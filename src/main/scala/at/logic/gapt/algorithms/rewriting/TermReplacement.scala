@@ -2,9 +2,7 @@
 package at.logic.gapt.algorithms.rewriting
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
-import at.logic.gapt.proofs.expansionTrees._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.proofs.expansion.{ replaceET, ExpansionTree }
 import at.logic.gapt.proofs.{ HOLSequent, resolution, lk }
 
 import scala.collection.mutable
@@ -134,24 +132,7 @@ object TermReplacement {
     f( proof )
   }
 
-  def apply( expTree: ExpansionTree, map: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree = expTree match {
-    case ETTop           => ETTop
-    case ETBottom        => ETBottom
-    case ETAtom( f )     => ETAtom( apply( f, map ) )
-    case ETNeg( t1 )     => ETNeg( apply( t1, map ) )
-    case ETAnd( t1, t2 ) => ETAnd( apply( t1, map ), apply( t2, map ) )
-    case ETOr( t1, t2 )  => ETOr( apply( t1, map ), apply( t2, map ) )
-    case ETImp( t1, t2 ) => ETImp( apply( t1, map ), apply( t2, map ) )
-    case ETStrongQuantifier( f, v, selection ) =>
-      ETStrongQuantifier( apply( f, map ), v, apply( selection, map ) )
-    case ETSkolemQuantifier( f, v, selection ) =>
-      ETSkolemQuantifier( apply( f, map ), v, apply( selection, map ) )
-    case ETWeakQuantifier( f, instances ) =>
-      ETWeakQuantifier.applyWithoutMerge(
-        apply( f, map ),
-        instances map { case ( t, term ) => apply( t, map ) -> apply( term, map ) }
-      )
-    case ETWeakening( f ) => ETWeakening( apply( f, map ) )
-  }
+  def apply( expTree: ExpansionTree, map: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree =
+    replaceET( expTree, map )
 }
 

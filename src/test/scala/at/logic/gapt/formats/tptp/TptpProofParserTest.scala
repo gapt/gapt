@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.proofs.Clause
-import at.logic.gapt.proofs.expansionTrees.toDeep
+import at.logic.gapt.proofs.expansion.toDeep
 import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.prover9.Prover9

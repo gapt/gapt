@@ -1,5 +1,5 @@
 
-package at.logic.gapt.proofs.expansionTrees
+package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._

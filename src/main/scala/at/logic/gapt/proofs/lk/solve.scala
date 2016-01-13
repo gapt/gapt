@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.utils.logging.Logger
 
@@ -658,12 +658,12 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
    */
   private def removeWeakFormulas( seq: HOLSequent ) = {
     val w_ant = expansionSequent.antecedent.filter( {
-      case ETWeakening( _ ) => true
-      case _                => false
+      case ETWeakening( _, _ ) => true
+      case _                   => false
     } ).map( toShallow( _ ) )
     val w_suc = expansionSequent.succedent.filter( {
-      case ETWeakening( _ ) => true
-      case _                => false
+      case ETWeakening( _, _ ) => true
+      case _                   => false
     } ).map( toShallow( _ ) )
 
     HOLSequent( seq.antecedent.filterNot( w_ant.contains( _ ) ), seq.succedent.filterNot( w_suc.contains( _ ) ) )
@@ -684,14 +684,14 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case Neg( f1 ) =>
         trace( "found neg left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
-        val etSeq1 = expansionSequent.removeFromAntecedent( et ) :+ et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree]
+        val etSeq1 = expansionSequent.removeFromAntecedent( et ) :+ et.immediateSubProofs( 0 )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1 ) )
       case And( f1, f2 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
         val etSeq =
-          et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] +:
-            et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] +:
+          et.immediateSubProofs( 1 ) +:
+            et.immediateSubProofs( 0 ) +:
             expansionSequent.removeFromAntecedent( et )
         val ps1 = new ExpansionTreeProofStrategy( etSeq )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1 ) )
@@ -705,23 +705,23 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     } ).map( formula => formula match {
       case Neg( f1 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
-        val etSeq1 = et.asInstanceOf[UnaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] +: expansionSequent.removeFromSuccedent( et )
+        val etSeq1 = et.immediateSubProofs( 0 ) +: expansionSequent.removeFromSuccedent( et )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1 ) )
       case Imp( f1, f2 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
         val etSeq =
-          et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] +:
+          et.immediateSubProofs( 0 ) +:
             expansionSequent
-            .replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
+            .replaceInSuccedent( et, et.immediateSubProofs( 1 ) )
             .asInstanceOf[ExpansionSequent]
         val ps1 = new ExpansionTreeProofStrategy( etSeq )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1 ) )
       case Or( f1, f2 ) =>
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
         val etSeq = ( expansionSequent
-          .replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] )
-          :+ et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] )
+          .replaceInSuccedent( et, et.immediateSubProofs( 1 ) )
+          :+ et.immediateSubProofs( 0 ) )
           .asInstanceOf[ExpansionSequent]
         val ps1 = new ExpansionTreeProofStrategy( etSeq )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1 ) )
@@ -735,8 +735,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     } ).map( formula => {
       // prepare new proof strategies for children
       val et = getETOfFormula( expansionSequent, formula, isAntecedent = false ).get
-      val etSeq1 = expansionSequent.replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] ).asInstanceOf[ExpansionSequent]
-      val etSeq2 = expansionSequent.replaceInSuccedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] ).asInstanceOf[ExpansionSequent]
+      val etSeq1 = expansionSequent.replaceInSuccedent( et, et.immediateSubProofs( 0 ) )
+      val etSeq2 = expansionSequent.replaceInSuccedent( et, et.immediateSubProofs( 1 ) )
       val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
       val ps2 = new ExpansionTreeProofStrategy( etSeq2 )
       new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Succedent, None, List[ProofStrategy]( ps1, ps2 ) )
@@ -752,18 +752,18 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       case Imp( _, _ ) => {
         trace( "found imp left; exp seq: " + expansionSequent + "; formula: " + formula )
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
-        val children = et.asInstanceOf[BinaryExpansionTree].children // children are Tuple2(ET, Option[Formula])
+        val children = et.immediateSubProofs // children are Tuple2(ET, Option[Formula])
         val etSeqPurged = expansionSequent.removeFromAntecedent( et )
-        val etSeq1 = new ExpansionSequent( etSeqPurged.antecedent, children( 0 )._1.asInstanceOf[ExpansionTree] +: etSeqPurged.succedent )
-        val etSeq2 = new ExpansionSequent( children( 1 )._1.asInstanceOf[ExpansionTree] +: etSeqPurged.antecedent, etSeqPurged.succedent )
+        val etSeq1 = new ExpansionSequent( etSeqPurged.antecedent, children( 0 ) +: etSeqPurged.succedent )
+        val etSeq2 = new ExpansionSequent( children( 1 ) +: etSeqPurged.antecedent, etSeqPurged.succedent )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         val ps2 = new ExpansionTreeProofStrategy( etSeq2 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1, ps2 ) )
       }
       case Or( _, _ ) => {
         val et = getETOfFormula( expansionSequent, formula, isAntecedent = true ).get
-        val etSeq1 = expansionSequent.replaceInAntecedent( et, et.asInstanceOf[BinaryExpansionTree].children( 0 )._1.asInstanceOf[ExpansionTree] ).asInstanceOf[ExpansionSequent]
-        val etSeq2 = expansionSequent.replaceInAntecedent( et, et.asInstanceOf[BinaryExpansionTree].children( 1 )._1.asInstanceOf[ExpansionTree] ).asInstanceOf[ExpansionSequent]
+        val etSeq1 = expansionSequent.replaceInAntecedent( et, et.immediateSubProofs( 0 ) )
+        val etSeq2 = expansionSequent.replaceInAntecedent( et, et.immediateSubProofs( 1 ) )
         val ps1 = new ExpansionTreeProofStrategy( etSeq1 )
         val ps2 = new ExpansionTreeProofStrategy( etSeq2 )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( formula, FormulaLocation.Antecedent, None, List[ProofStrategy]( ps1, ps2 ) )
@@ -777,7 +777,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
 
     val anteResult = expansionSequent.antecedent.collectFirst( {
       case et @ ETStrongQuantifier( formula, variable, selection ) =>
-        val newEtSeq = expansionSequent.replaceInAntecedent( et, selection.asInstanceOf[ExpansionTree] ).asInstanceOf[ExpansionSequent]
+        val newEtSeq = expansionSequent.replaceInAntecedent( et, selection )
         new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Antecedent, Some( variable ),
           List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
     } )
@@ -785,7 +785,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     anteResult.orElse(
       expansionSequent.succedent.collectFirst( {
         case et @ ETStrongQuantifier( formula, variable, selection ) =>
-          val newEtSeq = expansionSequent.replaceInSuccedent( et, selection.asInstanceOf[ExpansionTree] ).asInstanceOf[ExpansionSequent]
+          val newEtSeq = expansionSequent.replaceInSuccedent( et, selection )
           new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( variable ),
             List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
       } )
@@ -797,20 +797,11 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
    * Naive approach: always check everything.
    * This data does not really change (except on et seq changes), so it could be cached/precalculated for efficiency in the future
    */
-  private def doVariablesAppearInStrongQuantifier( vars: Set[Var], et: ExpansionTree ): Boolean = {
-    et match {
-      case ETStrongQuantifier( formula, v, sel ) =>
-        vars.contains( v ) || doVariablesAppearInStrongQuantifier( vars, sel )
-      case ETWeakQuantifier( formula, instances ) =>
-        instances.exists( entry => doVariablesAppearInStrongQuantifier( vars, entry._1 ) )
-      case BinaryExpansionTree( child1, child2 ) =>
-        doVariablesAppearInStrongQuantifier( vars, child1 ) || doVariablesAppearInStrongQuantifier( vars, child2 )
-      case UnaryExpansionTree( child1 ) => doVariablesAppearInStrongQuantifier( vars, child1 )
-      case ETAtom( _ )                  => false
-      case ETWeakening( _ )             => false
-      case ETTop | ETBottom             => false
+  private def doVariablesAppearInStrongQuantifier( vars: Set[Var], et: ExpansionTree ): Boolean =
+    et.subProofs exists {
+      case ETStrongQuantifier( _, ev, _ ) if vars contains ev => true
+      case _ => false
     }
-  }
 
   def findWeakQuantifier( seq: HOLSequent ): Option[ExpansionTreeProofStrategy.ExpansionTreeAction] = {
     // check which of the terms to use (just ones that aren't there yet)
@@ -820,17 +811,12 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     // also in cyclicity condition: expand outer instantiations before inner (can't magically make inner part of formula appear, only rule by rule). this is done automatically if only outermost occurences of weak
     // quantifier instances are checked here
 
-    def getFirstApplicableInstanceOfWeakQuantifier( instances: Seq[( ExpansionTree, LambdaExpression )] ) = {
-      val firstApplicable = instances.find( {
-        case ( et: ExpansionTree, term: LambdaExpression ) =>
+    def getFirstApplicableInstanceOfWeakQuantifier( instances: Map[LambdaExpression, ExpansionTree] ) =
+      instances.find {
+        case ( term, et ) =>
           // check if free variables of term appear in any strong quantifier
-          val vars = freeVariables( term )
-          val doVarsAppear = doVariablesAppearInStrongQuantifier( vars, _: ExpansionTree )
-          val canUseInstance = expansionSequent.succedent.forall( !doVarsAppear( _ ) ) && expansionSequent.antecedent.forall( !doVarsAppear( _ ) )
-          canUseInstance
-      } )
-      firstApplicable
-    }
+          eigenVariablesET( expansionSequent ).intersect( freeVariables( term ) ).isEmpty
+      }
 
     val anteResult: Option[ExpansionTreeProofStrategy.ExpansionTreeAction] = expansionSequent.antecedent.foldLeft( None: Option[ExpansionTreeProofStrategy.ExpansionTreeAction] )( ( old, et ) =>
       // want to return first match, so return old if defined or check next
@@ -838,13 +824,13 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
         et match {
           case ETWeakQuantifier( formula, instances ) =>
             getFirstApplicableInstanceOfWeakQuantifier( instances ).map( instancePicked => {
-              val newInstances = instances.filterNot( _ eq instancePicked )
+              val newInstances = instances.filterNot( _ == instancePicked )
               // drop et as soon as all instances have been picked (from etseq, will stick in actual sequent for simplicity but never be chosen)
               val newEtSeq0 =
                 if ( newInstances.isEmpty ) { expansionSequent.removeFromAntecedent( et ) }
-                else { expansionSequent.replaceInAntecedent( et, ETWeakQuantifier.applyWithoutMerge( formula, newInstances ) ) }
-              val newEtSeq = ( instancePicked._1 +: newEtSeq0 ).asInstanceOf[ExpansionSequent]
-              new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Antecedent, Some( instancePicked._2 ),
+                else { expansionSequent.replaceInAntecedent( et, ETWeakQuantifier( formula, newInstances ) ) }
+              val newEtSeq = instancePicked._2 +: newEtSeq0
+              new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Antecedent, Some( instancePicked._1 ),
                 List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
             } )
           case _ => None
@@ -861,13 +847,13 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
             et match {
               case ETWeakQuantifier( formula, instances ) =>
                 getFirstApplicableInstanceOfWeakQuantifier( instances ).map( instancePicked => {
-                  val newInstances = instances.filterNot( _ eq instancePicked )
+                  val newInstances = instances.filterNot( _ == instancePicked )
                   // drop et as soon as all instances have been picked
                   val newEtSeq0 =
                     if ( newInstances.isEmpty ) { expansionSequent.removeFromSuccedent( et ) }
-                    else { expansionSequent.replaceInSuccedent( et, ETWeakQuantifier.applyWithoutMerge( formula, newInstances ) ) }
-                  val newEtSeq = ( newEtSeq0 :+ instancePicked._1 ).asInstanceOf[ExpansionSequent]
-                  new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( instancePicked._2 ),
+                    else { expansionSequent.replaceInSuccedent( et, ETWeakQuantifier( formula, newInstances ) ) }
+                  val newEtSeq = newEtSeq0 :+ instancePicked._2
+                  new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( instancePicked._1 ),
                     List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
                 } )
               case _ => None
@@ -964,6 +950,22 @@ private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
   def noCommonAtoms( seq: HOLSequent ): Boolean = {
     val ats = atoms( seq )
     ats.size == ats.toSet.size
+  }
+}
+
+/**
+ * Gets expansion tree of a formula from expansion sequent.
+ */
+private object getETOfFormula {
+  def apply( etSeq: ExpansionSequent, f: HOLFormula, isAntecedent: Boolean ): Option[ExpansionTree] = {
+    getFromExpansionTreeList( if ( isAntecedent ) etSeq.antecedent else etSeq.succedent, f )
+  }
+
+  private def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: HOLFormula ): Option[ExpansionTree] = ets match {
+    case head +: tail =>
+      if ( toShallow( head ) == f ) Some( head )
+      else getFromExpansionTreeList( tail, f )
+    case Seq() => None
   }
 }
 

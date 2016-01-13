@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.expr.{ HOLAtomConst, LambdaExpression }
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 
@@ -32,12 +32,12 @@ object RobinsonToLK {
 
     val projections = justifications map {
       case ( clause, ProjectionFromEndSequent( proj, index ) ) =>
-        val projWithDef = ExpansionProofToLK( proj ++ clause.map( ETAtom ) )
+        val projWithDef = ExpansionProofToLK( ExpansionProof( proj ++ clause.map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
         clause -> DefinitionRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ), index isSuc )
 
       case ( clause, Definition( newAtom, expansion ) ) =>
         val i = clause indexOf newAtom
-        val p = ExpansionProofToLK( clause.map( ETAtom ).updated( i, expansion ) )
+        val p = ExpansionProofToLK( ExpansionProof( clause.map( ETAtom( _, false ), ETAtom( _, true ) ).updated( i, expansion ) ) )
         clause -> DefinitionRule( p, toShallow( expansion ), newAtom, i isSuc )
     }
 

@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.{ FOLSubstitution, Utils }
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.findMinimalSipGrammar
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }

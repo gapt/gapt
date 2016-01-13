@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr.{ StringSymbol, _ }
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentMatchers }
 import org.specs2.mutable._
 
@@ -17,17 +17,17 @@ class SolveTest extends Specification with SequentMatchers {
       val formula = Ex( x, Or( Neg( HOLAtom( d, x :: Nil ) ), All( y, HOLAtom( d, y :: Nil ) ) ) ) // exists x (-d(x) or forall y d(y))
 
       val inst1 = ETOr(
-        ETNeg( ETAtom( HOLAtom( d, u :: Nil ) ) ), // -d(u)
-        ETStrongQuantifier( All( y, HOLAtom( d, y :: Nil ) ), v, ETAtom( HOLAtom( d, v :: Nil ) ) ) // forall y d(y) +^v d(v)
+        ETNeg( ETAtom( HOLAtom( d, u :: Nil ), false ) ), // -d(u)
+        ETStrongQuantifier( All( y, HOLAtom( d, y :: Nil ) ), v, ETAtom( HOLAtom( d, v :: Nil ), true ) ) // forall y d(y) +^v d(v)
       )
 
       val inst2 = ETOr(
-        ETNeg( ETAtom( HOLAtom( d, c :: Nil ) ) ), // -d(c)
-        ETStrongQuantifier( All( y, HOLAtom( d, y :: Nil ) ), u, ETAtom( HOLAtom( d, u :: Nil ) ) ) // forall y d(y) +^u d(u)
+        ETNeg( ETAtom( HOLAtom( d, c :: Nil ), false ) ), // -d(c)
+        ETStrongQuantifier( All( y, HOLAtom( d, y :: Nil ) ), u, ETAtom( HOLAtom( d, u :: Nil ), true ) ) // forall y d(y) +^u d(u)
       )
 
       // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch
-      val et = ETWeakQuantifier.applyWithoutMerge( formula, List( ( inst1, u ), ( inst2, c ) ) )
+      val et = ETWeakQuantifier( formula, Map( u -> inst1, c -> inst2 ) )
       val etSeq = Sequent() :+ et
 
       val Some( lkProof ) = solve.expansionProofToLKProof( toShallow( etSeq ), etSeq )
@@ -55,8 +55,8 @@ class SolveTest extends Specification with SequentMatchers {
   }
 
   "ExpansionProofToLK" should {
-    "top" in { ExpansionProofToLK( Sequent() :+ ETTop ) must_== TopAxiom }
-    "bottom" in { ExpansionProofToLK( ETBottom +: Sequent() ) must_== BottomAxiom }
+    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( true ) ) ) must_== TopAxiom }
+    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( false ) +: Sequent() ) ) must_== BottomAxiom }
   }
 }
 

@@ -7,7 +7,7 @@ import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.expansionTrees.{ addSymmetry, toDeep => ETtoDeep, ExpansionProofToLK }
+import at.logic.gapt.proofs.expansion.{ toDeep => ETtoDeep, eliminateCutsET, addSymmetry, ExpansionProofToLK }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import XMLParser._
@@ -137,7 +137,7 @@ class MiscTest extends Specification {
       val p2 = ForallLeftRule( p1, AllxPx, y )
       val p3 = ForallRightRule( p2, AllxPx, y )
 
-      val etSeq = LKToExpansionProof( p3 )
+      val etSeq = eliminateCutsET( LKToExpansionProof( p3 ) )
 
       val proof = ExpansionProofToLK( etSeq ) // must not throw exception
       ok
@@ -146,7 +146,7 @@ class MiscTest extends Specification {
     "construct proof with expansion sequent extracted from proof (2/2)" in {
       val proof = LinearExampleProof( 4 )
 
-      val proofPrime = ExpansionProofToLK( LKToExpansionProof( proof ) ) // must not throw exception
+      val proofPrime = ExpansionProofToLK( eliminateCutsET( LKToExpansionProof( proof ) ) ) // must not throw exception
       ok
     }
 
@@ -204,7 +204,7 @@ class MiscTest extends Specification {
 
       Sat4j.isValid( deep ) must beTrue
 
-      ExpansionProofToLK( expseq ) // must not throw exception
+      ExpansionProofToLK( eliminateCutsET( expseq ) ) // must not throw exception
       ok
     }
 

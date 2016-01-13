@@ -57,15 +57,15 @@ object PopupMenu {
   def apply( main: ExpansionSequentViewer, ced: CedentPanel, x: Int, y: Int ) {
     val popupMenu = new PopupMenu {
       val trees = ced.treeList.drawnTrees
-      contents += new MenuItem( Action( "Close all" ) { trees.foreach( det => det.close( det.expansionTree.toShallow ) ) } )
+      contents += new MenuItem( Action( "Close all" ) { trees.foreach( det => det.close( det.expansionTree.shallow ) ) } )
       contents += new MenuItem( Action( "Open all" ) {
         for ( det <- trees ) {
-          val subFs = firstQuantifiers( det.expansionTree.toShallow )
+          val subFs = firstQuantifiers( det.expansionTree.shallow )
           subFs.foreach( det.open )
         }
       } )
 
-      contents += new MenuItem( Action( "Expand all" ) { trees.foreach( det => expandRecursive( det, det.expansionTree.toShallow ) ) } )
+      contents += new MenuItem( Action( "Expand all" ) { trees.foreach( det => expandRecursive( det, det.expansionTree.shallow ) ) } )
       contents += new MenuItem( Action( "Reset" ) {
         ced.treeList = new TreeListPanel( main, ced.cedent, ced.ft )
         ced.scrollPane.contents = ced.treeList

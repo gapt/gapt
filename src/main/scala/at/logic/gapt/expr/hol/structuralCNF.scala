@@ -1,8 +1,9 @@
 package at.logic.gapt.expr.hol
 
+import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 
 import scala.collection.mutable
 
@@ -56,12 +57,18 @@ object structuralCNF {
           val eigen = rename( x, freeVars.toList )
           freeVars += eigen
           val fa = left( Substitution( x -> eigen )( a ) )
-          es => ETWeakQuantifier( f, fa( es ) -> eigen ).asInstanceOf[ExpansionTree]
+          es => {
+            val et = fa( es )
+            ETWeakQuantifier( Ex( x, Substitution( eigen -> x )( et.shallow ) ), Map( eigen -> et ) )
+          }
         case All( x, a ) if !propositional =>
           val fvs = freeVariables( f ).toSeq
           val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
           val fa = left( Substitution( x -> skolem( fvs: _* ) )( a ) )
-          es => ETSkolemQuantifier( f, skolem, fa( es ) )
+          es => {
+            val et = fa( es )
+            ETSkolemQuantifier( All( x, TermReplacement( et.shallow, Map( skolem( fvs: _* ) -> x ) ) ), skolem( fvs: _* ), et )
+          }
         case And( a, b ) =>
           val fa = left( a )
           val fb = left( b )
@@ -69,24 +76,24 @@ object structuralCNF {
         case Neg( a ) =>
           val fa = right( a )
           es => ETNeg( fa( es ) )
-        case Top() => es => ETTop
+        case Top() => es => ETTop( true )
         case Bottom() =>
           trivial = true
-          es => ETBottom
+          es => ETBottom( true )
         case Or( a, Bottom() ) =>
           val fa = left( a )
-          es => ETOr( fa( es ), ETBottom )
+          es => ETOr( fa( es ), ETBottom( true ) )
         case Or( Bottom(), b ) =>
           val fb = left( b )
-          es => ETOr( ETBottom, fb( es ) )
+          es => ETOr( ETBottom( true ), fb( es ) )
         case Imp( a, Bottom() ) =>
           val fa = right( a )
-          es => ETImp( fa( es ), ETBottom )
+          es => ETImp( fa( es ), ETBottom( true ) )
         case Imp( Top(), b ) =>
           val fb = left( b )
-          es => ETImp( ETTop, fb( es ) )
+          es => ETImp( ETTop( false ), fb( es ) )
         case Or( Top(), _ ) | Or( _, Top() ) | Imp( Bottom(), _ ) | Imp( _, Top() ) =>
-          es => ETWeakening( f )
+          es => ETWeakening( f, true )
         case _ =>
           if ( !ant.contains( f ) ) ant += f
           es => es( Ant( ant indexOf f ) )
@@ -97,12 +104,18 @@ object structuralCNF {
           val eigen = rename( x, freeVars.toList )
           freeVars += eigen
           val fa = right( Substitution( x -> eigen )( a ) )
-          es => ETWeakQuantifier( f, fa( es ) -> eigen ).asInstanceOf[ExpansionTree]
+          es => {
+            val et = fa( es )
+            ETWeakQuantifier( All( x, Substitution( eigen -> x )( et.shallow ) ), Map( eigen -> et ) )
+          }
         case Ex( x, a ) if !propositional =>
           val fvs = freeVariables( f ).toSeq
           val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
           val fa = right( Substitution( x -> skolem( fvs: _* ) )( a ) )
-          es => ETSkolemQuantifier( f, skolem, fa( es ) )
+          es => {
+            val et = fa( es )
+            ETSkolemQuantifier( Ex( x, TermReplacement( et.shallow, Map( skolem( fvs: _* ) -> x ) ) ), skolem( fvs: _* ), et )
+          }
         case Or( a, b ) =>
           val fa = right( a )
           val fb = right( b )
@@ -114,18 +127,18 @@ object structuralCNF {
         case Neg( a ) =>
           val fa = left( a )
           es => ETNeg( fa( es ) )
-        case Bottom() => es => ETBottom
+        case Bottom() => es => ETBottom( false )
         case Top() =>
           trivial = true
-          es => ETTop
+          es => ETTop( false )
         case And( a, Top() ) =>
           val fa = right( a )
-          es => ETAnd( fa( es ), ETTop )
+          es => ETAnd( fa( es ), ETTop( false ) )
         case And( Top(), b ) =>
           val fb = right( b )
-          es => ETAnd( ETTop, fb( es ) )
+          es => ETAnd( ETTop( false ), fb( es ) )
         case And( Bottom(), _ ) | And( _, Bottom() ) =>
-          es => ETWeakening( f )
+          es => ETWeakening( f, false )
         case _ =>
           if ( !suc.contains( f ) ) suc += f
           es => es( Suc( suc indexOf f ) )
@@ -156,22 +169,22 @@ object structuralCNF {
           val clause = seq.map { _.asInstanceOf[HOLAtom] }
           cnf += clause
           if ( generateJustifications )
-            justifications += ( clause -> backTrans( clause map ETAtom ) )
+            justifications += ( clause -> backTrans( clause.map( ETAtom( _, true ), ETAtom( _, false ) ) ) )
       }
     }
 
     def splitAt( seq: HOLSequent, i: SequentIndex, backTrans: ExpansionSequent => Justification ): Unit =
       ( seq( i ), i ) match {
         case ( And( a, b ), i: Suc ) =>
-          splitAt( seq.updated( i, a ), i, es => backTrans( es.updated( i, ETAnd( es( i ), ETWeakening( b ) ) ) ) )
-          splitAt( seq.updated( i, b ), i, es => backTrans( es.updated( i, ETAnd( ETWeakening( a ), es( i ) ) ) ) )
+          splitAt( seq.updated( i, a ), i, es => backTrans( es.updated( i, ETAnd( es( i ), ETWeakening( b, false ) ) ) ) )
+          splitAt( seq.updated( i, b ), i, es => backTrans( es.updated( i, ETAnd( ETWeakening( a, false ), es( i ) ) ) ) )
         case ( Or( a, b ), i: Ant ) =>
-          splitAt( seq.updated( i, a ), i, es => backTrans( es.updated( i, ETOr( es( i ), ETWeakening( b ) ) ) ) )
-          splitAt( seq.updated( i, b ), i, es => backTrans( es.updated( i, ETOr( ETWeakening( a ), es( i ) ) ) ) )
+          splitAt( seq.updated( i, a ), i, es => backTrans( es.updated( i, ETOr( es( i ), ETWeakening( b, true ) ) ) ) )
+          splitAt( seq.updated( i, b ), i, es => backTrans( es.updated( i, ETOr( ETWeakening( a, true ), es( i ) ) ) ) )
         case ( Imp( a, b ), i: Ant ) =>
           val aIdx = Suc( seq.succedent.size )
-          splitAt( seq.delete( i ) :+ a, aIdx, es => backTrans( es.delete( aIdx ).insertAt( i, ETImp( es( aIdx ), ETWeakening( b ) ) ) ) )
-          splitAt( seq.updated( i, b ), i, es => backTrans( es.updated( i, ETImp( ETWeakening( a ), es( i ) ) ) ) )
+          splitAt( seq.delete( i ) :+ a, aIdx, es => backTrans( es.delete( aIdx ).insertAt( i, ETImp( es( aIdx ), ETWeakening( b, true ) ) ) ) )
+          splitAt( seq.updated( i, b ), i, es => backTrans( es.updated( i, ETImp( ETWeakening( a, false ), es( i ) ) ) ) )
         case _ => expand( seq, backTrans )
       }
 
@@ -193,7 +206,7 @@ object structuralCNF {
           expand( Sequent( Seq( repl ), Seq( f ) ), es => Definition( repl, es( Suc( 0 ) ) ) )
         }
       }
-      split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETAtom( repl ) ) ) )
+      split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETAtom( repl, i.isAnt ) ) ) )
     }
 
     ( cnf.toSet, justifications.toSet, defs.map( _.swap ).toMap )

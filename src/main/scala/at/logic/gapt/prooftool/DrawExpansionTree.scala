@@ -14,7 +14,7 @@ import swing._
 import scala.swing.event.{ MouseExited, MouseEntered, MouseClicked }
 import java.awt.{ Font, Color }
 import java.awt.event.MouseEvent
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 import at.logic.gapt.expr.hol._
@@ -24,7 +24,7 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
+class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
 
   import ExpansionTreeState._
   override def loggerName = "DrawExpTreeLogger"
@@ -63,21 +63,22 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
 
   /**
    * This function is responsible for converting an expansion tree to a component.
+   *
    * @param expTree The tree to be converted.
    * @param allow Whether the root node of expTree should be clickable. Might be obsolete.
    * @return A BoxPanel representing expTree.
    */
-  def treeToComponent( expTree: MultiExpansionTree, allow: Boolean ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
+  def treeToComponent( expTree: ExpansionTree, allow: Boolean ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
     opaque = false
 
     expTree match {
-      case METAtom( _ ) | METTop | METBottom | METWeakening( _ ) =>
-        val lbl = DrawSequent.formulaToLabel( main, expTree.toShallow, ft )
+      case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) =>
+        val lbl = DrawSequent.formulaToLabel( main, expTree.shallow, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
-      case METNeg( t ) =>
+      case ETNeg( t ) =>
         val conn = label( "¬", ft )
         val subF = treeToComponent( t, allow )
         this.listenTo( conn.mouse.moves )
@@ -89,7 +90,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
         }
         contents += conn
         contents += subF
-      case METAnd( t1, t2 ) =>
+      case ETAnd( t1, t2 ) =>
         val parenthesis = connectParenthesis( label( "(", ft ), label( ")", ft ) )
         val conn = label( "∧", ft )
         val subF1 = treeToComponent( t1, allow )
@@ -110,7 +111,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case METOr( t1, t2 ) =>
+      case ETOr( t1, t2 ) =>
         val parenthesis = connectParenthesis( label( "(", ft ), label( ")", ft ) )
         val conn = label( "∨", ft )
         val subF1 = treeToComponent( t1, allow )
@@ -131,7 +132,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case METImp( t1, t2 ) =>
+      case ETImp( t1, t2 ) =>
         val parenthesis = connectParenthesis( label( "(", ft ), label( ")", ft ) )
         val conn = label( "⊃", ft )
         val subF1 = treeToComponent( t1, allow )
@@ -152,10 +153,11 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
         contents += conn
         contents += subF2
         contents += parenthesis._2
-      case METWeakQuantifier( formula, instances ) =>
-        val terms = instances.map( i => i._2.toList ).toList
-        val subtrees = instances.map( i => i._1 ).toList
-        val quantifiers = quantifierBlock( expTree ) // quantifiers is a string containing the quantifier block represented by this weak node.
+
+      case ETQuantBlock( formula, depth, instances ) =>
+        val terms = instances.toList.map( i => i._1 )
+        val subtrees = instances.toList.map( i => i._2 )
+        val quantifiers = quantifierBlock( takeQuants( formula, depth ), formula ) // quantifiers is a string containing the quantifier block represented by this weak node.
 
         if ( state.get( formula ) == Some( Expand ) ) {
           // We first consider the case that the top-level quantifier is expanded.
@@ -170,12 +172,12 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
             contents += drawMatrix( subtrees )
           } else {
             state -= formula
-            contents += drawFormula( instances.head._1.toShallow ) // If there are no terms to expand the quantifier with, we can safely call drawFormula.
+            contents += drawFormula( instances.head._2.shallow ) // If there are no terms to expand the quantifier with, we can safely call drawFormula.
           }
         } else {
           // The current tree is either open or closed.
           val lbl = LatexLabel( main, ft, quantifiers )
-          val subF = expTree.getSubformula
+          val subF = dropQuants( formula, depth )
 
           if ( allow ) lbl.reactions += {
             case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -194,87 +196,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
           contents += drawFormula( subF ) // Since the current quantifier block is not expanded, we needn't worry about the state of child trees and can call drawFormula.
         }
 
-      case METStrongQuantifier( formula, vars, sel ) => // This case is mostly analogous to the WeakQuantifier one.
-        val terms = List( vars.toList )
-        val subtrees = List( sel )
-        val quantifiers = quantifierBlock( expTree )
-
-        if ( state.get( formula ) == Some( Expand ) ) {
-          if ( subtrees != Nil ) {
-            val lbl = LatexLabel( main, ft, getMatrixSymbol( formula ) )
-            lbl.reactions += {
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close( formula )
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-                PopupMenu( DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y )
-            }
-            contents += lbl
-            contents += drawMatrix( subtrees )
-          } else {
-            state -= formula
-            contents += drawFormula( sel.toShallow )
-          }
-        } else {
-          val lbl = LatexLabel( main, ft, quantifiers )
-          val subF = expTree.getSubformula
-
-          if ( allow ) lbl.reactions += {
-            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-              PopupMenu( DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y )
-            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
-              if ( state.get( formula ) == Some( Open ) ) expand( formula )
-              else open( formula )
-          }
-          else {
-            lbl.deafTo( lbl.mouse.clicks )
-            lbl.tooltip = "First expand all the quantifiers till the root!" // alternative message "The block of quantifiers is locked!"
-          }
-
-          contents += lbl
-          if ( state.get( formula ) == Some( Open ) ) contents += drawTerms( terms )
-          contents += drawFormula( subF )
-        }
-
-      case METSkolemQuantifier( formula, vars, sel ) => // This case is identical to strong quantifier handling
-        val terms = List( vars.toList )
-        val subtrees = List( sel )
-        val quantifiers = quantifierBlock( expTree )
-
-        if ( state.get( formula ) == Some( Expand ) ) {
-          if ( subtrees != Nil ) {
-            val lbl = LatexLabel( main, ft, getMatrixSymbol( formula ) )
-            lbl.reactions += {
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close( formula )
-              case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-                PopupMenu( DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y )
-            }
-            contents += lbl
-            contents += drawMatrix( subtrees )
-          } else {
-            state -= formula
-            contents += drawFormula( sel.toShallow )
-          }
-        } else {
-          val lbl = LatexLabel( main, ft, quantifiers )
-          val subF = expTree.getSubformula
-
-          if ( allow ) lbl.reactions += {
-            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
-              PopupMenu( DrawExpansionTree.this, formula, lbl, e.point.x, e.point.y )
-            case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
-              if ( state.get( formula ) == Some( Open ) ) expand( formula )
-              else open( formula )
-          }
-          else {
-            lbl.deafTo( lbl.mouse.clicks )
-            lbl.tooltip = "First expand all the quantifiers till the root!" // alternative message "The block of quantifiers is locked!"
-          }
-
-          contents += lbl
-          if ( state.get( formula ) == Some( Open ) ) contents += drawTerms( terms )
-          contents += drawFormula( subF )
-        }
-
-      case METWeakening( f ) =>
+      case ETWeakening( f, _ ) =>
         //not really tested
         val lbl = DrawSequent.formulaToLabel( main, f, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
@@ -283,6 +205,49 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
     }
   }
 
+  object ETStrongBlock {
+    def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[List[LambdaExpression], ExpansionTree] )] = et match {
+      case ETStrongQuantifier( _, eigen, ETStrongBlock( _, depth, children ) ) =>
+        Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( eigen +: t, child ) ) )
+      case ETSkolemQuantifier( _, st, ETStrongBlock( _, depth, children ) ) =>
+        Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( st +: t, child ) ) )
+      case _ => Some( ( et.shallow, 0, Map( List[LambdaExpression]() -> et ) ) )
+    }
+  }
+
+  object ETWeakBlock {
+    def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[List[LambdaExpression], ExpansionTree] )] = et match {
+      case ETWeakQuantifier( _, children ) =>
+        val compressedChildren = children mapValues unapply mapValues { _.get }
+        if ( compressedChildren.map { _._2._2 }.toSet.size == 1 ) {
+          val depth = compressedChildren.map { _._2._2 }.head + 1
+          Some( ( et.shallow, depth, for ( ( t, ( _, _, grandchildren ) ) <- compressedChildren; ( ts, grandchild ) <- grandchildren ) yield ( t +: ts, grandchild ) ) )
+        } else {
+          Some( ( et.shallow, 1, for ( ( t, child ) <- children ) yield ( List( t ), child ) ) )
+        }
+      case _ => Some( ( et.shallow, 0, Map( List[LambdaExpression]() -> et ) ) )
+    }
+  }
+
+  object ETQuantBlock {
+    def unapply( et: ExpansionTree ) = et match {
+      case ETStrongBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
+      case ETWeakBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
+      case _ => None
+    }
+  }
+
+  def dropQuants( formula: HOLFormula, howMany: Int ): HOLFormula =
+    if ( howMany == 0 ) formula else formula match {
+      case All( _, f ) => dropQuants( f, howMany - 1 )
+      case Ex( _, f )  => dropQuants( f, howMany - 1 )
+    }
+  def takeQuants( formula: HOLFormula, howMany: Int ): List[Var] =
+    if ( howMany == 0 ) Nil else formula match {
+      case All( x, f ) => x +: takeQuants( f, howMany - 1 )
+      case Ex( x, f )  => x +: takeQuants( f, howMany - 1 )
+    }
+
   def getMatrixSymbol( formula: HOLFormula ) = formula match {
     case Ex( _, _ )  => "\\bigvee"
     case All( _, _ ) => "\\bigwedge"
@@ -290,17 +255,12 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
   }
 
   /**
-   * @param et A MultiExpansionTree (either StrongQuantifier or WeakQuantifier)
+   * @param et A ExpansionTree (either StrongQuantifier or WeakQuantifier)
    * @return A string containing the quantifier block represented by this quantifier node.
    */
-  def quantifierBlock( et: MultiExpansionTree ): String = et match {
-    case METStrongQuantifier( _, _, _ ) | METWeakQuantifier( _, _ ) | METSkolemQuantifier( _, _, _ ) =>
-      val vars = et.getVars
-      val f = et.toShallow
-      f match {
-        case All( _, _ ) => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\forall " + DrawSequent.formulaToLatexString( v ) + ")" )
-        case Ex( _, _ )  => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\exists " + DrawSequent.formulaToLatexString( v ) + ")" )
-      }
+  def quantifierBlock( vars: List[Var], f: HOLFormula ): String = f match {
+    case All( _, _ ) => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\forall " + DrawSequent.formulaToLatexString( v ) + ")" )
+    case Ex( _, _ )  => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\exists " + DrawSequent.formulaToLatexString( v ) + ")" )
   }
 
   // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
@@ -332,10 +292,10 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: MultiExpan
 
   /**
    *
-   * @param list A list of MultiExpansionTrees.
+   * @param list A list of ExpansionTrees.
    * @return A BoxPanel containing the elements of list stacked on top of each other and surrounded by angle brackets.
    */
-  def drawMatrix( list: List[MultiExpansionTree] ) = new BoxPanel( Orientation.Vertical ) {
+  def drawMatrix( list: List[ExpansionTree] ) = new BoxPanel( Orientation.Vertical ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
     border = Swing.EmptyBorder( 0, ft.getSize, 0, ft.getSize )

@@ -214,12 +214,12 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   def removeFromSuccedent[B]( e: B ) = new Sequent( antecedent, succedent filterNot ( _ == e ) )
 
-  def replaceInAntecedent[B, C]( from: B, to: C ) = {
+  def replaceInAntecedent[B >: A]( from: B, to: B ) = {
     require( antecedent.contains( from ) )
     new Sequent( antecedent.map( e => if ( e == from ) to else e ), succedent )
   }
 
-  def replaceInSuccedent[B, C]( from: B, to: C ) = {
+  def replaceInSuccedent[B >: A]( from: B, to: B ) = {
     require( succedent.contains( from ) )
     new Sequent( antecedent, succedent.map( e => if ( e == from ) to else e ) )
   }

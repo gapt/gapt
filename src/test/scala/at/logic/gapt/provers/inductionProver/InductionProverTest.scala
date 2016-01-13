@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ETWeakQuantifier, merge, ETAtom }
+import at.logic.gapt.proofs.expansion.{ ExpansionSequent, ETWeakQuantifier, ETAtom }
 import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
@@ -38,27 +38,27 @@ class InductionProverTest extends Specification {
 
     // Induction base
 
-    val et1 = ETAtom( f0 )
-    val et2 = merge( ETWeakQuantifier( All( x, g0( x ) ), List( ( ETAtom( g0( beta ) ), beta ) ) ) )
-    val et3 = merge( ETWeakQuantifier( All( x, uR( x ) ), List( ( ETAtom( uR( beta ) ), beta ) ) ) )
+    val et1 = ETAtom( f0, false )
+    val et2 = ETWeakQuantifier( All( x, g0( x ) ), Map( beta -> ETAtom( g0( beta ), false ) ) )
+    val et3 = ETWeakQuantifier( All( x, uR( x ) ), Map( beta -> ETAtom( uR( beta ), false ) ) )
 
     val ExpSeq0 = ExpansionSequent( List( et1, et2, et3 ), Nil )
 
     // Induction step
 
-    val et4 = merge( ETWeakQuantifier( All( x, fST( x ) ), List( ( ETAtom( fST( nu ) ), nu ) ) ) )
-    val et5 = merge( ETWeakQuantifier( All( x, All( z, gST( x, z ) ) ), List(
-      ( ETWeakQuantifier( All( z, gST( gamma, z ) ), List(
-        ( ETAtom( gST( gamma, nu ) ), nu )
-      ) ), gamma )
-    ) ) )
-    val et6 = merge( ETWeakQuantifier( All( x, All( z, All( w, ASSO( x, z, w ) ) ) ), List(
-      ( ETWeakQuantifier( All( z, All( w, ASSO( gamma, z, w ) ) ), List(
-        ( ETWeakQuantifier( All( w, ASSO( gamma, s( nu ), w ) ), List(
-          ( ETAtom( ASSO( gamma, s( nu ), f( nu ) ) ), f( nu ) )
-        ) ), s( nu ) )
-      ) ), gamma )
-    ) ) )
+    val et4 = ETWeakQuantifier( All( x, fST( x ) ), Map( nu -> ETAtom( fST( nu ), false ) ) )
+    val et5 = ETWeakQuantifier( All( x, All( z, gST( x, z ) ) ), Map(
+      gamma -> ETWeakQuantifier( All( z, gST( gamma, z ) ), Map(
+        nu -> ETAtom( gST( gamma, nu ), false )
+      ) )
+    ) )
+    val et6 = ETWeakQuantifier( All( x, All( z, All( w, ASSO( x, z, w ) ) ) ), Map(
+      gamma -> ETWeakQuantifier( All( z, All( w, ASSO( gamma, z, w ) ) ), Map(
+        s( nu ) -> ETWeakQuantifier( All( w, ASSO( gamma, s( nu ), w ) ), Map(
+          f( nu ) -> ETAtom( ASSO( gamma, s( nu ), f( nu ) ), false )
+        ) )
+      ) )
+    ) )
 
     val t = List( m( gamma, s( nu ) ) )
 
@@ -66,11 +66,9 @@ class InductionProverTest extends Specification {
 
     // Conclusion
 
-    val et7 = merge( ETWeakQuantifier( All( x, uL( x ) ), List(
-      ( ETAtom( uL( f( alpha ) ) ), f( alpha ) )
-    ) ) )
+    val et7 = ETWeakQuantifier( All( x, uL( x ) ), Map( f( alpha ) -> ETAtom( uL( f( alpha ) ), false ) ) )
 
-    val et8 = ETAtom( Eq( g( s( zero ), alpha ), f( alpha ) ) )
+    val et8 = ETAtom( Eq( g( s( zero ), alpha ), f( alpha ) ), true )
 
     val u = List( s( zero ) )
 
@@ -134,56 +132,35 @@ class InductionProverTest extends Specification {
     val ForAllAdd0 = All( x, add0( x ) )
     val ForAllAddS = All.Block( List( x, y ), addS( x, y ) )
 
-    val et1 = merge( ETWeakQuantifier( ForAllAdd0, List(
-      ( ETAtom( add0( beta ) ), beta ),
-      ( ETAtom( add0( plus( alpha, beta ) ) ), plus( alpha, beta ) )
-    ) ) )
+    val et1 = ETWeakQuantifier( ForAllAdd0, Map(
+      beta -> ETAtom( add0( beta ), false ),
+      plus( alpha, beta ) -> ETAtom( add0( plus( alpha, beta ) ), false )
+    ) )
 
     val ExpSeq0 = ExpansionSequent( List( et1 ), Nil )
 
-    val et2 = merge( ETWeakQuantifier(
+    val et2 = ETWeakQuantifier(
       ForAllAddS,
-      List(
-        (
+      Map(
+        gamma ->
           ETWeakQuantifier(
             All( y, addS( gamma, y ) ),
-            List(
-              (
-                ETAtom( addS( gamma, nu ) ),
-                nu
-              )
-            )
+            Map( nu -> ETAtom( addS( gamma, nu ), false ) )
           ),
-            gamma
-        ),
 
-        (
+        alpha ->
           ETWeakQuantifier(
             All( y, addS( alpha, y ) ),
-            List(
-              (
-                ETAtom( addS( alpha, plus( gamma, nu ) ) ),
-                plus( gamma, nu )
-              )
-            )
+            Map( plus( gamma, nu ) -> ETAtom( addS( alpha, plus( gamma, nu ) ), false ) )
           ),
-            alpha
-        ),
 
-        (
+        plus( alpha, gamma ) ->
           ETWeakQuantifier(
             All( y, addS( plus( alpha, gamma ), y ) ),
-            List(
-              (
-                ETAtom( addS( plus( alpha, gamma ), nu ) ),
-                nu
-              )
-            )
-          ),
-            plus( alpha, gamma )
-        )
+            Map( nu -> ETAtom( addS( plus( alpha, gamma ), nu ), false ) )
+          )
       )
-    ) )
+    )
 
     val t = List( gamma )
 
@@ -193,7 +170,7 @@ class InductionProverTest extends Specification {
 
     val u = List( alpha )
 
-    val ExpSeq2 = ExpansionSequent( Nil, List( ETAtom( B ) ) )
+    val ExpSeq2 = ExpansionSequent( Nil, List( ETAtom( B, true ) ) )
 
     val F = assoc( alpha, gamma, nu )
 

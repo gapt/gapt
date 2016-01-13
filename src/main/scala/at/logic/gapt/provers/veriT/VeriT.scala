@@ -1,9 +1,10 @@
 package at.logic.gapt.provers.veriT
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
+import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.runProcess
 import java.io._
@@ -24,10 +25,11 @@ class VeriT extends OneShotProver with ExternalProgram {
     VeriTParser.isUnsat( new StringReader( veritOutput ) )
   }
 
-  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
+  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionProof] ): Option[ExpansionProof] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map { renamedProof =>
-      renamedProof map { TermReplacement( _, invertRenaming ) }
+    f( renamedSeq ) map {
+      case ExpansionProof( renamedExpSeq ) =>
+        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming ) } )
     }
   }
 
@@ -39,7 +41,7 @@ class VeriT extends OneShotProver with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] = withGroundVariables2( s ) { s =>
+  override def getExpansionProofWithCut( s: HOLSequent ): Option[ExpansionProofWithCut] = withGroundVariables2( s ) { s =>
     val ( smtBenchmark, _, renaming ) = SmtLibExporter( s )
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
@@ -50,18 +52,18 @@ class VeriT extends OneShotProver with ExternalProgram {
       }
       val exp_seq = for ( et <- renamedExpansion ) yield TermReplacement( et, undoRenaming )
 
-      val exp_seq_quant = exp_seq filter { isQuantified( _ ) }
+      val exp_seq_quant = exp_seq filter { e => containsQuantifier( e.shallow ) }
 
       val prop = for ( ( f, idx ) <- s.zipWithIndex ) yield formulaToExpansionTree( f, idx.isSuc )
 
       val quasi_taut = exp_seq_quant ++ prop
       val taut = addSymmetry( quasi_taut )
 
-      taut
+      ExpansionProof( taut )
     }
   }
 
-  override def getLKProof( s: HOLSequent ) = getExpansionSequent( s ) map { ExpansionProofToLK( _ ) }
+  override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ExpansionProofToLK( _ ) }
 
   val isInstalled: Boolean =
     try {

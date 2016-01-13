@@ -18,7 +18,7 @@ import at.logic.gapt.utils.glob
 import at.logic.gapt.utils.logging.metrics
 
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.proofs.expansionTrees.{ FOLInstanceTermEncoding, addSymmetry, toShallow }
+import at.logic.gapt.proofs.expansion._
 
 import org.json4s._
 import org.json4s.native.JsonMethods._
@@ -60,18 +60,18 @@ class MetricsPrinter extends MetricsCollector {
 object testCutIntro extends App {
 
   lazy val proofSeqRegex = """(\w+)\((\d+)\)""".r
-  def loadProof( fileName: String ) = fileName match {
+  def loadProof( fileName: String ): Option[( ExpansionProof, Boolean )] = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
       val hasEquality = containsEqualityReasoning( p )
       metrics.value( "lkinf_input", rulesNumber( p ) )
-      Some( LKToExpansionProof( p ) -> hasEquality )
+      Some( eliminateCutsET( LKToExpansionProof( p ) ) -> hasEquality )
     case _ if fileName endsWith ".proof_flat" =>
-      VeriTParser.getExpansionProof( fileName ) map { ep => addSymmetry( ep ) -> false }
+      VeriTParser.getExpansionProof( fileName ) map { ep => ExpansionProof( addSymmetry( ep ) ) -> false }
     case _ if fileName contains "/leanCoP" =>
       LeanCoPParser.getExpansionProof(
         new StringReader( extractFromTSTPCommentsIfNecessary( Source.fromFile( fileName ).mkString ) )
-      ) map { _ -> true }
+      ) map { ExpansionProof( _ ) -> true }
     case _ if fileName contains "/Prover9" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent(
         extractFromTSTPCommentsIfNecessary( Source.fromFile( fileName ).mkString )

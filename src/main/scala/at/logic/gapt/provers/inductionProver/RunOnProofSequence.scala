@@ -6,7 +6,7 @@ import at.logic.gapt.expr.{ Eq, FOLConst, FOLFunction }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, Sequent }
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
 import org.apache.log4j.{ Level, Logger }
@@ -18,7 +18,7 @@ object RunOnProofSequence {
     new SipProver().getSimpleInductionProof( getEndSequent( proof ), getInstanceProofs( proof ) )
   }
 
-  def getInstanceProofs( proof: String ) = ( 0 until 5 ).map { n => n -> removeEqAxioms( LKToExpansionProof( ProofMap( proof )._2( n ) ) ) }
+  def getInstanceProofs( proof: String ) = ( 0 until 5 ).map { n => n -> removeEqAxioms( LKToExpansionProof( ProofMap( proof )._2( n ) ).expansionSequent ) }
 
   def getEndSequent( proof: String ) = ProofMap( proof )._1
 

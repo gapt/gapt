@@ -108,7 +108,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
     try {
       scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val et = LKToExpansionProof( content )
-      val viewer = new ExpansionSequentViewer( "Expansion Tree", et )
+      val viewer = new ExpansionSequentViewer( "Expansion Tree", et.expansionSequent )
       viewer.showFrame()
       scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
