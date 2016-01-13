@@ -22,3 +22,15 @@ val destructLemma2 = new Lemma(
 	use(DestructTactic())
 }
 
+val chainLemma = new Lemma(
+	Sequent(Seq("hyp" -> parseFormula("(all x (q(x) -> p(f(x))))")), Seq("target" -> parseFormula("p(f(f(c)))")))
+) {
+	use(ChainTactic("hyp").at("target"))
+}
+
+val chainLemma2 = new Lemma(
+	Sequent(Seq("hyp" -> parseFormula("(all x (p(f(x))))")), Seq("target" -> parseFormula("p(f(f(c)))")))
+) {
+	use(ChainTactic("hyp"))
+} qed
+

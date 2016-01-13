@@ -830,4 +830,3 @@ case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic 
     Some( ContractionMacroRule( auxProof ) )
   }
 }
-

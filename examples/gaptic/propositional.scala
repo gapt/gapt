@@ -43,15 +43,9 @@ val direct = new Lemma(
 	use(AxiomTactic)
 } qed
 
-val fail1 = new Lemma(
-	Sequent(Seq("A" -> A), Seq("B" -> B))
+val lemmaProp = new Lemma(
+	Sequent(Seq("a" -> Imp(A, B)), Seq("s" -> Or(And(A,B), Neg(A))))
 ) {
-	use(AxiomTactic)
-} qed
-
-val fail2 = new Lemma(
-	Sequent(Seq("A" -> A, "B" -> B), Seq("B" -> B))
-) {
-	use(AxiomTactic)
-	use(AxiomTactic)
+	use(ImpLeftTactic())
+	use(PropTactic)
 } qed

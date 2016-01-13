@@ -45,9 +45,6 @@ class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean = tr
     }
   }
 
-  /**
-   *
-   */
   private def printSubGoals() = {
     if ( proofState.subGoals.isEmpty )
       println( "No current sub goals!" )
@@ -56,6 +53,11 @@ class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean = tr
       for ( i <- proofState.subGoals.indices )
         println( s"$i: ${proofState.displaySubGoal( ( i ) )}" )
     }
+  }
+
+  def setCurrentSubGoal( i: Int ) = proofState.setCurrentSubGoal( i ) match {
+    case Some( x ) => proofState = x
+    case _         =>
   }
 }
 
