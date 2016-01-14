@@ -42,6 +42,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         /* Structural rules except cut */
         case TopRight( _ ) | BottomLeft( _ ) => Set( ( proof, cut_ancs ) )
         case Axiom( _, _, f ) =>
+          /*
           cut_ancs match {
             case Sequent( Seq( false ), Seq( false ) ) => ()
             case Sequent( Seq( true ), Seq( false ) ) =>
@@ -52,6 +53,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
               ()
             case Sequent( Seq( true ), Seq( true ) ) => ()
           }
+          */
           Set( ( proof, cut_ancs ) )
         case Reflexivity( _, _ )                => Set( ( proof, cut_ancs ) )
 

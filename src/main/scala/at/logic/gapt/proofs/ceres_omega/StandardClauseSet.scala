@@ -20,7 +20,13 @@ object StandardClauseSet extends StandardClauseSet
  * but labels forgotten).
  */
 class StandardClauseSet {
-  def apply( struct: Struct[Label] ): Set[LabelledSequent] = struct match {
+  /**
+   * Creates the characteristic sequent set from a struct
+   * @param struct The struct to be converted
+   * @param contract if contract is set, duplicate formulas will not be added to the clause during a merge (default: true)
+   * @return
+   */
+  def apply( struct: Struct[Label], contract: Boolean = true ): Set[LabelledSequent] = struct match {
     case A( Top(), _ )    => Set()
     case A( Bottom(), _ ) => Set( Sequent( Nil, Nil ) )
     case A( fo, label :: Nil ) =>
@@ -46,7 +52,13 @@ class StandardClauseSet {
     case Times( x, y, _ ) =>
       val xs = apply( x )
       val ys = apply( y )
-      xs.flatMap( x1 => ys.flatMap( y1 => Set( delta_compose( x1, y1 ) ) ) )
+      xs.flatMap( x1 => ys.flatMap( y1 => {
+        if ( contract )
+          Set( delta_compose( x1, y1 ) )
+        else
+          Set( x1 ++ y1 )
+      } ) )
+
     case _ => throw new Exception( "Unhandled case: " + struct )
   }
 

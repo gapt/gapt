@@ -31,7 +31,10 @@ object extractStructFromLKsk {
           EmptyTimesJunction()
       }
     case p @ Reflexivity( antLabel, term ) =>
-      A( Eq( term, term ), List( antLabel ) )
+      if ( isCutAncestor( Suc( 0 ) ) )
+        A( Eq( term, term ), List( antLabel ) )
+      else
+        EmptyTimesJunction()
     case p @ Cut( subProof1, aux1, subProof2, aux2 ) if cutFormulaPred( p.cutFormula ) =>
       Plus(
         apply( p.subProof1, p.occConnectors( 0 ).parents( isCutAncestor ).map( _.headOption getOrElse true ), cutFormulaPred ),
