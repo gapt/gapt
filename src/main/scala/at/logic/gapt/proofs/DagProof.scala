@@ -9,7 +9,7 @@ import scala.runtime.ScalaRunTime
  * Proofs are recursive structures that are represented as case classes.  Equality is standard case class equality
  * (but implemented in such a way that it is efficient on DAGs).
  *
- * @tparam Proof  The type of proof, e.g. [[at.logic.gapt.proofs.lkNew.LKProof]].
+ * @tparam Proof  The type of proof, e.g. [[at.logic.gapt.proofs.lk.LKProof]].
  */
 trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
   /**

@@ -12,6 +12,7 @@ import at.logic.gapt.proofs.lkskNew._
 import at.logic.gapt.proofs.ral._
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.utils.logging.Logger
 import org.specs2.mutable._
 
 import scala.io.Source
@@ -21,7 +22,7 @@ import scala.io.Source
 /**
  * Created by marty on 6/18/15.
  */
-class ceres_omegaTest extends Specification {
+class ceres_omegaTest extends Specification with Logger {
 
   def load( file: String, pname: String ) =
     LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( file ) mkString ).proof( pname )
@@ -94,30 +95,35 @@ class ceres_omegaTest extends Specification {
       val selp = LKToLKsk( elp )
       val proj = Projections( selp, CERES.skipPropositional )
       val struct = extractStructFromLKsk( selp, CERES.skipPropositional )
-      val css = StandardClauseSet( struct )
+      val css = StandardClauseSet( struct, false )
       //css.map( println )
 
       val pcss = proj.map( x => x._1.conclusion.zipWithIndex.filter( pair => x._2( pair._2 ) ).map( _._1 ) )
       def formulas( set: Set[Sequent[LabelledFormula]] ) = set.map( x => x.map( _._2 ) ).toList
       val ( pqs, abspcss ) = replaceAbstractions( formulas( pcss ) )
       val ( cqs, abscss ) = replaceAbstractions( formulas( css ) )
-      //TODO: fix skolem constant bug in lk to lksk conversion and comment back in
+
+      debug( "=== projection css ===" )
+      abspcss.map( x => debug( x.toString ) )
+      debug( "=== projection replacement terms ===" )
+      pqs.map( x => debug( x._2 + " -> " + x._1 ) )
+      debug( TPTPFOLExporter.tptp_problem( abspcss ) )
+
+      debug( "=== computed css ===" )
+      abscss.map( x => debug( x.toString ) )
+      debug( TPTPFOLExporter.tptp_problem( abscss ) )
+
+      debug( "=== css replacement terms ===" )
+      cqs.map( x => debug( x._2 + " -> " + x._1 ) )
+
       /*
-      println( "=== projection css ===" )
-      abspcss.map( println )
-      println( "=== projection replacement terms ===" )
-      pqs.map( x => println( x._2 + " -> " + x._1 ) )
+      pcss.forall( x => css.exists( y =>
+        StillmanSubsumptionAlgorithmHOL.subsumes( y.map( _._2 ), x.map( _._2 ) ) must beTrue ) )
+        */
+      pqs must_== ( cqs )
 
-      println( "=== computed css ===" )
-      abscss.map( println )
-      println( "=== projection replacement terms ===" )
-      cqs.map( x => println( x._2 + " -> " + x._1 ) )
-      //pqs must_== ( cqs )
-
-      println( TPTPFOLExporter.tptp_problem( abscss ) )
-
-      abspcss must_== abscss
-      */
+      //abspcss must_== abscss
+      /**/
       ok( "done" )
     }
 
