@@ -11,6 +11,7 @@ import org.specs2.mutable.Specification
 class ExpansionProofTest extends Specification with SatMatchers {
 
   "linear example cut intro" in {
+    if ( !Prover9.isInstalled ) skipped
     val Some( p ) = CutIntroduction.compressLKProof( LinearExampleProof( 6 ) )
     val e = LKToExpansionProof( p )
     e.deep must beValidSequent
