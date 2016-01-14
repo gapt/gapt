@@ -70,4 +70,18 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
   }
+
+  "duplicate bound variables" in {
+    val Seq( p, q ) = Seq( "p", "q" ) map { FOLAtomConst( _, 1 ) }
+    val Seq( c, d ) = Seq( "c", "d" ) map { FOLConst( _ ) }
+    val x = FOLVar( "x" )
+
+    val endSequent = Sequent() :+ ( ( All( x, p( x ) ) | All( x, q( x ) ) ) --> ( p( c ) | q( d ) ) )
+
+    val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true, propositional = false )
+    val Some( ref ) = Prover9 getRobinsonProof cnf
+    val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
+    expansion.shallow must_== endSequent
+    expansion.deep must beValidSequent
+  }
 }
