@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic }
 import at.logic.gapt.proofs.lk._
@@ -828,5 +829,129 @@ case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic 
 
     val auxProof = CutRule( leftPremise, Suc( leftPremise.s.succedent.length - 1 ), rightPremise, Ant( 0 ) )
     Some( ContractionMacroRule( auxProof ) )
+  }
+}
+
+/**
+ * EqualityLeftRule tactic
+ * @param equalityLabel
+ * @param formulaLabel
+ */
+case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String ) extends Tactic {
+
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val indices = for (
+      ( ( `equalityLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;
+      ( ( `formulaLabel`, _ ), formulaIndex ) <- goalSequent.zipWithIndex.antecedent
+    ) yield ( eqIndex, formulaIndex )
+
+    for ( ( equalityIndex, formulaIndex ) <- indices.headOption ) yield {
+      val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
+      val ( _, mainFormula ) = goalSequent( formulaIndex )
+
+      def f( l: List[HOLPosition], h: HOLFormula, r: LambdaExpression ): HOLFormula = l match {
+        case x :: xs => f( xs, h.replace( x, r ), r )
+        case Nil     => h
+      }
+
+      val replacement = mainFormula.find( t ) match {
+        case l if l.length > 0 =>
+          f( l, mainFormula, s )
+        case _ =>
+          f( mainFormula.find( s ), mainFormula, t )
+      }
+
+      val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> replacement ) )
+
+      val premise = OpenAssumption( newGoal )
+
+      EqualityLeftRule( premise, equalityIndex, formulaIndex, mainFormula )
+    }
+  }
+}
+
+/**
+ * EqualityLeftRule tactic
+ * @param equalityLabel
+ * @param formulaLabel
+ */
+case class EqualityRightTactic( equalityLabel: String, formulaLabel: String ) extends Tactic {
+
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val indices = for (
+      ( ( `equalityLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;
+      ( ( `formulaLabel`, _ ), formulaIndex ) <- goalSequent.zipWithIndex.succedent
+    ) yield ( eqIndex, formulaIndex )
+
+    for ( ( equalityIndex, formulaIndex ) <- indices.headOption ) yield {
+      val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
+      val ( _, mainFormula ) = goalSequent( formulaIndex )
+
+      def f( l: List[HOLPosition], h: HOLFormula, r: LambdaExpression ): HOLFormula = l match {
+        case x :: xs => f( xs, h.replace( x, r ), r )
+        case Nil     => h
+      }
+
+      val replacement = mainFormula.find( t ) match {
+        case l if l.length > 0 =>
+          f( l, mainFormula, s )
+        case _ =>
+          f( mainFormula.find( s ), mainFormula, t )
+      }
+
+      val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> replacement ) )
+
+      val premise = OpenAssumption( newGoal )
+
+      EqualityRightRule( premise, equalityIndex, formulaIndex, mainFormula )
+    }
+  }
+}
+
+/**
+ * DefinitionLeftRule tactic
+ * @param applyToLabel
+ * @param replacement
+ */
+case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic {
+
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val indices =
+      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.antecedent )
+        yield index
+
+    for ( i <- indices.headOption ) yield {
+      val ( _, existingFormula ) = goalSequent( i )
+      val premise = OpenAssumption( goalSequent delete ( i ) insertAt ( i, ( applyToLabel -> replacement ) ) )
+      DefinitionLeftRule( premise, i, existingFormula )
+    }
+  }
+}
+
+/**
+ * DefinitionRightRule tactic
+ * @param applyToLabel
+ * @param replacement
+ */
+case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic {
+
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val indices =
+      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.succedent )
+        yield index
+
+    for ( i <- indices.headOption ) yield {
+      val ( _, existingFormula ) = goalSequent( i )
+      val premise = OpenAssumption( goalSequent delete ( i ) insertAt ( i, ( applyToLabel -> replacement ) ) )
+      DefinitionRightRule( premise, i, existingFormula )
+    }
   }
 }

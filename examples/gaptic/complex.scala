@@ -34,3 +34,4 @@ val chainLemma2 = new Lemma(
 	use(ChainTactic("hyp"))
 } qed
 
+
