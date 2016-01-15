@@ -138,7 +138,7 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.parboiled" %% "parboiled" % "2.1.0",
-      "org.scalaz" %% "scalaz-core" % "7.1.5",
+      "org.scalaz" %% "scalaz-core" % "7.2.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.13",
@@ -176,9 +176,9 @@ lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ba
 lazy val evalUserManual = TaskKey[Unit]("eval-user-manual", "Evaluates the snippets in the user manual.")
 
 lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.6.6",
-  "org.specs2" %% "specs2-junit" % "3.6.6",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.6.6")
+  "org.specs2" %% "specs2-core" % "3.7",
+  "org.specs2" %% "specs2-junit" % "3.7",  // needed for junitxml output
+  "org.specs2" %% "specs2-matcher" % "3.7")
 
 def recursiveListFiles(f: File): Seq[File] =
   if (f.isDirectory)
