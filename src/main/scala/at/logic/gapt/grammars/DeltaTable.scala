@@ -63,7 +63,6 @@ class DeltaTableException( msg: String ) extends Exception( msg )
  * one can extract grammars from it by simply iterating through its rows.
  *
  * For details, see "Algorithmic Introduction of Quantified Cuts (Hetzl et al 2013)"
- * and deltavector.tex/.pdf in the /doc-directory.
  *
  * @param terms The terms occurring in an LK proof.
  * @param eigenvariable The name of eigenvariable that should be introduced in the decompositions.
