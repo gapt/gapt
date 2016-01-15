@@ -21,7 +21,7 @@ object CLIMain extends Logger {
 
   val imports = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "gapt-cli-prelude.scala" ) ).mkString
 
-  def main( args: Array[String] ) {
+  def main( args: Array[String] ): Unit = {
     val settings = new Settings
     settings.usejavacp.value = true
     settings.language.value = {
