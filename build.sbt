@@ -28,10 +28,6 @@ lazy val commonSettings = Seq(
   // scalaz-stream is not on maven.org
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
-  javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
-  fork := true,
-  fork in Test := true,
-
   sourcesInBase := false // people like to keep scripts lying around
 
 ) ++ defaultScalariformSettings :+
@@ -40,6 +36,12 @@ lazy val commonSettings = Seq(
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(DoubleIndentClassDeclaration, true)
     .setPreference(SpaceInsideParentheses, true))
+
+lazy val forkOpts = Seq(
+  javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
+  fork := true,
+  fork in Test := true
+)
 
 lazy val publishSettings =
   if (Version endsWith "-SNAPSHOT") {
@@ -58,7 +60,11 @@ lazy val publishSettings =
     Seq(bintrayOrganization := Some("gapt"))
   }
 
-lazy val root = (project in file(".")).
+lazy val root = project.in(file(".")).
+  aggregate(gaptJS, gaptJVM).
+  settings(publish := {}, publishLocal := {}, sourcesInBase := false)
+
+lazy val gapt = crossProject.in(file(".")).
   settings(commonSettings: _*).
   settings(publishSettings: _*).
   disablePlugins(JUnitXmlReportPlugin).
@@ -73,12 +79,16 @@ lazy val root = (project in file(".")).
       "-sourcepath", baseDirectory.value.getAbsolutePath,
       "-diagrams",
       "-implicits"
-    ),
+    )
+  ).
+  jvmSettings(
 
     mainClass := Some("at.logic.cli.CLIMain"),
 
     fork in console := true,
     initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
+
+    testForkedParallel in Test := true,
 
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
@@ -97,8 +107,8 @@ lazy val root = (project in file(".")).
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDir / fn)}
           .map{f => (f, baseDir.toPath.relativize(f.toPath))} ++
         List((baseDir / "doc/README.dist", "README"),
-             (baseDir / "doc/user_manual.pdf", "user_manual.pdf")) ++
-          recursiveListFiles(apidocs).map{f => f -> s"apidocs/${apidocs.toPath.relativize(f.toPath)}"}
+          (baseDir / "doc/user_manual.pdf", "user_manual.pdf")) ++
+        recursiveListFiles(apidocs).map{f => f -> s"apidocs/${apidocs.toPath.relativize(f.toPath)}"}
 
       val archiveStem = s"gapt-$version"
 
@@ -131,21 +141,25 @@ lazy val root = (project in file(".")).
         connectInput = false),
         Seq(userManFn)).exitValue()
       if (exitVal == 0) IO.write(file(userManFn), out.toByteArray)
-    },
-
-    testForkedParallel in Test := true,
-
+    }
+  ).
+  settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.parboiled" %% "parboiled" % "2.1.0",
-      "org.scalaz" %% "scalaz-core" % "7.1.5",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
-      "org.slf4j" % "slf4j-api" % "1.7.13",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.13",
       "xml-resolver" % "xml-resolver" % "1.2",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"),
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
+    )
+  ).
+  jvmSettings(
+    libraryDependencies ++= Seq(
+      "org.slf4j" % "slf4j-api" % "1.7.13",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.13",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
+      "org.scalaz" %% "scalaz-core" % "7.1.5"
+    ),
 
     // UI
     libraryDependencies ++= Seq(
@@ -154,12 +168,22 @@ lazy val root = (project in file(".")).
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
       "com.itextpdf" % "itextpdf" % "5.5.8",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
-  )
+  ).
+  jsSettings(
+    libraryDependencies ++= Seq(
+      "org.scala-js" %%% "scala-parser-combinators" % "1.0.2",
+      "com.github.japgolly.fork.scalaz" %%% "scalaz-core" % "7.2.0"
+    )
+  ).
+  jvmSettings(forkOpts: _*)
+
+lazy val gaptJVM = gapt.jvm
+lazy val gaptJS = gapt.js
 
 addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/scalariformFormat ; testing/test:scalariformFormat")
 
-lazy val testing = (project in file("testing")).
-  dependsOn(root).
+lazy val testing = project.in(file("testing")).
+  dependsOn(gaptJVM).
   settings(commonSettings: _*).
   disablePlugins(JUnitXmlReportPlugin).
   settings(
