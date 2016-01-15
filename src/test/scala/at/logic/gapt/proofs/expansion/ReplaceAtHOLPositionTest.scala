@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
 import org.specs2.mutable._
 
 /**
