@@ -2,7 +2,7 @@ import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr.hol.{structuralCNF, univclosure}
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
-import at.logic.gapt.proofs.expansionTrees.{minimalExpansionSequent, ExpansionProofToLK}
+import at.logic.gapt.proofs.expansion.{ExpansionProofToLK, minimalExpansionSequent}
 import at.logic.gapt.proofs.resolution.expansionProofFromInstances
 import at.logic.gapt.proofs.{FOLClause, Sequent}
 import at.logic.gapt.prooftool.prooftool

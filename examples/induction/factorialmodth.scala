@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{HOLSequent, Sequent}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.inductionProver._
 import SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
@@ -17,7 +17,7 @@ val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +
 
 val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map univclosure.apply
 
-val modThProver = new Prover {
+val modThProver = new OneShotProver {
   override def getLKProof(seq: HOLSequent): Option[LKProof] =
     Prover9.getLKProof(theory ++ seq)
 

@@ -1,6 +1,6 @@
 import at.logic.gapt.expr.{FOLAtom, Neg}
 import at.logic.gapt.formats.hoare.ProgramParser
-import at.logic.gapt.proofs.expansionTrees.{compressQuantifiers, METWeakQuantifier}
+import at.logic.gapt.proofs.expansion.extractInstances
 import at.logic.gapt.proofs.hoare.{ForLoop, SimpleLoopProblem}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
@@ -28,14 +28,10 @@ val instanceSeq = slp.instanceSequent(1)
 println(instanceSeq)
 val proof = Prover9.getLKProof(instanceSeq).get
 
-val expansionSequent = compressQuantifiers(LKToExpansionProof(proof))
-expansionSequent.antecedent.foreach {
-  case METWeakQuantifier(formula, instances) =>
-    println(s"$formula:")
-    instances.foreach { case (inst, terms) => println(s"  $terms ($inst)") }
-  case _ => Nil
-}
-val deepSequent = expansionSequent.toDeep
+val expansionSequent = LKToExpansionProof(proof).expansionSequent
+extractInstances(expansionSequent) foreach println
+
+val deepSequent = expansionSequent map {_.deep}
 deepSequent.antecedent.foreach(println(_))
 deepSequent.succedent.foreach(f => println(Neg(f)))
 

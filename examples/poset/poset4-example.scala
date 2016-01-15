@@ -2,8 +2,8 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.hol.{existsclosure, CNFp, instantiate}
 import at.logic.gapt.grammars.{recSchemToVTRATG, findMinimalVectGrammar, VectTratGrammar}
 import at.logic.gapt.proofs.ceres.CERES
+import at.logic.gapt.proofs.expansion.{ExpansionProof, extractInstances, minimalExpansionSequents, FOLInstanceTermEncoding}
 import at.logic.gapt.proofs.{Suc, Sequent}
-import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
 import at.logic.gapt.cutintro._
@@ -131,7 +131,7 @@ val minESs = minimalExpansionSequents(p, Sat4j)
 println(s"Number of minimal expansion sequents: ${minESs.size}")
 println(s"Size of minimal expansion sequent: ${minESs.map(extractInstances(_)).map(_.size).min}")
 
-CutIntroduction.compressToLK(p, hasEquality = false,
+CutIntroduction.compressToLK(ExpansionProof(p), hasEquality = false,
   method = new GrammarFindingMethod {
     override def findGrammars(lang: Set[FOLTerm]): Option[VectTratGrammar] = {
       Some(findMinimalVectGrammar(lang, Seq(3),

@@ -35,6 +35,9 @@ object minimalExpansionSequent {
    */
   def apply( sequent: ExpansionSequent, prover: Prover ): Option[ExpansionSequent] =
     new Minimizer( sequent, prover ).computeAMinimal()
+
+  def apply(proof: ExpansionProof, prover: Prover): Option[ExpansionProof] =
+    apply(proof.expansionSequent, prover) map { ExpansionProof(_)}
 }
 
 /**

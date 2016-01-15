@@ -3,7 +3,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.grammars._
-import at.logic.gapt.proofs.expansionTrees.{InstanceTermEncoding, extractInstances}
+import at.logic.gapt.proofs.expansion.{InstanceTermEncoding, extractInstances}
 import at.logic.gapt.proofs.lk.{skolemize, LKToExpansionProof}
 import at.logic.gapt.provers.inductionProver.{hSolveQBUP, qbupForRecSchem}
 import at.logic.gapt.provers.prover9.Prover9
@@ -48,7 +48,7 @@ val instanceProofs = instances map { inst =>
   }.toMap[LambdaExpression, LambdaExpression]
   val erasedInstanceSequent = instanceSequent map { TermReplacement(_, erasure) }
   val Some(erasedProof) = Prover9 getLKProof erasedInstanceSequent
-  val erasedExpansion = LKToExpansionProof(erasedProof)
+  val erasedExpansion = LKToExpansionProof(erasedProof).expansionSequent
   val reifiedExpansion = erasedExpansion map { TermReplacement(_, erasure.map(_.swap)) }
   inst -> reifiedExpansion
 }
