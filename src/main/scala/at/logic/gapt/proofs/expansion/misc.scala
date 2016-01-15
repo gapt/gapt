@@ -64,21 +64,6 @@ object formulaToExpansionTree {
   }
 }
 
-/**
- * Returns the expansion sequent with certain expansions trees removed
- */
-object removeFromExpansionSequent {
-  /**
-   * @param seq: specifies formulas to remove; formulas in the antecedent/consequent will remove expansion trees in the antecedent/consequent of the expansion tree
-   *             expansion trees are removed if Sh(e) \in seq (using default equality, which is alpha equality)
-   */
-  def apply( etSeq: ExpansionSequent, seq: HOLSequent ): ExpansionSequent = {
-    val ante = etSeq.antecedent.filterNot( et => seq.antecedent.contains( et.shallow ) )
-    val cons = etSeq.succedent.filterNot( et => seq.succedent.contains( et.shallow ) )
-    new ExpansionSequent( ante, cons )
-  }
-}
-
 @deprecated( "Use .deep instead", "2016-01-13" )
 object toDeep {
   def apply( t: ExpansionTree ): HOLFormula = t.deep
