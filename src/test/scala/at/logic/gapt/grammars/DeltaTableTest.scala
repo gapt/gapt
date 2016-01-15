@@ -59,7 +59,7 @@ class DeltaTableTest extends Specification {
         val s1 = Set( ( ( f1 :: f2 :: Nil ) :: Nil ).transpose: _* )
         val s2 = Set( ( ( a :: b :: Nil ) :: ( b :: a :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( alpha, s1 ), ( f_alpha, s2.asInstanceOf[types.S] ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( alpha, s1.toSet ), ( f_alpha, s2.toSet ) ) )
       }
 
       "example with a unary function symbol" in {
@@ -79,7 +79,7 @@ class DeltaTableTest extends Specification {
 
         val s = Set( ( ( a :: b :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( f_alpha, s.asInstanceOf[types.S] ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( f_alpha, s.toSet ) ) )
       }
     }
 
@@ -102,7 +102,7 @@ class DeltaTableTest extends Specification {
 
         val s = Set( ( ( f1 :: g1 :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( alpha, s ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( alpha, s.toSet ) ) )
       }
 
       "example #1 without duplicates" in {
@@ -130,7 +130,7 @@ class DeltaTableTest extends Specification {
         val uTarget = FOLFunction( f, alpha0 :: FOLFunction( g, alpha1 :: alpha2 :: Nil ) :: Nil )
         val s = Set( ( ( a :: b :: Nil ) :: ( c :: e :: Nil ) :: ( d :: fc :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.asInstanceOf[types.S] ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.toSet ) ) )
       }
 
       "example #2 with duplicates" in {
@@ -155,7 +155,7 @@ class DeltaTableTest extends Specification {
         val uTarget = FOLFunction( f, alpha0 :: FOLFunction( g, alpha1 :: alpha1 :: Nil ) :: Nil )
         val s = Set( ( ( a :: b :: Nil ) :: ( c :: d :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.asInstanceOf[types.S] ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.toSet ) ) )
       }
 
       "example #3 with alpha-elimination" in {
@@ -179,7 +179,7 @@ class DeltaTableTest extends Specification {
         val uTarget = FOLFunction( f, alpha0 :: FOLFunction( g, c :: d :: Nil ) :: Nil )
         val s = Set( ( ( a :: b :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.asInstanceOf[types.S] ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.toSet ) ) )
       }
 
       "example #4 with duplicates and alpha-elimination" in {
@@ -205,7 +205,7 @@ class DeltaTableTest extends Specification {
         val uTarget = FOLFunction( f, FOLFunction( h, alpha0 :: Nil ) :: FOLFunction( g, c :: alpha0 :: Nil ) :: Nil )
         val s = Set( ( ( a :: b :: b :: Nil ) :: Nil ).transpose: _* )
 
-        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.asInstanceOf[types.S] ) ) )
+        ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.toSet ) ) )
       }
     }
 
