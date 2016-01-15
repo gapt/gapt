@@ -139,7 +139,7 @@ object Deltas {
       }
     }
 
-    private def computeDg( terms: List[FOLTerm], eigenvariable: String, curInd: Int ): Set[( types.U, types.RawS, Int )] = {
+    private def computeDg( terms: List[FOLTerm], eigenvariable: String, curInd: Int ): Set[( FOLTerm, List[List[FOLTerm]], Int )] = {
 
       //Special case: only one term has been provided. This isn't part of
       //the definition of DeltaG in the paper (deltavector.tex), but
@@ -161,7 +161,7 @@ object Deltas {
         //computePart is the only part which is significanlty different from
         //its counterpart in UnboundedVariableDelta, since it has to compute all combinations of choices
         //between the second & third cases.
-        def computePart( acc: Set[( List[types.U], types.RawS, Int )], ts: List[FOLTerm] ): Set[( List[types.U], types.RawS, Int )] = {
+        def computePart( acc: Set[( List[FOLTerm], List[List[FOLTerm]], Int )], ts: List[FOLTerm] ): Set[( List[FOLTerm], List[List[FOLTerm]], Int )] = {
           acc.flatMap {
             case ( u, s, ind ) => computeDg( ts, eigenvariable, ind ).map {
               case ( uPart, sPart, newInd ) => ( u :+ uPart, s ++ sPart, newInd )
@@ -169,11 +169,11 @@ object Deltas {
           }
         }
 
-        var results = Set[( types.U, types.RawS, Int )]()
+        var results = Set[( FOLTerm, List[List[FOLTerm]], Int )]()
 
         //We choose the second case and filter out all the results with too many variables, then apply nub.
         if ( commonFuncHead( terms ) ) {
-          val recursionResults = terms.map( t => FOLFunctionArgs( t ) ).transpose.foldLeft( Set( ( Nil: List[types.U], Nil: types.RawS, curInd ) ) )( computePart )
+          val recursionResults = terms.map( t => FOLFunctionArgs( t ) ).transpose.foldLeft( Set( ( Nil: List[FOLTerm], Nil: List[List[FOLTerm]], curInd ) ) )( computePart )
           val filteredResults = recursionResults.filter { case ( _, s, _ ) => s.distinct.length <= upperBound }
 
           //Apply nub to each result
@@ -221,7 +221,7 @@ object Deltas {
      *
      * @param terms The terms t_1,...,t_n.
      * @param eigenvariable The name of the variables to insert into u. The default is "α".
-     * @return The tuple (u:FOLTerm, s:types.RawS).
+     * @return The tuple (u:FOLTerm, s:List[List[FOLTerm]]).
      * Replacing α_1,...,α_q with s[1][i],...,s[q][i] results in t_i.
      */
     def computeDelta( terms: List[FOLTerm], eigenvariable: String ): Set[types.Decomposition] = {
@@ -260,14 +260,14 @@ object Deltas {
         ( ( terms.head, Nil ), curInd )
       } else if ( commonFuncHead( terms ) ) {
         //Compute Delta_G(u_i) for all u_i
-        def computePart( acc: ( List[types.U], types.RawS, Int ), ts: List[FOLTerm] ): ( List[types.U], types.RawS, Int ) = {
+        def computePart( acc: ( List[FOLTerm], List[List[FOLTerm]], Int ), ts: List[FOLTerm] ): ( List[FOLTerm], List[List[FOLTerm]], Int ) = {
           val ( ( uPart, sPart ), i: Int ) = computeDg( ts, eigenvariable, acc._3 )
           ( acc._1 :+ uPart, acc._2 ++ sPart, i )
         }
 
         //Get the function args (unapply._2) and fold with computePart
         //The result might contain duplicate variables and therefore, nub must be applied
-        val ( rawUParts, s, newInd ) = terms.map( t => FOLFunctionArgs( t ) ).transpose.foldLeft( ( Nil: List[types.U], Nil: types.RawS, curInd ) )( computePart )
+        val ( rawUParts, s, newInd ) = terms.map( t => FOLFunctionArgs( t ) ).transpose.foldLeft( ( Nil: List[FOLTerm], Nil: List[List[FOLTerm]], curInd ) )( computePart )
 
         //Reapply the function head to the pieces
         val u = FOLFunction( FOLFunctionName( terms.head ), rawUParts )
@@ -309,7 +309,7 @@ object Deltas {
    *
    * This function is used for nub.
    */
-  private def smallestVarInU( eigenvariable: String, u: types.U ): Option[Int] = {
+  private def smallestVarInU( eigenvariable: String, u: FOLTerm ): Option[Int] = {
     val res = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( v => extractIndex( v, eigenvariable ) )
     if ( res.isEmpty ) None else Some( res.min )
   }
@@ -319,7 +319,7 @@ object Deltas {
    * Variable names are expected to be of the form [eigenvariable]_[i],
    * where i is the variable index. If u has no variables, None is returned.
    */
-  private def largestVarInU( eigenvariable: String, u: types.U ): Option[Int] = {
+  private def largestVarInU( eigenvariable: String, u: FOLTerm ): Option[Int] = {
     val res = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) ).map( v => extractIndex( v, eigenvariable ) )
     if ( res.isEmpty ) None else Some( res.max )
   }
@@ -336,7 +336,7 @@ object Deltas {
    * @param (u',s') s.t. all α with identical corresponding term-lists in s have been merged together in u
    * and all duplicate lists s have been reduced to only 1 occurrence.
    */
-  private def nub( beginWith: Option[Int], eigenvariable: String, u: types.U, s: types.RawS ): types.RawDecomposition = beginWith match {
+  private def nub( beginWith: Option[Int], eigenvariable: String, u: FOLTerm, s: List[List[FOLTerm]] ): types.RawDecomposition = beginWith match {
     case None => ( u, s )
     case Some( start ) => {
       val indexedS = s.zip( start to ( start + s.size - 1 ) )
@@ -345,7 +345,7 @@ object Deltas {
       var presentVars = variables( u ).filter( isEigenvariable( _: FOLVar, eigenvariable ) )
 
       //Go through s, look ahead for duplicates, and delete them.
-      def nub2( u: types.U, s: List[( List[FOLTerm], Int )] ): types.RawDecomposition = s match {
+      def nub2( u: FOLTerm, s: List[( List[FOLTerm], Int )] ): types.RawDecomposition = s match {
         //no variables in u -> just return (u,Nil)
         case Nil => ( u, s.unzip._1 )
         //variables occur -> check xs for identical s-vectors

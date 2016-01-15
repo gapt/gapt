@@ -33,24 +33,12 @@ import scala.collection.immutable.HashMap
 
 //package-global definitions
 package object types {
-  /** A term with variables */
-  type U = FOLTerm
-  /** The s-vector for a single term (the elements are the substitutions for the term's variables) */
-  type SVector = List[FOLTerm]
-  /** The set of s-vectors of a substitution */
-  type S = Set[SVector]
-
-  /**
-   * A raw s-vector, computed inside a delta-vector.
-   * Raw s-vectors are transposed and turned into sets to become s-vectors.
-   */
-  type RawS = List[List[FOLTerm]]
 
   /** A raw decomposition, i.e. a decomposition with a raw s-vector. */
-  type RawDecomposition = ( U, RawS )
+  type RawDecomposition = ( FOLTerm, List[List[FOLTerm]] )
 
   /* A decomposition consisting u and S */
-  type Decomposition = ( U, S )
+  type Decomposition = ( FOLTerm, Set[List[FOLTerm]] )
 }
 
 class DeltaTableException( msg: String ) extends Exception( msg )
@@ -70,7 +58,7 @@ class DeltaTableException( msg: String ) extends Exception( msg )
 class DeltaTable( terms: List[FOLTerm], eigenvariable: String, delta: DeltaVector ) {
   var termsAdded: Int = 0
 
-  var table = new HashMap[types.S, List[( types.U, List[FOLTerm] )]]
+  var table = new HashMap[Set[List[FOLTerm]], List[( FOLTerm, List[FOLTerm] )]]
   val trivialEv = FOLVar( eigenvariable + "_0" )
 
   // Initialize with empty decomposition
@@ -131,7 +119,7 @@ class DeltaTable( terms: List[FOLTerm], eigenvariable: String, delta: DeltaVecto
    * a decomposition of T.
    * If the key already exists, (u,T) is appended the list of existing values
    */
-  def add( s: types.S, u: types.U, t: List[FOLTerm] ) {
+  def add( s: Set[List[FOLTerm]], u: FOLTerm, t: List[FOLTerm] ) {
     if ( table.contains( s ) ) {
       val lst = table( s )
       table += ( s -> ( ( u, t ) :: lst ) )
@@ -170,8 +158,8 @@ class DeltaTable( terms: List[FOLTerm], eigenvariable: String, delta: DeltaVecto
    * @param k only include lines with at least k pairs (defaults to 1 which displays all lines)
    */
   def toPrettyString( k: Int = 1 ): String = {
-    def SVectorToString( ss: types.SVector ): String = { "〈" + ss.mkString( ", " ) + "〉" }
-    def SToString( s: types.S ): String = { "{" + s.map( SVectorToString( _ ) ).mkString( ", " ) + "}" }
+    def SVectorToString( ss: List[FOLTerm] ): String = { "〈" + ss.mkString( ", " ) + "〉" }
+    def SToString( s: Set[List[FOLTerm]] ): String = { "{" + s.map( SVectorToString( _ ) ).mkString( ", " ) + "}" }
 
     val nLine = sys.props( "line.separator" )
 

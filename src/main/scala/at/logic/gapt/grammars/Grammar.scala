@@ -39,7 +39,7 @@ object ComputeGrammars {
 
     //The number of terms this grammar compresses (grammars that "compress" only one term are useless and
     //hence discarded here.)
-    def numTerms( s: types.S, t: List[FOLTerm] ) = if ( s.size != 0 ) s.size else t.size
+    def numTerms( s: Set[List[FOLTerm]], t: List[FOLTerm] ) = if ( s.size != 0 ) s.size else t.size
 
     // This gets decremented as iterating through the delta table reveals
     // smaller and smaller grammars. The initial value is the size of the trivial decomposition
@@ -48,14 +48,14 @@ object ComputeGrammars {
 
     // Exact computation of the smallest coverings. Returns only these. Memory-aware implementation.
     // s is the key of the delta table and pairs is a list of (u,T), where s applied to u = T.
-    def smallestCoverExact( s: types.S, pairs: List[( types.U, List[FOLTerm] )] ) = {
+    def smallestCoverExact( s: Set[List[FOLTerm]], pairs: List[( FOLTerm, List[FOLTerm] )] ) = {
 
       // |U| + |S| < |T|
       // We only need to consider subsets of size |smallestGrammar| - |S| or less
       val maxSubsetSize = smallestGrammarSize - s.size
 
       //val subsets = all subsets pairs of size (1..maxSubsetSize)
-      lazy val subsets = ( 1 to maxSubsetSize ).toList.foldLeft( Iterator[Set[( types.U, List[FOLTerm] )]]() ) {
+      lazy val subsets = ( 1 to maxSubsetSize ).toList.foldLeft( Iterator[Set[( FOLTerm, List[FOLTerm] )]]() ) {
         case ( acc, i ) => pairs.toSet.subsets( i ) ++ acc
       }
 
@@ -65,14 +65,14 @@ object ComputeGrammars {
 
       //Returns the smallest subset {(u1,T1),...,(un,Tn)} of a line in the delta table
       //such that. Union(T1,...,Tn) + C = terms, where C are some constant terms.
-      def getSmallestSubsets( subsets: Iterator[Set[( types.U, List[FOLTerm] )]] ): List[List[FOLTerm]] = {
+      def getSmallestSubsets( subsets: Iterator[Set[( FOLTerm, List[FOLTerm] )]] ): List[List[FOLTerm]] = {
         if ( subsets.hasNext ) {
 
           val set = subsets.next()
 
           if ( set.size <= coverSize ) {
             //Create the union of the pairs in the subset and check whether it amounts to <terms>
-            val ( u, t ) = set.foldLeft( ( List[types.U](), List[FOLTerm]() ) ) {
+            val ( u, t ) = set.foldLeft( ( List[FOLTerm](), List[FOLTerm]() ) ) {
               case ( acc, ( u, t ) ) =>
                 ( u :: acc._1, t ++ acc._2 )
             }
