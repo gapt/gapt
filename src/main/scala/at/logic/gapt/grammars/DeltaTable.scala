@@ -20,7 +20,7 @@
  * To give an example where producing supersets would be advantageous:
  * imagine a proof where the terms P(0),...,P(2^n - 1) occur.
  * The decomposition of this termset is very inelegant, but if we
- * we to produce a decomposition for P(0),...,P(2^n), we'd have a
+ * produce a decomposition for P(0),...,P(2^n), we'd have a
  * much smaller and equally serviceable solution.
  *
  * */
