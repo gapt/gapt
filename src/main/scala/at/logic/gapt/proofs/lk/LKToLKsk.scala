@@ -100,10 +100,10 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
         ( ExSkRight( uproof, aux, Ex( v, formula ), term ), table )
       case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) if isCutAnc( p.mainIndices.head ) =>
-        val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
+        val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
         ( AllLeft( uproof, aux, All( v, formula ), term ), table )
       case p @ ExistsRightRule( subProof, aux: Suc, formula, term, v ) if isCutAnc( p.mainIndices.head ) =>
-        val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
+        val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
         ( ExRight( uproof, aux, Ex( v, formula ), term ), table )
 
       case p @ ForallRightRule( subProof, aux: Suc, eigen, quant ) if !isCutAnc( p.mainIndices.head ) =>

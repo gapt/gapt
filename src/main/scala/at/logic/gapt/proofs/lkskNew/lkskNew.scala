@@ -275,21 +275,18 @@ case class ExLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, eigen
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+case class AllLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
-  val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
 
-  val mainFormulaSequent = ( otherLabels -> mainFormula ) +: Sequent()
-
+  lazy val newFormulas = mainFormula +: Sequent()
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule {
+case class ExRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, substitutionTerm: LambdaExpression ) extends UnaryRule with SameLabel {
   val Ex( quantVar, formula ) = mainFormula
-  val ( otherLabels :+ `substitutionTerm` ) = subProof.labels( aux )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> substitutionTerm )( formula ) ) )
 
-  val mainFormulaSequent = Sequent() :+ ( otherLabels -> mainFormula )
+  lazy val newFormulas = Sequent() :+ mainFormula
   def auxIndices = Seq( Seq( aux ) )
 }
