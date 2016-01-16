@@ -114,6 +114,22 @@ case object ReflexivityAxiomTactic extends Tactic {
 }
 
 /**
+ * TheoryAxiom tactic
+ */
+case object TheoryAxiomTactic extends Tactic {
+
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.conclusion
+
+    if (goalSequent.forall( _.isInstanceOf[HOLAtom] ))
+      Option(TheoryAxiom(goalSequent.asInstanceOf[Sequent[HOLAtom]]))
+    else
+      None
+  }
+
+}
+
+/**
  * Tactic for identification of (all) axioms
  */
 case object AxiomTactic extends Tactic {
