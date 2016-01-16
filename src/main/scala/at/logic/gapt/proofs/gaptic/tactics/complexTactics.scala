@@ -96,7 +96,7 @@ case object PropTactic extends Tactic {
 	override def apply( goal: OpenAssumption ) = {
 		solve.solvePropositional( goal.conclusion ) match {
 			case None      => None
-			case Some( z ) => Option(z)
+			case Some( z ) => Option( z )
 		}
 	}
 }
@@ -108,7 +108,17 @@ case object Prover9Tactic extends Tactic {
 	override def apply( goal: OpenAssumption ) = {
 		Prover9.getLKProof( goal.conclusion ) match {
 			case None      => None
-			case Some( z ) => Option(z)
+			case Some( z ) => Option( z )
 		}
+	}
+}
+
+/**
+ *
+ */
+case class ForgetTactic( applyToLabel: String ) extends Tactic {
+	override def apply( goal: OpenAssumption ) = {
+		val f = WeakeningLeftTactic(applyToLabel) orElse WeakeningRightTactic(applyToLabel)
+		f(goal)
 	}
 }
