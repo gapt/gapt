@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.ivy.conversion
 
-import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip }
+import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip => IFlip }
 import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.proofs.{ Clause, HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.resolution._
@@ -38,33 +38,9 @@ object IvyToRobinson {
       case IPropositional( id, exp, clause, parent ) =>
         val Some( subst ) = StillmanSubsumptionAlgorithmFOL.subsumes_by( parent.conclusion, clause )
         Factor( Instance( convert( parent ), subst ), clause )._1
-      case Flip( id, exp, unflipped, clause, parent ) =>
+      case IFlip( id, exp, unflipped, clause, parent ) =>
         val q = convert( parent )
-        val Eq( s: FOLTerm, t: FOLTerm ) = parent.conclusion( unflipped )
-        val unflippedInQ = q.conclusion.indicesWhere( _ == parent.conclusion( unflipped ) ).filter( _ sameSideAs unflipped ).head
-        if ( unflippedInQ.isSuc ) {
-          /* this is a positive occurrence, i.e. we do the following:
-               (parent)
-              C :- D, s=t       :- s=s
-              ----------------------------- para
-                     C :- D, t=s
-           */
-          Paramodulation( q, unflippedInQ,
-            ReflexivityClause( s ), Suc( 0 ), Eq( t, s ) )
-        } else {
-          /* this is a negative occurrence, i.e. we do the following:
-                t=s :- t=s         :- s=s
-                ------------------------- para           (parent)
-                       t=s :- s=t                      s=t, C :- D
-                       -------------------------------------------------- Res
-                                       t=s, C :- D
-          */
-          Resolution(
-            Paramodulation( TautologyClause( Eq( t, s ) ), Suc( 0 ),
-              ReflexivityClause( s ), Suc( 0 ), Eq( s, t ) ), Suc( 0 ),
-            q, unflippedInQ
-          )
-        }
+        Flip( q, q.conclusion.indicesWhere( _ == parent.conclusion( unflipped ) ).filter( _ sameSideAs unflipped ).head )
       case IParamodulation( id, exp, pos, eq, lit, newLit, orientation, clause, parent1, parent2 ) =>
         val q1 = convert( parent1 )
         val q2 = convert( parent2 )

@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
 
 object Pi2Pigeonhole {
   val zero = FOLConst( "0" )
@@ -36,8 +36,8 @@ object Pi2Pigeonhole {
   val betahat = FOLVar( "β^" )
   val betahatprime = FOLVar( "β^'" )
 
-  def Delta_T_I_i( i: LambdaExpression, beta: Var, betaprime: Var, prover: Prover9 ): LKProof = {
-    var Some( p ) = prover.getLKProof( I( i, zero, beta ) +:
+  def Delta_T_I_i( i: LambdaExpression, beta: Var, betaprime: Var ): LKProof = {
+    var Some( p ) = Escargot.getLKProof( I( i, zero, beta ) +:
       I( i, s( beta ), betaprime ) +:
       Delta :+
       T( beta, betaprime ) )
@@ -51,21 +51,19 @@ object Pi2Pigeonhole {
   }
 
   def apply(): LKProof = {
-    val prover = Prover9
-
-    var Some( p1 ) = prover.getLKProof( Gamma :+
+    var Some( p1 ) = Escargot.getLKProof( Gamma :+
       I( zero, alpha, M( alpha, alphahat ) ) :+
       I( one, alphahat, M( alpha, alphahat ) ) )
     p1 = ExistsRightRule( p1, I( zero, alpha ), M( alpha, alphahat ) )
     p1 = ExistsRightRule( p1, I( one, alphahat ), M( alpha, alphahat ) )
     p1 = ForallRightRule( p1, I( one ), alphahat )
 
-    val p2 = Delta_T_I_i( one, betahat, betahatprime, prover )
+    val p2 = Delta_T_I_i( one, betahat, betahatprime )
 
     var p3: LKProof = CutRule( p1, p2, I( one ) )
     p3 = ForallRightRule( p3, I( zero ), alpha )
 
-    val p4 = Delta_T_I_i( zero, beta, betaprime, prover )
+    val p4 = Delta_T_I_i( zero, beta, betaprime )
 
     val p5 = CutRule( p3, p4, I( zero ) )
 

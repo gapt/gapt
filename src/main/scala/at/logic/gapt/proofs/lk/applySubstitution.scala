@@ -78,7 +78,7 @@ object applySubstitution {
 
     case ForallRightRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
-      val renamedEigen = rename( eigen, substitution.range )
+      val renamedEigen = rename( eigen, substitution.range.toList )
       apply( substitution, preserveEigenvariables )( ForallRightRule(
         apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof ),
         aux, renamedEigen, quant
@@ -90,7 +90,7 @@ object applySubstitution {
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
-      val renamedEigen = rename( eigen, substitution.range )
+      val renamedEigen = rename( eigen, substitution.range.toList )
       apply( substitution, preserveEigenvariables )( ExistsLeftRule(
         apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof ),
         aux, renamedEigen, quant

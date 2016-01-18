@@ -33,10 +33,14 @@ object syntacticMGU {
     }
   }
 
+  def apply( exprs: TraversableOnce[LambdaExpression] )( implicit dummyImplicit: DummyImplicit ): Option[Substitution] = {
+    val exprs_ = exprs.toSeq
+    apply( exprs_ zip exprs_.tail )
+  }
   def apply( eqs: TraversableOnce[( LambdaExpression, LambdaExpression )] ): Option[Substitution] = unify( eqs toList, Map(), Set() )
   def apply( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] = apply( List( a -> b ) )
 
-  def apply( eqs: TraversableOnce[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
+  def apply( eqs: TraversableOnce[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[FOLSubstitution] =
     unify( eqs toList, Map(), Set() ) map { subst =>
       FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
     }

@@ -30,8 +30,7 @@ object RobinsonToExpansionProof {
   }
 
   def apply( p: ResolutionProof ): ExpansionSequent =
-    ( for ( ( clause, substs ) <- groundInstancesFromResolutionProof( p ) )
-      yield formulaToExpansionTree( univclosure( clause.toFormula ), substs.toList, pos = false ) ) ++: Sequent()
+    apply( p, inputClauses( p ).map { _.toFormula }.map { univclosure( _ ) } ++: Sequent() )
 }
 
 object expansionProofFromInstances {

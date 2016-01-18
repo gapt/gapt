@@ -85,9 +85,9 @@ object testCutIntro extends App {
       val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
       metrics.value( "tstp_sketch_size", sketch.subProofs.size )
 
-      RefutationSketchToRobinson( sketch, Prover9 ) map { resProof =>
+      RefutationSketchToRobinson( sketch ) map { resProof =>
         loadResolutionProof( resProof, endSequent )
-      }
+      } toOption
   }
 
   def extractFromTSTPCommentsIfNecessary( output: String ): String = {

@@ -7,7 +7,6 @@ import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.llkNew.exportLLK
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.{ Suc, Ant }
-import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.proofs.lkOld
 import at.logic.gapt.formats.llk
 
@@ -121,9 +120,6 @@ class LKToLKskTest extends Specification {
   }
 
   "pigeonhole" in {
-    //skipped( "save time" )
-    if ( !Prover9.isInstalled ) skipped
-
     LKToLKsk( Pi2Pigeonhole() )
     ok
   }

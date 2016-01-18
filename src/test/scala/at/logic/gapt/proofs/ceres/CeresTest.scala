@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.formats.llkNew._
 import at.logic.gapt.proofs.SequentMatchers
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
@@ -18,25 +19,19 @@ class CeresTest extends Specification with SequentMatchers {
 
   "Struct extraction" should {
     "work for the permutation proof" in {
-      checkForProverOrSkip
-
       val proof = load( "perm.llk", "TheProof" )
-      val acnf = CERES( proof )
+      val acnf = CERES( proof, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
 
     "work for simple equations (1)" in {
-      checkForProverOrSkip
-
       val proof = load( "eqsimple.llk", "Proof1" )
-      val acnf = CERES( proof )
+      val acnf = CERES( proof, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
     "work for simple equations (2)" in {
-      checkForProverOrSkip
-
       val proof = load( "eqsimple.llk", "Proof2" )
-      val acnf = CERES( proof )
+      val acnf = CERES( proof, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
     "work for simple equations (3)" in {

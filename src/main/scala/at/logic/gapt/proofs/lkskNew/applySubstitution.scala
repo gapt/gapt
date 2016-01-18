@@ -83,7 +83,7 @@ object applySubstitution {
 
     case AllRight( subProof, aux, formula, eigen ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
-      val renamedEigen = rename( eigen, substitution.range )
+      val renamedEigen = rename( eigen, substitution.range.toList )
       val renamed_proof = apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof )
       apply( substitution, preserveEigenvariables )( AllRight( renamed_proof, aux, bnsub( formula, substitution ), renamedEigen ) )
 
@@ -94,7 +94,7 @@ object applySubstitution {
 
     case ExLeft( subProof, aux, formula, eigen ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
-      val renamedEigen = rename( eigen, substitution.range )
+      val renamedEigen = rename( eigen, substitution.range.toList )
       val renamed_proof = apply( Substitution( eigen -> renamedEigen ), preserveEigenvariables )( subProof )
       apply( substitution, preserveEigenvariables )( ExLeft( renamed_proof, aux, bnsub( formula, substitution ), renamedEigen ) )
 

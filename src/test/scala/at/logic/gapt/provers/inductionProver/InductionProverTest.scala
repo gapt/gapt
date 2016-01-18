@@ -2,12 +2,10 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansionTrees.{ ExpansionSequent, ETWeakQuantifier, merge, ETAtom }
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
 class InductionProverTest extends Specification {
-
-  if ( !Prover9.isInstalled ) skipAll
 
   "the factorial example proof" should {
     val zero = FOLConst( "0" )
@@ -84,7 +82,7 @@ class InductionProverTest extends Specification {
 
     "produce an LKProof" in {
       val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
-      p.toLKProof
+      p.toLKProof( Escargot )
 
       success
     }
@@ -97,10 +95,7 @@ class InductionProverTest extends Specification {
 
     "find the induction formula" in {
       val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
-      FindFormulaH( sip, 0 ) match {
-        case Some( _ ) => success
-        case None      => failure
-      }
+      FindFormulaH( sip, 0, prover = Escargot ) must_== Some( m( gamma, f( nu ) ) === g( gamma, nu ) )
     }
   }
 
@@ -205,7 +200,7 @@ class InductionProverTest extends Specification {
 
     "produce an LKProof" in {
       val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
-      p.toLKProof
+      p.toLKProof( Escargot )
 
       success
     }
@@ -218,10 +213,7 @@ class InductionProverTest extends Specification {
 
     "find the induction formula" in {
       val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
-      FindFormulaH( sip, 0 ) match {
-        case Some( _ ) => success
-        case None      => failure
-      }
+      FindFormulaH( sip, 0, prover = Escargot ) must_== Some( assoc( alpha, gamma, nu ) )
     }
   }
 }

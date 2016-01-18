@@ -31,7 +31,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
     case Abs( v, s ) if domain contains v => Substitution( map - v )( t )
     case Abs( v, s ) if range contains v =>
       // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
-      val newV = rename( v, freeVariables( s ) ++ range toList )
+      val newV = rename( v, freeVariables( s ) union range toList )
       apply( Abs( newV, Substitution( v -> newV )( s ) ) )
     case Abs( v, s ) => Abs( v, apply( s ) )
   }
@@ -39,9 +39,8 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   def apply( t: HOLFormula ): HOLFormula = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
   def apply( sequent: HOLSequent ): HOLSequent = sequent map apply
 
-  // TODO: why lists? why not sets?
-  def domain: List[Var] = map.keys.toList
-  def range: List[Var] = map.foldLeft( List[Var]() )( ( acc, data ) => freeVariables( data._2 ).toList ++ acc )
+  def domain: Set[Var] = map.keySet
+  def range: Set[Var] = map.values.toSet[LambdaExpression].flatMap( freeVariables( _ ) )
 
   def ::( sub: ( Var, LambdaExpression ) ) = new Substitution( map + sub )
   def ::( otherSubstitution: Substitution ) = new Substitution( map ++ otherSubstitution.map )
