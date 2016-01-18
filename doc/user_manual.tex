@@ -908,7 +908,7 @@ acnf: at.logic.gapt.proofs.lk.LKProof =
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
-et: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.(f(x)=0∨f(x)=s(0)), List((Atom(f(M(v100,s(M(v100,v101))))=0)∨Atom(f(M(v100,s(M(v100,v101))))=s(0)),M(v100,s(M(v100,v101)))), (Atom(f(M(v100,v101))=0)∨Atom(f(M(v100,v101))=s(0)),M(v100,v101)), (Atom(f(M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))))=0)∨Atom(f(M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))))=s(0)),M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101)))), (Atom(f(M(v100,s(M(s(M(v100,v101)),v1))))=0)∨Atom(f(M(v100,s(M(s(M(v100,v101)),v1))))=s(0)),M(v100,s(M(s(M(v100,v101)),v1)))), (Atom(f(M(s(M(v100,v101)),v1))=0)∨Atom(f(M(s(M(v100,v101)),v1))=s(0)),M(s(M(v100,v101)),v1)), (Atom(f(M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),v1))))=0)∨Atom(f(M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),...
+et: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.(f(x)=0∨f(x)=s(0)), List((Atom(f(M(s(M(v100,v101)),v102))=0)∨Atom(f(M(s(M(v100,v101)),v102))=s(0)),M(s(M(v100,v101)),v102)), (Atom(f(M(v100,v101))=0)∨Atom(f(M(v100,v101))=s(0)),M(v100,v101)), (Atom(f(M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102))))=0)∨Atom(f(M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102))))=s(0)),M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102)))), (Atom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),v102))=0)∨Atom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),v102))=s(0)),M(s(M(M(v100,v101),s(M(v100,v101)))),v102)), (Atom(f(M(M(v100,v101),s(M(v100,v101))))=0)∨Atom(f(M(M(v100,v101),s(M(v100,v101))))=s(0)),M(M(v100,v101),s(M(v100,v101)))), (Atom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),s(M(s(M(M(v100,v101),s(M(v100,v101))...
 gapt> prooftool(et)
 
 \end{clilisting}
