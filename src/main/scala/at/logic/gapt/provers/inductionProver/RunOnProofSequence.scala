@@ -18,7 +18,7 @@ object RunOnProofSequence {
     new SipProver().getSimpleInductionProof( getEndSequent( proof ), getInstanceProofs( proof ) )
   }
 
-  def getInstanceProofs( proof: String ) = ( 0 until 5 ).map { n => n -> removeEqAxioms( LKToExpansionProof( ProofMap( proof )._2( n ) ).expansionSequent ) }
+  def getInstanceProofs( proof: String ) = ( 0 until 5 ).map { n => n -> removeEqAxioms( eliminateCutsET( LKToExpansionProof( ProofMap( proof )._2( n ) ) ) ) }
 
   def getEndSequent( proof: String ) = ProofMap( proof )._1
 
@@ -52,9 +52,9 @@ object RunOnProofSequence {
     "assoc" -> ( assocES, UniformAssociativity3ExampleProof.apply _ )
   )
 
-  def removeEqAxioms( eseq: ExpansionSequent ) =
-    eseq.zipWithIndex filter {
+  def removeEqAxioms( eseq: ExpansionProof ): ExpansionProof =
+    ExpansionProof( eseq.expansionSequent.zipWithIndex filter {
       case ( et, Ant( _ ) ) => !Prover9.isValid( toShallow( et ) )
       case ( et, Suc( _ ) ) => !Prover9.isValid( -toShallow( et ) )
-    } map { _._1 }
+    } map { _._1 } )
 }

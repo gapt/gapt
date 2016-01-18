@@ -4,7 +4,7 @@ import at.logic.gapt.expr.{ FOLSubstitution, FOLVar }
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.{ Sequent, Suc, Ant }
-import at.logic.gapt.proofs.expansion.{ formulaToExpansionTree, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, formulaToExpansionTree, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKProver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import SimpleInductionProof._
@@ -18,14 +18,14 @@ class SipProverTest extends Specification {
       map( parseFormula ).
       map( univclosure( _ ), FOLSubstitution( FOLVar( "x" ) -> alpha )( _ ) )
 
-    def instanceProof( n: Int ): ExpansionSequent = {
+    def instanceProof( n: Int ): ExpansionProof = {
       val instP0 = formulaToExpansionTree( endSequent( Ant( 0 ) ), false )
       val instPs = formulaToExpansionTree(
         endSequent( Ant( 1 ) ),
         ( 0 until n ).toList map { i => FOLSubstitution( FOLVar( "x" ) -> Utils.numeral( i ) ) }, false
       )
       val instPa = formulaToExpansionTree( FOLSubstitution( alpha -> Utils.numeral( n ) )( endSequent( Suc( 0 ) ) ), true )
-      instP0 +: instPs +: Sequent() :+ instPa
+      ExpansionProof( instP0 +: instPs +: Sequent() :+ instPa )
     }
 
     val tautP = Sat4j

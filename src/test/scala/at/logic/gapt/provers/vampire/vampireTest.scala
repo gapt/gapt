@@ -103,7 +103,7 @@ class VampireTest extends Specification with SequentMatchers {
 
     "treat variables in sequents as constants" in {
       val seq = "P(x)" +: Sequent() :+ "P(c)" map parseFormula
-      Vampire.getExpansionSequent( seq ) must beNone
+      Vampire.getExpansionProof( seq ) must beNone
     }
 
     "handle weird sequents" in {

@@ -21,14 +21,14 @@ class LeanCoPProverTest extends Specification {
       val a = FOLAtom( "a" )
       val s = HOLSequent( Seq( a ), Seq( a ) )
 
-      LeanCoP.getExpansionSequent( s ) must beSome
+      LeanCoP.getExpansionProof( s ) must beSome
     }
 
     "forall x, P(x) |- P(0)" in {
       val f = All( FOLVar( "x" ), FOLAtom( "P", FOLVar( "x" ) ) )
       val g = FOLAtom( "P", FOLConst( "0" ) )
 
-      LeanCoP.getExpansionSequent( HOLSequent( Seq( f ), Seq( g ) ) ) must beSome
+      LeanCoP.getExpansionProof( HOLSequent( Seq( f ), Seq( g ) ) ) must beSome
     }
 
     "x + 0 = x, x + s(y) = s(x+y) |- x + s(0) = s(x)" in {
@@ -37,12 +37,12 @@ class LeanCoPProverTest extends Specification {
         Seq( parseFormula( "k+s(0) = s(k)" ) )
       )
 
-      LeanCoP.getExpansionSequent( seq ) must beSome
+      LeanCoP.getExpansionProof( seq ) must beSome
     }
 
     "P,P->Q |- Q" in {
       val seq = HOLSequent( Seq( FOLAtom( "P" ), Imp( FOLAtom( "P" ), FOLAtom( "Q" ) ) ), Seq( FOLAtom( "Q" ) ) )
-      LeanCoP.getExpansionSequent( seq ) must beSome
+      LeanCoP.getExpansionProof( seq ) must beSome
     }
 
     //    "validate the buss tautology for n=1" in { leanCoP.isValid( BussTautology( 1 ) ) must beTrue }

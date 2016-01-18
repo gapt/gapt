@@ -43,7 +43,7 @@ class SipProver(
 
   }
 
-  def getSimpleInductionProof( endSequent: HOLSequent, instanceProofs: Seq[( Int, ExpansionSequent )] ): Option[SimpleInductionProof] = {
+  def getSimpleInductionProof( endSequent: HOLSequent, instanceProofs: Seq[( Int, ExpansionProof )] ): Option[SimpleInductionProof] = {
 
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
@@ -99,11 +99,11 @@ class SipProver(
     }
   }
 
-  def generateInstanceProofs( endSequent: HOLSequent, inductionVariable: FOLVar ): Seq[( Int, ExpansionSequent )] = {
+  def generateInstanceProofs( endSequent: HOLSequent, inductionVariable: FOLVar ): Seq[( Int, ExpansionProof )] = {
     var instanceProofs = instances map { n =>
       val instanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )( endSequent )
       debug( s"[n=$n] Proving $instanceSequent" )
-      n -> instanceProver.getExpansionSequent( instanceSequent ).get
+      n -> instanceProver.getExpansionProof( instanceSequent ).get
     }
     if ( minimizeInstanceLanguages ) {
       instanceProofs = instanceProofs map {

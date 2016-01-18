@@ -53,7 +53,7 @@ class Prover9Test extends Specification with SequentMatchers {
 
     "treat variables in sequents as constants" in {
       val seq = "P(x)" +: Sequent() :+ "P(c)" map parseFormula
-      Prover9.getExpansionSequent( seq ) must beNone
+      Prover9.getExpansionProof( seq ) must beNone
     }
 
     "handle exit code 2" in {

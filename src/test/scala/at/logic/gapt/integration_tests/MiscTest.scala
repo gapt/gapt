@@ -171,7 +171,7 @@ class MiscTest extends Specification {
       if ( !VeriT.isInstalled ) skipped( "VeriT is not installed" )
 
       val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
-      val E = VeriT.getExpansionSequent( HOLSequent( Nil, F :: Nil ) ).get
+      val E = VeriT.getExpansionProof( HOLSequent( Nil, F :: Nil ) ).get
 
       val Edeep = ETtoDeep( E )
       Sat4j.isValid( Edeep ) must beTrue
@@ -183,7 +183,7 @@ class MiscTest extends Specification {
       val C = Prover9TermParser.parseFormula( "f(x_0,y_0) = f(y_0,x_0)" )
       val AS = Prover9TermParser.parseFormula( "f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )" )
       val s = HOLSequent( C :: Nil, AS :: Nil )
-      val E = VeriT.getExpansionSequent( s ).get
+      val E = VeriT.getExpansionProof( s ).get
 
       val Edeep = ETtoDeep( E )
       Sat4j.isValid( Edeep ) must beTrue
