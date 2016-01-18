@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{TarArchiveEntry, TarArchiveOut
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
-val Version = "1.11-SNAPSHOT"
+val Version = "2.0"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
