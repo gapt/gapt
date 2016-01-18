@@ -10,7 +10,7 @@ package at.logic.gapt.prooftool
 import java.awt.event.{ ActionEvent, KeyEvent }
 
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
-import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, ExpansionSequent }
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lkOld.UnfoldException
 import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.lkOld.base.RichOccSequent
@@ -57,16 +57,18 @@ object prooftool {
    */
   def apply( obj: AnyRef, name: String = "prooftool" ): Unit =
     obj match {
-      case p: LKProof             => new LKProofViewer( name, p ).showFrame()
-      case p: SequentProof[a, b]  => new SequentProofViewer[a, b]( name, p ).showFrame()
-      case es: ExpansionSequent   => new ExpansionSequentViewer( name, es ).showFrame()
-      case p: lkOld.base.LKProof  => new OldLKViewer( name, p ).showFrame()
-      case p: TreeProof[_]        => new TreeProofViewer( name, p ).showFrame()
-      case p: Proof[_]            => new ResolutionProofViewer( name, p ).showFrame()
-      case list: List[HOLSequent] => new ListViewer( name, list ).showFrame()
-      case seq: HOLSequent        => new ListViewer( name, List( seq ) ).showFrame()
-      case set: Set[HOLSequent]   => new ListViewer( name, set.toList ).showFrame()
-      case tree: Tree[a]          => new TreeViewer[a]( name, tree ).showFrame()
+      case p: LKProof                => new LKProofViewer( name, p ).showFrame()
+      case p: SequentProof[a, b]     => new SequentProofViewer[a, b]( name, p ).showFrame()
+      case ep: ExpansionProof        => prooftool( ep.expansionSequent, name )
+      case ep: ExpansionProofWithCut => prooftool( eliminateCutsET( ep ), name )
+      case es: ExpansionSequent      => new ExpansionSequentViewer( name, es ).showFrame()
+      case p: lkOld.base.LKProof     => new OldLKViewer( name, p ).showFrame()
+      case p: TreeProof[_]           => new TreeProofViewer( name, p ).showFrame()
+      case p: Proof[_]               => new ResolutionProofViewer( name, p ).showFrame()
+      case list: List[HOLSequent]    => new ListViewer( name, list ).showFrame()
+      case seq: HOLSequent           => new ListViewer( name, List( seq ) ).showFrame()
+      case set: Set[HOLSequent]      => new ListViewer( name, set.toList ).showFrame()
+      case tree: Tree[a]             => new TreeViewer[a]( name, tree ).showFrame()
       case db: ProofDatabase =>
         for ( ( pName, p ) <- db.proofs )
           prooftool( p, pName )

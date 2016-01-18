@@ -6,7 +6,7 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansion.ExpansionSequent
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.{ OneShotProver, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -17,9 +17,9 @@ class LeanCoP extends OneShotProver with ExternalProgram {
   val nLine = sys.props( "line.separator" )
 
   override def isValid( s: HOLSequent ): Boolean =
-    getExpansionSequent( s ).isDefined
+    getExpansionProofWithCut( s ).isDefined
 
-  override def getExpansionSequent( s: HOLSequent ): Option[ExpansionSequent] =
+  override def getExpansionProofWithCut( s: HOLSequent ): Option[ExpansionProofWithCut] =
     withRenamedConstants( s ) { seq =>
       require( seq.succedent.size == 1 )
 
@@ -33,7 +33,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
         mkString( nLine )
 
       LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) )
-    }
+    } map { ExpansionProof( _ ) }
 
   override def getLKProof( seq: HOLSequent ): Option[LKProof] =
     throw new UnsupportedOperationException
