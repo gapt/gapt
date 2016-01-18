@@ -1,5 +1,5 @@
 import at.logic.gapt.examples.UniformAssociativity3ExampleProof
-import at.logic.gapt.expr.fol.{Numeral, FOLSubstitution}
+import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.grammars.{minimizeSipGrammar, stableSipGrammar, minimizeRecursionScheme, SipRecSchem}

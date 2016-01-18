@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.hoare
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubstitution
 
 object usedVariables {
   def apply( p: Program ): List[FOLVar] = p match {

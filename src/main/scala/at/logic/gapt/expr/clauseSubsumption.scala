@@ -1,6 +1,6 @@
 package at.logic.gapt.expr
 
-import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
+import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.expr.hol.NaiveIncompleteMatchingAlgorithm
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 

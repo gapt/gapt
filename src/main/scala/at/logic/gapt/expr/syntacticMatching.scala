@@ -1,7 +1,5 @@
 package at.logic.gapt.expr
 
-import at.logic.gapt.expr.fol.FOLSubstitution
-
 object syntacticMatching {
 
   def apply( from: FOLExpression, to: FOLExpression ): Option[FOLSubstitution] =

@@ -2,7 +2,7 @@ package at.logic.gapt.formats.veriT
 
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLSubstitution }
+import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.expr.hol.{ removeQuantifiers, instantiate, isPrenex }
 import at.logic.gapt.proofs.expansionTrees._
 import java.io.{ Reader, FileReader }

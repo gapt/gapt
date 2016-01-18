@@ -126,7 +126,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 
   private def instanceTerms( signedInstance: HOLFormula, esFormula: SequentIndex ) =
     syntacticMatching( signedMatrices( esFormula ), signedInstance ) map { subst =>
-      esFormula -> quantVars( esFormula ).map( subst.apply )
+      esFormula -> subst( quantVars( esFormula ) )
     }
 
   private def findInstance( signedInstance: HOLFormula ): Option[( SequentIndex, Seq[LambdaExpression] )] =

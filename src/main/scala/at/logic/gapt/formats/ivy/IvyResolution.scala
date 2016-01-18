@@ -2,7 +2,6 @@ package at.logic.gapt.formats.ivy
 
 import at.logic.gapt.proofs._
 import at.logic.gapt.formats.lisp.SExpression
-import at.logic.gapt.expr.fol.FOLSubstitution
 import at.logic.gapt.expr._
 
 /**

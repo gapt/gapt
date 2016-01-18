@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLSubTerms, FOLSubstitution }
+import at.logic.gapt.expr.fol.FOLSubTerms
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }

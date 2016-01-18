@@ -1,6 +1,6 @@
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{reduceHolToFol, Utils, FOLSubstitution}
+import at.logic.gapt.expr.fol.{reduceHolToFol, Utils}
 import at.logic.gapt.expr.hol.{instantiate, univclosure}
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.formats.tip.TipSmtParser
