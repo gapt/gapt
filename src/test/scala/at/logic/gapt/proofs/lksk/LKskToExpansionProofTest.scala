@@ -2,9 +2,10 @@ package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansionTrees.{ ETAtom, ETNeg, ETSkolemQuantifier, ExpansionTree, ExpansionSequent, ETWeakQuantifier, ETImp, ETWeakening }
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lkOld.{ Axiom => LKAxiom, WeakeningLeftRule => LKWeakeningLeftRule, _ }
+import at.logic.gapt.utils.SortedMap
 import org.specs2.mutable._
 
 /**
@@ -115,73 +116,66 @@ class LKskToExpansionProofTest extends Specification {
 
       val et = LKskToExpansionProof( simpleHOLProof.i4 )
 
-      val inst1: ( ExpansionTree, HOLFormula ) = ( ETAtom( simpleHOLProof.p ), simpleHOLProof.p )
-      val inst2: ( ExpansionTree, HOLFormula ) = ( ETNeg( ETAtom( simpleHOLProof.p ) ), Neg( simpleHOLProof.p ) )
-      val cet: ExpansionTree = ETWeakQuantifier( simpleHOLProof.existsx, List( inst1, inst2 ) ).asInstanceOf[ExpansionTree] //TODO: this cast is ugly
+      val inst1 = simpleHOLProof.p -> ETAtom( simpleHOLProof.p, true )
+      val inst2 = -simpleHOLProof.p -> ETNeg( ETAtom( simpleHOLProof.p, false ) )
+      val cet = ETWeakQuantifier( simpleHOLProof.existsx, Map( inst1, inst2 ) )
 
-      val control = ExpansionSequent( Nil, List( cet ) )
-
-      et must_== ( control )
+      et must_== ExpansionProof( Sequent() :+ cet )
     }
 
     "work for the same hol proof, automatically skolemized" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof.proof )
+      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof.proof )
 
       et must beLike {
-        case ETWeakQuantifier( _, Seq(
-          ( ETAtom( _ ), _ ),
-          ( ETNeg( ETAtom( _ ) ), _ ) )
+        case ETWeakQuantifier( _, SortedMap(
+          ( _, ETAtom( _, _ ) ),
+          ( _, ETNeg( ETAtom( _, _ ) ) ) )
           ) => ok
-        case _ => ko
       }
     }
 
     "work for the same hol proof, manually skolemized" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleLKskProof.i4 )
+      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleLKskProof.i4 )
 
       et must beLike {
-        case ETWeakQuantifier( _, Seq(
-          ( ETAtom( _ ), _ ),
-          ( ETNeg( ETAtom( _ ) ), _ ) )
+        case ETWeakQuantifier( _, SortedMap(
+          ( _, ETAtom( _, _ ) ),
+          ( _, ETNeg( ETAtom( _, _ ) ) ) )
           ) => ok
-        case _ => ko
       }
     }
 
     "work for a skolemized hol proof with strong individual quantifiers" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof2.proof )
+      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof2.proof )
 
       et must beLike {
         case ETSkolemQuantifier( _, sk,
-          ETWeakQuantifier( _, Seq(
-            ( ETAtom( _ ), _ ),
-            ( ETNeg( ETAtom( _ ) ), _ ) )
+          ETWeakQuantifier( _, SortedMap(
+            ( _, ETAtom( _, _ ) ),
+            ( _, ETNeg( ETAtom( _, _ ) ) ) )
             ) ) => ok
-        case _ => ko
       }
     }
 
     "work for a skolemized hol proof with strong individual quantifiers inside weak ho quantifiers" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof3.proof )
+      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof3.proof )
 
       et must beLike {
-        case ETWeakQuantifier( _, Seq(
-          ( ETSkolemQuantifier( _, sk1, ETAtom( _ ) ), _ ),
-          ( ETNeg( ETWeakQuantifier( _, Seq( ( ETAtom( _ ), sk2 ) ) ) ), _ )
+        case ETWeakQuantifier( _, SortedMap(
+          ( _, ETNeg( ETWeakQuantifier( _, SortedMap( ( sk2, ETAtom( _, _ ) ) ) ) ) ),
+          ( _, ETSkolemQuantifier( _, sk1, ETAtom( _, _ ) ) )
           ) ) => ok
-        case _ => ko
       }
     }
 
     "work for a skolemized hol proof with weakening" in {
-      val ExpansionSequent( ( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof4.proof )
+      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof4.proof )
 
       et must beLike {
-        case ETWeakQuantifier( _, Seq(
-          ( ETSkolemQuantifier( _, sk1, ETAtom( _ ) ), _ ),
-          ( ETImp( ETWeakening( _ ), ETNeg( ETWeakQuantifier( _, Seq( ( ETAtom( _ ), sk2 ) ) ) ) ), _ )
+        case ETWeakQuantifier( _, SortedMap(
+          ( _, ETImp( ETWeakening( _, _ ), ETNeg( ETWeakQuantifier( _, SortedMap( ( sk2, ETAtom( _, _ ) ) ) ) ) ) ),
+          ( _, ETSkolemQuantifier( _, sk1, ETAtom( _, _ ) ) )
           ) ) => ok
-        case _ => ko
       }
     }
   }

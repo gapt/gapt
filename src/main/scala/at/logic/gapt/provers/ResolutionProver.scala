@@ -5,7 +5,7 @@ import at.logic.gapt.expr.{ HOLFormula, Const }
 import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.{ Sequent, HOLClause, HOLSequent }
-import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKProof
 
 abstract class ResolutionProver extends OneShotProver {
@@ -24,10 +24,11 @@ abstract class ResolutionProver extends OneShotProver {
     }
   }
 
-  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
+  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionProof] ): Option[ExpansionProof] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map { renamedProof =>
-      renamedProof map { TermReplacement( _, invertRenaming ) }
+    f( renamedSeq ) map {
+      case ExpansionProof( renamedExpSeq ) =>
+        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming ) } )
     }
   }
 
@@ -57,7 +58,9 @@ abstract class ResolutionProver extends OneShotProver {
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
-  override def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
+  override def getExpansionProofWithCut( seq: HOLSequent ): Option[ExpansionProofWithCut] =
+    getExpansionProof( seq )
+  override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
     withGroundVariables2( seq ) { seq =>
       val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
       getRobinsonProof( cnf ).map( RobinsonToExpansionProof( _, seq, justs, defs ) )

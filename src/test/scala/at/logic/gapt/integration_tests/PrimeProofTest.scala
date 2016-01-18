@@ -5,7 +5,7 @@ import at.logic.gapt.expr.Top
 import at.logic.gapt.expr.hol.containsStrongQuantifier
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.expansionTrees.{ toDeep, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ toDeep, ExpansionSequent }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._

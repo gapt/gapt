@@ -4,7 +4,7 @@ import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.expr.hol.{ removeQuantifiers, instantiate, isPrenex }
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import java.io.{ Reader, FileReader }
 import scala.collection.immutable.HashMap
 import scala.util.parsing.combinator._

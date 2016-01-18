@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.expansionTrees
+package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
@@ -14,12 +14,10 @@ class TermExtractionTest extends Specification {
   )
 
   val instP = All( x, FOLAtom( "P", x, FOLConst( "d" ) ) )
-  val expTreeP = ETWeakQuantifier( instP, Seq(
-    ETAtom( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) )
-      -> FOLConst( "c" ),
-    ETAtom( FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) ) )
-      -> FOLConst( "d" )
-  ) ).asInstanceOf[ExpansionTree]
+  val expTreeP = ETWeakQuantifier( instP, Map(
+    FOLConst( "c" ) -> ETAtom( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ), false ),
+    FOLConst( "d" ) -> ETAtom( FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) ), false )
+  ) )
 
   val expSeq = ExpansionSequent( Seq( expTreeP ), Seq() )
 

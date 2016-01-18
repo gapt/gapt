@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Suc, Ant, Sequent }
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -45,24 +45,22 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
       val p4 = ExistsLeftRule( p3, Ex( x, HOLAtom( P, x :: Nil ) ), beta )
       val p5 = ContractionLeftRule( p4, Ex( x, HOLAtom( P, x :: Nil ) ) )
 
-      val E = LKToExpansionProof( p5 )
+      val E = LKToExpansionProof( p5 ).expansionSequent
 
-      E.antecedent mustEqual List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), beta, ETAtom( HOLAtom( P, beta :: Nil ) ) ) )
+      E.antecedent mustEqual List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), beta, ETAtom( HOLAtom( P, beta :: Nil ), false ) ) )
       // this assumes that the first variable wins, f(beta) would also be valid
       val f_alpha = HOLFunction( f, beta :: Nil )
       E.succedent mustEqual List( ETWeakQuantifier(
         Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ),
-        List(
-          (
+        Map(
+          f_alpha ->
             ETWeakQuantifier(
               Ex( z, HOLAtom( Q, f_alpha :: z :: Nil ) ),
-              List(
-                ( ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ) ), c ),
-                ( ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ) ), d )
+              Map(
+                c -> ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ), true ),
+                d -> ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ), true )
               )
-            ),
-              f_alpha
-          )
+            )
         )
       ) )
 

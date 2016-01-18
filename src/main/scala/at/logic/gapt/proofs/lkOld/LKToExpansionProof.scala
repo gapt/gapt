@@ -2,7 +2,8 @@ package at.logic.gapt.proofs.lkOld
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.expansionTrees.{ merge => mergeTree, _ }
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.logging.Logger
@@ -10,12 +11,12 @@ import at.logic.gapt.utils.logging.Logger
 object LKToExpansionProof extends LKToExpansionProof
 class LKToExpansionProof extends Logger {
 
-  def apply( proof: LKProof ): ExpansionSequent = {
+  def apply( proof: LKProof ): ExpansionProof = {
     val map = extract( proof )
-    mergeTree( ( proof.root.antecedent.map( fo => map( fo ) ), proof.root.succedent.map( fo => map( fo ) ) ) )
+    eliminateMerges( ExpansionProof( Sequent( proof.root.antecedent.map( fo => map( fo ) ), proof.root.succedent.map( fo => map( fo ) ) ) ) )
   }
 
-  private def extract( proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = proof match {
+  private def extract( proof: LKProof ): Map[FormulaOccurrence, ExpansionTree] = proof match {
     case Axiom( r ) =>
       handleAxiom( r )
     case UnaryLKProof( _, up, r, _, p ) =>
@@ -30,7 +31,7 @@ class LKToExpansionProof extends Logger {
     case _ => throw new IllegalArgumentException( "unsupported proof rule: " + proof )
   }
 
-  protected def handleAxiom( r: OccSequent ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  protected def handleAxiom( r: OccSequent ): Map[FormulaOccurrence, ExpansionTree] = {
     // guess the axiom: must be an atom and appear left as well as right
     // can't use set intersection, but lists are small enough to do it manually
     val axiomCandidates = r.antecedent.filter( elem => r.succedent.exists( elem2 => elem syntaxEquals elem2 ) ).filter( o => isExtendedAtom( o.formula ) )
@@ -45,48 +46,55 @@ class LKToExpansionProof extends Logger {
           //only print the warning for non reflexivity atoms
           debug( "Warning: No candidates for axiom formula in expansion tree extraction, treating as atom trees since axiom only contains atoms: " + r )
         }
-        Map( r.antecedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ) ++
-          r.succedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ): _* )
+        Map( r.antecedent.map( fo => ( fo, ETInitialNode( fo.formula, false ) ) ) ++
+          r.succedent.map( fo => ( fo, ETInitialNode( fo.formula, true ) ) ): _* )
       } else {
         throw new IllegalArgumentException( "Error: Axiom sequent in expansion tree extraction contains no atom A on left and right side and contains non-atomic formulas: " + r )
       }
 
       // this behaviour is convenient for development, as it allows to work reasonably with invalid axioms
-      Map( r.antecedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ) ++
-        r.succedent.map( fo => ( fo, ETInitialNode( fo.formula ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, ETInitialNode( fo.formula, false ) ) ) ++
+        r.succedent.map( fo => ( fo, ETInitialNode( fo.formula, true ) ) ): _* )
     } else {
       val axiomFormula = axiomCandidates( 0 )
 
-      Map( r.antecedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETInitialNode( fo.formula ) else ETWeakening( fo.formula ) ) ) ++
-        r.succedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETInitialNode( fo.formula ) else ETWeakening( fo.formula ) ) ): _* )
+      Map( r.antecedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETInitialNode( fo.formula, false ) else ETWeakening( fo.formula, false ) ) ) ++
+        r.succedent.map( fo => ( fo, if ( fo syntaxEquals axiomFormula ) ETInitialNode( fo.formula, true ) else ETWeakening( fo.formula, true ) ) ): _* )
     }
   }
+
+  def ETInitialNode( extendedAtom: HOLFormula, pol: Boolean ): ExpansionTree =
+    extendedAtom match {
+      case Top()         => ETTop( pol )
+      case Bottom()      => ETBottom( pol )
+      case atom: HOLAtom => ETAtom( atom, pol )
+    }
 
   //occurs in handleAxiom
   private def allExtendedAtoms( l: Seq[FormulaOccurrence] ) = l.forall( o => isExtendedAtom( o.formula ) )
 
-  protected def handleUnary( r: OccSequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  protected def handleUnary( r: OccSequent, p: FormulaOccurrence, map: Map[FormulaOccurrence, ExpansionTree], proof: LKProof ): Map[FormulaOccurrence, ExpansionTree] = {
     getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map ) + Tuple2( p, proof match {
-      case WeakeningRightRule( _, _, _ )           => ETWeakening( p.formula )
-      case WeakeningLeftRule( _, _, _ )            => ETWeakening( p.formula )
-      case ForallLeftRule( _, _, a, _, t )         => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
-      case ExistsRightRule( _, _, a, _, t )        => ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) )
+      case WeakeningRightRule( _, _, _ )           => ETWeakening( p.formula, true )
+      case WeakeningLeftRule( _, _, _ )            => ETWeakening( p.formula, false )
+      case ForallLeftRule( _, _, a, _, t )         => ETWeakQuantifier( p.formula, Map( t -> map( a ) ) )
+      case ExistsRightRule( _, _, a, _, t )        => ETWeakQuantifier( p.formula, Map( t -> map( a ) ) )
       case ForallRightRule( _, _, a, _, v )        => ETStrongQuantifier( p.formula, v, map( a ) )
       case ExistsLeftRule( _, _, a, _, v )         => ETStrongQuantifier( p.formula, v, map( a ) )
       case ContractionLeftRule( _, _, a1, a2, _ )  => ETMerge( map( a1 ), map( a2 ) )
       case ContractionRightRule( _, _, a1, a2, _ ) => ETMerge( map( a1 ), map( a2 ) )
       case AndLeft1Rule( _, _, a, _ ) =>
         val And( _, f2 ) = p.formula
-        ETAnd( map( a ), ETWeakening( f2 ) )
+        ETAnd( map( a ), ETWeakening( f2, false ) )
       case AndLeft2Rule( _, _, a, _ ) =>
         val And( f1, _ ) = p.formula
-        ETAnd( ETWeakening( f1 ), map( a ) )
+        ETAnd( ETWeakening( f1, false ), map( a ) )
       case OrRight1Rule( _, _, a, _ ) =>
         val Or( _, f2 ) = p.formula
-        ETOr( map( a ), ETWeakening( f2 ) )
+        ETOr( map( a ), ETWeakening( f2, true ) )
       case OrRight2Rule( _, _, a, _ ) =>
         val Or( f1, _ ) = p.formula
-        ETOr( ETWeakening( f1 ), map( a ) )
+        ETOr( ETWeakening( f1, true ), map( a ) )
       case ImpRightRule( _, _, a1, a2, _ ) =>
         ETImp( map( a1 ), map( a2 ) )
       case NegLeftRule( _, _, a, _ )         => ETNeg( map( a ) )
@@ -96,7 +104,7 @@ class LKToExpansionProof extends Logger {
     } )
   }
 
-  protected def handleBinary( r: OccSequent, map: Map[FormulaOccurrence, ExpansionTreeWithMerges], proof: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, p: FormulaOccurrence ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = {
+  protected def handleBinary( r: OccSequent, map: Map[FormulaOccurrence, ExpansionTree], proof: LKProof, a1: FormulaOccurrence, a2: FormulaOccurrence, p: FormulaOccurrence ): Map[FormulaOccurrence, ExpansionTree] = {
     getMapOfContext( r.elements.toSet - p, map ) + Tuple2( p, proof match {
       case ImpLeftRule( _, _, _, _, _, _ )  => ETImp( map( a1 ), map( a2 ) )
       case OrLeftRule( _, _, _, _, _, _ )   => ETOr( map( a1 ), map( a2 ) )
@@ -117,7 +125,7 @@ class LKToExpansionProof extends Logger {
   }
 
   // the set of formula occurrences given to method must not contain any principal formula
-  protected def getMapOfContext( s: Set[FormulaOccurrence], map: Map[FormulaOccurrence, ExpansionTreeWithMerges] ): Map[FormulaOccurrence, ExpansionTreeWithMerges] =
+  protected def getMapOfContext( s: Set[FormulaOccurrence], map: Map[FormulaOccurrence, ExpansionTree] ): Map[FormulaOccurrence, ExpansionTree] =
     Map( s.toList.map( fo => ( fo, {
       require( fo.parents.size == 1 )
       map( fo.parents.head )

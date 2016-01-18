@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.expansionTrees
+package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.lk.{ LKToExpansionProof, LKProof }
  *
  * Each expansion tree is transformed into a list of instances of its shallow formula.
  *
- * In contrast to [[toDeep]], this function doesn't produce conjunctions of instances, but instead increases the
+ * In contrast to [[ExpansionProof.deep]], this function doesn't produce conjunctions of instances, but instead increases the
  * number of formulas in the antecedent/succedent.
  */
 object extractInstances {
@@ -19,9 +19,9 @@ object extractInstances {
     if ( !containsQuantifier( toShallow( expansionTree ) ) )
       Set( toShallow( expansionTree ) )
     else expansionTree match {
-      case ETWeakening( _ ) => Set()
+      case ETWeakening( _, _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>
-        instances flatMap { i => extractInstances( i._1 ) } toSet
+        instances flatMap { i => extractInstances( i._2 ) } toSet
       case ETStrongQuantifier( _, _, t ) => extractInstances( t )
       case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
       case ETAnd( t, s )                 => for ( ( ti, si ) <- apply( t, s ) ) yield ti & si
@@ -48,6 +48,9 @@ object extractInstances {
 
   def apply( expansionSequent: ExpansionSequent ): HOLSequent =
     expansionSequent flatMap apply
+
+  def apply( expansionProof: ExpansionProof ): HOLSequent =
+    apply( expansionProof.expansionSequent )
 
 }
 
@@ -156,6 +159,13 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
     encode( extractInstances( instance ) )
 
   /**
+   * Encodes an expansion proof (of an instance proof).
+   *
+   * The shallow formulas of the expansion sequents should be subsumed by formulas in the end-sequent.
+   */
+  def encode( instance: ExpansionProof ): Set[LambdaExpression] = encode( extractInstances( instance ) )
+
+  /**
    * Maps a function symbol to the index of its corresponding formula in the end-sequent.
    */
   def findESIndex( sym: Const ): Option[SequentIndex] = symbols indexOfOption sym
@@ -225,7 +235,7 @@ object InstanceTermEncoding {
 
   def apply( lkProof: LKProof ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
     val encoding = InstanceTermEncoding( lkProof.endSequent )
-    encoding.encode( LKToExpansionProof( lkProof ) ) -> encoding
+    encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ) -> encoding
   }
 }
 
@@ -240,6 +250,6 @@ object FOLInstanceTermEncoding {
 
   def apply( lkProof: LKProof ): ( Set[FOLTerm], InstanceTermEncoding ) = {
     val encoding = FOLInstanceTermEncoding( lkProof.endSequent )
-    encoding.encode( LKToExpansionProof( lkProof ) ).map( _.asInstanceOf[FOLTerm] ) -> encoding
+    encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ).map( _.asInstanceOf[FOLTerm] ) -> encoding
   }
 }

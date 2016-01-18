@@ -1,11 +1,14 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class ResolutionToLKTest extends Specification with SequentMatchers {
+class ResolutionToLKTest extends Specification with SequentMatchers with SatMatchers {
 
   object UNSproof {
     val v0 = FOLVar( "v0" )
@@ -239,6 +242,21 @@ class ResolutionToLKTest extends Specification with SequentMatchers {
         )
       )
       proof.endSequent must beMultiSetEqual( Sequent() :+ p( b, b ) )
+    }
+
+    "duplicate bound variables" in {
+      if ( !Prover9.isInstalled ) skipped
+      val Seq( p, q ) = Seq( "p", "q" ) map { FOLAtomConst( _, 1 ) }
+      val Seq( c, d ) = Seq( "c", "d" ) map { FOLConst( _ ) }
+      val x = FOLVar( "x" )
+
+      val endSequent = Sequent() :+ ( ( All( x, p( x ) ) | All( x, q( x ) ) ) --> ( p( c ) | q( d ) ) )
+
+      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true, propositional = false )
+      val Some( ref ) = Prover9 getRobinsonProof cnf
+      val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
+      expansion.shallow must_== endSequent
+      expansion.deep must beValidSequent
     }
   }
 }

@@ -14,3 +14,11 @@ object numberOfResolutionsAndParamodulations {
 object inputClauses {
   def apply( p: ResolutionProof ): Set[HOLClause] = p.subProofs.collect { case InputClause( clause ) => clause }
 }
+
+object containsEquationalReasoning {
+  def apply( p: ResolutionProof ): Boolean = p.subProofs exists {
+    case _: Paramodulation    => true
+    case _: ReflexivityClause => true
+    case _                    => false
+  }
+}

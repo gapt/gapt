@@ -13,7 +13,8 @@ import at.logic.gapt.provers.prover9._
 
 import at.logic.gapt.proofs.ceres_omega._
 
-import at.logic.gapt.proofs.expansionTrees.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETWeakQuantifier, ETSkolemQuantifier, ExpansionTree, ExpansionSequent }
+import at.logic.gapt.utils.SortedMap
 
 import org.specs2.mutable._
 
@@ -72,18 +73,18 @@ class nTapeTest extends Specification {
     // FIXME: use a less fragile method to find the induction formula...
     val indet = conjuncts( 19 )
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
-      case ETWeakQuantifier( _, List(
-        ( inst1, et1 ),
-        ( inst2, et2 )
+      case ETWeakQuantifier( _, SortedMap(
+        ( et1, inst1 ),
+        ( et2, inst2 )
         ) ) =>
         List( inst1, inst2 )
     }
 
     val ( ind1base, ind1step ) = ind1 match {
       case ETImp( ETAnd(
-        ETWeakQuantifier( _, List( ( _, base ) ) ),
+        ETWeakQuantifier( _, SortedMap( ( base, _ ) ) ),
         ETSkolemQuantifier( _, _,
-          ETImp( _, ETWeakQuantifier( f, List( ( inst, step ) ) ) )
+          ETImp( _, ETWeakQuantifier( f, SortedMap( ( step, inst ) ) ) )
           )
         ), _ ) =>
         ( base, step )
@@ -91,9 +92,9 @@ class nTapeTest extends Specification {
 
     val ( ind2base, ind2step ) = ind2 match {
       case ETImp( ETAnd(
-        ETWeakQuantifier( _, List( ( _, base ) ) ),
+        ETWeakQuantifier( _, SortedMap( ( base, _ ) ) ),
         ETSkolemQuantifier( _, _,
-          ETImp( _, ETWeakQuantifier( f, List( ( inst, step ) ) ) )
+          ETImp( _, ETWeakQuantifier( f, SortedMap( ( step, inst ) ) ) )
           ) ), _ ) =>
         ( base, step )
     }
@@ -124,6 +125,7 @@ class nTapeTest extends Specification {
 
   /**
    * The actual cut-elimination procedure.
+   *
    * @param filename
    * @return Some(errormessage) if something breaks, None otherwise
    */

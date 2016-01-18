@@ -6,7 +6,7 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
+import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.{ OneShotProver, renameConstantsToFi, Prover }
 import at.logic.gapt.utils.traits.ExternalProgram

@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.{ lcomp, containsQuantifier }
 import at.logic.gapt.proofs.{ Sequent, Ant }
-import at.logic.gapt.proofs.expansionTrees.FOLInstanceTermEncoding
+import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk.{ CutRule, quantRulesNumber }
 import at.logic.gapt.provers.basicProver.BasicProver

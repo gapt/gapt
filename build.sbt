@@ -30,7 +30,7 @@ lazy val commonSettings = Seq(
 
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
-  fork in Test := true,
+//  fork in Test := true,
 
   sourcesInBase := false // people like to keep scripts lying around
 

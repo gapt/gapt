@@ -1,118 +1,137 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.expr.{ HOLAtom, Eq }
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
 
   /**
    * Extracts an expansion sequent Ex(π) from an LKProof π.
-   * Dp(Ex(π)) might not be tautological, e.g. if π contains quantified cuts.
+   *
    * The induction rule is not supported!
    *
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
    */
-  def apply( proof: LKProof ): ExpansionSequent =
-    merge( extract( regularize( AtomicExpansion( proof ) ) ) )
+  def apply( proof: LKProof ): ExpansionProofWithCut = {
+    val ( cuts, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
+    eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
+  }
 
-  private def extract( proof: LKProof ): Sequent[ExpansionTreeWithMerges] = proof match {
+  private def extract( proof: LKProof ): ( Seq[ETImp], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
-    case LogicalAxiom( atom: HOLAtom )           => Sequent( Seq( ETAtom( atom ) ), Seq( ETAtom( atom ) ) )
+    case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, false ) ), Seq( ETAtom( atom, true ) ) )
 
-    case ReflexivityAxiom( s )                   => Sequent( Seq(), Seq( ETAtom( Eq( s, s ) ) ) )
+    case ReflexivityAxiom( s )         => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), true ) ) )
 
-    case TopAxiom                                => Sequent( Seq(), Seq( ETTop ) )
+    case TopAxiom                      => Seq() -> Sequent( Seq(), Seq( ETTop( true ) ) )
 
-    case BottomAxiom                             => Sequent( Seq( ETBottom ), Seq() )
+    case BottomAxiom                   => Seq() -> Sequent( Seq( ETBottom( false ) ), Seq() )
 
-    case TheoryAxiom( sequent )                  => sequent map { i => ETAtom( i ) }
+    case TheoryAxiom( sequent )        => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.isSuc ) )
 
     // Structural rules
-    case WeakeningLeftRule( subProof, formula )  => ETWeakening( formula ) +: extract( subProof )
+    case WeakeningLeftRule( subProof, formula ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( ETWeakening( formula, false ) +: subSequent )
 
-    case WeakeningRightRule( subProof, formula ) => extract( subProof ) :+ ETWeakening( formula )
+    case WeakeningRightRule( subProof, formula ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( subSequent :+ ETWeakening( formula, true ) )
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
-      val subSequent = extract( subProof )
-      ETMerge( subSequent( aux1 ), subSequent( aux2 ) ) +: subSequent.delete( aux1, aux2 )
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( ETMerge( subSequent( aux1 ), subSequent( aux2 ) ) +: subSequent.delete( aux1, aux2 ) )
 
     case ContractionRightRule( subProof, aux1, aux2 ) =>
-      val subSequent = extract( subProof )
-      subSequent.delete( aux1, aux2 ) :+ ETMerge( subSequent( aux1 ), subSequent( aux2 ) )
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( subSequent.delete( aux1, aux2 ) :+ ETMerge( subSequent( aux1 ), subSequent( aux2 ) ) )
 
-    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val leftSubSequent = extract( leftSubProof ).delete( aux1 )
-      val rightSubSequent = extract( rightSubProof ).delete( aux2 )
-      leftSubSequent ++ rightSubSequent
+    case c @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( leftCuts, leftSequent ) = extract( leftSubProof )
+      val ( rightCuts, rightSequent ) = extract( rightSubProof )
+      val newCut = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
+      val cuts = if ( containsQuantifier( c.cutFormula ) )
+        newCut +: ( leftCuts ++ rightCuts )
+      else leftCuts ++ rightCuts
+      ( cuts, leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
 
     // Propositional rules
     case NegLeftRule( subProof, aux ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      ETNeg( subTree ) +: subSequent
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( ETNeg( subSequent( aux ) ) +: subSequent.delete( aux ) )
 
     case NegRightRule( subProof, aux ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      subSequent :+ ETNeg( subTree )
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( subSequent.delete( aux ) :+ ETNeg( subSequent( aux ) ) )
 
     case AndLeftRule( subProof, aux1, aux2 ) =>
-      val subSequent = extract( subProof )
-      ETAnd( subSequent( aux1 ), subSequent( aux2 ) ) +: subSequent.delete( aux1, aux2 )
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( ETAnd( subSequent( aux1 ), subSequent( aux2 ) ) +: subSequent.delete( aux1, aux2 ) )
 
     case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubTree, leftSubSequent ) = extract( leftSubProof ).focus( aux1 )
-      val ( rightSubTree, rightSubSequent ) = extract( rightSubProof ).focus( aux2 )
-      ( leftSubSequent ++ rightSubSequent ) :+ ETAnd( leftSubTree, rightSubTree )
+      val ( leftCuts, leftSequent ) = extract( leftSubProof )
+      val ( rightCuts, rightSequent ) = extract( rightSubProof )
+      val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
+      val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
+      ( leftCuts ++ rightCuts, ( leftSubSequent ++ rightSubSequent ) :+ ETAnd( leftSubTree, rightSubTree ) )
 
     case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubTree, leftSubSequent ) = extract( leftSubProof ).focus( aux1 )
-      val ( rightSubTree, rightSubSequent ) = extract( rightSubProof ).focus( aux2 )
-      ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent )
+      val ( leftCuts, leftSequent ) = extract( leftSubProof )
+      val ( rightCuts, rightSequent ) = extract( rightSubProof )
+      val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
+      val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
+      ( leftCuts ++ rightCuts, ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
 
     case OrRightRule( subProof, aux1, aux2 ) =>
-      val subSequent = extract( subProof )
-      subSequent.delete( aux1, aux2 ) :+ ETOr( subSequent( aux1 ), subSequent( aux2 ) )
+      val ( subCuts, subSequent ) = extract( subProof )
+      subCuts -> ( subSequent.delete( aux1, aux2 ) :+ ETOr( subSequent( aux1 ), subSequent( aux2 ) ) )
 
     case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubTree, leftSubSequent ) = extract( leftSubProof ).focus( aux1 )
-      val ( rightSubTree, rightSubSequent ) = extract( rightSubProof ).focus( aux2 )
-      ETImp( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent )
+      val ( leftCuts, leftSequent ) = extract( leftSubProof )
+      val ( rightCuts, rightSequent ) = extract( rightSubProof )
+      val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
+      val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
+      ( leftCuts ++ rightCuts, ETImp( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
 
     case ImpRightRule( subProof, aux1, aux2 ) =>
-      val subSequent = extract( subProof )
-      subSequent.delete( aux1, aux2 ) :+ ETImp( subSequent( aux1 ), subSequent( aux2 ) )
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, subSequent.delete( aux1, aux2 ) :+ ETImp( subSequent( aux1 ), subSequent( aux2 ) ) )
 
     // Quantifier rules
     case ForallLeftRule( subProof, aux, _, t, _ ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) ) +: subSequent
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, ETWeakQuantifier( proof.mainFormulas.head, Map( t -> subSequent( aux ) ) ) +: subSequent.delete( aux ) )
 
     case ForallRightRule( subProof, aux, eigen, _ ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      subSequent :+ ETStrongQuantifier( proof.mainFormulas.head, eigen, subTree )
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, subSequent.delete( aux ) :+ ETStrongQuantifier( proof.mainFormulas.head, eigen, subSequent( aux ) ) )
 
     case ExistsLeftRule( subProof, aux, eigen, _ ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      ETStrongQuantifier( proof.mainFormulas.head, eigen, subTree ) +: subSequent
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, ETStrongQuantifier( proof.mainFormulas.head, eigen, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
     case ExistsRightRule( subProof, aux, _, t, _ ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
-      subSequent :+ ETWeakQuantifier( proof.mainFormulas.head, Seq( subTree -> t ) )
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, subSequent.delete( aux ) :+ ETWeakQuantifier( proof.mainFormulas.head, Map( t -> subSequent( aux ) ) ) )
 
     // Equality rules
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
+      val ( subCuts, sequent ) = extract( subProof )
+      val ( subTree, subSequent ) = sequent.focus( aux )
 
       val repTerm = proof.mainFormulas.head( pos.head )
       val newTree = pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
-      newTree +: subSequent
+      ( subCuts, newTree +: subSequent )
 
     case EqualityRightRule( subProof, eq, aux, pos ) =>
-      val ( subTree, subSequent ) = extract( subProof ).focus( aux )
+      val ( subCuts, sequent ) = extract( subProof )
+      val ( subTree, subSequent ) = sequent.focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
       val newTree = pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
-      subSequent :+ newTree
+      ( subCuts, subSequent :+ newTree )
   }
 }

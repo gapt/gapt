@@ -7,7 +7,7 @@ import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.Sequent
@@ -52,7 +52,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     if ( !containsEqualityReasoning( p ) ) {
       MiniSAT.isValid( deep ) !-- "minisat validity"
       solve.solvePropositional( deep ).isDefined !-- "solvePropositional"
-      ExpansionProofToLK( E ) --- "expansionProofToLKProof"
+      ExpansionProofToLK( eliminateCutsET( E ) ) --- "expansionProofToLKProof"
     }
     VeriT.isValid( deep ) !-- "verit validity"
 
@@ -74,6 +74,13 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
+
+        LKToExpansionProof( q ) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
+          VeriT.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"
+          eliminateCutsET( expQ ) --? "expansion tree cut-elimination (cut-intro)" foreach { expQstar =>
+            VeriT.isValid( expQstar.deep ) !-- "cut-elim expansion tree validity (cut-intro)"
+          }
+        }
 
         VeriT.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"
       }

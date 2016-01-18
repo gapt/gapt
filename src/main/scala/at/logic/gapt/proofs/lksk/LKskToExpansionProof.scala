@@ -1,9 +1,10 @@
 package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lkOld.{ BinaryLKProof, CutRule, UnaryLKProof, LKToExpansionProof }
 import at.logic.gapt.proofs.lkOld.base.LKProof
-import at.logic.gapt.proofs.expansionTrees.{ merge => mergeTree, _ }
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
 /**
@@ -11,31 +12,31 @@ import at.logic.gapt.proofs.occurrences.FormulaOccurrence
  */
 object LKskToExpansionProof extends LKskToExpansionProof;
 class LKskToExpansionProof extends LKToExpansionProof {
-  override def apply( proof: LKProof ): ExpansionSequent = {
+  override def apply( proof: LKProof ): ExpansionProof = {
     val map = extract( proof )
-    mergeTree( ( proof.root.antecedent.map( fo => map( fo ) ), proof.root.succedent.map( fo => map( fo ) ) ) )
+    eliminateMerges( ExpansionProof( Sequent( proof.root.antecedent.map( fo => map( fo ) ), proof.root.succedent.map( fo => map( fo ) ) ) ) )
   }
 
-  def extract( proof: LKProof ): Map[FormulaOccurrence, ExpansionTreeWithMerges] = proof match {
+  def extract( proof: LKProof ): Map[FormulaOccurrence, ExpansionTree] = proof match {
     case Axiom( r ) =>
       handleAxiom( r )
 
     case WeakeningRightRule( parent, r, p ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, ETWeakening( p.formula ) ) )
+      contextmap + ( ( p, ETWeakening( p.formula, true ) ) )
     case WeakeningLeftRule( parent, r, p ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, ETWeakening( p.formula ) ) )
+      contextmap + ( ( p, ETWeakening( p.formula, false ) ) )
     case ForallSkLeftRule( parent, r, a, p, t ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) ) ) )
+      contextmap + ( ( p, ETWeakQuantifier( p.formula, Map( t -> map( a ) ) ) ) )
     case ExistsSkRightRule( parent, r, a, p, t ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, ETWeakQuantifier( p.formula, List( Tuple2( map( a ), t ) ) ) ) )
+      contextmap + ( ( p, ETWeakQuantifier( p.formula, Map( t -> map( a ) ) ) ) )
     case ForallSkRightRule( parent, r, a, p, skt ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )

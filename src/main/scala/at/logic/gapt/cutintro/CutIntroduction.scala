@@ -7,8 +7,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansionTrees.{ quantRulesNumber => quantRulesNumberET, _ }
-import at.logic.gapt.proofs.lkOld.ExtractInterpolant
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
 import at.logic.gapt.provers.Prover
@@ -165,9 +164,9 @@ class CutIntroEHSUnprovableException( msg: String ) extends CutIntroException( m
 
 object CutIntroduction extends Logger {
 
-  def compressToEHS( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[ExtendedHerbrandSequent] = {
+  def compressToEHS( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[ExtendedHerbrandSequent] = {
     require(
-      isFOLPrenexSigma1( toShallow( ep ) ),
+      isFOLPrenexSigma1( ep.shallow ),
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
     )
 
@@ -182,12 +181,12 @@ object CutIntroduction extends Logger {
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
     metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
 
-    metrics.value( "quant_input", quantRulesNumberET( ep ) )
+    metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
     if ( verbose )
-      println( s"Quantifier inferences in the input proof: ${quantRulesNumberET( ep )}" )
+      println( s"Quantifier inferences in the input proof: ${numberOfInstancesET( ep.expansionSequent )}" )
 
-    val endSequent = toShallow( ep )
+    val endSequent = ep.shallow
     if ( verbose ) println( s"End sequent: $endSequent" )
 
     /********** Term set Extraction **********/
@@ -283,7 +282,7 @@ object CutIntroduction extends Logger {
     proof
   }
 
-  def compressToLK( ep: ExpansionSequent, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
+  def compressToLK( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
     compressToEHS( ep, hasEquality, method, verbose ) map { constructLKProof( _, hasEquality, verbose ) }
 
   def compressLKProof( p: LKProof, method: GrammarFindingMethod = DeltaTableMethod( manyQuantifiers = false ), verbose: Boolean = false ): Option[LKProof] = {
@@ -292,7 +291,7 @@ object CutIntroduction extends Logger {
     if ( verbose )
       println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
 
-    val ep = LKToExpansionProof( clean_proof )
+    val ep = eliminateCutsET( LKToExpansionProof( clean_proof ) )
     val hasEquality = containsEqualityReasoning( clean_proof )
 
     compressToLK( ep, hasEquality, method, verbose )

@@ -7,7 +7,7 @@ package at.logic.gapt.proofs.lkOld
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ isPrenex, instantiate, HOLPosition }
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent }
-import at.logic.gapt.proofs.expansionTrees._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.utils.ds.trees._
@@ -1288,66 +1288,5 @@ object WeakeningContractionMacroRule extends MacroRuleLogger {
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
 
     apply( s1, antList, sucList, strict )
-  }
-}
-
-/**
- * Computes a proof of F from a proof of some instances of F
- *
- */
-object proofFromInstances {
-  /**
-   *
-   * @param s1 An LKProof containing the instances in es in its end sequent.
-   * @param es An ExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
-   * @return A proof starting with s1 and ending with the deep sequent of es.
-   */
-  def apply( s1: LKProof, es: ExpansionSequent ): LKProof =
-    ( es.antecedent ++ es.succedent ).foldLeft( s1 )( apply )
-
-  /**
-   *
-   * @param s1 An LKProof containing the instances in et in its end sequent
-   * @param et An ExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
-   * @return A proof starting with s1 and ending with the deep formula of et.
-   */
-  def apply( s1: LKProof, et: ExpansionTree ): LKProof = apply( s1, compressQuantifiers( et ) )
-
-  /**
-   *
-   * @param s1 An LKProof containing the instances in mes in its end sequent.
-   * @param mes A MultiExpansionSequent in which all shallow formulas are prenex and which contains no strong or Skolem quantifiers.
-   * @return A proof starting with s1 and ending with the deep sequent of mes.
-   */
-  def apply( s1: LKProof, mes: MultiExpansionSequent )( implicit dummyImplicit: DummyImplicit ): LKProof = ( mes.antecedent ++ mes.succedent ).foldLeft( s1 )( apply )
-
-  /**
-   *
-   * @param s1 An LKProof containing the instances in et in its end sequent
-   * @param met A MultiExpansionTree whose shallow formula is prenex and which contains no strong or Skolem quantifiers.
-   * @return A proof starting with s1 and ending with the deep formula of met.
-   */
-  def apply( s1: LKProof, met: MultiExpansionTree ): LKProof = {
-    require( isPrenex( met.toShallow ), "Shallow formula of " + met + " is not prenex" )
-
-    met match {
-      case METWeakQuantifier( f @ All( _, _ ), instances ) =>
-        val tmp = instances.foldLeft( s1 ) {
-          ( acc, i ) => ForallLeftBlock( acc, f, i._2 )
-        }
-
-        ContractionLeftMacroRule( tmp, f )
-
-      case METWeakQuantifier( f @ Ex( _, _ ), instances ) =>
-        val tmp = instances.foldLeft( s1 ) {
-          ( acc, i ) => ExistsRightBlock( acc, f, i._2 )
-        }
-
-        ContractionRightMacroRule( tmp, f )
-
-      case METSkolemQuantifier( _, _, _ ) | METStrongQuantifier( _, _, _ ) =>
-        throw new UnsupportedOperationException( "This case is not handled at this time." )
-      case _ => s1
-    }
   }
 }

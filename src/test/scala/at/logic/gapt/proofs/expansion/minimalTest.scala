@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.expansionTrees
+package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
@@ -12,46 +12,42 @@ class minimalExpansionSequentTest extends Specification {
   val d = Const( "d", Ti )
   val P = Const( "P", Ti -> To )
 
-  val et1: ExpansionTree = merge(
+  val et1: ExpansionTree =
     ETWeakQuantifier(
       All( x, HOLAtom( P, x :: Nil ) ),
-      List( ( ETAtom( HOLAtom( P, c :: Nil ) ), c ), ( ETAtom( HOLAtom( P, d :: Nil ) ), d ) )
+      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), false ), d -> ETAtom( HOLAtom( P, d :: Nil ), false ) )
     )
-  )
 
-  val et2: ExpansionTree = merge(
+  val et2: ExpansionTree =
     ETWeakQuantifier(
       Ex( x, HOLAtom( P, x :: Nil ) ),
-      List( ( ETAtom( HOLAtom( P, c :: Nil ) ), c ), ( ETAtom( HOLAtom( P, d :: Nil ) ), d ) )
+      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), true ), d -> ETAtom( HOLAtom( P, d :: Nil ), true ) )
     )
-  )
 
-  val eSeq = compressQuantifiers( ExpansionSequent( List( et1 ), List( et2 ) ) )
+  val eSeq = ExpansionSequent( List( et1 ), List( et2 ) )
 
   val minESeq = List(
-    ExpansionSequent( List( merge(
+    ExpansionSequent( List(
       ETWeakQuantifier(
         All( x, HOLAtom( P, x :: Nil ) ),
-        List( ( ETAtom( HOLAtom( P, c :: Nil ) ), c ) )
+        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), false ) )
       )
-    ) ), List( merge(
+    ), List(
       ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: Nil ) ),
-        List( ( ETAtom( HOLAtom( P, c :: Nil ) ), c ) )
+        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), true ) )
       )
-    ) ) ),
-    ExpansionSequent( List( merge(
-      ETWeakQuantifier(
-        All( x, HOLAtom( P, x :: Nil ) ),
-        List( ( ETAtom( HOLAtom( P, d :: Nil ) ), d ) )
-      )
-    ) ), List( merge(
+    ) ),
+    ExpansionSequent( List( ETWeakQuantifier(
+      All( x, HOLAtom( P, x :: Nil ) ),
+      Map( d -> ETAtom( HOLAtom( P, d :: Nil ), false ) )
+    ) ), List(
       ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: Nil ) ),
-        List( ( ETAtom( HOLAtom( P, d :: Nil ) ), d ) )
+        Map( d -> ETAtom( HOLAtom( P, d :: Nil ), true ) )
       )
-    ) ) )
-  ).map( compressQuantifiers.apply )
+    ) )
+  )
 
   "Minimal expansion trees" should {
     "be computed correctly by the smart algorithm" in {
@@ -59,7 +55,7 @@ class minimalExpansionSequentTest extends Specification {
     }
 
     "handle weakening" in {
-      val E = ETAtom( FOLAtom( "Q" ) ) +: Sequent() :+ ETImp( ETWeakening( FOLAtom( "P" ) ), ETAtom( FOLAtom( "Q" ) ) )
+      val E = ETAtom( FOLAtom( "Q" ), false ) +: Sequent() :+ ETImp( ETWeakening( FOLAtom( "P" ), false ), ETAtom( FOLAtom( "Q" ), true ) )
       val Some( minSeq ) = minimalExpansionSequent( E, Sat4j )
       Sat4j.isValid( toDeep( minSeq ) ) must_== true
     }

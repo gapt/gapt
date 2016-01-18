@@ -10,7 +10,7 @@ package at.logic.gapt.prooftool
 import java.awt.event.{ ActionEvent, KeyEvent }
 
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
-import at.logic.gapt.proofs.expansionTrees.{ ExpansionProofToLK, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, ExpansionSequent }
 import at.logic.gapt.proofs.lkOld.UnfoldException
 import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.lkOld.base.RichOccSequent

@@ -1,8 +1,8 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent, eliminateCutsET, ExpansionProofWithCut }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.expansionTrees.ExpansionSequent
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 
@@ -47,8 +47,15 @@ trait Prover {
    */
   def getLKProof( seq: HOLSequent ): Option[LKProof]
 
+  @deprecated( "Use getExpansionProof instead", "2016-01-13" )
   def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
-    getLKProof( seq ).map( LKToExpansionProof( _ ) )
+    getExpansionProof( seq ) map { _.expansionSequent }
+
+  def getExpansionProofWithCut( seq: HOLSequent ): Option[ExpansionProofWithCut] =
+    getLKProof( seq ) map { LKToExpansionProof( _ ) }
+
+  def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
+    getExpansionProofWithCut( seq ) map { eliminateCutsET( _ ) }
 
   /**
    * Starts an incremental proving session.

@@ -1,7 +1,7 @@
 import at.logic.gapt.expr.hol.{CNFp, instantiate}
 import at.logic.gapt.grammars.{recSchemToVTRATG, findMinimalVectGrammar, VectTratGrammar}
+import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 import at.logic.gapt.proofs.{Suc, Sequent}
-import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
 import at.logic.gapt.cutintro._

@@ -2,8 +2,8 @@ import at.logic.gapt.examples.UniformAssociativity3ExampleProof
 import at.logic.gapt.expr.FOLTerm
 import at.logic.gapt.expr.hol.{toNNF, simplify, lcomp}
 import at.logic.gapt.grammars.{minimizeSipGrammar, SipGrammarMinimizationFormula, stableSipGrammar}
+import at.logic.gapt.proofs.expansion.{FOLInstanceTermEncoding, toShallow, ExpansionSequent}
 import at.logic.gapt.proofs.{Suc, Ant, HOLSequent}
-import at.logic.gapt.proofs.expansionTrees._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
@@ -21,7 +21,7 @@ var instanceSequents = (1 until N) map { n =>
   val instanceProof = UniformAssociativity3ExampleProof(n)
 //  val instanceProof = LinearEqExampleProof(n)
 //  val instanceProof = FactorialFunctionEqualityExampleProof(n)
-  n -> removeEqAxioms(LKToExpansionProof(instanceProof))
+  n -> removeEqAxioms(LKToExpansionProof(instanceProof).expansionSequent)
 }
 
 val endSequent = HOLSequent(
