@@ -1,56 +1,57 @@
+import at.logic.gapt.expr.FOLVar
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.gaptic.tactics._
 
 val drinker = new Lemma( Sequent( Nil, Seq( "D" -> parseFormula( "(exists x (P(x) -> (all y P(y))))" )))) {
-  use(ExistsRightTactic( parseTerm( "c" ), "D1" ))
-  use(ImpRightTactic( "D1" ))
-  use(ForallRightTactic( FOLVar( "y_0" ), "D1_2" ))
-  use(ExistsRightTactic( parseTerm( "y_0" ), "D2" ))
-  use(ImpRightTactic( "D2" ))
-  use(ForallRightTactic( FOLVar( "y_1" ), "D2_2" ))
-  use(LogicalAxiomTactic( parseFormula( "P(y_0)" )))
+  use(exR( parseTerm( "c" ), "D1" ))
+  use(impR( "D1" ))
+  use(allR( FOLVar( "y_0" ), "D1_2" ))
+  use(exR( parseTerm( "y_0" ), "D2" ))
+  use(impR( "D2" ))
+  use(allR( FOLVar( "y_1" ), "D2_2" ))
+  use(axiomLog  )
 } qed
 
 val dualdrinker = new Lemma( Sequent( Seq( "D" -> parseFormula( "(all x (P(x) & (exists y -P(y))))")), Nil )) {
-  use(ForallLeftTactic( parseTerm( "c" ), "D1" ))
-  use(AndLeftTactic( "D1" ))
-  use(ExistsLeftTactic( FOLVar( "y_0" ) ))
-  use(NegLeftTactic( "D1_2" ))
-  use(ForallLeftTactic( parseTerm( "y_0" ), "D2" ))
-  use(AndLeftTactic( "D2" ))
-  use(ExistsLeftTactic( FOLVar( "y_1" ) ))
-  use(NegLeftTactic( "D2_2" ))
-  use(LogicalAxiomTactic( parseFormula( "P(y_0)" )))
+  use(allL( parseTerm( "c" ), "D1" ))
+  use(andL( "D1" ))
+  use(exL( FOLVar( "y_0" ) ))
+  use(negL( "D1_2" ))
+  use(allL( parseTerm( "y_0" ), "D2" ))
+  use(andL( "D2" ))
+  use(exL( FOLVar( "y_1" ) ))
+  use(negL( "D2_2" ))
+  use(axiomLog)
 } qed
 
 val drinker2 = new Lemma( Sequent( Nil, Seq( "D" -> parseFormula( "(exists x (P(x) -> (all y P(y))))" )))) {
-  use(ExistsRightTactic( parseTerm( "c" ), "D1" ))
-  use(ImpRightTactic())
-  use(ForallRightTactic())
-  use(ExistsRightTactic( parseTerm( "y" ), "D2" ))
-  use(ImpRightTactic())
-  use(ForallRightTactic())
-  use(LogicalAxiomTactic())
+  use(exR( parseTerm( "c" ), "D1" ))
+  use(impR)
+  use(allR)
+  use(exR( parseTerm( "y" ), "D2" ))
+  use(impR)
+  use(allR)
+  use(axiomLog)
 } qed
 
 val drinker3 = new Lemma( Sequent( Nil, Seq( "D" -> parseFormula( "(exists x (P(x) -> (all y P(y))))" )))) {
-  use(ExistsRightTactic( parseTerm( "c" ), "D1" ))
-  use(ImpRightTactic())
-  use(ForallRightTactic())
-  use(ExistsRightTactic( parseTerm( "y" ), "D2" ))
-  use(ImpRightTactic())
-  use(ForallRightTactic())
-  use(AxiomTactic)
+  use(exR( parseTerm( "c" ), "D1" ))
+  use(impR)
+  use(allR)
+  use(exR( parseTerm( "y" ), "D2" ))
+  use(impR)
+  use(allR)
+  use(axiom)
 } qed
 
 val dualdrinker2 = new Lemma( Sequent( Seq( "D" -> parseFormula( "(all x (P(x) & (exists y -P(y))))")), Nil )) {
-  use(ForallLeftTactic( parseTerm( "c" ), "D1" ))
-  use(AndLeftTactic())
-  use(ExistsLeftTactic())
-  use(NegLeftTactic())
-  use(ForallLeftTactic( parseTerm( "y" ), "D2" ))
-  use(AndLeftTactic())
-  use(ExistsLeftTactic())
-  use(NegLeftTactic())
-  use(LogicalAxiomTactic( parseFormula( "P(y)" )))
+  use(allL( parseTerm( "c" ), "D1" ))
+  use(andL)
+  use(exL)
+  use(negL)
+  use(allL( parseTerm( "y" ), "D2" ))
+  use(andL)
+  use(exL)
+  use(negL)
+  use(axiomLog)
 } qed

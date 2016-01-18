@@ -8,40 +8,33 @@ import at.logic.gapt.proofs.lk._
 
 /**
  * LogicalAxiom tactic
- * @param b
+ * @param label
  */
-case class LogicalAxiomTactic( b: Option[HOLFormula] = None ) extends Tactic {
+case class LogicalAxiomTactic( label: Option[String] = None ) extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.conclusion
+    val goalSequent = goal.s
 
-    val indices = b match {
-      case Some( a ) =>
+    val indices = label match {
+      case Some( l1 ) =>
         for {
-          ( `a`, indexAnt ) <- goalSequent.zipWithIndex.succedent
-          ( `a`, indexSuc ) <- goalSequent.zipWithIndex.antecedent
+          ( ( `l1`, a ), indexAnt ) <- goalSequent.zipWithIndex.succedent
+          ( ( _, b ), indexSuc ) <- goalSequent.zipWithIndex.antecedent if a == b
         } yield ( indexAnt, indexSuc )
 
       case None =>
         for {
-          ( a1, indexAnt ) <- goalSequent.zipWithIndex.succedent
-          ( a2, indexSuc ) <- goalSequent.zipWithIndex.antecedent if a1 == a2
+          ( ( _, a ), indexAnt ) <- goalSequent.zipWithIndex.succedent
+          ( ( _, b ), indexSuc ) <- goalSequent.zipWithIndex.antecedent if a == b
         } yield ( indexAnt, indexSuc )
     }
 
     for ( ( i, _ ) <- indices.headOption ) yield {
-      val ax = LogicalAxiom( goalSequent( i ) )
+      val ax = LogicalAxiom( goalSequent( i )._2 )
 
-      WeakeningMacroRule( ax, goalSequent )
+      WeakeningMacroRule( ax, goal.conclusion )
     }
   }
-}
-
-/**
- * Companion object for LogicalAxiomTactic
- */
-object LogicalAxiomTactic {
-  def apply( a: HOLFormula ) = new LogicalAxiomTactic( Option( a ) )
 }
 
 /**
@@ -121,8 +114,8 @@ case object TheoryAxiomTactic extends Tactic {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
-    if (goalSequent.forall( _.isInstanceOf[HOLAtom] ))
-      Option(TheoryAxiom(goalSequent.asInstanceOf[Sequent[HOLAtom]]))
+    if ( goalSequent.forall( _.isInstanceOf[HOLAtom] ) )
+      Option( TheoryAxiom( goalSequent.asInstanceOf[Sequent[HOLAtom]] ) )
     else
       None
   }
@@ -171,13 +164,6 @@ case class NegLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
 }
 
 /**
- * Companion object for NegRightTactic
- */
-object NegLeftTactic {
-  def apply( applyToLabel: String ) = new NegLeftTactic( Some( applyToLabel ) )
-}
-
-/**
  * NegRightRule tactic
  * @param applyToLabel
  */
@@ -204,13 +190,6 @@ case class NegRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
       NegRightRule( premise, Ant( 0 ) )
     }
   }
-}
-
-/**
- * Companion object for NegRightTactic
- */
-object NegRightTactic {
-  def apply( applyToLabel: String ) = new NegRightTactic( Some( applyToLabel ) )
 }
 
 /**
@@ -279,8 +258,10 @@ case class ContractionLeftTactic( applyToLabel: String ) extends Tactic {
     val goalSequent = goal.s
 
     val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.antecedent )
-        yield index
+      for (
+        ( ( `applyToLabel`, a ), index ) <- goalSequent.zipWithIndex.antecedent;
+        ( ( otherLabel, b ), _ ) <- goalSequent.zipWithIndex.antecedent if applyToLabel != otherLabel && a == b
+      ) yield index
 
     // Select some formula index!
     for ( i <- indices.headOption ) yield {
@@ -311,8 +292,10 @@ case class ContractionRightTactic( applyToLabel: String ) extends Tactic {
     val goalSequent = goal.s
 
     val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.succedent )
-        yield index
+      for (
+        ( ( `applyToLabel`, a ), index ) <- goalSequent.zipWithIndex.succedent;
+        ( ( otherLabel, b ), _ ) <- goalSequent.zipWithIndex.succedent if applyToLabel != otherLabel && a == b
+      ) yield index
 
     // Select some formula index!
     for ( i <- indices.headOption ) yield {
@@ -374,13 +357,6 @@ case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
 }
 
 /**
- * Companion object for AndLeftTactic
- */
-object AndLeftTactic {
-  def apply( applyToLabel: String ) = new AndLeftTactic( Some( applyToLabel ) )
-}
-
-/**
  * AndRightRule tactic
  * @param applyToLabel
  */
@@ -418,13 +394,6 @@ case class AndRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
       ContractionMacroRule( lkTmp )
     }
   }
-}
-
-/**
- * Companion object for AndRightTactic
- */
-object AndRightTactic {
-  def apply( applyToLabel: String ) = new AndRightTactic( Some( applyToLabel ) )
 }
 
 /**
@@ -468,13 +437,6 @@ case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
 }
 
 /**
- * Companion object for OrLeftTactic
- */
-object OrLeftTactic {
-  def apply( applyToLabel: String ) = new OrLeftTactic( Some( applyToLabel ) )
-}
-
-/**
  * OrRightRule tactic
  * @param applyToLabel
  */
@@ -511,13 +473,6 @@ case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
     }
   }
 
-}
-
-/**
- * Companion object for OrRightTactic
- */
-object OrRightTactic {
-  def apply( applyToLabel: String ) = new OrRightTactic( Some( applyToLabel ) )
 }
 
 /**
@@ -561,13 +516,6 @@ case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
 }
 
 /**
- * Companion object for ImpLeftTactic
- */
-object ImpLeftTactic {
-  def apply( applyToLabel: String ) = new ImpLeftTactic( Some( applyToLabel ) )
-}
-
-/**
  * ImpRightRule tactic
  * @param applyToLabel
  */
@@ -604,13 +552,6 @@ case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
     }
   }
 
-}
-
-/**
- * Companion object for ImpRightTactic
- */
-object ImpRightTactic {
-  def apply( applyToLabel: String ) = new ImpRightTactic( Some( applyToLabel ) )
 }
 
 /**
@@ -665,17 +606,6 @@ case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Op
 }
 
 /**
- * Companion object for ExistsLeftTactic
- */
-object ExistsLeftTactic {
-  def apply( eigenVariable: Var, applyToLabel: String ) = new ExistsLeftTactic( Some( eigenVariable ), Some( applyToLabel ) )
-
-  def apply( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
-
-  def apply( applyToLabel: String ) = new ExistsLeftTactic( applyToLabel = Some( applyToLabel ) )
-}
-
-/**
  * ExistsRightRule tactic
  * @param term
  * @param applyToLabel
@@ -717,13 +647,6 @@ case class ExistsRightTactic( term: LambdaExpression, instantiationLabel: String
 }
 
 /**
- * Companion object for ExistsRightTactic
- */
-object ExistsRightTactic {
-  def apply( term: LambdaExpression, instantiationLabel: String, applyToLabel: String ) = new ExistsRightTactic( term, instantiationLabel, Some( applyToLabel ) )
-}
-
-/**
  * ForallLeftRule tactic
  * @param term
  * @param applyToLabel
@@ -762,13 +685,6 @@ case class ForallLeftTactic( term: LambdaExpression, instantiationLabel: String,
     else
       None
   }
-}
-
-/**
- * Companion object for ForallLeftTactic
- */
-object ForallLeftTactic {
-  def apply( term: LambdaExpression, instantiationLabel: String, applyToLabel: String ) = new ForallLeftTactic( term, instantiationLabel, Some( applyToLabel ) )
 }
 
 /**
@@ -818,17 +734,6 @@ case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: O
         }
     }
   }
-}
-
-/**
- * Companion object for ForallRightTactic
- */
-object ForallRightTactic {
-  def apply( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( Some( eigenVariable ), Some( applyToLabel ) )
-
-  def apply( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
-
-  def apply( applyToLabel: String ) = new ForallRightTactic( applyToLabel = Some( applyToLabel ) )
 }
 
 /**
