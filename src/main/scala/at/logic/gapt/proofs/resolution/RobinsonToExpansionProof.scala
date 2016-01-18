@@ -25,7 +25,7 @@ object RobinsonToExpansionProof {
         clause <- CNFn.toFClauseList( fs.toFormula )
         pcnf = PCNF( fs, clause )
         exp = for {
-          ( e, ei ) <- LKToExpansionProof( pcnf ).expansionSequent.zipWithIndex
+          ( e, ei ) <- LKToExpansionProof( pcnf ).toExpansionProof.expansionSequent.zipWithIndex
           if ei sameSideAs i
           if toShallow( e ) == f
         } yield e

@@ -60,6 +60,11 @@ case class ExpansionProofWithCut( cuts: Seq[ETImp], expansionSequent: Sequent[Ex
     evInTerm <- eigenVariables intersect freeVariables( term )
   } yield evInTerm -> ev
   val Right( linearizedDependencyRelation ) = linearizeStrictPartialOrder( eigenVariables, dependencyRelation )
+
+  def toExpansionProof: ExpansionProof = {
+    require( cuts isEmpty )
+    ExpansionProof( expansionSequent )
+  }
 }
 
 class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) extends ExpansionProofWithCut( Seq(), expansionSequent )
@@ -85,7 +90,7 @@ object eliminateMerges {
     elim( expansionProof.cuts, expansionProof.expansionSequent )
 
   def apply( expansionProof: ExpansionProof ): ExpansionProof =
-    ExpansionProof( apply( locally[ExpansionProofWithCut]( expansionProof ) ).expansionSequent )
+    apply( expansionProof: ExpansionProofWithCut ).toExpansionProof
 
   private def elim( cuts: Seq[ETImp], expansionSequent: Sequent[ExpansionTree] ): ExpansionProofWithCut = {
     var needToMergeAgain = false
