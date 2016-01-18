@@ -4,9 +4,11 @@ import at.logic.gapt.formats.llk.toLLKString
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.llkNew.LLKProofParser
+import at.logic.gapt.formats.llkNew.{ loadLLK, LLKProofParser }
 import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.lkskNew.LKskToExpansionProof
 import at.logic.gapt.proofs.resolution.RobinsonToRal
 
 import at.logic.gapt.provers.prover9._
@@ -131,16 +133,16 @@ class nTapeTest extends Specification {
    */
   def doCutelim( filename: String ): Option[String] = {
     show( "Loading file" )
-    val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
+    val pdb = loadLLK( getClass.getClassLoader getResourceAsStream filename )
     show( "Eliminating definitions, expanding tautological axioms" )
     val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
     show( "Skolemizing" )
     val selp = LKToLKsk( elp )
 
     show( "Extracting struct" )
-    val struct = extractStructFromLKsk( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+    val struct = extractStructFromLKsk( selp, ceres_omega.skip_propositional )
     show( "Computing projections" )
-    val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )
+    val proj = Projections( selp, ceres_omega.skip_propositional )
 
     show( "Computing clause set" )
     val cl = StandardClauseSet( struct )
@@ -189,7 +191,6 @@ class nTapeTest extends Specification {
   args( skipAll = !Prover9.isInstalled )
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
-      skipped( "ceres omega still has problems" )
       //skipped("works but takes a bit time")
       doCutelim( "tape3.llk" ) match {
         case Some( error ) => ko( error )
@@ -199,7 +200,6 @@ class nTapeTest extends Specification {
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
-      skipped( "ceres omega still has problems" )
       doCutelim( "tape3ex.llk" ) match {
         case Some( error ) => ko( error )
         case None          => ok

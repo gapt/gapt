@@ -16,13 +16,10 @@ case class ProjectionException( message: String, original_proof: LKskProof, new_
   extends Exception( message, nested ) {}
 
 object Projections extends at.logic.gapt.utils.logging.Logger {
-  def reflexivity_projection( es: LabelledSequent, t: Ty = Ti, label: Label ): ( LKskProof, Sequent[Boolean] ) = {
+  def reflexivity_projection( es: LabelledSequent, term: LambdaExpression, label: Label ): ( LKskProof, Sequent[Boolean] ) = {
+    require( term.exptype == Ti, "Only first order reflexivity projections are allowed!" )
     // create a fresh variable to create x = x
-    val ( es_ant, es_succ ) = es.map( _._2 ).toTuple
-    val es_formulas = es_ant ++ es_succ
-    val es_vars = es_formulas.foldLeft( Set[Var]() )( ( x, y ) => x ++ freeVariables( y ) )
-    val x = rename( Var( "x", t ), es_vars.toList )
-    val ax: LKskProof = Reflexivity( label, x )
+    val ax: LKskProof = Reflexivity( label, term )
     val cut_anc = ax.conclusion.map( _ => true )
     weakenESAncs( es, Set( ( ax, cut_anc ) ) ).toList( 0 )
   }
@@ -34,6 +31,13 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   def apply( proof: LKskProof, pred: HOLFormula => Boolean ): Set[( LKskProof, Sequent[Boolean] )] =
     apply( proof, proof.conclusion.map( _ => false ), pred )
 
+  /**
+   * Given an LKsk proof proof, compute the set of projections for it.
+   * @param proof The original proof.
+   * @param cut_ancs A characteristic function indicating which formula occurrences in the conclusion are cut ancestors
+   * @param pred A predicate deciding if a cut-formula should be included in the projection
+   * @return A set of pairs (projection, cut_ancs) where cut_ancs indicates the cut ancestors of the projection's conclusion
+   */
   def apply( proof: LKskProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[( LKskProof, Sequent[Boolean] )] = {
     implicit val c_ancs = cut_ancs
     proof.occConnectors
@@ -83,7 +87,6 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         case AllSkLeft( p, a, f, t )            => handleWeakQuantRule( proof, p, a, f, t, AllSkLeft.apply, pred )
         case ExSkRight( p, a, f, t )            => handleWeakQuantRule( proof, p, a, f, t, ExSkRight.apply, pred )
 
-        //TODO: handle equality
         case Equality( p, e, a, flipped, pos ) =>
           handleEqRule( proof, p, e, a, flipped, pos, pred )
 

@@ -23,6 +23,9 @@ object applySubstitution {
     case Axiom( antlabel, suclabel, f ) =>
       Axiom( bnsub( antlabel, substitution ), bnsub( suclabel, substitution ), bnsub( f, substitution ) )
 
+    case Reflexivity( suclabel, f ) =>
+      Reflexivity( bnsub( suclabel, substitution ), bnsub( f, substitution ) )
+
     case WeakeningLeft( subProof, f ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       WeakeningLeft( subProofNew, bnsub( f, substitution ) )
@@ -131,7 +134,7 @@ object applySubstitution {
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
       Equality( subProofNew, eq, aux, flipped, pos )
 
-    case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
+    case _ => throw new IllegalArgumentException( s"The rule ${proof.longName} is not handled at this time." )
   }
 
   def bnsub( f: LambdaExpression, sub: Substitution ): LambdaExpression = betaNormalize( sub( f ) )
@@ -139,3 +142,123 @@ object applySubstitution {
   def bnsub( f: Label, sub: Substitution ): Label = f.map( bnsub( _, sub ) )
   def bnsub( f: LabelledFormula, sub: Substitution ): LabelledFormula = ( bnsub( f._1, sub ), bnsub( f._2, sub ) )
 }
+
+/*
+object applySubstitution {
+  def apply( l: Label)(implicit subst : Substitution) : Label = l map subst.apply
+  def apply( s : LabelledFormula)(implicit subst : Substitution) : LabelledFormula = (apply(s._1)(subst), subst(s._2))
+  def apply( s : LabelledSequent)(implicit subst : Substitution) : LabelledSequent= s.map(apply)
+
+  def apply( proof: LKskProof, cut_ancs: Sequent[Boolean])(implicit subst : Substitution): ( LKskProof, Sequent[Boolean] ) = {
+    /* Invariant of the algorithm: in proof and subst(proof), the sequent index of each formula F and subst(F) is the same
+       as a consequence, also cut_ancs == subst(cut_ancs). It is still present in the signature s.t. the ceres omega code
+       does not rely on the invariant.
+    */
+    implicit val c_ancs = cut_ancs
+    proof.occConnectors
+    try {
+      val r: ( LKskProof, Sequent[Boolean] ) = proof match {
+        /* Structural rules except cut */
+        case TopRight( _ ) | BottomLeft( _ ) => (proof, cut_ancs)
+        case Axiom( l1, l2, f ) => (Axiom(apply(l1), apply(l2), subst(f)), cut_ancs )
+        case Reflexivity( l, f )                =>
+          (Reflexivity(apply(l), subst(f)), cut_ancs )
+        case ContractionLeft( p, a1, a2 )       =>
+          val (rp, _) = apply(p, cut_ancs)
+          (ContractionLeft(rp,a1,a2), cut_ancs)
+        case ContractionRight( p, a1, a2 )      =>
+          val (rp, _) = apply(p, cut_ancs)
+          (ContractionRight(rp, a1, a2), cut_ancs)
+        case WeakeningLeft( p, m )              =>
+          val (rp, _) = apply(rp, cut_ancs)
+          (WeakeningLeft(p,m), cut_ancs)
+        case WeakeningRight( p, m )             =>
+          val (rp, _) = apply(p, cut_ancs)
+          (WeakeningRight(rp,m), cut_ancs)
+
+        /* Logical rules */
+        case AndRight( p1, a1, p2, a2 )         =>
+          val (rp1, _) = apply(p1, cut_ancs)
+          val (rp2, _) = apply(p2, cut_ancs)
+          (AndRight(rp1,a1,rp2,a2), cut_ancs)
+        case OrLeft( p1, a1, p2, a2 )           =>
+          val (rp1, _) = apply(p1, cut_ancs)
+          val (rp2, _) = apply(p2, cut_ancs)
+          (OrLeft(rp1,a1,rp2,a2), cut_ancs)
+        case ImpLeft( p1, a1, p2, a2 )          =>
+          val (rp1, _) = apply(p1, cut_ancs)
+          val (rp2, _) = apply(p2, cut_ancs)
+          (ImpLeft(rp1,a1,rp2,a2), cut_ancs)
+        case NegLeft( p, a )                    =>
+          val (rp, _) = apply(p, cut_ancs)
+          (NegLeft(rp,a), cut_ancs)
+        case NegRight( p, a )                   =>
+          val (rp, _) = apply(p, cut_ancs)
+          (NegRight(rp,a), cut_ancs)
+        case OrRight( p, a1, a2 )               =>
+          val (rp, _) = apply(p, cut_ancs)
+          (OrRight(rp, a1,a2), cut_ancs)
+        case AndLeft( p, a1, a2 )               =>
+          val (rp, _) = apply(p, cut_ancs)
+          (AndLeft(rp,a1,a2), cut_ancs)
+        case ImpRight( p, a1, a2 )              =>
+          val (rp, _) = apply(p, cut_ancs)
+          (ImpRight(rp,a1,a2), cut_ancs)
+
+        /* quantifier rules  */
+        case AllRight( p, a, f, eigenvar ) if subst.range contains eigenvar =>
+          val ev = rename(ev, subst.range)
+          val (rp1, _) = apply(p, cut_ancs)(Substitution(eigenvar -> ev))
+          val (rp2, _) = AllRight(rp1, a, f, ev)
+          apply(rp2, cut_ancs)
+        case AllRight(p,a,f,eigenvar) =>
+          val (rp,_) = apply(p, cut_ancs)(Substitution(subst.map - eigenvar))
+          (AllRight(rp, a, betaNormalize(subst(f)), eigenvar), cut_ancs)
+        case ExLeft( p, a, f, eigenvar ) if subst.range contains eigenvar    =>
+          val ev = rename(ev, subst.range)
+          val (rp1, _) = apply(p, cut_ancs)(Substitution(eigenvar -> ev))
+          val (rp2, _) = ExLeft(rp1, a, f, ev)
+          apply(rp2, cut_ancs)
+        case ExLeft( p, a, f, eigenvar )     =>
+          val (rp,_) = apply(p, cut_ancs)(Substitution(subst.map - eigenvar))
+          (ExLeft(rp, a, betaNormalize(subst(f)), eigenvar), cut_ancs)
+
+        case AllLeft( p, a, f, t )              =>
+          val (rp,_) = apply(p, cut_ancs)
+          (AllLeft(rp, a, betaNormalize(subst(f)), betaNormalize(subst(t))), cut_ancs)
+        case ExRight( p, a, f, t )              =>
+          val (rp,_) = apply(p, cut_ancs)
+          (ExRight(rp, a, betaNormalize(subst(f)), betaNormalize(subst(t))), cut_ancs)
+
+        case AllSkRight( p, a, main, sk_const ) =>
+          val (rp,_) = apply(p, cut_ancs)
+          (AllSkRight(rp, a, betaNormalize(subst(main)), sk_const), cut_ancs)
+        case ExSkLeft( p, a, main, sk_const )   =>
+          val (rp,_) = apply(p, cut_ancs)
+          (ExSkLeft(rp, a, betaNormalize(subst(main)), sk_const), cut_ancs)
+        case AllSkLeft( p, a, f, t )            =>
+          val (rp,_) = apply(p, cut_ancs)
+          (AllSkLeft(rp, a, betaNormalize(subst(f)), betaNormalize(subst(t))), cut_ancs)
+        case ExSkRight( p, a, f, t )            =>
+          val (rp,_) = apply(p, cut_ancs)
+          (ExSkRight(rp, a, betaNormalize(subst(f)), betaNormalize(subst(t))), cut_ancs)
+
+        case Equality( p, e, a, flipped, pos ) =>
+          val (rp, _) = apply(p, cut_ancs)
+          (Equality(rp,e,a,flipped,pos), cut_ancs)
+
+        case r @ Cut( p1, a1, p2, a2 ) =>
+        case _ => throw new Exception( "No such a rule in Projections.apply " + proof.longName )
+      }
+      r
+    } catch {
+      case e: ProjectionException =>
+        //println("passing exception up...")
+        //throw ProjectionException(e.getMessage, proof, Nil, null)
+        throw e
+      case e: Exception =>
+        throw ProjectionException( "Error computing projection: " + e.getMessage + sys.props( "line.separator" ) + e.getStackTrace, proof, Nil, e )
+    }
+  }
+}
+*/

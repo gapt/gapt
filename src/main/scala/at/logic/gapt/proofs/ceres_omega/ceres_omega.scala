@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres_omega
 
+import at.logic.gapt.expr.hol.{ freeHOVariables, containsQuantifierOnLogicalLevel }
 import at.logic.gapt.proofs.lkskNew.LKskProof._
 import at.logic.gapt.proofs.lkskNew._
 import at.logic.gapt.expr._
@@ -7,30 +8,18 @@ import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
 import at.logic.gapt.proofs.{ SequentIndex, Suc, Ant, Sequent }
 import at.logic.gapt.proofs.ral._
-
-//this is a dummy until apply subst is done
-object applySubstitution {
-  def apply( proof: LKskProof, subst: Substitution ): ( LKskProof, Map[SequentIndex, SequentIndex] ) = {
-    //TODO: implement
-    ( proof, Map() )
-  }
-}
+import at.logic.gapt.utils.logging.Logger
 
 /**
  * Created by marty on 10/6/14.
  */
 object ceres_omega extends ceres_omega
 
-class ceres_omega {
+class ceres_omega extends Logger {
+  //TODO: check if we cant replace it with the CERES.skip_propositional method
+  def skip_propositional( x: HOLFormula ) = containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty
 
   val nLine = sys.props( "line.separator" )
-
-  private def check_es( s: LabelledSequent, c: LabelledSequent, es: LabelledSequent ): LabelledSequent = {
-
-    s
-  }
-
-  private def invert( s: Sequent[Boolean] ) = s.map( !_ )
 
   /* Bug: Like the old versiom this code assumes that we can delete the labels while constructing the proof, not only at
      the cut. Because of that, we might contract the wrong formulas. If the Ral proof comes from a first-order import,
@@ -52,12 +41,11 @@ class ceres_omega {
     ralproof:    RalProof,
     es:          LabelledSequent,
     struct:      Struct[Label]
-  ): ( LKskProof, Sequent[Boolean] ) =
-    ralproof match {
+  ): ( LKskProof, Sequent[Boolean] ) = {
+    val r = ralproof match {
       //reflexivity as initial rule
       case RalInitial( Sequent( Seq(), Seq( ( label, equation @ Eq( x, y ) ) ) ) ) if ( x == y ) && ( x.exptype == Ti ) =>
-
-        Projections.reflexivity_projection( es, Ti, label )
+        Projections.reflexivity_projection( es, x, label )
 
       case RalInitial( root ) =>
         val candidates = projections.toList.flatMap( x => {
@@ -70,7 +58,7 @@ class ceres_omega {
 
         candidates match {
           case ( ( proof, cut_anc ), sub ) :: _ =>
-            val subproof = applySubstitution( proof, sub )._1
+            val subproof = applySubstitution( sub )( proof )
             val clause = filterEndsequent( subproof.conclusion, cut_anc )
             //subsumption has an implicit contraction. we first find out, which formulas are superfluous...
             val tocontract = Sequent[LabelledFormula](
@@ -89,7 +77,7 @@ class ceres_omega {
                       ( rule, nca )
                     case None => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
                   }
-                case None => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
+                case _ => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
               }
             } )
             val scontr = tocontract.succedent.foldLeft( acontr )( ( pair, occ ) => {
@@ -103,14 +91,9 @@ class ceres_omega {
                       ( rule, nca )
                     case None => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
                   }
-                case None => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
+                case _ => throw new Exception( "Could not find an element to contract for " + occ + " in " + root )
               }
             } )
-
-            //          require( scontr.root.toHOLSequent.multiSetEquals( ( nclause compose es ).toHOLSequent ), "The root " + f( scontr.root ) + " must consist of the clause " + f( nclause ) + " plus the end-sequent " + f( es ) )
-            //          require( scontr.root.occurrences.size == es.occurrences.size + nclause.occurrences.size, "The size of the generated end-sequent " + root + " is not the size of the end-sequent " + f( es ) + " + the size of the clause " + nclause )
-
-            //          require( ( nclause.occurrences diff scontr.root.occurrences ).isEmpty )
             scontr
           case Nil =>
             throw new Exception( "Could not find a projection for the clause " + root + " in " +
@@ -118,13 +101,12 @@ class ceres_omega {
         }
 
       case cut @ RalCut( parent1, p1occs, parent2, p2occs ) =>
-        val root = ralproof.formulas
         val ( lkparent1, ca1 ) = ceres_omega( projections, parent1, es, struct )
         val ( lkparent2, ca2 ) = ceres_omega( projections, parent2, es, struct )
 
-        //since we automatically delete the labels on the cut-ancestors, we need to look for an onlabeled cut_anc occurence
+        //since we automatically delete the labels on the cut-ancestors, we need to look for an unlabeled cut_anc occurrence
         val cut_lformula: LabelledFormula = ( Seq(), cut.cutFormula )
-        val cleft = p1occs.foldLeft( ( lkparent1, ca1 ) )( ( pair, _ ) => {
+        val cleft = p1occs.tail.foldLeft( ( lkparent1, ca1 ) )( ( pair, _ ) => {
           val ( proof, ca ) = pair
           val a1 = findAuxInSuccedent( cut_lformula, proof.conclusion, Seq(), ca )
           val a2 = findAuxInSuccedent( cut_lformula, proof.conclusion, Seq( a1 ), ca )
@@ -132,7 +114,7 @@ class ceres_omega {
           val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pair, false )
           ( rule, nca )
         } )
-        val cright = p2occs.foldLeft( ( lkparent2, ca2 ) )( ( pair, _ ) => {
+        val cright = p2occs.tail.foldLeft( ( lkparent2, ca2 ) )( ( pair, _ ) => {
           val ( proof, ca ) = pair
           val a1 = findAuxInAntecedent( cut_lformula, proof.conclusion, Seq(), ca )
           val a2 = findAuxInAntecedent( cut_lformula, proof.conclusion, Seq( a1 ), ca )
@@ -149,7 +131,6 @@ class ceres_omega {
         contractEndsequent( ( rule, nca ), es )
 
       case RalFactor( parent, contr @ Ant( _ ), aux ) =>
-        val root = ralproof.formulas
         val clformula = ralproof.conclusion( contr )
 
         val ( lkparent, ca ) = ceres_omega( projections, parent, es, struct )
@@ -161,7 +142,6 @@ class ceres_omega {
         ( rule, nca )
 
       case RalFactor( parent, contr @ Suc( _ ), aux ) =>
-        val root = ralproof.formulas
         val clformula = ralproof.conclusion( contr )
 
         val ( lkparent, ca ) = ceres_omega( projections, parent, es, struct )
@@ -175,24 +155,22 @@ class ceres_omega {
       case RalPara( _, _, _, _, pos, _ ) if pos.size != 1 =>
         throw new Exception( "Paramodulations at multiple positions are not handled!" )
 
-      case RalPara( parent1, p1occ, parent2, p2occ @ Ant( _ ), Seq( pos ), flipped ) =>
-        val root = ralproof.formulas
-        val principial = ralproof.mainFormulas.head._2
+      case RalPara( parent1, eqocc, parent2, p2occ @ Ant( _ ), Seq( pos ), flipped ) =>
         val ( lkparent1, ca1 ) = ceres_omega( projections, parent1, es, struct )
         val ( lkparent2, ca2 ) = ceres_omega( projections, parent2, es, struct )
 
-        val eqlformula = parent1.conclusion( p1occ )
+        val eqlformula = parent1.conclusion( eqocc )
 
         def fa( boolseq: Sequent[Boolean] ) = findAuxOptionInAntecedent( eqlformula, lkparent2.conclusion, Seq(), boolseq )
         def fs( boolseq: Sequent[Boolean] ) = findAuxOptionInSuccedent( eqlformula, lkparent1.conclusion, Seq(), boolseq )
 
         // check if the eqformula is already in the antecedent of parent 2. if yes, use the unary rule, if not simulate the binary rule
-        ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca2 ) ) match {
-          case ( Some( eqidx ), _ ) =>
+        ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca1 ) ) match {
+          case ( Some( eqidx ), _ ) if parent1.formulas( eqocc ) != parent2.formulas( p2occ ) => //need to exclude paramodulation into the same equation
             val modulant = findAuxInAntecedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
             val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
             val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
-            contractEndsequent( ( rule, nca ), es )
+            ( rule, nca )
           case ( _, Some( eqidx ) ) =>
             val wlkparent2 = WeakeningLeft( lkparent2, lkparent1.conclusion( eqidx ) )
             val nca = Projections.calculate_child_cut_ecs( wlkparent2, wlkparent2.occConnectors( 0 ), ( lkparent2, ca2 ), true )
@@ -203,54 +181,55 @@ class ceres_omega {
             }
             val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
             val nc2 = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
-            val ruleeqidx = rule.mainIndices( 1 ) match {
+            val ruleeqidx = rule.occConnectors( 0 ).child( weqidx ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of Equation (left)!" )
             }
             val cutrule = Cut( lkparent1, eqidx, rule, ruleeqidx )
             val cnca = Projections.calculate_child_cut_ecs( cutrule, cutrule.occConnectors( 0 ), cutrule.occConnectors( 1 ),
-              ( lkparent1, ca1 ), ( wlkparent2, nca ), false )
+              ( lkparent1, ca1 ), ( rule, nc2 ), false )
 
             contractEndsequent( ( cutrule, cnca ), es )
           case ( None, None ) =>
-            throw new Exception( s"Could not find equation $eqlformula!" )
+            throw new Exception( s"Could not find equation $eqlformula in parents ${lkparent1.conclusion} or ${lkparent2.conclusion}!" )
         }
 
-      case RalPara( parent1, p1occ, parent2, p2occ @ Suc( _ ), Seq( pos ), flipped ) =>
-        val root = ralproof.formulas
-        val principial = ralproof.mainFormulas.head._2
+      case RalPara( parent1, eqocc, parent2, p2occ @ Suc( _ ), Seq( pos ), flipped ) =>
         val ( lkparent1, ca1 ) = ceres_omega( projections, parent1, es, struct )
         val ( lkparent2, ca2 ) = ceres_omega( projections, parent2, es, struct )
 
-        val eqlformula = parent1.conclusion( p1occ )
+        val eqlformula = parent1.conclusion( eqocc )
 
         def fa( boolseq: Sequent[Boolean] ) = findAuxOptionInAntecedent( eqlformula, lkparent2.conclusion, Seq(), boolseq )
         def fs( boolseq: Sequent[Boolean] ) = findAuxOptionInSuccedent( eqlformula, lkparent1.conclusion, Seq(), boolseq )
 
         // check if the eqformula is already in the antecedent of parent 2. if yes, use the unary rule, if not simulate the binary rule
-        ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca2 ) ) match {
+        ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca1 ) ) match {
           case ( Some( eqidx ), _ ) =>
             val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
             val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
             val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
-            contractEndsequent( ( rule, nca ), es )
+            ( rule, nca )
           case ( _, Some( eqidx ) ) =>
-            val wlkparent2 = WeakeningRight( lkparent2, lkparent1.conclusion( eqidx ) )
+            //weaken equation on left hand side of lk parent 2, calculate new cut-ancestors
+            val wlkparent2 = WeakeningLeft( lkparent2, lkparent1.conclusion( eqidx ) )
             val nca = Projections.calculate_child_cut_ecs( wlkparent2, wlkparent2.occConnectors( 0 ), ( lkparent2, ca2 ), true )
-            val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), wlkparent2.conclusion, Seq( eqidx ), nca )
+            //find indices of modulant formula and equation in the new inference
+            val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), wlkparent2.conclusion, Seq(), nca )
             val weqidx = wlkparent2.mainIndices( 0 ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
+
             val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
             val nc2 = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
-            val ruleeqidx = rule.mainIndices( 1 ) match {
+            val ruleeqidx = rule.occConnectors( 0 ).child( weqidx ) match {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of Equation (left)!" )
             }
             val cutrule = Cut( lkparent1, eqidx, rule, ruleeqidx )
             val cnca = Projections.calculate_child_cut_ecs( cutrule, cutrule.occConnectors( 0 ), cutrule.occConnectors( 1 ),
-              ( lkparent1, ca1 ), ( wlkparent2, nca ), false )
+              ( lkparent1, ca1 ), ( rule, nc2 ), false )
 
             contractEndsequent( ( cutrule, cnca ), es )
           case ( None, None ) =>
@@ -258,14 +237,17 @@ class ceres_omega {
         }
 
       case RalSub( parent, sub ) =>
-        val root = ralproof.formulas
         val ( lkparent, ca ) = ceres_omega( projections, parent, es, struct )
-        val ( rule, mapping ) = applySubstitution( lkparent, sub )
-        //TODO: we assume here that the indices in the substituted proof and in the parents are the same
+        val rule = applySubstitution( sub )( lkparent )
+        //we use the invariant that the order of formula occurrences does not change by applying the substitution
         ( rule, ca )
 
       case _ => throw new Exception( "Unhandled case: " + ralproof )
     }
+    debug( s"${ralproof.longName}" )
+    debug( s"cutanc ${r._1.conclusion.zipWithIndex.filter( x => r._2( x._2 ) ).map( _._1._2 )}" )
+    r
+  }
 
   def findAuxOptionInAntecedent( aux: LabelledFormula, sequent: LabelledSequent,
                                  exclusion_list: Seq[SequentIndex], bool_filter: Sequent[Boolean] ): Option[Ant] =
@@ -277,7 +259,7 @@ class ceres_omega {
   def findAuxInAntecedent( aux: LabelledFormula, sequent: LabelledSequent,
                            exclusion_list: Seq[SequentIndex], bool_filter: Sequent[Boolean] ): Ant =
     findAuxOptionInAntecedent( aux, sequent, exclusion_list, bool_filter ).getOrElse(
-      throw new Exception( s"Could not find the auxiliary formula $aux in antecedent of $sequent with exclusion list $exclusion_list" )
+      throw new Exception( s"Could not find the auxiliary formula $aux in antecedent of $sequent with exclusion list $exclusion_list and filter $bool_filter" )
     )
 
   def findAuxOptionInSuccedent( aux: LabelledFormula, sequent: LabelledSequent,
@@ -290,7 +272,7 @@ class ceres_omega {
   def findAuxInSuccedent( aux: LabelledFormula, sequent: LabelledSequent,
                           exclusion_list: Seq[SequentIndex], bool_filter: Sequent[Boolean] ): Suc =
     findAuxOptionInSuccedent( aux, sequent, exclusion_list, bool_filter ).getOrElse(
-      throw new Exception( s"Could not find the auxiliary formula $aux in succedent of $sequent with exclusion list $exclusion_list" )
+      throw new Exception( s"Could not find the auxiliary formula $aux in succedent of $sequent with exclusion list $exclusion_list and filter $bool_filter" )
     )
 
   /**
@@ -303,22 +285,27 @@ class ceres_omega {
   def contractEndsequent( p: ( LKskProof, Sequent[Boolean] ), es: LabelledSequent ): ( LKskProof, Sequent[Boolean] ) = {
     val contr_left = es.antecedent.foldLeft( p )( ( rp, fo ) => {
       val ( proof, ca ) = rp
-      val a1 = findAuxInAntecedent( fo, proof.conclusion, Seq(), ca )
-      val a2 = findAuxInAntecedent( fo, proof.conclusion, Seq( a1 ), ca )
+      val esa = invert( ca )
+      val a1 = findAuxInAntecedent( fo, proof.conclusion, Seq(), esa )
+      val a2 = findAuxInAntecedent( fo, proof.conclusion, Seq( a1 ), esa )
       val rule = ContractionLeft( proof, a1, a2 )
       val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rp, false )
       ( rule, nca )
     } )
     val contr_right = es.succedent.foldLeft( p )( ( rp, fo ) => {
       val ( proof, ca ) = rp
-      val a1 = findAuxInSuccedent( fo, proof.conclusion, Seq(), ca )
-      val a2 = findAuxInSuccedent( fo, proof.conclusion, Seq( a1 ), ca )
+      val esa = invert( ca )
+      val a1 = findAuxInSuccedent( fo, proof.conclusion, Seq(), esa )
+      val a2 = findAuxInSuccedent( fo, proof.conclusion, Seq( a1 ), esa )
       val rule = ContractionRight( proof, a1, a2 )
       val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rp, false )
       ( rule, nca )
     } )
     contr_right
   }
+
+  /* inverts a boolean sequent */
+  def invert( s: Sequent[Boolean] ) = s.map( !_ )
 
   /* removes the final end-sequent from a projection's current end-sequent */
   def filterEndsequent( root: LabelledSequent, cut_anc: Sequent[Boolean] ) =

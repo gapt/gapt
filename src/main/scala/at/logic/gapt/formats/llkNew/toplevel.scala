@@ -2,7 +2,9 @@ package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.expr.{ LambdaExpression, HOLFormula }
 import at.logic.gapt.proofs.lk.LKProof
-import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
+import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, InputStream }
+
+import scala.io.Source
 
 /**
  * Top-level interface to LLK Parsing
@@ -18,6 +20,8 @@ object loadLLK {
     val tokens = LLKProofParser.parseFile( filename )
     LLKProofParser.createLKProof( tokens )
   }
+  def apply( stream: InputStream ) =
+    LLKProofParser.parseString( Source.fromInputStream( stream ).mkString )
 }
 
 object exportLLK {
