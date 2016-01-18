@@ -557,13 +557,39 @@ We can also extract instances for basic equality axioms (reflexivity, symmetry,
 and congruences) from veriT's proof output:
 \begin{clilisting}[VeriT.isInstalled]
 gapt> val Some(expansionSequent) = VeriT getExpansionSequent (Sequent() :+ f)
-expansionSequent: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(x=y⊃y=x), ArrayBuffer((WeakQuantifier(∀y.(a=y⊃y=a), ArrayBuffer((Atom(a=b)⊃Atom(b=a),b), (Atom(a=c)⊃Atom(c=a),c))),a))), WeakQuantifier(∀x1.∀y1.((x1=y1∧P(x1))⊃P(y1)), ArrayBuffer((WeakQuantifier(∀y1.((c=y1∧P(c))⊃P(y1)), ArrayBuffer((Atom(c=a)∧Atom(P(c))⊃Atom(P(a)),a))),c), (WeakQuantifier(∀y1.((b=y1∧P(b))⊃P(y1)), ArrayBuffer((Atom(b=a)∧Atom(P(b))⊃Atom(P(a)),a))),b))) :- Atom(a=b)∨Atom(a=c)∧Atom(P(c))∧Atom(P(b))⊃Atom(P(a))
-
+warning: there was one deprecation warning; re-run with -deprecation for details
+expansionSequent: at.logic.gapt.proofs.expansion.ExpansionSequent =
+[p8] ETWeakQuantifier(∀x.∀y.(x=y⊃y=x), a, p7)
+[p7] ETWeakQuantifier(∀y.(a=y⊃y=a), b, p3, c, p6)
+[p6] ETImp(p4, p5)
+[p5] ETAtom(c=a, false)
+[p4] ETAtom(a=c, true)
+[p3] ETImp(p1, p2)
+[p2] ETAtom(b=a, false)
+[p1] ETAtom(a=b, true)
+, [p12] ETWeakQuantifier(∀x1.∀y1.((x1=y1∧P(x1))⊃P(y1)), b, p6, c, p11)
+[p11] ETWeakQuantifier(∀y1.((c=y1∧P(c))⊃P(y1)), a, p10)
+[p10] ETImp(p9, p4)
+[p9] ETAnd(p7, p8)
+[p8] ETAtom(P(c), true)
+[p7] ETAtom(c=a, true)
+[p6] ETWeakQuantifier(∀y1.((b=y1∧P(b))⊃P(y1)), a, p5)
+[p5] ETImp(p3, p4)
+[p4] ETAtom(P(a), false)
+[p3] ETAnd(p1, p2)
+[p2] ETAtom(P(b), true)
+[p1] ETAtom(b=a, true)
+ :- [p9] ETImp(p7, p8)
+[p8] ETAtom(P(a), true)
+[p7] ETAnd(p3, p6)
+[p6] ETAnd(p4, p5)
+[p5] ETAtom(P(b), false)
+[p4] ETAtom(P(...
 gapt> extractInstances(expansionSequent) foreach println
 (a=b⊃b=a)
 (a=c⊃c=a)
-((c=a∧P(c))⊃P(a))
 ((b=a∧P(b))⊃P(a))
+((c=a∧P(c))⊃P(a))
 (((a=b∨a=c)∧(P(c)∧P(b)))⊃P(a))
 
 \end{clilisting}
@@ -612,7 +638,18 @@ Some([p19] ∀x.(p(x)⊃p(s(x))), p(0) :- p(s(s(0)))    (ContractionLeftRule(p18
 [p13] ∀x.(p(x)⊃p(s(x))), ∀x.(p(x)⊃p(s(x))), p(s(0)) :- p(s(s(0)))    (WeakeningLeftRule(p12, ∀x.(p(x)⊃p(s(x)))))
 [p12] ∀x.(p(x)⊃p(s(x))), p(s(0)) :- p(s(s(0)))    (ForallLeftRule(p11, Ant(0), (p(x)⊃p(s(x))), s(0...
 gapt> Prover9 getExpansionSequent sequent
-res21: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(Atom(p(0)), WeakQuantifier(∀x.(p(x)⊃p(s(x))), List((Atom(p(0))⊃Atom(p(s(0))),0), (Atom(p(s(0)))⊃Atom(p(s(s(0)))),s(0)))) :- Atom(p(s(s(0)))))
+warning: there was one deprecation warning; re-run with -deprecation for details
+res21: Option[at.logic.gapt.proofs.expansion.ExpansionSequent] =
+Some([p1] ETAtom(p(0), false)
+, [p7] ETWeakQuantifier(∀x.(p(x)⊃p(s(x))), 0, p3, s(0), p6)
+[p6] ETImp(p4, p5)
+[p5] ETAtom(p(s(s(0))), false)
+[p4] ETAtom(p(s(0)), true)
+[p3] ETImp(p1, p2)
+[p2] ETAtom(p(s(0)), false)
+[p1] ETAtom(p(0), true)
+ :- [p1] ETAtom(p(s(s(0))), true)
+)
 
 \end{clilisting}
 
@@ -641,7 +678,15 @@ gapt> val strong = ("(exists x all y P(x,y))" +: Sequent()                      
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x.∀y.P(x,y) :- ∀y.∃x.P(x,y)
 
 gapt> Prover9 getExpansionSequent strong
-res23: Option[at.logic.gapt.proofs.expansionTrees.ExpansionSequent] = Some(SkolemQuantifier(∃x.∀y.P(x,y), s_{0}, WeakQuantifier(∀y.P(s_{0},y), List((Atom(P(s_{0},s_{2})),s_{2})))) :- SkolemQuantifier(∀y.∃x.P(x,y), s_{2}, WeakQuantifier(∃x.P(x,s_{2}), List((Atom(P(s_{0},s_{2})),s_{0})))))
+warning: there was one deprecation warning; re-run with -deprecation for details
+res23: Option[at.logic.gapt.proofs.expansion.ExpansionSequent] =
+Some([p3] ETSkolemQuantifier(∃x.∀y.P(x,y), s_{0}, p2)
+[p2] ETWeakQuantifier(∀y.P(s_{0},y), s_{2}, p1)
+[p1] ETAtom(P(s_{0},s_{2}), false)
+ :- [p3] ETSkolemQuantifier(∀y.∃x.P(x,y), s_{2}, p2)
+[p2] ETWeakQuantifier(∃x.P(x,s_{2}), s_{0}, p1)
+[p1] ETAtom(P(s_{0},s_{2}), true)
+)
 
 \end{clilisting}
 
@@ -649,6 +694,7 @@ The LeanCoP interface only supports the \cli{getExpansionSequent} method with
 exactly one formula in the succedent:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionSequent sequent map {toDeep(_)}
+warning: there was one deprecation warning; re-run with -deprecation for details
 res24: Option[at.logic.gapt.proofs.HOLSequent] = Some(p(0), ((p(0)⊃p(s(0)))∧(p(s(0))⊃p(s(s(0))))) :- p(s(s(0))))
 
 \end{clilisting}
@@ -849,7 +895,25 @@ p: at.logic.gapt.proofs.lk.LKProof =
 [p37] (P(0,0)⊃P(s(0),0)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ImpLeftRule(p1, Suc(0), p36, Ant(1)))
 [p36] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(s(0),0), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0))))...
 gapt> val E = LKToExpansionProof( p )
-E: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.∀y.(P(x,y)⊃P(s(x),y)), List((WeakQuantifier(∀y.(P(0,y)⊃P(s(0),y)), List((Atom(P(0,0))⊃Atom(P(s(0),0)),0))),0), (WeakQuantifier(∀y.(P(s(0),y)⊃P(s(s(0)),y)), List((Atom(P(s(0),0))⊃Atom(P(s(s(0)),0)),0))),s(0)), (WeakQuantifier(∀y.(P(s(s(0)),y)⊃P(s(s(s(0))),y)), List((Atom(P(s(s(0)),0))⊃Atom(P(s(s(s(0))),0)),0))),s(s(0))), (WeakQuantifier(∀y.(P(s(s(s(0))),y)⊃P(s(s(s(s(0)))),y)), List((Atom(P(s(s(s(0))),0))⊃Atom(P(s(s(s(s(0)))),0)),0))),s(s(s(0)))))), Atom(P(0,0)), WeakQuantifier(∀x.∀y.(P(x,y)⊃P(x,s(y))), List((WeakQuantifier(∀y.(P(s(s(s(s(0)))),y)⊃P(s(s(s(s(0)))),s(y))), List((Atom(P(s(s(s(s(0)))),0))⊃Atom(P(s(s(s(s(0)))),s(0))),0), (Atom(P(s(s(s(s(0)))),s(0)))⊃Atom(P(s(s(s(s(0)))),s(s(0)))),s(0)), (Atom(P(s(s(s(s(...
+E: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+ExpansionProofWithCut(List(),[p17] ETWeakQuantifier(∀x.∀y.(P(x,y)⊃P(s(x),y)), s(s(s(0))), p4, s(s(0)), p8, s(0), p12, 0, p16)
+[p16] ETWeakQuantifier(∀y.(P(0,y)⊃P(s(0),y)), 0, p15)
+[p15] ETImp(p13, p14)
+[p14] ETAtom(P(s(0),0), false)
+[p13] ETAtom(P(0,0), true)
+[p12] ETWeakQuantifier(∀y.(P(s(0),y)⊃P(s(s(0)),y)), 0, p11)
+[p11] ETImp(p9, p10)
+[p10] ETAtom(P(s(s(0)),0), false)
+[p9] ETAtom(P(s(0),0), true)
+[p8] ETWeakQuantifier(∀y.(P(s(s(0)),y)⊃P(s(s(s(0))),y)), 0, p7)
+[p7] ETImp(p5, p6)
+[p6] ETAtom(P(s(s(s(0))),0), false)
+[p5] ETAtom(P(s(s(0)),0), true)
+[p4] ETWeakQuantifier(∀y.(P(s(s(s(0))),y)⊃P(s(s(s(s(0)))),y)), 0, p3)
+[p3] ETImp(p1, p2)
+[p2] ETAtom(P(s(s(s(s(0)))),0), false)
+[p1] ETAtom(P(s(s(s(0))),0), true)
+, [p1] ETAtom(P(0,0),...
 \end{clilisting}
 This expansion sequent can then be viewed in the graphical user interface by simply calling:
 \begin{clilisting}
@@ -908,7 +972,17 @@ acnf: at.logic.gapt.proofs.lk.LKProof =
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
-et: at.logic.gapt.proofs.expansionTrees.ExpansionSequent = WeakQuantifier(∀x.(f(x)=0∨f(x)=s(0)), List((Atom(f(M(s(M(v100,v101)),v102))=0)∨Atom(f(M(s(M(v100,v101)),v102))=s(0)),M(s(M(v100,v101)),v102)), (Atom(f(M(v100,v101))=0)∨Atom(f(M(v100,v101))=s(0)),M(v100,v101)), (Atom(f(M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102))))=0)∨Atom(f(M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102))))=s(0)),M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102)))), (Atom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),v102))=0)∨Atom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),v102))=s(0)),M(s(M(M(v100,v101),s(M(v100,v101)))),v102)), (Atom(f(M(M(v100,v101),s(M(v100,v101))))=0)∨Atom(f(M(M(v100,v101),s(M(v100,v101))))=s(0)),M(M(v100,v101),s(M(v100,v101)))), (Atom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),s(M(s(M(M(v100,v101),s(M(v100,v101))...
+et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+ExpansionProofWithCut(List(),[p19] ETWeakQuantifier(∀x.(f(x)=0∨f(x)=s(0)), M(s(M(v100,v101)),v102), p3, M(s(M(M(v100,v101),s(M(v100,v101)))),v102), p6, M(s(M(v100,v101)),s(M(s(M(v100,v101)),v102))), p9, M(s(M(M(v100,v101),s(M(v100,v101)))),s(M(s(M(M(v100,v101),s(M(v100,v101)))),v102))), p12, M(v100,v101), p15, M(M(v100,v101),s(M(v100,v101))), p18)
+[p18] ETOr(p16, p17)
+[p17] ETAtom(f(M(M(v100,v101),s(M(v100,v101))))=s(0), false)
+[p16] ETAtom(f(M(M(v100,v101),s(M(v100,v101))))=0, false)
+[p15] ETOr(p13, p14)
+[p14] ETAtom(f(M(v100,v101))=s(0), false)
+[p13] ETAtom(f(M(v100,v101))=0, false)
+[p12] ETOr(p10, p11)
+[p11] ETAtom(f(M(s(M(M(v100,v101),s(M(v100,v101)))),s(M(s(M(M(v100,v101),s(M(v100,v101)))),v102))))=s(0), false)
+[p10] ETAtom...
 gapt> prooftool(et)
 
 \end{clilisting}
