@@ -20,7 +20,7 @@ object linearizeStrictPartialOrder {
         case None =>
           val start = set.head
           val cycle = start +: walk( start, relation ).drop( 1 ).takeWhile( _ != start ) :+ start
-          Left( cycle )
+          Left( cycle.toList )
       }
     }
 
@@ -66,6 +66,18 @@ class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) extends Expansi
 object ExpansionProof {
   def apply( expansionSequent: Sequent[ExpansionTree] ) = new ExpansionProof( expansionSequent )
   def unapply( expansionProof: ExpansionProof ) = Some( expansionProof.expansionSequent )
+}
+
+private[expansion] object expansionProofSubstitution extends ClosedUnderSub[ExpansionProofWithCut] {
+  override def applySubstitution( subst: Substitution, expansionProof: ExpansionProofWithCut ): ExpansionProofWithCut =
+    if ( subst.domain intersect expansionProof.eigenVariables nonEmpty ) {
+      applySubstitution( Substitution( subst.map -- expansionProof.eigenVariables ), expansionProof )
+    } else {
+      val substWithRenaming = subst compose Substitution(
+        rename( expansionProof.eigenVariables intersect subst.range, expansionProof.eigenVariables union subst.range )
+      )
+      ExpansionProofWithCut( substWithRenaming( expansionProof.cuts ) map { _.asInstanceOf[ETImp] }, substWithRenaming( expansionProof.expansionSequent ) )
+    }
 }
 
 object eliminateMerges {
@@ -149,8 +161,8 @@ object eliminateMerges {
     if ( !needToMergeAgain ) {
       ExpansionProofWithCut( mergedCuts map { _.asInstanceOf[ETImp] }, mergedSequent )
     } else elim(
-      mergedCuts map { substituteET( _, eigenVarSubst ) } map { _.asInstanceOf[ETImp] },
-      mergedSequent map { substituteET( _, eigenVarSubst ) }
+      mergedCuts map { eigenVarSubst( _ ) } map { _.asInstanceOf[ETImp] },
+      mergedSequent map { eigenVarSubst( _ ) }
     )
   }
 }
@@ -180,11 +192,11 @@ object eliminateCutsET {
           yield renaming compose Substitution( eigenVariable -> term )
 
       apply( eliminateMerges( ExpansionProofWithCut(
-        ( for ( ( subst, ( term, instance ) ) <- substs zip instances.toSeq ) yield substituteET(
-          if ( strongPolarity ) ETImp( instance, child ) else ETImp( child, instance ), subst
+        ( for ( ( subst, ( term, instance ) ) <- substs zip instances.toSeq ) yield subst(
+          if ( strongPolarity ) ETImp( instance, child ) else ETImp( child, instance )
         ).asInstanceOf[ETImp] )
-          ++ ( for ( c <- rest; s <- Substitution() +: substs ) yield substituteET( c, s ).asInstanceOf[ETImp] ),
-        for ( tree <- expansionSequent ) yield ETMerge( tree +: substs.map { substituteET( tree, _ ) } )
+          ++ ( for ( c <- rest; s <- Substitution() +: substs ) yield s( c ).asInstanceOf[ETImp] ),
+        for ( tree <- expansionSequent ) yield ETMerge( tree +: substs.map { _( tree ) } )
       ) ) )
     }
 

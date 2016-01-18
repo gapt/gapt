@@ -97,7 +97,7 @@ object expansionProofFromInstances {
             if substs isDefinedAt clause
             subst <- substs( clause )
             if subst( defAtom ) == atom
-          } yield elimDefs( substituteET( expansionWithDefs, subst ), shallow ) ) + ETWeakening( shallow, pol ) )
+          } yield elimDefs( subst( expansionWithDefs ), shallow ) ) + ETWeakening( shallow, pol ) )
         )
       case ( ETAtom( _, _ ), _ )                => et
       case ( ETNeg( t1 ), Neg( sh1 ) )          => ETNeg( elimDefs( t1, sh1 ) )
@@ -117,7 +117,7 @@ object expansionProofFromInstances {
           ( clause, ProjectionFromEndSequent( projWithDefs, `idx` ) ) <- justifications
           if substs isDefinedAt clause
           subst <- substs( clause )
-        } yield elimDefs( substituteET( projWithDefs.elements.head, subst ), formula ) )
+        } yield elimDefs( subst( projWithDefs.elements.head ), formula ) )
           + ETWeakening( formula, idx isSuc )
       )
     ) )

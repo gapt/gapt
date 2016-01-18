@@ -166,9 +166,9 @@ object replaceET {
   }
 }
 
-object substituteET {
-  def apply( et: ExpansionTree, subst: Substitution ): ExpansionTree = et match {
-    case ETMerge( child1, child2 ) => ETMerge( substituteET( child1, subst ), substituteET( child2, subst ) )
+private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[ExpansionTree] {
+  def applySubstitution( subst: Substitution, et: ExpansionTree ): ExpansionTree = et match {
+    case ETMerge( child1, child2 ) => ETMerge( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
 
     case et @ ETWeakening( formula, _ ) =>
       et.copy( formula = subst( formula ) )
@@ -176,25 +176,25 @@ object substituteET {
       et.copy( atom = subst( atom ).asInstanceOf[HOLAtom] )
 
     case _: ETTop | _: ETBottom  => et
-    case ETNeg( child )          => ETNeg( substituteET( child, subst ) )
-    case ETAnd( child1, child2 ) => ETAnd( substituteET( child1, subst ), substituteET( child2, subst ) )
-    case ETOr( child1, child2 )  => ETOr( substituteET( child1, subst ), substituteET( child2, subst ) )
-    case ETImp( child1, child2 ) => ETImp( substituteET( child1, subst ), substituteET( child2, subst ) )
+    case ETNeg( child )          => ETNeg( applySubstitution( subst, child ) )
+    case ETAnd( child1, child2 ) => ETAnd( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
+    case ETOr( child1, child2 )  => ETOr( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
+    case ETImp( child1, child2 ) => ETImp( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
 
     case ETWeakQuantifier( shallow, instances ) =>
       ETWeakQuantifier.withMerge(
         subst( shallow ),
         for ( ( selectedTerm, child ) <- instances.toSeq )
-          yield subst( selectedTerm ) -> substituteET( child, subst )
+          yield subst( selectedTerm ) -> applySubstitution( subst, child )
       )
 
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       subst( eigenVariable ) match {
-        case eigenNew: Var => ETStrongQuantifier( subst( shallow ), eigenNew, substituteET( child, subst ) )
-        case skolemTerm    => ETSkolemQuantifier( subst( shallow ), skolemTerm, substituteET( child, subst ) )
+        case eigenNew: Var => ETStrongQuantifier( subst( shallow ), eigenNew, applySubstitution( subst, child ) )
+        case skolemTerm    => ETSkolemQuantifier( subst( shallow ), skolemTerm, applySubstitution( subst, child ) )
       }
     case ETSkolemQuantifier( shallow, skolemTerm, child ) =>
-      ETSkolemQuantifier( subst( shallow ), subst( skolemTerm ), substituteET( child, subst ) )
+      ETSkolemQuantifier( subst( shallow ), subst( skolemTerm ), applySubstitution( subst, child ) )
   }
 }
 
