@@ -1,9 +1,12 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.BussTautology
+import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.expr.{ StringSymbol, _ }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentMatchers }
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
 class SolveTest extends Specification with SequentMatchers {
@@ -30,7 +33,7 @@ class SolveTest extends Specification with SequentMatchers {
       val et = ETWeakQuantifier( formula, Map( u -> inst1, c -> inst2 ) )
       val etSeq = Sequent() :+ et
 
-      val Some( lkProof ) = solve.expansionProofToLKProof( toShallow( etSeq ), etSeq )
+      val Some( lkProof ) = solve.expansionProofToLKProof( etSeq )
       lkProof.endSequent must beMultiSetEqual( toShallow( etSeq ) )
     }
 
@@ -57,6 +60,18 @@ class SolveTest extends Specification with SequentMatchers {
   "ExpansionProofToLK" should {
     "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( true ) ) ) must_== TopAxiom }
     "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( false ) +: Sequent() ) ) must_== BottomAxiom }
+
+    "equality" in {
+      val Some( expansion ) = Escargot getExpansionProof existsclosure(
+        "x+(y+z) = (x+y)+z" +:
+          "x+y = y+x" +:
+          Sequent()
+          :+ "(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
+          map parseFormula
+      )
+      val lk = ExpansionProofToLK( expansion, hasEquality = true )
+      lk.conclusion must beMultiSetEqual( expansion.shallow )
+    }
   }
 }
 

@@ -6,7 +6,8 @@ import at.logic.gapt.expr.schema._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.provers.{ OneShotProver, Prover }
+import at.logic.gapt.proofs.resolution.RobinsonToLK
+import at.logic.gapt.provers.{ ResolutionProver, OneShotProver, Prover }
 import at.logic.gapt.utils.logging.Logger
 
 /**
@@ -19,53 +20,33 @@ object solve extends Logger {
 
   /**
    * Main method for solving propositional sequents
+   *
    * @param seq: sequent to prove
-   * @param throwOnError: throw Exception if there is no proof
    * @return a proof if there is one
    */
-  def solvePropositional( seq: HOLSequent, throwOnError: Boolean = false ): Option[LKProof] = {
-    debug( "running solvePropositional" )
-
-    if ( SolveUtils.noCommonAtoms( seq ) ) {
-      trace( "no common atoms: " + seq )
-      //      None
-    }
-
-    startProving( seq, new PropositionalProofStrategy, throwOnError )
-  }
+  def solvePropositional( seq: HOLSequent ): Option[LKProof] =
+    startProving( seq, new PropositionalProofStrategy, _ => None )
 
   def solvePropositional( formula: HOLFormula ): Option[LKProof] = solvePropositional( Sequent() :+ formula )
 
   /**
    * Transform expansion proof to LK proof (assumes that deep formula of expansionSequent is a tautology)
    */
-  def expansionProofToLKProof( expansionSequent: ExpansionSequent ): Option[LKProof] = {
-    expansionProofToLKProof( toShallow( expansionSequent ), expansionSequent )
-  }
-
-  /**
-   * "Solving" for FOL: Use instances from expansion sequent to create LK proof for a sequent
-   */
-  def expansionProofToLKProof( seq: HOLSequent, expansionSequent: ExpansionSequent, throwOnError: Boolean = false ): Option[LKProof] = {
-    debug( nLine + "running expansionProofToLKProof" )
-    startProving( seq, new ExpansionTreeProofStrategy( expansionSequent ), throwOnError )
-  }
+  def expansionProofToLKProof( expansionSequent: ExpansionSequent, qfProver: Option[ResolutionProver] = None ): Option[LKProof] =
+    startProving( toShallow( expansionSequent ), new ExpansionTreeProofStrategy( expansionSequent ),
+      qfProver match {
+        case Some( prover ) =>
+          seq => prover getRobinsonProof seq.filter { isAtom( _ ) } map { ref =>
+            RobinsonToLK( ref, Sequent(), cls => LogicalAxiom( cls.elements.head ), addWeakenings = false )
+          }
+        case None => _ => None
+      } )
 
   // internal interface method
-  private def startProving( seq: HOLSequent, strategy: ProofStrategy, throwOnError: Boolean ): Option[LKProof] = {
-    val seq_norm = HOLSequent( seq.antecedent.toSet.toList, seq.succedent.toSet.toList )
+  private def startProving( seq: HOLSequent, strategy: ProofStrategy, fallback: HOLSequent => Option[LKProof] ): Option[LKProof] =
+    prove( seq.distinct, strategy, fallback ) map { WeakeningMacroRule( _, seq ) }
 
-    prove( seq_norm, strategy ) match {
-      case Some( p ) => {
-        debug( "finished proof successfully" )
-        Some( WeakeningMacroRule( p, seq ) )
-      }
-      case None =>
-        if ( throwOnError ) throw new Exception( "Sequent is not provable." ) else None
-    }
-  }
-
-  private def prove( seq: HOLSequent, strategy: ProofStrategy ): Option[LKProof] = {
+  private def prove( seq: HOLSequent, strategy: ProofStrategy, fallback: HOLSequent => Option[LKProof] ): Option[LKProof] = {
     // we are only proving set-normalized sequents
     val antSet = seq.antecedent.toSet
     val sucSet = seq.succedent.toSet
@@ -96,19 +77,19 @@ object solve extends Logger {
           action.loc match {
             case ProofStrategy.FormulaLocation.Antecedent =>
               assert( seq.antecedent.contains( action.formula ) )
-              applyActionAntecedent( action, seq )
+              applyActionAntecedent( action, seq, fallback )
 
             case ProofStrategy.FormulaLocation.Succedent =>
               assert( seq.succedent.contains( action.formula ) )
-              applyActionSuccedent( action, seq )
+              applyActionSuccedent( action, seq, fallback )
           }
 
-        case None => None
+        case None => fallback( seq )
       }
     }
   }
 
-  private def applyActionAntecedent( action: ProofStrategy.Action, seq: HOLSequent ): Option[LKProof] = {
+  private def applyActionAntecedent( action: ProofStrategy.Action, seq: HOLSequent, fallback: HOLSequent => Option[LKProof] ): Option[LKProof] = {
     // sequent without principal formula to help building upper goal sequent
     val rest = HOLSequent( seq.antecedent.diff( action.formula :: Nil ), seq.succedent )
     // proof strategies for children (with expansion sequents according to children or no changes in the propositional case)
@@ -120,13 +101,13 @@ object solve extends Logger {
 
       case All( v, f ) => {
         val quantifiedTerm = action.getQuantifiedTerm.get // must be defined in this case
-        val auxFormula = Substitution( v, quantifiedTerm )( f )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, quantifiedTerm )( f ) )
 
         val p_ant = if ( seq.antecedent.contains( auxFormula ) ) seq.antecedent else auxFormula +: seq.antecedent
         val p_suc = seq.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof => {
           if ( proof.endSequent.antecedent.contains( auxFormula ) && !rest.antecedent.contains( auxFormula ) ) {
             val proof1 = ForallLeftRule( proof, action.formula, quantifiedTerm )
             if ( proof.endSequent.antecedent.contains( action.formula ) ) // main formula already appears in upper proof
@@ -146,7 +127,7 @@ object solve extends Logger {
         val p_suc = seq.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof =>
           if ( proof.endSequent.antecedent.contains( auxFormula ) && !rest.antecedent.contains( auxFormula ) )
             ExistsLeftRule( proof, action.formula, eigenVar )
           else
@@ -163,7 +144,7 @@ object solve extends Logger {
         val p_suc = if ( seq.succedent.contains( f1 ) ) seq.succedent else f1 +: rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof =>
           if ( proof.endSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 ) )
             NegLeftRule( proof, f1 )
           else
@@ -177,7 +158,7 @@ object solve extends Logger {
         val p_suc = rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof =>
           if ( proof.endSequent.antecedent.contains( f1 ) || proof.endSequent.antecedent.contains( f2 ) )
             AndLeftMacroRule( proof, f1, f2 )
           else
@@ -191,14 +172,14 @@ object solve extends Logger {
         val p_suc1 = rest.succedent
         val premise1 = HOLSequent( p_ant1, p_suc1 )
 
-        prove( premise1, nextProofStrategies( 0 ) ) match {
+        prove( premise1, nextProofStrategies( 0 ), fallback ) match {
           case Some( proof1 ) =>
             if ( proof1.endSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 ) ) {
               val p_ant2 = if ( rest.antecedent.contains( f2 ) ) rest.antecedent else f2 +: rest.antecedent
               val p_suc2 = rest.succedent
               val premise2 = HOLSequent( p_ant2, p_suc2 )
 
-              prove( premise2, nextProofStrategies( 1 ) ).map( proof2 =>
+              prove( premise2, nextProofStrategies( 1 ), fallback ).map( proof2 =>
                 if ( proof2.endSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 ) )
                   ContractionMacroRule( OrLeftRule( proof1, f1, proof2, f2 ) )
                 else
@@ -215,14 +196,14 @@ object solve extends Logger {
         val p_suc1 = if ( rest.succedent.contains( f1 ) ) rest.succedent else f1 +: rest.succedent
         val premise1 = HOLSequent( p_ant1, p_suc1 )
 
-        prove( premise1, nextProofStrategies( 0 ) ) match {
+        prove( premise1, nextProofStrategies( 0 ), fallback ) match {
           case Some( proof1 ) =>
             if ( proof1.endSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 ) ) {
               val p_ant2 = if ( rest.antecedent.contains( f2 ) ) rest.antecedent else f2 +: rest.antecedent
               val p_suc2 = rest.succedent
               val premise2 = HOLSequent( p_ant2, p_suc2 )
 
-              prove( premise2, nextProofStrategies( 1 ) ).map( proof2 =>
+              prove( premise2, nextProofStrategies( 1 ), fallback ).map( proof2 =>
                 if ( proof2.endSequent.antecedent.contains( f2 ) && !rest.antecedent.contains( f2 ) )
                   ContractionMacroRule( ImpLeftRule( proof1, f1, proof2, f2 ) )
                 else
@@ -317,7 +298,7 @@ object solve extends Logger {
     rv
   }
 
-  private def applyActionSuccedent( action: ProofStrategy.Action, seq: HOLSequent ): Option[LKProof] = {
+  private def applyActionSuccedent( action: ProofStrategy.Action, seq: HOLSequent, fallback: HOLSequent => Option[LKProof] ): Option[LKProof] = {
     val rest = HOLSequent( seq.antecedent, seq.succedent.diff( action.formula :: Nil ) )
     val nextProofStrategies = action.getNextStrategies
 
@@ -333,7 +314,7 @@ object solve extends Logger {
         val p_suc = if ( rest.succedent.contains( auxFormula ) ) rest.succedent else auxFormula +: rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof =>
           if ( proof.endSequent.succedent.contains( auxFormula ) && !rest.succedent.contains( auxFormula ) )
             ForallRightRule( proof, action.formula, eigenVar )
           else
@@ -342,13 +323,13 @@ object solve extends Logger {
 
       case Ex( v, f ) => {
         val quantifiedTerm = action.getQuantifiedTerm.get
-        val auxFormula = Substitution( v, quantifiedTerm )( f )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, quantifiedTerm )( f ) )
 
         val p_ant = rest.antecedent
         val p_suc = if ( seq.succedent.contains( auxFormula ) ) seq.succedent else auxFormula +: seq.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof => {
           if ( proof.endSequent.succedent.contains( auxFormula ) && !rest.succedent.contains( auxFormula ) ) {
             val proof1 = ExistsRightRule( proof, action.formula, quantifiedTerm )
             if ( proof.endSequent.succedent.contains( action.formula ) )
@@ -370,7 +351,7 @@ object solve extends Logger {
         val p_suc = rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof =>
           if ( proof.endSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 ) )
             NegRightRule( proof, f1 )
           else
@@ -382,7 +363,7 @@ object solve extends Logger {
         val p_suc = if ( rest.succedent.contains( f2 ) ) rest.succedent else f2 +: rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof => {
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof => {
           val infer_on_f1 = proof.endSequent.antecedent.contains( f1 ) && !rest.antecedent.contains( f1 )
           val infer_on_f2 = proof.endSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 )
 
@@ -403,7 +384,7 @@ object solve extends Logger {
         val p_suc = f1_opt ++ f2_opt ++ rest.succedent
         val premise = HOLSequent( p_ant, p_suc )
 
-        prove( premise, nextProofStrategies( 0 ) ).map( proof =>
+        prove( premise, nextProofStrategies( 0 ), fallback ).map( proof =>
           if ( proof.endSequent.succedent.contains( f1 ) || proof.endSequent.succedent.contains( f2 ) )
             OrRightMacroRule( proof, f1, f2 )
           else
@@ -417,14 +398,14 @@ object solve extends Logger {
         val p_suc1 = if ( rest.succedent.contains( f1 ) ) rest.succedent else f1 +: rest.succedent
         val premise1 = HOLSequent( p_ant1, p_suc1 )
 
-        prove( premise1, nextProofStrategies( 0 ) ) match {
+        prove( premise1, nextProofStrategies( 0 ), fallback ) match {
           case Some( proof1 ) =>
             if ( proof1.endSequent.succedent.contains( f1 ) && !rest.succedent.contains( f1 ) ) {
               val p_ant2 = rest.antecedent
               val p_suc2 = if ( rest.succedent.contains( f2 ) ) rest.succedent else f2 +: rest.succedent
               val premise2 = HOLSequent( p_ant2, p_suc2 )
 
-              prove( premise2, nextProofStrategies( 1 ) ).map( proof2 =>
+              prove( premise2, nextProofStrategies( 1 ), fallback ).map( proof2 =>
                 if ( proof2.endSequent.succedent.contains( f2 ) && !rest.succedent.contains( f2 ) )
                   ContractionMacroRule( AndRightRule( proof1, f1, proof2, f2 ) )
                 else

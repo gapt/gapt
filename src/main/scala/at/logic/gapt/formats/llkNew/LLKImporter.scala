@@ -191,7 +191,7 @@ trait TokenToLKConverter extends Logger {
           )
         case "AUTOPROP" =>
           try {
-            val Some( rule ) = solve.solvePropositional( HOLSequent( ant, suc ), true )
+            val Some( rule ) = solve.solvePropositional( HOLSequent( ant, suc ) )
             proofstack = rule :: proofstack
             require(
               proofstack.nonEmpty && proofstack( 0 ).endSequent.multiSetEquals( fs ),

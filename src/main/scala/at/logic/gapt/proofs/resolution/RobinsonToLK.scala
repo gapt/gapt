@@ -66,7 +66,7 @@ object RobinsonToLK {
    * @param createAxiom  Gives the replacement LK proofs for the input clauses.
    * @return  LK proof ending in endSequent ++ resolutionDerivation.conclusion.
    */
-  def apply( resolutionDerivation: ResolutionProof, endSequent: HOLSequent, createAxiom: HOLClause => LKProof ): LKProof = {
+  def apply( resolutionDerivation: ResolutionProof, endSequent: HOLSequent, createAxiom: HOLClause => LKProof, addWeakenings: Boolean = true ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
 
     def f( p: ResolutionProof ): LKProof = memo.getOrElseUpdate( p, p match {
@@ -97,7 +97,8 @@ object RobinsonToLK {
         )
     } )
     val rproof = f( resolutionDerivation )
-    WeakeningContractionMacroRule( rproof, endSequent )
+    if ( addWeakenings ) WeakeningContractionMacroRule( rproof, endSequent )
+    else ContractionMacroRule( rproof )
   }
 
 }
