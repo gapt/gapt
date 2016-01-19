@@ -23,6 +23,9 @@ object solve extends Logger {
   def solvePropositional( seq: HOLSequent ): Option[LKProof] =
     startProving( seq, new PropositionalProofStrategy, _ => None )
 
+  def solvePropositional( formula: HOLFormula ): Option[LKProof] =
+    solvePropositional( Sequent() :+ formula )
+
   /**
    * Transform expansion proof to LK proof (assumes that deep formula of expansionSequent is a tautology)
    */
