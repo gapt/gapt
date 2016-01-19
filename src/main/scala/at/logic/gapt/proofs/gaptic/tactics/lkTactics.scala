@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.gaptic.tactics
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.gaptic.{ OpenAssumption, Tactic }
+import at.logic.gapt.proofs.gaptic.{ NewLabel, OpenAssumption, Tactic }
 import at.logic.gapt.proofs.lk._
 
 /**
@@ -269,7 +269,8 @@ case class ContractionLeftTactic( applyToLabel: String ) extends Tactic {
       val ( existingLabel, formula ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
-      val newGoal = goalSequent.delete( i ).insertAt( i, existingLabel + "_1" -> formula ).insertAt( i + 1, existingLabel + "_2" -> formula )
+      val newGoalTmp = goalSequent delete ( i ) insertAt ( i, NewLabel( goalSequent, existingLabel ) -> formula )
+      val newGoal = newGoalTmp insertAt ( i + 1, NewLabel( newGoalTmp, existingLabel ) -> formula )
 
       val firstOccurrenceIndex = Ant( 0 )
       val secondOccurrenceIndex = firstOccurrenceIndex + 1
@@ -303,7 +304,8 @@ case class ContractionRightTactic( applyToLabel: String ) extends Tactic {
       val ( existingLabel, formula ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
-      val newGoal = goalSequent.delete( i ).insertAt( i, existingLabel + "_1" -> formula ).insertAt( i + 1, existingLabel + "_2" -> formula )
+      val newGoalTmp = goalSequent delete ( i ) insertAt ( i, NewLabel( goalSequent, existingLabel ) -> formula )
+      val newGoal = newGoalTmp insertAt ( i + 1, NewLabel( newGoalTmp, existingLabel ) -> formula )
 
       val firstOccurrenceIndex = Suc( newGoal.succedent.length - 2 )
       val secondOccurrenceIndex = firstOccurrenceIndex + 1
@@ -342,7 +344,8 @@ case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
-      val newGoal = ( existingLabel + "_1" -> lhs ) +: ( existingLabel + "_2" -> rhs ) +: goalSequent.delete( i )
+      val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
+      val newGoal = newGoalTmp insertAt ( Ant( 1 ), ( NewLabel( goalSequent, existingLabel ) -> rhs ) )
 
       // Indices of lhs and rhs
       val lhsIndex = Ant( 0 )
@@ -461,7 +464,8 @@ case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val ( existingLabel, Or( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-      val newGoal = goalSequent.delete( i ).:+( existingLabel + "_1" -> lhs ).:+( existingLabel + "_2" -> rhs )
+      val newGoalTmp = goalSequent.delete( i ) :+ ( NewLabel( goalSequent, existingLabel ) -> lhs )
+      val newGoal = newGoalTmp :+ ( NewLabel( newGoalTmp, existingLabel ) -> rhs )
 
       // Indices of lhs and rhs
       val lhsIndex = Suc( newGoal.succedent.length - 2 )
@@ -540,7 +544,8 @@ case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
       val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
 
       // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
-      val newGoal = ( existingLabel + "_1" -> lhs ) +: goalSequent.delete( i ) :+ ( existingLabel + "_2" -> rhs )
+      val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
+      val newGoal = newGoalTmp :+ ( NewLabel( newGoalTmp, existingLabel ) -> rhs )
 
       // Indices of lhs and rhs
       val lhsIndex = Ant( 0 )
@@ -610,7 +615,7 @@ case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Op
  * @param term
  * @param applyToLabel
  */
-case class ExistsRightTactic( term: LambdaExpression, instantiationLabel: String, applyToLabel: Option[String] = None ) extends Tactic {
+case class ExistsRightTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -626,23 +631,20 @@ case class ExistsRightTactic( term: LambdaExpression, instantiationLabel: String
     }
 
     // Select some formula index!
-    if ( goalSequent.find( e => e._1 == instantiationLabel ).isEmpty )
-      for ( i <- indices headOption ) yield {
-        val ( _, quantifiedFormula ) = goalSequent( i )
-        val Ex( v, fm ) = quantifiedFormula
+    for ( i <- indices headOption ) yield {
+      val ( existingLabel, quantifiedFormula ) = goalSequent( i )
+      val Ex( v, fm ) = quantifiedFormula
 
-        val auxFormula = Substitution( v, term )( fm )
+      val auxFormula = Substitution( v, term )( fm )
 
-        val newGoal = goalSequent.insertAt( i, instantiationLabel -> auxFormula )
+      val newGoal = goalSequent.insertAt( i, NewLabel( goalSequent, existingLabel ) -> auxFormula )
 
-        val premise = OpenAssumption( newGoal )
+      val premise = OpenAssumption( newGoal )
 
-        val auxProofSegment = ExistsRightRule( premise, quantifiedFormula, term )
+      val auxProofSegment = ExistsRightRule( premise, quantifiedFormula, term )
 
-        ContractionRightRule( auxProofSegment, quantifiedFormula )
-      }
-    else
-      None
+      ContractionRightRule( auxProofSegment, quantifiedFormula )
+    }
   }
 }
 
@@ -651,7 +653,7 @@ case class ExistsRightTactic( term: LambdaExpression, instantiationLabel: String
  * @param term
  * @param applyToLabel
  */
-case class ForallLeftTactic( term: LambdaExpression, instantiationLabel: String, applyToLabel: Option[String] = None ) extends Tactic {
+case class ForallLeftTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -666,24 +668,21 @@ case class ForallLeftTactic( term: LambdaExpression, instantiationLabel: String,
           yield index
     }
 
-    if ( goalSequent.find( e => e._1 == instantiationLabel ).isEmpty )
-      // Select some formula index!
-      for ( i <- indices headOption ) yield {
-        val ( _, quantifiedFormula ) = goalSequent( i )
-        val All( v, fm ) = quantifiedFormula
+    // Select some formula index!
+    for ( i <- indices headOption ) yield {
+      val ( existingLabel, quantifiedFormula ) = goalSequent( i )
+      val All( v, fm ) = quantifiedFormula
 
-        val auxFormula = Substitution( v, term )( fm )
+      val auxFormula = Substitution( v, term )( fm )
 
-        val newGoal = goalSequent.insertAt( i + 1, instantiationLabel -> auxFormula )
+      val newGoal = goalSequent.insertAt( i + 1, NewLabel( goalSequent, existingLabel ) -> auxFormula )
 
-        val premise = OpenAssumption( newGoal )
+      val premise = OpenAssumption( newGoal )
 
-        val auxProofSegment = ForallLeftRule( premise, quantifiedFormula, term )
+      val auxProofSegment = ForallLeftRule( premise, quantifiedFormula, term )
 
-        ContractionLeftRule( auxProofSegment, quantifiedFormula )
-      }
-    else
-      None
+      ContractionLeftRule( auxProofSegment, quantifiedFormula )
+    }
   }
 }
 

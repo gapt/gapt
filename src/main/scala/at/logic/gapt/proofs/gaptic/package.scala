@@ -61,13 +61,13 @@ package object gaptic {
 
   def exL = new ExistsLeftTactic()
 
-  def exR( term: LambdaExpression, instantiationLabel: String, applyToLabel: String ) = new ExistsRightTactic( term, instantiationLabel, Some( applyToLabel ) )
+  def exR( term: LambdaExpression, applyToLabel: String ) = new ExistsRightTactic( term, Some( applyToLabel ) )
 
-  def exR( term: LambdaExpression, instantiationLabel: String ) = new ExistsRightTactic( term, instantiationLabel )
+  def exR( term: LambdaExpression ) = new ExistsRightTactic( term )
 
-  def allL( term: LambdaExpression, instantiationLabel: String, applyToLabel: String ) = new ForallLeftTactic( term, instantiationLabel, Some( applyToLabel ) )
+  def allL( term: LambdaExpression, applyToLabel: String ) = new ForallLeftTactic( term, Some( applyToLabel ) )
 
-  def allL( term: LambdaExpression, instantiationLabel: String ) = new ForallLeftTactic( term, instantiationLabel )
+  def allL( term: LambdaExpression ) = new ForallLeftTactic( term )
 
   def allR( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( Some( eigenVariable ), Some( applyToLabel ) )
 

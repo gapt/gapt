@@ -1,8 +1,7 @@
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.gaptic.tactics._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.gaptic._
 
 val A = FOLAtom( "A" )
 val B = FOLAtom( "B" )
@@ -25,10 +24,10 @@ val lemma2 = Lemma(
 }
 
 val drinker3 = Lemma( Sequent( Nil, Seq("E" -> parseFormula("B"), "E" -> parseFormula("A"), "D" -> parseFormula( "(exists x (P(x) -> (all y P(y))))" )))) {
-	exR(parseTerm("c"), "D1")
+	exR( parseTerm( "c" ) )
 	impR
 	allR
-	exR(parseTerm("y"), "D2")
+	exR( parseTerm( "y" ) )
 	impR
 	allR
 	axiom
