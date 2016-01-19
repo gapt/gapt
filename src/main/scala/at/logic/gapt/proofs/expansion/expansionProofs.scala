@@ -184,25 +184,26 @@ object eliminateCutsET {
 
     def quantifiedCut(
       instances:     Map[LambdaExpression, ExpansionTree],
-      eigenVariable: Var, child: ExpansionTree,
-      strongPolarity: Boolean
+      eigenVariable: Var, child: ExpansionTree
     ): ExpansionProofWithCut = {
+      if ( instances isEmpty ) return addCuts()
+
       val eigenVars = expansionSequent.elements.toSet + child ++ rest flatMap { eigenVariablesET( _ ) }
 
       var renamings = Seq[Substitution]()
       for ( _ <- 0 until instances.size )
-        renamings :+= Substitution( rename( eigenVars, eigenVars union renamings.flatMap { r => freeVariables( r.range ) }.toSet ) )
+        renamings :+= Substitution( rename( eigenVars, eigenVars union renamings.flatMap { r => freeVariables( r.range ) }.toSet union instances.values.flatMap { eigenVariablesET( _ ) }.toSet ) )
       val substs =
         for ( ( renaming, ( term, instance ) ) <- renamings zip instances.seq )
           yield renaming compose Substitution( eigenVariable -> term )
 
-      apply( eliminateMerges( ExpansionProofWithCut(
+      eliminateMerges( ExpansionProofWithCut(
         ( for ( ( subst, ( term, instance ) ) <- substs zip instances.toSeq ) yield subst(
-          if ( strongPolarity ) ETImp( instance, child ) else ETImp( child, instance )
+          if ( instance.polarity ) ETImp( instance, child ) else ETImp( child, instance )
         ).asInstanceOf[ETImp] )
-          ++ ( for ( c <- rest; s <- Substitution() +: substs ) yield s( c ).asInstanceOf[ETImp] ),
-        for ( tree <- expansionSequent ) yield ETMerge( tree +: substs.map { _( tree ) } )
-      ) ) )
+          ++ ( for ( c <- rest; s <- substs ) yield s( c ).asInstanceOf[ETImp] ),
+        for ( tree <- expansionSequent ) yield ETMerge( substs.map { _( tree ) } )
+      ) )
     }
 
     ( cut1, cut2 ) match {
@@ -216,9 +217,9 @@ object eliminateCutsET {
       case ( ETOr( t1, s1 ), ETOr( t2, s2 ) )   => addCuts( ETImp( t1, t2 ), ETImp( s1, s2 ) )
       case ( ETImp( t1, s1 ), ETImp( t2, s2 ) ) => addCuts( ETImp( t2, t1 ), ETImp( s1, s2 ) )
       case ( ETWeakQuantifier( _, instances ), ETStrongQuantifier( _, eigenVariable, child ) ) =>
-        quantifiedCut( instances, eigenVariable, child, strongPolarity = true )
+        quantifiedCut( instances, eigenVariable, child )
       case ( ETStrongQuantifier( _, eigenVariable, child ), ETWeakQuantifier( _, instances ) ) =>
-        quantifiedCut( instances, eigenVariable, child, strongPolarity = false )
+        quantifiedCut( instances, eigenVariable, child )
     }
 
   }

@@ -3,13 +3,19 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.{ Pi2Pigeonhole, LinearExampleProof }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.lk.{ solve, LKToExpansionProof }
+import at.logic.gapt.formats.llkNew.LLKProofParser
+import at.logic.gapt.proofs.{ SequentMatchers, Sequent }
+import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
+import at.logic.gapt.proofs.lkOld.base.beSyntacticMultisetEqual
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
-class ExpansionProofTest extends Specification with SatMatchers {
+import scala.io.Source
+
+class ExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 
   "linear example cut intro" in {
     val Some( p ) = CutIntroduction.compressLKProof( LinearExampleProof( 6 ) )
@@ -48,6 +54,16 @@ class ExpansionProofTest extends Specification with SatMatchers {
     val e = LKToExpansionProof( Pi2Pigeonhole() )
     Escargot isValid e.deep must_== true
     Escargot isValid eliminateCutsET( e ).deep must_== true
+  }
+
+  "tape proof cut elimination" in {
+    val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "tape3ex.llk" ) ).mkString )
+    val lk = DefinitionElimination( pdb.Definitions )( pdb proof "TAPEPROOF" )
+    val expansion = LKToExpansionProof( lk )
+    Escargot isValid expansion.deep must_== true
+    val cutfree = eliminateCutsET( expansion )
+    if ( !VeriT.isInstalled ) skipped
+    VeriT isValid cutfree.deep must_== true
   }
 
 }
