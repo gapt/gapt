@@ -34,16 +34,6 @@ object ListSupport {
   }
 
   /**
-   * Given a list xs, returns a list of copies of xs without the first, second, ..., last element.
-   *
-   *
-   */
-  def listComplements[T]( xs: Seq[T] ): Seq[Seq[T]] = xs match {
-    case Nil     => Nil
-    case y +: ys => ys +: listComplements( ys ).map( zs => y +: zs )
-  }
-
-  /**
    * Generates the powerset S as a List of a List, where
    * |S| <= n
    *

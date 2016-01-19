@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.utils.dssupport.ListSupport.listComplements
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
@@ -233,12 +232,18 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
     case ETSkolemQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, vars, _ ) )
 
     case tree @ ETWeakQuantifier( f, inst ) =>
-      val containsWeakQ = tree.subProofs exists { _.isInstanceOf[ETWeakQuantifier] }
-      if ( containsWeakQ ) { //In this case we are in a bottommost weak quantifier node, which means that we will actually remove instances.
-        if ( inst.size > 1 ) {
-          val instances = listComplements( inst.toList ) //These two lines generate all expansion trees that result from removing an instance from tree.
-          instances.map( i => ETWeakQuantifier( f, i.toMap ) )
-        } else Nil
-      } else inst.toSeq.flatMap( p => generateSuccessorTrees( p._2 ) )
+      inst.toSeq flatMap {
+        case ( term, child ) =>
+          val containsWeakQ = child.subProofs exists {
+            case ETWeakQuantifier( _, grandkids ) => grandkids.nonEmpty
+            case _                                => false
+          }
+          if ( containsWeakQ ) {
+            generateSuccessorTrees( child ) map { succ => ETWeakQuantifier( f, inst.updated( term, succ ) ) }
+          } else {
+            //In this case we are in a bottommost weak quantifier node, which means that we will actually remove instances.
+            Seq( ETWeakQuantifier( f, inst - term ) )
+          }
+      }
   }
 }
