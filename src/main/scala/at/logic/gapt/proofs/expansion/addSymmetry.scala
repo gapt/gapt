@@ -9,14 +9,13 @@ import at.logic.gapt.expr.fol._
  * returns an expansion sequent S' which is S extended by the symmetry instances
  * needed to make it a tautology.
  */
-// TODO: After the layer reform, maybe this can use HOLFormulas.
 object addSymmetry {
 
   def apply( s: ExpansionSequent ): ExpansionSequent = {
 
     val deep_sequent = toDeep( s )
-    val eq_ant = deep_sequent.antecedent.flatMap( f => getEqualityPairs( f.asInstanceOf[FOLFormula], false ) )
-    val eq_suc = deep_sequent.succedent.flatMap( f => getEqualityPairs( f.asInstanceOf[FOLFormula], true ) )
+    val eq_ant = deep_sequent.antecedent.flatMap( f => getEqualityPairs( f, false ) )
+    val eq_suc = deep_sequent.succedent.flatMap( f => getEqualityPairs( f, true ) )
     val polarized_eq = eq_ant ++ eq_suc
     val positive_pairs = polarized_eq.filter( t => t._3 ).map( t => ( t._1, t._2 ) )
     val negative_pairs = polarized_eq.filter( t => !t._3 ).map( t => ( t._1, t._2 ) )
@@ -36,7 +35,7 @@ object addSymmetry {
     val imp = Imp( eq1, eq2 )
     val eq_symm = All( x, All( y, imp ) )
 
-    val subs = symm_terms.map( p => FOLSubstitution( Map( ( x, p._1 ), ( y, p._2 ) ) ) )
+    val subs = symm_terms.map( p => Substitution( x -> p._1, y -> p._2 ) )
 
     if ( subs.length == 0 ) s
     else {
@@ -54,14 +53,14 @@ object addSymmetry {
    * terms which occur in the same equality predicate and its polarity.
    * pol is true for positive polarity.
    */
-  def getEqualityPairs( f: FOLFormula, pol: Boolean ): List[( FOLTerm, FOLTerm, Boolean )] = f match {
-    case FOLAtom( eq, List( t1, t2 ) ) if eq.toString == "=" => List( ( t1, t2, pol ) )
-    case FOLAtom( p, _ ) if p.toString != "=" => List()
+  def getEqualityPairs( f: HOLFormula, pol: Boolean ): List[( LambdaExpression, LambdaExpression, Boolean )] = f match {
+    case Eq( t1, t2 )     => List( ( t1, t2, pol ) )
+    case HOLAtom( p, _ )  => List()
     case Bottom() | Top() => List()
-    case Neg( f1 ) => getEqualityPairs( f1, !pol )
-    case And( f1, f2 ) => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
-    case Or( f1, f2 ) => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
-    case Imp( f1, f2 ) => getEqualityPairs( f1, !pol ) ++ getEqualityPairs( f2, pol )
+    case Neg( f1 )        => getEqualityPairs( f1, !pol )
+    case And( f1, f2 )    => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
+    case Or( f1, f2 )     => getEqualityPairs( f1, pol ) ++ getEqualityPairs( f2, pol )
+    case Imp( f1, f2 )    => getEqualityPairs( f1, !pol ) ++ getEqualityPairs( f2, pol )
   }
 
 }

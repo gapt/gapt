@@ -9,9 +9,10 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansion.toDeep
 import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class VeriTProverTest extends Specification {
+class VeriTProverTest extends Specification with SatMatchers {
   args( skipAll = !VeriT.isInstalled )
 
   "VeriT" should {
@@ -60,6 +61,14 @@ class VeriTProverTest extends Specification {
         Sequent()
         :+ Eq( FOLFunction( "f", FOLConst( "α" ) ), FOLFunction( "f", FOLConst( "β" ) ) ) )
       Sat4j.isValid( toDeep( VeriT getExpansionProof sequent get ) ) must_== true
+    }
+
+    "term level booleans" in {
+      val f = Const( "f", To -> Ti )
+      val p = FOLAtomConst( "p", 1 )
+      val formula = ( f( Top() ) === f( Bottom() ) ) --> ( p( f( Bottom() ) ) <-> p( f( Top() ) ) )
+      val Some( expansion ) = VeriT getExpansionProof ( Sequent() :+ formula )
+      expansion.deep must beValidSequent
     }
   }
 }

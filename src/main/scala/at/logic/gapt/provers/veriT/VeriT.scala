@@ -46,11 +46,11 @@ class VeriT extends OneShotProver with ExternalProgram {
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
     VeriTParser.getExpansionProof( new StringReader( output ) ) map { renamedExpansion =>
-      val undoRenaming: Map[LambdaExpression, LambdaExpression] = renaming map {
+      val undoRenaming = renaming.map {
         case ( from, to @ Const( smtName, FunctionType( TBase( "Bool" ), argTypes ) ) ) => FOLAtomConst( smtName, argTypes.size ) -> from
         case ( from, to @ Const( smtName, FunctionType( _, argTypes ) ) )               => FOLFunctionConst( smtName, argTypes.size ) -> from
-      }
-      val exp_seq = for ( et <- renamedExpansion ) yield TermReplacement( et, undoRenaming )
+      } ++ Map( FOLConst( "false" ) -> Bottom(), FOLConst( "true" ) -> Top() )
+      val exp_seq = for ( et <- renamedExpansion ) yield TermReplacement( et, undoRenaming.toMap[LambdaExpression, LambdaExpression] )
 
       val exp_seq_quant = exp_seq filter { e => containsQuantifier( e.shallow ) }
 
@@ -64,6 +64,14 @@ class VeriT extends OneShotProver with ExternalProgram {
   }
 
   override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ExpansionProofToLK( _ ) }
+
+  def addEquationalAxioms( epwc: ExpansionProofWithCut ): Option[ExpansionProofWithCut] =
+    for ( ExpansionProofWithCut( Seq(), veritExpansion ) <- getExpansionProofWithCut( epwc.deep ) ) yield {
+      val equationalAxioms = veritExpansion filter { t => containsQuantifier( t.shallow ) } map { t =>
+        freeVariables( t.shallow ).foldLeft( t )( ( t_, fv ) => ETWeakQuantifier( All( fv, t_.shallow ), Map( fv -> t_ ) ) )
+      }
+      epwc.copy( expansionSequent = equationalAxioms ++ epwc.expansionSequent )
+    }
 
   val isInstalled: Boolean =
     try {
