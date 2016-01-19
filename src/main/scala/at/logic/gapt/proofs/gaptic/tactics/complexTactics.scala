@@ -86,10 +86,7 @@ case class ChainTactic( hyp: String, target: Option[String] = None ) extends Tac
  */
 case object PropTactic extends Tactic {
   override def apply( goal: OpenAssumption ) = {
-    solve.solvePropositional( goal.conclusion ) match {
-      case None      => None
-      case Some( z ) => Option( z )
-    }
+    solve.solvePropositional( goal.conclusion )
   }
 }
 
@@ -98,19 +95,6 @@ case object PropTactic extends Tactic {
  */
 case object Prover9Tactic extends Tactic {
   override def apply( goal: OpenAssumption ) = {
-    Prover9.getLKProof( goal.conclusion ) match {
-      case None      => None
-      case Some( z ) => Option( z )
-    }
-  }
-}
-
-/**
- *
- */
-case class ForgetTactic( applyToLabel: String ) extends Tactic {
-  override def apply( goal: OpenAssumption ) = {
-    val f = WeakeningLeftTactic( applyToLabel ) orElse WeakeningRightTactic( applyToLabel )
-    f( goal )
+    Prover9.getLKProof( goal.conclusion )
   }
 }
