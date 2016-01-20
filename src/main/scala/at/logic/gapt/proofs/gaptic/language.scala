@@ -4,63 +4,48 @@ import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk._
 
-/**
- *
- * @param initGoal
- */
-class Lemma( initGoal: Sequent[( String, HOLFormula )], showOutput: Boolean = true ) {
-  private var proofState = ProofState( 0, OpenAssumption( initGoal ) )
+import language.experimental.macros
 
-  if ( showOutput )
-    printSubGoals()
+object Lemma {
+  def apply( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical ): LKProof = macro LemmaMacros.applyImpl
+}
 
-  /**
-   *
-   * @param t
-   */
-  def use( t: Tactical ) = t( proofState ) match {
-    case Some( newProofState ) =>
-      // Replace proof state
-      proofState = newProofState
+object LemmaMacros {
 
-      // Print new sub goals
-      if ( showOutput )
-        printSubGoals()
-    case None =>
-      // Tactic failure
-      throw new TacticFailureException( "Failed to apply tactic " + t + " to proof state " + proofState )
-  }
+  def use( proofState: ProofState, tactical: Tactical ): ProofState =
+    tactical( proofState ) getOrElse {
+      throw new TacticFailureException( "Failed to apply tactic " + tactical + " to proof state " + proofState )
+    }
 
-  /**
-   *
-   * @return
-   */
-  def qed: LKProof = {
+  def qed( proofState: ProofState ): LKProof =
     if ( proofState.subGoals.isEmpty ) {
-      // Done
       proofState.proofSegment
     } else {
-      // Failure
-      throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals." )
+      throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals:\n" + proofState.subGoals.mkString( "\n" ) )
     }
-  }
 
-  private def printSubGoals() = {
-    if ( proofState.subGoals.isEmpty )
-      println( "No current sub goals!" )
-    else {
-      println( "Current sub goals:" )
-      for ( i <- proofState.subGoals.indices )
-        println( s"$i: ${proofState.displaySubGoal( ( i ) )}" )
+  import reflect.macros._
+  def applyImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+    import c.universe._
+    val proofState = TermName( c.freshName() )
+
+    val tacticsStmts = tacticsProof match {
+      case q"{..$stmts}" =>
+        for ( stmt <- stmts )
+          yield q"$proofState = _root_.at.logic.gapt.proofs.gaptic.LemmaMacros.use($proofState, $stmt)"
     }
-  }
 
-  def setCurrentSubGoal( i: Int ) = proofState.setCurrentSubGoal( i ) match {
-    case Some( x ) => proofState = x
-    case _         =>
+    q"""
+      var $proofState = _root_.at.logic.gapt.proofs.gaptic.ProofState(0,
+        _root_.at.logic.gapt.proofs.gaptic.OpenAssumption($labelledSequent))
+
+      ..$tacticsStmts
+
+      _root_.at.logic.gapt.proofs.gaptic.LemmaMacros.qed($proofState)
+    """
   }
 }
 
-class TacticFailureException( s: String ) extends Throwable
+class TacticFailureException( s: String ) extends Throwable( s )
 
-class QedFailureException( s: String ) extends Throwable
+class QedFailureException( s: String ) extends Throwable( s )
