@@ -118,34 +118,40 @@ case class ChainTactic( hyp: String, target: Option[String] = None ) extends Tac
             // where the sequent is an axiom (following some contractions).
             // The right premises of the implication left rules become new sub goals,
             // but where the initial target formula is then "forgotten".
-            def f( x: Sequent[( String, HOLFormula )], y: SequentIndex ): LKProof = {
+            def g( x: Sequent[( String, HOLFormula )], y: SequentIndex ): LKProof = x( y ) match {
+              case ( existingLabel, And( lhs, rhs ) ) =>
+                AndRightRule(
+                  g( x.delete( y ) :+ ( existingLabel, lhs ), Suc( x.succedent.length - 1 ) ),
+                  g( x.delete( y ) :+ ( existingLabel, rhs ), Suc( x.succedent.length - 1 ) ),
+                  And( lhs, rhs )
+                )
+              case _ =>
+                OpenAssumption( x )
+            }
+
+            def f( x: Sequent[( String, HOLFormula )], y: SequentIndex, outermostCall: Boolean = false ): LKProof = {
               x( y ) match {
                 case ( existingLabel, Imp( lhs, rhs ) ) =>
-                  val newGoalLeft = x.delete( y ) :+ ( existingLabel -> lhs )
-                  val newGoalRight = ( existingLabel -> rhs ) +: x.delete( y )
+                  // Different methods must be applied depending on how the chain is defined.
+                  val premiseLeft = lhs match {
+                    case And( _, _ ) if outermostCall =>
+                      WeakeningLeftRule( g( x.delete( targetIndex ).delete( y ) :+ ( existingLabel -> lhs ), Suc( x.succedent.length - 1 ) ), rhs )
+                    case _ =>
+                      forget( targetLabel )( OpenAssumption( x.delete( y ) :+ ( existingLabel -> lhs ) ) ).get
+                  }
 
-                  val leftIndex = Suc( newGoalLeft.succedent.length - 1 )
-                  val rightIndex = Ant( 0 )
-
-                  val premiseLeft = f( newGoalLeft, leftIndex )
-                  val premiseRight = f( newGoalRight, rightIndex )
+                  val premiseRight = f( ( existingLabel -> rhs ) +: x.delete( y ), Ant( 0 ) )
 
                   ImpLeftRule( premiseLeft, premiseRight, Imp( lhs, rhs ) )
 
-                case ( _, z ) =>
-                  axiomLog( OpenAssumption( x ) ) match {
-                    case Some( proof ) =>
-                      proof
-                    case None =>
-                      val premise = OpenAssumption( x )
-                      forget( targetLabel )( premise ).get
-                  }
+                case _ =>
+                  axiomLog( OpenAssumption( x ) ).get
               }
             }
 
             val auxFormula = sub( hypInner )
             val newGoal = goalSequent.insertAt( i + 1, NewLabel( goalSequent, hyp ) -> auxFormula )
-            val premise = f( newGoal, i + 1 )
+            val premise = f( newGoal, i + 1, true )
             val auxProofSegment = ForallLeftRule( premise, quantifiedFormula, sub.map.get( hypVar ).get )
             Option( ContractionLeftRule( auxProofSegment, quantifiedFormula ) )
 
