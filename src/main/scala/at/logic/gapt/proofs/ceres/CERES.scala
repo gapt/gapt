@@ -115,7 +115,7 @@ class CERES {
         projections.map( _.endSequent.diff( endsequent ) ).mkString( "{" + nLine, ";" + nLine, nLine + "}" ) )
       case Some( proj ) =>
         val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
-        val subproj = applySubstitution( sub )( proj )
+        val subproj = sub( proj )
         val duplicates = ( subproj.endSequent diff endsequent ) diff axfs
         //println( s"duplicates: $duplicates" )
         //println( subproj.endSequent )

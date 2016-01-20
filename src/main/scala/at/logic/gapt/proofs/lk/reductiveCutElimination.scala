@@ -250,11 +250,11 @@ class ReductiveCutElimination {
         CutRule( rSubProof, a2, lSubProof, a1 )
 
       case ( ForallRightRule( lSubProof, a1, eigen, _ ), ForallLeftRule( rSubProof, a2, f, term, _ ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
-        val lSubProofNew = applySubstitution( Substitution( eigen, term ) )( lSubProof )
+        val lSubProofNew = Substitution( eigen, term )( lSubProof )
         CutRule( lSubProofNew, rSubProof, right.auxFormulas.head.head )
 
       case ( ExistsRightRule( lSubProof, a2, f, term, _ ), ExistsLeftRule( rSubProof, a1, eigen, _ ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
-        val rSubProofNew = applySubstitution( Substitution( eigen, term ) )( rSubProof )
+        val rSubProofNew = Substitution( eigen, term )( rSubProof )
         CutRule( lSubProof, rSubProofNew, left.auxFormulas.head.head )
 
       case ( DefinitionRightRule( lSubProof, a1, main1 ), DefinitionLeftRule( rSubProof, a2, main2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>

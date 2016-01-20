@@ -77,7 +77,7 @@ object RobinsonToLK {
         ContractionLeftRule( f( p1 ), p1.conclusion( idx1 ) )
       case Factor( p1, idx1 @ Suc( _ ), idx2 ) =>
         ContractionRightRule( f( p1 ), p1.conclusion( idx1 ) )
-      case Instance( p1, s ) => applySubstitution( s )( f( p1 ) )
+      case Instance( p1, s ) => s( f( p1 ) )
       case Resolution( p1, idx1, p2, idx2 ) =>
         ContractionMacroRule(
           CutRule( f( p1 ), f( p2 ), p1.conclusion( idx1 ) ),

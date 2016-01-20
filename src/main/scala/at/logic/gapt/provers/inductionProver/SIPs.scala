@@ -235,7 +235,7 @@ class SimpleInductionProof(
     else
       FOLSubstitution( alpha, num( n ) )
 
-    val inductionBase1 = applySubstitution( baseSub )( proofFromInstances( pi0, ExpSeq0 ) )
+    val inductionBase1 = baseSub( proofFromInstances( pi0, ExpSeq0 ) )
     val inductionBase = ContractionMacroRule(
       if ( indFormIsQuantified )
         ForallRightRule( inductionBase1, baseSub( Fprime( alpha, zero ) ), baseSub( beta ).asInstanceOf[FOLVar] )
@@ -250,7 +250,7 @@ class SimpleInductionProof(
         else
           FOLSubstitution( List( alpha -> num( n ), nu -> num( k ) ) )
 
-      val inductionStep1 = applySubstitution( sub )( proofFromInstances( pi1, ExpSeq1 ) )
+      val inductionStep1 = sub( proofFromInstances( pi1, ExpSeq1 ) )
       val inductionStep2 =
         if ( indFormIsQuantified ) {
           t.foldLeft( inductionStep1 ) {
@@ -283,7 +283,7 @@ class SimpleInductionProof(
         conclusion1
     )
 
-    val conclusion = applySubstitution( conclusionSub )( conclusion2 )
+    val conclusion = conclusionSub( conclusion2 )
 
     CutRule( stepsProof, conclusion, Fprime( num( n ), num( n ) ) )
   }

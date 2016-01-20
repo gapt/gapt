@@ -110,7 +110,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         val ls = labels( p.mainIndices.head )
         val ( skolemSymbol, newTable ) = createSkolemSymbol( skolemSymbolFactory, hpaths( p.mainIndices( 0 ) ), contracted_symbols )
         val skolemConstant = Const( skolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
-        val subProof_ = applySubstitution( Substitution( eigen -> skolemConstant( ls: _* ) ) )( subProof )
+        val subProof_ = Substitution( eigen -> skolemConstant( ls: _* ) )( subProof )
         val ( uproof, table ) = apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )( newTable )
         ( AllSkRight( uproof, aux, p.mainFormula, skolemConstant ), table )
 
@@ -118,7 +118,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         val ls = labels( p.mainIndices.head )
         val ( skolemSymbol, newTable ) = createSkolemSymbol( skolemSymbolFactory, hpaths( p.mainIndices( 0 ) ), contracted_symbols )
         val skolemConstant = Const( skolemSymbol, FunctionType( eigen.exptype, ls.map( _.exptype ) ) )
-        val subProof_ = applySubstitution( Substitution( eigen -> skolemConstant( ls: _* ) ) )( subProof )
+        val subProof_ = Substitution( eigen -> skolemConstant( ls: _* ) )( subProof )
         val ( uproof, table ) = apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )( newTable )
         ( ExSkLeft( uproof, aux, p.mainFormula, skolemConstant ), table )
 

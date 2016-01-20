@@ -40,7 +40,7 @@ object moveStrongQuantifierRulesDown {
       case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
         val newEigen = eigenVariables( p.mainIndices.head ).head
         val ( q, oc ) = apply(
-          applySubstitution( Substitution( eigen -> newEigen ) )( subProof ),
+          Substitution( eigen -> newEigen )( subProof ),
           p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ).
             updated( aux, eigenVariables( p.mainIndices.head ).tail )
         )

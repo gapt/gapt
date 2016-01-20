@@ -161,14 +161,14 @@ object regularize {
       val eigenNew = rename( eigen, blacklist.toList )
       val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigenNew )
 
-      val subProofNew = applySubstitution( Substitution( eigen, eigenNew ) )( subProofNew_ )
+      val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
       ( ForallRightRule( subProofNew, aux, eigenNew, quant ), blacklistNew )
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val eigenNew = rename( eigen, blacklist.toList )
       val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigenNew )
 
-      val subProofNew = applySubstitution( Substitution( eigen, eigenNew ) )( subProofNew_ )
+      val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
       ( ExistsLeftRule( subProofNew, aux, eigenNew, quant ), blacklistNew )
 
     case ExistsRightRule( subProof, aux, f, term, v ) =>
@@ -192,7 +192,7 @@ object regularize {
       val newCases = cases map { c =>
         val renaming = rename( c.eigenVars.toSet, blacklistNew )
         blacklistNew ++= renaming.values
-        val ( subProofNew, blacklistNew_ ) = apply_( applySubstitution( Substitution( renaming ) )( c.proof ), blacklistNew )
+        val ( subProofNew, blacklistNew_ ) = apply_( Substitution( renaming )( c.proof ), blacklistNew )
         blacklistNew = blacklistNew_
         c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming )
       }

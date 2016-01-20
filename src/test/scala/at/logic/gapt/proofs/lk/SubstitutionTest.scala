@@ -36,20 +36,20 @@ class SubstitutionTest extends Specification with SequentMatchers {
 
     "apply correctly to a simple proof" in {
       import proof1._
-      val p_s = applySubstitution( subst )( proof )
+      val p_s = subst( proof )
       p_s.endSequent must beMultiSetEqual( P( f( a ) ) +: Sequent() :+ P( f( a ) ) )
     }
 
     "apply correctly to a proof with quantifiers" in {
       import proof2._
-      val p_s = applySubstitution( subst )( proof )
+      val p_s = subst( proof )
       val pfa = All( x, P( x, f( a ) ) )
       p_s.endSequent must beMultiSetEqual( pfa +: Sequent() :+ pfa )
     }
 
     "apply correctly to a proof with quantifiers with overbinding" in {
       import proof2._
-      val p_s = applySubstitution( subst2 )( proof )
+      val p_s = subst2( proof )
       val pfa = All( y, P( y, x ) )
       p_s.endSequent must beMultiSetEqual( pfa +: Sequent() :+ pfa )
     }

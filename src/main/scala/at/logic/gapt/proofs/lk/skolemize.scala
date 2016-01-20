@@ -151,7 +151,7 @@ object skolemize {
           val skolemFunction = sym( context: _* )
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head )
             .updated( aux, Some( context -> skolemSymbols.tail ) ) )
-          ExchangeLeftMacroRule( applySubstitution( Substitution( eigen -> skolemFunction ) )( subProof_ ), aux )
+          ExchangeLeftMacroRule( Substitution( eigen -> skolemFunction )( subProof_ ), aux )
         case None =>
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
           ExistsLeftRule( subProof_, aux, eigen, quant )
@@ -163,7 +163,7 @@ object skolemize {
           val skolemFunction = sym( context: _* )
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head )
             .updated( aux, Some( context -> skolemSymbols.tail ) ) )
-          ExchangeRightMacroRule( applySubstitution( Substitution( eigen -> skolemFunction ) )( subProof_ ), aux )
+          ExchangeRightMacroRule( Substitution( eigen -> skolemFunction )( subProof_ ), aux )
         case None =>
           val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
           ForallRightRule( subProof_, aux, eigen, quant )

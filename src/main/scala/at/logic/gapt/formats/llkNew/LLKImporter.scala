@@ -818,7 +818,7 @@ trait TokenToLKConverter extends Logger {
       NaiveIncompleteMatchingAlgorithm.matchTerm( x._1, link, Set() ) match {
         case None => Nil
         case Some( sub ) =>
-          applySubstitution( sub )( x._2 ) :: Nil
+          sub( x._2 ) :: Nil
       }
     } )
 
