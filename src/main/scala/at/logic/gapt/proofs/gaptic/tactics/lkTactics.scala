@@ -210,7 +210,6 @@ case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic {
       // Extract LHS/RHS
       val ( _, formula ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
       val newGoal = goalSequent.delete( i )
 
       val premise = OpenAssumption( newGoal )
@@ -238,7 +237,6 @@ case class WeakeningRightTactic( applyToLabel: String ) extends Tactic {
       // Extract LHS/RHS
       val ( _, formula ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
       val newGoal = goalSequent.delete( i )
 
       val premise = OpenAssumption( newGoal )
@@ -268,7 +266,6 @@ case class ContractionLeftTactic( applyToLabel: String ) extends Tactic {
       // Extract LHS/RHS
       val ( existingLabel, formula ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
       val newGoalTmp = goalSequent delete ( i ) insertAt ( i, NewLabel( goalSequent, existingLabel ) -> formula )
       val newGoal = newGoalTmp insertAt ( i + 1, NewLabel( newGoalTmp, existingLabel ) -> formula )
 
@@ -303,7 +300,6 @@ case class ContractionRightTactic( applyToLabel: String ) extends Tactic {
       // Extract LHS/RHS
       val ( existingLabel, formula ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
       val newGoalTmp = goalSequent delete ( i ) insertAt ( i, NewLabel( goalSequent, existingLabel ) -> formula )
       val newGoal = newGoalTmp insertAt ( i + 1, NewLabel( newGoalTmp, existingLabel ) -> formula )
 
@@ -343,7 +339,6 @@ case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       // Extract LHS/RHS
       val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of And(lhs, rhs) in antecedent
       val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
       val newGoal = newGoalTmp insertAt ( Ant( 1 ), ( NewLabel( goalSequent, existingLabel ) -> rhs ) )
 
@@ -383,7 +378,6 @@ case class AndRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
       // Extract LHS/RHS
       val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
       val newGoalLeft = goalSequent.delete( i ).:+( existingLabel -> lhs )
       val newGoalRight = goalSequent.delete( i ).:+( existingLabel -> rhs )
 
@@ -423,7 +417,6 @@ case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       // Extract LHS/RHS
       val ( existingLabel, Or( lhs, rhs ) ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
       val newGoalLeft = ( existingLabel -> lhs ) +: goalSequent.delete( i )
       val newGoalRight = ( existingLabel -> rhs ) +: goalSequent.delete( i )
 
@@ -463,7 +456,6 @@ case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
       // Extract LHS/RHS
       val ( existingLabel, Or( lhs, rhs ) ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
       val newGoalTmp = goalSequent.delete( i ) :+ ( NewLabel( goalSequent, existingLabel ) -> lhs )
       val newGoal = newGoalTmp :+ ( NewLabel( newGoalTmp, existingLabel ) -> rhs )
 
@@ -503,7 +495,6 @@ case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       // Extract LHS/RHS
       val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
       val newGoalLeft = goalSequent.delete( i ) :+ ( existingLabel -> lhs )
       val newGoalRight = ( existingLabel -> rhs ) +: goalSequent.delete( i )
 
@@ -543,7 +534,6 @@ case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic 
       // Extract LHS/RHS
       val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
 
-      // New goal with lhs, rhs instead of Or(lhs, rhs) in succedent
       val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
       val newGoal = newGoalTmp :+ ( NewLabel( newGoalTmp, existingLabel ) -> rhs )
 

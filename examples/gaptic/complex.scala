@@ -35,4 +35,10 @@ val chainLemma2 = Lemma(
 	chain("hyp")
 }
 
+val chainLemma3 = new Lemma(
+	Sequent(Seq("hyp" -> parseFormula("(all x (r(x) -> (q(x) -> p(f(x)))))")), Seq("target" -> parseFormula("p(f(f(c)))")))
+) {
+	use(chain("hyp"))
+}
+
 
