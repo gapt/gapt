@@ -22,15 +22,12 @@ lazy val commonSettings = Seq(
 
   scalaVersion := "2.11.7",
   scalacOptions in Compile ++= Seq("-deprecation", "-language:postfixOps", "-language:implicitConversions", "-feature"),
-  testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
-  libraryDependencies ++= testDependencies map(_ % Test),
 
   // scalaz-stream is not on maven.org
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
 
   javaOptions ++= Seq("-Xss40m", "-Xmx1g"),
   fork := true,
-//  fork in Test := true,
 
   sourcesInBase := false // people like to keep scripts lying around
 
@@ -40,6 +37,14 @@ lazy val commonSettings = Seq(
     .setPreference(AlignSingleLineCaseStatements, true)
     .setPreference(DoubleIndentClassDeclaration, true)
     .setPreference(SpaceInsideParentheses, true))
+
+lazy val testSettings = Seq(
+  testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "console"),
+  libraryDependencies ++= Seq(
+    "org.specs2" %% "specs2-core" % "3.7",
+    "org.specs2" %% "specs2-junit" % "3.7",  // needed for junitxml output
+    "org.specs2" %% "specs2-matcher" % "3.7") map(_ % Test)
+  )
 
 lazy val publishSettings =
   if (Version endsWith "-SNAPSHOT") {
@@ -58,39 +63,22 @@ lazy val publishSettings =
     Seq(bintrayOrganization := Some("gapt"))
   }
 
-lazy val root = (project in file(".")).
+lazy val root = project.in(file(".")).
+  aggregate(core, examples, tests, cli, testing).
+  dependsOn(core, examples, cli).
   settings(commonSettings: _*).
-  settings(publishSettings: _*).
-  disablePlugins(JUnitXmlReportPlugin).
   settings(
-    name := "gapt",
-    description := "General Architecture for Proofs",
-
-    scalacOptions in (Compile, doc) ++= Seq(
-      "-doc-title", "gapt",
-      "-doc-version", version.value,
-      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
-      "-sourcepath", baseDirectory.value.getAbsolutePath,
-      "-diagrams",
-      "-implicits"
-    ),
-
-    mainClass := Some("at.logic.cli.CLIMain"),
-
     fork in console := true,
-    initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
-
-    unmanagedSourceDirectories in Compile += baseDirectory.value / "examples",
-    sourceDirectories in (Compile, scalariformFormat) += baseDirectory.value / "examples",
+    initialCommands in console := IO.read(resourceDirectory.in(cli, Compile).value / "gapt-cli-prelude.scala"),
 
     // Release stuff
-    test in assembly := {}, // don't execute test when assembling jar
+    aggregate in assembly := false,
     releaseDist := {
-      val baseDir = baseDirectory.value
+      val baseDir = file(".")
       val version = Keys.version.value
-      val apidocs = (doc in Compile).value
+      val apidocs = doc.in(core, Compile).value
 
-      val archiveFile = target.value / s"gapt-$version.tar.gz"
+      val archiveFile = file(".") / "target" / s"gapt-$version.tar.gz"
 
       Process(List("latexmk", "-pdf", "user_manual.tex"), baseDir / "doc") !
 
@@ -100,8 +88,8 @@ lazy val root = (project in file(".")).
         filesToIncludeAsIs.flatMap{fn => recursiveListFiles(baseDir / fn)}
           .map{f => (f, baseDir.toPath.relativize(f.toPath))} ++
         List((baseDir / "doc/README.dist", "README"),
-             (baseDir / "doc/user_manual.pdf", "user_manual.pdf")) ++
-          recursiveListFiles(apidocs).map{f => f -> s"apidocs/${apidocs.toPath.relativize(f.toPath)}"}
+          (baseDir / "doc/user_manual.pdf", "user_manual.pdf")) ++
+        recursiveListFiles(apidocs).map{f => f -> s"apidocs/${apidocs.toPath.relativize(f.toPath)}"}
 
       val archiveStem = s"gapt-$version"
 
@@ -130,13 +118,28 @@ lazy val root = (project in file(".")).
         outputStrategy = Some(CustomOutput(out)),
         workingDirectory = Some(file(".")),
         javaHome = javaHome.value,
-        runJVMOptions = javaOptions.value ++ Seq("-cp", Path.makeString(Attributed.data((fullClasspath in Test).value))),
+        runJVMOptions = javaOptions.value ++ Seq("-cp", Path.makeString(Attributed.data(fullClasspath.in(tests,Test).value))),
         connectInput = false),
         Seq(userManFn)).exitValue()
       if (exitVal == 0) IO.write(file(userManFn), out.toByteArray)
-    },
+    }
+  )
 
-    testForkedParallel in Test := true,
+lazy val core = project.in(file("core")).
+  settings(commonSettings: _*).
+  settings(publishSettings: _*).
+  settings(
+    name := "gapt",
+    description := "General Architecture for Proofs",
+
+    scalacOptions in (Compile, doc) ++= Seq(
+      "-doc-title", "gapt",
+      "-doc-version", version.value,
+      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-sourcepath", baseDirectory.value.getAbsolutePath,
+      "-diagrams",
+      "-implicits"
+    ),
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
@@ -153,39 +156,70 @@ lazy val root = (project in file(".")).
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.13",
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
       "com.itextpdf" % "itextpdf" % "5.5.8",
       "org.scilab.forge" % "jlatexmath" % "1.0.2")
   )
 
-addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat ; testing/scalariformFormat ; testing/test:scalariformFormat")
-
-lazy val testing = (project in file("testing")).
-  dependsOn(root).
+lazy val examples = project.in(file("examples")).
+  dependsOn(core).
   settings(commonSettings: _*).
+  settings(publishSettings: _*).
+  settings(
+    name := "gapt-examples",
+    unmanagedSourceDirectories in Compile := Seq(baseDirectory.value),
+    sourceDirectories in (Compile, scalariformFormat) := unmanagedSourceDirectories.in(Compile).value
+  )
+
+lazy val tests = project.in(file("tests")).
+  dependsOn(core, examples, cli).
+  settings(commonSettings: _*).
+  settings(testSettings: _*).
   disablePlugins(JUnitXmlReportPlugin).
+  settings(
+    testForkedParallel := true,
+    publish := {}
+  )
+
+lazy val cli = project.in(file("cli")).
+  dependsOn(core).
+  dependsOn(examples).
+  settings(commonSettings: _*).
+  settings(
+    mainClass := Some("at.logic.cli.CLIMain"),
+
+    libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "jline" % "jline" % "2.13"),
+
+    publish := {}
+  )
+
+addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
+
+lazy val testing = project.in(file("testing")).
+  dependsOn(core).
+  dependsOn(examples).
+  settings(commonSettings: _*).
   settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
 
-    baseDirectory in run := file(".")
+    baseDirectory in run := file("."),
+
+    sourcesInBase := false
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
 
 lazy val evalUserManual = TaskKey[Unit]("eval-user-manual", "Evaluates the snippets in the user manual.")
 
-lazy val testDependencies = Seq(
-  "org.specs2" %% "specs2-core" % "3.7",
-  "org.specs2" %% "specs2-junit" % "3.7",  // needed for junitxml output
-  "org.specs2" %% "specs2-matcher" % "3.7")
-
 def recursiveListFiles(f: File): Seq[File] =
-  if (f.isDirectory)
+  if (f.getName == "target")
+    Seq()
+  else if (f.isDirectory)
     IO.listFiles(f).flatMap(recursiveListFiles)
   else
     Seq(f)
