@@ -1,4 +1,4 @@
-import at.logic.gapt.examples.Script
+package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lkOld._
 
