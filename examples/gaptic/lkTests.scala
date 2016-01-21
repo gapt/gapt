@@ -3,10 +3,11 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 
 val eqLemma = Lemma(
-	Sequent(Seq("eq1" -> parseFormula("u = v"), "eq2" -> parseFormula("x = y"), "a" -> parseFormula("P(u) -> Q(u)")), Seq("b" -> parseFormula("P(x) & Q(x)")))
+	Sequent(Seq("eq1" -> parseFormula("u = v"), "eq2" -> parseFormula("y = x"), "a" -> parseFormula("P(u) -> Q(u)")), Seq("b" -> parseFormula("P(x) & Q(x)")))
 ) {
-	eqL("eq1", "a")
-	eqR("eq2", "b")
+	eqL("eq1", "a").to(parseFormula("P(v) -> Q(v)"))
+	eqL("eq1", "a").to(parseFormula("P(v) -> Q(u)"))
+	eqR("eq2", "b").fromRightToLeft
 }
 
 val defLemma = Lemma(
