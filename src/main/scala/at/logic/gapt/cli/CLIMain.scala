@@ -1,5 +1,7 @@
 package at.logic.gapt.cli
 
+import at.logic.gapt.examples.Script
+
 import scala.io.Source
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
@@ -35,9 +37,26 @@ object CLIMain extends Logger {
 
       // If invoked as ./gapt.sh script.scala,
       // then load script.scala and exit.
-      case Array( scriptFile ) =>
+      case Array( scriptFile, scriptArgs @ _* ) =>
         debug( "Initializing logging framework" )
-        new IMain( settings ).compile( imports + Source.fromFile( scriptFile ).mkString ).eval()
+
+        // Strip package declaration, the script compiler doesn't like it.
+        val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
+        val scriptSrc = Source.fromFile( scriptFile ).mkString match {
+          case packageRegex( restOfScript ) => restOfScript
+          case scriptWithoutPackage         => scriptWithoutPackage
+        }
+
+        val intp = new IMain( settings )
+        intp beSilentDuring { intp.interpret( imports + scriptSrc ) }
+
+        // Execute all defined objects of type Script.
+        for {
+          defTerm <- intp.namedDefinedTerms
+          if intp.typeOfTerm( defTerm.toString ) <:< intp.global.typeOf[Script]
+        } intp eval defTerm.toString match {
+          case script: Script => script main scriptArgs.toArray
+        }
 
       case _ =>
         settings.Yreplsync.value = true

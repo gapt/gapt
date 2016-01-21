@@ -1,4 +1,8 @@
-println( """
+package at.logic.gapt.examples.autded
+
+object exercise1 {
+  println(
+    """
   Get the formula φ_3 from Example 2.1 of the course notes by:
   gapt> PQPairs( 3 )
 
@@ -19,5 +23,7 @@ println( """
 
   You can compute the logical complexity |φ_3| of φ_3 as follows:
   gapt> lcomp( PQPairs( 3 ))
-""" )
+"""
+  )
+}
 

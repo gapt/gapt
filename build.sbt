@@ -80,6 +80,9 @@ lazy val root = (project in file(".")).
     fork in console := true,
     initialCommands in console := IO.read((resourceDirectory in Compile).value / "gapt-cli-prelude.scala"),
 
+    unmanagedSourceDirectories in Compile += baseDirectory.value / "examples",
+    sourceDirectories in (Compile, scalariformFormat) += baseDirectory.value / "examples",
+
     // Release stuff
     test in assembly := {}, // don't execute test when assembling jar
     releaseDist := {

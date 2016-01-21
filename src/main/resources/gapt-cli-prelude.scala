@@ -1,4 +1,5 @@
 import at.logic.gapt.examples._
+import at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
@@ -33,4 +34,4 @@ import at.logic.gapt.provers.escargot._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils._
 import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
-import Prover9TermParserLadrStyle._
+import Prover9TermParserLadrStyle.{parseTerm, parseFormula}

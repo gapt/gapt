@@ -16,3 +16,9 @@ package object examples {
     FactorialFunctionEqualityExampleProof2
   )
 }
+
+package examples {
+  class Script extends scala.App {
+    def run() = main( Array() )
+  }
+}

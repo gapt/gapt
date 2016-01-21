@@ -1,23 +1,25 @@
+package at.logic.gapt.examples.autded
 import at.logic.gapt.examples.PigeonHolePrinciple
 import at.logic.gapt.expr.Neg
 import at.logic.gapt.expr.fol.TseitinCNF
 import at.logic.gapt.expr.hol.existsclosure
-import at.logic.gapt.proofs.{Sequent, FOLClause}
+import at.logic.gapt.proofs.{ Sequent, FOLClause }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.sat.MiniSAT
 
-// setup
+object exercise3 {
 
-def MiniSATIsUnsat( cls: List[FOLClause] ): Boolean = {
-  !MiniSAT.solve( cls ).isDefined
-}
+  def MiniSATIsUnsat( cls: List[FOLClause] ): Boolean = MiniSAT.solve( cls ).isEmpty
 
-def Prover9IsUnsat( cls: List[FOLClause] ): Boolean =
-  Prover9 isValid existsclosure(cls.map{_.toFormula} ++: Sequent())
+  def Prover9IsUnsat( cls: List[FOLClause] ): Boolean =
+    Prover9 isValid existsclosure( cls.map {
+      _.toFormula
+    } ++: Sequent() )
 
-def TseitinPHP( n: Int ) = TseitinCNF( Neg( PigeonHolePrinciple( n, n-1 ) ) )
+  def TseitinPHP( n: Int ) = TseitinCNF( Neg( PigeonHolePrinciple( n, n - 1 ) ) )
 
-println( """
+  println(
+    """
   You can obtain a propositional unsatisfiable clause set from the Tseitin-
   transformation of the negation of the n-th pigeonhole principle tautology by:
   gapt> TseitinPHP( n )
@@ -29,5 +31,7 @@ println( """
 
   Use the time-command to find the largest n which is solved in < 5 seconds by 
   prover9 and minisat respectively.
-""" )
+"""
+  )
+}
 
