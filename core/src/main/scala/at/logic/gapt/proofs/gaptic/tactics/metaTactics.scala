@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.gaptic.{ ProofState, Tactical }
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ WeakeningMacroRule, LKProof }
 
 /**
  * Repeat tactical
@@ -31,14 +31,15 @@ case class InsertTactic( insertion: LKProof ) extends Tactical {
       case None => x
       case Some( goal ) =>
         StillmanSubsumptionAlgorithmFOL.subsumes_by( insertion.endSequent, goal.conclusion ) match {
-          case None => f( x, i + 1 )
+          case None => f( x, i - 1 )
           case Some( sub ) =>
             insertedOnce = true
-            f( x replaceSubGoal ( i, sub( insertion ) ), 0 )
+            val insertionContracted = WeakeningMacroRule( sub( insertion ), goal.conclusion )
+            f( x replaceSubGoal ( i, insertionContracted ), i - 1 )
         }
     }
 
-    val r = f( proofState, 0 )
+    val r = f( proofState, proofState.subGoals.length - 1 )
 
     if ( insertedOnce )
       Some( r )
