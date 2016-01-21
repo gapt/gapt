@@ -29,19 +29,22 @@ object LemmaMacros {
     import c.universe._
     val proofState = TermName( c.freshName() )
 
+    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
+    val proofStateCompanion = symbolOf[ProofState.type].asClass.module
+    val openAssumptionCompanion = symbolOf[OpenAssumption.type].asClass.module
+
     val tacticsStmts = tacticsProof match {
       case q"{..$stmts}" =>
         for ( stmt <- stmts )
-          yield q"$proofState = _root_.at.logic.gapt.proofs.gaptic.LemmaMacros.use($proofState, $stmt)"
+          yield q"$proofState = $lemmaMacros.use($proofState, $stmt)"
     }
 
     q"""
-      var $proofState = _root_.at.logic.gapt.proofs.gaptic.ProofState(0,
-        _root_.at.logic.gapt.proofs.gaptic.OpenAssumption($labelledSequent))
+      var $proofState = $proofStateCompanion(0, $openAssumptionCompanion($labelledSequent))
 
       ..$tacticsStmts
 
-      _root_.at.logic.gapt.proofs.gaptic.LemmaMacros.qed($proofState)
+      $lemmaMacros.qed($proofState)
     """
   }
 }
