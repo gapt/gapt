@@ -45,7 +45,8 @@ object factorialmodth extends Script {
   val sipProver = new SipProver(
     quasiTautProver = modThProver,
     solutionFinder = patchingSolFinder,
-    instances = 0 to 3,
+    instances = 0 to 4,
+    instanceProver = Prover9,
     testInstances = 0 to 6,
     minimizeInstanceLanguages = true // <- removes instances that are subsumed by the theory :-)
   )
