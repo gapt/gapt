@@ -89,11 +89,11 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         ( Cut( uproof1, aux1, uproof2, aux2 ), table2 )
 
       case p: EqualityRule =>
-        val lambdaPos = HOLPosition.toLambdaPosition( p.auxFormula )( p.positions )
-        Equality(
-          apply( p.subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ) ),
-          p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos
-        )
+        val lambdaPos = p.positions map {
+          HOLPosition.toLambdaPosition( p.auxFormula )
+        }
+        val ( uproof, table ) = apply( p.subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
+        ( Equality( uproof, p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos ), table )
 
       case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) if !isCutAnc( p.mainIndices.head ) =>
         val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
@@ -177,8 +177,10 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
     }
 
     def extend( p: LKProof ): HPath = extend( p.mainFormulas( 0 ) )
+
     override def toString() = s"HPath(${contracting_inference.hashCode}, $path)"
   }
+
 }
 
 object LKToLKsk {
@@ -190,7 +192,7 @@ object LKToLKsk {
  * --------------------------------- all:l                 --------------------------------- all:l
  * \Gamma :- \forall x P(x), \Delta                        \Gamma :- \forall x P(x), \Delta
  * ----------------------------------------------------------------------------------------- X:l
- *      \Gamma' :- \forall x P(x), \forall x P(x), \Delta
- *      ------------------------------------------------- c:r
- *      \Gamma' :- \forall x P(x), \Delta
+ * \Gamma' :- \forall x P(x), \forall x P(x), \Delta
+ * ------------------------------------------------- c:r
+ * \Gamma' :- \forall x P(x), \Delta
  */

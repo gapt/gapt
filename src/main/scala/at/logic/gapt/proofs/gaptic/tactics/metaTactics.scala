@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr.{ StillmanSubsumptionAlgorithmFOL, StillmanSubsumptionAlgorithmHOL }
+import at.logic.gapt.expr.StillmanSubsumptionAlgorithmFOL
 import at.logic.gapt.proofs.gaptic.{ ProofState, Tactical }
-import at.logic.gapt.proofs.lk.{ applySubstitution, LKProof }
+import at.logic.gapt.proofs.lk.LKProof
 
 /**
  * Repeat tactical
@@ -34,7 +34,7 @@ case class InsertTactic( insertion: LKProof ) extends Tactical {
           case None => f( x, i + 1 )
           case Some( sub ) =>
             insertedOnce = true
-            f( x replaceSubGoal ( i, applySubstitution( sub )( insertion ) ), 0 )
+            f( x replaceSubGoal ( i, sub( insertion ) ), 0 )
         }
     }
 
