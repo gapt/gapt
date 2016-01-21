@@ -89,7 +89,9 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         ( Cut( uproof1, aux1, uproof2, aux2 ), table2 )
 
       case p: EqualityRule =>
-        val lambdaPos = p.positions map { HOLPosition.toLambdaPosition( p.auxFormula ) }
+        val lambdaPos = p.positions map {
+          HOLPosition.toLambdaPosition( p.auxFormula )
+        }
         val ( uproof, table ) = apply( p.subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
         ( Equality( uproof, p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos ), table )
 
@@ -175,8 +177,10 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
     }
 
     def extend( p: LKProof ): HPath = extend( p.mainFormulas( 0 ) )
+
     override def toString() = s"HPath(${contracting_inference.hashCode}, $path)"
   }
+
 }
 
 object LKToLKsk {
@@ -188,7 +192,7 @@ object LKToLKsk {
  * --------------------------------- all:l                 --------------------------------- all:l
  * \Gamma :- \forall x P(x), \Delta                        \Gamma :- \forall x P(x), \Delta
  * ----------------------------------------------------------------------------------------- X:l
- *      \Gamma' :- \forall x P(x), \forall x P(x), \Delta
- *      ------------------------------------------------- c:r
- *      \Gamma' :- \forall x P(x), \Delta
+ * \Gamma' :- \forall x P(x), \forall x P(x), \Delta
+ * ------------------------------------------------- c:r
+ * \Gamma' :- \forall x P(x), \Delta
  */
