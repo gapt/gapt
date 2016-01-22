@@ -51,7 +51,7 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "pi2 pigeonhole" in {
-    val e = LKToExpansionProof( Pi2Pigeonhole() )
+    val e = LKToExpansionProof( Pi2Pigeonhole.proof )
     Escargot isValid e.deep must_== true
     Escargot isValid eliminateCutsET( e ).deep must_== true
   }

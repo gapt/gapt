@@ -57,7 +57,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "pi2 pigeonhole" in {
-    val p = Pi2Pigeonhole()
+    val p = Pi2Pigeonhole.proof
     val recSchem = extractRecSchem( p )
 
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )

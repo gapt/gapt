@@ -120,7 +120,7 @@ class LKToLKskTest extends Specification {
   }
 
   "pigeonhole" in {
-    LKToLKsk( Pi2Pigeonhole() )
+    LKToLKsk( Pi2Pigeonhole.proof )
     ok
   }
 
