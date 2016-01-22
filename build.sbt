@@ -64,7 +64,7 @@ lazy val publishSettings =
   }
 
 lazy val root = project.in(file(".")).
-  aggregate(core, examples, tests, cli, testing).
+  aggregate(core, examples, tests, userManual, cli, testing).
   dependsOn(core, examples, cli).
   settings(commonSettings: _*).
   settings(
@@ -120,7 +120,7 @@ lazy val root = project.in(file(".")).
         outputStrategy = Some(CustomOutput(out)),
         workingDirectory = Some(file(".")),
         javaHome = javaHome.value,
-        runJVMOptions = javaOptions.value ++ Seq("-cp", Path.makeString(Attributed.data(fullClasspath.in(tests,Test).value))),
+        runJVMOptions = javaOptions.value ++ Seq("-cp", Path.makeString(Attributed.data(fullClasspath.in(userManual, Compile).value))),
         connectInput = false),
         Seq(userManFn)).exitValue()
       if (exitVal == 0) IO.write(file(userManFn), out.toByteArray)
@@ -172,7 +172,7 @@ lazy val examples = project.in(file("examples")).
   )
 
 lazy val tests = project.in(file("tests")).
-  dependsOn(core, examples, cli).
+  dependsOn(core, examples).
   settings(commonSettings: _*).
   settings(testSettings: _*).
   disablePlugins(JUnitXmlReportPlugin).
@@ -181,9 +181,17 @@ lazy val tests = project.in(file("tests")).
     packagedArtifacts := Map()
   )
 
+lazy val userManual = project.in(file("doc")).
+  dependsOn(cli).
+  settings(commonSettings: _*).
+  settings(
+    sourcesInBase := true,
+    sourceDirectories in (Compile, scalariformFormat) += baseDirectory.value,
+    packagedArtifacts := Map()
+  )
+
 lazy val cli = project.in(file("cli")).
-  dependsOn(core).
-  dependsOn(examples).
+  dependsOn(core, examples).
   settings(commonSettings: _*).
   settings(
     mainClass := Some("at.logic.cli.CLIMain"),
@@ -198,8 +206,7 @@ lazy val cli = project.in(file("cli")).
 addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
 
 lazy val testing = project.in(file("testing")).
-  dependsOn(core).
-  dependsOn(examples).
+  dependsOn(core, examples).
   settings(commonSettings: _*).
   settings(
     name := "gapt-testing",
@@ -209,9 +216,7 @@ lazy val testing = project.in(file("testing")).
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
 
-    baseDirectory in run := file("."),
-
-    sourcesInBase := false
+    baseDirectory in run := file(".")
   )
 
 lazy val releaseDist = TaskKey[File]("release-dist", "Creates the release tar ball.")
