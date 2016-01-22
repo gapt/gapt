@@ -31,7 +31,7 @@ lazy val commonSettings = Seq(
 
   sourcesInBase := false // people like to keep scripts lying around
 
-) ++ defaultScalariformSettings :+
+) ++ publishSettings ++ defaultScalariformSettings :+
   (ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference(AlignParameters, true)
     .setPreference(AlignSingleLineCaseStatements, true)
@@ -70,6 +70,8 @@ lazy val root = project.in(file(".")).
   settings(
     fork in console := true,
     initialCommands in console := IO.read(resourceDirectory.in(cli, Compile).value / "gapt-cli-prelude.scala"),
+
+    packagedArtifacts := Map(),
 
     // Release stuff
     aggregate in assembly := false,
@@ -127,10 +129,9 @@ lazy val root = project.in(file(".")).
 
 lazy val core = project.in(file("core")).
   settings(commonSettings: _*).
-  settings(publishSettings: _*).
   settings(
     name := "gapt",
-    description := "General Architecture for Proofs",
+    description := "General Architecture for Proof Theory",
 
     scalacOptions in (Compile, doc) ++= Seq(
       "-doc-title", "gapt",
@@ -164,7 +165,6 @@ lazy val core = project.in(file("core")).
 lazy val examples = project.in(file("examples")).
   dependsOn(core).
   settings(commonSettings: _*).
-  settings(publishSettings: _*).
   settings(
     name := "gapt-examples",
     unmanagedSourceDirectories in Compile := Seq(baseDirectory.value),
@@ -178,7 +178,7 @@ lazy val tests = project.in(file("tests")).
   disablePlugins(JUnitXmlReportPlugin).
   settings(
     testForkedParallel := true,
-    publish := {}
+    packagedArtifacts := Map()
   )
 
 lazy val cli = project.in(file("cli")).
@@ -192,7 +192,7 @@ lazy val cli = project.in(file("cli")).
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "jline" % "jline" % "2.13"),
 
-    publish := {}
+    packagedArtifacts := Map()
   )
 
 addCommandAlias("format", "; scalariformFormat ; test:scalariformFormat")
@@ -204,6 +204,8 @@ lazy val testing = project.in(file("testing")).
   settings(
     name := "gapt-testing",
     description := "gapt extended regression tests",
+
+    packagedArtifacts := Map(),
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
 
