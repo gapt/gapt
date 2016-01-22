@@ -25,35 +25,34 @@ object tape {
     forget( "A" )
     destruct
     axiom
-    forget( "I0'" )
+    forget( "I0_1" )
     axiomTh
   }
 
   val rhs = Lemma( Sequent( Seq( "Iv" -> parseFormula( "I(v)" ) ), Seq( "C" -> parseFormula( "(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) ) ) {
     defL( "Iv", Iv )
     allL( parseTerm( "0" ) )
-    exL( FOLVar( "y_0" ), "Iv1" )
+    exL( FOLVar( "y_0" ), "Iv_0" )
     allL( parseTerm( "y_0 + 1" ) )
     forget( "Iv" )
-    exL( FOLVar( "y_1" ), "Iv2" )
+    exL( FOLVar( "y_1" ), "Iv_1" )
     exR( parseTerm( "y_0" ) )
     exR( parseTerm( "(y_0 + y_1) + 1" ) )
     forget( "C" )
-    forget( "C'" )
+    forget( "C_0" )
     destruct
     negR
-    forget( "Iv1" )
-    forget( "Iv2" )
+    forget( "Iv_0" )
+    forget( "Iv_1" )
     axiomTh
-    eqL( "Iv2", "Iv1" )
-    forget( "Iv2" )
+    eqL( "Iv_1", "Iv_0" )
+    forget( "Iv_1" )
     axiomTh
   }
 
   val p = Lemma( Sequent( Seq( "A" -> parseFormula( "A" ) ), Seq( "C" -> parseFormula( "(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) ) ) {
     cut( parseFormula( "I(1)" ), "I1" )
     cut( parseFormula( "I(0)" ), "I0" )
-    forget( "C" ) // should not be necessary
     insert( lhs )
     forget( "A" )
     forget( "I1" )
