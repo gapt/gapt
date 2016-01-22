@@ -238,7 +238,7 @@ lazy val testing = project.in( file( "testing" ) ).
 
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.2.11",
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0",
 
     baseDirectory in run := file( "." )
   )
