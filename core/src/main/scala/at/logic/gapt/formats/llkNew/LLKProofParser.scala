@@ -20,10 +20,10 @@ case class ExtendedProofDatabase(
 )
     extends ProofDatabase(
       proofs = eproofs.map( x =>
-      x._1 match {
-        case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
-        case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
-      } ).toList,
+        x._1 match {
+          case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
+          case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
+        } ).toList,
       Definitions = edefinitions,
       axioms = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) ),
       sequentLists = Nil

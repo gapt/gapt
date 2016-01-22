@@ -27,7 +27,7 @@ object Multisets {
       map + ( ( elem, map.get( elem ).get - 1 ) )
     else
       throw new Exception // element not contained in the multiset
-      )
+    )
 
     // produces duplicates, i.e. if the multiset contains
     // 3x A, then the iterator will produce A, A, A.

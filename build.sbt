@@ -69,6 +69,8 @@ lazy val publishSettings =
     Seq( bintrayOrganization := Some( "gapt" ) )
   }
 
+lazy val BuildSbtConfig = config( "buildsbt" ) extend Compile
+
 lazy val root = project.in( file( "." ) ).
   aggregate( core, examples, tests, userManual, cli, testing ).
   dependsOn( core, examples, cli ).
@@ -79,7 +81,9 @@ lazy val root = project.in( file( "." ) ).
 
     packagedArtifacts := Map(),
 
-    sources in ( Compile, scalariformFormat ) += baseDirectory.value / "build.sbt",
+    inConfig( BuildSbtConfig )( configScalariformSettings ++ commonSettings ),
+    sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
+    includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
     // Release stuff
     aggregate in assembly := false,
@@ -223,10 +227,6 @@ lazy val cli = project.in( file( "cli" ) ).
     packagedArtifacts := Map()
   )
 
-lazy val BuildSbtConfig = config( "buildsbt" ) extend Compile
-inConfig( BuildSbtConfig )( configScalariformSettings ++ commonSettings )
-scalaSource in BuildSbtConfig := baseDirectory.value
-includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter )
 addCommandAlias( "format", "; scalariformFormat ; test:scalariformFormat ; buildsbt:scalariformFormat" )
 
 lazy val testing = project.in( file( "testing" ) ).

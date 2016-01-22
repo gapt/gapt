@@ -218,6 +218,6 @@ class DrawProof[T](
         case _ => None
       }
       else res // we have found the proof already
-      )
+    )
   }
 }

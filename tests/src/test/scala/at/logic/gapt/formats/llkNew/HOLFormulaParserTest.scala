@@ -164,7 +164,7 @@ class LLKASTParserTest extends Specification {
         "(all X f(1+X)= (X*0)+X)", "(all X f(1+X)= (X*0)+X) | (all X f(1+X)= (X*0)+X)",
         "(\\ x => (\\y => ( x+x = y+y  )))" //, " (\\ x => (\\y => ( (x+x) = (y+y)  )))"
         , "(\\delta + \\kappa) +1", "(\\delta + \\kappa) +1 = 0+1", "(@ ((\\ x => (\\alpha))) 0)" //,"((\\delta + \\kappa) +1)","((\\delta + \\kappa) +1) = 0+1"
-        )
+      )
       val res: List[( String, String )] = terms.map( ( s: String ) =>
         LLKASTParser.parseAll( LLKASTParser.formula, s ) match {
           case LLKASTParser.Success( result, _ ) =>
