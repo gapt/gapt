@@ -21,7 +21,7 @@ object LemmaMacros {
     if ( proofState.subGoals.isEmpty ) {
       proofState.proofSegment
     } else {
-      throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals:\n" + proofState.subGoals.mkString( "\n" ) )
+      throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
     }
 
   import reflect.macros._
