@@ -53,7 +53,7 @@ object improveSolutionLK {
    */
   private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula =
     for ( session <- prover.startIncrementalSession() ) yield {
-      session declareSymbolsIn ( start, context toFormula )
+      session declareSymbolsIn ( instances.flatMap { _.map.values } + start ++ context.elements )
       session assert context.toNegFormula
 
       val isSolution = mutable.Map[Set[FOLClause], Boolean]()
