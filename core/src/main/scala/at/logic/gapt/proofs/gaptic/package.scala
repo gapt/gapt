@@ -106,6 +106,7 @@ package object gaptic {
   def prop = PropTactic
 
   def prover9 = Prover9Tactic
+  def escargot = EscargotTactic
 
   def forget( l: String ) = WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l )
 

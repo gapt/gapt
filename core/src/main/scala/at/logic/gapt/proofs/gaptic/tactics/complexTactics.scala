@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 
 /**
@@ -181,4 +182,8 @@ case object Prover9Tactic extends Tactic {
   override def apply( goal: OpenAssumption ) = {
     Prover9.getLKProof( goal.conclusion )
   }
+}
+
+case object EscargotTactic extends Tactic {
+  override def apply( goal: OpenAssumption ) = Escargot getLKProof goal.conclusion
 }
