@@ -208,8 +208,8 @@ lazy val userManual = project.in( file( "doc" ) ).
   dependsOn( cli ).
   settings( commonSettings: _* ).
   settings(
-    sourcesInBase := true,
-    sourceDirectories in ( Compile, scalariformFormat ) += baseDirectory.value,
+    unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
+    sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value,
     packagedArtifacts := Map()
   )
 
