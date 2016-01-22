@@ -1,4 +1,4 @@
-import at.logic.gapt.examples.Script
+package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ structuralCNF, univclosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
