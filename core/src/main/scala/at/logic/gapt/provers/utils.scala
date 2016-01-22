@@ -40,7 +40,7 @@ object groundFreeVariables {
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =
     getGroundingMap( variables( seq ), constants( seq ) )
 
-  def apply( seq: HOLSequent ): ( HOLSequent, Map[LambdaExpression, LambdaExpression] ) = {
+  def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, Var] ) = {
     val groundingMap = getGroundingMap( seq )
     val groundSeq = Substitution( groundingMap )( seq )
     val unground = groundingMap.map { case ( f, t ) => ( t, f ) }

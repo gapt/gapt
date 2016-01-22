@@ -29,7 +29,7 @@ class VeriT extends OneShotProver with ExternalProgram {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map {
       case ExpansionProof( renamedExpSeq ) =>
-        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming ) } )
+        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming.toMap ) } )
     }
   }
 

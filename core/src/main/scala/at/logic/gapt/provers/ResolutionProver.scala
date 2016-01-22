@@ -1,7 +1,7 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.expr.{ HOLFormula, Const }
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.{ Sequent, HOLClause, HOLSequent }
@@ -20,7 +20,9 @@ abstract class ResolutionProver extends OneShotProver {
   private def withGroundVariables( seq: HOLSequent )( f: HOLSequent => Option[LKProof] ): Option[LKProof] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map { renamedProof =>
-      TermReplacement( renamedProof, invertRenaming toMap )
+      val usedVars = renamedProof.subProofs.flatMap { p => variables( p ) }
+      val varRenaming = rename( invertRenaming.values.toSet, usedVars )
+      Substitution( varRenaming.map( _.swap ) )( TermReplacement( renamedProof, invertRenaming.mapValues( varRenaming ).toMap[LambdaExpression, LambdaExpression] ) )
     }
   }
 
@@ -28,14 +30,14 @@ abstract class ResolutionProver extends OneShotProver {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map {
       case ExpansionProof( renamedExpSeq ) =>
-        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming ) } )
+        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming.toMap ) } )
     }
   }
 
   private def withGroundVariables3( seq: HOLSequent )( f: HOLSequent => Option[ResolutionProof] ): Option[ResolutionProof] = {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map { renamedProof =>
-      TermReplacement( renamedProof, invertRenaming )
+      TermReplacement( renamedProof, invertRenaming.toMap )
     }
   }
 
