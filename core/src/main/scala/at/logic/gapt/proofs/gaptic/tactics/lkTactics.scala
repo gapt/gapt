@@ -340,7 +340,7 @@ case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
       val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
 
       val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
-      val newGoal = newGoalTmp insertAt ( Ant( 1 ), ( NewLabel( goalSequent, existingLabel ) -> rhs ) )
+      val newGoal = newGoalTmp insertAt ( Ant( 1 ), ( NewLabel( newGoalTmp, existingLabel ) -> rhs ) )
 
       // Indices of lhs and rhs
       val lhsIndex = Ant( 0 )

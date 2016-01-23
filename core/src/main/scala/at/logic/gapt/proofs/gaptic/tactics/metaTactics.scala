@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr.StillmanSubsumptionAlgorithmFOL
-import at.logic.gapt.proofs.gaptic.{ ProofState, Tactical }
+import at.logic.gapt.proofs.gaptic.{ Tactic, OpenAssumption, ProofState, Tactical }
 import at.logic.gapt.proofs.lk.{ WeakeningMacroRule, LKProof }
 
 /**
@@ -19,32 +19,16 @@ case class RepeatTactic( tact: Tactical ) extends Tactical {
 }
 
 /**
- * Insert tactical
- * Inserts an LKProof where the end sequent subsumes the sequent of the open assumption
+ * Insert tactic
+ * Inserts an LKProof if the insertion sequent subsumes the sequent of the sub goal
  * @param insertion
  */
-case class InsertTactic( insertion: LKProof ) extends Tactical {
-  def apply( proofState: ProofState ) = {
-    var insertedOnce = false
-
-    def f( x: ProofState, i: Int ): ProofState = x.getSubGoal( i ) match {
-      case None => x
-      case Some( goal ) =>
-        StillmanSubsumptionAlgorithmFOL.subsumes_by( insertion.endSequent, goal.conclusion ) match {
-          case None => f( x, i - 1 )
-          case Some( sub ) =>
-            insertedOnce = true
-            val insertionContracted = WeakeningMacroRule( sub( insertion ), goal.conclusion )
-            f( x replaceSubGoal ( i, insertionContracted ), i - 1 )
-        }
+case class InsertTactic( insertion: LKProof ) extends Tactic {
+  def apply( goal: OpenAssumption ) = {
+    StillmanSubsumptionAlgorithmFOL.subsumes_by( insertion.endSequent, goal.conclusion ) match {
+      case Some( sub ) =>
+        Option( WeakeningMacroRule( sub( insertion ), goal.conclusion ) )
+      case None => None
     }
-
-    val r = f( proofState, proofState.subGoals.length - 1 )
-
-    if ( insertedOnce )
-      Some( r )
-    else
-      None
   }
-
 }
