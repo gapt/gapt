@@ -12,8 +12,8 @@ object propositional {
     Sequent( Seq( "initAnt" -> Imp( A, B ) ), Seq( "initSuc" -> Or( And( A, B ), Neg( A ) ) ) )
   ) {
       orR( "initSuc" )
-      negR( "initSuc_2" )
-      andR( "initSuc_1" )
+      negR( "initSuc_1" )
+      andR( "initSuc_0" )
       axiomLog
       impL( "initAnt" )
       axiomLog
@@ -24,18 +24,12 @@ object propositional {
     Sequent( Seq( "initAnt" -> Imp( A, B ) ), Seq( "initSuc" -> Or( And( A, B ), Neg( A ) ) ) )
   ) {
       orR( "initSuc" )
-      negR( "initSuc_2" )
-      andR( "initSuc_1" )
+      negR( "initSuc_1" )
+      andR( "initSuc_0" )
       axiom
       impL
       axiom
       axiom
-    }
-
-  val cutTest = Lemma(
-    Sequent( Seq( "a1" -> And( A, B ), "a2" -> Imp( B, A ) ), Seq( "s1" -> Or( B, A ), "s2" -> Neg( And( B, A ) ) ) )
-  ) {
-      cut( Imp( FOLAtom( "C" ), Bottom() ), "cfm" )
     }
 
   val direct = Lemma(
