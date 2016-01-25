@@ -302,6 +302,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def contains[B]( el: B ): Boolean = elements contains el
 
+  def contains[B]( el: B, isSuc: Boolean ): Boolean =
+    if ( isSuc ) succedent contains el else antecedent contains el
+
   /**
    * Returns the element at some SequentIndex.
    *
@@ -396,6 +399,8 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 
+  def indexOfPol[B >: A]( elem: B, inSuc: Boolean ): SequentIndex =
+    if ( inSuc ) indexOfInSuc( elem ) else indexOfInAnt( elem )
   def indexOfInAnt[B >: A]( elem: B ): SequentIndex = Ant( antecedent indexOf elem )
   def indexOfInSuc[B >: A]( elem: B ): SequentIndex = Suc( succedent indexOf elem )
 

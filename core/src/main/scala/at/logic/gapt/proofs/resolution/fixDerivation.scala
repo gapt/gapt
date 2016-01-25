@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFn
-import at.logic.gapt.proofs.{ Clause, HOLClause, HOLSequent, Suc }
+import at.logic.gapt.proofs._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.utils.logging.Logger
@@ -15,122 +15,30 @@ import scala.collection.immutable.HashMap
  *  and want a refutation R' of a set C' such that C implies C'.
  *
  *  This algorithm tries to obtain R' by trying to replace clauses c
- *  from C in R by derivations of C from C' in the following way:
- *
- *  - If c is in C' or c is an instance of reflexivity, do nothing.
- *  - If c is subsumed by some c' in C', derive c from c' by factoring.
- *  - Otherwise, try to derive c from C' by paramodulation and symmetry (prover9 often needs
- *    this, and the check is usually fast),
- *  - Otherwise, try to derive c from C' by propositional resolution.
- *
- *  If none of this works, we issue a warning and keep the clause c. If no warning is issued
- *  and the algorithm terminates, the result is the desired R'.
+ *  from C in R by derivations of C from C'.
  *
  *  In general, if R is a derivation of a clause c, the result R' of fixDerivation(R)
  *  is a derivation of a subclause of c.
  */
 
 object fixDerivation extends Logger {
-  private def getSymmetryMap( to: Tuple2[Seq[HOLFormula], Seq[HOLFormula]], from: Tuple2[Seq[HOLFormula], Seq[HOLFormula]] ) = {
-    var err = false
-    def createMap( from: Seq[HOLFormula], to: Seq[HOLFormula] ) = {
-      ( from zip from.indices ).foldLeft( HashMap[Int, Int]() ) {
-        case ( map, ( from_f, from_i ) ) => {
-          val to_i = to.indexWhere( to_f => ( from_f == to_f ) || ( ( from_f, to_f ) match {
-            case ( Eq( from_l, from_r ), Eq( to_l, to_r ) ) if from_l == to_r && from_r == to_l => true
-            case _ => false
-          } ) )
-          if ( to_i != -1 )
-            map + ( ( from_i, to_i ) )
-          else {
-            err = true
-            map
-          }
-        }
-      }
+  def tryDeriveBySymmetry( to: HOLClause, from: HOLClause ): Option[ResolutionProof] = {
+    val needToFlip = for ( ( a, i ) <- from.zipWithIndex ) yield a match {
+      case _ if to.contains( a, i isSuc ) => false
+      case Eq( t, s ) if to.contains( Eq( s, t ), i isSuc ) => true
+      case _ => return None
     }
-    val neg_map = createMap( from._1, to._1 )
-    val pos_map = createMap( from._2, to._2 )
-    if ( err )
-      None
-    else
-      Some( ( neg_map, pos_map ) )
+
+    var p: ResolutionProof = InputClause( from )
+    for ( ( ( a, true ), i ) <- from zip needToFlip zipWithIndex )
+      p = Flip( p, p.conclusion.indexOfPol( a, i isSuc ) )
+
+    Some( p )
   }
-  private def convertSequent( seq: HOLClause ) =
-    ( seq.antecedent, seq.succedent )
-  private def applySymm( p: ResolutionProof, f: HOLFormula, pos: Boolean ): ResolutionProof =
-    {
-      val ( left, right ) = f match {
-        case Eq( l, r ) => ( l, r )
-      }
-      val newe = Eq( right, left )
-      val refl = Eq( left, left )
-      if ( pos ) {
-        val irefl = ReflexivityClause( left )
-        Paramodulation( p, p.conclusion indexOf f, irefl, Suc( 0 ), newe )
-      } else {
-        val init = TautologyClause( newe )
-        val init2 = init
-        val eq1 = Paramodulation( init, Suc( 0 ), p, p.conclusion indexOf f, refl )
-        val eq2 = Paramodulation( init2, Suc( 0 ), eq1, eq1.conclusion indexOf refl, newe )
-        Factor( eq2 )._1
-      }
-    }
-  def tryDeriveBySymmetry( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
-    getSymmetryMap( convertSequent( to ), convertSequent( from ) ) map {
-      case ( neg_map, pos_map ) =>
-        trace( "deriving " + to + " from " + from + " by symmetry" )
-        val my_to = convertSequent( to )
-        val my_from = convertSequent( from )
-        val ( neg_map, pos_map ) = getSymmetryMap( my_to, my_from ).get
-        val init: ResolutionProof = InputClause( from.map( _.asInstanceOf[HOLAtom] ) )
 
-        var my_from_s = ( List[HOLFormula](), List[HOLFormula]() )
-        var neg_map_s = HashMap[Int, Int]()
-        var pos_map_s = HashMap[Int, Int]()
-
-        // add symmetry derivations
-        val s_neg = neg_map.keySet.foldLeft( init )( ( p, i ) => {
-          val f = my_from._1( i )
-          val to_i = neg_map( i )
-          neg_map_s = neg_map_s + ( my_from_s._1.size -> to_i )
-          f match {
-            case Eq( _, _ ) if my_to._1( to_i ) != f => {
-              my_from_s = ( my_from_s._1 :+ my_to._1( to_i ), my_from_s._2 )
-              applySymm( p, f, false )
-            }
-            case _ => {
-              my_from_s = ( my_from_s._1 :+ f, my_from_s._2 )
-              p
-            }
-          }
-        } )
-        val s_pos = pos_map.keySet.foldLeft( s_neg )( ( p, i ) => {
-          val f = my_from._2( i )
-          val to_i = pos_map( i )
-          pos_map_s = pos_map_s + ( my_from_s._2.size -> to_i )
-          f match {
-            case Eq( _, _ ) if my_to._2( to_i ) != f => {
-              my_from_s = ( my_from_s._1, my_from_s._2 :+ my_to._2( to_i ) )
-              applySymm( p, f, true )
-            }
-            case _ => {
-              my_from_s = ( my_from_s._1, my_from_s._2 :+ f )
-              p
-            }
-          }
-        } )
-
-        assert( to.isSubMultisetOf( s_pos.conclusion ) )
-
-        Factor( s_pos )._1
-    }
-
-  private val subsumption_alg = StillmanSubsumptionAlgorithmHOL
   def tryDeriveByFactor( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
-    subsumption_alg.subsumes_by( from, to ) map { s =>
-      Factor( Instance( InputClause( from ), s ) )._1
-    }
+    for ( s <- clauseSubsumption( from, to, multisetSubsumption = false ) )
+      yield Factor( Instance( InputClause( from ), s ) )._1
 
   def tryDeriveTrivial( to: HOLClause, from: Seq[HOLClause] ) = to match {
     case _ if from contains to => Some( InputClause( to ) )
