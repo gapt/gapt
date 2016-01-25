@@ -703,7 +703,12 @@ object ContractionMacroRule extends ConvenienceConstructor( "ContractionMacroRul
       && ( currentSequent isSubsetOf targetSequent ) )
 
     if ( strict & !assertion ) {
-      throw LKRuleCreationException( "Sequent " + targetSequent + " cannot be reached from " + currentSequent + " by contractions." )
+      throw LKRuleCreationException(
+        s"""Sequent $targetSequent cannot be reached from $currentSequent by contractions.
+           |It is missing the following formulas:
+           |${( targetSequent diff currentSequent ) ++ ( currentSequent.distinct diff targetSequent.distinct )}
+         """.stripMargin
+      )
     }
 
     val ( subProof, subConnector ) = targetAnt.distinct.foldLeft( ( p, OccConnector( p.endSequent ) ) ) { ( acc, f ) =>
@@ -1011,7 +1016,12 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
     val targetSuc = targetSequent.succedent
 
     if ( strict && !( currentSequent isSubsetOf targetSequent ) )
-      throw LKRuleCreationException( "Sequent " + targetSequent + " cannot be reached from " + currentSequent + " by weakenings and contractions." )
+      throw LKRuleCreationException(
+        s"""Sequent $targetSequent cannot be reached from $currentSequent by weakenings and contractions:
+           |It is missing the following formulas:
+           |${currentSequent.distinct diff targetSequent.distinct}
+         """.stripMargin
+      )
 
     val antList = targetAnt.distinct map ( f => ( f, targetAnt.count( _ == f ) ) )
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )

@@ -72,7 +72,8 @@ object RobinsonToLK {
     def f( p: ResolutionProof ): LKProof = memo.getOrElseUpdate( p, p match {
       case TautologyClause( atom )   => LogicalAxiom( atom )
       case ReflexivityClause( term ) => ReflexivityAxiom( term )
-      case InputClause( cls )        => createAxiom( cls )
+      case InputClause( cls ) =>
+        ContractionMacroRule( WeakeningMacroRule( createAxiom( cls ), cls, strict = false ), endSequent ++ cls, strict = false )
       case Factor( p1, idx1 @ Ant( _ ), idx2 ) =>
         ContractionLeftRule( f( p1 ), p1.conclusion( idx1 ) )
       case Factor( p1, idx1 @ Suc( _ ), idx2 ) =>
