@@ -33,6 +33,7 @@ lazy val commonSettings = Seq(
 
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
+  baseDirectory in run := file( "." ),
 
   sourcesInBase := false // people like to keep scripts lying around
 
@@ -238,9 +239,7 @@ lazy val testing = project.in( file( "testing" ) ).
 
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0",
-
-    baseDirectory in run := file( "." )
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
