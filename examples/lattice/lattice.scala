@@ -267,50 +267,50 @@ object lattice {
     allL( y_0, "GLB_0" )
     forget( "GLB" )
     forget( "GLB_0" )
-    andL("GLB_0_0")
-		andL("GLB_0_0_0")
-		axiomLog
+    andL( "GLB_0_0" )
+    andL( "GLB_0_0_0" )
+    axiomLog
   }
 
   // absorption law 1 - difficult direction
-	val r_1_a = All(z, Imp(And(leq(cap(x_0, y_0), z), leq(x_0, z)), leq(cup(cap(x_0, y_0), x_0), z)))
-  val r_1 = Lemma( Sequent( Seq("a" -> r_1_a, "GLB" -> GLB, "R" -> R), Seq("b" -> leq(cup(cap(x_0, y_0), x_0), x_0)) ) ) {
-    allL(x_0, "a")
-		impL
-		andR
-		insert(r_1_1)
-		allL(x_0, "R")
-		eqR("R_0", "a_0").fromLeftToRight
-		axiomRefl
-		prop
+  val r_1_a = All( z, Imp( And( leq( cap( x_0, y_0 ), z ), leq( x_0, z ) ), leq( cup( cap( x_0, y_0 ), x_0 ), z ) ) )
+  val r_1 = Lemma( Sequent( Seq( "a" -> r_1_a, "GLB" -> GLB, "R" -> R ), Seq( "b" -> leq( cup( cap( x_0, y_0 ), x_0 ), x_0 ) ) ) ) {
+    allL( x_0, "a" )
+    impL
+    andR
+    insert( r_1_1 )
+    allL( x_0, "R" )
+    eqR( "R_0", "a_0" ).fromLeftToRight
+    axiomRefl
+    prop
   }
 
   // apply anti-symmetry to show absorption law 1 (+ easy direction)
-  val q_1 = Lemma( Sequent( Seq("GLB" -> GLB, "LUB" -> LUB, "R" -> R, "AS" -> AS), Seq("a" -> All(x, All(y, Eq(cup(cap(x,y), x), x))))) ) {
-    allR(x_0)
-		allR(y_0)
-		allL(cup(cap(x_0, y_0), x_0), "AS")
-		allL(x_0, "AS_0")
-		forget("AS")
-		forget("AS_0")
-		impL("AS_0_0")
-		allL(cap(x_0, y_0), "LUB")
-		allL(x_0, "LUB_0")
-		forget("LUB")
-		forget("LUB_0")
-		andL("LUB_0_0")
-		andL("LUB_0_0_0")
-		andR
-		insert(r_1)
-		axiomLog
-		axiomLog
+  val q_1 = Lemma( Sequent( Seq( "GLB" -> GLB, "LUB" -> LUB, "R" -> R, "AS" -> AS ), Seq( "a" -> All( x, All( y, Eq( cup( cap( x, y ), x ), x ) ) ) ) ) ) {
+    allR( x_0 )
+    allR( y_0 )
+    allL( cup( cap( x_0, y_0 ), x_0 ), "AS" )
+    allL( x_0, "AS_0" )
+    forget( "AS" )
+    forget( "AS_0" )
+    impL( "AS_0_0" )
+    allL( cap( x_0, y_0 ), "LUB" )
+    allL( x_0, "LUB_0" )
+    forget( "LUB" )
+    forget( "LUB_0" )
+    andL( "LUB_0_0" )
+    andL( "LUB_0_0_0" )
+    andR
+    insert( r_1 )
+    axiomLog
+    axiomLog
   }
 
-  val p3_2 = Lemma( Sequent( Seq("L3" -> L3), Seq("L2" -> L2) ) ) {
-    repeat(andL)
-		andR
-		insert(q_1)
-		insert(q_2)
+  val p3_2 = Lemma( Sequent( Seq( "L3" -> L3 ), Seq( "L2" -> L2 ) ) ) {
+    repeat( andL )
+    andR
+    insert( q_1 )
+    insert( q_2 )
   }
 
   // Main proof
