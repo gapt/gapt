@@ -17,7 +17,7 @@ state_renaming = {
         }
 
 def get_test_results(build_no):
-    url = 'http://compile:8080/job/{0}/{1}/testReport/api/json?tree=suites[cases[className,name,status]]' \
+    url = 'http://compile.logic.tuwien.ac.at/job/{0}/{1}/testReport/api/json?tree=suites[cases[className,name,status]]' \
             .format(*map(urllib.parse.quote, [ 'gapt extended testing', build_no ]))
     return urllib.request.urlopen(url).read().decode('utf-8')
 
