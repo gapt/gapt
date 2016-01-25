@@ -152,8 +152,7 @@ object fixDerivation extends Logger {
         orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
         orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
-          warn( "Could not derive " + cls + " from " + cs + " by symmetry or propositional resolution" )
-          InputClause( cls )
+          throw new IllegalArgumentException( s"Could not derive $cls from\n${cs mkString "\n"}" )
         }
     }
 
