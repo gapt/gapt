@@ -143,6 +143,8 @@ trait Tactical {
       }
     }
   }
+
+  override def toString = this.getClass.getName
 }
 
 trait Tactic extends Tactical {

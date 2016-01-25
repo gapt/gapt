@@ -1,8 +1,9 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr.StillmanSubsumptionAlgorithmFOL
-import at.logic.gapt.proofs.gaptic.{ Tactic, OpenAssumption, ProofState, Tactical }
-import at.logic.gapt.proofs.lk.{ WeakeningMacroRule, LKProof }
+import at.logic.gapt.proofs.SequentIndex
+import at.logic.gapt.proofs.gaptic.{ OpenAssumption, ProofState, Tactic, Tactical }
+import at.logic.gapt.proofs.lk.{ LKProof, WeakeningMacroRule }
 
 /**
  * Repeat tactical
@@ -25,9 +26,9 @@ case class RepeatTactic( tact: Tactical ) extends Tactical {
  */
 case class InsertTactic( insertion: LKProof ) extends Tactic {
   def apply( goal: OpenAssumption ) = {
-    StillmanSubsumptionAlgorithmFOL.subsumes_by( insertion.endSequent, goal.conclusion ) match {
+    StillmanSubsumptionAlgorithmFOL.subsumes_by( insertion.endSequent, goal.endSequent ) match {
       case Some( sub ) =>
-        Option( WeakeningMacroRule( sub( insertion ), goal.conclusion ) )
+        Option( WeakeningMacroRule( sub( insertion ), goal.endSequent ) )
       case None => None
     }
   }

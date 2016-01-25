@@ -109,5 +109,4 @@ package object gaptic {
   def escargot = EscargotTactic
 
   def forget( l: String ) = WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l )
-
 }

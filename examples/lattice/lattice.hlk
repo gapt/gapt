@@ -407,7 +407,7 @@ define proof q_2
     :- ( x_0 \cup y_0 ) \cap x_0 = x_0 ;
   with undef AS
     all x all y ( ( x \leq y and y \leq x ) impl x = y ) :- ;
-  with all left # x <- ( x_0 \cap y_0 ) \cup x_0, y <- x_0
+  with all left # x <- ( x_0 \cup y_0 ) \cap x_0, y <- x_0
      (
       ( ( x_0 \cup y_0 ) \cap x_0 ) \leq x_0
      and

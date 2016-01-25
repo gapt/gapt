@@ -14,7 +14,7 @@ object LemmaMacros {
 
   def use( proofState: ProofState, tactical: Tactical ): ProofState =
     tactical( proofState ) getOrElse {
-      throw new TacticFailureException( "Failed to apply tactic " + tactical + " to proof state " + proofState )
+      throw new TacticFailureException( "Failed to apply tactic " + tactical + " to proof state with sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
     }
 
   def qed( proofState: ProofState ): LKProof =
