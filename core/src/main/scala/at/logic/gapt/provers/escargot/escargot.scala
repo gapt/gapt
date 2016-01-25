@@ -265,7 +265,7 @@ class EscargotLoop extends Logger {
 
   def unifyingEqualityResolution( given: Cls ): Unit =
     for {
-      i <- given.maximal if i.isAnt
+      i <- if ( given.selected.nonEmpty ) given.selected else given.maximal if i.isAnt
       Eq( t, s ) <- Some( given.clause( i ) )
       mgu <- syntacticMGU( t, s )
     } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
