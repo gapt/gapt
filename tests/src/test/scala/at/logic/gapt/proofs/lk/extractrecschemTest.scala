@@ -56,6 +56,9 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     Sat4j.isValid( Sequent() :++ lang ) must beTrue
   }
 
+  "bottom" in { Or( extractRecSchem( BottomAxiom ).language.map { _.asInstanceOf[HOLFormula] } ) must beValid }
+  "top" in { Or( extractRecSchem( TopAxiom ).language.map { _.asInstanceOf[HOLFormula] } ) must beValid }
+
   "pi2 pigeonhole" in {
     val p = Pi2Pigeonhole.proof
     val recSchem = extractRecSchem( p )

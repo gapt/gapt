@@ -73,9 +73,11 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
     symbols.elements filterNot { _ == Bottom() } map { sym => Rule( axiom, sym ) } toSet
 
   def getRules( p: LKProof, axiom: LambdaExpression, symbols: Sequent[LambdaExpression], context: List[Var] ): Set[Rule] = p match {
-    case ReflexivityAxiom( term ) if includeEqTheory            => allRules( symbols, axiom ) + Rule( axiom, term !== term )
-    case TheoryAxiom( sequent ) if includeTheoryAxioms          => allRules( symbols, axiom ) + Rule( axiom, sequent toNegFormula )
+    case ReflexivityAxiom( term ) if includeEqTheory => allRules( symbols, axiom ) + Rule( axiom, term !== term )
+    case TheoryAxiom( sequent ) if includeTheoryAxioms => allRules( symbols, axiom ) + Rule( axiom, sequent toNegFormula )
     case _: LogicalAxiom | _: ReflexivityAxiom | _: TheoryAxiom => allRules( symbols, axiom )
+    case TopAxiom => Set( Rule( axiom, Top() ) )
+    case BottomAxiom => Set( Rule( axiom, -Bottom() ) )
     case WeakQuantifierRule( q, aux, _, term, v, pol ) =>
       val main = p.mainIndices.head
       val appSym = App( symbols( main ), term )
