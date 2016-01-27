@@ -101,6 +101,13 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 
     ProofState( currentGoalIndex, newSegment )
   }
+
+  override def toString =
+    s"""${subGoals.map { _.toPrettyString }.mkString( "\n" )}
+     |
+     |Partial proof:
+     |$proofSegment
+   """.stripMargin
 }
 
 /**
