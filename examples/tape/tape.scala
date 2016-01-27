@@ -57,5 +57,6 @@ object tape {
     forget( "A" )
     forget( "I1" )
     insert( rhs )
+    insert( rhs )
   }
 }
