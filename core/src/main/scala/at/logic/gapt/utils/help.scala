@@ -3,10 +3,6 @@ package at.logic.gapt.utils
 import java.nio.file.{ Paths, Files }
 
 /**
- * Created by sebastian on 19.10.15.
- */
-
-/**
  * Opens the scala documentation in a browser window.
  *
  */
@@ -19,7 +15,7 @@ object help {
    */
   private def indexPath = {
     val tarballPath = Paths.get( "apidocs", "index.html" ).toAbsolutePath
-    val devPath = Paths.get( "target", "scala-2.11", "api", "index.html" ).toAbsolutePath
+    val devPath = Paths.get( "core", "target", "scala-2.11", "api", "index.html" ).toAbsolutePath
 
     if ( Files.exists( tarballPath ) )
       tarballPath.toUri.toString
