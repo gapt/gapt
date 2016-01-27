@@ -17,6 +17,14 @@ object weakQuantRulesNumber {
     }
 }
 
+object strongQuantRulesNumber {
+  def apply( p: LKProof ): Int =
+    p.treeLike.postOrder count {
+      case StrongQuantifierRule( _, _, _, _, _ ) => true
+      case _                                     => false
+    }
+}
+
 object cutsNumber {
   def apply( p: LKProof ): Int =
     p.treeLike.postOrder count {
@@ -27,4 +35,17 @@ object cutsNumber {
 
 object rulesNumber {
   def apply( p: LKProof ): Int = p.treeLike.size.toInt
+}
+
+object printProofStats {
+  def apply( p: LKProof ): Unit =
+    print(
+      s"""
+         |Inferences: ${rulesNumber( p )}
+         |Cuts: ${cutsNumber( p )}
+         |Strong quantifier inferences: ${strongQuantRulesNumber( p )}
+         |Weak quantifier inferences: ${weakQuantRulesNumber( p )}
+         |Equality inferences: ${p.treeLike.postOrder.count { _.isInstanceOf[EqualityRule] }}
+       """.stripMargin
+    )
 }
