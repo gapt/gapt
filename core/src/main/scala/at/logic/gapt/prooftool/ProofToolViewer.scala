@@ -59,8 +59,7 @@ object prooftool {
     obj match {
       case p: LKProof                => new LKProofViewer( name, p ).showFrame()
       case p: SequentProof[a, b]     => new SequentProofViewer[a, b]( name, p ).showFrame()
-      case ep: ExpansionProof        => prooftool( ep.expansionSequent, name )
-      case ep: ExpansionProofWithCut => prooftool( eliminateCutsET( ep ), name )
+      case ep: ExpansionProofWithCut => new ExpansionSequentViewer( name, ep.cuts ++: ep.expansionSequent ).showFrame()
       case es: ExpansionSequent      => new ExpansionSequentViewer( name, es ).showFrame()
       case p: lkOld.base.LKProof     => new OldLKViewer( name, p ).showFrame()
       case p: TreeProof[_]           => new TreeProofViewer( name, p ).showFrame()
