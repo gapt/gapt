@@ -4,8 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
 
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
-
 object lattice {
   private val Seq( x, x_0, y, y_0, z, z_0 ) = Seq( "x", "x_0", "y", "y_0", "z", "z_0" ) map {
     FOLVar( _ )
@@ -13,17 +11,24 @@ object lattice {
 
   private val cap = FOLFunctionConst( "cap", 2 )
   private val cup = FOLFunctionConst( "cup", 2 )
+  private val leq = FOLAtomConst( "leq", 2 )
+
+  private def r( x: HOLAtom, y: ( LambdaExpression, LambdaExpression )* ): HOLAtom =
+    y.toList match {
+      case ( y1, y2 ) :: ys => r( x.replace( x.find( y1 ), y2 ).asInstanceOf[HOLAtom], ys: _* )
+      case Nil              => x
+    }
 
   private val Seq( ax1, ax2, ax3, ax4, ax5, ax6 ) = Seq(
-    All( x, All( y, Eq( cap( x, y ), cap( y, x ) ) ) ),
-    All( x, All( y, All( z, Eq( cap( cap( x, y ), z ), cap( x, cap( y, z ) ) ) ) ) ),
-    All( x, Eq( cap( x, x ), x ) ),
-    All( x, All( y, Eq( cup( x, y ), cup( y, x ) ) ) ),
-    All( x, All( y, All( z, Eq( cup( cup( x, y ), z ), cup( x, cup( y, z ) ) ) ) ) ),
-    All( x, Eq( cup( x, x ), x ) )
+    Eq( cap( x, y ), cap( y, x ) ),
+    Eq( cap( cap( x, y ), z ), cap( x, cap( y, z ) ) ),
+    Eq( cap( x, x ), x ),
+    Eq( cup( x, y ), cup( y, x ) ),
+    Eq( cup( cup( x, y ), z ), cup( x, cup( y, z ) ) ),
+    Eq( cup( x, x ), x )
   )
 
-  private def leq( x: LambdaExpression, y: LambdaExpression ) = Eq( cap( x, y ), x )
+  private def leqUnfold( a: LambdaExpression, b: LambdaExpression ) = Eq( cap( a, b ), a )
 
   private val L1 = All( x, All( y, And(
     Imp( Eq( cap( x, y ), x ), Eq( cup( x, y ), y ) ),
@@ -38,7 +43,7 @@ object lattice {
   private val R = All( x, leq( x, x ) )
   private val AS = All( x, All( y, Imp( And( leq( x, y ), leq( y, x ) ), Eq( x, y ) ) ) )
   private val T = All( x, All( y, All( z, Imp( And( leq( x, y ), leq( y, z ) ), leq( x, z ) ) ) ) )
-  private val POSET = And( R, And( AS, T ) )
+  private val POSET = And( FOLAtom( "R" ), And( FOLAtom( "AS" ), FOLAtom( "T" ) ) )
   private val GLB = All( x, All( y, And(
     And( leq( cap( x, y ), x ), leq( cap( x, y ), y ) ),
     All( z, Imp( And( leq( z, x ), leq( z, y ) ), leq( z, cap( x, y ) ) ) )
@@ -47,32 +52,24 @@ object lattice {
     And( leq( x, cup( x, y ) ), leq( y, cup( x, y ) ) ),
     All( z, Imp( And( leq( x, z ), leq( y, z ) ), leq( cup( x, y ), z ) ) )
   ) ) )
-  private val L3 = And( POSET, And( GLB, LUB ) )
+  private val L3 = And( FOLAtom( "POSET" ), And( FOLAtom( "GLB" ), FOLAtom( "LUB" ) ) )
 
   //
   // In the equational background theory
   //
 
-  def h1( s: LambdaExpression, t: LambdaExpression ) = Lemma( Sequent( Seq( "ax1" -> ax1, "ax2" -> ax2, "ax3" -> ax3 ), Seq( "a" -> Eq( cap( cap( s, t ), s ), cap( s, t ) ) ) ) ) {
-    allL( cap( s, t ), "ax1" )
-    allL( s, "ax1_0" )
-    eqR( "ax1_0_0", "a" ).fromLeftToRight
-    allL( s, "ax2" )
-    allL( s, "ax2_0" )
-    allL( t, "ax2_0_0" )
-    eqR( "ax2_0_0_0", "a" ).fromRightToLeft
-    allL( s, "ax3" )
-    eqR( "ax3_0", "a" ).fromLeftToRight
-    axiomRefl
+  def h1( s: LambdaExpression, t: LambdaExpression ) = {
+    Lemma( Sequent( Nil, Seq( "a" -> Eq( cap( cap( s, t ), s ), cap( s, t ) ) ) ) ) {
+      paramod( "a", r( ax1, ( x, cap( s, t ) ), ( y, s ) ), Eq( cap( s, cap( s, t ) ), cap( s, t ) ) )
+      paramod( "a", r( ax2, ( x, s ), ( y, s ), ( z, t ) ), Eq( cap( cap( s, s ), t ), cap( s, t ) ) )
+      paramod( "a", r( ax3, ( x, s ) ), Eq( cap( s, t ), cap( s, t ) ) )
+      axiomRefl
+    }
   }
 
-  def h2( s: LambdaExpression, t: LambdaExpression ) = Lemma( Sequent( Seq( "ax2" -> ax2, "ax3" -> ax3 ), Seq( "a" -> Eq( cap( cap( s, t ), t ), cap( s, t ) ) ) ) ) {
-    allL( s, "ax2" )
-    allL( t, "ax2_0" )
-    allL( t, "ax2_0_0" )
-    eqR( "ax2_0_0_0", "a" ).fromLeftToRight
-    allL( t, "ax3" )
-    eqR( "ax3_0", "a" ).fromLeftToRight
+  def h2( s: LambdaExpression, t: LambdaExpression ) = Lemma( Sequent( Nil, Seq( "a" -> Eq( cap( cap( s, t ), t ), cap( s, t ) ) ) ) ) {
+    paramod( "a", r( ax2, ( x, s ), ( y, t ), ( z, t ) ), Eq( cap( s, cap( t, t ) ), cap( s, t ) ) )
+    paramod( "a", r( ax3, ( x, t ) ), Eq( cap( s, t ), cap( s, t ) ) )
     axiomRefl
   }
 
@@ -81,10 +78,15 @@ object lattice {
   //
 
   // show that join is _least_ upper bound for \leq
-  val p_6 = Lemma( Sequent( Seq( "ax5" -> ax5, "L1" -> L1 ), Seq( "a" -> All( z, Imp( And( leq( x_0, z ), leq( y_0, z ) ), leq( cup( x_0, y_0 ), z ) ) ) ) ) ) {
+  val p_6_a = All( z, Imp( And( leq( x_0, z ), leq( y_0, z ) ), leq( cup( x_0, y_0 ), z ) ) )
+  val p_6_a_leq = All( z, Imp( And( leqUnfold( x_0, z ), leqUnfold( y_0, z ) ), leqUnfold( cup( x_0, y_0 ), z ) ) )
+
+  val p_6 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> p_6_a ) ) ) {
+    defR( "a", p_6_a_leq )
     allR( z_0 )
     impR
     andL
+    defL( "L1", L1 )
     allL( x_0, "L1" )
     allL( z_0, "L1_0" )
     andL( "L1_0_0" )
@@ -99,10 +101,7 @@ object lattice {
     allL( z_0, "L1_2" )
     andL( "L1_2_0" )
     impL( "L1_2_0_1" )
-    allL( x_0, "ax5" )
-    allL( y_0, "ax5_0" )
-    allL( z_0, "ax5_0_0" )
-    eqR( "ax5_0_0_0", "L1_2_0_1" ).fromLeftToRight
+    paramod( "L1_2_0_1", r( ax5, x -> x_0, y -> y_0, z -> z_0 ), Eq( cup( x_0, cup( y_0, z_0 ) ), z_0 ) )
     eqR( "L1_1_0_0", "L1_2_0_1" ).fromLeftToRight
     eqR( "L1_0_0_0", "L1_2_0_1" ).fromLeftToRight
     axiomRefl
@@ -110,61 +109,61 @@ object lattice {
   }
 
   // continues showing that join is upper bound for \leq
-  def p_5_1( s: LambdaExpression, t: LambdaExpression ) = Lemma( Sequent( Seq( "ax5" -> ax5, "ax6" -> ax6, "L1" -> L1 ), Seq( "a" -> leq( s, cup( s, t ) ) ) ) ) {
+  def p_5_1( s: LambdaExpression, t: LambdaExpression ) = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> leq( s, cup( s, t ) ) ) ) ) {
+    defR( "a", leqUnfold( s, cup( s, t ) ) )
+    defL( "L1", L1 )
     allL( s, "L1" )
     allL( cup( s, t ), "L1_0" )
     andL
     impL( "L1_0_0_1" )
-    allL( s, "ax5" )
-    allL( s, "ax5_0" )
-    allL( t, "ax5_0_0" )
-    allL( s, "ax6" )
-    eqR( "ax5_0_0_0", "L1_0_0_1" ).fromRightToLeft
-    eqR( "ax6_0", "L1_0_0_1" ).fromLeftToRight
+    paramod( "L1_0_0_1", r( ax5, x -> s, y -> s, z -> t ), Eq( cup( cup( s, s ), t ), cup( s, t ) ) )
+    paramod( "L1_0_0_1", r( ax6, x -> s ), Eq( cup( s, t ), cup( s, t ) ) )
     axiomRefl
     prop
   }
 
   // show that join is upper bound for \leq
-  val p_5 = Lemma( Sequent( Seq( "ax4" -> ax4, "ax5" -> ax5, "ax6" -> ax6, "L1" -> L1 ), Seq( "LUB" -> LUB ) ) ) {
+  val p_5 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "LUB" -> FOLAtom( "LUB" ) ) ) ) {
+    defR( "LUB", LUB )
     allR( x_0, "LUB" )
     allR( y_0, "LUB" )
     andR
     andR
     insert( p_5_1( x_0, y_0 ) )
-    allL( x_0, "ax4" )
-    allL( y_0, "ax4_0" )
-    eqR( "ax4_0_0", "LUB" ).fromLeftToRight
+    paramod( "LUB", r( ax4, x -> x_0, y -> y_0 ), leq( y_0, cup( y_0, x_0 ) ) )
     insert( p_5_1( y_0, x_0 ) )
     insert( p_6 )
   }
 
   //show that meet is _greatest_ lower bound for \leq
-  val p_4 = Lemma( Sequent( Seq( "ax2" -> ax2 ), Seq( "a" -> All( z, Imp( And( leq( z, x_0 ), leq( z, y_0 ) ), leq( z, cap( x_0, y_0 ) ) ) ) ) ) ) {
+  val p_4_a = All( z, Imp( And( leq( z, x_0 ), leq( z, y_0 ) ), leq( z, cap( x_0, y_0 ) ) ) )
+  val p_4_a_leq = All( z, Imp( And( leqUnfold( z, x_0 ), leqUnfold( z, y_0 ) ), leqUnfold( z, cap( x_0, y_0 ) ) ) )
+  val p_4 = Lemma( Sequent( Nil, Seq( "a" -> p_4_a ) ) ) {
+    defR( "a", p_4_a_leq )
     allR( z_0 )
     impR
     andL
-    allL( z_0, "ax2" )
-    allL( x_0, "ax2_0" )
-    allL( y_0, "ax2_0_0" )
-    eqR( "ax2_0_0_0", "a_1" ).fromRightToLeft
+    paramod( "a_1", r( ax2, x -> z_0, y -> x_0, z -> y_0 ), Eq( cap( cap( z_0, x_0 ), y_0 ), z_0 ) )
     eqR( "a_0_0", "a_1" ).fromLeftToRight
     eqR( "a_0_1", "a_1" ).fromLeftToRight
     axiomRefl
   }
 
   // finishes showing that meet is lower bound for \leq
-  val p_3_1 = Lemma( Sequent( Seq( "ax2" -> ax2, "ax3" -> ax3 ), Seq( "a" -> leq( cap( x_0, y_0 ), y_0 ) ) ) ) {
+  val p_3_1 = Lemma( Sequent( Nil, Seq( "a" -> leq( cap( x_0, y_0 ), y_0 ) ) ) ) {
+    defR( "a", leqUnfold( cap( x_0, y_0 ), y_0 ) )
     insert( h2( x_0, y_0 ) )
   }
 
   // show that meet is lower bound for \leq
-  val p_3 = Lemma( Sequent( Seq( "ax1" -> ax1, "ax2" -> ax2, "ax3" -> ax3, "ax4" -> ax4, "ax5" -> ax5, "ax6" -> ax6, "L1" -> L1 ), Seq( "a" -> And( GLB, LUB ) ) ) ) {
+  val p_3 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> And( FOLAtom( "GLB" ), FOLAtom( "LUB" ) ) ) ) ) {
     andR
+    defR( "a", GLB )
     allR( x_0, "a" )
     allR( y_0, "a" )
     andR
     andR
+    defR( "a", leqUnfold( cap( x_0, y_0 ), x_0 ) )
     insert( h1( x_0, y_0 ) )
     insert( p_3_1 )
     insert( p_4 )
@@ -172,44 +171,47 @@ object lattice {
   }
 
   // show transitivity
-  val p_2 = Lemma( Sequent( Seq( "ax2" -> ax2 ), Seq( "T" -> T ) ) ) {
+  val p_2 = Lemma( Sequent( Nil, Seq( "T" -> FOLAtom( "T" ) ) ) ) {
+    defR( "T", T )
     allR( x_0 )
     allR( y_0 )
     allR( z_0 )
     impR
     andL
+    defL( "T_0_0", leqUnfold( x_0, y_0 ) )
+    defL( "T_0_1", leqUnfold( y_0, z_0 ) )
+    defR( "T_1", leqUnfold( x_0, z_0 ) )
     eqR( "T_0_0", "T_1" ).fromRightToLeft
     eqR( "T_0_1", "T_1" ).to( Eq( cap( cap( x_0, y_0 ), z_0 ), cap( x_0, cap( y_0, z_0 ) ) ) )
-    allL( x_0, "ax2" )
-    allL( y_0, "ax2_0" )
-    allL( z_0, "ax2_0_0" )
-    eqR( "ax2_0_0_0", "T_1" ).to( Eq( cap( cap( x_0, y_0 ), z_0 ), cap( cap( x_0, y_0 ), z_0 ) ) )
+    paramod( "T_1", r( ax2, x -> x_0, y -> y_0, z -> z_0 ), Eq( cap( cap( x_0, y_0 ), z_0 ), cap( cap( x_0, y_0 ), z_0 ) ) )
     axiomRefl
   }
 
   // show anti-symmetry
-  val p_1 = Lemma( Sequent( Seq( "ax1" -> ax1, "ax2" -> ax2 ), Seq( "a" -> And( AS, T ) ) ) ) {
+  val p_1 = Lemma( Sequent( Nil, Seq( "a" -> And( FOLAtom( "AS" ), FOLAtom( "T" ) ) ) ) ) {
     andR
+    defR( "a", AS )
     allR( x_0 )
     allR( y_0 )
     impR
     andL
-    allL( x_0, "ax1" )
-    allL( y_0, "ax1_0" )
+    defL( "a_0_0", leqUnfold( x_0, y_0 ) )
+    defL( "a_0_1", leqUnfold( y_0, x_0 ) )
+    paramod( "a_0_1", r( ax1, x -> x_0, y -> y_0 ), Eq( cap( x_0, y_0 ), y_0 ) )
     eqR( "a_0_0", "a_1" ).to( Eq( cap( x_0, y_0 ), y_0 ) )
-    eqR( "a_0_1", "a_1" ).to( Eq( cap( x_0, y_0 ), cap( y_0, x_0 ) ) )
-    eqR( "ax1_0_0", "a_1" ).to( Eq( cap( x_0, y_0 ), cap( x_0, y_0 ) ) )
-    axiomRefl
+    axiomLog
     insert( p_2 )
   }
 
   // split up POSET, show reflexivity
-  val p1_3 = Lemma( Sequent( Seq( "ax1" -> ax1, "ax2" -> ax2, "ax3" -> ax3, "ax4" -> ax4, "ax5" -> ax5, "ax6" -> ax6, "L1" -> L1 ), Seq( "L3" -> L3 ) ) ) {
+  val p1_3 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "L3" -> FOLAtom( "L3" ) ) ) ) {
+    defR( "L3", L3 )
     andR
+    defR( "L3", POSET )
     andR
+    defR( "L3", All( x, leqUnfold( x, x ) ) )
     allR( x_0 )
-    allL( x_0, "ax3" )
-    eqR( "ax3_0", "L3" ).fromLeftToRight
+    paramod( "L3", r( ax3, x -> x_0 ), Eq( x_0, x_0 ) )
     axiomRefl
     insert( p_1 )
     insert( p_3 )
@@ -220,7 +222,8 @@ object lattice {
   //
 
   // finishes r_2
-  val r_2_1 = Lemma( Sequent( Seq( "LUB" -> LUB ), Seq( "a" -> leq( x_0, cup( x_0, y_0 ) ) ) ) ) {
+  val r_2_1 = Lemma( Sequent( Seq( "LUB" -> FOLAtom( "LUB" ) ), Seq( "a" -> leq( x_0, cup( x_0, y_0 ) ) ) ) ) {
+    defL( "LUB", LUB )
     allL( x_0, "LUB" )
     allL( y_0, "LUB_0" )
     andL
@@ -230,25 +233,28 @@ object lattice {
 
   // absorption law 2 - difficult direction
   val r_2_a = All( z, Imp( And( leq( z, cup( x_0, y_0 ) ), leq( z, x_0 ) ), leq( z, cap( cup( x_0, y_0 ), x_0 ) ) ) )
-  val r_2 = Lemma( Sequent( Seq( "a" -> r_2_a, "LUB" -> LUB, "R" -> R ), Seq( "b" -> leq( x_0, cap( cup( x_0, y_0 ), x_0 ) ) ) ) ) {
+  val r_2 = Lemma( Sequent( Seq( "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ), "a" -> r_2_a ), Seq( "b" -> leq( x_0, cap( cup( x_0, y_0 ), x_0 ) ) ) ) ) {
     allL( x_0, "a" )
     impL
     andR
     insert( r_2_1 )
+    defL( "R", R )
     allL( x_0, "R" )
     axiomLog
     prop
   }
 
   // apply anti-symmetry to show absorption law 2 (+ easy direction)
-  val q_2 = Lemma( Sequent( Seq( "GLB" -> GLB, "LUB" -> LUB, "R" -> R, "AS" -> AS ), Seq( "a" -> All( x, All( y, Eq( cap( cup( x, y ), x ), x ) ) ) ) ) ) {
+  val q_2 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ), "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ), "AS" -> FOLAtom( "AS" ) ), Seq( "a" -> All( x, All( y, Eq( cap( cup( x, y ), x ), x ) ) ) ) ) ) {
     allR( x_0 )
     allR( y_0 )
+    defL( "AS", AS )
     allL( cap( cup( x_0, y_0 ), x_0 ), "AS" )
     allL( x_0, "AS_0" )
     forget( "AS" )
     forget( "AS_0" )
     impL( "AS_0_0" )
+    defL( "GLB", GLB )
     allL( cup( x_0, y_0 ), "GLB" )
     allL( x_0, "GLB_0" )
     forget( "GLB" )
@@ -262,7 +268,8 @@ object lattice {
   }
 
   // finishes r_1
-  val r_1_1 = Lemma( Sequent( Seq( "GLB" -> GLB ), Seq( "a" -> leq( cap( x_0, y_0 ), x_0 ) ) ) ) {
+  val r_1_1 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ) ), Seq( "a" -> leq( cap( x_0, y_0 ), x_0 ) ) ) ) {
+    defL( "GLB", GLB )
     allL( x_0, "GLB" )
     allL( y_0, "GLB_0" )
     forget( "GLB" )
@@ -274,26 +281,28 @@ object lattice {
 
   // absorption law 1 - difficult direction
   val r_1_a = All( z, Imp( And( leq( cap( x_0, y_0 ), z ), leq( x_0, z ) ), leq( cup( cap( x_0, y_0 ), x_0 ), z ) ) )
-  val r_1 = Lemma( Sequent( Seq( "a" -> r_1_a, "GLB" -> GLB, "R" -> R ), Seq( "b" -> leq( cup( cap( x_0, y_0 ), x_0 ), x_0 ) ) ) ) {
+  val r_1 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ), "R" -> FOLAtom( "R" ), "a" -> r_1_a ), Seq( "b" -> leq( cup( cap( x_0, y_0 ), x_0 ), x_0 ) ) ) ) {
     allL( x_0, "a" )
     impL
     andR
     insert( r_1_1 )
+    defL( "R", R )
     allL( x_0, "R" )
-    eqR( "R_0", "a_0" ).fromLeftToRight
-    axiomRefl
+    axiomLog
     prop
   }
 
   // apply anti-symmetry to show absorption law 1 (+ easy direction)
-  val q_1 = Lemma( Sequent( Seq( "GLB" -> GLB, "LUB" -> LUB, "R" -> R, "AS" -> AS ), Seq( "a" -> All( x, All( y, Eq( cup( cap( x, y ), x ), x ) ) ) ) ) ) {
+  val q_1 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ), "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ), "AS" -> FOLAtom( "AS" ) ), Seq( "a" -> All( x, All( y, Eq( cup( cap( x, y ), x ), x ) ) ) ) ) ) {
     allR( x_0 )
     allR( y_0 )
+    defL( "AS", AS )
     allL( cup( cap( x_0, y_0 ), x_0 ), "AS" )
     allL( x_0, "AS_0" )
     forget( "AS" )
     forget( "AS_0" )
     impL( "AS_0_0" )
+    defL( "LUB", LUB )
     allL( cap( x_0, y_0 ), "LUB" )
     allL( x_0, "LUB_0" )
     forget( "LUB" )
@@ -306,16 +315,20 @@ object lattice {
     axiomLog
   }
 
-  val p3_2 = Lemma( Sequent( Seq( "L3" -> L3 ), Seq( "L2" -> L2 ) ) ) {
-    repeat( andL )
+  val p3_2 = Lemma( Sequent( Seq( "L3" -> FOLAtom( "L3" ) ), Seq( "L2" -> FOLAtom( "L2" ) ) ) ) {
+    defL( "L3", L3 )
+    decompose
+    defL( "L3_0", POSET )
+    decompose
+    defR( "L2", L2 )
     andR
     insert( q_1 )
     insert( q_2 )
   }
 
   // Main proof
-  val p = Lemma( Sequent( Seq( "ax1" -> ax1, "ax2" -> ax2, "ax3" -> ax3, "ax4" -> ax4, "ax5" -> ax5, "ax6" -> ax6, "L1" -> L1 ), Seq( "L2" -> L2 ) ) ) {
-    cut( L3, "L3" )
+  val p = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "L2" -> FOLAtom( "L2" ) ) ) ) {
+    cut( FOLAtom( "L3" ), "L3" )
     insert( p1_3 )
     insert( p3_2 )
   }

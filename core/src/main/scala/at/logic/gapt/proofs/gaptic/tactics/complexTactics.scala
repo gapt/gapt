@@ -167,6 +167,47 @@ case class ChainTactic( hyp: String, target: Option[String] = None ) extends Tac
 }
 
 /**
+ * Paramodulation tactic
+ */
+case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targetFormula: HOLFormula ) extends Tactic {
+
+  override def apply( goal: OpenAssumption ) = {
+    val goalSequent = goal.s
+
+    val indices = for ( ( ( `mainFormulaLabel`, _ ), index ) <- goalSequent.zipWithIndex.elements )
+      yield index
+
+    indices.headOption match {
+      case Some( sequentIndex ) =>
+
+        axiom match {
+          case Eq( _, _ ) =>
+
+            val cutLabel = NewLabel( goalSequent, mainFormulaLabel + "_cut" )
+
+            val leftPremise = TheoryAxiom( Sequent( Nil, Seq( axiom ) ) )
+            val rightPremiseTmp = OpenAssumption( ( cutLabel, axiom ) +: goalSequent )
+
+            val ( cutIndex, rightPremise ) = sequentIndex match {
+              case Ant( _ ) =>
+                ( Ant( 1 ), eqL( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
+              case Suc( _ ) =>
+                ( Ant( 0 ), eqR( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
+            }
+
+            for ( p <- rightPremise )
+              yield CutRule( leftPremise, Suc( 0 ), p, cutIndex )
+
+          case _ => None
+        }
+
+      case None => None
+    }
+  }
+
+}
+
+/**
  * Solves propositional sub goal
  */
 case object PropTactic extends Tactic {

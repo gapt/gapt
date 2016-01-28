@@ -19,7 +19,7 @@ object LemmaMacros {
 
   def qed( proofState: ProofState ): LKProof =
     if ( proofState.subGoals.isEmpty ) {
-      proofState.proofSegment
+      cleanStructuralRules( proofState.proofSegment )
     } else {
       throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
     }

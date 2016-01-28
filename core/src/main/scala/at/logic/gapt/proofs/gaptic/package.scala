@@ -109,4 +109,6 @@ package object gaptic {
   def escargot = EscargotTactic
 
   def forget( l: String ) = WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l )
+
+  def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
 }

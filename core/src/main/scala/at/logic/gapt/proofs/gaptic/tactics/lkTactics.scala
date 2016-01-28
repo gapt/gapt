@@ -807,8 +807,10 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
         }
 
         val replacement = targetFormula match {
-          case Some( mainFormula ) if testValidity( mainFormula ) =>
-            targetFormula
+          case Some( mainFormula ) =>
+            if ( testValidity( mainFormula ) )
+              targetFormula
+            else None
           case None =>
             val r = leftToRight match {
               case Some( true ) =>
@@ -830,11 +832,12 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
         }
 
         replacement match {
-          case None => None
-          case Some( x ) =>
+          case Some( x ) if x != auxFormula =>
             val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> x ) )
             val premise = OpenAssumption( newGoal )
+
             Option( EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula ) )
+          case _ => None
         }
     }
   }
@@ -916,8 +919,10 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
         }
 
         val replacement = targetFormula match {
-          case Some( mainFormula ) if testValidity( mainFormula ) =>
-            targetFormula
+          case Some( mainFormula ) =>
+            if ( testValidity( mainFormula ) )
+              targetFormula
+            else None
           case None =>
             val r = leftToRight match {
               case Some( true ) =>
@@ -939,11 +944,11 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
         }
 
         replacement match {
-          case None => None
-          case Some( x ) =>
+          case Some( x ) if x != auxFormula =>
             val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> x ) )
             val premise = OpenAssumption( newGoal )
             Option( EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) )
+          case _ => None
         }
     }
   }
