@@ -23,6 +23,7 @@ package object gaptic {
 
   def negL( applyToLabel: String ) = new NegLeftTactic( Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def negL = new NegLeftTactic()
 
   def negR( applyToLabel: String ) = new NegRightTactic( Some( applyToLabel ) )
@@ -31,6 +32,7 @@ package object gaptic {
 
   def andL( applyToLabel: String ) = new AndLeftTactic( Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def andL = new AndLeftTactic()
 
   def andR( applyToLabel: String ) = new AndRightTactic( Some( applyToLabel ) )
@@ -39,6 +41,7 @@ package object gaptic {
 
   def orL( applyToLabel: String ) = new OrLeftTactic( Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def orL = new OrLeftTactic()
 
   def orR( applyToLabel: String ) = new OrRightTactic( Some( applyToLabel ) )
@@ -47,34 +50,42 @@ package object gaptic {
 
   def impL( applyToLabel: String ) = new ImpLeftTactic( Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def impL = new ImpLeftTactic()
 
   def impR( applyToLabel: String ) = new ImpRightTactic( Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def impR = new ImpRightTactic()
 
   def exL( eigenVariable: Var, applyToLabel: String ) = new ExistsLeftTactic( Some( eigenVariable ), Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def exL( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
 
   def exL( applyToLabel: String ) = new ExistsLeftTactic( applyToLabel = Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def exL = new ExistsLeftTactic()
 
   def exR( term: LambdaExpression, applyToLabel: String ) = new ExistsRightTactic( term, Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def exR( term: LambdaExpression ) = new ExistsRightTactic( term )
 
   def allL( term: LambdaExpression, applyToLabel: String ) = new ForallLeftTactic( term, Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def allL( term: LambdaExpression ) = new ForallLeftTactic( term )
 
   def allR( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( Some( eigenVariable ), Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def allR( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
 
   def allR( applyToLabel: String ) = new ForallRightTactic( applyToLabel = Some( applyToLabel ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def allR = new ForallRightTactic()
 
   def cut( h: HOLFormula, c: String ) = CutTactic( h, c )
@@ -99,6 +110,7 @@ package object gaptic {
 
   def destruct( l: String ) = new DestructTactic( Some( l ) )
 
+  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def destruct = new DestructTactic()
 
   def chain( h: String ) = ChainTactic( h )
