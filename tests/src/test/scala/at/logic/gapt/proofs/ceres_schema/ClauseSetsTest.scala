@@ -38,6 +38,7 @@ class ClauseSetsTest extends Specification {
     }
 
     "test the schematic struct in journal_example.slk" in {
+      skipped( "SchemaProofDB is not thread-safe" )
       val s = new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "ceres-journal_example.lks" ) )
       val map = sFOParser.parseProof( s )
       val p = map.get( "\\psi" ).get._2.get( "root" ).get
@@ -45,6 +46,7 @@ class ClauseSetsTest extends Specification {
     }
 
     "test the schematic struct in sEXP.slk" in {
+      skipped( "SchemaProofDB is not thread-safe" )
       val s = new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "sEXP.lks" ) )
       SchemaProofDB.clear
       val map = sFOParser.parseProof( s )

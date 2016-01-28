@@ -13,6 +13,7 @@ class UnfoldSchemaProofTest extends Specification {
   //implicit val factory = defaultFormulaOccurrenceFactory
   "UnfoldSchemaProofTest" should {
     "unfold the adder.slk" in {
+      skipped( "SchemaProofDB is not thread-safe" )
       val zero = IntZero(); val one = Succ( IntZero() ); val two = Succ( Succ( IntZero() ) ); val three = Succ( Succ( Succ( IntZero() ) ) )
       val str = new InputStreamReader( getClass.getClassLoader.getResourceAsStream( "schema-adder.lks" ) )
       val map = parseProof( str )
