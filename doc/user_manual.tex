@@ -959,22 +959,23 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p693] ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionRightRule(p692, Suc(1), Suc(0)))
-[p692] ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1)), ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionLeftRule(p691, Ant(3), Ant(2)))
-[p691] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1)), ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionLeftRule(p690, Ant(4), Ant(2)))
-[p690] ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x...
+[p413] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionRightRule(p412, Suc(1), Suc(0)))
+[p412] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1)), ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionLeftRule(p411, Ant(3), Ant(2)))
+[p411] ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.(f(x1)=0∨f(x1)=s(0)) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1)), ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionLeftRule(p410, Ant(4), Ant(2)))
+[p410] ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.(f(x1)=0∨f(x1)=s(0)), ...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-ExpansionProofWithCut(List(),[p19] ETWeakQuantifier(∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), s(M(s(v100),v101)), p7, s(M(s(s(M(s(v100),v101))),v1)), p14, s(s(M(s(v100),v101))), p18)
-[p18] ETWeakQuantifier(∀y0.(<=(s(s(M(s(v100),v101))),M(s(s(M(s(v100),v101))),y0))∧<=(y0,M(s(s(M(s(v100),v101))),y0))), v1, p17)
-[p17] ETAnd(p15, p16)
-[p16] ETWeakening(<=(v1,M(s(s(M(s(v100),v101))),v1)), false)
-[p15] ETAtom(<=(s(s(M(s(v100),v101))),M(s(s(M(s(v100),v101))),v1)), false)
-[p14] ETWeakQuantifier(∀y0.(<=(s(M(s(s(M(s(v100),v101))),v1)),M(s(M(s(s(M(s(v100),v101))),v1)),y0))∧<=(y0,M(s(M(s(s(M(s(v100),v101))),v1)),y0))), v102, p10, s(M(s(M(s(s(M(s(v100),v101))),v1)),v102)), p13)
-[p13] ETAnd(p11, p12)
-[p12] ETAtom(<=(s(M(s(M(s(s(M(s(v100),v10...
+ExpansionProofWithCut(List(),[p19] ETWeakQuantifier(∀x1.(f(x1)=0∨f(x1)=s(0)), M(s(M(s(v100),v101)),v102), p3, M(s(M(s(s(M(s(v100),v101))),v1)),v102), p6, M(s(M(s(v100),v101)),s(M(s(M(s(v100),v101)),v102))), p9, M(s(s(M(s(v100),v101))),v1), p12, M(s(v100),v101), p15, M(s(M(s(s(M(s(v100),v101))),v1)),s(M(s(M(s(s(M(s(v100),v101))),v1)),v102))), p18)
+[p18] ETOr(p16, p17)
+[p17] ETAtom(f(M(s(M(s(s(M(s(v100),v101))),v1)),s(M(s(M(s(s(M(s(v100),v101))),v1)),v102))))=s(0), false)
+[p16] ETAtom(f(M(s(M(s(s(M(s(v100),v101))),v1)),s(M(s(M(s(s(M(s(v100),v101))),v1)),v102))))=0, false)
+[p15] ETOr(p13, p14)
+[p14] ETAtom(f(M(s(v100),v101))=s(0), false)
+[p13] ETAtom(f(M(s(v100),v101))=0, false)
+[p12] ETOr(p10, p11)
+[p11] ETAtom(f(M(s(s(M(s(v100),v...
 gapt> prooftool(et)
 
 \end{clilisting}
