@@ -126,7 +126,7 @@ case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialS
   }
 }
 
-trait Tactical {
+trait Tactical { self =>
   /**
    *
    * @param proofState
@@ -152,6 +152,10 @@ trait Tactical {
     }
   }
 
+  def andThen( t2: Tactical ): Tactical = new Tactical {
+    def apply( proofState: ProofState ) = self( proofState ) flatMap { t2( _ ) }
+    override def toString = s"$self andThen $t2"
+  }
 }
 
 trait Tactic extends Tactical {
