@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.LinearExampleProof
+import at.logic.gapt.examples.{ Pi2Pigeonhole, LinearExampleProof }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Suc, Ant, Sequent }
 import at.logic.gapt.proofs.expansion._
@@ -102,6 +102,10 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
       val expansion = LKToExpansionProof( proof )
 
       toDeep( expansion ) must beValidSequent
+    }
+
+    "return merge-free proofs" in {
+      LKToExpansionProof( Pi2Pigeonhole.proof ).subProofs must not( contain( beAnInstanceOf[ETMerge] ) )
     }
   }
 }
