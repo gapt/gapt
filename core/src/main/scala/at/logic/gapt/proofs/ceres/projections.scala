@@ -302,7 +302,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         s1 map ( pm => {
           //println( p.endSequent( e ) )
           val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( e, a ) )
-          constructor( p, a1_, a2_, pos )
+          constructor( pm, a1_, a2_, pos )
         } )
 
     }
