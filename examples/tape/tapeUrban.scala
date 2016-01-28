@@ -49,7 +49,7 @@ object tapeUrban {
     forget( "I0_0" )
     defL( "M_2", M2 )
     // chain( "M_2" ) // why does this not work here?
-    prover9
+    escargot
 
     andR( "I0_0" )
     forget( "A" )
@@ -57,7 +57,7 @@ object tapeUrban {
     forget( "I1_0" )
     defL( "M_1", M1 )
     // chain( "M_1" ) // why does this not work here?
-    prover9
+    escargot
 
     forget( "M_1" )
     forget( "M_2" )

@@ -8,4 +8,12 @@ class TapeTest extends Specification {
     tape
     ok
   }
+
+}
+
+class TapeUrbanTest extends Specification {
+  "urban tape" in {
+    tapeUrban
+    ok
+  }
 }

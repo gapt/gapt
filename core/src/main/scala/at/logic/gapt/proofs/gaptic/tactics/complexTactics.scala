@@ -13,7 +13,9 @@ import at.logic.gapt.provers.prover9.Prover9
 case object DecomposeTactic extends Tactical {
   def apply( proofState: ProofState ) = {
     RepeatTactic(
-      AndLeftTactic() orElse
+      NegLeftTactic() orElse
+        NegRightTactic() orElse
+        AndLeftTactic() orElse
         OrRightTactic() orElse
         ImpRightTactic() orElse
         ForallRightTactic() orElse

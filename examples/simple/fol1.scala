@@ -1,6 +1,5 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.expr.FOLVar
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
@@ -14,32 +13,20 @@ object fol1 {
     cut( parseFormula( "(all x exists y (-P(x,y) | Q(x,y)))" ), "C" )
 
     // left subproof
-    forget( "R" )
-    allR( FOLVar( "z" ) )
-    exR( parseTerm( "a" ) )
-    allL( parseTerm( "z" ) )
-    allL( parseTerm( "a" ) )
-    orR( "C1" )
-    impL( "L2" )
-    negR( "C1_1" )
-    axiomLog
-    axiomLog
+    allR( "C" )
+    exR( parseTerm( "a" ), "C" )
+    allL( parseTerm( "x" ), "L" )
+    allL( parseTerm( "a" ), "L_0" )
+    decompose
+    destruct( "L_0_0" )
+    repeat( axiomLog )
 
     // right subproof
-    forget( "L" )
-    allL( parseTerm( "b" ) )
-    exL( FOLVar( "v" ) )
-    exR( parseTerm( "b" ) )
-    exR( parseTerm( "v" ) )
-    forget( "C" )
-    forget( "R" )
-    forget( "R1" )
-    impR( "R2" )
-    negR( "R2_2" )
-    negL( "R2_1" )
-    orL( "C1" )
-    negL( "C1" )
-    axiomLog
-    axiomLog
+    allL( parseTerm( "b" ), "C" )
+    exL( "C_0" )
+    exR( parseTerm( "b" ), "R" )
+    exR( parseTerm( "y" ), "R_0" )
+    destruct( "C_0" )
+    repeat( decompose andThen axiomLog )
   }
 }
