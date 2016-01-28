@@ -16,16 +16,16 @@ object tape {
     defR( "I1", I1 )
     allR( FOLVar( "x_0" ), "I0" )
     allR( FOLVar( "x_1" ), "I1" )
-    exR( parseTerm( "x_0" ) )
-    forget( "I1" )
-    exR( parseTerm( "x_1" ) )
+    exR( parseTerm( "x_1" ), "I0" )
     forget( "I0" )
+    exR( parseTerm( "x_0" ), "I1" )
+    forget( "I1" )
     defL( "A", A )
     allL( parseTerm( "x_0 + x_1" ) )
     forget( "A" )
     destruct
     axiom
-    forget( "I0_1" )
+    forget( "I0_0" )
     axiomTh
   }
 
