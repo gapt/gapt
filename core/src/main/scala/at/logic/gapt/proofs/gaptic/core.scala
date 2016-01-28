@@ -148,10 +148,10 @@ trait Tactical {
       override def apply( proofState: ProofState ): Option[ProofState] = {
         t1( proofState ) orElse t2( proofState )
       }
+      override def toString = s"$t1 orElse $t2"
     }
   }
 
-  override def toString = this.getClass.getName
 }
 
 trait Tactic extends Tactical {
@@ -188,6 +188,8 @@ trait Tactic extends Tactical {
       override def apply( goal: OpenAssumption ): Option[LKProof] = {
         t1( goal ) orElse t2( goal )
       }
+
+      override def toString = s"$t1 orElse $t2"
     }
   }
 }
