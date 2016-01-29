@@ -73,95 +73,81 @@ case class DestructTactic( applyToLabel: Option[String] = None ) extends Tactic 
 /**
  * Chain
  */
-case class ChainTactic( hyp: String, target: Option[String] = None ) extends Tactic {
+case class ChainTactic( hyp: String, target: Option[String] = None, substitution: Map[Var, LambdaExpression] = Map() ) extends Tactic {
+
+  def subst( map: ( Var, LambdaExpression )* ) = copy( substitution = substitution ++ map )
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
-    val hypIndex = ( for ( ( ( `hyp`, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption
-
     // Proceed only if a (universally quantified) hypothesis exists
-    hypIndex match {
-      case None => None
-      case Some( i ) if i.isInstanceOf[Ant] =>
-        // Extract hypothesis
-        val ( _, quantifiedFormula ) = goalSequent( i )
-        val All( hypVar, hypInner ) = quantifiedFormula
+    ( for ( ( ( `hyp`, All( _, _ ) ), index: Ant ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption flatMap { hypIndex =>
 
-        // Extract formula to match against target
-        def f( x: HOLFormula ): HOLFormula = x match {
-          case Imp( _, r ) => f( r )
-          case _           => x
-        }
+      // Extract hypothesis
+      val ( _, quantifiedFormula ) = goalSequent( hypIndex )
+      val All.Block( hypVar, hypInner ) = quantifiedFormula
 
-        val hypTargetMatch = f( hypInner )
+      // Extract formula to match against target
+      def f( x: HOLFormula ): HOLFormula = x match {
+        case Imp( _, r ) => f( r )
+        case _           => x
+      }
 
-        // Find target index and substitution
-        val t = {
-          target match {
-            case Some( x ) =>
-              ( for (
-                ( ( `x`, y ), index ) <- goalSequent.zipWithIndex.succedent;
-                sub <- syntacticMatching( hypTargetMatch, y )
-              ) yield ( x, index, sub ) ).headOption
-            case None =>
-              ( for (
-                ( ( x, y ), index ) <- goalSequent.zipWithIndex.succedent;
-                sub <- syntacticMatching( hypTargetMatch, y )
-              ) yield ( x, index, sub ) ).headOption
-          }
-        }
+      val hypTargetMatch = f( hypInner )
+
+      // Find target index and substitution
+      ( target match {
+        case Some( x ) =>
+          ( for (
+            ( ( `x`, y ), index ) <- goalSequent.zipWithIndex.succedent;
+            sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution )
+          ) yield ( x, index, sub ) ).headOption
+        case None =>
+          ( for (
+            ( ( x, y ), index ) <- goalSequent.zipWithIndex.succedent;
+            sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution )
+          ) yield ( x, index, sub ) ).headOption
+      } ) map {
 
         // Proceed only if a matching formula exists
-        t match {
-          case None => None
-          case Some( ( targetLabel, targetIndex, sub ) ) =>
+        case ( targetLabel, targetIndex, sub ) =>
 
-            // Recursively apply implication left to the left until the end of the chain is reached,
-            // where the sequent is an axiom (following some contractions).
-            // The right premises of the implication left rules become new sub goals,
-            // but where the initial target formula is then "forgotten".
-            def g( x: Sequent[( String, HOLFormula )], y: SequentIndex ): LKProof = x( y ) match {
-              case ( existingLabel, And( lhs, rhs ) ) =>
-                AndRightRule(
-                  g( x.delete( y ) :+ ( existingLabel, lhs ), Suc( x.succedent.length - 1 ) ),
-                  g( x.delete( y ) :+ ( existingLabel, rhs ), Suc( x.succedent.length - 1 ) ),
-                  And( lhs, rhs )
-                )
+          // Recursively apply implication left to the left until the end of the chain is reached,
+          // where the sequent is an axiom (following some contractions).
+          // The right premises of the implication left rules become new sub goals,
+          // but where the initial target formula is then "forgotten".
+          def handleAnds( curGoal: Sequent[( String, HOLFormula )], hypCond: Suc ): LKProof = curGoal( hypCond ) match {
+            case ( existingLabel, And( lhs, rhs ) ) =>
+              AndRightRule(
+                handleAnds( curGoal.updated( hypCond, existingLabel -> lhs ), hypCond ),
+                handleAnds( curGoal.updated( hypCond, existingLabel -> rhs ), hypCond ),
+                And( lhs, rhs )
+              )
+            case _ =>
+              OpenAssumption( curGoal )
+          }
+
+          def handleImps( curGoal: Sequent[( String, HOLFormula )], hyp: Ant ): LKProof = {
+            curGoal( hyp ) match {
+              case ( hypLabel, Imp( lhs, rhs ) ) =>
+                // Different methods must be applied depending on how the chain is defined.
+                val premiseLeft = handleAnds( curGoal.delete( targetIndex ).delete( hyp ) :+ ( targetLabel -> lhs ), Suc( curGoal.succedent.length - 1 ) )
+                val premiseRight = handleImps( curGoal.updated( hyp, hypLabel -> rhs ), hyp )
+                ImpLeftRule( premiseLeft, premiseRight, Imp( lhs, rhs ) )
+
               case _ =>
-                OpenAssumption( x )
+                axiomLog( OpenAssumption( curGoal ) ).get
             }
+          }
 
-            def f( x: Sequent[( String, HOLFormula )], y: SequentIndex, outermostCall: Boolean = false ): LKProof = {
-              x( y ) match {
-                case ( existingLabel, Imp( lhs, rhs ) ) =>
-                  // Different methods must be applied depending on how the chain is defined.
-                  val premiseLeft = lhs match {
-                    case And( _, _ ) if outermostCall =>
-                      WeakeningLeftRule( g( x.delete( targetIndex ).delete( y ) :+ ( existingLabel -> lhs ), Suc( x.succedent.length - 1 ) ), rhs )
-                    case _ =>
-                      forget( targetLabel )( OpenAssumption( x.delete( y ) :+ ( existingLabel -> lhs ) ) ).get
-                  }
+          val auxFormula = sub( hypInner )
+          val newGoal = ( NewLabel( goalSequent, hyp ) -> auxFormula ) +: goalSequent
+          val premise = handleImps( newGoal, Ant( 0 ) )
+          val auxProofSegment = ForallLeftBlock( premise, quantifiedFormula, sub( hypVar ) )
+          ContractionLeftRule( auxProofSegment, quantifiedFormula )
 
-                  val premiseRight = f( ( existingLabel -> rhs ) +: x.delete( y ), Ant( 0 ) )
+      }
 
-                  ImpLeftRule( premiseLeft, premiseRight, Imp( lhs, rhs ) )
-
-                case _ =>
-                  axiomLog( OpenAssumption( x ) ).get
-              }
-            }
-
-            val auxFormula = sub( hypInner )
-            val newGoal = goalSequent.insertAt( i + 1, NewLabel( goalSequent, hyp ) -> auxFormula )
-            val premise = f( newGoal, i + 1, true )
-            val auxProofSegment = ForallLeftRule( premise, quantifiedFormula, sub.map.get( hypVar ).get )
-            Option( ContractionLeftRule( auxProofSegment, quantifiedFormula ) )
-
-        }
-
-      case Some( i ) if i.isInstanceOf[Suc] =>
-        None
     }
   }
 

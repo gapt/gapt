@@ -3,9 +3,12 @@ package at.logic.gapt.proofs.gaptic
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk._
+import scalaz._
+import Scalaz._
 
 /**
  * Immutable object defining the current state of the proof in the tactics language.
+ *
  * @param currentGoalIndex
  * @param proofSegment
  */
@@ -26,6 +29,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 
   /**
    * Returns the sub goal at a given index if it exists.
+   *
    * @param i
    * @return
    */
@@ -34,6 +38,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 
   /**
    * Returns a string representation of a sub goal at a given index.
+   *
    * @param i
    * @return
    */
@@ -46,6 +51,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 
   /**
    * Returns a new proof state if the new sub goal index is valid
+   *
    * @param i
    * @return
    */
@@ -54,6 +60,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 
   /**
    * Replaces the i-th open assumption by an arbitrary proof segment and returns the result in a new proof state.
+   *
    * @param openAssumption
    * @param replacementSegment
    * @return
@@ -67,7 +74,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
       case OpenAssumption( _ ) =>
         assumptionIndex += 1
         if ( assumptionIndex == openAssumption )
-          replacementSegment
+          WeakeningContractionMacroRule( replacementSegment, p.conclusion )
         else
           p
       // Case distinction on rules
@@ -112,6 +119,7 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 
 /**
  * Defines the case class open assumption which considers an arbitrary labelled sequence an axiom.
+ *
  * @param s
  */
 case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialSequent {
@@ -138,6 +146,7 @@ trait Tactical { self =>
    * Returns result of first tactical, if there is any,
    * else it returns the result of the second tactical,
    * with the possibility of no result from either.
+   *
    * @param t2
    * @return
    */
@@ -156,9 +165,17 @@ trait Tactical { self =>
     def apply( proofState: ProofState ) = self( proofState ) flatMap { t2( _ ) }
     override def toString = s"$self andThen $t2"
   }
+
+  def onAllSubGoals: Tactical = new Tactical {
+    def apply( proofState: ProofState ) =
+      Applicative[Option].traverse( proofState.subGoals.toList )( subGoal => self( ProofState( 0, subGoal ) ) ) map {
+        _.zipWithIndex.foldRight( proofState ) { case ( ( subState, index ), state ) => state.replaceSubGoal( index, subState.proofSegment ) }
+      }
+    override def toString = s"$self.onAllSubGoals"
+  }
 }
 
-trait Tactic extends Tactical {
+trait Tactic extends Tactical { self =>
   /**
    *
    * @param goal
@@ -182,6 +199,7 @@ trait Tactic extends Tactical {
    * Returns result of first tactic, if there is any,
    * else it returns the result of the second tactic,
    * with the possibility of no result from either.
+   *
    * @param t2
    * @return
    */
@@ -196,6 +214,11 @@ trait Tactic extends Tactical {
       override def toString = s"$t1 orElse $t2"
     }
   }
+
+  def onAll( t2: Tactical ): Tactical = new Tactical {
+    def apply( proofState: ProofState ): Option[ProofState] = self( proofState ) flatMap { t2.onAllSubGoals( _ ) }
+    override def toString = s"$self onAll $t2"
+  }
 }
 
 /**
@@ -204,6 +227,7 @@ trait Tactic extends Tactical {
 object NewLabel {
   /**
    * Actual helper function for a fresh variable.
+   *
    * @param sequent
    * @param fromLabel
    * @return
