@@ -36,7 +36,8 @@ object LemmaMacros {
     val tacticsStmts = tacticsProof match {
       case q"{..$stmts}" =>
         for ( stmt <- stmts )
-          yield q"$proofState = $lemmaMacros.use($proofState, $stmt)"
+          yield atPos( stmt.pos )( q"$proofState = $lemmaMacros.use($proofState, $stmt)" )
+
     }
 
     q"""
