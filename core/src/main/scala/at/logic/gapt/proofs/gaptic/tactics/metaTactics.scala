@@ -33,3 +33,10 @@ case class InsertTactic( insertion: LKProof ) extends Tactic {
     }
   }
 }
+
+/**
+ * Trivial "unit" tactical.
+ */
+object SkipTactical extends Tactical {
+  def apply( proofState: ProofState ): Option[ProofState] = Some( proofState )
+}
