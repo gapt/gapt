@@ -12,6 +12,7 @@ import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.MiniSAT
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
@@ -44,10 +45,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     ( toShallow( E ) == p.endSequent ) !-- "shallow sequent of expansion proof"
 
-    val ip = Prover9.getLKProof( deep ).get --- "getLKProof( deep )"
-    val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-    ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
-    ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+    Prover9.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
+      val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
+      ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
+      ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+    }
 
     if ( !containsEqualityReasoning( p ) ) {
       MiniSAT.isValid( deep ) !-- "minisat validity"
@@ -86,6 +88,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       }
 
     skolemize( p ) --? "skolemize"
+
+    Escargot.getLKProof( deep ).get --? "Escargot.getLKProof(deep)"
   }
 }
 
