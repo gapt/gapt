@@ -47,7 +47,7 @@ val prover = new LKProver
 fns.foreach( fn => {
   val p = Prover9Importer.lkProofFromFile( "testing/TSTP/prover9/" + fn )
   val E = LKToExpansionProof( p )
-  val F = toDeep( E )
+  val F = E.deep
 
   val t = System.currentTimeMillis
   prover.getLKProof( F )

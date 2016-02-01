@@ -48,8 +48,8 @@ case class ExpansionProofWithCut( cuts: Seq[ETImp], expansionSequent: Sequent[Ex
     }
   }
 
-  def shallow = expansionSequent map { _.shallow }
-  def deep = cuts.map { _.deep } ++: expansionSequent.map { _.deep }
+  def shallow = expansionSequent.shallow
+  def deep = cuts.map { _.deep } ++: expansionSequent.deep
 
   def subProofs = expansionSequent.elements.toSet ++ cuts flatMap { _.subProofs }
   val eigenVariables = for ( ETStrongQuantifier( _, ev, _ ) <- subProofs ) yield ev

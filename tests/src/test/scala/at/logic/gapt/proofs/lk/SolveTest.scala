@@ -34,7 +34,7 @@ class SolveTest extends Specification with SequentMatchers {
       val etSeq = Sequent() :+ et
 
       val Some( lkProof ) = solve.expansionProofToLKProof( etSeq )
-      lkProof.endSequent must beMultiSetEqual( toShallow( etSeq ) )
+      lkProof.endSequent must beMultiSetEqual( etSeq.shallow )
     }
 
     "prove top" in { solve.solvePropositional( Sequent() :+ Top() ) must beSome }

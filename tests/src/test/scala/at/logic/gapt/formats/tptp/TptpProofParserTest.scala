@@ -1,7 +1,6 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.proofs.Clause
-import at.logic.gapt.proofs.expansion.toDeep
 import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.escargot.Escargot
@@ -34,7 +33,7 @@ class TptpProofParserTest extends Specification {
         RobinsonToLK( robinson, endSequent )
 
       val expansion = RobinsonToExpansionProof( robinson, endSequent )
-      Escargot isValid toDeep( expansion ) must_== true
+      Escargot isValid expansion.deep must_== true
     }
   }
 }

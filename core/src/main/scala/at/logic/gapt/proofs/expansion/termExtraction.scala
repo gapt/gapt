@@ -16,8 +16,8 @@ import at.logic.gapt.proofs.lk.{ LKToExpansionProof, LKProof }
  */
 object extractInstances {
   def apply( expansionTree: ExpansionTree ): Set[HOLFormula] =
-    if ( !containsQuantifier( toShallow( expansionTree ) ) )
-      Set( toShallow( expansionTree ) )
+    if ( !containsQuantifier( expansionTree.shallow ) )
+      Set( expansionTree.shallow )
     else expansionTree match {
       case ETWeakening( _, _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>
@@ -36,10 +36,10 @@ object extractInstances {
     if ( ais.isEmpty && bis.isEmpty ) {
       Set()
     } else if ( ais.isEmpty ) {
-      val dummy = removeAllQuantifiers( toShallow( a ) )
+      val dummy = removeAllQuantifiers( a.shallow )
       for ( bi <- bis ) yield ( dummy, bi )
     } else if ( bis.isEmpty ) {
-      val dummy = removeAllQuantifiers( toShallow( b ) )
+      val dummy = removeAllQuantifiers( b.shallow )
       for ( ai <- ais ) yield ( ai, dummy )
     } else {
       for ( ai <- ais; bi <- bis ) yield ( ai, bi )
@@ -229,7 +229,7 @@ object InstanceTermEncoding {
     new InstanceTermEncoding( endSequent map { toVNF( _ ) }, instanceTermType )
 
   def apply( expansionSequent: ExpansionSequent ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
-    val encoding = InstanceTermEncoding( toShallow( expansionSequent ) )
+    val encoding = InstanceTermEncoding( expansionSequent.shallow )
     encoding.encode( expansionSequent ) -> encoding
   }
 
@@ -244,7 +244,7 @@ object FOLInstanceTermEncoding {
     InstanceTermEncoding( endSequent, Ti )
 
   def apply( expansionSequent: ExpansionSequent ): ( Set[FOLTerm], InstanceTermEncoding ) = {
-    val encoding = FOLInstanceTermEncoding( toShallow( expansionSequent ) )
+    val encoding = FOLInstanceTermEncoding( expansionSequent.shallow )
     encoding.encode( expansionSequent ).map( _.asInstanceOf[FOLTerm] ) -> encoding
   }
 

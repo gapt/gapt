@@ -16,11 +16,11 @@ package object proofs {
      * Why is this not the definition of a sequent (/\ F -> \/ G)? The current implementation (\/-F \/ G) is
      * only classically equivalent (In IL a -> b :/- -a \/ b).
      */
-    def toFormula: HOLFormula = Or( sequent.antecedent.toList.map( f => Neg( f ) ) ++ sequent.succedent )
+    def toFormula: HOLFormula = Or( sequent.antecedent.map( Neg( _ ) ) ++ sequent.succedent )
 
     def toNegFormula: HOLFormula = And( sequent.antecedent ++ sequent.succedent.map( Neg( _ ) ) )
 
-    def toImplication: HOLFormula = Imp( And( sequent.antecedent.toList ), Or( sequent.succedent ) )
+    def toImplication: HOLFormula = Imp( And( sequent.antecedent ), Or( sequent.succedent ) )
   }
 
   implicit class RichFOLSequent( sequent: FOLSequent ) {

@@ -54,7 +54,7 @@ object RunOnProofSequence {
 
   def removeEqAxioms( eseq: ExpansionProof ): ExpansionProof =
     ExpansionProof( eseq.expansionSequent.zipWithIndex filter {
-      case ( et, Ant( _ ) ) => !Prover9.isValid( toShallow( et ) )
-      case ( et, Suc( _ ) ) => !Prover9.isValid( -toShallow( et ) )
+      case ( et, Ant( _ ) ) => !Prover9.isValid( et.shallow )
+      case ( et, Suc( _ ) ) => !Prover9.isValid( -et.shallow )
     } map { _._1 } )
 }

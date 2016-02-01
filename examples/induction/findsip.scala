@@ -3,7 +3,7 @@ import at.logic.gapt.examples.{ Script, UniformAssociativity3ExampleProof }
 import at.logic.gapt.expr.FOLTerm
 import at.logic.gapt.expr.hol.{ toNNF, simplify, lcomp }
 import at.logic.gapt.grammars.{ minimizeSipGrammar, SipGrammarMinimizationFormula, stableSipGrammar }
-import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.{ Suc, Ant, HOLSequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
@@ -14,8 +14,8 @@ import at.logic.gapt.utils.time
 object findsip extends Script {
   def removeEqAxioms( eseq: ExpansionSequent ) =
     eseq.zipWithIndex filter {
-      case ( et, Ant( _ ) ) => !Prover9.isValid( toShallow( et ) )
-      case ( et, Suc( _ ) ) => !Prover9.isValid( -toShallow( et ) )
+      case ( et, Ant( _ ) ) => !Prover9.isValid( et.shallow )
+      case ( et, Suc( _ ) ) => !Prover9.isValid( -et.shallow )
     } map { _._1 }
 
   val N = 5
@@ -27,7 +27,7 @@ object findsip extends Script {
   }
 
   val endSequent = HOLSequent(
-    instanceSequents.flatMap { case ( n, seq ) => toShallow( seq ).antecedent }.distinct,
+    instanceSequents.flatMap { case ( n, seq ) => seq.shallow.antecedent }.distinct,
     Seq( parseFormula( "(x + x) + x = x + (x + x)" ) )
   )
   println( s"End-sequent of the sip: $endSequent" )

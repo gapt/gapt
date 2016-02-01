@@ -5,7 +5,7 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.examples.proofSequences
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
-import at.logic.gapt.proofs.expansion.{ toShallow, FOLInstanceTermEncoding, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout.withTimeout
@@ -20,7 +20,7 @@ object dumpTermsets extends App {
   Files createDirectories outDir
 
   def termsetFromExpansionProof( e: ExpansionSequent ): Set[FOLTerm] =
-    simplifyNames( FOLInstanceTermEncoding( toShallow( e ) ) encode e map { _.asInstanceOf[FOLTerm] } )
+    simplifyNames( FOLInstanceTermEncoding( e.shallow ) encode e map { _.asInstanceOf[FOLTerm] } )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
     val renaming: Map[LambdaExpression, LambdaExpression] =

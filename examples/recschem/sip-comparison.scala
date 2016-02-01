@@ -4,7 +4,7 @@ import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.grammars.{ minimizeSipGrammar, stableSipGrammar, minimizeRecursionScheme, SipRecSchem }
-import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, toShallow, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.{ Suc, Sequent, Ant }
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
@@ -17,8 +17,8 @@ object sip_comparison extends Script {
 
   def removeEqAxioms( eseq: ExpansionSequent ) =
     eseq.zipWithIndex filter {
-      case ( et, Ant( _ ) ) => !Prover9.isValid( toShallow( et ) )
-      case ( et, Suc( _ ) ) => !Prover9.isValid( -toShallow( et ) )
+      case ( et, Ant( _ ) ) => !Prover9.isValid( et.shallow )
+      case ( et, Suc( _ ) ) => !Prover9.isValid( -et.shallow )
     } map { _._1 }
 
   val endSequent = Sequent(

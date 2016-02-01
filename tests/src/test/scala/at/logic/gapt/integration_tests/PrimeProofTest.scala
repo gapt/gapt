@@ -5,7 +5,7 @@ import at.logic.gapt.expr.Top
 import at.logic.gapt.expr.hol.containsStrongQuantifier
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.expansion.{ toDeep, ExpansionSequent }
+import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
@@ -121,7 +121,7 @@ class PrimeProofTest extends Specification {
           // test expansion tree extraction by verifying that the deep formula is a tautology
           val definitionFreeProof = DefinitionElimination( proofdb.Definitions )( proof ) // can't extract ETs in the presence of definitions currently
           val etSeq = LKToExpansionProof( definitionFreeProof )
-          val fSequent = toDeep( etSeq )
+          val fSequent = etSeq.deep
           VeriT.isValid( fSequent ) must beTrue
         }
       }
