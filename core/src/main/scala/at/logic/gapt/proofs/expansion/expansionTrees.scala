@@ -138,6 +138,9 @@ case class ETSkolemQuantifier( shallow: HOLFormula, skolemTerm: LambdaExpression
 }
 
 object replaceET {
+  def apply( ep: ExpansionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionProof =
+    ExpansionProof( ep.expansionSequent map { replaceET( _, repl ) } )
+
   def apply( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree = et match {
     case ETMerge( child1, child2 ) => ETMerge( replaceET( child1, repl ), replaceET( child2, repl ) )
 
