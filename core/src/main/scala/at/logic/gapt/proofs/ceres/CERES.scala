@@ -68,8 +68,9 @@ class CERES {
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Prover9 )
   def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = {
     val es = p.endSequent
-    val cs = CharacteristicClauseSet( StructCreators.extract( p, pred ) )
-    val proj = Projections( p, pred ) + CERES.refProjection( es )
+    val p_ = regularize( AtomicExpansion( p ) )
+    val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
+    val proj = Projections( p_, pred ) + CERES.refProjection( es )
     /*
     val cs_ = cs.asInstanceOf[Set[HOLSequent]]
     var count = 0;
