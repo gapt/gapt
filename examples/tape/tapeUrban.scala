@@ -99,5 +99,15 @@ object tapeUrban {
     insert( epsilon_i )
     insert( epsilon_i )
   }
+
+  val defs = Map(
+    FOLAtomConst( "I", 1 ) -> Abs( i, Ii ),
+    FOLAtom( "A" ) -> A,
+    FOLAtom( "M_1" ) -> M1,
+    FOLAtom( "M_2" ) -> M2,
+    FOLAtom( "S" ) -> S,
+    FOLAtom( "T" ) -> T,
+    FOLAtom( "P" ) -> P
+  )
 }
 

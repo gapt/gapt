@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.expr.FOLVar
+import at.logic.gapt.expr.{ FOLAtom, FOLAtomConst, Abs, FOLVar }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
@@ -59,4 +59,9 @@ object tape {
     insert( rhs )
     insert( rhs )
   }
+
+  val defs = Map(
+    FOLAtom( "A" ) -> A,
+    FOLAtomConst( "I", 1 ) -> Abs( FOLVar( "v" ), Iv )
+  )
 }
