@@ -74,7 +74,7 @@ object IvyToRobinson {
     }.unzip
 
     val proofWithoutNewSymbols = TermReplacement( proof, newSymbols.toMap[LambdaExpression, LambdaExpression] )
-    val justificationsWithoutNewSymbols = justifications map {TermReplacement(_, newSymbols.toMap[LambdaExpression,LambdaExpression])}
+    val justificationsWithoutNewSymbols = justifications map { TermReplacement( _, newSymbols.toMap[LambdaExpression, LambdaExpression] ) }
 
     mapInputClauses( proofWithoutNewSymbols ) { cls =>
       justificationsWithoutNewSymbols.find { _.conclusion == cls } getOrElse { InputClause( cls ) }
