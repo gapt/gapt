@@ -41,18 +41,18 @@ object tapeUrban {
     allR( n, "I0" )
     exR( max( n, nprime ), "I0" )
     exR( max( n, nprime ), "I1" )
-    forget( "I0" ); forget( "I1" )
+    forget( "I0", "I1" )
     andR( "I1_0" )
-    forget( "A" ); forget( "M_1" ); forget( "I0_0" )
+    forget( "A", "M_1", "I0_0" )
     defL( "M_2", M2 )
     chain( "M_2" )
 
     andR( "I0_0" )
-    forget( "A" ); forget( "M_2" ); forget( "I1_0" )
+    forget( "A", "M_2", "I1_0" )
     defL( "M_1", M1 )
     chain( "M_1" )
 
-    forget( "M_1" ); forget( "M_2" )
+    forget( "M_1", "M_2" )
     defL( "A", A )
     allL( max( n, nprime ), "A" )
     prop
@@ -71,18 +71,18 @@ object tapeUrban {
     defR( "P", P )
     exR( n, "P" )
     exR( m, "P_0" )
-    forget( "P" ); forget( "P_0" )
+    forget( "P", "P_0" )
     andL( "Ii_0" )
     andL( "Ii_1" )
     forget( "Ii_0_0" )
     andR( "P_0_0" )
 
-    forget( "Ii_1_1" ); forget( "Ii_0_1" ); forget( "T" )
+    forget( "Ii_1_1", "Ii_0_1", "T" )
     defL( "S", S )
     chain( "S" )
     axiom
 
-    forget( "Ii_1_0" ); forget( "S" )
+    forget( "Ii_1_0", "S" )
     defL( "T", T )
     chain( "T" )
     axiom
