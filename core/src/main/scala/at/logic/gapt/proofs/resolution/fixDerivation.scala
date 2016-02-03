@@ -22,23 +22,34 @@ import scala.collection.immutable.HashMap
  */
 
 object fixDerivation extends Logger {
-  def tryDeriveBySymmetry( to: HOLClause, from: HOLClause ): Option[ResolutionProof] = {
-    val needToFlip = for ( ( a, i ) <- from.zipWithIndex ) yield a match {
-      case _ if to.contains( a, i isSuc ) => false
-      case Eq( t, s ) if to.contains( Eq( s, t ), i isSuc ) => true
-      case _ => return None
-    }
-
-    var p: ResolutionProof = InputClause( from )
-    for ( ( ( a, true ), i ) <- from zip needToFlip zipWithIndex )
-      p = Flip( p, p.conclusion.indexOfPol( a, i isSuc ) )
-
-    Some( p )
+  object matchingModEq extends syntacticMatching {
+    override def apply(
+      pairs:             List[( LambdaExpression, LambdaExpression )],
+      alreadyFixedSubst: Map[Var, LambdaExpression]
+    ): Traversable[Substitution] =
+      pairs match {
+        case ( ( Eq( t1, s1 ), Eq( t2, s2 ) ) :: rest ) =>
+          apply( ( t1 -> t2 ) :: ( s1 -> s2 ) :: rest, alreadyFixedSubst ).toSeq ++
+            apply( ( t1 -> s2 ) :: ( s1 -> t2 ) :: rest, alreadyFixedSubst ).toSeq
+        case _ => super.apply( pairs, alreadyFixedSubst )
+      }
   }
 
-  def tryDeriveByFactor( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
-    for ( s <- clauseSubsumption( from, to, multisetSubsumption = false ) )
-      yield Factor( Instance( InputClause( from ), s ) )._1
+  def tryDeriveBySubsumptionModEq( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
+    for ( s <- clauseSubsumption( from, to, multisetSubsumption = false, matchingAlgorithm = matchingModEq ) ) yield {
+      var p = Factor( Instance( InputClause( from ), s ) )._1
+
+      val needToFlip = for ( ( a, i ) <- p.conclusion.zipWithIndex ) yield a match {
+        case _ if to.contains( a, i isSuc ) => false
+        case Eq( t, s ) if to.contains( Eq( s, t ), i isSuc ) => true
+        case _ => return None
+      }
+
+      for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
+        p = Flip( p, p.conclusion.indexOfPol( a, i isSuc ) )
+
+      p
+    }
 
   def tryDeriveTrivial( to: HOLClause, from: Seq[HOLClause] ) = to match {
     case _ if from contains to => Some( InputClause( to ) )
@@ -56,8 +67,7 @@ object fixDerivation extends Logger {
   def apply( p: ResolutionProof, cs: Seq[HOLClause] ): ResolutionProof =
     mapInputClauses( p ) { cls =>
       tryDeriveTrivial( cls, cs ).
-        orElse( findFirstSome( cs )( tryDeriveByFactor( cls, _ ) ) ).
-        orElse( findFirstSome( cs )( tryDeriveBySymmetry( cls, _ ) ) ).
+        orElse( findFirstSome( cs )( tryDeriveBySubsumptionModEq( cls, _ ) ) ).
         orElse( tryDeriveViaResolution( cls, cs ) ).
         getOrElse {
           throw new IllegalArgumentException( s"Could not derive $cls from\n${cs mkString "\n"}" )
