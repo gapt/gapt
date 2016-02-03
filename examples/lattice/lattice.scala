@@ -54,6 +54,19 @@ object lattice {
   ) ) )
   private val L3 = And( FOLAtom( "POSET" ), And( FOLAtom( "GLB" ), FOLAtom( "LUB" ) ) )
 
+  val defs = Map(
+    FOLAtom( "L1" ) -> L1,
+    FOLAtom( "L2" ) -> L2,
+    FOLAtom( "L3" ) -> L3,
+    FOLAtom( "R" ) -> R,
+    FOLAtom( "AS" ) -> AS,
+    FOLAtom( "T" ) -> T,
+    FOLAtom( "POSET" ) -> POSET,
+    FOLAtom( "GLB" ) -> GLB,
+    FOLAtom( "LUB" ) -> LUB,
+    leq -> Abs( Seq( x, y ), leqUnfold( x, y ) )
+  )
+
   //
   // In the equational background theory
   //
