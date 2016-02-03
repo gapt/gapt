@@ -1,5 +1,7 @@
 package at.logic.gapt
 
+import at.logic.gapt.algorithms.rewriting.TermReplacement
+import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.Sequent
 
 import scala.annotation.implicitNotFound
@@ -188,5 +190,59 @@ package object expr {
    */
   implicit def LambdaExpressionClosedUnderSub[T <: LambdaExpression]( implicit notAFOLExpression: Not[T <:< FOLExpression], notAHOLFormula: Not[T <:< HOLFormula] ) = new Substitutable[Substitution, T, LambdaExpression] {
     override def applySubstitution( sub: Substitution, t: T ): LambdaExpression = applySub( sub, t )
+  }
+
+  /**
+   * Extension class that provides the "p9a", "p9f", and "p9t" string interpolation functions.
+   * @param sc A StringContext
+   */
+  implicit class P9Helper( val sc: StringContext ) extends AnyVal {
+
+    /**
+     * Provides the "p9f" string interpolation that parses a string as a FOL formula (via Prover9TermParserLadrStyle)
+     */
+    def p9f( args: FOLExpression* ): FOLFormula = {
+      val strings = sc.parts.toList
+      val expressions = args.toList
+
+      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
+      val formulaString = stringsNew.mkString ++ strings.last
+      val formula = Prover9TermParserLadrStyle.parseFormula( formulaString )
+
+      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
+        case Const( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+
+      }
+      TermReplacement( formula, repl ).asInstanceOf[FOLFormula]
+    }
+
+    /**
+     * Provides the "p9t" string interpolation that parses a string as a FOL term (via Prover9TermParserLadrStyle)
+     */
+    def p9t( args: FOLTerm* ): FOLTerm = {
+      val strings = sc.parts.toList
+      val expressions = args.toList
+
+      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
+      val term = Prover9TermParserLadrStyle.parseTerm( stringsNew.mkString ++ strings.last )
+
+      def repl: PartialFunction[FOLTerm, FOLTerm] = {
+        case Const( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+
+      }
+
+      TermReplacement( term, repl )
+    }
+
+    /**
+     * Provides the "p9a" string interpolation that parses a string as a FOL atom (via Prover9TermParserLadrStyle)
+     */
+    def p9a( args: FOLExpression* ): FOLAtom = p9f( args: _* ).asInstanceOf[FOLAtom]
+
+    private def placeholder = "qq_"
   }
 }
