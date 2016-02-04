@@ -104,11 +104,11 @@ class ceres_omegaTest extends Specification with Logger {
       abspcss.map( x => debug( x.toString ) )
       debug( "=== projection replacement terms ===" )
       pqs.map( x => debug( x._2 + " -> " + x._1 ) )
-      debug( TPTPFOLExporter.tptp_problem( abspcss ) )
+      debug( TPTPFOLExporter.tptp_problem( abspcss.asInstanceOf[List[HOLClause]] ).toString )
 
       debug( "=== computed css ===" )
       abscss.map( x => debug( x.toString ) )
-      debug( TPTPFOLExporter.tptp_problem( abscss ) )
+      debug( TPTPFOLExporter.tptp_problem( abscss.asInstanceOf[List[HOLClause]] ).toString )
 
       debug( "=== css replacement terms ===" )
       cqs.map( x => debug( x._2 + " -> " + x._1 ) )

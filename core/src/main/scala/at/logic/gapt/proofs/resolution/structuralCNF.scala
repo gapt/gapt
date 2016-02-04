@@ -14,10 +14,19 @@ object structuralCNF {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
-    val clausifier = new Clausifier( propositional, structural, rename.awayFrom( constants( endSequent ) ) )
+    onProofs(
+      endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input( _ ) ).elements,
+      propositional, structural
+    )
+  }
 
-    endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input( _ ) ).foreach( clausifier.expand )
-
+  def onProofs(
+    proofs:        Iterable[ResolutionProof],
+    propositional: Boolean                   = false,
+    structural:    Boolean                   = true
+  ): Set[ResolutionProof] = {
+    val clausifier = new Clausifier( propositional, structural, rename.awayFrom( proofs.flatMap( containedNames( _ ) ) ) )
+    proofs foreach clausifier.expand
     clausifier.cnf.toSet
   }
 }

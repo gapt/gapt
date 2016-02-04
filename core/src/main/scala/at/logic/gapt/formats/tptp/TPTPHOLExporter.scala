@@ -1,12 +1,13 @@
 package at.logic.gapt.formats.tptp
 
-import java.io.{ FileWriter, BufferedWriter }
+import java.io.{ BufferedWriter, FileWriter }
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
 
 object TPTPHOLExporter extends TPTPHOLExporter
+
 class TPTPHOLExporter {
   /**
    * Exports the given FSequent list to the THF fragment of TPTP. The default behavior of the exporter
@@ -18,6 +19,7 @@ class TPTPHOLExporter {
 
   /**
    * Exports a sequent set as TPTP thf problem
+   *
    * @param ls the list of sequents to export
    * @param filename the filename
    * @param positive if true we check ls for validity, if false (default), we check for unsatisfiability

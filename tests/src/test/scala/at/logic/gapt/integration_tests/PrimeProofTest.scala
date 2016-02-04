@@ -130,9 +130,9 @@ class PrimeProofTest extends Specification {
 
       val cs = deleteTautologies( CharacteristicClauseSet( s ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
-      val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
-      writer.write( tptp )
-      writer.flush
+      //      val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
+      //      writer.write( tptp.toString )
+      //      writer.flush
       val projs = Projections( proof_sk, CERES.skipEquations )
       val path = "target" + separator + "prime1-" + n + "-sk.xml"
 
@@ -159,9 +159,9 @@ class PrimeProofTest extends Specification {
 
       val cs = deleteTautologies( CharacteristicClauseSet( s ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
-      val writer = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-cs.tptp" )
-      writer.write( tptp )
-      writer.flush
+      //      val writer = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-cs.tptp" )
+      //      writer.write( tptp.toString )
+      //      writer.flush
       val projs = Projections( proof_sk, CERES.skipEquations )
       val path = "target" + separator + "euclid-" + n + "-sk.xml"
 

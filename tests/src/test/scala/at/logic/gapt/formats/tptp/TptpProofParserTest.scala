@@ -7,8 +7,8 @@ import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
 
-import scalaz._
 import scala.io.Source
+import scalaz._
 
 class TptpProofParserTest extends Specification {
 

@@ -1,17 +1,12 @@
 package at.logic.gapt.provers.escargot
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
+import at.logic.gapt.formats.tptp.{ TptpParser, resolutionToTptp, tptpProblemToResolution }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
-import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.utils.NameGenerator
 import at.logic.gapt.utils.logging.Logger
-
-import scala.collection.mutable
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLSequent] ): LPO = {
@@ -66,6 +61,21 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       state.inferences :+= UnifyingEqualityResolution
     }
   }
+
+  def main( args: Array[String] ): Unit =
+    args.toSeq match {
+      case Seq( tptpInputFile ) =>
+        org.apache.log4j.Logger.getLogger( classOf[EscargotState] ).setLevel( org.apache.log4j.Level.DEBUG )
+
+        val tptp = TptpParser.loadFile( tptpInputFile )
+        getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
+          case Some( proof ) =>
+            println( "SZS status Unsatisfiable" )
+            println( resolutionToTptp( proof ).mkString )
+          case None =>
+            println( "SZS status Satisfiable" )
+        }
+    }
 }
 object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
 

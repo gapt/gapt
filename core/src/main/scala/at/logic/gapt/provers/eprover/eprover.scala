@@ -3,7 +3,7 @@ package at.logic.gapt.provers.eprover
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.tptp.TptpProofParser
+import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser, tptpToString }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
@@ -16,10 +16,15 @@ class EProver extends ResolutionProver with ExternalProgram {
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
+        // E has flaky TPTP parsing, so we roll our own exporter here
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq( "eproof", "--tptp3-format" ), tptpIn )
-        if ( output.split( "\n" ).contains( "# SZS status Unsatisfiable" ) )
-          RefutationSketchToResolution( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ) ).toOption
+        val lines = output.split( "\n" )
+        if ( lines.contains( "# SZS status Unsatisfiable" ) )
+          RefutationSketchToResolution( TptpProofParser.parse(
+            lines.filterNot( _ startsWith "# " ).mkString( "\n" ),
+            labelledCNF mapValues { Seq( _ ) }
+          ) ).toOption
         else None
       }
     )
@@ -38,10 +43,7 @@ class EProver extends ResolutionProver with ExternalProgram {
   }
 
   def renameVars( formula: LambdaExpression ): LambdaExpression =
-    Substitution( freeVariables( formula ).
-      toSeq.zipWithIndex.map {
-        case ( v, i ) => v -> FOLVar( s"X$i" )
-      } )( formula )
+    tptpToString.renameVars( freeVariables( formula ).toSeq, formula )._2
   private def toTPTP( clause: FOLClause ): String =
     toTPTP( renameVars( clause.toDisjunction ) )
 

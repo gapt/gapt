@@ -1242,11 +1242,10 @@ You can also export sequents in TPTP format if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter.tptp_proof_problem_split(sequent)
-res32: String =
-"fof( formula0, axiom, 'p'('0') ).
-fof( formula1, axiom, (! [X0] : ( 'p'(X0) => 'p'('s'(X0)) )) ).
-fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
-"
+res32: at.logic.gapt.formats.tptp.TptpFile =
+fof(ant_0, axiom, p('0')).
+fof(ant_1, axiom, (![X]: (p(X) => p(s(X))))).
+fof(suc_0, conjecture, p(s(s('0')))).
 
 \end{clilisting}
 

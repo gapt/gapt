@@ -27,7 +27,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
     for ( ( _, clause ) <- cnf if clause.isProof ) return Some( ResolutionToExpansionProof( clause ) )
 
     renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
-      val tptp = TPTPFOLExporter.tptp_proof_problem_split( sequent )
+      val tptp = TPTPFOLExporter( sequent ).toString
       withTempFile.fromString( tptp ) { leanCoPInput =>
         runProcess.withExitValue( Seq( "leancop", leanCoPInput ) )
       } match {

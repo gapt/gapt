@@ -29,9 +29,9 @@ class TapeTest extends Specification with SequentMatchers {
       cs.map( x => println( s"Clause: $x" ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
       println( s"tptp string:\n$tptp" )
-      val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
-      writer.write( tptp )
-      writer.flush
+      //      val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
+      //      writer.write( tptp.toString )
+      //      writer.flush
       val projs = Projections( proof_sk )
       //projs.toList.map( x => { println( x.endSequent diff proof_sk.endSequent ) } )
       println( LatexLLKExporter( projs.toList( 0 ), true ) )
