@@ -1,7 +1,7 @@
 package at.logic.gapt.examples.poset
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.cutintro.{ GrammarFindingMethod, CutIntroduction }
+import at.logic.gapt.cutintro.{ beautifySolution, GrammarFindingMethod, CutIntroduction }
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.VectTratGrammar
@@ -16,7 +16,8 @@ import at.logic.gapt.provers.sat.Sat4j
 object dtable extends Script {
 
   val constructedProof = eliminateCutsET( LKToExpansionProof( proof.cycleImpliesEqual4 ) )
-  //  println(extractRecSchem(proof.cycleImpliesEqual4))
+  //  println( extractRecSchem( proof.cycleImpliesEqual4 ) )
+  //  InstanceTermEncoding( proof.cycleImpliesEqual4 )._1.toSeq sortBy { _.toString } foreach println
 
   if ( false ) {
     val removeEq = Map[LambdaExpression, LambdaExpression]( EqC( Ti ) -> FOLAtomConst( "E", 2 ) )
@@ -29,7 +30,9 @@ object dtable extends Script {
 
   CutIntroduction.compressToLK( constructedProof, hasEquality = false, method = new GrammarFindingMethod {
     def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
-      val dtable = deltaTable.createTable( lang.toSet, Some( 3 ) )
+      var dtable = deltaTable.createTable( lang.toSet, Some( 3 ) )
+
+      dtable = deltaTable.tableSubsumption( dtable )
 
       val ( us, s ) = deltaTable.findGrammarFromDeltaTable( lang.toSet, dtable )
 

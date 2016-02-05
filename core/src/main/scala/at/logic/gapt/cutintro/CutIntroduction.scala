@@ -224,7 +224,10 @@ object CutIntroduction extends Logger {
 
       val canonicalEHS = ExtendedHerbrandSequent( grammar, computeCanonicalSolution( grammar ) )
 
-      val minimizedEHS = metrics.time( "minsol" ) { improveSolutionLK( canonicalEHS, prover, hasEquality ) }
+      val minimizedEHS = metrics.time( "minsol" ) {
+        val improved = improveSolutionLK( canonicalEHS, prover, hasEquality )
+        beautifySolution( improved )
+      }
 
       val lcompCanonicalSol = canonicalEHS.cutFormulas.map( lcomp( _ ) ).sum
       val lcompMinSol = minimizedEHS.cutFormulas.map( lcomp( _ ) ).sum

@@ -1,6 +1,6 @@
 package at.logic.gapt.grammars.deltatable
 
-import at.logic.gapt.expr.{ Substitution, FOLConst, FOLVar }
+import at.logic.gapt.expr.{ FOLFunctionConst, Substitution, FOLConst, FOLVar }
 import org.specs2.mutable.Specification
 
 class DeltaTableTest extends Specification {
@@ -19,6 +19,30 @@ class DeltaTableTest extends Specification {
         Substitution( x1 -> c1, x2 -> c3, x3 -> c2 )
       )
       deltaTable.keySubsumption( k1, k2 ) must_== Set( Map( x1 -> x1, x2 -> x3, x3 -> x2 ) )
+    }
+  }
+
+  "delta table creation" in {
+    "many aus" in {
+      val Seq( a, b, c, d ) = Seq( "a", "b", "c", "d" ) map { FOLConst( _ ) }
+      val Seq( f, g ) = Seq( "f", "g" ) map { FOLFunctionConst( _, 3 ) }
+      val lang = for {
+        h <- Seq( f, g )
+        t <- Seq(
+          h( a, b, c ),
+          h( b, c, a ),
+          h( c, a, b ),
+          h( c, d, a ),
+          h( d, a, c )
+        )
+      } yield t
+
+      val table = deltaTable.createTable( lang.toSet )
+
+      table must contain( atLeast( beLike[( Set[Substitution], deltaTable.Row )] {
+        case ( s, decomps ) if s.size == 5 => ok
+      } ) )
+      ok
     }
   }
 

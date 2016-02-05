@@ -2,39 +2,63 @@ package at.logic.gapt.grammars.deltatable
 
 import at.logic.gapt.cutintro.DeltaTableMethod
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar, antiUnifier }
+import at.logic.gapt.grammars.VectTratGrammar
+import at.logic.gapt.utils.time
 
 import scala.collection.mutable
 
 object deltaTable {
   type Row = Set[( LambdaExpression, Set[LambdaExpression] )]
+  type SimpleGrammar = ( LambdaExpression, Set[Substitution] )
+
+  def antiUnifier( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+    val vars = mutable.Map[( LambdaExpression, LambdaExpression ), Var]()
+    val subst1 = mutable.Map[Var, LambdaExpression]()
+    val subst2 = mutable.Map[Var, LambdaExpression]()
+
+    var i = 0
+    def au( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
+      val Apps( fa, as ) = a
+      val Apps( fb, bs ) = b
+      if ( fa == fb ) {
+        fa( ( as, bs ).zipped map au: _* )
+      } else {
+        vars.getOrElseUpdate( a -> b, {
+          i = i + 1
+          val v = Var( s"x$i", a.exptype )
+          subst1( v ) = a
+          subst2( v ) = b
+          v
+        } )
+      }
+    }
+
+    ( au( a, b ), subst1, subst2 )
+  }
 
   def createTable( termSet: Set[LambdaExpression], maxArity: Option[Int] = None ): Map[Set[Substitution], Row] = {
-    // invariant:
-    // deltatable(S) contains (u, T) ==> u S = T && |S| = |T|
-    val deltatable = mutable.Map[Set[Substitution], Row]().withDefaultValue( Set() )
+    val termsList = termSet.toBuffer
 
-    deltatable( Set( Substitution() ) ) = for ( t <- termSet ) yield t -> Set( t )
+    // invariant:  deltatable(u,S) == (T,i)  ==>  u S = T  &&  |S| = |T|
+    val deltatable = mutable.Map[SimpleGrammar, ( Set[LambdaExpression], Int )]()
 
-    for ( i <- 1 until termSet.size ) {
-      for ( ( s, decomps ) <- deltatable.toMap; ( u, terms ) <- decomps if terms.size == i ) {
-        for ( t <- termSet.toSet diff terms ) {
-          val terms_ = terms + t
-          val u_ = antiUnifier( terms_.toSeq )
-          if ( !u_.isInstanceOf[Var] && maxArity.forall { freeVariables( u_ ).size <= _ } ) {
-            val s_ = for ( t_ <- terms_ ) yield syntacticMatching( u_, t_ ).get
+    for ( ( t, i ) <- termsList.zipWithIndex )
+      deltatable( t -> Set( Substitution() ) ) = Set( t ) -> i
 
-            require( s_.map { _( u_ ) } == terms_ )
-
-            deltatable( s_ ) = deltatable( s_ ) + ( u_ -> terms_ )
+    for ( prevTermsLen <- 1 until termSet.size ) {
+      for ( ( ( u, s ), ( terms, lastIndex ) ) <- deltatable.toSeq if terms.size == prevTermsLen ) {
+        for ( newIndex <- ( lastIndex + 1 ) until termsList.size; t = termsList( newIndex ) ) {
+          val ( u_, substU, substT ) = antiUnifier( u, t )
+          if ( !u_.isInstanceOf[Var] && maxArity.forall { substU.size <= _ } ) {
+            val s_ = s.map { subst => Substitution( substU mapValues { subst( _ ) } ) } + Substitution( substT )
+            val terms_ = terms + t
+            deltatable( u_ -> s_ ) = terms_ -> newIndex
           }
         }
       }
-
-      subsumptionRemoval( deltatable )
     }
 
-    deltatable.toMap
+    deltatable groupBy { _._1._2 } mapValues { _ map { case ( ( u, s ), ( terms, _ ) ) => u -> terms } toSet }
   }
 
   def keySubsumption( a: Set[Substitution], b: Set[Substitution] ): Set[Map[Var, Var]] =
@@ -58,61 +82,81 @@ object deltaTable {
     } yield solution
   }
 
-  def subsumptionRemoval( table: mutable.Map[Set[Substitution], Row] ): Unit = {
-    val max = table.keys.map { _.size }.max
+  def tableSubsumption( table: Map[Set[Substitution], Row] ): Map[Set[Substitution], Row] =
     for {
-      k1 <- table.keySet
-      if k1.size == max
-      if table contains k1
-      ( k2, r2 ) <- table
-      if k2.size >= max - 1
-      if k1 != k2
-      varMap <- keySubsumption( k2, k1 ).take( 1 )
-    } {
-      val subst = Substitution( varMap )
-      table( k1 ) = table( k1 ) union ( r2 map { case ( u, ts ) => subst( u ) -> ts } )
-      if ( k1.size == k2.size && k1.head.map.size == k2.head.map.size ) table -= k2 // varMap is a bijection
+      ( s1, row1 ) <- table
+      if s1.head.map.size > 1
+    } yield {
+      var newRow = row1.to[mutable.Set]
+      for {
+        ( s2, row2 ) <- table
+        if s2.head.map.nonEmpty // do not add ground terms
+        subs <- keySubsumption( s2, s1 )
+        subst = Substitution( subs )
+        ( u2, t2 ) <- row2
+      } newRow += subst( u2 ) -> t2
+      newRow = newRow.groupBy { _._1 }.mapValues { _ flatMap { _._2 } toSet }.to[mutable.Set]
+      for {
+        e1 @ ( u1, t1 ) <- newRow
+        e2 @ ( u2, t2 ) <- newRow
+        if newRow contains e1
+        if e1 != e2
+        if t2 subsetOf t1
+      } newRow -= e2
+      s1 -> newRow.toSet
     }
-
-    // merge inside rows
-    for ( ( k, r ) <- table ) table( k ) = r.groupBy { _._1 }.mapValues { _.flatMap { _._2 } }.toSet
-  }
 
   def findGrammarFromDeltaTable( termSet: Set[LambdaExpression], deltatable: Map[Set[Substitution], Row] ): ( Set[LambdaExpression], Set[Substitution] ) = {
     var minSize = termSet.size
+    val minGrammars = mutable.Buffer[( Set[LambdaExpression], Set[Substitution] )]()
 
-    val allGrammars = for ( ( s, decomps ) <- deltatable.toSeq ) yield {
-      val missingTerms = termSet diff ( decomps flatMap { _._2 } )
-      val patchedDecomps = decomps union ( missingTerms map { t => t -> Set( t ) } )
-
-      def minimizeGrammar( termSet: Set[LambdaExpression], grammar: Row, alreadyIncluded: Row ): Option[Row] =
-        if ( termSet isEmpty ) {
-          minSize = math.min( alreadyIncluded.size + s.size, minSize )
-          Some( alreadyIncluded )
-        } else if ( alreadyIncluded.size + s.size >= minSize ) {
-          None
-        } else if ( grammar isEmpty ) {
-          throw new IllegalArgumentException
-        } else {
-          val focus = grammar minBy { _._2.size }
-          if ( grammar exists { sg => focus._2.subsetOf( sg._2 ) && focus._2 != sg._2 } )
-            return minimizeGrammar( termSet, grammar - focus, alreadyIncluded )
-          val isInc = minimizeGrammar( termSet diff focus._2, grammar - focus, alreadyIncluded + focus )
-          val restLang = grammar - focus flatMap { _._2 }
-          if ( termSet subsetOf restLang ) {
-            val isNotInc = minimizeGrammar( termSet, grammar - focus, alreadyIncluded )
-            val possibilities = Seq( isInc, isNotInc ).flatten
-            if ( possibilities.isEmpty ) None else Some( possibilities minBy { _.size } )
-          } else {
-            isInc
-          }
+    def minimizeGrammar(
+      termSet:         Set[LambdaExpression],
+      grammar:         Row,
+      alreadyIncluded: Set[LambdaExpression],
+      s:               Set[Substitution]
+    ): Unit =
+      if ( termSet isEmpty ) {
+        val grammarSize = alreadyIncluded.size + s.size
+        if ( grammarSize < minSize ) {
+          minSize = grammarSize
+          minGrammars += ( alreadyIncluded -> s )
         }
-      val minDecomps = minimizeGrammar( termSet, patchedDecomps, Set() )
+      } else if ( alreadyIncluded.size + s.size >= minSize ) {
+        // Ignore this branch.
+      } else if ( grammar isEmpty ) {
+        throw new IllegalArgumentException
+      } else {
+        val focus = grammar maxBy { _._2.size }
 
-      minDecomps.map { _.map { _._1 } -> s }
+        minimizeGrammar(
+          termSet diff focus._2,
+          grammar map { x => x._1 -> x._2.diff( focus._2 ) } filter { _._2.nonEmpty },
+          alreadyIncluded + focus._1, s
+        )
+
+        val restLang = grammar - focus flatMap { _._2 }
+        if ( termSet subsetOf restLang ) {
+          minimizeGrammar( termSet, grammar - focus, alreadyIncluded, s )
+        }
+      }
+
+    for ( ( s, decomps ) <- deltatable ) {
+      val coveredTerms = decomps flatMap { _._2 }
+      minimizeGrammar( coveredTerms, decomps, termSet diff coveredTerms, s )
     }
 
-    allGrammars.flatten minBy { g => g._1.size + g._2.size }
+    for {
+      g1 @ ( u1, s1 ) <- minGrammars
+      g2 @ ( u2, s2 ) <- minGrammars
+      if g1 != g2
+      subst <- keySubsumption( s1, s2 )
+      u = u2 ++ u1.map { Substitution( subst )( _ ) }
+      s = s2
+      row = for ( t <- u ) yield t -> s.map { _( t ) }.intersect( termSet )
+    } minimizeGrammar( termSet, row, Set(), s )
+
+    minGrammars minBy { g => g._1.size + g._2.size }
   }
 
   def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VectTratGrammar = {
@@ -131,20 +175,30 @@ object deltaTable {
 
     def iter( suc: String, zero: String )( i: Int ): FOLTerm =
       if ( i == 0 ) FOLConst( zero ) else FOLFunction( suc, iter( suc, zero )( i - 1 ) )
-    val n = 9
+    val n = 12
     val terms1 = 0 until n map iter( "f", "c" ) map { FOLFunction( "r", _ ) }
     val terms2 = 0 until n map iter( "g", "d" ) map { FOLFunction( "s", _ ) }
     val terms = terms1 ++ terms2
 
     val deltatable = createTable( terms.toSet )
 
-    val actualMinGrammar = findMinimalVectGrammar( terms.toSet, Seq( 1 ) )
-
-    val origDTableGrammar = DeltaTableMethod( false ).findGrammars( terms.toSet ).get
+    //    val actualMinGrammar = findMinimalVectGrammar( terms.toSet, Seq( 1 ) )
+    //
+    //    val origDTableGrammar = DeltaTableMethod( false ).findGrammars( terms.toSet ).get
 
     val ( us, s ) = findGrammarFromDeltaTable( terms.toSet, deltatable )
     val vtratg = grammarToVTRATG( us, s )
-    println( deltatable )
+    //    println( deltatable )
     println( vtratg )
+
+    time {
+      for ( i <- 1 to 5 ) {
+        val ( u, s ) = findGrammarFromDeltaTable( terms.toSet, createTable( terms.toSet ) )
+        grammarToVTRATG( u, s )
+      }
+    }
+    time { for ( i <- 1 to 5 ) DeltaTableMethod( true ).findGrammars( terms.toSet ).get }
+    Thread sleep 4000
+    ()
   }
 }
