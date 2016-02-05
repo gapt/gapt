@@ -37,17 +37,21 @@ class CutIntroTest extends Specification {
     }
 
     "linear equality example" in {
-      skipped( "actually has herbrand complexity 2... better examples welcome" )
       val f = FOLFunctionConst( "f", 1 )
+      val g = FOLFunctionConst( "g", 1 )
       val x = FOLVar( "x" )
       val c = FOLConst( "c" )
 
-      val Some( p ) = Escargot getLKProof ( All( x, f( x ) === x ) +: Sequent() :+ ( f( f( f( f( f( f( f( f( f( c ) ) ) ) ) ) ) ) ) === c ) )
+      val Some( p ) = Escargot getLKProof (
+        All( x, f( g( x ) ) === f( x ) ) +:
+        Sequent()
+        :+ ( f( ( g ^ 9 )( c ) ) === f( c ) )
+      )
       val Some( q ) = CutIntroduction.compressLKProof( p, MaxSATMethod( MaxSat4j, 1 ), verbose = false )
       val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
       cutFormulas must contain( atMost(
-        All( x, f( f( f( x ) ) ) === x ),
-        All( x, x === f( f( f( x ) ) ) )
+        All( x, f( ( g ^ 3 )( x ) ) === f( x ) ),
+        All( x, f( x ) === f( ( g ^ 3 )( x ) ) )
       ) )
     }
 
