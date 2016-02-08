@@ -134,7 +134,8 @@ object deltaTable {
       row = for ( t <- u ) yield t -> s.map { _( t ) }.intersect( termSet )
     } minimizeGrammar( termSet, row, Set(), s )
 
-    minGrammars minBy { g => g._1.size + g._2.size }
+    if ( minGrammars isEmpty ) termSet -> Set()
+    else minGrammars minBy { g => g._1.size + g._2.size }
   }
 
   def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VectTratGrammar = {
