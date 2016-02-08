@@ -129,10 +129,7 @@ object deltaTable {
   }
 
   def tableSubsumption( table: Map[Set[Substitution], Row] ): Map[Set[Substitution], Row] =
-    for {
-      ( s1, row1 ) <- table
-      if s1.head.map.size > 1
-    } yield {
+    for ( ( s1, row1 ) <- table ) yield if ( s1.head.map.size <= 1 ) s1 -> row1 else {
       var newRow = row1.to[mutable.Set]
       for {
         ( s2, row2 ) <- table
