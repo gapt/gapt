@@ -36,6 +36,52 @@ object deltaTable {
     ( au( a, b ), subst1, subst2 )
   }
 
+  def antiUnifier1( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+    def au1FromAU( au: LambdaExpression ): ( LambdaExpression, Option[LambdaExpression] ) = au match {
+      case Var( _, ty ) => ( Var( "x", ty ), Some( au ) )
+      case c: Const     => ( c, None )
+      case Apps( f, as ) =>
+        val ( as_, s_ ) = as.map( au1FromAU ).unzip
+        if ( s_.flatten.distinct.size <= 1 ) {
+          f( as_ : _* ) -> s_.flatten.headOption
+        } else {
+          Var( "x", au.exptype ) -> Some( au )
+        }
+    }
+
+    val ( au, subst1, subst2 ) = antiUnifier( a, b )
+    au1FromAU( au ) match {
+      case ( au1, None ) => ( au1, Map(), Map() )
+      case ( au1, Some( repl ) ) =>
+        val v = freeVariables( au1 ).head
+        ( au1, Map( v -> Substitution( subst1 )( repl ) ), Map( v -> Substitution( subst2 )( repl ) ) )
+    }
+  }
+
+  def antiUnifier1b( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+    def au( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
+      val Apps( fa, as ) = a
+      val Apps( fb, bs ) = b
+      if ( fa == fb ) {
+        val ( as_, s_ ) = ( as, bs ).zipped.map( au ).unzip
+        if ( s_.flatten.distinct.size <= 1 ) {
+          ( fa( as_ : _* ), s_.flatten.headOption )
+        } else {
+          ( Var( "x", a.exptype ), Some( ( a, b ) ) )
+        }
+      } else {
+        ( Var( "x", a.exptype ), Some( ( a, b ) ) )
+      }
+    }
+
+    au( a, b ) match {
+      case ( au1, None ) => ( au1, Map(), Map() )
+      case ( au1, Some( ( substA, substB ) ) ) =>
+        val v = freeVariables( au1 ).head
+        ( au1, Map( v -> substA ), Map( v -> substB ) )
+    }
+  }
+
   def createTable( termSet: Set[LambdaExpression], maxArity: Option[Int] = None ): Map[Set[Substitution], Row] = {
     val termsList = termSet.toBuffer
 
@@ -197,7 +243,7 @@ object deltaTable {
         grammarToVTRATG( u, s )
       }
     }
-    time { for ( i <- 1 to 5 ) DeltaTableMethod( true ).findGrammars( terms.toSet ).get }
+    time { for ( i <- 1 to 5 ) DeltaTableMethod( false ).findGrammars( terms.toSet ).get }
     Thread sleep 4000
     ()
   }
