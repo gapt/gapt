@@ -13,7 +13,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "compute au of first-order terms" in {
       val c = FOLConst( "c" )
       val d = FOLConst( "d" )
-      val au = antiUnifier( Seq( FOLFunction( "f", c, c ), FOLFunction( "f", d, d ) ) )
+      val au = antiUnifier( FOLFunction( "f", c, c ), FOLFunction( "f", d, d ) )._1
       val x = FOLVar( "x" )
       Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, FOLFunction( "f", x, x ) )
     }
@@ -26,7 +26,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       val t = Const( "t", tree )
       val s = Const( "s", tree )
 
-      val au = antiUnifier( Seq( node( a, t, t ), node( a, s, s ) ) )
+      val au = antiUnifier( node( a, t, t ), node( a, s, s ) )._1
 
       val x = Var( "x", tree )
       Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, node( a, x, x ) )
