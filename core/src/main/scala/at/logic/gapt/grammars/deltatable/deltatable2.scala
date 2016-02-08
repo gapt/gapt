@@ -83,28 +83,35 @@ object deltaTable {
   }
 
   def createTable( termSet: Set[LambdaExpression], maxArity: Option[Int] = None, singleVariable: Boolean = false ): Map[Set[Substitution], Row] = {
-    val termsList = termSet.toBuffer
+    // invariant:  deltatable(S) contains (u,T)  ==>  u S = T  &&  |S| = |T|
+    val deltatable = mutable.Map[Set[Substitution], List[( LambdaExpression, Set[LambdaExpression] )]]().withDefaultValue( Nil )
 
-    // invariant:  deltatable(u,S) == (T,i)  ==>  u S = T  &&  |S| = |T|
-    val deltatable = mutable.Map[SimpleGrammar, ( Set[LambdaExpression], Int )]()
+    def populate(
+      remainingTerms: List[LambdaExpression],
+      currentAU:      LambdaExpression,
+      currentCover:   Set[LambdaExpression],
+      currentSubst:   Set[Substitution]
+    ): Unit = if ( remainingTerms.nonEmpty ) {
+      val ( newTerm :: rest ) = remainingTerms
 
-    for ( ( t, i ) <- termsList.zipWithIndex )
-      deltatable( t -> Set( Substitution() ) ) = Set( t ) -> i
+      val ( newAU, substCurAU, substNewTerm ) =
+        if ( currentAU == null ) ( newTerm, Map[Var, LambdaExpression](), Map[Var, LambdaExpression]() )
+        else if ( singleVariable ) antiUnifier1( currentAU, newTerm )
+        else antiUnifier( currentAU, newTerm )
 
-    for ( prevTermsLen <- 1 until termSet.size ) {
-      for ( ( ( u, s ), ( terms, lastIndex ) ) <- deltatable.toSeq if terms.size == prevTermsLen ) {
-        for ( newIndex <- ( lastIndex + 1 ) until termsList.size; t = termsList( newIndex ) ) {
-          val ( u_, substU, substT ) = if ( singleVariable ) antiUnifier1( u, t ) else antiUnifier( u, t )
-          if ( !u_.isInstanceOf[Var] && maxArity.forall { substU.size <= _ } ) {
-            val s_ = s.map { subst => Substitution( substU mapValues { subst( _ ) } ) } + Substitution( substT )
-            val terms_ = terms + t
-            deltatable( u_ -> s_ ) = terms_ -> newIndex
-          }
-        }
+      if ( !newAU.isInstanceOf[Var] && maxArity.forall { substCurAU.size <= _ } ) {
+        val newSubst = currentSubst.map { subst => Substitution( substCurAU mapValues { subst( _ ) } ) } + Substitution( substNewTerm )
+        val newCover = currentCover + newTerm
+        deltatable( newSubst ) ::= ( newAU -> newCover )
+        populate( rest, newAU, newCover, newSubst )
       }
+
+      populate( rest, currentAU, currentCover, currentSubst )
     }
 
-    deltatable groupBy { _._1._2 } mapValues { _ map { case ( ( u, s ), ( terms, _ ) ) => u -> terms } toSet }
+    populate( termSet.toList, null, Set(), Set() )
+
+    deltatable.mapValues { _.toSet }.toMap
   }
 
   def keySubsumption( a: Set[Substitution], b: Set[Substitution] ): Set[Map[Var, Var]] =
