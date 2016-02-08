@@ -33,12 +33,12 @@ object RobinsonToLK {
     val projections = justifications map {
       case ( clause, ProjectionFromEndSequent( proj, index ) ) =>
         val projWithDef = ExpansionProofToLK( ExpansionProof( proj ++ clause.map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
-        clause -> DefinitionRule( projWithDef, toShallow( proj ).elements.head, endSequent( index ), index isSuc )
+        clause -> DefinitionRule( projWithDef, proj.shallow.elements.head, endSequent( index ), index isSuc )
 
       case ( clause, Definition( newAtom, expansion ) ) =>
         val i = clause indexOf newAtom
         val p = ExpansionProofToLK( ExpansionProof( clause.map( ETAtom( _, false ), ETAtom( _, true ) ).updated( i, expansion ) ) )
-        clause -> DefinitionRule( p, toShallow( expansion ), newAtom, i isSuc )
+        clause -> DefinitionRule( p, expansion.shallow, newAtom, i isSuc )
     }
 
     val proofWithDefs = apply( resolutionProof, endSequent, projections )

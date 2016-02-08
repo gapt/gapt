@@ -7,22 +7,24 @@ import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 object clauseSubsumption {
   def apply( from: Sequent[LambdaExpression], to: Sequent[LambdaExpression],
              alreadyFixed:        Map[Var, LambdaExpression] = Map(),
-             multisetSubsumption: Boolean                    = true ): Option[Substitution] = {
+             multisetSubsumption: Boolean                    = true,
+             matchingAlgorithm:   MatchingAlgorithm          = syntacticMatching ): Option[Substitution] = {
     if ( multisetSubsumption )
       if ( from.antecedent.size > to.antecedent.size || from.succedent.size > to.succedent.size )
         return None
     if ( from isEmpty ) return Some( Substitution( alreadyFixed ) )
     val chosenFrom = from.indices.head
-    for (
-      chosenTo <- to.indices if chosenTo sameSideAs chosenFrom;
-      newSubst <- syntacticMatching( List( from( chosenFrom ) -> to( chosenTo ) ), alreadyFixed );
+    for {
+      chosenTo <- to.indices if chosenTo sameSideAs chosenFrom
+      newSubst <- matchingAlgorithm( List( from( chosenFrom ) -> to( chosenTo ) ), alreadyFixed )
       subsumption <- apply(
         from delete chosenFrom,
         if ( multisetSubsumption ) to delete chosenTo else to,
         newSubst.map,
-        multisetSubsumption
+        multisetSubsumption,
+        matchingAlgorithm
       )
-    ) return Some( subsumption )
+    } return Some( subsumption )
     None
   }
 }
@@ -30,6 +32,7 @@ object clauseSubsumption {
 trait SubsumptionAlgorithm {
   /**
    * A predicate which is true iff s2 is subsumed by s1.
+   *
    * @param s1 a clause
    * @param s2 a clause
    * @return true iff s1 subsumes s2
@@ -44,6 +47,7 @@ object StillmanSubsumptionAlgorithmHOL extends SubsumptionAlgorithm {
 
   /**
    * Calculates the subtitution to apply to s1 in order to subsume s2. if it exists
+   *
    * @param s1 a clause
    * @param s2 a clause
    * @return if s1 subsumes s2, the substitution necessary. None otherwise.

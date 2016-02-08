@@ -6,7 +6,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
-class FixDerivationTest extends Specification {
+class FixDerivationTest extends Specification with SequentMatchers {
   "fixDerivation" should {
     "not say that p :- is derivable from p :- p, r by symmetry" in {
       val p = FOLAtom( "p", Nil )
@@ -14,7 +14,7 @@ class FixDerivationTest extends Specification {
       val to = HOLClause( p :: Nil, Nil )
       val from = HOLClause( p :: Nil, p :: r :: Nil )
 
-      fixDerivation.tryDeriveBySymmetry( to, from ) must beNone
+      fixDerivation.tryDeriveBySubsumptionModEq( to, from ) must beNone
     }
 
     "say that a=b, b=c :- c=d is derivable from c=b, a=b :- d=c" in {
@@ -30,7 +30,29 @@ class FixDerivationTest extends Specification {
       val from = HOLClause( ab :: bc :: Nil, cd :: Nil )
       val to = HOLClause( cb :: ab :: Nil, dc :: Nil )
 
-      fixDerivation.tryDeriveBySymmetry( to, from ) must beSome
+      fixDerivation.tryDeriveBySubsumptionModEq( to, from ) must beSome
+    }
+
+    "matchingModEq" in {
+      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
+      val Seq( f, g, h ) = Seq( "f", "g", "h" ) map { FOLFunctionConst( _, 1 ) }
+
+      def m( a: LambdaExpression, b: LambdaExpression ) = fixDerivation.matchingModEq( List( a -> b ), Map() )
+
+      m( f( x ) === g( y ), f( y ) === g( x ) ) must contain( exactly( Substitution( x -> y, y -> x ) ) )
+      m( f( x ) === f( y ), f( y ) === f( x ) ) must contain( exactly( Substitution( x -> x, y -> y ), Substitution( x -> y, y -> x ) ) )
+    }
+
+    "derive modulo subsumption and equation reorientation" in {
+      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
+      val Seq( f, g, h ) = Seq( "f", "g", "h" ) map { FOLFunctionConst( _, 1 ) }
+
+      val from = ( f( x ) === g( y ) ) +: Clause() :+ ( g( y ) === h( z ) )
+      val to = ( g( z ) === f( y ) ) +: Clause() :+ ( h( x ) === g( z ) )
+
+      fixDerivation.tryDeriveBySubsumptionModEq( to, from ) must beLike {
+        case Some( p ) => p.conclusion must beMultiSetEqual( to )
+      }
     }
 
     "say that p(a) :- q(x) can be derived by factoring from p(x), p(y) :- q(u), q(v)" in {
@@ -49,7 +71,7 @@ class FixDerivationTest extends Specification {
       val to = HOLClause( pa :: Nil, qx :: Nil )
       val from = HOLClause( px :: py :: Nil, qu :: qv :: Nil )
 
-      fixDerivation.tryDeriveByFactor( to, from ) must beSome
+      fixDerivation.tryDeriveBySubsumptionModEq( to, from ) must beSome
     }
 
     "obtain a derivation of :- p from { :- q; q :- p } from a derivation of :- p, r from { :- q, r; q :- p }" in {

@@ -64,20 +64,6 @@ object formulaToExpansionTree {
   }
 }
 
-@deprecated( "Use .deep instead", "2016-01-13" )
-object toDeep {
-  def apply( t: ExpansionTree ): HOLFormula = t.deep
-  def apply( t: ExpansionSequent ): HOLSequent = t map { _.deep }
-  def apply( t: ExpansionProofWithCut ): HOLSequent = t.deep
-}
-
-@deprecated( "Use .shallow instead", "2016-01-13" )
-object toShallow {
-  def apply( t: ExpansionTree ): HOLFormula = t.shallow
-  def apply( t: ExpansionSequent ): HOLSequent = t map { _.shallow }
-  def apply( t: ExpansionProofWithCut ): HOLSequent = t.shallow
-}
-
 object numberOfInstancesET {
   def apply( t: ExpansionTree ): Int =
     t.subProofs collect { case ETWeakQuantifier( _, instances ) => instances.size } sum

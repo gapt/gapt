@@ -7,7 +7,7 @@ import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.expansion.{ toDeep => ETtoDeep, eliminateCutsET, addSymmetry, ExpansionProofToLK }
+import at.logic.gapt.proofs.expansion.{ eliminateCutsET, addSymmetry, ExpansionProofToLK }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import XMLParser._
@@ -160,7 +160,7 @@ class MiscTest extends Specification {
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
         val p = VeriTParser.getExpansionProof( new InputStreamReader( getClass.getClassLoader getResourceAsStream s"test${i}.verit" ) ).get
         val taut_p = addSymmetry( p )
-        val seq = ETtoDeep( taut_p )
+        val seq = taut_p.deep
 
         Sat4j.isValid( seq ) must beTrue
       }
@@ -173,7 +173,7 @@ class MiscTest extends Specification {
       val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
       val E = VeriT.getExpansionProof( HOLSequent( Nil, F :: Nil ) ).get
 
-      val Edeep = ETtoDeep( E )
+      val Edeep = E.deep
       Sat4j.isValid( Edeep ) must beTrue
     }
 
@@ -185,7 +185,7 @@ class MiscTest extends Specification {
       val s = HOLSequent( C :: Nil, AS :: Nil )
       val E = VeriT.getExpansionProof( s ).get
 
-      val Edeep = ETtoDeep( E )
+      val Edeep = E.deep
       Sat4j.isValid( Edeep ) must beTrue
     }
 
@@ -197,7 +197,7 @@ class MiscTest extends Specification {
 
       val lkproof = lkProofFromClasspath( "PUZ002-1.out" )
       val expseq = LKToExpansionProof( lkproof )
-      val deep = ETtoDeep( expseq )
+      val deep = expseq.deep
 
       Sat4j.isValid( deep ) must beTrue
 
@@ -211,7 +211,7 @@ class MiscTest extends Specification {
 
       val lkProof = lkProofFromClasspath( "ALG004-1.out" )
       val expansionSequent = LKToExpansionProof( lkProof )
-      val deep = ETtoDeep( expansionSequent )
+      val deep = expansionSequent.deep
 
       VeriT.isValid( deep ) must beTrue
     }
@@ -221,7 +221,7 @@ class MiscTest extends Specification {
 
       val lkproof1 = lkProofFromClasspath( "PUZ002-1.out" )
       val expseq = LKToExpansionProof( lkproof1 )
-      val deep = ETtoDeep( expseq )
+      val deep = expseq.deep
 
       solve.solvePropositional( deep ).isDefined must beTrue
     }
@@ -230,7 +230,7 @@ class MiscTest extends Specification {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
       val lkproof1 = lkProofFromClasspath( "NUM484+3.out" )
       val expseq = LKToExpansionProof( lkproof1 )
-      val deep = ETtoDeep( expseq )
+      val deep = expseq.deep
       success( "everything worked fine" )
     }
   }

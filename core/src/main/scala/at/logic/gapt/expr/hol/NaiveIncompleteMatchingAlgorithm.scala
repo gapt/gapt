@@ -9,5 +9,5 @@ object NaiveIncompleteMatchingAlgorithm {
 
   // restrictedDomain: variables to be treated as constants.
   def matchTerm( term: LambdaExpression, posInstance: LambdaExpression, restrictedDomain: Set[Var] ): Option[Substitution] =
-    syntacticMatching( List( term -> posInstance ), restrictedDomain.map { v => v -> v }.toMap )
+    syntacticMatching( List( term -> posInstance ), restrictedDomain.map { v => v -> v }.toMap ) headOption
 }

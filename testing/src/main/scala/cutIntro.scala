@@ -109,7 +109,7 @@ object loadProof {
   def loadResolutionProof( resProof: ResolutionProof, endSequent: HOLSequent ) = {
     metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
     val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
-    val containsEquations = constants( toShallow( expansionProof ) ) exists {
+    val containsEquations = constants( expansionProof.shallow ) exists {
       case EqC( _ ) => true
       case _        => false
     }
@@ -214,7 +214,7 @@ object findNonTrivialTSTPExamples extends App {
       println( fn )
       withTimeout( 60 seconds ) {
         val p = Prover9Importer.expansionProofFromFile( fn )
-        val terms = FOLInstanceTermEncoding( toShallow( p ) ).encode( p )
+        val terms = FOLInstanceTermEncoding( p.shallow ).encode( p )
         val functions = terms map { case FOLFunction( f, _ ) => f }
 
         Success( TermSetStats( fn, terms.size, functions.size ) )

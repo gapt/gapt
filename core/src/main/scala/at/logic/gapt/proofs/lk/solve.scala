@@ -30,7 +30,7 @@ object solve extends Logger {
    * Transform expansion proof to LK proof (assumes that deep formula of expansionSequent is a tautology)
    */
   def expansionProofToLKProof( expansionSequent: ExpansionSequent, qfProver: Option[ResolutionProver] = None ): Option[LKProof] =
-    startProving( toShallow( expansionSequent ), new ExpansionTreeProofStrategy( expansionSequent ),
+    startProving( expansionSequent.shallow, new ExpansionTreeProofStrategy( expansionSequent ),
       qfProver match {
         case Some( prover ) =>
           seq => prover getRobinsonProof seq.filter { isAtom( _ ) } map { ref =>
@@ -444,8 +444,8 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
   override def toString: String = "ExpansionTreeProofStrategy(" + expansionSequent + ")"
 
   override def calcNextStep( seq: HOLSequent ): Option[ProofStrategy.Action] = {
-    // every possible action (i.e. formula in toShallow( expansionSequent )) must be realizable (in seq)
-    assert( toShallow( expansionSequent ).isSubsetOf( seq ) )
+    // every possible action (i.e. formula in expansionSequent.shallow) must be realizable (in seq)
+    assert( expansionSequent.shallow.isSubsetOf( seq ) )
 
     val goal_pruned = removeWeakFormulas( seq )
 
@@ -475,17 +475,17 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     val w_ant = expansionSequent.antecedent.filter( {
       case ETWeakening( _, _ ) => true
       case _                   => false
-    } ).map( toShallow( _ ) )
+    } ).map( _.shallow )
     val w_suc = expansionSequent.succedent.filter( {
       case ETWeakening( _, _ ) => true
       case _                   => false
-    } ).map( toShallow( _ ) )
+    } ).map( _.shallow )
 
     HOLSequent( seq.antecedent.filterNot( w_ant.contains( _ ) ), seq.succedent.filterNot( w_suc.contains( _ ) ) )
   }
 
   // TODO:  why do find... operate on seq, would it not make more sense to have them work on expansionSequent?
-  //        in particular since we have assert( toShallow( expansionSequent ).isSubsetOf( seq ) )
+  //        in particular since we have assert( expansionSequent.shallow.isSubsetOf( seq ) )
 
   /**
    * need to override find-methods as we keep track of the state of the expansion sequent here
@@ -589,7 +589,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
     val anteResult = expansionSequent.antecedent.collectFirst( {
       case et @ ETStrongQuantifier( formula, variable, selection ) =>
         val newEtSeq = expansionSequent.replaceInAntecedent( et, selection )
-        new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Antecedent, Some( variable ),
+        new ExpansionTreeProofStrategy.ExpansionTreeAction( et.shallow, FormulaLocation.Antecedent, Some( variable ),
           List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
     } )
 
@@ -597,7 +597,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
       expansionSequent.succedent.collectFirst( {
         case et @ ETStrongQuantifier( formula, variable, selection ) =>
           val newEtSeq = expansionSequent.replaceInSuccedent( et, selection )
-          new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( variable ),
+          new ExpansionTreeProofStrategy.ExpansionTreeAction( et.shallow, FormulaLocation.Succedent, Some( variable ),
             List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
       } )
     )
@@ -641,7 +641,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
                 if ( newInstances.isEmpty ) { expansionSequent.removeFromAntecedent( et ) }
                 else { expansionSequent.replaceInAntecedent( et, ETWeakQuantifier( formula, newInstances ) ) }
               val newEtSeq = instancePicked._2 +: newEtSeq0
-              new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Antecedent, Some( instancePicked._1 ),
+              new ExpansionTreeProofStrategy.ExpansionTreeAction( et.shallow, FormulaLocation.Antecedent, Some( instancePicked._1 ),
                 List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
             } )
           case _ => None
@@ -664,7 +664,7 @@ class ExpansionTreeProofStrategy( val expansionSequent: ExpansionSequent ) exten
                     if ( newInstances.isEmpty ) { expansionSequent.removeFromSuccedent( et ) }
                     else { expansionSequent.replaceInSuccedent( et, ETWeakQuantifier( formula, newInstances ) ) }
                   val newEtSeq = newEtSeq0 :+ instancePicked._2
-                  new ExpansionTreeProofStrategy.ExpansionTreeAction( toShallow( et ), FormulaLocation.Succedent, Some( instancePicked._1 ),
+                  new ExpansionTreeProofStrategy.ExpansionTreeAction( et.shallow, FormulaLocation.Succedent, Some( instancePicked._1 ),
                     List( new ExpansionTreeProofStrategy( newEtSeq ) ) )
                 } )
               case _ => None
@@ -695,7 +695,7 @@ private object getETOfFormula {
 
   private def getFromExpansionTreeList( ets: Seq[ExpansionTree], f: HOLFormula ): Option[ExpansionTree] = ets match {
     case head +: tail =>
-      if ( toShallow( head ) == f ) Some( head )
+      if ( head.shallow == f ) Some( head )
       else getFromExpansionTreeList( tail, f )
     case Seq() => None
   }

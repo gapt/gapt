@@ -134,10 +134,10 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
       caseRules.toSet
     case p: EqualityLeftRule if includeEqTheory =>
       getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) +
-        Rule( axiom, ( p.equation & p.mainFormula ) --> p.auxFormula )
+        Rule( axiom, p.equation & p.mainFormula & -p.auxFormula )
     case p: EqualityRightRule if includeEqTheory =>
       getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) +
-        Rule( axiom, ( p.equation & p.auxFormula ) --> p.mainFormula )
+        Rule( axiom, p.equation & p.auxFormula & -p.mainFormula )
     case _ =>
       ( for (
         ( q, occConn ) <- p.immediateSubProofs zip p.occConnectors;

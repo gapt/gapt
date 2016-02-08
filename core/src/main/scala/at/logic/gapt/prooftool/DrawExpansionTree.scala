@@ -74,7 +74,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
     opaque = false
 
     expTree match {
-      case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) =>
+      case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) | ETDefinition( _, _, _ ) =>
         val lbl = DrawSequent.formulaToLabel( main, expTree.shallow, ft )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
@@ -195,13 +195,6 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
           if ( state.get( formula ) == Some( Open ) ) contents += drawTerms( terms ) // If the quantifier block is open, we draw its terms.
           contents += drawFormula( subF ) // Since the current quantifier block is not expanded, we needn't worry about the state of child trees and can call drawFormula.
         }
-
-      case ETWeakening( f, _ ) =>
-        //not really tested
-        val lbl = DrawSequent.formulaToLabel( main, f, ft )
-        lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
-        contents += lbl
-
     }
   }
 

@@ -57,7 +57,7 @@ class minimalExpansionSequentTest extends Specification {
     "handle weakening" in {
       val E = ETAtom( FOLAtom( "Q" ), false ) +: Sequent() :+ ETImp( ETWeakening( FOLAtom( "P" ), false ), ETAtom( FOLAtom( "Q" ), true ) )
       val Some( minSeq ) = minimalExpansionSequent( E, Sat4j )
-      Sat4j.isValid( toDeep( minSeq ) ) must_== true
+      Sat4j.isValid( minSeq.deep ) must_== true
     }
   }
 }

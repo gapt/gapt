@@ -21,17 +21,17 @@ object tapeUrban {
   private val zero = FOLConst( "0" )
   private val one = s( zero )
 
-  val A = All( x, Or( Eq( f( x ), zero ), Eq( f( x ), one ) ) )
-  val P = Ex( n, Ex( m, And( lt( n, m ), Eq( f( n ), f( m ) ) ) ) )
-  val T = All( i, All( x, All( y, Imp( And( Eq( f( y ), i ), Eq( f( x ), i ) ), Eq( f( x ), f( y ) ) ) ) ) )
-  val S = All( x, All( y, Imp( leq( s( x ), y ), lt( x, y ) ) ) )
-  val M1 = All( y, All( x, leq( x, max( x, y ) ) ) )
-  val M2 = All( y, All( x, leq( y, max( x, y ) ) ) )
-  val I0 = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), zero ) ) ) )
-  val I1 = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), one ) ) ) )
-  val Ii = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), i ) ) ) )
+  private val A = All( x, Or( Eq( f( x ), zero ), Eq( f( x ), one ) ) )
+  private val P = Ex( n, Ex( m, And( lt( n, m ), Eq( f( n ), f( m ) ) ) ) )
+  private val T = All( i, All( x, All( y, Imp( And( Eq( f( y ), i ), Eq( f( x ), i ) ), Eq( f( x ), f( y ) ) ) ) ) )
+  private val S = All( x, All( y, Imp( leq( s( x ), y ), lt( x, y ) ) ) )
+  private val M1 = All( y, All( x, leq( x, max( x, y ) ) ) )
+  private val M2 = All( y, All( x, leq( y, max( x, y ) ) ) )
+  private val I0 = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), zero ) ) ) )
+  private val I1 = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), one ) ) ) )
+  private val Ii = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), i ) ) ) )
 
-  private val tau = Lemma( Sequent(
+  val tau = Lemma( Sequent(
     Seq( "M_1" -> FOLAtom( "M_1" ), "M_2" -> FOLAtom( "M_2" ), "A" -> FOLAtom( "A" ) ),
     Seq( "I0" -> FOLAtom( "I", Seq( zero ) ), "I1" -> FOLAtom( "I", Seq( one ) ) )
   ) ) {
@@ -41,32 +41,24 @@ object tapeUrban {
     allR( n, "I0" )
     exR( max( n, nprime ), "I0" )
     exR( max( n, nprime ), "I1" )
-    forget( "I0" )
-    forget( "I1" )
+    forget( "I0", "I1" )
     andR( "I1_0" )
-    forget( "A" )
-    forget( "M_1" )
-    forget( "I0_0" )
+    forget( "A", "M_1", "I0_0" )
     defL( "M_2", M2 )
-    // chain( "M_2" ) // why does this not work here?
-    escargot
+    chain( "M_2" )
 
     andR( "I0_0" )
-    forget( "A" )
-    forget( "M_2" )
-    forget( "I1_0" )
+    forget( "A", "M_2", "I1_0" )
     defL( "M_1", M1 )
-    // chain( "M_1" ) // why does this not work here?
-    escargot
+    chain( "M_1" )
 
-    forget( "M_1" )
-    forget( "M_2" )
+    forget( "M_1", "M_2" )
     defL( "A", A )
-    allL( max( n, nprime ) )
+    allL( max( n, nprime ), "A" )
     prop
   }
 
-  private val epsilon_i = Lemma( Sequent(
+  val epsilon_i = Lemma( Sequent(
     Seq( "Ii" -> FOLAtom( "I", Seq( i ) ), "S" -> FOLAtom( "S" ), "T" -> FOLAtom( "T" ) ),
     Seq( "P" -> FOLAtom( "P" ) )
   ) ) {
@@ -79,30 +71,22 @@ object tapeUrban {
     defR( "P", P )
     exR( n, "P" )
     exR( m, "P_0" )
-    forget( "P" )
-    forget( "P_0" )
+    forget( "P", "P_0" )
     andL( "Ii_0" )
     andL( "Ii_1" )
     forget( "Ii_0_0" )
     andR( "P_0_0" )
 
-    forget( "Ii_1_1" )
-    forget( "Ii_0_1" )
-    forget( "T" )
+    forget( "Ii_1_1", "Ii_0_1", "T" )
     defL( "S", S )
-    // here chain should also be useful
-    allL( n, "S" )
-    allL( m, "S_0" )
-    prop
+    chain( "S" )
+    axiom
 
-    forget( "Ii_1_0" )
-    forget( "S" )
+    forget( "Ii_1_0", "S" )
     defL( "T", T )
-    // here chain should also be useful
-    allL( i, "T" )
-    allL( n, "T_0" )
-    allL( m, "T_0_0" )
-    prop
+    chain( "T" )
+    axiom
+    axiom
   }
 
   val sigma = Lemma( Sequent(
@@ -115,5 +99,15 @@ object tapeUrban {
     insert( epsilon_i )
     insert( epsilon_i )
   }
+
+  val defs = Map(
+    FOLAtomConst( "I", 1 ) -> Abs( i, Ii ),
+    FOLAtom( "A" ) -> A,
+    FOLAtom( "M_1" ) -> M1,
+    FOLAtom( "M_2" ) -> M2,
+    FOLAtom( "S" ) -> S,
+    FOLAtom( "T" ) -> T,
+    FOLAtom( "P" ) -> P
+  )
 }
 

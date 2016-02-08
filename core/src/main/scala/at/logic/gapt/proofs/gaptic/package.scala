@@ -120,7 +120,18 @@ package object gaptic {
   def prover9 = Prover9Tactic
   def escargot = EscargotTactic
 
-  def forget( l: String ) = WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l )
+  /**
+   * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.
+   * @param ls A sequence of labels L,,1,,,..., L,,n,,.
+   * @return The tactical
+   *           (WeakeningLeftTactic(L,,1,,) orElse WeakeningRightTactic(L,,1,,)) andThen ... andThen (WeakeningLeftTactic(L,,n,,) orElse WeakeningRightTactic(L,,n,,))
+   *
+   */
+  def forget( ls: String* ): Tactical = ls.foldLeft[Tactical]( SkipTactical ) { ( acc, l ) =>
+    acc andThen ( WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l ) )
+  }
 
   def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
+
+  def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 }

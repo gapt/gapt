@@ -7,7 +7,6 @@ package at.logic.gapt.provers.veriT
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.expansion.toDeep
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
@@ -60,7 +59,7 @@ class VeriTProverTest extends Specification with SatMatchers {
       val sequent = ( Eq( FOLConst( "α" ), FOLConst( "β" ) ) +:
         Sequent()
         :+ Eq( FOLFunction( "f", FOLConst( "α" ) ), FOLFunction( "f", FOLConst( "β" ) ) ) )
-      Sat4j.isValid( toDeep( VeriT getExpansionProof sequent get ) ) must_== true
+      Sat4j.isValid( ( VeriT getExpansionProof sequent get ).deep ) must_== true
     }
 
     "term level booleans" in {

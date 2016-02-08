@@ -1,7 +1,13 @@
 package at.logic.gapt.expr
 
-object syntacticMatching {
+trait MatchingAlgorithm {
+  def apply(
+    pairs:             List[( LambdaExpression, LambdaExpression )],
+    alreadyFixedSubst: Map[Var, LambdaExpression]
+  ): Traversable[Substitution]
+}
 
+object syntacticMatching extends syntacticMatching {
   def apply( from: FOLExpression, to: FOLExpression ): Option[FOLSubstitution] =
     apply( List( from -> to ) )
 
@@ -17,14 +23,15 @@ object syntacticMatching {
       alreadyFixedSubst.asInstanceOf[Map[Var, LambdaExpression]]
     ) map { subst =>
       FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
-    }
+    } headOption
 
   def apply( from: LambdaExpression, to: LambdaExpression ): Option[Substitution] =
     apply( List( from -> to ) )
 
   def apply( pairs: List[( LambdaExpression, LambdaExpression )] ): Option[Substitution] =
-    apply( pairs, Map[Var, LambdaExpression]() )
-
+    apply( pairs, Map[Var, LambdaExpression]() ) headOption
+}
+class syntacticMatching extends MatchingAlgorithm {
   /**
    * Recursively looks for a Substitution σ such that for each (a, b) ∈ pairs, σ(a) = b.
    *
@@ -35,7 +42,7 @@ object syntacticMatching {
   def apply(
     pairs:             List[( LambdaExpression, LambdaExpression )],
     alreadyFixedSubst: Map[Var, LambdaExpression]
-  ): Option[Substitution] = pairs match {
+  ): Traversable[Substitution] = pairs match {
     case Nil => Some( Substitution( alreadyFixedSubst ) )
     case first :: rest =>
       first match {

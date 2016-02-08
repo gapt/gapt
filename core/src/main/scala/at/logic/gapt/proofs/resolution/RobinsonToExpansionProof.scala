@@ -27,7 +27,7 @@ object RobinsonToExpansionProof {
         exp = for {
           ( e, ei ) <- LKToExpansionProof( pcnf ).toExpansionProof.expansionSequent.zipWithIndex
           if ei sameSideAs i
-          if toShallow( e ) == f
+          if e.shallow == f
         } yield e
         just = ProjectionFromEndSequent( exp, i )
       } yield clause -> just

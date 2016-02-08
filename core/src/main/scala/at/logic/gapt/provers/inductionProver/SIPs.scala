@@ -39,7 +39,7 @@ class SimpleInductionProof(
   val Gamma1 = extractInstances( ExpSeq1 )
   val Gamma2 = extractInstances( ExpSeq2 )
 
-  val EndSequent = ( toShallow( ExpSeq0 ) ++ toShallow( ExpSeq1 ) ++ toShallow( ExpSeq2 ) ).distinct
+  val EndSequent = ( ExpSeq0.shallow ++ ExpSeq1.shallow ++ ExpSeq2.shallow ).distinct
 
   require( freeVariables( Gamma0 ) subsetOf Set( alpha, beta ), "Gamma0 should contain only α, β, but freeVariables(Gamma0) = " + freeVariables( Gamma0 ).toString() )
   require( freeVariables( Gamma1 ) subsetOf Set( alpha, nu, gamma ), "Gamma1 should contain only α, ν, γ, but freeVariables(Gamma1) = " + freeVariables( Gamma1 ).toString() )

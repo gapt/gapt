@@ -13,7 +13,7 @@ object addSymmetry {
 
   def apply( s: ExpansionSequent ): ExpansionSequent = {
 
-    val deep_sequent = toDeep( s )
+    val deep_sequent = s.deep
     val eq_ant = deep_sequent.antecedent.flatMap( f => getEqualityPairs( f, false ) )
     val eq_suc = deep_sequent.succedent.flatMap( f => getEqualityPairs( f, true ) )
     val polarized_eq = eq_ant ++ eq_suc

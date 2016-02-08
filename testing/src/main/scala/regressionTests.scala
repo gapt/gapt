@@ -12,6 +12,7 @@ import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.MiniSAT
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
@@ -28,7 +29,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
 
     RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
-      VeriT.isValid( toDeep( E2 ) ) !-- "toDeep validity of RobinsonToExpansionProof"
+      VeriT.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
       VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
@@ -38,16 +39,17 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     LKToLKsk( p ) --? "LKToLKsk"
 
     val E = LKToExpansionProof( p ) --- "LKToExpansionProof"
-    val deep = toDeep( E )
+    val deep = E.deep
 
     simplifyResolutionProof( robinson ).conclusion.isEmpty !-- "simplifyResolutionProof"
 
-    ( toShallow( E ) == p.endSequent ) !-- "shallow sequent of expansion proof"
+    ( E.shallow == p.endSequent ) !-- "shallow sequent of expansion proof"
 
-    val ip = Prover9.getLKProof( deep ).get --- "getLKProof( deep )"
-    val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-    ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
-    ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+    Prover9.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
+      val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
+      ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
+      ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+    }
 
     if ( !containsEqualityReasoning( p ) ) {
       MiniSAT.isValid( deep ) !-- "minisat validity"
@@ -86,6 +88,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       }
 
     skolemize( p ) --? "skolemize"
+
+    Escargot.getLKProof( deep ).get --? "Escargot.getLKProof(deep)"
   }
 }
 
@@ -95,7 +99,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def test( implicit testRun: TestRun ) = {
     val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
 
-    val deep = toDeep( E ) --- "toDeep"
+    val deep = E.deep --- "toDeep"
     VeriT.isValid( deep.toFormula ) !-- "verit validity"
   }
 }
@@ -104,7 +108,7 @@ class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
   override def test( implicit testRun: TestRun ) = {
     val E = addSymmetry( VeriTParser.getExpansionProof( f.getAbsolutePath ).get ) --- "import"
 
-    val deep = toDeep( E ) --- "toDeep"
+    val deep = E.deep --- "toDeep"
     MiniSAT.isValid( deep.toFormula ) !-- "minisat validity"
   }
 }

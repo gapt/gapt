@@ -137,6 +137,22 @@ case class ETSkolemQuantifier( shallow: HOLFormula, skolemTerm: LambdaExpression
   def deep = child.deep
 }
 
+/**
+ * Expansion tree node for definitions.
+ *
+ * @param shallow An atom P(x,,1,,,..., x,,n,,) where P stands for a more complex formula.
+ * @param definedExpr The expression that P abbreviates. Must have the same type as P.
+ * @param child An expansion tree with shallowFormula definedExpr(x,,1,,,...,x,,n,,)
+ */
+case class ETDefinition( shallow: HOLAtom, definedExpr: LambdaExpression, child: ExpansionTree ) extends UnaryExpansionTree {
+  val HOLAtom( pred, args ) = shallow
+  require( pred.exptype == definedExpr.exptype )
+  require( child.shallow == BetaReduction.betaNormalize( App( definedExpr, args ) ), s"child.shallow = ${child.shallow}; App(rhs, args) = ${App( definedExpr, args )}" )
+
+  val polarity = child.polarity
+  def deep = child.deep
+}
+
 object replaceET {
   def apply( ep: ExpansionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionProof =
     ExpansionProof( ep.expansionSequent map { replaceET( _, repl ) } )

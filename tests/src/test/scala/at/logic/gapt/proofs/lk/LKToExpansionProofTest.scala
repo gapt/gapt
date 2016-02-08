@@ -13,7 +13,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
 
     "handle successive contractions " in {
       val etSeq = LKToExpansionProof( LinearExampleProof( 2 ) )
-      toDeep( etSeq ) must beValidSequent
+      etSeq.deep must beValidSequent
     }
 
     "do merge triggering a substitution triggering a merge" in {
@@ -73,7 +73,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
       val p3 = WeakeningLeftRule( p2, Bottom() ) // weakened, hence top on left side
       val p4 = ContractionLeftRule( p3, Bottom() ) // negative polarity, bottom must win
 
-      toDeep( LKToExpansionProof( p4 ) ) must beValidSequent
+      LKToExpansionProof( p4 ).deep must beValidSequent
     }
 
     "contractions on strong quantifiers" in {
@@ -91,7 +91,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
 
       val expansion = LKToExpansionProof( proof )
 
-      toDeep( expansion ) must beValidSequent
+      expansion.deep must beValidSequent
     }
 
     "non-atomic initial sequents" in {
@@ -101,7 +101,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
       val proof = LogicalAxiom( All( x, Ex( y, p( x, y ) ) ) )
       val expansion = LKToExpansionProof( proof )
 
-      toDeep( expansion ) must beValidSequent
+      expansion.deep must beValidSequent
     }
 
     "return merge-free proofs" in {
