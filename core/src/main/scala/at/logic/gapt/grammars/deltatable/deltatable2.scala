@@ -1,6 +1,6 @@
 package at.logic.gapt.grammars.deltatable
 
-import at.logic.gapt.cutintro.DeltaTableMethod
+import at.logic.gapt.cutintro.{ GrammarFindingMethod, DeltaTableMethod }
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.VectTratGrammar
 import at.logic.gapt.utils.time
@@ -247,4 +247,24 @@ object deltaTable {
     Thread sleep 4000
     ()
   }
+}
+
+case class DeltaTableMethodNew(
+    singleQuantifier: Boolean,
+    tableSubsumption: Boolean,
+    keyLimit:         Option[Int]
+) extends GrammarFindingMethod {
+  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
+    val langSet = lang.toSet[LambdaExpression]
+
+    var dtable = deltaTable.createTable( langSet, keyLimit )
+
+    if ( tableSubsumption ) dtable = deltaTable.tableSubsumption( dtable )
+
+    val ( us, s ) = deltaTable.findGrammarFromDeltaTable( langSet, dtable )
+
+    Some( deltaTable.grammarToVTRATG( us, s ) )
+  }
+
+  def name = toString
 }
