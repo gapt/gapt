@@ -82,7 +82,7 @@ object deltaTable {
     }
   }
 
-  def createTable( termSet: Set[LambdaExpression], maxArity: Option[Int] = None ): Map[Set[Substitution], Row] = {
+  def createTable( termSet: Set[LambdaExpression], maxArity: Option[Int] = None, singleVariable: Boolean = false ): Map[Set[Substitution], Row] = {
     val termsList = termSet.toBuffer
 
     // invariant:  deltatable(u,S) == (T,i)  ==>  u S = T  &&  |S| = |T|
@@ -94,7 +94,7 @@ object deltaTable {
     for ( prevTermsLen <- 1 until termSet.size ) {
       for ( ( ( u, s ), ( terms, lastIndex ) ) <- deltatable.toSeq if terms.size == prevTermsLen ) {
         for ( newIndex <- ( lastIndex + 1 ) until termsList.size; t = termsList( newIndex ) ) {
-          val ( u_, substU, substT ) = antiUnifier( u, t )
+          val ( u_, substU, substT ) = if ( singleVariable ) antiUnifier1( u, t ) else antiUnifier( u, t )
           if ( !u_.isInstanceOf[Var] && maxArity.forall { substU.size <= _ } ) {
             val s_ = s.map { subst => Substitution( substU mapValues { subst( _ ) } ) } + Substitution( substT )
             val terms_ = terms + t
@@ -234,12 +234,7 @@ object deltaTable {
     //    println( deltatable )
     println( vtratg )
 
-    time {
-      for ( i <- 1 to 5 ) {
-        val ( u, s ) = findGrammarFromDeltaTable( terms.toSet, createTable( terms.toSet ) )
-        grammarToVTRATG( u, s )
-      }
-    }
+    time { for ( i <- 1 to 5 ) DeltaTableMethodNew( singleQuantifier = true, tableSubsumption = false, None ).findGrammars( terms.toSet ).get }
     time { for ( i <- 1 to 5 ) DeltaTableMethod( false ).findGrammars( terms.toSet ).get }
     Thread sleep 4000
     ()
@@ -254,7 +249,7 @@ case class DeltaTableMethodNew(
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
     val langSet = lang.toSet[LambdaExpression]
 
-    var dtable = deltaTable.createTable( langSet, keyLimit )
+    var dtable = deltaTable.createTable( langSet, keyLimit, singleQuantifier )
 
     if ( tableSubsumption ) dtable = deltaTable.tableSubsumption( dtable )
 
