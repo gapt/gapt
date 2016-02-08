@@ -57,10 +57,10 @@ class MetricsPrinter extends MetricsCollector {
   }
 }
 
-object testCutIntro extends App {
+object loadProof {
 
   lazy val proofSeqRegex = """(\w+)\((\d+)\)""".r
-  def loadProof( fileName: String ): Option[( ExpansionProof, Boolean )] = fileName match {
+  def apply( fileName: String ): Option[( ExpansionProof, Boolean )] = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
       val hasEquality = containsEqualityReasoning( p )
@@ -115,7 +115,11 @@ object testCutIntro extends App {
     expansionProof -> containsEquations
   }
 
-  def getMethod( methodName: String ) = methodName match {
+}
+
+object parseMethod {
+
+  def apply( methodName: String ) = methodName match {
     case "1_dtable"    => DeltaTableMethod( manyQuantifiers = false )
     case "many_dtable" => DeltaTableMethod( manyQuantifiers = true )
     case "reforest"    => ReforestMethod()
@@ -123,6 +127,10 @@ object testCutIntro extends App {
       val vectorSizes = methodName.dropRight( "_maxsat".length ).split( "_" ).map( _.toInt )
       MaxSATMethod( OpenWBO, vectorSizes: _* )
   }
+
+}
+
+object testCutIntro extends App {
 
   val Array( fileName: String, methodName: String ) = args
 
@@ -151,7 +159,7 @@ object testCutIntro extends App {
       case ( expansionProof, hasEquality ) =>
         metrics.value( "has_equality", hasEquality )
         try metrics.time( "cutintro" ) {
-          CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
+          CutIntroduction.compressToLK( expansionProof, hasEquality, parseMethod( methodName ), verbose = false ) match {
             case Some( _ ) => metrics.value( "status", "ok" )
             case None =>
               if ( metricsPrinter.data( "termset_trivial" ) == true )
