@@ -2,7 +2,7 @@ package at.logic.gapt.testing
 
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.tptp.TptpProofParser
-import at.logic.gapt.grammars.deltatable.DeltaTableMethodNew
+import at.logic.gapt.grammars.DeltaTableMethodNew
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.utils.logging.MetricsCollector
@@ -124,9 +124,9 @@ object parseMethod {
     case "1_dtable"           => DeltaTableMethod( manyQuantifiers = false )
     case "many_dtable"        => DeltaTableMethod( manyQuantifiers = true )
 
-    case "1_dtable_new"       => DeltaTableMethodNew( singleQuantifier = true, tableSubsumption = false, None )
-    case "many_dtable_new"    => DeltaTableMethodNew( singleQuantifier = false, tableSubsumption = false, None )
-    case "many_dtable_ss_new" => DeltaTableMethodNew( singleQuantifier = false, tableSubsumption = true, None )
+    case "1_dtable_new"       => DeltaTableMethodNew( singleQuantifier = true, subsumedRowMerging = false, keyLimit = None )
+    case "many_dtable_new"    => DeltaTableMethodNew( singleQuantifier = false, subsumedRowMerging = false, keyLimit = None )
+    case "many_dtable_ss_new" => DeltaTableMethodNew( singleQuantifier = false, subsumedRowMerging = true, keyLimit = None )
 
     case "reforest"           => ReforestMethod()
     case _ if methodName endsWith "_maxsat" =>

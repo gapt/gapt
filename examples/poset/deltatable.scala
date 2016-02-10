@@ -1,15 +1,12 @@
 package at.logic.gapt.examples.poset
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.cutintro.{ beautifySolution, GrammarFindingMethod, CutIntroduction }
+import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.VectTratGrammar
-import at.logic.gapt.grammars.deltatable.{ DeltaTableMethodNew, deltaTable }
+import at.logic.gapt.grammars.DeltaTableMethodNew
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lk.{ LKToExpansionProof, extractRecSchem }
-import at.logic.gapt.provers.eprover.EProver
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.sat.Sat4j
 
@@ -29,7 +26,7 @@ object dtable extends Script {
   }
 
   CutIntroduction.compressToLK( constructedProof, hasEquality = false,
-    method = DeltaTableMethodNew( singleQuantifier = false, tableSubsumption = true, Some( 3 ) ),
+    method = DeltaTableMethodNew( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ),
     verbose = true )
 
 }

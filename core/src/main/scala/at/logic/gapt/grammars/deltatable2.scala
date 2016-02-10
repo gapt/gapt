@@ -1,18 +1,21 @@
-package at.logic.gapt.grammars.deltatable
+package at.logic.gapt.grammars
 
-import at.logic.gapt.cutintro.{ GrammarFindingMethod, DeltaTableMethod }
+import at.logic.gapt.cutintro.GrammarFindingMethod
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.{ antiUnifier, antiUnifier1, VectTratGrammar }
-import at.logic.gapt.utils.time
 
 import scala.collection.mutable
 
-object deltaTable {
+object deltaTableAlgorithm {
   type Row = Set[( LambdaExpression, Set[LambdaExpression] )]
 
-  def createTable( termSet: Set[LambdaExpression], maxArity: Option[Int] = None, singleVariable: Boolean = false ): Map[Set[Substitution], Row] = {
+  def createTable(
+    termSet:        Set[LambdaExpression],
+    maxArity:       Option[Int]           = None,
+    singleVariable: Boolean               = false
+  ): Map[Set[Substitution], Row] = {
     // invariant:  deltatable(S) contains (u,T)  ==>  u S = T  &&  |S| = |T|
-    val deltatable = mutable.Map[Set[Substitution], List[( LambdaExpression, Set[LambdaExpression] )]]().withDefaultValue( Nil )
+    val deltatable = mutable.Map[Set[Substitution], List[( LambdaExpression, Set[LambdaExpression] )]]().
+      withDefaultValue( Nil )
 
     def populate(
       remainingTerms: List[LambdaExpression],
@@ -63,7 +66,7 @@ object deltaTable {
     } yield solution
   }
 
-  def tableSubsumption( table: Map[Set[Substitution], Row] ): Map[Set[Substitution], Row] =
+  def mergeSubsumedRows( table: Map[Set[Substitution], Row] ): Map[Set[Substitution], Row] =
     for ( ( s1, row1 ) <- table ) yield if ( s1.head.map.size <= 1 ) s1 -> row1 else {
       var newRow = row1.to[mutable.Set]
       for {
@@ -84,13 +87,17 @@ object deltaTable {
       s1 -> newRow.toSet
     }
 
-  def findGrammarFromDeltaTable( termSet: Set[LambdaExpression], deltatable: Map[Set[Substitution], Row] ): ( Set[LambdaExpression], Set[Substitution] ) = {
+  def findGrammarFromDeltaTable(
+    termSet:                Set[LambdaExpression],
+    deltatable:             Map[Set[Substitution], Row],
+    subsumeMinimalGrammars: Boolean
+  ): ( Set[LambdaExpression], Set[Substitution] ) = {
     var minSize = termSet.size
     val minGrammars = mutable.Buffer[( Set[LambdaExpression], Set[Substitution] )]()
 
-    def minimizeGrammar(
+    def minimizeRow(
       termSet:         Set[LambdaExpression],
-      grammar:         Row,
+      row:             Row,
       alreadyIncluded: Set[LambdaExpression],
       s:               Set[Substitution]
     ): Unit =
@@ -102,29 +109,32 @@ object deltaTable {
         }
       } else if ( alreadyIncluded.size + s.size >= minSize ) {
         // Ignore this branch.
-      } else if ( grammar isEmpty ) {
+      } else if ( row isEmpty ) {
         throw new IllegalArgumentException
       } else {
-        val focus = grammar maxBy { _._2.size }
+        val pivot = row maxBy { _._2.size }
 
-        minimizeGrammar(
-          termSet diff focus._2,
-          grammar map { x => x._1 -> x._2.diff( focus._2 ) } filter { _._2.nonEmpty },
-          alreadyIncluded + focus._1, s
+        // Case 1, pivot is included.
+        minimizeRow(
+          termSet diff pivot._2,
+          row map { x => x._1 -> x._2.diff( pivot._2 ) } filter { _._2.nonEmpty },
+          alreadyIncluded + pivot._1,
+          s
         )
 
-        val restLang = grammar - focus flatMap { _._2 }
-        if ( termSet subsetOf restLang ) {
-          minimizeGrammar( termSet, grammar - focus, alreadyIncluded, s )
-        }
+        // Case 2, pivot is not included.
+        val restRow = row filterNot { _._2 subsetOf pivot._2 }
+        val restLang = restRow flatMap { _._2 }
+        if ( termSet subsetOf restLang )
+          minimizeRow( termSet, restRow, alreadyIncluded, s )
       }
 
     for ( ( s, decomps ) <- deltatable ) {
       val coveredTerms = decomps flatMap { _._2 }
-      minimizeGrammar( coveredTerms, decomps, termSet diff coveredTerms, s )
+      minimizeRow( coveredTerms, decomps, termSet diff coveredTerms, s )
     }
 
-    for {
+    if ( subsumeMinimalGrammars ) for {
       g1 @ ( u1, s1 ) <- minGrammars
       g2 @ ( u2, s2 ) <- minGrammars
       if g1 != g2
@@ -132,7 +142,7 @@ object deltaTable {
       u = u2 ++ u1.map { Substitution( subst )( _ ) }
       s = s2
       row = for ( t <- u ) yield t -> s.map { _( t ) }.intersect( termSet )
-    } minimizeGrammar( termSet, row, Set(), s )
+    } minimizeRow( termSet, row, Set(), s )
 
     if ( minGrammars isEmpty ) termSet -> Set()
     else minGrammars minBy { g => g._1.size + g._2.size }
@@ -146,53 +156,34 @@ object deltaTable {
         union ( for ( u <- us ) yield List( tau ) -> List( u.asInstanceOf[FOLTerm] ) ) )
   }
 
-  def main( args: Array[String] ) = {
-    //    val n = 9
-    //    val terms = for (i <- 0 to n) yield FOLFunction("f", Numeral(i))
-
-    //    val terms = FOLInstanceTermEncoding( SquareEdges2DimExampleProof( 10 ) )._1
-
-    def iter( suc: String, zero: String )( i: Int ): FOLTerm =
-      if ( i == 0 ) FOLConst( zero ) else FOLFunction( suc, iter( suc, zero )( i - 1 ) )
-    val n = 12
-    val terms1 = 0 until n map iter( "f", "c" ) map { FOLFunction( "r", _ ) }
-    val terms2 = 0 until n map iter( "g", "d" ) map { FOLFunction( "s", _ ) }
-    val terms = terms1 ++ terms2
-
-    val deltatable = createTable( terms.toSet )
-
-    //    val actualMinGrammar = findMinimalVectGrammar( terms.toSet, Seq( 1 ) )
-    //
-    //    val origDTableGrammar = DeltaTableMethod( false ).findGrammars( terms.toSet ).get
-
-    val ( us, s ) = findGrammarFromDeltaTable( terms.toSet, deltatable )
-    val vtratg = grammarToVTRATG( us, s )
-    //    println( deltatable )
-    println( vtratg )
-
-    time { for ( i <- 1 to 5 ) DeltaTableMethodNew( singleQuantifier = true, tableSubsumption = false, None ).findGrammars( terms.toSet ).get }
-    time { for ( i <- 1 to 5 ) DeltaTableMethod( false ).findGrammars( terms.toSet ).get }
-    Thread sleep 4000
-    ()
-  }
 }
 
 case class DeltaTableMethodNew(
-    singleQuantifier: Boolean,
-    tableSubsumption: Boolean,
-    keyLimit:         Option[Int]
+    singleQuantifier:   Boolean,
+    subsumedRowMerging: Boolean,
+    keyLimit:           Option[Int]
 ) extends GrammarFindingMethod {
+  import deltaTableAlgorithm._
+
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
     val langSet = lang.toSet[LambdaExpression]
 
-    var dtable = deltaTable.createTable( langSet, keyLimit, singleQuantifier )
+    var dtable = createTable( langSet, keyLimit, singleQuantifier )
 
-    if ( tableSubsumption ) dtable = deltaTable.tableSubsumption( dtable )
+    if ( subsumedRowMerging ) dtable = mergeSubsumedRows( dtable )
 
-    val ( us, s ) = deltaTable.findGrammarFromDeltaTable( langSet, dtable )
+    val ( us, s ) = findGrammarFromDeltaTable( langSet, dtable, false )
 
-    Some( deltaTable.grammarToVTRATG( us, s ) )
+    Some( grammarToVTRATG( us, s ) )
   }
 
-  def name = toString
+  def name = {
+    val n = new StringBuilder
+    n append ( if ( singleQuantifier ) "1" else "many" )
+    n append "_dtable"
+    if ( subsumedRowMerging ) n append "_ss"
+    for ( l <- keyLimit ) n append s"_lim$l"
+    n append "_new"
+    n.result()
+  }
 }

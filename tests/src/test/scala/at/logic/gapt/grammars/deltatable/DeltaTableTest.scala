@@ -1,6 +1,7 @@
 package at.logic.gapt.grammars.deltatable
 
 import at.logic.gapt.expr.{ FOLFunctionConst, Substitution, FOLConst, FOLVar }
+import at.logic.gapt.grammars.deltaTableAlgorithm
 import org.specs2.mutable.Specification
 
 class DeltaTableTest extends Specification {
@@ -18,7 +19,7 @@ class DeltaTableTest extends Specification {
         Substitution( x1 -> c3, x2 -> c2, x3 -> c1 ),
         Substitution( x1 -> c1, x2 -> c3, x3 -> c2 )
       )
-      deltaTable.keySubsumption( k1, k2 ) must_== Set( Map( x1 -> x1, x2 -> x3, x3 -> x2 ) )
+      deltaTableAlgorithm.keySubsumption( k1, k2 ) must_== Set( Map( x1 -> x1, x2 -> x3, x3 -> x2 ) )
     }
   }
 
@@ -37,9 +38,9 @@ class DeltaTableTest extends Specification {
         )
       } yield t
 
-      val table = deltaTable.createTable( lang.toSet )
+      val table = deltaTableAlgorithm.createTable( lang.toSet )
 
-      table must contain( atLeast( beLike[( Set[Substitution], deltaTable.Row )] {
+      table must contain( atLeast( beLike[( Set[Substitution], deltaTableAlgorithm.Row )] {
         case ( s, decomps ) if s.size == 5 => ok
       } ) )
       ok

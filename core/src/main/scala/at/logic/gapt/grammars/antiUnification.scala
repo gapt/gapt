@@ -4,6 +4,10 @@ import at.logic.gapt.expr.{ freeVariables, Apps, Var, LambdaExpression }
 
 import scala.collection.mutable
 
+/**
+ * Computes the minimum of two terms in the subsumption lattice,
+ * together with the substitutions witnessing the subsumption.
+ */
 object antiUnifier {
   def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
     val vars = mutable.Map[( LambdaExpression, LambdaExpression ), Var]()
@@ -31,8 +35,12 @@ object antiUnifier {
   }
 }
 
+/**
+ * Computes the minimum of two terms in the subsumption lattice of
+ * terms with at most one free variable, together with the substitutions
+ * witnessing the subsumption.
+ */
 object antiUnifier1 {
-
   def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
     def au( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
       val Apps( fa, as ) = a
