@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars.reforest
 
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.deltaTableAlgorithm
+import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.lk.DefinitionElimination
 
 import scala.collection.mutable
@@ -47,7 +47,9 @@ case class ReforestState(
     val newNTArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
     def abbr( t: LambdaExpression ): LambdaExpression = t match {
-      case Apps( digram.c1, as1 ) =>
+      case Apps( digram.c1, as1_ ) =>
+        // Innermost-first rewriting is really important here!
+        val as1 = as1_ map abbr
         as1( digram.i ) match {
           case Apps( digram.c2, as2 ) =>
             newNT( as1.take( digram.i ) ++ as2 ++ as1.drop( digram.i + 1 ) map abbr: _* )
@@ -186,6 +188,11 @@ case class ReforestState(
 
   override def toString =
     ( for ( ( lhs, rhss ) <- rules; rhs <- rhss ) yield s"$lhs -> $rhs\n" ).toSeq.sorted.mkString
+
+  def toRecursionScheme: RecursionScheme =
+    RecursionScheme( axiom, for ( ( nt, rhss ) <- rules.toSet; rhs <- rhss ) yield Rule( nt, rhs ) )
+
+  def toVTRATG: VectTratGrammar = recSchemToVTRATG( toRecursionScheme )
 
 }
 

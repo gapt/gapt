@@ -128,7 +128,7 @@ object parseMethod {
     case "many_dtable_new"    => DeltaTableMethodNew( singleQuantifier = false, subsumedRowMerging = false, keyLimit = None )
     case "many_dtable_ss_new" => DeltaTableMethodNew( singleQuantifier = false, subsumedRowMerging = true, keyLimit = None )
 
-    case "reforest"           => ReforestMethod()
+    case "reforest"           => ReforestMethod
     case _ if methodName endsWith "_maxsat" =>
       val vectorSizes = methodName.dropRight( "_maxsat".length ).split( "_" ).map( _.toInt )
       MaxSATMethod( OpenWBO, vectorSizes: _* )

@@ -6,6 +6,7 @@ import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.grammars._
+import at.logic.gapt.grammars.reforest.Reforest
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
@@ -56,7 +57,7 @@ object MaxSATMethod {
     MaxSATMethod( bestAvailableMaxSatSolver, nonTerminalLengths: _* )
 }
 
-case class ReforestMethod( command: Seq[String] = Seq( "reforest" ) ) extends GrammarFindingMethod {
+case class ExternalReforestMethod( command: Seq[String] = Seq( "reforest" ) ) extends GrammarFindingMethod {
   def findRecSchem( lang: Set[FOLTerm] ): RecursionScheme = {
     val renaming = for ( ( c, i ) <- constants( lang ).zipWithIndex ) yield c -> FOLFunctionConst( s"f$i", arity( c.exptype ) )
 
@@ -80,7 +81,17 @@ case class ReforestMethod( command: Seq[String] = Seq( "reforest" ) ) extends Gr
   override def findGrammars( lang: Set[FOLTerm] ) =
     Some( recSchemToVTRATG( findRecSchem( lang ) ) )
 
-  override def name = "reforest"
+  override def name = "reforest_hs"
+}
+
+case object ReforestMethod extends GrammarFindingMethod {
+  def findGrammars( lang: Set[FOLTerm] ) = {
+    var state = Reforest start lang
+    state = Reforest full state
+    Some( state.toVTRATG )
+  }
+
+  def name = "reforest"
 }
 
 /**
