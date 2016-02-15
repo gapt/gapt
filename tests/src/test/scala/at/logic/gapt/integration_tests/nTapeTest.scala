@@ -180,7 +180,6 @@ class nTapeTest extends Specification {
   args( skipAll = !Prover9.isInstalled )
   "The higher-order tape proof" should {
     "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
-      skipped( "fails because projections add too much end-sequent material" )
       val acnf_labels = nTape2Test.acnf.conclusion.map( _._1 ).filter( _ != LKskProof.emptyLabel )
       acnf_labels must_== Sequent[Label]()
 
@@ -193,7 +192,7 @@ class nTapeTest extends Specification {
     }
 
     "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
-      skipped( "fails because projections add too much end-sequent material" )
+      //skipped( "fails because projections add too much end-sequent material" )
       val acnf_labels = nTape3Test.acnf.conclusion.map( _._1 ).filter( _ != LKskProof.emptyLabel )
       acnf_labels must_== Sequent[Label]()
 
