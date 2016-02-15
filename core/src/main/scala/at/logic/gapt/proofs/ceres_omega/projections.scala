@@ -115,6 +115,14 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           }
         case _ => throw new Exception( "No such a rule in Projections.apply " + proof.longName )
       }
+
+      val orig_es = ( proof.conclusion zip cut_ancs ).filterNot( _._2 ).map( _._1 )
+      r.map( x => {
+        val ( rp, rca ) = x
+        val proj_es = ( rp.conclusion zip rca ).filterNot( _._2 ).map( _._1 )
+        require( orig_es multiSetEquals proj_es, s"Error computing projection for ${proof.longName} ${proof.conclusion}:\n$orig_es\nis not equal to\n$proj_es" )
+      } )
+
       r
     } catch {
       case e: ProjectionException =>
@@ -375,11 +383,11 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         //println( "eq t t" )
         s1
       case ( true, false ) =>
-        //println( "eq t f" )
+        //println( s"eq t f with eq ${eqf} and aux ${mainf}" )
         val ef = p.conclusion( e )
         val ax = Axiom( ef._1, ef._1, ef._2 )
         val main_e = proof.mainIndices( 0 )
-        val es = proof.conclusion.zipWithIndex.filter( x => x._2 != main_e && !cut_ancs( x._2 ) ).map( _._1 )
+        val es = proof.conclusion.zipWithIndex.filter( x => x._2 != main_e && x._2 != e_idx_conclusion && !cut_ancs( x._2 ) ).map( _._1 )
         val wax = weakenESAncs( es, Set( ( ax, Sequent( false :: Nil, true :: Nil ) ) ) ) //TODO: check cut-ancestorship of ax
         s1 ++ wax
       case ( false, true ) =>

@@ -272,7 +272,9 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         val ef = p.endSequent( e )
         val ax = Axiom( List( ef ), List( ef ) )
         val main_e = proof.mainIndices( 0 )
-        val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e && !cut_ancs( x._2 ) ).map( _._1 )
+        val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
+          x._2 != e_idx_conclusion &&
+          !cut_ancs( x._2 ) ).map( _._1 )
         val wax = weakenESAncs( es, Set( ax ) )
         s1 ++ wax
       case ( false, true ) =>
