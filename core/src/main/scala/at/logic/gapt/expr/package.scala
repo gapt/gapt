@@ -228,14 +228,14 @@ package object expr {
       val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
       val term = Prover9TermParserLadrStyle.parseTerm( stringsNew.mkString ++ strings.last )
 
-      def repl: PartialFunction[FOLTerm, FOLTerm] = {
+      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
         case Const( name, _ ) if name.startsWith( placeholder ) =>
           val i = name.drop( placeholder.length ).toInt
           expressions( i )
 
       }
 
-      TermReplacement( term, repl )
+      TermReplacement( term, repl ).asInstanceOf[FOLTerm]
     }
 
     /**
