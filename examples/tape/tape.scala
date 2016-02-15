@@ -24,7 +24,7 @@ object tape {
     defL( "A", A )
     allL( p9t"x_0 + x_1" )
     forget( "A" )
-    destruct
+    destruct( "A_0" )
     axiom
     forget( "I0_0" )
     axiomTh
@@ -38,11 +38,11 @@ object tape {
     allL( p9t"y_0 + 1" )
     forget( "Iv" )
     exL( FOLVar( "y_1" ), "Iv_1" )
-    exR( p9t"y_0" )
-    exR( p9t"(y_0 + y_1) + 1" )
+    exR( p9t"y_0", "C" )
+    exR( p9t"(y_0 + y_1) + 1", "C_0" )
     forget( "C" )
     forget( "C_0" )
-    destruct
+    destruct( "C_0_0" )
     negR
     forget( "Iv_0" )
     forget( "Iv_1" )

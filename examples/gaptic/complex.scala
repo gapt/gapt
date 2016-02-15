@@ -26,8 +26,8 @@ object complex {
   val destructLemma2 = Lemma(
     Sequent( Seq( "noise1" -> parseFormula( "a" ) ), Seq( "noise2" -> parseFormula( "P(y)" ), "label1" -> parseFormula( "a | (b | c)" ), "noise3" -> parseFormula( "P(z)" ), "label2" -> parseFormula( "a & (b & c)" ) ) )
   ) {
-      destruct
-      destruct
+      destruct( "label1" )
+      destruct( "label2" )
       axiom
       axiom
     }

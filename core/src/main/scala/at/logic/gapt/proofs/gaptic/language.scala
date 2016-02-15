@@ -5,16 +5,27 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk._
 
 import language.experimental.macros
+import scalaz._
+import Scalaz._
 
 object Lemma {
-  def apply( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical ): LKProof = macro LemmaMacros.applyImpl
+  def apply[T]( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.applyImpl
 }
 
 object LemmaMacros {
 
-  def use( proofState: ProofState, tactical: Tactical ): ProofState =
-    tactical( proofState ) getOrElse {
-      throw new TacticFailureException( "Failed to apply tactic " + tactical + " to proof state with sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
+  def use[T]( proofState: ProofState, tactical: Tactical[T] ): ProofState =
+    ( try tactical( proofState ) catch {
+      case t: Throwable =>
+        throw new TacticFailureException(
+          s"Exception when applying $tactical to proof state with sub goals:\n" +
+            proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) + "\n",
+          t
+        )
+    } ) match {
+      case Success( ( _, newState ) ) => newState
+      case Failure( errors ) =>
+        throw new TacticFailureException( "Failed to apply tactic " + tactical + " to proof state with sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) + "\n" + errors.toList.mkString( "\n" ) )
     }
 
   def qed( proofState: ProofState ): LKProof =
@@ -50,6 +61,6 @@ object LemmaMacros {
   }
 }
 
-class TacticFailureException( s: String ) extends Throwable( s )
+class TacticFailureException( s: String, cause: Throwable = null ) extends Throwable( s, cause )
 
 class QedFailureException( s: String ) extends Throwable( s )
