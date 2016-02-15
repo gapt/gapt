@@ -158,10 +158,10 @@ object deltaTableAlgorithm {
 
 }
 
-case class DeltaTableMethodNew(
-    singleQuantifier:   Boolean,
-    subsumedRowMerging: Boolean,
-    keyLimit:           Option[Int]
+case class DeltaTableMethod(
+    singleQuantifier:   Boolean     = false,
+    subsumedRowMerging: Boolean     = false,
+    keyLimit:           Option[Int] = None
 ) extends GrammarFindingMethod {
   import deltaTableAlgorithm._
 

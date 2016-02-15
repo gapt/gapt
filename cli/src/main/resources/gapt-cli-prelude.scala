@@ -19,7 +19,6 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.cutintro._
-import Deltas._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.sat._
 import at.logic.gapt.provers.leancop._

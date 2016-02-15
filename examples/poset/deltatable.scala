@@ -4,7 +4,7 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.DeltaTableMethodNew
+import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
@@ -26,7 +26,7 @@ object dtable extends Script {
   }
 
   CutIntroduction.compressToLK( constructedProof, hasEquality = false,
-    method = DeltaTableMethodNew( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ),
+    method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ),
     verbose = true )
 
 }

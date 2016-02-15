@@ -4,6 +4,7 @@ import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.{ lcomp, containsQuantifier }
+import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Sequent, Ant }
 import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
@@ -21,19 +22,19 @@ class CutIntroTest extends Specification {
       Utils.numeral( n - 1 ) :: LinearExampleTermset( n - 1 )
 
   "CutIntroduction" should {
-    "extract and decompose the termset of the linear example proof (n = 4)" in {
-      val proof = LinearExampleProof( 4 )
+    "extract and decompose the termset of the linear example proof (n = 9)" in {
+      val proof = LinearExampleProof( 9 )
 
       val ( termset, _ ) = FOLInstanceTermEncoding( proof )
       val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
 
       CutIntroduction.compressLKProof(
         proof,
-        method = DeltaTableMethod( manyQuantifiers = false ),
+        method = DeltaTableMethod(),
         verbose = false
       ) must beSome
 
-      set must contain( exactly( LinearExampleTermset( 4 ): _* ) )
+      set must contain( exactly( LinearExampleTermset( 9 ): _* ) )
     }
 
     "linear equality example" in {

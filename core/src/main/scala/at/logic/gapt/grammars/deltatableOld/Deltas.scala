@@ -1,4 +1,4 @@
-package at.logic.gapt.grammars
+package at.logic.gapt.grammars.deltatableOld
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._

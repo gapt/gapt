@@ -6,6 +6,7 @@ import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
@@ -71,7 +72,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
-      ( CutIntroduction.compressLKProof( p, DeltaTableMethod( manyQuantifiers = true ), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
+      ( CutIntroduction.compressLKProof( p, DeltaTableMethod(), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
 
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
