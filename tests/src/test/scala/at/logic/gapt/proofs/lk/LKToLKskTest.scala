@@ -1,14 +1,11 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.Pi2Pigeonhole
+import at.logic.gapt.examples.{ Pi2Pigeonhole, lattice }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemSymbolFactory
 import at.logic.gapt.formats.llk.HybridLatexParser
-import at.logic.gapt.formats.llkNew.exportLLK
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.{ Suc, Ant }
-import at.logic.gapt.proofs.lkOld
-import at.logic.gapt.formats.llk
 
 import org.specs2.mutable._
 
@@ -126,8 +123,7 @@ class LKToLKskTest extends Specification {
 
   "lattice proof" in {
     //skipped( "save time" )
-    val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lattice.xml" ) )
-    val lk = DefinitionElimination( pdb.Definitions )( regularize( pdb.proofs.head._2 ) )
+    val lk = regularize( DefinitionElimination( lattice.defs )( lattice.p ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }

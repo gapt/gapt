@@ -132,4 +132,6 @@ package object gaptic {
   }
 
   def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
+
+  def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 }

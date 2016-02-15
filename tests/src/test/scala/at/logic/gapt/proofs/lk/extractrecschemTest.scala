@@ -1,10 +1,9 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.Pi2Pigeonhole
+import at.logic.gapt.examples.{ tapeUrban, tape, Pi2Pigeonhole }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.{ Ant, HOLSequent, Sequent, Suc }
 import at.logic.gapt.provers.escargot.Escargot
@@ -69,16 +68,23 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "tape proof" in {
-    val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), enable_compression = true )
-    val proof = DefinitionElimination( pdb.Definitions )( regularize( pdb proof "the-proof" ) )
+    val proof = DefinitionElimination( tape.defs )( tape.p )
 
     val recSchem = extractRecSchem( proof )
-    val lang = recSchem.parametricLanguage( FOLConst( "n_0" ) ).map( _.asInstanceOf[HOLFormula] )
+    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
     Escargot isValid ( Sequent() :++ lang ) must_== true
 
     val recSchemWithEq = extractRecSchem( proof, includeEqTheory = true )
-    val langWithEq = recSchemWithEq.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] )
+    val langWithEq = recSchemWithEq.language.map( _.asInstanceOf[HOLFormula] )
     Or( langWithEq ) must beValid
+  }
+
+  "urban tape proof" in {
+    val proof = DefinitionElimination( tapeUrban.defs )( tapeUrban.sigma )
+
+    val recSchem = extractRecSchem( proof )
+    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
+    Escargot isValid ( Sequent() :++ lang ) must_== true
   }
 
   "simple pi3" in {

@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 
 object DefinitionElimination {
-  def apply( dmap: Map[LambdaExpression, LambdaExpression] ): DefinitionElimination =
-    new DefinitionElimination( dmap )
+  def apply( dmap: Map[_ <: LambdaExpression, _ <: LambdaExpression] ): DefinitionElimination =
+    new DefinitionElimination( dmap.toMap )
 }
 class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
   private val requiresMatching = dmap.keys exists { !_.isInstanceOf[Const] }

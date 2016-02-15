@@ -89,7 +89,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     skolemize( p ) --? "skolemize"
 
-    Escargot.getLKProof( deep ).get --? "Escargot.getLKProof(deep)"
+    Escargot.getLKProof( deep ).get --? "Escargot getLKProof deep"
   }
 }
 

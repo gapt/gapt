@@ -48,6 +48,7 @@ object fixDerivation extends Logger {
       for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
         p = Flip( p, p.conclusion.indexOfPol( a, i isSuc ) )
 
+      p = Factor( p )._1
       p
     }
 

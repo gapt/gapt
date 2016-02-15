@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
@@ -193,6 +194,56 @@ case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targe
     }
   }
 
+}
+
+/**
+ * Rewrites using the specified equations at the target, either once or as often as possible.
+ *
+ * @param equations  Universally quantified equations on the antecedent, with direction (left-to-right?)
+ * @param target  Formula to rewrite.
+ * @param once  Rewrite exactly once?
+ */
+case class RewriteTactic(
+    equations: Traversable[( String, Boolean )],
+    target:    Option[String],
+    once:      Boolean
+) extends Tactic {
+  def apply( goal: OpenAssumption ) = target match {
+    case Some( tgt ) => apply( goal, tgt )
+    case _ => goal.s match {
+      case Sequent( _, Seq( ( tgt, _ ) ) ) => apply( goal, tgt )
+      case _                               => None
+    }
+  }
+
+  def apply( goal: OpenAssumption, target: String ): Option[LKProof] = {
+    for {
+      ( eqLabel, leftToRight ) <- equations
+      ( ( `target`, tgt ), tgtIdx ) <- goal.s.zipWithIndex.elements
+      ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.s.antecedent
+      ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
+      pos <- HOLPosition getPositions tgt
+      subst <- syntacticMatching( t_, tgt( pos ) )
+    } return {
+      val newTgt = tgt.replace( pos, subst( s_ ) )
+      val newGoal = OpenAssumption( goal.s.updated( tgtIdx, target -> newTgt ) )
+      val p1 = if ( once ) newGoal else apply( newGoal, target ) getOrElse newGoal
+      val p2 = WeakeningLeftRule( p1, subst( eq ) )
+      val p3 =
+        if ( tgtIdx isSuc ) EqualityRightRule( p2, Ant( 0 ), newTgt, tgt )
+        else EqualityLeftRule( p2, Ant( 0 ), newTgt, tgt )
+      val p4 = ForallLeftBlock( p3, quantEq, subst( vs ) )
+      val p5 = ContractionLeftRule( p4, quantEq )
+      require( p5.conclusion multiSetEquals goal.conclusion )
+      Some( p5 )
+    }
+    if ( once ) None else Some( goal )
+  }
+
+  def ltr( eqs: String* ) = copy( equations = equations ++ eqs.map { _ -> true } )
+  def rtl( eqs: String* ) = copy( equations = equations ++ eqs.map { _ -> false } )
+  def in( tgt: String ) = copy( target = Some( tgt ) )
+  def many = copy( once = false )
 }
 
 /**
