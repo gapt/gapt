@@ -6,6 +6,7 @@ import at.logic.gapt.expr.hol.{ univclosure, instantiate }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.gaptic._
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -14,164 +15,98 @@ trait ProofSequence {
 }
 
 /**
- * Functions to construct cut-free FOL LK proofs of the sequents
+ * Constructs cut-free FOL LK proofs of the sequents
  *
- * P(0), \ALL x . P(x) -> P(s(x)) :- P(s^n(0))
+ * P(0), ∀x. P(x) → P(s(x)) :- P(s^n^(0))
  *
  * where n is an Integer parameter >= 0.
  */
 object LinearExampleProof extends ProofSequence {
-  val s = "s"
-  val p = "P"
-  val c = "0"
+  /**
+   * @param n An integer >= 0.
+   * @return A proof of P(0), ∀x. P(x) → P(s(x)) :- P(s^n^(0))
+   */
+  def apply( n: Int ): LKProof = {
+    require( n >= 0, "n must be nonnegative" )
 
-  def apply( n: Int ) = proof( 0, n )
-
-  /** returns LKProof with end-sequent  P(s^k(0)), \ALL x . P(x) -> P(s(x)) :- P(s^n(0)) */
-  def proof( k: Int, n: Int ): LKProof =
-    {
-      val x = FOLVar( "x" )
-      val ass = All( x, Imp( FOLAtom( p, x :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: Nil ) ) )
-      if ( k == n ) // leaf proof
-      {
-        val a = FOLAtom( p, Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( LogicalAxiom( a ), ass )
-      } else {
-        val p1 = FOLAtom( p, Utils.numeral( k ) :: Nil )
-        val p2 = FOLAtom( p, Utils.numeral( k + 1 ) :: Nil )
-        val aux = Imp( p1, p2 )
-        ContractionLeftRule( ForallLeftRule( ImpLeftRule( LogicalAxiom( p1 ), p1, proof( k + 1, n ), p2 ), ass, Utils.numeral( k ) ), ass )
-      }
+    val num = Utils.numeral( n )
+    val ax = p9f"(all x (P(x) -> P(s(x))))"
+    val p0 = p9a"P(0)"
+    val pn = p9a"P($num)"
+    Lemma( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
+      repeat( chain( "Ax" ) )
+      prop
     }
+  }
 }
 
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
- * P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
+ * P(0,0), ∀x,y. P(x,y) → P(s(x),y), ∀x,y. P(x,y) → P(x,s(y)) :- P(s^n^(0),s^n^(0))
  *
  * where n is an Integer parameter >= 0.
  *
- * The proofs constructed here go along the diagonal of P, i.e. one X-step, then one Y-step, etc.
+ * The proofs constructed here go along the diagonal of P, i.e. one x-step, then one y-step, etc.
  */
 object SquareDiagonalExampleProof extends ProofSequence {
-  val s = "s"
-  val p = "P"
-  val c = "0"
 
-  def apply( n: Int ) = proof( 0, n )
+  /**
+   * @param n An integer >= 0.
+   * @return A proof of P(0,0), ∀x,y. P(x,y) → P(s(x),y), ∀x,y. P(x,y) → P(x,s(y)) :- P(s^n^(0),s^n^(0))
+   */
+  def apply( n: Int ): LKProof = {
+    require( n >= 0, "n must be nonnegative" )
 
-  /** returns LKProof with end-sequent  P(s^k(0),s^k(0)), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y . P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0)) */
-  def proof( k: Int, n: Int ): LKProof =
-    {
-      val x = FOLVar( "x" )
-      val y = FOLVar( "y" )
+    val num = Utils.numeral( n )
+    val p00 = p9a"P(0,0)"
+    val pnn = p9a"P($num, $num)"
+    val axX = p9f"(all x all y (P(x,y) -> P(s(x), y)))"
+    val axY = p9f"(all x all y (P(x,y) -> P(x, s(y))))"
 
-      val assx = All( x, All( y, Imp( FOLAtom( p, x :: y :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: y :: Nil ) ) ) )
-      def assx_aux( k: Int ) = All( y, Imp( FOLAtom( p, Utils.numeral( k ) :: y :: Nil ), FOLAtom( p, Utils.numeral( k + 1 ) :: y :: Nil ) ) )
-
-      val assy = All( x, All( y, Imp( FOLAtom( p, x :: y :: Nil ), FOLAtom( p, x :: FOLFunction( s, y :: Nil ) :: Nil ) ) ) )
-      def assy_aux( k: Int ) = All( y, Imp( FOLAtom( p, Utils.numeral( k ) :: y :: Nil ), FOLAtom( p, Utils.numeral( k ) :: FOLFunction( s, y :: Nil ) :: Nil ) ) )
-
-      if ( k == n ) // leaf proof
-      {
-        val a = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( WeakeningLeftRule( LogicalAxiom( a ), assx ), assy )
-      } else {
-        val ayl = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( k ) :: Nil ) // atom y left
-        val ayr = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( k + 1 ) :: Nil )
-        val auxy = Imp( ayl, ayr )
-
-        val p1 = ImpLeftRule( LogicalAxiom( ayl ), ayl, proof( k + 1, n ), ayr )
-        val p2 = ForallLeftRule( p1, assy_aux( k + 1 ), Utils.numeral( k ) )
-        val p3 = ForallLeftRule( p2, assy, Utils.numeral( k + 1 ) )
-        val p4 = ContractionLeftRule( p3, assy )
-
-        val axl = FOLAtom( p, Utils.numeral( k ) :: Utils.numeral( k ) :: Nil ) // atom x left
-        val axr = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( k ) :: Nil )
-        val auxx = Imp( axl, axr )
-
-        val p5 = ImpLeftRule( LogicalAxiom( axl ), axl, p4, axr )
-        val p6 = ForallLeftRule( p5, assx_aux( k ), Utils.numeral( k ) )
-        val p7 = ForallLeftRule( p6, assx, Utils.numeral( k ) )
-        ContractionLeftRule( p7, assx )
-      }
+    Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
+      repeat( chain( "AxY" ) andThen chain( "AxX" ) )
+      prop
     }
+  }
 }
 
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
- * P(0,0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0))
+ * P(0,0), ∀x,y. P(x,y) → P(s(x),y), ∀x,y. P(x,y) → P(x,s(y)) :- P(s^n^(0),s^n^(0))
  *
  * where n is an Integer parameter >= 0.
  *
  * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed
  */
 object SquareEdgesExampleProof extends ProofSequence {
-  val s = "s"
-  val p = "P"
-  val c = "0"
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
+  /**
+   * @param n An integer >= 0.
+   * @return A proof of P(0,0), ∀x,y. P(x,y) → P(s(x),y), ∀x,y. P(x,y) → P(x,s(y)) :- P(s^n^(0),s^n^(0))
+   */
+  def apply( n: Int ): LKProof = {
+    require( n >= 0, "n must be nonnegative" )
 
-  val assx = All( x, All( y, Imp( FOLAtom( p, x :: y :: Nil ), FOLAtom( p, FOLFunction( s, x :: Nil ) :: y :: Nil ) ) ) )
-  def assx_aux( k: Int ) = All( y, Imp( FOLAtom( p, Utils.numeral( k ) :: y :: Nil ), FOLAtom( p, Utils.numeral( k + 1 ) :: y :: Nil ) ) )
+    val num = Utils.numeral( n )
+    val p00 = p9a"P(0,0)"
+    val pnn = p9a"P($num, $num)"
+    val axX = p9f"(all x all y (P(x,y) -> P(s(x), y)))"
+    val axY = p9f"(all x all y (P(x,y) -> P(x, s(y))))"
 
-  val assy = All( x, All( y, Imp( FOLAtom( p, x :: y :: Nil ), FOLAtom( p, x :: FOLFunction( s, y :: Nil ) :: Nil ) ) ) )
-  def assy_aux( k: Int ) = All( y, Imp( FOLAtom( p, Utils.numeral( k ) :: y :: Nil ), FOLAtom( p, Utils.numeral( k ) :: FOLFunction( s, y :: Nil ) :: Nil ) ) )
-
-  def apply( n: Int ) = proof( 0, n )
-
-  /** returns LKProof with end-sequent  P(s^k(0),0), \ALL x \ALL y. P(x,y) -> P(s(x),y), \ALL x \ALL y. P(x,y) -> P(x,s(y)) :- P(s^n(0),s^n(0)) */
-  def proof( k: Int, n: Int ): LKProof =
-    {
-      if ( k == n ) {
-        val p1 = ForallLeftRule( upper_proof( 0, n ), assy, Utils.numeral( n ) )
-        WeakeningLeftRule( p1, assx )
-      } else {
-        val pk = FOLAtom( p, Utils.numeral( k ) :: Utils.numeral( 0 ) :: Nil )
-        val pkp1 = FOLAtom( p, Utils.numeral( k + 1 ) :: Utils.numeral( 0 ) :: Nil )
-        val impl = Imp( pk, pkp1 )
-
-        ContractionLeftRule(
-          ForallLeftRule(
-            ForallLeftRule(
-              ImpLeftRule(
-                Axiom( pk :: Nil, pk :: Nil ), pk,
-                proof( k + 1, n ), pkp1
-              ),
-              assx_aux( k ), Utils.numeral( 0 )
-            ),
-            assx, Utils.numeral( k )
-          ),
-          assx
-        )
-      }
+    Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
+      repeat( chain( "AxY" ) )
+      repeat( chain( "AxX" ) )
+      prop
     }
-
-  /** returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0)) */
-  def upper_proof( k: Int, n: Int ): LKProof =
-    {
-      if ( k == n ) // leaf proof
-      {
-        val a = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( LogicalAxiom( a ), assy_aux( n ) )
-      } else {
-        val pk = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( k ) :: Nil )
-        val pkp1 = FOLAtom( p, Utils.numeral( n ) :: Utils.numeral( k + 1 ) :: Nil )
-        val impl = Imp( pk, pkp1 )
-
-        ContractionLeftRule( ForallLeftRule( ImpLeftRule( LogicalAxiom( pk ), pk, upper_proof( k + 1, n ), pkp1 ), assy_aux( n ), Utils.numeral( k ) ), assy_aux( n ) )
-      }
-    }
+  }
 }
 
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
- * P(a,b), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sx(y)) :- P(sx^n(a),sy^n(b))
+ * P(a,b), ∀x,y. P(x,y) → P(s,,x,,(x),y), ∀x,y. P(x,y) → P(x,s,,y,,(y)) :- P(s,,x,,^n^(a),s,,y,,^n^(b))
  *
  * where n is an Integer parameter >= 0.
  *
@@ -179,91 +114,33 @@ object SquareEdgesExampleProof extends ProofSequence {
  * but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
  */
 object SquareEdges2DimExampleProof extends ProofSequence {
-  //separate sucessor for the x- and y-directions
-  val sx = "s_x"
-  val sy = "s_y"
-  //0 of the x-axis
-  val a = "a"
-  //0 of the y-axis
-  val b = "b"
 
-  val p = "P"
+  /**
+   * @param n An integer >= 0.
+   * @return P(a,b), ∀x,y. P(x,y) → P(s,,x,,(x),y), ∀x,y. P(x,y) → P(x,s,,y,,(y)) :- P(s,,x,,^n^(a),s,,y,,^n^(b))
+   */
+  def apply( n: Int ): LKProof = {
+    require( n >= 0, "n must be nonnegative" )
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
+    val sna = Utils.iterateTerm( FOLConst( "a" ), "s_x", n )
+    val snb = Utils.iterateTerm( FOLConst( "b" ), "s_y", n )
+    val pab = p9a"P(a,b)"
+    val pnn = p9a"P($sna, $snb)"
+    val axX = p9f"(all x all y (P(x,y) -> P(s_x(x), y)))"
+    val axY = p9f"(all x all y (P(x,y) -> P(x, s_y(y))))"
 
-  //Converts integers into terms consisting of nested application of the successor function to 0
-  def numeralX( n: Int ) = Utils.iterateTerm( FOLConst( a ), sx, n )
-  def numeralY( n: Int ) = Utils.iterateTerm( FOLConst( b ), sy, n )
-
-  val assx = All( x, All( y, Imp( FOLAtom( p, x :: y :: Nil ), FOLAtom( p, FOLFunction( sx, x :: Nil ) :: y :: Nil ) ) ) )
-  def assx_aux( k: Int ) = All( y, Imp( FOLAtom( p, numeralX( k ) :: y :: Nil ), FOLAtom( p, numeralX( k + 1 ) :: y :: Nil ) ) )
-
-  val assy = All( x, All( y, Imp( FOLAtom( p, x :: y :: Nil ), FOLAtom( p, x :: FOLFunction( sy, y :: Nil ) :: Nil ) ) ) )
-  def assy_aux( k: Int ) = All( y, Imp( FOLAtom( p, numeralX( k ) :: y :: Nil ), FOLAtom( p, numeralX( k ) :: FOLFunction( sy, y :: Nil ) :: Nil ) ) )
-
-  def apply( n: Int ) = proof( 0, n )
-
-  /** returns LKProof with end-sequent  P(sx^k(a),0), \ALL x \ALL y. P(x,y) -> P(sx(x),y), \ALL x \ALL y. P(x,y) -> P(x,sy(y)) :- P(sx^n(a),sy^n(b)) */
-  def proof( k: Int, n: Int ): LKProof =
-    {
-      if ( k == n ) {
-        val p1 = ForallLeftRule( upper_proof( 0, n ), assy, numeralX( n ) )
-        WeakeningLeftRule( p1, assx )
-      } else {
-        val pk = FOLAtom( p, numeralX( k ) :: numeralY( 0 ) :: Nil )
-        val pkp1 = FOLAtom( p, numeralX( k + 1 ) :: numeralY( 0 ) :: Nil )
-        val impl = Imp( pk, pkp1 )
-
-        ContractionLeftRule(
-          ForallLeftRule(
-            ForallLeftRule(
-              ImpLeftRule(
-                LogicalAxiom( pk ), pk,
-                proof( k + 1, n ), pkp1
-              ),
-              assx_aux( k ), numeralY( 0 )
-            ), //possibly not correct -> switch?
-            assx, numeralX( k )
-          ), //same
-          assx
-        )
-      }
+    Lemma( Sequent( Seq( "Pab" -> pab, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
+      repeat( chain( "AxY" ) )
+      repeat( chain( "AxX" ) )
+      prop
     }
-
-  /** returns LKProof with end-sequent  P(s^n(0),s^k(0)), \ALL y . P(s^n(0),y) -> P(s^n(0),s(y)) :- P(s^n(0),s^n(0)) */
-  def upper_proof( k: Int, n: Int ): LKProof =
-    {
-      if ( k == n ) // leaf proof
-      {
-        val ax = FOLAtom( p, numeralX( n ) :: numeralY( n ) :: Nil )
-        WeakeningLeftRule( Axiom( ax :: Nil, ax :: Nil ), assy_aux( n ) )
-      } else {
-        val pk = FOLAtom( p, numeralX( n ) :: numeralY( k ) :: Nil )
-        val pkp1 = FOLAtom( p, numeralX( n ) :: numeralY( k + 1 ) :: Nil )
-        val impl = Imp( pk, pkp1 )
-
-        ContractionLeftRule(
-          ForallLeftRule(
-            ImpLeftRule(
-              LogicalAxiom( pk ),
-              pk,
-              upper_proof( k + 1, n ),
-              pkp1
-            ),
-            assy_aux( n ),
-            numeralY( k )
-          ), //possibly not correct: switch or maybe restructure.
-          assy_aux( n )
-        )
-      }
-    }
+  }
 }
 
 /**
  * Functions to construct the straightforward cut-free FOL LK proofs of the sequents
  *
- * P(s^n(0),0), \ALL x \ALL y . P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0))
+ * P(s^n^(0),0), ∀x,y. P(s(x),y) → P(x,s(y)) :- P(0,s^n^(0))
  *
  * where n is an Integer parameter >= 0.
  *
@@ -272,52 +149,30 @@ object SquareEdges2DimExampleProof extends ProofSequence {
  * compressibility of finite languages and formal proofs, submitted, 2015.
  */
 object SumExampleProof extends ProofSequence {
-  val s = "s"
-  val p = "P"
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
+  /**
+   * @param n An integer >= 0.
+   * @return A proof of P(s^n^(0),0), ∀x,y. P(s(x),y) → P(x,s(y)) :- P(0,s^n^(0))
+   */
+  def apply( n: Int ): LKProof = {
+    require( n >= 0, "n must be nonnegative" )
 
-  val ass = All( x, All( y, Imp( FOLAtom( p, FOLFunction( s, x :: Nil ) :: y :: Nil ), FOLAtom( p, x :: FOLFunction( s, y :: Nil ) :: Nil ) ) ) )
-  def ass_inst( x: Int ) = All( y, Imp( FOLAtom( p, FOLFunction( s, Utils.numeral( x ) :: Nil ) :: y :: Nil ), FOLAtom( p, Utils.numeral( x ) :: FOLFunction( s, y :: Nil ) :: Nil ) ) )
-  def ass_inst_inst( x: Int, y: Int ) = Imp( FOLAtom( p, FOLFunction( s, Utils.numeral( x ) :: Nil ) :: Utils.numeral( y ) :: Nil ), FOLAtom( p, Utils.numeral( x ) :: FOLFunction( s, Utils.numeral( y ) :: Nil ) :: Nil ) )
+    val num = Utils.numeral( n )
+    val pn0 = p9a"P($num,0)"
+    val p0n = p9a"P(0,$num)"
+    val ax = p9f"(all x all y (P(s(x),y) -> P(x, s(y))))"
 
-  def apply( n: Int ) = proof( 0, n )
-
-  /** returns LKProof with end-sequent  P(s^{n-k}(0),s^k(0)), \ALL x \ALL y. P(s(x),y) -> P(x,s(y)) :- P(0,s^n(0)) */
-  def proof( k: Int, n: Int ): LKProof =
-    {
-      if ( k == n ) // leaf proof
-      {
-        val a = FOLAtom( p, Utils.numeral( 0 ) :: Utils.numeral( n ) :: Nil )
-        WeakeningLeftRule( LogicalAxiom( a ), ass )
-      } else {
-        val a1 = FOLAtom( p, Utils.numeral( n - k ) :: Utils.numeral( k ) :: Nil )
-        val a2 = FOLAtom( p, Utils.numeral( n - ( k + 1 ) ) :: Utils.numeral( k + 1 ) :: Nil )
-
-        ContractionLeftRule(
-          ForallLeftRule(
-            ForallLeftRule(
-              ImpLeftRule(
-                LogicalAxiom( a1 ),
-                a1,
-                proof( k + 1, n ),
-                a2
-              ),
-              ass_inst( n - ( k + 1 ) ), Utils.numeral( k )
-            ),
-            ass, Utils.numeral( n - ( k + 1 ) )
-          ),
-          ass
-        )
-      }
+    Lemma( Sequent( Seq( "Pn0" -> pn0, "Ax" -> ax ), Seq( "P0n" -> p0n ) ) ) {
+      repeat( chain( "Ax" ) )
+      prop
     }
+  }
 }
 
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
- * Refl, Trans, \ALL x. f(x) = x :- f^n(a) = a
+ * Refl, Trans, \ALL x. f(x) = x :- f^n^(a) = a
  *
  * where n is an Integer parameter >= 0.
  */
