@@ -27,9 +27,9 @@ import at.logic.gapt.proofs.lkOld.LKToLKsk
 /*
 object script extends Script {
   /* adjust filename to load a different example */
-  val filename = "./examples/hol-tape/ntape.llk"
+  val filename = "./examples/ntape/ntape.llk"
 
-  //val filename = "./examples/hol-tape/ntape.llk"
+  //val filename = "./examples/ntape/ntape.llk"
   //val filename = "tape3old.llk"
 
   /* begin of proof script  */

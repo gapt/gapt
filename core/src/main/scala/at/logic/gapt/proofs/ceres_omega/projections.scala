@@ -209,7 +209,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
       } ) )
 
   def getESAncs( proof: LKskProof, cut_ancs: Sequent[Boolean] ): LabelledSequent = {
-    //use cut_ancs as characteristic function to filter the the cut-ancestors from the current sequent
+    //use cut_ancs as characteristic function to filter the cut-ancestors from the current sequent
     ( proof.conclusion zip cut_ancs ).filterNot( _._2 ).map( _._1 )
   }
 
