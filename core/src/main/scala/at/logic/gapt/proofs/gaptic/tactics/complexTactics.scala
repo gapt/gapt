@@ -64,6 +64,7 @@ case class DestructTactic( applyToLabel: String ) extends Tactic[Any] {
 case class ChainTactic( hyp: String, target: Option[String] = None, substitution: Map[Var, LambdaExpression] = Map() ) extends Tactic[Unit] {
 
   def subst( map: ( Var, LambdaExpression )* ) = copy( substitution = substitution ++ map )
+  def at( target: String ) = copy( target = Option( target ) )
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -139,8 +140,6 @@ case class ChainTactic( hyp: String, target: Option[String] = None, substitution
 
       }
   }
-
-  def at( target: String ) = new ChainTactic( hyp, Option( target ) )
 }
 
 /**
