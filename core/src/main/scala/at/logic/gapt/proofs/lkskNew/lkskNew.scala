@@ -98,9 +98,9 @@ case class TopRight( label: Label ) extends InitialSequent {
   def mainFormulaSequent = Sequent() :+ ( label -> Top() )
 }
 
-case class TheoryAxiom( sequent: Sequent[LabelledFormula] ) extends InitialSequent {
-  def mainFormulaSequent = sequent
-}
+//case class TheoryAxiom( sequent: Sequent[LabelledFormula] ) extends InitialSequent {
+//  def mainFormulaSequent = sequent
+//}
 
 trait UnaryRule extends LKskProof {
   def subProof: LKskProof

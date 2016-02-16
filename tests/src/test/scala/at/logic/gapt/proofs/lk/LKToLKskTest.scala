@@ -122,14 +122,14 @@ class LKToLKskTest extends Specification {
   }
 
   "lattice proof" in {
-    //skipped( "save time" )
+    skipped( "this proof has non-tautological axioms" )
     val lk = regularize( DefinitionElimination( lattice.defs )( lattice.p ) )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }
 
   "tape proof" in {
-    //skipped( "save time" )
+    skipped( "this proof has non-tautological axioms" )
     val pdb = XMLProofDatabaseParser( getClass.getClassLoader getResourceAsStream "tape-in.xml.gz", enable_compression = true )
     val lk = DefinitionElimination( pdb.Definitions )( regularize( pdb proof "the-proof" ) )
     val lksk = LKToLKsk( lk )
