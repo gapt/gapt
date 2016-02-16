@@ -78,9 +78,11 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
           drawLines = false
-          tx.visible = false
+          main.publisher.publish( HideEndSequent( proof.immediateSubProofs.head ) )
         case _ =>
       }
+    case HideEndSequent( p ) if p == proof =>
+      tx.visible = false
     case e: ShowAllRules[_] if e.proof == proof =>
       drawLines = true
       initialize()
