@@ -8,6 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr.hol.toPrettyString
+import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
@@ -25,18 +26,34 @@ import at.logic.gapt.utils.latex.nameToLatexString
 import collection.mutable
 
 object DrawSequent {
-  def apply[T <: HOLFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) = new DrawSequent( main, sequent, visibility, colors, ft )
-  //used by DrawClList
-  def apply( main: ProofToolViewer[_], seq: OccSequent, ft: Font, str: String ): DrawSequent[HOLFormula] = apply( main, seq.toHOLSequent, ft, str )
+  def apply[T <: HOLFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) =
+    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => formulaToLatexString( x, true ) )
+
+  /*
+  def apply[T <: LabelledFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) =
+    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => formulaToLatexString( x._2, true ) )
+    */
 
   //used by DrawClList to draw FSequents
-  def apply( main: ProofToolViewer[_], seq: HOLSequent, ft: Font, str: String )( implicit dummyImplicit: DummyImplicit ): DrawSequent[HOLFormula] = {
+  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, visibility: Sequent[Boolean], colors: Sequent[Color], t_renderer: T => String )( implicit dummyImplicit: DummyImplicit ): DrawSequent[T] = {
+    /*
     val visibility = if ( str.isEmpty )
       seq map { _ => true }
     else
-      seq map { f => formulaToLatexString( f ) contains str }
+      seq map { f => t_renderer( f ) contains str }
     val colors = seq map { _ => Color.white }
-    DrawSequent( main, seq, visibility, colors, ft )
+      */
+    new DrawSequent[T]( main, seq, visibility, colors, ft, t_renderer )
+  }
+
+  //used by DrawClList to draw FSequents
+  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, str: String, t_renderer: T => String )( implicit dummyImplicit: DummyImplicit ): DrawSequent[T] = {
+    val visibility = if ( str.isEmpty )
+      seq map { _ => true }
+    else
+      seq map { f => t_renderer( f ) contains str }
+    val colors = seq map { _ => Color.white }
+    new DrawSequent[T]( main, seq, visibility, colors, ft, t_renderer )
   }
 
   //used by DrawProof
@@ -46,7 +63,7 @@ object DrawSequent {
       case Some( set ) => seq map { fo => set contains fo }
     }
     val colors = seq map { fo => Color.white }
-    DrawSequent( main, seq.toHOLSequent, visibility, colors, ft )
+    DrawSequent[HOLFormula]( main, seq.toHOLSequent, visibility, colors, ft )
   }
 
   def formulaToLabel( main: ProofToolViewer[_], f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( f ) )
@@ -187,14 +204,14 @@ object DrawSequent {
 
 }
 
-class DrawSequent[T <: HOLFormula](
-    main:           ProofToolViewer[_],
-    val sequent:    Sequent[T],
-    val visibility: Sequent[Boolean],
-    val colors:     Sequent[Color],
-    val ft:         Font
+class DrawSequent[T](
+    main:                         ProofToolViewer[_],
+    val sequent:                  Sequent[T],
+    val visibility:               Sequent[Boolean],
+    val colors:                   Sequent[Color],
+    val ft:                       Font,
+    val sequent_element_renderer: T => String
 ) extends FlowPanel {
-  import DrawSequent._
   opaque = false // Necessary to draw the proof properly
   hGap = 0 // no gap between components
 
@@ -211,7 +228,7 @@ class DrawSequent[T <: HOLFormula](
     if ( v ) {
       if ( !first ) contents += LatexLabel( main, ft, "," )
       else first = false
-      contents += LatexLabel( main, ft, formulaToLatexString( f ), c )
+      contents += LatexLabel( main, ft, sequent_element_renderer( f ), c )
     }
   }
   contents += LatexLabel( main, ft, "\\vdash" ) // \u22a2
@@ -220,7 +237,7 @@ class DrawSequent[T <: HOLFormula](
     if ( v ) {
       if ( !first ) contents += LatexLabel( main, ft, "," )
       else first = false
-      contents += LatexLabel( main, ft, formulaToLatexString( f ), c )
+      contents += LatexLabel( main, ft, sequent_element_renderer( f ), c )
     }
   }
 

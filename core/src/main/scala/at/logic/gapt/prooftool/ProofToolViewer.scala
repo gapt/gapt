@@ -7,18 +7,12 @@
 
 package at.logic.gapt.prooftool
 
-import java.awt.event.{ ActionEvent, KeyEvent }
-
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lkOld.UnfoldException
-import at.logic.gapt.proofs.lkOld.base.OccSequent
-import at.logic.gapt.proofs.lkOld.base.RichOccSequent
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lkOld
-import at.logic.gapt.proofs.{ Sequent, DagProof, SequentProof, HOLSequent }
-import at.logic.gapt.proofs.lksk.eliminateDefinitions
-import at.logic.gapt.proofs.shlk.{ applySchemaSubstitution2, applySchemaSubstitution }
+import at.logic.gapt.proofs.lkskNew.LKskProof
+import at.logic.gapt.proofs.{ SequentProof, HOLSequent }
 import com.itextpdf.awt.PdfGraphics2D
 import scala.swing._
 import BorderPanel._
@@ -29,36 +23,27 @@ import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, B
 import javax.swing.filechooser.FileFilter
 import javax.swing.{ KeyStroke, WindowConstants, SwingUtilities }
 import at.logic.gapt.proofs.proofs.TreeProof
-import at.logic.gapt.expr.hol._
-import at.logic.gapt.expr.schema.IntVar
 import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
-import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.proofs.ceres_schema.clauseSets.{ renameCLsymbols, StandardClauseSet }
-import at.logic.gapt.proofs.ceres_schema.struct.{ structToExpressionTree, StructCreators }
-import at.logic.gapt.proofs.ceres_schema.projections.{ Projections, DeleteTautology, DeleteRedundantSequents }
-import at.logic.gapt.proofs.ceres_schema.{ UnfoldProjectionTerm, ProjectionTermCreators }
 import at.logic.gapt.utils.ds.trees.Tree
-import at.logic.gapt.proofs.ceres_schema.clauseSchema.{ resolutionProofSchemaDB, InstantiateResSchema }
-import at.logic.gapt.proofs.ceres_schema.ACNF.ACNF
-import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
-import at.logic.gapt.formats.llk.HybridLatexExporter
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
 
 object prooftool {
   /**
    * Displays various objects in prooftool. Creates an instance of the appropriate viewer.
+   *
    * @param obj The object to be displayed.
    * @param name The title to be displayed.
    */
   def apply( obj: AnyRef, name: String = "prooftool" ): Unit =
     obj match {
-      case p: LKProof                => new LKProofViewer( name, p ).showFrame()
-      case p: SequentProof[a, b]     => new SequentProofViewer[a, b]( name, p ).showFrame()
+      case p: LKProof   => new LKProofViewer( name, p ).showFrame()
+      case p: LKskProof => new LKskProofViewer( name, p ).showFrame()
+      case p: SequentProof[_, _] =>
+        def renderer( x: T forSome { type T } ) = x.toString //TODO: have a better default
+        new SequentProofViewer( name, p, renderer ).showFrame()
       case ep: ExpansionProofWithCut => new ExpansionSequentViewer( name, ep.cuts ++: ep.expansionSequent ).showFrame()
       case es: ExpansionSequent      => new ExpansionSequentViewer( name, es ).showFrame()
       case p: lkOld.base.LKProof     => new OldLKViewer( name, p ).showFrame()
@@ -78,6 +63,7 @@ object prooftool {
 
 /**
  * The main window of the ProofTool application.
+ *
  * @param name The name to be displayed at the top.
  * @param content The object to be displayed.
  * @tparam T The type of content.
@@ -137,6 +123,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Resizes the content to a new font size.
+   *
    * @param fSize The new font size.
    */
   def resizeContent( fSize: Int ): Unit = {
@@ -193,6 +180,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Exports a component as a pdf.
+   *
    * @param component The component to be exported.
    */
   def fExportPdf( component: Component ) {
@@ -227,6 +215,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Exports a component as a PNG.
+   *
    * @param component The component to be exported.
    */
   def fExportPng( component: Component ) {
@@ -282,6 +271,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Displays an info message.
+   *
    * @param info The text of the message.
    */
   def infoMessage( info: String ) {
@@ -290,6 +280,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Displays a warning message.
+   *
    * @param warning The text of the message.
    */
   def warningMessage( warning: String ) {
@@ -298,6 +289,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Displays an error message.
+   *
    * @param error The text of the message.
    */
   def errorMessage( error: String ) {
@@ -306,6 +298,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   /**
    * Displays a question.
+   *
    * @param question The text of the question.
    */
   def questionMessage( question: String ) =

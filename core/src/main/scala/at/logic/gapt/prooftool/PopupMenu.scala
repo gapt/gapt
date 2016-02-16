@@ -7,7 +7,7 @@ package at.logic.gapt.prooftool
  * Time: 1:24 PM
  */
 
-import at.logic.gapt.proofs.DagProof
+import at.logic.gapt.proofs.{ SequentProof, DagProof }
 import at.logic.gapt.proofs.lk.LKProof
 
 import swing.SequentialContainer.Wrapper
@@ -25,6 +25,22 @@ object PopupMenu {
 
   // PopupMenu for LKProofs.
   def apply[T <: DagProof[T]]( main: DagProofViewer[T], tproof: DagProof[T], component: Component, x: Int, y: Int ) {
+    lazy val proof = tproof.asInstanceOf[LKProof]
+    val popupMenu = new PopupMenu {
+      contents += new Separator
+      //      contents += new MenuItem( Action( "Apply Gentzen's Method (new)" ) { Main.newgentzen( proof ) } )
+      //      contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( proof ) } )
+      contents += new Separator
+      contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
+      contents += new Separator
+      contents += new MenuItem( Action( "Show Proof Above" ) { main.publisher.publish( ShowProof( tproof ) ) } )
+      contents += new MenuItem( Action( "Hide Proof Above" ) { main.publisher.publish( HideProof( tproof ) ) } )
+      contents += new Separator
+    }
+    popupMenu.show( component, x, y )
+  }
+
+  def apply[F, T <: SequentProof[F, T]]( main: SequentProofViewer[F, T], tproof: SequentProof[F, T], component: Component, x: Int, y: Int ) {
     lazy val proof = tproof.asInstanceOf[LKProof]
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "View Subproof as Sunburst Tree" ) {
