@@ -4,12 +4,13 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.tactics._
 import at.logic.gapt.proofs.lk.LKProof
 
+import scalaz._
+import Scalaz._
+
 package object gaptic {
   // LK Tactics
 
-  def axiomLog( l: String ) = new LogicalAxiomTactic( Option( l ) )
-
-  def axiomLog = new LogicalAxiomTactic()
+  def axiomLog = LogicalAxiomTactic
 
   def axiomTop = TopAxiomTactic
 
@@ -19,7 +20,7 @@ package object gaptic {
 
   def axiomTh = TheoryAxiomTactic
 
-  def axiom = AxiomTactic
+  def axiom = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
 
   def negL( applyToLabel: String ) = new NegLeftTactic( Some( applyToLabel ) )
 
@@ -102,16 +103,23 @@ package object gaptic {
 
   def insert( proof: LKProof ) = InsertTactic( proof )
 
-  def repeat( t: Tactical ) = RepeatTactic( t )
+  def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
 
   // Complex
 
   def decompose = DecomposeTactic
 
-  def destruct( l: String ) = new DestructTactic( Some( l ) )
-
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
-  def destruct = new DestructTactic()
+  def destruct( label: String ) =
+    allR( label ) orElse
+      exL( label ) orElse
+      andL( label ) orElse
+      andR( label ) orElse
+      orL( label ) orElse
+      orR( label ) orElse
+      impL( label ) orElse
+      impR( label ) orElse
+      negL( label ) orElse
+      negR( label )
 
   def chain( h: String ) = ChainTactic( h )
 
@@ -122,16 +130,26 @@ package object gaptic {
 
   /**
    * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.
+   *
    * @param ls A sequence of labels L,,1,,,..., L,,n,,.
    * @return The tactical
    *           (WeakeningLeftTactic(L,,1,,) orElse WeakeningRightTactic(L,,1,,)) andThen ... andThen (WeakeningLeftTactic(L,,n,,) orElse WeakeningRightTactic(L,,n,,))
    *
    */
-  def forget( ls: String* ): Tactical = ls.foldLeft[Tactical]( SkipTactical ) { ( acc, l ) =>
+  def forget( ls: String* ): Tactical[Unit] = ls.foldLeft[Tactical[Unit]]( SkipTactical ) { ( acc, l ) =>
     acc andThen ( WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l ) )
   }
 
   def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
+
+  implicit object TacticalMonad extends Monad[Tactical] {
+    def point[A]( a: => A ): Tactical[A] = new Tactical[A] {
+      def apply( proofState: ProofState ) = ( a -> proofState ).success
+    }
+
+    def bind[A, B]( fa: Tactical[A] )( f: A => Tactical[B] ): Tactical[B] =
+      fa flatMap f
+  }
 }

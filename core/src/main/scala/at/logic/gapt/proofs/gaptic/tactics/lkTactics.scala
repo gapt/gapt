@@ -1,731 +1,191 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.gaptic.{ NewLabel, OpenAssumption, Tactic }
+import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
+import scalaz._
+import Scalaz._
+import Validation.FlatMap._
 
-/**
- * LogicalAxiom tactic
- * @param label
- */
-case class LogicalAxiomTactic( label: Option[String] = None ) extends Tactic {
+case object LogicalAxiomTactic extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) = {
+    val candidates = goal.conclusion.antecedent intersect goal.conclusion.succedent
 
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = label match {
-      case Some( l1 ) =>
-        for {
-          ( ( `l1`, a ), indexAnt ) <- goalSequent.zipWithIndex.succedent
-          ( ( _, b ), indexSuc ) <- goalSequent.zipWithIndex.antecedent if a == b
-        } yield ( indexAnt, indexSuc )
-
-      case None =>
-        for {
-          ( ( _, a ), indexAnt ) <- goalSequent.zipWithIndex.succedent
-          ( ( _, b ), indexSuc ) <- goalSequent.zipWithIndex.antecedent if a == b
-        } yield ( indexAnt, indexSuc )
-    }
-
-    for ( ( i, _ ) <- indices.headOption ) yield {
-      val ax = LogicalAxiom( goalSequent( i )._2 )
-
-      WeakeningMacroRule( ax, goal.conclusion )
+    candidates match {
+      case Seq( formula, _* ) => ( (), LogicalAxiom( formula ) ).success
+      case _                  => TacticalFailure( this, Some( goal ), "not a logical axiom" ).failureNel
     }
   }
 }
 
-/**
- * TopAxiom tactic
- */
-case object TopAxiomTactic extends Tactic {
+case object TopAxiomTactic extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( _, Top(), _: Suc ) <- findFormula( goal, None ) )
+      yield () -> BottomAxiom
+}
 
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.conclusion
+case object BottomAxiomTactic extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( _, Bottom(), _: Ant ) <- findFormula( goal, None ) )
+      yield () -> BottomAxiom
+}
 
-    val indices =
-      for {
-        ( Top(), index ) <- goalSequent.zipWithIndex.succedent
-      } yield index
-
-    for ( _ <- indices.headOption ) yield {
-
-      val ax = TopAxiom
-
-      WeakeningMacroRule( ax, goalSequent )
+case object ReflexivityAxiomTactic extends Tactic[Unit] {
+  object Refl {
+    def unapply( f: HOLFormula ): Option[LambdaExpression] = f match {
+      case Eq( t, t_ ) if t == t_ => Some( t )
+      case _                      => None
     }
   }
 
+  def apply( goal: OpenAssumption ) =
+    for ( ( _, Refl( t ), _: Suc ) <- findFormula( goal, None ) )
+      yield () -> ReflexivityAxiom( t )
 }
 
-/**
- * BottomAxiom tactic
- */
-case object BottomAxiomTactic extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.conclusion
-
-    val indices =
-      for {
-        ( Bottom(), index ) <- goalSequent.zipWithIndex.antecedent
-      } yield index
-
-    for ( _ <- indices.headOption ) yield {
-
-      val ax = BottomAxiom
-
-      WeakeningMacroRule( ax, goalSequent )
-    }
-  }
-
-}
-
-/**
- * ReflexivityAxiom tactic
- */
-case object ReflexivityAxiomTactic extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.conclusion
-
-    val indices =
-      for ( ( Eq( lhs: LambdaExpression, rhs: LambdaExpression ), index ) <- goalSequent.zipWithIndex.succedent if lhs == rhs )
-        yield index
-
-    for ( i <- indices.headOption ) yield {
-      val Eq( lhs, _ ) = goalSequent( i )
-
-      val ax = ReflexivityAxiom( lhs )
-
-      WeakeningMacroRule( ax, goalSequent )
-    }
-  }
-
-}
-
-/**
- * TheoryAxiom tactic
- */
-case object TheoryAxiomTactic extends Tactic {
-
+case object TheoryAxiomTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
 
     if ( goalSequent.forall( _.isInstanceOf[HOLAtom] ) )
-      Option( TheoryAxiom( goalSequent.asInstanceOf[Sequent[HOLAtom]] ) )
+      ( (), TheoryAxiom( goalSequent.asInstanceOf[Sequent[HOLAtom]] ) ).success
     else
-      None
-  }
-
-}
-
-/**
- * Tactic for identification of (all) axioms
- */
-case object AxiomTactic extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val x = TopAxiomTactic orElse BottomAxiomTactic orElse ReflexivityAxiomTactic orElse LogicalAxiomTactic()
-    x( goal )
-  }
-
-}
-
-/**
- * NegLeftRule tactic
- * @param applyToLabel
- */
-case class NegLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Neg( _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Neg( _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-    }
-
-    for ( i <- indices.headOption ) yield {
-      val ( existingLabel, Neg( e ) ) = goalSequent( i )
-
-      val newGoal = ( goalSequent delete i ) :+ ( existingLabel, e )
-      val premise = OpenAssumption( newGoal )
-
-      NegLeftRule( premise, Suc( newGoal.succedent.length - 1 ) )
-    }
+      TacticalFailure( this, Some( goal ), "not an atomic subgoal" ).failureNel
   }
 }
 
-/**
- * NegRightRule tactic
- * @param applyToLabel
- */
-case class NegRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Neg( _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Neg( _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-    }
-
-    for ( i <- indices.headOption ) yield {
-      val ( existingLabel, Neg( e ) ) = goalSequent( i )
-
-      val newGoal = ( existingLabel, e ) +: ( goalSequent delete i )
-      val premise = OpenAssumption( newGoal )
-
-      NegRightRule( premise, Ant( 0 ) )
-    }
-  }
+case class NegLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[String] {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( existingLabel, Neg( f ), i: Ant ) <- findFormula( goal, applyToLabel )
+      newGoal = goal.s.delete( i ) :+ ( existingLabel -> f )
+    } yield existingLabel -> NegLeftRule( OpenAssumption( newGoal ), newGoal.indices.last )
 }
 
-/**
- * WeakeningLeftRule tactic
- * @param applyToLabel
- */
-case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.antecedent )
-        yield index
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( _, formula ) = goalSequent( i )
-
-      val newGoal = goalSequent.delete( i )
-
-      val premise = OpenAssumption( newGoal )
-
-      WeakeningLeftRule( premise, formula )
-    }
-  }
+case class NegRightTactic( applyToLabel: Option[String] = None ) extends Tactic[String] {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( existingLabel, Neg( f ), i: Suc ) <- findFormula( goal, applyToLabel )
+      newGoal = ( existingLabel -> f ) +: goal.s.delete( i )
+    } yield existingLabel -> NegRightRule( OpenAssumption( newGoal ), newGoal.indices.head )
 }
 
-/**
- * WeakeningRightRule tactic
- * @param applyToLabel
- */
-case class WeakeningRightTactic( applyToLabel: String ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.succedent )
-        yield index
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( _, formula ) = goalSequent( i )
-
-      val newGoal = goalSequent.delete( i )
-
-      val premise = OpenAssumption( newGoal )
-
-      WeakeningRightRule( premise, formula )
-    }
-  }
+case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( _, f, i: Ant ) <- findFormula( goal, Some( applyToLabel ) ) )
+      yield () -> OpenAssumption( goal.s delete i )
 }
 
-/**
- * ContractionLeftRule tactic
- * @param applyToLabel
- */
-case class ContractionLeftTactic( applyToLabel: String ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.antecedent ) yield index
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, formula ) = goalSequent( i )
-
-      val newGoalTmp = goalSequent delete ( i ) insertAt ( i, NewLabel( goalSequent, existingLabel ) -> formula )
-      val newGoal = newGoalTmp insertAt ( i + 1, NewLabel( newGoalTmp, existingLabel ) -> formula )
-
-      val firstOccurrenceIndex = Ant( 0 )
-      val secondOccurrenceIndex = firstOccurrenceIndex + 1
-
-      val premise = OpenAssumption( newGoal )
-
-      ContractionLeftRule( premise, firstOccurrenceIndex, secondOccurrenceIndex )
-    }
-  }
-
+case class WeakeningRightTactic( applyToLabel: String ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( _, f, i: Suc ) <- findFormula( goal, Some( applyToLabel ) ) )
+      yield () -> OpenAssumption( goal.s delete i )
 }
 
-/**
- * ContractionRightRule tactic
- * @param applyToLabel
- */
-case class ContractionRightTactic( applyToLabel: String ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.succedent ) yield index
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, formula ) = goalSequent( i )
-
-      val newGoalTmp = goalSequent delete ( i ) insertAt ( i, NewLabel( goalSequent, existingLabel ) -> formula )
-      val newGoal = newGoalTmp insertAt ( i + 1, NewLabel( newGoalTmp, existingLabel ) -> formula )
-
-      val firstOccurrenceIndex = Suc( newGoal.succedent.length - 2 )
-      val secondOccurrenceIndex = firstOccurrenceIndex + 1
-
-      val premise = OpenAssumption( newGoal )
-
-      ContractionRightRule( premise, firstOccurrenceIndex, secondOccurrenceIndex )
-    }
-  }
-
+case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[( String, String )] {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, And( lhs, rhs ), idx: Ant ) <- findFormula( goal, applyToLabel )
+      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
+      newGoal = ( newLabel1 -> lhs ) +: ( newLabel2 -> rhs ) +: goal.s.delete( idx )
+    } yield ( newLabel1, newLabel2 ) -> AndLeftRule( OpenAssumption( newGoal ), Ant( 0 ), Ant( 1 ) )
 }
 
-/**
- * AndLeftRule tactic
- * @param applyToLabel
- */
-case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, And( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, And( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-    }
-
-    // Select some formula index!
-
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
-
-      val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
-      val newGoal = newGoalTmp insertAt ( Ant( 1 ), ( NewLabel( newGoalTmp, existingLabel ) -> rhs ) )
-
-      // Indices of lhs and rhs
-      val lhsIndex = Ant( 0 )
-      val rhsIndex = lhsIndex + 1
-
-      val premise = OpenAssumption( newGoal )
-
-      AndLeftRule( premise, lhsIndex, rhsIndex )
-    }
-  }
-
+case class AndRightTactic( applyToLabel: Option[String] = None ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( label, And( lhs, rhs ), idx: Suc ) <- findFormula( goal, applyToLabel ) )
+      yield () ->
+      AndRightRule( OpenAssumption( goal.s.updated( idx, label -> lhs ) ), idx,
+        OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
-/**
- * AndRightRule tactic
- * @param applyToLabel
- */
-case class AndRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, And( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, And( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, And( lhs, rhs ) ) = goalSequent( i )
-
-      val newGoalLeft = goalSequent.delete( i ).:+( existingLabel -> lhs )
-      val newGoalRight = goalSequent.delete( i ).:+( existingLabel -> rhs )
-
-      val premiseLeft = OpenAssumption( newGoalLeft )
-      val premiseRight = OpenAssumption( newGoalRight )
-
-      val leftIndex = Suc( newGoalLeft.succedent.length - 1 )
-      val rightIndex = Suc( newGoalRight.succedent.length - 1 )
-
-      val lkTmp = AndRightRule( premiseLeft, leftIndex, premiseRight, rightIndex )
-      ContractionMacroRule( lkTmp, goal.conclusion, false )
-    }
-  }
+case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( label, Or( lhs, rhs ), idx: Ant ) <- findFormula( goal, applyToLabel ) )
+      yield () ->
+      OrLeftRule( OpenAssumption( goal.s.updated( idx, label -> lhs ) ), idx,
+        OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
-/**
- * OrLeftRule tactic
- * @param applyToLabel
- */
-case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Or( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Or( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, Or( lhs, rhs ) ) = goalSequent( i )
-
-      val newGoalLeft = ( existingLabel -> lhs ) +: goalSequent.delete( i )
-      val newGoalRight = ( existingLabel -> rhs ) +: goalSequent.delete( i )
-
-      val premiseLeft = OpenAssumption( newGoalLeft )
-      val premiseRight = OpenAssumption( newGoalRight )
-
-      val leftIndex = Ant( 0 )
-      val rightIndex = Ant( 0 )
-
-      val lkTmp = OrLeftRule( premiseLeft, leftIndex, premiseRight, rightIndex )
-      ContractionMacroRule( lkTmp, goal.conclusion, false )
-    }
-  }
+case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic[( String, String )] {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, Or( lhs, rhs ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
+      newGoal = goal.s.delete( idx ) :+ ( newLabel1 -> lhs ) :+ ( newLabel2 -> rhs )
+      Seq( rhsIdx, lhsIdx ) = newGoal.indices.reverse.take( 2 )
+    } yield ( newLabel1, newLabel2 ) -> OrRightRule( OpenAssumption( newGoal ), lhsIdx, rhsIdx )
 }
 
-/**
- * OrRightRule tactic
- * @param applyToLabel
- */
-case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Or( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Or( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, Or( lhs, rhs ) ) = goalSequent( i )
-
-      val newGoalTmp = goalSequent.delete( i ) :+ ( NewLabel( goalSequent, existingLabel ) -> lhs )
-      val newGoal = newGoalTmp :+ ( NewLabel( newGoalTmp, existingLabel ) -> rhs )
-
-      // Indices of lhs and rhs
-      val lhsIndex = Suc( newGoal.succedent.length - 2 )
-      val rhsIndex = lhsIndex + 1
-
-      val premise = OpenAssumption( newGoal )
-
-      OrRightRule( premise, lhsIndex, rhsIndex )
-    }
-  }
-
+case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( label, Imp( lhs, rhs ), idx: Ant ) <- findFormula( goal, applyToLabel ) )
+      yield () ->
+      ImpLeftRule( OpenAssumption( goal.s.delete( idx ) :+ ( label -> lhs ) ), Suc( goal.s.succedent.size ),
+        OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
-/**
- * ImpLeftRule tactic
- * @param applyToLabel
- */
-case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Imp( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Imp( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
-
-      val newGoalLeft = goalSequent.delete( i ) :+ ( existingLabel -> lhs )
-      val newGoalRight = ( existingLabel -> rhs ) +: goalSequent.delete( i )
-
-      val premiseLeft = OpenAssumption( newGoalLeft )
-      val premiseRight = OpenAssumption( newGoalRight )
-
-      val leftIndex = Suc( newGoalLeft.succedent.length - 1 )
-      val rightIndex = Ant( 0 )
-
-      val lkTmp = ImpLeftRule( premiseLeft, leftIndex, premiseRight, rightIndex )
-
-      ContractionMacroRule( lkTmp, goal.conclusion, false )
-    }
-  }
+case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic[( String, String )] {
+  // TODO: keep label for rhs?
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, Imp( lhs, rhs ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
+      newGoal = ( newLabel1 -> lhs ) +: goal.s.updated( idx, newLabel2 -> rhs )
+    } yield ( newLabel1, newLabel2 ) -> ImpRightRule( OpenAssumption( newGoal ), Ant( 0 ), idx )
 }
 
-/**
- * ImpRightRule tactic
- * @param applyToLabel
- */
-case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Imp( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Imp( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices.headOption ) yield {
-      // Extract LHS/RHS
-      val ( existingLabel, Imp( lhs, rhs ) ) = goalSequent( i )
-
-      val newGoalTmp = ( NewLabel( goalSequent, existingLabel ) -> lhs ) +: goalSequent.delete( i )
-      val newGoal = newGoalTmp :+ ( NewLabel( newGoalTmp, existingLabel ) -> rhs )
-
-      // Indices of lhs and rhs
-      val lhsIndex = Ant( 0 )
-      val rhsIndex = Suc( newGoal.succedent.length - 1 )
-
-      val premise = OpenAssumption( newGoal )
-
-      ImpRightRule( premise, lhsIndex, rhsIndex )
-    }
-  }
-
-}
-
-/**
- * ExistsLeftRule tactic
- * @param eigenVariable
- * @param applyToLabel
- */
-case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-    }
-
-    // Select some formula index!
-    indices.headOption match {
-      case None =>
-        None
-      case Some( i ) =>
-        val ( existingLabel, quantifiedFormula ) = goalSequent( i )
-        val Ex( v, fm ) = quantifiedFormula
-
-        val ev = eigenVariable match {
-          case Some( x ) => x
-          case None =>
-            rename( v, freeVariables( goal.conclusion ).toList )
-        }
-
+abstract class StrongQuantTactic extends Tactic[Var] {
+  def eigenVariable: Option[Var]
+  protected def pickEigenvariable( bound: Var, goal: OpenAssumption ) =
+    eigenVariable match {
+      case Some( ev ) =>
         if ( freeVariables( goal.conclusion ) contains ev )
-          None
-        else {
-          val auxFormula = Substitution( v, ev )( fm )
-
-          // New goal with instance of fm instead of Exi(v, fm)
-          val newGoal = ( existingLabel -> auxFormula ) +: goalSequent.delete( i )
-
-          val premise = OpenAssumption( newGoal )
-
-          Some( ExistsLeftRule( premise, quantifiedFormula, ev ) )
-        }
+          TacticalFailure( this, Some( goal ), "provided eigenvariable would violate eigenvariable condition" ).failureNel
+        else
+          ev.success
+      case None =>
+        rename( bound, freeVariables( goal.conclusion ).toList ).success
     }
-  }
-
 }
 
-/**
- * ExistsRightRule tactic
- * @param term
- * @param applyToLabel
- */
-case class ExistsRightTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, Ex( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices headOption ) yield {
-      val ( existingLabel, quantifiedFormula ) = goalSequent( i )
-      val Ex( v, fm ) = quantifiedFormula
-
-      val auxFormula = Substitution( v, term )( fm )
-
-      val newGoal = goalSequent.insertAt( i, NewLabel( goalSequent, existingLabel ) -> auxFormula )
-
-      val premise = OpenAssumption( newGoal )
-
-      val auxProofSegment = ExistsRightRule( premise, quantifiedFormula, term )
-
-      ContractionRightRule( auxProofSegment, quantifiedFormula )
-    }
-  }
+case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends StrongQuantTactic {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, f @ Ex( bound, _ ), idx: Ant ) <- findFormula( goal, applyToLabel )
+      ev <- pickEigenvariable( bound, goal )
+    } yield ev -> ExistsLeftRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
-/**
- * ForallLeftRule tactic
- * @param term
- * @param applyToLabel
- */
-case class ForallLeftTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.antecedent )
-          yield index
-    }
-
-    // Select some formula index!
-    for ( i <- indices headOption ) yield {
-      val ( existingLabel, quantifiedFormula ) = goalSequent( i )
-      val All( v, fm ) = quantifiedFormula
-
-      val auxFormula = Substitution( v, term )( fm )
-
-      val newGoal = goalSequent.insertAt( i + 1, NewLabel( goalSequent, existingLabel ) -> auxFormula )
-
-      val premise = OpenAssumption( newGoal )
-
-      val auxProofSegment = ForallLeftRule( premise, quantifiedFormula, term )
-
-      ContractionLeftRule( auxProofSegment, quantifiedFormula )
-    }
-  }
+case class ExistsRightTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic[String] {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      newLabel = NewLabel( goal.s, label )
+    } yield newLabel ->
+      ExistsRightRule( OpenAssumption( goal.s :+ ( newLabel -> instantiate( f, term ) ) ), f, term )
 }
 
-/**
- * ForallRightRule tactic
- * @param applyToLabel
- */
-case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, All( _, _ ) ), index ) <- goalSequent.zipWithIndex.succedent )
-          yield index
-    }
-
-    // Select some formula index!
-    indices.headOption match {
-      case None =>
-        None
-      case Some( i ) =>
-        val ( existingLabel, quantifiedFormula ) = goalSequent( i )
-        val All( v, fm ) = quantifiedFormula
-
-        val ev = eigenVariable match {
-          case Some( x ) => x
-          case None =>
-            rename( v, freeVariables( goal.conclusion ).toList )
-        }
-
-        if ( freeVariables( goal.conclusion ) contains ev )
-          None
-        else {
-          val auxFormula = Substitution( v, ev )( fm )
-
-          // New goal with instance of fm instead of Exi(v, fm)
-          val newGoal = goalSequent.delete( i ) :+ ( existingLabel -> auxFormula )
-
-          val premise = OpenAssumption( newGoal )
-
-          Some( ForallRightRule( premise, quantifiedFormula, ev ) )
-        }
-    }
-  }
+case class ForallLeftTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic[String] {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, applyToLabel )
+      newLabel = NewLabel( goal.s, label )
+    } yield newLabel ->
+      ForallLeftRule( OpenAssumption( ( newLabel -> instantiate( f, term ) ) +: goal.s ), f, term )
 }
 
-/**
- * CutRule tactic
- * @param cutFormula
- */
-case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic {
+case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends StrongQuantTactic {
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, f @ All( bound, _ ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      ev <- pickEigenvariable( bound, goal )
+    } yield ev -> ForallRightRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
+}
 
+case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
@@ -733,16 +193,11 @@ case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic 
     val rightPremise = OpenAssumption( ( cutLabel, cutFormula ) +: goalSequent )
 
     val auxProof = CutRule( leftPremise, Suc( leftPremise.s.succedent.length - 1 ), rightPremise, Ant( 0 ) )
-    Some( ContractionMacroRule( auxProof ) )
+    ( () -> auxProof ).success
   }
 }
 
-/**
- * EqualityLeftRule tactic
- * @param equalityLabel
- * @param formulaLabel
- */
-case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic {
+case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -753,7 +208,7 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
     ) yield ( eqIndex, formulaIndex )
 
     indices.headOption match {
-      case None => None
+      case None => TacticalFailure( this, Some( goal ), "label not found" ).failureNel
       case Some( ( equalityIndex, formulaIndex ) ) =>
         val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
         val ( _, auxFormula ) = goalSequent( formulaIndex )
@@ -836,8 +291,8 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
             val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> x ) )
             val premise = OpenAssumption( newGoal )
 
-            Option( EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula ) )
-          case _ => None
+            ( (), EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula ) ).success
+          case _ => TacticalFailure( this, Some( goal ), "FIXME" ).failureNel
         }
     }
   }
@@ -849,12 +304,7 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
   def to( targetFormula: HOLFormula ) = new EqualityLeftTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
 
-/**
- * EqualityLeftRule tactic
- * @param equalityLabel
- * @param formulaLabel
- */
-case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic {
+case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -865,7 +315,7 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
     ) yield ( eqIndex, formulaIndex )
 
     indices.headOption match {
-      case None => None
+      case None => TacticalFailure( this, Some( goal ), "label not found" ).failureNel
       case Some( ( equalityIndex, formulaIndex ) ) =>
         val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
         val ( _, auxFormula ) = goalSequent( formulaIndex )
@@ -947,8 +397,8 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
           case Some( x ) if x != auxFormula =>
             val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> x ) )
             val premise = OpenAssumption( newGoal )
-            Option( EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) )
-          case _ => None
+            ( (), EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) ).success
+          case _ => TacticalFailure( this, Some( goal ), "FIXME" ).failureNel
         }
     }
   }
@@ -960,46 +410,14 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
   def to( targetFormula: HOLFormula ) = new EqualityRightTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
 
-/**
- * DefinitionLeftRule tactic
- * @param applyToLabel
- * @param replacement
- */
-case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.antecedent )
-        yield index
-
-    for ( i <- indices.headOption ) yield {
-      val ( _, existingFormula ) = goalSequent( i )
-      val premise = OpenAssumption( goalSequent delete ( i ) insertAt ( i, ( applyToLabel -> replacement ) ) )
-      DefinitionLeftRule( premise, i, existingFormula )
-    }
-  }
+case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( label, formula, idx: Ant ) <- findFormula( goal, Some( applyToLabel ) ) )
+      yield () -> DefinitionLeftRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
 }
 
-/**
- * DefinitionRightRule tactic
- * @param applyToLabel
- * @param replacement
- */
-case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices =
-      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.succedent )
-        yield index
-
-    for ( i <- indices.headOption ) yield {
-      val ( _, existingFormula ) = goalSequent( i )
-      val premise = OpenAssumption( goalSequent delete ( i ) insertAt ( i, ( applyToLabel -> replacement ) ) )
-      DefinitionRightRule( premise, i, existingFormula )
-    }
-  }
+case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    for ( ( label, formula, idx: Suc ) <- findFormula( goal, Some( applyToLabel ) ) )
+      yield () -> DefinitionRightRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
 }
