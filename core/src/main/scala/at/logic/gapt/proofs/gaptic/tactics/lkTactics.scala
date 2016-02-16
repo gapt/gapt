@@ -159,22 +159,22 @@ case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Op
     } yield ev -> ExistsLeftRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
-case class ExistsRightTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic[String] {
+case class ExistsRightTactic( applyToLabel: Option[String] = None, terms: Seq[LambdaExpression] ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
       ( label, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, applyToLabel )
       newLabel = NewLabel( goal.s, label )
     } yield newLabel ->
-      ExistsRightRule( OpenAssumption( goal.s :+ ( newLabel -> instantiate( f, term ) ) ), f, term )
+      ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> instantiate( f, terms ) ) ), f, terms )
 }
 
-case class ForallLeftTactic( term: LambdaExpression, applyToLabel: Option[String] = None ) extends Tactic[String] {
+case class ForallLeftTactic( applyToLabel: Option[String] = None, terms: Seq[LambdaExpression] ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
       ( label, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, applyToLabel )
       newLabel = NewLabel( goal.s, label )
     } yield newLabel ->
-      ForallLeftRule( OpenAssumption( ( newLabel -> instantiate( f, term ) ) +: goal.s ), f, term )
+      ForallLeftBlock( OpenAssumption( ( newLabel -> instantiate( f, terms ) ) +: goal.s ), f, terms )
 }
 
 case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends StrongQuantTactic {

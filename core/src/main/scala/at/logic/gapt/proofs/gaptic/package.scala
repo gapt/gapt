@@ -69,15 +69,15 @@ package object gaptic {
   @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def exL = new ExistsLeftTactic()
 
-  def exR( term: LambdaExpression, applyToLabel: String ) = new ExistsRightTactic( term, Some( applyToLabel ) )
+  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( Some( applyToLabel ), term +: terms )
 
   @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
-  def exR( term: LambdaExpression ) = new ExistsRightTactic( term )
+  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( None, term +: terms )
 
-  def allL( term: LambdaExpression, applyToLabel: String ) = new ForallLeftTactic( term, Some( applyToLabel ) )
+  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( Some( applyToLabel ), term +: terms )
 
   @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
-  def allL( term: LambdaExpression ) = new ForallLeftTactic( term )
+  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( None, term +: terms )
 
   def allR( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( Some( eigenVariable ), Some( applyToLabel ) )
 

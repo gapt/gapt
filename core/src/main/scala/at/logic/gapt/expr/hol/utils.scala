@@ -359,8 +359,8 @@ object instantiate {
    * Instantiates the initial quantifiers of a formula with the given list of terms
    */
   def apply( f: HOLFormula, ts: Seq[LambdaExpression] ): HOLFormula = ts match {
-    case Nil     => f
-    case t :: ts => instantiate( instantiate( f, t ), ts )
+    case Seq()   => f
+    case t +: ts => instantiate( instantiate( f, t ), ts )
   }
 
   /**
@@ -373,7 +373,7 @@ object instantiate {
 
   def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = apply( f.asInstanceOf[HOLFormula], t.asInstanceOf[LambdaExpression] ).asInstanceOf[FOLFormula]
   def apply( f: FOLFormula, ts: Seq[FOLTerm] ): FOLFormula = apply( f.asInstanceOf[HOLFormula], ts.asInstanceOf[Seq[LambdaExpression]] ).asInstanceOf[FOLFormula]
-  def apply( f: FOLFormula, tss: Seq[Seq[FOLTerm]] ): Seq[FOLFormula] = apply( f.asInstanceOf[HOLFormula], tss.asInstanceOf[Seq[Seq[FOLTerm]]] ).asInstanceOf[Seq[FOLFormula]]
+  def apply( f: FOLFormula, tss: Seq[Seq[FOLTerm]] )( implicit d: DummyImplicit ): Seq[FOLFormula] = apply( f.asInstanceOf[HOLFormula], tss.asInstanceOf[Seq[Seq[FOLTerm]]] ).asInstanceOf[Seq[FOLFormula]]
 
   /**
    * Compute all clauses obtainable from substituting terms from the given set for variables in the given clause.

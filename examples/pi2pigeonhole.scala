@@ -29,12 +29,12 @@ object Pi2Pigeonhole {
       forget( "t" ); decompose; escargot
 
       forget( "I0" )
-      allL( zero, "I1" ); decompose
-      allL( s( y ), "I1" ); decompose
+      allL( "I1", zero ); decompose
+      allL( "I1", s( y ) ); decompose
       forget( "I1" ); escargot
 
-      allL( zero, "I0" ); decompose
-      allL( s( y ), "I0" ); decompose
+      allL( "I0", zero ); decompose
+      allL( "I0", s( y ) ); decompose
       forget( "I0" ); escargot
     }
 }
