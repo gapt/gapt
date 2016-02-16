@@ -9,11 +9,13 @@ package at.logic.gapt.prooftool
 
 import java.awt.{ Font, Color }
 import Font._
+import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, LabelledFormula }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
 import scala.swing.{ Component, FlowPanel, GridPanel, Label }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 class DrawList(
     main:         ListViewer,
@@ -52,10 +54,11 @@ class DrawList(
 
         s.elements.head match {
           case _: FormulaOccurrence =>
-            DrawSequent[FormulaOccurrence]( main, s.asInstanceOf[OccSequent], ft, str, ( f: FormulaOccurrence ) => DrawSequent.formulaToLatexString( f.formula, true ) )
+            DrawSequent[FormulaOccurrence]( main, s.asInstanceOf[OccSequent], ft, str, ( x: FormulaOccurrence ) => formulaOccurrenceToLatexString( x ) )
+          case _: LabelledFormula =>
+            DrawSequent[LabelledFormula]( main, s.asInstanceOf[LabelledSequent], ft, str, ( x: LabelledFormula ) => labelledFormulaToLatexString( x ) )
           case _: HOLFormula =>
-            def renderer( f: HOLFormula ): String = DrawSequent.formulaToLatexString( f, true )
-            DrawSequent[HOLFormula]( main, s.asInstanceOf[HOLSequent], ft, str, ( f: HOLFormula ) => DrawSequent.formulaToLatexString( f, true ) )
+            DrawSequent[HOLFormula]( main, s.asInstanceOf[HOLSequent], ft, str, ( x: HOLFormula ) => formulaToLatexString( x ) )
         }
       }
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
@@ -82,6 +85,6 @@ class DrawList(
     contents += new Label( " := " ) { font = ft }
     contents += label2
 
-    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, DrawSequent.formulaToLatexString( e ) )
+    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( e ) )
   }
 }

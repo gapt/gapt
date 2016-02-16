@@ -1,24 +1,18 @@
 package at.logic.gapt.prooftool
 
-import java.awt.Color
-import java.awt.event.{ ActionEvent, KeyEvent }
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
-import javax.swing.KeyStroke
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.latex.{ SequentsListLatexExporter, ProofToLatexExporter }
 import at.logic.gapt.formats.llk.HybridLatexExporter
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ lkNew2Old, LKToExpansionProof, LKProof }
 import at.logic.gapt.proofs.lkskNew.LKskProof
 import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 import scala.swing._
-import scala.swing.event.Key
 
 /**
  * Created by sebastian on 12/11/15.
@@ -104,7 +98,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
  */
-class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof, x => DrawSequent.formulaToLatexString( x, true ) ) with Savable[LKProof] with ContainsLKProof {
+class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof, formulaToLatexString ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton, sunburstViewButton )
@@ -193,7 +187,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
  */
-class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofViewer[LabelledFormula, LKskProof]( name, proof, x => DrawSequent.formulaToLatexString( x._2, true ) ) {
+class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofViewer[LabelledFormula, LKskProof]( name, proof, labelledFormulaToLatexString ) {
   override val content: LKskProof = proof
   override def fileMenuContents = Seq( openButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
