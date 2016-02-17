@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.undoHol2Fol.Signature
 import at.logic.gapt.expr.fol.{ undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.proofs.{ Suc, Ant }
 import at.logic.gapt.proofs.ral._
@@ -42,7 +43,7 @@ abstract class RobinsonToRal {
  * @param cmap The mapping of abstracted symbols to lambda terms. The abstracted symbols must be unique (i.e. cmap
  *             must be a bijection)
  */
-case class Robinson2RalWithAbstractions(
+class Robinson2RalWithAbstractions(
     sig_vars:   Map[String, List[Var]],
     sig_consts: Map[String, List[Const]],
     cmap:       replaceAbstractions.ConstantsMap
@@ -64,4 +65,37 @@ case class Robinson2RalWithAbstractions(
 
     Substitution( mapping )
   }
+}
+
+/**
+ * A converter from Robinson resolution proofs to Ral proofs, which reintroduces the lambda abstractions
+ * which we removed for the fol export.
+ */
+object Robinson2RalWithAbstractions {
+
+  /**
+   * @param signature The signature of the original proof
+   * @param cmap The mapping of abstracted symbols to lambda terms. The abstracted symbols must be unique (i.e. cmap
+   *             must be a bijection)
+   */
+  def apply( signature: Signature, cmap: replaceAbstractions.ConstantsMap ) = {
+    val ( sigc, sigv ) = signature
+    new Robinson2RalWithAbstractions(
+      sigv.map( x => ( x._1, x._2.toList ) ),
+      sigc.map( x => ( x._1, x._2.toList ) ), cmap
+    )
+  }
+
+  /**
+   * @param sig_vars The signature of the variables in the original proof
+   * @param sig_consts The signature of constants in the original proof
+   * @param cmap The mapping of abstracted symbols to lambda terms. The abstracted symbols must be unique (i.e. cmap
+   *             must be a bijection)
+   */
+  def apply(
+    sig_vars:   Map[String, List[Var]],
+    sig_consts: Map[String, List[Const]],
+    cmap:       replaceAbstractions.ConstantsMap
+  ) = new Robinson2RalWithAbstractions( sig_vars, sig_consts, cmap )
+
 }

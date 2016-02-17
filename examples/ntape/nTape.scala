@@ -5,7 +5,8 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
-import at.logic.gapt.proofs.lkskNew.LKskToExpansionProof
+import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
+import at.logic.gapt.proofs.lkskNew.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ Sequent, HOLClause }
 import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.resolution.Robinson2RalWithAbstractions
@@ -24,15 +25,20 @@ abstract class nTape {
   def root_proof(): String
 
   /**
+   * The input LK proof
+   */
+  lazy val input_proof = proofdb proof root_proof
+
+  /**
    * The input proof (TAPEPROOF) after definition elimination, expansion of logical axioms to atomic axioms and
    *  definition eliminiation
    */
-  lazy val postprocessed_lkproof = AtomicExpansion( DefinitionElimination( proofdb.Definitions )( regularize( proofdb proof root_proof ) ) )
+  lazy val preprocessed_input_proof = AtomicExpansion( DefinitionElimination( proofdb.Definitions )( regularize( input_proof ) ) )
 
   /**
    * The processed input proof converted to LKsk.
    */
-  lazy val lksk_proof = LKToLKsk( postprocessed_lkproof )
+  lazy val lksk_proof = LKToLKsk( preprocessed_input_proof )
 
   /**
    * The struct of the proof. It is an intermediate representation of the characteristic sequent set.
@@ -53,7 +59,7 @@ abstract class nTape {
    * The first order export of the characteristic sequent set, together with the map of replacing constants.
    */
   lazy val ( abstracted_constants_map, fol_css ) = {
-    val css_nolabels = css.map( _.map( _._2 ) ).toList // remove labels from css
+    val css_nolabels = css.map( _.map( LKskProof.getFormula ) ).toList // remove labels from css
     val ( abs_consts, abs_css ) = replaceAbstractions( css_nolabels )
     /* map types to first order*/
     val fol_css = reduceHolToFol( abs_css )
@@ -82,14 +88,10 @@ abstract class nTape {
    * The ral version of the first-order refutation, with all necessary simplifications undone
    */
   lazy val ral_refutation = {
-    val proofformulas = for ( p <- lksk_proof.subProofs; f <- p.formulas.elements ) yield f
 
-    val ( sigc, sigv ) = undoHol2Fol.getSignature( proofformulas.toList )
+    val signature = undoHol2Fol.getSignature( lksk_proof, LKskProof.getFormula )
 
-    val converter = Robinson2RalWithAbstractions(
-      sigv.map( x => ( x._1, x._2.toList ) ),
-      sigc.map( x => ( x._1, x._2.toList ) ), abstracted_constants_map
-    )
+    val converter = Robinson2RalWithAbstractions( signature, abstracted_constants_map )
 
     converter( fol_refutation )
   }
@@ -106,7 +108,14 @@ abstract class nTape {
 
   //prints the interesting terms from the expansion sequent
   def printStatistics() = {
+    println( "------------ Proof sizes --------------" )
+    println( s"Input proof        : ${input_proof.treeLike.size}" )
+    println( s"Preprocessed input : ${preprocessed_input_proof.treeLike.size}" )
+    println( s"LKsk input proof   : ${lksk_proof.treeLike.size}" )
+    println( s"ACNF output proof  : ${acnf.treeLike.size}" )
 
+    println()
+    println( "------------ Witness Terms from Expansion Proof --------------" )
     val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
     // FIXME: use a less fragile method to find the induction formula...
     val indet = conjuncts( 19 )

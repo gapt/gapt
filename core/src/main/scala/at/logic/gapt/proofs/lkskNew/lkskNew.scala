@@ -13,6 +13,9 @@ object LKskProof {
   type LabelledFormula = ( Label, HOLFormula )
   type LabelledSequent = Sequent[LabelledFormula]
   val emptyLabel: Label = Seq()
+
+  def getLabel( f: LabelledFormula ) = f._1
+  def getFormula( f: LabelledFormula ) = f._2
 }
 
 trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRule[LabelledFormula, LKskProof] {

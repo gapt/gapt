@@ -3,6 +3,7 @@ package at.logic.gapt.expr.fol
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.{ Ty, Ti, To }
+import at.logic.gapt.proofs.SequentProof
 import at.logic.gapt.utils.logging.Logger
 
 /**
@@ -15,9 +16,12 @@ import at.logic.gapt.utils.logging.Logger
  * [[undoHol2Fol.backtranslate]].
  */
 object undoHol2Fol extends Logger {
+  type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )
+
   override def loggerName = "HOL2FOLLogger"
   /**
    * Translate the fol formula e to a hol formula over the given signature for constants and variables.
+   *
    * @param e the fol formula.
    * @param sig_vars a mapping fol name to hol var with appropriate type
    * @param sig_consts a mapping fol name to hol const with appropriate type
@@ -122,7 +126,12 @@ object undoHol2Fol extends Logger {
 
   val ivy_varname = """(v[0-9]+)""".r
 
-  def getSignature( fs: List[LambdaExpression] ): ( Map[String, Set[Const]], Map[String, Set[Var]] ) =
+  def getSignature[F, T <: SequentProof[F, T]]( proof: SequentProof[F, T], extract: F => LambdaExpression ): Signature = {
+    val exprs = for ( p <- proof.subProofs; f <- p.conclusion.elements map extract ) yield f
+    getSignature( exprs.toList )
+  }
+
+  def getSignature( fs: List[LambdaExpression] ): Signature =
     fs.foldLeft( ( Map[String, Set[Const]](), Map[String, Set[Var]]() ) )( ( maps, e ) => {
       //println("next "+maps._1.size+":"+maps._2.size)
       getSignature( e, maps._1, maps._2 )
