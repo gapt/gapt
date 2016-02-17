@@ -7,6 +7,7 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.examples.Formulas._
 
 trait ProofSequence {
   def apply( n: Int ): LKProof
@@ -425,149 +426,85 @@ object SumOfOnesFExampleProof extends ProofSequence {
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
- * Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n(0)
+ * Refl, Trans, CongSuc, ABase, ASuc, :- sum( n ) = s^n^(0)
  *
  * where n is an Integer parameter >= 0.
  */
 object SumOfOnesExampleProof extends ProofSequence {
-  val s = "s"
-  val zero = "0"
-  val p = "+"
+  import Utils.{ numeral => num }
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
-  val z = FOLVar( "z" )
+  def apply( n: Int ) = {
+    val goal = if ( n == 0 ) p9a"0 = 0" else p9a"${sum( n )} = ${num( n )}"
+    val endSequent = Sequent(
+      Seq(
+        "Refl" -> ReflexivityEq,
+        "Trans" -> TransitivityEq,
+        "CongSuc" -> CongUnaryEq( "s" ),
+        "ABase" -> Peano.AdditionBase,
+        "ASuc" -> Peano.AdditionSucc
+      ), Seq(
+        "Goal" -> goal
+      )
+    )
 
-  // axioms
-  val Refl = All( x, Eq( x, x ) )
-  val Trans = All( x, All( y, All( z, Imp( Eq( x, y ), Imp( Eq( y, z ), Eq( x, z ) ) ) ) ) )
-  val CongSuc = All( x, All( y, Imp(
-    Eq( x, y ),
-    Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) )
-  ) ) )
-  val ABase = All( x, Eq( FOLFunction( p, x :: FOLConst( zero ) :: Nil ), x ) )
-  val ASuc = All( x, All( y, Eq( FOLFunction( p, x :: FOLFunction( s, y :: Nil ) :: Nil ), FOLFunction( s, FOLFunction( p, x :: y :: Nil ) :: Nil ) ) ) )
+    n match {
+      case 0 | 1 =>
+        Lemma( endSequent ) {
+          allL( "Refl", num( n ) )
+          prop
+        }
 
-  def apply( n: Int ) = proof( n )
+      case _ =>
+        val subProof = apply( n - 1 )
+        Lemma( endSequent ) {
+          allL( "CongSuc", sum( n - 1 ), num( n - 1 ) )
+          impL( "CongSuc_0" )
+          insert( subProof )
 
-  private def proof( k: Int ): LKProof = {
-    if ( k == 0 ) {
-      val zero_eq_zero = Eq( Utils.numeral( 0 ), Utils.numeral( 0 ) )
-      val p1 = ForallLeftRule( LogicalAxiom( zero_eq_zero ), Refl, Utils.numeral( 0 ) )
-      val p2 = WeakeningLeftRule( p1, Trans )
-      val p3 = WeakeningLeftRule( p2, CongSuc )
-      val p4 = WeakeningLeftRule( p3, ABase )
-      WeakeningLeftRule( p4, ASuc )
-    } else if ( k == 1 ) {
-      val one_eq_one = Eq( Utils.numeral( 1 ), Utils.numeral( 1 ) )
-      val p1 = ForallLeftRule( LogicalAxiom( one_eq_one ), Refl, Utils.numeral( 1 ) )
-      val p2 = WeakeningLeftRule( p1, Trans )
-      val p3 = WeakeningLeftRule( p2, CongSuc )
-      val p4 = WeakeningLeftRule( p3, ABase )
-      WeakeningLeftRule( p4, ASuc )
-    } else {
-      /// atoms
-      val ssumkm1_eq_k = Eq( FOLFunction( s, sum( k - 1 ) :: Nil ), Utils.numeral( k ) )
-      val ssumkm1_eq_z = Eq( FOLFunction( s, sum( k - 1 ) :: Nil ), z )
-      val sumk_eq_k = Eq( sum( k ), Utils.numeral( k ) )
-      val sumk_eq_y = Eq( sum( k ), y )
-      val sumk_eq_z = Eq( sum( k ), z )
-      val y_eq_z = Eq( y, z )
-      val sumk_eq_ssumkm1 = Eq( sum( k ), FOLFunction( s, sum( k - 1 ) :: Nil ) )
-      val sumkm1_eq_km1 = Eq( sum( k - 1 ), Utils.numeral( k - 1 ) )
-      val sumkm1_eq_y = Eq( sum( k - 1 ), y )
-      val ssumkm1_eq_sy = Eq( FOLFunction( s, sum( k - 1 ) :: Nil ), FOLFunction( s, y :: Nil ) )
+          allL( "Trans", sum( n ), FOLFunction( "s", sum( n - 1 ) ), num( n ) ) //Trans_0
+          impL( "Trans_0" )
+          insert( aux_proof( n - 1 ) )
 
-      /// prop. formulas
-      val Trans2 = Imp( ssumkm1_eq_k, sumk_eq_k )
-      val Trans3 = Imp( sumk_eq_ssumkm1, Trans2 )
-      val CongSuc2 = Imp( sumkm1_eq_km1, ssumkm1_eq_k )
-
-      /// quant. formulas
-      val Trans3_1 = All( z, Imp( sumk_eq_ssumkm1, Imp( ssumkm1_eq_z, sumk_eq_z ) ) )
-      val Trans3_2 = All( y, All( z, Imp( sumk_eq_y, Imp( y_eq_z, sumk_eq_z ) ) ) )
-      val CongSuc2_1 = All( y, Imp( sumkm1_eq_y, ssumkm1_eq_sy ) )
-
-      /// proof
-      // transitivity (using aux_proof)
-      val p1 = LogicalAxiom( ssumkm1_eq_k )
-      val p2 = LogicalAxiom( sumk_eq_k )
-      val p3 = ImpLeftRule( p1, ssumkm1_eq_k, p2, sumk_eq_k )
-      val p4 = aux_proof( k - 1 )
-      val p5 = ImpLeftRule( p4, sumk_eq_ssumkm1, p3, Trans2 )
-      val p6 = ForallLeftRule( p5, Trans3_1, Utils.numeral( k ) )
-      val p7 = ForallLeftRule( p6, Trans3_2, FOLFunction( s, sum( k - 1 ) :: Nil ) )
-      val p8 = ForallLeftRule( p7, Trans, sum( k ) )
-      val p9 = ContractionLeftRule( p8, Trans )
-
-      // congruence sucessor (using IH)
-      val p10 = proof( k - 1 )
-      val p11 = ImpLeftRule( p10, sumkm1_eq_km1, p9, ssumkm1_eq_k )
-      val p12 = ContractionLeftRule( p11, Trans )
-      val p13 = ContractionLeftRule( p12, CongSuc )
-      val p14 = ContractionLeftRule( p13, ASuc )
-      val p15 = ContractionLeftRule( p14, ABase )
-      val p16 = ForallLeftRule( p15, CongSuc2_1, Utils.numeral( k - 1 ) )
-      val p17 = ForallLeftRule( p16, CongSuc, sum( k - 1 ) )
-      ContractionLeftRule( p17, CongSuc )
+          impL( "Trans_0" )
+          repeat( axiom )
+        }
     }
   }
 
   /** constructs proof of: Trans, CongSuc, ASuc, ABase :- sum( k + 1 ) = s( sum( k ) ) */
-  private def aux_proof( k: Int ): LKProof = {
-    /// atoms
-    val ssumkp0_eq_ssumk = Eq( FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ), FOLFunction( s, sum( k ) :: Nil ) )
-    val sumkp1_eq_ssumk = Eq( sum( k + 1 ), FOLFunction( s, sum( k ) :: Nil ) )
-    val sumkp1_eq_ssumkp0 = Eq( sum( k + 1 ), FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ) )
-    val ssumkp0_eq_z = Eq( FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ), z )
-    val sumkp1_eq_z = Eq( sum( k + 1 ), z )
-    val sumkp1_eq_y = Eq( sum( k + 1 ), y )
-    val y_eq_z = Eq( y, z )
-    val sumkp0_eq_sumk = Eq( FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ), sum( k ) )
-    val sumkp0_eq_y = Eq( FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ), y )
-    val ssumkp0_eq_sy = Eq( FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ), FOLFunction( s, y :: Nil ) )
-    val sumkpsy_eq_ssumkpy = Eq( FOLFunction( p, sum( k ) :: FOLFunction( s, y :: Nil ) :: Nil ), FOLFunction( s, FOLFunction( p, sum( k ) :: y :: Nil ) :: Nil ) )
+  private def aux_proof( n: Int ): LKProof = {
+    val goal = p9f"${sum( n + 1 )} = s(${sum( n )})"
+    val endSequent = Sequent(
+      Seq(
+        "Trans" -> TransitivityEq,
+        "CongSuc" -> CongUnaryEq( "s" ),
+        "ABase" -> Peano.AdditionBase,
+        "ASuc" -> Peano.AdditionSucc
+      ), Seq(
+        "Goal" -> goal
+      )
+    )
 
-    /// prop. formulas
-    val Trans2 = Imp( ssumkp0_eq_ssumk, sumkp1_eq_ssumk )
-    val Trans3 = Imp( sumkp1_eq_ssumkp0, Trans2 )
-    val Cong2 = Imp( sumkp0_eq_sumk, ssumkp0_eq_ssumk )
+    Lemma( endSequent ) {
+      allL( "ABase", sum( n ) ) //ABase_0
+      allL( "ASuc", sum( n ), num( 0 ) ) // ASuc_0
+      allL( "CongSuc", p9t"${sum( n )} + 0", sum( n ) ) // CongSuc_0
+      impL( "CongSuc_0" )
+      axiom
 
-    /// quant. formulas
-    val Trans3_1 = All( z, Imp( sumkp1_eq_ssumkp0, Imp( ssumkp0_eq_z, sumkp1_eq_z ) ) )
-    val Trans3_2 = All( y, All( z, Imp( sumkp1_eq_y, Imp( y_eq_z, sumkp1_eq_z ) ) ) )
-    val Cong2_1 = All( y, Imp( sumkp0_eq_y, ssumkp0_eq_sy ) )
-    val ASuc_1 = All( y, sumkpsy_eq_ssumkpy )
+      allL( "Trans", sum( n + 1 ), p9t"s(${sum( n )} +0)", p9t"s(${sum( n )})" ) // Trans_0
+      impL( "Trans_0" )
+      axiom
 
-    /// proof
-    // transitivity
-    val p1 = LogicalAxiom( ssumkp0_eq_ssumk )
-    val p2 = LogicalAxiom( sumkp1_eq_ssumk )
-    val p3 = ImpLeftRule( p1, ssumkp0_eq_ssumk, p2, sumkp1_eq_ssumk )
-    val p4 = LogicalAxiom( sumkp1_eq_ssumkp0 )
-    val p5 = ImpLeftRule( p4, sumkp1_eq_ssumkp0, p3, Trans2 )
-    val p6 = ForallLeftRule( p5, Trans3_1, FOLFunction( s, sum( k ) :: Nil ) )
-    val p7 = ForallLeftRule( p6, Trans3_2, FOLFunction( s, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) :: Nil ) )
-    val p8 = ForallLeftRule( p7, Trans, sum( k + 1 ) )
-
-    // congruence sucessor
-    val p9 = LogicalAxiom( sumkp0_eq_sumk )
-    val p10 = ImpLeftRule( p9, sumkp0_eq_sumk, p8, ssumkp0_eq_ssumk )
-    val p11 = ForallLeftRule( p10, Cong2_1, sum( k ) )
-    val p12 = ForallLeftRule( p11, CongSuc, FOLFunction( p, sum( k ) :: Utils.numeral( 0 ) :: Nil ) )
-
-    // addition sucessor case
-    val p13 = ForallLeftRule( p12, ASuc_1, Utils.numeral( 0 ) )
-    val p14 = ForallLeftRule( p13, ASuc, sum( k ) )
-
-    // addition base case
-    ForallLeftRule( p14, ABase, sum( k ) )
+      impL( "Trans_0" )
+      repeat( axiom )
+    }
   }
 
   // the term (.((1 + 1) + 1 ) + ... + 1 ), k must be at least 1
   private def sum( k: Int ): FOLTerm = {
     if ( k == 1 ) Utils.numeral( 1 )
-    else FOLFunction( p, sum( k - 1 ) :: Utils.numeral( 1 ) :: Nil )
+    else FOLFunction( "+", sum( k - 1 ) :: Utils.numeral( 1 ) :: Nil )
   }
 }
 
