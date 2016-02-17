@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.proofs.{ Suc, Ant }
 import at.logic.gapt.proofs.ral._
 
@@ -10,14 +11,9 @@ object RobinsonToRal extends RobinsonToRal {
    * Ral transformation is that before the layer cleanup we also needed to convert all formulas to the same layer type
    * (i.e. not mix FOLFormulas with HOLFormulas).
    */
-  @deprecated( "No idea what this should do", "2015-05-03" )
   override def convert_formula( e: HOLFormula ): HOLFormula = e
-  @deprecated( "No idea what this should do", "2015-05-03" )
   override def convert_substitution( s: Substitution ): Substitution = s
 
-  //TODO: this is somehow dirty....
-  def convert_map( m: Map[Var, LambdaExpression] ): Substitution =
-    Substitution( m.asInstanceOf[Map[Var, LambdaExpression]] )
 }
 
 abstract class RobinsonToRal {
@@ -34,5 +30,38 @@ abstract class RobinsonToRal {
     case Resolution( p1, i1, p2, i2 ) => RalCut( apply( p1 ), Seq( i1 ), apply( p2 ), Seq( i2 ) )
     case Paramodulation( p1, eq @ Suc( _ ), p2, lit, pos, dir ) =>
       RalPara( apply( p1 ), eq, apply( p2 ), lit, pos, dir )
+  }
+}
+
+/**
+ * A converter from Robinson resolution proofs to Ral proofs, which reintroduces the lambda abstractions
+ * which we removed for the fol export.
+ *
+ * @param sig_vars The signature of the variables in the original proof
+ * @param sig_consts The signature of constants in the original proof
+ * @param cmap The mapping of abstracted symbols to lambda terms. The abstracted symbols must be unique (i.e. cmap
+ *             must be a bijection)
+ */
+case class Robinson2RalWithAbstractions(
+    sig_vars:   Map[String, List[Var]],
+    sig_consts: Map[String, List[Const]],
+    cmap:       replaceAbstractions.ConstantsMap
+) extends RobinsonToRal {
+  //we know that the cmap is a bijection and define absmap as the inverse of cmap
+  val absmap = Map[String, LambdaExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
+
+  private def bt( e: LambdaExpression, t_expected: Option[Ty] ) = BetaReduction.betaNormalize(
+    undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap, t_expected )
+  )
+
+  override def convert_formula( e: HOLFormula ): HOLFormula = bt( e, Some( To ) ).asInstanceOf[HOLFormula]
+
+  override def convert_substitution( s: Substitution ): Substitution = {
+    val mapping = s.map.toList.map {
+      case ( from, to ) =>
+        ( bt( from, None ).asInstanceOf[Var], bt( to, None ) )
+    }
+
+    Substitution( mapping )
   }
 }

@@ -24,7 +24,7 @@ import at.logic.gapt.proofs.lkOld.{ deleteTautologies, subsumedClausesRemovalHOL
 object inst extends Script {
   /* adjust filename to load a different example */
   //val filename = "tape3-4c.llk"
-  val filename = "examples/hol-tape/tape3-3.llk"
+  val filename = "examples/ntape/tape3-3.llk"
 
   /* begin of proof script  */
 

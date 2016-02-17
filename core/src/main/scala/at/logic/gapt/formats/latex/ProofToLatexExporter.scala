@@ -11,10 +11,7 @@ import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.base.{ BinaryLKProof, LKProof, NullaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.proofs.RuleTypeA
 import at.logic.gapt.proofs.shlk.SchemaProofLinkRule
-import at.logic.gapt.prooftool.DrawSequent
-//import at.logic.calculi.lk.quantificationRules.{ForallRightRuleType, ForallLeftRuleType, ExistsRightRuleType, ExistsLeftRuleType}
-//import at.logic.calculi.lk.definitionRules.{DefinitionRightRuleType, DefinitionLeftRuleType}
-//import at.logic.calculi.lk.equationalRules.{EquationRight2RuleType, EquationRight1RuleType, EquationLeft2RuleType, EquationLeft1RuleType}
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ sequentToLatexString, formulaToLatexString }
 
 object ProofToLatexExporter {
 
@@ -47,21 +44,21 @@ object ProofToLatexExporter {
   def rulesToLatex( proof: LKProof ): String = proof match {
     case p: NullaryLKProof => p match {
       case SchemaProofLinkRule( root, link, indices ) =>
-        "\\AxiomC{$(" + link + "(" + DrawSequent.formulaToLatexString( indices.head ) + "))$} " + nLine +
+        "\\AxiomC{$(" + link + "(" + formulaToLatexString( indices.head ) + "))$} " + nLine +
           "\\dashedLine " + nLine +
-          "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( root ) + "$} " + nLine
+          "\\UnaryInfC{$" + sequentToLatexString( root ) + "$} " + nLine
       case _ =>
-        "\\AxiomC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " + nLine
+        "\\AxiomC{$" + sequentToLatexString( p.root ) + "$} " + nLine
     }
     case p: UnaryLKProof =>
       rulesToLatex( p.uProof ) +
         "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} " + nLine +
-        "\\UnaryInfC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " + nLine
+        "\\UnaryInfC{$" + sequentToLatexString( p.root ) + "$} " + nLine
     case p: BinaryLKProof =>
       rulesToLatex( p.uProof1 ) + nLine +
         rulesToLatex( p.uProof2 ) + nLine +
         "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} " + nLine +
-        "\\BinaryInfC{$" + DrawSequent.sequentToLatexString( p.root ) + "$} " + nLine
+        "\\BinaryInfC{$" + sequentToLatexString( p.root ) + "$} " + nLine
   }
 
   def ruleNameToLatex( name: RuleTypeA ) = name match {

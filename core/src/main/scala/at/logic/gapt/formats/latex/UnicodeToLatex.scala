@@ -1,13 +1,10 @@
-package at.logic.gapt.utils
+package at.logic.gapt.formats.latex
 
 /**
- * Created with IntelliJ IDEA.
- * User: marty
- * Date: 10/30/13
- * Time: 7:26 PM
- * To change this template use File | Settings | File Templates.
+ * UnicodeToLatex contains a table of greek unicode symbols and their LaTeX equivalents.
  */
-package object latex {
+object UnicodeToLatex {
+  def apply( name: String ) = nameToLatexString( name )
   // Add more unicode symbols if necessary
   def nameToLatexString( name: String ) = name match {
     case "~"  => """ \sim """

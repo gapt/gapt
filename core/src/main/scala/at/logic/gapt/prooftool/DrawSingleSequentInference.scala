@@ -1,8 +1,8 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.SequentProof
 import at.logic.gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 import scala.swing._
 import java.awt.Color
@@ -12,7 +12,7 @@ import java.awt.Color
  * Created by marty on 3/26/14.
  */
 
-class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value ) extends ScrollPane {
+class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value, sequent_element_renderer: F => String ) extends ScrollPane {
 
   private var _p: Option[SequentProof[F, T]] = None
   def p(): Option[SequentProof[F, T]] = _p
@@ -70,20 +70,20 @@ class DrawSingleSequentInference[F <: HOLFormula, T <: SequentProof[F, T]]( main
     auxiliaries.contents.clear()
     val aux = for ( proof <- p().toList; ( auxIndices, premise ) <- proof.auxIndices zip proof.premises )
       yield for ( ( f, i ) <- premise.zipWithIndex if auxIndices contains i ) yield f
-    for ( x <- aux ) auxiliaries.contents += DrawSequent( main, x, font, "" )
+    for ( x <- aux ) auxiliaries.contents += DrawSequent[F]( main, x, font, "", sequent_element_renderer )
     auxiliaries.contents += Swing.Glue
 
     primaries.contents.clear()
     val primary = for ( proof <- p() ) yield for ( ( f, i ) <- proof.conclusion.zipWithIndex if proof.mainIndices contains i ) yield f
-    for ( prim <- primary ) primaries.contents += DrawSequent( main, prim, font, "" )
+    for ( prim <- primary ) primaries.contents += DrawSequent[F]( main, prim, font, "", sequent_element_renderer )
     primaries.contents += Swing.Glue
 
     substitution.contents.clear()
     p() match {
       case Some( proof: ForallLeftRule ) =>
-        substitution.contents += LatexLabel( main, font, DrawSequent.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, formulaToLatexString( proof.term ) )
       case Some( proof: ExistsRightRule ) =>
-        substitution.contents += LatexLabel( main, font, DrawSequent.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, formulaToLatexString( proof.term ) )
       case _ =>
     }
     substitution.contents += Swing.Glue

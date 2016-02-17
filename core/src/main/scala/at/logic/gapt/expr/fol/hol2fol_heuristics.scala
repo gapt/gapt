@@ -7,7 +7,7 @@ import at.logic.gapt.utils.logging.Logger
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
- * [[at.logic.gapt.language.fol.algorithms.replaceAbstractions]] and [[at.logic.gapt.language.fol.algorithms.reduceHolToFol]] back to its original signature.
+ * [[at.logic.gapt.expr.fol.replaceAbstractions]] and [[at.logic.gapt.expr.fol.reduceHolToFol]] back to its original signature.
  * Sometimes, types have to be guessed and the code is poorly tested, so it is unclear
  * how general it is. It works (and is necessary) during the acnf creation of the n-tape proof.
  *
@@ -119,7 +119,9 @@ object undoHol2Fol extends Logger {
         throw new Exception( "Could not convert subterm " + e )
     }
   }
+
   val ivy_varname = """(v[0-9]+)""".r
+
   def getSignature( fs: List[LambdaExpression] ): ( Map[String, Set[Const]], Map[String, Set[Var]] ) =
     fs.foldLeft( ( Map[String, Set[Const]](), Map[String, Set[Var]]() ) )( ( maps, e ) => {
       //println("next "+maps._1.size+":"+maps._2.size)

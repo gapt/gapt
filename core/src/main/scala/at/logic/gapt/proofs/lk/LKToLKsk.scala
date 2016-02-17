@@ -24,7 +24,8 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
       case ReflexivityAxiom( term ) => ( Reflexivity( labels( Suc( 0 ) ), term ), contracted_symbols )
       case TopAxiom                 => ( TopRight( labels( Suc( 0 ) ) ), contracted_symbols )
       case BottomAxiom              => ( BottomLeft( labels( Ant( 0 ) ) ), contracted_symbols )
-      case lk.TheoryAxiom( seq )    => ( lkskNew.TheoryAxiom( labels zip seq ), contracted_symbols )
+      case lk.TheoryAxiom( seq ) => //( lkskNew.TheoryAxiom( labels zip seq ), contracted_symbols )
+        throw new Exception( "LKsk does not have theory axioms. Only sequents of the form F :- F are allowed." )
 
       case p @ ContractionLeftRule( subProof, aux1: Ant, aux2: Ant ) =>
         val nhpath = extend_hpaths( p, hpaths.zipWithIndex map ( {
@@ -89,6 +90,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         ( Cut( uproof1, aux1, uproof2, aux2 ), table2 )
 
       case p: EqualityRule =>
+
         val lambdaPos = p.positions map {
           HOLPosition.toLambdaPosition( p.auxFormula )
         }

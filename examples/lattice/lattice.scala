@@ -100,23 +100,20 @@ object lattice {
     impR
     andL
     defL( "L1", L1 )
-    allL( x_0, "L1" )
-    allL( z_0, "L1_0" )
-    andL( "L1_0_0" )
-    impL( "L1_0_0_0" )
+    allL( "L1", x_0, z_0 )
+    andL( "L1_0" )
+    impL( "L1_0_0" )
     prop
-    allL( y_0, "L1" )
-    allL( z_0, "L1_1" )
-    andL( "L1_1_0" )
-    impL( "L1_1_0_0" )
+    allL( "L1", y_0, z_0 )
+    andL( "L1_1" )
+    impL( "L1_1_0" )
     prop
-    allL( cup( x_0, y_0 ), "L1" )
-    allL( z_0, "L1_2" )
-    andL( "L1_2_0" )
-    impL( "L1_2_0_1" )
-    paramod( "L1_2_0_1", r( ax5, x -> x_0, y -> y_0, z -> z_0 ), Eq( cup( x_0, cup( y_0, z_0 ) ), z_0 ) )
-    eqR( "L1_1_0_0", "L1_2_0_1" ).fromLeftToRight
-    eqR( "L1_0_0_0", "L1_2_0_1" ).fromLeftToRight
+    allL( "L1", cup( x_0, y_0 ), z_0 )
+    andL( "L1_2" )
+    impL( "L1_2_1" )
+    paramod( "L1_2_1", r( ax5, x -> x_0, y -> y_0, z -> z_0 ), Eq( cup( x_0, cup( y_0, z_0 ) ), z_0 ) )
+    eqR( "L1_1_0", "L1_2_1" ).fromLeftToRight
+    eqR( "L1_0_0", "L1_2_1" ).fromLeftToRight
     axiomRefl
     prop
   }
@@ -125,12 +122,11 @@ object lattice {
   def p_5_1( s: LambdaExpression, t: LambdaExpression ) = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> leq( s, cup( s, t ) ) ) ) ) {
     defR( "a", leqUnfold( s, cup( s, t ) ) )
     defL( "L1", L1 )
-    allL( s, "L1" )
-    allL( cup( s, t ), "L1_0" )
+    allL( "L1", s, cup( s, t ) )
     andL
-    impL( "L1_0_0_1" )
-    paramod( "L1_0_0_1", r( ax5, x -> s, y -> s, z -> t ), Eq( cup( cup( s, s ), t ), cup( s, t ) ) )
-    paramod( "L1_0_0_1", r( ax6, x -> s ), Eq( cup( s, t ), cup( s, t ) ) )
+    impL( "L1_0_1" )
+    paramod( "L1_0_1", r( ax5, x -> s, y -> s, z -> t ), Eq( cup( cup( s, s ), t ), cup( s, t ) ) )
+    paramod( "L1_0_1", r( ax6, x -> s ), Eq( cup( s, t ), cup( s, t ) ) )
     axiomRefl
     prop
   }
@@ -237,8 +233,7 @@ object lattice {
   // finishes r_2
   val r_2_1 = Lemma( Sequent( Seq( "LUB" -> FOLAtom( "LUB" ) ), Seq( "a" -> leq( x_0, cup( x_0, y_0 ) ) ) ) ) {
     defL( "LUB", LUB )
-    allL( x_0, "LUB" )
-    allL( y_0, "LUB_0" )
+    allL( "LUB", x_0, y_0 )
     andL
     andL
     axiomLog
@@ -247,12 +242,12 @@ object lattice {
   // absorption law 2 - difficult direction
   val r_2_a = All( z, Imp( And( leq( z, cup( x_0, y_0 ) ), leq( z, x_0 ) ), leq( z, cap( cup( x_0, y_0 ), x_0 ) ) ) )
   val r_2 = Lemma( Sequent( Seq( "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ), "a" -> r_2_a ), Seq( "b" -> leq( x_0, cap( cup( x_0, y_0 ), x_0 ) ) ) ) ) {
-    allL( x_0, "a" )
+    allL( "a", x_0 )
     impL
     andR
     insert( r_2_1 )
     defL( "R", R )
-    allL( x_0, "R" )
+    allL( "R", x_0 )
     axiomLog
     prop
   }
@@ -262,19 +257,15 @@ object lattice {
     allR( x_0 )
     allR( y_0 )
     defL( "AS", AS )
-    allL( cap( cup( x_0, y_0 ), x_0 ), "AS" )
-    allL( x_0, "AS_0" )
+    allL( "AS", cap( cup( x_0, y_0 ), x_0 ), x_0 )
     forget( "AS" )
-    forget( "AS_0" )
-    impL( "AS_0_0" )
+    impL( "AS_0" )
     defL( "GLB", GLB )
-    allL( cup( x_0, y_0 ), "GLB" )
-    allL( x_0, "GLB_0" )
+    allL( "GLB", cup( x_0, y_0 ), x_0 )
     forget( "GLB" )
-    forget( "GLB_0" )
-    andL( "GLB_0_0" )
+    andL( "GLB_0" )
     andR
-    destruct( "GLB_0_0_0" )
+    destruct( "GLB_0_0" )
     axiomLog
     insert( r_2 )
     axiomLog
@@ -283,24 +274,22 @@ object lattice {
   // finishes r_1
   val r_1_1 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ) ), Seq( "a" -> leq( cap( x_0, y_0 ), x_0 ) ) ) ) {
     defL( "GLB", GLB )
-    allL( x_0, "GLB" )
-    allL( y_0, "GLB_0" )
+    allL( "GLB", x_0, y_0 )
     forget( "GLB" )
-    forget( "GLB_0" )
+    andL( "GLB_0" )
     andL( "GLB_0_0" )
-    andL( "GLB_0_0_0" )
     axiomLog
   }
 
   // absorption law 1 - difficult direction
   val r_1_a = All( z, Imp( And( leq( cap( x_0, y_0 ), z ), leq( x_0, z ) ), leq( cup( cap( x_0, y_0 ), x_0 ), z ) ) )
   val r_1 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ), "R" -> FOLAtom( "R" ), "a" -> r_1_a ), Seq( "b" -> leq( cup( cap( x_0, y_0 ), x_0 ), x_0 ) ) ) ) {
-    allL( x_0, "a" )
+    allL( "a", x_0 )
     impL
     andR
     insert( r_1_1 )
     defL( "R", R )
-    allL( x_0, "R" )
+    allL( "R", x_0 )
     axiomLog
     prop
   }
@@ -310,18 +299,14 @@ object lattice {
     allR( x_0 )
     allR( y_0 )
     defL( "AS", AS )
-    allL( cup( cap( x_0, y_0 ), x_0 ), "AS" )
-    allL( x_0, "AS_0" )
+    allL( "AS", cup( cap( x_0, y_0 ), x_0 ), x_0 )
     forget( "AS" )
-    forget( "AS_0" )
-    impL( "AS_0_0" )
+    impL( "AS_0" )
     defL( "LUB", LUB )
-    allL( cap( x_0, y_0 ), "LUB" )
-    allL( x_0, "LUB_0" )
+    allL( "LUB", cap( x_0, y_0 ), x_0 )
     forget( "LUB" )
-    forget( "LUB_0" )
+    andL( "LUB_0" )
     andL( "LUB_0_0" )
-    andL( "LUB_0_0_0" )
     andR
     insert( r_1 )
     axiomLog

@@ -24,6 +24,7 @@ case object ShowLeaf extends Event
 case object HideLeaf extends Event
 case object HideTree extends Event
 case object HideStructuralRules extends Event
+case class HideEndSequent[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class ShowAllRules[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class ShowAllRulesOld[T]( proof: TreeProof[T] ) extends Event
 case class HideProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event

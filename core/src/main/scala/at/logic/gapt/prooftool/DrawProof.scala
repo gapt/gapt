@@ -18,6 +18,7 @@ import at.logic.gapt.proofs.lkOld.base.OccSequent
 import java.awt.RenderingHints
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 class DrawProof[T](
   val main:                        TreeProofViewer[T],
@@ -112,7 +113,7 @@ class DrawProof[T](
             background = white
             opaque = false
             border = Swing.EmptyBorder( 0, fSize, 0, fSize )
-            val pLink = LatexLabel( main, ft, "(\\textbf{" + link + "}" + indices.foldRight( "" )( ( i, rez ) => ", " + DrawSequent.formulaToLatexString( i ) + rez ) + ")", null )
+            val pLink = LatexLabel( main, ft, "(\\textbf{" + link + "}" + indices.foldRight( "" )( ( i, rez ) => ", " + formulaToLatexString( i ) + rez ) + ")", null )
             pLink.xLayoutAlignment = 0.5
             pLink.opaque = false
             pLink.border = Swing.EmptyBorder( 0, 0, 5, 0 )

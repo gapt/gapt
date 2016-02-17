@@ -355,11 +355,12 @@ You can generate instances of these proof sequences by entering, e.g.,
 \begin{clilisting}
 gapt> val p = SumExampleProof( 5 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p27] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0) :- P(0,s(s(s(s(s(0))))))    (ContractionLeftRule(p26, Ant(0), Ant(2)))
-[p26] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))) :- P(0,s(s(s(s(s(0))))))    (ForallLeftRule(p25, Ant(0), ∀y.(P(s(x),y)⊃P(x,s(y))), s(s(s(s(0)))), x))
-[p25] ∀y.(P(s(s(s(s(s(0))))),y)⊃P(s(s(s(s(0)))),s(y))), P(s(s(s(s(s(0))))),0), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))) :- P(0,s(s(s(s(s(0))))))    (ForallLeftRule(p24, Ant(0), (P(s(s(s(s(s(0))))),y)⊃P(s(s(s(s(0)))),s(y))), 0, y))
-[p24] (P(s(s(s(s(s(0))))),0)⊃P(s(s(s(s(0)))),s(0))), P(s(s(s(s(s(0))))),0), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))) :- P(0,s(s(s(s(s(0))))))    (ImpLeftRule(p1, Suc(0), p23, Ant(1)))
-[p23] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(0)))),s(0)...
+[p25] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0) :- P(0,s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
+[p24] ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0) :- P(0,s(s(s(s(s(0))))))    (ForallLeftRule(p23, Ant(0), ∀y.(P(s(x),y)⊃P(x,s(y))), 0, x))
+[p23] ∀y.(P(s(0),y)⊃P(0,s(y))), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0) :- P(0,s(s(s(s(s(0))))))    (ForallLeftRule(p22, Ant(0), (P(s(0),y)⊃P(0,s(y))), s(s(s(s(0)))), y))
+[p22] (P(s(0),s(s(s(s(0)))))⊃P(0,s(s(s(s(s(0))))))), ∀x.∀y.(P(s(x),y)⊃P(x,s(y))), P(s(s(s(s(s(0))))),0) :- P(0,s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
+[p21] P(0,s(s(s(s(s(0)))))) :- P(0,s(s(s(s(s(0))))))    (LogicalAxiom(P(0,s(s(s(s(s(0))))))))
+[p20] ∀x...
 \end{clilisting}
 
 \section{Feature walkthrough}
@@ -883,31 +884,27 @@ For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val p = SquareEdgesExampleProof( 4 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p40] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ContractionLeftRule(p39, Ant(0), Ant(2)))
-[p39] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ForallLeftRule(p38, Ant(0), ∀y.(P(x,y)⊃P(s(x),y)), 0, x))
-[p38] ∀y.(P(0,y)⊃P(s(0),y)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ForallLeftRule(p37, Ant(0), (P(0,y)⊃P(s(0),y)), 0, y))
-[p37] (P(0,0)⊃P(s(0),0)), P(0,0), ∀x.∀y.(P(x,y)⊃P(s(x),y)), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ImpLeftRule(p1, Suc(0), p36, Ant(1)))
-[p36] ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(s(0),0), ∀x.∀y.(P(x,y)⊃P(x,s(y))) :- P(s(s(s(s(0))))...
+[p39] ∀x.∀y.(P(x,y)⊃P(x,s(y))), ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ContractionLeftRule(p38, Ant(0), Ant(1)))
+[p38] ∀x.∀y.(P(x,y)⊃P(x,s(y))), ∀x.∀y.(P(x,y)⊃P(x,s(y))), ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ForallLeftRule(p37, Ant(0), ∀y.(P(x,y)⊃P(x,s(y))), s(s(s(s(0)))), x))
+[p37] ∀y.(P(s(s(s(s(0)))),y)⊃P(s(s(s(s(0)))),s(y))), ∀x.∀y.(P(x,y)⊃P(x,s(y))), ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ForallLeftRule(p36, Ant(0), (P(s(s(s(s(0)))),y)⊃P(s(s(s(s(0)))),s(y))), s(s(s(0))), y))
+[p36] (P(s(s(s(s(0)))),s(s(s(0))))⊃P(s(s(s(s(0)))),s(s(s(s(0)))))), ∀x.∀y.(P(x,y)⊃P(x,s(y))), ∀x.∀y.(P(x,y)⊃P(s(x),y)), P(0,0) :- P(s(s(s(s(0)))),s(s(s(s(0)))))    (ImpLeftRule(p...
 gapt> val E = LKToExpansionProof( p )
 E: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-ExpansionProofWithCut(List(),[p17] ETWeakQuantifier(∀x.∀y.(P(x,y)⊃P(s(x),y)), s(s(s(0))), p4, s(s(0)), p8, s(0), p12, 0, p16)
-[p16] ETWeakQuantifier(∀y.(P(0,y)⊃P(s(0),y)), 0, p15)
-[p15] ETImp(p13, p14)
-[p14] ETAtom(P(s(0),0), false)
-[p13] ETAtom(P(0,0), true)
-[p12] ETWeakQuantifier(∀y.(P(s(0),y)⊃P(s(s(0)),y)), 0, p11)
-[p11] ETImp(p9, p10)
-[p10] ETAtom(P(s(s(0)),0), false)
-[p9] ETAtom(P(s(0),0), true)
-[p8] ETWeakQuantifier(∀y.(P(s(s(0)),y)⊃P(s(s(s(0))),y)), 0, p7)
-[p7] ETImp(p5, p6)
-[p6] ETAtom(P(s(s(s(0))),0), false)
-[p5] ETAtom(P(s(s(0)),0), true)
-[p4] ETWeakQuantifier(∀y.(P(s(s(s(0))),y)⊃P(s(s(s(s(0)))),y)), 0, p3)
+ExpansionProofWithCut(List(),[p14] ETWeakQuantifier(∀x.∀y.(P(x,y)⊃P(x,s(y))), s(s(s(s(0)))), p13)
+[p13] ETWeakQuantifier(∀y.(P(s(s(s(s(0)))),y)⊃P(s(s(s(s(0)))),s(y))), s(0), p3, 0, p6, s(s(0)), p9, s(s(s(0))), p12)
+[p12] ETImp(p10, p11)
+[p11] ETAtom(P(s(s(s(s(0)))),s(s(s(s(0))))), false)
+[p10] ETAtom(P(s(s(s(s(0)))),s(s(s(0)))), true)
+[p9] ETImp(p7, p8)
+[p8] ETAtom(P(s(s(s(s(0)))),s(s(s(0)))), false)
+[p7] ETAtom(P(s(s(s(s(0)))),s(s(0))), true)
+[p6] ETImp(p4, p5)
+[p5] ETAtom(P(s(s(s(s(0)))),s(0)), false)
+[p4] ETAtom(P(s(s(s(s(0)))),0), true)
 [p3] ETImp(p1, p2)
-[p2] ETAtom(P(s(s(s(s(0)))),0), false)
-[p1] ETAtom(P(s(s(s(0))),0), true)
-, [p1] ETAtom(P(0,0),...
+[p2] ETAtom(P(s(s(s(s(0)))),s(s(0))), false)
+[p1] ETAtom(P(s(s(s(s(0)))),s(0)), true)
+, [p17] ETWeakQuantifier(∀x.∀y.(P(x,y)⊃P(s(x),y)), s(0), p4, 0, p8, s(s(0)), p12, s(s(s...
 \end{clilisting}
 This expansion proof can then be viewed in the graphical user interface by simply calling:
 \begin{clilisting}
@@ -954,28 +951,31 @@ The actual simplification is performed using the \texttt{CERES} command. Please 
 gapt> prooftool(Pi2Pigeonhole.proof)
 
 gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach println
-∀x.∃y0.(<=(x,y0)∧f(y0)=s(0))
-∀x.∃y0.(<=(x,y0)∧f(y0)=0)
+∀x.∃y3.(<=(x,y3)∧f(y3)=s(0))
+∀x.∃y2.(<=(x,y2)∧f(y2)=0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p413] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionRightRule(p412, Suc(1), Suc(0)))
-[p412] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1)), ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionLeftRule(p411, Ant(3), Ant(2)))
-[p411] ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.(f(x1)=0∨f(x1)=s(0)) :- ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1)), ∃x0.∃y1.(<=(s(x0),y1)∧f(x0)=f(y1))    (ContractionLeftRule(p410, Ant(4), Ant(2)))
-[p410] ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.(f(x1)=0∨f(x1)=s(0)), ...
+[p406] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)) :- ∃x0.∃y2.(<=(s(x0),y2)∧f(x0)=f(y2))    (ContractionRightRule(p405, Suc(1), Suc(0)))
+[p405] ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)) :- ∃x0.∃y2.(<=(s(x0),y2)∧f(x0)=f(y2)), ∃x0.∃y2.(<=(s(x0),y2)∧f(x0)=f(y2))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
+[p404] ∀x1.∀y2.(<=(x1,M(x1,y2))∧<=(y2,M(x1,y2))), ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.(f(x1)=0∨f(x1)=s(0)) :- ∃x0.∃y2.(<=(s(x0),y2)∧f(x0)=f(y2)), ∃x0.∃y2.(<=(s(x0),y2)∧f(x0)=f(y2))    (ContractionLeftRule(p403, Ant(4), Ant(2)))
+[p403] ∀x1.∀y2.(<=(s(x1),y2)⊃<=(x1,y2)), ∀x1.(f(x1)=0∨f(x1)=s(0)), ∀x1.∀y2.(...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-ExpansionProofWithCut(List(),[p19] ETWeakQuantifier(∀x1.(f(x1)=0∨f(x1)=s(0)), M(s(M(s(v100),v101)),v102), p3, M(s(M(s(s(M(s(v100),v101))),v1)),v102), p6, M(s(M(s(v100),v101)),s(M(s(M(s(v100),v101)),v102))), p9, M(s(s(M(s(v100),v101))),v1), p12, M(s(v100),v101), p15, M(s(M(s(s(M(s(v100),v101))),v1)),s(M(s(M(s(s(M(s(v100),v101))),v1)),v102))), p18)
+ExpansionProofWithCut(List(),[p19] ETWeakQuantifier(∀x1.(f(x1)=0∨f(x1)=s(0)), M(s(M(v100,s(M(s(M(v100,v101)),v1)))),s(M(s(M(v100,v101)),v1))), p3, M(s(M(v100,v101)),v1), p6, M(s(M(v100,s(M(v100,v101)))),s(M(v100,v101))), p9, M(v100,s(M(v100,v101))), p12, M(v100,v101), p15, M(v100,s(M(s(M(v100,v101)),v1))), p18)
 [p18] ETOr(p16, p17)
-[p17] ETAtom(f(M(s(M(s(s(M(s(v100),v101))),v1)),s(M(s(M(s(s(M(s(v100),v101))),v1)),v102))))=s(0), false)
-[p16] ETAtom(f(M(s(M(s(s(M(s(v100),v101))),v1)),s(M(s(M(s(s(M(s(v100),v101))),v1)),v102))))=0, false)
+[p17] ETAtom(f(M(v100,s(M(s(M(v100,v101)),v1))))=s(0), false)
+[p16] ETAtom(f(M(v100,s(M(s(M(v100,v101)),v1))))=0, false)
 [p15] ETOr(p13, p14)
-[p14] ETAtom(f(M(s(v100),v101))=s(0), false)
-[p13] ETAtom(f(M(s(v100),v101))=0, false)
+[p14] ETAtom(f(M(v100,v101))=s(0), false)
+[p13] ETAtom(f(M(v100,v101))=0, false)
 [p12] ETOr(p10, p11)
-[p11] ETAtom(f(M(s(s(M(s(v100),v...
+[p11] ETAtom(f(M(v100,s(M(v100,v101))))=s(0), false)
+[p10] ETAtom(f(M(v100,s(M(v100,v101))))=0, false)
+[p9] ETOr(p7, p8)
+[p8] ETAtom(f(M(s(M(v100,s(M(v100,v101)...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -993,13 +993,13 @@ Take an example proof:
 \begin{clilisting}
 gapt> val p = LinearExampleProof(4)
 p: at.logic.gapt.proofs.lk.LKProof =
-[p18] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(0)))))    (ContractionLeftRule(p17, Ant(0), Ant(2)))
-[p17] ∀x.(P(x)⊃P(s(x))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(0)))))    (ForallLeftRule(p16, Ant(0), (P(x)⊃P(s(x))), 0, x))
-[p16] (P(0)⊃P(s(0))), P(0), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(0)))))    (ImpLeftRule(p1, Suc(0), p15, Ant(1)))
-[p15] ∀x.(P(x)⊃P(s(x))), P(s(0)) :- P(s(s(s(s(0)))))    (ContractionLeftRule(p14, Ant(0), Ant(2)))
-[p14] ∀x.(P(x)⊃P(s(x))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(0)))))    (ForallLeftRule(p13, Ant(0), (P(x)⊃P(s(x))), s(0), x))
-[p13] (P(s(0))⊃P(s(s(0)))), P(s(0)), ∀x.(P(x)⊃P(s(x))) :- P(s(s(s(s(0)))))    (ImpLeftRule(p2, Suc(0), p12, Ant(1)))
-[p12] ∀x.(P(x)⊃P(s(x))), P(s(s(0))) :- P(s(s(s(s(0)))))    (ContractionLeftRule(p11, A...
+[p16] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(0)))))    (ContractionLeftRule(p15, Ant(0), Ant(1)))
+[p15] ∀x.(P(x)⊃P(s(x))), ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(0)))))    (ForallLeftRule(p14, Ant(0), (P(x)⊃P(s(x))), s(s(s(0))), x))
+[p14] (P(s(s(s(0))))⊃P(s(s(s(s(0)))))), ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(s(0)))))    (ImpLeftRule(p12, Suc(0), p13, Ant(0)))
+[p13] P(s(s(s(s(0))))) :- P(s(s(s(s(0)))))    (LogicalAxiom(P(s(s(s(s(0)))))))
+[p12] ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(0))))    (ContractionLeftRule(p11, Ant(0), Ant(1)))
+[p11] ∀x.(P(x)⊃P(s(x))), ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(0))))    (ForallLeftRule(p10, Ant(0), (P(x)⊃P(s(x))), s(s(0)), x))
+[p10] (P(s(s(0)))⊃P(s(s(s(0))))), ∀x.(P(x)⊃P(s(x))), P(0) :- P(s(s(s(0))))    (ImpLeftRule(p8, Suc(0), p9...
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
