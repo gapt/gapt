@@ -198,22 +198,26 @@ package object expr {
    *
    * @param sc A StringContext
    */
-  implicit class P9Helper( val sc: StringContext ) extends AnyVal {
+  implicit class ExpressionParseHelper( val sc: StringContext ) extends AnyVal {
 
-    /**
-     * Provides the "p9f" string interpolation that parses a string as a FOL formula (via Prover9TermParserLadrStyle)
-     */
-    def p9f( args: FOLExpression* ): FOLFormula = hof( args: _* ).asInstanceOf[FOLFormula]
+    // Higher order parsers
 
-    /**
-     * Provides the "p9t" string interpolation that parses a string as a FOL term (via Prover9TermParserLadrStyle)
-     */
-    def p9t( args: FOLTerm* ): FOLTerm = e( args: _* ).asInstanceOf[FOLTerm]
+    def e( args: LambdaExpression* ): LambdaExpression = {
+      val strings = sc.parts.toList
+      val expressions = args.toList
 
-    /**
-     * Provides the "p9a" string interpolation that parses a string as a FOL atom (via Prover9TermParserLadrStyle)
-     */
-    def p9a( args: FOLExpression* ): FOLAtom = p9f( args: _* ).asInstanceOf[FOLAtom]
+      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
+      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
+        case Const( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+      }
+
+      BabelParser.parse( stringsNew.mkString ++ strings.last ).fold(
+        error => throw new IllegalArgumentException( error ),
+        term => TermReplacement( term, repl )
+      )
+    }
 
     def hof( args: LambdaExpression* ): HOLFormula = {
       val strings = sc.parts.toList
@@ -232,21 +236,98 @@ package object expr {
       )
     }
 
-    def e( args: LambdaExpression* ): LambdaExpression = {
-      val strings = sc.parts.toList
-      val expressions = args.toList
+    def hoa( args: LambdaExpression* ): HOLAtom = {
+      val tmp = hof( args: _* )
 
-      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
-      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
-        case Const( name, _ ) if name.startsWith( placeholder ) =>
-          val i = name.drop( placeholder.length ).toInt
-          expressions( i )
+      try { tmp.asInstanceOf[HOLAtom] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Expression $tmp appears not to be a HOL atom. Parse it with hof." )
       }
+    }
 
-      BabelParser.parse( stringsNew.mkString ++ strings.last ).fold(
-        error => throw new IllegalArgumentException( error ),
-        term => TermReplacement( term, repl )
-      )
+    def hov( args: LambdaExpression* ): Var = {
+      val tmp = e( args: _* )
+
+      try { tmp.asInstanceOf[Var] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a variable. Parse it with e." )
+      }
+    }
+
+    def hoc( args: LambdaExpression* ): Const = {
+      val tmp = e( args: _* )
+
+      try { tmp.asInstanceOf[Const] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a constant. Parse it with e." )
+      }
+    }
+
+    // First order parsers
+
+    def foe( args: FOLExpression* ): FOLExpression = {
+
+      val tmp = e( args: _* )
+
+      try { tmp.asInstanceOf[FOLExpression] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Expression $tmp appears not to be a FOL expression. Parse it with e." )
+      }
+    }
+
+    def fof( args: FOLExpression* ): FOLFormula = {
+
+      val tmp = hof( args: _* )
+
+      try { tmp.asInstanceOf[FOLFormula] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Formula $tmp appears not to be a FOL formula. Parse it with hof." )
+      }
+    }
+
+    def foa( args: FOLExpression* ): FOLAtom = {
+      val tmp = fof( args: _* )
+
+      try { tmp.asInstanceOf[FOLAtom] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Formula $tmp appears not to be an atom. Parse it with fof." )
+      }
+    }
+
+    def fot( args: FOLTerm* ): FOLTerm = {
+      val tmp = e( args: _* )
+
+      try { tmp.asInstanceOf[FOLTerm] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Expression $tmp appears not to be FOL term. Parse it with e." )
+      }
+    }
+
+    def fov( args: FOLTerm* ): FOLVar = {
+      val tmp = fot( args: _* )
+
+      try { tmp.asInstanceOf[FOLVar] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Term $tmp cannot be read as a FOL variable. Parse it with fot." )
+      }
+    }
+
+    def foc( args: FOLTerm* ): FOLConst = {
+      val tmp = fot( args: _* )
+
+      try { tmp.asInstanceOf[FOLConst] }
+      catch {
+        case _: ClassCastException =>
+          throw new IllegalArgumentException( s"Term $tmp cannot be read as a FOL constant. Parse it with fot." )
+      }
     }
 
     private def placeholder = "qq_"

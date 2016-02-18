@@ -104,10 +104,10 @@ object Formulas {
    */
   object Peano {
     val zero = FOLConst( "0" )
-    val AdditionBase = p9f"(all x x+0 = x)"
-    val AdditionSucc = p9f"(all x all y x + s(y) = s(x+y))"
+    val AdditionBase = fof"(all x x+0 = x)"
+    val AdditionSucc = fof"(all x all y x + s(y) = s(x+y))"
 
-    val AdditionAssoc = p9f"(all x all y all z (x + y) + z = x + (y + z))"
+    val AdditionAssoc = fof"(all x all y all z (x + y) + z = x + (y + z))"
   }
 
   private def safeNames( symbs: String* )( names: String* ): Seq[String] = for ( s <- names ) yield {
