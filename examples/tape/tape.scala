@@ -6,23 +6,23 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
 
 object tape {
-  val A = p9f"(all x ( f(x) = 0 | f(x) = 1 ))"
-  val I0 = p9f"(all x exists y f( x + y ) = 0)"
-  val I1 = p9f"(all x exists y f( x + y ) = 1)"
-  val Iv = p9f"(all x exists y f( x + y ) = v)"
+  val A = fof"(all x ( f(x) = 0 | f(x) = 1 ))"
+  val I0 = fof"(all x exists y f( x + y ) = 0)"
+  val I1 = fof"(all x exists y f( x + y ) = 1)"
+  val Iv = fof"(all x exists y f( x + y ) = v)"
 
-  val lhs = Lemma( ( "A" -> p9f"A" ) +: Sequent()
-    :+ ( "I0" -> p9f"I(0)" ) :+ ( "I1" -> p9f"I(1)" ) ) {
+  val lhs = Lemma( ( "A" -> fof"A" ) +: Sequent()
+    :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {
     defR( "I0", I0 )
     defR( "I1", I1 )
     allR( FOLVar( "x_0" ), "I0" )
     allR( FOLVar( "x_1" ), "I1" )
-    exR( "I0", p9t"x_1" )
+    exR( "I0", fot"x_1" )
     forget( "I0" )
-    exR( "I1", p9t"x_0" )
+    exR( "I1", fot"x_0" )
     forget( "I1" )
     defL( "A", A )
-    allL( p9t"x_0 + x_1" )
+    allL( fot"x_0 + x_1" )
     forget( "A" )
     destruct( "A_0" )
     axiom
@@ -30,15 +30,15 @@ object tape {
     axiomTh
   }
 
-  val rhs = Lemma( ( "Iv" -> p9f"I(v)" ) +: Sequent()
-    :+ ( "C" -> p9f"(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) {
+  val rhs = Lemma( ( "Iv" -> fof"I(v)" ) +: Sequent()
+    :+ ( "C" -> fof"(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) {
     defL( "Iv", Iv )
-    allL( p9t"0" )
+    allL( fot"0" )
     exL( FOLVar( "y_0" ), "Iv_0" )
-    allL( p9t"y_0 + 1" )
+    allL( fot"y_0 + 1" )
     forget( "Iv" )
     exL( FOLVar( "y_1" ), "Iv_1" )
-    exR( "C", p9t"y_0", p9t"(y_0 + y_1) + 1" )
+    exR( "C", fot"y_0", fot"(y_0 + y_1) + 1" )
     forget( "C" )
     destruct( "C_0" )
     negR
@@ -50,10 +50,10 @@ object tape {
     axiomTh
   }
 
-  val p = Lemma( ( "A" -> p9f"A" ) +: Sequent()
-    :+ ( "C" -> p9f"(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) {
-    cut( p9f"I(1)", "I1" )
-    cut( p9f"I(0)", "I0" )
+  val p = Lemma( ( "A" -> fof"A" ) +: Sequent()
+    :+ ( "C" -> fof"(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) {
+    cut( fof"I(1)", "I1" )
+    cut( fof"I(0)", "I0" )
     insert( lhs )
     forget( "A" )
     forget( "I1" )
