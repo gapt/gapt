@@ -69,7 +69,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
             parens( showName( vn ) <> ":" <> show( vt, false ) )
         val t1 = t0 + ( vn -> v )
         val ( e_, t2 ) = show( e, knownType, t1, prio.lam + 1 )
-        ( parenIf( p, prio.lam, "^" <> v_ </> e_ ),
+        ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ </> e_ ),
           if ( t0 contains vn ) t2 + ( vn -> t0( vn ) )
           else t2 - vn )
 
