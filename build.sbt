@@ -168,6 +168,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.0",
+      "com.lihaoyi" %% "fastparse" % "0.3.4",
       "org.scalaz" %% "scalaz-core" % "7.2.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
