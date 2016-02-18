@@ -40,7 +40,7 @@ object BabelParser {
     case ( expr, None )       => expr
   }
 
-  val Impl: P[ast.Expr] = P( Bicond.rep( 1, "->" | "→" ) ).map( _.reduceRight( ast.Imp ) )
+  val Impl: P[ast.Expr] = P( Bicond.rep( 1, "->" | "⊃" ) ).map( _.reduceRight( ast.Imp ) )
   val Bicond: P[ast.Expr] = P( Disj.rep( 1, "<->" ) ).map {
     case Seq( formula ) => formula
     case formulas       => ( formulas, formulas.tail ).zipped.map( ast.Bicond ).reduceLeft( ast.And )
