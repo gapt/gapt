@@ -128,8 +128,8 @@ class LKskToExpansionProofTest extends Specification {
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(
-          ( _, ETAtom( _, _ ) ),
-          ( _, ETNeg( ETAtom( _, _ ) ) ) )
+          ( _, ETNeg( ETAtom( _, _ ) ) ),
+          ( _, ETAtom( _, _ ) ) )
           ) => ok
       }
     }
@@ -139,8 +139,8 @@ class LKskToExpansionProofTest extends Specification {
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(
-          ( _, ETAtom( _, _ ) ),
-          ( _, ETNeg( ETAtom( _, _ ) ) ) )
+          ( _, ETNeg( ETAtom( _, _ ) ) ),
+          ( _, ETAtom( _, _ ) ) )
           ) => ok
       }
     }
@@ -151,8 +151,8 @@ class LKskToExpansionProofTest extends Specification {
       et must beLike {
         case ETSkolemQuantifier( _, sk,
           ETWeakQuantifier( _, SortedMap(
-            ( _, ETAtom( _, _ ) ),
-            ( _, ETNeg( ETAtom( _, _ ) ) ) )
+            ( _, ETNeg( ETAtom( _, _ ) ) ),
+            ( _, ETAtom( _, _ ) ) )
             ) ) => ok
       }
     }
@@ -162,8 +162,8 @@ class LKskToExpansionProofTest extends Specification {
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(
-          ( _, ETNeg( ETWeakQuantifier( _, SortedMap( ( sk2, ETAtom( _, _ ) ) ) ) ) ),
-          ( _, ETSkolemQuantifier( _, sk1, ETAtom( _, _ ) ) )
+          ( _, ETSkolemQuantifier( _, sk1, ETAtom( _, _ ) ) ),
+          ( _, ETNeg( ETWeakQuantifier( _, SortedMap( ( sk2, ETAtom( _, _ ) ) ) ) ) )
           ) ) => ok
       }
     }

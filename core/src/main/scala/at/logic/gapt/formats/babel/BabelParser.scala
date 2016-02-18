@@ -15,7 +15,6 @@ object BabelLexical {
   val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
   val QuotedNameChar: P[String] = P(
     CharsWhile( c => c != '\\' && c != ''' ).! |
-      "\\'".!.map( _ => "'" ) |
       ( "\\" ~ ( "'" | "\\" ).! ) |
       ( "\\u" ~ CharIn( ( 'a' to 'f' ) ++ ( '0' to '9' ) ).
         rep( min = 4, max = 4 ).!.
@@ -41,7 +40,7 @@ object BabelParser {
     case ( expr, None )       => expr
   }
 
-  val Impl: P[ast.Expr] = P( Bicond.rep( 1, "->" | "→" ) ).map( _.reduceRight( ast.Imp ) )
+  val Impl: P[ast.Expr] = P( Bicond.rep( 1, "->" | "⊃" ) ).map( _.reduceRight( ast.Imp ) )
   val Bicond: P[ast.Expr] = P( Disj.rep( 1, "<->" ) ).map {
     case Seq( formula ) => formula
     case formulas       => ( formulas, formulas.tail ).zipped.map( ast.Bicond ).reduceLeft( ast.And )

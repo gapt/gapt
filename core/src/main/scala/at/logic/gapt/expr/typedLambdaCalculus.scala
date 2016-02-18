@@ -7,6 +7,7 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr.hol.HOLPosition._
+import at.logic.gapt.formats.babel.BabelExporter
 
 import scala.annotation.tailrec
 
@@ -114,34 +115,7 @@ abstract class LambdaExpression {
    */
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
-  override def toString = this match {
-    case Eq( x, y )                          => s"$x=$y"
-    case Neg( Eq( x, y ) )                   => s"$x≠$y"
-    case FOLFunction( "+", Seq( x, y ) )     => s"($x+$y)"
-    case FOLFunction( "*", Seq( x, y ) )     => s"($x*$y)"
-
-    case All( Var( x, Ti ), e )              => s"∀$x.$e"
-    case All( Var( x, t ), e )               => s"∀$x:$t.$e"
-    case Ex( Var( x, Ti ), e )               => s"∃$x.$e"
-    case Ex( Var( x, t ), e )                => s"∃$x:$t.$e"
-    case And( x, y )                         => s"($x∧$y)"
-    case Or( x, y )                          => s"($x∨$y)"
-    case Imp( x, y )                         => s"($x⊃$y)"
-    case Neg( x )                            => s"¬$x"
-    case Bottom()                            => "⊥"
-    case Top()                               => "⊤"
-
-    case FOLAtom( r, Seq() )                 => s"$r"
-    case FOLFunction( f, Seq() )             => s"$f"
-    case HOLAtom( r, xs ) if xs.nonEmpty     => s"$r(${xs mkString ","})"
-    case HOLFunction( f, xs ) if xs.nonEmpty => s"$f(${xs mkString ","})"
-
-    case Abs( Var( x, Ti ), t )              => s"(λ$x.$t)"
-    case Abs( Var( x, ty ), t )              => s"(λ$x:$ty.$t)"
-    case App( x, y )                         => s"($x $y)"
-    case Var( x, t )                         => s"$x"
-    case Const( x, t )                       => s"$x"
-  }
+  override def toString = BabelExporter.export( this )
 
   def &( that: LambdaExpression ): HOLFormula = And( this, that )
   def |( that: LambdaExpression ): HOLFormula = Or( this, that )

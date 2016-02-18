@@ -133,7 +133,7 @@ class DeltaTableTest extends Specification {
         ( dec ) must beEqualTo( Set[Decomposition]( ( uTarget, s.toSet ) ) )
       }
 
-      "example #2 with duplicates" in {
+      "example 2 with duplicates" in {
 
         val deltaG = new UnboundedVariableDelta()
 
