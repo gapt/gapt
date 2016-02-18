@@ -56,8 +56,8 @@ class EscargotTest extends Specification {
     Escargot getRobinsonProof formula must beSome
   }
 
-  "drinker" in { Escargot getRobinsonProof parseFormula( "?x p(x) -> (!y p(y))" ) must beSome }
-  "barber" in { Escargot getRobinsonProof parseFormula( "-(?x !y shaves(x,y) <-> -shaves(y,y))" ) must beSome }
+  "drinker" in { Escargot getRobinsonProof parseFormula( "?x (p(x) -> !y p(y))" ) must beSome }
+  "barber" in { Escargot getRobinsonProof parseFormula( "-?x !y (shaves(x,y) <-> -shaves(y,y))" ) must beSome }
 
   "two plus two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "s(s(0)) + s(s(0)) != s(s(s(s(0))))" ) must beSome }
   "two times two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "x * 0 = 0", "x*s(y) = (x*y) + x", "s(s(0)) * s(s(0)) != s(s(s(s(0))))" ) must beSome }

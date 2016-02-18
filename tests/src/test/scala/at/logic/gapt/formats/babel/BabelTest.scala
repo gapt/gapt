@@ -34,6 +34,12 @@ class BabelTest extends Specification {
       }
   }
 
+  "quantifiers bind more closely than conjunction" in {
+    BabelParser.parse( "?x P(x) | Q(x)" ) must beLike {
+      case \/-( Or( Ex( _, _ ), _ ) ) => ok
+    }
+  }
+
   "limited llk compatibility" in {
     val formulas = Seq(
       "p(X)", "A", "-p(y)", "-p(Y)",

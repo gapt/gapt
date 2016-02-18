@@ -31,18 +31,15 @@ object BabelParser {
 
   val ExprAndNothingElse: P[ast.Expr] = P( "" ~ Expr ~ End )
 
-  val Expr: P[ast.Expr] = P( TypeAscription )
+  val Expr: P[ast.Expr] = P( Lam )
 
-  val TypeAscription: P[ast.Expr] = P( Quant ~/ ( ":" ~ Type ).? ) map {
+  val BoundVar: P[ast.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => ast.Ident( x._1, x._2 ) ) )
+  val Lam: P[ast.Expr] = P( ( ( "^" | "\\" ) ~/ BoundVar ~ "=>".? ~ Lam ).map( x => ast.Abs( x._1, x._2 ) ) | TypeAscription )
+
+  val TypeAscription: P[ast.Expr] = P( Impl ~/ ( ":" ~ Type ).? ) map {
     case ( expr, Some( ty ) ) => ast.TypeAscription( expr, ty )
     case ( expr, None )       => expr
   }
-
-  val Quant: P[ast.Expr] = P( Ex | All | Lam | Impl )
-  val QuantIdent: P[ast.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => ast.Ident( x._1, x._2 ) ) )
-  val Ex = P( ( "?" | "exists" ) ~/ QuantIdent ~ Quant ).map( ast.Ex.tupled )
-  val All = P( ( "!" | "all" ) ~/ QuantIdent ~ Quant ).map( ast.All.tupled )
-  val Lam = P( ( "^" | "\\" ) ~/ QuantIdent ~ "=>".? ~ Quant ).map( x => ast.Abs( x._1, x._2 ) )
 
   val Impl: P[ast.Expr] = P( Bicond.rep( 1, "->" ) ).map( _.reduceRight( ast.Imp ) )
   val Bicond: P[ast.Expr] = P( Disj.rep( 1, "<->" ) ).map {
@@ -52,9 +49,12 @@ object BabelParser {
 
   val Disj = P( Conj.rep( 1, "|" ) ).map( _.reduceLeft( ast.Or ) )
 
-  val Conj = P( Neg.rep( 1, "&" ) ).map( _.reduceLeft( ast.And ) )
+  val Conj = P( QuantOrNeg.rep( 1, "&" ) ).map( _.reduceLeft( ast.And ) )
 
-  val Neg: P[ast.Expr] = P( ( "-" ~ Neg ).map( ast.Neg ) | InfixRel )
+  val QuantOrNeg: P[ast.Expr] = P( Ex | All | Neg | InfixRel )
+  val Ex = P( ( "?" | "exists" ) ~/ BoundVar ~ QuantOrNeg ).map( ast.Ex.tupled )
+  val All = P( ( "!" | "all" ) ~/ BoundVar ~ QuantOrNeg ).map( ast.All.tupled )
+  val Neg: P[ast.Expr] = P( ( "-" ~ QuantOrNeg ).map( ast.Neg ) )
 
   val InfixRelSym = P( "<" | ">" | "<=" | ">=" | "=" | "!=" )
   val InfixRel = P( PlusMinus ~/ ( InfixRelSym.! ~ PlusMinus ).rep ) map {
