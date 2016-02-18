@@ -115,7 +115,8 @@ abstract class LambdaExpression {
    */
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
-  override def toString = BabelExporter.export( this )
+  override def toString = new BabelExporter( unicode = true ).export( this )
+  def toAsciiString = new BabelExporter( unicode = false ).export( this )
 
   def &( that: LambdaExpression ): HOLFormula = And( this, that )
   def |( that: LambdaExpression ): HOLFormula = Or( this, that )

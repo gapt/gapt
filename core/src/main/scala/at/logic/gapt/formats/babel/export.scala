@@ -3,7 +3,7 @@ package at.logic.gapt.formats.babel
 import at.logic.gapt.expr._
 import org.kiama.output.PrettyPrinter
 
-object BabelExporter extends PrettyPrinter {
+class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
 
   def export( expr: LambdaExpression ): String =
     pretty( show( expr, false, Map(), prio.max )._1 )
@@ -55,11 +55,11 @@ object BabelExporter extends PrettyPrinter {
 
       case Neg( e ) =>
         val ( e_, t1 ) = show( e, true, t0, prio.quantOrNeg + 1 )
-        ( parenIf( p, prio.quantOrNeg, "-" <> e_ ), t1 )
+        ( parenIf( p, prio.quantOrNeg, ( if ( unicode ) "¬" else "-" ) <> e_ ), t1 )
 
-      case And( a, b ) => showBin( "&", prio.conj, 1, 0, a, b, true, t0, p )
-      case Or( a, b )  => showBin( "|", prio.disj, 1, 0, a, b, true, t0, p )
-      case Imp( a, b ) => showBin( "->", prio.impl, 0, 1, a, b, true, t0, p )
+      case And( a, b ) => showBin( if ( unicode ) "∧" else "&", prio.conj, 1, 0, a, b, true, t0, p )
+      case Or( a, b )  => showBin( if ( unicode ) "∨" else "|", prio.disj, 1, 0, a, b, true, t0, p )
+      case Imp( a, b ) => showBin( if ( unicode ) "⊃" else "->", prio.impl, 0, 1, a, b, true, t0, p )
 
       case Abs( v @ Var( vn, vt ), e ) =>
         val v_ =
@@ -73,8 +73,8 @@ object BabelExporter extends PrettyPrinter {
           if ( t0 contains vn ) t2 + ( vn -> t0( vn ) )
           else t2 - vn )
 
-      case All( v, e ) => showQuant( "!", v, e, t0, p )
-      case Ex( v, e )  => showQuant( "?", v, e, t0, p )
+      case All( v, e ) => showQuant( if ( unicode ) "∀" else "!", v, e, t0, p )
+      case Ex( v, e )  => showQuant( if ( unicode ) "∃" else "?", v, e, t0, p )
 
       case Apps( hd, args ) if args.nonEmpty =>
         if ( knownType || expr.exptype == Ti ) {
@@ -140,14 +140,16 @@ object BabelExporter extends PrettyPrinter {
   }
 
   val unquotedName = """[A-Za-z0-9_$]+""".r
+  val safeChars = """[A-Za-z0-9 ~!@#$%^&*()_=+{}|;:,./<>?-]|\[|\]""".r
   def showName( name: String ): Doc = name match {
     case unquotedName() => name
     case _ => "'" + name.map {
-      case c @ unquotedName() =>
+      case c @ safeChars() =>
         c
-      case '''  => "\\'"
-      case '\\' => "\\\\"
-      case c    => "\\u%04x".format( c.toChar.toInt )
+      case '''          => "\\'"
+      case '\\'         => "\\\\"
+      case c if unicode => c
+      case c            => "\\u%04x".format( c.toChar.toInt )
     }.mkString + "'"
   }
 
