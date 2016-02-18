@@ -40,6 +40,12 @@ class BabelTest extends Specification {
     }
   }
 
+  "unicode connectives" in {
+    BabelParser.parse( "∃x P(x) ∨ Q(x)" ) must beLike {
+      case \/-( Or( Ex( _, _ ), _ ) ) => ok
+    }
+  }
+
   "limited llk compatibility" in {
     val formulas = Seq(
       "p(X)", "A", "-p(y)", "-p(Y)",
