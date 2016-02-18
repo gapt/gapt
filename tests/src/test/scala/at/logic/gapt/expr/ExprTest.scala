@@ -67,7 +67,7 @@ class ExprTest extends Specification {
 
   "toString" should {
     "terminate" in {
-      FOLAtom( "P" ).toString must beEqualTo( "P" )
+      FOLAtom( "P" ).toString must beEqualTo( "P:o" )
     }
   }
 

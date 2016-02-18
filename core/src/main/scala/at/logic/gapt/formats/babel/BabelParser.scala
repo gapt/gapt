@@ -15,7 +15,6 @@ object BabelLexical {
   val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
   val QuotedNameChar: P[String] = P(
     CharsWhile( c => c != '\\' && c != ''' ).! |
-      "\\'".!.map( _ => "'" ) |
       ( "\\" ~ ( "'" | "\\" ).! ) |
       ( "\\u" ~ CharIn( ( 'a' to 'f' ) ++ ( '0' to '9' ) ).
         rep( min = 4, max = 4 ).!.
