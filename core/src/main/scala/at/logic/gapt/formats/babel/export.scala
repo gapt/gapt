@@ -34,8 +34,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     p:         Int
   ): ( Doc, Map[String, LambdaExpression] ) =
     expr match {
-      case Top() if false    => ( value( ??? ), t0 )
-      case Bottom() if false => ( value( ??? ), t0 )
+      case Top()    => ( value( if ( unicode ) "⊤" else "true" ), t0 )
+      case Bottom() => ( value( if ( unicode ) "⊥" else "false" ), t0 )
 
       case Apps( Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) =>
         showBin( rel, prio.infixRel, 0, 0, a, b, false, t0, p )
@@ -142,6 +142,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
   val unquotedName = """[A-Za-z0-9_$]+""".r
   val safeChars = """[A-Za-z0-9 ~!@#$%^&*()_=+{}|;:,./<>?-]|\[|\]""".r
   def showName( name: String ): Doc = name match {
+    case "true"         => "'true'"
+    case "false"        => "'false'"
     case unquotedName() => name
     case _ => "'" + name.map {
       case c @ safeChars() =>

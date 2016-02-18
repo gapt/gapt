@@ -85,7 +85,10 @@ object BabelParser {
   }
 
   val Parens: P[ast.Expr] = P( "(" ~/ Expr ~/ ")" )
-  val Atom: P[ast.Expr] = P( Parens | Ident )
+  val Atom: P[ast.Expr] = P( Parens | True | False | Ident )
+
+  val True = P( "true" | "⊤" ).map( _ => ast.Top )
+  val False = P( "false" | "⊥" ).map( _ => ast.Bottom )
 
   val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshTypeVar() ) ) )
 
