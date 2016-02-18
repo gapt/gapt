@@ -42,7 +42,7 @@ object BabelParser {
   val QuantIdent: P[ast.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => ast.Ident( x._1, x._2 ) ) )
   val Ex = P( ( "?" | "exists" ) ~/ QuantIdent ~ Quant ).map( ast.Ex.tupled )
   val All = P( ( "!" | "all" ) ~/ QuantIdent ~ Quant ).map( ast.All.tupled )
-  val Lam = P( "\\" ~/ QuantIdent ~ "=>".? ~ Quant ).map( x => ast.Abs( x._1, x._2 ) )
+  val Lam = P( ( "^" | "\\" ) ~/ QuantIdent ~ "=>".? ~ Quant ).map( x => ast.Abs( x._1, x._2 ) )
 
   val Impl: P[ast.Expr] = P( Bicond.rep( 1, "->" ) ).map( _.reduceRight( ast.Imp ) )
   val Bicond: P[ast.Expr] = P( Disj.rep( 1, "<->" ) ).map {

@@ -32,7 +32,7 @@ object ast {
   def readable( e: Expr ): String = e match {
     case TypeAscription( expr, ty ) => s"(${readable( expr )}:${readable( ty )})"
     case Ident( name, ty )          => s"($name:${readable( ty )})"
-    case Abs( v, sub )              => s"(\\${readable( v )} ${readable( sub )})"
+    case Abs( v, sub )              => s"(^${readable( v )} ${readable( sub )})"
     case App( a, b )                => s"(${readable( a )} ${readable( b )})"
   }
 
@@ -73,6 +73,9 @@ object ast {
     case TypeVar( idx )  => assg.get( idx ).fold( t )( subst( _, assg ) )
   }
   type UnificationError = String
+  def printCtx( eqs: List[( Type, Type )], assg: Map[TypeVarIdx, Type] ): String =
+    ( assg.map { case ( idx, t ) => s"${readable( TypeVar( idx ) )} = ${readable( t )}\n" } ++
+      eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
   def solve( eqs: List[( Type, Type )], assg: Map[TypeVarIdx, Type] ): UnificationError \/ Map[TypeVarIdx, Type] = eqs match {
     case Nil => assg.right
     case ( first :: rest ) => first match {
@@ -86,11 +89,11 @@ object ast {
         if ( t1 == t2_ )
           solve( rest, assg )
         else if ( freeVars( t2_ ) contains i1 )
-          s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )}".left
+          s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )} in\n${printCtx( eqs, assg )}".left
         else
           solve( rest, assg + ( i1 -> t2_ ) )
       case ( t1, t2: TypeVar ) => solve( ( t2 -> t1 ) :: rest, assg )
-      case ( t1, t2 )          => s"Cannot unify types ${readable( t1 )} and ${readable( t2 )}".left
+      case ( t1, t2 )          => s"Cannot unify types ${readable( t1 )} and ${readable( t2 )} in\n${printCtx( eqs, assg )}".left
     }
   }
 
