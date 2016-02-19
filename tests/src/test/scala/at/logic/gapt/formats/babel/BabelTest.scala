@@ -53,6 +53,26 @@ class BabelTest extends Specification {
     }
   }
 
+  "round-trip safety" in {
+    val strings = Seq(
+      "#c(x : o > o > o) #v(c : o) x",
+      "(qrev(qrev(x, nil), nil): list) = x",
+      "!a?b a(b,c)",
+      "true", "'true'", "'all' x"
+    )
+    Fragments.foreach( strings ) { string =>
+      string in {
+        val \/-( expr ) = BabelParser.parse( string )
+
+        val \/-( expr2 ) = BabelParser.parse( expr.toString )
+        expr must_== expr2
+
+        val \/-( expr3 ) = BabelParser.parse( expr.toAsciiString )
+        expr must_== expr3
+      }
+    }
+  }
+
   "limited llk compatibility" in {
     val formulas = Seq(
       "p(X)", "A", "-p(y)", "-p(Y)",
@@ -154,14 +174,12 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
 (p101(Y) | -p102(Y)) & (p100(Y) | -p101(Y)))) & -p101(X) & p100(X))))"""
     )
 
-    Fragments.foreach( formulas ) { formula =>
-      formula in {
-        BabelParser.parse( formula ) must beLike {
-          case \/-( expr ) => ok
-        }
+    for ( formula <- formulas )
+      BabelParser.parse( formula ) must beLike {
+        case \/-( expr ) => ok
       }
-    }
 
+    ok
   }
 
 }
