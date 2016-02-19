@@ -62,16 +62,15 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Imp( a, b ) => showBin( if ( unicode ) "⊃" else "->", prio.impl, 0, 1, a, b, true, t0, p )
 
       case Abs( v @ Var( vn, vt ), e ) =>
+        val t1 = t0 - vn
+        val ( e_, t2 ) = show( e, knownType, t1, prio.lam + 1 )
         val v_ =
-          if ( knownType || vt == Ti )
+          if ( vt == Ti || t2.get( vn ).contains( v ) )
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
-        val t1 = t0 + ( vn -> v )
-        val ( e_, t2 ) = show( e, knownType, t1, prio.lam + 1 )
         ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ <@> e_ ),
-          if ( t0 contains vn ) t2 + ( vn -> t0( vn ) )
-          else t2 - vn )
+          t2 - vn ++ t0.get( vn ).map { vn -> _ } )
 
       case All( v, e ) => showQuant( if ( unicode ) "∀" else "!", v, e, t0, p )
       case Ex( v, e )  => showQuant( if ( unicode ) "∃" else "?", v, e, t0, p )
@@ -132,16 +131,15 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     p:   Int
   ): ( Doc, Map[String, LambdaExpression] ) = {
     val Var( vn, vt ) = v
+    val t1 = t0 - vn
+    val ( e_, t2 ) = show( e, true, t1, prio.quantOrNeg + 1 )
     val v_ =
-      if ( vt == Ti )
+      if ( vt == Ti || t2.get( vn ).contains( v ) )
         showName( vn )
       else
         parens( showName( vn ) <> ":" <> show( vt, false ) )
-    val t1 = t0 + ( vn -> v )
-    val ( e_, t2 ) = show( e, true, t1, prio.quantOrNeg + 1 )
     ( parenIf( p, prio.quantOrNeg, sym <> v_ <@> e_ ),
-      if ( t0 contains vn ) t2 + ( vn -> t0( vn ) )
-      else t2 - vn )
+      t2 - vn ++ t0.get( vn ).map { vn -> _ } )
   }
 
   val unquotedName = """[A-Za-z0-9_$]+""".r
