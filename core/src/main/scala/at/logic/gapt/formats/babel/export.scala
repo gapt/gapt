@@ -6,7 +6,7 @@ import org.kiama.output.PrettyPrinter
 class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
 
   def export( expr: LambdaExpression ): String =
-    pretty( show( expr, false, Map(), prio.max )._1 )
+    pretty( group( show( expr, false, Map(), prio.max )._1 ) )
 
   object prio {
     val ident = 0
@@ -51,7 +51,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Eq( a, b ) =>
         val ( a_, t1 ) = show( a, false, t0, prio.infixRel )
         val ( b_, t2 ) = show( b, true, t1, prio.infixRel )
-        ( parenIf( p, prio.infixRel, a_ <+> "=" </> b_ ), t2 )
+        ( parenIf( p, prio.infixRel, a_ <+> "=" <@> b_ ), t2 )
 
       case Neg( e ) =>
         val ( e_, t1 ) = show( e, true, t0, prio.quantOrNeg + 1 )
@@ -69,7 +69,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
             parens( showName( vn ) <> ":" <> show( vt, false ) )
         val t1 = t0 + ( vn -> v )
         val ( e_, t2 ) = show( e, knownType, t1, prio.lam + 1 )
-        ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ </> e_ ),
+        ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ <@> e_ ),
           if ( t0 contains vn ) t2 + ( vn -> t0( vn ) )
           else t2 - vn )
 
@@ -93,7 +93,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
           ( parenIf( p, prio.app, hd_ ) <> parens( fillsep( args_, comma ) ), t2 )
         } else {
           val ( expr_, t2 ) = show( expr, true, t1, prio.ascript )
-          ( parenIf( p, prio.ascript, expr_ <+> ":" </> show( expr.exptype, false ) ), t2 )
+          ( parenIf( p, prio.ascript, expr_ <+> ":" <@> show( expr.exptype, false ) ), t2 )
         }
 
       case Const( name, ty ) =>
@@ -121,7 +121,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
   ): ( Doc, Map[String, LambdaExpression] ) = {
     val ( a_, t1 ) = show( a, knownType, t0, prio + leftPrioBias )
     val ( b_, t2 ) = show( b, knownType, t1, prio + rightPrioBias )
-    ( parenIf( p, prio, a_ <+> sym </> b_ ), t2 )
+    ( parenIf( p, prio, a_ <+> sym <@> b_ ), t2 )
   }
 
   def showQuant(
@@ -139,7 +139,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
         parens( showName( vn ) <> ":" <> show( vt, false ) )
     val t1 = t0 + ( vn -> v )
     val ( e_, t2 ) = show( e, true, t1, prio.quantOrNeg + 1 )
-    ( parenIf( p, prio.quantOrNeg, sym <> v_ </> e_ ),
+    ( parenIf( p, prio.quantOrNeg, sym <> v_ <@> e_ ),
       if ( t0 contains vn ) t2 + ( vn -> t0( vn ) )
       else t2 - vn )
   }
@@ -163,13 +163,13 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
   def show( ty: Ty, needParens: Boolean ): Doc = ty match {
     case TBase( name ) => showName( name )
     case a -> b if !needParens =>
-      show( a, true ) <\> ">" <\> show( b, false )
-    case _ => nest( parens( show( ty, false ) ) )
+      group( show( a, true ) <> ">" <@@> show( b, false ) )
+    case _ => parens( nest( show( ty, false ) ) )
   }
 
   def parenIf( enclosingPrio: Int, currentPrio: Int, doc: Doc ) =
     if ( enclosingPrio <= currentPrio )
-      nest( parens( doc ) )
+      parens( group( nest( doc ) ) )
     else
-      doc
+      group( doc )
 }
