@@ -44,7 +44,7 @@
 % axiom names %
 \CONSTDEC{A1, A2, A3, A4, A5, A6, A7, A8, A9, A10}{o}
 \CONSTDEC{A11, A12, A13, A14, A15, A16, A17, A18, A19, A20}{o}
-\CONSTDEC{ A21, A22, A23, A24, A30, A31, A32, A33, A34, A35, A36, IND}{o}
+\CONSTDEC{ A21, A22, A23, A24, A30, A31, A33, A34, A36, IND}{o}
 
 
 
@@ -91,10 +91,8 @@
 \AXIOMDEC{A36}{}{ x  < y -> x+z < y+z}
 \AXIOMDEC{A18}{}{ x=0 | ( exists y y<x)} 
 \AXIOMDEC{A19}{}{ 0 < x +1}
-\AXIOMDEC{A32}{}{ x<y -> x+1<y+1}
 \AXIOMDEC{A33}{}{ -(x<x) }
 \AXIOMDEC{A34}{}{ x<y & y<z -> x<z }
-\AXIOMDEC{A35}{}{ x+1<y+1 -> x<y}
 \AXIOMDEC{IND}{}{Y(0) & ( all n (Y(n) -> Y(n+1))) -> ( all n Y(n))}
 \AXIOMDEC{A20}{}{(  all x (0 \bm x = 0))}
 \AXIOMDEC{A21}{}{(  all x (x \bm 0 = x))}
@@ -617,7 +615,7 @@
   \INSTAXIOM{A19: 0<x+1}{AX}{0<0+1}
 
   \AX{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}
-  \INSTAXIOM{A32: x<y -> x+1 < y+1}{AX}{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}
+  \INSTAXIOM{A36: x<y -> x+1 < y+1}{AX}{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}
   \ALLR{\alpha}{AX}{( all n (n<n+1 -> n+1 < (n+1)+1))}
   \ANDR{AX}{0<0+1 & (( all n (n<n+1 -> n+1 < (n+1)+1)))}
   \AX{( all n (n < n+1))}{( all n (n < n+1))}
@@ -642,7 +640,7 @@
   \NEGL{ (n+1)+1 < n+1 -> n+1<n, - n+1<n, (n+1)+1 < n+1}{}
   \NEGR{ (n+1)+1 < n+1 -> n+1<n, - n+1<n }{ - (n+1)+1 < n+1}
   \IMPR{ (n+1)+1 < n+1 -> n+1<n }{- (n+1<n) -> -((n+1)+1 < n+1)}
-  \INSTAXIOM{A35: x+1<y+1 -> x < y}{AX}{- (n+1<n) -> - ((n+1)+1 < n+1)}
+  \INSTAXIOM{A17: x+1<y+1 -> x < y}{AX}{- (n+1<n) -> - ((n+1)+1 < n+1)}
   \ALLR{n}{AX}{ ( all n (- (n+1<n) -> -((n+1)+1 < n+1)))}
 
   \ANDR{AX}{ - 0+1<0 & ( all n (- (n+1<n) -> -((n+1)+1 < n+1)))}

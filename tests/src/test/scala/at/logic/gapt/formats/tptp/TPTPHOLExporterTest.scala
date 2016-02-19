@@ -14,12 +14,12 @@ class TPTPHOLExporterTest extends Specification {
       val ax = HOLAtom( x, List( c ) )
       val ay = HOLAtom( y )
 
-      println( TPTPHOLExporter( List( HOLSequent( Nil, List( ax, ay ) ) ) ) )
+      println( TPTPHOLExporter( List( HOLSequent( Nil, List( ax, ay ) ) ), true ) )
 
       println( TPTPHOLExporter( List(
         HOLSequent( List( ax ), Nil ),
         HOLSequent( Nil, List( ay ) )
-      ) ) )
+      ), true ) )
       ok
     }
   }
