@@ -69,7 +69,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
             showName( vn )
           else
             parens( showName( vn ) <> ":" <> show( vt, false ) )
-        ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ <@> e_ ),
+        ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ </> e_ ),
           t2 - vn ++ t0.get( vn ).map { vn -> _ } )
 
       case All( v, e ) => showQuant( if ( unicode ) "∀" else "!", v, e, t0, p )
@@ -138,7 +138,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
         showName( vn )
       else
         parens( showName( vn ) <> ":" <> show( vt, false ) )
-    ( parenIf( p, prio.quantOrNeg, sym <> v_ <@> e_ ),
+    ( parenIf( p, prio.quantOrNeg, sym <> v_ </> e_ ),
       t2 - vn ++ t0.get( vn ).map { vn -> _ } )
   }
 
