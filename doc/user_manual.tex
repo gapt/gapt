@@ -567,7 +567,7 @@ formulas.  For example we can check whether a quantifier-free formula is a
 quasi-tautology using veriT:
 \begin{clilisting}
 gapt> val f = parseFormula("(a=b | a=c) & P(c) & P(b) -> P(a)")
-f: at.logic.gapt.expr.FOLFormula = (a = b ∨ a = c) ∧ (P(c) ∧ P(b)) ⊃ P(a)
+f: at.logic.gapt.expr.HOLFormula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \end{clilisting}
 
@@ -599,7 +599,7 @@ benchmark: String =
 (declare-fun f2 () t1)
 (declare-fun f3 () t1)
 (declare-fun f4 () t1)
-(assert (not (=> (and (or (= f4 f2) (= f4 f3)) (and (f1 f3) (f1 f2))) (f1 f4))))
+(assert (not (=> (and (and (or (= f4 f2) (= f4 f3)) (f1 f3)) (f1 f2)) (f1 f4))))
 (check-sat)
 "
 typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
@@ -643,7 +643,7 @@ a = b ⊃ b = a
 a = c ⊃ c = a
 b = a ∧ P(b) ⊃ P(a)
 c = a ∧ P(c) ⊃ P(a)
-(a = b ∨ a = c) ∧ (P(c) ∧ P(b)) ⊃ P(a)
+(a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \end{clilisting}
 
@@ -729,7 +729,7 @@ Note that \cli{getLKProof} only works for sequents without strong quantifiers
 will happily return expansion proofs with Skolem quantifiers in that case:
 \begin{clilisting}[Prover9.isInstalled]
 gapt> val strong = ("(exists x all y P(x,y))" +: Sequent()                                     :+ "(all y exists x P(x,y))" map parseFormula)
-strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLFormula] = ∃x ∀y P(x, y) :- ∀y ∃x P(x, y)
+strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∃x ∀y P(x, y) :- ∀y ∃x P(x, y)
 
 gapt> Prover9 getExpansionProof strong
 res25: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =

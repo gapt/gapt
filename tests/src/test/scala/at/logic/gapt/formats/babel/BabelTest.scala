@@ -3,24 +3,23 @@ package at.logic.gapt.formats.babel
 import at.logic.gapt.expr._
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
-import scalaz.\/-
 
 class BabelTest extends Specification {
 
   "hol impl" in {
     val x = Var( "x", To )
-    BabelParser.parse( "x -> x" ) must_== \/-( x --> x )
+    BabelParser.parse( "x -> x" ) must_== ( x --> x )
   }
 
   "many sorted quant" in {
     BabelParser.parse( "!P ?(x:Nat) !y P x y" ) must beLike {
-      case \/-( All( p, Ex( _, All( _, Apps( p_, _ ) ) ) ) ) => p must_== p_
+      case All( p, Ex( _, All( _, Apps( p_, _ ) ) ) ) => p must_== p_
     }
   }
 
   "equation chain" in {
     BabelParser.parse( "!P ?x !y P x y + 1 = y = P(x)(y) + 1 = P(x,y) + 1" ) must beLike {
-      case \/-( All( _, Ex( _, All( _, _ ) ) ) ) => ok
+      case All( _, Ex( _, All( _, _ ) ) ) => ok
     }
   }
 
@@ -30,27 +29,25 @@ class BabelTest extends Specification {
         '\u2200' (\'""' ('""' '\'' : o)) : o
       """
     ) must beLike {
-        case \/-( All( v, App( v_, Const( "'", Ti ) ) ) ) if v == v_ => ok
+        case All( v, App( v_, Const( "'", Ti ) ) ) if v == v_ => ok
       }
   }
 
   "quantifiers bind more closely than conjunction" in {
     BabelParser.parse( "?x P(x) | Q(x)" ) must beLike {
-      case \/-( Or( Ex( _, _ ), _ ) ) => ok
+      case Or( Ex( _, _ ), _ ) => ok
     }
   }
 
   "unicode connectives" in {
     BabelParser.parse( "∃x P(x) ∨ Q(x)" ) must beLike {
-      case \/-( Or( Ex( _, _ ), _ ) ) => ok
+      case Or( Ex( _, _ ), _ ) => ok
     }
   }
 
   "variable and constant literals" in {
-    BabelParser.parse( "#c(x : o > o > o) #v(c : o) x" ) must beLike {
-      case \/-( formula ) =>
-        formula must_== Apps( Const( "x", To -> ( To -> To ) ), Var( "c", To ), Var( "x", To ) )
-    }
+    BabelParser.parse( "#c(x : o > o > o) #v(c : o) x" ) must_==
+      Apps( Const( "x", To -> ( To -> To ) ), Var( "c", To ), Var( "x", To ) )
   }
 
   "round-trip safety" in {
@@ -66,12 +63,12 @@ class BabelTest extends Specification {
     )
     Fragments.foreach( strings ) { string =>
       string in {
-        val \/-( expr ) = BabelParser.parse( string )
+        val expr = BabelParser.parse( string )
 
-        val \/-( expr2 ) = BabelParser.parse( expr.toString )
+        val expr2 = BabelParser.parse( expr.toString )
         expr must_== expr2
 
-        val \/-( expr3 ) = BabelParser.parse( expr.toAsciiString )
+        val expr3 = BabelParser.parse( expr.toAsciiString )
         expr must_== expr3
       }
     }
@@ -178,10 +175,7 @@ p101(Y))) & (-(all X (-r1(Y,X) | -(-p2(X) & -p102(X) & p101(X)))) & -(all X (-r1
 (p101(Y) | -p102(Y)) & (p100(Y) | -p101(Y)))) & -p101(X) & p100(X))))"""
     )
 
-    for ( formula <- formulas )
-      BabelParser.parse( formula ) must beLike {
-        case \/-( expr ) => ok
-      }
+    formulas foreach BabelParser.parse
 
     ok
   }

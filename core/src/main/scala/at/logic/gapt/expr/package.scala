@@ -213,10 +213,7 @@ package object expr {
           expressions( i )
       }
 
-      BabelParser.parse( stringsNew.mkString ++ strings.last ).fold(
-        error => throw new IllegalArgumentException( error ),
-        term => TermReplacement( term, repl )
-      )
+      TermReplacement( BabelParser.parse( stringsNew.mkString ++ strings.last ), repl )
     }
 
     def hof( args: LambdaExpression* ): HOLFormula = {
@@ -230,10 +227,7 @@ package object expr {
           expressions( i )
       }
 
-      BabelParser.parseFormula( stringsNew.mkString ++ strings.last ).fold(
-        error => throw new IllegalArgumentException( error ),
-        term => TermReplacement( term, repl )
-      )
+      TermReplacement( BabelParser.parseFormula( stringsNew.mkString ++ strings.last ), repl )
     }
 
     def hoa( args: LambdaExpression* ): HOLAtom = {

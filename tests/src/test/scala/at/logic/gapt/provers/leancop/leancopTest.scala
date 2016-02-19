@@ -1,9 +1,7 @@
 package at.logic.gapt.provers.leancop
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 
 import org.specs2.mutable._
 
@@ -32,11 +30,7 @@ class LeanCoPProverTest extends Specification {
     }
 
     "x + 0 = x, x + s(y) = s(x+y) |- x + s(0) = s(x)" in {
-      val seq = HOLSequent(
-        Seq( "x+0 = x", "x+s(y) = s(x+y)" ).map( s => univclosure( parseFormula( s ) ) ),
-        Seq( parseFormula( "k+s(0) = s(k)" ) )
-      )
-
+      val seq = hof"!x x+0 = x" +: hof"!x !y x+s(y) = s(x+y)" +: Sequent() :+ hof"k+s(0) = s(k)"
       LeanCoP.getExpansionProof( seq ) must beSome
     }
 

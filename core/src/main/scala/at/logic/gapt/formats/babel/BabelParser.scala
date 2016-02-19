@@ -109,7 +109,7 @@ object BabelParser {
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
 
-  def parse( text: String ): String \/ LambdaExpression = {
+  def tryParse( text: String ): String \/ LambdaExpression = {
     import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
       case Success( expr, _ ) =>
@@ -120,8 +120,13 @@ object BabelParser {
         parseError.toString.left
     }
   }
+  def parse( text: String ): LambdaExpression =
+    tryParse( text ).fold(
+      error => throw new IllegalArgumentException( error ),
+      expr => expr
+    )
 
-  def parseFormula( text: String ): String \/ HOLFormula = {
+  def tryParseFormula( text: String ): String \/ HOLFormula = {
     import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
       case Success( expr, _ ) =>
@@ -133,4 +138,9 @@ object BabelParser {
         parseError.toString.left
     }
   }
+  def parseFormula( text: String ): HOLFormula =
+    tryParseFormula( text ).fold(
+      error => throw new IllegalArgumentException( error ),
+      formula => formula
+    )
 }

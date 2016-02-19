@@ -3,7 +3,6 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr.hol.{ CNFn, structuralCNF, existsclosure }
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.proofs.{ SequentMatchers, Sequent }
 import at.logic.gapt.utils.SatMatchers
@@ -11,13 +10,12 @@ import org.specs2.mutable._
 
 class RobinsonToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
   "simple proof from prover9" should {
-    val es = existsclosure(
-      "P(c,z)" +:
-        "P(x,g(z)) -> P(f(x),z) & R(y)" +:
-        "P(x,z) -> Q(x)" +:
-        Sequent()
-        :+ "Q(f(f(x)))"
-        map parseFormula
+    val es = (
+      hof"!z P(c,z)" +:
+      hof"!x!y!z (P(x,g(z)) -> P(f(x),z) & R(y))" +:
+      hof"!x!z (P(x,z) -> Q(x))" +:
+      Sequent()
+      :+ hof"?x Q(f(f(x)))"
     )
 
     "extract expansion sequent for the initial clauses" in {
