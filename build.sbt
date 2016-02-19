@@ -25,7 +25,8 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
-    "-feature"
+    "-feature",
+    "-unchecked"
   ),
 
   // scalaz-stream is not on maven.org
