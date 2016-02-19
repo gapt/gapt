@@ -38,8 +38,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Top()    => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() => ( value( if ( unicode ) "⊥" else "false" ), t0 )
 
-      case Apps( Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) =>
-        showBin( rel, prio.infixRel, 0, 0, a, b, false, bound, t0, p )
+      case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) =>
+        showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
       case Apps( c @ Const( "+", _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.plusMinus, 1, 1, a, b, knownType, bound, t0, p )
       case Apps( c @ Const( "-", _ ), Seq( a, b ) ) =>
