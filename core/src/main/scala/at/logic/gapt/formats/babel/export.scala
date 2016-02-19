@@ -81,10 +81,11 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
           case Var( n, _ )   => Some( n )
           case _             => None
         }
+        val hdKnown = hdSym.exists { n => t0 get n contains hd }
         var t1 = t0 ++ hdSym.map { _ -> hd }
-        if ( knownType || expr.exptype == Ti || hdSym.exists { n => t0 get n contains hd } ) {
+        if ( knownType || expr.exptype == Ti || hdKnown ) {
           val args_ = for ( arg <- args ) yield {
-            val ( arg_, t10 ) = show( arg, false, t1, prio.max )
+            val ( arg_, t10 ) = show( arg, hdKnown, t1, prio.max )
             t1 = t10
             arg_
           }
