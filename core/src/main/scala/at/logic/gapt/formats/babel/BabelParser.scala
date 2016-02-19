@@ -105,24 +105,26 @@ object BabelParser {
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
 
   def parse( text: String ): String \/ LambdaExpression = {
+    import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
-      case Parsed.Success( expr, _ ) =>
+      case Success( expr, _ ) =>
         ast.toRealExpr( expr ).leftMap { unifError =>
           s"Cannot type-check ${ast.readable( expr )}:\n$unifError"
         }
-      case parseError: Parsed.Failure =>
+      case parseError: Failure =>
         parseError.toString.left
     }
   }
 
   def parseFormula( text: String ): String \/ HOLFormula = {
+    import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
-      case Parsed.Success( expr, _ ) =>
+      case Success( expr, _ ) =>
         val formula = ast.TypeAscription( expr, ast.Bool )
         ast.toRealExpr( formula ).leftMap { unifError =>
           s"Cannot type-check ${ast.readable( formula )}:\n$unifError"
         }.map { _.asInstanceOf[HOLFormula] }
-      case parseError: Parsed.Failure =>
+      case parseError: Failure =>
         parseError.toString.left
     }
   }
