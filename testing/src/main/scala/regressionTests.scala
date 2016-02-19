@@ -4,6 +4,7 @@ import java.io.{ FileWriter, File }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
+import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.grammars.DeltaTableMethod
@@ -33,6 +34,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       VeriT.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
       VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
+
+    BabelParser.parse( reconstructedEndSequent.toImplication.toString ) == reconstructedEndSequent.toImplication !-- "babel round-trip"
 
     val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
 
