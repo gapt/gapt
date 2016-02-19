@@ -77,8 +77,13 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Ex( v, e )  => showQuant( if ( unicode ) "∃" else "?", v, e, t0, p )
 
       case Apps( hd, args ) if args.nonEmpty =>
-        if ( knownType || expr.exptype == Ti ) {
-          var t1 = t0
+        val hdSym = hd match {
+          case Const( n, _ ) => Some( n )
+          case Var( n, _ )   => Some( n )
+          case _             => None
+        }
+        var t1 = t0 ++ hdSym.map { _ -> hd }
+        if ( knownType || expr.exptype == Ti || hdSym.exists { n => t0 get n contains hd } ) {
           val args_ = for ( arg <- args ) yield {
             val ( arg_, t10 ) = show( arg, false, t1, prio.max )
             t1 = t10
@@ -87,8 +92,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
           val ( hd_, t2 ) = show( hd, true, t1, prio.app )
           ( parenIf( p, prio.app, hd_ ) <> parens( fillsep( args_, comma ) ), t2 )
         } else {
-          val ( expr_, t1 ) = show( expr, true, t0, prio.ascript )
-          ( parenIf( p, prio.ascript, expr_ <+> ":" </> show( expr.exptype, false ) ), t1 )
+          val ( expr_, t2 ) = show( expr, true, t1, prio.ascript )
+          ( parenIf( p, prio.ascript, expr_ <+> ":" </> show( expr.exptype, false ) ), t2 )
         }
 
       case Const( name, ty ) =>
