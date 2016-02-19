@@ -67,6 +67,9 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 
   override def toString() = map.map( x => x._1 + " -> " + x._2 ).mkString( "Substitution(", ",", ")" )
 
+  def asFOLSubstitution: FOLSubstitution =
+    FOLSubstitution( map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
+
 }
 
 object Substitution {

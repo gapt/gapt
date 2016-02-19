@@ -12,38 +12,24 @@ import at.logic.gapt.utils.logging.metrics
 
 import scala.collection.{ GenTraversable, mutable }
 
-object SameRootSymbol {
-  def unapply( terms: Seq[LambdaExpression] ): Option[( Const, List[List[LambdaExpression]] )] =
-    unapply( terms toList )
+object subsetAUs {
+  def apply( terms: Traversable[LambdaExpression], maxSize: Int ): Set[LambdaExpression] = {
+    val aus = Set.newBuilder[LambdaExpression]
 
-  def unapply( terms: List[LambdaExpression] ): Option[( Const, List[List[LambdaExpression]] )] = terms match {
-    case Apps( s: Const, as ) :: Nil => Some( ( s, as map ( List( _ ) ) ) )
-    case Apps( s: Const, as ) :: SameRootSymbol( t, bs ) if s == t =>
-      Some( ( s, ( as, bs ).zipped map ( _ :: _ ) ) )
-    case _ => None
-  }
-}
+    def findAUs( currentAU: LambdaExpression, terms: List[LambdaExpression], maxSize: Int ): Unit =
+      if ( maxSize > 0 && terms.nonEmpty ) {
+        val ( t :: rest ) = terms
 
-private class antiUnifier {
-  private var varIndex = 0
-  private val vars = mutable.Map[Seq[LambdaExpression], Var]()
-  private def getVar( terms: Seq[LambdaExpression] ) =
-    vars.getOrElseUpdate( terms, { varIndex += 1; Var( s"β$varIndex", terms.head.exptype ) } )
+        val newAU = if ( currentAU == null ) t else antiUnifier( currentAU, t )._1
+        aus += newAU
+        if ( !newAU.isInstanceOf[Var] ) findAUs( newAU, rest, maxSize - 1 )
 
-  def apply( terms: Seq[LambdaExpression] ): LambdaExpression = terms match {
-    case SameRootSymbol( s, as ) => s( as map apply: _* )
-    case _                       => getVar( terms )
-  }
-}
+        findAUs( currentAU, rest, maxSize )
+      }
 
-object antiUnifier {
-  def apply( terms: Seq[LambdaExpression] ): LambdaExpression = new antiUnifier().apply( terms )
-}
+    findAUs( null, terms.toList, maxSize )
 
-object termSize {
-  def apply( t: FOLTerm ): Int = t match {
-    case FOLFunction( _, as ) => 1 + as.map( apply ).sum
-    case FOLVar( _ )          => 1
+    aus.result()
   }
 }
 
@@ -71,14 +57,13 @@ object stsSubsumedByAU {
 }
 
 object stableTerms {
-  def apply( lang: GenTraversable[FOLTerm], nonTerminals: Seq[FOLVar] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
-    apply( lang.asInstanceOf[GenTraversable[LambdaExpression]], nonTerminals.asInstanceOf[Seq[Var]] ).map( _.asInstanceOf[FOLTerm] )
+  def apply( lang: Traversable[FOLTerm], nonTerminals: Seq[FOLVar] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+    apply( lang: Traversable[LambdaExpression], nonTerminals ).map( _.asInstanceOf[FOLTerm] )
 
-  def apply( lang: GenTraversable[LambdaExpression], nonTerminals: Seq[Var] ): Set[LambdaExpression] = {
+  def apply( lang: Traversable[LambdaExpression], nonTerminals: Seq[Var] ): Set[LambdaExpression] = {
     lang foreach { term => require( freeVariables( term ) isEmpty ) }
 
-    val antiUnifiers = ListSupport.boundedPower( lang toList, nonTerminals.size + 1 ).
-      map( antiUnifier( _ ) ).toSet
+    val antiUnifiers = subsetAUs( lang, nonTerminals.size + 1 )
     antiUnifiers flatMap { au => stsSubsumedByAU( au, nonTerminals.toSet ) }
   }
 }

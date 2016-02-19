@@ -2,6 +2,8 @@ package at.logic.gapt.testing
 
 import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
 import at.logic.gapt.formats.tptp.TptpProofParser
+import at.logic.gapt.grammars.DeltaTableMethod
+import at.logic.gapt.grammars.deltatableOld.DeltaTableMethodOld
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.utils.logging.MetricsCollector
@@ -57,10 +59,10 @@ class MetricsPrinter extends MetricsCollector {
   }
 }
 
-object testCutIntro extends App {
+object loadProof {
 
   lazy val proofSeqRegex = """(\w+)\((\d+)\)""".r
-  def loadProof( fileName: String ): Option[( ExpansionProof, Boolean )] = fileName match {
+  def apply( fileName: String ): Option[( ExpansionProof, Boolean )] = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
       val hasEquality = containsEqualityReasoning( p )
@@ -115,14 +117,27 @@ object testCutIntro extends App {
     expansionProof -> containsEquations
   }
 
-  def getMethod( methodName: String ) = methodName match {
-    case "1_dtable"    => DeltaTableMethod( manyQuantifiers = false )
-    case "many_dtable" => DeltaTableMethod( manyQuantifiers = true )
-    case "reforest"    => ReforestMethod()
+}
+
+object parseMethod {
+
+  def apply( methodName: String ) = methodName match {
+    case "1_dtable_old"    => DeltaTableMethodOld( manyQuantifiers = false )
+    case "many_dtable_old" => DeltaTableMethodOld( manyQuantifiers = true )
+
+    case "1_dtable"        => DeltaTableMethod( singleQuantifier = true, subsumedRowMerging = false, keyLimit = None )
+    case "many_dtable"     => DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = false, keyLimit = None )
+    case "many_dtable_ss"  => DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = None )
+
+    case "reforest"        => ReforestMethod()
     case _ if methodName endsWith "_maxsat" =>
       val vectorSizes = methodName.dropRight( "_maxsat".length ).split( "_" ).map( _.toInt )
       MaxSATMethod( OpenWBO, vectorSizes: _* )
   }
+
+}
+
+object testCutIntro extends App {
 
   val Array( fileName: String, methodName: String ) = args
 
@@ -151,7 +166,7 @@ object testCutIntro extends App {
       case ( expansionProof, hasEquality ) =>
         metrics.value( "has_equality", hasEquality )
         try metrics.time( "cutintro" ) {
-          CutIntroduction.compressToLK( expansionProof, hasEquality, getMethod( methodName ), verbose = false ) match {
+          CutIntroduction.compressToLK( expansionProof, hasEquality, parseMethod( methodName ), verbose = false ) match {
             case Some( _ ) => metrics.value( "status", "ok" )
             case None =>
               if ( metricsPrinter.data( "termset_trivial" ) == true )

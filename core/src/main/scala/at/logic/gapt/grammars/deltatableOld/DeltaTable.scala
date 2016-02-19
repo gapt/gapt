@@ -25,7 +25,7 @@
  *
  * */
 
-package at.logic.gapt.grammars
+package at.logic.gapt.grammars.deltatableOld
 
 import at.logic.gapt.expr._
 
@@ -136,6 +136,7 @@ class DeltaTable( terms: List[FOLTerm], eigenvariable: String, delta: DeltaVecto
 
   /**
    * compute and print statistics about this delta-table
+   *
    * @prln the function used for printing
    */
   def printStats( prln: String => Unit ) {

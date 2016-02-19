@@ -7,10 +7,10 @@
  * P = { τ -> u | u in U} union { α -> s | s in S }
  */
 
-package at.logic.gapt.grammars
+package at.logic.gapt.grammars.deltatableOld
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol._
+import at.logic.gapt.grammars.VectTratGrammar
 
 /**
  * Takes a set of terms and, using DeltaG, computes the set of smallest grammars that generate it.
@@ -27,7 +27,6 @@ object ComputeGrammars {
 
   /**
    * Finds valid, minimum-size grammars based on a list of terms and a generalized delta table.
-   *
    *
    * @param terms The terms to be compressed.
    * @param deltatable A generalized delta table for terms.

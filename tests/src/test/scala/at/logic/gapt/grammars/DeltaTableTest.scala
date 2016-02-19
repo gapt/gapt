@@ -7,8 +7,9 @@ package at.logic.gapt.grammars
 
 import at.logic.gapt.cutintro.SchematicExtendedHerbrandSequent
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.Deltas._
-import at.logic.gapt.grammars.types._
+import at.logic.gapt.grammars.deltatableOld.Deltas
+import Deltas._
+import at.logic.gapt.grammars.deltatableOld.types._
 import org.specs2.mutable._
 
 class DeltaTableTest extends Specification {
