@@ -93,7 +93,7 @@
 \AXIOMDEC{A19}{}{ 0 < x +1}
 \AXIOMDEC{A33}{}{ -(x<x) }
 \AXIOMDEC{A34}{}{ x<y & y<z -> x<z }
-\AXIOMDEC{IND}{}{Y(0) & ( all n (Y(n) -> Y(n+1))) -> ( all n Y(n))}
+\AXIOMDEC{IND}{}{(all Y Y(0) & ( all n (Y(n) -> Y(n+1))) -> ( all n Y(n)))}
 \AXIOMDEC{A20}{}{(  all x (0 \bm x = 0))}
 \AXIOMDEC{A21}{}{(  all x (x \bm 0 = x))}
 \AXIOMDEC{A22}{}{(  all x  all y ((x+1) \bm (y+1) = x \bm y))}

@@ -30,10 +30,25 @@ abstract class nTape {
   lazy val input_proof = proofdb proof root_proof
 
   /**
+   * The input proof (TAPEPROOF) after preprocessing step 1: definition elimination
+   */
+  lazy val preprocessed_input_proof1 = DefinitionElimination( proofdb.Definitions )( input_proof )
+
+  /**
+   * The input proof after preprocessing step 2: expansion of logical axioms to atomic axioms
+   */
+  lazy val preprocessed_input_proof2 = AtomicExpansion( preprocessed_input_proof1 )
+
+  /**
+   * The input proof preprocessing step 3: regularization
+   */
+  lazy val preprocessed_input_proof3 = regularize( preprocessed_input_proof2 )
+
+  /**
    * The input proof (TAPEPROOF) after definition elimination, expansion of logical axioms to atomic axioms and
    *  definition eliminiation
    */
-  lazy val preprocessed_input_proof = AtomicExpansion( DefinitionElimination( proofdb.Definitions )( regularize( input_proof ) ) )
+  lazy val preprocessed_input_proof = preprocessed_input_proof3
 
   /**
    * The processed input proof converted to LKsk.
