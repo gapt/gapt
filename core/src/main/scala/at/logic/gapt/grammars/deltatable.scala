@@ -129,7 +129,7 @@ object deltaTableAlgorithm {
           minimizeRow( termSet, restRow, alreadyIncluded, s )
       }
 
-    for ( ( s, decomps ) <- deltatable ) {
+    for ( ( s, decomps ) <- deltatable.toSeq sortBy { -_._1.toSeq.flatMap { _.map.values }.map { expressionSize( _ ) }.sum } ) {
       val coveredTerms = decomps flatMap { _._2 }
       minimizeRow( coveredTerms, decomps, termSet diff coveredTerms, s )
     }
