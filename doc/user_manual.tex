@@ -1048,60 +1048,62 @@ and input them to the cut-introduction algorithm.
 
 Take an example proof:
 \begin{clilisting}
-gapt> val p = LinearExampleProof(4)
+gapt> val p = LinearExampleProof(9)
 p: at.logic.gapt.proofs.lk.LKProof =
-[p16] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(0))))): o    (ContractionLeftRule(p15, Ant(0), Ant(1)))
-[p15] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(0))))): o    (ForallLeftRule(p14, Ant(0), P(x) ⊃ P(s(x)), s(s(s(0))), x))
-[p14] P(s(s(s(0)))) ⊃ P(s(s(s(s(0))))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(0))))): o    (ImpLeftRule(p12, Suc(0), p13, Ant(0)))
-[p13] P(s(s(s(s(0))))): o :- P(s(s(s(s(0))))): o    (LogicalAxiom(P(s(s(s(s(0))))): o))
-[p12] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(0)))): o    (ContractionLeftRule(p11, Ant(0), Ant(1)))
-[p11] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(0)))): o    (ForallLeftRule(p10, Ant(0), P(x) ⊃ P(s(x)), s(s(0)), x))
-[p10] P(s(s(0))) ⊃ P(s(s(s(0)))), ∀x (P(x) ⊃ P(s(x))...
+[p36] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p35, Ant(0), Ant(1)))
+[p35] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
+[p34] P(s(s(s(s(s(s(s(s(0))))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
+[p33] P(s(s(s(s(s(s(s(s(s(0)))))))))): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (LogicalAxiom(P(s(s(s(s(s(s(s(s(s(0)))))))))): o))
+[p32] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(0))))))))): o    (ContractionLeftRule(p31, Ant(0), Ant(1)))
+[p31] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P...
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
-gapt> val q = CutIntroduction.compressLKProof( p,                                   DeltaTableMethod( manyQuantifiers=false ), verbose=true )
-Total inferences in the input proof: 16
-Quantifier inferences in the input proof: 4
-End sequent: ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(0))))): o
-Size of term set: 6
-Smallest grammar of size 6:
-Axiom: (#v('τ': i))
+gapt> val q = CutIntroduction.compressLKProof( p,                                   DeltaTableMethod(), verbose=true )
+Total inferences in the input proof: 36
+Quantifier inferences in the input proof: 9
+End sequent: ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o
+Size of term set: 11
+Smallest grammar of size 8:
+Axiom: (#v(tau: i))
 Non-terminal vectors:
-  (#v('τ': i))
-  (#v('α_0': i))
+  (#v(tau: i))
+  (x1)
 Productions:
-  #v('τ': i) -> '-{P(0): o}_a1'
+  #v(tau: i) -> '-{P(0): o}_a1'
 
-  #v('τ': i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(#v('α_0': i))
+  #v(tau: i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
 
-  #v('τ': i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(#v('α_0': i)))
+  #v(tau: i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
 
-  #v('τ': i) -> '{P(s(s(s(s(0))))): o}_s0'
+  #v(tau: i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
 
-  #v('α_0': i) -> 0
+  #v(tau: i) -> '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
 
-  #v('α_0': i) -> s(s(0))
+  x1 -> 0
+
+  x1 -> s(s(s(0)))
+
+  x1 -> s(s(s(s(s(s(0))))))
 
 
-Size of the canonical solution: 8
+Size of the canonical solution: 12
 Size of the minimized solution: 4
 CNF of minimized cut-formula number 0:
-  P(#v('α_0': i)): o :- P(s(s(#v('α_0': i)))): o
+  P(x1): o :- P(s(s(s(x1)))): o
 Number of cuts introduced: 1
-Total inferences in the proof with cut(s): 19
-Quantifier inferences in the proof with cut(s): 5
+Total inferences in the proof with cut(s): 27
+Quantifier inferences in the proof with cut(s): 7
 q: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p19] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(0))))): o    (CutRule(p10, Suc(0), p18, Ant(0)))
-[p18] ∀'α_0' (P('α_0') ⊃ P(s(s('α_0')))), P(0): o :- P(s(s(s(s(0))))): o    (ContractionLeftRule(p17, Ant(1), Ant(0)))
-[p17] ∀'α_0' (P('α_0') ⊃ P(s(s('α_0')))), ∀'α_0' (P('α_0') ⊃ P(s(s('α_0')))), P(0): o :- P(s(s(s(s(0))))): o    (ForallLeftRule(p16, Ant(2), P(#v('α_0': i)) ⊃ P(s(s(#v('α_0': i)))), s(s(0)), #v('α_0': i)))
-[p16] ∀'α_0' (P('α_0') ⊃ P(s(s('α_0')))), P(0): o, P(s(s(0))) ⊃ P(s(s(s(s(0))))) :- P(s(s(s(s(0))))): o    (ForallLeftRule(p15, Ant(0), P(#v('α_0': i)) ⊃ P(s(s(#v('α_0': i)))), 0, #v('α_0': i)))
-[p15] P(0) ⊃ P(s(s(0))), P(0): o, P(s(s(0))) ⊃ P(s(s(s(s(0))))) :- P(s(s(s(s(0))))): o    (ImpLeftRule(p11, Suc(0), p14, Ant(1)))
-...
+Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (CutRule(p14, Suc(0), p26, Ant(0)))
+[p26] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p25, Ant(1), Ant(0)))
+[p25] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p24, Ant(1), Ant(0)))
+[p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ForallLeftRule(p23, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
+[p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o, P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0))))...
 \end{clilisting}
-You can also try \texttt{DeltaTableMethod(manyQuantifiers=true)}, this will proceed as above but will
-compute a single cut with a block of quantifiers.  The method \texttt{MaxSATMethod(1,2)}
-uses a reduction to a MaxSAT problem and an external MaxSAT-solver for finding a
+
+You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
+problem and an external MaxSAT-solver to a
 minimal grammar corresponding to a proof with a cut with two cuts, one with $1$
 quantifier, one with $2$ quantifiers.
 
