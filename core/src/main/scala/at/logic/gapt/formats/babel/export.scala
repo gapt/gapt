@@ -152,8 +152,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
   val unquotedName = """[A-Za-z0-9_$]+""".r
   val safeChars = """[A-Za-z0-9 ~!@#$%^&*()_=+{}|;:,./<>?-]|\[|\]""".r
   def showName( name: String ): Doc = name match {
-    case "true"         => "'true'"
-    case "false"        => "'false'"
+    case _ if BabelLexical.keywords( name ) =>
+      s"'$name'"
     case unquotedName() => name
     case _ => "'" + name.map {
       case c @ safeChars() =>

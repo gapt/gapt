@@ -12,7 +12,8 @@ object BabelLexical {
   val Whitespace = NoTrace( CharsWhile( _.isWhitespace, min = 0 ) )
 
   val Name: P[String] = P( UnquotedName | QuotedName )
-  val UnquotedName: P[String] = P( CharsWhile( c => c.isLetterOrDigit || c == '_' || c == '$' ).! )
+  def isUnquotNameChar( c: Char ) = c.isLetterOrDigit || c == '_' || c == '$'
+  val UnquotedName: P[String] = P( CharsWhile( isUnquotNameChar ).! )
   val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
   val QuotedNameChar: P[String] = P(
     CharsWhile( c => c != '\\' && c != ''' ).! |
@@ -21,6 +22,10 @@ object BabelLexical {
         rep( min = 4, max = 4 ).!.
         map( Integer.parseInt( _, 16 ).toChar.toString ) )
   )
+
+  val keywords = Set( "true", "false", "all", "exists" )
+
+  def kw( name: String ) = P( name ~ !CharPred( isUnquotNameChar ) )
 }
 
 object BabelParser {
@@ -52,8 +57,8 @@ object BabelParser {
   val Conj = P( QuantOrNeg.rep( 1, "&" | "∧" ) ).map( _.reduceLeft( ast.And ) )
 
   val QuantOrNeg: P[ast.Expr] = P( Ex | All | Neg | InfixRel )
-  val Ex = P( ( "?" | "∃" | "exists" ) ~/ BoundVar ~ QuantOrNeg ).map( ast.Ex.tupled )
-  val All = P( ( "!" | "∀" | "all" ) ~/ BoundVar ~ QuantOrNeg ).map( ast.All.tupled )
+  val Ex = P( ( "?" | "∃" | kw( "exists" ) ) ~/ BoundVar ~ QuantOrNeg ).map( ast.Ex.tupled )
+  val All = P( ( "!" | "∀" | kw( "all" ) ) ~/ BoundVar ~ QuantOrNeg ).map( ast.All.tupled )
   val Neg: P[ast.Expr] = P( ( "-" | "¬" ) ~ QuantOrNeg ).map( ast.Neg )
 
   val InfixRelSym = P( "<" | ">" | "<=" | ">=" | "=" | "!=" )
@@ -88,8 +93,8 @@ object BabelParser {
   val Parens: P[ast.Expr] = P( "(" ~/ Expr ~/ ")" )
   val Atom: P[ast.Expr] = P( Parens | True | False | LitVar | LitConst | Ident )
 
-  val True = P( "true" | "⊤" ).map( _ => ast.Top )
-  val False = P( "false" | "⊥" ).map( _ => ast.Bottom )
+  val True = P( kw( "true" ) | "⊤" ).map( _ => ast.Top )
+  val False = P( kw( "false" ) | "⊥" ).map( _ => ast.Bottom )
 
   val LitVar = P( "#v(" ~/ Name ~ ":" ~ Type ~ ")" ) map {
     case ( name, ty ) => ast.LiftBlackbox( real.Var( name, ast.toRealType( ty, Map() ) ) )
