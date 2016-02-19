@@ -2,13 +2,15 @@ package at.logic.gapt.provers.escargot
 
 import at.logic.gapt.examples.{ Permutations, PigeonHolePrinciple, BussTautology }
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.expr.{ All, Ex, FOLAtom, FOLVar }
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existsclosure
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
+import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.proofs.Sequent
 import org.specs2.mutable._
 
 class EscargotTest extends Specification {
+  import BabelParser.parseFormula
+
   def parse( formulas: String* ) = existsclosure { ( formulas map parseFormula ) ++: Sequent() }
   def test( formulas: String* ) = Escargot getRobinsonProof parse( formulas: _* )
 
@@ -50,8 +52,8 @@ class EscargotTest extends Specification {
     Escargot getRobinsonProof formula must beSome
   }
 
-  "drinker" in { Escargot getRobinsonProof parseFormula( "(exists x (p(x) -> (all y (p(y)))))" ) must beSome }
-  "barber" in { Escargot getRobinsonProof parseFormula( "-(exists x all y (shaves(x,y) <-> -shaves(y,y)))" ) must beSome }
+  "drinker" in { Escargot getRobinsonProof hof"?x (p(x) -> !y p(y))" must beSome }
+  "barber" in { Escargot getRobinsonProof hof"-?x !y (shaves(x,y) <-> -shaves(y,y))" must beSome }
 
   "two plus two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "s(s(0)) + s(s(0)) != s(s(s(s(0))))" ) must beSome }
   "two times two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "x * 0 = 0", "x*s(y) = (x*y) + x", "s(s(0)) * s(s(0)) != s(s(s(s(0))))" ) must beSome }

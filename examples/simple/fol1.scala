@@ -6,24 +6,24 @@ import at.logic.gapt.proofs.gaptic._
 
 object fol1 {
   val p = Lemma( Sequent(
-    Seq( "L" -> p9f"(all x all y (P(x,y) -> Q(x,y)))" ),
-    Seq( "R" -> p9f"(exists x exists y (-Q(x,y) -> -P(x,y)))" )
+    Seq( "L" -> fof"(all x all y (P(x,y) -> Q(x,y)))" ),
+    Seq( "R" -> fof"(exists x exists y (-Q(x,y) -> -P(x,y)))" )
   ) ) {
 
-    cut( p9f"(all x exists y (-P(x,y) | Q(x,y)))", "C" )
+    cut( fof"(all x exists y (-P(x,y) | Q(x,y)))", "C" )
 
     // left subproof
     allR( "C" )
-    exR( "C", p9t"a" )
-    allL( "L", p9t"x", p9t"a" )
+    exR( "C", fot"a" )
+    allL( "L", fot"x", fot"a" )
     decompose
     destruct( "L_0" )
     repeat( axiomLog )
 
     // right subproof
-    allL( "C", p9t"b" )
+    allL( "C", fot"b" )
     exL( "C_0" )
-    exR( "R", p9t"b", p9t"y" )
+    exR( "R", fot"b", fot"y" )
     destruct( "C_0" )
     repeat( decompose andThen axiomLog )
   }

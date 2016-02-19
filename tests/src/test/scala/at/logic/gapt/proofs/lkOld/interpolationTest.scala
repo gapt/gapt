@@ -7,7 +7,6 @@ import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.occurrences._
 import org.specs2.mutable._
-import at.logic.gapt.formats.prover9.Prover9TermParser.parseFormula
 import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.provers.eqProver.EquationalProver
 

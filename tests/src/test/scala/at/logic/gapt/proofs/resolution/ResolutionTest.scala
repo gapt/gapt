@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Suc, Ant, Clause }
 import org.specs2.mutable._
 
@@ -10,93 +9,85 @@ class ResolutionTest extends Specification {
   "InputClause" in {
     InputClause( Clause() ).conclusion.isEmpty must_== true
     InputClause( Clause() ).immediateSubProofs must beEmpty
-    InputClause( FOLAtom( "P" ) +: Clause() ).mainIndices must_== Seq( Ant( 0 ) )
+    InputClause( hoa"P" +: Clause() ).mainIndices must_== Seq( Ant( 0 ) )
   }
 
   "ReflexivityClause" in {
-    val c = FOLFunction( "c" )
-    ReflexivityClause( c ).conclusion must_== ( Clause() :+ Eq( c, c ) )
+    ReflexivityClause( le"c" ).conclusion must_== ( Clause() :+ Eq( le"c", le"c" ) )
   }
 
   "TautologyClause" in {
-    val a = FOLAtom( "a" )
-    TautologyClause( a ).conclusion must_== ( a +: Clause() :+ a )
+    TautologyClause( hoa"a" ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"a" )
   }
 
   "Factor" in {
-    val Seq( fx, fy ) = Seq( "x", "y" ) map { n => FOLAtom( "f", FOLVar( n ) ) }
-    Factor( InputClause( fx +: fx +: Clause() ), Ant( 0 ), Ant( 1 ) ).conclusion must_== ( fx +: Clause() )
-    Factor( InputClause( fx +: fx +: Clause() ), Ant( 1 ), Ant( 0 ) ) must throwAn[IllegalArgumentException]
-    Factor( InputClause( fx +: fx +: Clause() ), Ant( 0 ), Ant( 2 ) ) must throwAn[IndexOutOfBoundsException]
-    Factor( InputClause( fx +: fx +: Clause() :+ fx ), Ant( 0 ), Suc( 0 ) ) must throwAn[IllegalArgumentException]
-    Factor( InputClause( fx +: fy +: Clause() ), Ant( 0 ), Ant( 1 ) ) must throwAn[IllegalArgumentException]
+    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 0 ), Ant( 1 ) ).conclusion must_== ( hoa"f(x)" +: Clause() )
+    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 1 ), Ant( 0 ) ) must throwAn[IllegalArgumentException]
+    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 0 ), Ant( 2 ) ) must throwAn[IndexOutOfBoundsException]
+    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() :+ hoa"f(x)" ), Ant( 0 ), Suc( 0 ) ) must throwAn[IllegalArgumentException]
+    Factor( InputClause( hoa"f(x)" +: hoa"f(y)" +: Clause() ), Ant( 0 ), Ant( 1 ) ) must throwAn[IllegalArgumentException]
   }
 
   "Factor companion" in {
-    val Seq( fx, fy ) = Seq( "x", "y" ) map { n => FOLAtom( "f", FOLVar( n ) ) }
-    Factor( InputClause( fx +: fx +: Clause() ) )._1.conclusion must_== ( fx +: Clause() )
+    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ) )._1.conclusion must_== ( hoa"f(x)" +: Clause() )
   }
 
   "Resolution" in {
-    val Seq( fx, fy ) = Seq( "x", "y" ) map { n => FOLAtom( "f", FOLVar( n ) ) }
-
     Resolution(
-      InputClause( Clause() :+ fx ), Suc( 0 ),
-      InputClause( fx +: Clause() ), Ant( 0 )
+      InputClause( Clause() :+ hoa"f(x)" ), Suc( 0 ),
+      InputClause( hoa"f(x)" +: Clause() ), Ant( 0 )
     ).conclusion must_== Clause()
 
     Resolution(
-      InputClause( Clause() :+ fx ), Suc( 0 ),
-      InputClause( fy +: Clause() ), Ant( 0 )
+      InputClause( Clause() :+ hoa"f(x)" ), Suc( 0 ),
+      InputClause( hoa"f(y)" +: Clause() ), Ant( 0 )
     ) must throwAn[IllegalArgumentException]
 
     Resolution(
-      InputClause( fx +: Clause() ), Ant( 0 ),
-      InputClause( Clause() :+ fx ), Suc( 0 )
+      InputClause( hoa"f(x)" +: Clause() ), Ant( 0 ),
+      InputClause( Clause() :+ hoa"f(x)" ), Suc( 0 )
     ) must throwAn[IllegalArgumentException]
 
     Resolution(
-      InputClause( FOLAtom( "a" ) +: Clause() :+ fx :+ FOLAtom( "b" ) ), Suc( 0 ),
-      InputClause( FOLAtom( "c" ) +: fx +: Clause() :+ FOLAtom( "d" ) ), Ant( 1 )
-    ).conclusion must_== ( "a" +: "c" +: Clause() :+ "b" :+ "d" map { FOLAtom( _ ) } )
+      InputClause( hoa"a" +: Clause() :+ hoa"f(x)" :+ hoa"b" ), Suc( 0 ),
+      InputClause( hoa"c" +: hoa"f(x)" +: Clause() :+ hoa"d" ), Ant( 1 )
+    ).conclusion must_== ( hoa"a" +: hoa"c" +: Clause() :+ hoa"b" :+ hoa"d" )
   }
-
-  def parseAtom( s: String ): FOLAtom = Prover9TermParserLadrStyle.parseFormula( s ).asInstanceOf[FOLAtom]
 
   "Paramodulation" in {
     Paramodulation(
-      InputClause( Clause() :+ "f(c) = g(d)" map parseAtom ), Suc( 0 ),
-      InputClause( "a" +: Clause() :+ "p(f(c), f(c))" map parseAtom ), Suc( 0 ),
+      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
+      InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
       Seq( LambdaPosition( 2 ) ), leftToRight = true
-    ).conclusion must_== ( "a" +: Clause() :+ "p(f(c), g(d))" map parseAtom )
+    ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
     Paramodulation(
-      InputClause( Clause() :+ "f(c) = g(d)" map parseAtom ), Suc( 0 ),
-      InputClause( "a" +: Clause() :+ "p(f(c), f(c))" map parseAtom ), Suc( 0 ),
+      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
+      InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
       Seq( LambdaPosition( 1, 2 ), LambdaPosition( 2 ) ), leftToRight = true
-    ).conclusion must_== ( "a" +: Clause() :+ "p(g(d), g(d))" map parseAtom )
+    ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(g(d), g(d))" )
     Paramodulation(
-      InputClause( Clause() :+ "f(c) = g(d)" map parseAtom ), Suc( 0 ),
-      InputClause( "p(f(c), f(c))" +: Clause() map parseAtom ), Ant( 0 ),
+      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
+      InputClause( hoa"p(f(c), f(c))" +: Clause() ), Ant( 0 ),
       Seq( LambdaPosition( 2 ) ), leftToRight = true
-    ).conclusion must_== ( "p(f(c), g(d))" +: Clause() map parseAtom )
+    ).conclusion must_== ( hoa"p(f(c), g(d))" +: Clause() )
     Paramodulation(
-      InputClause( Clause() :+ "f(c) = g(d)" map parseAtom ), Suc( 0 ),
-      InputClause( "p(g(d), f(c))" +: Clause() map parseAtom ), Ant( 0 ),
+      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
+      InputClause( hoa"p(g(d), f(c))" +: Clause() ), Ant( 0 ),
       Seq( LambdaPosition( 1, 2 ) ), leftToRight = false
-    ).conclusion must_== ( "p(f(c), f(c))" +: Clause() map parseAtom )
+    ).conclusion must_== ( hoa"p(f(c), f(c))" +: Clause() )
   }
 
   "Paramodulation companion" in {
     Paramodulation(
-      InputClause( Clause() :+ "f(c) = g(d)" map parseAtom ), Suc( 0 ),
-      InputClause( "a" +: Clause() :+ "p(f(c), f(c))" map parseAtom ), Suc( 0 ),
-      parseAtom( "p(f(c), g(d))" )
-    ).conclusion must_== ( "a" +: Clause() :+ "p(f(c), g(d))" map parseAtom )
+      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
+      InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
+      hoa"p(f(c), g(d))"
+    ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
   }
 
   "daglike performance" in {
     def proof( n: Int ) = {
-      var p: ResolutionProof = TautologyClause( FOLAtom( "a" ) )
+      var p: ResolutionProof = TautologyClause( hoa"a" )
       0 until n foreach { i =>
         p = Resolution( p, Suc( 0 ), p, Ant( 0 ) )
       }

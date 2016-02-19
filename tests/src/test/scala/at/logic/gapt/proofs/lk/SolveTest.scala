@@ -4,8 +4,7 @@ import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.expr.{ StringSymbol, _ }
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentMatchers }
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
+import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
@@ -43,14 +42,12 @@ class SolveTest extends Specification with SequentMatchers {
     "refute bottom" in { solve.solvePropositional( Bottom() +: Sequent() ) must beSome }
 
     "prove ( p ∨ p ) ⊃ ( p ∧ p )" in {
-      val p = FOLAtom( "p" )
-      val F = ( p | p ) --> ( p & p )
+      val F = hof"p|p -> p&p"
       solve.solvePropositional( Sequent() :+ F ) must beSome
     }
 
     "prove ( p ∧ p ) ⊃ ( p ∨ p )" in {
-      val p = FOLAtom( "p" )
-      val F = ( p & p ) --> ( p | p )
+      val F = hof"p&p -> p|p"
       solve.solvePropositional( Sequent() :+ F ) must beSome
     }
 
@@ -63,11 +60,10 @@ class SolveTest extends Specification with SequentMatchers {
 
     "equality" in {
       val Some( expansion ) = Escargot getExpansionProof existsclosure(
-        "x+(y+z) = (x+y)+z" +:
-          "x+y = y+x" +:
+        hof"x+(y+z) = (x+y)+z" +:
+          hof"x+y = y+x" +:
           Sequent()
-          :+ "(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
-          map parseFormula
+          :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
       )
       val lk = ExpansionProofToLK( expansion, hasEquality = true )
       lk.conclusion must beMultiSetEqual( expansion.shallow )

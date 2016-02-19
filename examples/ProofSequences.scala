@@ -31,9 +31,9 @@ object LinearExampleProof extends ProofSequence {
     require( n >= 0, "n must be nonnegative" )
 
     val num = Utils.numeral( n )
-    val ax = p9f"(all x (P(x) -> P(s(x))))"
-    val p0 = p9a"P(0)"
-    val pn = p9a"P($num)"
+    val ax = fof"(all x (P(x) -> P(s(x))))"
+    val p0 = foa"P(0)"
+    val pn = foa"P($num)"
     Lemma( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
       repeat( chain( "Ax" ) )
       prop
@@ -60,10 +60,10 @@ object SquareDiagonalExampleProof extends ProofSequence {
     require( n >= 0, "n must be nonnegative" )
 
     val num = Utils.numeral( n )
-    val p00 = p9a"P(0,0)"
-    val pnn = p9a"P($num, $num)"
-    val axX = p9f"(all x all y (P(x,y) -> P(s(x), y)))"
-    val axY = p9f"(all x all y (P(x,y) -> P(x, s(y))))"
+    val p00 = foa"P(0,0)"
+    val pnn = foa"P($num, $num)"
+    val axX = fof"(all x all y (P(x,y) -> P(s(x), y)))"
+    val axY = fof"(all x all y (P(x,y) -> P(x, s(y))))"
 
     Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) andThen chain( "AxX" ) )
@@ -91,10 +91,10 @@ object SquareEdgesExampleProof extends ProofSequence {
     require( n >= 0, "n must be nonnegative" )
 
     val num = Utils.numeral( n )
-    val p00 = p9a"P(0,0)"
-    val pnn = p9a"P($num, $num)"
-    val axX = p9f"(all x all y (P(x,y) -> P(s(x), y)))"
-    val axY = p9f"(all x all y (P(x,y) -> P(x, s(y))))"
+    val p00 = foa"P(0,0)"
+    val pnn = foa"P($num, $num)"
+    val axX = fof"(all x all y (P(x,y) -> P(s(x), y)))"
+    val axY = fof"(all x all y (P(x,y) -> P(x, s(y))))"
 
     Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) )
@@ -125,10 +125,10 @@ object SquareEdges2DimExampleProof extends ProofSequence {
 
     val sna = Utils.iterateTerm( FOLConst( "a" ), "s_x", n )
     val snb = Utils.iterateTerm( FOLConst( "b" ), "s_y", n )
-    val pab = p9a"P(a,b)"
-    val pnn = p9a"P($sna, $snb)"
-    val axX = p9f"(all x all y (P(x,y) -> P(s_x(x), y)))"
-    val axY = p9f"(all x all y (P(x,y) -> P(x, s_y(y))))"
+    val pab = foa"P(a,b)"
+    val pnn = foa"P($sna, $snb)"
+    val axX = fof"(all x all y (P(x,y) -> P(s_x(x), y)))"
+    val axY = fof"(all x all y (P(x,y) -> P(x, s_y(y))))"
 
     Lemma( Sequent( Seq( "Pab" -> pab, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) )
@@ -159,9 +159,9 @@ object SumExampleProof extends ProofSequence {
     require( n >= 0, "n must be nonnegative" )
 
     val num = Utils.numeral( n )
-    val pn0 = p9a"P($num,0)"
-    val p0n = p9a"P(0,$num)"
-    val ax = p9f"(all x all y (P(s(x),y) -> P(x, s(y))))"
+    val pn0 = foa"P($num,0)"
+    val p0n = foa"P(0,$num)"
+    val ax = fof"(all x all y (P(s(x),y) -> P(x, s(y))))"
 
     Lemma( Sequent( Seq( "Pn0" -> pn0, "Ax" -> ax ), Seq( "P0n" -> p0n ) ) ) {
       repeat( chain( "Ax" ) )
@@ -434,7 +434,7 @@ object SumOfOnesExampleProof extends ProofSequence {
   import Utils.{ numeral => num }
 
   def apply( n: Int ) = {
-    val goal = if ( n == 0 ) p9a"0 = 0" else p9a"${sum( n )} = ${num( n )}"
+    val goal = if ( n == 0 ) foa"0 = 0" else foa"${sum( n )} = ${num( n )}"
     val endSequent = Sequent(
       Seq(
         "Refl" -> ReflexivityEq,
@@ -473,7 +473,7 @@ object SumOfOnesExampleProof extends ProofSequence {
 
   /** constructs proof of: Trans, CongSuc, ASuc, ABase :- sum( k + 1 ) = s( sum( k ) ) */
   private def aux_proof( n: Int ): LKProof = {
-    val goal = p9f"${sum( n + 1 )} = s(${sum( n )})"
+    val goal = fof"${sum( n + 1 )} = s(${sum( n )})"
     val endSequent = Sequent(
       Seq(
         "Trans" -> TransitivityEq,
@@ -488,11 +488,11 @@ object SumOfOnesExampleProof extends ProofSequence {
     Lemma( endSequent ) {
       allL( "ABase", sum( n ) ) //ABase_0
       allL( "ASuc", sum( n ), num( 0 ) ) // ASuc_0
-      allL( "CongSuc", p9t"${sum( n )} + 0", sum( n ) ) // CongSuc_0
+      allL( "CongSuc", fot"${sum( n )} + 0", sum( n ) ) // CongSuc_0
       impL( "CongSuc_0" )
       axiom
 
-      allL( "Trans", sum( n + 1 ), p9t"s(${sum( n )} +0)", p9t"s(${sum( n )})" ) // Trans_0
+      allL( "Trans", sum( n + 1 ), fot"s(${sum( n )} +0)", fot"s(${sum( n )})" ) // Trans_0
       impL( "Trans_0" )
       axiom
 
