@@ -202,7 +202,7 @@ package object expr {
 
     // Higher order parsers
 
-    def e( args: LambdaExpression* ): LambdaExpression = {
+    def le( args: LambdaExpression* ): LambdaExpression = {
       val strings = sc.parts.toList
       val expressions = args.toList
 
@@ -247,22 +247,22 @@ package object expr {
     }
 
     def hov( args: LambdaExpression* ): Var = {
-      val tmp = e( args: _* )
+      val tmp = le( args: _* )
 
       try { tmp.asInstanceOf[Var] }
       catch {
         case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a variable. Parse it with e." )
+          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a variable. Parse it with le." )
       }
     }
 
     def hoc( args: LambdaExpression* ): Const = {
-      val tmp = e( args: _* )
+      val tmp = le( args: _* )
 
       try { tmp.asInstanceOf[Const] }
       catch {
         case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a constant. Parse it with e." )
+          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a constant. Parse it with le." )
       }
     }
 
@@ -270,12 +270,12 @@ package object expr {
 
     def foe( args: FOLExpression* ): FOLExpression = {
 
-      val tmp = e( args: _* )
+      val tmp = le( args: _* )
 
       try { tmp.asInstanceOf[FOLExpression] }
       catch {
         case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp appears not to be a FOL expression. Parse it with e." )
+          throw new IllegalArgumentException( s"Expression $tmp appears not to be a FOL expression. Parse it with le." )
       }
     }
 
@@ -301,12 +301,12 @@ package object expr {
     }
 
     def fot( args: FOLTerm* ): FOLTerm = {
-      val tmp = e( args: _* )
+      val tmp = le( args: _* )
 
       try { tmp.asInstanceOf[FOLTerm] }
       catch {
         case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp appears not to be FOL term. Parse it with e." )
+          throw new IllegalArgumentException( s"Expression $tmp appears not to be FOL term. Parse it with le." )
       }
     }
 
