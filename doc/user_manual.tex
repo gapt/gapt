@@ -243,7 +243,7 @@ functionality of these systems will not be available.
 
 \section{Data structures}
 
-\subsection{Formulas}
+\subsection{Expressions and formulas}
 
 Formulas, terms, and other expressions are are represented as lambda terms in a
 simple type theory with many base sorts.  The standard base sorts are $o$ for
@@ -251,14 +251,18 @@ Boolean values, and $\iota$ for individuals.  Terms and formulas of first-order
 logic and schematic first-order logic are hence encoded as lambda terms, these
 form regular subsets of the lambda expression.
 
-You can enter formulas as follows:
+There are two ways of entering expressions: you can parse them or construct them
+manually.
+\subsubsection{Formula parsing}
+Here is an example of parsing a higher-order formula:
 \begin{clilisting}
 gapt> val H = hof"!x (P(x,f(x)) -> ?y P(x,y))"
 H: at.logic.gapt.expr.HOLFormula = ∀x (P(x, f(x)) ⊃ ∃y P(x, y))
 
 \end{clilisting}
 
-The prefix indicates the Scala type of the expression, available are the following:
+Every kind of expression that GAPT supports can be parsed by writing \verb!<prefix>"<string>"!.
+The prefix indicates the Scala type of the expression. The following prefixes are available:
 
 \begin{tabular}{r l}
 \cli{le} & lambda expression \\
@@ -274,7 +278,7 @@ The prefix indicates the Scala type of the expression, available are the followi
 \cli{foc} & first-order constant
 \end{tabular}
 
-The input language has full type inference---and in addition the formula
+The input language has full type inference, and the formula
 prefixes make sure that the expression is of type $o$ (Boolean).  If no
 particular type is required, we default to $\iota$:
 \begin{clilisting}
@@ -314,6 +318,59 @@ of each construct, these are separated by commas here):
 \cli{f: i>i>o} & type ascription (annotation)
 \end{tabular}
 
+\subsubsection{Constructing formulas manually}
+Every kind of expression that exists in GAPT can be constructed manually. For instance, you can define variables
+and constants like this:
+\begin{clilisting}
+gapt> val x = FOLVar("x")
+x: at.logic.gapt.expr.FOLVar = x
+
+gapt> val P = Const("P", Ti -> To)
+P: at.logic.gapt.expr.Const = P:i>o
+
+\end{clilisting}
+\cli{Var} and \cli{Const} require you to supply types, whereas \cli{FOLVar} and
+\cli{FOLConst} automatically have type $\iota$. Terms and atomic formulas are constructed
+similarly:
+\begin{clilisting}
+gapt> val x = FOLVar("x")
+x: at.logic.gapt.expr.FOLVar = x
+
+gapt> val fx = FOLFunction("f",x)
+fx: at.logic.gapt.expr.FOLTerm = f(x)
+
+gapt> val Pfx = FOLAtom("P", fx)
+Pfx: at.logic.gapt.expr.FOLAtom = P(f(x)): o
+
+\end{clilisting}
+
+On the formulas themselves, there are operators for the various Boolean connectives:
+
+\begin{tabular}{r l}
+ \cli{-A} & $\neg A$\\
+ \cli{A \& B} & $A \wedge B$\\
+ \cli{A | B} & $A \vee B$\\
+ \cli{A --> B} & $A \supset B$\\
+ \cli{A <-> B} & $A \leftrightarrow B$
+\end{tabular}
+ 
+\begin{clilisting}
+gapt> val A = FOLAtom("A")
+A: at.logic.gapt.expr.FOLAtom = A:o
+
+gapt> val B = FOLAtom("B")
+B: at.logic.gapt.expr.FOLAtom = B:o
+
+gapt> val C = FOLAtom("C")
+C: at.logic.gapt.expr.FOLAtom = C:o
+
+gapt> (A & B) --> C
+res4: at.logic.gapt.expr.FOLFormula = A ∧ B ⊃ C
+
+\end{clilisting}
+
+\subsubsection{Predefined formulas}
+
 A collection of formula sequences can be found in the file \cli{examples/FormulaSequences.scala}.
 You can generate instances of these formula sequences by entering for example:
 \begin{clilisting}
@@ -332,26 +389,83 @@ d_5:o
 
 \end{clilisting}
 
+\subsection{Sequents}
+Sequents are an important data structure in GAPT. A sequent is a pair of lists:
+\begin{equation*}
+ A_1,...,A_m \vdash B_1,...,B_n
+\end{equation*}
+The list to the left of the sequent symbol $\vdash$ is called the antecedent, the
+one on the right the succedent. Usually, but not always, the elements of the sequences are going to be formulas.
+
+In GAPT, you can create sequents by supplying an antecedent and a succedent:
+
+\begin{clilisting}
+gapt> val S1 = Sequent() // the empty sequent
+S1: at.logic.gapt.proofs.Sequent[Nothing] =  :-
+
+gapt> val S2 = Sequent(List(1,2), List(3,4)) // a sequent of Ints
+S2: at.logic.gapt.proofs.Sequent[Int] = 1, 2 :- 3, 4
+
+gapt> val S3 = Sequent(List(foa"A", foa"B"), List(foa"C", foa"D")) // a sequent of FOL atoms
+S3: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = A:o, B:o :- C:o, D:o
+
+\end{clilisting}
+
+Sequents have append operations for both the antecedent and the succedent. In the antecedent,
+elements are appended to the left, in the succedent, to the right:
+
+\begin{clilisting}
+gapt> val S1 = Sequent(List(foa"B"), List(foa"C"))
+S1: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = B:o :- C:o
+
+gapt> val S2 = foa"A" +: S1
+S2: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = A:o, B:o :- C:o
+
+gapt> val S3 = S2 :+ foa"D"
+S3: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = A:o, B:o :- C:o, D:o
+
+gapt> foa"A" +: foa"B" +: Sequent() :+ foa"C" :+ foa"D"
+res5: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = A:o, B:o :- C:o, D:o
+
+\end{clilisting}
+
+You can retrieve elements from a sequent either by accessing the antecedent
+or succedent directly ...
+\begin{clilisting}
+gapt> val S = Sequent(List(foa"A", foa"B"), List(foa"C", foa"D"))
+S: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = A:o, B:o :- C:o, D:o
+
+gapt> val b = S.antecedent(1)
+b: at.logic.gapt.expr.FOLAtom = B:o
+
+gapt> val c = S.succedent(0)
+c: at.logic.gapt.expr.FOLAtom = C:o
+
+\end{clilisting}
+... or by using the \cli{SequentIndex} class:
+
+\begin{clilisting}
+gapt> val i = Ant(0)
+i: at.logic.gapt.proofs.Ant = Ant(0)
+
+gapt> val j = Suc(1)
+j: at.logic.gapt.proofs.Suc = Suc(1)
+
+gapt> val a = S(i)
+a: at.logic.gapt.expr.FOLAtom = A:o
+
+gapt> val d = S(j)
+d: at.logic.gapt.expr.FOLAtom = D:o
+
+\end{clilisting}
+
+
 \subsection{Proofs}\label{sec:entering_proofs}
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
 of the inference rules.
-\begin{clilisting}
-gapt> val A = FOLAtom("A")
-A: at.logic.gapt.expr.FOLAtom = A:o
 
-gapt> val B = FOLAtom("B")
-B: at.logic.gapt.expr.FOLAtom = B:o
-
-gapt> val F1 = B --> (A & B)
-F1: at.logic.gapt.expr.FOLFormula = B ⊃ A ∧ B
-
-gapt> val F2 = A & B
-F2: at.logic.gapt.expr.FOLFormula = A ∧ B
-
-\end{clilisting}
-%
 We start with the axioms:
 %
 \begin{clilisting}
@@ -428,13 +542,13 @@ iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
-res5: Boolean = true
+res7: Boolean = true
 
 \end{clilisting}
 shows\footnote{In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.} that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
-res6: Boolean = false
+res8: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
@@ -462,16 +576,16 @@ gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
-res7: Boolean = false
+res9: Boolean = false
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res8: Boolean = true
+res10: Boolean = true
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
-res9: Boolean = false
+res11: Boolean = false
 
 \end{clilisting}
 
@@ -484,7 +598,7 @@ gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
-res10: String =
+res12: String =
 "p cnf 9 12
 1 2 3 0
 -2 -4 0
@@ -506,14 +620,14 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res11: at.logic.gapt.expr.HOLAtom = R(p_3, h_1): o
+res13: at.logic.gapt.expr.HOLAtom = R(p_3, h_1): o
 
 \end{clilisting}
 
 GAPT also supports other SAT solvers such as MiniSAT or Glucose out of the box:
 \begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT isValid PigeonHolePrinciple(3,2)
-res12: Boolean = true
+res14: Boolean = true
 
 \end{clilisting}
 \begin{clilisting}[Glucose.isInstalled]
@@ -529,7 +643,7 @@ gapt> val solver = new ExternalSATSolver("minisat", "-mem-lim=1024")
 solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-mem-lim=1024")
 
 gapt> solver isValid PigeonHolePrinciple(3,2)
-res14: Boolean = true
+res16: Boolean = true
 
 \end{clilisting}
 
@@ -550,7 +664,7 @@ b: at.logic.gapt.expr.FOLAtom = b:o
 c: at.logic.gapt.expr.FOLAtom = c:o
 
 gapt> MaxSat4j.solve(hard = a|b|c, soft = Seq(-a -> 4, -b -> 3))
-res15: Option[at.logic.gapt.models.Interpretation] =
+res17: Option[at.logic.gapt.models.Interpretation] =
 Some(a:o -> false
 b:o -> false
 c:o -> true)
@@ -573,7 +687,7 @@ f: at.logic.gapt.expr.HOLFormula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
-res16: Boolean = true
+res18: Boolean = true
 
 \end{clilisting}
 
@@ -663,10 +777,10 @@ sequent: at.logic.gapt.proofs.HOLSequent = p(0): o, ∀x (p(x) ⊃ p(s(x))) :- p
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-res20: Boolean = true
+res22: Boolean = true
 
 gapt> Prover9 getRobinsonProof sequent
-res21: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res23: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p11]  :-     (Resolution(p6, Suc(0), p10, Ant(0)))
 [p10] p(s(0)): o :-     (Resolution(p7, Suc(0), p9, Ant(0)))
 [p9] p(s(s(0))): o :-     (Instance(p8, Substitution()))
@@ -681,7 +795,7 @@ Some([p11]  :-     (Resolution(p6, Suc(0), p10, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res22: Option[at.logic.gapt.proofs.lk.LKProof] =
+res24: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p19] ∀x0 (p(x0) ⊃ p(s(x0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p18, Ant(2), Ant(1)))
 [p18] p(0): o, ∀x0 (p(x0) ⊃ p(s(x0))), ∀x0 (p(x0) ⊃ p(s(x0))) :- p(s(s(0))): o    (CutRule(p9, Suc(0), p17, Ant(1)))
 [p17] ∀x0 (p(x0) ⊃ p(s(x0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p14, Suc(0), p16, Ant(0)))
@@ -691,7 +805,7 @@ Some([p19] ∀x0 (p(x0) ⊃ p(s(x0))), p(0): o :- p(s(s(0))): o    (ContractionL
 [p13] ∀x0 (p(x0) ⊃ p(s(x0))), ∀x0 (p(x0) ⊃ p(s(x0))), p(s(0)): o :- p(s(s(0))): o    (WeakeningLeftRule(p12, ∀x0 (p(x0) ⊃ p(s(x0)))))
 [p12] ∀x0 ...
 gapt> Prover9 getExpansionProof sequent
-res23: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res25: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(ExpansionProofWithCut(List(),[p1] ETAtom(p(0): o, false)
 ,
 [p7] ETWeakQuantifier(∀x (p(x) ⊃ p(s(x))), 0, p3, s(0), p6)
@@ -732,7 +846,7 @@ gapt> val strong = ("(exists x all y P(x,y))" +: Sequent()                      
 strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∃x ∀y P(x, y) :- ∀y ∃x P(x, y)
 
 gapt> Prover9 getExpansionProof strong
-res25: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res27: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(ExpansionProofWithCut(List(),[p3] ETSkolemQuantifier(∃x ∀y P(x, y), 's_{0}', p2)
 [p2] ETWeakQuantifier(∀y P('s_{0}', y), 's_{2}', p1)
 [p1] ETAtom(P('s_{0}', 's_{2}'): o, false)
@@ -757,7 +871,7 @@ You can also export sequents in TPTP format if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter.tptp_proof_problem_split(sequent)
-res27: String =
+res29: String =
 "fof( formula0, axiom, 'p'('0') ).
 fof( formula1, axiom, (! [X0] : ( 'p'(X0) => 'p'('s'(X0)) )) ).
 fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
@@ -771,7 +885,7 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
-res28: Option[at.logic.gapt.proofs.lk.LKProof] =
+res30: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a:o :- b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a:o, b:o :- a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -1929,7 +2043,7 @@ returns a list of length 1 as shown by entering
 %
 \begin{clilisting}
 gapt> proofs.length
-res36: Int = 1
+res38: Int = 1
 
 \end{clilisting}
 %
@@ -1938,7 +2052,7 @@ entering
 %
 \begin{clilisting}
 gapt> proofs(0)._1
-res37: String = p
+res39: String = p
 
 \end{clilisting}
 %
