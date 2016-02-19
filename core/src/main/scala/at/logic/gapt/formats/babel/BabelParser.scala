@@ -1,5 +1,6 @@
 package at.logic.gapt.formats.babel
 
+import at.logic.gapt.{ expr => real }
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 
 import scalaz._
@@ -80,19 +81,26 @@ object BabelParser {
   }
 
   val Tuple: P[Seq[ast.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
-  val App: P[ast.Expr] = P( "@".? ~ Atom ~/ ( Tuple | Ident.map( Seq( _ ) ) ).rep ) map {
+  val App: P[ast.Expr] = P( "@".? ~ Atom ~/ ( Tuple | Atom.map( Seq( _ ) ) ).rep ) map {
     case ( expr, args ) => args.flatten.foldLeft( expr )( ast.App )
   }
 
   val Parens: P[ast.Expr] = P( "(" ~/ Expr ~/ ")" )
-  val Atom: P[ast.Expr] = P( Parens | True | False | Ident )
+  val Atom: P[ast.Expr] = P( Parens | True | False | LitVar | LitConst | Ident )
 
   val True = P( "true" | "⊤" ).map( _ => ast.Top )
   val False = P( "false" | "⊥" ).map( _ => ast.Bottom )
 
+  val LitVar = P( "#v(" ~/ Name ~ ":" ~ Type ~ ")" ) map {
+    case ( name, ty ) => ast.LiftBlackbox( real.Var( name, ast.toRealType( ty, Map() ) ) )
+  }
+  val LitConst = P( "#c(" ~/ Name ~ ":" ~ Type ~ ")" ) map {
+    case ( name, ty ) => ast.LiftBlackbox( real.Const( name, ast.toRealType( ty, Map() ) ) )
+  }
+
   val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshTypeVar() ) ) )
 
-  val TypeParens: P[ast.Type] = P( "(" ~ Type ~ ")" )
+  val TypeParens: P[ast.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
 

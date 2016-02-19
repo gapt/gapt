@@ -8,7 +8,7 @@ import at.logic.gapt.{ expr => real }
 object ast {
 
   class TypeVarIdx {
-    override def toString = Integer toHexString hashCode()
+    override def toString = Integer toHexString hashCode() take 3
   }
   def gensym() = new TypeVarIdx
 
@@ -23,6 +23,7 @@ object ast {
   case class Ident( name: String, ty: Type ) extends Expr
   case class Abs( v: Ident, sub: Expr ) extends Expr
   case class App( a: Expr, b: Expr ) extends Expr
+  case class Lifted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
 
   def readable( t: Type ): String = t match {
     case BaseType( name ) => name
@@ -34,6 +35,7 @@ object ast {
     case Ident( name, ty )          => s"($name:${readable( ty )})"
     case Abs( v, sub )              => s"(^${readable( v )} ${readable( sub )})"
     case App( a, b )                => s"(${readable( a )} ${readable( b )})"
+    case Lifted( e, ty, fvs )       => s"#lifted($e, ${readable( ty )}${fvs map { case ( n, t ) => s", $n -> ${readable( t )}" } mkString})"
   }
 
   def Bool = BaseType( "o" )
@@ -61,6 +63,18 @@ object ast {
     App( Ident( name, ArrType( ArrType( freshTypeVar(), Bool ), Bool ) ), Abs( v, sub ) )
   def Ex: ( Ident, Expr ) => Expr = Quant( real.ExistsC.name )
   def All = Quant( real.ForallC.name )
+
+  def liftType( t: real.Ty ): Type = t match {
+    case real.TBase( name )   => BaseType( name )
+    case real.`->`( in, out ) => ArrType( liftType( in ), liftType( out ) )
+  }
+  def LiftBlackbox( e: real.LambdaExpression ) =
+    Lifted( e, liftType( e.exptype ), Map() )
+  def LiftWhitebox( e: real.LambdaExpression ) =
+    Lifted( e, liftType( e.exptype ),
+      real.freeVariables( e ).
+      map { case real.Var( name, ty ) => name -> liftType( ty ) }.
+      toMap )
 
   def freeVars( t: Type ): Set[TypeVarIdx] = t match {
     case BaseType( name ) => Set()
@@ -119,6 +133,10 @@ object ast {
           ( s2, bt ) <- infer( b, env, s1 )
           s3 <- solve( List( at -> ArrType( bt, appType ) ), s2 )
         } yield ( s3, appType )
+      case Lifted( e, ty, fvs ) =>
+        for {
+          s1 <- solve( fvs.mapKeys( env( _ ) ).toList, s0 )
+        } yield ( s1, ty )
     }
 
   val polymorphic = Set( real.EqC.name, real.ForallC.name, real.ExistsC.name )
@@ -127,6 +145,7 @@ object ast {
     case Ident( name, ty )       => Set( name )
     case Abs( v, sub )           => freeIdentifers( sub ) - v.name
     case App( a, b )             => freeIdentifers( a ) union freeIdentifers( b )
+    case Lifted( e, ty, fvs )    => fvs.keySet
   }
 
   def toRealType( ty: Type, assg: Map[TypeVarIdx, Type] ): real.Ty = ty match {
@@ -144,6 +163,7 @@ object ast {
       real.Abs( toRealExpr( v, assg, bound_ ).asInstanceOf[real.Var], toRealExpr( sub, assg, bound_ ) )
     case App( a, b ) =>
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
+    case Lifted( e, ty, fvs ) => e
   }
   def toRealExpr( expr: Expr, isVar: String => Boolean ): UnificationError \/ real.LambdaExpression = {
     val fi = freeIdentifers( expr ) diff polymorphic
@@ -151,7 +171,9 @@ object ast {
     for ( ( assg, _ ) <- infer( expr, fi.map { _ -> freshTypeVar() }.toMap, Map() ) )
       yield toRealExpr( expr, assg.withDefaultValue( BaseType( "i" ) ), freeVars )
   }
+  val varPattern = "[u-zU-Z].*".r
+  def matchesVarPattern( n: String ) = varPattern.pattern.matcher( n ).matches()
   def toRealExpr( expr: Expr ): UnificationError \/ real.LambdaExpression =
-    toRealExpr( expr, _ matches "[u-zU-Z].*" )
+    toRealExpr( expr, matchesVarPattern )
 
 }

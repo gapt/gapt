@@ -46,6 +46,13 @@ class BabelTest extends Specification {
     }
   }
 
+  "variable and constant literals" in {
+    BabelParser.parse( "#c(x : o > o > o) #v(c : o) x" ) must beLike {
+      case \/-( formula ) =>
+        formula must_== Apps( Const( "x", To -> ( To -> To ) ), Var( "c", To ), Var( "x", To ) )
+    }
+  }
+
   "limited llk compatibility" in {
     val formulas = Seq(
       "p(X)", "A", "-p(y)", "-p(Y)",
