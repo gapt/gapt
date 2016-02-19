@@ -17,7 +17,7 @@ package object expr {
    * Suppose you have types `S <: T` and a function `foo[T]` that you only want to apply to elements of type T that are not of type S.
    * Then you can write `foo[T](implicit notAnS: Not[S <:<T])`.
    *
-   * TODO: Add an "ambiguous implicit" annotation to make this clearer. My scala version does not currently suppor this.
+   * TODO: Add an "ambiguous implicit" annotation to make this clearer. My scala version does not currently support this.
    *
    * @tparam T
    */
@@ -194,7 +194,7 @@ package object expr {
   }
 
   /**
-   * Extension class that provides the "p9a", "p9f", and "p9t" string interpolation functions.
+   * Extension class that provides string interpolation functions for various expression types.
    *
    * @param sc A StringContext
    */
@@ -202,6 +202,9 @@ package object expr {
 
     // Higher order parsers
 
+    /** Parses a string as a [[LambdaExpression]].
+      *
+      */
     def le( args: LambdaExpression* ): LambdaExpression = {
       val strings = sc.parts.toList
       val expressions = args.toList
@@ -216,6 +219,11 @@ package object expr {
       TermReplacement( BabelParser.parse( stringsNew.mkString ++ strings.last ), repl )
     }
 
+    /** Parses a string as a [[HOLFormula]].
+      *
+      * @param args
+      * @return
+      */
     def hof( args: LambdaExpression* ): HOLFormula = {
       val strings = sc.parts.toList
       val expressions = args.toList
@@ -230,6 +238,11 @@ package object expr {
       TermReplacement( BabelParser.parseFormula( stringsNew.mkString ++ strings.last ), repl )
     }
 
+    /** Parses a string as a [[HOLAtom]].
+      *
+      * @param args
+      * @return
+      */
     def hoa( args: LambdaExpression* ): HOLAtom = {
       val tmp = hof( args: _* )
 
@@ -240,6 +253,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[Var]].
+      *
+      * @param args
+      * @return
+      */
     def hov( args: LambdaExpression* ): Var = {
       val tmp = le( args: _* )
 
@@ -250,6 +268,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[Const]].
+      *
+      * @param args
+      * @return
+      */
     def hoc( args: LambdaExpression* ): Const = {
       val tmp = le( args: _* )
 
@@ -262,6 +285,11 @@ package object expr {
 
     // First order parsers
 
+    /** Parses a string as a [[FOLExpression]].
+      *
+      * @param args
+      * @return
+      */
     def foe( args: FOLExpression* ): FOLExpression = {
 
       val tmp = le( args: _* )
@@ -273,6 +301,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[FOLFormula]].
+      *
+      * @param args
+      * @return
+      */
     def fof( args: FOLExpression* ): FOLFormula = {
 
       val tmp = hof( args: _* )
@@ -284,6 +317,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[FOLAtom]].
+      *
+      * @param args
+      * @return
+      */
     def foa( args: FOLExpression* ): FOLAtom = {
       val tmp = fof( args: _* )
 
@@ -294,6 +332,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[FOLTerm]].
+      *
+      * @param args
+      * @return
+      */
     def fot( args: FOLTerm* ): FOLTerm = {
       val tmp = le( args: _* )
 
@@ -304,6 +347,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[FOLVar]].
+      *
+      * @param args
+      * @return
+      */
     def fov( args: FOLTerm* ): FOLVar = {
       val tmp = fot( args: _* )
 
@@ -314,6 +362,11 @@ package object expr {
       }
     }
 
+    /** Parses a string as a [[FOLConst]].
+      *
+      * @param args
+      * @return
+      */
     def foc( args: FOLTerm* ): FOLConst = {
       val tmp = fot( args: _* )
 
