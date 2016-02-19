@@ -61,7 +61,7 @@ object BabelParser {
   val All = P( ( "!" | "∀" | kw( "all" ) ) ~/ BoundVar ~ QuantOrNeg ).map( ast.All.tupled )
   val Neg: P[ast.Expr] = P( ( "-" | "¬" ) ~ QuantOrNeg ).map( ast.Neg )
 
-  val InfixRelSym = P( "<" | ">" | "<=" | ">=" | "=" | "!=" )
+  val InfixRelSym = P( "<=" | ">=" | "<" | ">" | "=" | "!=" )
   val InfixRel = P( PlusMinus ~/ ( InfixRelSym.! ~ PlusMinus ).rep ) map {
     case ( first, Seq() ) => first
     case ( first, conds ) =>

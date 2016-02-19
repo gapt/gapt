@@ -58,6 +58,8 @@ class BabelTest extends Specification {
       "#c(x : o > o > o) #v(c : o) x",
       "(qrev(qrev(x, nil), nil): list) = x",
       "!a?b a(b,c)",
+      "(a:t1) + (b:t2) : t3",
+      "(a:t1) <= (b:t2) < (c:t3) = (d:t3)",
       "true", "'true'", "'all' x"
     )
     Fragments.foreach( strings ) { string =>
