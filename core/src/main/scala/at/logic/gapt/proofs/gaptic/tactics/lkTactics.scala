@@ -22,13 +22,13 @@ case object LogicalAxiomTactic extends Tactic[Unit] {
 
 case object TopAxiomTactic extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( _, Top(), _: Suc ) <- findFormula( goal, None ) )
+    for ( ( _, Top(), _: Suc ) <- findFormula( goal, AnyFormula ) )
       yield () -> BottomAxiom
 }
 
 case object BottomAxiomTactic extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( _, Bottom(), _: Ant ) <- findFormula( goal, None ) )
+    for ( ( _, Bottom(), _: Ant ) <- findFormula( goal, AnyFormula ) )
       yield () -> BottomAxiom
 }
 
@@ -41,7 +41,7 @@ case object ReflexivityAxiomTactic extends Tactic[Unit] {
   }
 
   def apply( goal: OpenAssumption ) =
-    for ( ( _, Refl( t ), _: Suc ) <- findFormula( goal, None ) )
+    for ( ( _, Refl( t ), _: Suc ) <- findFormula( goal, AnyFormula ) )
       yield () -> ReflexivityAxiom( t )
 }
 
@@ -56,82 +56,82 @@ case object TheoryAxiomTactic extends Tactic[Unit] {
   }
 }
 
-case class NegLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[String] {
+case class NegLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( existingLabel, Neg( f ), i: Ant ) <- findFormula( goal, applyToLabel )
+      ( existingLabel, Neg( f ), i: Ant ) <- findFormula( goal, mode )
       newGoal = goal.s.delete( i ) :+ ( existingLabel -> f )
     } yield existingLabel -> NegLeftRule( OpenAssumption( newGoal ), newGoal.indices.last )
 }
 
-case class NegRightTactic( applyToLabel: Option[String] = None ) extends Tactic[String] {
+case class NegRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( existingLabel, Neg( f ), i: Suc ) <- findFormula( goal, applyToLabel )
+      ( existingLabel, Neg( f ), i: Suc ) <- findFormula( goal, mode )
       newGoal = ( existingLabel -> f ) +: goal.s.delete( i )
     } yield existingLabel -> NegRightRule( OpenAssumption( newGoal ), newGoal.indices.head )
 }
 
 case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( _, f, i: Ant ) <- findFormula( goal, Some( applyToLabel ) ) )
+    for ( ( _, f, i: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> OpenAssumption( goal.s delete i )
 }
 
 case class WeakeningRightTactic( applyToLabel: String ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( _, f, i: Suc ) <- findFormula( goal, Some( applyToLabel ) ) )
+    for ( ( _, f, i: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> OpenAssumption( goal.s delete i )
 }
 
-case class AndLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[( String, String )] {
+case class AndLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, And( lhs, rhs ), idx: Ant ) <- findFormula( goal, applyToLabel )
+      ( label, And( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode )
       newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
       newGoal = ( newLabel1 -> lhs ) +: ( newLabel2 -> rhs ) +: goal.s.delete( idx )
     } yield ( newLabel1, newLabel2 ) -> AndLeftRule( OpenAssumption( newGoal ), Ant( 0 ), Ant( 1 ) )
 }
 
-case class AndRightTactic( applyToLabel: Option[String] = None ) extends Tactic[Unit] {
+case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( label, And( lhs, rhs ), idx: Suc ) <- findFormula( goal, applyToLabel ) )
+    for ( ( label, And( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode ) )
       yield () ->
       AndRightRule( OpenAssumption( goal.s.updated( idx, label -> lhs ) ), idx,
         OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
-case class OrLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[Unit] {
+case class OrLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( label, Or( lhs, rhs ), idx: Ant ) <- findFormula( goal, applyToLabel ) )
+    for ( ( label, Or( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
       yield () ->
       OrLeftRule( OpenAssumption( goal.s.updated( idx, label -> lhs ) ), idx,
         OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
-case class OrRightTactic( applyToLabel: Option[String] = None ) extends Tactic[( String, String )] {
+case class OrRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, Or( lhs, rhs ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      ( label, Or( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode )
       newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
       newGoal = goal.s.delete( idx ) :+ ( newLabel1 -> lhs ) :+ ( newLabel2 -> rhs )
       Seq( rhsIdx, lhsIdx ) = newGoal.indices.reverse.take( 2 )
     } yield ( newLabel1, newLabel2 ) -> OrRightRule( OpenAssumption( newGoal ), lhsIdx, rhsIdx )
 }
 
-case class ImpLeftTactic( applyToLabel: Option[String] = None ) extends Tactic[Unit] {
+case class ImpLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( label, Imp( lhs, rhs ), idx: Ant ) <- findFormula( goal, applyToLabel ) )
+    for ( ( label, Imp( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
       yield () ->
       ImpLeftRule( OpenAssumption( goal.s.delete( idx ) :+ ( label -> lhs ) ), Suc( goal.s.succedent.size ),
         OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
-case class ImpRightTactic( applyToLabel: Option[String] = None ) extends Tactic[( String, String )] {
+case class ImpRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   // TODO: keep label for rhs?
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, Imp( lhs, rhs ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      ( label, Imp( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode )
       newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
       newGoal = ( newLabel1 -> lhs ) +: goal.s.updated( idx, newLabel2 -> rhs )
     } yield ( newLabel1, newLabel2 ) -> ImpRightRule( OpenAssumption( newGoal ), Ant( 0 ), idx )
@@ -151,36 +151,36 @@ abstract class StrongQuantTactic extends Tactic[Var] {
     }
 }
 
-case class ExistsLeftTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends StrongQuantTactic {
+case class ExistsLeftTactic( mode: TacticApplyMode = UniqueFormula, eigenVariable: Option[Var] = None ) extends StrongQuantTactic {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, f @ Ex( bound, _ ), idx: Ant ) <- findFormula( goal, applyToLabel )
+      ( label, f @ Ex( bound, _ ), idx: Ant ) <- findFormula( goal, mode )
       ev <- pickEigenvariable( bound, goal )
     } yield ev -> ExistsLeftRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
-case class ExistsRightTactic( applyToLabel: Option[String] = None, terms: Seq[LambdaExpression] ) extends Tactic[String] {
+case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression] ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      ( label, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, mode )
       newLabel = NewLabel( goal.s, label )
     } yield newLabel ->
       ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> instantiate( f, terms ) ) ), f, terms )
 }
 
-case class ForallLeftTactic( applyToLabel: Option[String] = None, terms: Seq[LambdaExpression] ) extends Tactic[String] {
+case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression] ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, applyToLabel )
+      ( label, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, mode )
       newLabel = NewLabel( goal.s, label )
     } yield newLabel ->
       ForallLeftBlock( OpenAssumption( ( newLabel -> instantiate( f, terms ) ) +: goal.s ), f, terms )
 }
 
-case class ForallRightTactic( eigenVariable: Option[Var] = None, applyToLabel: Option[String] = None ) extends StrongQuantTactic {
+case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariable: Option[Var] = None ) extends StrongQuantTactic {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, f @ All( bound, _ ), idx: Suc ) <- findFormula( goal, applyToLabel )
+      ( label, f @ All( bound, _ ), idx: Suc ) <- findFormula( goal, mode )
       ev <- pickEigenvariable( bound, goal )
     } yield ev -> ForallRightRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
@@ -412,12 +412,12 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
 
 case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( label, formula, idx: Ant ) <- findFormula( goal, Some( applyToLabel ) ) )
+    for ( ( label, formula, idx: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> DefinitionLeftRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
 }
 
 case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
-    for ( ( label, formula, idx: Suc ) <- findFormula( goal, Some( applyToLabel ) ) )
+    for ( ( label, formula, idx: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> DefinitionRightRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
 }

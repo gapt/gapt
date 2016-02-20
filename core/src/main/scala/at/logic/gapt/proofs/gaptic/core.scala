@@ -135,6 +135,35 @@ case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialS
   }
 }
 
+/**
+  * Class that describes how a tactic should be applied: to a label, to the unique fitting formula, or to any fitting formula.
+  */
+sealed abstract class TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean
+}
+
+/** Apply a tactic to a specific label.
+  *
+  * @param label The label that the tactic should be applied to.
+  */
+case class OnLabel( label: String ) extends TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean = p( label )
+}
+
+/**
+  * Apply a tactic only if there is exactly one formula that fits.
+  */
+case object UniqueFormula extends TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean = true
+}
+
+/**
+  * Apply a tactic if there is a formula that fits.
+  */
+case object AnyFormula extends TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean = true
+}
+
 case class TacticalFailure( tactical: Tactical[_], goal: Option[OpenAssumption], message: String ) {
   override def toString = s"$tactical: $message:${goal.map( "\n" + _.toPrettyString ).getOrElse( "" )}"
 }
@@ -227,20 +256,25 @@ trait Tactic[+T] extends Tactical[T] { self =>
     override def toString = s"$self onAll $t2"
   }
 
-  protected def findFormula( goal: OpenAssumption, label: Option[String] ): FindFormula =
-    new FindFormula( goal, label )
-  protected class FindFormula( goal: OpenAssumption, label: Option[String] ) {
+  protected def findFormula( goal: OpenAssumption, mode: TacticApplyMode ): FindFormula =
+    new FindFormula( goal, mode )
+  protected class FindFormula( goal: OpenAssumption, mode: TacticApplyMode ) {
     type Val = ( String, HOLFormula, SequentIndex )
 
     def withFilter( pred: Val => Boolean ): ValidationNel[TacticalFailure, Val] =
       goal.s.zipWithIndex.elements.collect {
-        case ( ( l, f ), i ) if label.forall { _ == l } && pred( l, f, i ) => ( l, f, i )
+        case ( ( l, f ), i ) if mode.forall { _ == l } && pred( l, f, i ) => ( l, f, i )
       } match {
-        case Seq( someFormula, _* ) => someFormula.success
+        case Seq( f ) => f.success
+        case Seq( someFormula, _* ) =>
+          mode match {
+            case AnyFormula => someFormula.success
+            case _          => TacticalFailure( self, Some( goal ), s"Formula could not be uniquely determined." ).failureNel
+          }
         case _ =>
-          label match {
-            case Some( l ) => TacticalFailure( self, Some( goal ), s"label $l not found" ).failureNel
-            case _         => TacticalFailure( self, Some( goal ), s"no matching formula found" ).failureNel
+          mode match {
+            case OnLabel( l ) => TacticalFailure( self, Some( goal ), s"Label $l not found." ).failureNel
+            case _            => TacticalFailure( self, Some( goal ), s"No matching formula found." ).failureNel
           }
       }
 

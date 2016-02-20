@@ -17,13 +17,13 @@ import Validation.FlatMap._
 case object DecomposeTactic extends Tactical[Unit] {
   def apply( proofState: ProofState ) = {
     RepeatTactic(
-      NegLeftTactic() orElse
-        NegRightTactic() orElse
-        AndLeftTactic() orElse
-        OrRightTactic() orElse
-        ImpRightTactic() orElse
-        ForallRightTactic() orElse
-        ExistsLeftTactic()
+      NegLeftTactic( AnyFormula ) orElse
+        NegRightTactic( AnyFormula ) orElse
+        AndLeftTactic( AnyFormula ) orElse
+        OrRightTactic( AnyFormula ) orElse
+        ImpRightTactic( AnyFormula ) orElse
+        ForallRightTactic( AnyFormula ) orElse
+        ExistsLeftTactic( AnyFormula )
     )( proofState )
   }
 }
