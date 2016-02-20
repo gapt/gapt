@@ -20,7 +20,7 @@ package object gaptic {
 
   def axiomTh = TheoryAxiomTactic
 
-  def axiom = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
+  def trivial = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
 
   def negL( applyToLabel: String ) = new NegLeftTactic( OnLabel( applyToLabel ) )
 
@@ -98,17 +98,7 @@ package object gaptic {
 
   def decompose = DecomposeTactic
 
-  def destruct( label: String ) =
-    allR( label ) orElse
-      exL( label ) orElse
-      andL( label ) orElse
-      andR( label ) orElse
-      orL( label ) orElse
-      orR( label ) orElse
-      impL( label ) orElse
-      impR( label ) orElse
-      negL( label ) orElse
-      negR( label )
+  def destruct( label: String ) = DestructTactic( label )
 
   def chain( h: String ) = ChainTactic( h )
 

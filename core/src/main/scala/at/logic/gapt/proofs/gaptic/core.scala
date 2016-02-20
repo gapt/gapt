@@ -136,30 +136,31 @@ case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialS
 }
 
 /**
-  * Class that describes how a tactic should be applied: to a label, to the unique fitting formula, or to any fitting formula.
-  */
+ * Class that describes how a tactic should be applied: to a label, to the unique fitting formula, or to any fitting formula.
+ */
 sealed abstract class TacticApplyMode {
   def forall( p: String => Boolean ): Boolean
 }
 
-/** Apply a tactic to a specific label.
-  *
-  * @param label The label that the tactic should be applied to.
-  */
+/**
+ * Apply a tactic to a specific label.
+ *
+ * @param label The label that the tactic should be applied to.
+ */
 case class OnLabel( label: String ) extends TacticApplyMode {
   def forall( p: String => Boolean ): Boolean = p( label )
 }
 
 /**
-  * Apply a tactic only if there is exactly one formula that fits.
-  */
+ * Apply a tactic only if there is exactly one formula that fits.
+ */
 case object UniqueFormula extends TacticApplyMode {
   def forall( p: String => Boolean ): Boolean = true
 }
 
 /**
-  * Apply a tactic if there is a formula that fits.
-  */
+ * Apply a tactic if there is a formula that fits.
+ */
 case object AnyFormula extends TacticApplyMode {
   def forall( p: String => Boolean ): Boolean = true
 }

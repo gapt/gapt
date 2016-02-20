@@ -12,7 +12,7 @@ import Scalaz._
 import Validation.FlatMap._
 
 /**
- * Repeatedly applies unary rules that are unambiguous
+ * Repeatedly applies unambiguous unary rules to the entire goal.
  */
 case object DecomposeTactic extends Tactical[Unit] {
   def apply( proofState: ProofState ) = {
@@ -28,6 +28,12 @@ case object DecomposeTactic extends Tactical[Unit] {
   }
 }
 
+/**
+ * Attempts to decompose a formula by trying all tactics that don't require additional information.
+ *
+ * Note that this tactic only decomposes the outermost symbol, i.e. it only performs one step.
+ * @param applyToLabel The label of the formula to be decomposed.
+ */
 case class DestructTactic( applyToLabel: String ) extends Tactic[Any] {
 
   override def apply( goal: OpenAssumption ) = {
@@ -53,13 +59,18 @@ case class DestructTactic( applyToLabel: String ) extends Tactic[Any] {
           negL( existingLabel ) orElse
           negR( existingLabel )
         tac( goal )
-      case None => TacticalFailure( this, Some( goal ), "no destructable formula found" ).failureNel
+      case None => TacticalFailure( this, Some( goal ), "No destructible formula found." ).failureNel
     }
   }
 }
 
 /**
- * Chain
+ * Performs backwards chaining:
+ * A goal of the form `∀x (P(x) → Q(x)), Γ :- Δ, Q(t)` is replaced by the goal `∀x (P(x) → Q(x)), Γ :- Δ, P(t)`.
+ *
+ * @param hyp
+ * @param target
+ * @param substitution
  */
 case class ChainTactic( hyp: String, target: Option[String] = None, substitution: Map[Var, LambdaExpression] = Map() ) extends Tactic[Unit] {
 
@@ -233,7 +244,7 @@ case class RewriteTactic(
 }
 
 /**
- * Solves propositional sub goal
+ * Calls the GAPT tableau prover on the subgoal.
  */
 case object PropTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
@@ -242,7 +253,7 @@ case object PropTactic extends Tactic[Unit] {
 }
 
 /**
- * Solves sub goal with Prover9
+ * Calls prover9 on the subgoal.
  */
 case object Prover9Tactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
@@ -250,6 +261,9 @@ case object Prover9Tactic extends Tactic[Unit] {
   }
 }
 
+/**
+ * Calls Escargot on the subgoal.
+ */
 case object EscargotTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     Escargot getLKProof goal.conclusion toSuccessNel TacticalFailure( this, Some( goal ), "search failed" ) map { () -> _ }

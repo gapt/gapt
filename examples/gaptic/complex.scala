@@ -12,7 +12,7 @@ object complex {
       decompose
       allL( FOLVar( "y" ) )
       decompose
-      axiom
+      trivial
     }
 
   val destructLemma = Lemma(
@@ -20,7 +20,7 @@ object complex {
   ) {
       destruct( "label1" )
       destruct( "label2" )
-      axiom
+      trivial
     }
 
   val destructLemma2 = Lemma(
@@ -28,15 +28,15 @@ object complex {
   ) {
       destruct( "label1" )
       destruct( "label2" )
-      axiom
-      axiom
+      trivial
+      trivial
     }
 
   val chainLemma = Lemma(
     Sequent( Seq( "a" -> parseFormula( "q(f(c))" ), "hyp" -> parseFormula( "(all x (q(x) -> p(f(x))))" ) ), Seq( "target" -> parseFormula( "p(f(f(c)))" ) ) )
   ) {
       chain( "hyp" ).at( "target" )
-      axiom
+      trivial
     }
 
   val chainLemma2 = Lemma(
@@ -49,17 +49,17 @@ object complex {
     Sequent( Seq( "a" -> parseFormula( "r(f(c))" ), "b" -> parseFormula( "q(f(c))" ), "hyp" -> parseFormula( "(all x (r(x) -> (q(x) -> p(f(x)))))" ) ), Seq( "target" -> parseFormula( "p(f(f(c)))" ) ) )
   ) {
       chain( "hyp" )
-      axiom
-      axiom
+      trivial
+      trivial
     }
 
   val chainLemma4 = Lemma(
     Sequent( Seq( "a" -> parseFormula( "r(f(c))" ), "b" -> parseFormula( "q(f(c))" ), "c" -> parseFormula( "w(f(c))" ), "hyp" -> parseFormula( "(all x ((r(x) & q(x) & w(x)) -> p(f(x))))" ) ), Seq( "target" -> parseFormula( "p(f(f(c)))" ) ) )
   ) {
       chain( "hyp" )
-      axiom
-      axiom
-      axiom
+      trivial
+      trivial
+      trivial
     }
 }
 

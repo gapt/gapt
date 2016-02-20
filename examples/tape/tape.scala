@@ -25,7 +25,7 @@ object tape {
     allL( fot"x_0 + x_1" )
     forget( "A" )
     destruct( "A_0" )
-    axiom
+    trivial
     forget( "I0_0" )
     axiomTh
   }

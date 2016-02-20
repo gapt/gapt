@@ -466,7 +466,7 @@ object SumOfOnesExampleProof extends ProofSequence {
           insert( aux_proof( n - 1 ) )
 
           impL( "Trans_0" )
-          repeat( axiom )
+          repeat( trivial )
         }
     }
   }
@@ -490,14 +490,14 @@ object SumOfOnesExampleProof extends ProofSequence {
       allL( "ASuc", sum( n ), num( 0 ) ) // ASuc_0
       allL( "CongSuc", fot"${sum( n )} + 0", sum( n ) ) // CongSuc_0
       impL( "CongSuc_0" )
-      axiom
+      trivial
 
       allL( "Trans", sum( n + 1 ), fot"s(${sum( n )} +0)", fot"s(${sum( n )})" ) // Trans_0
       impL( "Trans_0" )
-      axiom
+      trivial
 
       impL( "Trans_0" )
-      repeat( axiom )
+      repeat( trivial )
     }
   }
 

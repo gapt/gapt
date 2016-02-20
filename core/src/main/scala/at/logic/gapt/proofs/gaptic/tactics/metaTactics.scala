@@ -8,10 +8,12 @@ import scalaz._
 import Scalaz._
 
 /**
- * Repeat tactical
- * Repeatedly applies the given tactical to a proof state until it fails.
+ * Applies the given [[Tactical]] to the proof state until it fails.
  *
- * @param tact
+ * Note that the tactical is not required to succeed at least once, i.e. it might
+ * fail immediately.
+ *
+ * @param tact The [[Tactical]] to be repeated.
  */
 case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
   override def apply( proofState: ProofState ) = {
@@ -23,10 +25,9 @@ case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
 }
 
 /**
- * Insert tactic
- * Inserts an LKProof if the insertion sequent subsumes the sequent of the sub goal
+ * Inserts an [[LKProof]] if the insertion sequent subsumes the sequent of the subgoal.
  *
- * @param insertion
+ * @param insertion The [[LKProof]] to be inserted. Its end sequent must subsume the current goal.
  */
 case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = {

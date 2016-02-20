@@ -45,7 +45,7 @@ object drinker {
     exR( parseTerm( "y" ) )
     impR
     allR
-    axiom
+    trivial
   }
 
   val dualdrinker2 = Lemma( Sequent( Seq( "D" -> parseFormula( "(all x (P(x) & (exists y -P(y))))" ) ), Nil ) ) {

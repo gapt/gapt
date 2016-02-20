@@ -79,13 +79,13 @@ object tapeUrban {
     forget( "Ii_1_1", "Ii_0_1", "T" )
     defL( "S", S )
     chain( "S" )
-    axiom
+    trivial
 
     forget( "Ii_1_0", "S" )
     defL( "T", T )
     chain( "T" )
-    axiom
-    axiom
+    trivial
+    trivial
   }
 
   val sigma = Lemma( Sequent(

@@ -9,6 +9,9 @@ import scalaz._
 import Scalaz._
 import Validation.FlatMap._
 
+/**
+ * Closes a goal of the form A, Γ :- Δ, Δ
+ */
 case object LogicalAxiomTactic extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = {
     val candidates = goal.conclusion.antecedent intersect goal.conclusion.succedent
@@ -20,18 +23,27 @@ case object LogicalAxiomTactic extends Tactic[Unit] {
   }
 }
 
+/**
+ * Closes a goal of the form Γ :- Δ, ⊤
+ */
 case object TopAxiomTactic extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, Top(), _: Suc ) <- findFormula( goal, AnyFormula ) )
       yield () -> BottomAxiom
 }
 
+/**
+ * Closes a goal of the form ⊥, Γ :- Δ
+ */
 case object BottomAxiomTactic extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, Bottom(), _: Ant ) <- findFormula( goal, AnyFormula ) )
       yield () -> BottomAxiom
 }
 
+/**
+ * Closes a goal of the form Γ :- Δ, s = s
+ */
 case object ReflexivityAxiomTactic extends Tactic[Unit] {
   object Refl {
     def unapply( f: HOLFormula ): Option[LambdaExpression] = f match {
@@ -45,6 +57,9 @@ case object ReflexivityAxiomTactic extends Tactic[Unit] {
       yield () -> ReflexivityAxiom( t )
 }
 
+/**
+ * Closes an arbitrary goal by declaring it a theory axiom.
+ */
 case object TheoryAxiomTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.conclusion
@@ -56,6 +71,10 @@ case object TheoryAxiomTactic extends Tactic[Unit] {
   }
 }
 
+/**
+ * Decomposes a negation in the antecedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class NegLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
@@ -64,6 +83,10 @@ case class NegLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic
     } yield existingLabel -> NegLeftRule( OpenAssumption( newGoal ), newGoal.indices.last )
 }
 
+/**
+ * Decomposes a negation in the succedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class NegRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
@@ -72,18 +95,30 @@ case class NegRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tacti
     } yield existingLabel -> NegRightRule( OpenAssumption( newGoal ), newGoal.indices.head )
 }
 
+/**
+ * Removes a formula from the antecedent of a goal.
+ * @param applyToLabel The label of the formula to be removed.
+ */
 case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, f, i: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> OpenAssumption( goal.s delete i )
 }
 
+/**
+ * Removes a formula from the succedent of a goal.
+ * @param applyToLabel The label of the formula to be removed.
+ */
 case class WeakeningRightTactic( applyToLabel: String ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, f, i: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> OpenAssumption( goal.s delete i )
 }
 
+/**
+ * Decomposes a conjunction in the antecedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class AndLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   def apply( goal: OpenAssumption ) =
     for {
@@ -93,6 +128,10 @@ case class AndLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic
     } yield ( newLabel1, newLabel2 ) -> AndLeftRule( OpenAssumption( newGoal ), Ant( 0 ), Ant( 1 ) )
 }
 
+/**
+ * Decomposes a conjunction in the succedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, And( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode ) )
@@ -101,6 +140,10 @@ case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tacti
         OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
+/**
+ * Decomposes a disjunction in the antecedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class OrLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, Or( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
@@ -109,6 +152,10 @@ case class OrLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[
         OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
+/**
+ * Decomposes a disjunction in the succedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class OrRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   def apply( goal: OpenAssumption ) =
     for {
@@ -119,6 +166,10 @@ case class OrRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic
     } yield ( newLabel1, newLabel2 ) -> OrRightRule( OpenAssumption( newGoal ), lhsIdx, rhsIdx )
 }
 
+/**
+ * Decomposes an implication in the antecedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class ImpLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, Imp( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
@@ -127,6 +178,10 @@ case class ImpLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic
         OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
 }
 
+/**
+ * Decomposes an implication in the succedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ */
 case class ImpRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   // TODO: keep label for rhs?
   def apply( goal: OpenAssumption ) =
@@ -143,7 +198,7 @@ abstract class StrongQuantTactic extends Tactic[Var] {
     eigenVariable match {
       case Some( ev ) =>
         if ( freeVariables( goal.conclusion ) contains ev )
-          TacticalFailure( this, Some( goal ), "provided eigenvariable would violate eigenvariable condition" ).failureNel
+          TacticalFailure( this, Some( goal ), "Provided eigenvariable would violate eigenvariable condition." ).failureNel
         else
           ev.success
       case None =>
@@ -151,6 +206,11 @@ abstract class StrongQuantTactic extends Tactic[Var] {
     }
 }
 
+/**
+ * Decomposes an existential quantifier in the antecedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ * @param eigenVariable If Some(v), the rule will attempt to use v as the eigenvariable. Otherwise it will automatically pick one.
+ */
 case class ExistsLeftTactic( mode: TacticApplyMode = UniqueFormula, eigenVariable: Option[Var] = None ) extends StrongQuantTactic {
   def apply( goal: OpenAssumption ) =
     for {
@@ -159,6 +219,11 @@ case class ExistsLeftTactic( mode: TacticApplyMode = UniqueFormula, eigenVariabl
     } yield ev -> ExistsLeftRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
+/**
+ * Decomposes a block of existential quantifiers in the antecedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ * @param terms Instantiations for the quantifiers in the block.
+ */
 case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression] ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
@@ -168,6 +233,11 @@ case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[
       ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> instantiate( f, terms ) ) ), f, terms )
 }
 
+/**
+ * Decomposes a block of universal quantifiers in the succedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ * @param terms Instantiations for the quantifiers in the block.
+ */
 case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression] ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
@@ -177,6 +247,11 @@ case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[L
       ForallLeftBlock( OpenAssumption( ( newLabel -> instantiate( f, terms ) ) +: goal.s ), f, terms )
 }
 
+/**
+ * Decomposes a universal quantifier in the succedent of a goal.
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ * @param eigenVariable If Some(v), the rule will attempt to use v as the eigenvariable. Otherwise it will automatically pick one.
+ */
 case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariable: Option[Var] = None ) extends StrongQuantTactic {
   def apply( goal: OpenAssumption ) =
     for {
@@ -185,6 +260,11 @@ case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariab
     } yield ev -> ForallRightRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
+/**
+ * Introduces a cut, creating two new subgoals.
+ * @param cutFormula The cut formula.
+ * @param cutLabel The label for the cut formula.
+ */
 case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -197,6 +277,15 @@ case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic[
   }
 }
 
+/**
+ * Applies an equation in the antecedent of a goal.
+ * @param equalityLabel The label of the equality.
+ * @param formulaLabel The label of the formula the equality is to be used on.
+ * @param leftToRight If `Some(true)`, the equation `s = t` will be used to rewrite `s` to `t`, and the other way around
+ *                    for Some(false). If `None`, the tactic will attempt to decide the direction automatically.
+ * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
+ *                      it will replace as many occurrences as possible according to `leftToRight`.
+ */
 case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
@@ -304,6 +393,15 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
   def to( targetFormula: HOLFormula ) = new EqualityLeftTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
 
+/**
+ * Applies an equation in the succedent of a goal.
+ * @param equalityLabel The label of the equality.
+ * @param formulaLabel The label of the formula the equality is to be used on.
+ * @param leftToRight If `Some(true)`, the equation `s = t` will be used to rewrite `s` to `t`, and the other way around
+ *                    for Some(false). If `None`, the tactic will attempt to decide the direction automatically.
+ * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
+ *                      it will replace as many occurrences as possible according to `leftToRight`.
+ */
 case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
@@ -410,12 +508,22 @@ case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, lef
   def to( targetFormula: HOLFormula ) = new EqualityRightTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
 
+/**
+ * Applies a definition in the antecedent of a goal.
+ * @param applyToLabel The label of the defined formula to be expanded.
+ * @param replacement The formula to be inserted.
+ */
 case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, formula, idx: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
       yield () -> DefinitionLeftRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
 }
 
+/**
+ * Applies a definition in the succedent of a goal.
+ * @param applyToLabel The label of the defined formula to be expanded.
+ * @param replacement The formula to be inserted.
+ */
 case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, formula, idx: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
