@@ -41,11 +41,11 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) =>
         showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
       case Apps( c @ Const( "+", _ ), Seq( a, b ) ) =>
-        showBinOp( c, prio.plusMinus, 1, 1, a, b, knownType, bound, t0, p )
+        showBinOp( c, prio.plusMinus, 1, 0, a, b, knownType, bound, t0, p )
       case Apps( c @ Const( "-", _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.plusMinus, 1, 0, a, b, knownType, bound, t0, p )
       case Apps( c @ Const( "*", _ ), Seq( a, b ) ) =>
-        showBinOp( c, prio.timesDiv, 1, 1, a, b, knownType, bound, t0, p )
+        showBinOp( c, prio.timesDiv, 1, 0, a, b, knownType, bound, t0, p )
       case Apps( c @ Const( "/", _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.timesDiv, 1, 0, a, b, knownType, bound, t0, p )
 
