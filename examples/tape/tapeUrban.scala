@@ -36,9 +36,9 @@ object tapeUrban {
     Seq( "I0" -> FOLAtom( "I", Seq( zero ) ), "I1" -> FOLAtom( "I", Seq( one ) ) )
   ) ) {
     defR( "I1", I1 )
-    allR( nprime, "I1" )
+    allR( "I1", nprime )
     defR( "I0", I0 )
-    allR( n, "I0" )
+    allR( "I0", n )
     exR( "I0", max( n, nprime ) )
     exR( "I1", max( n, nprime ) )
     forget( "I0", "I1" )
@@ -64,9 +64,9 @@ object tapeUrban {
   ) ) {
     defL( "Ii", Ii )
     allL( "Ii", zero )
-    exL( n, "Ii_0" )
+    exL( "Ii_0", n )
     allL( "Ii", s( n ) )
-    exL( m, "Ii_1" )
+    exL( "Ii_1", m )
     forget( "Ii" )
     defR( "P", P )
     exR( "P", n, m )

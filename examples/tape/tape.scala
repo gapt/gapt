@@ -15,8 +15,8 @@ object tape {
     :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {
     defR( "I0", I0 )
     defR( "I1", I1 )
-    allR( FOLVar( "x_0" ), "I0" )
-    allR( FOLVar( "x_1" ), "I1" )
+    allR( "I0", FOLVar( "x_0" ) )
+    allR( "I1", FOLVar( "x_1" ) )
     exR( "I0", fot"x_1" )
     forget( "I0" )
     exR( "I1", fot"x_0" )
@@ -34,10 +34,10 @@ object tape {
     :+ ( "C" -> fof"(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) {
     defL( "Iv", Iv )
     allL( fot"0" )
-    exL( FOLVar( "y_0" ), "Iv_0" )
+    exL( "Iv_0", FOLVar( "y_0" ) )
     allL( fot"y_0 + 1" )
     forget( "Iv" )
-    exL( FOLVar( "y_1" ), "Iv_1" )
+    exL( "Iv_1", FOLVar( "y_1" ) )
     exR( "C", fot"y_0", fot"(y_0 + y_1) + 1" )
     forget( "C" )
     destruct( "C_0" )

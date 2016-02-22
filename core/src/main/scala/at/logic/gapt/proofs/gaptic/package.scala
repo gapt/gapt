@@ -54,7 +54,7 @@ package object gaptic {
 
   def impR = new ImpRightTactic()
 
-  def exL( eigenVariable: Var, applyToLabel: String ) = new ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
+  def exL( applyToLabel: String, eigenVariable: Var ) = new ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
   def exL( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
 
@@ -70,7 +70,7 @@ package object gaptic {
 
   def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms )
 
-  def allR( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
+  def allR( applyToLabel: String, eigenVariable: Var ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
   def allR( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
 

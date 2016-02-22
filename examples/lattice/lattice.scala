@@ -134,8 +134,8 @@ object lattice {
   // show that join is upper bound for \leq
   val p_5 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "LUB" -> FOLAtom( "LUB" ) ) ) ) {
     defR( "LUB", LUB )
-    allR( x_0, "LUB" )
-    allR( y_0, "LUB" )
+    allR( "LUB", x_0 )
+    allR( "LUB", y_0 )
     andR
     andR
     insert( p_5_1( x_0, y_0 ) )
@@ -168,8 +168,8 @@ object lattice {
   val p_3 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> And( FOLAtom( "GLB" ), FOLAtom( "LUB" ) ) ) ) ) {
     andR
     defR( "a", GLB )
-    allR( x_0, "a" )
-    allR( y_0, "a" )
+    allR( "a", x_0 )
+    allR( "a", y_0 )
     andR
     andR
     defR( "a", leqUnfold( cap( x_0, y_0 ), x_0 ) )
