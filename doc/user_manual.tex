@@ -1179,20 +1179,20 @@ Quantifier inferences in the input proof: 9
 End sequent: ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o
 Size of term set: 11
 Smallest grammar of size 8:
-Axiom: (#v(tau: i))
+Axiom: (x0)
 Non-terminal vectors:
-  (#v(tau: i))
+  (x0)
   (x1)
 Productions:
-  #v(tau: i) -> '-{P(0): o}_a1'
+  x0 -> '-{P(0): o}_a1'
 
-  #v(tau: i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+  x0 -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
 
-  #v(tau: i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+  x0 -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
 
-  #v(tau: i) -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+  x0 -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
 
-  #v(tau: i) -> '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+  x0 -> '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
 
   x1 -> 0
 
@@ -1237,17 +1237,17 @@ lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector
 
 gapt> val grammar = findMinimalGrammar(lang, 2)
 grammar: at.logic.gapt.grammars.TratGrammar =
-Axiom: #v('τ': i)
-Non-terminals: #v('τ': i), #v('α_1': i), #v('α_2': i)
+Axiom: x0
+Non-terminals: x0, x1, x2
 Productions:
-  #v('τ': i) -> s(#v('α_1': i))
-  #v('τ': i) -> s(s(s(s(#v('α_1': i)))))
-  #v('α_1': i) -> #v('α_2': i)
-  #v('α_1': i) -> s(#v('α_2': i))
-  #v('α_1': i) -> s(s(#v('α_2': i)))
-  #v('α_2': i) -> 0
-  #v('α_2': i) -> s(s(s(s(s(s(0))))))
-  #v('α_2': i) -> s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
+  x0 -> s(s(s(s(x1))))
+  x0 -> s(x1)
+  x1 -> s(s(s(s(s(s(s(s(s(s(s(s(x2))))))))))))
+  x1 -> s(s(s(s(s(s(x2))))))
+  x1 -> x2
+  x2 -> 0
+  x2 -> s(0)
+  x2 -> s(s(0))
 
 gapt> lang.toSet subsetOf grammar.language
 res36: Boolean = true
@@ -1258,14 +1258,14 @@ You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
 res37: at.logic.gapt.grammars.TratGrammar =
-Axiom: #v('τ': i)
-Non-terminals: #v('τ': i), #v('α_1': i), #v('α_2': i)
+Axiom: x0
+Non-terminals: x0, x1, x2
 Productions:
-  #v('τ': i) -> s(#v('α_1': i))
-  #v('τ': i) -> s(s(s(s(#v('α_1': i)))))
-  #v('α_1': i) -> #v('α_2': i)
-  #v('α_1': i) -> s(#v('α_2': i))
-  #v('α_2': i) -> 0
+  x0 -> s(s(s(s(x1))))
+  x0 -> s(x1)
+  x1 -> x2
+  x2 -> 0
+  x2 -> s(0)
 
 \end{clilisting}
 

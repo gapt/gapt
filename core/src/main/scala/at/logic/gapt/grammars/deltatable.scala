@@ -150,7 +150,7 @@ object deltaTableAlgorithm {
 
   def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VectTratGrammar = {
     val alpha = freeVariables( us ).toList.sortBy { _.toString }.asInstanceOf[List[FOLVar]]
-    val tau = rename( FOLVar( "tau" ), alpha )
+    val tau = rename( FOLVar( "x0" ), alpha )
     VectTratGrammar( tau, Seq( List( tau ), alpha ),
       ( for ( subst <- s ) yield alpha -> alpha.map { subst( _ ).asInstanceOf[FOLTerm] } )
         union ( for ( u <- us ) yield List( tau ) -> List( u.asInstanceOf[FOLTerm] ) ) )
