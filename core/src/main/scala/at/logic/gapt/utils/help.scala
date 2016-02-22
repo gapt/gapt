@@ -15,7 +15,7 @@ object help {
    */
   private def indexPath = {
     val tarballPath = Paths.get( "apidocs", "index.html" ).toAbsolutePath
-    val devPath = Paths.get( "core", "target", "scala-2.11", "api", "index.html" ).toAbsolutePath
+    val devPath = Paths.get( "target", "scala-2.11", "unidoc", "index.html" ).toAbsolutePath
 
     if ( Files.exists( tarballPath ) )
       tarballPath.toUri.toString

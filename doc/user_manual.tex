@@ -658,12 +658,7 @@ for an overview.
 Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
-gapt> val Seq(a,b,c) = Seq("a","b","c") map {FOLAtom(_)}
-a: at.logic.gapt.expr.FOLAtom = a:o
-b: at.logic.gapt.expr.FOLAtom = b:o
-c: at.logic.gapt.expr.FOLAtom = c:o
-
-gapt> MaxSat4j.solve(hard = a|b|c, soft = Seq(-a -> 4, -b -> 3))
+gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
 res17: Option[at.logic.gapt.models.Interpretation] =
 Some(a:o -> false
 b:o -> false
@@ -680,7 +675,7 @@ The SMT solver interface in GAPT supports validity queries for \verb,QF_UF,
 formulas.  For example we can check whether a quantifier-free formula is a
 quasi-tautology using veriT:
 \begin{clilisting}
-gapt> val f = parseFormula("(a=b | a=c) & P(c) & P(b) -> P(a)")
+gapt> val f = hof"(a=b | a=c) & P(c) & P(b) -> P(a)"
 f: at.logic.gapt.expr.HOLFormula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \end{clilisting}
@@ -705,7 +700,7 @@ You can export \verb,QF_UF, formulas (or sequents) as SMT-LIB benchmarks;
 note that we apply a drastic renaming to the constant symbols in order to
 support arbitrary (even Unicode) names in GAPT:
 \begin{clilisting}
-gapt> val (benchmark, typeRenaming, constantRenaming) =                                 SmtLibExporter(Sequent() :+ f)
+gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
 benchmark: String =
 "(set-logic QF_UF)
 (declare-sort t1 0)
@@ -724,7 +719,7 @@ constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(a
 We can also extract instances for basic equality axioms (reflexivity, symmetry,
 and congruences) from veriT's proof output:
 \begin{clilisting}[VeriT.isInstalled]
-gapt> val Some(expansionProof) = VeriT getExpansionProof (Sequent() :+ f)
+gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 ExpansionProofWithCut(List(),[p8] ETWeakQuantifier(∀x ∀y (x = y ⊃ y = x), a, p7)
 [p7] ETWeakQuantifier(∀y (a = y ⊃ y = a), b, p3, c, p6)
@@ -770,8 +765,8 @@ LeanCoP interface only supports expansion proof extraction.
 
 Here is how you can get all of these kinds of proofs using Prover9:
 \begin{clilisting}
-gapt> val sequent = existsclosure("p(0)" +: "p(x) -> p(s(x))" +: Sequent()                                 :+ "p(s(s(0)))" map parseFormula)
-sequent: at.logic.gapt.proofs.HOLSequent = p(0): o, ∀x (p(x) ⊃ p(s(x))) :- p(s(s(0))): o
+gapt> val sequent = hof"p(0)" +: hof"!x (p(x) -> p(s(x)))" +: Sequent() :+ hof"p(s(s(0)))"
+sequent: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = p(0): o, ∀x (p(x) ⊃ p(s(x))) :- p(s(s(0))): o
 
 \end{clilisting}
 
@@ -842,19 +837,17 @@ Note that \cli{getLKProof} only works for sequents without strong quantifiers
 (i.e.\ sequents that are already Skolemized); however \cli{getExpansionProof}
 will happily return expansion proofs with Skolem quantifiers in that case:
 \begin{clilisting}[Prover9.isInstalled]
-gapt> val strong = ("(exists x all y P(x,y))" +: Sequent()                                     :+ "(all y exists x P(x,y))" map parseFormula)
-strong: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∃x ∀y P(x, y) :- ∀y ∃x P(x, y)
-
-gapt> Prover9 getExpansionProof strong
+gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
 res27: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(ExpansionProofWithCut(List(),[p3] ETSkolemQuantifier(∃x ∀y P(x, y), 's_{0}', p2)
-[p2] ETWeakQuantifier(∀y P('s_{0}', y), 's_{2}', p1)
-[p1] ETAtom(P('s_{0}', 's_{2}'): o, false)
-
+Some(ExpansionProofWithCut(List(),
 :-
-[p3] ETSkolemQuantifier(∀y ∃x P(x, y), 's_{2}', p2)
-[p2] ETWeakQuantifier(∃x P(x, 's_{2}'), 's_{0}', p1)
-[p1] ETAtom(P('s_{0}', 's_{2}'): o, true)
+[p7] ETImp(p3, p6)
+[p6] ETSkolemQuantifier(∀y ∃x p(x, y), 's_{2}', p5)
+[p5] ETWeakQuantifier(∃x p(x, 's_{2}'), 's_{0}', p4)
+[p4] ETAtom(p('s_{0}', 's_{2}'): o, true)
+[p3] ETSkolemQuantifier(∃x ∀y p(x, y), 's_{0}', p2)
+[p2] ETWeakQuantifier(∀y p('s_{0}', y), 's_{2}', p1)
+[p1] ETAtom(p('s_{0}', 's_{2}'): o, false)
 ))
 
 \end{clilisting}
@@ -884,7 +877,7 @@ fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
 GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
-gapt> solve.solvePropositional(parseFormula("a -> (b -> a&b)"))
+gapt> solve solvePropositional hof"a -> b -> a&b"
 res30: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a:o :- b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
@@ -903,29 +896,28 @@ The GAPT-system contains an implementation of reductive cut-elimination
 with cuts (as in Appendix~\ref{sec.fileio}).
 %
 \begin{clilisting}
-gapt> val p = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs(0)._2
+gapt> val p = examples.fol1.p
 p: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (CutRule(p13, Suc(0), p24, Ant(0)))
+[p25] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (CutRule(p9, Suc(0), p24, Ant(0)))
 [p24] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p23, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
-[p23] ∃y (¬P(b, y) ∨ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), v, y))
-[p22] ¬P(b, v) ∨ Q(b, v) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p21] ¬P(b, v) ∨ Q(b, v) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), v, y))
-[p20] ¬P(b, v) ∨ Q(b, v) :- ¬Q(b, v) ⊃ ¬P(b, v)    (ImpRightRule(p19, Ant(1), Suc(0)))
-[p19] ¬P(b, v) ∨ Q(b, v), ¬Q(b, v) :- ¬P(b, v)    (OrLeftRule(p16, Ant(0), p18, Ant(1)))
-[p18] ¬Q(b, v), Q(...
+[p23] ∃y (¬P(b, y) ∨ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), y, y))
+[p22] ¬P(b, y) ∨ Q(b, y) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
+[p21] ¬P(b, y) ∨ Q(b, y) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
+[p20] ¬P(b, y) ∨ Q(b, y) :- ¬Q(b, y) ⊃ ¬P(b, y)    (ContractionRightRule(p19, Suc(0), Suc(1)))
+[p19] ¬P(b, y) ∨ Q(b, y) :- ¬Q(b, y) ⊃ ¬P(b, y), ¬Q(b, y) ⊃ ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18...
 \end{clilisting}
 %
 and then call the cut-elimination procedure:
 \begin{clilisting}
 gapt> val q = ReductiveCutElimination( p )
 q: at.logic.gapt.proofs.lk.LKProof =
-[p16] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p15, Ant(0), ∀y (P(x, y) ⊃ Q(x, y)), b, x))
-[p15] ∀y (P(b, y) ⊃ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p14, Ant(0), P(b, y) ⊃ Q(b, y), a, y))
-[p14] P(b, a) ⊃ Q(b, a) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ContractionRightRule(p13, Suc(0), Suc(1)))
-[p13] P(b, a) ⊃ Q(b, a) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y)), ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ImpLeftRule(p6, Suc(0), p12, Ant(0)))
-[p12] Q(b, a): o :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p11, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p11] Q(b, a): o :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p10, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), a, y))
-[p10] Q(b, a): o :- ¬Q(b, a) ⊃ ¬P(b, a)    (ImpRightRule(p9, Ant(0),...
+[p14] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p13, Ant(0), ∀y (P(x, y) ⊃ Q(x, y)), b, x))
+[p13] ∀y (P(b, y) ⊃ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p12, Ant(0), P(b, y) ⊃ Q(b, y), a, y))
+[p12] P(b, a) ⊃ Q(b, a) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p11, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
+[p11] P(b, a) ⊃ Q(b, a) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p10, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), a, y))
+[p10] P(b, a) ⊃ Q(b, a) :- ¬Q(b, a) ⊃ ¬P(b, a)    (ContractionRightRule(p9, Suc(0), Suc(1)))
+[p9] P(b, a) ⊃ Q(b, a) :- ¬Q(b, a) ⊃ ¬P(b, a), ¬Q(b, a) ⊃ ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
+[p8] ¬Q(b, a), P(b, a) ⊃ Q(b, a) :- ¬Q(b, a) ⊃ ¬P(b, a), ¬P(b, a)    (WeakeningLeftR...
 \end{clilisting}
 
 
@@ -936,33 +928,26 @@ by new function symbols thus obtaining a validity-equivalent sequent. In the GAP
 is implemented for proofs and can be used, e.g.~as follows:
 %
 \begin{clilisting}
-gapt> val Seq(x, y) = Seq("x", "y") map {FOLVar(_)}
-x: at.logic.gapt.expr.FOLVar = x
-y: at.logic.gapt.expr.FOLVar = y
-
-gapt> val Pxy = FOLAtom("P", x, y)
-Pxy: at.logic.gapt.expr.FOLAtom = P(x, y): o
-
-gapt> var p: LKProof = LogicalAxiom(Pxy)
+gapt> var p: LKProof = LogicalAxiom(hof"P(x,y)")
 p: at.logic.gapt.proofs.lk.LKProof =
 [p1] P(x, y): o :- P(x, y): o    (LogicalAxiom(P(x, y): o))
 
-gapt> p = ExistsRightRule(p, Ex(x, Pxy), x)
+gapt> p = ExistsRightRule(p, hof"?x P(x,y)", le"x")
 p: at.logic.gapt.proofs.lk.LKProof = [p2] P(x, y): o :- ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
 [p1] P(x, y): o :- P(x, y): o    (LogicalAxiom(P(x, y): o))
 
-gapt> p = ForallLeftRule(p, All(y, Pxy), y)
+gapt> p = ForallLeftRule(p, hof"!y P(x,y)", le"y")
 p: at.logic.gapt.proofs.lk.LKProof = [p3] ∀y P(x, y) :- ∃x P(x, y)    (ForallLeftRule(p2, Ant(0), P(x, y): o, y, y))
 [p2] P(x, y): o :- ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
 [p1] P(x, y): o :- P(x, y): o    (LogicalAxiom(P(x, y): o))
 
-gapt> p = ForallRightRule(p, All(y, Ex(x, Pxy)), y)
+gapt> p = ForallRightRule(p, hof"!y?x P(x,y)", fov"y")
 p: at.logic.gapt.proofs.lk.LKProof = [p4] ∀y P(x, y) :- ∀y ∃x P(x, y)    (ForallRightRule(p3, Suc(0), y, y))
 [p3] ∀y P(x, y) :- ∃x P(x, y)    (ForallLeftRule(p2, Ant(0), P(x, y): o, y, y))
 [p2] P(x, y): o :- ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
 [p1] P(x, y): o :- P(x, y): o    (LogicalAxiom(P(x, y): o))
 
-gapt> p = ExistsLeftRule(p, Ex(x, All(y, Pxy)), x)
+gapt> p = ExistsLeftRule(p, hof"?x!y P(x,y)", fov"x")
 p: at.logic.gapt.proofs.lk.LKProof = [p5] ∃x ∀y P(x, y) :- ∀y ∃x P(x, y)    (ExistsLeftRule(p4, Ant(0), x, x))
 [p4] ∀y P(x, y) :- ∀y ∃x P(x, y)    (ForallRightRule(p3, Suc(0), y, y))
 [p3] ∀y P(x, y) :- ∃x P(x, y)    (ForallLeftRule(p2, Ant(0), P(x, y): o, y, y))
@@ -997,35 +982,20 @@ and $\Gamma_2\seq\Delta_2$. For instance, suppose pr is the following proof:
 \end{center}
 First, we construct the proof pr:
 \begin{clilisting}
-gapt> val ca = FOLConst( "a" )
-ca: at.logic.gapt.expr.FOLConst = a
-
-gapt> val cb = FOLConst( "b" )
-cb: at.logic.gapt.expr.FOLConst = b
-
-gapt> val pa = FOLAtom( "P", List( ca ) )
-pa: at.logic.gapt.expr.FOLAtom = P(a): o
-
-gapt> val pb = FOLAtom( "P", List( cb ) )
-pb: at.logic.gapt.expr.FOLAtom = P(b): o
-
-gapt> val aeqb = Eq( ca, cb )
-aeqb: at.logic.gapt.expr.FOLAtom = a = b
-
-gapt> val axpa = LogicalAxiom( pa )
+gapt> val axpa = LogicalAxiom( fof"P(a)" )
 axpa: at.logic.gapt.proofs.lk.LogicalAxiom =
 [p1] P(a): o :- P(a): o    (LogicalAxiom(P(a): o))
 
-gapt> val axpb = LogicalAxiom( pb )
+gapt> val axpb = LogicalAxiom( fof"P(b)" )
 axpb: at.logic.gapt.proofs.lk.LogicalAxiom =
 [p1] P(b): o :- P(b): o    (LogicalAxiom(P(b): o))
 
-gapt> val proof = WeakeningLeftRule( axpa, aeqb )
+gapt> val proof = WeakeningLeftRule( axpa, fof"a=b" )
 proof: at.logic.gapt.proofs.lk.WeakeningLeftRule =
 [p2] a = b, P(a): o :- P(a): o    (WeakeningLeftRule(p1, a = b))
 [p1] P(a): o :- P(a): o    (LogicalAxiom(P(a): o))
 
-gapt> val pr = EqualityRightRule( proof, aeqb, Suc( 0 ), pb )
+gapt> val pr = EqualityRightRule( proof, fof"a=b", Suc( 0 ), fof"P(b)" )
 pr: at.logic.gapt.proofs.lk.EqualityRightRule =
 [p3] a = b, P(a): o :- P(b): o    (EqualityRightRule(p2, Ant(0), Suc(0), List([2])))
 [p2] a = b, P(a): o :- P(a): o    (WeakeningLeftRule(p1, a = b))
@@ -2018,71 +1988,6 @@ $Q x \varphi +^s \varphi[s/x]$
 cut & $E_1 \impl E_2$ \quad (where $E_1$ and $E_2$ have the same shallow formula) \\
 
 \end{tabular}
-
-\section{XML proof parser}\label{sec.fileio}
-
-This method \texttt{XMLProofDatabaseParser} will take as an argument a string that represents the path of a file
-containing a proof database in the XML format (generated by HLK, for example) and
-will return a proof database containing a list
-of pairs. It expects a file (the string of a proof will not work) and you can use
-the relative path. In the list returned, each pair is composed of a string and
-an object representing a proof within the system. The string is the name of the
-proof defined in the XML file. For example:
-%
-\begin{clilisting}
-gapt> val proofs = XMLProofDatabaseParser( "examples/simple/fol1.xml.gz" ).proofs
-proofs: List[(String, at.logic.gapt.proofs.lk.LKProof)] =
-List((p,[p25] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (CutRule(p13, Suc(0), p24, Ant(0)))
-[p24] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p23, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
-[p23] ∃y (¬P(b, y) ∨ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), v, y))
-[p22] ¬P(b, v) ∨ Q(b, v) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p21] ¬P(b, v) ∨ Q(b, v) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), v, y))
-[p20] ¬P(b, v) ∨ Q(b, v) :- ¬Q(b, v) ⊃ ¬P(b, v)    (ImpRightRule(p19, Ant(1), Suc(0)))
-[p19] ¬P(b, v) ∨ Q(b, v), ¬Q(b, v) :- ¬P(b, v)    (OrLeftRule(p16, Ant(0), p18...
-\end{clilisting}
-%
-returns a list of length 1 as shown by entering
-%
-\begin{clilisting}
-gapt> proofs.length
-res38: Int = 1
-
-\end{clilisting}
-%
-Its only element is \cli{proofs(0)}, the name of this proof can be obtained by
-entering
-%
-\begin{clilisting}
-gapt> proofs(0)._1
-res39: String = p
-
-\end{clilisting}
-%
-and the proof itself by
-%
-\begin{clilisting}
-gapt> val proof = proofs(0)._2
-proof: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (CutRule(p13, Suc(0), p24, Ant(0)))
-[p24] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p23, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
-[p23] ∃y (¬P(b, y) ∨ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), v, y))
-[p22] ¬P(b, v) ∨ Q(b, v) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p21] ¬P(b, v) ∨ Q(b, v) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), v, y))
-[p20] ¬P(b, v) ∨ Q(b, v) :- ¬Q(b, v) ⊃ ¬P(b, v)    (ImpRightRule(p19, Ant(1), Suc(0)))
-[p19] ¬P(b, v) ∨ Q(b, v), ¬Q(b, v) :- ¬P(b, v)    (OrLeftRule(p16, Ant(0), p18, Ant(1)))
-[p18] ¬Q(b, v)...
-\end{clilisting}
-%
-You can then view this proof in the graphical user interface \texttt{prooftool} by
-entering
-%
-\begin{clilisting}
-gapt> prooftool( proof )
-
-\end{clilisting}
-%
-In the folder \cli{../examples/simple} you can find a number of further simple
-proofs.
 
 \end{appendix}
 

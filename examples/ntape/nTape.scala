@@ -5,6 +5,7 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
+import at.logic.gapt.proofs.lkOld.subsumedClausesRemovalHOL
 import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
 import at.logic.gapt.proofs.lkskNew.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ Sequent, HOLClause }
@@ -30,10 +31,25 @@ abstract class nTape {
   lazy val input_proof = proofdb proof root_proof
 
   /**
+   * The input proof (TAPEPROOF) after preprocessing step 1: definition elimination
+   */
+  lazy val preprocessed_input_proof1 = DefinitionElimination( proofdb.Definitions )( input_proof )
+
+  /**
+   * The input proof after preprocessing step 2: expansion of logical axioms to atomic axioms
+   */
+  lazy val preprocessed_input_proof2 = AtomicExpansion( preprocessed_input_proof1 )
+
+  /**
+   * The input proof preprocessing step 3: regularization
+   */
+  lazy val preprocessed_input_proof3 = regularize( preprocessed_input_proof2 )
+
+  /**
    * The input proof (TAPEPROOF) after definition elimination, expansion of logical axioms to atomic axioms and
    *  definition eliminiation
    */
-  lazy val preprocessed_input_proof = AtomicExpansion( DefinitionElimination( proofdb.Definitions )( regularize( input_proof ) ) )
+  lazy val preprocessed_input_proof = preprocessed_input_proof3
 
   /**
    * The processed input proof converted to LKsk.
@@ -56,10 +72,18 @@ abstract class nTape {
   lazy val css = StandardClauseSet( struct )
 
   /**
+   * The characteristic sequent set after removal of labels and subsumption
+   */
+  lazy val preprocessed_css = {
+    val stripped_css = css.map( _.map( LKskProof.getFormula ) )
+    subsumedClausesRemovalHOL( stripped_css.toList )
+  }
+
+  /**
    * The first order export of the characteristic sequent set, together with the map of replacing constants.
    */
   lazy val ( abstracted_constants_map, fol_css ) = {
-    val css_nolabels = css.map( _.map( LKskProof.getFormula ) ).toList // remove labels from css
+    val css_nolabels = preprocessed_css // remove labels from css
     val ( abs_consts, abs_css ) = replaceAbstractions( css_nolabels )
     /* map types to first order*/
     val fol_css = reduceHolToFol( abs_css )
@@ -109,16 +133,23 @@ abstract class nTape {
   //prints the interesting terms from the expansion sequent
   def printStatistics() = {
     println( "------------ Proof sizes --------------" )
-    println( s"Input proof        : ${input_proof.treeLike.size}" )
-    println( s"Preprocessed input : ${preprocessed_input_proof.treeLike.size}" )
-    println( s"LKsk input proof   : ${lksk_proof.treeLike.size}" )
-    println( s"ACNF output proof  : ${acnf.treeLike.size}" )
-
-    println()
+    println( s"Input proof            : ${input_proof.treeLike.size}" )
+    println( s"Preprocessed input     : ${preprocessed_input_proof.treeLike.size}" )
+    println( s"LKsk input proof       : ${lksk_proof.treeLike.size}" )
+    println( s"ACNF output proof      : ${acnf.treeLike.size}" )
+    println( "------------ " )
+    println( s"Css size               : ${css.size}" )
+    println( s"Preprocessed css size  : ${preprocessed_css.size}" )
+    println( "------------ " )
+    println( s"Refutation size (dag)  : ${fol_refutation.dagLike.size}" )
+    println( s"Refutation size (tree) : ${fol_refutation.dagLike.size}" )
+    println( s"Refutation depth       : ${fol_refutation.depth}" )
     println( "------------ Witness Terms from Expansion Proof --------------" )
+
+    //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect
     val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
-    // FIXME: use a less fragile method to find the induction formula...
-    val indet = conjuncts( 19 )
+    val ind_axiom = proofdb.Definitions.find( _._1.toString == "IND" ).get._2
+    val indet = conjuncts.find( _.shallow == ind_axiom ).get
 
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
       case ETWeakQuantifier( _, instances ) =>
