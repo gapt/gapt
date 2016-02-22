@@ -77,6 +77,7 @@ lazy val root = project.in( file( "." ) ).
   aggregate( core, examples, tests, userManual, cli, testing ).
   dependsOn( core, examples, cli ).
   settings( commonSettings: _* ).
+  settings( unidocSettings: _* ).
   settings(
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
@@ -92,7 +93,7 @@ lazy val root = project.in( file( "." ) ).
     releaseDist := {
       val baseDir = file( "." )
       val version = Keys.version.value
-      val apidocs = doc.in( core, Compile ).value
+      val apidocs = target.in( ScalaUnidoc, UnidocKeys.unidoc ).value
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 

@@ -8,6 +8,8 @@ addSbtPlugin( "org.scoverage" %% "sbt-scoverage" % "1.3.5" )
 // Provides an assembly task which produces a fat jar with all dependencies included.
 addSbtPlugin( "com.eed3si9n" % "sbt-assembly" % "0.14.1" )
 
+addSbtPlugin( "com.eed3si9n" % "sbt-unidoc" % "0.3.3" )
+
 addSbtPlugin( "org.scalariform" % "sbt-scalariform" % "1.6.0" )
 
 addSbtPlugin( "me.lessis" % "bintray-sbt" % "0.3.0" )
