@@ -7,6 +7,12 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
 
   override val defaultIndent = 2
 
+  override def nest( doc: Doc, j: Indent = defaultIndent ): Doc =
+    nesting { i =>
+      if ( i > 10 ) doc
+      else super.nest( doc, j )
+    }
+
   def export( expr: LambdaExpression ): String =
     pretty( group( show( expr, false, Set(), Map(), prio.max )._1 ) )
 
@@ -122,7 +128,9 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     }
 
     def showFunCall( hd_ :Doc, args_ : List[Doc], p: Int ) =
-      parenIf( p, prio.app, hd_ ) <> nest( group( parens( vsep( args_, comma ) ) ) )
+      parenIf( p, prio.app, hd_ ) <> nest( group( parens(
+        if ( args_.size == 1 ) args_.head else lsep( args_, comma )
+      ) ) )
 
     val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
     if ( knownType || expr.exptype == Ti || hdKnown1 ) {
