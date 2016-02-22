@@ -700,7 +700,7 @@ You can export \verb,QF_UF, formulas (or sequents) as SMT-LIB benchmarks;
 note that we apply a drastic renaming to the constant symbols in order to
 support arbitrary (even Unicode) names in GAPT:
 \begin{clilisting}
-gapt> val (benchmark, typeRenaming, constantRenaming) =                                 SmtLibExporter(Sequent() :+ f)
+gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
 benchmark: String =
 "(set-logic QF_UF)
 (declare-sort t1 0)
@@ -719,7 +719,7 @@ constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(a
 We can also extract instances for basic equality axioms (reflexivity, symmetry,
 and congruences) from veriT's proof output:
 \begin{clilisting}[VeriT.isInstalled]
-gapt> val Some(expansionProof) = VeriT getExpansionProof (Sequent() :+ f)
+gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 ExpansionProofWithCut(List(),[p8] ETWeakQuantifier(∀x ∀y (x = y ⊃ y = x), a, p7)
 [p7] ETWeakQuantifier(∀y (a = y ⊃ y = a), b, p3, c, p6)
@@ -877,7 +877,7 @@ fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
 GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solve.solvePropositional}, for example as in:
 \begin{clilisting}
-gapt> solve solvePropositional hof"a -> (b -> a&b)"
+gapt> solve solvePropositional hof"a -> b -> a&b"
 res30: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a:o :- b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
