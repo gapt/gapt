@@ -60,6 +60,8 @@ class BabelTest extends Specification {
       "(a:i)+(b:i)=a & #c('+':t>t>t) c d = d",
       "(a:t1) <= b & #c('<=':t2>t3>o) b c",
       "(x*y)*z = x*(y*z)",
+      "'<=' x y : i",
+      "true & p(#c('⊤': i))",
       "true", "'true'", "'all' x"
     )
     Fragments.foreach( strings ) { string =>

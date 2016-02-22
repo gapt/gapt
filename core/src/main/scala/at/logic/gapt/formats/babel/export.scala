@@ -26,6 +26,10 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
   }
 
   val infixRel = Set( "<", "<=", ">", ">=" )
+  val logicalConstName = Set(
+    TopC.name, BottomC.name, NegC.name, AndC.name, OrC.name, ImpC.name,
+    ForallC.name, ExistsC.name
+  )
 
   def show(
     expr:      LambdaExpression,
@@ -38,7 +42,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Top()    => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() => ( value( if ( unicode ) "⊥" else "false" ), t0 )
 
-      case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) =>
+      case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.exptype == To =>
         showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
       case Apps( c @ Const( "+", _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.plusMinus, 1, 0, a, b, knownType, bound, t0, p )
@@ -78,7 +82,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Apps( _, args ) if args.nonEmpty => showApps( expr, knownType, bound, t0, p )
 
       case Const( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ast.matchesVarPattern( name ) )
+        if ( t0.get( name ).exists { _ != expr } || ast.matchesVarPattern( name ) || logicalConstName( name ) || name == "=" )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
