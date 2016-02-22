@@ -145,9 +145,11 @@ abstract class nTape {
     println( s"Refutation size (tree) : ${fol_refutation.dagLike.size}" )
     println( s"Refutation depth       : ${fol_refutation.depth}" )
     println( "------------ Witness Terms from Expansion Proof --------------" )
+
+    //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect
     val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
-    // FIXME: use a less fragile method to find the induction formula...
-    val indet = conjuncts( 19 )
+    val ind_axiom = proofdb.Definitions.find( _._1.toString == "IND" ).get._2
+    val indet = conjuncts.find( _.shallow == ind_axiom ).get
 
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
       case ETWeakQuantifier( _, instances ) =>

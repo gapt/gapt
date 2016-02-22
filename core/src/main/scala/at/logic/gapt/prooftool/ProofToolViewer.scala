@@ -7,6 +7,7 @@
 
 package at.logic.gapt.prooftool
 
+import at.logic.gapt.expr.LambdaExpression
 import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
