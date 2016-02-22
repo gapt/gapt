@@ -229,19 +229,9 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
 
   def parenIf( enclosingPrio: Int, currentPrio: Int, doc: Doc ) =
     if ( enclosingPrio <= currentPrio ) {
-      if ( enclosingPrio == prio.quantOrNeg + 1 || enclosingPrio == prio.lam + 1 ) {
-        // add linebreaks after blocks of quantifiers
-        group( linebreak <> parens( nest( doc ) ) )
-      } else {
-        parens( group( nest( doc ) ) )
-      }
+      parens( group( nest( doc ) ) )
     } else if ( enclosingPrio / 2 > currentPrio / 2 ) {
-      if ( enclosingPrio == prio.quantOrNeg + 1 || enclosingPrio == prio.lam + 1 ) {
-        // add linebreaks after blocks of quantifiers
-        group( linebreak <> nest( doc ) )
-      } else {
-        group( nest( doc ) )
-      }
+      group( nest( doc ) )
     } else {
       doc
     }
