@@ -71,10 +71,10 @@ class BabelTest extends Specification {
         val expr = BabelParser.parse( string )
 
         val expr2 = BabelParser.parse( expr.toString )
-        expr must_== expr2
+        expr syntaxEquals expr2 must beTrue
 
         val expr3 = BabelParser.parse( expr.toAsciiString )
-        expr must_== expr3
+        expr syntaxEquals expr3 must beTrue
       }
     }
   }
