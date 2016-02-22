@@ -39,8 +39,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     p:         Int
   ): ( Doc, Map[String, LambdaExpression] ) =
     expr match {
-      case Top()    => ( value( if ( unicode ) "⊤" else "true" ), t0 )
-      case Bottom() => ( value( if ( unicode ) "⊥" else "false" ), t0 )
+      case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
+      case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )
 
       case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.exptype == To =>
         showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
@@ -53,18 +53,18 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Apps( c @ Const( "/", _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.timesDiv, 1, 0, a, b, knownType, bound, t0, p )
 
-      case Eq( a, b ) =>
+      case Eq( a, b ) if !bound( EqC.name ) =>
         val ( a_, t1 ) = show( a, false, bound, t0, prio.infixRel )
         val ( b_, t2 ) = show( b, true, bound, t1, prio.infixRel )
         ( parenIf( p, prio.infixRel, a_ <+> "=" <@> b_ ), t2 )
 
-      case Neg( e ) =>
+      case Neg( e ) if !bound( NegC.name ) =>
         val ( e_, t1 ) = show( e, true, bound, t0, prio.quantOrNeg + 1 )
         ( parenIf( p, prio.quantOrNeg, ( if ( unicode ) "¬" else "-" ) <> e_ ), t1 )
 
-      case And( a, b ) => showBin( if ( unicode ) "∧" else "&", prio.conj, 1, 0, a, b, true, bound, t0, p )
-      case Or( a, b )  => showBin( if ( unicode ) "∨" else "|", prio.disj, 1, 0, a, b, true, bound, t0, p )
-      case Imp( a, b ) => showBin( if ( unicode ) "⊃" else "->", prio.impl, 0, 1, a, b, true, bound, t0, p )
+      case And( a, b ) if !bound( AndC.name ) => showBin( if ( unicode ) "∧" else "&", prio.conj, 1, 0, a, b, true, bound, t0, p )
+      case Or( a, b ) if !bound( OrC.name )   => showBin( if ( unicode ) "∨" else "|", prio.disj, 1, 0, a, b, true, bound, t0, p )
+      case Imp( a, b ) if !bound( ImpC.name ) => showBin( if ( unicode ) "⊃" else "->", prio.impl, 0, 1, a, b, true, bound, t0, p )
 
       case Abs( v @ Var( vn, vt ), e ) =>
         val ( e_, t1 ) = show( e, knownType, bound + vn, t0 - vn, prio.lam + 1 )
@@ -76,13 +76,13 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
         ( parenIf( p, prio.lam, ( if ( unicode ) "λ" else "^" ) <> v_ </> e_ ),
           t1 - vn ++ t0.get( vn ).map { vn -> _ } )
 
-      case All( v, e )                      => showQuant( if ( unicode ) "∀" else "!", v, e, bound, t0, p )
-      case Ex( v, e )                       => showQuant( if ( unicode ) "∃" else "?", v, e, bound, t0, p )
+      case All( v, e ) if !bound( ForallC.name ) => showQuant( if ( unicode ) "∀" else "!", v, e, bound, t0, p )
+      case Ex( v, e ) if !bound( ExistsC.name )  => showQuant( if ( unicode ) "∃" else "?", v, e, bound, t0, p )
 
-      case Apps( _, args ) if args.nonEmpty => showApps( expr, knownType, bound, t0, p )
+      case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
       case Const( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ast.matchesVarPattern( name ) || logicalConstName( name ) || name == "=" )
+        if ( t0.get( name ).exists { _ != expr } || ast.matchesVarPattern( name ) || logicalConstName( name ) || name == EqC.name )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
