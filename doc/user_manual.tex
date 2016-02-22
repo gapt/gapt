@@ -632,7 +632,7 @@ res14: Boolean = true
 \end{clilisting}
 \begin{clilisting}[Glucose.isInstalled]
 gapt> Glucose isValid PigeonHolePrinciple(3,2)
-res13: Boolean = true
+res15: Boolean = true
 
 \end{clilisting}
 
@@ -694,10 +694,10 @@ res18: Boolean = true
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
 \begin{clilisting}[Z3.isInstalled && CVC4.isInstalled]
 gapt> Z3 isValid f
-res15: Boolean = true
+res19: Boolean = true
 
 gapt> CVC4 isValid f
-res16: Boolean = true
+res20: Boolean = true
 
 \end{clilisting}
 
@@ -827,7 +827,7 @@ All of the above works with E prover (\cli{EProver}) and Vampire
 example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res24: Option[at.logic.gapt.proofs.lk.LKProof] =
+res26: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p19] p(0): o, ∀x0 (p(x0) ⊃ p(s(x0))) :- p(s(s(0))): o    (CutRule(p3, Suc(0), p18, Ant(1)))
 [p18] ∀x0 (p(x0) ⊃ p(s(x0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p17, Ant(2), Ant(0)))
 [p17] ∀x0 (p(x0) ⊃ p(s(x0))), p(0): o, ∀x0 (p(x0) ⊃ p(s(x0))) :- p(s(s(0))): o    (CutRule(p8, Suc(0), p16, Ant(1)))
@@ -863,7 +863,7 @@ The LeanCoP interface only supports the \cli{getExpansionProof} method with
 exactly one formula in the succedent:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent map {_.deep}
-res26: Option[at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula]] = Some(p(0): o, (p(0) ⊃ p(s(0))) ∧ (p(s(0)) ⊃ p(s(s(0)))) :- p(s(s(0))): o)
+res28: Option[at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula]] = Some(p(0): o, (p(0) ⊃ p(s(0))) ∧ (p(s(0)) ⊃ p(s(s(0)))) :- p(s(s(0))): o)
 
 \end{clilisting}
 
@@ -1250,14 +1250,14 @@ Productions:
   #v('α_2': i) -> s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
 
 gapt> lang.toSet subsetOf grammar.language
-res34: Boolean = true
+res36: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
-res35: at.logic.gapt.grammars.TratGrammar =
+res37: at.logic.gapt.grammars.TratGrammar =
 Axiom: #v('τ': i)
 Non-terminals: #v('τ': i), #v('α_1': i), #v('α_2': i)
 Productions:
