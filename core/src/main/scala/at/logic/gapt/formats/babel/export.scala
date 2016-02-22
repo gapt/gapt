@@ -110,20 +110,25 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Var( n, _ )   => Some( n )
       case _             => None
     }
-    val hdKnown = hdSym.exists { n => t0 get n contains hd }
-    if ( knownType || expr.exptype == Ti || hdKnown ) {
-      var t1 = if ( hdSym.exists { t0.get( _ ).exists { _ != hd } } ) t0
-      else t0 ++ hdSym.map { _ -> hd }
-      val args_ = for ( arg <- args ) yield {
-        val ( arg_, t10 ) = show( arg, hdKnown, bound, t1, prio.max )
-        t1 = t10
-        arg_
-      }
+
+    val hdKnown0 = hdSym.exists { n => t0 get n contains hd }
+    var t1 = t0
+    val args_ = for ( arg <- args ) yield {
+      val ( arg_, t10 ) = show( arg, hdKnown0, bound, t1, prio.max )
+      t1 = t10
+      arg_
+    }
+
+    def showFunCall( hd_ :Doc, args_ : List[Doc], p: Int ) =
+      parenIf( p, prio.app, hd_ ) <> parens( fillsep( args_, comma ) )
+
+    val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
+    if ( knownType || expr.exptype == Ti || hdKnown1 ) {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.app )
-      ( parenIf( p, prio.app, hd_ ) <> parens( fillsep( args_, comma ) ), t2 )
+      ( showFunCall( hd_, args_, p ), t2 )
     } else {
-      val ( expr_, t1 ) = show( expr, true, bound, t0, prio.ascript )
-      ( parenIf( p, prio.ascript, expr_ <> ":" <@> show( expr.exptype, false ) ), t1 )
+      val ( hd_, t2 ) = show( hd, true, bound, t1, prio.ascript )
+      ( parenIf( p, prio.ascript, showFunCall( hd_, args_, prio.ascript ) <> ":" <@> show( expr.exptype, false ) ), t2 )
     }
   }
 
