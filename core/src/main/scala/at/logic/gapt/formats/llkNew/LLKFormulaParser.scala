@@ -255,15 +255,6 @@ class LLKFormulaParser {
 
   }
 
-  def ps( s: String ): LLKSignature = DeclarationParser.parseDeclaration( s )
-  def pf( s: String )( implicit sig: LLKSignature ) = {
-    DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
-      case DeclarationParser.Success( result, _ ) => ASTtoHOL( sig.apply, result )
-      case DeclarationParser.NoSuccess( msg, input ) =>
-        throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
-    }
-  }
-
   def parseFormula( s: String ): HOLFormula = f( parse( s ) )
 
 }

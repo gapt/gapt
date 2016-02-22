@@ -66,3 +66,31 @@ object parseLLKFormula {
     exp.asInstanceOf[HOLFormula]
   }
 }
+
+/**
+ * A package with shortcuts for parsing higher-order functions. They are separate because the short names might
+ * pollute the namespace.
+ */
+package short {
+  import at.logic.gapt.formats.llkNew.LLKTypes.LLKSignature
+
+  object sig { def apply( s: String ): LLKSignature = DeclarationParser.parseDeclaration( s ) }
+
+  object hot {
+    def apply( s: String )( implicit signature: LLKSignature ) = {
+      DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
+        case DeclarationParser.Success( result, _ ) => LLKFormulaParser.ASTtoHOL( signature.apply, result )
+        case DeclarationParser.NoSuccess( msg, input ) =>
+          throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
+      }
+    }
+  }
+
+  object hof {
+    def apply( s: String )( implicit signature: LLKSignature ) = hot( s )( signature ) match {
+      case f: HOLFormula       => f
+      case e: LambdaExpression => throw new Exception( s"ef is an expression of type ${e.exptype} but not a formula!" )
+    }
+  }
+
+}

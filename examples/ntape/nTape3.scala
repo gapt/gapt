@@ -7,7 +7,7 @@ import at.logic.gapt.formats.llkNew.loadLLK
  */
 object nTape3 extends nTape {
 
-  override def proofdb() = loadLLK( "examples/ntape/ntape-small.llk" )
+  override def proofdb() = loadLLK( "examples/ntape/ntape3.llk" )
 
   override def root_proof() = "TAPEPROOF"
 

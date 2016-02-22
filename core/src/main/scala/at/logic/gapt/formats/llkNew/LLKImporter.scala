@@ -2,7 +2,6 @@ package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent }
-import at.logic.gapt.formats.llkNew.{ ast, LLKFormulaParser }
 import at.logic.gapt.formats.llkNew.ast.LambdaAST
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
