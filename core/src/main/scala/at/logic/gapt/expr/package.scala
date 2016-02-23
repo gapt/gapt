@@ -196,8 +196,9 @@ package object expr {
    *
    * @param sc A StringContext
    */
-  implicit class ExpressionParseHelper( val sc: StringContext ) extends AnyVal {
+  implicit class ExpressionParseHelper( val sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line ) {
     import at.logic.gapt.formats.babel._
+    import scalaz.{ \/-, -\/ }
 
     private def interpolate( args: Seq[LambdaExpression], astTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
       // TODO: use LiftWhitebox in AST instead of TermReplacement
@@ -212,8 +213,12 @@ package object expr {
           expressions( i )
       }
 
-      val expr = BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ).
-        fold( throw _, identity )
+      val expr = BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ) match {
+        case -\/( error ) => throw new IllegalArgumentException(
+          s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
+        )
+        case \/-( expr ) => expr
+      }
 
       TermReplacement( expr, repl )
     }
