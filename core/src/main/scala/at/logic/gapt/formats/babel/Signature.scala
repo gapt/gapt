@@ -43,9 +43,15 @@ case class MapSignature( map: Map[String, ast.Type] ) extends Signature {
 }
 
 sealed trait VarConst {
-  val t: ast.Type
+  def t: ast.Type
+
+  def isVar: Boolean
 }
 
-case class IsVar( t: ast.Type ) extends VarConst
+case class IsVar( t: ast.Type ) extends VarConst {
+  def isVar = true
+}
 
-case class IsConst( t: ast.Type ) extends VarConst
+case class IsConst( t: ast.Type ) extends VarConst {
+  def isVar = false
+}
