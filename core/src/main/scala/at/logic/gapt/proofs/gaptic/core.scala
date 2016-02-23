@@ -101,6 +101,12 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
       case EqualityRightRule( subProof, eq, index, pos )               => EqualityRightRule( f( subProof ), subProof.conclusion( eq ), subProof.conclusion( index ), pos )
       case DefinitionLeftRule( subProof, index, main )                 => DefinitionLeftRule( f( subProof ), subProof.conclusion( index ), main )
       case DefinitionRightRule( subProof, index, main )                => DefinitionRightRule( f( subProof ), subProof.conclusion( index ), main )
+      case p @ InductionRule( cases, _ ) => p.copy( cases = cases map {
+        case InductionCase( q, c, hyps, evs, concl ) =>
+          val q_ = f( q )
+          InductionCase( q_, c, hyps map { q.conclusion( _ ) } map { q_.conclusion.indexOfInAnt },
+            evs, q_.conclusion.indexOfInSuc( q.conclusion( concl ) ) )
+      } )
       case _ =>
         throw new Exception( "Unmatched LK rule: " + p + ". Could not replace sub goal." )
     }

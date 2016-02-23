@@ -18,11 +18,8 @@ trait Context extends babel.Signature {
 
 case class FiniteContext(
     constants:   Set[Const],
-    definitions: Map[Const, LambdaExpression],
-    typeDefs: Set[Context.TypeDef] = Set(
-      Context.Sort( Ti ),
-      Context.InductiveType( To, Set( Top(), Bottom() ) )
-    )
+    definitions: Map[Const, LambdaExpression] = Map(),
+    typeDefs:    Set[Context.TypeDef]         = Set( Context.iTypeDef, Context.oTypeDef )
 ) extends Context {
   val constantsMap = constants.map { c => c.name -> c }.toMap
   val typeDefsMap = typeDefs.map { td => td.ty.name -> td }.toMap
@@ -36,5 +33,8 @@ case class FiniteContext(
 object Context {
   sealed trait TypeDef { def ty: TBase }
   case class Sort( ty: TBase ) extends TypeDef
-  case class InductiveType( ty: TBase, constructors: Set[Const] ) extends TypeDef
+  case class InductiveType( ty: TBase, constructors: Seq[Const] ) extends TypeDef
+
+  val oTypeDef = Context.InductiveType( To, Seq( Top(), Bottom() ) )
+  val iTypeDef = Context.Sort( Ti )
 }

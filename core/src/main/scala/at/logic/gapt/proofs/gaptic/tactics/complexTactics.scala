@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.{ Const => Con, _ }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
@@ -241,6 +241,35 @@ case class RewriteTactic(
   def rtl( eqs: String* ) = copy( equations = equations ++ eqs.map { _ -> false } )
   def in( tgt: String ) = copy( target = Some( tgt ) )
   def many = copy( once = false )
+}
+
+case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) extends Tactic[Unit] {
+  def getConstructors( goal: OpenAssumption, t: TBase ): ValidationNel[TacticalFailure, Seq[Con]] =
+    ctx.typeDef( t.name ) match {
+      case Some( Context.InductiveType( _, constructors ) ) => constructors.success
+      case Some( typeDef ) => TacticalFailure( this, Some( goal ), s"Type $t is not inductively defined: $typeDef" ).failureNel
+      case None => TacticalFailure( this, Some( goal ), s"Type $t is not defined" ).failureNel
+    }
+
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, main @ All( v @ Var( name, t: TBase ), formula ), idx: Suc ) <- findFormula( goal, target )
+      constrs <- getConstructors( goal, t )
+    } yield {
+      val cases = constrs map { constr =>
+        val FunctionType( _, argTypes ) = constr.exptype
+        var fvs = freeVariables( goal.conclusion )
+        val evs = argTypes map { at =>
+          val ev = rename( if ( at == t ) v else Var( "x", at ), fvs.toList )
+          fvs += ev
+          ev
+        }
+        val hyps = NewLabels( goal.s, s"IH$name" ) zip ( evs filter { _.exptype == t } map { ev => Substitution( v -> ev )( formula ) } )
+        val subGoal = hyps ++: goal.s.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
+        InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
+      }
+      () -> InductionRule( cases, main )
+    }
 }
 
 /**
