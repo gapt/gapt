@@ -2,7 +2,7 @@ package at.logic.gapt.formats.tip
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existsclosure
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.exptype
@@ -16,17 +16,26 @@ case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
     ( projectors, fieldVars ).zipped map { ( p, f ) => p( constr( fieldVars: _* ) ) === f }
   }
 }
-case class TipDatatype( t: Ty, constructors: Seq[TipConstructor] ) {
+case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
   constructors foreach { ctr => require( ctr.datatype == t ) }
 }
 
 case class TipFun( fun: Const, definitions: Seq[HOLFormula] )
 
-case class TipProblem( datatypes: Seq[TipDatatype], functions: Seq[TipFun], goal: HOLFormula ) {
+case class TipProblem( sorts: Seq[TBase], datatypes: Seq[TipDatatype], functions: Seq[TipFun], goal: HOLFormula ) {
   def toSequent = existsclosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
       functions.flatMap( _.definitions ) ++:
       Sequent()
       :+ goal
   )
+
+  def context =
+    FiniteContext(
+      constants = Set() ++ functions.map { _.fun } ++
+      datatypes.flatMap { _.constructors }.flatMap { c => c.projectors :+ c.constr },
+      definitions = Map(),
+      typeDefs = Set() ++ sorts.map { Context.Sort } ++
+        datatypes.map { dt => Context.InductiveType( dt.t, dt.constructors.map { _.constr }.toSet ) }
+    )
 }

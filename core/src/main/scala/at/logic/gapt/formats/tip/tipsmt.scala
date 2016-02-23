@@ -9,7 +9,7 @@ import scala.collection.mutable
 import scala.io.Source
 
 class TipSmtParser {
-  val typeDecls = mutable.Map[String, Ty]()
+  val typeDecls = mutable.Map[String, TBase]()
   val funDecls = mutable.Map[String, Const]()
 
   def declare( t: TBase ): Unit = typeDecls( t.name ) = t
@@ -97,7 +97,10 @@ class TipSmtParser {
   }
 
   def toProblem: TipProblem =
-    TipProblem( datatypes.toSeq, functions.toSeq, And( goals ) )
+    TipProblem(
+      typeDecls.values.toSeq diff datatypes.map { _.t },
+      datatypes.toSeq, functions.toSeq, And( goals )
+    )
 }
 
 object TipSmtParser {
