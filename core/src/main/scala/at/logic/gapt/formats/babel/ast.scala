@@ -68,8 +68,10 @@ object ast {
     case real.TBase( name )   => BaseType( name )
     case real.`->`( in, out ) => ArrType( liftType( in ), liftType( out ) )
   }
+
   def LiftBlackbox( e: real.LambdaExpression ) =
     Lifted( e, liftType( e.exptype ), Map() )
+
   def LiftWhitebox( e: real.LambdaExpression ) =
     Lifted( e, liftType( e.exptype ),
       real.freeVariables( e ).
@@ -81,6 +83,7 @@ object ast {
     case ArrType( a, b )  => freeVars( a ) union freeVars( b )
     case TypeVar( idx )   => Set( idx )
   }
+
   def subst( t: Type, assg: Map[TypeVarIdx, Type] ): Type = t match {
     case BaseType( _ )   => t
     case ArrType( a, b ) => ArrType( subst( a, assg ), subst( b, assg ) )
@@ -90,6 +93,7 @@ object ast {
   def printCtx( eqs: List[( Type, Type )], assg: Map[TypeVarIdx, Type] ): String =
     ( assg.map { case ( idx, t ) => s"${readable( TypeVar( idx ) )} = ${readable( t )}\n" } ++
       eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
+
   def solve( eqs: List[( Type, Type )], assg: Map[TypeVarIdx, Type] ): UnificationError \/ Map[TypeVarIdx, Type] = eqs match {
     case Nil => assg.right
     case ( first :: rest ) => first match {
@@ -140,6 +144,7 @@ object ast {
     }
 
   val polymorphic = Set( real.EqC.name, real.ForallC.name, real.ExistsC.name )
+
   def freeIdentifers( expr: Expr ): Set[String] = expr match {
     case TypeAnnotation( e, ty ) => freeIdentifers( e )
     case Ident( name, ty )       => Set( name )
@@ -153,6 +158,7 @@ object ast {
     case ArrType( a, b )  => toRealType( a, assg ) -> toRealType( b, assg )
     case TypeVar( idx )   => toRealType( assg( idx ), assg )
   }
+
   def toRealExpr( expr: Expr, assg: Map[TypeVarIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
     case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
     case expr @ Ident( name, ty ) =>
@@ -165,15 +171,11 @@ object ast {
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
     case Lifted( e, ty, fvs ) => e
   }
-  def toRealExpr( expr: Expr, isVar: String => Boolean ): UnificationError \/ real.LambdaExpression = {
+  def toRealExpr( expr: Expr )( implicit sig: Signature ): UnificationError \/ real.LambdaExpression = {
     val fi = freeIdentifers( expr ) diff polymorphic
-    val freeVars = fi filter isVar
-    for ( ( assg, _ ) <- infer( expr, fi.map { _ -> freshTypeVar() }.toMap, Map() ) )
+    val freeVars = fi filter sig.isVar
+    val startingEnv = fi.map { i => i -> sig.getType( i ) }
+    for ( ( assg, _ ) <- infer( expr, startingEnv.toMap, Map() ) )
       yield toRealExpr( expr, assg.withDefaultValue( BaseType( "i" ) ), freeVars )
   }
-  val varPattern = "[u-zU-Z].*".r
-  def matchesVarPattern( n: String ) = varPattern.pattern.matcher( n ).matches()
-  def toRealExpr( expr: Expr ): UnificationError \/ real.LambdaExpression =
-    toRealExpr( expr, matchesVarPattern )
-
 }

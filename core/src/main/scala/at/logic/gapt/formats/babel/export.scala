@@ -45,7 +45,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     bound:     Set[String],
     t0:        Map[String, LambdaExpression],
     p:         Int
-  ): ( Doc, Map[String, LambdaExpression] ) =
+  )( implicit sig: Signature ): ( Doc, Map[String, LambdaExpression] ) =
     expr match {
       case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )
@@ -90,14 +90,14 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
       case Const( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ast.matchesVarPattern( name ) || logicalConstName( name ) || name == EqC.name )
+        if ( t0.get( name ).exists { _ != expr } || sig.isVar( name ) || logicalConstName( name ) || name == EqC.name )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
       case Var( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !ast.matchesVarPattern( name ) ) )
+        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.isVar( name ) ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
