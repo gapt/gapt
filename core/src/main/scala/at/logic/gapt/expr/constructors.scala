@@ -178,7 +178,7 @@ class UnaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
 object Neg extends UnaryPropConnectiveHelper( NegC )
 
 class NullaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
-  def apply(): PropFormula = c().asInstanceOf[PropFormula]
+  def apply(): PropFormula with Const = c().asInstanceOf[PropFormula with Const]
   def unapply( formula: PropFormula ) = formula match {
     case c() => true
     case _   => false
