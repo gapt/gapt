@@ -117,7 +117,7 @@ object BabelParser {
           s"Cannot type-check ${ast.readable( expr )}:\n$unifError"
         }
       case parseError: Failure =>
-        parseError.toString.left
+        ParseError( parseError ).getMessage.left
     }
   }
   def parse( text: String ): LambdaExpression =
@@ -135,7 +135,7 @@ object BabelParser {
           s"Cannot type-check ${ast.readable( formula )}:\n$unifError"
         }.map { _.asInstanceOf[HOLFormula] }
       case parseError: Failure =>
-        parseError.toString.left
+        ParseError( parseError ).getMessage.left
     }
   }
   def parseFormula( text: String ): HOLFormula =
