@@ -19,7 +19,7 @@ object ast {
   def freshTypeVar() = TypeVar( gensym() )
 
   sealed trait Expr
-  case class TypeAscription( expr: Expr, ty: Type ) extends Expr
+  case class TypeAnnotation( expr: Expr, ty: Type ) extends Expr
   case class Ident( name: String, ty: Type ) extends Expr
   case class Abs( v: Ident, sub: Expr ) extends Expr
   case class App( a: Expr, b: Expr ) extends Expr
@@ -31,7 +31,7 @@ object ast {
     case TypeVar( idx )   => s"_$idx"
   }
   def readable( e: Expr ): String = e match {
-    case TypeAscription( expr, ty ) => s"(${readable( expr )}:${readable( ty )})"
+    case TypeAnnotation( expr, ty ) => s"(${readable( expr )}:${readable( ty )})"
     case Ident( name, ty )          => s"($name:${readable( ty )})"
     case Abs( v, sub )              => s"(^${readable( v )} ${readable( sub )})"
     case App( a, b )                => s"(${readable( a )} ${readable( b )})"
@@ -113,7 +113,7 @@ object ast {
 
   def infer( expr: Expr, env: Map[String, Type], s0: Map[TypeVarIdx, Type] ): UnificationError \/ ( Map[TypeVarIdx, Type], Type ) =
     expr match {
-      case TypeAscription( e, t ) =>
+      case TypeAnnotation( e, t ) =>
         for {
           ( s1, et ) <- infer( e, env, s0 )
           s2 <- solve( List( et -> t ), s1 )
@@ -141,7 +141,7 @@ object ast {
 
   val polymorphic = Set( real.EqC.name, real.ForallC.name, real.ExistsC.name )
   def freeIdentifers( expr: Expr ): Set[String] = expr match {
-    case TypeAscription( e, ty ) => freeIdentifers( e )
+    case TypeAnnotation( e, ty ) => freeIdentifers( e )
     case Ident( name, ty )       => Set( name )
     case Abs( v, sub )           => freeIdentifers( sub ) - v.name
     case App( a, b )             => freeIdentifers( a ) union freeIdentifers( b )
@@ -154,7 +154,7 @@ object ast {
     case TypeVar( idx )   => toRealType( assg( idx ), assg )
   }
   def toRealExpr( expr: Expr, assg: Map[TypeVarIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
-    case TypeAscription( e, ty ) => toRealExpr( e, assg, bound )
+    case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
     case expr @ Ident( name, ty ) =>
       if ( bound( name ) ) real.Var( name, toRealType( ty, assg ) )
       else real.Const( name, toRealType( ty, assg ) )

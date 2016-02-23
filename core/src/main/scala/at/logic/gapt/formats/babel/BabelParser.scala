@@ -39,10 +39,10 @@ object BabelParser {
   val Expr: P[ast.Expr] = P( Lam )
 
   val BoundVar: P[ast.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => ast.Ident( x._1, x._2 ) ) )
-  val Lam: P[ast.Expr] = P( ( ( "^" | "\\" | "λ" ) ~/ BoundVar ~ "=>".? ~ Lam ).map( x => ast.Abs( x._1, x._2 ) ) | TypeAscription )
+  val Lam: P[ast.Expr] = P( ( ( "^" | "\\" | "λ" ) ~/ BoundVar ~ "=>".? ~ Lam ).map( x => ast.Abs( x._1, x._2 ) ) | TypeAnnotation )
 
-  val TypeAscription: P[ast.Expr] = P( Impl ~/ ( ":" ~ Type ).? ) map {
-    case ( expr, Some( ty ) ) => ast.TypeAscription( expr, ty )
+  val TypeAnnotation: P[ast.Expr] = P( Impl ~/ ( ":" ~ Type ).? ) map {
+    case ( expr, Some( ty ) ) => ast.TypeAnnotation( expr, ty )
     case ( expr, None )       => expr
   }
 
@@ -71,7 +71,7 @@ object BabelParser {
         case ( a, "!=", b ) => ast.Neg( ast.Eq( a, b ) )
         case ( a, "=", b )  => ast.Eq( a, b )
         case ( a, r, b ) =>
-          ast.TypeAscription( ast.App( ast.App( ast.Ident( r, ast.freshTypeVar() ), a ), b ), ast.Bool )
+          ast.TypeAnnotation( ast.App( ast.App( ast.Ident( r, ast.freshTypeVar() ), a ), b ), ast.Bool )
       }.reduceLeft( ast.And )
   }
 
@@ -130,7 +130,7 @@ object BabelParser {
     import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
       case Success( expr, _ ) =>
-        val formula = ast.TypeAscription( expr, ast.Bool )
+        val formula = ast.TypeAnnotation( expr, ast.Bool )
         ast.toRealExpr( formula ).leftMap { unifError =>
           s"Cannot type-check ${ast.readable( formula )}:\n$unifError"
         }.map { _.asInstanceOf[HOLFormula] }

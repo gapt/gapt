@@ -27,7 +27,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     val disj = 16
     val bicond = 18
     val impl = 20
-    val ascript = 22
+    val typeAnnot = 22
     val lam = 24
 
     val max = lam + 2
@@ -95,14 +95,14 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
         else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
-          ( parenIf( p, prio.ascript, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
+          ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
       case Var( name, ty ) =>
         if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !ast.matchesVarPattern( name ) ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
-          ( parenIf( p, prio.ascript, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
+          ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
     }
 
   def showApps(
@@ -137,8 +137,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.app )
       ( showFunCall( hd_, args_, p ), t2 )
     } else {
-      val ( hd_, t2 ) = show( hd, true, bound, t1, prio.ascript )
-      ( parenIf( p, prio.ascript, showFunCall( hd_, args_, prio.ascript ) <> ":" <@> show( expr.exptype, false ) ), t2 )
+      val ( hd_, t2 ) = show( hd, true, bound, t1, prio.typeAnnot )
+      ( parenIf( p, prio.typeAnnot, showFunCall( hd_, args_, prio.typeAnnot ) <> ":" <@> show( expr.exptype, false ) ), t2 )
     }
   }
 
@@ -179,8 +179,8 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       showBin( cn, prio, leftPrioBias, rightPrioBias, a, b, cKnown, bound, t0 + ( cn -> c ), p )
     } else {
       val ( expr_, t1 ) = showBinOp( c, prio, leftPrioBias, rightPrioBias, a, b,
-        true, bound, t0, BabelExporter.this.prio.ascript )
-      ( parenIf( p, BabelExporter.this.prio.ascript,
+        true, bound, t0, BabelExporter.this.prio.typeAnnot )
+      ( parenIf( p, BabelExporter.this.prio.typeAnnot,
         expr_ <> ":" <@> show( rett, false ) ), t1 )
     }
   }
