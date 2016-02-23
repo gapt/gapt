@@ -24,11 +24,11 @@ object Signature {
   implicit val defaultSignature = new Signature {
     val varPattern = "[u-zU-Z].*".r
 
-    override def apply(s: String): VarConst = {
-      if (varPattern.pattern.matcher( s ).matches())
-        IsVar(freshTypeVar())
+    override def apply( s: String ): VarConst = {
+      if ( varPattern.pattern.matcher( s ).matches() )
+        IsVar( freshTypeVar() )
       else
-        IsConst(freshTypeVar())
+        IsConst( freshTypeVar() )
     }
   }
 }
