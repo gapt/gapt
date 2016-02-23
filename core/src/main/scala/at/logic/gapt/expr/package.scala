@@ -1,8 +1,6 @@
 package at.logic.gapt
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
-import at.logic.gapt.formats.babel.BabelParser
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.Sequent
 
 import scala.annotation.implicitNotFound
@@ -199,6 +197,26 @@ package object expr {
    * @param sc A StringContext
    */
   implicit class ExpressionParseHelper( val sc: StringContext ) extends AnyVal {
+    import at.logic.gapt.formats.babel._
+
+    private def interpolate( args: Seq[LambdaExpression], astTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
+      // TODO: use LiftWhitebox in AST instead of TermReplacement
+
+      val strings = sc.parts.toList
+      val expressions = args.toList
+
+      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
+      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
+        case Const( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+      }
+
+      val expr = BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ).
+        fold( throw _, identity )
+
+      TermReplacement( expr, repl )
+    }
 
     // Higher order parsers
 
@@ -206,19 +224,7 @@ package object expr {
      * Parses a string as a [[LambdaExpression]].
      *
      */
-    def le( args: LambdaExpression* ): LambdaExpression = {
-      val strings = sc.parts.toList
-      val expressions = args.toList
-
-      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
-      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
-        case Const( name, _ ) if name.startsWith( placeholder ) =>
-          val i = name.drop( placeholder.length ).toInt
-          expressions( i )
-      }
-
-      TermReplacement( BabelParser.parse( stringsNew.mkString ++ strings.last ), repl )
-    }
+    def le( args: LambdaExpression* ): LambdaExpression = interpolate( args, identity )
 
     /**
      * Parses a string as a [[HOLFormula]].
@@ -226,19 +232,7 @@ package object expr {
      * @param args
      * @return
      */
-    def hof( args: LambdaExpression* ): HOLFormula = {
-      val strings = sc.parts.toList
-      val expressions = args.toList
-
-      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
-      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
-        case Const( name, _ ) if name.startsWith( placeholder ) =>
-          val i = name.drop( placeholder.length ).toInt
-          expressions( i )
-      }
-
-      TermReplacement( BabelParser.parseFormula( stringsNew.mkString ++ strings.last ), repl )
-    }
+    def hof( args: LambdaExpression* ): HOLFormula = interpolate( args, ast.TypeAnnotation( _, ast.Bool ) ).asInstanceOf[HOLFormula]
 
     /**
      * Parses a string as a [[HOLAtom]].
@@ -246,14 +240,10 @@ package object expr {
      * @param args
      * @return
      */
-    def hoa( args: LambdaExpression* ): HOLAtom = {
-      val tmp = hof( args: _* )
-
-      try { tmp.asInstanceOf[HOLAtom] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp appears not to be a HOL atom. Parse it with hof." )
-      }
+    def hoa( args: LambdaExpression* ): HOLAtom = hof( args: _* ) match {
+      case atom: HOLAtom => atom
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr appears not to be a HOL atom. Parse it with hof." )
     }
 
     /**
@@ -262,14 +252,10 @@ package object expr {
      * @param args
      * @return
      */
-    def hov( args: LambdaExpression* ): Var = {
-      val tmp = le( args: _* )
-
-      try { tmp.asInstanceOf[Var] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a variable. Parse it with le." )
-      }
+    def hov( args: LambdaExpression* ): Var = le( args: _* ) match {
+      case v: Var => v
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr cannot be read as a variable. Parse it with le." )
     }
 
     /**
@@ -278,14 +264,10 @@ package object expr {
      * @param args
      * @return
      */
-    def hoc( args: LambdaExpression* ): Const = {
-      val tmp = le( args: _* )
-
-      try { tmp.asInstanceOf[Const] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp cannot be read as a constant. Parse it with le." )
-      }
+    def hoc( args: LambdaExpression* ): Const = le( args: _* ) match {
+      case c: Const => c
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr cannot be read as a constant. Parse it with le." )
     }
 
     // First order parsers
@@ -296,15 +278,10 @@ package object expr {
      * @param args
      * @return
      */
-    def foe( args: FOLExpression* ): FOLExpression = {
-
-      val tmp = le( args: _* )
-
-      try { tmp.asInstanceOf[FOLExpression] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp appears not to be a FOL expression. Parse it with le." )
-      }
+    def foe( args: FOLExpression* ): FOLExpression = le( args: _* ) match {
+      case folExpression: FOLExpression => folExpression
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr appears not to be a FOL expression. Parse it with le." )
     }
 
     /**
@@ -313,15 +290,10 @@ package object expr {
      * @param args
      * @return
      */
-    def fof( args: FOLExpression* ): FOLFormula = {
-
-      val tmp = hof( args: _* )
-
-      try { tmp.asInstanceOf[FOLFormula] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Formula $tmp appears not to be a FOL formula. Parse it with hof." )
-      }
+    def fof( args: FOLExpression* ): FOLFormula = hof( args: _* ) match {
+      case formula: FOLFormula => formula
+      case expr =>
+        throw new IllegalArgumentException( s"Formula $expr appears not to be a FOL formula. Parse it with hof." )
     }
 
     /**
@@ -330,14 +302,10 @@ package object expr {
      * @param args
      * @return
      */
-    def foa( args: FOLExpression* ): FOLAtom = {
-      val tmp = fof( args: _* )
-
-      try { tmp.asInstanceOf[FOLAtom] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Formula $tmp appears not to be an atom. Parse it with fof." )
-      }
+    def foa( args: FOLExpression* ): FOLAtom = fof( args: _* ) match {
+      case atom: FOLAtom => atom
+      case expr =>
+        throw new IllegalArgumentException( s"Formula $expr appears not to be an atom. Parse it with fof." )
     }
 
     /**
@@ -346,14 +314,10 @@ package object expr {
      * @param args
      * @return
      */
-    def fot( args: FOLTerm* ): FOLTerm = {
-      val tmp = le( args: _* )
-
-      try { tmp.asInstanceOf[FOLTerm] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Expression $tmp appears not to be FOL term. Parse it with le." )
-      }
+    def fot( args: FOLTerm* ): FOLTerm = le( args: _* ) match {
+      case term: FOLTerm => term
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr appears not to be FOL term. Parse it with le." )
     }
 
     /**
@@ -362,14 +326,10 @@ package object expr {
      * @param args
      * @return
      */
-    def fov( args: FOLTerm* ): FOLVar = {
-      val tmp = fot( args: _* )
-
-      try { tmp.asInstanceOf[FOLVar] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Term $tmp cannot be read as a FOL variable. Parse it with fot." )
-      }
+    def fov( args: FOLTerm* ): FOLVar = fot( args: _* ) match {
+      case v: FOLVar => v
+      case expr =>
+        throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL variable. Parse it with fot." )
     }
 
     /**
@@ -378,16 +338,12 @@ package object expr {
      * @param args
      * @return
      */
-    def foc( args: FOLTerm* ): FOLConst = {
-      val tmp = fot( args: _* )
-
-      try { tmp.asInstanceOf[FOLConst] }
-      catch {
-        case _: ClassCastException =>
-          throw new IllegalArgumentException( s"Term $tmp cannot be read as a FOL constant. Parse it with fot." )
-      }
+    def foc( args: FOLTerm* ): FOLConst = fot( args: _* ) match {
+      case c: FOLConst => c
+      case expr =>
+        throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL constant. Parse it with fot." )
     }
 
-    private def placeholder = "qq_"
+    private def placeholder = "__qq_"
   }
 }

@@ -6,6 +6,10 @@ import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import scalaz._
 import Scalaz._
 
+sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
+case class BabelUnificationError( reason: String ) extends BabelParseError( reason )
+case class BabelParsingError( parseError: fastparse.core.ParseError ) extends BabelParseError( parseError.getMessage )
+
 object BabelLexical {
   import fastparse.all._
 
@@ -109,38 +113,21 @@ object BabelParser {
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
 
-  def tryParse( text: String ): String \/ LambdaExpression = {
+  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity ): BabelParseError \/ LambdaExpression = {
     import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
       case Success( expr, _ ) =>
-        ast.toRealExpr( expr ).leftMap { unifError =>
-          s"Cannot type-check ${ast.readable( expr )}:\n$unifError"
+        val transformedExpr = astTransformer( expr )
+        ast.toRealExpr( transformedExpr ).leftMap { unifError =>
+          BabelUnificationError( s"Cannot type-check ${ast.readable( transformedExpr )}:\n$unifError" )
         }
       case parseError: Failure =>
-        ParseError( parseError ).getMessage.left
+        BabelParsingError( ParseError( parseError ) ).left
     }
   }
-  def parse( text: String ): LambdaExpression =
-    tryParse( text ).fold(
-      error => throw new IllegalArgumentException( error ),
-      expr => expr
-    )
 
-  def tryParseFormula( text: String ): String \/ HOLFormula = {
-    import fastparse.core.Parsed._
-    ExprAndNothingElse.parse( text ) match {
-      case Success( expr, _ ) =>
-        val formula = ast.TypeAnnotation( expr, ast.Bool )
-        ast.toRealExpr( formula ).leftMap { unifError =>
-          s"Cannot type-check ${ast.readable( formula )}:\n$unifError"
-        }.map { _.asInstanceOf[HOLFormula] }
-      case parseError: Failure =>
-        ParseError( parseError ).getMessage.left
-    }
-  }
+  def parse( text: String ): LambdaExpression =
+    tryParse( text ).fold( throw _, identity )
   def parseFormula( text: String ): HOLFormula =
-    tryParseFormula( text ).fold(
-      error => throw new IllegalArgumentException( error ),
-      formula => formula
-    )
+    tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
 }
