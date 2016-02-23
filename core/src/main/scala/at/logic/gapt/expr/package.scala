@@ -196,7 +196,7 @@ package object expr {
    *
    * @param sc A StringContext
    */
-  implicit class ExpressionParseHelper( val sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line ) {
+  implicit class ExpressionParseHelper( val sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line, sig: at.logic.gapt.formats.babel.Signature ) {
     import at.logic.gapt.formats.babel._
     import scalaz.{ \/-, -\/ }
 

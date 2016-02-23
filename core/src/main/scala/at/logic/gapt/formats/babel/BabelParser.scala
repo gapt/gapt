@@ -113,12 +113,12 @@ object BabelParser {
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
 
-  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity ): BabelParseError \/ LambdaExpression = {
+  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: Signature ): BabelParseError \/ LambdaExpression = {
     import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
       case Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
-        ast.toRealExpr( transformedExpr ).leftMap { unifError =>
+        ast.toRealExpr( transformedExpr, sig ).leftMap { unifError =>
           BabelUnificationError( s"Cannot type-check ${ast.readable( transformedExpr )}:\n$unifError" )
         }
       case parseError: Failure =>
@@ -126,8 +126,8 @@ object BabelParser {
     }
   }
 
-  def parse( text: String ): LambdaExpression =
+  def parse( text: String )( implicit sig: Signature ): LambdaExpression =
     tryParse( text ).fold( throw _, identity )
-  def parseFormula( text: String ): HOLFormula =
+  def parseFormula( text: String )( implicit sig: Signature ): HOLFormula =
     tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
 }
