@@ -2,9 +2,10 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr.{ Bottom, Const, LambdaExpression, TBase, Ti, To, Top }
 import at.logic.gapt.formats.babel
+import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 
-trait Context extends babel.Signature {
+trait Context extends BabelSignature {
   def constant( name: String ): Option[Const]
   def typeDef( name: String ): Option[TypeDef]
   def definition( const: Const ): Option[LambdaExpression]

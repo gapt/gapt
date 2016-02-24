@@ -7,8 +7,7 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr.hol.HOLPosition._
-import at.logic.gapt.formats.babel
-import at.logic.gapt.formats.babel.BabelExporter
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 
 import scala.annotation.tailrec
 
@@ -116,9 +115,9 @@ abstract class LambdaExpression {
    */
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
-  override def toString = new BabelExporter( unicode = true, sig = babel.Signature.defaultSignature ).export( this )
-  def toAsciiString = new BabelExporter( unicode = false, sig = babel.Signature.defaultSignature ).export( this )
-  def toSigRelativeString( implicit sig: babel.Signature ) =
+  override def toString = new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).export( this )
+  def toAsciiString = new BabelExporter( unicode = false, sig = BabelSignature.defaultSignature ).export( this )
+  def toSigRelativeString( implicit sig: BabelSignature ) =
     new BabelExporter( unicode = true, sig = sig ).export( this )
 
   def &( that: LambdaExpression ): HOLFormula = And( this, that )

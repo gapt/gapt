@@ -3,7 +3,7 @@ package at.logic.gapt.formats.babel
 import at.logic.gapt.expr._
 import org.kiama.output.PrettyPrinter
 
-class BabelExporter( unicode: Boolean, sig: Signature ) extends PrettyPrinter {
+class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrinter {
 
   override val defaultIndent = 2
 

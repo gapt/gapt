@@ -171,7 +171,7 @@ object ast {
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
     case Lifted( e, ty, fvs ) => e
   }
-  def toRealExpr( expr: Expr, sig: Signature ): UnificationError \/ real.LambdaExpression = {
+  def toRealExpr( expr: Expr, sig: BabelSignature ): UnificationError \/ real.LambdaExpression = {
     val fi = freeIdentifers( expr ) diff polymorphic
     val freeVars = fi filter sig.isVar
     val startingEnv = fi.map { i => i -> sig.getType( i ) }

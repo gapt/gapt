@@ -1,6 +1,7 @@
 package at.logic.gapt
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Sequent
 
 import scala.annotation.implicitNotFound
@@ -196,7 +197,7 @@ package object expr {
    *
    * @param sc A StringContext
    */
-  implicit class ExpressionParseHelper( val sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line, sig: at.logic.gapt.formats.babel.Signature ) {
+  implicit class ExpressionParseHelper( val sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) {
     import at.logic.gapt.formats.babel._
     import scalaz.{ \/-, -\/ }
 
