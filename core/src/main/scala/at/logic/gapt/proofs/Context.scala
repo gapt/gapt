@@ -50,6 +50,14 @@ case class FiniteContext(
         copy( typeDefs = typeDefs + typeDef, constants = constants ++ constructors )
     }
   }
+
+  def +( what: Const, by: LambdaExpression ): FiniteContext = {
+    require( !definitions.contains( what ) )
+    require( freeVariables( by ).isEmpty )
+    require( constant( what.name ).isEmpty )
+    for ( c <- at.logic.gapt.expr.constants( by ) ) require( constant( c.name ) contains c )
+    copy( constants = constants + what, definitions = definitions + ( what -> by ) )
+  }
 }
 
 object Context {
