@@ -116,7 +116,7 @@ class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
 }
 
 class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: MonomorphicLogicalC ) extends BinaryPropConnectiveHelper( c ) {
-  def apply( fs: TraversableOnce[HOLFormula] ): HOLFormula = nAry( fs.toSeq: _* )
+  def apply( fs: TraversableOnce[LambdaExpression] ): HOLFormula = nAry( fs.toSeq: _* )
   def apply( fs: TraversableOnce[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs.toSeq: _* )
 
   def leftAssociative( fs: LambdaExpression* ): HOLFormula =
