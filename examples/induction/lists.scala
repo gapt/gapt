@@ -75,7 +75,7 @@ object lists extends TacticsProof {
 
     println( rs )
     rs.parametricLanguage( le"cons(x, cons(y, cons(z, nil)))" ) map { _.toSigRelativeString } foreach println
-    // not valid because inductive lemma is instantiated with (... + ...)
+    // not valid because inductive lemma is instantiated with rev(...)
   }
 
 }
