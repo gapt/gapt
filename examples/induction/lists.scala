@@ -1,14 +1,14 @@
 package at.logic.gapt.examples.induction
 
 import at.logic.gapt.examples.TacticsProof
-import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.extractRecSchem
 
 object lists extends TacticsProof {
 
-  implicit val ctx = new MutableContext
+  implicit var ctx = FiniteContext()
   ctx += Context.Sort( "i" )
   ctx += Context.InductiveType( "list", hoc"nil: list", hoc"cons: i>list>list" )
 
