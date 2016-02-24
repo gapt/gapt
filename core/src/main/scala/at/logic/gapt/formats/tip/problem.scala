@@ -35,7 +35,7 @@ case class TipProblem( sorts: Seq[TBase], datatypes: Seq[TipDatatype], functions
       constants = Set() ++ functions.map { _.fun } ++
       datatypes.flatMap { _.constructors }.flatMap { c => c.projectors :+ c.constr },
       definitions = Map(),
-      typeDefs = Set() ++ sorts.map { Context.Sort } ++
+      typeDefs = Set() ++ sorts.map { Context.Sort( _ ) } ++
         datatypes.map { dt => Context.InductiveType( dt.t, dt.constructors.map { _.constr } ) }
     )
 }
