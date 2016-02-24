@@ -5,6 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, QMaxSAT, MaxSATSolver }
 import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.formats.babel
 
 import scala.collection.mutable
 
@@ -18,8 +19,8 @@ case class Rule( lhs: LambdaExpression, rhs: LambdaExpression ) {
   def apply( subst: Substitution ): Rule =
     Rule( subst( lhs ), subst( rhs ) )
 
-  override def toString: String =
-    s"$lhs -> $rhs"
+  override def toString: String = toSigRelativeString
+  def toSigRelativeString( implicit sig: babel.Signature ) = s"${lhs.toSigRelativeString} -> ${rhs.toSigRelativeString}"
 }
 
 case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[Rule] ) {
@@ -61,7 +62,8 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
     gen.toSet
   }
 
-  override def toString: String = rules.toSeq.sortBy( _.toString ) mkString "\n"
+  override def toString: String = toSigRelativeString
+  def toSigRelativeString( implicit sig: babel.Signature ) = rules.toSeq.map( _.toSigRelativeString ).sorted mkString "\n"
 }
 
 object RecursionScheme {
