@@ -32,9 +32,12 @@ case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
 case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = {
     clauseSubsumption( insertion.endSequent, goal.endSequent ) match {
+      case Some( sub ) if sub.isIdentity =>
+        ( () -> insertion ).success
       case Some( sub ) =>
-        ( (), WeakeningMacroRule( sub( insertion ), goal.endSequent ) ).success
-      case None => TacticalFailure( this, Some( goal ), s"goal is not subsumed by ${insertion.endSequent}" ).failureNel
+        ( (), sub( insertion ) ).success
+      case None =>
+        TacticalFailure( this, Some( goal ), s"goal is not subsumed by ${insertion.endSequent}" ).failureNel
     }
   }
 }
