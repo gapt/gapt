@@ -3,7 +3,7 @@ package at.logic.gapt.formats.babel
 import at.logic.gapt.expr._
 import org.kiama.output.PrettyPrinter
 
-class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
+class BabelExporter( unicode: Boolean, sig: Signature ) extends PrettyPrinter {
 
   override val defaultIndent = 2
 
@@ -13,8 +13,16 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
       else super.nest( doc, j )
     }
 
-  def export( expr: LambdaExpression ): String =
-    pretty( group( show( expr, false, Set(), Map(), prio.max )._1 ) )
+  def export( expr: LambdaExpression ): String = {
+    val knownTypesFromSig = constants( expr ) flatMap { c =>
+      sig( c.name ) match {
+        case IsConst( ast.TypeVar( _ ) ) => None
+        case IsConst( astType ) if astType == ast.liftType( c.exptype ) => Some( c.name -> c )
+        case _ => None
+      }
+    }
+    pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) )
+  }
 
   object prio {
     val ident = 0
@@ -45,7 +53,7 @@ class BabelExporter( unicode: Boolean ) extends PrettyPrinter {
     bound:     Set[String],
     t0:        Map[String, LambdaExpression],
     p:         Int
-  )( implicit sig: Signature ): ( Doc, Map[String, LambdaExpression] ) =
+  ): ( Doc, Map[String, LambdaExpression] ) =
     expr match {
       case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )

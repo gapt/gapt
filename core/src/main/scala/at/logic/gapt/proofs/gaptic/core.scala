@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.gaptic
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ SequentIndex, Sequent }
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.formats.babel
 import scalaz._
 import Scalaz._
 import Validation.FlatMap._
@@ -116,7 +117,8 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
     ProofState( currentGoalIndex, newSegment )
   }
 
-  override def toString =
+  override def toString = toSigRelativeString
+  def toSigRelativeString( implicit sig: babel.Signature ) =
     s"""${subGoals.map { _.toPrettyString }.mkString( "\n" )}
      |
      |Partial proof:
@@ -132,11 +134,11 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialSequent {
   override def conclusion = s map { labelledFormula => labelledFormula._2 }
 
-  def toPrettyString = {
+  def toPrettyString( implicit sig: babel.Signature ) = {
     val builder = new StringBuilder
-    for ( ( l, f ) <- s.antecedent ) builder append s"$l: $f\n"
+    for ( ( l, f ) <- s.antecedent ) builder append s"$l: ${f.toSigRelativeString}\n"
     builder append ":-\n"
-    for ( ( l, f ) <- s.succedent ) builder append s"$l: $f\n"
+    for ( ( l, f ) <- s.succedent ) builder append s"$l: ${f.toSigRelativeString}\n"
     builder.toString
   }
 }
@@ -172,7 +174,9 @@ case object AnyFormula extends TacticApplyMode {
 }
 
 case class TacticalFailure( tactical: Tactical[_], goal: Option[OpenAssumption], message: String ) {
-  override def toString = s"$tactical: $message:${goal.map( "\n" + _.toPrettyString ).getOrElse( "" )}"
+  override def toString = toSigRelativeString
+  def toSigRelativeString( implicit sig: babel.Signature ) =
+    s"$tactical: $message:${goal.map( "\n" + _.toPrettyString ).getOrElse( "" )}"
 }
 
 trait Tactical[+T] { self =>

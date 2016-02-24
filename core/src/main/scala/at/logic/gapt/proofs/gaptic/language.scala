@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.gaptic
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.formats.babel
 
 import language.experimental.macros
 import scalaz._
@@ -14,25 +15,33 @@ object Lemma {
 
 object LemmaMacros {
 
-  def use[T]( proofState: ProofState, tactical: Tactical[T] ): ProofState =
+  def use[T]( proofState: ProofState, tactical: Tactical[T] )( implicit sig: babel.Signature ): ProofState =
     ( try tactical( proofState ) catch {
       case t: Throwable =>
         throw new TacticFailureException(
           s"Exception when applying $tactical to proof state with sub goals:\n" +
-            proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) + "\n",
+            proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ),
           t
         )
     } ) match {
       case Success( ( _, newState ) ) => newState
       case Failure( errors ) =>
-        throw new TacticFailureException( "Failed to apply tactic " + tactical + " to proof state with sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) + "\n" + errors.toList.mkString( "\n" ) )
+        throw new TacticFailureException(
+          s"Failed to apply tactic $tactical to proof state with sub goals:\n" +
+            proofState.subGoals.map { _.toPrettyString + "\n" }.mkString +
+            "CAUSED BY:\n" +
+            errors.toList.map { _.toSigRelativeString }.mkString( "\n" )
+        )
     }
 
-  def qed( proofState: ProofState ): LKProof =
+  def qed( proofState: ProofState )( implicit sig: babel.Signature ): LKProof =
     if ( proofState.subGoals.isEmpty ) {
       cleanStructuralRules( proofState.proofSegment )
     } else {
-      throw new QedFailureException( "Proof not completed. There are still " + proofState.subGoals.length + " unproved sub goals:\n" + proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
+      throw new QedFailureException(
+        s"Proof not completed. There are still ${proofState.subGoals.length} open sub goals:\n" +
+          proofState.subGoals.map { _.toPrettyString }.mkString( "\n" )
+      )
     }
 
   import reflect.macros._
