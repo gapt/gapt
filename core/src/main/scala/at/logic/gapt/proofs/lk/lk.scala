@@ -295,9 +295,6 @@ abstract class ContractionRule extends UnaryLKProof with CommonRule {
   def aux1: SequentIndex
   def aux2: SequentIndex
 
-  if ( premise( aux1 ) != premise( aux2 ) )
-    throw LKRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-
   override def auxIndices = Seq( Seq( aux1, aux2 ) )
 
   val mainFormula = premise( aux1 )
@@ -318,6 +315,9 @@ abstract class ContractionRule extends UnaryLKProof with CommonRule {
 case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends ContractionRule {
 
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
+
+  if ( premise( aux1 ) != premise( aux2 ) )
+    throw LKRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
 
   override def name = "c:l"
 
@@ -357,6 +357,9 @@ object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule"
 case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends ContractionRule {
 
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
+
+  if ( premise( aux1 ) != premise( aux2 ) )
+    throw LKRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
 
   override def name = "c:r"
 
