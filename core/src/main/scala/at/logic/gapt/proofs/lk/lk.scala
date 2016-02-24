@@ -291,6 +291,18 @@ object Axiom {
   def apply( ant: Seq[HOLFormula], suc: Seq[HOLFormula] ): InitialSequent = apply( Sequent( ant, suc ) )
 }
 
+abstract class ContractionRule extends UnaryLKProof with CommonRule {
+  def aux1: SequentIndex
+  def aux2: SequentIndex
+
+  if ( premise( aux1 ) != premise( aux2 ) )
+    throw LKRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
+
+  override def auxIndices = Seq( Seq( aux1, aux2 ) )
+
+  val mainFormula = premise( aux1 )
+}
+
 /**
  * An LKProof ending with a left contraction:
  * <pre>
@@ -303,22 +315,13 @@ object Axiom {
  * @param aux1 The index of one occurrence of A.
  * @param aux2 The index of the other occurrence of A.
  */
-case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+case class ContractionLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends ContractionRule {
 
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
-
-  if ( premise( aux1 ) != premise( aux2 ) )
-    throw LKRuleCreationException( s"Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-
-  override def auxIndices = Seq( Seq( aux1, aux2 ) )
-
-  val mainFormula = premise( aux1 )
 
   override def name = "c:l"
 
   override def mainFormulaSequent = mainFormula +: Sequent()
-
 }
 
 object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule" ) {
@@ -351,17 +354,9 @@ object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule"
  * @param aux1 The index of one occurrence of A.
  * @param aux2 The index of the other occurrence of A.
  */
-case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+case class ContractionRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex ) extends ContractionRule {
 
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
-
-  if ( premise( aux1 ) != premise( aux2 ) )
-    throw LKRuleCreationException( s"Auxiliar formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
-
-  override def auxIndices = Seq( Seq( aux1, aux2 ) )
-
-  val mainFormula = premise( aux1 )
 
   override def name = "c:r"
 
@@ -1335,6 +1330,9 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
 
   override def formulasToBeDeleted = Seq( Seq( aux ) )
 
+  def auxInConclusion = mainIndices.head
+  def eqInConclusion: SequentIndex
+
 }
 
 /**
@@ -1364,6 +1362,8 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
   override def name = "eq:l"
 
   override def mainFormulaSequent = mainFormula +: Sequent()
+
+  def eqInConclusion = eq + 1
 }
 
 object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
@@ -1503,6 +1503,8 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
   override def name = "eq:r"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
+
+  def eqInConclusion = eq
 }
 
 object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {

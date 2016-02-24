@@ -4,6 +4,7 @@ import at.logic.gapt.examples.TacticsProof
 import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.proofs.lk.extractRecSchem
 
 object lists extends TacticsProof {
 
@@ -39,9 +40,8 @@ object lists extends TacticsProof {
     refl
   }
 
-  Lemma( appth :+ ( "example" -> hof"!x x + nil + nil = x" ) ) {
+  Lemma( appth :+ ( "example" -> hof"x + nil + nil = x" ) ) {
     include( "appnil", appnil )
-    decompose
     rewrite.many ltr "appnil"
     refl
   }
@@ -66,5 +66,11 @@ object lists extends TacticsProof {
     rewrite.many ltr "revnil"; refl
     rewrite.many ltr ( "revcons", "apprev", "IHx_0", "revnil", "nilapp", "consapp" ); refl
   }
+
+  if ( false )
+    println( extractRecSchem( Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
+      include( "revrev", revrev )
+      chain( "revrev" )
+    } ) )
 
 }
