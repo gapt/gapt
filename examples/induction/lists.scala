@@ -67,10 +67,15 @@ object lists extends TacticsProof {
     rewrite.many ltr ( "revcons", "apprev", "IHx_0", "revnil", "nilapp", "consapp" ); refl
   }
 
-  if ( false )
-    println( extractRecSchem( Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
+  if ( false ) {
+    val rs = extractRecSchem( Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
       include( "revrev", revrev )
       chain( "revrev" )
-    } ) )
+    } )
+
+    println( rs )
+    rs.parametricLanguage( le"cons(x, cons(y, cons(z, nil)))" ) map { _.toSigRelativeString } foreach println
+    // not valid because inductive lemma is instantiated with (... + ...)
+  }
 
 }
