@@ -22,9 +22,20 @@ object freeVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
     case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
       apply( subProof ) - eigen
+    case InductionRule( cases, main ) =>
+      freeVariables( p.conclusion ) ++ ( cases flatMap { c =>
+        apply( c.proof ) -- c.eigenVars
+      } )
     case _ =>
       freeVariables( p.conclusion ) ++ p.immediateSubProofs.flatMap( apply )
   }
+}
+
+object groundFreeVarsLK {
+  def apply( p: LKProof ): LKProof =
+    Substitution( freeVariablesLK( p ) map {
+      case v @ Var( n, t ) => v -> Const( n, t )
+    } )( p )
 }
 
 object cutFormulas {
