@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.expr.{ HOLAtom, Eq }
+import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
+import at.logic.gapt.expr.{ Eq, HOLAtom }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion._
 
@@ -54,7 +54,7 @@ object LKToExpansionProof {
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val newCut = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
-      val cuts = if ( containsQuantifier( c.cutFormula ) )
+      val cuts = if ( containsQuantifierOnLogicalLevel( c.cutFormula ) )
         newCut +: ( leftCuts ++ rightCuts )
       else leftCuts ++ rightCuts
       ( cuts, leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
