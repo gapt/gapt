@@ -66,11 +66,16 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
       eigen :: findEigenVars( aux, subProof )
     case p @ InductionRule( _, _ ) if p.mainIndices contains occ =>
       p.quant :: findEigenVars( p.cases.head.conclusion, p.cases.head.proof )
-    case p: ContractionRule =>
-      require( p.aux1 != occ && p.aux2 != occ )
+    case p: ContractionRule if !p.mainIndices.contains( occ ) =>
       findEigenVars( p.getOccConnector parent occ, p.subProof )
     case p: CutRule =>
-      findEigenVars( p.getRightOccConnector parent occ, p.rightSubProof )
+      p.getLeftOccConnector parents occ match {
+        case Seq( pocc ) => findEigenVars( pocc, p.leftSubProof )
+        case _ => p.getRightOccConnector parents occ match {
+          case Seq( pocc ) => findEigenVars( pocc, p.rightSubProof )
+          case _           => throw new IllegalArgumentException
+        }
+      }
     case _ => Nil
   }
 
