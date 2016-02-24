@@ -97,6 +97,15 @@ package object gaptic {
 
   def insert( proof: LKProof ) = InsertTactic( proof )
 
+  def include( label: String, proof: LKProof ): Tactical[Unit] =
+    for {
+      goal <- currentGoal
+      diff = proof.conclusion diff goal.conclusion
+      cutFormula = diff.toFormula
+      _ <- cut( cutFormula, label )
+      _ <- insert( proof )
+    } yield ()
+
   def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
 
   // Complex
@@ -127,6 +136,10 @@ package object gaptic {
   def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
+
+  def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
+    def apply( goal: OpenAssumption ) = ( goal -> goal ).success
+  }
 
   implicit object TacticalMonad extends Monad[Tactical] {
     def point[A]( a: => A ): Tactical[A] = new Tactical[A] {

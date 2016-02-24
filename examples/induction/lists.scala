@@ -36,4 +36,11 @@ object lists extends TacticsProof {
     refl
   }
 
+  Lemma( th :+ ( "example" -> hof"!x x + nil + nil = x" ) ) {
+    include( "appnil", appnil )
+    decompose
+    rewrite.many ltr "appnil"
+    refl
+  }
+
 }
