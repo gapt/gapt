@@ -2,7 +2,6 @@ package at.logic.gapt.formats.babel
 
 import scalaz._
 import Scalaz._
-
 import at.logic.gapt.{ expr => real }
 
 object ast {
@@ -46,18 +45,18 @@ object ast {
     App( App( Ident( real.EqC.name, eqType ), a ), b )
   }
 
-  def Top = Ident( real.TopC.name, Bool )
-  def Bottom = Ident( real.BottomC.name, Bool )
+  def Top = LiftBlackbox( real.Top() )
+  def Bottom = LiftBlackbox( real.Bottom() )
 
-  def UnaryConn( name: String ): Expr => Expr = a => App( Ident( name, ArrType( Bool, Bool ) ), a )
-  def Neg = UnaryConn( real.NegC.name )
+  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( LiftBlackbox( c() ), a )
+  def Neg = UnaryConn( real.NegC )
 
-  def BinaryConn( name: String ): ( Expr, Expr ) => Expr = ( a, b ) =>
-    App( App( Ident( name, ArrType( Bool, ArrType( Bool, Bool ) ) ), a ), b )
-  def And = BinaryConn( real.AndC.name )
-  def Or = BinaryConn( real.OrC.name )
+  def BinaryConn( c: real.MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
+    App( App( LiftBlackbox( c() ), a ), b )
+  def And = BinaryConn( real.AndC )
+  def Or = BinaryConn( real.OrC )
   def Bicond( a: Expr, b: Expr ) = And( Imp( a, b ), Imp( b, a ) )
-  def Imp = BinaryConn( real.ImpC.name )
+  def Imp = BinaryConn( real.ImpC )
 
   def Quant( name: String ): ( Ident, Expr ) => Expr = ( v, sub ) =>
     App( Ident( name, ArrType( ArrType( freshTypeVar(), Bool ), Bool ) ), Abs( v, sub ) )
