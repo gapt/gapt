@@ -37,9 +37,11 @@ case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
       case Some( sub ) =>
         ( (), sub( insertion ) ).success
       case None =>
-        TacticalFailure( this, Some( goal ), s"goal is not subsumed by ${insertion.endSequent}" ).failureNel
+        TacticalFailure( this, Some( goal ), s"goal is not subsumed by provided proof" ).failureNel
     }
   }
+
+  override def toString = s"insert(${insertion.conclusion})"
 }
 
 /**
