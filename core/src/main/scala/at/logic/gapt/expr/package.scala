@@ -270,10 +270,17 @@ package object expr {
      * @param args
      * @return
      */
-    def hoc( args: LambdaExpression* ): Const = le( args: _* ) match {
-      case c: Const => c
-      case expr =>
-        throw new IllegalArgumentException( s"Expression $expr cannot be read as a constant. Parse it with le." )
+    def hoc( args: LambdaExpression* ): Const = {
+      import fastparse.core.ParseError
+      import fastparse.core.Parsed._
+      require( args.isEmpty )
+      BabelParser.ConstAndNothingElse.parse( sc.parts.head ) match {
+        case Success( c, _ ) => c
+        case f: Failure =>
+          throw new IllegalArgumentException(
+            s"Cannot parse constant at ${file.value}:${line.value}:\n${ParseError( f ).getMessage}"
+          )
+      }
     }
 
     // First order parsers

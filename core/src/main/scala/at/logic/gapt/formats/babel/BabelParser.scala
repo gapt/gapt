@@ -39,6 +39,7 @@ object BabelParser {
   import White._
 
   val ExprAndNothingElse: P[ast.Expr] = P( "" ~ Expr ~ End )
+  val ConstAndNothingElse: P[real.Const] = P( "" ~ Const ~ End )
 
   val Expr: P[ast.Expr] = P( Lam )
 
@@ -95,17 +96,19 @@ object BabelParser {
   }
 
   val Parens: P[ast.Expr] = P( "(" ~/ Expr ~/ ")" )
-  val Atom: P[ast.Expr] = P( Parens | True | False | LitVar | LitConst | Ident )
+  val Atom: P[ast.Expr] = P( Parens | True | False | VarLiteral | ConstLiteral | Ident )
 
   val True = P( kw( "true" ) | "⊤" ).map( _ => ast.Top )
   val False = P( kw( "false" ) | "⊥" ).map( _ => ast.Bottom )
 
-  val LitVar = P( "#v(" ~/ Name ~ ":" ~ Type ~ ")" ) map {
-    case ( name, ty ) => ast.LiftBlackbox( real.Var( name, ast.toRealType( ty, Map() ) ) )
+  val Var = P( Name ~ ":" ~ Type ) map {
+    case ( name, ty ) => real.Var( name, ast.toRealType( ty, Map() ) )
   }
-  val LitConst = P( "#c(" ~/ Name ~ ":" ~ Type ~ ")" ) map {
-    case ( name, ty ) => ast.LiftBlackbox( real.Const( name, ast.toRealType( ty, Map() ) ) )
+  val Const = P( Name ~ ":" ~ Type ) map {
+    case ( name, ty ) => real.Const( name, ast.toRealType( ty, Map() ) )
   }
+  val VarLiteral = P( "#v(" ~/ Var ~ ")" ) map { ast.LiftBlackbox }
+  val ConstLiteral = P( "#c(" ~/ Const ~ ")" ) map { ast.LiftBlackbox }
 
   val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshTypeVar() ) ) )
 
