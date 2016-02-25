@@ -106,6 +106,7 @@ case class KBO( precedence: Seq[Const], constWeights: Map[Const, Int] = Map() ) 
 class EscargotLoop extends Logger {
   var termOrdering: TermOrdering = LPO()
   var hasEquality = true
+  var propositional = false
 
   class Cls( val proof: ResolutionProof, val index: Int ) {
     def clause = proof.conclusion
@@ -128,6 +129,22 @@ class EscargotLoop extends Logger {
   def SimpCls( parent: Cls, newProof: ResolutionProof ): Cls = new Cls( newProof, parent.index )
   def DerivedCls( parent: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
   def DerivedCls( parent1: Cls, parent2: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
+
+  def subsume( a: HOLClause, b: HOLClause ): Option[Substitution] =
+    if ( propositional ) {
+      if ( a isSubMultisetOf b ) Some( Substitution() )
+      else None
+    } else clauseSubsumption( a, b )
+  def unify( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
+    if ( propositional ) {
+      if ( a == b ) Some( Substitution() )
+      else None
+    } else syntacticMGU( a, b )
+  def matching( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
+    if ( propositional ) {
+      if ( a == b ) Some( Substitution() )
+      else None
+    } else syntacticMatching( a, b )
 
   var newlyDerived = mutable.Set[Cls]()
   val usable = mutable.Set[Cls]()
@@ -186,8 +203,8 @@ class EscargotLoop extends Logger {
     val eqs = for {
       c <- workedOff
       Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
-      if syntacticMatching( t, s ).isDefined
-      if syntacticMatching( s, t ).isDefined
+      if matching( t, s ).isDefined
+      if matching( s, t ).isDefined
       ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
       if !termOrdering.lt( t_, s_ )
     } yield ( t_, s_, c, leftToRight )
@@ -201,7 +218,7 @@ class EscargotLoop extends Logger {
         ( subterm, pos ) <- LambdaPosition getPositions e groupBy { e( _ ) } if !didRewrite
         if !subterm.isInstanceOf[Var]
         ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
-        subst <- syntacticMatching( t_, subterm )
+        subst <- matching( t_, subterm )
         if termOrdering.lt( subst( s_ ), subterm, treatVarsAsConsts = true )
       } {
         for ( p <- pos ) e = e.replace( p, subst( s_ ) )
@@ -227,20 +244,20 @@ class EscargotLoop extends Logger {
       cls1 <- newlyDerived
       cls2 <- newlyDerived if cls1 != cls2
       if newlyDerived contains cls1
-      _ <- clauseSubsumption( cls2.clause, cls1.clause )
+      _ <- subsume( cls2.clause, cls1.clause )
     } newlyDerived -= cls1
 
   def forwardSubsumption() =
     for {
       existing <- workedOff
       cls <- newlyDerived
-      _ <- clauseSubsumption( existing.clause, cls.clause )
+      _ <- subsume( existing.clause, cls.clause )
     } newlyDerived -= cls
 
   def backwardSubsumption( given: Cls ) =
     for {
       existing <- workedOff
-      _ <- clauseSubsumption( given.clause, existing.clause )
+      _ <- subsume( given.clause, existing.clause )
     } workedOff -= existing
 
   def inferenceComputation( given: Cls ): Unit = {
@@ -260,14 +277,14 @@ class EscargotLoop extends Logger {
     for {
       i <- given.maximal; j <- given.maximal
       if i < j && i.sameSideAs( j )
-      mgu <- syntacticMGU( given.clause( i ), given.clause( j ) )
+      mgu <- unify( given.clause( i ), given.clause( j ) )
     } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
 
   def unifyingEqualityResolution( given: Cls ): Unit =
     for {
       i <- if ( given.selected.nonEmpty ) given.selected else given.maximal if i.isAnt
       Eq( t, s ) <- Some( given.clause( i ) )
-      mgu <- syntacticMGU( t, s )
+      mgu <- unify( t, s )
     } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
 
   def orderedResolution( given: Cls ): Unit =
@@ -284,7 +301,7 @@ class EscargotLoop extends Logger {
       i1 <- if ( c1.selected.nonEmpty ) c1.selected else c1.maximal
       a1 = c1.clause( i1 ) if i1 isAnt;
       i2 <- c2.maximal if i2 isSuc;
-      mgu <- syntacticMGU( p2_.conclusion( i2 ), a1 )
+      mgu <- unify( p2_.conclusion( i2 ), a1 )
       if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( a1, mgu( c1.clause( i1_ ) ) ) }
       if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
       ( p1__, conn1 ) = Factor( Instance( c1.proof, mgu ) )
@@ -317,12 +334,12 @@ class EscargotLoop extends Logger {
       a2 = p2_.conclusion( i2 )
       ( st2, pos2 ) <- LambdaPosition getPositions a2 groupBy { a2( _ ) }
       if !st2.isInstanceOf[Var]
-      mgu <- syntacticMGU( t_, st2 )
+      mgu <- unify( t_, st2 )
       if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
       pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
       p1__ = Instance( c1.proof, mgu )
       p2__ = Instance( p2_, mgu )
-    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, pos2_.toSeq, leftToRight ) )
+    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, pos2_.distinct, leftToRight ) )
   }
 
   def unitRewriting( given: Cls ): Unit = {
@@ -353,7 +370,7 @@ class EscargotLoop extends Logger {
           ( subterm, pos ) <- LambdaPosition getPositions p.conclusion( i ) groupBy { p.conclusion( i )( _ ) } if !didRewrite
           if !subterm.isInstanceOf[Var]
           ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
-          subst <- syntacticMatching( t_, subterm )
+          subst <- matching( t_, subterm )
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
@@ -372,7 +389,7 @@ class EscargotLoop extends Logger {
   }
 
   def isSubsumedByWorkedOff( given: Cls ) =
-    workedOff exists { cls => clauseSubsumption( cls.clause, given.clause ) isDefined }
+    workedOff exists { cls => subsume( cls.clause, given.clause ) isDefined }
 
   var strategy = 0
   def choose(): Cls = {
@@ -447,6 +464,7 @@ class Escargot extends ResolutionProver {
   override def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
     val loop = new EscargotLoop
     loop.hasEquality = cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
+    loop.propositional = cnf.flatMap { freeVariables( _ ) }.isEmpty
     loop.termOrdering = Escargot.lpoHeuristic( cnf )
     loop.newlyDerived ++= cnf.map { loop.InputCls }
     loop.loop()
