@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ Bottom, Const, FunctionType, LambdaExpression, TBase, Ti, To, Top, baseTypes, constants, freeVariables }
+import at.logic.gapt.expr.{ Bottom, Const, EqC, FunctionType, LambdaExpression, TBase, Ti, To, Top, baseTypes, constants, freeVariables }
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
@@ -10,7 +10,7 @@ import scala.collection.mutable
 trait Context extends BabelSignature {
   def constant( name: String ): Option[Const]
   def typeDef( name: String ): Option[TypeDef]
-  def definition( const: Const ): Option[LambdaExpression]
+  def definition( name: String ): Option[LambdaExpression]
 
   override def apply( s: String ): babel.VarConst =
     constant( s ) match {
@@ -26,10 +26,11 @@ case class FiniteContext(
 ) extends Context {
   val constantsMap = constants.map { c => c.name -> c }.toMap
   val typeDefsMap = typeDefs.map { td => td.ty.name -> td }.toMap
+  val definitionMap = definitions map { case ( w, b ) => w.name -> b }
   for ( ( c, d ) <- definitions ) require( c.exptype == d.exptype )
 
   def constant( name: String ) = constantsMap get name
-  def definition( const: Const ) = definitions get const
+  def definition( name: String ) = definitionMap get name
   def typeDef( name: String ) = typeDefsMap get name
 
   def +( const: Const ): FiniteContext = {
@@ -52,11 +53,14 @@ case class FiniteContext(
     }
   }
 
-  def +( what: Const, by: LambdaExpression ): FiniteContext = {
-    require( !definitions.contains( what ) )
-    require( freeVariables( by ).isEmpty )
-    require( constant( what.name ).isEmpty )
-    for ( c <- at.logic.gapt.expr.constants( by ) ) require( constant( c.name ) contains c )
+  def +( defn: ( String, LambdaExpression ) ): FiniteContext = {
+    val ( name, by ) = defn
+    val what = Const( name, by.exptype )
+    require( definition( name ).isEmpty )
+    require( constant( name ).isEmpty )
+    require( freeVariables( by ).isEmpty, s"In definition $name -> $by: contains free variables ${freeVariables( by )}" )
+    for ( c <- at.logic.gapt.expr.constants( by ) if EqC.unapply( c ).isEmpty )
+      require( constant( c.name ) contains c, s"In definition $name -> $by: constant $c not defined yet" )
     copy( constants = constants + what, definitions = definitions + ( what -> by ) )
   }
 }

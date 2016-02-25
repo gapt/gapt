@@ -272,6 +272,28 @@ case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) e
     }
 }
 
+case class UnfoldTactic( target: String, definition: String )( implicit ctx: Context ) extends Tactic[Unit] {
+  def getDef: ValidationNel[TacticalFailure, ( Con, LambdaExpression )] =
+    ctx.definition( definition ) match {
+      case Some( by ) =>
+        ( Con( definition, by.exptype ), by ).success
+      case None =>
+        TacticalFailure( this, None, s"Definition $definition not present in context" ).failureNel
+    }
+
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
+      defn <- getDef; ( what, by ) = defn
+      defPositions = main.find( what )
+      unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
+      normalized = BetaReduction.betaNormalize( unfolded )
+      newGoal = OpenAssumption( goal.s.updated( idx, label -> normalized ) )
+    } yield () ->
+      ( if ( idx.isSuc ) DefinitionRightRule( newGoal, idx, main )
+      else DefinitionLeftRule( newGoal, idx, main ) )
+}
+
 /**
  * Calls the GAPT tableau prover on the subgoal.
  */
