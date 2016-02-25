@@ -34,6 +34,7 @@ case class FiniteContext(
 
   def +( const: Const ): FiniteContext = {
     require( !( constantsMap get const.name exists { _ != const } ) )
+    for ( t <- baseTypes( const.exptype ) ) require( typeDef( t.name ).isDefined )
     copy( constants = constants + const )
   }
   def ++( consts: Iterable[Const] ): FiniteContext =
