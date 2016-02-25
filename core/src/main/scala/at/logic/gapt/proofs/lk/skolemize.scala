@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.utils.ds.streams.Definitions._
 
 object skolemize {
-  def apply( formula: HOLFormula, inSuc: Boolean, context: Seq[LambdaExpression], skolemSymbols: Stream[SymbolA] ): HOLFormula = formula match {
+  def apply( formula: HOLFormula, inSuc: Boolean, context: Seq[LambdaExpression], skolemSymbols: Stream[String] ): HOLFormula = formula match {
     case Bottom() | Top() | HOLAtom( _, _ ) =>
       formula
     case Neg( f )            => Neg( skolemize( f, !inSuc, context, skolemSymbols ) )
@@ -23,24 +23,24 @@ object skolemize {
   }
 
   def apply( formula: HOLFormula, inSuc: Boolean ): HOLFormula =
-    apply( formula, inSuc, Seq(), new SkolemSymbolFactory().getSkolemSymbols )
+    apply( formula, inSuc, Seq(), new SkolemSymbolFactory( constants( formula ) ).getSkolemSymbols )
 
   def apply( formula: HOLFormula ): HOLFormula =
     apply( formula, inSuc = true )
 
-  private def maybeSkolemize( formula: HOLFormula, inSuc: Boolean, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[SymbolA] )] ): HOLFormula =
+  private def maybeSkolemize( formula: HOLFormula, inSuc: Boolean, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[String] )] ): HOLFormula =
     contextAndSymbols match {
       case Some( ( context, skolemSymbols ) ) => skolemize( formula, inSuc, context, skolemSymbols )
       case None                               => formula
     }
 
   def apply( proof: LKProof ): LKProof = {
-    val factory = new SkolemSymbolFactory
+    val factory = new SkolemSymbolFactory( proof.subProofs flatMap { _.conclusion.elements } flatMap { constants( _ ) } )
     val contextAndSymbols = proof.endSequent.map { _ => Some( Seq() -> factory.getSkolemSymbols ) }
     cleanStructuralRules( apply( proof, contextAndSymbols ) )
   }
 
-  def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[LambdaExpression], Stream[SymbolA] )]] ): LKProof = proof match {
+  def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[LambdaExpression], Stream[String] )]] ): LKProof = proof match {
     // Initial sequents are already skolemized
     case InitialSequent( _ ) => proof
 

@@ -31,10 +31,8 @@ object renameConstantsToFi {
 object groundFreeVariables {
   def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
     val varList = vars.toList
-    ( varList, getRenaming( varList.map( _.sym ), consts.map( _.sym ).toList ) ).zipped.map {
-      case ( v, cs ) =>
-        v -> Const( cs.toString, v.exptype )
-    }
+    val nameGen = rename.awayFrom( consts )
+    varList map { v => v -> Const( nameGen fresh v.name, v.exptype ) }
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =

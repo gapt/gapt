@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.utils.NameGenerator
 
 import scalaz._
 import Scalaz._

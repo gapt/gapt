@@ -15,7 +15,7 @@ object Tindex extends TBase( "ω" )
 /******************** SPECIAL INTEGERS ************************************/
 
 object IntVar {
-  def apply( name: String ) = Var( StringSymbol( name ), Tindex )
+  def apply( name: String ) = Var( name, Tindex )
   def unapply( t: IntegerTerm ) = t match {
     case Var( name, Tindex ) => Some( name )
     case _                   => None

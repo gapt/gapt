@@ -14,8 +14,6 @@ package at.logic.gapt.expr
  * @param name  The name of this logical constant, e.g. "∀"
  */
 abstract class LogicalC( val name: String ) {
-  val symbol = StringSymbol( name )
-
   protected type MatchResult
   protected def matchType( exptype: Ty ): MatchResult
   protected def noMatch: MatchResult
@@ -24,9 +22,9 @@ abstract class LogicalC( val name: String ) {
     case Const( `name`, exptype ) => matchType( exptype )
     case _                        => noMatch
   }
-  private[expr] def unapply( pair: ( SymbolA, Ty ) ): MatchResult = pair match {
-    case ( `symbol`, ty ) => matchType( ty )
-    case _                => noMatch
+  private[expr] def unapply( pair: ( String, Ty ) ): MatchResult = pair match {
+    case ( `name`, ty ) => matchType( ty )
+    case _              => noMatch
   }
 }
 
@@ -37,7 +35,7 @@ abstract class LogicalC( val name: String ) {
  * @param ty  The fixed type of this logical constant, e.g. To->To->To
  */
 class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
-  def apply() = Const( symbol, ty )
+  def apply() = Const( name, ty )
 
   protected type MatchResult = Boolean
   protected override def matchType( exptype: Ty ) = exptype == ty
@@ -50,7 +48,7 @@ class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
  * @param name  The name of this logical constant, e.g. "∀"
  */
 class QuantifierC( name: String ) extends LogicalC( name ) {
-  def apply( qtype: Ty ) = Const( symbol, ( qtype -> To ) -> To )
+  def apply( qtype: Ty ) = Const( name, ( qtype -> To ) -> To )
 
   protected type MatchResult = Option[Ty]
   protected override def matchType( exptype: Ty ) = exptype match {
@@ -71,7 +69,7 @@ object ExistsC extends QuantifierC( "∃" )
 object ForallC extends QuantifierC( "∀" )
 
 object EqC extends LogicalC( "=" ) {
-  def apply( ty: Ty ) = Const( symbol, ty -> ( ty -> To ) )
+  def apply( ty: Ty ) = Const( name, ty -> ( ty -> To ) )
 
   protected type MatchResult = Option[Ty]
   protected override def matchType( exptype: Ty ) = exptype match {

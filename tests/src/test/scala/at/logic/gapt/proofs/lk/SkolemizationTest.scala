@@ -10,28 +10,23 @@ class SkolemizationTest extends Specification {
     val x = Var( "x", Ti )
     val y = Var( "y", Ti )
     val f = All( x, HOLAtom( Const( "P", Ti -> To ), x :: Nil ) )
-    val s0 = StringSymbol( "s_{0}" )
-    val s1 = StringSymbol( "s_{2}" )
-    val s2 = StringSymbol( "s_{4}" )
-    val s3 = StringSymbol( "s_{6}" )
     val p = Const( "P", Ti -> To )
     val r = Const( "R", Ti -> ( Ti -> To ) )
 
     "leave a formula with only weak quantifiers untouched" in {
-      val stream = new SkolemSymbolFactory().getSkolemSymbols
-      skolemize( f, false, Seq(), stream ) must beEqualTo( f )
+      skolemize( f, false ) must_== f
     }
 
     "introduce correctly a Skolem constant" in {
-      val stream = new SkolemSymbolFactory().getSkolemSymbols
+      val stream = new SkolemSymbolFactory( Seq() ).getSkolemSymbols
       val skfun = Const( stream.head, Ti )
       val skf = HOLAtom( p, skfun :: Nil )
       skolemize( f, true, Seq(), stream ) must beEqualTo( skf )
     }
 
     "handle a binary formula correctly" in {
-      val stream = new SkolemSymbolFactory().getSkolemSymbols
-      val y = Var( StringSymbol( "y" ), Ti )
+      val stream = new SkolemSymbolFactory( Seq() ).getSkolemSymbols
+      val y = Var( "y", Ti )
       val rxy = HOLAtom( r, x :: y :: Nil )
       val f2 = Imp( f, All( x, Ex( y, rxy ) ) )
 
@@ -52,9 +47,9 @@ class SkolemizationTest extends Specification {
     }
 
     "handle a simple proof correctly" in {
-      val s5 = StringSymbol( "s_{1}" )
+      val s5 = "s_1"
       val cs5 = Const( s5, Ti )
-      val alpha = Var( StringSymbol( "α" ), Ti )
+      val alpha = Var( "α", Ti )
       val Palpha = HOLAtom( p, alpha :: Nil )
       val Ps0 = HOLAtom( p, cs5 :: Nil )
       val allxPx = All( x, HOLAtom( p, x :: Nil ) )
@@ -104,8 +99,8 @@ class SkolemizationTest extends Specification {
       val r3 = ForallLeftRule( r2, allxexyRxy, a )
       val proof: LKProof = ForallRightRule( r3, allxexyRxy, a )
 
-      val fs0 = Const( StringSymbol( "s_{0}" ), Ti -> Ti )
-      val s1c = Const( StringSymbol( "s_{1}" ), Ti )
+      val fs0 = Const( "s_0", Ti -> Ti )
+      val s1c = Const( "s_1", Ti )
       val s0s1 = App( fs0, s1c )
       val sR = HOLAtom( r, List( s1c, s0s1 ) )
       val sax = Axiom( List( sR ), List( sR ) )

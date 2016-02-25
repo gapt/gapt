@@ -182,7 +182,7 @@ abstract class nTape {
 
     ( ind1base, ind1step, ind2base, ind2step ) match {
       case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
-        val map = Map[LambdaExpression, StringSymbol]()
+        val map = Map[LambdaExpression, String]()
         val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
 
         val ( map1, sb1 ) = replaceAbstractions( sb, map, counter )

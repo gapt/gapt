@@ -14,7 +14,6 @@ import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
 import at.logic.gapt.expr.schema.IntZero
 import scala.Tuple2
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
@@ -275,7 +274,7 @@ object sFOParserCNT {
       def variable: Parser[Var] = ( indexedwVar | indexedVar | FOVariable ) //regex(new Regex("[u-z]" + word))  ^^ {case x => Var(new VariableStringSymbol(x), i->i).asInstanceOf[Var]}
       def constant: Parser[Const] = regex( new Regex( "[t]" + word ) ) ^^ {
         case x => {
-          Const( StringSymbol( x ), Tindex -> Tindex )
+          Const( x, Tindex -> Tindex )
         }
       }
       def and: Parser[SchemaFormula] = "(" ~ repsep( formula, "/\\" ) ~ ")" ^^ { case "(" ~ formulas ~ ")" => { formulas.tail.foldLeft( formulas.head )( ( f, res ) => And( f, res ) ) } }

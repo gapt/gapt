@@ -94,7 +94,7 @@ class TPTPHOLExporter {
     val width = ( vsyms ++ csyms ).sortWith( ( x, y ) => y.size < x.size ).head.size
 
     for ( ( c, s ) <- cnames ) {
-      val sym = c.sym.toString
+      val sym = c.name
       if ( sym != s ) {
         print( "%   " )
         print( sym )
@@ -105,13 +105,13 @@ class TPTPHOLExporter {
       }
     }
 
-    val cunchanged = for ( ( c, s ) <- cnames; if ( c.sym.toString == s ) ) yield { s }
+    val cunchanged = for ( ( c, s ) <- cnames; if ( c.name == s ) ) yield { s }
     if ( cunchanged.nonEmpty ) println( "% Unchanged constants: " + cunchanged.mkString( "," ) )
 
     println( "% " )
 
     for ( ( c, s ) <- vnames ) {
-      val sym = c.sym.toString
+      val sym = c.name
       if ( sym != s ) {
         print( "%   " )
         print( sym )
@@ -122,7 +122,7 @@ class TPTPHOLExporter {
       }
     }
 
-    val vunchanged = for ( ( c, s ) <- vnames; if ( c.sym.toString == s ) ) yield { s }
+    val vunchanged = for ( ( c, s ) <- vnames; if ( c.name == s ) ) yield { s }
     if ( vunchanged.nonEmpty ) println( "% Unchanged variables: " + vunchanged.mkString( "," ) )
 
   }

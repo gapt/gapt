@@ -105,7 +105,6 @@ class LLKExporter( val expandTex: Boolean ) {
     case EqC( _ ) => ( vmap, cmap )
 
     case NonLogicalConstant( name, exptype ) =>
-      val sym = exp.asInstanceOf[Const].sym
       if ( cmap.contains( name ) ) {
         if ( cmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + cmap( name ) + " != " + exptype )
         ( vmap, cmap )

@@ -3,6 +3,7 @@ package at.logic.gapt
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.utils.NameGenerator
 
 import scala.annotation.implicitNotFound
 
@@ -358,5 +359,12 @@ package object expr {
     }
 
     private def placeholder = "__qq_"
+  }
+
+  implicit class ExprNameGenerator( val nameGen: NameGenerator ) {
+    def fresh( v: Var ) = Var( nameGen.fresh( v.name ), v.exptype )
+    def fresh( v: FOLVar ) = FOLVar( nameGen.fresh( v.name ) )
+    def fresh( c: Const ) = Const( nameGen.fresh( c.name ), c.exptype )
+    def fresh( c: FOLConst ) = FOLConst( nameGen.fresh( c.name ) )
   }
 }

@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.ral
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs._
 import RalProof._
@@ -144,7 +143,7 @@ private[ral] trait SimpleOneFormulaRule extends OneFormulaRule {
 }
 
 private[ral] object computeSkolemTerm {
-  def apply( sk: SkolemSymbol, t: Ty, label: Label ) = {
+  def apply( sk: String, t: Ty, label: Label ) = {
     val labelList = label.toList
     val tp = FunctionType( t, labelList map { _.exptype } )
     HOLFunction( Const( sk, tp ), labelList )
@@ -160,7 +159,7 @@ case class RalAllT( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) 
     BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] )
 }
 
-case class RalAllF( subProof: RalProof, idx: SequentIndex, skolemSymbol: SkolemSymbol ) extends SimpleOneFormulaRule {
+case class RalAllF( subProof: RalProof, idx: SequentIndex, skolemSymbol: String ) extends SimpleOneFormulaRule {
   require( idx isAnt )
   lazy val App( ForallC( quantifiedType ), sub ) = subProof.formulas( idx )
 
@@ -177,7 +176,7 @@ case class RalExF( subProof: RalProof, idx: SequentIndex, eigenVariable: Var ) e
       BetaReduction.betaNormalize( App( sub, eigenVariable ).asInstanceOf[HOLFormula] ) ) +: Sequent()
 }
 
-case class RalExT( subProof: RalProof, idx: SequentIndex, skolemSymbol: SkolemSymbol ) extends SimpleOneFormulaRule {
+case class RalExT( subProof: RalProof, idx: SequentIndex, skolemSymbol: String ) extends SimpleOneFormulaRule {
   require( idx isSuc )
   lazy val App( ExistsC( quantifiedType ), sub ) = subProof.formulas( idx )
 

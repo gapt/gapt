@@ -16,16 +16,16 @@ import at.logic.gapt.formats.readers.StringReader
 class SimpleHOLParserTest extends Specification {
   private class MyParser( input: String ) extends StringReader( input ) with SimpleHOLParser
   "SimpleHOLParser" should {
-    val var1 = Var( StringSymbol( "x1" ), Ti -> ( Ti -> Ti ) )
+    val var1 = Var( ( "x1" ), Ti -> ( Ti -> Ti ) )
     "parse correctly a variable" in {
       ( new MyParser( "x1: (i -> (i -> i))" ).getTerm() ) must beEqualTo( var1 )
     }
-    val const1 = Const( StringSymbol( "c1" ), Ti -> Ti )
+    val const1 = Const( ( "c1" ), Ti -> Ti )
     "parse correctly an constant" in {
       ( new MyParser( "c1: (i -> i)" ).getTerm() ) must beEqualTo( const1 )
     }
-    val var2 = Var( StringSymbol( "x2" ), Ti )
-    val atom1 = HOLAtom( Const( StringSymbol( "a" ), var1.exptype -> ( var2.exptype -> ( const1.exptype -> To ) ) ), var1 :: var2 :: const1 :: Nil )
+    val var2 = Var( ( "x2" ), Ti )
+    val atom1 = HOLAtom( Const( ( "a" ), var1.exptype -> ( var2.exptype -> ( const1.exptype -> To ) ) ), var1 :: var2 :: const1 :: Nil )
     "parse correctly an atom" in {
       ( new MyParser( "a(x1: (i -> (i -> i)), x2: i, c1: (i -> i))" ).getTerm() ) must beEqualTo( atom1 )
     }
@@ -39,11 +39,11 @@ class SimpleHOLParserTest extends Specification {
     "parse correctly a formula constant" in {
       ( new MyParser( "c: o" ).getTerm() ) must beLike { case x: HOLFormula => ok }
     }
-    val f1 = HOLFunction( Const( StringSymbol( "f" ), Ti -> Ti ), Const( StringSymbol( "a" ), Ti ) :: Nil )
+    val f1 = HOLFunction( Const( ( "f" ), Ti -> Ti ), Const( ( "a" ), Ti ) :: Nil )
     "parse correctly a function" in {
       ( new MyParser( "f(a:i):i" ) ).getTerm must beEqualTo( f1 )
     }
-    val f2 = HOLFunction( Var( StringSymbol( "x" ), Ti -> Ti ), Const( StringSymbol( "a" ), Ti ) :: Nil )
+    val f2 = HOLFunction( Var( ( "x" ), Ti -> Ti ), Const( ( "a" ), Ti ) :: Nil )
     "parse correctly a function variable 1" in {
       val term = ( new MyParser( "x(a:i):i" ) ).getTerm
       term must beEqualTo( f2 )

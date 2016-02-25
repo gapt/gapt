@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.TypeSynonyms.SkolemSymbol
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemSymbolFactory }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkskNew.LKskProof._
@@ -12,7 +11,7 @@ import at.logic.gapt.utils.logging.Logger
 
 class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
   type HPathsSequent = Sequent[List[HPath]]
-  type SkolemSymbolTable = Map[HPath, SkolemSymbol]
+  type SkolemSymbolTable = Map[HPath, String]
 
   def apply( p: LKProof ): LKskProof = apply( p, p.conclusion map { _ => Seq() },
     p.conclusion map { _ => false },
@@ -137,7 +136,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
     res
   }
 
-  def createSkolemSymbol( factory: SkolemSymbolFactory, current_hpaths: List[HPath], symbol_table: SkolemSymbolTable ): ( SkolemSymbol, SkolemSymbolTable ) = {
+  def createSkolemSymbol( factory: SkolemSymbolFactory, current_hpaths: List[HPath], symbol_table: SkolemSymbolTable ): ( String, SkolemSymbolTable ) = {
     //println( s"creating skolem symbol for $current_hpaths" )
     //println( s"symbol table is:" )
     //symbol_table.map( x => println( s"${x._1} -> ${x._2}" ) )
@@ -186,7 +185,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
 }
 
 object LKToLKsk {
-  def apply( p: LKProof ): LKskProof = ( new LKToLKsk( new SkolemSymbolFactory ) )( p )
+  def apply( p: LKProof ): LKskProof = ( new LKToLKsk( new SkolemSymbolFactory( constants( p.subProofs.flatMap( _.conclusion.elements ) ) ) ) )( p )
 }
 
 /**

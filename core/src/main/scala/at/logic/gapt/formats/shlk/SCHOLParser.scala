@@ -161,30 +161,30 @@ object SCHOLParser {
       def intVar: Parser[SchemaExpression] = "k".r ^^ { case x => { Var( x, Tindex ) } }
       def succ: Parser[SchemaExpression] = "s(" ~ VariatedOrdinalTerms ~ ")" ^^ {
         case "s(" ~ ii ~ ")" => {
-          val head = Const( StringSymbol( "schS" ), Tindex -> Tindex )
+          val head = Const( "schS", Tindex -> Tindex )
           SchemaFunction( head, List( ii ) )
         }
       }
       def succConsts: Parser[SchemaExpression] = "s(" ~ intConst ~ ")" ^^ {
         case "s(" ~ ii ~ ")" => {
-          val head = Const( StringSymbol( "schS" ), Tindex -> Tindex )
+          val head = Const( "schS", Tindex -> Tindex )
           SchemaFunction( head, List( ii ) )
         }
       }
       def IndividualFunction: Parser[SchemaExpression] = regex( new Regex( "[a-z]+" ) ) ~ "(" ~ repsep( IndividualSort, "," ) ~ ")" ^^ {
         case x ~ "(" ~ params ~ ")" => {
-          val head = Const( StringSymbol( x ), FunctionType( Ti, params.map( _.exptype ) ) )
+          val head = Const( x, FunctionType( Ti, params.map( _.exptype ) ) )
           SchemaFunction( head, params )
         }
       }
       def FOVariable: Parser[Var] = regex( new Regex( "[xyzm]{1}" ) ) ^^ { case x => Var( x, Ti ) }
       def OrdinalFunctionFarIns: Parser[SchemaExpression] = regex( new Regex( "[A-Z]{1}" ) ) ~ "(" ~ OrdinalTerms ~ ")" ^^ {
         case x ~ "(" ~ ii ~ ")" => {
-          val head = Const( StringSymbol( x ), ii.exptype -> Ti )
+          val head = Const( x, ii.exptype -> Ti )
           SchemaFunction( head, List( ii ) )
         }
       }
-      def constant: Parser[Const] = regex( new Regex( "[c]{1}[a-zA-Z0-9]+" ) ) ^^ { case x => Const( StringSymbol( x ), Ti ) }
+      def constant: Parser[Const] = regex( new Regex( "[c]{1}[a-zA-Z0-9]+" ) ) ^^ { case x => Const( x, Ti ) }
       def IndividualOrdinalFunctionVar: Parser[Var] = regex( new Regex( "[A-Z]{1}" ) ) ^^ { case x => Var( x, Tindex -> Ti ) }
       def lambdaTerm: Parser[SchemaExpression] = "(" ~ "λ" ~ FOVariable ~ "." ~ IndividualSort ~ ")" ^^ { case "(" ~ "λ" ~ x ~ "." ~ t ~ ")" => Abs( x, t ) }
       ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -41,12 +41,12 @@ class LKToLKskTest extends Specification {
 
     //println( llk.exportLLK( lkOld.LKToLKsk( lkNew2Old( p3 ) ) ) )
 
-    val factory = new SkolemSymbolFactory
+    val factory = new SkolemSymbolFactory( Seq() )
 
     val lksk = new LKToLKsk( factory )( p3 )
 
     val sym = factory.getSkolemSymbol
-    sym.s must_== "s_{8}"
+    sym must_== "s_8"
   }
 
   "a proof with contractions and cut (1)" in {
@@ -65,10 +65,10 @@ class LKToLKskTest extends Specification {
     val p4 = ContractionLeftRule( p3, Ant( 0 ), Ant( 1 ) )
     val p5 = ContractionRightRule( p4, Suc( 0 ), Suc( 1 ) )
 
-    val factory = new SkolemSymbolFactory
+    val factory = new SkolemSymbolFactory( Seq() )
     val lksk = new LKToLKsk( factory )( p5 )
     val sym = factory.getSkolemSymbol
-    sym.s must_== "s_{2}"
+    sym must_== "s_2"
   }
 
   "a proof with contractions and cut (2)" in {
@@ -87,10 +87,10 @@ class LKToLKskTest extends Specification {
     val p3 = CutRule( p1, p2, p )
     val p4 = ContractionLeftRule( p3, Ant( 0 ), Ant( 1 ) )
 
-    val factory = new SkolemSymbolFactory
+    val factory = new SkolemSymbolFactory( Seq() )
     val lksk = new LKToLKsk( factory )( p4 )
     val sym = factory.getSkolemSymbol
-    sym.s must_== "s_{3}"
+    sym must_== "s_3"
   }
 
   "a proof with contractions and cut (3)" in {
@@ -110,10 +110,10 @@ class LKToLKskTest extends Specification {
     val p3 = CutRule( p1, p2, p )
     val p4 = ContractionRightRule( p3, Suc( 0 ), Suc( 1 ) )
 
-    val factory = new SkolemSymbolFactory
+    val factory = new SkolemSymbolFactory( Seq() )
     val lksk = new LKToLKsk( factory )( p4 )
     val sym = factory.getSkolemSymbol
-    sym.s must_== "s_{4}"
+    sym must_== "s_4"
   }
 
   "pigeonhole" in {

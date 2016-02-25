@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr.hol.existsclosure
-import at.logic.gapt.expr.{ StringSymbol, _ }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.provers.escargot.Escargot
@@ -12,9 +12,9 @@ class SolveTest extends Specification with SequentMatchers {
   "SolveTest" should {
     "prove sequent where quantifier order matters" in {
       // example from Chaudhuri et.al.: A multi-focused proof system ...
-      val List( x, y, u, v ) = List( "x", "y", "u", "v" ) map ( x => Var( StringSymbol( x ), Ti ) )
-      val c = Const( StringSymbol( "c" ), Ti )
-      val d = Const( StringSymbol( "d" ), Ti -> To )
+      val List( x, y, u, v ) = List( "x", "y", "u", "v" ) map ( x => Var( x, Ti ) )
+      val c = Const( "c", Ti )
+      val d = Const( "d", Ti -> To )
 
       val formula = Ex( x, Or( Neg( HOLAtom( d, x :: Nil ) ), All( y, HOLAtom( d, y :: Nil ) ) ) ) // exists x (-d(x) or forall y d(y))
 

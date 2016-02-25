@@ -1,7 +1,6 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.{ Ty, Ti, To }
 import at.logic.gapt.proofs.SequentProof
 import at.logic.gapt.utils.logging.Logger
@@ -64,7 +63,7 @@ object undoHol2Fol extends Logger {
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
         val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
-          case Nil        => All( Var( x.sym, x.exptype ).asInstanceOf[Var], f_ )
+          case Nil        => All( Var( x.name, x.exptype ).asInstanceOf[Var], f_ )
           case List( x_ ) => All( x_, f_ )
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
@@ -72,7 +71,7 @@ object undoHol2Fol extends Logger {
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
         val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
-          case Nil        => Ex( Var( x.sym, x.exptype ).asInstanceOf[Var], f_ )
+          case Nil        => Ex( Var( x.name, x.exptype ).asInstanceOf[Var], f_ )
           case List( x_ ) => Ex( x_, f_ )
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
@@ -114,7 +113,7 @@ object undoHol2Fol extends Logger {
         head
       case Var( ivy_varname( name ), Ti ) =>
         trace( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
-        Var( StringSymbol( name ), Ti ).asInstanceOf[Var]
+        Var( name, Ti ).asInstanceOf[Var]
       case Var( name, Ti ) =>
         throw new Exception( "No signature information for variable " + e )
       case Const( name, _ ) =>

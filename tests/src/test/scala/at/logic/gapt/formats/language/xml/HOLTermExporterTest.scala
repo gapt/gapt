@@ -41,7 +41,7 @@ class HOLTermExporterTest extends Specification {
       trim( exporter.exportTerm(
         HOLFunction(
           Const( "f", Ti -> ( Ti -> Ti ) ),
-          List( Var( StringSymbol( "x" ), Ti ), Const( "c", Ti ) )
+          List( Var( ( "x" ), Ti ), Const( "c", Ti ) )
         )
       ) ) must beEqualTo(
         <function symbol="f"><variable symbol="x"/><constant symbol="c"/></function>
@@ -152,9 +152,9 @@ class HOLTermExporterTest extends Specification {
     }
     // definedsetformula is not supported yet
     /*"export correctly a defined set formula \\cup(X,Y)(c)" in {
-      trim(exporter.exportTerm(App(AppN( Const( new ConstantStringSymbol("\\cup"), "((i -> o) -> ((i -> o) -> (i -> o)))"),
-          Var( new VariableStringSymbol("X"), "(i -> o)" )::Var( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
-          Const( new ConstantStringSymbol("c"), "i" ) ))) must beEqualTo (trim(
+      trim(exporter.exportTerm(App(AppN( Const( new Constant("\\cup"), "((i -> o) -> ((i -> o) -> (i -> o)))"),
+          Var( new Variable("X"), "(i -> o)" )::Var( new Variable("Y"), "(i -> o)" )::Nil),
+          Const( new Constant("c"), "i" ) ))) must beEqualTo (trim(
         <definedsetformula>
           <definedset symbol="\cup" definition="\cup">
             <secondordervariable symbol="X"/>
@@ -165,14 +165,14 @@ class HOLTermExporterTest extends Specification {
       ))
     }
     "export correctly a complex sentence (all X)(all Y)(all z) X(z) impl \\cup(X,Y)(z)" in {
-      trim(exporter.exportTerm(All( Var( new VariableStringSymbol("X"), "(i -> o)" ),
-          All( Var( new VariableStringSymbol("Y"), "(i -> o)"),
-            All( Var( new VariableStringSymbol("z"), "i"),
-              Imp( Atom( new VariableStringSymbol("X"), Var( "z", "i" )::Nil ),
-                AppFormula(AppN( Const( new ConstantStringSymbol("\\cup"),
+      trim(exporter.exportTerm(All( Var( new Variable("X"), "(i -> o)" ),
+          All( Var( new Variable("Y"), "(i -> o)"),
+            All( Var( new Variable("z"), "i"),
+              Imp( Atom( new Variable("X"), Var( "z", "i" )::Nil ),
+                AppFormula(AppN( Const( new Constant("\\cup"),
                                    "((i -> o) -> ((i -> o) -> (i -> o)))"),
-                           Var( new VariableStringSymbol("X"), "(i -> o)" )::
-                           Var( new VariableStringSymbol("Y"), "(i -> o)" )::Nil),
+                           Var( new Variable("X"), "(i -> o)" )::
+                           Var( new Variable("Y"), "(i -> o)" )::Nil),
                     Var( "z", "i" ) ) ) ) ) ) )) must beEqualTo (trim(
         <secondorderquantifiedformula type="all">
           <secondordervariable symbol="X"/>

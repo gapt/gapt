@@ -136,10 +136,10 @@ abstract class LambdaExpression {
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
+class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
 
-  // The name of the variable should be obtained with this method.
-  def name: String = sym.toString
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def sym: SymbolA = new SymbolA {}
 
   // Syntactic equality: two variables are equal if they have the same name and the same type
   def syntaxEquals( e: LambdaExpression ) = e match {
@@ -157,9 +157,10 @@ class Var private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpr
   override val hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
+class Const private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
 
-  def name: String = sym.toString
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def sym = new SymbolA {}
 
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Const( n, t ) => ( n == name && t == exptype )
@@ -214,14 +215,18 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
 }
 
 object Var {
-  def apply( name: String, exptype: Ty ): Var = Var( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: Ty ): Var = determineTraits.forVar( sym, exptype )
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def apply( sym: SymbolA, exptype: Ty ): Var = apply( sym.toString, exptype )
+
+  def apply( name: String, exptype: Ty ): Var = determineTraits.forVar( name, exptype )
 
   def unapply( v: Var ) = Some( v.name, v.exptype )
 }
 object Const {
-  def apply( name: String, exptype: Ty ): Const = Const( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: Ty ): Const = determineTraits.forConst( sym, exptype )
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def apply( sym: SymbolA, exptype: Ty ): Const = apply( sym.toString, exptype )
+
+  def apply( name: String, exptype: Ty ): Const = determineTraits.forConst( name, exptype )
 
   def unapply( c: Const ) = Some( c.name, c.exptype )
 }

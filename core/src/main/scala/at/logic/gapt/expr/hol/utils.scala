@@ -422,8 +422,8 @@ object normalizeFreeVariables {
     var i = 0
     //generate a blacklist that prevents renaming of bound variables
     val blacklist = LambdaPosition.getPositions( f ).flatMap( f( _ ) match {
-      case All( x, _ ) => List( x.sym.toString )
-      case Ex( x, _ )  => List( x.sym.toString )
+      case All( x, _ ) => List( x.name )
+      case Ex( x, _ )  => List( x.name )
       case _           => Nil
     } )
 

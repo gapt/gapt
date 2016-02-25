@@ -171,8 +171,8 @@ class SubstitutionsTest extends Specification {
 
     "issue 383" in {
       val p = Const( "p", Ti -> To )
-      val x0 = Var( VariantSymbol( "x", 0 ), Ti )
-      val x = Var( StringSymbol( "x" ), Ti )
+      val x = Var( "x", Ti )
+      val x0 = rename( x, Set( x ) )
 
       val formula = All( x, p( x ) )
       Substitution( x0 -> x )( formula ) must_== formula
@@ -180,9 +180,9 @@ class SubstitutionsTest extends Specification {
 
     "yet another renaming bug" in {
       val p = FOLFunctionConst( "p", 2 )
-      val x = Var( StringSymbol( "x" ), Ti )
-      val x0 = Var( VariantSymbol( "x", 0 ), Ti ) // the fresh variable that we rename x to
-      val y = Var( StringSymbol( "y" ), Ti )
+      val x = Var( "x", Ti )
+      val x0 = rename( x, Set( x ) )
+      val y = Var( "y", Ti )
 
       val formula = Abs( x, p( x, x0 ) )
       Substitution( y -> x )( formula ) must_== formula
