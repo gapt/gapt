@@ -2,14 +2,18 @@ package at.logic.gapt.examples.poset
 
 import at.logic.gapt.examples.TacticsProof
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object proof extends TacticsProof {
-  implicit val ctx = FiniteContext(
-    constants = Set( hoc"f: i>i>i", hoc"'=':i>i>o",
-      hoc"a:i", hoc"b:i", hoc"c:i", hoc"d:i" )
-  )
+  implicit var ctx = FiniteContext()
+  ctx += Context.Sort( "i" )
+  ctx += hoc"f: i>i>i"
+  ctx += hoc"'=':i>i>o"
+  ctx += hoc"a:i"
+  ctx += hoc"b:i"
+  ctx += hoc"c:i"
+  ctx += hoc"d:i"
 
   val axioms =
     ( "eqrefl" -> hof"!x x=x" ) +:
