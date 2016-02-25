@@ -220,7 +220,7 @@ case class RewriteTactic(
       ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.s.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
-      subst <- syntacticMatching( t_, tgt( pos ) )
+      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), freeVariables( quantEq ).map { v => v -> v }.toMap )
     } return {
       val newTgt = tgt.replace( pos, subst( s_ ) )
       val newGoal = OpenAssumption( goal.s.updated( tgtIdx, target -> newTgt ) )

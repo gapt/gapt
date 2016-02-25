@@ -49,7 +49,7 @@ object tape extends TacticsProof {
     destruct( "C_0" )
     negR
     insert( ax3 )
-    eqL( "Iv_1", "Iv_0" )
+    rewrite rtl "Iv_1" in "Iv_0"
     insert( ax1 )
   }
 
