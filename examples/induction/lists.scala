@@ -58,6 +58,34 @@ object lists extends TacticsProof {
     rewrite.many ltr ( "revcons", "apprev", "IHx_0", "revnil", "nilapp", "consapp" ); refl
   }
 
+  ctx += hoc"map: (i>i) > (list>list)"
+  val mapth =
+    ( "mapcons" -> hof"!f!x!xs map f (cons x xs) = cons (f x) (map f xs)" ) +:
+      ( "mapnil" -> hof"!f map f nil = nil" ) +:
+      Sequent()
+
+  val mapapp = Lemma( ( appth ++ mapth ) :+ ( "goal" -> hof"!f!xs!ys map f (xs + ys) = map f xs + map f ys" ) ) {
+    allR; induction onAll decompose
+    rewrite.many ltr ( "nilapp", "mapnil" ); refl
+    rewrite.many ltr ( "consapp", "mapcons", "IHxs_0" ); refl
+  }
+
+  val maprev = Lemma( ( appth ++ revth ++ mapth ) :+ ( "goal" -> hof"!f!xs map f (rev xs) = rev (map f xs)" ) ) {
+    include( "mapapp", mapapp )
+    allR; induction
+    rewrite.many ltr ( "revnil", "mapnil" ); refl
+    rewrite.many ltr ( "revcons", "mapcons", "mapapp", "IHxs_0", "mapnil" ); refl
+  }
+
+  ctx += ( "*" -> le"^f^g^x f (g x)" )
+  Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "example", "*" ); refl }
+
+  val mapfusion = Lemma( mapth :+ ( "goal" -> hof"!f!g!xs map (f*g) xs = map f (map g xs)" ) ) {
+    allR; allR; induction
+    rewrite.many ltr "mapnil"; refl
+    rewrite.many ltr ( "mapcons", "IHxs_0" ); unfold( "goal", "*" ); refl
+  }
+
   if ( false ) {
     val rs = extractRecSchem( Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
       include( "revrev", revrev )
