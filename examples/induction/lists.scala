@@ -14,11 +14,11 @@ object lists extends TacticsProof {
 
   ctx += hoc"'+': list>list>list"
   val appth =
-    ( "consapp" -> hof"!x!y!z cons(x,y)+z = cons(x,y+z)" ) +:
-      ( "nilapp" -> hof"!x nil+x = x" ) +:
+    ( "consapp" -> hof"∀x ∀y ∀z cons(x,y)+z = cons(x,y+z)" ) +:
+      ( "nilapp" -> hof"∀x nil+x = x" ) +:
       Sequent()
 
-  val appnil = Lemma( appth :+ ( "goal" -> hof"!x x+nil = x" ) ) {
+  val appnil = Lemma( appth :+ ( "goal" -> hof"∀x x+nil = x" ) ) {
     induction
     chain( "nilapp" )
     rewrite.many ltr ( "consapp", "IHx_0" ) in "goal"
@@ -31,7 +31,7 @@ object lists extends TacticsProof {
     refl
   }
 
-  val appassoc = Lemma( appth :+ ( "goal" -> hof"!x!y!z x+(y+z) = (x+y)+z" ) ) {
+  val appassoc = Lemma( appth :+ ( "goal" -> hof"∀x ∀y ∀z x+(y+z) = (x+y)+z" ) ) {
     induction onAll decompose
     rewrite.many ltr "nilapp"; refl
     rewrite.many ltr ( "consapp", "IHx_0" ); refl
@@ -39,11 +39,11 @@ object lists extends TacticsProof {
 
   ctx += hoc"rev: list>list"
   val revth =
-    ( "revcons" -> hof"!x!y rev(cons(x,y)) = rev(y)+cons(x,nil)" ) +:
+    ( "revcons" -> hof"∀x∀y rev(cons(x,y)) = rev(y)+cons(x,nil)" ) +:
       ( "revnil" -> hof"rev(nil) = nil" ) +:
       Sequent()
 
-  val apprev = Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"!x!y rev(x+y) = rev(y) + rev(x)" ) ) {
+  val apprev = Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"∀x ∀y rev(x+y) = rev(y) + rev(x)" ) ) {
     include( "appnil", appnil )
     include( "appassoc", appassoc )
     induction onAll decompose
@@ -51,7 +51,7 @@ object lists extends TacticsProof {
     rewrite.many ltr ( "consapp", "revcons", "IHx_0", "appassoc" ); refl
   }
 
-  val revrev = Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"!x rev(rev(x)) = x" ) ) {
+  val revrev = Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"∀x rev(rev(x)) = x" ) ) {
     include( "apprev", apprev )
     induction onAll decompose
     rewrite.many ltr "revnil"; refl
@@ -60,31 +60,33 @@ object lists extends TacticsProof {
 
   ctx += hoc"map: (i>i) > (list>list)"
   val mapth =
-    ( "mapcons" -> hof"!f!x!xs map f (cons x xs) = cons (f x) (map f xs)" ) +:
-      ( "mapnil" -> hof"!f map f nil = nil" ) +:
+    ( "mapcons" -> hof"∀f ∀x ∀xs map f (cons x xs) = cons (f x) (map f xs)" ) +:
+      ( "mapnil" -> hof"∀f map f nil = nil" ) +:
       Sequent()
 
-  val mapapp = Lemma( ( appth ++ mapth ) :+ ( "goal" -> hof"!f!xs!ys map f (xs + ys) = map f xs + map f ys" ) ) {
+  val mapapp = Lemma( ( appth ++ mapth ) :+ ( "goal" -> hof"∀f ∀xs ∀ys map f (xs + ys) = map f xs + map f ys" ) ) {
     allR; induction onAll decompose
     rewrite.many ltr ( "nilapp", "mapnil" ); refl
     rewrite.many ltr ( "consapp", "mapcons", "IHxs_0" ); refl
   }
 
-  val maprev = Lemma( ( appth ++ revth ++ mapth ) :+ ( "goal" -> hof"!f!xs map f (rev xs) = rev (map f xs)" ) ) {
+  val maprev = Lemma( ( appth ++ revth ++ mapth ) :+ ( "goal" -> hof"∀f ∀xs map f (rev xs) = rev (map f xs)" ) ) {
     include( "mapapp", mapapp )
     allR; induction
     rewrite.many ltr ( "revnil", "mapnil" ); refl
     rewrite.many ltr ( "revcons", "mapcons", "mapapp", "IHxs_0", "mapnil" ); refl
   }
 
-  ctx += ( "*" -> le"^f^g^x f (g x)" )
+  ctx += ( "*" -> le"λf λg λx f (g x)" )
   Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "example", "*" ); refl }
 
-  val mapfusion = Lemma( mapth :+ ( "goal" -> hof"!f!g!xs map (f*g) xs = map f (map g xs)" ) ) {
+  val mapfusion = Lemma( mapth :+ ( "goal" -> hof"∀f ∀g ∀xs map (f*g) xs = map f (map g xs)" ) ) {
     allR; allR; induction
     rewrite.many ltr "mapnil"; refl
     rewrite.many ltr ( "mapcons", "IHxs_0" ); unfold( "goal", "*" ); refl
   }
+
+  // Note: we cannot prove constructor injectivity using the induction rule.
 
   if ( false ) {
     val rs = extractRecSchem( Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
