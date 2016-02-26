@@ -92,7 +92,7 @@ object deltaTableAlgorithm {
     deltatable:             Map[Set[Substitution], Row],
     subsumeMinimalGrammars: Boolean
   ): ( Set[LambdaExpression], Set[Substitution] ) = {
-    var minSize = termSet.size
+    var minSize = termSet.size + 1
     val minGrammars = mutable.Buffer[( Set[LambdaExpression], Set[Substitution] )]()
 
     def minimizeRow(
