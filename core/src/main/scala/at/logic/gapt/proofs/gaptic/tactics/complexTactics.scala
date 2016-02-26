@@ -101,12 +101,12 @@ case class ChainTactic( hyp: String, target: Option[String] = None, substitution
           case Some( x ) =>
             ( for (
               ( ( `x`, y ), index ) <- goalSequent.zipWithIndex.succedent;
-              sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution )
+              sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution ++ freeVariables( quantifiedFormula ).map { v => v -> v } )
             ) yield ( x, index, sub ) ).headOption
           case None =>
             ( for (
               ( ( x, y ), index ) <- goalSequent.zipWithIndex.succedent;
-              sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution )
+              sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution ++ freeVariables( quantifiedFormula ).map { v => v -> v } )
             ) yield ( x, index, sub ) ).headOption
         } ).toSuccessNel( TacticalFailure( this, Some( goal ), s"target $target not found" ) ) map {
 
