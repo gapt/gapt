@@ -16,7 +16,7 @@ object BabelLexical {
   val Whitespace = NoTrace( CharsWhile( _.isWhitespace, min = 0 ) )
 
   val Name: P[String] = P( UnquotedName | QuotedName )
-  def isUnquotNameChar( c: Char ) = c.isLetterOrDigit || c == '_' || c == '$'
+  def isUnquotNameChar( c: Char ) = ( c.isLetterOrDigit || c == '_' || c == '$' ) && c != 'λ'
   val UnquotedName: P[String] = P( CharsWhile( isUnquotNameChar ).! )
   val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
   val QuotedNameChar: P[String] = P(
