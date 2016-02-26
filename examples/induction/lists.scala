@@ -77,7 +77,7 @@ object lists extends TacticsProof {
     rewrite.many ltr ( "revcons", "mapcons", "mapapp", "IHxs_0", "mapnil" ); refl
   }
 
-  ctx += ( "*" -> le"λf λg λx f (g x)" )
+  ctx += hof"(f*g) x = f (g x)"
   Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "example", "*" ); refl }
 
   val mapfusion = Lemma( mapth :+ ( "goal" -> hof"∀f ∀g ∀xs map (f*g) xs = map f (map g xs)" ) ) {

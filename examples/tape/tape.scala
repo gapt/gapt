@@ -11,8 +11,8 @@ object tape extends TacticsProof {
   ctx += hoc"f: i>i"
   ctx += hoc"'+': i>i>i"
   ctx += hoc"0: i"; ctx += hoc"1: i"
-  ctx += ( "A" -> hof"!x (f(x) = 0 | f(x) = 1)" )
-  ctx += ( "I" -> le"^v !x?y f(x+y) = v" )
+  ctx += hof"A = (∀x (f(x) = 0 ∨ f(x) = 1))"
+  ctx += hof"I(v) = (∀x ∃y f(x+y) = v)"
 
   val ax1 = TheoryAxiom( hoa"f(0+x) = f(x+1+y)" +: Sequent() :+ hoa"f(x) = f(x+y+1)" )
   val ax2 = TheoryAxiom( hoa"f(x+y) = 1" +: Sequent() :+ hoa"f(y+x)=1" )

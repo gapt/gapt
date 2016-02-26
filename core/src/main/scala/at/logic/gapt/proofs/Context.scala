@@ -1,11 +1,9 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ Bottom, Const, EqC, FunctionType, LambdaExpression, TBase, Ti, To, Top, baseTypes, constants, freeVariables }
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
-
-import scala.collection.mutable
 
 trait Context extends BabelSignature {
   def constant( name: String ): Option[Const]
@@ -62,6 +60,11 @@ case class FiniteContext(
     for ( c <- at.logic.gapt.expr.constants( by ) if EqC.unapply( c ).isEmpty )
       require( constant( c.name ) contains c, s"In definition $name -> $by: constant $c not defined yet" )
     copy( constants = constants + what, definitions = definitions + ( what -> by ) )
+  }
+
+  def +( equation: HOLFormula ): FiniteContext = equation match {
+    case Eq( Apps( Var( definedConstName, _ ), arguments ), definition ) =>
+      this + ( definedConstName -> Abs( arguments map { _.asInstanceOf[Var] }, definition ) )
   }
 }
 
