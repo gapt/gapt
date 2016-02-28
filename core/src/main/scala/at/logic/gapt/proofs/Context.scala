@@ -32,21 +32,38 @@ case class FiniteContext(
   def typeDef( name: String ) = typeDefsMap get name
 
   def +( const: Const ): FiniteContext = {
-    require( !( constantsMap get const.name exists { _ != const } ) )
-    for ( t <- baseTypes( const.exptype ) ) require( typeDef( t.name ).isDefined )
+    require(
+      !( constantsMap get const.name exists { _ != const } ),
+      s"Constant ${const.name} is already defined as ${constantsMap get const.name get}."
+    )
+
+    for ( t <- baseTypes( const.exptype ) ) require(
+      typeDef( t.name ).isDefined,
+      s"Constant definition contains undeclared type ${t.name}."
+    )
+
     copy( constants = constants + const )
   }
   def ++( consts: Iterable[Const] ): FiniteContext =
     consts.foldLeft( this )( _ + _ )
 
   def +( typeDef: TypeDef ): FiniteContext = {
-    require( !( typeDefsMap get typeDef.ty.name exists { _ != typeDef } ) )
+    require(
+      !( typeDefsMap get typeDef.ty.name exists { _ != typeDef } ),
+      s"Type ${typeDef.ty.name} is already defined as ${typeDefsMap get typeDef.ty.name get}."
+    )
     typeDef match {
       case Sort( _ ) => copy( typeDefs = typeDefs + typeDef )
       case InductiveType( _, constructors ) =>
-        require( constructors.map { _.toString } == constructors.map { _.toString }.distinct )
+        require(
+          constructors.map { _.toString } == constructors.map { _.toString }.distinct,
+          s"Names of type constructors are not distinct."
+        )
         for ( const <- constructors )
-          require( !( constantsMap get const.name exists { _ != const } ) )
+          require(
+            !( constantsMap get const.name exists { _ != const } ),
+            s"Constant ${const.name} is already defined as ${constantsMap get const.name get}."
+          )
         copy( typeDefs = typeDefs + typeDef, constants = constants ++ constructors )
     }
   }
@@ -54,8 +71,16 @@ case class FiniteContext(
   def +( defn: ( String, LambdaExpression ) ): FiniteContext = {
     val ( name, by ) = defn
     val what = Const( name, by.exptype )
-    require( definition( name ).isEmpty )
-    require( constant( name ).isEmpty )
+    require(
+      definition( name ).isEmpty,
+      s"In definition $name -> $by: $name is already defined as ${definition( name ).get}."
+    )
+
+    require(
+      constant( name ).isEmpty,
+      s"In definition $name -> $by: Constant $name is already defined as ${constantsMap get name get}."
+    )
+
     require( freeVariables( by ).isEmpty, s"In definition $name -> $by: contains free variables ${freeVariables( by )}" )
     for ( c <- at.logic.gapt.expr.constants( by ) if EqC.unapply( c ).isEmpty )
       require( constant( c.name ) contains c, s"In definition $name -> $by: constant $c not defined yet" )
@@ -74,7 +99,10 @@ object Context {
   case class InductiveType( ty: TBase, constructors: Seq[Const] ) extends TypeDef {
     for ( constr <- constructors ) {
       val FunctionType( ty_, _ ) = constr.exptype
-      require( ty == ty_ )
+      require(
+        ty == ty_,
+        s"Base type $ty and type constructor $constr don't agree."
+      )
     }
   }
 
