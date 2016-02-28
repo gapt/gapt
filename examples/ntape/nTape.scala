@@ -148,7 +148,8 @@ abstract class nTape {
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect
     val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
-    val ind_axiom = proofdb.Definitions.find( _._1.toString == "IND" ).get._2
+    val ind_atom = HOLAtom( Const( "IND", To ), List() )
+    val ind_axiom = proofdb.Definitions.find( _._1 == ind_atom ).get._2
     val indet = conjuncts.find( _.shallow == ind_axiom ).get
 
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
