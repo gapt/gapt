@@ -213,6 +213,11 @@ package object expr {
         case Const( name, _ ) if name.startsWith( placeholder ) =>
           val i = name.drop( placeholder.length ).toInt
           expressions( i )
+
+        case Var( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+
       }
 
       val expr = BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ) match {
