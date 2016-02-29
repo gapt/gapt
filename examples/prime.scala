@@ -73,8 +73,6 @@ object prime extends TacticsProof {
 
       //Left subproof of the cut:
       forget( "C", "O" )
-      // I don't know why, but if I don't pass the substitution manually, it doesn't work.
-      //insert(Substitution(hov"X: i >o" -> le" set_1 1")(compCompProof))
       insert( compCompProof )
 
       //Right subproof of the cut:
