@@ -7,8 +7,8 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Sequent, Context, FiniteContext }
 
 /**
-  * Created by sebastian on 2/25/16.
-  */
+ * Created by sebastian on 2/25/16.
+ */
 object prime extends TacticsProof {
   implicit var ctx = FiniteContext()
 
@@ -54,153 +54,152 @@ object prime extends TacticsProof {
 
   // Proof that complement(complement(X)) = X (under extensionality).
   val compCompProof = Lemma(
-    ("EXT" -> extensionality) +: Sequent() :+ "comp" -> hof" compN(compN(X)) = X"
+    ( "EXT" -> extensionality ) +: Sequent() :+ "comp" -> hof" compN(compN(X)) = X"
   ) {
-    chain("EXT")
-    forget("EXT")
-    allR("comp", fov"x")
-    unfold("comp", "in")
-    unfold("comp", "compN")
-    prop
-  }
+      chain( "EXT" )
+      forget( "EXT" )
+      allR( "comp", fov"x" )
+      unfold( "comp", "in" )
+      unfold( "comp", "compN" )
+      prop
+    }
 
   // Proof that if complement{1} is closed, {1} is open (under extensionality).
   val openClosedProof = Lemma(
-    ("EXT" -> extensionality) +: ("C" -> hof" C(compN(set_1(1)))") +: Sequent() :+"O" -> hof"O(set_1(1))"
+    ( "EXT" -> extensionality ) +: ( "C" -> hof" C(compN(set_1(1)))" ) +: Sequent() :+ "O" -> hof"O(set_1(1))"
   ) {
-    unfold("C", "C")
-    cut(hof" compN(compN(set_1 1)) = set_1 1", "CF")
+      unfold( "C", "C" )
+      cut( hof" compN(compN(set_1 1)) = set_1 1", "CF" )
 
-    //Left subproof of the cut:
-    forget("C", "O")
-    // I don't know why, but if I don't pass the substitution manually, it doesn't work.
-    //insert(Substitution(hov"X: i >o" -> le" set_1 1")(compCompProof))
-    insert(compCompProof)
+      //Left subproof of the cut:
+      forget( "C", "O" )
+      // I don't know why, but if I don't pass the substitution manually, it doesn't work.
+      //insert(Substitution(hov"X: i >o" -> le" set_1 1")(compCompProof))
+      insert( compCompProof )
 
-    //Right subproof of the cut:
-    forget("EXT")
-    unfold("C", "C")
-    eqL("CF", "C").fromLeftToRight
-    forget("CF")
-    unfold("O", "O")
-    unfold("O", "set_1")
-    unfold("O", "ν")
-    unfold("O", "subset")
-    unfold("O", "in")
-    unfold("C", "O")
-    unfold("C", "set_1")
-    unfold("C", "ν")
-    unfold("C", "subset")
-    unfold("C", "in")
-    trivial
-  }
+      //Right subproof of the cut:
+      forget( "EXT" )
+      unfold( "C", "C" )
+      eqL( "CF", "C" ).fromLeftToRight
+      forget( "CF" )
+      unfold( "O", "O" )
+      unfold( "O", "set_1" )
+      unfold( "O", "ν" )
+      unfold( "O", "subset" )
+      unfold( "O", "in" )
+      unfold( "C", "O" )
+      unfold( "C", "set_1" )
+      unfold( "C", "ν" )
+      unfold( "C", "subset" )
+      unfold( "C", "in" )
+      trivial
+    }
 
   // Proof that {1} is nonempty
   val singletonNonempty = Lemma(
     Sequent() :+ "nonempty" -> hof" ¬empty(set_1(1))"
   ) {
-    unfold( "nonempty", "empty" )
-    unfold( "nonempty", "in" )
-    unfold( "nonempty", "set_1" )
-    decompose
-    exR("nonempty", hoc" 1:i")
-    trivial
-  }
+      unfold( "nonempty", "empty" )
+      unfold( "nonempty", "in" )
+      unfold( "nonempty", "set_1" )
+      decompose
+      exR( "nonempty", hoc" 1:i" )
+      trivial
+    }
 
   // Proof that {1} is finite
   val singletonFinite = Lemma(
-    ("infinite" -> hof" INF (set_1 1)") +: Sequent()
+    ( "infinite" -> hof" INF (set_1 1)" ) +: Sequent()
   ) {
-    unfold("infinite", "INF")
-    unfold("infinite", "set_1")
-    unfold("infinite", "in")
-    allL("infinite", hoc"1: i")
-    forget("infinite")
-    exL("infinite_0")
-    axiomTh
-  }
+      unfold( "infinite", "INF" )
+      unfold( "infinite", "set_1" )
+      unfold( "infinite", "in" )
+      allL( "infinite", hoc"1: i" )
+      forget( "infinite" )
+      exL( "infinite_0" )
+      axiomTh
+    }
 
   // Proof of INF(S), S subset X :- INF(X).
   // S and X are free.
   val infiniteSubset = Lemma(
-    ("subset_inf" -> hof"INF(S)") +: ("subset" -> hof" subset S X") +: Sequent() :+ "set_inf" -> hof"INF(X)"
+    ( "subset_inf" -> hof"INF(S)" ) +: ( "subset" -> hof" subset S X" ) +: Sequent() :+ "set_inf" -> hof"INF(X)"
   ) {
-    unfold("subset_inf", "INF")
-    unfold("set_inf", "INF")
-    allR("set_inf")
-    allL("subset_inf", fov"k")
-    exL("subset_inf_0")
-    exR("set_inf", fov"l")
-    forget("set_inf", "subset_inf")
-    unfold("subset", "subset")
-    chain("subset")
-    trivial //If we don't need to unfold ∈.
-  }
+      unfold( "subset_inf", "INF" )
+      unfold( "set_inf", "INF" )
+      allR( "set_inf" )
+      allL( "subset_inf", fov"k" )
+      exL( "subset_inf_0" )
+      exR( "set_inf", fov"l" )
+      forget( "set_inf", "subset_inf" )
+      unfold( "subset", "subset" )
+      chain( "subset" )
+      trivial //If we don't need to unfold ∈.
+    }
 
   // Proof that every nonempty open set is infinite.
   val phi2 = Lemma(
     Sequent() :+ "goal" -> hof"∀X ((O(X) ∧ ¬ empty(X)) -> INF(X))"
   ) {
-    decompose
-    unfold("goal_0_1", "empty")
-    decompose
-    unfold("goal_0_0", "O")
-    decompose
-    allL("goal_0_0", fov"n")
-    forget("goal_0_0")
-    impL("goal_0_0_0")
+      decompose
+      unfold( "goal_0_1", "empty" )
+      decompose
+      unfold( "goal_0_0", "O" )
+      decompose
+      allL( "goal_0_0", fov"n" )
+      forget( "goal_0_0" )
+      impL( "goal_0_0_0" )
 
-    trivial // n ∈ X :- n ∈ X -- do we need to expand this further?
+      trivial // n ∈ X :- n ∈ X -- do we need to expand this further?
 
-    forget("goal_0_1")
-    exL("goal_0_0_0")
-    cut(hof"INF(ν(n, l+1))", "CF")
+      forget( "goal_0_1" )
+      exL( "goal_0_0_0" )
+      cut( hof"INF(ν(n, l+1))", "CF" )
 
-    // Left subproof: ν(n, l+1) is infinite
-    forget("goal_0_0_0", "goal_1")
-    unfold("CF", "INF")
-    allR("CF")
-    exR("CF", fot" n * (l + (1 + 1)) + l * (k+1)")
-    forget("CF")
-    unfold("CF_0", "ν")
-    unfold("CF_0", "in")
-    exR("CF_0", fot"n +(k + 1)")
-    forget("CF_0")
-    axiomTh
+      // Left subproof: ν(n, l+1) is infinite
+      forget( "goal_0_0_0", "goal_1" )
+      unfold( "CF", "INF" )
+      allR( "CF" )
+      exR( "CF", fot" n * (l + (1 + 1)) + l * (k+1)" )
+      forget( "CF" )
+      unfold( "CF_0", "ν" )
+      unfold( "CF_0", "in" )
+      exR( "CF_0", fot"n +(k + 1)" )
+      forget( "CF_0" )
+      axiomTh
 
-    // Right subproof:
-    insert(infiniteSubset)
-  }
+      // Right subproof:
+      insert( infiniteSubset )
+    }
 
-  def updateContext(k: Int): Unit = {
-    require(k >= 0)
+  def updateContext( k: Int ): Unit = {
+    require( k >= 0 )
 
     ctx = baseCTX
 
-    val p = for (i <- 0 to k)
-      yield FOLConst(s"p_$i")
+    val p = for ( i <- 0 to k )
+      yield FOLConst( s"p_$i" )
 
-    p foreach {ctx += _}
+    p foreach { ctx += _ }
 
-    val P = (0 to k) map {i => Const(s"P[$i]", Ti -> To)}
+    val P = ( 0 to k ) map { i => Const( s"P[$i]", Ti -> To ) }
 
-    ctx += ("P[0]", le"set_1(p_0)")
+    ctx += ( "P[0]", le"set_1(p_0)" )
 
-    for (i <- 1 to k) {
-      ctx += (s"P[$i]", le"union(${P(i-1)}: i > o, set_1 (${p(i)}:i))")
+    for ( i <- 1 to k ) {
+      ctx += ( s"P[$i]", le"union(${P( i - 1 )}: i > o, set_1 (${p( i )}:i))" )
     }
 
-    ctx += (s"F[$k]", hof" ∀l (PRIME(l) <-> in(l, ${P(k)}))")
+    ctx += ( s"F[$k]", hof" ∀l (PRIME(l) <-> in(l, ${P( k )}))" )
   }
 
-  def proof(k: Int): LKProof = {
-    require(k >= 0)
+  def proof( k: Int ): LKProof = {
+    require( k >= 0 )
 
-    updateContext(k)
+    updateContext( k )
 
     ???
   }
 
-
-  val oldProof =  XMLProofDatabaseParser("examples/prime/ceres_xml/prime1-2.xml.gz").proofs(0)._2
+  val oldProof = XMLProofDatabaseParser( "examples/prime/ceres_xml/prime1-2.xml.gz" ).proofs( 0 )._2
 }
