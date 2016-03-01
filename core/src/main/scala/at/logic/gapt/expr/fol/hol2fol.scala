@@ -10,7 +10,7 @@ object reduceHolToFol extends reduceHolToFol
  * Creates a FOL formula from a HOL formula, but applies transformations which do _not_ preserve validity!
  * Transformations applied:
  *
- *  - Replace all subterms (\x.t) by a constant. The scope parameter is needed to pass existing term-constant mappings.
+ *  - Replace all subterms (\x.t[v]) by a function q_n(v). The scope parameter is needed to pass existing term-constant mappings.
  *  - Change the type of constants and variables s.t. they are first order (i.e. Const("c", To->Ti) is mapped to FOLConst("c",Ti)
  *  - Logical operators inside the term structure are replaced by first order terms
  *
