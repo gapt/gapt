@@ -1,6 +1,7 @@
 package at.logic.gapt.formats.babel
 
 import ast._
+import at.logic.gapt.{ expr => real }
 
 /**
  * A signature for the Babel parser.
@@ -97,6 +98,10 @@ case class MapBabelSignature( map: Map[String, ast.Type] ) extends BabelSignatur
       IsConst( map( x ) )
     else
       IsVar( ast.freshTypeVar() )
+}
+object MapBabelSignature {
+  def apply( consts: Iterable[real.Const] ): MapBabelSignature =
+    MapBabelSignature( consts.view map { c => c.name -> liftType( c.exptype ) } toMap )
 }
 
 /**

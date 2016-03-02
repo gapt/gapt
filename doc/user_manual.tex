@@ -1149,27 +1149,29 @@ Quantifier inferences in the input proof: 9
 End sequent: ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o
 Size of term set: 11
 Smallest grammar of size 8:
-Axiom: (x0)
-Non-terminal vectors:
-  (x0)
-  (x1)
-Productions:
-  x0 -> '-{P(0): o}_a1'
+Non-terminal vectors: (x0), (x1)
+Terminals:
+  '-{P(0): o}_a1'
+  '-{∀x (P(x) ⊃ P(s(x)))}_a0':i>i
+  0
+  s:i>i
+  '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
 
-  x0 -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+x0 → '-{P(0): o}_a1'
 
-  x0 -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
 
-  x0 -> '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
 
-  x0 -> '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
 
-  x1 -> 0
+x0 → '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
 
-  x1 -> s(s(s(0)))
+x1 → 0
 
-  x1 -> s(s(s(s(s(s(0))))))
+x1 → s(s(s(0)))
 
+x1 → s(s(s(s(s(s(0))))))
 
 Size of the canonical solution: 12
 Size of the minimized solution: 4

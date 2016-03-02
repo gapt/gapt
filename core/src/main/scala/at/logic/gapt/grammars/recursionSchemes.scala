@@ -3,7 +3,7 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT, bestAvailableMaxSatSolver }
 import at.logic.gapt.utils.logging.Logger
 
@@ -23,12 +23,45 @@ case class Rule( lhs: LambdaExpression, rhs: LambdaExpression ) {
   def toSigRelativeString( implicit sig: BabelSignature ) = s"${lhs.toSigRelativeString} -> ${rhs.toSigRelativeString}"
 }
 
+private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
+    extends BabelExporter( unicode, rs.babelSignature ) {
+
+  def csep( docs: List[Doc] ): Doc = ssep( docs, line( ", " ) )
+
+  def export(): String = {
+    val nonTerminals = rs.axiom +: ( rs.nonTerminals - rs.axiom ).toList.sortBy { _.name }
+    val ntDecl = group( "Non-terminals:" <> nest( line <> vsep(
+      nonTerminals map { show( _, false, Set(), Map(), prio.max )._1 }
+    ) ) )
+
+    val tDecl = group( "Terminals:" <> nest( line <> vsep(
+      rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 }
+    ) ) )
+
+    val knownTypes = ( rs.nonTerminals union rs.terminals ).map { c => c.name -> c }.toMap
+
+    val rules = group( vsep( rs.rules.toList sortBy { _.toString } map {
+      case Rule( lhs, rhs ) =>
+        group( show( lhs, false, Set(), knownTypes, prio.impl )._1 </> nest( "→" <@>
+          show( rhs, true, Set(), knownTypes, prio.impl )._1 ) )
+    } ) )
+
+    pretty( group( ntDecl <> line <> tDecl <> line <> line <> rules <> line ) )
+  }
+
+}
+
 case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[Rule] ) {
   require( nonTerminals contains axiom )
   rules foreach {
     case Rule( Apps( leftHead: Const, _ ), _ ) =>
       require( nonTerminals contains leftHead )
   }
+
+  def terminals: Set[Const] =
+    rules flatMap { case Rule( lhs, rhs ) => constants( lhs ) union constants( rhs ) } diff nonTerminals
+
+  def babelSignature = MapBabelSignature( terminals union nonTerminals )
 
   def language: Set[LambdaExpression] = parametricLanguage()
   def languageWithDummyParameters: Set[LambdaExpression] =
@@ -62,8 +95,7 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
     gen.toSet
   }
 
-  override def toString: String = toSigRelativeString
-  def toSigRelativeString( implicit sig: BabelSignature ) = rules.toSeq.map( _.toSigRelativeString ).sorted mkString "\n"
+  override def toString: String = new RecursionSchemeExporter( unicode = true, rs = this ).export()
 }
 
 object RecursionScheme {
