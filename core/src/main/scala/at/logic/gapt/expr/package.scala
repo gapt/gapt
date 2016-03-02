@@ -1,6 +1,9 @@
 package at.logic.gapt
 
+import at.logic.gapt.algorithms.rewriting.TermReplacement
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.utils.NameGenerator
 
 import scala.annotation.implicitNotFound
 
@@ -14,7 +17,7 @@ package object expr {
    * Suppose you have types `S <: T` and a function `foo[T]` that you only want to apply to elements of type T that are not of type S.
    * Then you can write `foo[T](implicit notAnS: Not[S <:<T])`.
    *
-   * TODO: Add an "ambiguous implicit" annotation to make this clearer. My scala version does not currently suppor this.
+   * TODO: Add an "ambiguous implicit" annotation to make this clearer. My scala version does not currently support this.
    *
    * @tparam T
    */
@@ -188,5 +191,185 @@ package object expr {
    */
   implicit def LambdaExpressionClosedUnderSub[T <: LambdaExpression]( implicit notAFOLExpression: Not[T <:< FOLExpression], notAHOLFormula: Not[T <:< HOLFormula] ) = new Substitutable[Substitution, T, LambdaExpression] {
     override def applySubstitution( sub: Substitution, t: T ): LambdaExpression = applySub( sub, t )
+  }
+
+  /**
+   * Extension class that provides string interpolation functions for various expression types.
+   *
+   * @param sc A StringContext
+   */
+  implicit class ExpressionParseHelper( val sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) {
+    import at.logic.gapt.formats.babel._
+    import scalaz.{ \/-, -\/ }
+
+    private def interpolate( args: Seq[LambdaExpression], astTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
+      // TODO: use LiftWhitebox in AST instead of TermReplacement
+
+      val strings = sc.parts.toList
+      val expressions = args.toList
+
+      val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
+      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
+        case Const( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+
+        case Var( name, _ ) if name.startsWith( placeholder ) =>
+          val i = name.drop( placeholder.length ).toInt
+          expressions( i )
+
+      }
+
+      val expr = BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ) match {
+        case -\/( error ) => throw new IllegalArgumentException(
+          s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
+        )
+        case \/-( expr ) => expr
+      }
+
+      TermReplacement( expr, repl )
+    }
+
+    // Higher order parsers
+
+    /**
+     * Parses a string as a [[LambdaExpression]].
+     *
+     */
+    def le( args: LambdaExpression* ): LambdaExpression = interpolate( args, identity )
+
+    /**
+     * Parses a string as a [[HOLFormula]].
+     *
+     * @param args
+     * @return
+     */
+    def hof( args: LambdaExpression* ): HOLFormula = interpolate( args, ast.TypeAnnotation( _, ast.Bool ) ).asInstanceOf[HOLFormula]
+
+    /**
+     * Parses a string as a [[HOLAtom]].
+     *
+     * @param args
+     * @return
+     */
+    def hoa( args: LambdaExpression* ): HOLAtom = hof( args: _* ) match {
+      case atom: HOLAtom => atom
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr appears not to be a HOL atom. Parse it with hof." )
+    }
+
+    /**
+     * Parses a string as a [[Var]].
+     *
+     * @param args
+     * @return
+     */
+    def hov( args: LambdaExpression* ): Var = le( args: _* ) match {
+      case v: Var => v
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr cannot be read as a variable. Parse it with le." )
+    }
+
+    /**
+     * Parses a string as a [[Const]].
+     *
+     * @param args
+     * @return
+     */
+    def hoc( args: LambdaExpression* ): Const = {
+      import fastparse.core.ParseError
+      import fastparse.core.Parsed._
+      require( args.isEmpty )
+      BabelParser.ConstAndNothingElse.parse( sc.parts.head ) match {
+        case Success( c, _ ) => c
+        case f: Failure =>
+          throw new IllegalArgumentException(
+            s"Cannot parse constant at ${file.value}:${line.value}:\n${ParseError( f ).getMessage}"
+          )
+      }
+    }
+
+    // First order parsers
+
+    /**
+     * Parses a string as a [[FOLExpression]].
+     *
+     * @param args
+     * @return
+     */
+    def foe( args: FOLExpression* ): FOLExpression = le( args: _* ) match {
+      case folExpression: FOLExpression => folExpression
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr appears not to be a FOL expression. Parse it with le." )
+    }
+
+    /**
+     * Parses a string as a [[FOLFormula]].
+     *
+     * @param args
+     * @return
+     */
+    def fof( args: FOLExpression* ): FOLFormula = hof( args: _* ) match {
+      case formula: FOLFormula => formula
+      case expr =>
+        throw new IllegalArgumentException( s"Formula $expr appears not to be a FOL formula. Parse it with hof." )
+    }
+
+    /**
+     * Parses a string as a [[FOLAtom]].
+     *
+     * @param args
+     * @return
+     */
+    def foa( args: FOLExpression* ): FOLAtom = fof( args: _* ) match {
+      case atom: FOLAtom => atom
+      case expr =>
+        throw new IllegalArgumentException( s"Formula $expr appears not to be an atom. Parse it with fof." )
+    }
+
+    /**
+     * Parses a string as a [[FOLTerm]].
+     *
+     * @param args
+     * @return
+     */
+    def fot( args: FOLTerm* ): FOLTerm = le( args: _* ) match {
+      case term: FOLTerm => term
+      case expr =>
+        throw new IllegalArgumentException( s"Expression $expr appears not to be FOL term. Parse it with le." )
+    }
+
+    /**
+     * Parses a string as a [[FOLVar]].
+     *
+     * @param args
+     * @return
+     */
+    def fov( args: FOLTerm* ): FOLVar = fot( args: _* ) match {
+      case v: FOLVar => v
+      case expr =>
+        throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL variable. Parse it with fot." )
+    }
+
+    /**
+     * Parses a string as a [[FOLConst]].
+     *
+     * @param args
+     * @return
+     */
+    def foc( args: FOLTerm* ): FOLConst = fot( args: _* ) match {
+      case c: FOLConst => c
+      case expr =>
+        throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL constant. Parse it with fot." )
+    }
+
+    private def placeholder = "__qq_"
+  }
+
+  implicit class ExprNameGenerator( val nameGen: NameGenerator ) {
+    def fresh( v: Var ) = Var( nameGen.fresh( v.name ), v.exptype )
+    def fresh( v: FOLVar ) = FOLVar( nameGen.fresh( v.name ) )
+    def fresh( c: Const ) = Const( nameGen.fresh( c.name ), c.exptype )
+    def fresh( c: FOLConst ) = FOLConst( nameGen.fresh( c.name ) )
   }
 }

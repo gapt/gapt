@@ -12,14 +12,13 @@ import scala.xml.Utility.trim
 
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.To
 
 class LkExporterTest extends Specification {
 
   val exporter = new LKExporter {}
   // helper to create 0-ary predicate constants
-  def pc( sym: String ) = HOLAtom( Const( StringSymbol( sym ), To ), List() )
+  def pc( sym: String ) = HOLAtom( Const( ( sym ), To ), List() )
 
   "LKExporter" should {
     "export correctly a sequent A, B :- C, D" in {
@@ -271,13 +270,13 @@ class LkExporterTest extends Specification {
     }
     "parse correctly an involved proof from a file" in {
       val proofs = (new XMLReader(new InputStreamReader(getClass.getClassLoader.getResourceAsStream("xml" + separator + "test1.xml"))) with XMLProofDatabaseParser).getProofs()
-      val X = Var( new VariableStringSymbol( "X" ), i -> o )
-      val t = Const( new ConstantStringSymbol( "t" ), i)
-      val s = Const( new ConstantStringSymbol( "s" ), i)
-      val r = Const( new ConstantStringSymbol( "r" ), i)
-      val f = Const( new ConstantStringSymbol( "f" ), i -> i)
-      val x = Var( new VariableStringSymbol( "x" ), i )
-      val Rs = new ConstantStringSymbol( "R" )
+      val X = Var( new Variable( "X" ), i -> o )
+      val t = Const( new Constant( "t" ), i)
+      val s = Const( new Constant( "s" ), i)
+      val r = Const( new Constant( "r" ), i)
+      val f = Const( new Constant( "f" ), i -> i)
+      val x = Var( new Variable( "x" ), i )
+      val Rs = new Constant( "R" )
       val f1 = All( X, And( AppFormula( X, t ), Neg( AppFormula( X, s ) ) ) )
       val f2 = And( Imp( Atom( Rs, r::t::Nil ), Atom( Rs, r::App( f, t )::Nil ) ),
                     Ex( x, And( Atom( Rs, x::s::Nil ), Neg( Atom( Rs, x::App( f, s )::Nil ) ) ) ) )

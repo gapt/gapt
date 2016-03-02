@@ -1,5 +1,7 @@
 package at.logic.gapt.formats.llkNew
 
+import at.logic.gapt.formats.llkNew.LLKTypes.{ LLKSignature, emptyLLKSignature }
+
 import util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.PackratParsers
 
@@ -145,11 +147,15 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
   }
 }
 
-object DeclarationParser extends DeclarationParser;
+object DeclarationParser extends DeclarationParser
+object LLKTypes {
+  type LLKSignature = Map[String, LambdaExpression]
+  val emptyLLKSignature = Map[String, LambdaExpression]()
+}
 
 class DeclarationParser extends LLKASTParser {
   /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
-  def parseDeclaration( s: String ): Map[String, LambdaExpression] = parseAll( declaration_list, s ) match {
+  def parseDeclaration( s: String ): LLKSignature = parseAll( declaration_list, s ) match {
     case Success( result, _ ) => result
     case NoSuccess( msg, input ) =>
       throw new Exception( "Error parsing type declaration '" + s + "' at position " + input.pos + ". Error message: " + msg )
@@ -163,17 +169,17 @@ class DeclarationParser extends LLKASTParser {
   lazy val simpleType: PackratParser[Ty] = ti | to
   lazy val complexType: PackratParser[Ty] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 -> t2 } | simpleType
 
-  lazy val constdecl: PackratParser[Map[String, LambdaExpression]] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => Map[String, LambdaExpression]() ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )
+  lazy val constdecl: PackratParser[LLKSignature] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
+    case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )
   }
 
   lazy val vardecl: PackratParser[Map[String, LambdaExpression]] = "var" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
-    case _ ~ varnames ~ _ ~ exptype => Map[String, LambdaExpression]() ++ ( varnames map ( x => ( x, Var( x, exptype ) ) ) )
+    case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ ( varnames map ( x => ( x, Var( x, exptype ) ) ) )
   }
 
   //declaration lists e.g.: var x,y :i; const a,b : i; const P : i > i > o
-  lazy val declaration: PackratParser[Map[String, LambdaExpression]] = constdecl | vardecl
-  lazy val declaration_list: PackratParser[Map[String, LambdaExpression]] =
+  lazy val declaration: PackratParser[LLKSignature] = constdecl | vardecl
+  lazy val declaration_list: PackratParser[LLKSignature] =
     ( rep1sep( declaration, ";" ) ~ ";" ) ^^ {
       case l ~ _ => l.foldLeft( defaultsymbols )( ( map, x ) => {
         for ( v <- map.keys ) {
@@ -183,9 +189,9 @@ class DeclarationParser extends LLKASTParser {
       } )
     }
 
-  val defaultsymbols = Map[String, LambdaExpression]()
+  val defaultsymbols = emptyLLKSignature
 
-  lazy val declaredformula: PackratParser[( Map[String, LambdaExpression], ast.LambdaAST )] =
+  lazy val declaredformula: PackratParser[( LLKSignature, ast.LambdaAST )] =
     ( declaration_list ~ formula ) ^^ { case d ~ f => ( d, f ) }
 }
 
@@ -230,7 +236,7 @@ class LLKFormulaParser {
     case ast.Bottom()    => HOLAtom( Bottom(), Nil )
   }
 
-  def parse( create: String => Var, s: CharSequence ): LambdaExpression = {
+  def parse( create: String => LambdaExpression, s: CharSequence ): LambdaExpression = {
     DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
       case DeclarationParser.Success( result, _ ) => ASTtoHOL( create, result )
       case DeclarationParser.NoSuccess( msg, input ) =>

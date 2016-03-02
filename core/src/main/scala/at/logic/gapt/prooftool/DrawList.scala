@@ -9,11 +9,13 @@ package at.logic.gapt.prooftool
 
 import java.awt.{ Font, Color }
 import Font._
+import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, LabelledFormula }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
-import swing.{ FlowPanel, GridPanel, Label }
+import scala.swing.{ Component, FlowPanel, GridPanel, Label }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 class DrawList(
     main:         ListViewer,
@@ -46,12 +48,19 @@ class DrawList(
       }
     }
 
-    def drawMember( x: Any ) = x match {
-      case s: Sequent[t] if s.nonEmpty =>
+    def drawMember[T]( x: Any ): Component = x match {
+      case s: Sequent[T] if s.nonEmpty => {
+        val colors = s map { _ => Color.white }
+
         s.elements.head match {
-          case _: FormulaOccurrence => DrawSequent( main, s.asInstanceOf[OccSequent], ft, str )
-          case _: HOLFormula        => DrawSequent( main, s.asInstanceOf[HOLSequent], ft, str )
+          case _: FormulaOccurrence =>
+            DrawSequent[FormulaOccurrence]( main, s.asInstanceOf[OccSequent], ft, str, ( x: FormulaOccurrence ) => formulaOccurrenceToLatexString( x ) )
+          case _: LabelledFormula =>
+            DrawSequent[LabelledFormula]( main, s.asInstanceOf[LabelledSequent], ft, str, ( x: LabelledFormula ) => labelledFormulaToLatexString( x ) )
+          case _: HOLFormula =>
+            DrawSequent[HOLFormula]( main, s.asInstanceOf[HOLSequent], ft, str, ( x: HOLFormula ) => formulaToLatexString( x ) )
         }
+      }
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
       case _ => new Label( x.toString ) {
         background = new Color( 255, 255, 255 )
@@ -76,6 +85,6 @@ class DrawList(
     contents += new Label( " := " ) { font = ft }
     contents += label2
 
-    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, DrawSequent.formulaToLatexString( e ) )
+    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( e ) )
   }
 }

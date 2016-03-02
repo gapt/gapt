@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.lisp
 
 import scala.io.Source
-import scala.util.Try
+import scala.util.{ Success, Failure, Try }
 import at.logic.gapt.formats.lisp
 import scala.collection.immutable
 import org.parboiled2._
@@ -59,8 +59,15 @@ object SExpressionParser {
   def parseFile( fn: String ): List[SExpression] =
     parseString( Source.fromFile( fn ).mkString )
 
-  def parseString( s: String ): List[SExpression] =
-    tryParseString( s ).get
+  def parseString( s: String ): List[SExpression] = {
+    val parser = new SExpressionParser( s )
+    parser.File.run() match {
+      case Failure( error: ParseError ) =>
+        throw new IllegalArgumentException( parser.formatError( error ) )
+      case Failure( exception ) => throw exception
+      case Success( value )     => value.toList
+    }
+  }
 
   def tryParseString( s: String ): Try[List[SExpression]] =
     new SExpressionParser( s ).File.run().map { _.toList }
@@ -83,5 +90,5 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
     ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList() ) }
   }
 
-  def File = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }
+  def File: Rule1[Seq[lisp.SExpression]] = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }
 }

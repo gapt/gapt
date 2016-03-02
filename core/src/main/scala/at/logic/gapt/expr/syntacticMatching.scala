@@ -21,9 +21,7 @@ object syntacticMatching extends syntacticMatching {
     apply(
       pairs.asInstanceOf[List[( LambdaExpression, LambdaExpression )]],
       alreadyFixedSubst.asInstanceOf[Map[Var, LambdaExpression]]
-    ) map { subst =>
-      FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
-    } headOption
+    ) map { _.asFOLSubstitution } headOption
 
   def apply( from: LambdaExpression, to: LambdaExpression ): Option[Substitution] =
     apply( List( from -> to ) )
@@ -59,7 +57,8 @@ class syntacticMatching extends MatchingAlgorithm {
             alreadyFixedSubst.keySet ++
               pairs.flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } toList
           )
-          apply( ( Substitution( v1 -> v_ )( e1 ) -> Substitution( v2 -> v_ )( e2 ) ) :: rest, alreadyFixedSubst )
+          apply( ( Substitution( v1 -> v_ )( e1 ) -> Substitution( v2 -> v_ )( e2 ) ) :: rest, alreadyFixedSubst ).
+            map { subst => Substitution( subst.map - v_ ) }
 
         case ( v: Var, exp ) if alreadyFixedSubst.get( v ).contains( exp ) =>
           apply( rest, alreadyFixedSubst )

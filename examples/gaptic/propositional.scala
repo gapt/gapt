@@ -26,16 +26,16 @@ object propositional {
       orR( "initSuc" )
       negR( "initSuc_1" )
       andR( "initSuc_0" )
-      axiom
+      trivial
       impL
-      axiom
-      axiom
+      trivial
+      trivial
     }
 
   val direct = Lemma(
     Sequent( Seq( "A" -> A, "B" -> B ), Seq( "B" -> B ) )
   ) {
-      axiom
+      trivial
     }
 
   val lemmaProp = Lemma(

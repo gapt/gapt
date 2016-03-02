@@ -1,0 +1,37 @@
+//Step 1: proof database with proofs, definitions and completed imput proof
+nTape3.proofdb.Definitions
+
+prooftool( nTape3.input_proof )
+
+//Step 2: prepocessed input proof
+nTape3.preprocessed_input_proof
+
+//Step 3: conversion to LKskc=
+nTape3.lksk_proof
+
+//Step 4: extract characteristic sequent set and projections
+prooftool( nTape3.css )
+
+nTape3.projections
+
+//Step 5: prepreocess the css applying subsumption, replacing lambda
+//        abstractions by fresh function terms and mapping hol types to fol
+nTape3.fol_css
+
+//Step 6: refute fol clause set
+prooftool( nTape3.fol_refutation )
+
+//Step 7: convert fol refutation to Ral=
+nTape3.ral_refutation
+
+//Step 8: create proof in atomic-cut normal-form by simulating the refutation
+prooftool( nTape3.acnf )
+
+//Step 9: extract expansion proof (datastructure includes atomic cuts in
+          antecedent ) and show expansion proof without atomic cuts
+nTape3.expansion_proof
+
+prooftool( nTape3.expansion_proof.expansionSequent )
+
+// Print statistics and extracted witness terms
+nTape3.printStatistics

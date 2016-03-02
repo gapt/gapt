@@ -19,7 +19,7 @@
 \CONSTDEC{C, MONstep}{o}
 \CONSTDEC{IF0, IF1}{i>i>o}
 \CONSTDEC{MONstep_{a1}, MONstep_{a2}, MONstep_{a3}, MONstep_{a4'}, MONstep_{a4}, MONstep_{a5}, MONstep_{a6}, MONstep_{a7}}{o}
-\CONSTDEC{NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, INFTAPE, TAPEPROOF, \pi_1}{o}
+\CONSTDEC{NOCCstep, NOCCstep_{a}, NOCCstep_{b}, OLDTAPE, OLDTAPE2, TAPEPROOF, \pi_1}{o}
 \CONSTDEC{BASE, STEP, MAIN, \rho}{i>o}
 
 % definitions  %
@@ -44,7 +44,7 @@
 % axiom names %
 \CONSTDEC{A1, A2, A3, A4, A5, A6, A7, A8, A9, A10}{o}
 \CONSTDEC{A11, A12, A13, A14, A15, A16, A17, A18, A19, A20}{o}
-\CONSTDEC{ A21, A22, A23, A24, A30, A31, A32, A33, A34, A35, A36, IND}{o}
+\CONSTDEC{ A21, A22, A23, A24, A30, A31, A33, A34, A36, IND}{o}
 
 
 
@@ -91,11 +91,9 @@
 \AXIOMDEC{A36}{}{ x  < y -> x+z < y+z}
 \AXIOMDEC{A18}{}{ x=0 | ( exists y y<x)} 
 \AXIOMDEC{A19}{}{ 0 < x +1}
-\AXIOMDEC{A32}{}{ x<y -> x+1<y+1}
 \AXIOMDEC{A33}{}{ -(x<x) }
 \AXIOMDEC{A34}{}{ x<y & y<z -> x<z }
-\AXIOMDEC{A35}{}{ x+1<y+1 -> x<y}
-\AXIOMDEC{IND}{}{Y(0) & ( all n (Y(n) -> Y(n+1))) -> ( all n Y(n))}
+\AXIOMDEC{IND}{}{(all Y Y(0) & ( all n (Y(n) -> Y(n+1))) -> ( all n Y(n)))}
 \AXIOMDEC{A20}{}{(  all x (0 \bm x = 0))}
 \AXIOMDEC{A21}{}{(  all x (x \bm 0 = x))}
 \AXIOMDEC{A22}{}{(  all x  all y ((x+1) \bm (y+1) = x \bm y))}
@@ -107,7 +105,7 @@
 
 % ===== START OF PROOF ===== %
 
-\CONTINUEFROM{INFTAPE}{AX,T}{I(0),I(1)}
+\CONTINUEFROM{OLDTAPE2}{AX,T}{I(0),I(1)}
 
 \CONTINUEFROM{MAIN(0)}{AX, I(0)}{C}
 
@@ -617,7 +615,7 @@
   \INSTAXIOM{A19: 0<x+1}{AX}{0<0+1}
 
   \AX{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}
-  \INSTAXIOM{A32: x<y -> x+1 < y+1}{AX}{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}
+  \INSTAXIOM{A36: x<y -> x+1 < y+1}{AX}{\alpha < \alpha +1 -> \alpha +1 < (\alpha+1)+1}
   \ALLR{\alpha}{AX}{( all n (n<n+1 -> n+1 < (n+1)+1))}
   \ANDR{AX}{0<0+1 & (( all n (n<n+1 -> n+1 < (n+1)+1)))}
   \AX{( all n (n < n+1))}{( all n (n < n+1))}
@@ -642,7 +640,7 @@
   \NEGL{ (n+1)+1 < n+1 -> n+1<n, - n+1<n, (n+1)+1 < n+1}{}
   \NEGR{ (n+1)+1 < n+1 -> n+1<n, - n+1<n }{ - (n+1)+1 < n+1}
   \IMPR{ (n+1)+1 < n+1 -> n+1<n }{- (n+1<n) -> -((n+1)+1 < n+1)}
-  \INSTAXIOM{A35: x+1<y+1 -> x < y}{AX}{- (n+1<n) -> - ((n+1)+1 < n+1)}
+  \INSTAXIOM{A17: x+1<y+1 -> x < y}{AX}{- (n+1<n) -> - ((n+1)+1 < n+1)}
   \ALLR{n}{AX}{ ( all n (- (n+1<n) -> -((n+1)+1 < n+1)))}
 
   \ANDR{AX}{ - 0+1<0 & ( all n (- (n+1<n) -> -((n+1)+1 < n+1)))}
@@ -693,8 +691,6 @@
 % ===== START OF PROOF ===== %
 
   \AX{j<(n+1)+1}{j<(n+1)+1}
-
-
 
   \AX{i<j}{i<j}
   \AX{j<n+1}{j<n+1}
@@ -754,7 +750,7 @@
   \ALLR{}{AX,T}{( all x  exists y ((x<y) & f(y)=1)),( all x  exists y ((x<y) & f(y)=0))}
   \DEF{AX,T}{( all x  exists y ((x<y) & f(y)=1)),I(0)}
   \DEF{AX,T}{I(1),I(0)}
-  \CONTINUEWITH{INFTAPE}
+  \CONTINUEWITH{OLDTAPE2}
 
 % ===== END OF PROOF ===== %
 

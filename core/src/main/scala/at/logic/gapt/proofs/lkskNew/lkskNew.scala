@@ -12,6 +12,10 @@ object LKskProof {
   type Label = Seq[LambdaExpression]
   type LabelledFormula = ( Label, HOLFormula )
   type LabelledSequent = Sequent[LabelledFormula]
+  val emptyLabel: Label = Seq()
+
+  def getLabel( f: LabelledFormula ) = f._1
+  def getFormula( f: LabelledFormula ) = f._2
 }
 
 trait LKskProof extends SequentProof[LabelledFormula, LKskProof] with ContextRule[LabelledFormula, LKskProof] {
@@ -97,9 +101,9 @@ case class TopRight( label: Label ) extends InitialSequent {
   def mainFormulaSequent = Sequent() :+ ( label -> Top() )
 }
 
-case class TheoryAxiom( sequent: Sequent[LabelledFormula] ) extends InitialSequent {
-  def mainFormulaSequent = sequent
-}
+//case class TheoryAxiom( sequent: Sequent[LabelledFormula] ) extends InitialSequent {
+//  def mainFormulaSequent = sequent
+//}
 
 trait UnaryRule extends LKskProof {
   def subProof: LKskProof

@@ -1,5 +1,7 @@
 package at.logic.gapt.formats.tptp
 
+import java.io.{ FileWriter, BufferedWriter }
+
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
@@ -17,13 +19,32 @@ class TPTPHOLExporter {
    */
   val nLine = sys.props( "line.separator" )
 
-  def apply( l: List[HOLSequent], positive: Boolean = false ): String = {
-    require( l.nonEmpty, "Cannot export an empty sequent list!" )
-    val ( vs, vnames, cs, cnames ) = createNamesFromSequent( l )
+  /**
+   * Exports a sequent set as TPTP thf problem
+   * @param ls the list of sequents to export
+   * @param filename the filename
+   * @param positive if true we check ls for validity, if false (default), we check for unsatisfiability
+   */
+  def apply( ls: List[HOLSequent], filename: String, positive: Boolean = false ): Unit = {
+    val file = new BufferedWriter( new FileWriter( filename ) )
+    file.write( apply( ls, positive ) )
+    file.close
+    ()
+  }
+
+  /**
+   * Exports a sequent set as TPTP thf problem
+   *
+   * @param ls the list of sequents to export
+   * @param positive if true (default) we check ls for validity, if false, we check for unsatisfiability
+   */
+  def apply( ls: List[HOLSequent], positive: Boolean ): String = {
+    require( ls.nonEmpty, "Cannot export an empty sequent list!" )
+    val ( vs, vnames, cs, cnames ) = createNamesFromSequent( ls )
 
     var index = 0
 
-    val types = for ( seq <- l; f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.exptype ) ) yield t
+    val types = for ( seq <- ls; f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.exptype ) ) yield t
     val tdecls = for ( t <- types.distinct if t != Ti && t != To ) yield { index += 1; s"thf($index, type, $t: $$tType).$nLine" }
 
     val vdecs_ = for ( v <- vs ) yield {
@@ -41,13 +62,13 @@ class TPTPHOLExporter {
 
     val sdecs = positive match {
       case true =>
-        for ( fs <- l ) yield {
+        for ( fs <- ls ) yield {
           index = index + 1
           //thf_sequent_dec( index, fs, vnames, cnames ) + nLine //leo doesn't support sequents?
           thf_formula_dec( index, fs.toImplication, vnames, cnames ) + nLine
         }
       case false =>
-        val negClauses = Neg( And( l.map( closedFormula ) ) )
+        val negClauses = Neg( And( ls.map( closedFormula ) ) )
         index = index + 1
         // since in thf conjectures are seen as conjunction. the negated cnf is one big formula
         List( thf_formula_dec( index, negClauses, vnames, cnames ) )
@@ -73,7 +94,7 @@ class TPTPHOLExporter {
     val width = ( vsyms ++ csyms ).sortWith( ( x, y ) => y.size < x.size ).head.size
 
     for ( ( c, s ) <- cnames ) {
-      val sym = c.sym.toString
+      val sym = c.name
       if ( sym != s ) {
         print( "%   " )
         print( sym )
@@ -84,13 +105,13 @@ class TPTPHOLExporter {
       }
     }
 
-    val cunchanged = for ( ( c, s ) <- cnames; if ( c.sym.toString == s ) ) yield { s }
+    val cunchanged = for ( ( c, s ) <- cnames; if ( c.name == s ) ) yield { s }
     if ( cunchanged.nonEmpty ) println( "% Unchanged constants: " + cunchanged.mkString( "," ) )
 
     println( "% " )
 
     for ( ( c, s ) <- vnames ) {
-      val sym = c.sym.toString
+      val sym = c.name
       if ( sym != s ) {
         print( "%   " )
         print( sym )
@@ -101,7 +122,7 @@ class TPTPHOLExporter {
       }
     }
 
-    val vunchanged = for ( ( c, s ) <- vnames; if ( c.sym.toString == s ) ) yield { s }
+    val vunchanged = for ( ( c, s ) <- vnames; if ( c.name == s ) ) yield { s }
     if ( vunchanged.nonEmpty ) println( "% Unchanged variables: " + vunchanged.mkString( "," ) )
 
   }

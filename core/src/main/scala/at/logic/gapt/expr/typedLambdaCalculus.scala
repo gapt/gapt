@@ -7,6 +7,7 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr.hol.HOLPosition._
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 
 import scala.annotation.tailrec
 
@@ -114,34 +115,10 @@ abstract class LambdaExpression {
    */
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
-  override def toString = this match {
-    case Eq( x, y )                          => s"$x=$y"
-    case Neg( Eq( x, y ) )                   => s"$x≠$y"
-    case FOLFunction( "+", Seq( x, y ) )     => s"($x+$y)"
-    case FOLFunction( "*", Seq( x, y ) )     => s"($x*$y)"
-
-    case All( Var( x, Ti ), e )              => s"∀$x.$e"
-    case All( Var( x, t ), e )               => s"∀$x:$t.$e"
-    case Ex( Var( x, Ti ), e )               => s"∃$x.$e"
-    case Ex( Var( x, t ), e )                => s"∃$x:$t.$e"
-    case And( x, y )                         => s"($x∧$y)"
-    case Or( x, y )                          => s"($x∨$y)"
-    case Imp( x, y )                         => s"($x⊃$y)"
-    case Neg( x )                            => s"¬$x"
-    case Bottom()                            => "⊥"
-    case Top()                               => "⊤"
-
-    case FOLAtom( r, Seq() )                 => s"$r"
-    case FOLFunction( f, Seq() )             => s"$f"
-    case HOLAtom( r, xs ) if xs.nonEmpty     => s"$r(${xs mkString ","})"
-    case HOLFunction( f, xs ) if xs.nonEmpty => s"$f(${xs mkString ","})"
-
-    case Abs( Var( x, Ti ), t )              => s"(λ$x.$t)"
-    case Abs( Var( x, ty ), t )              => s"(λ$x:$ty.$t)"
-    case App( x, y )                         => s"($x $y)"
-    case Var( x, t )                         => s"$x"
-    case Const( x, t )                       => s"$x"
-  }
+  override def toString = new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).export( this )
+  def toAsciiString = new BabelExporter( unicode = false, sig = BabelSignature.defaultSignature ).export( this )
+  def toSigRelativeString( implicit sig: BabelSignature ) =
+    new BabelExporter( unicode = true, sig = sig ).export( this )
 
   def &( that: LambdaExpression ): HOLFormula = And( this, that )
   def |( that: LambdaExpression ): HOLFormula = Or( this, that )
@@ -159,10 +136,10 @@ abstract class LambdaExpression {
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
+class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
 
-  // The name of the variable should be obtained with this method.
-  def name: String = sym.toString
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def sym: SymbolA = new SymbolA {}
 
   // Syntactic equality: two variables are equal if they have the same name and the same type
   def syntaxEquals( e: LambdaExpression ) = e match {
@@ -180,9 +157,10 @@ class Var private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpr
   override val hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const private[expr] ( val sym: SymbolA, val exptype: Ty ) extends LambdaExpression {
+class Const private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
 
-  def name: String = sym.toString
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def sym = new SymbolA {}
 
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Const( n, t ) => ( n == name && t == exptype )
@@ -237,14 +215,18 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
 }
 
 object Var {
-  def apply( name: String, exptype: Ty ): Var = Var( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: Ty ): Var = determineTraits.forVar( sym, exptype )
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def apply( sym: SymbolA, exptype: Ty ): Var = apply( sym.toString, exptype )
+
+  def apply( name: String, exptype: Ty ): Var = determineTraits.forVar( name, exptype )
 
   def unapply( v: Var ) = Some( v.name, v.exptype )
 }
 object Const {
-  def apply( name: String, exptype: Ty ): Const = Const( StringSymbol( name ), exptype )
-  def apply( sym: SymbolA, exptype: Ty ): Const = determineTraits.forConst( sym, exptype )
+  @deprecated( "Use strings instead of symbols", "2016-02-25" )
+  def apply( sym: SymbolA, exptype: Ty ): Const = apply( sym.toString, exptype )
+
+  def apply( name: String, exptype: Ty ): Const = determineTraits.forConst( name, exptype )
 
   def unapply( c: Const ) = Some( c.name, c.exptype )
 }

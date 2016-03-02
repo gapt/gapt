@@ -190,24 +190,6 @@ class HigherOrderLogicTest extends Specification {
     }
   }
 
-  "SkolemSymbolFactory" should {
-    val x = Var( "x", Ti )
-    val y = Var( "y", Ti )
-    val f = All( x, HOLAtom( Var( "P", Ti -> To ), x :: Nil ) )
-    val s0 = new StringSymbol( "s_{0}" )
-    val s1 = new StringSymbol( "s_{2}" )
-    val s2 = new StringSymbol( "s_{4}" )
-    val s3 = new StringSymbol( "s_{6}" )
-
-    val stream = new SkolemSymbolFactory().getSkolemSymbols
-
-    "return a correct stream of Skolem symbols" in {
-      stream.head must beEqualTo( s0 )
-      stream.tail.head must beEqualTo( s1 )
-      stream.tail.tail.head must beEqualTo( s2 )
-    }
-  }
-
   "Higher Order Formula matching" should {
     "not allow P and P match as an Atom " in {
       val f = And( HOLAtom( Var( "P", To ), Nil ), HOLAtom( Var( "P", To ), Nil ) )

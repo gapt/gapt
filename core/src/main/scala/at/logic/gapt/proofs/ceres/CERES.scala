@@ -146,7 +146,7 @@ class CERES {
 
   def refProjection( es: HOLSequent ): LKProof = {
     require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
-    val x = Var( StringSymbol( "x" ), Ti ).asInstanceOf[Var]
+    val x = Var( "x", Ti ).asInstanceOf[Var]
     val axiomseq = HOLSequent( Nil, List( Eq( x, x ) ) )
     //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
     WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq ++ es )

@@ -116,7 +116,7 @@ class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
 }
 
 class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: MonomorphicLogicalC ) extends BinaryPropConnectiveHelper( c ) {
-  def apply( fs: TraversableOnce[HOLFormula] ): HOLFormula = nAry( fs.toSeq: _* )
+  def apply( fs: TraversableOnce[LambdaExpression] ): HOLFormula = nAry( fs.toSeq: _* )
   def apply( fs: TraversableOnce[FOLFormula] )( implicit d: DummyImplicit ): FOLFormula = nAry( fs.toSeq: _* )
 
   def leftAssociative( fs: LambdaExpression* ): HOLFormula =
@@ -178,7 +178,7 @@ class UnaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
 object Neg extends UnaryPropConnectiveHelper( NegC )
 
 class NullaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
-  def apply(): PropFormula = c().asInstanceOf[PropFormula]
+  def apply(): PropFormula with Const = c().asInstanceOf[PropFormula with Const]
   def unapply( formula: PropFormula ) = formula match {
     case c() => true
     case _   => false

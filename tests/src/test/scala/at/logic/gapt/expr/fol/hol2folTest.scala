@@ -10,7 +10,7 @@ import at.logic.gapt.formats.readers.StringReader
 import org.specs2.mutable._
 
 class hol2folTest extends Specification {
-  def imap = Map[LambdaExpression, StringSymbol]() // the scope for most tests is just the term itself
+  def imap = Map[LambdaExpression, String]() // the scope for most tests is just the term itself
   def iid = new { var idd = 0; def nextId = { idd = idd + 1; idd } }
 
   private class MyParserHOL( input: String ) extends StringReader( input ) with SimpleHOLParser

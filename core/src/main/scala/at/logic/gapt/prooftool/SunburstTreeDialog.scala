@@ -16,7 +16,7 @@ import scala.swing._
 import scala.swing.event._
 import java.awt.Color
 
-class SunburstTreeDialog[T <: DagProof[T]]( val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T] ) extends Frame {
+class SunburstTreeDialog[F, T <: SequentProof[F, T]]( val mainWindow: DagProofViewer[T], name: String, proof: DagProof[T], sequent_element_renderer: F => String ) extends Frame {
   title = "Sunburst view of " + name
   //modal = false
   preferredSize = new Dimension( 700, 500 )
@@ -55,7 +55,7 @@ class SunburstTreeDialog[T <: DagProof[T]]( val mainWindow: DagProofViewer[T], n
     val model = new ReactiveSunburstModel( new ProofNode[T]( proof ), new ProofNodeInfo[T]() )
     val sunView = model.getView()
     // inference information
-    val info = new DrawSingleSequentInference( mainWindow, Orientation.Vertical )
+    val info = new DrawSingleSequentInference( mainWindow, Orientation.Vertical, sequent_element_renderer )
 
     sunView.setToolTipEnabled( true )
     sunView.reactions += {

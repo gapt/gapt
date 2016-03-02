@@ -92,7 +92,7 @@ object deltaTableAlgorithm {
     deltatable:             Map[Set[Substitution], Row],
     subsumeMinimalGrammars: Boolean
   ): ( Set[LambdaExpression], Set[Substitution] ) = {
-    var minSize = termSet.size
+    var minSize = termSet.size + 1
     val minGrammars = mutable.Buffer[( Set[LambdaExpression], Set[Substitution] )]()
 
     def minimizeRow(
@@ -129,7 +129,7 @@ object deltaTableAlgorithm {
           minimizeRow( termSet, restRow, alreadyIncluded, s )
       }
 
-    for ( ( s, decomps ) <- deltatable ) {
+    for ( ( s, decomps ) <- deltatable.toSeq sortBy { -_._1.toSeq.flatMap { _.map.values }.map { expressionSize( _ ) }.sum } ) {
       val coveredTerms = decomps flatMap { _._2 }
       minimizeRow( coveredTerms, decomps, termSet diff coveredTerms, s )
     }
@@ -150,7 +150,7 @@ object deltaTableAlgorithm {
 
   def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VectTratGrammar = {
     val alpha = freeVariables( us ).toList.sortBy { _.toString }.asInstanceOf[List[FOLVar]]
-    val tau = rename( FOLVar( "tau" ), alpha )
+    val tau = rename( FOLVar( "x0" ), alpha )
     VectTratGrammar( tau, Seq( List( tau ), alpha ),
       ( for ( subst <- s ) yield alpha -> alpha.map { subst( _ ).asInstanceOf[FOLTerm] } )
         union ( for ( u <- us ) yield List( tau ) -> List( u.asInstanceOf[FOLTerm] ) ) )
@@ -158,10 +158,10 @@ object deltaTableAlgorithm {
 
 }
 
-case class DeltaTableMethodNew(
-    singleQuantifier:   Boolean,
-    subsumedRowMerging: Boolean,
-    keyLimit:           Option[Int]
+case class DeltaTableMethod(
+    singleQuantifier:   Boolean     = false,
+    subsumedRowMerging: Boolean     = false,
+    keyLimit:           Option[Int] = None
 ) extends GrammarFindingMethod {
   import deltaTableAlgorithm._
 

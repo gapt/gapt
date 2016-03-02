@@ -5,6 +5,7 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.proofs._
+import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.GenTraversable
 import scala.collection.mutable
@@ -167,30 +168,26 @@ object expressionSize {
  * is not in the blackList.
  */
 object rename {
-  def apply( v: Var, blackList: List[Var] ): Var = Var( getRenaming( v.sym, blackList.map( v => v.sym ) ), v.exptype )
-  def apply( v: FOLVar, blackList: List[Var] ): FOLVar =
-    apply( v.asInstanceOf[Var], blackList ).asInstanceOf[FOLVar]
-  def apply( a: SymbolA, blackList: List[SymbolA] ): SymbolA = getRenaming( a, blackList )
-  def apply( c: Const, blackList: List[Const] ): Const = Const( getRenaming( c.sym, blackList.map( c => c.sym ) ), c.exptype )
-  def apply( c: FOLConst, blackList: List[Const] ): FOLConst =
-    apply( c.asInstanceOf[Const], blackList ).asInstanceOf[FOLConst]
+  def awayFrom( blacklist: Iterable[Var] ): NameGenerator =
+    new NameGenerator( blacklist map { _.name } )
+  def awayFrom( blacklist: Iterable[Const] )( implicit dummyImplicit: DummyImplicit ): NameGenerator =
+    new NameGenerator( blacklist map { _.name } )
+
+  def apply( v: Var, blackList: Iterable[Var] ): Var = awayFrom( blackList ).fresh( v )
+  def apply( v: FOLVar, blackList: Iterable[Var] ): FOLVar = awayFrom( blackList ).fresh( v )
+  def apply( c: Const, blackList: Iterable[Const] ): Const = awayFrom( blackList ).fresh( c )
+  def apply( c: FOLConst, blackList: Iterable[Const] ): FOLConst = awayFrom( blackList ).fresh( c )
 
   /**
    * renames a set of variables to pairwise distinct variables while avoiding names from blackList.
    */
-  def apply( vs: Set[FOLVar], blackList: Set[FOLVar] ): Map[FOLVar, FOLVar] = {
-    val v_list = vs.toList
-    ( v_list zip
-      v_list.foldLeft( Nil: List[FOLVar] )(
-        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList )
-      ) ).toMap
+  def apply( vs: Iterable[FOLVar], blackList: Iterable[FOLVar] ): Map[FOLVar, FOLVar] = {
+    val nameGen = awayFrom( blackList )
+    vs map { v => v -> nameGen.fresh( v ) } toMap
   }
-  def apply( vs: Set[Var], blackList: Set[Var] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
-    val v_list = vs.toList
-    ( v_list zip
-      v_list.foldLeft( Nil: List[Var] )(
-        ( res, v ) => res :+ apply( v, ( blackList ++ res ).toList )
-      ) ).toMap
+  def apply( vs: Iterable[Var], blackList: Iterable[Var] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
+    val nameGen = awayFrom( blackList )
+    vs map { v => v -> nameGen.fresh( v ) } toMap
   }
 }
 

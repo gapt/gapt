@@ -386,6 +386,6 @@ object LKToLKsk extends Logger {
   var skolem_cnt = -1
   def getFreshSkolemFunctionSymbol = {
     skolem_cnt += 1
-    StringSymbol( "s_{" + skolem_cnt + "}" )
+    "s_{" + skolem_cnt + "}"
   }
 }

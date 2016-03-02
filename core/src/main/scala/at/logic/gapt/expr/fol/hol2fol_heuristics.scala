@@ -1,13 +1,13 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.{ Ty, Ti, To }
+import at.logic.gapt.proofs.SequentProof
 import at.logic.gapt.utils.logging.Logger
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
- * [[at.logic.gapt.language.fol.algorithms.replaceAbstractions]] and [[at.logic.gapt.language.fol.algorithms.reduceHolToFol]] back to its original signature.
+ * [[at.logic.gapt.expr.fol.replaceAbstractions]] and [[at.logic.gapt.expr.fol.reduceHolToFol]] back to its original signature.
  * Sometimes, types have to be guessed and the code is poorly tested, so it is unclear
  * how general it is. It works (and is necessary) during the acnf creation of the n-tape proof.
  *
@@ -15,9 +15,12 @@ import at.logic.gapt.utils.logging.Logger
  * [[undoHol2Fol.backtranslate]].
  */
 object undoHol2Fol extends Logger {
+  type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )
+
   override def loggerName = "HOL2FOLLogger"
   /**
    * Translate the fol formula e to a hol formula over the given signature for constants and variables.
+   *
    * @param e the fol formula.
    * @param sig_vars a mapping fol name to hol var with appropriate type
    * @param sig_consts a mapping fol name to hol const with appropriate type
@@ -60,7 +63,7 @@ object undoHol2Fol extends Logger {
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
         val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
-          case Nil        => All( Var( x.sym, x.exptype ).asInstanceOf[Var], f_ )
+          case Nil        => All( Var( x.name, x.exptype ).asInstanceOf[Var], f_ )
           case List( x_ ) => All( x_, f_ )
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
@@ -68,7 +71,7 @@ object undoHol2Fol extends Logger {
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
         val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
-          case Nil        => Ex( Var( x.sym, x.exptype ).asInstanceOf[Var], f_ )
+          case Nil        => Ex( Var( x.name, x.exptype ).asInstanceOf[Var], f_ )
           case List( x_ ) => Ex( x_, f_ )
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
@@ -110,7 +113,7 @@ object undoHol2Fol extends Logger {
         head
       case Var( ivy_varname( name ), Ti ) =>
         trace( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
-        Var( StringSymbol( name ), Ti ).asInstanceOf[Var]
+        Var( name, Ti ).asInstanceOf[Var]
       case Var( name, Ti ) =>
         throw new Exception( "No signature information for variable " + e )
       case Const( name, _ ) =>
@@ -119,8 +122,15 @@ object undoHol2Fol extends Logger {
         throw new Exception( "Could not convert subterm " + e )
     }
   }
+
   val ivy_varname = """(v[0-9]+)""".r
-  def getSignature( fs: List[LambdaExpression] ): ( Map[String, Set[Const]], Map[String, Set[Var]] ) =
+
+  def getSignature[F, T <: SequentProof[F, T]]( proof: SequentProof[F, T], extract: F => LambdaExpression ): Signature = {
+    val exprs = for ( p <- proof.subProofs; f <- p.conclusion.elements map extract ) yield f
+    getSignature( exprs.toList )
+  }
+
+  def getSignature( fs: List[LambdaExpression] ): Signature =
     fs.foldLeft( ( Map[String, Set[Const]](), Map[String, Set[Var]]() ) )( ( maps, e ) => {
       //println("next "+maps._1.size+":"+maps._2.size)
       getSignature( e, maps._1, maps._2 )

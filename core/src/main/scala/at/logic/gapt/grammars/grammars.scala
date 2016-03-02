@@ -1,5 +1,37 @@
 package at.logic.gapt.grammars
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
+
+private class VtratgExporter( unicode: Boolean, vtratg: VectTratGrammar )
+    extends BabelExporter( unicode, vtratg.babelSignature ) {
+
+  def csep( docs: List[Doc] ): Doc = ssep( docs, line( ", " ) )
+
+  def export(): String = {
+    val ntDecl = group( "Non-terminal vectors:" <> nest( line <> csep(
+      vtratg.nonTerminals.toList map { nt =>
+        "(" <> hsep( nt map { show( _, false, Set(), Map(), prio.max )._1 }, "," ) <> ")"
+      }
+    ) ) )
+
+    val tDecl = group( "Terminals:" <> nest( line <> csep(
+      vtratg.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 }
+    ) ) )
+
+    val knownTypes = vtratg.terminals.map { c => c.name -> c }.toMap
+
+    val prods = sep( vtratg.productions.toList
+      sortBy { case ( as, ts ) => ( vtratg.nonTerminals.indexOf( as ), ts.toString ) }
+      map { p =>
+        group( csep( p.zipped map ( ( a, t ) =>
+          group( show( a, false, Set(), knownTypes, prio.impl )._1 </> nest( "→" </>
+            show( t, true, Set(), knownTypes, prio.impl )._1 ) ) ) ) ) <> line
+      } )
+
+    pretty( group( ntDecl <> line <> tDecl <> line <> line <> prods ) )
+  }
+
+}
 
 object VectTratGrammar {
   type NonTerminalVect = List[FOLVar]
@@ -14,7 +46,9 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
   def productions( nonTerminalVect: NonTerminalVect ): Set[Production] = productions filter ( _._1 == nonTerminalVect )
   def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
 
-  val nLine = sys.props( "line.separator" )
+  def terminals: Set[Const] = productions flatMap { p => constants( p._2 ) }
+
+  def babelSignature = MapBabelSignature( terminals )
 
   productions foreach {
     case p @ ( a, t ) =>
@@ -42,24 +76,7 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
     lang filter ( freeVariables( _ ).isEmpty )
   }
 
-  override def toString: String = {
-    val s = new StringBuilder
-    s append s"Axiom: ($axiom)" + nLine
-    s append s"Non-terminal vectors:" + nLine
-    nonTerminals foreach { a =>
-      s append s"  (${a.mkString( ", " )})" + nLine
-    }
-    s append s"Productions:" + nLine
-    productions.toSeq.sortBy { case ( as, ts ) => ( nonTerminals.indexOf( as ), ts.toString() ) } foreach {
-      case ( as, ts ) =>
-        ( as, ts ).zipped foreach {
-          case ( a, t ) =>
-            s append s"  $a -> $t" + nLine
-        }
-        s append nLine
-    }
-    s.toString()
-  }
+  override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).export()
 }
 
 object TratGrammar {

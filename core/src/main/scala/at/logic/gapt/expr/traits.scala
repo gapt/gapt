@@ -115,29 +115,29 @@ trait PropAtom extends Const with PropFormula with FOLAtom with FOLAtomConst
  * determineTraits$$anon$27, which is not particularly readable.
  */
 private[expr] object determineTraits {
-  private class Var_with_FOLVar( s: SymbolA, t: Ty ) extends Var( s, t ) with FOLVar
-  private class Var_with_HOLFormula( s: SymbolA, t: Ty ) extends Var( s, t ) with HOLFormula
-  private class Var_with_HOLAtom( s: SymbolA, t: Ty ) extends Var( s, t ) with HOLAtom
-  private class Var_with_HOLPartialAtom( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Var( s, t ) with HOLPartialAtom
+  private class Var_with_FOLVar( s: String, t: Ty ) extends Var( s, t ) with FOLVar
+  private class Var_with_HOLFormula( s: String, t: Ty ) extends Var( s, t ) with HOLFormula
+  private class Var_with_HOLAtom( s: String, t: Ty ) extends Var( s, t ) with HOLAtom
+  private class Var_with_HOLPartialAtom( s: String, t: Ty, override val numberOfArguments: Int ) extends Var( s, t ) with HOLPartialAtom
 
-  def forVar( sym: SymbolA, exptype: Ty ): Var = exptype match {
+  def forVar( sym: String, exptype: Ty ): Var = exptype match {
     case Ti                     => new Var_with_FOLVar( sym, exptype )
     case To                     => new Var_with_HOLAtom( sym, exptype )
     case FunctionType( To, ts ) => new Var_with_HOLPartialAtom( sym, exptype, ts.length )
     case _                      => new Var( sym, exptype )
   }
 
-  private class Const_with_FOLQuantifier( s: SymbolA, t: Ty ) extends Const( s, t ) with FOLQuantifier
-  private class Const_with_LogicalConstant( s: SymbolA, t: Ty ) extends Const( s, t ) with LogicalConstant
-  private class Const_with_PropConnective_with_PropFormula( s: SymbolA, t: Ty ) extends Const( s, t ) with PropConnective with PropFormula
-  private class Const_with_FOLConst( s: SymbolA, t: Ty ) extends Const( s, t ) with FOLConst
-  private class Const_with_PropAtom( s: SymbolA, t: Ty ) extends Const( s, t ) with PropAtom
-  private class Const_with_PropConnective( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropConnective
-  private class Const_with_PropPartialFormula( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropPartialFormula
-  private class Const_with_FOLFunctionConst( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLFunctionConst
-  private class Const_with_FOLAtomConst( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLAtomConst
-  private class Const_with_HOLAtomConst( s: SymbolA, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with HOLAtomConst
-  def forConst( sym: SymbolA, exptype: Ty ): Const = ( sym, exptype ) match {
+  private class Const_with_FOLQuantifier( s: String, t: Ty ) extends Const( s, t ) with FOLQuantifier
+  private class Const_with_LogicalConstant( s: String, t: Ty ) extends Const( s, t ) with LogicalConstant
+  private class Const_with_PropConnective_with_PropFormula( s: String, t: Ty ) extends Const( s, t ) with PropConnective with PropFormula
+  private class Const_with_FOLConst( s: String, t: Ty ) extends Const( s, t ) with FOLConst
+  private class Const_with_PropAtom( s: String, t: Ty ) extends Const( s, t ) with PropAtom
+  private class Const_with_PropConnective( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropConnective
+  private class Const_with_PropPartialFormula( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with PropPartialFormula
+  private class Const_with_FOLFunctionConst( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLFunctionConst
+  private class Const_with_FOLAtomConst( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with FOLAtomConst
+  private class Const_with_HOLAtomConst( s: String, t: Ty, override val numberOfArguments: Int ) extends Const( s, t ) with HOLAtomConst
+  def forConst( sym: String, exptype: Ty ): Const = ( sym, exptype ) match {
     case ForallC( Ti ) | ExistsC( Ti ) => new Const_with_FOLQuantifier( sym, exptype )
     case ForallC( _ ) | ExistsC( _ )   => new Const_with_LogicalConstant( sym, exptype )
     case AndC() | OrC() | ImpC()       => new Const_with_PropConnective( sym, exptype, 2 )

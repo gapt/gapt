@@ -18,17 +18,15 @@ import at.logic.gapt.formats.simple.SimpleXMLProofParser
 import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase }
 import XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.readers.XMLReaders._
-import at.logic.gapt.formats.shlk.SCHOLParser
-import at.logic.gapt.formats.shlk_parsing.sFOParser
 import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.schema.dbTRS
 import at.logic.gapt.proofs.{ lk, SequentProof, HOLSequent }
 import at.logic.gapt.proofs.ceres_schema.clauseSchema._
-import at.logic.gapt.proofs.lkOld.base.{ LKProof }
 import at.logic.gapt.proofs.proofs.{ Proof, TreeProof }
 import at.logic.gapt.proofs.shlk.SchemaProofDB
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, LeafTree, Tree }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 import scala.swing.Dialog
 
@@ -97,7 +95,7 @@ class FileParser( main: ProofToolViewer[_] ) {
     case rTerm( t1, t2, f ) =>
       val p1 = rTermToTree( t1 )
       val p2 = rTermToTree( t2 )
-      new BinaryTree[AnyRef]( "Resolve " + DrawSequent.formulaToLatexString( f ), p1, p2 )
+      new BinaryTree[AnyRef]( "Resolve " + formulaToLatexString( f ), p1, p2 )
     case _ => new LeafTree[AnyRef]( term.toString.replace( Console.RED + " \u22a2 " + Console.RESET, " \\vdash " ) )
   }
 

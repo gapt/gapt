@@ -1,5 +1,6 @@
 package at.logic.gapt.formats.llk
 
+import at.logic.gapt.formats.latex.UnicodeToLatex
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lkOld._
@@ -314,7 +315,7 @@ object toLatexString {
   }
 
   def nameToLatexString( s: String, escapebrack: Boolean = true ): String = {
-    val s1 = at.logic.gapt.utils.latex.nameToLatexString( s )
+    val s1 = UnicodeToLatex( s )
     //val s2 = if (escapebrack) s1.replaceAll("\\[","(").replaceAll("\\]",")") else s1
     val s2 = if ( s == "!=" ) "\\neq" else s1
     val s3 = if ( s2 != "-" ) s2.replaceAll( "-", "" ) else s2

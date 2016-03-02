@@ -25,7 +25,8 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
-    "-feature"
+    "-feature",
+    "-unchecked"
   ),
 
   // scalaz-stream is not on maven.org
@@ -47,9 +48,9 @@ lazy val commonSettings = Seq(
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
-    "org.specs2" %% "specs2-core" % "3.7",
-    "org.specs2" %% "specs2-junit" % "3.7", // needed for junitxml output
-    "org.specs2" %% "specs2-matcher" % "3.7"
+    "org.specs2" %% "specs2-core" % "3.7.1",
+    "org.specs2" %% "specs2-junit" % "3.7.1", // needed for junitxml output
+    "org.specs2" %% "specs2-matcher" % "3.7.1"
   ) map ( _ % Test )
 )
 
@@ -76,6 +77,7 @@ lazy val root = project.in( file( "." ) ).
   aggregate( core, examples, tests, userManual, cli, testing ).
   dependsOn( core, examples, cli ).
   settings( commonSettings: _* ).
+  settings( unidocSettings: _* ).
   settings(
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
@@ -91,7 +93,7 @@ lazy val root = project.in( file( "." ) ).
     releaseDist := {
       val baseDir = file( "." )
       val version = Keys.version.value
-      val apidocs = doc.in( core, Compile ).value
+      val apidocs = target.in( ScalaUnidoc, UnidocKeys.unidoc ).value
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 
@@ -167,12 +169,15 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.0",
+      "org.parboiled" %% "parboiled" % "2.1.1",
+      "com.lihaoyi" %% "fastparse" % "0.3.5",
+      "com.googlecode.kiama" %% "kiama" % "1.8.0",
+      "com.lihaoyi" %% "sourcecode" % "0.1.0",
       "org.scalaz" %% "scalaz-core" % "7.2.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
-      "org.slf4j" % "slf4j-api" % "1.7.14",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.14",
+      "org.slf4j" % "slf4j-api" % "1.7.18",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.18",
       "xml-resolver" % "xml-resolver" % "1.2",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"

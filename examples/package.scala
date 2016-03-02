@@ -21,4 +21,8 @@ package examples {
   class Script extends scala.App {
     def run() = main( Array() )
   }
+
+  class TacticsProof {
+    def main( args: Array[String] ): Unit = ()
+  }
 }

@@ -1,54 +1,47 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.{ Const => Con, _ }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
+import scalaz._
+import Scalaz._
+import Validation.FlatMap._
 
 /**
- * Repeatedly applies unary rules that are unambiguous
+ * Repeatedly applies unambiguous unary rules to the entire goal.
  */
-case object DecomposeTactic extends Tactical {
+case object DecomposeTactic extends Tactical[Unit] {
   def apply( proofState: ProofState ) = {
     RepeatTactic(
-      NegLeftTactic() orElse
-        NegRightTactic() orElse
-        AndLeftTactic() orElse
-        OrRightTactic() orElse
-        ImpRightTactic() orElse
-        ForallRightTactic() orElse
-        ExistsLeftTactic()
+      NegLeftTactic( AnyFormula ) orElse
+        NegRightTactic( AnyFormula ) orElse
+        AndLeftTactic( AnyFormula ) orElse
+        OrRightTactic( AnyFormula ) orElse
+        ImpRightTactic( AnyFormula ) orElse
+        ForallRightTactic( AnyFormula ) orElse
+        ExistsLeftTactic( AnyFormula )
     )( proofState )
   }
 }
 
-case class DestructTactic( applyToLabel: Option[String] = None ) extends Tactic {
+/**
+ * Attempts to decompose a formula by trying all tactics that don't require additional information.
+ *
+ * Note that this tactic only decomposes the outermost symbol, i.e. it only performs one step.
+ * @param applyToLabel The label of the formula to be decomposed.
+ */
+case class DestructTactic( applyToLabel: String ) extends Tactic[Any] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
-    def canDestruct( formula: HOLFormula, index: SequentIndex ): Boolean = ( formula, index ) match {
-      case ( All( _, _ ), Suc( _ ) ) => true
-      case ( Ex( _, _ ), Ant( _ ) )  => true
-      case ( And( _, _ ), _ )        => true
-      case ( Or( x, y ), _ )         => true
-      case ( Imp( x, y ), _ )        => true
-      case ( Neg( _ ), _ )           => true
-      case _                         => false
-    }
-
-    val indices = applyToLabel match {
-      case None =>
-        for ( ( ( _, formula ), index ) <- goalSequent.zipWithIndex.elements if canDestruct( formula, index ) )
-          yield index
-
-      case Some( label ) =>
-        for ( ( ( `label`, _ ), index ) <- goalSequent.zipWithIndex.elements )
-          yield index
-    }
+    val indices =
+      for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.elements )
+        yield index
 
     // Select some formula index!
     indices.headOption match {
@@ -66,99 +59,104 @@ case class DestructTactic( applyToLabel: Option[String] = None ) extends Tactic 
           negL( existingLabel ) orElse
           negR( existingLabel )
         tac( goal )
-      case None => None
+      case None => TacticalFailure( this, Some( goal ), "No destructible formula found." ).failureNel
     }
   }
 }
 
 /**
- * Chain
+ * Performs backwards chaining:
+ * A goal of the form `∀x (P(x) → Q(x)), Γ :- Δ, Q(t)` is replaced by the goal `∀x (P(x) → Q(x)), Γ :- Δ, P(t)`.
+ *
+ * @param hyp
+ * @param target
+ * @param substitution
  */
-case class ChainTactic( hyp: String, target: Option[String] = None, substitution: Map[Var, LambdaExpression] = Map() ) extends Tactic {
+case class ChainTactic( hyp: String, target: Option[String] = None, substitution: Map[Var, LambdaExpression] = Map() ) extends Tactic[Unit] {
 
   def subst( map: ( Var, LambdaExpression )* ) = copy( substitution = substitution ++ map )
+  def at( target: String ) = copy( target = Option( target ) )
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
     // Proceed only if a (universally quantified) hypothesis exists
-    ( for ( ( ( `hyp`, All( _, _ ) ), index: Ant ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption flatMap { hypIndex =>
+    ( for ( ( ( `hyp`, All( _, _ ) ), index: Ant ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption.
+      toSuccessNel( TacticalFailure( this, Some( goal ), s"hyp $hyp not found" ) ) flatMap { hypIndex =>
 
-      // Extract hypothesis
-      val ( _, quantifiedFormula ) = goalSequent( hypIndex )
-      val All.Block( hypVar, hypInner ) = quantifiedFormula
+        // Extract hypothesis
+        val ( _, quantifiedFormula ) = goalSequent( hypIndex )
+        val All.Block( hypVar, hypInner ) = quantifiedFormula
 
-      // Extract formula to match against target
-      def f( x: HOLFormula ): HOLFormula = x match {
-        case Imp( _, r ) => f( r )
-        case _           => x
-      }
+        // Extract formula to match against target
+        def f( x: HOLFormula ): HOLFormula = x match {
+          case Imp( _, r ) => f( r )
+          case _           => x
+        }
 
-      val hypTargetMatch = f( hypInner )
+        val hypTargetMatch = f( hypInner )
 
-      // Find target index and substitution
-      ( target match {
-        case Some( x ) =>
-          ( for (
-            ( ( `x`, y ), index ) <- goalSequent.zipWithIndex.succedent;
-            sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution )
-          ) yield ( x, index, sub ) ).headOption
-        case None =>
-          ( for (
-            ( ( x, y ), index ) <- goalSequent.zipWithIndex.succedent;
-            sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution )
-          ) yield ( x, index, sub ) ).headOption
-      } ) map {
+        // Find target index and substitution
+        ( target match {
+          case Some( x ) =>
+            ( for (
+              ( ( `x`, y ), index ) <- goalSequent.zipWithIndex.succedent;
+              sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution ++ freeVariables( quantifiedFormula ).map { v => v -> v } )
+            ) yield ( x, index, sub ) ).headOption
+          case None =>
+            ( for (
+              ( ( x, y ), index ) <- goalSequent.zipWithIndex.succedent;
+              sub <- syntacticMatching( List( hypTargetMatch -> y ), substitution ++ freeVariables( quantifiedFormula ).map { v => v -> v } )
+            ) yield ( x, index, sub ) ).headOption
+        } ).toSuccessNel( TacticalFailure( this, Some( goal ), s"target $target not found" ) ) map {
 
-        // Proceed only if a matching formula exists
-        case ( targetLabel, targetIndex, sub ) =>
+          // Proceed only if a matching formula exists
+          case ( targetLabel, targetIndex, sub ) =>
 
-          // Recursively apply implication left to the left until the end of the chain is reached,
-          // where the sequent is an axiom (following some contractions).
-          // The right premises of the implication left rules become new sub goals,
-          // but where the initial target formula is then "forgotten".
-          def handleAnds( curGoal: Sequent[( String, HOLFormula )], hypCond: Suc ): LKProof = curGoal( hypCond ) match {
-            case ( existingLabel, And( lhs, rhs ) ) =>
-              AndRightRule(
-                handleAnds( curGoal.updated( hypCond, existingLabel -> lhs ), hypCond ),
-                handleAnds( curGoal.updated( hypCond, existingLabel -> rhs ), hypCond ),
-                And( lhs, rhs )
-              )
-            case _ =>
-              OpenAssumption( curGoal )
-          }
-
-          def handleImps( curGoal: Sequent[( String, HOLFormula )], hyp: Ant ): LKProof = {
-            curGoal( hyp ) match {
-              case ( hypLabel, Imp( lhs, rhs ) ) =>
-                // Different methods must be applied depending on how the chain is defined.
-                val premiseLeft = handleAnds( curGoal.delete( targetIndex ).delete( hyp ) :+ ( targetLabel -> lhs ), Suc( curGoal.succedent.length - 1 ) )
-                val premiseRight = handleImps( curGoal.updated( hyp, hypLabel -> rhs ), hyp )
-                ImpLeftRule( premiseLeft, premiseRight, Imp( lhs, rhs ) )
-
+            // Recursively apply implication left to the left until the end of the chain is reached,
+            // where the sequent is an axiom (following some contractions).
+            // The right premises of the implication left rules become new sub goals,
+            // but where the initial target formula is then "forgotten".
+            def handleAnds( curGoal: Sequent[( String, HOLFormula )], hypCond: Suc ): LKProof = curGoal( hypCond ) match {
+              case ( existingLabel, And( lhs, rhs ) ) =>
+                AndRightRule(
+                  handleAnds( curGoal.updated( hypCond, existingLabel -> lhs ), hypCond ),
+                  handleAnds( curGoal.updated( hypCond, existingLabel -> rhs ), hypCond ),
+                  And( lhs, rhs )
+                )
               case _ =>
-                axiomLog( OpenAssumption( curGoal ) ).get
+                OpenAssumption( curGoal )
             }
-          }
 
-          val auxFormula = sub( hypInner )
-          val newGoal = ( NewLabel( goalSequent, hyp ) -> auxFormula ) +: goalSequent
-          val premise = handleImps( newGoal, Ant( 0 ) )
-          val auxProofSegment = ForallLeftBlock( premise, quantifiedFormula, sub( hypVar ) )
-          ContractionLeftRule( auxProofSegment, quantifiedFormula )
+            def handleImps( curGoal: Sequent[( String, HOLFormula )], hyp: Ant ): LKProof = {
+              curGoal( hyp ) match {
+                case ( hypLabel, Imp( lhs, rhs ) ) =>
+                  // Different methods must be applied depending on how the chain is defined.
+                  val premiseLeft = handleAnds( curGoal.delete( targetIndex ).delete( hyp ) :+ ( targetLabel -> lhs ), Suc( curGoal.succedent.length - 1 ) )
+                  val premiseRight = handleImps( curGoal.updated( hyp, hypLabel -> rhs ), hyp )
+                  ImpLeftRule( premiseLeft, premiseRight, Imp( lhs, rhs ) )
+
+                case ( _, formula ) =>
+                  WeakeningMacroRule( LogicalAxiom( formula ), curGoal map { _._2 } )
+              }
+            }
+
+            val auxFormula = sub( hypInner )
+            val newGoal = ( NewLabel( goalSequent, hyp ) -> auxFormula ) +: goalSequent
+            val premise = handleImps( newGoal, Ant( 0 ) )
+            val auxProofSegment = ForallLeftBlock( premise, quantifiedFormula, sub( hypVar ) )
+            () -> ContractionLeftRule( auxProofSegment, quantifiedFormula )
+
+        }
 
       }
-
-    }
   }
-
-  def at( target: String ) = new ChainTactic( hyp, Option( target ) )
 }
 
 /**
  * Paramodulation tactic
  */
-case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targetFormula: HOLFormula ) extends Tactic {
+case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targetFormula: HOLFormula ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
@@ -184,13 +182,12 @@ case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targe
                 ( Ant( 0 ), eqR( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
             }
 
-            for ( p <- rightPremise )
-              yield CutRule( leftPremise, Suc( 0 ), p, cutIndex )
+            rightPremise map { case ( _, p ) => () -> CutRule( leftPremise, Suc( 0 ), p, cutIndex ) }
 
-          case _ => None
+          case _ => TacticalFailure( this, Some( goal ), "not an equation" ).failureNel
         }
 
-      case None => None
+      case None => TacticalFailure( this, Some( goal ), "label not found" ).failureNel
     }
   }
 
@@ -207,23 +204,23 @@ case class RewriteTactic(
     equations: Traversable[( String, Boolean )],
     target:    Option[String],
     once:      Boolean
-) extends Tactic {
+) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = target match {
-    case Some( tgt ) => apply( goal, tgt )
+    case Some( tgt ) => apply( goal, tgt ) map { () -> _ }
     case _ => goal.s match {
-      case Sequent( _, Seq( ( tgt, _ ) ) ) => apply( goal, tgt )
-      case _                               => None
+      case Sequent( _, Seq( ( tgt, _ ) ) ) => apply( goal, tgt ) map { () -> _ }
+      case _                               => TacticalFailure( this, Some( goal ), "target formula not found" ).failureNel
     }
   }
 
-  def apply( goal: OpenAssumption, target: String ): Option[LKProof] = {
+  def apply( goal: OpenAssumption, target: String ): ValidationNel[TacticalFailure, LKProof] = {
     for {
       ( eqLabel, leftToRight ) <- equations
       ( ( `target`, tgt ), tgtIdx ) <- goal.s.zipWithIndex.elements
       ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.s.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
-      subst <- syntacticMatching( t_, tgt( pos ) )
+      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), freeVariables( quantEq ).map { v => v -> v }.toMap )
     } return {
       val newTgt = tgt.replace( pos, subst( s_ ) )
       val newGoal = OpenAssumption( goal.s.updated( tgtIdx, target -> newTgt ) )
@@ -235,9 +232,9 @@ case class RewriteTactic(
       val p4 = ForallLeftBlock( p3, quantEq, subst( vs ) )
       val p5 = ContractionLeftRule( p4, quantEq )
       require( p5.conclusion multiSetEquals goal.conclusion )
-      Some( p5 )
+      p5.success
     }
-    if ( once ) None else Some( goal )
+    if ( once ) TacticalFailure( this, Some( goal ), "cannot rewrite at least once" ).failureNel else goal.success
   }
 
   def ltr( eqs: String* ) = copy( equations = equations ++ eqs.map { _ -> true } )
@@ -246,24 +243,85 @@ case class RewriteTactic(
   def many = copy( once = false )
 }
 
+case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) extends Tactic[Unit] {
+  def getConstructors( goal: OpenAssumption, t: TBase ): ValidationNel[TacticalFailure, Seq[Con]] =
+    ctx.typeDef( t.name ) match {
+      case Some( Context.InductiveType( _, constructors ) ) => constructors.success
+      case Some( typeDef ) => TacticalFailure( this, Some( goal ), s"Type $t is not inductively defined: $typeDef" ).failureNel
+      case None => TacticalFailure( this, Some( goal ), s"Type $t is not defined" ).failureNel
+    }
+
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, main @ All( v @ Var( name, t: TBase ), formula ), idx: Suc ) <- findFormula( goal, target )
+      constrs <- getConstructors( goal, t )
+    } yield {
+      val cases = constrs map { constr =>
+        val FunctionType( _, argTypes ) = constr.exptype
+        var fvs = freeVariables( goal.conclusion )
+        val evs = argTypes map { at =>
+          val ev = rename( if ( at == t ) v else Var( "x", at ), fvs.toList )
+          fvs += ev
+          ev
+        }
+        val hyps = NewLabels( goal.s, s"IH$name" ) zip ( evs filter { _.exptype == t } map { ev => Substitution( v -> ev )( formula ) } )
+        val subGoal = hyps ++: goal.s.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
+        InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
+      }
+      () -> InductionRule( cases, main )
+    }
+}
+
+case class UnfoldTactic( target: String, definition: String, definitions: String* )( implicit ctx: Context ) extends Tactic[Unit] {
+  def getDef: ValidationNel[TacticalFailure, ( Con, LambdaExpression )] =
+    ctx.definition( definition ) match {
+      case Some( by ) =>
+        ( Con( definition, by.exptype ), by ).success
+      case None =>
+        TacticalFailure( this, None, s"Definition $definition not present in context" ).failureNel
+    }
+
+  def apply( goal: OpenAssumption ) =
+    for {
+      ( label, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
+      defn <- getDef; ( what, by ) = defn
+      defPositions = main.find( what )
+      unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
+      normalized = BetaReduction.betaNormalize( unfolded )
+      newGoal = OpenAssumption( goal.s.updated( idx, label -> normalized ) )
+      subProof <- definitions match {
+        case hd +: tl =>
+          UnfoldTactic( target, hd, tl: _* )( ctx )( newGoal ) map { _._2 }
+        case _ =>
+          newGoal.successNel[TacticalFailure]
+      }
+    } yield () ->
+      ( if ( idx.isSuc ) DefinitionRightRule( subProof, idx, main )
+      else DefinitionLeftRule( subProof, idx, main ) )
+}
+
 /**
- * Solves propositional sub goal
+ * Calls the GAPT tableau prover on the subgoal.
  */
-case object PropTactic extends Tactic {
+case object PropTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
-    solve.solvePropositional( goal.conclusion )
+    solve.solvePropositional( goal.conclusion ).toSuccessNel( TacticalFailure( this, Some( goal ), "search failed" ) ) map { () -> _ }
   }
 }
 
 /**
- * Solves sub goal with Prover9
+ * Calls prover9 on the subgoal.
  */
-case object Prover9Tactic extends Tactic {
+case object Prover9Tactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
-    Prover9.getLKProof( goal.conclusion )
+    Prover9.getLKProof( goal.conclusion ).toSuccessNel( TacticalFailure( this, Some( goal ), "search failed" ) ) map { () -> _ }
   }
 }
 
-case object EscargotTactic extends Tactic {
-  override def apply( goal: OpenAssumption ) = Escargot getLKProof goal.conclusion
+/**
+ * Calls Escargot on the subgoal.
+ */
+case object EscargotTactic extends Tactic[Unit] {
+  override def apply( goal: OpenAssumption ) =
+    Escargot getLKProof goal.conclusion toSuccessNel TacticalFailure( this, Some( goal ), "search failed" ) map { () -> _ }
 }

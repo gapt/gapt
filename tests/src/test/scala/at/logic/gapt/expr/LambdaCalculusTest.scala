@@ -54,7 +54,7 @@ class LambdaCalculusTest extends Specification {
 
     "equate variables with same name (but different symbols)" in {
       val v = Var( "v", Ti )
-      val v0 = Var( "v0", Ti )
+      val v0 = Var( "v_0", Ti )
       val v_renamed = rename( v, List( v ) )
 
       v_renamed must beEqualTo( v0 )
@@ -190,9 +190,6 @@ class LambdaCalculusTest extends Specification {
       val x_renamed = rename( x, blacklist )
 
       ( blacklist.contains( x_renamed ) ) must beEqualTo( false )
-
-      x_renamed.sym must beAnInstanceOf[VariantSymbol]
-      x_renamed.sym.asInstanceOf[VariantSymbol].s must_== "x"
     }
 
     "produce a new variable different from all in the blacklist (in presence of maliciously chosen variable names)" in {

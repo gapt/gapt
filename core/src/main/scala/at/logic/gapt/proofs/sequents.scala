@@ -73,7 +73,14 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   override def hashCode: Int = 31 * antecedent.hashCode() + succedent.hashCode()
 
-  override def toString: String = s"${antecedent mkString ", "} :- ${succedent mkString ", "}"
+  override def toString: String = {
+    val stringified = this map { _.toString }
+    val multiLine = stringified exists { _ contains "\n" }
+    if ( multiLine )
+      s"${stringified.antecedent.mkString( ",\n" )}\n:-\n${stringified.succedent.mkString( ",\n" )}"
+    else
+      s"${stringified.antecedent.mkString( ", " )} :- ${stringified.succedent.mkString( ", " )}"
+  }
 
   /**
    * Equality treating each side of the sequent as a set.
@@ -406,6 +413,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   def swapped: Sequent[A] = Sequent( succedent, antecedent )
 
+  def exists( p: A => Boolean ): Boolean = antecedent.exists( p ) || succedent.exists( p )
   def forall( p: A => Boolean ): Boolean = antecedent.forall( p ) && succedent.forall( p )
 
   def zip[B]( that: Sequent[B] ): Sequent[( A, B )] =

@@ -158,10 +158,10 @@ class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizati
 
 object stableProofGrammar {
   def apply( lang: Set[FOLTerm], n: Int ) = {
-    val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"α_$i" ) }
+    val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"x$i" ) }
     val topLevelStableTerms = stableTerms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
     val argumentStableTerms = stableTerms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
-    val axiom = FOLVar( "τ" )
+    val axiom = FOLVar( "x0" )
     TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelStableTerms.map( axiom -> _ ) ++ argumentStableTerms.flatMap { st =>
       val fvs = freeVariables( st )
       val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
@@ -205,8 +205,11 @@ object stableProofVectGrammar {
   import VectTratGrammar._
 
   def apply( lang: Set[FOLTerm], arities: Seq[Int] ): VectTratGrammar = {
-    val rhsNonTerminals = arities.zipWithIndex map { case ( arity, i ) => ( 0 until arity ).map( j => FOLVar( s"α_${i}_$j" ) ).toList }
-    apply( lang, FOLVar( "τ" ), rhsNonTerminals )
+    val rhsNonTerminals = arities.zipWithIndex map {
+      case ( arity, i ) =>
+        ( 0 until arity ).map( j => FOLVar( s"x_${i}_$j" ) ).toList
+    }
+    apply( lang, FOLVar( "x0" ), rhsNonTerminals )
   }
 
   def apply( lang: Set[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {

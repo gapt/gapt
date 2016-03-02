@@ -15,15 +15,15 @@ object meta {
       orR
       negR
       andR
-      repeat( axiom )
+      repeat( trivial )
       impL
-      repeat( axiom )
+      repeat( trivial )
     }
 
   val lemma2 = Lemma(
     Sequent( Seq( "A" -> Imp( A, B ) ), Seq( "S" -> Or( And( A, B ), Neg( A ) ) ) )
   ) {
-      repeat( orR orElse negR orElse andR orElse impL orElse axiom )
+      repeat( orR orElse negR orElse andR orElse impL orElse trivial )
     }
 
   val drinker3 = Lemma( Sequent( Nil, Seq( "E" -> parseFormula( "B" ), "E" -> parseFormula( "A" ), "D" -> parseFormula( "(exists x (P(x) -> (all y P(y))))" ) ) ) ) {
@@ -33,12 +33,12 @@ object meta {
     exR( parseTerm( "y" ) )
     impR
     allR
-    axiom
+    trivial
   }
 
   val lemma3 = Lemma( Sequent( Seq( "F" -> parseFormula( "A -> B" ) ), Seq( "E" -> parseFormula( "B" ), "D" -> parseFormula( "(exists y (P(y) -> (all z P(z))))" ) ) ) ) {
     impL
     insert( drinker3 )
-    axiom
+    trivial
   }
 }

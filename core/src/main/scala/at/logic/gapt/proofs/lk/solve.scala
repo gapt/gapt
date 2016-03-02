@@ -765,6 +765,8 @@ object AtomicExpansion {
 
     case DefinitionLeftRule( subProof, aux, main ) => DefinitionLeftRule( apply( subProof ), aux, main )
     case DefinitionRightRule( subProof, aux, main ) => DefinitionRightRule( apply( subProof ), aux, main )
+
+    case InductionRule( cases, main ) => InductionRule( cases map { c => c.copy( apply( c.proof ) ) }, main )
   }
 
 }

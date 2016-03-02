@@ -1,67 +1,65 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.expr.{ FOLAtom, FOLAtomConst, Abs, FOLVar }
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.{ parseFormula, parseTerm }
+import at.logic.gapt.proofs.lk.TheoryAxiom
 
-object tape {
-  val A = parseFormula( "(all x ( f(x) = 0 | f(x) = 1 ))" )
-  val I0 = parseFormula( "(all x exists y f( x + y ) = 0)" )
-  val I1 = parseFormula( "(all x exists y f( x + y ) = 1)" )
-  val Iv = parseFormula( "(all x exists y f( x + y ) = v)" )
+object tape extends TacticsProof {
+  implicit var ctx = FiniteContext()
+  ctx += Context.Sort( "i" )
+  ctx += hoc"f: i>i"
+  ctx += hoc"'+': i>i>i"
+  ctx += hoc"0: i"; ctx += hoc"1: i"
+  ctx += hof"A = (∀x (f(x) = 0 ∨ f(x) = 1))"
+  ctx += hof"I(v) = (∀x ∃y f(x+y) = v)"
 
-  val lhs = Lemma( Sequent( Seq( "A" -> parseFormula( "A" ) ), Seq( "I0" -> parseFormula( "I(0)" ), "I1" -> parseFormula( "I(1)" ) ) ) ) {
-    defR( "I0", I0 )
-    defR( "I1", I1 )
-    allR( FOLVar( "x_0" ), "I0" )
-    allR( FOLVar( "x_1" ), "I1" )
-    exR( parseTerm( "x_1" ), "I0" )
+  val ax1 = TheoryAxiom( hoa"f(0+x) = f(x+1+y)" +: Sequent() :+ hoa"f(x) = f(x+y+1)" )
+  val ax2 = TheoryAxiom( hoa"f(x+y) = 1" +: Sequent() :+ hoa"f(y+x)=1" )
+  val ax3 = TheoryAxiom( hoa"x = x+y+1" +: Sequent() )
+
+  val lhs = Lemma( ( "A" -> fof"A" ) +: Sequent()
+    :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {
+    unfold( "I0", "I" )
+    unfold( "I1", "I" )
+    allR( "I0", FOLVar( "x_0" ) )
+    allR( "I1", FOLVar( "x_1" ) )
+    exR( "I0", fot"x_1" )
     forget( "I0" )
-    exR( parseTerm( "x_0" ), "I1" )
+    exR( "I1", fot"x_0" )
     forget( "I1" )
-    defL( "A", A )
-    allL( parseTerm( "x_0 + x_1" ) )
+    unfold( "A", "A" )
+    allL( fot"x_0 + x_1" )
     forget( "A" )
-    destruct
-    axiom
-    forget( "I0_0" )
-    axiomTh
+    destruct( "A_0" )
+    trivial
+    insert( ax2 )
   }
 
-  val rhs = Lemma( Sequent( Seq( "Iv" -> parseFormula( "I(v)" ) ), Seq( "C" -> parseFormula( "(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) ) ) {
-    defL( "Iv", Iv )
-    allL( parseTerm( "0" ) )
-    exL( FOLVar( "y_0" ), "Iv_0" )
-    allL( parseTerm( "y_0 + 1" ) )
+  val rhs = Lemma( ( "Iv" -> fof"I(v)" ) +: Sequent()
+    :+ ( "C" -> fof"?x?y (x != y & f x = f y)" ) ) {
+    unfold( "Iv", "I" )
+    allL( fot"0" )
+    exL( "Iv_0", fov"y_0" )
+    allL( fot"y_0 + 1" )
     forget( "Iv" )
-    exL( FOLVar( "y_1" ), "Iv_1" )
-    exR( parseTerm( "y_0" ) )
-    exR( parseTerm( "(y_0 + y_1) + 1" ) )
+    exL( "Iv_1", fov"y_1" )
+    exR( "C", fot"y_0", fot"(y_0 + y_1) + 1" )
     forget( "C" )
-    forget( "C_0" )
-    destruct
+    destruct( "C_0" )
     negR
-    forget( "Iv_0" )
-    forget( "Iv_1" )
-    axiomTh
-    eqL( "Iv_1", "Iv_0" )
-    forget( "Iv_1" )
-    axiomTh
+    insert( ax3 )
+    rewrite rtl "Iv_1" in "Iv_0"
+    insert( ax1 )
   }
 
-  val p = Lemma( Sequent( Seq( "A" -> parseFormula( "A" ) ), Seq( "C" -> parseFormula( "(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) ) ) {
-    cut( parseFormula( "I(1)" ), "I1" )
-    cut( parseFormula( "I(0)" ), "I0" )
+  val p = Lemma( ( "A" -> fof"A" ) +: Sequent()
+    :+ ( "C" -> fof"?x?y (x != y & f x = f y)" ) ) {
+    cut( fof"I(1)", "I1" )
+    cut( fof"I(0)", "I0" )
     insert( lhs )
-    forget( "A" )
-    forget( "I1" )
-    insert( rhs )
-    insert( rhs )
+    repeat( insert( rhs ) )
   }
 
-  val defs = Map(
-    FOLAtom( "A" ) -> A,
-    FOLAtomConst( "I", 1 ) -> Abs( FOLVar( "v" ), Iv )
-  )
+  val defs = ctx.definitions
 }

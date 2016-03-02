@@ -1,4 +1,4 @@
-package at.logic.gapt.grammars
+package at.logic.gapt.grammars.deltatableOld
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
@@ -287,12 +287,12 @@ object Deltas {
 
   //------------------------Helper functions---------------------------------/
 
-  private def isEigenvariable( x: FOLVar, eigenvariable: String ) = x.toString.split( '_' ) match {
+  private def isEigenvariable( x: FOLVar, eigenvariable: String ) = x.name.split( '_' ) match {
     case Array( eigenvariable, n ) => n.forall( Character.isDigit )
     case _                         => false
   }
 
-  private def extractIndex( x: FOLVar, eigenvariable: String ) = x.toString.substring( eigenvariable.length + 1, x.toString.length ).toInt
+  private def extractIndex( x: FOLVar, eigenvariable: String ) = x.name.substring( eigenvariable.length + 1, x.name.length ).toInt
 
   /** returns true iff all given terms begin with the same function symbol & the same arity.*/
   private def commonFuncHead( terms: List[FOLTerm] ) = {
@@ -356,7 +356,7 @@ object Deltas {
           //go through all duplicates, rename the corresponding variables in u to ev_[ind]
           //and delete ev_[x] from presentvars
           val newU = duplicates.foldLeft( u )( ( curU, dupl ) => {
-            presentVars = presentVars.filter( pv => pv.toString != ( eigenvariable + "_" + dupl._2 ) )
+            presentVars = presentVars.filter( pv => pv.name != ( eigenvariable + "_" + dupl._2 ) )
             val r = FOLSubstitution( Map( FOLVar( eigenvariable + "_" + dupl._2 ) -> FOLVar( eigenvariable + "_" + ind ) ) )
             r( curU )
           } )
@@ -370,10 +370,10 @@ object Deltas {
       val ( swissCheeseU, newS ) = nub2( u, indexedS )
 
       //Merging with nub2 will have created holes in u => reindex the variables in u to get a contiuous segment
-      val renamings = presentVars.toList.sortBy( x => x.toString ).zip( start to ( presentVars.size - 1 ) )
+      val renamings = presentVars.toList.sortBy( x => x.name ).zip( start to ( presentVars.size - 1 ) )
 
       val reindexedU = renamings.foldLeft( swissCheeseU ) { ( curU, ren ) =>
-        val r = FOLSubstitution( Map( FOLVar( ren._1.toString ) -> FOLVar( eigenvariable + "_" + ren._2 ) ) )
+        val r = FOLSubstitution( Map( FOLVar( ren._1.name ) -> FOLVar( eigenvariable + "_" + ren._2 ) ) )
         r( curU )
       }
 

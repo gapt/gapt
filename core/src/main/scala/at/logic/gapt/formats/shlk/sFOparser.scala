@@ -14,7 +14,6 @@ import at.logic.gapt.proofs.shlk._
 import scala.Tuple4
 import at.logic.gapt.expr._
 import scala.Tuple2
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.{ To, FunctionType, Ti }
 import at.logic.gapt.proofs.lkOld._
 
@@ -104,16 +103,16 @@ object sFOParser {
       }
       def fo_term: Parser[SchemaExpression] = "[f]".r ~ "(" ~ variable ~ ")" ^^ {
         case name ~ "(" ~ arg ~ ")" => {
-          val v = Const( StringSymbol( name ), Ti -> Ti ).asInstanceOf[Const]
+          val v = Const( name, Ti -> Ti ).asInstanceOf[Const]
           App( v, arg ).asInstanceOf[SchemaExpression]
         }
       }
       def indexedVar: Parser[Var] = regex( new Regex( "[u-z]" ) ) ~ "(" ~ intTerm ~ ")" ^^ {
-        case x ~ "(" ~ index ~ ")" => Var( StringSymbol( x ), Tindex -> Ti )
+        case x ~ "(" ~ index ~ ")" => Var( x, Tindex -> Ti )
       }
       def FOVariable: Parser[Var] = regex( new Regex( "[u-z]" + word ) ) ^^ { case x => foVar( x ) }
       def variable: Parser[Var] = FOVariable //regex(new Regex("[u-z]" + word))  ^^ {case x => Var(new VariableStringSymbol(x), i->i).asInstanceOf[Var]}
-      def constant: Parser[Const] = regex( new Regex( "[a-tA-Z0-9]" + word ) ) ^^ { case x => Const( StringSymbol( x ), Tindex -> Tindex ) }
+      def constant: Parser[Const] = regex( new Regex( "[a-tA-Z0-9]" + word ) ) ^^ { case x => Const( x, Tindex -> Tindex ) }
       def and: Parser[SchemaFormula] = "(" ~ repsep( formula, "/\\" ) ~ ")" ^^ { case "(" ~ formulas ~ ")" => { formulas.tail.foldLeft( formulas.head )( ( f, res ) => And( f, res ) ) } }
       def or: Parser[SchemaFormula] = "(" ~ repsep( formula, """\/""" ) ~ ")" ^^ { case "(" ~ formulas ~ ")" => { formulas.tail.foldLeft( formulas.head )( ( f, res ) => Or( f, res ) ) } }
       def imp: Parser[SchemaFormula] = "Imp" ~ formula ~ formula ^^ { case "Imp" ~ x ~ y => Imp( x, y ) }

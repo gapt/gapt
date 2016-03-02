@@ -4,6 +4,7 @@ import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
+import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
@@ -29,9 +30,9 @@ object structuralCNF {
     val justifications = mutable.Set[( HOLClause, Justification )]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
 
-    val symsInFormula = constants( endSequent ) map { _.name }
-    val skolemSyms = new SkolemSymbolFactory().getSkolemSymbols.map { _.toString() }.filter { s => !symsInFormula.contains( s ) }.iterator
-    val abbrevSyms = Stream.from( 0 ).map { i => s"D$i" }.filter { s => !symsInFormula.contains( s ) }.iterator
+    val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
+    def mkSkolemSym() = nameGen.freshWithIndex( "s" )
+    def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 
     // We do a clausification similar to forward proof search in Ral.
     // (But we handle Skolemization more as an afterthought here.)
@@ -63,7 +64,7 @@ object structuralCNF {
           }
         case All( x, a ) if !propositional =>
           val fvs = freeVariables( f ).toSeq
-          val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
+          val skolem = Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
           val fa = left( Substitution( x -> skolem( fvs: _* ) )( a ) )
           es => {
             val et = fa( es )
@@ -110,7 +111,7 @@ object structuralCNF {
           }
         case Ex( x, a ) if !propositional =>
           val fvs = freeVariables( f ).toSeq
-          val skolem = Const( skolemSyms.next, FunctionType( x.exptype, fvs map { _.exptype } ) )
+          val skolem = Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
           val fa = right( Substitution( x -> skolem( fvs: _* ) )( a ) )
           es => {
             val et = fa( es )
@@ -196,7 +197,7 @@ object structuralCNF {
       val alreadyDefined = defs isDefinedAt Abs( fvs, f )
       val const = defs.getOrElseUpdate(
         Abs( fvs, f ),
-        HOLAtomConst( abbrevSyms.next(), fvs map { _.exptype }: _* )
+        HOLAtomConst( mkAbbrevSym(), fvs map { _.exptype }: _* )
       )
       val repl = const( fvs: _* )
       if ( !alreadyDefined ) {

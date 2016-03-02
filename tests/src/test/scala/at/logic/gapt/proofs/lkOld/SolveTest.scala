@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lkOld
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.StringSymbol
 import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.{ SequentMatchers, Sequent, HOLSequent }
 import at.logic.gapt.proofs.expansion._
@@ -64,11 +63,11 @@ class SolveTest extends Specification with SequentMatchers {
       solve.solvePropositional( HOLSequent( A :: B :: C :: Nil, And( And( A, B ), C ) :: Nil ) )
       solve.solvePropositional( HOLSequent( bigo2 :: Nil, A0 :: A1 :: A2 :: Nil ) )
 
-      val c2 = Const( new StringSymbol( "c" ), Ti )
-      val d2 = Const( new StringSymbol( "d" ), Ti )
-      val e2 = Const( new StringSymbol( "e" ), Ti )
+      val c2 = Const( "c", Ti )
+      val d2 = Const( "d", Ti )
+      val e2 = Const( "e", Ti )
 
-      val P = Const( new StringSymbol( "P" ), Ti -> To )
+      val P = Const( "P", Ti -> To )
 
       val Pc2 = HOLAtom( P, c2 :: Nil )
       val Pd2 = HOLAtom( P, d2 :: Nil )
@@ -89,12 +88,12 @@ class SolveTest extends Specification with SequentMatchers {
 
     "prove non-atomic axioms (1)" in {
       import at.logic.gapt.expr.hol._
-      val List( x, y, z ) = List( "x", "y", "z" ) map ( x => Var( StringSymbol( x ), Ti ) )
-      val List( u, v, w ) = List( "u", "v", "w" ) map ( x => Var( StringSymbol( x ), Ti -> Ti ) )
-      val List( a, b, c, zero ) = List( "a", "b", "c", "0" ) map ( x => Const( StringSymbol( x ), Ti ) )
-      val List( f, g, h, s ) = List( "f", "g", "h", "s" ) map ( x => Const( StringSymbol( x ), Ti -> Ti ) )
-      val List( p, q ) = List( "P", "Q" ) map ( x => Const( StringSymbol( x ), Ti -> Ti ) )
-      val List( _Xsym, _Ysym ) = List( "X", "Y" ) map ( x => StringSymbol( x ) )
+      val List( x, y, z ) = List( "x", "y", "z" ) map ( x => Var( ( x ), Ti ) )
+      val List( u, v, w ) = List( "u", "v", "w" ) map ( x => Var( ( x ), Ti -> Ti ) )
+      val List( a, b, c, zero ) = List( "a", "b", "c", "0" ) map ( x => Const( ( x ), Ti ) )
+      val List( f, g, h, s ) = List( "f", "g", "h", "s" ) map ( x => Const( ( x ), Ti -> Ti ) )
+      val List( p, q ) = List( "P", "Q" ) map ( x => Const( ( x ), Ti -> Ti ) )
+      val List( _Xsym, _Ysym ) = List( "X", "Y" ) map ( x => ( x ) )
       val List( _X, _Y ) = List( _Xsym, _Ysym ) map ( x => Var( x, Ti -> To ) )
 
       val xzero = HOLAtom( _X, List( zero ) )
@@ -119,12 +118,12 @@ class SolveTest extends Specification with SequentMatchers {
 
     "prove non-atomic axioms (2)" in {
       import at.logic.gapt.expr.hol._
-      val List( x, y, z ) = List( "x", "y", "z" ) map ( x => Var( StringSymbol( x ), Ti ) )
-      val List( u, v, w ) = List( "u", "v", "w" ) map ( x => Var( StringSymbol( x ), Ti -> Ti ) )
-      val List( a, b, c, zero ) = List( "a", "b", "c", "0" ) map ( x => Const( StringSymbol( x ), Ti ) )
-      val List( f, g, h, s ) = List( "f", "g", "h", "s" ) map ( x => Const( StringSymbol( x ), Ti -> Ti ) )
-      val List( psym, qsym ) = List( "P", "Q" ) map ( x => StringSymbol( x ) )
-      val List( _Xsym, _Ysym ) = List( "X", "Y" ) map ( x => StringSymbol( x ) )
+      val List( x, y, z ) = List( "x", "y", "z" ) map ( x => Var( ( x ), Ti ) )
+      val List( u, v, w ) = List( "u", "v", "w" ) map ( x => Var( ( x ), Ti -> Ti ) )
+      val List( a, b, c, zero ) = List( "a", "b", "c", "0" ) map ( x => Const( ( x ), Ti ) )
+      val List( f, g, h, s ) = List( "f", "g", "h", "s" ) map ( x => Const( ( x ), Ti -> Ti ) )
+      val List( psym, qsym ) = List( "P", "Q" ) map ( x => ( x ) )
+      val List( _Xsym, _Ysym ) = List( "X", "Y" ) map ( x => ( x ) )
       val List( _X, _Y ) = List( _Xsym, _Ysym ) map ( x => Var( x, Ti -> To ) )
 
       val Q = Const( qsym, Ti -> ( Ti -> To ) )

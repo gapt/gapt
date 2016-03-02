@@ -11,7 +11,7 @@ object lkTests {
       eqL( "eq1", "a" ).to( parseFormula( "P(v) -> Q(v)" ) )
       eqL( "eq1", "a" ).to( parseFormula( "P(v) -> Q(u)" ) )
       eqR( "eq2", "b" ).fromRightToLeft
-      axiom
+      trivial
     }
 
   val defLemma = Lemma(
@@ -19,6 +19,6 @@ object lkTests {
   ) {
       defL( "a", parseFormula( "P(a) -> Q(a)" ) )
       defR( "b", parseFormula( "P(b) | Q(b)" ) )
-      axiom
+      trivial
     }
 }

@@ -1,10 +1,14 @@
 package at.logic.gapt.proofs.gaptic
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.utils.NameGenerator
+
 import scalaz._
 import Scalaz._
+import Validation.FlatMap._
 
 /**
  * Immutable object defining the current state of the proof in the tactics language.
@@ -100,6 +104,12 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
       case EqualityRightRule( subProof, eq, index, pos )               => EqualityRightRule( f( subProof ), subProof.conclusion( eq ), subProof.conclusion( index ), pos )
       case DefinitionLeftRule( subProof, index, main )                 => DefinitionLeftRule( f( subProof ), subProof.conclusion( index ), main )
       case DefinitionRightRule( subProof, index, main )                => DefinitionRightRule( f( subProof ), subProof.conclusion( index ), main )
+      case p @ InductionRule( cases, _ ) => p.copy( cases = cases map {
+        case InductionCase( q, c, hyps, evs, concl ) =>
+          val q_ = f( q )
+          InductionCase( q_, c, hyps map { q.conclusion( _ ) } map { q_.conclusion.indexOfInAnt },
+            evs, q_.conclusion.indexOfInSuc( q.conclusion( concl ) ) )
+      } )
       case _ =>
         throw new Exception( "Unmatched LK rule: " + p + ". Could not replace sub goal." )
     }
@@ -109,7 +119,8 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
     ProofState( currentGoalIndex, newSegment )
   }
 
-  override def toString =
+  override def toString = toSigRelativeString
+  def toSigRelativeString( implicit sig: BabelSignature ) =
     s"""${subGoals.map { _.toPrettyString }.mkString( "\n" )}
      |
      |Partial proof:
@@ -125,22 +136,53 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialSequent {
   override def conclusion = s map { labelledFormula => labelledFormula._2 }
 
-  def toPrettyString = {
+  def toPrettyString( implicit sig: BabelSignature ) = {
     val builder = new StringBuilder
-    for ( ( l, f ) <- s.antecedent ) builder append s"$l: $f\n"
+    for ( ( l, f ) <- s.antecedent ) builder append s"$l: ${f.toSigRelativeString}\n"
     builder append ":-\n"
-    for ( ( l, f ) <- s.succedent ) builder append s"$l: $f\n"
+    for ( ( l, f ) <- s.succedent ) builder append s"$l: ${f.toSigRelativeString}\n"
     builder.toString
   }
 }
 
-trait Tactical { self =>
-  /**
-   *
-   * @param proofState
-   * @return
-   */
-  def apply( proofState: ProofState ): Option[ProofState]
+/**
+ * Class that describes how a tactic should be applied: to a label, to the unique fitting formula, or to any fitting formula.
+ */
+sealed abstract class TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean
+}
+
+/**
+ * Apply a tactic to a specific label.
+ *
+ * @param label The label that the tactic should be applied to.
+ */
+case class OnLabel( label: String ) extends TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean = p( label )
+}
+
+/**
+ * Apply a tactic only if there is exactly one formula that fits.
+ */
+case object UniqueFormula extends TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean = true
+}
+
+/**
+ * Apply a tactic if there is a formula that fits.
+ */
+case object AnyFormula extends TacticApplyMode {
+  def forall( p: String => Boolean ): Boolean = true
+}
+
+case class TacticalFailure( tactical: Tactical[_], goal: Option[OpenAssumption], message: String ) {
+  override def toString = toSigRelativeString
+  def toSigRelativeString( implicit sig: BabelSignature ) =
+    s"$tactical: $message:${goal.map( "\n" + _.toPrettyString ).getOrElse( "" )}"
+}
+
+trait Tactical[+T] { self =>
+  def apply( proofState: ProofState ): ValidationNel[TacticalFailure, ( T, ProofState )]
 
   /**
    * Returns result of first tactical, if there is any,
@@ -150,50 +192,57 @@ trait Tactical { self =>
    * @param t2
    * @return
    */
-  def orElse( t2: Tactical ): Tactical = {
+  def orElse[S >: T]( t2: Tactical[S] ): Tactical[S] = {
     val t1 = this
 
-    new Tactical {
-      override def apply( proofState: ProofState ): Option[ProofState] = {
-        t1( proofState ) orElse t2( proofState )
+    new Tactical[S] {
+      override def apply( proofState: ProofState ) = {
+        t1( proofState ) findSuccess t2( proofState )
       }
       override def toString = s"$t1 orElse $t2"
     }
   }
 
-  def andThen( t2: Tactical ): Tactical = new Tactical {
-    def apply( proofState: ProofState ) = self( proofState ) flatMap { t2( _ ) }
+  def andThen[S]( t2: Tactical[S] ): Tactical[S] = new Tactical[S] {
+    def apply( proofState: ProofState ) = self( proofState ) flatMap { x => t2( x._2 ) }
     override def toString = s"$self andThen $t2"
   }
 
-  def onAllSubGoals: Tactical = new Tactical {
-    def apply( proofState: ProofState ) =
-      Applicative[Option].traverse( proofState.subGoals.toList )( subGoal => self( ProofState( 0, subGoal ) ) ) map {
-        _.zipWithIndex.foldRight( proofState ) { case ( ( subState, index ), state ) => state.replaceSubGoal( index, subState.proofSegment ) }
-      }
+  def map[S]( f: T => S ): Tactical[S] = new Tactical[S] {
+    def apply( proofState: ProofState ) = self( proofState ) map { x => f( x._1 ) -> x._2 }
+  }
+
+  def flatMap[S]( f: T => Tactical[S] ): Tactical[S] = new Tactical[S] {
+    def apply( proofState: ProofState ) = self( proofState ) flatMap { x => f( x._1 )( x._2 ) }
+  }
+
+  def onAllSubGoals: Tactical[Unit] = new Tactical[Unit] {
+    def apply( proofState: ProofState ) = {
+      type StrVal[T] = ValidationNel[TacticalFailure, T]
+      Applicative[StrVal].traverse( proofState.subGoals.toList )( subGoal => self.asTactic( subGoal ) ) map {
+        _.zipWithIndex.foldRight( proofState ) { case ( ( subState, index ), state ) => state.replaceSubGoal( index, subState._2 ) }
+      } map { x => ( (), x ) }
+    }
     override def toString = s"$self.onAllSubGoals"
+  }
+
+  def asTactic: Tactic[T] = new Tactic[T] {
+    def apply( goal: OpenAssumption ) = self( ProofState( 0, goal ) ) map { case ( res, p ) => res -> p.proofSegment }
+    override def toString = s"$self.asTactic"
   }
 }
 
-trait Tactic extends Tactical { self =>
-  /**
-   *
-   * @param goal
-   * @return
-   */
-  def apply( goal: OpenAssumption ): Option[LKProof]
+trait Tactic[+T] extends Tactical[T] { self =>
+  def apply( goal: OpenAssumption ): ValidationNel[TacticalFailure, ( T, LKProof )]
 
-  /**
-   *
-   * @param proofState
-   * @return
-   */
-  override def apply( proofState: ProofState ): Option[ProofState] = {
-    for {
-      goal <- proofState getSubGoal proofState.currentGoalIndex
-      proofSegment <- this( goal )
-    } yield proofState.replaceSubGoal( proofState currentGoalIndex, proofSegment )
-  }
+  override def apply( proofState: ProofState ): ValidationNel[TacticalFailure, ( T, ProofState )] =
+    proofState getSubGoal proofState.currentGoalIndex match {
+      case None => TacticalFailure( this, None, "no open subgoal" ).failureNel
+      case Some( goal ) => this( goal ) map {
+        case ( res, proofSegment ) =>
+          res -> proofState.replaceSubGoal( proofState currentGoalIndex, proofSegment )
+      }
+    }
 
   /**
    * Returns result of first tactic, if there is any,
@@ -203,28 +252,54 @@ trait Tactic extends Tactical { self =>
    * @param t2
    * @return
    */
-  def orElse( t2: Tactic ): Tactic = {
+  def orElse[S >: T]( t2: Tactic[S] ): Tactic[S] = {
     val t1 = this
 
-    new Tactic {
-      override def apply( goal: OpenAssumption ): Option[LKProof] = {
-        t1( goal ) orElse t2( goal )
+    new Tactic[S] {
+      override def apply( goal: OpenAssumption ) = {
+        t1( goal ) findSuccess t2( goal )
       }
 
       override def toString = s"$t1 orElse $t2"
     }
   }
 
-  def onAll( t2: Tactical ): Tactical = new Tactical {
-    def apply( proofState: ProofState ): Option[ProofState] = self( proofState ) flatMap { t2.onAllSubGoals( _ ) }
+  def onAll[S]( t2: Tactical[S] ) = new Tactical[Unit] {
+    def apply( proofState: ProofState ) = self( proofState ) flatMap { x => t2.onAllSubGoals( x._2 ) }
     override def toString = s"$self onAll $t2"
+  }
+
+  protected def findFormula( goal: OpenAssumption, mode: TacticApplyMode ): FindFormula =
+    new FindFormula( goal, mode )
+  protected class FindFormula( goal: OpenAssumption, mode: TacticApplyMode ) {
+    type Val = ( String, HOLFormula, SequentIndex )
+
+    def withFilter( pred: Val => Boolean ): ValidationNel[TacticalFailure, Val] =
+      goal.s.zipWithIndex.elements.collect {
+        case ( ( l, f ), i ) if mode.forall { _ == l } && pred( l, f, i ) => ( l, f, i )
+      } match {
+        case Seq( f ) => f.success
+        case Seq( someFormula, _* ) =>
+          mode match {
+            case AnyFormula => someFormula.success
+            case _          => TacticalFailure( self, Some( goal ), s"Formula could not be uniquely determined." ).failureNel
+          }
+        case _ =>
+          mode match {
+            case OnLabel( l ) => TacticalFailure( self, Some( goal ), s"Label $l not found." ).failureNel
+            case _            => TacticalFailure( self, Some( goal ), s"No matching formula found." ).failureNel
+          }
+      }
+
+    def flatMap[U]( func: Val => ValidationNel[TacticalFailure, U] ): ValidationNel[TacticalFailure, U] =
+      withFilter( _ => true ).flatMap( func )
   }
 }
 
 /**
  * Object that wraps helper function to generate new label from an existing one
  */
-object NewLabel {
+object NewLabels {
   /**
    * Actual helper function for a fresh variable.
    *
@@ -232,28 +307,20 @@ object NewLabel {
    * @param fromLabel
    * @return
    */
-  def apply( sequent: Sequent[( String, HOLFormula )], fromLabel: String ): String = {
+  def apply( sequent: Sequent[( String, HOLFormula )], fromLabel: String ): Stream[String] = {
     val regex = f"$fromLabel%s_([0-9]+)".r
 
     // Get integer subscripts (i.e 1, 2, 3 for x_1, x_2, x_3)
     val usedVariableSubscripts = {
       for ( ( label, _ ) <- sequent.elements; m <- regex findFirstMatchIn label )
         yield Integer parseInt ( m group 1 )
-    }.toList.sorted
+    }.toSet
 
-    def f( s: Seq[Int] ): Int = s match {
-      case h1 :: ( h2 :: t ) if ( h2 > h1 + 1 ) => h1 + 1
-      case h1 :: ( h2 :: t )                    => f( h2 :: t )
-      case h :: t if t.length == 0              => h + 1
-    }
-
-    val subscript =
-      usedVariableSubscripts.headOption match {
-        case None                   => 0
-        case Some( min ) if min > 0 => 0
-        case _                      => f( usedVariableSubscripts )
-      }
-
-    f"$fromLabel%s_$subscript%d"
+    for ( i <- Stream from 0 if !usedVariableSubscripts( i ) ) yield f"$fromLabel%s_$i%d"
   }
+}
+
+object NewLabel {
+  def apply( sequent: Sequent[( String, HOLFormula )], fromLabel: String ): String =
+    NewLabels( sequent, fromLabel ).head
 }

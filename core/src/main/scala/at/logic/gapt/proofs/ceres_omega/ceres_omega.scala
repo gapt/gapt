@@ -292,7 +292,7 @@ class ceres_omega extends Logger {
       val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rp, false )
       ( rule, nca )
     } )
-    val contr_right = es.succedent.foldLeft( p )( ( rp, fo ) => {
+    val contr_right = es.succedent.foldLeft( contr_left )( ( rp, fo ) => {
       val ( proof, ca ) = rp
       val esa = invert( ca )
       val a1 = findAuxInSuccedent( fo, proof.conclusion, Seq(), esa )
@@ -301,6 +301,7 @@ class ceres_omega extends Logger {
       val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rp, false )
       ( rule, nca )
     } )
+    //debug( s"contracted ${p._1.conclusion.size - contr_right._1.conclusion.size} formulas!" )
     contr_right
   }
 

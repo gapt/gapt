@@ -258,6 +258,43 @@ object replaceAtHOLPosition {
   }
 }
 
+object replaceAtLambdaPosition {
+  def apply( et: ExpansionTree, pos: LambdaPosition, exp: LambdaExpression ): ExpansionTree = {
+    val rest = pos.tail
+    ( et, pos.head ) match {
+      //FIXME: avoid the cast to HOLFormula
+      case ( ETMerge( left, right ), _ )                => ETMerge( replaceAtLambdaPosition( left, pos, exp ), replaceAtLambdaPosition( right, pos, exp ) )
+
+      case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )     => et
+      case ( ETAtom( formula, polarity ), _ )           => ETAtom( formula.replace( pos, exp ).asInstanceOf[HOLAtom], polarity )
+
+      case ( ETWeakening( formula, polarity ), _ )      => ETWeakening( formula.replace( pos, exp ).asInstanceOf[HOLFormula], polarity )
+
+      case ( ETNeg( sub ), 1 )                          => ETNeg( replaceAtLambdaPosition( sub, rest, exp ) )
+
+      case ( ETAnd( left, right ), 1 )                  => ETAnd( replaceAtLambdaPosition( left, rest, exp ), right )
+      case ( ETAnd( left, right ), 2 )                  => ETAnd( left, replaceAtLambdaPosition( right, rest, exp ) )
+
+      case ( ETOr( left, right ), 1 )                   => ETOr( replaceAtLambdaPosition( left, rest, exp ), right )
+      case ( ETOr( left, right ), 2 )                   => ETOr( left, replaceAtLambdaPosition( right, rest, exp ) )
+
+      case ( ETImp( left, right ), 1 )                  => ETImp( replaceAtLambdaPosition( left, rest, exp ), right )
+      case ( ETImp( left, right ), 2 )                  => ETImp( left, replaceAtLambdaPosition( right, rest, exp ) )
+
+      //FIXME: Quantifier cases are not entirely safe: What if the eigenvariable or the instances are replaced?
+      case ( ETStrongQuantifier( formula, v, sub ), 1 ) => ETStrongQuantifier( formula.replace( pos, exp ).asInstanceOf[HOLFormula], v, replaceAtLambdaPosition( sub, rest, exp ) )
+      case ( ETSkolemQuantifier( formula, v, sub ), 1 ) => ETSkolemQuantifier( formula.replace( pos, exp ).asInstanceOf[HOLFormula], v, replaceAtLambdaPosition( sub, rest, exp ) )
+
+      case ( ETWeakQuantifier( formula, instances ), 1 ) =>
+        ETWeakQuantifier(
+          formula.replace( pos, exp ).asInstanceOf[HOLFormula],
+          for ( ( term, instance ) <- instances )
+            yield term -> replaceAtLambdaPosition( instance, rest, exp )
+        )
+    }
+  }
+}
+
 object cleanStructureET {
   def apply( t: ExpansionTree ): ExpansionTree = t match {
     case ETNeg( s ) => apply( s ) match {

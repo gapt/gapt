@@ -29,23 +29,6 @@ trait GrammarFindingMethod {
   def name: String
 }
 
-case class DeltaTableMethod( manyQuantifiers: Boolean ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
-    val delta = manyQuantifiers match {
-      case true  => new Deltas.UnboundedVariableDelta()
-      case false => new Deltas.OneVariableDelta()
-    }
-    val eigenvariable = "α"
-    val deltatable = metrics.time( "dtable" ) { new DeltaTable( lang.toList, eigenvariable, delta ) }
-
-    metrics.time( "dtable2grammar" ) {
-      ComputeGrammars.findValidGrammars( lang.toList, deltatable, eigenvariable ).sortBy( _.size ).headOption
-    }
-  }
-
-  override def name: String = if ( manyQuantifiers ) "many_dtable" else "1_dtable"
-}
-
 case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
   override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
     Some( findMinimalVectGrammar( lang, nonTerminalLengths, solver ) )
@@ -299,7 +282,7 @@ object CutIntroduction extends Logger {
   def compressToLK( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
     compressToEHS( ep, hasEquality, method, verbose ) map { constructLKProof( _, hasEquality, verbose ) }
 
-  def compressLKProof( p: LKProof, method: GrammarFindingMethod = DeltaTableMethod( manyQuantifiers = false ), verbose: Boolean = false ): Option[LKProof] = {
+  def compressLKProof( p: LKProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] = {
     val clean_proof = cleanStructuralRules( p )
 
     if ( verbose )

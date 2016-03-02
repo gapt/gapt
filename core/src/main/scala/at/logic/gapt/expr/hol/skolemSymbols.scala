@@ -5,13 +5,8 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
+import at.logic.gapt.utils.NameGenerator
 import at.logic.gapt.utils.ds.streams.Definitions._
-
-object TypeSynonyms {
-  type SkolemSymbol = StringSymbol
-}
-
-import at.logic.gapt.expr.hol.TypeSynonyms._
 
 /* The idea of SkolemSymbolFactory is to provide
      a singleton for access to the (global) Skolem symbols.
@@ -28,11 +23,8 @@ import at.logic.gapt.expr.hol.TypeSynonyms._
      the odd indices of s.
    */
 
-class SkolemSymbolFactory {
-  private def skolem_symbol_stream_from( n: Int ): Stream[SkolemSymbol] =
-    Stream.cons( StringSymbol( "s_{" + n + "}" ), skolem_symbol_stream_from( n + 1 ) )
-
-  private var skolem_symbol_stream = skolem_symbol_stream_from( 0 )
+class SkolemSymbolFactory( usedConstants: Iterable[Const] ) {
+  private var skolem_symbol_stream = new NameGenerator( usedConstants map { _.name } ).freshStream( "s" )
 
   def getSkolemSymbols = {
     val stream = even( skolem_symbol_stream )

@@ -7,14 +7,15 @@ import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.cutintro._
+import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion.{ eliminateCutsET, addSymmetry, ExpansionProofToLK }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
-import at.logic.gapt.formats.prover9.Prover9TermParser
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.maxsat.MaxSat4j
 import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriT
@@ -46,7 +47,7 @@ class MiscTest extends Specification {
 
     "perform cut introduction on an example proof" in {
       val p = LinearExampleProof( 7 )
-      CutIntroduction.compressLKProof( p, method = DeltaTableMethod( manyQuantifiers = false ), verbose = false ) must beSome
+      CutIntroduction.compressLKProof( p, method = DeltaTableMethod( singleQuantifier = true ), verbose = false ) must beSome
     }
 
     "skolemize a simple proof" in {
@@ -89,9 +90,9 @@ class MiscTest extends Specification {
       Success()
     }
 
-    "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 4)" in {
-      val p = LinearExampleProof( 4 )
-      val Some( pi ) = CutIntroduction.compressLKProof( p, method = DeltaTableMethod( manyQuantifiers = false ), verbose = false )
+    "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
+      val p = LinearExampleProof( 9 )
+      val Some( pi ) = CutIntroduction.compressLKProof( p, method = MaxSATMethod( MaxSat4j, 1 ), verbose = false )
       val pe = ReductiveCutElimination( pi )
 
       ReductiveCutElimination.isCutFree( p ) must beEqualTo( true )
@@ -103,7 +104,7 @@ class MiscTest extends Specification {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val p1 = lkProofFromClasspath( "SYN726-1.out" )
-      val Some( p2 ) = CutIntroduction.compressLKProof( p1, method = DeltaTableMethod( manyQuantifiers = true ), verbose = false )
+      val Some( p2 ) = CutIntroduction.compressLKProof( p1, method = DeltaTableMethod(), verbose = false )
       val p3 = ReductiveCutElimination( p2 )
 
       ReductiveCutElimination.isCutFree( p2 ) must beEqualTo( false )
@@ -170,7 +171,7 @@ class MiscTest extends Specification {
     "prove quasi-tautology by veriT and verify validity using sat4j (1/2)" in {
       if ( !VeriT.isInstalled ) skipped( "VeriT is not installed" )
 
-      val F = Prover9TermParser.parseFormula( "a=b -> b=a" )
+      val F = hof"a=b -> b=a"
       val E = VeriT.getExpansionProof( HOLSequent( Nil, F :: Nil ) ).get
 
       val Edeep = E.deep
@@ -180,8 +181,8 @@ class MiscTest extends Specification {
     "prove quasi-tautology by veriT and verify validity using sat4j (2/2)" in {
       if ( !VeriT.isInstalled ) skipped( "VeriT is not installed" )
 
-      val C = Prover9TermParser.parseFormula( "f(x_0,y_0) = f(y_0,x_0)" )
-      val AS = Prover9TermParser.parseFormula( "f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )" )
+      val C = hof"f(x_0,y_0) = f(y_0,x_0)"
+      val AS = hof"f(x_0,y_0)=x_0 -> ( f(y_0,x_0)=y_0 -> x_0=y_0 )"
       val s = HOLSequent( C :: Nil, AS :: Nil )
       val E = VeriT.getExpansionProof( s ).get
 

@@ -4,12 +4,13 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.tactics._
 import at.logic.gapt.proofs.lk.LKProof
 
+import scalaz._
+import Scalaz._
+
 package object gaptic {
   // LK Tactics
 
-  def axiomLog( l: String ) = new LogicalAxiomTactic( Option( l ) )
-
-  def axiomLog = new LogicalAxiomTactic()
+  def axiomLog = LogicalAxiomTactic
 
   def axiomTop = TopAxiomTactic
 
@@ -17,75 +18,66 @@ package object gaptic {
 
   def axiomRefl = ReflexivityAxiomTactic
 
+  def refl = ReflexivityAxiomTactic
+
   def axiomTh = TheoryAxiomTactic
 
-  def axiom = AxiomTactic
+  def trivial = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
 
-  def negL( applyToLabel: String ) = new NegLeftTactic( Some( applyToLabel ) )
+  def negL( applyToLabel: String ) = new NegLeftTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def negL = new NegLeftTactic()
 
-  def negR( applyToLabel: String ) = new NegRightTactic( Some( applyToLabel ) )
+  def negR( applyToLabel: String ) = new NegRightTactic( OnLabel( applyToLabel ) )
 
   def negR = new NegRightTactic()
 
-  def andL( applyToLabel: String ) = new AndLeftTactic( Some( applyToLabel ) )
+  def andL( applyToLabel: String ) = new AndLeftTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def andL = new AndLeftTactic()
 
-  def andR( applyToLabel: String ) = new AndRightTactic( Some( applyToLabel ) )
+  def andR( applyToLabel: String ) = new AndRightTactic( OnLabel( applyToLabel ) )
 
   def andR = new AndRightTactic()
 
-  def orL( applyToLabel: String ) = new OrLeftTactic( Some( applyToLabel ) )
+  def orL( applyToLabel: String ) = new OrLeftTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def orL = new OrLeftTactic()
 
-  def orR( applyToLabel: String ) = new OrRightTactic( Some( applyToLabel ) )
+  def orR( applyToLabel: String ) = new OrRightTactic( OnLabel( applyToLabel ) )
 
   def orR = new OrRightTactic()
 
-  def impL( applyToLabel: String ) = new ImpLeftTactic( Some( applyToLabel ) )
+  def impL( applyToLabel: String ) = new ImpLeftTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def impL = new ImpLeftTactic()
 
-  def impR( applyToLabel: String ) = new ImpRightTactic( Some( applyToLabel ) )
+  def impR( applyToLabel: String ) = new ImpRightTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def impR = new ImpRightTactic()
 
-  def exL( eigenVariable: Var, applyToLabel: String ) = new ExistsLeftTactic( Some( eigenVariable ), Some( applyToLabel ) )
+  def exL( applyToLabel: String, eigenVariable: Var ) = new ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def exL( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
 
-  def exL( applyToLabel: String ) = new ExistsLeftTactic( applyToLabel = Some( applyToLabel ) )
+  def exL( applyToLabel: String ) = new ExistsLeftTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def exL = new ExistsLeftTactic()
 
-  def exR( term: LambdaExpression, applyToLabel: String ) = new ExistsRightTactic( term, Some( applyToLabel ) )
+  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
-  def exR( term: LambdaExpression ) = new ExistsRightTactic( term )
+  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms )
 
-  def allL( term: LambdaExpression, applyToLabel: String ) = new ForallLeftTactic( term, Some( applyToLabel ) )
+  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
-  def allL( term: LambdaExpression ) = new ForallLeftTactic( term )
+  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms )
 
-  def allR( eigenVariable: Var, applyToLabel: String ) = new ForallRightTactic( Some( eigenVariable ), Some( applyToLabel ) )
+  def allR( applyToLabel: String, eigenVariable: Var ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def allR( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
 
-  def allR( applyToLabel: String ) = new ForallRightTactic( applyToLabel = Some( applyToLabel ) )
+  def allR( applyToLabel: String ) = new ForallRightTactic( OnLabel( applyToLabel ) )
 
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
   def allR = new ForallRightTactic()
 
   def cut( h: HOLFormula, c: String ) = CutTactic( h, c )
@@ -98,20 +90,29 @@ package object gaptic {
 
   def defR( l: String, r: HOLFormula ) = DefinitionRightTactic( l, r )
 
+  def induction( implicit ctx: Context ) = InductionTactic( UniqueFormula )
+  def induction( label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ) )
+
   // Meta
 
   def insert( proof: LKProof ) = InsertTactic( proof )
 
-  def repeat( t: Tactical ) = RepeatTactic( t )
+  def include( label: String, proof: LKProof ): Tactical[Unit] =
+    for {
+      goal <- currentGoal
+      diff = proof.conclusion diff goal.conclusion
+      cutFormula = diff.toFormula
+      _ <- cut( cutFormula, label )
+      _ <- insert( proof )
+    } yield ()
+
+  def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
 
   // Complex
 
   def decompose = DecomposeTactic
 
-  def destruct( l: String ) = new DestructTactic( Some( l ) )
-
-  @deprecated( "Please specify a label.  Otherwise the tactic breaks easily with changes in GAPT.", "2016-01-28" )
-  def destruct = new DestructTactic()
+  def destruct( label: String ) = DestructTactic( label )
 
   def chain( h: String ) = ChainTactic( h )
 
@@ -122,16 +123,33 @@ package object gaptic {
 
   /**
    * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.
+   *
    * @param ls A sequence of labels L,,1,,,..., L,,n,,.
    * @return The tactical
    *           (WeakeningLeftTactic(L,,1,,) orElse WeakeningRightTactic(L,,1,,)) andThen ... andThen (WeakeningLeftTactic(L,,n,,) orElse WeakeningRightTactic(L,,n,,))
    *
    */
-  def forget( ls: String* ): Tactical = ls.foldLeft[Tactical]( SkipTactical ) { ( acc, l ) =>
+  def forget( ls: String* ): Tactical[Unit] = ls.foldLeft[Tactical[Unit]]( SkipTactical ) { ( acc, l ) =>
     acc andThen ( WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l ) )
   }
 
   def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
+
+  def unfold( inLabel: String, definition: String, definitions: String* )( implicit ctx: Context ) =
+    UnfoldTactic( inLabel, definition, definitions: _* )
+
+  def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
+    def apply( goal: OpenAssumption ) = ( goal -> goal ).success
+  }
+
+  implicit object TacticalMonad extends Monad[Tactical] {
+    def point[A]( a: => A ): Tactical[A] = new Tactical[A] {
+      def apply( proofState: ProofState ) = ( a -> proofState ).success
+    }
+
+    def bind[A, B]( fa: Tactical[A] )( f: A => Tactical[B] ): Tactical[B] =
+      fa flatMap f
+  }
 }

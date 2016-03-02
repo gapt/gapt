@@ -60,9 +60,9 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "tape3ex.llk" ) ).mkString )
     val lk = DefinitionElimination( pdb.Definitions )( pdb proof "TAPEPROOF" )
     val expansion = LKToExpansionProof( lk )
-    Escargot isValid expansion.deep must_== true
     val cutfree = eliminateCutsET( expansion )
     if ( !VeriT.isInstalled ) skipped
+    VeriT isValid expansion.deep must_== true
     VeriT isValid cutfree.deep must_== true
   }
 
