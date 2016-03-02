@@ -272,7 +272,7 @@ case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) e
     }
 }
 
-case class UnfoldTactic( target: String, definition: String )( implicit ctx: Context ) extends Tactic[Unit] {
+case class UnfoldTactic( target: String, definition: String, definitions: String* )( implicit ctx: Context ) extends Tactic[Unit] {
   def getDef: ValidationNel[TacticalFailure, ( Con, LambdaExpression )] =
     ctx.definition( definition ) match {
       case Some( by ) =>
@@ -289,9 +289,15 @@ case class UnfoldTactic( target: String, definition: String )( implicit ctx: Con
       unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
       normalized = BetaReduction.betaNormalize( unfolded )
       newGoal = OpenAssumption( goal.s.updated( idx, label -> normalized ) )
+      subProof <- definitions match {
+        case hd +: tl =>
+          UnfoldTactic( target, hd, tl: _* )( ctx )( newGoal ) map { _._2 }
+        case _ =>
+          newGoal.successNel[TacticalFailure]
+      }
     } yield () ->
-      ( if ( idx.isSuc ) DefinitionRightRule( newGoal, idx, main )
-      else DefinitionLeftRule( newGoal, idx, main ) )
+      ( if ( idx.isSuc ) DefinitionRightRule( subProof, idx, main )
+      else DefinitionLeftRule( subProof, idx, main ) )
 }
 
 /**

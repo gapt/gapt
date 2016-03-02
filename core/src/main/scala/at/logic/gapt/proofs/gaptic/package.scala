@@ -137,7 +137,8 @@ package object gaptic {
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
-  def unfold( inLabel: String, definition: String )( implicit ctx: Context ) = UnfoldTactic( inLabel, definition )
+  def unfold( inLabel: String, definition: String, definitions: String* )( implicit ctx: Context ) =
+    UnfoldTactic( inLabel, definition, definitions: _* )
 
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success
