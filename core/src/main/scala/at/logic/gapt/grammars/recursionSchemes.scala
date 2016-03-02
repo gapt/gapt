@@ -30,11 +30,11 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
 
   def export(): String = {
     val nonTerminals = rs.axiom +: ( rs.nonTerminals - rs.axiom ).toList.sortBy { _.name }
-    val ntDecl = group( "Non-terminals:" <> nest( line <> vsep(
+    val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
       nonTerminals map { show( _, false, Set(), Map(), prio.max )._1 }
     ) ) )
 
-    val tDecl = group( "Terminals:" <> nest( line <> vsep(
+    val tDecl = group( "Terminals:" <> nest( line <> csep(
       rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 }
     ) ) )
 
