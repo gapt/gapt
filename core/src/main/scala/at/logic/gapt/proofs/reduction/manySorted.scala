@@ -48,10 +48,10 @@ case class ErasureReduction( ctx: FiniteContext ) extends FOLReduction {
     case Or( f, g )   => Or( forward( f, freeVars ), forward( g, freeVars ) )
     case Imp( f, g )  => Imp( forward( f, freeVars ), forward( g, freeVars ) )
     case All( x, f ) =>
-      val y = rename( FOLVar( x.name ), freeVars.values.toList )
+      val y = rename( FOLVar( x.name ), freeVars.values )
       All( y, forward( f, freeVars + ( x -> y ) ) )
     case Ex( x, f ) =>
-      val y = rename( FOLVar( x.name ), freeVars.values.toList )
+      val y = rename( FOLVar( x.name ), freeVars.values )
       Ex( y, forward( f, freeVars + ( x -> y ) ) )
     case Eq( t, s ) => Eq( forward( t, freeVars ), forward( s, freeVars ) )
     case Apps( c: HOLAtomConst, args ) =>
