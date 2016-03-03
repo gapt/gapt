@@ -8,21 +8,43 @@ import at.logic.gapt.proofs.resolution.{ InputClause, mapInputClauses, Resolutio
 
 import scala.collection.mutable
 
-trait FOLReduction {
-  def forward( clause: HOLSequent ): FOLSequent
+trait HOLReduction { self =>
+  def context: FiniteContext
+  def reducedContext: FiniteContext
+
+  def forward( sequent: HOLSequent ): HOLSequent
 
   def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof
   def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent
+
+  def |>( otherReduction: FiniteContext => HOLReduction ): HOLReduction =
+    new HOLReduction {
+      val other = otherReduction( self.reducedContext )
+
+      def context = self.context
+      def reducedContext = other.reducedContext
+
+      def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
+        self.back( other.back( proof, self.forward( endSequent ) ), endSequent )
+
+      def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent =
+        self.back( other.back( expansionSequent, self.forward( endSequent ) ), endSequent )
+
+      def forward( sequent: HOLSequent ): HOLSequent =
+        other.forward( self.forward( sequent ) )
+
+      override def toString = s"$self |> $other"
+    }
 }
 
-case class ErasureReduction( ctx: FiniteContext ) extends FOLReduction {
-  val termErasure = ctx.constants map {
+case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
+  val termErasure = context.constants map {
     case c @ Const( name, FunctionType( _, argTypes ) ) =>
       c -> FOLFunctionConst( s"f_$name", argTypes.size )
   } toMap
   val termReification = termErasure map { _.swap }
 
-  val predicateErasure = ctx.constants collect {
+  val predicateErasure = context.constants collect {
     case c @ HOLAtomConst( name, argTypes ) =>
       c -> FOLAtomConst( s"P_$name", argTypes.size )
   } toMap
@@ -183,17 +205,14 @@ case class ErasureReduction( ctx: FiniteContext ) extends FOLReduction {
   }
 }
 
-case class PredicateReduction( ctx: FiniteContext ) extends FOLReduction {
-  val baseTypes = ctx.constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
+case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
+  val baseTypes = context.constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
   val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( s"is_$ty", ty ) }.toMap
   val predicates = predicateForType.values.toSet
 
-  val intermediateContext = ctx ++ predicates
-  val erasureReduction = ErasureReduction( intermediateContext )
+  val reducedContext = context ++ predicates
 
-  def reducedContext = erasureReduction.reducedContext
-
-  val predicateAxioms = existsclosure( ctx.constants.map {
+  val predicateAxioms = existsclosure( context.constants.map {
     case c @ Const( _, FunctionType( retType, argTypes ) ) =>
       val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
       And( args map { a => predicateForType( a.exptype )( a ) } ) --> predicateForType( retType )( c( args: _* ) )
@@ -214,11 +233,11 @@ case class PredicateReduction( ctx: FiniteContext ) extends FOLReduction {
   private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
     predicateAxioms ++ sequent.map( guard )
 
-  override def forward( sequent: HOLSequent ): FOLSequent =
-    erasureReduction.forward( guardAndAddAxioms( sequent ) )
+  override def forward( sequent: HOLSequent ): HOLSequent =
+    guardAndAddAxioms( sequent )
 
   override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
-    mapInputClauses( erasureReduction.back( proof, guardAndAddAxioms( endSequent ) ) ) { cls =>
+    mapInputClauses( proof ) { cls =>
       val clauseWithoutPredicates = cls filterNot { case Apps( c: HOLAtomConst, _ ) => predicates contains c }
       if ( clauseWithoutPredicates.nonEmpty )
         InputClause( clauseWithoutPredicates )
