@@ -7,17 +7,10 @@ import scala.collection.immutable
 import org.parboiled2._
 
 /**
- * ** Lisp SExpression Datatypes and Parser
+ * Lisp SExpression Datatypes and Parser
  * This is a basic LISP S-expression parser, without quote character, macros or other fancy stuff.
  * Atoms have a reduced namespace and need to be extended if necessary.
  *
- * Some remarks:
- * (1) regexp parsers eat whitespace and newlines
- * (2) recursive cases have to be put first
- */
-
-/* Basic Lisp Datastructures: Atom, Cons and List 
- * Namespace collisions in scala.*.List
  * Printing a Datastructure should output valid Lisp.
  */
 sealed abstract class SExpression
@@ -52,7 +45,6 @@ case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
   override def toString = "( " + car + " . " + cdr + ")"
 }
 
-/* Parser for SExpressions  */
 object SExpressionParser {
   def apply( fn: String ): List[SExpression] = parseFile( fn )
 
