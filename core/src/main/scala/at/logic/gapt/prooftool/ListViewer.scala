@@ -7,9 +7,7 @@ import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.latex.{ SequentsListLatexExporter, ProofToLatexExporter }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.formats.writers.FileWriter
-import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lk.{ lkNew2Old, LKProof }
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 
 import scala.swing.{ Separator, Menu, FileChooser, Action }
@@ -36,9 +34,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer
             case fs: HOLSequent => fs
             case _              => throw new Exception( "Cannot save this kind of lists." )
           }
-          if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-            XMLExporter( result, new ProofDatabase( Map(), Nil, Nil, List( ( name, ls ) ) ) )
-          } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
+          if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
             val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
             ( new FileWriter( filename ) with SequentsListLatexExporter with HOLTermArithmeticalExporter )
               .exportSequentList( ls, Nil ).close

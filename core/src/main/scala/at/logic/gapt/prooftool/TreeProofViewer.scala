@@ -4,10 +4,8 @@ import java.awt.Color
 
 import at.logic.gapt.formats.latex.ProofToLatexExporter
 import at.logic.gapt.formats.llk.HybridLatexExporter
-import at.logic.gapt.formats.xml.XMLExporter
 import at.logic.gapt.proofs.lkOld.base.LKProof
 import at.logic.gapt.proofs.lkOld.{ getAuxFormulas, getCutAncestors }
-import at.logic.gapt.proofs.lk.lkOld2New
 import at.logic.gapt.proofs.proofs.TreeProof
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 
@@ -36,9 +34,7 @@ class OldLKViewer( name: String, proof: LKProof ) extends TreeProofViewer( name,
         val result = chooser.selectedFile.getPath
         // val pair = body.getContent.getData.get
         try {
-          if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-            XMLExporter( result, name, lkOld2New( proof ) )
-          } else if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
+          if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
             val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
             file.write( HybridLatexExporter( proof, escape_latex = true ) )
