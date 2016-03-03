@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres_omega
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres.{ SimplifyStruct, Struct }
-import at.logic.gapt.proofs.lkOld.subsumedClausesRemovalHOL
+import at.logic.gapt.proofs.lkOld.subsumedClausesRemoval
 import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, Label }
 
 import scala.collection.mutable
@@ -26,7 +26,7 @@ object CharacteristicSequentSet {
 
   def prunefs( l: List[HOLSequent] ): ( FOLConstantsMap, List[HOLSequent], List[HOLSequent] ) = {
     val ( fcmap, fol ) = extractFOL( l )
-    ( fcmap, subsumedClausesRemovalHOL( fol ), extractHOL( l ).toSet.toList )
+    ( fcmap, subsumedClausesRemoval( fol ), extractHOL( l ).toSet.toList )
   }
 
   type FOLConstantsMap = Map[String, FOLExpression]

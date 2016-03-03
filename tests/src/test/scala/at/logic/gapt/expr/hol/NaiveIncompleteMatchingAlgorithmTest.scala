@@ -20,7 +20,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val f = Const( "f", Ti -> Ti )
       val fb = App( f, b )
       val Pafb = App( Pa, fb )
-      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm( Pax, Pafb )
+      val subst = syntacticMatching( Pax, Pafb )
       val subst1 = Substitution( x, fb )
       subst must beEqualTo( Some( subst1 ) )
     }
@@ -37,7 +37,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val fb = App( f, b )
       val Pfb = App( P, fb )
       val Pfbfb = App( Pfb, fb )
-      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm( Pzx, Pfbfb )
+      val subst = syntacticMatching( Pzx, Pfbfb )
       val subst1 = Substitution( Map( ( x, fb ), ( z, fb ) ) )
       subst must beEqualTo( Some( subst1 ) )
     }
@@ -53,7 +53,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val fb = App( f, b )
       val Pfb = App( P, fb )
       val Pfbz = App( Pfb, z )
-      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm( Pzx, Pfbz )
+      val subst = syntacticMatching( Pzx, Pfbz )
       val subst1 = Substitution( Map( ( z, fb ), ( x, z ) ) )
       subst must beEqualTo( Some( subst1 ) )
     }
@@ -65,7 +65,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val x = Var( "x", Ti )
       val px = HOLFunction( p, x :: Nil )
       val at = HOLAtom( lt, a :: px :: Nil )
-      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm( at, at )
+      val subst = syntacticMatching( at, at )
       subst must beEqualTo( Some( Substitution( x -> x ) ) )
     }
 
@@ -77,7 +77,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val px = HOLFunction( p, x :: Nil )
       val at = HOLAtom( lt, a :: px :: Nil )
       val at2 = HOLAtom( lt, a :: px :: Nil ) // Is this a copy?
-      val subst = NaiveIncompleteMatchingAlgorithm.matchTerm( at, at2 )
+      val subst = syntacticMatching( at, at2 )
       subst must beEqualTo( Some( Substitution( x -> x ) ) )
     }
   }

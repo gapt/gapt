@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLPosition, FOLMatchingAlgorithm }
+import at.logic.gapt.expr.fol.FOLPosition
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.dssupport.ListSupport.pairs

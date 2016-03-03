@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
-import at.logic.gapt.proofs.lkOld.subsumedClausesRemovalHOL
+import at.logic.gapt.proofs.lkOld.subsumedClausesRemoval
 import at.logic.gapt.proofs.lkskNew.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ Sequent, HOLClause }
 import at.logic.gapt.proofs.ceres_omega._
@@ -85,7 +85,7 @@ abstract class nTape {
    */
   lazy val preprocessed_css = {
     val stripped_css = css.map( _.map( LKskProof.getFormula ) )
-    subsumedClausesRemovalHOL( stripped_css.toList )
+    subsumedClausesRemoval( stripped_css.toList )
   }
 
   /**

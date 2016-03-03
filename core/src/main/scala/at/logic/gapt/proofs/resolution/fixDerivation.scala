@@ -36,7 +36,7 @@ object fixDerivation extends Logger {
   }
 
   def tryDeriveBySubsumptionModEq( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
-    for ( s <- clauseSubsumption( from, to, multisetSubsumption = false, matchingAlgorithm = matchingModEq ) ) yield {
+    for ( s <- clauseSubsumption( from, to, matchingAlgorithm = matchingModEq ) ) yield {
       var p = Factor( Instance( InputClause( from ), s ) )._1
 
       val needToFlip = for ( ( a, i ) <- p.conclusion.zipWithIndex ) yield a match {

@@ -31,8 +31,8 @@ object SimpleStandardClauseSet extends AlternativeStandardClauseSet( ( x, y ) =>
  */
 object AlternativeStandardClauseSet extends AlternativeStandardClauseSet(
   ( set1, set2 ) => {
-    val set1_ = set1.filterNot( s1 => set2.exists( s2 => StillmanSubsumptionAlgorithmHOL.subsumes( s2, s1 ) ) )
-    val set2_ = set2.filterNot( s2 => set1_.exists( s1 => StillmanSubsumptionAlgorithmHOL.subsumes( s1, s2 ) ) )
+    val set1_ = set1.filterNot( s1 => set2.exists( s2 => clauseSubsumption( s2, s1 ).isDefined ) )
+    val set2_ = set2.filterNot( s2 => set1_.exists( s1 => clauseSubsumption( s1, s2 ).isDefined ) )
     //println("Set1: "+set1.size+" - "+(set1.size-set1_.size))
     //println("Set2: "+set2.size+" - "+(set2.size-set2_.size))
     ( set1_, set2_ )

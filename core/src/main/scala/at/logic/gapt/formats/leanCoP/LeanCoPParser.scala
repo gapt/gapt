@@ -130,7 +130,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
     def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
       case Nil => None
-      case hd :: tl => FOLMatchingAlgorithm.matchTerms( hd, goal ) match {
+      case hd :: tl => syntacticMatching( hd, goal ) match {
         case None        => findSubstitution( tl, goal )
         case Some( sub ) => Some( sub )
       }

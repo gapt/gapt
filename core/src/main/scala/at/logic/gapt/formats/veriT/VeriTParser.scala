@@ -2,7 +2,6 @@ package at.logic.gapt.formats.veriT
 
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLMatchingAlgorithm
 import at.logic.gapt.expr.hol.{ removeQuantifiers, instantiate, isPrenex }
 import at.logic.gapt.proofs.expansion._
 import java.io.{ Reader, FileReader }
@@ -299,7 +298,7 @@ object VeriTParser extends RegexParsers {
           val instances = p._2
           val subs = instances.foldLeft( List[FOLSubstitution]() ) {
             case ( lst, instance ) =>
-              FOLMatchingAlgorithm.matchTerms( fMatrix, instance ) match {
+              syntacticMatching( fMatrix, instance ) match {
                 case Some( s ) => s :: lst
                 case None      => lst
               }
