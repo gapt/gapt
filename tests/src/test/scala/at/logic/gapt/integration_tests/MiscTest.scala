@@ -5,8 +5,8 @@ import java.io.InputStreamReader
 
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llkNew.LLKProofParser
-import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
 import at.logic.gapt.cutintro._
+import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion.{ eliminateCutsET, addSymmetry, ExpansionProofToLK }
 import at.logic.gapt.proofs._
@@ -83,10 +83,10 @@ class MiscTest extends Specification {
       val cs = CharacteristicClauseSet( s )
       val path = "target" + separator + "test1p-out.xml"
       val oldproofs_with_names = projs.toList.zipWithIndex.map( p => ( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) )
-      saveXML(
-        oldproofs_with_names,
-        ( "cs", cs.toList ) :: Nil, path
-      )
+      //      saveXML(
+      //        oldproofs_with_names,
+      //        ( "cs", cs.toList ) :: Nil, path
+      //      )
       Success()
     }
 

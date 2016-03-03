@@ -1,7 +1,7 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.expr.{ FOLAtom, Eq }
-import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.formats.xml.{ XMLParser }
 import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lk._
@@ -65,11 +65,11 @@ class TapeTest extends Specification with SequentMatchers {
         case Some( _ ) => true must beEqualTo( true )
       }
 
-      saveXML(
-        ( "tape-sk", lkNew2Old( proof_sk ) ) ::
-          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
-        ( "cs", cs.toList ) :: Nil, path
-      )
+      //      saveXML(
+      //        ( "tape-sk", lkNew2Old( proof_sk ) ) ::
+      //          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
+      //        ( "cs", cs.toList ) :: Nil, path
+      //      )
       ( new java.io.File( path ) ).exists() must beEqualTo( true )
       ok
     }

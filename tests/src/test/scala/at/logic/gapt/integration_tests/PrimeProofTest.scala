@@ -3,7 +3,7 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.expr.Top
 import at.logic.gapt.expr.hol.containsStrongQuantifier
-import at.logic.gapt.formats.xml.{ XMLParser, saveXML }
+import at.logic.gapt.formats.xml.{ XMLParser }
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -146,12 +146,12 @@ class PrimeProofTest extends Specification {
         }
       }
 
-      saveXML(
-        Tuple2( "prime1-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
-          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
-        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-        ( "cs", cs.toList ) :: Nil, path
-      )
+      //      saveXML(
+      //        Tuple2( "prime1-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
+      //          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
+      //        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
+      //        ( "cs", cs.toList ) :: Nil, path
+      //      )
       ( new java.io.File( path ) ).exists() must beEqualTo( true )
     }
 
@@ -176,11 +176,11 @@ class PrimeProofTest extends Specification {
       val path = "target" + separator + "euclid-" + n + "-sk.xml"
 
       //new Prover9Prover().getRobinsonProof( cs ) must beEqualTo( true )
-      saveXML(
-        Tuple2( "euclid-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
-          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
-        Tuple2( "cs", cs.toList ) :: Nil, path
-      )
+      //      saveXML(
+      //        Tuple2( "euclid-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
+      //          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
+      //        Tuple2( "cs", cs.toList ) :: Nil, path
+      //      )
       ( new java.io.File( path ) ).exists() must beEqualTo( true )
     }
 
