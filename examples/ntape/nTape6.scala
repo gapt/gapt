@@ -17,7 +17,7 @@ import at.logic.gapt.formats.llkNew.short._
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.proofs.HOLSequent
 
-object nTape5 {
+object nTape6 {
 
   implicit val signature =
     sig( """var X:o; var U,V:i; var H:i>i; var x,y:i;
