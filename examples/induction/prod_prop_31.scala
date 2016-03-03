@@ -52,10 +52,10 @@ object prod_prop_31 extends Script {
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     if ( true ) {
       val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
-      val reduction = ErasureReduction( ctx )
+      val reduction = PredicateReduction( ctx )
       val erasedInstanceSequent = reduction forward instanceSequent
       println( erasedInstanceSequent )
-      val Some( erasedProof ) = Escargot getRobinsonProof erasedInstanceSequent
+      val Some( erasedProof ) = SPASS getRobinsonProof erasedInstanceSequent
       val reifiedProof = reduction.back( erasedProof, instanceSequent )
       val reifiedExpansion = RobinsonToExpansionProof( reifiedProof, instanceSequent )
       inst -> reifiedExpansion
