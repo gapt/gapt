@@ -56,7 +56,7 @@ object toVNF {
       case Const( _, _ ) => e
       case App( a, b )   => App( makeDistinct( a ), makeDistinct( b ) )
       case Abs( v, a ) if seen contains v =>
-        val newVar = rename( v, seen toList )
+        val newVar = rename( v, seen )
         makeDistinct( Abs( newVar, Substitution( v -> newVar )( a ) ) )
       case Abs( v, a ) if !( seen contains v ) =>
         seen += v

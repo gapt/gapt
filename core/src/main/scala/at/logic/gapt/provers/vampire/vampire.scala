@@ -16,7 +16,7 @@ class Vampire extends ResolutionProver with ExternalProgram {
   override def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( seq ) {
       case ( renaming, cnf ) =>
-        val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
+        val labelledCNF = cnf.toSeq.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq(
           "vampire", "-p", "tptp",

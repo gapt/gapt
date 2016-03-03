@@ -55,7 +55,7 @@ object structuralCNF {
 
       def left( f: HOLFormula ): ( ExpansionSequent => ExpansionTree ) = f match {
         case Ex( x, a ) if !propositional =>
-          val eigen = rename( x, freeVars.toList )
+          val eigen = rename( x, freeVars )
           freeVars += eigen
           val fa = left( Substitution( x -> eigen )( a ) )
           es => {
@@ -102,7 +102,7 @@ object structuralCNF {
 
       def right( f: HOLFormula ): ( ExpansionSequent => ExpansionTree ) = f match {
         case All( x, a ) if !propositional =>
-          val eigen = rename( x, freeVars.toList )
+          val eigen = rename( x, freeVars )
           freeVars += eigen
           val fa = right( Substitution( x -> eigen )( a ) )
           es => {
@@ -149,7 +149,7 @@ object structuralCNF {
 
       if ( !trivial && ant.intersect( suc ).isEmpty )
         split(
-          Sequent( ant.toSeq, suc.toSeq ),
+          Sequent( ant, suc ),
           es => backTrans( expandBackTranfs.map( _( es ) ) )
         )
     }

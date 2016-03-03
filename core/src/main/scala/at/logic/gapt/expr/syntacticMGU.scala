@@ -8,7 +8,7 @@ object syntacticMGU {
       case ( App( a1, b1 ), App( a2, b2 ) ) if b1.exptype == b2.exptype => unify( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, env, bound )
       case ( c1: Const, c2: Const ) if c1 == c2                         => unify( rest, env, bound )
       case ( Abs( v1, t1 ), Abs( v2, t2 ) ) if v1.exptype == v2.exptype =>
-        val v_ = rename( v1, ( env ++ eqs ).flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } ++ bound toList )
+        val v_ = rename( v1, ( env ++ eqs ).flatMap { p => freeVariables( p._1 ) union freeVariables( p._2 ) } ++ bound )
         unify( ( Substitution( v1 -> v_ )( t1 ) -> Substitution( v2 -> v_ )( t2 ) ) :: rest, env, bound + v_ )
       case ( x: Var, y ) if bound contains x =>
         if ( x == y ) unify( rest, env, bound ) else None

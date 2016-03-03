@@ -61,7 +61,7 @@ package object expr {
     case Abs( v, s ) if sub.domain contains v => applySub( Substitution( sub.map - v ), t )
     case Abs( v, s ) if sub.range contains v =>
       // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
-      val newV = rename( v, ( freeVariables( s ) ++ sub.range ).toList )
+      val newV = rename( v, freeVariables( s ) union sub.range )
       applySub( sub, Abs( newV, applySub( Substitution( v -> newV ), s ) ) )
     case Abs( v, s ) => Abs( v, applySub( sub, s ) )
   }

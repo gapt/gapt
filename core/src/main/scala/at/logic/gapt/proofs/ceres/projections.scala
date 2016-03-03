@@ -19,7 +19,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   def reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
     val es = proof.endSequent
     val x = Var( "x", t )
-    val x_ = rename( x, es.formulas.flatMap( freeVariables( _ ) ).toList )
+    val x_ = rename( x, freeVariables( es ) )
     val ax: LKProof = Axiom( Nil, List( Eq( x_, x_ ) ) )
     val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
     val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningRightRule( p, f ) )

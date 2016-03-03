@@ -202,7 +202,7 @@ abstract class StrongQuantTactic extends Tactic[Var] {
         else
           ev.success
       case None =>
-        rename( bound, freeVariables( goal.conclusion ).toList ).success
+        rename( bound, freeVariables( goal.conclusion ) ).success
     }
 }
 
