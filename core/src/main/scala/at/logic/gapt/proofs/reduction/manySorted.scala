@@ -15,20 +15,23 @@ trait FOLReduction {
   def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent
 }
 
-case class ErasureReduction( signature: Set[Const] ) extends FOLReduction {
-  val termErasure = signature.zipWithIndex map {
-    case ( c @ Const( name, FunctionType( _, argTypes ) ), i ) =>
-      c -> FOLFunctionConst( s"f_${name}_$i", argTypes.size )
+case class ErasureReduction( ctx: FiniteContext ) extends FOLReduction {
+  val termErasure = ctx.constants map {
+    case c @ Const( name, FunctionType( _, argTypes ) ) =>
+      c -> FOLFunctionConst( s"f_$name", argTypes.size )
   } toMap
-
   val termReification = termErasure map { _.swap }
 
-  val predicateErasure = signature.zipWithIndex collect {
-    case ( c @ HOLAtomConst( name, argTypes ), i ) =>
-      c -> FOLAtomConst( s"P_${name}_$i", argTypes.size )
+  val predicateErasure = ctx.constants collect {
+    case c @ HOLAtomConst( name, argTypes ) =>
+      c -> FOLAtomConst( s"P_$name", argTypes.size )
   } toMap
-
   val predicateReification = predicateErasure map { _.swap }
+
+  val reducedContext = FiniteContext() +
+    Context.Sort( "i" ) ++
+    termErasure.values ++
+    predicateErasure.values
 
   private def renameFreeVars( vs: Set[Var] ) =
     vs.toSeq.zipWithIndex.map { case ( v, i ) => v -> FOLVar( s"${v.name}_$i" ) }.toMap
@@ -180,13 +183,17 @@ case class ErasureReduction( signature: Set[Const] ) extends FOLReduction {
   }
 }
 
-case class PredicateReduction( signature: Set[Const] ) extends FOLReduction {
-  val baseTypes = signature flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
+case class PredicateReduction( ctx: FiniteContext ) extends FOLReduction {
+  val baseTypes = ctx.constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
   val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( s"is_$ty", ty ) }.toMap
   val predicates = predicateForType.values.toSet
-  val erasureReduction = ErasureReduction( signature ++ predicates )
 
-  val predicateAxioms = existsclosure( signature.map {
+  val intermediateContext = ctx ++ predicates
+  val erasureReduction = ErasureReduction( intermediateContext )
+
+  def reducedContext = erasureReduction.reducedContext
+
+  val predicateAxioms = existsclosure( ctx.constants.map {
     case c @ Const( _, FunctionType( retType, argTypes ) ) =>
       val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
       And( args map { a => predicateForType( a.exptype )( a ) } ) --> predicateForType( retType )( c( args: _* ) )

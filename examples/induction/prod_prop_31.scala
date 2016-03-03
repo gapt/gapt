@@ -8,7 +8,7 @@ import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemize }
-import at.logic.gapt.proofs.reduction.{PredicateReduction, ErasureReduction}
+import at.logic.gapt.proofs.reduction.{ PredicateReduction, ErasureReduction }
 import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem }
@@ -52,13 +52,10 @@ object prod_prop_31 extends Script {
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     if ( true ) {
       val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
-      val reduction = PredicateReduction( constants( instanceSequent ) filter {
-        case EqC( _ ) | _: LogicalConstant => false
-        case _                             => true
-      } )
+      val reduction = ErasureReduction( ctx )
       val erasedInstanceSequent = reduction forward instanceSequent
       println( erasedInstanceSequent )
-      val Some( erasedProof ) = SPASS getRobinsonProof erasedInstanceSequent
+      val Some( erasedProof ) = Escargot getRobinsonProof erasedInstanceSequent
       val reifiedProof = reduction.back( erasedProof, instanceSequent )
       val reifiedExpansion = RobinsonToExpansionProof( reifiedProof, instanceSequent )
       inst -> reifiedExpansion

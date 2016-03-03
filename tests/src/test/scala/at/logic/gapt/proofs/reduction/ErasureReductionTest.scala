@@ -1,32 +1,25 @@
 package at.logic.gapt.proofs.reduction
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ InputClause, MguResolution }
-import at.logic.gapt.proofs.{ Ant, Suc, Clause }
 import org.specs2.mutable._
 
 class ErasureReductionTest extends Specification {
   "two-sorted" in {
-    val nat = TBase( "nat" )
-    val witness = TBase( "witness" )
+    implicit var ctx = FiniteContext()
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += Context.Sort( "witness" )
+    ctx += hoc"f: witness > witness"
+    ctx += hoc"P: nat > witness > o"
+    ctx += hoc"Q: nat > o"
 
-    val o = Const( "0", nat )
-    val s = Const( "s", nat -> nat )
+    val red = ErasureReduction( ctx )
 
-    val f = Const( "f", witness -> witness )
-
-    val P = HOLAtomConst( "P", nat, witness )
-    val Q = HOLAtomConst( "Q", nat )
-
-    val x = Var( "x", nat )
-    val y = Var( "y", witness )
-
-    val red = ErasureReduction( Set( o, s, f, P, Q ) )
-
-    val c1 = Clause() :+ P( o, y )
-    val c2 = P( x, f( y ) ) +: Clause() :+ P( s( x ), y )
-    val c3 = P( x, y ) +: Clause() :+ Q( x )
-    val c4 = Q( s( s( s( s( o ) ) ) ) ) +: Clause()
+    val c1 = Clause() :+ hoa"P 0 y"
+    val c2 = hoa"P x (f y)" +: Clause() :+ hoa"P (s x) y"
+    val c3 = hoa"P x y" +: Clause() :+ hoa"Q x"
+    val c4 = hoa"Q (s (s (s (s 0))))" +: Clause()
 
     val Seq( ec1, ec2, ec3, ec4 ) = Seq( c1, c2, c3, c4 ) map { red forward }
 
