@@ -3,6 +3,7 @@ package at.logic.gapt.provers.spass
 import java.io.IOException
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch.{ RefutationSketch, RefutationSketchToRobinson, SketchAxiom, SketchInference }
@@ -17,29 +18,32 @@ import scala.util.{ Failure, Success }
 object SPASS extends SPASS
 class SPASS extends ResolutionProver with ExternalProgram {
 
-  def atom2dfg( a: FOLAtom ) = a match {
-    case Eq( t, s )          => s"equal(${term2dfg( t )}, ${term2dfg( s )})"
-    case FOLAtom( n, Seq() ) => n
-    case FOLAtom( n, as )    => s"$n(${as map term2dfg mkString ","})"
-  }
-  def term2dfg( t: FOLTerm ): String = t match {
+  def expr2dfg( e: LambdaExpression ): String = e match {
+    case Bottom()             => "false"
+    case Or( a, b )           => s"or(${expr2dfg( a )}, ${expr2dfg( b )})"
+    case Neg( a )             => s"not(${expr2dfg( a )})"
+    case All( v, a )          => s"forall([${v.name}],${expr2dfg( a )})"
+    case Eq( t, s )           => s"equal(${expr2dfg( t )}, ${expr2dfg( s )})"
+    case FOLAtom( n, Seq() )  => n
+    case FOLAtom( n, as )     => s"$n(${as map expr2dfg mkString ","})"
     case FOLVar( n )          => n
     case FOLConst( n )        => n
-    case FOLFunction( f, as ) => s"$f(${as map term2dfg mkString ","})"
+    case FOLFunction( f, as ) => s"$f(${as map expr2dfg mkString ","})"
   }
+
   def cls2dfg( cls: FOLClause ): String = {
     val cls_ = FOLSubstitution( freeVariables( cls ).zipWithIndex.
       map { case ( v, i ) => v -> FOLVar( s"X$i" ) } )( cls )
-    s"clause(|| ${cls_.antecedent map atom2dfg mkString " "} -> ${cls_.succedent map atom2dfg mkString " "})."
+    s"formula(${expr2dfg( univclosure( cls_.toFormula ) )})."
   }
 
   override def getRobinsonProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
     case ( renaming, cnf ) =>
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
-      val list_of_clauses =
+      val list_of_formulae =
         s"""
-         |list_of_clauses(axioms, cnf).
+         |list_of_formulae(axioms).
          |${cnf.asInstanceOf[Traversable[FOLClause]] map cls2dfg mkString "\n"}
          |end_of_list.
        """.stripMargin
@@ -73,7 +77,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
          |
          |$list_of_symbols
          |
-         |$list_of_clauses
+         |$list_of_formulae
          |
          |end_problem.
        """.stripMargin
