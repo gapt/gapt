@@ -14,7 +14,6 @@ import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.ParsingException
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
-import at.logic.gapt.formats.simple.SimpleXMLProofParser
 import at.logic.gapt.formats.xml.{ XMLParser, ProofDatabase }
 import XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.readers.XMLReaders._
@@ -46,38 +45,6 @@ class FileParser( main: ProofToolViewer[_] ) {
     termTrees = Nil
     proofdb = db
   }
-
-  def stabFileReader( input: InputStream ) {
-    SchemaProofDB.clear
-    resolutionProofSchemaDB.clear
-    termTrees = Nil
-    proofdb = new ProofDatabase( Map(), Nil, Nil, Nil )
-    proofs = ( new XMLReader( input ) with SimpleXMLProofParser ).getNamedTrees()
-  }
-
-  //  def lksFileReader( input: InputStreamReader ) {
-  //    resolutionProofSchemaDB.clear
-  //    proofs = Nil
-  //    termTrees = Nil
-  //    val ps = sFOParser.parseProofs( input ) // constructs dbTRS as a side effect.
-  //    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
-  //    //  val start = System.currentTimeMillis()
-  //    proofdb = new ProofDatabase( defs, ps, Nil, Nil )
-  //    //  val end = System.currentTimeMillis()
-  //    //  println("parsing took " + (end - start).toString)
-  //  }
-  //
-  //  def lksCNTFileReader( input: InputStreamReader ) {
-  //    resolutionProofSchemaDB.clear
-  //    proofs = Nil
-  //    termTrees = Nil
-  //    val ps = SCHOLParser.parseProofs( input ) // constructs dbTRS as a side effect.
-  //    val defs = dbTRS.map.map( p => p._2._1 :: p._2._2 :: Nil ).flatten.toMap[LambdaExpression, LambdaExpression]
-  //    //  val start = System.currentTimeMillis()
-  //    proofdb = new ProofDatabase( defs, ps, Nil, Nil )
-  //    //  val end = System.currentTimeMillis()
-  //    //  println("parsing took " + (end - start).toString)
-  //  }
 
   def rsFileReader( input: InputStreamReader ) {
     ParseResSchema( input ) // constructs resolutionProofSchemaDB and dbTRS as a side effect.
@@ -128,24 +95,8 @@ class FileParser( main: ProofToolViewer[_] ) {
       //      else if ( path.endsWith( ".lks.gz" ) ) lksFileReader( gzFileStreamReader( path ) )
       else if ( path.endsWith( ".rs" ) ) rsFileReader( fileStreamReader( path ) )
       else if ( path.endsWith( ".rs.gz" ) ) rsFileReader( gzFileStreamReader( path ) )
-      else if ( path.endsWith( ".xml" ) ) try {
-        ceresFileReader( new FileInputStream( path ) )
-      } catch {
-        case pe: ParsingException =>
-          main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
-            case Dialog.Result.Yes => stabFileReader( new FileInputStream( path ) )
-            case _                 =>
-          }
-      }
-      else if ( path.endsWith( ".xml.gz" ) ) try {
-        ceresFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
-      } catch {
-        case pe: ParsingException =>
-          main.questionMessage( "There was a parsing exception:" + dnLine + " \t " + pe.getMessage + dnLine + "Continue with another parser?" ) match {
-            case Dialog.Result.Yes => stabFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
-            case _                 =>
-          }
-      }
+      else if ( path.endsWith( ".xml" ) ) ceresFileReader( new FileInputStream( path ) )
+      else if ( path.endsWith( ".xml.gz" ) ) ceresFileReader( new GZIPInputStream( new FileInputStream( path ) ) )
       else if ( path.endsWith( ".ivy" ) ) ivyFileReader( path )
       //  else if (path.endsWith(".ivy.gz")) ivyFileReader(path) // This will be added later
       else main.warningMessage( "Can not recognize file extension: " + path.substring( path.lastIndexOf( "." ) ) )
