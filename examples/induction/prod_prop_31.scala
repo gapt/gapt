@@ -5,8 +5,9 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.grammars._
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
-import at.logic.gapt.proofs.lk.{ skolemize, LKToExpansionProof }
+import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemize }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem }
 import at.logic.gapt.provers.prover9.Prover9
@@ -27,15 +28,19 @@ object prod_prop_31 extends Script {
   (assert-not (forall ((x list)) (= (qrev (qrev x nil) nil) x)))
   (check-sat)
 """
+  implicit var ctx = tipProblem.context
 
   val sequent = tipProblem toSequent
 
   val list = TBase( "list" )
   val sk_a = TBase( "sk_a" )
-  val nil = Const( "nil", list )
-  val cons = Const( "cons", sk_a -> ( list -> list ) )
+  val nil = le"nil"
+  val cons = le"cons"
 
-  def mkList( i: Int ) = ( 0 until i ).foldRight[LambdaExpression]( nil ) { ( j, l ) => cons( Const( s"a$j", sk_a ), l ) }
+  val as = 0 until 10 map { j => Const( s"a$j", sk_a ) }
+  ctx ++= as
+
+  def mkList( i: Int ) = ( 0 until i ).foldRight[LambdaExpression]( nil ) { ( j, l ) => cons( as( j ), l ) }
 
   val instances = 0 to 2 map mkList
 
@@ -114,8 +119,13 @@ object prod_prop_31 extends Script {
 
   val inst = mkList( 8 )
   val lang = logicalRS parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
-  println( s"Validity for instance x = $inst:" )
+  println( s"Validity for instance x = ${inst.toSigRelativeString}:" )
   println( Z3 isValid Or( lang toSeq ) )
+  if ( true ) {
+    val Some( lk ) = Escargot getLKProof Sequent( lang.toSeq map { case Neg( f ) => ( f, false ) case f => ( f, true ) } )
+    println( "Interpolant of the instance sequent:" )
+    println( simplify( ExtractInterpolant( lk, lk.conclusion.map( _ => false, _ => true ) )._3 ).toSigRelativeString )
+  }
   println()
 
   // FIXME: currently learns datatype from recursion scheme :-/
