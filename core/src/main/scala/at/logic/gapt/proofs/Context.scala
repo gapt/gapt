@@ -67,6 +67,8 @@ case class FiniteContext(
         copy( typeDefs = typeDefs + typeDef, constants = constants ++ constructors )
     }
   }
+  def ++( typeDefs: Iterable[TypeDef] )( implicit dummyImplicit: DummyImplicit ): FiniteContext =
+    typeDefs.foldLeft( this )( _ + _ )
 
   def +( defn: ( String, LambdaExpression ) ): FiniteContext = {
     val ( name, by ) = defn

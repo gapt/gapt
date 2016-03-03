@@ -1,10 +1,11 @@
 package at.logic.gapt.proofs.reduction
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ existsclosure, CNFn }
+import at.logic.gapt.expr.hol.{ atoms, univclosure, existsclosure, CNFn }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.proofs.resolution.{ InputClause, mapInputClauses, ResolutionProof }
+import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
@@ -222,7 +223,7 @@ case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
 
   private def guard( formula: HOLFormula ): HOLFormula = formula match {
     case Top() | Bottom() | HOLAtom( _, _ ) => formula
-    case Neg( f )                           => Neg( guard( formula ) )
+    case Neg( f )                           => Neg( guard( f ) )
     case And( f, g )                        => And( guard( f ), guard( g ) )
     case Or( f, g )                         => Or( guard( f ), guard( g ) )
     case Imp( f, g )                        => Imp( guard( f ), guard( g ) )
@@ -247,3 +248,156 @@ case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
 
   override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
 }
+
+case class LambdaEliminationReduction( context: FiniteContext, lambdas: Set[Abs] ) extends HOLReduction {
+  val nameGen = rename.awayFrom( context.constants )
+
+  private val replacements = mutable.Map[Abs, LambdaExpression]()
+  private val extraAxioms = mutable.Buffer[HOLFormula]()
+
+  private def setup( e: LambdaExpression ): LambdaExpression = e match {
+    case App( a, b )                           => App( setup( a ), setup( b ) )
+    case v: Var                                => v
+    case c: Const                              => c
+    case lam: Abs if replacements contains lam => replacements( lam )
+    case lam @ Abs( x, t: HOLFormula ) =>
+      val fvs = freeVariables( lam ).toSeq
+      val lamSym = Const( nameGen freshWithIndex "lambda", FunctionType( lam.exptype, fvs.map {
+        _.exptype
+      } ) )
+      replacements( lam ) = lamSym( fvs: _* )
+      extraAxioms += univclosure( replacements( lam )( x ) <-> t )
+      replacements( lam )
+    case lam @ Abs( x, t ) =>
+      val fvs = freeVariables( lam ).toSeq
+      val lamSym = Const( nameGen freshWithIndex "lambda", FunctionType( lam.exptype, fvs.map {
+        _.exptype
+      } ) )
+      replacements( lam ) = lamSym( fvs: _* )
+      extraAxioms += univclosure( replacements( lam )( x ) === t )
+      replacements( lam )
+  }
+
+  private def setup( f: HOLFormula ): HOLFormula = f match {
+    case All( x, g )      => All( x, setup( g ) )
+    case Ex( x, g )       => Ex( x, setup( g ) )
+    case Top() | Bottom() => f
+    case Neg( g )         => Neg( setup( g ) )
+    case And( g, h )      => And( setup( g ), setup( h ) )
+    case Or( g, h )       => Or( setup( g ), setup( h ) )
+    case Imp( g, h )      => Imp( setup( g ), setup( h ) )
+    case Apps( hd, args ) => hd( args map setup: _* ).asInstanceOf[HOLFormula]
+  }
+
+  lambdas foreach setup
+
+  val reducedContext = context ++ constants( replacements.values )
+
+  def delambdaify( e: LambdaExpression ): LambdaExpression = e match {
+    case App( a, b )       => App( delambdaify( a ), delambdaify( b ) )
+    case lam: Abs          => replacements( lam )
+    case _: Var | _: Const => e
+  }
+
+  def delambdaify( f: HOLFormula ): HOLFormula = f match {
+    case All( x, g )      => All( x, delambdaify( g ) )
+    case Ex( x, g )       => Ex( x, delambdaify( g ) )
+    case Top() | Bottom() => f
+    case Neg( g )         => Neg( delambdaify( g ) )
+    case And( g, h )      => And( delambdaify( g ), delambdaify( h ) )
+    case Or( g, h )       => Or( delambdaify( g ), delambdaify( h ) )
+    case Imp( g, h )      => Imp( delambdaify( g ), delambdaify( h ) )
+    case Apps( hd, args ) => hd( args map delambdaify: _* ).asInstanceOf[HOLFormula]
+  }
+
+  override def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent map delambdaify
+
+  override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = ???
+
+  override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
+}
+
+case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
+  private val nameGen = rename.awayFrom( context.constants )
+  private val typeNameGen = new NameGenerator( context.typeDefs.map { _.ty.name } )
+
+  val partialAppTypes = context.constants flatMap {
+    case Const( _, FunctionType( _, argTypes ) ) =>
+      argTypes.filterNot { _.isInstanceOf[TBase] }
+  } map { t => ( TBase( typeNameGen freshWithIndex "fun" ), t ) } toMap
+
+  val partiallyAppedTypes = partialAppTypes.map { _.swap }
+
+  val applyFunctions = partialAppTypes.map {
+    case ( partialAppType, ty @ FunctionType( ret, args ) ) =>
+      partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType -> ty )
+  }
+
+  val partialApplicationFuns =
+    for {
+      ( partialAppType, funType @ FunctionType( ret, argTypes ) ) <- partialAppTypes
+      g @ Const( _, FunctionType( `ret`, gArgTypes ) ) <- context.constants
+      if gArgTypes endsWith argTypes
+    } yield ( Const(
+      nameGen freshWithIndex "partial",
+      FunctionType( partialAppType, gArgTypes.dropRight( argTypes.size ) map reduceArgTy )
+    ), g, funType )
+
+  val newConstants = context.constants.map {
+    case c @ Const( n, t ) => c -> Const( n, reduceFunTy( t ) )
+  }.toMap
+
+  val extraAxioms =
+    for {
+      f @ Const( _, FunctionType( ret, ( partialAppType: TBase ) :: argTypes ) ) <- applyFunctions.values
+      ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ) ), g, _ ) <- partialApplicationFuns
+    } yield {
+      val varGen = rename.awayFrom( Set[Var]() )
+      val gArgVars = pappArgTypes map { Var( varGen freshWithIndex "x", _ ) }
+      val fArgVars = argTypes map { Var( varGen freshWithIndex "y", _ ) }
+      univclosure( applyFunctions( partialAppType )( partialApplicationFun( gArgVars: _* ) )( fArgVars: _* ) ===
+        newConstants( g )( gArgVars: _* )( fArgVars: _* ) )
+    }
+
+  def reduceFunTy( t: Ty ): Ty = {
+    val FunctionType( ret, args ) = t
+    FunctionType( ret, args map reduceArgTy )
+  }
+  def reduceArgTy( t: Ty ): TBase = t match {
+    case t: TBase => t
+    case _        => partiallyAppedTypes( t )
+  }
+
+  val reducedContext = context.copy( constants = newConstants.values.toSet ) ++
+    partialAppTypes.keys.map { Context.Sort( _ ) } ++
+    applyFunctions.values ++
+    partialApplicationFuns.map { _._1 }
+
+  def reduce( e: LambdaExpression ): LambdaExpression = e match {
+    case All( Var( x, t ), f ) => All( Var( x, reduceArgTy( t ) ), reduce( f ) )
+    case Ex( Var( x, t ), f )  => Ex( Var( x, reduceArgTy( t ) ), reduce( f ) )
+    case Top() | Bottom()      => e
+    case Neg( f )              => Neg( reduce( f ) )
+    case And( g, h )           => And( reduce( g ), reduce( h ) )
+    case Or( g, h )            => Or( reduce( g ), reduce( h ) )
+    case Imp( g, h )           => Imp( reduce( g ), reduce( h ) )
+
+    case Var( n, t )           => Var( n, reduceArgTy( t ) )
+    case Apps( f: Const, args ) if partiallyAppedTypes.contains( e.exptype ) =>
+      val Some( ( p, _, _ ) ) = partialApplicationFuns find { paf => paf._2 == f && paf._3 == e.exptype }
+      p( args map reduce: _* )
+    case Apps( f: Var, args ) =>
+      applyFunctions( reduceArgTy( f.exptype ) )( reduce( f ) )( args map reduce: _* )
+    case Apps( f: Const, args ) =>
+      newConstants( f )( args map reduce: _* )
+    //    case Abs( Var( x, t ), b ) => Abs( Var( x, reduceArgTy( t ) ), reduce( b ) )
+  }
+
+  override def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map { reduce( _ ).asInstanceOf[HOLFormula] }
+
+  override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = ???
+
+  override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
+}
+
+case class HOFunctionReduction2( context: FiniteContext )
