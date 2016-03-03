@@ -232,6 +232,7 @@ functionality of these systems will not be available.
   the commands \texttt{prover9} and \texttt{prooftrans} are available.
 \item E theorem prover (\url{http://eprover.org/})
 \item Vampire 4.0 (\url{http://www.vprover.org/})
+\item SPASS (\url{http://www.spass-prover.org/})
 \item LeanCoP (\url{http://leancop.de/})
 \item VeriT (\url{http://www.verit-solver.org/})
 \item Z3 (\url{https://github.com/Z3Prover/z3})
@@ -817,9 +818,9 @@ Some(ExpansionProofWithCut(List(),[p1] ETAtom(p(0): o, false)
 
 \end{clilisting}
 
-All of the above works with E prover (\cli{EProver}) and Vampire
-(\cli{Vampire}) as well, we will just show \cli{EProver.getLKProof} as an
-example:
+All of the above works with the E prover (\cli{EProver}), SPASS (\cli{SPASS}),
+and Vampire (\cli{Vampire}) as well, we will just show \cli{EProver.getLKProof}
+as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res26: Option[at.logic.gapt.proofs.lk.LKProof] =

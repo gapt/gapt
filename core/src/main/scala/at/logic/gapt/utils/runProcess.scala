@@ -16,8 +16,8 @@ object runProcess {
 
   def apply( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false ): String =
     withExitValue( cmd, stdin, catchStderr ) match {
-      case ( 0, out )       => out
-      case ( exitValue, _ ) => throw new IOException( s"${cmd mkString " "} exited with value $exitValue" )
+      case ( 0, out )         => out
+      case ( exitValue, out ) => throw new IOException( s"${cmd mkString " "} exited with value $exitValue:\n$out" )
     }
 
   def withExitValue( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false ): ( Int, String ) = {

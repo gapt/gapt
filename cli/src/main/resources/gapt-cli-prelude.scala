@@ -29,6 +29,7 @@ import at.logic.gapt.provers.vampire._
 import at.logic.gapt.provers.veriT._
 import at.logic.gapt.provers.smtlib._
 import at.logic.gapt.provers.escargot._
+import at.logic.gapt.provers.spass._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils._
 import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
