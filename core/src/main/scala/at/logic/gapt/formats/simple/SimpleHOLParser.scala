@@ -9,7 +9,6 @@ package at.logic.gapt.formats.simple
 
 import at.logic.gapt.expr.schema.Tindex
 import at.logic.gapt.expr.{ To, FunctionType }
-import at.logic.gapt.formats.HOLParser
 import at.logic.gapt.expr._
 
 import scala.util.matching.Regex
