@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.reduction
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ existsclosure, containsStrongQuantifier, CNFn }
+import at.logic.gapt.expr.hol.{ existsclosure, CNFn }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.proofs.resolution.{ InputClause, mapInputClauses, ResolutionProof }
@@ -211,10 +211,8 @@ case class PredicateReduction( ctx: FiniteContext ) extends FOLReduction {
     case Ex( x @ Var( _, t ), f )           => Ex( x, predicateForType( t )( x ) & guard( f ) )
   }
 
-  private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent = {
-    require( !containsStrongQuantifier( sequent ) )
+  private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
     predicateAxioms ++ sequent.map( guard )
-  }
 
   override def forward( sequent: HOLSequent ): FOLSequent =
     erasureReduction.forward( guardAndAddAxioms( sequent ) )
