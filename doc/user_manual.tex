@@ -819,8 +819,10 @@ Some(ExpansionProofWithCut(List(),[p1] ETAtom(p(0): o, false)
 \end{clilisting}
 
 All of the above works with the E prover (\cli{EProver}), SPASS (\cli{SPASS}),
-and Vampire (\cli{Vampire}) as well, we will just show \cli{EProver.getLKProof}
-as an example:
+and Vampire (\cli{Vampire})\footnote{Unfortunately, we have to disable
+  splitting in both SPASS and Vampire because we are unable to import proofs
+  that contain splitting inferences.} as well, we will just show
+\cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res26: Option[at.logic.gapt.proofs.lk.LKProof] =
