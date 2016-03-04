@@ -17,9 +17,9 @@ class LeanCoP extends OneShotProver with ExternalProgram {
   val nLine = sys.props( "line.separator" )
 
   override def isValid( s: HOLSequent ): Boolean =
-    getExpansionProofWithCut( s ).isDefined
+    getExpansionProof( s ).isDefined
 
-  override def getExpansionProofWithCut( s: HOLSequent ): Option[ExpansionProofWithCut] =
+  override def getExpansionProof( s: HOLSequent ): Option[ExpansionProof] =
     withRenamedConstants( s ) { seq =>
       require( seq.succedent.size == 1 )
 

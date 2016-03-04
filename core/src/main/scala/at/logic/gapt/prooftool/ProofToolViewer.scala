@@ -45,8 +45,8 @@ object prooftool {
       case p: SequentProof[_, _] =>
         def renderer( x: T forSome { type T } ) = x.toString //TODO: have a better default
         new SequentProofViewer( name, p, renderer ).showFrame()
-      case ep: ExpansionProofWithCut => new ExpansionSequentViewer( name, ep.cuts ++: ep.expansionSequent ).showFrame()
-      case es: ExpansionSequent      => new ExpansionSequentViewer( name, es ).showFrame()
+      case ep: ExpansionProofWithCut => apply( ep.expansionWithCutAxiom, name )
+      case ep: ExpansionProof        => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
       case p: lkOld.base.LKProof     => new OldLKViewer( name, p ).showFrame()
       case p: TreeProof[_]           => new TreeProofViewer( name, p ).showFrame()
       case p: Proof[_]               => new ResolutionProofViewer( name, p ).showFrame()

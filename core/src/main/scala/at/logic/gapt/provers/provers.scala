@@ -51,17 +51,11 @@ trait Prover {
   def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
     getExpansionProof( seq ) map { _.expansionSequent }
 
-  def getExpansionProofWithCut( formula: HOLFormula ): Option[ExpansionProofWithCut] =
-    getExpansionProofWithCut( Sequent() :+ formula )
-
-  def getExpansionProofWithCut( seq: HOLSequent ): Option[ExpansionProofWithCut] =
-    getLKProof( seq ) map { LKToExpansionProof( _ ) }
-
   def getExpansionProof( formula: HOLFormula ): Option[ExpansionProof] =
     getExpansionProof( Sequent() :+ formula )
 
   def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
-    getExpansionProofWithCut( seq ) map { eliminateCutsET( _ ) }
+    getLKProof( seq ) map { LKToExpansionProof( _ ) } map { eliminateCutsET( _ ) }
 
   /**
    * Starts an incremental proving session.

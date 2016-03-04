@@ -67,3 +67,43 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
 }
+
+class ExpansionProofDefinitionEliminationTest extends Specification with SatMatchers {
+  "simple unipolar definition" in {
+    implicit var ctx = FiniteContext()
+    ctx += Context.Sort( "i" )
+    ctx += hoc"P: i>o"
+    ctx += hoc"f: i>i"
+    ctx += hoc"c: i"
+    ctx += hof"D x = (P c ∧ P (f c))"
+
+    val d = ETWeakQuantifier(
+      hof"∀x (D x <-> P x ∧ P (f x))",
+      Map( le"c" ->
+        ETAnd(
+          ETImp(
+            ETAtom( hoa"D c", true ),
+            ETAnd( ETWeakening( hof"P c", false ), ETAtom( hoa"P (f c)", false ) )
+          ),
+          ETWeakening( hof"P c ∧ P (f c) ⊃ D c", false )
+        ) )
+    )
+    val f = ETWeakQuantifier(
+      hof"∃x (P x ∧ P (f x) ⊃ P (f x))",
+      Map( le"c" ->
+        ETImp(
+          ETDefinedAtom( hoa"D c", false, ctx.definition( "D" ).get ),
+          ETAtom( hoa"P (f c)", true )
+        ) )
+    )
+
+    val epwd = ExpansionProof( d +: Sequent() :+ f )
+    epwd.deep must beValidSequent
+
+    val epwc = eliminateDefsET( epwd, false )
+    epwc.deep must beValidSequent
+
+    val ep = eliminateCutsET( epwc )
+    ep.deep must beValidSequent
+  }
+}

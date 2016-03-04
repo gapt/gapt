@@ -438,6 +438,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   }
 
   def withFilter( p: A => Boolean ): Sequent[A] = filter( p )
+
+  def groupBy[B]( f: A => B ): Sequent[( B, Seq[A] )] =
+    Sequent( antecedent groupBy f toSeq, succedent groupBy f toSeq )
 }
 
 object Sequent {
