@@ -377,7 +377,7 @@ trait TokenToLKConverter extends Logger {
     }
 
     def inferTerm( x: Var, holf: HOLFormula ): LambdaExpression = {
-      NaiveIncompleteMatchingAlgorithm.matchTerm( holf, aux, Set() ) match {
+      syntacticMatching( holf, aux ) match {
         case Some( sub ) =>
           val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
           if ( auxterm.nonEmpty ) {
@@ -428,7 +428,7 @@ trait TokenToLKConverter extends Logger {
     }
 
     def inferTerm( x: Var, f: HOLFormula ): LambdaExpression = {
-      NaiveIncompleteMatchingAlgorithm.matchTerm( f, aux, Set() ) match {
+      syntacticMatching( f, aux ) match {
         case Some( sub ) =>
           val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the term was projected away we try the identity function
           if ( auxterm.nonEmpty ) {
@@ -852,7 +852,7 @@ trait TokenToLKConverter extends Logger {
     require( auxterm.isDefined, "Can not refer to a subproof(CONTINUEFROM): Need a proof name to link to!" )
     val link = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
     val ps: List[LKProof] = proofs.toList.flatMap( x => {
-      NaiveIncompleteMatchingAlgorithm.matchTerm( x._1, link, Set() ) match {
+      syntacticMatching( x._1, link ) match {
         case None => Nil
         case Some( sub ) =>
           applySubstitution( x._2, sub )._1 :: Nil
@@ -896,7 +896,7 @@ trait TokenToLKConverter extends Logger {
       val ( _, ax2 ) = stripUniversalQuantifiers( ax1 )
       val ax = normalize( sub( ax2 ) )
       //println("Trying:"+f(ax)+" against "+f(auxf))
-      val r1 = NaiveIncompleteMatchingAlgorithm.matchTerm( ax, auxf, Set() ) match {
+      val r1 = syntacticMatching( ax, auxf ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub ) =>
           val sub2 = Substitution( sub.map.filter( x => x._1 != x._2 ) )
@@ -998,7 +998,7 @@ trait TokenToLKConverter extends Logger {
       val ( _, ax2 ) = stripUniversalQuantifiers( ax1 )
       val ax = betaNormalize( sub( ax2 ).asInstanceOf[LambdaExpression] )( StrategyOuterInner.Outermost )
       //println("Trying: "+ f(ax))
-      val r1 = NaiveIncompleteMatchingAlgorithm.matchTerm( ax, auxf, Set() ) match {
+      val r1 = syntacticMatching( ax, auxf ) match {
         case Some( sub ) if sub( ax ) syntaxEquals ( auxf ) => ( name, ax1, sub ) :: Nil
         case Some( sub2 ) =>
           val sub = Substitution( sub2.map.filterNot( x => x._1 == x._2 ) )
@@ -1066,7 +1066,7 @@ trait TokenToLKConverter extends Logger {
         case RToken( "CONTINUEFROM", Some( f ), _, _, _ ) =>
           //find the matching proofs
           proofnames.filter( p =>
-            NaiveIncompleteMatchingAlgorithm.matchTerm( p, c( LLKFormulaParser.ASTtoHOL( naming, f ) ), Set() ).isDefined ) match {
+            syntacticMatching( p, c( LLKFormulaParser.ASTtoHOL( naming, f ) ) ).isDefined ) match {
             //and check if the dependency is ok
             case Nil =>
               throw new HybridLatexParserException( "Could not find a matching dependency for proof " + f
@@ -1081,7 +1081,7 @@ trait TokenToLKConverter extends Logger {
         case RToken( "INSTLEMMA", Some( f ), _, _, _ ) =>
           //find the matching proofs
           proofnames.filter( p =>
-            NaiveIncompleteMatchingAlgorithm.matchTerm( p, c( LLKFormulaParser.ASTtoHOL( naming, f ) ), Set() ).isDefined ) match {
+            syntacticMatching( p, c( LLKFormulaParser.ASTtoHOL( naming, f ) ) ).isDefined ) match {
             //and check if the dependency is ok
             case Nil =>
               throw new HybridLatexParserException( "Could not find a matching dependency for proof " + f

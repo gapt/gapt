@@ -9,7 +9,7 @@ import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
 import at.logic.gapt.utils.time
 
 object vtrat_comparison extends Script {
-  val N = 13
+  val N = 8
   val terms = ( 0 until N ).map { i => FOLFunction( "r", Numeral( i ), Numeral( N - i ) ) }.toSet
 
   val A = FOLConst( "A" )

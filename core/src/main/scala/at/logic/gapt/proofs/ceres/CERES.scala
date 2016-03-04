@@ -111,11 +111,11 @@ class CERES {
     val nLine = sys.props( "line.separator" )
     //println( s"end-sequent: $endsequent" )
     //println( s"looking for projection to $axfs" )
-    projections.find( x => StillmanSubsumptionAlgorithmHOL.subsumes( x.endSequent diff endsequent, axfs ) ) match {
+    projections.find( x => clauseSubsumption( x.endSequent diff endsequent, axfs ).isDefined ) match {
       case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
         projections.map( _.endSequent.diff( endsequent ) ).mkString( "{" + nLine, ";" + nLine, nLine + "}" ) )
       case Some( proj ) =>
-        val Some( sub ) = StillmanSubsumptionAlgorithmHOL.subsumes_by( proj.endSequent diff endsequent, axfs )
+        val Some( sub ) = clauseSubsumption( proj.endSequent diff endsequent, axfs )
         val subproj = sub( proj )
         val duplicates = ( subproj.endSequent diff endsequent ) diff axfs
         //println( s"duplicates: $duplicates" )

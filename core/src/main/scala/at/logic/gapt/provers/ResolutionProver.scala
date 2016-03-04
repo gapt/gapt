@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.lk.LKProof
 
 abstract class ResolutionProver extends OneShotProver {
 
-  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, Const], List[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
+  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, Const], Traversable[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
     val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf.toList )
     f( renaming, renamedCNF ) map { renamedProof =>
       TermReplacement( renamedProof, invertRenaming toMap )
@@ -21,7 +21,7 @@ abstract class ResolutionProver extends OneShotProver {
     val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
     f( renamedSeq ) map { renamedProof =>
       val usedVars = renamedProof.subProofs.flatMap { p => variables( p ) }
-      val varRenaming = rename( invertRenaming.values.toSet, usedVars )
+      val varRenaming = rename( invertRenaming.values, usedVars )
       Substitution( varRenaming.map( _.swap ) )( TermReplacement( renamedProof, invertRenaming.mapValues( varRenaming ).toMap[LambdaExpression, LambdaExpression] ) )
     }
   }

@@ -8,7 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr.LambdaExpression
-import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
+import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lkOld
@@ -164,9 +164,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
         scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
         val result = chooser.selectedFile.getPath
         try {
-          if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-            XMLExporter( result, db.getProofDB )
-          } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
+          if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
             val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
             file.write( ProofToLatexExporter( db.getProofs.map( pair => ( pair._1, lkNew2Old( pair._2.asInstanceOf[LKProof] ) ) ) ) )

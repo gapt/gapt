@@ -46,7 +46,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     IvyToRobinson( ivyProof )
   }
 
-  private def toP9Input( cnf: List[HOLClause], renaming: Map[Const, Const] ): String = {
+  private def toP9Input( cnf: Traversable[HOLClause], renaming: Map[Const, Const] ): String = {
     val commands = ArrayBuffer[String]()
 
     commands += "set(quiet)" // suppresses noisy output on stderr

@@ -14,7 +14,6 @@ import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkOld.{ deleteTautologies, subsumedClausesRemovalHOL }
 
 /* *************************************************************************** *
    n-Tape Proof script: loads an instance of the n-Tape proof, extracts the

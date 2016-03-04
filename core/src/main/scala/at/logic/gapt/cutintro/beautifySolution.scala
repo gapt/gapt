@@ -47,7 +47,7 @@ object beautifySolution {
           val subsumingFormulas = for {
             ( ( vs, cnfs ), j ) <- esCNFs.zipWithIndex.elements
             esCNF <- cnfs
-            subst <- clauseSubsumption( esCNF, cls, multisetSubsumption = false )
+            subst <- clauseSubsumption( esCNF, cls )
           } yield ( j, subst.asFOLSubstitution( vs ).toList )
           subsumingFormulas.headOption match {
             case Some( ( j, inst ) ) =>

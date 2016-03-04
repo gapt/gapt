@@ -36,7 +36,7 @@ object fixDerivation extends Logger {
   }
 
   def tryDeriveBySubsumptionModEq( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
-    for ( s <- clauseSubsumption( from, to, multisetSubsumption = false, matchingAlgorithm = matchingModEq ) ) yield {
+    for ( s <- clauseSubsumption( from, to, matchingAlgorithm = matchingModEq ) ) yield {
       var p = Factor( Instance( InputClause( from ), s ) )._1
 
       val needToFlip = for ( ( a, i ) <- p.conclusion.zipWithIndex ) yield a match {
@@ -65,6 +65,8 @@ object fixDerivation extends Logger {
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
 
+  def apply( p: ResolutionProof, cs: Traversable[HOLClause] ): ResolutionProof =
+    apply( p, cs.toSeq )
   def apply( p: ResolutionProof, cs: Seq[HOLClause] ): ResolutionProof =
     mapInputClauses( p ) { cls =>
       tryDeriveTrivial( cls, cs ).
@@ -138,10 +140,10 @@ object findDerivationViaResolution {
       map( Clause() :+ _, _ +: Clause() ).
       elements
 
-    prover.getRobinsonProof( bs.toList ++ negatedClausesA.toList ) map { refutation =>
+    prover.getRobinsonProof( bs ++ negatedClausesA ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
 
-      val toUnusedVars = rename( grounding.map( _._1 ).toSet, containedVariables( tautologified ) )
+      val toUnusedVars = rename( grounding.map( _._1 ), containedVariables( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }
       val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[LambdaExpression, LambdaExpression] )
       val derivationInOrigVars = Instance( derivation, Substitution( toUnusedVars.map( _.swap ) ) )

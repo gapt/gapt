@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ FOLMatchingAlgorithm, FOLPosition }
+import at.logic.gapt.expr.fol.FOLPosition
 import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs._
@@ -1426,13 +1426,13 @@ object NaturalNumberInductionRule extends ConvenienceConstructor( "NaturalNumber
     val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
 
     // Find a FOLSubstitution for A[x] and A[0], if possible.
-    val sub1 = FOLMatchingAlgorithm.matchTerms( aX, aZero ) match {
+    val sub1 = syntacticMatching( aX, aZero ) match {
       case Some( s ) => s
       case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aZero." )
     }
 
     // Find a substitution for A[x] and A[Sx], if possible.
-    val sub2 = FOLMatchingAlgorithm.matchTerms( aX, aSx ) match {
+    val sub2 = syntacticMatching( aX, aSx ) match {
       case Some( s ) => s
       case None      => throw LKRuleCreationException( s"Formula $aX can't be matched to formula $aSx." )
     }

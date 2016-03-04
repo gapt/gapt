@@ -1,9 +1,8 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr.{ clauseSubsumption, StillmanSubsumptionAlgorithmFOL }
-import at.logic.gapt.proofs.SequentIndex
+import at.logic.gapt.expr.clauseSubsumption
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.{ LKProof, WeakeningMacroRule }
+import at.logic.gapt.proofs.lk._
 import scalaz._
 import Scalaz._
 

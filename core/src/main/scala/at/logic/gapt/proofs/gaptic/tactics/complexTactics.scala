@@ -258,12 +258,8 @@ case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) e
     } yield {
       val cases = constrs map { constr =>
         val FunctionType( _, argTypes ) = constr.exptype
-        var fvs = freeVariables( goal.conclusion )
-        val evs = argTypes map { at =>
-          val ev = rename( if ( at == t ) v else Var( "x", at ), fvs.toList )
-          fvs += ev
-          ev
-        }
+        var nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
+        val evs = argTypes map { at => nameGen.fresh( if ( at == t ) v else Var( "x", at ) ) }
         val hyps = NewLabels( goal.s, s"IH$name" ) zip ( evs filter { _.exptype == t } map { ev => Substitution( v -> ev )( formula ) } )
         val subGoal = hyps ++: goal.s.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
         InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )

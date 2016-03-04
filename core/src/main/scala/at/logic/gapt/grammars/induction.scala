@@ -116,10 +116,10 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
           yield instP -> p ).groupBy( _._1 ).values foreach { l =>
           val tratProdInc = tratMinForm.productionIsIncluded( l.head._1 )
           if ( atomsInInstForm contains tratProdInc )
-            cs += Imp( tratProdInc, Or( l map ( _._2 ) map productionIsIncluded toList ) )
+            cs += Imp( tratProdInc, Or( l map ( _._2 ) map productionIsIncluded ) )
         }
     }
-    And( cs.result toList )
+    And( cs.result )
   }
 }
 

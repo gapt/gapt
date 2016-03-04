@@ -80,7 +80,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case ForallRightRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
-      val renamedEigen = rename( eigen, substitution.range.toList )
+      val renamedEigen = rename( eigen, substitution.range )
       applySubstitution( substitution, ForallRightRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
         aux, renamedEigen, quant
@@ -92,7 +92,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case ExistsLeftRule( subProof, aux, eigen, quant ) if substitution.range contains eigen =>
       require( !preserveEigenvariables, s"Cannot apply substitution: Eigenvariable $eigen is in range of substitution" )
-      val renamedEigen = rename( eigen, substitution.range.toList )
+      val renamedEigen = rename( eigen, substitution.range )
       applySubstitution( substitution, ExistsLeftRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
         aux, renamedEigen, quant
@@ -136,7 +136,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       indCase( Substitution( subst.map -- c.eigenVars.toSet ), c )
     } else if ( subst.range intersect c.eigenVars.toSet nonEmpty ) {
       require( !preserveEigenvariables )
-      val renaming = rename( c.eigenVars.toSet, freeVariables( c.proof.endSequent ) -- c.eigenVars.toSet ++ subst.range )
+      val renaming = rename( c.eigenVars, freeVariables( c.proof.endSequent ) -- c.eigenVars ++ subst.range )
       indCase( subst, c.copy(
         applySubstitution( Substitution( renaming ), c.proof ),
         eigenVars = c.eigenVars map renaming

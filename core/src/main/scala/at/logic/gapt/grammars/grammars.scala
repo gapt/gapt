@@ -50,8 +50,6 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
 
   def babelSignature = MapBabelSignature( terminals )
 
-  val nLine = sys.props( "line.separator" )
-
   productions foreach {
     case p @ ( a, t ) =>
       require( nonTerminals contains a, s"unknown non-terminal vector $a in $p" )

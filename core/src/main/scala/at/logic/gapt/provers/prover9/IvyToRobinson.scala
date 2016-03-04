@@ -35,7 +35,7 @@ object IvyToRobinson {
       case IPropositional( id, exp, clause, parent ) if clause isSubMultisetOf parent.conclusion =>
         Factor( convert( parent ), clause )._1
       case IPropositional( id, exp, clause, parent ) =>
-        val Some( subst ) = StillmanSubsumptionAlgorithmFOL.subsumes_by( parent.conclusion, clause )
+        val Some( subst ) = clauseSubsumption( parent.conclusion, clause )
         Factor( Instance( convert( parent ), subst ), clause )._1
       case IFlip( id, exp, unflipped, clause, parent ) =>
         val q = convert( parent )

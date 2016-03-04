@@ -5,7 +5,6 @@ import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, B
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.formats.latex.{ SequentsListLatexExporter, ProofToLatexExporter }
 import at.logic.gapt.formats.llk.HybridLatexExporter
-import at.logic.gapt.formats.xml.{ ProofDatabase, XMLExporter }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ lkNew2Old, LKToExpansionProof, LKProof }
 import at.logic.gapt.proofs.lkskNew.LKskProof
@@ -126,9 +125,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
         val result = chooser.selectedFile.getPath
         // val pair = body.getContent.getData.get
         try {
-          if ( result.endsWith( ".xml" ) || chooser.fileFilter.getDescription == ".xml" ) {
-            XMLExporter( result, name, proof )
-          } else if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
+          if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
             val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
             file.write( HybridLatexExporter( lkNew2Old( proof ), escape_latex = true ) )

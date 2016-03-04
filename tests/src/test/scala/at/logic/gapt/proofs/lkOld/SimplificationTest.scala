@@ -81,12 +81,12 @@ class SimplificationTest extends Specification {
       "HOL" in {
         "1" in {
           val ls = List( s9, s10 )
-          val ret = subsumedClausesRemovalHOL( ls )
+          val ret = subsumedClausesRemoval( ls )
           ret.size must beEqualTo( 1 )
         }
         "2" in {
           val ls = List( seq1f, seq2f, seq3f, seq4f )
-          val ret = subsumedClausesRemovalHOL( ls )
+          val ret = subsumedClausesRemoval( ls )
           ret.toSet must beEqualTo( Set( seq1f, seq4f ) )
         }
       }

@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"
   private def getRenaming( seq: HOLSequent ): Map[Const, Const] = getRenaming( constants( seq ) )
-  private def getRenaming( cnf: List[HOLClause] ): Map[Const, Const] =
+  private def getRenaming( cnf: Traversable[HOLClause] ): Map[Const, Const] =
     getRenaming( cnf.flatMap( constants( _ ) ).toSet )
   private def getRenaming( constants: Set[Const] ): Map[Const, Const] =
     constants.toSeq.zipWithIndex.map {
@@ -21,7 +21,7 @@ object renameConstantsToFi {
     val renamedSeq = seq map { TermReplacement( _, renaming.toMap[LambdaExpression, LambdaExpression] ) }
     ( renamedSeq, renaming, invertRenaming( renaming ) )
   }
-  def apply( cnf: List[HOLClause] ): ( List[HOLClause], Map[Const, Const], Map[Const, Const] ) = {
+  def apply( cnf: Traversable[HOLClause] ): ( Traversable[HOLClause], Map[Const, Const], Map[Const, Const] ) = {
     val renaming = getRenaming( cnf )
     val renamedCNF = cnf.map( clause => clause map { TermReplacement( _, renaming.toMap[LambdaExpression, LambdaExpression] ) } )
     ( renamedCNF, renaming, invertRenaming( renaming ) )
@@ -30,9 +30,8 @@ object renameConstantsToFi {
 
 object groundFreeVariables {
   def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
-    val varList = vars.toList
     val nameGen = rename.awayFrom( consts )
-    varList map { v => v -> Const( nameGen fresh v.name, v.exptype ) }
+    vars.toSeq map { v => v -> Const( nameGen fresh v.name, v.exptype ) }
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =

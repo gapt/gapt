@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
-import at.logic.gapt.proofs.lkOld.subsumedClausesRemovalHOL
+import at.logic.gapt.proofs.lkOld.subsumedClausesRemoval
 import at.logic.gapt.proofs.lkskNew.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ Sequent, HOLClause }
 import at.logic.gapt.proofs.ceres_omega._
@@ -85,7 +85,7 @@ abstract class nTape {
    */
   lazy val preprocessed_css = {
     val stripped_css = css.map( _.map( LKskProof.getFormula ) )
-    subsumedClausesRemovalHOL( stripped_css.toList )
+    subsumedClausesRemoval( stripped_css.toList )
   }
 
   /**
@@ -195,8 +195,11 @@ abstract class nTape {
     println( s"Preprocessed css size  : ${preprocessed_css.size}" )
     println( "------------ " )
     println( s"Refutation size (dag)  : ${fol_refutation.dagLike.size}" )
-    println( s"Refutation size (tree) : ${fol_refutation.dagLike.size}" )
+    println( s"Refutation size (tree) : ${fol_refutation.treeLike.size}" )
     println( s"Refutation depth       : ${fol_refutation.depth}" )
+    println( "------------ " )
+    println( s"Reproved deep formula proof size (dag)  : ${reproved_deep.dagLike.size}" )
+    println( s"Reproved deep formula proof size (tree) : ${reproved_deep.treeLike.size}" )
     println( "------------ Witness Terms from Expansion Proof --------------" )
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect

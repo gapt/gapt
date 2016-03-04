@@ -50,7 +50,7 @@ class ceres_omega extends Logger {
       case RalInitial( root ) =>
         val candidates = projections.toList.flatMap( x => {
           val pes = filterEndsequent( x._1.conclusion, x._2 )
-          StillmanSubsumptionAlgorithmHOL.subsumes_by( pes.map( _._2 ), root.map( _._2 ) ) match {
+          clauseSubsumption( pes.map( _._2 ), root.map( _._2 ) ) match {
             case None        => Nil
             case Some( sub ) => List( ( x, sub ) )
           }

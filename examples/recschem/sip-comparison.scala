@@ -1,15 +1,13 @@
-package at.logic.gapt.examples.poset
+package at.logic.gapt.examples.recschem
 import at.logic.gapt.examples.{ Script, UniformAssociativity3ExampleProof }
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.grammars.{ minimizeSipGrammar, stableSipGrammar, minimizeRecursionScheme, SipRecSchem }
-import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, ExpansionSequent }
+import at.logic.gapt.grammars.{ SipRecSchem, minimizeRecursionScheme, minimizeSipGrammar, stableSipGrammar }
+import at.logic.gapt.proofs.expansion.{ ExpansionSequent, FOLInstanceTermEncoding }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.{ Suc, Sequent, Ant }
+import at.logic.gapt.proofs.{ Ant, Sequent, Suc }
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.utils.time
 
@@ -17,15 +15,12 @@ object sip_comparison extends Script {
 
   def removeEqAxioms( eseq: ExpansionSequent ) =
     eseq.zipWithIndex filter {
-      case ( et, Ant( _ ) ) => !Prover9.isValid( et.shallow )
-      case ( et, Suc( _ ) ) => !Prover9.isValid( -et.shallow )
+      case ( et, Ant( _ ) ) => !Escargot.isValid( et.shallow )
+      case ( et, Suc( _ ) ) => !Escargot.isValid( -et.shallow )
     } map { _._1 }
 
-  val endSequent = Sequent(
-    Seq( "s(x+y) = x+s(y)", "x+0 = x" )
-      map ( s => univclosure( parseFormula( s ) ) ),
-    Seq( parseFormula( "(x+x)+x = x+(x+x)" ) )
-  )
+  val endSequent = fof"∀x ∀y s(x+y) = x+s(y)" +: fof"∀x x+0 = x" +:
+    Sequent() :+ fof"(x+x)+x = x+(x+x)"
   val instanceProofs =
     ( 0 until 6 ).map { n => n -> removeEqAxioms( LKToExpansionProof( UniformAssociativity3ExampleProof( n ) ).expansionSequent ) }
 

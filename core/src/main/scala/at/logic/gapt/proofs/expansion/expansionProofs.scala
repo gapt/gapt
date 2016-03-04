@@ -191,9 +191,10 @@ object eliminateCutsET {
 
       val eigenVars = expansionSequent.elements.toSet + child ++ rest flatMap { eigenVariablesET( _ ) }
 
-      var renamings = Seq[Substitution]()
-      for ( _ <- 0 until instances.size )
-        renamings :+= Substitution( rename( eigenVars, eigenVars union renamings.flatMap { r => freeVariables( r.range ) }.toSet union instances.values.flatMap { eigenVariablesET( _ ) }.toSet ) )
+      val nameGen = rename.awayFrom( eigenVars union Set( eigenVariable )
+        union instances.values.flatMap { eigenVariablesET( _ ) }.toSet )
+      val renamings = for ( _ <- 0 until instances.size )
+        yield Substitution( eigenVars map { ev => ev -> nameGen.fresh( ev ) } )
       val substs =
         for ( ( renaming, ( term, instance ) ) <- renamings zip instances.seq )
           yield renaming compose Substitution( eigenVariable -> term )

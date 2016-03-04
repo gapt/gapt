@@ -134,7 +134,7 @@ class EscargotLoop extends Logger {
     if ( propositional ) {
       if ( a isSubMultisetOf b ) Some( Substitution() )
       else None
-    } else clauseSubsumption( a, b )
+    } else clauseSubsumption( a, b, multisetSubsumption = true )
   def unify( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
     if ( propositional ) {
       if ( a == b ) Some( Substitution() )

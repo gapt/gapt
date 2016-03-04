@@ -48,69 +48,69 @@ class StillmanSubsumptionAlgorithmFOLTest extends Specification {
       "P(x) | P(f(x,y)) and P(a) | P(b) | P(f(b,a))" in {
         val c1 = HOLSequent( Nil, Px :: Pfxy :: Nil )
         val c2 = HOLSequent( Nil, Pa :: Pb :: Pfba :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "Nil and P(a) | P(b) | P(f(b,a))" in {
         val c1 = HOLSequent( Nil, Nil )
         val c2 = HOLSequent( Nil, Pa :: Pb :: Pfba :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x) and P(x) | P(f(x,y))" in {
         val c1 = HOLSequent( Nil, Px :: Nil )
         val c2 = HOLSequent( Nil, Px :: Pfxy :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x) and P(x)" in {
         val c1 = HOLSequent( Nil, Px :: Nil )
         val c2 = HOLSequent( Nil, Px :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x) and P(y)" in {
         val c1 = HOLSequent( Nil, Px :: Nil )
         val c2 = HOLSequent( Nil, Py :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x,x) | P(x,a) and P(a,a)" in {
         val c1 = HOLSequent( Nil, Pxx :: Pxa :: Nil )
         val c2 = HOLSequent( Nil, Paa :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x) | Q(x,y) and P(a) | Q(a,y) | R(x)" in {
         val c1 = HOLSequent( Nil, Px :: Qxy :: Nil )
         val c2 = HOLSequent( Nil, Pa :: Qay :: Rx :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
     }
     "return false on the following clauses" in {
       "P(x) | P(f(x)) and P(f(a)) | P(f(b))" in {
         val c1 = HOLSequent( Nil, Px :: Pfx :: Nil )
         val c2 = HOLSequent( Nil, Pfa :: Pfb :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( false )
+        clauseSubsumption( c1, c2 ) must beNone
       }
       "P(a,a) and P(x,x) | P(x,a)" in {
         val c1 = HOLSequent( Nil, Paa :: Nil )
         val c2 = HOLSequent( Nil, Pxx :: Pxa :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( false )
+        clauseSubsumption( c1, c2 ) must beNone
       }
       "P(x,x) | P(x,b) and P(b,a) | P(a,b)" in {
         val c1 = HOLSequent( Nil, Pxx :: Pxb :: Nil )
         val c2 = HOLSequent( Nil, Pba :: Pab :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( false )
+        clauseSubsumption( c1, c2 ) must beNone
       }
       "P(x) | -P(x) and P(a) | -P(b)" in {
         val c1 = HOLSequent( Px :: Nil, Px :: Nil )
         val c2 = HOLSequent( Pb :: Nil, Pa :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( false )
+        clauseSubsumption( c1, c2 ) must beNone
       }
       "P(x) | -P(x) and P(y) | -P(z)" in {
         val c1 = HOLSequent( Px :: Nil, Px :: Nil )
         val c2 = HOLSequent( Pz :: Nil, Py :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( false )
+        clauseSubsumption( c1, c2 ) must beNone
       }
       "P(x) and P(a) | P(y)" in {
         val c1 = HOLSequent( Nil, Px :: Nil )
         val c2 = HOLSequent( Nil, Pa :: Py :: Nil )
-        StillmanSubsumptionAlgorithmFOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
     }
   }
@@ -147,22 +147,22 @@ class StillmanSubsumptionAlgorithmHOLTest extends Specification {
       "P(x:i,x:i) | P(x:i,a:i) and P(a:i,a:i)" in {
         val c1 = HOLSequent( Nil, Pxx :: Pxa :: Nil )
         val c2 = HOLSequent( Nil, Paa :: Nil )
-        StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x:i,x:i) and P(f(y:i,z:i,a:i):i,f(y:i,z:i,a:i):i)" in {
         val c1 = HOLSequent( Nil, Pxx :: Nil )
         val c2 = HOLSequent( Nil, Pfyza_fyza :: Nil )
-        StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x:i,x:i) and P(f(q:(i->o),z:i,a:i):i,f(q:(i->o),z:i,a:i):i) | -Q(f(b:i):(i->i))" in {
         val c1 = HOLSequent( Nil, Pxx :: Nil )
         val c2 = HOLSequent( Qf1b :: Nil, Pf2qza :: Nil )
-        StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
       "P(x:i) and P(a:i) | Q(x:i)" in {
         val c1 = HOLSequent( Nil, Px :: Nil )
         val c2 = HOLSequent( Nil, Pa :: Qx :: Nil )
-        StillmanSubsumptionAlgorithmHOL.subsumes( c1, c2 ) must beEqualTo( true )
+        clauseSubsumption( c1, c2 ) must beSome
       }
     }
   }

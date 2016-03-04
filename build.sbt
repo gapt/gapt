@@ -169,16 +169,15 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.1",
+      "org.parboiled" %% "parboiled" % "2.1.2",
       "com.lihaoyi" %% "fastparse" % "0.3.5",
       "com.googlecode.kiama" %% "kiama" % "1.8.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.0",
-      "org.scalaz" %% "scalaz-core" % "7.2.0",
+      "org.scalaz" %% "scalaz-core" % "7.2.1",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.18",
       "org.slf4j" % "slf4j-log4j12" % "1.7.18",
-      "xml-resolver" % "xml-resolver" % "1.2",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),

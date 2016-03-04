@@ -12,7 +12,6 @@ import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.ExportingException
 import at.logic.gapt.formats.OutputExporter
 
 trait SequentsListLatexExporter extends HOLTermLatexExporter {

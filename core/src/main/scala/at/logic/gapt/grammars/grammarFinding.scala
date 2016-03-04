@@ -75,7 +75,7 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
   def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = FOLAtom( "ntval", n, value )
 
   def formula: FOLFormula = {
-    val notASubTerm = rename( FOLConst( "⊥" ), constants( t ).toList )
+    val notASubTerm = rename( FOLConst( "⊥" ), constants( t ) )
 
     // we try not generate the formulas for all subterms, but only for those which are needed
     val possibleAssignments = mutable.Set[( Int, List[FOLTerm] )]()
@@ -148,7 +148,7 @@ class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
       VectGrammarMinimizationFormula.this.valueOfNonTerminal( t, n, value )
   }.formula
 
-  def coversLanguage( lang: Traversable[FOLTerm] ) = And( lang map generatesTerm toList )
+  def coversLanguage( lang: Traversable[FOLTerm] ) = And( lang map generatesTerm )
 }
 
 class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
