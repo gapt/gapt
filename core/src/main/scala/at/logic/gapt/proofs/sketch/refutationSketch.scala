@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.sketch
 
-import at.logic.gapt.expr.FOLAtom
+import at.logic.gapt.expr.{ freeVariables, FOLAtom }
 import at.logic.gapt.proofs.{ OccConnector, SequentProof, FOLClause }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.{ mapInputClauses, findDerivationViaResolution }
@@ -18,7 +18,7 @@ import scalaz._, Scalaz._
  *
  * These two cases are modelled as [[SketchAxiom]] and [[SketchInference]].
  */
-trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
+sealed trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
   override def occConnectors = immediateSubProofs map { p => OccConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
   override def mainIndices = Seq()
   override def auxIndices = immediateSubProofs map { _ => Seq() }
@@ -54,6 +54,25 @@ case class SketchInference( conclusion: FOLClause, from: Seq[RefutationSketch] )
   override def productElement( n: Int ) = if ( n == 0 ) conclusion else from( n - 1 )
 }
 
+case class SketchSplit(
+    splittingClause: RefutationSketch, part1: FOLClause,
+    case1: RefutationSketch, case2: RefutationSketch
+) extends RefutationSketch {
+  require( part1 isSubMultisetOf splittingClause.conclusion )
+  val part2 = splittingClause.conclusion diff part1
+
+  require( case1.conclusion.isEmpty )
+  require( case2.conclusion.isEmpty )
+
+  val addAxioms1 = Set( part1 )
+
+  val groundNegPart1 = part1.filter( freeVariables( _ ).isEmpty ).map( FOLClause() :+ _, _ +: FOLClause() ).elements
+  val addAxioms2 = Set( part2 ) ++ groundNegPart1
+
+  override def immediateSubProofs = Seq( splittingClause, case1, case2 )
+  override def conclusion = FOLClause()
+}
+
 case class UnprovableSketchInference( inference: SketchInference )
 
 object RefutationSketchToRobinson {
@@ -81,6 +100,13 @@ object RefutationSketchToRobinson {
             map { _.success }.
             getOrElse { UnprovableSketchInference( s ).failureNel }
         } yield mapInputClauses( deriv )( solvedFromMap )
+      case s: SketchSplit =>
+        import Validation.FlatMap._
+        for {
+          splittingClause <- solve( s.splittingClause )
+          case1 <- solve( s.case1 )
+          case2 <- solve( s.case2 )
+        } yield Splitting( splittingClause, s.part1, case1, case2 )
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

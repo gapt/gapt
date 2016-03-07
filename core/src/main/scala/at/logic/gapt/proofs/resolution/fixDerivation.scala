@@ -86,27 +86,15 @@ object tautologifyInitialUnitClauses {
    * Replace matching initial clauses by tautologies.
    *
    * If shouldTautologify is true for an initial unit clause +-a, then it is replaced by the tautology a:-a.  The
-   * resulting resolution proof has the same structure as the original proof, and will hence contain many duplicate
-   * literals originating from the new initial clauses as the new literals are not factored away.
+   * resulting resolution proof has the same structure as the original proof.
    */
   def apply( p: ResolutionProof, shouldTautologify: HOLClause => Boolean ): ResolutionProof =
-    p match {
-      case InputClause( clause ) if shouldTautologify( clause ) && clause.size == 1 => TautologyClause( clause.elements.head )
-      case InputClause( _ ) | ReflexivityClause( _ ) | TautologyClause( _ )         => p
-      case Factor( p1, i1, i2 ) =>
-        val newP1 = apply( p1, shouldTautologify )
-        Factor( newP1, newP1.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).filter( _ sameSideAs i1 ).take( 2 ) )._1
-      case Instance( p1, subst ) => Instance( apply( p1, shouldTautologify ), subst )
-      case Resolution( p1, i1, p2, i2 ) =>
-        val newP1 = apply( p1, shouldTautologify )
-        val newP2 = apply( p2, shouldTautologify )
-        Resolution( newP1, newP1.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).filter( _ sameSideAs i1 ).head,
-          newP2, newP2.conclusion.indicesWhere( _ == p2.conclusion( i2 ) ).filter( _ sameSideAs i2 ).head )
-      case Paramodulation( p1, i1, p2, i2, pos, dir ) =>
-        val newP1 = apply( p1, shouldTautologify )
-        val newP2 = apply( p2, shouldTautologify )
-        Paramodulation( newP1, newP1.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).filter( _ sameSideAs i1 ).head,
-          newP2, newP2.conclusion.indicesWhere( _ == p2.conclusion( i2 ) ).filter( _ sameSideAs i2 ).head, pos, dir )
+    mapInputClauses.withOccConn( p, factorEverything = true ) {
+      case clause @ Clause( Seq(), Seq( a ) ) if shouldTautologify( clause ) =>
+        TautologyClause( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq() +: Sequent() :+ Seq( Suc( 0 ) ) )
+      case clause @ Clause( Seq( a ), Seq() ) if shouldTautologify( clause ) =>
+        TautologyClause( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq( Ant( 0 ) ) +: Sequent() :+ Seq() )
+      case clause => InputClause( clause ) -> OccConnector( clause )
     }
 }
 
@@ -125,7 +113,7 @@ object findDerivationViaResolution {
    * @param a Consequence to prove.
    * @param bs Set of initial clauses for the resulting proof.
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
-   * @return Resolution proof ending in a subclause of a, or None if prover9 couldn't prove the consequence.
+   * @return Resolution proof ending in a subclause of a, or None if the prover couldn't prove the consequence.
    */
   def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = Escargot ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
@@ -148,7 +136,7 @@ object findDerivationViaResolution {
       val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[LambdaExpression, LambdaExpression] )
       val derivationInOrigVars = Instance( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
 
-      simplifyResolutionProof( Factor( derivationInOrigVars )._1 )
+      simplifyResolutionProof( derivationInOrigVars )
     }
   }
 }
