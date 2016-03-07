@@ -41,11 +41,13 @@ abstract class ResolutionProver extends OneShotProver {
     }
   }
 
-  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
+  override def getLKProof( seq: HOLSequent ): Option[LKProof] = getLKProof( seq, addWeakenings = true )
+
+  def getLKProof( seq: HOLSequent, addWeakenings: Boolean ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
       val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
       getRobinsonProof( seq ) map { robinsonProof =>
-        RobinsonToLK( robinsonProof, seq, justs toMap, defs )
+        RobinsonToLK( robinsonProof, seq, justs toMap, defs, addWeakenings )
       }
     }
 

@@ -89,7 +89,7 @@ object expansionProofFromInstances {
     def elimDefs( et: ExpansionTree, shallow: HOLFormula ): ExpansionTree = ( et, shallow ) match {
       case ( ETTop( pol ), _ )    => ETTop( pol )
       case ( ETBottom( pol ), _ ) => ETBottom( pol )
-      case ( ETAtom( atom @ Apps( abbrev: HOLAtomConst, args ), pol ), _ ) if definitions isDefinedAt abbrev =>
+      case ( ETDefinedAtom( atom @ Apps( abbrev: HOLAtomConst, args ), pol, _ ), _ ) =>
         defAtomExpansion.getOrElseUpdate(
           atom -> pol,
           ETMerge( ( for {

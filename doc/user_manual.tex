@@ -793,13 +793,14 @@ Some([p11]  :-     (Resolution(p6, Suc(0), p10, Ant(0)))
 
 gapt> Prover9 getLKProof sequent
 res24: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p19] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p18, Ant(2), Ant(1)))
-[p18] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))), ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p9, Suc(0), p17, Ant(1)))
-[p17] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p14, Suc(0), p16, Ant(0)))
-[p16] p(s(s(0))): o :- p(s(s(0))): o    (ContractionRightRule(p15, Suc(0), Suc(1)))
-[p15] p(s(s(0))): o :- p(s(s(0))): o, p(s(s(0))): o    (WeakeningRightRule(p10, p(s(s(0))): o))
-[p14] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (ContractionLeftRule(p13, Ant(0), Ant(1)))
-[p13] ∀x_0 (p(x_0) ⊃ p(s(x_0))), ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (WeakeningLeftRule(p12, ∀x_0 (p(x_0) ⊃...
+Some([p11] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))), ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (ForallLeftRule(p7, Ant(0), p(x_0) ⊃ p(s(x_0)), s(0), x_0))
+[p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)): o :- p(s(s(0))): o    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
+[p6] p(s(s(0))): o :- p(s(s(0))): o    (LogicalAxiom(p(s(s(0))): o))
+[p5] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(0)): o    (CutRule(p1, Suc(0), p4, Ant(1)))
+[p4] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :...
 gapt> Prover9 getExpansionProof sequent
 res25: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(ExpansionProofWithCut(List(),[p1] ETAtom(p(0): o, false)
@@ -820,20 +821,20 @@ Some(ExpansionProofWithCut(List(),[p1] ETAtom(p(0): o, false)
 
 All of the above works with the E prover (\cli{EProver}), SPASS (\cli{SPASS}),
 and Vampire (\cli{Vampire})\footnote{Unfortunately, we have to disable
-  splitting in both SPASS and Vampire because we are unable to import proofs
-  that contain splitting inferences.} as well, we will just show
+  SAT splitting in Vampire because we are unable to import proofs
+  that contain those splitting inferences.} as well, we will just show
 \cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res26: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p19] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p3, Suc(0), p18, Ant(1)))
-[p18] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p17, Ant(2), Ant(0)))
-[p17] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p8, Suc(0), p16, Ant(1)))
-[p16] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p13, Suc(0), p15, Ant(0)))
-[p15] p(s(s(0))): o :- p(s(s(0))): o    (ContractionRightRule(p14, Suc(0), Suc(1)))
-[p14] p(s(s(0))): o :- p(s(s(0))): o, p(s(s(0))): o    (WeakeningRightRule(p9, p(s(s(0))): o))
-[p13] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (ContractionLeftRule(p12, Ant(0), Ant(1)))
-[p12] ∀x_0 (p(x_0) ⊃ p(s(x_0))), ∀...
+Some([p11] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p1, Suc(0), p10, Ant(1)))
+[p10] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p9, Ant(2), Ant(0)))
+[p9] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p4, Suc(0), p8, Ant(1)))
+[p8] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p7, Suc(0), p5, Ant(0)))
+[p7] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (ForallLeftRule(p6, Ant(0), p(x_0) ⊃ p(s(x_0)), s(0), x_0))
+[p6] p(s(0)) ⊃ p(s(s(0))), p(s(0)): o :- p(s(s(0))): o    (ImpLeftRule(p2, Suc(0), p5, Ant(0)))
+[p5] p(s(s(0))): o :- p(s(s(0))): o    (LogicalAxiom(p(s(s(0))): o))
+[p4] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): ...
 \end{clilisting}
 
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
@@ -878,11 +879,11 @@ fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
 \subsection{Built-in tableaux prover}
 
 GAPT contains a  built-in tableaux prover for propositional logic
-which can be called with the command \texttt{solve.solvePropositional}, for example as in:
+which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
-gapt> solve solvePropositional hof"a -> b -> a&b"
-res30: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
+gapt> solvePropositional(hof"a -> b -> a&b")
+res30: at.logic.gapt.proofs.lk.solvePropositional.UnprovableOrLKProof =
+\/-([p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a:o :- b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a:o, b:o :- a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] b:o :- b:o    (LogicalAxiom(b:o))

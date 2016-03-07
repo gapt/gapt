@@ -85,6 +85,18 @@ class ResolutionTest extends Specification {
     ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
   }
 
+  "Splitting" in {
+    val c1 = InputClause( Clause() :+ hoa"p" :+ hoa"q" )
+    val c2 = InputClause( hoa"p" +: Clause() )
+    val c3 = InputClause( hoa"q" +: Clause() )
+
+    val splCls = c1
+    val case1 = Resolution( InputClause( Clause() :+ hoa"p" ), Suc( 0 ), c2, Ant( 0 ) )
+    val case2 = Resolution( InputClause( Clause() :+ hoa"q" ), Suc( 0 ), c3, Ant( 0 ) )
+    val proof = Splitting( splCls, Clause() :+ hoa"p", case1, case2 )
+    proof.conclusion must beEmpty
+  }
+
   "daglike performance" in {
     def proof( n: Int ) = {
       var p: ResolutionProof = TautologyClause( hoa"a" )

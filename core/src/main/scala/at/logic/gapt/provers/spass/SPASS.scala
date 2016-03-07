@@ -3,9 +3,10 @@ package at.logic.gapt.provers.spass
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
+import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
-import at.logic.gapt.proofs.sketch.{ RefutationSketch, RefutationSketchToRobinson, SketchAxiom, SketchInference }
+import at.logic.gapt.proofs.sketch._
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.utils.runProcess
 import at.logic.gapt.utils.traits.ExternalProgram
@@ -17,29 +18,32 @@ import scala.util.{ Failure, Success }
 object SPASS extends SPASS
 class SPASS extends ResolutionProver with ExternalProgram {
 
-  def atom2dfg( a: FOLAtom ) = a match {
-    case Eq( t, s )          => s"equal(${term2dfg( t )}, ${term2dfg( s )})"
-    case FOLAtom( n, Seq() ) => n
-    case FOLAtom( n, as )    => s"$n(${as map term2dfg mkString ","})"
-  }
-  def term2dfg( t: FOLTerm ): String = t match {
+  def expr2dfg( e: LambdaExpression ): String = e match {
+    case Bottom()             => "false"
+    case Or( a, b )           => s"or(${expr2dfg( a )}, ${expr2dfg( b )})"
+    case Neg( a )             => s"not(${expr2dfg( a )})"
+    case All( v, a )          => s"forall([${v.name}],${expr2dfg( a )})"
+    case Eq( t, s )           => s"equal(${expr2dfg( t )}, ${expr2dfg( s )})"
+    case FOLAtom( n, Seq() )  => n
+    case FOLAtom( n, as )     => s"$n(${as map expr2dfg mkString ","})"
     case FOLVar( n )          => n
     case FOLConst( n )        => n
-    case FOLFunction( f, as ) => s"$f(${as map term2dfg mkString ","})"
+    case FOLFunction( f, as ) => s"$f(${as map expr2dfg mkString ","})"
   }
+
   def cls2dfg( cls: FOLClause ): String = {
     val cls_ = FOLSubstitution( freeVariables( cls ).zipWithIndex.
       map { case ( v, i ) => v -> FOLVar( s"X$i" ) } )( cls )
-    s"clause(|| ${cls_.antecedent map atom2dfg mkString " "} -> ${cls_.succedent map atom2dfg mkString " "})."
+    s"formula(${expr2dfg( univclosure( cls_.toFormula ) )})."
   }
 
   override def getRobinsonProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
     case ( renaming, cnf ) =>
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
-      val list_of_clauses =
+      val list_of_formulae =
         s"""
-         |list_of_clauses(axioms, cnf).
+         |list_of_formulae(axioms).
          |${cnf.asInstanceOf[Traversable[FOLClause]] map cls2dfg mkString "\n"}
          |end_of_list.
        """.stripMargin
@@ -73,12 +77,12 @@ class SPASS extends ResolutionProver with ExternalProgram {
          |
          |$list_of_symbols
          |
-         |$list_of_clauses
+         |$list_of_formulae
          |
          |end_problem.
        """.stripMargin
 
-      val out = runProcess.withTempInputFile( Seq( "SPASS", "-DocProof", "-Splits=0", "-IOHy=1" ), dfg, catchStderr = true )
+      val out = runProcess.withTempInputFile( Seq( "SPASS", "-DocProof" ), dfg, catchStderr = true )
 
       val lines = out.split( "\n" )
 
@@ -90,9 +94,36 @@ class SPASS extends ResolutionProver with ExternalProgram {
         val inferences = proof map InferenceParser.parseInference
 
         val inference2sketch = mutable.Map[Int, RefutationSketch]()
+        val splitStack = mutable.Stack[( Int, FOLClause, Option[Int] )]()
+        def finishSplit( infNum: Int, splitLevel: Int ): Unit =
+          if ( splitLevel > 0 ) splitStack.pop() match {
+            case ( splitCls, part1, None ) =>
+              splitStack push ( ( splitCls, part1, Some( infNum ) ) )
+            case ( splitCls, part1, Some( case1 ) ) =>
+              inference2sketch( infNum ) = SketchSplit(
+                inference2sketch( splitCls ), part1,
+                inference2sketch( case1 ), inference2sketch( infNum )
+              )
+              finishSplit( infNum, splitLevel - 1 )
+          }
         inferences foreach {
-          case ( num, "Inp", _, clause )    => inference2sketch( num ) = SketchAxiom( clause )
-          case ( num, _, premises, clause ) => inference2sketch( num ) = SketchInference( clause, premises map inference2sketch )
+          case ( num, 0, "Inp", _, clause ) =>
+            inference2sketch( num ) = SketchAxiom( clause )
+          case ( num, splitLevel, "Spt", Seq( splitClause ), part1 ) =>
+            val Some( subst ) = clauseSubsumption( part1, inference2sketch( splitClause ).conclusion )
+            require( subst.isRenaming )
+            splitStack push ( ( splitClause, subst.asFOLSubstitution( part1 ), None ) )
+            inference2sketch( num ) = SketchAxiom( subst.asFOLSubstitution( part1 ) )
+          case ( num, splitLevel, "Spt", _, clause ) =>
+            val splitClause = inference2sketch( splitStack.top._1 ).conclusion
+            val Some( subst ) = clauseSubsumption( clause, splitClause ).orElse( clauseSubsumption( clause, splitClause.swapped ) )
+            require( subst.isRenaming )
+            inference2sketch( num ) = SketchAxiom( subst.asFOLSubstitution( clause ) )
+          case ( num, splitLevel, _, premises, clause ) =>
+            val p = SketchInference( clause, premises map inference2sketch )
+            inference2sketch( num ) = p
+
+            if ( clause isEmpty ) finishSplit( num, splitLevel )
         }
 
         val sketch = inference2sketch( inferences.last._1 )
@@ -114,9 +145,9 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
     def Backreference = rule { Num ~ "." ~ Num ~> ( ( inference, literal ) => inference ) }
 
-    def Justification: Rule1[( String, Seq[Int] )] = rule {
+    def Justification: Rule1[( Int, String, Seq[Int] )] = rule {
       "[" ~ Num ~ ":" ~ Name ~ optional( ":" ~ oneOrMore( Backreference ).separatedBy( "," ) ) ~ "]" ~>
-        ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( inferenceType, premises.getOrElse( Seq() ) ) )
+        ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( splitLevel, inferenceType, premises.getOrElse( Seq() ) ) )
     }
 
     def isVar( n: String ) = n.head.isUpper
@@ -138,9 +169,9 @@ class SPASS extends ResolutionProver with ExternalProgram {
         ( ( constraints: Seq[FOLAtom], ant: Seq[FOLAtom], suc: Seq[FOLAtom] ) => constraints ++: ant ++: Sequent() :++ suc )
     }
 
-    def Inference: Rule1[( Int, String, Seq[Int], FOLClause )] = rule {
+    def Inference: Rule1[( Int, Int, String, Seq[Int], FOLClause )] = rule {
       Num ~ Justification ~ Ws ~ Clause ~ "." ~>
-        ( ( inferenceNum: Int, just: ( String, Seq[Int] ), clause: FOLClause ) => ( inferenceNum, just._1, just._2, clause ) )
+        ( ( inferenceNum: Int, just: ( Int, String, Seq[Int] ), clause: FOLClause ) => ( inferenceNum, just._1, just._2, just._3, clause ) )
     }
   }
   object InferenceParser {

@@ -2,7 +2,8 @@ package at.logic.gapt.provers.spass
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.resolution.inputClauses
+import at.logic.gapt.expr.hol.structuralCNF
+import at.logic.gapt.proofs.resolution.{ InputClause, inputClauses }
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import org.specs2.mutable.Specification
 
@@ -58,7 +59,13 @@ class SpassTest extends Specification with SequentMatchers {
       val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
       val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
       val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-      SPASS getRobinsonProof formula must beSome
+      val ( cnf, _, _ ) = structuralCNF( -formula, false, false )
+      SPASS getRobinsonProof cnf must beLike {
+        case Some( p ) =>
+          for ( InputClause( cls ) <- p.subProofs )
+            cnf must contain( cls )
+          ok
+      }
     }
   }
 

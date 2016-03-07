@@ -11,6 +11,8 @@ import java.io._
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
 
+import scalaz.\/-
+
 object VeriT extends VeriT
 class VeriT extends OneShotProver with ExternalProgram {
 
@@ -63,7 +65,10 @@ class VeriT extends OneShotProver with ExternalProgram {
     }
   }
 
-  override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ExpansionProofToLK( _ ) }
+  override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ep =>
+    val \/-( p ) = ExpansionProofToLK( ep )
+    p
+  }
 
   def addEquationalAxioms( epwc: ExpansionProofWithCut ): Option[ExpansionProofWithCut] =
     for ( ExpansionProofWithCut( Seq(), veritExpansion ) <- getExpansionProofWithCut( epwc.deep ) ) yield {

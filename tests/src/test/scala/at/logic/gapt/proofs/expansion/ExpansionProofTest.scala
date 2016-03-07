@@ -4,7 +4,7 @@ import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.{ Pi2Pigeonhole, LinearExampleProof }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llkNew.LLKProofParser
-import at.logic.gapt.proofs.{ SequentMatchers, Sequent }
+import at.logic.gapt.proofs.{ Context, FiniteContext, SequentMatchers, Sequent }
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
 import at.logic.gapt.proofs.lkOld.base.beSyntacticMultisetEqual
 import at.logic.gapt.provers.escargot.Escargot
