@@ -134,7 +134,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
       findDerivationViaResolution( a, bs, prover = Escargot ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
-          foreach( inputClauses( p ) ) { inputClause =>
+          foreach( p.inputClauses ) { inputClause =>
             bs.toSet[HOLClause] must contain( inputClause )
           }
       }

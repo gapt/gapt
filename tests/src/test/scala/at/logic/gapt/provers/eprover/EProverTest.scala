@@ -1,7 +1,6 @@
 package at.logic.gapt.provers.eprover
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.inputClauses
 import at.logic.gapt.proofs.{ SequentMatchers, Clause, HOLSequent, Sequent }
 import org.specs2.mutable._
 
@@ -49,7 +48,8 @@ class EProverTest extends Specification with SequentMatchers {
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
       EProver.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => inputClauses( p ) must contain( atMost( cnf ) )
+        case Some( p ) =>
+          cnf must contain( atLeast( p.inputClauses ) )
       }
     }
   }

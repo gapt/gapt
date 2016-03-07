@@ -12,7 +12,9 @@ import at.logic.gapt.proofs._
  * Substitutions are not absorbed into resolution, factoring, and
  * paramodulation; they are explicitly represented using [[Instance]].
  */
-trait ResolutionProof extends SequentProof[HOLAtom, ResolutionProof]
+trait ResolutionProof extends SequentProof[HOLAtom, ResolutionProof] {
+  def inputClauses: Set[HOLClause]
+}
 
 /**
  * Initial clause of a resolution proof.
@@ -31,14 +33,17 @@ trait InitialClause extends ResolutionProof {
 }
 
 /**
- * Input clause from the CNF that we're refuting.
+ * Input clause from the CNF that we're refuting, or an assumption from
+ * a [[Splitting]] inference that is discharged later.
  *
  * <pre>
  *   ----------
  *   conclusion
  * </pre>
  */
-case class InputClause( conclusion: HOLClause ) extends InitialClause
+case class InputClause( conclusion: HOLClause ) extends InitialClause {
+  val inputClauses = Set( conclusion )
+}
 /**
  * Reflexivity.
  *
@@ -48,6 +53,7 @@ case class InputClause( conclusion: HOLClause ) extends InitialClause
  * </pre>
  */
 case class ReflexivityClause( term: LambdaExpression ) extends InitialClause {
+  val inputClauses = Set[HOLClause]()
   override val conclusion = Clause() :+ Eq( term, term )
 }
 /**
@@ -59,6 +65,7 @@ case class ReflexivityClause( term: LambdaExpression ) extends InitialClause {
  * </pre>
  */
 case class TautologyClause( atom: HOLAtom ) extends InitialClause {
+  val inputClauses = Set[HOLClause]()
   override val conclusion = atom +: Clause() :+ atom
 }
 
@@ -81,6 +88,8 @@ case class Instance( subProof: ResolutionProof, substitution: Substitution ) ext
   override def auxIndices = Seq( subProof.conclusion.indices )
 
   override def immediateSubProofs = Seq( subProof )
+
+  val inputClauses = subProof.inputClauses
 }
 
 /**
@@ -109,6 +118,8 @@ case class Factor( subProof: ResolutionProof, literal1: SequentIndex, literal2: 
   override def auxIndices = Seq( Seq( literal1, literal2 ) )
 
   override def immediateSubProofs = Seq( subProof )
+
+  val inputClauses = subProof.inputClauses
 }
 
 object Factor {
@@ -184,6 +195,8 @@ case class Resolution( subProof1: ResolutionProof, literal1: SequentIndex,
   override def auxIndices = Seq( Seq( literal1 ), Seq( literal2 ) )
 
   override def immediateSubProofs = Seq( subProof1, subProof2 )
+
+  val inputClauses = subProof1.inputClauses union subProof2.inputClauses
 }
 
 object MguResolution {
@@ -249,6 +262,8 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
   override def auxIndices = Seq( Seq( equation ), Seq( literal ) )
 
   override def immediateSubProofs = Seq( subProof1, subProof2 )
+
+  val inputClauses = subProof1.inputClauses union subProof2.inputClauses
 }
 
 object Paramodulation {
@@ -275,6 +290,51 @@ object Paramodulation {
       }
 }
 
+/**
+ * DPLL-style splitting as used in SPASS.
+ *
+ * This inference is very similar to an or-elimination rule in natural
+ * deduction; [[splittingClause]] is the proof of a disjunction, and then we do a case analysis:
+ * first, we consider the case that [[part1]] is true and derive a contradiction.  Second, we consider
+ * the case that [[part2]] is true and [[part1]] is false.
+ *
+ * <pre>
+ *   (splittingClause)     (case1)            (case2)
+ *                         [part1]        [part2] [¬part1]
+ *    part1 ∨ part2           ⊥                 ⊥
+ *   -----------------------------------------------------
+ *                           ⊥
+ * </pre>
+ */
+case class Splitting(
+    splittingClause: ResolutionProof, part1: HOLClause,
+    case1: ResolutionProof, case2: ResolutionProof
+) extends ResolutionProof {
+  val part2 = splittingClause.conclusion diff part1
+
+  require( case1.conclusion.isEmpty )
+  require( case2.conclusion.isEmpty )
+
+  val addInputClauses1 = Set( part1 )
+
+  val groundNegPart1 = part1.filter( freeVariables( _ ).isEmpty ).map( Clause() :+ _, _ +: Clause() ).elements
+  val addInputClauses2 = Set( part2 ) ++ groundNegPart1
+
+  def conclusion = Clause()
+
+  val inputClauses = splittingClause.inputClauses union
+    ( case1.inputClauses diff addInputClauses1 ) union
+    ( case2.inputClauses diff addInputClauses2 )
+
+  def mainIndices = Seq()
+  def auxIndices = Seq( splittingClause.conclusion.indices, Seq(), Seq() )
+  def immediateSubProofs = Seq( splittingClause, case1, case2 )
+  def occConnectors = Seq(
+    OccConnector( Clause(), splittingClause.conclusion, Sequent() ),
+    OccConnector( Clause() ), OccConnector( Clause() )
+  )
+}
+
 object Flip {
   def apply( subProof: ResolutionProof, equation: SequentIndex ): ResolutionProof = {
     val Eq( s, t ) = subProof.conclusion( equation )
@@ -288,55 +348,5 @@ object Flip {
         subProof, equation
       )
     }
-  }
-}
-
-object Splitting {
-  def apply(
-    splittingClause: ResolutionProof, part1: HOLClause,
-    subProof1: ResolutionProof, subProof2: ResolutionProof
-  ): ResolutionProof = {
-    require( part1 isSubMultisetOf splittingClause.conclusion )
-    val part2 = splittingClause.conclusion diff part1
-    require( freeVariables( part1 ) intersect freeVariables( part2 ) isEmpty )
-
-    val nameGen = rename.awayFrom(
-      splittingClause.subProofs union subProof1.subProofs union subProof2.subProofs
-        collect { case Instance( _, subst ) => subst.domain } flatten
-    )
-
-    val projections1 = for ( ( a, i ) <- part1.zipWithIndex )
-      yield mapInputClauses.withOccConn( subProof1, factorEverything = true ) {
-      case clause if clause multiSetEquals part1 =>
-        TautologyClause( a ) -> OccConnector( a +: Clause() :+ a, clause,
-          if ( i isSuc ) Seq() +: Sequent() :+ Seq( i )
-          else Seq( i ) +: Sequent() :+ Seq() )
-      case clause => InputClause( clause ) -> OccConnector( clause )
-    }
-
-    val part2renaming = freeVariables( part2 ).map { v => v -> nameGen.fresh( v ) }
-    val renamedSplittingClause = Instance( splittingClause, Substitution( part2renaming ) )
-    val renamedPart1OccConn = OccConnector( part1, Substitution( part2renaming )( splittingClause.conclusion ).map { _.asInstanceOf[HOLAtom] },
-      for ( ( a, i ) <- part1.zipWithIndex ) yield Seq( splittingClause.conclusion.indexOfPol( a, i.isSuc ) ) )
-    val renamedDerivationOfPart2 = mapInputClauses.withOccConn( subProof1, factorEverything = true ) { clause =>
-      if ( clause multiSetEquals part1 ) {
-        renamedSplittingClause -> renamedPart1OccConn.inv
-      } else {
-        InputClause( clause ) -> OccConnector( clause )
-      }
-    }
-    val derivationOfPart2 = Instance( renamedDerivationOfPart2, Substitution( part2renaming.map { _.swap } ) )
-    require( derivationOfPart2.conclusion isSubMultisetOf part2 )
-
-    val finalProof = mapInputClauses( subProof2, factorEarly = true ) { clause =>
-      if ( clause multiSetEquals part2 ) {
-        derivationOfPart2
-      } else {
-        projections1.find( _.conclusion isSubsetOf clause ).map( projections1( _ ) ).getOrElse( InputClause( clause ) )
-      }
-    }
-    require( finalProof.conclusion.isEmpty )
-
-    finalProof
   }
 }

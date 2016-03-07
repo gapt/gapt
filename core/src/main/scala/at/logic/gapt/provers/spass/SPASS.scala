@@ -127,7 +127,6 @@ class SPASS extends ResolutionProver with ExternalProgram {
         }
 
         val sketch = inference2sketch( inferences.last._1 )
-        require( sketch.conclusion.isEmpty )
 
         RefutationSketchToRobinson( sketch ) match {
           case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )

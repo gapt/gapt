@@ -76,6 +76,8 @@ object TermReplacement {
       case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
       case Paramodulation( q1, l1, q2, l2, pos, dir ) =>
         Paramodulation( f( q1 ), l1, f( q2 ), l2, pos, dir )
+      case Splitting( q0, c1, q1, q2 ) =>
+        Splitting( f( q0 ), c1 map { TermReplacement( _, repl ) }, f( q1 ), f( q2 ) )
     } )
 
     f( proof )
