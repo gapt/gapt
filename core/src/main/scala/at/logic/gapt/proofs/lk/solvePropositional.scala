@@ -32,6 +32,9 @@ trait SolveUtils {
 object solvePropositional extends SolveUtils {
   type Error = HOLSequent
 
+  def apply( formula: HOLFormula ): UnprovableOrLKProof =
+    apply( Sequent() :+ formula )
+
   def apply( seq: HOLSequent ): UnprovableOrLKProof =
     solve( seq ) map { WeakeningMacroRule( _, seq ) }
 
