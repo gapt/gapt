@@ -131,6 +131,9 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
     res.toMap
   }
 
+  def infer( clause: FOLClause, known: Map[FOLVar, Var] ): Map[FOLVar, Var] =
+    clause.elements.foldRight( known )( infer )
+
   def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
     back( proof, CNFn.toFClauseList( endSequent.toFormula ).toSet )
 
@@ -182,6 +185,14 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
         val q1 = f( subProof1, subProofVars )
         val q2 = f( subProof2, subProofVars )
         Paramodulation( q1, eq, q2, lit, pos, ltr )
+
+      case Splitting( p0, c1, p1, p2 ) =>
+        val subProofVars = infer( p0.conclusion.map { _.asInstanceOf[FOLAtom] }, vars )
+        Splitting(
+          f( p0, subProofVars ),
+          c1 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ).asInstanceOf[HOLAtom] },
+          f( p1, vars ), f( p2, vars )
+        )
     } )
 
     f( proof, Map() )
