@@ -160,14 +160,24 @@ package object expr {
   }
 
   /**
+   * Testifies that applying a non-FOL substitution to a FOLAtom results in a HOLAtom.
+   * @param notAFOLSub Testifies that S is not a FOLSubstitution.
+   * @tparam S
+   * @return
+   */
+  implicit def FOLAtomSubstitutable[S <: Substitution]( implicit notAFOLSub: Not[S <:< FOLSubstitution] ) = new Substitutable[S, FOLAtom, HOLAtom] {
+    override def applySubstitution( sub: S, x: FOLAtom ): HOLAtom = applySub( sub, x ).asInstanceOf[HOLAtom]
+  }
+
+  /**
    * Testifies that applying a Substitution that is not a FOLSubstitution to a HOLFormula will result in a HOLFormula.
    *
    * @param notAFOLSub Testifies that S is not a subtype of FOLSubstitution.
    * @tparam S
    * @return
    */
-  implicit def HOLFormulaClosedUnderSub[S <: Substitution]( implicit notAFOLSub: Not[S <:< FOLSubstitution] ) = new Substitutable[S, HOLFormula, HOLFormula] {
-    override def applySubstitution( sub: S, x: HOLFormula ): HOLFormula = applySub( sub, x ).asInstanceOf[HOLFormula]
+  implicit def HOLFormulaClosedUnderSub[S <: Substitution, T <: HOLFormula]( implicit notAFOLSub: Not[S <:< FOLSubstitution], notAFOLAtom: Not[T <:< FOLAtom] ) = new Substitutable[S, T, HOLFormula] {
+    override def applySubstitution( sub: S, x: T ): HOLFormula = applySub( sub, x ).asInstanceOf[HOLFormula]
   }
 
   /**
@@ -177,8 +187,8 @@ package object expr {
    * @tparam S
    * @return
    */
-  implicit def FOLExpressionSubstitutable[S <: Substitution]( implicit notAFOLSub: Not[S <:< FOLSubstitution] ) = new Substitutable[S, FOLExpression, LambdaExpression] {
-    override def applySubstitution( sub: S, t: FOLExpression ): LambdaExpression = applySub( sub, t )
+  implicit def FOLExpressionSubstitutable[S <: Substitution, T <: FOLExpression]( implicit notAFOLSub: Not[S <:< FOLSubstitution], notAFOLAtom: Not[T <:< FOLAtom] ) = new Substitutable[S, T, LambdaExpression] {
+    override def applySubstitution( sub: S, t: T ): LambdaExpression = applySub( sub, t )
   }
 
   /**
