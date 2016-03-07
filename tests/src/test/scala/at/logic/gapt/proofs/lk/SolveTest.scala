@@ -1,38 +1,36 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.BussTautology
-import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
+import scalaz.\/-
+
 class SolveTest extends Specification with SequentMatchers {
   "SolveTest" should {
     "prove sequent where quantifier order matters" in {
       // example from Chaudhuri et.al.: A multi-focused proof system ...
-      val List( x, y, u, v ) = List( "x", "y", "u", "v" ) map ( x => Var( x, Ti ) )
-      val c = Const( "c", Ti )
-      val d = Const( "d", Ti -> To )
-
-      val formula = Ex( x, Or( Neg( HOLAtom( d, x :: Nil ) ), All( y, HOLAtom( d, y :: Nil ) ) ) ) // exists x (-d(x) or forall y d(y))
+      val formula = hof"∃x (¬d(x) ∨ ∀y d(y))"
 
       val inst1 = ETOr(
-        ETNeg( ETAtom( HOLAtom( d, u :: Nil ), false ) ), // -d(u)
-        ETStrongQuantifier( All( y, HOLAtom( d, y :: Nil ) ), v, ETAtom( HOLAtom( d, v :: Nil ), true ) ) // forall y d(y) +^v d(v)
+        ETNeg( ETAtom( hoa"d(u)", false ) ), // -d(u)
+        ETStrongQuantifier( hof"∀y d(y)", hov"v", ETAtom( hoa"d(v)", true ) ) // forall y d(y) +^v d(v)
       )
 
       val inst2 = ETOr(
-        ETNeg( ETAtom( HOLAtom( d, c :: Nil ), false ) ), // -d(c)
-        ETStrongQuantifier( All( y, HOLAtom( d, y :: Nil ) ), u, ETAtom( HOLAtom( d, u :: Nil ), true ) ) // forall y d(y) +^u d(u)
+        ETNeg( ETAtom( hoa"d(c)", false ) ), // -d(c)
+        ETStrongQuantifier( hof"∀y d(y)", hov"u", ETAtom( hoa"d(u)", true ) ) // forall y d(y) +^u d(u)
       )
 
       // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch
-      val et = ETWeakQuantifier( formula, Map( u -> inst1, c -> inst2 ) )
+      val et = ETWeakQuantifier( formula, Map( le"u" -> inst1, le"c" -> inst2 ) )
       val etSeq = Sequent() :+ et
 
-      val Some( lkProof ) = solve.expansionProofToLKProof( etSeq )
+      val \/-( lkProof ) = ExpansionProofToLK( ExpansionProof( etSeq ) )
       lkProof.endSequent must beMultiSetEqual( etSeq.shallow )
     }
 
@@ -55,8 +53,8 @@ class SolveTest extends Specification with SequentMatchers {
   }
 
   "ExpansionProofToLK" should {
-    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( true ) ) ) must_== TopAxiom }
-    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( false ) +: Sequent() ) ) must_== BottomAxiom }
+    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( true ) ) ) must_== \/-( TopAxiom ) }
+    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( false ) +: Sequent() ) ) must_== \/-( BottomAxiom ) }
 
     "equality" in {
       val Some( expansion ) = Escargot getExpansionProof existsclosure(
@@ -65,9 +63,31 @@ class SolveTest extends Specification with SequentMatchers {
           Sequent()
           :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
       )
-      val lk = ExpansionProofToLK( expansion, hasEquality = true )
+      val \/-( lk ) = ExpansionProofWithEqualityToLK( expansion )
       lk.conclusion must beMultiSetEqual( expansion.shallow )
     }
+
+    "cuts" in {
+      val es = ETAtom( hoa"p 0", false ) +:
+        ETWeakQuantifier( hof"∀x (p x ⊃ p (s x))", Map(
+          le"z" -> ETImp( ETAtom( hoa"p z", true ), ETAtom( hoa"p (s z)", false ) ),
+          le"s z" -> ETImp( ETAtom( hoa"p (s z)", true ), ETAtom( hoa"p (s (s z))", false ) )
+        ) ) +: Sequent() :+ ETAtom( hoa"p (s (s (s (s 0))))", true )
+      val cutf = hof"∀x (p x ⊃ p (s (s x)))"
+      val cut = ETImp(
+        ETStrongQuantifier( cutf, hov"z",
+          ETImp( ETAtom( hoa"p z", false ), ETAtom( hoa"p (s (s z))", true ) ) ),
+        ETWeakQuantifier( cutf, Map(
+          le"0" -> ETImp( ETAtom( hoa"p 0", true ), ETAtom( hoa"p (s (s 0))", false ) ),
+          le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", true ), ETAtom( hoa"p (s (s (s (s 0))))", false ) )
+        ) )
+      )
+      val epwc = ExpansionProofWithCut( Seq( cut ), es )
+      ExpansionProofToLK( epwc ) must beLike {
+        case \/-( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
+      }
+    }
+
   }
 }
 

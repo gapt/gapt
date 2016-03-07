@@ -2,12 +2,13 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.hol.structuralCNF
-import at.logic.gapt.expr.{ HOLAtomConst, LambdaExpression }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
+import scalaz.\/-
 
 object RobinsonToLK {
   /**
@@ -25,23 +26,24 @@ object RobinsonToLK {
 
   def apply( resolutionProof: ResolutionProof, endSequent: HOLSequent,
              justifications: Map[HOLClause, structuralCNF.Justification],
-             definitions:    Map[HOLAtomConst, LambdaExpression] ): LKProof = {
+             definitions:    Map[HOLAtomConst, LambdaExpression],
+             addWeakenings:  Boolean ): LKProof = {
     require( resolutionProof.conclusion.isEmpty )
 
     import structuralCNF.{ ProjectionFromEndSequent, Definition }
 
     val projections = justifications map {
       case ( clause, ProjectionFromEndSequent( proj, index ) ) =>
-        val projWithDef = ExpansionProofToLK( ExpansionProof( proj ++ clause.map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
-        clause -> DefinitionRule( projWithDef, proj.shallow.elements.head, endSequent( index ), index isSuc )
+        val \/-( projWithDef ) = ExpansionProofToLK( ExpansionProof( proj ++ clause.map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
+        clause -> projWithDef
 
       case ( clause, Definition( newAtom, expansion ) ) =>
         val i = clause indexOf newAtom
-        val p = ExpansionProofToLK( ExpansionProof( clause.map( ETAtom( _, false ), ETAtom( _, true ) ).updated( i, expansion ) ) )
+        val \/-( p ) = ExpansionProofToLK( ExpansionProof( clause.map( ETAtom( _, false ), ETAtom( _, true ) ).updated( i, expansion ) ) )
         clause -> DefinitionRule( p, expansion.shallow, newAtom, i isSuc )
     }
 
-    val proofWithDefs = apply( resolutionProof, endSequent, projections )
+    val proofWithDefs = apply( resolutionProof, endSequent, projections, addWeakenings )
     DefinitionElimination( definitions.toMap )( proofWithDefs )
   }
 
@@ -78,7 +80,8 @@ object RobinsonToLK {
         ContractionLeftRule( f( p1 ), p1.conclusion( idx1 ) )
       case Factor( p1, idx1 @ Suc( _ ), idx2 ) =>
         ContractionRightRule( f( p1 ), p1.conclusion( idx1 ) )
-      case Instance( p1, s ) => s( f( p1 ) )
+      case Instance( p1, s ) if s.isIdentity => f( p1 )
+      case Instance( p1, s )                 => s( f( p1 ) )
       case Resolution( p1, idx1, p2, idx2 ) =>
         ContractionMacroRule(
           CutRule( f( p1 ), f( p2 ), p1.conclusion( idx1 ) ),
@@ -97,7 +100,7 @@ object RobinsonToLK {
           endSequent ++ p.conclusion, strict = false
         )
     } )
-    val rproof = f( resolutionDerivation )
+    val rproof = f( eliminateSplitting( resolutionDerivation ) )
     if ( addWeakenings ) WeakeningContractionMacroRule( rproof, endSequent )
     else ContractionMacroRule( rproof )
   }

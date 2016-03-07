@@ -240,6 +240,9 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   def flatMap[B]( f: A => TraversableOnce[B] ): Sequent[B] = flatMap( f, f )
 
+  def collect[B]( f: PartialFunction[A, B] ): Sequent[B] =
+    Sequent( antecedent collect f, succedent collect f )
+
   /**
    * Maps two functions over the antecedent and succedent, respectively.
    *

@@ -4,6 +4,7 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, Expa
 
 import scala.swing.event.Key
 import scala.swing.{ Separator, Menu, Action, MenuItem }
+import scalaz.\/-
 
 /**
  * Created by sebastian on 12/13/15.
@@ -11,6 +12,7 @@ import scala.swing.{ Separator, Menu, Action, MenuItem }
 
 /**
  * ProofToolViewer for expansion sequents.
+ *
  * @param name The name to be displayed at the top.
  * @param es The expansion sequent to be displayed.
  */
@@ -24,7 +26,7 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
   def lkproof() {
     try {
       scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val p = ExpansionProofToLK( ExpansionProof( content ) )
+      val \/-( p ) = ExpansionProofToLK( ExpansionProof( content ) )
       val viewer = new LKProofViewer( "LK proof", p )
       viewer.showFrame()
       scrollPane.cursor = java.awt.Cursor.getDefaultCursor

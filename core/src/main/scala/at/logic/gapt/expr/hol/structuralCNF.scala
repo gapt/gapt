@@ -207,7 +207,7 @@ object structuralCNF {
           expand( Sequent( Seq( repl ), Seq( f ) ), es => Definition( repl, es( Suc( 0 ) ) ) )
         }
       }
-      split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETAtom( repl, i.isAnt ) ) ) )
+      split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETDefinedAtom( repl, i.isAnt, Abs( fvs, f ) ) ) ) )
     }
 
     ( cnf.toSet, justifications.toSet, defs.map( _.swap ).toMap )

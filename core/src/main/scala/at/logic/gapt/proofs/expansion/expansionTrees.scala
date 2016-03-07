@@ -2,8 +2,10 @@ package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
 import at.logic.gapt.proofs.DagProof
+
+import scala.collection.mutable
 
 trait ExpansionTree extends DagProof[ExpansionTree] {
   def shallow: HOLFormula
@@ -40,10 +42,27 @@ case class ETMerge( child1: ExpansionTree, child2: ExpansionTree ) extends Binar
 object ETMerge {
   def apply( nonEmptyChildren: Iterable[ExpansionTree] ): ExpansionTree =
     nonEmptyChildren reduce { ETMerge( _, _ ) }
+
+  def apply( shallow: HOLFormula, polarity: Boolean, children: Iterable[ExpansionTree] ): ExpansionTree = {
+    for ( ch <- children ) {
+      require( ch.polarity == polarity )
+      require( ch.shallow == shallow )
+    }
+    if ( children.nonEmpty ) apply( children ) else ETWeakening( shallow, polarity )
+  }
 }
 
 case class ETAtom( atom: HOLAtom, polarity: Boolean ) extends ExpansionTree {
   def shallow = atom
+  def deep = atom
+  def immediateSubProofs = Seq()
+}
+
+case class ETDefinedAtom( atom: HOLAtom, polarity: Boolean, definition: LambdaExpression ) extends ExpansionTree {
+  val Apps( definitionConst: Const, arguments ) = atom
+  require( freeVariables( definition ).isEmpty )
+
+  val shallow = BetaReduction.betaNormalize( definition( arguments: _* ) ).asInstanceOf[HOLFormula]
   def deep = atom
   def immediateSubProofs = Seq()
 }
@@ -112,6 +131,41 @@ object ETWeakQuantifier {
     ETWeakQuantifier( shallow, instances groupBy { _._1 } mapValues { children => ETMerge( children map { _._2 } ) } )
   }
 }
+object ETWeakQuantifierBlock {
+  def apply( shallow: HOLFormula, blockSize: Int, instances: Iterable[( Seq[LambdaExpression], ExpansionTree )] ): ExpansionTree =
+    if ( blockSize == 0 ) {
+      ETMerge( instances map { _._2 } )
+    } else {
+      ETWeakQuantifier( shallow, instances groupBy { _._1.head } mapValues { children =>
+        apply( instantiate( shallow, children.head._1.head ), blockSize - 1,
+          children map { case ( ts, et ) => ts.tail -> et } )
+      } )
+    }
+
+  def unapply( et: ExpansionTree ): Some[( HOLFormula, Map[Seq[LambdaExpression], ExpansionTree] )] = {
+    val instances = mutable.Map[Seq[LambdaExpression], ExpansionTree]()
+
+    def walk( et: ExpansionTree, terms: Seq[LambdaExpression], n: Int ): Unit =
+      if ( n == 0 ) instances( terms ) = et else et match {
+        case ETWeakQuantifier( _, insts ) =>
+          for ( ( term, child ) <- insts )
+            walk( child, terms :+ term, n - 1 )
+        case ETMerge( a, b ) =>
+          walk( a, terms, n )
+          walk( b, terms, n )
+        case ETWeakening( _, _ ) =>
+      }
+
+    val numberQuants = ( et.polarity, et.shallow ) match {
+      case ( true, Ex.Block( vs, _ ) )   => vs.size
+      case ( false, All.Block( vs, _ ) ) => vs.size
+    }
+
+    walk( et, Seq(), numberQuants )
+
+    Some( et.shallow -> instances.toMap )
+  }
+}
 
 case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: ExpansionTree ) extends UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
@@ -164,6 +218,8 @@ object replaceET {
       et.copy( formula = TermReplacement( formula, repl ) )
     case et @ ETAtom( atom, _ ) =>
       et.copy( atom = TermReplacement( atom, repl ) )
+    case ETDefinedAtom( atom, pol, definition ) =>
+      ETDefinedAtom( TermReplacement( atom, repl ), pol, TermReplacement( definition, repl ) )
 
     case _: ETTop | _: ETBottom  => et
     case ETNeg( child )          => ETNeg( replaceET( child, repl ) )
@@ -192,6 +248,8 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
     case et @ ETWeakening( formula, _ ) =>
       et.copy( formula = subst( formula ) )
     case et @ ETAtom( atom, _ ) =>
+      et.copy( atom = subst( atom ).asInstanceOf[HOLAtom] )
+    case et @ ETDefinedAtom( atom, _, _ ) =>
       et.copy( atom = subst( atom ).asInstanceOf[HOLAtom] )
 
     case _: ETTop | _: ETBottom  => et
@@ -222,6 +280,30 @@ object eigenVariablesET {
   def apply( s: ExpansionSequent ): Set[Var] = s.elements.flatMap { apply }.toSet
 }
 
+object getAtHOLPosition {
+  def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
+    if ( pos.isEmpty ) Set( et ) else ( et, pos.head ) match {
+      case ( ETMerge( a, b ), _ )                => apply( a, pos ) union apply( b, pos )
+
+      case ( ETNeg( ch ), 1 )                    => apply( ch, pos.tail )
+
+      case ( ETAnd( l, _ ), 1 )                  => apply( l, pos.tail )
+      case ( ETAnd( _, r ), 2 )                  => apply( r, pos.tail )
+
+      case ( ETOr( l, _ ), 1 )                   => apply( l, pos.tail )
+      case ( ETOr( _, r ), 2 )                   => apply( r, pos.tail )
+
+      case ( ETImp( l, _ ), 1 )                  => apply( l, pos.tail )
+      case ( ETImp( _, r ), 2 )                  => apply( r, pos.tail )
+
+      case ( ETStrongQuantifier( _, _, ch ), 1 ) => apply( ch, pos.tail )
+      case ( ETSkolemQuantifier( _, _, ch ), 1 ) => apply( ch, pos.tail )
+      case ( ETWeakQuantifier( _, insts ), 1 )   => insts.values flatMap { apply( _, pos.tail ) } toSet
+
+      case ( _, _ )                              => Set()
+    }
+}
+
 object replaceAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition, exp: LambdaExpression ): ExpansionTree = {
     val rest = pos.tail
@@ -230,6 +312,7 @@ object replaceAtHOLPosition {
 
       case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )     => et
       case ( ETAtom( formula, polarity ), _ )           => ETAtom( formula.replace( pos, exp ).asInstanceOf[HOLAtom], polarity )
+      case ( et @ ETDefinedAtom( atom, _, _ ), _ )      => et.copy( atom = atom.replace( pos, exp ).asInstanceOf[HOLAtom] )
 
       case ( ETWeakening( formula, polarity ), _ )      => ETWeakening( formula.replace( pos, exp ), polarity )
 
@@ -256,6 +339,12 @@ object replaceAtHOLPosition {
         )
     }
   }
+}
+
+object generalizeET {
+  def apply( et: ExpansionTree, newShallow: HOLFormula ): ExpansionTree =
+    HOLPosition.differingPositions( et.shallow, newShallow ).foldLeft( et )( ( et_, pos ) =>
+      replaceAtHOLPosition( et_, pos, newShallow( pos ) ) )
 }
 
 object replaceAtLambdaPosition {

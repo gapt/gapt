@@ -1,6 +1,8 @@
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
@@ -257,6 +259,17 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
       val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
       expansion.shallow must_== endSequent
       expansion.deep must beValidSequent
+    }
+
+    "structural cnf with definitions" in {
+      val Some( p ) = Escargot getLKProof BussTautology( 3 )
+      p.conclusion must beMultiSetEqual( BussTautology( 3 ) )
+    }
+    "structural cnf 2" in {
+      val as = 0 to 3 map { i => FOLAtom( s"a$i" ) }
+      val endSequent = thresholds.exactly.oneOf( as ) +: Sequent() :+ naive.exactly.oneOf( as )
+      val Some( p ) = Escargot getLKProof endSequent
+      p.conclusion must beMultiSetEqual( endSequent )
     }
   }
 }

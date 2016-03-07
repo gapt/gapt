@@ -195,8 +195,11 @@ abstract class nTape {
     println( s"Preprocessed css size  : ${preprocessed_css.size}" )
     println( "------------ " )
     println( s"Refutation size (dag)  : ${fol_refutation.dagLike.size}" )
-    println( s"Refutation size (tree) : ${fol_refutation.dagLike.size}" )
+    println( s"Refutation size (tree) : ${fol_refutation.treeLike.size}" )
     println( s"Refutation depth       : ${fol_refutation.depth}" )
+    println( "------------ " )
+    println( s"Reproved deep formula proof size (dag)  : ${reproved_deep.dagLike.size}" )
+    println( s"Reproved deep formula proof size (tree) : ${reproved_deep.treeLike.size}" )
     println( "------------ Witness Terms from Expansion Proof --------------" )
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect

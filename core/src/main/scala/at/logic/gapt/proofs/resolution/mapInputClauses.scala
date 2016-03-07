@@ -5,19 +5,36 @@ import at.logic.gapt.proofs.{ OccConnector, HOLClause, SequentIndex }
 import scala.collection.mutable
 
 object mapInputClauses {
-  def apply( proof: ResolutionProof )( f: HOLClause => ResolutionProof ): ResolutionProof = {
+  def guessConn( oldConcl: HOLClause, newConcl: HOLClause ): OccConnector[HOLAtom] = {
+    val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
+    OccConnector( newConcl, oldConcl, newConcl.zipWithIndex.map {
+      case ( atom, newIdx ) =>
+        val oldIdx = oldConcl.indicesWhere( _ == atom ).
+          filterNot( alreadyUsedOldIndices.contains ).
+          filter( newIdx.sameSideAs ).
+          head
+        alreadyUsedOldIndices += oldIdx
+        Seq( oldIdx )
+    } )
+  }
+
+  def apply( proof: ResolutionProof, factorEarly: Boolean = false )( f: HOLClause => ResolutionProof ): ResolutionProof =
+    withOccConn( proof ) { clause =>
+      val q = f( clause )
+      q -> guessConn( clause, q.conclusion )
+    }
+
+  def withOccConn( proof: ResolutionProof, factorEverything: Boolean = false )( f: HOLClause => ( ResolutionProof, OccConnector[HOLAtom] ) ): ResolutionProof = {
     val memo = mutable.Map[ResolutionProof, ( ResolutionProof, OccConnector[HOLAtom] )]()
 
-    def guessConn( oldConcl: HOLClause, newConcl: HOLClause ): OccConnector[HOLAtom] = {
-      val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
-      OccConnector( newConcl, oldConcl, newConcl.zipWithIndex.map {
-        case ( atom, newIdx ) =>
-          val oldIdx = oldConcl.indicesWhere( _ == atom ).
-            filterNot( alreadyUsedOldIndices.contains ).
-            filter( newIdx.sameSideAs ).
-            head
-          alreadyUsedOldIndices += oldIdx
-          Seq( oldIdx )
+    def doFactor( p: ResolutionProof, res: ( ResolutionProof, OccConnector[HOLAtom] ) ): ( ResolutionProof, OccConnector[HOLAtom] ) = {
+      val ( newP, conn ) = res
+      check( p, if ( factorEverything ) {
+        val ( facP, facConn ) = Factor( newP )
+        val facConn_ = facConn.copy( parentsSequent = facConn.parentsSequent.map { _ take 1 } )
+        ( facP, facConn_ * conn )
+      } else {
+        res
       } )
     }
 
@@ -28,11 +45,9 @@ object mapInputClauses {
       res
     }
 
-    def doMap( p: ResolutionProof ): ( ResolutionProof, OccConnector[HOLAtom] ) = check( p, memo.getOrElseUpdate( p, p match {
+    def doMap( p: ResolutionProof ): ( ResolutionProof, OccConnector[HOLAtom] ) = doFactor( p, memo.getOrElseUpdate( p, p match {
       case TautologyClause( _ ) | ReflexivityClause( _ ) => p -> OccConnector( p.conclusion )
-      case InputClause( clause ) =>
-        val q = f( clause )
-        q -> guessConn( clause, q.conclusion )
+      case InputClause( clause )                         => f( clause )
       case Factor( p1, i1, i2 ) =>
         val ( q1, conn1 ) = doMap( p1 )
         ( for ( j1 <- conn1 children i1 headOption; j2 <- conn1 children i2 headOption; ( res, resConn ) <- Some( Factor( q1, List( j1, j2 ) ) ) )
@@ -59,6 +74,15 @@ object mapInputClauses {
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
+      case p @ Splitting( p0, c1, p1, p2 ) =>
+        val ( q0, _ ) = doMap( p0 )
+        val q1 = mapInputClauses.withOccConn( p1, factorEverything ) { cls =>
+          if ( p.addInputClauses1 contains cls ) InputClause( cls ) -> OccConnector( cls ) else f( cls )
+        }
+        val q2 = mapInputClauses.withOccConn( p2, factorEverything ) { cls =>
+          if ( p.addInputClauses2 contains cls ) InputClause( cls ) -> OccConnector( cls ) else f( cls )
+        }
+        Splitting( q0, c1, q1, q2 ) -> OccConnector( HOLClause() )
     } ) )
 
     doMap( proof )._1

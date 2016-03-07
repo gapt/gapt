@@ -1,8 +1,7 @@
 package at.logic.gapt.provers.vampire
 
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.resolution.inputClauses
-import at.logic.gapt.proofs.{ Clause, HOLClause, Sequent, SequentMatchers, HOLSequent }
+import at.logic.gapt.proofs.{ Clause, Sequent, SequentMatchers, HOLSequent }
 import org.specs2.mutable._
 
 import at.logic.gapt.expr._
@@ -102,7 +101,8 @@ class VampireTest extends Specification with SequentMatchers {
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
       Vampire.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => inputClauses( p ) must contain( atMost( cnf.toSet[HOLClause] ) )
+        case Some( p ) =>
+          cnf must contain( atLeast( p.inputClauses ) )
       }
     }
 
