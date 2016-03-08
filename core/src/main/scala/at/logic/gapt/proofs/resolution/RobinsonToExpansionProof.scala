@@ -105,17 +105,17 @@ object groundInstancesFromResolutionProof {
             case ( clause, instSubst ) =>
               clause -> instSubst.mapValues { subst( _ ) }
           }
-        case node @ Splitting( splittingClause, part1, case1, case2 ) =>
-          val addInstFrom1 = getInst( case1 ) filter { inst => node.addInputClauses1 exists { _ multiSetEquals inst._1 } } map { _._2 }
-          val addInstFrom2 = getInst( case2 ) filter { inst => node.addInputClauses2 exists { _ multiSetEquals inst._1 } } map { _._2 }
+        case node @ Splitting( splittingClause, part1, part2, case1, case2 ) =>
+          val addInstFrom1 = getInst( case1 ) filter { inst => node.addInputClauses1 contains inst._1 } map { _._2 }
+          val addInstFrom2 = getInst( case2 ) filter { inst => node.addInputClauses2 contains inst._1 } map { _._2 }
           val addInstances = for {
             subst1 <- addInstFrom1
             subst2 <- addInstFrom2
             subst = Substitution( subst1 ++ subst2 )
             ( cls, inst ) <- getInst( splittingClause )
           } yield cls -> inst.mapValues { subst( _ ) }
-          val inst1 = getInst( case1 ).filterNot { inst => node.addInputClauses1 exists { _ multiSetEquals inst._1 } }
-          val inst2 = getInst( case2 ).filterNot { inst => node.addInputClauses2 exists { _ multiSetEquals inst._1 } }
+          val inst1 = getInst( case1 ).filterNot { inst => node.addInputClauses1 contains inst._1 }
+          val inst2 = getInst( case2 ).filterNot { inst => node.addInputClauses2 contains inst._1 }
           inst1 union inst2 union addInstances
         case _ => node.immediateSubProofs flatMap getInst toSet
       } )
