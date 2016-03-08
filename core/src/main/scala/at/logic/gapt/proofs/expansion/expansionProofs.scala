@@ -75,7 +75,7 @@ case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
   val cuts = for {
     cutAxiomExpansion <- expansionWithCutAxiom.expansionSequent.antecedent
     if cutAxiomExpansion.shallow == cutAxiom
-    cut <- expansionWithCutAxiom.expansionSequent( Ant( 0 ) )( HOLPosition( 1 ) )
+    cut <- cutAxiomExpansion( HOLPosition( 1 ) )
     cut1 <- cut( HOLPosition( 1 ) )
     cut2 <- cut( HOLPosition( 2 ) )
   } yield ETImp( cut1, cut2 )
@@ -128,14 +128,15 @@ object eliminateMerges {
     var eigenVarSubst = Substitution()
 
     def merge( tree: ExpansionTree ): ExpansionTree = tree match {
-      case ETMerge( t, s )             => merge2( t, s )
-      case ETAtom( atom, pol )         => ETAtom( atom, pol )
-      case ETWeakening( formula, pol ) => ETWeakening( formula, pol )
-      case _: ETTop | _: ETBottom      => tree
-      case ETNeg( t )                  => ETNeg( merge( t ) )
-      case ETAnd( t, s )               => ETAnd( merge( t ), merge( s ) )
-      case ETOr( t, s )                => ETOr( merge( t ), merge( s ) )
-      case ETImp( t, s )               => ETImp( merge( t ), merge( s ) )
+      case ETMerge( t, s )              => merge2( t, s )
+      case _: ETDefinedAtom | _: ETAtom => tree
+      case tree: ETDefinition           => tree.copy( child = merge( tree.child ) )
+      case ETWeakening( formula, pol )  => ETWeakening( formula, pol )
+      case _: ETTop | _: ETBottom       => tree
+      case ETNeg( t )                   => ETNeg( merge( t ) )
+      case ETAnd( t, s )                => ETAnd( merge( t ), merge( s ) )
+      case ETOr( t, s )                 => ETOr( merge( t ), merge( s ) )
+      case ETImp( t, s )                => ETImp( merge( t ), merge( s ) )
       case ETWeakQuantifier( shallow, inst ) =>
         ETWeakQuantifier(
           shallow,
@@ -153,8 +154,11 @@ object eliminateMerges {
           case t: ETMerge => ETMerge( t, merge( s ) )
           case t          => merge2( t, s )
         }
-      case ( t, s: ETMerge )                    => merge2( s, t )
-      case ( t: ETAtom, _: ETAtom )             => merge( t )
+      case ( t, s: ETMerge ) => merge2( s, t )
+      case ( t: ETAtom, _: ETAtom ) => t
+      case ( t @ ETDefinedAtom( a1, _, d1 ), ETDefinedAtom( a2, _, d2 ) ) if d1 == d2 => t
+      case ( ETDefinition( shallow, def1, t1 ), ETDefinition( _, def2, t2 ) ) if def1 == def2 =>
+        ETDefinition( shallow, def1, merge2( t1, t2 ) )
       case ( ETNeg( t ), ETNeg( s ) )           => ETNeg( merge2( t, s ) )
       case ( ETAnd( t1, t2 ), ETAnd( s1, s2 ) ) => ETAnd( merge2( t1, s1 ), merge2( t2, s2 ) )
       case ( ETOr( t1, t2 ), ETOr( s1, s2 ) )   => ETOr( merge2( t1, s1 ), merge2( t2, s2 ) )
@@ -183,12 +187,9 @@ object eliminateMerges {
 
         ETMerge( merge( tree1 ), merge( tree2 ) )
       case ( t: ETSkolemQuantifier, s: ETStrongQuantifier ) => merge2( s, t )
-      case ( ETSkolemQuantifier( shallow, st1, t1 ), ETSkolemQuantifier( _, st2, t2 ) ) =>
-        if ( st1 == st2 ) {
-          ETSkolemQuantifier( shallow, st1, merge2( t1, t2 ) )
-        } else {
-          ETMerge( merge( tree1 ), merge( tree2 ) )
-        }
+      case ( ETSkolemQuantifier( shallow, st1, t1 ), ETSkolemQuantifier( _, st2, t2 ) ) if st1 == st2 =>
+        ETSkolemQuantifier( shallow, st1, merge2( t1, t2 ) )
+      case ( t, s ) => ETMerge( merge( t ), merge( s ) )
     }
 
     val mergedSequent = expansionSequent map merge
@@ -261,7 +262,7 @@ object eliminateCutsET {
 object eliminateDefsET {
   object DefinitionFormula {
     def unapply( f: HOLFormula ) = f match {
-      case All.Block( vs, And( Imp( Apps( d1: Const, vs1 ), r1 ),
+      case All.Block( vs, And( Imp( Apps( d1: HOLAtomConst, vs1 ), r1 ),
         Imp( r2, Apps( d2, vs2 ) ) ) ) if d1 == d2 && r1 == r2 && vs == vs1 && vs == vs2 =>
         Some( ( vs, d1, r2 ) )
       case _ => None
@@ -269,8 +270,13 @@ object eliminateDefsET {
   }
 
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean ): ExpansionProofWithCut =
-    ep.shallow.find { case DefinitionFormula( _, _, _ ) => true case _ => false } match {
-      case Some( idx ) => apply( apply( ep, idx, pureFolWithoutEq ), pureFolWithoutEq )
+    apply( ep, pureFolWithoutEq, _ => true )
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, whichDefinitions: HOLAtomConst => Boolean ): ExpansionProofWithCut =
+    ep.shallow.find {
+      case DefinitionFormula( _, d, _ ) if whichDefinitions( d ) => true
+      case _ => false
+    } match {
+      case Some( idx ) => apply( apply( ep, idx, pureFolWithoutEq ), pureFolWithoutEq, whichDefinitions )
       case None        => ExpansionProofWithCut( ep )
     }
   def apply( ep: ExpansionProof, idx: SequentIndex, pureFolWithoutEq: Boolean ): ExpansionProof = {
@@ -318,6 +324,7 @@ object eliminateDefsET {
 
       case ETDefinedAtom( Apps( `definitionConst`, as ), pol, _ ) =>
         if ( pol ) insts( as )._1 else insts( as )._2
+      case ETDefinedAtom( _, _, _ )                          => et
       case ETAtom( Apps( f, _ ), _ ) if f != definitionConst => et
     }
 

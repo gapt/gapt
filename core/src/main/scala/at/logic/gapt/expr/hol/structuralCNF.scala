@@ -14,20 +14,20 @@ object structuralCNF {
   case class ProjectionFromEndSequent( projection: ExpansionSequent, indexInES: SequentIndex ) extends Justification
   case class Definition( newAtom: HOLAtom, expansion: ExpansionTree ) extends Justification
 
-  def apply( formula: HOLFormula, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) =
+  def apply( formula: HOLFormula, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Map[HOLClause, Justification], Map[HOLAtomConst, LambdaExpression] ) =
     apply( formula +: Sequent(), generateJustifications, propositional )
 
-  def apply( endSequent: FOLSequent, generateJustifications: Boolean, propositional: Boolean )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: FOLSequent, generateJustifications: Boolean, propositional: Boolean )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Map[HOLClause, Justification], Map[HOLAtomConst, LambdaExpression] ) = {
     val ( cnf, justifications, definitions ) = apply( endSequent.asInstanceOf[HOLSequent], generateJustifications, propositional )
     ( cnf.map { _.asInstanceOf[FOLClause] }, justifications, definitions )
   }
 
-  def apply( endSequent: HOLSequent, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Set[( HOLClause, Justification )], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: HOLSequent, generateJustifications: Boolean, propositional: Boolean ): ( Set[HOLClause], Map[HOLClause, Justification], Map[HOLAtomConst, LambdaExpression] ) = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     val cnf = mutable.Set[HOLClause]()
-    val justifications = mutable.Set[( HOLClause, Justification )]()
+    val justifications = mutable.Map[HOLClause, Justification]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
 
     val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
@@ -170,7 +170,7 @@ object structuralCNF {
           val clause = seq.map { _.asInstanceOf[HOLAtom] }
           cnf += clause
           if ( generateJustifications )
-            justifications += ( clause -> backTrans( clause.map( ETAtom( _, true ), ETAtom( _, false ) ) ) )
+            justifications( clause ) = backTrans( clause.map( ETAtom( _, true ), ETAtom( _, false ) ) )
       }
     }
 
@@ -210,7 +210,7 @@ object structuralCNF {
       split( seq.updated( i, repl ), es => backTrans( es.updated( i, ETDefinedAtom( repl, i.isAnt, Abs( fvs, f ) ) ) ) )
     }
 
-    ( cnf.toSet, justifications.toSet, defs.map( _.swap ).toMap )
+    ( cnf.toSet, justifications.toMap, defs.map( _.swap ).toMap )
   }
 
 }
