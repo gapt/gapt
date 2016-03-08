@@ -296,10 +296,7 @@ object eliminateDefsET {
     if ( !pureFolWithoutEq ) {
       val newNegRepl = ETMerge( definedFormula, false, insts.values.map { _._2 }.map { generalizeET( _, definedFormula ) } )
       val newPosRepl = ETMerge( definedFormula, true, insts.values.map { _._1 }.map { generalizeET( _, definedFormula ) } )
-      insts = insts map {
-        case ( as, _ ) =>
-          as -> ( Substitution( vs zip as )( newPosRepl ), Substitution( vs zip as )( newNegRepl ) )
-      }
+      insts = insts map { case ( as, _ ) => as -> Substitution( vs zip as )( newPosRepl -> newNegRepl ) }
     }
 
     def replm: PartialFunction[LambdaExpression, LambdaExpression] = {
