@@ -46,6 +46,7 @@ object expansionProofFromInstances {
     definitions:            Map[HOLAtomConst, LambdaExpression],
     pureFOLwithoutEquality: Boolean                             = false
   ): ExpansionProof = {
+    require( substs.keySet subsetOf justifications.keySet )
 
     val endSequentETs =
       for ( ( formula, idx ) <- es.zipWithIndex ) yield ETMerge(
@@ -105,16 +106,17 @@ object groundInstancesFromResolutionProof {
               clause -> instSubst.mapValues { subst( _ ) }
           }
         case node @ Splitting( splittingClause, part1, case1, case2 ) =>
-          val addInstFrom1 = getInst( case1 ) filter { inst => node.addInputClauses1 contains inst._1 } map { _._2 }
-          val addInstFrom2 = getInst( case2 ) filter { inst => node.addInputClauses2 contains inst._1 } map { _._2 }
+          val addInstFrom1 = getInst( case1 ) filter { inst => node.addInputClauses1 exists { _ multiSetEquals inst._1 } } map { _._2 }
+          val addInstFrom2 = getInst( case2 ) filter { inst => node.addInputClauses2 exists { _ multiSetEquals inst._1 } } map { _._2 }
           val addInstances = for {
-            subst <- addInstFrom1 union addInstFrom2
-            subst_ = Substitution( subst )
+            subst1 <- addInstFrom1
+            subst2 <- addInstFrom2
+            subst = Substitution( subst1 ++ subst2 )
             ( cls, inst ) <- getInst( splittingClause )
-          } yield cls -> inst.mapValues { subst_( _ ) }
-          val inst1 = getInst( case1 ).filterNot { inst => node.addInputClauses1 contains inst._1 }
-          val inst2 = getInst( case2 ).filterNot { inst => node.addInputClauses2 contains inst._1 }
-          getInst( splittingClause ) union inst1 union inst2 union addInstances
+          } yield cls -> inst.mapValues { subst( _ ) }
+          val inst1 = getInst( case1 ).filterNot { inst => node.addInputClauses1 exists { _ multiSetEquals inst._1 } }
+          val inst2 = getInst( case2 ).filterNot { inst => node.addInputClauses2 exists { _ multiSetEquals inst._1 } }
+          inst1 union inst2 union addInstances
         case _ => node.immediateSubProofs flatMap getInst toSet
       } )
 

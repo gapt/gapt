@@ -6,7 +6,7 @@ import at.logic.gapt.proofs._
 object eliminateSplitting {
   def apply( p: ResolutionProof ): ResolutionProof = p match {
     case Splitting( splittingClause, part1, case1, case2 ) =>
-      justOne( Splitting( splittingClause, part1, apply( case2 ), apply( case2 ) ) )
+      justOne( Splitting( splittingClause, part1, apply( case1 ), apply( case2 ) ) )
     case _ => p
   }
 
