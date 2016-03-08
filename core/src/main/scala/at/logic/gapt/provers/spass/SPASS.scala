@@ -108,7 +108,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
           }
         inferences foreach {
           case ( num, 0, "Inp", _, clause ) =>
-            inference2sketch( num ) = SketchAxiom( clause )
+            inference2sketch( num ) = SketchAxiom( cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined ).get.map { _.asInstanceOf[FOLAtom] } )
           case ( num, splitLevel, "Spt", Seq( splitClause ), part1 ) =>
             val Some( subst ) = clauseSubsumption( part1, inference2sketch( splitClause ).conclusion )
             require( subst.isRenaming )
@@ -127,11 +127,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
         }
 
         val sketch = inference2sketch( inferences.last._1 )
-        require( sketch.conclusion.isEmpty )
 
         RefutationSketchToRobinson( sketch ) match {
           case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )
-          case scalaz.Success( resProof ) => Some( fixDerivation( resProof, cnf ) )
+          case scalaz.Success( resProof ) => Some( resProof )
         }
       } else {
         None

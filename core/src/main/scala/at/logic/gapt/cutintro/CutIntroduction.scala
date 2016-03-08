@@ -10,7 +10,7 @@ import at.logic.gapt.grammars.reforest.Reforest
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfResolutionsAndParamodulations }
+import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfLogicalInferencesRes }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
@@ -173,7 +173,7 @@ object CutIntroduction extends Logger {
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
-    metrics.value( "hs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
+    metrics.value( "hs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
@@ -247,7 +247,7 @@ object CutIntroduction extends Logger {
       }
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
       metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
-      metrics.value( "ehs_resinf", numberOfResolutionsAndParamodulations( simplifyResolutionProof( ehsResolutionProof ) ) )
+      metrics.value( "ehs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( ehsResolutionProof ) ) )
 
       minimizedEHS
     } orElse {

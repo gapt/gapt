@@ -3,11 +3,11 @@ package at.logic.gapt.provers.spass
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr.hol.structuralCNF
-import at.logic.gapt.proofs.resolution.{ InputClause, inputClauses }
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
-class SpassTest extends Specification with SequentMatchers {
+class SpassTest extends Specification with SequentMatchers with SatMatchers {
   args( skipAll = !SPASS.isInstalled )
   "SPASS" should {
     "prove identity" in {
@@ -51,7 +51,7 @@ class SpassTest extends Specification with SequentMatchers {
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
       SPASS.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => inputClauses( p ) must contain( atMost( cnf ) )
+        case Some( p ) => cnf must contain( atLeast( p.inputClauses ) )
       }
     }
 
@@ -60,12 +60,8 @@ class SpassTest extends Specification with SequentMatchers {
       val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
       val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
       val ( cnf, _, _ ) = structuralCNF( -formula, false, false )
-      SPASS getRobinsonProof cnf must beLike {
-        case Some( p ) =>
-          for ( InputClause( cls ) <- p.subProofs )
-            cnf must contain( cls )
-          ok
-      }
+      SPASS getRobinsonProof cnf must beLike { case Some( p ) => cnf must contain( atLeast( p.inputClauses ) ) }
+      SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
     }
   }
 

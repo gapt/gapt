@@ -1569,6 +1569,14 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
 \BinaryInfC{$C \lor l[t] \lor D$}
 \end{prooftree}
 
+\begin{prooftree}
+\AxiomC{$C \lor D$}
+\AxiomC{$[C]$}\noLine\UnaryInfC{$\bot$}
+\AxiomC{$[D]\:[\neg C]$}\noLine\UnaryInfC{$\bot$}
+\RightLabel{Splitting}
+\TrinaryInfC{$\bot$}
+\end{prooftree}
+
 \subsection{LKsk}
 
 LKsk is a sequent calculus used in the CERES method for higher-order logic, see

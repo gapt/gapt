@@ -135,7 +135,7 @@ object Prover9Importer extends ExternalProgram {
       val tptpEndSequent = reconstructEndSequent( p9Output )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        inputClauses( resProof ).map( _.toFormula ) ++: Sequent()
+        resProof.inputClauses.map( _.toFormula ) ++: Sequent()
       } else {
         prenexify.pos( tptpEndSequent.toFormula )
       }

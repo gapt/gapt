@@ -2,7 +2,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.hol.structuralCNF
-import at.logic.gapt.expr.{ HOLAtomConst, LambdaExpression }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
@@ -100,7 +100,7 @@ object RobinsonToLK {
           endSequent ++ p.conclusion, strict = false
         )
     } )
-    val rproof = f( resolutionDerivation )
+    val rproof = f( eliminateSplitting( resolutionDerivation ) )
     if ( addWeakenings ) WeakeningContractionMacroRule( rproof, endSequent )
     else ContractionMacroRule( rproof )
   }

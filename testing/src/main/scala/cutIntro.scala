@@ -13,7 +13,7 @@ import at.logic.gapt.examples._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, simplifyResolutionProof, numberOfResolutionsAndParamodulations, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, simplifyResolutionProof, numberOfLogicalInferencesRes, RobinsonToExpansionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.utils.glob
@@ -108,7 +108,7 @@ object loadProof {
   }
 
   def loadResolutionProof( resProof: ResolutionProof, endSequent: HOLSequent ) = {
-    metrics.value( "resinf_input", numberOfResolutionsAndParamodulations( simplifyResolutionProof( resProof ) ) )
+    metrics.value( "resinf_input", numberOfLogicalInferencesRes( simplifyResolutionProof( resProof ) ) )
     val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
     val containsEquations = constants( expansionProof.shallow ) exists {
       case EqC( _ ) => true
