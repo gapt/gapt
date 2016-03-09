@@ -101,7 +101,7 @@ package object gaptic {
     for {
       goal <- currentGoal
       diff = proof.conclusion diff goal.conclusion
-      cutFormula = diff.toFormula
+      cutFormula = diff.toDisjunction
       _ <- cut( cutFormula, label )
       _ <- insert( proof )
     } yield ()

@@ -7,29 +7,32 @@
 
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.expr.LambdaExpression
 import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lkOld
 import at.logic.gapt.proofs.lkskNew.LKskProof
-import at.logic.gapt.proofs.{ SequentProof, HOLSequent }
+import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import com.itextpdf.awt.PdfGraphics2D
+
 import scala.swing._
 import BorderPanel._
 import scala.swing.event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
-import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
+import java.io.{ File, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 import javax.swing.filechooser.FileFilter
-import javax.swing.{ KeyStroke, WindowConstants, SwingUtilities }
+import javax.swing.WindowConstants
+
 import at.logic.gapt.proofs.proofs.TreeProof
-import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
+import at.logic.gapt.formats.latex.ProofToLatexExporter
 import at.logic.gapt.utils.ds.trees.Tree
 import at.logic.gapt.proofs.proofs.Proof
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
+
+import scalaz.\/-
 
 object prooftool {
   /**
@@ -40,10 +43,12 @@ object prooftool {
    */
   def apply( obj: AnyRef, name: String = "prooftool" ): Unit =
     obj match {
-      case p: LKProof   => new LKProofViewer( name, p ).showFrame()
-      case p: LKskProof => new LKskProofViewer( name, p ).showFrame()
-      case p: SequentProof[_, _] =>
-        def renderer( x: T forSome { type T } ) = x.toString //TODO: have a better default
+      case Some( wrapped: AnyRef ) => apply( wrapped, name )
+      case \/-( wrapped: AnyRef )  => apply( wrapped, name )
+      case p: LKProof              => new LKProofViewer( name, p ).showFrame()
+      case p: LKskProof            => new LKskProofViewer( name, p ).showFrame()
+      case p: SequentProof[f, t] =>
+        def renderer( x: f ): String = "" + x //TODO: have a better default
         new SequentProofViewer( name, p, renderer ).showFrame()
       case ep: ExpansionProofWithCut => new ExpansionSequentViewer( name, ep.cuts ++: ep.expansionSequent ).showFrame()
       case es: ExpansionSequent      => new ExpansionSequentViewer( name, es ).showFrame()

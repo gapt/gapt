@@ -356,12 +356,12 @@ object canonicalSolution {
   import SimpleInductionProof._
 
   def apply( sip: SimpleInductionProof, i: Int ): FOLFormula = i match {
-    case 0 => FOLSubstitution( beta -> gamma )( sip.Gamma0.toNegFormula ).asInstanceOf[FOLFormula]
+    case 0 => FOLSubstitution( beta -> gamma )( sip.Gamma0.toNegConjunction ).asInstanceOf[FOLFormula]
     case _ =>
       val C_ = apply( sip, i - 1 )
       val nuSubst = FOLSubstitution( nu -> Utils.numeral( i - 1 ) )
       And(
-        nuSubst( sip.Gamma1.toNegFormula ).asInstanceOf[FOLFormula],
+        nuSubst( sip.Gamma1.toNegConjunction ).asInstanceOf[FOLFormula],
         if ( sip.t.isEmpty )
           C_
         else
@@ -387,7 +387,7 @@ object findConseq extends Logger {
       if ( acc contains F ) {
         acc
       } else {
-        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( And( F map { _.toFormula } ) ) ) )
+        val Fu = S.u.map( ui => FOLSubstitution( alpha, num )( FOLSubstitution( gamma, ui )( And( F map { _.toDisjunction } ) ) ) )
         if ( prover.isValid( Fu ++: Gamma2n ) )
           apply( S, n, F, acc, forgetClauses, prover )
         else
@@ -417,7 +417,7 @@ object FindFormulaH extends Logger {
     debug( s"FindConseq found ${M.size} consequences." )
 
     val proofs = M.view.flatMap { F =>
-      val C = And( F map { _.toFormula } )
+      val C = And( F map { _.toDisjunction } )
       val pos = C.find( num ).toSet // If I understand the paper correctly, an improvement can be made here
       val posSets = pos.subsets().toList.sortBy( _.size ).reverse
 

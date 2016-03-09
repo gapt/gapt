@@ -172,7 +172,7 @@ object CutIntroduction extends Logger {
       throw new CutIntroEHSUnprovableException( s"Cannot prove Herbrand sequent using ${resProver.getClass.getSimpleName}." )
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
-    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toFormula ) )
+    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
     metrics.value( "hs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
@@ -246,7 +246,7 @@ object CutIntroduction extends Logger {
         throw new CutIntroEHSUnprovableException( s"Cannot prove extended Herbrand sequent using ${resProver.getClass.getSimpleName}." )
       }
       metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
-      metrics.value( "ehs_scomp", expressionSize( ehsSequent.toFormula ) )
+      metrics.value( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
       metrics.value( "ehs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( ehsResolutionProof ) ) )
 
       minimizedEHS

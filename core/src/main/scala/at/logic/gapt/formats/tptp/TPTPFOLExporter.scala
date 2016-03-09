@@ -21,7 +21,7 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
 
   // Convert a sequent into a tptp proof problem.
   def tptp_proof_problem( seq: HOLSequent ) =
-    "fof( to_prove, conjecture, " + exportFormula( seq.toFormula.asInstanceOf[FOLFormula] ) + ")." + nLine
+    "fof( to_prove, conjecture, " + exportFormula( seq.toDisjunction.asInstanceOf[FOLFormula] ) + ")." + nLine
 
   def tptp_proof_problem_split( seq: HOLSequent ) =
     ( seq.antecedent.map( _ -> "axiom" ) ++ seq.succedent.map( _ -> "conjecture" ) ).zipWithIndex.map {
@@ -42,7 +42,7 @@ object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
   // TODO: would like to have FOLSequent here --- instead, we cast
   // we export it as a disjunction
   def export( s: HOLSequent ) = {
-    val f = reduceHolToFol( s.toFormula )
+    val f = reduceHolToFol( s.toDisjunction )
     val map = getVarRenaming( f )
     trace( "var renaming: " + map )
     tptp( f )( map )

@@ -121,17 +121,32 @@ object LKToExpansionProof {
     // Equality rules
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
       val ( subCuts, sequent ) = extract( subProof )
-      val ( subTree, subSequent ) = sequent.focus( aux )
-
+      val eqTree = sequent( eq )
+      val ( auxTree, subSequent ) = sequent.focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
-      val newTree = pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
-      ( subCuts, newTree +: subSequent )
+
+      val newAuxTree = pos.foldLeft( auxTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
+      val newEqTree = eqTree match {
+        case ETWeakening( f: HOLAtom, p ) => ETAtom( f, p )
+        case ETAtom( f, p )               => ETAtom( f, p )
+        case ETDefinition( _, _, _ )      => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
+        case _                            => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
+      }
+      ( subCuts, newAuxTree +: subSequent.updated( eq, newEqTree ) )
 
     case EqualityRightRule( subProof, eq, aux, pos ) =>
       val ( subCuts, sequent ) = extract( subProof )
-      val ( subTree, subSequent ) = sequent.focus( aux )
+      val eqTree = sequent( eq )
+      val ( auxTree, subSequent ) = sequent.focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
-      val newTree = pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
-      ( subCuts, subSequent :+ newTree )
+
+      val newAuxTree = pos.foldLeft( auxTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
+      val newEqTree = eqTree match {
+        case ETWeakening( f: HOLAtom, p ) => ETAtom( f, p )
+        case ETAtom( f, p )               => ETAtom( f, p )
+        case ETDefinition( _, _, _ )      => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
+        case _                            => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
+      }
+      ( subCuts, subSequent.updated( eq, newEqTree ) :+ newAuxTree )
   }
 }

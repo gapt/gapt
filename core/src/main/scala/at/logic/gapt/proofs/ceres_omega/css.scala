@@ -55,7 +55,7 @@ object CharacteristicSequentSet {
   }
 
   def extractHOL( l: List[HOLSequent] ): List[HOLSequent] = l.flatMap( x => try {
-    x.toFormula
+    x.toDisjunction
     Nil
   } catch {
     case e: Exception => x :: Nil
@@ -66,7 +66,7 @@ object CharacteristicSequentSet {
 
   def extractSymbolTable( l: List[HOLSequent] ): Symboltable =
     l.foldLeft( emptysmboltable )( ( table, x ) => {
-      val ( vt, ct ) = extractSymbolTable( x.toFormula )
+      val ( vt, ct ) = extractSymbolTable( x.toDisjunction )
       val ( vt_, ct_ ) = table
       ( vt ++ vt_, ct ++ ct_ )
     } )

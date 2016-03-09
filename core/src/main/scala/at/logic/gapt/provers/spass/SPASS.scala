@@ -34,7 +34,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
   def cls2dfg( cls: FOLClause ): String = {
     val cls_ = FOLSubstitution( freeVariables( cls ).zipWithIndex.
       map { case ( v, i ) => v -> FOLVar( s"X$i" ) } )( cls )
-    s"formula(${expr2dfg( univclosure( cls_.toFormula ) )})."
+    s"formula(${expr2dfg( univclosure( cls_.toDisjunction ) )})."
   }
 
   override def getRobinsonProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {

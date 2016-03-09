@@ -161,7 +161,7 @@ object SumExampleProof extends ProofSequence {
     val num = Utils.numeral( n )
     val pn0 = foa"P($num,0)"
     val p0n = foa"P(0,$num)"
-    val ax = fof"(all x all y (P(s(x),y) -> P(x, s(y))))"
+    val ax = fof" ∀x ∀y (P(s(x),y) -> P(x, s(y)))"
 
     Lemma( Sequent( Seq( "Pn0" -> pn0, "Ax" -> ax ), Seq( "P0n" -> p0n ) ) ) {
       repeat( chain( "Ax" ) )

@@ -78,7 +78,7 @@ object fixDerivation extends Logger {
     }
 
   def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
-    fixDerivation( p, CNFn toFClauseList endSequent.toFormula )
+    fixDerivation( p, CNFn toFClauseList endSequent.toDisjunction )
 }
 
 object tautologifyInitialUnitClauses {
