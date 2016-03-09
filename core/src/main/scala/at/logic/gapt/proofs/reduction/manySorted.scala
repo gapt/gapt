@@ -1,10 +1,10 @@
 package at.logic.gapt.proofs.reduction
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ atoms, univclosure, existsclosure, CNFn }
+import at.logic.gapt.expr.hol.{ CNFn, atoms, existsclosure, univclosure }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansion.ExpansionSequent
-import at.logic.gapt.proofs.resolution.{ InputClause, mapInputClauses, ResolutionProof }
+import at.logic.gapt.proofs.expansion._
+import at.logic.gapt.proofs.resolution.{ InputClause, ResolutionProof, mapInputClauses }
 import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
@@ -16,7 +16,7 @@ trait HOLReduction { self =>
   def forward( sequent: HOLSequent ): HOLSequent
 
   def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof
-  def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent
+  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof
 
   def |>( otherReduction: FiniteContext => HOLReduction ): HOLReduction =
     new HOLReduction {
@@ -28,8 +28,8 @@ trait HOLReduction { self =>
       def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
         self.back( other.back( proof, self.forward( endSequent ) ), endSequent )
 
-      def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent =
-        self.back( other.back( expansionSequent, self.forward( endSequent ) ), endSequent )
+      def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+        self.back( other.back( expansionProof, self.forward( endSequent ) ), endSequent )
 
       def forward( sequent: HOLSequent ): HOLSequent =
         other.forward( self.forward( sequent ) )
@@ -148,7 +148,7 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
 
     def g( p: ResolutionProof, vars: Map[FOLVar, Var] ): ResolutionProof = memo.getOrElseUpdate( ( p, vars ), p match {
       case ReflexivityClause( term: FOLTerm ) => ReflexivityClause( back( term, vars ) )
-      case TautologyClause( atom: FOLAtom )   => TautologyClause( back( atom, vars ).asInstanceOf[HOLAtom] )
+      case TautologyClause( atom: FOLAtom )   => TautologyClause( back( atom, vars ) )
       case InputClause( clause ) =>
         ( for (
           original <- originalInputClauses;
@@ -190,7 +190,7 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
         val subProofVars = infer( p0.conclusion.map { _.asInstanceOf[FOLAtom] }, vars )
         Splitting(
           f( p0, subProofVars ),
-          c1 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ).asInstanceOf[HOLAtom] },
+          c1 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
           f( p1, vars ), f( p2, vars )
         )
     } )
@@ -198,7 +198,31 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
     f( proof, Map() )
   }
 
-  override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
+  def back( et: ExpansionTree, shallow: HOLFormula ): ExpansionTree = ( et, shallow ) match {
+    case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, Map() ), pol )
+    case ( ETWeakening( _, pol ), _ )        => ETWeakening( shallow, pol )
+    case ( ETMerge( a, b ), _ )              => ETMerge( back( a, shallow ), back( b, shallow ) )
+    case ( _: ETBottom | _: ETTop, _ )       => et
+    case ( ETNeg( a ), Neg( sha ) )          => ETNeg( back( a, sha ) )
+    case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha ), back( b, shb ) )
+    case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha ), back( b, shb ) )
+    case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha ), back( b, shb ) )
+    case ( ETWeakQuantifier( _, insts ), Quant( x, sh ) ) =>
+      ETWeakQuantifier(
+        shallow,
+        for ( ( t, inst ) <- insts ) yield {
+          val t_ = back( t.asInstanceOf[FOLTerm], Map[FOLVar, Var]() )
+          t_ -> back( inst, Substitution( x -> t_ )( sh ) )
+        }
+      )
+  }
+
+  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+    ExpansionProof( expansionProof.expansionSequent zip endSequent map {
+      case ( et, sh ) =>
+        require( forward( sh, Map[Var, FOLVar]() ) == et.shallow )
+        back( et, sh )
+    } )
 
   def back( t: FOLTerm, freeVars: Map[FOLVar, Var] ): LambdaExpression = t match {
     case v: FOLVar                         => freeVars( v )
@@ -215,6 +239,9 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
     case Apps( c: FOLAtomConst, args ) =>
       predicateReification( c )( args map { _.asInstanceOf[FOLTerm] } map { back( _, freeVars ) }: _* )
   }
+
+  def back( atom: FOLAtom, freeVars: Map[FOLVar, Var] ): HOLAtom =
+    back( atom: FOLFormula, freeVars ).asInstanceOf[HOLAtom]
 }
 
 case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
@@ -257,7 +284,39 @@ case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
         InputClause( cls )
     }
 
-  override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
+  def unguard( formula: HOLFormula ): HOLFormula = formula match {
+    case Top() | Bottom() | HOLAtom( _, _ ) => formula
+    case Neg( f )                           => Neg( unguard( f ) )
+    case And( f, g )                        => And( unguard( f ), unguard( g ) )
+    case Or( f, g )                         => Or( unguard( f ), unguard( g ) )
+    case Imp( f, g )                        => Imp( unguard( f ), unguard( g ) )
+    case All( x, Imp( grd, f ) )            => All( x, unguard( f ) )
+    case Ex( x, And( grd, f ) )             => Ex( x, unguard( f ) )
+  }
+  def unguard( et: ExpansionTree ): ExpansionTree = et match {
+    case ETMerge( a, b )        => ETMerge( unguard( a ), unguard( b ) )
+    case ETWeakening( f, pol )  => ETWeakening( unguard( f ), pol )
+    case _: ETAtom              => et
+    case _: ETTop | _: ETBottom => et
+    case ETNeg( a )             => ETNeg( unguard( a ) )
+    case ETAnd( a, b )          => ETAnd( unguard( a ), unguard( b ) )
+    case ETOr( a, b )           => ETOr( unguard( a ), unguard( b ) )
+    case ETImp( a, b )          => ETImp( unguard( a ), unguard( b ) )
+    case ETWeakQuantifier( shallow, insts ) =>
+      ETWeakQuantifier(
+        unguard( shallow ),
+        insts map {
+          case ( t, ETImp( _, inst ) ) if !et.polarity => t -> unguard( inst )
+          case ( t, ETAnd( _, inst ) ) if et.polarity  => t -> unguard( inst )
+        }
+      )
+  }
+
+  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+    ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
+      case ( et, i ) if !predicateAxioms.contains( et.shallow, i.isSuc ) =>
+        unguard( et )
+    } )
 }
 
 case class LambdaEliminationReduction( context: FiniteContext, lambdas: Set[Abs] ) extends HOLReduction {
@@ -325,7 +384,7 @@ case class LambdaEliminationReduction( context: FiniteContext, lambdas: Set[Abs]
 
   override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = ???
 
-  override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
+  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = ???
 }
 
 case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
@@ -408,5 +467,5 @@ case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
 
   override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = ???
 
-  override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
+  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = ???
 }

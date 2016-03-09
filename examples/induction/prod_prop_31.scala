@@ -1,5 +1,4 @@
 package at.logic.gapt.examples.induction
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
@@ -8,11 +7,10 @@ import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemize }
-import at.logic.gapt.proofs.reduction.{ PredicateReduction, ErasureReduction }
+import at.logic.gapt.proofs.reduction.{ ErasureReduction, PredicateReduction }
 import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem }
-import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
 
@@ -51,14 +49,19 @@ object prod_prop_31 extends Script {
   val instanceProofs = instances map { inst =>
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     if ( true ) {
-      val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
       val reduction = PredicateReduction( ctx ) |> ErasureReduction
       val erasedInstanceSequent = reduction forward instanceSequent
-      println( erasedInstanceSequent )
-      val Some( erasedProof ) = SPASS getRobinsonProof erasedInstanceSequent
-      val reifiedProof = reduction.back( erasedProof, instanceSequent )
-      val reifiedExpansion = RobinsonToExpansionProof( reifiedProof, instanceSequent )
-      inst -> reifiedExpansion
+      if ( false ) {
+        val Some( erasedProof ) = SPASS getRobinsonProof erasedInstanceSequent
+        val reifiedProof = reduction.back( erasedProof, instanceSequent )
+        val reifiedExpansion = RobinsonToExpansionProof( reifiedProof, instanceSequent )
+        inst -> reifiedExpansion
+      } else {
+        val Some( erasedExpansion ) = SPASS getExpansionProof erasedInstanceSequent
+        val reifiedExpansion = reduction.back( erasedExpansion, instanceSequent )
+        require( Z3 isValid reifiedExpansion.deep )
+        inst -> reifiedExpansion
+      }
     } else {
       inst -> Escargot.getExpansionProof( instanceSequent ).get
     }
