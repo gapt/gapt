@@ -92,8 +92,8 @@ object tapeUrban {
     Seq( "M_1" -> FOLAtom( "M_1" ), "M_2" -> FOLAtom( "M_2" ), "S" -> FOLAtom( "S" ), "T" -> FOLAtom( "T" ), "A" -> FOLAtom( "A" ) ),
     Seq( "P" -> FOLAtom( "P" ) )
   ) ) {
-    cut( FOLAtom( "I", zero ), "I0" )
-    cut( FOLAtom( "I", one ), "I1" )
+    cut( "I0", FOLAtom( "I", zero ) )
+    cut( "I1", FOLAtom( "I", one ) )
     insert( tau )
     insert( epsilon_i )
     insert( epsilon_i )

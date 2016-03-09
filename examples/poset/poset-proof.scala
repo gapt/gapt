@@ -66,11 +66,11 @@ object proof extends TacticsProof {
       decompose
 
       // first show f(c,a)=c
-      cut( hof"f(c, a) = c", "leq_c_a" ); forget( "goal_1" )
+      cut( "leq_c_a", hof"f(c, a) = c" ); forget( "goal_1" )
       chain( "trans" ).subst( hov"y" -> le"d" ); prop; prop
 
       // and f(a,c)=a
-      cut( hof"f(a, c) = a", "leq_a_c" ); forget( "goal_1" )
+      cut( "leq_a_c", hof"f(a, c) = a" ); forget( "goal_1" )
       chain( "trans" ).subst( hov"y" -> le"b" ); prop; prop
 
       // now show the final goals

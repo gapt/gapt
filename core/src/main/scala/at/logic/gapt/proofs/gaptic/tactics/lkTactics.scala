@@ -265,7 +265,7 @@ case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariab
  * @param cutFormula The cut formula.
  * @param cutLabel The label for the cut formula.
  */
-case class CutTactic( cutFormula: HOLFormula, cutLabel: String ) extends Tactic[Unit] {
+case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 

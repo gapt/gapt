@@ -10,7 +10,7 @@ object fol1 {
     Seq( "R" -> fof"(exists x exists y (-Q(x,y) -> -P(x,y)))" )
   ) ) {
 
-    cut( fof"(all x exists y (-P(x,y) | Q(x,y)))", "C" )
+    cut( "C", fof"(all x exists y (-P(x,y) | Q(x,y)))" )
 
     // left subproof
     allR( "C" )

@@ -80,7 +80,7 @@ package object gaptic {
 
   def allR = new ForallRightTactic()
 
-  def cut( h: HOLFormula, c: String ) = CutTactic( h, c )
+  def cut( c: String, h: HOLFormula ) = CutTactic( c, h )
 
   def eqL( eq: String, fm: String ) = EqualityLeftTactic( eq, fm )
 
@@ -102,7 +102,7 @@ package object gaptic {
       goal <- currentGoal
       diff = proof.conclusion diff goal.conclusion
       cutFormula = diff.toDisjunction
-      _ <- cut( cutFormula, label )
+      _ <- cut( label, cutFormula )
       _ <- insert( proof )
     } yield ()
 

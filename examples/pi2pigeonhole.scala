@@ -23,8 +23,8 @@ object Pi2Pigeonhole {
       Sequent()
       :+ ( "t" -> Ex( x, Ex( y, lteq( s( x ), y ) & ( f( x ) === f( y ) ) ) ) )
   ) {
-      cut( All( x, Ex( y, lteq( x, y ) & ( f( y ) === zero ) ) ), "I0" )
-      cut( All( x, Ex( y, lteq( x, y ) & ( f( y ) === one ) ) ), "I1" )
+      cut( "I0", All( x, Ex( y, lteq( x, y ) & ( f( y ) === zero ) ) ) )
+      cut( "I1", All( x, Ex( y, lteq( x, y ) & ( f( y ) === one ) ) ) )
 
       forget( "t" ); decompose; escargot
 
