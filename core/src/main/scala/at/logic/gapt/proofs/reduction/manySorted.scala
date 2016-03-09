@@ -410,5 +410,3 @@ case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
 
   override def back( expansionSequent: ExpansionSequent, endSequent: HOLSequent ): ExpansionSequent = ???
 }
-
-case class HOFunctionReduction2( context: FiniteContext )
