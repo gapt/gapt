@@ -17,5 +17,6 @@ package object expansion {
   }
 
   implicit val expansionTreesAreClosedUnderAdmissibleSubstitutions: ClosedUnderSub[ExpansionTree] = expansionTreeSubstitution
-  implicit val expansionProofsAreClosedUnderSubstitution: ClosedUnderSub[ExpansionProofWithCut] = expansionProofSubstitution
+  implicit val expansionProofsAreClosedUnderSubstitution: ClosedUnderSub[ExpansionProof] = expansionProofSubstitution
+  implicit val expansionProofsWithCutAreClosedUnderSubstitution: ClosedUnderSub[ExpansionProofWithCut] = expansionProofWithCutSubstitution
 }

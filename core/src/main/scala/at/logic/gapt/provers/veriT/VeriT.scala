@@ -43,7 +43,7 @@ class VeriT extends OneShotProver with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionProofWithCut( s: HOLSequent ): Option[ExpansionProofWithCut] = withGroundVariables2( s ) { s =>
+  override def getExpansionProof( s: HOLSequent ): Option[ExpansionProof] = withGroundVariables2( s ) { s =>
     val ( smtBenchmark, _, renaming ) = SmtLibExporter( s )
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
@@ -70,8 +70,8 @@ class VeriT extends OneShotProver with ExternalProgram {
     p
   }
 
-  def addEquationalAxioms( epwc: ExpansionProofWithCut ): Option[ExpansionProofWithCut] =
-    for ( ExpansionProofWithCut( Seq(), veritExpansion ) <- getExpansionProofWithCut( epwc.deep ) ) yield {
+  def addEquationalAxioms( epwc: ExpansionProof ): Option[ExpansionProof] =
+    for ( ExpansionProof( veritExpansion ) <- getExpansionProof( epwc.deep ) ) yield {
       val equationalAxioms = veritExpansion filter { t => containsQuantifier( t.shallow ) } map { t =>
         freeVariables( t.shallow ).foldLeft( t )( ( t_, fv ) => ETWeakQuantifier( All( fv, t_.shallow ), Map( fv -> t_ ) ) )
       }

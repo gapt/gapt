@@ -1652,6 +1652,8 @@ case class InductionCase( proof: LKProof, constructor: Const,
     require( hyp.isAnt && proof.endSequent.isDefinedAt( hyp ) )
   }
 
+  val term = constructor( eigenVars: _* )
+
   require( conclusion.isSuc && proof.endSequent.isDefinedAt( conclusion ) )
 }
 
@@ -1678,7 +1680,7 @@ case class InductionRule( cases: Seq[InductionCase], mainFormula: HOLFormula ) e
     ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
       require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
     }
-    require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.constructor( c.eigenVars: _* ) )( qfFormula ) )
+    require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.term )( qfFormula ) )
   }
   require( freeVariables( contexts.flatMap( _.elements ) :+ mainFormula ) intersect cases.flatMap( _.eigenVars ).toSet isEmpty )
 

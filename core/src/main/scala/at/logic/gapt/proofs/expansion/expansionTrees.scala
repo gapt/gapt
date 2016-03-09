@@ -11,6 +11,8 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
   def shallow: HOLFormula
   def deep: HOLFormula
   def polarity: Boolean
+
+  def apply( pos: HOLPosition ): Set[ExpansionTree] = getAtHOLPosition( this, pos )
 }
 
 case class ETWeakening( formula: HOLFormula, polarity: Boolean ) extends ExpansionTree {
@@ -114,7 +116,8 @@ case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpressio
 
   for ( ( selectedTerm, child ) <- instances ) {
     require( child.polarity == polarity )
-    require( child.shallow == BetaReduction.betaNormalize( Substitution( boundVar -> selectedTerm )( qfFormula ) ) )
+    val correctShallow = BetaReduction.betaNormalize( Substitution( boundVar -> selectedTerm )( qfFormula ) )
+    require( child.shallow == correctShallow, s"Incorrect shallow formula:\n${child.shallow} !=\n $correctShallow" )
   }
 
   def deep =
@@ -143,10 +146,10 @@ object ETWeakQuantifierBlock {
     }
 
   def unapply( et: ExpansionTree ): Some[( HOLFormula, Map[Seq[LambdaExpression], ExpansionTree] )] = {
-    val instances = mutable.Map[Seq[LambdaExpression], ExpansionTree]()
+    val instances = mutable.Map[Seq[LambdaExpression], Set[ExpansionTree]]().withDefaultValue( Set() )
 
     def walk( et: ExpansionTree, terms: Seq[LambdaExpression], n: Int ): Unit =
-      if ( n == 0 ) instances( terms ) = et else et match {
+      if ( n == 0 ) instances( terms ) += et else et match {
         case ETWeakQuantifier( _, insts ) =>
           for ( ( term, child ) <- insts )
             walk( child, terms :+ term, n - 1 )
@@ -163,7 +166,7 @@ object ETWeakQuantifierBlock {
 
     walk( et, Seq(), numberQuants )
 
-    Some( et.shallow -> instances.toMap )
+    Some( et.shallow -> instances.toMap.mapValues( ETMerge( _ ) ) )
   }
 }
 
@@ -280,7 +283,7 @@ object eigenVariablesET {
   def apply( s: ExpansionSequent ): Set[Var] = s.elements.flatMap { apply }.toSet
 }
 
-object getAtHOLPosition {
+private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
     if ( pos.isEmpty ) Set( et ) else ( et, pos.head ) match {
       case ( ETMerge( a, b ), _ )                => apply( a, pos ) union apply( b, pos )

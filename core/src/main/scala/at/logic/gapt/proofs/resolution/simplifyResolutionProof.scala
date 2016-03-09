@@ -37,8 +37,8 @@ object simplifyResolutionProof {
             } getOrElse q4
           } getOrElse q3
       }
-      case p @ Splitting( splittingClause, part1, case1, case2 ) =>
-        Splitting( simplified( splittingClause ), part1, simplified( case1 ), simplified( case2 ) )
+      case p @ Splitting( splittingClause, part1, part2, case1, case2 ) =>
+        Splitting( simplified( splittingClause ), part1, part2, simplified( case1 ), simplified( case2 ) )
     } ) ensuring { res => res.conclusion == res.conclusion.distinct && res.conclusion.isSubMultisetOf( p.conclusion ) }
 
     simplified( proof )

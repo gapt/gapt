@@ -93,7 +93,7 @@ class ResolutionTest extends Specification {
     val splCls = c1
     val case1 = Resolution( InputClause( Clause() :+ hoa"p" ), Suc( 0 ), c2, Ant( 0 ) )
     val case2 = Resolution( InputClause( Clause() :+ hoa"q" ), Suc( 0 ), c3, Ant( 0 ) )
-    val proof = Splitting( splCls, Clause() :+ hoa"p", case1, case2 )
+    val proof = Splitting( splCls, Clause() :+ hoa"p", Clause() :+ hoa"q", case1, case2 )
     proof.conclusion must beEmpty
   }
 

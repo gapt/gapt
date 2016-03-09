@@ -63,6 +63,13 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
       SPASS getRobinsonProof cnf must beLike { case Some( p ) => cnf must contain( atLeast( p.inputClauses ) ) }
       SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
     }
+
+    "bug with quantified splitting" in {
+      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
+      val as = 0 to 2 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
+      val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
+      SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
+    }
   }
 
 }

@@ -307,11 +307,12 @@ object Paramodulation {
  * </pre>
  */
 case class Splitting(
-    splittingClause: ResolutionProof, part1: HOLClause,
+    splittingClause: ResolutionProof,
+    part1:           HOLClause, part2: HOLClause,
     case1: ResolutionProof, case2: ResolutionProof
 ) extends ResolutionProof {
-  val part2 = splittingClause.conclusion diff part1
-
+  require( splittingClause.conclusion isSubMultisetOf ( part1 ++ part2 ) )
+  require( freeVariables( part1 ) intersect freeVariables( part2 ) isEmpty )
   require( case1.conclusion.isEmpty )
   require( case2.conclusion.isEmpty )
 
