@@ -106,7 +106,7 @@ object RefutationSketchToRobinson {
           splittingClause <- solve( s.splittingClause )
           case1 <- solve( s.case1 )
           case2 <- solve( s.case2 )
-        } yield Splitting( splittingClause, s.part1, case1, case2 )
+        } yield Splitting( splittingClause, s.part1, s.part2, case1, case2 )
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

@@ -248,6 +248,9 @@ object FOLInstanceTermEncoding {
     encoding.encode( expansionSequent ).map( _.asInstanceOf[FOLTerm] ) -> encoding
   }
 
+  def apply( expansionProof: ExpansionProof ): ( Set[FOLTerm], InstanceTermEncoding ) =
+    apply( expansionProof.expansionSequent )
+
   def apply( expansionProof: ExpansionProofWithCut ): ( Set[FOLTerm], InstanceTermEncoding ) =
     apply( eliminateCutsET( expansionProof ).expansionSequent )
 

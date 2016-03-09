@@ -5,7 +5,7 @@ object numberOfLogicalInferencesRes {
     p.subProofs.count {
       case Resolution( _, _, _, _ )           => true
       case Paramodulation( _, _, _, _, _, _ ) => true
-      case Splitting( _, _, _, _ )            => true
+      case Splitting( _, _, _, _, _ )         => true
       case _                                  => false
     }
 }

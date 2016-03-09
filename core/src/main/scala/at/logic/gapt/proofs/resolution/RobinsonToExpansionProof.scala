@@ -2,17 +2,18 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.structuralCNF.{ ProjectionFromEndSequent, Definition, Justification }
-import at.logic.gapt.expr.hol.{ instantiate, CNFn, univclosure }
+import at.logic.gapt.expr.hol.{ CNFp, instantiate, CNFn, univclosure }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
+import at.logic.gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
 
 object RobinsonToExpansionProof {
 
   def apply( p: ResolutionProof, es: HOLSequent,
-             justifications: Set[( HOLClause, Justification )],
+             justifications: Map[HOLClause, Justification],
              definitions:    Map[HOLAtomConst, LambdaExpression] ): ExpansionProof =
     expansionProofFromInstances( groundInstancesFromResolutionProof( p ), es, justifications, definitions,
       pureFOLwithoutEquality = !containsEquationalReasoning( p ) )
@@ -31,96 +32,62 @@ object RobinsonToExpansionProof {
         } yield e
         just = ProjectionFromEndSequent( exp, i )
       } yield clause -> just
-    apply( p, es, justifications toSet, Map() )
+    apply( p, es, justifications.toMap, Map() )
   }
 
   def apply( p: ResolutionProof ): ExpansionProof =
     apply( p, p.inputClauses.map { _.toDisjunction }.map { univclosure( _ ) } ++: Sequent() )
 }
 
-/** Requires unipolar definitions. */
 object expansionProofFromInstances {
-  // In the case without equality, whenever we encounter a defined atom in an expansion of the end-sequent, we can
-  // insert at that point all the expansions from the defining clauses where the defined atom matches literally.
-  //
-  // We can think of this operation as ad-hoc resolving the clauses from the end-sequent with the clauses from the
-  // definitions.  This is sound since we only have unipolar definitions (and ground resolution).
-  //
-  // With equality however, you can resolve literals that are not literally equal.  In this case we want to insert
-  // *all* the expansions from the defining clauses, even if they do not match.  To make this possible, we change the
-  // instances of the clauses from the definitions to match the ones from the end-sequent, "mating" them.
-  private def mateInstances( substs: Map[HOLClause, Set[Substitution]], justifications: Set[( HOLClause, Justification )] ): Map[HOLClause, Set[Substitution]] = {
-    val todo = mutable.Set[( HOLClause, Substitution )]()
+  def apply[S <: Substitution](
+    substs: Map[HOLClause, Set[S]], es: HOLSequent,
+    justifications:         Map[HOLClause, Justification],
+    definitions:            Map[HOLAtomConst, LambdaExpression],
+    pureFOLwithoutEquality: Boolean                             = false
+  ): ExpansionProof = {
+    require( substs.keySet subsetOf justifications.keySet )
 
-    for {
-      ( defClause, Definition( defAtom @ Apps( defAtomC: HOLAtomConst, defArgs ), _ ) ) <- justifications
-      if substs isDefinedAt defClause
-      ( useClause, useSubsts ) <- substs
-      if useClause != defClause
-      Apps( `defAtomC`, useArgs ) <- useClause.elements
-      defSubst <- substs( defClause )
-      useSubst <- useSubsts
-      newDefSubst = Substitution( defSubst.map ++ ( defArgs.map { _.asInstanceOf[Var] } zip ( useArgs map { useSubst( _ ) } ) ) )
-      if !substs( defClause ).contains( newDefSubst )
-    } todo += ( defClause -> newDefSubst )
-
-    if ( todo isEmpty )
-      substs
-    else
-      mateInstances(
-        for ( ( clause, clauseSubsts ) <- substs )
-          yield clause -> ( clauseSubsts union todo.filter { _._1 == clause }.map { _._2 } ),
-        justifications
-      )
-  }
-
-  def apply[S <: Substitution]( substitutions: Map[HOLClause, Set[S]], es: HOLSequent,
-                                justifications:         Set[( HOLClause, Justification )],
-                                definitions:            Map[HOLAtomConst, LambdaExpression],
-                                pureFOLwithoutEquality: Boolean                             = false ): ExpansionProof = {
-
-    val substs = if ( !pureFOLwithoutEquality && definitions.nonEmpty )
-      mateInstances( substitutions mapValues { _.toSet }, justifications )
-    else
-      substitutions
-
-    val defElim = DefinitionElimination( definitions.toMap )
-    val defAtomExpansion = mutable.Map[( HOLAtom, Boolean ), ExpansionTree]()
-    def elimDefs( et: ExpansionTree, shallow: HOLFormula ): ExpansionTree = ( et, shallow ) match {
-      case ( ETTop( pol ), _ )    => ETTop( pol )
-      case ( ETBottom( pol ), _ ) => ETBottom( pol )
-      case ( ETDefinedAtom( atom @ Apps( abbrev: HOLAtomConst, args ), pol, _ ), _ ) =>
-        defAtomExpansion.getOrElseUpdate(
-          atom -> pol,
-          ETMerge( ( for {
-            ( clause, Definition( defAtom, expansionWithDefs ) ) <- justifications
-            if substs isDefinedAt clause
-            subst <- substs( clause )
-            if subst( defAtom ) == atom
-          } yield elimDefs( subst( expansionWithDefs ), shallow ) ) + ETWeakening( shallow, pol ) )
-        )
-      case ( ETAtom( _, _ ), _ )                => et
-      case ( ETNeg( t1 ), Neg( sh1 ) )          => ETNeg( elimDefs( t1, sh1 ) )
-      case ( ETAnd( t1, t2 ), And( sh1, sh2 ) ) => ETAnd( elimDefs( t1, sh1 ), elimDefs( t2, sh2 ) )
-      case ( ETOr( t1, t2 ), Or( sh1, sh2 ) )   => ETOr( elimDefs( t1, sh1 ), elimDefs( t2, sh2 ) )
-      case ( ETImp( t1, t2 ), Imp( sh1, sh2 ) ) => ETImp( elimDefs( t1, sh1 ), elimDefs( t2, sh2 ) )
-      case ( ETSkolemQuantifier( f, st, selection ), _ ) =>
-        ETSkolemQuantifier( shallow, st, elimDefs( selection, instantiate( shallow, st ) ) )
-      case ( ETWeakQuantifier( f, instances ), _ ) =>
-        ETWeakQuantifier( shallow, for ( ( term, inst ) <- instances ) yield term -> elimDefs( inst, instantiate( shallow, term ) ) )
-      case ( ETWeakening( f, pol ), _ ) => ETWeakening( shallow, pol )
-    }
-
-    eliminateMerges( ExpansionProof(
+    val endSequentETs =
       for ( ( formula, idx ) <- es.zipWithIndex ) yield ETMerge(
-        ( for {
+        formula, idx isSuc,
+        for {
           ( clause, ProjectionFromEndSequent( projWithDefs, `idx` ) ) <- justifications
           if substs isDefinedAt clause
           subst <- substs( clause )
-        } yield elimDefs( subst( projWithDefs.elements.head ), formula ) )
-          + ETWeakening( formula, idx isSuc )
+        } yield subst( projWithDefs.elements.head )
       )
+
+    val defETs = for ( ( defConst, definingFormula ) <- definitions ) yield for {
+      ( clause, Definition( defAtom @ Apps( `defConst`, vs ), expansion ) ) <- justifications
+      if substs isDefinedAt clause
+    } yield {
+      val defET =
+        if ( expansion.polarity )
+          ETAnd(
+            ETWeakening( defAtom --> expansion.shallow, false ),
+            ETImp( expansion, ETAtom( defAtom, false ) )
+          )
+        else
+          ETAnd(
+            ETImp( ETAtom( defAtom, true ), expansion ),
+            ETWeakening( expansion.shallow --> defAtom, false )
+          )
+      ETWeakQuantifierBlock(
+        All.Block( vs.map { _.asInstanceOf[Var] }, defAtom <-> expansion.shallow ),
+        vs.size, for ( subst <- substs( clause ) ) yield subst( vs -> defET )
+      )
+    }
+    val mergedDefETs = defETs.filter { _.nonEmpty }.map { ETMerge( _ ) }.toSeq
+
+    val expansionProofWithDef = eliminateMerges( ExpansionProof( mergedDefETs ++: endSequentETs ) )
+
+    eliminateCutsET( eliminateDefsET(
+      expansionProofWithDef,
+      pureFOLwithoutEquality,
+      definitions.keySet
     ) )
+
   }
 }
 
@@ -138,17 +105,18 @@ object groundInstancesFromResolutionProof {
             case ( clause, instSubst ) =>
               clause -> instSubst.mapValues { subst( _ ) }
           }
-        case node @ Splitting( splittingClause, part1, case1, case2 ) =>
+        case node @ Splitting( splittingClause, part1, part2, case1, case2 ) =>
           val addInstFrom1 = getInst( case1 ) filter { inst => node.addInputClauses1 contains inst._1 } map { _._2 }
           val addInstFrom2 = getInst( case2 ) filter { inst => node.addInputClauses2 contains inst._1 } map { _._2 }
           val addInstances = for {
-            subst <- addInstFrom1 union addInstFrom2
-            subst_ = Substitution( subst )
+            subst1 <- addInstFrom1
+            subst2 <- addInstFrom2
+            subst = Substitution( subst1 ++ subst2 )
             ( cls, inst ) <- getInst( splittingClause )
-          } yield cls -> inst.mapValues { subst_( _ ) }
+          } yield cls -> inst.mapValues { subst( _ ) }
           val inst1 = getInst( case1 ).filterNot { inst => node.addInputClauses1 contains inst._1 }
           val inst2 = getInst( case2 ).filterNot { inst => node.addInputClauses2 contains inst._1 }
-          getInst( splittingClause ) union inst1 union inst2 union addInstances
+          inst1 union inst2 union addInstances
         case _ => node.immediateSubProofs flatMap getInst toSet
       } )
 

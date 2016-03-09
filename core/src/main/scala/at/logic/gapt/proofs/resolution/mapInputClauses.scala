@@ -74,7 +74,7 @@ object mapInputClauses {
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
-      case p @ Splitting( p0, c1, p1, p2 ) =>
+      case p @ Splitting( p0, c1, c2, p1, p2 ) =>
         val ( q0, _ ) = doMap( p0 )
         val q1 = mapInputClauses.withOccConn( p1, factorEverything ) { cls =>
           if ( p.addInputClauses1 contains cls ) InputClause( cls ) -> OccConnector( cls ) else f( cls )
@@ -82,7 +82,7 @@ object mapInputClauses {
         val q2 = mapInputClauses.withOccConn( p2, factorEverything ) { cls =>
           if ( p.addInputClauses2 contains cls ) InputClause( cls ) -> OccConnector( cls ) else f( cls )
         }
-        Splitting( q0, c1, q1, q2 ) -> OccConnector( HOLClause() )
+        Splitting( q0, c1, c2, q1, q2 ) -> OccConnector( HOLClause() )
     } ) )
 
     doMap( proof )._1
