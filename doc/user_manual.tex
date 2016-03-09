@@ -468,6 +468,7 @@ There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
 of the inference rules.
 
+\subsubsection{Top-down proof construction}
 We start with the axioms:
 %
 \begin{clilisting}
@@ -530,6 +531,148 @@ p: at.logic.gapt.proofs.lk.LKProof =
 [p23] ∀y (P(s(0), y) ⊃ P(0, s(y))), ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0): o :- P(0, s(s(s(s(s(0)))))): o    (ForallLeftRule(p22, Ant(0), P(s(0), y) ⊃ P(0, s(y)), s(s(s(s(0)))), y))
 [p22] P(s(0), s(s(s(s(0))))) ⊃ P(0, s(s(s(s(s(0)))))), ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0): o :- P(0, s(s(s(s(s(0)))))): o    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
 [p21] P(0, s(s(s(s(s(0)))))): o :- P(0...
+\end{clilisting}
+
+\subsubsection{Gaptic}
+Gapt also contains a tactics language called gaptic. It allows the user to construct proofs bottom up.
+
+To use gaptic, \cli{import at.logic.gapt.proofs.gaptic.\_}. A new gaptic proof is initialized with the \cli{Lemma} macro. The first argument of \cli{Lemma} is the labelled end sequent, i.e. the sequent you want to prove in which each formula has a string label. The second argument consists of a list of statements, called tactics, separated by line breaks (or \cli{;}):
+
+\begin{clilisting}
+gapt> import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.proofs.gaptic._
+
+gapt> val lemmaEx = Lemma( Sequent( Seq( "a" -> fof"P a", "b" -> fof"!x (P x -> Q x)" ), Seq( "c" -> fof" Q a" ) ) ) { allL(fot"a") }
+at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
+b_0: P(a) ⊃ Q(a)
+a: P(a): o
+b: ∀x (P(x) ⊃ Q(x))
+:-
+c: Q(a): o
+
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
+  ... 36 elided
+
+\end{clilisting}
+
+As seen above, the currently open goals are shown when the proof is not yet completed. Upon completion of the proof, the value of \cli{lemmaEx} is the resulting proof:
+\begin{clilisting}
+gapt> val lemmaEx = Lemma( Sequent( Seq( "a" -> fof"P a", "b" -> fof"!x (P x -> Q x)"), Seq( "c" -> fof"Q a" ) ) ) { allL(fot"a"); impL; trivial; trivial }
+lemmaEx: at.logic.gapt.proofs.lk.LKProof =
+[p4] ∀x (P(x) ⊃ Q(x)), P(a): o :- Q(a): o    (ForallLeftRule(p3, Ant(0), P(x) ⊃ Q(x), a, x))
+[p3] P(a) ⊃ Q(a), P(a): o :- Q(a): o    (ImpLeftRule(p1, Suc(0), p2, Ant(0)))
+[p2] Q(a): o :- Q(a): o    (LogicalAxiom(Q(a): o))
+[p1] P(a): o :- P(a): o    (LogicalAxiom(P(a): o))
+
+\end{clilisting}
+
+Most tactics can be called with or without a label argument. If a tactic is called with a label, it will be applied to that specific formula, if possible. Otherwise, the system will attempt to determine a target formula on its own. If there is no such formula or more than one, the tactic will fail.
+
+We now give a description of the available tactics.
+
+The \cli{forget} tactic corresponds to weakening rules in LK. It accepts a list of labels and removes the formulas with those labels from the current subgoal:
+
+\begin{clilisting}
+gapt> val weakEx =  Lemma( Sequent( Seq( "a" -> fof"P a", "b" -> fof"!x (P x -> Q x)" ), Seq( "c" -> fof"Q a" ) ) ) { forget( "b" ) }
+at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
+a: P(a): o
+:-
+c: Q(a): o
+
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
+  ... 36 elided
+
+\end{clilisting}
+
+The tactics \cli{axiomLog}, \cli{axiomTh}, \cli{axiomRefl}, \cli{axiomBot} and \cli{axiomTop} cover the logical, theory, reflexivity, bottom and top axioms, respectively. The \cli{trivial} tactic automatically selects the applicable axiom. Also, any weakening rules required to reach an actual axiom sequent are automatically applied.
+
+The following example shows the use of the \cli{trivial} tactic to end the proof by a logical axiom:
+
+\begin{clilisting}
+gapt> val axiomEx = Lemma( Sequent( Nil, Seq( "D" -> fof"exists x (P x -> all y P y)" ) ) ) { exR( fot"c" ); impR; allR; exR( fov"y" ); impR; allR; trivial }
+axiomEx: at.logic.gapt.proofs.lk.LKProof =
+[p9]  :- ∃x (P(x) ⊃ ∀y P(y))    (ContractionRightRule(p8, Suc(0), Suc(1)))
+[p8]  :- ∃x (P(x) ⊃ ∀y P(y)), ∃x (P(x) ⊃ ∀y P(y))    (ExistsRightRule(p7, Suc(1), P(x) ⊃ ∀y P(y), c, x))
+[p7]  :- ∃x (P(x) ⊃ ∀y P(y)), P(c) ⊃ ∀y P(y)    (ImpRightRule(p6, Ant(0), Suc(1)))
+[p6] P(c): o :- ∃x (P(x) ⊃ ∀y P(y)), ∀y P(y)    (WeakeningLeftRule(p5, P(c): o))
+[p5]  :- ∃x (P(x) ⊃ ∀y P(y)), ∀y P(y)    (ForallRightRule(p4, Suc(0), y, y))
+[p4]  :- P(y): o, ∃x (P(x) ⊃ ∀y P(y))    (ExistsRightRule(p3, Suc(1), P(x) ⊃ ∀y P(y), y, x))
+[p3]  :- P(y): o, P(y) ⊃ ∀y_0 P(y_0)    (ImpRightRule(p2, Ant(0), Suc(1)))
+[p2] P(y): o :- P(y): o, ∀y_0 P(y_0)    (WeakeningRightRule(p1, ∀y_0 P(y_0)))
+[p1] P(y): o :- P(y): o    (LogicalAxiom(P(y): o))
+
+\end{clilisting}
+
+The tactics \cli{eqL} and \cli{eqR} cover the left and right equality rules. The tactics take as first argument the label of an equality to use from the antecedent. The second argument is the label of the formula to apply the rule to. Furthermore, it can be specified if the equality should be used from left to right or vice versa. Also, a target formula can be specified, if not all occurrences need to be replaced (in either direction). If neither direction nor a target formula is specified, the equality will be applied left to right. It that is not applicable, it will try to apply the equality from right to left.
+
+\begin{clilisting}
+gapt> val eqEx = Lemma( Sequent( Seq( "c" -> fof"P(y) & Q(y)", "eq1" -> fof"u = v", "eq2" -> fof"y = x", "a" -> fof"P(u) -> Q(u)" ), Seq( "b" -> fof"P(x) & Q(x)" ) ) ) {       eqL( "eq1", "a" ).to( fof"P(v) -> Q(v)" ); eqL( "eq1", "a" ).to( fof"P(v) -> Q(u)" ); eqR( "eq2", "b" ).fromRightToLeft; trivial }
+eqEx: at.logic.gapt.proofs.lk.LKProof =
+[p5] u = v, P(u) ⊃ Q(u), y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (WeakeningLeftRule(p4, u = v))
+[p4] P(u) ⊃ Q(u), y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (WeakeningLeftRule(p3, P(u) ⊃ Q(u)))
+[p3] y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (EqualityRightRule(p2, Ant(0), Suc(0), List([1,2], [2,2])))
+[p2] y = x, P(y) ∧ Q(y) :- P(y) ∧ Q(y)    (WeakeningLeftRule(p1, y = x))
+[p1] P(y) ∧ Q(y) :- P(y) ∧ Q(y)    (LogicalAxiom(P(y) ∧ Q(y)))
+
+\end{clilisting}
+
+The tactics for the weak quantifiers are \cli{allL} and \cli{exR}. They are called with the list of terms to instantiate the quantified formula with. One call of \cli{allL} or \cli{exR} can instantiate any number of quantifiers in a formula. The tactics for the strong quantifiers are \cli{allR} and \cli{exL}. They are optionally called with the variable that should be used as an eigenvariable. If no eigenvariable is provided, a fresh variable will automatically be generated. The weak quantifier formulas are kept in the sequent after instantiations while the strong quantifier formulas are automatically removed. 
+
+\begin{clilisting}
+gapt> val quantEx = Lemma( Sequent( Seq( "D" -> fof"(all x (P(x) & (exists y -P(y))))" ), Nil ) ) { allL( fot"c" ); andL; exL( FOLVar( "y_0" ) ); negL; allL( fot"y_0" ); andL; exL( FOLVar( "y_1" ) ); negL; axiomLog }
+quantEx: at.logic.gapt.proofs.lk.LKProof =
+[p10] ∀x (P(x) ∧ ∃y ¬P(y)) :-     (ContractionLeftRule(p9, Ant(0), Ant(1)))
+[p9] ∀x (P(x) ∧ ∃y ¬P(y)), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (ForallLeftRule(p8, Ant(0), P(x) ∧ ∃y ¬P(y), c, x))
+[p8] P(c) ∧ ∃y ¬P(y), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (AndLeftRule(p7, Ant(0), Ant(1)))
+[p7] P(c): o, ∃y ¬P(y), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (WeakeningLeftRule(p6, P(c): o))
+[p6] ∃y ¬P(y), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (ExistsLeftRule(p5, Ant(0), y_0, y))
+[p5] ¬P(y_0), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (NegLeftRule(p4, Suc(0)))
+[p4] ∀x (P(x) ∧ ∃y ¬P(y)) :- P(y_0): o    (ForallLeftRule(p3, Ant(0), P(x) ∧ ∃y ¬P(y), y_0, x))
+[p3] P(y_0) ∧ ∃y ¬P(y) :- P(y_0): o    (AndLeftRule(p2, Ant(1), Ant(0)))
+[p2] ∃y ¬P(y), P(y_0): o :- P(y_0): o    (WeakeningLeftRule(p1, ∃y ¬P(y)))
+[p1] P(y_0...
+\end{clilisting}
+
+The implication, negation, disjunction and conjunction rules are covered by the tactics \cli{impL}, \cli{impR}, \cli{negL}, \cli{negR}, \cli{disL}, \cli{disR}, \cli{conL} and \cli{conR}, respectively. They are similar in the sense that they take no arguments apart from an optional label to apply the tactic to.
+
+\begin{clilisting}
+gapt> val propEx = Lemma( Sequent( Seq( "initAnt" -> fof"A -> B" ), Seq( "initSuc" -> fof"(A & B) | -A" ) ) ) { orR( "initSuc" ); negR( "initSuc_1" ); andR( "initSuc_0" ); trivial; impL; trivial; trivial }
+propEx: at.logic.gapt.proofs.lk.LKProof =
+[p7] A ⊃ B :- A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
+[p6] A ⊃ B :- A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
+[p5] A:o, A ⊃ B :- A ∧ B    (ContractionLeftRule(p4, Ant(0), Ant(2)))
+[p4] A:o, A ⊃ B, A:o :- A ∧ B    (AndRightRule(p1, Suc(0), p3, Suc(0)))
+[p3] A ⊃ B, A:o :- B:o    (ImpLeftRule(p1, Suc(0), p2, Ant(0)))
+[p2] B:o :- B:o    (LogicalAxiom(B:o))
+[p1] A:o :- A:o    (LogicalAxiom(A:o))
+
+\end{clilisting}
+
+The \cli{cut} tactic is used to introduce a cut rule. The first argument is the (unique new) label for the cut formula, the second argument is the cut formula itself. Both arguments are mandatory. In the case where a non-unique label is provided the tactic simply fails.
+
+\begin{clilisting}
+gapt> val cutEx = Lemma( Sequent( Seq( "A" -> fof"A" ), Seq( "C" -> fof"(exists x exists y ( -x=y & f(x)=f(y) ))" ) ) ) { cut( "I1", fof"I(1)" ); cut( "I0", fof"I(0)" ) }
+at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 3 open sub goals:
+A: A:o
+:-
+C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
+I1: I(1): o
+I0: I(0): o
+
+I0: I(0): o
+A: A:o
+:-
+C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
+I1: I(1): o
+
+I1: I(1): o
+A: A:o
+:-
+C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
+
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
+  ... 36 elided
+
 \end{clilisting}
 
 \section{Feature walkthrough}
