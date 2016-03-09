@@ -47,8 +47,8 @@ object prooftool {
       case \/-( wrapped: AnyRef )  => apply( wrapped, name )
       case p: LKProof              => new LKProofViewer( name, p ).showFrame()
       case p: LKskProof            => new LKskProofViewer( name, p ).showFrame()
-      case p: SequentProof[_, _] =>
-        def renderer( x: T forSome { type T } ) = x.toString //TODO: have a better default
+      case p: SequentProof[f, t] =>
+        def renderer( x: f ): String = "" + x //TODO: have a better default
         new SequentProofViewer( name, p, renderer ).showFrame()
       case ep: ExpansionProofWithCut => new ExpansionSequentViewer( name, ep.cuts ++: ep.expansionSequent ).showFrame()
       case es: ExpansionSequent      => new ExpansionSequentViewer( name, es ).showFrame()
