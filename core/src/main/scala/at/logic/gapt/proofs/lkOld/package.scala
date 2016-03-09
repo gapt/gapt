@@ -30,7 +30,7 @@ package object base {
     /**
      * Interpretation of the sequent as formula.
      */
-    def toFormula = this.toHOLSequent.toFormula
+    def toFormula = this.toHOLSequent.toDisjunction
 
     /**
      * Is this sequent of the form F :- F?

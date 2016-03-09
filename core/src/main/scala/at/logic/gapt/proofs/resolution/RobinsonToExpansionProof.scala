@@ -22,7 +22,7 @@ object RobinsonToExpansionProof {
       for {
         ( f, i ) <- es.zipWithIndex.elements
         fs = if ( i isAnt ) f +: Sequent() else Sequent() :+ f
-        clause <- CNFn.toFClauseList( fs.toFormula )
+        clause <- CNFn.toFClauseList( fs.toDisjunction )
         pcnf = PCNF( fs, clause )
         exp = for {
           ( e, ei ) <- LKToExpansionProof( pcnf ).toExpansionProof.expansionSequent.zipWithIndex
@@ -35,7 +35,7 @@ object RobinsonToExpansionProof {
   }
 
   def apply( p: ResolutionProof ): ExpansionProof =
-    apply( p, p.inputClauses.map { _.toFormula }.map { univclosure( _ ) } ++: Sequent() )
+    apply( p, p.inputClauses.map { _.toDisjunction }.map { univclosure( _ ) } ++: Sequent() )
 }
 
 /** Requires unipolar definitions. */

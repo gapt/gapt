@@ -31,7 +31,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     } map {
       mapInputClauses( _ ) { clause =>
         cnf.view flatMap { ourClause =>
-          syntacticMatching( ourClause.toFormula.asInstanceOf[FOLFormula], clause.toFormula.asInstanceOf[FOLFormula] ) map { matching =>
+          syntacticMatching( ourClause.toDisjunction.asInstanceOf[FOLFormula], clause.toDisjunction.asInstanceOf[FOLFormula] ) map { matching =>
             Instance( InputClause( ourClause.map { _.asInstanceOf[FOLAtom] } ), matching )
           }
         } head
@@ -65,7 +65,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
       toSeq.zipWithIndex.map {
         case ( v, i ) => v -> FOLVar( s"x$i" )
       } )( formula )
-  private def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toFormula ) )
+  private def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toDisjunction ) )
   private def toP9Input( expr: LambdaExpression ): String = expr match {
     case Top()                => "$T"
     case Bottom()             => "$F"
@@ -135,9 +135,9 @@ object Prover9Importer extends ExternalProgram {
       val tptpEndSequent = reconstructEndSequent( p9Output )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        resProof.inputClauses.map( _.toFormula ) ++: Sequent()
+        resProof.inputClauses.map( _.toDisjunction ) ++: Sequent()
       } else {
-        prenexify.pos( tptpEndSequent.toFormula )
+        prenexify.pos( tptpEndSequent.toDisjunction )
       }
     }
 

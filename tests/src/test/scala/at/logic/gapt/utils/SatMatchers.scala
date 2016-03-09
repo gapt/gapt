@@ -17,6 +17,6 @@ trait SatMatchers extends OptionMatchers {
 
   def beValid = beUnsat ^^ { ( f: HOLFormula ) => -f }
 
-  def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toFormula }
+  def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
 }

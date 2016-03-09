@@ -104,7 +104,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
 
     val deep = E.deep --- "toDeep"
-    VeriT.isValid( deep.toFormula ) !-- "verit validity"
+    VeriT.isValid( deep.toDisjunction ) !-- "verit validity"
   }
 }
 
@@ -113,7 +113,7 @@ class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
     val E = addSymmetry( VeriTParser.getExpansionProof( f.getAbsolutePath ).get ) --- "import"
 
     val deep = E.deep --- "toDeep"
-    MiniSAT.isValid( deep.toFormula ) !-- "minisat validity"
+    MiniSAT.isValid( deep.toDisjunction ) !-- "minisat validity"
   }
 }
 

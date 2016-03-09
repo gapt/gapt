@@ -43,7 +43,7 @@ class EProver extends ResolutionProver with ExternalProgram {
         case ( v, i ) => v -> FOLVar( s"X$i" )
       } )( formula )
   private def toTPTP( clause: FOLClause ): String =
-    toTPTP( renameVars( clause.toFormula ) )
+    toTPTP( renameVars( clause.toDisjunction ) )
 
   private def toTPTP( cnf: Map[String, FOLClause] ): String =
     cnf.map {

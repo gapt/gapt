@@ -41,7 +41,7 @@ object instprover extends Script {
   val instances = for ( clause <- cnf ) yield clause ->
     ( for {
       inst <- done ++ todo
-      subst <- syntacticMatching( clause.toFormula, inst.toFormula )
+      subst <- syntacticMatching( clause.toDisjunction, inst.toDisjunction )
     } yield subst ).toSet
   val expansionProof = expansionProofFromInstances(
     instances.toMap, endSequent, justifications, definitions

@@ -45,7 +45,7 @@ object hSolveQBUP {
 
     def checkSol( cnf: Set[HOLClause] ): Unit =
       if ( !isSolution.contains( cnf ) ) {
-        val substCnfFormula = subst( And( cnf map { _.toFormula } ) )
+        val substCnfFormula = subst( And( cnf map { _.toDisjunction } ) )
         if ( VeriT isValid TermReplacement( cond, Map( Xinst -> substCnfFormula ) ) ) {
           isSolution( cnf ) = true
           forgetfulPropResolve( cnf ) foreach checkSol
@@ -57,7 +57,7 @@ object hSolveQBUP {
 
     checkSol( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
 
-    isSolution collect { case ( sol, true ) => And( sol map { _.toFormula } ) } toSet
+    isSolution collect { case ( sol, true ) => And( sol map { _.toDisjunction } ) } toSet
   }
 
   def apply( qbupMatrix: HOLFormula, xInst: LambdaExpression, start: HOLFormula ): Option[LambdaExpression] = {
