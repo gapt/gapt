@@ -1,6 +1,6 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.formats.xml.{ XMLParser }
+import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lk._
@@ -10,11 +10,15 @@ import XMLParser._
 import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.ceres.CharacteristicClauseSet
-
 import java.util.zip.GZIPInputStream
-import java.io.{ FileReader, FileInputStream, InputStreamReader }
+import java.io.{ FileInputStream, FileReader, InputStreamReader }
 import java.io.File.separator
+
+import at.logic.gapt.examples.primediv
+import at.logic.gapt.expr.HOLAtom
+import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.spass.SPASS
 import org.specs2.mutable._
 import org.specs2.execute.Success
 
@@ -22,14 +26,7 @@ class LNPProofTest extends Specification {
 
   "The system" should {
     "parse correctly the LNP proof" in {
-      skipped( "This HOL proof does have axioms different from F :- F but CERES_omega is not defined on them." )
-      val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "lnp.xml" ) )
-      val proofs = pdb.proofs
-      proofs.size must beEqualTo( 1 )
-      val proof = proofs.head._2
-      //printStats( proof )
-
-      val proof_sk = LKToLKsk( regularize( DefinitionElimination( pdb.Definitions )( proof ) ) )
+      val proof_sk = LKToLKsk( regularize( AtomicExpansion( DefinitionElimination( primediv.defs )( primediv.proof ) ) ) )
       val s = extractStructFromLKsk( proof_sk )
 
       val cs = CharacteristicClauseSet( s )
@@ -50,4 +47,6 @@ class LNPProofTest extends Specification {
       ok( "No errors" )
     }
   }
+
+  "prime divisor proof" in { primediv; ok }
 }
