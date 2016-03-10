@@ -68,7 +68,7 @@ object prime extends TacticsProof {
     ( "EXT" -> extensionality ) +: ( "C" -> hof" C(compN(set_1(1)))" ) +: Sequent() :+ "O" -> hof"O(set_1(1))"
   ) {
       unfold( "C", "C" )
-      cut( hof" compN(compN(set_1 1)) = set_1 1", "CF" )
+      cut( "CF", hof" compN(compN(set_1 1)) = set_1 1" )
 
       //Left subproof of the cut:
       forget( "C", "O" )
@@ -139,7 +139,7 @@ object prime extends TacticsProof {
 
       forget( "goal_0_1" )
       exL( "goal_0_0_0" )
-      cut( hof"INF(ν(n, l+1))", "CF" )
+      cut( "CF", hof"INF(ν(n, l+1))" )
 
       // Left subproof: ν(n, l+1) is infinite
       forget( "goal_0_0_0", "goal_1" )
