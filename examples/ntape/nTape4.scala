@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.lkskNew.LKskProof
 case class nTape4( size: Int ) extends nTape {
   require( 1 < size && size < 5, "We have only instances 2 to 4." )
 
-  override def proofdb() = loadLLK( s"examples/ntape/ntape4-$size.llk" )
+  override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream s"ntape/ntape4-$size.llk" )
 
   override def root_proof() = "TAPEPROOF"
 
