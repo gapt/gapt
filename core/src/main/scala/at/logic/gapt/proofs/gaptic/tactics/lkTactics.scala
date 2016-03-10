@@ -230,7 +230,7 @@ case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[
       ( label, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, mode )
       newLabel = NewLabel( goal.s, label )
     } yield newLabel ->
-      ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> instantiate( f, terms ) ) ), f, terms )
+      ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> BetaReduction.betaNormalize( instantiate( f, terms ) ) ) ), f, terms )
 }
 
 /**
@@ -244,7 +244,7 @@ case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[L
       ( label, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, mode )
       newLabel = NewLabel( goal.s, label )
     } yield newLabel ->
-      ForallLeftBlock( OpenAssumption( ( newLabel -> instantiate( f, terms ) ) +: goal.s ), f, terms )
+      ForallLeftBlock( OpenAssumption( ( newLabel -> BetaReduction.betaNormalize( instantiate( f, terms ) ) ) +: goal.s ), f, terms )
 }
 
 /**
