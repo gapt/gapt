@@ -197,6 +197,10 @@ lazy val examples = project.in( file( "examples" ) ).
     name := "gapt-examples",
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
     resourceDirectory in Compile := baseDirectory.value,
+    excludeFilter in ( Compile, unmanagedResources ) := {
+      val target = ( baseDirectory.value / "target" ).getCanonicalPath
+      new SimpleFileFilter( _.getCanonicalPath startsWith target )
+    } || "*.scala",
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value
   )
 
