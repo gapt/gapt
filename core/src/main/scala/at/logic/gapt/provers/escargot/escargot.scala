@@ -443,7 +443,7 @@ class EscargotLoop extends Logger {
   }
 }
 
-object Escargot extends Escargot {
+object Escargot extends Escargot( equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLClause] ): LPO = {
     val consts = constants( cnf flatMap { _.elements } )
 
@@ -460,11 +460,11 @@ object Escargot extends Escargot {
   }
 }
 
-class Escargot extends ResolutionProver {
+class Escargot( equality: Boolean, propositional: Boolean ) extends ResolutionProver {
   override def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
     val loop = new EscargotLoop
-    loop.hasEquality = cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
-    loop.propositional = cnf.flatMap { freeVariables( _ ) }.isEmpty
+    loop.hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
+    loop.propositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
     loop.termOrdering = Escargot.lpoHeuristic( cnf )
     loop.newlyDerived ++= cnf.map { loop.InputCls }
     loop.loop()
