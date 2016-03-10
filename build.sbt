@@ -196,6 +196,7 @@ lazy val examples = project.in( file( "examples" ) ).
   settings(
     name := "gapt-examples",
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
+    resourceDirectory in Compile := baseDirectory.value,
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value
   )
 
