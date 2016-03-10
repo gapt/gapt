@@ -46,8 +46,8 @@ class MiscTest extends Specification {
 //    */
 
     "perform cut introduction on an example proof" in {
-      val p = LinearExampleProof( 7 )
-      CutIntroduction.compressLKProof( p, method = DeltaTableMethod( singleQuantifier = true ), verbose = false ) must beSome
+      val p = LinearExampleProof( 4 )
+      CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false ) must beSome
     }
 
     "skolemize a simple proof" in {

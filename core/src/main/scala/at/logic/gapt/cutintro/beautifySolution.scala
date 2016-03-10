@@ -63,7 +63,10 @@ object beautifySolution {
 
     val newUs = for ( ( ( u, uInst ), j ) <- ehs.sehs.us.zipWithIndex ) yield u -> ( uInst ++ addUs.filter { _._1 == j }.map { _._2 } )
 
-    ehs.copy( sehs = ehs.sehs.copy( us = newUs ), cutFormulas = ( ehs.sehs.eigenVariables, newCFs ).zipped map { All.Block( _, _ ) } )
+    val ( nontrivialSS, nontrivialCFs ) = ( ehs.sehs.ss zip newCFs ).filter { _._2 != Top() }.unzip
+
+    val newSEHS = SchematicExtendedHerbrandSequent( newUs, nontrivialSS )
+    ExtendedHerbrandSequent( newSEHS, ( newSEHS.eigenVariables, nontrivialCFs ).zipped map { All.Block( _, _ ) } )
   }
 
 }

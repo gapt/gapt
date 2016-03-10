@@ -10,14 +10,14 @@ import at.logic.gapt.grammars.reforest.Reforest
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, numberOfLogicalInferencesRes }
+import at.logic.gapt.proofs.resolution.{ numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.basicProver._
 import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.logging.{ metrics, Logger }
+import at.logic.gapt.utils.logging.{ Logger, metrics }
 import at.logic.gapt.utils.runProcess
 
 class CutIntroException( msg: String ) extends Exception( msg )
@@ -149,6 +149,24 @@ object vtratgToSEHS {
   }
 }
 
+object sehsToVTRATG {
+  def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VectTratGrammar = {
+    val freeVars = freeVariables( sehs.us.elements.flatMap { _._2 } ++ sehs.ss.flatMap { _._2 } flatten ) ++ sehs.eigenVariables.flatten
+    val axiom = rename( FOLVar( "x" ), freeVars )
+    val nonTerminals = sehs.eigenVariables
+    val instances = for ( ( f, us ) <- sehs.us; u <- us ) yield instantiate( f, u )
+    val productionsFromAx = for ( t <- encoding encode instances ) yield List( axiom ) -> List( t.asInstanceOf[FOLTerm] )
+    val otherProds = for ( ( ev, ss ) <- sehs.ss; s <- ss ) yield ev -> s
+    val productions = productionsFromAx ++ otherProds
+
+    val grounding = FOLSubstitution( freeVariables( productions flatMap { _._2 } ) diff nonTerminals.flatten.toSet map {
+      case FOLVar( n ) => FOLVar( n ) -> FOLConst( n )
+    } )
+
+    VectTratGrammar( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1 -> grounding( p._2 ).toList } )
+  }
+}
+
 /**
  * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
  * In practice it does happen if the method used for searching a proof covers a too
@@ -197,8 +215,10 @@ object CutIntroduction extends Logger {
       method.findGrammars( termset )
     }.filter { g =>
       g.productions.exists( _._1 != g.axiomVect )
-    }.map { vtratGrammar =>
-
+    }.orElse {
+      if ( verbose ) println( "No grammar found." )
+      None
+    }.flatMap { vtratGrammar =>
       val generatedLanguage = vtratGrammar.language
       metrics.value( "grammar_lang_size", generatedLanguage.size )
       termset foreach { term =>
@@ -218,41 +238,57 @@ object CutIntroduction extends Logger {
 
       val canonicalEHS = ExtendedHerbrandSequent( grammar, computeCanonicalSolution( grammar ) )
 
-      val minimizedEHS = metrics.time( "minsol" ) {
-        val improved = improveSolutionLK( canonicalEHS, prover, hasEquality )
-        beautifySolution( improved )
+      val minimizedEHS = metrics.time( "minsol" ) { improveSolutionLK( canonicalEHS, prover, hasEquality ) }
+      if ( verbose ) for ( ( cf, i ) <- minimizedEHS.cutFormulas.zipWithIndex ) {
+        println( s"CNF of minimized cut-formula number $i:" )
+        for ( clause <- CNFp toClauseList cf )
+          println( s"  $clause" )
       }
+
+      val beautifiedEHS = metrics.time( "beausol" ) { beautifySolution( minimizedEHS ) }
 
       val lcompCanonicalSol = canonicalEHS.cutFormulas.map( lcomp( _ ) ).sum
       val lcompMinSol = minimizedEHS.cutFormulas.map( lcomp( _ ) ).sum
+      val lcompBeauSol = beautifiedEHS.cutFormulas.map( lcomp( _ ) ).sum
+      val beauGrammar = sehsToVTRATG( encoding, beautifiedEHS.sehs )
 
       metrics.value( "cansol_lcomp", lcompCanonicalSol )
       metrics.value( "minsol_lcomp", lcompMinSol )
+      metrics.value( "beausol_lcomp", lcompBeauSol )
       metrics.value( "cansol_scomp", canonicalEHS.cutFormulas.map( expressionSize( _ ) ).sum )
       metrics.value( "minsol_scomp", minimizedEHS.cutFormulas.map( expressionSize( _ ) ).sum )
-      metrics.value( "minsol", minimizedEHS.cutFormulas.map( _.toString ) )
-      if ( verbose ) {
-        println( s"Size of the canonical solution: $lcompCanonicalSol" )
-        println( s"Size of the minimized solution: $lcompMinSol" )
-        for ( ( cf, i ) <- minimizedEHS.cutFormulas.zipWithIndex ) {
-          println( s"CNF of minimized cut-formula number $i:" )
-          for ( clause <- CNFp toClauseList cf )
-            println( s"  $clause" )
+      metrics.value( "beausol_scomp", beautifiedEHS.cutFormulas.map( expressionSize( _ ) ).sum )
+      metrics.value( "beaugrammar_size", beauGrammar.size )
+      metrics.value( "beaugrammar_scomp", beauGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
+      metrics.value( "beausol", beautifiedEHS.cutFormulas.map( _.toString ) )
+
+      if ( beautifiedEHS.cutFormulas.nonEmpty ) {
+        if ( verbose ) {
+          println( s"Beautified grammar of size ${beauGrammar.size}:" )
+          println( beauGrammar )
+          println( s"Size of the canonical solution: $lcompCanonicalSol" )
+          println( s"Size of the minimized solution: $lcompMinSol" )
+          println( s"Size of the beautified solution: $lcompBeauSol" )
+          for ( ( cf, i ) <- beautifiedEHS.cutFormulas.zipWithIndex ) {
+            println( s"CNF of beautified cut-formula number $i:" )
+            for ( clause <- CNFp toClauseList cf )
+              println( s"  $clause" )
+          }
         }
-      }
 
-      val ehsSequent = minimizedEHS.getDeep
-      val ehsResolutionProof = resProver getRobinsonProof ehsSequent getOrElse {
-        throw new CutIntroEHSUnprovableException( s"Cannot prove extended Herbrand sequent using ${resProver.getClass.getSimpleName}." )
-      }
-      metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
-      metrics.value( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
-      metrics.value( "ehs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( ehsResolutionProof ) ) )
+        val ehsSequent = beautifiedEHS.getDeep
+        val ehsResolutionProof = resProver getRobinsonProof ehsSequent getOrElse {
+          throw new CutIntroEHSUnprovableException( s"Cannot prove extended Herbrand sequent using ${resProver.getClass.getSimpleName}." )
+        }
+        metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
+        metrics.value( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
+        metrics.value( "ehs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( ehsResolutionProof ) ) )
 
-      minimizedEHS
-    } orElse {
-      if ( verbose ) println( "No grammar found." )
-      None
+        Some( beautifiedEHS )
+      } else {
+        if ( verbose ) println( "No non-trivial lemma found." )
+        None
+      }
     }
   }
 
