@@ -140,6 +140,14 @@ object containsStrongQuantifier {
       s.succedent.exists( x => containsStrongQuantifier( x, true ) )
 }
 
+object containsWeakQuantifier {
+  def apply( f: HOLFormula, pol: Boolean ): Boolean = containsStrongQuantifier( f, !pol )
+
+  def apply( s: HOLSequent ): Boolean =
+    s.antecedent.exists( x => containsWeakQuantifier( x, false ) ) ||
+      s.succedent.exists( x => containsWeakQuantifier( x, true ) )
+}
+
 object freeHOVariables {
   /**
    * Computes the set of all HOL Variables which are not of type i in a formula. Together with

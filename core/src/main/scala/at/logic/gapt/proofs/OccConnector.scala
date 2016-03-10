@@ -150,4 +150,14 @@ object OccConnector {
    * @return An OccConnector that connects every index of sequent to itself.
    */
   def apply[A]( sequent: Sequent[A] ): OccConnector[A] = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
+
+  /**
+   * Creates an OccConnector that connects all occurrences of an object in the antecedents of two sequents, and analogously
+   * for the succedents.
+   */
+  def findEquals[A]( firstSequent: Sequent[A], secondSequent: Sequent[A] ): OccConnector[A] = {
+    val parentsSequent = firstSequent map ( x => secondSequent.indicesWhere( _ == x ) filter { _.isAnt }, x => secondSequent.indicesWhere( _ == x ) filter { _.isSuc } )
+
+    OccConnector( firstSequent, secondSequent, parentsSequent )
+  }
 }
