@@ -11,16 +11,27 @@ import scalaz.{ -\/, \/- }
  */
 
 /**
- * Proof transfomation that eliminates some theory axioms, namely those subsumed by `formula`.
- * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+ * Object for calling the `eliminateTheoryAxiom` transformation.
  */
-class eliminateTheoryAxioms private ( val formula: HOLFormula ) extends LKVisitor {
-  require( isPrenex( formula ), s"Formula $formula is not prenex." )
-  require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
+object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
+  /**
+   * Eliminates some theory axioms from `proof`, namely those subsumed by `formula`.
+   * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+   * @param proof An LKProof.
+   * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
+   *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`; `conn` is an
+   *         OccConnector relating `proof` and `proof'`.
+   */
+  def withOccConnector( formula: HOLFormula )( proof: LKProof ) = recurse( proof, formula )
 
-  val All.Block( vars, matrix ) = formula
-  val cnf = CNFp.toClauseList( matrix )
-  val cnfFormula = And( cnf map { _.toDisjunction } )
+  /**
+   * Eliminates some theory axioms from `proof`, namely those subsumed by `formula`.
+   * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+   * @param proof An LKProof.
+   * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
+   *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`.
+   */
+  def apply( formula: HOLFormula )( proof: LKProof ) = withOccConnector( formula )( proof )._1
 
   /**
    *
@@ -28,7 +39,13 @@ class eliminateTheoryAxioms private ( val formula: HOLFormula ) extends LKVisito
    * @return If A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,, is subsumed by F, returns a proof of
    *         F, A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,,. Otherwise the input axiom.
    */
-  protected override def visitTheoryAxiom( proof: TheoryAxiom ) = {
+  protected override def visitTheoryAxiom( proof: TheoryAxiom, formula: HOLFormula ) = {
+    require( isPrenex( formula ), s"Formula $formula is not prenex." )
+    require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
+
+    val All.Block( vars, matrix ) = formula
+    val cnf = CNFp.toClauseList( matrix )
+    val cnfFormula = And( cnf map { _.toDisjunction } )
     val TheoryAxiom( sequent ) = proof
     val subs = cnf map {
       clauseSubsumption( _, sequent )
@@ -47,33 +64,9 @@ class eliminateTheoryAxioms private ( val formula: HOLFormula ) extends LKVisito
           case \/-( p )   => p
           case -\/( seq ) => throw new Exception( s"Sequent $seq is not provable." )
         }
-        subProof -> OccConnector.findEquals( subProof.endSequent, sequent )
+        ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ), formula )
 
-      case _ => proof -> OccConnector( sequent )
+      case _ => ( proof, OccConnector( sequent ), formula )
     }
   }
-}
-
-/**
- * Object for calling the `eliminateTheoryAxiom` transformation.
- */
-object eliminateTheoryAxioms {
-  /**
-   * Eliminates some theory axioms from `proof`, namely those subsumed by `formula`.
-   * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
-   * @param proof An LKProof.
-   * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
-   *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`; `conn` is an
-   *         OccConnector relating `proof` and `proof'`.
-   */
-  def withOccConnector( formula: HOLFormula )( proof: LKProof ) = new eliminateTheoryAxioms( formula ).withOccConnector( proof )
-
-  /**
-   * Eliminates some theory axioms from `proof`, namely those subsumed by `formula`.
-   * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
-   * @param proof An LKProof.
-   * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
-   *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`.
-   */
-  def apply( formula: HOLFormula )( proof: LKProof ) = withOccConnector( formula )( proof )._1
 }
