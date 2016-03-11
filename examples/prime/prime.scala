@@ -17,12 +17,12 @@ case class prime( k: Int ) extends TacticsProof {
   ctx += Context.Sort( "i" )
 
   // Constants
-  ctx += hoc" 0: i"
-  ctx += hoc" 1: i"
-  ctx += hoc" '+': i > i > i"
-  ctx += hoc" '*': i > i > i"
-  ctx += hoc" '<': i > i > o"
-  ctx += hoc" '=': i > i > o"
+  ctx += Const( "0", Ti )
+  ctx += Const( "1", Ti )
+  ctx += Const( "+", Ti -> ( Ti -> Ti ) )
+  ctx += Const( "*", Ti -> ( Ti -> Ti ) )
+  ctx += Const( "<", Ti -> ( Ti -> To ) )
+  ctx += Const( "=", Ti -> ( Ti -> To ) )
 
   //Definitions
   ctx += "set_1" -> le" λk λl l = k"
