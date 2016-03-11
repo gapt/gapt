@@ -267,7 +267,13 @@ case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) e
     }
 }
 
-case class UnfoldTactic( target: String, definition: String, definitions: String* )( implicit ctx: Context ) extends Tactic[Unit] {
+case class UnfoldTacticHelper( definition: String, definitions: Seq[String] )( implicit ctx: Context ) {
+  def in( label: String, labels: String* ) = labels.foldLeft[Tactical[Unit]]( UnfoldTactic( label, definition, definitions ) ) {
+    ( acc, l ) => acc andThen UnfoldTactic( l, definition, definitions )
+  }
+}
+
+case class UnfoldTactic( target: String, definition: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
   def getDef: ValidationNel[TacticalFailure, ( Con, LambdaExpression )] =
     ctx.definition( definition ) match {
       case Some( by ) =>
@@ -288,7 +294,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: String
         case ( p :: ps, _ ) =>
           DefinitionRule( newGoal, normalized, main, idx.isSuc ).successNel[TacticalFailure]
         case ( Nil, hd +: tl ) =>
-          UnfoldTactic( target, hd, tl: _* )( ctx )( newGoal ) map { _._2 }
+          UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
         case _ =>
           TacticalFailure( this, None, s"Definition $definition not found in formula $main." ).failureNel[LKProof]
       }
