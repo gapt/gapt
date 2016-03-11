@@ -221,30 +221,50 @@ case class ExistsLeftTactic( mode: TacticApplyMode = UniqueFormula, eigenVariabl
 
 /**
  * Decomposes a block of existential quantifiers in the antecedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  * @param terms Instantiations for the quantifiers in the block.
+ * @param instantiateOnce Whether the quantified formula should be forgotten after instantiating.
  */
-case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression] ) extends Tactic[String] {
+case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression], instantiateOnce: Boolean ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, mode )
+      ( label: String, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, mode )
       newLabel = NewLabel( goal.s, label )
-    } yield newLabel ->
-      ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> BetaReduction.betaNormalize( instantiate( f, terms ) ) ) ), f, terms )
+      instantiatedFormula = BetaReduction.betaNormalize( instantiate( f, terms ) )
+    } yield if ( instantiateOnce ) {
+      label ->
+        ExistsRightBlock( OpenAssumption( goal.s.updated( idx, ( label, instantiatedFormula ) ) ), f, terms )
+    } else {
+      newLabel ->
+        ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> instantiatedFormula ) ), f, terms )
+    }
+
+  def forget = ExistsRightTactic( mode, terms, instantiateOnce = true )
 }
 
 /**
  * Decomposes a block of universal quantifiers in the succedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  * @param terms Instantiations for the quantifiers in the block.
+ * @param instantiateOnce Whether the quantified formula should be forgotten after instantiating.
  */
-case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression] ) extends Tactic[String] {
+case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression], instantiateOnce: Boolean ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, mode )
+      ( label: String, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, mode )
       newLabel = NewLabel( goal.s, label )
-    } yield newLabel ->
-      ForallLeftBlock( OpenAssumption( ( newLabel -> BetaReduction.betaNormalize( instantiate( f, terms ) ) ) +: goal.s ), f, terms )
+      instantiatedFormula = BetaReduction.betaNormalize( instantiate( f, terms ) )
+    } yield if ( instantiateOnce ) {
+      label ->
+        ForallLeftBlock( OpenAssumption( goal.s.updated( idx, ( label, instantiatedFormula ) ) ), f, terms )
+    } else {
+      newLabel ->
+        ForallLeftBlock( OpenAssumption( ( newLabel -> instantiatedFormula ) +: goal.s ), f, terms )
+    }
+
+  def forget = ForallLeftTactic( mode, terms, instantiateOnce = true )
 }
 
 /**
