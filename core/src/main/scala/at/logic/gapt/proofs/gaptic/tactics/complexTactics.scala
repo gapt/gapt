@@ -284,13 +284,34 @@ case class UnfoldTactic( target: String, definition: String, definitions: String
       unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
       normalized = BetaReduction.betaNormalize( unfolded )
       newGoal = OpenAssumption( goal.s.updated( idx, label -> normalized ) )
-      subProof <- definitions match {
-        case hd +: tl =>
+      proof_ : ValidationNel[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
+        case ( p :: ps, _ ) =>
+          DefinitionRule( newGoal, normalized, main, idx.isSuc ).successNel[TacticalFailure]
+        case ( Nil, hd +: tl ) =>
           UnfoldTactic( target, hd, tl: _* )( ctx )( newGoal ) map { _._2 }
         case _ =>
-          newGoal.successNel[TacticalFailure]
+          TacticalFailure( this, None, s"Definition $definition not found in formula $main." ).failureNel[LKProof]
       }
-    } yield () -> DefinitionRule( subProof, normalized, main, idx.isSuc )
+      proof <- proof_
+    } yield () -> proof
+
+  /*def apply( goal: OpenAssumption ) =
+    for {
+      ( label, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
+      defn <- getDef; ( what, by ) = defn
+      defPositions = main.find( what )
+      unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
+      normalized = BetaReduction.betaNormalize( unfolded )
+      newGoal = OpenAssumption( goal.s.updated( idx, label -> normalized ) )
+      ( (), proof ) <- ( defPositions, definitions ) match {
+        case ( _ :: _, _ ) =>
+          DefinitionRule( newGoal, normalized, main, idx.isSuc ).successNel[TacticalFailure]
+        case ( Nil, hd +: tl ) =>
+          UnfoldTactic( target, hd, tl: _* )( ctx )( newGoal )
+        case _ =>
+          TacticalFailure( this, None, s"Definition $definition not found in formula $main." ).failureNel[( Unit, LKProof )]
+      }
+    } yield () -> proof*/
 }
 
 /**
