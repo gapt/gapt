@@ -551,7 +551,7 @@ b: ∀x (P(x) ⊃ Q(x))
 c: Q(a): o
 
   at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
-  ... 36 elided
+  ... 35 elided
 
 \end{clilisting}
 
@@ -580,7 +580,7 @@ a: P(a): o
 c: Q(a): o
 
   at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
-  ... 36 elided
+  ... 35 elided
 
 \end{clilisting}
 
@@ -671,7 +671,7 @@ A: A:o
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
   at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
-  ... 36 elided
+  ... 35 elided
 
 \end{clilisting}
 
@@ -1322,9 +1322,37 @@ x1 → s(s(s(0)))
 
 x1 → s(s(s(s(s(s(0))))))
 
+CNF of minimized cut-formula number 0:
+  P(x1): o :- P(s(s(s(x1)))): o
+Beautified grammar of size 8:
+Non-terminal vectors: (x), (x1)
+Terminals:
+  '-{P(0): o}_a1'
+  '-{∀x (P(x) ⊃ P(s(x)))}_a0':i>i
+  0
+  s:i>i
+  '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+
+x → '-{P(0): o}_a1'
+
+x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+
+x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+
+x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+
+x → '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+
+x1 → 0
+
+x1 → s(s(s(0)))
+
+x1 → s(s(s(s(s(s(0))))))
+
 Size of the canonical solution: 12
 Size of the minimized solution: 4
-CNF of minimized cut-formula number 0:
+Size of the beautified solution: 4
+CNF of beautified cut-formula number 0:
   P(x1): o :- P(s(s(s(x1)))): o
 Number of cuts introduced: 1
 Total inferences in the proof with cut(s): 27

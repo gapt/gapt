@@ -20,7 +20,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" )
   ) ),
 
-  scalaVersion := "2.11.7",
+  scalaVersion := "2.11.8",
   scalacOptions in Compile ++= Seq(
     "-deprecation",
     "-language:postfixOps",
@@ -196,6 +196,11 @@ lazy val examples = project.in( file( "examples" ) ).
   settings(
     name := "gapt-examples",
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
+    resourceDirectory in Compile := baseDirectory.value,
+    excludeFilter in ( Compile, unmanagedResources ) := {
+      val target = ( baseDirectory.value / "target" ).getCanonicalPath
+      new SimpleFileFilter( _.getCanonicalPath startsWith target )
+    } || "*.scala",
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value
   )
 

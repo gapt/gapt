@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.{ Pi2Pigeonhole, lattice }
+import at.logic.gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemSymbolFactory
 import at.logic.gapt.formats.llk.HybridLatexParser
@@ -94,7 +94,6 @@ class LKToLKskTest extends Specification {
   }
 
   "a proof with contractions and cut (3)" in {
-    //skipped( "bug: see https://github.com/gapt/gapt/issues/467" )
     /* This proof has 4 skolem constants. Since we skip the contraction on the left hand side, we have different
        skolem constants for the All quantifiers. Similar to the non-cut version, this breaks the homomorphy property and
        we also need to create fresh constants for the Ex quantifiers.
@@ -130,8 +129,7 @@ class LKToLKskTest extends Specification {
 
   "tape proof" in {
     skipped( "this proof has non-tautological axioms" )
-    val pdb = XMLProofDatabaseParser( getClass.getClassLoader getResourceAsStream "tape-in.xml.gz", enable_compression = true )
-    val lk = DefinitionElimination( pdb.Definitions )( regularize( pdb proof "the-proof" ) )
+    val lk = DefinitionElimination( tape.defs )( tape.p )
     val lksk = LKToLKsk( lk )
     lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
   }

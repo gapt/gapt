@@ -3,15 +3,14 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol.{ lcomp, containsQuantifier }
+import at.logic.gapt.expr.hol.{ containsQuantifier, lcomp }
 import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.{ Sequent, Ant }
+import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk.{ CutRule, quantRulesNumber }
 import at.logic.gapt.provers.basicProver.BasicProver
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.maxsat.MaxSat4j
 import org.specs2.mutable._
 
 class CutIntroTest extends Specification {
@@ -48,7 +47,7 @@ class CutIntroTest extends Specification {
         Sequent()
         :+ ( f( ( g ^ 9 )( c ) ) === f( c ) )
       )
-      val Some( q ) = CutIntroduction.compressLKProof( p, MaxSATMethod( MaxSat4j, 1 ), verbose = false )
+      val Some( q ) = CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false )
       val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
       cutFormulas must contain( atMost(
         All( x, f( ( g ^ 3 )( x ) ) === f( x ) ),

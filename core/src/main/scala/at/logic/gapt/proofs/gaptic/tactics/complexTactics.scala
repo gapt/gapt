@@ -80,8 +80,7 @@ case class ChainTactic( hyp: String, target: Option[String] = None, substitution
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
-    // Proceed only if a (universally quantified) hypothesis exists
-    ( for ( ( ( `hyp`, All( _, _ ) ), index: Ant ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption.
+    ( for ( ( ( `hyp`, _ ), index: Ant ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption.
       toSuccessNel( TacticalFailure( this, Some( goal ), s"hyp $hyp not found" ) ) flatMap { hypIndex =>
 
         // Extract hypothesis

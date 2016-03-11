@@ -2,7 +2,7 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.tactics._
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
 
 import scalaz._
 import Scalaz._
@@ -64,13 +64,13 @@ package object gaptic {
 
   def exL = new ExistsLeftTactic()
 
-  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms )
+  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
 
-  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms )
+  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms, instantiateOnce = false )
 
-  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms )
+  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
 
-  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms )
+  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms, instantiateOnce = false )
 
   def allR( applyToLabel: String, eigenVariable: Var ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
@@ -107,6 +107,9 @@ package object gaptic {
     } yield ()
 
   def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
+
+  @deprecated( "Proof not finished!", since = "the dawn of time" )
+  def sorry = insert( TheoryAxiom( Clause() ) )
 
   // Complex
 
