@@ -14,7 +14,7 @@ object primediv extends TacticsProof {
   val theory =
     ( "assoc" -> hof"∀x∀y∀z x*(y*z) = (x*y)*z" ) +:
       ( "neutral" -> hof"∀x x*1 = x" ) +:
-      ( "mulleq" -> hof"∀x∀y∀z (x*y=z ∧ x!=1 ⊃ x<z)" ) +:
+      ( "mulleq" -> hof"∀x∀y∀z (x*y=z ∧ x!=z ⊃ x<z)" ) +:
       ( "oneleqeq" -> hof"∀x (x!=1 ⊃ 1<x)" ) +:
       Sequent()
 
