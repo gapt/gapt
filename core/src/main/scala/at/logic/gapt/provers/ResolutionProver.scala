@@ -62,8 +62,6 @@ abstract class ResolutionProver extends OneShotProver {
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
-  override def getExpansionProofWithCut( seq: HOLSequent ): Option[ExpansionProofWithCut] =
-    getExpansionProof( seq )
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
     withGroundVariables2( seq ) { seq =>
       val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )

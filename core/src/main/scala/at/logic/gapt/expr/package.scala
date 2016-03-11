@@ -110,6 +110,17 @@ package object expr {
   }
 
   /**
+   * Testifies that a pair of substitutable objects is substitutable (by applying the substitution to each element).
+   */
+  implicit def SubstitutablePair[S <: Substitution, T1, U1, T2, U2](
+    implicit
+    ev1: Substitutable[S, T1, U1],
+    ev2: Substitutable[S, T2, U2]
+  ): Substitutable[S, ( T1, T2 ), ( U1, U2 )] = new Substitutable[S, ( T1, T2 ), ( U1, U2 )] {
+    override def applySubstitution( sub: S, pair: ( T1, T2 ) ): ( U1, U2 ) = ( ev1.applySubstitution( sub, pair._1 ), ev2.applySubstitution( sub, pair._2 ) )
+  }
+
+  /**
    * Testifies that type `FOLTerm` is closed under `FOLSub`.
    *
    */

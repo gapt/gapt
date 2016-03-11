@@ -14,6 +14,9 @@ object ExpansionProofWithEqualityToLK extends ExpansionProofToLK( withEquality =
 class ExpansionProofToLK( withEquality: Boolean ) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
+  def apply( expansionProof: ExpansionProof ): UnprovableOrLKProof =
+    apply( ExpansionProofWithCut( expansionProof ) )
+
   def apply( expansionProofWithCut: ExpansionProofWithCut ): UnprovableOrLKProof =
     solve( expansionProofWithCut.cuts, expansionProofWithCut.expansionSequent ).
       map { WeakeningMacroRule( _, expansionProofWithCut.shallow ) }

@@ -34,5 +34,5 @@ abstract class SATSolver extends OneShotProver {
 
   def getLKProof( seq: HOLSequent ): Option[LKProof] = throw new UnsupportedOperationException
   override def isValid( f: HOLFormula ): Boolean = solve( -f ).isEmpty
-  override def isValid( seq: HOLSequent ): Boolean = isValid( seq.toFormula )
+  override def isValid( seq: HOLSequent ): Boolean = isValid( seq.toDisjunction )
 }

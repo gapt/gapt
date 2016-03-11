@@ -137,8 +137,8 @@ class TPTPHOLExporter {
   }
 
   def createNamesFromSequent( l: List[HOLSequent] ): ( List[Var], NameMap, List[Const], CNameMap ) = {
-    val vs = l.foldLeft( Set[Var]() )( ( set, fs ) => getVars( fs.toFormula, set ) ).toList
-    val cs = l.foldLeft( Set[Const]() )( ( set, fs ) => getConsts( fs.toFormula, set ) ).toList
+    val vs = l.foldLeft( Set[Var]() )( ( set, fs ) => getVars( fs.toDisjunction, set ) ).toList
+    val cs = l.foldLeft( Set[Const]() )( ( set, fs ) => getConsts( fs.toDisjunction, set ) ).toList
     ( vs, createNamesFromVar( vs ), cs, createNamesFromConst( cs ) )
   }
 
@@ -151,7 +151,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: HOLSequent ): HOLFormula = univclosure( fs.toFormula )
+  def closedFormula( fs: HOLSequent ): HOLFormula = univclosure( fs.toDisjunction )
 
   def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )

@@ -8,11 +8,11 @@ import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 
 object extractRecSchemFromResProof {
   def apply( p: ResolutionProof ): ( RecursionScheme, InstanceTermEncoding ) = {
-    val endSequent = existsclosure( p.inputClauses.map( _.toFormula ) ++: Sequent() )
+    val endSequent = existsclosure( p.inputClauses.map( _.toDisjunction ) ++: Sequent() )
     val encoding = InstanceTermEncoding( endSequent )
     apply(
       p,
-      clause => encoding.encodeOption( -clause.toFormula )
+      clause => encoding.encodeOption( -clause.toDisjunction )
     ) -> encoding
   }
 

@@ -35,7 +35,7 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
   "tautological clauses with naive CNF" in {
     val p = FOLAtom( "p" )
     val endSequent = Sequent() :+ ( ( p --> -( -p ) ) & ( -( -p ) --> p ) )
-    val cnf = CNFn.toFClauseList( endSequent.toFormula )
+    val cnf = CNFn.toFClauseList( endSequent.toDisjunction )
     val Some( robinson ) = Escargot getRobinsonProof cnf
     val expansion = RobinsonToExpansionProof( robinson, endSequent )
     expansion.shallow must_== endSequent

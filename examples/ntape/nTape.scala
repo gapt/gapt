@@ -133,7 +133,7 @@ abstract class nTape {
    * The expansion proof of the first-order refutation ([[fol_refutation]]).
    */
   lazy val fol_refutation_expansion_proof = {
-    val end_sequent = Sequent( fol_css.map( x => univclosure( x.toFormula ) ), Nil )
+    val end_sequent = Sequent( fol_css.map( x => univclosure( x.toDisjunction ) ), Nil )
     val lk_rp = RobinsonToLK( fol_refutation, end_sequent )
     LKToExpansionProof( lk_rp )
   }

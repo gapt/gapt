@@ -34,7 +34,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
   def cls2dfg( cls: FOLClause ): String = {
     val cls_ = FOLSubstitution( freeVariables( cls ).zipWithIndex.
       map { case ( v, i ) => v -> FOLVar( s"X$i" ) } )( cls )
-    s"formula(${expr2dfg( univclosure( cls_.toFormula ) )})."
+    s"formula(${expr2dfg( univclosure( cls_.toDisjunction ) )})."
   }
 
   override def getRobinsonProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
@@ -108,17 +108,26 @@ class SPASS extends ResolutionProver with ExternalProgram {
           }
         inferences foreach {
           case ( num, 0, "Inp", _, clause ) =>
-            inference2sketch( num ) = SketchAxiom( clause )
-          case ( num, splitLevel, "Spt", Seq( splitClause ), part1 ) =>
-            val Some( subst ) = clauseSubsumption( part1, inference2sketch( splitClause ).conclusion )
+            val Some( clauseInOurCNF ) = cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined )
+            inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( clauseInOurCNF map { _.asInstanceOf[FOLAtom] } ) ) )
+          case ( num, splitLevel, "Spt", Seq( splitClauseNum ), part1 ) =>
+            val splitClause = inference2sketch( splitClauseNum ).conclusion
+            val Some( subst ) = clauseSubsumption( part1, splitClause )
             require( subst.isRenaming )
-            splitStack push ( ( splitClause, subst.asFOLSubstitution( part1 ), None ) )
-            inference2sketch( num ) = SketchAxiom( subst.asFOLSubstitution( part1 ) )
+            val correctPart1 = subst.asFOLSubstitution( part1 )
+            splitStack push ( ( splitClauseNum, correctPart1, None ) )
+            inference2sketch( num ) = SketchInference( splitClause, Seq( SketchAxiom( correctPart1 ) ) )
           case ( num, splitLevel, "Spt", _, clause ) =>
             val splitClause = inference2sketch( splitStack.top._1 ).conclusion
-            val Some( subst ) = clauseSubsumption( clause, splitClause ).orElse( clauseSubsumption( clause, splitClause.swapped ) )
-            require( subst.isRenaming )
-            inference2sketch( num ) = SketchAxiom( subst.asFOLSubstitution( clause ) )
+            val correctClause =
+              if ( clauseSubsumption( clause, splitClause ).isDefined ) {
+                splitClause diff splitStack.top._2
+              } else {
+                require( clause.size == 1 && freeVariables( clause ).isEmpty )
+                require( clause.swapped isSubsetOf splitStack.top._2 )
+                clause
+              }
+            inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( correctClause ) ) )
           case ( num, splitLevel, _, premises, clause ) =>
             val p = SketchInference( clause, premises map inference2sketch )
             inference2sketch( num ) = p
@@ -130,7 +139,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
         RefutationSketchToRobinson( sketch ) match {
           case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )
-          case scalaz.Success( resProof ) => Some( fixDerivation( resProof, cnf ) )
+          case scalaz.Success( resProof ) => Some( resProof )
         }
       } else {
         None

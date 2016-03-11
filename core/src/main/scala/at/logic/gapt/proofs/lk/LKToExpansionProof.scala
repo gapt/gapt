@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
-import at.logic.gapt.expr.{ Eq, HOLAtom }
+import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
+import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, To, Var, freeVariables, rename }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion._
 
@@ -16,11 +16,12 @@ object LKToExpansionProof {
    * @return The expansion proof Ex(π).
    */
   def apply( proof: LKProof ): ExpansionProofWithCut = {
-    val ( cuts, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
-    eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
+    val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
+    val theory_ = theory.groupBy { _.shallow }.values.toSeq.map { ETMerge( _ ) }
+    eliminateMerges( ExpansionProofWithCut( theory_ ++: expansionSequent ) )
   }
 
-  private def extract( proof: LKProof ): ( Seq[ETImp], Sequent[ExpansionTree] ) = proof match {
+  private def extract( proof: LKProof ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
     case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, false ) ), Seq( ETAtom( atom, true ) ) )
@@ -53,7 +54,10 @@ object LKToExpansionProof {
     case c @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
-      val newCut = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
+      val newCut = ETWeakQuantifier(
+        ExpansionProofWithCut.cutAxiom,
+        Map( c.cutFormula -> ETImp( leftSequent( aux1 ), rightSequent( aux2 ) ) )
+      )
       val cuts = if ( containsQuantifierOnLogicalLevel( c.cutFormula ) )
         newCut +: ( leftCuts ++ rightCuts )
       else leftCuts ++ rightCuts
@@ -121,17 +125,32 @@ object LKToExpansionProof {
     // Equality rules
     case EqualityLeftRule( subProof, eq, aux, pos ) =>
       val ( subCuts, sequent ) = extract( subProof )
-      val ( subTree, subSequent ) = sequent.focus( aux )
-
+      val eqTree = sequent( eq )
+      val ( auxTree, subSequent ) = sequent.focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
-      val newTree = pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
-      ( subCuts, newTree +: subSequent )
+
+      val newAuxTree = pos.foldLeft( auxTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
+      val newEqTree = eqTree match {
+        case ETWeakening( f: HOLAtom, p ) => ETAtom( f, p )
+        case ETAtom( f, p )               => ETAtom( f, p )
+        case ETDefinition( _, _, _ )      => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
+        case _                            => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
+      }
+      ( subCuts, newAuxTree +: subSequent.updated( eq, newEqTree ) )
 
     case EqualityRightRule( subProof, eq, aux, pos ) =>
       val ( subCuts, sequent ) = extract( subProof )
-      val ( subTree, subSequent ) = sequent.focus( aux )
+      val eqTree = sequent( eq )
+      val ( auxTree, subSequent ) = sequent.focus( aux )
       val repTerm = proof.mainFormulas.head( pos.head )
-      val newTree = pos.foldLeft( subTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
-      ( subCuts, subSequent :+ newTree )
+
+      val newAuxTree = pos.foldLeft( auxTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
+      val newEqTree = eqTree match {
+        case ETWeakening( f: HOLAtom, p ) => ETAtom( f, p )
+        case ETAtom( f, p )               => ETAtom( f, p )
+        case ETDefinition( _, _, _ )      => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
+        case _                            => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
+      }
+      ( subCuts, subSequent.updated( eq, newEqTree ) :+ newAuxTree )
   }
 }

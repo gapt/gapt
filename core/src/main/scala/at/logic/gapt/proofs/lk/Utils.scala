@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex }
 
 object containsEqualityReasoning {
   /**
@@ -64,23 +64,14 @@ object isRegular {
  * Proof regularization
  *
  */
-object regularize {
+object regularize extends LKVisitor[Set[Var]] {
   /**
    * Renames all eigenvariables in a proof so that it becomes regular.
    *
    * @param proof An LKProof.
    * @return A regular LKProof.
    */
-  def apply( proof: LKProof ) = apply_( proof, freeVariablesLK( proof ) )._1
-
-  /**
-   * Renames at least the eigenvariables contains in blacklist so that proof becomes regular.
-   *
-   * @param proof An LKProof.
-   * @param blacklist A set of variables that must be renamed if they occur as eigenvariables.
-   * @return A regular LKProof.
-   */
-  def apply( proof: LKProof, blacklist: Set[Var] ): LKProof = apply_( proof, blacklist )._1
+  def apply( proof: LKProof ): LKProof = apply( proof, freeVariablesLK( proof ) )
 
   /**
    * Renames at least the eigenvariables contains in blacklist so that proof becomes regular.
@@ -89,135 +80,49 @@ object regularize {
    * @param blacklist A sequence of variables that must be renamed if they occur as eigenvariables.
    * @return A regular LKProof.
    */
-  def apply( proof: LKProof, blacklist: Seq[Var] ): LKProof = apply_( proof, blacklist.toSet )._1
+  def apply( proof: LKProof, blacklist: Seq[Var] ): LKProof = apply( proof, blacklist.toSet )
 
-  /**
-   * Performs the actual regularization.
-   *
-   * @param proof An LKProof.
-   * @param blacklist A set of variables that must be renamed if they occur as eigenvariables.
-   * @return A regular LKProof and the final blacklist.
-   */
-  def apply_( proof: LKProof, blacklist: Set[Var] ): ( LKProof, Set[Var] ) = proof match {
-    case InitialSequent( sequent ) =>
-      ( proof, blacklist )
+  protected override def visitForallRight( proof: ForallRightRule, blacklist: Set[Var] ) = {
+    val ForallRightRule( subProof, aux, eigen, quant ) = proof
+    val eigenNew = rename( eigen, blacklist )
+    val ( subProofNew_, subConnector, blacklistNew ) = recurse( subProof, blacklist + eigenNew )
 
-    case WeakeningLeftRule( subProof, f ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( WeakeningLeftRule( subProofNew, f ), blacklistNew )
-
-    case WeakeningRightRule( subProof, f ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( WeakeningRightRule( subProofNew, f ), blacklistNew )
-
-    case ContractionLeftRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( ContractionLeftRule( subProofNew, aux1, aux2 ), blacklistNew )
-
-    case ContractionRightRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( ContractionRightRule( subProofNew, aux1, aux2 ), blacklistNew )
-
-    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, blacklistNew_ ) = apply_( leftSubProof, blacklist )
-      val ( rightSubProofNew, blacklistNew ) = apply_( rightSubProof, blacklistNew_ )
-
-      ( CutRule( leftSubProofNew, aux1, rightSubProofNew, aux2 ), blacklistNew )
-
-    case NegLeftRule( subProof, aux ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( NegLeftRule( subProofNew, aux ), blacklistNew )
-
-    case NegRightRule( subProof, aux ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( NegRightRule( subProofNew, aux ), blacklistNew )
-
-    case AndLeftRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( AndLeftRule( subProofNew, aux1, aux2 ), blacklistNew )
-
-    case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, blacklistNew_ ) = apply_( leftSubProof, blacklist )
-      val ( rightSubProofNew, blacklistNew ) = apply_( rightSubProof, blacklistNew_ )
-
-      ( AndRightRule( leftSubProofNew, aux1, rightSubProofNew, aux2 ), blacklistNew )
-
-    case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, blacklistNew_ ) = apply_( leftSubProof, blacklist )
-      val ( rightSubProofNew, blacklistNew ) = apply_( rightSubProof, blacklistNew_ )
-
-      ( OrLeftRule( leftSubProofNew, aux1, rightSubProofNew, aux2 ), blacklistNew )
-
-    case OrRightRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-
-      ( OrRightRule( subProofNew, aux1, aux2 ), blacklistNew )
-
-    case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( leftSubProofNew, blacklistNew_ ) = apply_( leftSubProof, blacklist )
-      val ( rightSubProofNew, blacklistNew ) = apply_( rightSubProof, blacklistNew_ )
-
-      ( ImpLeftRule( leftSubProofNew, aux1, rightSubProofNew, aux2 ), blacklistNew )
-
-    case ImpRightRule( subProof, aux1, aux2 ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-
-      ( ImpRightRule( subProofNew, aux1, aux2 ), blacklistNew )
-
-    case ForallLeftRule( subProof, aux, f, term, v ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( ForallLeftRule( subProofNew, aux, f, term, v ), blacklistNew )
-
-    case ForallRightRule( subProof, aux, eigen, quant ) =>
-      val eigenNew = rename( eigen, blacklist )
-      val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigenNew )
-
-      val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
-      ( ForallRightRule( subProofNew, aux, eigenNew, quant ), blacklistNew )
-
-    case ExistsLeftRule( subProof, aux, eigen, quant ) =>
-      val eigenNew = rename( eigen, blacklist )
-      val ( subProofNew_, blacklistNew ) = apply_( subProof, blacklist + eigenNew )
-
-      val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
-      ( ExistsLeftRule( subProofNew, aux, eigenNew, quant ), blacklistNew )
-
-    case ExistsRightRule( subProof, aux, f, term, v ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( ExistsRightRule( subProofNew, aux, f, term, v ), blacklistNew )
-
-    case EqualityLeftRule( subProof, eq, aux, pos ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( EqualityLeftRule( subProofNew, eq, aux, pos ), blacklistNew )
-
-    case EqualityRightRule( subProof, eq, aux, pos ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( EqualityRightRule( subProofNew, eq, aux, pos ), blacklistNew )
-
-    case proof @ InductionRule( cases, main ) =>
-      var blacklistNew = blacklist
-
-      val newQuant = rename( proof.quant, blacklistNew )
-      blacklistNew += newQuant
-
-      val newCases = cases map { c =>
-        val renaming = rename( c.eigenVars, blacklistNew )
-        blacklistNew ++= renaming.values
-        val ( subProofNew, blacklistNew_ ) = apply_( Substitution( renaming )( c.proof ), blacklistNew )
-        blacklistNew = blacklistNew_
-        c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming )
-      }
-
-      InductionRule( newCases, All( newQuant, Substitution( proof.quant -> newQuant )( proof.qfFormula ) ) ) -> blacklistNew
-
-    case DefinitionLeftRule( subProof, aux, main ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( DefinitionLeftRule( subProofNew, aux, main ), blacklistNew )
-
-    case DefinitionRightRule( subProof, aux, main ) =>
-      val ( subProofNew, blacklistNew ) = apply_( subProof, blacklist )
-      ( DefinitionRightRule( subProofNew, aux, main ), blacklistNew )
-
-    case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
+    val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
+    val proofNew = ForallRightRule( subProofNew, aux, eigenNew, quant )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, blacklistNew )
   }
+
+  protected override def visitExistsLeft( proof: ExistsLeftRule, blacklist: Set[Var] ) = {
+    val ExistsLeftRule( subProof, aux, eigen, quant ) = proof
+    val eigenNew = rename( eigen, blacklist )
+    val ( subProofNew_, subConnector, blacklistNew ) = recurse( subProof, blacklist + eigenNew )
+
+    val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
+    val proofNew = ExistsLeftRule( subProofNew, aux, eigenNew, quant )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, blacklistNew )
+  }
+
+  protected override def visitInduction( proof: InductionRule, blacklist: Set[Var] ) = {
+    val InductionRule( cases, main ) = proof
+    var blacklistNew = blacklist
+
+    val newQuant = rename( proof.quant, blacklistNew )
+    blacklistNew += newQuant
+
+    val newCasesConnectors = cases map { c =>
+      val renaming = rename( c.eigenVars, blacklistNew )
+      blacklistNew ++= renaming.values
+      val ( subProofNew, subConnector, blacklistNew_ ) = recurse( Substitution( renaming )( c.proof ), blacklistNew )
+      blacklistNew = blacklistNew_
+      c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming ) -> subConnector
+    }
+
+    val ( casesNew, subConnectors ) = newCasesConnectors.unzip
+    val proofNew = InductionRule( casesNew, proof.mainFormula )
+    val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
+    val connector = if ( subConnectors_.isEmpty ) OccConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
+
+    ( proofNew, connector, blacklistNew )
+  }
+
 }

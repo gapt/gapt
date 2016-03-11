@@ -2,7 +2,7 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.tactics._
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
 
 import scalaz._
 import Scalaz._
@@ -64,13 +64,13 @@ package object gaptic {
 
   def exL = new ExistsLeftTactic()
 
-  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms )
+  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
 
-  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms )
+  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms, instantiateOnce = false )
 
-  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms )
+  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
 
-  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms )
+  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms, instantiateOnce = false )
 
   def allR( applyToLabel: String, eigenVariable: Var ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
@@ -80,7 +80,7 @@ package object gaptic {
 
   def allR = new ForallRightTactic()
 
-  def cut( h: HOLFormula, c: String ) = CutTactic( h, c )
+  def cut( c: String, h: HOLFormula ) = CutTactic( c, h )
 
   def eqL( eq: String, fm: String ) = EqualityLeftTactic( eq, fm )
 
@@ -101,12 +101,20 @@ package object gaptic {
     for {
       goal <- currentGoal
       diff = proof.conclusion diff goal.conclusion
-      cutFormula = diff.toFormula
-      _ <- cut( cutFormula, label )
+      cutFormula = diff.toDisjunction
+      _ <- cut( label, cutFormula )
       _ <- insert( proof )
     } yield ()
 
   def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
+
+  @deprecated( "Proof not finished!", since = "the dawn of time" )
+  def sorry = insert( TheoryAxiom( Clause() ) )
+  def fail = new Tactical[Nothing] {
+    def apply( proofState: ProofState ): ValidationNel[TacticalFailure, ( Nothing, ProofState )] =
+      TacticalFailure( this, None, "explicit fail" ).failureNel
+    override def toString = "fail"
+  }
 
   // Complex
 

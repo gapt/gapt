@@ -3,12 +3,12 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.atoms
 import at.logic.gapt.proofs.reduction._
-import at.logic.gapt.proofs.{ Context, FiniteContext }
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.provers.spass.SPASS
 
 object ReductionDemo extends Script {
-  val deep = nTape3.expansion_proof.deep
-  //  val deep = hof"∀f P(f) = f(c)" +: Sequent() :+ hof"P(λx h(h(x))) = h(h(c))"
+  //  val deep = nTape3.expansion_proof.deep
+  val deep = hof"∀f P(f) = f(c)" +: Sequent() :+ hof"P(λx h(h(x))) = h(h(c))"
 
   implicit var ctx = FiniteContext()
   ctx += Context.Sort( "i" )

@@ -107,6 +107,15 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
     "return merge-free proofs" in {
       LKToExpansionProof( Pi2Pigeonhole.proof ).subProofs must not( contain( beAnInstanceOf[ETMerge] ) )
     }
+
+    "equality on weakened formulas" in {
+      val proof = ( ProofBuilder
+        c ReflexivityAxiom( le"t" )
+        u ( WeakeningLeftRule( _, hof"t=s" ) )
+        u ( EqualityRightRule( _, eq = hof"t=s", aux = hof"t=t", mainFormula = hof"s=t" ) ) qed )
+
+      LKToExpansionProof( proof ).deep must beEValidSequent
+    }
   }
 }
 

@@ -1,16 +1,25 @@
 These are higher order proofs in the LKsk calculus given as LLK format.
 
-To see them start the cli (assuming you are in the gapt/source directory) and call the following commands:
+To see them start the cli (assuming you are in the gapt/source directory) and load the proof
+ scripts ntape2.script or ntape3.script. As a starter, try 
+
+nTape3.printStatistics
+prooftool(nTape3.acnf)
+
+on the cli.
+
+There are also some LLK examples in this directory, which formalize some first-roder versions
+ of the pigeon-hole principle.
 
 /* loads a simple combinatory proof (the pigeon hole principle for 3 pigeons and 2 holes) and shows the expansion tree */
-val pdb = loadLLK("../examples/hol-tape/pigeon32.llk")
+val pdb = loadLLK("examples/ntape/pigeon32.llk")
 prooftool(pdb.proof("PROOF"))
 
 val et = extractExpansionSequent(pdb.proof("PROOF"))
 prooftool(et)
 
-/* loads a simple combinatory proof (the pigeon hole principle for 3 pigeons and 2 holes) and shows the expansion tree */
-val pdb = loadLLK("../examples/hol-tape/kommfo.llk")
+/* loads a simple combinatory proof with commutativity and shows the expansion tree */
+val pdb = loadLLK("examples/ntape/kommfo.llk")
 prooftool(pdb.proof("THEPROOF"))
 
 val elp = eliminateDefinitions(pdb, "THEPROOF")

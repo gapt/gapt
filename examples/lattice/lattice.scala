@@ -326,7 +326,7 @@ object lattice {
 
   // Main proof
   val p = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "L2" -> FOLAtom( "L2" ) ) ) ) {
-    cut( FOLAtom( "L3" ), "L3" )
+    cut( "L3", FOLAtom( "L3" ) )
     insert( p1_3 )
     insert( p3_2 )
   }

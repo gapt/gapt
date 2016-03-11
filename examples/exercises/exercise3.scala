@@ -13,7 +13,7 @@ object exercise3 {
 
   def Prover9IsUnsat( cls: List[FOLClause] ): Boolean =
     Prover9 isValid existsclosure( cls.map {
-      _.toFormula
+      _.toDisjunction
     } ++: Sequent() )
 
   def TseitinPHP( n: Int ) = TseitinCNF( Neg( PigeonHolePrinciple( n, n - 1 ) ) )

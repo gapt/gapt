@@ -135,7 +135,7 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
     clause.elements.foldRight( known )( infer )
 
   def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
-    back( proof, CNFn.toFClauseList( endSequent.toFormula ).toSet )
+    back( proof, CNFn.toFClauseList( endSequent.toDisjunction ).toSet )
 
   def back( proof: ResolutionProof, originalInputClauses: Set[HOLClause] ): ResolutionProof = {
     import at.logic.gapt.proofs.resolution._
@@ -152,7 +152,7 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
       case InputClause( clause ) =>
         ( for (
           original <- originalInputClauses;
-          subst <- syntacticMatching( original.toFormula, back( clause.toFormula.asInstanceOf[FOLFormula], vars ) )
+          subst <- syntacticMatching( original.toDisjunction, back( clause.toDisjunction.asInstanceOf[FOLFormula], vars ) )
         ) yield Instance( InputClause( original ), subst ) ).head
 
       case Instance( subProof, subst ) =>
@@ -186,11 +186,12 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
         val q2 = f( subProof2, subProofVars )
         Paramodulation( q1, eq, q2, lit, pos, ltr )
 
-      case Splitting( p0, c1, p1, p2 ) =>
+      case Splitting( p0, c1, c2, p1, p2 ) =>
         val subProofVars = infer( p0.conclusion.map { _.asInstanceOf[FOLAtom] }, vars )
         Splitting(
           f( p0, subProofVars ),
           c1 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
+          c2 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
           f( p1, vars ), f( p2, vars )
         )
     } )
@@ -257,7 +258,7 @@ case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
       And( args map { a => predicateForType( a.exptype )( a ) } ) --> predicateForType( retType )( c( args: _* ) )
   } ++: Sequent() )
 
-  val predicateAxiomClauses = CNFn.toFClauseList( predicateAxioms.toFormula ).toSet
+  val predicateAxiomClauses = CNFn.toFClauseList( predicateAxioms.toDisjunction ).toSet
 
   private def guard( formula: HOLFormula ): HOLFormula = formula match {
     case Top() | Bottom() | HOLAtom( _, _ ) => formula
