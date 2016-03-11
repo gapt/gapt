@@ -23,7 +23,7 @@ object PDAnalysis extends nTape {
   override def root_proof() = "THEPROOF";
 
   // the substitution from the paper. the skolem symbol might be wrong.
-  val sub = Substitution( hov"X:nat>o" -> le"\(x:nat) exists z (D z s3 & x < s3 & z > 1)" )
+  val sub = Substitution( hov"X:nat>o" -> le"\(x:nat) exists (z:nat) (D z (s_1 : nat) & x < (s_1 : nat) & z > (1:nat))" )
 
   lazy val css_ : Set[HOLSequent] = {
     def subl( l: LKskProof.Label ) =
@@ -48,7 +48,7 @@ class LNPProofTest extends Specification {
   "The system" should {
     "parse correctly the LNP proof" in {
       PDAnalysis.css_
-      //println( PDAnalysis.ref ) //TODO: doesnt work because the set is not first order yet
+      println( PDAnalysis.css_ )
       ok( "No errors" )
     }
 
