@@ -110,6 +110,11 @@ package object gaptic {
 
   @deprecated( "Proof not finished!", since = "the dawn of time" )
   def sorry = insert( TheoryAxiom( Clause() ) )
+  def fail = new Tactical[Nothing] {
+    def apply( proofState: ProofState ): ValidationNel[TacticalFailure, ( Nothing, ProofState )] =
+      TacticalFailure( this, None, "explicit fail" ).failureNel
+    override def toString = "fail"
+  }
 
   // Complex
 
@@ -140,8 +145,8 @@ package object gaptic {
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
-  def unfold( inLabel: String, definition: String, definitions: String* )( implicit ctx: Context ) =
-    UnfoldTactic( inLabel, definition, definitions: _* )
+  def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
+    UnfoldTacticHelper( definition, definitions )
 
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success

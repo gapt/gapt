@@ -78,12 +78,12 @@ object lists extends TacticsProof {
   }
 
   ctx += hof"(f*g) x = f (g x)"
-  Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "example", "*" ); refl }
+  Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "*" ) in "example"; refl }
 
   val mapfusion = Lemma( mapth :+ ( "goal" -> hof"∀f ∀g ∀xs map (f*g) xs = map f (map g xs)" ) ) {
     allR; allR; induction
     rewrite.many ltr "mapnil"; refl
-    rewrite.many ltr ( "mapcons", "IHxs_0" ); unfold( "goal", "*" ); refl
+    rewrite.many ltr ( "mapcons", "IHxs_0" ); unfold( "*" ) in "goal"; refl
   }
 
   // Note: we cannot prove constructor injectivity using the induction rule.
