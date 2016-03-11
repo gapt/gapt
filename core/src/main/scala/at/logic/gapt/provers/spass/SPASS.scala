@@ -108,14 +108,15 @@ class SPASS extends ResolutionProver with ExternalProgram {
           }
         inferences foreach {
           case ( num, 0, "Inp", _, clause ) =>
-            inference2sketch( num ) = SketchAxiom( cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined ).get.map { _.asInstanceOf[FOLAtom] } )
+            val Some( clauseInOurCNF ) = cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined )
+            inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( clauseInOurCNF map { _.asInstanceOf[FOLAtom] } ) ) )
           case ( num, splitLevel, "Spt", Seq( splitClauseNum ), part1 ) =>
             val splitClause = inference2sketch( splitClauseNum ).conclusion
             val Some( subst ) = clauseSubsumption( part1, splitClause )
             require( subst.isRenaming )
             val correctPart1 = subst.asFOLSubstitution( part1 )
             splitStack push ( ( splitClauseNum, correctPart1, None ) )
-            inference2sketch( num ) = SketchAxiom( correctPart1 )
+            inference2sketch( num ) = SketchInference( splitClause, Seq( SketchAxiom( correctPart1 ) ) )
           case ( num, splitLevel, "Spt", _, clause ) =>
             val splitClause = inference2sketch( splitStack.top._1 ).conclusion
             val correctClause =
@@ -126,7 +127,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
                 require( clause.swapped isSubsetOf splitStack.top._2 )
                 clause
               }
-            inference2sketch( num ) = SketchAxiom( correctClause )
+            inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( correctClause ) ) )
           case ( num, splitLevel, _, premises, clause ) =>
             val p = SketchInference( clause, premises map inference2sketch )
             inference2sketch( num ) = p
