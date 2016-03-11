@@ -290,9 +290,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: String
         case _ =>
           newGoal.successNel[TacticalFailure]
       }
-    } yield () ->
-      ( if ( idx.isSuc ) DefinitionRightRule( subProof, idx, main )
-      else DefinitionLeftRule( subProof, idx, main ) )
+    } yield () -> DefinitionRule( subProof, normalized, main, idx.isSuc )
 }
 
 /**
