@@ -50,46 +50,6 @@ class MiscTest extends Specification {
       CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false ) must beSome
     }
 
-    "skolemize a simple proof" in {
-      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk2.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( proof )
-      Success()
-    }
-
-    "skolemize a proof with a simple definition" in {
-      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk3.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( proof )
-      Success()
-    }
-
-    "skolemize a proof with a complex definition" in {
-      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "sk4.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( proof )
-      Success()
-    }
-
-    "extract projections and clause set from a skolemized proof" in {
-      val proofdb = ( new XMLReader( getClass.getClassLoader.getResourceAsStream( "test1p.xml" ) ) with XMLProofDatabaseParser ).getProofDatabase()
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
-      val projs = Projections( proof )
-      val s = StructCreators.extract( proof )
-      val cs = CharacteristicClauseSet( s )
-      val path = "target" + separator + "test1p-out.xml"
-      val oldproofs_with_names = projs.toList.zipWithIndex.map( p => ( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) )
-      //      saveXML(
-      //        oldproofs_with_names,
-      //        ( "cs", cs.toList ) :: Nil, path
-      //      )
-      Success()
-    }
-
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
       val p = LinearExampleProof( 9 )
       val Some( pi ) = CutIntroduction.compressLKProof( p, method = MaxSATMethod( MaxSat4j, 1 ), verbose = false )
