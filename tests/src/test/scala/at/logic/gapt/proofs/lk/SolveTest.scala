@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.BussTautology
+import at.logic.gapt.examples.{ BussTautology, primediv }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.proofs.expansion._
@@ -85,6 +85,13 @@ class SolveTest extends Specification with SequentMatchers {
       val epwc = ExpansionProofWithCut( Seq( cut ), es )
       ExpansionProofToLK( epwc ) must beLike {
         case \/-( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
+      }
+    }
+
+    "read back higher order prime divisor proof" in {
+      val p = DefinitionElimination( primediv.defs )( primediv.proof )
+      ExpansionProofWithEqualityToLK( LKToExpansionProof( p ) ) must beLike {
+        case \/-( p_ ) => p_.conclusion must beMultiSetEqual( p.conclusion )
       }
     }
 

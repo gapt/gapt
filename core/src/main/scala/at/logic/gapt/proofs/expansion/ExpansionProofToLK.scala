@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.expansion
 
-import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
@@ -144,7 +143,7 @@ class ExpansionProofToLK( withEquality: Boolean ) extends SolveUtils {
         else newExpSeq ++:= insts_.values
 
         solve( cuts, newExpSeq ) map { p0 =>
-          val presentInsts = insts_.keys filter { t => p0.conclusion.contains( instantiate( sh, t ), i.isSuc ) }
+          val presentInsts = insts_.filter { t => p0.conclusion.contains( t._2.shallow, i.isSuc ) }.keys
           presentInsts.foldLeft( p0 )( ( p, t ) =>
             if ( i isAnt ) ForallLeftRule( p, sh, t )
             else ExistsRightRule( p, sh, t ) )
