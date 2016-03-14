@@ -5,23 +5,11 @@ import at.logic.gapt.proofs.{ OccConnector, HOLClause, SequentIndex }
 import scala.collection.mutable
 
 object mapInputClauses {
-  def guessConn( oldConcl: HOLClause, newConcl: HOLClause ): OccConnector[HOLAtom] = {
-    val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
-    OccConnector( newConcl, oldConcl, newConcl.zipWithIndex.map {
-      case ( atom, newIdx ) =>
-        val oldIdx = oldConcl.indicesWhere( _ == atom ).
-          filterNot( alreadyUsedOldIndices.contains ).
-          filter( newIdx.sameSideAs ).
-          head
-        alreadyUsedOldIndices += oldIdx
-        Seq( oldIdx )
-    } )
-  }
 
   def apply( proof: ResolutionProof, factorEarly: Boolean = false )( f: HOLClause => ResolutionProof ): ResolutionProof =
     withOccConn( proof ) { clause =>
       val q = f( clause )
-      q -> guessConn( clause, q.conclusion )
+      q -> OccConnector.guessInjection( clause, q.conclusion )
     }
 
   def withOccConn( proof: ResolutionProof, factorEverything: Boolean = false )( f: HOLClause => ( ResolutionProof, OccConnector[HOLAtom] ) ): ResolutionProof = {

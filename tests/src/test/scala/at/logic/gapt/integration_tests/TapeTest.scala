@@ -1,21 +1,19 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.expr.{ FOLAtom, Eq }
-import at.logic.gapt.formats.xml.{ XMLParser }
+import at.logic.gapt.expr.{ Eq, FOLAtom }
+import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lk._
-
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import XMLParser._
 import at.logic.gapt.provers.escargot.Escargot
-
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.formats.llkNew.LatexLLKExporter
 import at.logic.gapt.proofs.ceres._
-
 import java.io.File.separator
 
+import at.logic.gapt.examples.tape
 import org.specs2.mutable._
 
 class TapeTest extends Specification with SequentMatchers {
@@ -26,10 +24,7 @@ class TapeTest extends Specification with SequentMatchers {
     "parse, skolemize, extract and refute the css of the tape proof" in {
       skipped( "" )
       checkForProverOrSkip
-      val proofdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
-      val proof_sk = skolemize( regularize( DefinitionElimination( proofdb.Definitions )( proof ) ) )
+      val proof_sk = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
       //println( LatexLLKExporter( proof_sk, true ) )
 
       println( proof_sk )
@@ -79,18 +74,14 @@ class TapeTest extends Specification with SequentMatchers {
       checkForProverOrSkip
 
       //get the proof
-      val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
-      pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
+      val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
       val ancf = CERES( proof )
       ancf.endSequent must beMultiSetEqual( proof.endSequent )
 
     }
 
     "apply the full CERES method and skip cuts on equations" in {
-      val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
-      pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
+      val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
       val acnf = CERES( proof, CERES.skipEquations, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
@@ -100,9 +91,7 @@ class TapeTest extends Specification with SequentMatchers {
       checkForProverOrSkip
 
       //get the proof
-      val pdb = XMLProofDatabaseParser( getClass.getClassLoader.getResourceAsStream( "tape-in.xml.gz" ), true )
-      pdb.proofs.size must beEqualTo( 1 )
-      val proof = skolemize( regularize( DefinitionElimination( pdb.Definitions )( pdb.proofs.head._2 ) ) )
+      val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
       val acnf = CERES( proof, CERES.skipEquations )
       val eqacnf = CERES( acnf, _ match { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true } )
       eqacnf.endSequent must beMultiSetEqual( proof.endSequent )

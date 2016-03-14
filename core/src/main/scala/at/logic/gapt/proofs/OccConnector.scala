@@ -1,5 +1,7 @@
 package at.logic.gapt.proofs
 
+import scala.collection.mutable
+
 /**
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
@@ -159,5 +161,21 @@ object OccConnector {
     val parentsSequent = firstSequent map ( x => secondSequent.indicesWhere( _ == x ) filter { _.isAnt }, x => secondSequent.indicesWhere( _ == x ) filter { _.isSuc } )
 
     OccConnector( firstSequent, secondSequent, parentsSequent )
+  }
+
+  /**
+   * Guesses an OccConnector, such that each element in lowerSequent gets connected to a different element in upperSequent.
+   */
+  def guessInjection[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): OccConnector[A] = {
+    val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
+    OccConnector( lowerSequent, upperSequent, lowerSequent.zipWithIndex.map {
+      case ( atom, newIdx ) =>
+        val oldIdx = upperSequent.indicesWhere( _ == atom ).
+          filterNot( alreadyUsedOldIndices.contains ).
+          filter( newIdx.sameSideAs ).
+          head
+        alreadyUsedOldIndices += oldIdx
+        Seq( oldIdx )
+    } )
   }
 }

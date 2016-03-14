@@ -1,6 +1,0 @@
-(
-(10 (input) (= (multiply v0 v1) (multiply v1 v0)) NIL)
-(15 (input) (= (multiply (add v0 v1) v2) (add (multiply v0 v2) (multiply v1 v2))) NIL)
-(100 (instantiate 10 ((v0 . (add v0 v1)) (v1 . v2))) (= (multiply (add v0 v1) v2) (multiply v2 (add v0 v1))) NIL)
-(101 (paramod 100 (1) 15 (1)) (= (multiply v2 (add v0 v1)) (add (multiply v0 v2) (multiply v1 v2))) NIL)
-)

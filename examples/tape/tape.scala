@@ -20,15 +20,14 @@ object tape extends TacticsProof {
 
   val lhs = Lemma( ( "A" -> fof"A" ) +: Sequent()
     :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {
-    unfold( "I0", "I" )
-    unfold( "I1", "I" )
+    unfold( "I" ) in ( "I0", "I1" )
     allR( "I0", FOLVar( "x_0" ) )
     allR( "I1", FOLVar( "x_1" ) )
     exR( "I0", fot"x_1" )
     forget( "I0" )
     exR( "I1", fot"x_0" )
     forget( "I1" )
-    unfold( "A", "A" )
+    unfold( "A" ) in "A"
     allL( fot"x_0 + x_1" )
     forget( "A" )
     destruct( "A_0" )
@@ -38,7 +37,7 @@ object tape extends TacticsProof {
 
   val rhs = Lemma( ( "Iv" -> fof"I(v)" ) +: Sequent()
     :+ ( "C" -> fof"?x?y (x != y & f x = f y)" ) ) {
-    unfold( "Iv", "I" )
+    unfold( "I" ) in "Iv"
     allL( fot"0" )
     exL( "Iv_0", fov"y_0" )
     allL( fot"y_0 + 1" )
