@@ -37,6 +37,7 @@ case class prime( k: Int ) extends TacticsProof {
   ctx += "empty" -> le" λX ¬∃n X(n)"
   ctx += "compN" -> le" λX λx ¬X(x)"
   ctx += "union" -> le" λX λY λx (X(x) ∨ Y(x))"
+  ctx += "intersection" -> le" λX λY λx (X(x) ∧ Y(x))"
   ctx += "O" -> le" λX ∀m (X(m) -> ∃l subset(ν(m, l+1), X))"
   ctx += "C" -> le" λX O(compN(X))"
   ctx += "INF" -> le" λX ∀k ∃l X(k+(l + 1))"
@@ -51,14 +52,14 @@ case class prime( k: Int ) extends TacticsProof {
 
   ctx += ( "P[0]", le" set_1(p_0)" )
   ctx += ( "S[0]", le" ν(0, p_0)" )
-  ctx += ( "Q[0]", hof" PRIME(${p(0)})")
-  ctx += ("R[0]", hof" ∀y (P[0] y -> PRIME y)")
+  ctx += ( "Q[0]", hof" PRIME(${p( 0 )})" )
+  ctx += ( "R[0]", hof" ∀y (${P( 0 )}(y) -> PRIME y)" )
 
   for ( i <- 1 to k ) {
     ctx += ( s"P[$i]", le"union(${P( i - 1 )}, set_1 (${p( i )}:i))" )
     ctx += ( s"S[$i]", le"union(${S( i - 1 )}, ν(0, ${p( i )}))" )
-    ctx += (s"Q[$i]", hof" ${Q(i-1)} ∧ PRIME(${p(i)})")
-    ctx += (s"R[$i]", hof" ∀y (${P(i)} y -> PRIME y)")
+    ctx += ( s"Q[$i]", hof" ${Q( i - 1 )} ∧ PRIME(${p( i )})" )
+    ctx += ( s"R[$i]", hof" ∀y (${P( i )} y -> PRIME y)" )
   }
 
   ctx += ( s"F[$k]", hof" ∀l (PRIME(l) <-> ${P( k )}(l))" )
@@ -71,6 +72,36 @@ case class prime( k: Int ) extends TacticsProof {
    * | Subproofs |
    * -------------
    */
+
+  val deMorgan1 = Lemma(
+    ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof"compN(union X Y) = intersection(compN X)(compN Y)" )
+  ) {
+      chain( "EXT" )
+      forget( "EXT" )
+      allR
+      repeat( unfold( "compN", "intersection", "union" ) in "Suc" )
+      prop
+
+    }
+
+  val intersectionOpen: LKProof = Lemma(
+    ( "Ant0" -> hof" O(X)" ) +: ( "Ant1" -> hof" O(Y)" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof" O(intersection X Y)" )
+  ) {
+
+    }
+
+  val unionClosed = Lemma(
+    ( "Ant0" -> hof"C(X)" ) +: ( "Ant1" -> hof" C(Y)" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof" C(union X Y)" )
+  ) {
+      unfold( "C" ) in ( "Ant0", "Ant1", "Suc" )
+      cut( "CF", hof" compN(union X Y) = intersection(compN X)(compN Y)" )
+
+      insert( deMorgan1 )
+
+      eqR( "CF", "Suc" )
+      forget( "CF" )
+      //insert(intersectionOpen)
+    }
 
   // Proof that complement(complement(X)) = X (under extensionality).
   val compCompProof = Lemma(
@@ -375,11 +406,144 @@ case class prime( k: Int ) extends TacticsProof {
       insert( psi1Right )
     }
 
-  /*def psi2: LKProof = Lemma(
+  def FR: LKProof = Lemma(
+    ( "Ant" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> R( k ).asInstanceOf[HOLFormula] )
+  ) {
+      unfold( s"R[$k]" ) in "Suc"
+      allR
+      unfold( s"F[$k]" ) in "Ant"
+      allL( fov" y" )
+      andL
+      trivial
+    }
+
+  def RQ( n: Int ): LKProof = {
+    val endSequent = ( "Ant" -> R( n ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> Q( n ).asInstanceOf[HOLFormula] )
+
+    n match {
+      case 0 =>
+        Lemma( endSequent ) {
+          unfold( s"Q[0]" ) in "Suc"
+          unfold( s"R[0]" ) in "Ant"
+          allL( p( 0 ) ).forget
+          impL
+
+          repeat( unfold( "P[0]", "set_1" ) in "Ant" )
+          trivial
+
+          trivial
+        }
+
+      case _ =>
+        Lemma( endSequent ) {
+          unfold( s"Q[$n]" ) in "Suc"
+          cut( s"R[${n - 1}]", R( n - 1 ).asInstanceOf[HOLFormula] )
+
+          //forget( "Suc" )
+          unfold( s"R[${n - 1}]" ) in s"R[${n - 1}]"
+          allR
+          impR
+          unfold( s"R[$n]" ) in "Ant"
+          allL( fov"y" ).forget
+          impL
+
+          repeat( unfold( s"P[$n]", "union" ) in "Ant" )
+          prop
+
+          trivial
+
+          //forget( "Ant" )
+          andR
+
+          insert( RQ( n - 1 ) )
+
+          forget( s"R[${n - 1}]" )
+          unfold( s"R[$n]" ) in "Ant"
+          allL( p( n ) ).forget
+          impL
+          repeat( unfold( s"P[$n]", "union", "set_1" ) in "Ant" )
+          orR
+          trivial
+
+          trivial
+        }
+    }
+  }
+
+  def FQ: LKProof = Lemma(
+    ( "Ant" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> Q( k ).asInstanceOf[HOLFormula] )
+  ) {
+      cut( s"R[$k]", R( k ).asInstanceOf[HOLFormula] )
+      insert( FR )
+      insert( RQ( k ) )
+    }
+
+  def pgt0: LKProof = Lemma(
+    ( "Ant" -> fof"PRIME(n)" ) +: Sequent() :+ ( "Suc" -> fof"0 < n" )
+  ) {
+      cut( "CF", fof" 1 < n" )
+
+      forget( "Suc" )
+      unfold( "PRIME" ) in "Ant"
+      andL
+      trivial
+
+      forget( "Ant" )
+      cut( "CF2", fof" 0 + 1 = 1" )
+
+      forget( "CF", "Suc" )
+      axiomTh
+
+      eqL( "CF2", "CF" )
+      forget( "CF2" )
+      axiomTh
+
+    }
+
+  def psi2Right( n: Int ): LKProof = {
+    val endSequent = ( s"Q[$n]" -> Q( n ).asInstanceOf[HOLFormula] ) +: ( "REM" -> hof" REM" ) +: Sequent() :+ ( "Suc" -> hof" C ${S( n )}" )
+
+    n match {
+      case 0 =>
+        Lemma( endSequent ) {
+          unfold( "Q[0]" ) in s"Q[$n]"
+          cut( "0<p0", fof" 0 < ${p( 0 )}" )
+
+          insert( pgt0 )
+
+          unfold( "S[0]" ) in "Suc"
+          //insert(progClosed)
+        }
+
+      case _ =>
+        Lemma( endSequent ) {
+          unfold( s"Q[$n]" ) in s"Q[$n]"
+          andL
+          cut( s"0<p$n", fof" 0 < ${p( n )}" )
+
+          insert( pgt0 )
+
+          unfold( s"S[$n]" ) in "Suc"
+          cut( "CF", hof" C(ν 0 ${p( n )})" )
+
+          //insert(progClosed)
+
+          cut( "CF2", hof" C(${S( n - 1 )}" )
+          //insert(psi2Right(n-1))
+          //insert(varphiCUnion)
+
+        }
+    }
+  }
+
+  def psi2: LKProof = Lemma(
     ( "Ant0" -> hof"${F( k )}" ) +: ( "Ant1" -> hof" REM" ) +: Sequent() :+ ( "Suc" -> hof" C ${S( k )}" )
   ) {
+      cut( s"Q[$k]", Q( k ).asInstanceOf[HOLFormula] )
 
-    }*/
+      insert( FQ )
+      //insert(psi2Right)
+    }
 
   def proof: LKProof = {
     val endSequent = ( "EXT" -> extensionality ) +: ( s"F[$k]" -> hof" ${F( k )}" ) +: ( "REM" -> hof" REM" ) +: ( "Prime-Div" -> hof" PRIME-DIV" ) +: Sequent()
@@ -404,14 +568,14 @@ case class prime( k: Int ) extends TacticsProof {
   def F( k: Int ) = Const( s"F[$k]", To )
   def S( k: Int ) = Const( s"S[$k]", Ti -> To )
   def P( k: Int ) = Const( s"P[$k]", Ti -> To )
-  def Q(k: Int ) = Const(s"Q[$k]", To)
-  def R(k: Int) = Const(s"R[$k]", To)
+  def Q( k: Int ) = Const( s"Q[$k]", To )
+  def R( k: Int ) = Const( s"R[$k]", To )
 }
 
 object PrimeProof {
   def main( args: Array[String] ): Unit = {
     val k = args( 0 ).toInt
-    prime( k ).proof
+    prime( k ).unionClosed
     ()
   }
 
