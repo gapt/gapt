@@ -95,6 +95,19 @@ class SolveTest extends Specification with SequentMatchers {
       }
     }
 
+    "useless quantifiers" in {
+      val et = ETWeakQuantifier(
+        hof"∃x true",
+        Map(
+          le"c" -> ETTop( true ),
+          le"d" -> ETTop( true )
+        )
+      )
+      ExpansionProofToLK( ExpansionProof( Sequent() :+ et ) ) must beLike {
+        case \/-( p ) => p.conclusion must_== ( Sequent() :+ et.shallow )
+      }
+    }
+
   }
 }
 

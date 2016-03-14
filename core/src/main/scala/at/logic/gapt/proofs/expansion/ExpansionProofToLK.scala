@@ -143,10 +143,11 @@ class ExpansionProofToLK( withEquality: Boolean ) extends SolveUtils {
         else newExpSeq ++:= insts_.values
 
         solve( cuts, newExpSeq ) map { p0 =>
-          val presentInsts = insts_.filter { t => p0.conclusion.contains( t._2.shallow, i.isSuc ) }.keys
-          presentInsts.foldLeft( p0 )( ( p, t ) =>
-            if ( i isAnt ) ForallLeftRule( p, sh, t )
-            else ExistsRightRule( p, sh, t ) )
+          insts_.foldLeft( p0 ) {
+            case ( p, ( _, child ) ) if !p.conclusion.contains( child.shallow, i.isSuc ) => p
+            case ( p, ( t, _ ) ) if i isAnt => ForallLeftRule( p, sh, t )
+            case ( p, ( t, _ ) ) if i isSuc => ExistsRightRule( p, sh, t )
+          }
         }
     }
   }
