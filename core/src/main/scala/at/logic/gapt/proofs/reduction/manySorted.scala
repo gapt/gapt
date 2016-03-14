@@ -1,60 +1,50 @@
 package at.logic.gapt.proofs.reduction
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFn, atoms, existsclosure, univclosure }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.resolution.{ InputClause, ResolutionProof, mapInputClauses }
+import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
-trait HOLReduction { self =>
-  def context: FiniteContext
-  def reducedContext: FiniteContext
+trait Reduction[-P1, +P2, +S1, -S2] {
+  def forward( problem: P1 ): ( P2, S2 => S1 )
 
-  def forward( sequent: HOLSequent ): HOLSequent
-
-  def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof
-  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof
-
-  def |>( otherReduction: FiniteContext => HOLReduction ): HOLReduction =
-    new HOLReduction {
-      val other = otherReduction( self.reducedContext )
-
-      def context = self.context
-      def reducedContext = other.reducedContext
-
-      def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
-        self.back( other.back( proof, self.forward( endSequent ) ), endSequent )
-
-      def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
-        self.back( other.back( expansionProof, self.forward( endSequent ) ), endSequent )
-
-      def forward( sequent: HOLSequent ): HOLSequent =
-        other.forward( self.forward( sequent ) )
-
-      override def toString = s"$self |> $other"
-    }
+  def |>[P2_ >: P2, P3, S2_ <: S2, S3]( other: Reduction[P2_, P3, S2_, S3] ): Reduction[P1, P3, S1, S3] =
+    CombinedReduction( this, other )
 }
 
-case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
-  val termErasure = context.constants map {
+trait Reduction_[P, S] extends Reduction[P, P, S, S]
+trait OneWayReduction_[P] extends Reduction[P, P, Nothing, Any]
+
+case class CombinedReduction[-P1, P2, +P3, +S1, S2, -S3](
+    red1: Reduction[P1, P2, S1, S2],
+    red2: Reduction[P2, P3, S2, S3]
+) extends Reduction[P1, P3, S1, S3] {
+  override def toString = s"$red1 |> $red2"
+
+  override def forward( problem: P1 ): ( P3, S3 => S1 ) = {
+    val ( prob2, back1 ) = red1.forward( problem )
+    val ( prob3, back2 ) = red2.forward( prob2 )
+    ( prob3, sol3 => back1( back2( sol3 ) ) )
+  }
+}
+
+private class ErasureReductionHelper( constants: Set[Const] ) {
+  val termErasure = constants map {
     case c @ Const( name, FunctionType( _, argTypes ) ) =>
       c -> FOLFunctionConst( s"f_$name", argTypes.size )
   } toMap
   val termReification = termErasure map { _.swap }
 
-  val predicateErasure = context.constants collect {
+  val predicateErasure = constants collect {
     case c @ HOLAtomConst( name, argTypes ) =>
       c -> FOLAtomConst( s"P_$name", argTypes.size )
   } toMap
   val predicateReification = predicateErasure map { _.swap }
-
-  val reducedContext = FiniteContext() +
-    Context.Sort( "i" ) ++
-    termErasure.values ++
-    predicateErasure.values
 
   private def renameFreeVars( vs: Set[Var] ) =
     vs.toSeq.zipWithIndex.map { case ( v, i ) => v -> FOLVar( s"${v.name}_$i" ) }.toMap
@@ -133,9 +123,6 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
 
   def infer( clause: FOLClause, known: Map[FOLVar, Var] ): Map[FOLVar, Var] =
     clause.elements.foldRight( known )( infer )
-
-  def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
-    back( proof, CNFn.toFClauseList( endSequent.toDisjunction ).toSet )
 
   def back( proof: ResolutionProof, originalInputClauses: Set[HOLClause] ): ResolutionProof = {
     import at.logic.gapt.proofs.resolution._
@@ -218,7 +205,7 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
       )
   }
 
-  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
     ExpansionProof( expansionProof.expansionSequent zip endSequent map {
       case ( et, sh ) =>
         require( forward( sh, Map[Var, FOLVar]() ) == et.shallow )
@@ -245,14 +232,26 @@ case class ErasureReduction( context: FiniteContext ) extends HOLReduction {
     back( atom: FOLFormula, freeVars ).asInstanceOf[HOLAtom]
 }
 
-case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
-  val baseTypes = context.constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
+case object ErasureReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
+  override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
+    val helper = new ErasureReductionHelper( problem flatMap { constants( _ ) } )
+    ( problem map helper.forward, helper.back( _, problem ) )
+  }
+}
+
+case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
+  override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
+    val helper = new ErasureReductionHelper( constants( problem ) )
+    ( helper.forward( problem ), helper.back( _, problem ) )
+  }
+}
+
+private class PredicateReductionHelper( constants: Set[Const] ) {
+  val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
   val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( s"is_$ty", ty ) }.toMap
   val predicates = predicateForType.values.toSet
 
-  val reducedContext = context ++ predicates
-
-  val predicateAxioms = existsclosure( context.constants.map {
+  val predicateAxioms = existsclosure( constants.map {
     case c @ Const( _, FunctionType( retType, argTypes ) ) =>
       val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
       And( args map { a => predicateForType( a.exptype )( a ) } ) --> predicateForType( retType )( c( args: _* ) )
@@ -273,10 +272,13 @@ case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
   private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
     predicateAxioms ++ sequent.map( guard )
 
-  override def forward( sequent: HOLSequent ): HOLSequent =
+  def forward( sequent: HOLSequent ): HOLSequent =
     guardAndAddAxioms( sequent )
 
-  override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
+  def forward( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
+    CNFp.toClauseList( guard( univclosure( clause.toImplication ) ) ).head
+
+  def back( proof: ResolutionProof ): ResolutionProof =
     mapInputClauses( proof ) { cls =>
       val clauseWithoutPredicates = cls filterNot { case Apps( c: HOLAtomConst, _ ) => predicates contains c }
       if ( clauseWithoutPredicates.nonEmpty )
@@ -313,15 +315,29 @@ case class PredicateReduction( context: FiniteContext ) extends HOLReduction {
       )
   }
 
-  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
+  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
     ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
       case ( et, i ) if !predicateAxioms.contains( et.shallow, i.isSuc ) =>
         unguard( et )
     } )
 }
 
-case class LambdaEliminationReduction( context: FiniteContext, lambdas: Set[Abs] ) extends HOLReduction {
-  val nameGen = rename.awayFrom( context.constants )
+case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
+  override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
+    val helper = new PredicateReductionHelper( problem flatMap { constants( _ ) } )
+    ( problem map helper.forward, helper.back( _ ) )
+  }
+}
+
+case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] {
+  override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
+    val helper = new PredicateReductionHelper( constants( problem ) )
+    ( helper.forward( problem ), helper.back( _, problem ) )
+  }
+}
+
+private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: Set[Abs] ) {
+  val nameGen = rename.awayFrom( constants )
 
   private val replacements = mutable.Map[Abs, LambdaExpression]()
   private val extraAxioms = mutable.Buffer[HOLFormula]()
@@ -362,8 +378,6 @@ case class LambdaEliminationReduction( context: FiniteContext, lambdas: Set[Abs]
 
   lambdas foreach setup
 
-  val reducedContext = context ++ constants( replacements.values )
-
   def delambdaify( e: LambdaExpression ): LambdaExpression = e match {
     case App( a, b )       => App( delambdaify( a ), delambdaify( b ) )
     case lam: Abs          => replacements( lam )
@@ -381,19 +395,24 @@ case class LambdaEliminationReduction( context: FiniteContext, lambdas: Set[Abs]
     case Apps( hd, args ) => hd( args map delambdaify: _* ).asInstanceOf[HOLFormula]
   }
 
-  override def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent map delambdaify
-
-  override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = ???
-
-  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = ???
+  def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent map delambdaify
 }
 
-case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
-  private val nameGen = rename.awayFrom( context.constants )
-  private val typeNameGen = new NameGenerator( context.typeDefs.map { _.ty.name } )
+case object LambdaEliminationReduction extends OneWayReduction_[HOLSequent] {
+  override def forward( problem: HOLSequent ) = {
+    val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }.toSet
+    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas )
+    ( helper.forward( problem ), _ => throw new UnsupportedOperationException )
+  }
+}
 
-  val partialAppTypes = context.constants flatMap {
-    case Const( _, FunctionType( _, argTypes ) ) =>
+private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[Var] ) {
+  private val nameGen = rename.awayFrom( constants )
+  val baseTys = ( Set[LambdaExpression]() ++ constants ++ variables ) map { _.exptype } flatMap { baseTypes( _ ) }
+  private val typeNameGen = new NameGenerator( baseTys.map { _.name } )
+
+  val partialAppTypes = ( Set[LambdaExpression]() ++ constants ++ variables ) map { _.exptype } flatMap {
+    case FunctionType( _, argTypes ) =>
       argTypes.filterNot { _.isInstanceOf[TBase] }
   } map { t => ( TBase( typeNameGen freshWithIndex "fun" ), t ) } toMap
 
@@ -407,14 +426,14 @@ case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
   val partialApplicationFuns =
     for {
       ( partialAppType, funType @ FunctionType( ret, argTypes ) ) <- partialAppTypes
-      g @ Const( _, FunctionType( `ret`, gArgTypes ) ) <- context.constants
+      g @ Const( _, FunctionType( `ret`, gArgTypes ) ) <- constants
       if gArgTypes endsWith argTypes
     } yield ( Const(
       nameGen freshWithIndex "partial",
       FunctionType( partialAppType, gArgTypes.dropRight( argTypes.size ) map reduceArgTy )
     ), g, funType )
 
-  val newConstants = context.constants.map {
+  val newConstants = constants.map {
     case c @ Const( n, t ) => c -> Const( n, reduceFunTy( t ) )
   }.toMap
 
@@ -439,11 +458,6 @@ case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
     case _        => partiallyAppedTypes( t )
   }
 
-  val reducedContext = context.copy( constants = newConstants.values.toSet ) ++
-    partialAppTypes.keys.map { Context.Sort( _ ) } ++
-    applyFunctions.values ++
-    partialApplicationFuns.map { _._1 }
-
   def reduce( e: LambdaExpression ): LambdaExpression = e match {
     case All( Var( x, t ), f ) => All( Var( x, reduceArgTy( t ) ), reduce( f ) )
     case Ex( Var( x, t ), f )  => Ex( Var( x, reduceArgTy( t ) ), reduce( f ) )
@@ -464,9 +478,26 @@ case class HOFunctionReduction( context: FiniteContext ) extends HOLReduction {
     //    case Abs( Var( x, t ), b ) => Abs( Var( x, reduceArgTy( t ) ), reduce( b ) )
   }
 
-  override def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map { reduce( _ ).asInstanceOf[HOLFormula] }
+  def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map { reduce( _ ).asInstanceOf[HOLFormula] }
+}
 
-  override def back( proof: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = ???
+case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
+  override def forward( problem: HOLSequent ) = {
+    val helper = new HOFunctionReductionHelper( constants( problem ), variables( problem ) )
+    ( helper.forward( problem ), _ => throw new UnsupportedOperationException )
+  }
+}
 
-  override def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = ???
+case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], ExpansionProof, ResolutionProof] {
+  override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => ExpansionProof ) = {
+    val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
+    ( cnf, RobinsonToExpansionProof( _, problem, justs, defs ) )
+  }
+}
+
+case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKProof, ResolutionProof] {
+  override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => LKProof ) = {
+    val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
+    ( cnf, RobinsonToLK( _, problem, justs, defs, addWeakenings = true ) )
+  }
 }

@@ -14,14 +14,14 @@ class ErasureReductionTest extends Specification {
     ctx += hoc"P: nat > witness > o"
     ctx += hoc"Q: nat > o"
 
-    val red = ErasureReduction( ctx )
+    val red = new ErasureReductionHelper( ctx.constants )
 
     val c1 = Clause() :+ hoa"P 0 y"
     val c2 = hoa"P x (f y)" +: Clause() :+ hoa"P (s x) y"
     val c3 = hoa"P x y" +: Clause() :+ hoa"Q x"
     val c4 = hoa"Q (s (s (s (s 0))))" +: Clause()
 
-    val Seq( ec1, ec2, ec3, ec4 ) = Seq( c1, c2, c3, c4 ) map { red forward }
+    val Seq( ec1, ec2, ec3, ec4 ) = Seq( c1, c2, c3, c4 ) map { red.forward }
 
     val p1 = InputClause( ec2 )
     val p2 = MguResolution( p1, Suc( 0 ), p1, Ant( 0 ) )
