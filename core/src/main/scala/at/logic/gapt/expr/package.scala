@@ -1,6 +1,5 @@
 package at.logic.gapt
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.utils.NameGenerator
@@ -223,32 +222,31 @@ package object expr {
     import at.logic.gapt.formats.babel._
     import scalaz.{ \/-, -\/ }
 
-    private def interpolate( args: Seq[LambdaExpression], astTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
-      // TODO: use LiftWhitebox in AST instead of TermReplacement
-
+    private def interpolate( args: Seq[LambdaExpression], baseAstTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
       val strings = sc.parts.toList
       val expressions = args.toList
 
       val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
-      def repl: PartialFunction[LambdaExpression, LambdaExpression] = {
-        case Const( name, _ ) if name.startsWith( placeholder ) =>
-          val i = name.drop( placeholder.length ).toInt
-          expressions( i )
 
-        case Var( name, _ ) if name.startsWith( placeholder ) =>
+      def repl( expr: ast.Expr ): ast.Expr = expr match {
+        case ast.TypeAnnotation( e, ty ) => ast.TypeAnnotation( repl( e ), ty )
+        case ast.Ident( name, ty ) if name startsWith placeholder =>
           val i = name.drop( placeholder.length ).toInt
-          expressions( i )
-
+          ast.LiftWhitebox( expressions( i ) )
+        case expr: ast.Ident   => expr
+        case ast.Abs( v, sub ) => ast.Abs( v, repl( sub ) )
+        case ast.App( a, b )   => ast.App( repl( a ), repl( b ) )
+        case expr: ast.Lifted  => expr
       }
 
-      val expr = BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ) match {
+      def astTransformer( expr: ast.Expr ): ast.Expr = baseAstTransformer( repl( expr ) )
+
+      BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ) match {
         case -\/( error ) => throw new IllegalArgumentException(
           s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
         )
         case \/-( expr ) => expr
       }
-
-      TermReplacement( expr, repl )
     }
 
     // Higher order parsers

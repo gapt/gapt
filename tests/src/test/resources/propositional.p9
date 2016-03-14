@@ -1,6 +1,0 @@
-formulas(sos).
--A | -B | -C.
-A.
-B.
-C.
-end_of_list.
