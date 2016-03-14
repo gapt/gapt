@@ -51,10 +51,14 @@ case class prime( k: Int ) extends TacticsProof {
 
   ctx += ( "P[0]", le" set_1(p_0)" )
   ctx += ( "S[0]", le" ν(0, p_0)" )
+  ctx += ( "Q[0]", hof" PRIME(${p(0)})")
+  ctx += ("R[0]", hof" ∀y (P[0] y -> PRIME y)")
 
   for ( i <- 1 to k ) {
     ctx += ( s"P[$i]", le"union(${P( i - 1 )}, set_1 (${p( i )}:i))" )
     ctx += ( s"S[$i]", le"union(${S( i - 1 )}, ν(0, ${p( i )}))" )
+    ctx += (s"Q[$i]", hof" ${Q(i-1)} ∧ PRIME(${p(i)})")
+    ctx += (s"R[$i]", hof" ∀y (${P(i)} y -> PRIME y)")
   }
 
   ctx += ( s"F[$k]", hof" ∀l (PRIME(l) <-> ${P( k )}(l))" )
@@ -400,6 +404,8 @@ case class prime( k: Int ) extends TacticsProof {
   def F( k: Int ) = Const( s"F[$k]", To )
   def S( k: Int ) = Const( s"S[$k]", Ti -> To )
   def P( k: Int ) = Const( s"P[$k]", Ti -> To )
+  def Q(k: Int ) = Const(s"Q[$k]", To)
+  def R(k: Int) = Const(s"R[$k]", To)
 }
 
 object PrimeProof {
