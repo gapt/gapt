@@ -298,7 +298,8 @@ case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[
 }
 
 /**
- * Applies an equation in the antecedent of a goal.
+ * Applies an equation in a goal.
+ *
  * @param equalityLabel The label of the equality.
  * @param formulaLabel The label of the formula the equality is to be used on.
  * @param leftToRight If `Some(true)`, the equation `s = t` will be used to rewrite `s` to `t`, and the other way around
@@ -306,14 +307,14 @@ case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[
  * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
  *                      it will replace as many occurrences as possible according to `leftToRight`.
  */
-case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
+case class EqualityTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.s
 
     val indices = for (
       ( ( `equalityLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;
-      ( ( `formulaLabel`, _ ), formulaIndex ) <- goalSequent.zipWithIndex.antecedent
+      ( ( `formulaLabel`, _ ), formulaIndex ) <- goalSequent.zipWithIndex.elements
     ) yield ( eqIndex, formulaIndex )
 
     indices.headOption match {
@@ -382,11 +383,11 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
               case Some( false ) =>
                 f( auxFormula.find( t ), auxFormula, s )
               case None =>
-                auxFormula.find( t ) match {
-                  case l if l.length > 0 =>
-                    f( l, auxFormula, s )
-                  case _ =>
-                    f( auxFormula.find( s ), auxFormula, t )
+                ( auxFormula.find( s ), auxFormula.find( t ) ) match {
+                  case ( Nil, ps ) if ps.nonEmpty =>
+                    f( ps, auxFormula, s )
+                  case ( ps, Nil ) if ps.nonEmpty =>
+                    f( ps, auxFormula, t )
                 }
             }
 
@@ -397,135 +398,20 @@ case class EqualityLeftTactic( equalityLabel: String, formulaLabel: String, left
 
         replacement match {
           case Some( x ) if x != auxFormula =>
-            val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> x ) )
+            val newGoal = goalSequent.updated( formulaIndex, formulaLabel -> x )
             val premise = OpenAssumption( newGoal )
 
-            ( (), EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula ) ).success
+            ( (), if ( formulaIndex.isAnt ) EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula ) else EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) ).success
           case _ => TacticalFailure( this, Some( goal ), "FIXME" ).failureNel
         }
     }
   }
 
-  def fromLeftToRight = new EqualityLeftTactic( equalityLabel, formulaLabel, leftToRight = Some( true ) )
+  def fromLeftToRight = new EqualityTactic( equalityLabel, formulaLabel, leftToRight = Some( true ) )
 
-  def fromRightToLeft = new EqualityLeftTactic( equalityLabel, formulaLabel, leftToRight = Some( false ) )
+  def fromRightToLeft = new EqualityTactic( equalityLabel, formulaLabel, leftToRight = Some( false ) )
 
-  def to( targetFormula: HOLFormula ) = new EqualityLeftTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
-}
-
-/**
- * Applies an equation in the succedent of a goal.
- * @param equalityLabel The label of the equality.
- * @param formulaLabel The label of the formula the equality is to be used on.
- * @param leftToRight If `Some(true)`, the equation `s = t` will be used to rewrite `s` to `t`, and the other way around
- *                    for Some(false). If `None`, the tactic will attempt to decide the direction automatically.
- * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
- *                      it will replace as many occurrences as possible according to `leftToRight`.
- */
-case class EqualityRightTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = for (
-      ( ( `equalityLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;
-      ( ( `formulaLabel`, _ ), formulaIndex ) <- goalSequent.zipWithIndex.succedent
-    ) yield ( eqIndex, formulaIndex )
-
-    indices.headOption match {
-      case None => TacticalFailure( this, Some( goal ), "label not found" ).failureNel
-      case Some( ( equalityIndex, formulaIndex ) ) =>
-        val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
-        val ( _, auxFormula ) = goalSequent( formulaIndex )
-
-        def f( l: List[HOLPosition], h: HOLFormula, r: LambdaExpression ): HOLFormula = l match {
-          case x :: xs => f( xs, h.replace( x, r ), r )
-          case Nil     => h
-        }
-
-        def testValidity( mainFormula: HOLFormula ): Boolean = {
-          if ( s == t && auxFormula == mainFormula ) {
-            val sAux = auxFormula.find( s )
-
-            if ( sAux.isEmpty )
-              false
-            else
-              true
-          } else if ( s == t && auxFormula != mainFormula )
-            false
-          else if ( s != t && auxFormula == mainFormula )
-            false
-          else {
-            val sAux = auxFormula.find( s )
-            val sMain = mainFormula.find( s )
-
-            val tAux = auxFormula.find( t )
-            val tMain = mainFormula.find( t )
-
-            if ( sAux.isEmpty && tAux.isEmpty )
-              false
-            else {
-              val tToS = sMain intersect tAux
-              val sToT = tMain intersect sAux
-
-              if ( tToS.isEmpty ) {
-                val mainNew = sToT.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, t ) }
-                if ( mainNew == mainFormula )
-                  true
-                else
-                  false
-              } else if ( sToT.isEmpty ) {
-                val mainNew = tToS.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, s ) }
-                if ( mainNew == mainFormula )
-                  true
-                else
-                  false
-              } else
-                false
-            }
-          }
-        }
-
-        val replacement = targetFormula match {
-          case Some( mainFormula ) =>
-            if ( testValidity( mainFormula ) )
-              targetFormula
-            else None
-          case None =>
-            val r = leftToRight match {
-              case Some( true ) =>
-                f( auxFormula.find( s ), auxFormula, t )
-              case Some( false ) =>
-                f( auxFormula.find( t ), auxFormula, s )
-              case None =>
-                auxFormula.find( t ) match {
-                  case l if l.length > 0 =>
-                    f( l, auxFormula, s )
-                  case _ =>
-                    f( auxFormula.find( s ), auxFormula, t )
-                }
-            }
-
-            Option( r )
-
-          case _ => None
-        }
-
-        replacement match {
-          case Some( x ) if x != auxFormula =>
-            val newGoal = goalSequent delete ( formulaIndex ) insertAt ( formulaIndex, ( formulaLabel -> x ) )
-            val premise = OpenAssumption( newGoal )
-            ( (), EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) ).success
-          case _ => TacticalFailure( this, Some( goal ), "FIXME" ).failureNel
-        }
-    }
-  }
-
-  def fromLeftToRight = new EqualityRightTactic( equalityLabel, formulaLabel, leftToRight = Some( true ) )
-
-  def fromRightToLeft = new EqualityRightTactic( equalityLabel, formulaLabel, leftToRight = Some( false ) )
-
-  def to( targetFormula: HOLFormula ) = new EqualityRightTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
+  def to( targetFormula: HOLFormula ) = new EqualityTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
 
 /**

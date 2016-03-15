@@ -176,9 +176,9 @@ case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targe
 
             val ( cutIndex, rightPremise ) = sequentIndex match {
               case Ant( _ ) =>
-                ( Ant( 1 ), eqL( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
+                ( Ant( 1 ), eql( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
               case Suc( _ ) =>
-                ( Ant( 0 ), eqR( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
+                ( Ant( 0 ), eql( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
             }
 
             rightPremise map { case ( _, p ) => () -> CutRule( leftPremise, Suc( 0 ), p, cutIndex ) }

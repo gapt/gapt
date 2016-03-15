@@ -112,7 +112,7 @@ case class prime( k: Int ) extends TacticsProof {
       forget( "Ant0", "Ant1", "Suc_1" )
       axiomTh
 
-      eqR( "CF", "Suc_1" )
+      eql( "CF", "Suc_1" )
       forget( "CF" )
       repeat( unfold( "subset", "intersection" ) in "Suc_1" )
       decompose
@@ -153,7 +153,7 @@ case class prime( k: Int ) extends TacticsProof {
 
       insert( deMorgan1 )
 
-      eqR( "CF", "Suc" )
+      eql( "CF", "Suc" )
       forget( "CF" )
       insert( intersectionOpen )
     }
@@ -176,7 +176,7 @@ case class prime( k: Int ) extends TacticsProof {
       unfold( "ν" ) in ( "CF_0_1", "CF_1" )
       exL( "CF_0_1" )
       exL( "CF_1" )
-      eqL( "CF_0_1", "CF_1" )
+      eql( "CF_0_1", "CF_1" )
       forget( "CF_0_1" )
       cut( "tri", fof"i < k ∨ k < i" )
 
@@ -206,11 +206,11 @@ case class prime( k: Int ) extends TacticsProof {
 
       unfold( "compN" ) in "CF_0"
       decompose
-      eqL( "CF_1", "REM_1" )
+      eql( "CF_1", "REM_1" )
       trivial; trivial
 
       forget( "REM", "EXT" )
-      eqR( "CF", "Suc" )
+      eql( "CF", "Suc" )
       forget( "CF" )
       unfold( "O" ) in "Suc"
       decompose
@@ -221,7 +221,7 @@ case class prime( k: Int ) extends TacticsProof {
       forget( "0<l" )
       exL
       exR( fov"m_0" ).forget
-      eqR( "PRE", "Suc_1" )
+      eql( "PRE", "Suc_1" )
       forget( "PRE" )
       unfold( "subset" ) in "Suc_1"
       unfold( "U" ) in "Suc_0"
@@ -237,7 +237,7 @@ case class prime( k: Int ) extends TacticsProof {
       exL( "Suc_0_1" )
       exL( "Suc_1_0" )
       exR( fot"n_0 + n_1" ).forget
-      eqL( "Suc_0_1", "Suc_1_0" )
+      eql( "Suc_0_1", "Suc_1_0" )
       forget( "Suc_0_1" )
       paramod( "Suc_1_0", hoa" (i + n_0 * l) + n_1 *l  = i + (n_0 *l + n_1 * l) ", hof" n = i + (n_0 *l + n_1 * l)" )
       forget( "Suc_1_0_cut_0" )
@@ -270,7 +270,7 @@ case class prime( k: Int ) extends TacticsProof {
       //Right subproof of the cut:
       forget( "EXT" )
 
-      eqL( "CF", "C" ).fromLeftToRight
+      eql( "CF", "C" ).fromLeftToRight
       forget( "CF" )
       repeat( unfold( "O", "ν", "subset" ) in ( "O", "C" ) )
       trivial
@@ -444,7 +444,7 @@ case class prime( k: Int ) extends TacticsProof {
 
       trivial
 
-      eqL( "CF3", "CF2_1" )
+      eql( "CF3", "CF2_1" )
       forget( "CF3", "CF2_0", "CF" )
       axiomTh
 
@@ -497,7 +497,7 @@ case class prime( k: Int ) extends TacticsProof {
         Lemma( endSequent ) {
           repeat( unfold( s"P[0]", "set_1" ) in "Ant0" )
           unfold( s"S[0]" ) in "Suc"
-          eqR( "Ant0", "Suc" )
+          eql( "Ant0", "Suc" )
           trivial
         }
 
@@ -510,7 +510,7 @@ case class prime( k: Int ) extends TacticsProof {
           insert( lambda( n - 1 ) )
 
           unfold( "set_1" ) in "Ant0"
-          eqR( "Ant0", "Suc_1" )
+          eql( "Ant0", "Suc_1" )
           trivial
         }
     }
@@ -634,7 +634,7 @@ case class prime( k: Int ) extends TacticsProof {
       forget( "CF", "Suc" )
       axiomTh
 
-      eqL( "CF2", "CF" )
+      eql( "CF2", "CF" )
       forget( "CF2" )
       axiomTh
 
@@ -698,7 +698,7 @@ case class prime( k: Int ) extends TacticsProof {
       cut( "CF", hof" ${S( k )} = compN(set_1 1)" )
       insert( psi1 )
 
-      eqR( "CF", "C compN{1}" )
+      eql( "CF", "C compN{1}" )
       forget( "CF" )
       insert( psi2 )
       insert( openClosedProof )

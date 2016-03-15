@@ -603,10 +603,10 @@ axiomEx: at.logic.gapt.proofs.lk.LKProof =
 
 \end{clilisting}
 
-The tactics \cli{eqL} and \cli{eqR} cover the left and right equality rules. The tactics take as first argument the label of an equality to use from the antecedent. The second argument is the label of the formula to apply the rule to. Furthermore, it can be specified if the equality should be used from left to right or vice versa. Also, a target formula can be specified, if not all occurrences need to be replaced (in either direction). If neither direction nor a target formula is specified, the equality will be applied left to right. It that is not applicable, it will try to apply the equality from right to left.
+The tactic \cli{eql} covers the left and right equality rules. The tactic takes as first argument the label of an equality to use from the antecedent. The second argument is the label of the formula to apply the rule to. Furthermore, it can be specified if the equality should be used from left to right or vice versa. Also, a target formula can be specified, if not all occurrences need to be replaced (in either direction). If neither direction nor a target formula is specified, the tactic will only work if the direction is unambiguous.
 
 \begin{clilisting}
-gapt> val eqEx = Lemma( Sequent( Seq( "c" -> fof"P(y) & Q(y)", "eq1" -> fof"u = v", "eq2" -> fof"y = x", "a" -> fof"P(u) -> Q(u)" ), Seq( "b" -> fof"P(x) & Q(x)" ) ) ) {       eqL( "eq1", "a" ).to( fof"P(v) -> Q(v)" ); eqL( "eq1", "a" ).to( fof"P(v) -> Q(u)" ); eqR( "eq2", "b" ).fromRightToLeft; trivial }
+gapt> val eqEx = Lemma( Sequent( Seq( "c" -> fof"P(y) & Q(y)", "eq1" -> fof"u = v", "eq2" -> fof"y = x", "a" -> fof"P(u) -> Q(u)" ), Seq( "b" -> fof"P(x) & Q(x)" ) ) ) {       eql( "eq1", "a" ).to( fof"P(v) -> Q(v)" ); eql( "eq1", "a" ).to( fof"P(v) -> Q(u)" ); eql( "eq2", "b" ).fromRightToLeft; trivial }
 eqEx: at.logic.gapt.proofs.lk.LKProof =
 [p5] u = v, P(u) ⊃ Q(u), y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (WeakeningLeftRule(p4, u = v))
 [p4] P(u) ⊃ Q(u), y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (WeakeningLeftRule(p3, P(u) ⊃ Q(u)))

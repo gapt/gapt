@@ -8,9 +8,9 @@ object lkTests {
   val eqLemma = Lemma(
     Sequent( Seq( "c" -> parseFormula( "P(y) & Q(y)" ), "eq1" -> parseFormula( "u = v" ), "eq2" -> parseFormula( "y = x" ), "a" -> parseFormula( "P(u) -> Q(u)" ) ), Seq( "b" -> parseFormula( "P(x) & Q(x)" ) ) )
   ) {
-      eqL( "eq1", "a" ).to( parseFormula( "P(v) -> Q(v)" ) )
-      eqL( "eq1", "a" ).to( parseFormula( "P(v) -> Q(u)" ) )
-      eqR( "eq2", "b" ).fromRightToLeft
+      eql( "eq1", "a" ).to( parseFormula( "P(v) -> Q(v)" ) )
+      eql( "eq1", "a" ).to( parseFormula( "P(v) -> Q(u)" ) )
+      eql( "eq2", "b" ).fromRightToLeft
       trivial
     }
 
