@@ -85,9 +85,63 @@ case class prime( k: Int ) extends TacticsProof {
     }
 
   val intersectionOpen: LKProof = Lemma(
-    ( "Ant0" -> hof" O(X)" ) +: ( "Ant1" -> hof" O(Y)" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof" O(intersection X Y)" )
+    ( "Ant0" -> hof" O(X)" ) +: ( "Ant1" -> hof" O(Y)" ) +: Sequent() :+ ( "Suc" -> hof" O(intersection X Y)" )
   ) {
+      unfold( "O" ) in ( "Ant0", "Ant1", "Suc" )
+      allR
+      impR
+      allL( "Ant0", fov"m" ).forget
+      unfold( "intersection" ) in "Suc_0"
+      andL
+      impL
 
+      trivial
+
+      exL( fov"l_0" )
+      allL( "Ant1", fov"m" ).forget
+      impL
+
+      trivial
+
+      forget( "Suc_0_0", "Suc_0_1" )
+      exL( fov"l_1" )
+      exR( fot" (l_0 + 1) * l_1 + l_0" ).forget
+      cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" )
+
+      forget( "Ant0", "Ant1", "Suc_1" )
+      axiomTh
+
+      eqR( "CF", "Suc_1" )
+      forget( "CF" )
+      repeat( unfold( "subset", "intersection" ) in "Suc_1" )
+      decompose
+      andR
+
+      forget( "Ant1" )
+      unfold( "subset" ) in ( "Ant0" )
+      allL( "Ant0", fov"n" ).forget
+      impL
+
+      forget( "Suc_1_1" )
+      unfold( "ν" ) in ( "Suc_1_0", "Ant0" )
+      exL
+      exR( fot"n_0 * (l_1 + 1)" ).forget
+      axiomTh
+
+      trivial
+
+      forget( "Ant0" )
+      unfold( "subset" ) in ( "Ant1" )
+      allL( "Ant1", fov"n" ).forget
+      impL
+
+      forget( "Suc_1_1" )
+      unfold( "ν" ) in ( "Suc_1_0", "Ant1" )
+      exL
+      exR( fot"n_0 * (l_0 + 1)" ).forget
+      axiomTh
+
+      trivial
     }
 
   val unionClosed = Lemma(
@@ -100,7 +154,7 @@ case class prime( k: Int ) extends TacticsProof {
 
       eqR( "CF", "Suc" )
       forget( "CF" )
-      //insert(intersectionOpen)
+      insert( intersectionOpen )
     }
 
   // Proof that complement(complement(X)) = X (under extensionality).
@@ -529,8 +583,8 @@ case class prime( k: Int ) extends TacticsProof {
           //insert(progClosed)
 
           cut( "CF2", hof" C(${S( n - 1 )}" )
-          //insert(psi2Right(n-1))
-          //insert(varphiCUnion)
+          insert( psi2Right( n - 1 ) )
+          insert( unionClosed )
 
         }
     }
@@ -575,7 +629,7 @@ case class prime( k: Int ) extends TacticsProof {
 object PrimeProof {
   def main( args: Array[String] ): Unit = {
     val k = args( 0 ).toInt
-    prime( k ).unionClosed
+    prime( k ).intersectionOpen
     ()
   }
 
