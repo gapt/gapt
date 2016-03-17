@@ -221,7 +221,7 @@ case class prime( k: Int ) extends TacticsProof {
       forget( "0<l" )
       exL
       exR( fov"m_0" ).forget
-      eql( "PRE", "Suc_1" )
+      rewrite rtl "PRE" in "Suc_1"
       forget( "PRE" )
       unfold( "subset" ) in "Suc_1"
       unfold( "U" ) in "Suc_0"
