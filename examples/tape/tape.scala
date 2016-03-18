@@ -1,9 +1,8 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, FOTheory, FiniteContext, Sequent }
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.TheoryAxiom
 
 object tape extends TacticsProof {
   implicit var ctx = FiniteContext()
@@ -14,9 +13,12 @@ object tape extends TacticsProof {
   ctx += hof"A = (∀x (f(x) = 0 ∨ f(x) = 1))"
   ctx += hof"I(v) = (∀x ∃y f(x+y) = v)"
 
-  val ax1 = TheoryAxiom( hoa"f(0+x) = f(x+1+y)" +: Sequent() :+ hoa"f(x) = f(x+y+1)" )
-  val ax2 = TheoryAxiom( hoa"f(x+y) = 1" +: Sequent() :+ hoa"f(y+x)=1" )
-  val ax3 = TheoryAxiom( hoa"x = x+y+1" +: Sequent() )
+  ctx += FOTheory(
+    hof"∀x∀y x+y = y+x",
+    hof"∀x∀y∀z (x+y)+z = x+(y+z)",
+    hof"∀x 0+x = x",
+    hof"∀x∀y x+y+1 != x"
+  )
 
   val lhs = Lemma( ( "A" -> fof"A" ) +: Sequent()
     :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {
@@ -32,7 +34,7 @@ object tape extends TacticsProof {
     forget( "A" )
     destruct( "A_0" )
     trivial
-    insert( ax2 )
+    theory
   }
 
   val rhs = Lemma( ( "Iv" -> fof"I(v)" ) +: Sequent()
@@ -47,9 +49,9 @@ object tape extends TacticsProof {
     forget( "C" )
     destruct( "C_0" )
     negR
-    insert( ax3 )
+    theory
     rewrite rtl "Iv_1" in "Iv_0"
-    insert( ax1 )
+    theory
   }
 
   val p = Lemma( ( "A" -> fof"A" ) +: Sequent()

@@ -63,7 +63,7 @@ class SolveTest extends Specification with SequentMatchers {
           Sequent()
           :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
       )
-      val \/-( lk ) = ExpansionProofWithEqualityToLK( expansion )
+      val \/-( lk ) = ExpansionProofToLK( expansion )
       lk.conclusion must beMultiSetEqual( expansion.shallow )
     }
 
@@ -90,7 +90,7 @@ class SolveTest extends Specification with SequentMatchers {
 
     "read back higher order prime divisor proof" in {
       val p = DefinitionElimination( primediv.defs )( primediv.proof )
-      ExpansionProofWithEqualityToLK( LKToExpansionProof( p ) ) must beLike {
+      ExpansionProofToLK.withTheory( primediv.ctx )( LKToExpansionProof( p ) ) must beLike {
         case \/-( p_ ) => p_.conclusion must beMultiSetEqual( p.conclusion )
       }
     }

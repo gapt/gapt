@@ -4,11 +4,14 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
+import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
+import at.logic.gapt.provers.escargot.Escargot
 
 trait Context extends BabelSignature {
   def constant( name: String ): Option[Const]
   def typeDef( name: String ): Option[TypeDef]
   def definition( name: String ): Option[LambdaExpression]
+  def theory( clause: HOLClause ): Option[LKProof]
 
   override def apply( s: String ): babel.VarConst =
     constant( s ) match {
@@ -17,10 +20,24 @@ trait Context extends BabelSignature {
     }
 }
 
+trait BackgroundTheory {
+  def solve( atomicSeq: HOLClause ): Option[LKProof]
+}
+
+case class FOTheory( axioms: HOLFormula* ) extends BackgroundTheory {
+  require( freeVariables( axioms ).isEmpty )
+
+  def solve( atomicSeq: HOLClause ): Option[LKProof] =
+    Escargot getLKProof ( axioms ++: atomicSeq, addWeakenings = false ) map { p =>
+      TheoryAxiom( p.conclusion intersect atomicSeq map { _.asInstanceOf[HOLAtom] } )
+    }
+}
+
 case class FiniteContext(
-    constants:   Set[Const]                   = Set(),
-    definitions: Map[Const, LambdaExpression] = Map(),
-    typeDefs:    Set[Context.TypeDef]         = Set( Context.oTypeDef )
+    constants:        Set[Const]                   = Set(),
+    definitions:      Map[Const, LambdaExpression] = Map(),
+    typeDefs:         Set[Context.TypeDef]         = Set( Context.oTypeDef ),
+    backgroundTheory: BackgroundTheory             = FOTheory()
 ) extends Context {
   val constantsMap = constants.map { c => c.name -> c }.toMap
   val typeDefsMap = typeDefs.map { td => td.ty.name -> td }.toMap
@@ -30,6 +47,8 @@ case class FiniteContext(
   def constant( name: String ) = constantsMap get name
   def definition( name: String ) = definitionMap get name
   def typeDef( name: String ) = typeDefsMap get name
+
+  def theory( atomicSeq: HOLClause ): Option[LKProof] = backgroundTheory.solve( atomicSeq )
 
   def +( const: Const ): FiniteContext = {
     require(
@@ -91,6 +110,9 @@ case class FiniteContext(
     case Eq( Apps( Var( definedConstName, _ ), arguments ), definition ) =>
       this + ( definedConstName -> Abs( arguments map { _.asInstanceOf[Var] }, definition ) )
   }
+
+  def +( newTheory: BackgroundTheory ): FiniteContext =
+    copy( backgroundTheory = newTheory )
 }
 
 object Context {

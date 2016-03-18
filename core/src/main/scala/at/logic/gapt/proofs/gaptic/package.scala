@@ -20,8 +20,6 @@ package object gaptic {
 
   def refl = ReflexivityAxiomTactic
 
-  def axiomTh = TheoryAxiomTactic
-
   def trivial = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
 
   def negL( applyToLabel: String ) = new NegLeftTactic( OnLabel( applyToLabel ) )
@@ -104,6 +102,14 @@ package object gaptic {
       _ <- insert( proof )
     } yield ()
 
+  def theory( implicit ctx: Context ): Tactical[Unit] =
+    for {
+      goal <- currentGoal
+      theoryAxiom <- ctx.theory( goal.conclusion collect { case a: HOLAtom => a } ).
+        toTactical( "does not follow from theory" )
+      _ <- insert( theoryAxiom )
+    } yield ()
+
   def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
 
   @deprecated( "Proof not finished!", since = "the dawn of time" )
@@ -139,6 +145,7 @@ package object gaptic {
     acc andThen ( WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l ) )
   }
 
+  @deprecated( "Unsafe, use byTheory instead", "2016-03-18" )
   def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
@@ -157,5 +164,17 @@ package object gaptic {
 
     def bind[A, B]( fa: Tactical[A] )( f: A => Tactical[B] ): Tactical[B] =
       fa flatMap f
+  }
+
+  implicit class TacticalOptionOps[T]( option: Option[T] ) {
+    def toTactical( errorMsg: String ): Tactical[T] = new Tactical[T] {
+      override def apply( proofState: ProofState ) =
+        option match {
+          case None          => TacticalFailure( this, None, errorMsg ).failureNel
+          case Some( value ) => ( value -> proofState ).success
+        }
+
+      override def toString = s"$option.toTactical"
+    }
   }
 }

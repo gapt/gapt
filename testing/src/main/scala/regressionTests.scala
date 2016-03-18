@@ -59,7 +59,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       MiniSAT.isValid( deep ) !-- "minisat validity"
       solvePropositional( deep ).isRight !-- "solvePropositional"
     }
-    ExpansionProofWithEqualityToLK( E ).isRight !-- "expansionProofToLKProof"
+    ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
     VeriT.isValid( deep ) !-- "verit validity"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
@@ -86,7 +86,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
           eliminateCutsET( expQ ) --? "expansion tree cut-elimination (cut-intro)" foreach { expQstar =>
             VeriT.isValid( expQstar.deep ) !-- "cut-elim expansion tree validity (cut-intro)"
           }
-          ExpansionProofWithEqualityToLK( expQ ).isRight !-- "ExpansionProofToLK (cut-intro)"
+          ExpansionProofToLK( expQ ).isRight !-- "ExpansionProofToLK (cut-intro)"
         }
 
         VeriT.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"

@@ -4,9 +4,11 @@ import at.logic.gapt.examples.TacticsProof
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
+import at.logic.gapt.proofs.{ Ant, BackgroundTheory, Context, FOTheory, FiniteContext, HOLClause, Sequent, Suc }
 import at.logic.gapt.prooftool.prooftool
+import at.logic.gapt.provers.groundFreeVariables
+import at.logic.gapt.provers.smtlib.{ SmtlibSession, Z3, Z3Session }
 
 /**
  * Created by sebastian on 2/25/16.
@@ -23,7 +25,42 @@ case class prime( k: Int ) extends TacticsProof {
   ctx += Const( "+", Ti -> ( Ti -> Ti ) )
   ctx += Const( "*", Ti -> ( Ti -> Ti ) )
   ctx += Const( "<", Ti -> ( Ti -> To ) )
-  ctx += Const( "=", Ti -> ( Ti -> To ) )
+
+  object Arithmetic extends BackgroundTheory {
+    def nameMapping( sess: SmtlibSession ) = {
+      sess.typeRenaming.map( Ti ) = TBase( "Int" )
+      sess.termRenaming.map ++= Seq(
+        le"0" -> hoc"0: Int",
+        le"1" -> hoc"1: Int",
+        le"'+'" -> hoc"'+': Int>Int>Int",
+        le"'*'" -> hoc"'*': Int>Int>Int",
+        le"'<'" -> hoc"'<': Int>Int>Bool"
+      ).map { x => x._1.asInstanceOf[Const] -> x._2 }
+    }
+
+    override def solve( atomicSeq: HOLClause ): Option[LKProof] =
+      for ( sess <- new Z3Session ) yield {
+        sess.debug = true
+        val labels = atomicSeq.indicesSequent map { case Ant( i ) => s"a$i"; case Suc( i ) => s"s$i" }
+        sess.setLogic( "QF_UFNIA" )
+        sess.produceUnsatCores()
+        nameMapping( sess )
+        val groundSeq = groundFreeVariables( atomicSeq )._1
+        for ( c <- constants( groundSeq ) if c.name != "=" && !sess.termRenaming.map.contains( c ) )
+          sess declareFun c
+        for ( c <- constants( groundSeq ) if c.exptype == Ti ) sess assert hof"0 < $c ∨ 0 = $c"
+        for ( ( a, l ) <- groundSeq.map( identity, -_ ) zip labels ) sess assert ( a, l )
+        if ( sess.checkSat() ) {
+          println( s"\nWrong theory axiom: ${atomicSeq.map { _.toSigRelativeString }}\n" )
+          // FIXME: None
+          Some( TheoryAxiom( atomicSeq ) )
+        } else {
+          val unsatCore = sess.getUnsatCore().toSet
+          Some( TheoryAxiom( for ( ( a, l ) <- atomicSeq zip labels if unsatCore contains l ) yield a ) )
+        }
+      }
+  }
+  ctx += Arithmetic
 
   //Definitions
   ctx += "set_1" -> le" λk λl l = k"
@@ -110,7 +147,7 @@ case class prime( k: Int ) extends TacticsProof {
       cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" )
 
       forget( "Ant0", "Ant1", "Suc_1" )
-      axiomTh
+      theory
 
       eql( "CF", "Suc_1" )
       forget( "CF" )
@@ -127,7 +164,7 @@ case class prime( k: Int ) extends TacticsProof {
       unfold( "ν" ) in ( "Suc_1_0", "Ant0" )
       exL
       exR( fot"n_0 * (l_1 + 1)" ).forget
-      axiomTh
+      theory
 
       trivial
 
@@ -140,7 +177,7 @@ case class prime( k: Int ) extends TacticsProof {
       unfold( "ν" ) in ( "Suc_1_0", "Ant1" )
       exL
       exR( fot"n_0 * (l_0 + 1)" ).forget
-      axiomTh
+      theory
 
       trivial
     }
@@ -182,12 +219,12 @@ case class prime( k: Int ) extends TacticsProof {
 
       forget( "CF_0_0_0", "CF_1", "0<l" )
       orR
-      axiomTh
+      theory
 
       forget( "CF_0_0_1" )
       orL
 
-      axiomTh; axiomTh
+      theory; theory
 
       impR
       unfold( "REM" ) in "REM"
@@ -293,7 +330,7 @@ case class prime( k: Int ) extends TacticsProof {
       repeat( unfold( "INF", "set_1" ) in "infinite" )
       allL( "infinite", hoc"1: i" ).forget
       exL( "infinite" )
-      axiomTh
+      theory
     }
 
   // Proof of INF(S), S subset X :- INF(X).
@@ -334,7 +371,7 @@ case class prime( k: Int ) extends TacticsProof {
       exR( fot" n * (l + (1 + 1)) + l * (k+1)" ).forget
       unfold( "ν" ) in "CF"
       exR( fot"n +(k + 1)" ).forget
-      axiomTh
+      theory
 
       // Right subproof:
       insert( infiniteSubset )
@@ -446,7 +483,7 @@ case class prime( k: Int ) extends TacticsProof {
 
       eql( "CF3", "CF2_1" )
       forget( "CF3", "CF2_0", "CF" )
-      axiomTh
+      theory
 
       forget( "Suc_0", "Ant1" )
       unfold( "set_1" ) in "Suc_1"
@@ -632,11 +669,11 @@ case class prime( k: Int ) extends TacticsProof {
       cut( "CF2", fof" 0 + 1 = 1" )
 
       forget( "CF", "Suc" )
-      axiomTh
+      theory
 
       eql( "CF2", "CF" )
       forget( "CF2" )
-      axiomTh
+      theory
 
     }
 
@@ -714,3 +751,4 @@ case class prime( k: Int ) extends TacticsProof {
   def Q( k: Int ) = Const( s"Q[$k]", To )
   def R( k: Int ) = Const( s"R[$k]", To )
 }
+object prime3 extends prime( 3 )

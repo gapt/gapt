@@ -3,7 +3,7 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.expr.Top
 import at.logic.gapt.expr.hol.containsStrongQuantifier
-import at.logic.gapt.formats.xml.{ XMLParser }
+import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
@@ -16,10 +16,11 @@ import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.prime.prime
-
 import java.io.File.separator
-import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
+import java.io.{ FileInputStream, FileReader, IOException, InputStreamReader }
 import java.util.zip.GZIPInputStream
+
+import at.logic.gapt.provers.smtlib.Z3
 import org.specs2.mutable._
 
 //TODO: without elimination of schematic definitions (in the hlk sense), only the smallest instance works
@@ -112,6 +113,7 @@ class PrimeProofTest extends Specification {
     def prime1( n: Int, refute: Boolean ) = {
       skipped( "higher-order definition elimination fails & prover9 does not understand many-sorted logic" )
       checkForProverOrSkip
+      if ( !Z3.isInstalled ) skipped
 
       val primeN = prime( n )
       val proof = primeN.proof
