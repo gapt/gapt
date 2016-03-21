@@ -247,17 +247,23 @@ case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
 }
 
 private class PredicateReductionHelper( constants: Set[Const] ) {
+  private val nameGen = rename awayFrom constants
+
   val baseTypes = constants flatMap { case Const( _, FunctionType( ret, args ) ) => ret +: args }
-  val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( s"is_$ty", ty ) }.toMap
+  val predicateForType = baseTypes.map { ty => ty -> HOLAtomConst( nameGen fresh s"is_$ty", ty ) }.toMap
   val predicates = predicateForType.values.toSet
 
-  val predicateAxioms = existsclosure( constants.map {
+  val predicateAxioms = constants.map {
     case c @ Const( _, FunctionType( retType, argTypes ) ) =>
       val args = argTypes.zipWithIndex map { case ( t, i ) => Var( s"x$i", t ) }
       And( args map { a => predicateForType( a.exptype )( a ) } ) --> predicateForType( retType )( c( args: _* ) )
-  } ++: Sequent() )
+  }
 
-  val predicateAxiomClauses = CNFn.toFClauseList( predicateAxioms.toDisjunction ).toSet
+  val nonEmptyWitnesses = baseTypes.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
+  val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForType( w.exptype )( w ) }
+
+  val extraAxioms = existsclosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
+  val extraAxiomClauses = CNFn.toFClauseList( extraAxioms.toDisjunction ).toSet
 
   private def guard( formula: HOLFormula ): HOLFormula = formula match {
     case Top() | Bottom() | HOLAtom( _, _ ) => formula
@@ -270,11 +276,13 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   }
 
   private def guardAndAddAxioms( sequent: HOLSequent ): HOLSequent =
-    predicateAxioms ++ sequent.map( guard )
+    extraAxioms ++ sequent.map( guard )
 
   def forward( sequent: HOLSequent ): HOLSequent =
     guardAndAddAxioms( sequent )
 
+  def forward( cnf: Set[HOLClause] ): Set[HOLClause] =
+    extraAxiomClauses union cnf.map( forward )
   def forward( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
     CNFp.toClauseList( guard( univclosure( clause.toImplication ) ) ).head
 
@@ -317,7 +325,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
     ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
-      case ( et, i ) if !predicateAxioms.contains( et.shallow, i.isSuc ) =>
+      case ( et, i ) if !extraAxioms.contains( et.shallow, i.isSuc ) =>
         unguard( et )
     } )
 }
@@ -325,7 +333,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
 case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
     val helper = new PredicateReductionHelper( problem flatMap { constants( _ ) } )
-    ( problem map helper.forward, helper.back( _ ) )
+    ( helper forward problem, helper.back )
   }
 }
 

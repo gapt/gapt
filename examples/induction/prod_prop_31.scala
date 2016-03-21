@@ -49,10 +49,10 @@ object prod_prop_31 extends Script {
   val instanceProofs = instances map { inst =>
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     if ( true ) {
-      if ( false ) {
+      if ( true ) {
         val reduction = CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
-        val ( erasedInstanceSequent, back ) = reduction forward instanceSequent
-        val Some( erasedProof ) = SPASS getRobinsonProof erasedInstanceSequent
+        val ( erasedCNF, back ) = reduction forward instanceSequent
+        val Some( erasedProof ) = SPASS getRobinsonProof erasedCNF
         val reifiedExpansion = back( erasedProof )
         inst -> reifiedExpansion
       } else {
