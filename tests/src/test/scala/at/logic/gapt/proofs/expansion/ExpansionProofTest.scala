@@ -1,10 +1,10 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.cutintro.CutIntroduction
-import at.logic.gapt.examples.{ Pi2Pigeonhole, LinearExampleProof }
+import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llkNew.LLKProofParser
-import at.logic.gapt.proofs.{ Context, FiniteContext, SequentMatchers, Sequent }
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, SequentMatchers, expansion }
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
 import at.logic.gapt.proofs.lkOld.base.beSyntacticMultisetEqual
 import at.logic.gapt.provers.escargot.Escargot
@@ -64,6 +64,21 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     if ( !VeriT.isInstalled ) skipped
     VeriT isValid expansion.deep must_== true
     VeriT isValid cutfree.deep must_== true
+  }
+
+  "weird cuts" in {
+    val epwc = ExpansionProofWithCut(
+      Seq( ETImp(
+        ETStrongQuantifier( hof"∀x P x", hov"x", ETAtom( hoa"P x", true ) ),
+        ETWeakQuantifier( hof"∀x P x", Map( le"f x" -> ETAtom( hoa"P (f x)", false ) ) )
+      ) ),
+      ETWeakQuantifier( hof"∀x P x", Map( le"x" -> ETAtom( hoa"P x", false ) ) ) +:
+        Sequent()
+        :+ ETWeakQuantifier( hof"∃x P (f x)", Map( le"x" -> ETAtom( hoa"P (f x)", true ) ) )
+    )
+    epwc.deep must beValidSequent
+    val ep = eliminateCutsET( epwc )
+    ep.deep must beValidSequent
   }
 
 }

@@ -112,8 +112,8 @@ object lattice {
     andL( "L1_2" )
     impL( "L1_2_1" )
     paramod( "L1_2_1", r( ax5, x -> x_0, y -> y_0, z -> z_0 ), Eq( cup( x_0, cup( y_0, z_0 ) ), z_0 ) )
-    eqR( "L1_1_0", "L1_2_1" ).fromLeftToRight
-    eqR( "L1_0_0", "L1_2_1" ).fromLeftToRight
+    eql( "L1_1_0", "L1_2_1" ).fromLeftToRight
+    eql( "L1_0_0", "L1_2_1" ).fromLeftToRight
     axiomRefl
     prop
   }
@@ -153,8 +153,8 @@ object lattice {
     impR
     andL
     paramod( "a_1", r( ax2, x -> z_0, y -> x_0, z -> y_0 ), Eq( cap( cap( z_0, x_0 ), y_0 ), z_0 ) )
-    eqR( "a_0_0", "a_1" ).fromLeftToRight
-    eqR( "a_0_1", "a_1" ).fromLeftToRight
+    eql( "a_0_0", "a_1" ).fromLeftToRight
+    eql( "a_0_1", "a_1" ).fromLeftToRight
     axiomRefl
   }
 
@@ -190,8 +190,8 @@ object lattice {
     defL( "T_0_0", leqUnfold( x_0, y_0 ) )
     defL( "T_0_1", leqUnfold( y_0, z_0 ) )
     defR( "T_1", leqUnfold( x_0, z_0 ) )
-    eqR( "T_0_0", "T_1" ).fromRightToLeft
-    eqR( "T_0_1", "T_1" ).to( Eq( cap( cap( x_0, y_0 ), z_0 ), cap( x_0, cap( y_0, z_0 ) ) ) )
+    eql( "T_0_0", "T_1" ).fromRightToLeft
+    eql( "T_0_1", "T_1" ).to( Eq( cap( cap( x_0, y_0 ), z_0 ), cap( x_0, cap( y_0, z_0 ) ) ) )
     paramod( "T_1", r( ax2, x -> x_0, y -> y_0, z -> z_0 ), Eq( cap( cap( x_0, y_0 ), z_0 ), cap( cap( x_0, y_0 ), z_0 ) ) )
     axiomRefl
   }
@@ -207,7 +207,7 @@ object lattice {
     defL( "a_0_0", leqUnfold( x_0, y_0 ) )
     defL( "a_0_1", leqUnfold( y_0, x_0 ) )
     paramod( "a_0_1", r( ax1, x -> x_0, y -> y_0 ), Eq( cap( x_0, y_0 ), y_0 ) )
-    eqR( "a_0_0", "a_1" ).to( Eq( cap( x_0, y_0 ), y_0 ) )
+    eql( "a_0_0", "a_1" ).to( Eq( cap( x_0, y_0 ), y_0 ) )
     axiomLog
     insert( p_2 )
   }

@@ -82,9 +82,7 @@ package object gaptic {
 
   def cut( c: String, h: HOLFormula ) = CutTactic( c, h )
 
-  def eqL( eq: String, fm: String ) = EqualityLeftTactic( eq, fm )
-
-  def eqR( eq: String, fm: String ) = EqualityRightTactic( eq, fm )
+  def eql( eq: String, fm: String ) = EqualityTactic( eq, fm )
 
   def defL( l: String, r: HOLFormula ) = DefinitionLeftTactic( l, r )
 

@@ -15,6 +15,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.proofs.ceres._
+import at.logic.gapt.examples.prime.prime
 
 import java.io.File.separator
 import java.io.{ IOException, FileReader, FileInputStream, InputStreamReader }
@@ -109,17 +110,16 @@ class PrimeProofTest extends Specification {
     //    }
 
     def prime1( n: Int, refute: Boolean ) = {
-      skipped( "Does not work right now - without definition elimination the end-sequent looks skolemized but it isn't." )
+      skipped( "higher-order definition elimination fails & prover9 does not understand many-sorted logic" )
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "prime1-" + n + ".xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
+      val primeN = prime( n )
+      val proof = primeN.proof
 
-      if ( false ) { // run this code as soon as issue 260 is fixed:
+      if ( false ) {
         if ( VeriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
-          val definitionFreeProof = DefinitionElimination( proofdb.Definitions )( proof ) // can't extract ETs in the presence of definitions currently
+          val definitionFreeProof = DefinitionElimination( primeN.ctx.definitions )( proof ) // can't extract ETs in the presence of definitions currently
           val etSeq = LKToExpansionProof( definitionFreeProof )
           val fSequent = etSeq.deep
           VeriT.isValid( fSequent ) must beTrue
@@ -146,13 +146,7 @@ class PrimeProofTest extends Specification {
         }
       }
 
-      //      saveXML(
-      //        Tuple2( "prime1-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
-      //          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
-      //        //projs.map( p => p._1 ).toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", p._1 ) ),
-      //        ( "cs", cs.toList ) :: Nil, path
-      //      )
-      ( new java.io.File( path ) ).exists() must beEqualTo( true )
+      ok
     }
 
     def euclid( n: Int ) = {
