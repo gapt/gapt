@@ -9,30 +9,6 @@ import org.specs2.specification.core.Fragments
 
 class GrammarFindingTest extends Specification with SatMatchers {
 
-  "antiUnifier" should {
-    "compute au of first-order terms" in {
-      val c = FOLConst( "c" )
-      val d = FOLConst( "d" )
-      val au = antiUnifier( FOLFunction( "f", c, c ), FOLFunction( "f", d, d ) )._1
-      val x = FOLVar( "x" )
-      Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, FOLFunction( "f", x, x ) )
-    }
-    "compute au of many-sorted terms" in {
-      val data = TBase( "Data" )
-      val tree = TBase( "Tree" )
-      val node = Const( "Node", data -> ( tree -> ( tree -> tree ) ) )
-
-      val a = Const( "a", data )
-      val t = Const( "t", tree )
-      val s = Const( "s", tree )
-
-      val au = antiUnifier( node( a, t, t ), node( a, s, s ) )._1
-
-      val x = Var( "x", tree )
-      Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, node( a, x, x ) )
-    }
-  }
-
   "VectTratGrammar" should {
     "not accept cyclic grammars" in {
       vtg( Seq( "x" ), Seq( "x->x" ) ) must throwA[IllegalArgumentException]

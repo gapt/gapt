@@ -1,6 +1,6 @@
 package at.logic.gapt.grammars
 
-import at.logic.gapt.expr.{ freeVariables, Apps, Var, LambdaExpression }
+import at.logic.gapt.expr.{ Apps, Const, LambdaExpression, Var, freeVariables }
 
 import scala.collection.mutable
 
@@ -18,7 +18,7 @@ object antiUnifier {
     def au( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b
-      if ( fa == fb ) {
+      if ( fa.isInstanceOf[Const] && fa == fb ) {
         fa( ( as, bs ).zipped map au: _* )
       } else {
         vars.getOrElseUpdate( a -> b, {
@@ -45,7 +45,7 @@ object antiUnifier1 {
     def au( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b
-      if ( fa == fb ) {
+      if ( fa.isInstanceOf[Const] && fa == fb ) {
         val ( as_, s_ ) = ( as, bs ).zipped.map( au ).unzip
         if ( s_.flatten.distinct.size <= 1 ) {
           ( fa( as_ : _* ), s_.flatten.headOption )
