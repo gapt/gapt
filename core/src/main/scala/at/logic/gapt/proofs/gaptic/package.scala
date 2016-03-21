@@ -145,9 +145,6 @@ package object gaptic {
     acc andThen ( WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l ) )
   }
 
-  @deprecated( "Unsafe, use byTheory instead", "2016-03-18" )
-  def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
-
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
   def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
