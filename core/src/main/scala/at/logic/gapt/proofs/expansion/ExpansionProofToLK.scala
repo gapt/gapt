@@ -7,10 +7,14 @@ import at.logic.gapt.provers.escargot.Escargot
 import scalaz._
 import Scalaz._
 
-object ExpansionProofToLK extends ExpansionProofToLK( withEquality = false )
-object ExpansionProofWithEqualityToLK extends ExpansionProofToLK( withEquality = true )
+object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getLKProof( _, addWeakenings = false ) ) {
+  def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( ctx.theory _ )
+}
+object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 
-class ExpansionProofToLK( withEquality: Boolean ) extends SolveUtils {
+class ExpansionProofToLK(
+    theorySolver: HOLClause => Option[LKProof]
+) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
   def apply( expansionProof: ExpansionProof ): UnprovableOrLKProof =
@@ -32,7 +36,7 @@ class ExpansionProofToLK( withEquality: Boolean ) extends SolveUtils {
       orElse( tryUnary( cuts, expSeq ) ).
       orElse( tryCut( cuts, expSeq ) ).
       orElse( tryBinary( cuts, expSeq ) ).
-      orElse( tryEquality( cuts, expSeq ) ).
+      orElse( tryTheory( cuts, expSeq ) ).
       getOrElse( ( cuts, expSeq ).left ).
       map {
         ContractionMacroRule( _ ).
@@ -47,9 +51,8 @@ class ExpansionProofToLK( withEquality: Boolean ) extends SolveUtils {
       None
   }
 
-  private def tryEquality( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
-    if ( !withEquality ) None else
-      Escargot.getLKProof( expSeq collect { case ETAtom( atom, _ ) => atom }, addWeakenings = false ).map { _.right }
+  private def tryTheory( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
+    theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ).map { _.right }
 
   private def tryDef( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
