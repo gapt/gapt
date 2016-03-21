@@ -16,8 +16,6 @@ import at.logic.gapt.provers.spass.SPASS
  * Created by sebastian on 2/25/16.
  */
 case class prime( k: Int ) extends TacticsProof {
-  implicit var ctx = FiniteContext()
-
   // Types
   ctx += Context.Sort( "i" )
 

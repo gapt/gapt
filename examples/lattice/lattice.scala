@@ -5,7 +5,6 @@ import at.logic.gapt.proofs.{ Context, FOTheory, FiniteContext, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object lattice extends TacticsProof {
-  implicit var ctx = FiniteContext()
   ctx += Context.Sort( "i" )
   ctx += hoc"cap: i>i>i"
   ctx += hoc"cup: i>i>i"

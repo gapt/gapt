@@ -5,7 +5,6 @@ import at.logic.gapt.proofs.{ Context, FOTheory, FiniteContext, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object tape extends TacticsProof {
-  implicit var ctx = FiniteContext()
   ctx += Context.Sort( "i" )
   ctx += hoc"f: i>i"
   ctx += hoc"'+': i>i>i"
