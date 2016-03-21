@@ -1,10 +1,12 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.{ CNFp, isPrenex, containsWeakQuantifier }
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
 
 trait Context extends BabelSignature {
@@ -24,13 +26,51 @@ trait BackgroundTheory {
   def solve( atomicSeq: HOLClause ): Option[LKProof]
 }
 
-case class FOTheory( axioms: HOLFormula* ) extends BackgroundTheory {
+case class SubsumptionTheory( axioms: HOLFormula* ) extends BackgroundTheory {
+  for ( formula <- axioms ) {
+    require( isPrenex( formula ), s"Formula $formula is not prenex." )
+    require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
+  }
+
+  val cnfMap = ( for ( formula <- axioms ) yield {
+    val All.Block( vars, matrix ) = formula
+    val cnf = CNFp.toClauseList( matrix )
+
+    formula -> ( vars, matrix, cnf )
+  } ).toMap
+
+  def solve( atomicSeq: HOLClause ): Option[LKProof] = {
+    val maybeProof = for ( formula <- axioms ) yield {
+      val ( vars, matrix, cnf ) = cnfMap( formula )
+      val subs = cnf map {
+        clauseSubsumption( _, atomicSeq )
+      }
+      val maybeSub = subs.zipWithIndex.find( _._1.nonEmpty ) map { case ( Some( s ), i ) => ( s, i ) }
+
+      maybeSub map {
+        case ( sub, i ) =>
+          val substitutedClause: HOLClause = sub( cnf( i ) ).asInstanceOf[Sequent[HOLAtom]]
+          TheoryAxiom( substitutedClause )
+      }
+    }
+
+    maybeProof find {
+      _.nonEmpty
+    } getOrElse None
+  }
+}
+
+case class FOTheory( solver: ResolutionProver, axioms: HOLFormula* ) extends BackgroundTheory {
   require( freeVariables( axioms ).isEmpty )
 
   def solve( atomicSeq: HOLClause ): Option[LKProof] =
-    Escargot getLKProof ( axioms ++: atomicSeq, addWeakenings = false ) map { p =>
+    solver getLKProof ( axioms ++: atomicSeq, addWeakenings = false ) map { p =>
       TheoryAxiom( p.conclusion intersect atomicSeq map { _.asInstanceOf[HOLAtom] } )
     }
+}
+
+object FOTheory {
+  def apply( axioms: HOLFormula* ): FOTheory = FOTheory( Escargot, axioms: _* )
 }
 
 case class FiniteContext(
