@@ -5,10 +5,12 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
-import at.logic.gapt.proofs.{ Ant, BackgroundTheory, Context, FOTheory, FiniteContext, HOLClause, Sequent, Suc }
+import at.logic.gapt.proofs._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.groundFreeVariables
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.smtlib.{ SmtlibSession, Z3, Z3Session }
+import at.logic.gapt.provers.spass.SPASS
 
 /**
  * Created by sebastian on 2/25/16.
@@ -26,41 +28,18 @@ case class prime( k: Int ) extends TacticsProof {
   ctx += Const( "*", Ti -> ( Ti -> Ti ) )
   ctx += Const( "<", Ti -> ( Ti -> To ) )
 
-  object Arithmetic extends BackgroundTheory {
-    def nameMapping( sess: SmtlibSession ) = {
-      sess.typeRenaming.map( Ti ) = TBase( "Int" )
-      sess.termRenaming.map ++= Seq(
-        le"0" -> hoc"0: Int",
-        le"1" -> hoc"1: Int",
-        le"'+'" -> hoc"'+': Int>Int>Int",
-        le"'*'" -> hoc"'*': Int>Int>Int",
-        le"'<'" -> hoc"'<': Int>Int>Bool"
-      ).map { x => x._1.asInstanceOf[Const] -> x._2 }
-    }
-
-    override def solve( atomicSeq: HOLClause ): Option[LKProof] =
-      for ( sess <- new Z3Session ) yield {
-        sess.debug = true
-        val labels = atomicSeq.indicesSequent map { case Ant( i ) => s"a$i"; case Suc( i ) => s"s$i" }
-        sess.setLogic( "QF_UFNIA" )
-        sess.produceUnsatCores()
-        nameMapping( sess )
-        val groundSeq = groundFreeVariables( atomicSeq )._1
-        for ( c <- constants( groundSeq ) if c.name != "=" && !sess.termRenaming.map.contains( c ) )
-          sess declareFun c
-        for ( c <- constants( groundSeq ) if c.exptype == Ti ) sess assert hof"0 < $c ∨ 0 = $c"
-        for ( ( a, l ) <- groundSeq.map( identity, -_ ) zip labels ) sess assert ( a, l )
-        if ( sess.checkSat() ) {
-          println( s"\nWrong theory axiom: ${atomicSeq.map { _.toSigRelativeString }}\n" )
-          // FIXME: None
-          Some( TheoryAxiom( atomicSeq ) )
-        } else {
-          val unsatCore = sess.getUnsatCore().toSet
-          Some( TheoryAxiom( for ( ( a, l ) <- atomicSeq zip labels if unsatCore contains l ) yield a ) )
-        }
-      }
-  }
-  ctx += Arithmetic
+  ctx += SubsumptionTheory(
+    hof" ∀x ∀y (x + 1) * y + x + 1 = (x + 1) * (y + 1)",
+    hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * u  * v)",
+    hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * v  * u)",
+    hof"∀x ∀y (x = y -> y = x)",
+    hof" ∀k ∀l ∀r ∀m (k < m -> k + l*m = 0 + r*m -> 0 = k)",
+    hof" ∀x ¬1 + (x + 1) = 1",
+    hof" ∀k ∀n ∀l k + (n * (l + (1 + 1)) + l * (k + 1) + 1) = n + (n + (k + 1)) * (l + 1)",
+    hof" ∀x ∀y (1 < x -> ¬ 1 = y * x)",
+    hof" ∀x 0+x = x",
+    hof" ∀x ∀y (x < y -> 0 < y)"
+  )
 
   //Definitions
   ctx += "set_1" -> le" λk λl l = k"
@@ -196,10 +175,10 @@ case class prime( k: Int ) extends TacticsProof {
     }
 
   val progClosed = Lemma(
-    ( "PRE" -> hof"PRE" ) +: ( "REM" -> hof"REM" ) +: ( "0<l" -> hof" 0 < l" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof"C(ν k l)" )
+    ( "PRE" -> hof"PRE" ) +: ( "REM" -> hof"REM" ) +: ( "0<l" -> hof" 0 < l" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof"C(ν 0 l)" )
   ) {
       unfold( "C" ) in "Suc"
-      cut( "CF", hof" U(k,l) = compN(ν k l)" )
+      cut( "CF", hof" U(0,l) = compN(ν 0 l)" )
 
       forget( "PRE", "Suc" )
       chain( "EXT" )
@@ -215,16 +194,15 @@ case class prime( k: Int ) extends TacticsProof {
       exL( "CF_1" )
       eql( "CF_0_1", "CF_1" )
       forget( "CF_0_1" )
-      cut( "tri", fof"i < k ∨ k < i" )
+      cut( "tri", fof"¬0 = i" )
 
       forget( "CF_0_0_0", "CF_1", "0<l" )
-      orR
+      decompose
       theory
 
       forget( "CF_0_0_1" )
-      orL
-
-      theory; theory
+      decompose
+      theory
 
       impR
       unfold( "REM" ) in "REM"
@@ -236,7 +214,7 @@ case class prime( k: Int ) extends TacticsProof {
       allL( fov"x" ).forget
       decompose
       unfold( "U" ) in "CF_1"
-      exR( fov"k_0" ).forget
+      exR( fov"k" ).forget
       andR
 
       andR; trivial
