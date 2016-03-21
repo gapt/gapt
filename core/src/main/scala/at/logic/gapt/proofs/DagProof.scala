@@ -137,17 +137,31 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
   protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$longName(${productIterator.map { param => subProofLabels.getOrElse( param, param.toString ) }.mkString( ", " )})"
 
-  override def toString: String = {
-    val steps = dagLike.postOrder.zipWithIndex map { case ( p, i ) => ( p, s"p${i + 1}" ) }
-    val subProofLabels: Map[Any, String] = steps.toMap
+  protected def dagLikeToString: Boolean = true
+  override def toString: String =
+    if ( dagLikeToString ) {
+      val steps = dagLike.postOrder.zipWithIndex map { case ( p, i ) => ( p, s"p${i + 1}" ) }
+      val subProofLabels: Map[Any, String] = steps.toMap
 
-    val output = new StringBuilder()
-    steps.reverse foreach {
-      case ( step, number ) =>
-        output ++= s"[$number] ${step.stepString( subProofLabels )}\n"
+      val output = new StringBuilder()
+      steps.reverse foreach {
+        case ( step, number ) =>
+          output ++= s"[$number] ${step.stepString( subProofLabels )}\n"
+      }
+      output.result()
+    } else {
+      val output = Seq.newBuilder[String]
+      var number = 0
+      def write( step: Proof ): ( Any, String ) = {
+        val subProofLabels = step.immediateSubProofs.map( write ).toMap
+        number += 1
+        val label = s"p$number"
+        output += s"[$label] ${step.stepString( subProofLabels )}\n"
+        step -> label
+      }
+      write( this )
+      output.result().reverse.mkString
     }
-    output.result()
-  }
 
   override val hashCode = ScalaRunTime._hashCode( this )
 

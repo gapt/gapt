@@ -92,14 +92,20 @@ object ExpansionProofWithCut {
   def apply( expansionSequentWithCutAxiom: ExpansionSequent ): ExpansionProofWithCut =
     ExpansionProofWithCut( ExpansionProof( expansionSequentWithCutAxiom ) )
   def apply( cuts: Seq[ETImp], expansionSequent: Sequent[ExpansionTree] ): ExpansionProofWithCut =
-    apply(
-      ETWeakQuantifier.withMerge(
-        ExpansionProofWithCut.cutAxiom,
-        for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut
-      ) +: expansionSequent
+    apply( mkCutAxiom( cuts ) +: expansionSequent )
+  def mkCutAxiom( cuts: Seq[ETImp] ): ExpansionTree =
+    ETWeakQuantifier.withMerge(
+      ExpansionProofWithCut.cutAxiom,
+      for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut
     )
 }
 
+object freeVariablesET {
+  def apply( expansionProof: ExpansionProof ): Set[Var] =
+    freeVariables( expansionProof.deep ) diff expansionProof.eigenVariables
+  def apply( expansionProofWithCut: ExpansionProofWithCut ): Set[Var] =
+    apply( expansionProofWithCut.expansionWithCutAxiom )
+}
 private[expansion] object expansionProofSubstitution extends ClosedUnderSub[ExpansionProof] {
   override def applySubstitution( subst: Substitution, expansionProof: ExpansionProof ): ExpansionProof =
     if ( subst.domain intersect expansionProof.eigenVariables nonEmpty ) {
@@ -118,12 +124,15 @@ private[expansion] object expansionProofWithCutSubstitution extends ClosedUnderS
 
 object eliminateMerges {
   def apply( expansionProof: ExpansionProofWithCut ): ExpansionProofWithCut =
-    new ExpansionProofWithCut( apply( expansionProof.expansionWithCutAxiom ) )
+    ExpansionProofWithCut( elim( expansionProof.expansionWithCutAxiom.expansionSequent ) )
 
   def apply( expansionProof: ExpansionProof ): ExpansionProof =
-    elim( expansionProof.expansionSequent )
+    ExpansionProof( elim( expansionProof.expansionSequent ) )
 
-  private def elim( expansionSequent: Sequent[ExpansionTree] ): ExpansionProof = {
+  def unsafe( expansionSequent: ExpansionSequent ): ExpansionSequent =
+    elim( expansionSequent )
+
+  private def elim( expansionSequent: Sequent[ExpansionTree] ): ExpansionSequent = {
     var needToMergeAgain = false
     var eigenVarSubst = Substitution()
 
@@ -195,7 +204,7 @@ object eliminateMerges {
     val mergedSequent = expansionSequent map merge
 
     if ( !needToMergeAgain ) {
-      ExpansionProof( mergedSequent )
+      mergedSequent
     } else {
       elim( mergedSequent map { eigenVarSubst( _ ) } )
     }
@@ -204,36 +213,67 @@ object eliminateMerges {
 
 object eliminateCutsET {
   def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = expansionProof.cuts match {
-    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent ) )
+    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent, freeVariablesET( expansionProof ) ) )
     case Seq()                       => ExpansionProof( expansionProof.expansionSequent )
   }
 
   private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETImp],
-                          expansionSequent: Sequent[ExpansionTree] ): ExpansionProofWithCut = {
+                          expansionSequent: Sequent[ExpansionTree], freeVars: Set[Var] ): ExpansionProofWithCut = {
     def addCuts( extraCuts: ETImp* ) = ExpansionProofWithCut( extraCuts ++ rest, expansionSequent )
 
+    // This uses a slightly more optimized reduction step than described in the unpublished
+    // paper "Expansion Trees with Cut".
+    //
+    // Say we have an expansion proof with cut ∀x P(x) ⊃ ∀x P(x), Γ :- Δ where the cut expands
+    // to P(eigenvar) ⊃ P(inst_1) ∧ ‥ ∧ P(inst_n), and the deep sequent is T-valid (for a given theory T).
+    // Let η_i be renamings of the eigenvariable in P(eigenvar), Γ, Δ without the variables occurring
+    // in the shallow formula P(x) to fresh variables, and σ_i = η_i [eigenvar \ inst_i].
+    // By applying an invertible rule to the cut-implication we see that the deep formulas of Γ :- Δ, P(eigenvar)
+    // and P(inst_1), ‥, P(inst_n), Γ :- Δ are T-valid.
+    //
+    // If there exists an σ_k such that the shallow formulas of P(eigenvar) and P(inst_i)σ_k are equal for all i,
+    // then we can apply all σ_i to the first sequent, and apply σ_k to the second sequent and conclude that
+    // P(eigenvar)σ_1 ⊃ P(inst_1)σ_k, P(eigenvar)σ_2 ⊃ P(inst_2)σ_k, ‥, Γσ_1, Γσ_2, ‥ :- Δσ_1, Δσ_2, ‥
+    // is T-valid.
+    //
+    // In the general case we can still apply all σ_i to the first sequent, but we cannot apply
+    // σ_1 to the second sequent--but it's not necessary to apply a substitution there, it just
+    // keeps the quantifier complexity low.
+    // In this case the following sequent becomes T-valid by the same argument:
+    // P(eigenvar)σ_1 ⊃ P(inst_1), P(eigenvar)σ_2 ⊃ P(inst_2), ‥, Γ, Γσ_1, Γσ_2, ‥ :- Δ, Δσ_1, Δσ_2, ‥
+    //
+    // The resulting expansion proof will have duplicate eigenvariables since we did not rename the ones that occur
+    // in the cut formula.  But these will get merged as they are below the cut eigenvariable in the dependency order
+    // (and hence do not dominate weak quantifier instances that contain the cut eigenvariable).
+    // TODO: rename even fewer eigenvariables based on this observation
     def quantifiedCut(
       instances:     Map[LambdaExpression, ExpansionTree],
       eigenVariable: Var, child: ExpansionTree
     ): ExpansionProofWithCut = {
       if ( instances isEmpty ) return addCuts()
 
-      val eigenVars = expansionSequent.elements.toSet + child ++ rest flatMap { eigenVariablesET( _ ) }
-
-      val nameGen = rename.awayFrom( eigenVars union Set( eigenVariable )
+      val eigenVarsToRename = expansionSequent.elements.toSet + child ++ rest flatMap { eigenVariablesET( _ ) } diff freeVariables( child.shallow )
+      val nameGen = rename.awayFrom( eigenVarsToRename union freeVariables( child.shallow ) union freeVars
         union instances.values.flatMap { eigenVariablesET( _ ) }.toSet )
       val renamings = for ( _ <- 0 until instances.size )
-        yield Substitution( eigenVars map { ev => ev -> nameGen.fresh( ev ) } )
+        yield Substitution( eigenVarsToRename map { ev => ev -> nameGen.fresh( ev ) } )
       val substs =
-        for ( ( renaming, ( term, instance ) ) <- renamings zip instances.seq )
-          yield renaming compose Substitution( eigenVariable -> term )
+        for ( ( renaming, ( term, instance ) ) <- renamings zip instances )
+          yield Substitution( eigenVariable -> term ) compose renaming
 
-      eliminateMerges( ExpansionProofWithCut(
-        ( for ( ( ( subst, renaming ), ( term, instance ) ) <- substs zip renamings zip instances.toSeq ) yield {
-          if ( instance.polarity ) ETImp( renaming( instance ), subst( child ) )
-          else ETImp( subst( child ), renaming( instance ) )
-        } ) ++ ( for ( c <- rest; s <- substs ) yield s( c ).asInstanceOf[ETImp] ),
-        for ( tree <- expansionSequent ) yield ETMerge( substs.map { _( tree ) } )
+      val matchingSubstOption = substs find { s => ( substs zip instances.values ).forall { inst => s( inst._2.shallow ) == inst._1( child.shallow ) } }
+      val matchingSubst = matchingSubstOption getOrElse Substitution()
+      val needExtraCopy = matchingSubstOption.isEmpty
+
+      val newCuts = for ( ( subst, ( term, instance ) ) <- substs zip instances ) yield {
+        if ( instance.polarity ) ETImp( matchingSubst( instance ), subst( child ) )
+        else ETImp( subst( child ), matchingSubst( instance ) )
+      }
+
+      val substs_ = if ( needExtraCopy ) substs :+ Substitution() else substs
+      ExpansionProofWithCut( eliminateMerges.unsafe(
+        ExpansionProofWithCut.mkCutAxiom( newCuts ++ ( for ( c <- rest; s <- substs_ ) yield s( c ).asInstanceOf[ETImp] ) ) +:
+          ( for ( tree <- expansionSequent ) yield ETMerge( substs_.map { _( tree ) } ) )
       ) )
     }
 
