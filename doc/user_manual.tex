@@ -875,9 +875,10 @@ expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 [p2] ETAtom(b = a, false)
 [p1] ETAtom(a = b, true)
 ,
-[p12] ETWeakQuantifier(∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1)), b, p6, c, p11)
-[p11] ETWeakQuantifier(∀y1 (c = y1 ∧ P(c) ⊃ P(y1)), a, p10)
-[p10] ETImp(p9, p4)
+[p13] ETWeakQuantifier(∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1)), b, p6, c, p12)
+[p12] ETWeakQuantifier(∀y1 (c = y1 ∧ P(c) ⊃ P(y1)), a, p11)
+[p11] ETImp(p9, p10)
+[p10] ETAtom(P(a): o, false)
 [p9] ETAnd(p7, p8)
 [p8] ETAtom(P(c): o, true)
 [p7] ETAtom(c = a, true)
@@ -891,8 +892,7 @@ expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 :-
 [p9] ETImp(p7, p8)
 [p8] ETAtom(P(a): o, true)
-[p7] ETAnd(p5, p6)
-[p6] ETAtom(P(...
+[p7...
 gapt> extractInstances(expansionProof) foreach println
 a = b ⊃ b = a
 a = c ⊃ c = a
