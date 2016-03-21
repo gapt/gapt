@@ -58,20 +58,6 @@ case object ReflexivityAxiomTactic extends Tactic[Unit] {
 }
 
 /**
- * Closes an arbitrary goal by declaring it a theory axiom.
- */
-case object TheoryAxiomTactic extends Tactic[Unit] {
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.conclusion
-
-    if ( goalSequent.forall( _.isInstanceOf[HOLAtom] ) )
-      ( (), TheoryAxiom( goalSequent.asInstanceOf[Sequent[HOLAtom]] ) ).success
-    else
-      TacticalFailure( this, Some( goal ), "not an atomic subgoal" ).failureNel
-  }
-}
-
-/**
  * Decomposes a negation in the antecedent of a goal.
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
