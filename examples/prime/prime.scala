@@ -38,7 +38,10 @@ case class prime( k: Int ) extends TacticsProof {
     hof" ∀k ∀n ∀l k + (n * (l + (1 + 1)) + l * (k + 1) + 1) = n + (n + (k + 1)) * (l + 1)",
     hof" ∀x ∀y (1 < x -> ¬ 1 = y * x)",
     hof" ∀x 0+x = x",
-    hof" ∀x ∀y (x < y -> 0 < y)"
+    hof" ∀x ∀y (x < y -> 0 < y)",
+    hof"∀x ∀y ∀z (1<y ∧ x=0+z*y ⊃ x!=1)",
+    hof"∀x ∀y ∀z (y*z=x ⊃ x=0+z*y)",
+    hof"∀x ∀y1 ∀y2 ∀z x + y1*z + y2*z = x + (y1+y2)*z"
   )
 
   //Definitions
@@ -125,7 +128,6 @@ case class prime( k: Int ) extends TacticsProof {
       exR( fot" (l_0 + 1) * l_1 + l_0" ).forget
       cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" )
 
-      forget( "Ant0", "Ant1", "Suc_1" )
       theory
 
       eql( "CF", "Suc_1" )
@@ -249,15 +251,10 @@ case class prime( k: Int ) extends TacticsProof {
 
       forget( "Suc_0_0_0", "Suc_0_0_1" )
       unfold( "ν" ) in ( "Suc_0_1", "Suc_1_0", "Suc_1_1" )
-      exL( "Suc_0_1" )
-      exL( "Suc_1_0" )
+      decompose
       exR( fot"n_0 + n_1" ).forget
-      eql( "Suc_0_1", "Suc_1_0" )
-      forget( "Suc_0_1" )
-      paramod( "Suc_1_0", hoa" (i + n_0 * l) + n_1 *l  = i + (n_0 *l + n_1 * l) ", hof" n = i + (n_0 *l + n_1 * l)" )
-      forget( "Suc_1_0_cut_0" )
-      paramod( "Suc_1_0", hoa"n_0 * l + n_1 *l = (n_0 + n_1) *l", hof" n = i + (n_0 + n_1) * l" )
-      trivial
+      rewrite.many ltr ( "Suc_0_1", "Suc_1_0" )
+      theory
     }
 
   // Proof that complement(complement(X)) = X (under extensionality).
@@ -452,18 +449,9 @@ case class prime( k: Int ) extends TacticsProof {
       decompose
       forget( "Ant1_0_1_1" )
       unfold( "ν" ) in "CF2_1"
-      exL( "CF2_1" )
-      paramod( "CF2_1", hoa"0 + n * y = n * y", hof" x = n * y" )
-      forget( "CF2_1_cut_0" )
-      cut( "CF3", fof" x = 1" )
-
-      trivial
-
-      eql( "CF3", "CF2_1" )
-      forget( "CF3", "CF2_0", "CF" )
+      decompose
       theory
 
-      forget( "Suc_0", "Ant1" )
       unfold( "set_1" ) in "Suc_1"
       decompose
       trivial
@@ -497,11 +485,7 @@ case class prime( k: Int ) extends TacticsProof {
       unfold( "ν" ) in "Suc"
       exL
       exR( fov"m" ).forget
-      forget( s"F[$k]_1", "x!=1" )
-      paramod( "Suc", hoa" 0 + m * l = m * l", hoa"x = m*l" )
-      paramod( "Suc", hoa" m * l = l * m", hoa" x = l * m" )
-      paramod( "Suc", hoa" l * m = x", hoa" x = x" )
-      trivial
+      theory
     }
 
   def lambda( n: Int ): LKProof = {
@@ -646,11 +630,9 @@ case class prime( k: Int ) extends TacticsProof {
       forget( "Ant" )
       cut( "CF2", fof" 0 + 1 = 1" )
 
-      forget( "CF", "Suc" )
       theory
 
       eql( "CF2", "CF" )
-      forget( "CF2" )
       theory
 
     }
