@@ -75,7 +75,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 
   override def toString: String = {
     val stringified = this map { _.toString }
-    val multiLine = stringified exists { _ contains "\n" }
+    val multiLine = stringified.exists { _ contains "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
     if ( multiLine )
       s"${stringified.antecedent.mkString( ",\n" )}\n:-\n${stringified.succedent.mkString( ",\n" )}"
     else
