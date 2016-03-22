@@ -216,7 +216,7 @@ abstract class nTape {
     val ( ind1base, ind1step ) = ind1 match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _,
+        ETSkolemQuantifier( _, _, _,
           ETImp( _, ETWeakQuantifier( f, step_instances ) )
           )
         ), _ ) =>
@@ -228,7 +228,7 @@ abstract class nTape {
     val ( ind2base, ind2step ) = ind2 match {
       case ETImp( ETAnd(
         ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _,
+        ETSkolemQuantifier( _, _, _,
           ETImp( _, ETWeakQuantifier( f, step_instances ) )
           )
         ), _ ) =>

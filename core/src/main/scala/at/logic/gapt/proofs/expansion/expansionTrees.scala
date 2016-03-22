@@ -184,11 +184,19 @@ case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: E
   def deep = child.deep
 }
 
-case class ETSkolemQuantifier( shallow: HOLFormula, skolemTerm: LambdaExpression, child: ExpansionTree ) extends UnaryExpansionTree {
+case class ETSkolemQuantifier(
+    shallow:    HOLFormula,
+    skolemTerm: LambdaExpression,
+    skolemDef:  LambdaExpression,
+    child:      ExpansionTree
+) extends UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( false, x, t )
     case All( x, t ) => ( true, x, t )
   }
+
+  val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
+  require( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ) == shallow )
 
   require( child.polarity == polarity )
   require( child.shallow == Substitution( boundVar -> skolemTerm )( qfFormula ) )
@@ -204,7 +212,7 @@ case class ETSkolemQuantifier( shallow: HOLFormula, skolemTerm: LambdaExpression
  * @param child An expansion tree with shallowFormula definedExpr(x,,1,,,...,x,,n,,)
  */
 case class ETDefinition( shallow: HOLAtom, definedExpr: LambdaExpression, child: ExpansionTree ) extends UnaryExpansionTree {
-  val HOLAtom( pred, args ) = shallow
+  val HOLAtom( pred: Const, args ) = shallow
   require( pred.exptype == definedExpr.exptype )
   require( child.shallow == BetaReduction.betaNormalize( App( definedExpr, args ) ), s"child.shallow = ${child.shallow}; App(rhs, args) = ${App( definedExpr, args )}" )
 
@@ -241,8 +249,13 @@ object replaceET {
 
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       ETStrongQuantifier( TermReplacement( shallow, repl ), TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl ) )
-    case ETSkolemQuantifier( shallow, eigenVariable, child ) =>
-      ETSkolemQuantifier( TermReplacement( shallow, repl ), TermReplacement( eigenVariable, repl ), replaceET( child, repl ) )
+    case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
+      ETSkolemQuantifier(
+        TermReplacement( shallow, repl ),
+        TermReplacement( skolemTerm, repl ),
+        TermReplacement( skolemDef, repl ),
+        replaceET( child, repl )
+      )
   }
 }
 
@@ -273,10 +286,10 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       subst( eigenVariable ) match {
         case eigenNew: Var => ETStrongQuantifier( subst( shallow ), eigenNew, applySubstitution( subst, child ) )
-        case skolemTerm    => ETSkolemQuantifier( subst( shallow ), skolemTerm, applySubstitution( subst, child ) )
+        case _             => throw new UnsupportedOperationException
       }
-    case ETSkolemQuantifier( shallow, skolemTerm, child ) =>
-      ETSkolemQuantifier( subst( shallow ), subst( skolemTerm ), applySubstitution( subst, child ) )
+    case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
+      ETSkolemQuantifier( subst( shallow ), subst( skolemTerm ), skolemDef, applySubstitution( subst, child ) )
   }
 }
 
@@ -288,24 +301,24 @@ object eigenVariablesET {
 private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
     if ( pos.isEmpty ) Set( et ) else ( et, pos.head ) match {
-      case ( ETMerge( a, b ), _ )                => apply( a, pos ) union apply( b, pos )
+      case ( ETMerge( a, b ), _ )                   => apply( a, pos ) union apply( b, pos )
 
-      case ( ETNeg( ch ), 1 )                    => apply( ch, pos.tail )
+      case ( ETNeg( ch ), 1 )                       => apply( ch, pos.tail )
 
-      case ( ETAnd( l, _ ), 1 )                  => apply( l, pos.tail )
-      case ( ETAnd( _, r ), 2 )                  => apply( r, pos.tail )
+      case ( ETAnd( l, _ ), 1 )                     => apply( l, pos.tail )
+      case ( ETAnd( _, r ), 2 )                     => apply( r, pos.tail )
 
-      case ( ETOr( l, _ ), 1 )                   => apply( l, pos.tail )
-      case ( ETOr( _, r ), 2 )                   => apply( r, pos.tail )
+      case ( ETOr( l, _ ), 1 )                      => apply( l, pos.tail )
+      case ( ETOr( _, r ), 2 )                      => apply( r, pos.tail )
 
-      case ( ETImp( l, _ ), 1 )                  => apply( l, pos.tail )
-      case ( ETImp( _, r ), 2 )                  => apply( r, pos.tail )
+      case ( ETImp( l, _ ), 1 )                     => apply( l, pos.tail )
+      case ( ETImp( _, r ), 2 )                     => apply( r, pos.tail )
 
-      case ( ETStrongQuantifier( _, _, ch ), 1 ) => apply( ch, pos.tail )
-      case ( ETSkolemQuantifier( _, _, ch ), 1 ) => apply( ch, pos.tail )
-      case ( ETWeakQuantifier( _, insts ), 1 )   => insts.values flatMap { apply( _, pos.tail ) } toSet
+      case ( ETStrongQuantifier( _, _, ch ), 1 )    => apply( ch, pos.tail )
+      case ( ETSkolemQuantifier( _, _, _, ch ), 1 ) => apply( ch, pos.tail )
+      case ( ETWeakQuantifier( _, insts ), 1 )      => insts.values flatMap { apply( _, pos.tail ) } toSet
 
-      case ( _, _ )                              => Set()
+      case ( _, _ )                                 => Set()
     }
 }
 
@@ -334,7 +347,8 @@ object replaceAtHOLPosition {
 
       //FIXME: Quantifier cases are not entirely safe: What if the eigenvariable or the instances are replaced?
       case ( ETStrongQuantifier( formula, v, sub ), 1 ) => ETStrongQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
-      case ( ETSkolemQuantifier( formula, v, sub ), 1 ) => ETSkolemQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
+      case ( ETSkolemQuantifier( formula, skt, skf, sub ), 1 ) =>
+        ETSkolemQuantifier( formula.replace( pos, exp ), skt, skf, replaceAtHOLPosition( sub, rest, exp ) )
 
       case ( ETWeakQuantifier( formula, instances ), 1 ) =>
         ETWeakQuantifier(
@@ -377,7 +391,8 @@ object replaceAtLambdaPosition {
 
       //FIXME: Quantifier cases are not entirely safe: What if the eigenvariable or the instances are replaced?
       case ( ETStrongQuantifier( formula, v, sub ), 1 ) => ETStrongQuantifier( formula.replace( pos, exp ).asInstanceOf[HOLFormula], v, replaceAtLambdaPosition( sub, rest, exp ) )
-      case ( ETSkolemQuantifier( formula, v, sub ), 1 ) => ETSkolemQuantifier( formula.replace( pos, exp ).asInstanceOf[HOLFormula], v, replaceAtLambdaPosition( sub, rest, exp ) )
+      case ( ETSkolemQuantifier( formula, skt, skf, sub ), 1 ) =>
+        ETSkolemQuantifier( formula.replace( pos, exp ).asInstanceOf[HOLFormula], skt, skf, replaceAtLambdaPosition( sub, rest, exp ) )
 
       case ( ETWeakQuantifier( formula, instances ), 1 ) =>
         ETWeakQuantifier(
@@ -411,9 +426,9 @@ object cleanStructureET {
       case ETWeakening( _, p ) => ETWeakening( sh, p )
       case r                   => ETStrongQuantifier( sh, ev, r )
     }
-    case ETSkolemQuantifier( sh, st, s ) => apply( s ) match {
+    case ETSkolemQuantifier( sh, st, sf, s ) => apply( s ) match {
       case ETWeakening( _, p ) => ETWeakening( sh, p )
-      case r                   => ETSkolemQuantifier( sh, st, r )
+      case r                   => ETSkolemQuantifier( sh, st, sf, r )
     }
     case ETWeakQuantifier( sh, inst ) =>
       val cleanInst = inst mapValues apply filterNot { _._2.isInstanceOf[ETWeakening] }

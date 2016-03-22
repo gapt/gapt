@@ -59,33 +59,33 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           }
           */
           Set( ( proof, cut_ancs ) )
-        case Reflexivity( _, _ )                => Set( ( proof, cut_ancs ) )
+        case Reflexivity( _, _ )                        => Set( ( proof, cut_ancs ) )
 
-        case ContractionLeft( p, a1, a2 )       => handleContractionRule( proof, p, a1, a2, ContractionLeft.apply, pred )
-        case ContractionRight( p, a1, a2 )      => handleContractionRule( proof, p, a1, a2, ContractionRight.apply, pred )
-        case WeakeningLeft( p, m )              => handleWeakeningRule( proof, p, m, WeakeningLeft.apply, pred )
-        case WeakeningRight( p, m )             => handleWeakeningRule( proof, p, m, WeakeningRight.apply, pred )
+        case ContractionLeft( p, a1, a2 )               => handleContractionRule( proof, p, a1, a2, ContractionLeft.apply, pred )
+        case ContractionRight( p, a1, a2 )              => handleContractionRule( proof, p, a1, a2, ContractionRight.apply, pred )
+        case WeakeningLeft( p, m )                      => handleWeakeningRule( proof, p, m, WeakeningLeft.apply, pred )
+        case WeakeningRight( p, m )                     => handleWeakeningRule( proof, p, m, WeakeningRight.apply, pred )
 
         /* Logical rules */
-        case AndRight( p1, a1, p2, a2 )         => handleBinaryRule( proof, p1, p2, a1, a2, AndRight.apply, pred )
-        case OrLeft( p1, a1, p2, a2 )           => handleBinaryRule( proof, p1, p2, a1, a2, OrLeft.apply, pred )
-        case ImpLeft( p1, a1, p2, a2 )          => handleBinaryRule( proof, p1, p2, a1, a2, ImpLeft.apply, pred )
-        case NegLeft( p, a )                    => handleNegRule( proof, p, a, NegLeft.apply, pred )
-        case NegRight( p, a )                   => handleNegRule( proof, p, a, NegRight.apply, pred )
-        case OrRight( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, OrRight.apply, pred )
-        case AndLeft( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, AndLeft.apply, pred )
-        case ImpRight( p, a1, a2 )              => handleUnaryRule( proof, p, a1, a2, ImpRight.apply, pred )
+        case AndRight( p1, a1, p2, a2 )                 => handleBinaryRule( proof, p1, p2, a1, a2, AndRight.apply, pred )
+        case OrLeft( p1, a1, p2, a2 )                   => handleBinaryRule( proof, p1, p2, a1, a2, OrLeft.apply, pred )
+        case ImpLeft( p1, a1, p2, a2 )                  => handleBinaryRule( proof, p1, p2, a1, a2, ImpLeft.apply, pred )
+        case NegLeft( p, a )                            => handleNegRule( proof, p, a, NegLeft.apply, pred )
+        case NegRight( p, a )                           => handleNegRule( proof, p, a, NegRight.apply, pred )
+        case OrRight( p, a1, a2 )                       => handleUnaryRule( proof, p, a1, a2, OrRight.apply, pred )
+        case AndLeft( p, a1, a2 )                       => handleUnaryRule( proof, p, a1, a2, AndLeft.apply, pred )
+        case ImpRight( p, a1, a2 )                      => handleUnaryRule( proof, p, a1, a2, ImpRight.apply, pred )
 
         /* quantifier rules  */
-        case AllRight( p, a, eigenv, qvar )     => handleStrongQuantRule( proof, p, a, AllRight.apply, pred )
-        case ExLeft( p, a, eigenvar, qvar )     => handleStrongQuantRule( proof, p, a, ExLeft.apply, pred )
-        case AllLeft( p, a, f, t )              => handleWeakQuantRule( proof, p, a, f, t, AllLeft.apply, pred )
-        case ExRight( p, a, f, t )              => handleWeakQuantRule( proof, p, a, f, t, ExRight.apply, pred )
+        case AllRight( p, a, eigenv, qvar )             => handleStrongQuantRule( proof, p, a, AllRight.apply, pred )
+        case ExLeft( p, a, eigenvar, qvar )             => handleStrongQuantRule( proof, p, a, ExLeft.apply, pred )
+        case AllLeft( p, a, f, t )                      => handleWeakQuantRule( proof, p, a, f, t, AllLeft.apply, pred )
+        case ExRight( p, a, f, t )                      => handleWeakQuantRule( proof, p, a, f, t, ExRight.apply, pred )
 
-        case AllSkRight( p, a, main, sk_const ) => handleStrongSkQuantRule( proof, p, a, main, sk_const, AllSkRight.apply, pred )
-        case ExSkLeft( p, a, main, sk_const )   => handleStrongSkQuantRule( proof, p, a, main, sk_const, ExSkLeft.apply, pred )
-        case AllSkLeft( p, a, f, t )            => handleWeakQuantRule( proof, p, a, f, t, AllSkLeft.apply, pred )
-        case ExSkRight( p, a, f, t )            => handleWeakQuantRule( proof, p, a, f, t, ExSkRight.apply, pred )
+        case AllSkRight( p, a, main, sk_const, sk_def ) => handleStrongSkQuantRule( proof, p, a, main, sk_const, sk_def, AllSkRight.apply, pred )
+        case ExSkLeft( p, a, main, sk_const, sk_def )   => handleStrongSkQuantRule( proof, p, a, main, sk_const, sk_def, ExSkLeft.apply, pred )
+        case AllSkLeft( p, a, f, t )                    => handleWeakQuantRule( proof, p, a, f, t, AllSkLeft.apply, pred )
+        case ExSkRight( p, a, f, t )                    => handleWeakQuantRule( proof, p, a, f, t, ExSkRight.apply, pred )
 
         case Equality( p, e, a, flipped, pos ) =>
           handleEqRule( proof, p, e, a, flipped, pos, pred )
@@ -335,14 +335,15 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   def handleStrongSkQuantRule[Side <: SequentIndex]( proof: LKskProof, p: LKskProof, a: Side,
                                                      main:        HOLFormula,
-                                                     sk_const:    Const,
-                                                     constructor: ( LKskProof, Side, HOLFormula, Const ) => LKskProof,
+                                                     sk_const:    LambdaExpression,
+                                                     sk_def:      LambdaExpression,
+                                                     constructor: ( LKskProof, Side, HOLFormula, LambdaExpression, LambdaExpression ) => LKskProof,
                                                      pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[( LKskProof, Sequent[Boolean] )] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
       val List( aux ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      val rp = constructor( pm._1, castToSide( aux ), main, sk_const )
+      val rp = constructor( pm._1, castToSide( aux ), main, sk_const, sk_def )
       val nca = calculate_child_cut_ecs( rp, rp.occConnectors( 0 ), pm, false )
       ( rp, nca )
     } )

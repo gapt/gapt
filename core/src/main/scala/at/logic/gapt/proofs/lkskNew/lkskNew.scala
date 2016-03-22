@@ -239,11 +239,12 @@ case class ExSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, su
   def auxIndices = Seq( Seq( aux ) )
 }
 
-/* TODO: how to verify skolem symbols?
-   They are quite flexible - the main restriction is that quantifiers cannot be contracted,
-   when they were introduced from different skolem symbols */
-case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
+case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: LambdaExpression, skolemDef: LambdaExpression ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
+  val Apps( skolemConst, baseArgs ) = skolemSymbol
+  require( freeVariables( skolemDef ).isEmpty )
+  requireEq( mainFormula, BetaReduction.betaNormalize( skolemDef( baseArgs: _* )( subProof.labels( aux ): _* ) ) )
+  require( freeVariables( skolemDef ).isEmpty )
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
 
@@ -251,8 +252,11 @@ case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, s
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
+case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: LambdaExpression, skolemDef: LambdaExpression ) extends UnaryRule with SameLabel {
   val Ex( quantVar, formula ) = mainFormula
+  val Apps( skolemConst, baseArgs ) = skolemSymbol
+  require( freeVariables( skolemDef ).isEmpty )
+  requireEq( mainFormula, BetaReduction.betaNormalize( skolemDef( baseArgs: _* )( subProof.labels( aux ): _* ) ) )
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
 

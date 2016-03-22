@@ -22,12 +22,12 @@ object extractInstances {
       case ETWeakening( _, _ ) => Set()
       case ETWeakQuantifier( _, instances ) =>
         instances flatMap { i => extractInstances( i._2 ) } toSet
-      case ETStrongQuantifier( _, _, t ) => extractInstances( t )
-      case ETSkolemQuantifier( _, _, t ) => extractInstances( t )
-      case ETAnd( t, s )                 => for ( ( ti, si ) <- apply( t, s ) ) yield ti & si
-      case ETOr( t, s )                  => for ( ( ti, si ) <- apply( t, s ) ) yield ti | si
-      case ETImp( t, s )                 => for ( ( ti, si ) <- apply( t, s ) ) yield ti --> si
-      case ETNeg( t )                    => for ( ti <- extractInstances( t ) ) yield -ti
+      case ETStrongQuantifier( _, _, t )    => extractInstances( t )
+      case ETSkolemQuantifier( _, _, _, t ) => extractInstances( t )
+      case ETAnd( t, s )                    => for ( ( ti, si ) <- apply( t, s ) ) yield ti & si
+      case ETOr( t, s )                     => for ( ( ti, si ) <- apply( t, s ) ) yield ti | si
+      case ETImp( t, s )                    => for ( ( ti, si ) <- apply( t, s ) ) yield ti --> si
+      case ETNeg( t )                       => for ( ti <- extractInstances( t ) ) yield -ti
     }
 
   private def apply( a: ExpansionTree, b: ExpansionTree ): Set[( HOLFormula, HOLFormula )] = {
