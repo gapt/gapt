@@ -1423,7 +1423,7 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
           val Abs( v, rest ) = repContext
-          if ( rest.find( s ).isEmpty )
+          if ( auxFormula.find( s ).isEmpty )
             throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
 
           EqualityLeftRule( subProof, eq, aux, repContext )
@@ -1530,7 +1530,7 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
           val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
           val Abs( v, rest ) = repContext
-          if ( rest.find( s ).isEmpty )
+          if ( auxFormula.find( s ).isEmpty )
             throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
 
           EqualityRightRule( subProof, eq, aux, repContext )

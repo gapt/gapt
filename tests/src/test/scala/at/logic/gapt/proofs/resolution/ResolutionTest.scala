@@ -58,22 +58,22 @@ class ResolutionTest extends Specification {
     Paramodulation(
       InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
       InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"λx p(x,f(c))".asInstanceOf[Abs], leftToRight = true
+      le"λx p(f(c),x): o".asInstanceOf[Abs], leftToRight = true
     ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
     Paramodulation(
       InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
       InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"λx p(x,x)".asInstanceOf[Abs], leftToRight = true
+      le"λx p(x,x): o".asInstanceOf[Abs], leftToRight = true
     ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(g(d), g(d))" )
     Paramodulation(
       InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
       InputClause( hoa"p(f(c), f(c))" +: Clause() ), Ant( 0 ),
-      le"λx p(x,f(c))".asInstanceOf[Abs], leftToRight = true
+      le"λx p(f(c),x): o".asInstanceOf[Abs], leftToRight = true
     ).conclusion must_== ( hoa"p(f(c), g(d))" +: Clause() )
     Paramodulation(
       InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
       InputClause( hoa"p(g(d), f(c))" +: Clause() ), Ant( 0 ),
-      le"λx p(x,f(c))".asInstanceOf[Abs], leftToRight = false
+      le"λx p(x,f(c)): o".asInstanceOf[Abs], leftToRight = false
     ).conclusion must_== ( hoa"p(f(c), f(c))" +: Clause() )
   }
 

@@ -243,7 +243,10 @@ case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
     case ( Eq( a, b ), false ) => ( b, a )
   }
 
-  require( BetaReduction.betaNormalize( App( replacementContext, what ) ) == subProof2.conclusion( literal ), s"${BetaReduction.betaNormalize( App( replacementContext, what ) )} != ${subProof2.conclusion( literal )}" )
+  val auxFormula_ = BetaReduction.betaNormalize( App( replacementContext, what ) )
+  val auxFormula = subProof2.conclusion( literal )
+
+  require( auxFormula_ == auxFormula )
 
   val rewrittenAtom = BetaReduction.betaNormalize( App( replacementContext, by ) ).asInstanceOf[HOLAtom]
 

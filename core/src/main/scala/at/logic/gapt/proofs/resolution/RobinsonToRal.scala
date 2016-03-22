@@ -19,18 +19,22 @@ object RobinsonToRal extends RobinsonToRal {
 
 abstract class RobinsonToRal {
   /* convert formula will be called on any formula before translation */
-  def convert_formula( e: HOLFormula ): HOLFormula;
+  def convert_formula( e: HOLFormula ): HOLFormula
 
   /* convert substitution will be called on any substitution before translation */
-  def convert_substitution( s: Substitution ): Substitution;
+  def convert_substitution( s: Substitution ): Substitution
 
   def apply( p: ResolutionProof ): RalProof = p match {
     case _: InitialClause             => RalInitial( p.conclusion map convert_formula map { Seq[LambdaExpression]() -> _ } )
     case Factor( p1, i1, i2 )         => RalFactor( apply( p1 ), i1, i2 )
-    case Instance( p1, subst )        => RalSub( apply( p1 ), convert_substitution( subst ) )
+    case Instance( p1, subst )        =>
+      val substNew = convert_substitution( subst )
+      RalSub( apply( p1 ), substNew )
     case Resolution( p1, i1, p2, i2 ) => RalCut( apply( p1 ), Seq( i1 ), apply( p2 ), Seq( i2 ) )
-    case Paramodulation( p1, eq @ Suc( _ ), p2, lit, pos, dir ) =>
-      RalPara( apply( p1 ), eq, apply( p2 ), lit, pos, dir )
+    case Paramodulation( p1, eq @ Suc( _ ), p2, lit, con, dir ) =>
+      val p1New = apply(p1)
+      val p2New = apply(p2)
+      RalPara( p1New, eq, p2New, lit, con, dir )
   }
 }
 

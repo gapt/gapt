@@ -100,7 +100,9 @@ case class RalPara( subProof1: RalProof, equation: Suc,
 
   val Abs( v, f ) = replacementContext
   require( f.find( v ).length == 1 )
-  require( BetaReduction.betaNormalize( App( replacementContext, t ) ) == subProof2.formulas( modulant ) )
+  val auxFormula =  BetaReduction.betaNormalize(subProof2.formulas( modulant ))
+  val auxFormula_ = BetaReduction.betaNormalize( App( replacementContext, t ) )
+  require( auxFormula_ == auxFormula )
 
   require( subProof1.labels( equation ) == subProof2.labels( modulant ) )
 

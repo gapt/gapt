@@ -1204,13 +1204,13 @@ class LKNewTest extends Specification {
     "refuse to construct a proof" in {
       val ax = Axiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
-      EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityLeftRule( ax, Ant( 0 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityLeftRule( ax, Ant( 3 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityLeftRule( ax, Ant( 0 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityLeftRule( ax, Ant( 2 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
+      EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityLeftRule( ax, Ant( 0 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityLeftRule( ax, Ant( 3 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityLeftRule( ax, Ant( 0 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityLeftRule( ax, Ant( 2 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
     }
 
     "correctly return its main formula" in {
@@ -1298,13 +1298,13 @@ class LKNewTest extends Specification {
     "refuse to construct a proof" in {
       val ax = Axiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
-      EqualityRightRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityRightRule( ax, Ant( 0 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityRightRule( ax, Ant( 3 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityRightRule( ax, Ant( 0 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityRightRule( ax, Ant( 2 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
-      EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[LKRuleCreationException]
+      EqualityRightRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityRightRule( ax, Ant( 0 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityRightRule( ax, Ant( 3 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityRightRule( ax, Ant( 0 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityRightRule( ax, Ant( 2 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
+      EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
     }
 
     "correctly return its main formula" in {
