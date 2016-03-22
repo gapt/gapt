@@ -123,31 +123,29 @@ object LKToExpansionProof {
       ( subCuts, subSequent.delete( aux ) :+ ETWeakQuantifier( proof.mainFormulas.head, Map( t -> subSequent( aux ) ) ) )
 
     // Equality rules
-    case EqualityLeftRule( subProof, eq, aux, con ) =>
+    case p @ EqualityLeftRule( subProof, eq, aux, con ) =>
       val ( subCuts, sequent ) = extract( subProof )
       val eqTree = sequent( eq )
       val ( auxTree, subSequent ) = sequent.focus( aux )
-      val repTerm = proof.mainFormulas.head( pos.head )
 
-      val newAuxTree = pos.foldLeft( auxTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
+      val newAuxTree = replaceWithContext(auxTree, con, p.by)
       val newEqTree = eqTree match {
-        case ETWeakening( f: HOLAtom, p ) => ETAtom( f, p )
-        case ETAtom( f, p )               => ETAtom( f, p )
+        case ETWeakening( f: HOLAtom, pol ) => ETAtom( f, pol )
+        case ETAtom( f, pol )               => ETAtom( f, pol )
         case ETDefinition( _, _, _ )      => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
         case _                            => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
       }
       ( subCuts, newAuxTree +: subSequent.updated( eq, newEqTree ) )
 
-    case EqualityRightRule( subProof, eq, aux, con ) =>
+    case p @ EqualityRightRule( subProof, eq, aux, con ) =>
       val ( subCuts, sequent ) = extract( subProof )
       val eqTree = sequent( eq )
       val ( auxTree, subSequent ) = sequent.focus( aux )
-      val repTerm = proof.mainFormulas.head( pos.head )
 
-      val newAuxTree = pos.foldLeft( auxTree ) { ( acc, p ) => replaceAtHOLPosition( acc, p, repTerm ) }
+      val newAuxTree = replaceWithContext(auxTree, con, p.by)
       val newEqTree = eqTree match {
-        case ETWeakening( f: HOLAtom, p ) => ETAtom( f, p )
-        case ETAtom( f, p )               => ETAtom( f, p )
+        case ETWeakening( f: HOLAtom, pol ) => ETAtom( f, pol )
+        case ETAtom( f, pol )               => ETAtom( f, pol )
         case ETDefinition( _, _, _ )      => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
         case _                            => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
       }

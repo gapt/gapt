@@ -339,7 +339,7 @@ class EscargotLoop extends Logger {
       pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
       p1__ = Instance( c1.proof, mgu )
       p2__ = Instance( p2_, mgu )
-    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, pos2_.distinct, leftToRight ) )
+    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, replacementContext(a2,pos2_.distinct), leftToRight ) )
   }
 
   def unitRewriting( given: Cls ): Unit = {
@@ -374,7 +374,7 @@ class EscargotLoop extends Logger {
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
-            p, i, pos.toSeq, leftToRight )
+            p, i, replacementContext(p.conclusion(i),pos.toSeq), leftToRight )
           didRewrite = true
         }
       }

@@ -89,12 +89,8 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         ( Cut( uproof1, aux1, uproof2, aux2 ), table2 )
 
       case p: EqualityRule =>
-
-        val lambdaPos = p.positions map {
-          HOLPosition.toLambdaPosition( p.auxFormula )
-        }
         val ( uproof, table ) = apply( p.subProof, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )
-        ( Equality( uproof, p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, lambdaPos ), table )
+        ( Equality( uproof, p.eq.asInstanceOf[Ant], p.aux, p.leftToRight, p.replacementContext ), table )
 
       case p @ ForallLeftRule( subProof, aux: Ant, formula, term, v ) if !isCutAnc( p.mainIndices.head ) =>
         val ( uproof, table ) = apply( subProof, p.getOccConnector.parent( labels ).updated( aux, labels( p.mainIndices.head ) :+ term ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ) )

@@ -176,15 +176,14 @@ case class ImpRight( subProof: LKskProof, aux1: Ant, aux2: Suc ) extends UnaryRu
   def auxIndices = Seq( Seq( aux1, aux2 ) )
 }
 
-case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, pos: Seq[LambdaPosition] ) extends UnaryRule with SameLabel {
+case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, con: Abs ) extends UnaryRule with SameLabel {
   require( eq != aux )
 
-  lazy val ( s, t ) = subProof.formulas( eq ) match {
+  lazy val ( what, by ) = subProof.formulas( eq ) match {
     case Eq( s_, t_ ) => if ( leftToRight ) s_ -> t_ else t_ -> s_
   }
-  for ( p <- pos )
-    require( subProof.formulas( aux )( p ) == s )
-  lazy val mainFormula = pos.foldLeft( subProof.formulas( aux ) ) { ( acc, p ) => acc.replace( p, t ).asInstanceOf[HOLFormula] }
+    require( BetaReduction.betaNormalize(App(con, what)) == subProof.formulas(aux))
+  lazy val mainFormula = BetaReduction.betaNormalize(App(con, by)).asInstanceOf[HOLFormula]
 
   lazy val newFormulas = if ( aux isAnt ) mainFormula +: Sequent() else Sequent() :+ mainFormula
 

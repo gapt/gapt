@@ -131,24 +131,18 @@ object LKskToExpansionProof {
         ( subCuts, subSequent.delete( aux ) :+ ETWeakQuantifier( proof.mainFormulas.head._2, Map( t -> subSequent( aux ) ) ) )
 
       // Equality rules
-      case Equality( subProof, eq, aux @ Ant( _ ), flipped, pos ) =>
+      case p@Equality( subProof, eq, aux @ Ant( _ ), flipped, con ) =>
         val ( subCuts, sequent ) = extract( subProof )
         val ( subTree, subSequent ) = sequent.focus( aux )
 
-        val repTerm = proof.mainFormulas.head._2( pos.head )
-        val newTree = pos.foldLeft( subTree ) { ( acc, pos ) =>
-          replaceAtLambdaPosition( acc, pos, repTerm )
-        }
+        val newTree = replaceWithContext(subTree, con, p.by)
         ( subCuts, newTree +: subSequent )
 
-      case Equality( subProof, eq, aux @ Suc( _ ), flipped, pos ) =>
+      case p@Equality( subProof, eq, aux @ Suc( _ ), flipped, con ) =>
         val ( subCuts, sequent ) = extract( subProof )
         val ( subTree, subSequent ) = sequent.focus( aux )
 
-        val repTerm = proof.mainFormulas.head._2( pos.head )
-        val newTree = pos.foldLeft( subTree ) { ( acc, pos ) =>
-          replaceAtLambdaPosition( acc, pos, repTerm )
-        }
+        val newTree = replaceWithContext(subTree, con, p.by)
         ( subCuts, subSequent :+ newTree )
     }
 

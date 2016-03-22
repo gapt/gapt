@@ -152,10 +152,10 @@ class ceres_omega extends Logger {
         val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent, ca ), false )
         ( rule, nca )
 
-      case RalPara( _, _, _, _, pos, _ ) if pos.size != 1 =>
+      case RalPara( _, _, _, _, Abs(v, f), _ ) if f.find(v).length != 1 =>
         throw new Exception( "Paramodulations at multiple positions are not handled!" )
 
-      case RalPara( parent1, eqocc, parent2, p2occ @ Ant( _ ), Seq( pos ), flipped ) =>
+      case RalPara( parent1, eqocc, parent2, p2occ @ Ant( _ ), con, flipped ) =>
         val ( lkparent1, ca1 ) = ceres_omega( projections, parent1, es, struct )
         val ( lkparent2, ca2 ) = ceres_omega( projections, parent2, es, struct )
 
@@ -168,7 +168,7 @@ class ceres_omega extends Logger {
         ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca1 ) ) match {
           case ( Some( eqidx ), _ ) if parent1.formulas( eqocc ) != parent2.formulas( p2occ ) => //need to exclude paramodulation into the same equation
             val modulant = findAuxInAntecedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
-            val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
+            val rule = Equality( lkparent2, eqidx, modulant, flipped, con )
             val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
             ( rule, nca )
           case ( _, Some( eqidx ) ) =>
@@ -179,7 +179,7 @@ class ceres_omega extends Logger {
               case a @ Ant( _ ) => a
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
-            val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
+            val rule = Equality( wlkparent2, weqidx, modulant, flipped, con )
             val nc2 = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
             val ruleeqidx = rule.occConnectors( 0 ).child( weqidx ) match {
               case a @ Ant( _ ) => a
@@ -194,7 +194,7 @@ class ceres_omega extends Logger {
             throw new Exception( s"Could not find equation $eqlformula in parents ${lkparent1.conclusion} or ${lkparent2.conclusion}!" )
         }
 
-      case RalPara( parent1, eqocc, parent2, p2occ @ Suc( _ ), Seq( pos ), flipped ) =>
+      case RalPara( parent1, eqocc, parent2, p2occ @ Suc( _ ), con, flipped ) =>
         val ( lkparent1, ca1 ) = ceres_omega( projections, parent1, es, struct )
         val ( lkparent2, ca2 ) = ceres_omega( projections, parent2, es, struct )
 
@@ -207,7 +207,7 @@ class ceres_omega extends Logger {
         ( fa( lkparent2.conclusion.map( _ => true ) ), fs( ca1 ) ) match {
           case ( Some( eqidx ), _ ) =>
             val modulant = findAuxInSuccedent( parent2.conclusion( p2occ ), lkparent2.conclusion, Seq( eqidx ), ca2 )
-            val rule = Equality( lkparent2, eqidx, modulant, flipped, Seq( pos ) )
+            val rule = Equality( lkparent2, eqidx, modulant, flipped, con )
             val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent2, ca2 ), false )
             ( rule, nca )
           case ( _, Some( eqidx ) ) =>
@@ -221,7 +221,7 @@ class ceres_omega extends Logger {
               case _            => throw new Exception( "Error in constructor of WeakeningLeft!" )
             }
 
-            val rule = Equality( wlkparent2, weqidx, modulant, flipped, Seq( pos ) )
+            val rule = Equality( wlkparent2, weqidx, modulant, flipped, con )
             val nc2 = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wlkparent2, nca ), false )
             val ruleeqidx = rule.occConnectors( 0 ).child( weqidx ) match {
               case a @ Ant( _ ) => a
