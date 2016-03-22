@@ -124,8 +124,8 @@ object TermReplacement {
       case ExistsLeftRule( subProof, aux, eigen, quant ) => ExistsLeftRule( f( subProof ), aux, eigen, quant )
       case ExistsRightRule( subProof, aux, formula, term, v ) => ExistsRightRule( f( subProof ), aux, apply( formula, repl ), apply( term, repl ), v )
 
-      case EqualityLeftRule( subProof, eq, aux, pos ) => EqualityLeftRule( f( subProof ), eq, aux, pos )
-      case EqualityRightRule( subProof, eq, aux, pos ) => EqualityRightRule( f( subProof ), eq, aux, pos )
+      case EqualityLeftRule( subProof, eq, aux, con ) => EqualityLeftRule( f( subProof ), eq, aux, con )
+      case EqualityRightRule( subProof, eq, aux, con ) => EqualityRightRule( f( subProof ), eq, aux, con )
 
       case InductionRule( cases, main ) =>
         InductionRule( cases map { c =>

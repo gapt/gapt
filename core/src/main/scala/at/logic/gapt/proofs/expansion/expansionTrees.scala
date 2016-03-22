@@ -346,6 +346,21 @@ object replaceAtHOLPosition {
   }
 }
 
+object replaceWithContext {
+  def apply(et: ExpansionTree, replacementContext: Abs, exp: LambdaExpression): ExpansionTree = (et, replacementContext) match {
+    case (ETMerge(left, right), _) => ETMerge(apply(left, replacementContext, exp), apply(right, replacementContext, exp))
+    case (ETTop(_),_) | (ETBottom(_),_) => et
+    case (et@ETAtom(formula, _), _) => et.copy(atom = BetaReduction.betaNormalize(App(replacementContext, exp)).asInstanceOf[HOLAtom])
+    case ( et @ ETDefinedAtom( atom, _, _ ), _ )      => et.copy( atom = BetaReduction.betaNormalize(App(replacementContext, exp)).asInstanceOf[HOLAtom] )
+    case (et@ETWeakening(formula, _), _) =>  et.copy( formula = BetaReduction.betaNormalize(App(replacementContext, exp)).asInstanceOf[HOLFormula] )
+    case (ETNeg(sub), Abs(v, Neg(f))) => ETNeg(apply(sub, Abs(v, f), exp))
+    case (ETAnd(left, right), Abs(v, And(l,r))) => ETAnd(apply(left, Abs(v,l), exp), apply(right, Abs(v,r), exp))
+    case (ETOr(left, right), Abs(v, Or(l,r))) => ETOr(apply(left, Abs(v,l), exp), apply(right, Abs(v,r), exp))
+    case (ETImp(left, right), Abs(v, Imp(l,r))) => ETImp(apply(left, Abs(v,l), exp), apply(right, Abs(v,r), exp))
+    case (ETStrongQuantifier(formula, v, sub), )
+  }
+}
+
 object generalizeET {
   def apply( et: ExpansionTree, newShallow: HOLFormula ): ExpansionTree =
     HOLPosition.differingPositions( et.shallow, newShallow ).foldLeft( et )( ( et_, pos ) =>

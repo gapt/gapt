@@ -123,7 +123,7 @@ object LKToExpansionProof {
       ( subCuts, subSequent.delete( aux ) :+ ETWeakQuantifier( proof.mainFormulas.head, Map( t -> subSequent( aux ) ) ) )
 
     // Equality rules
-    case EqualityLeftRule( subProof, eq, aux, pos ) =>
+    case EqualityLeftRule( subProof, eq, aux, con ) =>
       val ( subCuts, sequent ) = extract( subProof )
       val eqTree = sequent( eq )
       val ( auxTree, subSequent ) = sequent.focus( aux )
@@ -138,7 +138,7 @@ object LKToExpansionProof {
       }
       ( subCuts, newAuxTree +: subSequent.updated( eq, newEqTree ) )
 
-    case EqualityRightRule( subProof, eq, aux, pos ) =>
+    case EqualityRightRule( subProof, eq, aux, con ) =>
       val ( subCuts, sequent ) = extract( subProof )
       val eqTree = sequent( eq )
       val ( auxTree, subSequent ) = sequent.focus( aux )

@@ -268,7 +268,7 @@ trait LKVisitor[T] {
 
   protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
     val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), proof.positions )
+    val proofNew = EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), proof.replacementContext )
     val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
 
     ( proofNew, connector, otherArgNew )
@@ -276,7 +276,7 @@ trait LKVisitor[T] {
 
   protected def visitEqualityRight( proof: EqualityRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
     val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), proof.positions )
+    val proofNew = EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), proof.replacementContext )
     val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
 
     ( proofNew, connector, otherArgNew )

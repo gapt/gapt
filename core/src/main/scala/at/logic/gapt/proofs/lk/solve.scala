@@ -80,8 +80,8 @@ object AtomicExpansion {
     case ExistsLeftRule( subProof, aux, eigen, quant ) => ExistsLeftRule( apply( subProof ), aux, eigen, quant )
 
     //equality and definitions
-    case EqualityLeftRule( subProof, eq, aux, pos ) => EqualityLeftRule( apply( subProof ), eq, aux, pos )
-    case EqualityRightRule( subProof, eq, aux, pos ) => EqualityRightRule( apply( subProof ), eq, aux, pos )
+    case EqualityLeftRule( subProof, eq, aux, con ) => EqualityLeftRule( apply( subProof ), eq, aux, con )
+    case EqualityRightRule( subProof, eq, aux, con ) => EqualityRightRule( apply( subProof ), eq, aux, con )
 
     case DefinitionLeftRule( subProof, aux, main ) => DefinitionLeftRule( apply( subProof ), aux, main )
     case DefinitionRightRule( subProof, aux, main ) => DefinitionRightRule( apply( subProof ), aux, main )
