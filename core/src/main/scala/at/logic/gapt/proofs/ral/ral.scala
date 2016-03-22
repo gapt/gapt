@@ -98,9 +98,9 @@ case class RalPara( subProof1: RalProof, equation: Suc,
     case ( Eq( a, b ), false ) => ( b, a )
   }
 
-  val Abs(v, f) = replacementContext
-  require(f.find(v).length == 1)
-    require( BetaReduction.betaNormalize(App(replacementContext, t)) == subProof2.formulas( modulant ))
+  val Abs( v, f ) = replacementContext
+  require( f.find( v ).length == 1 )
+  require( BetaReduction.betaNormalize( App( replacementContext, t ) ) == subProof2.formulas( modulant ) )
 
   require( subProof1.labels( equation ) == subProof2.labels( modulant ) )
 
@@ -108,7 +108,7 @@ case class RalPara( subProof1: RalProof, equation: Suc,
     subProof2.conclusion.updated(
       modulant,
       subProof2.labels( modulant ) ->
-        BetaReduction.betaNormalize(App(replacementContext,s)).asInstanceOf[HOLFormula]
+        BetaReduction.betaNormalize( App( replacementContext, s ) ).asInstanceOf[HOLFormula]
     )
 
   override def occConnectors = Seq(

@@ -109,11 +109,11 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case EqualityLeftRule( subProof, eq, aux, con ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      EqualityLeftRule( subProofNew, eq, aux, substitution(con).asInstanceOf[Abs] )
+      EqualityLeftRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case EqualityRightRule( subProof, eq, aux, con ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      EqualityRightRule( subProofNew, eq, aux, substitution(con).asInstanceOf[Abs] )
+      EqualityRightRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case InductionRule( cases, main ) =>
       InductionRule( cases map {

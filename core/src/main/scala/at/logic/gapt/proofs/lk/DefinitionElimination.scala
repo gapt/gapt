@@ -95,10 +95,10 @@ class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpressi
 
     //equational rules
     case proof @ EqualityLeftRule( subProof, eq, aux, con ) =>
-      EqualityLeftRule( apply( subProof ), eq, aux, apply(con).asInstanceOf[Abs] )
+      EqualityLeftRule( apply( subProof ), eq, aux, apply( con ).asInstanceOf[Abs] )
 
     case proof @ EqualityRightRule( subProof, eq, aux, con ) =>
-      EqualityRightRule( apply( subProof ), eq, aux, apply(con).asInstanceOf[Abs] )
+      EqualityRightRule( apply( subProof ), eq, aux, apply( con ).asInstanceOf[Abs] )
 
     /* The cases for definition rules employ a trick: The removal of the rule would change the order of the end
         sequent. We use exchange macro rules to artificially replicate the movement of formulas that the definition

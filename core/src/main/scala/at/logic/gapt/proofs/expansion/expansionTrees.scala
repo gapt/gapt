@@ -347,29 +347,31 @@ object replaceAtHOLPosition {
 }
 
 object replaceWithContext {
-  def apply(et: ExpansionTree, replacementContext: Abs, exp: LambdaExpression): ExpansionTree = {
-    def newFormula = BetaReduction.betaNormalize(App(replacementContext, exp)).asInstanceOf[HOLFormula]
+  def apply( et: ExpansionTree, replacementContext: Abs, exp: LambdaExpression ): ExpansionTree = {
+    def newFormula = BetaReduction.betaNormalize( App( replacementContext, exp ) ).asInstanceOf[HOLFormula]
     def newAtom = newFormula.asInstanceOf[HOLAtom]
 
-    (et, replacementContext) match {
-      case (ETMerge(left, right), _) => ETMerge(apply(left, replacementContext, exp), apply(right, replacementContext, exp))
-      case (ETTop(_),_) | (ETBottom(_),_) => et
-      case (et@ETAtom(formula, _), _) => et.copy(atom = newAtom)
-      case ( et @ ETDefinedAtom( atom, _, _ ), _ )      => et.copy( atom = newAtom )
-      case (et@ETWeakening(formula, _), _) =>  et.copy( formula = newFormula )
-      case (ETNeg(sub), Abs(v, Neg(f))) => ETNeg(apply(sub, Abs(v, f), exp))
-      case (ETAnd(left, right), Abs(v, And(l,r))) => ETAnd(apply(left, Abs(v,l), exp), apply(right, Abs(v,r), exp))
-      case (ETOr(left, right), Abs(v, Or(l,r))) => ETOr(apply(left, Abs(v,l), exp), apply(right, Abs(v,r), exp))
-      case (ETImp(left, right), Abs(v, Imp(l,r))) => ETImp(apply(left, Abs(v,l), exp), apply(right, Abs(v,r), exp))
-      case (ETStrongQuantifier(formula, x, sub), Abs(v, Quant(y, f))) if x == y =>
-        ETStrongQuantifier(newFormula, x, apply(sub, Abs(v, f), exp))
-      case (ETSkolemQuantifier(formula, x, sub), Abs(v, Quant(y, f))) if x == y =>
-        ETSkolemQuantifier(newFormula, x, apply(sub, Abs(v, f), exp))
-      case (ETWeakQuantifier(formula, instances), Abs(v, Quant(y, f))) =>
-        ETWeakQuantifier(newFormula,
-          for((term, instance) <- instances)
-        yield term -> apply(instance, Abs(v, f), exp))
-      case _ => throw new IllegalArgumentException(s"Tree $et and context $replacementContext could not be handled.")
+    ( et, replacementContext ) match {
+      case ( ETMerge( left, right ), _ )                   => ETMerge( apply( left, replacementContext, exp ), apply( right, replacementContext, exp ) )
+      case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )        => et
+      case ( et @ ETAtom( formula, _ ), _ )                => et.copy( atom = newAtom )
+      case ( et @ ETDefinedAtom( atom, _, _ ), _ )         => et.copy( atom = newAtom )
+      case ( et @ ETWeakening( formula, _ ), _ )           => et.copy( formula = newFormula )
+      case ( ETNeg( sub ), Abs( v, Neg( f ) ) )            => ETNeg( apply( sub, Abs( v, f ), exp ) )
+      case ( ETAnd( left, right ), Abs( v, And( l, r ) ) ) => ETAnd( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
+      case ( ETOr( left, right ), Abs( v, Or( l, r ) ) )   => ETOr( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
+      case ( ETImp( left, right ), Abs( v, Imp( l, r ) ) ) => ETImp( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
+      case ( ETStrongQuantifier( formula, x, sub ), Abs( v, Quant( y, f ) ) ) if x == y =>
+        ETStrongQuantifier( newFormula, x, apply( sub, Abs( v, f ), exp ) )
+      case ( ETSkolemQuantifier( formula, x, sub ), Abs( v, Quant( y, f ) ) ) if x == y =>
+        ETSkolemQuantifier( newFormula, x, apply( sub, Abs( v, f ), exp ) )
+      case ( ETWeakQuantifier( formula, instances ), Abs( v, Quant( y, f ) ) ) =>
+        ETWeakQuantifier(
+          newFormula,
+          for ( ( term, instance ) <- instances )
+            yield term -> apply( instance, Abs( v, f ), exp )
+        )
+      case _ => throw new IllegalArgumentException( s"Tree $et and context $replacementContext could not be handled." )
     }
   }
 }

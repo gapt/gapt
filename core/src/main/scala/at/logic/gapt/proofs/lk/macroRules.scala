@@ -198,7 +198,7 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param pos The positions of the term to be replaced within the aux formula.
    * @return An LKProof and an OccConnector connecting its end sequent with the end sequent of subProof.
    */
-  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con:Abs ): ( EqualityLeftRule, OccConnector[HOLFormula] ) = {
+  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): ( EqualityLeftRule, OccConnector[HOLFormula] ) = {
     val ( _, indices, _, _ ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( equation, auxFormula ), Seq() )
 
     ( indices( 0 ), indices( 1 ) ) match {
@@ -1070,7 +1070,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    con: Abs
+    con:           Abs
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1081,7 +1081,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = aux match {
       case Left( i ) =>
-        EqualityLeftRule( p1, Ant( 0 ), i + 1, con)
+        EqualityLeftRule( p1, Ant( 0 ), i + 1, con )
 
       case Right( f ) =>
         EqualityLeftRule( p1, Ant( 0 ), f, con )
@@ -1185,11 +1185,11 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
    * @return
    */
   def apply(
-             leftSubProof:  LKProof,
-             eq:            IndexOrFormula,
-             rightSubProof: LKProof,
-             aux:           IndexOrFormula,
-             con:           Abs
+    leftSubProof:  LKProof,
+    eq:            IndexOrFormula,
+    rightSubProof: LKProof,
+    aux:           IndexOrFormula,
+    con:           Abs
   ): LKProof = {
 
     val eqFormula = eq match {

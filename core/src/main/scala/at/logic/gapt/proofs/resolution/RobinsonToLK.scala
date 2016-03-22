@@ -94,9 +94,10 @@ object RobinsonToLK {
           endSequent ++ p.conclusion, strict = false
         )
       case p @ Paramodulation( p1, eq, p2, lit @ Suc( _ ), poss, dir ) =>
+        val ( p1New, p2New ) = ( f( p1 ), f( p2 ) )
         ContractionMacroRule(
-          ParamodulationRightRule( f( p1 ), p1.conclusion( eq ),
-            f( p2 ), p2.conclusion( lit ), p.rewrittenAtom ),
+          ParamodulationRightRule( p1New, p1.conclusion( eq ),
+            p2New, p2.conclusion( lit ), p.rewrittenAtom ),
           endSequent ++ p.conclusion, strict = false
         )
     } )

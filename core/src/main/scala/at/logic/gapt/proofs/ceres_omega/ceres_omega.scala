@@ -152,7 +152,7 @@ class ceres_omega extends Logger {
         val nca = Projections.calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( lkparent, ca ), false )
         ( rule, nca )
 
-      case RalPara( _, _, _, _, Abs(v, f), _ ) if f.find(v).length != 1 =>
+      case RalPara( _, _, _, _, Abs( v, f ), _ ) if f.find( v ).length != 1 =>
         throw new Exception( "Paramodulations at multiple positions are not handled!" )
 
       case RalPara( parent1, eqocc, parent2, p2occ @ Ant( _ ), con, flipped ) =>
