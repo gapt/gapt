@@ -100,11 +100,14 @@ case class RalPara( subProof1: RalProof, equation: Suc,
 
   val Abs( v, f ) = replacementContext
   require( f.find( v ).length == 1 )
-  val auxFormula =  BetaReduction.betaNormalize(subProof2.formulas( modulant ))
+  val auxFormula = BetaReduction.betaNormalize( subProof2.formulas( modulant ) )
   val auxFormula_ = BetaReduction.betaNormalize( App( replacementContext, t ) )
-  require( auxFormula_ == auxFormula )
+  require( auxFormula_ == auxFormula, s"$auxFormula != $auxFormula_" )
 
-  require( subProof1.labels( equation ) == subProof2.labels( modulant ) )
+  require(
+    subProof1.labels( equation ) == subProof2.labels( modulant ),
+    s"${subProof1.labels( equation )} != ${subProof2.labels( modulant )}"
+  )
 
   override val conclusion = subProof1.conclusion.delete( equation ) ++
     subProof2.conclusion.updated(
