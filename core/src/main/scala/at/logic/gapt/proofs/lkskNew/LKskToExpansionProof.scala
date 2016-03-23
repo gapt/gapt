@@ -118,13 +118,13 @@ object LKskToExpansionProof {
         val ( subCuts, subSequent ) = extract( subProof )
         ( subCuts, ETWeakQuantifier( proof.mainFormulas.head._2, Map( t -> subSequent( aux ) ) ) +: subSequent.delete( aux ) )
 
-      case r @ AllSkRight( subProof, aux, main, skolem_constant ) =>
+      case r @ AllSkRight( subProof, aux, main, skolem_constant, skolem_def ) =>
         val ( subCuts, subSequent ) = extract( subProof )
-        ( subCuts, subSequent.delete( aux ) :+ ETSkolemQuantifier( proof.mainFormulas.head._2, r.skolemTerm, subSequent( aux ) ) )
+        ( subCuts, subSequent.delete( aux ) :+ ETSkolemQuantifier( proof.mainFormulas.head._2, r.skolemTerm, skolem_def, subSequent( aux ) ) )
 
-      case r @ ExSkLeft( subProof, aux, main, skolem_constant ) =>
+      case r @ ExSkLeft( subProof, aux, main, skolem_constant, skolem_def ) =>
         val ( subCuts, subSequent ) = extract( subProof )
-        ( subCuts, ETSkolemQuantifier( proof.mainFormulas.head._2, r.skolemTerm, subSequent( aux ) ) +: subSequent.delete( aux ) )
+        ( subCuts, ETSkolemQuantifier( proof.mainFormulas.head._2, r.skolemTerm, skolem_def, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
       case ExSkRight( subProof, aux, _, t ) =>
         val ( subCuts, subSequent ) = extract( subProof )

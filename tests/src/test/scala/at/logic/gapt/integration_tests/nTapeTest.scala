@@ -11,7 +11,7 @@ import org.specs2.mutable._
 class nTapeTest extends Specification {
   args( skipAll = !Prover9.isInstalled )
   "The higher-order tape proof" should {
-    "do cut-elimination on the 2 copies tape proof (tape3.llk)" in {
+    "do cut-elimination on the 2 copies tape proof tape3.llk" in {
       val acnf_labels = nTape2.acnf.conclusion.map( _._1 ).filter( _ != LKskProof.emptyLabel )
       acnf_labels must_== Sequent[Label]()
 
@@ -29,7 +29,7 @@ class nTapeTest extends Specification {
       ok( "all statistics created!" )
     }
 
-    "do cut-elimination on the 1 copy tape proof (tape3ex.llk)" in {
+    "do cut-elimination on the 1 copy tape proof tape3ex.llk" in {
       val acnf_labels = nTape3.acnf.conclusion.map( _._1 ).filter( _ != LKskProof.emptyLabel )
       acnf_labels must_== Sequent[Label]()
 
@@ -39,7 +39,7 @@ class nTapeTest extends Specification {
       ok( "acnf could be created" )
     }
 
-    "print statistics of the 3 copies tape proof, including reproving the deep formula (tape3ex.llk)" in {
+    "print statistics of the 3 copies tape proof, including reproving the deep formula tape3ex.llk" in {
       if ( !EProver.isInstalled ) skipped( "No EProver installed!" )
       nTape3.printStatistics()
       ok( "all statistics created!" )

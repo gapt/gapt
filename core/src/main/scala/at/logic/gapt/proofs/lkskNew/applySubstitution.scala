@@ -116,14 +116,14 @@ object applySubstitution {
       val newF = substitution( p.mainFormula )
       AllSkLeft( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
 
-    case p @ AllSkRight( subProof, aux, formula, skolemconst ) =>
+    case p @ AllSkRight( subProof, aux, formula, skolemconst, skolemdef ) =>
       val renamed_main = bnsub( p.mainFormula, substitution )
       val renamed_proof = apply( substitution )( subProof )
-      AllSkRight( renamed_proof, aux, renamed_main, skolemconst )
+      AllSkRight( renamed_proof, aux, renamed_main, bnsub( skolemconst, substitution ), skolemdef )
 
-    case p @ ExSkLeft( subProof, aux, formula, skolemconst ) =>
+    case p @ ExSkLeft( subProof, aux, formula, skolemconst, skolemdef ) =>
       val renamed_main = bnsub( p.mainFormula, substitution )
-      ExSkLeft( apply( Substitution( substitution.map ) )( subProof ), aux, renamed_main, skolemconst )
+      ExSkLeft( apply( Substitution( substitution.map ) )( subProof ), aux, renamed_main, bnsub( skolemconst, substitution ), skolemdef )
 
     case p @ ExSkRight( subProof, aux, f, term ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )

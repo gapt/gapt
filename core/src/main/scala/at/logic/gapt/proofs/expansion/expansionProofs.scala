@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions }
 
 import scala.collection.mutable
 
@@ -53,6 +53,25 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val subProofs = expansionSequent.elements flatMap { _.subProofs } toSet
   val eigenVariables = for ( ETStrongQuantifier( _, ev, _ ) <- subProofs ) yield ev
 
+  val skolemFunctions = SkolemFunctions(
+    subProofs collect {
+      case sk: ETSkolemQuantifier => sk.skolemConst -> sk.skolemDef
+    }
+  )
+
+  val atomDefs =
+    subProofs collect {
+      case d: ETDefinedAtom => d.definitionConst -> d.definition
+      case d: ETDefinition  => d.pred -> d.definedExpr
+    } groupBy { _._1 } map {
+      case ( c, ds ) =>
+        require(
+          ds.size == 1,
+          s"Inconsistent definition $c:\n${ds.map { _._2 }.mkString( "\n" )}"
+        )
+        c -> ds.head._2
+    }
+
   val dependencyRelation = for {
     ETWeakQuantifier( _, instances ) <- subProofs
     ( term, child ) <- instances
@@ -71,6 +90,7 @@ case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
   def deep = expansionWithCutAxiom.deep
   def shallow = expansionSequent map { _.shallow }
   def subProofs = expansionWithCutAxiom.subProofs
+  def skolemFunctions = expansionWithCutAxiom.skolemFunctions
 
   val cuts = for {
     cutAxiomExpansion <- expansionWithCutAxiom.expansionSequent.antecedent
@@ -189,15 +209,15 @@ object eliminateMerges {
 
           ETMerge( merge( tree1 ), merge( tree2 ) )
         }
-      case ( ETStrongQuantifier( _, v1, t1 ), ETSkolemQuantifier( shallow, st2, t2 ) ) =>
+      case ( ETStrongQuantifier( _, v1, t1 ), ETSkolemQuantifier( shallow, st2, sf2, t2 ) ) =>
         needToMergeAgain = true
         if ( !eigenVarSubst.map.isDefinedAt( v1 ) )
           eigenVarSubst = eigenVarSubst compose Substitution( v1 -> st2 )
 
         ETMerge( merge( tree1 ), merge( tree2 ) )
       case ( t: ETSkolemQuantifier, s: ETStrongQuantifier ) => merge2( s, t )
-      case ( ETSkolemQuantifier( shallow, st1, t1 ), ETSkolemQuantifier( _, st2, t2 ) ) if st1 == st2 =>
-        ETSkolemQuantifier( shallow, st1, merge2( t1, t2 ) )
+      case ( ETSkolemQuantifier( shallow, st1, sf1, t1 ), ETSkolemQuantifier( _, st2, sf2, t2 ) ) if st1 == st2 =>
+        ETSkolemQuantifier( shallow, st1, sf1, merge2( t1, t2 ) )
       case ( t, s ) => ETMerge( merge( t ), merge( s ) )
     }
 
@@ -350,17 +370,17 @@ object eliminateDefsET {
     }
     def replf( f: HOLFormula ): HOLFormula = TermReplacement( f, replm )
     def repl( et: ExpansionTree ): ExpansionTree = et match {
-      case ETMerge( a, b )                  => ETMerge( repl( a ), repl( b ) )
-      case ETWeakening( sh, pol )           => ETWeakening( replf( sh ), pol )
+      case ETMerge( a, b )                      => ETMerge( repl( a ), repl( b ) )
+      case ETWeakening( sh, pol )               => ETWeakening( replf( sh ), pol )
 
-      case ETTop( _ ) | ETBottom( _ )       => et
-      case ETNeg( ch )                      => ETNeg( repl( ch ) )
-      case ETAnd( l, r )                    => ETAnd( repl( l ), repl( r ) )
-      case ETOr( l, r )                     => ETOr( repl( l ), repl( r ) )
-      case ETImp( l, r )                    => ETImp( repl( l ), repl( r ) )
-      case ETWeakQuantifier( sh, is )       => ETWeakQuantifier( replf( sh ), is mapValues repl )
-      case ETStrongQuantifier( sh, ev, ch ) => ETStrongQuantifier( replf( sh ), ev, repl( ch ) )
-      case ETSkolemQuantifier( sh, st, ch ) => ETSkolemQuantifier( replf( sh ), st, repl( ch ) )
+      case ETTop( _ ) | ETBottom( _ )           => et
+      case ETNeg( ch )                          => ETNeg( repl( ch ) )
+      case ETAnd( l, r )                        => ETAnd( repl( l ), repl( r ) )
+      case ETOr( l, r )                         => ETOr( repl( l ), repl( r ) )
+      case ETImp( l, r )                        => ETImp( repl( l ), repl( r ) )
+      case ETWeakQuantifier( sh, is )           => ETWeakQuantifier( replf( sh ), is mapValues repl )
+      case ETStrongQuantifier( sh, ev, ch )     => ETStrongQuantifier( replf( sh ), ev, repl( ch ) )
+      case ETSkolemQuantifier( sh, st, sd, ch ) => ETSkolemQuantifier( replf( sh ), st, sd, repl( ch ) )
 
       case ETDefinedAtom( Apps( `definitionConst`, as ), pol, _ ) =>
         if ( pol ) insts( as )._1 else insts( as )._2

@@ -89,12 +89,12 @@ class ReplaceAtHOLPositionTest extends Specification {
       replaceAtHOLPosition( ETStrongQuantifier( AllyFxy, y, ETAtom( Fxy, true ) ), xPos, a ) should beEqualTo( ETStrongQuantifier( All( y, Fay ), y, ETAtom( Fay, true ) ) )
     }
 
-    "correctly replace an argument in a Skolem quantifier node" in {
-      val AllyFxy = All( y, Fxy )
-      val xPos = AllyFxy.find( x ).head
-
-      replaceAtHOLPosition( ETSkolemQuantifier( AllyFxy, y, ETAtom( Fxy, true ) ), xPos, a ) should beEqualTo( ETSkolemQuantifier( All( y, Fay ), y, ETAtom( Fay, true ) ) )
-    }
+    //    "correctly replace an argument in a Skolem quantifier node" in {
+    //      val AllyFxy = All( y, Fxy )
+    //      val xPos = AllyFxy.find( x ).head
+    //
+    //      replaceAtHOLPosition( ETSkolemQuantifier( AllyFxy, y, ETAtom( Fxy, true ) ), xPos, a ) should beEqualTo( ETSkolemQuantifier( All( y, Fay ), y, ETAtom( Fay, true ) ) )
+    //    }
 
     "correctly replace an argument in a weak quantifier node " in {
       val ExyFxy = Ex( y, Fxy )

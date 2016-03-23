@@ -1404,8 +1404,6 @@ object proofFromInstances {
 
         ContractionRightMacroRule( tmp, f )
 
-      case ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) =>
-        throw new UnsupportedOperationException( "This case is not handled at this time." )
       case _ => s1
     }
   }

@@ -40,11 +40,11 @@ class LKskToExpansionProof extends LKToExpansionProof {
     case ForallSkRightRule( parent, r, a, p, skt ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, ETSkolemQuantifier( p.formula, skt, map( a ) ) ) )
+      contextmap + ( ( p, ETSkolemQuantifier( p.formula, skt, ???, map( a ) ) ) )
     case ExistsSkLeftRule( parent, r, a, p, skt ) =>
       val map = extract( parent )
       val contextmap = getMapOfContext( ( r.antecedent ++ r.succedent ).toSet - p, map )
-      contextmap + ( ( p, ETSkolemQuantifier( p.formula, skt, map( a ) ) ) )
+      contextmap + ( ( p, ETSkolemQuantifier( p.formula, skt, ???, map( a ) ) ) )
 
     case UnaryLKProof( _, up, r, _, p ) =>
       val map = extract( up )
