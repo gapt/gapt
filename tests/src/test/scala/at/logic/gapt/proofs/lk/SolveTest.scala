@@ -5,6 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 

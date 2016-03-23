@@ -155,20 +155,24 @@ object lkNew2Old {
 
       testCorrectness( proofOld, proof, sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) :+ proofOld.prin.head )
 
-    case EqualityLeftRule( subProof, eq, aux, pos ) =>
+    case EqualityLeftRule( subProof, eq, aux, con ) =>
       val ( subProofOld, sequent ) = apply_( subProof )
       val equation = proof.auxFormulas.head.head
       val ax = lkOld.Axiom( equation )
+      val Abs( v, rest ) = con
+      val pos = rest.find( v )
       val proofOld_ = lkOld.EquationLeftRule( ax, subProofOld, ax.root.succedent.head, sequent( aux ), pos )
       val proofOld = lkOld.ContractionLeftRule( proofOld_, proofOld_.getDescendantInLowerSequent( ax.root.antecedent.head ).get, proofOld_.getDescendantInLowerSequent( sequent( eq ) ).get )
 
       val mainOcc = proofOld.getDescendantInLowerSequent( proofOld_.prin.head ).get
       testCorrectness( proofOld, proof, mainOcc +: sequent.delete( aux ).map( o => proofOld.getDescendantInLowerSequent( o ).get ) )
 
-    case EqualityRightRule( subProof, eq, aux, pos ) =>
+    case EqualityRightRule( subProof, eq, aux, con ) =>
       val ( subProofOld, sequent ) = apply_( subProof )
       val equation = proof.auxFormulas.head.head
       val ax = lkOld.Axiom( equation )
+      val Abs( v, rest ) = con
+      val pos = rest.find( v )
       val proofOld_ = lkOld.EquationRightRule( ax, subProofOld, ax.root.succedent.head, sequent( aux ), pos )
       val proofOld = lkOld.ContractionLeftRule( proofOld_, proofOld_.getDescendantInLowerSequent( ax.root.antecedent.head ).get, proofOld_.getDescendantInLowerSequent( sequent( eq ) ).get )
 
@@ -396,7 +400,10 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
+      val ( equation, auxFormula ) = ( leftSubProofNew.endSequent( eq ), rightSubProofNew.endSequent( aux ) )
+      val term = auxFormula( pos.head )
+      val con = replacementContext( term.exptype, auxFormula, pos, freeVariables( equation ).toSeq: _* )
+      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, con )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ Sequent( Seq( mainOcc ), Seq() ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) )
 
@@ -404,7 +411,10 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
+      val ( equation, auxFormula ) = ( leftSubProofNew.endSequent( eq ), rightSubProofNew.endSequent( aux ) )
+      val term = auxFormula( pos.head )
+      val con = replacementContext( term.exptype, auxFormula, pos, freeVariables( equation ).toSeq: _* )
+      val proofNew = ParamodulationLeftRule( leftSubProofNew, eq, rightSubProofNew, aux, con )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ Sequent( Seq( mainOcc ), Seq() ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) )
 
@@ -412,7 +422,10 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
+      val ( equation, auxFormula ) = ( leftSubProofNew.endSequent( eq ), rightSubProofNew.endSequent( aux ) )
+      val term = auxFormula( pos.head )
+      val con = replacementContext( term.exptype, auxFormula, pos, freeVariables( equation ).toSeq: _* )
+      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, con )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
 
@@ -420,7 +433,10 @@ object lkOld2New {
       val ( leftSubProofNew, leftSequent ) = apply_( leftSubProof )
       val ( rightSubProofNew, rightSequent ) = apply_( rightSubProof )
       val ( eq, aux ) = ( leftSequent indexOf eqOcc, rightSequent indexOf auxOcc )
-      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, pos )
+      val ( equation, auxFormula ) = ( leftSubProofNew.endSequent( eq ), rightSubProofNew.endSequent( aux ) )
+      val term = auxFormula( pos.head )
+      val con = replacementContext( term.exptype, auxFormula, pos, freeVariables( equation ).toSeq: _* )
+      val proofNew = ParamodulationRightRule( leftSubProofNew, eq, rightSubProofNew, aux, con )
 
       testCorrectness( proof, proofNew, ( leftSequent.delete( eq ).map( o => proof.getDescendantInLowerSequent( o ).get ) ++ rightSequent.delete( aux ).map( o => proof.getDescendantInLowerSequent( o ).get ) ) :+ mainOcc )
 

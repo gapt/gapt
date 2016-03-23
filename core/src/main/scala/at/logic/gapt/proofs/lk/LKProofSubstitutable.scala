@@ -107,13 +107,13 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val Ex( newV, newF ) = substitution( p.mainFormula )
       ExistsRightRule( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ), newV )
 
-    case EqualityLeftRule( subProof, eq, aux, pos ) =>
+    case EqualityLeftRule( subProof, eq, aux, con ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      EqualityLeftRule( subProofNew, eq, aux, pos )
+      EqualityLeftRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
-    case EqualityRightRule( subProof, eq, aux, pos ) =>
+    case EqualityRightRule( subProof, eq, aux, con ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      EqualityRightRule( subProofNew, eq, aux, pos )
+      EqualityRightRule( subProofNew, eq, aux, substitution( con ).asInstanceOf[Abs] )
 
     case InductionRule( cases, main ) =>
       InductionRule( cases map {

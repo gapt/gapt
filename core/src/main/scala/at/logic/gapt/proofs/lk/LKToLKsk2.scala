@@ -85,7 +85,7 @@ private class LKToLKsk2( consts: Set[Const], vars: Set[Var] ) {
             updated ( p.eq, info( p.eqInConclusion ) ),
             subst ),
           p.eq.asInstanceOf[Ant], p.aux, p.leftToRight,
-          p.positions map { HOLPosition.toLambdaPosition( p.auxFormula ) }
+          p.replacementContext
         )
 
       case p @ CutRule( q1, a1: Suc, q2, a2: Ant ) =>

@@ -87,8 +87,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         case AllSkLeft( p, a, f, t )                    => handleWeakQuantRule( proof, p, a, f, t, AllSkLeft.apply, pred )
         case ExSkRight( p, a, f, t )                    => handleWeakQuantRule( proof, p, a, f, t, ExSkRight.apply, pred )
 
-        case Equality( p, e, a, flipped, pos ) =>
-          handleEqRule( proof, p, e, a, flipped, pos, pred )
+        case Equality( p, e, a, flipped, con ) =>
+          handleEqRule( proof, p, e, a, flipped, con, pred )
 
         case r @ Cut( p1, a1, p2, a2 ) =>
           val main_is_cutanc = pred( r.cutFormula )
@@ -366,7 +366,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleEqRule( proof: LKskProof, p: LKskProof, e: SequentIndex, a: SequentIndex,
-                    flipped: Boolean, pos: Seq[LambdaPosition],
+                    flipped: Boolean, con: Abs,
                     pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[( LKskProof, Sequent[Boolean] )] = {
     val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
     val s1 = apply( p, new_cut_ancs, pred )
@@ -414,7 +414,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           }
           require( waux != weq, "Aux formulas must be different!" )
           //and apply it
-          val rule = Equality( wproof, weq, waux, flipped, pos )
+          val rule = Equality( wproof, weq, waux, flipped, con )
           val cas = calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), ( wproof, wcas ), false ) //TODO: check if default false is correct
           ( rule, cas )
         } )
@@ -427,7 +427,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
             case a @ Ant( _ ) => a
             case _            => throw new Exception( "Equation occurrence in must be in antecedent!" )
           }
-          val r = Equality( pm._1, aeq, a2_, flipped, pos )
+          val r = Equality( pm._1, aeq, a2_, flipped, con )
           val cas = calculate_child_cut_ecs( r, r.occConnectors( 0 ), pm, false ) //TODO: check if default false is correct
           ( r, cas )
         } )

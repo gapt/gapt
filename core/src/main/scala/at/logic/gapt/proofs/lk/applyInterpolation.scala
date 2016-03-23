@@ -307,20 +307,20 @@ object Interpolate {
 
     // equality rules
 
-    case EqualityRightRule( subProof, eq, aux, pos ) => {
+    case EqualityRightRule( subProof, eq, aux, con ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val auxFormula = subProof.endSequent( aux )
       val eqIndex = p.occConnectors( 0 ).child( eq )
 
       var ipl = up_I
 
-      if ( npart.contains( eqIndex ) && npart.contains( p.mainIndices( 0 ) ) ) ( EqualityRightRule( up_nproof, eq, auxFormula, pos ), up_pproof, up_I )
-      else if ( ppart.contains( eqIndex ) && ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityRightRule( up_pproof, eq, auxFormula, pos ), up_I )
+      if ( npart.contains( eqIndex ) && npart.contains( p.mainIndices( 0 ) ) ) ( EqualityRightRule( up_nproof, eq, auxFormula, con ), up_pproof, up_I )
+      else if ( ppart.contains( eqIndex ) && ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityRightRule( up_pproof, eq, auxFormula, con ), up_I )
       else if ( npart.contains( p.mainIndices( 0 ) ) ) {
         ipl = Imp( p.endSequent( eqIndex ), up_I )
 
         val up_nproof1 = WeakeningLeftRule( up_nproof, p.endSequent( eqIndex ) )
-        val up_nproof2 = EqualityRightRule( up_nproof1, eq, auxFormula, pos )
+        val up_nproof2 = EqualityRightRule( up_nproof1, eq, auxFormula, con )
         val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eqIndex ), up_I )
 
         val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ) ), p.endSequent( eqIndex ), up_pproof, up_I )
@@ -334,27 +334,27 @@ object Interpolate {
         val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eqIndex ) )
 
         val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eqIndex ) )
-        val up_pproof2 = EqualityRightRule( up_pproof1, eq, auxFormula, pos )
+        val up_pproof2 = EqualityRightRule( up_pproof1, eq, auxFormula, con )
         val up_pproof3 = AndLeftRule( up_pproof2, p.endSequent( eqIndex ), up_I )
 
         ( up_nproof2, up_pproof3, ipl )
       } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
     }
 
-    case EqualityLeftRule( subProof, eq, aux, pos ) => {
+    case EqualityLeftRule( subProof, eq, aux, con ) => {
       val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
       val auxFormula = subProof.endSequent( aux )
       val eqIndex = p.occConnectors( 0 ).child( eq )
 
       var ipl = up_I
 
-      if ( npart.contains( eqIndex ) && npart.contains( p.mainIndices( 0 ) ) ) ( EqualityLeftRule( up_nproof, eq, auxFormula, pos ), up_pproof, up_I )
-      else if ( ppart.contains( eqIndex ) && ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityLeftRule( up_pproof, eq, auxFormula, pos ), up_I )
+      if ( npart.contains( eqIndex ) && npart.contains( p.mainIndices( 0 ) ) ) ( EqualityLeftRule( up_nproof, eq, auxFormula, con ), up_pproof, up_I )
+      else if ( ppart.contains( eqIndex ) && ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityLeftRule( up_pproof, eq, auxFormula, con ), up_I )
       else if ( npart.contains( p.mainIndices( 0 ) ) ) {
         ipl = Imp( p.endSequent( eqIndex ), up_I )
 
         val up_nproof1 = WeakeningLeftRule( up_nproof, p.endSequent( eqIndex ) )
-        val up_nproof2 = EqualityLeftRule( up_nproof1, eq, auxFormula, pos )
+        val up_nproof2 = EqualityLeftRule( up_nproof1, eq, auxFormula, con )
         val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eqIndex ), up_I )
 
         val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ) ), p.endSequent( eqIndex ), up_pproof, up_I )
@@ -368,7 +368,7 @@ object Interpolate {
         val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eqIndex ) )
 
         val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eqIndex ) )
-        val up_pproof2 = EqualityLeftRule( up_pproof1, eq, auxFormula, pos )
+        val up_pproof2 = EqualityLeftRule( up_pproof1, eq, auxFormula, con )
         val up_pproof3 = AndLeftRule( up_pproof2, p.endSequent( eqIndex ), up_I )
 
         ( up_nproof2, up_pproof3, ipl )
