@@ -14,6 +14,7 @@ object RobinsonToRal extends RobinsonToRal {
    */
   override def convert_formula( e: HOLFormula ): HOLFormula = e
   override def convert_substitution( s: Substitution ): Substitution = s
+  override def convert_context( con: Abs ) = con
 
 }
 
@@ -23,6 +24,8 @@ abstract class RobinsonToRal {
 
   /* convert substitution will be called on any substitution before translation */
   def convert_substitution( s: Substitution ): Substitution
+
+  def convert_context( con: Abs ): Abs
 
   def apply( p: ResolutionProof ): RalProof = p match {
     case _: InitialClause     => RalInitial( p.conclusion map convert_formula map { Seq[LambdaExpression]() -> _ } )
@@ -34,7 +37,7 @@ abstract class RobinsonToRal {
     case Paramodulation( p1, eq @ Suc( _ ), p2, lit, con, dir ) =>
       val p1New = apply( p1 )
       val p2New = apply( p2 )
-      RalPara( p1New, eq, p2New, lit, con, dir )
+      RalPara( p1New, eq, p2New, lit, convert_context( con ), dir )
   }
 }
 
@@ -60,6 +63,12 @@ class Robinson2RalWithAbstractions(
   )
 
   override def convert_formula( e: HOLFormula ): HOLFormula = bt( e, Some( To ) ).asInstanceOf[HOLFormula]
+
+  override def convert_context( con: Abs ) = {
+    val Abs( v, rest ) = con
+    val restNew = bt( rest, None )
+    toVNF( Abs( v, restNew ) ).asInstanceOf[Abs]
+  }
 
   override def convert_substitution( s: Substitution ): Substitution = {
     val mapping = s.map.toList.map {

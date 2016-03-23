@@ -130,9 +130,10 @@ object applySubstitution {
       val newF = substitution( p.mainFormula )
       ExSkRight( subProofNew, aux, betaNormalize( newF ), betaNormalize( substitution( term ) ) )
 
-    case Equality( subProof, eq, aux, flipped, pos ) =>
+    case Equality( subProof, eq, aux, flipped, con ) =>
       val subProofNew = apply( substitution, preserveEigenvariables )( subProof )
-      Equality( subProofNew, eq, aux, flipped, pos )
+      val conNew = substitution( con ).asInstanceOf[Abs]
+      Equality( subProofNew, eq, aux, flipped, conNew )
 
     case _ => throw new IllegalArgumentException( s"The rule ${proof.longName} is not handled at this time." )
   }

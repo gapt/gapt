@@ -1365,7 +1365,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param positions The positions of the term to be replaced within A.
+ * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
 case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
     extends EqualityRule {
@@ -1389,15 +1389,15 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
    * @param subProof The subproof.
    * @param eqFormula The index of the equation or the equation itself.
    * @param auxFormula The index of the auxiliary formula or the formula itself.
-   * @param pos The positions of the term to be replaced within A.
+   * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): EqualityLeftRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs ): EqualityLeftRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
 
-    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), con )
+    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), replacementContext )
 
   }
 
@@ -1472,7 +1472,7 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param positions The positions of the term to be replaced within A.
+ * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
 case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
     extends EqualityRule {
@@ -1496,15 +1496,15 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
    * @param subProof The subproof.
    * @param eqFormula The index of the equation or the equation itself.
    * @param auxFormula The index of the auxiliary formula or the formula itself.
-   * @param pos The positions of the term to be replaced within A.
+   * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): EqualityRightRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs ): EqualityRightRule = {
     val premise = subProof.endSequent
 
     val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
 
-    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), con )
+    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), replacementContext )
 
   }
 

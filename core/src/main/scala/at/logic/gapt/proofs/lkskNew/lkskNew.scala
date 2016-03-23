@@ -182,7 +182,10 @@ case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRigh
   lazy val ( what, by ) = subProof.formulas( eq ) match {
     case Eq( s_, t_ ) => if ( leftToRight ) s_ -> t_ else t_ -> s_
   }
-  require( BetaReduction.betaNormalize( App( con, what ) ) == subProof.formulas( aux ) )
+
+  val auxFormula_ = BetaReduction.betaNormalize( App( con, what ) )
+  val auxFormula = subProof.formulas( aux )
+  require( auxFormula_ == auxFormula )
   lazy val mainFormula = BetaReduction.betaNormalize( App( con, by ) ).asInstanceOf[HOLFormula]
 
   lazy val newFormulas = if ( aux isAnt ) mainFormula +: Sequent() else Sequent() :+ mainFormula
