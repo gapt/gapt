@@ -261,5 +261,13 @@ object Abs {
     variables.foldRight( expression )( Abs( _, _ ) )
 
   def unapply( a: Abs ) = Some( a.variable, a.term )
+
+  object Block {
+    def apply( vars: Seq[Var], expr: LambdaExpression ) = Abs( vars, expr )
+    def unapply( e: LambdaExpression ): Some[( List[Var], LambdaExpression )] = e match {
+      case Abs( v, e_ ) => e_ match { case Block( vs, e__ ) => Some( ( v :: vs, e__ ) ) }
+      case e            => Some( ( Nil, e ) )
+    }
+  }
 }
 

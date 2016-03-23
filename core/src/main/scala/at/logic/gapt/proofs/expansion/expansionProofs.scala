@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions }
 
 import scala.collection.mutable
 
@@ -53,17 +53,11 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val subProofs = expansionSequent.elements flatMap { _.subProofs } toSet
   val eigenVariables = for ( ETStrongQuantifier( _, ev, _ ) <- subProofs ) yield ev
 
-  val skolemDefs =
+  val skolemFunctions = SkolemFunctions(
     subProofs collect {
       case sk: ETSkolemQuantifier => sk.skolemConst -> sk.skolemDef
-    } groupBy { _._1 } map {
-      case ( c, ds ) =>
-        require(
-          ds.size == 1,
-          s"Inconsistent skolem symbol $c:\n${ds.map { _._2 }.mkString( "\n" )}"
-        )
-        c -> ds.head._2
     }
+  )
 
   val atomDefs =
     subProofs collect {
@@ -96,7 +90,7 @@ case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
   def deep = expansionWithCutAxiom.deep
   def shallow = expansionSequent map { _.shallow }
   def subProofs = expansionWithCutAxiom.subProofs
-  def skolemDefs = expansionWithCutAxiom.skolemDefs
+  def skolemFunctions = expansionWithCutAxiom.skolemFunctions
 
   val cuts = for {
     cutAxiomExpansion <- expansionWithCutAxiom.expansionSequent.antecedent

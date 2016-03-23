@@ -135,27 +135,25 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
         ( ExRight( uproof, aux, Ex( v, formula ), term ), table )
 
       case p @ ForallRightRule( subProof, aux: Suc, eigen, quant ) if !isCutAnc( p.mainIndices.head ) =>
-        val ( skvs, skd ) = skolemDefs( p.mainIndices.head )
-        val ( _, skd_ ) = destructSkolemDef( p, skolemDefs, labels )
+        val ( skvs, skd ) = destructSkolemDef( p, skolemDefs, labels )
         val ls = labels( p.mainIndices.head )
         val ( skolemSymbol, newTable ) = createSkolemSymbol( skolemSymbolFactory, hpaths( p.mainIndices( 0 ) ), contracted_symbols )
         val addVars = ( freeVariables( skd ) -- skvs ).toSeq
         val skolemConstant = Const( skolemSymbol, FunctionType( eigen.exptype, ( addVars ++ ls ).map( _.exptype ) ) )( addVars: _* )
         val subProof_ = Substitution( eigen -> skolemConstant( ls: _* ) )( subProof )
         val ( uproof, table ) = apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ),
-          p.getOccConnector.parent( skolemDefs ).updated( p.aux, skvs -> instantiate( skd_, skolemConstant( skvs: _* ) ) ) )( newTable )
+          p.getOccConnector.parent( skolemDefs ).updated( p.aux, skvs -> instantiate( skd, skolemConstant( skvs: _* ) ) ) )( newTable )
         ( AllSkRight( uproof, aux, p.mainFormula, skolemConstant, Abs( addVars ++ skvs, skd ) ), table )
 
       case p @ ExistsLeftRule( subProof, aux: Ant, eigen, quant ) if !isCutAnc( p.mainIndices.head ) =>
-        val ( skvs, skd ) = skolemDefs( p.mainIndices.head )
-        val ( _, skd_ ) = destructSkolemDef( p, skolemDefs, labels )
+        val ( skvs, skd ) = destructSkolemDef( p, skolemDefs, labels )
         val ls = labels( p.mainIndices.head )
         val ( skolemSymbol, newTable ) = createSkolemSymbol( skolemSymbolFactory, hpaths( p.mainIndices( 0 ) ), contracted_symbols )
         val addVars = ( freeVariables( skd ) -- skvs ).toSeq
         val skolemConstant = Const( skolemSymbol, FunctionType( eigen.exptype, ( addVars ++ ls ).map( _.exptype ) ) )( addVars: _* )
         val subProof_ = Substitution( eigen -> skolemConstant( ls: _* ) )( subProof )
         val ( uproof, table ) = apply( subProof_, p.getOccConnector.parent( labels ), p.getOccConnector.parent( isCutAnc ), extend_hpaths( p, hpaths ),
-          p.getOccConnector.parent( skolemDefs ).updated( p.aux, skvs -> instantiate( skd_, skolemConstant( skvs: _* ) ) ) )( newTable )
+          p.getOccConnector.parent( skolemDefs ).updated( p.aux, skvs -> instantiate( skd, skolemConstant( skvs: _* ) ) ) )( newTable )
         ( ExSkLeft( uproof, aux, p.mainFormula, skolemConstant, Abs( addVars ++ skvs, skd ) ), table )
 
       case p @ ForallRightRule( subProof, aux: Suc, eigen, quant ) if isCutAnc( p.mainIndices.head ) =>
