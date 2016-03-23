@@ -69,6 +69,7 @@
     {α}{{\ensuremath{\alpha}}}1%
     {β}{{\ensuremath{\beta}}}1%
     {τ}{{\ensuremath{\tau}}}1%
+    {λ}{{\ensuremath{\lambda}}}1%
     {∈}{{\ensuremath{\in}}}1%
   }
 
@@ -1039,10 +1040,10 @@ res30: at.logic.gapt.proofs.lk.solvePropositional.UnprovableOrLKProof =
 
 \subsection{Cut-elimination (Gentzen's method)}
 
-The GAPT-system contains an implementation of reductive cut-elimination
-\`{a} la Gentzen. It can be used as follows: first we load a proof $p$
-with cuts (as in Appendix~\ref{sec.fileio}).
-%
+The GAPT-system contains an implementation of Gentzen-style reductive
+cut-elimination.  It can be used as follows: first we load a proof $p$ with
+cuts:
+
 \begin{clilisting}
 gapt> val p = examples.fol1.p
 p: at.logic.gapt.proofs.lk.LKProof =
