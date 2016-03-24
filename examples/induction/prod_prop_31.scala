@@ -43,7 +43,7 @@ object prod_prop_31 extends Script {
 
   def mkList( i: Int ) = ( 0 until i ).foldRight[LambdaExpression]( nil ) { ( j, l ) => cons( as( j ), l ) }
 
-  val instances = 0 to 2 map mkList
+  val instances = 0 to 3 map mkList
 
   // Compute many-sorted expansion sequents
   val instanceProofs = instances map { inst =>
@@ -90,6 +90,7 @@ object prod_prop_31 extends Script {
     A( x ) -> G( x, w2 ), A( x ) -> z,
     G( cons( y, x ), w ) -> G( x, w2 ),
     G( cons( y, x ), w ) -> z,
+    G( x, w ) -> z,
     G( nil, w ) -> z
   )
 
@@ -107,11 +108,7 @@ object prod_prop_31 extends Script {
     weight = rule => expressionSize( rule.lhs === rule.rhs ) )
   println( s"Minimized recursion scheme:\n$rs\n" )
 
-  val logicalRS = encoding.decode( rs.copy( rules = rs.rules flatMap {
-    case r @ Rule( lhs, rhs ) if lhs == G( x, w ) =>
-      Seq( r( Substitution( x -> cons( y, x ) ) ), r( Substitution( x -> nil ) ) )
-    case r => Seq( r )
-  } ) )
+  val logicalRS = encoding decode rs
   println( s"Logical recursion scheme:\n$logicalRS\n" )
 
   val inst = mkList( 8 )
@@ -125,20 +122,19 @@ object prod_prop_31 extends Script {
   }
   println()
 
-  // FIXME: currently learns datatype from recursion scheme :-/
   val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
   println( s"QBUP:\n$qbup\n" )
 
   println( s"Canonical solution at G(${mkList( 3 )},w):" )
   val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
   val canSol = And( logicalRS generatedTerms G_( mkList( 3 ), w ) map { -_ } )
-  CNFp.toClauseList( canSol ) foreach println
+  CNFp.toClauseList( canSol ).map { _.map { _.toSigRelativeString } } foreach println
   println()
 
   val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( mkList( 3 ), w ), canSol )
   println()
 
   val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-  println( s"Solution: $solution\n" )
+  println( s"Solution: ${solution.toSigRelativeString}\n" )
   println( Z3 isValid skolemize( formula ) )
 }

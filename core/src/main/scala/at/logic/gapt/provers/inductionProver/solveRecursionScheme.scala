@@ -2,33 +2,53 @@ package at.logic.gapt.provers.inductionProver
 
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.reduceHolToFol
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.grammars.RecursionScheme
+import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.lk.skolemize
-import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
+import at.logic.gapt.proofs.{ Context, HOLClause }
+import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.veriT.VeriT
 
 import scala.collection.mutable
 
 object qbupForRecSchem {
-  def apply( recSchem: RecursionScheme ): HOLFormula = {
+  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): HOLFormula = {
     def convert( term: LambdaExpression ): HOLFormula = term match {
       case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
       case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
         HOLAtom( Var( s"X_$name", ty )( args: _* ) )
-      case formula => -formula
+      case Neg( formula ) => formula
+      case formula        => -formula
     }
 
-    existsclosure( And( recSchem.rules groupBy { _.lhs } map {
-      case ( lhs, rules ) =>
-        All.Block(
-          freeVariables( lhs ) toSeq,
-          And( rules map { _.rhs } map convert toSeq ) --> convert( lhs )
-        )
-    } toSeq ) )
+    val lhss = recSchem.nonTerminals flatMap { nt =>
+      val FunctionType( To, argTypes ) = nt.exptype
+      val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x$i", t )
+      recSchem.rulesFrom( nt ).flatMap {
+        case Rule( Apps( _, as ), _ ) => as.zipWithIndex.filterNot { _._1.isInstanceOf[Var] }.map { _._2 }
+      }.toSeq match {
+        case Seq() => Some( nt( args: _* ) )
+        case Seq( idx ) =>
+          val TBase( indTyName ) = argTypes( idx )
+          val Some( Context.InductiveType( indTy, ctrs ) ) = ctx.typeDef( indTyName )
+          for {
+            ctr <- ctrs
+            FunctionType( _, ctrArgTys ) = ctr.exptype
+          } yield nt( args.updated( idx, ctr(
+            ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"y$i", t ) ): _*
+          ) ): _* )
+      }
+    }
+
+    existsclosure( And( for ( lhs <- lhss ) yield All.Block(
+      freeVariables( lhs ) toSeq,
+      And( for {
+        Rule( lhs_, rhs ) <- recSchem.rules
+        subst <- syntacticMatching( lhs_, lhs )
+      } yield convert( subst( rhs ) ) )
+        --> convert( lhs )
+    ) ) )
   }
 }
 
