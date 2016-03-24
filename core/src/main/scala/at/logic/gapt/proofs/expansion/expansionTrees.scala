@@ -14,7 +14,7 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
 
   def apply( pos: HOLPosition ): Set[ExpansionTree] = getAtHOLPosition( this, pos )
 
-  override protected def dagLikeToString = false
+  override def toString = treeLike.toString
 }
 
 case class ETWeakening( formula: HOLFormula, polarity: Boolean ) extends ExpansionTree {

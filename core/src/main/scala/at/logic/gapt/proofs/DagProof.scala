@@ -27,95 +27,11 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
    */
   def longName: String = productPrefix
 
-  /** Operations that view the sub-proofs as a tree. */
-  object treeLike {
+  /** Operations that view the sub-proofs as a tree, see [[DagProof.TreeLikeOps]] for a list. */
+  def treeLike = new DagProof.TreeLikeOps( self )
 
-    /**
-     * Iterate over all sub-proofs including this in post-order.
-     */
-    def foreach( f: Proof => Unit ): Unit = {
-      for ( p <- immediateSubProofs ) p.treeLike foreach f
-      f( self )
-    }
-
-    /**
-     * A sequence of all sub-proofs including this in post-order.
-     */
-    def postOrder: Seq[Proof] = {
-      val subProofs = Seq.newBuilder[Proof]
-      for ( p <- treeLike ) subProofs += p
-      subProofs.result()
-    }
-
-    /**
-     * Number of sub-proofs including this, counting duplicates.
-     */
-    def size: BigInt = {
-      val memo = mutable.Map[Proof, BigInt]()
-      def f( subProof: Proof ): BigInt =
-        memo.getOrElseUpdate(
-          subProof,
-          subProof.immediateSubProofs.map( f ).sum + 1
-        )
-      f( self )
-    }
-  }
-
-  /** Operations that view the sub-proofs as a DAG, which ignore duplicate sub-proofs. */
-  object dagLike {
-
-    /**
-     * Iterate over all sub-proofs including this in post-order, ignoring duplicates.
-     * @return Set of all visited sub-proofs including this.
-     */
-    def foreach( f: Proof => Unit ): Set[Proof] = {
-      val seen = mutable.Set[Proof]()
-
-      def traverse( p: Proof ): Unit =
-        if ( !( seen contains p ) ) {
-          p.immediateSubProofs foreach traverse
-          seen += p
-          f( p )
-        }
-
-      traverse( self )
-      seen.toSet
-    }
-
-    /**
-     * A sequence of all sub-proofs including this in post-order, ignoring duplicates.
-     */
-    def postOrder: Seq[Proof] = {
-      val subProofs = Seq.newBuilder[Proof]
-      for ( p <- dagLike ) subProofs += p
-      subProofs.result()
-    }
-
-    /**
-     * A sequence of all sub-proofs including this in post-order, ignoring duplicates.
-     */
-    def breadthFirst: Seq[Proof] = {
-      val seen = mutable.Set[Proof]()
-      val result = Seq.newBuilder[Proof]
-      val queue = mutable.Queue[Proof]( self )
-
-      while ( queue.nonEmpty ) {
-        val next = queue.dequeue()
-        if ( !( seen contains next ) ) {
-          seen += next
-          result += next
-          queue ++= next.immediateSubProofs
-        }
-      }
-
-      result.result()
-    }
-
-    /**
-     * Number of sub-proofs including this, not counting duplicates.
-     */
-    def size: Int = subProofs.size
-  }
+  /** Operations that view the sub-proofs as a DAG, which ignore duplicate sub-proofs, see [[DagProof.DagLikeOps]] for a list. */
+  def dagLike = new DagProof.DagLikeOps( self )
 
   /**
    * Set of all (transitive) sub-proofs including this.
@@ -137,31 +53,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
   protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$longName(${productIterator.map { param => subProofLabels.getOrElse( param, param.toString ) }.mkString( ", " )})"
 
-  protected def dagLikeToString: Boolean = true
-  override def toString: String =
-    if ( dagLikeToString ) {
-      val steps = dagLike.postOrder.zipWithIndex map { case ( p, i ) => ( p, s"p${i + 1}" ) }
-      val subProofLabels: Map[Any, String] = steps.toMap
-
-      val output = new StringBuilder()
-      steps.reverse foreach {
-        case ( step, number ) =>
-          output ++= s"[$number] ${step.stepString( subProofLabels )}\n"
-      }
-      output.result()
-    } else {
-      val output = Seq.newBuilder[String]
-      var number = 0
-      def write( step: Proof ): ( Any, String ) = {
-        val subProofLabels = step.immediateSubProofs.map( write ).toMap
-        number += 1
-        val label = s"p$number"
-        output += s"[$label] ${step.stepString( subProofLabels )}\n"
-        step -> label
-      }
-      write( this )
-      output.result().reverse.mkString
-    }
+  override def toString: String = dagLike.toString
 
   override val hashCode = ScalaRunTime._hashCode( this )
 
@@ -201,4 +93,120 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
     }
   }
 
+}
+
+object DagProof {
+  class TreeLikeOps[Proof <: DagProof[Proof]]( val self: Proof ) extends AnyVal {
+
+    /**
+     * Iterate over all sub-proofs including this in post-order.
+     */
+    def foreach( f: Proof => Unit ): Unit = {
+      for ( p <- self.immediateSubProofs ) p.treeLike foreach f
+      f( self )
+    }
+
+    /**
+     * A sequence of all sub-proofs including this in post-order.
+     */
+    def postOrder: Seq[Proof] = {
+      val subProofs = Seq.newBuilder[Proof]
+      for ( p <- self.treeLike ) subProofs += p
+      subProofs.result()
+    }
+
+    /**
+     * Number of sub-proofs including this, counting duplicates.
+     */
+    def size: BigInt = {
+      val memo = mutable.Map[Proof, BigInt]()
+      def f( subProof: Proof ): BigInt =
+        memo.getOrElseUpdate(
+          subProof,
+          subProof.immediateSubProofs.map( f ).sum + 1
+        )
+      f( self )
+    }
+
+    override def toString: String = {
+      val output = Seq.newBuilder[String]
+      var number = 0
+      def write( step: Proof ): ( Any, String ) = {
+        val subProofLabels = step.immediateSubProofs.map( write ).toMap
+        number += 1
+        val label = s"p$number"
+        output += s"[$label] ${step.stepString( subProofLabels )}\n"
+        step -> label
+      }
+      write( self )
+      output.result().reverse.mkString
+    }
+  }
+
+  class DagLikeOps[Proof <: DagProof[Proof]]( val self: Proof ) extends AnyVal {
+
+    /**
+     * Iterate over all sub-proofs including this in post-order, ignoring duplicates.
+     * @return Set of all visited sub-proofs including this.
+     */
+    def foreach( f: Proof => Unit ): Set[Proof] = {
+      val seen = mutable.Set[Proof]()
+
+      def traverse( p: Proof ): Unit =
+        if ( !( seen contains p ) ) {
+          p.immediateSubProofs foreach traverse
+          seen += p
+          f( p )
+        }
+
+      traverse( self )
+      seen.toSet
+    }
+
+    /**
+     * A sequence of all sub-proofs including this in post-order, ignoring duplicates.
+     */
+    def postOrder: Seq[Proof] = {
+      val subProofs = Seq.newBuilder[Proof]
+      for ( p <- self.dagLike ) subProofs += p
+      subProofs.result()
+    }
+
+    /**
+     * A sequence of all sub-proofs including this in post-order, ignoring duplicates.
+     */
+    def breadthFirst: Seq[Proof] = {
+      val seen = mutable.Set[Proof]()
+      val result = Seq.newBuilder[Proof]
+      val queue = mutable.Queue[Proof]( self )
+
+      while ( queue.nonEmpty ) {
+        val next = queue.dequeue()
+        if ( !( seen contains next ) ) {
+          seen += next
+          result += next
+          queue ++= next.immediateSubProofs
+        }
+      }
+
+      result.result()
+    }
+
+    /**
+     * Number of sub-proofs including this, not counting duplicates.
+     */
+    def size: Int = self.subProofs.size
+
+    override def toString = {
+      val steps = self.dagLike.postOrder.zipWithIndex map { case ( p, i ) => ( p, s"p${i + 1}" ) }
+      val subProofLabels: Map[Any, String] = steps.toMap
+
+      val output = new StringBuilder()
+      steps.reverse foreach {
+        case ( step, number ) =>
+          output ++= s"[$number] ${step.stepString( subProofLabels )}\n"
+      }
+      output.result()
+    }
+  }
 }
