@@ -167,11 +167,13 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         val q2 = f( subProof2, subProofVars )
         Resolution( q1, idx1, q2, idx2 )
 
-      case Paramodulation( subProof1, eq, subProof2, lit, pos, ltr ) =>
+      case Paramodulation( subProof1, eq, subProof2, lit, Abs( v: FOLVar, con: FOLAtom ), ltr ) =>
         val subProofVars = infer( subProof1.conclusion( eq ).asInstanceOf[FOLAtom], vars )
         val q1 = f( subProof1, subProofVars )
         val q2 = f( subProof2, subProofVars )
-        Paramodulation( q1, eq, q2, lit, pos, ltr )
+        val conVars = infer( con, vars )
+        val newCon = Abs( conVars( v ), back( con, conVars ) )
+        Paramodulation( q1, eq, q2, lit, newCon, ltr )
 
       case Splitting( p0, c1, c2, p1, p2 ) =>
         val subProofVars = infer( p0.conclusion.map { _.asInstanceOf[FOLAtom] }, vars )
