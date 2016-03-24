@@ -399,25 +399,3 @@ case class EqualityTactic( equalityLabel: String, formulaLabel: String, leftToRi
 
   def to( targetFormula: HOLFormula ) = new EqualityTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
-
-/**
- * Applies a definition in the antecedent of a goal.
- * @param applyToLabel The label of the defined formula to be expanded.
- * @param replacement The formula to be inserted.
- */
-case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
-  def apply( goal: OpenAssumption ) =
-    for ( ( label, formula, idx: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
-      yield () -> DefinitionLeftRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
-}
-
-/**
- * Applies a definition in the succedent of a goal.
- * @param applyToLabel The label of the defined formula to be expanded.
- * @param replacement The formula to be inserted.
- */
-case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
-  def apply( goal: OpenAssumption ) =
-    for ( ( label, formula, idx: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
-      yield () -> DefinitionRightRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
-}
