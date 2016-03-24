@@ -13,12 +13,4 @@ object lkTests {
       eql( "eq2", "b" ).fromRightToLeft
       trivial
     }
-
-  val defLemma = Lemma(
-    Sequent( Seq( "c" -> parseFormula( "P(b) | Q(b)" ), "a" -> parseFormula( "P(u) -> Q(u)" ) ), Seq( "b" -> parseFormula( "P(x) & Q(x)" ) ) )
-  ) {
-      defL( "a", parseFormula( "P(a) -> Q(a)" ) )
-      defR( "b", parseFormula( "P(b) | Q(b)" ) )
-      trivial
-    }
 }

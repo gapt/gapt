@@ -82,10 +82,6 @@ package object gaptic {
 
   def eql( eq: String, fm: String ) = EqualityTactic( eq, fm )
 
-  def defL( l: String, r: HOLFormula ) = DefinitionLeftTactic( l, r )
-
-  def defR( l: String, r: HOLFormula ) = DefinitionRightTactic( l, r )
-
   def induction( implicit ctx: Context ) = InductionTactic( UniqueFormula )
   def induction( label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ) )
 
