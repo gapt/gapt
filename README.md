@@ -12,7 +12,8 @@ proofs, GAPT concentrates on the transformation and further processing of
 proofs.
 
 Website: https://logic.at/gapt
-Email: [mailing list](https://groups.google.com/forum/#!forum/gapt-group)
+
+Contact: [mailing list](https://groups.google.com/forum/#!forum/gapt-group)
 
 ### Example
 
