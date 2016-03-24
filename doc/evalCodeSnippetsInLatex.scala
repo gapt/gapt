@@ -8,9 +8,7 @@ import scala.sys.process
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter._
 
-object evalCodeSnippetsInLatex extends App {
-
-  val Array( inFile ) = args
+object evalCodeSnippetsInLatex {
 
   def mkInterp(): ILoop = {
     val settings = new Settings
@@ -42,12 +40,8 @@ object evalCodeSnippetsInLatex extends App {
     repl
   }
 
-  var interp = mkInterp()
-  var inCliListing = false
-  var isSkipped = false
-
   class ResultHolder( var result: Any )
-  def evalCodeInInterp( code: String ): Any = {
+  def evalCodeInInterp( code: String, interp: ILoop ): Any = {
     val resultHolder = new ResultHolder( null )
     val varName = "$evalCodeSnippetsInLatex_result"
     interp beSilentDuring {
@@ -62,39 +56,44 @@ object evalCodeSnippetsInLatex extends App {
   val endCliListing = """\end{clilisting}"""
   val assignment = """val\s+\w+\s+=.*""".r
 
-  for ( line <- Source.fromFile( inFile ).getLines() )
-    if ( inCliListing && isSkipped ) {
-      println( line )
-      line match {
-        case `endCliListing` =>
-          inCliListing = false
+  def processCliListing( listing: Seq[String], condition: String, interp: ILoop ): Unit = {
+    if ( condition == null ) println( s"\\begin{clilisting}" ) else println( s"\\begin{clilisting}[$condition]" )
+    if ( condition != null && evalCodeInInterp( condition, interp ) != true ) {
+      process.stderr println s"Skipping snippet because condition failed: $condition"
+
+      println( listing mkString )
+      listing foreach {
         case cliInputLine( assignment() ) =>
         case cliInputLine( _ ) =>
           // increment res123 counter
           interp beSilentDuring { interp command "true" }
         case _ =>
       }
-    } else if ( inCliListing && !isSkipped ) {
-      line match {
-        case `endCliListing` =>
-          println( line )
-          inCliListing = false
-        case line @ cliInputLine( command ) =>
+    } else {
+      listing foreach {
+        case cliInputLine( command ) =>
           println( s"gapt> $command" )
           interp.command( command )
           println()
         case _ =>
       }
-    } else {
-      line match {
-        case beginCliListing( condition ) =>
-          println( line )
-          inCliListing = true
-          isSkipped = condition != null && evalCodeInInterp( condition ) != true
-          if ( isSkipped )
-            process.stderr println s"Skipping snippet because condition failed: $condition"
-        case _ => println( line )
-      }
     }
+    println( s"\\end{clilisting}" )
+  }
+
+  def processLines( lines: Stream[String], interp: ILoop ): Unit = lines match {
+    case beginCliListing( condition ) #:: rest =>
+      processCliListing( rest takeWhile { _ != endCliListing }, condition, interp )
+      processLines( rest dropWhile { _ != endCliListing } drop 1, interp )
+    case line #:: rest =>
+      println( line )
+      processLines( rest, interp )
+    case Stream() =>
+  }
+
+  def main( args: Array[String] ) = {
+    val Array( inFile ) = args
+    processLines( Source.fromFile( inFile ).getLines().toStream, mkInterp() )
+  }
 
 }
