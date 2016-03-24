@@ -72,8 +72,12 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
         c -> ds.head._2
     }
 
+  /**
+   * Contains the pair (x, y) iff x occurs as a selected term in any sort of quantifier node
+   * below the strong quantifier node introducing y.
+   */
   val dependencyRelation = for {
-    ETWeakQuantifier( _, instances ) <- subProofs
+    ETQuantifier( _, instances ) <- subProofs
     ( term, child ) <- instances
     ETStrongQuantifier( _, ev, _ ) <- child.subProofs
     evInTerm <- eigenVariables intersect freeVariables( term )

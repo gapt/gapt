@@ -110,7 +110,15 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   def deep = child1.deep --> child2.deep
 }
 
-case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpression, ExpansionTree] ) extends ExpansionTree {
+trait ETQuantifier extends ExpansionTree {
+  def instances: Traversable[( LambdaExpression, ExpansionTree )]
+}
+object ETQuantifier {
+  def unapply( et: ETQuantifier ): Some[( HOLFormula, Traversable[( LambdaExpression, ExpansionTree )] )] =
+    Some( et.shallow -> et.instances )
+}
+
+case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpression, ExpansionTree] ) extends ETQuantifier {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( true, x, t )
     case All( x, t ) => ( false, x, t )
@@ -172,7 +180,7 @@ object ETWeakQuantifierBlock {
   }
 }
 
-case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: ExpansionTree ) extends UnaryExpansionTree {
+case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: ExpansionTree ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( false, x, t )
     case All( x, t ) => ( true, x, t )
@@ -180,6 +188,8 @@ case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: E
 
   require( child.polarity == polarity )
   require( child.shallow == Substitution( boundVar -> eigenVariable )( qfFormula ) )
+
+  def instances = Some( eigenVariable -> child )
 
   def deep = child.deep
 }
@@ -189,7 +199,7 @@ case class ETSkolemQuantifier(
     skolemTerm: LambdaExpression,
     skolemDef:  LambdaExpression,
     child:      ExpansionTree
-) extends UnaryExpansionTree {
+) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( false, x, t )
     case All( x, t ) => ( true, x, t )
@@ -200,6 +210,8 @@ case class ETSkolemQuantifier(
 
   require( child.polarity == polarity )
   require( child.shallow == Substitution( boundVar -> skolemTerm )( qfFormula ) )
+
+  def instances = Some( skolemTerm -> child )
 
   def deep = child.deep
 }
