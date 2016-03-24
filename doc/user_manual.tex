@@ -527,10 +527,25 @@ You can generate instances of these proof sequences by entering, e.g.,
 \begin{clilisting}
 gapt> val p = SumExampleProof( 5 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0): o :- P(0, s(s(s(s(s(0)))))): o    (ContractionLeftRule(p24, Ant(0), Ant(1)))
-[p24] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0): o :- P(0, s(s(s(s(s(0)))))): o    (ForallLeftRule(p23, Ant(0), ∀y (P(s(x), y) ⊃ P(x, s(y))), 0, x))
-[p23] ∀y (P(s(0), y) ⊃ P(0, s(y))), ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0): o :- P(0, s(s(s(s(s(0)))))): o    (ForallLeftRule(p22, Ant(0), P(s(0), y) ⊃ P(0, s(y)), s(s(s(s(0)))), y))
-[p22] P(s(0), s(s(s(s(0))))) ⊃ P(0, s(s(s(s(s(0)))))), ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0): o :- P(0, s(s(s(s(s(0)))))): o    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
+[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+P(s(s(s(s(s(0))))), 0): o
+:-
+P(0, s(s(s(s(s(0)))))): o    (ContractionLeftRule(p24, Ant(0), Ant(1)))
+[p24] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+P(s(s(s(s(s(0))))), 0): o
+:-
+P(0, s(s(s(s(s(0)))))): o    (ForallLeftRule(p23, Ant(0), ∀y (P(s(x), y) ⊃ P(x, s(y))), 0, x))
+[p23] ∀y (P(s(0), y) ⊃ P(0, s(y))),
+∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+P(s(s(s(s(s(0))))), 0): o
+:-
+P(0, s(s(s(s(s(0)))))): o    (ForallLeftRule(p22, Ant(0), P(s(0), y) ⊃ P(0, s(y)), s(s(s(s(0)))), y))
+[p22] P(s(0), s(s(s(s(0))))) ⊃ P(0, s(s(s(s(s(0)))))),
+∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+P(s(s(s(s(s(0))))), 0): o
+:-
+P(0, s(s(s(s(s(0)))))): o    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
 [p21] P(0, s(s(s(s(s(0)))))): o :- P(0...
 \end{clilisting}
 
@@ -1174,10 +1189,26 @@ For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val p = SquareEdgesExampleProof( 4 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p39] ∀x ∀y (P(x, y) ⊃ P(x, s(y))), ∀x ∀y (P(x, y) ⊃ P(s(x), y)), P(0, 0): o :- P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ContractionLeftRule(p38, Ant(0), Ant(1)))
-[p38] ∀x ∀y (P(x, y) ⊃ P(x, s(y))), ∀x ∀y (P(x, y) ⊃ P(x, s(y))), ∀x ∀y (P(x, y) ⊃ P(s(x), y)), P(0, 0): o :- P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ForallLeftRule(p37, Ant(0), ∀y (P(x, y) ⊃ P(x, s(y))), s(s(s(s(0)))), x))
-[p37] ∀y (P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y))), ∀x ∀y (P(x, y) ⊃ P(x, s(y))), ∀x ∀y (P(x, y) ⊃ P(s(x), y)), P(0, 0): o :- P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ForallLeftRule(p36, Ant(0), P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y)), s(s(s(0))), y))
-[p36] P(s(s(s(s(0)))), s(s(s(0)))) ⊃ P(s(s(s(s(0)))), s(s(s(s(0))))), ∀x ∀y (P(x, y) ⊃ P(x, s(y))), ∀x ∀y (P(x, y) ⊃...
+[p39] ∀x ∀y (P(x, y) ⊃ P(x, s(y))),
+∀x ∀y (P(x, y) ⊃ P(s(x), y)),
+P(0, 0): o
+:-
+P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ContractionLeftRule(p38, Ant(0), Ant(1)))
+[p38] ∀x ∀y (P(x, y) ⊃ P(x, s(y))),
+∀x ∀y (P(x, y) ⊃ P(x, s(y))),
+∀x ∀y (P(x, y) ⊃ P(s(x), y)),
+P(0, 0): o
+:-
+P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ForallLeftRule(p37, Ant(0), ∀y (P(x, y) ⊃ P(x, s(y))), s(s(s(s(0)))), x))
+[p37] ∀y (P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y))),
+∀x ∀y (P(x, y) ⊃ P(x, s(y))),
+∀x ∀y (P(x, y) ⊃ P(s(x), y)),
+P(0, 0): o
+:-
+P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ForallLeftRule(p36, Ant(0), P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y)), s(s(s(0))), y))
+[p36] P(s(s(s(s(0)))), s(s(s(0)))) ⊃ P(s(s(s(s(0)))), s(s(s(s(0))))),
+∀x ∀y (P(x, y) ⊃ P(x, s(y))),
+∀x ∀y (P(x, y) ⊃...
 gapt> val E = LKToExpansionProof( p )
 E: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
 [p14] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ P(x, s(y))), s(s(s(s(0)))), p13)
@@ -1247,9 +1278,24 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p406] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)), ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)), ∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1) :- ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p405, Suc(1), Suc(0)))
-[p405] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)), ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)), ∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1) :- ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)), ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
-[p404] ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)), ∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1), ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)), ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)) :- ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)), ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(...
+[p406] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
+∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1)
+:-
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p405, Suc(1), Suc(0)))
+[p405] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
+∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1)
+:-
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
+[p404] ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
+∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1),
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
+:-
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
@@ -1285,11 +1331,20 @@ Take an example proof:
 gapt> val p = LinearExampleProof(9)
 p: at.logic.gapt.proofs.lk.LKProof =
 [p36] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p35, Ant(0), Ant(1)))
-[p35] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
-[p34] P(s(s(s(s(s(s(s(s(0))))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))), ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
+[p35] ∀x (P(x) ⊃ P(s(x))),
+∀x (P(x) ⊃ P(s(x))),
+P(0): o
+:-
+P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
+[p34] P(s(s(s(s(s(s(s(s(0))))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
+∀x (P(x) ⊃ P(s(x))),
+P(0): o
+:-
+P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 [p33] P(s(s(s(s(s(s(s(s(s(0)))))))))): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (LogicalAxiom(P(s(s(s(s(s(s(s(s(s(0)))))))))): o))
 [p32] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(0))))))))): o    (ContractionLeftRule(p31, Ant(0), Ant(1)))
-[p31] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P...
+[p31] ∀x (P(x) ⊃ P(s(x))),
+∀x (P(x) ⊃ P...
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
@@ -1361,9 +1416,21 @@ Quantifier inferences in the proof with cut(s): 7
 q: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (CutRule(p14, Suc(0), p26, Ant(0)))
 [p26] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p25, Ant(1), Ant(0)))
-[p25] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p24, Ant(1), Ant(0)))
-[p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ForallLeftRule(p23, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
-[p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0): o, P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0))))...
+[p25] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+P(0): o
+:-
+P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ContractionLeftRule(p24, Ant(1), Ant(0)))
+[p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+P(0): o
+:-
+P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ForallLeftRule(p23, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
+[p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+P(0): o,
+P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0))))...
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
