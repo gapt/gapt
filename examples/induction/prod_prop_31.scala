@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemi
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem }
+import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem, simplePi1RecSchemTempl }
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
 
@@ -79,20 +79,12 @@ object prod_prop_31 extends Script {
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, x ) ) )
 
   val A = Const( "A", list -> encoding.instanceTermType )
-  val G = Const( "G", list -> ( list -> encoding.instanceTermType ) )
-  val y = Var( "y", sk_a )
   val w = Var( "w", list )
-  val w2 = Var( "w2", list )
-  val z = Var( "z", encoding.instanceTermType )
 
-  val template = RecSchemTemplate(
-    A,
-    A( x ) -> G( x, w2 ), A( x ) -> z,
-    G( cons( y, x ), w ) -> G( x, w2 ),
-    G( cons( y, x ), w ) -> z,
-    G( x, w ) -> z,
-    G( nil, w ) -> z
-  )
+  val template = simplePi1RecSchemTempl( A( x ), Seq( list ) )
+  println( "Recursion scheme template:" )
+  template.template.toSeq.sortBy { _._1.toString } foreach println
+  println()
 
   val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst ) -> term
   val stableRS = template.stableRecSchem( targets.toSet )

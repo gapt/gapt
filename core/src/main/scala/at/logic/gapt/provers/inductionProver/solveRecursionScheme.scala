@@ -3,14 +3,57 @@ package at.logic.gapt.provers.inductionProver
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.grammars.{ RecursionScheme, Rule }
+import at.logic.gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
 import at.logic.gapt.proofs.lk.skolemize
-import at.logic.gapt.proofs.{ Context, HOLClause }
+import at.logic.gapt.proofs.{ Context, FiniteContext, HOLClause }
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.veriT.VeriT
 
 import scala.collection.mutable
+
+object simplePi1RecSchemTempl {
+  def apply( axiom: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: FiniteContext ): RecSchemTemplate = {
+    val nameGen = rename.awayFrom( ctx.constants )
+
+    val Apps( axiomNT: Const, axiomArgs ) = axiom
+    val FunctionType( instTT, axiomArgTys ) = axiomNT.exptype
+    // TODO: handle strong quantifiers in conclusion correctly
+    //    val axiomArgs = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"x_$i", t )
+
+    val indLemmaNT = Const( nameGen fresh "G", FunctionType( instTT, axiomArgTys ++ pi1QTys ) )
+    val indLemmaRhsArgs = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"y_$i", t )
+
+    val lhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
+    val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )
+
+    val indLemmaRules = axiomArgTys.zipWithIndex.flatMap {
+      case ( indLemmaArgTy: TBase, indLemmaArgIdx ) =>
+        ctx.typeDef( indLemmaArgTy.name ).get match {
+          case Context.Sort( _ ) => Seq()
+          case Context.InductiveType( indTy, ctrs ) =>
+            ctrs flatMap { ctr =>
+              val FunctionType( _, ctrArgTys ) = ctr.exptype
+              val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
+              val lhs = indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctr( ctrArgs: _* ) )( axiomArgs.drop( indLemmaArgIdx + 1 ): _* )( lhsPi1QArgs: _* )
+              val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
+                case ( ctrArgTy, ctrArgIdx ) =>
+                  lhs -> indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctrArgs( ctrArgIdx ) )( indLemmaRhsArgs.drop( indLemmaArgIdx + 1 ): _* )( rhsPi1QArgs: _* )
+              }
+              recRules :+ ( lhs -> Var( "u", instTT ) )
+            }
+        }
+    }
+
+    RecSchemTemplate(
+      axiomNT,
+      indLemmaRules.toSet
+        + ( axiomNT( axiomArgs: _* ) -> indLemmaNT( axiomArgs: _* )( rhsPi1QArgs: _* ) )
+        + ( axiomNT( axiomArgs: _* ) -> Var( "u", instTT ) )
+    //        + ( indLemmaNT( axiomArgs: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) )
+    )
+  }
+}
 
 object qbupForRecSchem {
   def apply( recSchem: RecursionScheme )( implicit ctx: Context ): HOLFormula = {
