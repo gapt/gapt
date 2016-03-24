@@ -61,7 +61,8 @@ object evalCodeSnippetsInLatex {
     if ( condition != null && evalCodeInInterp( condition, interp ) != true ) {
       process.stderr println s"Skipping snippet because condition failed: $condition"
 
-      println( listing mkString )
+      listing foreach println
+
       listing foreach {
         case cliInputLine( assignment() ) =>
         case cliInputLine( _ ) =>
