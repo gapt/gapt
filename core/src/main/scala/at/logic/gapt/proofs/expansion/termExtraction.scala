@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.grammars.{ Rule, RecursionScheme }
+import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, LKProof }
 
@@ -81,6 +81,7 @@ object groundTerms {
  * capture the instances used in the instance proofs--i.e. not alpha.
  */
 class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTermType: Ty ) {
+  private val nameGen = rename.awayFrom( constants( endSequent ) )
 
   endSequent.elements foreach { formula =>
     require( isInVNF( formula ), s"$formula is not in variable normal form" )
@@ -116,9 +117,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   /**
    * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
    */
-  protected def mkSym( idx: SequentIndex ) = idx match {
-    case Ant( i ) => s"-{${endSequent( idx )}}_a$i"
-    case Suc( i ) => s"{${endSequent( idx )}}_s$i"
+  protected def mkSym( idx: SequentIndex ) = {
+    val idxPart = idx match { case Ant( i ) => s"a$i" case Suc( i ) => s"s$i" }
+    nameGen fresh s"$idxPart:${matrices( idx ).toString.replace( " ", "" ).take( 30 )}"
   }
 
   /**

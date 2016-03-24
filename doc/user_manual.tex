@@ -1301,21 +1301,21 @@ Size of term set: 11
 Smallest grammar of size 8:
 Non-terminal vectors: (x0), (x1)
 Terminals:
-  '-{P(0): o}_a1'
-  '-{∀x (P(x) ⊃ P(s(x)))}_a0':i>i
   0
+  'a0:P(x)⊃P(s(x))':i>i
+  'a1:P(0):o'
   s:i>i
-  '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+  's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
-x0 → '-{P(0): o}_a1'
+x0 → 'a0:P(x)⊃P(s(x))'(s(s(x1)))
 
-x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+x0 → 'a0:P(x)⊃P(s(x))'(s(x1))
 
-x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+x0 → 'a0:P(x)⊃P(s(x))'(x1)
 
-x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+x0 → 'a1:P(0):o'
 
-x0 → '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+x0 → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
 x1 → 0
 
@@ -1328,21 +1328,21 @@ CNF of minimized cut-formula number 0:
 Beautified grammar of size 8:
 Non-terminal vectors: (x), (x1)
 Terminals:
-  '-{P(0): o}_a1'
-  '-{∀x (P(x) ⊃ P(s(x)))}_a0':i>i
   0
+  'a0:P(x)⊃P(s(x))':i>i
+  'a1:P(0):o'
   s:i>i
-  '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+  's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
-x → '-{P(0): o}_a1'
+x → 'a0:P(x)⊃P(s(x))'(s(s(x1)))
 
-x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+x → 'a0:P(x)⊃P(s(x))'(s(x1))
 
-x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+x → 'a0:P(x)⊃P(s(x))'(x1)
 
-x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+x → 'a1:P(0):o'
 
-x → '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+x → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
 x1 → 0
 
