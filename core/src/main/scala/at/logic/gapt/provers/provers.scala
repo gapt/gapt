@@ -47,10 +47,6 @@ trait Prover {
    */
   def getLKProof( seq: HOLSequent ): Option[LKProof]
 
-  @deprecated( "Use getExpansionProof instead", "2016-01-13" )
-  def getExpansionSequent( seq: HOLSequent ): Option[ExpansionSequent] =
-    getExpansionProof( seq ) map { _.expansionSequent }
-
   def getExpansionProof( formula: HOLFormula ): Option[ExpansionProof] =
     getExpansionProof( Sequent() :+ formula )
 
