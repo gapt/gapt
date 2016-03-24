@@ -339,7 +339,10 @@ class EscargotLoop extends Logger {
       pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
       p1__ = Instance( c1.proof, mgu )
       p2__ = Instance( p2_, mgu )
-    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, pos2_.distinct, leftToRight ) )
+      ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
+      context = replacementContext( s.exptype, atom, pos2_.distinct, t, s )
+
+    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, context, leftToRight ) )
   }
 
   def unitRewriting( given: Cls ): Unit = {
@@ -374,7 +377,7 @@ class EscargotLoop extends Logger {
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
-            p, i, pos.toSeq, leftToRight )
+            p, i, replacementContext( t_.exptype, p.conclusion( i ), pos.toSeq ), leftToRight )
           didRewrite = true
         }
       }
@@ -454,7 +457,7 @@ object Escargot extends Escargot( equality = true, propositional = false ) {
     val eqs = atoms collect { case c @ EqC( _ ) => c }
     val functions = for ( c <- consts; FunctionType( to, _ ) = c.exptype if to != To ) yield c
 
-    val precedence = functions.toSeq.sortBy { arity( _ ) } ++ eqs ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) }
+    val precedence = functions.toSeq.sortBy { arity( _ ) } ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) } ++ eqs
 
     LPO( precedence, if ( boolOnTermLevel ) Set() else ( types - To ) map { ( _, To ) } )
   }

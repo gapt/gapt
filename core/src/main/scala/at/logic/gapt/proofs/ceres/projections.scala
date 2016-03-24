@@ -88,8 +88,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
         case DefinitionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
         case DefinitionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
-        case EqualityLeftRule( p1, e, a, pos )      => handleEqRule( proof, p1, e, a, pos, EqualityLeftRule.apply, pred )
-        case EqualityRightRule( p1, e, a, pos )     => handleEqRule( proof, p1, e, a, pos, EqualityRightRule.apply, pred )
+        case EqualityLeftRule( p1, e, a, con )      => handleEqRule( proof, p1, e, a, con, EqualityLeftRule.apply, pred )
+        case EqualityRightRule( p1, e, a, con )     => handleEqRule( proof, p1, e, a, con, EqualityRightRule.apply, pred )
         case rule @ CutRule( p1, a1, p2, a2 ) =>
           if ( pred( rule.cutFormula ) ) {
             /* this cut is taken into account */
@@ -249,7 +249,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
   }
 
   def handleEqRule( proof: LKProof, p: LKProof, e: SequentIndex, a: SequentIndex,
-                    pos: Seq[HOLPosition], constructor: ( LKProof, SequentIndex, SequentIndex, Seq[HOLPosition] ) => LKProof,
+                    con: Abs, constructor: ( LKProof, SequentIndex, SequentIndex, Abs ) => LKProof,
                     pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
     val s1 = apply( p, new_cut_ancs, pred )
@@ -296,7 +296,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
           val weq = wproof.mainIndices( 0 )
           require( waux != weq, "Aux formulas must be different!" )
           //and apply it
-          val rule = constructor( wproof, weq, waux, pos )
+          val rule = constructor( wproof, weq, waux, con )
           rule
         } )
       case ( false, false ) =>
@@ -304,7 +304,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
         s1 map ( pm => {
           //println( p.endSequent( e ) )
           val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( e, a ) )
-          constructor( pm, a1_, a2_, pos )
+          constructor( pm, a1_, a2_, con )
         } )
 
     }

@@ -228,8 +228,8 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       val sRight = generateSuccessorTrees( right )
       sLeft.map( t => ETImp( t, right ) ) ++ sRight.map( t => ETImp( left, t ) )
 
-    case ETStrongQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( ETStrongQuantifier.apply( f, vars, _ ) )
-    case ETSkolemQuantifier( f, vars, sel ) => generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, vars, _ ) )
+    case ETStrongQuantifier( f, vars, sel )   => generateSuccessorTrees( sel ).map( ETStrongQuantifier.apply( f, vars, _ ) )
+    case ETSkolemQuantifier( f, st, sf, sel ) => generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, st, sf, _ ) )
 
     case tree @ ETWeakQuantifier( f, inst ) =>
       inst.toSeq flatMap {

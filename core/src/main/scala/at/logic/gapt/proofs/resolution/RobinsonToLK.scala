@@ -34,12 +34,12 @@ object RobinsonToLK {
 
     val projections = justifications map {
       case ( clause, ProjectionFromEndSequent( proj, index ) ) =>
-        val \/-( projWithDef ) = ExpansionProofToLK( ExpansionProof( proj ++ clause.map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
+        val \/-( projWithDef ) = PropositionalExpansionProofToLK( ExpansionProof( proj ++ clause.map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
         clause -> projWithDef
 
       case ( clause, Definition( newAtom, expansion ) ) =>
         val i = clause indexOf newAtom
-        val \/-( p ) = ExpansionProofToLK( ExpansionProof( clause.map( ETAtom( _, false ), ETAtom( _, true ) ).updated( i, expansion ) ) )
+        val \/-( p ) = PropositionalExpansionProofToLK( ExpansionProof( clause.map( ETAtom( _, false ), ETAtom( _, true ) ).updated( i, expansion ) ) )
         clause -> DefinitionRule( p, expansion.shallow, newAtom, i isSuc )
     }
 
@@ -94,9 +94,10 @@ object RobinsonToLK {
           endSequent ++ p.conclusion, strict = false
         )
       case p @ Paramodulation( p1, eq, p2, lit @ Suc( _ ), poss, dir ) =>
+        val ( p1New, p2New ) = ( f( p1 ), f( p2 ) )
         ContractionMacroRule(
-          ParamodulationRightRule( f( p1 ), p1.conclusion( eq ),
-            f( p2 ), p2.conclusion( lit ), p.rewrittenAtom ),
+          ParamodulationRightRule( p1New, p1.conclusion( eq ),
+            p2New, p2.conclusion( lit ), p.rewrittenAtom ),
           endSequent ++ p.conclusion, strict = false
         )
     } )

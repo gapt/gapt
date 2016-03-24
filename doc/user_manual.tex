@@ -69,6 +69,7 @@
     {α}{{\ensuremath{\alpha}}}1%
     {β}{{\ensuremath{\beta}}}1%
     {τ}{{\ensuremath{\tau}}}1%
+    {λ}{{\ensuremath{\lambda}}}1%
     {∈}{{\ensuremath{\in}}}1%
   }
 
@@ -584,7 +585,7 @@ c: Q(a): o
 
 \end{clilisting}
 
-The tactics \cli{axiomLog}, \cli{axiomTh}, \cli{axiomRefl}, \cli{axiomBot} and \cli{axiomTop} cover the logical, theory, reflexivity, bottom and top axioms, respectively. The \cli{trivial} tactic automatically selects the applicable axiom. Also, any weakening rules required to reach an actual axiom sequent are automatically applied.
+The tactics \cli{axiomLog}, \cli{axiomRefl}, \cli{axiomBot} and \cli{axiomTop} cover the logical, reflexivity, bottom and top axioms, respectively. The \cli{trivial} tactic automatically selects the applicable axiom. Also, any weakening rules required to reach an actual axiom sequent are automatically applied.
 
 The following example shows the use of the \cli{trivial} tactic to end the proof by a logical axiom:
 
@@ -610,7 +611,7 @@ gapt> val eqEx = Lemma( Sequent( Seq( "c" -> fof"P(y) & Q(y)", "eq1" -> fof"u = 
 eqEx: at.logic.gapt.proofs.lk.LKProof =
 [p5] u = v, P(u) ⊃ Q(u), y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (WeakeningLeftRule(p4, u = v))
 [p4] P(u) ⊃ Q(u), y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (WeakeningLeftRule(p3, P(u) ⊃ Q(u)))
-[p3] y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (EqualityRightRule(p2, Ant(0), Suc(0), List([1,2], [2,2])))
+[p3] y = x, P(y) ∧ Q(y) :- P(x) ∧ Q(x)    (EqualityRightRule(p2, Ant(0), Suc(0), λx_0 P(x_0) ∧ Q(x_0)))
 [p2] y = x, P(y) ∧ Q(y) :- P(y) ∧ Q(y)    (WeakeningLeftRule(p1, y = x))
 [p1] P(y) ∧ Q(y) :- P(y) ∧ Q(y)    (LogicalAxiom(P(y) ∧ Q(y)))
 
@@ -990,10 +991,10 @@ res27: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 [p7] ETImp(p3, p6)
-[p6] ETSkolemQuantifier(∀y ∃x p(x, y), s_1, p5)
+[p6] ETSkolemQuantifier(∀y ∃x p(x, y), s_1, ∀y ∃x p(x, y), p5)
 [p5] ETWeakQuantifier(∃x p(x, s_1), s_0, p4)
 [p4] ETAtom(p(s_0, s_1): o, true)
-[p3] ETSkolemQuantifier(∃x ∀y p(x, y), s_0, p2)
+[p3] ETSkolemQuantifier(∃x ∀y p(x, y), s_0, ∃x ∀y p(x, y), p2)
 [p2] ETWeakQuantifier(∀y p(s_0, y), s_1, p1)
 [p1] ETAtom(p(s_0, s_1): o, false)
 )
@@ -1039,10 +1040,10 @@ res30: at.logic.gapt.proofs.lk.solvePropositional.UnprovableOrLKProof =
 
 \subsection{Cut-elimination (Gentzen's method)}
 
-The GAPT-system contains an implementation of reductive cut-elimination
-\`{a} la Gentzen. It can be used as follows: first we load a proof $p$
-with cuts (as in Appendix~\ref{sec.fileio}).
-%
+The GAPT-system contains an implementation of Gentzen-style reductive
+cut-elimination.  It can be used as follows: first we load a proof $p$ with
+cuts:
+
 \begin{clilisting}
 gapt> val p = examples.fol1.p
 p: at.logic.gapt.proofs.lk.LKProof =
@@ -1145,7 +1146,7 @@ proof: at.logic.gapt.proofs.lk.WeakeningLeftRule =
 
 gapt> val pr = EqualityRightRule( proof, fof"a=b", Suc( 0 ), fof"P(b)" )
 pr: at.logic.gapt.proofs.lk.EqualityRightRule =
-[p3] a = b, P(a): o :- P(b): o    (EqualityRightRule(p2, Ant(0), Suc(0), List([2])))
+[p3] a = b, P(a): o :- P(b): o    (EqualityRightRule(p2, Ant(0), Suc(0), λx P(x): o))
 [p2] a = b, P(a): o :- P(a): o    (WeakeningLeftRule(p1, a = b))
 [p1] P(a): o :- P(a): o    (LogicalAxiom(P(a): o))
 
@@ -1300,21 +1301,21 @@ Size of term set: 11
 Smallest grammar of size 8:
 Non-terminal vectors: (x0), (x1)
 Terminals:
-  '-{P(0): o}_a1'
-  '-{∀x (P(x) ⊃ P(s(x)))}_a0':i>i
   0
+  'a0:P(x)⊃P(s(x))':i>i
+  'a1:P(0):o'
   s:i>i
-  '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+  's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
-x0 → '-{P(0): o}_a1'
+x0 → 'a0:P(x)⊃P(s(x))'(s(s(x1)))
 
-x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+x0 → 'a0:P(x)⊃P(s(x))'(s(x1))
 
-x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+x0 → 'a0:P(x)⊃P(s(x))'(x1)
 
-x0 → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+x0 → 'a1:P(0):o'
 
-x0 → '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+x0 → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
 x1 → 0
 
@@ -1327,21 +1328,21 @@ CNF of minimized cut-formula number 0:
 Beautified grammar of size 8:
 Non-terminal vectors: (x), (x1)
 Terminals:
-  '-{P(0): o}_a1'
-  '-{∀x (P(x) ⊃ P(s(x)))}_a0':i>i
   0
+  'a0:P(x)⊃P(s(x))':i>i
+  'a1:P(0):o'
   s:i>i
-  '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+  's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
-x → '-{P(0): o}_a1'
+x → 'a0:P(x)⊃P(s(x))'(s(s(x1)))
 
-x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(s(x1)))
+x → 'a0:P(x)⊃P(s(x))'(s(x1))
 
-x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(s(x1))
+x → 'a0:P(x)⊃P(s(x))'(x1)
 
-x → '-{∀x (P(x) ⊃ P(s(x)))}_a0'(x1)
+x → 'a1:P(0):o'
 
-x → '{P(s(s(s(s(s(s(s(s(s(0)))))))))): o}_s0'
+x → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
 x1 → 0
 

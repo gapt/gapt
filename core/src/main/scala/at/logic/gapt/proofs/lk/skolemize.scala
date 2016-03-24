@@ -113,12 +113,12 @@ object skolemize {
 
     // Equality rules:
     // Luckily, Skolemization changes neither the indices nor the term positions, so we can keep them.
-    case proof @ EqualityLeftRule( subProof, eq, aux, pos ) =>
+    case proof @ EqualityLeftRule( subProof, eq, aux, con ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      EqualityLeftRule( subProof_, eq, aux, pos )
-    case proof @ EqualityRightRule( subProof, eq, aux, pos ) =>
+      EqualityLeftRule( subProof_, eq, aux, con )
+    case proof @ EqualityRightRule( subProof, eq, aux, con ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      EqualityRightRule( subProof_, eq, aux, pos )
+      EqualityRightRule( subProof_, eq, aux, con )
 
     // Definition rules:
     // We do it as in the old LK: skolemize both the before and after formulas using the same stream of skolem symbols.

@@ -13,6 +13,8 @@ proofs.
 
 Website: https://logic.at/gapt
 
+Contact: [mailing list](https://groups.google.com/forum/#!forum/gapt-group)
+
 ### Example
 
 One of the many features GAPT supports is an implementation of [Herbrand's

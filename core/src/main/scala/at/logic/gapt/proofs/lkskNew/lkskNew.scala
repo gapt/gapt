@@ -176,15 +176,17 @@ case class ImpRight( subProof: LKskProof, aux1: Ant, aux2: Suc ) extends UnaryRu
   def auxIndices = Seq( Seq( aux1, aux2 ) )
 }
 
-case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, pos: Seq[LambdaPosition] ) extends UnaryRule with SameLabel {
+case class Equality( subProof: LKskProof, eq: Ant, aux: SequentIndex, leftToRight: Boolean, con: Abs ) extends UnaryRule with SameLabel {
   require( eq != aux )
 
-  lazy val ( s, t ) = subProof.formulas( eq ) match {
+  lazy val ( what, by ) = subProof.formulas( eq ) match {
     case Eq( s_, t_ ) => if ( leftToRight ) s_ -> t_ else t_ -> s_
   }
-  for ( p <- pos )
-    require( subProof.formulas( aux )( p ) == s )
-  lazy val mainFormula = pos.foldLeft( subProof.formulas( aux ) ) { ( acc, p ) => acc.replace( p, t ).asInstanceOf[HOLFormula] }
+
+  val auxFormula_ = BetaReduction.betaNormalize( App( con, what ) )
+  val auxFormula = subProof.formulas( aux )
+  require( auxFormula_ == auxFormula )
+  lazy val mainFormula = BetaReduction.betaNormalize( App( con, by ) ).asInstanceOf[HOLFormula]
 
   lazy val newFormulas = if ( aux isAnt ) mainFormula +: Sequent() else Sequent() :+ mainFormula
 
@@ -239,11 +241,12 @@ case class ExSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, su
   def auxIndices = Seq( Seq( aux ) )
 }
 
-/* TODO: how to verify skolem symbols?
-   They are quite flexible - the main restriction is that quantifiers cannot be contracted,
-   when they were introduced from different skolem symbols */
-case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
+case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, skolemSymbol: LambdaExpression, skolemDef: LambdaExpression ) extends UnaryRule with SameLabel {
   val All( quantVar, formula ) = mainFormula
+  val Apps( skolemConst, baseArgs ) = skolemSymbol
+  require( freeVariables( skolemDef ).isEmpty )
+  requireEq( mainFormula, BetaReduction.betaNormalize( skolemDef( baseArgs: _* )( subProof.labels( aux ): _* ) ) )
+  require( freeVariables( skolemDef ).isEmpty )
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
 
@@ -251,8 +254,11 @@ case class AllSkRight( subProof: LKskProof, aux: Suc, mainFormula: HOLFormula, s
   def auxIndices = Seq( Seq( aux ) )
 }
 
-case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: Const ) extends UnaryRule with SameLabel {
+case class ExSkLeft( subProof: LKskProof, aux: Ant, mainFormula: HOLFormula, skolemSymbol: LambdaExpression, skolemDef: LambdaExpression ) extends UnaryRule with SameLabel {
   val Ex( quantVar, formula ) = mainFormula
+  val Apps( skolemConst, baseArgs ) = skolemSymbol
+  require( freeVariables( skolemDef ).isEmpty )
+  requireEq( mainFormula, BetaReduction.betaNormalize( skolemDef( baseArgs: _* )( subProof.labels( aux ): _* ) ) )
   val skolemTerm = skolemSymbol( subProof.labels( aux ): _* )
   requireEq( subProof.formulas( aux ), BetaReduction.betaNormalize( Substitution( quantVar -> skolemTerm )( formula ) ) )
 

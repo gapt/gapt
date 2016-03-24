@@ -68,7 +68,7 @@ object StructCreators extends Logger {
       case InitialSequent( so ) =>
         handleAxiom( so, cut_occs )
 
-      case EqualityLeftRule( upperProof, eq, aux, pos ) =>
+      case EqualityLeftRule( upperProof, eq, aux, con ) =>
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
@@ -84,7 +84,7 @@ object StructCreators extends Logger {
             struct
         }
 
-      case EqualityRightRule( upperProof, eq, aux, pos ) =>
+      case EqualityRightRule( upperProof, eq, aux, con ) =>
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )

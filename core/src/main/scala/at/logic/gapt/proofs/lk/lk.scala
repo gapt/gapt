@@ -308,6 +308,7 @@ abstract class ContractionRule extends UnaryLKProof with CommonRule {
  *    --------------
  *      A, Γ :- Δ
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param aux1 The index of one occurrence of A.
  * @param aux2 The index of the other occurrence of A.
@@ -350,6 +351,7 @@ object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule"
  *    --------------
  *      Γ :- Δ, A
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param aux1 The index of one occurrence of A.
  * @param aux2 The index of the other occurrence of A.
@@ -392,6 +394,7 @@ object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRul
  *     ---------w:l
  *     A, Γ :- Δ
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param formula The formula A.
  */
@@ -412,6 +415,7 @@ case class WeakeningLeftRule( subProof: LKProof, formula: HOLFormula )
  *     ---------w:r
  *     Γ :- Δ, A
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param formula The formula A.
  */
@@ -432,6 +436,7 @@ case class WeakeningRightRule( subProof: LKProof, formula: HOLFormula )
  *   ------------------------
  *        Γ, Π :- Δ, Λ
  * </pre>
+ *
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A in π,,1,,.
  * @param rightSubProof The proof π,,2,,.
@@ -444,7 +449,7 @@ case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LK
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
 
   if ( leftPremise( aux1 ) != rightPremise( aux2 ) )
-    throw LKRuleCreationException( s"Auxiliar formulas are not the same." )
+    throw LKRuleCreationException( s"Auxiliary formulas are not the same:\n${leftPremise( aux1 )}\n${rightPremise( aux2 )}" )
 
   def cutFormula = leftPremise( aux1 )
 
@@ -506,6 +511,7 @@ object CutRule extends ConvenienceConstructor( "CutRule" ) {
  *   -----------¬:l
  *   ¬A, Γ :- Δ
  * </pre>
+ *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
  */
@@ -547,6 +553,7 @@ object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
  *   -----------¬:r
  *   Γ :- Δ, ¬A
  * </pre>
+ *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
  */
@@ -588,6 +595,7 @@ object NegRightRule extends ConvenienceConstructor( "NegRightRule" ) {
  *    --------------
  *    A ∧ B, Γ :- Δ
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param aux1 The index of A.
  * @param aux2 The index of B.
@@ -650,6 +658,7 @@ object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
  * --------------------------
  *     Γ, Π :- Δ, Λ, A∧B
  * </pre>
+ *
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A.
  * @param rightSubProof The proof π,,2,,
@@ -718,6 +727,7 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
  * --------------------------
  *     A∨B, Γ, Π :- Δ, Λ
  * </pre>
+ *
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A.
  * @param rightSubProof The proof π,,2,,
@@ -786,6 +796,7 @@ object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
  *    --------------
  *     Γ :- Δ, A ∨ B
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param aux1 The index of A.
  * @param aux2 The index of B.
@@ -847,6 +858,7 @@ object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
  * --------------------------
  *     A→B, Γ, Π :- Δ, Λ
  * </pre>
+ *
  * @param leftSubProof The proof π,,1,,.
  * @param aux1 The index of A.
  * @param rightSubProof The proof π,,2,,
@@ -915,6 +927,7 @@ object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
  *    --------------
  *     Γ :- Δ, A → B
  * </pre>
+ *
  * @param subProof The subproof π.
  * @param aux1 The index of A.
  * @param aux2 The index of B.
@@ -976,6 +989,7 @@ object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
  *     ----------------∀:l
  *       ∀x.A, Γ :- Δ
  * </pre>
+ *
  * @param subProof The proof π.
  * @param aux The index of A[x\t].
  * @param A The formula A.
@@ -1200,6 +1214,7 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
  *     ----------------∃:r
  *       Γ :- Δ, ∃x.A
  * </pre>
+ *
  * @param subProof The proof π.
  * @param aux The index of A[x\t].
  * @param A The formula A.
@@ -1292,42 +1307,37 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   def subProof: LKProof
   def eq: SequentIndex
   def aux: SequentIndex
-  def positions: Seq[HOLPosition]
+  def replacementContext: Abs
 
-  require( positions.nonEmpty, "Replacement at zero positions is not supported at this time." )
-  for ( ( p1, p2 ) <- pairs( positions ) ) {
-    require( !p1.isPrefixOf( p2 ), s"Position $p1 is a prefix of position $p2." )
-  }
+  val Abs( v, cont ) = replacementContext
 
   aux match {
     case Ant( _ ) => validateIndices( premise, Seq( eq, aux ), Seq() )
     case Suc( _ ) => validateIndices( premise, Seq( eq ), Seq( aux ) )
   }
 
-  val equation = premise( eq )
+  def equation = premise( eq )
 
   val auxFormula = premise( aux )
 
-  val first = positions.head
+  require( !( freeVariables( equation ) ++ freeVariables( auxFormula ) contains v ) )
 
   val ( what, by, leftToRight ) = equation match {
     case Eq( s, t ) =>
-      auxFormula( first ) match {
-        case `s` =>
-          ( s, t, true )
-        case `t` =>
-          ( t, s, false )
-        case _ =>
-          throw LKRuleCreationException( s"Position $first in $auxFormula should be $s or $t, but is ${auxFormula( first )}." )
+      val insertS = BetaReduction.betaNormalize( App( replacementContext, s ) )
+      val insertT = BetaReduction.betaNormalize( App( replacementContext, t ) )
+      if ( insertS == auxFormula ) {
+        ( s, t, true )
+      } else if ( insertT == auxFormula ) {
+        ( t, s, false )
+      } else {
+        throw LKRuleCreationException( s"Inserting $s into context yields $insertS; inserting" +
+          s" $t yields $insertT. Neither is equal to ${auxFormula}." )
       }
     case _ => throw LKRuleCreationException( s"Formula $equation is not an equation." )
   }
 
-  val mainFormula = positions.foldLeft( auxFormula ) { ( acc, p ) =>
-    require( acc( p ) == what, s"Position $p in $acc should be $what, but is ${acc( p )}." )
-
-    acc.replace( p, by )
-  }
+  def mainFormula = BetaReduction.betaNormalize( App( replacementContext, by ) ).asInstanceOf[HOLFormula]
 
   def auxIndices = Seq( Seq( eq, aux ) )
 
@@ -1355,9 +1365,9 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param positions The positions of the term to be replaced within A.
+ * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
-case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, positions: Seq[HOLPosition] )
+case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
     extends EqualityRule {
 
   validateIndices( premise, Seq( eq, aux ), Seq() )
@@ -1379,42 +1389,16 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
    * @param subProof The subproof.
    * @param eqFormula The index of the equation or the equation itself.
    * @param auxFormula The index of the auxiliary formula or the formula itself.
-   * @param pos The positions of the term to be replaced within A.
+   * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): EqualityLeftRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs ): EqualityLeftRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
 
-    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), pos )
+    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), replacementContext )
 
-  }
-
-  /**
-   * Convenience constructor for eq:l.
-   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-   * will attempt to find an appropriate index on its own.
-   *
-   * @param subProof The subproof.
-   * @param eqFormula The index of the equation or the equation itself.
-   * @param auxFormula The index of the auxiliary formula or the formula itself.
-   * @param pos The positions of the term to be replaced within A.
-   * @return
-   */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[FOLPosition] )( implicit dummyImplicit: DummyImplicit ): EqualityLeftRule = {
-    val premise = subProof.endSequent
-
-    val ( indices, _ ) = findAndValidate( premise )( Seq( eqFormula, auxFormula ), Seq() )
-
-    val aF = premise( Ant( indices( 1 ) ) ) match {
-      case f: FOLFormula =>
-        f
-      case _ =>
-        throw LKRuleCreationException( s"Proposed aux formula ${premise( Ant( indices( 1 ) ) )} is not FOL." )
-    }
-
-    EqualityLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ), pos map { FOLPosition.toHOLPosition( aF ) } )
   }
 
   /**
@@ -1436,12 +1420,13 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
     eqFormula match {
       case Eq( s, t ) =>
         if ( s == t && auxFormula == mainFormula ) {
-          val sAux = auxFormula.find( s )
+          val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
-          if ( sAux.isEmpty )
+          val Abs( v, rest ) = repContext
+          if ( auxFormula.find( s ).isEmpty )
             throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
 
-          EqualityLeftRule( subProof, eq, aux, Seq( sAux.head ) )
+          EqualityLeftRule( subProof, eq, aux, repContext )
 
         } else if ( s == t && auxFormula != mainFormula ) {
           throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + mainFormula + "differ." )
@@ -1450,29 +1435,20 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
 
         } else {
-          val sAux = auxFormula.find( s )
-          val sMain = mainFormula.find( s )
+          val contextS = replacementContext( s.exptype, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ), s, t )
+          val contextT = replacementContext( t.exptype, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ), s, t )
 
-          val tAux = auxFormula.find( t )
-          val tMain = mainFormula.find( t )
+          val Abs( vS, restS ) = contextS
+          val Abs( vT, restT ) = contextT
 
-          if ( sAux.isEmpty && tAux.isEmpty )
+          if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
             throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
 
-          val tToS = sMain intersect tAux
-          val sToT = tMain intersect sAux
-
-          if ( tToS.isEmpty ) {
-            val mainNew = sToT.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, t ) }
-            if ( mainNew == mainFormula ) {
-              EqualityLeftRule( subProof, eq, aux, sToT )
-            } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
-          } else if ( sToT.isEmpty ) {
-            val mainNew = tToS.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, s ) }
-            if ( mainNew == mainFormula ) {
-              EqualityLeftRule( subProof, eq, aux, tToS )
-            } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
-          } else throw LKRuleCreationException( "Cannot perform replacements in both directions in " + auxFormula + " and " + mainFormula + "." )
+          if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+            EqualityLeftRule( subProof, eq, aux, contextS )
+          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+            EqualityLeftRule( subProof, eq, aux, contextT )
+          } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
         }
 
       case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
@@ -1496,9 +1472,9 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
  * @param subProof The subproof π.
  * @param eq The index of s = t.
  * @param aux The index of the formula in which the replacement is to be performed.
- * @param positions The positions of the term to be replaced within A.
+ * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
-case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, positions: Seq[HOLPosition] )
+case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
     extends EqualityRule {
 
   validateIndices( premise, Seq( eq ), Seq( aux ) )
@@ -1520,42 +1496,15 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
    * @param subProof The subproof.
    * @param eqFormula The index of the equation or the equation itself.
    * @param auxFormula The index of the auxiliary formula or the formula itself.
-   * @param pos The positions of the term to be replaced within A.
+   * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
    * @return
    */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): EqualityRightRule = {
+  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, replacementContext: Abs ): EqualityRightRule = {
     val premise = subProof.endSequent
 
     val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
 
-    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), pos )
-
-  }
-
-  /**
-   * Convenience constructor for eq:r.
-   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-   * will attempt to find an appropriate index on its own.
-   *
-   * @param subProof The subproof.
-   * @param eqFormula The index of the equation or the equation itself.
-   * @param auxFormula The index of the auxiliary formula or the formula itself.
-   * @param pos The positions of the term to be replaced within A.
-   * @return
-   */
-  def apply( subProof: LKProof, eqFormula: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[FOLPosition] )( implicit dummyImplicit: DummyImplicit ): EqualityRightRule = {
-    val premise = subProof.endSequent
-
-    val ( indicesAnt, indicesSuc ) = findAndValidate( premise )( Seq( eqFormula ), Seq( auxFormula ) )
-
-    val aF = premise( Suc( indicesSuc( 0 ) ) ) match {
-      case f: FOLFormula =>
-        f
-      case _ =>
-        throw LKRuleCreationException( s"Proposed aux formula ${premise( Suc( indicesSuc( 0 ) ) )} is not FOL." )
-    }
-
-    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), pos map { FOLPosition.toHOLPosition( aF ) } )
+    EqualityRightRule( subProof, Ant( indicesAnt( 0 ) ), Suc( indicesSuc( 0 ) ), replacementContext )
 
   }
 
@@ -1578,12 +1527,13 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
     eqFormula match {
       case Eq( s, t ) =>
         if ( s == t && auxFormula == mainFormula ) {
-          val sAux = auxFormula.find( s )
+          val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
-          if ( sAux.isEmpty )
+          val Abs( v, rest ) = repContext
+          if ( auxFormula.find( s ).isEmpty )
             throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
 
-          EqualityRightRule( subProof, eq, aux, sAux )
+          EqualityRightRule( subProof, eq, aux, repContext )
 
         } else if ( s == t && auxFormula != mainFormula ) {
           throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + mainFormula + "differ." )
@@ -1592,29 +1542,20 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
 
         } else {
-          val sAux = auxFormula.find( s )
-          val sMain = mainFormula.find( s )
+          val contextS = replacementContext( s.exptype, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ), s, t )
+          val contextT = replacementContext( t.exptype, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ), s, t )
 
-          val tAux = auxFormula.find( t )
-          val tMain = mainFormula.find( t )
+          val Abs( vS, restS ) = contextS
+          val Abs( vT, restT ) = contextT
 
-          if ( sAux.isEmpty && tAux.isEmpty )
+          if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
             throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
 
-          val tToS = sMain intersect tAux
-          val sToT = tMain intersect sAux
-
-          if ( tToS.isEmpty ) {
-            val mainNew = sToT.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, t ) }
-            if ( mainNew == mainFormula ) {
-              EqualityRightRule( subProof, eq, aux, sToT )
-            } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
-          } else if ( sToT.isEmpty ) {
-            val mainNew = tToS.foldLeft( auxFormula ) { ( acc, p ) => HOLPosition.replace( acc, p, s ) }
-            if ( mainNew == mainFormula ) {
-              EqualityRightRule( subProof, eq, aux, tToS )
-            } else throw LKRuleCreationException( "Replacement should yield " + mainFormula + " but is " + mainNew + "." )
-          } else throw LKRuleCreationException( "Cannot perform replacements in both directions in " + auxFormula + " and " + mainFormula + "." )
+          if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+            EqualityRightRule( subProof, eq, aux, contextS )
+          } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+            EqualityRightRule( subProof, eq, aux, contextT )
+          } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
         }
 
       case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )

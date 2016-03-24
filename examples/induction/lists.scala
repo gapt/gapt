@@ -7,8 +7,6 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.extractRecSchem
 
 object lists extends TacticsProof {
-
-  implicit var ctx = FiniteContext()
   ctx += Context.Sort( "i" )
   ctx += Context.InductiveType( "list", hoc"nil: list", hoc"cons: i>list>list" )
 

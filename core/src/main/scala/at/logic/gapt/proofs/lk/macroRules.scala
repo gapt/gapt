@@ -186,7 +186,7 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param pos The positions of the term to be replaced within the aux formula.
    * @return
    */
-  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): EqualityLeftRule = withOccConnector( subProof, equation, auxFormula, pos )._1
+  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): EqualityLeftRule = withOccConnector( subProof, equation, auxFormula, con )._1
 
   /**
    * Like EqualityLeftRule, but the equation need not exist in the premise. If it doesn't, it will automatically be added via weakening.
@@ -198,7 +198,7 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
    * @param pos The positions of the term to be replaced within the aux formula.
    * @return An LKProof and an OccConnector connecting its end sequent with the end sequent of subProof.
    */
-  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): ( EqualityLeftRule, OccConnector[HOLFormula] ) = {
+  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): ( EqualityLeftRule, OccConnector[HOLFormula] ) = {
     val ( _, indices, _, _ ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( equation, auxFormula ), Seq() )
 
     ( indices( 0 ), indices( 1 ) ) match {
@@ -209,11 +209,11 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
         val e = ( equation: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, e )
         val oc = subProof_.getOccConnector
-        val proof = EqualityLeftRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Ant( i ) ), pos )
+        val proof = EqualityLeftRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Ant( i ) ), con )
         ( proof, proof.getOccConnector * oc )
 
       case ( _, _ ) => // Both equation and aux formula have been found. Simply construct the inference.
-        val proof = EqualityLeftRule( subProof, equation, auxFormula, pos )
+        val proof = EqualityLeftRule( subProof, equation, auxFormula, con )
         ( proof, proof.getOccConnector )
     }
   }
@@ -231,7 +231,7 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
    * @param pos The positions of the term to be replaced within the aux formula.
    * @return
    */
-  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): EqualityRightRule = withOccConnector( subProof, equation, auxFormula, pos )._1
+  def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): EqualityRightRule = withOccConnector( subProof, equation, auxFormula, con )._1
 
   /**
    * Like EqualityRightRule, but the equation need not exist in the premise. If it doesn't, it will automatically be added via weakening.
@@ -243,7 +243,7 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
    * @param pos The positions of the term to be replaced within the aux formula.
    * @return An LKProof and an OccConnector connecting its end sequent with the end sequent of subProof.
    */
-  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, pos: Seq[HOLPosition] ): ( EqualityRightRule, OccConnector[HOLFormula] ) = {
+  def withOccConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): ( EqualityRightRule, OccConnector[HOLFormula] ) = {
     val ( _, indicesAnt, _, indicesSuc ) = findIndicesOrFormulasInPremise( subProof.endSequent )( Seq( equation ), Seq( auxFormula ) )
 
     ( indicesAnt( 0 ), indicesSuc( 0 ) ) match {
@@ -254,11 +254,11 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
         val e = ( equation: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, e )
         val oc = subProof_.getOccConnector
-        val proof = EqualityRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ), pos )
+        val proof = EqualityRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ), con )
         ( proof, proof.getOccConnector * oc )
 
       case ( _, _ ) => // Both equation and aux formula have been found. Simply construct the inference.
-        val proof = EqualityRightRule( subProof, equation, auxFormula, pos )
+        val proof = EqualityRightRule( subProof, equation, auxFormula, con )
         ( proof, proof.getOccConnector )
     }
   }
@@ -1070,7 +1070,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    pos:           Seq[HOLPosition]
+    con:           Abs
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1081,69 +1081,10 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = aux match {
       case Left( i ) =>
-        EqualityLeftRule( p1, Ant( 0 ), i + 1, pos )
+        EqualityLeftRule( p1, Ant( 0 ), i + 1, con )
 
       case Right( f ) =>
-        EqualityLeftRule( p1, Ant( 0 ), f, pos )
-    }
-
-    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
-  }
-
-  /**
-   * Simulates a binary equation rule, aka paramodulation.
-   *
-   * A binary rule of the form
-   * <pre>
-   *        (π1)              (π2)
-   *     Γ,Δ :- s = t   A[s], Π :- Λ
-   *   ------------------------------par:l
-   *         A[t], Γ, Π :- Δ, Λ
-   * </pre>
-   * is expressed as a series of inferences:
-   * <pre>
-   *                               (π2)
-   *                         A[s], Π :- Λ
-   *                     --------------------w:l
-   *                     s = t, A[s], Π :- Λ
-   *       (π1)         ---------------------:eq:l
-   *   Γ, Δ :- s = t     A[t], s = t, Π :- Λ
-   *   -------------------------------------cut
-   *            A[t], Γ, Π :- Δ, Λ
-   * </pre>
-   *
-   *
-   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-   * will attempt to find an appropriate index on its own.
-   *
-   * @param leftSubProof The left subproof π1.
-   * @param eq The index of the equation or the equation itself.
-   * @param rightSubProof The right subproof π2.
-   * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The positions of the term to be replaced within A.
-   * @return
-   */
-  def apply(
-    leftSubProof:  LKProof,
-    eq:            IndexOrFormula,
-    rightSubProof: LKProof,
-    aux:           IndexOrFormula,
-    pos:           Seq[FOLPosition]
-  )( implicit dummyImplicit: DummyImplicit ): LKProof = {
-
-    val eqFormula = eq match {
-      case Left( i )  => leftSubProof.endSequent( i )
-      case Right( f ) => f
-    }
-
-    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = aux match {
-      case Left( i ) =>
-        EqualityLeftRule( p1, Ant( 0 ), i + 1, pos )
-
-      case Right( f ) =>
-        EqualityLeftRule( p1, Ant( 0 ), f, pos )
-
+        EqualityLeftRule( p1, Ant( 0 ), f, con )
     }
 
     CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
@@ -1240,7 +1181,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The positions of the term to be replaced within A.
+   * @param con The positions of the term to be replaced within A.
    * @return
    */
   def apply(
@@ -1248,7 +1189,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    pos:           Seq[HOLPosition]
+    con:           Abs
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1257,59 +1198,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     }
 
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, pos )
-
-    CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
-  }
-
-  /**
-   * Simulates a binary equation rule, aka paramodulation.
-   *
-   * A binary rule of the form
-   * <pre>
-   *        (π1)              (π2)
-   *     Γ,Δ :- s = t   Π :- Λ, A[s]
-   *   ------------------------------par:r
-   *         Γ, Π :- Δ, Λ, A[t]
-   * </pre>
-   * is expressed as a series of inferences:
-   * <pre>
-   *                               (π2)
-   *                         Π :- Λ, A[s]
-   *                     --------------------w:l
-   *                     s = t, Π :- Λ, A[s]
-   *       (π1)         ---------------------:eq:r
-   *   Γ, Δ :- s = t     s = t, Π :- Λ, A[t]
-   *   -------------------------------------cut
-   *            Γ, Π :- Δ, Λ, A[t]
-   * </pre>
-   *
-   *
-   * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-   * will attempt to find an appropriate index on its own.
-   *
-   * @param leftSubProof The left subproof π1.
-   * @param eq The index of the equation or the equation itself.
-   * @param rightSubProof The right subproof π2.
-   * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The positions of the term to be replaced within A.
-   * @return
-   */
-  def apply(
-    leftSubProof:  LKProof,
-    eq:            IndexOrFormula,
-    rightSubProof: LKProof,
-    aux:           IndexOrFormula,
-    pos:           Seq[FOLPosition]
-  )( implicit dummyImplicit: DummyImplicit ): LKProof = {
-
-    val eqFormula = eq match {
-      case Left( i )  => leftSubProof.endSequent( i )
-      case Right( f ) => f
-    }
-
-    val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
-    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, pos )
+    val p2 = EqualityRightRule( p1, Ant( 0 ), aux, con )
 
     CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
   }
@@ -1515,8 +1404,6 @@ object proofFromInstances {
 
         ContractionRightMacroRule( tmp, f )
 
-      case ETSkolemQuantifier( _, _, _ ) | ETStrongQuantifier( _, _, _ ) =>
-        throw new UnsupportedOperationException( "This case is not handled at this time." )
       case _ => s1
     }
   }

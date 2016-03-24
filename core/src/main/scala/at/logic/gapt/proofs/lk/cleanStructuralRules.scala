@@ -365,7 +365,7 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getOccConnector.inv )
       }
 
-    case p @ EqualityLeftRule( subProof, eq, aux, pos ) =>
+    case p @ EqualityLeftRule( subProof, eq, aux, con ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
@@ -375,11 +375,11 @@ object cleanStructuralRules {
 
         case _ => // The aux formula is not weak → introduce the equation by weakening, if necessary, then perform the inference
           val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( eq ) )
-          val proofNew = EqualityLeftRule( subProofNew_, subConnector_.child( eq ), subConnector_.child( aux ), pos )
+          val proofNew = EqualityLeftRule( subProofNew_, subConnector_.child( eq ), subConnector_.child( aux ), con )
           ( proofNew, proofNew.getOccConnector * subConnector_ * p.getOccConnector.inv )
       }
 
-    case p @ EqualityRightRule( subProof, eq, aux, pos ) =>
+    case p @ EqualityRightRule( subProof, eq, aux, con ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
@@ -389,7 +389,7 @@ object cleanStructuralRules {
 
         case _ => // The aux formula is not weak → introduce the equation by weakening, if necessary, then perform the inference
           val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( eq ) )
-          val proofNew = EqualityRightRule( subProofNew_, subConnector_.child( eq ), subConnector_.child( aux ), pos )
+          val proofNew = EqualityRightRule( subProofNew_, subConnector_.child( eq ), subConnector_.child( aux ), con )
           ( proofNew, proofNew.getOccConnector * subConnector_ * p.getOccConnector.inv )
       }
 

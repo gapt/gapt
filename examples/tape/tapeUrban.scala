@@ -1,112 +1,101 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 /**
  * Formalisation of the tape-proof as described in C. Urban: Classical Logic
  * and Computation, PhD Thesis, Cambridge University, 2000.
  */
-object tapeUrban {
-  private val Seq( i, x, y, k, m, n, nprime ) = Seq( "i", "x", "y", "k", "m", "n", "n'" ) map {
-    FOLVar( _ )
-  }
+object tapeUrban extends TacticsProof {
+  ctx += Context.Sort( "i" )
 
-  private val f = FOLFunctionConst( "f", 1 )
-  private val leq = FOLAtomConst( "leq", 2 )
-  private val lt = FOLAtomConst( "lt", 2 )
-  private val max = FOLFunctionConst( "max", 2 )
-  private val s = FOLFunctionConst( "s", 1 )
-  private val zero = FOLConst( "0" )
-  private val one = s( zero )
+  ctx += hoc"f: i>i"
+  ctx += hoc"'<=': i>i>o"
+  ctx += hoc"'<': i>i>o"
+  ctx += hoc"max: i>i>i"
+  ctx += hoc"s: i>i"
+  ctx += hoc"0: i"
+  ctx += hof"1 = s 0"
 
-  private val A = All( x, Or( Eq( f( x ), zero ), Eq( f( x ), one ) ) )
-  private val P = Ex( n, Ex( m, And( lt( n, m ), Eq( f( n ), f( m ) ) ) ) )
-  private val T = All( i, All( x, All( y, Imp( And( Eq( f( y ), i ), Eq( f( x ), i ) ), Eq( f( x ), f( y ) ) ) ) ) )
-  private val S = All( x, All( y, Imp( leq( s( x ), y ), lt( x, y ) ) ) )
-  private val M1 = All( y, All( x, leq( x, max( x, y ) ) ) )
-  private val M2 = All( y, All( x, leq( y, max( x, y ) ) ) )
-  private val I0 = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), zero ) ) ) )
-  private val I1 = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), one ) ) ) )
-  private val Ii = All( n, Ex( k, And( leq( n, k ), Eq( f( k ), i ) ) ) )
+  ctx += hof"A = (∀x (f(x)=0 ∨ f(x)=1))"
+  ctx += hof"P = (∃n ∃m (n < m ∧ f(n) = f(m)))"
+  ctx += hof"T = (∀i ∀x ∀y (f(y) = i ∧ f(x) = i ⊃ f(x) = f(y)))"
+  ctx += hof"S = (∀x ∀y (s x <= y ⊃ x < y))"
+  ctx += hof"M_1 = (∀y ∀x x <= max x y)"
+  ctx += hof"M_2 = (∀y ∀x y <= max x y)"
+  ctx += hof"I i = (∀n ∃k (n <= k ∧ f(k) = i))"
 
-  val tau = Lemma( Sequent(
-    Seq( "M_1" -> FOLAtom( "M_1" ), "M_2" -> FOLAtom( "M_2" ), "A" -> FOLAtom( "A" ) ),
-    Seq( "I0" -> FOLAtom( "I", Seq( zero ) ), "I1" -> FOLAtom( "I", Seq( one ) ) )
-  ) ) {
-    defR( "I1", I1 )
-    allR( "I1", nprime )
-    defR( "I0", I0 )
-    allR( "I0", n )
-    exR( "I0", max( n, nprime ) )
-    exR( "I1", max( n, nprime ) )
-    forget( "I0", "I1" )
-    andR( "I1_0" )
-    forget( "A", "M_1", "I0_0" )
-    defL( "M_2", M2 )
-    chain( "M_2" )
+  val tau = Lemma(
+    ( "M_1" -> hof"M_1" ) +: ( "M_2" -> hof"M_2" ) +: ( "A" -> hof"A" ) +:
+      Sequent() :+ ( "I0" -> hof"I 0" ) :+ ( "I1" -> hof"I 1" )
+  ) {
+      unfold( "I" ) in "I1"
+      allR( "I1", hov"n_" )
+      unfold( "I" ) in "I0"
+      allR( "I0", hov"n" )
+      exR( "I0", le"max n n_" )
+      exR( "I1", le"max n n_" )
+      forget( "I0", "I1" )
+      andR( "I1_0" )
+      forget( "A", "M_1", "I0_0" )
+      unfold( "M_2" ) in "M_2"
+      chain( "M_2" )
 
-    andR( "I0_0" )
-    forget( "A", "M_2", "I1_0" )
-    defL( "M_1", M1 )
-    chain( "M_1" )
+      andR( "I0_0" )
+      forget( "A", "M_2", "I1_0" )
+      unfold( "M_1" ) in "M_1"
+      chain( "M_1" )
 
-    forget( "M_1", "M_2" )
-    defL( "A", A )
-    allL( "A", max( n, nprime ) )
-    prop
-  }
+      forget( "M_1", "M_2" )
+      unfold( "A" ) in "A"
+      allL( "A", le"max n n_" )
+      prop
+    }
 
-  val epsilon_i = Lemma( Sequent(
-    Seq( "Ii" -> FOLAtom( "I", Seq( i ) ), "S" -> FOLAtom( "S" ), "T" -> FOLAtom( "T" ) ),
-    Seq( "P" -> FOLAtom( "P" ) )
-  ) ) {
-    defL( "Ii", Ii )
-    allL( "Ii", zero )
-    exL( "Ii_0", n )
-    allL( "Ii", s( n ) )
-    exL( "Ii_1", m )
-    forget( "Ii" )
-    defR( "P", P )
-    exR( "P", n, m )
-    forget( "P" )
-    andL( "Ii_0" )
-    andL( "Ii_1" )
-    forget( "Ii_0_0" )
-    andR( "P_0" )
+  val epsilon_i = Lemma(
+    ( "Ii" -> hof"I i" ) +: ( "S" -> hof"S" ) +: ( "T" -> hof"T" ) +:
+      Sequent() :+ ( "P" -> hof"P" )
+  ) {
+      unfold( "I" ) in "Ii"
+      allL( "Ii", le"0" )
+      exL( "Ii_0", hov"n" )
+      allL( "Ii", le"s n" )
+      exL( "Ii_1", hov"m" )
+      forget( "Ii" )
+      unfold( "P" ) in "P"
+      exR( "P", le"n", le"m" )
+      forget( "P" )
+      andL( "Ii_0" )
+      andL( "Ii_1" )
+      forget( "Ii_0_0" )
+      andR( "P_0" )
 
-    forget( "Ii_1_1", "Ii_0_1", "T" )
-    defL( "S", S )
-    chain( "S" )
-    trivial
+      forget( "Ii_1_1", "Ii_0_1", "T" )
+      unfold( "S" ) in "S"
+      chain( "S" )
+      trivial
 
-    forget( "Ii_1_0", "S" )
-    defL( "T", T )
-    chain( "T" )
-    trivial
-    trivial
-  }
+      forget( "Ii_1_0", "S" )
+      unfold( "T" ) in "T"
+      chain( "T" )
+      trivial
+      trivial
+    }
 
-  val sigma = Lemma( Sequent(
-    Seq( "M_1" -> FOLAtom( "M_1" ), "M_2" -> FOLAtom( "M_2" ), "S" -> FOLAtom( "S" ), "T" -> FOLAtom( "T" ), "A" -> FOLAtom( "A" ) ),
-    Seq( "P" -> FOLAtom( "P" ) )
-  ) ) {
-    cut( "I0", FOLAtom( "I", zero ) )
-    cut( "I1", FOLAtom( "I", one ) )
-    insert( tau )
-    insert( epsilon_i )
-    insert( epsilon_i )
-  }
+  val sigma = Lemma(
+    ( "M_1" -> hof"M_1" ) +: ( "M_2" -> hof"M_2" ) +: ( "S" -> hof"S" ) +: ( "T" -> hof"T" ) +: ( "A" -> hof"A" ) +:
+      Sequent() :+ ( "P" -> hof"P" )
+  ) {
+      cut( "I0", hof"I 0" )
+      cut( "I1", hof"I 1" )
+      insert( tau )
+      insert( epsilon_i )
+      insert( epsilon_i )
+    }
 
-  val defs = Map(
-    FOLAtomConst( "I", 1 ) -> Abs( i, Ii ),
-    FOLAtom( "A" ) -> A,
-    FOLAtom( "M_1" ) -> M1,
-    FOLAtom( "M_2" ) -> M2,
-    FOLAtom( "S" ) -> S,
-    FOLAtom( "T" ) -> T,
-    FOLAtom( "P" ) -> P
-  )
+  val defs = ctx.definitions
+  val proof = sigma
 }
 

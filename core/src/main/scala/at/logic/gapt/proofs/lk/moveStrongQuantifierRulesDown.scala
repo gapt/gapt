@@ -81,8 +81,8 @@ object moveStrongQuantifierRulesDown {
           case ForallLeftRule( _, aux, formula, term, v )  => ForallLeftRule( qs( 0 ), oc( 0 ).child( aux ), formula, term, v )
           case ExistsRightRule( _, aux, formula, term, v ) => ExistsRightRule( qs( 0 ), oc( 0 ).child( aux ), formula, term, v )
 
-          case EqualityLeftRule( _, eq, aux, pos )         => EqualityLeftRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), pos )
-          case EqualityRightRule( _, eq, aux, pos )        => EqualityRightRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), pos )
+          case EqualityLeftRule( _, eq, aux, con )         => EqualityLeftRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), con )
+          case EqualityRightRule( _, eq, aux, con )        => EqualityRightRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), con )
 
           case p @ InductionRule( cases, main ) =>
             p.copy( ( cases, qs, oc ).zipped map { ( c, q, o ) =>

@@ -129,18 +129,6 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def intersect[B >: A]( other: Sequent[B] ) = new Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
 
   /**
-   * Concatenate two sequents.  This is equivalent to ++.
-   *
-   * @param other
-   * @return
-   */
-  @deprecated( "Beware: this is the same as ++.", "2015-10-23" )
-  def union[B >: A]( other: Sequent[B] ) = this ++ other
-
-  @deprecated( "Use ++ instead.", "2015-10-23" )
-  def compose[B >: A]( other: Sequent[B] ) = this ++ other
-
-  /**
    * Removes duplicate formulas from both cedents.
    *
    * @return
@@ -169,15 +157,6 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  @deprecated( "Use +: instead.", "2015-10-23" )
-  def addToAntecedent[B >: A]( e: B ): Sequent[B] = e +: this
-
-  /**
-   * Adds an element to the antecedent. New elements are always outermost, i.e. on the very left.
-   *
-   * @param e An element of type B > A
-   * @return The sequent with e added to the antecedent
-   */
   def +:[B >: A]( e: B ) = new Sequent( e +: antecedent, succedent )
 
   /**
@@ -187,15 +166,6 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @return The sequent with es added to the antecedent.
    */
   def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
-
-  /**
-   * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
-   *
-   * @param e An element of type B > A
-   * @return The sequent with e added to the succedent
-   */
-  @deprecated( "Use :+ instead.", "2015-10-23" )
-  def addToSuccedent[B >: A]( e: B ): Sequent[B] = this :+ e
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -218,16 +188,6 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   def removeFromAntecedent[B]( e: B ) = new Sequent( antecedent filterNot ( _ == e ), succedent )
 
   def removeFromSuccedent[B]( e: B ) = new Sequent( antecedent, succedent filterNot ( _ == e ) )
-
-  def replaceInAntecedent[B >: A]( from: B, to: B ) = {
-    require( antecedent.contains( from ) )
-    new Sequent( antecedent.map( e => if ( e == from ) to else e ), succedent )
-  }
-
-  def replaceInSuccedent[B >: A]( from: B, to: B ) = {
-    require( succedent.contains( from ) )
-    new Sequent( antecedent, succedent.map( e => if ( e == from ) to else e ) )
-  }
 
   /**
    * Maps a function over both cedents

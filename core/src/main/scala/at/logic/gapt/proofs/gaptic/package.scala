@@ -20,8 +20,6 @@ package object gaptic {
 
   def refl = ReflexivityAxiomTactic
 
-  def axiomTh = TheoryAxiomTactic
-
   def trivial = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
 
   def negL( applyToLabel: String ) = new NegLeftTactic( OnLabel( applyToLabel ) )
@@ -84,10 +82,6 @@ package object gaptic {
 
   def eql( eq: String, fm: String ) = EqualityTactic( eq, fm )
 
-  def defL( l: String, r: HOLFormula ) = DefinitionLeftTactic( l, r )
-
-  def defR( l: String, r: HOLFormula ) = DefinitionRightTactic( l, r )
-
   def induction( implicit ctx: Context ) = InductionTactic( UniqueFormula )
   def induction( label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ) )
 
@@ -102,6 +96,14 @@ package object gaptic {
       cutFormula = diff.toDisjunction
       _ <- cut( label, cutFormula )
       _ <- insert( proof )
+    } yield ()
+
+  def theory( implicit ctx: Context ): Tactical[Unit] =
+    for {
+      goal <- currentGoal
+      theoryAxiom <- ctx.theory( goal.conclusion collect { case a: HOLAtom => a } ).
+        toTactical( "does not follow from theory" )
+      _ <- insert( theoryAxiom )
     } yield ()
 
   def repeat[T]( t: Tactical[T] ) = RepeatTactic( t )
@@ -139,8 +141,6 @@ package object gaptic {
     acc andThen ( WeakeningLeftTactic( l ) orElse WeakeningRightTactic( l ) )
   }
 
-  def paramod( l: String, axiom: HOLAtom, target: HOLFormula ) = ParamodulationTactic( l, axiom, target )
-
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
   def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
@@ -157,5 +157,17 @@ package object gaptic {
 
     def bind[A, B]( fa: Tactical[A] )( f: A => Tactical[B] ): Tactical[B] =
       fa flatMap f
+  }
+
+  implicit class TacticalOptionOps[T]( option: Option[T] ) {
+    def toTactical( errorMsg: String ): Tactical[T] = new Tactical[T] {
+      override def apply( proofState: ProofState ) =
+        option match {
+          case None          => TacticalFailure( this, None, errorMsg ).failureNel
+          case Some( value ) => ( value -> proofState ).success
+        }
+
+      override def toString = s"$option.toTactical"
+    }
   }
 }

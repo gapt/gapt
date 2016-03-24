@@ -153,46 +153,6 @@ case class ChainTactic( hyp: String, target: Option[String] = None, substitution
 }
 
 /**
- * Paramodulation tactic
- */
-case class ParamodulationTactic( mainFormulaLabel: String, axiom: HOLAtom, targetFormula: HOLFormula ) extends Tactic[Unit] {
-
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
-
-    val indices = for ( ( ( `mainFormulaLabel`, _ ), index ) <- goalSequent.zipWithIndex.elements )
-      yield index
-
-    indices.headOption match {
-      case Some( sequentIndex ) =>
-
-        axiom match {
-          case Eq( _, _ ) =>
-
-            val cutLabel = NewLabel( goalSequent, mainFormulaLabel + "_cut" )
-
-            val leftPremise = TheoryAxiom( Sequent( Nil, Seq( axiom ) ) )
-            val rightPremiseTmp = OpenAssumption( ( cutLabel, axiom ) +: goalSequent )
-
-            val ( cutIndex, rightPremise ) = sequentIndex match {
-              case Ant( _ ) =>
-                ( Ant( 1 ), eql( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
-              case Suc( _ ) =>
-                ( Ant( 0 ), eql( cutLabel, mainFormulaLabel ).to( targetFormula )( rightPremiseTmp ) )
-            }
-
-            rightPremise map { case ( _, p ) => () -> CutRule( leftPremise, Suc( 0 ), p, cutIndex ) }
-
-          case _ => TacticalFailure( this, Some( goal ), "not an equation" ).failureNel
-        }
-
-      case None => TacticalFailure( this, Some( goal ), "label not found" ).failureNel
-    }
-  }
-
-}
-
-/**
  * Rewrites using the specified equations at the target, either once or as often as possible.
  *
  * @param equations  Universally quantified equations on the antecedent, with direction (left-to-right?)

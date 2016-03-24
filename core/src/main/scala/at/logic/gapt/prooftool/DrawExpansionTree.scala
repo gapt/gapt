@@ -202,7 +202,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
     def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[List[LambdaExpression], ExpansionTree] )] = et match {
       case ETStrongQuantifier( _, eigen, ETStrongBlock( _, depth, children ) ) =>
         Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( eigen +: t, child ) ) )
-      case ETSkolemQuantifier( _, st, ETStrongBlock( _, depth, children ) ) =>
+      case ETSkolemQuantifier( _, st, _, ETStrongBlock( _, depth, children ) ) =>
         Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( st +: t, child ) ) )
       case _ => Some( ( et.shallow, 0, Map( List[LambdaExpression]() -> et ) ) )
     }

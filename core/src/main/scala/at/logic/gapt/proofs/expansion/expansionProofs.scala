@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions }
 
 import scala.collection.mutable
 
@@ -53,8 +53,31 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val subProofs = expansionSequent.elements flatMap { _.subProofs } toSet
   val eigenVariables = for ( ETStrongQuantifier( _, ev, _ ) <- subProofs ) yield ev
 
+  val skolemFunctions = SkolemFunctions(
+    subProofs collect {
+      case sk: ETSkolemQuantifier => sk.skolemConst -> sk.skolemDef
+    }
+  )
+
+  val atomDefs =
+    subProofs collect {
+      case d: ETDefinedAtom => d.definitionConst -> d.definition
+      case d: ETDefinition  => d.pred -> d.definedExpr
+    } groupBy { _._1 } map {
+      case ( c, ds ) =>
+        require(
+          ds.size == 1,
+          s"Inconsistent definition $c:\n${ds.map { _._2 }.mkString( "\n" )}"
+        )
+        c -> ds.head._2
+    }
+
+  /**
+   * Contains the pair (x, y) iff x occurs as a selected term in any sort of quantifier node
+   * below the strong quantifier node introducing y.
+   */
   val dependencyRelation = for {
-    ETWeakQuantifier( _, instances ) <- subProofs
+    ETQuantifier( _, instances ) <- subProofs
     ( term, child ) <- instances
     ETStrongQuantifier( _, ev, _ ) <- child.subProofs
     evInTerm <- eigenVariables intersect freeVariables( term )
@@ -71,6 +94,7 @@ case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
   def deep = expansionWithCutAxiom.deep
   def shallow = expansionSequent map { _.shallow }
   def subProofs = expansionWithCutAxiom.subProofs
+  def skolemFunctions = expansionWithCutAxiom.skolemFunctions
 
   val cuts = for {
     cutAxiomExpansion <- expansionWithCutAxiom.expansionSequent.antecedent
@@ -189,15 +213,15 @@ object eliminateMerges {
 
           ETMerge( merge( tree1 ), merge( tree2 ) )
         }
-      case ( ETStrongQuantifier( _, v1, t1 ), ETSkolemQuantifier( shallow, st2, t2 ) ) =>
+      case ( ETStrongQuantifier( _, v1, t1 ), ETSkolemQuantifier( shallow, st2, sf2, t2 ) ) =>
         needToMergeAgain = true
         if ( !eigenVarSubst.map.isDefinedAt( v1 ) )
           eigenVarSubst = eigenVarSubst compose Substitution( v1 -> st2 )
 
         ETMerge( merge( tree1 ), merge( tree2 ) )
       case ( t: ETSkolemQuantifier, s: ETStrongQuantifier ) => merge2( s, t )
-      case ( ETSkolemQuantifier( shallow, st1, t1 ), ETSkolemQuantifier( _, st2, t2 ) ) if st1 == st2 =>
-        ETSkolemQuantifier( shallow, st1, merge2( t1, t2 ) )
+      case ( ETSkolemQuantifier( shallow, st1, sf1, t1 ), ETSkolemQuantifier( _, st2, sf2, t2 ) ) if st1 == st2 =>
+        ETSkolemQuantifier( shallow, st1, sf1, merge2( t1, t2 ) )
       case ( t, s ) => ETMerge( merge( t ), merge( s ) )
     }
 
@@ -211,14 +235,30 @@ object eliminateMerges {
   }
 }
 
+object generatedUpperSetInPO {
+  def apply[T]( gen: Iterable[T], rel: Iterable[( T, T )] ): Set[T] = {
+    val upper = mutable.Set[T]()
+    def walk( el: T ): Unit =
+      if ( !upper.contains( el ) ) {
+        upper += el
+        for ( ( `el`, next ) <- rel ) walk( next )
+      }
+    gen foreach walk
+    upper.toSet
+  }
+}
+
 object eliminateCutsET {
   def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = expansionProof.cuts match {
-    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent, freeVariablesET( expansionProof ) ) )
-    case Seq()                       => ExpansionProof( expansionProof.expansionSequent )
+    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent,
+      expansionProof.eigenVariables union freeVariables( expansionProof.deep ),
+      expansionProof.expansionWithCutAxiom.dependencyRelation ) )
+    case Seq() => ExpansionProof( expansionProof.expansionSequent )
   }
 
   private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETImp],
-                          expansionSequent: Sequent[ExpansionTree], freeVars: Set[Var] ): ExpansionProofWithCut = {
+                          expansionSequent: Sequent[ExpansionTree], freeVars: Set[Var],
+                          dependencyRelation: Set[( Var, Var )] ): ExpansionProofWithCut = {
     def addCuts( extraCuts: ETImp* ) = ExpansionProofWithCut( extraCuts ++ rest, expansionSequent )
 
     // This uses a slightly more optimized reduction step than described in the unpublished
@@ -226,8 +266,8 @@ object eliminateCutsET {
     //
     // Say we have an expansion proof with cut ∀x P(x) ⊃ ∀x P(x), Γ :- Δ where the cut expands
     // to P(eigenvar) ⊃ P(inst_1) ∧ ‥ ∧ P(inst_n), and the deep sequent is T-valid (for a given theory T).
-    // Let η_i be renamings of the eigenvariable in P(eigenvar), Γ, Δ without the variables occurring
-    // in the shallow formula P(x) to fresh variables, and σ_i = η_i [eigenvar \ inst_i].
+    // Let η_i be renamings of the eigenvariables above the eigenvariables in P(eigenvar) and all P(inst_i)
+    // in the dependency order to fresh variables, and σ_i = η_i [eigenvar \ inst_i].
     // By applying an invertible rule to the cut-implication we see that the deep formulas of Γ :- Δ, P(eigenvar)
     // and P(inst_1), ‥, P(inst_n), Γ :- Δ are T-valid.
     //
@@ -242,19 +282,17 @@ object eliminateCutsET {
     // In this case the following sequent becomes T-valid by the same argument:
     // P(eigenvar)σ_1 ⊃ P(inst_1), P(eigenvar)σ_2 ⊃ P(inst_2), ‥, Γ, Γσ_1, Γσ_2, ‥ :- Δ, Δσ_1, Δσ_2, ‥
     //
-    // The resulting expansion proof will have duplicate eigenvariables since we did not rename the ones that occur
-    // in the cut formula.  But these will get merged as they are below the cut eigenvariable in the dependency order
-    // (and hence do not dominate weak quantifier instances that contain the cut eigenvariable).
-    // TODO: rename even fewer eigenvariables based on this observation
+    // The resulting expansion proof will have duplicate eigenvariables since we did not rename the ones
+    // that are not above the eigenvariables in the cut.  But these will get merged as they do not dominate
+    // weak quantifier instances that have been changed through the substitution.
     def quantifiedCut(
       instances:     Map[LambdaExpression, ExpansionTree],
       eigenVariable: Var, child: ExpansionTree
     ): ExpansionProofWithCut = {
       if ( instances isEmpty ) return addCuts()
 
-      val eigenVarsToRename = expansionSequent.elements.toSet + child ++ rest flatMap { eigenVariablesET( _ ) } diff freeVariables( child.shallow )
-      val nameGen = rename.awayFrom( eigenVarsToRename union freeVariables( child.shallow ) union freeVars
-        union instances.values.flatMap { eigenVariablesET( _ ) }.toSet )
+      val eigenVarsToRename = generatedUpperSetInPO( eigenVariablesET( child ) + eigenVariable, dependencyRelation ) - eigenVariable
+      val nameGen = rename.awayFrom( freeVars )
       val renamings = for ( _ <- 0 until instances.size )
         yield Substitution( eigenVarsToRename map { ev => ev -> nameGen.fresh( ev ) } )
       val substs =
@@ -350,17 +388,17 @@ object eliminateDefsET {
     }
     def replf( f: HOLFormula ): HOLFormula = TermReplacement( f, replm )
     def repl( et: ExpansionTree ): ExpansionTree = et match {
-      case ETMerge( a, b )                  => ETMerge( repl( a ), repl( b ) )
-      case ETWeakening( sh, pol )           => ETWeakening( replf( sh ), pol )
+      case ETMerge( a, b )                      => ETMerge( repl( a ), repl( b ) )
+      case ETWeakening( sh, pol )               => ETWeakening( replf( sh ), pol )
 
-      case ETTop( _ ) | ETBottom( _ )       => et
-      case ETNeg( ch )                      => ETNeg( repl( ch ) )
-      case ETAnd( l, r )                    => ETAnd( repl( l ), repl( r ) )
-      case ETOr( l, r )                     => ETOr( repl( l ), repl( r ) )
-      case ETImp( l, r )                    => ETImp( repl( l ), repl( r ) )
-      case ETWeakQuantifier( sh, is )       => ETWeakQuantifier( replf( sh ), is mapValues repl )
-      case ETStrongQuantifier( sh, ev, ch ) => ETStrongQuantifier( replf( sh ), ev, repl( ch ) )
-      case ETSkolemQuantifier( sh, st, ch ) => ETSkolemQuantifier( replf( sh ), st, repl( ch ) )
+      case ETTop( _ ) | ETBottom( _ )           => et
+      case ETNeg( ch )                          => ETNeg( repl( ch ) )
+      case ETAnd( l, r )                        => ETAnd( repl( l ), repl( r ) )
+      case ETOr( l, r )                         => ETOr( repl( l ), repl( r ) )
+      case ETImp( l, r )                        => ETImp( repl( l ), repl( r ) )
+      case ETWeakQuantifier( sh, is )           => ETWeakQuantifier( replf( sh ), is mapValues repl )
+      case ETStrongQuantifier( sh, ev, ch )     => ETStrongQuantifier( replf( sh ), ev, repl( ch ) )
+      case ETSkolemQuantifier( sh, st, sd, ch ) => ETSkolemQuantifier( replf( sh ), st, sd, repl( ch ) )
 
       case ETDefinedAtom( Apps( `definitionConst`, as ), pol, _ ) =>
         if ( pol ) insts( as )._1 else insts( as )._2

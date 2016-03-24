@@ -1,6 +1,5 @@
 package at.logic.gapt.expr.hol
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
@@ -29,10 +28,21 @@ object structuralCNF {
     val cnf = mutable.Set[HOLClause]()
     val justifications = mutable.Map[HOLClause, Justification]()
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
+    val skConsts = mutable.Map[LambdaExpression, Const]()
 
     val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
     def mkSkolemSym() = nameGen.freshWithIndex( "s" )
     def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
+
+    def getSkolemInfo( f: HOLFormula, x: Var ): ( LambdaExpression, LambdaExpression ) = {
+      val fvs = freeVariables( f ).toSeq
+      val skolemizedFormula = Abs( fvs, f )
+      val skolemConst = skConsts.getOrElseUpdate(
+        skolemizedFormula,
+        Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
+      )
+      ( skolemConst( fvs: _* ), skolemizedFormula )
+    }
 
     // We do a clausification similar to forward proof search in Ral.
     // (But we handle Skolemization more as an afterthought here.)
@@ -63,13 +73,9 @@ object structuralCNF {
             ETWeakQuantifier( Ex( x, Substitution( eigen -> x )( et.shallow ) ), Map( eigen -> et ) )
           }
         case All( x, a ) if !propositional =>
-          val fvs = freeVariables( f ).toSeq
-          val skolem = Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
-          val fa = left( Substitution( x -> skolem( fvs: _* ) )( a ) )
-          es => {
-            val et = fa( es )
-            ETSkolemQuantifier( All( x, TermReplacement( et.shallow, Map( skolem( fvs: _* ) -> x ) ) ), skolem( fvs: _* ), et )
-          }
+          val ( skolemTerm, skolemizedFormula ) = getSkolemInfo( f, x )
+          val fa = left( Substitution( x -> skolemTerm )( a ) )
+          es => ETSkolemQuantifier( f, skolemTerm, skolemizedFormula, fa( es ) )
         case And( a, b ) =>
           val fa = left( a )
           val fb = left( b )
@@ -110,13 +116,9 @@ object structuralCNF {
             ETWeakQuantifier( All( x, Substitution( eigen -> x )( et.shallow ) ), Map( eigen -> et ) )
           }
         case Ex( x, a ) if !propositional =>
-          val fvs = freeVariables( f ).toSeq
-          val skolem = Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
-          val fa = right( Substitution( x -> skolem( fvs: _* ) )( a ) )
-          es => {
-            val et = fa( es )
-            ETSkolemQuantifier( Ex( x, TermReplacement( et.shallow, Map( skolem( fvs: _* ) -> x ) ) ), skolem( fvs: _* ), et )
-          }
+          val ( skolemTerm, skolemizedFormula ) = getSkolemInfo( f, x )
+          val fa = right( Substitution( x -> skolemTerm )( a ) )
+          es => ETSkolemQuantifier( f, skolemTerm, skolemizedFormula, fa( es ) )
         case Or( a, b ) =>
           val fa = right( a )
           val fb = right( b )

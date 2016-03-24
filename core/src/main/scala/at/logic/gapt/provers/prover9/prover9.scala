@@ -6,9 +6,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
-import at.logic.gapt.formats.prover9.{ Prover9TermParserLadrStyle, Prover9TermParser }
+import at.logic.gapt.formats.prover9.{ Prover9TermParser, Prover9TermParserLadrStyle }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansion.ExpansionSequent
+import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.ResolutionProver
@@ -154,11 +154,11 @@ object Prover9Importer extends ExternalProgram {
     RobinsonToLK( fixedResProof, endSequent )
   }
 
-  def expansionProofFromFile( p9File: String ): ExpansionSequent =
+  def expansionProofFromFile( p9File: String ): ExpansionProof =
     expansionProof( Source.fromFile( p9File ).mkString )
 
-  def expansionProof( p9Output: String ): ExpansionSequent = {
+  def expansionProof( p9Output: String ): ExpansionProof = {
     val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
-    RobinsonToExpansionProof( fixedResProof, endSequent ).expansionSequent
+    RobinsonToExpansionProof( fixedResProof, endSequent )
   }
 }

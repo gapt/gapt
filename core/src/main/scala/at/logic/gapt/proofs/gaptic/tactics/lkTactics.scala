@@ -58,20 +58,6 @@ case object ReflexivityAxiomTactic extends Tactic[Unit] {
 }
 
 /**
- * Closes an arbitrary goal by declaring it a theory axiom.
- */
-case object TheoryAxiomTactic extends Tactic[Unit] {
-  override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.conclusion
-
-    if ( goalSequent.forall( _.isInstanceOf[HOLAtom] ) )
-      ( (), TheoryAxiom( goalSequent.asInstanceOf[Sequent[HOLAtom]] ) ).success
-    else
-      TacticalFailure( this, Some( goal ), "not an atomic subgoal" ).failureNel
-  }
-}
-
-/**
  * Decomposes a negation in the antecedent of a goal.
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
@@ -412,26 +398,4 @@ case class EqualityTactic( equalityLabel: String, formulaLabel: String, leftToRi
   def fromRightToLeft = new EqualityTactic( equalityLabel, formulaLabel, leftToRight = Some( false ) )
 
   def to( targetFormula: HOLFormula ) = new EqualityTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
-}
-
-/**
- * Applies a definition in the antecedent of a goal.
- * @param applyToLabel The label of the defined formula to be expanded.
- * @param replacement The formula to be inserted.
- */
-case class DefinitionLeftTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
-  def apply( goal: OpenAssumption ) =
-    for ( ( label, formula, idx: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
-      yield () -> DefinitionLeftRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
-}
-
-/**
- * Applies a definition in the succedent of a goal.
- * @param applyToLabel The label of the defined formula to be expanded.
- * @param replacement The formula to be inserted.
- */
-case class DefinitionRightTactic( applyToLabel: String, replacement: HOLFormula ) extends Tactic[Unit] {
-  def apply( goal: OpenAssumption ) =
-    for ( ( label, formula, idx: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
-      yield () -> DefinitionRightRule( OpenAssumption( goal.s.updated( idx, label -> replacement ) ), idx, formula )
 }

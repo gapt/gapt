@@ -4,8 +4,6 @@ import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object primediv extends TacticsProof {
-
-  implicit var ctx = FiniteContext()
   ctx += Context.Sort( "nat" )
   ctx += hoc"'*': nat>nat>nat"
   ctx += hoc"1: nat"

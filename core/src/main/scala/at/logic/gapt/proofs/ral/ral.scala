@@ -91,24 +91,29 @@ case class RalFactor( subProof: RalProof, idx1: SequentIndex, idx2: SequentIndex
 
 case class RalPara( subProof1: RalProof, equation: Suc,
                     subProof2: RalProof, modulant: SequentIndex,
-                    positions: Seq[LambdaPosition], leftToRight: Boolean ) extends RalProof {
+                    replacementContext: Abs, leftToRight: Boolean ) extends RalProof {
   require( equation isSuc )
   val ( t, s ) = ( subProof1.formulas( equation ), leftToRight ) match {
     case ( Eq( a, b ), true )  => ( a, b )
     case ( Eq( a, b ), false ) => ( b, a )
   }
 
-  positions foreach { position =>
-    require( subProof2.formulas( modulant )( position ) == t )
-  }
+  val Abs( v, f ) = replacementContext
+  require( f.find( v ).length == 1 )
+  val auxFormula = BetaReduction.betaNormalize( subProof2.formulas( modulant ) )
+  val auxFormula_ = BetaReduction.betaNormalize( App( replacementContext, t ) )
+  require( auxFormula_ == auxFormula, s"$auxFormula != $auxFormula_" )
 
-  require( subProof1.labels( equation ) == subProof2.labels( modulant ) )
+  require(
+    subProof1.labels( equation ) == subProof2.labels( modulant ),
+    s"${subProof1.labels( equation )} != ${subProof2.labels( modulant )}"
+  )
 
   override val conclusion = subProof1.conclusion.delete( equation ) ++
     subProof2.conclusion.updated(
       modulant,
       subProof2.labels( modulant ) ->
-        positions.foldLeft( subProof2.formulas( modulant ) ) { _.replace( _, s ).asInstanceOf[HOLFormula] }
+        BetaReduction.betaNormalize( App( replacementContext, s ) ).asInstanceOf[HOLFormula]
     )
 
   override def occConnectors = Seq(

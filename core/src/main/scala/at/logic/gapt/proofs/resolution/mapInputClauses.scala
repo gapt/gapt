@@ -53,12 +53,12 @@ object mapInputClauses {
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
-      case Paramodulation( p1, i1, p2, i2, pos, dir ) =>
+      case Paramodulation( p1, i1, p2, i2, con, dir ) =>
         val ( q1, conn1 ) = doMap( p1 )
         val ( q2, conn2 ) = doMap( p2 )
         conn1.children( i1 ).headOption map { j1 =>
           conn2.children( i2 ).headOption map { j2 =>
-            val res = Paramodulation( q1, j1, q2, j2, pos, dir )
+            val res = Paramodulation( q1, j1, q2, j2, con, dir )
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }

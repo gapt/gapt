@@ -66,7 +66,7 @@ class VeriT extends OneShotProver with ExternalProgram {
   }
 
   override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ep =>
-    val \/-( p ) = ExpansionProofToLK( ep )
+    val \/-( p ) = PropositionalExpansionProofToLK( ep )
     p
   }
 

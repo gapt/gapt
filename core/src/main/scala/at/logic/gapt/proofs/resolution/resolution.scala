@@ -236,18 +236,19 @@ object MguResolution {
  */
 case class Paramodulation( subProof1: ResolutionProof, equation: SequentIndex,
                            subProof2: ResolutionProof, literal: SequentIndex,
-                           positions: Seq[LambdaPosition], leftToRight: Boolean ) extends ResolutionProof {
+                           replacementContext: Abs, leftToRight: Boolean ) extends ResolutionProof {
   require( equation isSuc )
-  val ( t, s ) = ( subProof1.conclusion( equation ), leftToRight ) match {
+  val ( what, by ) = ( subProof1.conclusion( equation ), leftToRight ) match {
     case ( Eq( a, b ), true )  => ( a, b )
     case ( Eq( a, b ), false ) => ( b, a )
   }
 
-  positions foreach { position =>
-    require( subProof2.conclusion( literal )( position ) == t )
-  }
+  val auxFormula_ = BetaReduction.betaNormalize( App( replacementContext, what ) )
+  val auxFormula = subProof2.conclusion( literal )
 
-  val rewrittenAtom = positions.foldLeft( subProof2.conclusion( literal ) ) { _.replace( _, s ).asInstanceOf[HOLAtom] }
+  require( auxFormula_ == auxFormula )
+
+  val rewrittenAtom = BetaReduction.betaNormalize( App( replacementContext, by ) ).asInstanceOf[HOLAtom]
 
   override val conclusion = subProof1.conclusion.delete( equation ) ++
     subProof2.conclusion.updated( literal, rewrittenAtom )
@@ -276,9 +277,12 @@ object Paramodulation {
     }
 
     val oldAtom = subProof2.conclusion( literal )
-    val positions = LambdaPosition.getPositions( oldAtom, _ == t ).filter { newAtom.get( _ ) == Some( s ) }
-    val proof = Paramodulation( subProof1, equation, subProof2, literal, positions, leftToRight )
-    if ( proof.mainFormulas.head == newAtom ) Some( proof ) else None
+    val positions = LambdaPosition.getPositions( oldAtom, _ == t ).filter { newAtom.get( _ ) contains s }
+    if ( positions.nonEmpty ) {
+      val context = replacementContext( s.exptype, oldAtom, positions, s, t )
+      val proof = Paramodulation( subProof1, equation, subProof2, literal, context, leftToRight )
+      if ( proof.mainFormulas.head == newAtom ) Some( proof ) else None
+    } else None
   }
   def apply( subProof1: ResolutionProof, equation: SequentIndex,
              subProof2: ResolutionProof, literal: SequentIndex,
