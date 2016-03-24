@@ -43,7 +43,7 @@ object prod_prop_31 extends Script {
 
   def mkList( i: Int ) = ( 0 until i ).foldRight[LambdaExpression]( nil ) { ( j, l ) => cons( as( j ), l ) }
 
-  val instances = 0 to 3 map mkList
+  val instances = 0 to 2 map mkList
 
   // Compute many-sorted expansion sequents
   val instanceProofs = instances map { inst =>
@@ -123,7 +123,7 @@ object prod_prop_31 extends Script {
   println()
 
   val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
-  println( s"QBUP:\n$qbup\n" )
+  println( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
   println( s"Canonical solution at G(${mkList( 3 )},w):" )
   val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
