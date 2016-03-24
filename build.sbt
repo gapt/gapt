@@ -176,8 +176,8 @@ lazy val core = project.in( file( "core" ) ).
       "org.scalaz" %% "scalaz-core" % "7.2.1",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
-      "org.slf4j" % "slf4j-api" % "1.7.18",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.18",
+      "org.slf4j" % "slf4j-api" % "1.7.19",
+      "org.slf4j" % "slf4j-log4j12" % "1.7.19",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
@@ -185,7 +185,7 @@ lazy val core = project.in( file( "core" ) ).
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
-      "com.itextpdf" % "itextpdf" % "5.5.8",
+      "com.itextpdf" % "itextpdf" % "5.5.9",
       "org.scilab.forge" % "jlatexmath" % "1.0.2"
     )
   )
@@ -231,7 +231,7 @@ lazy val cli = project.in( file( "cli" ) ).
 
     libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.13"
+      "jline" % "jline" % "2.14.1"
     ),
 
     packagedArtifacts := Map()
