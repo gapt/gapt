@@ -235,14 +235,30 @@ object eliminateMerges {
   }
 }
 
+object generatedUpperSetInPO {
+  def apply[T]( gen: Iterable[T], rel: Iterable[( T, T )] ): Set[T] = {
+    val upper = mutable.Set[T]()
+    def walk( el: T ): Unit =
+      if ( !upper.contains( el ) ) {
+        upper += el
+        for ( ( `el`, next ) <- rel ) walk( next )
+      }
+    gen foreach walk
+    upper.toSet
+  }
+}
+
 object eliminateCutsET {
   def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = expansionProof.cuts match {
-    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent, freeVariablesET( expansionProof ) ) )
-    case Seq()                       => ExpansionProof( expansionProof.expansionSequent )
+    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent,
+      expansionProof.eigenVariables union freeVariables( expansionProof.deep ),
+      expansionProof.expansionWithCutAxiom.dependencyRelation ) )
+    case Seq() => ExpansionProof( expansionProof.expansionSequent )
   }
 
   private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETImp],
-                          expansionSequent: Sequent[ExpansionTree], freeVars: Set[Var] ): ExpansionProofWithCut = {
+                          expansionSequent: Sequent[ExpansionTree], freeVars: Set[Var],
+                          dependencyRelation: Set[( Var, Var )] ): ExpansionProofWithCut = {
     def addCuts( extraCuts: ETImp* ) = ExpansionProofWithCut( extraCuts ++ rest, expansionSequent )
 
     // This uses a slightly more optimized reduction step than described in the unpublished
@@ -250,8 +266,8 @@ object eliminateCutsET {
     //
     // Say we have an expansion proof with cut ∀x P(x) ⊃ ∀x P(x), Γ :- Δ where the cut expands
     // to P(eigenvar) ⊃ P(inst_1) ∧ ‥ ∧ P(inst_n), and the deep sequent is T-valid (for a given theory T).
-    // Let η_i be renamings of the eigenvariable in P(eigenvar), Γ, Δ without the variables occurring
-    // in the shallow formula P(x) to fresh variables, and σ_i = η_i [eigenvar \ inst_i].
+    // Let η_i be renamings of the eigenvariables above the eigenvariables in P(eigenvar) and all P(inst_i)
+    // in the dependency order to fresh variables, and σ_i = η_i [eigenvar \ inst_i].
     // By applying an invertible rule to the cut-implication we see that the deep formulas of Γ :- Δ, P(eigenvar)
     // and P(inst_1), ‥, P(inst_n), Γ :- Δ are T-valid.
     //
@@ -266,19 +282,17 @@ object eliminateCutsET {
     // In this case the following sequent becomes T-valid by the same argument:
     // P(eigenvar)σ_1 ⊃ P(inst_1), P(eigenvar)σ_2 ⊃ P(inst_2), ‥, Γ, Γσ_1, Γσ_2, ‥ :- Δ, Δσ_1, Δσ_2, ‥
     //
-    // The resulting expansion proof will have duplicate eigenvariables since we did not rename the ones that occur
-    // in the cut formula.  But these will get merged as they are below the cut eigenvariable in the dependency order
-    // (and hence do not dominate weak quantifier instances that contain the cut eigenvariable).
-    // TODO: rename even fewer eigenvariables based on this observation
+    // The resulting expansion proof will have duplicate eigenvariables since we did not rename the ones
+    // that are not above the eigenvariables in the cut.  But these will get merged as they do not dominate
+    // weak quantifier instances that have been changed through the substitution.
     def quantifiedCut(
       instances:     Map[LambdaExpression, ExpansionTree],
       eigenVariable: Var, child: ExpansionTree
     ): ExpansionProofWithCut = {
       if ( instances isEmpty ) return addCuts()
 
-      val eigenVarsToRename = expansionSequent.elements.toSet + child ++ rest flatMap { eigenVariablesET( _ ) } diff freeVariables( child.shallow )
-      val nameGen = rename.awayFrom( eigenVarsToRename union freeVariables( child.shallow ) union freeVars
-        union instances.values.flatMap { eigenVariablesET( _ ) }.toSet )
+      val eigenVarsToRename = generatedUpperSetInPO( eigenVariablesET( child ) + eigenVariable, dependencyRelation ) - eigenVariable
+      val nameGen = rename.awayFrom( freeVars )
       val renamings = for ( _ <- 0 until instances.size )
         yield Substitution( eigenVarsToRename map { ev => ev -> nameGen.fresh( ev ) } )
       val substs =
