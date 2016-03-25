@@ -372,7 +372,17 @@ object replaceAtHOLPosition {
   }
 }
 
+/**
+ * Replaces terms in an expansion tree according to a replacement context.
+ */
 object replaceWithContext {
+  /**
+   *
+   * @param et An expansion tree.
+   * @param replacementContext A replacement context, i.e. a lambda expression of the form λx.E.
+   * @param exp The term to insert for x.
+   * @return A new expansion tree where x has been replaced with exp in every node.
+   */
   def apply( et: ExpansionTree, replacementContext: Abs, exp: LambdaExpression ): ExpansionTree = {
     def newFormula = BetaReduction.betaNormalize( App( replacementContext, exp ) ).asInstanceOf[HOLFormula]
     def newAtom = newFormula.asInstanceOf[HOLAtom]
@@ -387,15 +397,15 @@ object replaceWithContext {
       case ( ETAnd( left, right ), Abs( v, And( l, r ) ) ) => ETAnd( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETOr( left, right ), Abs( v, Or( l, r ) ) )   => ETOr( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETImp( left, right ), Abs( v, Imp( l, r ) ) ) => ETImp( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
-      case ( ETStrongQuantifier( formula, x, sub ), Abs( v, Quant( y, f ) ) ) if x == y =>
-        ETStrongQuantifier( newFormula, x, apply( sub, Abs( v, f ), exp ) )
-      case ( ETSkolemQuantifier( formula, x, skDef, sub ), Abs( v, Quant( y, f ) ) ) if x == y =>
-        ETSkolemQuantifier( newFormula, x, skDef, apply( sub, Abs( v, f ), exp ) )
+      case ( ETStrongQuantifier( formula, x, sub ), Abs( v, Quant( y, f ) ) ) =>
+        ETStrongQuantifier( newFormula, x, apply( sub, Abs( v, Substitution( y, x )( f ) ), exp ) )
+      case ( ETSkolemQuantifier( formula, x, skDef, sub ), Abs( v, Quant( y, f ) ) ) =>
+        ETSkolemQuantifier( newFormula, x, skDef, apply( sub, Abs( v, Substitution( y, x )( f ) ), exp ) )
       case ( ETWeakQuantifier( formula, instances ), Abs( v, Quant( y, f ) ) ) =>
         ETWeakQuantifier(
           newFormula,
           for ( ( term, instance ) <- instances )
-            yield term -> apply( instance, Abs( v, f ), exp )
+            yield term -> apply( instance, Abs( v, Substitution( y, term )( f ) ), exp )
         )
       case _ => throw new IllegalArgumentException( s"Tree $et and context $replacementContext could not be handled." )
     }
