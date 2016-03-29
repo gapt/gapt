@@ -457,7 +457,7 @@ object Escargot extends Escargot( equality = true, propositional = false ) {
     val eqs = atoms collect { case c @ EqC( _ ) => c }
     val functions = for ( c <- consts; FunctionType( to, _ ) = c.exptype if to != To ) yield c
 
-    val precedence = functions.toSeq.sortBy { arity( _ ) } ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) } ++ eqs
+    val precedence = functions.toSeq.sortBy { arity( _ ) } ++ eqs ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) }
 
     LPO( precedence, if ( boolOnTermLevel ) Set() else ( types - To ) map { ( _, To ) } )
   }
