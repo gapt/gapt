@@ -125,7 +125,7 @@ class LKskToExpansionProofTest extends Specification {
     }
 
     "work for the same hol proof, automatically skolemized" in {
-      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof.proof )
+      val ExpansionProof( ExpansionSequent( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof.proof )
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(
@@ -136,7 +136,7 @@ class LKskToExpansionProofTest extends Specification {
     }
 
     "work for the same hol proof, manually skolemized" in {
-      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleLKskProof.i4 )
+      val ExpansionProof( ExpansionSequent( Nil, List( et ) ) ) = LKskToExpansionProof( simpleLKskProof.i4 )
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(
@@ -147,7 +147,7 @@ class LKskToExpansionProofTest extends Specification {
     }
 
     "work for a skolemized hol proof with strong individual quantifiers" in {
-      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof2.proof )
+      val ExpansionProof( ExpansionSequent( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof2.proof )
 
       et must beLike {
         case ETSkolemQuantifier( _, sk, _,
@@ -159,7 +159,7 @@ class LKskToExpansionProofTest extends Specification {
     }
 
     "work for a skolemized hol proof with strong individual quantifiers inside weak ho quantifiers" in {
-      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof3.proof )
+      val ExpansionProof( ExpansionSequent( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof3.proof )
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(
@@ -170,7 +170,7 @@ class LKskToExpansionProofTest extends Specification {
     }
 
     "work for a skolemized hol proof with weakening" in {
-      val ExpansionProof( ExpansionSequent( ( Nil, List( et ) ) ) ) = LKskToExpansionProof( simpleHOLProof4.proof )
+      val ExpansionProof( ExpansionSequent( Nil, List( et ) ) ) = LKskToExpansionProof( simpleHOLProof4.proof )
 
       et must beLike {
         case ETWeakQuantifier( _, SortedMap(

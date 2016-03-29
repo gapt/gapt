@@ -21,8 +21,8 @@ object applySubstitution extends at.logic.gapt.utils.logging.Logger {
   def apply( proof: LKProof, subst: Substitution ): ( LKProof, Map[LabelledFormulaOccurrence, LabelledFormulaOccurrence] ) =
     proof match {
       case Axiom( so: LabelledOccSequent ) => {
-        val ant_occs = so.l_antecedent
-        val succ_occs = so.l_succedent
+        val ant_occs = so.antecedent
+        val succ_occs = so.succedent
         val seq = HOLSequent( ant_occs.map( fo => normalize( subst( fo.formula ) ) ), succ_occs.map( fo => normalize( subst( fo.formula ) ) ) )
         val labels_ant = ant_occs.map( fo => fo.skolem_label.map( t => subst( t ) ) ).toList
         val labels_succ = succ_occs.map( fo => fo.skolem_label.map( t => subst( t ) ) ).toList
@@ -39,39 +39,39 @@ object applySubstitution extends at.logic.gapt.utils.logging.Logger {
         val new_parent = apply( p, subst )
         val new_proof = WeakeningLeftRule.createDefault( new_parent._1, subst( m.formula ), m.skolem_label.map( e => normalize( subst.apply( e ) ) ) )
         val es = toLabelledSequent( p.root )
-        ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
+        ( new_proof, computeMap( es.antecedent ++ es.succedent, proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
       }
       case WeakeningRightRule( p, s, m ) => {
         val new_parent = apply( p, subst )
         val new_proof = WeakeningRightRule.createDefault( new_parent._1, subst( m.formula ), m.skolem_label.map( e => normalize( subst.apply( e ) ) ) )
         val es = toLabelledSequent( p.root )
-        ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
+        ( new_proof, computeMap( es.antecedent ++ es.succedent, proof, new_proof, new_parent._2 ) + Tuple2( m, new_proof.prin.head ) )
       }
       case ForallSkLeftRule( p, s, a, m, t ) => {
         val new_parent = apply( p, subst )
         val new_proof = ForallSkLeftRule( new_parent._1, new_parent._2( a ), normalize( subst( m.formula ) ), normalize( subst( t ) ), !m.skolem_label.contains( t ) )
 
         val es = toLabelledSequent( p.root )
-        ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
+        ( new_proof, computeMap( es.antecedent ++ es.succedent, proof, new_proof, new_parent._2 ) )
       }
       case ExistsSkRightRule( p, s, a, m, t ) => {
         val new_parent = apply( p, subst )
         val new_proof = ExistsSkRightRule( new_parent._1, new_parent._2( a ), normalize( subst( m.formula ) ), normalize( subst.apply( t ) ), !m.skolem_label.contains( t ) )
 
         val es = toLabelledSequent( p.root )
-        ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
+        ( new_proof, computeMap( es.antecedent ++ es.succedent, proof, new_proof, new_parent._2 ) )
       }
       case ForallSkRightRule( p, s, a, m, t ) => {
         val new_parent = apply( p, subst )
         val new_proof = ForallSkRightRule( new_parent._1, new_parent._2( a ), normalize( subst( m.formula ) ), normalize( subst.apply( t ) ) )
         val es = toLabelledSequent( p.root )
-        ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
+        ( new_proof, computeMap( es.antecedent ++ es.succedent, proof, new_proof, new_parent._2 ) )
       }
       case ExistsSkLeftRule( p, s, a, m, t ) => {
         val new_parent = apply( p, subst )
         val new_proof = ExistsSkLeftRule( new_parent._1, new_parent._2( a ), normalize( subst( m.formula ) ), normalize( subst.apply( t ) ) )
         val es = toLabelledSequent( p.root )
-        ( new_proof, computeMap( es.l_antecedent ++ es.l_succedent, proof, new_proof, new_parent._2 ) )
+        ( new_proof, computeMap( es.antecedent ++ es.succedent, proof, new_proof, new_parent._2 ) )
       }
       // casting is necessary, since Map is not covariant
       case UnaryLKProof( _, p, _, _, _ ) => LKapplySubstitution.handleRule(

@@ -195,8 +195,8 @@ trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
   val smskip = nLine + nLine
   val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
   private def exportSequent( seq: LabelledOccSequent ) = {
-    val ant = seq.l_antecedent.toList
-    val suc = seq.l_succedent.toList
+    val ant = seq.antecedent.toList
+    val suc = seq.succedent.toList
     if ( ant.size > 0 ) exportLabelledFormulaOccurrence( ant.head )
     if ( ant.size > 1 ) ant.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence( x ) } )
     getOutput.write( smskip ); getOutput.write( """ $\vdash$ """ ); getOutput.write( smskip )

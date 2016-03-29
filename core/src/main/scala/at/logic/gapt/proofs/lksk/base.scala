@@ -5,6 +5,7 @@
 
 package at.logic.gapt.proofs.lksk
 
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.proofs._
 import at.logic.gapt.expr._
@@ -70,21 +71,8 @@ object LKskFOFactory extends FOFactory {
 
 }
 
-// TODO: instead of l_antecedent, use override val antecedent
-// does not work right now because Set is not covariant!
-case class LabelledOccSequent(
-  val l_antecedent: Seq[LabelledFormulaOccurrence],
-  val l_succedent:  Seq[LabelledFormulaOccurrence]
-)
-    extends OccSequent( l_antecedent, l_succedent ) {
-  override def toString: String = l_antecedent.mkString( ", " ) + " :- " + l_succedent.mkString( ", " )
-
-  def compose( that: LabelledOccSequent ): LabelledOccSequent =
-    LabelledOccSequent( this.l_antecedent ++ that.l_antecedent, this.l_succedent ++ that.l_succedent )
-}
-
 object LabelledOccSequent {
-  def apply( s: OccSequent ) = new LabelledOccSequent(
+  def apply( s: OccSequent ): LabelledOccSequent = Sequent(
     s.antecedent.asInstanceOf[Seq[LabelledFormulaOccurrence]],
     s.succedent.asInstanceOf[Seq[LabelledFormulaOccurrence]]
   )

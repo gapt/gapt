@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.ceres_schema.clauseSets
 
-import at.logic.gapt.proofs.{ Clause, HOLSequent }
+import at.logic.gapt.proofs.{ Sequent, Clause, HOLSequent }
 import at.logic.gapt.proofs.ceres_schema.struct._
 import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lksk._

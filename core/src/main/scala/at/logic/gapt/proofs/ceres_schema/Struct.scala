@@ -558,7 +558,7 @@ object StructCreators extends Logger {
       {
         debug( "0 " + cut_occs + "  " );
         so match {
-          case lso: LabelledOccSequent if lso.l_antecedent.size == 1 && lso.l_succedent.size == 1 =>
+          case lso: LabelledOccSequent if lso.antecedent.size == 1 && lso.succedent.size == 1 =>
             handleLabelledAxiom( lso, cut_occs )
           case _ => handleAxiom( so, cut_occs )
         }
@@ -631,8 +631,8 @@ object StructCreators extends Logger {
     }*/
 
   def handleLabelledAxiom( lso: LabelledOccSequent, cut_occs: Set[FormulaOccurrence] ) = {
-    val left = lso.l_antecedent.toList.head
-    val right = lso.l_succedent.toList.head
+    val left = lso.antecedent.toList.head
+    val right = lso.succedent.toList.head
     val ant = if ( cut_occs.contains( left ) )
       Dual( A( new LabelledFormulaOccurrence( left.formula, Nil, right.skolem_label ) ) ) :: Nil
     else

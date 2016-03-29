@@ -32,9 +32,9 @@ object LLKFormatter {
   def f( lfo: LabelledFormulaOccurrence ): String =
     f( lfo.formula ) + lfo.skolem_label.map( f ).mkString( "[label: ", ", ", "]" )
 
-  def f( ls: LabelledOccSequent ): String = {
-    ls.l_antecedent.map( f ).mkString( "", ", ", " :- " ) +
-      ls.l_succedent.map( f ).mkString( "", ", ", "" )
+  def f( ls: LabelledOccSequent )( implicit d1: DummyImplicit, d2: DummyImplicit ): String = {
+    ls.antecedent.map( f ).mkString( "", ", ", " :- " ) +
+      ls.succedent.map( f ).mkString( "", ", ", "" )
   }
   def f( e: LambdaExpression ): String = " " + toLLKString( e ) + " "
 }
