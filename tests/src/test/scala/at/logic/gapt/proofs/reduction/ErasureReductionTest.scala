@@ -33,7 +33,7 @@ class ErasureReductionTest extends Specification {
     p6.conclusion must_== Clause()
 
     val reifiedProof = red.back( p6, Set( c1, c2, c3, c4 ) )
-    println( reifiedProof )
+    //    println( reifiedProof )
     reifiedProof.conclusion must_== Clause()
   }
 }
