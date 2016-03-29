@@ -116,6 +116,14 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
 
       LKToExpansionProof( proof ).deep must beEValidSequent
     }
+
+    "replacement contexts" in {
+      val lk = ( ProofBuilder c ReflexivityAxiom( le"c" )
+        u ( ExistsRightRule( _, hof"∃x x=c", le"c" ) )
+        u ( WeakeningLeftRule( _, hof"c=d" ) )
+        u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), le"λx ∃y y=x".asInstanceOf[Abs] ) ) qed )
+      LKToExpansionProof( lk ).shallow must_== lk.conclusion
+    }
   }
 }
 
