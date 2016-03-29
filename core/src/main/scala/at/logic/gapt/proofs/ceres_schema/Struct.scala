@@ -5,22 +5,23 @@
 
 package at.logic.gapt.proofs.ceres_schema.struct
 
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.base._
-import at.logic.gapt.proofs.lksk.{ LabelledOccSequent, UnaryLKskProof, LabelledFormulaOccurrence }
-import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
+import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent, UnaryLKskProof }
+import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 import at.logic.gapt.proofs.shlk._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.SymbolA
-import at.logic.gapt.expr.schema.{ SchemaSubstitution => SchemaSubstitution, SchemaFormula, BiggerThan, IntZero, IntVar, IntegerTerm, IndexedPredicate, Succ, BigAnd, BigOr, Pred }
+import at.logic.gapt.expr.schema.{ BigAnd, BigOr, BiggerThan, IndexedPredicate, IntVar, IntZero, IntegerTerm, Pred, SchemaFormula, SchemaSubstitution, Succ }
 import at.logic.gapt.utils.ds.Multisets.Multiset
 import at.logic.gapt.utils.ds.Multisets._
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.proofs.ceres_schema.clauseSets.StandardClauseSet._
 import at.logic.gapt.proofs.ceres_schema.RelevantCC
 import at.logic.gapt.utils.logging.Logger
+
 import scala.collection.immutable.HashSet
 import scala.math.max
 
@@ -558,8 +559,8 @@ object StructCreators extends Logger {
       {
         debug( "0 " + cut_occs + "  " );
         so match {
-          case lso: LabelledOccSequent if lso.antecedent.size == 1 && lso.succedent.size == 1 =>
-            handleLabelledAxiom( lso, cut_occs )
+          case lso @ Sequent( Seq( _: LabelledFormulaOccurrence ), Seq( _: LabelledFormulaOccurrence ) ) =>
+            handleLabelledAxiom( lso.asInstanceOf[LabelledOccSequent], cut_occs )
           case _ => handleAxiom( so, cut_occs )
         }
       }
