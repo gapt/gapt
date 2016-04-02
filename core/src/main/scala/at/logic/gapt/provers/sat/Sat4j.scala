@@ -1,11 +1,13 @@
 package at.logic.gapt.provers.sat
 
 import at.logic.gapt.formats.dimacs.DIMACS
-import org.sat4j.core.{ VecInt, Vec }
+import at.logic.gapt.formats.dimacs.DIMACS.{ CNF, DRUP }
+import org.sat4j.core.{ LiteralsUtils, Vec, VecInt }
 import org.sat4j.minisat.SolverFactory
-import org.sat4j.specs.{ ContradictionException, IVec, IVecInt }
+import org.sat4j.specs._
+import org.sat4j.tools.SearchListenerAdapter
 
-class Sat4j extends SATSolver {
+class Sat4j extends DrupSolver {
   import Sat4j._
 
   override def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model] = {
@@ -24,6 +26,37 @@ class Sat4j extends SATSolver {
       case _: ContradictionException => None
     }
   }
+
+  class RupListener extends SearchListenerAdapter[ISolverService] {
+    val drup = Seq.newBuilder[Either[DIMACS.Clause, DIMACS.Clause]]
+
+    override def learnUnit( p: Int ) = drup += Right( Seq( p ) )
+    override def learn( c: IConstr ) = drup += Right( c )
+
+    override def end( result: Lbool ) =
+      if ( result == Lbool.FALSE ) drup += Right( Seq() )
+  }
+
+  override def getDrupProof( cnf: CNF ): Option[DRUP] = {
+    val solver = SolverFactory.newDefault()
+    val listener = new RupListener
+    solver.setSearchListener( listener )
+    solver.newVar( DIMACS maxAtom cnf )
+
+    try {
+      solver.addAllClauses( cnf )
+
+      if ( solver.isSatisfiable ) {
+        None
+      } else {
+        Some( listener.drup.result() )
+      }
+    } catch {
+      case _: ContradictionException =>
+        listener.end( Lbool.FALSE )
+        Some( listener.drup.result() )
+    }
+  }
 }
 
 object Sat4j extends Sat4j {
@@ -32,4 +65,7 @@ object Sat4j extends Sat4j {
 
   implicit def cnf2sat4j( cnf: DIMACS.CNF ): IVec[IVecInt] =
     new Vec( cnf.map { implicitly[IVecInt]( _ ) }.toArray )
+
+  implicit def sat4j2clause( constr: IConstr ): DIMACS.Clause =
+    for ( i <- 0 until constr.size() ) yield LiteralsUtils.toDimacs( constr get i )
 }

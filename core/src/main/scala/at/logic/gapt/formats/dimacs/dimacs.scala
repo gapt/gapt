@@ -13,6 +13,8 @@ object DIMACS {
   type CNF = Seq[Clause]
   type Model = Seq[Literal]
 
+  type DRUP = Seq[Either[Clause, Clause]]
+
   def maxAtom( cnf: CNF ) = {
     val atoms = cnf.flatten.map( math.abs )
     if ( atoms.nonEmpty ) atoms.max else 0
@@ -60,7 +62,7 @@ object readDIMACS {
   private val whitespace = """\s""".r
 
   def apply( dimacsOutput: String ): DIMACS.Model =
-    whitespace split dimacsOutput.trim diff Seq( "SAT", "0", "" ) map { _.toInt }
+    whitespace split dimacsOutput.trim diff Seq( "SAT", "s", "SATISFIABLE", "v", "0", "" ) map { _.toInt }
 }
 
 object writeDIMACS {
@@ -74,6 +76,22 @@ object writeDIMACS {
 
     dimacsInput.result()
   }
+}
+
+object readDRUP {
+  def apply( drupOutput: String ): DIMACS.DRUP =
+    drupOutput.trim.split( "\n" ).toSeq flatMap {
+      case line if line startsWith "s "    => None
+      case line if line startsWith "%RUPD" => None
+      case ""                              => None
+      case "UNSAT"                         => None
+      case "f DRUP"                        => None
+      case "o proof DRUP"                  => None
+      case line if line.startsWith( "d " ) =>
+        Some( Left( line.substring( 2 ).split( " " ).toSeq.map( _.toInt ).dropRight( 1 ) ) )
+      case line =>
+        Some( Right( line.split( " " ).map( _.toInt ).toSeq.dropRight( 1 ) ) )
+    }
 }
 
 object writeWDIMACS {

@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.sat
 
+import at.logic.gapt.examples.{ BussTautology, PigeonHolePrinciple }
 import at.logic.gapt.expr._
 import org.specs2.mutable._
 
@@ -34,4 +35,10 @@ class Sat4jTest extends Specification {
 
   "empty CNF is sat" in { Sat4j.solve( Seq() ) must beSome }
   "empty clause is unsat" in { Sat4j.solve( Seq( Seq() ) ) must beNone }
+
+  "proof import" in {
+    "pigeonhole 4 3" in { Sat4j getRobinsonProof PigeonHolePrinciple( 4, 3 ) must beSome }
+    "buss 5" in { Sat4j getRobinsonProof BussTautology( 5 ) must beSome }
+    "to be or not to be" in { Sat4j getRobinsonProof hof"be ∨ ¬be" must beSome }
+  }
 }
