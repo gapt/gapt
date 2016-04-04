@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import java.io.{ FileWriter, File }
+import java.io.{ File, FileWriter }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
@@ -13,15 +13,15 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.resolution.{ simplifyResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, RobinsonToLK, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.sat.MiniSAT
+import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
 import at.logic.gapt.provers.veriT.VeriT
-import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
+import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.utils.glob
+
 import scala.concurrent.duration._
 import scala.util.Random
-
 import scala.xml.XML
 
 class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
@@ -57,6 +57,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     if ( !containsEqualityReasoning( p ) ) {
       MiniSAT.isValid( deep ) !-- "minisat validity"
+      Sat4j.getRobinsonProof( deep ).isDefined !-- "Sat4j proof import"
       solvePropositional( deep ).isRight !-- "solvePropositional"
     }
     ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
