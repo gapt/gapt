@@ -49,10 +49,12 @@ object DrupToResolutionProof {
     throw new IllegalArgumentException
   }
 
-  def unitPropagationReplay( cnf: Set[ResolutionProof], toDerive: HOLClause ): ResolutionProof = {
+  def unitPropagationReplay( cnf: Iterable[ResolutionProof], toDerive: HOLClause ): ResolutionProof = {
     val negatedUnitClauses = toDerive.map( Sequent() :+ _, _ +: Sequent() ).elements.toSet
-    val emptyClause = unitPropagationProver( cnf union negatedUnitClauses.map( InputClause ) )
-    tautologifyInitialUnitClauses( emptyClause, negatedUnitClauses )
+    val inputClausesForProver = cnf.map( p => p.conclusion -> p ).toMap
+    val emptyClause = unitPropagationProver( ( inputClausesForProver.keySet ++ negatedUnitClauses ).map( InputClause ) )
+    val derivation = tautologifyInitialUnitClauses( emptyClause, negatedUnitClauses )
+    mapInputClauses( derivation )( inputClausesForProver )
   }
 
   def apply( drup: DrupProof ): ResolutionProof = {
@@ -61,7 +63,7 @@ object DrupToResolutionProof {
       case DrupInput( clause ) =>
         cnf += InputClause( clause )
       case DrupDerive( clause ) =>
-        cnf += unitPropagationReplay( cnf.toSet, clause )
+        cnf += unitPropagationReplay( cnf, clause )
       case DrupForget( clause ) =>
         cnf.retain( !_.conclusion.multiSetEquals( clause ) )
     }
