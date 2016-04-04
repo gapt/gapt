@@ -9,7 +9,20 @@ import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 import scala.io.Source
 
-object PicoSAT extends PicoSAT( "picosat" )
+private object picoSatHelper {
+  def getDefaultExecutableName() =
+    try {
+      // Debian and Fedora have a special name for PicoSAT with proof support
+      val name = "picosat.trace"
+      runProcess( Seq( name, "--version" ) )
+      name
+    } catch {
+      case _: IOException =>
+        "picosat"
+    }
+}
+
+object PicoSAT extends PicoSAT( picoSatHelper.getDefaultExecutableName() )
 class PicoSAT( command: String* ) extends DrupSolver with ExternalProgram {
   def runProgram( dimacsInput: String ): Either[String, String] =
     withTempFile.fromString( dimacsInput ) { dimacsInputFile =>
