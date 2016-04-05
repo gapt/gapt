@@ -2,9 +2,9 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol.{ univclosure, instantiate }
+import at.logic.gapt.expr.hol.{ instantiate, univclosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.examples.Formulas._
@@ -170,6 +170,29 @@ object SumExampleProof extends ProofSequence {
   }
 }
 
+trait ExplicitEqualityTactics {
+
+  /**
+   * Applies the quantified equation ∀x(e_l=e_r) to the left side of the equation tgt_l=tgt_r,
+   * leaving open the subgoal e_r σ = tgt_r.
+   */
+  def explicitRewrite(
+    equation: String, targetEq: String,
+    transitivity: String
+  ) =
+    for {
+      goal <- currentGoal
+      All.Block( Seq( _, transVar, _ ), _ ) = goal( transitivity )
+      All.Block( _, Imp.Block( _, Eq( eqL, eqR ) ) ) = goal( equation )
+      Eq( tgtL, tgtR ) = goal( targetEq )
+      subst <- syntacticMatching( eqL, tgtL ).
+        toTactical( s"cannot match equation $equation to formula $targetEq" )
+      _ <- chain( transitivity ).at( targetEq ).subst( transVar -> subst( eqR ) )
+      _ <- chain( equation ).at( targetEq )
+    } yield ()
+
+}
+
 /**
  * Functions to construct cut-free FOL LK proofs of the sequents
  *
@@ -177,68 +200,25 @@ object SumExampleProof extends ProofSequence {
  *
  * where n is an Integer parameter >= 0.
  */
-object LinearEqExampleProof extends ProofSequence {
-  val a = "a"
-  val f = "f"
+object LinearEqExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
+  ctx += Context.Sort( "i" )
+  ctx += hoc"f: i>i"
+  ctx += hoc"a: i"
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
-  val z = FOLVar( "z" )
+  // f^k(a)
+  private def fk( k: Int ): LambdaExpression =
+    Stream.iterate( le"a" )( x => le"f $x" )( k )
 
-  val Refl = All( x, Eq( x, x ) )
-  val Ass = All( x, Eq( FOLFunction( f, x :: Nil ), x ) )
-  val Trans = All( x, All( y, All( z, Imp( Eq( x, y ), Imp( Eq( y, z ), Eq( x, z ) ) ) ) ) )
-
-  def apply( n: Int ) = proof( n )
-
-  /** returns LKProof with end-sequent  Refl, Trans, \ALL x. f(x) = x :- f^k(a) = a */
-  def proof( k: Int ): LKProof = {
-    if ( k == 0 ) // leaf proof
-    {
-      val a_eq_a = Eq( Utils.iterateTerm( FOLConst( a ), f, 0 ), Utils.iterateTerm( FOLConst( a ), f, 0 ) )
-      WeakeningLeftRule( WeakeningLeftRule( ForallLeftRule( LogicalAxiom( a_eq_a ), Refl, FOLConst( a ) ), Trans ), Ass )
-    } else {
-      // atoms
-      val ka_eq_a = Eq( Utils.iterateTerm( FOLConst( a ), f, k ), Utils.iterateTerm( FOLConst( a ), f, 0 ) )
-      val ka_eq_ka = Eq( Utils.iterateTerm( FOLConst( a ), f, k ), Utils.iterateTerm( FOLConst( a ), f, k ) )
-      val kma_eq_a = Eq( Utils.iterateTerm( FOLConst( a ), f, k - 1 ), Utils.iterateTerm( FOLConst( a ), f, 0 ) )
-      val ka_eq_kma = Eq( Utils.iterateTerm( FOLConst( a ), f, k ), Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
-      val ka_eq_z = Eq( Utils.iterateTerm( FOLConst( a ), f, k ), z )
-      val kma_eq_z = Eq( Utils.iterateTerm( FOLConst( a ), f, k - 1 ), z )
-      val y_eq_z = Eq( y, z )
-      val ka_eq_y = Eq( Utils.iterateTerm( FOLConst( a ), f, k ), y )
-      val x_eq_y = Eq( x, y )
-      val x_eq_z = Eq( x, z )
-
-      // prop. formulas
-      val Trans2 = Imp( kma_eq_a, ka_eq_a )
-      val Trans3 = Imp( ka_eq_kma, Trans2 )
-
-      // quant. formulas
-      val Trans3_1 = All( z, Imp( ka_eq_kma, Imp( kma_eq_z, ka_eq_z ) ) )
-      val Trans3_2 = All( y, All( z, Imp( ka_eq_y, Imp( y_eq_z, ka_eq_z ) ) ) )
-      val Trans3_3 = All( x, All( y, All( z, Imp( x_eq_y, Imp( y_eq_z, x_eq_z ) ) ) ) )
-
-      // prop. proofs
-      val p1 = ImpLeftRule( proof( k - 1 ), kma_eq_a, Axiom( ka_eq_a :: Nil, ka_eq_a :: Nil ), ka_eq_a )
-
-      val p0 = LogicalAxiom( ka_eq_kma )
-
-      val p2 = ImpLeftRule( p0, ka_eq_kma, p1, Trans2 )
-
-      // proofs containing quantifiers
-      val p3 = ForallLeftRule( p2, Trans3_1, Utils.iterateTerm( FOLConst( a ), f, 0 ) )
-      val p4 = ForallLeftRule( p3, Trans3_2, Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
-      val p5 = ForallLeftRule( p4, Trans3_3, Utils.iterateTerm( FOLConst( a ), f, k ) )
-
-      val p6 = ForallLeftRule( p5, Ass, Utils.iterateTerm( FOLConst( a ), f, k - 1 ) )
-
-      val p7 = ContractionLeftRule( p6, Ass )
-      val p8 = ContractionLeftRule( p7, Trans )
-
-      p8
-    }
-  }
+  def apply( n: Int ) =
+    Lemma(
+      ( "refl" -> hof"∀x x=x" ) +:
+        ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+        ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
+        :+ ( "goal" -> hof"${fk( n )} = a" )
+    ) {
+        repeat( explicitRewrite( "id", "goal", transitivity = "trans" ) )
+        chain( "refl" )
+      }
 }
 
 object SumOfOnesF2ExampleProof extends ProofSequence {

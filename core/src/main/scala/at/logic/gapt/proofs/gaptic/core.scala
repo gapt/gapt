@@ -136,6 +136,8 @@ case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
 case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialSequent {
   override def conclusion = s map { labelledFormula => labelledFormula._2 }
 
+  def apply( label: String ): HOLFormula = s.elements.find( _._1 == label ).get._2
+
   def toPrettyString( implicit sig: BabelSignature ) = {
     val builder = new StringBuilder
     for ( ( l, f ) <- s.antecedent ) builder append s"$l: ${f.toSigRelativeString}\n"

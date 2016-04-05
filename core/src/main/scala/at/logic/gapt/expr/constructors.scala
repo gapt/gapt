@@ -152,7 +152,15 @@ class MonoidalBinaryPropConnectiveHelper( c: MonomorphicLogicalC, val neutral: M
 
 object And extends MonoidalBinaryPropConnectiveHelper( AndC, TopC )
 object Or extends MonoidalBinaryPropConnectiveHelper( OrC, BottomC )
-object Imp extends BinaryPropConnectiveHelper( ImpC )
+object Imp extends BinaryPropConnectiveHelper( ImpC ) {
+  object Block {
+    def apply( as: Seq[HOLFormula], b: HOLFormula ): HOLFormula = as.foldRight( b )( Imp( _, _ ) )
+    def unapply( f: HOLFormula ): Some[( List[HOLFormula], HOLFormula )] = f match {
+      case Imp( a, Block( as, b ) ) => Some( ( a :: as, b ) )
+      case b                        => Some( ( Nil, b ) )
+    }
+  }
+}
 
 class UnaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply( a: LambdaExpression ): HOLFormula = Apps( c(), a ).asInstanceOf[HOLFormula]
