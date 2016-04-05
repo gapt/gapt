@@ -49,3 +49,13 @@ case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
 case object SkipTactical extends Tactical[Unit] {
   def apply( proofState: ProofState ) = ( (), proofState ).success
 }
+
+case class FocusTactical( index: Either[Int, OpenAssumptionIndex] ) extends Tactical[Unit] {
+  def apply( proofState: ProofState ) =
+    index match {
+      case Left( i ) if 0 <= i && i < proofState.subGoals.size =>
+        ( (), proofState.focus( proofState.subGoals( i ).index ) ).success
+      case Right( i ) => ( (), proofState.focus( i ) ).success
+      case _          => TacticalFailure( this, None, s"Cannot find subgoal $index" ).failureNel
+    }
+}

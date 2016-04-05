@@ -25,6 +25,11 @@ case class ProofState private (
 
   def currentSubGoalOption: Option[OpenAssumption] = subGoals.headOption
 
+  def focus( index: OpenAssumptionIndex ): ProofState = {
+    val ( focused, rest ) = subGoals.partition( _.index == index )
+    copy( subGoals = focused ++ rest )
+  }
+
   def replace( index: OpenAssumptionIndex, proofSegment: LKProof ): ProofState = {
     val subGoal = subGoals.find( _.index == index ).getOrElse(
       throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" )
