@@ -1,148 +1,108 @@
 package at.logic.gapt.proofs.gaptic
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.utils.NameGenerator
 
 import scalaz._
 import Scalaz._
 import Validation.FlatMap._
 
-/**
- * Immutable object defining the current state of the proof in the tactics language.
- *
- * @param currentGoalIndex
- * @param proofSegment
- */
-case class ProofState( currentGoalIndex: Int, proofSegment: LKProof ) {
-  val initSegment = proofSegment.endSequent
+object ProofState {
+  def apply( initialGoal: OpenAssumption ): ProofState =
+    ProofState( initialGoal, List( initialGoal ), Map() )
+  def apply( initialGoal: Sequent[( String, HOLFormula )] ): ProofState =
+    ProofState( OpenAssumption( initialGoal ) )
+}
+case class ProofState private (
+    initialGoal:      OpenAssumption,
+    subGoals:         List[OpenAssumption],
+    finishedSubGoals: Map[OpenAssumptionIndex, LKProof]
+) {
 
-  val subGoals: Seq[OpenAssumption] =
-    for ( OpenAssumption( s ) <- proofSegment.treeLike.postOrder )
-      yield OpenAssumption( s )
+  def isFinished: Boolean = subGoals.isEmpty
 
-  require( currentGoalIndex >= 0 && currentGoalIndex <= subGoals.length )
+  def currentSubGoalOption: Option[OpenAssumption] = subGoals.headOption
 
-  /**
-   *
-   * Constructor with name of theorem and initial formula.
-   */
-  def this( proofSegment: LKProof ) = this( 0, proofSegment )
+  def replace( index: OpenAssumptionIndex, proofSegment: LKProof ): ProofState = {
+    val subGoal = subGoals.find( _.index == index ).getOrElse(
+      throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" )
+    )
+    require(
+      proofSegment.conclusion isSubsetOf subGoal.conclusion,
+      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}"
+    )
 
-  /**
-   * Returns the sub goal at a given index if it exists.
-   *
-   * @param i
-   * @return
-   */
-  def getSubGoal( i: Int ): Option[OpenAssumption] =
-    if ( subGoals isDefinedAt i ) Some( subGoals( i ) ) else None
+    val newOpenAssumptions = proofSegment.treeLike.postOrder.collect { case oa: OpenAssumption => oa }.distinct
 
-  /**
-   * Returns a string representation of a sub goal at a given index.
-   *
-   * @param i
-   * @return
-   */
-  def displaySubGoal( i: Int ): String = {
-    getSubGoal( i ) match {
-      case Some( o: OpenAssumption ) => o.s.toString
-      case None                      => "No sub goal found with index " + i
+    val subGoals_ = subGoals.filter( _.index != index ).diff( newOpenAssumptions )
+
+    for ( ( idx, oas ) <- newOpenAssumptions.groupBy( _.index ) )
+      require( oas.size == 1, s"Different new open assumptions with same index:\n${oas.mkString( "\n" )}" )
+    require(
+      newOpenAssumptions intersect subGoals_ isEmpty,
+      s"New open assumption contains already open subgoal"
+    )
+    require(
+      newOpenAssumptions.map( _.index ).toSet intersect finishedSubGoals.keySet isEmpty,
+      s"New open assumption contains already finished subgoal"
+    )
+
+    copy(
+      subGoals = newOpenAssumptions.toList ++ subGoals_,
+      finishedSubGoals = finishedSubGoals + ( index -> proofSegment )
+    )
+  }
+
+  def replace( proofSegment: LKProof ): ProofState = replace( subGoals.head.index, proofSegment )
+
+  class ProofSegmentInsertionVisitor( failOnMissingSubgoal: Boolean ) extends LKVisitor[Unit] {
+    override def visitOpenAssumption( p: OpenAssumption, dummy: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+      finishedSubGoals.get( p.index ) match {
+        case Some( segment ) =>
+          val subProof = recurse( segment, () )._1
+          require( subProof.conclusion multiSetEquals segment.conclusion )
+          val segment_ = WeakeningContractionMacroRule( subProof, p.conclusion )
+          require( segment_.conclusion multiSetEquals p.conclusion )
+          ( segment_, OccConnector.guessInjection( segment_.conclusion, p.conclusion ).inv, () )
+        case None if failOnMissingSubgoal  => throw new IllegalArgumentException( s"Subgoal still open: $p" )
+        case None if !failOnMissingSubgoal => super.visitOpenAssumption( p, dummy )
+      }
     }
   }
 
-  /**
-   * Returns a new proof state if the new sub goal index is valid
-   *
-   * @param i
-   * @return
-   */
-  def setCurrentSubGoal( i: Int ): Option[ProofState] =
-    if ( subGoals isDefinedAt i ) Some( copy( currentGoalIndex = i ) ) else None
-
-  /**
-   * Replaces the i-th open assumption by an arbitrary proof segment and returns the result in a new proof state.
-   *
-   * @param openAssumption
-   * @param replacementSegment
-   * @return
-   */
-  def replaceSubGoal( openAssumption: Int, replacementSegment: LKProof ): ProofState = {
-    var assumptionIndex = -1
-
-    // Replacement function - applied recursively
-    def f( p: LKProof ): LKProof = p match {
-      // Open assumption. Replace on matching index.
-      case OpenAssumption( _ ) =>
-        assumptionIndex += 1
-        if ( assumptionIndex == openAssumption )
-          WeakeningContractionMacroRule( replacementSegment, p.conclusion )
-        else
-          p
-      // Case distinction on rules
-      case InitialSequent( s )                                         => Axiom( s )
-      case ContractionLeftRule( subProof, index1, _ )                  => ContractionLeftRule( f( subProof ), subProof.conclusion( index1 ) )
-      case ContractionRightRule( subProof, index1, _ )                 => ContractionRightRule( f( subProof ), subProof.conclusion( index1 ) )
-      case WeakeningLeftRule( subProof, formula )                      => WeakeningLeftRule( f( subProof ), formula )
-      case WeakeningRightRule( subProof, formula )                     => WeakeningRightRule( f( subProof ), formula )
-      case CutRule( leftSubProof, index1, rightSubProof, index2 )      => CutRule( f( leftSubProof ), leftSubProof.conclusion( index1 ), f( rightSubProof ), rightSubProof.conclusion( index2 ) )
-      case NegLeftRule( subProof, index )                              => NegLeftRule( f( subProof ), subProof.conclusion( index ) )
-      case NegRightRule( subProof, index )                             => NegRightRule( f( subProof ), subProof.conclusion( index ) )
-      case AndLeftRule( subProof, index1, index2 )                     => AndLeftRule( f( subProof ), subProof.conclusion( index1 ), subProof.conclusion( index2 ) )
-      case AndRightRule( leftSubProof, index1, rightSubProof, index2 ) => AndRightRule( f( leftSubProof ), leftSubProof.conclusion( index1 ), f( rightSubProof ), rightSubProof.conclusion( index2 ) )
-      case OrLeftRule( leftSubProof, index1, rightSubProof, index2 )   => OrLeftRule( f( leftSubProof ), leftSubProof.conclusion( index1 ), f( rightSubProof ), rightSubProof.conclusion( index2 ) )
-      case OrRightRule( subProof, index1, index2 )                     => OrRightRule( f( subProof ), subProof.conclusion( index1 ), subProof.conclusion( index2 ) )
-      case ImpLeftRule( leftSubProof, index1, rightSubProof, index2 )  => ImpLeftRule( f( leftSubProof ), leftSubProof.conclusion( index1 ), f( rightSubProof ), rightSubProof.conclusion( index2 ) )
-      case ImpRightRule( subProof, index1, index2 )                    => ImpRightRule( f( subProof ), subProof.conclusion( index1 ), subProof.conclusion( index2 ) )
-      case ForallLeftRule( subProof, _, a, term, v )                   => ForallLeftRule( f( subProof ), All( v, a ), term )
-      case ForallRightRule( subProof, index, ev, qv )                  => ForallRightRule( f( subProof ), All( qv, Substitution( ev, qv )( subProof.conclusion( index ) ) ), ev )
-      case ExistsLeftRule( subProof, index, ev, qv )                   => ExistsLeftRule( f( subProof ), Ex( qv, Substitution( ev, qv )( subProof.conclusion( index ) ) ), ev )
-      case ExistsRightRule( subProof, _, a, term, v )                  => ExistsRightRule( f( subProof ), Ex( v, a ), term )
-      case EqualityLeftRule( subProof, eq, index, con )                => EqualityLeftRule( f( subProof ), subProof.conclusion( eq ), subProof.conclusion( index ), con )
-      case EqualityRightRule( subProof, eq, index, con )               => EqualityRightRule( f( subProof ), subProof.conclusion( eq ), subProof.conclusion( index ), con )
-      case DefinitionLeftRule( subProof, index, main )                 => DefinitionLeftRule( f( subProof ), subProof.conclusion( index ), main )
-      case DefinitionRightRule( subProof, index, main )                => DefinitionRightRule( f( subProof ), subProof.conclusion( index ), main )
-      case p @ InductionRule( cases, _ ) => p.copy( cases = cases map {
-        case InductionCase( q, c, hyps, evs, concl ) =>
-          val q_ = f( q )
-          InductionCase( q_, c, hyps map { q.conclusion( _ ) } map { q_.conclusion.indexOfInAnt },
-            evs, q_.conclusion.indexOfInSuc( q.conclusion( concl ) ) )
-      } )
-      case _ =>
-        throw new Exception( "Unmatched LK rule: " + p + ". Could not replace sub goal." )
-    }
-
-    val newSegment = f( proofSegment )
-
-    ProofState( currentGoalIndex, newSegment )
-  }
+  def partialProof: LKProof = new ProofSegmentInsertionVisitor( failOnMissingSubgoal = false ).apply( initialGoal, () )
+  def result: LKProof = new ProofSegmentInsertionVisitor( failOnMissingSubgoal = true ).apply( initialGoal, () )
 
   override def toString = toSigRelativeString
   def toSigRelativeString( implicit sig: BabelSignature ) =
-    s"""${subGoals.map { _.toPrettyString }.mkString( "\n" )}
-     |
-     |Partial proof:
-     |$proofSegment
-   """.stripMargin
+    subGoals.map { _.toPrettyString }.mkString( "\n" )
+}
+
+/**
+ * The globally unique index of an open assumption in a proof state.
+ */
+class OpenAssumptionIndex {
+  override def toString = Integer toHexString hashCode() take 3
 }
 
 /**
  * Defines the case class open assumption which considers an arbitrary labelled sequence an axiom.
- *
- * @param s
  */
-case class OpenAssumption( s: Sequent[( String, HOLFormula )] ) extends InitialSequent {
-  override def conclusion = s map { labelledFormula => labelledFormula._2 }
+case class OpenAssumption(
+    labelledSequent: Sequent[( String, HOLFormula )],
+    index:           OpenAssumptionIndex             = new OpenAssumptionIndex
+) extends InitialSequent {
+  override def conclusion = labelledSequent map { labelledFormula => labelledFormula._2 }
 
-  def apply( label: String ): HOLFormula = s.elements.find( _._1 == label ).get._2
+  def apply( label: String ): HOLFormula = labelledSequent.elements.find( _._1 == label ).get._2
 
   def toPrettyString( implicit sig: BabelSignature ) = {
     val builder = new StringBuilder
-    for ( ( l, f ) <- s.antecedent ) builder append s"$l: ${f.toSigRelativeString}\n"
+    for ( ( l, f ) <- labelledSequent.antecedent ) builder append s"$l: ${f.toSigRelativeString}\n"
     builder append ":-\n"
-    for ( ( l, f ) <- s.succedent ) builder append s"$l: ${f.toSigRelativeString}\n"
+    for ( ( l, f ) <- labelledSequent.succedent ) builder append s"$l: ${f.toSigRelativeString}\n"
     builder.toString
   }
 }
@@ -221,15 +181,15 @@ trait Tactical[+T] { self =>
   def onAllSubGoals: Tactical[Unit] = new Tactical[Unit] {
     def apply( proofState: ProofState ) = {
       type StrVal[T] = ValidationNel[TacticalFailure, T]
-      Applicative[StrVal].traverse( proofState.subGoals.toList )( subGoal => self.asTactic( subGoal ) ) map {
-        _.zipWithIndex.foldRight( proofState ) { case ( ( subState, index ), state ) => state.replaceSubGoal( index, subState._2 ) }
+      Applicative[StrVal].traverse( proofState.subGoals )( subGoal => self.asTactic( subGoal ).map( subGoal.index -> _ ) ) map {
+        _.foldRight( proofState ) { case ( ( index, subState ), state ) => state.replace( index, subState._2 ) }
       } map { x => ( (), x ) }
     }
     override def toString = s"$self.onAllSubGoals"
   }
 
   def asTactic: Tactic[T] = new Tactic[T] {
-    def apply( goal: OpenAssumption ) = self( ProofState( 0, goal ) ) map { case ( res, p ) => res -> p.proofSegment }
+    def apply( goal: OpenAssumption ) = self( ProofState( goal ) ) map { case ( res, p ) => res -> p.partialProof }
     override def toString = s"$self.asTactic"
   }
 }
@@ -238,11 +198,11 @@ trait Tactic[+T] extends Tactical[T] { self =>
   def apply( goal: OpenAssumption ): ValidationNel[TacticalFailure, ( T, LKProof )]
 
   override def apply( proofState: ProofState ): ValidationNel[TacticalFailure, ( T, ProofState )] =
-    proofState getSubGoal proofState.currentGoalIndex match {
+    proofState.currentSubGoalOption match {
       case None => TacticalFailure( this, None, "no open subgoal" ).failureNel
       case Some( goal ) => this( goal ) map {
         case ( res, proofSegment ) =>
-          res -> proofState.replaceSubGoal( proofState currentGoalIndex, proofSegment )
+          res -> proofState.replace( goal.index, proofSegment )
       }
     }
 
@@ -277,7 +237,7 @@ trait Tactic[+T] extends Tactical[T] { self =>
     type Val = ( String, HOLFormula, SequentIndex )
 
     def withFilter( pred: Val => Boolean ): ValidationNel[TacticalFailure, Val] =
-      goal.s.zipWithIndex.elements.collect {
+      goal.labelledSequent.zipWithIndex.elements.collect {
         case ( ( l, f ), i ) if mode.forall { _ == l } && pred( l, f, i ) => ( l, f, i )
       } match {
         case Seq( f ) => f.success

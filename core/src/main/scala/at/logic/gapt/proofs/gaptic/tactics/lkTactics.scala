@@ -59,113 +59,123 @@ case object ReflexivityAxiomTactic extends Tactic[Unit] {
 
 /**
  * Decomposes a negation in the antecedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class NegLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
       ( existingLabel, Neg( f ), i: Ant ) <- findFormula( goal, mode )
-      newGoal = goal.s.delete( i ) :+ ( existingLabel -> f )
+      newGoal = goal.labelledSequent.delete( i ) :+ ( existingLabel -> f )
     } yield existingLabel -> NegLeftRule( OpenAssumption( newGoal ), newGoal.indices.last )
 }
 
 /**
  * Decomposes a negation in the succedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class NegRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
       ( existingLabel, Neg( f ), i: Suc ) <- findFormula( goal, mode )
-      newGoal = ( existingLabel -> f ) +: goal.s.delete( i )
+      newGoal = ( existingLabel -> f ) +: goal.labelledSequent.delete( i )
     } yield existingLabel -> NegRightRule( OpenAssumption( newGoal ), newGoal.indices.head )
 }
 
 /**
  * Removes a formula from the antecedent of a goal.
+ *
  * @param applyToLabel The label of the formula to be removed.
  */
 case class WeakeningLeftTactic( applyToLabel: String ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, f, i: Ant ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
-      yield () -> OpenAssumption( goal.s delete i )
+      yield () -> OpenAssumption( goal.labelledSequent delete i )
 }
 
 /**
  * Removes a formula from the succedent of a goal.
+ *
  * @param applyToLabel The label of the formula to be removed.
  */
 case class WeakeningRightTactic( applyToLabel: String ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, f, i: Suc ) <- findFormula( goal, OnLabel( applyToLabel ) ) )
-      yield () -> OpenAssumption( goal.s delete i )
+      yield () -> OpenAssumption( goal.labelledSequent delete i )
 }
 
 /**
  * Decomposes a conjunction in the antecedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class AndLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   def apply( goal: OpenAssumption ) =
     for {
       ( label, And( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode )
-      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
-      newGoal = ( newLabel1 -> lhs ) +: ( newLabel2 -> rhs ) +: goal.s.delete( idx )
+      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.labelledSequent, label )
+      newGoal = ( newLabel1 -> lhs ) +: ( newLabel2 -> rhs ) +: goal.labelledSequent.delete( idx )
     } yield ( newLabel1, newLabel2 ) -> AndLeftRule( OpenAssumption( newGoal ), Ant( 0 ), Ant( 1 ) )
 }
 
 /**
  * Decomposes a conjunction in the succedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, And( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode ) )
       yield () ->
-      AndRightRule( OpenAssumption( goal.s.updated( idx, label -> lhs ) ), idx,
-        OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
+      AndRightRule( OpenAssumption( goal.labelledSequent.updated( idx, label -> lhs ) ), idx,
+        OpenAssumption( goal.labelledSequent.updated( idx, label -> rhs ) ), idx )
 }
 
 /**
  * Decomposes a disjunction in the antecedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class OrLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, Or( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
       yield () ->
-      OrLeftRule( OpenAssumption( goal.s.updated( idx, label -> lhs ) ), idx,
-        OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
+      OrLeftRule( OpenAssumption( goal.labelledSequent.updated( idx, label -> lhs ) ), idx,
+        OpenAssumption( goal.labelledSequent.updated( idx, label -> rhs ) ), idx )
 }
 
 /**
  * Decomposes a disjunction in the succedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class OrRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
   def apply( goal: OpenAssumption ) =
     for {
       ( label, Or( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode )
-      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
-      newGoal = goal.s.delete( idx ) :+ ( newLabel1 -> lhs ) :+ ( newLabel2 -> rhs )
+      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.labelledSequent, label )
+      newGoal = goal.labelledSequent.delete( idx ) :+ ( newLabel1 -> lhs ) :+ ( newLabel2 -> rhs )
       Seq( rhsIdx, lhsIdx ) = newGoal.indices.reverse.take( 2 )
     } yield ( newLabel1, newLabel2 ) -> OrRightRule( OpenAssumption( newGoal ), lhsIdx, rhsIdx )
 }
 
 /**
  * Decomposes an implication in the antecedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class ImpLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, Imp( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
       yield () ->
-      ImpLeftRule( OpenAssumption( goal.s.delete( idx ) :+ ( label -> lhs ) ), Suc( goal.s.succedent.size ),
-        OpenAssumption( goal.s.updated( idx, label -> rhs ) ), idx )
+      ImpLeftRule( OpenAssumption( goal.labelledSequent.delete( idx ) :+ ( label -> lhs ) ), Suc( goal.labelledSequent.succedent.size ),
+        OpenAssumption( goal.labelledSequent.updated( idx, label -> rhs ) ), idx )
 }
 
 /**
  * Decomposes an implication in the succedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
 case class ImpRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[( String, String )] {
@@ -173,8 +183,8 @@ case class ImpRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tacti
   def apply( goal: OpenAssumption ) =
     for {
       ( label, Imp( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode )
-      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.s, label )
-      newGoal = ( newLabel1 -> lhs ) +: goal.s.updated( idx, newLabel2 -> rhs )
+      newLabel1 #:: newLabel2 #:: _ = NewLabels( goal.labelledSequent, label )
+      newGoal = ( newLabel1 -> lhs ) +: goal.labelledSequent.updated( idx, newLabel2 -> rhs )
     } yield ( newLabel1, newLabel2 ) -> ImpRightRule( OpenAssumption( newGoal ), Ant( 0 ), idx )
 }
 
@@ -194,6 +204,7 @@ abstract class StrongQuantTactic extends Tactic[Var] {
 
 /**
  * Decomposes an existential quantifier in the antecedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  * @param eigenVariable If Some(v), the rule will attempt to use v as the eigenvariable. Otherwise it will automatically pick one.
  */
@@ -202,7 +213,7 @@ case class ExistsLeftTactic( mode: TacticApplyMode = UniqueFormula, eigenVariabl
     for {
       ( label, f @ Ex( bound, _ ), idx: Ant ) <- findFormula( goal, mode )
       ev <- pickEigenvariable( bound, goal )
-    } yield ev -> ExistsLeftRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
+    } yield ev -> ExistsLeftRule( OpenAssumption( goal.labelledSequent.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
 /**
@@ -216,14 +227,14 @@ case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[
   def apply( goal: OpenAssumption ) =
     for {
       ( label: String, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, mode )
-      newLabel = NewLabel( goal.s, label )
+      newLabel = NewLabel( goal.labelledSequent, label )
       instantiatedFormula = BetaReduction.betaNormalize( instantiate( f, terms ) )
     } yield if ( instantiateOnce ) {
       label ->
-        ExistsRightBlock( OpenAssumption( goal.s.updated( idx, ( label, instantiatedFormula ) ) ), f, terms )
+        ExistsRightBlock( OpenAssumption( goal.labelledSequent.updated( idx, ( label, instantiatedFormula ) ) ), f, terms )
     } else {
       newLabel ->
-        ExistsRightBlock( OpenAssumption( goal.s :+ ( newLabel -> instantiatedFormula ) ), f, terms )
+        ExistsRightBlock( OpenAssumption( goal.labelledSequent :+ ( newLabel -> instantiatedFormula ) ), f, terms )
     }
 
   def forget = ExistsRightTactic( mode, terms, instantiateOnce = true )
@@ -240,14 +251,14 @@ case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[L
   def apply( goal: OpenAssumption ) =
     for {
       ( label: String, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, mode )
-      newLabel = NewLabel( goal.s, label )
+      newLabel = NewLabel( goal.labelledSequent, label )
       instantiatedFormula = BetaReduction.betaNormalize( instantiate( f, terms ) )
     } yield if ( instantiateOnce ) {
       label ->
-        ForallLeftBlock( OpenAssumption( goal.s.updated( idx, ( label, instantiatedFormula ) ) ), f, terms )
+        ForallLeftBlock( OpenAssumption( goal.labelledSequent.updated( idx, ( label, instantiatedFormula ) ) ), f, terms )
     } else {
       newLabel ->
-        ForallLeftBlock( OpenAssumption( ( newLabel -> instantiatedFormula ) +: goal.s ), f, terms )
+        ForallLeftBlock( OpenAssumption( ( newLabel -> instantiatedFormula ) +: goal.labelledSequent ), f, terms )
     }
 
   def forget = ForallLeftTactic( mode, terms, instantiateOnce = true )
@@ -255,6 +266,7 @@ case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[L
 
 /**
  * Decomposes a universal quantifier in the succedent of a goal.
+ *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  * @param eigenVariable If Some(v), the rule will attempt to use v as the eigenvariable. Otherwise it will automatically pick one.
  */
@@ -263,22 +275,23 @@ case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariab
     for {
       ( label, f @ All( bound, _ ), idx: Suc ) <- findFormula( goal, mode )
       ev <- pickEigenvariable( bound, goal )
-    } yield ev -> ForallRightRule( OpenAssumption( goal.s.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
+    } yield ev -> ForallRightRule( OpenAssumption( goal.labelledSequent.updated( idx, label -> instantiate( f, ev ) ) ), f, ev )
 }
 
 /**
  * Introduces a cut, creating two new subgoals.
+ *
  * @param cutFormula The cut formula.
  * @param cutLabel The label for the cut formula.
  */
 case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
+    val goalSequent = goal.labelledSequent
 
     val leftPremise = OpenAssumption( goalSequent :+ ( cutLabel, cutFormula ) )
     val rightPremise = OpenAssumption( ( cutLabel, cutFormula ) +: goalSequent )
 
-    val auxProof = CutRule( leftPremise, Suc( leftPremise.s.succedent.length - 1 ), rightPremise, Ant( 0 ) )
+    val auxProof = CutRule( leftPremise, Suc( leftPremise.labelledSequent.succedent.length - 1 ), rightPremise, Ant( 0 ) )
     ( () -> auxProof ).success
   }
 }
@@ -296,7 +309,7 @@ case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[
 case class EqualityTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
+    val goalSequent = goal.labelledSequent
 
     val indices = for (
       ( ( `equalityLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;

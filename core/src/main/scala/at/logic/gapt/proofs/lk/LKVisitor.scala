@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.OccConnector
+import at.logic.gapt.proofs.gaptic.OpenAssumption
 
 /**
  * Created by sebastian on 3/10/16.
@@ -33,6 +34,9 @@ trait LKVisitor[T] {
   }
 
   final def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = proof match {
+    case p: OpenAssumption =>
+      visitOpenAssumption( p, otherArg )
+
     case p: LogicalAxiom =>
       visitLogicalAxiom( p, otherArg )
 
@@ -119,6 +123,8 @@ trait LKVisitor[T] {
    * Visiting methods. The implementations given here simply reconstruct the corresponding rule.
    * Different proof transformations can be implemented by overriding some of these methods.
    */
+
+  protected def visitOpenAssumption( proof: OpenAssumption, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( proof, OccConnector( proof.endSequent ), otherArg )
 
   protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( proof, OccConnector( proof.endSequent ), otherArg )
 

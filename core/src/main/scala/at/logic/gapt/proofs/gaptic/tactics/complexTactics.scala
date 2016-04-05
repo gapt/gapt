@@ -32,12 +32,13 @@ case object DecomposeTactic extends Tactical[Unit] {
  * Attempts to decompose a formula by trying all tactics that don't require additional information.
  *
  * Note that this tactic only decomposes the outermost symbol, i.e. it only performs one step.
+ *
  * @param applyToLabel The label of the formula to be decomposed.
  */
 case class DestructTactic( applyToLabel: String ) extends Tactic[Any] {
 
   override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
+    val goalSequent = goal.labelledSequent
 
     val indices =
       for ( ( ( `applyToLabel`, _ ), index ) <- goalSequent.zipWithIndex.elements )
@@ -78,7 +79,7 @@ case class ChainTactic( hyp: String, target: Option[String] = None, substitution
   def at( target: String ) = copy( target = Option( target ) )
 
   override def apply( goal: OpenAssumption ) = {
-    val goalSequent = goal.s
+    val goalSequent = goal.labelledSequent
 
     ( for ( ( ( `hyp`, _ ), index: Ant ) <- goalSequent.zipWithIndex.elements ) yield index ).headOption.
       toSuccessNel( TacticalFailure( this, Some( goal ), s"hyp $hyp not found" ) ) flatMap { hypIndex =>
@@ -166,7 +167,7 @@ case class RewriteTactic(
 ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = target match {
     case Some( tgt ) => apply( goal, tgt ) map { () -> _ }
-    case _ => goal.s match {
+    case _ => goal.labelledSequent match {
       case Sequent( _, Seq( ( tgt, _ ) ) ) => apply( goal, tgt ) map { () -> _ }
       case _                               => TacticalFailure( this, Some( goal ), "target formula not found" ).failureNel
     }
@@ -175,14 +176,14 @@ case class RewriteTactic(
   def apply( goal: OpenAssumption, target: String ): ValidationNel[TacticalFailure, LKProof] = {
     for {
       ( eqLabel, leftToRight ) <- equations
-      ( ( `target`, tgt ), tgtIdx ) <- goal.s.zipWithIndex.elements
-      ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.s.antecedent
+      ( ( `target`, tgt ), tgtIdx ) <- goal.labelledSequent.zipWithIndex.elements
+      ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.labelledSequent.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
       subst <- syntacticMatching( List( t_ -> tgt( pos ) ), freeVariables( quantEq ).map { v => v -> v }.toMap )
     } return {
       val newTgt = tgt.replace( pos, subst( s_ ) )
-      val newGoal = OpenAssumption( goal.s.updated( tgtIdx, target -> newTgt ) )
+      val newGoal = OpenAssumption( goal.labelledSequent.updated( tgtIdx, target -> newTgt ) )
       val p1 = if ( once ) newGoal else apply( newGoal, target ) getOrElse newGoal
       val p2 = WeakeningLeftRule( p1, subst( eq ) )
       val p3 =
@@ -219,8 +220,8 @@ case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) e
         val FunctionType( _, argTypes ) = constr.exptype
         var nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
         val evs = argTypes map { at => nameGen.fresh( if ( at == t ) v else Var( "x", at ) ) }
-        val hyps = NewLabels( goal.s, s"IH$name" ) zip ( evs filter { _.exptype == t } map { ev => Substitution( v -> ev )( formula ) } )
-        val subGoal = hyps ++: goal.s.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
+        val hyps = NewLabels( goal.labelledSequent, s"IH$name" ) zip ( evs filter { _.exptype == t } map { ev => Substitution( v -> ev )( formula ) } )
+        val subGoal = hyps ++: goal.labelledSequent.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
         InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
       }
       () -> InductionRule( cases, main )
@@ -249,7 +250,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
       defPositions = main.find( what )
       unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
       normalized = BetaReduction.betaNormalize( unfolded )
-      newGoal = OpenAssumption( goal.s.updated( idx, label -> normalized ) )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
       proof_ : ValidationNel[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
         case ( p :: ps, _ ) =>
           DefinitionRule( newGoal, normalized, main, idx.isSuc ).successNel[TacticalFailure]

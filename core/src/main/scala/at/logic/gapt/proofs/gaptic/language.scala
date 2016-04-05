@@ -36,7 +36,7 @@ object LemmaMacros {
 
   def qed( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =
     if ( proofState.subGoals.isEmpty ) {
-      cleanStructuralRules( proofState.proofSegment )
+      cleanStructuralRules( proofState.result )
     } else {
       throw new QedFailureException(
         s"Proof not completed. There are still ${proofState.subGoals.length} open sub goals:\n" +
@@ -51,7 +51,6 @@ object LemmaMacros {
 
     val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
     val proofStateCompanion = symbolOf[ProofState.type].asClass.module
-    val openAssumptionCompanion = symbolOf[OpenAssumption.type].asClass.module
 
     val tacticsStmts = tacticsProof match {
       case q"{..$stmts}" =>
@@ -61,7 +60,7 @@ object LemmaMacros {
     }
 
     q"""
-      var $proofState = $proofStateCompanion(0, $openAssumptionCompanion($labelledSequent))
+      var $proofState = $proofStateCompanion($labelledSequent)
 
       ..$tacticsStmts
 
