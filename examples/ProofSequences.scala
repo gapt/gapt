@@ -267,104 +267,30 @@ object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with Expl
       }
 }
 
-/**
- * Constructs the cut-free FOL LK proof of the sequent
- *
- * AUX, f(0) = 0, Forall x.f(s(x)) = f(x) + s(0) |- f(s^n(0)) = s^n(0)
- * Where AUX is {Transitivity, Symmetry, Reflexity of =,
- *               Forall xy.x=y -> s(x) = s(y), f(0) = 0, Forall x.f(s(x)) = f(x) + s(0)}
- */
-object SumOfOnesFExampleProof extends ProofSequence {
-  val s = "s"
-  val zero = "0"
-  val p = "+"
-  var f = "f"
+object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
+  ctx += Context.Sort( "i" )
+  ctx += hoc"s: i>i"
+  ctx += hoc"0: i"
+  ctx += hoc"'+': i>i>i"
+  ctx += hoc"f: i>i"
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
-  val z = FOLVar( "z" )
-
-  //Helpers
-  def Fn( n: Int ) = FOLFunction( f, Utils.numeral( n ) :: Nil )
-
-  //Forall xyz.(x = y ^ y = z -> x = z)
-  val Trans = All( x, All( y, All( z, Imp( And( Eq( x, y ), Eq( y, z ) ), Eq( x, z ) ) ) ) )
-
-  //Forall xy.(x=y -> s(x) = s(y))
-  val CongSucc = All( x, All( y, Imp( Eq( x, y ), Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ) ) ) )
-  def CongSuccX( x: FOLTerm ) = All( y, Imp( Eq( x, y ), Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ) ) )
-  def CongSuccXY( x: FOLTerm, y: FOLTerm ) = Imp( Eq( x, y ), Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ) )
-
-  //Forall x.(x + 1 = s(x)) (reversed to avoid the application of the symmetry of =)
-  val Plus = All( x, Eq( FOLFunction( p, x :: Utils.numeral( 1 ) :: Nil ), FOLFunction( s, x :: Nil ) ) )
-  def PlusX( x: FOLTerm ) = Eq( FOLFunction( p, x :: Utils.numeral( 1 ) :: Nil ), FOLFunction( s, x :: Nil ) )
-
-  //Definition of f
-  //f(0) = 0
-  val FZero = Eq( FOLFunction( f, Utils.numeral( 0 ) :: Nil ), Utils.numeral( 0 ) )
-  //Forall x.f(s(x)) = f(x) + s(0)
-  val FSucc = All( x, Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) ) )
-  def FSuccX( x: FOLTerm ) = Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) )
-
-  //The starting axiom f(n) = n |- f(n) = n
-  def start( n: Int ) =
-    WeakeningMacroRule(
-      LogicalAxiom( Fn( n ) === Utils.numeral( n ) ),
-      Eq( Fn( n ), Utils.numeral( n ) ) +: Trans +: Plus +: CongSucc +: FSucc +: Sequent() :+ Eq( Fn( n ), Utils.numeral( n ) )
-    )
-
-  def apply( n: Int ) = proof( n )
-  def proof( n: Int ) = TermGenProof( EqChainProof( start( n ), n ), 0, n )
-
-  /**
-   * Generates a sequent containing, in addition to the formulas in the bottommost sequent of s1,
-   * the chain of equations f(n) = s(f(n-1)),...,f(1)=s(f(0)), f(0) = 0.s
-   * The generates proof employs only the axiom of transitivity and (x=y -> s(x) = s(y)))
-   */
-  private def EqChainProof( s1: LKProof, n: Int ): LKProof = {
-    if ( n <= 0 ) { s1 }
-    else {
-      val tr = TransRule( Fn( n ), Utils.iterateTerm( Fn( n - 1 ), s, 1 ), Utils.numeral( n ), s1 )
-
-      val ax2 = LogicalAxiom( Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ) )
-
-      //Introduces the instantiated form of CongSuc
-      val impl = ImpLeftRule( ax2, Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) ), tr, Eq( Utils.iterateTerm( Fn( n - 1 ), s, 1 ), Utils.numeral( n ) ) )
-
-      //Quantify CongSucc
-      val cong1 = ForallLeftRule( impl, CongSuccX( Fn( n - 1 ) ), Utils.numeral( n - 1 ) )
-      val cong2 = ForallLeftRule( cong1, CongSucc, Fn( n - 1 ) )
-
-      val cl = ContractionLeftRule( cong2, CongSucc )
-
-      EqChainProof( cl, n - 1 )
-    }
-  }
-
-  /**
-   * Given a proof s1, produced by EqChainProof, generates a proof that
-   * eliminates the chains of equasions and proves the final sequent
-   * FZero, FSucc, TR, Plus |- f(n) = n.
-   */
-  private def TermGenProof( s1: LKProof, n: Int, targetN: Int ): LKProof = {
-    if ( n >= targetN ) { s1 }
-    else {
-
-      val tr = TransRule( Fn( n + 1 ), FOLFunction( p, Fn( n ) :: Utils.numeral( 1 ) :: Nil ), Utils.iterateTerm( Fn( n ), s, 1 ), s1 )
-
-      //Quantify plus
-      val plus = ForallLeftRule( tr, Plus, Fn( n ) )
-      val clPlus = ContractionLeftRule( plus, Plus )
-
-      //Quantify fsucc
-      val fsucc = ForallLeftRule( clPlus, FSucc, Utils.numeral( n ) )
-      val clFSucc = ContractionLeftRule( fsucc, FSucc )
-
-      TermGenProof( clFSucc, n + 1, targetN )
-    }
-
-  }
-
+  def apply( n: Int ) =
+    Lemma(
+      ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+        ( "congsuc" -> hof"∀x ∀y (x = y ⊃ s(x) = s(y))" ) +:
+        ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
+        ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
+        ( "f0" -> hof"f 0 = 0" ) +:
+        Sequent()
+        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" )
+    ) {
+        repeat(
+          explicitRewriteLeft( "fs", "goal" ) andThen
+            explicitRewriteLeft( "plus1", "goal" ) andThen
+            chain( "congsuc" )
+        )
+        chain( "f0" )
+      }
 }
 
 /**
