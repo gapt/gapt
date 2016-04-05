@@ -608,7 +608,7 @@ The following example shows the use of the \cli{trivial} tactic to end the proof
 \begin{clilisting}
 gapt> val axiomEx = Lemma( Sequent( Nil, Seq( "D" -> fof"exists x (P x -> all y P y)" ) ) ) { exR( fot"c" ); impR; allR; exR( fov"y" ); impR; allR; trivial }
 axiomEx: at.logic.gapt.proofs.lk.LKProof =
-[p9]  :- ∃x (P(x) ⊃ ∀y P(y))    (ContractionRightRule(p8, Suc(0), Suc(1)))
+[p9]  :- ∃x (P(x) ⊃ ∀y P(y))    (ContractionRightRule(p8, Suc(1), Suc(0)))
 [p8]  :- ∃x (P(x) ⊃ ∀y P(y)), ∃x (P(x) ⊃ ∀y P(y))    (ExistsRightRule(p7, Suc(1), P(x) ⊃ ∀y P(y), c, x))
 [p7]  :- ∃x (P(x) ⊃ ∀y P(y)), P(c) ⊃ ∀y P(y)    (ImpRightRule(p6, Ant(0), Suc(1)))
 [p6] P(c): o :- ∃x (P(x) ⊃ ∀y P(y)), ∀y P(y)    (WeakeningLeftRule(p5, P(c): o))
@@ -638,7 +638,7 @@ The tactics for the weak quantifiers are \cli{allL} and \cli{exR}. They are call
 \begin{clilisting}
 gapt> val quantEx = Lemma( Sequent( Seq( "D" -> fof"(all x (P(x) & (exists y -P(y))))" ), Nil ) ) { allL( fot"c" ); andL; exL( FOLVar( "y_0" ) ); negL; allL( fot"y_0" ); andL; exL( FOLVar( "y_1" ) ); negL; axiomLog }
 quantEx: at.logic.gapt.proofs.lk.LKProof =
-[p10] ∀x (P(x) ∧ ∃y ¬P(y)) :-     (ContractionLeftRule(p9, Ant(0), Ant(1)))
+[p10] ∀x (P(x) ∧ ∃y ¬P(y)) :-     (ContractionLeftRule(p9, Ant(1), Ant(0)))
 [p9] ∀x (P(x) ∧ ∃y ¬P(y)), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (ForallLeftRule(p8, Ant(0), P(x) ∧ ∃y ¬P(y), c, x))
 [p8] P(c) ∧ ∃y ¬P(y), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (AndLeftRule(p7, Ant(0), Ant(1)))
 [p7] P(c): o, ∃y ¬P(y), ∀x (P(x) ∧ ∃y ¬P(y)) :-     (WeakeningLeftRule(p6, P(c): o))
@@ -657,7 +657,7 @@ gapt> val propEx = Lemma( Sequent( Seq( "initAnt" -> fof"A -> B" ), Seq( "initSu
 propEx: at.logic.gapt.proofs.lk.LKProof =
 [p7] A ⊃ B :- A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
 [p6] A ⊃ B :- A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
-[p5] A:o, A ⊃ B :- A ∧ B    (ContractionLeftRule(p4, Ant(0), Ant(2)))
+[p5] A:o, A ⊃ B :- A ∧ B    (ContractionLeftRule(p4, Ant(2), Ant(0)))
 [p4] A:o, A ⊃ B, A:o :- A ∧ B    (AndRightRule(p1, Suc(0), p3, Suc(0)))
 [p3] A ⊃ B, A:o :- B:o    (ImpLeftRule(p1, Suc(0), p2, Ant(0)))
 [p2] B:o :- B:o    (LogicalAxiom(B:o))
@@ -1068,7 +1068,7 @@ p: at.logic.gapt.proofs.lk.LKProof =
 [p23] ∃y (¬P(b, y) ∨ Q(b, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), y, y))
 [p22] ¬P(b, y) ∨ Q(b, y) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p21] ¬P(b, y) ∨ Q(b, y) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
-[p20] ¬P(b, y) ∨ Q(b, y) :- ¬Q(b, y) ⊃ ¬P(b, y)    (ContractionRightRule(p19, Suc(0), Suc(1)))
+[p20] ¬P(b, y) ∨ Q(b, y) :- ¬Q(b, y) ⊃ ¬P(b, y)    (ContractionRightRule(p19, Suc(1), Suc(0)))
 [p19] ¬P(b, y) ∨ Q(b, y) :- ¬Q(b, y) ⊃ ¬P(b, y), ¬Q(b, y) ⊃ ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18...
 \end{clilisting}
 %
@@ -1281,17 +1281,17 @@ gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
 [p406] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
-∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1)
+∀x_0 ∀y_1 (s(x_0) <= y_1 ⊃ x_0 <= y_1)
 :-
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p405, Suc(1), Suc(0)))
 [p405] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
-∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1)
+∀x_0 ∀y_1 (s(x_0) <= y_1 ⊃ x_0 <= y_1)
 :-
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
 [p404] ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
-∀x_1 ∀y_1 (s(x_1) <= y_1 ⊃ x_1 <= y_1),
+∀x_0 ∀y_1 (s(x_0) <= y_1 ⊃ x_0 <= y_1),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
 :-
