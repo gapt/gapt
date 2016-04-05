@@ -1,6 +1,5 @@
 package at.logic.gapt.examples.prime
 
-import at.logic.gapt.examples.TacticsProof
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.gaptic._

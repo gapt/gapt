@@ -1,11 +1,15 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
-object fol1 {
-  val p = Lemma( Sequent(
+object fol1 extends TacticsProof {
+  ctx += Context.Sort( "i" )
+  ctx += hoc"P: i>i>o"
+  ctx += hoc"Q: i>i>o"
+
+  val proof = Lemma( Sequent(
     Seq( "L" -> fof"(all x all y (P(x,y) -> Q(x,y)))" ),
     Seq( "R" -> fof"(exists x exists y (-Q(x,y) -> -P(x,y)))" )
   ) ) {
