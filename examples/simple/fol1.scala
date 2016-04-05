@@ -8,6 +8,8 @@ object fol1 extends TacticsProof {
   ctx += Context.Sort( "i" )
   ctx += hoc"P: i>i>o"
   ctx += hoc"Q: i>i>o"
+  ctx += hoc"a: i"
+  ctx += hoc"b: i"
 
   val proof = Lemma( Sequent(
     Seq( "L" -> fof"(all x all y (P(x,y) -> Q(x,y)))" ),

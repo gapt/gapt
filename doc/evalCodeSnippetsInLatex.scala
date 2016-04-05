@@ -55,6 +55,10 @@ object evalCodeSnippetsInLatex {
   val beginCliListing = """\\begin\{clilisting\}(?:\[(.*)\])?""".r
   val endCliListing = """\end{clilisting}"""
   val assignment = """val\s+\w+\s+=.*""".r
+  val beginTacticsListing = """\begin{tacticslisting}"""
+  val endTacticsListing = """\end{tacticslisting}"""
+  val beginTacticsOutput = """\begin{tacticsoutput}"""
+  val endTacticsOutput = """\end{tacticsoutput}"""
 
   def processCliListing( listing: Seq[String], condition: String, interp: ILoop ): Unit = {
     if ( condition == null ) println( s"\\begin{clilisting}" ) else println( s"\\begin{clilisting}[$condition]" )
@@ -79,13 +83,32 @@ object evalCodeSnippetsInLatex {
         case _ =>
       }
     }
-    println( s"\\end{clilisting}" )
+    println( endCliListing )
+  }
+
+  def processTacticsListing( listing: Seq[String], interp: ILoop ): Unit = {
+    println( beginTacticsListing )
+    listing foreach println
+    println( endTacticsListing )
+    println( beginTacticsOutput )
+    interp command
+      s"""val () = { new at.logic.gapt.proofs.gaptic.TacticsProof {
+           import at.logic.gapt.proofs.gaptic._
+           implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature
+           ${listing mkString "\n"}
+         }; () }"""
+    println( endTacticsOutput )
   }
 
   def processLines( lines: Stream[String], interp: ILoop ): Unit = lines match {
     case beginCliListing( condition ) #:: rest =>
       processCliListing( rest takeWhile { _ != endCliListing }, condition, interp )
       processLines( rest dropWhile { _ != endCliListing } drop 1, interp )
+    case `beginTacticsListing` #:: rest =>
+      processTacticsListing( rest takeWhile { _ != endTacticsListing }, interp )
+      processLines( rest dropWhile { _ != endTacticsListing } drop 1, interp )
+    case `beginTacticsOutput` #:: rest =>
+      processLines( rest dropWhile { _ != endTacticsOutput } drop 1, interp )
     case line #:: rest =>
       println( line )
       processLines( rest, interp )
