@@ -1,7 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.Utils
+import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.{ instantiate, univclosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
@@ -176,9 +176,9 @@ trait ExplicitEqualityTactics {
    * Applies the quantified equation ∀x(e_l=e_r) to the left side of the equation tgt_l=tgt_r,
    * leaving open the subgoal e_r σ = tgt_r.
    */
-  def explicitRewrite(
+  def explicitRewriteLeft(
     equation: String, targetEq: String,
-    transitivity: String
+    transitivity: String = "trans"
   ) =
     for {
       goal <- currentGoal
@@ -188,6 +188,26 @@ trait ExplicitEqualityTactics {
       subst <- syntacticMatching( eqL, tgtL ).
         toTactical( s"cannot match equation $equation to formula $targetEq" )
       _ <- chain( transitivity ).at( targetEq ).subst( transVar -> subst( eqR ) )
+      _ <- chain( equation ).at( targetEq )
+    } yield ()
+
+  /**
+   * Applies the quantified equation ∀x(e_l=e_r) to the right side of the equation tgt_l=tgt_r,
+   * leaving open the subgoal tgt_l = e_l σ.
+   */
+  def explicitRewriteRight(
+    equation: String, targetEq: String,
+    transitivity: String = "trans"
+  ) =
+    for {
+      goal <- currentGoal
+      All.Block( Seq( _, transVar, _ ), _ ) = goal( transitivity )
+      All.Block( _, Imp.Block( _, Eq( eqL, eqR ) ) ) = goal( equation )
+      Eq( tgtL, tgtR ) = goal( targetEq )
+      subst <- syntacticMatching( eqR, tgtR ).
+        toTactical( s"cannot match equation $equation to formula $targetEq" )
+      _ <- chain( transitivity ).at( targetEq ).subst( transVar -> subst( eqL ) )
+      _ <- focus( 1 )
       _ <- chain( equation ).at( targetEq )
     } yield ()
 
@@ -216,91 +236,35 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
         ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
         :+ ( "goal" -> hof"${fk( n )} = a" )
     ) {
-        repeat( explicitRewrite( "id", "goal", transitivity = "trans" ) )
+        repeat( explicitRewriteLeft( "id", "goal" ) )
         chain( "refl" )
       }
 }
 
-object SumOfOnesF2ExampleProof extends ProofSequence {
-  val s = "s"
-  val zero = "0"
-  val p = "+"
-  var f = "f"
+object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with ExplicitEqualityTactics {
+  ctx += Context.Sort( "i" )
+  ctx += hoc"s: i>i"
+  ctx += hoc"0: i"
+  ctx += hoc"'+': i>i>i"
+  ctx += hoc"f: i>i"
 
-  val x = FOLVar( "x" )
-  val y = FOLVar( "y" )
-  val z = FOLVar( "z" )
-
-  //Helpers
-  def Fn( n: Int ) = FOLFunction( f, Utils.numeral( n ) :: Nil )
-
-  //Forall x.(x + 1 = s(x)) (reversed to avoid the application of the symmetry of =)
-  val Plus = All( x, Eq( FOLFunction( p, x :: Utils.numeral( 1 ) :: Nil ), FOLFunction( s, x :: Nil ) ) )
-  def PlusX( x: FOLTerm ) = Eq( FOLFunction( p, x :: Utils.numeral( 1 ) :: Nil ), FOLFunction( s, x :: Nil ) )
-
-  //Forall xyz.(y=z -> (x+y=x+z))
-  val EqPlus = All( x, All( y, All( z, Imp( Eq( y, z ), Eq( FOLFunction( p, y :: x :: Nil ), FOLFunction( p, z :: x :: Nil ) ) ) ) ) )
-  def EqPlusX( x: FOLTerm ) = All( y, All( z, Imp( Eq( y, z ), Eq( FOLFunction( p, y :: x :: Nil ), FOLFunction( p, z :: x :: Nil ) ) ) ) )
-  def EqPlusXY( x: FOLTerm, y: FOLTerm ) = All( z, Imp( Eq( y, z ), Eq( FOLFunction( p, y :: x :: Nil ), FOLFunction( p, z :: x :: Nil ) ) ) )
-  def EqPlusXYZ( x: FOLTerm, y: FOLTerm, z: FOLTerm ) = Imp( Eq( y, z ), Eq( FOLFunction( p, y :: x :: Nil ), FOLFunction( p, z :: x :: Nil ) ) )
-
-  //Forall xyz.(x = y ^ y = z -> x = z)
-  val Trans = All( x, All( y, All( z, Imp( And( Eq( x, y ), Eq( y, z ) ), Eq( x, z ) ) ) ) )
-
-  //Definition of f
-  //f(0) = 0
-  val FZero = Eq( FOLFunction( f, Utils.numeral( 0 ) :: Nil ), Utils.numeral( 0 ) )
-  //Forall x.f(s(x)) = f(x) + s(0)
-  val FSucc = All( x, Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) ) )
-  def FSuccX( x: FOLTerm ) = Eq( FOLFunction( f, FOLFunction( s, x :: Nil ) :: Nil ), FOLFunction( p, FOLFunction( f, x :: Nil ) :: Utils.numeral( 1 ) :: Nil ) )
-
-  //The starting axiom f(n) = n |- f(n) = n
-  def start( n: Int ) =
-    WeakeningMacroRule(
-      LogicalAxiom( Fn( n ) === Utils.numeral( n ) ),
-      Eq( Fn( n ), Utils.numeral( n ) ) +: Trans +: Plus +: EqPlus +: FSucc +: Sequent() :+ Eq( Fn( n ), Utils.numeral( n ) )
-    )
-
-  def apply( n: Int ) = RecProof( start( n ), n )
-
-  /**
-   * Recursively constructs the proof, starting with the proof s1.
-   */
-  def RecProof( s1: LKProof, n: Int ): LKProof = {
-    if ( n <= 0 ) { s1 }
-    else {
-
-      val fn_eq_n = Eq( Fn( n - 1 ), Utils.numeral( n - 1 ) )
-      val fn_s0 = FOLFunction( p, Fn( n - 1 ) :: Utils.numeral( 1 ) :: Nil )
-      val n_s0 = FOLFunction( p, Utils.numeral( n - 1 ) :: Utils.numeral( 1 ) :: Nil )
-
-      val tr = TransRule( Fn( n ), n_s0, Utils.numeral( n ), s1 )
-
-      val tr2 = TransRule( Fn( n ), fn_s0, n_s0, tr )
-
-      val impl = ImpLeftRule( LogicalAxiom( fn_eq_n ), fn_eq_n, tr2, Eq( fn_s0, n_s0 ) )
-
-      //Instantiate FSucc
-      val allQFSucc = ForallLeftRule( impl, FSucc, Utils.numeral( n - 1 ) )
-      val clFSucc = ContractionLeftRule( allQFSucc, FSucc )
-
-      //Instantiate Plus
-      val allQPlus = ForallLeftRule( clFSucc, Plus, Utils.numeral( n - 1 ) )
-      val clPlus = ContractionLeftRule( allQPlus, Plus )
-
-      //Instantiare EqPlus (x=(s0), y=Fn(n-1), z=n-1)
-      val eqx = Utils.numeral( 1 )
-      val eqy = Fn( n - 1 )
-      val eqz = Utils.numeral( n - 1 )
-
-      val allQEqPlusZ = ForallLeftRule( clPlus, EqPlusXY( eqx, eqy ), eqz )
-      val allQEqPlusYZ = ForallLeftRule( allQEqPlusZ, EqPlusX( eqx ), eqy )
-      val allQEqPlusXYZ = ForallLeftRule( allQEqPlusYZ, EqPlus, eqx )
-      val clEqPlus = ContractionLeftRule( allQEqPlusXYZ, EqPlus )
-
-      RecProof( clEqPlus, n - 1 )
-    }
-  }
+  def apply( n: Int ) =
+    Lemma(
+      ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
+        ( "congplusleft" -> hof"∀x∀y∀z (y=z ⊃ y+x = z+x)" ) +:
+        ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
+        ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
+        ( "f0" -> hof"f 0 = 0" ) +:
+        Sequent()
+        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" )
+    ) {
+        repeat(
+          explicitRewriteRight( "plus1", "goal" ) andThen
+            explicitRewriteLeft( "fs", "goal" ) andThen
+            chain( "congplusleft" )
+        )
+        chain( "f0" )
+      }
 }
 
 /**
