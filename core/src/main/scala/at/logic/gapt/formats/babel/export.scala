@@ -216,7 +216,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
   def showName( name: String ): Doc = name match {
     case _ if BabelLexical.keywords( name ) =>
       s"'$name'"
-    case _ if name forall { BabelLexical.isUnquotNameChar } => name
+    case _ if name.nonEmpty && name.forall { BabelLexical.isUnquotNameChar } => name
     case _ => "'" + name.map {
       case c @ safeChars() =>
         c

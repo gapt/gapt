@@ -64,6 +64,7 @@ class BabelTest extends Specification {
       "'<=' x y : i",
       "true & p(#c('⊤': i))",
       "^('⊤': i) #c('⊤': o) & p('⊤': i)",
+      "''",
       "true", "'true'", "'all' x"
     )
     Fragments.foreach( strings ) { string =>
