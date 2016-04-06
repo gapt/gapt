@@ -3,18 +3,15 @@ import at.logic.gapt.examples.Script
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.grammars._
+import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
-import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemize }
+import at.logic.gapt.proofs.lk.{ ExtractInterpolant, skolemize }
 import at.logic.gapt.proofs.reduction._
-import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem, randomInstance, simplePi1RecSchemTempl }
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
-
-import scala.util.Random
 
 object prod_prop_31 extends Script {
   val tipProblem = TipSmtParser parse
@@ -33,19 +30,25 @@ object prod_prop_31 extends Script {
 """
   implicit var ctx = tipProblem.context
 
-  val sequent = tipProblem toSequent
+  val sequent @ Sequent( theory, Seq( All.Block( vs, _ ) ) ) = tipProblem.toSequent
+  println( sequent )
+  println()
 
-  val list = TBase( "list" )
+  val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
 
-  val instances = for ( _ <- 0 to 2 ) yield {
-    val size = Random.nextInt( 4 )
-    randomInstance.generate( list, size )
+  val pi1QTys = ctx.typeDefs.toSeq collect {
+    case InductiveType( ty, _ ) if ty != To => ty
+  }
+
+  var instances = Set[Seq[LambdaExpression]]()
+  while ( instances.size < 4 ) {
+    instances += randomInstance.generate( paramTypes, 0 to 5 contains _ )
   }
   println( "Instances:" )
   instances foreach println
 
   // Compute many-sorted expansion sequents
-  val instanceProofs = instances.distinct map { inst =>
+  val instanceProofs = instances map { inst =>
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     if ( true ) {
       if ( true ) {
@@ -70,32 +73,31 @@ object prod_prop_31 extends Script {
   instanceProofs foreach {
     case ( inst, es ) =>
       println( s"Instances for x = $inst:" )
-      extractInstances( es ).map( -_, identity ).elements foreach println
+      println( extractInstances( es ).map( _.toSigRelativeString ) )
       println()
   }
 
-  val x = Var( "x", list )
-  val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, x ) ) )
+  val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
 
-  val A = Const( "A", list -> encoding.instanceTermType )
-  val w = Var( "w", list )
+  val A = Const( "A", FunctionType( encoding.instanceTermType, paramTypes ) )
 
-  val template = simplePi1RecSchemTempl( A( x ), Seq( list ) )
+  val template = simplePi1RecSchemTempl( A( vs: _* ), pi1QTys )
+  val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
   println( "Recursion scheme template:" )
   template.template.toSeq.sortBy { _._1.toString } foreach println
   println()
 
-  val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst ) -> term
-  val rs = template.findMinimalCover( targets.toSet, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
+  val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst: _* ) -> term
+  val rs = template.findMinimalCover( targets, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
   println( s"Minimized recursion scheme:\n$rs\n" )
 
   val logicalRS = encoding decode rs
   println( s"Logical recursion scheme:\n$logicalRS\n" )
 
-  val inst = randomInstance.generate( list, 8 )
-  val lang = logicalRS parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
-  println( s"Checking validity for instance x = ${inst.toSigRelativeString}" )
-  require( Z3 isValid Or( lang ), s"Validity for instance x = ${inst.toSigRelativeString}" )
+  val inst = randomInstance.generate( paramTypes, 6 to 10 contains _ )
+  val lang = logicalRS.parametricLanguage( inst: _* ) map { _.asInstanceOf[HOLFormula] }
+  println( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}" )
+  require( Z3 isValid Or( lang ), s"Validity for instance ${inst.map( _.toSigRelativeString )}" )
   if ( false ) {
     val Some( lk ) = Escargot getLKProof Sequent( lang.toSeq map { case Neg( f ) => ( f, false ) case f => ( f, true ) } )
     println( "Interpolant of the instance sequent:" )
@@ -106,14 +108,14 @@ object prod_prop_31 extends Script {
   val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
   println( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
-  val canSolInst = randomInstance.generate( list, 3 )
+  val canSolInst = randomInstance.generate( paramTypes, 3 to 5 contains _ )
   println( s"Canonical solution at G($canSolInst,w):" )
   val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
-  val canSol = And( logicalRS generatedTerms G_( canSolInst, w ) map { -_ } )
+  val canSol = And( logicalRS generatedTerms G_( canSolInst: _* )( ws: _* ) map { -_ } )
   CNFp.toClauseList( canSol ).map { _.map { _.toSigRelativeString } } foreach println
   println()
 
-  val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst, w ), canSol )
+  val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst: _* )( ws: _* ), canSol )
   println()
 
   val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
