@@ -511,3 +511,14 @@ case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKPr
     ( cnf, RobinsonToLK( _, problem, justs, defs, addWeakenings = true ) )
   }
 }
+
+case object GroundingReductionET extends Reduction_[HOLSequent, ExpansionProof] {
+  override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
+    val nameGen = rename.awayFrom( constants( problem ) )
+    val subst = for ( v @ Var( name, ty ) <- freeVariables( problem ) ) yield v -> Const( nameGen fresh name, ty )
+    ( Substitution( subst )( problem ), exp => {
+      require( exp.eigenVariables intersect subst.map( _._1 ) isEmpty )
+      replaceET( exp, subst.map( _.swap ).toMap )
+    } )
+  }
+}

@@ -218,8 +218,13 @@ object minimizeRecursionScheme extends Logger {
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
              weight:       Rule => Int       = _ => 1 ) = {
+    val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
+    val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
+    val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
+    val targets_ = grounding( targets.toSet )
+
     val formula = new RecSchemGenLangFormula( recSchem, targetFilter )
-    val hard = formula( targets )
+    val hard = formula( targets_ )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = solver.solve( hard, soft ).get
@@ -440,8 +445,12 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
     RecursionScheme( axiom, nonTerminals, rules )
   }
 
-  def findMinimalCover( targets: Set[( LambdaExpression, LambdaExpression )], solver: MaxSATSolver = bestAvailableMaxSatSolver ): RecursionScheme = {
-    minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver )
+  def findMinimalCover(
+    targets: Set[( LambdaExpression, LambdaExpression )],
+    solver:  MaxSATSolver                                = bestAvailableMaxSatSolver,
+    weight:  Rule => Int                                 = _ => 1
+  ): RecursionScheme = {
+    minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
   }
 }
 

@@ -61,8 +61,6 @@ object stableTerms {
     apply( lang: Traversable[LambdaExpression], nonTerminals ).map( _.asInstanceOf[FOLTerm] )
 
   def apply( lang: Traversable[LambdaExpression], nonTerminals: Seq[Var] ): Set[LambdaExpression] = {
-    lang foreach { term => require( freeVariables( term ) isEmpty ) }
-
     val antiUnifiers = subsetAUs( lang, nonTerminals.size + 1 )
     antiUnifiers flatMap { au => stsSubsumedByAU( au, nonTerminals.toSet ) }
   }

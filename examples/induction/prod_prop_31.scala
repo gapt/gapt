@@ -36,32 +36,26 @@ object prod_prop_31 extends Script {
   val sequent = tipProblem toSequent
 
   val list = TBase( "list" )
-  val sk_a = TBase( "sk_a" )
-  val nil = le"nil"
-  val cons = le"cons"
 
   val instances = for ( _ <- 0 to 2 ) yield {
     val size = Random.nextInt( 4 )
-    val term = randomInstance.generate( list, size )
-    val ( term_, ctx_ ) = randomInstance.toSkolemConsts( term, ctx )
-    ctx = ctx_
-    term_
+    randomInstance.generate( list, size )
   }
   println( "Instances:" )
   instances foreach println
 
   // Compute many-sorted expansion sequents
-  val instanceProofs = instances map { inst =>
+  val instanceProofs = instances.distinct map { inst =>
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     if ( true ) {
       if ( true ) {
-        val reduction = CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
+        val reduction = GroundingReductionET |> CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
         val ( erasedCNF, back ) = reduction forward instanceSequent
         val Some( erasedProof ) = SPASS getRobinsonProof erasedCNF
         val reifiedExpansion = back( erasedProof )
         inst -> reifiedExpansion
       } else {
-        val reduction = PredicateReductionET |> ErasureReductionET
+        val reduction = GroundingReductionET |> PredicateReductionET |> ErasureReductionET
         val ( erasedInstanceSequent, back ) = reduction forward instanceSequent
         val Some( erasedExpansion ) = SPASS getExpansionProof erasedInstanceSequent
         val reifiedExpansion = back( erasedExpansion )
@@ -92,17 +86,7 @@ object prod_prop_31 extends Script {
   println()
 
   val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst ) -> term
-  val stableRS = template.stableRecSchem( targets.toSet )
-  // FIXME: the class of rs w/o skolem symbols is not closed under the rewriting that stableTerms() expects :-/
-  val stableRSWithoutSkolemSymbols =
-    RecursionScheme( stableRS.axiom, stableRS.nonTerminals,
-      stableRS.rules filterNot {
-        case Rule( from, to ) =>
-          constants( to ) exists { _.exptype == sk_a }
-      } )
-  //println(stableRSWithoutSkolemSymbols)
-  val rs = minimizeRecursionScheme( stableRSWithoutSkolemSymbols, targets, template.targetFilter,
-    weight = rule => expressionSize( rule.lhs === rule.rhs ) )
+  val rs = template.findMinimalCover( targets.toSet, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
   println( s"Minimized recursion scheme:\n$rs\n" )
 
   val logicalRS = encoding decode rs
