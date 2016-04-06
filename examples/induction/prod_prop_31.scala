@@ -10,9 +10,11 @@ import at.logic.gapt.proofs.lk.{ ExtractInterpolant, LKToExpansionProof, skolemi
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.resolution.RobinsonToExpansionProof
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem, simplePi1RecSchemTempl }
+import at.logic.gapt.provers.inductionProver.{ hSolveQBUP, qbupForRecSchem, randomInstance, simplePi1RecSchemTempl }
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
+
+import scala.util.Random
 
 object prod_prop_31 extends Script {
   val tipProblem = TipSmtParser parse
@@ -38,12 +40,15 @@ object prod_prop_31 extends Script {
   val nil = le"nil"
   val cons = le"cons"
 
-  val as = 0 until 10 map { j => Const( s"a$j", sk_a ) }
-  ctx ++= as
-
-  def mkList( i: Int ) = ( 0 until i ).foldRight[LambdaExpression]( nil ) { ( j, l ) => cons( as( j ), l ) }
-
-  val instances = 0 to 2 map mkList
+  val instances = for ( _ <- 0 to 2 ) yield {
+    val size = Random.nextInt( 4 )
+    val term = randomInstance.generate( list, size )
+    val ( term_, ctx_ ) = randomInstance.toSkolemConsts( term, ctx )
+    ctx = ctx_
+    term_
+  }
+  println( "Instances:" )
+  instances foreach println
 
   // Compute many-sorted expansion sequents
   val instanceProofs = instances map { inst =>
@@ -103,11 +108,11 @@ object prod_prop_31 extends Script {
   val logicalRS = encoding decode rs
   println( s"Logical recursion scheme:\n$logicalRS\n" )
 
-  val inst = mkList( 8 )
+  val inst = randomInstance.generate( list, 8 )
   val lang = logicalRS parametricLanguage inst map { _.asInstanceOf[HOLFormula] }
-  println( s"Validity for instance x = ${inst.toSigRelativeString}:" )
-  println( Z3 isValid Or( lang toSeq ) )
-  if ( true ) {
+  println( s"Checking validity for instance x = ${inst.toSigRelativeString}" )
+  require( Z3 isValid Or( lang ), s"Validity for instance x = ${inst.toSigRelativeString}" )
+  if ( false ) {
     val Some( lk ) = Escargot getLKProof Sequent( lang.toSeq map { case Neg( f ) => ( f, false ) case f => ( f, true ) } )
     println( "Interpolant of the instance sequent:" )
     println( simplify( ExtractInterpolant( lk, lk.conclusion.map( _ => false, _ => true ) )._3 ).toSigRelativeString )
@@ -117,13 +122,14 @@ object prod_prop_31 extends Script {
   val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
   println( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
-  println( s"Canonical solution at G(${mkList( 3 )},w):" )
+  val canSolInst = randomInstance.generate( list, 3 )
+  println( s"Canonical solution at G($canSolInst,w):" )
   val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
-  val canSol = And( logicalRS generatedTerms G_( mkList( 3 ), w ) map { -_ } )
+  val canSol = And( logicalRS generatedTerms G_( canSolInst, w ) map { -_ } )
   CNFp.toClauseList( canSol ).map { _.map { _.toSigRelativeString } } foreach println
   println()
 
-  val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( mkList( 3 ), w ), canSol )
+  val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst, w ), canSol )
   println()
 
   val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )

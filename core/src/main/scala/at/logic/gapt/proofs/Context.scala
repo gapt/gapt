@@ -15,6 +15,8 @@ trait Context extends BabelSignature {
   def definition( name: String ): Option[LambdaExpression]
   def theory( clause: HOLClause ): Option[LKProof]
 
+  def typeDef( ty: TBase ): Option[TypeDef] = typeDef( ty.name )
+
   override def apply( s: String ): babel.VarConst =
     constant( s ) match {
       case Some( c ) => babel.IsConst( babel.ast.liftType( c.exptype ) )
