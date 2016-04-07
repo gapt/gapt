@@ -34,11 +34,13 @@ object Viper {
       instances += randomInstance.generate( paramTypes, 0 to 5 contains _ )
     }
     println( "Instances:" )
-    instances foreach println
+    for ( inst <- instances )
+      println( inst map { _.toSigRelativeString } )
+    println()
 
     // Compute many-sorted expansion sequents
     val instanceProofs = instances map { inst =>
-      println( s"Proving instance $inst" )
+      println( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
       val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
       if ( true ) {
         if ( false ) {
@@ -61,10 +63,11 @@ object Viper {
         inst -> Escargot.getExpansionProof( instanceSequent ).get
       }
     }
+    println()
 
     instanceProofs foreach {
       case ( inst, es ) =>
-        println( s"Instances for x = $inst:" )
+        println( s"Instances for x = ${inst.map( _.toSigRelativeString )}:" )
         println( extractInstances( es ).map( _.toSigRelativeString ) )
         println()
     }
