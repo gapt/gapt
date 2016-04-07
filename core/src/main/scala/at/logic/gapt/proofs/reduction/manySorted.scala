@@ -77,47 +77,47 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case v: Var => freeVars( v )
   }
 
-  def infer( atom: FOLAtom, known: Map[FOLVar, Var] ): Map[FOLVar, Var] = {
+  def infer( formula: FOLFormula, known: Map[FOLVar, Var] ): Map[FOLVar, Var] =
+    infer( formula, To, known )
+  def infer( expr: FOLExpression, ty: Ty, known: Map[FOLVar, Var] ): Map[FOLVar, Var] = {
     val res = mutable.Map[FOLVar, Var]()
     res ++= known
 
-    def formula( f: FOLAtom ) = f match {
+    def i( f: FOLExpression, expected: Ty ): Ty = f match {
       case Eq( a @ FOLFunction( _, _ ), b ) =>
-        term( b, term( a, null ) )
+        i( b, i( a, null ) )
       case Eq( a, b @ FOLFunction( _, _ ) ) =>
-        term( a, term( b, null ) )
+        i( a, i( b, null ) )
       case Eq( a: FOLVar, b ) if known isDefinedAt a =>
-        term( b, known( a ).exptype )
+        i( b, known( a ).exptype )
       case Eq( a, b: FOLVar ) if known isDefinedAt b =>
-        term( b, known( b ).exptype )
-      case Eq( a: FOLVar, b: FOLVar ) => term( b, term( a, Ti ) ) // hope for the best...
+        i( b, known( b ).exptype )
+      case Eq( a: FOLVar, b: FOLVar ) => i( b, i( a, Ti ) ) // hope for the best...
       case Apps( c: FOLAtomConst, args ) =>
         predicateReification( c ) match {
           case Const( _, FunctionType( _, argTypes ) ) =>
             for ( ( a: FOLTerm, t ) <- args zip argTypes )
-              term( a, t )
+              i( a, t )
         }
-    }
-
-    def term( f: FOLTerm, termType: Ty ): Ty = f match {
+        expected
       case v @ FOLVar( name ) =>
         res.get( v ) match {
-          case Some( Var( _, `termType` ) ) =>
+          case Some( Var( _, `expected` ) ) =>
           case Some( Var( _, other ) ) =>
-            throw new Exception( s"Reification failure: $v should have type $termType but already has type $other instead" )
-          case None => res( v ) = Var( name, termType )
+            throw new Exception( s"Reification failure: $v should have type $expected but already has type $other instead" )
+          case None => res( v ) = Var( name, expected )
         }
-        termType
+        expected
       case Apps( c: FOLFunctionConst, args ) =>
         termReification( c ) match {
           case Const( _, FunctionType( retType, argTypes ) ) =>
             for ( ( a: FOLTerm, t ) <- args zip argTypes )
-              term( a, t )
+              i( a, t )
             retType
         }
     }
 
-    formula( atom )
+    i( expr, ty )
     res.toMap
   }
 
@@ -188,21 +188,22 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     f( proof, Map() )
   }
 
-  def back( et: ExpansionTree, shallow: HOLFormula ): ExpansionTree = ( et, shallow ) match {
-    case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, Map() ), pol )
+  def back( et: ExpansionTree, shallow: HOLFormula, freeVars: Map[FOLVar, Var] ): ExpansionTree = ( et, shallow ) match {
+    case ( ETAtom( atom: FOLAtom, pol ), _ ) => ETAtom( back( atom, freeVars ), pol )
     case ( ETWeakening( _, pol ), _ )        => ETWeakening( shallow, pol )
-    case ( ETMerge( a, b ), _ )              => ETMerge( back( a, shallow ), back( b, shallow ) )
+    case ( ETMerge( a, b ), _ )              => ETMerge( back( a, shallow, freeVars ), back( b, shallow, freeVars ) )
     case ( _: ETBottom | _: ETTop, _ )       => et
-    case ( ETNeg( a ), Neg( sha ) )          => ETNeg( back( a, sha ) )
-    case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha ), back( b, shb ) )
-    case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha ), back( b, shb ) )
-    case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha ), back( b, shb ) )
+    case ( ETNeg( a ), Neg( sha ) )          => ETNeg( back( a, sha, freeVars ) )
+    case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
+    case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
+    case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETWeakQuantifier( _, insts ), Quant( x, sh ) ) =>
       ETWeakQuantifier(
         shallow,
-        for ( ( t, inst ) <- insts ) yield {
-          val t_ = back( t.asInstanceOf[FOLTerm], Map[FOLVar, Var]() )
-          t_ -> back( inst, Substitution( x -> t_ )( sh ) )
+        for ( ( t: FOLTerm, inst ) <- insts ) yield {
+          val childFreeVars = infer( t, x.exptype, freeVars )
+          val t_ = back( t, childFreeVars )
+          t_ -> back( inst, Substitution( x -> t_ )( sh ), childFreeVars )
         }
       )
   }
@@ -211,7 +212,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     ExpansionProof( expansionProof.expansionSequent zip endSequent map {
       case ( et, sh ) =>
         require( forward( sh, Map[Var, FOLVar]() ) == et.shallow )
-        back( et, sh )
+        back( et, sh, Map() )
     } )
 
   def back( t: FOLTerm, freeVars: Map[FOLVar, Var] ): LambdaExpression = t match {

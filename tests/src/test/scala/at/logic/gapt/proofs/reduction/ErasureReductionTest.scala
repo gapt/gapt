@@ -1,11 +1,14 @@
 package at.logic.gapt.proofs.reduction
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs._
+import at.logic.gapt.proofs.expansion.{ ETAtom, ETWeakQuantifier, ExpansionProof }
 import at.logic.gapt.proofs.resolution.{ InputClause, MguResolution }
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class ErasureReductionTest extends Specification {
+class ErasureReductionTest extends Specification with SatMatchers {
   "two-sorted" in {
     implicit var ctx = FiniteContext()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
@@ -33,7 +36,32 @@ class ErasureReductionTest extends Specification {
     p6.conclusion must_== Clause()
 
     val reifiedProof = red.back( p6, Set( c1, c2, c3, c4 ) )
-    //    println( reifiedProof )
     reifiedProof.conclusion must_== Clause()
+  }
+
+  "variables as weak quantifier instances" in {
+    implicit var ctx = FiniteContext()
+    ctx += Context.Sort( "foo" )
+    ctx += hoc"P: foo>o"
+
+    val sequent = hof"∀x P x" +: Sequent() :+ hof"∃x P x"
+
+    val red = new ErasureReductionHelper( ctx.constants )
+
+    val deepAtom = red.forward( hof"P z", Map( hov"z: foo" -> FOLVar( "z" ) ) ).asInstanceOf[FOLAtom]
+    val firstOrderEP =
+      ExpansionProof(
+        ETWeakQuantifier(
+          red.forward( hof"∀x P x", Map() ),
+          Map( FOLVar( "z" ) -> ETAtom( deepAtom, false ) )
+        ) +:
+          Sequent()
+          :+ ETWeakQuantifier(
+            red.forward( hof"∃x P x", Map() ),
+            Map( FOLVar( "z" ) -> ETAtom( deepAtom, true ) )
+          )
+      )
+
+    red.back( firstOrderEP, sequent ).deep must beValidSequent
   }
 }
