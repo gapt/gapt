@@ -3,10 +3,8 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemSymbolFactory
-import at.logic.gapt.formats.llk.HybridLatexParser
-import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
-import at.logic.gapt.proofs.{ Suc, Ant }
-
+import at.logic.gapt.formats.llkNew.loadLLK
+import at.logic.gapt.proofs.{ Ant, Suc }
 import org.specs2.mutable._
 
 import scala.io.Source
@@ -136,8 +134,7 @@ class LKToLKskTest extends Specification {
 
   "higher order tape proof" in {
     def load( fn: String ): LKProof = {
-      val tokens = HybridLatexParser.parse( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString )
-      val pdb = HybridLatexParser.createLKProof( tokens )
+      val pdb = loadLLK( getClass.getClassLoader.getResourceAsStream( fn ) )
       AtomicExpansion( DefinitionElimination( pdb.Definitions )( pdb proof "TAPEPROOF" ) )
     }
 

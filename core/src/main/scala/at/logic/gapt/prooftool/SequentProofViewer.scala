@@ -1,15 +1,15 @@
 package at.logic.gapt.prooftool
 
-import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
+import java.io.{ ByteArrayInputStream, File, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.formats.latex.{ SequentsListLatexExporter, ProofToLatexExporter }
-import at.logic.gapt.formats.llk.HybridLatexExporter
+import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lk.{ lkNew2Old, LKToExpansionProof, LKProof }
+import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
 import at.logic.gapt.proofs.lkskNew.LKskProof
 import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString }
+import at.logic.gapt.formats.llkNew.exportLLK
 
 import scala.swing._
 
@@ -128,12 +128,12 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
           if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
             val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
-            file.write( HybridLatexExporter( lkNew2Old( proof ), escape_latex = true ) )
+            file.write( exportLLK( proof ) )
             file.close()
           } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
             val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
-            file.write( ProofToLatexExporter( lkNew2Old( proof ) ) )
+            file.write( ProofToLatexExporter( proof ) )
             file.close()
           } else infoMessage( "Proofs cannot be saved in this format." )
         } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }

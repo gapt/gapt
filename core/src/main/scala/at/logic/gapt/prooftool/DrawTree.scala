@@ -14,9 +14,6 @@ import java.awt.Font._
 import java.awt.{ RenderingHints, BasicStroke }
 import at.logic.gapt.utils.ds.trees._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres_schema.struct.structToExpressionTree.{ TimesC, PlusC }
-import at.logic.gapt.proofs.ceres_schema.PStructToExpressionTree.{ PWeakC, PTimesC, PPlusC }
-import at.logic.gapt.proofs.lkOld.base.OccSequent
 import java.awt.event.{ MouseMotionListener, MouseEvent }
 import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, sequentToLatexString }
 
@@ -27,9 +24,7 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private val bd = Swing.EmptyBorder( fSize / 2 )
   private val tx = tree.vertex match {
-    case PWeakC( seq )        => "w^{" + sequentToLatexString( seq ) + "}"
     case he: LambdaExpression => formulaToLatexString( he )
-    case seq: OccSequent      => sequentToLatexString( seq )
     case _                    => tree.vertex.toString
   }
   private var drawLines = true
@@ -46,7 +41,6 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
     tree match {
       case utree: UnaryTree[_] =>
         val mylabel = utree.vertex match {
-          case PWeakC( _ ) => LatexLabel( main, ft, tx )
           case _ => new Label( tx ) {
             font = ft
             val myicon = icon
@@ -108,11 +102,6 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
         } ) = Position.Center
       case btree: BinaryTree[_] =>
         val label = new Label( tx ) {
-          btree.vertex match {
-            case TimesC | PTimesC( _ ) => foreground = new Color( 255, 0, 0 )
-            case PlusC | PPlusC        => foreground = new Color( 0, 0, 255 )
-            case _                     =>
-          }
           if ( !str.isEmpty && tx.contains( str ) ) {
             background = new Color( 0, 255, 0 )
             opaque = true

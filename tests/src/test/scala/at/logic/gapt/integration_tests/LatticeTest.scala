@@ -5,9 +5,6 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.examples.lattice
 import at.logic.gapt.expr.hol.isAtom
-import at.logic.gapt.formats.readers.XMLReaders._
-import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.formats.xml.XMLParser._
 import at.logic.gapt.proofs.{ SequentMatchers, HOLClause }
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.lkOld.{ deleteTautologies }

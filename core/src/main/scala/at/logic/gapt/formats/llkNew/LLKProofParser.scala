@@ -2,7 +2,6 @@ package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llkNew.ast.LambdaAST
-import at.logic.gapt.formats.xml.ProofDatabase
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.LKProof
 import java.io.FileReader
@@ -14,20 +13,20 @@ import scala.util.parsing.input.PagedSeqReader
  * additionally to the list of pairs.
  */
 case class ExtendedProofDatabase(
-  eproofs:      Map[HOLFormula, LKProof],
-  eaxioms:      Map[HOLFormula, HOLFormula],
-  edefinitions: Map[LambdaExpression, LambdaExpression]
-)
-    extends ProofDatabase(
-      proofs = eproofs.map( x =>
-        x._1 match {
-          case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
-          case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
-        } ).toList,
-      Definitions = edefinitions,
-      axioms = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) ),
-      sequentLists = Nil
-    )
+    eproofs:      Map[HOLFormula, LKProof],
+    eaxioms:      Map[HOLFormula, HOLFormula],
+    edefinitions: Map[LambdaExpression, LambdaExpression]
+) {
+  val proofs = eproofs.map( x =>
+    x._1 match {
+      case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
+      case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
+    } ).toList
+  val Definitions = edefinitions
+  val axioms = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) )
+
+  def proof( name: String ) = proofs.find( _._1 == name ).get._2
+}
 
 /**
  * The abstract class for tokens of an llk proof. TTokens represent type declarations, ATokens represent axiom
@@ -37,6 +36,7 @@ abstract class Token
 
 /**
  * A TToken represents an LLK type declaration.
+ *
  * @param decltype either "VARDEC" or "CONSTDEC"
  * @param names a list of symbol names
  * @param types the assigned type
@@ -45,6 +45,7 @@ case class TToken( decltype: String, names: List[String], types: Ty ) extends To
 
 /**
  * An AToken represents an Axiom declaration or Definition declaration.
+ *
  * @param rule either "AXIOMDEF", "PREDDEF" or"FUNDEF"
  * @param name the (unique) name of the definition/axiom
  * @param antecedent the antecedent of the declaration sequent (not yet typechecked)
@@ -54,6 +55,7 @@ case class AToken( rule: String, name: Option[LambdaAST], antecedent: List[Lambd
 
 /**
  * A RToken represents a rule application.
+ *
  * @param rule One out of "AX", "ALLL", "ALLR", "EXL", "EXR", "ANDL", "ANDR", "ORL", "ORR", "IMPL", "IMPR", "NEGL",
  *             "NEGR", "CUT", "EQL", "EQR", "WEAKL", "WEAKR", "CONTRL", "CONTRR", "DEF", "BETA", "INSTAXIOM"
  * @param name quantifier rules allow optional specification of the subsitution term, definitions and axiom instantiations

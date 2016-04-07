@@ -79,20 +79,3 @@ object EqC extends LogicalC( "=" ) {
   protected override def noMatch = None
 }
 
-//package schematic {
-//
-//  object BigAndC extends MonomorphicLogicalC( "⋀", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
-//  object BigOrC extends MonomorphicLogicalC( "⋁", ( Tindex -> To ) -> ( Tindex -> ( Tindex -> To ) ) )
-//
-//  object ZeroC extends MonomorphicLogicalC( "0", Tindex )
-//  object SuccC extends MonomorphicLogicalC( "s", Tindex -> Tindex )
-//
-//  object PlusC extends MonomorphicLogicalC( "+", Tindex -> ( Tindex -> Tindex ) )
-//  object TimesC extends MonomorphicLogicalC( "×", Tindex -> ( Tindex -> Tindex ) )
-//
-//  object BiggerThanC extends MonomorphicLogicalC( ">", Tindex -> ( Tindex -> To ) )
-//  object SimC extends MonomorphicLogicalC( "~", Tindex -> ( Tindex -> To ) )
-//  object LessThanC extends MonomorphicLogicalC( "<", Tindex -> ( Tindex -> To ) )
-//  object LeqC extends MonomorphicLogicalC( "≤", Tindex -> ( Tindex -> To ) )
-//
-//}

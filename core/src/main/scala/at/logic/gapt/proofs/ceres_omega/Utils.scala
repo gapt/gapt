@@ -4,7 +4,6 @@ import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lkskNew.LKskProof._
 import at.logic.gapt.proofs.lkskNew._
-import at.logic.gapt.proofs.occurrences._
 
 /**
  * The pick* functions generalize the convenience constructors of the LK rules which allow to specify arguments by

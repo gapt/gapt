@@ -3,13 +3,9 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.expr.Top
 import at.logic.gapt.expr.hol.containsStrongQuantifier
-import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.proofs.HOLClause
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import XMLParser._
-import at.logic.gapt.formats.readers.XMLReaders._
-import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.prover9._

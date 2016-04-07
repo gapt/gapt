@@ -10,12 +10,10 @@ package at.logic.gapt.prooftool
 import java.awt.{ Font, Color }
 import Font._
 import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, LabelledFormula }
-import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
 import scala.swing.{ Component, FlowPanel, GridPanel, Label }
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString }
 
 class DrawList(
     main:         ListViewer,
@@ -53,8 +51,6 @@ class DrawList(
         val colors = s map { _ => Color.white }
 
         s.elements.head match {
-          case _: FormulaOccurrence =>
-            DrawSequent[FormulaOccurrence]( main, s.asInstanceOf[OccSequent], ft, str, ( x: FormulaOccurrence ) => formulaOccurrenceToLatexString( x ) )
           case _: LabelledFormula =>
             DrawSequent[LabelledFormula]( main, s.asInstanceOf[LabelledSequent], ft, str, ( x: LabelledFormula ) => labelledFormulaToLatexString( x ) )
           case _: HOLFormula =>

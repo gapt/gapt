@@ -7,12 +7,9 @@ import java.nio.file.{ Paths, Files }
 
 import at.logic.gapt.expr.hol._
 
-import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
 import at.logic.gapt.formats.latex.SequentsListLatexExporter
 
-import at.logic.gapt.formats.llk.HybridLatexParser
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
-import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.HOLSequent
 
 /* *************************************************************************** *

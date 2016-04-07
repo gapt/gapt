@@ -7,11 +7,8 @@ package at.logic.gapt.formats.latex
  * Time: 21:49
  */
 
-import at.logic.gapt.proofs.lkOld._
-import at.logic.gapt.proofs.lkOld.base.{ BinaryLKProof, LKProof, NullaryLKProof, UnaryLKProof }
-import at.logic.gapt.proofs.proofs.RuleTypeA
-import at.logic.gapt.proofs.shlk.SchemaProofLinkRule
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ sequentToLatexString, formulaToLatexString }
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, sequentToLatexString }
+import at.logic.gapt.proofs.lk._
 
 object ProofToLatexExporter {
 
@@ -41,52 +38,19 @@ object ProofToLatexExporter {
       rulesToLatex( proof ) +
       "\\end{prooftree} " + nLine
 
-  def rulesToLatex( proof: LKProof ): String = proof match {
-    case p: NullaryLKProof => p match {
-      case SchemaProofLinkRule( root, link, indices ) =>
-        "\\AxiomC{$(" + link + "(" + formulaToLatexString( indices.head ) + "))$} " + nLine +
-          "\\dashedLine " + nLine +
-          "\\UnaryInfC{$" + sequentToLatexString( root ) + "$} " + nLine
-      case _ =>
-        "\\AxiomC{$" + sequentToLatexString( p.root ) + "$} " + nLine
-    }
-    case p: UnaryLKProof =>
-      rulesToLatex( p.uProof ) +
-        "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} " + nLine +
-        "\\UnaryInfC{$" + sequentToLatexString( p.root ) + "$} " + nLine
-    case p: BinaryLKProof =>
-      rulesToLatex( p.uProof1 ) + nLine +
-        rulesToLatex( p.uProof2 ) + nLine +
-        "\\RightLabel{$" + ruleNameToLatex( p.rule ) + "$} " + nLine +
-        "\\BinaryInfC{$" + sequentToLatexString( p.root ) + "$} " + nLine
+  def rulesToLatex( p: LKProof ): String = p.immediateSubProofs.size match {
+    case 0 =>
+      "\\AxiomC{$" + sequentToLatexString( p.conclusion ) + "$} " + nLine
+    case 1 =>
+      rulesToLatex( p.immediateSubProofs( 0 ) ) +
+        "\\RightLabel{$" + ruleNameToLatex( p ) + "$} " + nLine +
+        "\\UnaryInfC{$" + sequentToLatexString( p.conclusion ) + "$} " + nLine
+    case 2 =>
+      rulesToLatex( p.immediateSubProofs( 0 ) ) + nLine +
+        rulesToLatex( p.immediateSubProofs( 1 ) ) + nLine +
+        "\\RightLabel{$" + ruleNameToLatex( p ) + "$} " + nLine +
+        "\\BinaryInfC{$" + sequentToLatexString( p.conclusion ) + "$} " + nLine
   }
 
-  def ruleNameToLatex( name: RuleTypeA ) = name match {
-    case NegLeftRuleType          => "\\neg \\colon l"
-    case NegRightRuleType         => "\\neg \\colon r"
-    case AndLeft1RuleType         => "\\land \\colon l1"
-    case AndLeft2RuleType         => "\\land \\colon l2"
-    case AndRightRuleType         => "\\land \\colon r"
-    case OrLeftRuleType           => "\\lor \\colon l"
-    case OrRight1RuleType         => "\\lor \\colon r1"
-    case OrRight2RuleType         => "\\lor \\colon r2"
-    case ImpLeftRuleType          => "\\supset \\colon l"
-    case ImpRightRuleType         => "\\supset \\colon r"
-    case ExistsLeftRuleType       => "\\exists \\colon l"
-    case ExistsRightRuleType      => "\\exists \\colon r"
-    case ForallLeftRuleType       => "\\forall \\colon l"
-    case ForallRightRuleType      => "\\forall \\colon r"
-    case WeakeningLeftRuleType    => "w \\colon l"
-    case WeakeningRightRuleType   => "w \\colon r"
-    case ContractionLeftRuleType  => "c \\colon l"
-    case ContractionRightRuleType => "c \\colon r"
-    case CutRuleType              => "cut"
-    case DefinitionLeftRuleType   => "d \\colon l"
-    case DefinitionRightRuleType  => "d \\colon r"
-    case EquationLeft1RuleType    => "e \\colon l1"
-    case EquationLeft2RuleType    => "e \\colon l2"
-    case EquationRight1RuleType   => "e \\colon r1"
-    case EquationRight2RuleType   => "e \\colon r2"
-    case _                        => "\\twoheadrightarrow"
-  }
+  def ruleNameToLatex( name: LKProof ) = name.name
 }

@@ -8,9 +8,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.{ Sequent }
-import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence }
 import org.scilab.forge.jlatexmath.{ TeXIcon, TeXConstants, TeXFormula }
 import java.awt.{ Color, Font }
 import java.awt.image.BufferedImage
@@ -52,17 +50,16 @@ object DrawSequent {
   }
 
   //used by DrawProof
-  def apply( main: ProofToolViewer[_], seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ): DrawSequent[HOLFormula] = {
-    val visibility = vis_occ match {
-      case None        => seq map { fo => true }
-      case Some( set ) => seq map { fo => set contains fo }
-    }
-    val colors = seq map { fo => Color.white }
-    DrawSequent[HOLFormula]( main, seq.toHOLSequent, visibility, colors, ft )
-  }
+  //  def apply( main: ProofToolViewer[_], seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ): DrawSequent[HOLFormula] = {
+  //    val visibility = vis_occ match {
+  //      case None        => seq map { fo => true }
+  //      case Some( set ) => seq map { fo => set contains fo }
+  //    }
+  //    val colors = seq map { fo => Color.white }
+  //    DrawSequent[HOLFormula]( main, seq.toHOLSequent, visibility, colors, ft )
+  //  }
 
   def formulaToLabel( main: ProofToolViewer[_], f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( f ) )
-  def formulaToLabel( main: ProofToolViewer[_], fo: FormulaOccurrence, ft: Font ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( fo.formula ) )
 
 }
 
@@ -78,12 +75,6 @@ class DrawSequent[T](
   hGap = 0 // no gap between components
 
   listenTo( main.publisher )
-  reactions += {
-    // since panel is not opaque, it cannot have a background color,
-    case ChangeSequentColor( s, color, reset ) => // so change background of each component.
-      if ( s == sequent ) contents.foreach( c => c.background = color )
-      else if ( reset ) contents.foreach( c => c.background = Color.white )
-  }
 
   private var first = true
   for ( ( f, v, c ) <- zip3( sequent, visibility, colors ).antecedent ) {

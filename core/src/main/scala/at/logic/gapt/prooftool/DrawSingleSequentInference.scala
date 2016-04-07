@@ -2,10 +2,11 @@ package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.SequentProof
 import at.logic.gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString, formulaOccurrenceToLatexString }
 
 import scala.swing._
 import java.awt.Color
+
+import at.logic.gapt.formats.latex.LatexUIRenderer
 
 /**
  *
@@ -81,9 +82,9 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolVie
     substitution.contents.clear()
     p() match {
       case Some( proof: ForallLeftRule ) =>
-        substitution.contents += LatexLabel( main, font, formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, LatexUIRenderer.formulaToLatexString( proof.term ) )
       case Some( proof: ExistsRightRule ) =>
-        substitution.contents += LatexLabel( main, font, formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, LatexUIRenderer.formulaToLatexString( proof.term ) )
       case _ =>
     }
     substitution.contents += Swing.Glue

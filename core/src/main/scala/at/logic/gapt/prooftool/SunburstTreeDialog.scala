@@ -136,8 +136,4 @@ class SunburstTreeDialog[F, T <: SequentProof[F, T]]( val mainWindow: DagProofVi
   }
 
   contents = main
-
-  override def closeOperation() {
-    mainWindow.publisher.publish( ChangeSequentColor( null, null, reset = true ) )
-  }
 }

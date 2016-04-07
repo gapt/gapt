@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.{ To, MonomorphicLogicalC, SymbolA, LambdaExpression }
+import at.logic.gapt.expr.{ To, MonomorphicLogicalC, LambdaExpression }
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree, Tree }
 
 /**
@@ -10,31 +10,31 @@ import at.logic.gapt.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree, Tree }
 // (for, e.g. displaying purposes)
 
 package structterm {
-  case object TimesSymbol extends SymbolA {
+  case object TimesSymbol {
     def unique = "TimesSymbol"
     override def toString = "⊗"
     def toCode = "TimesSymbol"
   }
 
-  case object PlusSymbol extends SymbolA {
+  case object PlusSymbol {
     def unique = "PlusSymbol"
     override def toString = "⊕"
     def toCode = "PlusSymbol"
   }
 
-  case object DualSymbol extends SymbolA {
+  case object DualSymbol {
     def unique = "DualSymbol"
     override def toString = "∼"
     def toCode = "DualSymbol"
   }
 
-  case object EmptyTimesSymbol extends SymbolA {
+  case object EmptyTimesSymbol {
     def unique = "EmptyTimesSymbol"
     override def toString = "ε_⊗"
     def toCode = "EmptyTimesSymbol"
   }
 
-  case object EmptyPlusSymbol extends SymbolA {
+  case object EmptyPlusSymbol {
     def unique = "EmptyPlusSymbol"
     override def toString = "ε_⊕"
     def toCode = "EmptyPlusSymbol"

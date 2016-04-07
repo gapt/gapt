@@ -1,7 +1,6 @@
 package at.logic.gapt.formats.llkNew
 
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lksk.{ LabelledFormulaOccurrence, LabelledOccSequent }
 import at.logic.gapt.formats.llkNew.ast.LambdaAST
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
@@ -23,13 +22,6 @@ object LLKFormatter {
     s.map.map( x => f( x._1 ) + " -> " + f( x._2 ) ).mkString( "{", ",", "}" )
   }
 
-  def f( lfo: LabelledFormulaOccurrence ): String =
-    f( lfo.formula ) + lfo.skolem_label.map( f ).mkString( "[label: ", ", ", "]" )
-
-  def f( ls: LabelledOccSequent ): String = {
-    ls.l_antecedent.map( f ).mkString( "", ", ", " :- " ) +
-      ls.l_succedent.map( f ).mkString( "", ", ", "" )
-  }
   def f( e: LambdaExpression ): String = " " + toLLKString( e ) + " "
 }
 

@@ -5,7 +5,6 @@ import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.provers.eqProver.EquationalProver
 
 class LKNewInterpolationTest extends Specification with SequentMatchers {
