@@ -39,14 +39,14 @@ class TipSmtParser {
     case LFun( "declare-fun", LAtom( name ), LList( argTypes @ _* ), LAtom( retType ) ) =>
       declare( Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) ) )
     case LFun( "define-fun" | "define-fun-rec", LAtom( name ), LList( args @ _* ), LAtom( retType ), body ) =>
-      val argVars = args.map { case LFun( argName, LAtom( argType ) ) => Var( argName, typeDecls( argType ) ) }
+      val argVars = for ( LFun( argName, LAtom( argType ) ) <- args ) yield Var( argName, typeDecls( argType ) )
       val funConst = Const( name, FunctionType( typeDecls( retType ), argVars.map( _.exptype ) ) )
       declare( funConst )
-      functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.toSet ) )
+      functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
     case LFun( "assert", formula ) =>
-      goals += -parseExpression( formula, Set() )
+      goals += -parseExpression( formula, Map() )
     case LFun( "assert-not", formula ) =>
-      goals += parseExpression( formula, Set() ).asInstanceOf[HOLFormula]
+      goals += parseExpression( formula, Map() ).asInstanceOf[HOLFormula]
     case LFun( "check-sat" ) => ()
   }
 
@@ -62,16 +62,21 @@ class TipSmtParser {
       Const( projector, ofType -> typeDecls( typename ) )
   }
 
-  def parseFunctionBody( sexp: SExpression, lhs: LambdaExpression, freeVars: Set[Var] ): Seq[HOLFormula] = sexp match {
+  def parseFunctionBody( sexp: SExpression, lhs: LambdaExpression, freeVars: Map[String, LambdaExpression] ): Seq[HOLFormula] = sexp match {
     case LFun( "match", LAtom( varName ), cases @ _* ) =>
       cases flatMap {
         case LFun( "case", LFunOrAtom( constrName, argNames @ _* ), body ) =>
+          require( freeVars( varName ).isInstanceOf[Var] )
           val constr = funDecls( constrName )
           val FunctionType( _, constrArgTypes ) = constr.exptype
           require( constrArgTypes.size == argNames.size )
-          val args = ( argNames.map { case LAtom( name ) => name }, constrArgTypes ).zipped map { Var( _, _ ) }
-          val subst = Substitution( freeVars.find( _.name == varName ).get -> constr( args: _* ) )
-          parseFunctionBody( body, lhs, freeVars ++ args ) map { subst( _ ) }
+          val args = for ( ( LAtom( name ), ty ) <- argNames zip constrArgTypes ) yield Var( name, ty )
+          val subst = Substitution( freeVars( varName ).asInstanceOf[Var] -> constr( args: _* ) )
+          parseFunctionBody(
+            body,
+            subst( lhs ),
+            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v }
+          )
       }
     case LFun( "ite", cond, ifTrue, ifFalse ) =>
       parseFunctionBody( ifFalse, lhs, freeVars ).map( -parseExpression( cond, freeVars ) --> _ ) ++
@@ -81,12 +86,12 @@ class TipSmtParser {
     case _                => Seq( Eq( lhs, parseExpression( sexp, freeVars ) ) )
   }
 
-  def parseExpression( sexp: SExpression, freeVars: Set[Var] ): LambdaExpression = sexp match {
-    case LAtom( name ) if freeVars exists { _.name == name } => freeVars find { _.name == name } get
-    case LAtom( name )                                       => funDecls( name )
+  def parseExpression( sexp: SExpression, freeVars: Map[String, LambdaExpression] ): LambdaExpression = sexp match {
+    case LAtom( name ) if freeVars contains name => freeVars( name )
+    case LAtom( name )                           => funDecls( name )
     case LFun( "forall", LList( varNames @ _* ), formula ) =>
-      val vars = varNames map { case LFun( name, LAtom( typeName ) ) => Var( name, typeDecls( typeName ) ) }
-      All.Block( vars, parseExpression( formula, freeVars ++ vars ) )
+      val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
+      All.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "=", sexps @ _* ) =>
       sexps map { parseExpression( _, freeVars ) } reduce { Eq( _, _ ) }
     case LFun( "and", sexps @ _* ) => And( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
