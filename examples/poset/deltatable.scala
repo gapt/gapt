@@ -16,11 +16,11 @@ object dtable extends Script {
   //  InstanceTermEncoding( proof.cycleImpliesEqual4 )._1.toSeq sortBy { _.toString } foreach println
 
   if ( false ) {
-    val removeEq = Map[LambdaExpression, LambdaExpression]( EqC( Ti ) -> FOLAtomConst( "E", 2 ) )
-    val automaticProof = replaceET(
-      Prover9.getExpansionProof( proof.cycleImpliesEqual4.endSequent map { TermReplacement( _, removeEq ) } ).get,
-      removeEq.map( _.swap )
-    )
+    val removeEq = Map( EqC( Ti ) -> FOLAtomConst( "E", 2 ) )
+    val Some( automaticProof ) =
+      Prover9.getExpansionProof(
+        TermReplacement( proof.cycleImpliesEqual4.endSequent, removeEq.toMap )
+      ) map { TermReplacement( _, removeEq.map( _.swap ) ) }
     val Some( autoMin ) = minimalExpansionSequent( automaticProof, Sat4j )
   }
 

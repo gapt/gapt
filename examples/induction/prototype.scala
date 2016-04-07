@@ -88,9 +88,7 @@ object prototype extends Script {
   lazy val tipES = reduceHolToFol( TipSmtParser.parseFile( "/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2" ).toSequent ) match {
     case Sequent( theory, Seq( All( v, concl ) ) ) =>
       val repl = Map[LambdaExpression, LambdaExpression]( FOLConst( "Z" ) -> FOLConst( "0" ), FOLFunctionConst( "S", 1 ) -> FOLFunctionConst( "s", 1 ) )
-      reduceHolToFol( Sequent( theory, Seq( Substitution( v -> alpha )( concl ) ) ) ) map {
-        TermReplacement( _, repl )
-      }
+      TermReplacement( reduceHolToFol( Sequent( theory, Seq( Substitution( v -> alpha )( concl ) ) ) ), repl )
   }
 
   val sumES = HOLSequent(

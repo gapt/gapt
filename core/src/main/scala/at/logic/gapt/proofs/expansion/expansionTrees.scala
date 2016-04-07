@@ -231,7 +231,7 @@ case class ETDefinition( shallow: HOLAtom, definedExpr: LambdaExpression, child:
   def deep = child.deep
 }
 
-object replaceET {
+private[expansion] object replaceET {
   def apply( ep: ExpansionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionProof =
     ExpansionProof( ep.expansionSequent map { replaceET( _, repl ) } )
 
@@ -259,7 +259,10 @@ object replaceET {
       )
 
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
-      ETStrongQuantifier( TermReplacement( shallow, repl ), TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl ) )
+      ETStrongQuantifier(
+        TermReplacement( shallow, repl ),
+        TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl )
+      )
     case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
       ETSkolemQuantifier(
         TermReplacement( shallow, repl ),
@@ -376,6 +379,20 @@ object replaceAtHOLPosition {
  */
 object replaceWithContext {
   /**
+   * Instantiates the quantifier inside a replacement context.
+   *
+   * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
+   */
+  private def instReplCtx( ctx: Abs, term: LambdaExpression ): Abs =
+    ctx match {
+      case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
+        val newX = rename( x, freeVariables( term ) )
+        instReplCtx( Abs( newX, Substitution( x -> newX )( quantFormula ) ), term )
+      case Abs( x, quantFormula: HOLFormula ) =>
+        Abs( x, instantiate( quantFormula, term ) )
+    }
+
+  /**
    *
    * @param et An expansion tree.
    * @param replacementContext A replacement context, i.e. a lambda expression of the form λx.E.
@@ -396,15 +413,15 @@ object replaceWithContext {
       case ( ETAnd( left, right ), Abs( v, And( l, r ) ) ) => ETAnd( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETOr( left, right ), Abs( v, Or( l, r ) ) )   => ETOr( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETImp( left, right ), Abs( v, Imp( l, r ) ) ) => ETImp( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
-      case ( ETStrongQuantifier( formula, x, sub ), Abs( v, Quant( y, f ) ) ) =>
-        ETStrongQuantifier( newFormula, x, apply( sub, Abs( v, Substitution( y, x )( f ) ), exp ) )
-      case ( ETSkolemQuantifier( formula, x, skDef, sub ), Abs( v, Quant( y, f ) ) ) =>
-        ETSkolemQuantifier( newFormula, x, skDef, apply( sub, Abs( v, Substitution( y, x )( f ) ), exp ) )
-      case ( ETWeakQuantifier( formula, instances ), Abs( v, Quant( y, f ) ) ) =>
+      case ( ETStrongQuantifier( formula, x, sub ), _ ) =>
+        ETStrongQuantifier( newFormula, x, apply( sub, instReplCtx( replacementContext, x ), exp ) )
+      case ( ETSkolemQuantifier( formula, skTerm, skDef, sub ), _ ) =>
+        ETSkolemQuantifier( newFormula, skTerm, skDef, apply( sub, instReplCtx( replacementContext, skTerm ), exp ) )
+      case ( ETWeakQuantifier( formula, instances ), _ ) =>
         ETWeakQuantifier(
           newFormula,
           for ( ( term, instance ) <- instances )
-            yield term -> apply( instance, Abs( v, Substitution( y, term )( f ) ), exp )
+            yield term -> apply( instance, instReplCtx( replacementContext, term ), exp )
         )
       case _ => throw new IllegalArgumentException( s"Tree $et and context $replacementContext could not be handled." )
     }

@@ -85,9 +85,9 @@ class TermReplacementTest extends Specification {
       rt1 must be_==( r1 )
       rt2 must be_==( r2 )
 
-      val map = Map[FOLExpression, FOLExpression]( ( t1 -> t2 ), ( t3 -> t4 ) )
-      rt1 must be_==( TermReplacement( o1, map ) )
-      rt2 must be_==( TermReplacement( o2, map ) )
+      val map = Map( t1 -> t2, t3 -> t4 )
+      rt1 must be_==( TermReplacement( o1, map.toMap ) )
+      rt2 must be_==( TermReplacement( o2, map.toMap ) )
     }
 
     " work on simple proofs " in {

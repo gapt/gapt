@@ -1309,8 +1309,6 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   def aux: SequentIndex
   def replacementContext: Abs
 
-  val Abs( v, cont ) = replacementContext
-
   aux match {
     case Ant( _ ) => validateIndices( premise, Seq( eq, aux ), Seq() )
     case Suc( _ ) => validateIndices( premise, Seq( eq ), Seq( aux ) )
@@ -1319,8 +1317,6 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   def equation = premise( eq )
 
   val auxFormula = premise( aux )
-
-  require( !( freeVariables( equation ) ++ freeVariables( auxFormula ) contains v ) )
 
   val ( what, by, leftToRight ) = equation match {
     case Eq( s, t ) =>

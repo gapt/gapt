@@ -519,7 +519,7 @@ case object GroundingReductionET extends Reduction_[HOLSequent, ExpansionProof] 
     val subst = for ( v @ Var( name, ty ) <- freeVariables( problem ) ) yield v -> Const( nameGen fresh name, ty )
     ( Substitution( subst )( problem ), exp => {
       require( exp.eigenVariables intersect subst.map( _._1 ) isEmpty )
-      replaceET( exp, subst.map( _.swap ).toMap )
+      TermReplacement( exp, subst.map( _.swap ).toMap )
     } )
   }
 }

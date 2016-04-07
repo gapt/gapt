@@ -1,15 +1,66 @@
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.proofs.expansion.{ ExpansionTree, replaceET }
-import at.logic.gapt.proofs.{ lk, resolution }
+import at.logic.gapt.proofs.Sequent
 
-import scala.collection.mutable
+trait Replaceable[-I, +O] {
+  def replace( obj: I, p: PartialFunction[LambdaExpression, LambdaExpression] ): O
+}
+trait ClosedUnderReplacement[T] extends Replaceable[T, T]
+
+private[expr] trait DefaultReplaceables {
+
+  private object lambdaExpressionReplacer extends ClosedUnderReplacement[LambdaExpression] {
+    def replace( term: LambdaExpression, map: PartialFunction[LambdaExpression, LambdaExpression] ): LambdaExpression =
+      term match {
+        case _ if map isDefinedAt term => map( term )
+
+        // special case polymorphic constants so that we can do type-changing replacements
+        // but only if the user doesn't specify any replacement for the logical constants
+        case Eq( s, t ) if !( map isDefinedAt EqC( s.exptype ) ) =>
+          Eq( replace( s, map ), replace( t, map ) )
+        case All( x, t ) if !( map isDefinedAt ForallC( x.exptype ) ) =>
+          All( replace( x, map ).asInstanceOf[Var], replace( t, map ) )
+        case Ex( x, t ) if !( map isDefinedAt ExistsC( x.exptype ) ) =>
+          Ex( replace( x, map ).asInstanceOf[Var], replace( t, map ) )
+
+        case App( s, t ) =>
+          App( replace( s, map ), replace( t, map ) )
+        case Abs( x, t ) =>
+          Abs( replace( x, map ).asInstanceOf[Var], replace( t, map ) )
+
+        case _ => term
+      }
+  }
+  private object holFormulaReplacer extends ClosedUnderReplacement[HOLFormula] {
+    override def replace( obj: HOLFormula, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLFormula =
+      lambdaExpressionReplacer.replace( obj, p ).asInstanceOf[HOLFormula]
+  }
+
+  implicit def lambdaExpressionReplaceable[I <: LambdaExpression]( implicit notAFormula: Not[I <:< HOLFormula] ): Replaceable[I, LambdaExpression] = lambdaExpressionReplacer
+  implicit def holFormulaReplaceable[I <: HOLFormula]( implicit notAnAtom: Not[I <:< HOLAtom] ): Replaceable[I, HOLFormula] = holFormulaReplacer
+  implicit object holAtomReplaceable extends ClosedUnderReplacement[HOLAtom] {
+    override def replace( obj: HOLAtom, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLAtom =
+      lambdaExpressionReplacer.replace( obj, p ).asInstanceOf[HOLAtom]
+  }
+
+  implicit object substitutionReplaceable extends ClosedUnderReplacement[Substitution] {
+    def replace( subst: Substitution, p: PartialFunction[LambdaExpression, LambdaExpression] ): Substitution =
+      Substitution( for ( ( l, r ) <- subst.map ) yield TermReplacement( l, p ).asInstanceOf[Var] -> TermReplacement( r, p ) )
+  }
+
+  implicit def sequentReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Sequent[I], Sequent[O]] =
+    new Replaceable[Sequent[I], Sequent[O]] {
+      override def replace( obj: Sequent[I], p: PartialFunction[LambdaExpression, LambdaExpression] ) =
+        obj.map { TermReplacement( _, p ) }
+    }
+
+}
 
 /**
  * A term replacement homomorphically extends a partial function on lambda expressions to all lambda expressions.
  *
- * This is done on a "best effort" basis.  Replacing constants by ground terms will work, anything beyond that might or might not work.
+ * This is done on a "best effort" basis.  Replacing constants by ground terms of the same type will usually work, anything beyond that might or might not work.
  */
 object TermReplacement {
   def apply( term: LambdaExpression, what: LambdaExpression, by: LambdaExpression ): LambdaExpression =
@@ -18,141 +69,7 @@ object TermReplacement {
   def apply( f: HOLFormula, what: LambdaExpression, by: LambdaExpression ): HOLFormula =
     apply( f, Map( what -> by ) )
 
-  def apply( term: HOLFormula, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLFormula =
-    apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLFormula]
-
-  def apply( term: HOLAtom, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLAtom =
-    apply( term.asInstanceOf[LambdaExpression], p ).asInstanceOf[HOLAtom]
-
-  def apply( term: LambdaExpression, map: PartialFunction[LambdaExpression, LambdaExpression] ): LambdaExpression =
-    term match {
-      case _ if map isDefinedAt term => map( term )
-
-      // special case polymorphic constants so that we can do type-changing replacements
-      // but only if the user doesn't specify any replacement for the logical constants
-      case Eq( s, t ) if !( map isDefinedAt EqC( s.exptype ) ) =>
-        Eq( apply( s, map ), apply( t, map ) )
-      case All( x, t ) if !( map isDefinedAt ForallC( x.exptype ) ) =>
-        All( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
-      case Ex( x, t ) if !( map isDefinedAt ExistsC( x.exptype ) ) =>
-        Ex( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
-
-      case App( s, t ) =>
-        App( apply( s, map ), apply( t, map ) )
-      case Abs( x, t ) =>
-        Abs( apply( x, map ).asInstanceOf[Var], apply( t, map ) )
-
-      case _ => term
-    }
-
-  def apply( term: FOLExpression, map: PartialFunction[FOLExpression, FOLExpression] ): FOLExpression =
-    apply( term.asInstanceOf[LambdaExpression], map.asInstanceOf[PartialFunction[LambdaExpression, LambdaExpression]] ).asInstanceOf[FOLExpression]
-
-  def apply( t: FOLTerm, map: PartialFunction[FOLTerm, FOLTerm] ): FOLTerm =
-    apply( t.asInstanceOf[FOLExpression], map.asInstanceOf[PartialFunction[FOLExpression, FOLExpression]] ).asInstanceOf[FOLTerm]
-
-  def apply( f: FOLFormula, map: PartialFunction[FOLTerm, FOLTerm] ): FOLFormula =
-    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[PartialFunction[FOLExpression, FOLExpression]] ).asInstanceOf[FOLFormula]
-
-  def apply( f: FOLAtom, map: PartialFunction[FOLTerm, FOLTerm] ): FOLAtom =
-    apply( f.asInstanceOf[FOLExpression], map.asInstanceOf[PartialFunction[FOLExpression, FOLExpression]] ).asInstanceOf[FOLAtom]
-
-  def apply( proof: resolution.ResolutionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): resolution.ResolutionProof = {
-    import resolution._
-    val memo = mutable.Map[ResolutionProof, ResolutionProof]()
-
-    def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
-      case InputClause( clause )     => InputClause( clause map { TermReplacement( _, repl ) } )
-      case ReflexivityClause( term ) => ReflexivityClause( TermReplacement( term, repl ) )
-      case TautologyClause( atom )   => TautologyClause( TermReplacement( atom, repl ) )
-      case Factor( q, i1, i2 )       => Factor( f( q ), i1, i2 )
-      case Instance( q, subst ) =>
-        Instance( f( q ), Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } ) )
-      case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
-      case Paramodulation( q1, l1, q2, l2, con, dir ) =>
-        val q1New = f( q1 )
-        val q2New = f( q2 )
-        val ( equation, auxFormula ) = ( q1New.conclusion( l1 ), q2New.conclusion( l2 ) )
-        val Abs( v, subContext ) = con
-        val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
-        val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
-        Paramodulation( q1New, l1, q2New, l2, contextNew, dir )
-      case Splitting( q0, c1, c2, q1, q2 ) =>
-        Splitting(
-          f( q0 ),
-          c1 map { TermReplacement( _, repl ) },
-          c2 map { TermReplacement( _, repl ) },
-          f( q1 ), f( q2 )
-        )
-    } )
-
-    f( proof )
-  }
-
-  def apply( proof: lk.LKProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): lk.LKProof = {
-    import lk._
-
-    def f( p: LKProof ): LKProof = p match {
-      case TopAxiom => TopAxiom
-      case BottomAxiom => BottomAxiom
-      case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term, repl ) )
-      case LogicalAxiom( atom ) => LogicalAxiom( apply( atom, repl ) )
-      case TheoryAxiom( clause ) => TheoryAxiom( clause map { apply( _, repl ) } )
-
-      case WeakeningLeftRule( subProof, formula ) => WeakeningLeftRule( f( subProof ), apply( formula, repl ) )
-      case WeakeningRightRule( subProof, formula ) => WeakeningRightRule( f( subProof ), apply( formula, repl ) )
-
-      case ContractionLeftRule( subProof, aux1, aux2 ) => ContractionLeftRule( f( subProof ), aux1, aux2 )
-      case ContractionRightRule( subProof, aux1, aux2 ) => ContractionRightRule( f( subProof ), aux1, aux2 )
-
-      case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) => CutRule( f( leftSubProof ), aux1, f( rightSubProof ), aux2 )
-
-      case NegLeftRule( subProof, aux ) => NegLeftRule( f( subProof ), aux )
-      case NegRightRule( subProof, aux ) => NegRightRule( f( subProof ), aux )
-
-      case AndLeftRule( subProof, aux1, aux2 ) => AndLeftRule( f( subProof ), aux1, aux2 )
-      case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) => AndRightRule( f( leftSubProof ), aux1, f( rightSubProof ), aux2 )
-
-      case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) => OrLeftRule( f( leftSubProof ), aux1, f( rightSubProof ), aux2 )
-      case OrRightRule( subProof, aux1, aux2 ) => OrRightRule( f( subProof ), aux1, aux2 )
-
-      case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) => ImpLeftRule( f( leftSubProof ), aux1, f( rightSubProof ), aux2 )
-      case ImpRightRule( subProof, aux1, aux2 ) => ImpRightRule( f( subProof ), aux1, aux2 )
-
-      case ForallLeftRule( subProof, aux, formula, term, v ) => ForallLeftRule( f( subProof ), aux, apply( formula, repl ), apply( term, repl ), v )
-      case ForallRightRule( subProof, aux, eigen, quant ) => ForallRightRule( f( subProof ), aux, eigen, quant )
-
-      case ExistsLeftRule( subProof, aux, eigen, quant ) => ExistsLeftRule( f( subProof ), aux, eigen, quant )
-      case ExistsRightRule( subProof, aux, formula, term, v ) => ExistsRightRule( f( subProof ), aux, apply( formula, repl ), apply( term, repl ), v )
-
-      case EqualityLeftRule( subProof, eq, aux, con ) =>
-        val subProofNew = f( subProof )
-        val ( equation, auxFormula ) = ( subProofNew.endSequent( eq ), subProofNew.endSequent( aux ) )
-        val Abs( v, subContext ) = con
-        val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
-        val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
-        EqualityLeftRule( subProofNew, eq, aux, contextNew )
-      case EqualityRightRule( subProof, eq, aux, con ) =>
-        val subProofNew = f( subProof )
-        val ( equation, auxFormula ) = ( subProofNew.endSequent( eq ), subProofNew.endSequent( aux ) )
-        val Abs( v, subContext ) = con
-        val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
-        val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
-        EqualityRightRule( subProofNew, eq, aux, contextNew )
-
-      case InductionRule( cases, main ) =>
-        InductionRule( cases map { c =>
-          c.copy( apply( c.proof, repl ), constructor = apply( c.constructor, repl ).asInstanceOf[Const] )
-        }, apply( main, repl ) )
-
-      case DefinitionLeftRule( subProof, aux, main )  => DefinitionLeftRule( f( subProof ), aux, apply( main, repl ) )
-      case DefinitionRightRule( subProof, aux, main ) => DefinitionRightRule( f( subProof ), aux, apply( main, repl ) )
-    }
-
-    f( proof )
-  }
-
-  def apply( expTree: ExpansionTree, map: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree =
-    replaceET( expTree, map )
+  def apply[I, O]( obj: I, p: PartialFunction[LambdaExpression, LambdaExpression] )( implicit ev: Replaceable[I, O] ): O =
+    ev.replace( obj, p )
 }
 

@@ -2,7 +2,7 @@ package at.logic.gapt.examples.poset
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.grammars.{ VectTratGrammar, findMinimalVectGrammar }
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
@@ -33,9 +33,7 @@ object atp_instances extends Script {
   val endSequent = eqRefl +: eqSymm +: eqTran +: eqFCongr +: fComm +: fAssoc +: Sequent() :+ concl
 
   val removeEq = Map[LambdaExpression, LambdaExpression]( EqC( Ti ) -> FOLAtomConst( "E", 2 ) )
-  val endSequentWoEq = endSequent map {
-    TermReplacement( _, removeEq )
-  }
+  val endSequentWoEq = TermReplacement( endSequent, removeEq )
 
   val Some( p ) = Prover9 getLKProof endSequentWoEq map {
     TermReplacement( _, removeEq map { _.swap } )

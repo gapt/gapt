@@ -17,12 +17,12 @@ object renameConstantsToFi {
 
   def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, Const], Map[Const, Const] ) = {
     val renaming = getRenaming( seq )
-    val renamedSeq = seq map { TermReplacement( _, renaming.toMap[LambdaExpression, LambdaExpression] ) }
+    val renamedSeq = TermReplacement( seq, renaming.toMap )
     ( renamedSeq, renaming, invertRenaming( renaming ) )
   }
   def apply( cnf: Traversable[HOLClause] ): ( Traversable[HOLClause], Map[Const, Const], Map[Const, Const] ) = {
     val renaming = getRenaming( cnf )
-    val renamedCNF = cnf.map( clause => clause map { TermReplacement( _, renaming.toMap[LambdaExpression, LambdaExpression] ) } )
+    val renamedCNF = cnf.map( TermReplacement( _, renaming.toMap ) )
     ( renamedCNF, renaming, invertRenaming( renaming ) )
   }
 }

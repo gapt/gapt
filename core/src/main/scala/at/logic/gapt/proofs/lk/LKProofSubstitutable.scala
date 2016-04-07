@@ -2,6 +2,8 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import BetaReduction._
+import at.logic.gapt.proofs.OccConnector
+import at.logic.gapt.proofs.gaptic.OpenAssumption
 
 /**
  * Class that describes how LKProofs can be substituted.
@@ -144,4 +146,90 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     } else {
       c.copy( applySubstitution( subst, c.proof ) )
     }
+}
+
+class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression] ) extends LKVisitor[Unit] {
+  override protected def visitOpenAssumption( proof: OpenAssumption, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val proofNew = OpenAssumption( for ( ( l, f ) <- proof.labelledSequent ) yield l -> TermReplacement( f, repl ), proof.index )
+    ( proofNew, OccConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ), () )
+  }
+
+  override protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val proofNew = LogicalAxiom( TermReplacement( proof.A, repl ) )
+    ( proofNew, OccConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ), () )
+  }
+
+  override protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val proofNew = ReflexivityAxiom( TermReplacement( proof.s, repl ) )
+    ( proofNew, OccConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ), () )
+  }
+
+  override protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val proofNew = TheoryAxiom( TermReplacement( proof.conclusion, repl ) )
+    ( proofNew, OccConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ), () )
+  }
+
+  override protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = WeakeningLeftRule( subProofNew, TermReplacement( proof.formula, repl ) )
+    ( proofNew, ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ), () )
+  }
+
+  override protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = WeakeningRightRule( subProofNew, TermReplacement( proof.formula, repl ) )
+    ( proofNew, ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ), () )
+  }
+
+  override protected def visitForallLeft( proof: ForallLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = ForallLeftRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitForallRight( proof: ForallRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = ForallRightRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = ExistsRightRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = ExistsLeftRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  // FIXME: we don't apply TermReplacement to the replacement contexts but to the main formula
+  // This is necessary because ResolutionProver degrounds proofs by replacing constants with
+  // variables--these variables end up being the same as the bound variable in the replacement context...
+
+  override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitEqualityRight( proof: EqualityRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.main, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.main, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
 }

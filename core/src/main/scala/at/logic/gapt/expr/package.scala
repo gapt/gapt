@@ -9,7 +9,7 @@ import scala.annotation.implicitNotFound
 /**
  * Created by sebastian on 11.01.16.
  */
-package object expr {
+package object expr extends DefaultReplaceables {
 
   /**
    * Together with the scala `<:<` construct, the Not trait allows us to express that a type is not a subtype of another. This works in the following manner:
