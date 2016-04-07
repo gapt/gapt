@@ -1,20 +1,13 @@
 package at.logic.gapt.examples.prime
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.xml.XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs._
-import at.logic.gapt.prooftool.prooftool
-import at.logic.gapt.provers.groundFreeVariables
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.provers.smtlib.{ SmtlibSession, Z3, Z3Session }
-import at.logic.gapt.provers.spass.SPASS
 
-/**
- * Created by sebastian on 2/25/16.
- */
-case class prime( k: Int ) extends TacticsProof {
+trait PrimeDefinitions extends TacticsProof {
+  def k: Int
+
   // Types
   ctx += Context.Sort( "i" )
 
@@ -31,10 +24,16 @@ case class prime( k: Int ) extends TacticsProof {
     hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * v  * u)",
     hof"∀x ∀y (x = y -> y = x)",
     hof" ∀k ∀l ∀r ∀m (k < m -> k + l*m = 0 + r*m -> 0 = k)",
+    hof"∀x ∀y ∀z (1 < x ⊃ x*y != x*z + 1)",
     hof" ∀x ¬1 + (x + 1) = 1",
     hof" ∀k ∀n ∀l k + (n * (l + (1 + 1)) + l * (k + 1) + 1) = n + (n + (k + 1)) * (l + 1)",
     hof" ∀x ∀y (1 < x -> ¬ 1 = y * x)",
     hof" ∀x 0+x = x",
+    hof" ∀x x*1 = x",
+    hof"∀x∀y (x*y+1=1 ⊃ x+1=1 ∧ y+1=1)",
+    hof"∀x (1<x ⊃ x+1 != 1)",
+    hof" ∀x∀y∀z x*(y*z)=(x*y)*z",
+    hof" ∀x∀y x*y=y*x",
     hof" ∀x ∀y (x < y -> 0 < y)",
     hof"∀x ∀y ∀z (1<y ∧ x=0+z*y ⊃ x!=1)",
     hof"∀x ∀y ∀z (y*z=x ⊃ x=0+z*y)",
@@ -63,23 +62,33 @@ case class prime( k: Int ) extends TacticsProof {
   val p = for ( i <- 0 to k )
     yield FOLConst( s"p_$i" )
 
-  p foreach {
-    ctx += _
-  }
+  ctx ++= p
+
+  def F( k: Int ) = Const( s"F[$k]", To )
+  def S( k: Int ) = Const( s"S[$k]", Ti -> To )
+  def P( k: Int ) = Const( s"P[$k]", Ti -> To )
+  def Q( k: Int ) = Const( s"Q[$k]", To )
+  def R( k: Int ) = Const( s"R[$k]", To )
+  def prod( k: Int ) = Const( s"prod[$k]", Ti )
 
   ctx += ( "P[0]", le" set_1(p_0)" )
   ctx += ( "S[0]", le" ν(0, p_0)" )
   ctx += ( "Q[0]", hof" PRIME(${p( 0 )})" )
   ctx += ( "R[0]", hof" ∀y (${P( 0 )}(y) -> PRIME y)" )
+  ctx += hof"${prod( 0 )} = ${p( 0 )}"
 
   for ( i <- 1 to k ) {
     ctx += ( s"P[$i]", le"union(${P( i - 1 )}, set_1 (${p( i )}:i))" )
     ctx += ( s"S[$i]", le"union(${S( i - 1 )}, ν(0, ${p( i )}))" )
     ctx += ( s"Q[$i]", hof" ${Q( i - 1 )} ∧ PRIME(${p( i )})" )
     ctx += ( s"R[$i]", hof" ∀y (${P( i )} y -> PRIME y)" )
+    ctx += hof"${prod( i )} = ${prod( i - 1 )} * ${p( i )}"
   }
 
   ctx += ( s"F[$k]", hof" ∀l (PRIME(l) <-> ${P( k )}(l))" )
+}
+
+case class prime( k: Int ) extends PrimeDefinitions {
 
   // The paper says X = Y <-> X subset Y ∧ Y subset X, but the current proof uses the definition
   // X = Y <-> ∀x (x ∈ X <-> x ∈ Y). Taking the latter for now.
@@ -701,11 +710,5 @@ case class prime( k: Int ) extends TacticsProof {
       insert( singletonFinite )
     }
   }
-
-  def F( k: Int ) = Const( s"F[$k]", To )
-  def S( k: Int ) = Const( s"S[$k]", Ti -> To )
-  def P( k: Int ) = Const( s"P[$k]", Ti -> To )
-  def Q( k: Int ) = Const( s"Q[$k]", To )
-  def R( k: Int ) = Const( s"R[$k]", To )
 }
 object prime3 extends prime( 3 )

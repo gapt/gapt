@@ -151,7 +151,7 @@ case class FiniteContext(
   }
 
   def +( equation: HOLFormula ): FiniteContext = equation match {
-    case Eq( Apps( Var( definedConstName, _ ), arguments ), definition ) =>
+    case Eq( Apps( VarOrConst( definedConstName, _ ), arguments ), definition ) =>
       this + ( definedConstName -> Abs( arguments map { _.asInstanceOf[Var] }, definition ) )
   }
 

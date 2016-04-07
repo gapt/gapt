@@ -14,4 +14,13 @@ class PrimeTest extends Specification {
     }
   }
 
+  "euclid proof" in {
+    Fragments.foreach( 0 to 5 ) { i =>
+      s"n = $i" in {
+        prime.euclid( i ).proof
+        ok
+      }
+    }
+  }
+
 }

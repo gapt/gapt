@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.proofs.gaptic.tactics.SkipTactical
 
 import scalaz._
 import Scalaz._
@@ -197,6 +198,10 @@ trait Tactical[+T] { self =>
     def apply( goal: OpenAssumption ) = self( ProofState( goal ) ) map { case ( res, p ) => res -> p.partialProof }
     override def toString = s"$self.asTactic"
   }
+}
+object Tactical {
+  def sequence[T]( tacticals: Seq[Tactical[T]] ): Tactical[List[T]] =
+    tacticals.toList.sequence
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>

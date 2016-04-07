@@ -15,7 +15,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.examples.prime.prime
+import at.logic.gapt.examples.prime
 import java.io.File.separator
 import java.io.{ FileInputStream, FileReader, IOException, InputStreamReader }
 import java.util.zip.GZIPInputStream
@@ -115,7 +115,7 @@ class PrimeProofTest extends Specification {
       checkForProverOrSkip
       if ( !Z3.isInstalled ) skipped
 
-      val primeN = prime( n )
+      val primeN = prime.prime( n )
       val proof = primeN.proof
 
       if ( false ) {
@@ -155,9 +155,8 @@ class PrimeProofTest extends Specification {
       skipped( "Does not work right now - without definition elimination the end-sequent looks skolemized but it isn't." )
       checkForProverOrSkip
 
-      val proofdb = ( new XMLReader( new GZIPInputStream( getClass.getClassLoader.getResourceAsStream( "euclid-" + n + ".xml.gz" ) ) ) with XMLProofDatabaseParser ).getProofDatabase()
-      proofdb.proofs.size must beEqualTo( 1 )
-      val proof = proofdb.proofs.head._2
+      val euclidN = prime.euclid( 3 )
+      val proof = euclidN.proof
       //      val deproof = DefinitionElimination( proofdb.Definitions )( proof )
 
       val proof_sk = skolemize( regularize( AtomicExpansion( proof ) ) )
@@ -171,13 +170,9 @@ class PrimeProofTest extends Specification {
       val projs = Projections( proof_sk, CERES.skipEquations )
       val path = "target" + separator + "euclid-" + n + "-sk.xml"
 
-      //new Prover9Prover().getRobinsonProof( cs ) must beEqualTo( true )
-      //      saveXML(
-      //        Tuple2( "euclid-" + n + "-sk", lkNew2Old( proof_sk ) ) ::
-      //          projs.toList.zipWithIndex.map( p => Tuple2( "\\psi_{" + p._2 + "}", lkNew2Old( p._1 ) ) ),
-      //        Tuple2( "cs", cs.toList ) :: Nil, path
-      //      )
-      ( new java.io.File( path ) ).exists() must beEqualTo( true )
+      Prover9 getRobinsonProof cs must beSome
+      cs foreach println
+      ok
     }
 
     "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=0" in euclid( 0 )

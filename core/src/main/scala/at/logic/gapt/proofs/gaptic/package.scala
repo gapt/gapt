@@ -102,7 +102,7 @@ package object gaptic {
     for {
       goal <- currentGoal
       theoryAxiom <- ctx.theory( goal.conclusion collect { case a: HOLAtom => a } ).
-        toTactical( "does not follow from theory" )
+        toTactical( "does not follow from theory", goal )
       _ <- insert( theoryAxiom )
     } yield ()
 
@@ -149,6 +149,8 @@ package object gaptic {
   def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
     UnfoldTacticHelper( definition, definitions )
 
+  def skip = SkipTactical
+
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success
   }
@@ -163,10 +165,12 @@ package object gaptic {
   }
 
   implicit class TacticalOptionOps[T]( option: Option[T] ) {
-    def toTactical( errorMsg: String ): Tactical[T] = new Tactical[T] {
+    def toTactical( errorMsg: String ): Tactical[T] = toTactical( errorMsg, None )
+    def toTactical( errorMsg: String, goal: OpenAssumption ): Tactical[T] = toTactical( errorMsg, Some( goal ) )
+    def toTactical( errorMsg: String, goal: Option[OpenAssumption] ): Tactical[T] = new Tactical[T] {
       override def apply( proofState: ProofState ) =
         option match {
-          case None          => TacticalFailure( this, None, errorMsg ).failureNel
+          case None          => TacticalFailure( this, goal, errorMsg ).failureNel
           case Some( value ) => ( value -> proofState ).success
         }
 
