@@ -1,13 +1,12 @@
 package at.logic.gapt.examples.poset
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.grammars.{ findMinimalVectGrammar, VectTratGrammar }
+import at.logic.gapt.grammars.{ VectTratGrammar, findMinimalVectGrammar }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
-import at.logic.gapt.cutintro.{ ReforestMethod, GrammarFindingMethod, MaxSATMethod, CutIntroduction }
+import at.logic.gapt.cutintro.{ CutIntroduction, GrammarFindingMethod, MaxSATMethod, ReforestMethod }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.maxsat.ExternalMaxSATSolver
 import at.logic.gapt.provers.prover9.Prover9

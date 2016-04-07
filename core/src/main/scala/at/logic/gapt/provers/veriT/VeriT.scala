@@ -1,6 +1,5 @@
 package at.logic.gapt.provers.veriT
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.formats.veriT._
 import at.logic.gapt.proofs.HOLSequent
@@ -8,6 +7,7 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.runProcess
 import java.io._
+
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
 

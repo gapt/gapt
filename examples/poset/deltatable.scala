@@ -1,6 +1,5 @@
 package at.logic.gapt.examples.poset
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._

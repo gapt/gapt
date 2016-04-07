@@ -1,11 +1,10 @@
 package at.logic.gapt.examples.poset
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.examples.Script
-import at.logic.gapt.expr.hol.{ existsclosure, CNFp, instantiate }
-import at.logic.gapt.grammars.{ recSchemToVTRATG, findMinimalVectGrammar, VectTratGrammar }
+import at.logic.gapt.expr.hol.{ CNFp, existsclosure, instantiate }
+import at.logic.gapt.grammars.{ VectTratGrammar, findMinimalVectGrammar, recSchemToVTRATG }
 import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, extractInstances, minimalExpansionSequents, FOLInstanceTermEncoding }
-import at.logic.gapt.proofs.{ Suc, Sequent }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, FOLInstanceTermEncoding, extractInstances, minimalExpansionSequents }
+import at.logic.gapt.proofs.{ Sequent, Suc }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
 import at.logic.gapt.cutintro._

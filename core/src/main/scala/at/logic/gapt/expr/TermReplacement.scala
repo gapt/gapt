@@ -1,22 +1,17 @@
 
-package at.logic.gapt.algorithms.rewriting
+package at.logic.gapt.expr
 
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.{ replaceET, ExpansionTree }
-import at.logic.gapt.proofs.{ HOLSequent, resolution, lk }
+import at.logic.gapt.proofs.expansion.{ ExpansionTree, replaceET }
+import at.logic.gapt.proofs.{ lk, resolution }
 
 import scala.collection.mutable
 
 /**
- * ***** Term Replacement **********
- * replaces all occurences of term "what" by term "by" in term "term" -- be careful with replacing variables,
- * there is no scope checking
+ * A term replacement homomorphically extends a partial function on lambda expressions to all lambda expressions.
  *
- * usable on subclasses of lambda expressions and fsequents
+ * This is done on a "best effort" basis.  Replacing constants by ground terms will work, anything beyond that might or might not work.
  */
 object TermReplacement {
-  //TODO: this should go into the language layer (blocked because of the dependency on name replacement)
-
   def apply( term: LambdaExpression, what: LambdaExpression, by: LambdaExpression ): LambdaExpression =
     apply( term, Map( what -> by ) )
 

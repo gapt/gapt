@@ -1,10 +1,9 @@
 package at.logic.gapt.provers
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.structuralCNF
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK, RobinsonToExpansionProof }
-import at.logic.gapt.proofs.{ Sequent, HOLClause, HOLSequent }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToExpansionProof, RobinsonToLK }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKProof
 

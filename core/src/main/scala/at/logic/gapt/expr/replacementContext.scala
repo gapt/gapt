@@ -1,6 +1,5 @@
 package at.logic.gapt.expr
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr.hol.HOLPosition
 
 /**

@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemSymbolFactory, atoms, instantiate }
 import at.logic.gapt.proofs._

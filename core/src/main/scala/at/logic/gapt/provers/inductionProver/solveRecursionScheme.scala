@@ -1,6 +1,5 @@
 package at.logic.gapt.provers.inductionProver
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }

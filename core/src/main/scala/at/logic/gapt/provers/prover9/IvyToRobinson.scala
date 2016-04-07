@@ -4,7 +4,6 @@ import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate 
 import at.logic.gapt.proofs.{ Clause, HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import scala.collection.mutable
 
 /**

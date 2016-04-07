@@ -1,14 +1,14 @@
 package at.logic.gapt.provers.leancop
 
-import java.io.{ IOException, ByteArrayOutputStream, StringReader }
+import java.io.{ ByteArrayOutputStream, IOException, StringReader }
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
+import at.logic.gapt.expr.TermReplacement
 import at.logic.gapt.formats.leanCoP.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent }
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.provers.{ OneShotProver, renameConstantsToFi, Prover }
+import at.logic.gapt.provers.{ OneShotProver, Prover, renameConstantsToFi }
 import at.logic.gapt.utils.traits.ExternalProgram
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 

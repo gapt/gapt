@@ -1,10 +1,8 @@
-package at.logic.gapt.algorithms.rewriting
+package at.logic.gapt.expr
 
-import at.logic.gapt.proofs.{ Ant, Suc, Clause }
-import org.specs2.mutable._
-import at.logic.gapt.expr.fol._
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Ant, Clause, Suc }
+import org.specs2.mutable._
 
 /**
  * Test for replacment of constant symbols by terms

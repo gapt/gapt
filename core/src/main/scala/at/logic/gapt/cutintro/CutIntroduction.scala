@@ -1,6 +1,5 @@
 package at.logic.gapt.cutintro
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.hol._

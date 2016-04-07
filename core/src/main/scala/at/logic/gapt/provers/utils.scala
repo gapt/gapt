@@ -1,8 +1,7 @@
 package at.logic.gapt.provers
 
-import at.logic.gapt.algorithms.rewriting.TermReplacement
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"
