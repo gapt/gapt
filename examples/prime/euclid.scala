@@ -71,7 +71,6 @@ case class euclid( k: Int ) extends PrimeDefinitions {
   val proof =
     Lemma(
       ( "fk" -> hof"${F( k )}" ) +:
-        ( "pre" -> hof"PRE" ) +:
         ( "primediv" -> hof"'PRIME-DIV'" ) +: Sequent()
     ) {
         unfold( "PRIME-DIV" ) in "primediv"
