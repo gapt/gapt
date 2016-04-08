@@ -144,6 +144,8 @@ package object gaptic {
   def focus( indexOfSubGoal: Int ) = new FocusTactical( Left( indexOfSubGoal ) )
   def focus( indexOfSubGoal: OpenAssumptionIndex ) = new FocusTactical( Right( indexOfSubGoal ) )
 
+  def renameLabel( oldLabel: String ) = RenameTactic( oldLabel, oldLabel )
+
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
   def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =

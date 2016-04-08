@@ -30,7 +30,7 @@ trait PrimeDefinitions extends TacticsProof {
     hof" ∀x ∀y (1 < x -> ¬ 1 = y * x)",
     hof" ∀x 0+x = x",
     hof" ∀x x*1 = x",
-    hof"∀x∀y (x*y+1=1 ⊃ x+1=1 ∧ y+1=1)",
+    hof"∀x∀y (x*y+1=1 ⊃ x+1=1 ∨ y+1=1)",
     hof"∀x (1<x ⊃ x+1 != 1)",
     hof" ∀x∀y∀z x*(y*z)=(x*y)*z",
     hof" ∀x∀y x*y=y*x",

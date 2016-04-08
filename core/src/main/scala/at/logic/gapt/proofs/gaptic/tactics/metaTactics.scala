@@ -43,6 +43,17 @@ case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
   override def toString = s"insert(${insertion.conclusion})"
 }
 
+case class RenameTactic( oldLabel: String, newLabel: String ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) =
+    goal.labelledSequent.find( _._1 == oldLabel ) match {
+      case Some( idx ) =>
+        ( () -> OpenAssumption( goal.labelledSequent.updated( idx, newLabel -> goal.conclusion( idx ) ) ) ).success
+      case None => TacticalFailure( this, Some( goal ), s"Old label $oldLabel not found" ).failureNel
+    }
+
+  def to( newLabel: String ) = copy( newLabel = newLabel )
+}
+
 /**
  * Trivial "unit" tactical.
  */

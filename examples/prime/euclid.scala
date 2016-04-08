@@ -39,34 +39,35 @@ case class euclid( k: Int ) extends PrimeDefinitions {
       }
   }
 
-  def splitgt0( label: String ) =
+  def splitgt0( label: String ): Tactical[Unit] =
     for {
       goal <- currentGoal
       subst <- syntacticMatching( hof"a*b + 1 = 1", goal( label ) ).
         toTactical( s"$label is no product", goal )
       l = NewLabel( goal.labelledSequent, label )
-      _ <- cut( l, subst( hof"a+1=1 ∧ b+1=1" ) )
-      _ <- destruct( l ); _ <- theory; _ <- theory
-      _ <- forget( label )
-      ls <- andL( l )
-    } yield ls
+      _ <- cut( l, subst( hof"a+1=1 ∨ b+1=1" ) )
+      _ <- destruct( l ); _ <- theory
+      _ <- forget( label ); _ <- renameLabel( l ) to label
+      _ <- orL( label )
+    } yield ()
 
-  val prodgt0 =
-    Lemma(
-      ( "gt0" -> hof"${prod( k )} + 1 = 1" ) +:
-        ( "fk" -> hof"${F( k )}" ) +:
-        Sequent()
-    ) {
-        unfold( F( k ).name ) in "fk"
-        allL( "fk", p( k ) ).forget; decompose; destruct( "fk_1" )
-        repeat( unfold( P( k ).name, "union", "set_1" ) in "fk_1" ); decompose; trivial
-        unfold( "PRIME" ) in "fk_1"; decompose
+  def prodgt0( i: Int ): LKProof = Lemma(
+    ( "gt0" -> hof"${prod( i )} + 1 = 1" ) +:
+      ( "fk" -> hof"${F( k )}" ) +:
+      Sequent()
+  ) {
+      unfold( prod( i ).name ) in "gt0"
 
-        unfold( prod( k ).name ) in "gt0"
-        splitgt0( "gt0" ) orElse skip
+      if ( i > 0 ) splitgt0( "gt0" ) andThen insert( prodgt0( i - 1 ) ) else skip
 
-        theory
-      }
+      unfold( F( k ).name ) in "fk"
+      allL( "fk", p( i ) ).forget; decompose; destruct( "fk_1" )
+      Tactical.sequence( for ( j <- i to k reverse ) yield repeat( unfold( P( j ).name, "union", "set_1" ) in "fk_1" ) )
+      decompose; trivial
+      unfold( "PRIME" ) in "fk_1"; decompose
+
+      theory
+    }
 
   val proof =
     Lemma(
@@ -77,7 +78,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
         allL( "primediv", le"${prod( k )} + 1" ).forget
         destruct( "primediv" ) onAll decompose
 
-        insert( prodgt0 )
+        insert( prodgt0( k ) )
 
         unfold( s"F[$k]" ) in "fk"
         allL( "fk", le"l" ).forget; decompose
