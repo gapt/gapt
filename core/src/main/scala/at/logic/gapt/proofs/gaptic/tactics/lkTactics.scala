@@ -124,7 +124,7 @@ case class AndLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic
  *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
-case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
+case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends BinaryTactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, And( lhs, rhs ), idx: Suc ) <- findFormula( goal, mode ) )
       yield () ->
@@ -137,7 +137,7 @@ case class AndRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tacti
  *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
-case class OrLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
+case class OrLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends BinaryTactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, Or( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
       yield () ->
@@ -165,7 +165,7 @@ case class OrRightTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic
  *
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  */
-case class ImpLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends Tactic[Unit] {
+case class ImpLeftTactic( mode: TacticApplyMode = UniqueFormula ) extends BinaryTactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( label, Imp( lhs, rhs ), idx: Ant ) <- findFormula( goal, mode ) )
       yield () ->
@@ -284,7 +284,7 @@ case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariab
  * @param cutFormula The cut formula.
  * @param cutLabel The label for the cut formula.
  */
-case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[Unit] {
+case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends BinaryTactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.labelledSequent
 
@@ -299,20 +299,20 @@ case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends Tactic[
 /**
  * Applies an equation in a goal.
  *
- * @param equalityLabel The label of the equality.
- * @param formulaLabel The label of the formula the equality is to be used on.
+ * @param equationLabel The label of the equation.
+ * @param formulaLabel The label of the formula the equation is to be used on.
  * @param leftToRight If `Some(true)`, the equation `s = t` will be used to rewrite `s` to `t`, and the other way around
  *                    for Some(false). If `None`, the tactic will attempt to decide the direction automatically.
  * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
  *                      it will replace as many occurrences as possible according to `leftToRight`.
  */
-case class EqualityTactic( equalityLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
+case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.labelledSequent
 
     val indices = for (
-      ( ( `equalityLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;
+      ( ( `equationLabel`, Eq( _, _ ) ), eqIndex ) <- goalSequent.zipWithIndex.antecedent;
       ( ( `formulaLabel`, _ ), formulaIndex ) <- goalSequent.zipWithIndex.elements
     ) yield ( eqIndex, formulaIndex )
 
@@ -406,9 +406,9 @@ case class EqualityTactic( equalityLabel: String, formulaLabel: String, leftToRi
     }
   }
 
-  def fromLeftToRight = new EqualityTactic( equalityLabel, formulaLabel, leftToRight = Some( true ) )
+  def fromLeftToRight = new EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( true ) )
 
-  def fromRightToLeft = new EqualityTactic( equalityLabel, formulaLabel, leftToRight = Some( false ) )
+  def fromRightToLeft = new EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( false ) )
 
-  def to( targetFormula: HOLFormula ) = new EqualityTactic( equalityLabel, formulaLabel, targetFormula = Some( targetFormula ) )
+  def yielding( targetFormula: HOLFormula ) = new EqualityTactic( equationLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }
