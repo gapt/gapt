@@ -93,7 +93,7 @@ lazy val root = project.in( file( "." ) ).
     releaseDist := {
       val baseDir = file( "." )
       val version = Keys.version.value
-      val apidocs = target.in( ScalaUnidoc, UnidocKeys.unidoc ).value
+      val apidocs = doc.in( ScalaUnidoc, UnidocKeys.unidoc ).value
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 
