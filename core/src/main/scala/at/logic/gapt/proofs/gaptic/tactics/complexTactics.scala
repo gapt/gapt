@@ -203,8 +203,21 @@ case class RewriteTactic(
   def many = copy( once = false )
 }
 
-case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) extends Tactic[Unit] {
-  def getConstructors( goal: OpenAssumption, t: TBase ): ValidationNel[TacticalFailure, Seq[Con]] =
+/**
+ * Reduces a subgoal via induction.
+ *
+ * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
+ * @param ctx A [[at.logic.gapt.proofs.Context]]. Used to find the constructors of inductive types.
+ */
+case class InductionTactic( mode: TacticApplyMode )( implicit ctx: Context ) extends Tactic[Unit] {
+
+  /**
+   * Reads the constructors of type `t` from the context.
+   *
+   * @param t A base type.
+   * @return Either a list containing the constructors of `t` or a TacticalFailure.
+   */
+  private def getConstructors( goal: OpenAssumption, t: TBase ): ValidationNel[TacticalFailure, Seq[Con]] =
     ctx.typeDef( t.name ) match {
       case Some( Context.InductiveType( _, constructors ) ) => constructors.success
       case Some( typeDef ) => TacticalFailure( this, Some( goal ), s"Type $t is not inductively defined: $typeDef" ).failureNel
@@ -213,7 +226,7 @@ case class InductionTactic( target: TacticApplyMode )( implicit ctx: Context ) e
 
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, main @ All( v @ Var( name, t: TBase ), formula ), idx: Suc ) <- findFormula( goal, target )
+      ( label, main @ All( v @ Var( name, t: TBase ), formula ), idx: Suc ) <- findFormula( goal, mode )
       constrs <- getConstructors( goal, t )
     } yield {
       val cases = constrs map { constr =>

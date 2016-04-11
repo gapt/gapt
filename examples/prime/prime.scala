@@ -119,15 +119,11 @@ case class prime( k: Int ) extends PrimeDefinitions {
       allL( "Ant0", fov"m" ).forget
       unfold( "intersection" ) in "Suc_0"
       andL
-      impL
-
-      trivial
+      impL left trivial
 
       exL( fov"l_0" )
       allL( "Ant1", fov"m" ).forget
-      impL
-
-      trivial
+      impL left trivial
 
       forget( "Suc_0_0", "Suc_0_1" )
       exL( fov"l_1" )
@@ -143,9 +139,9 @@ case class prime( k: Int ) extends PrimeDefinitions {
       andR
 
       forget( "Ant1" )
-      unfold( "subset" ) in ( "Ant0" )
+      unfold( "subset" ) in "Ant0"
       allL( "Ant0", fov"n" ).forget
-      impL
+      impL right trivial
 
       forget( "Suc_1_1" )
       unfold( "ν" ) in ( "Suc_1_0", "Ant0" )
@@ -153,12 +149,10 @@ case class prime( k: Int ) extends PrimeDefinitions {
       exR( fot"n_0 * (l_1 + 1)" ).forget
       theory
 
-      trivial
-
       forget( "Ant0" )
-      unfold( "subset" ) in ( "Ant1" )
+      unfold( "subset" ) in "Ant1"
       allL( "Ant1", fov"n" ).forget
-      impL
+      impL right trivial
 
       forget( "Suc_1_1" )
       unfold( "ν" ) in ( "Suc_1_0", "Ant1" )
@@ -166,7 +160,6 @@ case class prime( k: Int ) extends PrimeDefinitions {
       exR( fot"n_0 * (l_0 + 1)" ).forget
       theory
 
-      trivial
     }
 
   val unionClosed = Lemma(
@@ -215,22 +208,21 @@ case class prime( k: Int ) extends PrimeDefinitions {
       impR
       unfold( "REM" ) in "REM"
       allL( fov"l" ).forget
-      impL
-      trivial
+      impL left trivial
 
       forget( "0<l" )
       allL( fov"x" ).forget
       decompose
       unfold( "U" ) in "CF_1"
       exR( fov"k" ).forget
-      andR
+      andR right trivial
 
-      andR; trivial
+      andR left trivial
 
       unfold( "compN" ) in "CF_0"
       decompose
       eql( "CF_1", "REM_1" )
-      trivial; trivial
+      trivial
 
       forget( "REM", "EXT" )
       eql( "CF", "Suc" )
@@ -239,7 +231,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
       decompose
       unfold( "PRE" ) in "PRE"
       allL( "PRE", fov"l" ).forget
-      impL; trivial
+      impL left trivial
 
       forget( "0<l" )
       exL
@@ -287,7 +279,6 @@ case class prime( k: Int ) extends PrimeDefinitions {
 
       //Right subproof of the cut:
       forget( "EXT" )
-
       eql( "CF", "C" ).fromLeftToRight
       forget( "CF" )
       repeat( unfold( "O", "ν", "subset" ) in ( "O", "C" ) )
@@ -337,9 +328,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
       unfold( "O" ) in "open"
       decompose
       allL( fov"n" ).forget
-      impL
-
-      trivial
+      impL left trivial
 
       forget( "nonempty" )
       exL
@@ -360,9 +349,6 @@ case class prime( k: Int ) extends PrimeDefinitions {
 
   /**
    * Proof of x ∈ S[n] :- ∃y ( y ∈ P[n] ∧ x ∈ ν(0,y) )
-   *
-   * @param n
-   * @return
    */
   def varrho2( n: Int ): LKProof = {
     val endSequent = ( "Ant" -> hof" ${S( n )}(x)" ) +: Sequent() :+ ( "Suc" -> hof"∃y (${P( n )}(y) ∧ ν 0 y x)" )
@@ -469,22 +455,16 @@ case class prime( k: Int ) extends PrimeDefinitions {
   ) {
       unfold( "PRIME-DIV" ) in "Prime-Div"
       allL( "Prime-Div", fov"x" ).forget
-      impL
-
-      trivial
+      impL left trivial
 
       exL( "Prime-Div" )
       exR( "Suc", fov"l" ).forget
       allL( s"F[$k]", fov"l" ).forget
       decompose
-      impL( s"F[$k]_0" )
-
-      trivial
+      impL( s"F[$k]_0" ) left trivial
 
       forget( "Prime-Div_0" )
-      andR
-
-      trivial
+      andR left trivial
 
       forget( s"F[$k]_0" )
       unfold( "DIV" ) in "Prime-Div_1"
@@ -510,9 +490,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
         Lemma( endSequent ) {
           repeat( unfold( s"P[$n]", s"S[$n]", "union" ) in ( "Ant0", "Suc" ) )
           orR
-          orL
-
-          insert( lambda( n - 1 ) )
+          orL left insert( lambda( n - 1 ) )
 
           unfold( "set_1" ) in "Ant0"
           eql( "Ant0", "Suc_1" )
@@ -571,11 +549,9 @@ case class prime( k: Int ) extends PrimeDefinitions {
           unfold( s"Q[0]" ) in "Suc"
           unfold( s"R[0]" ) in "Ant"
           allL( p( 0 ) ).forget
-          impL
+          impL right trivial
 
           repeat( unfold( "P[0]", "set_1" ) in "Ant" )
-          trivial
-
           trivial
         }
 
@@ -590,14 +566,11 @@ case class prime( k: Int ) extends PrimeDefinitions {
           impR
           unfold( s"R[$n]" ) in "Ant"
           allL( fov"y" ).forget
-          impL
+          impL right trivial
 
           repeat( unfold( s"P[$n]", "union" ) in "Ant" )
           prop
 
-          trivial
-
-          //forget( "Ant" )
           andR
 
           insert( RQ( n - 1 ) )
@@ -605,11 +578,10 @@ case class prime( k: Int ) extends PrimeDefinitions {
           forget( s"R[${n - 1}]" )
           unfold( s"R[$n]" ) in "Ant"
           allL( p( n ) ).forget
-          impL
+          impL right trivial
+
           repeat( unfold( s"P[$n]", "union", "set_1" ) in "Ant" )
           orR
-          trivial
-
           trivial
         }
     }
@@ -692,22 +664,18 @@ case class prime( k: Int ) extends PrimeDefinitions {
     val endSequent = ( "EXT" -> extensionality ) +: ( s"F[$k]" -> hof" ${F( k )}" ) +: ( "REM" -> hof" REM" ) +: ( "PRE" -> hof"PRE" ) +: ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: Sequent()
 
     Lemma( endSequent ) {
-      cut( "INF {1}", hof" INF (set_1 1)" )
+      cut( "INF {1}", hof" INF (set_1 1)" ) right insert( singletonFinite )
       cut( "nonempty {1}", hof" ¬ empty (set_1 1)" )
       insert( singletonNonempty )
 
-      cut( "O {1}", hof" O (set_1 1)" )
-      cut( "C compN{1}", hof" C (compN(set_1 1))" )
+      cut( "O {1}", hof" O (set_1 1)" ) right insert( phi2 )
+      cut( "C compN{1}", hof" C (compN(set_1 1))" ) right insert( openClosedProof )
       cut( "CF", hof" ${S( k )} = compN(set_1 1)" )
       insert( psi1 )
 
       eql( "CF", "C compN{1}" )
       forget( "CF" )
       insert( psi2 )
-      insert( openClosedProof )
-      insert( phi2 )
-
-      insert( singletonFinite )
     }
   }
 }
