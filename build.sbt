@@ -48,9 +48,9 @@ lazy val commonSettings = Seq(
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
-    "org.specs2" %% "specs2-core" % "3.7.2",
-    "org.specs2" %% "specs2-junit" % "3.7.2", // needed for junitxml output
-    "org.specs2" %% "specs2-matcher" % "3.7.2"
+    "org.specs2" %% "specs2-core" % "3.7.3",
+    "org.specs2" %% "specs2-junit" % "3.7.3", // needed for junitxml output
+    "org.specs2" %% "specs2-matcher" % "3.7.3"
   ) map ( _ % Test )
 )
 
