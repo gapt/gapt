@@ -7,9 +7,6 @@ import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
 import scalaz._
 import Scalaz._
 
-/**
- * Foo
- */
 package object gaptic {
   // LK Tactics
 
@@ -555,63 +552,63 @@ package object gaptic {
    *
    */
   def forget( l: String, ls: String* ): Tactical[Unit] =
-    l +: ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } reduce[Tactical[Unit]] ( _ andThen _ )
+    Tactical.sequence( l +: ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () )
 
   /**
-    * Moves the specified goal to the front of the goal list.
-    * @param indexOfSubGoal The index of the goal.
-    */
+   * Moves the specified goal to the front of the goal list.
+   * @param indexOfSubGoal The index of the goal.
+   */
   def focus( indexOfSubGoal: Int ) = new FocusTactical( Left( indexOfSubGoal ) )
 
   /**
-    * Moves the specified goal to the front of the goal list.
-    * @param indexOfSubGoal The index of the goal.
-    */
+   * Moves the specified goal to the front of the goal list.
+   * @param indexOfSubGoal The index of the goal.
+   */
   def focus( indexOfSubGoal: OpenAssumptionIndex ) = new FocusTactical( Right( indexOfSubGoal ) )
 
   /**
-    * Changes the provided label. Syntax:
-    *
-    * {{{
-    *   renameLabel("foo") to "bar"
-    * }}}
-    * @param oldLabel The label to be renamed.
-    */
+   * Changes the provided label. Syntax:
+   *
+   * {{{
+   *   renameLabel("foo") to "bar"
+   * }}}
+   * @param oldLabel The label to be renamed.
+   */
   def renameLabel( oldLabel: String ) = RenameTactic( oldLabel, oldLabel )
 
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
   /**
-    * Replaces a defined constant with its definition. Syntax:
-    *
-    * {{{
-    *   unfold("def1", "def2",...,"defn") in ("label1", "label2",...,"labelk")
-    * }}}
-    *
-    * NB: This will only replace the first definition it finds in each supplied formula. If you want to unfold all definitions,
-    * use `repeat`.
-    * @param definition The definition `def1`.
-    * @param definitions The definitions `def2`,...,`defn`.
-    * @param ctx A [[at.logic.gapt.proofs.Context]]. The definitions you want to unfold need to be present in `ctx`.
-    */
+   * Replaces a defined constant with its definition. Syntax:
+   *
+   * {{{
+   *   unfold("def1", "def2",...,"defn") in ("label1", "label2",...,"labelk")
+   * }}}
+   *
+   * NB: This will only replace the first definition it finds in each supplied formula. If you want to unfold all definitions,
+   * use `repeat`.
+   * @param definition The definition `def1`.
+   * @param definitions The definitions `def2`,...,`defn`.
+   * @param ctx A [[at.logic.gapt.proofs.Context]]. The definitions you want to unfold need to be present in `ctx`.
+   */
   def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
     UnfoldTacticHelper( definition, definitions )
 
   /**
-    * Does nothing.
-    */
+   * Does nothing.
+   */
   def skip = SkipTactical
 
   /**
-    * Retrieves the current subgoal.
-    */
+   * Retrieves the current subgoal.
+   */
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success
   }
 
   /**
-    * Implementation of the [[scalaz.Monad]] typeclass for Tacticals.
-    */
+   * Implementation of the [[scalaz.Monad]] typeclass for Tacticals.
+   */
   implicit object TacticalMonad extends Monad[Tactical] {
     def point[A]( a: => A ): Tactical[A] = new Tactical[A] {
       def apply( proofState: ProofState ) = ( a -> proofState ).success
