@@ -42,6 +42,8 @@ trait Struct[Data] {
    * @return the corresponding data element
    */
   def getData(): List[Data]
+
+  def toFormula: HOLFormula
 }
 
 object Times {
@@ -82,6 +84,8 @@ class Times[Data]( val left: Struct[Data], val right: Struct[Data], val data: Li
 
   override def getData = data
 
+  def toFormula = left.toFormula | right.toFormula
+
 }
 
 case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[Data] {
@@ -100,6 +104,8 @@ case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[
     }
   }
   override def getData = Nil
+
+  def toFormula = left.toFormula & right.toFormula
 }
 case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
   override def toString(): String = "~(" + sub + ")"
@@ -115,6 +121,8 @@ case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
     }
   }
   override def getData = Nil
+
+  def toFormula = -sub.toFormula
 }
 case class A[Data]( fo: HOLFormula, data: List[Data] ) extends Struct[Data] { // Atomic Struct
   override def toString(): String = fo.toString
@@ -126,6 +134,8 @@ case class A[Data]( fo: HOLFormula, data: List[Data] ) extends Struct[Data] { //
   override def size() = 1
   override def alternations() = 0
   override def getData = Nil
+
+  def toFormula = fo
 }
 
 object A {
@@ -141,6 +151,8 @@ case class EmptyTimesJunction[Data]() extends Struct[Data] {
   override def size() = 1
   override def alternations() = 0
   override def getData = Nil
+
+  def toFormula = Bottom()
 }
 
 case class EmptyPlusJunction[Data]() extends Struct[Data] {
@@ -152,6 +164,8 @@ case class EmptyPlusJunction[Data]() extends Struct[Data] {
   override def size() = 1
   override def alternations() = 0
   override def getData = Nil
+
+  def toFormula = Top()
 }
 
 /* convenience object allowing to create and match a set of plus nodes */
