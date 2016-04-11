@@ -740,8 +740,8 @@ val eqEx = Lemma(Sequent(
         "eq2" -> fof"y = x",
         "a" -> fof"P(u) -> Q(u)"),
     Seq("b" -> fof"P(x) & Q(x)"))) {
-  eql("eq1", "a").to(fof"P(v) -> Q(v)")
-  eql("eq1", "a").to(fof"P(v) -> Q(u)")
+  eql("eq1", "a").yielding(fof"P(v) -> Q(v)")
+  eql("eq1", "a").yielding(fof"P(v) -> Q(u)")
   eql("eq2", "b").fromRightToLeft
   trivial
 }
