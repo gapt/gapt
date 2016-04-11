@@ -24,9 +24,9 @@ case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
 }
 
 /**
- * Inserts an [[LKProof]] if the insertion sequent subsumes the sequent of the subgoal.
+ * Inserts an [[at.logic.gapt.proofs.lk.LKProof]] if the insertion sequent subsumes the sequent of the subgoal.
  *
- * @param insertion The [[LKProof]] to be inserted. Its end sequent must subsume the current goal.
+ * @param insertion The [[at.logic.gapt.proofs.lk.LKProof]] to be inserted. Its end sequent must subsume the current goal.
  */
 case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = {
