@@ -463,10 +463,18 @@ package object gaptic {
   def insert( proof: LKProof ) = InsertTactic( proof )
 
   /**
+   * Uses an LKProof as a lemma.
    *
-   * @param label
-   * @param proof
-   * @return
+   * If `proof` ends in `Γ :- φ`, then the current goal
+   *
+   * `Γ, Π :- Λ`
+   *
+   * is reduced to
+   *
+   * `Γ, Π, φ :- Λ`
+   *
+   * @param proof The proof to insert as a lemma by a cut.
+   * @param label the label for φ in the subgoal
    */
   def include( label: String, proof: LKProof ): Tactical[Unit] =
     for {
@@ -518,7 +526,7 @@ package object gaptic {
    * - `¬:l` and `¬:r`
    * - `∧:l`
    * - `∨:r`
-   * - `→:r`
+   * - `⊃:r`
    * - `∃:l`
    * - `∀:r`
    */
@@ -576,6 +584,18 @@ package object gaptic {
    */
   def renameLabel( oldLabel: String ) = RenameTactic( oldLabel, oldLabel )
 
+  /**
+   * Rewrites the formula specified by target using (possibly universally quantified) equations.
+   *
+   * {{{
+   *   rewrite.many ltr "equation1" in "target"
+   *   rewrite.many ltr ("equation1", "eq2") rtl ("eq3", "eq4") in "target"
+   * }}}
+   *
+   * `ltr`: rewrite left-to-right using this equation
+   * `rtl`: rewrite right-to-left using this equation
+   * `many`: rewrite as long as possible (default is to only rewrite once)
+   */
   def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
 
   /**
