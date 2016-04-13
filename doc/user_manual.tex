@@ -279,10 +279,10 @@ form regular subsets of the lambda expression.
 There are two ways of entering expressions: you can parse them or construct them
 manually.
 \subsubsection{Formula parsing}
-Here is an example of parsing a higher-order formula:
+Here is an example of parsing a first-order formula:
 \begin{clilisting}
-gapt> val H = hof"!x (P(x,f(x)) -> ?y P(x,y))"
-H: at.logic.gapt.expr.HOLFormula = ∀x (P(x, f(x)) ⊃ ∃y P(x, y))
+gapt> val F = fof"!x (P(x,f(x)) -> ?y P(x,y))"
+F: at.logic.gapt.expr.FOLFormula = ∀x (P(x, f(x)) ⊃ ∃y P(x, y))
 
 \end{clilisting}
 
@@ -302,6 +302,17 @@ The prefix indicates the Scala type of the expression. The following prefixes ar
 \cli{fov} & first-order variable \\
 \cli{foc} & first-order constant
 \end{tabular}
+
+This parser supports Scala string interpolation. For example, you can do:
+\begin{clilisting}
+gapt> val t = fot"f(f(x))"
+t: at.logic.gapt.expr.FOLTerm = f(f(x))
+
+gapt> val G = fof"!x (P(x,$t) -> ?y P(x,y))"
+G: at.logic.gapt.expr.FOLFormula = ∀x (P(x, f(f(x))) ⊃ ∃y P(x, y))
+
+\end{clilisting}
+
 
 The input language has full type inference, and the formula
 prefixes make sure that the expression is of type $o$ (Boolean).  If no
@@ -642,7 +653,7 @@ following (we now omit the boilerplate for brevity):
 val lemmaEx =
   Lemma(Sequent(
       Seq("a" -> fof"P a", "b" -> fof"!x (P x -> Q x)"),
-      Seq("c" -> fof" Q a"))) {
+      Seq("c" -> fof"Q a"))) {
     allL(fot"a")
   }
 \end{tacticslisting}
