@@ -19,7 +19,7 @@ class StructTest extends Specification {
       val proof: LKProof = LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( "perm.llk" ) mkString ).proof( "TheProof" )
       val struct = extractStruct( proof )
       val cs = CharacteristicClauseSet( struct )
-      println( coloredStructString( struct ) )
+      //println( coloredStructString( struct ) )
       val typedec = "var x,y,z : i; const f : i>i>i; const a,b,c : i; "
       val strings = List(
         "f(y, f(z, x)) = f(f(y, z), x)",
@@ -44,7 +44,7 @@ class StructTest extends Specification {
         } )
       }
 
-      println( TPTPFOLExporter.tptp_problem( cs.toList ) )
+      //println( TPTPFOLExporter.tptp_problem( cs.toList ) )
 
       compare( cs.asInstanceOf[Set[HOLSequent]], cs_check ).toList must beLike( { case List( ( _, true ), ( _, true ), ( _, true ), ( _, true ) ) => ok( "" ) } )
       compare( cs_check, cs.asInstanceOf[Set[HOLSequent]] ).toList must beLike( { case List( ( _, true ), ( _, true ), ( _, true ), ( _, true ) ) => ok( "" ) } )

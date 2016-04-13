@@ -267,7 +267,7 @@ object existsclosure {
 
   /**
    * Closes all formulas on the right of the sequent existentially and all formulas on the left universally.
-   **/
+   */
   def apply( seq: HOLSequent ): HOLSequent = seq.map( univclosure( _ ), existsclosure( _ ) )
 }
 

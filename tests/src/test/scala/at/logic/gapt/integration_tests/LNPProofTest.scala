@@ -48,7 +48,7 @@ class LNPProofTest extends Specification {
   "The system" should {
     "parse correctly the LNP proof" in {
       PDAnalysis.css_
-      println( PDAnalysis.css_ )
+      // println( PDAnalysis.css_ )
       ok( "No errors" )
     }
 

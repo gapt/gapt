@@ -16,8 +16,8 @@ class nTapeTest extends Specification {
       acnf_labels must_== Sequent[Label]()
 
       val acnf_lkconclusion = nTape2.acnf.conclusion.map( _._2 ) //discard labels
-      println( nTape2.preprocessed_input_proof.conclusion )
-      println( acnf_lkconclusion )
+      //println( nTape2.preprocessed_input_proof.conclusion )
+      //println( acnf_lkconclusion )
       acnf_lkconclusion.multiSetEquals( nTape2.preprocessed_input_proof.conclusion ) must beTrue
 
       ok( "acnf could be created" )

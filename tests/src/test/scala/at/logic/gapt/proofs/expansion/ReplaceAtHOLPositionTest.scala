@@ -99,7 +99,7 @@ class ReplaceAtHOLPositionTest extends Specification {
     "correctly replace an argument in a weak quantifier node " in {
       val ExyFxy = Ex( y, Fxy )
       val xPos = ExyFxy.find( x ).head
-      println( xPos )
+      //println( xPos )
       replaceAtHOLPosition(
         ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( HOLAtom( F, x, a ), true ), b -> ETAtom( HOLAtom( F, x, b ), true ) ) ), xPos, b
       ) should beEqualTo(
