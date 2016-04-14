@@ -9,15 +9,6 @@ import at.logic.gapt.provers.sat.MiniSAT
 
 object exercise4 {
 
-  def MiniSATIsUnsat( cls: List[FOLClause] ): Boolean = MiniSAT.solve( cls ).isEmpty
-
-  def Prover9IsUnsat( cls: List[FOLClause] ): Boolean =
-    Prover9 isValid existsclosure( cls.map {
-      _.toDisjunction
-    } ++: Sequent() )
-
-  def TseitinPHP( n: Int ) = TseitinCNF( Neg( PigeonHolePrinciple( n, n - 1 ) ) )
-
   println(
     """
   It is well known that the group of all permutations of n >= 2 elements
@@ -28,7 +19,7 @@ object exercise4 {
   for several n and describe what Permutations( n ) expresses.
 
   Use
-  gapt> Prover9IsUnsat( Permutations( n ) )
+  gapt> Prover9 isUnsat Permutations( n )
   to show that several of these clause sets are unsatisfiable. How far do you
   get in < 5 seconds?
 
@@ -42,7 +33,7 @@ object exercise4 {
   terms from T.
 
   Use
-  gapt> MiniSATIsUnsat( instantiate( Permutations( n ), Permutations.constants( n ) ) )
+  gapt> MiniSAT isUnsat instantiate( Permutations( n ), Permutations.constants( n ) )
   to show that Permutations( n ) is unsatisfiable using minisat. How far do you
   get in < 5 seconds?
 """
