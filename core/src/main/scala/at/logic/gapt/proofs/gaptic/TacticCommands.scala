@@ -8,6 +8,11 @@ import at.logic.gapt.proofs.lk._
 import scalaz._
 import Scalaz._
 
+/**
+ * Predefined tactics in gaptic.
+ */
+object TacticCommands extends TacticCommands
+
 trait TacticCommands {
   // LK Tactics
 
