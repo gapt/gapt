@@ -69,7 +69,7 @@ object prooftool {
  */
 abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends Reactor {
   type MainComponentType <: Component // The type of the mainComponent object (e.g., DrawSequentProof in the case of LK proofs).
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   val dnLine = nLine + nLine
   var DEBUG = false
   val defaultFontSize = 12

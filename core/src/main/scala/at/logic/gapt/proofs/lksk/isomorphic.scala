@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.proofs.RuleTypeA
 
 object rule_isomorphic extends rule_isomorphic
 class rule_isomorphic {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( p1: LKProof, p2: LKProof, pred: ( RuleTypeA, RuleTypeA ) => Boolean ): Boolean =
     ( p1, p2 ) match {
       case ( a1: NullaryLKProof, a2: NullaryLKProof ) =>

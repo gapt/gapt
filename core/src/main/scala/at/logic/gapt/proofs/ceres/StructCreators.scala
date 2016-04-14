@@ -40,7 +40,7 @@ object StructCreators extends Logger {
     case EmptyTimesJunction() => n
   }
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def toFormula[Data]( s: Struct[Data] ): HOLFormula =
     And( CharacteristicClauseSet( s ).toSeq map ( _.toDisjunction ) )

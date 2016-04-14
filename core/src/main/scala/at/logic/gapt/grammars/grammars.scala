@@ -89,7 +89,7 @@ object TratGrammar {
 case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: Set[TratGrammar.Production] ) {
   import TratGrammar._
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def productions( nonTerminal: FOLVar ): Set[Production] = productions filter ( _._1 == nonTerminal )
   def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )

@@ -254,7 +254,7 @@ object cutConfToString {
 // by, for each o in cc, taking the element f from seq such that
 // f, where param goes to term, is equal to o.formula.
 object cutOccConfigToCutConfig {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( so: OccSequent, cc: TypeSynonyms.CutOccurrenceConfiguration, seq: HOLSequent, params: List[IntVar], terms: List[IntegerTerm] ): ( Multiset[HOLFormula], Multiset[HOLFormula] ) = {
     cc.foldLeft( ( HashMultiset[HOLFormula](), HashMultiset[HOLFormula]() ) )( ( res, fo ) => {
@@ -335,7 +335,7 @@ object StructCreators extends Logger {
     case EmptyTimesJunction => n
   }
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   // this is for proof schemata: it extracts the characteristic
   // clause set for the proof called "name"

@@ -278,7 +278,7 @@
 //    case EmptyTimesJunction => n
 //  }
 //
-//  val nLine = sys.props( "line.separator" )
+//  private val nLine = sys.props( "line.separator" )
 //
 //  def toFormula( s: Struct ): HOLFormula =
 //    transformStructToClauseSet( s ).foldLeft[HOLFormula]( Top() )( ( f, c ) =>

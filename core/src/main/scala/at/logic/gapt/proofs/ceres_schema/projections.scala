@@ -468,7 +468,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val new_cut_ancs = copySetToAncestor( cut_ancs )
     val s1 = apply( p1, new_cut_ancs, pred )
     val s2 = apply( p2, new_cut_ancs, pred )
-    // val nLine = sys.props("line.separator")
+    // private val nLine = sys.props("line.separator")
     //println("Binary rule on:"+nLine+s1.map(_.root)+nLine+s2.map(_.root))
     if ( cut_ancs.contains( m ) )
       handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs )

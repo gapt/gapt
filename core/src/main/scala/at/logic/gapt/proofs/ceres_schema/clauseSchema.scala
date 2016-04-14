@@ -113,7 +113,7 @@ object deComposeSClause {
 
 //replace "v" with the sClause from the Map
 object replace {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( c: sClause, varList: Map[sClauseVar, sClause] ): sClause = c match {
     case v: sClauseVar if varList.keySet.contains( v )  => varList.get( v ).get
     case v: sClauseVar if !varList.keySet.contains( v ) => throw new Exception( nLine + "ERROR 112" + nLine + "!" )
@@ -126,7 +126,7 @@ object replace {
 //applies sub to a sClauseTerm or sClause
 //the sub is of type Var -> SchemaExpression
 object applySubToSclauseOrSclauseTerm {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( sub: SchemaSubstitution, c: sClauseTerm ): sClauseTerm = {
     c match {
       case v: sClauseVar => c
@@ -164,7 +164,7 @@ object applySubToSclauseOrSclauseTerm {
 
 // σ(k+1, x, l)
 object sTermN {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   //the l.head should be of type Tindex() !
   def apply( f: String, l: List[SchemaExpression] ): SchemaExpression = {
     require( l.head.exptype == Tindex )
@@ -187,7 +187,7 @@ object sTermN {
 
 // dbTRS for σ(k+1, x, l), i.e. sTermN
 class dbTRSsTermN( val map: Map[String, Tuple2[Tuple2[SchemaExpression, SchemaExpression], Tuple2[SchemaExpression, SchemaExpression]]] ) {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def add( term: String, base: Tuple2[SchemaExpression, SchemaExpression], step: Tuple2[SchemaExpression, SchemaExpression] ): dbTRSsTermN = {
     val newMap = map + Tuple2( term, Tuple2( base, step ) )
@@ -613,7 +613,7 @@ object fo2VarSubstitution {
 }
 
 object ResDeductionToLKTree {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( r: sResolutionTerm ): LKProof = r match {
     case non: nonVarSclause =>
@@ -715,7 +715,7 @@ object InstantiateResSchema {
 
 //grounds a LKS-proof with respect to the variables of type: ω->ι
 object GroundingProjections {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( p: LKProof, mapfo2: Map[fo2Var, SchemaExpression] ): LKProof = {
     p match {

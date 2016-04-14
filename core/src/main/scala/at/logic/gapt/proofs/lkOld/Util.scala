@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lkOld.base.{ LKProof, OccSequent }
 import at.logic.gapt.proofs.occurrences.{ FormulaOccurrence, defaultFormulaOccurrenceFactory }
 
 object Util {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   class ElimEx( val uproofs: List[LKProof], val aux: List[FormulaOccurrence], val prim: HOLFormula, val defs: Option[Map[FormulaOccurrence, FormulaOccurrence]] ) extends Exception {
     override def getMessage = {
       var s = "proofs:" + nLine + nLine

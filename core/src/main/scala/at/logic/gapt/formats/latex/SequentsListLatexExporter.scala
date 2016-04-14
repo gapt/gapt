@@ -15,7 +15,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.OutputExporter
 
 trait SequentsListLatexExporter extends HOLTermLatexExporter {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   val smskip = nLine + nLine
   val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
   private def exportSequent( seq: HOLSequent ) = {
@@ -191,7 +191,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 }
 
 trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   val smskip = nLine + nLine
   val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
   private def exportSequent( seq: LabelledOccSequent ) = {

@@ -206,7 +206,7 @@ class reduceHolToFol {
       //this case is added for schema
       /*
       case App(func,arg) => {
-        val nLine = sys.props("line.separator")
+        private val nLine = sys.props("line.separator")
       
         func match {
           case Var(sym,_) => {

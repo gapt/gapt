@@ -20,7 +20,7 @@ object testVeriTImport {
   var unfold_error = 0
   var success = 0
   
-  val nLine = sys.props("line.separator")
+  private val nLine = sys.props("line.separator")
   
   def apply( str: String, timeout: Int ) = {
     

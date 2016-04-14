@@ -28,7 +28,7 @@ class SipProver(
 )
     extends OneShotProver with Logger {
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
     getSimpleInductionProof( endSequent ).map( _.toLKProof )

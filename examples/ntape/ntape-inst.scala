@@ -39,7 +39,7 @@ object inst extends Script {
       Files.write( Paths.get( filename ), TPTPHOLExporter( ls, positive ).getBytes )
   }
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def show( s: String ) = println( nLine + nLine + "+++++++++ " + s + " ++++++++++" + nLine )
 

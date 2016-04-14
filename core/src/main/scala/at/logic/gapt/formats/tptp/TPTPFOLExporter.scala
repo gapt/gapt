@@ -12,7 +12,7 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 object TPTPFOLExporter extends at.logic.gapt.utils.logging.Logger {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   // convert a named list of clauses to a CNF refutation problem.
   // TODO: have to give a different name because of erasure :-(

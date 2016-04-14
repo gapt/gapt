@@ -30,7 +30,7 @@ object applySchemaSubstitution2 {
   }
 }
 object CloneLKProof2 {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( proof: LKProof, name: String, rewriterules: List[Tuple2[SchemaFormula, SchemaFormula]], proofSize: Int, version: Int, ProofLinkPassing: List[Tuple2[SchemaExpression, SchemaExpression]] ): Tuple2[List[Tuple2[SchemaFormula, SchemaFormula]], LKProof] = {
     proof match {
       case trsArrowLeftRule( p, s, a, m )  => if ( version == 0 ) Tuple2( List(), proof ) else if ( version == 1 ) apply( p, name, rewriterules, proofSize, version, ProofLinkPassing ) else if ( version == 2 ) Tuple2( List(), proof ) else Tuple2( List(), proof )
@@ -518,7 +518,7 @@ object iterateOnFormula {
   def apply( term: SchemaExpression, ProofLinkPassing: List[Tuple2[SchemaExpression, SchemaExpression]] ): SchemaExpression = ProofLinkPassing.foldLeft( term )( ( t, pair ) => { cloneMyTerm( t, pair._1, pair._2 ) } )
 }
 object genterm {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( n: Int, p: SchemaFormula, t: SchemaExpression ): SchemaFormula = {
     p match {
       case Neg( nF ) => {
@@ -588,7 +588,7 @@ object genterm {
 }
 
 object cloneMySol {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( form: SchemaFormula, proofSize: Int ): SchemaFormula = {
     form match {
       case Neg( nF ) => {
@@ -721,7 +721,7 @@ object getName {
 }
 
 object cloneMyTerm {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( term: SchemaExpression, proofSize: Int ): SchemaExpression = {
     term match {
       case SchemaFunction( n, l, t ) if getName( n ) == "schS" && t == Tindex => SchemaFunction( n, l.map( x => apply( x, proofSize ) ) )
@@ -766,7 +766,7 @@ object cloneMyTerm {
 }
 
 object equalforms {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( form: SchemaFormula, form2: SchemaFormula ): Boolean = {
     form match {
       case Neg( nF ) => form2 match {
@@ -820,7 +820,7 @@ object equalforms {
 }
 
 object equalterms {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( term: SchemaExpression, term2: SchemaExpression ): Boolean = {
     term match {
       case SchemaFunction( head, l, Tindex ) if getName( head ) == "schS" => term2 match {

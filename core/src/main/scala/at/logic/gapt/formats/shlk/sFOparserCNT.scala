@@ -22,7 +22,7 @@ import at.logic.gapt.expr.schema.IntZero
 import scala.Tuple2
 
 object sFOParserCNT {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def parseProofs( input: InputStreamReader ): List[( String, LKProof )] = {
     //    ("p",parseProof(input, "root"))::Nil
@@ -692,7 +692,7 @@ object sFOParserCNT {
 }
 
 object getPLinks {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( p: LKProof ): List[OccSequent] = p match {
     case Axiom( so ) => Nil

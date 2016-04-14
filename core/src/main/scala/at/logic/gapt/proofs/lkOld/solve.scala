@@ -15,7 +15,7 @@ import at.logic.gapt.provers.{ OneShotProver, Prover }
  * Currently supports propositional logic as well as proof construction using expansion trees.
  */
 object solve extends at.logic.gapt.utils.logging.Logger {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   /**
    * Main method for solving propositional sequents
@@ -606,7 +606,7 @@ class PropositionalProofStrategy extends ProofStrategy with at.logic.gapt.utils.
 }
 
 private object SolveUtils extends at.logic.gapt.utils.logging.Logger {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   // Checks if the sequent is of the form A, \Gamma |- A, \Delta
   def isAxiom( seq: HOLSequent ): Boolean = {

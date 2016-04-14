@@ -18,7 +18,7 @@ import clauseSchema._
  * For first-order CERES, the CERES object does a grounding on its own.
  */
 object ACNF {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def plugProjections( resRefutation: LKProof, groun_proj_set: Set[LKProof], end_seq: HOLSequent ): LKProof = {
     resRefutation match {
@@ -164,7 +164,7 @@ object renameIndexedVarInProjection {
       case ForallLeftRule( up, seq, a, p, t )       => ForallLeftRule( apply( up, pair ), renameVar( a.formula, pair ), renameVar( p.formula, pair ), renameVar( t, pair ) )
       case ExistsRightRule( up, _, a, p, t )        => ExistsRightRule( apply( up, pair ), renameVar( a.formula, pair ), renameVar( p.formula, pair ), renameVar( t, pair ) )
       //TODO: Implement ForallRight and ExistsLeft! Cvetan please fix it!
-      case _                                        => throw new Exception( nLine + "Missing case in GroundingProjections !" + nLine + p.rule )
+      case _                                        => throw new Exception( "Missing case in GroundingProjections !\n" + p.rule )
     }
   }
 }

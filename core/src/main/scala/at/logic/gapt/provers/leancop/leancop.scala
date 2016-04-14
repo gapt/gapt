@@ -14,7 +14,7 @@ import at.logic.gapt.utils.{ runProcess, withTempFile }
 
 object LeanCoP extends LeanCoP
 class LeanCoP extends OneShotProver with ExternalProgram {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   override def isValid( s: HOLSequent ): Boolean =
     getExpansionProof( s ).isDefined

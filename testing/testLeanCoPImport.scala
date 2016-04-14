@@ -27,7 +27,7 @@ object testLeanCoPImport {
 
   def apply( str: String, timeout: Int ) = {
     
-    val nLine = sys.props("line.separator")
+    private val nLine = sys.props("line.separator")
     val top_dir = new File( str )
     val proof_files = getAllProofFiles( top_dir )
 

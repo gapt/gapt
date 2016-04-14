@@ -14,7 +14,7 @@ class TPTPHOLExporter {
    *
    * @note In contrast to prover9, for multiple conjectures, each of them has to be proved.
    */
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   /**
    * Exports a sequent set as TPTP thf problem

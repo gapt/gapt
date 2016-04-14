@@ -8,7 +8,7 @@ import at.logic.gapt.formats.latex.LatexUIRenderer.{ sequentToLatexString, formu
 
 object ProofToLatexExporter {
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( proof: LKProof ) = document( proofToLatex( proof ) )
 

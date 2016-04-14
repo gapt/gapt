@@ -32,7 +32,7 @@ object findsip extends Script {
   )
   println( s"End-sequent of the sip: $endSequent" )
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   val encoding = FOLInstanceTermEncoding( endSequent )
   var instanceLanguages = instanceSequents.map {

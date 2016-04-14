@@ -21,7 +21,7 @@ object addition extends Script {
 
   val slp = SimpleLoopProblem( p.asInstanceOf[ForLoop], g, A, B )
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   println( slp.loop.body )
   println( slp.programVariables )

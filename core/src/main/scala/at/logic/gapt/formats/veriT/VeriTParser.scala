@@ -15,7 +15,7 @@ object VeriTParser extends RegexParsers {
 
   type Instances = ( FOLFormula, List[FOLFormula] )
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def getEqReflInstances( f: List[FOLFormula] ): Instances = {
     val x = FOLVar( "x" )

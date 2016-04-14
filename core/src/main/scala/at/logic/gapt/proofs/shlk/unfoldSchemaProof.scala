@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.occurrences._
 import at.logic.gapt.proofs.shlk._
 
 object applySchemaSubstitution {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def handleSchemaEquivalenceRule(
     new_parent:  LKProof,
     subst:       SchemaSubstitution,
@@ -193,7 +193,7 @@ object applySchemaSubstitution {
 //substitution end
 
 object checkProofLinks1 {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
   def apply( p: LKProof ): Unit = p match {
     case Axiom( so )                            => {}
     case UnaryLKProof( _, upperProof, _, _, _ ) => checkProofLinks1( upperProof )

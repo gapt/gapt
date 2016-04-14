@@ -83,7 +83,7 @@ object pAxiomTerm {
 
 object ProjectionTermCreators {
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def relevantProj( main_proof: String ): List[( String, Tree[AnyRef] )] = {
     val s = SchemaProofDB.toList.map( pair => genCC( pair._1 ) ) //for console
@@ -373,7 +373,7 @@ object ProjectionTermCreators {
 
 object PStructToExpressionTree {
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( s: ProjectionTerm ): Tree[AnyRef] = s match {
     case pTimes( rho, left, right, aux1, aux2 ) => BinaryTree( PTimesC( rho ), apply( left ), apply( right ) )
@@ -555,7 +555,7 @@ object PStructToExpressionTree {
 
 // returns a ground projection term for a given instance of the parameter k
 object GroundingProjectionTerm {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( pair: Tuple2[ProjectionTerm, ProjectionTerm], i: Int ): ProjectionTerm = {
     val k = IntVar( "k" )
@@ -620,7 +620,7 @@ object ProjectionTermDB extends Iterable[( String, ProjectionTerm )] with Traver
 //unfolds (normalizes) a projection term, i.e. removes the "pr" symbols according to the rewriting rules (see the journal paper)
 object UnfoldProjectionTerm {
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   // This method is used in ProofTool.
   // It should return unfolded term as a tree and the list of projections
@@ -788,7 +788,7 @@ object ProjectionTermToSetOfProofs {
 
 //removes the ↠:l and ↠:r inferences, i.e. normalizes the formulas in term level
 object RemoveArrowRules {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   private def NormalizeSequent( seq: OccSequent ): OccSequent = {
     OccSequent( seq.antecedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ), seq.succedent.map( fo => fo.factory.createFormulaOccurrence( unfoldSFormula( fo.formula.asInstanceOf[SchemaFormula] ), Nil ) ) )

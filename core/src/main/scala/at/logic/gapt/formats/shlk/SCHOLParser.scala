@@ -16,7 +16,7 @@ import java.io.InputStreamReader
 import scala.collection.mutable.{ Map => MMap }
 
 object PutPlusTogether {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( iI: SchemaExpression, iC: SchemaExpression ): SchemaExpression = {
     iC match {
@@ -40,7 +40,7 @@ object maketogether {
 }
 
 object backToInt {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( i: SchemaExpression ): Int = {
     i match {

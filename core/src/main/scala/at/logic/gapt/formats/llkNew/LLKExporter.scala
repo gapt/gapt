@@ -10,7 +10,7 @@ object LLKExporter extends LLKExporter( false )
 
 class LLKExporter( val expandTex: Boolean ) {
   val emptyTypeMap = Map[String, Ty]()
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def apply( db: ExtendedProofDatabase, escape_latex: Boolean ) = {
     val types0 = db.eproofs.foldLeft( ( emptyTypeMap, emptyTypeMap ) )( ( t, p ) =>

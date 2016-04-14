@@ -16,7 +16,7 @@ class LeanCoPLeanPredWrongArityException( msg: String ) extends Exception( msg: 
 
 object LeanCoPParser extends RegexParsers with PackratParsers {
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
     getExpansionProof( new FileReader( filename ) )

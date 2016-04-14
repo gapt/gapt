@@ -18,7 +18,7 @@ import at.logic.gapt.expr.{ To, FunctionType, Ti }
 import at.logic.gapt.proofs.lkOld._
 
 object SHLK {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   def parseProofs( input: InputStreamReader ): List[( String, LKProof )] = {
     //    ("p",parseProof(input, "root"))::Nil

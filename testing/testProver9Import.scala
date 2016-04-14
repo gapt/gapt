@@ -36,7 +36,7 @@ object testProver9Import {
 
   type MyMap = scala.collection.mutable.Map[String,List[Pair[String,Option[Throwable]]]]
 
-  val nLine = sys.props("line.separator")
+  private val nLine = sys.props("line.separator")
   
   def apply( dir: String, to: Long, fn: Option[String] = None ) {
     println( "Testing prover9-import with timeout " + to + "s:" )

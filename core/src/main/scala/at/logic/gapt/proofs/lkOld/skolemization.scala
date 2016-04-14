@@ -24,7 +24,7 @@ object skolemize extends Logger {
 
       // TODO: make this a parameter?
       var cur_stream = new SkolemSymbolFactory( constants( p ) ).getSkolemSymbols
-      // val nLine = sys.props("line.separator")
+      // private val nLine = sys.props("line.separator")
       //println(nLine + nLine + nLine + cur_stream+" , "+cur_stream.tail+" , "+cur_stream.tail.tail+" , "+cur_stream.tail.tail.tail)
 
       val symbol_map = fos.foldLeft( new HashMap[FormulaOccurrence, Stream[String]] )( ( m, fo ) => {
@@ -289,7 +289,7 @@ object skolemize extends Logger {
                                                                                                                    inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
 
                                                                                                                    cut_ancs: Set[FormulaOccurrence] ) = {
-    // val nLine = sys.props("line.separator")  
+    // private val nLine = sys.props("line.separator")  
     //println( nLine + "entering weak quant rule for "+proof.root.toStringSimple)
     //inst_map map println
     //println
@@ -332,7 +332,7 @@ object skolemize extends Logger {
                                                                                                         inst_map: Map[FormulaOccurrence, List[LambdaExpression]],
                                                                                                         cut_ancs: Set[FormulaOccurrence] ) = {
 
-    // val nLine = sys.props("line.separator") 
+    // private val nLine = sys.props("line.separator") 
     //println(nLine + "entering strong quant rule for "+proof.root.toStringSimple)
     if ( !cut_ancs.contains( m ) ) {
       val sym_stream = symbol_map( m )

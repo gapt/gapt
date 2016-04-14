@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.lkOld.{ Axiom, BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.shlk._
 
 object printSchemaProof {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   // TODO: this should move to where Sequent is declared...
   def sequentToString( s: OccSequent ): String = {

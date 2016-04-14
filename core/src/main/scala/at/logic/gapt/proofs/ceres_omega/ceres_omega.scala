@@ -16,7 +16,7 @@ class ceres_omega extends Logger {
   //TODO: check if we cant replace it with the CERES.skip_propositional method
   def skip_propositional( x: HOLFormula ) = containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty
 
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   /* Bug: Like the old versiom this code assumes that we can delete the labels while constructing the proof, not only at
      the cut. Because of that, we might contract the wrong formulas. If the Ral proof comes from a first-order import,

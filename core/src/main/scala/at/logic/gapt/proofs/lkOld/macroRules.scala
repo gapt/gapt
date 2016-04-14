@@ -298,7 +298,7 @@ object ForallRightBlock {
  *
  */
 object EquationLeftRule extends EquationRuleLogger {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   /**
    *
@@ -542,7 +542,7 @@ object EquationLeftRule extends EquationRuleLogger {
  *
  */
 object EquationRightRule extends EquationRuleLogger {
-  val nLine = sys.props( "line.separator" )
+  private val nLine = sys.props( "line.separator" )
 
   /**
    *
