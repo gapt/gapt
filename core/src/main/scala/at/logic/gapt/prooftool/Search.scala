@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: 2/21/12
- * Time: 12:41 PM
- */
-
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 import at.logic.gapt.proofs.lkOld.base.{ OccSequent, BinaryLKProof, UnaryLKProof, NullaryLKProof }
 import at.logic.gapt.proofs.proofs.{ BinaryProof, UnaryProof, Proof, NullaryProof, TreeProof }

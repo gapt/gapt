@@ -8,9 +8,6 @@ import at.logic.gapt.proofs.lkOld.{ Axiom => LKAxiom, WeakeningLeftRule => LKWea
 import at.logic.gapt.utils.SortedMap
 import org.specs2.mutable._
 
-/**
- * Created by marty on 8/7/14.
- */
 class LKskToExpansionProofTest extends Specification {
   object simpleHOLProof {
     val p = HOLAtom( Const( "P", To ), Nil )

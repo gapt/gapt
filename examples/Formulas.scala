@@ -1,9 +1,6 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-/**
- * Created by sebastian on 2/16/16.
- */
 
 /**
  * Contains some commonly used formulas.

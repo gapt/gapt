@@ -6,9 +6,6 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.annotation.implicitNotFound
 
-/**
- * Created by sebastian on 11.01.16.
- */
 package object expr extends DefaultReplaceables {
 
   /**

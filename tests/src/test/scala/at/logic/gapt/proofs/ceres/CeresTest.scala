@@ -9,9 +9,6 @@ import org.specs2.mutable._
 
 import scala.io.Source
 
-/**
- * Created by marty on 11/24/15.
- */
 class CeresTest extends Specification with SequentMatchers {
 
   def load( file: String, pname: String ) =

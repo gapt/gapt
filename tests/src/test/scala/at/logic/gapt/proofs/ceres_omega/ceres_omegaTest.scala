@@ -19,9 +19,6 @@ import scala.io.Source
 
 //TODO: Fix the test!
 
-/**
- * Created by marty on 6/18/15.
- */
 class ceres_omegaTest extends Specification with Logger {
 
   def load( file: String, pname: String ) =

@@ -1,10 +1,6 @@
 package at.logic.gapt.proofs.lk
 
 /**
- * Created by sebastian on 8/15/15.
- */
-
-/**
  * Class for convenient construction of proofs.
  * Allows you to write proofs post-order style (à la Bussproofs). Example:
  * <pre>

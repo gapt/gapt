@@ -3,9 +3,6 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
 import org.specs2.mutable._
 
-/**
- * Created by sebastian on 7/22/15.
- */
 class ReplaceAtHOLPositionTest extends Specification {
   "replaceAtHOLPosition" should {
     val P = Const( "P", Ti -> ( Ti -> To ) )

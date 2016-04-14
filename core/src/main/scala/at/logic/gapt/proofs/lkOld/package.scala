@@ -4,9 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence
 
-/**
- * Created by sebastian on 7/13/15.
- */
 package object base {
 
   type OccSequent = Sequent[FormulaOccurrence]

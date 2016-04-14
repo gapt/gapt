@@ -6,13 +6,6 @@ import org.specs2.mutable._
 
 import scala.io.Source
 
-/**
- * Created with IntelliJ IDEA.
- * User: marty
- * Date: 10/14/13
- * Time: 3:02 PM
- * To change this template use File | Settings | File Templates.
- */
 class LLKTest extends Specification {
   val p1 =
     """\AX{T,MON(h_1,\alpha)}{MON(h_1,\alpha) }

@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created with IntelliJ IDEA.
- * User: mrukhaia
- * Date: 4/12/14
- * Time: 2:13 PM
- */
-
 import javax.swing.WindowConstants
 
 import at.logic.gapt.expr.HOLFormula

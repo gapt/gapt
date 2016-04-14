@@ -10,9 +10,6 @@ import org.specs2.mutable._
 import scala.collection.Set
 import scala.io.Source
 
-/**
- * Created by marty on 11/24/15.
- */
 class StructTest extends Specification {
   "Struct extraction" should {
     "work for the permutation proof" in {

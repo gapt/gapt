@@ -7,13 +7,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.lkOld.base._
 
-/**
- * Created with IntelliJ IDEA.
- * User: marty
- * Date: 11/11/13
- * Time: 4:27 PM
- * To change this template use File | Settings | File Templates.
- */
 /*
 class SubstituteProofTest extends Specification {
   "Proof substitution" should {

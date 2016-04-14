@@ -7,10 +7,6 @@ import scala.swing.event.Key
 import scala.swing.{ CheckMenuItem, Action, MenuItem }
 
 /**
- * Created by sebastian on 12/14/15.
- */
-
-/**
  * An object that contains some common menu buttons.
  */
 object MenuButtons {

@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: 2/3/11
- * Time: 2:34 PM
- */
-
 import java.awt.{ Font, Color }
 import Font._
 import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, LabelledFormula }

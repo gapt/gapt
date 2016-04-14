@@ -7,11 +7,6 @@ import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, label
 import scala.swing._
 import java.awt.Color
 
-/**
- *
- * Created by marty on 3/26/14.
- */
-
 class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value, sequent_element_renderer: F => String ) extends ScrollPane {
 
   private var _p: Option[SequentProof[F, T]] = None

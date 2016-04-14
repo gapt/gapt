@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created with IntelliJ IDEA.
- * User: mrukhaia
- * Date: 10/23/12
- * Time: 12:29 PM
- */
-
 import scala.swing._
 import java.awt.Color
 import javax.swing.{ JSpinner, SpinnerModel }

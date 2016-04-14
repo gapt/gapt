@@ -21,9 +21,6 @@ trait UnificationAlgorithm extends FinitaryUnification
 
 class UnificationException( msg: String ) extends Exception( msg )
 
-/**
- * Created by sebastian on 2/9/15.
- */
 object FOLUnificationAlgorithm extends UnificationAlgorithm {
 
   //  def unify( seq1: HOLSequent, seq2: HOLSequent ): List[FOLSubstitution] = syntacticMGU(seq1.toFormula.asInstanceOf[FOLFormula], seq2.toFormula.asInstanceOf[FOLFormula]).toList

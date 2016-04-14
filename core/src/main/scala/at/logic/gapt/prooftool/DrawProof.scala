@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: 2/3/11
- * Time: 4:24 PM
- */
-
 import scala.swing._
 import BorderPanel._
 import event._

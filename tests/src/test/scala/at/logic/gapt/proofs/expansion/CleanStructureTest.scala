@@ -4,9 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import org.specs2.mutable._
 
-/**
- * Created by sebastian on 7/15/15.
- */
 class CleanStructureTest extends Specification {
   "cleanStructureET" should {
     val x = FOLVar( "x" )

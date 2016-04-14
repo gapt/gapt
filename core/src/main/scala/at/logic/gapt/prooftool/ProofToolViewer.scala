@@ -1,10 +1,3 @@
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: Oct 27, 2010
- * Time: 12:08:33 PM
- */
-
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.formats.xml.ProofDatabase

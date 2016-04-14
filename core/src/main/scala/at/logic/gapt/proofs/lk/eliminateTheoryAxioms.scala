@@ -7,10 +7,6 @@ import at.logic.gapt.proofs.{ OccConnector, HOLClause, Sequent }
 import scalaz.{ -\/, \/- }
 
 /**
- * Created by sebastian on 3/8/16.
- */
-
-/**
  * Object for calling the `eliminateTheoryAxiom` transformation.
  */
 object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {

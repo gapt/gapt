@@ -3,9 +3,6 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr.{ To, MonomorphicLogicalC, SymbolA, LambdaExpression }
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, UnaryTree, LeafTree, Tree }
 
-/**
- * Created by marty on 10/19/15.
- */
 // since case classes may be DAGs, we give a method to convert to a tree
 // (for, e.g. displaying purposes)
 

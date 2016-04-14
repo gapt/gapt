@@ -4,9 +4,6 @@ import at.logic.gapt.proofs.lkOld.base.{ LKProof, NullaryLKProof }
 import at.logic.gapt.proofs.lkOld.{ BinaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.proofs.RuleTypeA
 
-/**
- * Created by marty on 8/25/14.
- */
 object rule_isomorphic extends rule_isomorphic
 class rule_isomorphic {
   val nLine = sys.props( "line.separator" )

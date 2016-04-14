@@ -5,10 +5,6 @@ import at.logic.gapt.proofs.OccConnector
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 
 /**
- * Created by sebastian on 3/10/16.
- */
-
-/**
  * Implementation of the visitor pattern for [[at.logic.gapt.proofs.lk.LKProof]].
  * Proof transformations can implement this trait to reduce boilerplate code.
  * @tparam T Type of additional arguments that may be used in the transformation.

@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created with IntelliJ IDEA.
- * User: mrukhaia
- * Date: 9/13/12
- * Time: 12:51 PM
- */
-
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 

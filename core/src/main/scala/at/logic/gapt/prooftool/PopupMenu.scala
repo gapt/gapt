@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: 8/12/11
- * Time: 1:24 PM
- */
-
 import at.logic.gapt.proofs.{ SequentProof, DagProof }
 import at.logic.gapt.proofs.lk.LKProof
 

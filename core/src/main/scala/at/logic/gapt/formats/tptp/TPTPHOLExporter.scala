@@ -6,9 +6,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
 
-/**
- * Created by marty on 12/10/13.
- */
 object TPTPHOLExporter extends TPTPHOLExporter
 class TPTPHOLExporter {
   /**

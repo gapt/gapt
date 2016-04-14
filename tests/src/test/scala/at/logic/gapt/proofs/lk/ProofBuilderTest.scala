@@ -3,9 +3,6 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr.{ And, FOLAtom }
 import org.specs2.mutable._
 
-/**
- * Created by sebastian on 8/20/15.
- */
 class ProofBuilderTest extends Specification {
   "ProofBuilder" should {
     val A = FOLAtom( "A", Nil )

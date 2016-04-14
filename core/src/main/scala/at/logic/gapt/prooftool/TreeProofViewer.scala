@@ -12,9 +12,6 @@ import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, B
 import scala.swing.event.Key
 import scala.swing.{ Menu, FileChooser, Action, Separator }
 
-/**
- * Created by sebastian on 12/13/15.
- */
 class TreeProofViewer[T]( name: String, proof: TreeProof[T] ) extends ProofToolViewer[TreeProof[T]]( name, proof ) {
   override type MainComponentType = DrawProof[T]
   override def createMainComponent( fSize: Int ) = new DrawProof( this, proof, fSize, None, "" )

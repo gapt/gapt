@@ -3,10 +3,6 @@ package at.logic.gapt.expr
 import at.logic.gapt.expr.hol.HOLPosition
 
 /**
- * Created by sebastian on 3/21/16.
- */
-
-/**
  * Creates a lambda expression that designates positions to be replaced.
  */
 object replacementContext {

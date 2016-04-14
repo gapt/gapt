@@ -10,9 +10,6 @@ import at.logic.gapt.proofs.{ SequentIndex, Suc, Ant, Sequent }
 import at.logic.gapt.proofs.ral._
 import at.logic.gapt.utils.logging.Logger
 
-/**
- * Created by marty on 10/6/14.
- */
 object ceres_omega extends ceres_omega
 
 class ceres_omega extends Logger {

@@ -3,10 +3,6 @@ package at.logic.gapt.expr.hol
 import at.logic.gapt.expr._
 
 /**
- * Created by marty on 4/16/15.
- */
-
-/**
  * Formats a HOL expression without types and the outermost parenthesis. Conjunction, disjunction and implication
  * are considered right associative, i.e. a /\ ((b /\ c) /\ d) = a /\ (b /\ c) /\ d. Equation is rendered infix.
  */

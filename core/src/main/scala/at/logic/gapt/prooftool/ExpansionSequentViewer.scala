@@ -7,10 +7,6 @@ import scala.swing.{ Separator, Menu, Action, MenuItem }
 import scalaz.\/-
 
 /**
- * Created by sebastian on 12/13/15.
- */
-
-/**
  * ProofToolViewer for expansion sequents.
  *
  * @param name The name to be displayed at the top.

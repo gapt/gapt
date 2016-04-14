@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: Nov 5, 2010
- * Time: 3:00:53 PM
- */
-
 import at.logic.gapt.proofs.DagProof
 import at.logic.gapt.proofs.lkOld.base.OccSequent
 import at.logic.gapt.proofs.occurrences.FormulaOccurrence

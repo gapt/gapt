@@ -1,10 +1,3 @@
-/**
- * Created by IntelliJ IDEA.
- * User: mrukhaia
- * Date: 2/6/11
- * Time: 1:38 PM
- */
-
 package at.logic.gapt.prooftool
 
 import scala.swing._

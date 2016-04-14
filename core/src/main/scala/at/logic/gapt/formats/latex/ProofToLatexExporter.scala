@@ -1,12 +1,5 @@
 package at.logic.gapt.formats.latex
 
-/**
- * Created with IntelliJ IDEA.
- * User: mishiko
- * Date: 9/6/12
- * Time: 21:49
- */
-
 import at.logic.gapt.proofs.lkOld._
 import at.logic.gapt.proofs.lkOld.base.{ BinaryLKProof, LKProof, NullaryLKProof, UnaryLKProof }
 import at.logic.gapt.proofs.proofs.RuleTypeA

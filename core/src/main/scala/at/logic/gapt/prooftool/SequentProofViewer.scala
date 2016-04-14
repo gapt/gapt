@@ -14,10 +14,6 @@ import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, label
 import scala.swing._
 
 /**
- * Created by sebastian on 12/11/15.
- */
-
-/**
  * A ProofToolViewer for dag proofs.
  *
  * @param name The name to be displayed at the top.

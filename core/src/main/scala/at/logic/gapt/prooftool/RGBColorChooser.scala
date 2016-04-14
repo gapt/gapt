@@ -1,12 +1,5 @@
 package at.logic.gapt.prooftool
 
-/**
- * Created with IntelliJ IDEA.
- * User: mrukhaia
- * Date: 10/23/12
- * Time: 12:38 PM
- */
-
 import swing._
 import java.awt.{ Dimension, Point }
 import swing.event._
