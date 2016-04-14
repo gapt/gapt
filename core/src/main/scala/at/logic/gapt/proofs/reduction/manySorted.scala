@@ -10,16 +10,30 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
+/**
+ * Represents a reduction of a problem together with a back-translation of the solutions.
+ *
+ * A problem P1 is reduced to a problem P2, a solution S2 to the problem P2
+ * can then be translated back to a solution S1 of the problem P1.
+ */
 trait Reduction[-P1, +P2, +S1, -S2] {
   def forward( problem: P1 ): ( P2, S2 => S1 )
 
+  /** Sequentially composes reductions. */
   def |>[P2_ >: P2, P3, S2_ <: S2, S3]( other: Reduction[P2_, P3, S2_, S3] ): Reduction[P1, P3, S1, S3] =
     CombinedReduction( this, other )
 }
 
+/** A reduction that does not change the type of the problem. */
 trait Reduction_[P, S] extends Reduction[P, P, S, S]
+/** A reduction without back-translation. */
 trait OneWayReduction_[P] extends Reduction[P, P, Nothing, Any]
 
+/**
+ * Sequential composition of reductions.
+ *
+ * This class is not intended to be used directly, but via the [[Reduction#|>]] operator.
+ */
 case class CombinedReduction[-P1, P2, +P3, +S1, S2, -S3](
     red1: Reduction[P1, P2, S1, S2],
     red2: Reduction[P2, P3, S2, S3]
@@ -235,6 +249,11 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     back( atom: FOLFormula, freeVars ).asInstanceOf[HOLAtom]
 }
 
+/**
+ * Reduces finding a resolution proof of a many-sorted clause set to the first-order case.
+ *
+ * Sorts are simply ignored and we make a best effort to convert the resolution refutation back.
+ */
 case object ErasureReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
     val helper = new ErasureReductionHelper( problem flatMap { constants( _ ) } )
@@ -242,6 +261,11 @@ case object ErasureReductionCNF extends Reduction_[Set[HOLClause], ResolutionPro
   }
 }
 
+/**
+ * Reduces finding an expansion proof of a many-sorted sequent to the first-order case.
+ *
+ * Sorts are simply ignored and we make a best effort to convert the expansion tree.
+ */
 case object ErasureReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
     val helper = new ErasureReductionHelper( constants( problem ) )
@@ -333,6 +357,10 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
     } )
 }
 
+/**
+ * Simplifies the problem of finding a resolution refutation of a many-sorted clause set by adding
+ * predicates for each of the sorts.  The resulting problem is still many-sorted.
+ */
 case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionProof] {
   override def forward( problem: Set[HOLClause] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
     val helper = new PredicateReductionHelper( problem flatMap { constants( _ ) } )
@@ -340,6 +368,10 @@ case object PredicateReductionCNF extends Reduction_[Set[HOLClause], ResolutionP
   }
 }
 
+/**
+ * Simplifies the problem of finding an expansion proof of a many-sorted sequent by adding
+ * predicates for each of the sorts.  The resulting problem is still many-sorted.
+ */
 case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
     val helper = new PredicateReductionHelper( constants( problem ) )
@@ -409,6 +441,9 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
   def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent map delambdaify
 }
 
+/**
+ * Replaces lambda abstractions by fresh function symbols, together with axioms that axiomatize them.
+ */
 case object LambdaEliminationReduction extends OneWayReduction_[HOLSequent] {
   override def forward( problem: HOLSequent ) = {
     val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }.toSet
@@ -492,6 +527,9 @@ private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[V
   def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map { reduce( _ ).asInstanceOf[HOLFormula] }
 }
 
+/**
+ * Replaces the use of higher-order functions by fresh function symbols, together with axioms that axiomatize them.
+ */
 case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
   override def forward( problem: HOLSequent ) = {
     val helper = new HOFunctionReductionHelper( constants( problem ), variables( problem ) )
@@ -499,6 +537,9 @@ case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
   }
 }
 
+/**
+ * Reduces finding an expansion proof for a sequent to finding a resolution proof of a clause set.
+ */
 case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], ExpansionProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => ExpansionProof ) = {
     val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
@@ -506,6 +547,9 @@ case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], Exp
   }
 }
 
+/**
+ * Reduces finding an LK proof for a sequent to finding a resolution proof of a clause set.
+ */
 case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => LKProof ) = {
     val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
@@ -513,6 +557,9 @@ case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKPr
   }
 }
 
+/**
+ * Simplifies the problem by grounding free variables.
+ */
 case object GroundingReductionET extends Reduction_[HOLSequent, ExpansionProof] {
   override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
     val nameGen = rename.awayFrom( constants( problem ) )
