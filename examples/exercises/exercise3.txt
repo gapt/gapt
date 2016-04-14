@@ -1,0 +1,13 @@
+
+You can obtain a propositional unsatisfiable clause set from the Tseitin-
+transformation of the negation of the n-th pigeonhole principle tautology by:
+gapt> TseitinCNF( Neg( PigeonHolePrinciple( n, n - 1 ) ) )
+
+Use minisat and prover9 to show that this clause set is unsatisfiable by:
+gapt> Prover9.isUnsat( TseitinCNF( Neg( PigeonHolePrinciple( n, n - 1 ) ) ) )
+and
+gapt> MiniSAT.isUnsat( TseitinCNF( Neg( PigeonHolePrinciple( n, n - 1 ) ) ) )
+
+Use the time-command to find the largest n which is solved in < 5 seconds by 
+prover9 and minisat respectively.
+
