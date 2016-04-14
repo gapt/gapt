@@ -36,6 +36,11 @@ trait SATSolver extends OneShotProver {
 
   def getLKProof( seq: HOLSequent ): Option[LKProof] = throw new UnsupportedOperationException
   override def isValid( seq: HOLSequent ): Boolean = solve( seq.toNegConjunction ).isEmpty
+
+  /**
+   * Checks whether a set of clauses is propositionally unsatisfiable.
+   */
+  override def isUnsat( cnf: Iterable[HOLClause] ): Boolean = isValid( cnf ++: Sequent() map { _.toDisjunction } )
 }
 
 trait DrupSolver extends SATSolver with ResolutionProver {
