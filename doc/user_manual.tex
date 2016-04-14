@@ -1442,6 +1442,11 @@ expansion: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
 [p7] ETWeakQuantifier(∃x ∃y ...
 \end{clilisting}
 
+The expansion proof returned by \cli{LKToExpansionProof} contains the
+quantifier inferences of the proof in LK and the quantified cuts.
+Quantifier-free cuts are not included, as they can never be involved in
+quantifier inferences.
+
 Expansion proofs have shallow and deep sequents.  The shallow sequent
 corresponds to the end-sequent of the proof in LK, and is the sequent that is
 proven.  The deep sequent consists of instances of the shallow sequent: the
