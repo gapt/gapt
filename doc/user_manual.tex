@@ -1239,13 +1239,36 @@ fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
 
 \end{clilisting}
 
+\subsection{Built-in superposition prover}
+
+GAPT contains a simple built-in superposition prover called Escargot.  It is
+used for proof replay to import proofs from other provers.  You can use it with
+the same interface as \cli{Prover9} and the other first-order provers:
+
+\begin{clilisting}
+gapt> val formula = hof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
+formula: at.logic.gapt.expr.HOLFormula =
+∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x ⊃
+  d + a + c + b = a + b + c + d
+
+gapt> Escargot getRobinsonProof formula
+res32: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+Some([p46]  :-     (Resolution(p1, Suc(0), p45, Ant(0)))
+[p45] b + (c + (a + d)) = b + (c + (a + d)) :-     (Paramodulation(p12, Suc(0), p44, Ant(0), λx b + (c + (a + d)) = b + x, true))
+[p44] b + (c + (a + d)) = b + (a + (c + d)) :-     (Paramodulation(p13, Suc(0), p43, Ant(0), λx b + (c + (a + d)) = x, true))
+[p43] b + (c + (a + d)) = a + (b + (c + d)) :-     (Paramodulation(p12, Suc(0), p42, Ant(0), λx b + x = a + (b + (c + d)), true))
+[p42] b + (a + (c + d)) = a + (b + (c + d)) :-     (Paramodulation(p18, Suc(0), p41, Ant(0), λx b + (a + (c + d)) = a + x, true))
+[p41] b + (a + (c + d)) = a + (d + (b + c)) :-     (Paramodulation(p19, Suc(0), p40, Ant(0), λx b + (a + (c + d)) = a + (d + x), false))
+[p40] b + (a + (c + d)...
+\end{clilisting}
+
 \subsection{Built-in tableaux prover}
 
 GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
-res32: at.logic.gapt.proofs.lk.LKProof =
+res33: at.logic.gapt.proofs.lk.LKProof =
 [p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a:o :- b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a:o, b:o :- a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -1669,14 +1692,14 @@ Productions:
   x2 -> s(0)
 
 gapt> lang.toSet subsetOf grammar.language
-res38: Boolean = true
+res39: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
-res39: at.logic.gapt.grammars.TratGrammar =
+res40: at.logic.gapt.grammars.TratGrammar =
 Axiom: x0
 Non-terminals: x0, x1, x2
 Productions:
