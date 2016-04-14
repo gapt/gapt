@@ -48,7 +48,7 @@ object CLIMain extends Logger {
         }
 
         val intp = new IMain( settings )
-        intp beSilentDuring { intp.interpret( imports + scriptSrc ) }
+        intp beQuietDuring { intp.interpret( imports + scriptSrc ) }
 
         // Execute all defined objects of type Script.
         for {
