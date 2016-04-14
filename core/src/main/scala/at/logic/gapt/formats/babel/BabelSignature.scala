@@ -4,7 +4,7 @@ import ast._
 import at.logic.gapt.{ expr => real }
 
 /**
- * A signature for the Babel parser.
+ * A signature for the Babel parser.  This class decides whether a free identifier is a variable or a constant.
  */
 abstract class BabelSignature {
   /**
