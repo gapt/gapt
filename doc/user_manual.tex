@@ -1244,14 +1244,13 @@ fof( formula2, conjecture, 'p'('s'('s'('0'))) ).
 GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
-gapt> solvePropositional(hof"a -> b -> a&b")
-res32: at.logic.gapt.proofs.lk.solvePropositional.UnprovableOrLKProof =
-\/-([p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
+gapt> solvePropositional(hof"a -> b -> a&b").get
+res32: at.logic.gapt.proofs.lk.LKProof =
+[p5]  :- a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a:o :- b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a:o, b:o :- a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] b:o :- b:o    (LogicalAxiom(b:o))
 [p1] a:o :- a:o    (LogicalAxiom(a:o))
-)
 
 \end{clilisting}
 

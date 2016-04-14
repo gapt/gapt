@@ -34,4 +34,5 @@ import at.logic.gapt.provers.escargot._
 import at.logic.gapt.provers.spass._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils._
+import ScalazHelpers._
 import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
