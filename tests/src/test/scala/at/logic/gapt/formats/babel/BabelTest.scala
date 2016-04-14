@@ -33,7 +33,7 @@ class BabelTest extends Specification {
       }
   }
 
-  "quantifiers bind more closely than conjunction" in {
+  "quantifiers bind more closely than disjunction" in {
     BabelParser.parse( "?x P(x) | Q(x)" ) must beLike {
       case Or( Ex( _, _ ), _ ) => ok
     }
