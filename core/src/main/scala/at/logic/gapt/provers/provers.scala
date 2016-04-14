@@ -1,9 +1,10 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.existsclosure
 import at.logic.gapt.proofs.epsilon.{ EpsilonProof, ExpansionProofToEpsilon }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent, eliminateCutsET }
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 
@@ -35,6 +36,16 @@ trait Prover {
     case Some( _ ) => true
     case None      => false
   }
+
+  /**
+   * Checks whether a formula is unsatisfiable.
+   */
+  def isUnsat( formula: HOLFormula ): Boolean = isValid( -formula )
+
+  /**
+   * Checks whether a set of clauses is unsatisfiable.
+   */
+  def isUnsat( cnf: Iterable[HOLClause] ): Boolean = isValid( existsclosure( cnf ++: Sequent() map { _.toDisjunction } ) )
 
   /**
    * @param formula The formula that should be proved.
