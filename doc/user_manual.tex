@@ -2570,12 +2570,15 @@ antecedent or the succedent---this is one of the four possibilities:
 Expansion trees are a compact representation of quantifier inferences in
 proofs with cuts.  They have originally been introduced
 in~\cite{Miller87Compact}.  GAPT contains an extension by Skolem nodes, weakening
-nodes, and cuts~\cite{Hetzl2013Expansion}.
+nodes, definitions, merges, and cuts~\cite{Hetzl2013Expansion}.
 
 \begin{tabular}{r l}
 
   \cli{ETAtom} & $A$ \quad (where $A$ is a HOL atom) \\
-\cli{ETWeakening} & $\varphi$ \quad (where $\varphi$ is a formula) \\
+\cli{ETWeakening} & $\mathsf{wk}(\varphi)$ \quad (where $\varphi$ is a formula) \\
+\cli{ETMerge} & $E_1 \sqcup E_2$ \\
+\cli{ETDefinition} & $D +_\mathsf{def} E$ \quad (where $D$ is a defined atom expanding to the shallow formula of $E$) \\
+\cli{ETDefinedAtom} & $\varphi +_\mathsf{def} D$ \quad (where $D$ is a defined atom expanding to $\varphi$) \\
 \cli{ETTop} & $\top$ \\
 \cli{ETBottom} & $\bot$ \\
 \cli{ETNeg} & $\neg E$ \\
