@@ -24,14 +24,17 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
       else super.nest( doc, j )
     }
 
-  def export( expr: LambdaExpression ): String = {
-    val knownTypesFromSig = constants( expr ) flatMap { c =>
+  def knownConstantTypesFromSig( consts: Iterable[Const] ) =
+    consts flatMap { c =>
       sig( c.name ) match {
         case IsConst( ast.TypeVar( _ ) ) => None
         case IsConst( astType ) if astType == ast.liftType( c.exptype ) => Some( c.name -> c )
         case _ => None
       }
     }
+
+  def export( expr: LambdaExpression ): String = {
+    val knownTypesFromSig = knownConstantTypesFromSig( constants( expr ) )
     pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) )
   }
 
