@@ -115,8 +115,27 @@ abstract class LambdaExpression {
    */
   def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
 
+  /**
+   * Converts this expression into a string.
+   *
+   * The output can be parsed using e.g. the string interpolators, and we
+   * guarantee that the expression can be perfectly reconstructed from the string output.
+   */
   override def toString = new BabelExporter( unicode = true, sig = BabelSignature.defaultSignature ).export( this )
+  /**
+   * Converts this expression into a 7-bit safe ASCII string.
+   *
+   * The output can be parsed using e.g. the string interpolators, and we
+   * guarantee that the expression can be perfectly reconstructed from the string output.
+   */
   def toAsciiString = new BabelExporter( unicode = false, sig = BabelSignature.defaultSignature ).export( this )
+  /**
+   * Converts this expression into a string, taking the signature into account.
+   *
+   * This produces a similar output as [[toString]], but will use the
+   * variable convention indicated by the signature.  That is, if sig defines x to
+   * be a constant, then we output just x instead of the default #c(x: i).
+   */
   def toSigRelativeString( implicit sig: BabelSignature ) =
     new BabelExporter( unicode = true, sig = sig ).export( this )
 

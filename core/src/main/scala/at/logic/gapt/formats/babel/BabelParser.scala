@@ -32,7 +32,7 @@ object BabelLexical {
   def kw( name: String ) = P( name ~ !CharPred( isUnquotNameChar ) )
 }
 
-object BabelParser {
+object BabelParserCombinators {
   import BabelLexical._
   import fastparse.noApi._
   val White = fastparse.WhitespaceApi.Wrapper( Whitespace )
@@ -115,7 +115,18 @@ object BabelParser {
   val TypeParens: P[ast.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
+}
 
+object BabelParser {
+  import BabelParserCombinators._
+  import fastparse.noApi._
+
+  /**
+   * Parses text as a lambda expression, or returns a parse error.
+   *
+   * @param astTransformer  Function to apply to the Babel AST before type inference.
+   * @param sig  Babel signature that specifies which free variables are constants.
+   */
   def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ LambdaExpression = {
     import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
@@ -129,8 +140,10 @@ object BabelParser {
     }
   }
 
+  /** Parses text as a lambda expression, or throws an exception. */
   def parse( text: String )( implicit sig: BabelSignature ): LambdaExpression =
     tryParse( text ).fold( throw _, identity )
+  /** Parses text as a formula, or throws an exception. */
   def parseFormula( text: String )( implicit sig: BabelSignature ): HOLFormula =
     tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
 }

@@ -299,7 +299,7 @@ package object expr extends DefaultReplaceables {
       import fastparse.core.ParseError
       import fastparse.core.Parsed._
       require( args.isEmpty )
-      BabelParser.ConstAndNothingElse.parse( sc.parts.head ) match {
+      BabelParserCombinators.ConstAndNothingElse.parse( sc.parts.head ) match {
         case Success( c, _ ) => c
         case f: Failure =>
           throw new IllegalArgumentException(

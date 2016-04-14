@@ -4,6 +4,21 @@ import scalaz._
 import Scalaz._
 import at.logic.gapt.{ expr => real }
 
+/**
+ * Intermediate representation for expressions parsed by Babel.
+ *
+ * This representation is intended to be as simple as possible, all
+ * higher-level constructs (such as <-> or ∀) are already desugared
+ * into simply-typed lambda terms.
+ *
+ * It differs from the "real" lambda calculus in [[at.logic.gapt.expr]]
+ * in three major ways:
+ *
+ *  1. There are type variables.
+ *  1. There are type annotations.
+ *  1. Free variables, bound variables, and constants are not
+ *     distinguished; they are all stored as "identifiers".
+ */
 object ast {
 
   class TypeVarIdx {

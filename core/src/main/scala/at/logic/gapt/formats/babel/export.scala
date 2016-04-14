@@ -3,6 +3,17 @@ package at.logic.gapt.formats.babel
 import at.logic.gapt.expr._
 import org.kiama.output.PrettyPrinter
 
+/**
+ * Exports lambda expressions in the Babel format.
+ * You probably do not want to use this class, use one of [[at.logic.gapt.expr.LambdaExpression#toString expression.toString]],
+ * [[at.logic.gapt.expr.LambdaExpression#toSigRelativeString .toSigRelativeString]], or [[at.logic.gapt.expr.LambdaExpression#toAsciiString .toAsciiString]] instead.
+ * These are all implemented using this class.
+ *
+ * This exporter is implemented using the [[https://bitbucket.org/inkytonik/kiama/src/default/wiki/PrettyPrinting.md pretty-printing library included in Kiama]].
+ *
+ * @param unicode  Whether to output logical connectives using Unicode symbols.
+ * @param sig  The Babel signature, to decide whether we need to escape constants because they do not fit the naming convention.
+ */
 class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrinter {
 
   override val defaultIndent = 2
@@ -47,6 +58,22 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     ForallC.name, ExistsC.name
   )
 
+  /**
+   * Converts a lambda expression into a document.
+   *
+   * At every point in the conversion, we keep track of:
+   *
+   *  1. Whether the parser will already know the type of this expression (by inference)
+   *  1. What type the free identifiers have.
+   *  1. What priority the enclosing operator has.
+   *
+   * @param expr  The lambda expression to convert.
+   * @param knownType  Whether we already know the type of this expression.
+   * @param bound  Names bound by enclosing binders.
+   * @param t0  Already used free identifiers, together with the variable or constant they represent.
+   * @param p  The priority of the enclosing operator.
+   * @return  Pretty-printed document and the free identifiers.
+   */
   def show(
     expr:      LambdaExpression,
     knownType: Boolean,
