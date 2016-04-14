@@ -12,6 +12,7 @@ import at.logic.gapt.formats.xml._
 import XMLParser.XMLProofDatabaseParser
 import at.logic.gapt.formats.llkNew._
 import at.logic.gapt.grammars._
+import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.drup._
 import at.logic.gapt.proofs.epsilon._
 import at.logic.gapt.proofs.expansion._

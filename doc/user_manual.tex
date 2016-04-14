@@ -1772,6 +1772,79 @@ Productions:
 
 \end{clilisting}
 
+\subsection{Many-sorted logic}
+
+The lambda calculus implemented in GAPT supports multiple base sorts.  When
+entering a many-sorted formula you need to provide enough type annotations to
+infer the types:
+\begin{clilisting}
+gapt> val formula = hof"P(cons(0:nat, cons(s(0), nil)): list)"
+formula: at.logic.gapt.expr.HOLFormula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
+
+gapt> val axiom = hof"P(nil) & !x!y!z (P(x) -> P(cons(y: nat, cons(z, x)): list))"
+axiom: at.logic.gapt.expr.HOLFormula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+
+gapt> val problem = hof"$axiom -> $formula"
+problem: at.logic.gapt.expr.HOLFormula =
+P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) ⊃
+  P(cons(0, cons(s(0), nil)))
+
+\end{clilisting}
+
+The built-in prover Escargot can natively solve many-sorted problems:
+\begin{clilisting}
+gapt> Escargot.getExpansionProof(problem).get.deep
+res47: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
+
+:-
+P(nil:list) ∧ (P(nil) ⊃ P(cons(0:nat, cons(s(0): nat, nil): list))) ⊃
+  P(cons(0, cons(s(0), nil)))
+
+\end{clilisting}
+
+For other provers we need to reduce this problem to a first-order one.  For
+example in this way we can obtain a many-sorted expansion proof from Prover9
+(which only supports a single sort):
+\begin{clilisting}[Prover9.isInstalled]
+gapt> val reduction = PredicateReductionET |> ErasureReductionET
+reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.expansion.ExpansionProof,at.logic.gapt.proofs.expansion.ExpansionProof] = PredicateReductionET |> ErasureReductionET
+
+gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
+firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
+∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
+∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
+⊤ ⊃ P_is_list(f_nil),
+∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
+⊤ ⊃ P_is_nat(f_0),
+P_is_nat(f_nonempty_nat): o,
+P_is_o(f_nonempty_o): o,
+P_is_list(f_nonempty_list): o
+:-
+P_P(f_nil) ∧
+    ∀x (P_is_list(x) ⊃
+        ∀y (P_is_nat(y) ⊃
+            ∀z (P_is_nat(z) ⊃ P_P(x) ⊃ P_P(f_cons(y, f_cons(z, x)))))) ⊃
+  P_P(f_cons(f_0, f_cons(f_s(f_0), f_nil)))
+back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function1>
+
+gapt> Prover9 getExpansionProof firstOrderProblem map back
+res48: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(
+:-
+[p10] ETImp(p8, p9)
+[p9] ETAtom(P(cons(0:nat, cons(s(0): nat, nil:list): list)): o, true)
+[p8] ETAnd(p1, p7)
+[p7] ETWeakQuantifier(∀x ∀y ∀z (P(x:list) ⊃ P(cons(y:nat, cons(z:nat, x): list))), nil:list, p6)
+[p6] ETWeakQuantifier(∀y ∀z (P(nil:list) ⊃ P(cons(y:nat, cons(z:nat, nil): list))), 0:nat, p5)
+[p5] ETWeakQuantifier(∀z (P(nil:list) ⊃ P(cons(0:nat, cons(z:nat, nil): list))), s(0:nat): nat, p4)
+[p4] ETImp(p2, p3)
+[p3] ETAtom(P(cons(0:nat, cons(s(0): nat, nil:list): list)): o, false)
+[p2] ETAtom(P(nil:list): o, true)
+[p1] ETAtom(P(nil:list): o, false)
+)
+
+\end{clilisting}
+
 \vfill
 \pagebreak
 \begin{appendix}
