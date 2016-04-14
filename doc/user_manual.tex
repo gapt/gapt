@@ -1402,66 +1402,116 @@ I: at.logic.gapt.expr.HOLFormula = a = b ⊃ ¬P(a)
 
 \subsection{Expansion trees}
 
-Expansion trees are a compact representation of cut-free proofs. They have originally been
-introduced in~\cite{Miller87Compact}. GAPT contains an implementation of
-expansion trees for higher-order logic including functions for extracting expansion
-trees from proofs, for merging expansion trees, for pruning and transforming them
-in various ways and for viewing them in a comfortable way in the graphical user interface.
+Expansion proofs are a compact representation of the quantifier inferences in a
+proof.  They have originally been introduced in~\cite{Miller87Compact}.  GAPT
+contains an implementation of expansion proofs with cut for higher-order logic,
+including functions to extract expansion trees from proofs, to merge expansion
+trees, to prune and transform them in various ways, to eliminate first-order
+cuts, and to display them in the graphical user interface.
 
-An expansion tree contains the instances of the quantifiers for a formula. In order
-to represent an LK-proof we use {\em expansion proofs}, i.e.~sequents of expansion trees.
+An expansion tree contains the instances of the quantifiers for a formula.  In order
+to represent a proof of a sequent we use sequents of expansion trees.  An
+expansion proof consists of such a sequent of expansion trees where the
+strong quantifiers do not form cycles.
 For example we can obtain an expansion proof by:
 \begin{clilisting}
-gapt> val p = SquareEdgesExampleProof( 4 )
-p: at.logic.gapt.proofs.lk.LKProof =
-[p39] ∀x ∀y (P(x, y) ⊃ P(x, s(y))),
-∀x ∀y (P(x, y) ⊃ P(s(x), y)),
-P(0, 0): o
-:-
-P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ContractionLeftRule(p38, Ant(0), Ant(1)))
-[p38] ∀x ∀y (P(x, y) ⊃ P(x, s(y))),
-∀x ∀y (P(x, y) ⊃ P(x, s(y))),
-∀x ∀y (P(x, y) ⊃ P(s(x), y)),
-P(0, 0): o
-:-
-P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ForallLeftRule(p37, Ant(0), ∀y (P(x, y) ⊃ P(x, s(y))), s(s(s(s(0)))), x))
-[p37] ∀y (P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y))),
-∀x ∀y (P(x, y) ⊃ P(x, s(y))),
-∀x ∀y (P(x, y) ⊃ P(s(x), y)),
-P(0, 0): o
-:-
-P(s(s(s(s(0)))), s(s(s(s(0))))): o    (ForallLeftRule(p36, Ant(0), P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y)), s(s(s(0))), y))
-[p36] P(s(s(s(s(0)))), s(s(s(0)))) ⊃ P(s(s(s(s(0)))), s(s(s(s(0))))),
-∀x ∀y (P(x, y) ⊃ P(x, s(y))),
-∀x ∀y (P(x, y) ⊃...
-gapt> val E = LKToExpansionProof( p )
-E: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-[p14] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ P(x, s(y))), s(s(s(s(0)))), p13)
-[p13] ETWeakQuantifier(∀y (P(s(s(s(s(0)))), y) ⊃ P(s(s(s(s(0)))), s(y))), s(0), p3, 0, p6, s(s(0)), p9, s(s(s(0))), p12)
-[p12] ETImp(p10, p11)
-[p11] ETAtom(P(s(s(s(s(0)))), s(s(s(s(0))))): o, false)
-[p10] ETAtom(P(s(s(s(s(0)))), s(s(s(0)))): o, true)
-[p9] ETImp(p7, p8)
-[p8] ETAtom(P(s(s(s(s(0)))), s(s(s(0)))): o, false)
-[p7] ETAtom(P(s(s(s(s(0)))), s(s(0))): o, true)
-[p6] ETImp(p4, p5)
-[p5] ETAtom(P(s(s(s(s(0)))), s(0)): o, false)
-[p4] ETAtom(P(s(s(s(s(0)))), 0): o, true)
-[p3] ETImp(p1, p2)
-[p2] ETAtom(P(s(s(s(s(0)))), s(s(0))): o, false)
-[p1] ETAtom(P(s(s(s(s(0)))), s(0)): o, true)
+gapt> val expansion = LKToExpansionProof(examples.fol1.proof)
+expansion: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+[p14] ETWeakQuantifier(∀X (X ⊃ X), ∀x ∃y (¬P(x, y) ∨ Q(x, y)), p13)
+[p13] ETImp(p6, p12)
+[p12] ETWeakQuantifier(∀x ∃y (¬P(x, y) ∨ Q(x, y)), b, p11)
+[p11] ETStrongQuantifier(∃y (¬P(b, y) ∨ Q(b, y)), y, p10)
+[p10] ETOr(p8, p9)
+[p9] ETAtom(Q(b, y): o, false)
+[p8] ETNeg(p7)
+[p7] ETAtom(P(b, y): o, true)
+[p6] ETStrongQuantifier(∀x ∃y (¬P(x, y) ∨ Q(x, y)), x, p5)
+[p5] ETWeakQuantifier(∃y (¬P(x, y) ∨ Q(x, y)), a, p4)
+[p4] ETOr(p2, p3)
+[p3] ETAtom(Q(x, a): o, true)
+[p2] ETNeg(p1)
+[p1] ETAtom(P(x, a): o, false)
 ,
-[p17] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ P(s(x), y)), s(0), p4, 0, p8, s(s(...
+[p5] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ Q(x, y)), x, p4)
+[p4] ETWeakQuantifier(∀y (P(x, y) ⊃ Q(x, y)), a, p3)
+[p3] ETImp(p1, p2)
+[p2] ETAtom(Q(x, a): o, false)
+[p1] ETAtom(P(x, a): o, true)
+
+:-
+[p7] ETWeakQuantifier(∃x ∃y ...
 \end{clilisting}
-This expansion proof can then be viewed in the graphical user interface by simply calling:
+
+Expansion proofs have shallow and deep sequents.  The shallow sequent
+corresponds to the end-sequent of the proof in LK, and is the sequent that is
+proven.  The deep sequent consists of instances of the shallow sequent: the
+(quasi-)tautology of the deep sequent implies the validity of the shallow
+sequent.
 \begin{clilisting}
-gapt> prooftool( E )
+gapt> expansion.shallow
+res34: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+
+gapt> expansion.deep
+res35: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
+¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
+P(x, a) ⊃ Q(x, a)
+:-
+¬Q(b, y) ⊃ ¬P(b, y)
+
+gapt> Sat4j isValid expansion.deep
+res36: Boolean = true
 
 \end{clilisting}
 
-A window then opens that displays the end-sequent of \cli{p}, i.e.\ the shallow
-sequent of \cli{E}.  You can then selectively expand quantifiers by clicking on
-them, see~\cite{Hetzl13Understanding} for a detailed description.
+This expansion proof contains a cut.  Cuts are stored as expansions of the
+second-order formula $\forall X (X \impl X)$ in the antecedent.  GAPT contains
+a procedure to eliminate such cuts in expansion proofs as described
+in~\cite{Hetzl2013Expansion}:
+\begin{clilisting}
+gapt> eliminateCutsET(expansion)
+res37: at.logic.gapt.proofs.expansion.ExpansionProof =
+[p5] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ Q(x, y)), b, p4)
+[p4] ETWeakQuantifier(∀y (P(b, y) ⊃ Q(b, y)), a, p3)
+[p3] ETImp(p1, p2)
+[p2] ETAtom(Q(b, a): o, false)
+[p1] ETAtom(P(b, a): o, true)
+
+:-
+[p7] ETWeakQuantifier(∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, p6)
+[p6] ETWeakQuantifier(∃y (¬Q(b, y) ⊃ ¬P(b, y)), a, p5)
+[p5] ETImp(p2, p4)
+[p4] ETNeg(p3)
+[p3] ETAtom(P(b, a): o, false)
+[p2] ETNeg(p1)
+[p1] ETAtom(Q(b, a): o, true)
+
+\end{clilisting}
+
+We can also convert expansion proofs to LK; this works even in the presence of
+cuts, and also if the proof requires equational reasoning:
+\begin{clilisting}
+gapt> ExpansionProofToLK(expansion).get
+res38: at.logic.gapt.proofs.lk.LKProof =
+[p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
+[p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
+[p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
+[p18] ∃y (¬P(b, y) ∨ Q(b, y)) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsLeftRule(p17, Ant(0), y, y))
+[p17] ¬P(b, y) ∨ Q(b, y) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p16, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
+[p16] ¬P(b, y) ∨ Q(b, y) :- ¬Q(b, y) ⊃ ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
+[p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) :- ¬P(b, y)    (NegLeftRule(p14, Suc(0)))
+[p14] ¬P(b, y) ∨ Q(b, y) :- Q...
+\end{clilisting}
+
+You can also view this expansion proof in the graphical user interface by
+calling:
+\begin{clilisting}
+gapt> prooftool( expansion )
+
+\end{clilisting}
+
+A window then opens that displays the shallow sequent of \cli{expansion}.  You
+can selectively expand quantifiers by clicking on them,
+see~\cite{Hetzl13Understanding} for a detailed description.
 
 \subsection{Cut-elimination by resolution (CERES)}\label{sec:ceres}
 
@@ -1692,14 +1742,14 @@ Productions:
   x2 -> s(0)
 
 gapt> lang.toSet subsetOf grammar.language
-res39: Boolean = true
+res44: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
-res40: at.logic.gapt.grammars.TratGrammar =
+res45: at.logic.gapt.grammars.TratGrammar =
 Axiom: x0
 Non-terminals: x0, x1, x2
 Productions:
