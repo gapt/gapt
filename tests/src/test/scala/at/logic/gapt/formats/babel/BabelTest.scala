@@ -65,6 +65,7 @@ class BabelTest extends Specification {
       "true & p(#c('⊤': i))",
       "^('⊤': i) #c('⊤': o) & p('⊤': i)",
       "''",
+      "'\\u0000'",
       "true", "'true'", "'all' x"
     )
     Fragments.foreach( strings ) { string =>
@@ -76,6 +77,16 @@ class BabelTest extends Specification {
 
         val expr3 = BabelParser.parse( expr.toAsciiString )
         expr syntaxEquals expr3 must beTrue
+      }
+    }
+  }
+
+  "correct ascii conversion" in {
+    val strings = Seq( "ößfð", "'fßðf fßð'", "^z!x?y (true & false & x -> y & -z | x & x!=x)", "'\\u0000'" )
+    Fragments.foreach( strings ) { string =>
+      string in {
+        val expr = BabelParser parse string
+        expr.toAsciiString must beMatching( """\p{ASCII}+""".r )
       }
     }
   }
