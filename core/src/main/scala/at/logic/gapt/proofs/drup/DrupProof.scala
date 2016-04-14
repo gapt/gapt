@@ -9,10 +9,32 @@ sealed abstract class DrupProofLine extends Product {
   def clause: HOLClause
   override def toString = s"[${productPrefix.stripPrefix( "Drup" ).toLowerCase}] $clause"
 }
+
+/** Input clause in a DRUP proof. */
 case class DrupInput( clause: HOLClause ) extends DrupProofLine
+/**
+ * Derived clause in a DRUP proof.
+ *
+ * The clause is not only required to be a consequence of the previous
+ * clauses in the proof, but also RUP (a strictly stronger requirement):
+ *
+ * Given a set of clauses Γ and a clause C, then C has the property RUP with regard to Γ iff
+ * Γ, ¬C can be refuted with only unit propagation.
+ */
 case class DrupDerive( clause: HOLClause ) extends DrupProofLine
+/**
+ * Forgets a clause in a DRUP proof.
+ *
+ * This inference is not necessary for completeness, it is mainly a
+ * performance optimization since it speeds up the unit propagation in [[DrupDerive]].
+ */
 case class DrupForget( clause: HOLClause ) extends DrupProofLine
 
+/**
+ * DRUP proof.
+ *
+ * A DRUP proof consists of a sequence of clauses.  Each clause is either a [[DrupInput]], a [[DrupDerive]], or a [[DrupForget]].
+ */
 case class DrupProof( refutation: Seq[DrupProofLine] ) {
   override def toString = refutation.reverse.mkString( "\n" )
 }

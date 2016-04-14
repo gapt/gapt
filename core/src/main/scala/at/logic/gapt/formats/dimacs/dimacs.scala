@@ -2,6 +2,7 @@ package at.logic.gapt.formats.dimacs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.models.MapBasedInterpretation
+import at.logic.gapt.proofs.drup.{ DrupDerive, DrupForget, DrupProof, DrupProofLine }
 import at.logic.gapt.proofs.{ Clause, HOLClause }
 
 import scala.collection.mutable
@@ -13,7 +14,15 @@ object DIMACS {
   type CNF = Seq[Clause]
   type Model = Seq[Literal]
 
-  type DRUP = Seq[Either[Clause, Clause]]
+  /**
+   * Inference in a DRUP proof in DIMACS encoding.
+   *
+   * This is the same proof system as in [[DrupProof]], except that we store the atoms in DIMACS encoding here.
+   */
+  sealed abstract class DrupInference
+  case class DrupDerive( clause: Clause ) extends DrupInference
+  case class DrupDelete( clause: Clause ) extends DrupInference
+  type DRUP = Seq[DrupInference]
 
   def maxAtom( cnf: CNF ) = {
     val atoms = cnf.flatten.map( math.abs )
@@ -55,6 +64,12 @@ class DIMACSEncoding {
       case l if l < 0 => decodeAtomOption( -l ) map { _ -> false }
     } toMap )
 
+  def decodeProof( drupProof: DIMACS.DRUP ): Seq[DrupProofLine] =
+    drupProof map {
+      case DIMACS.DrupDelete( cls ) => DrupForget( decodeClause( cls ) )
+      case DIMACS.DrupDerive( cls ) => DrupDerive( decodeClause( cls ) )
+    }
+
   override def toString = s"DIMACSEncoding(${atomMap.map( x => s"${x._1} -> ${x._2}" ).mkString( ", " )})"
 }
 
@@ -88,9 +103,9 @@ object readDRUP {
       case "f DRUP"                        => None
       case "o proof DRUP"                  => None
       case line if line.startsWith( "d " ) =>
-        Some( Left( line.substring( 2 ).split( " " ).toSeq.map( _.toInt ).dropRight( 1 ) ) )
+        Some( DIMACS.DrupDelete( line.substring( 2 ).split( " " ).toSeq.map( _.toInt ).dropRight( 1 ) ) )
       case line =>
-        Some( Right( line.split( " " ).map( _.toInt ).toSeq.dropRight( 1 ) ) )
+        Some( DIMACS.DrupDerive( line.split( " " ).map( _.toInt ).toSeq.dropRight( 1 ) ) )
     }
 }
 

@@ -54,10 +54,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
     val encoding = new DIMACSEncoding
     val dimacsCNF = encoding.encodeCNF( cnf )
     getDrupProof( dimacsCNF ) map { dimacsDRUP =>
-      DrupProof( cnf.toSet, dimacsDRUP map {
-        case Left( cls )  => DrupForget( encoding decodeClause cls )
-        case Right( cls ) => DrupDerive( encoding decodeClause cls )
-      } )
+      DrupProof( cnf.toSet, encoding decodeProof dimacsDRUP )
     }
   }
 

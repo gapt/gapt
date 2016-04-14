@@ -28,13 +28,13 @@ class Sat4j extends DrupSolver {
   }
 
   class RupListener extends SearchListenerAdapter[ISolverService] {
-    val drup = Seq.newBuilder[Either[DIMACS.Clause, DIMACS.Clause]]
+    val drup = Seq.newBuilder[DIMACS.DrupInference]
 
-    override def learnUnit( p: Int ) = drup += Right( Seq( p ) )
-    override def learn( c: IConstr ) = drup += Right( c )
+    override def learnUnit( p: Int ) = drup += DIMACS.DrupDerive( Seq( p ) )
+    override def learn( c: IConstr ) = drup += DIMACS.DrupDerive( c )
 
     override def end( result: Lbool ) =
-      if ( result == Lbool.FALSE ) drup += Right( Seq() )
+      if ( result == Lbool.FALSE ) drup += DIMACS.DrupDerive( Seq() )
   }
 
   override def getDrupProof( cnf: CNF ): Option[DRUP] = {
