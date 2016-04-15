@@ -88,6 +88,18 @@ lazy val root = project.in( file( "." ) ).
     sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
+    apiURL := Some(url("https://logic.at/gapt/api/")),
+    autoAPIMappings := true,
+    scalacOptions in ( ScalaUnidoc, UnidocKeys.unidoc ) ++= Seq(
+      "-doc-title", "gapt",
+      "-doc-version", version.value,
+      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-sourcepath", baseDirectory.value.getAbsolutePath,
+      "-diagrams",
+      "-implicits", "-implicits-show-all",
+      "-skip-packages", "scala"
+    ),
+
     // Release stuff
     aggregate in assembly := false,
     releaseDist := {
@@ -156,15 +168,6 @@ lazy val core = project.in( file( "core" ) ).
   settings(
     name := "gapt",
     description := "General Architecture for Proof Theory",
-
-    scalacOptions in ( Compile, doc ) ++= Seq(
-      "-doc-title", "gapt",
-      "-doc-version", version.value,
-      "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
-      "-sourcepath", baseDirectory.value.getAbsolutePath,
-      "-diagrams",
-      "-implicits"
-    ),
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
