@@ -88,7 +88,7 @@ lazy val root = project.in( file( "." ) ).
     sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
-    apiURL := Some(url("https://logic.at/gapt/api/")),
+    apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
     autoAPIMappings := true,
     scalacOptions in ( ScalaUnidoc, UnidocKeys.unidoc ) ++= Seq(
       "-doc-title", "gapt",
