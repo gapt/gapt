@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.1 (unreleased)
+## Version 2.1 (release on 2016-04-18)
 
 * Escargot, a simple built-in superposition prover
 * New expansion tree implementation, now with cuts!
