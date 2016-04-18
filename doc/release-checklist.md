@@ -1,4 +1,4 @@
-* sbt clean
+* fresh checkout
 * bump all versions (9.7 and 9.8-SNAPSHOT) to 9.8
 * nix-shell --pure -p sbt --command 'sbt test'
 * sbt evalUserManual test
