@@ -109,7 +109,7 @@
   morestring=[b]"""
 }
 
-\lstnewenvironment{tacticslisting}{\lstset{language=scala}}{}
+\lstnewenvironment{tacticslisting}[1][]{\lstset{language=scala}}{}
 \lstnewenvironment{tacticsoutput}{}{}
 
 \setlength{\parindent}{0pt}
@@ -845,6 +845,36 @@ C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
   at at.logic.gapt.proofs.gaptic.LemmaMacros$.qed(language.scala:41)
   ... 25 elided
+\end{tacticsoutput}
+
+Using gaptic, we can also create proofs with induction.  For example, let us
+prove that concatenation of lists is associative:
+
+\begin{tacticslisting}[nosig]
+ctx += Context.Sort("i")
+
+// Define the type of lists.
+ctx += Context.InductiveType("list",
+  hoc"nil: list",
+  hoc"cons: i>list>list")
+
+// Declare a constant denoting concatenation.
+// We will axiomatize its definition in the end-sequent.
+ctx += hoc"'+': list>list>list"
+
+val catassoc =
+  Lemma(
+      ("conscat" -> hof"∀x ∀y ∀z cons(x,y)+z = cons(x,y+z)") +:
+      ("nilcat" -> hof"∀x nil+x = x") +:
+      Sequent()
+      :+ ("goal" -> hof"∀x ∀y ∀z x+(y+z) = (x+y)+z")
+    ) {
+  induction onAll decompose
+  rewrite.many ltr "nilcat"; refl
+  rewrite.many ltr ("conscat", "IHx_0"); refl
+}
+\end{tacticslisting}
+\begin{tacticsoutput}
 \end{tacticsoutput}
 
 \section{Feature walkthrough}
