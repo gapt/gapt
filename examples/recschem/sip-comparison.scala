@@ -40,10 +40,18 @@ object sip_comparison extends Script {
 
   val nfRecSchem = SipRecSchem.stableRecSchem( instanceLanguages )
   println( nfRecSchem.rules.size )
+  println( "Recursion scheme minimization:" )
   val minimized = time {
     minimizeRecursionScheme( nfRecSchem, SipRecSchem.toTargets( instanceLanguages ), SipRecSchem.targetFilter, bestAvailableMaxSatSolver )
   }
   println( minimized )
+  println
+
+  println( "Recursion scheme minimization via instantiation:" )
+  val minimizedInst = time {
+    minimizeRecursionScheme.viaInst( nfRecSchem, SipRecSchem.toTargets( instanceLanguages ), SipRecSchem.targetFilter, bestAvailableMaxSatSolver )
+  }
+  println( minimizedInst )
   println
 
   ( 0 until 10 ) foreach { i =>

@@ -230,6 +230,32 @@ object minimizeRecursionScheme extends Logger {
     val interp = solver.solve( hard, soft ).get
     RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
+
+  def viaInst( recSchem: RecursionScheme, targets: Traversable[( LambdaExpression, LambdaExpression )],
+               targetFilter: TargetFilter.Type = TargetFilter.default,
+               solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
+               weight:       Rule => Int       = _ => 1 ) = {
+    val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
+    val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
+    val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
+    val targets_ = grounding( targets.toSet )
+
+    val instTerms = targets_.map { _._1 }.flatMap { case Apps( _, as ) => as }.flatMap { instantiateRS.subTerms }
+    val instRS = instantiateRS( recSchem, instTerms )
+
+    val formula = new RecSchemGenLangFormula( instRS, targetFilter )
+    val ruleCorrespondence = for ( ir <- instRS.rules ) yield formula.ruleIncluded( ir ) --> Or(
+      for {
+        r <- recSchem.rules
+        _ <- syntacticMatching( List( r.lhs -> ir.lhs, r.rhs -> ir.rhs ) )
+      } yield formula.ruleIncluded( r )
+    )
+    val hard = formula( targets_ ) & And( ruleCorrespondence )
+    debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
+    val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
+    val interp = solver.solve( hard, soft ).get
+    RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+  }
 }
 
 object SipRecSchem extends RecSchemTemplate(
@@ -451,6 +477,13 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
     weight:  Rule => Int                                 = _ => 1
   ): RecursionScheme = {
     minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
+  }
+  def findMinimalCoverViaInst(
+    targets: Set[( LambdaExpression, LambdaExpression )],
+    solver:  MaxSATSolver                                = bestAvailableMaxSatSolver,
+    weight:  Rule => Int                                 = _ => 1
+  ): RecursionScheme = {
+    minimizeRecursionScheme.viaInst( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
   }
 }
 

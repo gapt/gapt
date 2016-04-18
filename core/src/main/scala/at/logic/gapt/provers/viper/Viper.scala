@@ -83,7 +83,7 @@ object Viper {
     println()
 
     val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst: _* ) -> term
-    val rs = template.findMinimalCover( targets, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
+    val rs = template.findMinimalCoverViaInst( targets, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
     println( s"Minimized recursion scheme:\n$rs\n" )
 
     val logicalRS = encoding decode rs
