@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs
 
 import scala.collection.GenTraversable
+import scalaz.Functor
 
 /**
  * Represents an index of an element in a sequent.
@@ -68,16 +69,7 @@ case class Suc( k: Int ) extends SequentIndex {
  * @param succedent The second list.
  * @tparam A The type of the elements of the sequent.
  */
-class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
-  /**
-   * Equality treating each side of the sequent as list, i.e. respecting order and multiplicity.
-   */
-  override def equals( other: Any ): Boolean = other match {
-    case seq: Sequent[Any] => ( antecedent equals seq.antecedent ) && ( succedent equals seq.succedent )
-    case _                 => false
-  }
-
-  override def hashCode: Int = 31 * antecedent.hashCode() + succedent.hashCode()
+case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
 
   override def toString: String = {
     val stringified = this map { _.toString }
@@ -124,7 +116,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
   /**
    * Takes the multiset difference between two sequents, i.e. each side separately.
    */
-  def diff[B >: A]( other: Sequent[B] ) = new Sequent( this.antecedent diff other.antecedent, this.succedent diff other.succedent )
+  def diff[B >: A]( other: Sequent[B] ) = Sequent( this.antecedent diff other.antecedent, this.succedent diff other.succedent )
 
   /**
    * Computes the intersection of two sequents.
@@ -132,7 +124,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param other
    * @return
    */
-  def intersect[B >: A]( other: Sequent[B] ) = new Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
+  def intersect[B >: A]( other: Sequent[B] ) = Sequent( antecedent intersect other.antecedent, succedent intersect other.succedent )
 
   /**
    * Removes duplicate formulas from both cedents.
@@ -163,7 +155,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  def +:[B >: A]( e: B ) = new Sequent( e +: antecedent, succedent )
+  def +:[B >: A]( e: B ) = copy( antecedent = e +: this.antecedent )
 
   /**
    * Adds a sequent of elements to the antecedent. New elements are always outermost, i.e. on the very left.
@@ -179,7 +171,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the succedent
    */
-  def :+[B >: A]( e: B ) = new Sequent( antecedent, succedent :+ e )
+  def :+[B >: A]( e: B ) = copy( succedent = this.succedent :+ e )
 
   /**
    * Adds a sequence of elements to the succedent. New elements are always outermost, i.e. on the very right.
@@ -189,11 +181,11 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
 
-  def ++[B >: A]( that: Sequent[B] ) = new Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.succedent )
+  def ++[B >: A]( that: Sequent[B] ) = Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.succedent )
 
-  def removeFromAntecedent[B]( e: B ) = new Sequent( antecedent filterNot ( _ == e ), succedent )
+  def removeFromAntecedent[B]( e: B ) = Sequent( antecedent filterNot ( _ == e ), succedent )
 
-  def removeFromSuccedent[B]( e: B ) = new Sequent( antecedent, succedent filterNot ( _ == e ) )
+  def removeFromSuccedent[B]( e: B ) = Sequent( antecedent, succedent filterNot ( _ == e ) )
 
   /**
    * Maps a function over both cedents
@@ -217,7 +209,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @tparam B The return type of f and g.
    * @return The sequent of type B that results from mapping f and g over the antecedent and succedent, respectively.
    */
-  def map[B]( f: ( A ) => B, g: ( A ) => B ) = new Sequent( antecedent map f, succedent map g )
+  def map[B]( f: ( A ) => B, g: ( A ) => B ) = Sequent( antecedent map f, succedent map g )
 
   def flatMap[B]( f: A => TraversableOnce[B], g: A => TraversableOnce[B] ): Sequent[B] =
     Sequent( antecedent flatMap f, succedent flatMap g )
@@ -228,7 +220,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    * @param p A function of type A => Boolean.
    * @return The sequent consisting of only those elements satisfying p.
    */
-  def filter( p: A => Boolean ): Sequent[A] = new Sequent( antecedent filter p, succedent filter p )
+  def filter( p: A => Boolean ): Sequent[A] = Sequent( antecedent filter p, succedent filter p )
 
   /**
    * The sub-sequent of elements not satisfying some predicate.
@@ -266,7 +258,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    */
   def sizes = lengths
 
-  def sorted[B >: A]( implicit ordering: Ordering[B] ) = new Sequent( antecedent.sorted( ordering ), succedent.sorted( ordering ) )
+  def sorted[B >: A]( implicit ordering: Ordering[B] ) = Sequent( antecedent.sorted( ordering ), succedent.sorted( ordering ) )
   def sortBy[B]( f: A => B )( implicit ord: Ordering[B] ): Sequent[A] = sorted( ord on f )
 
   /**
@@ -323,7 +315,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
    *
    * @return
    */
-  def indicesSequent: Sequent[SequentIndex] = new Sequent( antecedent.indices map { i => Ant( i ) }, succedent.indices map { i => Suc( i ) } )
+  def indicesSequent: Sequent[SequentIndex] = Sequent( antecedent.indices map { i => Ant( i ) }, succedent.indices map { i => Suc( i ) } )
 
   /**
    * Returns the list of indices of elements satisfying some predicate.
@@ -410,9 +402,7 @@ class Sequent[+A]( val antecedent: Seq[A], val succedent: Seq[A] ) {
 }
 
 object Sequent {
-  def apply[A](): Sequent[A] = new Sequent( Seq(), Seq() )
-
-  def apply[A]( ant: Seq[A], succ: Seq[A] ): Sequent[A] = new Sequent( ant, succ )
+  def apply[A](): Sequent[A] = Sequent( Seq(), Seq() )
 
   def apply[A]( polarizedElements: Seq[( A, Boolean )] ): Sequent[A] =
     Sequent(
@@ -420,5 +410,7 @@ object Sequent {
       polarizedElements.filter( _._2 == true ).map( _._1 )
     )
 
-  def unapply[A]( f: Sequent[A] ): Option[( Seq[A], Seq[A] )] = Some( ( f.antecedent, f.succedent ) )
+  implicit val SequentFunctor = new Functor[Sequent] {
+    def map[A, B]( fa: Sequent[A] )( f: A => B ): Sequent[B] = fa.map( f )
+  }
 }

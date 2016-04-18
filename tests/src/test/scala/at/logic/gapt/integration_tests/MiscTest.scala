@@ -7,17 +7,18 @@ import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.cutintro._
 import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.expansion.{ eliminateCutsET, addSymmetry, ExpansionProofToLK }
+import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, addSymmetry, eliminateCutsET }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.maxsat.MaxSat4j
-import at.logic.gapt.provers.prover9.{ Prover9Importer, Prover9 }
+import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriT
 import at.logic.gapt.proofs.ceres._
 import java.io.File.separator
+
 import org.specs2.execute.Success
 import org.specs2.mutable._
 
@@ -49,7 +50,7 @@ class MiscTest extends Specification {
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
       val p = LinearExampleProof( 9 )
-      val Some( pi ) = CutIntroduction.compressLKProof( p, method = MaxSATMethod( MaxSat4j, 1 ), verbose = false )
+      val Some( pi ) = CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false )
       val pe = ReductiveCutElimination( pi )
 
       ReductiveCutElimination.isCutFree( p ) must beEqualTo( true )
