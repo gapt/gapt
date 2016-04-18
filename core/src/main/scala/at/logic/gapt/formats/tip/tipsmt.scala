@@ -101,6 +101,7 @@ class TipSmtParser {
       else exprs reduce { Eq( _, _ ) }
     case LFun( "and", sexps @ _* ) => And( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
     case LFun( "or", sexps @ _* )  => Or( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
+    case LFun( "not", sexp_ )      => Neg( parseExpression( sexp_, freeVars ) )
     case LFun( "=>", sexps @ _* )  => sexps map { parseExpression( _, freeVars ) } reduceRight { _ --> _ }
     case LFun( name, args @ _* ) =>
       funDecls( name )( args map { parseExpression( _, freeVars ) }: _* )
