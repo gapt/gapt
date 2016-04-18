@@ -1,5 +1,15 @@
 # Release notes for GAPT
 
+## Version 2.2 (unreleased)
+
+* Removal of obsolete or unmaintained code:
+  * Schemata
+  * Old LK implementation
+  * Old LKsk implementation
+  * Old LLK parser
+  * Old Delta-Table implemenetation
+  * XML parser
+
 ## Version 2.1 (release on 2016-04-18)
 
 * Escargot, a simple built-in superposition prover
