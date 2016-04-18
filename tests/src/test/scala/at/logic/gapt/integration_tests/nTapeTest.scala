@@ -2,8 +2,8 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.examples.{ nTape2, nTape3 }
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.lkskNew.LKskProof
-import at.logic.gapt.proofs.lkskNew.LKskProof.Label
+import at.logic.gapt.proofs.lksk.LKskProof
+import at.logic.gapt.proofs.lksk.LKskProof.Label
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._

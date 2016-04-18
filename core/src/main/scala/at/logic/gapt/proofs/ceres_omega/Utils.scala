@@ -2,8 +2,8 @@ package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkskNew.LKskProof._
-import at.logic.gapt.proofs.lkskNew._
+import at.logic.gapt.proofs.lksk.LKskProof._
+import at.logic.gapt.proofs.lksk._
 
 /**
  * The pick* functions generalize the convenience constructors of the LK rules which allow to specify arguments by
@@ -28,6 +28,7 @@ object Pickrule {
 
   /**
    * picks one occurrences from the candidates s.t. formulas (if it exists) are identical.
+   *
    * @return the index of a fitting formulas for aux
    */
   def pick( es: LabelledSequent, aux: SequentIndex, candidates: Seq[zipIndex] ): SequentIndex =
@@ -35,6 +36,7 @@ object Pickrule {
 
   /**
    * picks 2 occurrences from the same list s.t. ac1 != ac2, where formulas and skolem label agree
+   *
    * @return a list with the indices of a fitting formulas for aux1 / aux2
    */
   def pick2( p: LKskProof, aux1: SequentIndex, aux2: SequentIndex, candidates: Seq[zipIndex] ): List[SequentIndex] =
@@ -42,6 +44,7 @@ object Pickrule {
 
   /**
    * picks 2 occurrences from the same list s.t. ac1 != ac2, where formulas and skolem label agree
+   *
    * @return a list with the indices of a fitting formulas for aux1 / aux2
    */
   def pick2( es: LabelledSequent, aux1: SequentIndex, aux2: SequentIndex, candidates: Seq[zipIndex] ): List[SequentIndex] = {
@@ -54,6 +57,7 @@ object Pickrule {
 
   /**
    * picks 1 occurrence from the same list s.t. ac1 != ac2, where formulas and skolem label agree
+   *
    * @return a pair of index and remaining candidates
    */
   def pick1( es: LabelledSequent, aux: SequentIndex, candidates: Seq[zipIndex] ): ( SequentIndex, Seq[zipIndex] ) = {

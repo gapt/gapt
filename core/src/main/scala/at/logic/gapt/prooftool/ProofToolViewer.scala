@@ -2,7 +2,7 @@ package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lkskNew.LKskProof
+import at.logic.gapt.proofs.lksk.LKskProof
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import com.itextpdf.awt.PdfGraphics2D
 

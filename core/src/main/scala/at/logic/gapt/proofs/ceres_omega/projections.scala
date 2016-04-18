@@ -8,8 +8,8 @@ package at.logic.gapt.proofs.ceres_omega
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, LabelledFormula, Label }
-import at.logic.gapt.proofs.lkskNew._
+import at.logic.gapt.proofs.lksk.LKskProof.{ LabelledSequent, LabelledFormula, Label }
+import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ceres_omega.Pickrule._
 
 case class ProjectionException( message: String, original_proof: LKskProof, new_proofs: List[LKskProof], nested: Exception )
@@ -33,6 +33,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   /**
    * Given an LKsk proof proof, compute the set of projections for it.
+   *
    * @param proof The original proof.
    * @param cut_ancs A characteristic function indicating which formula occurrences in the conclusion are cut ancestors
    * @param pred A predicate deciding if a cut-formula should be included in the projection
@@ -136,6 +137,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   /**
    * finds the cut ancestor sequent in the parent connected with the occurrence connector
+   *
    * @param connector
    * @param s
    * @return
@@ -146,6 +148,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   /**
    * given an inference from pm._1 to child, infer the child_s cut_anc sequent from pm._2
+   *
    * @param child a child proof of pm._1
    * @param connector connector from parent child to pm._1
    * @param pm a pair proof + cut_ancestor sequent
@@ -177,6 +180,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
 
   /**
    * finds the successor cut-ancestor sequent from two parents
+   *
    * @param child child proof of binary inference with left parent pm1._1 and right parent pm2._1
    * @param connector1 connector from pm1._1 to child
    * @param pm1 a pair proof + cut_ancestor sequent

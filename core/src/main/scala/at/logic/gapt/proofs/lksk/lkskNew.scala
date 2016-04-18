@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.lkskNew
+package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition

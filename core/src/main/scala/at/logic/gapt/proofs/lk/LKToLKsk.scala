@@ -3,10 +3,10 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemSymbolFactory, atoms, instantiate }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkskNew.LKskProof._
-import at.logic.gapt.proofs.lkskNew
+import at.logic.gapt.proofs.lksk.LKskProof._
+import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.lk
-import at.logic.gapt.proofs.lkskNew._
+import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.utils.logging.Logger
 
 class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
@@ -22,7 +22,7 @@ class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
 
   def apply( p: LKProof, labels: Sequent[Label], isCutAnc: Sequent[Boolean], hpaths: HPathsSequent, skolemDefs: Sequent[SkolemDef] )( implicit contracted_symbols: SkolemSymbolTable ): ( LKskProof, SkolemSymbolTable ) = {
     val res: ( LKskProof, SkolemSymbolTable ) = p match {
-      case LogicalAxiom( atom )     => ( lkskNew.Axiom( labels( Ant( 0 ) ), labels( Suc( 0 ) ), atom ), contracted_symbols )
+      case LogicalAxiom( atom )     => ( lksk.Axiom( labels( Ant( 0 ) ), labels( Suc( 0 ) ), atom ), contracted_symbols )
       case ReflexivityAxiom( term ) => ( Reflexivity( labels( Suc( 0 ) ), term ), contracted_symbols )
       case TopAxiom                 => ( TopRight( labels( Suc( 0 ) ) ), contracted_symbols )
       case BottomAxiom              => ( BottomLeft( labels( Ant( 0 ) ) ), contracted_symbols )

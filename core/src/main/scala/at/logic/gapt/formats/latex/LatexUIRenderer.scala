@@ -2,7 +2,7 @@ package at.logic.gapt.formats.latex
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
+import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 
 /**
  * LatexRenderer provides the user interface rendering logic for prooftool.

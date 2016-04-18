@@ -1,10 +1,10 @@
 package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr.{ Eq, HOLFormula }
-import at.logic.gapt.proofs.lkskNew.LKskProof.Label
+import at.logic.gapt.proofs.lksk.LKskProof.Label
 import at.logic.gapt.proofs.{ Suc, Ant, Sequent }
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.lkskNew._
+import at.logic.gapt.proofs.lksk._
 
 object extractStructFromLKsk {
   /* lksk passes labels on */

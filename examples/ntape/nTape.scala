@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
-import at.logic.gapt.proofs.lkskNew.{ LKskProof, LKskToExpansionProof }
+import at.logic.gapt.proofs.lksk.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, Sequent }
 import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.resolution.{ Robinson2RalWithAbstractions, RobinsonToLK }

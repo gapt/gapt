@@ -1,9 +1,9 @@
-package at.logic.gapt.proofs.lkskNew
+package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr._
 import BetaReduction._
 import at.logic.gapt.proofs.SequentIndex
-import at.logic.gapt.proofs.lkskNew.LKskProof.{ Label, LabelledFormula }
+import at.logic.gapt.proofs.lksk.LKskProof.{ Label, LabelledFormula }
 
 object applySubstitution {
   /**

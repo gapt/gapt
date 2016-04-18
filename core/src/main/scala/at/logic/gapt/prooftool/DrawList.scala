@@ -2,7 +2,7 @@ package at.logic.gapt.prooftool
 
 import java.awt.{ Font, Color }
 import Font._
-import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, LabelledFormula }
+import at.logic.gapt.proofs.lksk.LKskProof.{ LabelledSequent, LabelledFormula }
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 import at.logic.gapt.expr._
 import scala.swing.{ Component, FlowPanel, GridPanel, Label }

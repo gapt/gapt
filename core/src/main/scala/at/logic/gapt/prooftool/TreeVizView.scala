@@ -1,7 +1,7 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ lkskNew => lksk }
+import at.logic.gapt.proofs.{ lksk => lksk }
 import at.logic.gapt.proofs.{ SequentProof, DagProof, HOLSequent }
 
 import scala.swing.{ Action, BorderPanel }

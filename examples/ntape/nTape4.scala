@@ -5,7 +5,7 @@ import at.logic.gapt.expr.{ Eq, Ti, Var }
 import at.logic.gapt.formats.llkNew.loadLLK
 import at.logic.gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
-import at.logic.gapt.proofs.lkskNew.LKskProof
+import at.logic.gapt.proofs.lksk.LKskProof
 
 /**
  * Version 3 of the higher-order n-Tape proof.

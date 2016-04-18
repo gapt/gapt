@@ -7,8 +7,8 @@ import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, regularize, LKToLKsk }
-import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
-import at.logic.gapt.proofs.lkskNew._
+import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
+import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.prover9.Prover9

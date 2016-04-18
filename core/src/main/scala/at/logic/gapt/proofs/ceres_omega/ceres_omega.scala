@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr.hol.{ freeHOVariables, containsQuantifierOnLogicalLevel }
-import at.logic.gapt.proofs.lkskNew.LKskProof._
-import at.logic.gapt.proofs.lkskNew._
+import at.logic.gapt.proofs.lksk.LKskProof._
+import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.utils.dssupport.ListSupport._
@@ -27,6 +27,7 @@ class ceres_omega extends Logger {
 
   /**
    * Applies the CERES_omega method to a proof.
+   *
    * @param projections This is the set of projections to use. A projection to reflexvity is generated if needed.
    * @param ralproof The R_al proof to use as skeleton.
    * @param es The end-sequent of the original proof.
@@ -275,6 +276,7 @@ class ceres_omega extends Logger {
   /**
    * After an application of a binary rule, end-sequent material might be duplicated. This method adds contractions
    * for every end-sequent formula.
+   *
    * @param p a proof with an end-sequent of the form: es x es x C (where C is some additional content)
    * @param es the end-sequent material which occurs twice
    * @return a proof with an end-sequent of the form: es x C

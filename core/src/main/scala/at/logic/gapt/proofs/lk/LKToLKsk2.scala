@@ -2,8 +2,8 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
-import at.logic.gapt.proofs.lkskNew._
-import at.logic.gapt.proofs.lkskNew
+import at.logic.gapt.proofs.lksk._
+import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -25,7 +25,7 @@ private class LKToLKsk2( consts: Set[Const], vars: Set[Var] ) {
     def subf( f: HOLFormula ): HOLFormula = sub( f: LambdaExpression ).asInstanceOf[HOLFormula]
 
     p match {
-      case LogicalAxiom( atom )     => lkskNew.Axiom( info( Ant( 0 ) )._1.map { _._2 }.map( sub ), info( Suc( 0 ) )._1.map { _._2 }.map( sub ), sub( atom ).asInstanceOf[HOLAtom] )
+      case LogicalAxiom( atom )     => lksk.Axiom( info( Ant( 0 ) )._1.map { _._2 }.map( sub ), info( Suc( 0 ) )._1.map { _._2 }.map( sub ), sub( atom ).asInstanceOf[HOLAtom] )
       case ReflexivityAxiom( term ) => Reflexivity( info( Suc( 0 ) )._1.map { _._2 }.map( sub ), sub( term ) )
 
       case TopAxiom                 => TopRight( info( Suc( 0 ) )._1.map { _._2 }.map( sub ) )

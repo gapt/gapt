@@ -6,8 +6,8 @@ import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
-import at.logic.gapt.proofs.lkskNew.LKskProof
-import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
+import at.logic.gapt.proofs.lksk.LKskProof
+import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString }
 import at.logic.gapt.formats.llkNew.exportLLK
 

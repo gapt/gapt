@@ -7,8 +7,8 @@ import at.logic.gapt.proofs.lk.{ AtomicExpansion, LKToLKsk, regularize }
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, deleteTautologies }
 import at.logic.gapt.examples.{ nTape, primediv }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lkskNew.LKskProof
-import at.logic.gapt.proofs.lkskNew.LKskProof.LabelledFormula
+import at.logic.gapt.proofs.lksk.LKskProof
+import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 import BetaReduction._
