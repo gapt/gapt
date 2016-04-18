@@ -41,6 +41,10 @@ trait Struct[Data] {
   def getData(): List[Data]
 
   def toFormula: HOLFormula
+
+  def label: LambdaExpression
+
+  def children: Seq[Struct[Data]]
 }
 
 object Times {
@@ -83,6 +87,9 @@ class Times[Data]( val left: Struct[Data], val right: Struct[Data], val data: Li
 
   def toFormula = left.toFormula | right.toFormula
 
+  def label = Const( "⊗", To -> ( To -> To ) )
+  def children = Seq( left, right )
+
 }
 
 case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[Data] {
@@ -103,6 +110,9 @@ case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[
   override def getData = Nil
 
   def toFormula = left.toFormula & right.toFormula
+
+  def label = Const( "⊕", To -> ( To -> To ) )
+  def children = Seq( left, right )
 }
 case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
   override def toString(): String = "~(" + sub + ")"
@@ -120,6 +130,9 @@ case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
   override def getData = Nil
 
   def toFormula = -sub.toFormula
+
+  def label = Const( "~", To -> To )
+  def children = Seq( sub )
 }
 case class A[Data]( fo: HOLFormula, data: List[Data] ) extends Struct[Data] { // Atomic Struct
   override def toString(): String = fo.toString
@@ -133,6 +146,9 @@ case class A[Data]( fo: HOLFormula, data: List[Data] ) extends Struct[Data] { //
   override def getData = Nil
 
   def toFormula = fo
+
+  def label = fo
+  def children = Seq()
 }
 
 object A {
@@ -150,6 +166,9 @@ case class EmptyTimesJunction[Data]() extends Struct[Data] {
   override def getData = Nil
 
   def toFormula = Bottom()
+
+  def label = FOLAtom( "ε⊗" )
+  def children = Seq()
 }
 
 case class EmptyPlusJunction[Data]() extends Struct[Data] {
@@ -163,6 +182,9 @@ case class EmptyPlusJunction[Data]() extends Struct[Data] {
   override def getData = Nil
 
   def toFormula = Top()
+
+  def label = FOLAtom( "ε⊕" )
+  def children = Seq()
 }
 
 /* convenience object allowing to create and match a set of plus nodes */

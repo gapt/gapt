@@ -4,22 +4,20 @@ import scala.swing._
 import event._
 import BorderPanel._
 import java.awt.Font._
-import java.awt.{ RenderingHints, BasicStroke }
-import at.logic.gapt.utils.ds.trees._
-import at.logic.gapt.expr._
-import java.awt.event.{ MouseMotionListener, MouseEvent }
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, sequentToLatexString }
+import java.awt.{ BasicStroke, RenderingHints }
 
-class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
+import java.awt.event.{ MouseEvent, MouseMotionListener }
+
+import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, sequentToLatexString }
+import at.logic.gapt.proofs.ceres.Struct
+
+class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
   background = new Color( 255, 255, 255 )
   opaque = false
 
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private val bd = Swing.EmptyBorder( fSize / 2 )
-  private val tx = tree.vertex match {
-    case he: LambdaExpression => formulaToLatexString( he )
-    case _                    => tree.vertex.toString
-  }
+  private val tx = formulaToLatexString( struct.label )
   private var drawLines = true
 
   initialize()
@@ -31,9 +29,9 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
   def search = str
 
   def initialize() {
-    tree match {
-      case utree: UnaryTree[_] =>
-        val mylabel = utree.vertex match {
+    struct match {
+      case utree if struct.children.size == 1 =>
+        val mylabel = utree.label match {
           case _ => new Label( tx ) {
             font = ft
             val myicon = icon
@@ -86,14 +84,14 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
             }
         }
         layout( mylabel ) = Position.North
-        layout( new DrawTree( main, utree.t, fSize, str ) {
+        layout( new DrawStruct( main, utree.children.head, fSize, str ) {
           listenTo( mylabel, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.Center
-      case btree: BinaryTree[_] =>
+      case btree if struct.children.size == 2 =>
         val label = new Label( tx ) {
           if ( !str.isEmpty && tx.contains( str ) ) {
             background = new Color( 0, 255, 0 )
@@ -119,21 +117,21 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
           }
         }
         layout( label ) = Position.North
-        layout( new DrawTree( main, btree.t1, fSize, str ) {
+        layout( new DrawStruct( main, btree.children( 0 ), fSize, str ) {
           listenTo( label, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.West
-        layout( new DrawTree( main, btree.t2, fSize, str ) {
+        layout( new DrawStruct( main, btree.children( 1 ), fSize, str ) {
           listenTo( label, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.East
-      case ltree: LeafTree[_] =>
+      case ltree =>
         val mylabel = LatexLabel( main, ft, tx )
         if ( !str.isEmpty && tx.contains( str ) ) mylabel.background = new Color( 0, 255, 0 )
         else mylabel.opaque = false
@@ -165,8 +163,8 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
     g.setStroke( new BasicStroke( fSize / 25, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
     g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
 
-    if ( drawLines ) tree match {
-      case p: UnaryTree[_] =>
+    if ( drawLines ) struct match {
+      case p if struct.children.size == 1 =>
         val north = this.layout.find( x => x._2 == Position.North ).get._1
         val north_width = north.size.width
         val north_height = north.size.height
@@ -174,7 +172,7 @@ class DrawTree( main: TreeViewer[_], val tree: Tree[_], private val fSize: Int, 
         val center_width = center.size.width
 
         g.drawLine( north_width / 2, north_height - fSize / 2, center_width / 2, north_height + fSize / 2 )
-      case p: BinaryTree[_] =>
+      case p if struct.children.size == 2 =>
         val north = this.layout.find( x => x._2 == Position.North ).get._1
         val northWidth = north.size.width
         val northHeight = north.size.height
