@@ -1,6 +1,6 @@
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
-import at.logic.gapt.formats.llkNew.ast.LambdaAST
+import at.logic.gapt.formats.llk.ast.LambdaAST
 import at.logic.gapt.expr._
 import org.specs2.mutable._
 

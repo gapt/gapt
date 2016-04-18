@@ -4,7 +4,7 @@ package at.logic.gapt.integration_tests
 import java.io.InputStreamReader
 
 import at.logic.gapt.examples.LinearExampleProof
-import at.logic.gapt.formats.llkNew.LLKProofParser
+import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.cutintro._
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, addSymmetry, eliminateCutsET }

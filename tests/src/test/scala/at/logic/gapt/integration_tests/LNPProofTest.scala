@@ -1,6 +1,6 @@
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
+import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, HOLSequent }
 import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.lk.{ AtomicExpansion, LKToLKsk, regularize }

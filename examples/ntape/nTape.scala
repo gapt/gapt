@@ -6,7 +6,7 @@ import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
-import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
+import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
 import at.logic.gapt.proofs.lksk.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, Sequent }

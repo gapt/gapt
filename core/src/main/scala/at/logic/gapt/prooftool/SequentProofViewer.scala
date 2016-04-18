@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
 import at.logic.gapt.proofs.lksk.LKskProof
 import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString }
-import at.logic.gapt.formats.llkNew.exportLLK
+import at.logic.gapt.formats.llk.exportLLK
 
 import scala.swing._
 

@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres_omega
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.replaceAbstractions
 import at.logic.gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
-import at.logic.gapt.formats.llkNew.LLKProofParser
+import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, regularize, LKToLKsk }

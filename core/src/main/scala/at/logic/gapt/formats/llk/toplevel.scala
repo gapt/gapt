@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
 import at.logic.gapt.expr.{ LambdaExpression, HOLFormula }
 import at.logic.gapt.proofs.lk.LKProof
@@ -72,7 +72,7 @@ object parseLLKFormula {
  * pollute the namespace.
  */
 package short {
-  import at.logic.gapt.formats.llkNew.LLKTypes.LLKSignature
+  import at.logic.gapt.formats.llk.LLKTypes.LLKSignature
 
   object sig { def apply( s: String ): LLKSignature = DeclarationParser.parseDeclaration( s ) }
 

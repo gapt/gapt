@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.formats.llkNew.loadLLK
+import at.logic.gapt.formats.llk.loadLLK
 
 /**
  * Version 2 of the higher-order n-Tape proof.

@@ -8,7 +8,7 @@ import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof, lk }
 import at.logic.gapt.utils.ds.trees.{ BinaryTree, LeafTree, Tree }
-import at.logic.gapt.formats.llkNew.{ ExtendedProofDatabase, loadLLK }
+import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, loadLLK }
 
 import scala.swing.Dialog
 

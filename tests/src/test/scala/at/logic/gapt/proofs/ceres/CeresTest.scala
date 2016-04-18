@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.formats.llkNew._
+import at.logic.gapt.formats.llk._
 import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, gaptic }

@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
 import at.logic.gapt.expr.{ Substitution => SubstitutionLambda, rename => renameLambda, _ }
 

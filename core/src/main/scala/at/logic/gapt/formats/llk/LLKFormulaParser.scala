@@ -1,6 +1,6 @@
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
-import at.logic.gapt.formats.llkNew.LLKTypes.{ LLKSignature, emptyLLKSignature }
+import at.logic.gapt.formats.llk.LLKTypes.{ LLKSignature, emptyLLKSignature }
 
 import util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.PackratParsers

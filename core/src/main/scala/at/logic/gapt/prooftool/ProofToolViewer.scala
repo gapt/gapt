@@ -21,7 +21,7 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
 
-import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
+import at.logic.gapt.formats.llk.ExtendedProofDatabase
 
 import scalaz.\/-
 

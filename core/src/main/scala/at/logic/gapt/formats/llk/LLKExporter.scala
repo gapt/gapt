@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
 import at.logic.gapt.formats.latex.UnicodeToLatex
 import at.logic.gapt.proofs._

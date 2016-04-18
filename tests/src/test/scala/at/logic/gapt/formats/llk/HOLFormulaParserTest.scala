@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
 /**
  * Tests for FormulaParser

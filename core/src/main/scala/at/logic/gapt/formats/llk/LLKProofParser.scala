@@ -1,7 +1,7 @@
-package at.logic.gapt.formats.llkNew
+package at.logic.gapt.formats.llk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.llkNew.ast.LambdaAST
+import at.logic.gapt.formats.llk.ast.LambdaAST
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.LKProof
 import java.io.FileReader

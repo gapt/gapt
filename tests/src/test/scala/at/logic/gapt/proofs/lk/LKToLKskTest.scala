@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.examples.{ Pi2Pigeonhole, lattice, tape }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemSymbolFactory
-import at.logic.gapt.formats.llkNew.loadLLK
+import at.logic.gapt.formats.llk.loadLLK
 import at.logic.gapt.proofs.{ Ant, Suc }
 import org.specs2.mutable._
 

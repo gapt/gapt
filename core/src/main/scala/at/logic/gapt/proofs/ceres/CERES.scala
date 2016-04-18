@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.formats.llkNew.LLKExporter
+import at.logic.gapt.formats.llk.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
