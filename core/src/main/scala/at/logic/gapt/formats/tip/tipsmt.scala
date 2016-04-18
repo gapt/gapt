@@ -83,7 +83,9 @@ class TipSmtParser {
         parseFunctionBody( ifTrue, lhs, freeVars ).map( parseExpression( cond, freeVars ) --> _ )
     case LAtom( "true" )  => Seq( lhs.asInstanceOf[HOLFormula] )
     case LAtom( "false" ) => Seq( -lhs )
-    case _                => Seq( Eq( lhs, parseExpression( sexp, freeVars ) ) )
+    case _ =>
+      val expr = parseExpression( sexp, freeVars )
+      Seq( if ( lhs.exptype == To ) lhs <-> expr else lhs === expr )
   }
 
   def parseExpression( sexp: SExpression, freeVars: Map[String, LambdaExpression] ): LambdaExpression = sexp match {
@@ -93,7 +95,10 @@ class TipSmtParser {
       val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
       All.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "=", sexps @ _* ) =>
-      sexps map { parseExpression( _, freeVars ) } reduce { Eq( _, _ ) }
+      val exprs = sexps map { parseExpression( _, freeVars ) }
+      if ( exprs.head.exptype == To )
+        exprs reduce { _ <-> _ }
+      else exprs reduce { Eq( _, _ ) }
     case LFun( "and", sexps @ _* ) => And( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
     case LFun( "or", sexps @ _* )  => Or( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
     case LFun( "=>", sexps @ _* )  => sexps map { parseExpression( _, freeVars ) } reduceRight { _ --> _ }
