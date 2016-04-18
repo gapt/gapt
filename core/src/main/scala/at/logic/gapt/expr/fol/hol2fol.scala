@@ -2,7 +2,6 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.expr.schema._
 import at.logic.gapt.proofs.HOLSequent
 
 object reduceHolToFol extends reduceHolToFol
@@ -140,21 +139,16 @@ class reduceHolToFol {
   //assumes we are on the logical level of the hol formula - all types are mapped to i, i>o or i>i>o respectively
   private def apply_( term: LambdaExpression ): FOLExpression = {
     term match {
-      case e: FOLExpression            => e // if it's already FOL - great, we are done.
-      case indexedFOVar( name, index ) => FOLVar( name ++ intTermLength( index.asInstanceOf[IntegerTerm] ).toString )
-      case foVar( name )               => FOLVar( name )
-      case foConst( name )             => FOLConst( name )
-      case Const( n, To )              => FOLAtom( n, Nil )
-      case Var( n, _ )                 => FOLVar( n )
-      case Const( n, _ )               => FOLConst( n )
-      case Top()                       => Top()
-      case Bottom()                    => Bottom()
-      case Neg( n )                    => Neg( apply_( n ).asInstanceOf[FOLFormula] )
-      case And( n1, n2 )               => And( apply_( n1 ), apply_( n2 ) )
-      case Or( n1, n2 )                => Or( apply_( n1 ), apply_( n2 ) )
-      case Imp( n1, n2 )               => Imp( apply_( n1 ), apply_( n2 ) )
-      case All( v: Var, n )            => All( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
-      case Ex( v: Var, n )             => Ex( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
+      case e: FOLExpression => e // if it's already FOL - great, we are done.
+      case Const( n, To )   => FOLAtom( n, Nil )
+      case Var( n, _ )      => FOLVar( n )
+      case Const( n, _ )    => FOLConst( n )
+      case Neg( n )         => Neg( apply_( n ).asInstanceOf[FOLFormula] )
+      case And( n1, n2 )    => And( apply_( n1 ), apply_( n2 ) )
+      case Or( n1, n2 )     => Or( apply_( n1 ), apply_( n2 ) )
+      case Imp( n1, n2 )    => Imp( apply_( n1 ), apply_( n2 ) )
+      case All( v: Var, n ) => All( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
+      case Ex( v: Var, n )  => Ex( apply_( v ).asInstanceOf[FOLVar], apply_( n ) )
       case HOLAtom( Const( n, _ ), ls ) =>
         FOLAtom( n, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
       case HOLAtom( Var( n, _ ), ls ) =>
@@ -163,19 +157,6 @@ class reduceHolToFol {
         FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
       case HOLFunction( Var( n, _ ), ls ) =>
         FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
-
-      //this case is added for schema
-      case App( func, arg ) => {
-        func match {
-          case Var( sym, _ ) =>
-            val new_arg = apply_( arg ).asInstanceOf[FOLTerm]
-            return FOLFunction( sym, new_arg :: Nil )
-
-          case _ =>
-            println( "WARNING: FO schema term: " + term )
-            throw new Exception( "Probably unrecognized object from schema!" )
-        }
-      }
       case _ => throw new IllegalArgumentException( "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" ) // for cases of higher order atoms and functions
     }
   }
@@ -183,17 +164,14 @@ class reduceHolToFol {
   //if we encountered an atom, we need to convert logical formulas to the term level too
   private def apply_termlevel( term: LambdaExpression ): FOLTerm = {
     term match {
-      case e: FOLTerm                  => e // if it's already FOL - great, we are done.
-      case indexedFOVar( name, index ) => FOLVar( name ++ intTermLength( index.asInstanceOf[IntegerTerm] ).toString )
-      case foVar( name )               => FOLVar( name.toString )
-      case foConst( name )             => FOLConst( name.toString )
-      case Var( n, _ )                 => FOLVar( n )
-      case Const( n, _ )               => FOLConst( n )
+      case e: FOLTerm    => e // if it's already FOL - great, we are done.
+      case Var( n, _ )   => FOLVar( n )
+      case Const( n, _ ) => FOLConst( n )
       //we cannot use the logical symbols directly because they are treated differently by the Function matcher
-      case Neg( n )                    => FOLFunction( NegC.name, List( apply_termlevel( n ) ) )
-      case And( n1, n2 )               => FOLFunction( AndC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case Or( n1, n2 )                => FOLFunction( OrC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
-      case Imp( n1, n2 )               => FOLFunction( ImpC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case Neg( n )      => FOLFunction( NegC.name, List( apply_termlevel( n ) ) )
+      case And( n1, n2 ) => FOLFunction( AndC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case Or( n1, n2 )  => FOLFunction( OrC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
+      case Imp( n1, n2 ) => FOLFunction( ImpC.name, List( apply_termlevel( n1 ), apply_termlevel( n2 ) ) )
       case All( v: Var, n ) =>
         FOLFunction( ForallC.name, List( apply_termlevel( v ).asInstanceOf[FOLVar], apply_termlevel( n ) ) )
       case Ex( v: Var, n ) =>
@@ -202,22 +180,6 @@ class reduceHolToFol {
         FOLFunction( head.toString, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
       case HOLFunction( Const( name, _ ), ls ) =>
         FOLFunction( name, ls.map( x => folexp2term( apply_termlevel( x ) ) ) )
-
-      //this case is added for schema
-      /*
-      case App(func,arg) => {
-        private val nLine = sys.props("line.separator")
-      
-        func match {
-          case Var(sym,_) => {
-            val new_arg = apply_(arg).asInstanceOf[FOLTerm]
-            return at.logic.gapt.language.fol.Function(new ConstantString(sym.toString), new_arg::Nil)
-          }
-          case _ => println( nLine + "WARNING: FO schema term!" + nLine)
-        }
-        throw new Exception( nLine + "Probably unrecognized object from schema!" + nLine)
-      }
-      */
 
       // This case replaces an abstraction by a function term.
       //
@@ -236,12 +198,6 @@ class reduceHolToFol {
     }
   }
 
-  //transforms a ground integer term to Int
-  private def intTermLength( t: IntegerTerm ): Int = t match {
-    case IntZero()  => 0
-    case Succ( t1 ) => 1 + intTermLength( t1 )
-    case _          => throw new Exception( sys.props( "line.separator" ) + "Error in reduceHolToFol.length(...) !" + sys.props( "line.separator" ) )
-  }
 }
 
 object replaceAbstractions extends replaceAbstractions

@@ -5,10 +5,7 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.occurrences.{ defaultFormulaOccurrenceFactory, FormulaOccurrence }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.SymbolA
-import at.logic.gapt.utils.ds.trees.{ Tree, UnaryTree, BinaryTree, LeafTree }
 import scala.math.max
 
 /**

@@ -84,8 +84,6 @@ object variables {
   def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
   def apply( s: HOLSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Set[FOLVar] = s.elements flatMap apply toSet
-  def apply( s: at.logic.gapt.proofs.lkOld.base.OccSequent )( implicit dummy: DummyImplicit ): Set[Var] = apply( s.map( _.formula ) )
-  def apply( p: at.logic.gapt.proofs.lkOld.base.LKProof ): Set[Var] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
   def apply[Expr <: LambdaExpression, Proof <: SequentProof[Expr, Proof]]( p: SequentProof[Expr, Proof] ): Set[Var] =
     p.subProofs flatMap { _.conclusion.elements } flatMap { variables( _ ) }
 }
@@ -139,8 +137,6 @@ object constants {
   def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
 
   def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
-  def apply( s: at.logic.gapt.proofs.lkOld.base.OccSequent )( implicit dummy: DummyImplicit ): Set[Const] = apply( s.map( _.formula ) )
-  def apply( p: at.logic.gapt.proofs.lkOld.base.LKProof ): Set[Const] = p.fold( apply )( _ ++ apply( _ ) )( _ ++ _ ++ apply( _ ) )
 }
 
 /**

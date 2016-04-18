@@ -16,9 +16,7 @@ class LLKExporter( val expandTex: Boolean ) {
     val types0 = db.eproofs.foldLeft( ( emptyTypeMap, emptyTypeMap ) )( ( t, p ) =>
       getTypes( p._2, t._1, t._2 ) )
     val types1 = db.axioms.foldLeft( types0 )( ( m, fs ) => getTypes( fs, m._1, m._2 ) )
-    val types2 = db.sequentLists.foldLeft( types1 )( ( m, el ) =>
-      el._2.foldLeft( m )( ( m_, fs ) => getTypes( fs, m._1, m._2 ) ) )
-    val ( vtypes, ctypes ) = db.eproofs.keySet.foldLeft( types2 )( ( m, x ) => getTypes( x, m._1, m._2 ) )
+    val ( vtypes, ctypes ) = db.eproofs.keySet.foldLeft( types1 )( ( m, x ) => getTypes( x, m._1, m._2 ) )
 
     val sb = new StringBuilder()
     sb.append( generateDeclarations( vtypes, ctypes ) )

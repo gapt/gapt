@@ -3,10 +3,7 @@ package at.logic.gapt.prooftool
 import java.awt.event.{ KeyEvent, ActionEvent }
 import javax.swing.KeyStroke
 
-import at.logic.gapt.formats.arithmetic.HOLTermArithmeticalExporter
-import at.logic.gapt.formats.latex.{ SequentsListLatexExporter, ProofToLatexExporter }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.formats.writers.FileWriter
 import at.logic.gapt.proofs.HOLSequent
 import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, ByteArrayInputStream, InputStreamReader, File }
 
@@ -31,11 +28,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer
             case fs: HOLSequent => fs
             case _              => throw new Exception( "Cannot save this kind of lists." )
           }
-          if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
-            val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
-            ( new FileWriter( filename ) with SequentsListLatexExporter with HOLTermArithmeticalExporter )
-              .exportSequentList( ls, Nil ).close
-          } else if ( result.endsWith( ".tptp" ) || chooser.fileFilter.getDescription == ".tptp" ) {
+          if ( result.endsWith( ".tptp" ) || chooser.fileFilter.getDescription == ".tptp" ) {
             val filename = if ( result.endsWith( ".tptp" ) ) result else result + ".tptp"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
             file.write( TPTPFOLExporter.tptp_problem( ls ) )

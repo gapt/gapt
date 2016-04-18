@@ -2,10 +2,8 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lkOld.base._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.occurrences._
 
 /**
  * The pick* functions generalize the convenience constructors of the LK rules which allow to specify arguments by
@@ -195,36 +193,36 @@ object DeleteTautology {
 }
 
 //TODO: change to new lk
-object DeleteReduntantFOfromSequent {
-  def apply( s: OccSequent ): OccSequent = {
-    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
-    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
-    OccSequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
-  }
-}
+//object DeleteReduntantFOfromSequent {
+//  def apply( s: OccSequent ): OccSequent = {
+//    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
+//    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
+//    OccSequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
+//  }
+//}
 
 //TODO: change to new lk
-object DeleteRedundantSequents {
-  private def member( seq: OccSequent, l: List[OccSequent] ): Boolean = {
-    l match {
-      case seq1 :: ls =>
-        if ( seq.antecedent.toList.map( fo => fo.formula ).toSet == seq1.antecedent.toList.map( fo => fo.formula ).toSet &&
-          seq.succedent.toList.map( fo => fo.formula ).toSet == seq1.succedent.toList.map( fo => fo.formula ).toSet ) true
-        else member( seq, ls )
-      case _ => false
-    }
-  }
-
-  def apply( l: List[OccSequent] ): List[OccSequent] = {
-    l match {
-      case x :: ls =>
-        val new_ls = apply( ls )
-        if ( member( x, new_ls ) )
-          new_ls
-        else
-          x :: new_ls
-      case _ => List[OccSequent]()
-    }
-  }
-}
+//object DeleteRedundantSequents {
+//  private def member( seq: OccSequent, l: List[OccSequent] ): Boolean = {
+//    l match {
+//      case seq1 :: ls =>
+//        if ( seq.antecedent.toList.map( fo => fo.formula ).toSet == seq1.antecedent.toList.map( fo => fo.formula ).toSet &&
+//          seq.succedent.toList.map( fo => fo.formula ).toSet == seq1.succedent.toList.map( fo => fo.formula ).toSet ) true
+//        else member( seq, ls )
+//      case _ => false
+//    }
+//  }
+//
+//  def apply( l: List[OccSequent] ): List[OccSequent] = {
+//    l match {
+//      case x :: ls =>
+//        val new_ls = apply( ls )
+//        if ( member( x, new_ls ) )
+//          new_ls
+//        else
+//          x :: new_ls
+//      case _ => List[OccSequent]()
+//    }
+//  }
+//}
 

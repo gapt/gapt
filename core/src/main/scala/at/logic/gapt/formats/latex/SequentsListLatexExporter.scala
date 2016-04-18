@@ -1,15 +1,6 @@
-/*
- * SequentsListPDFExporter.scala
- *
- */
-
 package at.logic.gapt.formats.latex
 
-import at.logic.gapt.expr.schema.Tindex
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.lkOld._
-import at.logic.gapt.proofs.lkOld.base._
-import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.OutputExporter
@@ -120,9 +111,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
   }
 
   def typeToString( t: Ty, outermost: Boolean = true ): String = t match {
-    case Ti     => "i"
-    case To     => "o"
-    case Tindex => "w"
+    case TBase( name ) => name
     case t1 -> t2 =>
       typeToString_( t1 ) +
         " > " +
@@ -130,9 +119,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
   }
 
   def typeToString_( t: Ty ): String = t match {
-    case Ti     => "i"
-    case To     => "o"
-    case Tindex => "w"
+    case TBase( name ) => name
     case t1 -> t2 =>
       ( "(" ) +
         typeToString_( t1 ) +
@@ -189,94 +176,3 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     }
   }*/
 }
-
-trait LabelledSequentsListLatexExporter extends HOLTermLatexExporter {
-  private val nLine = sys.props( "line.separator" )
-  val smskip = nLine + nLine
-  val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
-  private def exportSequent( seq: LabelledOccSequent ) = {
-    val ant = seq.l_antecedent.toList
-    val suc = seq.l_succedent.toList
-    if ( ant.size > 0 ) exportLabelledFormulaOccurrence( ant.head )
-    if ( ant.size > 1 ) ant.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence( x ) } )
-    getOutput.write( smskip ); getOutput.write( """ $\vdash$ """ ); getOutput.write( smskip )
-    if ( suc.size > 0 ) exportLabelledFormulaOccurrence( suc.head )
-    if ( suc.size > 1 ) suc.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportLabelledFormulaOccurrence( x ) } )
-  }
-
-  def exportSequentList( ls: List[LabelledOccSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): at.logic.gapt.formats.OutputExporter = {
-    // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
-    // Also describe the types of all constants
-
-    getOutput.write( """\documentclass[10pt, a4paper]{article}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\topmargin}{-1.5cm}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\headheight}{0cm}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\headsep}{0cm}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\textheight}{1.25\textheight}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\oddsidemargin}{-1.5cm}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\evensidemargin}{-1.5cm}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\setlength{\textwidth}{1.4\textwidth}""" )
-    getOutput.write( nLine )
-    getOutput.write( """\begin{document}""" )
-    getOutput.write( nLine )
-    sections.foreach( x => {
-      getOutput.write( """\section{""" + x._1 + "}" )
-      getOutput.write( nLine )
-      getOutput.write( """\begin{tabular}{ll}""" )
-      x._2.foreach( y => {
-        printOnMatch( y._1 )
-        getOutput.write( " & " )
-        printOnMatch( y._2 )
-        getOutput.write( """ \\ """ )
-        getOutput.write( nLine )
-      } )
-      getOutput.write( """\end{tabular}""" )
-      getOutput.write( nLine )
-    } )
-    getOutput.write( """\section{Clauses}""" )
-    getOutput.write( nLine )
-    ls.foreach( x => { exportSequent( x ); getOutput.write( mdskip ) } )
-    getOutput.write( """\end{document}""" )
-    this
-  }
-
-  private def printOnMatch( a: Any ) = a match {
-    case le: LambdaExpression          => exportTerm1( le )
-    case fo: LabelledFormulaOccurrence => exportLabelledFormulaOccurrence( fo )
-    case ta: Ty                        => getOutput.write( "$" + latexType( ta ) + "$" )
-    case _                             => getOutput.write( a.toString )
-  }
-
-  private def exportTerm1( f: LambdaExpression ) = {
-    getOutput.write( "$" )
-    exportTerm( f )
-    getOutput.write( "$" )
-  }
-
-  private def exportLabelledFormulaOccurrence( fo: LabelledFormulaOccurrence ) = {
-    getOutput.write( """$\left<""" )
-    exportTerm( fo.formula )
-    getOutput.write( """\right>^{""" )
-    fo.skolem_label.foreach( t => {
-      exportTerm( t )
-      getOutput.write( ", " )
-    } )
-    getOutput.write( """}$""" )
-  }
-  /*private def replaceTerm(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]): LambdaExpression = f match {
-    case v: Var => v
-    case App(a,b) => App(replaceTerm(a, defs), replaceTerm(b, defs))
-    case a @ Abs(x,b) => defs.get(extractAbs(a.asInstanceOf[Abs])) match {
-      case Some(v) => v._2
-      case _ => Abs(x, replaceTerm(b, defs))
-    }
-  }*/
-}
-

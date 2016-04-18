@@ -6,13 +6,10 @@ import java.io.InputStreamReader
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.cutintro._
-import at.logic.gapt.formats.xml.XMLParser
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion.{ eliminateCutsET, addSymmetry, ExpansionProofToLK }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import XMLParser._
-import at.logic.gapt.formats.readers.XMLReaders._
 import at.logic.gapt.formats.veriT.VeriTParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.maxsat.MaxSat4j

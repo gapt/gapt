@@ -6,7 +6,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.llkNew.LLKProofParser
 import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, SequentMatchers, expansion }
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
-import at.logic.gapt.proofs.lkOld.base.beSyntacticMultisetEqual
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.veriT.VeriT

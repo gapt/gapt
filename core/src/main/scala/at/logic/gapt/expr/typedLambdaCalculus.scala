@@ -157,9 +157,6 @@ abstract class LambdaExpression {
 
 class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
 
-  @deprecated( "Use strings instead of symbols", "2016-02-25" )
-  def sym: SymbolA = new SymbolA {}
-
   // Syntactic equality: two variables are equal if they have the same name and the same type
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Var( n, t ) => ( n == name && t == exptype )
@@ -177,9 +174,6 @@ class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpr
 }
 
 class Const private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
-
-  @deprecated( "Use strings instead of symbols", "2016-02-25" )
-  def sym = new SymbolA {}
 
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Const( n, t ) => ( n == name && t == exptype )
@@ -234,17 +228,11 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
 }
 
 object Var {
-  @deprecated( "Use strings instead of symbols", "2016-02-25" )
-  def apply( sym: SymbolA, exptype: Ty ): Var = apply( sym.toString, exptype )
-
   def apply( name: String, exptype: Ty ): Var = determineTraits.forVar( name, exptype )
 
   def unapply( v: Var ) = Some( v.name, v.exptype )
 }
 object Const {
-  @deprecated( "Use strings instead of symbols", "2016-02-25" )
-  def apply( sym: SymbolA, exptype: Ty ): Const = apply( sym.toString, exptype )
-
   def apply( name: String, exptype: Ty ): Const = determineTraits.forConst( name, exptype )
 
   def unapply( c: Const ) = Some( c.name, c.exptype )
