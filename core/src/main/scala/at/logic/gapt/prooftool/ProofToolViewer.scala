@@ -21,6 +21,7 @@ import javax.imageio.ImageIO
 import java.awt.Color
 
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
+import at.logic.gapt.proofs.ceres.Struct
 
 import scalaz.\/-
 
@@ -42,6 +43,7 @@ object prooftool {
         new SequentProofViewer( name, p, renderer ).showFrame()
       case ep: ExpansionProofWithCut => apply( ep.expansionWithCutAxiom, name )
       case ep: ExpansionProof        => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
+      case struct: Struct[d]         => new StructViewer[d]( name, struct ).showFrame()
       case list: List[HOLSequent]    => new ListViewer( name, list ).showFrame()
       case seq: HOLSequent           => new ListViewer( name, List( seq ) ).showFrame()
       case set: Set[HOLSequent]      => new ListViewer( name, set.toList ).showFrame()
