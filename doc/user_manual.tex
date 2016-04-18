@@ -209,8 +209,9 @@ sbt console
 
 \item If you like GAPT and want to use it as a library in your Scala project,
   it is available as a Maven artifact on JCenter.  All you need to do is add
-  one line to your \verb,build.sbt,:
+  two lines to your \verb,build.sbt,:
 \begin{lstlisting}
+resolvers += Resolver.jcenterRepo
 libraryDependencies += "at.logic.gapt" %% "gapt" % "2.1"
 \end{lstlisting}
 

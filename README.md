@@ -45,9 +45,10 @@ cd gapt-2.1
 ```
 This will drop you into a scala REPL with GAPT pre-loaded.
 
-If you want to use GAPT in your project, all you have to do is add one line to
+If you want to use GAPT in your project, all you have to do is add two lines to
 your SBT build file:
 ```scala
+resolvers += Resolver.jcenterRepo
 libraryDependencies += "at.logic.gapt" %% "gapt" % "2.1"
 ```
 
