@@ -55,7 +55,7 @@ object evalCodeSnippetsInLatex {
   val beginCliListing = """\\begin\{clilisting\}(?:\[(.*)\])?""".r
   val endCliListing = """\end{clilisting}"""
   val assignment = """val\s+\w+\s+=.*""".r
-  val beginTacticsListing = """\begin{tacticslisting}"""
+  val beginTacticsListing = """\\begin\{tacticslisting\}(?:\[(.*)\])?""".r
   val endTacticsListing = """\end{tacticslisting}"""
   val beginTacticsOutput = """\begin{tacticsoutput}"""
   val endTacticsOutput = """\end{tacticsoutput}"""
@@ -86,17 +86,23 @@ object evalCodeSnippetsInLatex {
     println( endCliListing )
   }
 
-  def processTacticsListing( listing: Seq[String], interp: ILoop ): Unit = {
-    println( beginTacticsListing )
+  def processTacticsListing( listing: Seq[String], optionString: String, interp: ILoop ): Unit = {
+    val options = if ( optionString == null ) Seq() else optionString.split( "," ).toSeq
+
+    val code = new StringBuilder
+    code ++= "val () = { new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
+    code ++= "import at.logic.gapt.proofs.gaptic._\n"
+    if ( !options.contains( "nosig" ) )
+      code ++= "implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature\n"
+    for ( line <- listing ) { code ++= line; code += '\n' }
+    code ++= "}; () }"
+
+    println( """\begin{tacticslisting}""" +
+      ( if ( options.isEmpty ) "" else s"[${options.mkString( "," )}]" ) )
     listing foreach println
     println( endTacticsListing )
     println( beginTacticsOutput )
-    interp command
-      s"""val () = { new at.logic.gapt.proofs.gaptic.TacticsProof {
-           import at.logic.gapt.proofs.gaptic._
-           implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature
-           ${listing mkString "\n"}
-         }; () }"""
+    interp command code.result()
     println( endTacticsOutput )
   }
 
@@ -104,8 +110,8 @@ object evalCodeSnippetsInLatex {
     case beginCliListing( condition ) #:: rest =>
       processCliListing( rest takeWhile { _ != endCliListing }, condition, interp )
       processLines( rest dropWhile { _ != endCliListing } drop 1, interp )
-    case `beginTacticsListing` #:: rest =>
-      processTacticsListing( rest takeWhile { _ != endTacticsListing }, interp )
+    case beginTacticsListing( optionString ) #:: rest =>
+      processTacticsListing( rest takeWhile { _ != endTacticsListing }, optionString, interp )
       processLines( rest dropWhile { _ != endTacticsListing } drop 1, interp )
     case `beginTacticsOutput` #:: rest =>
       processLines( rest dropWhile { _ != endTacticsOutput } drop 1, interp )
