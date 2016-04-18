@@ -905,13 +905,13 @@ Furthermore,
 gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
 m: at.logic.gapt.models.Interpretation =
 R(p_1, h_1): o -> false
-R(p_1, h_2): o -> false
-R(p_1, h_3): o -> true
-R(p_2, h_1): o -> true
+R(p_1, h_2): o -> true
+R(p_1, h_3): o -> false
+R(p_2, h_1): o -> false
 R(p_2, h_2): o -> false
-R(p_2, h_3): o -> false
-R(p_3, h_1): o -> false
-R(p_3, h_2): o -> true
+R(p_2, h_3): o -> true
+R(p_3, h_1): o -> true
+R(p_3, h_2): o -> false
 R(p_3, h_3): o -> false
 
 \end{clilisting}
@@ -927,7 +927,7 @@ gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
 res10: Boolean = false
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res11: Boolean = true
+res11: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
@@ -940,7 +940,7 @@ res12: Boolean = false
 We can also convert $\neg\mathrm{PHP}_{3,3}$ into DIMACS format:
 \begin{clilisting}
 gapt> val (cnf, _, _) = structuralCNF(-PigeonHolePrinciple(3,3), generateJustifications=false, propositional=true)
-cnf: Set[at.logic.gapt.proofs.HOLClause] = Set( :- R(p_3, h_1): o, R(p_3, h_2): o, R(p_3, h_3): o, R(p_3, h_2): o, R(p_2, h_2): o :- , R(p_2, h_3): o, R(p_1, h_3): o :- , R(p_3, h_3): o, R(p_2, h_3): o :- ,  :- R(p_2, h_1): o, R(p_2, h_2): o, R(p_2, h_3): o, R(p_3, h_3): o, R(p_1, h_3): o :- , R(p_2, h_1): o, R(p_1, h_1): o :- , R(p_3, h_2): o, R(p_1, h_2): o :- , R(p_3, h_1): o, R(p_1, h_1): o :- , R(p_3, h_1): o, R(p_2, h_1): o :- , R(p_2, h_2): o, R(p_1, h_2): o :- ,  :- R(p_1, h_1): o, R(p_1, h_2): o, R(p_1, h_3): o)
+cnf: Set[at.logic.gapt.proofs.HOLClause] = Set( :- R(p_1, h_1): o, R(p_1, h_2): o, R(p_1, h_3): o, R(p_2, h_3): o, R(p_1, h_3): o :- , R(p_3, h_1): o, R(p_1, h_1): o :- , R(p_2, h_1): o, R(p_1, h_1): o :- ,  :- R(p_2, h_1): o, R(p_2, h_2): o, R(p_2, h_3): o, R(p_3, h_2): o, R(p_2, h_2): o :- , R(p_3, h_3): o, R(p_2, h_3): o :- , R(p_3, h_3): o, R(p_1, h_3): o :- , R(p_2, h_2): o, R(p_1, h_2): o :- , R(p_3, h_1): o, R(p_2, h_1): o :- , R(p_3, h_2): o, R(p_1, h_2): o :- ,  :- R(p_3, h_1): o, R(p_3, h_2): o, R(p_3, h_3): o)
 
 gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
@@ -949,17 +949,17 @@ gapt> writeDIMACS(encoding encodeCNF cnf)
 res13: String =
 "p cnf 9 12
 1 2 3 0
--2 -4 0
+-4 -3 0
+-5 -1 0
+-6 -1 0
+6 7 4 0
+-8 -7 0
+-9 -4 0
+-9 -3 0
+-7 -2 0
 -5 -6 0
--3 -5 0
-7 4 5 0
--3 -6 0
--7 -8 0
--2 -9 0
--1 -8 0
--1 -7 0
--4 -9 0
-8 9 6 0
+-8 -2 0
+5 8 9 0
 "
 
 \end{clilisting}
@@ -968,7 +968,7 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res14: at.logic.gapt.expr.HOLAtom = R(p_3, h_1): o
+res14: at.logic.gapt.expr.HOLAtom = R(p_1, h_1): o
 
 \end{clilisting}
 
@@ -1000,23 +1000,23 @@ GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
 res18: Option[at.logic.gapt.proofs.drup.DrupProof] =
 Some([derive]  :-
-[derive] R(p_1, h_1): o :-
-[derive]  :- R(p_4, h_2): o
-[derive]  :- R(p_1, h_1): o, R(p_4, h_2): o
-[derive]  :- R(p_2, h_1): o, R(p_4, h_2): o, R(p_1, h_1): o
-[derive] R(p_1, h_2): o :- R(p_4, h_2): o, R(p_2, h_1): o
-[input] R(p_4, h_2): o, R(p_1, h_2): o :-
-[input] R(p_4, h_1): o, R(p_1, h_1): o :-
+[derive] R(p_1, h_2): o :-
+[derive] R(p_2, h_2): o :-
+[derive]  :- R(p_2, h_3): o
+[derive] R(p_2, h_1): o :- R(p_3, h_3): o
+[derive] R(p_1, h_1): o :- R(p_2, h_3): o
+[derive] R(p_1, h_2): o :- R(p_2, h_3): o
+[derive] R(p_3, h_2): o :- R(p_1, h_3): o, R(p_2, h_3): o
+[derive] R(p_4, h_3): o :-
+[derive] R(p_3, h_1): o :- R(p_2, h_3): o, R(p_1, h_3): o
 [input]  :- R(p_3, h_1): o, R(p_3, h_2): o, R(p_3, h_3): o
-[input] R(p_2, h_2): o, R(p_1, h_2): o :-
-[input]  :- R(p_2, h_1): o, R(p_2, h_2): o, R(p_2, h_3): o
-[input] R(p_4, h_2): o, R(p_3, h_2): o :-
-[input] R(p_4, h_3): o, R(p_2, h_3): o :-
-[input] R(p_4, h_1): o, R(p_2, h_1): o :-
-[input] R(p_4, h_2): o, R(p_2, h_2): o :-
-[input] R(p_3, h_3): o, R(p_2, h_3): o :-
 [input] R(p_4, h_1): o, R(p_3, h_1): o :-
-[input] R(p_4...
+[input] R(p_2, h_1): o, R(p_1, h_1): o :-
+[input] R(p_4, h_2): o, R(p_1, h_2): o :-
+[input]  :- R(p_1, h_1): o, R(p_1, h_2): o, R(p_1, h_3): o
+[input]  :- R(p_2, h_1): o, R(p_2, h_2): o, R(p_2, h_3): o
+[input] R(p_3, h_2): o, R(p_2, h_2): o :-
+[input] R(p_4, h_2): o, R(p_2,...
 \end{clilisting}
 
 Just as in the first-order prover interface, you can call
@@ -1025,7 +1025,7 @@ format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
 res19: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p394]
+Some([p386]
 :-
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
@@ -1121,33 +1121,17 @@ and congruences) from veriT's proof output:
 \begin{clilisting}[VeriT.isInstalled]
 gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
-[p8] ETWeakQuantifier(∀x ∀y (x = y ⊃ y = x), a, p7)
-[p7] ETWeakQuantifier(∀y (a = y ⊃ y = a), b, p3, c, p6)
-[p6] ETImp(p4, p5)
-[p5] ETAtom(c = a, false)
-[p4] ETAtom(a = c, true)
-[p3] ETImp(p1, p2)
-[p2] ETAtom(b = a, false)
-[p1] ETAtom(a = b, true)
-,
-[p13] ETWeakQuantifier(∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1)), b, p6, c, p12)
-[p12] ETWeakQuantifier(∀y1 (c = y1 ∧ P(c) ⊃ P(y1)), a, p11)
-[p11] ETImp(p9, p10)
-[p10] ETAtom(P(a): o, false)
-[p9] ETAnd(p7, p8)
-[p8] ETAtom(P(c): o, true)
-[p7] ETAtom(c = a, true)
-[p6] ETWeakQuantifier(∀y1 (b = y1 ∧ P(b) ⊃ P(y1)), a, p5)
-[p5] ETImp(p3, p4)
-[p4] ETAtom(P(a): o, false)
-[p3] ETAnd(p1, p2)
-[p2] ETAtom(P(b): o, true)
-[p1] ETAtom(b = a, true)
-
+∀x ∀y (x = y ⊃ y = x)
+  +^{a}
+    (∀y (a = y ⊃ y = a)
+      +^{b} ((a = b)+ ⊃ (b = a)-)
+      +^{c} ((a = c)+ ⊃ (c = a)-)),
+∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1))
+  +^{b} (∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-))
+  +^{c} (∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-))
 :-
-[p9] ETImp(p7, p8)
-[p8] ETAtom(P(a): o, true)
-[p7...
+(((a = b)- ∨ (a = c)-) ∧ P(c)-) ∧ P(b)- ⊃ P(a)+
+
 gapt> extractInstances(expansionProof) foreach println
 a = b ⊃ b = a
 a = c ⊃ c = a
@@ -1202,19 +1186,12 @@ Some([p11] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (Contracti
 [p4] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :...
 gapt> Prover9 getExpansionProof sequent
 res28: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some([p1] ETAtom(p(0): o, false)
-,
-[p7] ETWeakQuantifier(∀x (p(x) ⊃ p(s(x))), 0, p3, s(0), p6)
-[p6] ETImp(p4, p5)
-[p5] ETAtom(p(s(s(0))): o, false)
-[p4] ETAtom(p(s(0)): o, true)
-[p3] ETImp(p1, p2)
-[p2] ETAtom(p(s(0)): o, false)
-[p1] ETAtom(p(0): o, true)
-
+Some(p(0)-,
+∀x (p(x) ⊃ p(s(x)))
+  +^{0} (p(0)+ ⊃ p(s(0))-)
+  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
 :-
-[p1] ETAtom(p(s(s(0))): o, true)
-)
+p(s(s(0)))+)
 
 \end{clilisting}
 
@@ -1244,14 +1221,8 @@ gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
 res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
-[p7] ETImp(p3, p6)
-[p6] ETSkolemQuantifier(∀y ∃x p(x, y), s_1, ∀y ∃x p(x, y), p5)
-[p5] ETWeakQuantifier(∃x p(x, s_1), s_0, p4)
-[p4] ETAtom(p(s_0, s_1): o, true)
-[p3] ETSkolemQuantifier(∃x ∀y p(x, y), s_0, ∃x ∀y p(x, y), p2)
-[p2] ETWeakQuantifier(∀y p(s_0, y), s_1, p1)
-[p1] ETAtom(p(s_0, s_1): o, false)
-)
+∃x ∀y p(x, y) +sk^{s_0} (∀y p(s_0, y) +^{s_1} p(s_0, s_1)-) ⊃
+  ∀y ∃x p(x, y) +sk^{s_1} (∃x p(x, s_1) +^{s_0} p(s_0, s_1)+))
 
 \end{clilisting}
 
@@ -1289,13 +1260,13 @@ formula: at.logic.gapt.expr.HOLFormula =
 
 gapt> Escargot getRobinsonProof formula
 res33: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
-Some([p46]  :-     (Resolution(p1, Suc(0), p45, Ant(0)))
-[p45] b + (c + (a + d)) = b + (c + (a + d)) :-     (Paramodulation(p12, Suc(0), p44, Ant(0), λx b + (c + (a + d)) = b + x, true))
-[p44] b + (c + (a + d)) = b + (a + (c + d)) :-     (Paramodulation(p13, Suc(0), p43, Ant(0), λx b + (c + (a + d)) = x, true))
-[p43] b + (c + (a + d)) = a + (b + (c + d)) :-     (Paramodulation(p12, Suc(0), p42, Ant(0), λx b + x = a + (b + (c + d)), true))
-[p42] b + (a + (c + d)) = a + (b + (c + d)) :-     (Paramodulation(p18, Suc(0), p41, Ant(0), λx b + (a + (c + d)) = a + x, true))
-[p41] b + (a + (c + d)) = a + (d + (b + c)) :-     (Paramodulation(p19, Suc(0), p40, Ant(0), λx b + (a + (c + d)) = a + (d + x), false))
-[p40] b + (a + (c + d)...
+Some([p40]  :-     (Resolution(p1, Suc(0), p39, Ant(0)))
+[p39] b + (c + (a + d)) = b + (c + (a + d)) :-     (Paramodulation(p3, Suc(0), p38, Ant(0), λx b + (c + (a + d)) = b + (c + x), false))
+[p38] b + (c + (a + d)) = b + (c + (d + a)) :-     (Paramodulation(p13, Suc(0), p37, Ant(0), λx b + (c + (a + d)) = x, true))
+[p37] b + (c + (a + d)) = c + (b + (d + a)) :-     (Paramodulation(p14, Suc(0), p36, Ant(0), λx b + (c + (a + d)) = c + x, true))
+[p36] b + (c + (a + d)) = c + (d + (b + a)) :-     (Paramodulation(p15, Suc(0), p35, Ant(0), λx b + (c + (a + d)) = x, true))
+[p35] b + (c + (a + d)) = d + (c + (b + a)) :-     (Resolution(p18, Suc(0), p34, Ant(0)))
+[p34] d + (c + (b + a)) = b + (c + (a + d)) :-     (Paramodulation(...
 \end{clilisting}
 
 \subsection{Built-in tableaux prover}
@@ -1453,29 +1424,18 @@ For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val expansion = LKToExpansionProof(examples.fol1.proof)
 expansion: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-[p14] ETWeakQuantifier(∀X (X ⊃ X), ∀x ∃y (¬P(x, y) ∨ Q(x, y)), p13)
-[p13] ETImp(p6, p12)
-[p12] ETWeakQuantifier(∀x ∃y (¬P(x, y) ∨ Q(x, y)), b, p11)
-[p11] ETStrongQuantifier(∃y (¬P(b, y) ∨ Q(b, y)), y, p10)
-[p10] ETOr(p8, p9)
-[p9] ETAtom(Q(b, y): o, false)
-[p8] ETNeg(p7)
-[p7] ETAtom(P(b, y): o, true)
-[p6] ETStrongQuantifier(∀x ∃y (¬P(x, y) ∨ Q(x, y)), x, p5)
-[p5] ETWeakQuantifier(∃y (¬P(x, y) ∨ Q(x, y)), a, p4)
-[p4] ETOr(p2, p3)
-[p3] ETAtom(Q(x, a): o, true)
-[p2] ETNeg(p1)
-[p1] ETAtom(P(x, a): o, false)
-,
-[p5] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ Q(x, y)), x, p4)
-[p4] ETWeakQuantifier(∀y (P(x, y) ⊃ Q(x, y)), a, p3)
-[p3] ETImp(p1, p2)
-[p2] ETAtom(Q(x, a): o, false)
-[p1] ETAtom(P(x, a): o, true)
-
+∀X (X ⊃ X)
+  +^{∀x ∃y (¬P(x, y) ∨ Q(x, y))}
+    (∀x ∃y (¬P(x, y) ∨ Q(x, y)) +ev^{x}
+        (∃y (¬P(x, y) ∨ Q(x, y)) +^{a} (¬P(x, a)- ∨ Q(x, a)+)) ⊃
+      ∀x ∃y (¬P(x, y) ∨ Q(x, y))
+        +^{b} (∃y (¬P(b, y) ∨ Q(b, y)) +ev^{y} (¬P(b, y)+ ∨ Q(b, y)-))),
+∀x ∀y (P(x, y) ⊃ Q(x, y))
+  +^{x} (∀y (P(x, y) ⊃ Q(x, y)) +^{a} (P(x, a)+ ⊃ Q(x, a)-))
 :-
-[p7] ETWeakQuantifier(∃x ∃y ...
+∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+  +^{b} (∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{y} (¬Q(b, y)+ ⊃ ¬P(b, y)-))
+
 \end{clilisting}
 
 The expansion proof returned by \cli{LKToExpansionProof} contains the
@@ -1511,20 +1471,11 @@ in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
 res38: at.logic.gapt.proofs.expansion.ExpansionProof =
-[p5] ETWeakQuantifier(∀x ∀y (P(x, y) ⊃ Q(x, y)), b, p4)
-[p4] ETWeakQuantifier(∀y (P(b, y) ⊃ Q(b, y)), a, p3)
-[p3] ETImp(p1, p2)
-[p2] ETAtom(Q(b, a): o, false)
-[p1] ETAtom(P(b, a): o, true)
-
+∀x ∀y (P(x, y) ⊃ Q(x, y))
+  +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
 :-
-[p7] ETWeakQuantifier(∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, p6)
-[p6] ETWeakQuantifier(∃y (¬Q(b, y) ⊃ ¬P(b, y)), a, p5)
-[p5] ETImp(p2, p4)
-[p4] ETNeg(p3)
-[p3] ETAtom(P(b, a): o, false)
-[p2] ETNeg(p1)
-[p1] ETAtom(Q(b, a): o, true)
+∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+  +^{b} (∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{a} (¬Q(b, a)+ ⊃ ¬P(b, a)-))
 
 \end{clilisting}
 
@@ -1616,19 +1567,26 @@ gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-[p19] ETWeakQuantifier(∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)), M(s(M(v100, v101)), v102), p3, M(s(M(M(v100, v101), s(M(v100, v101)))), v102), p6, M(s(M(v100, v101)), s(M(s(M(v100, v101)), v102))), p9, M(
-  s(M(M(v100, v101), s(M(v100, v101)))),
-  s(M(s(M(M(v100, v101), s(M(v100, v101)))), v102))), p12, M(v100, v101), p15, M(M(v100, v101), s(M(v100, v101))), p18)
-[p18] ETOr(p16, p17)
-[p17] ETAtom(f(M(M(v100, v101), s(M(v100, v101)))) = s(0), false)
-[p16] ETAtom(f(M(M(v100, v101), s(M(v100, v101)))) = 0, false)
-[p15] ETOr(p13, p14)
-[p14] ETAtom(f(M(v100, v101)) = s(0), false)
-[p13] ETAtom(f(M(v100, v101)) = 0, false)
-[p12] ETOr(p10, p11)
-[p11] ETAtom(f(M(
-      s(M(M(v100, v101), s(M(v100, v101)))),
-      s(M(s(M(M(v100, v101), s(M(v10...
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
+  +^{M(
+      s(M(v100, s(M(s(M(v100, v101)), v1)))),
+      s(M(s(M(v100, v101)), v1)))}
+    ((f(M(
+            s(M(v100, s(M(s(M(v100, v101)), v1)))),
+            s(M(s(M(v100, v101)), v1)))) =
+        0)- ∨
+      (f(M(
+            s(M(v100, s(M(s(M(v100, v101)), v1)))),
+            s(M(s(M(v100, v101)), v1)))) =
+        s(0))-)
+  +^{M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))}
+    ((f(M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))) = 0)- ∨
+      (f(M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))) = s(0))-)
+  +^{M(s(M(v100, v101)), v1)}
+    ((f(M(s(M(v100, v101)), v1)) = 0)- ∨
+      (f(M(s(M(v100, v101)), v1)) = s(0))-)
+  +^{M(v100, s(M(s(M(v100, v101)), v1)))}
+    ((f(M(v100, s(M(s(...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1773,14 +1731,14 @@ grammar: at.logic.gapt.grammars.TratGrammar =
 Axiom: x0
 Non-terminals: x0, x1, x2
 Productions:
-  x0 -> s(s(s(s(s(s(s(s(s(s(s(s(s(x1)))))))))))))
-  x0 -> s(s(s(s(s(s(s(x1)))))))
+  x0 -> s(s(s(s(s(s(s(s(s(s(x1))))))))))
   x0 -> s(x1)
-  x1 -> s(s(s(s(x2))))
-  x1 -> s(s(x2))
+  x1 -> s(s(s(s(s(s(x2))))))
+  x1 -> s(s(s(x2)))
   x1 -> x2
   x2 -> 0
   x2 -> s(0)
+  x2 -> s(s(0))
 
 gapt> lang.toSet subsetOf grammar.language
 res45: Boolean = true
@@ -1795,8 +1753,7 @@ Axiom: x0
 Non-terminals: x0, x1, x2
 Productions:
   x0 -> s(x1)
-  x1 -> s(s(s(s(x2))))
-  x1 -> s(s(x2))
+  x1 -> s(s(s(x2)))
   x1 -> x2
   x2 -> 0
   x2 -> s(0)
@@ -1862,17 +1819,14 @@ gapt> Prover9 getExpansionProof firstOrderProblem map back
 res48: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
-[p10] ETImp(p8, p9)
-[p9] ETAtom(P(cons(0:nat, cons(s(0): nat, nil:list): list)): o, true)
-[p8] ETAnd(p1, p7)
-[p7] ETWeakQuantifier(∀x ∀y ∀z (P(x:list) ⊃ P(cons(y:nat, cons(z:nat, x): list))), nil:list, p6)
-[p6] ETWeakQuantifier(∀y ∀z (P(nil:list) ⊃ P(cons(y:nat, cons(z:nat, nil): list))), 0:nat, p5)
-[p5] ETWeakQuantifier(∀z (P(nil:list) ⊃ P(cons(0:nat, cons(z:nat, nil): list))), s(0:nat): nat, p4)
-[p4] ETImp(p2, p3)
-[p3] ETAtom(P(cons(0:nat, cons(s(0): nat, nil:list): list)): o, false)
-[p2] ETAtom(P(nil:list): o, true)
-[p1] ETAtom(P(nil:list): o, false)
-)
+P(nil:list)- ∧
+    (∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+      +^{nil}
+        (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
+          +^{0}
+            (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
+            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+  P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
 
