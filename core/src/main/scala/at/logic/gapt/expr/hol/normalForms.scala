@@ -2,7 +2,7 @@ package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
-import at.logic.gapt.utils.dssupport.ListSupport
+import at.logic.gapt.utils.ListSupport
 
 /**
  * Transforms a formula to negation normal form (transforming also

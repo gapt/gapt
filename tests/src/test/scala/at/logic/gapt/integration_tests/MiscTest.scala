@@ -10,12 +10,12 @@ import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, addSymmetry, eliminateCutsET }
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.formats.verit.VeriTParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.maxsat.MaxSat4j
 import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.proofs.ceres._
 import java.io.File.separator
 

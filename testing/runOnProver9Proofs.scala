@@ -1,7 +1,9 @@
-import java.io.{FileWriter, File}
+import java.io.{File, FileWriter}
+
 import at.logic.gapt.proofs.lkOld.base.LKRuleCreationException
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.executionModels.timeout._
+import at.logic.gapt.utils.withTimeout
 
 object runOnProver9Proofs {
   /** The base prover9 path.

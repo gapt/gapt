@@ -4,8 +4,7 @@ import java.io.IOException
 
 import at.logic.gapt.expr.Top
 import at.logic.gapt.formats.dimacs.{ DIMACS, readDIMACS, readDRUP, writeDIMACS }
-import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.{ runProcess, withTempFile }
+import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 
 import scala.io.Source
 

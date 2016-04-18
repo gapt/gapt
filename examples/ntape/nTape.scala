@@ -14,7 +14,7 @@ import at.logic.gapt.proofs.ceres_omega._
 import at.logic.gapt.proofs.resolution.{ Robinson2RalWithAbstractions, RobinsonToLK }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.executionModels.timeout.{ TimeOutException, withTimeout }
+import at.logic.gapt.utils.{ TimeOutException, withTimeout }
 
 import scala.concurrent.duration.Duration
 

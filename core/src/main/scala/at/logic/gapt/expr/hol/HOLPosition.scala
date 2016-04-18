@@ -1,7 +1,8 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.dssupport.ListSupport.pairs
+import at.logic.gapt.utils.ListSupport
+import ListSupport.pairs
 
 object HOLPosition {
   def apply( list: List[Int] ) = new HOLPosition( list )

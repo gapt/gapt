@@ -1,4 +1,4 @@
-package at.logic.gapt.provers.inductionProver
+package at.logic.gapt.provers.viper
 
 import at.logic.gapt.examples._
 import at.logic.gapt.expr.hol.univclosure
@@ -7,7 +7,7 @@ import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
+import at.logic.gapt.provers.viper.SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
 import org.apache.log4j.{ Level, Logger }
 

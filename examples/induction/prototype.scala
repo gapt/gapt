@@ -6,8 +6,8 @@ import at.logic.gapt.expr.hol.{ instantiate, univclosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
-import at.logic.gapt.provers.inductionProver.SimpleInductionProof._
-import at.logic.gapt.provers.inductionProver._
+import at.logic.gapt.provers.viper.SimpleInductionProof._
+import at.logic.gapt.provers.viper._
 import org.apache.log4j.{ Level, Logger }
 
 object prototype extends Script {

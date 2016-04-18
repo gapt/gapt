@@ -3,14 +3,14 @@
  *
  */
 
-package at.logic.gapt.provers.eqProver
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.provers.veriT._
+import at.logic.gapt.provers.smtlib.Z3
+import at.logic.gapt.provers.verit._
 
 /** Use prover9 to get LK proof and Z3 or veriT for validity check. */
 object EquationalProver extends Prover {

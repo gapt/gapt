@@ -4,7 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLPosition
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.utils.dssupport.ListSupport.pairs
+import at.logic.gapt.utils.ListSupport
+import ListSupport.pairs
 
 import scala.collection.mutable
 

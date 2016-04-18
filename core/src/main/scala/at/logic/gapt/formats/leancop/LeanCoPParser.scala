@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.leanCoP
+package at.logic.gapt.formats.leancop
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._

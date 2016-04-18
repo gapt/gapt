@@ -1,4 +1,4 @@
-package at.logic.gapt.utils.traits
+package at.logic.gapt.utils
 
 trait ExternalProgram {
 

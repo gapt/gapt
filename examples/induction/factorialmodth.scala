@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.provers.OneShotProver
-import at.logic.gapt.provers.inductionProver._
+import at.logic.gapt.provers.viper._
 import SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
 import org.apache.log4j.{ Logger, Level }

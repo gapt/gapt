@@ -1,10 +1,10 @@
 
-package at.logic.gapt.provers.basicProver
+package at.logic.gapt.cutintro
 
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.{ OneShotProver, Prover }
 
 /** Uses our propositional prover to get LK proof andsat4j for validity check */
 object BasicProver extends OneShotProver {

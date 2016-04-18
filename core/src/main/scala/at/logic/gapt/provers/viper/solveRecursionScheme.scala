@@ -1,4 +1,4 @@
-package at.logic.gapt.provers.inductionProver
+package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.skolemize
 import at.logic.gapt.proofs.{ Context, FiniteContext, HOLClause }
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.verit.VeriT
 
 import scala.collection.mutable
 

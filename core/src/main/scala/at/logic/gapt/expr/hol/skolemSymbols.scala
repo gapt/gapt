@@ -5,8 +5,8 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.NameGenerator
-import at.logic.gapt.utils.ds.streams.Definitions._
+import at.logic.gapt.utils.{ StreamUtils, NameGenerator }
+import StreamUtils._
 
 /* The idea of SkolemSymbolFactory is to provide
      a singleton for access to the (global) Skolem symbols.

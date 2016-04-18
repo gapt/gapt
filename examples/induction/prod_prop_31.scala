@@ -1,7 +1,7 @@
 package at.logic.gapt.examples.induction
 import at.logic.gapt.examples.Script
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.provers.inductionProver._
+import at.logic.gapt.provers.viper._
 
 object prod_prop_31 extends Script {
   val tipProblem = TipSmtParser parse

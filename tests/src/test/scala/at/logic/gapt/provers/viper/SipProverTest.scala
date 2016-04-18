@@ -1,4 +1,4 @@
-package at.logic.gapt.provers.inductionProver
+package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils

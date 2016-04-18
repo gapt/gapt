@@ -1,6 +1,6 @@
 import java.io._
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
-import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.formats.verit.VeriTParser
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansionTrees.{compressQuantifiers, minimalExpansionSequent, getStatistics, removeFromExpansionSequent}
 import org.slf4j.LoggerFactory

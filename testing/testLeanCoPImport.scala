@@ -1,8 +1,9 @@
-import java.io.{ File, FileReader }
-import org.slf4j.LoggerFactory
+import java.io.{File, FileReader}
 
+import org.slf4j.LoggerFactory
 import at.logic.gapt.utils.executionModels.timeout._
-import at.logic.gapt.formats.leanCoP._
+import at.logic.gapt.formats.leancop._
+import at.logic.gapt.utils.{TimeOutException, withTimeout}
 
 /**
  * Usage: 

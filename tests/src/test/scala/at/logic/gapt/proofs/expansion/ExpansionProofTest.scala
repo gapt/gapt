@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, SequentMatchers, 
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 

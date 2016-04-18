@@ -5,8 +5,8 @@ import java.io.{ File, FileWriter }
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.babel.BabelParser
-import at.logic.gapt.formats.leanCoP.LeanCoPParser
-import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.formats.leancop.LeanCoPParser
+import at.logic.gapt.formats.verit.VeriTParser
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
@@ -16,7 +16,7 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, RobinsonToLK, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.utils.glob
 

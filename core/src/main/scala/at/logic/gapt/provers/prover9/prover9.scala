@@ -12,8 +12,7 @@ import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.runProcess
+import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 import scala.collection.mutable.ArrayBuffer
 import scala.io.Source

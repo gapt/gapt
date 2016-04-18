@@ -3,9 +3,8 @@ package at.logic.gapt.provers.maxsat
 import java.io.IOException
 
 import at.logic.gapt.expr.FOLAtom
-import at.logic.gapt.formats.dimacs.{ writeWDIMACS, readWDIMACS, DIMACS }
-import at.logic.gapt.utils.{ withTempFile, runProcess }
-import at.logic.gapt.utils.traits.ExternalProgram
+import at.logic.gapt.formats.dimacs.{ DIMACS, readWDIMACS, writeWDIMACS }
+import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 
 class ExternalMaxSATSolver( val command: String* ) extends MaxSATSolver with ExternalProgram {
   protected def runProgram( dimacsInput: String ): String =

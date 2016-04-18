@@ -2,8 +2,7 @@ package at.logic.gapt.testing
 
 import java.io._
 
-import at.logic.gapt.utils.executionModels.timeout.{ TimeOutException, withTimeout }
-import at.logic.gapt.utils.withTempFile
+import at.logic.gapt.utils.{ TimeOutException, withTempFile, withTimeout }
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable

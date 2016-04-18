@@ -4,12 +4,11 @@ import java.io.IOException
 
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tptp.TptpProofParser
-import at.logic.gapt.proofs.resolution.{ fixDerivation, ResolutionProof }
-import at.logic.gapt.proofs.{ HOLClause, FOLClause }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.runProcess
+import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 object Vampire extends Vampire
 class Vampire extends ResolutionProver with ExternalProgram {

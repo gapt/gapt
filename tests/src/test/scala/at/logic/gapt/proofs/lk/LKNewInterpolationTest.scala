@@ -1,11 +1,11 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.cutintro.EquationalProver
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import org.specs2.execute.Success
 import org.specs2.mutable._
-import at.logic.gapt.provers.eqProver.EquationalProver
 
 class LKNewInterpolationTest extends Specification with SequentMatchers {
   "applyInterpolation" should {

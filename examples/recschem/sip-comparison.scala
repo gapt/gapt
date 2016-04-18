@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.{ Ant, Sequent, Suc }
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.time
 
 object sip_comparison extends Script {

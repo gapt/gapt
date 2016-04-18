@@ -1,33 +1,31 @@
 package at.logic.gapt.testing
 
-import at.logic.gapt.expr.{ FOLFunction, EqC, constants }
+import at.logic.gapt.expr.{ EqC, FOLFunction, constants }
 import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.utils.logging.MetricsCollector
-import at.logic.gapt.formats.leanCoP.LeanCoPParser
+import at.logic.gapt.formats.leancop.LeanCoPParser
 import java.io._
+
 import at.logic.gapt.examples._
-import at.logic.gapt.formats.veriT.VeriTParser
+import at.logic.gapt.formats.verit.VeriTParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, simplifyResolutionProof, numberOfLogicalInferencesRes, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToExpansionProof, numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
-import at.logic.gapt.utils.glob
+import at.logic.gapt.utils.{ glob, withTimeout }
 import at.logic.gapt.utils.logging.metrics
-
-import at.logic.gapt.utils.executionModels.timeout._
 import at.logic.gapt.proofs.expansion._
-
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.io.Source
-import scala.util.{ Success, Failure }
+import scala.util.{ Failure, Success }
 
 class MetricsPrinter extends MetricsCollector {
   val data = mutable.Map[String, Any]()

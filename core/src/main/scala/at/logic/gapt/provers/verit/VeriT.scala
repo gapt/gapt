@@ -1,11 +1,10 @@
-package at.logic.gapt.provers.veriT
+package at.logic.gapt.provers.verit
 
 import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.formats.veriT._
+import at.logic.gapt.formats.verit._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.utils.traits.ExternalProgram
-import at.logic.gapt.utils.runProcess
+import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 import java.io._
 
 import at.logic.gapt.provers._

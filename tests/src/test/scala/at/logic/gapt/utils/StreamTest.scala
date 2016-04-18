@@ -2,11 +2,10 @@
  * StreamTest.scala
  */
 
-package at.logic.gapt.utils.ds
+package at.logic.gapt.utils
 
+import at.logic.gapt.utils.StreamUtils._
 import org.specs2.mutable._
-
-import streams.Definitions._
 
 class StreamTest extends Specification {
 

@@ -3,7 +3,8 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemSymbolFactory
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.utils.ds.streams.Definitions._
+import at.logic.gapt.utils.StreamUtils
+import StreamUtils._
 
 object skolemize {
   def apply( formula: HOLFormula, inSuc: Boolean, context: Seq[LambdaExpression], skolemSymbols: Stream[String] ): HOLFormula = formula match {

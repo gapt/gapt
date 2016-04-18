@@ -2,7 +2,7 @@
  * Tests for verit's interface.
 **/
 
-package at.logic.gapt.provers.veriT
+package at.logic.gapt.provers.verit
 
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._

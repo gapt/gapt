@@ -8,8 +8,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.utils.runProcess
-import at.logic.gapt.utils.traits.ExternalProgram
+import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 import org.parboiled2._
 
 import scala.collection.mutable

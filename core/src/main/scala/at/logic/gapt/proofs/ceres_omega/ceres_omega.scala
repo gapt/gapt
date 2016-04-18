@@ -1,13 +1,14 @@
 package at.logic.gapt.proofs.ceres_omega
 
-import at.logic.gapt.expr.hol.{ freeHOVariables, containsQuantifierOnLogicalLevel }
+import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, freeHOVariables }
 import at.logic.gapt.proofs.lksk.LKskProof._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.ceres.Struct
-import at.logic.gapt.utils.dssupport.ListSupport._
-import at.logic.gapt.proofs.{ SequentIndex, Suc, Ant, Sequent }
+import at.logic.gapt.utils.ListSupport._
+import at.logic.gapt.proofs.{ Ant, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.ral._
+import at.logic.gapt.utils.ListSupport
 import at.logic.gapt.utils.logging.Logger
 
 object ceres_omega extends ceres_omega

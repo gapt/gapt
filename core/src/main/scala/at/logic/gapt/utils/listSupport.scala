@@ -3,7 +3,7 @@
  *
  */
 
-package at.logic.gapt.utils.dssupport
+package at.logic.gapt.utils
 
 object ListSupport {
 

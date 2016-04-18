@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.veriT
+package at.logic.gapt.formats.verit
 
 import at.logic.gapt.expr.{ TBase, Const }
 import at.logic.gapt.proofs.HOLSequent

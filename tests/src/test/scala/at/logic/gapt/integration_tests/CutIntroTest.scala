@@ -9,7 +9,6 @@ import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk.{ CutRule, quantRulesNumber }
-import at.logic.gapt.provers.basicProver.BasicProver
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 

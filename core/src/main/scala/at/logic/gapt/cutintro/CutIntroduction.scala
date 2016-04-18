@@ -11,8 +11,6 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.basicProver._
-import at.logic.gapt.provers.eqProver._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.prover9.Prover9

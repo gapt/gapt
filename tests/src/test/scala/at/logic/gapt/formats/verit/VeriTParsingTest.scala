@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.veriT
+package at.logic.gapt.formats.verit
 
 import java.io.InputStreamReader
 

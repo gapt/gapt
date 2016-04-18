@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.prover9._
-import at.logic.gapt.provers.veriT.VeriT
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.proofs.ceres.{ deleteTautologies, _ }
 import at.logic.gapt.examples.prime
 import java.io.File.separator

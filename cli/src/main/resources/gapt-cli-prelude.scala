@@ -7,7 +7,7 @@ import at.logic.gapt.formats.babel.BabelParser.parseFormula
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.formats.tip._
 import at.logic.gapt.formats.tptp._
-import at.logic.gapt.formats.veriT._
+import at.logic.gapt.formats.verit._
 import at.logic.gapt.formats.llk._
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.reduction._
@@ -22,12 +22,12 @@ import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.sat._
 import at.logic.gapt.provers.leancop._
-import at.logic.gapt.provers.inductionProver._
+import at.logic.gapt.provers.viper._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.maxsat._
 import at.logic.gapt.provers.eprover._
 import at.logic.gapt.provers.vampire._
-import at.logic.gapt.provers.veriT._
+import at.logic.gapt.provers.verit._
 import at.logic.gapt.provers.smtlib._
 import at.logic.gapt.provers.escargot._
 import at.logic.gapt.provers.spass._

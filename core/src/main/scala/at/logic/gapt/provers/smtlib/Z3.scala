@@ -3,8 +3,7 @@ package at.logic.gapt.provers.smtlib
 import java.io.IOException
 
 import at.logic.gapt.provers.IncrementalProver
-import at.logic.gapt.utils.runProcess
-import at.logic.gapt.utils.traits.ExternalProgram
+import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 object Z3 extends Z3( "QF_UF" )
 class Z3( val logic: String ) extends IncrementalProver with ExternalProgram {
