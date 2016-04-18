@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.DagProof
 
 import scala.collection.mutable
@@ -13,7 +14,9 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
 
   def apply( pos: HOLPosition ): Set[ExpansionTree] = getAtHOLPosition( this, pos )
 
-  override def toString = treeLike.toString
+  def toSigRelativeString( implicit sig: BabelSignature ) =
+    new ExpansionTreePrettyPrinter( sig ).export( this )
+  override def toString = toSigRelativeString
 }
 
 case class ETWeakening( formula: HOLFormula, polarity: Boolean ) extends ExpansionTree {
