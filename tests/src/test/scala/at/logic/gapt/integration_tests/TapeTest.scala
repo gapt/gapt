@@ -2,13 +2,12 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.expr.{ Eq, FOLAtom }
 import at.logic.gapt.proofs.SequentMatchers
-import at.logic.gapt.proofs.lkOld.deleteTautologies
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.formats.llkNew.LatexLLKExporter
-import at.logic.gapt.proofs.ceres._
+import at.logic.gapt.proofs.ceres.{ deleteTautologies, _ }
 import java.io.File.separator
 
 import at.logic.gapt.examples.tape

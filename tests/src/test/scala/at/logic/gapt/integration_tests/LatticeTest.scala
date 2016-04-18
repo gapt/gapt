@@ -7,7 +7,6 @@ import at.logic.gapt.examples.lattice
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.{ SequentMatchers, HOLClause }
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.lkOld.{ deleteTautologies }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9._

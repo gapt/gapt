@@ -1,8 +1,8 @@
 
-package at.logic.gapt.proofs.lkOld
+package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ Sequent, HOLSequent, HOLClause }
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 
 object deleteTautologies {
   def apply[T]( sequents: Seq[Sequent[T]] ): Seq[Sequent[T]] =

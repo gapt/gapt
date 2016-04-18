@@ -3,9 +3,9 @@
  *
  */
 
-package at.logic.gapt.proofs.lkOld
+package at.logic.gapt.formats.llkNew
 
-import at.logic.gapt.expr.{ rename => renameLambda, Substitution => SubstitutionLambda, _ }
+import at.logic.gapt.expr.{ Substitution => SubstitutionLambda, rename => renameLambda, _ }
 
 //TODO: perhaps there is a better place for this
 object EquationVerifier {

@@ -2,9 +2,8 @@ package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.ceres.{ SimplifyStruct, Struct }
-import at.logic.gapt.proofs.lkOld.subsumedClausesRemoval
-import at.logic.gapt.proofs.lkskNew.LKskProof.{ LabelledSequent, Label }
+import at.logic.gapt.proofs.ceres.{ SimplifyStruct, Struct, subsumedClausesRemoval }
+import at.logic.gapt.proofs.lkskNew.LKskProof.{ Label, LabelledSequent }
 
 import scala.collection.mutable
 

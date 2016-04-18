@@ -1,10 +1,10 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr.hol.freeHOVariables
-import at.logic.gapt.expr.{ Ti, Var, Eq }
+import at.logic.gapt.expr.{ Eq, Ti, Var }
 import at.logic.gapt.formats.llkNew.loadLLK
+import at.logic.gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
-import at.logic.gapt.proofs.lkOld.{ deleteTautologies, subsumedClausesRemoval }
 import at.logic.gapt.proofs.lkskNew.LKskProof
 
 /**

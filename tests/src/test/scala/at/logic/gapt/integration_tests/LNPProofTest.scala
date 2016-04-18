@@ -1,12 +1,10 @@
 package at.logic.gapt.integration_tests
 
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
-import at.logic.gapt.proofs.{ HOLSequent, HOLClause, FOLClause }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, HOLSequent }
 import at.logic.gapt.proofs.ceres_omega._
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize, LKToLKsk }
-import at.logic.gapt.proofs.lkOld.deleteTautologies
-import at.logic.gapt.proofs.ceres.CharacteristicClauseSet
-
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, LKToLKsk, regularize }
+import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, deleteTautologies }
 import at.logic.gapt.examples.{ nTape, primediv }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lkskNew.LKskProof

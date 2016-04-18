@@ -81,7 +81,7 @@ class LLKTest extends Specification {
     }
 
     "correctly infer replacement terms in equalities" in {
-      import at.logic.gapt.proofs.lkOld.EquationVerifier.{ Different, Equal, EqualModuloEquality, checkReplacement }
+      import EquationVerifier.{ Different, Equal, EqualModuloEquality, checkReplacement }
       val List( a ) = List( "a" ) map ( x => Const( x, Ti ) )
       val List( f, g ) = List( "f", "g" ) map ( x => Const( x, Ti -> Ti ) )
       val List( p ) = List( "p" ) map ( x => Const( x, Ti -> ( Ti -> ( Ti -> To ) ) ) )

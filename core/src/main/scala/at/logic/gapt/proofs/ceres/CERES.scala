@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.formats.llkNew.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.proofs.lkOld.{ subsumedClausesRemoval, deleteTautologies }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
 import at.logic.gapt.proofs.HOLSequent

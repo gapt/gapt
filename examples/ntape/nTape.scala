@@ -5,16 +5,17 @@ import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.expr.fol.{ reduceHolToFol, undoHol2Fol, replaceAbstractions }
+import at.logic.gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
 import at.logic.gapt.formats.llkNew.ExtendedProofDatabase
-import at.logic.gapt.proofs.lkOld.subsumedClausesRemoval
+import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
 import at.logic.gapt.proofs.lkskNew.{ LKskProof, LKskToExpansionProof }
-import at.logic.gapt.proofs.{ Sequent, HOLClause }
+import at.logic.gapt.proofs.{ HOLClause, Sequent }
 import at.logic.gapt.proofs.ceres_omega._
-import at.logic.gapt.proofs.resolution.{ RobinsonToLK, Robinson2RalWithAbstractions }
+import at.logic.gapt.proofs.resolution.{ Robinson2RalWithAbstractions, RobinsonToLK }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.executionModels.timeout.{ withTimeout, TimeOutException }
+import at.logic.gapt.utils.executionModels.timeout.{ TimeOutException, withTimeout }
+
 import scala.concurrent.duration.Duration
 
 /**
