@@ -71,15 +71,20 @@ object qbupForRecSchem {
         case Rule( Apps( _, as ), _ ) => as.zipWithIndex.filterNot { _._1.isInstanceOf[Var] }.map { _._2 }
       }.toSeq match {
         case Seq() => Some( nt( args: _* ) )
-        case Seq( idx ) =>
-          val TBase( indTyName ) = argTypes( idx )
-          val Some( Context.InductiveType( indTy, ctrs ) ) = ctx.typeDef( indTyName )
-          for {
-            ctr <- ctrs
-            FunctionType( _, ctrArgTys ) = ctr.exptype
-          } yield nt( args.updated( idx, ctr(
-            ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"y$i", t ) ): _*
-          ) ): _* )
+        case idcs =>
+          val newArgs = for ( ( TBase( indTyName ), idx ) <- argTypes.zipWithIndex ) yield if ( !idcs.contains( idx ) ) List( args( idx ) )
+          else {
+            val TBase( indTyName ) = argTypes( idx )
+            val Some( Context.InductiveType( indTy, ctrs ) ) = ctx.typeDef( indTyName )
+            for {
+              ctr <- ctrs.toList
+              FunctionType( _, ctrArgTys ) = ctr.exptype
+            } yield ctr(
+              ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"y$i", t ) ): _*
+            )
+          }
+          import scalaz._, Scalaz._
+          newArgs.traverse( identity ).map( nt( _: _* ) ): List[LambdaExpression]
       }
     }
 
