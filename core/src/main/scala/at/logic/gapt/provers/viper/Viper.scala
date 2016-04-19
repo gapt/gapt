@@ -3,6 +3,7 @@ package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFp, instantiate, simplify }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
+import at.logic.gapt.grammars.instantiateRS
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
@@ -89,14 +90,23 @@ object Viper {
     val logicalRS = encoding decode rs
     println( s"Logical recursion scheme:\n$logicalRS\n" )
 
-    val inst = randomInstance.generate( paramTypes, 6 to 10 contains _ )
-    val lang = logicalRS.parametricLanguage( inst: _* ) map { _.asInstanceOf[HOLFormula] }
-    println( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}" )
-    require( Z3 isValid Or( lang ), s"Validity for instance ${inst.map( _.toSigRelativeString )}" )
-    if ( false ) {
-      val Some( lk ) = Escargot getLKProof Sequent( lang.toSeq map { case Neg( f ) => ( f, false ) case f => ( f, true ) } )
-      println( "Interpolant of the instance sequent:" )
-      println( simplify( ExtractInterpolant( lk, lk.conclusion.map( _ => false, _ => true ) )._3 ).toSigRelativeString )
+    def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
+    val failedInstOption = ( 0 to 20 ).view.
+      map { _ => randomInstance.generate( paramTypes, 6 to 10 contains _ ) }.
+      distinct.
+      filterNot { inst =>
+        val ok = checkInst( inst )
+        println( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
+        ok
+      }.headOption
+    failedInstOption foreach { failedInst =>
+      import scalaz._, Scalaz._
+      val mininmalCounterExample = failedInst.toList.
+        traverse( i => instantiateRS.subTerms( i ).filter( _.exptype == i.exptype ).toList ).
+        filterNot { i => Z3 isValid Or( logicalRS.parametricLanguage( i: _* ) ) }.
+        minBy { _ map { expressionSize( _ ) } sum }
+      println( s"Minimal counterexample: ${mininmalCounterExample.map { _.toSigRelativeString }}" )
+      require( false )
     }
     println()
 
