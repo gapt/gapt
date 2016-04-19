@@ -90,6 +90,8 @@ class TipSmtParser {
 
   def parseExpression( sexp: SExpression, freeVars: Map[String, LambdaExpression] ): LambdaExpression = sexp match {
     case LAtom( name ) if freeVars contains name => freeVars( name )
+    case LAtom( "false" )                        => Bottom()
+    case LAtom( "true" )                         => Top()
     case LAtom( name )                           => funDecls( name )
     case LFun( "forall", LList( varNames @ _* ), formula ) =>
       val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
