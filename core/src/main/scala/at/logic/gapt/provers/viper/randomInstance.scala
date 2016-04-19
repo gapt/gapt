@@ -33,7 +33,7 @@ object randomInstance {
     case Apps( _, as ) => 1 + as.map( exprSize ).sum
   }
 
-  def generate( tys: Seq[TBase], cond: Int => Boolean )( implicit ctx: Context ): Seq[LambdaExpression] =
-    Stream.continually( generate( tys ) ).filter( insts => cond( insts.map( exprSize ).sum ) ).head
+  def generate( tys: Seq[TBase], cond: Float => Boolean )( implicit ctx: Context ): Seq[LambdaExpression] =
+    Stream.continually( generate( tys ) ).filter( insts => cond( insts.map( exprSize ).sum.toFloat / insts.size ) ).head
 
 }
