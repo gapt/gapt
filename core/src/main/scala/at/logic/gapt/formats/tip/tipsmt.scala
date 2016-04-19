@@ -99,9 +99,8 @@ class TipSmtParser {
       All.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "=", sexps @ _* ) =>
       val exprs = sexps map { parseExpression( _, freeVars ) }
-      if ( exprs.head.exptype == To )
-        exprs reduce { _ <-> _ }
-      else exprs reduce { Eq( _, _ ) }
+      And( for ( ( a, b ) <- exprs zip exprs.tail )
+        yield if ( exprs.head.exptype == To ) a <-> b else a === b )
     case LFun( "and", sexps @ _* ) => And( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
     case LFun( "or", sexps @ _* )  => Or( sexps map { parseExpression( _, freeVars ).asInstanceOf[HOLFormula] } )
     case LFun( "not", sexp_ )      => Neg( parseExpression( sexp_, freeVars ) )
