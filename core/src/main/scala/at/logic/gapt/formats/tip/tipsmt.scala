@@ -141,7 +141,8 @@ object TipSmtParser {
         "--uncurry-theory",
         "--let-lift"
       ),
-      contents
+      contents,
+      catchStderr = true
     ) )
 
   def fixupAndParseFile( filename: String ): TipProblem =
