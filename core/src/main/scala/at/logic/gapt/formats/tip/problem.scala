@@ -22,17 +22,22 @@ case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
 
 case class TipFun( fun: Const, definitions: Seq[HOLFormula] )
 
-case class TipProblem( sorts: Seq[TBase], datatypes: Seq[TipDatatype], functions: Seq[TipFun], goal: HOLFormula ) {
+case class TipProblem(
+    sorts: Seq[TBase], datatypes: Seq[TipDatatype],
+    uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
+    assumptions: Seq[HOLFormula], goal: HOLFormula
+) {
   def toSequent = existsclosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
       functions.flatMap( _.definitions ) ++:
+      assumptions ++:
       Sequent()
       :+ goal
   )
 
   def context =
     FiniteContext(
-      constants = Set() ++ functions.map { _.fun } ++
+      constants = Set() ++ uninterpretedConsts ++ functions.map { _.fun } ++
       datatypes.flatMap { _.constructors }.flatMap { c => c.projectors :+ c.constr },
       definitions = Map(),
       typeDefs = Set() ++ sorts.map { Context.Sort( _ ) } ++

@@ -17,6 +17,7 @@ class TipSmtParser {
 
   val datatypes = mutable.Buffer[TipDatatype]()
   val functions = mutable.Buffer[TipFun]()
+  val assumptions = mutable.Buffer[HOLFormula]()
   val goals = mutable.Buffer[HOLFormula]()
 
   typeDecls( "Bool" ) = To
@@ -44,7 +45,7 @@ class TipSmtParser {
       declare( funConst )
       functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
     case LFun( "assert", formula ) =>
-      goals += -parseExpression( formula, Map() )
+      assumptions += parseExpression( formula, Map() ).asInstanceOf[HOLFormula]
     case LFun( "assert-not", formula ) =>
       goals += parseExpression( formula, Map() ).asInstanceOf[HOLFormula]
     case LFun( "check-sat" ) => ()
@@ -111,8 +112,10 @@ class TipSmtParser {
 
   def toProblem: TipProblem =
     TipProblem(
-      typeDecls.values.toSeq diff datatypes.map { _.t },
-      datatypes.toSeq, functions.toSeq, And( goals )
+      typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
+      funDecls.values.toSeq diff functions.map { _.fun },
+      functions,
+      assumptions, And( goals )
     )
 }
 
