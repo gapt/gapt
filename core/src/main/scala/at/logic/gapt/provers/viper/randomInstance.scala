@@ -8,7 +8,10 @@ import scala.util.Random
 
 object randomInstance {
 
-  def generate( tys: Seq[TBase] )( implicit ctx: Context ): Seq[LambdaExpression] = tys.map( generate )
+  def generate( tys: Seq[TBase] )( implicit ctx: Context ): Seq[LambdaExpression] = {
+    val nameGen = new NameGenerator( Set() )
+    tys.map( generate( _, nameGen ) )
+  }
   def generate( ty: TBase )( implicit ctx: Context ): LambdaExpression = generate( ty, new NameGenerator( Set() ) )
 
   def generate( ty: TBase, nameGen: NameGenerator )( implicit ctx: Context ): LambdaExpression = {
