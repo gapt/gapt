@@ -97,6 +97,9 @@ class TipSmtParser {
     case LFun( "forall", LList( varNames @ _* ), formula ) =>
       val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
       All.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
+    case LFun( "exists", LList( varNames @ _* ), formula ) =>
+      val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
+      Ex.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "=", sexps @ _* ) =>
       val exprs = sexps map { parseExpression( _, freeVars ) }
       And( for ( ( a, b ) <- exprs zip exprs.tail )
