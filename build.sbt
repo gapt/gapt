@@ -100,6 +100,24 @@ lazy val root = project.in( file( "." ) ).
       "-skip-packages", "scala"
     ),
 
+    scripts := {
+      val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
+        Attributed.data( fullClasspath.in( cli, Compile ).value )
+      ) )
+      def mkScript( file: File, extraArgs: String* ) = {
+        IO.write(
+          file,
+          s"#!/bin/sh\njava ${( runJVMOptions ++ extraArgs ).mkString( " " )} ${"\"$@\""}\n"
+        )
+        file.setExecutable( true )
+      }
+      (
+        mkScript( target.value / "run" ),
+        mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
+        mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" )
+      )
+    },
+
     // Release stuff
     aggregate in assembly := false,
     releaseDist := {
@@ -257,6 +275,8 @@ lazy val testing = project.in( file( "testing" ) ).
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 
 lazy val evalUserManual = TaskKey[Unit]( "eval-user-manual", "Evaluates the snippets in the user manual." )
+
+lazy val scripts = TaskKey[Unit]( "scripts", "Creates scripts in target/" )
 
 def recursiveListFiles( f: File ): Seq[File] =
   if ( f.getName == "target" )
