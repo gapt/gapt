@@ -3,7 +3,7 @@ package at.logic.gapt.formats.tip
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.lisp._
-import at.logic.gapt.utils.runProcess
+import at.logic.gapt.utils.{ NameGenerator, runProcess }
 
 import scala.collection.mutable
 import scala.io.Source
@@ -65,7 +65,19 @@ class TipSmtParser {
 
   def parseFunctionBody( sexp: SExpression, lhs: LambdaExpression, freeVars: Map[String, LambdaExpression] ): Seq[HOLFormula] = sexp match {
     case LFun( "match", LAtom( varName ), cases @ _* ) =>
-      cases flatMap {
+      def handleCase( cas: SExpression ): Seq[HOLFormula] = cas match {
+        case LFun( "case", LAtom( "default" ), body ) =>
+          val coveredConstructors = cases collect {
+            case LFun( "case", LFunOrAtom( constrName, _* ) ) if constrName != "default" =>
+              funDecls( constrName )
+          }
+          val missingConstructors = datatypes.find( _.t == freeVars( varName ).exptype ).get.constructors.map( _.constr ) diff coveredConstructors
+          missingConstructors flatMap { ctr =>
+            val FunctionType( _, ts ) = ctr.exptype
+            val nameGen = new NameGenerator( freeVars.keys )
+            val vs = for ( t <- ts ) yield LAtom( nameGen fresh "x" )
+            handleCase( LFun( "case", LFun( ctr.name, vs: _* ), body ) )
+          }
         case LFun( "case", LFunOrAtom( constrName, argNames @ _* ), body ) =>
           require( freeVars( varName ).isInstanceOf[Var] )
           val constr = funDecls( constrName )
@@ -79,6 +91,7 @@ class TipSmtParser {
             freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v }
           )
       }
+      cases flatMap handleCase
     case LFun( "ite", cond, ifTrue, ifFalse ) =>
       parseFunctionBody( ifFalse, lhs, freeVars ).map( -parseExpression( cond, freeVars ) --> _ ) ++
         parseFunctionBody( ifTrue, lhs, freeVars ).map( parseExpression( cond, freeVars ) --> _ )
