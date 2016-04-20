@@ -136,7 +136,7 @@ object TipSmtParser {
       Seq(
         "tip",
         "--type-skolem-conjecture",
-        "--add-match", "--commute-match",
+        "--commute-match",
         "--lambda-lift", "--axiomatize-lambdas",
         "--monomorphise",
         "--if-to-bool-op",
