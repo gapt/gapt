@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.tip
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.existsclosure
+import at.logic.gapt.expr.hol.{ existsclosure, univclosure }
 import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
@@ -27,9 +27,24 @@ case class TipProblem(
     uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
     assumptions: Seq[HOLFormula], goal: HOLFormula
 ) {
+  def constructorInjectivity =
+    for {
+      TipDatatype( ty, ctrs ) <- datatypes
+      if ty != To // FIXME
+      ( TipConstructor( ctr1, _ ), i1 ) <- ctrs.zipWithIndex
+      ( TipConstructor( ctr2, _ ), i2 ) <- ctrs.zipWithIndex
+      if i1 < i2 // ignore symmetric pairs
+      FunctionType( _, args1 ) = ctr1.exptype
+      FunctionType( _, args2 ) = ctr2.exptype
+    } yield univclosure(
+      ctr1( ( for ( ( t, j ) <- args1.zipWithIndex ) yield Var( s"x$j", t ) ): _* ) !==
+        ctr2( ( for ( ( t, j ) <- args2.zipWithIndex ) yield Var( s"y$j", t ) ): _* )
+    )
+
   def toSequent = existsclosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
       functions.flatMap( _.definitions ) ++:
+      constructorInjectivity ++:
       assumptions ++:
       Sequent()
       :+ goal
