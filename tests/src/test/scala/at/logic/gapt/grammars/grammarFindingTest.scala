@@ -70,7 +70,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
 
   "nfsSubsumedByAU" should {
     "r(x, f(x)) with variables y,z" in {
-      stsSubsumedByAU( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
+      stsSubsumedByLGG( parseTerm( "r(x, f(x))" ), Set( "y", "z" ).map( FOLVar( _ ) ) ) must_==
         Set( "y", "z", "r(y, f(y))", "r(z, f(z))" ).map( parseTerm )
     }
     "many-sorted stable terms" in {
@@ -84,7 +84,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       val yb = Var( "yb", b )
       val yc = Var( "yc", c )
       val yd = Var( "yd", d )
-      stsSubsumedByAU( r( x, f( x ) ), Set( ya1, ya2, yb, yc, yd ) ) must_==
+      stsSubsumedByLGG( r( x, f( x ) ), Set( ya1, ya2, yb, yc, yd ) ) must_==
         Set( yc, r( ya1, f( ya1 ) ), r( ya2, f( ya2 ) ) )
     }
   }

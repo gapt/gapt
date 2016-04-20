@@ -12,47 +12,47 @@ import at.logic.gapt.utils.logging.metrics
 
 import scala.collection.{ GenTraversable, mutable }
 
-object subsetAUs {
+object subsetLGGs {
   def apply( terms: Traversable[LambdaExpression], maxSize: Int ): Set[LambdaExpression] = {
-    val aus = Set.newBuilder[LambdaExpression]
+    val lggs = Set.newBuilder[LambdaExpression]
 
-    def findAUs( currentAU: LambdaExpression, terms: List[LambdaExpression], maxSize: Int ): Unit =
+    def findLGGs( currentLGG: LambdaExpression, terms: List[LambdaExpression], maxSize: Int ): Unit =
       if ( maxSize > 0 && terms.nonEmpty ) {
         val ( t :: rest ) = terms
 
-        val newAU = if ( currentAU == null ) t else antiUnifier( currentAU, t )._1
-        aus += newAU
-        if ( !newAU.isInstanceOf[Var] ) findAUs( newAU, rest, maxSize - 1 )
+        val newLGG = if ( currentLGG == null ) t else leastGeneralGeneralization( currentLGG, t )._1
+        lggs += newLGG
+        if ( !newLGG.isInstanceOf[Var] ) findLGGs( newLGG, rest, maxSize - 1 )
 
-        findAUs( currentAU, rest, maxSize )
+        findLGGs( currentLGG, rest, maxSize )
       }
 
-    findAUs( null, terms.toList, maxSize )
+    findLGGs( null, terms.toList, maxSize )
 
-    aus.result()
+    lggs.result()
   }
 }
 
-object stsSubsumedByAU {
-  def apply( au: LambdaExpression, nts: Set[Var] ): Set[LambdaExpression] = apply( au, nts, nts,
-    LambdaPosition.getPositions( au, _.exptype.isInstanceOf[TBase] ).
-      groupBy( au( _ ) ).toList.
+object stsSubsumedByLGG {
+  def apply( lgg: LambdaExpression, nts: Set[Var] ): Set[LambdaExpression] = apply( lgg, nts, nts,
+    LambdaPosition.getPositions( lgg, _.exptype.isInstanceOf[TBase] ).
+      groupBy( lgg( _ ) ).toList.
       sortBy { case ( st, _ ) => expressionSize( st ) }.
       map( _._2 ) )
 
-  private def apply( au: LambdaExpression, ntsToDo: Set[Var], nts: Set[Var], allPositions: List[List[LambdaPosition]] ): Set[LambdaExpression] = allPositions match {
+  private def apply( lgg: LambdaExpression, ntsToDo: Set[Var], nts: Set[Var], allPositions: List[List[LambdaPosition]] ): Set[LambdaExpression] = allPositions match {
     case positions :: otherPositions =>
-      positions.flatMap { au.get( _ ) }.headOption.
+      positions.flatMap { lgg.get( _ ) }.headOption.
         filterNot( freeVariables( _ ) subsetOf nts ).
         map { st =>
           ntsToDo filter { _.exptype == st.exptype } flatMap { nt =>
-            var generalization = au
+            var generalization = lgg
             for ( pos <- positions ) generalization = generalization.replace( pos, nt )
             apply( generalization, ntsToDo - nt, nts, otherPositions )
           }
-        }.getOrElse( Set() ) ++ apply( au, ntsToDo, nts, otherPositions )
-    case Nil if freeVariables( au ) subsetOf nts => Set( au )
-    case _                                       => Set()
+        }.getOrElse( Set() ) ++ apply( lgg, ntsToDo, nts, otherPositions )
+    case Nil if freeVariables( lgg ) subsetOf nts => Set( lgg )
+    case _                                        => Set()
   }
 }
 
@@ -61,8 +61,8 @@ object stableTerms {
     apply( lang: Traversable[LambdaExpression], nonTerminals ).map( _.asInstanceOf[FOLTerm] )
 
   def apply( lang: Traversable[LambdaExpression], nonTerminals: Seq[Var] ): Set[LambdaExpression] = {
-    val antiUnifiers = subsetAUs( lang, nonTerminals.size + 1 )
-    antiUnifiers flatMap { au => stsSubsumedByAU( au, nonTerminals.toSet ) }
+    val lggs = subsetLGGs( lang, nonTerminals.size + 1 )
+    lggs flatMap { stsSubsumedByLGG( _, nonTerminals.toSet ) }
   }
 }
 

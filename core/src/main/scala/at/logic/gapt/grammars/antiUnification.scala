@@ -8,18 +8,18 @@ import scala.collection.mutable
  * Computes the minimum of two terms in the subsumption lattice,
  * together with the substitutions witnessing the subsumption.
  */
-object antiUnifier {
+object leastGeneralGeneralization {
   def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
     val vars = mutable.Map[( LambdaExpression, LambdaExpression ), Var]()
     val subst1 = mutable.Map[Var, LambdaExpression]()
     val subst2 = mutable.Map[Var, LambdaExpression]()
 
     var i = 0
-    def au( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
+    def lgg( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b
       if ( fa.isInstanceOf[Const] && fa == fb ) {
-        fa( ( as, bs ).zipped map au: _* )
+        fa( ( as, bs ).zipped map lgg: _* )
       } else {
         vars.getOrElseUpdate( a -> b, {
           i = i + 1
@@ -31,7 +31,7 @@ object antiUnifier {
       }
     }
 
-    ( au( a, b ), subst1, subst2 )
+    ( lgg( a, b ), subst1, subst2 )
   }
 }
 
@@ -40,13 +40,13 @@ object antiUnifier {
  * terms with at most one free variable, together with the substitutions
  * witnessing the subsumption.
  */
-object antiUnifier1 {
+object leastGeneralGeneralization1 {
   def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
-    def au( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
+    def lgg( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b
       if ( fa.isInstanceOf[Const] && fa == fb ) {
-        val ( as_, s_ ) = ( as, bs ).zipped.map( au ).unzip
+        val ( as_, s_ ) = ( as, bs ).zipped.map( lgg ).unzip
         if ( s_.flatten.distinct.size <= 1 ) {
           ( fa( as_ : _* ), s_.flatten.headOption )
         } else {
@@ -57,7 +57,7 @@ object antiUnifier1 {
       }
     }
 
-    au( a, b ) match {
+    lgg( a, b ) match {
       case ( au1, None ) => ( au1, Map(), Map() )
       case ( au1, Some( ( substA, substB ) ) ) =>
         val v = freeVariables( au1 ).head

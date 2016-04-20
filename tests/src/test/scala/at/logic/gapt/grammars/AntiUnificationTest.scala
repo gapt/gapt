@@ -9,7 +9,7 @@ class AntiUnificationTest extends Specification {
     "compute au of first-order terms" in {
       val c = FOLConst( "c" )
       val d = FOLConst( "d" )
-      val au = antiUnifier( FOLFunction( "f", c, c ), FOLFunction( "f", d, d ) )._1
+      val au = leastGeneralGeneralization( FOLFunction( "f", c, c ), FOLFunction( "f", d, d ) )._1
       val x = FOLVar( "x" )
       Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, FOLFunction( "f", x, x ) )
     }
@@ -22,7 +22,7 @@ class AntiUnificationTest extends Specification {
       val t = Const( "t", tree )
       val s = Const( "s", tree )
 
-      val au = antiUnifier( node( a, t, t ), node( a, s, s ) )._1
+      val au = leastGeneralGeneralization( node( a, t, t ), node( a, s, s ) )._1
 
       val x = Var( "x", tree )
       Abs( freeVariables( au ).toSeq, au ) must_== Abs( x, node( a, x, x ) )
@@ -31,7 +31,7 @@ class AntiUnificationTest extends Specification {
     "terms with free variables" in {
       val a = le"f(x1, c)"
       val b = le"f(x1, d)"
-      val ( au, s1, s2 ) = antiUnifier( a, b )
+      val ( au, s1, s2 ) = leastGeneralGeneralization( a, b )
       Substitution( s1 )( au ) must_== a
       Substitution( s2 )( au ) must_== b
     }
@@ -41,7 +41,7 @@ class AntiUnificationTest extends Specification {
     "terms with free variables" in {
       val a = le"f(x, c)"
       val b = le"f(x, d)"
-      val ( au, s1, s2 ) = antiUnifier1( a, b )
+      val ( au, s1, s2 ) = leastGeneralGeneralization1( a, b )
       Substitution( s1 )( au ) must_== a
       Substitution( s2 )( au ) must_== b
     }

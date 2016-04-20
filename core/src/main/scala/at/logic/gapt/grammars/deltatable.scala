@@ -19,25 +19,25 @@ object deltaTableAlgorithm {
 
     def populate(
       remainingTerms: List[LambdaExpression],
-      currentAU:      LambdaExpression,
+      currentLGG:     LambdaExpression,
       currentCover:   Set[LambdaExpression],
       currentSubst:   Set[Substitution]
     ): Unit = if ( remainingTerms.nonEmpty ) {
       val ( newTerm :: rest ) = remainingTerms
 
-      val ( newAU, substCurAU, substNewTerm ) =
-        if ( currentAU == null ) ( newTerm, Map[Var, LambdaExpression](), Map[Var, LambdaExpression]() )
-        else if ( singleVariable ) antiUnifier1( currentAU, newTerm )
-        else antiUnifier( currentAU, newTerm )
+      val ( newLGG, substCurLGG, substNewTerm ) =
+        if ( currentLGG == null ) ( newTerm, Map[Var, LambdaExpression](), Map[Var, LambdaExpression]() )
+        else if ( singleVariable ) leastGeneralGeneralization1( currentLGG, newTerm )
+        else leastGeneralGeneralization( currentLGG, newTerm )
 
-      if ( !newAU.isInstanceOf[Var] && maxArity.forall { substCurAU.size <= _ } ) {
-        val newSubst = currentSubst.map { subst => Substitution( substCurAU mapValues { subst( _ ) } ) } + Substitution( substNewTerm )
+      if ( !newLGG.isInstanceOf[Var] && maxArity.forall { substCurLGG.size <= _ } ) {
+        val newSubst = currentSubst.map { subst => Substitution( substCurLGG mapValues { subst( _ ) } ) } + Substitution( substNewTerm )
         val newCover = currentCover + newTerm
-        deltatable( newSubst ) ::= ( newAU -> newCover )
-        populate( rest, newAU, newCover, newSubst )
+        deltatable( newSubst ) ::= ( newLGG -> newCover )
+        populate( rest, newLGG, newCover, newSubst )
       }
 
-      populate( rest, currentAU, currentCover, currentSubst )
+      populate( rest, currentLGG, currentCover, currentSubst )
     }
 
     populate( termSet.toList, null, Set(), Set() )
