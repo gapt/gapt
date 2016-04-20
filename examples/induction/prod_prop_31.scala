@@ -19,5 +19,5 @@ object prod_prop_31 extends Script {
   (check-sat)
 """
 
-  Viper solve tipProblem
+  Viper.solve( tipProblem, ViperOptions.parse( Map() ) )
 }

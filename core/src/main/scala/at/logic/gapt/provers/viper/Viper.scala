@@ -12,12 +12,42 @@ import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
+import at.logic.gapt.provers.viper.ViperOptions.FloatRange
 
-import scala.io.StdIn
+import scala.io.{ Source, StdIn }
+import scala.runtime.RichFloat
+
+case class ViperOptions(
+  instanceNumber:  Int,
+  instanceSize:    FloatRange,
+  quantTys:        Option[Seq[TBase]],
+  tautCheckNumber: Int,
+  tautCheckSize:   FloatRange,
+  canSolSize:      FloatRange
+)
+object ViperOptions {
+  type FloatRange = ( Float, Float )
+
+  private def parseRange( ran: String ): FloatRange = {
+    val Seq( from, to ) = ran.split( "," ).toSeq
+    from.toFloat -> to.toFloat
+  }
+
+  def parse( opts: Map[String, String] ) =
+    ViperOptions(
+      instanceNumber = opts.getOrElse( "instnum", "4" ).toInt,
+      instanceSize = parseRange( opts.getOrElse( "instsize", "0,5" ) ),
+      quantTys = opts.get( "qtys" ).map( _.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ),
+      tautCheckNumber = opts.getOrElse( "tchknum", "20" ).toInt,
+      tautCheckSize = parseRange( opts.getOrElse( "tchksize", "6,10" ) ),
+      canSolSize = parseRange( opts.getOrElse( "cansolsize", "3,5" ) )
+    )
+
+}
 
 object Viper {
 
-  def solve( problem: TipProblem ): LambdaExpression = {
+  def solve( problem: TipProblem, options: ViperOptions ): LambdaExpression = {
     implicit var ctx = problem.context
 
     val sequent @ Sequent( theory, Seq( All.Block( vs, _ ) ) ) = problem.toSequent
@@ -26,13 +56,17 @@ object Viper {
 
     val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
 
-    val pi1QTys = ctx.typeDefs.toSeq collect {
-      case InductiveType( ty, _ ) if ty != To => ty
+    val pi1QTys = options.quantTys getOrElse {
+      ctx.typeDefs.toSeq collect {
+        case InductiveType( ty, _ ) if ty != To => ty
+      }
     }
 
+    def inside( range: FloatRange ) = ( f: Float ) => range._1 <= f && f <= range._2
+
     var instances = Set[Seq[LambdaExpression]]()
-    while ( instances.size < 4 ) {
-      instances += randomInstance.generate( paramTypes, 0 to 5 contains _ )
+    while ( instances.size < options.instanceNumber ) {
+      instances += randomInstance.generate( paramTypes, inside( options.instanceSize ) )
     }
     println( "Instances:" )
     for ( inst <- instances )
@@ -91,8 +125,8 @@ object Viper {
     println( s"Logical recursion scheme:\n$logicalRS\n" )
 
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
-    val failedInstOption = ( 0 to 20 ).view.
-      map { _ => randomInstance.generate( paramTypes, 6 to 10 contains _ ) }.
+    val failedInstOption = ( 0 to options.tautCheckNumber ).view.
+      map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize ) ) }.
       distinct.
       filterNot { inst =>
         val ok = checkInst( inst )
@@ -113,7 +147,7 @@ object Viper {
     val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
     println( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
-    val canSolInst = randomInstance.generate( paramTypes, 3 to 5 contains _ )
+    val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
     println( s"Canonical solution at G($canSolInst,w):" )
     val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
     val canSol = And( logicalRS generatedTerms G_( canSolInst: _* )( ws: _* ) map { -_ } )
@@ -130,11 +164,32 @@ object Viper {
     solution
   }
 
-  def main( args: Array[String] ): Unit = args match {
-    case Array( fn ) =>
-      solve( TipSmtParser fixupAndParseFile fn )
-    case Array() =>
-      solve( TipSmtParser fixupAndParse Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString )
+  val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,]*)\s*""".r
+  def extractOptions( tipSmtCode: String ) =
+    tipSmtCode.split( "\n" ).collect {
+      case optionRegex( k, v ) => ( k, v )
+    }
+  def parseCode( tipSmtCode: String, options: Map[String, String] ): ( TipProblem, ViperOptions ) = {
+    val options_ = options ++ extractOptions( tipSmtCode )
+    val problem =
+      if ( options_ contains "nofixup" ) TipSmtParser parse tipSmtCode
+      else TipSmtParser fixupAndParse tipSmtCode
+    ( problem, ViperOptions parse options_ )
+  }
+  val cmdLineOptRegex = """--([a-z]+)=(.*)""".r
+  def parseArgs( args: Seq[String], options: Map[String, String] ): ( TipProblem, ViperOptions ) =
+    args match {
+      case Seq() =>
+        parseCode( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString, options )
+      case Seq( fn ) =>
+        parseCode( Source fromFile fn mkString, options )
+      case cmdLineOptRegex( k, v ) +: rest =>
+        parseArgs( rest, options + ( k -> v ) )
+    }
+
+  def main( args: Array[String] ): Unit = {
+    val ( problem, options ) = parseArgs( args, Map() )
+    solve( problem, options )
   }
 
 }

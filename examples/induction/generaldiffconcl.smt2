@@ -1,3 +1,5 @@
+; viper qtys witness
+
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (declare-sort witness 0)
@@ -10,8 +12,9 @@
   (=> (and (P x (f y)) (P x (g y))) (P (s x) y))))
 
 (declare-fun Q (nat) Bool)
-(assert (forall ((x nat) (y witness))
-  (=> (P x y) (Q x))))
+(declare-const c witness)
+(assert (forall ((x nat))
+  (=> (P x c) (Q x))))
 
 (assert-not (forall ((x nat)) (Q x)))
 (check-sat)
