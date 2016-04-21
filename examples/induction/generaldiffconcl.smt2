@@ -1,4 +1,5 @@
 ; viper qtys witness
+; viper cansolsize 2,2
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
