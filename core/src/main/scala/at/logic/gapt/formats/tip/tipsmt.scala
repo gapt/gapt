@@ -152,7 +152,7 @@ object TipSmtParser {
         "--commute-match",
         "--lambda-lift", "--axiomatize-lambdas",
         "--monomorphise",
-        "--if-to-bool-op", "--bool-op-lift",
+        "--if-to-bool-op",
         "--int-to-nat",
         "--uncurry-theory",
         "--let-lift"
