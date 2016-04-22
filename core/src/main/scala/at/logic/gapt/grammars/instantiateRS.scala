@@ -11,7 +11,7 @@ object instantiateRS {
   }
 
   def apply( recursionScheme: RecursionScheme, terms: Set[LambdaExpression] ): RecursionScheme = {
-    val sts = terms.groupBy { _.exptype }
+    val sts = terms.groupBy { _.exptype }.withDefaultValue( Set() )
 
     recursionScheme.copy( rules = recursionScheme.rules flatMap {
       case rule @ Rule( Apps( nt, args ), rhs ) =>
