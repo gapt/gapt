@@ -110,11 +110,11 @@ object qbupForRecSchem {
 
     existsclosure( And( for ( lhs <- lhss ) yield All.Block(
       freeVariables( lhs ) toSeq,
-      And( for {
+      formulaToSequent.pos( And( for {
         Rule( lhs_, rhs ) <- recSchem.rules
         subst <- syntacticMatching( lhs_, lhs )
       } yield convert( subst( rhs ) ) )
-        --> convert( lhs )
+        --> convert( lhs ) ).toImplication
     ) ) )
   }
 }

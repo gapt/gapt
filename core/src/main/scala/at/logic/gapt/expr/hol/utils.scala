@@ -488,7 +488,7 @@ object normalizeFreeVariables {
 /**
  * Removes top-level connectives from a formula.
  */
-object prenexify {
+object formulaToSequent {
   /**
    * Returns a sequent that is equivalent to :- formula.
    */
@@ -496,6 +496,7 @@ object prenexify {
     case Or( a, b )  => pos( a ) ++ pos( b )
     case Imp( a, b ) => neg( a ) ++ pos( b )
     case Neg( a )    => neg( a )
+    case Bottom()    => Sequent()
     case _           => Sequent() :+ formula
   }
   /**
@@ -504,6 +505,7 @@ object prenexify {
   def neg( formula: HOLFormula ): HOLSequent = formula match {
     case And( a, b ) => neg( a ) ++ neg( b )
     case Neg( a )    => pos( a )
+    case Top()       => Sequent()
     case _           => formula +: Sequent()
   }
 }

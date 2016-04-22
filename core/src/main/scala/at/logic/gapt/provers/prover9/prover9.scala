@@ -136,7 +136,7 @@ object Prover9Importer extends ExternalProgram {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
         resProof.inputClauses.map( _.toDisjunction ) ++: Sequent()
       } else {
-        prenexify.pos( tptpEndSequent.toDisjunction )
+        formulaToSequent.pos( tptpEndSequent.toDisjunction )
       }
     }
 
