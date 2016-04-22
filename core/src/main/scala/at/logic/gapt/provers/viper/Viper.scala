@@ -18,15 +18,15 @@ import scala.collection.mutable
 import scala.io.{ Source, StdIn }
 
 case class ViperOptions(
-  instanceNumber:  Int,
-  instanceSize:    FloatRange,
-  instanceProver:  String,
-  quantTys:        Option[Seq[TBase]],
-  tautCheckNumber: Int,
-  tautCheckSize:   FloatRange,
-  canSolSize:      FloatRange,
-  forgetOne:       Boolean,
-  verbose:         Boolean
+  instanceNumber:  Int                = 3,
+  instanceSize:    FloatRange         = ( 0, 3 ),
+  instanceProver:  String             = "spass_nopred",
+  quantTys:        Option[Seq[TBase]] = None,
+  tautCheckNumber: Int                = 20,
+  tautCheckSize:   FloatRange         = ( 6, 10 ),
+  canSolSize:      FloatRange         = ( 2, 4 ),
+  forgetOne:       Boolean            = false,
+  verbose:         Boolean            = true
 )
 object ViperOptions {
   type FloatRange = ( Float, Float )
@@ -36,19 +36,20 @@ object ViperOptions {
     from.toFloat -> to.toFloat
   }
 
-  def parse( opts: Map[String, String] ) =
-    ViperOptions(
-      verbose = opts.getOrElse( "verbose", "true" ).toBoolean,
-      instanceNumber = opts.getOrElse( "instnum", "3" ).toInt,
-      instanceSize = parseRange( opts.getOrElse( "instsize", "0,3" ) ),
-      instanceProver = opts.getOrElse( "instprover", "spass_nopred" ),
-      quantTys = opts.get( "qtys" ).map( _.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ),
-      tautCheckNumber = opts.getOrElse( "tchknum", "20" ).toInt,
-      tautCheckSize = parseRange( opts.getOrElse( "tchksize", "6,10" ) ),
-      canSolSize = parseRange( opts.getOrElse( "cansolsize", "2,4" ) ),
-      forgetOne = opts.getOrElse( "forgetone", "false" ).toBoolean
-    )
+  private def parseAndApply( k: String, v: String, opts: ViperOptions ): ViperOptions = k match {
+    case "verbose"    => opts.copy( verbose = v.toBoolean )
+    case "instnum"    => opts.copy( instanceNumber = v.toInt )
+    case "instsize"   => opts.copy( instanceSize = parseRange( v ) )
+    case "instprover" => opts.copy( instanceProver = v )
+    case "qtys"       => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ) )
+    case "tchknum"    => opts.copy( tautCheckNumber = v.toInt )
+    case "tchksize"   => opts.copy( tautCheckSize = parseRange( v ) )
+    case "cansolsize" => opts.copy( canSolSize = parseRange( v ) )
+    case "forgetone"  => opts.copy( forgetOne = v.toBoolean )
+  }
 
+  def parse( opts: Map[String, String] ) =
+    opts.foldLeft( ViperOptions() )( ( opts_, opt ) => parseAndApply( opt._1, opt._2, opts_ ) )
 }
 
 class Viper( val problem: TipProblem, val options: ViperOptions ) {
