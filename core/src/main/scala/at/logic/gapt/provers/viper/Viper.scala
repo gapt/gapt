@@ -201,7 +201,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     }
     require( Z3 isValid instProof.deep )
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
-    info( instProof.toString )
+    info( instProof.toSigRelativeString )
     info()
 
     instProof
