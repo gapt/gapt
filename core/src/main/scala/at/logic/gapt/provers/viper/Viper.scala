@@ -200,8 +200,8 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
         Escargot.getExpansionProof( instanceSequent ).get
     }
     require( Z3 isValid instProof.deep )
-    info( s"Instances for x = ${inst.map( _.toSigRelativeString )}:" )
-    info( extractInstances( instProof ).map( _.toSigRelativeString ) )
+    info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
+    info( instProof.toString )
     info()
 
     instProof

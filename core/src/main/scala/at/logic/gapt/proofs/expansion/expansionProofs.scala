@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions }
+import at.logic.gapt.formats.babel.BabelSignature
 
 import scala.collection.mutable
 
@@ -83,7 +84,9 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   } yield evInTerm -> ev
   val Right( linearizedDependencyRelation ) = linearizeStrictPartialOrder( eigenVariables, dependencyRelation )
 
-  override def toString = expansionSequent.toString
+  override def toString = toSigRelativeString
+  def toSigRelativeString( implicit sig: BabelSignature ) =
+    expansionSequent.map( _.toSigRelativeString ).toString
 }
 
 case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
