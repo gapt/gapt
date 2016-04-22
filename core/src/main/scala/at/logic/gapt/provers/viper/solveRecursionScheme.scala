@@ -107,7 +107,7 @@ object hSolveQBUP {
     case _ if !containsQuantifierOnLogicalLevel( f ) => Set( f )
   }
 
-  def findConseq( start: HOLFormula, cond: HOLFormula, Xinst: LambdaExpression, subst: Substitution ): Set[HOLFormula] = {
+  def findConseq( start: HOLFormula, cond: HOLFormula, Xinst: LambdaExpression, subst: Substitution, forgetOne: Boolean ): Set[HOLFormula] = {
     val isSolution = mutable.Map[Set[HOLClause], Boolean]()
 
     def checkSol( cnf: Set[HOLClause] ): Unit =
@@ -117,6 +117,7 @@ object hSolveQBUP {
           isSolution( cnf ) = true
           forgetfulPropResolve( cnf ) foreach checkSol
           forgetfulPropParam( cnf ) foreach checkSol
+          if ( forgetOne ) for ( c <- cnf ) checkSol( cnf - c )
         } else {
           isSolution( cnf ) = false
         }
@@ -127,7 +128,7 @@ object hSolveQBUP {
     isSolution collect { case ( sol, true ) => And( sol map { _.toDisjunction } ) } toSet
   }
 
-  def apply( qbupMatrix: HOLFormula, xInst: LambdaExpression, start: HOLFormula ): Option[LambdaExpression] = {
+  def apply( qbupMatrix: HOLFormula, xInst: LambdaExpression, start: HOLFormula, forgetOne: Boolean ): Option[LambdaExpression] = {
     val Apps( x: Var, xInstArgs ) = xInst
     val conjuncts = getConjuncts( qbupMatrix )
 
@@ -140,7 +141,7 @@ object hSolveQBUP {
       }
     } head
 
-    val conseqs = findConseq( start, searchCondition, searchSubst( xInst ), searchSubst )
+    val conseqs = findConseq( start, searchCondition, searchSubst( xInst ), searchSubst, forgetOne )
 
     val xGenArgs = xInstArgs.zipWithIndex.map { case ( a, i ) => Var( s"x$i", a.exptype ) }
     val xGen = x( xGenArgs: _* )

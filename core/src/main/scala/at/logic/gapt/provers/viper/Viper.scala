@@ -3,7 +3,7 @@ package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFp, instantiate, simplify }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.grammars.instantiateRS
+import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, extractInstances }
@@ -23,7 +23,8 @@ case class ViperOptions(
   quantTys:        Option[Seq[TBase]],
   tautCheckNumber: Int,
   tautCheckSize:   FloatRange,
-  canSolSize:      FloatRange
+  canSolSize:      FloatRange,
+  forgetOne:       Boolean
 )
 object ViperOptions {
   type FloatRange = ( Float, Float )
@@ -40,7 +41,8 @@ object ViperOptions {
       quantTys = opts.get( "qtys" ).map( _.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ),
       tautCheckNumber = opts.getOrElse( "tchknum", "20" ).toInt,
       tautCheckSize = parseRange( opts.getOrElse( "tchksize", "6,10" ) ),
-      canSolSize = parseRange( opts.getOrElse( "cansolsize", "3,5" ) )
+      canSolSize = parseRange( opts.getOrElse( "cansolsize", "3,5" ) ),
+      forgetOne = opts.getOrElse( "forgetone", "false" ).toBoolean
     )
 
 }
@@ -154,7 +156,7 @@ object Viper {
     CNFp.toClauseList( canSol ).map { _.map { _.toSigRelativeString } } foreach println
     println()
 
-    val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst: _* )( ws: _* ), canSol )
+    val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst: _* )( ws: _* ), canSol, forgetOne = options.forgetOne )
     println()
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
