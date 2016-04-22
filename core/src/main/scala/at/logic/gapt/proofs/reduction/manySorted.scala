@@ -222,12 +222,14 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       )
   }
 
-  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
-    ExpansionProof( expansionProof.expansionSequent zip endSequent map {
-      case ( et, sh ) =>
-        require( forward( sh, Map[Var, FOLVar]() ) == et.shallow )
-        back( et, sh, Map() )
-    } )
+  def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = {
+    require( expansionProof.shallow isSubsetOf endSequent.map( forward( _, Map[Var, FOLVar]() ) ) )
+    ExpansionProof( for {
+      et <- expansionProof.expansionSequent
+      originalSh <- endSequent.elements
+      if forward( originalSh, Map[Var, FOLVar]() ) == et.shallow
+    } yield back( et, originalSh, Map() ) )
+  }
 
   def back( t: FOLTerm, freeVars: Map[FOLVar, Var] ): LambdaExpression = t match {
     case v: FOLVar                         => freeVars( v )
