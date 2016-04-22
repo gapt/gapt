@@ -526,22 +526,3 @@ object recSchemToVTRATG {
     VectTratGrammar( axiom, nonTerminals, productions )
   }
 }
-
-object qbupForRecSchem {
-  def apply( recSchem: RecursionScheme ): HOLFormula = {
-    def convert( term: LambdaExpression ): HOLFormula = term match {
-      case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
-      case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
-        HOLAtom( Var( s"X_$name", ty )( args: _* ) )
-      case formula => -formula
-    }
-
-    existsclosure( And( recSchem.rules groupBy { _.lhs } map {
-      case ( lhs, rules ) =>
-        All.Block(
-          freeVariables( lhs ) toSeq,
-          And( rules map { _.rhs } map convert toSeq ) --> convert( lhs )
-        )
-    } toSeq ) )
-  }
-}

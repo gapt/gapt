@@ -54,17 +54,9 @@ object simplePi1RecSchemTempl {
   }
 }
 
-object qbupForRecSchem {
-  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): HOLFormula = {
-    def convert( term: LambdaExpression ): HOLFormula = term match {
-      case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
-      case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
-        HOLAtom( Var( s"X_$name", ty )( args: _* ) )
-      case Neg( formula ) => formula
-      case formula        => -formula
-    }
-
-    val lhss = recSchem.nonTerminals flatMap { nt =>
+object canonicalRsLHS {
+  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): Set[LambdaExpression] =
+    recSchem.nonTerminals flatMap { nt =>
       val FunctionType( To, argTypes ) = nt.exptype
       val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x$i", t )
       recSchem.rulesFrom( nt ).flatMap {
@@ -87,6 +79,34 @@ object qbupForRecSchem {
           newArgs.traverse( identity ).map( nt( _: _* ) ): List[LambdaExpression]
       }
     }
+}
+
+object homogenizeRS {
+  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): RecursionScheme = {
+    val lhss = canonicalRsLHS( recSchem )
+    val rules =
+      for {
+        lhs <- lhss
+        r @ Rule( lhs_, rhs ) <- recSchem.rules
+        subst <- syntacticMatching( lhs_, lhs )
+      } yield subst( r )
+    val qfRHSs = rules collect { case Rule( _, rhs ) if freeVariables( rhs ).isEmpty => rhs }
+    val extraRules = for ( lhs <- lhss; rhs <- qfRHSs ) yield Rule( lhs, rhs )
+    recSchem.copy( rules = rules ++ extraRules )
+  }
+}
+
+object qbupForRecSchem {
+  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): HOLFormula = {
+    def convert( term: LambdaExpression ): HOLFormula = term match {
+      case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
+      case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
+        HOLAtom( Var( s"X_$name", ty )( args: _* ) )
+      case Neg( formula ) => formula
+      case formula        => -formula
+    }
+
+    val lhss = canonicalRsLHS( recSchem )
 
     existsclosure( And( for ( lhs <- lhss ) yield All.Block(
       freeVariables( lhs ) toSeq,

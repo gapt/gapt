@@ -123,7 +123,7 @@ object Viper {
     val rs = template.findMinimalCoverViaInst( targets, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
     println( s"Minimized recursion scheme:\n$rs\n" )
 
-    val logicalRS = encoding decode rs
+    val logicalRS = homogenizeRS( encoding decode rs )
     println( s"Logical recursion scheme:\n$logicalRS\n" )
 
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
