@@ -1,9 +1,11 @@
 package at.logic.gapt.formats.tip
 
+import java.io.IOException
+
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.lisp._
-import at.logic.gapt.utils.{ NameGenerator, runProcess }
+import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
 import scala.collection.mutable
 import scala.io.Source
@@ -134,7 +136,7 @@ class TipSmtParser {
     )
 }
 
-object TipSmtParser {
+object TipSmtParser extends ExternalProgram {
   def parse( tipBench: String ): TipProblem = {
     val tipSmtParser = new TipSmtParser
     SExpressionParser.parseString( tipBench ) foreach tipSmtParser.parse
@@ -163,4 +165,8 @@ object TipSmtParser {
 
   def fixupAndParseFile( filename: String ): TipProblem =
     fixupAndParse( Source fromFile filename mkString )
+
+  val isInstalled =
+    try { runProcess( Seq( "tip", "--help" ), "" ); true }
+    catch { case _: IOException => false }
 }

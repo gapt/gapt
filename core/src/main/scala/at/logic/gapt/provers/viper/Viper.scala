@@ -24,7 +24,8 @@ case class ViperOptions(
   tautCheckNumber: Int,
   tautCheckSize:   FloatRange,
   canSolSize:      FloatRange,
-  forgetOne:       Boolean
+  forgetOne:       Boolean,
+  verbose:         Boolean
 )
 object ViperOptions {
   type FloatRange = ( Float, Float )
@@ -36,6 +37,7 @@ object ViperOptions {
 
   def parse( opts: Map[String, String] ) =
     ViperOptions(
+      verbose = opts.getOrElse( "verbose", "true" ).toBoolean,
       instanceNumber = opts.getOrElse( "instnum", "4" ).toInt,
       instanceSize = parseRange( opts.getOrElse( "instsize", "0,5" ) ),
       quantTys = opts.get( "qtys" ).map( _.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ),
@@ -52,9 +54,11 @@ object Viper {
   def solve( problem: TipProblem, options: ViperOptions ): LambdaExpression = {
     implicit var ctx = problem.context
 
+    def info( msg: Any* ) = if ( options.verbose ) println( msg mkString )
+
     val sequent @ Sequent( theory, Seq( All.Block( vs, _ ) ) ) = problem.toSequent
-    println( sequent )
-    println()
+    info( sequent )
+    info()
 
     val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
 
@@ -70,14 +74,14 @@ object Viper {
     while ( instances.size < options.instanceNumber ) {
       instances += randomInstance.generate( paramTypes, inside( options.instanceSize ) )
     }
-    println( "Instances:" )
+    info( "Instances:" )
     for ( inst <- instances )
-      println( inst map { _.toSigRelativeString } )
-    println()
+      info( inst map { _.toSigRelativeString } )
+    info()
 
     // Compute many-sorted expansion sequents
     val instanceProofs = instances map { inst =>
-      println( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
+      info( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
       val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
       if ( true ) {
         if ( false ) {
@@ -100,13 +104,13 @@ object Viper {
         inst -> Escargot.getExpansionProof( instanceSequent ).get
       }
     }
-    println()
+    info()
 
     instanceProofs foreach {
       case ( inst, es ) =>
-        println( s"Instances for x = ${inst.map( _.toSigRelativeString )}:" )
-        println( extractInstances( es ).map( _.toSigRelativeString ) )
-        println()
+        info( s"Instances for x = ${inst.map( _.toSigRelativeString )}:" )
+        info( extractInstances( es ).map( _.toSigRelativeString ) )
+        info()
     }
 
     val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
@@ -115,16 +119,17 @@ object Viper {
 
     val template = simplePi1RecSchemTempl( A( vs: _* ), pi1QTys )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
-    println( "Recursion scheme template:" )
-    template.template.toSeq.sortBy { _._1.toString } foreach println
-    println()
+    info( "Recursion scheme template:" )
+    for ( ( lhs, rhs ) <- template.template.toSeq.sortBy { _._1.toString } )
+      info( s"$lhs -> $rhs" )
+    info()
 
     val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst: _* ) -> term
     val rs = template.findMinimalCoverViaInst( targets, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
-    println( s"Minimized recursion scheme:\n$rs\n" )
+    info( s"Minimized recursion scheme:\n$rs\n" )
 
     val logicalRS = homogenizeRS( encoding decode rs )
-    println( s"Logical recursion scheme:\n$logicalRS\n" )
+    info( s"Logical recursion scheme:\n$logicalRS\n" )
 
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
     val failedInstOption = ( 0 to options.tautCheckNumber ).view.
@@ -132,7 +137,7 @@ object Viper {
       distinct.
       filterNot { inst =>
         val ok = checkInst( inst )
-        println( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
+        info( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
         ok
       }.headOption
     failedInstOption foreach { failedInst =>
@@ -141,27 +146,28 @@ object Viper {
         traverse( i => instantiateRS.subTerms( i ).filter( _.exptype == i.exptype ).toList ).
         filterNot { i => Z3 isValid Or( logicalRS.parametricLanguage( i: _* ) ) }.
         minBy { _ map { expressionSize( _ ) } sum }
-      println( s"Minimal counterexample: ${mininmalCounterExample.map { _.toSigRelativeString }}" )
+      info( s"Minimal counterexample: ${mininmalCounterExample.map { _.toSigRelativeString }}" )
       require( false )
     }
-    println()
+    info()
 
     val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
-    println( s"QBUP:\n${qbup.toSigRelativeString}\n" )
+    info( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
     val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
-    println( s"Canonical solution at G($canSolInst,w):" )
+    info( s"Canonical solution at G($canSolInst,w):" )
     val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
     val canSol = And( logicalRS generatedTerms G_( canSolInst: _* )( ws: _* ) map { -_ } )
-    CNFp.toClauseList( canSol ).map { _.map { _.toSigRelativeString } } foreach println
-    println()
+    for ( cls <- CNFp.toClauseList( canSol ) )
+      info( cls map { _.toSigRelativeString } )
+    info()
 
     val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst: _* )( ws: _* ), canSol, forgetOne = options.forgetOne )
-    println()
+    info()
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    println( s"Solution: ${solution.toSigRelativeString}\n" )
-    println( Z3 isValid skolemize( formula ) )
+    info( s"Solution: ${solution.toSigRelativeString}\n" )
+    info( Z3 isValid skolemize( formula ) )
 
     solution
   }
