@@ -119,9 +119,9 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   def findMinimalCounterexample( correctInstances: Iterable[Instance], logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
     val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
-    val failedInstOption = ( 0 to options.tautCheckNumber ).view.
+    val failedInstOption = ( 0 to options.tautCheckNumber ).
       map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
-      distinct.
+      distinct.sortBy { _.map( randomInstance.exprSize ).sum }.view.
       filterNot { inst =>
         val ok = checkInst( inst )
         info( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
