@@ -70,7 +70,7 @@ class TipSmtParser {
       def handleCase( cas: SExpression ): Seq[HOLFormula] = cas match {
         case LFun( "case", LAtom( "default" ), body ) =>
           val coveredConstructors = cases collect {
-            case LFun( "case", LFunOrAtom( constrName, _* ) ) if constrName != "default" =>
+            case LFun( "case", LFunOrAtom( constrName, _* ), _ ) if constrName != "default" =>
               funDecls( constrName )
           }
           val missingConstructors = datatypes.find( _.t == freeVars( varName ).exptype ).get.constructors.map( _.constr ) diff coveredConstructors
