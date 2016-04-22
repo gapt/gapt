@@ -10,7 +10,7 @@ class ViperTest extends Specification {
 
   "known to be working problems" in {
     Fragments.foreach( Seq(
-      "appnil", "comm", "comm1", "general", "generaldiffconcl", "linear", "minus", "prod_prop_31"
+      "appnil", "comm", "comm1", "general", "generaldiffconcl", "linear", "minus", "plus0", "prod_prop_31"
     ) ) { prob =>
       prob in {
         if ( !SPASS.isInstalled || !Z3.isInstalled || !TipSmtParser.isInstalled ) skipped
