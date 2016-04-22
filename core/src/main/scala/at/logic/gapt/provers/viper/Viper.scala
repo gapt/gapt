@@ -23,7 +23,7 @@ case class ViperOptions(
   instanceProver:  String             = "spass_nopred",
   quantTys:        Option[Seq[TBase]] = None,
   tautCheckNumber: Int                = 20,
-  tautCheckSize:   FloatRange         = ( 6, 10 ),
+  tautCheckSize:   FloatRange         = ( 2, 3 ),
   canSolSize:      FloatRange         = ( 2, 4 ),
   forgetOne:       Boolean            = false,
   verbose:         Boolean            = true
@@ -61,7 +61,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   def info() = if ( options.verbose ) println()
   def info( msg: Any ) = if ( options.verbose ) println( msg )
 
-  def inside( range: FloatRange ) = ( f: Float ) => range._1 <= f && f <= range._2
+  def inside( range: FloatRange, scale: Float = 1 ) = ( f: Float ) => scale * range._1 <= f && f <= scale * range._2
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
 
   type Instance = Seq[LambdaExpression]
@@ -81,7 +81,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
     while ( true ) {
       val rs = findRecursionScheme( instanceProofs )
-      findMinimalCounterexample( rs ) match {
+      findMinimalCounterexample( instanceProofs.keys, rs ) match {
         case Some( inst ) =>
           instanceProofs( inst ) = getInstanceProof( inst )
 
@@ -116,10 +116,11 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     logicalRS
   }
 
-  def findMinimalCounterexample( logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
+  def findMinimalCounterexample( correctInstances: Iterable[Instance], logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
+    val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
     val failedInstOption = ( 0 to options.tautCheckNumber ).view.
-      map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize ) ) }.
+      map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
       distinct.
       filterNot { inst =>
         val ok = checkInst( inst )
@@ -196,7 +197,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
 object Viper {
 
-  val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,]*)\s*""".r
+  val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,.]*)\s*""".r
   def extractOptions( tipSmtCode: String ) =
     tipSmtCode.split( "\n" ).collect {
       case optionRegex( k, v ) => ( k, v )
