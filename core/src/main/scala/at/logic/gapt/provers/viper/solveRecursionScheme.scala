@@ -21,7 +21,6 @@ object simplePi1RecSchemTempl {
     //    val axiomArgs = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"x_$i", t )
 
     val indLemmaNT = Const( nameGen fresh "G", FunctionType( instTT, axiomArgTys ++ pi1QTys ) )
-    val indLemmaRhsArgs = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"y_$i", t )
 
     val lhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
     val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )
@@ -37,7 +36,7 @@ object simplePi1RecSchemTempl {
               val lhs = indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctr( ctrArgs: _* ) )( axiomArgs.drop( indLemmaArgIdx + 1 ): _* )( lhsPi1QArgs: _* )
               val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
                 case ( ctrArgTy, ctrArgIdx ) =>
-                  lhs -> indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctrArgs( ctrArgIdx ) )( indLemmaRhsArgs.drop( indLemmaArgIdx + 1 ): _* )( rhsPi1QArgs: _* )
+                  lhs -> indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctrArgs( ctrArgIdx ) )( axiomArgs.drop( indLemmaArgIdx + 1 ): _* )( rhsPi1QArgs: _* )
               }
               recRules :+ ( lhs -> Var( "u", instTT ) )
             }
@@ -72,7 +71,7 @@ object canonicalRsLHS {
               ctr <- ctrs.toList
               FunctionType( _, ctrArgTys ) = ctr.exptype
             } yield ctr(
-              ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"y$i", t ) ): _*
+              ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _*
             )
           }
           import scalaz._, Scalaz._

@@ -116,6 +116,13 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst: _* ) -> term
     val rs = template.findMinimalCoverViaInst( targets.toSet, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
     info( s"Minimized recursion scheme:\n$rs\n" )
+    for ( ( Apps( _, inst ), terms ) <- targets groupBy { _._1 } ) {
+      val genLang = rs.parametricLanguage( inst: _* )
+      require(
+        terms.map { _._2 }.toSet subsetOf genLang,
+        s"Terms not covered by recursion scheme in $inst:\n${terms.map { _._2.toSigRelativeString }.mkString( "\n" )}"
+      )
+    }
 
     val logicalRS = homogenizeRS( encoding decode rs )
     info( s"Logical recursion scheme:\n$logicalRS\n" )
@@ -187,11 +194,11 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
           throw new IllegalArgumentException( s"Cannot prove:\n$erasedInstanceSequent" )
         }
         val reifiedExpansion = back( erasedExpansion )
-        require( Z3 isValid reifiedExpansion.deep )
         reifiedExpansion
       case "escargot" =>
         Escargot.getExpansionProof( instanceSequent ).get
     }
+    require( Z3 isValid instProof.deep )
     info( s"Instances for x = ${inst.map( _.toSigRelativeString )}:" )
     info( extractInstances( instProof ).map( _.toSigRelativeString ) )
     info()
