@@ -81,6 +81,12 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
     while ( true ) {
       val rs = findRecursionScheme( instanceProofs )
+
+      for ( ( inst, _ ) <- instanceProofs ) {
+        val genLang = rs.parametricLanguage( inst: _* )
+        require( Z3 isValid Or( genLang ), s"Generated instance language for $inst not tautological" )
+      }
+
       findMinimalCounterexample( instanceProofs.keys, rs ) match {
         case Some( inst ) =>
           instanceProofs( inst ) = getInstanceProof( inst )
