@@ -20,6 +20,7 @@ import scala.io.{ Source, StdIn }
 case class ViperOptions(
   instanceNumber:  Int,
   instanceSize:    FloatRange,
+  instanceProver:  String,
   quantTys:        Option[Seq[TBase]],
   tautCheckNumber: Int,
   tautCheckSize:   FloatRange,
@@ -40,6 +41,7 @@ object ViperOptions {
       verbose = opts.getOrElse( "verbose", "true" ).toBoolean,
       instanceNumber = opts.getOrElse( "instnum", "3" ).toInt,
       instanceSize = parseRange( opts.getOrElse( "instsize", "0,3" ) ),
+      instanceProver = opts.getOrElse( "instprover", "spass_nopred" ),
       quantTys = opts.get( "qtys" ).map( _.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ),
       tautCheckNumber = opts.getOrElse( "tchknum", "20" ).toInt,
       tautCheckSize = parseRange( opts.getOrElse( "tchksize", "6,10" ) ),
@@ -68,7 +70,9 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info()
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
-    while ( instanceProofs.size < options.instanceNumber ) {
+    var ttl = options.instanceNumber * 10
+    while ( instanceProofs.size < options.instanceNumber && ttl > 0 ) {
+      ttl -= 1
       val inst = randomInstance.generate( paramTypes, inside( options.instanceSize ) )
       if ( !instanceProofs.contains( inst ) )
         instanceProofs( inst ) = getInstanceProof( inst )
@@ -161,14 +165,14 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   def getInstanceProof( inst: Seq[LambdaExpression] ) = {
     info( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
-    val instProof = if ( true ) {
-      if ( false ) {
+    val instProof = options.instanceProver match {
+      case "spass_pred" =>
         val reduction = GroundingReductionET |> CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
         val ( erasedCNF, back ) = reduction forward instanceSequent
         val Some( erasedProof ) = SPASS getRobinsonProof erasedCNF
         val reifiedExpansion = back( erasedProof )
         reifiedExpansion
-      } else {
+      case "spass_nopred" =>
         val reduction = GroundingReductionET |> ErasureReductionET
         val ( erasedInstanceSequent, back ) = reduction forward instanceSequent
         val erasedExpansion = SPASS getExpansionProof erasedInstanceSequent getOrElse {
@@ -177,9 +181,8 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
         val reifiedExpansion = back( erasedExpansion )
         require( Z3 isValid reifiedExpansion.deep )
         reifiedExpansion
-      }
-    } else {
-      Escargot.getExpansionProof( instanceSequent ).get
+      case "escargot" =>
+        Escargot.getExpansionProof( instanceSequent ).get
     }
     info( s"Instances for x = ${inst.map( _.toSigRelativeString )}:" )
     info( extractInstances( instProof ).map( _.toSigRelativeString ) )
