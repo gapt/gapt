@@ -1,5 +1,4 @@
-; viper instsize 0,3
-; viper instnum 3
+; viper cansolsize 2,2
 
 (declare-sort i 0)
 (declare-datatypes () ((list (nil) (cons (head i) (tail list)))))

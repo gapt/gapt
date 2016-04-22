@@ -1,9 +1,6 @@
 ; Property from "Productive Use of Failure in Inductive Proof",
 ; Andrew Ireland and Alan Bundy, JAR 1996
 
-; viper instsize 0,3
-; viper instnum 3
-
 (declare-datatypes (a)
   ((list (nil) (cons (head a) (tail (list a))))))
 (define-fun-rec

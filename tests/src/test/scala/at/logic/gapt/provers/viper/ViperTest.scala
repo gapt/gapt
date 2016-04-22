@@ -18,7 +18,7 @@ class ViperTest extends Specification {
           io.Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( s"induction/$prob.smt2" ) ).mkString,
           Map( "verbose" -> "false" )
         )
-        Viper.solve( problem, options )
+        new Viper( problem, options ).solve()
         ok
       }
     }
