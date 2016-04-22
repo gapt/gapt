@@ -145,7 +145,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
     val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
-    info( s"Canonical solution at G($canSolInst,w):" )
+    info( s"Canonical solution at $canSolInst:" )
     val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
     val pi1QTys = FunctionType.unapply( G_.exptype ).get._2.drop( canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )

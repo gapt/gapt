@@ -461,7 +461,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
               }.toSet
               rules = rules filter {
                 case Rule( Apps( `nt`, args ), to ) =>
-                  !freeVariables( to ).subsetOf( identicalArgs map { args( _ ).asInstanceOf[Var] } )
+                  !freeVariables( to ).subsetOf( identicalArgs map { args( _ ) } collect { case v: Var => v } )
                 case _ => true
               }
           }
