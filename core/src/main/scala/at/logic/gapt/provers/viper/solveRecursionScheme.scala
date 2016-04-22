@@ -90,8 +90,8 @@ object homogenizeRS {
         r @ Rule( lhs_, rhs ) <- recSchem.rules
         subst <- syntacticMatching( lhs_, lhs )
       } yield subst( r )
-    val qfRHSs = rules collect { case Rule( _, rhs ) if freeVariables( rhs ).isEmpty => rhs }
-    val extraRules = for ( lhs <- lhss; rhs <- qfRHSs ) yield Rule( lhs, rhs )
+    val terminalRHSs = rules collect { case Rule( _, rhs @ Apps( hd: Const, _ ) ) if !recSchem.nonTerminals( hd ) => rhs }
+    val extraRules = for ( lhs <- lhss; rhs <- terminalRHSs if freeVariables( rhs ) subsetOf freeVariables( lhs ) ) yield Rule( lhs, rhs )
     recSchem.copy( rules = rules ++ extraRules )
   }
 }
