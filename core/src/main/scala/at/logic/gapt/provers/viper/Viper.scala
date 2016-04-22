@@ -124,7 +124,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       )
     }
 
-    val logicalRS = homogenizeRS( encoding decode rs )
+    val logicalRS = encoding decode rs
     info( s"Logical recursion scheme:\n$logicalRS\n" )
     logicalRS
   }
@@ -152,17 +152,18 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     }
   }
 
-  def solveRecSchem( logicalRS: RecursionScheme ) = {
+  def solveRecSchem( rs: RecursionScheme ) = {
+    val homogenized = homogenizeRS( rs )
 
-    val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( logicalRS )
+    val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( homogenized )
     info( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
     val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
     info( s"Canonical solution at $canSolInst:" )
-    val G_ = logicalRS.nonTerminals.find( _.name == "G" ).get
+    val G_ = homogenized.nonTerminals.find( _.name == "G" ).get
     val pi1QTys = FunctionType.unapply( G_.exptype ).get._2.drop( canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
-    val canSol = And( logicalRS generatedTerms G_( canSolInst: _* )( ws: _* ) map { -_ } )
+    val canSol = And( homogenized generatedTerms G_( canSolInst: _* )( ws: _* ) map { -_ } )
     for ( cls <- CNFp.toClauseList( canSol ) )
       info( cls map { _.toSigRelativeString } )
     info()
