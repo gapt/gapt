@@ -114,9 +114,17 @@ object LKToExpansionProof {
       val ( subCuts, subSequent ) = extract( subProof )
       ( subCuts, subSequent.delete( aux ) :+ ETStrongQuantifier( proof.mainFormulas.head, eigen, subSequent( aux ) ) )
 
+    case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, subSequent.delete( aux ) :+ ETSkolemQuantifier( main, skT, skD, subSequent( aux ) ) )
+
     case ExistsLeftRule( subProof, aux, eigen, _ ) =>
       val ( subCuts, subSequent ) = extract( subProof )
       ( subCuts, ETStrongQuantifier( proof.mainFormulas.head, eigen, subSequent( aux ) ) +: subSequent.delete( aux ) )
+
+    case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, ETSkolemQuantifier( main, skT, skD, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
     case ExistsRightRule( subProof, aux, _, t, _ ) =>
       val ( subCuts, subSequent ) = extract( subProof )

@@ -109,6 +109,14 @@ class SolveTest extends Specification with SequentMatchers {
       }
     }
 
+    "skolem quantifiers" in {
+      val formula = hof"?x!y p(x,y) -> !y?x p(x,y)"
+      val Some( skolemExpansion ) = Escargot getExpansionProof formula
+      ExpansionProofToLK( skolemExpansion ) must beLike {
+        case \/-( p ) => p.conclusion must_== ( Sequent() :+ formula )
+      }
+    }
+
   }
 }
 

@@ -124,6 +124,10 @@ class ExpansionProofToLK(
         mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, false ) { ExistsLeftRule( _, sh, ev ) }
       case ( ETStrongQuantifier( sh, ev, f ), i: Suc ) =>
         mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, true ) { ForallRightRule( _, sh, ev ) }
+      case ( ETSkolemQuantifier( sh, skT, skD, f ), i: Ant ) =>
+        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, false ) { ExistsSkLeftRule( _, skT, skD ) }
+      case ( ETSkolemQuantifier( sh, skT, skD, f ), i: Suc ) =>
+        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, true ) { ForallSkRightRule( _, skT, skD ) }
     }
 
   private def tryWeakQ( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
