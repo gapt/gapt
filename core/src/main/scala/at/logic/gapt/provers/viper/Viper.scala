@@ -3,7 +3,7 @@ package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.grammars.{ RecursionScheme, instantiateRS }
+import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, extractInstances }
@@ -158,17 +158,19 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( homogenized )
     info( s"QBUP:\n${qbup.toSigRelativeString}\n" )
 
+    val axiomArgs = homogenized.rules.collectFirst { case Rule( Apps( Const( "A", _ ), args ), _ ) => args }.get
+
     val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
     info( s"Canonical solution at $canSolInst:" )
     val G_ = homogenized.nonTerminals.find( _.name == "G" ).get
-    val pi1QTys = FunctionType.unapply( G_.exptype ).get._2.drop( canSolInst.size )
+    val pi1QTys = FunctionType.unapply( G_.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
-    val canSol = And( homogenized generatedTerms G_( canSolInst: _* )( ws: _* ) map { -_ } )
+    val canSol = And( homogenized generatedTerms G_( axiomArgs: _* )( canSolInst: _* )( ws: _* ) map { -_ } )
     for ( cls <- CNFp.toClauseList( canSol ) )
       info( cls map { _.toSigRelativeString } )
     info()
 
-    val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( canSolInst: _* )( ws: _* ), canSol, forgetOne = options.forgetOne )
+    val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( axiomArgs: _* )( canSolInst: _* )( ws: _* ), canSol, forgetOne = options.forgetOne )
     info()
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
@@ -202,6 +204,8 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     require( Z3 isValid instProof.deep )
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
+    info( "Language:" )
+    encoding.encode( instProof ).toSeq.map( _.toString ).sorted.foreach( info )
     info()
 
     instProof

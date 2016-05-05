@@ -18,9 +18,9 @@ object simplePi1RecSchemTempl {
     val Apps( axiomNT: Const, axiomArgs ) = axiom
     val FunctionType( instTT, axiomArgTys ) = axiomNT.exptype
     // TODO: handle strong quantifiers in conclusion correctly
-    //    val axiomArgs = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"x_$i", t )
+    val axiomArgs2 = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"x_$i", t )
 
-    val indLemmaNT = Const( nameGen fresh "G", FunctionType( instTT, axiomArgTys ++ pi1QTys ) )
+    val indLemmaNT = Const( nameGen fresh "G", FunctionType( instTT, axiomArgTys ++ axiomArgTys ++ pi1QTys ) )
 
     val lhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
     val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )
@@ -33,10 +33,10 @@ object simplePi1RecSchemTempl {
             ctrs flatMap { ctr =>
               val FunctionType( _, ctrArgTys ) = ctr.exptype
               val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
-              val lhs = indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctr( ctrArgs: _* ) )( axiomArgs.drop( indLemmaArgIdx + 1 ): _* )( lhsPi1QArgs: _* )
+              val lhs = indLemmaNT( axiomArgs: _* )( axiomArgs2.take( indLemmaArgIdx ): _* )( ctr( ctrArgs: _* ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ): _* )( lhsPi1QArgs: _* )
               val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
                 case ( ctrArgTy, ctrArgIdx ) =>
-                  lhs -> indLemmaNT( axiomArgs.take( indLemmaArgIdx ): _* )( ctrArgs( ctrArgIdx ) )( axiomArgs.drop( indLemmaArgIdx + 1 ): _* )( rhsPi1QArgs: _* )
+                  lhs -> indLemmaNT( axiomArgs: _* )( axiomArgs2.take( indLemmaArgIdx ): _* )( ctrArgs( ctrArgIdx ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ): _* )( rhsPi1QArgs: _* )
               }
               recRules :+ ( lhs -> Var( "u", instTT ) )
             }
@@ -46,7 +46,7 @@ object simplePi1RecSchemTempl {
     RecSchemTemplate(
       axiomNT,
       indLemmaRules.toSet
-        + ( axiomNT( axiomArgs: _* ) -> indLemmaNT( axiomArgs: _* )( rhsPi1QArgs: _* ) )
+        + ( axiomNT( axiomArgs: _* ) -> indLemmaNT( axiomArgs: _* )( axiomArgs: _* )( rhsPi1QArgs: _* ) )
         + ( axiomNT( axiomArgs: _* ) -> Var( "u", instTT ) )
     //        + ( indLemmaNT( axiomArgs: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) )
     )
