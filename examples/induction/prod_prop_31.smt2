@@ -4,6 +4,8 @@
 ; FIXME doesn't work with any other size
 ; viper cansolsize 2,2
 
+; viper gramw scomp
+
 (declare-datatypes (a)
   ((list (nil) (cons (head a) (tail (list a))))))
 (define-fun-rec

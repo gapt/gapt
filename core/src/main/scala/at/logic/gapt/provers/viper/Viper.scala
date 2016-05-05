@@ -18,15 +18,16 @@ import scala.collection.mutable
 import scala.io.{ Source, StdIn }
 
 case class ViperOptions(
-  instanceNumber:  Int                = 3,
-  instanceSize:    FloatRange         = ( 0, 3 ),
-  instanceProver:  String             = "spass_nopred",
-  quantTys:        Option[Seq[TBase]] = None,
-  tautCheckNumber: Int                = 20,
-  tautCheckSize:   FloatRange         = ( 2, 3 ),
-  canSolSize:      FloatRange         = ( 2, 4 ),
-  forgetOne:       Boolean            = false,
-  verbose:         Boolean            = true
+  instanceNumber:   Int                = 3,
+  instanceSize:     FloatRange         = ( 0, 3 ),
+  instanceProver:   String             = "spass_nopred",
+  quantTys:         Option[Seq[TBase]] = None,
+  grammarWeighting: Rule => Int        = _ => 1,
+  tautCheckNumber:  Int                = 20,
+  tautCheckSize:    FloatRange         = ( 2, 3 ),
+  canSolSize:       FloatRange         = ( 2, 4 ),
+  forgetOne:        Boolean            = false,
+  verbose:          Boolean            = true
 )
 object ViperOptions {
   type FloatRange = ( Float, Float )
@@ -42,6 +43,10 @@ object ViperOptions {
     case "instsize"   => opts.copy( instanceSize = parseRange( v ) )
     case "instprover" => opts.copy( instanceProver = v )
     case "qtys"       => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ) )
+    case "gramw" => v match {
+      case "scomp"  => opts.copy( grammarWeighting = r => randomInstance.exprSize( r.lhs ) + randomInstance.exprSize( r.rhs ) )
+      case "nprods" => opts.copy( grammarWeighting = _ => 1 )
+    }
     case "tchknum"    => opts.copy( tautCheckNumber = v.toInt )
     case "tchksize"   => opts.copy( tautCheckSize = parseRange( v ) )
     case "cansolsize" => opts.copy( canSolSize = parseRange( v ) )
@@ -114,7 +119,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info()
 
     val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst: _* ) -> term
-    val rs = template.findMinimalCoverViaInst( targets.toSet, weight = rule => expressionSize( rule.lhs === rule.rhs ) )
+    val rs = template.findMinimalCoverViaInst( targets.toSet, weight = options.grammarWeighting )
     info( s"Minimized recursion scheme:\n$rs\n" )
     for ( ( Apps( _, inst ), terms ) <- targets groupBy { _._1 } ) {
       val genLang = rs.parametricLanguage( inst: _* )
