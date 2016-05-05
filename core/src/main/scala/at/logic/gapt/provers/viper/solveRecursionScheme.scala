@@ -20,7 +20,7 @@ object simplePi1RecSchemTempl {
     // TODO: handle strong quantifiers in conclusion correctly
     val axiomArgs2 = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"x_$i", t )
 
-    val indLemmaNT = Const( nameGen fresh "G", FunctionType( instTT, axiomArgTys ++ axiomArgTys ++ pi1QTys ) )
+    val indLemmaNT = Const( nameGen fresh "B", FunctionType( instTT, axiomArgTys ++ axiomArgTys ++ pi1QTys ) )
 
     val lhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
     val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )

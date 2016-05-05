@@ -162,10 +162,10 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
     val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
     info( s"Canonical solution at $canSolInst:" )
-    val G_ = homogenized.nonTerminals.find( _.name == "G" ).get
-    val pi1QTys = FunctionType.unapply( G_.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
+    val B = homogenized.nonTerminals.find( _.name == "B" ).get
+    val pi1QTys = FunctionType.unapply( B.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
-    val canSol = And( homogenized generatedTerms G_( axiomArgs: _* )( canSolInst: _* )( ws: _* ) map { -_ } )
+    val canSol = And( homogenized generatedTerms B( axiomArgs: _* )( canSolInst: _* )( ws: _* ) map { -_ } )
     for ( cls <- CNFp.toClauseList( canSol ) )
       info( cls map { _.toSigRelativeString } )
     info()
