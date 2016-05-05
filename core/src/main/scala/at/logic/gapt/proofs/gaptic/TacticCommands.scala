@@ -595,14 +595,14 @@ trait TacticCommands {
    *
    * {{{
    *   rewrite.many ltr "equation1" in "target"
-   *   rewrite.many ltr ("equation1", "eq2") rtl ("eq3", "eq4") in "target"
+   *   rewrite.many ltr ("equation1", "eq2") rtl ("eq3", "eq4") in "target" subst (hov"x" -> le"f(f(c))")
    * }}}
    *
    * `ltr`: rewrite left-to-right using this equation
    * `rtl`: rewrite right-to-left using this equation
    * `many`: rewrite as long as possible (default is to only rewrite once)
    */
-  def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
+  def rewrite = RewriteTactic( equations = Seq(), target = None, once = true, fixedSubst = Map() )
 
   /**
    * Replaces a defined constant with its definition. Syntax:

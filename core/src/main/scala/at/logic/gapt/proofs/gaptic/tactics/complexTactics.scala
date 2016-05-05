@@ -161,9 +161,10 @@ case class ChainTactic( hyp: String, target: Option[String] = None, substitution
  * @param once  Rewrite exactly once?
  */
 case class RewriteTactic(
-    equations: Traversable[( String, Boolean )],
-    target:    Option[String],
-    once:      Boolean
+    equations:  Traversable[( String, Boolean )],
+    target:     Option[String],
+    fixedSubst: Map[Var, LambdaExpression],
+    once:       Boolean
 ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = target match {
     case Some( tgt ) => apply( goal, tgt ) map { () -> _ }
@@ -180,7 +181,7 @@ case class RewriteTactic(
       ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.labelledSequent.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
-      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), freeVariables( quantEq ).map { v => v -> v }.toMap )
+      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), fixedSubst ++ freeVariables( quantEq ).map { v => v -> v }.toMap )
     } return {
       val newTgt = tgt.replace( pos, subst( s_ ) )
       val newGoal = OpenAssumption( goal.labelledSequent.updated( tgtIdx, target -> newTgt ) )
@@ -201,6 +202,7 @@ case class RewriteTactic(
   def rtl( eqs: String* ) = copy( equations = equations ++ eqs.map { _ -> false } )
   def in( tgt: String ) = copy( target = Some( tgt ) )
   def many = copy( once = false )
+  def subst( s: ( Var, LambdaExpression )* ) = copy( fixedSubst = fixedSubst ++ s )
 }
 
 /**
