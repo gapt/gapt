@@ -6,11 +6,12 @@ import at.logic.gapt.formats.llk.loadLLK
 import at.logic.gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.lksk.LKskProof
+import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 
 /**
  * Version 3 of the higher-order n-Tape proof.
  */
-class nTape4( val size: Int ) extends nTape {
+class nTape4( val size: Int ) extends AnalysisWithCeresOmega {
   require( 1 < size && size < 5, "We have only instances 2 to 4." )
 
   override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream s"ntape/ntape4-$size.llk" )

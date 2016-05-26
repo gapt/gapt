@@ -1,4 +1,4 @@
-package at.logic.gapt.examples
+package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
@@ -19,14 +19,55 @@ import at.logic.gapt.utils.{ TimeOutException, withTimeout }
 import scala.concurrent.duration.Duration
 
 /**
- * The generic template for the nTape proofs.
+ * The generic template for using ceres_omega to analyze a proof. It performs the following steps:
+ *
+ * 1) eliminate definitions ([[AnalysisWithCeresOmega.input_proof]]
+ *
+ * 2) eliminate definitions ([[AnalysisWithCeresOmega.preprocessed_input_proof1]]
+ *
+ * 3) expand non-atomic axioms ([[AnalysisWithCeresOmega.preprocessed_input_proof2]])
+ *
+ * 4) make the proof regular ([[AnalysisWithCeresOmega.preprocessed_input_proof]])
+ *
+ * 5) convert it to lk_sk ([[AnalysisWithCeresOmega.lksk_proof]])
+ *
+ * 6) compute the struct, css and projections ([[AnalysisWithCeresOmega.css]],
+ *
+ *    [[AnalysisWithCeresOmega.projections]], [[AnalysisWithCeresOmega.struct]])
+ *
+ * 7) map the css to first-order by lambda lifting and erasure of types
+ *    ([[AnalysisWithCeresOmega.fol_css]])
+ *
+ * 8) try to find a refutation of the css
+ *    ([[AnalysisWithCeresOmega.fol_refutation]])
+ *
+ * 9) reintroduce types (might fail because type erasure is a heuristic which is unsound in general)
+ *    (no method available, included in step 11)
+ *
+ * 10) reintroduce terms abstracted away by lambda lifting
+ *    (no method available, included in step 11)
+ *
+ * 11) construct an r_al proof from the refutation
+ *    ([[AnalysisWithCeresOmega.ral_refutation]])
+ *
+ * 12) construct the acnf
+ *    ([[AnalysisWithCeresOmega.acnf]])
+ *
+ * 13) construct the expansion proof (with atomic cuts)
+ *    ([[AnalysisWithCeresOmega.expansion_proof]])
+ *
+ * 14) print statistics
+ *    ([[AnalysisWithCeresOmega.printStatistics]])
  */
-abstract class nTape {
+abstract class AnalysisWithCeresOmega {
   /** The proof database to start from. */
   def proofdb(): ExtendedProofDatabase
 
   /** The name of the root proof to start with */
   def root_proof(): String
+
+  /** Determines if and which cuts should be taken into accoutn for cut-elimination. Default: propositional cuts are skipped. */
+  def skip_strategy() = ceres_omega.skip_propositional( _ )
 
   /**
    * Timeout for call to theorem provers.
@@ -69,12 +110,12 @@ abstract class nTape {
   /**
    * The struct of the proof. It is an intermediate representation of the characteristic sequent set.
    */
-  lazy val struct = extractStructFromLKsk( lksk_proof, ceres_omega.skip_propositional )
+  lazy val struct = extractStructFromLKsk( lksk_proof, skip_strategy() )
 
   /**
    * The set of projections of the [[preprocessed_input_proof]].
    */
-  lazy val projections = Projections( lksk_proof, ceres_omega.skip_propositional )
+  lazy val projections = Projections( lksk_proof, skip_strategy() )
 
   /**
    * The characteristic sequent set of the [[preprocessed_input_proof]].
@@ -184,7 +225,6 @@ abstract class nTape {
     }
   }
 
-  //prints the interesting terms from the expansion sequent
   def printStatistics() = {
     println( "------------ Proof sizes --------------" )
     println( s"Input proof            : ${input_proof.treeLike.size}" )
@@ -201,71 +241,6 @@ abstract class nTape {
     println( "------------ " )
     println( s"Reproved deep formula proof size (dag)  : ${reproved_deep.dagLike.size}" )
     println( s"Reproved deep formula proof size (tree) : ${reproved_deep.treeLike.size}" )
-    println( "------------ Witness Terms from Expansion Proof --------------" )
-
-    //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect
-    val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
-    val ind_atom = HOLAtom( Const( "IND", To ), List() )
-    val ind_axiom = proofdb.Definitions.find( _._1 == ind_atom ).get._2
-    val indet = conjuncts.find( _.shallow == ind_axiom ).get
-
-    val List( ind1, ind2 ): List[ExpansionTree] = indet match {
-      case ETWeakQuantifier( _, instances ) =>
-        instances.map( _._2 ).toList
-    }
-
-    val ( ind1base, ind1step ) = ind1 match {
-      case ETImp( ETAnd(
-        ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _, _,
-          ETImp( _, ETWeakQuantifier( f, step_instances ) )
-          )
-        ), _ ) =>
-        val List( ( base, _ ) ) = base_instances.toList
-        val List( ( step, _ ) ) = step_instances.toList
-        ( base, step )
-    }
-
-    val ( ind2base, ind2step ) = ind2 match {
-      case ETImp( ETAnd(
-        ETWeakQuantifier( _, base_instances ),
-        ETSkolemQuantifier( _, _, _,
-          ETImp( _, ETWeakQuantifier( f, step_instances ) )
-          )
-        ), _ ) =>
-        val List( ( base, _ ) ) = base_instances.toList
-        val List( ( step, _ ) ) = step_instances.toList
-        ( base, step )
-    }
-
-    ( ind1base, ind1step, ind2base, ind2step ) match {
-      case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
-        val map = Map[LambdaExpression, String]()
-        val counter = new {
-          private var state = 0;
-
-          def nextId = {
-            state = state + 1; state
-          }
-        }
-
-        val ( map1, sb1 ) = replaceAbstractions( sb, map, counter )
-        val ( map2, ss1 ) = replaceAbstractions( ss, map1, counter )
-        val ( map3, tb1 ) = replaceAbstractions( tb, map2, counter )
-        val ( map4, ts1 ) = replaceAbstractions( ts, map3, counter )
-
-        println( "base 1 simplified: " + Abs( xb, sb1 ) )
-        println( "base 2 simplified: " + Abs( yb, tb1 ) )
-        println( "step 1 simplified: " + Abs( xs, ss1 ) )
-        println( "step 2 simplified: " + Abs( ys, ts1 ) )
-
-        println( "With shortcuts:" )
-        for ( ( term, sym ) <- map4 ) {
-          println( "Symbol: " + sym )
-          println( "Term:   " + term )
-        }
-    }
-
   }
 
   /**
@@ -273,11 +248,6 @@ abstract class nTape {
    */
   def print_css_thf(): Unit = {
     println( TPTPHOLExporter( preprocessed_css, false ) )
-  }
-
-  private def decompose( et: ExpansionTree ): List[ExpansionTree] = et match {
-    case ETAnd( x, y ) => decompose( x ) ++ decompose( y );
-    case _             => List( et )
   }
 
 }
