@@ -230,10 +230,18 @@ package object expr extends DefaultReplaceables {
         case ast.Ident( name, ty ) if name startsWith placeholder =>
           val i = name.drop( placeholder.length ).toInt
           ast.LiftWhitebox( expressions( i ) )
-        case expr: ast.Ident   => expr
-        case ast.Abs( v, sub ) => ast.Abs( v, repl( sub ) )
-        case ast.App( a, b )   => ast.App( repl( a ), repl( b ) )
-        case expr: ast.Lifted  => expr
+        case expr: ast.Ident => expr
+        case ast.Abs( v, sub ) =>
+          repl( v ) match {
+            case vNew @ ast.Ident( _, _ ) => // If repl(v) = v.
+              ast.Abs( vNew, repl( sub ) )
+            case ast.Lifted( Var( vNew, _ ), ty, _ ) => // If repl(v) = v'.
+              ast.Abs( ast.Ident( vNew, ty ), repl( sub ) )
+            case _ => // Otherwise
+              throw new IllegalArgumentException( "Trying to substitute non-variable term in binding." )
+          }
+        case ast.App( a, b )  => ast.App( repl( a ), repl( b ) )
+        case expr: ast.Lifted => expr
       }
 
       def astTransformer( expr: ast.Expr ): ast.Expr = baseAstTransformer( repl( expr ) )
