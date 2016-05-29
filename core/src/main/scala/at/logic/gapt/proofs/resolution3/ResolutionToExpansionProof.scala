@@ -39,7 +39,7 @@ object ResolutionToExpansionProof {
     }
     def prop2( p: PropositionalResolutionRule, f: ( ExpansionTree, ExpansionTree ) => ExpansionTree ) = {
       val Seq( oc ) = p.occConnectors
-      propgm2( p, p.subProof, es => oc.parent( es ).updated( p.idx, f( es( p.mainIndices( 0 ) ), es( p.mainIndices( 1 ) ) ) ) )
+      propgm2( p, p.subProof, es => oc.parent( es, f( es( p.mainIndices( 0 ) ), es( p.mainIndices( 1 ) ) ) ) )
     }
 
     expansions( proof ) = Set( Substitution() -> proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, true ), ETAtom( _, false ) ) )
@@ -96,7 +96,6 @@ object ResolutionToExpansionProof {
           else ETMerge( ess.map( _._2 ).map( _( oc.child( i ) ) ) ) ).toSet )
 
       case p: SkolemQuantResolutionRule =>
-        val Seq( oc ) = p.occConnectors
         prop1( p, ETSkolemQuantifier( p.subProof.conclusion( p.idx ), p.skolemTerm, p.skolemDef, _ ) )
     }
 
@@ -111,7 +110,8 @@ object ResolutionToExpansionProof {
         ETWeakQuantifierBlock( sh, fvs.size,
           for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.map( ETNeg( _ ), identity ).elements.reduceOption( ETOr( _, _ ) ).getOrElse( ETBottom( false ) ) ) +: Sequent()
       case p @ Definition( _, _ ) =>
+        println( expansions( p ) )
         ETMerge( p.mainFormulaSequent.elements.head, false, expansions( p ).map( _._2.elements.head ) ) +: Sequent()
-    }.fold( Sequent() )( _ ++ _ ) )
+    }.fold( Sequent() )( _ ++ _ ) ++ proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) ) )
   }
 }
