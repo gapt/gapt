@@ -11,12 +11,7 @@ package object resolution {
       val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
       def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
-        case Input( sequent ) => Input( TermReplacement( sequent, repl ) )
-        case Definition( defConst, definition ) =>
-          Definition(
-            TermReplacement( defConst, repl ).asInstanceOf[Const],
-            TermReplacement( definition, repl )
-          )
+        case Input( sequent )    => Input( TermReplacement( sequent, repl ) )
         case Refl( term )        => Refl( TermReplacement( term, repl ) )
         case Taut( formula )     => Taut( TermReplacement( formula, repl ) )
         case Factor( q, i1, i2 ) => Factor( f( q ), i1, i2 )

@@ -124,8 +124,6 @@ object ResolutionToExpansionProof {
         val sh = All.Block( fvs, seq.toDisjunction )
         ETWeakQuantifierBlock( sh, fvs.size,
           for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.map( ETNeg( _ ), identity ).elements.reduceOption( ETOr( _, _ ) ).getOrElse( ETBottom( false ) ) ) +: Sequent()
-      case p @ Definition( _, _ ) =>
-        ETMerge( p.mainFormulaSequent.elements.head, false, expansions( p ).map( _._2.elements.head ) ) +: Sequent()
     }.fold( Sequent() )( _ ++ _ ) ++ proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
   }
 }

@@ -20,15 +20,6 @@ case class Taut( formula: HOLFormula ) extends InitialClause {
 case class Refl( term: LambdaExpression ) extends InitialClause {
   override def mainFormulaSequent = Sequent() :+ ( term === term )
 }
-case class Definition( definedConstant: Const, definition: LambdaExpression ) extends InitialClause {
-  val FunctionType( To, argTypes ) = definedConstant.exptype
-  val boundVars = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x$i", t )
-
-  override def mainFormulaSequent = Sequent() :+ All.Block(
-    boundVars,
-    definedConstant( boundVars: _* ) <-> BetaReduction.betaNormalize( definition( boundVars: _* ) )
-  )
-}
 
 case class Factor( subProof: ResolutionProof, idx1: SequentIndex, idx2: SequentIndex ) extends LocalResolutionRule {
   require( idx1 sameSideAs idx2 )
