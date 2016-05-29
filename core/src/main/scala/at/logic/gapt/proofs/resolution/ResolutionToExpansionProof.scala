@@ -1,6 +1,7 @@
-package at.logic.gapt.proofs.resolution3
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion._
 
@@ -15,10 +16,8 @@ object ResolutionToExpansionProof {
       case Paramod( _, _, _, _, _, _ ) => true
       case _                           => false
     }
-    val defConsts = proof.subProofs.collect {
-      case Definition( defConst, _ ) => defConst
-    }
-    eliminateCutsET( eliminateDefsET( expansionWithDefs, !containsEquality, defConsts ) )
+    val defConsts = proof.subProofs.collect { case p: DefIntro => p.defConst }
+    eliminateCutsET( eliminateDefsET( expansionWithDefs, !containsEquality, defConsts.toSet[Const] ) )
   }
 
   private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {
@@ -29,13 +28,24 @@ object ResolutionToExpansionProof {
   def withDefs( proof: ResolutionProof ): ExpansionProof = {
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
 
-    def propg( p: ResolutionProof, q: ResolutionProof, f: Set[( Substitution, ExpansionSequent )] => Set[( Substitution, ExpansionSequent )] ) =
-      expansions( q ) = expansions( q ) union f( expansions( p ) )
+    def propg( p: ResolutionProof, q: ResolutionProof, f: Set[( Substitution, ExpansionSequent )] => Set[( Substitution, ExpansionSequent )] ) = {
+      val newEs = f( expansions( p ) )
+      for ( ( s, e ) <- newEs ) {
+        for ( et <- e.antecedent ) require( et.polarity )
+        for ( et <- e.succedent ) require( !et.polarity )
+        require( e.shallow == s( q.conclusion ) )
+      }
+      expansions( q ) = expansions( q ) union newEs
+    }
     def propgm2( p: ResolutionProof, q: ResolutionProof, f: ExpansionSequent => ExpansionSequent ) =
       propg( p, q, _.map( _.map2( f ) ) )
     def prop1( p: PropositionalResolutionRule, f: ExpansionTree => ExpansionTree ) = {
       val Seq( oc ) = p.occConnectors
       propgm2( p, p.subProof, es => oc.parent( es ).updated( p.idx, f( es( p.mainIndices.head ) ) ) )
+    }
+    def prop1s( p: PropositionalResolutionRule, f: ( Substitution, ExpansionTree ) => ExpansionTree ) = {
+      val Seq( oc ) = p.occConnectors
+      propg( p, p.subProof, _.map( es => es._1 -> oc.parent( es._2 ).updated( p.idx, f( es._1, es._2( p.mainIndices.head ) ) ) ) )
     }
     def prop2( p: PropositionalResolutionRule, f: ( ExpansionTree, ExpansionTree ) => ExpansionTree ) = {
       val Seq( oc ) = p.occConnectors
@@ -56,16 +66,16 @@ object ResolutionToExpansionProof {
       case p @ Resolution( q1, i1, q2, i2 ) =>
         val atom = q1.conclusion( i1 ).asInstanceOf[HOLAtom]
         val Seq( oc1, oc2 ) = p.occConnectors
-        propgm2( p, q1, oc1.parent( _, ETAtom( atom, false ) ) )
-        propgm2( p, q2, oc2.parent( _, ETAtom( atom, true ) ) )
+        propg( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], false ) ) ) )
+        propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], true ) ) ) )
       case p @ DefIntro( q, i, defAtom, definition ) =>
         val Seq( oc ) = p.occConnectors
-        propgm2( p, q, oc.parent( _ ).updated( i, ETDefinedAtom( defAtom, i.isAnt, definition ) ) )
+        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated( i, ETDefinedAtom( es._1( defAtom ).asInstanceOf[HOLAtom], i.isAnt, definition ) ) ) )
 
-      case p @ Paramod( q1, i1, ltr, q2, i2, ctx: Abs ) =>
+      case p @ Paramod( q1, i1, ltr, q2, i2, ctx ) =>
         val Seq( oc1, oc2 ) = p.occConnectors
-        propgm2( p, q1, oc1.parent( _, ETAtom( q1.conclusion( i1 ).asInstanceOf[HOLAtom], false ) ) )
-        propgm2( p, q2, es => oc2.parent( es ).updated( i2, replaceWithContext( es( p.mainIndices.head ), ctx, p.t ) ) )
+        propg( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], false ) ) ) )
+        propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2 ).updated( i2, replaceWithContext( es._2( p.mainIndices.head ), es._1( ctx ).asInstanceOf[Abs], es._1( p.t ) ) ) ) )
 
       case p @ TopL( q, i ) =>
         val Seq( oc ) = p.occConnectors
@@ -78,28 +88,33 @@ object ResolutionToExpansionProof {
       case p: AndL  => prop2( p, ETAnd( _, _ ) )
       case p: OrR   => prop2( p, ETOr( _, _ ) )
       case p: ImpR  => prop2( p, ETImp( _, _ ) )
-      case p: AndR1 => prop1( p, ETAnd( _, ETWeakening( p.sub2, false ) ) )
-      case p: AndR2 => prop1( p, ETAnd( ETWeakening( p.sub1, false ), _ ) )
-      case p: OrL1  => prop1( p, ETOr( _, ETWeakening( p.sub2, true ) ) )
-      case p: OrL2  => prop1( p, ETOr( ETWeakening( p.sub1, true ), _ ) )
-      case p: ImpL1 => prop1( p, ETImp( _, ETWeakening( p.sub2, true ) ) )
-      case p: ImpL2 => prop1( p, ETImp( ETWeakening( p.sub1, false ), _ ) )
-
+      case p: AndR1 => prop1s( p, ( s, et ) => ETAnd( et, ETWeakening( s( p.sub2 ), false ) ) )
+      case p: OrL1  => prop1s( p, ( s, et ) => ETOr( et, ETWeakening( s( p.sub2 ), true ) ) )
+      case p: ImpL1 => prop1s( p, ( s, et ) => ETImp( et, ETWeakening( s( p.sub2 ), true ) ) )
+      case p: AndR2 => prop1s( p, ( s, et ) => ETAnd( ETWeakening( s( p.sub1 ), false ), et ) )
+      case p: OrL2  => prop1s( p, ( s, et ) => ETOr( ETWeakening( s( p.sub1 ), true ), et ) )
+      case p: ImpL2 => prop1s( p, ( s, et ) => ETImp( ETWeakening( s( p.sub1 ), false ), et ) )
       case p: WeakQuantResolutionRule =>
         val Seq( oc ) = p.occConnectors
         val subFVs = freeVariables( p.subProof.conclusion )
         propg( p, p.subProof, _.groupBy( _._1.restrict( subFVs ) ).mapValues( ess =>
           for ( i <- p.subProof.conclusion.indicesSequent ) yield if ( i == p.idx ) ETWeakQuantifier(
-            p.subProof.conclusion( p.idx ),
+            ess.head._1.restrict( subFVs )( p.subProof.conclusion( p.idx ) ),
             ess.groupBy( _._1( p.variable ) ).mapValues( _.map( _._2( oc.child( i ) ) ) ).mapValues( ETMerge( _ ) )
           )
           else ETMerge( ess.map( _._2 ).map( _( oc.child( i ) ) ) ) ).toSet )
 
       case p: SkolemQuantResolutionRule =>
-        prop1( p, ETSkolemQuantifier( p.subProof.conclusion( p.idx ), p.skolemTerm, p.skolemDef, _ ) )
+        prop1s( p, ( s, et ) => ETSkolemQuantifier( s( p.subProof.conclusion( p.idx ) ), s( p.skolemTerm ), p.skolemDef, et ) )
     }
 
-    ExpansionProof( proof.subProofs.collect {
+    eliminateMerges( ExpansionProof( proof.subProofs.collect {
+      case p @ Taut( f ) if !f.isInstanceOf[HOLAtom] /* FIXME */ =>
+        ETWeakQuantifier.withMerge(
+          ExpansionProofWithCut.cutAxiom,
+          for ( ( s, Sequent( Seq( l ), Seq( r ) ) ) <- expansions( p ) )
+            yield s( f ) -> ETImp( l, r )
+        ) +: Sequent()
       case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
         Sequent() :+ ETMerge( f, true, expansions( p ).map( _._2.elements.head ) )
       case p @ Input( Sequent( Seq(), Seq( f ) ) ) if freeVariables( f ).isEmpty =>
@@ -110,8 +125,7 @@ object ResolutionToExpansionProof {
         ETWeakQuantifierBlock( sh, fvs.size,
           for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.map( ETNeg( _ ), identity ).elements.reduceOption( ETOr( _, _ ) ).getOrElse( ETBottom( false ) ) ) +: Sequent()
       case p @ Definition( _, _ ) =>
-        println( expansions( p ) )
         ETMerge( p.mainFormulaSequent.elements.head, false, expansions( p ).map( _._2.elements.head ) ) +: Sequent()
-    }.fold( Sequent() )( _ ++ _ ) ++ proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) ) )
+    }.fold( Sequent() )( _ ++ _ ) ++ proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
   }
 }

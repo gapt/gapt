@@ -13,7 +13,7 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.resolution.{ RobinsonToExpansionProof, RobinsonToLK, simplifyResolutionProof }
+import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
 import at.logic.gapt.provers.verit.VeriT
@@ -30,14 +30,14 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def test( implicit testRun: TestRun ) = {
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
 
-    RobinsonToExpansionProof( robinson, reconstructedEndSequent ) --? "RobinsonToExpansionProof" map { E2 =>
+    ResolutionToExpansionProof( robinson ) --? "RobinsonToExpansionProof" map { E2 =>
       VeriT.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
       VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
     BabelParser.parse( reconstructedEndSequent.toImplication.toString ) == reconstructedEndSequent.toImplication !-- "babel round-trip"
 
-    val p = RobinsonToLK( robinson, reconstructedEndSequent ) --- "RobinsonToLK"
+    val p = WeakeningContractionMacroRule( ResolutionToLKProof( robinson ), reconstructedEndSequent ) --- "RobinsonToLK"
 
     regularize( p ) --? "regularize"
     LKToLKsk( p ) --? "LKToLKsk"

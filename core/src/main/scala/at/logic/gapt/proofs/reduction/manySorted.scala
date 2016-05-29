@@ -138,7 +138,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
   def infer( clause: FOLClause, known: Map[FOLVar, Var] ): Map[FOLVar, Var] =
     clause.elements.foldRight( known )( infer )
 
-  def back( proof: ResolutionProof, originalInputClauses: Set[HOLClause] ): ResolutionProof = {
+  def back( proof: ResolutionProof, originalInputs: Set[HOLClause] ): ResolutionProof = {
     import at.logic.gapt.proofs.resolution._
 
     val memo = mutable.Map[( ResolutionProof, Map[FOLVar, Var] ), ResolutionProof]()
@@ -148,15 +148,15 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     }
 
     def g( p: ResolutionProof, vars: Map[FOLVar, Var] ): ResolutionProof = memo.getOrElseUpdate( ( p, vars ), p match {
-      case ReflexivityClause( term: FOLTerm ) => ReflexivityClause( back( term, vars ) )
-      case TautologyClause( atom: FOLAtom )   => TautologyClause( back( atom, vars ) )
-      case InputClause( clause ) =>
+      case Refl( term: FOLTerm ) => Refl( back( term, vars ) )
+      case Taut( atom: FOLAtom ) => Taut( back( atom, vars ) )
+      case Input( clause ) =>
         ( for (
-          original <- originalInputClauses;
+          original <- originalInputs;
           subst <- syntacticMatching( original.toDisjunction, back( clause.toDisjunction.asInstanceOf[FOLFormula], vars ) )
-        ) yield Instance( InputClause( original ), subst ) ).head
+        ) yield Subst( Input( original ), subst ) ).head
 
-      case Instance( subProof, subst ) =>
+      case Subst( subProof, subst ) =>
         val subProofVars = freeVariables( subProof.conclusion ).map {
           case v @ FOLVar( name ) =>
             v -> Var( name, subst( v ) match {
@@ -170,7 +170,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
           case v @ FOLVar( name ) =>
             subProofVars( v ) -> back( subst( v ).asInstanceOf[FOLTerm], vars )
         } )
-        Instance( subProof_, newSubst )
+        Subst( subProof_, newSubst )
 
       case Factor( subProof, idx1, idx2 ) =>
         Factor( f( subProof, vars ), idx1, idx2 )
@@ -181,22 +181,15 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         val q2 = f( subProof2, subProofVars )
         Resolution( q1, idx1, q2, idx2 )
 
-      case Paramodulation( subProof1, eq, subProof2, lit, Abs( v: FOLVar, con: FOLAtom ), ltr ) =>
+      case Paramod( subProof1, eq, ltr, subProof2, lit, Abs( v: FOLVar, con: FOLAtom ) ) =>
         val subProofVars = infer( subProof1.conclusion( eq ).asInstanceOf[FOLAtom], vars )
         val q1 = f( subProof1, subProofVars )
         val q2 = f( subProof2, subProofVars )
         val conVars = infer( con, vars )
         val newCon = Abs( conVars( v ), back( con, conVars ) )
-        Paramodulation( q1, eq, q2, lit, newCon, ltr )
+        Paramod( q1, eq, ltr, q2, lit, newCon )
 
-      case Splitting( p0, c1, c2, p1, p2 ) =>
-        val subProofVars = infer( p0.conclusion.map { _.asInstanceOf[FOLAtom] }, vars )
-        Splitting(
-          f( p0, subProofVars ),
-          c1 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
-          c2 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
-          f( p1, vars ), f( p2, vars )
-        )
+      // FIXME: propositional
     } )
 
     f( proof, Map() )
@@ -319,9 +312,9 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
     mapInputClauses( proof ) { cls =>
       val clauseWithoutPredicates = cls filterNot { case Apps( c: HOLAtomConst, _ ) => predicates contains c }
       if ( clauseWithoutPredicates.nonEmpty )
-        InputClause( clauseWithoutPredicates )
+        Input( clauseWithoutPredicates )
       else
-        InputClause( cls )
+        Input( cls )
     }
 
   def unguard( formula: HOLFormula ): HOLFormula = formula match {
@@ -544,8 +537,9 @@ case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
  */
 case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], ExpansionProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => ExpansionProof ) = {
-    val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
-    ( cnf, RobinsonToExpansionProof( _, problem, justs, defs ) )
+    val cnf = structuralCNF3( problem, propositional = false )
+    ( cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
+      res => ResolutionToExpansionProof( mapInputClauses( res )( seq => cnf.find( _.conclusion == seq ).get ) ) )
   }
 }
 
@@ -554,8 +548,9 @@ case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], Exp
  */
 case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => LKProof ) = {
-    val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
-    ( cnf, RobinsonToLK( _, problem, justs, defs, addWeakenings = true ) )
+    val cnf = structuralCNF3( problem, propositional = false )
+    ( cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
+      res => ResolutionToLKProof( mapInputClauses( res )( seq => cnf.find( _.conclusion == seq ).get ) ) )
   }
 }
 

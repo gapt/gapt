@@ -36,10 +36,10 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
 
     val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 
-    val p1 = InputClause( Clause() :+ c1 )
-    val p2 = Instance( p1, sub )
-    val p3 = InputClause( Clause() :+ c2 )
-    val p4 = Paramodulation( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
+    val p1 = Input( Clause() :+ c1 )
+    val p2 = Subst( p1, sub )
+    val p3 = Input( Clause() :+ c2 )
+    val p4 = Paramod.withMain( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
 
   }
   object UNSproofFreshvars {
@@ -67,10 +67,10 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
 
     val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
 
-    val p1 = InputClause( Clause() :+ c1 )
-    val p2 = Instance( p1, sub )
-    val p3 = InputClause( Clause() :+ c2 )
-    val p4 = Paramodulation( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
+    val p1 = Input( Clause() :+ c1 )
+    val p2 = Subst( p1, sub )
+    val p3 = Input( Clause() :+ c2 )
+    val p4 = Paramod.withMain( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
   }
   object UNSproofVariant {
     val v0 = FOLVar( "v0" )
@@ -98,19 +98,19 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
     val sub1 = FOLSubstitution( Map( ( v0, v0u ), ( v1, v1u ) ) )
     val sub2 = FOLSubstitution( Map( ( v0u, v2 ), ( v1u, add01 ) ) )
 
-    val p1 = InputClause( Clause() :+ c1 )
-    val p1_ = Instance( p1, sub1 )
-    val p2 = Instance( p1, sub2 )
-    val p3 = InputClause( Clause() :+ c2 )
-    val p4 = Paramodulation( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
+    val p1 = Input( Clause() :+ c1 )
+    val p1_ = Subst( p1, sub1 )
+    val p2 = Subst( p1, sub2 )
+    val p3 = Input( Clause() :+ c2 )
+    val p4 = Paramod.withMain( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
 
   }
 
-  "RobinsonToLK" should {
+  "ResolutionToLKProof" should {
     "transform the following resolution proof into an LK proof of the empty sequent" in {
       "containing only an initial clause" in {
         val Pa = FOLAtom( "P", FOLConst( "a" ) :: Nil )
-        RobinsonToLK( TautologyClause( Pa ) ) must_== LogicalAxiom( Pa )
+        ResolutionToLKProof( Taut( Pa ) ) must_== LogicalAxiom( Pa )
       }
       "containing a factorized clause" in {
         val a = FOLConst( "a" )
@@ -122,13 +122,13 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         val Pfy = FOLAtom( "P", fy :: Nil )
         val Px = FOLAtom( "P", x :: Nil )
 
-        val p1 = InputClause( Pfa +: Px +: Pfy +: Clause() )
-        val resProof = Factor( Instance( p1, FOLSubstitution( x -> fa, y -> a ) ), Seq( Ant( 1 ), Ant( 0 ), Ant( 2 ) ) )._1
+        val p1 = Input( Pfa +: Px +: Pfy +: Clause() )
+        val resProof = Factor( Factor( Subst( p1, FOLSubstitution( x -> fa, y -> a ) ), Ant( 0 ), Ant( 1 ) ), Ant( 0 ), Ant( 1 ) )
 
         val l1 = TheoryAxiom( Pfa +: Pfa +: Pfa +: Sequent() )
         val l2 = ContractionLeftRule( l1, Ant( 0 ), Ant( 1 ) )
         val lkProof = ContractionLeftRule( l2, Ant( 0 ), Ant( 1 ) )
-        RobinsonToLK( resProof ) must_== lkProof
+        ResolutionToLKProof.asDerivation( resProof ) must_== lkProof
       }
       "containing a variant clause" in {
         val x = FOLVar( "x" )
@@ -136,11 +136,11 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         val Px = FOLAtom( "P", x :: Nil )
         val Py = FOLAtom( "P", y :: Nil )
 
-        val p1 = InputClause( Px +: Clause() )
-        val resProof = Instance( p1, FOLSubstitution( x -> y ) )
+        val p1 = Input( Px +: Clause() )
+        val resProof = Subst( p1, FOLSubstitution( x -> y ) )
 
         val lkProof = TheoryAxiom( Py +: Sequent() )
-        RobinsonToLK( resProof ) must_== lkProof
+        ResolutionToLKProof.asDerivation( resProof ) must_== lkProof
       }
       "containing a resolution clause" in {
         val x = FOLVar( "x" )
@@ -153,14 +153,14 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         val Pfa = FOLAtom( "P", fa :: Nil )
         val Pffa = FOLAtom( "P", ffa :: Nil )
 
-        val p1 = InputClause( Px +: Clause() :+ Pfx )
-        val p2 = InputClause( Pffa +: Clause() :+ Pfa )
-        val resProof = Resolution( p2, Suc( 0 ), Instance( p1, FOLSubstitution( x -> fa ) ), Ant( 0 ) )
+        val p1 = Input( Px +: Clause() :+ Pfx )
+        val p2 = Input( Pffa +: Clause() :+ Pfa )
+        val resProof = Resolution( p2, Suc( 0 ), Subst( p1, FOLSubstitution( x -> fa ) ), Ant( 0 ) )
 
         val l1 = TheoryAxiom( Pfa +: Sequent() :+ Pffa )
         val l2 = TheoryAxiom( Pffa +: Sequent() :+ Pfa )
         val lkProof = CutRule( l2, Suc( 0 ), l1, Ant( 0 ) )
-        RobinsonToLK( resProof ) must_== lkProof
+        ResolutionToLKProof.asDerivation( resProof ) must_== lkProof
       }
       "containing a paramodulation clause for rule 1" in {
         val a = FOLConst( "a" )
@@ -171,14 +171,14 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         val Pfa = FOLAtom( "P", FOLFunction( "f", a :: Nil ) :: Nil )
         val Pfb = FOLAtom( "P", FOLFunction( "f", b :: Nil ) :: Nil )
 
-        val p1 = InputClause( Clause() :+ exb )
-        val p2 = InputClause( Pfa +: Clause() )
-        val resProof = Paramodulation( Instance( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
+        val p1 = Input( Clause() :+ exb )
+        val p2 = Input( Pfa +: Clause() )
+        val resProof = Paramod.withMain( Subst( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
 
         val l1 = TheoryAxiom( Sequent() :+ eab )
         val l2 = TheoryAxiom( Pfa +: Sequent() )
         val lkProof = ParamodulationLeftRule( l1, l1.conclusion( Suc( 0 ) ), l2, l2.conclusion( Ant( 0 ) ), Pfb )
-        RobinsonToLK( resProof ) must_== lkProof
+        ResolutionToLKProof.asDerivation( resProof ) must_== lkProof
       }
       "containing a paramodulation clause for rule 2" in {
         val a = FOLConst( "a" )
@@ -189,14 +189,14 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         val Pfa = FOLAtom( "P", FOLFunction( "f", a :: Nil ) :: Nil )
         val Pfb = FOLAtom( "P", FOLFunction( "f", b :: Nil ) :: Nil )
 
-        val p1 = InputClause( Clause() :+ ebx )
-        val p2 = InputClause( Pfa +: Clause() )
-        val resProof = Paramodulation( Instance( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
+        val p1 = Input( Clause() :+ ebx )
+        val p2 = Input( Pfa +: Clause() )
+        val resProof = Paramod.withMain( Subst( p1, FOLSubstitution( x -> a ) ), Suc( 0 ), p2, Ant( 0 ), Pfb )
 
         val l1 = TheoryAxiom( Sequent() :+ eba )
         val l2 = TheoryAxiom( Pfa +: Sequent() )
         val lkProof = ParamodulationLeftRule( l1, l1.conclusion( Suc( 0 ) ), l2, l2.conclusion( Ant( 0 ) ), Pfb )
-        RobinsonToLK( resProof ) must_== lkProof
+        ResolutionToLKProof.asDerivation( resProof ) must_== lkProof
       }
     }
     "transform a resolution proof into an LK proof of the weakly quantified sequent" in {
@@ -209,25 +209,25 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         val f1 = All( x, Px )
 
         val seq = HOLSequent( List( f1 ), List( Pa ) )
-        val p1 = InputClause( Clause() :+ Px )
-        val p2 = InputClause( Pa +: Clause() )
-        val v1 = Instance( p1, FOLSubstitution( x -> y ) )
-        val resProof = Resolution( Instance( v1, FOLSubstitution( y -> a ) ), Suc( 0 ), p2, Ant( 0 ) )
-        RobinsonToLK( resProof, seq ).endSequent must_== ( f1 +: Sequent() :+ Pa )
+        val p1 = Input( Clause() :+ Px )
+        val p2 = Input( Pa +: Clause() )
+        val v1 = Subst( p1, FOLSubstitution( x -> y ) )
+        val resProof = Resolution( Subst( v1, FOLSubstitution( y -> a ) ), Suc( 0 ), p2, Ant( 0 ) )
+        ResolutionToLKProof( fixDerivation( resProof, seq ) ).endSequent must_== ( f1 +: Sequent() :+ Pa )
       }
       "transform the original subproof of the UNS example" in {
-        RobinsonToLK( UNSproof.p4 ).endSequent must_== ( Sequent() :+ UNSproof.c3 )
+        ResolutionToLKProof.asDerivation( UNSproof.p4 ).endSequent must_== ( Sequent() :+ UNSproof.c3 )
       }
       "transform the subproof of the UNS example with unique variables" in {
         skipped( "does not work! fix!" )
-        val r = RobinsonToLK( UNSproofFreshvars.p4 ).endSequent
+        val r = ResolutionToLKProof( UNSproofFreshvars.p4 ).endSequent
         r.antecedent must beEmpty
         r.succedent.size mustEqual ( 1 )
         r.succedent( 0 ) mustEqual ( UNSproofFreshvars.c3 )
       }
       "transform the subproof of the UNS example with introduced variant" in {
         skipped( "does not work! fix!" )
-        val r = RobinsonToLK( UNSproofVariant.p4 ).endSequent
+        val r = ResolutionToLKProof( UNSproofVariant.p4 ).endSequent
         r.antecedent must beEmpty
         r.succedent.size mustEqual ( 1 )
         r.succedent( 0 ) mustEqual ( UNSproofVariant.c3 )
@@ -235,16 +235,14 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
     }
 
     "transform rewriting at multiple positions" in {
-      val Seq( a, b ) = Seq( "a", "b" ) map { FOLConst( _ ) }
-      val p = FOLAtomConst( "p", 2 )
-      val proof = RobinsonToLK(
-        Paramodulation(
-          InputClause( Clause() :+ ( a === b ) ), Suc( 0 ),
-          InputClause( Clause() :+ p( a, a ) ), Suc( 0 ),
-          p( b, b )
+      val proof = ResolutionToLKProof.asDerivation(
+        Paramod(
+          Input( Clause() :+ hoa"a = b" ), Suc( 0 ), true,
+          Input( Clause() :+ hoa"p a a" ), Suc( 0 ),
+          le"^x p x x: o"
         )
       )
-      proof.endSequent must beMultiSetEqual( Sequent() :+ p( b, b ) )
+      proof.endSequent must beMultiSetEqual( Sequent() :+ hoa"p b b" )
     }
 
     "duplicate bound variables" in {
@@ -254,9 +252,9 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
 
       val endSequent = Sequent() :+ ( ( All( x, p( x ) ) | All( x, q( x ) ) ) --> ( p( c ) | q( d ) ) )
 
-      val ( cnf, projs, defs ) = structuralCNF( endSequent, generateJustifications = true, propositional = false )
+      val cnf = structuralCNF3( endSequent )
       val Some( ref ) = Escargot getRobinsonProof cnf
-      val expansion = RobinsonToExpansionProof( ref, endSequent, projs, defs )
+      val expansion = ResolutionToExpansionProof( ref )
       expansion.shallow must_== endSequent
       expansion.deep must beValidSequent
     }

@@ -1,13 +1,13 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.proofs.Clause
-import at.logic.gapt.proofs.resolution.{ RobinsonToLK, RobinsonToExpansionProof }
+import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, fixDerivation }
 import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
-import scalaz._
 
+import scalaz._
 import scala.io.Source
 
 class TptpProofParserTest extends Specification {
@@ -28,11 +28,13 @@ class TptpProofParserTest extends Specification {
       val Success( robinson ) = RefutationSketchToRobinson( sketch )
       robinson.conclusion must_== Clause()
 
+      val fixed = fixDerivation( robinson, endSequent )
+
       // not converting that one to LK because it takes too long
       if ( fn != "RNG103+2_E---1.9.THM-CRf.s" )
-        RobinsonToLK( robinson, endSequent )
+        ResolutionToLKProof( fixed )
 
-      val expansion = RobinsonToExpansionProof( robinson, endSequent )
+      val expansion = ResolutionToExpansionProof( fixed )
       Escargot isValid expansion.deep must_== true
     }
   }

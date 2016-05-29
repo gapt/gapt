@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
 import at.logic.gapt.proofs.lksk.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, Sequent }
 import at.logic.gapt.proofs.ceres_omega._
-import at.logic.gapt.proofs.resolution.{ Robinson2RalWithAbstractions, RobinsonToLK }
+import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, Robinson2RalWithAbstractions }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.{ TimeOutException, withTimeout }
@@ -175,8 +175,7 @@ abstract class AnalysisWithCeresOmega {
    * The expansion proof of the first-order refutation ([[fol_refutation]]).
    */
   lazy val fol_refutation_expansion_proof = {
-    val end_sequent = Sequent( fol_css.map( x => univclosure( x.toDisjunction ) ), Nil )
-    val lk_rp = RobinsonToLK( fol_refutation, end_sequent )
+    val lk_rp = ResolutionToLKProof( fol_refutation )
     LKToExpansionProof( lk_rp )
   }
 

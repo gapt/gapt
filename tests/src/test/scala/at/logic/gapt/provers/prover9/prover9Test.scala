@@ -2,7 +2,7 @@ package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-
+import at.logic.gapt.proofs.resolution.Input
 import org.specs2.mutable._
 
 import scala.io.Source
@@ -51,7 +51,7 @@ class Prover9Test extends Specification with SequentMatchers {
     "handle exit code 2" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
       Prover9.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => cnf must contain( atLeast( p.inputClauses ) )
+        case Some( p ) => cnf must contain( atLeast( p.subProofs.collect { case Input( seq ) => seq.asInstanceOf[HOLClause] } ) )
       }
     }
   }

@@ -1,11 +1,10 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.structuralCNF
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToExpansionProof, RobinsonToLK }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, mapInputClauses, structuralCNF3 }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent }
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.expansion.ExpansionProof
+import at.logic.gapt.proofs.lk.{ LKProof, WeakeningContractionMacroRule }
 
 trait ResolutionProver extends OneShotProver {
 
@@ -44,27 +43,35 @@ trait ResolutionProver extends OneShotProver {
 
   def getLKProof( seq: HOLSequent, addWeakenings: Boolean ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
-      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
-      getRobinsonProof( seq ) map { robinsonProof =>
-        RobinsonToLK( robinsonProof, seq, justs toMap, defs, addWeakenings )
+      getRobinsonProof( seq ) map { resolution =>
+        val lk = ResolutionToLKProof( resolution )
+        if ( addWeakenings ) WeakeningContractionMacroRule( lk, seq )
+        else lk
       }
     }
 
   override def isValid( seq: HOLSequent ): Boolean =
     getRobinsonProof( seq ).isDefined
 
+  def getRobinsonProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
+    val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
+    getRobinsonProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
+      mapInputClauses( resolution, factorEarly = true )( cnfMap )
+    }
+  }
+
   def getRobinsonProof( formula: HOLFormula ): Option[ResolutionProof] = getRobinsonProof( Sequent() :+ formula )
   def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] =
     withGroundVariables3( seq ) { seq =>
-      getRobinsonProof( structuralCNF( seq, generateJustifications = false, propositional = false )._1 )
+      val cnf = structuralCNF3( seq, propositional = false )
+      getRobinsonProof( cnf )
     }
 
   def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
     withGroundVariables2( seq ) { seq =>
-      val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
-      getRobinsonProof( cnf ).map( RobinsonToExpansionProof( _, seq, justs, defs ) )
+      getRobinsonProof( seq ) map { ResolutionToExpansionProof( _ ) }
     }
 
 }

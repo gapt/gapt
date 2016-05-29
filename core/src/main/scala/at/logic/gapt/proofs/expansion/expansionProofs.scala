@@ -348,28 +348,32 @@ object eliminateDefsET {
       case _ => None
     }
   }
+  val negReplPos = HOLPosition( 1, 2 )
+  val posReplPos = HOLPosition( 2, 1 )
 
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean ): ExpansionProofWithCut =
-    apply( ep, pureFolWithoutEq, _ => true )
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, whichDefinitions: HOLAtomConst => Boolean ): ExpansionProofWithCut =
-    ep.shallow.find {
-      case DefinitionFormula( _, d, _ ) if whichDefinitions( d ) => true
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProofWithCut =
+    definitions.foldLeft( ExpansionProofWithCut( ep ) )( apply( _, _, pureFolWithoutEq ) )
+  def apply( epwc: ExpansionProofWithCut, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProofWithCut = {
+    val definition = epwc.expansionWithCutAxiom.atomDefs.getOrElse( definitionConst, return epwc )
+    val Abs.Block( vs, definedFormula: HOLFormula ) = definition
+
+    val ( defCuts, otherCuts ) = epwc.cuts.partition {
+      case ETImp( d @ ETDefinedAtom( _, _, _ ), _ ) if d.definitionConst == definitionConst => true
+      case ETImp( _, d @ ETDefinedAtom( _, _, _ ) ) if d.definitionConst == definitionConst => true
       case _ => false
-    } match {
-      case Some( idx ) => apply( apply( ep, idx, pureFolWithoutEq ), pureFolWithoutEq, whichDefinitions )
-      case None        => ExpansionProofWithCut( ep )
-    }
-  def apply( ep: ExpansionProof, idx: SequentIndex, pureFolWithoutEq: Boolean ): ExpansionProof = {
-    val ETWeakQuantifierBlock( DefinitionFormula( vs, definitionConst, definedFormula ), insts0 ) = ep.expansionSequent( idx )
-    val negReplPos = HOLPosition( 1, 2 )
-    val posReplPos = HOLPosition( 2, 1 )
-    var insts = insts0 mapValues {
-      case et =>
-        ETMerge( et.shallow( posReplPos ).asInstanceOf[HOLFormula], true, getAtHOLPosition( et, posReplPos ) ) ->
-          ETMerge( et.shallow( negReplPos ).asInstanceOf[HOLFormula], false, getAtHOLPosition( et, negReplPos ) )
     }
 
-    val rest = ep.expansionSequent.delete( idx )
+    val insts0 = defCuts map {
+      case ETImp( ETDefinedAtom( Apps( _, as ), _, _ ), repl ) => as -> repl
+      case ETImp( repl, ETDefinedAtom( Apps( _, as ), _, _ ) ) => as -> repl
+    }
+    var insts = insts0.groupBy( _._1 ).mapValues { repls =>
+      val shallow = repls.head._2.shallow
+      ETMerge( shallow, true, repls.map( _._2 ).filter( _.polarity ) ) ->
+        ETMerge( shallow, false, repls.map( _._2 ).filter( !_.polarity ) )
+    }
+
+    val rest = ExpansionProofWithCut( otherCuts, epwc.expansionSequent ).expansionWithCutAxiom.expansionSequent
     val usesites = rest.elements.flatMap { _.subProofs }.
       collect { case ETDefinedAtom( Apps( d, args ), pol, _ ) => ( args, pol ) }.toSet
     insts = Map() ++
@@ -418,9 +422,9 @@ object eliminateDefsET {
       insts.values.map { case ( pos, neg ) => pos.shallow -> ETImp( pos, neg ) }
     )
 
-    val newES = ( newCuts +: ep.expansionSequent.delete( idx ).map { repl } ).
+    val newES = ( newCuts +: rest.map { repl } ).
       groupBy { _.shallow }.map { _._2 }.map { ETMerge( _ ) }
 
-    ExpansionProof( newES )
+    ExpansionProofWithCut( newES )
   }
 }

@@ -36,7 +36,7 @@ object fixDerivation extends Logger {
 
   def tryDeriveBySubsumptionModEq( to: HOLClause, from: HOLClause ): Option[ResolutionProof] =
     for ( s <- clauseSubsumption( from, to, matchingAlgorithm = matchingModEq ) ) yield {
-      var p = Factor( Instance( InputClause( from ), s ) )._1
+      var p = Factor( Subst( Input( from ), s ) )
 
       val needToFlip = for ( ( a, i ) <- p.conclusion.zipWithIndex ) yield a match {
         case _ if to.contains( a, i isSuc ) => false
@@ -47,14 +47,14 @@ object fixDerivation extends Logger {
       for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
         p = Flip( p, p.conclusion.indexOfPol( a, i isSuc ) )
 
-      p = Factor( p )._1
+      p = Factor( p )
       p
     }
 
   def tryDeriveTrivial( to: HOLClause, from: Seq[HOLClause] ) = to match {
-    case _ if from contains to => Some( InputClause( to ) )
-    case HOLClause( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ => Some( ReflexivityClause( t ) )
-    case HOLClause( Seq( a ), Seq( a_ ) ) if a == a_ => Some( TautologyClause( a ) )
+    case _ if from contains to => Some( Input( to ) )
+    case HOLClause( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ => Some( Refl( t ) )
+    case HOLClause( Seq( a ), Seq( a_ ) ) if a == a_ => Some( Taut( a ) )
     case _ => None
   }
 
@@ -67,7 +67,8 @@ object fixDerivation extends Logger {
   def apply( p: ResolutionProof, cs: Traversable[HOLClause] ): ResolutionProof =
     apply( p, cs.toSeq )
   def apply( p: ResolutionProof, cs: Seq[HOLClause] ): ResolutionProof =
-    mapInputClauses( p ) { cls =>
+    mapInputClauses( p ) { seq =>
+      val cls = seq.map( _.asInstanceOf[HOLAtom] )
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveBySubsumptionModEq( cls, _ ) ) ).
         orElse( tryDeriveViaResolution( cls, cs ) ).
@@ -76,8 +77,10 @@ object fixDerivation extends Logger {
         }
     }
 
-  def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof =
-    fixDerivation( p, CNFn toFClauseList endSequent.toDisjunction )
+  def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = {
+    val cnf = structuralCNF3( endSequent, structural = false )
+    mapInputClauses( fixDerivation( p, cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ) ) )( cls => cnf.find( _.conclusion == cls ).get )
+  }
 }
 
 object tautologifyInitialUnitClauses {
@@ -87,13 +90,13 @@ object tautologifyInitialUnitClauses {
    * If shouldTautologify is true for an initial unit clause +-a, then it is replaced by the tautology a:-a.  The
    * resulting resolution proof has the same structure as the original proof.
    */
-  def apply( p: ResolutionProof, shouldTautologify: HOLClause => Boolean ): ResolutionProof =
+  def apply( p: ResolutionProof, shouldTautologify: HOLSequent => Boolean ): ResolutionProof =
     mapInputClauses.withOccConn( p, factorEverything = true ) {
-      case clause @ Clause( Seq(), Seq( a ) ) if shouldTautologify( clause ) =>
-        TautologyClause( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq() +: Sequent() :+ Seq( Suc( 0 ) ) )
-      case clause @ Clause( Seq( a ), Seq() ) if shouldTautologify( clause ) =>
-        TautologyClause( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq( Ant( 0 ) ) +: Sequent() :+ Seq() )
-      case clause => InputClause( clause ) -> OccConnector( clause )
+      case clause @ Sequent( Seq(), Seq( a ) ) if shouldTautologify( clause ) =>
+        Taut( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq() +: Sequent() :+ Seq( Suc( 0 ) ) )
+      case clause @ Sequent( Seq( a ), Seq() ) if shouldTautologify( clause ) =>
+        Taut( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq( Ant( 0 ) ) +: Sequent() :+ Seq() )
+      case clause => Input( clause ) -> OccConnector( clause )
     }
 }
 
@@ -133,7 +136,7 @@ object findDerivationViaResolution {
       val toUnusedVars = rename( grounding.map( _._1 ), containedVariables( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }
       val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[LambdaExpression, LambdaExpression] )
-      val derivationInOrigVars = Instance( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
+      val derivationInOrigVars = Subst( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
 
       simplifyResolutionProof( derivationInOrigVars )
     }

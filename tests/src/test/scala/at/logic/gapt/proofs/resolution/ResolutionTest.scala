@@ -6,100 +6,100 @@ import org.specs2.mutable._
 
 class ResolutionTest extends Specification {
 
-  "InputClause" in {
-    InputClause( Clause() ).conclusion.isEmpty must_== true
-    InputClause( Clause() ).immediateSubProofs must beEmpty
-    InputClause( hoa"P" +: Clause() ).mainIndices must_== Seq( Ant( 0 ) )
+  "Input" in {
+    Input( Clause() ).conclusion.isEmpty must_== true
+    Input( Clause() ).immediateSubProofs must beEmpty
+    Input( hoa"P" +: Clause() ).mainIndices must_== Seq( Ant( 0 ) )
   }
 
   "ReflexivityClause" in {
-    ReflexivityClause( le"c" ).conclusion must_== ( Clause() :+ Eq( le"c", le"c" ) )
+    Refl( le"c" ).conclusion must_== ( Clause() :+ Eq( le"c", le"c" ) )
   }
 
   "TautologyClause" in {
-    TautologyClause( hoa"a" ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"a" )
+    Taut( hoa"a" ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"a" )
   }
 
   "Factor" in {
-    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 0 ), Ant( 1 ) ).conclusion must_== ( hoa"f(x)" +: Clause() )
-    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 1 ), Ant( 0 ) ) must throwAn[IllegalArgumentException]
-    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 0 ), Ant( 2 ) ) must throwAn[IndexOutOfBoundsException]
-    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() :+ hoa"f(x)" ), Ant( 0 ), Suc( 0 ) ) must throwAn[IllegalArgumentException]
-    Factor( InputClause( hoa"f(x)" +: hoa"f(y)" +: Clause() ), Ant( 0 ), Ant( 1 ) ) must throwAn[IllegalArgumentException]
+    Factor( Input( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 0 ), Ant( 1 ) ).conclusion must_== ( hoa"f(x)" +: Clause() )
+    Factor( Input( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 1 ), Ant( 0 ) ) must throwAn[IllegalArgumentException]
+    Factor( Input( hoa"f(x)" +: hoa"f(x)" +: Clause() ), Ant( 0 ), Ant( 2 ) ) must throwAn[IndexOutOfBoundsException]
+    Factor( Input( hoa"f(x)" +: hoa"f(x)" +: Clause() :+ hoa"f(x)" ), Ant( 0 ), Suc( 0 ) ) must throwAn[IllegalArgumentException]
+    Factor( Input( hoa"f(x)" +: hoa"f(y)" +: Clause() ), Ant( 0 ), Ant( 1 ) ) must throwAn[IllegalArgumentException]
   }
 
   "Factor companion" in {
-    Factor( InputClause( hoa"f(x)" +: hoa"f(x)" +: Clause() ) )._1.conclusion must_== ( hoa"f(x)" +: Clause() )
+    Factor( Input( hoa"f(x)" +: hoa"f(x)" +: Clause() ) ).conclusion must_== ( hoa"f(x)" +: Clause() )
   }
 
   "Resolution" in {
     Resolution(
-      InputClause( Clause() :+ hoa"f(x)" ), Suc( 0 ),
-      InputClause( hoa"f(x)" +: Clause() ), Ant( 0 )
+      Input( Clause() :+ hoa"f(x)" ), Suc( 0 ),
+      Input( hoa"f(x)" +: Clause() ), Ant( 0 )
     ).conclusion must_== Clause()
 
     Resolution(
-      InputClause( Clause() :+ hoa"f(x)" ), Suc( 0 ),
-      InputClause( hoa"f(y)" +: Clause() ), Ant( 0 )
+      Input( Clause() :+ hoa"f(x)" ), Suc( 0 ),
+      Input( hoa"f(y)" +: Clause() ), Ant( 0 )
     ) must throwAn[IllegalArgumentException]
 
     Resolution(
-      InputClause( hoa"f(x)" +: Clause() ), Ant( 0 ),
-      InputClause( Clause() :+ hoa"f(x)" ), Suc( 0 )
+      Input( hoa"f(x)" +: Clause() ), Ant( 0 ),
+      Input( Clause() :+ hoa"f(x)" ), Suc( 0 )
     ) must throwAn[IllegalArgumentException]
 
     Resolution(
-      InputClause( hoa"a" +: Clause() :+ hoa"f(x)" :+ hoa"b" ), Suc( 0 ),
-      InputClause( hoa"c" +: hoa"f(x)" +: Clause() :+ hoa"d" ), Ant( 1 )
+      Input( hoa"a" +: Clause() :+ hoa"f(x)" :+ hoa"b" ), Suc( 0 ),
+      Input( hoa"c" +: hoa"f(x)" +: Clause() :+ hoa"d" ), Ant( 1 )
     ).conclusion must_== ( hoa"a" +: hoa"c" +: Clause() :+ hoa"b" :+ hoa"d" )
   }
 
-  "Paramodulation" in {
-    Paramodulation(
-      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
-      InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"λx p(f(c),x): o".asInstanceOf[Abs], leftToRight = true
+  "Paramod" in {
+    Paramod(
+      Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
+      Input( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
+      le"λx p(f(c),x): o".asInstanceOf[Abs]
     ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
-    Paramodulation(
-      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
-      InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"λx p(x,x): o".asInstanceOf[Abs], leftToRight = true
+    Paramod(
+      Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
+      Input( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
+      le"λx p(x,x): o".asInstanceOf[Abs]
     ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(g(d), g(d))" )
-    Paramodulation(
-      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
-      InputClause( hoa"p(f(c), f(c))" +: Clause() ), Ant( 0 ),
-      le"λx p(f(c),x): o".asInstanceOf[Abs], leftToRight = true
+    Paramod(
+      Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
+      Input( hoa"p(f(c), f(c))" +: Clause() ), Ant( 0 ),
+      le"λx p(f(c),x): o".asInstanceOf[Abs]
     ).conclusion must_== ( hoa"p(f(c), g(d))" +: Clause() )
-    Paramodulation(
-      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
-      InputClause( hoa"p(g(d), f(c))" +: Clause() ), Ant( 0 ),
-      le"λx p(x,f(c)): o".asInstanceOf[Abs], leftToRight = false
+    Paramod(
+      Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), false,
+      Input( hoa"p(g(d), f(c))" +: Clause() ), Ant( 0 ),
+      le"λx p(x,f(c)): o".asInstanceOf[Abs]
     ).conclusion must_== ( hoa"p(f(c), f(c))" +: Clause() )
   }
 
-  "Paramodulation companion" in {
-    Paramodulation(
-      InputClause( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ),
-      InputClause( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      hoa"p(f(c), g(d))"
+  "Paramod companion" in {
+    Paramod(
+      Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
+      Input( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
+      le"^x p(f(c), x):o"
     ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
   }
 
-  "Splitting" in {
-    val c1 = InputClause( Clause() :+ hoa"p" :+ hoa"q" )
-    val c2 = InputClause( hoa"p" +: Clause() )
-    val c3 = InputClause( hoa"q" +: Clause() )
-
-    val splCls = c1
-    val case1 = Resolution( InputClause( Clause() :+ hoa"p" ), Suc( 0 ), c2, Ant( 0 ) )
-    val case2 = Resolution( InputClause( Clause() :+ hoa"q" ), Suc( 0 ), c3, Ant( 0 ) )
-    val proof = Splitting( splCls, Clause() :+ hoa"p", Clause() :+ hoa"q", case1, case2 )
-    proof.conclusion must beEmpty
-  }
+  //  "Splitting" in {
+  //    val c1 = Input( Clause() :+ hoa"p" :+ hoa"q" )
+  //    val c2 = Input( hoa"p" +: Clause() )
+  //    val c3 = Input( hoa"q" +: Clause() )
+  //
+  //    val splCls = c1
+  //    val case1 = Resolution( Input( Clause() :+ hoa"p" ), Suc( 0 ), c2, Ant( 0 ) )
+  //    val case2 = Resolution( Input( Clause() :+ hoa"q" ), Suc( 0 ), c3, Ant( 0 ) )
+  //    val proof = Splitting( splCls, Clause() :+ hoa"p", Clause() :+ hoa"q", case1, case2 )
+  //    proof.conclusion must beEmpty
+  //  }
 
   "daglike performance" in {
     def proof( n: Int ) = {
-      var p: ResolutionProof = TautologyClause( hoa"a" )
+      var p: ResolutionProof = Taut( hoa"a" )
       0 until n foreach { i =>
         p = Resolution( p, Suc( 0 ), p, Ant( 0 ) )
       }

@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import at.logic.gapt.expr.{ EqC, FOLFunction, constants }
+import at.logic.gapt.expr.{ EqC, FOLFunction, HOLAtom, constants }
 import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.HOLSequent
@@ -13,9 +13,9 @@ import at.logic.gapt.examples._
 import at.logic.gapt.formats.verit.VeriTParser
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToExpansionProof, numberOfLogicalInferencesRes, simplifyResolutionProof }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
+import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.{ glob, withTimeout }
 import at.logic.gapt.utils.logging.metrics
 import at.logic.gapt.proofs.expansion._
@@ -106,7 +106,7 @@ object loadProof {
 
   def loadResolutionProof( resProof: ResolutionProof, endSequent: HOLSequent ) = {
     metrics.value( "resinf_input", numberOfLogicalInferencesRes( simplifyResolutionProof( resProof ) ) )
-    val expansionProof = RobinsonToExpansionProof( resProof, endSequent )
+    val expansionProof = ResolutionToExpansionProof( resProof )
     val containsEquations = constants( expansionProof.shallow ) exists {
       case EqC( _ ) => true
       case _        => false

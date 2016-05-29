@@ -31,7 +31,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
       mapInputClauses( _ ) { clause =>
         cnf.view flatMap { ourClause =>
           syntacticMatching( ourClause.toDisjunction.asInstanceOf[FOLFormula], clause.toDisjunction.asInstanceOf[FOLFormula] ) map { matching =>
-            Instance( InputClause( ourClause.map { _.asInstanceOf[FOLAtom] } ), matching )
+            Subst( Input( ourClause.map { _.asInstanceOf[FOLAtom] } ), matching )
           }
         } head
       }
@@ -134,7 +134,7 @@ object Prover9Importer extends ExternalProgram {
       val tptpEndSequent = reconstructEndSequent( p9Output )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        resProof.inputClauses.map( _.toDisjunction ) ++: Sequent()
+        resProof.subProofs.collect { case Input( seq ) => seq.toDisjunction } ++: Sequent()
       } else {
         formulaToSequent.pos( tptpEndSequent.toDisjunction )
       }
@@ -148,16 +148,12 @@ object Prover9Importer extends ExternalProgram {
   def lkProofFromFile( p9File: String ): LKProof =
     lkProof( Source fromFile p9File mkString )
 
-  def lkProof( p9Output: String ): LKProof = {
-    val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
-    RobinsonToLK( fixedResProof, endSequent )
-  }
+  def lkProof( p9Output: String ): LKProof =
+    ResolutionToLKProof( robinsonProof( p9Output ) )
 
   def expansionProofFromFile( p9File: String ): ExpansionProof =
     expansionProof( Source.fromFile( p9File ).mkString )
 
-  def expansionProof( p9Output: String ): ExpansionProof = {
-    val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
-    RobinsonToExpansionProof( fixedResProof, endSequent )
-  }
+  def expansionProof( p9Output: String ): ExpansionProof =
+    ResolutionToExpansionProof( robinsonProof( p9Output ) )
 }

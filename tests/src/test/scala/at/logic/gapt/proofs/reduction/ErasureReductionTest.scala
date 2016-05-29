@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.{ ETAtom, ETWeakQuantifier, ExpansionProof }
-import at.logic.gapt.proofs.resolution.{ InputClause, MguResolution }
+import at.logic.gapt.proofs.resolution.{ Input, MguResolution }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -26,11 +26,11 @@ class ErasureReductionTest extends Specification with SatMatchers {
 
     val Seq( ec1, ec2, ec3, ec4 ) = Seq( c1, c2, c3, c4 ) map { red.forward }
 
-    val p1 = InputClause( ec2 )
+    val p1 = Input( ec2 )
     val p2 = MguResolution( p1, Suc( 0 ), p1, Ant( 0 ) )
     val p3 = MguResolution( p2, Suc( 0 ), p2, Ant( 0 ) )
-    val p4 = MguResolution( InputClause( ec1 ), Suc( 0 ), p3, Ant( 0 ) )
-    val p5 = MguResolution( InputClause( ec3 ), Suc( 0 ), InputClause( ec4 ), Ant( 0 ) )
+    val p4 = MguResolution( Input( ec1 ), Suc( 0 ), p3, Ant( 0 ) )
+    val p5 = MguResolution( Input( ec3 ), Suc( 0 ), Input( ec4 ), Ant( 0 ) )
     val p6 = MguResolution( p4, Suc( 0 ), p5, Ant( 0 ) )
 
     p6.conclusion must_== Clause()

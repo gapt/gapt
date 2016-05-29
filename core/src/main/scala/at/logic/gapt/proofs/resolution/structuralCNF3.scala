@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.resolution3
+package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 object structuralCNF3 {
 
-  def apply( endSequent: HOLSequent, propositional: Boolean ): Set[ResolutionProof] = {
+  def apply( endSequent: HOLSequent, propositional: Boolean = false, structural: Boolean = true ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
@@ -43,8 +43,8 @@ object structuralCNF3 {
     // In each step we simplify the sequents in this set and make them more like clauses.
 
     // First we expand the connectives which correspond to nested disjunctions, e.g. (:- a|b) turns into (:- a, b).
-    def expand( p: ResolutionProof ): Unit =
-      p.conclusion.zipWithIndex.elements.collectFirst {
+    def expand( p: ResolutionProof ): Unit = {
+      val p_Option = p.conclusion.zipWithIndex.elements.collectFirst {
         case ( Ex( x, a ), i: Ant ) if !propositional =>
           ExL( p, i, rename( x, freeVariables( p.conclusion ) ) )
         case ( All( x, a ), i: Suc ) if !propositional =>
@@ -78,11 +78,13 @@ object structuralCNF3 {
           return
         case ( Or( Top(), _ ) | Or( _, Top() ) | Imp( Bottom(), _ ) | Imp( _, Top() ), i: Ant ) =>
           return
-      } match {
+      }
+      p_Option match {
         case Some( p_ ) => expand( p_ )
         case None =>
           if ( !p.conclusion.isTaut ) split( Factor( p ) )
       }
+    }
 
     // Then we simplify the connectives which correspond to nested conjunctions, e.g. (:- a&b) turns into (:- a) and (:- b).
     // In order to combat exponential blow-up, we do something special if there are two or more such elements:
@@ -93,10 +95,10 @@ object structuralCNF3 {
         case ( Or( a, b ), i: Ant )  => i
         case ( Imp( a, b ), i: Ant ) => i
       } match {
-        case splits if splits.size > 1 || ( splits.size == 1 && p.conclusion.size > 3 ) =>
+        case splits if structural && ( splits.size > 1 || ( splits.size == 1 && p.conclusion.size > 3 ) ) =>
           abbrev( p, splits.head )
-        case Seq( i ) => splitAt( p, i )
-        case Seq()    => cnf += p
+        case Seq( i, _* ) => splitAt( p, i )
+        case Seq()        => cnf += p
       }
     }
 
@@ -127,11 +129,7 @@ object structuralCNF3 {
       )
       val repl = const( fvs: _* )
       if ( !alreadyDefined ) {
-        val defn = AllR.Block( Definition( const, definition ), Suc( 0 ) )
-        if ( i isAnt )
-          expand( AndR2( defn, Suc( 0 ) ) )
-        else
-          expand( AndR1( defn, Suc( 0 ) ) )
+        expand( DefIntro( Taut( f ), if ( i isAnt ) Suc( 0 ) else Ant( 0 ), repl, definition ) )
       }
       expand( DefIntro( p, i, repl, definition ) )
     }

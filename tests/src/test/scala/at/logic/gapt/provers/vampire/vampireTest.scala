@@ -100,10 +100,7 @@ class VampireTest extends Specification with SequentMatchers {
 
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      Vampire.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) =>
-          cnf must contain( atLeast( p.inputClauses ) )
-      }
+      Vampire.getRobinsonProof( cnf ) must beSome
     }
 
     "large cnf" in {

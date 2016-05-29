@@ -1,14 +1,15 @@
 package at.logic.gapt.proofs.sketch
 
-import at.logic.gapt.expr.{ freeVariables, FOLAtom }
-import at.logic.gapt.proofs.{ OccConnector, SequentProof, FOLClause }
+import at.logic.gapt.expr.{ FOLAtom, HOLAtom, freeVariables }
+import at.logic.gapt.proofs.{ FOLClause, OccConnector, SequentProof }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.resolution.{ mapInputClauses, findDerivationViaResolution }
+import at.logic.gapt.proofs.resolution.{ findDerivationViaResolution, mapInputClauses }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
 
 import scala.collection.mutable
-import scalaz._, Scalaz._
+import scalaz._
+import Scalaz._
 
 /**
  * Intermediate data structure intendend for the proof replay in the TPTP proof import.
@@ -90,23 +91,25 @@ object RefutationSketchToRobinson {
     type ErrorOr[X] = ValidationNel[UnprovableSketchInference, X]
     val memo = mutable.Map[RefutationSketch, ErrorOr[ResolutionProof]]()
     def solve( s: RefutationSketch ): ErrorOr[ResolutionProof] = memo.getOrElseUpdate( s, s match {
-      case SketchAxiom( axiom ) => Success( InputClause( axiom ) )
+      case SketchAxiom( axiom ) => Success( Input( axiom ) )
       case s @ SketchInference( conclusion, from ) =>
         import Validation.FlatMap._
         for {
           solvedFrom <- Applicative[ErrorOr].traverse( from.toList )( solve )
           solvedFromMap = solvedFrom.map { p => p.conclusion -> p }.toMap
-          deriv <- findDerivationViaResolution( s.conclusion, solvedFromMap.keySet, prover ).
+          deriv <- findDerivationViaResolution( s.conclusion, solvedFromMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ), prover ).
             map { _.success }.
             getOrElse { UnprovableSketchInference( s ).failureNel }
         } yield mapInputClauses( deriv )( solvedFromMap )
       case s: SketchSplit =>
         import Validation.FlatMap._
-        for {
-          splittingClause <- solve( s.splittingClause )
-          case1 <- solve( s.case1 )
-          case2 <- solve( s.case2 )
-        } yield Splitting( splittingClause, s.part1, s.part2, case1, case2 )
+        //        for {
+        //          splittingClause <- solve( s.splittingClause )
+        //          case1 <- solve( s.case1 )
+        //          case2 <- solve( s.case2 )
+        //        } yield Splitting( splittingClause, s.part1, s.part2, case1, case2 )
+        // FIXME
+        ???
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

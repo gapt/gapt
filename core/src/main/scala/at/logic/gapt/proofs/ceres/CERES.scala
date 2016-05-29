@@ -3,11 +3,10 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.formats.llk.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToLKProof }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.ResolutionProver
-
 import at.logic.gapt.provers.prover9.Prover9
 
 /**
@@ -103,7 +102,13 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
-    RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
+    WeakeningContractionMacroRule(
+      ResolutionToLKProof(
+      rp,
+      fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc.conclusion.map( _.asInstanceOf[HOLAtom] ) )
+    ),
+      endsequent
+    )
   }
 
   def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( axfs: HOLSequent ): LKProof = {

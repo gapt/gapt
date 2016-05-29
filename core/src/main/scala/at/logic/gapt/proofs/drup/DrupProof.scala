@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.drup
 
-import at.logic.gapt.proofs.{ HOLClause, Sequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.resolution._
 
 import scala.collection.mutable
@@ -64,7 +64,7 @@ object DrupToResolutionProof {
         cnf += Factor(
           if ( i1.isSuc ) Resolution( c1, i1, c2, i2 )
           else Resolution( c2, i2, c1, i1 )
-        )._1
+        )
       }
     }
 
@@ -72,9 +72,9 @@ object DrupToResolutionProof {
   }
 
   def unitPropagationReplay( cnf: Iterable[ResolutionProof], toDerive: HOLClause ): ResolutionProof = {
-    val negatedUnitClauses = toDerive.map( Sequent() :+ _, _ +: Sequent() ).elements.toSet
+    val negatedUnitClauses = toDerive.map( Sequent() :+ _, _ +: Sequent() ).elements.toSet[HOLSequent]
     val inputClausesForProver = cnf.map( p => p.conclusion -> p ).toMap
-    val emptyClause = unitPropagationProver( ( inputClausesForProver.keySet ++ negatedUnitClauses ).map( InputClause ) )
+    val emptyClause = unitPropagationProver( ( inputClausesForProver.keySet ++ negatedUnitClauses ).map( Input ) )
     val derivation = tautologifyInitialUnitClauses( emptyClause, negatedUnitClauses )
     mapInputClauses( derivation )( inputClausesForProver )
   }
@@ -83,7 +83,7 @@ object DrupToResolutionProof {
     val cnf = mutable.Set[ResolutionProof]()
     drup.refutation foreach {
       case DrupInput( clause ) =>
-        cnf += InputClause( clause )
+        cnf += Input( clause )
       case DrupDerive( clause ) =>
         cnf += unitPropagationReplay( cnf, clause )
       case DrupForget( clause ) =>

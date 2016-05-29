@@ -109,7 +109,7 @@ class EscargotLoop extends Logger {
   var propositional = false
 
   class Cls( val proof: ResolutionProof, val index: Int ) {
-    def clause = proof.conclusion
+    def clause = proof.conclusion.asInstanceOf[HOLClause]
 
     val maximal = for {
       ( a, i ) <- clause.zipWithIndex.elements
@@ -125,7 +125,7 @@ class EscargotLoop extends Logger {
   }
 
   private var clsIdx = 0
-  def InputCls( clause: HOLClause ): Cls = { clsIdx += 1; new Cls( InputClause( clause ), clsIdx ) }
+  def InputCls( clause: HOLClause ): Cls = { clsIdx += 1; new Cls( Input( clause ), clsIdx ) }
   def SimpCls( parent: Cls, newProof: ResolutionProof ): Cls = new Cls( newProof, parent.index )
   def DerivedCls( parent: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
   def DerivedCls( parent1: Cls, parent2: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
@@ -183,7 +183,7 @@ class EscargotLoop extends Logger {
 
   def factorClauses() =
     newlyDerived = newlyDerived map { cls =>
-      SimpCls( cls, Factor( cls.proof )._1 )
+      SimpCls( cls, Factor( cls.proof ) )
     }
 
   def tautologyDeletion() =
@@ -196,7 +196,7 @@ class EscargotLoop extends Logger {
     newlyDerived = newlyDerived map { cls =>
       val refls = cls.clause.antecedent collect { case Eq( t, t_ ) if t == t_ => t }
       SimpCls( cls, refls.foldRight( cls.proof )( ( t, proof ) =>
-        Resolution( ReflexivityClause( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
+        Resolution( Refl( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
     }
 
   def canonize( expr: LambdaExpression ): LambdaExpression = {
@@ -278,14 +278,14 @@ class EscargotLoop extends Logger {
       i <- given.maximal; j <- given.maximal
       if i < j && i.sameSideAs( j )
       mgu <- unify( given.clause( i ), given.clause( j ) )
-    } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
+    } newlyDerived += DerivedCls( given, Subst( given.proof, mgu ) )
 
   def unifyingEqualityResolution( given: Cls ): Unit =
     for {
       i <- if ( given.selected.nonEmpty ) given.selected else given.maximal if i.isAnt
       Eq( t, s ) <- Some( given.clause( i ) )
       mgu <- unify( t, s )
-    } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
+    } newlyDerived += DerivedCls( given, Subst( given.proof, mgu ) )
 
   def orderedResolution( given: Cls ): Unit =
     for ( existing <- workedOff ) {
@@ -296,7 +296,7 @@ class EscargotLoop extends Logger {
   def orderedResolution( c1: Cls, c2: Cls ): Unit = {
     if ( c2.selected.nonEmpty ) return
     val renaming = Substitution( rename( freeVariables( c2.clause ), freeVariables( c1.clause ) ) )
-    val p2_ = Instance( c2.proof, renaming )
+    val p2_ = Subst( c2.proof, renaming )
     for {
       i1 <- if ( c1.selected.nonEmpty ) c1.selected else c1.maximal
       a1 = c1.clause( i1 ) if i1 isAnt;
@@ -304,8 +304,8 @@ class EscargotLoop extends Logger {
       mgu <- unify( p2_.conclusion( i2 ), a1 )
       if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( a1, mgu( c1.clause( i1_ ) ) ) }
       if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
-      ( p1__, conn1 ) = Factor( Instance( c1.proof, mgu ) )
-      ( p2__, conn2 ) = Factor( Instance( p2_, mgu ) )
+      ( p1__, conn1 ) = Factor.withOccConn( Subst( c1.proof, mgu ) )
+      ( p2__, conn2 ) = Factor.withOccConn( Subst( p2_, mgu ) )
     } newlyDerived += DerivedCls( c1, c2, Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
   }
 
@@ -318,7 +318,7 @@ class EscargotLoop extends Logger {
   def orderedParamodulation( c1: Cls, c2: Cls ): Unit = {
     if ( c1.selected.nonEmpty ) return
     val renaming = Substitution( rename( freeVariables( c2.clause ), freeVariables( c1.clause ) ) )
-    val p2_ = Instance( c2.proof, renaming )
+    val p2_ = Subst( c2.proof, renaming )
 
     def isReductive( atom: HOLFormula, i: SequentIndex, pos: LambdaPosition ): Boolean =
       ( atom, i, pos.toList ) match {
@@ -337,12 +337,12 @@ class EscargotLoop extends Logger {
       mgu <- unify( t_, st2 )
       if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
       pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
-      p1__ = Instance( c1.proof, mgu )
-      p2__ = Instance( p2_, mgu )
+      p1__ = Subst( c1.proof, mgu )
+      p2__ = Subst( p2_, mgu )
       ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
       context = replacementContext( s.exptype, atom, pos2_.distinct, t, s )
 
-    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, context, leftToRight ) )
+    } newlyDerived += DerivedCls( c1, c2, Paramod( p1__, i1, leftToRight, p2__, i2, context ) )
   }
 
   def unitRewriting( given: Cls ): Unit = {
@@ -365,21 +365,20 @@ class EscargotLoop extends Logger {
 
     var p = c2.proof
     // Depends on the implementation detail that Paramodulation does not change indices.
-    for ( i <- p.conclusion.indices ) {
-      var didRewrite = true
-      while ( didRewrite ) {
-        didRewrite = false
-        for {
-          ( subterm, pos ) <- LambdaPosition getPositions p.conclusion( i ) groupBy { p.conclusion( i )( _ ) } if !didRewrite
-          if !subterm.isInstanceOf[Var]
-          ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
-          subst <- matching( t_, subterm )
-          if termOrdering.lt( subst( s_ ), subterm )
-        } {
-          p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
-            p, i, replacementContext( t_.exptype, p.conclusion( i ), pos.toSeq ), leftToRight )
-          didRewrite = true
-        }
+    var didRewrite = true
+    while ( didRewrite ) {
+      didRewrite = false
+      for {
+        i <- p.conclusion.indices if !didRewrite
+        ( subterm, pos ) <- LambdaPosition getPositions p.conclusion( i ) groupBy { p.conclusion( i )( _ ) } if !didRewrite
+        if !subterm.isInstanceOf[Var]
+        ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
+        subst <- matching( t_, subterm )
+        if termOrdering.lt( subst( s_ ), subterm )
+      } {
+        p = Paramod( Subst( c1.proof, subst ), Suc( 0 ), leftToRight,
+          p, i, replacementContext( t_.exptype, p.conclusion( i ), pos ) )
+        didRewrite = true
       }
     }
 
