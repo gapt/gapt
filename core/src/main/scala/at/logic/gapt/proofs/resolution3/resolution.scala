@@ -49,6 +49,16 @@ object Factor {
     }
     p_
   }
+  def withOccConn( p: ResolutionProof ): ( ResolutionProof, OccConnector[HOLFormula] ) = {
+    var p_ = p
+    var conn = OccConnector( p_.conclusion )
+    for ( ( a, i ) <- p.conclusion.diff( p.conclusion.distinct ).zipWithIndex ) {
+      val Seq( j1, j2, _* ) = p_.conclusion.zipWithIndex.elements.filter( _._2 sameSideAs i ).filter( _._1 == a ).map( _._2 )
+      p_ = Factor( p_, j1, j2 )
+      conn = p_.occConnectors.head * conn
+    }
+    p_ -> conn
+  }
 }
 
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
