@@ -7,6 +7,20 @@ import at.logic.gapt.proofs.expansion._
 import scala.collection.mutable
 
 object ResolutionToExpansionProof {
+
+  def apply( proof: ResolutionProof ): ExpansionProof = {
+    val expansionWithDefs = withDefs( proof )
+    val containsEquality = proof.subProofs.exists {
+      case Refl( _ )                   => true
+      case Paramod( _, _, _, _, _, _ ) => true
+      case _                           => false
+    }
+    val defConsts = proof.subProofs.collect {
+      case Definition( defConst, _ ) => defConst
+    }
+    eliminateCutsET( eliminateDefsET( expansionWithDefs, !containsEquality, defConsts ) )
+  }
+
   private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {
     def map1[A_]( f: A => A_ ): ( A_, B ) = ( f( pair._1 ), pair._2 )
     def map2[B_]( f: B => B_ ): ( A, B_ ) = ( pair._1, f( pair._2 ) )
@@ -47,6 +61,11 @@ object ResolutionToExpansionProof {
       case p @ DefIntro( q, i, defAtom, definition ) =>
         val Seq( oc ) = p.occConnectors
         propgm2( p, q, oc.parent( _ ).updated( i, ETDefinedAtom( defAtom, i.isAnt, definition ) ) )
+
+      case p @ Paramod( q1, i1, ltr, q2, i2, ctx: Abs ) =>
+        val Seq( oc1, oc2 ) = p.occConnectors
+        propgm2( p, q1, oc1.parent( _, ETAtom( q1.conclusion( i1 ).asInstanceOf[HOLAtom], false ) ) )
+        propgm2( p, q2, es => oc2.parent( es ).updated( i2, replaceWithContext( es( p.mainIndices.head ), ctx, p.t ) ) )
 
       case p @ TopL( q, i ) =>
         val Seq( oc ) = p.occConnectors
