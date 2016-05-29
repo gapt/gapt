@@ -59,6 +59,9 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
     Substitution( map ++ newMap )
   }
 
+  def restrict( newDomain: Iterable[Var] ): Substitution =
+    Substitution( newDomain.view.map( v => v -> this( v ) ) )
+
   //REMARK: this does not imply the substitution is injective
   def isRenaming = map.forall( p => p._2.isInstanceOf[Var] )
 
