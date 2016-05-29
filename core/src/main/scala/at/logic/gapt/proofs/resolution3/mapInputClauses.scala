@@ -67,7 +67,7 @@ object mapInputClauses {
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
 
-        // FIXME: support for propositional part
+      // FIXME: support for propositional part
     } ) )
 
     doMap( proof )._1
