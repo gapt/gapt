@@ -125,6 +125,8 @@ class ResolutionTest extends Specification {
     println( expansion )
     println( "deep formula of def-elim expansion" )
     println( expansion.deep )
+    println( simplifyResolutionProof( ExpansionToResolutionProof( expansion ).get ) )
+    println( ResolutionToExpansionProof( ExpansionToResolutionProof( expansion ).get ) )
 
     println( "LK" )
     println( ResolutionToLKProof( proof ) )
