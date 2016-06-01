@@ -195,6 +195,14 @@ case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: E
 
   def deep = child.deep
 }
+object ETStrongQuantifierBlock {
+  def apply( shallow: HOLFormula, eigenVariables: Seq[Var], child: ExpansionTree ): ExpansionTree = eigenVariables match {
+    case ev +: evs =>
+      ETStrongQuantifier( shallow, ev,
+        ETStrongQuantifierBlock( instantiate( shallow, ev ), evs, child ) )
+    case Seq() => child
+  }
+}
 
 case class ETSkolemQuantifier(
     shallow:    HOLFormula,

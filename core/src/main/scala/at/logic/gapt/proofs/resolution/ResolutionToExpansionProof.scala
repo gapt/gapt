@@ -16,7 +16,7 @@ object ResolutionToExpansionProof {
       case Paramod( _, _, _, _, _, _ ) => true
       case _                           => false
     }
-    val defConsts = proof.subProofs.collect { case p: DefIntro => p.defConst }
+    val defConsts = proof.definitions.keys
     eliminateCutsET( eliminateDefsET( expansionWithDefs.expansionWithCutAxiom, !containsEquality, defConsts.toSet[Const] ) )
   }
 
@@ -63,6 +63,10 @@ object ResolutionToExpansionProof {
     var expansionSequent: ExpansionSequent =
       proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) )
 
+    val splitDefn = mutable.Map[HOLAtom, HOLFormula]()
+    val splitCutL = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
+    val splitCutR = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
+
     proof.dagLike.postOrder.reverse.foreach {
       case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
         expansionSequent :+= ETMerge( f, true, expansions( p ).map( _._2.elements.head ) )
@@ -100,6 +104,30 @@ object ResolutionToExpansionProof {
         propg( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], false ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2 ).updated( i2, replaceWithContext( es._2( p.mainIndices.head ), es._1( ctx ).asInstanceOf[Abs], es._1( p.t ) ) ) ) )
 
+      case p @ AvatarSplit( q, propComps, nonPropComps ) =>
+        val renaming = Substitution( for ( v <- freeVariables( q.conclusion ) ) yield v -> nameGen.fresh( v ) )
+        propg( p, q, _ => for ( ( _, es ) <- sequent2expansions( q.conclusion ) ) yield renaming -> renaming( es ) )
+        for ( ( splAtom: HOLAtom, defn: HOLFormula ) <- p.inducedDefinitions ) {
+          val All.Block( vs, c ) = defn
+          splitDefn( splAtom ) = defn
+          splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
+            defn,
+            renaming( vs ).map( _.asInstanceOf[Var] ),
+            formulaToExpansionTree( renaming( c ), true )
+          )
+        }
+      case AvatarPropComponent1( _ ) =>
+      case AvatarPropComponent2( _ ) =>
+      case p @ AvatarComponent( splAtom, comp ) =>
+        val defn @ All.Block( vs, c ) = p.inducedDefinitions.head._2
+        splitCutR( splAtom ) ::= ETWeakQuantifierBlock(
+          defn, vs.size,
+          for ( ( s, es ) <- expansions( p ) )
+            yield s( vs ) -> es.toDisjunction( false )
+        )
+      case p @ AvatarAbsurd( q ) =>
+        propg( p, q, _ => sequent2expansions( q.conclusion ) )
+
       case p @ TopL( q, i ) =>
         val Seq( oc ) = p.occConnectors
         propgm2( p, q, oc.parent( _, ETTop( true ) ) )
@@ -130,6 +158,9 @@ object ResolutionToExpansionProof {
       case p: SkolemQuantResolutionRule =>
         prop1s( p, ( s, et ) => ETSkolemQuantifier( s( p.subProof.conclusion( p.idx ) ), s( p.skolemTerm ), p.skolemDef, et ) )
     }
+
+    for ( ( splAtom, defn ) <- splitDefn )
+      cuts += ETImp( ETMerge( defn, true, splitCutL( splAtom ) ), ETMerge( defn, false, splitCutR( splAtom ) ) )
 
     eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
   }

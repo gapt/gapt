@@ -55,6 +55,12 @@ private[expr] trait DefaultReplaceables {
         obj.map { TermReplacement( _, p ) }
     }
 
+  implicit def tupleReplaceable[I1, I2, O1, O2]( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): Replaceable[( I1, I2 ), ( O1, O2 )] =
+    new Replaceable[( I1, I2 ), ( O1, O2 )] {
+      override def replace( obj: ( I1, I2 ), p: PartialFunction[LambdaExpression, LambdaExpression] ): ( O1, O2 ) =
+        ( ev1.replace( obj._1, p ), ev2.replace( obj._2, p ) )
+    }
+
 }
 
 /**

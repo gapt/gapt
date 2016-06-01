@@ -1,9 +1,39 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ ContextRule, HOLSequent, OccConnector, Sequent, SequentIndex, SequentProof, Suc }
+import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.proofs.{ ContextRule, DagProof, HOLClause, HOLSequent, OccConnector, Sequent, SequentIndex, SequentProof, Suc }
 
-trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] {
+import scala.collection.mutable
+
+trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with DagProof[ResolutionProof] {
+  val assertions: HOLClause = immediateSubProofs.map( _.assertions ).fold( Sequent() )( _ ++ _ ).distinct
+
+  def inducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()
+  def definitions = {
+    val builder = mutable.Map[HOLAtomConst, LambdaExpression]()
+    for {
+      p <- subProofs
+      ( defConst, definition ) <- p.inducedDefinitions
+    } if ( builder contains defConst )
+      requireEq( builder( defConst ), definition )
+    else
+      builder( defConst ) = definition
+    builder.toMap
+  }
+
+  override protected def stepString( subProofLabels: Map[Any, String] ) = {
+    val assertionString =
+      if ( assertions.isEmpty ) ""
+      else s"   <-- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
+    s"$conclusion$assertionString   (${super[DagProof].stepString( subProofLabels )})"
+  }
+
+  def isProof = {
+    definitions
+    conclusion.isEmpty && assertions.isEmpty
+  }
+
   private[resolution] def requireEq[T]( a: T, b: T ) =
     require( a == b, s"\n$a ==\n$b" )
 }
@@ -129,6 +159,66 @@ object Paramod {
       Paramod( subProof1, eqIdx, false, subProof2, auxIdx, ctxRTL )
     }
   }
+}
+
+case class AvatarSplit(
+    subProof:                   ResolutionProof,
+    propositionalComponents:    HOLClause,
+    nonPropositionalComponents: Map[HOLAtom, HOLSequent]
+) extends ResolutionProof {
+  require( freeVariables( propositionalComponents ).isEmpty )
+  for ( ( sc, c ) <- nonPropositionalComponents ) {
+    require( sc.isInstanceOf[Const] )
+    require( freeVariables( sc ).isEmpty )
+  }
+  for {
+    ( sc1, c1 ) <- nonPropositionalComponents
+    ( sc2, c2 ) <- nonPropositionalComponents
+    if sc1 != sc2
+  } require( freeVariables( c1 ) intersect freeVariables( c2 ) isEmpty )
+
+  val components =
+    propositionalComponents.map( _ +: Sequent(), Sequent() :+ _ ).elements ++
+      nonPropositionalComponents.values
+
+  require( subProof.conclusion isSubMultisetOf components.fold( Sequent() )( _ ++ _ ) )
+
+  override def inducedDefinitions =
+    for ( ( sc, c ) <- nonPropositionalComponents )
+      yield sc.asInstanceOf[HOLAtomConst] -> univclosure( c.toDisjunction )
+
+  override val assertions =
+    subProof.assertions ++ propositionalComponents :++ nonPropositionalComponents.keys
+
+  def mainIndices = Seq()
+  def auxIndices = Seq( subProof.conclusion.indices )
+  def conclusion = Sequent()
+  def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion, Sequent() ) )
+  def immediateSubProofs = Seq( subProof )
+}
+case class AvatarAbsurd( subProof: ResolutionProof ) extends LocalResolutionRule {
+  override val assertions = Sequent()
+  def mainFormulaSequent = subProof.assertions
+  def auxIndices = Seq( Seq() )
+  def immediateSubProofs = Seq( subProof )
+}
+case class AvatarComponent( splittingAtom: HOLAtom, component: HOLSequent ) extends InitialClause {
+  require( splittingAtom.isInstanceOf[HOLAtomConst] )
+  override def inducedDefinitions =
+    Map( splittingAtom.asInstanceOf[HOLAtomConst] ->
+      univclosure( component.toDisjunction ) )
+  override val assertions = splittingAtom +: Sequent()
+  def mainFormulaSequent = component
+}
+case class AvatarPropComponent1( atom: HOLAtom ) extends InitialClause {
+  require( freeVariables( atom ).isEmpty )
+  override val assertions = atom +: Sequent()
+  def mainFormulaSequent = Sequent() :+ atom
+}
+case class AvatarPropComponent2( atom: HOLAtom ) extends InitialClause {
+  require( freeVariables( atom ).isEmpty )
+  override val assertions = Sequent() :+ atom
+  def mainFormulaSequent = atom +: Sequent()
 }
 
 abstract class PropositionalResolutionRule extends LocalResolutionRule {

@@ -9,13 +9,13 @@ import at.logic.gapt.proofs.HOLSequent
  * The paremeter pos is true if  the formula is to be considered positive
  * (right side of the sequent).
  */
-@deprecated( "Substitute and merge expansion trees instead", "2016-01-13" )
 object formulaToExpansionTree {
   def apply( form: HOLFormula, pos: Boolean ): ExpansionTree = {
     assert( !containsQuantifier( form ) )
     apply( form, List(), pos )
   }
 
+  @deprecated( "Substitute and merge expansion trees instead", "2016-01-13" )
   def apply( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = {
     // form's quantified variables must be pairwise distinct
     assert( isInVNF( form ), "formulaToExpansionTree: bound variables are not pairwise distinct." )

@@ -14,6 +14,12 @@ package object expansion {
   implicit class RichExpansionSequent( val sequent: ExpansionSequent ) {
     def shallow = sequent map { _.shallow }
     def deep = sequent map { _.deep }
+
+    def toDisjunction( polarity: Boolean ) =
+      sequent.map( ETNeg( _ ), identity ).
+        elements.
+        reduceOption( ETOr( _, _ ) ).
+        getOrElse( ETBottom( polarity ) )
   }
 
   implicit val expansionTreesAreClosedUnderAdmissibleSubstitutions: ClosedUnderSub[ExpansionTree] = expansionTreeSubstitution

@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.lk._
@@ -28,7 +29,12 @@ object ResolutionToLKProof {
   def apply( proof: ResolutionProof, input: Input => LKProof ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
 
-    def f( p: ResolutionProof ): LKProof = memo.getOrElseUpdate( p, ContractionMacroRule( p match {
+    val defMap = proof.definitions
+
+    def contract( p: ResolutionProof, q: LKProof ) =
+      ContractionMacroRule( q, ( ( p.conclusion ++ p.assertions ) diff q.endSequent.distinct ) ++ q.endSequent.distinct )
+
+    def f( p: ResolutionProof ): LKProof = memo.getOrElseUpdate( p, contract( p, p match {
       case in: Input       => input( in )
       case Taut( formula ) => LogicalAxiom( formula )
       case Refl( term )    => ReflexivityAxiom( term )
@@ -48,15 +54,41 @@ object ResolutionToLKProof {
         else
           ParamodulationRightRule( f( q1 ), q1.conclusion( i1 ), f( q2 ), q2.conclusion( i2 ), ctx )
 
+      case p @ AvatarAbsurd( q ) => f( q )
+      case p @ AvatarComponent( splAtom, component ) =>
+        val defn @ All.Block( vs, c ) = p.inducedDefinitions.head._2
+        val \/-( p1 ) = solvePropositional( c +: component )
+        val p2 = ForallLeftBlock( p1, defn, vs )
+        val p3 = DefinitionLeftRule( p2, defn, splAtom )
+        p3
+      case AvatarPropComponent1( atom ) => LogicalAxiom( atom )
+      case AvatarPropComponent2( atom ) => LogicalAxiom( atom )
+      case AvatarSplit( q, propComponents, nonPropComponents ) =>
+        var p_ = f( q )
+        for ( ( splAtom, comp ) <- nonPropComponents ) {
+          for ( a <- comp.antecedent ) p_ = NegRightRule( p_, a )
+          def mkOr( lits: HOLFormula ): Unit =
+            lits match {
+              case Or( lits_, lit ) =>
+                mkOr( lits_ )
+                p_ = OrRightMacroRule( p_, lits_, lit )
+              case _ =>
+            }
+          mkOr( comp.toDisjunction )
+          val defn @ All.Block( vs, _ ) = defMap( splAtom.asInstanceOf[HOLAtomConst] ).asInstanceOf[HOLFormula]
+          p_ = ForallRightBlock( p_, defn, vs )
+          p_ = DefinitionRightRule( p_, defn, splAtom )
+        }
+        p_
+
       // FIXME: add axiom reduction as in LKsk
       case _ =>
         val expansion = ResolutionToExpansionProof.withDefs( p )
-        ( ExpansionProofToLK( expansion ): @unchecked ) match {
-          case \/-( lk ) => lk
-        }
-    }, p.conclusion, strict = false ) )
+        val \/-( lk ) = ExpansionProofToLK( expansion )
+        lk
+    } ) )
 
-    f( proof )
+    cleanStructuralRules( DefinitionElimination( defMap )( f( proof ) ) )
   }
 
 }
