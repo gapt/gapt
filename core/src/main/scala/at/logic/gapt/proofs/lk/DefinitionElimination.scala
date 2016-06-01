@@ -93,6 +93,12 @@ class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpressi
     case ForallRightRule( subProof, aux, eigen, quant ) =>
       ForallRightRule( apply( subProof ), aux, eigen, quant )
 
+    case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+      ExistsSkLeftRule( apply( subProof ), aux, apply( main ), apply( skT ), apply( skD ) )
+
+    case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+      ForallSkRightRule( apply( subProof ), aux, apply( main ), apply( skT ), apply( skD ) )
+
     //equational rules
     case proof @ EqualityLeftRule( subProof, eq, aux, con ) =>
       EqualityLeftRule( apply( subProof ), eq, aux, apply( con ).asInstanceOf[Abs] )
