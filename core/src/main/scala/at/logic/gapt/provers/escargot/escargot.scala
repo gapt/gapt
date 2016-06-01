@@ -364,7 +364,6 @@ class EscargotLoop extends Logger {
     if ( eqs isEmpty ) return false
 
     var p = c2.proof
-    // Depends on the implementation detail that Paramodulation does not change indices.
     var didRewrite = true
     while ( didRewrite ) {
       didRewrite = false
