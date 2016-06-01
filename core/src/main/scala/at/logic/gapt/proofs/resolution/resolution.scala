@@ -3,7 +3,10 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ ContextRule, HOLSequent, OccConnector, Sequent, SequentIndex, SequentProof, Suc }
 
-trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof]
+trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] {
+  private[resolution] def requireEq[T]( a: T, b: T ) =
+    require( a == b, s"\n$a ==\n$b" )
+}
 
 abstract class LocalResolutionRule extends ResolutionProof with ContextRule[HOLFormula, ResolutionProof]
 
@@ -24,7 +27,7 @@ case class Refl( term: LambdaExpression ) extends InitialClause {
 case class Factor( subProof: ResolutionProof, idx1: SequentIndex, idx2: SequentIndex ) extends LocalResolutionRule {
   require( idx1 sameSideAs idx2 )
   require( idx1 < idx2 )
-  require( subProof.conclusion( idx1 ) == subProof.conclusion( idx2 ) )
+  requireEq( subProof.conclusion( idx1 ), subProof.conclusion( idx2 ) )
   override def mainFormulaSequent =
     if ( idx1 isAnt ) subProof.conclusion( idx1 ) +: Sequent()
     else Sequent() :+ subProof.conclusion( idx1 )
@@ -73,7 +76,7 @@ case class Resolution( subProof1: ResolutionProof, idx1: SequentIndex,
                        subProof2: ResolutionProof, idx2: SequentIndex ) extends LocalResolutionRule {
   require( idx1 isSuc )
   require( idx2 isAnt )
-  require( subProof1.conclusion( idx1 ) == subProof2.conclusion( idx2 ) )
+  requireEq( subProof1.conclusion( idx1 ), subProof2.conclusion( idx2 ) )
   def resolvedLiteral = subProof1.conclusion( idx1 )
 
   def mainFormulaSequent = Sequent()
@@ -139,7 +142,7 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
 case class DefIntro( subProof: ResolutionProof, idx: SequentIndex,
                      defAtom: HOLAtom, definition: LambdaExpression ) extends PropositionalResolutionRule {
   val Apps( defConst: HOLAtomConst, defArgs ) = defAtom
-  require( subProof.conclusion( idx ) == BetaReduction.betaNormalize( definition( defArgs: _* ) ) )
+  requireEq( subProof.conclusion( idx ), BetaReduction.betaNormalize( definition( defArgs: _* ) ) )
   override def mainFormulaSequent =
     if ( idx isAnt ) defAtom +: Sequent()
     else Sequent() :+ defAtom
@@ -251,7 +254,7 @@ abstract class SkolemQuantResolutionRule extends PropositionalResolutionRule {
   def sub: HOLFormula
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
-  require( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ) == subProof.conclusion( idx ) )
+  requireEq( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ), subProof.conclusion( idx ) )
 
   def instFormula = Substitution( bound -> skolemTerm )( sub )
 }
