@@ -16,8 +16,8 @@ object ResolutionToExpansionProof {
       case Paramod( _, _, _, _, _, _ ) => true
       case _                           => false
     }
-    val defConsts = proof.definitions.keys
-    eliminateCutsET( eliminateDefsET( expansionWithDefs.expansionWithCutAxiom, !containsEquality, defConsts.toSet[Const] ) )
+    val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
+    eliminateCutsET( eliminateDefsET( expansionWithDefs.expansionWithCutAxiom, !containsEquality, defConsts ) )
   }
 
   private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {
@@ -107,7 +107,7 @@ object ResolutionToExpansionProof {
       case p @ AvatarSplit( q, propComps, nonPropComps ) =>
         val renaming = Substitution( for ( v <- freeVariables( q.conclusion ) ) yield v -> nameGen.fresh( v ) )
         propg( p, q, _ => for ( ( _, es ) <- sequent2expansions( q.conclusion ) ) yield renaming -> renaming( es ) )
-        for ( ( splAtom: HOLAtom, defn: HOLFormula ) <- p.inducedDefinitions ) {
+        for ( ( splAtom: HOLAtom, defn: HOLFormula ) <- p.introducedDefinitions ) {
           val All.Block( vs, c ) = defn
           splitDefn( splAtom ) = defn
           splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
@@ -119,7 +119,7 @@ object ResolutionToExpansionProof {
       case AvatarPropComponent1( _ ) =>
       case AvatarPropComponent2( _ ) =>
       case p @ AvatarComponent( splAtom, comp ) =>
-        val defn @ All.Block( vs, c ) = p.inducedDefinitions.head._2
+        val defn @ All.Block( vs, c ) = p.introducedDefinitions.head._2
         splitCutR( splAtom ) ::= ETWeakQuantifierBlock(
           defn, vs.size,
           for ( ( s, es ) <- expansions( p ) )

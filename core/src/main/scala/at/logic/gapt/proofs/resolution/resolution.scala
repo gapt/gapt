@@ -9,12 +9,12 @@ import scala.collection.mutable
 trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with DagProof[ResolutionProof] {
   val assertions: HOLClause = immediateSubProofs.map( _.assertions ).fold( Sequent() )( _ ++ _ ).distinct
 
-  def inducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()
+  def introducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()
   def definitions = {
     val builder = mutable.Map[HOLAtomConst, LambdaExpression]()
     for {
       p <- subProofs
-      ( defConst, definition ) <- p.inducedDefinitions
+      ( defConst, definition ) <- p.introducedDefinitions
     } if ( builder contains defConst )
       requireEq( builder( defConst ), definition )
     else
@@ -183,7 +183,7 @@ case class AvatarSplit(
 
   require( subProof.conclusion isSubMultisetOf components.fold( Sequent() )( _ ++ _ ) )
 
-  override def inducedDefinitions =
+  override def introducedDefinitions =
     for ( ( sc, c ) <- nonPropositionalComponents )
       yield sc.asInstanceOf[HOLAtomConst] -> univclosure( c.toDisjunction )
 
@@ -204,7 +204,7 @@ case class AvatarAbsurd( subProof: ResolutionProof ) extends LocalResolutionRule
 }
 case class AvatarComponent( splittingAtom: HOLAtom, component: HOLSequent ) extends InitialClause {
   require( splittingAtom.isInstanceOf[HOLAtomConst] )
-  override def inducedDefinitions =
+  override def introducedDefinitions =
     Map( splittingAtom.asInstanceOf[HOLAtomConst] ->
       univclosure( component.toDisjunction ) )
   override val assertions = splittingAtom +: Sequent()
@@ -233,6 +233,7 @@ case class DefIntro( subProof: ResolutionProof, idx: SequentIndex,
                      defAtom: HOLAtom, definition: LambdaExpression ) extends PropositionalResolutionRule {
   val Apps( defConst: HOLAtomConst, defArgs ) = defAtom
   requireEq( subProof.conclusion( idx ), BetaReduction.betaNormalize( definition( defArgs: _* ) ) )
+  override def introducedDefinitions = Map( defConst -> definition )
   override def mainFormulaSequent =
     if ( idx isAnt ) defAtom +: Sequent()
     else Sequent() :+ defAtom

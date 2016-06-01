@@ -56,7 +56,7 @@ object ResolutionToLKProof {
 
       case p @ AvatarAbsurd( q ) => f( q )
       case p @ AvatarComponent( splAtom, component ) =>
-        val defn @ All.Block( vs, c ) = p.inducedDefinitions.head._2
+        val defn @ All.Block( vs, c ) = p.introducedDefinitions.head._2
         val \/-( p1 ) = solvePropositional( c +: component )
         val p2 = ForallLeftBlock( p1, defn, vs )
         val p3 = DefinitionLeftRule( p2, defn, splAtom )
@@ -88,7 +88,7 @@ object ResolutionToLKProof {
         lk
     } ) )
 
-    cleanStructuralRules( DefinitionElimination( defMap )( f( proof ) ) )
+    f( proof )
   }
 
 }
