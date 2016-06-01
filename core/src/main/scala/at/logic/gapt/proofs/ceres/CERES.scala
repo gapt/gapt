@@ -104,9 +104,9 @@ class CERES {
   def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
     WeakeningContractionMacroRule(
       ResolutionToLKProof(
-      rp,
-      fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc.conclusion.map( _.asInstanceOf[HOLAtom] ) )
-    ),
+        rp,
+        fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc.conclusion.map( _.asInstanceOf[HOLAtom] ) )
+      ),
       endsequent
     )
   }
