@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion._
 
 import scala.collection.mutable
@@ -17,7 +17,7 @@ object ResolutionToExpansionProof {
       case _                           => false
     }
     val defConsts = proof.subProofs.collect { case p: DefIntro => p.defConst }
-    eliminateCutsET( eliminateDefsET( expansionWithDefs, !containsEquality, defConsts.toSet[Const] ) )
+    eliminateCutsET( eliminateDefsET( expansionWithDefs.expansionWithCutAxiom, !containsEquality, defConsts.toSet[Const] ) )
   }
 
   private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {
@@ -25,7 +25,9 @@ object ResolutionToExpansionProof {
     def map2[B_]( f: B => B_ ): ( A, B_ ) = ( pair._1, f( pair._2 ) )
   }
 
-  def withDefs( proof: ResolutionProof ): ExpansionProof = {
+  def withDefs( proof: ResolutionProof ): ExpansionProofWithCut = {
+    val nameGen = rename.awayFrom( proof.subProofs.flatMap( _.conclusion.elements ).flatMap( variables( _ ) ) )
+
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
 
     def propg( p: ResolutionProof, q: ResolutionProof, f: Set[( Substitution, ExpansionSequent )] => Set[( Substitution, ExpansionSequent )] ) = {
@@ -52,10 +54,31 @@ object ResolutionToExpansionProof {
       propgm2( p, p.subProof, es => oc.parent( es, f( es( p.mainIndices( 0 ) ), es( p.mainIndices( 1 ) ) ) ) )
     }
 
-    expansions( proof ) = Set( Substitution() -> proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, true ), ETAtom( _, false ) ) )
+    def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
+      Set( Substitution() -> sequent.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, true ), ETAtom( _, false ) ) )
+
+    expansions( proof ) = sequent2expansions( proof.conclusion )
+
+    val cuts = mutable.Buffer[ETImp]()
+    var expansionSequent: ExpansionSequent =
+      proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) )
 
     proof.dagLike.postOrder.reverse.foreach {
-      case _: InitialClause =>
+      case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
+        expansionSequent :+= ETMerge( f, true, expansions( p ).map( _._2.elements.head ) )
+      case p @ Input( Sequent( Seq(), Seq( f ) ) ) if freeVariables( f ).isEmpty =>
+        expansionSequent +:= ETMerge( f, false, expansions( p ).map( _._2.elements.head ) )
+      case p @ Input( seq ) =>
+        val fvs = freeVariables( seq ).toSeq
+        val sh = All.Block( fvs, seq.toDisjunction )
+        expansionSequent +:= ETWeakQuantifierBlock( sh, fvs.size,
+          for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.map( ETNeg( _ ), identity ).elements.reduceOption( ETOr( _, _ ) ).getOrElse( ETBottom( false ) ) )
+      case p @ Taut( f ) =>
+        for {
+          ( s, Sequent( Seq( l ), Seq( r ) ) ) <- expansions( p )
+          if !l.isInstanceOf[ETAtom] || !r.isInstanceOf[ETAtom]
+        } cuts += ETImp( l, r )
+      case Refl( _ ) =>
 
       case p @ Factor( q, i1, i2 ) =>
         val Seq( oc ) = p.occConnectors
@@ -108,22 +131,6 @@ object ResolutionToExpansionProof {
         prop1s( p, ( s, et ) => ETSkolemQuantifier( s( p.subProof.conclusion( p.idx ) ), s( p.skolemTerm ), p.skolemDef, et ) )
     }
 
-    eliminateMerges( ExpansionProof( proof.subProofs.collect {
-      case p @ Taut( f ) if !f.isInstanceOf[HOLAtom] /* FIXME */ =>
-        ETWeakQuantifier.withMerge(
-          ExpansionProofWithCut.cutAxiom,
-          for ( ( s, Sequent( Seq( l ), Seq( r ) ) ) <- expansions( p ) )
-            yield s( f ) -> ETImp( l, r )
-        ) +: Sequent()
-      case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
-        Sequent() :+ ETMerge( f, true, expansions( p ).map( _._2.elements.head ) )
-      case p @ Input( Sequent( Seq(), Seq( f ) ) ) if freeVariables( f ).isEmpty =>
-        ETMerge( f, false, expansions( p ).map( _._2.elements.head ) ) +: Sequent()
-      case p @ Input( seq ) =>
-        val fvs = freeVariables( seq ).toSeq
-        val sh = All.Block( fvs, seq.toDisjunction )
-        ETWeakQuantifierBlock( sh, fvs.size,
-          for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.map( ETNeg( _ ), identity ).elements.reduceOption( ETOr( _, _ ) ).getOrElse( ETBottom( false ) ) ) +: Sequent()
-    }.fold( Sequent() )( _ ++ _ ) ++ proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) ) ) )
+    eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
   }
 }
