@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.proofs.{ HOLSequent, OccConnector }
+import at.logic.gapt.proofs.{ Clause, HOLSequent, OccConnector, Sequent }
 
 import scala.collection.mutable
 
@@ -66,6 +66,13 @@ object mapInputClauses {
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
+
+      case AvatarAbsurd( p1 ) if p1.conclusion.isEmpty =>
+        val ( q1, _ ) = doMap( p1 )
+        val res = AvatarAbsurd( q1 )
+        res -> OccConnector.guessInjection( p.conclusion, res.conclusion )
+      case AvatarSplit( p1, propComps, nonPropComps ) =>
+        AvatarSplit( doMap( p1 )._1, propComps, nonPropComps ) -> OccConnector( Clause(), Clause(), Sequent() )
 
       // FIXME: support for propositional part
     } ) )

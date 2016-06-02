@@ -86,7 +86,7 @@ class CERES {
     //println( "after subsumption:" + tapecl.size )
 
     prover.getRobinsonProof( tapecl ) match {
-      case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
+      case None => throw new Exception( "The characteristic clause set could not be refuted." )
       case Some( rp ) =>
         //println( s"refutation:\n$rp" )
         apply( es, proj, rp )

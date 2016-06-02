@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.utils.logging.Logger
 
@@ -117,7 +117,7 @@ object findDerivationViaResolution {
    * @param prover Prover to obtain a resolution refutation of the consequence bs |= a from.
    * @return Resolution proof ending in a subclause of a, or None if the prover couldn't prove the consequence.
    */
-  def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = Escargot ): Option[ResolutionProof] = {
+  def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = NonSplittingEscargot ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
       ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet

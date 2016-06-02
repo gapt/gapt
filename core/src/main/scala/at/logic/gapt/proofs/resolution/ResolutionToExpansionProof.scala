@@ -17,7 +17,7 @@ object ResolutionToExpansionProof {
       case _                           => false
     }
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
-    eliminateCutsET( eliminateDefsET( expansionWithDefs.expansionWithCutAxiom, !containsEquality, defConsts ) )
+    eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquality, defConsts ) )
   }
 
   private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {

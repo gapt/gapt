@@ -51,7 +51,7 @@ trait ResolutionProver extends OneShotProver {
     }
 
   override def isValid( seq: HOLSequent ): Boolean =
-    getRobinsonProof( seq ).isDefined
+    getRobinsonProof( groundFreeVariables( seq )._1 ).isDefined
 
   def getRobinsonProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap

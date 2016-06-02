@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.{ FOLClause, OccConnector, SequentProof }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.{ findDerivationViaResolution, mapInputClauses }
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 
 import scala.collection.mutable
 import scalaz._
@@ -87,7 +87,7 @@ object RefutationSketchToRobinson {
    * @param prover  Resolution prover used to reconstruct the inferences.
    * @return  <code>Some(proof)</code> if all inferences could be reconstructed, <code>None</code> otherwise.
    */
-  def apply( sketch: RefutationSketch, prover: ResolutionProver = Escargot ): ValidationNel[UnprovableSketchInference, ResolutionProof] = {
+  def apply( sketch: RefutationSketch, prover: ResolutionProver = NonSplittingEscargot ): ValidationNel[UnprovableSketchInference, ResolutionProof] = {
     type ErrorOr[X] = ValidationNel[UnprovableSketchInference, X]
     val memo = mutable.Map[RefutationSketch, ErrorOr[ResolutionProof]]()
     def solve( s: RefutationSketch ): ErrorOr[ResolutionProof] = memo.getOrElseUpdate( s, s match {

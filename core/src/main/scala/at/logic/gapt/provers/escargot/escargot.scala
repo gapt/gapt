@@ -1,9 +1,12 @@
 package at.logic.gapt.provers.escargot
 
 import at.logic.gapt.expr._
+import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.utils.NameGenerator
 import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
@@ -107,9 +110,13 @@ class EscargotLoop extends Logger {
   var termOrdering: TermOrdering = LPO()
   var hasEquality = true
   var propositional = false
+  var splitting = true
 
   class Cls( val proof: ResolutionProof, val index: Int ) {
     def clause = proof.conclusion.asInstanceOf[HOLClause]
+    def assertion = proof.assertions.asInstanceOf[HOLClause]
+
+    def clauseWithAssertions = ( clause, assertion )
 
     val maximal = for {
       ( a, i ) <- clause.zipWithIndex.elements
@@ -120,7 +127,7 @@ class EscargotLoop extends Logger {
 
     val weight = clause.elements.map { expressionSize( _ ) }.sum
 
-    override def toString = s"[$index] $clause   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
+    override def toString = s"[$index] $clause   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight) [$assertion]"
     override def hashCode = index
   }
 
@@ -134,6 +141,9 @@ class EscargotLoop extends Logger {
     if ( subst.isIdentity ) proof
     else at.logic.gapt.proofs.resolution.Subst( proof, subst )
 
+  def subsume( a: Cls, b: Cls ): Option[Substitution] =
+    if ( a.assertion isSubsetOf b.assertion ) subsume( a.clause, b.clause )
+    else None
   def subsume( a: HOLClause, b: HOLClause ): Option[Substitution] =
     if ( propositional ) {
       if ( a isSubMultisetOf b ) Some( Substitution() )
@@ -153,6 +163,14 @@ class EscargotLoop extends Logger {
   var newlyDerived = mutable.Set[Cls]()
   val usable = mutable.Set[Cls]()
   val workedOff = mutable.Set[Cls]()
+  val usableInactive = mutable.Set[Cls]()
+
+  var nameGen = new NameGenerator( Seq() )
+  var avatarModel = new MapBasedInterpretation( Map() )
+  var emptyClauses = mutable.Set[Cls]()
+  def isActive( cls: Cls ): Boolean = isActive( cls.assertion )
+  def isActive( assertion: HOLClause ): Boolean =
+    !splitting || avatarModel.interpret( assertion.toNegConjunction )
 
   def preprocessing() = {
     deleteDuplicates()
@@ -167,7 +185,7 @@ class EscargotLoop extends Logger {
   }
 
   def deleteDuplicates() =
-    for ( ( _, group ) <- newlyDerived groupBy { _.clause } )
+    for ( ( _, group ) <- newlyDerived groupBy { _.clauseWithAssertions } )
       newlyDerived --= group.tail
 
   def unitRewriteNew() =
@@ -191,7 +209,7 @@ class EscargotLoop extends Logger {
     }
 
   def tautologyDeletion() =
-    newlyDerived = newlyDerived filterNot { _.clause.isTaut }
+    newlyDerived = newlyDerived filterNot { _.clause.isTaut } filterNot { _.assertion.isTaut }
 
   def reflexivityDeletion() =
     newlyDerived = newlyDerived filterNot { _.clause.succedent.collect { case Eq( t, t_ ) if t == t_ => () }.nonEmpty }
@@ -203,9 +221,10 @@ class EscargotLoop extends Logger {
         Resolution( Refl( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
     }
 
-  def canonize( expr: LambdaExpression ): LambdaExpression = {
+  def canonize( expr: LambdaExpression, assertion: HOLClause ): LambdaExpression = {
     val eqs = for {
       c <- workedOff
+      if c.assertion isSubsetOf assertion
       Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
       if matching( t, s ).isDefined
       if matching( s, t ).isDefined
@@ -234,12 +253,21 @@ class EscargotLoop extends Logger {
 
   def isReflModE( cls: Cls ) =
     cls.clause.succedent exists {
-      case Eq( t, s ) => canonize( t ) == canonize( s )
+      case Eq( t, s ) => canonize( t, cls.assertion ) == canonize( s, cls.assertion )
       case _          => false
     }
 
   def clauseProcessing() = {
-    usable ++= newlyDerived
+    for ( c <- newlyDerived ) {
+      if ( c.clause.isEmpty ) {
+        emptyClauses += c
+        usable += c
+      } else if ( isActive( c ) ) {
+        usable += c
+      } else {
+        usableInactive += c
+      }
+    }
     newlyDerived.clear()
   }
 
@@ -248,21 +276,22 @@ class EscargotLoop extends Logger {
       cls1 <- newlyDerived
       cls2 <- newlyDerived if cls1 != cls2
       if newlyDerived contains cls1
-      _ <- subsume( cls2.clause, cls1.clause )
+      _ <- subsume( cls2, cls1 )
     } newlyDerived -= cls1
 
   def forwardSubsumption() =
     for {
       existing <- workedOff
       cls <- newlyDerived
-      _ <- subsume( existing.clause, cls.clause )
+      _ <- subsume( existing, cls )
     } newlyDerived -= cls
 
-  def backwardSubsumption( given: Cls ) =
+  def backwardSubsumption( given: Cls ) = {
     for {
       existing <- workedOff
-      _ <- subsume( given.clause, existing.clause )
+      _ <- subsume( given, existing )
     } workedOff -= existing
+  }
 
   def inferenceComputation( given: Cls ): Unit = {
     if ( hasEquality ) {
@@ -361,6 +390,7 @@ class EscargotLoop extends Logger {
     val eqs = for {
       c <- cs
       Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
+      if c.assertion isSubsetOf c2.assertion
       ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
       if !t_.isInstanceOf[Var]
       if !termOrdering.lt( t_, s_ )
@@ -394,7 +424,7 @@ class EscargotLoop extends Logger {
   }
 
   def isSubsumedByWorkedOff( given: Cls ) =
-    workedOff exists { cls => subsume( cls.clause, given.clause ) isDefined }
+    workedOff exists { cls => subsume( cls, given ).isDefined }
 
   var strategy = 0
   def choose(): Cls = {
@@ -413,14 +443,81 @@ class EscargotLoop extends Logger {
     }
   }
 
+  def getComponents( clause: HOLClause ): Set[HOLClause] = {
+    def findComp( c: HOLClause ): HOLClause = {
+      val fvs = freeVariables( c )
+      val c_ = clause.filter( freeVariables( _ ) intersect fvs nonEmpty )
+      if ( c_ isSubsetOf c ) c else findComp( c ++ c_ distinct )
+    }
+
+    if ( clause.isEmpty ) {
+      Set()
+    } else {
+      val c = findComp( clause.map( _ +: Clause(), Clause() :+ _ ).elements.head )
+      getComponents( clause diff c ) + c
+    }
+  }
+
+  def trySplit( cls: Cls ): Boolean = {
+    val comps = getComponents( cls.clause )
+
+    if ( comps.size >= 2 ) {
+      val propComps = comps.filter( freeVariables( _ ).isEmpty ).fold( Sequent() )( _ ++ _ )
+      val nonPropComps =
+        for ( c <- comps if freeVariables( c ).nonEmpty )
+          yield FOLAtom( nameGen.freshWithIndex( "_split" ) ) -> c
+
+      newlyDerived += DerivedCls( cls, AvatarSplit( cls.proof, propComps, nonPropComps.toMap ) )
+      for ( c <- propComps ) {
+        newlyDerived += DerivedCls( cls, AvatarPropComponent1( c ) )
+        newlyDerived += DerivedCls( cls, AvatarPropComponent2( c ) )
+      }
+      for ( ( sa, c ) <- nonPropComps )
+        newlyDerived += DerivedCls( cls, AvatarComponent( sa, c ) )
+
+      true
+    } else {
+      false
+    }
+  }
+
+  def switchToNewModel( model: MapBasedInterpretation ) = {
+    avatarModel = model
+
+    val allUsable = ( usable union usableInactive ).toSet
+    usable.clear()
+    usableInactive.clear()
+    for ( cls <- allUsable ) {
+      if ( cls.clause.isEmpty )
+        emptyClauses += cls
+      else if ( isActive( cls ) )
+        usable += cls
+      else
+        usableInactive += cls
+    }
+  }
+
   def loop(): Option[ResolutionProof] = {
     preprocessing()
 
     clauseProcessing()
 
-    while ( usable.nonEmpty ) {
-      for ( cls <- usable if cls.clause.isEmpty )
-        return Some( cls.proof )
+    while ( true ) {
+      if ( splitting ) {
+        if ( usable exists { _.clause.isEmpty } )
+          Sat4j.solve( emptyClauses.map( _.assertion ) ) match {
+            case Some( newModel ) =>
+              switchToNewModel( newModel.asInstanceOf[MapBasedInterpretation] )
+            case None =>
+              return Some( Sat4j.getRobinsonProof( emptyClauses.map( cls => AvatarAbsurd( cls.proof ) ) ).get )
+          }
+      } else {
+        for ( cls <- usable if cls.clause.isEmpty )
+          return Some( cls.proof )
+      }
+      require( avatarModel interpret And( emptyClauses.map( _.assertion ).map( _.toDisjunction ) ) )
+      if ( usable.isEmpty )
+        return None
 
       val given = choose()
       usable -= given
@@ -431,12 +528,14 @@ class EscargotLoop extends Logger {
 
       if ( !shouldDiscard ) {
         backwardSubsumption( given )
-        workedOff += given
 
-        inferenceComputation( given )
+        if ( !splitting || !trySplit( given ) ) {
+          workedOff += given
+          inferenceComputation( given )
 
-        preprocessing()
-        forwardSubsumption()
+          preprocessing()
+          forwardSubsumption()
+        }
 
         clauseProcessing()
 
@@ -448,7 +547,7 @@ class EscargotLoop extends Logger {
   }
 }
 
-object Escargot extends Escargot( equality = true, propositional = false ) {
+object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLClause] ): LPO = {
     val consts = constants( cnf flatMap { _.elements } )
 
@@ -464,10 +563,13 @@ object Escargot extends Escargot( equality = true, propositional = false ) {
     LPO( precedence, if ( boolOnTermLevel ) Set() else ( types - To ) map { ( _, To ) } )
   }
 }
+object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
 
-class Escargot( equality: Boolean, propositional: Boolean ) extends ResolutionProver {
+class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
   override def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
     val loop = new EscargotLoop
+    loop.splitting = splitting
+    loop.nameGen = rename.awayFrom( cnf.view.flatMap( constants( _ ) ).toSet )
     loop.hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
     loop.propositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
     loop.termOrdering = Escargot.lpoHeuristic( cnf )
