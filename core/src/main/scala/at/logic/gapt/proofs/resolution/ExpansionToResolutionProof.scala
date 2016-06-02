@@ -24,6 +24,8 @@ object ExpansionToResolutionProof {
 
   private def tryUnaryOrNullary( es: ExpansionSequent, p: ResolutionProof ): Option[Set[ResolutionProof]] =
     es.zipWithIndex.elements.collectFirst {
+      case ( ETWeakening( _, _ ), _ ) => Set()
+
       case ( ETTop( _ ), i: Suc )     => Set()
       case ( ETBottom( _ ), i: Ant )  => Set()
       case ( ETTop( _ ), i: Ant )     => clausify( es.delete( i ), TopL( p, i ) )
