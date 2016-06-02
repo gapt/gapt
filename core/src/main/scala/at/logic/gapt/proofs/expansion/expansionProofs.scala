@@ -251,16 +251,23 @@ object generatedUpperSetInPO {
 }
 
 object eliminateCutsET {
-  def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = expansionProof.cuts match {
-    case ETImp( cut1, cut2 ) +: rest => apply( singleStep( cut1, cut2, rest, expansionProof.expansionSequent,
-      expansionProof.eigenVariables union freeVariables( expansionProof.deep ),
-      expansionProof.expansionWithCutAxiom.dependencyRelation ) )
-    case Seq() => ExpansionProof( expansionProof.expansionSequent )
+  def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = {
+    val ep = eliminateMerges( expansionProof )
+    ep.cuts.view.flatMap {
+      case cut @ ETImp( cut1, cut2 ) =>
+        singleStep( cut1, cut2, ep.cuts.filterNot( _ == cut ), ep.expansionSequent,
+          ep.eigenVariables union freeVariables( ep.deep ),
+          ep.expansionWithCutAxiom.dependencyRelation )
+    }.headOption match {
+      case Some( reduced )         => apply( reduced )
+      case None if ep.cuts.isEmpty => ep.toExpansionProof
+      case None                    => ep.expansionWithCutAxiom
+    }
   }
 
   private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETImp],
                           expansionSequent: Sequent[ExpansionTree], freeVars: Set[Var],
-                          dependencyRelation: Set[( Var, Var )] ): ExpansionProofWithCut = {
+                          dependencyRelation: Set[( Var, Var )] ): Option[ExpansionProofWithCut] = {
     def addCuts( extraCuts: ETImp* ) = ExpansionProofWithCut( extraCuts ++ rest, expansionSequent )
 
     // This uses a slightly more optimized reduction step than described in the unpublished
@@ -317,10 +324,7 @@ object eliminateCutsET {
       ) )
     }
 
-    ( cut1, cut2 ) match {
-      case ( _: ETMerge, _ )                    => eliminateMerges( addCuts( ETImp( cut1, cut2 ) ) )
-      case ( _, _: ETMerge )                    => eliminateMerges( addCuts( ETImp( cut1, cut2 ) ) )
-
+    Some( ( cut1, cut2 ) ) collect {
       case ( _: ETWeakening, _ )                => addCuts()
       case ( _, _: ETWeakening )                => addCuts()
       case ( _: ETAtom, _: ETAtom )             => addCuts()
