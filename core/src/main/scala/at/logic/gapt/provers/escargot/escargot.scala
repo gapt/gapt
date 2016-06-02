@@ -130,6 +130,10 @@ class EscargotLoop extends Logger {
   def DerivedCls( parent: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
   def DerivedCls( parent1: Cls, parent2: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
 
+  def Subst( proof: ResolutionProof, subst: Substitution ) =
+    if ( subst.isIdentity ) proof
+    else at.logic.gapt.proofs.resolution.Subst( proof, subst )
+
   def subsume( a: HOLClause, b: HOLClause ): Option[Substitution] =
     if ( propositional ) {
       if ( a isSubMultisetOf b ) Some( Substitution() )
