@@ -30,9 +30,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     } map {
       mapInputClauses( _ ) { clause =>
         cnf.view flatMap { ourClause =>
-          syntacticMatching( ourClause.toDisjunction.asInstanceOf[FOLFormula], clause.toDisjunction.asInstanceOf[FOLFormula] ) map { matching =>
-            Subst( Input( ourClause.map { _.asInstanceOf[FOLAtom] } ), matching )
-          }
+          syntacticMatching( ourClause.toDisjunction, clause.toDisjunction ) map { Subst( Input( ourClause ), _ ) }
         } head
       }
     }
@@ -149,11 +147,11 @@ object Prover9Importer extends ExternalProgram {
     lkProof( Source fromFile p9File mkString )
 
   def lkProof( p9Output: String ): LKProof =
-    ResolutionToLKProof( robinsonProof( p9Output ) )
+    ResolutionToLKProof( robinsonProofWithReconstructedEndSequent( p9Output )._1 )
 
   def expansionProofFromFile( p9File: String ): ExpansionProof =
     expansionProof( Source.fromFile( p9File ).mkString )
 
   def expansionProof( p9Output: String ): ExpansionProof =
-    ResolutionToExpansionProof( robinsonProof( p9Output ) )
+    ResolutionToExpansionProof( robinsonProofWithReconstructedEndSequent( p9Output )._1 )
 }
