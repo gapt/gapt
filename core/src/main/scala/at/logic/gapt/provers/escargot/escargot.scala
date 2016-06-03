@@ -530,7 +530,6 @@ class EscargotLoop extends Logger {
         for ( cls <- usable if cls.clause.isEmpty )
           return Some( cls.proof )
       }
-      require( avatarModel interpret And( emptyClauses.map( _.assertion ).map( _.toDisjunction ) ) )
       if ( usable.isEmpty )
         return None
 
