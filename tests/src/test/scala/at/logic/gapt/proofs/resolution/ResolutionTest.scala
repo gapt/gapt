@@ -101,13 +101,13 @@ class ResolutionTest extends Specification {
     val split = AvatarSplit(
       c1,
       Clause(),
-      Map(
+      Seq(
         hoa"spl1" -> ( Clause() :+ hoa"p x" ),
         hoa"spl2" -> ( Clause() :+ hoa"q y" )
       )
     )
 
-    val comps = for ( ( sc, c ) <- split.nonPropositionalComponents )
+    val comps = for ( ( sc, c ) <- split.nonPropositionalComponents.toMap )
       yield sc -> AvatarComponent( sc, c )
     val p1 = comps( hoa"spl1" )
     val p2 = comps( hoa"spl2" )

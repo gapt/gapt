@@ -164,7 +164,7 @@ object Paramod {
 case class AvatarSplit(
     subProof:                   ResolutionProof,
     propositionalComponents:    HOLClause,
-    nonPropositionalComponents: Map[HOLAtom, HOLSequent]
+    nonPropositionalComponents: Seq[( HOLAtom, HOLSequent )]
 ) extends ResolutionProof {
   require( freeVariables( propositionalComponents ).isEmpty )
   for ( ( sc, c ) <- nonPropositionalComponents ) {
@@ -177,18 +177,19 @@ case class AvatarSplit(
     if sc1 != sc2
   } require( freeVariables( c1 ) intersect freeVariables( c2 ) isEmpty )
 
+  // FIXME: how to handle duplicate components?
   val components =
     propositionalComponents.map( _ +: Sequent(), Sequent() :+ _ ).elements ++
-      nonPropositionalComponents.values
+      nonPropositionalComponents.map( _._2 )
 
   require( subProof.conclusion isSubMultisetOf components.fold( Sequent() )( _ ++ _ ) )
 
   override def introducedDefinitions =
-    for ( ( sc, c ) <- nonPropositionalComponents )
+    for ( ( sc, c ) <- nonPropositionalComponents.toMap )
       yield sc.asInstanceOf[HOLAtomConst] -> univclosure( c.toDisjunction )
 
   override val assertions =
-    subProof.assertions ++ propositionalComponents :++ nonPropositionalComponents.keys
+    subProof.assertions ++ propositionalComponents :++ nonPropositionalComponents.map( _._1 )
 
   def mainIndices = Seq()
   def auxIndices = Seq( subProof.conclusion.indices )

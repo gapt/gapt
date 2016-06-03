@@ -75,7 +75,7 @@ object ResolutionToLKProof {
               case _ =>
             }
           mkOr( comp.toDisjunction )
-          val defn @ All.Block( vs, _ ) = defMap( splAtom.asInstanceOf[HOLAtomConst] ).asInstanceOf[HOLFormula]
+          val defn @ All.Block( vs, _ ) = univclosure( comp.toDisjunction )
           p_ = ForallRightBlock( p_, defn, vs )
           p_ = DefinitionRightRule( p_, defn, splAtom )
         }

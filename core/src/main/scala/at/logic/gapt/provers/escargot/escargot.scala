@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.escargot
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
@@ -163,10 +164,10 @@ class EscargotLoop extends Logger {
   var newlyDerived = mutable.Set[Cls]()
   val usable = mutable.Set[Cls]()
   val workedOff = mutable.Set[Cls]()
-  val usableInactive = mutable.Set[Cls]()
+  val locked = mutable.Set[Cls]()
 
   var nameGen = new NameGenerator( Seq() )
-  var avatarModel = new MapBasedInterpretation( Map() )
+  var avatarModel = MapBasedInterpretation( Map() )
   var emptyClauses = mutable.Set[Cls]()
   def isActive( cls: Cls ): Boolean = isActive( cls.assertion )
   def isActive( assertion: HOLClause ): Boolean =
@@ -261,11 +262,13 @@ class EscargotLoop extends Logger {
     for ( c <- newlyDerived ) {
       if ( c.clause.isEmpty ) {
         emptyClauses += c
+        if ( !avatarModel.interpret( c.assertion.toDisjunction ) )
+          usable += c // trigger model recomputation
+      }
+      if ( isActive( c ) ) {
         usable += c
-      } else if ( isActive( c ) ) {
-        usable += c
-      } else {
-        usableInactive += c
+      } else if ( c.clause.nonEmpty ) {
+        locked += c
       }
     }
     newlyDerived.clear()
@@ -458,6 +461,12 @@ class EscargotLoop extends Logger {
     }
   }
 
+  var componentCache = mutable.Map[HOLFormula, FOLAtom]()
+  def boxComponent( comp: HOLClause ): FOLAtom =
+    componentCache.getOrElseUpdate(
+      univclosure( comp.toDisjunction ),
+      FOLAtom( nameGen.freshWithIndex( "_split" ) )
+    )
   def trySplit( cls: Cls ): Boolean = {
     val comps = getComponents( cls.clause )
 
@@ -465,15 +474,22 @@ class EscargotLoop extends Logger {
       val propComps = comps.filter( freeVariables( _ ).isEmpty ).fold( Sequent() )( _ ++ _ )
       val nonPropComps =
         for ( c <- comps if freeVariables( c ).nonEmpty )
-          yield FOLAtom( nameGen.freshWithIndex( "_split" ) ) -> c
+          yield boxComponent( c ) -> c
 
-      newlyDerived += DerivedCls( cls, AvatarSplit( cls.proof, propComps, nonPropComps.toMap ) )
+      val split = AvatarSplit( cls.proof, propComps, nonPropComps.toSeq )
+      newlyDerived += DerivedCls( cls, split )
       for ( c <- propComps ) {
         newlyDerived += DerivedCls( cls, AvatarPropComponent1( c ) )
         newlyDerived += DerivedCls( cls, AvatarPropComponent2( c ) )
       }
       for ( ( sa, c ) <- nonPropComps )
         newlyDerived += DerivedCls( cls, AvatarComponent( sa, c ) )
+
+      val assignedAtoms = emptyClauses.view.flatMap( _.assertion.elements ).toSet
+      if ( isActive( split.assertions ) ) {
+        for ( atom <- split.assertions.filterNot( assignedAtoms ).succedent.headOption )
+          avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> true ) )
+      }
 
       true
     } else {
@@ -484,16 +500,14 @@ class EscargotLoop extends Logger {
   def switchToNewModel( model: MapBasedInterpretation ) = {
     avatarModel = model
 
-    val allUsable = ( usable union usableInactive ).toSet
-    usable.clear()
-    usableInactive.clear()
-    for ( cls <- allUsable ) {
-      if ( cls.clause.isEmpty )
-        emptyClauses += cls
-      else if ( isActive( cls ) )
-        usable += cls
-      else
-        usableInactive += cls
+    for ( cls <- locked if isActive( cls ) ) {
+      locked -= cls
+      usable += cls
+    }
+    for ( cls <- usable if cls.clause.isEmpty ) usable -= cls
+    for ( store <- Seq( workedOff, usable ); cls <- store if !isActive( cls ) ) {
+      store -= cls
+      locked += cls
     }
   }
 
@@ -506,8 +520,9 @@ class EscargotLoop extends Logger {
       if ( splitting ) {
         if ( usable exists { _.clause.isEmpty } )
           Sat4j.solve( emptyClauses.map( _.assertion ) ) match {
-            case Some( newModel ) =>
-              switchToNewModel( newModel.asInstanceOf[MapBasedInterpretation] )
+            case Some( newModel: MapBasedInterpretation ) =>
+              debug( s"sat splitting model: ${newModel.model.filter( _._2 ).keys.toSeq.sortBy( _.toString ).mkString( ", " )}" )
+              switchToNewModel( newModel )
             case None =>
               return Some( Sat4j.getRobinsonProof( emptyClauses.map( cls => AvatarAbsurd( cls.proof ) ) ).get )
           }
