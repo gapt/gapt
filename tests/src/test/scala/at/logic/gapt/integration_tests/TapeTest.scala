@@ -79,6 +79,7 @@ class TapeTest extends Specification with SequentMatchers {
 
     "apply the full CERES method and skip cuts on equations" in {
       val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
+      println( "now doing ceres" )
       val acnf = CERES( proof, CERES.skipEquations, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }

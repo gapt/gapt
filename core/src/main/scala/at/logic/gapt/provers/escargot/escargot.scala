@@ -186,11 +186,11 @@ class EscargotLoop extends Logger {
   }
 
   def deleteDuplicates() =
-    for ( ( _, group ) <- newlyDerived groupBy { _.clauseWithAssertions } )
+    for ( ( cwa, group ) <- newlyDerived groupBy { _.clauseWithAssertions } )
       newlyDerived --= group.tail
 
   def unitRewriteNew() =
-    for ( cls <- newlyDerived if unitRewriting( workedOff, cls ) )
+    for ( cls <- newlyDerived.toSet if unitRewriting( workedOff, cls ) )
       newlyDerived -= cls
 
   def orderEquations() =
@@ -285,13 +285,13 @@ class EscargotLoop extends Logger {
   def forwardSubsumption() =
     for {
       existing <- workedOff
-      cls <- newlyDerived
+      cls <- newlyDerived.toSeq
       _ <- subsume( existing, cls )
     } newlyDerived -= cls
 
   def backwardSubsumption( given: Cls ) = {
     for {
-      existing <- workedOff
+      existing <- workedOff.toSeq
       _ <- subsume( given, existing )
     } workedOff -= existing
   }
@@ -446,7 +446,7 @@ class EscargotLoop extends Logger {
     }
   }
 
-  def getComponents( clause: HOLClause ): Set[HOLClause] = {
+  def getComponents( clause: HOLClause ): List[HOLClause] = {
     def findComp( c: HOLClause ): HOLClause = {
       val fvs = freeVariables( c )
       val c_ = clause.filter( freeVariables( _ ) intersect fvs nonEmpty )
@@ -454,42 +454,50 @@ class EscargotLoop extends Logger {
     }
 
     if ( clause.isEmpty ) {
-      Set()
+      Nil
     } else {
       val c = findComp( clause.map( _ +: Clause(), Clause() :+ _ ).elements.head )
-      getComponents( clause diff c ) + c
+      c :: getComponents( clause diff c )
     }
   }
 
-  var componentCache = mutable.Map[HOLFormula, FOLAtom]()
-  def boxComponent( comp: HOLClause ): FOLAtom =
-    componentCache.getOrElseUpdate(
-      univclosure( comp.toDisjunction ),
-      FOLAtom( nameGen.freshWithIndex( "_split" ) )
-    )
+  var componentCache = mutable.Map[HOLSequent, AvatarQuantComponentAtom]()
+  def boxComponent( comp: HOLSequent ): AvatarSplit.QuantComponent = {
+    val renaming = for ( ( v, i ) <- freeVariables( comp ).zipWithIndex ) yield v -> Var( s"x_$i", v.exptype )
+    val canon = Substitution( renaming )( comp )
+    AvatarSplit.QuantComponent( componentCache.getOrElseUpdate(
+      canon,
+      AvatarQuantComponentAtom( FOLAtom( nameGen.freshWithIndex( "split" ) ), canon )
+    ), Substitution( renaming.map( _.swap ) ) )
+  }
+  val avatarAssignedAtoms = mutable.Set[HOLAtom]()
   def trySplit( cls: Cls ): Boolean = {
     val comps = getComponents( cls.clause )
 
     if ( comps.size >= 2 ) {
-      val propComps = comps.filter( freeVariables( _ ).isEmpty ).fold( Sequent() )( _ ++ _ )
+      val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
+        case Sequent( Seq( a ), Seq() ) => AvatarSplit.PropComponent( a, false )
+        case Sequent( Seq(), Seq( a ) ) => AvatarSplit.PropComponent( a, true )
+      }
       val nonPropComps =
         for ( c <- comps if freeVariables( c ).nonEmpty )
-          yield boxComponent( c ) -> c
+          yield boxComponent( c )
 
-      val split = AvatarSplit( cls.proof, propComps, nonPropComps.toSeq )
+      val split = AvatarSplit( cls.proof, nonPropComps ++ propComps )
       newlyDerived += DerivedCls( cls, split )
-      for ( c <- propComps ) {
-        newlyDerived += DerivedCls( cls, AvatarPropComponent1( c ) )
-        newlyDerived += DerivedCls( cls, AvatarPropComponent2( c ) )
-      }
-      for ( ( sa, c ) <- nonPropComps )
-        newlyDerived += DerivedCls( cls, AvatarComponent( sa, c ) )
+      for ( comp <- propComps; if !avatarAssignedAtoms( comp.atom ); pol <- Seq( false, true ) )
+        newlyDerived += DerivedCls( cls, AvatarComponent( AvatarComponent.PropComponent( comp.atom, pol ) ) )
+      for ( comp <- nonPropComps if !avatarAssignedAtoms( comp.componentAtom.atom ) )
+        newlyDerived += DerivedCls( cls, AvatarComponent( AvatarComponent.QuantComponent( comp.componentAtom ) ) )
 
-      val assignedAtoms = emptyClauses.view.flatMap( _.assertion.elements ).toSet
       if ( isActive( split.assertions ) ) {
-        for ( atom <- split.assertions.filterNot( assignedAtoms ).succedent.headOption )
+        for ( atom <- split.assertions.filterNot( avatarAssignedAtoms ).succedent.headOption )
           avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> true ) )
       }
+      for ( c <- usable union workedOff ) require( isActive( c ) )
+      for ( c <- locked ) require( !isActive( c ) )
+
+      avatarAssignedAtoms ++= split.assertions.elements
 
       true
     } else {
@@ -500,12 +508,12 @@ class EscargotLoop extends Logger {
   def switchToNewModel( model: MapBasedInterpretation ) = {
     avatarModel = model
 
-    for ( cls <- locked if isActive( cls ) ) {
+    for ( cls <- locked.toSet if isActive( cls ) ) {
       locked -= cls
       usable += cls
     }
     for ( cls <- usable if cls.clause.isEmpty ) usable -= cls
-    for ( store <- Seq( workedOff, usable ); cls <- store if !isActive( cls ) ) {
+    for ( store <- Seq( workedOff, usable ); cls <- store.toSet if !isActive( cls ) ) {
       store -= cls
       locked += cls
     }
@@ -521,7 +529,7 @@ class EscargotLoop extends Logger {
         if ( usable exists { _.clause.isEmpty } )
           Sat4j.solve( emptyClauses.map( _.assertion ) ) match {
             case Some( newModel: MapBasedInterpretation ) =>
-              debug( s"sat splitting model: ${newModel.model.filter( _._2 ).keys.toSeq.sortBy( _.toString ).mkString( ", " )}" )
+              debug( s"sat splitting model: ${newModel.model.filter( _._2 ).keys.toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
               switchToNewModel( newModel )
             case None =>
               return Some( Sat4j.getRobinsonProof( emptyClauses.map( cls => AvatarAbsurd( cls.proof ) ) ).get )
@@ -538,7 +546,7 @@ class EscargotLoop extends Logger {
 
       val shouldDiscard = isSubsumedByWorkedOff( given ) || ( hasEquality && isReflModE( given ) )
 
-      debug( s"[wo=${workedOff.size},us=${usable.size}] ${if ( shouldDiscard ) "discarded" else "kept"}: $given" )
+      debug( s"[wo=${workedOff.size},us=${usable.size}] ${if ( shouldDiscard ) "discarded" else "kept"}: $given".replace( '\n', ' ' ) )
 
       if ( !shouldDiscard ) {
         backwardSubsumption( given )

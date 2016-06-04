@@ -71,8 +71,8 @@ object mapInputClauses {
         val ( q1, _ ) = doMap( p1 )
         val res = AvatarAbsurd( q1 )
         res -> OccConnector.guessInjection( p.conclusion, res.conclusion )
-      case AvatarSplit( p1, propComps, nonPropComps ) =>
-        AvatarSplit( doMap( p1 )._1, propComps, nonPropComps ) -> OccConnector( Clause(), Clause(), Sequent() )
+      case AvatarSplit( p1, comps ) =>
+        AvatarSplit( doMap( p1 )._1, comps ) -> OccConnector( Clause(), Clause(), Sequent() )
 
       // FIXME: support for propositional part
     } ) )

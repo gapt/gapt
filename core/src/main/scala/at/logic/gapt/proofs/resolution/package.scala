@@ -6,17 +6,21 @@ import scala.collection.mutable
 
 package object resolution {
   implicit object resolutionProofsAreReplaceable extends ClosedUnderReplacement[ResolutionProof] {
+    def replace( qca: AvatarQuantComponentAtom, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarQuantComponentAtom =
+      AvatarQuantComponentAtom( TermReplacement( qca.atom, repl ), TermReplacement( qca.clause, repl ) )
+    def replace( subst: Substitution, repl: PartialFunction[LambdaExpression, LambdaExpression] ): Substitution =
+      Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } )
+
     def replace( proof: ResolutionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ResolutionProof = {
 
       val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
       def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
-        case Input( sequent )    => Input( TermReplacement( sequent, repl ) )
-        case Refl( term )        => Refl( TermReplacement( term, repl ) )
-        case Taut( formula )     => Taut( TermReplacement( formula, repl ) )
-        case Factor( q, i1, i2 ) => Factor( f( q ), i1, i2 )
-        case Subst( q, subst ) =>
-          Subst( f( q ), Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } ) )
+        case Input( sequent )             => Input( TermReplacement( sequent, repl ) )
+        case Refl( term )                 => Refl( TermReplacement( term, repl ) )
+        case Taut( formula )              => Taut( TermReplacement( formula, repl ) )
+        case Factor( q, i1, i2 )          => Factor( f( q ), i1, i2 )
+        case Subst( q, subst )            => Subst( f( q ), replace( subst, repl ) )
         case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
         case Paramod( q1, l1, dir, q2, l2, con ) =>
           val q1New = f( q1 )
@@ -26,17 +30,20 @@ package object resolution {
           val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
           val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )
-        case AvatarSplit( q, propComps, nonPropComps ) =>
+        case AvatarSplit( q, components ) =>
           AvatarSplit(
             f( q ),
-            TermReplacement( propComps, repl ),
-            nonPropComps.map( TermReplacement( _, repl ) )
+            components map {
+              case AvatarSplit.QuantComponent( qca, subst ) =>
+                AvatarSplit.QuantComponent( replace( qca, repl ), replace( subst, repl ) )
+              case c @ AvatarSplit.PropComponent( atom, _ ) => c.copy( atom = TermReplacement( atom, repl ) )
+            }
           )
         case AvatarAbsurd( q ) => AvatarAbsurd( f( q ) )
-        case AvatarComponent( splAtom, comp ) =>
-          AvatarComponent( TermReplacement( splAtom, repl ), TermReplacement( comp, repl ) )
-        case AvatarPropComponent1( atom ) => AvatarPropComponent1( TermReplacement( atom, repl ) )
-        case AvatarPropComponent2( atom ) => AvatarPropComponent2( TermReplacement( atom, repl ) )
+        case AvatarComponent( AvatarComponent.QuantComponent( qca ) ) =>
+          AvatarComponent( AvatarComponent.QuantComponent( replace( qca, repl ) ) )
+        case AvatarComponent( AvatarComponent.PropComponent( atom, pol ) ) =>
+          AvatarComponent( AvatarComponent.PropComponent( TermReplacement( atom, repl ), pol ) )
         case DefIntro( q, i, defAtom, definition ) =>
           DefIntro( f( q ), i, TermReplacement( defAtom, repl ), TermReplacement( definition, repl ) )
         case TopL( q, i )                => TopL( f( q ), i )

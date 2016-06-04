@@ -98,22 +98,21 @@ class ResolutionTest extends Specification {
     val c3 = ResolutionProofBuilder.c( in ).
       u( ImpL2( _, Ant( 0 ) ) ).u( OrL2( _, Ant( 0 ) ) ).qed
 
+    val qca1 = AvatarQuantComponentAtom( hoa"spl1", Clause() :+ hoa"p x" )
+    val qca2 = AvatarQuantComponentAtom( hoa"spl2", Clause() :+ hoa"q x" )
     val split = AvatarSplit(
       c1,
-      Clause(),
       Seq(
-        hoa"spl1" -> ( Clause() :+ hoa"p x" ),
-        hoa"spl2" -> ( Clause() :+ hoa"q y" )
+        AvatarSplit.QuantComponent( qca1, Substitution() ),
+        AvatarSplit.QuantComponent( qca2, Substitution( hov"x" -> le"y" ) )
       )
     )
 
-    val comps = for ( ( sc, c ) <- split.nonPropositionalComponents.toMap )
-      yield sc -> AvatarComponent( sc, c )
-    val p1 = comps( hoa"spl1" )
-    val p2 = comps( hoa"spl2" )
+    val p1 = AvatarComponent( AvatarComponent.QuantComponent( qca1 ) )
+    val p2 = AvatarComponent( AvatarComponent.QuantComponent( qca2 ) )
 
     val case1 = AvatarAbsurd( Resolution( Subst( p1, Substitution( hov"x" -> le"c" ) ), Suc( 0 ), c2, Ant( 0 ) ) )
-    val case2 = AvatarAbsurd( Resolution( Subst( p2, Substitution( hov"y" -> le"d" ) ), Suc( 0 ), c3, Ant( 0 ) ) )
+    val case2 = AvatarAbsurd( Resolution( Subst( p2, Substitution( hov"x" -> le"d" ) ), Suc( 0 ), c3, Ant( 0 ) ) )
     val proof = Resolution( Resolution( AvatarAbsurd( split ), Suc( 0 ), case1, Ant( 0 ) ), Suc( 0 ), case2, Ant( 0 ) )
     println( "resolution proof" )
     proof.isProof must_== true

@@ -379,7 +379,7 @@ object eliminateDefsET {
 
     val rest = ExpansionProofWithCut( otherCuts, epwc.expansionSequent ).expansionWithCutAxiom.expansionSequent
     val usesites = rest.elements.flatMap { _.subProofs }.
-      collect { case ETDefinedAtom( Apps( d, args ), pol, _ ) => ( args, pol ) }.toSet
+      collect { case ETDefinedAtom( Apps( `definitionConst`, args ), pol, _ ) => ( args, pol ) }.toSet
     insts = Map() ++
       usesites.map { _._1 }.map { as =>
         val ras = Substitution( vs zip as )( definedFormula )

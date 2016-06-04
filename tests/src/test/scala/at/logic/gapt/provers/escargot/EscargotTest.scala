@@ -47,7 +47,7 @@ class EscargotTest extends Specification {
 
   "large cnf" in {
     val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
+    val as = 0 to 5 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
     val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
     Escargot getRobinsonProof formula must beSome
   }
