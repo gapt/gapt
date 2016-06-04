@@ -3,9 +3,10 @@ package at.logic.gapt.proofs.resolution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk.ResolutionProofBuilder
 import at.logic.gapt.proofs.{ Ant, Clause, Sequent, Suc }
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class ResolutionTest extends Specification {
+class ResolutionTest extends Specification with SatMatchers {
 
   "Input" in {
     Input( Clause() ).conclusion.isEmpty must_== true
@@ -108,22 +109,16 @@ class ResolutionTest extends Specification {
     val case1 = AvatarAbsurd( Resolution( Subst( p1, Substitution( hov"x" -> le"c" ) ), Suc( 0 ), c2, Ant( 0 ) ) )
     val case2 = AvatarAbsurd( Resolution( Subst( p2, Substitution( hov"x" -> le"d" ) ), Suc( 0 ), c3, Ant( 0 ) ) )
     val proof = Resolution( Resolution( AvatarAbsurd( split ), Suc( 0 ), case1, Ant( 0 ) ), Suc( 0 ), case2, Ant( 0 ) )
-    println( "resolution proof" )
     proof.isProof must_== true
 
+    ResolutionToExpansionProof.withDefs( proof ).deep must beValidSequent
     val expansion = ResolutionToExpansionProof( proof )
-    println( "expansion with defs" )
-    println( ResolutionToExpansionProof.withDefs( proof ) )
-    println( "expansion after def-elim" )
-    println( expansion )
-    println( "deep formula of def-elim expansion" )
-    println( expansion.deep )
-    println( simplifyResolutionProof( ExpansionToResolutionProof( expansion ).get ) )
-    println( ResolutionToExpansionProof( ExpansionToResolutionProof( expansion ).get ) )
+    expansion.deep must beValidSequent
+    val Some( resFromExp ) = ExpansionToResolutionProof( expansion )
+    resFromExp.isProof must_== true
 
-    println( "LK" )
-    println( ResolutionToLKProof( proof ) )
-    ok
+    val lk = ResolutionToLKProof( proof )
+    lk.endSequent must_== in.sequent.swapped
   }
 
   "daglike performance" in {
