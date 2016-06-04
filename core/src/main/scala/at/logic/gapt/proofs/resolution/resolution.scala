@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.{ ContextRule, DagProof, HOLClause, HOLSequent, OccConnector, Sequent, SequentIndex, SequentProof, Suc }
 
 import scala.collection.mutable
@@ -161,24 +161,19 @@ object Paramod {
   }
 }
 
-case class AvatarQuantComponentAtom( atom: HOLAtom, clause: HOLSequent ) {
-  require( atom.isInstanceOf[HOLAtomConst] )
-  val definition = univclosure( clause.toDisjunction )
-  def inducedDefinitions = Map( atom.asInstanceOf[HOLAtomConst] -> definition )
-}
 case class AvatarSplit(
     subProof:   ResolutionProof,
-    components: Seq[AvatarSplit.Component]
+    components: Seq[AvatarComponent]
 ) extends ResolutionProof {
   for ( ( c1, i1 ) <- components.zipWithIndex; ( c2, i2 ) <- components.zipWithIndex if i1 != i2 )
     require( freeVariables( c1.clause ) intersect freeVariables( c2.clause ) isEmpty )
 
-  // FIXME: how to handle duplicate components?
+  // FIXME: should we really handle duplicate components?
   require( subProof.conclusion isSubMultisetOf components.map( _.clause ).fold( Sequent() )( _ ++ _ ) )
 
   override def introducedDefinitions = components.view.flatMap( _.inducedDefinitions ).toMap
 
-  override val assertions = ( subProof.assertions ++ components.map( _.assertions ).fold( Sequent() )( _ ++ _ ) ).distinct
+  override val assertions = ( subProof.assertions ++ components.map( _.assertion ).fold( Sequent() )( _ ++ _ ) ).distinct
 
   def mainIndices = Seq()
   def auxIndices = Seq( subProof.conclusion.indices )
@@ -186,53 +181,66 @@ case class AvatarSplit(
   def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion, Sequent() ) )
   def immediateSubProofs = Seq( subProof )
 }
-object AvatarSplit {
-  trait Component {
-    def clause: HOLSequent
-    def assertions: HOLClause
-    def inducedDefinitions: Map[HOLAtomConst, LambdaExpression]
+case class AvatarComponentIntro( component: AvatarComponent ) extends InitialClause {
+  override def introducedDefinitions = component.inducedDefinitions
+  override val assertions = component.assertion.swapped
+  def mainFormulaSequent = component.clause
+}
+
+trait AvatarComponent {
+  def clause: HOLSequent
+  def assertion: HOLClause
+  def inducedDefinitions: Map[HOLAtomConst, LambdaExpression]
+}
+case class AvatarNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var] ) extends AvatarComponent {
+  require( atom.isInstanceOf[HOLAtomConst] )
+  private val AvatarNonGroundComp.DefinitionFormula( canonVars, canonicalClause ) = definition
+
+  private val subst = Substitution( canonVars zip vars )
+  require( vars.size == canonVars.size )
+  require( subst isInjectiveRenaming )
+
+  def disjunction = instantiate( definition, vars )
+
+  def assertion = Sequent() :+ atom
+  val clause = Substitution( canonVars zip vars )( canonicalClause )
+  def inducedDefinitions = Map( atom.asInstanceOf[HOLAtomConst] -> definition )
+}
+object AvatarNonGroundComp {
+  def apply( atom: HOLAtom, definition: HOLFormula ): AvatarNonGroundComp = {
+    val All.Block( vs, _ ) = definition
+    AvatarNonGroundComp( atom, definition, vs )
   }
-  case class QuantComponent( componentAtom: AvatarQuantComponentAtom, subst: Substitution ) extends Component {
-    require( subst.isInjectiveRenaming )
-    def assertions = Sequent() :+ componentAtom.atom
-    def clause = subst( componentAtom.clause )
-    def inducedDefinitions = componentAtom.inducedDefinitions
-  }
-  case class PropComponent( atom: HOLAtom, polarity: Boolean ) extends Component {
-    require( freeVariables( atom ).isEmpty )
-    def assertions = if ( polarity ) Sequent() :+ atom else atom +: Sequent()
-    def clause = assertions
-    def inducedDefinitions = Map()
+
+  object DefinitionFormula {
+    def apply( clause: HOLSequent ): HOLFormula =
+      apply( freeVariables( clause ).toSeq, clause )
+    def apply( vars: Seq[Var], clause: HOLSequent ) = {
+      require( vars.toSet subsetOf freeVariables( clause ) )
+      All.Block( vars, clause.toDisjunction )
+    }
+    def unapply( f: HOLFormula ): Some[( Seq[Var], HOLSequent )] = f match {
+      case All.Block( vars, litDisj ) =>
+        val Or.nAry( lits ) = litDisj
+        Some( ( vars, lits.map {
+          case Neg( a ) => a +: Sequent()
+          case a        => Sequent() :+ a
+        }.fold( Sequent() )( _ ++ _ ) ) )
+    }
   }
 }
+case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarComponent {
+  require( freeVariables( atom ).isEmpty )
+  def assertion = if ( polarity ) Sequent() :+ atom else atom +: Sequent()
+  def clause = assertion
+  def inducedDefinitions = Map()
+}
+
 case class AvatarAbsurd( subProof: ResolutionProof ) extends LocalResolutionRule {
   override val assertions = Sequent()
   def mainFormulaSequent = subProof.assertions
   def auxIndices = Seq( Seq() )
   def immediateSubProofs = Seq( subProof )
-}
-case class AvatarComponent( component: AvatarComponent.Component ) extends InitialClause {
-  override def introducedDefinitions = component.inducedDefinitions
-  override val assertions = component.assertions
-  def mainFormulaSequent = component.clause
-}
-object AvatarComponent {
-  trait Component {
-    def clause: HOLSequent
-    def assertions: HOLClause
-    def inducedDefinitions: Map[HOLAtomConst, LambdaExpression]
-  }
-  case class QuantComponent( componentAtom: AvatarQuantComponentAtom ) extends Component {
-    def assertions = componentAtom.atom +: Sequent()
-    def clause = componentAtom.clause
-    def inducedDefinitions = componentAtom.inducedDefinitions
-  }
-  case class PropComponent( atom: HOLAtom, polarity: Boolean ) extends Component {
-    require( freeVariables( atom ).isEmpty )
-    def assertions = if ( polarity ) atom +: Sequent() else Sequent() :+ atom
-    def clause = assertions.swapped
-    def inducedDefinitions = Map()
-  }
 }
 
 abstract class PropositionalResolutionRule extends LocalResolutionRule {

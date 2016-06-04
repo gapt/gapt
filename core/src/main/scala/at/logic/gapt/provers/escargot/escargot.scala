@@ -461,14 +461,13 @@ class EscargotLoop extends Logger {
     }
   }
 
-  var componentCache = mutable.Map[HOLSequent, AvatarQuantComponentAtom]()
-  def boxComponent( comp: HOLSequent ): AvatarSplit.QuantComponent = {
-    val renaming = for ( ( v, i ) <- freeVariables( comp ).zipWithIndex ) yield v -> Var( s"x_$i", v.exptype )
-    val canon = Substitution( renaming )( comp )
-    AvatarSplit.QuantComponent( componentCache.getOrElseUpdate(
-      canon,
-      AvatarQuantComponentAtom( FOLAtom( nameGen.freshWithIndex( "split" ) ), canon )
-    ), Substitution( renaming.map( _.swap ) ) )
+  var componentCache = mutable.Map[HOLFormula, FOLAtom]()
+  def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
+    val definition @ All.Block( vs, _ ) = univclosure( comp.toDisjunction )
+    AvatarNonGroundComp( componentCache.getOrElseUpdate(
+      definition,
+      FOLAtom( nameGen.freshWithIndex( "split" ) )
+    ), definition, vs )
   }
   val avatarAssignedAtoms = mutable.Set[HOLAtom]()
   def trySplit( cls: Cls ): Boolean = {
@@ -476,8 +475,8 @@ class EscargotLoop extends Logger {
 
     if ( comps.size >= 2 ) {
       val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
-        case Sequent( Seq( a ), Seq() ) => AvatarSplit.PropComponent( a, false )
-        case Sequent( Seq(), Seq( a ) ) => AvatarSplit.PropComponent( a, true )
+        case Sequent( Seq( a ), Seq() ) => AvatarGroundComp( a, false )
+        case Sequent( Seq(), Seq( a ) ) => AvatarGroundComp( a, true )
       }
       val nonPropComps =
         for ( c <- comps if freeVariables( c ).nonEmpty )
@@ -486,16 +485,14 @@ class EscargotLoop extends Logger {
       val split = AvatarSplit( cls.proof, nonPropComps ++ propComps )
       newlyDerived += DerivedCls( cls, split )
       for ( comp <- propComps; if !avatarAssignedAtoms( comp.atom ); pol <- Seq( false, true ) )
-        newlyDerived += DerivedCls( cls, AvatarComponent( AvatarComponent.PropComponent( comp.atom, pol ) ) )
-      for ( comp <- nonPropComps if !avatarAssignedAtoms( comp.componentAtom.atom ) )
-        newlyDerived += DerivedCls( cls, AvatarComponent( AvatarComponent.QuantComponent( comp.componentAtom ) ) )
+        newlyDerived += DerivedCls( cls, AvatarComponentIntro( AvatarGroundComp( comp.atom, pol ) ) )
+      for ( comp <- nonPropComps if !avatarAssignedAtoms( comp.atom ) )
+        newlyDerived += DerivedCls( cls, AvatarComponentIntro( comp ) )
 
       if ( isActive( split.assertions ) ) {
         for ( atom <- split.assertions.filterNot( avatarAssignedAtoms ).succedent.headOption )
           avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> true ) )
       }
-      for ( c <- usable union workedOff ) require( isActive( c ) )
-      for ( c <- locked ) require( !isActive( c ) )
 
       avatarAssignedAtoms ++= split.assertions.elements
 

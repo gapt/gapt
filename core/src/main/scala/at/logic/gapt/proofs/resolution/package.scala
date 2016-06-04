@@ -6,8 +6,10 @@ import scala.collection.mutable
 
 package object resolution {
   implicit object resolutionProofsAreReplaceable extends ClosedUnderReplacement[ResolutionProof] {
-    def replace( qca: AvatarQuantComponentAtom, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarQuantComponentAtom =
-      AvatarQuantComponentAtom( TermReplacement( qca.atom, repl ), TermReplacement( qca.clause, repl ) )
+    def replace( component: AvatarComponent, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarComponent = component match {
+      case AvatarGroundComp( atom, pol )           => AvatarGroundComp( TermReplacement( atom, repl ), pol )
+      case AvatarNonGroundComp( atom, defn, vars ) => AvatarNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars )
+    }
     def replace( subst: Substitution, repl: PartialFunction[LambdaExpression, LambdaExpression] ): Substitution =
       Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } )
 
@@ -31,19 +33,9 @@ package object resolution {
           val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )
         case AvatarSplit( q, components ) =>
-          AvatarSplit(
-            f( q ),
-            components map {
-              case AvatarSplit.QuantComponent( qca, subst ) =>
-                AvatarSplit.QuantComponent( replace( qca, repl ), replace( subst, repl ) )
-              case c @ AvatarSplit.PropComponent( atom, _ ) => c.copy( atom = TermReplacement( atom, repl ) )
-            }
-          )
-        case AvatarAbsurd( q ) => AvatarAbsurd( f( q ) )
-        case AvatarComponent( AvatarComponent.QuantComponent( qca ) ) =>
-          AvatarComponent( AvatarComponent.QuantComponent( replace( qca, repl ) ) )
-        case AvatarComponent( AvatarComponent.PropComponent( atom, pol ) ) =>
-          AvatarComponent( AvatarComponent.PropComponent( TermReplacement( atom, repl ), pol ) )
+          AvatarSplit( f( q ), components map { replace( _, repl ) } )
+        case AvatarAbsurd( q )                 => AvatarAbsurd( f( q ) )
+        case AvatarComponentIntro( component ) => AvatarComponentIntro( replace( component, repl ) )
         case DefIntro( q, i, defAtom, definition ) =>
           DefIntro( f( q ), i, TermReplacement( defAtom, repl ), TermReplacement( definition, repl ) )
         case TopL( q, i )                => TopL( f( q ), i )

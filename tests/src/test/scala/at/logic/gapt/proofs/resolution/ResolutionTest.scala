@@ -98,18 +98,12 @@ class ResolutionTest extends Specification {
     val c3 = ResolutionProofBuilder.c( in ).
       u( ImpL2( _, Ant( 0 ) ) ).u( OrL2( _, Ant( 0 ) ) ).qed
 
-    val qca1 = AvatarQuantComponentAtom( hoa"spl1", Clause() :+ hoa"p x" )
-    val qca2 = AvatarQuantComponentAtom( hoa"spl2", Clause() :+ hoa"q x" )
-    val split = AvatarSplit(
-      c1,
-      Seq(
-        AvatarSplit.QuantComponent( qca1, Substitution() ),
-        AvatarSplit.QuantComponent( qca2, Substitution( hov"x" -> le"y" ) )
-      )
-    )
+    val comp1 = AvatarNonGroundComp( hoa"spl1", hof"!x p x", Seq( hov"x" ) )
+    val comp2 = AvatarNonGroundComp( hoa"spl2", hof"!x q x", Seq( hov"y" ) )
+    val split = AvatarSplit( c1, Seq( comp1, comp2 ) )
 
-    val p1 = AvatarComponent( AvatarComponent.QuantComponent( qca1 ) )
-    val p2 = AvatarComponent( AvatarComponent.QuantComponent( qca2 ) )
+    val p1 = AvatarComponentIntro( comp1 )
+    val p2 = AvatarComponentIntro( comp2.copy( vars = Seq( hov"x" ) ) )
 
     val case1 = AvatarAbsurd( Resolution( Subst( p1, Substitution( hov"x" -> le"c" ) ), Suc( 0 ), c2, Ant( 0 ) ) )
     val case2 = AvatarAbsurd( Resolution( Subst( p2, Substitution( hov"x" -> le"d" ) ), Suc( 0 ), c3, Ant( 0 ) ) )

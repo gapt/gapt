@@ -128,25 +128,23 @@ object ResolutionToExpansionProof {
 
       case p @ AvatarSplit( q, components ) =>
         val renaming = Substitution( for ( v <- freeVariables( q.conclusion ) ) yield v -> nameGen.fresh( v ) )
-        for ( AvatarSplit.QuantComponent( qca @ AvatarQuantComponentAtom( splAtom, clause ), subst ) <- components ) {
-          val All.Block( vs, c ) = qca.definition
-          splitDefn( splAtom ) = qca.definition
+        for ( comp @ AvatarNonGroundComp( splAtom, definition, vars ) <- components ) {
+          splitDefn( splAtom ) = definition
           splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
-            qca.definition,
-            renaming( subst( vs ) ).map( _.asInstanceOf[Var] ),
-            formulaToExpansionTree( renaming( subst( c ) ), true )
+            definition,
+            renaming( vars ).map( _.asInstanceOf[Var] ),
+            formulaToExpansionTree( renaming( comp.disjunction ), true )
           )
         }
         propg( p, q, _ => for ( ( _, es ) <- sequent2expansions( q.conclusion ) ) yield renaming -> renaming( es ) )
-      case p @ AvatarComponent( AvatarComponent.PropComponent( _, _ ) ) =>
+      case p @ AvatarComponentIntro( AvatarGroundComp( _, _ ) ) =>
         clear( p )
-      case p @ AvatarComponent( AvatarComponent.QuantComponent( qca @ AvatarQuantComponentAtom( splAtom, comp ) ) ) =>
-        val defn @ All.Block( vs, _ ) = qca.definition
-        splitDefn( splAtom ) = defn
+      case p @ AvatarComponentIntro( AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+        splitDefn( splAtom ) = definition
         splitCutR( splAtom ) ::= ETWeakQuantifierBlock(
-          defn, vs.size,
+          definition, vars.size,
           for ( ( s, es ) <- expansions( p ) )
-            yield s( vs ) -> es.toDisjunction( false )
+            yield s( vars ) -> es.toDisjunction( false )
         )
         clear( p )
       case p @ AvatarAbsurd( q ) =>

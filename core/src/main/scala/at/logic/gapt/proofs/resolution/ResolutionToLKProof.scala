@@ -52,18 +52,16 @@ object ResolutionToLKProof {
           ParamodulationRightRule( f( q1 ), q1.conclusion( i1 ), f( q2 ), q2.conclusion( i2 ), ctx )
 
       case p @ AvatarAbsurd( q ) => f( q )
-      case p @ AvatarComponent( AvatarComponent.QuantComponent( qca @ AvatarQuantComponentAtom( splAtom, component ) ) ) =>
-        val defn @ All.Block( vs, c ) = qca.definition
-        val \/-( p1 ) = solvePropositional( c +: component )
-        val p2 = ForallLeftBlock( p1, defn, vs )
-        val p3 = DefinitionLeftRule( p2, defn, splAtom )
+      case AvatarComponentIntro( comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+        val \/-( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
+        val p2 = ForallLeftBlock( p1, definition, vars )
+        val p3 = DefinitionLeftRule( p2, definition, splAtom )
         p3
-      case AvatarComponent( AvatarComponent.PropComponent( atom, _ ) ) => LogicalAxiom( atom )
+      case AvatarComponentIntro( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
       case AvatarSplit( q, components ) =>
         var p_ = f( q )
-        for ( AvatarSplit.QuantComponent( qca @ AvatarQuantComponentAtom( splAtom, canonComp ), subst ) <- components ) {
-          val comp = subst( canonComp )
-          for ( a <- comp.antecedent ) p_ = NegRightRule( p_, a )
+        for ( comp @ AvatarNonGroundComp( splAtom, definition, vars ) <- components ) {
+          for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
           def mkOr( lits: HOLFormula ): Unit =
             lits match {
               case Or( lits_, lit ) =>
@@ -71,10 +69,9 @@ object ResolutionToLKProof {
                 p_ = OrRightMacroRule( p_, lits_, lit )
               case _ =>
             }
-          mkOr( comp.toDisjunction )
-          val defn @ All.Block( vs, _ ) = qca.definition
-          p_ = ForallRightBlock( p_, defn, subst( vs ).map( _.asInstanceOf[Var] ) )
-          p_ = DefinitionRightRule( p_, defn, splAtom )
+          mkOr( comp.disjunction )
+          p_ = ForallRightBlock( p_, definition, vars )
+          p_ = DefinitionRightRule( p_, definition, splAtom )
         }
         p_
 
