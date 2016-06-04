@@ -489,11 +489,8 @@ class EscargotLoop extends Logger {
       for ( comp <- nonPropComps if !avatarAssignedAtoms( comp.atom ) )
         newlyDerived += DerivedCls( cls, AvatarComponentIntro( comp ) )
 
-      if ( isActive( split.assertions ) ) {
-        for ( atom <- split.assertions.filterNot( avatarAssignedAtoms ).succedent.headOption )
-          avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> true ) )
-      }
-
+      for ( atom <- split.assertions.succedent.filterNot( avatarAssignedAtoms ) )
+        avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> true ) )
       avatarAssignedAtoms ++= split.assertions.elements
 
       true

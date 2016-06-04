@@ -5,8 +5,9 @@ import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.prover9.Prover9
+
 import scalaz._
 import Scalaz._
 import Validation.FlatMap._
@@ -319,5 +320,5 @@ case object Prover9Tactic extends Tactic[Unit] {
  */
 case object EscargotTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
-    Escargot getLKProof goal.conclusion toSuccessNel TacticalFailure( this, Some( goal ), "search failed" ) map { () -> _ }
+    NonSplittingEscargot getLKProof goal.conclusion toSuccessNel TacticalFailure( this, Some( goal ), "search failed" ) map { () -> _ }
 }

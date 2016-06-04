@@ -4,10 +4,9 @@ import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.llk.LLKProofParser
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, SequentMatchers, expansion }
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
