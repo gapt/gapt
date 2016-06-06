@@ -54,7 +54,6 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
     }
 
     "large cnf" in {
-      skipped( "splitting broken atm" )
       val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
       val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
       val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
@@ -62,7 +61,6 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
     }
 
     "bug with quantified splitting" in {
-      skipped( "splitting broken atm" )
       val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
       val as = 0 to 2 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
       val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )

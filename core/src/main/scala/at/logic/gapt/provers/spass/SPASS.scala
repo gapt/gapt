@@ -93,48 +93,48 @@ class SPASS extends ResolutionProver with ExternalProgram {
         val inferences = proof map InferenceParser.parseInference
 
         val inference2sketch = mutable.Map[Int, RefutationSketch]()
-        val splitStack = mutable.Stack[( Int, FOLClause, Option[Int] )]()
+        val splitStack = mutable.Stack[( Int, SketchSplit, Option[Int] )]()
+        val splitCases = Seq.newBuilder[RefutationSketch]
         def finishSplit( infNum: Int, splitLevel: Int ): Unit =
           if ( splitLevel > 0 ) splitStack.pop() match {
-            case ( splitCls, part1, None ) =>
-              splitStack push ( ( splitCls, part1, Some( infNum ) ) )
-            case ( splitCls, part1, Some( case1 ) ) =>
-              inference2sketch( infNum ) = SketchSplit(
-                inference2sketch( splitCls ), part1,
-                inference2sketch( case1 ), inference2sketch( infNum )
-              )
+            case ( splitCls, split, None ) =>
+              splitStack push ( ( splitCls, split, Some( infNum ) ) )
+            case ( splitCls, split, Some( case1 ) ) =>
               finishSplit( infNum, splitLevel - 1 )
           }
         inferences foreach {
           case ( num, 0, "Inp", _, clause ) =>
             val Some( clauseInOurCNF ) = cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined )
             inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( clauseInOurCNF map { _.asInstanceOf[FOLAtom] } ) ) )
+            if ( clause isEmpty ) splitCases += inference2sketch( num )
           case ( num, splitLevel, "Spt", Seq( splitClauseNum ), part1 ) =>
             val splitClause = inference2sketch( splitClauseNum ).conclusion
             val Some( subst ) = clauseSubsumption( part1, splitClause )
             require( subst.isRenaming )
             val correctPart1 = subst.asFOLSubstitution( part1 )
-            splitStack push ( ( splitClauseNum, correctPart1, None ) )
-            inference2sketch( num ) = SketchInference( splitClause, Seq( SketchAxiom( correctPart1 ) ) )
+            val split = SketchSplit( inference2sketch( splitClauseNum ), correctPart1 )
+            splitCases += split
+            splitStack push ( ( splitClauseNum, split, None ) )
+            inference2sketch( num ) = SketchInference( splitClause, Seq( SketchSplit1( split ) ) )
           case ( num, splitLevel, "Spt", _, clause ) =>
-            val splitClause = inference2sketch( splitStack.top._1 ).conclusion
-            val correctClause =
-              if ( clauseSubsumption( clause, splitClause ).isDefined ) {
-                splitClause diff splitStack.top._2
-              } else {
-                require( clause.size == 1 && freeVariables( clause ).isEmpty )
-                require( clause.swapped isSubsetOf splitStack.top._2 )
-                clause
-              }
-            inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( correctClause ) ) )
+            val split = splitStack.top._2
+            val Seq( correctClause ) =
+              for {
+                ( possibleComp, i ) <- split.addAxioms2.zipWithIndex
+                _ <- clauseSubsumption( clause, possibleComp )
+              } yield SketchSplit2( split, i )
+            inference2sketch( num ) = SketchInference( clause, Seq( correctClause ) )
           case ( num, splitLevel, _, premises, clause ) =>
             val p = SketchInference( clause, premises map inference2sketch )
             inference2sketch( num ) = p
 
-            if ( clause isEmpty ) finishSplit( num, splitLevel )
+            if ( clause isEmpty ) {
+              splitCases += p
+              finishSplit( num, splitLevel )
+            }
         }
 
-        val sketch = inference2sketch( inferences.last._1 )
+        val sketch = SketchSplitCombine( splitCases.result() )
 
         RefutationSketchToRobinson( sketch ) match {
           case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )

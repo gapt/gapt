@@ -139,6 +139,8 @@ object ResolutionToExpansionProof {
         propg( p, q, _ => for ( ( _, es ) <- sequent2expansions( q.conclusion ) ) yield renaming -> renaming( es ) )
       case p @ AvatarComponentIntro( AvatarGroundComp( _, _ ) ) =>
         clear( p )
+      case p @ AvatarComponentIntro( AvatarNegNonGroundComp( _, _, _, _ ) ) =>
+        clear( p )
       case p @ AvatarComponentIntro( AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         splitDefn( splAtom ) = definition
         splitCutR( splAtom ) ::= ETWeakQuantifierBlock(

@@ -165,6 +165,7 @@ case class AvatarSplit(
     subProof:   ResolutionProof,
     components: Seq[AvatarComponent]
 ) extends ResolutionProof {
+  for ( c <- components ) require( !c.introOnly )
   for ( ( c1, i1 ) <- components.zipWithIndex; ( c2, i2 ) <- components.zipWithIndex if i1 != i2 )
     require( freeVariables( c1.clause ) intersect freeVariables( c2.clause ) isEmpty )
 
@@ -191,20 +192,36 @@ trait AvatarComponent {
   def clause: HOLSequent
   def assertion: HOLClause
   def inducedDefinitions: Map[HOLAtomConst, LambdaExpression]
+  def introOnly = false
 }
-case class AvatarNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var] ) extends AvatarComponent {
-  require( atom.isInstanceOf[HOLAtomConst] )
-  private val AvatarNonGroundComp.DefinitionFormula( canonVars, canonicalClause ) = definition
+abstract class AvatarGeneralNonGroundComp extends AvatarComponent {
+  def atom: HOLAtom
+  def definition: HOLFormula
+  def vars: Seq[Var]
 
-  private val subst = Substitution( canonVars zip vars )
+  require( atom.isInstanceOf[HOLAtomConst] )
+  protected val AvatarNonGroundComp.DefinitionFormula( canonVars, canonicalClause ) = definition
+
+  protected val subst = Substitution( canonVars zip vars )
   require( vars.size == canonVars.size )
   require( subst isInjectiveRenaming )
 
   def disjunction = instantiate( definition, vars )
 
-  def assertion = Sequent() :+ atom
-  val clause = Substitution( canonVars zip vars )( canonicalClause )
   def inducedDefinitions = Map( atom.asInstanceOf[HOLAtomConst] -> definition )
+
+  val componentClause = subst( canonicalClause )
+}
+case class AvatarNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var] ) extends AvatarGeneralNonGroundComp {
+  def assertion = Sequent() :+ atom
+  def clause = componentClause
+}
+case class AvatarNegNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var], idx: SequentIndex ) extends AvatarGeneralNonGroundComp {
+  require( freeVariables( componentClause( idx ) ).isEmpty )
+  def assertion = atom +: Sequent()
+  val propAtom = componentClause( idx )
+  def clause = if ( idx.isSuc ) propAtom +: Sequent() else Sequent() :+ propAtom
+  override def introOnly = true
 }
 object AvatarNonGroundComp {
   def apply( atom: HOLAtom, definition: HOLFormula ): AvatarNonGroundComp = {

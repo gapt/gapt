@@ -9,12 +9,13 @@ package object resolution {
     def replace( component: AvatarComponent, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarComponent = component match {
       case AvatarGroundComp( atom, pol )           => AvatarGroundComp( TermReplacement( atom, repl ), pol )
       case AvatarNonGroundComp( atom, defn, vars ) => AvatarNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars )
+      case AvatarNegNonGroundComp( atom, defn, vars, idx ) =>
+        AvatarNegNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars, idx )
     }
     def replace( subst: Substitution, repl: PartialFunction[LambdaExpression, LambdaExpression] ): Substitution =
       Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } )
 
     def replace( proof: ResolutionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ResolutionProof = {
-
       val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
       def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
