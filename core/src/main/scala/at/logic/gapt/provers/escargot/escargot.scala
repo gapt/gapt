@@ -526,7 +526,9 @@ class EscargotLoop extends Logger {
               debug( s"sat splitting model: ${newModel.model.filter( _._2 ).keys.toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
               switchToNewModel( newModel )
             case None =>
-              return Some( Sat4j.getRobinsonProof( emptyClauses.map( cls => AvatarAbsurd( cls.proof ) ) ).get )
+              return Some( emptyClauses.find( _.assertion.isEmpty ).map( _.proof ).getOrElse {
+                Sat4j.getRobinsonProof( emptyClauses.map( cls => AvatarAbsurd( cls.proof ) ) ).get
+              } )
           }
       } else {
         for ( cls <- usable if cls.clause.isEmpty )
