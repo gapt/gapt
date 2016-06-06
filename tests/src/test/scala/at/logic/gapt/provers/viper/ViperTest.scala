@@ -13,6 +13,7 @@ class ViperTest extends Specification {
       "appnil",
       "comm", "comm1", "commsx",
       "general", "generaldiffconcl", "linear",
+      "square",
       "minus", "plus0",
       "prod_prop_31"
     ) ) { prob =>

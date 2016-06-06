@@ -1,3 +1,5 @@
+; viper instprover escargot
+
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (declare-fun P (nat nat) Bool)
