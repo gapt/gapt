@@ -2002,11 +2002,23 @@ Theory axioms may only contain atomic formulas.
   \UnaryInfCm{\exists x A, \Gamma \seq \Delta}
   \end{prooftree}
 
+  \begin{prooftree}
+  \AxiomCm{A[s/x], \Gamma \seq \Delta}
+  \RightLabelm{(\exists sk\mt{:l})}
+  \UnaryInfCm{\exists x A, \Gamma \seq \Delta}
+  \end{prooftree}
+
   \subsubsection*{Right rules}
 
   \begin{prooftree}
   \AxiomCm{\Gamma \seq \Delta, A[y/x]}
   \RightLabelm{(\forall\mt{:r})}
+  \UnaryInfCm{\Gamma \seq \Delta, \forall x A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \Delta, A[y/x]}
+  \RightLabelm{(\forall sk\mt{:r})}
   \UnaryInfCm{\Gamma \seq \Delta, \forall x A}
   \end{prooftree}
 

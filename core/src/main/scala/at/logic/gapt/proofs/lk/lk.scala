@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLPosition
-import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.ListSupport
 import ListSupport.pairs
@@ -1132,6 +1132,73 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
 }
 
 /**
+ * An LKProof ending with a universal quantifier on the right:
+ * <pre>
+ *           (π)
+ *      Γ :- Δ, A[x\s(...)]
+ *     ---------------∀:r
+ *      Γ :- Δ, ∀x.A
+ * </pre>
+ * This rule requires a Skolem function s(...)
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A[x\α].
+ * @param mainFormula The main formula A[x\s(...)]
+ * @param skolemTerm The Skolem term s(...)
+ * @param skolemDef The Skolem definition, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
+ */
+case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: HOLFormula, skolemTerm: LambdaExpression, skolemDef: LambdaExpression )
+    extends UnaryLKProof with CommonRule {
+
+  validateIndices( premise, Seq(), Seq( aux ) )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  val All( quantifiedVariable, subFormula ) = mainFormula
+
+  val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
+
+  {
+    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
+    if ( expectedMain != mainFormula )
+      throw LKRuleCreationException( s"Main formula should be $expectedMain, but is $mainFormula" )
+  }
+
+  {
+    val expectedAux = BetaReduction.betaNormalize( instantiate( mainFormula, skolemTerm ) )
+    if ( expectedAux != auxFormula )
+      throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$skolemTerm] = $expectedAux, but is $auxFormula." )
+  }
+
+  override def name = "∀sk:r"
+
+  def auxIndices = Seq( Seq( aux ) )
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
+
+  /**
+   * Convenience constructor for ∀sk:r that, given a Skolem term and Skolem definition, will try to construct an inference with that instantiation.
+   *
+   * @param subProof The subproof.
+   * @return
+   */
+  def apply( subProof: LKProof, skolemTerm: LambdaExpression, skolemDef: LambdaExpression ): ForallSkRightRule = {
+    val Apps( _, skolemArgs ) = skolemTerm
+    val mainFormula = skolemDef( skolemArgs: _* ).asInstanceOf[HOLFormula]
+    val auxFormula = instantiate( mainFormula, skolemTerm )
+
+    val premise = subProof.endSequent
+
+    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
+
+    ForallSkRightRule( subProof, Suc( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
+  }
+}
+
+/**
  * An LKProof ending with an existential quantifier on the left:
  * <pre>
  *           (π)
@@ -1204,6 +1271,73 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
     case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
 
     case _                   => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+  }
+}
+
+/**
+ * An LKProof ending with an existential quantifier on the left:
+ * <pre>
+ *           (π)
+ *      A[x\s(...)], Γ :- Δ
+ *     --------------- ∃sk:l
+ *       ∃x.A Γ :- Δ
+ * </pre>
+ * This rule requires a Skolem function s(...)
+ *
+ * @param subProof The proof π.
+ * @param aux The index of A[x\s(...)].
+ * @param mainFormula The main formula A[x\s(...)]
+ * @param skolemTerm The Skolem term s(...)
+ * @param skolemDef The Skolem definition, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
+ */
+case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: HOLFormula, skolemTerm: LambdaExpression, skolemDef: LambdaExpression )
+    extends UnaryLKProof with CommonRule {
+
+  validateIndices( premise, Seq( aux ), Seq() )
+
+  val ( auxFormula, context ) = premise focus aux
+
+  val Ex( quantifiedVariable, subFormula ) = mainFormula
+
+  val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
+
+  {
+    val expectedMain = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) )
+    if ( expectedMain != mainFormula )
+      throw LKRuleCreationException( s"Main formula should be $expectedMain, but is $mainFormula" )
+  }
+
+  {
+    val expectedAux = BetaReduction.betaNormalize( instantiate( mainFormula, skolemTerm ) )
+    if ( expectedAux != auxFormula )
+      throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$skolemTerm] = $expectedAux, but is $auxFormula." )
+  }
+
+  override def name = "∃sk:l"
+
+  def auxIndices = Seq( Seq( aux ) )
+
+  override def mainFormulaSequent = mainFormula +: Sequent()
+}
+
+object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
+
+  /**
+   * Convenience constructor for ∃sk:l that, given a Skolem term and Skolem definition, will try to construct an inference with that instantiation.
+   *
+   * @param subProof The subproof.
+   * @return
+   */
+  def apply( subProof: LKProof, skolemTerm: LambdaExpression, skolemDef: LambdaExpression ): ExistsSkLeftRule = {
+    val Apps( _, skolemArgs ) = skolemTerm
+    val mainFormula = skolemDef( skolemArgs: _* ).asInstanceOf[HOLFormula]
+    val auxFormula = instantiate( mainFormula, skolemTerm )
+
+    val premise = subProof.endSequent
+
+    val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
+
+    ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
   }
 }
 

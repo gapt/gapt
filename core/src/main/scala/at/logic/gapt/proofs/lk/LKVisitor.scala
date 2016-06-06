@@ -93,8 +93,14 @@ trait LKVisitor[T] {
     case p: ForallRightRule =>
       visitForallRight( p, otherArg )
 
+    case p: ForallSkRightRule =>
+      visitForallSkRight( p, otherArg )
+
     case p: ExistsLeftRule =>
       visitExistsLeft( p, otherArg )
+
+    case p: ExistsSkLeftRule =>
+      visitExistsSkLeft( p, otherArg )
 
     case p: ExistsRightRule =>
       visitExistsRight( p, otherArg )
@@ -252,9 +258,25 @@ trait LKVisitor[T] {
     ( proofNew, connector, otherArgNew )
   }
 
+  protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
+    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
+    val proofNew = ForallSkRightRule( subProofNew, subConnector.child( proof.aux ), proof.mainFormula, proof.skolemTerm, proof.skolemDef )
+    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
+
+    ( proofNew, connector, otherArgNew )
+  }
+
   protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
     val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
     val proofNew = ExistsLeftRule( subProofNew, subConnector.child( proof.aux ), proof.eigenVariable, proof.quantifiedVariable )
+    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
+
+    ( proofNew, connector, otherArgNew )
+  }
+
+  protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
+    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
+    val proofNew = ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ), proof.mainFormula, proof.skolemTerm, proof.skolemDef )
     val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
 
     ( proofNew, connector, otherArgNew )
