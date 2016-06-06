@@ -60,7 +60,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   def subsume( a: Cls, b: Cls ): Option[Substitution] =
     if ( a.assertion isSubsetOf b.assertion ) subsume( a.clause, b.clause )
     else None
-  def subsume( a: HOLClause, b: HOLClause ): Option[Substitution] =
+  def subsume( a: HOLSequent, b: HOLSequent ): Option[Substitution] =
     if ( propositional ) {
       if ( a isSubMultisetOf b ) Some( Substitution() )
       else None
@@ -323,8 +323,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object AvatarSplitting extends InferenceRule {
 
-    def getComponents( clause: HOLClause ): List[HOLClause] = {
-      def findComp( c: HOLClause ): HOLClause = {
+    def getComponents( clause: HOLSequent ): List[HOLSequent] = {
+      def findComp( c: HOLSequent ): HOLSequent = {
         val fvs = freeVariables( c )
         val c_ = clause.filter( freeVariables( _ ) intersect fvs nonEmpty )
         if ( c_ isSubsetOf c ) c else findComp( c ++ c_ distinct )
@@ -353,8 +353,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
       if ( comps.size >= 2 ) {
         val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
-          case Sequent( Seq( a ), Seq() ) => AvatarGroundComp( a, false )
-          case Sequent( Seq(), Seq( a ) ) => AvatarGroundComp( a, true )
+          case Sequent( Seq( a: HOLAtom ), Seq() ) => AvatarGroundComp( a, false )
+          case Sequent( Seq(), Seq( a: HOLAtom ) ) => AvatarGroundComp( a, true )
         }
         val nonPropComps =
           for ( c <- comps if freeVariables( c ).nonEmpty )

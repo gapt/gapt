@@ -12,8 +12,8 @@ import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 
 class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int ) {
-  def clause = proof.conclusion.asInstanceOf[HOLClause]
-  def assertion = proof.assertions.asInstanceOf[HOLClause]
+  def clause = proof.conclusion
+  def assertion = proof.assertions
 
   def clauseWithAssertions = ( clause, assertion )
 
@@ -26,7 +26,7 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
 
-  override def toString = s"[$index] $clause   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight) [$assertion]"
+  override def toString = s"[$index] ${proof.conclusionString}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight) [$assertion]"
   override def hashCode = index
 }
 

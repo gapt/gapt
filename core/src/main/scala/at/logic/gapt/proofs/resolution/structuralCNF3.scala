@@ -8,7 +8,11 @@ import scala.collection.mutable
 
 object structuralCNF3 {
 
-  def apply( endSequent: HOLSequent, propositional: Boolean = false, structural: Boolean = true ): Set[ResolutionProof] = {
+  def apply(
+    endSequent:    HOLSequent,
+    propositional: Boolean    = false, structural: Boolean = true,
+    nameGenerator: NameGenerator = null
+  ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
@@ -16,7 +20,9 @@ object structuralCNF3 {
     val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
     val skConsts = mutable.Map[LambdaExpression, Const]()
 
-    val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
+    val nameGen =
+      if ( nameGenerator != null ) nameGenerator
+      else rename.awayFrom( constants( endSequent ) )
     def mkSkolemSym() = nameGen.freshWithIndex( "s" )
     def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 

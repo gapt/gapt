@@ -22,12 +22,14 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
     builder.toMap
   }
 
-  override protected def stepString( subProofLabels: Map[Any, String] ) = {
+  def conclusionString = {
     val assertionString =
       if ( assertions.isEmpty ) ""
       else s"   <-- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
-    s"$conclusion$assertionString   (${super[DagProof].stepString( subProofLabels )})"
+    conclusion.toString + assertionString
   }
+  override protected def stepString( subProofLabels: Map[Any, String] ) =
+    s"$conclusionString   (${super[DagProof].stepString( subProofLabels )})"
 
   def isProof = {
     definitions
