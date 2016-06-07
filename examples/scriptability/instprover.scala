@@ -1,9 +1,9 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ structuralCNF, univclosure }
+import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.formats.babel.BabelParser.parseFormula
 import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
-import at.logic.gapt.proofs.resolution.expansionProofFromInstances
+import at.logic.gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }
 import at.logic.gapt.proofs.{ FOLClause, Sequent }
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.sat.Sat4j
@@ -16,10 +16,8 @@ object instprover extends Script {
     takeWhile( _ != null ).map( _.trim ).filter( _.nonEmpty ).
     map( parseFormula ).map( univclosure( _ ).asInstanceOf[FOLFormula] ) ++: Sequent()
 
-  val ( cnf, justifications, definitions ) = structuralCNF(
-    endSequent,
-    generateJustifications = true, propositional = false
-  )
+  val justifications = structuralCNF( endSequent )
+  val cnf = justifications map { _.conclusion.asInstanceOf[FOLClause] }
 
   val done = mutable.Set[FOLClause]()
   val todo = mutable.Queue[FOLClause]( cnf.toSeq: _* )
@@ -43,9 +41,7 @@ object instprover extends Script {
       inst <- done ++ todo
       subst <- syntacticMatching( clause.toDisjunction, inst.toDisjunction )
     } yield subst ).toSet
-  val expansionProof = expansionProofFromInstances(
-    instances.toMap, endSequent, justifications, definitions
-  )
+  val expansionProof = expansionProofFromInstances( instances.toMap, justifications )
   val Some( minimized ) = minimalExpansionSequent( expansionProof, Sat4j )
   val lkProof = ExpansionProofToLK( minimized )
 

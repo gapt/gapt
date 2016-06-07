@@ -26,14 +26,15 @@ object ResolutionToExpansionProof {
     def map2[B_]( f: B => B_ ): ( A, B_ ) = ( pair._1, f( pair._2 ) )
   }
 
-  def withDefs( proof: ResolutionProof ): ExpansionProofWithCut = {
+  def withDefs( proof: ResolutionProof, addConclusion: Boolean = true ): ExpansionProofWithCut = {
     val nameGen = rename.awayFrom( proof.subProofs.flatMap( _.conclusion.elements ).flatMap( variables( _ ) ) )
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
 
     val cuts = mutable.Buffer[ETImp]()
     var expansionSequent: ExpansionSequent =
-      proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) )
+      if ( !addConclusion ) Sequent()
+      else proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) )
     val splitDefn = mutable.Map[HOLAtom, HOLFormula]()
     val splitCutL = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
     val splitCutR = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )

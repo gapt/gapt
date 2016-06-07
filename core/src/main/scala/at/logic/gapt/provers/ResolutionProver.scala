@@ -1,7 +1,7 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, mapInputClauses, structuralCNF3 }
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, mapInputClauses, structuralCNF }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.{ LKProof, WeakeningContractionMacroRule }
@@ -62,7 +62,7 @@ trait ResolutionProver extends OneShotProver {
 
   def getRobinsonProof( formula: HOLFormula ): Option[ResolutionProof] = getRobinsonProof( Sequent() :+ formula )
   def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] = {
-    val cnf = structuralCNF3( groundFreeVariables( seq )._1, propositional = false )
+    val cnf = structuralCNF( groundFreeVariables( seq )._1, propositional = false )
     getRobinsonProof( cnf )
   }
 

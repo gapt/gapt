@@ -6,7 +6,7 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
-object structuralCNF3 {
+object structuralCNF {
   def apply(
     endSequent:    HOLSequent,
     propositional: Boolean    = false, structural: Boolean = true

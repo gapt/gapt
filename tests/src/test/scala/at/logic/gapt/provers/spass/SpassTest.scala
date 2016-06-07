@@ -2,7 +2,6 @@ package at.logic.gapt.provers.spass
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.expr.hol.structuralCNF
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification

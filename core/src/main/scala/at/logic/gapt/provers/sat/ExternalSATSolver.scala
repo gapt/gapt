@@ -2,14 +2,8 @@ package at.logic.gapt.provers.sat
 
 import java.io.IOException
 
-import at.logic.gapt.expr.hol.structuralCNF
-import at.logic.gapt.expr.{ HOLFormula, Top }
+import at.logic.gapt.expr.Top
 import at.logic.gapt.formats.dimacs._
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
-import at.logic.gapt.proofs.drup.{ DrupDerive, DrupForget, DrupProof, DrupToResolutionProof }
-import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.resolution.ResolutionProof
-import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 
 import scala.io.Source

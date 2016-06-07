@@ -1,10 +1,10 @@
 package at.logic.gapt.provers.sat
 
-import at.logic.gapt.expr.hol.structuralCNF
+import at.logic.gapt.expr.hol.fastStructuralCNF
 import at.logic.gapt.expr.{ HOLAtomConst, HOLFormula }
 import at.logic.gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
-import at.logic.gapt.proofs.drup.{ DrupDerive, DrupForget, DrupProof, DrupToResolutionProof }
+import at.logic.gapt.proofs.drup.{ DrupProof, DrupToResolutionProof }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
@@ -22,7 +22,7 @@ trait SATSolver extends OneShotProver {
   }
 
   def solve( formula: HOLFormula ): Option[Interpretation] = {
-    val ( cnf, _, definitions ) = structuralCNF( formula, generateJustifications = false, propositional = true )
+    val ( cnf, definitions ) = fastStructuralCNF( formula, propositional = true )
     solve( cnf ) map {
       case i: MapBasedInterpretation =>
         // remove abbreviations for subformulas
@@ -49,7 +49,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
 
   def getDrupProof( formula: HOLFormula ): Option[DrupProof] = getDrupProof( Sequent() :+ formula )
   def getDrupProof( sequent: HOLSequent ): Option[DrupProof] =
-    getDrupProof( structuralCNF( sequent, generateJustifications = false, propositional = true )._1 )
+    getDrupProof( fastStructuralCNF( sequent, propositional = true )._1 )
   def getDrupProof( cnf: Traversable[HOLClause] ): Option[DrupProof] = {
     val encoding = new DIMACSEncoding
     val dimacsCNF = encoding.encodeCNF( cnf )

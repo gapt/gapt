@@ -78,7 +78,7 @@ object fixDerivation extends Logger {
     }
 
   def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = {
-    val cnf = structuralCNF3( endSequent, structural = false )
+    val cnf = structuralCNF( endSequent, structural = false )
     mapInputClauses( fixDerivation( p, cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ) ) )( cls => cnf.find( _.conclusion == cls ).get )
   }
 }

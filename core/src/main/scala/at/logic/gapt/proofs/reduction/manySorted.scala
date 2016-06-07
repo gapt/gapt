@@ -537,7 +537,7 @@ case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
  */
 case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], ExpansionProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => ExpansionProof ) = {
-    val cnf = structuralCNF3( problem, propositional = false )
+    val cnf = structuralCNF( problem, propositional = false )
     ( cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
       res => ResolutionToExpansionProof( mapInputClauses( res )( seq => cnf.find( _.conclusion == seq ).get ) ) )
   }
@@ -548,7 +548,7 @@ case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], Exp
  */
 case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => LKProof ) = {
-    val cnf = structuralCNF3( problem, propositional = false )
+    val cnf = structuralCNF( problem, propositional = false )
     ( cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
       res => ResolutionToLKProof( mapInputClauses( res )( seq => cnf.find( _.conclusion == seq ).get ) ) )
   }
