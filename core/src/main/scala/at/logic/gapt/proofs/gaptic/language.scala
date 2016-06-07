@@ -13,6 +13,10 @@ object Lemma {
   def apply[T]( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.applyImpl
 }
 
+object IncompleteLemma {
+  def apply[T]( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.incompleteImpl
+}
+
 object LemmaMacros {
 
   def use[T]( proofState: ProofState, tactical: Tactical[T] )( implicit sig: BabelSignature ): ProofState =
@@ -34,7 +38,7 @@ object LemmaMacros {
         )
     }
 
-  def qed( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =
+  def finishProof( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =
     if ( proofState.subGoals.isEmpty ) {
       cleanStructuralRules( proofState.result )
     } else {
@@ -44,10 +48,13 @@ object LemmaMacros {
       )
     }
 
+  def finishIncompleteProof( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =
+    cleanStructuralRules( proofState.partialProof )
+
   import reflect.macros._
-  def applyImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+  def constructProofState( c: blackbox.Context )( labelledSequent: c.Tree, tacticsProof: c.Tree ): c.Tree = {
     import c.universe._
-    val proofState = TermName( c.freshName() )
+    val proofState = TermName( c.freshName( "proofState" ) )
 
     val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
     val proofStateCompanion = symbolOf[ProofState.type].asClass.module
@@ -64,8 +71,24 @@ object LemmaMacros {
 
       ..$tacticsStmts
 
-      $lemmaMacros.qed($proofState)
+      $proofState
     """
+  }
+
+  def applyImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+    import c.universe._
+    val construction = constructProofState( c )( labelledSequent, tacticsProof )
+    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
+
+    q"$lemmaMacros.finishProof($construction)"
+  }
+
+  def incompleteImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+    import c.universe._
+    val construction = constructProofState( c )( labelledSequent, tacticsProof )
+    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
+
+    q"$lemmaMacros.finishIncompleteProof($construction)"
   }
 }
 
