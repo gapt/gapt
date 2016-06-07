@@ -55,7 +55,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       case e: MouseEntered => ds.contents.foreach( x => x.foreground = blue )
       case e: MouseExited  => ds.contents.foreach( x => x.foreground = black )
       //        This functionality can be written later if needed
-      //        case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 => PopupMenu(proof, this, e.point.x, e.point.y)
+      case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
+        PopupMenu( DrawSequentProof.this, e.point.x, e.point.y )
     }
     ds
   }
@@ -68,10 +69,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
       main.scrollPane.peer.dispatchEvent( e.peer )
-    case e: ShowProof[_] if e.proof == proof =>
+    case ShowSequentProof( dsp ) if dsp eq this =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
-    case e: HideProof[_] if e.proof == proof =>
+    case HideSequentProof( dsp ) if dsp eq this =>
       drawLines = false
       layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.

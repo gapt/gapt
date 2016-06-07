@@ -45,12 +45,13 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
+val specs2Version = "3.8.3"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
-    "org.specs2" %% "specs2-core" % "3.7.3",
-    "org.specs2" %% "specs2-junit" % "3.7.3", // needed for junitxml output
-    "org.specs2" %% "specs2-matcher" % "3.7.3"
+    "org.specs2" %% "specs2-core" % specs2Version,
+    "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output
+    "org.specs2" %% "specs2-matcher" % specs2Version
   ) map ( _ % Test )
 )
 
@@ -82,6 +83,7 @@ lazy val root = project.in( file( "." ) ).
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
     inConfig( BuildSbtConfig )( configScalariformSettings ++ commonSettings ),
@@ -190,11 +192,11 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.2",
+      "org.parboiled" %% "parboiled" % "2.1.3",
       "com.lihaoyi" %% "fastparse" % "0.3.7",
       "com.googlecode.kiama" %% "kiama" % "1.8.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.1",
-      "org.scalaz" %% "scalaz-core" % "7.2.2",
+      "org.scalaz" %% "scalaz-core" % "7.2.3",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.21",
@@ -232,6 +234,7 @@ lazy val tests = project.in( file( "tests" ) ).
   disablePlugins( JUnitXmlReportPlugin ).
   settings(
     testForkedParallel := true,
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -241,6 +244,7 @@ lazy val userManual = project.in( file( "doc" ) ).
   settings(
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value,
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -251,10 +255,10 @@ lazy val cli = project.in( file( "cli" ) ).
     mainClass := Some( "at.logic.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.14.1"
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ),
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -267,6 +271,7 @@ lazy val testing = project.in( file( "testing" ) ).
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0"

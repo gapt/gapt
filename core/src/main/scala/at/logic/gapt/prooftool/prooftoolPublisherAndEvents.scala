@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.DagProof
+import at.logic.gapt.proofs.{ DagProof, SequentProof }
 
 import scala.swing.event.Event
 import scala.swing.{ Color, Publisher }
@@ -18,4 +18,6 @@ case class HideEndSequent[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class ShowAllRules[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class HideProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class ShowProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
+case class HideSequentProof[F, T <: SequentProof[F, T]]( drawSequentProof: DrawSequentProof[F, T] ) extends Event
+case class ShowSequentProof[F, T <: SequentProof[F, T]]( drawSequentProof: DrawSequentProof[F, T] ) extends Event
 

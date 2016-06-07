@@ -33,23 +33,22 @@ object PopupMenu {
     popupMenu.show( component, x, y )
   }
 
-  def apply[F, T <: SequentProof[F, T]]( main: SequentProofViewer[F, T], tproof: SequentProof[F, T], component: Component, x: Int, y: Int ) {
-    lazy val proof = tproof.asInstanceOf[LKProof]
+  def apply[F, T <: SequentProof[F, T]]( dsp: DrawSequentProof[F, T], x: Int, y: Int ) {
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "View Subproof as Sunburst Tree" ) {
-        main.initSunburstDialog( "subproof " + proof.name, tproof )
+        dsp.main.initSunburstDialog( "subproof " + dsp.main.name, dsp.proof )
       } )
       contents += new Separator
       //      contents += new MenuItem( Action( "Apply Gentzen's Method (new)" ) { Main.newgentzen( proof ) } )
       //      contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( proof ) } )
       contents += new Separator
-      contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
-      contents += new Separator
-      contents += new MenuItem( Action( "Show Proof Above" ) { main.publisher.publish( ShowProof( tproof ) ) } )
-      contents += new MenuItem( Action( "Hide Proof Above" ) { main.publisher.publish( HideProof( tproof ) ) } )
+      //      contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
+      //      contents += new Separator
+      contents += new MenuItem( Action( "Show Proof Above" ) { dsp.main.publisher.publish( ShowSequentProof( dsp ) ) } )
+      contents += new MenuItem( Action( "Hide Proof Above" ) { dsp.main.publisher.publish( HideSequentProof( dsp ) ) } )
       contents += new Separator
     }
-    popupMenu.show( component, x, y )
+    popupMenu.show( dsp, x, y )
   }
 
   // PopupMenu for Expansion Trees.
