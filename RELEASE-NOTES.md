@@ -11,6 +11,7 @@
   * XML parser
 * Skolem inferences for LK
 * Sequent is now a case class
+* Subproofs can be hidden in prooftool now
 
 ## Version 2.1 (released on 2016-04-18)
 
