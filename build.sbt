@@ -45,12 +45,13 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
+val specs2Version = "3.8.3"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
-    "org.specs2" %% "specs2-core" % "3.7.3",
-    "org.specs2" %% "specs2-junit" % "3.7.3", // needed for junitxml output
-    "org.specs2" %% "specs2-matcher" % "3.7.3"
+    "org.specs2" %% "specs2-core" % specs2Version,
+    "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output
+    "org.specs2" %% "specs2-matcher" % specs2Version
   ) map ( _ % Test )
 )
 
@@ -190,11 +191,11 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.2",
+      "org.parboiled" %% "parboiled" % "2.1.3",
       "com.lihaoyi" %% "fastparse" % "0.3.7",
       "com.googlecode.kiama" %% "kiama" % "1.8.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.1",
-      "org.scalaz" %% "scalaz-core" % "7.2.2",
+      "org.scalaz" %% "scalaz-core" % "7.2.3",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.21",
@@ -251,8 +252,7 @@ lazy val cli = project.in( file( "cli" ) ).
     mainClass := Some( "at.logic.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.14.1"
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ),
 
     packagedArtifacts := Map()
