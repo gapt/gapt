@@ -83,6 +83,7 @@ lazy val root = project.in( file( "." ) ).
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
     inConfig( BuildSbtConfig )( configScalariformSettings ++ commonSettings ),
@@ -233,6 +234,7 @@ lazy val tests = project.in( file( "tests" ) ).
   disablePlugins( JUnitXmlReportPlugin ).
   settings(
     testForkedParallel := true,
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -242,6 +244,7 @@ lazy val userManual = project.in( file( "doc" ) ).
   settings(
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value,
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -255,6 +258,7 @@ lazy val cli = project.in( file( "cli" ) ).
       "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ),
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -267,6 +271,7 @@ lazy val testing = project.in( file( "testing" ) ).
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
     libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0"
