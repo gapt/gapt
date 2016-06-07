@@ -9,8 +9,10 @@
   * Old LLK parser
   * Old Delta-Table implemenetation
   * XML parser
+* Skolem inferences for LK
+* Sequent is now a case class
 
-## Version 2.1 (release on 2016-04-18)
+## Version 2.1 (released on 2016-04-18)
 
 * Escargot, a simple built-in superposition prover
 * New expansion tree implementation, now with cuts!
