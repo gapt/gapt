@@ -43,7 +43,7 @@ object ResolutionToExpansionProof {
       for ( ( s, e ) <- newEs ) {
         for ( et <- e.antecedent ) require( et.polarity )
         for ( et <- e.succedent ) require( !et.polarity )
-        require( e.shallow == s( q.conclusion ) )
+        require( e.shallow == s( q.conclusion ).map( BetaReduction.betaNormalize ) )
       }
       expansions( q ) = expansions( q ) union newEs
     }
