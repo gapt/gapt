@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
+import at.logic.gapt.provers.escargot.LPO
 
 import scala.collection.mutable
 
@@ -79,6 +80,25 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   def Subst( proof: ResolutionProof, subst: Substitution ) =
     if ( subst( proof.conclusion ) == proof.conclusion ) proof
     else at.logic.gapt.proofs.resolution.Subst( proof, subst )
+
+  object Clausification extends Clausifier( propositional, structural = true, nameGen = state.nameGen ) with InferenceRule {
+    def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[Cls] ) =
+      if ( given.clause.forall( _.isInstanceOf[HOLAtom] ) ) ( Set(), Set() )
+      else {
+        expand( given.proof )
+
+        val consts = constants( cnf.map( _.conclusion.elements ).flatMap( constants( _ ) ).filter( _.name != "=" ) )
+        state.termOrdering match {
+          case LPO( precedence, typeOrder ) =>
+            val pc = precedence.takeWhile( arity( _ ) == 0 )
+            state.termOrdering = LPO( pc ++ consts.diff( precedence.toSet ) ++ precedence.drop( pc.size ), typeOrder )
+        }
+
+        val inferred = cnf.map( SimpCls( given, _ ) ).toSet
+        cnf.clear()
+        ( inferred, Set( given ) )
+      }
+  }
 
   object TautologyDeletion extends RedundancyRule {
     def isRedundant( given: Cls, existing: Set[Cls] ): Boolean =

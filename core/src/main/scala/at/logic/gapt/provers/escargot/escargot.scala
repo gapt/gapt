@@ -14,7 +14,7 @@ import at.logic.gapt.utils.logging.Logger
 import scala.collection.mutable
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
-  def lpoHeuristic( cnf: Traversable[HOLClause] ): LPO = {
+  def lpoHeuristic( cnf: Traversable[HOLSequent] ): LPO = {
     val consts = constants( cnf flatMap { _.elements } )
 
     val boolOnTermLevel = consts exists { case Const( _, FunctionType( _, from ) ) => from contains To }

@@ -2,7 +2,7 @@ package at.logic.gapt.provers.escargot.impl
 
 import at.logic.gapt.expr._
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
-import at.logic.gapt.proofs.{ HOLClause, Sequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.{ LPO, TermOrdering }
 import at.logic.gapt.provers.sat.Sat4j
@@ -37,7 +37,8 @@ class EscargotState extends Logger {
   var inferences = Seq[InferenceRule]()
 
   private var clsIdx = 0
-  def InputCls( clause: HOLClause ): Cls = { clsIdx += 1; new Cls( this, Input( clause ), clsIdx ) }
+  def InputCls( clause: HOLSequent ): Cls = InputCls( Input( clause ) )
+  def InputCls( proof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( this, proof, clsIdx ) }
   def SimpCls( parent: Cls, newProof: ResolutionProof ): Cls = new Cls( this, newProof, parent.index )
   def DerivedCls( parent: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( this, newProof, clsIdx ) }
   def DerivedCls( parent1: Cls, parent2: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( this, newProof, clsIdx ) }
