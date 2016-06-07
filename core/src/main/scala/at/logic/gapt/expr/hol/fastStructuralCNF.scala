@@ -87,9 +87,9 @@ object fastStructuralCNF {
         case Ex( x, a ) if !propositional =>
           val ( skolemTerm, skolemizedFormula ) = getSkolemInfo( f, x )
           right( Substitution( x -> skolemTerm )( a ) )
-        case Or( a, b )                              =>
+        case Or( a, b ) =>
           right( a ); right( b )
-        case Imp( a, b )                             =>
+        case Imp( a, b ) =>
           left( a ); right( b )
         case Neg( a )                                => left( a )
         case Bottom()                                =>
