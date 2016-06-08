@@ -11,7 +11,7 @@ import scalaz.\/-
 object ResolutionToLKProof {
 
   def apply( proof: ResolutionProof ): LKProof =
-    apply( proof, in => in.sequent match {
+    DefinitionElimination( proof.definitions )( apply( proof, in => in.sequent match {
       case Sequent( Seq(), Seq( f ) ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case Sequent( Seq( f ), Seq() ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case seq =>
@@ -20,7 +20,7 @@ object ResolutionToLKProof {
           case \/-( proj ) =>
             ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
         }
-    } )
+    } ) )
 
   def asDerivation( proof: ResolutionProof ): LKProof =
     apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[HOLAtom] ) ) )
@@ -62,7 +62,6 @@ object ResolutionToLKProof {
       case AvatarComponentElim( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarComponentElim( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         var p_ = f( q )
-        val pOrig = p_
         for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
         def mkOr( lits: HOLFormula ): Unit =
           lits match {
