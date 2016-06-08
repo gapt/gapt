@@ -10,8 +10,8 @@ import scalaz.\/-
 
 object ResolutionToLKProof {
 
-  def apply( proof: ResolutionProof ): LKProof =
-    DefinitionElimination( proof.definitions )( apply( proof, in => in.sequent match {
+  def apply( proof: ResolutionProof ): LKProof = {
+    val lk = apply( proof, in => in.sequent match {
       case Sequent( Seq(), Seq( f ) ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case Sequent( Seq( f ), Seq() ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case seq =>
@@ -20,7 +20,10 @@ object ResolutionToLKProof {
           case \/-( proj ) =>
             ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
         }
-    } ) )
+    } )
+    if ( proof.definitions.isEmpty ) lk
+    else DefinitionElimination( proof.definitions )( lk )
+  }
 
   def asDerivation( proof: ResolutionProof ): LKProof =
     apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[HOLAtom] ) ) )
