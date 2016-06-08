@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.sketch
 
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.expr.{ FOLAtom, HOLAtom, HOLFormula, constants, freeVariables, rename }
-import at.logic.gapt.proofs.{ FOLClause, OccConnector, RichFOLSequent, Sequent, SequentProof }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, OccConnector, RichFOLSequent, Sequent, SequentProof }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.resolution.{ findDerivationViaResolution, mapInputClauses }
 import at.logic.gapt.provers.ResolutionProver
@@ -83,6 +83,15 @@ case class SketchSplit2( split: SketchSplit, i: Int ) extends RefutationSketch {
   def conclusion = split.addAxioms2( i )
 }
 
+case class SketchComponentIntro( component: AvatarComponent ) extends RefutationSketch {
+  def immediateSubProofs = Seq()
+  def conclusion = component.clause.map( _.asInstanceOf[FOLAtom] )
+}
+case class SketchComponentElim( subProof: RefutationSketch, component: AvatarComponent ) extends RefutationSketch {
+  def immediateSubProofs = Seq( subProof )
+  val conclusion = subProof.conclusion diff component.clause
+}
+
 case class SketchSplitCombine( splitCases: Seq[RefutationSketch] ) extends RefutationSketch {
   for ( p <- splitCases ) require( p.conclusion.isEmpty, p )
 
@@ -150,6 +159,11 @@ object RefutationSketchToRobinson {
             map { _.success }.
             getOrElse { UnprovableSketchInference( s ).failureNel }
         } yield refutation
+      case SketchComponentElim( from, comp ) =>
+        for ( solvedFrom <- solve( from ) )
+          yield AvatarComponentElim( solvedFrom, comp )
+      case SketchComponentIntro( comp ) =>
+        AvatarComponentIntro( comp ).success
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

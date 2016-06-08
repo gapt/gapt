@@ -53,6 +53,7 @@ class TPTPParser extends RegexParsers with PackratParsers {
 
   lazy val atom: PackratParser[FOLFormula] = falseTrue | equal | not_eq | eq | real_atom | quantified | "(" ~> formula <~ ")"
   lazy val falseTrue = "$" ~> ( "false" ^^ { _ => Bottom() } | "true" ^^ { _ => Top() } )
+  lazy val spl_atom = "$" ~> name ^^ { n => FOLAtom( "$" + n ) }
   lazy val real_atom: PackratParser[FOLFormula] = name ~ opt( "(" ~> repsep( term, "," ) <~ ")" ) ^^ {
     case pred ~ Some( args ) => FOLAtom( pred, args )
     case pred ~ None         => FOLAtom( pred )
@@ -70,7 +71,7 @@ class TPTPParser extends RegexParsers with PackratParsers {
   def constant: Parser[FOLConst] = name ^^ { case n => FOLConst( n ) }
   def variable: Parser[FOLVar] = """[_A-Z0-9][_A-Z0-9$a-z]*""".r ^^ { case n => FOLVar( n ) }
 
-  def name: Parser[String] = lower_word_or_integer | single_quoted
+  def name: Parser[String] = lower_word_or_integer | single_quoted | "[$]spl[0-9]+".r
   def lower_word_or_integer: Parser[String] = """[a-z0-9_-][A-Za-z0-9_-]*""".r
   def single_quoted: Parser[String] = "'" ~> """[^']*""".r <~ "'"
   def integer: Parser[Int] = """\d+""".r ^^ { _.toInt }

@@ -7,6 +7,21 @@ import at.logic.gapt.proofs._
 object AvatarSplit {
   def apply( subProof: ResolutionProof, components: Seq[AvatarComponent] ): ResolutionProof =
     components.foldLeft( subProof )( AvatarComponentElim( _, _ ) )
+
+  def getComponents( clause: HOLSequent ): List[HOLSequent] = {
+    def findComp( c: HOLSequent ): HOLSequent = {
+      val fvs = freeVariables( c )
+      val c_ = clause.filter( freeVariables( _ ) intersect fvs nonEmpty )
+      if ( c_ isSubsetOf c ) c else findComp( c ++ c_ distinct )
+    }
+
+    if ( clause.isEmpty ) {
+      Nil
+    } else {
+      val c = findComp( clause.map( _ +: Clause(), Clause() :+ _ ).elements.head )
+      c :: getComponents( clause diff c )
+    }
+  }
 }
 case class AvatarComponentElim( subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarComponent ) extends LocalResolutionRule {
   require( !component.introOnly )
@@ -58,6 +73,7 @@ abstract class AvatarGeneralNonGroundComp extends AvatarComponent {
 
   require( atom.isInstanceOf[HOLAtomConst] )
   protected val AvatarNonGroundComp.DefinitionFormula( canonVars, canonicalClause ) = definition
+  require( definition == AvatarNonGroundComp.DefinitionFormula( canonVars, canonicalClause ) )
 
   protected val subst = Substitution( canonVars zip vars )
   require( vars.size == canonVars.size )
@@ -100,6 +116,10 @@ object AvatarNonGroundComp {
           case Neg( a ) => a +: Sequent()
           case a        => Sequent() :+ a
         }.fold( Sequent() )( _ ++ _ ) ) )
+    }
+
+    def canonize( definition: HOLFormula ): HOLFormula = definition match {
+      case DefinitionFormula( vars, disj ) => DefinitionFormula( vars, disj )
     }
   }
 }

@@ -62,6 +62,7 @@ object ResolutionToLKProof {
       case AvatarComponentElim( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarComponentElim( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         var p_ = f( q )
+        val pOrig = p_
         for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
         def mkOr( lits: HOLFormula ): Unit =
           lits match {

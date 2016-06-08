@@ -18,8 +18,7 @@ class Vampire extends ResolutionProver with ExternalProgram {
         val labelledCNF = cnf.toSeq.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq(
-          "vampire", "-p", "tptp",
-          "--splitting", "off"
+          "vampire", "-p", "tptp"
         ), tptpIn ).split( "\n" )
         if ( output.head startsWith "Refutation" ) {
           val sketch = TptpProofParser.parse( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) )._2

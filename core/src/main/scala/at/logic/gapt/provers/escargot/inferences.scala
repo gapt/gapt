@@ -343,21 +343,6 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object AvatarSplitting extends InferenceRule {
 
-    def getComponents( clause: HOLSequent ): List[HOLSequent] = {
-      def findComp( c: HOLSequent ): HOLSequent = {
-        val fvs = freeVariables( c )
-        val c_ = clause.filter( freeVariables( _ ) intersect fvs nonEmpty )
-        if ( c_ isSubsetOf c ) c else findComp( c ++ c_ distinct )
-      }
-
-      if ( clause.isEmpty ) {
-        Nil
-      } else {
-        val c = findComp( clause.map( _ +: Clause(), Clause() :+ _ ).elements.head )
-        c :: getComponents( clause diff c )
-      }
-    }
-
     var componentCache = mutable.Map[HOLFormula, FOLAtom]()
     def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
       val definition @ All.Block( vs, _ ) = univclosure( comp.toDisjunction )
@@ -369,7 +354,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
     val componentAlreadyDefined = mutable.Set[HOLAtom]()
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[Cls] ) = {
-      val comps = getComponents( given.clause )
+      val comps = AvatarSplit.getComponents( given.clause )
 
       if ( comps.size >= 2 ) {
         val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
