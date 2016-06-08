@@ -10,7 +10,7 @@ import at.logic.gapt.provers.escargot.Escargot
 object ExpansionToResolutionProof {
 
   def apply( expansionProof: ExpansionProof, prover: ResolutionProver = Escargot ): Option[ResolutionProof] =
-    prover.getRobinsonProof( asCNF( expansionProof ) )
+    prover.getResolutionProof( asCNF( expansionProof ) )
 
   /** Just the CNF of the deep formula of the expansion proof. */
   def asCNF( expansionProof: ExpansionProof ): Set[ResolutionProof] =

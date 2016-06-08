@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.{ undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.proofs.{ Suc, Ant }
 import at.logic.gapt.proofs.ral._
 
-object RobinsonToRal extends RobinsonToRal {
+object ResolutionToRal extends ResolutionToRal {
   /* One of our heuristics maps higher-order types into first-order ones. When the proof is converted to Ral,
    * convert_formula and convert_substitution map the types back, if possible. The reason it is part of the
    * Ral transformation is that before the layer cleanup we also needed to convert all formulas to the same layer type
@@ -18,7 +18,7 @@ object RobinsonToRal extends RobinsonToRal {
 
 }
 
-abstract class RobinsonToRal {
+abstract class ResolutionToRal {
   /* convert formula will be called on any formula before translation */
   def convert_formula( e: HOLFormula ): HOLFormula
 
@@ -48,7 +48,7 @@ abstract class RobinsonToRal {
 }
 
 /**
- * A converter from Robinson resolution proofs to Ral proofs, which reintroduces the lambda abstractions
+ * A converter from resolution proofs to Ral proofs, which reintroduces the lambda abstractions
  * which we removed for the fol export.
  *
  * @param sig_vars The signature of the variables in the original proof
@@ -56,11 +56,11 @@ abstract class RobinsonToRal {
  * @param cmap The mapping of abstracted symbols to lambda terms. The abstracted symbols must be unique (i.e. cmap
  *             must be a bijection)
  */
-class Robinson2RalWithAbstractions(
+class Resolution2RalWithAbstractions(
     sig_vars:   Map[String, List[Var]],
     sig_consts: Map[String, List[Const]],
     cmap:       replaceAbstractions.ConstantsMap
-) extends RobinsonToRal {
+) extends ResolutionToRal {
   //we know that the cmap is a bijection and define absmap as the inverse of cmap
   val absmap = Map[String, LambdaExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
 
@@ -90,7 +90,7 @@ class Robinson2RalWithAbstractions(
  * A converter from Robinson resolution proofs to Ral proofs, which reintroduces the lambda abstractions
  * which we removed for the fol export.
  */
-object Robinson2RalWithAbstractions {
+object Resolution2RalWithAbstractions {
 
   /**
    * @param signature The signature of the original proof
@@ -99,7 +99,7 @@ object Robinson2RalWithAbstractions {
    */
   def apply( signature: Signature, cmap: replaceAbstractions.ConstantsMap ) = {
     val ( sigc, sigv ) = signature
-    new Robinson2RalWithAbstractions(
+    new Resolution2RalWithAbstractions(
       sigv.map( x => ( x._1, x._2.toList ) ),
       sigc.map( x => ( x._1, x._2.toList ) ), cmap
     )
@@ -115,6 +115,6 @@ object Robinson2RalWithAbstractions {
     sig_vars:   Map[String, List[Var]],
     sig_consts: Map[String, List[Const]],
     cmap:       replaceAbstractions.ConstantsMap
-  ) = new Robinson2RalWithAbstractions( sig_vars, sig_consts, cmap )
+  ) = new Resolution2RalWithAbstractions( sig_vars, sig_consts, cmap )
 
 }

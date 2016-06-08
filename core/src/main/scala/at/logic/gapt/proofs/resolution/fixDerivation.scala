@@ -130,7 +130,7 @@ object findDerivationViaResolution {
       map( Clause() :+ _, _ +: Clause() ).
       elements
 
-    prover.getRobinsonProof( bs ++ negatedClausesA ) map { refutation =>
+    prover.getResolutionProof( bs ++ negatedClausesA ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
 
       val toUnusedVars = rename( grounding.map( _._1 ), containedVariables( tautologified ) )

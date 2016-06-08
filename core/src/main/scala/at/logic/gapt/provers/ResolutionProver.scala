@@ -43,7 +43,7 @@ trait ResolutionProver extends OneShotProver {
 
   def getLKProof( seq: HOLSequent, addWeakenings: Boolean ): Option[LKProof] =
     withGroundVariables( seq ) { seq =>
-      getRobinsonProof( seq ) map { resolution =>
+      getResolutionProof( seq ) map { resolution =>
         val lk = ResolutionToLKProof( resolution )
         if ( addWeakenings ) WeakeningContractionMacroRule( lk, seq )
         else lk
@@ -51,26 +51,35 @@ trait ResolutionProver extends OneShotProver {
     }
 
   override def isValid( seq: HOLSequent ): Boolean =
-    getRobinsonProof( seq ).isDefined
+    getResolutionProof( seq ).isDefined
 
-  def getRobinsonProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
+  @deprecated( "Use getResolutionProof instead.", "2.2" )
+  def getRobinsonProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = getResolutionProof( cnf )
+  @deprecated( "Use getResolutionProof instead.", "2.2" )
+  def getRobinsonProof( formula: HOLFormula ): Option[ResolutionProof] = getResolutionProof( formula )
+  @deprecated( "Use getResolutionProof instead.", "2.2" )
+  def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] = getResolutionProof( seq )
+  @deprecated( "Use getResolutionProof instead.", "2.2" )
+  def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] = getResolutionProof( seq )
+
+  def getResolutionProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
-    getRobinsonProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
+    getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
       mapInputClauses( resolution, factorEarly = true )( cnfMap )
     }
   }
 
-  def getRobinsonProof( formula: HOLFormula ): Option[ResolutionProof] = getRobinsonProof( Sequent() :+ formula )
-  def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] = {
+  def getResolutionProof( formula: HOLFormula ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
+  def getResolutionProof( seq: HOLSequent ): Option[ResolutionProof] = {
     val cnf = structuralCNF( groundFreeVariables( seq )._1, propositional = false )
-    getRobinsonProof( cnf )
+    getResolutionProof( cnf )
   }
 
-  def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
+  def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
     withGroundVariables2( seq ) { seq =>
-      getRobinsonProof( seq ) map { ResolutionToExpansionProof( _ ) }
+      getResolutionProof( seq ) map { ResolutionToExpansionProof( _ ) }
     }
 
 }

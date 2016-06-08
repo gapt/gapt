@@ -46,7 +46,7 @@ class TapeTest extends Specification with SequentMatchers {
         //cs.asInstanceOf[Set[HOLSequent]].contains( pes ) must beTrue
       } )
 
-      Escargot getRobinsonProof cs must beSome
+      Escargot getResolutionProof cs must beSome
     }
 
     "apply the full CERES method" in {

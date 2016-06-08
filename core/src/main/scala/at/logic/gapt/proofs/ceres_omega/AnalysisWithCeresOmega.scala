@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
 import at.logic.gapt.proofs.lksk.{ LKskProof, LKskToExpansionProof }
 import at.logic.gapt.proofs.{ HOLClause, Sequent }
 import at.logic.gapt.proofs.ceres_omega._
-import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, Robinson2RalWithAbstractions }
+import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, Resolution2RalWithAbstractions }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.{ TimeOutException, withTimeout }
@@ -156,7 +156,7 @@ abstract class AnalysisWithCeresOmega {
   lazy val fol_refutation = {
     val some_rp = try {
       val css = fol_css //evaluate lazy val, otherwise the thread stays blocked
-      withTimeout( timeout() ) { Prover9.getRobinsonProof( css ) }
+      withTimeout( timeout() ) { Prover9.getResolutionProof( css ) }
     } catch {
       case e: TimeOutException =>
         println( s"Could not refute the clause set within ${timeout()}." )
@@ -194,7 +194,7 @@ abstract class AnalysisWithCeresOmega {
   lazy val ral_refutation = {
     val signature = undoHol2Fol.getSignature( lksk_proof, LKskProof.getFormula )
 
-    val converter = Robinson2RalWithAbstractions( signature, abstracted_constants_map )
+    val converter = Resolution2RalWithAbstractions( signature, abstracted_constants_map )
 
     converter( fol_refutation )
   }
@@ -218,7 +218,7 @@ abstract class AnalysisWithCeresOmega {
    * The proof of the deep formula of the [[expansion_proof]].
    */
   lazy val reproved_deep = {
-    EProver getRobinsonProof expansion_proof_fol_deep match {
+    EProver getResolutionProof expansion_proof_fol_deep match {
       case None      => throw new Exception( "Could not reprove deep formula!" )
       case Some( p ) => p
     }

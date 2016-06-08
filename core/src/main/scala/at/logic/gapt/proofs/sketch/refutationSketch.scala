@@ -104,7 +104,7 @@ case class SketchSplitCombine( splitCases: Seq[RefutationSketch] ) extends Refut
 
 case class UnprovableSketchInference( inference: RefutationSketch )
 
-object RefutationSketchToRobinson {
+object RefutationSketchToResolution {
   /**
    * Converts a refutation sketch to a resolution proof.
    *
@@ -155,7 +155,7 @@ object RefutationSketchToRobinson {
         import Validation.FlatMap._
         for {
           solvedCases <- Applicative[ErrorOr].traverse( cases.toList )( solve )
-          refutation <- Sat4j.getRobinsonProof( solvedCases.map( AvatarAbsurd( _ ) ) ).
+          refutation <- Sat4j.getResolutionProof( solvedCases.map( AvatarAbsurd( _ ) ) ).
             map { _.success }.
             getOrElse { UnprovableSketchInference( s ).failureNel }
         } yield refutation

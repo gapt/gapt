@@ -183,7 +183,7 @@ object CutIntroduction extends Logger {
     val resProver = if ( Prover9 isInstalled ) Prover9 else Escargot
 
     val herbrandSequent = extractInstances( ep )
-    val herbrandSequentResolutionProof = resProver getRobinsonProof herbrandSequent getOrElse {
+    val herbrandSequentResolutionProof = resProver getResolutionProof herbrandSequent getOrElse {
       throw new CutIntroEHSUnprovableException( s"Cannot prove Herbrand sequent using ${resProver.getClass.getSimpleName}." )
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
@@ -274,7 +274,7 @@ object CutIntroduction extends Logger {
         }
 
         val ehsSequent = beautifiedEHS.getDeep
-        val ehsResolutionProof = resProver getRobinsonProof ehsSequent getOrElse {
+        val ehsResolutionProof = resProver getResolutionProof ehsSequent getOrElse {
           throw new CutIntroEHSUnprovableException( s"Cannot prove extended Herbrand sequent using ${resProver.getClass.getSimpleName}." )
         }
         metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )

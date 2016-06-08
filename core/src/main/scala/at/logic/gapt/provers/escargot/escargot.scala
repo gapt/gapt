@@ -70,7 +70,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
 
 class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
-  override def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
+  override def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
     val hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
     val isPropositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
 

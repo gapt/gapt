@@ -58,7 +58,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
     }
   }
 
-  override def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
+  override def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     getDrupProof( cnf ) map { DrupToResolutionProof( _ ) }
 
   override def isValid( seq: HOLSequent ): Boolean = super[SATSolver].isValid( seq )

@@ -22,7 +22,7 @@ class LatticeTest extends Specification with SequentMatchers {
 
       val s = extractStruct( proof, CERES.skipEquations )
       val css = CharacteristicClauseSet( s )
-      Escargot getRobinsonProof css must beSome
+      Escargot getResolutionProof css must beSome
     }
 
     "parse, skolemize and apply CERES to the lattice proof" in {

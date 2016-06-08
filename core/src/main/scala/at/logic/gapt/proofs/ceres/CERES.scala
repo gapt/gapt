@@ -85,7 +85,7 @@ class CERES {
     //println( "original css size: " + cs.size )
     //println( "after subsumption:" + tapecl.size )
 
-    prover.getRobinsonProof( tapecl ) match {
+    prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception( "The characteristic clause set could not be refuted." )
       case Some( rp ) =>
         //println( s"refutation:\n$rp" )

@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class RobinsonToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
+class ResolutionToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
   "simple proof from prover9" should {
     val es = (
       hof"!z P(c,z)" +:
@@ -19,7 +19,7 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
     )
 
     "extract expansion sequent" in {
-      val Some( robinson ) = Escargot getRobinsonProof es
+      val Some( robinson ) = Escargot getResolutionProof es
       val expansion = ResolutionToExpansionProof( robinson )
       expansion.deep must beValidSequent
     }
@@ -29,7 +29,7 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
     val p = FOLAtom( "p" )
     val endSequent = Sequent() :+ ( ( p --> -( -p ) ) & ( -( -p ) --> p ) )
     val cnf = CNFn.toFClauseList( endSequent.toDisjunction )
-    val Some( robinson ) = Escargot getRobinsonProof cnf
+    val Some( robinson ) = Escargot getResolutionProof cnf
     val expansion = ResolutionToExpansionProof( fixDerivation( robinson, endSequent ) )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -41,7 +41,7 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
     val as = ( 0 to 12 ) map { i => FOLAtomConst( s"a$i", 1 ) }
     val endSequent = thresholds.atMost.oneOf( as map { a => Ex( x, a( x ) ) } ) +: Sequent() :+ ( as( 0 )( c ) --> -as( 1 )( d ) )
 
-    val Some( ref ) = Escargot getRobinsonProof endSequent
+    val Some( ref ) = Escargot getResolutionProof endSequent
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -52,7 +52,7 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
     val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
     val endSequent = Sequent() :+ ( All( z, thresholds.exactly.oneOf( as ) ) <-> All( z, naive.exactly.oneOf( as ) ) )
 
-    val Some( ref ) = Escargot getRobinsonProof endSequent
+    val Some( ref ) = Escargot getResolutionProof endSequent
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
@@ -65,7 +65,7 @@ class RobinsonToExpansionProofTest extends Specification with SatMatchers with S
 
     val endSequent = Sequent() :+ ( ( All( x, p( x ) ) | All( x, q( x ) ) ) --> ( p( c ) | q( d ) ) )
 
-    val Some( ref ) = Escargot getRobinsonProof endSequent
+    val Some( ref ) = Escargot getResolutionProof endSequent
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent

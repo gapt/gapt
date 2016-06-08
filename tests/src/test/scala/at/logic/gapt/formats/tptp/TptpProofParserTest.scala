@@ -2,7 +2,7 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.proofs.Clause
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, fixDerivation }
-import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
+import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
@@ -26,7 +26,7 @@ class TptpProofParserTest extends Specification {
       val ( endSequent, sketch ) = TptpProofParser.parse( load( fn ) )
       sketch.conclusion must_== Clause()
 
-      val Success( robinson ) = RefutationSketchToRobinson( sketch )
+      val Success( robinson ) = RefutationSketchToResolution( sketch )
       robinson.conclusion must_== Clause()
 
       val fixed = fixDerivation( robinson, endSequent )

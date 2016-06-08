@@ -192,7 +192,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       case "spass_pred" =>
         val reduction = GroundingReductionET |> CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
         val ( erasedCNF, back ) = reduction forward instanceSequent
-        val Some( erasedProof ) = SPASS getRobinsonProof erasedCNF
+        val Some( erasedProof ) = SPASS getResolutionProof erasedCNF
         val reifiedExpansion = back( erasedProof )
         reifiedExpansion
       case "spass_nopred" =>

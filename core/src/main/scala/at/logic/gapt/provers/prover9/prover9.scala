@@ -5,7 +5,7 @@ import java.io.IOException
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.ivy.IvyParser
-import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.formats.prover9.{ Prover9TermParser, Prover9TermParserLadrStyle }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionProof
@@ -19,7 +19,7 @@ import scala.io.Source
 
 object Prover9 extends Prover9( extraCommands = _ => Seq() )
 class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
-  def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
+  def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
     withRenamedConstants( cnf ) {
       case ( renaming, cnf ) =>
         val p9Input = toP9Input( cnf, renaming )
@@ -40,7 +40,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
 
     val ivyProof = IvyParser.parseString( ivy )
 
-    IvyToRobinson( ivyProof )
+    IvyToResolution( ivyProof )
   }
 
   private def toP9Input( cnf: Traversable[HOLClause], renaming: Map[Const, Const] ): String = {

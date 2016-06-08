@@ -1020,7 +1020,7 @@ Some([derive]  :-
 \end{clilisting}
 
 Just as in the first-order prover interface, you can call
-\cli{getRobinsonProof} and \cli{getLKProof} to get the proofs in the desired
+\cli{getResolutionProof} and \cli{getLKProof} to get the proofs in the desired
 format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
@@ -1159,7 +1159,7 @@ sequent: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = p(0): o, 
 gapt> Prover9 isValid sequent
 res25: Boolean = true
 
-gapt> Prover9 getRobinsonProof sequent
+gapt> Prover9 getResolutionProof sequent
 res26: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p13]  :-    (Resolution(p8, Suc(0), p12, Ant(0)))
 [p12] p(s(0)): o :-    (Resolution(p9, Suc(0), p11, Ant(0)))
@@ -1261,7 +1261,7 @@ formula: at.logic.gapt.expr.HOLFormula =
 ∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x ⊃
   d + a + c + b = a + b + c + d
 
-gapt> Escargot getRobinsonProof formula
+gapt> Escargot getResolutionProof formula
 res33: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p46]  :-    (Resolution(p1, Suc(0), p45, Ant(0)))
 [p45] b + (c + (a + d)) = b + (c + (a + d)) :-    (Paramod(p7, Suc(0), true, p44, Ant(0), λx b + (c + (a + d)) = b + (c + x)))

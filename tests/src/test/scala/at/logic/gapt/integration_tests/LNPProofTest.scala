@@ -38,7 +38,7 @@ object PDAnalysis extends AnalysisWithCeresOmega {
     case x: Any     => throw new Exception( s"$x is not an atom!" )
   } ) )
 
-  lazy val ref = Prover9.getRobinsonProof( fol_css_ )
+  lazy val ref = Prover9.getResolutionProof( fol_css_ )
 }
 
 class LNPProofTest extends Specification {

@@ -14,7 +14,7 @@ class TipSmtParserTest extends Specification {
     val one = Const( "One", TBase( "Bin" ) )
     val oneAnd = Const( "OneAnd", TBase( "Bin" ) -> TBase( "Bin" ) )
     val instanceSequent = problem.toSequent.map( identity, instantiate( _, Seq( one, one, oneAnd( oneAnd( one ) ) ) ) )
-    Escargot getRobinsonProof instanceSequent must beSome
+    Escargot getResolutionProof instanceSequent must beSome
   }
 
 }

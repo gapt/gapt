@@ -49,7 +49,7 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
 
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      SPASS.getRobinsonProof( cnf ) must beSome
+      SPASS.getResolutionProof( cnf ) must beSome
     }
 
     "large cnf" in {

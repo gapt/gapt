@@ -39,8 +39,8 @@ class GlucoseTest extends Specification {
   "empty clause is unsat" in { Glucose.solve( Seq( Seq() ) ) must beNone }
 
   "proof import" in {
-    "pigeonhole 3 2" in { Glucose getRobinsonProof PigeonHolePrinciple( 3, 2 ) must beSome }
-    "buss 5" in { Glucose getRobinsonProof BussTautology( 5 ) must beSome }
-    "to be or not to be" in { Glucose getRobinsonProof hof"be ∨ ¬be" must beSome }
+    "pigeonhole 3 2" in { Glucose getResolutionProof PigeonHolePrinciple( 3, 2 ) must beSome }
+    "buss 5" in { Glucose getResolutionProof BussTautology( 5 ) must beSome }
+    "to be or not to be" in { Glucose getResolutionProof hof"be ∨ ¬be" must beSome }
   }
 }

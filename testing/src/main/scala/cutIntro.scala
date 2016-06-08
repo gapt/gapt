@@ -4,7 +4,7 @@ import at.logic.gapt.expr.{ EqC, FOLFunction, HOLAtom, constants }
 import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
+import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.utils.logging.MetricsCollector
 import at.logic.gapt.formats.leancop.LeanCoPParser
 import java.io._
@@ -84,7 +84,7 @@ object loadProof {
       val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
       metrics.value( "tstp_sketch_size", sketch.subProofs.size )
 
-      RefutationSketchToRobinson( sketch ) map { resProof =>
+      RefutationSketchToResolution( sketch ) map { resProof =>
         loadResolutionProof( resProof, endSequent )
       } toOption
   }

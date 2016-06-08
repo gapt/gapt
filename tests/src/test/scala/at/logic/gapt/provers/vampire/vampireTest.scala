@@ -15,7 +15,7 @@ class VampireTest extends Specification with SequentMatchers {
       val p = FOLAtom( "P", Nil )
       val s1 = HOLSequent( Nil, p :: Nil )
       val s2 = HOLSequent( p :: Nil, Nil )
-      Vampire getRobinsonProof ( s1 :: s2 :: Nil ) must beSome
+      Vampire getResolutionProof ( s1 :: s2 :: Nil ) must beSome
     }
   }
 
@@ -47,7 +47,7 @@ class VampireTest extends Specification with SequentMatchers {
       val s2 = HOLSequent( Nil, List( k ) )
       val s3 = HOLSequent( Nil, List( s ) )
       val t1 = HOLSequent( List( skk_i ), Nil )
-      Vampire getRobinsonProof List( s1, s2, s3, t1 ) must beSome
+      Vampire getResolutionProof List( s1, s2, s3, t1 ) must beSome
     }
   }
 
@@ -55,7 +55,7 @@ class VampireTest extends Specification with SequentMatchers {
     "not refute { :- P; Q :- }" in {
       val s1 = HOLSequent( Nil, List( FOLAtom( "P", Nil ) ) )
       val t1 = HOLSequent( List( FOLAtom( "Q", Nil ) ), Nil )
-      Vampire getRobinsonProof List( s1, t1 ) must beNone
+      Vampire getResolutionProof List( s1, t1 ) must beNone
     }
   }
 
@@ -100,14 +100,14 @@ class VampireTest extends Specification with SequentMatchers {
 
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      Vampire.getRobinsonProof( cnf ) must beSome
+      Vampire.getResolutionProof( cnf ) must beSome
     }
 
     "large cnf" in {
       val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
       val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
       val endSequent = Sequent() :+ ( All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as ) )
-      Vampire getRobinsonProof endSequent must beSome
+      Vampire getResolutionProof endSequent must beSome
     }
   }
 

@@ -36,7 +36,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
     s"formula(${expr2dfg( univclosure( cls_.toDisjunction ) )})."
   }
 
-  override def getRobinsonProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
+  override def getResolutionProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
     case ( renaming, cnf ) =>
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
@@ -136,7 +136,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
         val sketch = SketchSplitCombine( splitCases.result() )
 
-        RefutationSketchToRobinson( sketch ) match {
+        RefutationSketchToResolution( sketch ) match {
           case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )
           case scalaz.Success( resProof ) => Some( resProof )
         }

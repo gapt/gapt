@@ -3,7 +3,7 @@ package at.logic.gapt.formats.ivy
 import org.specs2.matcher.MatchResult
 import org.specs2.specification.core.Fragments
 
-import conversion.IvyToRobinson
+import conversion.IvyToResolution
 import org.specs2.mutable._
 import at.logic.gapt.formats.lisp.{ LList, SExpressionParser }
 
@@ -12,7 +12,7 @@ import scala.io.Source
 /**
  * Test for the Ivy interface.
  */
-class IvyToRobinsonTest extends Specification {
+class IvyToResolutionTest extends Specification {
 
   def parse( file: String ): MatchResult[Any] = {
     val result = SExpressionParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream file ).mkString )
@@ -21,7 +21,7 @@ class IvyToRobinsonTest extends Specification {
     proof match {
       case LList( _* ) =>
         val pinput = IvyParser.parse( proof )
-        val rinput = IvyToRobinson( pinput )
+        val rinput = IvyToResolution( pinput )
         ok
       case _ =>
         ko( s"The proof in $file must have some inferences" )

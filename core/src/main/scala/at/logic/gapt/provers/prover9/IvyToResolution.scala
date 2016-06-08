@@ -7,9 +7,9 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 /**
- * Converts Ivy Proofs into Robinson Resolution Proofs
+ * Converts Ivy Proofs into Resolution Proofs
  */
-object IvyToRobinson {
+object IvyToResolution {
   def apply( ivy: IvyResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[String, ResolutionProof]()
     def convert( p: IvyResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p.id, p match {

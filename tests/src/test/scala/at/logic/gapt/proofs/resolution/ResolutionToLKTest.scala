@@ -251,7 +251,7 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
 
       val endSequent = Sequent() :+ ( ( All( x, p( x ) ) | All( x, q( x ) ) ) --> ( p( c ) | q( d ) ) )
 
-      val Some( ref ) = Escargot getRobinsonProof endSequent
+      val Some( ref ) = Escargot getResolutionProof endSequent
       val expansion = ResolutionToExpansionProof( ref )
       expansion.shallow must_== endSequent
       expansion.deep must beValidSequent

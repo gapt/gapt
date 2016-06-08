@@ -50,7 +50,7 @@ class Prover9Test extends Specification with SequentMatchers {
 
     "handle exit code 2" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      Prover9.getRobinsonProof( cnf ) must beLike {
+      Prover9.getResolutionProof( cnf ) must beLike {
         case Some( p ) => cnf must contain( atLeast( p.subProofs.collect { case Input( seq ) => seq.asInstanceOf[HOLClause] } ) )
       }
     }

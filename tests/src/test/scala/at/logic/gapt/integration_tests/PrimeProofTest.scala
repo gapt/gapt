@@ -137,7 +137,7 @@ class PrimeProofTest extends Specification {
       val path = "target" + separator + "prime1-" + n + "-sk.xml"
 
       if ( refute ) {
-        Prover9.getRobinsonProof( cs ) match {
+        Prover9.getResolutionProof( cs ) match {
           case None      => "" must beEqualTo( "refutation of struct cs in tptp format failed" )
           case Some( _ ) => true must beEqualTo( true )
         }
@@ -165,7 +165,7 @@ class PrimeProofTest extends Specification {
       val projs = Projections( proof_sk, CERES.skipEquations )
       val path = "target" + separator + "euclid-" + n + "-sk.xml"
 
-      Prover9 getRobinsonProof cs must beSome
+      Prover9 getResolutionProof cs must beSome
       cs foreach println
       ok
     }

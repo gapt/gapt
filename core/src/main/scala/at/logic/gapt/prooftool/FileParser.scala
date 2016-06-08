@@ -4,7 +4,7 @@ import java.io.{ FileInputStream, InputStream, InputStreamReader }
 import java.util.zip.GZIPInputStream
 
 import at.logic.gapt.formats.ivy.IvyParser
-import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof, lk }
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, loadLLK }
@@ -14,7 +14,7 @@ import scala.swing.Dialog
 class FileParser( main: ProofToolViewer[_] ) {
 
   def ivyFileReader( path: String ) {
-    val ivy = IvyToRobinson( IvyParser( path ) )
+    val ivy = IvyToResolution( IvyParser( path ) )
     // proofdb = new ProofDatabase(Map(), ("ivy_proof", RobinsonToLK(ivy))::Nil, Nil, Nil)
     resProofs = ( "ivy_proof", ivy ) :: Nil
   }
