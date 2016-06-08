@@ -57,23 +57,22 @@ object ResolutionToLKProof {
         val p2 = ForallLeftBlock( p1, definition, vars )
         val p3 = DefinitionLeftRule( p2, definition, splAtom )
         p3
-      case AvatarComponentIntro( AvatarGroundComp( atom, _ ) )  => LogicalAxiom( atom )
-      case AvatarComponentIntro( comp: AvatarNegNonGroundComp ) => LogicalAxiom( comp.propAtom )
-      case AvatarSplit( q, components ) =>
+      case AvatarComponentIntro( AvatarGroundComp( atom, _ ) )         => LogicalAxiom( atom )
+      case AvatarComponentIntro( comp: AvatarNegNonGroundComp )        => LogicalAxiom( comp.propAtom )
+      case AvatarComponentElim( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
+      case p @ AvatarComponentElim( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         var p_ = f( q )
-        for ( comp @ AvatarNonGroundComp( splAtom, definition, vars ) <- components ) {
-          for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
-          def mkOr( lits: HOLFormula ): Unit =
-            lits match {
-              case Or( lits_, lit ) =>
-                mkOr( lits_ )
-                p_ = OrRightMacroRule( p_, lits_, lit )
-              case _ =>
-            }
-          mkOr( comp.disjunction )
-          p_ = ForallRightBlock( p_, definition, vars )
-          p_ = DefinitionRightRule( p_, definition, splAtom )
-        }
+        for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
+        def mkOr( lits: HOLFormula ): Unit =
+          lits match {
+            case Or( lits_, lit ) =>
+              mkOr( lits_ )
+              p_ = OrRightMacroRule( p_, lits_, lit )
+            case _ =>
+          }
+        mkOr( comp.disjunction )
+        p_ = ForallRightBlock( p_, definition, vars )
+        p_ = DefinitionRightRule( p_, definition, splAtom )
         p_
 
       // FIXME: add axiom reduction as in LKsk

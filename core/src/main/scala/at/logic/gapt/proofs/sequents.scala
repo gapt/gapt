@@ -325,6 +325,9 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    */
   def indicesWhere( p: A => Boolean ): Seq[SequentIndex] = indices filter { i => p( this( i ) ) }
 
+  def indicesWherePol( p: A => Boolean, pol: Boolean ): Seq[SequentIndex] =
+    indices filter { i => ( i.isSuc == pol ) && p( this( i ) ) }
+
   /**
    * "Focuses on one element of the seuqent, i.e. returns element at index and the rest of the sequent.
    *

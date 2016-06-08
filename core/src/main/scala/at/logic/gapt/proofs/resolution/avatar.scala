@@ -4,26 +4,40 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs._
 
-case class AvatarSplit(
-    subProof:   ResolutionProof,
-    components: Seq[AvatarComponent]
-) extends ResolutionProof {
-  for ( c <- components ) require( !c.introOnly )
-  for ( ( c1, i1 ) <- components.zipWithIndex; ( c2, i2 ) <- components.zipWithIndex if i1 != i2 )
-    require( freeVariables( c1.clause ) intersect freeVariables( c2.clause ) isEmpty )
+object AvatarSplit {
+  def apply( subProof: ResolutionProof, components: Seq[AvatarComponent] ): ResolutionProof =
+    components.foldLeft( subProof )( AvatarComponentElim( _, _ ) )
+}
+case class AvatarComponentElim( subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarComponent ) extends LocalResolutionRule {
+  require( !component.introOnly )
+  require( indices subsetOf subProof.conclusion.indices.toSet )
 
-  // FIXME: should we really handle duplicate components?
-  require( subProof.conclusion isSubMultisetOf components.map( _.clause ).fold( Sequent() )( _ ++ _ ) )
+  val thisComponent = subProof.conclusion.zipWithIndex.filter( indices contains _._2 ).map( _._1 )
+  val rest = subProof.conclusion.zipWithIndex.filterNot( indices contains _._2 ).map( _._1 )
+  require( freeVariables( thisComponent ) intersect freeVariables( rest ) isEmpty )
+  require( component.clause isSubMultisetOf thisComponent )
 
-  override def introducedDefinitions = components.view.flatMap( _.inducedDefinitions ).toMap
-
-  override val assertions = ( subProof.assertions ++ components.map( _.assertion ).fold( Sequent() )( _ ++ _ ) ).distinct
-
-  def mainIndices = Seq()
-  def auxIndices = Seq( subProof.conclusion.indices )
-  def conclusion = Sequent()
-  def occConnectors = Seq( OccConnector( conclusion, subProof.conclusion, Sequent() ) )
-  def immediateSubProofs = Seq( subProof )
+  override def auxIndices = Seq( indices.toSeq )
+  override def mainFormulaSequent = Sequent()
+  override val assertions = subProof.assertions ++ component.assertion distinct
+  override def immediateSubProofs = Seq( subProof )
+  override def introducedDefinitions = component.inducedDefinitions
+}
+object AvatarComponentElim {
+  def apply( subProof: ResolutionProof, component: AvatarComponent ): AvatarComponentElim = {
+    def getIndices( toFind: HOLSequent ): Set[SequentIndex] =
+      if ( toFind.isEmpty ) {
+        Set()
+      } else {
+        val i = toFind.indices.head
+        val indices = getIndices( toFind.delete( i ) )
+        subProof.conclusion.indices.
+          find( j => !indices.contains( j ) && i.sameSideAs( j ) && toFind( i ) == subProof.conclusion( j ) ).
+          fold( indices )( indices + _ )
+      }
+    require( subProof.conclusion.delete( getIndices( component.clause ).toSeq: _* ) == subProof.conclusion.diff( component.clause ) )
+    AvatarComponentElim( subProof, getIndices( component.clause ), component )
+  }
 }
 case class AvatarComponentIntro( component: AvatarComponent ) extends InitialClause {
   override def introducedDefinitions = component.inducedDefinitions

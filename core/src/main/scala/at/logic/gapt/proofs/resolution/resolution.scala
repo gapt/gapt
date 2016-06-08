@@ -69,6 +69,14 @@ object Factor {
   def apply( p: ResolutionProof ): ResolutionProof =
     apply( p, p.conclusion.distinct )
   def apply( p: ResolutionProof, newConclusion: HOLSequent ): ResolutionProof = {
+    require(
+      newConclusion setEquals p.conclusion,
+      s"Proposed conclusion $newConclusion has fewer formulas than ${p.conclusion}"
+    )
+    require(
+      newConclusion isSubMultisetOf p.conclusion,
+      s"Proposed conclusion $newConclusion is not a submultiset of ${p.conclusion}"
+    )
     var p_ = p
     for ( ( a, i ) <- p.conclusion.diff( newConclusion ).zipWithIndex ) {
       val Seq( j1, j2, _* ) = p_.conclusion.zipWithIndex.elements.filter( _._2 sameSideAs i ).filter( _._1 == a ).map( _._2 )
@@ -85,6 +93,13 @@ object Factor {
       conn = p_.occConnectors.head * conn
     }
     p_ -> conn
+  }
+
+  object Block {
+    def unapply( p: ResolutionProof ): Some[ResolutionProof] = p match {
+      case Factor( Factor.Block( q ), _, _ ) => Some( q )
+      case _                                 => Some( p )
+    }
   }
 }
 object MguFactor {
@@ -113,6 +128,19 @@ case class Resolution( subProof1: ResolutionProof, idx1: SequentIndex,
   def mainFormulaSequent = Sequent()
   def immediateSubProofs = Seq( subProof1, subProof2 )
   def auxIndices = Seq( Seq( idx1 ), Seq( idx2 ) )
+}
+object Resolution {
+  def apply( subProof1: ResolutionProof, subProof2: ResolutionProof, atom: HOLFormula ): ResolutionProof =
+    Resolution( subProof1, subProof1.conclusion.indexOfInSuc( atom ),
+      subProof2, subProof2.conclusion.indexOfInAnt( atom ) )
+
+  def maybe( subProof1: ResolutionProof, subProof2: ResolutionProof, atom: HOLFormula ): ResolutionProof =
+    if ( !subProof1.conclusion.succedent.contains( atom ) )
+      subProof1
+    else if ( !subProof2.conclusion.antecedent.contains( atom ) )
+      subProof2
+    else
+      Resolution( subProof1, subProof2, atom )
 }
 object MguResolution {
   def apply( subProof1: ResolutionProof, idx1: SequentIndex,

@@ -4,8 +4,7 @@ import at.logic.gapt.expr.{ Eq, FOLAtom }
 import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
-import at.logic.gapt.provers.prover9._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.formats.llk.LatexLLKExporter
 import at.logic.gapt.proofs.ceres.{ deleteTautologies, _ }
 import java.io.File.separator
@@ -67,7 +66,7 @@ class TapeTest extends Specification with SequentMatchers {
     "apply the full CERES method and skip cuts on equations, then cut-eliminate cuts of equations" in {
       //get the proof
       val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
-      val acnf = CERES( proof, CERES.skipEquations, NonSplittingEscargot )
+      val acnf = CERES( proof, CERES.skipEquations, Escargot )
       val eqacnf = CERES( acnf, _ match { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true }, Escargot )
       eqacnf.endSequent must beMultiSetEqual( proof.endSequent )
 

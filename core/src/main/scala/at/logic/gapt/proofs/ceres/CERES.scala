@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.formats.llk.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToLKProof }
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.ResolutionProver
@@ -89,7 +89,7 @@ class CERES {
       case None => throw new Exception( "The characteristic clause set could not be refuted." )
       case Some( rp ) =>
         //println( s"refutation:\n$rp" )
-        apply( es, proj, rp )
+        apply( es, proj, eliminateSplitting( rp ) )
     }
   }
 

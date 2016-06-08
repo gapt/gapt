@@ -40,7 +40,8 @@ object ResolutionToExpansionProof {
     val splitCutR = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
 
     def propg_( p: ResolutionProof, q: ResolutionProof, f: Set[( Substitution, ExpansionSequent )] => Set[( Substitution, ExpansionSequent )] ) = {
-      val newEs = f( expansions( p ) )
+      val fvsQ = freeVariables( q.conclusion )
+      val newEs = f( expansions( p ) ).map( _.map1( _.restrict( fvsQ ) ) )
       for ( ( s, e ) <- newEs ) {
         for ( et <- e.antecedent ) require( et.polarity )
         for ( et <- e.succedent ) require( !et.polarity )
@@ -127,17 +128,22 @@ object ResolutionToExpansionProof {
         propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], false ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2 ).updated( i2, replaceWithContext( es._2( p.mainIndices.head ), es._1( ctx ).asInstanceOf[Abs], es._1( p.t ) ) ) ) )
 
-      case p @ AvatarSplit( q, components ) =>
-        val renaming = Substitution( for ( v <- freeVariables( q.conclusion ) ) yield v -> nameGen.fresh( v ) )
-        for ( comp @ AvatarNonGroundComp( splAtom, definition, vars ) <- components ) {
-          splitDefn( splAtom ) = definition
-          splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
-            definition,
-            renaming( vars ).map( _.asInstanceOf[Var] ),
-            formulaToExpansionTree( renaming( comp.disjunction ), true )
-          )
-        }
-        propg( p, q, _ => for ( ( _, es ) <- sequent2expansions( q.conclusion ) ) yield renaming -> renaming( es ) )
+      case p @ AvatarComponentElim( q, indices, AvatarGroundComp( atom, pol ) ) =>
+        val Seq( oc ) = p.occConnectors
+        propg( p, q, _.map( _.map2( es => oc.parent( es, ETAtom( atom, !pol ) ) ) ) )
+      case p @ AvatarComponentElim( q, indices, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+        val renaming = Substitution( for ( v <- freeVariables( comp.clause ) ) yield v -> nameGen.fresh( v ) )
+        splitDefn( splAtom ) = definition
+        splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
+          definition,
+          renaming( vars ).map( _.asInstanceOf[Var] ),
+          formulaToExpansionTree( renaming( comp.disjunction ), true )
+        )
+        val Seq( oc ) = p.occConnectors
+        propg( p, q, _.map( es => renaming.compose( es._1 ) -> oc.parents( es._2 ).zipWithIndex.map {
+          case ( Seq( et ), _ ) => et
+          case ( Seq(), idx )   => ETAtom( renaming( q.conclusion( idx ) ).asInstanceOf[HOLAtom], idx.isAnt )
+        } ) )
       case p @ AvatarComponentIntro( AvatarGroundComp( _, _ ) ) =>
         clear( p )
       case p @ AvatarComponentIntro( AvatarNegNonGroundComp( _, _, _, _ ) ) =>

@@ -33,8 +33,8 @@ package object resolution {
           val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
           val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )
-        case AvatarSplit( q, components ) =>
-          AvatarSplit( f( q ), components map { replace( _, repl ) } )
+        case AvatarComponentElim( q, indices, component ) =>
+          AvatarComponentElim( f( q ), indices, replace( component, repl ) )
         case AvatarAbsurd( q )                 => AvatarAbsurd( f( q ) )
         case AvatarComponentIntro( component ) => AvatarComponentIntro( replace( component, repl ) )
         case DefIntro( q, i, defAtom, definition ) =>
