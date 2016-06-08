@@ -2,6 +2,8 @@
 
 ## Version 2.2 (unreleased)
 
+* New resolution calculus with Avatar splitting
+* Vampire proof import with splitting
 * Removal of obsolete or unmaintained code:
   * Schemata
   * Old LK implementation

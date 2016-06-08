@@ -8,6 +8,7 @@ import at.logic.gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
 
+/** Converts a resolution proof to an expansion proof. */
 object ResolutionToExpansionProof {
 
   def apply( proof: ResolutionProof ): ExpansionProof = {
@@ -26,6 +27,10 @@ object ResolutionToExpansionProof {
     def map2[B_]( f: B => B_ ): ( A, B_ ) = ( pair._1, f( pair._2 ) )
   }
 
+  /**
+   * Performs the conversion without eliminating the definitions
+   * introduced by structural clausification.
+   */
   def withDefs( proof: ResolutionProof, addConclusion: Boolean = true ): ExpansionProofWithCut = {
     val nameGen = rename.awayFrom( proof.subProofs.flatMap( _.conclusion.elements ).flatMap( variables( _ ) ) )
 

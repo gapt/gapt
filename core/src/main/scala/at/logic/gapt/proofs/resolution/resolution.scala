@@ -5,10 +5,74 @@ import at.logic.gapt.proofs._
 
 import scala.collection.mutable
 
+/**
+ * Proof using resolution.
+ *
+ * Our resolution calculus integrates higher-order reasoning,
+ * structural clausification, and Avatar-style splitting as in [Vor14].
+ *
+ * The judgments of this calculus are A-sequents.  An A-sequent is a pair
+ * of a sequent of HOL formulas, and a conjunction of propositional
+ * literals---the assertion (that's where the "A" comes from).
+ * {{{
+ *   Γ <- A
+ * }}}
+ *
+ * We store the sequent as a HOLSequent in [[ResolutionProof#conclusion]],
+ * and the negation of the assertion as a HOLClause in
+ * [[ResolutionProof#assertions]] (as the negation of a conjunction of
+ * literals is a clause).  The judgment is interpreted as one of the following
+ * equivalent formulas:
+ * {{{
+ *   assertions.toNegConjunction --> conclusion.toDisjunction
+ *   (conclusion ++ assertions).toDisjunction   // equivalent to the first one
+ * }}}
+ *
+ * Inferences such as [[Resolution]] or [[Paramod]] do not operate on the assertions.
+ * Unless specified otherwise, assertions are inherited by default:
+ * {{{
+ *   Γ ∨ a <- A       -a ∨ Δ <- B
+ *   --------------------------------
+ *         Γ ∨ Δ <- A ∧ B
+ * }}}
+ *
+ * There is no factoring on assertions, duplicate assertions are automatically removed.
+ *
+ * Reading from top to bottom, a resolution proof is usually structured as follows:
+ * <ol>
+ *   <li> [[Input]] rules for formulas of the end-sequent
+ *   <li> [[AndL]], [[AllR]], etc. for the clausification.  A combination of
+ *     [[DefIntro]] and [[Taut]] is used to introduce definitions for subformulas.
+ *   <li> [[Resolution]], [[Paramod]], [[Subst]]. [[Factor]], [[Refl]], [[Taut]] for the
+ *     refutation of the resulting clauses.  Clauses are split by successively
+ *     applying [[AvatarComponentElim]], reducing the clause to an empty clause.
+ *     The clause components can then be used using [[AvatarComponentIntro]].
+ *   <li> Each empty clause of a splitting branch is followed by an
+ *     [[AvatarAbsurd]] inference, moving the assertion back to the clause.
+ *   <li> A [[Resolution]] refutation of the [[AvatarAbsurd]] clauses.
+ * </ol>
+ *
+ * Substitutions are not absorbed into resolution, factoring, and
+ * paramodulation; they are explicitly represented using [[Subst]].
+ *
+ * [Vor14] Andrei Voronkov, AVATAR: The Architecture for First-Order Theorem Provers. CAV 2014: pp. 696-710
+ */
 trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with DagProof[ResolutionProof] {
+  /**
+   * Assertions of the proof.
+   *
+   * Attention: this is interpreted as <code>assertions.toNegConjunction --> conclusion.toDisjunction</code>
+   *
+   * These assertions indicate the splitting assumptions this proof depends on.
+   */
   val assertions: HOLClause = immediateSubProofs.map( _.assertions ).fold( Sequent() )( _ ++ _ ).distinct
 
+  /** Definitions introduced by the bottom-most inference rule. */
   def introducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()
+  /**
+   * All definitions introduced by any subproof.
+   * @throws Exception if inconsistent definitions are used
+   */
   def definitions = {
     val builder = mutable.Map[HOLAtomConst, LambdaExpression]()
     for {
@@ -24,12 +88,13 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
   def conclusionString = {
     val assertionString =
       if ( assertions.isEmpty ) ""
-      else s"   <-- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
+      else s"   <- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
     conclusion.toString + assertionString
   }
   override protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$conclusionString   (${super[DagProof].stepString( subProofLabels )})"
 
+  /** Is this a proof of the empty clause with empty assertions, and consistent definitions? */
   def isProof = {
     definitions
     conclusion.isEmpty && assertions.isEmpty
@@ -45,16 +110,45 @@ abstract class InitialClause extends LocalResolutionRule {
   override def auxIndices = Seq()
   override def immediateSubProofs = Seq()
 }
+/**
+ * Input sequent.
+ * {{{
+ *   -------
+ *   sequent
+ * }}}
+ */
 case class Input( sequent: HOLSequent ) extends InitialClause {
   override def mainFormulaSequent = sequent
 }
+/**
+ * Tautology.
+ * {{{
+ *   -------------------
+ *   formula ∨ ¬formula
+ * }}}
+ */
 case class Taut( formula: HOLFormula ) extends InitialClause {
   override def mainFormulaSequent = formula +: Sequent() :+ formula
 }
+/**
+ * Reflexivity.
+ * {{{
+ *   -----------
+ *   term = term
+ * }}}
+ */
 case class Refl( term: LambdaExpression ) extends InitialClause {
   override def mainFormulaSequent = Sequent() :+ ( term === term )
 }
 
+/**
+ * Factoring.
+ * {{{
+ *   l ∨ l ∨ Γ
+ *   -----------
+ *   l ∨ Γ
+ * }}}
+ */
 case class Factor( subProof: ResolutionProof, idx1: SequentIndex, idx2: SequentIndex ) extends LocalResolutionRule {
   require( idx1 sameSideAs idx2 )
   require( idx1 < idx2 )
@@ -109,6 +203,14 @@ object MguFactor {
   }
 }
 
+/**
+ * Substitution.
+ * {{{
+ *          Γ
+ *   ---------------
+ *   substitution(Γ)
+ * }}}
+ */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
   override def conclusion: Sequent[HOLFormula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
@@ -118,6 +220,14 @@ case class Subst( subProof: ResolutionProof, substitution: Substitution ) extend
   override def immediateSubProofs: Seq[ResolutionProof] = Seq( subProof )
 }
 
+/**
+ * Resolution.
+ * {{{
+ *   Γ ∨ a    -a ∨ Δ
+ *   -----------------
+ *         Γ ∨ Δ
+ * }}}
+ */
 case class Resolution( subProof1: ResolutionProof, idx1: SequentIndex,
                        subProof2: ResolutionProof, idx2: SequentIndex ) extends LocalResolutionRule {
   require( idx1 isSuc )
@@ -151,6 +261,14 @@ object MguResolution {
   }
 }
 
+/**
+ * Paramodulation.
+ * {{{
+ *   Γ ∨ t=s     Δ ∨ l[t]
+ *   --------------------
+ *        Γ ∨ Δ ∨ l[s]
+ * }}}
+ */
 case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight: Boolean,
                     subProof2: ResolutionProof, auxIdx: SequentIndex,
                     context: LambdaExpression ) extends LocalResolutionRule {
@@ -198,6 +316,23 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
   override def auxIndices = Seq( Seq( idx ) )
 }
 
+/**
+ * Definition introduction.
+ * {{{
+ *   Γ ∨ φ(x)
+ *   --------
+ *   Γ ∨ D(x)
+ * }}}
+ *
+ * This is then used together with [[Taut]] in order to use the
+ * introduced definitions in other parts of the proof:
+ * {{{
+ *   ------------  Taut
+ *   ¬φ(x) ∨ φ(x)
+ *   ------------  DefIntro
+ *   ¬D(x) ∨ φ(x)
+ * }}}
+ */
 case class DefIntro( subProof: ResolutionProof, idx: SequentIndex,
                      defAtom: HOLAtom, definition: LambdaExpression ) extends PropositionalResolutionRule {
   val Apps( defConst: HOLAtomConst, defArgs ) = defAtom

@@ -5,12 +5,16 @@ import at.logic.gapt.proofs.HOLSequent
 
 import scala.collection.mutable
 
+/**
+ * Eliminate [[AvatarComponentElim]], [[AvatarComponentIntro]], [[AvatarAbsurd]]
+ * splitting inferences from a resolution proof.
+ */
 object eliminateSplitting {
 
   def apply( p: ResolutionProof ): ResolutionProof =
     nonGroundSplits( groundSplits( p ) )
 
-  def groundSplits( p: ResolutionProof ): ResolutionProof = {
+  private def groundSplits( p: ResolutionProof ): ResolutionProof = {
     if ( !p.subProofs.exists { _.isInstanceOf[AvatarAbsurd] } ) return p
 
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
@@ -40,7 +44,7 @@ object eliminateSplitting {
     f( p )
   }
 
-  def project( p: ResolutionProof, splAtom: HOLAtom ): ( ResolutionProof, Seq[Var], HOLSequent ) = {
+  private def project( p: ResolutionProof, splAtom: HOLAtom ): ( ResolutionProof, Seq[Var], HOLSequent ) = {
     val ngc = p.subProofs.collect { case AvatarComponentElim( _, _, comp @ AvatarNonGroundComp( `splAtom`, _, _ ) ) => comp }.head
     val newVs = ngc.vars map rename( ngc.vars, freeVariables( p.subProofs.flatMap( _.conclusion.elements ) ) )
     val newClause = Substitution( ngc.vars zip newVs )( ngc.clause )
@@ -78,7 +82,7 @@ object eliminateSplitting {
     ( f( p ), newVs, newClause )
   }
 
-  def replace( p: ResolutionProof, splAtom: HOLAtom, proj: ResolutionProof, projVars: Seq[Var], projClause: HOLSequent ): ResolutionProof = {
+  private def replace( p: ResolutionProof, splAtom: HOLAtom, proj: ResolutionProof, projVars: Seq[Var], projClause: HOLSequent ): ResolutionProof = {
     val extraAssumptions = proj.conclusion diff projClause
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
     def factor( p: ResolutionProof, q: ResolutionProof ) =
@@ -112,7 +116,7 @@ object eliminateSplitting {
     f( p )
   }
 
-  def nonGroundSplits( p: ResolutionProof ): ResolutionProof = {
+  private def nonGroundSplits( p: ResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
       case AvatarAbsurd( p1 ) => AvatarAbsurd( Factor( p1 ) )

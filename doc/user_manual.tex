@@ -1144,7 +1144,7 @@ c = a ∧ P(c) ⊃ P(a)
 \subsection{First-order theorem prover interface}
 
 GAPT includes interfaces to several first-order theorem provers, such as
-Prover9, E prover, and LeanCoP.  For Prover9 and E prover we can read back
+Prover9, E prover, and LeanCoP.  For Prover9, E, SPASS, and Vampire we can read back
 resolution proofs, and construct LK and expansion proofs from them.  The
 LeanCoP interface only supports expansion proof extraction.
 
@@ -1196,9 +1196,7 @@ p(s(s(0)))+)
 \end{clilisting}
 
 All of the above works with the E prover (\cli{EProver}), SPASS (\cli{SPASS}),
-and Vampire (\cli{Vampire})\footnote{Unfortunately, we have to disable
-  SAT splitting in Vampire because we are unable to import proofs
-  that contain those splitting inferences.} as well, we will just show
+and Vampire (\cli{Vampire}) as well, we will just show
 \cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
@@ -2112,24 +2110,48 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
 
 \subsection{Resolution}
 
-\subsection*{Initial clauses}
+Our resolution calculus integrates higher-order reasoning,
+structural clausification, and Avatar-style splitting as in [Vor14].
+The judgments of this calculus are A-sequents.  An A-sequent is a pair
+of a sequent of HOL formulas, and a conjunction of propositional
+literals---the assertion (that's where the ``A'' comes from).
+\[ \Gamma \leftarrow A \]
+
+We represent the (negation of the) assertion as a clause.  The judgment is
+interpreted as the following formula:
+\[ A \impl \Gamma \]
+
+Inferences such as resolution or paramodulation do not operate on the assertions.
+Unless specified otherwise, assertions are inherited by default:
+\begin{prooftree}
+  \AxiomC{$\Gamma \lor a \leftarrow A$}
+  \AxiomC{$\neg a \lor \Delta \leftarrow B$}
+  \RightLabel{Resolution}
+  \BinaryInfC{$\Gamma \lor \Delta \leftarrow A \land B$}
+\end{prooftree}
+
+There is no factoring on assertions, duplicate assertions are automatically removed.
+Substitutions are not absorbed into resolution, factoring, and
+paramodulation; they are explicitly represented using the Subst inference.
+
+\subsubsection*{Initial sequents}
 
 \begin{prooftree}
-\AxiomC{}\RightLabel{InputClause}
+\AxiomC{}\RightLabel{Input}
 \UnaryInfC{$C$}
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{}\RightLabel{ReflexivityClause}
+\AxiomC{}\RightLabel{Refl}
 \UnaryInfC{$t=t$}
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{}\RightLabel{TautologyClause}
+  \AxiomC{}\RightLabel{Taut}
 \UnaryInfC{$a \lor \neg a$}
 \end{prooftree}
 
-\subsection*{Structural rules}
+\subsubsection*{Structural rules}
 
 \begin{prooftree}
 \AxiomC{$a \lor a \lor C$}\RightLabel{Factor}
@@ -2137,11 +2159,11 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{$C$}\RightLabel{Instance}
+\AxiomC{$C$}\RightLabel{Subst}
 \UnaryInfC{$C \sigma$}
 \end{prooftree}
 
-\subsection*{Logical rules}
+\subsubsection*{Logical rules}
 
 \begin{prooftree}
 \AxiomC{$C \lor a$}
@@ -2153,23 +2175,149 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
 \begin{prooftree}
 \AxiomC{$C \lor t=s$}
 \AxiomC{$l[t] \lor D$}
-\RightLabel{Paramodulation}
+\RightLabel{Paramod}
 \BinaryInfC{$C \lor l[s] \lor D$}
 \end{prooftree}
 
 \begin{prooftree}
 \AxiomC{$C \lor t=s$}
 \AxiomC{$l[s] \lor D$}
-\RightLabel{Paramodulation}
+\RightLabel{Paramod}
 \BinaryInfC{$C \lor l[t] \lor D$}
 \end{prooftree}
 
+\subsubsection*{Propositional rules}
+
+\begin{multicols}{2}
 \begin{prooftree}
-\AxiomC{$C \lor D$}
-\AxiomC{$[C]$}\noLine\UnaryInfC{$\bot$}
-\AxiomC{$[D]\:[\neg C]$}\noLine\UnaryInfC{$\bot$}
-\RightLabel{Splitting}
-\TrinaryInfC{$\bot$}
+  \AxiomC{$\neg\top \lor C$}
+  \RightLabel{TopL}
+  \UnaryInfC{$C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\bot \lor C$}
+  \RightLabel{BottomR}
+  \UnaryInfC{$C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomC{$\neg\neg a \lor C$}
+  \RightLabel{NegL}
+  \UnaryInfC{$a \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\neg a \lor C$}
+  \RightLabel{NegR}
+  \UnaryInfC{$\neg a \lor C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomC{$\neg (a \land b) \lor C$}
+  \RightLabel{AndL}
+  \UnaryInfC{$\neg a \lor \neg b \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$(a \land b) \lor C$}
+  \RightLabel{AndR1}
+  \UnaryInfC{$a \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$(a \land b) \lor C$}
+  \RightLabel{AndR2}
+  \UnaryInfC{$b \lor C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomC{$\neg (a \lor b) \lor C$}
+  \RightLabel{OrL1}
+  \UnaryInfC{$\neg a \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\neg (a \lor b) \lor C$}
+  \RightLabel{OrL2}
+  \UnaryInfC{$\neg b \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$(a \lor b) \lor C$}
+  \RightLabel{OrR}
+  \UnaryInfC{$a \lor b \lor C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{3}
+\begin{prooftree}
+  \AxiomC{$\neg (a \impl b) \lor C$}
+  \RightLabel{ImpL1}
+  \UnaryInfC{$a \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\neg (a \impl b) \lor C$}
+  \RightLabel{ImpL2}
+  \UnaryInfC{$\neg b \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$(a \impl b) \lor C$}
+  \RightLabel{ImpR}
+  \UnaryInfC{$\neg a \lor b \lor C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomC{$\neg \forall x\, \varphi x \lor C$}
+  \RightLabel{AllL}
+  \UnaryInfC{$\neg \varphi(s(...)) \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\forall x\: \varphi x \lor C$}
+  \RightLabel{AllR}
+  \UnaryInfC{$\varphi x \lor C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomC{$\neg \exists x\: \varphi x \lor C$}
+  \RightLabel{ExL}
+  \UnaryInfC{$\neg \varphi x \lor C$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\exists x\, \varphi x \lor C$}
+  \RightLabel{ExR}
+  \UnaryInfC{$\varphi(s(...)) \lor C$}
+\end{prooftree}
+\end{multicols}
+
+\begin{prooftree}
+  \AxiomC{$C \lor \varphi(x)$}
+  \RightLabel{DefIntro}
+  \UnaryInfC{$C \lor D(x)$}
+\end{prooftree}
+
+\subsubsection*{Avatar rules}
+
+\begin{prooftree}
+  \AxiomC{$C \lor \Gamma \leftarrow A$}
+  \RightLabel{AvatarComponentElim}
+  \UnaryInfC{$\Gamma \leftarrow A \land \neg[C]$}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{AvatarComponentIntro}
+  \UnaryInfC{$C \leftarrow [C]$}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{$\Gamma \leftarrow A$}
+  \RightLabel{AvatarAbsurd}
+  \UnaryInfC{$\Gamma \lor \neg A \leftarrow \top$}
 \end{prooftree}
 
 \subsection{LKsk}

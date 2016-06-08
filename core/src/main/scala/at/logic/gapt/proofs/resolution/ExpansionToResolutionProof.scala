@@ -6,11 +6,13 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
 
+/** Converts an expansion proof to a resolution proof. */
 object ExpansionToResolutionProof {
 
   def apply( expansionProof: ExpansionProof, prover: ResolutionProver = Escargot ): Option[ResolutionProof] =
     prover.getRobinsonProof( asCNF( expansionProof ) )
 
+  /** Just the CNF of the deep formula of the expansion proof. */
   def asCNF( expansionProof: ExpansionProof ): Set[ResolutionProof] =
     expansionProof.expansionSequent.
       map( Sequent() :+ _, _ +: Sequent() ).elements.view.

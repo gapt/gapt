@@ -23,6 +23,15 @@ object AvatarSplit {
     }
   }
 }
+
+/**
+ * Removes a clause component.
+ * {{{
+ *   Γ ∨ C <- A
+ *   ---------------
+ *      Γ  <- A ∧ ¬a
+ * }}}
+ */
 case class AvatarComponentElim( subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarComponent ) extends LocalResolutionRule {
   require( !component.introOnly )
   require( indices subsetOf subProof.conclusion.indices.toSet )
@@ -54,12 +63,20 @@ object AvatarComponentElim {
     AvatarComponentElim( subProof, getIndices( component.clause ), component )
   }
 }
+/**
+ * Introduces a clause component.
+ * {{{
+ *   --------
+ *   C <- a
+ * }}}
+ */
 case class AvatarComponentIntro( component: AvatarComponent ) extends InitialClause {
   override def introducedDefinitions = component.inducedDefinitions
   override val assertions = component.assertion.swapped
   def mainFormulaSequent = component.clause
 }
 
+/** Clause component together with its associated propositional atom. */
 trait AvatarComponent {
   def clause: HOLSequent
   def assertion: HOLClause
@@ -130,6 +147,14 @@ case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarCo
   def inducedDefinitions = Map()
 }
 
+/**
+ * Moves an assertion back to the sequent.
+ * {{{
+ *     Γ <- A
+ *   ------------
+ *    Γ ∨ ¬A <-
+ * }}}
+ */
 case class AvatarAbsurd( subProof: ResolutionProof ) extends LocalResolutionRule {
   override val assertions = Sequent()
   def mainFormulaSequent = subProof.assertions
