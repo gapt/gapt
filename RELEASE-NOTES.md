@@ -4,6 +4,7 @@
 
 * New resolution calculus with Avatar splitting
 * Vampire proof import with splitting
+* More reliable leanCoP interface
 * Removal of obsolete or unmaintained code:
   * Schemata
   * Old LK implementation

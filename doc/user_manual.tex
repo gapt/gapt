@@ -1224,11 +1224,16 @@ Some(
 
 \end{clilisting}
 
-The LeanCoP interface only supports the \cli{getExpansionProof} method with
-exactly one formula in the succedent:
+The LeanCoP interface supports the \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
-gapt> LeanCoP getExpansionProof sequent map {_.deep}
-res31: Option[at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula]] = Some(p(0): o, (p(0) ⊃ p(s(0))) ∧ (p(s(0)) ⊃ p(s(s(0)))) :- p(s(s(0))): o)
+gapt> LeanCoP getExpansionProof sequent
+res31: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(∀x (p(x) ⊃ p(s(x)))
+  +^{0} (p(0)+ ⊃ p(s(0))-)
+  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+p(0)-
+:-
+p(s(s(0)))+)
 
 \end{clilisting}
 
@@ -1777,12 +1782,18 @@ P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) �
 
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
-gapt> Escargot.getExpansionProof(problem).get.deep
-res47: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
-
+gapt> Escargot.getExpansionProof(problem)
+res47: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(
 :-
-P(nil:list) ∧ (P(nil) ⊃ P(cons(0:nat, cons(s(0): nat, nil): list))) ⊃
-  P(cons(0, cons(s(0), nil)))
+P(nil:list)- ∧
+    (∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+      +^{nil}
+        (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
+          +^{0}
+            (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
+            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+  P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
 

@@ -120,7 +120,6 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
-
     val num_clauses = lean_clauses.length
     val goal = Or.rightAssociative( lean_clauses: _* )
 
@@ -130,9 +129,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
     def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
       case Nil => None
-      case hd :: tl => syntacticMatching( hd, goal ) match {
+      case hd :: tl => clauseSubsumption( CNFn.toClauseList( hd ).head, CNFn.toClauseList( goal ).head ) match {
         case None        => findSubstitution( tl, goal )
-        case Some( sub ) => Some( sub )
+        case Some( sub ) => Some( sub.asFOLSubstitution )
       }
     }
 
