@@ -133,6 +133,16 @@ object TptpProofParser extends TptpProofParser {
             ) )
           case clauses => labelledCNF( label ) map SketchAxiom
         }
+      case ( "cnf", "axiom", axiom, Seq() ) =>
+        val label = stepName
+        CNFp.toClauseList( axiom ) match {
+          case Seq( axiomClause ) =>
+            Seq( SketchInference(
+              axiomClause,
+              labelledCNF( label ) map SketchAxiom
+            ) )
+          case clauses => labelledCNF( label ) map SketchAxiom
+        }
       case ( _, _, conclusion, justification +: _ ) =>
         CNFp.toClauseList( conclusion ) match {
           case Seq( conclusionClause ) =>
