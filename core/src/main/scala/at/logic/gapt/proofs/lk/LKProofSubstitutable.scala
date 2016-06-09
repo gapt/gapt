@@ -199,6 +199,12 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
     ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
   }
 
+  override protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = ForallSkRightRule( subProofNew, TermReplacement( proof.skolemTerm, repl ), TermReplacement( proof.skolemDef, repl ) )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
   override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
     val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
     val proofNew = ExistsRightRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
@@ -208,6 +214,12 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
   override protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
     val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
     val proofNew = ExistsLeftRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.eigenVariable, repl ).asInstanceOf[Var] )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
+  }
+
+  override protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
+    val proofNew = ExistsSkLeftRule( subProofNew, TermReplacement( proof.skolemTerm, repl ), TermReplacement( proof.skolemDef, repl ) )
     ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
   }
 
