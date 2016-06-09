@@ -1177,14 +1177,14 @@ Some([p13]  :-    (Resolution(p8, Suc(0), p12, Ant(0)))
 [p1]  :- p(0): o   (Input( :- p(0): o)...
 gapt> Prover9 getLKProof sequent
 res27: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p11] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p10, Ant(2), Ant(1)))
-[p10] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))), ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p5, Suc(0), p9, Ant(1)))
-[p9] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p8, Suc(0), p6, Ant(0)))
-[p8] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (ForallLeftRule(p7, Ant(0), p(x_0) ⊃ p(s(x_0)), s(0), x_0))
+Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0): o, ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) :- p(s(s(0))): o    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)): o :- p(s(s(0))): o    (ForallLeftRule(p7, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
 [p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)): o :- p(s(s(0))): o    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
 [p6] p(s(s(0))): o :- p(s(s(0))): o    (LogicalAxiom(p(s(s(0))): o))
-[p5] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(0)): o    (CutRule(p1, Suc(0), p4, Ant(1)))
-[p4] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :...
+[p5] p(0): o, ∀x (p(x) ⊃ p(s(x))) :- p(s(0)): o    (CutRule(p1, Suc(0), p4, Ant(1)))
+[p4] ∀x (p(x) ⊃ p(s(x))), p(0): o :- p(s(0)): o    (ForallLeftRule(p3, Ant(0), p(x)...
 gapt> Prover9 getExpansionProof sequent
 res28: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(p(0)-,
@@ -1202,14 +1202,14 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res29: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p11] p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p1, Suc(0), p10, Ant(1)))
-[p10] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p9, Ant(2), Ant(0)))
-[p9] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): o, ∀x_0 (p(x_0) ⊃ p(s(x_0))) :- p(s(s(0))): o    (CutRule(p4, Suc(0), p8, Ant(1)))
-[p8] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p7, Suc(0), p5, Ant(0)))
-[p7] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(s(0)): o :- p(s(s(0))): o    (ForallLeftRule(p6, Ant(0), p(x_0) ⊃ p(s(x_0)), s(0), x_0))
+Some([p11] p(0): o, ∀x (p(x) ⊃ p(s(x))) :- p(s(s(0))): o    (CutRule(p1, Suc(0), p10, Ant(1)))
+[p10] ∀x (p(x) ⊃ p(s(x))), p(0): o :- p(s(s(0))): o    (ContractionLeftRule(p9, Ant(2), Ant(0)))
+[p9] ∀x (p(x) ⊃ p(s(x))), p(0): o, ∀x (p(x) ⊃ p(s(x))) :- p(s(s(0))): o    (CutRule(p4, Suc(0), p8, Ant(1)))
+[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)): o :- p(s(s(0))): o    (CutRule(p7, Suc(0), p5, Ant(0)))
+[p7] ∀x (p(x) ⊃ p(s(x))), p(s(0)): o :- p(s(s(0))): o    (ForallLeftRule(p6, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
 [p6] p(s(0)) ⊃ p(s(s(0))), p(s(0)): o :- p(s(s(0))): o    (ImpLeftRule(p2, Suc(0), p5, Ant(0)))
 [p5] p(s(s(0))): o :- p(s(s(0))): o    (LogicalAxiom(p(s(s(0))): o))
-[p4] ∀x_0 (p(x_0) ⊃ p(s(x_0))), p(0): ...
+[p4] ∀x (p(x) ⊃ p(s(x))), p(0): o :- p(s(0)): o    (ForallLeftRule(p3, Ant(0), p...
 \end{clilisting}
 
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
@@ -1544,29 +1544,29 @@ The actual simplification is performed using the \texttt{CERES} command. Please 
 gapt> prooftool(Pi2Pigeonhole.proof)
 
 gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach println
-∀x ∃y_0 (x <= y_0 ∧ f(y_0) = s(0))
-∀x ∃y_0 (x <= y_0 ∧ f(y_0) = 0)
+∀x ∃y (x <= y ∧ f(y) = s(0))
+∀x ∃y (x <= y ∧ f(y) = 0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
 [p406] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
-∀x_0 ∀y_1 (s(x_0) <= y_1 ⊃ x_0 <= y_1)
+∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
+∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1)
 :-
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p405, Suc(1), Suc(0)))
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p405, Suc(1), Suc(0)))
 [p405] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
-∀x_0 ∀y_1 (s(x_0) <= y_1 ⊃ x_0 <= y_1)
+∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
+∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1)
 :-
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
-[p404] ∀x_1 ∀y_1 (x_1 <= M(x_1, y_1) ∧ y_1 <= M(x_1, y_1)),
-∀x_0 ∀y_1 (s(x_0) <= y_1 ⊃ x_0 <= y_1),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
+[p404] ∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
+∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
 :-
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(...
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p403, Ant(4), Ant(...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
