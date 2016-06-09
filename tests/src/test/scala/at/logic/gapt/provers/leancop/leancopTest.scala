@@ -3,9 +3,10 @@ package at.logic.gapt.provers.leancop
 import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class LeanCoPProverTest extends Specification {
+class LeanCoPProverTest extends Specification with SatMatchers {
   args( skipAll = !LeanCoP.isInstalled )
 
   "LeanCoP" should {
@@ -37,6 +38,13 @@ class LeanCoPProverTest extends Specification {
     "P,P->Q |- Q" in {
       val seq = HOLSequent( Seq( FOLAtom( "P" ), Imp( FOLAtom( "P" ), FOLAtom( "Q" ) ) ), Seq( FOLAtom( "Q" ) ) )
       LeanCoP.getExpansionProof( seq ) must beSome
+    }
+
+    "linear example" in {
+      LeanCoP getExpansionProof hof"p 0 & !x (p x -> p (s x)) -> p (s (s (s 0)))" must beLike {
+        case Some( expansion ) =>
+          expansion.deep must beValidSequent
+      }
     }
 
     "validate the buss tautology for n=2" in { LeanCoP.isValid( BussTautology( 2 ) ) must beTrue }

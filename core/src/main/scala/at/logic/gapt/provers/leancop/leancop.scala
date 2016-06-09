@@ -42,7 +42,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
 
           LeanCoPParser.getExpansionProof( new StringReader( tptpProof ) )
       }
-    } map { es =>
+    } ) map { es =>
       val hasEquality = cnf.values.flatMap( _.conclusion.elements ).exists {
         case Eq( _, _ ) => true
         case _          => false
@@ -56,7 +56,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
         insts.keys.map( s => Substitution( vars zip s ) ).toSet
 
       expansionProofFromInstances( substs.toMap, cnf.values.toSet, !hasEquality )
-    } )
+    }
   }
 
   override def getLKProof( seq: HOLSequent ): Option[LKProof] =
