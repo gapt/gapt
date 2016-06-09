@@ -136,6 +136,10 @@ object Pickrule {
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )
+      case _: ForallSkRightRule =>
+        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
+        require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
+        List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )
       case _: ExistsLeftRule =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
@@ -144,6 +148,10 @@ object Pickrule {
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).succedent ) )
+      case _: ExistsSkLeftRule =>
+        require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
+        require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
+        List( pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ) )
 
       case _: EqualityLeftRule =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
