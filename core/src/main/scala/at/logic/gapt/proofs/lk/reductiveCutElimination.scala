@@ -178,6 +178,12 @@ class ReductiveCutElimination {
     case ExistsRightRule( subProof, _, _, term, _ ) =>
       ExistsRightRule( cutElim( subProof ), proof.mainFormulas.head, term )
 
+    case ForallSkRightRule( subProof, _, _, skTerm, skDef ) =>
+      ForallSkRightRule( cutElim( subProof ), skTerm, skDef )
+
+    case ExistsSkLeftRule( subProof, _, _, skTerm, skDef ) =>
+      ExistsSkLeftRule( cutElim( subProof ), skTerm, skDef )
+
     case EqualityLeftRule( subProof, _, _, _ ) =>
       EqualityLeftRule( cutElim( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
@@ -425,12 +431,26 @@ class ReductiveCutElimination {
         val aNew = cutSub.getLeftOccConnector.child( a )
         ForallRightRule( cutSub, aNew, eigen, quant )
 
+      case l @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) if left.mainIndices.head != aux1 =>
+
+        val aux1Sub = l.getOccConnector.parent( aux1 )
+        val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
+        val aNew = cutSub.getLeftOccConnector.child( a )
+        ForallSkRightRule( cutSub, aNew, main, skTerm, skDef )
+
       case l @ ExistsLeftRule( subProof, a, eigen, quant ) =>
 
         val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
         val aNew = cutSub.getLeftOccConnector.child( a )
         ExistsLeftRule( cutSub, aNew, eigen, quant )
+
+      case l @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) =>
+
+        val aux1Sub = l.getOccConnector.parent( aux1 )
+        val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
+        val aNew = cutSub.getLeftOccConnector.child( a )
+        ExistsSkLeftRule( cutSub, aNew, main, skTerm, skDef )
 
       case l @ ExistsRightRule( subProof, a, f, term, quant ) if left.mainIndices.head != aux1 =>
 
@@ -602,11 +622,23 @@ class ReductiveCutElimination {
         val aNew = cutSub.getRightOccConnector.child( a )
         ForallRightRule( cutSub, aNew, eigen, quant )
 
+      case r @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) =>
+        val aux2Sub = r.getOccConnector.parent( aux2 )
+        val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
+        val aNew = cutSub.getRightOccConnector.child( a )
+        ForallSkRightRule( cutSub, aNew, main, skTerm, skDef )
+
       case r @ ExistsLeftRule( subProof, a, eigen, quant ) if right.mainIndices.head != aux2 =>
         val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightOccConnector.child( a )
         ExistsLeftRule( cutSub, aNew, eigen, quant )
+
+      case r @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) if right.mainIndices.head != aux2 =>
+        val aux2Sub = r.getOccConnector.parent( aux2 )
+        val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
+        val aNew = cutSub.getRightOccConnector.child( a )
+        ExistsSkLeftRule( cutSub, aNew, main, skTerm, skDef )
 
       case r @ ExistsRightRule( subProof, a, f, term, quant ) =>
         val aux2Sub = r.getOccConnector.parent( aux2 )
