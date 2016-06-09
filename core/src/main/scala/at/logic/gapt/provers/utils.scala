@@ -29,7 +29,7 @@ object groundFreeVariables {
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =
-    getGroundingMap( variables( seq ), constants( seq ) )
+    getGroundingMap( freeVariables( seq ), constants( seq ) )
 
   def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, Var] ) = {
     val groundingMap = getGroundingMap( seq )
