@@ -8,41 +8,10 @@ import at.logic.gapt.proofs.lk.{ LKProof, WeakeningContractionMacroRule }
 
 trait ResolutionProver extends OneShotProver {
 
-  protected def withRenamedConstants( cnf: Traversable[HOLClause] )( f: ( Map[Const, Const], Traversable[HOLClause] ) => Option[ResolutionProof] ): Option[ResolutionProof] = {
-    val ( renamedCNF, renaming, invertRenaming ) = renameConstantsToFi( cnf.toList )
-    f( renaming, renamedCNF ) map { renamedProof =>
-      TermReplacement( renamedProof, invertRenaming toMap )
-    }
-  }
-
-  private def withGroundVariables( seq: HOLSequent )( f: HOLSequent => Option[LKProof] ): Option[LKProof] = {
-    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map { renamedProof =>
-      val usedVars = renamedProof.subProofs.flatMap { p => variables( p ) }
-      val varRenaming = rename( invertRenaming.values, usedVars )
-      Substitution( varRenaming.map( _.swap ) )( TermReplacement( renamedProof, invertRenaming.mapValues( varRenaming ).toMap[LambdaExpression, LambdaExpression] ) )
-    }
-  }
-
-  private def withGroundVariables2( seq: HOLSequent )( f: HOLSequent => Option[ExpansionProof] ): Option[ExpansionProof] = {
-    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map {
-      case ExpansionProof( renamedExpSeq ) =>
-        ExpansionProof( renamedExpSeq map { TermReplacement( _, invertRenaming.toMap ) } )
-    }
-  }
-
-  private def withGroundVariables3( seq: HOLSequent )( f: HOLSequent => Option[ResolutionProof] ): Option[ResolutionProof] = {
-    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
-    f( renamedSeq ) map { renamedProof =>
-      TermReplacement( renamedProof, invertRenaming.toMap )
-    }
-  }
-
   override def getLKProof( seq: HOLSequent ): Option[LKProof] = getLKProof( seq, addWeakenings = true )
 
   def getLKProof( seq: HOLSequent, addWeakenings: Boolean ): Option[LKProof] =
-    withGroundVariables( seq ) { seq =>
+    groundFreeVariables.wrap( seq ) { seq =>
       getResolutionProof( seq ) map { resolution =>
         val lk = ResolutionToLKProof( resolution )
         if ( addWeakenings ) WeakeningContractionMacroRule( lk, seq )
@@ -78,7 +47,7 @@ trait ResolutionProver extends OneShotProver {
   def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
-    withGroundVariables2( seq ) { seq =>
+    groundFreeVariables.wrap( seq ) { seq =>
       getResolutionProof( seq ) map { ResolutionToExpansionProof( _ ) }
     }
 

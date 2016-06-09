@@ -5,6 +5,8 @@ import at.logic.gapt.proofs.Sequent
 
 trait Replaceable[-I, +O] {
   def replace( obj: I, p: PartialFunction[LambdaExpression, LambdaExpression] ): O
+
+  def names( obj: I ): Set[VarOrConst]
 }
 trait ClosedUnderReplacement[T] extends Replaceable[T, T]
 
@@ -31,10 +33,15 @@ private[expr] trait DefaultReplaceables {
 
         case _ => term
       }
+
+    def names( term: LambdaExpression ): Set[VarOrConst] =
+      constants( term ).toSet[VarOrConst] union variables( term ).toSet
   }
   private object holFormulaReplacer extends ClosedUnderReplacement[HOLFormula] {
     override def replace( obj: HOLFormula, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLFormula =
       lambdaExpressionReplacer.replace( obj, p ).asInstanceOf[HOLFormula]
+
+    def names( obj: HOLFormula ) = lambdaExpressionReplacer.names( obj )
   }
 
   implicit def lambdaExpressionReplaceable[I <: LambdaExpression]( implicit notAFormula: Not[I <:< HOLFormula] ): Replaceable[I, LambdaExpression] = lambdaExpressionReplacer
@@ -42,23 +49,48 @@ private[expr] trait DefaultReplaceables {
   implicit object holAtomReplaceable extends ClosedUnderReplacement[HOLAtom] {
     override def replace( obj: HOLAtom, p: PartialFunction[LambdaExpression, LambdaExpression] ): HOLAtom =
       lambdaExpressionReplacer.replace( obj, p ).asInstanceOf[HOLAtom]
+
+    def names( obj: HOLAtom ) = lambdaExpressionReplacer.names( obj )
   }
 
   implicit object substitutionReplaceable extends ClosedUnderReplacement[Substitution] {
     def replace( subst: Substitution, p: PartialFunction[LambdaExpression, LambdaExpression] ): Substitution =
       Substitution( for ( ( l, r ) <- subst.map ) yield TermReplacement( l, p ).asInstanceOf[Var] -> TermReplacement( r, p ) )
+
+    def names( obj: Substitution ) =
+      obj.map.keySet ++ obj.map.values flatMap { containedNames( _ ) }
   }
 
   implicit def sequentReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Sequent[I], Sequent[O]] =
     new Replaceable[Sequent[I], Sequent[O]] {
       override def replace( obj: Sequent[I], p: PartialFunction[LambdaExpression, LambdaExpression] ) =
         obj.map { TermReplacement( _, p ) }
+
+      def names( obj: Sequent[I] ) = obj.elements flatMap { containedNames( _ ) } toSet
+    }
+
+  implicit def seqReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Seq[I], Seq[O]] =
+    new Replaceable[Seq[I], Seq[O]] {
+      override def replace( obj: Seq[I], p: PartialFunction[LambdaExpression, LambdaExpression] ) =
+        obj.map { TermReplacement( _, p ) }
+
+      def names( obj: Seq[I] ) = obj flatMap { containedNames( _ ) } toSet
+    }
+
+  implicit def optionReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Option[I], Option[O]] =
+    new Replaceable[Option[I], Option[O]] {
+      override def replace( obj: Option[I], p: PartialFunction[LambdaExpression, LambdaExpression] ) =
+        obj.map { TermReplacement( _, p ) }
+
+      def names( obj: Option[I] ) = obj.toSet[I] flatMap { containedNames( _ ) }
     }
 
   implicit def tupleReplaceable[I1, I2, O1, O2]( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): Replaceable[( I1, I2 ), ( O1, O2 )] =
     new Replaceable[( I1, I2 ), ( O1, O2 )] {
       override def replace( obj: ( I1, I2 ), p: PartialFunction[LambdaExpression, LambdaExpression] ): ( O1, O2 ) =
         ( ev1.replace( obj._1, p ), ev2.replace( obj._2, p ) )
+
+      def names( obj: ( I1, I2 ) ) = containedNames( obj._1 ) union containedNames( obj._2 )
     }
 
 }
@@ -77,5 +109,27 @@ object TermReplacement {
 
   def apply[I, O]( obj: I, p: PartialFunction[LambdaExpression, LambdaExpression] )( implicit ev: Replaceable[I, O] ): O =
     ev.replace( obj, p )
+
+  /**
+   * Performs capture-avoiding term replacement.
+   *
+   * If a constant or variable occurs both in the range of partialMap
+   * and obj, we rename the occurrence in obj first to something else.
+   */
+  def hygienic[I, O]( obj: I, partialMap: Map[Const, LambdaExpression] )( implicit ev: Replaceable[I, O] ): O = {
+    val namesInObj = containedNames( obj )
+    val namesInRange = partialMap.values.flatMap { containedNames( _ ) }.toSet
+
+    val needToRename = namesInObj intersect namesInRange -- partialMap.keySet
+    val nameGen = rename.awayFrom( namesInObj ++ namesInRange ++ partialMap.keySet )
+    val renaming = for ( n <- needToRename ) yield n -> nameGen.fresh( n )
+
+    TermReplacement( obj, partialMap ++ renaming toMap )
+  }
+}
+
+object containedNames {
+  def apply[I, O]( obj: I )( implicit ev: Replaceable[I, O] ): Set[VarOrConst] =
+    ev.names( obj )
 }
 

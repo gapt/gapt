@@ -11,7 +11,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 import scala.collection.mutable.ArrayBuffer
@@ -20,20 +20,21 @@ import scala.io.Source
 object Prover9 extends Prover9( extraCommands = _ => Seq() )
 class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
   def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
-    withRenamedConstants( cnf ) {
-      case ( renaming, cnf ) =>
+    renameConstantsToFi.wrap( cnf.toSeq )(
+      ( renaming, cnf: Seq[HOLClause] ) => {
         val p9Input = toP9Input( cnf, renaming )
         runProcess.withExitValue( Seq( "prover9" ), p9Input ) match {
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }
-    } map {
-      mapInputClauses( _ ) { clause =>
-        cnf.view flatMap { ourClause =>
-          syntacticMatching( ourClause.toDisjunction, clause.toDisjunction ) map { Subst( Input( ourClause ), _ ) }
-        } head
       }
-    }
+    ) map {
+        mapInputClauses( _ ) { clause =>
+          cnf.view flatMap { ourClause =>
+            syntacticMatching( ourClause.toDisjunction, clause.toDisjunction ) map { Subst( Input( ourClause ), _ ) }
+          } head
+        }
+      }
 
   private[prover9] def parseProof( p9Output: String ) = {
     val ivy = runProcess( Seq( "prooftrans", "ivy" ), p9Output )

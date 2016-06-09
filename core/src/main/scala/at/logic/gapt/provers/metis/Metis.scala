@@ -7,7 +7,7 @@ import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 import scalaz.Success
@@ -16,9 +16,9 @@ object Metis extends Metis
 
 class Metis extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
-    withRenamedConstants( seq ) {
-      case ( renaming, cnf ) =>
-        val labelledCNF = cnf.toSeq.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
+    renameConstantsToFi.wrap( seq.toSeq )(
+      ( renaming, cnf: Seq[HOLClause] ) => {
+        val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq( "metis", "--show", "proof" ), tptpIn )
         val lines = output.split( "\n" ).toSeq
@@ -27,7 +27,9 @@ class Metis extends ResolutionProver with ExternalProgram {
             dropWhile( !_.startsWith( "SZS output start CNFRefutation " ) ).drop( 1 ).
             takeWhile( !_.startsWith( "SZS output end CNFRefutation " ) ).
             mkString( "\n" )
-          RefutationSketchToResolution( TptpProofParser.parse( tptpDerivation, labelledCNF mapValues { Seq( _ ) } ) ) match {
+          RefutationSketchToResolution( TptpProofParser.parse( tptpDerivation, labelledCNF mapValues {
+            Seq( _ )
+          } ) ) match {
             case Success( proof ) => Some( proof )
           }
         } else if ( lines.exists( _.startsWith( "SZS status Satisfiable" ) ) ) {
@@ -35,7 +37,8 @@ class Metis extends ResolutionProver with ExternalProgram {
         } else {
           throw new IllegalArgumentException
         }
-    }
+      }
+    )
 
   private def toTPTP( formula: LambdaExpression ): String = formula match {
     case Bottom()                  => "$false"

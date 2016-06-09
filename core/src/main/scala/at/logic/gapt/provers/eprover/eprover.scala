@@ -7,21 +7,22 @@ import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 
 object EProver extends EProver
 class EProver extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
-    withRenamedConstants( seq ) {
-      case ( renaming, cnf ) =>
-        val labelledCNF = cnf.toSeq.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
+    renameConstantsToFi.wrap( seq.toSeq )(
+      ( renaming, cnf: Seq[HOLClause] ) => {
+        val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = toTPTP( labelledCNF )
         val output = runProcess.withTempInputFile( Seq( "eproof", "--tptp3-format" ), tptpIn )
         if ( output.split( "\n" ).contains( "# SZS status Unsatisfiable" ) )
           RefutationSketchToResolution( TptpProofParser.parse( output, labelledCNF mapValues { Seq( _ ) } ) ).toOption
         else None
-    }
+      }
+    )
 
   private def toTPTP( formula: LambdaExpression ): String = formula match {
     case Bottom()                  => "$false"

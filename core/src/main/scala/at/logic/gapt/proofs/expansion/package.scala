@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, LambdaExpression, Replaceable }
+import at.logic.gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, LambdaExpression, Replaceable, containedNames }
 
 package object expansion {
   type ExpansionSequent = Sequent[ExpansionTree]
@@ -26,14 +26,25 @@ package object expansion {
   implicit val expansionProofsAreClosedUnderSubstitution: ClosedUnderSub[ExpansionProof] = expansionProofSubstitution
   implicit val expansionProofsWithCutAreClosedUnderSubstitution: ClosedUnderSub[ExpansionProofWithCut] = expansionProofWithCutSubstitution
 
+  implicit object expansionTreesAreReplaceable extends ClosedUnderReplacement[ExpansionTree] {
+    override def replace( proof: ExpansionTree, p: PartialFunction[LambdaExpression, LambdaExpression] ) = replaceET( proof, p )
+
+    def names( proof: ExpansionTree ) =
+      proof.subProofs flatMap {
+        case p: ETDefinition       => containedNames( p.shallow ) ++ containedNames( p.definedExpr )
+        case p: ETDefinedAtom      => containedNames( p.shallow ) ++ containedNames( p.definition )
+        case p: ETSkolemQuantifier => containedNames( p.shallow ) ++ containedNames( p.skolemDef )
+        case p: ETStrongQuantifier => containedNames( p.shallow ) + p.eigenVariable
+        case p                     => containedNames( p.shallow )
+      }
+  }
   implicit object expansionProofsAreReplaceable extends ClosedUnderReplacement[ExpansionProof] {
     override def replace( proof: ExpansionProof, p: PartialFunction[LambdaExpression, LambdaExpression] ) = replaceET( proof, p )
+    def names( proof: ExpansionProof ) = containedNames( proof.expansionSequent )
   }
   implicit object expansionProofsWithCutAreReplaceable extends ClosedUnderReplacement[ExpansionProofWithCut] {
     override def replace( proof: ExpansionProofWithCut, p: PartialFunction[LambdaExpression, LambdaExpression] ) =
       ExpansionProofWithCut( replaceET( proof.expansionWithCutAxiom, p ) )
-  }
-  implicit object expansionTreesAreReplaceable extends ClosedUnderReplacement[ExpansionTree] {
-    override def replace( proof: ExpansionTree, p: PartialFunction[LambdaExpression, LambdaExpression] ) = replaceET( proof, p )
+    def names( proof: ExpansionProofWithCut ) = containedNames( proof.expansionWithCutAxiom )
   }
 }

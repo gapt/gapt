@@ -5,16 +5,23 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 package object resolution {
-  implicit object resolutionProofsAreReplaceable extends ClosedUnderReplacement[ResolutionProof] {
+  implicit object avatarComponentsAreReplaceable extends ClosedUnderReplacement[AvatarComponent] {
     def replace( component: AvatarComponent, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarComponent = component match {
       case AvatarGroundComp( atom, pol )           => AvatarGroundComp( TermReplacement( atom, repl ), pol )
       case AvatarNonGroundComp( atom, defn, vars ) => AvatarNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars )
       case AvatarNegNonGroundComp( atom, defn, vars, idx ) =>
         AvatarNegNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars, idx )
     }
-    def replace( subst: Substitution, repl: PartialFunction[LambdaExpression, LambdaExpression] ): Substitution =
-      Substitution( subst.map.map { case ( f, t ) => f -> TermReplacement( t, repl ) } )
+    def names( component: AvatarComponent ) = component match {
+      case AvatarGroundComp( atom, _ ) => containedNames( atom )
+      case AvatarNonGroundComp( atom, defn, vars ) =>
+        containedNames( atom ) ++ containedNames( defn ) ++ containedNames( vars )
+      case AvatarNegNonGroundComp( atom, defn, vars, _ ) =>
+        containedNames( atom ) ++ containedNames( defn ) ++ containedNames( vars )
+    }
+  }
 
+  implicit object resolutionProofsAreReplaceable extends ClosedUnderReplacement[ResolutionProof] {
     def replace( proof: ResolutionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ResolutionProof = {
       val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
@@ -23,7 +30,7 @@ package object resolution {
         case Refl( term )                 => Refl( TermReplacement( term, repl ) )
         case Taut( formula )              => Taut( TermReplacement( formula, repl ) )
         case Factor( q, i1, i2 )          => Factor( f( q ), i1, i2 )
-        case Subst( q, subst )            => Subst( f( q ), replace( subst, repl ) )
+        case Subst( q, subst )            => Subst( f( q ), TermReplacement( subst, repl ) )
         case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
         case Paramod( q1, l1, dir, q2, l2, con ) =>
           val q1New = f( q1 )
@@ -34,9 +41,9 @@ package object resolution {
           val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )
         case AvatarComponentElim( q, indices, component ) =>
-          AvatarComponentElim( f( q ), indices, replace( component, repl ) )
+          AvatarComponentElim( f( q ), indices, TermReplacement( component, repl ) )
         case AvatarAbsurd( q )                 => AvatarAbsurd( f( q ) )
-        case AvatarComponentIntro( component ) => AvatarComponentIntro( replace( component, repl ) )
+        case AvatarComponentIntro( component ) => AvatarComponentIntro( TermReplacement( component, repl ) )
         case DefIntro( q, i, defAtom, definition ) =>
           DefIntro( f( q ), i, TermReplacement( defAtom, repl ), TermReplacement( definition, repl ) )
         case TopL( q, i )                => TopL( f( q ), i )
@@ -59,6 +66,32 @@ package object resolution {
       } )
 
       f( proof )
+    }
+
+    def names( proof: ResolutionProof ) = {
+      val ns = Set.newBuilder[VarOrConst]
+      for ( p <- proof.subProofs ) {
+        ns ++= containedNames( p.conclusion )
+        ns ++= containedNames( p.assertions )
+        p match {
+          case AvatarComponentIntro( comp ) =>
+            ns ++= containedNames( comp )
+          case AvatarComponentElim( _, _, comp ) =>
+            ns ++= containedNames( comp )
+          case Subst( _, subst ) =>
+            ns ++= containedNames( subst )
+          case DefIntro( _, _, defAtom, defn ) =>
+            ns ++= containedNames( defAtom )
+            ns ++= containedNames( defn )
+          case p: SkolemQuantResolutionRule =>
+            ns ++= containedNames( p.skolemTerm )
+            ns ++= containedNames( p.skolemDef )
+          case p: WeakQuantResolutionRule =>
+            ns ++= containedNames( p.variable )
+          case _ =>
+        }
+      }
+      ns.result()
     }
   }
 }

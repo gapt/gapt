@@ -7,7 +7,7 @@ import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 import org.parboiled2._
 
@@ -36,8 +36,8 @@ class SPASS extends ResolutionProver with ExternalProgram {
     s"formula(${expr2dfg( univclosure( cls_.toDisjunction ) )})."
   }
 
-  override def getResolutionProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
-    case ( renaming, cnf ) =>
+  override def getResolutionProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
+    ( renaming, cnf: Seq[HOLClause] ) => {
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
       val list_of_formulae =
@@ -143,7 +143,8 @@ class SPASS extends ResolutionProver with ExternalProgram {
       } else {
         None
       }
-  }
+    }
+  )
 
   class InferenceParser( val input: ParserInput ) extends Parser {
     def Num = rule { capture( oneOrMore( CharPredicate.Digit ) ) ~> { _.toInt } }

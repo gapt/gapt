@@ -26,7 +26,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
     // LeanCoP doesn't like empty clauses
     for ( ( _, clause ) <- cnf if clause.isProof ) return Some( ResolutionToExpansionProof( clause ) )
 
-    withRenamedConstants( cnf.keys ++: Sequent() ) { sequent =>
+    renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
       val tptp = TPTPFOLExporter.tptp_proof_problem_split( sequent )
       withTempFile.fromString( tptp ) { leanCoPInput =>
         runProcess.withExitValue( Seq( "leancop", leanCoPInput ) )
@@ -56,7 +56,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
         insts.keys.map( s => Substitution( vars zip s ) ).toSet
 
       expansionProofFromInstances( substs.toMap, cnf.values.toSet, !hasEquality )
-    }
+    } )
   }
 
   override def getLKProof( seq: HOLSequent ): Option[LKProof] =
@@ -64,9 +64,4 @@ class LeanCoP extends OneShotProver with ExternalProgram {
 
   override val isInstalled: Boolean = try runProcess.withExitValue( Seq( "leancop" ) )._1 == 2
   catch { case _: IOException => false }
-
-  private def withRenamedConstants( seq: HOLSequent )( f: HOLSequent => Option[ExpansionSequent] ): Option[ExpansionSequent] = {
-    val ( renamedSeq, _, invertRenaming ) = renameConstantsToFi( seq )
-    f( renamedSeq ) map { TermReplacement( _, invertRenaming toMap ) }
-  }
 }

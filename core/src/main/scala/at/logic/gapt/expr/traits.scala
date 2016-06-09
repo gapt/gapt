@@ -11,6 +11,10 @@ trait HOLAtom extends HOLFormula with HOLPartialAtom {
   private[expr] override def numberOfArguments: Int = 0
 }
 
+trait VarOrConst extends LambdaExpression {
+  def name: String
+}
+
 trait LogicalConstant extends Const
 
 trait FOLExpression extends LambdaExpression {
@@ -264,5 +268,13 @@ object HOLAtom {
     case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None
   }
+}
+
+/**
+ * Matches constants and variables, but nothing else.
+ */
+object VarOrConst {
+  def unapply( e: VarOrConst ): Some[( String, Ty )] =
+    Some( e.name -> e.exptype )
 }
 

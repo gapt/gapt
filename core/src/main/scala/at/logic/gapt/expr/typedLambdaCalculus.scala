@@ -155,7 +155,7 @@ abstract class LambdaExpression {
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
+class Var private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
 
   // Syntactic equality: two variables are equal if they have the same name and the same type
   def syntaxEquals( e: LambdaExpression ) = e match {
@@ -173,7 +173,7 @@ class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpr
   override val hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
+class Const private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
 
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Const( n, t ) => ( n == name && t == exptype )

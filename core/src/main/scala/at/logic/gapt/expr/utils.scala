@@ -11,17 +11,6 @@ import scala.collection.GenTraversable
 import scala.collection.mutable
 
 /**
- * Matches constants and variables, but nothing else.
- */
-object VarOrConst {
-  def unapply( e: LambdaExpression ): Option[( String, Ty )] = e match {
-    case Var( name, et )   => Some( ( name, et ) )
-    case Const( name, et ) => Some( ( name, et ) )
-    case _                 => None
-  }
-}
-
-/**
  * A lambda term is in variable-normal form (VNF) if different binders bind
  * different variables, and bound variables are disjoint from the free ones.
  */
@@ -164,9 +153,7 @@ object expressionSize {
  * is not in the blackList.
  */
 object rename {
-  def awayFrom( blacklist: Iterable[Var] ): NameGenerator =
-    new NameGenerator( blacklist map { _.name } )
-  def awayFrom( blacklist: Iterable[Const] )( implicit dummyImplicit: DummyImplicit ): NameGenerator =
+  def awayFrom( blacklist: Iterable[VarOrConst] ): NameGenerator =
     new NameGenerator( blacklist map { _.name } )
 
   def apply( v: Var, blackList: Iterable[Var] ): Var = awayFrom( blackList ).fresh( v )

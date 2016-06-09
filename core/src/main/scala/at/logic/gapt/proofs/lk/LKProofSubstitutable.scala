@@ -223,19 +223,15 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
     ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
   }
 
-  // FIXME: we don't apply TermReplacement to the replacement contexts but to the main formula
-  // This is necessary because ResolutionProver degrounds proofs by replacing constants with
-  // variables--these variables end up being the same as the bound variable in the replacement context...
-
   override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
     val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
-    val proofNew = EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    val proofNew = EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
     ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
   }
 
   override protected def visitEqualityRight( proof: EqualityRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
     val ( subProofNew, subConnector, _ ) = recurse( proof.subProof, () )
-    val proofNew = EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    val proofNew = EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
     ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, () )
   }
 

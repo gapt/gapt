@@ -391,9 +391,13 @@ package object expr extends DefaultReplaceables {
   }
 
   implicit class ExprNameGenerator( val nameGen: NameGenerator ) {
-    def fresh( v: Var ) = Var( nameGen.fresh( v.name ), v.exptype )
-    def fresh( v: FOLVar ) = FOLVar( nameGen.fresh( v.name ) )
-    def fresh( c: Const ) = Const( nameGen.fresh( c.name ), c.exptype )
-    def fresh( c: FOLConst ) = FOLConst( nameGen.fresh( c.name ) )
+    def fresh( v: Var ): Var = Var( nameGen.fresh( v.name ), v.exptype )
+    def fresh( v: FOLVar ): FOLVar = FOLVar( nameGen.fresh( v.name ) )
+    def fresh( c: Const ): Const = Const( nameGen.fresh( c.name ), c.exptype )
+    def fresh( c: FOLConst ): FOLConst = FOLConst( nameGen.fresh( c.name ) )
+    def fresh( n: VarOrConst ): VarOrConst = n match {
+      case v: Var   => fresh( v )
+      case c: Const => fresh( c )
+    }
   }
 }
