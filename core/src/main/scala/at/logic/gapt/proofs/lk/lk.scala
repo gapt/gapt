@@ -1031,7 +1031,7 @@ case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula, 
   if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
-  val mainFormula = All( v, A )
+  val mainFormula = BetaReduction.betaNormalize( All( v, A ) )
 
   override def name = "∀:l"
 
@@ -1111,7 +1111,7 @@ case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable:
   if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
     throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
 
-  val mainFormula = All( quantifiedVariable, subFormula )
+  val mainFormula = BetaReduction.betaNormalize( All( quantifiedVariable, subFormula ) )
 
   override def name = "∀:r"
 
@@ -1239,7 +1239,7 @@ case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: 
   if ( BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) ) != auxFormula )
     throw LKRuleCreationException( s"Aux formula should be $subFormula[$quantifiedVariable\\$eigenVariable] = ${BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )}, but is $auxFormula." )
 
-  val mainFormula = Ex( quantifiedVariable, subFormula )
+  val mainFormula = BetaReduction.betaNormalize( Ex( quantifiedVariable, subFormula ) )
 
   override def name = "∃:l"
 
@@ -1358,7 +1358,7 @@ case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: HOLFormula,
   if ( premise( aux ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw LKRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( aux )}." )
 
-  val mainFormula = Ex( v, A )
+  val mainFormula = BetaReduction.betaNormalize( Ex( v, A ) )
 
   override def name = "∃:r"
 
