@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.escargot
 
-import at.logic.gapt.examples.{ Permutations, PigeonHolePrinciple, BussTautology }
+import at.logic.gapt.examples.{ BussTautology, CountingEquivalence, Permutations, PigeonHolePrinciple }
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existsclosure
@@ -45,12 +45,7 @@ class EscargotTest extends Specification {
 
   "davis putnam" in { test( "-(exists x exists y all z ((f(x,y) -> f(y,z) & f(z,z)) & (f(x,y) & g(x,y) -> g(x,z) & g(z,z))))" ) must beSome }
 
-  "large cnf" in {
-    val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val as = 0 to 5 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-    val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-    Escargot getResolutionProof formula must beSome
-  }
+  "large cnf" in { Escargot getResolutionProof CountingEquivalence( 5 ) must beSome }
 
   "drinker" in { Escargot getResolutionProof hof"?x (p(x) -> !y p(y))" must beSome }
   "barber" in { Escargot getResolutionProof hof"-?x !y (shaves(x,y) <-> -shaves(y,y))" must beSome }

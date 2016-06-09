@@ -1,9 +1,9 @@
 package at.logic.gapt.provers.vampire
 
+import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.{ Clause, Sequent, SequentMatchers, HOLSequent }
+import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import org.specs2.mutable._
-
 import at.logic.gapt.expr._
 
 class VampireTest extends Specification with SequentMatchers {
@@ -103,12 +103,7 @@ class VampireTest extends Specification with SequentMatchers {
       Vampire.getResolutionProof( cnf ) must beSome
     }
 
-    "large cnf" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-      val endSequent = Sequent() :+ ( All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as ) )
-      Vampire getResolutionProof endSequent must beSome
-    }
+    "large cnf" in { Vampire getResolutionProof CountingEquivalence( 2 ) must beSome }
   }
 
 }

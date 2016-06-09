@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr.hol.CNFn
@@ -48,9 +49,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
   }
 
   "quantified definitions" in {
-    val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-    val endSequent = Sequent() :+ ( All( z, thresholds.exactly.oneOf( as ) ) <-> All( z, naive.exactly.oneOf( as ) ) )
+    val endSequent = Sequent() :+ CountingEquivalence( 2 )
 
     val Some( ref ) = Escargot getResolutionProof endSequent
     val expansion = ResolutionToExpansionProof( ref )

@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.spass
 
+import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
@@ -53,17 +54,11 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
     }
 
     "large cnf" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-      val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-      SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
+      SPASS getExpansionProof CountingEquivalence( 3 ) must beLike { case Some( p ) => p.deep must beValidSequent }
     }
 
     "bug with quantified splitting" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val as = 0 to 2 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-      val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-      SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
+      SPASS getExpansionProof CountingEquivalence( 2 ) must beLike { case Some( p ) => p.deep must beValidSequent }
     }
   }
 

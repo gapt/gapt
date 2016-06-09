@@ -1,5 +1,6 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
 
 /**
@@ -105,4 +106,22 @@ object PigeonHolePrinciple {
   def pigeon( i: Int ) = FOLConst( "p_" + i )
 
   def hole( i: Int ) = FOLConst( "h_" + i )
+}
+
+/**
+ * Sequence of valid first-order formulas about equivalent counting methods.
+ *
+ * Consider the formula ∀z ∃^=1^i ∀x ∃y a_i(x,y,z), where ∃^=1^i is a quantifier
+ * that says that there exists exactly one i (in 0..n) such that ∀x ∃y a_i(x,y,z) is true.
+ *
+ * This function returns the equivalence between two implementations of the formula:
+ * first, using a naive quadratic implementation; and second, using an O(n*log(n))
+ * implementation with threshold formulas.
+ */
+object CountingEquivalence {
+  def apply( n: Int ): FOLFormula = {
+    val Seq( x, y, z ) = Seq( fov"x", fov"y", fov"z" )
+    val as = 0 to n map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
+    All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
+  }
 }
