@@ -8,14 +8,13 @@ object containsEqualityReasoning {
    * @param proof An LKProof.
    * @return true iff this proof contains a reflexivity axiom or an equational inference
    */
-  def apply( proof: LKProof ): Boolean = proof match {
-    case ReflexivityAxiom( _ )                           => true
-    case EqualityLeftRule( _, _, _, _ )                  => true
-    case EqualityRightRule( _, _, _, _ )                 => true
-    case InitialSequent( seq )                           => false
-    case UnaryLKProof( _, subProof )                     => containsEqualityReasoning( subProof )
-    case BinaryLKProof( _, leftSubProof, rightSubProof ) => containsEqualityReasoning( leftSubProof ) || containsEqualityReasoning( rightSubProof )
-  }
+  def apply( proof: LKProof ): Boolean =
+    proof.subProofs.exists {
+      case ReflexivityAxiom( _ )           => true
+      case EqualityLeftRule( _, _, _, _ )  => true
+      case EqualityRightRule( _, _, _, _ ) => true
+      case _                               => false
+    }
 }
 
 object freeVariablesLK {
