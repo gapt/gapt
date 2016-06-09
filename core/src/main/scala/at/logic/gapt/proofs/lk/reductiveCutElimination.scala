@@ -14,8 +14,6 @@ import ReductiveCutElimination._
 
 import scala.collection.mutable
 
-class ReductiveCutElimException( msg: String ) extends Exception( msg )
-
 /**
  * This object implements a version of Gentzen's cut-elimination
  * proof for our sequent calculus LK. For details, please
@@ -645,9 +643,6 @@ class ReductiveCutElimination {
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightOccConnector.child( a )
         ExistsRightRule( cutSub, aNew, f, term, quant )
-
-      case _ =>
-        throw new ReductiveCutElimException( "Can't match the case: Cut(" + left.longName + ", " + right.longName + ")" )
     }
   }
 }
