@@ -63,8 +63,12 @@ object ResolutionToLKProof {
         val p2 = ForallLeftBlock( p1, definition, vars )
         val p3 = DefinitionLeftRule( p2, definition, splAtom )
         p3
-      case AvatarComponentIntro( AvatarGroundComp( atom, _ ) )         => LogicalAxiom( atom )
-      case AvatarComponentIntro( comp: AvatarNegNonGroundComp )        => LogicalAxiom( comp.propAtom )
+      case AvatarComponentIntro( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
+      case AvatarComponentIntro( comp @ AvatarNegNonGroundComp( splAtom, definition, vars, idx ) ) =>
+        val \/-( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
+        val p2 = ForallRightBlock( p1, definition, vars )
+        val p3 = DefinitionRightRule( p2, definition, splAtom )
+        p3
       case AvatarComponentElim( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarComponentElim( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         var p_ = f( q )
