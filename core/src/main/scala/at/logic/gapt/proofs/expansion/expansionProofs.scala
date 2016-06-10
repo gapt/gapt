@@ -194,6 +194,8 @@ object eliminateMerges {
       case ( t @ ETDefinedAtom( a1, _, d1 ), ETDefinedAtom( a2, _, d2 ) ) if d1 == d2 => t
       case ( ETDefinition( shallow, def1, t1 ), ETDefinition( _, def2, t2 ) ) if def1 == def2 =>
         ETDefinition( shallow, def1, merge2( t1, t2 ) )
+      case ( t: ETTop, _: ETTop )               => t
+      case ( t: ETBottom, _: ETBottom )         => t
       case ( ETNeg( t ), ETNeg( s ) )           => ETNeg( merge2( t, s ) )
       case ( ETAnd( t1, t2 ), ETAnd( s1, s2 ) ) => ETAnd( merge2( t1, s1 ), merge2( t2, s2 ) )
       case ( ETOr( t1, t2 ), ETOr( s1, s2 ) )   => ETOr( merge2( t1, s1 ), merge2( t2, s2 ) )
