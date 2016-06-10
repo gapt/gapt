@@ -121,8 +121,12 @@ trait LKVisitor[T] {
       visitDefinitionRight( p, otherArg )
   }
 
+  def transportToSubProof( arg: T, proof: LKProof, subProofIdx: Int ): T = arg
+
   def one2one( proof: LKProof, arg: T )( func: Seq[( LKProof, OccConnector[HOLFormula] )] => LKProof ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val visitedChildren = proof.immediateSubProofs map { recurse( _, arg ) }
+    val visitedChildren =
+      for ( ( subProof, idx ) <- proof.immediateSubProofs.zipWithIndex )
+        yield recurse( subProof, transportToSubProof( arg, proof, idx ) )
     val newProof = func( visitedChildren )
     val conn = ( newProof.occConnectors, visitedChildren, proof.occConnectors ).zipped.map( _ * _._2 * _.inv ).reduce( _ + _ )
     ( newProof, conn )
@@ -146,7 +150,7 @@ trait LKVisitor[T] {
   protected def visitBottomAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( BottomAxiom, OccConnector( BottomAxiom.endSequent ) )
 
   protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val ( subProofNew, subConnector ) = recurse( proof.subProof, otherArg )
+    val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
     val proofNew = WeakeningLeftRule( subProofNew, proof.mainFormula )
     val connector = ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
 
@@ -154,7 +158,7 @@ trait LKVisitor[T] {
   }
 
   protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val ( subProofNew, subConnector ) = recurse( proof.subProof, otherArg )
+    val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
     val proofNew = WeakeningRightRule( subProofNew, proof.mainFormula )
     val connector = ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
 
