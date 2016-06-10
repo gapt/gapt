@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.examples.BussTautology
+import at.logic.gapt.examples.{ BussTautology, CountingEquivalence }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.proofs.lk._
@@ -266,6 +266,11 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
       val endSequent = thresholds.exactly.oneOf( as ) +: Sequent() :+ naive.exactly.oneOf( as )
       val Some( p ) = Escargot getLKProof endSequent
       p.conclusion must beMultiSetEqual( endSequent )
+    }
+
+    "counting example" in {
+      val Some( p ) = Escargot.getLKProof( CountingEquivalence( 1 ) )
+      p.conclusion must_== ( Sequent() :+ CountingEquivalence( 1 ) )
     }
   }
 }

@@ -988,6 +988,8 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
   def skolemTerm: LambdaExpression
   def skolemDef: LambdaExpression
 
+  require( freeVariables( skolemDef ).isEmpty )
+
   val ( auxFormula, context ) = premise focus aux
 
   def quantifiedVariable: Var
@@ -1197,7 +1199,7 @@ object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
    */
   def apply( subProof: LKProof, skolemTerm: LambdaExpression, skolemDef: LambdaExpression ): ForallSkRightRule = {
     val Apps( _, skolemArgs ) = skolemTerm
-    val mainFormula = skolemDef( skolemArgs: _* ).asInstanceOf[HOLFormula]
+    val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[HOLFormula]
     val auxFormula = instantiate( mainFormula, skolemTerm )
 
     val premise = subProof.endSequent
@@ -1324,7 +1326,7 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
    */
   def apply( subProof: LKProof, skolemTerm: LambdaExpression, skolemDef: LambdaExpression ): ExistsSkLeftRule = {
     val Apps( _, skolemArgs ) = skolemTerm
-    val mainFormula = skolemDef( skolemArgs: _* ).asInstanceOf[HOLFormula]
+    val mainFormula = BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ).asInstanceOf[HOLFormula]
     val auxFormula = instantiate( mainFormula, skolemTerm )
 
     val premise = subProof.endSequent
