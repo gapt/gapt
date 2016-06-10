@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.expansion.ExpansionProofToLK
+import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.{ Ant, OccConnector, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.lk._
 
 import scala.collection.mutable
@@ -16,10 +16,8 @@ object ResolutionToLKProof {
       case Sequent( Seq( f ), Seq() ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case seq =>
         val fvs = freeVariables( seq ).toSeq
-        ( solvePropositional( seq.toDisjunction +: seq ): @unchecked ) match {
-          case \/-( proj ) =>
-            ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
-        }
+        val \/-( proj ) = solvePropositional( seq.toDisjunction +: seq )
+        ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
     } )
     if ( proof.definitions.isEmpty ) lk
     else DefinitionElimination( proof.definitions )( lk )
@@ -30,6 +28,11 @@ object ResolutionToLKProof {
 
   def apply( proof: ResolutionProof, input: Input => LKProof ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
+
+    def reducef( p: PropositionalResolutionRule )( func: HOLFormula => LKProof ) = {
+      val q = f( p.subProof )
+      reduceAxiom( q, q.conclusion.indexOfPol( p.subProof.conclusion( p.idx ), p.idx.isSuc ) )( func )
+    }
 
     def contract( p: ResolutionProof, q: LKProof ) =
       ContractionMacroRule( q, ( ( p.conclusion ++ p.assertions ) diff q.endSequent.distinct ) ++ q.endSequent.distinct )
@@ -78,14 +81,88 @@ object ResolutionToLKProof {
         p_ = DefinitionRightRule( p_, definition, splAtom )
         p_
 
-      // FIXME: add axiom reduction as in LKsk
-      case _ =>
-        val expansion = ResolutionToExpansionProof.withDefs( p )
-        val \/-( lk ) = ExpansionProofToLK( expansion )
-        lk
+      case DefIntro( q, i: Suc, defAtom, defn ) =>
+        DefinitionRightRule( f( q ), q.conclusion( i ), defAtom )
+      case DefIntro( q, i: Ant, defAtom, defn ) =>
+        DefinitionLeftRule( f( q ), q.conclusion( i ), defAtom )
+
+      case p: TopL    => reducef( p ) { _ => TopAxiom }
+      case p: BottomR => reducef( p ) { _ => BottomAxiom }
+      case p: NegL    => reducef( p ) { case Neg( l ) => NegRightRule( LogicalAxiom( l ), Ant( 0 ) ) }
+      case p: NegR    => reducef( p ) { case Neg( l ) => NegLeftRule( LogicalAxiom( l ), Suc( 0 ) ) }
+      case p: AndL    => reducef( p ) { case And( l, r ) => AndRightRule( LogicalAxiom( l ), Suc( 0 ), LogicalAxiom( r ), Suc( 0 ) ) }
+      case p: AndR1   => reducef( p ) { case And( l, r ) => AndLeftRule( WeakeningLeftRule( LogicalAxiom( l ), r ), Ant( 1 ), Ant( 0 ) ) }
+      case p: AndR2   => reducef( p ) { case And( l, r ) => AndLeftRule( WeakeningLeftRule( LogicalAxiom( r ), l ), Ant( 0 ), Ant( 1 ) ) }
+      case p: OrR     => reducef( p ) { case Or( l, r ) => OrLeftRule( LogicalAxiom( l ), Ant( 0 ), LogicalAxiom( r ), Ant( 0 ) ) }
+      case p: OrL1    => reducef( p ) { case Or( l, r ) => OrRightRule( WeakeningRightRule( LogicalAxiom( l ), r ), Suc( 0 ), Suc( 1 ) ) }
+      case p: OrL2    => reducef( p ) { case Or( l, r ) => OrRightRule( WeakeningRightRule( LogicalAxiom( r ), l ), Suc( 1 ), Suc( 0 ) ) }
+      case p: ImpR    => reducef( p ) { case Imp( l, r ) => ImpLeftRule( LogicalAxiom( l ), Suc( 0 ), LogicalAxiom( r ), Ant( 0 ) ) }
+      case p: ImpL1   => reducef( p ) { case Imp( l, r ) => ImpRightRule( WeakeningRightRule( LogicalAxiom( l ), r ), Ant( 0 ), Suc( 1 ) ) }
+      case p: ImpL2   => reducef( p ) { case Imp( l, r ) => ImpRightRule( WeakeningLeftRule( LogicalAxiom( r ), l ), Ant( 0 ), Suc( 0 ) ) }
+
+      case p: AllL    => reducef( p )( f => ForallSkRightRule( LogicalAxiom( instantiate( f, p.skolemTerm ) ), Suc( 0 ), f, p.skolemTerm, p.skolemDef ) )
+      case p: ExR     => reducef( p )( f => ExistsSkLeftRule( LogicalAxiom( instantiate( f, p.skolemTerm ) ), Ant( 0 ), f, p.skolemTerm, p.skolemDef ) )
+
+      case p: AllR    => reducef( p )( f => ForallLeftRule( LogicalAxiom( instantiate( f, p.variable ) ), f, p.variable ) )
+      case p: ExL     => reducef( p )( f => ExistsRightRule( LogicalAxiom( instantiate( f, p.variable ) ), f, p.variable ) )
     } ) )
 
     f( proof )
   }
+
+  /**
+   * Transforms e.g. a proof of  Γ :- Δ, φ ∧ ψ  to one of  Γ :- Δ, φ  without introducing a cut.
+   *
+   * Assumes that only contractions and logical axioms operate on (ancestors
+   * of) the formula, and that func(φ ∧ ψ) is a proof of φ ∧ ψ :- φ.
+   */
+  def reduceAxiom( proof: LKProof, idx: SequentIndex )( func: HOLFormula => LKProof ): LKProof =
+    new LKVisitor[Sequent[Boolean]] {
+      val formula = proof.conclusion( idx )
+      val proofToInsert = func( formula )
+      val connToInsert = OccConnector( proofToInsert.endSequent, formula +: Sequent() :+ formula,
+        for ( i <- proofToInsert.endSequent.indicesSequent )
+          yield if ( proofToInsert.endSequent( i ) == formula )
+          Seq( if ( idx.isSuc ) Ant( 0 ) else Suc( 0 ) )
+        else Seq() )
+
+      override def transportToSubProof( isAncestor: Sequent[Boolean], proof: LKProof, subProofIdx: Int ) =
+        proof.occConnectors( subProofIdx ).parent( isAncestor, false )
+
+      override def visitLogicalAxiom( proof: LogicalAxiom, isAncestor: Sequent[Boolean] ) =
+        isAncestor.find( _ == true ) match {
+          case Some( i ) => ( proofToInsert, connToInsert )
+          case None      => withIdentityOccConnector( proof )
+        }
+
+      // Contract ancestors as soon as possible, and then skip the following contractions.
+      override def recurse( proof: LKProof, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) = {
+        if ( isAncestor.forall( _ == false ) ) return ( proof, OccConnector( proof.conclusion ) )
+        val ( proofNew, conn ) = super.recurse( proof, isAncestor )
+        contract( proofNew, conn )
+      }
+      def contract( subProof: LKProof, subConn: OccConnector[HOLFormula] ): ( LKProof, OccConnector[HOLFormula] ) = {
+        val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )
+        val newIndicesByFormula = newIndices.groupBy( i => i.isSuc -> subProof.conclusion( i ) )
+        newIndicesByFormula.values.find( _.size > 1 ) match {
+          case Some( Seq( i, j, _* ) ) =>
+            val contracted = if ( i.isSuc ) ContractionRightRule( subProof, i, j ) else ContractionLeftRule( subProof, i, j )
+            ( subProof, contracted.getOccConnector * subConn )
+          case None => ( subProof, subConn )
+        }
+      }
+      override def visitContractionLeft( proof: ContractionLeftRule, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) =
+        one2one( proof, isAncestor ) {
+          case Seq( ( subProof, subConn ) ) =>
+            if ( subConn.children( proof.aux1 ).isEmpty ) return ( subProof, subConn )
+            ContractionLeftRule( subProof, subConn child proof.aux1, subConn child proof.aux2 )
+        }
+      override def visitContractionRight( proof: ContractionRightRule, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) =
+        one2one( proof, isAncestor ) {
+          case Seq( ( subProof, subConn ) ) =>
+            if ( subConn.children( proof.aux1 ).isEmpty ) return ( subProof, subConn )
+            ContractionRightRule( subProof, subConn child proof.aux1, subConn child proof.aux2 )
+        }
+    }.apply( proof, proof.conclusion.indicesSequent.map( _ == idx ) )
 
 }

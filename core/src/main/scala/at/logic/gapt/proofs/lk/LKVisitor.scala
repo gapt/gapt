@@ -29,7 +29,7 @@ trait LKVisitor[T] {
     ( result._1, result._2 )
   }
 
-  final def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
+  def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
     case p: OpenAssumption =>
       visitOpenAssumption( p, otherArg )
 
@@ -132,22 +132,25 @@ trait LKVisitor[T] {
     ( newProof, conn )
   }
 
+  def withIdentityOccConnector( proof: LKProof ): ( LKProof, OccConnector[HOLFormula] ) =
+    ( proof, OccConnector( proof.endSequent ) )
+
   /*
    * Visiting methods. The implementations given here simply reconstruct the corresponding rule.
    * Different proof transformations can be implemented by overriding some of these methods.
    */
 
-  protected def visitOpenAssumption( proof: OpenAssumption, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( proof, OccConnector( proof.endSequent ) )
+  protected def visitOpenAssumption( proof: OpenAssumption, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( proof, OccConnector( proof.endSequent ) )
+  protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( proof, OccConnector( proof.endSequent ) )
+  protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( proof, OccConnector( proof.endSequent ) )
+  protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitTopAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( TopAxiom, OccConnector( TopAxiom.endSequent ) )
+  protected def visitTopAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( TopAxiom )
 
-  protected def visitBottomAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = ( BottomAxiom, OccConnector( BottomAxiom.endSequent ) )
+  protected def visitBottomAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( BottomAxiom )
 
   protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = {
     val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
