@@ -44,7 +44,8 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     markCutAncestors = false,
     Set(),
     "",
-    sequent_element_renderer
+    sequent_element_renderer,
+    Nil
   )
 
   def hideSequentContext() {
@@ -175,7 +176,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
 }
 
 /**
- * A ProofToolViewer for LK proofs.
+ * A ProofToolViewer for LKsk proofs.
  *
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.

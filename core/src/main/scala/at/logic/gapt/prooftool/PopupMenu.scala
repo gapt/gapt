@@ -44,8 +44,12 @@ object PopupMenu {
       contents += new Separator
       //      contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
       //      contents += new Separator
-      contents += new MenuItem( Action( "Show Proof Above" ) { dsp.main.publisher.publish( ShowSequentProof( dsp ) ) } )
-      contents += new MenuItem( Action( "Hide Proof Above" ) { dsp.main.publisher.publish( HideSequentProof( dsp ) ) } )
+      contents += new MenuItem( Action( "Show Proof Above" ) {
+        dsp.main.publisher.publish( ShowSequentProof( dsp.pos ) )
+      } )
+      contents += new MenuItem( Action( "Hide Proof Above" ) {
+        dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )
+      } )
       contents += new Separator
     }
     popupMenu.show( dsp, x, y )

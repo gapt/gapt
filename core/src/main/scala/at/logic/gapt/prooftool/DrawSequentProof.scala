@@ -21,7 +21,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     var markCutAncestors:     Boolean,
     val cutAncestorIndices:   Set[SequentIndex],
     private var str:          String,
-    sequent_element_renderer: F => String
+    sequent_element_renderer: F => String,
+    val pos:                  List[Int]
 ) extends BorderPanel with MouseMotionListener {
   private val blue = new Color( 0, 0, 255 )
   private val black = new Color( 0, 0, 0 )
@@ -69,10 +70,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
       main.scrollPane.peer.dispatchEvent( e.peer )
-    case ShowSequentProof( dsp ) if dsp eq this =>
+    case ShowSequentProof( pos ) if pos eq this.pos =>
       drawLines = true
       layout.foreach( pair => pair._1.visible = true )
-    case HideSequentProof( dsp ) if dsp eq this =>
+    case HideSequentProof( pos ) if pos eq this.pos =>
       drawLines = false
       layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
@@ -98,7 +99,20 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       case Seq( uProof: SequentProof[_, _] ) =>
         val cutAncestorIndicesNew = cutAncestorIndices flatMap { proof.occConnectors.head.parents }
         border = bd
-        layout( new DrawSequentProof( main, uProof, fSize, hideContexts, proof.auxIndices.head.toSet, markCutAncestors, cutAncestorIndicesNew, str, sequent_element_renderer ) ) = Position.Center
+        layout(
+          new DrawSequentProof(
+            main,
+            uProof,
+            fSize,
+            hideContexts,
+            proof.auxIndices.head.toSet,
+            markCutAncestors,
+            cutAncestorIndicesNew,
+            str,
+            sequent_element_renderer,
+            pos :+ 0
+          )
+        ) = Position.Center
         layout( tx ) = Position.South
       case Seq( uProof1, uProof2 ) =>
         val ( cutAncestorIndicesLeft, cutAncestorIndicesRight ) = proof match {
@@ -108,8 +122,34 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
             ( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ), cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) )
         }
         border = bd
-        layout( new DrawSequentProof( main, uProof1, fSize, hideContexts, proof.auxIndices.head.toSet, markCutAncestors, cutAncestorIndicesLeft, str, sequent_element_renderer ) ) = Position.West
-        layout( new DrawSequentProof( main, uProof2, fSize, hideContexts, proof.auxIndices.tail.head.toSet, markCutAncestors, cutAncestorIndicesRight, str, sequent_element_renderer ) ) = Position.East
+        layout(
+          new DrawSequentProof(
+            main,
+            uProof1,
+            fSize,
+            hideContexts,
+            proof.auxIndices.head.toSet,
+            markCutAncestors,
+            cutAncestorIndicesLeft,
+            str,
+            sequent_element_renderer,
+            pos :+ 0
+          )
+        ) = Position.West
+        layout(
+          new DrawSequentProof(
+            main,
+            uProof2,
+            fSize,
+            hideContexts,
+            proof.auxIndices.tail.head.toSet,
+            markCutAncestors,
+            cutAncestorIndicesRight,
+            str,
+            sequent_element_renderer,
+            pos :+ 1
+          )
+        ) = Position.East
         layout( tx ) = Position.South
       case Seq() =>
         tx.border = Swing.EmptyBorder( 0, fSize, 0, fSize )

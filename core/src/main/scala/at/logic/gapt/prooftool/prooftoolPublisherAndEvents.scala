@@ -18,6 +18,6 @@ case class HideEndSequent[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class ShowAllRules[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class HideProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
 case class ShowProof[T <: DagProof[T]]( proof: DagProof[T] ) extends Event
-case class HideSequentProof[F, T <: SequentProof[F, T]]( drawSequentProof: DrawSequentProof[F, T] ) extends Event
-case class ShowSequentProof[F, T <: SequentProof[F, T]]( drawSequentProof: DrawSequentProof[F, T] ) extends Event
+case class HideSequentProof( pos: List[Int] ) extends Event
+case class ShowSequentProof( pos: List[Int] ) extends Event
 
