@@ -64,14 +64,14 @@ case class ProofState private (
   def replace( proofSegment: LKProof ): ProofState = replace( subGoals.head.index, proofSegment )
 
   class ProofSegmentInsertionVisitor( failOnMissingSubgoal: Boolean ) extends LKVisitor[Unit] {
-    override def visitOpenAssumption( p: OpenAssumption, dummy: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+    override def visitOpenAssumption( p: OpenAssumption, dummy: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
       finishedSubGoals.get( p.index ) match {
         case Some( segment ) =>
           val subProof = recurse( segment, () )._1
           require( subProof.conclusion multiSetEquals segment.conclusion )
           val segment_ = WeakeningContractionMacroRule( subProof, p.conclusion )
           require( segment_.conclusion multiSetEquals p.conclusion )
-          ( segment_, OccConnector.guessInjection( segment_.conclusion, p.conclusion ).inv, () )
+          ( segment_, OccConnector.guessInjection( segment_.conclusion, p.conclusion ).inv )
         case None if failOnMissingSubgoal  => throw new IllegalArgumentException( s"Subgoal still open: $p" )
         case None if !failOnMissingSubgoal => super.visitOpenAssumption( p, dummy )
       }

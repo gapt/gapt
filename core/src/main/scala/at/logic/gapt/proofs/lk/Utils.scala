@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex }
+import at.logic.gapt.utils.NameGenerator
 
 object containsEqualityReasoning {
   /**
@@ -63,57 +64,44 @@ object isRegular {
  * Proof regularization
  *
  */
-object regularize extends LKVisitor[Set[Var]] {
+object regularize {
   /**
    * Renames all eigenvariables in a proof so that it becomes regular.
    *
    * @param proof An LKProof.
    * @return A regular LKProof.
    */
-  def apply( proof: LKProof ): LKProof = apply( proof, freeVariablesLK( proof ) )
+  def apply( proof: LKProof ): LKProof =
+    new regularize( rename.awayFrom( freeVariablesLK( proof ) ) ).apply( proof, () )
+}
 
-  /**
-   * Renames at least the eigenvariables contains in blacklist so that proof becomes regular.
-   *
-   * @param proof An LKProof.
-   * @param blacklist A sequence of variables that must be renamed if they occur as eigenvariables.
-   * @return A regular LKProof.
-   */
-  def apply( proof: LKProof, blacklist: Seq[Var] ): LKProof = apply( proof, blacklist.toSet )
+class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
 
-  protected override def visitForallRight( proof: ForallRightRule, blacklist: Set[Var] ) = {
+  protected override def visitForallRight( proof: ForallRightRule, arg: Unit ) = {
     val ForallRightRule( subProof, aux, eigen, quant ) = proof
-    val eigenNew = rename( eigen, blacklist )
-    val ( subProofNew_, subConnector, blacklistNew ) = recurse( subProof, blacklist + eigenNew )
-
-    val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
+    val eigenNew = nameGen.fresh( eigen )
+    val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
     val proofNew = ForallRightRule( subProofNew, aux, eigenNew, quant )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, blacklistNew )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
   }
 
-  protected override def visitExistsLeft( proof: ExistsLeftRule, blacklist: Set[Var] ) = {
+  protected override def visitExistsLeft( proof: ExistsLeftRule, arg: Unit ) = {
     val ExistsLeftRule( subProof, aux, eigen, quant ) = proof
-    val eigenNew = rename( eigen, blacklist )
-    val ( subProofNew_, subConnector, blacklistNew ) = recurse( subProof, blacklist + eigenNew )
-
-    val subProofNew = Substitution( eigen, eigenNew )( subProofNew_ )
+    val eigenNew = nameGen.fresh( eigen )
+    val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
     val proofNew = ExistsLeftRule( subProofNew, aux, eigenNew, quant )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, blacklistNew )
+    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
   }
 
-  protected override def visitInduction( proof: InductionRule, blacklist: Set[Var] ) = {
+  protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
     val InductionRule( cases, main ) = proof
-    var blacklistNew = blacklist
 
-    val newQuant = rename( proof.quant, blacklistNew )
-    blacklistNew += newQuant
+    val newQuant = nameGen.fresh( proof.quant )
 
     val newCasesConnectors = cases map { c =>
-      val renaming = rename( c.eigenVars, blacklistNew )
-      blacklistNew ++= renaming.values
-      val ( subProofNew, subConnector, blacklistNew_ ) = recurse( Substitution( renaming )( c.proof ), blacklistNew )
-      blacklistNew = blacklistNew_
-      c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming ) -> subConnector
+      val renaming = for ( ev <- c.eigenVars ) yield ev -> nameGen.fresh( ev )
+      val ( subProofNew, subConnector ) = recurse( Substitution( renaming )( c.proof ), () )
+      c.copy( proof = subProofNew, eigenVars = c.eigenVars map renaming.toMap ) -> subConnector
     }
 
     val ( casesNew, subConnectors ) = newCasesConnectors.unzip
@@ -121,7 +109,7 @@ object regularize extends LKVisitor[Set[Var]] {
     val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
     val connector = if ( subConnectors_.isEmpty ) OccConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
 
-    ( proofNew, connector, blacklistNew )
+    ( proofNew, connector )
   }
 
 }

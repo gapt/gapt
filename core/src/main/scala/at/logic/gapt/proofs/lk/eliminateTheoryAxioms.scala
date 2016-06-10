@@ -60,9 +60,9 @@ object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
           case \/-( p )   => p
           case -\/( seq ) => throw new Exception( s"Sequent $seq is not provable." )
         }
-        ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ), formula )
+        ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ) )
 
-      case _ => ( proof, OccConnector( sequent ), formula )
+      case _ => ( proof, OccConnector( sequent ) )
     }
   }
 }

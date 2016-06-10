@@ -19,7 +19,7 @@ object makeInductionExplicit extends LKVisitor[Unit] {
   def apply( p: LKProof ): LKProof =
     ContractionMacroRule( apply( p, () ) )
 
-  override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+  override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
     val indty = proof.indTy
     val constrs = proof.cases.map { _.constructor }
 
@@ -47,7 +47,7 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     val explicitHOLp =
       ForallLeftRule( explicitFOLp, indprin, Abs( proof.quant, proof.qfFormula ) )
 
-    val ( proof_, occConn, _ ) = recurse( explicitHOLp, () )
-    ( proof_, occConn * OccConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv, () )
+    val ( proof_, occConn ) = recurse( explicitHOLp, () )
+    ( proof_, occConn * OccConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv )
   }
 }

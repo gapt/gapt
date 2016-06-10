@@ -47,7 +47,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   }
 
   // an identity function maps all variables to themselves
-  def isIdentity = map.filterNot( ( p: ( Var, LambdaExpression ) ) => p._1 == p._2 ).isEmpty
+  def isIdentity = map.forall( p => p._1 == p._2 )
 
   // make sure the overriden keys are of the applying sub
   // note: compose is in function application notation i.e. (sigma compose tau) apply x = sigma(tau(x)) = x.tau.sigma
