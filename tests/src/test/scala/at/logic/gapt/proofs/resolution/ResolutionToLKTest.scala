@@ -41,69 +41,6 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
     val p4 = Paramod.withMain( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
 
   }
-  object UNSproofFreshvars {
-    val v0 = FOLVar( "v0" )
-    val v0u = FOLVar( "v0_" )
-    val v1 = FOLVar( "v1" )
-    val v1u = FOLVar( "v1_" )
-    val v2 = FOLVar( "v2" )
-
-    val m01u = FOLFunction( "multiply", v0u :: v1u :: Nil )
-    val m10u = FOLFunction( "multiply", v1u :: v0u :: Nil )
-    val m02 = FOLFunction( "multiply", v0 :: v2 :: Nil )
-    val m12 = FOLFunction( "multiply", v1 :: v2 :: Nil )
-    val add01 = FOLFunction( "add", v0 :: v1 :: Nil )
-    val am02m12 = FOLFunction( "add", m02 :: m12 :: Nil )
-    val ma012 = FOLFunction( "multiply", add01 :: v2 :: Nil )
-    val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
-
-    // =(multiply(v0_, v1_), multiply(v1_, v0_))
-    val c1 = Eq( m01u, m10u )
-    // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = Eq( ma012, am02m12 )
-    // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = Eq( m2a01, am02m12 )
-
-    val sub = FOLSubstitution( Map( ( v0, v2 ), ( v1, add01 ) ) )
-
-    val p1 = Input( Clause() :+ c1 )
-    val p2 = Subst( p1, sub )
-    val p3 = Input( Clause() :+ c2 )
-    val p4 = Paramod.withMain( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
-  }
-  object UNSproofVariant {
-    val v0 = FOLVar( "v0" )
-    val v0u = FOLVar( "v0_" )
-    val v1 = FOLVar( "v1" )
-    val v1u = FOLVar( "v1_" )
-    val v2 = FOLVar( "v2" )
-
-    val m01 = FOLFunction( "multiply", v0 :: v1 :: Nil )
-    val m10 = FOLFunction( "multiply", v1 :: v0 :: Nil )
-    val m02 = FOLFunction( "multiply", v0 :: v2 :: Nil )
-    val m12 = FOLFunction( "multiply", v1 :: v2 :: Nil )
-    val add01 = FOLFunction( "add", v0 :: v1 :: Nil )
-    val am02m12 = FOLFunction( "add", m02 :: m12 :: Nil )
-    val ma012 = FOLFunction( "multiply", add01 :: v2 :: Nil )
-    val m2a01 = FOLFunction( "multiply", v2 :: add01 :: Nil )
-
-    // =(multiply(v0, v1), multiply(v1, v0))
-    val c1 = Eq( m01, m10 )
-    // =(multiply(add(v0, v1), v2), add(multiply(v0, v2), multiply(v1, v2)))
-    val c2 = Eq( ma012, am02m12 )
-    // =(multiply(v2, add(v0, v1)), add(multiply(v0, v2), multiply(v1, v2)))
-    val c3 = Eq( m2a01, am02m12 )
-
-    val sub1 = FOLSubstitution( Map( ( v0, v0u ), ( v1, v1u ) ) )
-    val sub2 = FOLSubstitution( Map( ( v0u, v2 ), ( v1u, add01 ) ) )
-
-    val p1 = Input( Clause() :+ c1 )
-    val p1_ = Subst( p1, sub1 )
-    val p2 = Subst( p1, sub2 )
-    val p3 = Input( Clause() :+ c2 )
-    val p4 = Paramod.withMain( p2, Suc( 0 ), p3, Suc( 0 ), c3 )
-
-  }
 
   "ResolutionToLKProof" should {
     "transform the following resolution proof into an LK proof of the empty sequent" in {
@@ -216,20 +153,6 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
       }
       "transform the original subproof of the UNS example" in {
         ResolutionToLKProof.asDerivation( UNSproof.p4 ).endSequent must_== ( Sequent() :+ UNSproof.c3 )
-      }
-      "transform the subproof of the UNS example with unique variables" in {
-        skipped( "does not work! fix!" )
-        val r = ResolutionToLKProof( UNSproofFreshvars.p4 ).endSequent
-        r.antecedent must beEmpty
-        r.succedent.size mustEqual ( 1 )
-        r.succedent( 0 ) mustEqual ( UNSproofFreshvars.c3 )
-      }
-      "transform the subproof of the UNS example with introduced variant" in {
-        skipped( "does not work! fix!" )
-        val r = ResolutionToLKProof( UNSproofVariant.p4 ).endSequent
-        r.antecedent must beEmpty
-        r.succedent.size mustEqual ( 1 )
-        r.succedent( 0 ) mustEqual ( UNSproofVariant.c3 )
       }
     }
 
