@@ -130,6 +130,11 @@ object ResolutionToLKProof {
           Seq( if ( idx.isSuc ) Ant( 0 ) else Suc( 0 ) )
         else Seq() )
 
+      val extraSequent =
+        if ( idx.isSuc ) proofToInsert.conclusion.removeFromAntecedent( formula )
+        else proofToInsert.conclusion.removeFromSuccedent( formula )
+      val formulaMultiplicities = extraSequent.polarizedElements.groupBy( identity ).mapValues( _.size )
+
       override def transportToSubProof( isAncestor: Sequent[Boolean], proof: LKProof, subProofIdx: Int ) =
         proof.occConnectors( subProofIdx ).parent( isAncestor, false )
 
@@ -147,11 +152,11 @@ object ResolutionToLKProof {
       }
       def contract( subProof: LKProof, subConn: OccConnector[HOLFormula] ): ( LKProof, OccConnector[HOLFormula] ) = {
         val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )
-        val newIndicesByFormula = newIndices.groupBy( i => i.isSuc -> subProof.conclusion( i ) )
-        newIndicesByFormula.values.find( _.size > 1 ) match {
-          case Some( Seq( i, j, _* ) ) =>
+        val newIndicesByFormula = newIndices.groupBy( i => subProof.conclusion( i ) -> i.isSuc )
+        newIndicesByFormula.find( ni => ni._2.size > formulaMultiplicities( ni._1 ) ) match {
+          case Some( ( _, Seq( i, j, _* ) ) ) =>
             val contracted = if ( i.isSuc ) ContractionRightRule( subProof, i, j ) else ContractionLeftRule( subProof, i, j )
-            ( subProof, contracted.getOccConnector * subConn )
+            ( contracted, contracted.getOccConnector * subConn )
           case None => ( subProof, subConn )
         }
       }
