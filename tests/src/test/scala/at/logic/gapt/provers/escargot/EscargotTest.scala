@@ -105,4 +105,6 @@ class EscargotTest extends Specification {
       "a*i(a) != 1"
     ) must beSome
   }
+
+  "primitive support for lambdas" in { test( "!y (^x f(x,y)) = g(y) & r(g(c)) & -r(^x f(x,c))" ) must beSome }
 }

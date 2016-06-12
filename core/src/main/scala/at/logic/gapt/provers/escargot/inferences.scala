@@ -81,6 +81,22 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     if ( subst( proof.conclusion ) == proof.conclusion ) proof
     else at.logic.gapt.proofs.resolution.Subst( proof, subst )
 
+  def getFOPositions( exp: LambdaExpression ): Map[LambdaExpression, Seq[LambdaPosition]] = {
+    val poss = mutable.Map[LambdaExpression, Seq[LambdaPosition]]().withDefaultValue( Seq() )
+    def walk( exp: LambdaExpression, pos: List[Int] ): Unit = {
+      poss( exp ) :+= LambdaPosition( pos.reverse )
+      walkApp( exp, pos )
+    }
+    def walkApp( exp: LambdaExpression, pos: List[Int] ): Unit = exp match {
+      case App( f, arg ) =>
+        walk( arg, 2 :: pos )
+        walkApp( f, 1 :: pos )
+      case _ =>
+    }
+    walk( exp, Nil )
+    poss.toMap
+  }
+
   object Clausification extends Clausifier( propositional, structural = true, nameGen = state.nameGen ) with InferenceRule {
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[Cls] ) =
       if ( given.clause.forall( _.isInstanceOf[HOLAtom] ) ) ( Set(), Set() )
@@ -168,7 +184,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       while ( didRewrite ) {
         didRewrite = false
         for {
-          ( subterm, pos ) <- LambdaPosition getPositions e groupBy { e( _ ) } if !didRewrite
+          ( subterm, pos ) <- getFOPositions( e ) if !didRewrite
           if !subterm.isInstanceOf[Var]
           ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
           subst <- matching( t_, subterm )
@@ -230,7 +246,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         didRewrite = false
         for {
           i <- p.conclusion.indices if !didRewrite
-          ( subterm, pos ) <- LambdaPosition getPositions p.conclusion( i ) groupBy { p.conclusion( i )( _ ) } if !didRewrite
+          ( subterm, pos ) <- getFOPositions( p.conclusion( i ) ) if !didRewrite
           if !subterm.isInstanceOf[Var]
           ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
           subst <- matching( t_, subterm )
@@ -302,7 +318,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) ) if !termOrdering.lt( t_, s_ )
         i2 <- if ( c2.selected.nonEmpty ) c2.selected else c2.maximal
         a2 = p2_.conclusion( i2 )
-        ( st2, pos2 ) <- LambdaPosition getPositions a2 groupBy { a2( _ ) }
+        ( st2, pos2 ) <- getFOPositions( a2 )
         if !st2.isInstanceOf[Var]
         mgu <- unify( t_, st2 )
         if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
@@ -310,7 +326,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         p1__ = Subst( c1.proof, mgu )
         p2__ = Subst( p2_, mgu )
         ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
-        context = replacementContext( s.exptype, atom, pos2_.distinct, t, s )
+        context = replacementContext( s.exptype, atom, pos2_, t, s )
       } yield DerivedCls( c1, c2, Paramod( p1__, i1, leftToRight, p2__, i2, context ) )
 
       inferred.toSet
