@@ -11,12 +11,12 @@ import scala.collection.mutable
  */
 object eliminateSplitting {
 
-  def apply( p: ResolutionProof ): ResolutionProof =
+  def apply( p: ResolutionProof ): ResolutionProof = {
+    if ( !p.subProofs.exists { _.isInstanceOf[AvatarAbsurd] } ) return p
     nonGroundSplits( groundSplits( p ) )
+  }
 
   private def groundSplits( p: ResolutionProof ): ResolutionProof = {
-    if ( !p.subProofs.exists { _.isInstanceOf[AvatarAbsurd] } ) return p
-
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
     def factor( p: ResolutionProof, q: ResolutionProof ) = Factor( q, p.conclusion ++ p.assertions diff q.assertions )
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, factor( p, p match {

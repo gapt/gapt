@@ -131,7 +131,7 @@ object findDerivationViaResolution {
       elements
 
     prover.getResolutionProof( bs ++ negatedClausesA ) map { refutation =>
-      val tautologified = tautologifyInitialUnitClauses( refutation, negatedClausesA.toSet )
+      val tautologified = tautologifyInitialUnitClauses( eliminateSplitting( refutation ), negatedClausesA.toSet )
 
       val toUnusedVars = rename( grounding.map( _._1 ), containedVariables( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }
