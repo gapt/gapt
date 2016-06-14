@@ -6,7 +6,7 @@ import java.awt.event.{ MouseEvent, MouseMotionListener }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ Sequent, SequentIndex, SequentProof }
+import at.logic.gapt.proofs.{ Sequent, SequentIndex, SequentProof, lk }
 
 import scala.swing.BorderPanel._
 import scala.swing._
@@ -23,7 +23,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     private var str:          String,
     sequent_element_renderer: F => String,
     val pos:                  List[Int]
-) extends BorderPanel with MouseMotionListener {
+) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   private val blue = new Color( 0, 0, 255 )
   private val black = new Color( 0, 0, 0 )
   private val white = new Color( 255, 255, 255 )
@@ -72,10 +72,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       main.scrollPane.peer.dispatchEvent( e.peer )
     case ShowSequentProof( p ) if p == pos =>
       drawLines = true
-      layout.foreach( pair => pair._1.visible = true )
+    //layout.foreach( pair => pair._1.visible = true )
     case HideSequentProof( p ) if p == pos =>
       drawLines = false
-      layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
+    //layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
@@ -91,73 +91,39 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       revalidate()
   }
 
+  val cutAncestorIndicesNew = proof match {
+    case p: CutRule =>
+      List( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ) + p.aux1, cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) + p.aux2 )
+    case _ =>
+      for ( ( p, i ) <- proof.immediateSubProofs.zipWithIndex ) yield cutAncestorIndices flatMap proof.occConnectors( i ).parents
+  }
+
+  val subProofs = for ( ( p, i ) <- proof.immediateSubProofs.zipWithIndex ) yield {
+    new DrawSequentProof(
+      main,
+      p,
+      fSize,
+      hideContexts,
+      proof.auxIndices.head.toSet,
+      markCutAncestors,
+      cutAncestorIndicesNew( i ),
+      str,
+      sequent_element_renderer,
+      pos :+ i
+    )
+  }
+
+  val subProofsPanel = new SubproofsPanel( this, subProofs, fSize )
+  val linePanel = new ProofLinePanel( this, proof.name, fSize )
   initialize()
   // end of constructor
 
   def initialize() {
-    proof.immediateSubProofs match {
-      case Seq( uProof: SequentProof[_, _] ) =>
-        val cutAncestorIndicesNew = cutAncestorIndices flatMap { proof.occConnectors.head.parents }
-        border = bd
-        layout(
-          new DrawSequentProof(
-            main,
-            uProof,
-            fSize,
-            hideContexts,
-            proof.auxIndices.head.toSet,
-            markCutAncestors,
-            cutAncestorIndicesNew,
-            str,
-            sequent_element_renderer,
-            pos :+ 0
-          )
-        ) = Position.Center
-        layout( tx ) = Position.South
-      case Seq( uProof1, uProof2 ) =>
-        val ( cutAncestorIndicesLeft, cutAncestorIndicesRight ) = proof match {
-          case p: CutRule =>
-            ( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ) + p.aux1, cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) + p.aux2 )
-          case _ =>
-            ( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ), cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) )
-        }
-        border = bd
-        layout(
-          new DrawSequentProof(
-            main,
-            uProof1,
-            fSize,
-            hideContexts,
-            proof.auxIndices.head.toSet,
-            markCutAncestors,
-            cutAncestorIndicesLeft,
-            str,
-            sequent_element_renderer,
-            pos :+ 0
-          )
-        ) = Position.West
-        layout(
-          new DrawSequentProof(
-            main,
-            uProof2,
-            fSize,
-            hideContexts,
-            proof.auxIndices.tail.head.toSet,
-            markCutAncestors,
-            cutAncestorIndicesRight,
-            str,
-            sequent_element_renderer,
-            pos :+ 1
-          )
-        ) = Position.East
-        layout( tx ) = Position.South
-      case Seq() =>
-        tx.border = Swing.EmptyBorder( 0, fSize, 0, fSize )
-        layout( tx ) = Position.South
-    }
+    tx.border = Swing.EmptyBorder( 0, fSize, 0, fSize )
+    contents += subProofsPanel
+    contents += linePanel
+    contents += tx
   }
-
-  def getSequentWidth( g: Graphics2D ) = tx.contents.foldLeft( 0 )( ( width, x ) => width + x.size.width + 5 )
 
   def search_=( s: String ) {
     str = s
@@ -170,7 +136,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     initialize()
   }
 
-  override def paintComponent( g: Graphics2D ) {
+  def endSequentWidth( g: Graphics2D ) = tx.width( g )
+  def endSequentMarginWidth( g: Graphics2D ) = ( size.width - endSequentWidth( g ) ) / 2
+
+  /*override def paintComponent( g: Graphics2D ) {
     import scala.math.max
 
     super.paintComponent( g )
@@ -187,7 +156,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
         val center = this.layout.find( x => x._2 == Position.Center ).get._1.asInstanceOf[DrawSequentProof[_, _]]
         val width = center.size.width + fSize * 4
         val height = center.size.height
-        val seqLength = max( center.getSequentWidth( g ), getSequentWidth( g ) )
+        val seqLength = max( center.endSequentWidth, endSequentWidth )
 
         g.drawLine( ( width - seqLength ) / 2, height, ( width + seqLength ) / 2, height )
         g.drawString( proof.name, ( fSize / 4 + width + seqLength ) / 2, height + metrics.getMaxDescent )
@@ -197,15 +166,15 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
         val right = this.layout.find( x => x._2 == Position.East ).get._1.asInstanceOf[DrawSequentProof[_, _]]
         val rightWidth = right.size.width
         val height = max( left.size.height, right.size.height )
-        val leftSeqLength = left.getSequentWidth( g )
-        val rightSeqLength = right.getSequentWidth( g )
+        val leftSeqLength = left.endSequentWidth
+        val rightSeqLength = right.endSequentWidth
         val lineLength = right.location.x + ( rightWidth + rightSeqLength ) / 2
 
         g.drawLine( ( leftWidth - leftSeqLength ) / 2, height, lineLength, height )
         g.drawString( proof.name, lineLength + fSize / 4, height + metrics.getMaxDescent )
       case _ =>
     }
-  }
+  }*/
 
   this.peer.setAutoscrolls( true )
   this.peer.addMouseMotionListener( this )
@@ -225,5 +194,52 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
         collect { case dp: DrawSequentProof[_, _] => dp.getLocationOfProof( p ) }.
         flatten.headOption
     }
+  }
+}
+
+class SubproofsPanel[F, T <: SequentProof[F, T]](
+    val parent:    DrawSequentProof[F, T],
+    val subProofs: Seq[DrawSequentProof[F, T]],
+    val fSize:     Int
+) extends BoxPanel( Orientation.Horizontal ) {
+  private val blue = new Color( 0, 0, 255 )
+  private val black = new Color( 0, 0, 0 )
+  private val white = new Color( 255, 255, 255 )
+
+  background = white
+  opaque = false
+
+  def endSequentWidth( g: Graphics2D ) = subProofs match {
+    case Seq() => 0
+    case _ =>
+      val leftMargin = subProofs.head.endSequentMarginWidth( g )
+      val rightMargin = subProofs.last.endSequentMarginWidth( g )
+
+      size.width - leftMargin - rightMargin
+  }
+  subProofs.foreach( contents += _ )
+}
+
+class ProofLinePanel[F, T <: SequentProof[F, T]](
+    val parent:    DrawSequentProof[F, T],
+    val proofName: String,
+    val fSize:     Int
+) extends FlowPanel {
+  private val blue = new Color( 0, 0, 255 )
+  private val black = new Color( 0, 0, 0 )
+  private val white = new Color( 255, 255, 255 )
+
+  //background = white
+  //opaque = false
+  val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
+
+  override def paintComponent( g: Graphics2D ): Unit = {
+    val width = scala.math.max( parent.subProofsPanel.endSequentWidth( g ), parent.endSequentWidth( g ) )
+    val leftPoint = ( size.width - width ) / 2
+    val rightPoint = ( size.width + width ) / 2
+    val metrics = g.getFontMetrics( labelFont )
+
+    g.drawLine( leftPoint, size.height / 2, rightPoint, size.height / 2 )
+    g.drawString( proofName, rightPoint + fSize / 8, size.height / 2 + metrics.getMaxDescent )
   }
 }

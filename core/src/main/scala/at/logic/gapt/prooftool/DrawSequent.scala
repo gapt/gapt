@@ -87,6 +87,8 @@ class DrawSequent[T](
     }
   }
 
+  def width( g: Graphics2D ) = contents.foldLeft( 0 )( ( width, x ) => width + x.size.width )
+
   private def zip3[A, B, C]( seq1: Sequent[A], seq2: Sequent[B], seq3: Sequent[C] ): Sequent[( A, B, C )] = ( ( seq1 zip seq2 ) zip seq3 ) map { x => ( x._1._1, x._1._2, x._2 ) }
 }
 
