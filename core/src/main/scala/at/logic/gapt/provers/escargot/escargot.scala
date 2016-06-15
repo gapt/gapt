@@ -71,7 +71,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     val tptpInputFile = args.toSeq match {
       case Seq( "-v", file ) =>
         enableDebugging(); file
-      case Seq( file )       => file
+      case Seq( file ) => file
     }
 
     val tptp = TptpParser.loadFile( tptpInputFile )
