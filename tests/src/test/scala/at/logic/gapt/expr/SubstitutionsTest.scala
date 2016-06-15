@@ -96,15 +96,6 @@ class SubstitutionsTest extends Specification {
 
       betaNormalize( sigma.apply( xfx ) ) must beEqualTo( App( p, App( f, t ) ) )
     }
-    "concatenate/compose 2 Substitutions correctly" in {
-      val v = Var( "v", Ti ); val x = Var( "x", Ti ); val f = Var( "f", Ti -> Ti )
-      val e = App( f, x )
-      val sigma = Substitution( v, e )
-      val sigma1 = sigma :: ( Substitution() )
-      val sigma2 = sigma :: sigma :: ( Substitution() )
-      val sigma3 = sigma1 :: sigma1
-      ( sigma2 ) must beEqualTo( sigma3 )
-    }
     "substitute correctly when Substitution is applied" in {
       val v = Var( "v", Ti )
       val x = Var( "x", Ti )
