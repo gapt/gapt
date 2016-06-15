@@ -6,6 +6,7 @@
 * Vampire proof import with splitting
 * More reliable leanCoP interface
 * Metis interface
+* TPTP problem parser
 * Removal of obsolete or unmaintained code:
   * Schemata
   * Old LK implementation

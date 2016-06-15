@@ -1,6 +1,8 @@
 package at.logic.gapt.formats
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.existsclosure
+import at.logic.gapt.proofs.Sequent
 
 package object tptp {
 
@@ -10,6 +12,14 @@ package object tptp {
 
   case class TptpFile( inputs: Seq[TptpInput] ) {
     override def toString = inputs.mkString
+
+    def toSequent = existsclosure( inputs.map {
+      case AnnotatedFormula( _, _, "conjecture", formula, _ ) =>
+        Sequent() :+ formula
+      case AnnotatedFormula( _, _, _, formula, _ ) =>
+        formula +: Sequent()
+      case in => throw new IllegalArgumentException( in.toString )
+    }.fold( Sequent() )( _ ++ _ ) )
   }
   sealed trait TptpInput {
     override def toString = tptpToString.tptpInput( this )
