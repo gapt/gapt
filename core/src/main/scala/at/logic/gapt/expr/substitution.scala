@@ -2,7 +2,7 @@ package at.logic.gapt.expr
 
 import scala.collection.GenTraversable
 
-/*
+/**
  * A substitution is a mapping from variables to lambda-expressions which differs from the identity
  * on finitely many variables. Therefore:
  *  1) each variable is mapped to only one lambda expression
@@ -34,10 +34,6 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 
   def domain: Set[Var] = map.keySet
   def range: Set[Var] = map.values.toSet[LambdaExpression].flatMap( freeVariables( _ ) )
-
-  def ::( sub: ( Var, LambdaExpression ) ) = new Substitution( map + sub )
-
-  def ::( otherSubstitution: Substitution ) = new Substitution( map ++ otherSubstitution.map )
 
   override def hashCode = map.hashCode
 
