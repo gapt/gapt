@@ -1,6 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.resolution._
 
 object resolutionToTptp {
@@ -11,7 +12,7 @@ object resolutionToTptp {
       val ( _, disj_ ) = tptpToString.renameVars( freeVariables( disj ).toSeq, disj )
       AnnotatedFormula( "cnf", label, role, disj_.asInstanceOf[HOLFormula], annotations )
     } else {
-      AnnotatedFormula( "fof", label, role, disj, annotations )
+      AnnotatedFormula( "fof", label, role, univclosure( disj ), annotations )
     }
   }
 

@@ -12,34 +12,54 @@ object tptpToString {
 
   def annotations( annots: Seq[LambdaExpression] ): String = annots.map( expression ).map( ", " + _ ).mkString
 
-  def expression( expr: LambdaExpression ): String = expr match {
+  def expression( expr: LambdaExpression ): String = expression( expr, prio.max )
+
+  private object prio {
+    val term = 0
+    val infix_formula = 2
+    val unitary_formula = 4
+    val binary_formula = 6
+    val max = binary_formula + 2
+  }
+  private def parenIf( enclosingPrio: Int, currentPrio: Int, inside: String ) =
+    if ( enclosingPrio <= currentPrio ) s"($inside)" else inside
+  private def binExpr( a: LambdaExpression, b: LambdaExpression, p: Int, newPrio: Int, op: String ) =
+    parenIf( p, newPrio, s"${expression( a, newPrio )} $op ${expression( b, newPrio )}" )
+  private def binAssocExpr( expr: LambdaExpression, p: Int, op: String, conn: MonoidalBinaryPropConnectiveHelper ) = {
+    def leftAssocJuncts( e: LambdaExpression ): Seq[LambdaExpression] = e match {
+      case conn( a, b ) => leftAssocJuncts( a ) :+ b
+      case _            => Seq( e )
+    }
+    parenIf( p, prio.binary_formula, leftAssocJuncts( expr ).map( expression( _, prio.binary_formula ) ).mkString( s" $op " ) )
+  }
+  private def quant( vs: Seq[Var], bd: LambdaExpression, p: Int, q: String ) = {
+    val ( vs_, bd_ ) = renameVars( vs, bd )
+    parenIf( p, prio.unitary_formula, s"$q[${vs_ map expression mkString ","}]: ${expression( bd_, prio.unitary_formula + 1 )}" )
+  }
+  private def expression( expr: LambdaExpression, p: Int ): String = expr match {
     case GeneralList( elements @ _* ) =>
       s"[${elements map expression mkString ", "}]"
     case GeneralColon( a, b ) =>
-      s"${expression( a )}:${expression( b )}"
+      s"${expression( a, prio.term )}:${expression( b, prio.term )}"
 
     case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
-      s"(${expression( a )} <=> ${expression( b )})"
+      binExpr( a, b, p, prio.binary_formula, "<=>" )
 
-    case Top()             => "$true"
-    case Bottom()          => "$false"
-    case Const( c, _ )     => atomic_word( c )
-    case Var( name, _ )    => variable( name )
-    case Neg( Eq( a, b ) ) => s"(${expression( a )} != ${expression( b )})"
-    case Neg( f )          => s"(~ ${expression( f )})"
-    case Eq( a, b )        => s"(${expression( a )} = ${expression( b )})"
-    case And( a, b )       => s"(${expression( a )} & ${expression( b )})"
-    case Or( a, b )        => s"(${expression( a )} | ${expression( b )})"
-    case Imp( a, b )       => s"(${expression( a )} => ${expression( b )})"
-    case All.Block( vs, bd ) if vs.nonEmpty =>
-      val ( vs_, bd_ ) = renameVars( vs, bd )
-      s"(![${vs_ map expression mkString ","}]: ${expression( bd_ )})"
-    case Ex.Block( vs, bd ) if vs.nonEmpty =>
-      val ( vs_, bd_ ) = renameVars( vs, bd )
-      s"(?[${vs_ map expression mkString ","}]: ${expression( bd_ )})"
+    case Top()                              => "$true"
+    case Bottom()                           => "$false"
+    case Const( c, _ )                      => atomic_word( c )
+    case Var( name, _ )                     => variable( name )
+    case Neg( Eq( a, b ) )                  => binExpr( a, b, p, prio.infix_formula, "!=" )
+    case Neg( f )                           => parenIf( p, prio.unitary_formula, s"~ ${expression( f, prio.unitary_formula + 1 )}" )
+    case Eq( a, b )                         => binExpr( a, b, p, prio.infix_formula, "=" )
+    case And( _, _ )                        => binAssocExpr( expr, p, "&", And )
+    case Or( a, b )                         => binAssocExpr( expr, p, "|", Or )
+    case Imp( a, b )                        => binExpr( a, b, p, prio.binary_formula, "=>" )
+    case All.Block( vs, bd ) if vs.nonEmpty => quant( vs, bd, p, "!" )
+    case Ex.Block( vs, bd ) if vs.nonEmpty  => quant( vs, bd, p, "?" )
     case Apps( Const( hd, _ ), args ) if expr.exptype.isInstanceOf[TBase] =>
       s"${atomic_word( hd )}(${args map expression mkString ", "})"
-    case App( a, b ) => s"(${expression( a )} @ ${expression( b )})"
+    case App( a, b ) => binExpr( a, b, p, prio.term, s"@" )
   }
 
   def renameVarName( name: String ) =

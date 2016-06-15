@@ -62,20 +62,29 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     }
   }
 
-  def main( args: Array[String] ): Unit =
-    args.toSeq match {
-      case Seq( tptpInputFile ) =>
-        org.apache.log4j.Logger.getLogger( classOf[EscargotState] ).setLevel( org.apache.log4j.Level.DEBUG )
+  def enableDebugging(): Unit = {
+    import org.apache.log4j._
+    Logger.getLogger( classOf[EscargotState] ).setLevel( Level.DEBUG )
+  }
 
-        val tptp = TptpParser.loadFile( tptpInputFile )
-        getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
-          case Some( proof ) =>
-            println( "SZS status Unsatisfiable" )
-            println( resolutionToTptp( proof ).mkString )
-          case None =>
-            println( "SZS status Satisfiable" )
-        }
+  def main( args: Array[String] ): Unit = {
+    val tptpInputFile = args.toSeq match {
+      case Seq( "-v", file ) =>
+        enableDebugging(); file
+      case Seq( file )       => file
     }
+
+    val tptp = TptpParser.loadFile( tptpInputFile )
+    getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
+      case Some( proof ) =>
+        println( "% SZS status Unsatisfiable" )
+        println( "% SZS output start CNFRefutation" )
+        println( resolutionToTptp( proof ).mkString )
+        println( "% SZS output end CNFRefutation" )
+      case None =>
+        println( "% SZS status Satisfiable" )
+    }
+  }
 }
 object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
 
