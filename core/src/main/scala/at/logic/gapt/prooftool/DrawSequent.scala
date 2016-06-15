@@ -1,14 +1,17 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.{ Sequent }
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.expr._
-import org.scilab.forge.jlatexmath.{ TeXIcon, TeXConstants, TeXFormula }
-import java.awt.{ Color, Font }
+import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
+import java.awt.{ Color, Dimension, Font }
 import java.awt.image.BufferedImage
+
 import swing._
 import event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 import java.awt.event.MouseEvent
+
 import at.logic.gapt.formats.latex.LatexUIRenderer.formulaToLatexString
+
 import collection.mutable
 
 object DrawSequent {
@@ -87,7 +90,10 @@ class DrawSequent[T](
     }
   }
 
-  def width( g: Graphics2D ) = contents.foldLeft( 0 )( ( width, x ) => width + x.size.width )
+  // FIXME: figure out why + 10?  Is it the Label adding an inset?  Is the FlowPanel adding gaps?
+  val width = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconWidth ).sum + 10
+  val height = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconHeight ).max + 10
+  maximumSize = new Dimension( width, height )
 
   private def zip3[A, B, C]( seq1: Sequent[A], seq2: Sequent[B], seq3: Sequent[C] ): Sequent[( A, B, C )] = ( ( seq1 zip seq2 ) zip seq3 ) map { x => ( x._1._1, x._1._2, x._2 ) }
 }

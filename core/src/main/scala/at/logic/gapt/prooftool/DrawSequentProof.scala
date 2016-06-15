@@ -2,13 +2,11 @@ package at.logic.gapt.prooftool
 
 import java.awt.Font._
 import java.awt.{ Color, RenderingHints }
-import java.awt.event.{ MouseEvent, MouseMotionListener }
+import java.awt.event.{ ComponentEvent, MouseEvent, MouseMotionListener }
 
-import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ Sequent, SequentIndex, SequentProof, lk }
 
-import scala.swing.BorderPanel._
 import scala.swing._
 import scala.swing.event._
 
@@ -24,12 +22,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     sequent_element_renderer: F => String,
     val pos:                  List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
-  private val blue = new Color( 0, 0, 255 )
-  private val black = new Color( 0, 0, 0 )
-  private val white = new Color( 255, 255, 255 )
-
-  background = white
   opaque = false
+  border = Swing.LineBorder( Color.BLUE ) // DEBUG
 
   private val bd = Swing.EmptyBorder( 0, fSize * 2, 0, fSize * 2 )
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
@@ -53,8 +47,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     )
     ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
     ds.reactions += {
-      case e: MouseEntered => ds.contents.foreach( x => x.foreground = blue )
-      case e: MouseExited  => ds.contents.foreach( x => x.foreground = black )
+      case e: MouseEntered => ds.contents.foreach( x => x.foreground = Color.BLUE )
+      case e: MouseExited  => ds.contents.foreach( x => x.foreground = Color.BLACK )
       //        This functionality can be written later if needed
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
         PopupMenu( DrawSequentProof.this, e.point.x, e.point.y )
@@ -120,6 +114,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
   def initialize() {
     tx.border = Swing.EmptyBorder( 0, fSize, 0, fSize )
+    tx.border = Swing.LineBorder( Color.MAGENTA ) // DEBUG
+    contents += Swing.VGlue
     contents += subProofsPanel
     contents += linePanel
     contents += tx
@@ -136,8 +132,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     initialize()
   }
 
-  def endSequentWidth( g: Graphics2D ) = tx.width( g )
-  def endSequentMarginWidth( g: Graphics2D ) = ( size.width - endSequentWidth( g ) ) / 2
+  def endSequentWidth = tx.width
+  def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2
 
   /*override def paintComponent( g: Graphics2D ) {
     import scala.math.max
@@ -202,20 +198,18 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
     val subProofs: Seq[DrawSequentProof[F, T]],
     val fSize:     Int
 ) extends BoxPanel( Orientation.Horizontal ) {
-  private val blue = new Color( 0, 0, 255 )
-  private val black = new Color( 0, 0, 0 )
-  private val white = new Color( 255, 255, 255 )
+  border = Swing.LineBorder( Color.GREEN ) // DEBUG
 
-  background = white
   opaque = false
 
-  def endSequentWidth( g: Graphics2D ) = subProofs match {
+  def getEndSequentWidth() = subProofs match {
     case Seq() => 0
     case _ =>
-      val leftMargin = subProofs.head.endSequentMarginWidth( g )
-      val rightMargin = subProofs.last.endSequentMarginWidth( g )
+      val leftMargin = subProofs.head.endSequentMarginWidth
+      val rightMargin = subProofs.last.endSequentMarginWidth
 
-      size.width - leftMargin - rightMargin
+      // FIXME: consider both sides separately
+      size.width - 2 * math.min( leftMargin, rightMargin )
   }
   subProofs.foreach( contents += _ )
 }
@@ -225,21 +219,37 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
     val proofName: String,
     val fSize:     Int
 ) extends FlowPanel {
-  private val blue = new Color( 0, 0, 255 )
-  private val black = new Color( 0, 0, 0 )
-  private val white = new Color( 255, 255, 255 )
+  border = Swing.LineBorder( Color.RED ) // DEBUG
 
-  //background = white
-  //opaque = false
   val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
+  val labelFontMetrics = peer.getFontMetrics( labelFont )
+
+  def computeLineWidth() = {
+    val newLineWidth = scala.math.max( parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth )
+    if ( newLineWidth != lineWidth ) {
+      lineWidth = newLineWidth
+      val width = lineWidth + labelFontMetrics.stringWidth( proofName ) * 2 + fSize
+      val height = labelFontMetrics.getHeight + fSize / 4
+      preferredSize = new Dimension( width, height )
+      minimumSize = preferredSize
+      maximumSize = preferredSize
+      revalidate()
+    }
+  }
+
+  var lineWidth = 0; computeLineWidth()
+
+  listenTo( parent.subProofsPanel )
+  reactions += {
+    case UIElementShown( _ ) | UIElementResized( _ ) => computeLineWidth()
+  }
 
   override def paintComponent( g: Graphics2D ): Unit = {
-    val width = scala.math.max( parent.subProofsPanel.endSequentWidth( g ), parent.endSequentWidth( g ) )
-    val leftPoint = ( size.width - width ) / 2
-    val rightPoint = ( size.width + width ) / 2
-    val metrics = g.getFontMetrics( labelFont )
+    val leftPoint = ( size.width - lineWidth ) / 2
+    val rightPoint = ( size.width + lineWidth ) / 2
 
     g.drawLine( leftPoint, size.height / 2, rightPoint, size.height / 2 )
-    g.drawString( proofName, rightPoint + fSize / 8, size.height / 2 + metrics.getMaxDescent )
+    g.setFont( labelFont )
+    g.drawString( proofName, rightPoint + fSize / 8, size.height / 2 + labelFontMetrics.getMaxDescent )
   }
 }
