@@ -83,6 +83,11 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
       mnemonic = Key.V
       contents ++= viewMenuContents
     }
+
+    contents += new Menu( "Debug" ) {
+      mnemonic = Key.D
+      contents ++= debugMenuContents
+    }
   }
 
   val scrollPane = new PTScrollPane
@@ -329,6 +334,8 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   protected def zoomOutButton = MenuButtons.zoomOutButton( this )
 
+  protected def showDebugBordersButton = MenuButtons.ShowDebugBordersButton( this )
+
   /**
    *
    * @return The contents of the "File" menu.
@@ -341,4 +348,8 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    */
   def viewMenuContents: Seq[Component] = Seq( zoomInButton, zoomOutButton )
 
+  /**
+   * @return The contents of the "Debug" menu.
+   */
+  def debugMenuContents: Seq[Component] = Seq( showDebugBordersButton )
 }

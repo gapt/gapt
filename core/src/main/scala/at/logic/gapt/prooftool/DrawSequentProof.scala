@@ -23,12 +23,11 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val pos:                  List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   opaque = false
-  border = Swing.LineBorder( Color.BLUE ) // DEBUG
+  border = Swing.EmptyBorder
 
   private val bd = Swing.EmptyBorder( 0, fSize * 2, 0, fSize * 2 )
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
-  private var drawLines = true
   // The following is a hack to be able to apply searching to the end-sequent. Think about better solution.
   // The problem is that I need to "recalculate" end-sequent and need def for this reason.
   // But then since def is a function, size of tx1 cannot be calculated and lines are not drawn correctly.
@@ -65,24 +64,33 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     case e: MouseWheelMoved =>
       main.scrollPane.peer.dispatchEvent( e.peer )
     case ShowSequentProof( p ) if p == pos =>
-      drawLines = true
-    //layout.foreach( pair => pair._1.visible = true )
+      linePanel.visible = true
+      subProofsPanel.visible = true
+      tx.visible = true
     case HideSequentProof( p ) if p == pos =>
-      drawLines = false
-    //layout.foreach( pair => if ( pair._2 != Position.South ) pair._1.visible = false )
+      linePanel.visible = false
+      subProofsPanel.visible = false
+      tx.visible = false
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
-          drawLines = false
-          main.publisher.publish( HideEndSequent( proof.immediateSubProofs.head ) )
+          linePanel.visible = false
+          main.publisher.publish( HideEndSequent( pos :+ 0 ) )
         case _ =>
       }
-    case HideEndSequent( p ) if p == proof =>
+    case HideEndSequent( p ) if p == pos =>
       tx.visible = false
-    case e: ShowAllRules[_] if e.proof == proof =>
-      drawLines = true
-      initialize()
+    case ShowAllRules( p ) if pos startsWith p =>
+      linePanel.visible = true
       revalidate()
+
+    case ShowDebugBorders =>
+      border = Swing.LineBorder( Color.BLUE ) // DEBUG
+      tx.border = Swing.LineBorder( Color.MAGENTA ) // DEBUG
+
+    case HideDebugBorders =>
+      border = Swing.EmptyBorder
+      tx.border = Swing.EmptyBorder
   }
 
   val cutAncestorIndicesNew = proof match {
@@ -113,8 +121,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   // end of constructor
 
   def initialize() {
-    tx.border = Swing.EmptyBorder( 0, fSize, 0, fSize )
-    tx.border = Swing.LineBorder( Color.MAGENTA ) // DEBUG
+    tx.border = Swing.EmptyBorder
+
     contents += Swing.VGlue
     contents += subProofsPanel
     contents += linePanel
@@ -134,43 +142,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
   def endSequentWidth = tx.width
   def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2
-
-  /*override def paintComponent( g: Graphics2D ) {
-    import scala.math.max
-
-    super.paintComponent( g )
-
-    val metrics = g.getFontMetrics( labelFont )
-    // val em = metrics.charWidth('M')
-    g.setFont( labelFont )
-    // g.setStroke(new BasicStroke(fSize / 25))
-    g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
-    if ( !str.isEmpty && proof.name.contains( str ) ) g.setColor( new Color( 0, 255, 0 ) )
-
-    if ( drawLines ) proof.immediateSubProofs match {
-      case Seq( uProof ) =>
-        val center = this.layout.find( x => x._2 == Position.Center ).get._1.asInstanceOf[DrawSequentProof[_, _]]
-        val width = center.size.width + fSize * 4
-        val height = center.size.height
-        val seqLength = max( center.endSequentWidth, endSequentWidth )
-
-        g.drawLine( ( width - seqLength ) / 2, height, ( width + seqLength ) / 2, height )
-        g.drawString( proof.name, ( fSize / 4 + width + seqLength ) / 2, height + metrics.getMaxDescent )
-      case Seq( uProof1, uProof2 ) =>
-        val left = this.layout.find( x => x._2 == Position.West ).get._1.asInstanceOf[DrawSequentProof[_, _]]
-        val leftWidth = left.size.width + fSize * 4
-        val right = this.layout.find( x => x._2 == Position.East ).get._1.asInstanceOf[DrawSequentProof[_, _]]
-        val rightWidth = right.size.width
-        val height = max( left.size.height, right.size.height )
-        val leftSeqLength = left.endSequentWidth
-        val rightSeqLength = right.endSequentWidth
-        val lineLength = right.location.x + ( rightWidth + rightSeqLength ) / 2
-
-        g.drawLine( ( leftWidth - leftSeqLength ) / 2, height, lineLength, height )
-        g.drawString( proof.name, lineLength + fSize / 4, height + metrics.getMaxDescent )
-      case _ =>
-    }
-  }*/
 
   this.peer.setAutoscrolls( true )
   this.peer.addMouseMotionListener( this )
@@ -198,9 +169,10 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
     val subProofs: Seq[DrawSequentProof[F, T]],
     val fSize:     Int
 ) extends BoxPanel( Orientation.Horizontal ) {
-  border = Swing.LineBorder( Color.GREEN ) // DEBUG
-
+  border = Swing.EmptyBorder( 0, 0, 0, 0 )
   opaque = false
+
+  subProofs.foreach( contents += _ )
 
   def getEndSequentWidth() = subProofs match {
     case Seq() => 0
@@ -211,7 +183,16 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
       // FIXME: consider both sides separately
       size.width - 2 * math.min( leftMargin, rightMargin )
   }
-  subProofs.foreach( contents += _ )
+
+  listenTo( parent.main.publisher )
+
+  reactions += {
+    case ShowDebugBorders =>
+      border = Swing.LineBorder( Color.GREEN ) // DEBUG
+
+    case HideDebugBorders =>
+      border = Swing.EmptyBorder
+  }
 }
 
 class ProofLinePanel[F, T <: SequentProof[F, T]](
@@ -219,7 +200,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
     val proofName: String,
     val fSize:     Int
 ) extends FlowPanel {
-  border = Swing.LineBorder( Color.RED ) // DEBUG
+  border = Swing.EmptyBorder
 
   val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
   val labelFontMetrics = peer.getFontMetrics( labelFont )
@@ -239,9 +220,16 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
 
   var lineWidth = 0; computeLineWidth()
 
-  listenTo( parent.subProofsPanel )
+  listenTo( parent.subProofsPanel, parent.main.publisher )
   reactions += {
     case UIElementShown( _ ) | UIElementResized( _ ) => computeLineWidth()
+
+    case ShowDebugBorders =>
+      border = Swing.LineBorder( Color.RED ) // DEBUG
+
+    case HideDebugBorders =>
+      border = Swing.EmptyBorder
+
   }
 
   override def paintComponent( g: Graphics2D ): Unit = {

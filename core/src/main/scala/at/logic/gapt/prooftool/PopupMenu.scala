@@ -26,8 +26,9 @@ object PopupMenu {
       contents += new Separator
       contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
       contents += new Separator
-      contents += new MenuItem( Action( "Show Proof Above" ) { main.publisher.publish( ShowProof( tproof ) ) } )
-      contents += new MenuItem( Action( "Hide Proof Above" ) { main.publisher.publish( HideProof( tproof ) ) } )
+      //FIXME: What do these actually do? How are they different from the options in the menu below?
+      //contents += new MenuItem( Action( "Show Proof Above" ) { main.publisher.publish( ShowProof( tproof ) ) } )
+      //contents += new MenuItem( Action( "Hide Proof Above" ) { main.publisher.publish( HideProof( tproof ) ) } )
       contents += new Separator
     }
     popupMenu.show( component, x, y )

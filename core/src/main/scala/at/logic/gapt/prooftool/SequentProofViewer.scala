@@ -18,7 +18,7 @@ import scala.swing._
  *
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
- * @tparam T The type of dag proof..
+ * @tparam T The type of dag proof.
  */
 abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
@@ -140,7 +140,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
   }
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
-  def showAllRules(): Unit = publisher.publish( ShowAllRules( content ) )
+  def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
 
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
@@ -187,7 +187,7 @@ class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofView
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
-  def showAllRules(): Unit = publisher.publish( ShowAllRules( content ) )
+  def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
 
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )

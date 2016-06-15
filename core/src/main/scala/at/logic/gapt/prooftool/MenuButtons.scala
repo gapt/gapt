@@ -130,6 +130,17 @@ object MenuButtons {
         main.removeMarking()
     }
   }
+
+  def ShowDebugBordersButton( main: ProofToolViewer[_] ) = new CheckMenuItem( "Show debug borders" ) {
+    outer =>
+
+    action = Action( "Show debug borders" ) {
+      if ( outer.selected )
+        main.publisher.publish( ShowDebugBorders )
+      else
+        main.publisher.publish( HideDebugBorders )
+    }
+  }
 }
 
 /**
