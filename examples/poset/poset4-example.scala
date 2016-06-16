@@ -120,10 +120,10 @@ object poset4_example extends Script {
   val vtratg = recSchemToVTRATG( encRecSchem )
   val sehs = vtratgToSEHS( encoding, vtratg )
   val canSol = CutIntroduction.computeCanonicalSolution( sehs )
-  val canEHS = ExtendedHerbrandSequent( sehs, canSol )
+  val canEHS = SolutionStructure( sehs, canSol )
   val minSol = improveSolutionLK( canEHS, Sat4j, hasEquality = false )
   println( "Automatically improved cut-formula for grammar extracted from proof:" )
-  println( minSol.cutFormulas.head )
+  println( minSol.formulas.head )
   CutIntroduction.constructLKProof( minSol, hasEquality = false )
 
   // reductive cut-elimination takes too long and CERES produces too few weak quantfier inferences?

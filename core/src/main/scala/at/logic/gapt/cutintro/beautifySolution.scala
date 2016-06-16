@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 object beautifySolution {
 
-  def apply( ehs: ExtendedHerbrandSequent ): ExtendedHerbrandSequent = {
+  def apply( ehs: SolutionStructure ): SolutionStructure = {
     val esCNFs = ehs.endSequent.zipWithIndex map {
       case ( All.Block( vs, f ), i: Ant ) => vs -> CNFp.toClauseList( f ).toSet
       case ( Ex.Block( vs, f ), i: Suc )  => vs -> CNFn.toClauseList( f ).toSet
@@ -17,8 +17,7 @@ object beautifySolution {
 
     val addUs = mutable.Buffer[( SequentIndex, List[FOLTerm] )]()
 
-    val qfCFs = for ( ( cf, ev ) <- ehs.cutFormulas zip ehs.sehs.eigenVariables ) yield instantiate( cf, ev )
-    val newCFs = qfCFs.zipWithIndex map {
+    val newCFs = ehs.formulas.zipWithIndex map {
       case ( cf, k ) =>
         var cnf = CNFp.toClauseList( cf )
 
@@ -66,7 +65,7 @@ object beautifySolution {
     val ( nontrivialSS, nontrivialCFs ) = ( ehs.sehs.ss zip newCFs ).filter { _._2 != Top() }.unzip
 
     val newSEHS = SchematicExtendedHerbrandSequent( newUs, nontrivialSS )
-    ExtendedHerbrandSequent( newSEHS, ( newSEHS.eigenVariables, nontrivialCFs ).zipped map { All.Block( _, _ ) } )
+    SolutionStructure( newSEHS, nontrivialCFs )
   }
 
 }

@@ -175,7 +175,7 @@ object testCutIntro extends App {
             metrics.value( "status", e match {
               case _: OutOfMemoryError                    => "cutintro_out_of_memory"
               case _: StackOverflowError                  => "cutintro_stack_overflow"
-              case _: CutIntroEHSUnprovableException      => "cutintro_ehs_unprovable"
+              case _: CutIntroUnprovableException         => "cutintro_ehs_unprovable"
               case _: CutIntroNonCoveringGrammarException => "cutintro_noncovering_grammar"
               case _: LKRuleCreationException             => "lk_rule_creation_exception"
               case _: Throwable                           => "cutintro_other_exception"

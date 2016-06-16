@@ -17,7 +17,7 @@ object EquationalProver extends Prover {
   private val smtSolver =
     if ( Z3 isInstalled ) Z3
     else if ( VeriT isInstalled ) VeriT
-    else Escargot
+    else new Escargot( splitting = true, equality = true, propositional = true )
   private val resProver =
     if ( Prover9 isInstalled ) Prover9
     else Escargot

@@ -73,16 +73,16 @@ class CutIntroTest extends Specification {
 
       val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
       val grammar = new SchematicExtendedHerbrandSequent( us, ss )
-      val ehs = ExtendedHerbrandSequent( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
+      val ehs = SolutionStructure( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
       val prover = BasicProver
       val result_new = improveSolutionLK( ehs, prover, hasEquality = false )
       val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
 
       // expected result
-      val cf1 = All( a1, FOLAtom( "P", a1 ) --> FOLAtom( "P", fun( 2, a1 ) ) )
-      val cf2 = All( a2, FOLAtom( "P", a2 ) --> FOLAtom( "P", fun( 4, a2 ) ) )
+      val cf1 = FOLAtom( "P", a1 ) --> FOLAtom( "P", fun( 2, a1 ) )
+      val cf2 = FOLAtom( "P", a2 ) --> FOLAtom( "P", fun( 4, a2 ) )
 
-      result_new.cutFormulas must beEqualTo( cf1 :: cf2 :: Nil )
+      result_new.formulas must beEqualTo( cf1 :: cf2 :: Nil )
 
       quantRulesNumber( r_proof ) must_== grammar.size
     }

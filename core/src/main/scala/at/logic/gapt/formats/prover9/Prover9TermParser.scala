@@ -148,25 +148,5 @@ abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   lazy val variable: PackratParser[FOLVar] = varsymb ^^ { FOLVar( _ ) }
   lazy val topbottom: PackratParser[FOLFormula] = "$" ~> ( "T" ^^ ( x => Top() ) | "F" ^^ ( x => Bottom() ) )
 
-  def createNOp( fs: List[FOLFormula], constructor: ( FOLFormula, FOLFormula ) => FOLFormula ): FOLFormula = {
-    //if (fs.size < 2) failure("Binary operator needs to occur at least once!") else
-    fs.reduceRight( ( f: FOLFormula, g: FOLFormula ) => constructor( f, g ) )
-  }
-
-  def normalizeFSequent( f: HOLSequent ) = {
-    require( ( f.antecedent ++ f.succedent ).forall( _.isInstanceOf[FOLFormula] ), "normalization only works on FOL formulas" )
-    HOLSequent(
-      f.antecedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) ),
-      f.succedent.map( x => normalizeFormula( x.asInstanceOf[FOLFormula] ) )
-    )
-  }
-
-  def normalizeFormula( f: FOLFormula ): FOLFormula = {
-    val freevars: List[( FOLVar, Int )] = freeVariables( f ).toList.zipWithIndex
-    val pairs: List[( FOLVar, FOLVar )] = freevars.map( x => { ( x._1, FOLVar( "v" + x._2 ) ) } )
-    val nf: FOLFormula = FOLSubstitution( pairs )( f )
-    nf
-  }
-
 }
 
