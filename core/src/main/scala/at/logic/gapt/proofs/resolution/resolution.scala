@@ -219,6 +219,12 @@ case class Subst( subProof: ResolutionProof, substitution: Substitution ) extend
     Seq( OccConnector( conclusion, subProof.conclusion, subProof.conclusion.indicesSequent.map( Seq( _ ) ) ) )
   override def immediateSubProofs: Seq[ResolutionProof] = Seq( subProof )
 }
+object Subst {
+  def ifNecessary( subProof: ResolutionProof, substitution: Substitution ): ResolutionProof =
+    if ( substitution( subProof.conclusion ) == subProof.conclusion ) subProof
+    else Subst( subProof, substitution )
+
+}
 
 /**
  * Resolution.

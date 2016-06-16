@@ -77,9 +77,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       else None
     } else syntacticMatching( a, b )
 
-  def Subst( proof: ResolutionProof, subst: Substitution ) =
-    if ( subst( proof.conclusion ) == proof.conclusion ) proof
-    else at.logic.gapt.proofs.resolution.Subst( proof, subst )
+  def Subst( proof: ResolutionProof, subst: Substitution ) = at.logic.gapt.proofs.resolution.Subst.ifNecessary( proof, subst )
 
   def getFOPositions( exp: LambdaExpression ): Map[LambdaExpression, Seq[LambdaPosition]] = {
     val poss = mutable.Map[LambdaExpression, Seq[LambdaPosition]]().withDefaultValue( Seq() )

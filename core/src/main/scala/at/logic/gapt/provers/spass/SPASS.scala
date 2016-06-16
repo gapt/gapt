@@ -5,7 +5,7 @@ import java.io.IOException
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
+import at.logic.gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
@@ -47,11 +47,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
          |end_of_list.
        """.stripMargin
 
+      val consts = cnf.view.flatMap( constants( _ ) ).toSet
       val list_of_symbols = {
         val buf = new StringBuilder
         buf append "list_of_symbols.\n"
-
-        val consts = cnf.view.flatMap( constants( _ ) ).toSet
 
         val funs = consts filter { _.isInstanceOf[FOLPartialTerm] }
         if ( funs nonEmpty ) buf append s"functions[${funs map { _.name } mkString ","}].\n"
@@ -92,8 +91,30 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
         val inferences = proof map InferenceParser.parseInference
 
+        val nameGen = rename.awayFrom( consts )
+
+        class SpassSplit( splittingClause: RefutationSketch, part1: FOLClause ) {
+          require( part1 isSubMultisetOf splittingClause.conclusion )
+          val part2 = splittingClause.conclusion diff part1
+
+          val splitAtom1 = FOLAtom( nameGen.freshWithIndex( "_split1" ) )
+          val splitAtom2 = FOLAtom( nameGen.freshWithIndex( "_split2" ) )
+
+          val comp1 = AvatarNonGroundComp( splitAtom1, univclosure( part1.toDisjunction ) )
+          val comp2 = AvatarNonGroundComp( splitAtom2, univclosure( part2.toDisjunction ) )
+
+          val emptyClause = SketchComponentElim( SketchComponentElim( splittingClause, comp1 ), comp2 )
+
+          val addAxioms1 = Seq( SketchComponentIntro( comp1 ) )
+
+          val groundNegPart1 =
+            for ( ( a, i ) <- comp1.componentClause.zipWithIndex.elements if freeVariables( a ).isEmpty )
+              yield AvatarNegNonGroundComp( comp1.atom, comp1.definition, comp1.vars, i )
+          val addAxioms2 = Seq( comp2 ) ++ groundNegPart1 map { SketchComponentIntro( _ ) }
+        }
+
         val inference2sketch = mutable.Map[Int, RefutationSketch]()
-        val splitStack = mutable.Stack[( Int, SketchSplit, Option[Int] )]()
+        val splitStack = mutable.Stack[( Int, SpassSplit, Option[Int] )]()
         val splitCases = Seq.newBuilder[RefutationSketch]
         def finishSplit( infNum: Int, splitLevel: Int ): Unit =
           if ( splitLevel > 0 ) splitStack.pop() match {
@@ -112,18 +133,13 @@ class SPASS extends ResolutionProver with ExternalProgram {
             val Some( subst ) = clauseSubsumption( part1, splitClause )
             require( subst.isRenaming )
             val correctPart1 = subst.asFOLSubstitution( part1 )
-            val split = SketchSplit( inference2sketch( splitClauseNum ), correctPart1 )
-            splitCases += split
+            val split = new SpassSplit( inference2sketch( splitClauseNum ), correctPart1 )
+            splitCases += split.emptyClause
             splitStack push ( ( splitClauseNum, split, None ) )
-            inference2sketch( num ) = SketchInference( splitClause, Seq( SketchSplit1( split ) ) )
+            inference2sketch( num ) = SketchInference( splitClause, split.addAxioms1 )
           case ( num, splitLevel, "Spt", _, clause ) =>
             val split = splitStack.top._2
-            val Seq( correctClause ) =
-              for {
-                ( possibleComp, i ) <- split.addAxioms2.zipWithIndex
-                _ <- clauseSubsumption( clause, possibleComp )
-              } yield SketchSplit2( split, i )
-            inference2sketch( num ) = SketchInference( clause, Seq( correctClause ) )
+            inference2sketch( num ) = SketchInference( clause, split.addAxioms2 )
           case ( num, splitLevel, _, premises, clause ) =>
             val p = SketchInference( clause, premises map inference2sketch )
             inference2sketch( num ) = p
