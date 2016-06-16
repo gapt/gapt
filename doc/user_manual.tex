@@ -2147,19 +2147,22 @@ structural clausification, and Avatar-style splitting as in~\cite{Voronkov2014AV
 The judgments of this calculus are A-sequents.  An A-sequent is a pair
 of a sequent of HOL formulas, and a conjunction of propositional
 literals---the assertion (that's where the ``A'' comes from).
-\[ \Gamma \leftarrow A \]
+\[ \Gamma \vdash \Delta \leftarrow A \]
 
 We represent the (negation of the) assertion as a clause.  The judgment is
-interpreted as the following formula:
-\[ A \impl \Gamma \]
+interpreted as the following formula, where $\overline x$ are the free
+variables of the sequent:
+\[ A \impl \forall \overline{x}\,
+  \left(\bigwedge\Gamma \impl \bigvee\Delta\right) \]
 
 Inferences such as resolution or paramodulation do not operate on the assertions.
-Unless specified otherwise, assertions are inherited by default:
+Unless specified otherwise, assertions are inherited by default, combined with
+a conjunction:
 \begin{prooftree}
-  \AxiomC{$\Gamma \lor a \leftarrow A$}
-  \AxiomC{$\neg a \lor \Delta \leftarrow B$}
+  \AxiomC{$\Gamma \vdash \Delta, a \leftarrow A$}
+  \AxiomC{$a, \Pi \vdash \Lambda \leftarrow B$}
   \RightLabel{Resolution}
-  \BinaryInfC{$\Gamma \lor \Delta \leftarrow A \land B$}
+  \BinaryInfC{$\Gamma, \Pi \vdash \Delta, \Lambda \leftarrow A \land B$}
 \end{prooftree}
 
 There is no factoring on assertions, duplicate assertions are automatically removed.
@@ -2170,174 +2173,184 @@ paramodulation; they are explicitly represented using the Subst inference.
 
 \begin{prooftree}
 \AxiomC{}\RightLabel{Input}
-\UnaryInfC{$C$}
+\UnaryInfC{$S$}
 \end{prooftree}
 
 \begin{prooftree}
 \AxiomC{}\RightLabel{Refl}
-\UnaryInfC{$t=t$}
+\UnaryInfC{$\vdash t=t$}
 \end{prooftree}
 
 \begin{prooftree}
   \AxiomC{}\RightLabel{Taut}
-\UnaryInfC{$a \lor \neg a$}
+  \UnaryInfC{$a \vdash a$}
 \end{prooftree}
 
 \subsubsection*{Structural rules}
 
+\begin{multicols}{2}
 \begin{prooftree}
-\AxiomC{$a \lor a \lor C$}\RightLabel{Factor}
-\UnaryInfC{$a \lor C$}
+  \AxiomC{$a, a, \Gamma \vdash \Delta$}\RightLabel{Factor}
+  \UnaryInfC{$a, \Gamma \vdash \Delta$}
 \end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\Gamma \vdash \Delta, a, a$}\RightLabel{Factor}
+  \UnaryInfC{$\Gamma \vdash \Delta, a$}
+\end{prooftree}
+\end{multicols}
 
 \begin{prooftree}
-\AxiomC{$C$}\RightLabel{Subst}
-\UnaryInfC{$C \sigma$}
+\AxiomC{$S$}\RightLabel{Subst}
+\UnaryInfC{$S \sigma$}
 \end{prooftree}
 
 \subsubsection*{Logical rules}
 
 \begin{prooftree}
-\AxiomC{$C \lor a$}
-\AxiomC{$\neg a \lor D$}
+  \AxiomC{$\Gamma \vdash \Delta, a$}
+  \AxiomC{$a, \Pi \vdash \Lambda$}
 \RightLabel{Resolution}
-\BinaryInfC{$C \lor D$}
+\BinaryInfC{$\Gamma, \Pi \vdash \Delta, \Lambda$}
 \end{prooftree}
 
 \begin{prooftree}
-\AxiomC{$C \lor t=s$}
-\AxiomC{$l[t] \lor D$}
-\RightLabel{Paramod}
-\BinaryInfC{$C \lor l[s] \lor D$}
+  \AxiomC{$\Gamma \vdash \Delta, t=s$}
+  \AxiomC{$\Pi \vdash \Lambda, a[t]$}
+  \RightLabel{Paramod}
+  \BinaryInfC{$\Gamma, \Pi \vdash \Delta, \Lambda, a[s]$}
 \end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$C \lor t=s$}
-\AxiomC{$l[s] \lor D$}
-\RightLabel{Paramod}
-\BinaryInfC{$C \lor l[t] \lor D$}
-\end{prooftree}
+(We also allow rewriting in the antecedent, and rewriting from right to left.)
 
 \subsubsection*{Propositional rules}
 
 \begin{multicols}{2}
 \begin{prooftree}
-  \AxiomC{$\neg\top \lor C$}
+  \AxiomC{$\top, \Gamma \vdash \Delta$}
   \RightLabel{TopL}
-  \UnaryInfC{$C$}
+  \UnaryInfC{$\Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$\bot \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, \bot$}
   \RightLabel{BottomR}
-  \UnaryInfC{$C$}
+  \UnaryInfC{$\Gamma \vdash \Delta$}
 \end{prooftree}
 \end{multicols}
 
 \begin{multicols}{2}
 \begin{prooftree}
-  \AxiomC{$\neg\neg a \lor C$}
+  \AxiomC{$\neg a, \Gamma \vdash \Delta$}
   \RightLabel{NegL}
-  \UnaryInfC{$a \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, a$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$\neg a \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, \neg a$}
   \RightLabel{NegR}
-  \UnaryInfC{$\neg a \lor C$}
+  \UnaryInfC{$a, \Gamma \vdash \Delta$}
 \end{prooftree}
 \end{multicols}
 
 \begin{multicols}{3}
 \begin{prooftree}
-  \AxiomC{$\neg (a \land b) \lor C$}
+  \AxiomC{$a \land b, \Gamma \vdash \Delta$}
   \RightLabel{AndL}
-  \UnaryInfC{$\neg a \lor \neg b \lor C$}
+  \UnaryInfC{$a, b, \Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$(a \land b) \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, a \land b$}
   \RightLabel{AndR1}
-  \UnaryInfC{$a \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, a$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$(a \land b) \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, a \land b$}
   \RightLabel{AndR2}
-  \UnaryInfC{$b \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, b$}
 \end{prooftree}
 \end{multicols}
 
 \begin{multicols}{3}
 \begin{prooftree}
-  \AxiomC{$\neg (a \lor b) \lor C$}
+  \AxiomC{$a \lor b, \Gamma \vdash \Delta$}
   \RightLabel{OrL1}
-  \UnaryInfC{$\neg a \lor C$}
+  \UnaryInfC{$a, \Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$\neg (a \lor b) \lor C$}
+  \AxiomC{$a \lor b, \Gamma \vdash \Delta$}
   \RightLabel{OrL2}
-  \UnaryInfC{$\neg b \lor C$}
+  \UnaryInfC{$b, \Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$(a \lor b) \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, a \lor b$}
   \RightLabel{OrR}
-  \UnaryInfC{$a \lor b \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, a, b$}
 \end{prooftree}
 \end{multicols}
 
 \begin{multicols}{3}
 \begin{prooftree}
-  \AxiomC{$\neg (a \impl b) \lor C$}
+  \AxiomC{$a \impl b, \Gamma \vdash \Delta$}
   \RightLabel{ImpL1}
-  \UnaryInfC{$a \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, a$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$\neg (a \impl b) \lor C$}
+  \AxiomC{$a \impl b, \Gamma \vdash \Delta$}
   \RightLabel{ImpL2}
-  \UnaryInfC{$\neg b \lor C$}
+  \UnaryInfC{$b, \Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$(a \impl b) \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, a \impl b$}
   \RightLabel{ImpR}
-  \UnaryInfC{$\neg a \lor b \lor C$}
+  \UnaryInfC{$a, \Gamma \vdash \Delta, b$}
 \end{prooftree}
 \end{multicols}
 
 \begin{multicols}{2}
 \begin{prooftree}
-  \AxiomC{$\neg \forall x\, \varphi x \lor C$}
+  \AxiomC{$\forall x\, \varphi x, \Gamma \vdash \Delta$}
   \RightLabel{AllL}
-  \UnaryInfC{$\neg \varphi(s(...)) \lor C$}
+  \UnaryInfC{$\varphi(s(...)), \Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$\forall x\: \varphi x \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, \forall x\, \varphi x$}
   \RightLabel{AllR}
-  \UnaryInfC{$\varphi x \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, \varphi x$}
 \end{prooftree}
 \end{multicols}
 
 \begin{multicols}{2}
 \begin{prooftree}
-  \AxiomC{$\neg \exists x\: \varphi x \lor C$}
+  \AxiomC{$\exists x\, \varphi x, \Gamma \vdash \Delta$}
   \RightLabel{ExL}
-  \UnaryInfC{$\neg \varphi x \lor C$}
+  \UnaryInfC{$\varphi x, \Gamma \vdash \Delta$}
 \end{prooftree}
 \begin{prooftree}
-  \AxiomC{$\exists x\, \varphi x \lor C$}
+  \AxiomC{$\Gamma \vdash \Delta, \exists x\, \varphi x$}
   \RightLabel{ExR}
-  \UnaryInfC{$\varphi(s(...)) \lor C$}
+  \UnaryInfC{$\Gamma \vdash \Delta, \varphi(s(...))$}
 \end{prooftree}
 \end{multicols}
 
+\begin{multicols}{2}
 \begin{prooftree}
-  \AxiomC{$C \lor \varphi(x)$}
+  \AxiomC{$\varphi(\overline x), \Gamma \vdash \Delta$}
   \RightLabel{DefIntro}
-  \UnaryInfC{$C \lor D(x)$}
+  \UnaryInfC{$D(\overline x), \Gamma \vdash \Delta$}
 \end{prooftree}
+\begin{prooftree}
+  \AxiomC{$\Gamma \vdash \Delta, \varphi(\overline x)$}
+  \RightLabel{DefIntro}
+  \UnaryInfC{$\Gamma \vdash \Delta, D(\overline x)$}
+\end{prooftree}
+\end{multicols}
 
 \subsubsection*{Avatar rules}
 
+By $[C]$ we denote the propositional atom representing the clause component
+$C$.
+
 \begin{prooftree}
-  \AxiomC{$C \lor \Gamma \leftarrow A$}
+  \AxiomC{$C, S \leftarrow A$}
   \RightLabel{AvatarComponentElim}
-  \UnaryInfC{$\Gamma \leftarrow A \land \neg[C]$}
+  \UnaryInfC{$S \leftarrow A \land \neg[C]$}
 \end{prooftree}
 
 \begin{prooftree}
@@ -2347,9 +2360,9 @@ paramodulation; they are explicitly represented using the Subst inference.
 \end{prooftree}
 
 \begin{prooftree}
-  \AxiomC{$\Gamma \leftarrow A$}
+  \AxiomC{$S \leftarrow A$}
   \RightLabel{AvatarAbsurd}
-  \UnaryInfC{$\Gamma \lor \neg A \leftarrow \top$}
+  \UnaryInfC{$C, \neg A \leftarrow \top$}
 \end{prooftree}
 
 \subsection{LKsk}
