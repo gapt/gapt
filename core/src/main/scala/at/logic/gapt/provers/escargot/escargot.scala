@@ -69,6 +69,9 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
   def main( args: Array[String] ): Unit = {
     val tptpInputFile = args.toSeq match {
+      case Seq() =>
+        println( "Usage: escargot [-v] tptp-problem.p" )
+        sys.exit( 1 )
       case Seq( "-v", file ) =>
         enableDebugging(); file
       case Seq( file ) => file

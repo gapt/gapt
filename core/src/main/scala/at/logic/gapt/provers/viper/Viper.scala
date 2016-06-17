@@ -179,7 +179,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info()
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    info( s"Solution: ${solution.toSigRelativeString}\n" )
+    info( s"Found solution: ${solution.toSigRelativeString}\n" )
     info( Z3 isValid skolemize( formula ) )
 
     solution
@@ -236,6 +236,9 @@ object Viper {
   def parseArgs( args: Seq[String], options: Map[String, String] ): ( TipProblem, ViperOptions ) =
     args match {
       case Seq() =>
+        println( "Usage: viper tip-problem.smt2" )
+        sys exit 1
+      case Seq( "-" ) =>
         parseCode( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString, options )
       case Seq( fn ) =>
         parseCode( Source fromFile fn mkString, options )
