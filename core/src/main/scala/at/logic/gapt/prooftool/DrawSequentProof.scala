@@ -78,7 +78,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
         contents += Swing.VGlue
         contents += new Label( "CollapsedProof" ) {
-          horizontalAlignment = Alignment.Center
+          xLayoutAlignment = java.awt.Component.CENTER_ALIGNMENT
           text = "(...)"
         }
       }
