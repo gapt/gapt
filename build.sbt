@@ -197,7 +197,7 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "fastparse" % "0.3.7",
       "com.googlecode.kiama" %% "kiama" % "1.8.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.1",
-      "org.scalaz" %% "scalaz-core" % "7.2.3",
+      "org.scalaz" %% "scalaz-core" % "7.2.4",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "org.slf4j" % "slf4j-api" % "1.7.21",
