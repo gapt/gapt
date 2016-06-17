@@ -24,6 +24,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   opaque = false
   border = Swing.EmptyBorder
+  var collapsed = false
 
   private val bd = Swing.EmptyBorder( 0, fSize * 2, 0, fSize * 2 )
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
@@ -44,7 +45,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       colors,
       sequent_element_renderer
     )
-    ds.listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
+    ds.listenTo( ds.mouse.moves, ds.mouse.clicks, ds.mouse.wheel, main.publisher )
     ds.reactions += {
       case e: MouseEntered => ds.contents.foreach( x => x.foreground = Color.BLUE )
       case e: MouseExited  => ds.contents.foreach( x => x.foreground = Color.BLACK )
@@ -67,13 +68,14 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       main.scrollPane.peer.dispatchEvent( e.peer )
 
     case ShowSequentProof( p ) if p == pos =>
+      collapsed = false
       contents( 1 ) = subProofsPanel
       linePanel.visible = true
     //tx.visible = true
 
     case HideSequentProof( p ) if p == pos =>
+      collapsed = true
       contents( 1 ) = new BoxPanel( Orientation.Vertical ) {
-        border = Swing.LineBorder( Color.GRAY )
         opaque = false
 
         contents += Swing.VGlue
