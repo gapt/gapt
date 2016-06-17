@@ -59,18 +59,32 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   reactions += {
     case e: MouseDragged =>
       main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
+
     case e: MouseReleased =>
       main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
+
     case e: MouseWheelMoved =>
       main.scrollPane.peer.dispatchEvent( e.peer )
+
     case ShowSequentProof( p ) if p == pos =>
+      contents( 1 ) = subProofsPanel
       linePanel.visible = true
-      subProofsPanel.visible = true
-      tx.visible = true
+    //tx.visible = true
+
     case HideSequentProof( p ) if p == pos =>
+      contents( 1 ) = new BoxPanel( Orientation.Vertical ) {
+        border = Swing.LineBorder( Color.GRAY )
+        opaque = false
+
+        contents += Swing.VGlue
+        contents += new Label( "CollapsedProof" ) {
+          horizontalAlignment = Alignment.Center
+          text = "(...)"
+        }
+      }
       linePanel.visible = false
-      subProofsPanel.visible = false
-      tx.visible = false
+    //tx.visible = false
+
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
@@ -78,8 +92,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
           main.publisher.publish( HideEndSequent( pos :+ 0 ) )
         case _ =>
       }
+
     case HideEndSequent( p ) if p == pos =>
       tx.visible = false
+
     case ShowAllRules( p ) if pos startsWith p =>
       linePanel.visible = true
       revalidate()
@@ -171,6 +187,7 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
 ) extends BoxPanel( Orientation.Horizontal ) {
   border = Swing.EmptyBorder( 0, 0, 0, 0 )
   opaque = false
+  val collapsedProof = new Label( "CollapsedProof" ) { text = "(...)" }
 
   subProofs.foreach( contents += _ )
 
