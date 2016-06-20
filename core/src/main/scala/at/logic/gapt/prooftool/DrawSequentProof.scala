@@ -26,6 +26,14 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   border = Swing.EmptyBorder
   var collapsed = false
 
+  private var lineHidden_ = 0
+  def lineHidden = lineHidden_
+  def lineHidden_=( i: Int ) = {
+    require( i >= 0 )
+    lineHidden_ = i
+    linePanel.visible = lineHidden == 0
+  }
+
   private val bd = Swing.EmptyBorder( 0, fSize * 2, 0, fSize * 2 )
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
@@ -70,8 +78,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     case ShowSequentProof( p ) if p == pos =>
       collapsed = false
       contents( 1 ) = subProofsPanel
-      linePanel.visible = true
-    //tx.visible = true
+      lineHidden -= 1
 
     case HideSequentProof( p ) if p == pos =>
       collapsed = true
@@ -83,14 +90,13 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
           xLayoutAlignment = java.awt.Component.CENTER_ALIGNMENT
           text = "(...)"
         }
+        lineHidden += 1
       }
-      linePanel.visible = false
-    //tx.visible = false
 
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
-          linePanel.visible = false
+          lineHidden += 1
           main.publisher.publish( HideEndSequent( pos :+ 0 ) )
         case _ =>
       }
@@ -99,8 +105,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       tx.visible = false
 
     case ShowAllRules( p ) if pos startsWith p =>
-      linePanel.visible = true
-      revalidate()
+      lineHidden = if ( lineHidden > 0 ) lineHidden - 1 else 0
+      tx.visible = true
 
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.BLUE ) // DEBUG
