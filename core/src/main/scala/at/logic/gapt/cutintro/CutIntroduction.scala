@@ -263,18 +263,22 @@ object CutIntroduction extends Logger {
       val beautifiedSS = metrics.time( "beausol" ) { beautifySolution( minimizedSS ) }
       require( beautifiedSS.isValid( prover ) )
 
+      def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
+        metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
+        metrics.value( s"${name}sol_scomp", solStruct.formulas.map( expressionSize( _ ) ).sum )
+        metrics.value( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp.toClauseList( f ).size ).sum )
+        val clauseSizes = solStruct.formulas.flatMap( CNFp.toClauseList ).map( _.size )
+        metrics.value( s"${name}sol_maxclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.max )
+        metrics.value( s"${name}sol_avgclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.sum.toFloat / clauseSizes.size )
+      }
+      solStructMetrics( canonicalSS, "can" )
+      solStructMetrics( minimizedSS, "min" )
+      solStructMetrics( beautifiedSS, "beau" )
+
       val lcompCanonicalSol = canonicalSS.formulas.map( lcomp( _ ) ).sum
       val lcompMinSol = minimizedSS.formulas.map( lcomp( _ ) ).sum
       val lcompBeauSol = beautifiedSS.formulas.map( lcomp( _ ) ).sum
       val beauGrammar = sehsToVTRATG( encoding, beautifiedSS.sehs )
-
-      metrics.value( "cansol_lcomp", lcompCanonicalSol )
-      metrics.value( "minsol_lcomp", lcompMinSol )
-      metrics.value( "beausol_lcomp", lcompBeauSol )
-      metrics.value( "cansol_scomp", canonicalSS.formulas.map( expressionSize( _ ) ).sum )
-      metrics.value( "minsol_scomp", minimizedSS.formulas.map( expressionSize( _ ) ).sum )
-      metrics.value( "beausol_scomp", beautifiedSS.formulas.map( expressionSize( _ ) ).sum )
-      metrics.value( "beausol_nclauses", beautifiedSS.formulas.map( f => CNFp.toClauseList( f ).size ).sum )
       metrics.value( "beaugrammar_size", beauGrammar.size )
       metrics.value( "beaugrammar_scomp", beauGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
       metrics.value( "beausol", beautifiedSS.formulas.map( _.toString ) )
