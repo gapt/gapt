@@ -27,9 +27,9 @@ object AvatarSplit {
 /**
  * Removes a clause component.
  * {{{
- *   Γ ∨ C <- A
- *   ---------------
- *      Γ  <- A ∧ ¬a
+ *   S ++ C <- A
+ *   ----------------
+ *      S   <- A ∧ ¬a
  * }}}
  */
 case class AvatarComponentElim( subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarComponent ) extends LocalResolutionRule {
@@ -66,7 +66,7 @@ object AvatarComponentElim {
 /**
  * Introduces a clause component.
  * {{{
- *   --------
+ *   ------
  *   C <- a
  * }}}
  */
@@ -150,9 +150,9 @@ case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarCo
 /**
  * Moves an assertion back to the sequent.
  * {{{
- *     Γ <- A
+ *     S <- A
  *   ------------
- *    Γ ∨ ¬A <-
+ *    S ++ ¬A <-
  * }}}
  */
 case class AvatarAbsurd( subProof: ResolutionProof ) extends LocalResolutionRule {

@@ -15,7 +15,7 @@ import scala.collection.mutable
  * of a sequent of HOL formulas, and a conjunction of propositional
  * literals---the assertion (that's where the "A" comes from).
  * {{{
- *   Γ <- A
+ *   Γ :- Δ <- A
  * }}}
  *
  * We store the sequent as a HOLSequent in [[ResolutionProof#conclusion]],
@@ -31,9 +31,9 @@ import scala.collection.mutable
  * Inferences such as [[Resolution]] or [[Paramod]] do not operate on the assertions.
  * Unless specified otherwise, assertions are inherited by default:
  * {{{
- *   Γ ∨ a <- A       -a ∨ Δ <- B
+ *   Γ :- Δ, a <- A       a, Π :- Λ <- B
  *   --------------------------------
- *         Γ ∨ Δ <- A ∧ B
+ *         Γ, Π :- Δ, Λ <- A ∧ B
  * }}}
  *
  * There is no factoring on assertions, duplicate assertions are automatically removed.
@@ -124,7 +124,7 @@ case class Input( sequent: HOLSequent ) extends InitialClause {
  * Tautology.
  * {{{
  *   -------------------
- *   formula ∨ ¬formula
+ *   formula :- formula
  * }}}
  */
 case class Taut( formula: HOLFormula ) extends InitialClause {
@@ -133,8 +133,8 @@ case class Taut( formula: HOLFormula ) extends InitialClause {
 /**
  * Reflexivity.
  * {{{
- *   -----------
- *   term = term
+ *   --------------
+ *   :- term = term
  * }}}
  */
 case class Refl( term: LambdaExpression ) extends InitialClause {
@@ -144,9 +144,9 @@ case class Refl( term: LambdaExpression ) extends InitialClause {
 /**
  * Factoring.
  * {{{
- *   l ∨ l ∨ Γ
+ *   l, l, Γ :- Δ
  *   -----------
- *   l ∨ Γ
+ *   l, Γ :- Δ
  * }}}
  */
 case class Factor( subProof: ResolutionProof, idx1: SequentIndex, idx2: SequentIndex ) extends LocalResolutionRule {
@@ -206,9 +206,9 @@ object MguFactor {
 /**
  * Substitution.
  * {{{
- *          Γ
- *   ---------------
- *   substitution(Γ)
+ *          Γ :- Δ
+ *   ----------------------
+ *   substitution(Γ :- Δ)
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
@@ -229,9 +229,9 @@ object Subst {
 /**
  * Resolution.
  * {{{
- *   Γ ∨ a    -a ∨ Δ
- *   -----------------
- *         Γ ∨ Δ
+ *   Γ :- Δ, a    a, Π :- Λ
+ *   ----------------------
+ *         Γ, Π :- Δ, Λ
  * }}}
  */
 case class Resolution( subProof1: ResolutionProof, idx1: SequentIndex,
@@ -270,9 +270,9 @@ object MguResolution {
 /**
  * Paramodulation.
  * {{{
- *   Γ ∨ t=s     Δ ∨ l[t]
- *   --------------------
- *        Γ ∨ Δ ∨ l[s]
+ *   Γ :- Δ, t=s     Π :- Λ, l[t]
+ *   ----------------------------
+ *        Γ, Π :- Δ, Λ, l[s]
  * }}}
  */
 case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight: Boolean,
@@ -325,18 +325,18 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
 /**
  * Definition introduction.
  * {{{
- *   Γ ∨ φ(x)
+ *   Γ :- Δ, φ(x)
  *   --------
- *   Γ ∨ D(x)
+ *   Γ :- Δ, D(x)
  * }}}
  *
  * This is then used together with [[Taut]] in order to use the
  * introduced definitions in other parts of the proof:
  * {{{
  *   ------------  Taut
- *   ¬φ(x) ∨ φ(x)
+ *   φ(x) :- φ(x)
  *   ------------  DefIntro
- *   ¬D(x) ∨ φ(x)
+ *   D(x) :- φ(x)
  * }}}
  */
 case class DefIntro( subProof: ResolutionProof, idx: SequentIndex,

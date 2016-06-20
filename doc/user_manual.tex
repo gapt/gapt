@@ -2144,12 +2144,13 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
 
 Our resolution calculus integrates higher-order reasoning,
 structural clausification, and Avatar-style splitting as in~\cite{Voronkov2014AVATAR}.
-The judgments of this calculus are A-sequents.  An A-sequent is a pair
-of a sequent of HOL formulas, and a conjunction of propositional
-literals---the assertion (that's where the ``A'' comes from).
+The judgments of this calculus are A-sequents.  An A-sequent $S \leftarrow A$ is a pair
+of a sequent $S$ of HOL formulas, and a conjunction $A$ of propositional
+literals:
 \[ \Gamma \vdash \Delta \leftarrow A \]
 
-We represent the (negation of the) assertion as a clause.  The judgment is
+Internally, we represent the (negation of the) assertion as a clause.  The
+judgment $\Gamma \vdash \Delta \leftarrow A$ is
 interpreted as the following formula, where $\overline x$ are the free
 variables of the sequent:
 \[ A \impl \forall \overline{x}\,
@@ -2360,9 +2361,10 @@ $C$.
 \end{prooftree}
 
 \begin{prooftree}
-  \AxiomC{$S \leftarrow A$}
+  \AxiomC{$\Gamma \vdash \Delta \:\leftarrow\:
+    a_1 \land a_2 \land \cdots \land \neg b_1 \land \neg b_2 \land \cdots $}
   \RightLabel{AvatarAbsurd}
-  \UnaryInfC{$C, \neg A \leftarrow \top$}
+  \UnaryInfC{$a_1, a_2, \ldots, \Gamma \vdash \Delta, b_1, b_2, \ldots \:\leftarrow\: \top$}
 \end{prooftree}
 
 \subsection{LKsk}
