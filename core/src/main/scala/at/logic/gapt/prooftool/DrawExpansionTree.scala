@@ -301,15 +301,17 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
 
       g.setStroke( new BasicStroke( strokeSize, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND ) )
       g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
+      g.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON )
 
-      val leftAngleNodeX = location.x - fSize
-      val rightAngleNodeX = location.x + size.width - 2 * fSize
-      val anglesNodeY = location.y + size.height / 2
+      val leftAngleNodeX = fSize / 3
+      val leftAngleEdgesX = fSize - 1
 
-      val leftAngleEdgesX = location.x - fSize / 2
-      val rightAngleEdgesX = location.x + size.width - 5 * ( fSize / 2 )
-      val anglesEdge1Y = location.y
-      val anglesEdge2Y = location.y + size.height
+      val rightAngleNodeX = size.width - fSize / 3
+      val rightAngleEdgesX = size.width - ( fSize - 1 )
+
+      val anglesEdge1Y = 0
+      val anglesNodeY = size.height / 2
+      val anglesEdge2Y = size.height
 
       g.drawLine( leftAngleNodeX, anglesNodeY, leftAngleEdgesX, anglesEdge1Y )
       g.drawLine( leftAngleNodeX, anglesNodeY, leftAngleEdgesX, anglesEdge2Y )
