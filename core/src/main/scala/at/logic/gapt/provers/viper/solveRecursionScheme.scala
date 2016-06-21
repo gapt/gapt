@@ -11,6 +11,25 @@ import at.logic.gapt.provers.verit.VeriT
 
 import scala.collection.mutable
 
+case class MaxSatRecSchemFinder(
+    paramTys:         Seq[Ty],
+    pi1QTys:          Seq[TBase],
+    instanceType:     Ty,
+    grammarWeighting: Rule => Int,
+    context:          FiniteContext
+) extends InductiveGrammarFindingMethod {
+  implicit def ctx = context
+
+  val vs = for ( ( t, i ) <- paramTys.zipWithIndex ) yield Var( s"z$i", t )
+  val A = Const( "A", FunctionType( instanceType, paramTys ) )
+  val template = simplePi1RecSchemTempl( A( vs ), pi1QTys )
+
+  def find( taggedLanguage: Set[( Seq[LambdaExpression], LambdaExpression )] ): RecursionScheme = {
+    val targets = for ( ( ts, r ) <- taggedLanguage ) yield A( ts ) -> r
+    template.findMinimalCoverViaInst( targets, weight = grammarWeighting )
+  }
+}
+
 object simplePi1RecSchemTempl {
   def apply( axiom: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: FiniteContext ): RecSchemTemplate = {
     val nameGen = rename.awayFrom( ctx.constants )

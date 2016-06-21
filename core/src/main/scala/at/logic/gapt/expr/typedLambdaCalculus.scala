@@ -146,7 +146,8 @@ abstract class LambdaExpression {
   def <->( that: LambdaExpression ) = And( Imp( this, that ), Imp( that, this ) )
   def ===( that: LambdaExpression ) = Eq( this, that )
   def !==( that: LambdaExpression ) = Neg( Eq( this, that ) )
-  def apply( that: LambdaExpression* ) = App( this, that )
+  def apply( that: LambdaExpression* ): LambdaExpression = App( this, that )
+  def apply( that: Iterable[LambdaExpression] ): LambdaExpression = App( this, that.toSeq )
 
   def ^( n: Int )( that: LambdaExpression ): LambdaExpression =
     if ( n == 0 ) that else ( this ^ ( n - 1 ) )( this( that ) )

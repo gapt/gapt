@@ -21,6 +21,7 @@ case class ViperOptions(
   instanceNumber:   Int                = 3,
   instanceSize:     FloatRange         = ( 0, 3 ),
   instanceProver:   String             = "spass_nopred",
+  findingMethod:    String             = "maxsat",
   quantTys:         Option[Seq[TBase]] = None,
   grammarWeighting: Rule => Int        = _ => 1,
   tautCheckNumber:  Int                = 20,
@@ -42,6 +43,7 @@ object ViperOptions {
     case "instnum"    => opts.copy( instanceNumber = v.toInt )
     case "instsize"   => opts.copy( instanceSize = parseRange( v ) )
     case "instprover" => opts.copy( instanceProver = v )
+    case "findmth"    => opts.copy( findingMethod = v )
     case "qtys"       => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ) )
     case "gramw" => v match {
       case "scomp"  => opts.copy( grammarWeighting = r => randomInstance.exprSize( r.lhs ) + randomInstance.exprSize( r.rhs ) )
@@ -70,6 +72,22 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
 
   type Instance = Seq[LambdaExpression]
+
+  val grammarFinder = options.findingMethod match {
+    case "maxsat" =>
+      val pi1QTys = options.quantTys getOrElse {
+        ctx.typeDefs.toSeq collect { case InductiveType( ty, _ ) if ty != To => ty }
+      }
+
+      val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType, options.grammarWeighting, implicitly )
+
+      info( "Recursion scheme template:" )
+      for ( ( lhs, rhs ) <- msrsf.template.template.toSeq.sortBy( _._1.toString ) )
+        info( s"$lhs -> $rhs" )
+      info()
+
+      msrsf
+  }
 
   def solve(): LambdaExpression = {
     info( sequent )
@@ -104,24 +122,23 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   }
 
   def findRecursionScheme( instanceProofs: Iterable[( Instance, ExpansionProof )] ): RecursionScheme = {
-    val A = Const( "A", FunctionType( encoding.instanceTermType, paramTypes ) )
+    val taggedLanguage =
+      for {
+        ( inst, es ) <- instanceProofs
+        term <- encoding.encode( es.expansionSequent.antecedent ++: Sequent() )
+      } yield inst -> term
 
-    val pi1QTys = options.quantTys getOrElse {
-      ctx.typeDefs.toSeq collect {
-        case InductiveType( ty, _ ) if ty != To => ty
-      }
-    }
+    val rsWithoutConclusion = grammarFinder.find( taggedLanguage.toSet )
 
-    val template = simplePi1RecSchemTempl( A( vs: _* ), pi1QTys )
-    info( "Recursion scheme template:" )
-    for ( ( lhs, rhs ) <- template.template.toSeq.sortBy { _._1.toString } )
-      info( s"$lhs -> $rhs" )
-    info()
+    val conclusions =
+      for {
+        ( inst, es ) <- instanceProofs
+        term <- encoding.encode( Sequent() :++ es.expansionSequent.succedent )
+      } yield Rule( rsWithoutConclusion.axiom( vs ), term )
+    val rs = rsWithoutConclusion.copy( rules = rsWithoutConclusion.rules ++ conclusions )
 
-    val targets = for ( ( inst, es ) <- instanceProofs; term <- encoding encode es ) yield A( inst: _* ) -> term
-    val rs = template.findMinimalCoverViaInst( targets.toSet, weight = options.grammarWeighting )
-    info( s"Minimized recursion scheme:\n$rs\n" )
-    for ( ( Apps( _, inst ), terms ) <- targets groupBy { _._1 } ) {
+    info( s"Found recursion scheme:\n$rs\n" )
+    for ( ( Apps( _, inst ), terms ) <- taggedLanguage groupBy { _._1 } ) {
       val genLang = rs.parametricLanguage( inst: _* )
       require(
         terms.map { _._2 }.toSet subsetOf genLang,
