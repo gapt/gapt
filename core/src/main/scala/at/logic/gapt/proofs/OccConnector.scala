@@ -141,6 +141,21 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
     OccConnector( lowerSequent, upperSequent,
       parentsSequent.updated( child, parents( child ) :+ parent distinct ) )
   }
+
+  /**
+   * Removes a child/parent pair from an OccConnector.
+   * @param child An index of lowerSequent.
+   * @param parent An index of upperSequent. Must be a parent of child.
+   * @return A new OccConnector in which parents(child) no longer contains parent.
+   */
+  def -( child: SequentIndex, parent: SequentIndex ) = {
+    require( lowerSequent isDefinedAt child )
+    require( upperSequent isDefinedAt parent )
+    require( parentsSequent( child ) contains parent )
+
+    OccConnector( lowerSequent, upperSequent,
+      parentsSequent.updated( child, parents( child ) diff Seq( parent ) ) )
+  }
 }
 
 object OccConnector {
