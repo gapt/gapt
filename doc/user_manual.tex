@@ -1279,8 +1279,8 @@ used for proof replay to import proofs from other provers.  You can use it with
 the same interface as \cli{Prover9} and the other first-order provers:
 
 \begin{clilisting}
-gapt> val formula = hof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
-formula: at.logic.gapt.expr.HOLFormula =
+gapt> val formula = fof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
+formula: at.logic.gapt.expr.FOLFormula =
 ∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x ⊃
   d + a + c + b = a + b + c + d
 
