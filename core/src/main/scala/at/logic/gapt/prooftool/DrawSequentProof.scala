@@ -10,6 +10,19 @@ import at.logic.gapt.proofs.{ Sequent, SequentIndex, SequentProof, lk }
 import scala.swing._
 import scala.swing.event._
 
+/**
+ * A panel containing a sequent proof.
+ * @param main The instance of [[at.logic.gapt.prooftool.SequentProofViewer]] that this belongs to.
+ * @param proof The proof being displayed.
+ * @param fSize The font size.
+ * @param hideContexts Whether the contexts of sequents should be hidden.
+ * @param auxIndices The indices of the auxiliary formulas of the bottommost inference.
+ * @param markCutAncestors Whether the ancestors of cut formulas should be marked.
+ * @param cutAncestorIndices The indices of ancestors of cut formulas in the end sequent.
+ * @param str
+ * @param sequent_element_renderer
+ * @param pos The position of this proof relative to the main proof being displayed.
+ */
 class DrawSequentProof[F, T <: SequentProof[F, T]](
     val main:                 SequentProofViewer[F, T],
     val proof:                SequentProof[F, T],
@@ -22,10 +35,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     sequent_element_renderer: F => String,
     val pos:                  List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
-  opaque = false
-  border = Swing.EmptyBorder
   var collapsed = false
-
+  private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private var lineHidden_ = 0
   def lineHidden = lineHidden_
   def lineHidden_=( i: Int ) = {
@@ -34,15 +45,12 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     linePanel.visible = lineHidden == 0
   }
 
-  private val bd = Swing.EmptyBorder( 0, fSize * 2, 0, fSize * 2 )
-  private val ft = new Font( SANS_SERIF, PLAIN, fSize )
-  private val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
   // The following is a hack to be able to apply searching to the end-sequent. Think about better solution.
   // The problem is that I need to "recalculate" end-sequent and need def for this reason.
-  // But then since def is a function, size of tx1 cannot be calculated and lines are not drawn correctly.
+  // But then since def is a function, size of endSequentPanel_ cannot be calculated and lines are not drawn correctly.
 
-  private var tx = tx1
-  private def tx1 = {
+  private var endSequentPanel = endSequentPanel_
+  private def endSequentPanel_ = {
     val visibleFormulas = if ( hideContexts ) proof.mainIndices.toSet ++ auxIndices else proof.conclusion.indices.toSet
     val colors = proof.conclusion.indicesSequent map { i => if ( markCutAncestors && cutAncestorIndices.contains( i ) ) Color.green else Color.white }
     val ds = DrawSequent(
@@ -62,6 +70,83 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
         PopupMenu( DrawSequentProof.this, e.point.x, e.point.y )
     }
     ds
+  }
+
+  val cutAncestorIndicesNew = proof match {
+    case p: CutRule =>
+      List( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ) + p.aux1, cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) + p.aux2 )
+    case _ =>
+      for ( ( p, i ) <- proof.immediateSubProofs.zipWithIndex ) yield cutAncestorIndices flatMap proof.occConnectors( i ).parents
+  }
+
+  val subProofs = for ( ( p, i ) <- proof.immediateSubProofs.zipWithIndex ) yield {
+    new DrawSequentProof(
+      main,
+      p,
+      fSize,
+      hideContexts,
+      proof.auxIndices.head.toSet,
+      markCutAncestors,
+      cutAncestorIndicesNew( i ),
+      str,
+      sequent_element_renderer,
+      pos :+ i
+    )
+  }
+
+  val subProofsPanel = new SubproofsPanel( this, subProofs, fSize )
+  val linePanel = new ProofLinePanel( this, proof.name, fSize )
+  initialize()
+  // end of constructor
+
+  def initialize() {
+    endSequentPanel.border = Swing.EmptyBorder
+
+    contents += Swing.VGlue
+    contents += subProofsPanel
+    contents += linePanel
+    contents += endSequentPanel
+  }
+
+  def search_=( s: String ) {
+    str = s
+  }
+
+  def search = str
+
+  def searchNotInLKProof() {
+    endSequentPanel = endSequentPanel_
+    initialize()
+  }
+
+  def endSequentWidth = endSequentPanel.width
+  def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2
+
+  //FIXME: What is this used for?
+  def getLocationOfProof( p: SequentProof[_, _] ): Option[Point] = {
+    if ( p == proof ) {
+      Some( new Point( location.x + bounds.width / 2, location.y + bounds.height ) )
+    } else {
+      contents.view.
+        collect { case dp: DrawSequentProof[_, _] => dp.getLocationOfProof( p ) }.
+        flatten.headOption
+    }
+  }
+
+  /*
+   * Window management stuff & reactions
+   */
+  opaque = false
+  border = Swing.EmptyBorder
+
+  this.peer.setAutoscrolls( true )
+  this.peer.addMouseMotionListener( this )
+
+  def mouseMoved( e: MouseEvent ) {}
+  def mouseDragged( e: MouseEvent ) {
+    //The user is dragging us, so scroll!
+    val r = new Rectangle( e.getX, e.getY, 1, 1 )
+    this.peer.scrollRectToVisible( r )
   }
 
   listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher )
@@ -102,100 +187,34 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       }
 
     case HideEndSequent( p ) if p == pos =>
-      tx.visible = false
+      endSequentPanel.visible = false
 
     case ShowAllRules( p ) if pos startsWith p =>
       lineHidden = if ( lineHidden > 0 ) lineHidden - 1 else 0
-      tx.visible = true
+      endSequentPanel.visible = true
 
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.BLUE ) // DEBUG
-      tx.border = Swing.LineBorder( Color.MAGENTA ) // DEBUG
+      endSequentPanel.border = Swing.LineBorder( Color.MAGENTA ) // DEBUG
 
     case HideDebugBorders =>
       border = Swing.EmptyBorder
-      tx.border = Swing.EmptyBorder
+      endSequentPanel.border = Swing.EmptyBorder
   }
 
-  val cutAncestorIndicesNew = proof match {
-    case p: CutRule =>
-      List( cutAncestorIndices.flatMap( proof.occConnectors.head.parents ) + p.aux1, cutAncestorIndices.flatMap( proof.occConnectors.tail.head.parents ) + p.aux2 )
-    case _ =>
-      for ( ( p, i ) <- proof.immediateSubProofs.zipWithIndex ) yield cutAncestorIndices flatMap proof.occConnectors( i ).parents
-  }
-
-  val subProofs = for ( ( p, i ) <- proof.immediateSubProofs.zipWithIndex ) yield {
-    new DrawSequentProof(
-      main,
-      p,
-      fSize,
-      hideContexts,
-      proof.auxIndices.head.toSet,
-      markCutAncestors,
-      cutAncestorIndicesNew( i ),
-      str,
-      sequent_element_renderer,
-      pos :+ i
-    )
-  }
-
-  val subProofsPanel = new SubproofsPanel( this, subProofs, fSize )
-  val linePanel = new ProofLinePanel( this, proof.name, fSize )
-  initialize()
-  // end of constructor
-
-  def initialize() {
-    tx.border = Swing.EmptyBorder
-
-    contents += Swing.VGlue
-    contents += subProofsPanel
-    contents += linePanel
-    contents += tx
-  }
-
-  def search_=( s: String ) {
-    str = s
-  }
-
-  def search = str
-
-  def searchNotInLKProof() {
-    tx = tx1
-    initialize()
-  }
-
-  def endSequentWidth = tx.width
-  def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2
-
-  this.peer.setAutoscrolls( true )
-  this.peer.addMouseMotionListener( this )
-
-  def mouseMoved( e: MouseEvent ) {}
-  def mouseDragged( e: MouseEvent ) {
-    //The user is dragging us, so scroll!
-    val r = new Rectangle( e.getX, e.getY, 1, 1 )
-    this.peer.scrollRectToVisible( r )
-  }
-
-  def getLocationOfProof( p: SequentProof[_, _] ): Option[Point] = {
-    if ( p == proof ) {
-      Some( new Point( location.x + bounds.width / 2, location.y + bounds.height ) )
-    } else {
-      contents.view.
-        collect { case dp: DrawSequentProof[_, _] => dp.getLocationOfProof( p ) }.
-        flatten.headOption
-    }
-  }
 }
 
+/**
+ * A panel containing the subproofs of a proof arranged side by side.
+ * @param parent The [[at.logic.gapt.prooftool.DrawSequentProof]] instance that this belongs to.
+ * @param subProofs The The [[at.logic.gapt.prooftool.DrawSequentProof]] instances containing the subproofs.
+ * @param fSize The font size.
+ */
 class SubproofsPanel[F, T <: SequentProof[F, T]](
     val parent:    DrawSequentProof[F, T],
     val subProofs: Seq[DrawSequentProof[F, T]],
     val fSize:     Int
 ) extends BoxPanel( Orientation.Horizontal ) {
-  border = Swing.EmptyBorder( 0, 0, 0, 0 )
-  opaque = false
-  val collapsedProof = new Label( "CollapsedProof" ) { text = "(...)" }
 
   subProofs.foreach( contents += _ )
 
@@ -209,8 +228,9 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
       size.width - 2 * math.min( leftMargin, rightMargin )
   }
 
+  border = Swing.EmptyBorder( 0, 0, 0, 0 )
+  opaque = false
   listenTo( parent.main.publisher )
-
   reactions += {
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.GREEN ) // DEBUG
@@ -220,12 +240,17 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
   }
 }
 
+/**
+ * Panel that contains an inference line and the name of the inference.
+ * @param parent The [[at.logic.gapt.prooftool.DrawSequentProof]] instance that this belongs to.
+ * @param proofName The name of the inference.
+ * @param fSize The font size.
+ */
 class ProofLinePanel[F, T <: SequentProof[F, T]](
     val parent:    DrawSequentProof[F, T],
     val proofName: String,
     val fSize:     Int
 ) extends FlowPanel {
-  border = Swing.EmptyBorder
 
   val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
   val labelFontMetrics = peer.getFontMetrics( labelFont )
@@ -245,6 +270,17 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
 
   var lineWidth = 0; computeLineWidth()
 
+  override def paintComponent( g: Graphics2D ): Unit = {
+    val leftPoint = ( size.width - lineWidth ) / 2
+    val rightPoint = ( size.width + lineWidth ) / 2
+
+    g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
+    g.drawLine( leftPoint, size.height / 2, rightPoint, size.height / 2 )
+    g.setFont( labelFont )
+    g.drawString( proofName, rightPoint + fSize / 8, size.height / 2 + labelFontMetrics.getMaxDescent )
+  }
+
+  border = Swing.EmptyBorder
   listenTo( parent.subProofsPanel, parent.main.publisher )
   reactions += {
     case UIElementShown( _ ) | UIElementResized( _ ) => computeLineWidth()
@@ -255,15 +291,5 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
     case HideDebugBorders =>
       border = Swing.EmptyBorder
 
-  }
-
-  override def paintComponent( g: Graphics2D ): Unit = {
-    g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
-    val leftPoint = ( size.width - lineWidth ) / 2
-    val rightPoint = ( size.width + lineWidth ) / 2
-
-    g.drawLine( leftPoint, size.height / 2, rightPoint, size.height / 2 )
-    g.setFont( labelFont )
-    g.drawString( proofName, rightPoint + fSize / 8, size.height / 2 + labelFontMetrics.getMaxDescent )
   }
 }
