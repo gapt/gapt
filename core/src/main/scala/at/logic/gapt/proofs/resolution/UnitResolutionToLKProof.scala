@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.{ Eq, HOLFormula }
-import at.logic.gapt.proofs.{ Sequent, Suc }
+import at.logic.gapt.proofs.{ Ant, Sequent, Suc }
 import at.logic.gapt.proofs.lk._
 
 object UnitResolutionToLKProof {
@@ -24,11 +24,12 @@ object UnitResolutionToLKProof {
     var lk: LKProof = proof match {
       case Resolution( Refl( term ), _, _, _ ) => ReflexivityAxiom( term )
       case Resolution( left, _, right, _ ) =>
-        if ( shouldFlip( right ) ) {
-          val Sequent( Seq( Eq( t, s ) ), Seq() ) = right.conclusion
-          ResolutionToLKProof.mkSymmProof( t, s )
-        } else {
-          LogicalAxiom( left.conclusion.succedent.head )
+        val sucEq = maybeFlip( right.conclusion( Ant( 0 ) ), shouldFlip( right ) )
+        val antEq = maybeFlip( left.conclusion( Suc( 0 ) ), shouldFlip( left ) )
+        ( antEq, sucEq ) match {
+          case ( x, y ) if x == y => LogicalAxiom( x )
+          case ( Eq( t, s ), Eq( s_, t_ ) ) if t == t_ && s == s_ =>
+            ResolutionToLKProof.mkSymmProof( t, s )
         }
     }
 
