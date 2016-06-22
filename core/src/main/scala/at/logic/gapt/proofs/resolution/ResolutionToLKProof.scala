@@ -90,6 +90,11 @@ object ResolutionToLKProof {
       case DefIntro( q, i: Ant, defAtom, defn ) =>
         DefinitionLeftRule( f( q ), q.conclusion( i ), defAtom )
 
+      case p @ Flip( q, i: Ant ) =>
+        CutRule( mkSymmProof( p.s, p.t ), f( q ), q.conclusion( i ) )
+      case p @ Flip( q, i: Suc ) =>
+        CutRule( f( q ), mkSymmProof( p.t, p.s ), q.conclusion( i ) )
+
       case p: TopL    => reducef( p ) { _ => TopAxiom }
       case p: BottomR => reducef( p ) { _ => BottomAxiom }
       case p: NegL    => reducef( p ) { case Neg( l ) => NegRightRule( LogicalAxiom( l ), Ant( 0 ) ) }
@@ -174,4 +179,11 @@ object ResolutionToLKProof {
         }
     }.apply( proof, proof.conclusion.indicesSequent.map( _ == idx ) )
 
+  /** Proof of t=s :- s=t */
+  def mkSymmProof( t: LambdaExpression, s: LambdaExpression ): LKProof =
+    ProofBuilder.
+      c( ReflexivityAxiom( t ) ).
+      u( WeakeningLeftRule( _, Eq( t, s ) ) ).
+      u( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Eq( s, t ) ) ).
+      qed
 }

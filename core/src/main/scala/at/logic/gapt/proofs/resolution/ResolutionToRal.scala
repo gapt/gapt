@@ -44,6 +44,8 @@ abstract class ResolutionToRal {
       RalPara( p1New, p1New.conclusion.find( _._2 == convert_formula( p1.conclusion( eq ) ) ).get.asInstanceOf[Suc],
         p2New, p2New.conclusion.find( _._2 == convert_formula( p2.conclusion( lit ) ) ).get,
         convert_context( con ), dir )
+    case Flip( p1, i1 ) =>
+      apply( Flip.simulate( p1, i1 ) )
   }
 }
 

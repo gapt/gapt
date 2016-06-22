@@ -31,6 +31,9 @@ object eliminateSplitting {
         val q2 = f( p2 )
         Paramod( q1, q1.conclusion.indexOfInSuc( p1.conclusion( i1 ) ), ltr,
           q2, q2.conclusion.indexOfPol( p2.conclusion( i2 ), i2.isSuc ), ctx )
+      case p @ Flip( p1, i1 ) =>
+        val q1 = f( p1 )
+        Flip( q1, q1.conclusion.indexOfPol( p1.conclusion( i1 ), i1.isSuc ) )
       case Subst( p1, subst ) => Subst( f( p1 ), subst )
       case AvatarAbsurd( p1 ) =>
         val q1 = f( p1 )
@@ -71,6 +74,9 @@ object eliminateSplitting {
         val q2 = f( p2 )
         Paramod( q1, q1.conclusion.indexOfInSuc( p1.conclusion( i1 ) ), ltr,
           q2, q2.conclusion.indexOfPol( p2.conclusion( i2 ), i2.isSuc ), ctx )
+      case p @ Flip( p1, i1 ) =>
+        val q1 = f( p1 )
+        Flip( q1, q1.conclusion.indexOfPol( p1.conclusion( i1 ), i1.isSuc ) )
       case Subst( p1, subst ) => Subst( f( p1 ), subst )
       case AvatarComponentElim( p1, indices, AvatarNonGroundComp( `splAtom`, _, vs ) ) =>
         Subst( f( p1 ), Substitution( vs zip newVs ) )
@@ -106,6 +112,9 @@ object eliminateSplitting {
         val q2 = f( p2 )
         Paramod( q1, q1.conclusion.indexOfInSuc( p1.conclusion( i1 ) ), ltr,
           q2, q2.conclusion.indexOfPol( p2.conclusion( i2 ), i2.isSuc ), ctx )
+      case p @ Flip( p1, i1 ) =>
+        val q1 = f( p1 )
+        Flip( q1, q1.conclusion.indexOfPol( p1.conclusion( i1 ), i1.isSuc ) )
       case Subst( p1, subst ) => Subst( f( p1 ), subst )
       case AvatarComponentIntro( AvatarNonGroundComp( `splAtom`, _, vs ) ) =>
         Subst( proj, Substitution( projVars zip vs ) )

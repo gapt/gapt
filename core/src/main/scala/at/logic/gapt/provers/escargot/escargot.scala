@@ -3,8 +3,9 @@ package at.logic.gapt.provers.escargot
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tptp.{ TptpParser, resolutionToTptp, tptpProblemToResolution }
 import at.logic.gapt.proofs._
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
 import at.logic.gapt.utils.logging.Logger
 
@@ -103,4 +104,12 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
     state.newlyDerived ++= cnf.map { state.InputCls }
     state.loop()
   }
+
+  def getAtomicLKProof( sequent: HOLClause ): Option[LKProof] =
+    groundFreeVariables.wrap( sequent ) { sequent =>
+      getResolutionProof( sequent.map( _.asInstanceOf[HOLAtom] ).
+        map( Sequent() :+ _, _ +: Sequent() ).elements ) map { resolution =>
+        UnitResolutionToLKProof( resolution )
+      }
+    }
 }

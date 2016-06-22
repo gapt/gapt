@@ -71,6 +71,7 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
   def introducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()
   /**
    * All definitions introduced by any subproof.
+   *
    * @throws Exception if inconsistent definitions are used
    */
   def definitions = {
@@ -470,8 +471,12 @@ case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Lambda
   def mainFormulaSequent = Sequent() :+ instFormula
 }
 
+case class Flip( subProof: ResolutionProof, idx: SequentIndex ) extends PropositionalResolutionRule {
+  val Eq( t, s ) = subProof.conclusion( idx )
+  def mainFormulaSequent = if ( idx isSuc ) Sequent() :+ Eq( s, t ) else Eq( s, t ) +: Sequent()
+}
 object Flip {
-  def apply( subProof: ResolutionProof, equation: SequentIndex ): ResolutionProof = {
+  def simulate( subProof: ResolutionProof, equation: SequentIndex ): ResolutionProof = {
     val Eq( s, t ) = subProof.conclusion( equation )
     val x = rename( Var( "x", s.exptype ), freeVariables( subProof.conclusion ) )
     if ( equation isSuc ) {
@@ -486,4 +491,3 @@ object Flip {
     }
   }
 }
-

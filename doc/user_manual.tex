@@ -2222,6 +2222,19 @@ paramodulation; they are explicitly represented using the Subst inference.
 \end{prooftree}
 (We also allow rewriting in the antecedent, and rewriting from right to left.)
 
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomC{$\Gamma \vdash \Delta, t=s$}
+  \RightLabel{Flip}
+  \UnaryInfC{$\Gamma \vdash \Delta, s=t$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$t=s, \Gamma \vdash \Delta$}
+  \RightLabel{Flip}
+  \UnaryInfC{$s=t, \Gamma \vdash \Delta$}
+\end{prooftree}
+\end{multicols}
+
 \subsubsection*{Propositional rules}
 
 \begin{multicols}{2}

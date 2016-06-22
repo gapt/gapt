@@ -164,6 +164,9 @@ object ResolutionToExpansionProof {
       case p @ AvatarAbsurd( q ) =>
         propg( p, q, _ => sequent2expansions( q.conclusion ) )
 
+      case p: Flip =>
+        prop1( p, { case ETAtom( Eq( t, s ), pol ) => ETAtom( Eq( s, t ), pol ) } )
+
       case p @ TopL( q, i ) =>
         val Seq( oc ) = p.occConnectors
         propgm2( p, q, oc.parent( _, ETTop( true ) ) )
