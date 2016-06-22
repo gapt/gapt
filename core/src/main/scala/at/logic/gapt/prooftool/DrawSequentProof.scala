@@ -258,6 +258,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
   }
 
   override def paintComponent( g: Graphics2D ): Unit = {
+    g.setRenderingHint( RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB )
     val leftPoint = ( size.width - lineWidth ) / 2
     val rightPoint = ( size.width + lineWidth ) / 2
 

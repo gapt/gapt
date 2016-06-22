@@ -1,10 +1,11 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.{ SequentProof, DagProof }
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.{ DagProof, SequentProof }
+import at.logic.gapt.proofs.lk.{ InitialSequent, LKProof }
 
 import swing.SequentialContainer.Wrapper
 import javax.swing.JPopupMenu
+
 import swing._
 import at.logic.gapt.expr._
 
@@ -39,20 +40,25 @@ object PopupMenu {
       contents += new MenuItem( Action( "View Subproof as Sunburst Tree" ) {
         dsp.main.initSunburstDialog( "subproof " + dsp.main.name, dsp.proof )
       } )
-      contents += new Separator
       //      contents += new MenuItem( Action( "Apply Gentzen's Method (new)" ) { Main.newgentzen( proof ) } )
       //      contents += new MenuItem( Action( "Apply Gentzen's Method" ) { Main.gentzen( proof ) } )
       contents += new Separator
       //      contents += new MenuItem( Action( "Save Subproof as..." ) { /*main.fSave( ( proof.name, proof ) )*/ } )
       //      contents += new Separator
-      contents += new CheckMenuItem( "Hide proof above" ) {
-        selected = dsp.collapsed
-        action = Action( "Hide proof above" ) {
-          if ( dsp.collapsed )
-            dsp.main.publisher.publish( ShowSequentProof( dsp.pos ) )
-          else
-            dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )
-        }
+
+      dsp.proof match {
+        case _: InitialSequent =>
+
+        case _ =>
+          contents += new CheckMenuItem( "Hide proof above" ) {
+            selected = dsp.collapsed
+            action = Action( "Hide proof above" ) {
+              if ( dsp.collapsed )
+                dsp.main.publisher.publish( ShowSequentProof( dsp.pos ) )
+              else
+                dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )
+            }
+          }
       }
     }
     popupMenu.show( dsp, x, y )
