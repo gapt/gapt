@@ -21,7 +21,7 @@ One of the many features GAPT supports is an implementation of [Herbrand's
 theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how can
 automatically generate a Herbrand disjunction in GAPT:
 ```scala
-Prover9 getExpansionProof hof"P(c) ∨ P(d) ⊃ ∃x P(x)" map { _.deep }
+Prover9 getExpansionProof fof"P(c) ∨ P(d) ⊃ ∃x P(x)" map { _.deep }
 ```
 which returns the following Herbrand disjunction (the quantifier on the right
 has been expanded):
