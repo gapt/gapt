@@ -19,7 +19,6 @@ import scala.swing.event._
  * @param auxIndices The indices of the auxiliary formulas of the bottommost inference.
  * @param markCutAncestors Whether the ancestors of cut formulas should be marked.
  * @param cutAncestorIndices The indices of ancestors of cut formulas in the end sequent.
- * @param str
  * @param sequent_element_renderer
  * @param pos The position of this proof relative to the main proof being displayed.
  */
@@ -31,7 +30,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val auxIndices:           Set[SequentIndex],
     var markCutAncestors:     Boolean,
     val cutAncestorIndices:   Set[SequentIndex],
-    private var str:          String,
     sequent_element_renderer: F => String,
     val pos:                  List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
@@ -45,12 +43,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     linePanel.visible = lineHidden == 0
   }
 
-  // The following is a hack to be able to apply searching to the end-sequent. Think about better solution.
-  // The problem is that I need to "recalculate" end-sequent and need def for this reason.
-  // But then since def is a function, size of endSequentPanel_ cannot be calculated and lines are not drawn correctly.
-
-  private var endSequentPanel = endSequentPanel_
-  private def endSequentPanel_ = {
+  private val endSequentPanel = {
     val visibleFormulas = if ( hideContexts ) proof.mainIndices.toSet ++ auxIndices else proof.conclusion.indices.toSet
     val colors = proof.conclusion.indicesSequent map { i => if ( markCutAncestors && cutAncestorIndices.contains( i ) ) Color.green else Color.white }
     val ds = DrawSequent(
@@ -61,6 +54,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       colors,
       sequent_element_renderer
     )
+    ds.border = Swing.EmptyBorder
     ds.listenTo( ds.mouse.moves, ds.mouse.clicks, ds.mouse.wheel, main.publisher )
     ds.reactions += {
       case e: MouseEntered => ds.contents.foreach( x => x.foreground = Color.BLUE )
@@ -88,7 +82,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof.auxIndices.head.toSet,
       markCutAncestors,
       cutAncestorIndicesNew( i ),
-      str,
       sequent_element_renderer,
       pos :+ i
     )
@@ -96,28 +89,11 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
   val subProofsPanel = new SubproofsPanel( this, subProofs, fSize )
   val linePanel = new ProofLinePanel( this, proof.name, fSize )
-  initialize()
-  // end of constructor
 
-  def initialize() {
-    endSequentPanel.border = Swing.EmptyBorder
-
-    contents += Swing.VGlue
-    contents += subProofsPanel
-    contents += linePanel
-    contents += endSequentPanel
-  }
-
-  def search_=( s: String ) {
-    str = s
-  }
-
-  def search = str
-
-  def searchNotInLKProof() {
-    endSequentPanel = endSequentPanel_
-    initialize()
-  }
+  contents += Swing.VGlue
+  contents += subProofsPanel
+  contents += linePanel
+  contents += endSequentPanel
 
   def endSequentWidth = endSequentPanel.width
   def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2

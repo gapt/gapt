@@ -43,21 +43,18 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     Set(),
     markCutAncestors = false,
     Set(),
-    "",
     sequent_element_renderer,
     Nil
   )
 
   def hideSequentContext() {
     mainComponent.hideContexts = true
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def showAllFormulas() {
     mainComponent.hideContexts = false
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -145,14 +142,12 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     mainComponent.markCutAncestors = true
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def removeMarking(): Unit = {
     mainComponent.markCutAncestors = false
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -192,14 +187,12 @@ class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofView
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     mainComponent.markCutAncestors = true
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def removeMarking(): Unit = {
     mainComponent.markCutAncestors = false
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
