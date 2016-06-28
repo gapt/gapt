@@ -49,7 +49,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
       }
 
       val substs = for {
-        ETWeakQuantifierBlock( shallow, insts ) <- es.elements
+        ETWeakQuantifierBlock( shallow, _, insts ) <- es.elements
         ( formula @ All.Block( vars, _ ), clause ) <- cnf
         if formula == shallow
       } yield clause.conclusion.asInstanceOf[HOLClause] ->

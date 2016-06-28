@@ -11,7 +11,7 @@ package object tptp {
   type InfoItem = GeneralTerm
 
   case class TptpFile( inputs: Seq[TptpInput] ) {
-    override def toString = inputs.mkString
+    override def toString = tptpToString.tptpFile( this )
 
     def toSequent = existsclosure( inputs.map {
       case AnnotatedFormula( _, _, "conjecture", formula, _ ) =>

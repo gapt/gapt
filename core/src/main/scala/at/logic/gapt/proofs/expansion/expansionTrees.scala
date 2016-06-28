@@ -97,12 +97,20 @@ case class ETAnd( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   val shallow = child1.shallow & child2.shallow
   def deep = child1.deep & child2.deep
 }
+object ETAnd {
+  def apply( children: Seq[ExpansionTree], polarity: Boolean ): ExpansionTree =
+    children.reduceLeftOption( ETAnd( _, _ ) ).getOrElse( ETTop( polarity ) )
+}
 
 case class ETOr( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryExpansionTree {
   require( child1.polarity == child2.polarity )
   val polarity = child1.polarity
   val shallow = child1.shallow | child2.shallow
   def deep = child1.deep | child2.deep
+}
+object ETOr {
+  def apply( children: Seq[ExpansionTree], polarity: Boolean ): ExpansionTree =
+    children.reduceLeftOption( ETOr( _, _ ) ).getOrElse( ETBottom( polarity ) )
 }
 
 case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryExpansionTree {
@@ -147,6 +155,12 @@ object ETWeakQuantifier {
   }
 }
 object ETWeakQuantifierBlock {
+  def apply( shallow: HOLFormula, blockSize: Int, polarity: Boolean, instances: Iterable[( Seq[LambdaExpression], ExpansionTree )] ): ExpansionTree =
+    if ( instances.isEmpty && blockSize == 0 )
+      ETWeakening( shallow, polarity )
+    else
+      ETWeakQuantifierBlock( shallow, blockSize, instances )
+
   def apply( shallow: HOLFormula, blockSize: Int, instances: Iterable[( Seq[LambdaExpression], ExpansionTree )] ): ExpansionTree =
     if ( blockSize == 0 ) {
       ETMerge( instances map { _._2 } )
@@ -157,7 +171,7 @@ object ETWeakQuantifierBlock {
       } )
     }
 
-  def unapply( et: ExpansionTree ): Some[( HOLFormula, Map[Seq[LambdaExpression], ExpansionTree] )] = {
+  def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = {
     val instances = mutable.Map[Seq[LambdaExpression], Set[ExpansionTree]]().withDefaultValue( Set() )
 
     def walk( et: ExpansionTree, terms: Seq[LambdaExpression], n: Int ): Unit =
@@ -178,7 +192,7 @@ object ETWeakQuantifierBlock {
 
     walk( et, Seq(), numberQuants )
 
-    Some( et.shallow -> instances.toMap.mapValues( ETMerge( _ ) ) )
+    Some( ( et.shallow, numberQuants, instances.toMap.mapValues( ETMerge( _ ) ) ) )
   }
 }
 

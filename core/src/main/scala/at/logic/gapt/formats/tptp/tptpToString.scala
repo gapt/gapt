@@ -2,7 +2,9 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
 
-object tptpToString {
+object tptpToString extends tptpToString( alwaysParens = false, sugar = true )
+class tptpToString( alwaysParens: Boolean, sugar: Boolean ) {
+  def tptpFile( file: TptpFile ): String = file.inputs.map( tptpInput ).mkString
 
   def tptpInput( input: TptpInput ): String = input match {
     case AnnotatedFormula( language, name, role, formula, annots ) =>
@@ -22,7 +24,7 @@ object tptpToString {
     val max = binary_formula + 2
   }
   private def parenIf( enclosingPrio: Int, currentPrio: Int, inside: String ) =
-    if ( enclosingPrio <= currentPrio ) s"($inside)" else inside
+    if ( alwaysParens || enclosingPrio <= currentPrio ) s"($inside)" else inside
   private def binExpr( a: LambdaExpression, b: LambdaExpression, p: Int, newPrio: Int, op: String ) =
     parenIf( p, newPrio, s"${expression( a, newPrio )} $op ${expression( b, newPrio )}" )
   private def binAssocExpr( expr: LambdaExpression, p: Int, op: String, conn: MonoidalBinaryPropConnectiveHelper ) = {
@@ -42,7 +44,7 @@ object tptpToString {
     case GeneralColon( a, b ) =>
       s"${expression( a, prio.term )}:${expression( b, prio.term )}"
 
-    case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
+    case And( Imp( a, b ), Imp( b_, a_ ) ) if sugar && a == a_ && b == b_ =>
       binExpr( a, b, p, prio.binary_formula, "<=>" )
 
     case Top()                              => "$true"
