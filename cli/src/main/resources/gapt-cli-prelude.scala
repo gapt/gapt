@@ -22,6 +22,7 @@ import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.sat._
 import at.logic.gapt.provers.leancop._
+import at.logic.gapt.provers.nanocop._
 import at.logic.gapt.provers.viper._
 import at.logic.gapt.provers.prover9._
 import at.logic.gapt.provers.maxsat._
