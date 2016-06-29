@@ -17,19 +17,18 @@ object expansionFromNNF {
     }
   }
 
-  private def numClauses( f: HOLFormula, pol: Boolean, vs: Set[Var] ): Int = f match {
-    case Top() | Bottom() => 0
-    case Neg( g ) => numClauses( g, !pol, vs )
-    case And( a, b ) if !pol => numClauses( a, pol, vs ) + numClauses( b, pol, vs )
-    case Or( a, b ) if pol => numClauses( a, pol, vs ) + numClauses( b, pol, vs )
-    case Imp( a, b ) if pol => numClauses( a, !pol, vs ) + numClauses( b, pol, vs )
-    case Ex( v, g ) => numClauses( g, pol, vs + v )
-    case All( v, g ) => numClauses( g, pol, vs + v )
-    case _ if freeVariables( f ).intersect( vs ).nonEmpty => 1
-    case _ => 0
+  private def numClauses( f: HOLFormula, pol: Boolean ): Int = f match {
+    case Top() | Bottom()    => 0
+    case Neg( g )            => numClauses( g, !pol )
+    case And( a, b ) if !pol => numClauses( a, pol ) + numClauses( b, pol )
+    case Or( a, b ) if pol   => numClauses( a, pol ) + numClauses( b, pol )
+    case Imp( a, b ) if pol  => numClauses( a, !pol ) + numClauses( b, pol )
+    case Ex( v, g )          => numClauses( g, pol )
+    case All( v, g )         => numClauses( g, pol )
+    case _                   => 1
   }
 
-  def apply( nnf: List[ExpansionTree], sh: HOLFormula, pol: Boolean, mode: Boolean ): ( ExpansionTree, List[ExpansionTree] ) =
+  def apply( nnf: List[ExpansionTree], sh: HOLFormula, pol: Boolean, mode: Boolean ): ( ExpansionTree, List[ExpansionTree] ) = {
     ( nnf, sh, mode == pol ) match {
       case ( ETOr( a, b ) :: nnf_, _, _ ) if mode   => apply( a :: b :: nnf_, sh, pol, mode )
       case ( ETAnd( a, b ) :: nnf_, _, _ ) if !mode => apply( a :: b :: nnf_, sh, pol, mode )
@@ -69,17 +68,18 @@ object expansionFromNNF {
         ( ETWeakening( sh, pol ), nnf_ )
 
       case ( _, Quant( v, f ), _ ) =>
-        val nc = numClauses( sh, pol, Set() )
+        val nc = numClauses( sh, pol )
         val insts = for {
           i <- 0 until nc
           ETWeakQuantifier( _, is ) = nnf( i )
           ( t, inst ) <- is
-        } yield t -> ETOr( for ( j <- 0 until nc ) yield if ( i == j ) inst else ETWeakening( instantiate( nnf( j ).shallow, t ), true ), true )
+        } yield ( t, for ( j <- 0 until nc ) yield if ( i == j ) inst else ETWeakening( instantiate( nnf( j ).shallow, t ), true ) )
         ( ETWeakQuantifier.withMerge( sh, for ( ( term, inst ) <- insts )
-          yield term -> apply( List( inst ), instantiate( sh, term ), pol, true ).get1 ), nnf.drop( nc ) )
+          yield term -> apply( inst.toList, instantiate( sh, term ), pol, true ).get1 ), nnf.drop( nc ) )
       case ( a :: nnf_, And( _, _ ), true )               => ( apply( List( a ), sh, pol, !mode ).get1, nnf_ )
       case ( a :: nnf_, Or( _, _ ) | Imp( _, _ ), false ) => ( apply( List( a ), sh, pol, !mode ).get1, nnf_ )
     }
+  }
 
   def apply( nnf: List[ExpansionTree], sh: HOLSequent ): ExpansionSequent =
     if ( sh isEmpty ) {

@@ -3,6 +3,7 @@ package at.logic.gapt.provers.nanocop
 import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.formats.tptp.TptpParser
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.expr._
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
@@ -39,6 +40,15 @@ fof(bg_2_4_3, conjecture, ![W,V]: ((a_vector_subspace_of(W, V) & a_vector_space(
       case Some( expansion ) =>
         expansion.deep must beValidSequent
         expansion.shallow must_== tptp
+    }
+  }
+
+  "quantifier distribution" in {
+    val formula = hof"!x (true & -false & p & q x & r) -> !x (true & p & q (f x) & r)"
+    NanoCoP getExpansionProof formula must beLike {
+      case Some( expansion ) =>
+        expansion.deep must beValidSequent
+        expansion.shallow must_== ( Sequent() :+ formula )
     }
   }
 
