@@ -41,6 +41,14 @@ object expansionFromNNF {
       case ( ETAnd( ETTop( _ ), a ) :: nnf_, _, _ )   => apply( a :: nnf_, sh, pol, mode )
       case ( ETAnd( a, ETTop( _ ) ) :: nnf_, _, _ )   => apply( a :: nnf_, sh, pol, mode )
 
+      case ( ETWeakening( And( a, b ), p ) :: nnf_, _, false ) =>
+        apply( ETAnd( ETWeakening( a, p ), ETWeakening( b, p ) ) :: nnf_, sh, pol, mode )
+      case ( ETWeakening( Or( a, b ), p ) :: nnf_, _, true ) =>
+        apply( ETOr( ETWeakening( a, p ), ETWeakening( b, p ) ) :: nnf_, sh, pol, mode )
+      case ( ETWeakening( Or( a, b ), p ) :: nnf_, _, true ) =>
+        apply( ETImp( ETWeakening( a, !p ), ETWeakening( b, p ) ) :: nnf_, sh, pol, mode )
+      case ( ETWeakening( Neg( _: HOLAtom ) | ( _: HOLAtom ), _ ) :: nnf_, _, _ ) => apply( nnf_, sh, pol, mode )
+
       case ( ( ETTop( _ ) | ETBottom( _ ) | ETAtom( _, _ ) | ETNeg( ETAtom( _, _ ) ) ) :: nnf_, _, _ ) =>
         apply( nnf_, sh, pol, mode )
       case ( nnf_, atom: HOLAtom, _ ) => ( ETAtom( atom, pol ), nnf_ )

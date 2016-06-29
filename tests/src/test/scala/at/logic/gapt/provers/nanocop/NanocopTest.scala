@@ -27,7 +27,6 @@ class NanocopTest extends Specification with SatMatchers with SequentMatchers {
   }
 
   "alg211p1" in {
-    skipped( "does not work yet" )
     val tptp = TptpParser.parseString( """
 fof(basis_of, axiom, ![B,V]: (basis_of(B, V) => (lin_ind_subset(B, V) & a_subset_of(B, vec_to_class(V))))).
 fof(bg_2_2_5, axiom, ![S,T,V]: ((lin_ind_subset(S, V) & basis_of(T, V)) => ?[U]: (a_subset_of(U, T) & basis_of(union(S, U), V)))).
