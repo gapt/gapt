@@ -70,11 +70,11 @@ class PTContentPanel(
   listenTo( mouse.moves, mouse.clicks, mouse.wheel )
   reactions += {
     case e: MouseDragged =>
-      main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
+      main.mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
     case e: MouseReleased =>
-      main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
+      main.mainPanel.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
-      main.scrollPane.peer.dispatchEvent( e.peer )
+      main.mainPanel.peer.dispatchEvent( e.peer )
   }
 
   this.peer.setAutoscrolls( true )

@@ -20,7 +20,7 @@ import scala.swing._
  * @param proof The proof to be displayed.
  * @tparam T The type of dag proof.
  */
-abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ProofToolViewer[DagProof[T]]( name, proof ) {
+abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ScrollableProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
 
 }
