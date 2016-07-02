@@ -358,7 +358,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
 abstract class ScrollableProofToolViewer[+T]( name: String, content: T ) extends ProofToolViewer( name, content ) {
 
-  val scrollPane = new PTScrollPane
+  lazy val scrollPane = new PTScrollPane
   scrollPane.contentPanel = contentPanel
 
   override def contentPanel_=( p: PTContentPanel ) = {
