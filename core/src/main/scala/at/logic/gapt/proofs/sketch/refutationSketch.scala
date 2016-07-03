@@ -74,7 +74,9 @@ case class SketchSplitCombine( splitCases: Seq[RefutationSketch] ) extends Refut
   override def productElement( n: Int ) = splitCases( n )
 }
 
-case class UnprovableSketchInference( inference: RefutationSketch )
+case class UnprovableSketchInference( inference: RefutationSketch ) {
+  override def toString = s"Unprovable inference:\n$inference\n"
+}
 
 object RefutationSketchToResolution {
   /**

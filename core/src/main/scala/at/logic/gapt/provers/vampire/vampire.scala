@@ -10,6 +10,8 @@ import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
+import scalaz.Success
+
 object Vampire extends Vampire
 class Vampire extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
@@ -22,7 +24,8 @@ class Vampire extends ResolutionProver with ExternalProgram {
         ), tptpIn ).split( "\n" )
         if ( output.head startsWith "Refutation" ) {
           val sketch = TptpProofParser.parse( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) )._2
-          RefutationSketchToResolution( sketch ) map { fixDerivation( _, cnf ) } toOption
+          val Success( resolution ) = RefutationSketchToResolution( sketch )
+          Some( fixDerivation( resolution, cnf ) )
         } else None
       }
     )
