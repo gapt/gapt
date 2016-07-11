@@ -34,7 +34,7 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def and_formula_part = rule { ( "&" ~ Ws ~ unitary_formula ).+ ~> ( ( a: HOLFormula, as: Seq[HOLFormula] ) => And.leftAssociative( a +: as: _* ) ) }
   def unitary_formula: Rule1[HOLFormula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ logic_formula ~ ")" ~ Ws }
   def quantified_formula = rule { fol_quantifier ~ "[" ~ Ws ~ variable_list ~ "]" ~ Ws ~ ":" ~ Ws ~ unitary_formula ~> ( ( q: QuantifierHelper, vs, m ) => q.Block( vs, m ) ) }
-  def variable_list = rule { variable.+.separatedBy( Comma ) }
+  def variable_list = rule { ( variable ~ ( ":" ~ Ws ~ name ).? ~> ( ( a, b ) => a ) ).+.separatedBy( Comma ) }
   def unary_formula = rule { "~" ~ Ws ~ unitary_formula ~> ( Neg( _ ) ) }
 
   def atomic_formula = rule { defined_prop | infix_formula | plain_atomic_formula | ( distinct_object ~> ( FOLAtom( _ ) ) ) }

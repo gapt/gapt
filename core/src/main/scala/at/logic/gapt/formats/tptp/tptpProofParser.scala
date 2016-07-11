@@ -2,9 +2,9 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFn, CNFp, univclosure }
-import at.logic.gapt.proofs.resolution.{ AvatarComponent, AvatarGroundComp, AvatarNonGroundComp }
+import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp }
 import at.logic.gapt.proofs.sketch._
-import at.logic.gapt.proofs.{ FOLClause, Sequent }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
 
 import scala.collection.mutable
 
@@ -57,32 +57,34 @@ object TptpProofParser {
     }
 
     val memo = mutable.Map[String, Seq[RefutationSketch]]()
-    val splDefs = mutable.Set[AvatarComponent]()
-    def filterVampireSplits( clause: FOLClause ): FOLClause =
-      clause.filter {
-        case FOLAtom( name, Seq() ) if name startsWith "$spl" => false
-        case _ => true
+    val splDefs = mutable.Map[( FOLAtom, Boolean ), AvatarDefinition]()
+    val splAtoms = mutable.Set[FOLAtom]()
+    def filterVampireSplits( clause: FOLClause ): FOLClause = clause.filterNot( splAtoms )
+    def convertAvatarDefinition( defn: HOLFormula, splAtom: FOLAtom ): Seq[RefutationSketch] = {
+      val All.Block( vs, clauseDisj ) = defn
+      splAtoms += splAtom
+      val comps = defn match {
+        case splAtom @ FOLAtom( _, _ ) if freeVariables( splAtom ).isEmpty =>
+          Seq( false, true ) map { AvatarGroundComp( splAtom, _ ) }
+        case Neg( splAtom @ FOLAtom( _, _ ) ) if freeVariables( splAtom ).isEmpty =>
+          Seq( false, true ) map { AvatarGroundComp( splAtom, _ ) }
+        case _ =>
+          Seq( AvatarNonGroundComp( splAtom, AvatarNonGroundComp.DefinitionFormula.canonize( defn ) ) )
       }
+      comps map { comp =>
+        splDefs( ( splAtom, comp.assertion.succedent.nonEmpty ) ) = comp
+        SketchComponentIntro( comp )
+      }
+    }
     def convert( stepName: String ): Seq[RefutationSketch] = memo.getOrElseUpdate( stepName, steps( stepName ) match {
-      case AnnotatedFormula( "fof", _, "plain", And( Imp( defn @ All.Block( vs, clauseDisj ), Neg( splAtom: FOLAtom ) ), _ ), TptpTerm( "introduced", TptpTerm( "sat_splitting_component" ), _ ) +: _ ) =>
-        val comps = defn match {
-          case splAtom @ FOLAtom( _, _ ) if freeVariables( splAtom ).isEmpty =>
-            Seq( false, true ) map { AvatarGroundComp( splAtom, _ ) }
-          case Neg( splAtom @ FOLAtom( _, _ ) ) if freeVariables( splAtom ).isEmpty =>
-            Seq( false, true ) map { AvatarGroundComp( splAtom, _ ) }
-          case _ =>
-            Seq( AvatarNonGroundComp( splAtom, AvatarNonGroundComp.DefinitionFormula.canonize( defn ) ) )
-        }
-        comps map { comp =>
-          splDefs += comp
-          SketchComponentIntro( comp )
-        }
+      case AnnotatedFormula( "fof", _, "plain", And( Imp( defn, Neg( splAtom: FOLAtom ) ), _ ), TptpTerm( "introduced", TptpTerm( "sat_splitting_component" ), _ ) +: _ ) =>
+        convertAvatarDefinition( defn, splAtom )
       case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", TptpTerm( "sat_splitting_refutation" ), _, _ ) ) +: _ ) =>
         val sketchParents = getParents( justification ) flatMap convert
         val splitParents = sketchParents map { parent0 =>
           var parent = parent0
           while ( parent.conclusion.nonEmpty ) {
-            val ( comp, subst ) = splDefs.view.
+            val ( comp, subst ) = splDefs.values.view.
               flatMap { d => clauseSubsumption( d.clause, parent.conclusion ) filter { _.isInjectiveRenaming } map { d -> _ } }.
               headOption.getOrElse {
                 throw new IllegalArgumentException( parent.conclusion.toString )
@@ -96,6 +98,27 @@ object TptpProofParser {
           parent
         }
         Seq( SketchSplitCombine( splitParents ) )
+      case AnnotatedFormula( "fof", _, "plain", And( Imp( splAtom: FOLAtom, defn ), _ ), TptpTerm( "introduced", FOLVar( "AVATAR_definition" ), _ ) +: _ ) =>
+        convertAvatarDefinition( defn, splAtom )
+      case AnnotatedFormula( "fof", _, "plain", disj, ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ), _, _ ) ) +: _ ) =>
+        val Seq( assertion ) = CNFp.toClauseList( disj )
+        val Seq( splittedClause, _* ) = getParents( justification ) flatMap convert
+
+        var p = splittedClause
+        for {
+          ( splAtom: FOLAtom, i ) <- assertion.zipWithIndex
+          comp <- splDefs.get( ( splAtom, i.isSuc ) )
+          subst <- clauseSubsumption( comp.clause, p.conclusion )
+        } p = SketchComponentElim( p, comp match {
+          case comp @ AvatarNonGroundComp( _, _, vars ) =>
+            comp.copy( vars = subst( vars ).map( _.asInstanceOf[Var] ) )
+          case AvatarGroundComp( _, _ ) => comp
+        } )
+
+        require( p.conclusion.isEmpty, s"$assertion\n$splittedClause\n$splDefs" )
+        Seq( p )
+      case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ), _, _ ) ) +: _ ) =>
+        Seq( SketchSplitCombine( getParents( justification ).flatMap( convert ) ) )
       case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
         labelledCNF( label ) map SketchAxiom
       case AnnotatedFormula( _, _, _, axiom: FOLFormula, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>

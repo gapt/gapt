@@ -73,13 +73,13 @@ object mapInputClauses {
           res -> ( res.occConnectors.head * conn1 * p.occConnectors.head.inv )
         } getOrElse { q1 -> conn1 * p.occConnectors.head.inv }
 
-      case AvatarAbsurd( p1 ) if p1.conclusion.isEmpty =>
+      case AvatarContradiction( p1 ) if p1.conclusion.isEmpty =>
         val ( q1, _ ) = doMap( p1 )
-        val res = AvatarAbsurd( q1 )
+        val res = AvatarContradiction( q1 )
         res -> OccConnector.guessInjection( p.conclusion, res.conclusion )
-      case AvatarComponentElim( p1, indices, comp ) =>
+      case AvatarSplit( p1, indices, comp ) =>
         val ( q1, conn1 ) = doMap( p1 )
-        val res = AvatarComponentElim( q1, comp )
+        val res = AvatarSplit( q1, comp )
         res -> res.occConnectors.head * conn1 * p.occConnectors.head.inv
 
       // FIXME: support for propositional part

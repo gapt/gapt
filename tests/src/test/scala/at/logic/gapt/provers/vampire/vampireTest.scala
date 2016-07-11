@@ -5,8 +5,9 @@ import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import org.specs2.mutable._
 import at.logic.gapt.expr._
+import at.logic.gapt.utils.SatMatchers
 
-class VampireTest extends Specification with SequentMatchers {
+class VampireTest extends Specification with SequentMatchers with SatMatchers {
 
   args( skipAll = !Vampire.isInstalled )
 
@@ -104,6 +105,17 @@ class VampireTest extends Specification with SequentMatchers {
     }
 
     "large cnf" in { Vampire getResolutionProof CountingEquivalence( 2 ) must beSome }
+
+    "smt splitting" in {
+      val smtVampire = new Vampire( extraArgs = Seq( "-sas", "z3" ) )
+      if ( !smtVampire.isInstalled ) skipped
+      smtVampire getExpansionProof hof"""
+          a=b | b=c | c=d | !x f x = g x ->
+            f a = f b | f b = f c | f c = f d | f a = g a
+        """ must beLike {
+        case Some( proof ) => proof.deep must beEValidSequent
+      }
+    }
   }
 
 }

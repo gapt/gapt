@@ -103,12 +103,12 @@ class ResolutionTest extends Specification with SatMatchers {
     val comp2 = AvatarNonGroundComp( hoa"spl2", hof"!x q x", Seq( hov"y" ) )
     val split = AvatarSplit( c1, Seq( comp1, comp2 ) )
 
-    val p1 = AvatarComponentIntro( comp1 )
-    val p2 = AvatarComponentIntro( comp2.copy( vars = Seq( hov"x" ) ) )
+    val p1 = AvatarComponent( comp1 )
+    val p2 = AvatarComponent( comp2.copy( vars = Seq( hov"x" ) ) )
 
-    val case1 = AvatarAbsurd( Resolution( Subst( p1, Substitution( hov"x" -> le"c" ) ), Suc( 0 ), c2, Ant( 0 ) ) )
-    val case2 = AvatarAbsurd( Resolution( Subst( p2, Substitution( hov"x" -> le"d" ) ), Suc( 0 ), c3, Ant( 0 ) ) )
-    val proof = Resolution( Resolution( AvatarAbsurd( split ), Suc( 0 ), case1, Ant( 0 ) ), Suc( 0 ), case2, Ant( 0 ) )
+    val case1 = AvatarContradiction( Resolution( Subst( p1, Substitution( hov"x" -> le"c" ) ), Suc( 0 ), c2, Ant( 0 ) ) )
+    val case2 = AvatarContradiction( Resolution( Subst( p2, Substitution( hov"x" -> le"d" ) ), Suc( 0 ), c3, Ant( 0 ) ) )
+    val proof = Resolution( Resolution( AvatarContradiction( split ), Suc( 0 ), case1, Ant( 0 ) ), Suc( 0 ), case2, Ant( 0 ) )
     proof.isProof must_== true
 
     ResolutionToExpansionProof.withDefs( proof ).deep must beValidSequent

@@ -3,7 +3,7 @@ package at.logic.gapt.provers.spass
 import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.resolution.{ AvatarComponentIntro, AvatarNegNonGroundComp, ResolutionToLKProof }
+import at.logic.gapt.proofs.resolution.{ AvatarComponent, AvatarNegNonGroundComp, ResolutionToLKProof }
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
@@ -64,7 +64,7 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
 
     "bug with ground parts in quantified splits" in {
       val Some( res ) = SPASS.getResolutionProof( CountingEquivalence( 1 ) )
-      res.subProofs.collect { case AvatarComponentIntro( c: AvatarNegNonGroundComp ) => c } must not( beEmpty )
+      res.subProofs.collect { case AvatarComponent( c: AvatarNegNonGroundComp ) => c } must not( beEmpty )
       ResolutionToLKProof( res )
       ok
     }

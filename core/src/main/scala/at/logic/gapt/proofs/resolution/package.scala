@@ -5,14 +5,14 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 package object resolution {
-  implicit object avatarComponentsAreReplaceable extends ClosedUnderReplacement[AvatarComponent] {
-    def replace( component: AvatarComponent, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarComponent = component match {
+  implicit object avatarComponentsAreReplaceable extends ClosedUnderReplacement[AvatarDefinition] {
+    def replace( component: AvatarDefinition, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarDefinition = component match {
       case AvatarGroundComp( atom, pol )           => AvatarGroundComp( TermReplacement( atom, repl ), pol )
       case AvatarNonGroundComp( atom, defn, vars ) => AvatarNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars )
       case AvatarNegNonGroundComp( atom, defn, vars, idx ) =>
         AvatarNegNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars, idx )
     }
-    def names( component: AvatarComponent ) = component match {
+    def names( component: AvatarDefinition ) = component match {
       case AvatarGroundComp( atom, _ ) => containedNames( atom )
       case AvatarNonGroundComp( atom, defn, vars ) =>
         containedNames( atom ) ++ containedNames( defn ) ++ containedNames( vars )
@@ -40,10 +40,10 @@ package object resolution {
           val v_ = rename( v, freeVariables( equation ) ++ freeVariables( auxFormula ) )
           val contextNew = Abs( v_, TermReplacement( Substitution( v, v_ )( subContext ), repl ) )
           Paramod( q1New, l1, dir, q2New, l2, contextNew )
-        case AvatarComponentElim( q, indices, component ) =>
-          AvatarComponentElim( f( q ), indices, TermReplacement( component, repl ) )
-        case AvatarAbsurd( q )                 => AvatarAbsurd( f( q ) )
-        case AvatarComponentIntro( component ) => AvatarComponentIntro( TermReplacement( component, repl ) )
+        case AvatarSplit( q, indices, component ) =>
+          AvatarSplit( f( q ), indices, TermReplacement( component, repl ) )
+        case AvatarContradiction( q )     => AvatarContradiction( f( q ) )
+        case AvatarComponent( component ) => AvatarComponent( TermReplacement( component, repl ) )
         case DefIntro( q, i, defAtom, definition ) =>
           DefIntro( f( q ), i, TermReplacement( defAtom, repl ), TermReplacement( definition, repl ) )
         case Flip( q, i )                => Flip( f( q ), i )
@@ -75,9 +75,9 @@ package object resolution {
         ns ++= containedNames( p.conclusion )
         ns ++= containedNames( p.assertions )
         p match {
-          case AvatarComponentIntro( comp ) =>
+          case AvatarComponent( comp ) =>
             ns ++= containedNames( comp )
-          case AvatarComponentElim( _, _, comp ) =>
+          case AvatarSplit( _, _, comp ) =>
             ns ++= containedNames( comp )
           case Subst( _, subst ) =>
             ns ++= containedNames( subst )
