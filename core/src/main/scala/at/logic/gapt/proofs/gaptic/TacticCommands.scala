@@ -547,6 +547,7 @@ trait TacticCommands {
    * found and inserted.
    */
   def prop = PropTactic
+  def quasiprop = QuasiPropTactic
 
   /**
    * Calls `prover9` on the current subgoal.

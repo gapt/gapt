@@ -59,6 +59,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       MiniSAT.isValid( deep ) !-- "minisat validity"
       Sat4j.getResolutionProof( deep ).isDefined !-- "Sat4j proof import"
       solvePropositional( deep ).isRight !-- "solvePropositional"
+    } else {
+      solveQuasiPropositional( deep ).isRight !-- "solveQuasiPropositional"
     }
     ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
     VeriT.isValid( deep ) !-- "verit validity"

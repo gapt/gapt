@@ -1286,13 +1286,14 @@ formula: at.logic.gapt.expr.FOLFormula =
 
 gapt> Escargot getResolutionProof formula
 res34: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
-Some([p46]  :-    (Resolution(p1, Suc(0), p45, Ant(0)))
-[p45] b + (c + (a + d)) = b + (c + (a + d)) :-    (Paramod(p7, Suc(0), true, p44, Ant(0), λx b + (c + (a + d)) = b + (c + x)))
-[p44] b + (c + (a + d)) = b + (c + (d + a)) :-    (Paramod(p19, Suc(0), true, p43, Ant(0), λx b + (c + (a + d)) = x))
-[p43] b + (c + (a + d)) = c + (b + (d + a)) :-    (Paramod(p20, Suc(0), true, p42, Ant(0), λx b + (c + (a + d)) = c + x))
-[p42] b + (c + (a + d)) = c + (d + (b + a)) :-    (Paramod(p21, Suc(0), true, p41, Ant(0), λx b + (c + (a + d)) = x))
-[p41] b + (c + (a + d)) = d + (c + (b + a)) :-    (Resolution(p24, Suc(0), p40, Ant(0)))
-[p40] d + (c + (b + a)) = b + (c + (a + d)) :-    (Paramod(p25, Suc(0), true, p39, Ant(0), λx x = b + ...
+Some([p39]  :-    (Resolution(p1, Suc(0), p38, Ant(0)))
+[p38] b + (c + (a + d)) = b + (c + (a + d)) :-    (Paramod(p7, Suc(0), true, p37, Ant(0), λx b + (c + (a + d)) = b + (c + x)))
+[p37] b + (c + (a + d)) = b + (c + (d + a)) :-    (Paramod(p18, Suc(0), true, p36, Ant(0), λx b + (c + (a + d)) = x))
+[p36] b + (c + (a + d)) = c + (b + (d + a)) :-    (Paramod(p19, Suc(0), true, p35, Ant(0), λx b + (c + (a + d)) = c + x))
+[p35] b + (c + (a + d)) = c + (d + (b + a)) :-    (Paramod(p20, Suc(0), true, p34, Ant(0), λx b + (c + (a + d)) = x))
+[p34] b + (c + (a + d)) = d + (c + (b + a)) :-    (Flip(p33, Ant(0)))
+[p33] d + (c + (b + a)) = b + (c + (a + d)) :-    (Paramod(p21, Suc(0), true, p32, Ant(0), λx x = b + (c + (a + d))))
+[p3...
 \end{clilisting}
 
 \subsection{Built-in tableaux prover}
@@ -1310,6 +1311,21 @@ res35: at.logic.gapt.proofs.lk.LKProof =
 
 \end{clilisting}
 
+The tableaux prover can also prove quasi-tautologies if you call it as \texttt{solveQuasiPropositional}:
+\begin{clilisting}
+gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
+res36: at.logic.gapt.proofs.lk.LKProof =
+[p13]  :- a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p12, Ant(0), Suc(0)))
+[p12] a = b ∧ f(a) = b :- a = f(f(b))    (AndLeftRule(p11, Ant(0), Ant(1)))
+[p11] a = b, f(a) = b :- a = f(f(b))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] f(a) = b, a = b, a = b :- a = f(f(b))    (EqualityLeftRule(p9, Ant(0), Ant(2), λx f(a) = x))
+[p9] a = b, a = b, f(a) = a :- a = f(f(b))    (WeakeningLeftRule(p8, a = b))
+[p8] a = b, f(a) = a :- a = f(f(b))    (EqualityRightRule(p7, Ant(0), Suc(0), λx a = f(f(x))))
+[p7] a = b, f(a) = a :- a = f(f(a))    (WeakeningLeftRule(p6, a = b))
+[p6] f(a) = a :- a = f(f(a))    (ContractionLeftRule(p5, Ant(1), Ant(0)))
+[p5] f(a) = a, f(a) = a :- a = f(f(a))    (EqualityRightRule(p4, Ant(0), Suc(0), λx a = f(x)))
+[p4] f(...
+\end{clilisting}
 
 \subsection{Cut-elimination (Gentzen's method)}
 
@@ -1476,17 +1492,17 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res36: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res37: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res37: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
+res38: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
 ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
 P(x, a) ⊃ Q(x, a)
 :-
 ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
-res38: Boolean = true
+res39: Boolean = true
 
 \end{clilisting}
 
@@ -1496,7 +1512,7 @@ a procedure to eliminate such cuts in expansion proofs as described
 in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
-res39: at.logic.gapt.proofs.expansion.ExpansionProof =
+res40: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
   +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
 :-
@@ -1509,7 +1525,7 @@ We can also convert expansion proofs to LK; this works even in the presence of
 cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
-res40: at.logic.gapt.proofs.lk.LKProof =
+res41: at.logic.gapt.proofs.lk.LKProof =
 [p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
 [p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) :- ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
@@ -1571,46 +1587,48 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p406] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+[p388] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
 ∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1)
 :-
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p405, Suc(1), Suc(0)))
-[p405] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p387, Suc(1), Suc(0)))
+[p387] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
 ∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1)
 :-
 ∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p404, Ant(3), Ant(2)))
-[p404] ∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p386, Ant(3), Ant(2)))
+[p386] ∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
 ∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
 :-
 ∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p403, Ant(4), Ant(...
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p385, Ant(4), Ant(...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
   +^{M(
-      s(M(M(v100, v101), s(M(v100, v101)))),
-      s(M(s(M(M(v100, v101), s(M(v100, v101)))), v102)))}
+      s(M(v100, s(M(s(M(v100, v101)), v1)))),
+      s(M(s(M(v100, v101)), v1)))}
     ((f(M(
-            s(M(M(v100, v101), s(M(v100, v101)))),
-            s(M(s(M(M(v100, v101), s(M(v100, v101)))), v102)))) =
+            s(M(v100, s(M(s(M(v100, v101)), v1)))),
+            s(M(s(M(v100, v101)), v1)))) =
         0)- ∨
       (f(M(
-            s(M(M(v100, v101), s(M(v100, v101)))),
-            s(M(s(M(M(v100, v101), s(M(v100, v101)))), v102)))) =
+            s(M(v100, s(M(s(M(v100, v101)), v1)))),
+            s(M(s(M(v100, v101)), v1)))) =
         s(0))-)
-  +^{M(M(v100, v101), s(M(v100, v101)))}
-    ((f(M(M(v100, v101), s(M(v100, v101)))) = 0)- ∨
-      (f(M(M(v100, v101), s(M(v100, v101)))) = s(0))-)
-  +^{M(s(M(M(v100, v101), s(M(v100, v101)))), v102)}
-    ((f(M(s(M(M(v100, v101), s(M(v100, v101)))), v102)) = 0)- ∨
-      (f(M(s(M(M(v100, v101), s(M(v100, v...
+  +^{M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))}
+    ((f(M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))) = 0)- ∨
+      (f(M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))) = s(0))-)
+  +^{M(s(M(v100, v101)), v1)}
+    ((f(M(s(M(v100, v101)), v1)) = 0)- ∨
+      (f(M(s(M(v100, v101)), v1)) = s(0))-)
+  +^{M(v100, s(M(s(M(v100, v101)), v1)))}
+    ((f(M(v100, s(M(s(...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1765,14 +1783,14 @@ Productions:
   x2 -> s(s(0))
 
 gapt> lang.toSet subsetOf grammar.language
-res46: Boolean = true
+res47: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
-res47: at.logic.gapt.grammars.TratGrammar =
+res48: at.logic.gapt.grammars.TratGrammar =
 Axiom: x0
 Non-terminals: x0, x1, x2
 Productions:
@@ -1806,7 +1824,7 @@ P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) �
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
 gapt> Escargot.getExpansionProof(problem)
-res48: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res49: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -1846,7 +1864,7 @@ P_P(f_nil) ∧
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function1>
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
-res49: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res50: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -2221,6 +2239,19 @@ paramodulation; they are explicitly represented using the Subst inference.
   \BinaryInfC{$\Gamma, \Pi \vdash \Delta, \Lambda, a[s]$}
 \end{prooftree}
 (We also allow rewriting in the antecedent, and rewriting from right to left.)
+
+\begin{multicols}{2}
+\begin{prooftree}
+  \AxiomC{$\Gamma \vdash \Delta, t=s$}
+  \RightLabel{Flip}
+  \UnaryInfC{$\Gamma \vdash \Delta, s=t$}
+\end{prooftree}
+\begin{prooftree}
+  \AxiomC{$t=s, \Gamma \vdash \Delta$}
+  \RightLabel{Flip}
+  \UnaryInfC{$s=t, \Gamma \vdash \Delta$}
+\end{prooftree}
+\end{multicols}
 
 \subsubsection*{Propositional rules}
 

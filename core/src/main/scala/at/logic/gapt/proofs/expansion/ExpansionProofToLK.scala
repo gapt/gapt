@@ -7,7 +7,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import scalaz._
 import Scalaz._
 
-object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getLKProof( _, addWeakenings = false ) ) {
+object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
   def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( ctx.theory _ )
 }
 object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )

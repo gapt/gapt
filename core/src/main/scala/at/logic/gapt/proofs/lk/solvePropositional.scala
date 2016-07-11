@@ -2,6 +2,10 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.resolution.UnitResolutionToLKProof
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.groundFreeVariables
+
 import scalaz._
 import Scalaz._
 
@@ -29,7 +33,12 @@ trait SolveUtils {
     }
 }
 
-object solvePropositional extends SolveUtils {
+object solvePropositional extends solvePropositional( _ => None )
+object solveQuasiPropositional extends solvePropositional( Escargot.getAtomicLKProof )
+
+class solvePropositional(
+    theorySolver: HOLClause => Option[LKProof]
+) extends SolveUtils {
   type Error = HOLSequent
 
   def apply( formula: HOLFormula ): UnprovableOrLKProof =
@@ -46,6 +55,7 @@ object solvePropositional extends SolveUtils {
       orElse( tryNullary( seq ) ).
       orElse( tryUnary( seq ) ).
       orElse( tryBinary( seq ) ).
+      orElse( tryTheory( seq ) ).
       getOrElse( seq.left ).
       map {
         ContractionMacroRule( _ ).
@@ -101,5 +111,8 @@ object solvePropositional extends SolveUtils {
       case ( e @ Imp( f, g ), i: Ant ) => handle( i, e, f, true, g, false, ImpLeftRule( _, _, _ ) )
     }
   }
+
+  private def tryTheory( seq: HOLSequent ): Option[UnprovableOrLKProof] =
+    theorySolver( seq collect { case atom: HOLAtom => atom } ).map { _.right }
 
 }
