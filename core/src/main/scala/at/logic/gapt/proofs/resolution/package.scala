@@ -46,6 +46,7 @@ package object resolution {
         case AvatarComponentIntro( component ) => AvatarComponentIntro( TermReplacement( component, repl ) )
         case DefIntro( q, i, defAtom, definition ) =>
           DefIntro( f( q ), i, TermReplacement( defAtom, repl ), TermReplacement( definition, repl ) )
+        case Flip( q, i )                => Flip( f( q ), i )
         case TopL( q, i )                => TopL( f( q ), i )
         case BottomR( q, i )             => BottomR( f( q ), i )
         case NegL( q, i )                => NegL( f( q ), i )

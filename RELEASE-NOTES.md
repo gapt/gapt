@@ -1,6 +1,10 @@
 # Release notes for GAPT
 
-## Version 2.2 (unreleased)
+## Version 2.3 (unreleased)
+
+* Conversion of unit-equational resolution proofs to unary LK proofs
+
+## Version 2.2 (released on 2016-07-09)
 
 * New resolution calculus with Avatar splitting
 * Vampire proof import with splitting

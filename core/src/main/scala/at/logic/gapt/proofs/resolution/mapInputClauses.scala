@@ -66,6 +66,12 @@ object mapInputClauses {
             res -> ( ( res.occConnectors( 0 ) * conn1 * p.occConnectors( 0 ).inv ) + ( res.occConnectors( 1 ) * conn2 * p.occConnectors( 1 ).inv ) )
           } getOrElse { q2 -> conn2 * p.occConnectors( 1 ).inv }
         } getOrElse { q1 -> conn1 * p.occConnectors( 0 ).inv }
+      case Flip( p1, i1 ) =>
+        val ( q1, conn1 ) = doMap( p1 )
+        conn1.children( i1 ).headOption map { j1 =>
+          val res = Flip( q1, j1 )
+          res -> ( res.occConnectors.head * conn1 * p.occConnectors.head.inv )
+        } getOrElse { q1 -> conn1 * p.occConnectors.head.inv }
 
       case AvatarAbsurd( p1 ) if p1.conclusion.isEmpty =>
         val ( q1, _ ) = doMap( p1 )

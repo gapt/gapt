@@ -306,6 +306,11 @@ case object PropTactic extends Tactic[Unit] {
   }
 }
 
+case object QuasiPropTactic extends Tactic[Unit] {
+  override def apply( goal: OpenAssumption ) =
+    solveQuasiPropositional( goal.conclusion ).toOption.toSuccessNel( TacticalFailure( this, Some( goal ), "search failed" ) ) map { () -> _ }
+}
+
 /**
  * Calls prover9 on the subgoal.
  */

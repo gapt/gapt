@@ -174,7 +174,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
         ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( splitLevel, inferenceType, premises.getOrElse( Seq() ) ) )
     }
 
-    def isVar( n: String ) = n.head.isUpper
+    def isVar( n: String ) = n.head.isUpper || 'u'.to( 'z' ).contains( n.head )
     def Term: Rule1[FOLTerm] = rule {
       Name ~ optional( "(" ~ zeroOrMore( Term ).separatedBy( "," ) ~ ")" ) ~>
         ( ( name: String, args: Option[Seq[FOLTerm]] ) => if ( isVar( name ) ) FOLVar( name ) else FOLFunction( name, args.getOrElse( Seq() ) ) )
