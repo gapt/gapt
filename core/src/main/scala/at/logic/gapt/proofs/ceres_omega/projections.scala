@@ -8,7 +8,7 @@ package at.logic.gapt.proofs.ceres_omega
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lksk.LKskProof.{ LabelledSequent, LabelledFormula, Label }
+import at.logic.gapt.proofs.lksk.LKskProof.{ Label, LabelledFormula, LabelledSequent }
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ceres_omega.Pickrule._
 
@@ -108,8 +108,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
               s ++ s2.map( pm2 => {
                 val es1 = p1.conclusion
                 val es2 = p2.conclusion
-                val List( aux1, aux2 ) = pickrule( proof, List( p1, p2 ), List( pm1, pm2 ), List( a1, a2 ) )
-                val rule = Cut( pm1._1, castToSide( aux1 ), pm2._1, castToSide( aux2 ) )
+                val List( aux1: Suc, aux2: Ant ) = pickrule( proof, List( p1, p2 ), List( pm1, pm2 ), List( a1, a2 ) )
+                val rule = Cut( pm1._1, aux1, pm2._1, aux2 )
                 val nca = calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rule.occConnectors( 1 ), pm1, pm2, main_is_cutanc )
                 ( rule, nca )
               } ) )
@@ -214,8 +214,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
                                                                        constructor: ( LKskProof, Side1, LKskProof, Side2 ) => LKskProof ) =
     s1.foldLeft( Set.empty[( LKskProof, Sequent[Boolean] )] )( ( s, p1 ) =>
       s ++ s2.map( p2 => {
-        val List( a1, a2 ) = pickrule( proof, List( parent1, parent2 ), List( p1, p2 ), List( proof.auxIndices( 0 )( 0 ), proof.auxIndices( 1 )( 0 ) ) )
-        val rule = constructor( p1._1, castToSide( a1 ), p2._1, castToSide( a2 ) )
+        val List( a1: Side1, a2: Side2 ) = pickrule( proof, List( parent1, parent2 ), List( p1, p2 ), List( proof.auxIndices( 0 )( 0 ), proof.auxIndices( 1 )( 0 ) ) )
+        val rule = constructor( p1._1, a1, p2._1, a2 )
         val nca = calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), rule.occConnectors( 1 ), p1, p2, false )
         ( rule, nca )
       } ) )
@@ -256,8 +256,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val main_is_cutanc = cut_ancs( proof.mainIndices( 0 ) )
     if ( main_is_cutanc ) s
     else s.map( pm => {
-      val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( a1, a2 ) )
-      val rp = constructor( pm._1, castToSide( a1_ ), castToSide( a2_ ) )
+      val List( a1_ : Side, a2_ : Side ) = pickrule( proof, List( p ), List( pm ), List( a1, a2 ) )
+      val rp = constructor( pm._1, a1_, a2_ )
       val nca: Sequent[Boolean] = calculate_child_cut_ecs( rp, rp.occConnectors( 0 ), pm, main_is_cutanc )
       ( rp, nca )
     } )
@@ -270,8 +270,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
-      val List( a1_, a2_ ) = pickrule( proof, List( p ), List( pm ), List( a1, a2 ) )
-      val rp = constructor( pm._1, castToSide( a1_ ), castToSide( a2_ ) )
+      val List( a1_ : Side1, a2_ : Side2 ) = pickrule( proof, List( p ), List( pm ), List( a1, a2 ) )
+      val rp = constructor( pm._1, a1_, a2_ )
       val nca = calculate_child_cut_ecs( rp, rp.occConnectors( 0 ), pm, false )
       ( rp, nca )
     } )
@@ -297,7 +297,7 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
       val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      val rule = constructor( pm._1, castToSide( a_ ), f )
+      val rule = constructor( pm._1, a_, f )
       val nca = calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pm, false )
       ( rule, nca )
     } )
@@ -309,8 +309,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
-      val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      val rule = constructor( pm._1, castToSide( a_ ) )
+      val List( a_ : Side ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      val rule = constructor( pm._1, a_ )
       val nca = calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pm, false )
       ( rule, nca )
     } )
@@ -322,8 +322,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
-      val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      val rule = constructor( pm._1, castToSide( a_ ), f, t )
+      val List( a_ : Side ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      val rule = constructor( pm._1, a_, f, t )
       val nca = calculate_child_cut_ecs( rule, rule.occConnectors( 0 ), pm, false )
       ( rule, nca )
     } )
@@ -346,8 +346,8 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
-      val List( aux ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      val rp = constructor( pm._1, castToSide( aux ), main, sk_const, sk_def )
+      val List( aux: Side ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      val rp = constructor( pm._1, aux, main, sk_const, sk_def )
       val nca = calculate_child_cut_ecs( rp, rp.occConnectors( 0 ), pm, false )
       ( rp, nca )
     } )
@@ -439,9 +439,5 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     }
   }
 
-  //pickrule returns a list of sequentIndices but the LKsk constructors need either Ant or Suc. Cast to appropriate.
-  private def castToSide[Side <: SequentIndex]( si: SequentIndex ): Side =
-    if ( si.isInstanceOf[Side] ) si.asInstanceOf[Side]
-    else throw new Exception( s"The index $si is not on the expected side of the sequent!" )
 }
 

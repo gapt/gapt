@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeak
 /**
  * Version 2 of the higher-order n-Tape proof.
  */
-object nTape2 extends AnalysisWithCeresOmega {
+class nTape2 extends AnalysisWithCeresOmega {
 
   override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream "ntape/ntape2.llk" )
 
@@ -20,6 +20,8 @@ object nTape2 extends AnalysisWithCeresOmega {
     nTapeInstances.printInstances( this.expansion_proof, this.proofdb.Definitions )
   }
 }
+
+object nTape2 extends nTape2
 
 object nTapeInstances {
   //prints the interesting terms from the expansion sequent
