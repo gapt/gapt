@@ -93,6 +93,14 @@ private[expr] trait DefaultReplaceables {
       def names( obj: ( I1, I2 ) ) = containedNames( obj._1 ) union containedNames( obj._2 )
     }
 
+  implicit def mapReplaceable[I1, I2, O1, O2]( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): Replaceable[Map[I1, I2], Map[O1, O2]] =
+    new Replaceable[Map[I1, I2], Map[O1, O2]] {
+      override def replace( obj: Map[I1, I2], p: PartialFunction[LambdaExpression, LambdaExpression] ): Map[O1, O2] =
+        obj.map( TermReplacement( _, p ) )
+
+      def names( obj: Map[I1, I2] ) = containedNames( obj.toSeq )
+    }
+
 }
 
 /**
