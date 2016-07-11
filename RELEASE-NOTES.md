@@ -4,6 +4,7 @@
 
 * Conversion of unit-equational resolution proofs to unary LK proofs
 * Support for Vampire 4.1
+* Support for SPASS 3.9
 
 ## Version 2.2 (released on 2016-07-09)
 
