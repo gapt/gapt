@@ -45,7 +45,7 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.8.3"
+val specs2Version = "3.8.4"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
@@ -275,7 +275,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.4.0"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )

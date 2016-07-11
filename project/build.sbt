@@ -1,7 +1,7 @@
 resolvers += Classpaths.sbtPluginReleases
 logLevel := Level.Warn
 
-libraryDependencies += "org.apache.commons" % "commons-compress" % "1.11"
+libraryDependencies += "org.apache.commons" % "commons-compress" % "1.12"
 
 addSbtPlugin( "org.scoverage" %% "sbt-scoverage" % "1.3.5" )
 
