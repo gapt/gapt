@@ -4,7 +4,7 @@ import at.logic.gapt.expr.{ FOLAtom, HOLAtom, clauseSubsumption }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, OccConnector, SequentProof }
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.escargot.NonSplittingEscargot
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
@@ -112,6 +112,7 @@ object RefutationSketchToResolution {
         Applicative[ErrorOr].traverse( cases.toList )( solve ).flatMap { solvedCases =>
           solvedCases.find( p => p.conclusion.isEmpty && p.assertions.isEmpty ).
             orElse( Sat4j.getResolutionProof( solvedCases.map( AvatarContradiction( _ ) ) ) ).
+            orElse( NonSplittingEscargot.getResolutionProof( solvedCases.map( AvatarContradiction( _ ) ) ) ).
             map( _.success ).getOrElse( UnprovableSketchInference( s ).failureNel )
         }
       case SketchComponentElim( from, comp ) =>
