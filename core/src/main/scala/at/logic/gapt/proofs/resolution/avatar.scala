@@ -4,9 +4,47 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs._
 
+/**
+ * Removes a clause component.
+ * {{{
+ *   S ++ C <- A
+ *   ----------------
+ *      S   <- A ∧ ¬a
+ * }}}
+ */
+case class AvatarSplit( subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarDefinition ) extends LocalResolutionRule {
+  require( !component.introOnly )
+  require( indices subsetOf subProof.conclusion.indices.toSet )
+
+  val thisComponent = subProof.conclusion.zipWithIndex.filter( indices contains _._2 ).map( _._1 )
+  val rest = subProof.conclusion.zipWithIndex.filterNot( indices contains _._2 ).map( _._1 )
+  require( freeVariables( thisComponent ) intersect freeVariables( rest ) isEmpty )
+  require( component.clause isSubMultisetOf thisComponent )
+
+  override def auxIndices = Seq( indices.toSeq )
+  override def mainFormulaSequent = Sequent()
+  override val assertions = subProof.assertions ++ component.assertion distinct
+  override def immediateSubProofs = Seq( subProof )
+  override def introducedDefinitions = component.inducedDefinitions
+}
 object AvatarSplit {
-  def apply( subProof: ResolutionProof, components: Seq[AvatarComponent] ): ResolutionProof =
-    components.foldLeft( subProof )( AvatarComponentElim( _, _ ) )
+  def apply( subProof: ResolutionProof, component: AvatarDefinition ): AvatarSplit = {
+    def getIndices( toFind: HOLSequent ): Set[SequentIndex] =
+      if ( toFind.isEmpty ) {
+        Set()
+      } else {
+        val i = toFind.indices.head
+        val indices = getIndices( toFind.delete( i ) )
+        subProof.conclusion.indices.
+          find( j => !indices.contains( j ) && i.sameSideAs( j ) && toFind( i ) == subProof.conclusion( j ) ).
+          fold( indices )( indices + _ )
+      }
+    require( subProof.conclusion.delete( getIndices( component.clause ).toSeq: _* ) == subProof.conclusion.diff( component.clause ) )
+    AvatarSplit( subProof, getIndices( component.clause ), component )
+  }
+
+  def apply( subProof: ResolutionProof, components: Seq[AvatarDefinition] ): ResolutionProof =
+    components.foldLeft( subProof )( AvatarSplit( _, _ ) )
 
   def getComponents( clause: HOLSequent ): List[HOLSequent] = {
     def findComp( c: HOLSequent ): HOLSequent = {
@@ -23,46 +61,6 @@ object AvatarSplit {
     }
   }
 }
-
-/**
- * Removes a clause component.
- * {{{
- *   S ++ C <- A
- *   ----------------
- *      S   <- A ∧ ¬a
- * }}}
- */
-case class AvatarComponentElim( subProof: ResolutionProof, indices: Set[SequentIndex], component: AvatarComponent ) extends LocalResolutionRule {
-  require( !component.introOnly )
-  require( indices subsetOf subProof.conclusion.indices.toSet )
-
-  val thisComponent = subProof.conclusion.zipWithIndex.filter( indices contains _._2 ).map( _._1 )
-  val rest = subProof.conclusion.zipWithIndex.filterNot( indices contains _._2 ).map( _._1 )
-  require( freeVariables( thisComponent ) intersect freeVariables( rest ) isEmpty )
-  require( component.clause isSubMultisetOf thisComponent )
-
-  override def auxIndices = Seq( indices.toSeq )
-  override def mainFormulaSequent = Sequent()
-  override val assertions = subProof.assertions ++ component.assertion distinct
-  override def immediateSubProofs = Seq( subProof )
-  override def introducedDefinitions = component.inducedDefinitions
-}
-object AvatarComponentElim {
-  def apply( subProof: ResolutionProof, component: AvatarComponent ): AvatarComponentElim = {
-    def getIndices( toFind: HOLSequent ): Set[SequentIndex] =
-      if ( toFind.isEmpty ) {
-        Set()
-      } else {
-        val i = toFind.indices.head
-        val indices = getIndices( toFind.delete( i ) )
-        subProof.conclusion.indices.
-          find( j => !indices.contains( j ) && i.sameSideAs( j ) && toFind( i ) == subProof.conclusion( j ) ).
-          fold( indices )( indices + _ )
-      }
-    require( subProof.conclusion.delete( getIndices( component.clause ).toSeq: _* ) == subProof.conclusion.diff( component.clause ) )
-    AvatarComponentElim( subProof, getIndices( component.clause ), component )
-  }
-}
 /**
  * Introduces a clause component.
  * {{{
@@ -70,20 +68,20 @@ object AvatarComponentElim {
  *   C <- a
  * }}}
  */
-case class AvatarComponentIntro( component: AvatarComponent ) extends InitialClause {
+case class AvatarComponent( component: AvatarDefinition ) extends InitialClause {
   override def introducedDefinitions = component.inducedDefinitions
   override val assertions = component.assertion.swapped
   def mainFormulaSequent = component.clause
 }
 
 /** Clause component together with its associated propositional atom. */
-trait AvatarComponent {
+trait AvatarDefinition {
   def clause: HOLSequent
   def assertion: HOLClause
   def inducedDefinitions: Map[HOLAtomConst, LambdaExpression]
   def introOnly = false
 }
-abstract class AvatarGeneralNonGroundComp extends AvatarComponent {
+abstract class AvatarGeneralNonGroundComp extends AvatarDefinition {
   def atom: HOLAtom
   def definition: HOLFormula
   def vars: Seq[Var]
@@ -140,7 +138,7 @@ object AvatarNonGroundComp {
     }
   }
 }
-case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarComponent {
+case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarDefinition {
   require( freeVariables( atom ).isEmpty )
   def assertion = if ( polarity ) Sequent() :+ atom else atom +: Sequent()
   def clause = assertion
@@ -155,7 +153,7 @@ case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarCo
  *    S ++ ¬A <-
  * }}}
  */
-case class AvatarAbsurd( subProof: ResolutionProof ) extends LocalResolutionRule {
+case class AvatarContradiction( subProof: ResolutionProof ) extends LocalResolutionRule {
   override val assertions = Sequent()
   def mainFormulaSequent = subProof.assertions
   def auxIndices = Seq( Seq() )

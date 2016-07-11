@@ -384,11 +384,11 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         for ( comp <- propComps; if !componentAlreadyDefined( comp.atom ) ) {
           componentAlreadyDefined += comp.atom
           for ( pol <- Seq( false, true ) )
-            inferred += DerivedCls( given, AvatarComponentIntro( AvatarGroundComp( comp.atom, pol ) ) )
+            inferred += DerivedCls( given, AvatarComponent( AvatarGroundComp( comp.atom, pol ) ) )
         }
         for ( comp <- nonPropComps if !componentAlreadyDefined( comp.atom ) ) {
           componentAlreadyDefined += comp.atom
-          inferred += DerivedCls( given, AvatarComponentIntro( comp ) )
+          inferred += DerivedCls( given, AvatarComponent( comp ) )
         }
 
         ( inferred, Set( given ) )

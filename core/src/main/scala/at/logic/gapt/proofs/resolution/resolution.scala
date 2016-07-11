@@ -45,11 +45,11 @@ import scala.collection.mutable
  *     [[DefIntro]] and [[Taut]] is used to introduce definitions for subformulas.
  *   <li> [[Resolution]], [[Paramod]], [[Subst]]. [[Factor]], [[Refl]], [[Taut]] for the
  *     refutation of the resulting clauses.  Clauses are split by successively
- *     applying [[AvatarComponentElim]], reducing the clause to an empty clause.
- *     The clause components can then be used using [[AvatarComponentIntro]].
+ *     applying [[AvatarSplit]], reducing the clause to an empty clause.
+ *     The clause components can then be used using [[AvatarComponent]].
  *   <li> Each empty clause of a splitting branch is followed by an
- *     [[AvatarAbsurd]] inference, moving the assertion back to the clause.
- *   <li> A [[Resolution]] refutation of the [[AvatarAbsurd]] clauses.
+ *     [[AvatarContradiction]] inference, moving the assertion back to the clause.
+ *   <li> A [[Resolution]] refutation of the [[AvatarContradiction]] clauses.
  * </ol>
  *
  * Substitutions are not absorbed into resolution, factoring, and

@@ -133,10 +133,10 @@ object ResolutionToExpansionProof {
         propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], false ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2 ).updated( i2, replaceWithContext( es._2( p.mainIndices.head ), es._1( ctx ).asInstanceOf[Abs], es._1( p.t ) ) ) ) )
 
-      case p @ AvatarComponentElim( q, indices, AvatarGroundComp( atom, pol ) ) =>
+      case p @ AvatarSplit( q, indices, AvatarGroundComp( atom, pol ) ) =>
         val Seq( oc ) = p.occConnectors
         propg( p, q, _.map( _.map2( es => oc.parent( es, ETAtom( atom, !pol ) ) ) ) )
-      case p @ AvatarComponentElim( q, indices, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+      case p @ AvatarSplit( q, indices, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         val renaming = Substitution( for ( v <- freeVariables( comp.clause ) ) yield v -> nameGen.fresh( v ) )
         splitDefn( splAtom ) = definition
         splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
@@ -149,11 +149,11 @@ object ResolutionToExpansionProof {
           case ( Seq( et ), _ ) => et
           case ( Seq(), idx )   => ETAtom( renaming( q.conclusion( idx ) ).asInstanceOf[HOLAtom], idx.isAnt )
         } ) )
-      case p @ AvatarComponentIntro( AvatarGroundComp( _, _ ) ) =>
+      case p @ AvatarComponent( AvatarGroundComp( _, _ ) ) =>
         clear( p )
-      case p @ AvatarComponentIntro( AvatarNegNonGroundComp( _, _, _, _ ) ) =>
+      case p @ AvatarComponent( AvatarNegNonGroundComp( _, _, _, _ ) ) =>
         clear( p )
-      case p @ AvatarComponentIntro( AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+      case p @ AvatarComponent( AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         splitDefn( splAtom ) = definition
         splitCutR( splAtom ) ::= ETWeakQuantifierBlock(
           definition, vars.size,
@@ -161,7 +161,7 @@ object ResolutionToExpansionProof {
             yield s( vars ) -> es.toDisjunction( false )
         )
         clear( p )
-      case p @ AvatarAbsurd( q ) =>
+      case p @ AvatarContradiction( q ) =>
         propg( p, q, _ => sequent2expansions( q.conclusion ) )
 
       case p: Flip =>

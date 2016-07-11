@@ -2381,20 +2381,22 @@ $C$.
 
 \begin{prooftree}
   \AxiomC{$C, S \leftarrow A$}
-  \RightLabel{AvatarComponentElim}
+  \RightLabel{AvatarSplit}
   \UnaryInfC{$S \leftarrow A \land \neg[C]$}
 \end{prooftree}
+(For simplicity, the AvatarSplit rule only splits away a single clause
+component at a time.)
 
 \begin{prooftree}
   \AxiomC{}
-  \RightLabel{AvatarComponentIntro}
+  \RightLabel{AvatarComponent}
   \UnaryInfC{$C \leftarrow [C]$}
 \end{prooftree}
 
 \begin{prooftree}
   \AxiomC{$\Gamma \vdash \Delta \:\leftarrow\:
     a_1 \land a_2 \land \cdots \land \neg b_1 \land \neg b_2 \land \cdots $}
-  \RightLabel{AvatarAbsurd}
+  \RightLabel{AvatarContradiction}
   \UnaryInfC{$a_1, a_2, \ldots, \Gamma \vdash \Delta, b_1, b_2, \ldots \:\leftarrow\: \top$}
 \end{prooftree}
 

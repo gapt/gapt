@@ -2,7 +2,7 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFn, CNFp, univclosure }
-import at.logic.gapt.proofs.resolution.{ AvatarComponent, AvatarGroundComp, AvatarNonGroundComp }
+import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp }
 import at.logic.gapt.proofs.sketch._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
 
@@ -57,7 +57,7 @@ object TptpProofParser {
     }
 
     val memo = mutable.Map[String, Seq[RefutationSketch]]()
-    val splDefs = mutable.Map[( FOLAtom, Boolean ), AvatarComponent]()
+    val splDefs = mutable.Map[( FOLAtom, Boolean ), AvatarDefinition]()
     val splAtoms = mutable.Set[FOLAtom]()
     def filterVampireSplits( clause: FOLClause ): FOLClause = clause.filterNot( splAtoms )
     def convertAvatarDefinition( defn: HOLFormula, splAtom: FOLAtom ): Seq[RefutationSketch] = {

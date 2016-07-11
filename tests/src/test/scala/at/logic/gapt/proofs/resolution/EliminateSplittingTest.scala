@@ -12,10 +12,10 @@ class EliminateSplittingTest extends Specification {
     val Some( proofWithSplitting ) = Escargot getResolutionProof hof"!x p x | !x q x -> !x (p x | q x) & ${BussTautology( 2 ).toImplication}"
     val proofWithoutSplitting = eliminateSplitting( proofWithSplitting )
     proofWithoutSplitting.subProofs foreach {
-      case AvatarAbsurd( _ )              => ko
-      case AvatarComponentIntro( _ )      => ko
-      case AvatarComponentElim( _, _, _ ) => ko
-      case _                              => ok
+      case AvatarContradiction( _ ) => ko
+      case AvatarComponent( _ )     => ko
+      case AvatarSplit( _, _, _ )   => ko
+      case _                        => ok
     }
     proofWithoutSplitting.isProof must_== true
   }

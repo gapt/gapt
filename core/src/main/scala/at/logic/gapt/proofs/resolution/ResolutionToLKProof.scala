@@ -57,20 +57,20 @@ object ResolutionToLKProof {
         else
           ParamodulationRightRule( f( q1 ), q1.conclusion( i1 ), f( q2 ), q2.conclusion( i2 ), ctx )
 
-      case p @ AvatarAbsurd( q ) => f( q )
-      case AvatarComponentIntro( comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+      case p @ AvatarContradiction( q ) => f( q )
+      case AvatarComponent( comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         val \/-( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
         val p2 = ForallLeftBlock( p1, definition, vars )
         val p3 = DefinitionLeftRule( p2, definition, splAtom )
         p3
-      case AvatarComponentIntro( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
-      case AvatarComponentIntro( comp @ AvatarNegNonGroundComp( splAtom, definition, vars, idx ) ) =>
+      case AvatarComponent( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
+      case AvatarComponent( comp @ AvatarNegNonGroundComp( splAtom, definition, vars, idx ) ) =>
         val \/-( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
         val p2 = ForallRightBlock( p1, definition, vars )
         val p3 = DefinitionRightRule( p2, definition, splAtom )
         p3
-      case AvatarComponentElim( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
-      case p @ AvatarComponentElim( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
+      case AvatarSplit( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
+      case p @ AvatarSplit( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         var p_ = f( q )
         for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
         def mkOr( lits: HOLFormula ): Unit =

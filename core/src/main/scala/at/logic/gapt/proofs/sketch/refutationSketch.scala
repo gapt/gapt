@@ -55,11 +55,11 @@ case class SketchInference( conclusion: FOLClause, from: Seq[RefutationSketch] )
   override def productElement( n: Int ) = if ( n == 0 ) conclusion else from( n - 1 )
 }
 
-case class SketchComponentIntro( component: AvatarComponent ) extends RefutationSketch {
+case class SketchComponentIntro( component: AvatarDefinition ) extends RefutationSketch {
   def immediateSubProofs = Seq()
   def conclusion = component.clause.map( _.asInstanceOf[FOLAtom] )
 }
-case class SketchComponentElim( subProof: RefutationSketch, component: AvatarComponent ) extends RefutationSketch {
+case class SketchComponentElim( subProof: RefutationSketch, component: AvatarDefinition ) extends RefutationSketch {
   def immediateSubProofs = Seq( subProof )
   val conclusion = subProof.conclusion diff component.clause
 }
@@ -111,14 +111,14 @@ object RefutationSketchToResolution {
         import Validation.FlatMap._
         Applicative[ErrorOr].traverse( cases.toList )( solve ).flatMap { solvedCases =>
           solvedCases.find( p => p.conclusion.isEmpty && p.assertions.isEmpty ).
-            orElse( Sat4j.getResolutionProof( solvedCases.map( AvatarAbsurd( _ ) ) ) ).
+            orElse( Sat4j.getResolutionProof( solvedCases.map( AvatarContradiction( _ ) ) ) ).
             map( _.success ).getOrElse( UnprovableSketchInference( s ).failureNel )
         }
       case SketchComponentElim( from, comp ) =>
         for ( solvedFrom <- solve( from ) )
-          yield AvatarComponentElim( solvedFrom, comp )
+          yield AvatarSplit( solvedFrom, comp )
       case SketchComponentIntro( comp ) =>
-        AvatarComponentIntro( comp ).success
+        AvatarComponent( comp ).success
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

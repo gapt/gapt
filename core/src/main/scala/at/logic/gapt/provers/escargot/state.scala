@@ -153,7 +153,7 @@ class EscargotState extends Logger {
             switchToNewModel( newModel )
           case None =>
             return Some( emptyClauses.get( Sequent() ).map( _.proof ).getOrElse {
-              Sat4j.getResolutionProof( emptyClauses.values.map( cls => AvatarAbsurd( cls.proof ) ) ).get
+              Sat4j.getResolutionProof( emptyClauses.values.map( cls => AvatarContradiction( cls.proof ) ) ).get
             } )
         }
       }
