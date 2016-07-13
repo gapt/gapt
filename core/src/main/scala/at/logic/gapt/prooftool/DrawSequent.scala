@@ -104,25 +104,12 @@ object LatexLabel {
   def clearCache() = this.synchronized( cache.clear() )
 
   def apply( main: ProofToolViewer[_], font: Font, latexText: String, color: Color = Color.white ): LatexLabel = {
-    val key = ( latexText, font )
-    this.synchronized( {
-      val icon = cache.getOrElseUpdate( key, {
-        val formula = try {
-          new TeXFormula( latexText )
-        } catch {
-          case e: Exception =>
-            throw new Exception( "Could not create formula " + latexText + ": " + e.getMessage, e )
-        }
-        val myicon = formula.createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize )
-        val myimage = new BufferedImage( myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB )
-        val g2 = myimage.createGraphics()
-        g2.setColor( Color.white )
-        g2.fillRect( 0, 0, myicon.getIconWidth, myicon.getIconHeight )
-        myicon.paintIcon( null, g2, 0, 0 )
-        myicon
-      } )
-      new LatexLabel( main, font, latexText, icon, color )
-    } )
+    val icon = this.synchronized( cache.getOrElseUpdate(
+      ( latexText, font ),
+      new TeXFormula( latexText ).
+        createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize )
+    ) )
+    new LatexLabel( main, font, latexText, icon, color )
   }
 }
 
