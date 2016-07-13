@@ -18,9 +18,9 @@ import scala.swing._
  *
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
- * @tparam T The type of dag proof..
+ * @tparam T The type of dag proof.
  */
-abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ProofToolViewer[DagProof[T]]( name, proof ) {
+abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T] ) extends ScrollableProofToolViewer[DagProof[T]]( name, proof ) {
   override val content = proof
 
 }
@@ -43,21 +43,18 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     Set(),
     markCutAncestors = false,
     Set(),
-    "",
     sequent_element_renderer,
     Nil
   )
 
   def hideSequentContext() {
     mainComponent.hideContexts = true
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def showAllFormulas() {
     mainComponent.hideContexts = false
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -140,19 +137,17 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
   }
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
-  def showAllRules(): Unit = publisher.publish( ShowAllRules( content ) )
+  def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
 
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     mainComponent.markCutAncestors = true
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def removeMarking(): Unit = {
     mainComponent.markCutAncestors = false
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
@@ -187,19 +182,17 @@ class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofView
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
-  def showAllRules(): Unit = publisher.publish( ShowAllRules( content ) )
+  def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
 
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
     mainComponent.markCutAncestors = true
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def removeMarking(): Unit = {
     mainComponent.markCutAncestors = false
-    mainComponent.initialize()
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }

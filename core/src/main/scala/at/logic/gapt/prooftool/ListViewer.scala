@@ -12,7 +12,7 @@ import at.logic.gapt.expr.hol.existsclosure
 import scala.swing.{ Action, FileChooser, Menu, Separator }
 import scala.swing.event.Key
 
-class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer[List[HOLSequent]]( name, list ) with Savable[List[HOLSequent]] {
+class ListViewer( name: String, list: List[HOLSequent] ) extends ScrollableProofToolViewer[List[HOLSequent]]( name, list ) with Savable[List[HOLSequent]] {
   override type MainComponentType = DrawList
   override def createMainComponent( fSize: Int ) = new DrawList( this, list, fSize )
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
@@ -21,7 +21,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer
     chooser.fileFilter = chooser.acceptAllFileFilter
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve =>
-        scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
         val result = chooser.selectedFile.getPath
         // val pair = body.getContent.getData.get
 
@@ -37,7 +37,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ProofToolViewer
             file.close()
           } else infoMessage( "Lists cannot be saved in this format." )
         } catch { case e: Throwable => errorMessage( "Cannot save the list! " + dnLine + getExceptionString( e ) ) }
-        finally { scrollPane.cursor = java.awt.Cursor.getDefaultCursor }
+        finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
       case _ =>
     }
   }

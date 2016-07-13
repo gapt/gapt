@@ -3,9 +3,12 @@ package at.logic.gapt.prooftool
 import scala.swing._
 import java.awt.Color
 import javax.swing.{ JSpinner, SpinnerModel }
-import scala.swing.event.{ MouseWheelMoved, MouseReleased, MouseDragged, ValueChanged }
-import java.awt.event.{ MouseEvent, MouseMotionListener, FocusAdapter }
+
+import scala.swing.event.{ MouseDragged, MouseReleased, MouseWheelMoved, ValueChanged }
+import java.awt.event.{ FocusAdapter, MouseEvent, MouseMotionListener }
 import java.awt.Font._
+
+import scala.swing.BorderPanel.Position
 
 /**
  * The main scrollpane used in ProofTool
@@ -40,11 +43,7 @@ class PTContentPanel(
     val str:           String,
     val content:       Component,
     private val fSize: Int
-) extends GridBagPanel with MouseMotionListener {
-  val c = new Constraints
-  c.grid = ( 0, 0 )
-  c.insets.set( 15, 15, 15, 15 )
-
+) extends BorderPanel with MouseMotionListener {
   val niceName: String = str match {
     case s: String if s == "\\psi" || s == "psi" => "ψ"
     case s: String if s == "\\chi" || s == "chi" => "χ"
@@ -59,22 +58,22 @@ class PTContentPanel(
 
   val bd = Swing.TitledBorder( Swing.LineBorder( new Color( 0, 0, 0 ), 2 ), " " + niceName + " " )
   bd.setTitleFont( new Font( SERIF, BOLD, 16 ) )
-  border = bd
+  border = Swing.CompoundBorder( bd, Swing.EmptyBorder( 15 ) )
 
   background = new Color( 255, 255, 255 )
 
   def fontSize = fSize
 
-  layout( content ) = c
+  layout( content ) = Position.Center
 
   listenTo( mouse.moves, mouse.clicks, mouse.wheel )
   reactions += {
     case e: MouseDragged =>
-      main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
+      main.mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
     case e: MouseReleased =>
-      main.scrollPane.cursor = java.awt.Cursor.getDefaultCursor
+      main.mainPanel.cursor = java.awt.Cursor.getDefaultCursor
     case e: MouseWheelMoved =>
-      main.scrollPane.peer.dispatchEvent( e.peer )
+      main.mainPanel.peer.dispatchEvent( e.peer )
   }
 
   this.peer.setAutoscrolls( true )
