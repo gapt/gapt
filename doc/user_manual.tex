@@ -1587,48 +1587,48 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p388] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
-∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1)
-:-
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p387, Suc(1), Suc(0)))
-[p387] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
-∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1)
-:-
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p386, Ant(3), Ant(2)))
-[p386] ∀x_2 ∀y_1 (x_2 <= M(x_2, y_1) ∧ y_1 <= M(x_2, y_1)),
-∀x ∀y_1 (s(x) <= y_1 ⊃ x <= y_1),
+[p495] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
 ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
+∀x ∀y (s(x) <= y ⊃ x <= y)
+:-
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p494, Suc(1), Suc(0)))
+[p494] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x ∀y (s(x) <= y ⊃ x <= y)
 :-
 ∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p385, Ant(4), Ant(...
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p493, Ant(3), Ant(2)))
+[p493] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x ∀y (s(x) <= y ⊃ x <= y),
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
+:-
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p492, Ant(4), Ant(1)))
+[p492] ∀x ∀y (s(x) <= y ⊃ x...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
-  +^{M(
-      s(M(v100, s(M(s(M(v100, v101)), v1)))),
-      s(M(s(M(v100, v101)), v1)))}
-    ((f(M(
-            s(M(v100, s(M(s(M(v100, v101)), v1)))),
-            s(M(s(M(v100, v101)), v1)))) =
-        0)- ∨
-      (f(M(
-            s(M(v100, s(M(s(M(v100, v101)), v1)))),
-            s(M(s(M(v100, v101)), v1)))) =
-        s(0))-)
-  +^{M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))}
-    ((f(M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))) = 0)- ∨
-      (f(M(s(M(v100, s(M(v100, v101)))), s(M(v100, v101)))) = s(0))-)
-  +^{M(s(M(v100, v101)), v1)}
-    ((f(M(s(M(v100, v101)), v1)) = 0)- ∨
-      (f(M(s(M(v100, v101)), v1)) = s(0))-)
-  +^{M(v100, s(M(s(M(v100, v101)), v1)))}
-    ((f(M(v100, s(M(s(...
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
+  +^{s(M(s(M(v100, v101)), s(M(v100, v101))))}
+    (∀y (s(M(s(M(v100, v101)), s(M(v100, v101)))) <=
+            M(s(M(s(M(v100, v101)), s(M(v100, v101)))), y) ∧
+          y <= M(s(M(s(M(v100, v101)), s(M(v100, v101)))), y))
+      +^{s(M(
+            s(M(s(M(v100, v101)), s(M(v100, v101)))),
+            s(M(v100, v101))))}
+        ((s(M(s(M(v100, v101)), s(M(v100, v101)))) <=
+            M(
+            s(M(s(M(v100, v101)), s(M(v100, v101)))),
+            s(M(
+            s(M(s(M(v100, v101)), s(M(v100, v101)))),
+            s(M(v100, v101))))))- ∧
+          (s(M(
+            s(M(s(M(v100, v101)), s(M(v100, v101)))),
+            s(M(v100, v101)))) <=
+            M(
+            s(M(s(M(v...
 gapt> prooftool(et)
 
 \end{clilisting}
