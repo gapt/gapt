@@ -68,7 +68,7 @@ class MiscTest extends Specification {
       val p = db.proof( "TAPEPROOF" )
       val elp = AtomicExpansion( DefinitionElimination( db.Definitions )( p ) )
       val reg = regularize( elp )
-      val lksk_proof = LKToLKsk( reg )
+      val lksk_proof = skolemizeInferences( reg )
       // TODO
       val et = LKToExpansionProof( reg ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
