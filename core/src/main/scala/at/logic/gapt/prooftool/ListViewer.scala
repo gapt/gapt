@@ -23,7 +23,6 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ScrollableProof
       case FileChooser.Result.Approve =>
         mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
         val result = chooser.selectedFile.getPath
-        // val pair = body.getContent.getData.get
 
         try {
           val ls = list.map {

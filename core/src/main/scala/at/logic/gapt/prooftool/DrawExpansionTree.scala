@@ -70,7 +70,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
 
     expTree match {
       case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) | ETDefinition( _, _, _ ) =>
-        val lbl = DrawSequent.formulaToLabel( main, expTree.shallow, ft )
+        val lbl = LatexLabel( main, ft, LatexExporter( expTree.shallow ) )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
       case ETNeg( t ) =>
@@ -412,7 +412,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
         contents += label( "\\forall " + LatexExporter.escapeName( v.name ) + " ", ft )
         contents += drawFormula( f )
       case _ =>
-        val lbl = DrawSequent.formulaToLabel( main, formula, ft )
+        val lbl = LatexLabel( main, ft, LatexExporter( formula ) )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks )
         contents += lbl
     }
@@ -422,16 +422,8 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
     background = Color.white
     yLayoutAlignment = 0.5
     font = fnt
+    icon = new TeXFormula( s ).createTeXIcon( TeXConstants.STYLE_DISPLAY, fnt.getSize )
 
-    val formula = new TeXFormula( s )
-    val myicon = formula.createTeXIcon( TeXConstants.STYLE_DISPLAY, fnt.getSize )
-    val myimage = new BufferedImage( myicon.getIconWidth, myicon.getIconHeight, BufferedImage.TYPE_INT_ARGB )
-    val g2 = myimage.createGraphics()
-    g2.setColor( Color.white )
-    g2.fillRect( 0, 0, myicon.getIconWidth, myicon.getIconHeight )
-    myicon.paintIcon( peer, g2, 0, 0 )
-
-    icon = myicon
     if ( s == "(" || s == ")" ) {
       opaque = true
       tooltip = "Click to mark/unmark."

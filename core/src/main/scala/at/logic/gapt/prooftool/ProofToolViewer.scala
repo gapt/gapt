@@ -7,11 +7,9 @@ import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentProof }
 import com.itextpdf.awt.PdfGraphics2D
 
 import scala.swing._
-import BorderPanel._
 import scala.swing.event.Key
 import swing.Dialog.Message
 import swing.Swing.EmptyIcon
-import java.io.{ File, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 import javax.swing.filechooser.FileFilter
 import javax.swing.WindowConstants
 
@@ -19,6 +17,7 @@ import at.logic.gapt.formats.latex.LatexExporter
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
+import java.io.File
 
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
@@ -156,7 +155,6 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
         for ( ( name, p ) <- parser.getResolutionProofs ) prooftool( p, name )
 
         mainPanel.cursor = java.awt.Cursor.getDefaultCursor
-        publisher.publish( EnableMenus )
       case _ =>
     }
   }

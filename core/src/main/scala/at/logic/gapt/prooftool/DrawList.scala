@@ -16,47 +16,33 @@ class DrawList(
     val fontSize: Int
 ) extends GridPanel( 0, 1 ) {
   background = new Color( 255, 255, 255 )
-  private var str: String = ""
-  initialize()
 
-  def search_=( string: String ) {
-    str = string
-    contents.clear()
-    initialize()
+  val ft = new Font( SANS_SERIF, PLAIN, fontSize )
+  var first = true
+  for ( x <- list ) {
+    if ( first ) {
+      first = false
+      val component = drawMember( x )
+      contents += component
+    } else {
+      contents += new Label( ";" ) { font = ft }
+      val component = drawMember( x )
+      contents += component
+    }
   }
-  def search = str
 
-  def initialize() {
-    val ft = new Font( SANS_SERIF, PLAIN, fontSize )
-    var first = true
-    for ( x <- list ) {
-      if ( first ) {
-        first = false
-        val component = drawMember( x )
-        contents += component
-      } else {
-        contents += new Label( ";" ) { font = ft }
-        val component = drawMember( x )
-        contents += component
+  def drawMember[T]( x: Any ): Component = x match {
+    case s: Sequent[t] if s.nonEmpty => {
+      s.elements.head match {
+        case _: HOLFormula =>
+          DrawSequent( main, s.asInstanceOf[HOLSequent], ft, ( x: HOLFormula ) => LatexExporter( x ) )
       }
     }
-
-    def drawMember[T]( x: Any ): Component = x match {
-      case s: Sequent[T] if s.nonEmpty => {
-        val colors = s map { _ => Color.white }
-
-        s.elements.head match {
-          case _: HOLFormula =>
-            DrawSequent[HOLFormula]( main, s.asInstanceOf[HOLSequent], ft, str, ( x: HOLFormula ) => LatexExporter( x ) )
-        }
-      }
-      case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
-      case _ => new Label( x.toString ) {
-        background = new Color( 255, 255, 255 )
-        opaque = true
-        font = ft
-        if ( !str.isEmpty && text.contains( str ) ) background = new Color( 0, 255, 0 )
-      }
+    case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
+    case _ => new Label( x.toString ) {
+      background = new Color( 255, 255, 255 )
+      opaque = true
+      font = ft
     }
   }
 
@@ -66,9 +52,6 @@ class DrawList(
 
     val label1 = expressionToLabel( f1 )
     val label2 = expressionToLabel( f2 )
-
-    if ( !str.isEmpty && label1.latexText.contains( str ) ) label1.background = new Color( 0, 255, 0 )
-    if ( !str.isEmpty && label2.latexText.contains( str ) ) label2.background = new Color( 0, 255, 0 )
 
     contents += label1
     contents += new Label( " := " ) { font = ft }

@@ -34,29 +34,6 @@ class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: Ex
   //Code for window geometry and appearance
   background = new Color( 255, 255, 255 )
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
-  //apreferredSize = new Dimension( 1024, 768 )
-  /*dividerLocation =
-    /*if ( expSequent.antecedent.isEmpty )
-      preferredSize.width / 5
-    else if ( expSequent.succedent.isEmpty )
-      preferredSize.width * 4 / 5
-    else*/
-    preferredSize.width / 2*/
-
-  //  listenTo( main.mainPanel )
-  /*reactions += {
-    case UIElementResized( main.mainPanel ) =>
-      preferredSize = calculateOptimalSize
-      revalidate()
-  }*/
-
-  /*def calculateOptimalSize = {
-    val width = main.mainPanel.size.width
-    val height = main.mainPanel.size.height
-    if ( width > 100 && height > 200 )
-      new Dimension( width - 70, height - 150 )
-    else new Dimension( width, height )
-  }*/
 
   //Code for contents
   val mExpSequent = expSequent

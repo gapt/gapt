@@ -66,12 +66,12 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolVie
     auxiliaries.contents.clear()
     val aux = for ( proof <- p().toList; ( auxIndices, premise ) <- proof.auxIndices zip proof.premises )
       yield for ( ( f, i ) <- premise.zipWithIndex if auxIndices contains i ) yield f
-    for ( x <- aux ) auxiliaries.contents += DrawSequent[F]( main, x, font, "", sequent_element_renderer )
+    for ( x <- aux ) auxiliaries.contents += DrawSequent( main, x, font, sequent_element_renderer )
     auxiliaries.contents += Swing.Glue
 
     primaries.contents.clear()
     val primary = for ( proof <- p() ) yield for ( ( f, i ) <- proof.conclusion.zipWithIndex if proof.mainIndices contains i ) yield f
-    for ( prim <- primary ) primaries.contents += DrawSequent[F]( main, prim, font, "", sequent_element_renderer )
+    for ( prim <- primary ) primaries.contents += DrawSequent( main, prim, font, sequent_element_renderer )
     primaries.contents += Swing.Glue
 
     substitution.contents.clear()
@@ -83,18 +83,6 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolVie
       case _ =>
     }
     substitution.contents += Swing.Glue
-  }
-
-  def adjustOrientation( o: Orientation.Value ) {
-    val new_orientation = if ( o == Orientation.Vertical || auxiliaries.size.width > bounds.width )
-      Orientation.Vertical
-    else Orientation.Horizontal
-    if ( orientation != new_orientation ) {
-      orientation = new_orientation
-      setContents()
-      revalidate()
-      repaint()
-    }
   }
 
 }

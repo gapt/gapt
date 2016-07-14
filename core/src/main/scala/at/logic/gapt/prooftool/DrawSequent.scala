@@ -15,48 +15,10 @@ import at.logic.gapt.formats.latex.LatexExporter
 import collection.mutable
 
 object DrawSequent {
-  def apply[T <: HOLFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) =
-    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => LatexExporter( x ) )
-
-  /*
-  def apply[T <: LabelledFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) =
-    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => LatexExporter( x._2, true ) )
-    */
-
-  //used by DrawClList to draw FSequents
-  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, visibility: Sequent[Boolean], colors: Sequent[Color], t_renderer: T => String )( implicit dummyImplicit: DummyImplicit ): DrawSequent[T] = {
-    /*
-    val visibility = if ( str.isEmpty )
-      seq map { _ => true }
-    else
-      seq map { f => t_renderer( f ) contains str }
-    val colors = seq map { _ => Color.white }
-      */
+  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, visibility: Sequent[Boolean], colors: Sequent[Color], t_renderer: T => String ): DrawSequent[T] =
     new DrawSequent[T]( main, seq, visibility, colors, ft, t_renderer )
-  }
-
-  //used by DrawClList to draw FSequents
-  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, str: String, t_renderer: T => String )( implicit dummyImplicit: DummyImplicit ): DrawSequent[T] = {
-    val visibility = if ( str.isEmpty )
-      seq map { _ => true }
-    else
-      seq map { f => t_renderer( f ) contains str }
-    val colors = seq map { _ => Color.white }
-    new DrawSequent[T]( main, seq, visibility, colors, ft, t_renderer )
-  }
-
-  //used by DrawProof
-  //  def apply( main: ProofToolViewer[_], seq: OccSequent, ft: Font, vis_occ: Option[Set[FormulaOccurrence]] ): DrawSequent[HOLFormula] = {
-  //    val visibility = vis_occ match {
-  //      case None        => seq map { fo => true }
-  //      case Some( set ) => seq map { fo => set contains fo }
-  //    }
-  //    val colors = seq map { fo => Color.white }
-  //    DrawSequent[HOLFormula]( main, seq.toHOLSequent, visibility, colors, ft )
-  //  }
-
-  def formulaToLabel( main: ProofToolViewer[_], f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( main, ft, LatexExporter( f ) )
-
+  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, t_renderer: T => String ): DrawSequent[T] =
+    DrawSequent( main, seq, ft, seq.map( _ => true ), seq.map( _ => Color.white ), t_renderer )
 }
 
 class DrawSequent[T](
@@ -154,8 +116,5 @@ class LatexLabel( main: ProofToolViewer[_], val ft: Font, val latexText: String,
       }
       d.location = locationOnScreen
       d.open()
-    /*case ChangeFormulaColor( set, color, reset ) =>
-      if ( set.contains( fo ) ) background = color
-      else if ( reset ) background = Color.white*/
   }
 }

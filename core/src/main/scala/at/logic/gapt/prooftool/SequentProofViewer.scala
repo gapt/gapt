@@ -74,14 +74,6 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     d.open()
   }
 
-  /*def displaySunburst( name: String, proof: DagProof[T] ) {
-    showFrame()
-    scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    proof match { case proof: SequentProof[_, _] => loadProof( ( name, proof ) ) }
-    initSunburstDialog( name, proof )
-    scrollPane.cursor = java.awt.Cursor.getDefaultCursor
-  }*/
-
 }
 
 /**
@@ -195,15 +187,6 @@ class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofView
     mainComponent.revalidate()
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
-
-  // New menu buttons
-  //  def saveAsButton = MenuButtons.saveAsButton[LKProof]( this.asInstanceOf[ProofToolViewer[LKProof] with Savable[LKProof]] )
-
-  //  def hideStructuralRulesButton = MenuButtons.hideStructuralRulesButton( this )
-
-  //  def hideContextsButton = MenuButtons.hideContextsButton( this )
-
-  //  def markCutAncestorsButton = MenuButtons.marCutAncestorsButton( this )
 
   def sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
     sunburstView()

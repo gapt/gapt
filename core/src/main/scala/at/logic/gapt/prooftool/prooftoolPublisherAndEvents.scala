@@ -7,9 +7,6 @@ import scala.swing.{ Color, Publisher }
 
 class ProofToolPublisher extends Publisher
 
-case object ProofDbChanged extends Event
-case object DisableMenus extends Event
-case object EnableMenus extends Event
 case object ShowLeaf extends Event
 case object HideLeaf extends Event
 case object HideTree extends Event
