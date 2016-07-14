@@ -100,6 +100,8 @@ case class OpenAssumption(
     labelledSequent: Sequent[( String, HOLFormula )],
     index:           OpenAssumptionIndex             = new OpenAssumptionIndex
 ) extends InitialSequent {
+  override def name = "ass"
+
   override def conclusion = labelledSequent map { labelledFormula => labelledFormula._2 }
 
   def apply( label: String ): HOLFormula = labelledSequent.elements.find( _._1 == label ).get._2

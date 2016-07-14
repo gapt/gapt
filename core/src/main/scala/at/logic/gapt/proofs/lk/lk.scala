@@ -188,8 +188,6 @@ object Eigenvariable {
  */
 abstract class InitialSequent extends LKProof {
 
-  override def name = "ax"
-
   override def mainIndices = endSequent.indices
 
   override def auxIndices = Seq()
@@ -203,7 +201,9 @@ object InitialSequent {
   def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
-case class TheoryAxiom( conclusion: Sequent[HOLAtom] ) extends InitialSequent
+case class TheoryAxiom( conclusion: Sequent[HOLAtom] ) extends InitialSequent {
+  override def name = "th"
+}
 
 /**
  * An LKProof introducing ⊤ on the right:
@@ -242,6 +242,7 @@ case object BottomAxiom extends InitialSequent {
  * @param A The atom A.
  */
 case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
+  override def name = "ax"
   override def conclusion = HOLSequent( Seq( A ), Seq( A ) )
   def mainFormula = A
 }
@@ -257,6 +258,7 @@ case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
  * @param s The term s.
  */
 case class ReflexivityAxiom( s: LambdaExpression ) extends InitialSequent {
+  override def name = "refl"
   override def conclusion = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
   def mainFormula = Eq( s, s )
 }

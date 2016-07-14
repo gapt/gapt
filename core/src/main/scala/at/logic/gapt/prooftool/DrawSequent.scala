@@ -10,17 +10,17 @@ import swing._
 import event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 import java.awt.event.MouseEvent
 
-import at.logic.gapt.formats.latex.LatexUIRenderer.formulaToLatexString
+import at.logic.gapt.formats.latex.LatexExporter
 
 import collection.mutable
 
 object DrawSequent {
   def apply[T <: HOLFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) =
-    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => formulaToLatexString( x, true ) )
+    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => LatexExporter( x ) )
 
   /*
   def apply[T <: LabelledFormula]( main: ProofToolViewer[_], sequent: Sequent[T], visibility: Sequent[Boolean], colors: Sequent[Color], ft: Font ) =
-    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => formulaToLatexString( x._2, true ) )
+    new DrawSequent[T]( main, sequent, visibility, colors, ft, x => LatexExporter( x._2, true ) )
     */
 
   //used by DrawClList to draw FSequents
@@ -55,7 +55,7 @@ object DrawSequent {
   //    DrawSequent[HOLFormula]( main, seq.toHOLSequent, visibility, colors, ft )
   //  }
 
-  def formulaToLabel( main: ProofToolViewer[_], f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( f ) )
+  def formulaToLabel( main: ProofToolViewer[_], f: HOLFormula, ft: Font ): LatexLabel = LatexLabel( main, ft, LatexExporter( f ) )
 
 }
 

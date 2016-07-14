@@ -9,6 +9,7 @@ import at.logic.gapt.formats.tip._
 import at.logic.gapt.formats.tptp._
 import at.logic.gapt.formats.verit._
 import at.logic.gapt.formats.llk._
+import at.logic.gapt.formats.latex._
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.drup._

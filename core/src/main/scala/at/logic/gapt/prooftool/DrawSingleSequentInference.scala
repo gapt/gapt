@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
 import scala.swing._
 import java.awt.Color
 
-import at.logic.gapt.formats.latex.LatexUIRenderer
+import at.logic.gapt.formats.latex.LatexExporter
 
 class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value, sequent_element_renderer: F => String ) extends ScrollPane {
 
@@ -77,9 +77,9 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolVie
     substitution.contents.clear()
     p() match {
       case Some( proof: ForallLeftRule ) =>
-        substitution.contents += LatexLabel( main, font, LatexUIRenderer.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, LatexExporter( proof.term ) )
       case Some( proof: ExistsRightRule ) =>
-        substitution.contents += LatexLabel( main, font, LatexUIRenderer.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, font, LatexExporter( proof.term ) )
       case _ =>
     }
     substitution.contents += Swing.Glue

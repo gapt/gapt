@@ -1,4 +1,4 @@
-package at.logic.gapt.formats.latex
+package at.logic.gapt.formats.llk
 
 /**
  * UnicodeToLatex contains a table of greek unicode symbols and their LaTeX equivalents.

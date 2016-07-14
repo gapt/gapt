@@ -1,12 +1,14 @@
 package at.logic.gapt.prooftool
 
-import java.awt.{ Font, Color }
+import java.awt.{ Color, Font }
 import Font._
-import at.logic.gapt.proofs.lksk.LKskProof.{ LabelledSequent, LabelledFormula }
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+
+import at.logic.gapt.proofs.lksk.LKskProof.{ LabelledFormula, LabelledSequent }
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.latex.LatexExporter
+
 import scala.swing.{ Component, FlowPanel, GridPanel, Label }
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString }
 
 class DrawList(
     main:         ListViewer,
@@ -44,10 +46,8 @@ class DrawList(
         val colors = s map { _ => Color.white }
 
         s.elements.head match {
-          case _: LabelledFormula =>
-            DrawSequent[LabelledFormula]( main, s.asInstanceOf[LabelledSequent], ft, str, ( x: LabelledFormula ) => labelledFormulaToLatexString( x ) )
           case _: HOLFormula =>
-            DrawSequent[HOLFormula]( main, s.asInstanceOf[HOLSequent], ft, str, ( x: HOLFormula ) => formulaToLatexString( x ) )
+            DrawSequent[HOLFormula]( main, s.asInstanceOf[HOLSequent], ft, str, ( x: HOLFormula ) => LatexExporter( x ) )
         }
       }
       case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2, ft )
@@ -74,6 +74,6 @@ class DrawList(
     contents += new Label( " := " ) { font = ft }
     contents += label2
 
-    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, formulaToLatexString( e ) )
+    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, ft, LatexExporter( e ) )
   }
 }

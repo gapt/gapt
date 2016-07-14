@@ -4,13 +4,15 @@ import at.logic.gapt.expr._
 import at.logic.gapt.utils.logging.Logger
 
 import swing._
-import scala.swing.event.{ MouseExited, MouseEntered, MouseClicked }
-import java.awt.{ Font, Color }
+import scala.swing.event.{ MouseClicked, MouseEntered, MouseExited }
+import java.awt.{ Color, Font }
 import java.awt.event.MouseEvent
+
 import at.logic.gapt.proofs.expansion._
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
-import at.logic.gapt.formats.latex.LatexUIRenderer.formulaToLatexString
+
+import at.logic.gapt.formats.latex.LatexExporter
 import org.slf4j.LoggerFactory
 
 object ExpansionTreeState extends Enumeration {
@@ -245,8 +247,8 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
    * @return A string containing the quantifier block represented by this quantifier node.
    */
   def quantifierBlock( vars: List[Var], f: HOLFormula ): String = f match {
-    case All( _, _ ) => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\forall " + formulaToLatexString( v ) + ")" )
-    case Ex( _, _ )  => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\exists " + formulaToLatexString( v ) + ")" )
+    case All( _, _ ) => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\forall " + LatexExporter( v ) + ")" )
+    case Ex( _, _ )  => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\exists " + LatexExporter( v ) + ")" )
   }
 
   // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
@@ -270,7 +272,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
           lbl.yLayoutAlignment = 0
           contents += lbl
         } else firstTerm = false
-        contents += label( formulaToLatexString( t ), ft )
+        contents += label( LatexExporter( t ), ft )
       } )
     } )
     contents += label( "\\rangle", ft )
@@ -404,10 +406,10 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
         contents += subF2
         contents += parenthesis._2
       case Ex( v, f ) =>
-        contents += label( "(\\exists " + formulaToLatexString( v ) + ")", ft )
+        contents += label( "\\exists " + LatexExporter.escapeName( v.name ) + " ", ft )
         contents += drawFormula( f )
       case All( v, f ) =>
-        contents += label( "(\\forall " + formulaToLatexString( v ) + ")", ft )
+        contents += label( "\\forall " + LatexExporter.escapeName( v.name ) + " ", ft )
         contents += drawFormula( f )
       case _ =>
         val lbl = DrawSequent.formulaToLabel( main, formula, ft )

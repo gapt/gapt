@@ -15,11 +15,12 @@ import java.io.{ File, BufferedWriter => JBufferedWriter, FileWriter => JFileWri
 import javax.swing.filechooser.FileFilter
 import javax.swing.WindowConstants
 
-import at.logic.gapt.formats.latex.ProofToLatexExporter
+import at.logic.gapt.formats.latex.LatexExporter
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
 
+import at.logic.gapt.expr.LambdaExpression
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
 
@@ -39,7 +40,10 @@ object prooftool {
       case p: LKProof              => new LKProofViewer( name, p ).showFrame()
       case p: LKskProof            => new LKskProofViewer( name, p ).showFrame()
       case p: SequentProof[f, t] =>
-        def renderer( x: f ): String = "" + x //TODO: have a better default
+        def renderer( x: f ): String = x match {
+          case e: LambdaExpression => LatexExporter( e )
+          case _                   => x.toString
+        }
         new SequentProofViewer( name, p, renderer ).showFrame()
       case ep: ExpansionProofWithCut => apply( ep.expansionWithCutAxiom, name )
       case ep: ExpansionProof        => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
@@ -150,27 +154,6 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
         mainPanel.cursor = java.awt.Cursor.getDefaultCursor
         publisher.publish( EnableMenus )
-      case _ =>
-    }
-  }
-
-  def fSaveAll() {
-    chooser.fileFilter = chooser.acceptAllFileFilter
-    chooser.showSaveDialog( mBar ) match {
-      case FileChooser.Result.Approve =>
-        val db = new FileParser( this )
-        mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-        val result = chooser.selectedFile.getPath
-        try {
-          if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
-            val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
-            val file = new JBufferedWriter( new JFileWriter( filename ) )
-            file.write( ProofToLatexExporter( db.getProofs.map( pair => ( pair._1, pair._2.asInstanceOf[LKProof] ) ) ) )
-            file.close()
-          } else infoMessage( "Proofs cannot be saved in this format." )
-        } catch {
-          case e: Throwable => errorMessage( "Cannot save the file! " + dnLine + getExceptionString( e ) )
-        } finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }
       case _ =>
     }
   }

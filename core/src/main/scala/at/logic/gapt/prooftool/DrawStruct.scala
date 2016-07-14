@@ -5,10 +5,9 @@ import event._
 import BorderPanel._
 import java.awt.Font._
 import java.awt.{ BasicStroke, RenderingHints }
-
 import java.awt.event.{ MouseEvent, MouseMotionListener }
 
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, sequentToLatexString }
+import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs.ceres.Struct
 
 class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
@@ -17,7 +16,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
 
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private val bd = Swing.EmptyBorder( fSize / 2 )
-  private val tx = formulaToLatexString( struct.label )
+  private val tx = LatexExporter( struct.label )
   private var drawLines = true
 
   initialize()

@@ -3,9 +3,11 @@ package at.logic.gapt.formats.latex
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.OutputExporter
 
-trait SequentsListLatexExporter extends HOLTermLatexExporter {
+trait SequentsListLatexExporter {
+  def getOutput: java.io.Writer
+  def close = getOutput.close
+
   private val nLine = sys.props( "line.separator" )
   val smskip = nLine + nLine
   val mdskip = smskip + """\rule[-0.1cm]{5cm}{0.01cm} \\""" + smskip
@@ -17,7 +19,7 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
     if ( seq.succedent.size > 1 ) seq.succedent.tail.foreach( x => { getOutput.write( smskip ); /*getOutput.write(",");*/ exportTerm1( x ) } )
   }
 
-  def exportSequentList( ls: List[HOLSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): OutputExporter = {
+  def exportSequentList( ls: List[HOLSequent], sections: List[Tuple2[String, List[Tuple2[Any, Any]]]] ): SequentsListLatexExporter = {
     // first obtain information about the clauses, replace lambda expressions of constant type by constants (and describe it at the top of the page)
     // Also describe the types of all constants
 
@@ -158,13 +160,13 @@ trait SequentsListLatexExporter extends HOLTermLatexExporter {
 
   private def printOnMatch( a: Any ) = a match {
     case le: LambdaExpression => exportTerm1( le )
-    case ta: Ty               => getOutput.write( "$" + latexType( ta ) + "$" )
+    case ta: Ty               => getOutput.write( "$" + LatexExporter( ta ) + "$" )
     case _                    => getOutput.write( a.toString )
   }
 
   private def exportTerm1( f: LambdaExpression ) = {
     getOutput.write( "$" )
-    exportTerm( f )
+    LatexExporter( f )
     getOutput.write( "$" )
   }
   /*private def replaceTerm(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]): LambdaExpression = f match {

@@ -1,6 +1,5 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.formats.latex.UnicodeToLatex
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._

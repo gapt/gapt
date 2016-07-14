@@ -3,12 +3,11 @@ package at.logic.gapt.prooftool
 import java.io.{ ByteArrayInputStream, File, InputStreamReader, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 
 import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.formats.latex.{ ProofToLatexExporter, SequentsListLatexExporter }
+import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
 import at.logic.gapt.proofs.lksk.LKskProof
 import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
-import at.logic.gapt.formats.latex.LatexUIRenderer.{ formulaToLatexString, labelledFormulaToLatexString }
 import at.logic.gapt.formats.llk.exportLLK
 
 import scala.swing._
@@ -91,7 +90,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
  */
-class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof, formulaToLatexString ) with Savable[LKProof] with ContainsLKProof {
+class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof, LatexExporter( _ ) ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton, sunburstViewButton )
@@ -127,7 +126,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
           } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
             val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
             val file = new JBufferedWriter( new JFileWriter( filename ) )
-            file.write( ProofToLatexExporter( proof ) )
+            file.write( LatexExporter( proof ) )
             file.close()
           } else infoMessage( "Proofs cannot be saved in this format." )
         } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
@@ -176,7 +175,7 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
  */
-class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofViewer[LabelledFormula, LKskProof]( name, proof, labelledFormulaToLatexString ) {
+class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofViewer[LabelledFormula, LKskProof]( name, proof, lf => LatexExporter( lf._2 ) ) {
   override val content: LKskProof = proof
   override def fileMenuContents = Seq( openButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
