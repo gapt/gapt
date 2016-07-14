@@ -34,7 +34,7 @@ object LatexExporter {
     parenIf( p, newPrio, s"${expr( a, newPrio )} $op ${expr( b, newPrio )}" )
   private def quant( f: LambdaExpression, v: Var, p: Int, op: String ) =
     parenIf( p, prio.quantOrNeg, s"$op ${escapeName( v.name )}\\: ${expr( f, prio.quantOrNeg + 1 )}" )
-  private val relOps = Map( "=" -> "=", "<" -> "<", ">" -> ">", "<" -> "\\leq", ">" -> "\\geq" )
+  private val relOps = Map( "=" -> "=", "<" -> "<", ">" -> ">", "<=" -> "\\leq", ">=" -> "\\geq" )
   private def expr( e: LambdaExpression, p: Int ): String = e match {
     case Apps( Const( "+", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "+" )
     case Apps( Const( "-", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "-" )
