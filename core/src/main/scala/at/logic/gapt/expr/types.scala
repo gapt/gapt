@@ -1,10 +1,14 @@
 package at.logic.gapt.expr
 
+import at.logic.gapt.formats.babel.BabelExporter
+
 sealed abstract class Ty {
   def -> ( that: Ty ) = new -> ( this, that )
+
+  override def toString = new BabelExporter( unicode = true, sig = implicitly ).export( this )
 }
-case class TBase( name: String ) extends Ty { override def toString = name }
-case class -> ( in: Ty, out: Ty ) extends Ty { override def toString = s"($in -> $out)" }
+case class TBase( name: String ) extends Ty
+case class -> ( in: Ty, out: Ty ) extends Ty
 
 /**
  * Function type from_0 -> (from_1 -> ... (from_n -> to)).

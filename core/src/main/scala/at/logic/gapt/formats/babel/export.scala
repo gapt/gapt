@@ -37,6 +37,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     val knownTypesFromSig = knownConstantTypesFromSig( constants( expr ) )
     pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) )
   }
+  def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) )
 
   object prio {
     val ident = 0
