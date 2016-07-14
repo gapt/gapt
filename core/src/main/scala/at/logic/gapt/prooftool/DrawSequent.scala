@@ -92,7 +92,7 @@ class DrawSequent[T](
 
   // FIXME: figure out why + 10?  Is it the Label adding an inset?  Is the FlowPanel adding gaps?
   // It probably comes from the commas, which we render as JLabels and not as TeXIcons...
-  val width = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconWidth ).sum + 10
+  val width = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconWidth ).sum + 30
   val height = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconHeight ).max + font.getSize / 2
   preferredSize = new Dimension( width, height )
   maximumSize = new Dimension( Int.MaxValue, height )
