@@ -46,7 +46,7 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
           show( rhs, true, Set(), knownTypes, prio.impl )._1 ) )
     } ) )
 
-    pretty( group( ntDecl <> line <> tDecl <> line <> line <> rules <> line ) )
+    pretty( group( ntDecl <> line <> tDecl <> line <> line <> rules <> line ) ).layout
   }
 
 }

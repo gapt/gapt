@@ -1615,20 +1615,15 @@ et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
     (∀y (s(M(s(M(v100, v101)), s(M(v100, v101)))) <=
             M(s(M(s(M(v100, v101)), s(M(v100, v101)))), y) ∧
           y <= M(s(M(s(M(v100, v101)), s(M(v100, v101)))), y))
-      +^{s(M(
-            s(M(s(M(v100, v101)), s(M(v100, v101)))),
-            s(M(v100, v101))))}
+      +^{s(M(s(M(s(M(v100, v101)), s(M(v100, v101)))), s(M(v100, v101))))}
         ((s(M(s(M(v100, v101)), s(M(v100, v101)))) <=
             M(
             s(M(s(M(v100, v101)), s(M(v100, v101)))),
-            s(M(
-            s(M(s(M(v100, v101)), s(M(v100, v101)))),
-            s(M(v100, v101))))))- ∧
-          (s(M(
-            s(M(s(M(v100, v101)), s(M(v100, v101)))),
-            s(M(v100, v101)))) <=
+            s(M(s(M(s(M(v100, v101)), s(M(v100, v101)))), s(M(v100, v101))))))- ∧
+          (s(M(s(M(s(M(v100, v101)), s(M(v100, v101)))), s(M(v100, v101)))) <=
             M(
-            s(M(s(M(v...
+            s(M(s(M(v100, v101)), s(M(v100, v101)))),
+            s(M(s(M(s(M(v100, v101)), s(M(...
 gapt> prooftool(et)
 
 \end{clilisting}

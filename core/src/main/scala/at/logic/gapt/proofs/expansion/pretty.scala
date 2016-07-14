@@ -7,7 +7,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
 
   def export( et: ExpansionTree ): String = {
     val knownTypesFromSig = knownConstantTypesFromSig( constants( et.deep ) union constants( et.shallow ) )
-    pretty( group( show( et, knownTypesFromSig.toMap, prio.max )._1 ) )
+    pretty( group( show( et, knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
 
   def addPol( doc: Doc, pol: Boolean ) =
@@ -61,7 +61,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
           t2 = t4
           ( pretty( term_ ), group( nest( "+^{" <> term_ <> "}" <@> child_ ) ) )
       }
-      parenIf( p, prio.conj, vsep( sh_ +: insts_.sortBy( _._1 ).map( _._2 ) ) ) -> t2
+      parenIf( p, prio.conj, vsep( sh_ +: insts_.sortBy( _._1.layout ).map( _._2 ) ) ) -> t2
     case et @ ETDefinedAtom( atom, pol, _ ) =>
       val ( sh_, t1 ) = show( et.shallow, true, Set(), t0, prio.conj )
       val ( child_, t2 ) = show( ETAtom( atom, pol ), t1, prio.conj )

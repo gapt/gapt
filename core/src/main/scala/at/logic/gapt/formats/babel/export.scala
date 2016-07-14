@@ -1,7 +1,8 @@
 package at.logic.gapt.formats.babel
 
 import at.logic.gapt.expr._
-import org.kiama.output.PrettyPrinter
+import org.bitbucket.inkytonik.kiama.output.PrettyPrinter
+import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
 
 /**
  * Exports lambda expressions in the Babel format.
@@ -35,9 +36,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
 
   def export( expr: LambdaExpression ): String = {
     val knownTypesFromSig = knownConstantTypesFromSig( constants( expr ) )
-    pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) )
+    pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
-  def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) )
+  def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) ).layout
 
   object prio {
     val ident = 0

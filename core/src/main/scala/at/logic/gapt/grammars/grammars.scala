@@ -28,7 +28,7 @@ private class VtratgExporter( unicode: Boolean, vtratg: VectTratGrammar )
             show( t, true, Set(), knownTypes, prio.impl )._1 ) ) ) ) ) <> line
       } )
 
-    pretty( group( ntDecl <> line <> tDecl <> line <> line <> prods ) )
+    pretty( group( ntDecl <> line <> tDecl <> line <> line <> prods ) ).layout
   }
 
 }
