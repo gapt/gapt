@@ -5,8 +5,6 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.{ ImpRightRule, LKProof }
-import at.logic.gapt.proofs.lksk.LKskProof
-import at.logic.gapt.proofs.ral.RalProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.sketch.RefutationSketch
 import org.specs2.mutable.Specification
@@ -17,9 +15,7 @@ class ProoftoolViewableTest extends Specification {
 
   "implicit instances" in {
     implicitly[ProoftoolViewable[LKProof]]
-    implicitly[ProoftoolViewable[LKskProof]]
     implicitly[ProoftoolViewable[ResolutionProof]]
-    implicitly[ProoftoolViewable[RalProof]]
     implicitly[ProoftoolViewable[RefutationSketch]]
     implicitly[ProoftoolViewable[ImpRightRule]]
 

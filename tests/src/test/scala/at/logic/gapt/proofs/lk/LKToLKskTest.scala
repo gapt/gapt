@@ -17,8 +17,8 @@ class LKToLKskTest extends Specification {
     val p2 = ForallLeftRule( p1, qf )
     val p3 = ForallRightRule( p2, qf )
 
-    val pSk = LKToLKsk( p3 )
-    pSk.conclusion must_== ( p3.endSequent map { Seq() -> _ } )
+    val pSk = skolemizeInferences( p3 )
+    pSk.conclusion must_== p3.endSequent
   }
 
   "a proof with contractions" in {
@@ -38,12 +38,8 @@ class LKToLKskTest extends Specification {
 
     //println( llk.exportLLK( lkOld.LKToLKsk( lkNew2Old( p3 ) ) ) )
 
-    val factory = new SkolemSymbolFactory( Seq() )
-
-    val lksk = new LKToLKsk( factory )( p3 )
-
-    val sym = factory.getSkolemSymbol
-    sym must_== "s_8"
+    skolemizeInferences( p3 )
+    ok
   }
 
   "a proof with contractions and cut (1)" in {
@@ -62,10 +58,8 @@ class LKToLKskTest extends Specification {
     val p4 = ContractionLeftRule( p3, Ant( 0 ), Ant( 1 ) )
     val p5 = ContractionRightRule( p4, Suc( 0 ), Suc( 1 ) )
 
-    val factory = new SkolemSymbolFactory( Seq() )
-    val lksk = new LKToLKsk( factory )( p5 )
-    val sym = factory.getSkolemSymbol
-    sym must_== "s_2"
+    skolemizeInferences( p5 )
+    ok
   }
 
   "a proof with contractions and cut (2)" in {
@@ -84,10 +78,8 @@ class LKToLKskTest extends Specification {
     val p3 = CutRule( p1, p2, p )
     val p4 = ContractionLeftRule( p3, Ant( 0 ), Ant( 1 ) )
 
-    val factory = new SkolemSymbolFactory( Seq() )
-    val lksk = new LKToLKsk( factory )( p4 )
-    val sym = factory.getSkolemSymbol
-    sym must_== "s_3"
+    skolemizeInferences( p4 )
+    ok
   }
 
   "a proof with contractions and cut (3)" in {
@@ -106,29 +98,25 @@ class LKToLKskTest extends Specification {
     val p3 = CutRule( p1, p2, p )
     val p4 = ContractionRightRule( p3, Suc( 0 ), Suc( 1 ) )
 
-    val factory = new SkolemSymbolFactory( Seq() )
-    val lksk = new LKToLKsk( factory )( p4 )
-    val sym = factory.getSkolemSymbol
-    sym must_== "s_4"
+    skolemizeInferences( p4 )
+    ok
   }
 
   "pigeonhole" in {
-    LKToLKsk( Pi2Pigeonhole.proof )
+    skolemizeInferences( Pi2Pigeonhole.proof )
     ok
   }
 
   "lattice proof" in {
-    skipped( "this proof has non-tautological axioms" )
     val lk = regularize( DefinitionElimination( lattice.defs )( lattice.p ) )
-    val lksk = LKToLKsk( lk )
-    lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
+    val lksk = skolemizeInferences( lk )
+    lksk.conclusion must_== lk.conclusion
   }
 
   "tape proof" in {
-    skipped( "this proof has non-tautological axioms" )
     val lk = DefinitionElimination( tape.defs )( tape.p )
-    val lksk = LKToLKsk( lk )
-    lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
+    val lksk = skolemizeInferences( lk )
+    lksk.conclusion must_== lk.conclusion
   }
 
   "higher order tape proof" in {
@@ -140,14 +128,14 @@ class LKToLKskTest extends Specification {
     "2 copies tape proof" in {
       //skipped( "save time" )
       val lk = load( "tape3.llk" )
-      val lksk = LKToLKsk( lk )
-      lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
+      val lksk = skolemizeInferences( lk )
+      lksk.conclusion must_== lk.conclusion
     }
     "1 copy tape proof" in {
       //skipped( "save time" )
       val lk = load( "tape3ex.llk" )
-      val lksk = LKToLKsk( lk )
-      lksk.conclusion must_== ( lk.conclusion map { Seq() -> _ } )
+      val lksk = skolemizeInferences( lk )
+      lksk.conclusion must_== lk.conclusion
     }
   }
 }

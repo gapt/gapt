@@ -6,7 +6,6 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.loadLLK
 import at.logic.gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
-import at.logic.gapt.proofs.lksk.LKskProof
 import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 
 /**
@@ -20,7 +19,7 @@ class nTape4( val size: Int ) extends AnalysisWithCeresOmega {
   override def root_proof() = "TAPEPROOF"
 
   override lazy val preprocessed_css: List[HOLSequent] = {
-    val stripped_css = css.map( _.map( LKskProof.getFormula ) )
+    val stripped_css = css
     val equality = Sequent( Nil, List( Eq( Var( "x", Ti ), Var( "x", Ti ) ) ) )
     subsumedClausesRemoval( equality :: deleteTautologies( stripped_css ).toList )
   }
