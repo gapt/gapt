@@ -3,7 +3,7 @@ package at.logic.gapt.prooftool
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.lksk.LKskProof
-import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
+import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentProof }
 import com.itextpdf.awt.PdfGraphics2D
 
 import scala.swing._
@@ -20,7 +20,7 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
 
-import at.logic.gapt.expr.LambdaExpression
+import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
 
@@ -48,9 +48,12 @@ object prooftool {
       case ep: ExpansionProofWithCut => apply( ep.expansionWithCutAxiom, name )
       case ep: ExpansionProof        => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
       case struct: Struct[d]         => new StructViewer[d]( name, struct ).showFrame()
-      case list: List[HOLSequent]    => new ListViewer( name, list ).showFrame()
-      case seq: HOLSequent           => new ListViewer( name, List( seq ) ).showFrame()
-      case set: Set[HOLSequent]      => new ListViewer( name, set.toList ).showFrame()
+      case list: Iterable[s] if list.forall {
+        case sequent: Sequent[f] => sequent.forall( _.isInstanceOf[HOLFormula] )
+        case _                   => false
+      } => new ListViewer( name, list.toList.asInstanceOf[List[HOLSequent]] ).showFrame()
+      case seq: Sequent[f] if seq.forall( _.isInstanceOf[HOLFormula] ) =>
+        new ListViewer( name, List( seq.asInstanceOf[HOLSequent] ) ).showFrame()
       case db: ExtendedProofDatabase =>
         for ( ( pName, p ) <- db.proofs )
           prooftool( p, pName )
