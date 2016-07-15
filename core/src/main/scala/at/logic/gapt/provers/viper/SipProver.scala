@@ -90,7 +90,7 @@ class SipProver(
 
       ( 0 until 3 ) foreach { i =>
         lazy val C_i = canonicalSolution( schematicSip, i )
-        debug( s"C_$i =$nLine${CNFp( C_i ).map( _.mkString( ", " ) ).mkString( nLine )}" )
+        debug( s"C_$i =$nLine${CNFp( C_i ).mkString( nLine )}" )
       }
 
       solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )

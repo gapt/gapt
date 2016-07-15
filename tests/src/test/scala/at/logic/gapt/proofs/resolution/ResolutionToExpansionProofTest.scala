@@ -29,7 +29,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
   "tautological clauses with naive CNF" in {
     val p = FOLAtom( "p" )
     val endSequent = Sequent() :+ ( ( p --> -( -p ) ) & ( -( -p ) --> p ) )
-    val cnf = CNFn.toFClauseList( endSequent.toDisjunction )
+    val cnf = CNFn( endSequent.toDisjunction )
     val Some( robinson ) = Escargot getResolutionProof cnf
     val expansion = ResolutionToExpansionProof( fixDerivation( robinson, endSequent ) )
     expansion.shallow must_== endSequent

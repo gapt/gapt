@@ -397,7 +397,7 @@ object findConseq extends Logger {
   }
 
   def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = VeriT ): Set[CNF] =
-    apply( S, n, CNFp.toClauseList( A ).map { _.distinct.sortBy { _.hashCode } }.toSet, M, forgetClauses, prover )
+    apply( S, n, CNFp( A ).map { _.distinct.sortBy { _.hashCode } }, M, forgetClauses, prover )
 
   def ForgetOne( A: CNF ) = for ( a <- A ) yield A - a
 }

@@ -188,7 +188,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val pi1QTys = FunctionType.unapply( B.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
     val canSol = And( homogenized generatedTerms B( axiomArgs: _* )( canSolInst: _* )( ws: _* ) map { -_ } )
-    for ( cls <- CNFp.toClauseList( canSol ) )
+    for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
     info()
 

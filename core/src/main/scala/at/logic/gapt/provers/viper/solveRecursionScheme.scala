@@ -161,7 +161,7 @@ object hSolveQBUP {
         }
       }
 
-    checkSol( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
+    checkSol( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
 
     isSolution collect { case ( sol, true ) => And( sol map { _.toDisjunction } ) } toSet
   }

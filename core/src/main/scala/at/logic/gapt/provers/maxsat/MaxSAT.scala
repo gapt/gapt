@@ -42,7 +42,7 @@ abstract class MaxSATSolver extends Logger {
   def solve( hard: HOLFormula, soft: TraversableOnce[( HOLFormula, Int )] ): Option[Interpretation] = {
     solve(
       metrics.time( "tseitin" ) { fastStructuralCNF( hard, propositional = true )._1 },
-      soft.map( s => CNFp.toClauseList( s._1 ).map( f => ( f, s._2 ) ) ).flatten
+      soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten
     )
   }
 }

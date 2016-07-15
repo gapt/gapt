@@ -10,8 +10,8 @@ object beautifySolution {
 
   def apply( ehs: SolutionStructure ): SolutionStructure = {
     val esCNFs = ehs.endSequent.zipWithIndex map {
-      case ( All.Block( vs, f ), i: Ant ) => vs -> CNFp.toClauseList( f ).toSet
-      case ( Ex.Block( vs, f ), i: Suc )  => vs -> CNFn.toClauseList( f ).toSet
+      case ( All.Block( vs, f ), i: Ant ) => vs -> CNFp( f )
+      case ( Ex.Block( vs, f ), i: Suc )  => vs -> CNFn( f )
     }
     val unitAxioms = for ( ( vs, cnfs ) <- esCNFs ) yield vs -> cnfs.filter { _.size == 1 }
 
@@ -19,7 +19,7 @@ object beautifySolution {
 
     val newCFs = ehs.formulas.zipWithIndex map {
       case ( cf, k ) =>
-        var cnf = CNFp.toClauseList( cf )
+        var cnf = CNFp( cf )
 
         // unit resolution
         cnf = cnf map {

@@ -72,7 +72,7 @@ object improveSolutionLK {
           }
         }
 
-      checkSolution( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
+      checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
 
       val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
       solutions minBy { lcomp( _ ) }
@@ -88,7 +88,7 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    */
   private def improveBack( context: Sequent[FOLFormula], start: FOLFormula, prover: Prover ): FOLFormula =
-    simplify( And( CNFp.toClauseList( start ) map { improveBack( context, _, prover ).toImplication } ) )
+    simplify( And( CNFp( start ) map { improveBack( context, _, prover ).toImplication } ) )
 
   private def improveBack( context: Sequent[FOLFormula], start: FOLClause, prover: Prover ): FOLClause = {
     val isSolution = mutable.Map[FOLClause, Boolean]()

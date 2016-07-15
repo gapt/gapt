@@ -35,10 +35,10 @@ object TptpProofParser {
     stepList.inputs foreach {
       case AnnotatedFormula( "fof", _, "conjecture", formula: FOLFormula, Seq( TptpTerm( "file", _, TptpTerm( label ) ) ) ) =>
         endSequent :+= formula
-        labelledCNF += label -> CNFn.toClauseList( formula )
+        labelledCNF += label -> CNFn( formula ).toSeq
       case AnnotatedFormula( lang, _, _, formula: FOLFormula, Seq( TptpTerm( "file", _, TptpTerm( label ) ) ) ) =>
         endSequent +:= ( if ( lang == "cnf" ) univclosure( formula ) else formula )
-        labelledCNF += label -> CNFp.toClauseList( formula )
+        labelledCNF += label -> CNFp( formula ).toSeq
       case _ =>
     }
 
@@ -101,7 +101,7 @@ object TptpProofParser {
       case AnnotatedFormula( "fof", _, "plain", And( Imp( splAtom: FOLAtom, defn ), _ ), TptpTerm( "introduced", FOLVar( "AVATAR_definition" ), _ ) +: _ ) =>
         convertAvatarDefinition( defn, splAtom )
       case AnnotatedFormula( "fof", _, "plain", disj, ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ), _, _ ) ) +: _ ) =>
-        val Seq( assertion ) = CNFp.toClauseList( disj )
+        val Seq( assertion ) = CNFp( disj ).toSeq
         val Seq( splittedClause, _* ) = getParents( justification ) flatMap convert
 
         var p = splittedClause
@@ -122,7 +122,7 @@ object TptpProofParser {
       case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
         labelledCNF( label ) map SketchAxiom
       case AnnotatedFormula( _, _, _, axiom: FOLFormula, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
-        CNFp.toClauseList( axiom ) match {
+        CNFp( axiom ).toSeq match {
           case Seq( axiomClause ) =>
             Seq( SketchInference(
               axiomClause,
@@ -132,7 +132,7 @@ object TptpProofParser {
         }
       case AnnotatedFormula( "cnf", _, "axiom", axiom: FOLFormula, Seq() ) =>
         val label = stepName
-        CNFp.toClauseList( axiom ) match {
+        CNFp( axiom ).toSeq match {
           case Seq( axiomClause ) =>
             Seq( SketchInference(
               axiomClause,
@@ -141,7 +141,7 @@ object TptpProofParser {
           case clauses => labelledCNF( label ) map SketchAxiom
         }
       case AnnotatedFormula( _, _, _, conclusion: FOLFormula, justification +: _ ) =>
-        CNFp.toClauseList( conclusion ) match {
+        CNFp( conclusion ).toSeq match {
           case Seq( conclusionClause ) =>
             val sketchParents = getParents( justification ) flatMap convert
             val conclusionClause_ = filterVampireSplits( conclusionClause )

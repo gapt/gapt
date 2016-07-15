@@ -255,7 +255,7 @@ object CutIntroduction extends Logger {
       val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, prover, hasEquality ) }
       if ( verbose ) for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex ) {
         println( s"CNF of minimized cut-formula number $i:" )
-        for ( clause <- CNFp toClauseList cf )
+        for ( clause <- CNFp( cf ) )
           println( s"  $clause" )
       }
       require( minimizedSS.isValid( prover ) )
@@ -266,8 +266,8 @@ object CutIntroduction extends Logger {
       def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
         metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
         metrics.value( s"${name}sol_scomp", solStruct.formulas.map( expressionSize( _ ) ).sum )
-        metrics.value( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp.toClauseList( f ).size ).sum )
-        val clauseSizes = solStruct.formulas.flatMap( CNFp.toClauseList ).map( _.size )
+        metrics.value( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp( f ).size ).sum )
+        val clauseSizes = solStruct.formulas.flatMap( CNFp.apply ).map( _.size )
         metrics.value( s"${name}sol_maxclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.max )
         metrics.value( s"${name}sol_avgclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.sum.toFloat / clauseSizes.size )
       }
@@ -292,7 +292,7 @@ object CutIntroduction extends Logger {
           println( s"Size of the beautified solution: $lcompBeauSol" )
           for ( ( cf, i ) <- beautifiedSS.formulas.zipWithIndex ) {
             println( s"CNF of beautified cut-formula number $i:" )
-            for ( clause <- CNFp toClauseList cf )
+            for ( clause <- CNFp( cf ) )
               println( s"  $clause" )
           }
         }

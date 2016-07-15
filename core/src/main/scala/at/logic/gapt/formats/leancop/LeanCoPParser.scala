@@ -89,7 +89,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
     }
 
     val ( fd, defs ) = toDCF( f, lean_preds, false )
-    fd :: defs.flatMap( d => DNFp.toFormulaList( d ) )
+    fd :: defs.flatMap( d => DNFp( d ).map( _.toConjunction ) )
   }
 
   // Collects all n ^ [...] predicates used and their arities
@@ -103,20 +103,9 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
   }
 
   def toMagicalDNF( f: FOLFormula ): List[FOLFormula] = {
-    val normal_dnf = DNFp.toFormulaList( f )
+    val normal_dnf = DNFp( f )
 
-    def collectLiterals( cls: FOLFormula ): List[FOLFormula] = cls match {
-      case FOLAtom( _, _ )                        => List( cls )
-      case Neg( FOLAtom( _, _ ) )                 => List( cls )
-      case And( f1 @ FOLAtom( _, _ ), f2 )        => f1 :: collectLiterals( f2 )
-      case And( f1 @ Neg( FOLAtom( _, _ ) ), f2 ) => f1 :: collectLiterals( f2 )
-      case And( f1, f2 @ FOLAtom( _, _ ) )        => collectLiterals( f1 ) :+ f2
-      case And( f1, f2 @ Neg( FOLAtom( _, _ ) ) ) => collectLiterals( f1 ) :+ f2
-      case And( f1, f2 )                          => collectLiterals( f1 ) ++ collectLiterals( f2 )
-      case _                                      => throw new Exception( "collectLiterals: formula " + cls + " is not a clause." )
-    }
-
-    normal_dnf.map( c => And( collectLiterals( c ) ) )
+    normal_dnf.map( _.toConjunction ).toList
   }
 
   def matchClauses( my_clauses: List[FOLFormula], lean_clauses: List[FOLFormula] ): Option[FOLSubstitution] = {
@@ -129,7 +118,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
     def findSubstitution( lst: List[FOLFormula], goal: FOLFormula ): Option[FOLSubstitution] = lst match {
       case Nil => None
-      case hd :: tl => clauseSubsumption( CNFn.toClauseList( hd ).head, CNFn.toClauseList( goal ).head ) match {
+      case hd :: tl => clauseSubsumption( CNFn( hd ).head, CNFn( goal ).head ) match {
         case None        => findSubstitution( tl, goal )
         case Some( sub ) => Some( sub.asFOLSubstitution )
       }

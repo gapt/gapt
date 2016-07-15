@@ -285,7 +285,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForType( w.exptype )( w ) }
 
   val extraAxioms = existsclosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
-  val extraAxiomClauses = CNFn.toFClauseList( extraAxioms.toDisjunction ).toSet
+  val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
 
   private def guard( formula: HOLFormula ): HOLFormula = formula match {
     case Top() | Bottom() | HOLAtom( _, _ ) => formula
@@ -306,7 +306,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   def forward( cnf: Set[HOLClause] ): Set[HOLClause] =
     extraAxiomClauses union cnf.map( forward )
   def forward( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
-    CNFp.toClauseList( guard( univclosure( clause.toImplication ) ) ).head
+    CNFp( guard( univclosure( clause.toImplication ) ) ).head
 
   def back( proof: ResolutionProof ): ResolutionProof =
     mapInputClauses( proof ) { cls =>

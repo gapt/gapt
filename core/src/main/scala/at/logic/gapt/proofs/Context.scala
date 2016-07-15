@@ -71,32 +71,13 @@ case class SubsumptionTheory( axioms: HOLFormula* ) extends BackgroundTheory {
     require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
   }
 
-  val cnfMap = ( for ( formula <- axioms ) yield {
-    val All.Block( vars, matrix ) = formula
-    val cnf = CNFp.toClauseList( matrix )
+  private val cnf = CNFp( And( axioms ) )
 
-    formula -> ( vars, matrix, cnf )
-  } ).toMap
-
-  def solve( atomicSeq: HOLClause ): Option[LKProof] = {
-    val maybeProof = for ( formula <- axioms ) yield {
-      val ( vars, matrix, cnf ) = cnfMap( formula )
-      val subs = cnf map {
-        clauseSubsumption( _, atomicSeq )
-      }
-      val maybeSub = subs.zipWithIndex.find( _._1.nonEmpty ) map { case ( Some( s ), i ) => ( s, i ) }
-
-      maybeSub map {
-        case ( sub, i ) =>
-          val substitutedClause: HOLClause = sub( cnf( i ) ).asInstanceOf[Sequent[HOLAtom]]
-          TheoryAxiom( substitutedClause )
-      }
-    }
-
-    maybeProof find {
-      _.nonEmpty
-    } getOrElse None
-  }
+  def solve( atomicSeq: HOLClause ): Option[LKProof] =
+    ( for {
+      clause <- cnf
+      sub <- clauseSubsumption( clause, atomicSeq )
+    } yield TheoryAxiom( sub( clause ).map( _.asInstanceOf[HOLAtom] ) ) ).headOption
 }
 
 /**

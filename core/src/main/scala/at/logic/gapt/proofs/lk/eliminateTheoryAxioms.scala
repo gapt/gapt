@@ -40,7 +40,7 @@ object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
     require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
 
     val All.Block( vars, matrix ) = formula
-    val cnf = CNFp.toClauseList( matrix )
+    val cnf = CNFp( matrix )
     val cnfFormula = And( cnf map { _.toDisjunction } )
     val TheoryAxiom( sequent ) = proof
     val subs = cnf map {

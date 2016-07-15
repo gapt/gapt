@@ -8,7 +8,7 @@ object tptpProblemToResolution {
   def apply( tptpFile: TptpFile ): Set[ResolutionProof] =
     tptpFile.inputs.map {
       case AnnotatedFormula( "cnf", _, _, formula, _ ) =>
-        CNFp.toClauseList( formula ) match {
+        CNFp( formula ).toSeq match {
           case Seq( clause ) => Input( clause )
         }
       case AnnotatedFormula( _, _, "conjecture", formula, _ ) =>
