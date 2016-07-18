@@ -185,10 +185,6 @@ class CutIntroUnprovableException( msg: String ) extends CutIntroException( msg 
 
 object CutIntroduction extends Logger {
 
-  @deprecated( "Use compressToSolutionStructure instead", "2.2" )
-  def compressToEHS( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[SolutionStructure] =
-    compressToSolutionStructure( ep, hasEquality, method, verbose )
-
   def compressToSolutionStructure( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[SolutionStructure] = {
     require(
       isFOLPrenexSigma1( ep.shallow ),

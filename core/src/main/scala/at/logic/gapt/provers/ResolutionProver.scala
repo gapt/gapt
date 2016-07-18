@@ -22,15 +22,6 @@ trait ResolutionProver extends OneShotProver {
   override def isValid( seq: HOLSequent ): Boolean =
     getResolutionProof( seq ).isDefined
 
-  @deprecated( "Use getResolutionProof instead.", "2.2" )
-  def getRobinsonProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = getResolutionProof( cnf )
-  @deprecated( "Use getResolutionProof instead.", "2.2" )
-  def getRobinsonProof( formula: HOLFormula ): Option[ResolutionProof] = getResolutionProof( formula )
-  @deprecated( "Use getResolutionProof instead.", "2.2" )
-  def getRobinsonProof( seq: HOLSequent ): Option[ResolutionProof] = getResolutionProof( seq )
-  @deprecated( "Use getResolutionProof instead.", "2.2" )
-  def getRobinsonProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] = getResolutionProof( seq )
-
   def getResolutionProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
     getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
