@@ -8,6 +8,10 @@ object LKProver extends OneShotProver {
   def getLKProof( seq: HOLSequent ): Option[LKProof] = solvePropositional( seq ).toOption
 }
 
+object EquationalLKProver extends OneShotProver {
+  def getLKProof( seq: HOLSequent ): Option[LKProof] = solveQuasiPropositional( seq ).toOption
+}
+
 object AtomicExpansion {
 
   def apply( f: HOLFormula ): LKProof = f match {

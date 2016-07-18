@@ -11,9 +11,7 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.{ Logger, metrics }
 import at.logic.gapt.utils.runProcess
 
@@ -192,15 +190,14 @@ object CutIntroduction extends Logger {
     )
 
     val prover = if ( hasEquality ) EquationalProver else BasicProver
-    val resProver = if ( Prover9 isInstalled ) Prover9 else Escargot
 
     val herbrandSequent = extractInstances( ep )
-    val herbrandSequentResolutionProof = resProver getResolutionProof herbrandSequent getOrElse {
-      throw new CutIntroUnprovableException( s"Cannot prove Herbrand sequent using ${resProver.getClass.getSimpleName}." )
+    val herbrandSequentProof = prover.getLKProof( herbrandSequent ).getOrElse {
+      throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
-    metrics.value( "hs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( herbrandSequentResolutionProof ) ) )
+    metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
@@ -294,12 +291,12 @@ object CutIntroduction extends Logger {
         }
 
         val ehsSequent = beautifiedSS.getDeep
-        val ehsResolutionProof = resProver getResolutionProof ehsSequent getOrElse {
-          throw new CutIntroUnprovableException( s"Cannot prove extended Herbrand sequent using ${resProver.getClass.getSimpleName}." )
+        val ehsResolutionProof = prover.getLKProof( ehsSequent ).getOrElse {
+          throw new CutIntroUnprovableException( "Cannot prove extended Herbrand sequent." )
         }
         metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
         metrics.value( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
-        metrics.value( "ehs_resinf", numberOfLogicalInferencesRes( simplifyResolutionProof( ehsResolutionProof ) ) )
+        metrics.value( "ehs_lkinf", ehsResolutionProof.treeLike.size )
 
         Some( beautifiedSS )
       } else {
