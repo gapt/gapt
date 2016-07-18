@@ -10,9 +10,6 @@ object LKProver extends OneShotProver {
 
 object AtomicExpansion {
 
-  def apply( fs: HOLSequent ): LKProof =
-    WeakeningMacroRule( apply( fs.antecedent intersect fs.succedent head ), fs )
-
   def apply( f: HOLFormula ): LKProof = f match {
     case a: HOLAtom  => LogicalAxiom( a )
 

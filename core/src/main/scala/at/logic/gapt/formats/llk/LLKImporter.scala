@@ -164,7 +164,7 @@ trait TokenToLKConverter extends Logger {
         case "AX" =>
           val expaxiom = ( ant, suc ) match {
             case _ if ant == suc => //this is a workaround for the more restricted lk introduction rules
-              AtomicExpansion( HOLSequent( ant, suc ) ) //TODO: remove atomic expansion when it's not necessary anymore
+              AtomicExpansion( ant( 0 ) ) //TODO: remove atomic expansion when it's not necessary anymore
             case _ =>
               Axiom( HOLSequent( ant, suc ) )
           }
@@ -177,7 +177,7 @@ trait TokenToLKConverter extends Logger {
           require( ant.size == 1, "Tautological Axiom Completion needs exactly one formula in the antecedent, not " + ant.mkString( "," ) )
           require( suc.size == 1, "Tautological Axiom Completion needs exactly one formula in the succedent, not " + suc.mkString( "," ) )
           require( ant( 0 ) == suc( 0 ), "Tautological Axiom Completion can only expand sequents of the form F :- F, not " + HOLSequent( ant, suc ) )
-          val rule = AtomicExpansion( HOLSequent( ant, suc ) )
+          val rule = AtomicExpansion( ant( 0 ) )
           proofstack = rule :: proofstack
           require(
             proofstack.nonEmpty && proofstack( 0 ).endSequent.multiSetEquals( fs ),
