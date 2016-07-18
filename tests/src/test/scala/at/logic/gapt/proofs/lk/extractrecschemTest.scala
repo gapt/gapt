@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.{ tapeUrban, tape, Pi2Pigeonhole }
+import at.logic.gapt.examples.{ Pi2Pigeonhole, tape, tapeUrban }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.instantiate
@@ -11,6 +11,8 @@ import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
+
+import scalaz.\/-
 
 class ExtractRecSchemTest extends Specification with SatMatchers {
   "simple" in {
@@ -25,24 +27,24 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val g1 = All( y, P( y ) --> P( f( y ) ) )
     val g2 = P( f( f( f( f( c ) ) ) ) )
 
-    val p1 = solve.solvePropositional(
+    val \/-( p1 ) = solvePropositional(
       ( P( x ) --> P( f( x ) ) ) +:
         ( P( f( x ) ) --> P( f( f( x ) ) ) ) +:
         Sequent()
         :+ ( P( x ) --> P( f( f( x ) ) ) )
-    ).get
+    )
     val cutf = All( z, P( z ) --> P( f( f( z ) ) ) )
     val p2 = ForallLeftRule( p1, g1, x )
     val p3 = ForallLeftRule( p2, g1, f( x ) )
     val p4 = ContractionMacroRule( p3 )
     val p5 = ForallRightRule( p4, cutf, x )
 
-    val q1 = solve.solvePropositional(
+    val \/-( q1 ) = solvePropositional(
       ( P( c ) --> P( f( f( c ) ) ) ) +:
         ( P( f( f( c ) ) ) --> P( f( f( f( f( c ) ) ) ) ) ) +:
         Sequent()
         :+ ( P( c ) --> P( f( f( f( f( c ) ) ) ) ) )
-    ).get
+    )
     val q2 = ForallLeftRule( q1, cutf, c )
     val q3 = ForallLeftRule( q2, cutf, f( f( c ) ) )
     val q4 = ContractionMacroRule( q3 )

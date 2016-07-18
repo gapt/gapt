@@ -8,8 +8,11 @@ import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.proofs.lk._
 import org.slf4j.LoggerFactory
+
 import scala.annotation.tailrec
 import EquationVerifier._
+
+import scalaz.\/-
 
 object LLKFormatter {
   /* formats a sequent */
@@ -182,7 +185,7 @@ trait TokenToLKConverter extends Logger {
           )
         case "AUTOPROP" =>
           try {
-            val Some( rule ) = solve.solvePropositional( HOLSequent( ant, suc ) )
+            val \/-( rule ) = solvePropositional( HOLSequent( ant, suc ) )
             proofstack = rule :: proofstack
             require(
               proofstack.nonEmpty && proofstack( 0 ).endSequent.multiSetEquals( fs ),

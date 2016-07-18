@@ -304,7 +304,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
  */
 case object PropTactic extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
-    solve.solvePropositional( goal.conclusion ).toSuccessNel( TacticalFailure( this, Some( goal ), "search failed" ) ) map { () -> _ }
+    solvePropositional( goal.conclusion ).toOption.toSuccessNel( TacticalFailure( this, Some( goal ), "search failed" ) ) map { () -> _ }
   }
 }
 

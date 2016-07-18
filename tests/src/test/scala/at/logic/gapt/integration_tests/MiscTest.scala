@@ -182,7 +182,7 @@ class MiscTest extends Specification {
       val expseq = LKToExpansionProof( lkproof1 )
       val deep = expseq.deep
 
-      solve.solvePropositional( deep ).isDefined must beTrue
+      solvePropositional( deep ).isRight must beTrue
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {

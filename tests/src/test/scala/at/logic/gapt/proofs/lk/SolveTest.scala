@@ -35,22 +35,22 @@ class SolveTest extends Specification with SequentMatchers {
       lkProof.endSequent must beMultiSetEqual( etSeq.shallow )
     }
 
-    "prove top" in { solve.solvePropositional( Sequent() :+ Top() ) must beSome }
-    "not prove bottom" in { solve.solvePropositional( Sequent() :+ Bottom() ) must beNone }
-    "not refute top" in { solve.solvePropositional( Top() +: Sequent() ) must beNone }
-    "refute bottom" in { solve.solvePropositional( Bottom() +: Sequent() ) must beSome }
+    "prove top" in { solvePropositional( Sequent() :+ Top() ).toOption must beSome }
+    "not prove bottom" in { solvePropositional( Sequent() :+ Bottom() ).toOption must beNone }
+    "not refute top" in { solvePropositional( Top() +: Sequent() ).toOption must beNone }
+    "refute bottom" in { solvePropositional( Bottom() +: Sequent() ).toOption must beSome }
 
     "prove ( p ∨ p ) ⊃ ( p ∧ p )" in {
       val F = hof"p|p -> p&p"
-      solve.solvePropositional( Sequent() :+ F ) must beSome
+      solvePropositional( F ).toOption must beSome
     }
 
     "prove ( p ∧ p ) ⊃ ( p ∨ p )" in {
       val F = hof"p&p -> p|p"
-      solve.solvePropositional( Sequent() :+ F ) must beSome
+      solvePropositional( F ).toOption must beSome
     }
 
-    "prove BussTautology(2)" in { solve.solvePropositional( BussTautology( 2 ) ) must beSome }
+    "prove BussTautology(2)" in { solvePropositional( BussTautology( 2 ) ).toOption must beSome }
   }
 
   "ExpansionProofToLK" should {
