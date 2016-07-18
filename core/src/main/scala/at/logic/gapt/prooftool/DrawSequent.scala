@@ -71,7 +71,7 @@ object LatexLabel {
     val icon = this.synchronized( cache.getOrElseUpdate(
       ( latexText, font ),
       new TeXFormula( latexText ).
-        createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize )
+        createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF )
     ) )
     new LatexLabel( main, font, latexText, icon, color )
   }

@@ -422,7 +422,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
     background = Color.white
     yLayoutAlignment = 0.5
     font = fnt
-    icon = new TeXFormula( s ).createTeXIcon( TeXConstants.STYLE_DISPLAY, fnt.getSize )
+    icon = new TeXFormula( s ).createTeXIcon( TeXConstants.STYLE_DISPLAY, fnt.getSize, TeXFormula.SANSSERIF )
 
     if ( s == "(" || s == ")" ) {
       opaque = true
