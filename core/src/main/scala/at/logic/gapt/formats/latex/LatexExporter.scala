@@ -48,21 +48,36 @@ object LatexExporter {
     case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
       binExpr( a, b, p, prio.bicond, "\\equiv" )
 
-    case n: VarOrConst    => escapeName( n.name )
+    case n: VarOrConst => escapeName( n.name )
 
-    case Top()            => "\\top"
-    case Bottom()         => "\\bot"
-    case Neg( f )         => "\\neg " + expr( f, prio.quantOrNeg + 1 )
-    case And( a, b )      => binExpr( a, b, p, prio.conj, "\\land" )
-    case Or( a, b )       => binExpr( a, b, p, prio.disj, "\\lor" )
-    case Imp( a, b )      => binExpr( a, b, p, prio.impl, "\\supset" )
+    case Top()         => "\\top"
+    case Bottom()      => "\\bot"
+    case Neg( f )      => "\\neg " + expr( f, prio.quantOrNeg + 1 )
+    case And( a, b )   => binExpr( a, b, p, prio.conj, "\\land" )
+    case Or( a, b )    => binExpr( a, b, p, prio.disj, "\\lor" )
+    case Imp( a, b )   => binExpr( a, b, p, prio.impl, "\\supset" )
 
-    case All( v, f )      => quant( f, v, p, "\\forall" )
-    case Ex( v, f )       => quant( f, v, p, "\\exists" )
+    case All( v, f )   => quant( f, v, p, "\\forall" )
+    case Ex( v, f )    => quant( f, v, p, "\\exists" )
 
-    case Abs( v, f )      => parenIf( p, prio.lam, s"\\lambda ${escapeName( v.name )}\\: ${expr( f, prio.lam + 1 )}" )
+    case Abs( v, f )   => parenIf( p, prio.lam, s"\\lambda ${escapeName( v.name )}\\: ${expr( f, prio.lam + 1 )}" )
 
+    case IteratedUnaryFunction( f, n, arg ) if n > 1 =>
+      s"{${expr( f, prio.app )}}^{$n}(${expr( arg, prio.max )})"
     case Apps( hd, args ) => s"${expr( hd, prio.app )}(${args.map( expr( _, prio.max ) ).mkString( ", " )})"
+  }
+
+  private object IteratedUnaryFunction {
+    private def decompose( expr: LambdaExpression, hd: VarOrConst, n: Int ): ( VarOrConst, Int, LambdaExpression ) =
+      expr match {
+        case App( `hd`, arg ) => decompose( arg, hd, n + 1 )
+        case _                => ( hd, n, expr )
+      }
+    def unapply( expr: LambdaExpression ): Option[( VarOrConst, Int, LambdaExpression )] =
+      expr match {
+        case App( hd: VarOrConst, arg ) => Some( decompose( arg, hd, 1 ) )
+        case _                          => None
+      }
   }
 
   private val escapes = Map(
