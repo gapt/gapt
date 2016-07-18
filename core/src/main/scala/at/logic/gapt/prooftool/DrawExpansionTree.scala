@@ -19,10 +19,9 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) with Logger {
+class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) {
 
   import ExpansionTreeState._
-  override def loggerName = "DrawExpTreeLogger"
 
   background = new Color( 255, 255, 255 )
   yLayoutAlignment = 0.5
@@ -324,7 +323,6 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
   }
 
   def drawFormula( formula: HOLFormula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
-    trace( "drawFormula called on formula " + formula )
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
     opaque = false

@@ -11,10 +11,6 @@ import scala.swing.event.{ MouseExited, MouseEntered, UIElementResized, MouseCli
 import at.logic.gapt.proofs.expansion._
 import java.awt.event.MouseEvent
 
-trait DrawExpSeqLogger extends Logger {
-  override def loggerName = "DrawExpSeqLogger"
-}
-
 /**
  * These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
  * @param from Number of the first tree to be switched
@@ -29,7 +25,7 @@ private[prooftool] class SwitchEvent( val from: Int, val to: Int ) extends Event
  * @param fSize The font size.
  */
 class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: ExpansionSequent,
-                            private val fSize: Int ) extends SplitPane( Orientation.Vertical ) with DrawExpSeqLogger {
+                            private val fSize: Int ) extends SplitPane( Orientation.Vertical ) {
 
   //Code for window geometry and appearance
   background = new Color( 255, 255, 255 )
@@ -49,7 +45,7 @@ class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: Ex
  * @param title The title to be displayed at the top
  * @param ft The font to be used
  */
-class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree], val title: String, val ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
+class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree], val title: String, val ft: Font ) extends BoxPanel( Orientation.Vertical ) {
 
   //Code for the title label
   val titleLabel = new Label( title ) {
@@ -84,7 +80,7 @@ class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree],
  * @param trees The list of trees to be displayed
  * @param ft The font
  */
-class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree], ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
+class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree], ft: Font ) extends BoxPanel( Orientation.Vertical ) {
   background = new Color( 255, 255, 255 )
 
   val n = trees.length
