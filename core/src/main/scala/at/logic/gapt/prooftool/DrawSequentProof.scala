@@ -232,7 +232,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
   val labelFontMetrics = peer.getFontMetrics( labelFont )
 
   def computeLineWidth() = {
-    val newLineWidth = scala.math.max( parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth )
+    val newLineWidth = Seq( lineWidth, parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth ).max
     if ( newLineWidth != lineWidth ) {
       lineWidth = newLineWidth
       val width = lineWidth + labelFontMetrics.stringWidth( proofName ) * 2 + fSize
