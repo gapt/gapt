@@ -171,7 +171,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
     def Justification: Rule1[( Int, String, Seq[Int] )] = rule {
       "[" ~ Num ~ ":" ~ Name ~ optional( ":" ~ oneOrMore( Backreference ).separatedBy( "," ) ) ~ "]" ~>
-        ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( splitLevel, inferenceType, premises.getOrElse( Seq() ) ) )
+        ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( splitLevel, inferenceType, premises.getOrElse( Seq() ).distinct ) )
     }
 
     def isVar( n: String ) = n.head.isUpper || 'u'.to( 'z' ).contains( n.head )
