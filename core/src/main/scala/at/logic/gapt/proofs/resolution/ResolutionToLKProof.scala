@@ -72,13 +72,18 @@ object ResolutionToLKProof {
       case AvatarSplit( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarSplit( q, _, comp @ AvatarNonGroundComp( splAtom, definition, vars ) ) =>
         var p_ = f( q )
-        for ( a <- comp.clause.antecedent ) p_ = NegRightRule( p_, a )
+        for {
+          a <- comp.clause.antecedent
+          if p_.conclusion.antecedent contains a
+        } p_ = NegRightRule( p_, a )
         def mkOr( lits: HOLFormula ): Unit =
           lits match {
             case Or( lits_, lit ) =>
               mkOr( lits_ )
               p_ = OrRightMacroRule( p_, lits_, lit )
-            case _ =>
+            case lit =>
+              if ( !p_.conclusion.succedent.contains( lit ) )
+                p_ = WeakeningRightRule( p_, lit )
           }
         mkOr( comp.disjunction )
         p_ = ForallRightBlock( p_, definition, vars )
