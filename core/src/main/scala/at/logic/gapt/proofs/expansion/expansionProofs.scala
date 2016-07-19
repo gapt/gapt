@@ -283,23 +283,23 @@ object eliminateCutsET {
   private def simpPropCuts( cuts: Seq[ETImp] ): Seq[ETImp] = {
     val newCuts = Seq.newBuilder[ETImp]
     def simp( left: ExpansionTree, right: ExpansionTree ): Unit = ( left, right ) match {
-      case ( _: ETWeakening, _ )                =>
-      case ( _, _: ETWeakening )                =>
-      case ( _: ETAtom, _: ETAtom )             =>
-      case ( _: ETTop, _: ETTop )               =>
-      case ( _: ETBottom, _: ETBottom )         =>
-      case ( ETMerge( l1, l2 ), r )             =>
+      case ( _: ETWeakening, _ )        =>
+      case ( _, _: ETWeakening )        =>
+      case ( _: ETAtom, _: ETAtom )     =>
+      case ( _: ETTop, _: ETTop )       =>
+      case ( _: ETBottom, _: ETBottom ) =>
+      case ( ETMerge( l1, l2 ), r ) =>
         simp( l1, r ); simp( l2, r )
-      case ( l, ETMerge( r1, r2 ) )             =>
+      case ( l, ETMerge( r1, r2 ) ) =>
         simp( l, r1 ); simp( l, r2 )
-      case ( ETNeg( t1 ), ETNeg( t2 ) )         => simp( t2, t1 )
+      case ( ETNeg( t1 ), ETNeg( t2 ) ) => simp( t2, t1 )
       case ( ETAnd( t1, s1 ), ETAnd( t2, s2 ) ) =>
         simp( t1, t2 ); simp( s1, s2 )
-      case ( ETOr( t1, s1 ), ETOr( t2, s2 ) )   =>
+      case ( ETOr( t1, s1 ), ETOr( t2, s2 ) ) =>
         simp( t1, t2 ); simp( s1, s2 )
       case ( ETImp( t1, s1 ), ETImp( t2, s2 ) ) =>
         simp( t2, t1 ); simp( s1, s2 )
-      case _                                    => newCuts += ETImp( left, right )
+      case _ => newCuts += ETImp( left, right )
     }
     for ( ETImp( l, r ) <- cuts ) simp( l, r )
     newCuts.result()
