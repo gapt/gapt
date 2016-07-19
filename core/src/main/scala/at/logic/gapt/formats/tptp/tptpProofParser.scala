@@ -2,7 +2,7 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFn, CNFp, univclosure }
-import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp }
+import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import at.logic.gapt.proofs.sketch._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
 
@@ -106,9 +106,10 @@ object TptpProofParser {
 
         var p = splittedClause
         for {
+          clauseComponent <- AvatarSplit.getComponents( splittedClause.conclusion )
           ( splAtom: FOLAtom, i ) <- assertion.zipWithIndex
           comp <- splDefs.get( ( splAtom, i.isSuc ) )
-          subst <- clauseSubsumption( comp.clause, p.conclusion )
+          subst <- clauseSubsumption( comp.clause, clauseComponent )
         } p = SketchComponentElim( p, comp match {
           case comp @ AvatarNonGroundComp( _, _, vars ) =>
             comp.copy( vars = subst( vars ).map( _.asInstanceOf[Var] ) )
