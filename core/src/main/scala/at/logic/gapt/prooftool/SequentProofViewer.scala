@@ -46,6 +46,8 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     Nil
   )
 
+  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
+
   def hideSequentContext() {
     mainComponent.hideContexts = true
     mainComponent.revalidate()
@@ -74,6 +76,10 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     d.open()
   }
 
+  def sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
+    sunburstView()
+  } )
+
 }
 
 /**
@@ -85,7 +91,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
 class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof, LatexExporter( _ ) ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
-  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton, sunburstViewButton )
+  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), hideStructuralRulesButton, hideContextsButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton )
 
   /**
    * Displays the expansion proof of proof in a new window.
@@ -155,10 +161,6 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
   def viewExpansionProofButton = new MenuItem( Action( "View expansion proof" ) {
     expansionTree()
   } )
-
-  def sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
-    sunburstView()
-  } )
 }
 
 /**
@@ -170,7 +172,6 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
 class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofViewer[LabelledFormula, LKskProof]( name, proof, lf => LatexExporter( lf._2 ) ) {
   override val content: LKskProof = proof
   override def fileMenuContents = Seq( openButton, new Separator, exportToPDFButton, exportToPNGButton )
-  override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
 
   def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
   def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
@@ -188,7 +189,4 @@ class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofView
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
-  def sunburstViewButton = new MenuItem( Action( "Sunburst View" ) {
-    sunburstView()
-  } )
 }

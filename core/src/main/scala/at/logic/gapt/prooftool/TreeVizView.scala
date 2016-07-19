@@ -1,13 +1,15 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ lksk => lksk }
-import at.logic.gapt.proofs.{ SequentProof, DagProof, HOLSequent }
+import at.logic.gapt.proofs.lksk
+import at.logic.gapt.proofs.{ DagProof, HOLSequent, SequentProof }
 
 import scala.swing.{ Action, BorderPanel }
 import ch.randelshofer.tree._
 import javax.swing.event.ChangeListener
 import java.awt.Color
+
+import at.logic.gapt.proofs.resolution.{ AvatarComponent, AvatarContradiction, AvatarSplit, Factor, Paramod, Refl, Resolution, Subst, Taut }
 
 /** Wrapper from gapt proofs to TreeViz trees */
 case class ProofNode[T <: DagProof[T]]( proof: DagProof[T] ) extends TreeNode {
@@ -74,18 +76,21 @@ class ProofNodeInfo[T <: DagProof[T]] extends NodeInfo {
   def getColor( path: TreePath2[TreeNode] ) = {
     import Rainbow._
     path.getLastPathComponent.asInstanceOf[ProofNode[T]].proof match {
-      case _: CutRule | _: lksk.Cut => green
+      case _: CutRule | _: lksk.Cut | _: Resolution => green
       case _: InitialSequent | _: WeakeningLeftRule | _: WeakeningRightRule |
         _: ContractionLeftRule | _: ContractionRightRule |
         _: lksk.InitialSequent | _: lksk.WeakeningLeft | _: lksk.WeakeningRight |
-        _: lksk.ContractionLeft | _: lksk.ContractionRight => Color.LIGHT_GRAY
+        _: lksk.ContractionLeft | _: lksk.ContractionRight |
+        _: Factor | _: Taut => Color.LIGHT_GRAY
       case _: AndLeftRule | _: OrRightRule | _: ImpRightRule | _: NegLeftRule | _: NegRightRule |
         _: lksk.AndLeft | _: lksk.OrRight | _: lksk.ImpRight | _: lksk.NegLeft | _: lksk.NegRight => orange
       case _: AndRightRule | _: OrLeftRule | _: ImpLeftRule |
         _: lksk.AndRight | _: lksk.OrLeft | _: lksk.ImpLeft => yellow
       case WeakQuantifierRule( _, _, _, _, _, _ ) | _: lksk.AllLeft | _: lksk.AllSkLeft | _: lksk.ExRight | _: lksk.ExSkRight => blue
       case StrongQuantifierRule( _, _, _, _, _ ) | _: lksk.AllRight | _: lksk.AllSkRight | _: lksk.ExLeft | _: lksk.ExSkLeft => red
-      case _: EqualityRule | _: lksk.Equality => violet
+      case _: EqualityRule | _: lksk.Equality | _: Paramod | _: Refl | _: Factor => violet
+      case _: AvatarComponent | _: AvatarContradiction | _: AvatarSplit => yellow
+      case _: Subst => orange
       case _ => Color.MAGENTA
     }
   }
