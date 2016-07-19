@@ -157,7 +157,7 @@ object ETWeakQuantifierBlock {
       } )
     }
 
-  def unapply( et: ExpansionTree ): Some[( HOLFormula, Map[Seq[LambdaExpression], ExpansionTree] )] = {
+  def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = {
     val instances = mutable.Map[Seq[LambdaExpression], Set[ExpansionTree]]().withDefaultValue( Set() )
 
     def walk( et: ExpansionTree, terms: Seq[LambdaExpression], n: Int ): Unit =
@@ -178,7 +178,7 @@ object ETWeakQuantifierBlock {
 
     walk( et, Seq(), numberQuants )
 
-    Some( et.shallow -> instances.toMap.mapValues( ETMerge( _ ) ) )
+    Some( ( et.shallow, numberQuants, instances.toMap.mapValues( ETMerge( _ ) ) ) )
   }
 }
 

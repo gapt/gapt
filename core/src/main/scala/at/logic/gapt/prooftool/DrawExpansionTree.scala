@@ -202,24 +202,10 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
     }
   }
 
-  object ETWeakBlock {
-    def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[List[LambdaExpression], ExpansionTree] )] = et match {
-      case ETWeakQuantifier( _, children ) =>
-        val compressedChildren = children mapValues unapply mapValues { _.get }
-        if ( compressedChildren.map { _._2._2 }.toSet.size == 1 ) {
-          val depth = compressedChildren.map { _._2._2 }.head + 1
-          Some( ( et.shallow, depth, for ( ( t, ( _, _, grandchildren ) ) <- compressedChildren; ( ts, grandchild ) <- grandchildren ) yield ( t +: ts, grandchild ) ) )
-        } else {
-          Some( ( et.shallow, 1, for ( ( t, child ) <- children ) yield ( List( t ), child ) ) )
-        }
-      case _ => Some( ( et.shallow, 0, Map( List[LambdaExpression]() -> et ) ) )
-    }
-  }
-
   object ETQuantBlock {
     def unapply( et: ExpansionTree ) = et match {
       case ETStrongBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
-      case ETWeakBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
+      case ETWeakQuantifierBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
       case _ => None
     }
   }
@@ -252,7 +238,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
 
   // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
   // List of terms are separated by ; and terms in a list by ,
-  def drawTerms( list: List[List[LambdaExpression]] ) = new BoxPanel( Orientation.Horizontal ) {
+  def drawTerms( list: Seq[Seq[LambdaExpression]] ) = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
 
