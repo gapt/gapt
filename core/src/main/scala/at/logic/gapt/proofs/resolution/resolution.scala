@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.SkolemFunctions
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -86,6 +87,9 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
     builder.toMap
   }
 
+  def skolemFunctions =
+    SkolemFunctions( subProofs.collect { case p: SkolemQuantResolutionRule => p.skolemConst -> p.skolemDef } )
+
   def conclusionString = {
     val assertionString =
       if ( assertions.isEmpty ) ""
@@ -98,6 +102,7 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
   /** Is this a proof of the empty clause with empty assertions, and consistent definitions? */
   def isProof = {
     definitions
+    skolemFunctions
     conclusion.isEmpty && assertions.isEmpty
   }
 

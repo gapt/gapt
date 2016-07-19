@@ -83,7 +83,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       case Some( proof ) =>
         println( "% SZS status Unsatisfiable" )
         println( "% SZS output start CNFRefutation" )
-        println( resolutionToTptp( proof ).mkString )
+        print( resolutionToTptp( proof ) )
         println( "% SZS output end CNFRefutation" )
       case None =>
         println( "% SZS status Satisfiable" )

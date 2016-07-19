@@ -1,11 +1,13 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.{ instantiate, univclosure }
 import at.logic.gapt.proofs.resolution._
 
+import scala.collection.mutable
+
 object resolutionToTptp {
-  def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
+  private def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
     val disj = if ( inf.assertions.isEmpty ) inf.conclusion.toDisjunction
     else inf.conclusion.toDisjunction | inf.assertions.toDisjunction
     if ( inf.conclusion.forall( _.isInstanceOf[HOLAtom] ) ) {
@@ -16,7 +18,7 @@ object resolutionToTptp {
     }
   }
 
-  def convertDefinition(
+  private def convertDefinition(
     label:    String,
     defConst: HOLAtomConst,
     defn:     LambdaExpression
@@ -29,9 +31,25 @@ object resolutionToTptp {
       Seq() )
   }
 
-  def convertInference(
-    labelMap: Map[ResolutionProof, String],
-    defMap:   Map[HOLAtomConst, String],
+  private def convertSkolemDefinition(
+    label:   String,
+    skConst: Const,
+    defn:    LambdaExpression
+  ): AnnotatedFormula = {
+    val Abs.Block( vars, quantf: HOLFormula ) = defn
+    val instf = instantiate( quantf, skConst( vars ) )
+
+    AnnotatedFormula( "fof", label, "definition",
+      All.Block( vars, quantf match {
+        case Ex( _, _ )  => quantf --> instf
+        case All( _, _ ) => instf --> quantf
+      } ),
+      Seq() )
+  }
+
+  private def convertInference(
+    labelMap: collection.Map[ResolutionProof, String],
+    defMap:   collection.Map[Const, String],
     inf:      ResolutionProof
   ): TptpInput = {
     val label = labelMap( inf )
@@ -45,7 +63,9 @@ object resolutionToTptp {
           case c              => c.toString
         }.dropWhile( _ == '_' )
 
-        val parents = p.immediateSubProofs.map( labelMap ) ++ p.introducedDefinitions.keys.map( defMap )
+        val parents = p.immediateSubProofs.map( labelMap ) ++
+          p.introducedDefinitions.keys.map( defMap ) ++
+          Some( p ).collect { case p: SkolemQuantResolutionRule => defMap( p.skolemConst ) }
 
         fofOrCnf( label, "plain", inf,
           Seq( TptpTerm( "inference", FOLConst( inferenceName ),
@@ -53,10 +73,27 @@ object resolutionToTptp {
     }
   }
 
-  def apply( proof: ResolutionProof ): Seq[TptpInput] = {
-    val defMap = ( for ( ( dc, i ) <- proof.definitions.keys.zipWithIndex ) yield dc -> s"def$i" ).toMap
-    val labelMap = ( for ( ( p, i ) <- proof.dagLike.postOrder.zipWithIndex ) yield p -> s"p$i" ).toMap
-    proof.definitions.toSeq.map { case ( dc, dn ) => convertDefinition( defMap( dc ), dc, dn ) } ++
-      proof.dagLike.postOrder.map { convertInference( labelMap, defMap, _ ) }
+  def apply( proof: ResolutionProof ): TptpFile = {
+    val inputs = Seq.newBuilder[TptpInput]
+
+    val defMap = mutable.Map[Const, String]()
+    for ( ( ( dc, defn ), i ) <- proof.definitions.toSeq.zipWithIndex ) {
+      defMap( dc ) = s"def$i"
+      inputs += convertDefinition( defMap( dc ), dc, defn )
+    }
+
+    val skFuns = proof.skolemFunctions
+    for ( ( dc, i ) <- skFuns.dependencyOrder.zipWithIndex ) {
+      defMap( dc ) = s"skdef$i"
+      inputs += convertSkolemDefinition( defMap( dc ), dc, skFuns.skolemDefs( dc ) )
+    }
+
+    val labelMap = mutable.Map[ResolutionProof, String]()
+    for ( ( p, i ) <- proof.dagLike.postOrder.zipWithIndex ) {
+      labelMap( p ) = s"p$i"
+      inputs += convertInference( labelMap, defMap, p )
+    }
+
+    TptpFile( inputs.result() )
   }
 }
