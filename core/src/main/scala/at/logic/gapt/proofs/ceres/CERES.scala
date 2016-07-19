@@ -68,7 +68,7 @@ class CERES {
     val es = p.endSequent
     val p_ = regularize( AtomicExpansion( p ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
-    val proj = Projections( p_, pred ) + CERES.refProjection( es )
+    val proj = Projections( p_, pred )
     /*
     val cs_ = cs.asInstanceOf[Set[HOLSequent]]
     var count = 0;
@@ -105,55 +105,20 @@ class CERES {
     WeakeningContractionMacroRule(
       ResolutionToLKProof(
         rp,
-        fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc.conclusion.map( _.asInstanceOf[HOLAtom] ) )
+        fc => CERES.findMatchingProjection( endsequent, proj )( fc.conclusion )
       ),
       endsequent
     )
   }
 
   def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( axfs: HOLSequent ): LKProof = {
-    val nLine = sys.props( "line.separator" )
-    //println( s"end-sequent: $endsequent" )
-    //println( s"looking for projection to $axfs" )
-    projections.find( x => clauseSubsumption( x.endSequent diff endsequent, axfs ).isDefined ) match {
-      case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
-        projections.map( _.endSequent.diff( endsequent ) ).mkString( "{" + nLine, ";" + nLine, nLine + "}" ) )
-      case Some( proj ) =>
-        val Some( sub ) = clauseSubsumption( proj.endSequent diff endsequent, axfs )
-        val subproj = sub( proj )
-        val duplicates = ( subproj.endSequent diff endsequent ) diff axfs
-        //println( s"duplicates: $duplicates" )
-        //println( subproj.endSequent )
-        val cleft = duplicates.antecedent.foldLeft( subproj )( ( p, el ) => {
-          require(
-            p.endSequent.antecedent.filter( _ == el ).size >= 2,
-            s"Could not contract formula $el in proof $p. Can not match projection $subproj to clause $axfs."
-          )
-          ContractionLeftRule( p, el )
-        } )
-        val cright = duplicates.succedent.foldLeft( cleft )( ( p, el ) => {
-          require(
-            p.endSequent.succedent.filter( _ == el ).size >= 2,
-            s"Could not contract formula $el in proof $p. Can not match projection $subproj to clause $axfs."
-          )
-          ContractionRightRule( p, el )
+    for {
+      proj <- projections
+      sub <- clauseSubsumption( proj.endSequent diff endsequent, axfs )
+    } return ContractionMacroRule( sub( proj ), endsequent ++ axfs )
 
-        } )
-        require(
-          ( cright.endSequent diff endsequent ).multiSetEquals( axfs ),
-          "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to "
-            + axfs + " x " + endsequent
-        )
-        subproj
-    }
-  }
-
-  def refProjection( es: HOLSequent ): LKProof = {
-    require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
-    val x = Var( "x", Ti ).asInstanceOf[Var]
-    val axiomseq = HOLSequent( Nil, List( Eq( x, x ) ) )
-    //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
-    WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq ++ es )
+    throw new Exception( "Could not find a projection to " + axfs + " in " +
+      projections.map( _.endSequent.diff( endsequent ) ).mkString( "{\n", ";\n", "\n}" ) )
   }
 
 }
