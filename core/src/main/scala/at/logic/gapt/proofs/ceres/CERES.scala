@@ -69,26 +69,11 @@ class CERES {
     val p_ = regularize( AtomicExpansion( p ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
     val proj = Projections( p_, pred )
-    /*
-    val cs_ = cs.asInstanceOf[Set[HOLSequent]]
-    var count = 0;
-    for ( p <- proj ) {
-      if ( !cs_.contains( p.endSequent diff es ) ) {
-        println( LLKExporter.generateProof( p, "Proj" + count, true ) )
-        println()
-        count = count + 1
-      }
-    }*/
-
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
-    //println( TPTPFOLExporter.tptp_problem( tapecl.toList ) )
-    //println( "original css size: " + cs.size )
-    //println( "after subsumption:" + tapecl.size )
 
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception( "The characteristic clause set could not be refuted." )
       case Some( rp ) =>
-        //println( s"refutation:\n$rp" )
         apply( es, proj, eliminateSplitting( rp ) )
     }
   }
@@ -97,21 +82,28 @@ class CERES {
    * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
    *
    * @param endsequent The end-sequent of the original proof
-   * @param proj The projections of the original proof
+   * @param projections The projections of the original proof
    * @param rp A resolution refutation
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
+  def apply( endsequent: HOLSequent, projections: Set[LKProof], rp: ResolutionProof ) = {
     WeakeningContractionMacroRule(
-      ResolutionToLKProof(
-        rp,
-        fc => CERES.findMatchingProjection( endsequent, proj )( fc.conclusion )
-      ),
+      ResolutionToLKProof( rp, findMatchingProjection( endsequent, projections ) ),
       endsequent
     )
   }
 
-  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( axfs: HOLSequent ): LKProof = {
+  /**
+   * Finds the matching projection of an input clause in the set of projections.
+   * @param endsequent The common end-sequent of all projections.
+   * @param projections The set of projections.
+   * @param input_clause The clause we need to project to.
+   * @return An LK proof endsequent x input_clause contained in projections
+   * @note This method is passed to ResolutionToLKProof, which handles the simulation of the reflexivity introduction
+   *       rule by itself.
+   */
+  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( input_clause: Input ): LKProof = {
+    val axfs = input_clause.conclusion
     for {
       proj <- projections
       sub <- clauseSubsumption( proj.endSequent diff endsequent, axfs )
