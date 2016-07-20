@@ -16,6 +16,9 @@ object eliminateSplitting {
     nonGroundSplits( groundSplits( p ) )
   }
 
+  /**
+   * Eliminates splitting inferences on ground literals by replacing them with [[Taut]].
+   */
   private def groundSplits( p: ResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
     def factor( p: ResolutionProof, q: ResolutionProof ) = Factor( q, p.conclusion ++ p.assertions diff q.assertions )
@@ -47,6 +50,11 @@ object eliminateSplitting {
     f( p )
   }
 
+  /**
+   * Given a non-ground splitting component C with atom A and a proof that ends with A in the assertion,
+   * eliminate [[AvatarSplit]] inferences that move C into the assertion,
+   * and return a proof that ends with C in the conclusion.
+   */
   private def project( p: ResolutionProof, splAtom: HOLAtom ): ( ResolutionProof, Seq[Var], HOLSequent ) = {
     val ngc = p.subProofs.collect { case AvatarSplit( _, _, comp @ AvatarNonGroundComp( `splAtom`, _, _ ) ) => comp }.head
     val newVs = ngc.vars map rename( ngc.vars, freeVariables( p.subProofs.flatMap( _.conclusion.elements ) ) )
@@ -88,6 +96,10 @@ object eliminateSplitting {
     ( f( p ), newVs, newClause )
   }
 
+  /**
+   * Given a non-ground splitting component C with atom A as well as a projection that ends with C in the conclusion,
+   * replace all [[AvatarComponent]] inferences for that component with the projection.
+   */
   private def replace( p: ResolutionProof, splAtom: HOLAtom, proj: ResolutionProof, projVars: Seq[Var], projClause: HOLSequent ): ResolutionProof = {
     val extraAssumptions = proj.conclusion diff projClause
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
@@ -125,6 +137,12 @@ object eliminateSplitting {
     f( p )
   }
 
+  /**
+   * Eliminate non-ground splitting inferences.  This procedure is similar to Π_1-normalization in natural deduction.
+   * As a strategy, we pick a top-most resolution inference on a splitting atom (i.e. one that is
+   * right below [[AvatarContradiction]] inferences), call [[project]] on the left sub-proof,
+   * and then put the projection in the right sub-proof with [[replace]].
+   */
   private def nonGroundSplits( p: ResolutionProof ): ResolutionProof = {
     val memo = mutable.Map[ResolutionProof, ResolutionProof]()
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
