@@ -202,6 +202,11 @@ object ETStrongQuantifierBlock {
         ETStrongQuantifierBlock( instantiate( shallow, ev ), evs, child ) )
     case Seq() => child
   }
+
+  def unapply( et: ExpansionTree ): Some[( HOLFormula, Seq[Var], ExpansionTree )] = et match {
+    case ETStrongQuantifier( sh, ev, ETStrongQuantifierBlock( _, evs, child ) ) => Some( ( sh, ev +: evs, child ) )
+    case _ => Some( ( et.shallow, Seq(), et ) )
+  }
 }
 
 case class ETSkolemQuantifier(

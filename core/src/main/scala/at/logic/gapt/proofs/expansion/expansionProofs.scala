@@ -333,18 +333,18 @@ object eliminateCutsET {
     // that are not above the eigenvariables in the cut.  But these will get merged as they do not dominate
     // weak quantifier instances that have been changed through the substitution.
     def quantifiedCut(
-      instances:     Map[LambdaExpression, ExpansionTree],
-      eigenVariable: Var, child: ExpansionTree
+      instances:      Map[Seq[LambdaExpression], ExpansionTree],
+      eigenVariables: Seq[Var], child: ExpansionTree
     ): ( Seq[ETImp], ExpansionSequent ) = {
       if ( instances isEmpty ) return ( rest, expansionSequent )
 
-      val eigenVarsToRename = generatedUpperSetInPO( eigenVariablesET( child ) + eigenVariable, dependencyRelation ) - eigenVariable
+      val eigenVarsToRename = generatedUpperSetInPO( eigenVariablesET( child ) ++ eigenVariables, dependencyRelation ) -- eigenVariables
       val nameGen = rename.awayFrom( freeVars )
       val renamings = for ( _ <- 0 until instances.size )
         yield Substitution( eigenVarsToRename map { ev => ev -> nameGen.fresh( ev ) } )
       val substs =
         for ( ( renaming, ( term, instance ) ) <- renamings zip instances )
-          yield Substitution( eigenVariable -> term ) compose renaming
+          yield Substitution( eigenVariables zip term ) compose renaming
 
       val matchingSubstOption = substs find { s => ( substs zip instances.values ).forall { inst => s( inst._2.shallow ) == inst._1( child.shallow ) } }
       val matchingSubst = matchingSubstOption getOrElse Substitution()
@@ -363,10 +363,12 @@ object eliminateCutsET {
     }
 
     Some( ( cut1, cut2 ) ) collect {
-      case ( ETWeakQuantifier( _, instances ), ETStrongQuantifier( _, eigenVariable, child ) ) =>
-        quantifiedCut( instances, eigenVariable, child )
-      case ( ETStrongQuantifier( _, eigenVariable, child ), ETWeakQuantifier( _, instances ) ) =>
-        quantifiedCut( instances, eigenVariable, child )
+      case ( ETWeakQuantifierBlock( _, n, instances ), ETStrongQuantifierBlock( _, eigenVariables, child ) ) if n > 0 =>
+        require( eigenVariables.size == n )
+        quantifiedCut( instances, eigenVariables, child )
+      case ( ETStrongQuantifierBlock( _, eigenVariables, child ), ETWeakQuantifierBlock( _, n, instances ) ) if n > 0 =>
+        require( eigenVariables.size == n )
+        quantifiedCut( instances, eigenVariables, child )
     }
 
   }
