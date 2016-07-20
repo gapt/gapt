@@ -13,16 +13,6 @@ import at.logic.gapt.proofs.ceres.Pickrule._
 
 object Projections extends at.logic.gapt.utils.logging.Logger {
 
-  def reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
-    val es = proof.endSequent
-    val x = Var( "x", t )
-    val x_ = rename( x, freeVariables( es ) )
-    val ax: LKProof = Axiom( Nil, List( Eq( x_, x_ ) ) )
-    val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
-    val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningRightRule( p, f ) )
-    right
-  }
-
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ): Set[LKProof] =
     apply( proof, proof.endSequent.map( _ => false ), x => true )
