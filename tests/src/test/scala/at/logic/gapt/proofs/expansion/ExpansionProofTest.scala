@@ -88,7 +88,7 @@ class ExpansionProofDefinitionEliminationTest extends Specification with SatMatc
     ctx += hoc"P: i>o"
     ctx += hoc"f: i>i"
     ctx += hoc"c: i"
-    ctx += hof"D x = (P c ∧ P (f c))"
+    ctx += hof"D x = (P x ∧ P (f x))"
 
     val d = ETWeakQuantifier(
       hof"∀x (D x <-> P x ∧ P (f x))",
@@ -113,10 +113,10 @@ class ExpansionProofDefinitionEliminationTest extends Specification with SatMatc
     val epwd = ExpansionProof( d +: Sequent() :+ f )
     epwd.deep must beValidSequent
 
-    //    val epwc = eliminateDefsET( epwd, false )
-    //    epwc.deep must beValidSequent
-    //
-    //    val ep = eliminateCutsET( epwc )
-    //    ep.deep must beValidSequent
+    val epwc = eliminateDefsET( epwd, false, Set( hoc"D: i>o" ) )
+    epwc.deep must beValidSequent
+
+    val ep = eliminateCutsET( epwc )
+    ep.deep must beValidSequent
   }
 }

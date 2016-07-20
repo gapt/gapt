@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions }
 import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.proofs.resolution.Defn
 
 import scala.collection.mutable
 
@@ -383,32 +384,29 @@ object eliminateDefsET {
       case _ => None
     }
   }
-  val negReplPos = HOLPosition( 1, 2 )
-  val posReplPos = HOLPosition( 2, 1 )
+  private val negReplPos = HOLPosition( 1, 2 )
+  private val posReplPos = HOLPosition( 2, 1 )
 
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProofWithCut =
-    definitions.foldLeft( ExpansionProofWithCut( ep ) )( apply( _, _, pureFolWithoutEq ) )
-  def apply( epwc: ExpansionProofWithCut, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProofWithCut = {
-    val definition = epwc.expansionWithCutAxiom.atomDefs.getOrElse( definitionConst, return epwc )
+    ExpansionProofWithCut( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ) )
+  private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProof = {
+    val definition = ep.atomDefs.getOrElse( definitionConst, return ep )
     val Abs.Block( vs, definedFormula: HOLFormula ) = definition
 
-    val ( defCuts, otherCuts ) = epwc.cuts.partition {
-      case ETImp( d @ ETDefinedAtom( _, _, _ ), _ ) if d.definitionConst == definitionConst => true
-      case ETImp( _, d @ ETDefinedAtom( _, _, _ ) ) if d.definitionConst == definitionConst => true
-      case _ => false
-    }
+    val definitionFormula = Defn( definitionConst.asInstanceOf[HOLAtomConst], definition ).definitionFormula
+    val insts0 = for {
+      ETWeakQuantifierBlock( `definitionFormula`, n, insts ) <- ep.expansionSequent.antecedent
+      ( as, inst ) <- insts
+      repl <- inst( negReplPos ) ++ inst( posReplPos )
+    } yield as -> repl
 
-    val insts0 = defCuts map {
-      case ETImp( ETDefinedAtom( Apps( _, as ), _, _ ), repl ) => as -> repl
-      case ETImp( repl, ETDefinedAtom( Apps( _, as ), _, _ ) ) => as -> repl
-    }
     var insts = Map() ++ insts0.groupBy( _._1 ).mapValues { repls =>
       val shallow = repls.head._2.shallow
       ETMerge( shallow, true, repls.map( _._2 ).filter( _.polarity ) ) ->
         ETMerge( shallow, false, repls.map( _._2 ).filter( !_.polarity ) )
     }
 
-    val rest = ExpansionProofWithCut( otherCuts, epwc.expansionSequent ).expansionWithCutAxiom.expansionSequent
+    val rest = ep.expansionSequent.filterNot { et => !et.polarity && et.shallow == definitionFormula }
     val usesites = rest.elements.flatMap { _.subProofs }.
       collect { case ETDefinedAtom( Apps( `definitionConst`, args ), pol, _ ) => ( args, pol ) }.toSet
     insts = Map() ++
@@ -460,6 +458,6 @@ object eliminateDefsET {
     val newES = ( newCuts +: rest.map { repl } ).
       groupBy { _.shallow }.map { _._2 }.map { ETMerge( _ ) }
 
-    ExpansionProofWithCut( newES )
+    eliminateMerges( ExpansionProof( newES ) )
   }
 }

@@ -42,6 +42,19 @@ object ResolutionToLKProof {
       case Taut( formula ) => LogicalAxiom( formula )
       case Refl( term )    => ReflexivityAxiom( term )
 
+      case p @ Defn( defConst, definition ) =>
+        val phi = BetaReduction.betaNormalize( definition( p.vars ) ).asInstanceOf[HOLFormula]
+        ProofBuilder.
+          c( LogicalAxiom( phi ) ).
+          u( DefinitionLeftRule( _, Ant( 0 ), defConst( p.vars: _* ) ) ).
+          u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
+          c( LogicalAxiom( phi ) ).
+          u( DefinitionRightRule( _, Suc( 0 ), defConst( p.vars: _* ) ) ).
+          u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
+          b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
+          u( ForallRightBlock( _, p.definitionFormula, p.vars ) ).
+          qed
+
       case Factor( q, i1, i2 ) =>
         if ( i1 isAnt )
           ContractionLeftRule( f( q ), q.conclusion( i1 ) )
@@ -156,9 +169,27 @@ object ResolutionToLKProof {
 
       // Contract ancestors as soon as possible, and then skip the following contractions.
       override def recurse( proof: LKProof, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) = {
-        if ( isAncestor.forall( _ == false ) ) return ( proof, OccConnector( proof.conclusion ) )
-        val ( proofNew, conn ) = super.recurse( proof, isAncestor )
-        contract( proofNew, conn )
+        if ( isAncestor.forall( _ == false ) ) {
+          ( proof, OccConnector( proof.conclusion ) )
+        } else {
+          val mainAncestors = proof.mainIndices.filter( isAncestor( _ ) )
+          if ( !proof.isInstanceOf[LogicalAxiom] && mainAncestors.nonEmpty ) {
+            val mainAncestor = mainAncestors.head
+            val ( proof3, conn ) = if ( mainAncestor.isAnt ) {
+              val proof2 = CutRule( LogicalAxiom( proof.conclusion( mainAncestor ) ), Suc( 0 ), proof, mainAncestor )
+              recurse( proof2, proof2.getRightOccConnector.inv.parent( isAncestor, true ) )
+            } else {
+              val proof2 = CutRule( proof, mainAncestor, LogicalAxiom( proof.conclusion( mainAncestor ) ), Ant( 0 ) )
+              recurse( proof2, proof2.getLeftOccConnector.inv.parent( isAncestor, true ) )
+            }
+            // FIXME: do this properly
+            val proof4 = ReductiveCutElimination( proof3 )
+            ( proof4, OccConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
+          } else {
+            val ( proofNew, conn ) = super.recurse( proof, isAncestor )
+            contract( proofNew, conn )
+          }
+        }
       }
       def contract( subProof: LKProof, subConn: OccConnector[HOLFormula] ): ( LKProof, OccConnector[HOLFormula] ) = {
         val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )

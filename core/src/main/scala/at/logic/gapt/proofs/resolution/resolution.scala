@@ -146,6 +146,26 @@ case class Taut( formula: HOLFormula ) extends InitialClause {
 case class Refl( term: LambdaExpression ) extends InitialClause {
   override def mainFormulaSequent = Sequent() :+ ( term === term )
 }
+/**
+ * Definition.
+ * {{{
+ *   ---------------------
+ *   :- ∀x (D(x) <-> φ(x))
+ * }}}
+ */
+case class Defn( defConst: HOLAtomConst, definition: LambdaExpression ) extends InitialClause {
+  val vars = defConst.exptype match {
+    case FunctionType( To, argTypes ) =>
+      definition match {
+        case Abs.Block( vs, _ ) if vs.size == argTypes.size && vs == vs.distinct =>
+          vs
+        case _ => for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x_$i", t )
+      }
+  }
+  val definitionFormula = All.Block( vars, defConst( vars ) <-> BetaReduction.betaNormalize( definition( vars ) ) )
+  override def mainFormulaSequent = Sequent() :+ definitionFormula
+  override def introducedDefinitions = Map( defConst -> definition )
+}
 
 /**
  * Factoring.
@@ -336,14 +356,7 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
  *   Γ :- Δ, D(x)
  * }}}
  *
- * This is then used together with [[Taut]] in order to use the
- * introduced definitions in other parts of the proof:
- * {{{
- *   ------------  Taut
- *   φ(x) :- φ(x)
- *   ------------  DefIntro
- *   D(x) :- φ(x)
- * }}}
+ * This inference should only be used on descendants of Input inferences.
  */
 case class DefIntro( subProof: ResolutionProof, idx: SequentIndex,
                      defAtom: HOLAtom, definition: LambdaExpression ) extends PropositionalResolutionRule {

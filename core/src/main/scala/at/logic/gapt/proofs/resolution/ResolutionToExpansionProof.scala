@@ -104,6 +104,9 @@ object ResolutionToExpansionProof {
         expansionSequent +:= ETWeakQuantifierBlock( sh, fvs.size,
           for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.toDisjunction( false ) )
         clear( p )
+      case p @ Defn( _, _ ) =>
+        expansionSequent +:= ETMerge( p.definitionFormula, false, expansions( p ).map( _._2.elements.head ) )
+        clear( p )
       case p @ Taut( f ) =>
         for {
           ( s, Sequent( Seq( l ), Seq( r ) ) ) <- expansions( p )

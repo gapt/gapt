@@ -138,11 +138,11 @@ class Clausifier( propositional: Boolean, structural: Boolean, nameGen: NameGene
       Abs( fvs, f ),
       HOLAtomConst( mkAbbrevSym(), fvs map { _.exptype }: _* )
     )
-    val repl = const( fvs: _* )
     if ( !alreadyDefined ) {
-      expand( DefIntro( Taut( f ), if ( i isAnt ) Suc( 0 ) else Ant( 0 ), repl, definition ) )
+      val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definition ) )( AllR( _, Suc( 0 ), _ ) )
+      expand( ImpR( if ( i isAnt ) AndR2( defn, Suc( 0 ) ) else AndR1( defn, Suc( 0 ) ), Suc( 0 ) ) )
     }
-    expand( DefIntro( p, i, repl, definition ) )
+    expand( DefIntro( p, i, const( fvs: _* ), definition ) )
   }
 
 }

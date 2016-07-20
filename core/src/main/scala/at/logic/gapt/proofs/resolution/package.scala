@@ -29,6 +29,7 @@ package object resolution {
         case Input( sequent )             => Input( TermReplacement( sequent, repl ) )
         case Refl( term )                 => Refl( TermReplacement( term, repl ) )
         case Taut( formula )              => Taut( TermReplacement( formula, repl ) )
+        case Defn( defConst, definition ) => Defn( TermReplacement( defConst, repl ).asInstanceOf[HOLAtomConst], TermReplacement( definition, repl ) )
         case Factor( q, i1, i2 )          => Factor( f( q ), i1, i2 )
         case Subst( q, subst )            => Subst( f( q ), TermReplacement( subst, repl ) )
         case Resolution( q1, l1, q2, l2 ) => Resolution( f( q1 ), l1, f( q2 ), l2 )
@@ -84,6 +85,9 @@ package object resolution {
           case DefIntro( _, _, defAtom, defn ) =>
             ns ++= containedNames( defAtom )
             ns ++= containedNames( defn )
+          case Defn( defConst, definition ) =>
+            ns += defConst
+            ns ++= containedNames( definition )
           case p: SkolemQuantResolutionRule =>
             ns ++= containedNames( p.skolemTerm )
             ns ++= containedNames( p.skolemDef )
