@@ -11,7 +11,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.ceres.Pickrule._
 
-object Projections extends at.logic.gapt.utils.logging.Logger {
+object Projections {
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ): Set[LKProof] =
