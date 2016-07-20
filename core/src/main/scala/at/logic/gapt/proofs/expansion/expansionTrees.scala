@@ -137,13 +137,13 @@ case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpressio
     else And( instances.values map { _.deep } )
 
   def immediateSubProofs = instances.values.toSeq
-  private lazy val product = shallow +: instances.toSeq.flatMap { case ( selectedTerm, child ) => Seq( selectedTerm, child ) }
+  private lazy val product = Seq( shallow ) ++ instances.view.flatMap { case ( selectedTerm, child ) => Seq( selectedTerm, child ) }
   override def productArity = product.size
   override def productElement( n: Int ) = product( n )
 }
 object ETWeakQuantifier {
   def withMerge( shallow: HOLFormula, instances: Iterable[( LambdaExpression, ExpansionTree )] ): ExpansionTree = {
-    ETWeakQuantifier( shallow, instances groupBy { _._1 } mapValues { children => ETMerge( children map { _._2 } ) } )
+    ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1 ).mapValues( children => ETMerge( children.map { _._2 } ) ) )
   }
 }
 object ETWeakQuantifierBlock {
@@ -151,7 +151,7 @@ object ETWeakQuantifierBlock {
     if ( blockSize == 0 ) {
       ETMerge( instances map { _._2 } )
     } else {
-      ETWeakQuantifier( shallow, instances groupBy { _._1.head } mapValues { children =>
+      ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1.head ).mapValues { children =>
         apply( instantiate( shallow, children.head._1.head ), blockSize - 1,
           children map { case ( ts, et ) => ts.tail -> et } )
       } )
@@ -178,7 +178,7 @@ object ETWeakQuantifierBlock {
 
     walk( et, Seq(), numberQuants )
 
-    Some( ( et.shallow, numberQuants, instances.toMap.mapValues( ETMerge( _ ) ) ) )
+    Some( ( et.shallow, numberQuants, Map() ++ instances.mapValues( ETMerge( _ ) ) ) )
   }
 }
 
@@ -515,7 +515,7 @@ object cleanStructureET {
       case r                   => ETSkolemQuantifier( sh, st, sf, r )
     }
     case ETWeakQuantifier( sh, inst ) =>
-      val cleanInst = inst mapValues apply filterNot { _._2.isInstanceOf[ETWeakening] }
+      val cleanInst = Map() ++ inst.mapValues( apply ).filterNot { _._2.isInstanceOf[ETWeakening] }
       if ( cleanInst isEmpty ) ETWeakening( sh, t.polarity )
       else ETWeakQuantifier( sh, cleanInst )
     case _ => t

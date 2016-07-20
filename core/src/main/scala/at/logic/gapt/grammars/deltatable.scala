@@ -31,7 +31,7 @@ object deltaTableAlgorithm {
         else leastGeneralGeneralization( currentLGG, newTerm )
 
       if ( !newLGG.isInstanceOf[Var] && maxArity.forall { substCurLGG.size <= _ } ) {
-        val newSubst = currentSubst.map { subst => Substitution( substCurLGG mapValues { subst( _ ) } ) } + Substitution( substNewTerm )
+        val newSubst = currentSubst.map { subst => Substitution( Map() ++ substCurLGG.mapValues( subst( _ ) ) ) } + Substitution( substNewTerm )
         val newCover = currentCover + newTerm
         deltatable( newSubst ) ::= ( newLGG -> newCover )
         populate( rest, newLGG, newCover, newSubst )
@@ -42,7 +42,7 @@ object deltaTableAlgorithm {
 
     populate( termSet.toList, null, Set(), Set() )
 
-    deltatable.mapValues { _.toSet }.toMap
+    Map() ++ deltatable.mapValues( _.toSet )
   }
 
   def keySubsumption( a: Set[Substitution], b: Set[Substitution] ): Set[Map[Var, Var]] =
@@ -61,7 +61,7 @@ object deltaTableAlgorithm {
     for {
       ( corrK, `chosenV` ) <- b.flatten
       newAlreadyFixed = alreadyFixed + ( chosenK -> corrK )
-      if a.map { _ filterKeys newAlreadyFixed.keySet } subsetOf b.map { newAlreadyFixed mapValues _ }
+      if a.map( Map() ++ _.filterKeys( newAlreadyFixed.keySet ) ) subsetOf b.map( bi => Map() ++ newAlreadyFixed.mapValues( bi ) )
       solution <- keySubsumption( a, b, newAlreadyFixed )
     } yield solution
   }

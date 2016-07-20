@@ -94,7 +94,7 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
       }
     for ( ( ntv, i ) <- g.nonTerminals.zipWithIndex ) possibleAssignments += ( i -> ntv.map { _ => notASubTerm } )
     discoverAssignments( Map( g.axiom -> t ) )
-    val possibleValues = handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
+    val possibleValues = Map() ++ handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
 
     def Match( ntIdx: Int, t: List[FOLTerm], s: List[FOLTerm] ) =
       syntacticMatching( s zip t filter { _._2 != notASubTerm } ) match {

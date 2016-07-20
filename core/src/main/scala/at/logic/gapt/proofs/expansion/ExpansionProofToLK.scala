@@ -136,12 +136,12 @@ class ExpansionProofToLK(
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
     def possibleInsts( insts: Map[LambdaExpression, ExpansionTree] ) =
-      insts filterKeys { t => freeVariables( t ) intersect upcomingEVs isEmpty }
+      Map() ++ insts.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty )
 
-    expSeq.zipWithIndex.elements collectFirst {
-      case ( ETWeakQuantifier( sh, insts ), i ) if possibleInsts( insts ).nonEmpty =>
-        val insts_ = possibleInsts( insts )
+    for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {
+      val insts_ = possibleInsts( insts )
 
+      if ( insts_.nonEmpty ) {
         var newExpSeq =
           if ( insts_ == insts ) expSeq.delete( i )
           else expSeq.updated( i, ETWeakQuantifier( sh, insts -- insts_.keys ) )
@@ -149,14 +149,17 @@ class ExpansionProofToLK(
         if ( i isSuc ) newExpSeq :++= insts_.values
         else newExpSeq ++:= insts_.values
 
-        solve( cuts, newExpSeq ) map { p0 =>
+        return Some( solve( cuts, newExpSeq ) map { p0 =>
           insts_.foldLeft( p0 ) {
             case ( p, ( _, child ) ) if !p.conclusion.contains( child.shallow, i.isSuc ) => p
             case ( p, ( t, _ ) ) if i isAnt => ForallLeftRule( p, sh, t )
             case ( p, ( t, _ ) ) if i isSuc => ExistsRightRule( p, sh, t )
           }
-        }
+        } )
+      }
     }
+
+    None
   }
 
   private def tryCut( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {

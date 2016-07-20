@@ -141,7 +141,7 @@ class RecSchemGenLangFormula(
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
   def derivable( from: LambdaExpression, to: LambdaExpression ) = FOLAtom( s"$from=>$to" )
 
-  private val rulesPerNonTerminal = recursionScheme.rules.
+  private val rulesPerNonTerminal = Map() ++ recursionScheme.rules.
     groupBy { case Rule( _, Apps( nt: Const, _ ) ) => nt }.mapValues( _.toSeq )
   def reverseMatches( against: LambdaExpression ) =
     against match {

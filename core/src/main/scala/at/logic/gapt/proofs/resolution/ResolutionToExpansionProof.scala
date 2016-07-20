@@ -190,7 +190,7 @@ object ResolutionToExpansionProof {
         propg( p, p.subProof, _.groupBy( _._1.restrict( subFVs ) ).mapValues( ess =>
           for ( i <- p.subProof.conclusion.indicesSequent ) yield if ( i == p.idx ) ETWeakQuantifier(
             ess.head._1.restrict( subFVs )( p.subProof.conclusion( p.idx ) ),
-            ess.groupBy( _._1( p.variable ) ).mapValues( _.map( _._2( oc.child( i ) ) ) ).mapValues( ETMerge( _ ) )
+            Map() ++ ess.groupBy( _._1( p.variable ) ).mapValues( _.map( _._2( oc.child( i ) ) ) ).mapValues( ETMerge( _ ) )
           )
           else ETMerge( ess.map( _._2 ).map( _( oc.child( i ) ) ) ) ).toSet )
 

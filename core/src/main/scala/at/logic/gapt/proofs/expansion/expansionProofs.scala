@@ -402,7 +402,7 @@ object eliminateDefsET {
       case ETImp( ETDefinedAtom( Apps( _, as ), _, _ ), repl ) => as -> repl
       case ETImp( repl, ETDefinedAtom( Apps( _, as ), _, _ ) ) => as -> repl
     }
-    var insts = insts0.groupBy( _._1 ).mapValues { repls =>
+    var insts = Map() ++ insts0.groupBy( _._1 ).mapValues { repls =>
       val shallow = repls.head._2.shallow
       ETMerge( shallow, true, repls.map( _._2 ).filter( _.polarity ) ) ->
         ETMerge( shallow, false, repls.map( _._2 ).filter( !_.polarity ) )
@@ -437,7 +437,7 @@ object eliminateDefsET {
       case ETAnd( l, r )                        => ETAnd( repl( l ), repl( r ) )
       case ETOr( l, r )                         => ETOr( repl( l ), repl( r ) )
       case ETImp( l, r )                        => ETImp( repl( l ), repl( r ) )
-      case ETWeakQuantifier( sh, is )           => ETWeakQuantifier( replf( sh ), is mapValues repl )
+      case ETWeakQuantifier( sh, is )           => ETWeakQuantifier( replf( sh ), Map() ++ is.mapValues( repl ) )
       case ETStrongQuantifier( sh, ev, ch )     => ETStrongQuantifier( replf( sh ), ev, repl( ch ) )
       case ETSkolemQuantifier( sh, st, sd, ch ) => ETSkolemQuantifier( replf( sh ), st, sd, repl( ch ) )
 

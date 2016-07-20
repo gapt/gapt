@@ -163,7 +163,7 @@ case class ReforestState(
     for ( nt <- nts ) require( rules( nt ).size == 1 )
     val simpl = DefinitionElimination( nts map { nt => nt -> rules( nt ).head } toMap )
 
-    copy( rules = rules -- nts mapValues { _ map { simpl( _ ) } } )
+    copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { simpl( _ ) } } )
   }
 
   def expandUseless: ReforestState = {

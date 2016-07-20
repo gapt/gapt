@@ -26,7 +26,7 @@ trait SATSolver extends OneShotProver {
     solve( cnf ) map {
       case i: MapBasedInterpretation =>
         // remove abbreviations for subformulas
-        new MapBasedInterpretation( i.model.filterKeys {
+        MapBasedInterpretation( Map() ++ i.model.filterKeys {
           case c: HOLAtomConst => !definitions.isDefinedAt( c )
           case _               => true
         } )

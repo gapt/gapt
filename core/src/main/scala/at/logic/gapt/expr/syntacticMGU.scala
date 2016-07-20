@@ -23,7 +23,7 @@ object syntacticMGU {
             None
           } else {
             val subst = Substitution( x -> t_ )
-            unify( rest, ( env mapValues { subst( _ ) } ) + ( x -> t_ ), bound )
+            unify( rest, Map() ++ env.mapValues( subst( _ ) ) + ( x -> t_ ), bound )
           }
         }
       case ( exp, v: Var ) => unify( ( v -> exp ) :: rest, env, bound )
