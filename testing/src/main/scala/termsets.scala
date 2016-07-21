@@ -3,6 +3,7 @@ import java.nio.file._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
+import at.logic.gapt.proofs.loadExpansionProof
 
 import scala.App
 
@@ -26,7 +27,7 @@ object dumpTermset extends App {
     Files.write( outFile, termset.map( termToString ).toSeq.
       sorted.map( _ + "\n" ).mkString.getBytes( "UTF-8" ) )
 
-  val Some( ( expansionProof, _ ) ) = loadProof( inputFileName )
+  val Some( ( expansionProof, _ ) ) = loadExpansionProof( inputFileName )
   val termSet = FOLInstanceTermEncoding( expansionProof )._1
   writeTermset( Paths get outputFileName, simplifyNames( termSet ) )
 }

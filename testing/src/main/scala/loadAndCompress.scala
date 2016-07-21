@@ -4,6 +4,7 @@ import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 
 import scala.io.Source
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
+import at.logic.gapt.proofs.loadExpansionProof
 
 object loadAndCompress extends App {
   val Array( methodName, fileName ) = args
@@ -14,7 +15,7 @@ object loadAndCompress extends App {
     if ( fileName endsWith ".termset" ) {
       Source.fromFile( fileName ).getLines().map( parseTerm ).toSet
     } else {
-      val Some( ( expansion, _ ) ) = loadProof( fileName )
+      val Some( ( expansion, _ ) ) = loadExpansionProof( fileName )
       FOLInstanceTermEncoding( expansion )._1
     }
 

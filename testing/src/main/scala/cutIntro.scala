@@ -1,24 +1,18 @@
 package at.logic.gapt.testing
 
-import at.logic.gapt.expr.{ EqC, FOLFunction, HOLAtom, constants }
-import at.logic.gapt.formats.tptp.TptpProofParser
-import at.logic.gapt.grammars.DeltaTableMethod
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
-import at.logic.gapt.utils.logging.MetricsCollector
-import at.logic.gapt.formats.leancop.LeanCoPParser
 import java.io._
 
-import at.logic.gapt.examples._
-import at.logic.gapt.formats.verit.VeriTParser
-import at.logic.gapt.proofs.lk._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, numberOfLogicalInferencesRes, simplifyResolutionProof }
+import at.logic.gapt.examples._
+import at.logic.gapt.expr.FOLFunction
+import at.logic.gapt.grammars.DeltaTableMethod
+import at.logic.gapt.proofs.expansion._
+import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
+import at.logic.gapt.utils.logging.{ MetricsCollector, metrics }
 import at.logic.gapt.utils.{ glob, withTimeout }
-import at.logic.gapt.utils.logging.metrics
-import at.logic.gapt.proofs.expansion._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
@@ -59,66 +53,6 @@ class MetricsPrinter extends MetricsCollector {
   }
 }
 
-object loadProof {
-
-  lazy val proofSeqRegex = """(\w+)\((\d+)\)""".r
-  def apply( fileName: String ): Option[( ExpansionProof, Boolean )] = fileName match {
-    case proofSeqRegex( name, n ) =>
-      val p = proofSequences.find( _.name == name ).get( n.toInt )
-      val hasEquality = containsEqualityReasoning( p )
-      metrics.value( "lkinf_input", rulesNumber( p ) )
-      Some( eliminateCutsET( LKToExpansionProof( p ) ) -> hasEquality )
-    case _ if fileName endsWith ".proof_flat" =>
-      VeriTParser.getExpansionProof( fileName ) map { ep => ExpansionProof( addSymmetry( ep ) ) -> false }
-    case _ if fileName contains "/leanCoP" =>
-      LeanCoPParser.getExpansionProof(
-        new StringReader( extractFromTSTPCommentsIfNecessary( Source.fromFile( fileName ).mkString ) )
-      ) map { ExpansionProof( _ ) -> true }
-    case _ if fileName contains "/Prover9" =>
-      val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent(
-        extractFromTSTPCommentsIfNecessary( Source.fromFile( fileName ).mkString )
-      )
-      Some( loadResolutionProof( resProof, endSequent ) )
-    case _ => // try tstp format
-      val tstpOutput = Source fromFile fileName mkString
-
-      metrics.value( "tstp_is_cnf_ref", tstpOutput contains "CNFRefutation" )
-
-      val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
-      metrics.value( "tstp_sketch_size", sketch.subProofs.size )
-
-      RefutationSketchToResolution( sketch ) map { resProof =>
-        loadResolutionProof( resProof, endSequent )
-      } toOption
-  }
-
-  def extractFromTSTPCommentsIfNecessary( output: String ): String = {
-    val lines = output.split( "\n" )
-    if ( lines contains "%----ERROR: Could not form TPTP format derivation" )
-      lines.toSeq.
-        dropWhile( _ != "%----ORIGINAL SYSTEM OUTPUT" ).drop( 1 ).
-        takeWhile( !_.startsWith( "%-----" ) ).dropRight( 1 ).
-        map { _ substring 2 }.
-        dropWhile( _ startsWith "% " ).drop( 1 ).
-        filterNot( _ startsWith "% SZS" ).
-        filterNot( _ startsWith "\\n% SZS" ).
-        mkString( "", "\n", "\n" )
-    else
-      output
-  }
-
-  def loadResolutionProof( resProof: ResolutionProof, endSequent: HOLSequent ) = {
-    metrics.value( "resinf_input", numberOfLogicalInferencesRes( simplifyResolutionProof( resProof ) ) )
-    val expansionProof = ResolutionToExpansionProof( resProof )
-    val containsEquations = constants( expansionProof.shallow ) exists {
-      case EqC( _ ) => true
-      case _        => false
-    }
-    expansionProof -> containsEquations
-  }
-
-}
-
 object parseMethod {
 
   def apply( methodName: String ) = methodName match {
@@ -144,9 +78,20 @@ object testCutIntro extends App {
   metrics.value( "file", fileName )
   metrics.value( "method", methodName )
 
+  val proofSeqRegex = """(\w+)\((\d+)\)""".r
+  def loadProofForCutIntro( fileName: String ) = fileName match {
+    case proofSeqRegex( name, n ) =>
+      val p = proofSequences.find( _.name == name ).get( n.toInt )
+      val hasEquality = containsEqualityReasoning( p )
+      metrics.value( "lkinf_input", rulesNumber( p ) )
+      Some( eliminateCutsET( LKToExpansionProof( p ) ) -> hasEquality )
+    case _ =>
+      loadExpansionProof( fileName )
+  }
+
   metrics.time( "total" ) {
     val parseResult = try metrics.time( "parse" ) {
-      loadProof( fileName ) orElse {
+      loadProofForCutIntro( fileName ) orElse {
         metrics.value( "status", "parsing_proof_not_found" )
         None
       }
