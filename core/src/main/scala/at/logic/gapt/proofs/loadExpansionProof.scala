@@ -47,7 +47,6 @@ object loadExpansionProof {
         dropWhile( _ != "%----ORIGINAL SYSTEM OUTPUT" ).drop( 1 ).
         takeWhile( !_.startsWith( "%-----" ) ).dropRight( 1 ).
         map { _ substring 2 }.
-        dropWhile( _ startsWith "% " ).drop( 1 ).
         filterNot( _ startsWith "% SZS" ).
         filterNot( _ startsWith "\\n% SZS" ).
         mkString( "", "\n", "\n" )

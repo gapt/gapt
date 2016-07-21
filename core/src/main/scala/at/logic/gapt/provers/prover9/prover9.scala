@@ -90,7 +90,7 @@ object Prover9Importer extends ExternalProgram {
 
   def robinsonProof( p9Output: String ): ResolutionProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
-    val fixedP9Output = runProcess( Seq( "prooftrans" ), p9Output )
+    val fixedP9Output = runProcess( Seq( "prooftrans" ), loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ) )
 
     Prover9 parseProof fixedP9Output
   }
@@ -128,9 +128,11 @@ object Prover9Importer extends ExternalProgram {
   }
 
   def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( ResolutionProof, HOLSequent ) = {
-    val resProof = robinsonProof( p9Output )
+    val p9Output_ = loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output )
+
+    val resProof = robinsonProof( p9Output_ )
     val endSequent = existsclosure {
-      val tptpEndSequent = reconstructEndSequent( p9Output )
+      val tptpEndSequent = reconstructEndSequent( p9Output_ )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
         resProof.subProofs.collect { case Input( seq ) => seq.toDisjunction } ++: Sequent()

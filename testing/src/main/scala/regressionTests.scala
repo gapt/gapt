@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import java.io.{ File, FileWriter }
+import java.io.{ File, FileWriter, StringReader }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Sequent, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
@@ -105,7 +105,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def timeout = Some( 2 minutes )
 
   override def test( implicit testRun: TestRun ) = {
-    val E = LeanCoPParser.getExpansionProof( f.getAbsolutePath ).get --- "import"
+    val E = LeanCoPParser.getExpansionProof( new StringReader( loadExpansionProof.extractFromTSTPCommentsIfNecessary( io.Source.fromFile( f ).mkString ) ) ).get --- "import"
 
     val deep = E.deep --- "toDeep"
     VeriT.isValid( deep.toDisjunction ) !-- "verit validity"
@@ -123,8 +123,8 @@ class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
-  def prover9Proofs = glob( "testing/TSTP/prover9/**/*.s.out" )
-  def leancopProofs = glob( "testing/TSTP/leanCoP/**/*.out" )
+  def prover9Proofs = glob( "testing/TSTP/prover9/**/*.s" )
+  def leancopProofs = glob( "testing/TSTP/leanCoP/**/*.s" )
   def veritProofs = glob( "testing/veriT-SMT-LIB/**/*.proof_flat" )
 
   def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( new File( fn ) ) }

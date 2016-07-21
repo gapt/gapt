@@ -1,28 +1,3 @@
-%------------------------------------------------------------------------------
-File       : Prover9---1109a
-Problem    : GEO200+1 : TPTP v5.3.0. Released v3.3.0.
-Transform  : none
-Format     : tptp:raw
-Command    : run_prover9 %d %s
-
-Computer   : art05.cs.miami.edu
-Model      : i686 i686
-CPU        : Intel(R) Pentium(R) 4 CPU 2.80GHz @ 2800MHz
-Memory     : 2005MB
-OS         : Linux 2.6.32.26-175.fc12.i686.PAE
-CPULimit   : 300s
-DateTime   : Wed Jun 13 15:11:41 EDT 2012
-
-Result     : Theorem 0.60s
-Output     : Refutation 0.60s
-Verified   : 
-Statistics : -
-
-Comments   : 
-%------------------------------------------------------------------------------
-%----ERROR: Could not form TPTP format derivation
-%------------------------------------------------------------------------------
-%----ORIGINAL SYSTEM OUTPUT
 ============================== Prover9 ===============================
 Prover9 (32) version 2009-11A, November 2009.
 Process 10289 was started by tptp on art05.cs.miami.edu,
@@ -136,5 +111,3 @@ THEOREM PROVED
 Exiting with 1 proof.
 Process 10289 exit (max_proofs) Wed Jun 13 15:11:42 2012
 Prover9 interrupted
-
-%------------------------------------------------------------------------------
