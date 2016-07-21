@@ -40,6 +40,8 @@ case class ProofState private (
       s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}"
     )
 
+    if ( subGoal == proofSegment ) return this
+
     val newOpenAssumptions = proofSegment.treeLike.postOrder.collect { case oa: OpenAssumption => oa }.distinct
 
     val subGoals_ = subGoals.filter( _.index != index ).diff( newOpenAssumptions )
