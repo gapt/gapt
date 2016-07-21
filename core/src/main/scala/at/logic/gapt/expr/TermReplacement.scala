@@ -77,6 +77,14 @@ private[expr] trait DefaultReplaceables {
       def names( obj: Seq[I] ) = obj flatMap { containedNames( _ ) } toSet
     }
 
+  implicit def setReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Set[I], Set[O]] =
+    new Replaceable[Set[I], Set[O]] {
+      override def replace( obj: Set[I], p: PartialFunction[LambdaExpression, LambdaExpression] ) =
+        obj.map { TermReplacement( _, p ) }
+
+      def names( obj: Set[I] ) = obj flatMap { containedNames( _ ) }
+    }
+
   implicit def optionReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Option[I], Option[O]] =
     new Replaceable[Option[I], Option[O]] {
       override def replace( obj: Option[I], p: PartialFunction[LambdaExpression, LambdaExpression] ) =
