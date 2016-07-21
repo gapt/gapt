@@ -104,6 +104,7 @@ case class OpenAssumption(
 ) extends InitialSequent {
   override def name = "ass"
 
+  def labels = labelledSequent.map( _._1 )
   override def conclusion = labelledSequent map { labelledFormula => labelledFormula._2 }
 
   def apply( label: String ): HOLFormula = labelledSequent.elements.find( _._1 == label ).get._2
