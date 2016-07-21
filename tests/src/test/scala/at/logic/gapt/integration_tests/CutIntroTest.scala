@@ -2,13 +2,13 @@ package at.logic.gapt.integration_tests
 
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.Utils
-import at.logic.gapt.expr.hol.{ containsQuantifier, lcomp }
+import at.logic.gapt.expr.fol.{ Numeral, Utils }
+import at.logic.gapt.expr.hol.{ containsQuantifier, formulaToSequent, lcomp }
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.lk.{ CutRule, quantRulesNumber }
+import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
@@ -85,6 +85,18 @@ class CutIntroTest extends Specification {
       result_new.formulas must beEqualTo( cf1 :: cf2 :: Nil )
 
       quantRulesNumber( r_proof ) must_== grammar.size
+    }
+
+    "introduce weak quantifiers as low as possible" in {
+      val endSequent = formulaToSequent.pos( hof"!x q(x) & (q(c)->p(0)) & !x (p(x)&q(c)->p(s(x))) -> p(${Numeral( 9 )})" )
+      val Some( proof ) = Escargot.getLKProof( endSequent )
+      val Some( proofWithCut ) = CutIntroduction.compressLKProof( proof, method = DeltaTableMethod(), verbose = false )
+
+      // !x q(x) must only be instantiated once, even though it is used in both branches of the cut.
+      proofWithCut.treeLike.postOrder.filter {
+        case p: ForallLeftRule => p.mainFormula == hof"!x q(x)"
+        case _                 => false
+      } must haveSize( 1 )
     }
   }
 }

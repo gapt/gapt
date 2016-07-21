@@ -361,34 +361,29 @@ object CutIntroduction {
   }
 
   def buildProofWithCut( solStruct: SolutionStructure, prover: Prover ): LKProof = {
-    // ithCut(i) returns a proof that ends in (endSequent :+ qfCutFormulas(i+1) :+ ... :+ qfCutFormulas(n))
+    // ithCut(i) returns a proof that ends in (availableESInstanceFormulas ++ endSequent :+ qfCutFormulas(i+1) :+ ... :+ qfCutFormulas(n))
     def ithCut( i: Int ): LKProof = {
       val eigenVariablesInScope = ( for ( ( evs, j ) <- solStruct.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j ) yield ev ).toSet
-      val availableESInstances = for ( ( u, insts ) <- solStruct.sehs.us; inst <- insts if freeVariables( inst ) subsetOf eigenVariablesInScope ) yield ( u, inst )
-      val availableESInstanceFormulas = for ( ( u, inst ) <- availableESInstances ) yield instantiate( u, inst )
+      val availableESInstanceFormulas = for ( ( u, insts ) <- solStruct.sehs.us; inst <- insts if freeVariables( inst ) subsetOf eigenVariablesInScope ) yield instantiate( u, inst )
       val availableCutFormulas = for ( ( cf, j ) <- solStruct.formulas.zipWithIndex if i < j ) yield cf
       // Instances of the sequent on the right side of the cut, without the instances of the cut-formula.
       val context = availableESInstanceFormulas :++ availableCutFormulas
 
       if ( i == -1 ) {
-        var proof = prover getLKProof context getOrElse { throw new CutIntroUnprovableException( context.toString ) }
-        proof = WeakeningContractionMacroRule( proof, context, strict = true )
-        for ( ( u, inst ) <- availableESInstances.antecedent )
-          proof = ForallLeftBlock( proof, u, inst )
-        for ( ( u, inst ) <- availableESInstances.succedent )
-          proof = ExistsRightBlock( proof, u, inst )
-
-        ContractionMacroRule( proof )
+        ContractionMacroRule( prover getLKProof context getOrElse { throw new CutIntroUnprovableException( context.toString ) } )
       } else {
-        val lhs = ForallRightBlock( ithCut( i - 1 ), solStruct.cutFormulas( i ), solStruct.sehs.ss( i )._1 )
+        var lhs = ithCut( i - 1 )
+        for {
+          ( u, insts ) <- solStruct.sehs.us
+          inst <- insts.distinct
+          if freeVariables( inst ).intersect( solStruct.sehs.eigenVariables( i ).toSet ).nonEmpty
+        } lhs = WeakQuantifierBlock( lhs, u, inst )
+        lhs = ForallRightBlock( lhs, solStruct.cutFormulas( i ), solStruct.sehs.eigenVariables( i ) )
+        lhs = ContractionMacroRule( lhs )
 
         val rhsQfSequent = ( for ( inst <- solStruct.sehs.ss( i )._2 ) yield instantiate( solStruct.cutFormulas( i ), inst ) ) ++: context
         var rhs = prover getLKProof rhsQfSequent getOrElse { throw new CutIntroUnprovableException( rhsQfSequent.toString ) }
         rhs = WeakeningContractionMacroRule( rhs, rhsQfSequent, strict = true )
-        for ( ( u, inst ) <- availableESInstances.antecedent )
-          rhs = ForallLeftBlock( rhs, u, inst )
-        for ( ( u, inst ) <- availableESInstances.succedent )
-          rhs = ExistsRightBlock( rhs, u, inst )
         for ( inst <- solStruct.sehs.ss( i )._2 )
           rhs = ForallLeftBlock( rhs, solStruct.cutFormulas( i ), inst )
         rhs = ContractionMacroRule( rhs )
@@ -397,7 +392,13 @@ object CutIntroduction {
       }
     }
 
-    ithCut( solStruct.formulas.indices.last )
+    var proof = ithCut( solStruct.formulas.indices.last )
+    for {
+      ( u, insts ) <- solStruct.sehs.us
+      inst <- insts.distinct
+      if freeVariables( inst ).isEmpty
+    } proof = WeakQuantifierBlock( proof, u, inst )
+    WeakeningContractionMacroRule( proof, solStruct.endSequent, strict = true )
   }
 }
 

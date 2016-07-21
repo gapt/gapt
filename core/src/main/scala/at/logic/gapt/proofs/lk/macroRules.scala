@@ -558,6 +558,15 @@ object ExistsRightBlock {
   }
 }
 
+object WeakQuantifierBlock {
+  def apply( p: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ) =
+    main match {
+      case _ if terms.isEmpty => p
+      case All( _, _ )        => ForallLeftBlock( p, main, terms )
+      case Ex( _, _ )         => ExistsRightBlock( p, main, terms )
+    }
+}
+
 /**
  * This macro rule simulates a series of contractions in the antecedent.
  *
