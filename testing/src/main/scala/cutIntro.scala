@@ -156,7 +156,7 @@ object findNonTrivialTSTPExamples extends App {
     try {
       println( fn )
       withTimeout( 60 seconds ) {
-        val p = Prover9Importer.expansionProofFromFile( fn )
+        val p = Prover9Importer.expansionProof( fn )
         val terms = FOLInstanceTermEncoding( p.shallow ).encode( p )
         val functions = terms map { case FOLFunction( f, _ ) => f }
 

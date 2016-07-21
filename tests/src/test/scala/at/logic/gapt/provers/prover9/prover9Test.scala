@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.Input
 import org.specs2.mutable._
@@ -57,7 +58,7 @@ class Prover9Test extends Specification with SequentMatchers {
   }
 
   "Prover9 proof output loader" should {
-    def load( fn: String ) = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString
+    def load( fn: String ) = ClasspathInputFile( fn )
 
     "goat puzzle PUZ047+1.out" in {
       Prover9Importer.lkProof( load( "PUZ047+1.out" ) )

@@ -3,6 +3,7 @@ package at.logic.gapt.provers.metis
 import java.io.IOException
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
@@ -27,7 +28,7 @@ class Metis extends ResolutionProver with ExternalProgram {
             dropWhile( !_.startsWith( "SZS output start CNFRefutation " ) ).drop( 1 ).
             takeWhile( !_.startsWith( "SZS output end CNFRefutation " ) ).
             mkString( "\n" )
-          RefutationSketchToResolution( TptpProofParser.parse( tptpDerivation, labelledCNF mapValues {
+          RefutationSketchToResolution( TptpProofParser.parse( StringInputFile( tptpDerivation ), labelledCNF mapValues {
             Seq( _ )
           } ) ) match {
             case Success( proof ) => Some( proof )

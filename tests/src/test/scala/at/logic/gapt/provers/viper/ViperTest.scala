@@ -1,5 +1,6 @@
 package at.logic.gapt.provers.viper
 
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
@@ -20,7 +21,7 @@ class ViperTest extends Specification {
       prob in {
         if ( !SPASS.isInstalled || !Z3.isInstalled || !TipSmtParser.isInstalled ) skipped
         val ( problem, options ) = Viper.parseCode(
-          io.Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( s"induction/$prob.smt2" ) ).mkString,
+          ClasspathInputFile( s"induction/$prob.smt2" ),
           Map( "verbose" -> "false" )
         )
         new Viper( problem, options ).solve()

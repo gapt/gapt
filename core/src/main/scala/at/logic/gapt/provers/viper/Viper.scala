@@ -2,6 +2,7 @@ package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
+import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.InductiveType
@@ -238,11 +239,11 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 object Viper {
 
   val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,.]*)\s*""".r
-  def extractOptions( tipSmtCode: String ) =
-    tipSmtCode.split( "\n" ).collect {
+  def extractOptions( tipSmtCode: InputFile ) =
+    tipSmtCode.read.split( "\n" ).collect {
       case optionRegex( k, v ) => ( k, v )
     }
-  def parseCode( tipSmtCode: String, options: Map[String, String] ): ( TipProblem, ViperOptions ) = {
+  def parseCode( tipSmtCode: InputFile, options: Map[String, String] ): ( TipProblem, ViperOptions ) = {
     val options_ = options ++ extractOptions( tipSmtCode )
     val problem =
       if ( options_ contains "nofixup" ) TipSmtParser parse tipSmtCode
@@ -256,9 +257,9 @@ object Viper {
         println( "Usage: viper tip-problem.smt2" )
         sys exit 1
       case Seq( "-" ) =>
-        parseCode( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString, options )
+        parseCode( StringInputFile( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString ), options )
       case Seq( fn ) =>
-        parseCode( Source fromFile fn mkString, options )
+        parseCode( fn, options )
       case cmdLineOptRegex( k, v ) +: rest =>
         parseArgs( rest, options + ( k -> v ) )
     }

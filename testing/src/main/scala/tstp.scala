@@ -1,5 +1,6 @@
 package at.logic.gapt.testing
 
+import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 
@@ -13,7 +14,7 @@ object testTstpImport extends App {
   if ( !tstpOutput.contains( "CNFRefutation" ) )
     println( "NOT_CNF_REFUTATION" )
 
-  val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
+  val ( endSequent, sketch ) = TptpProofParser parse StringInputFile( tstpOutput )
   println( s"SKETCH_SIZE ${sketch.subProofs.size}" )
 
   val resolution = RefutationSketchToResolution( sketch ) getOrElse {

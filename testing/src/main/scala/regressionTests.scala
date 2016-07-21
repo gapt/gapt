@@ -11,6 +11,7 @@ import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
+import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ Sequent, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
@@ -28,7 +29,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def timeout = Some( 10 minutes )
 
   override def test( implicit testRun: TestRun ) = {
-    val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequentFromFile( f getAbsolutePath ) --- "import"
+    val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent( f ) --- "import"
 
     ResolutionToExpansionProof( robinson ) --? "RobinsonToExpansionProof" map { E2 =>
       VeriT.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
@@ -105,7 +106,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   override def timeout = Some( 2 minutes )
 
   override def test( implicit testRun: TestRun ) = {
-    val E = LeanCoPParser.getExpansionProof( new StringReader( loadExpansionProof.extractFromTSTPCommentsIfNecessary( io.Source.fromFile( f ).mkString ) ) ).get --- "import"
+    val E = LeanCoPParser.getExpansionProof( loadExpansionProof.extractFromTSTPCommentsIfNecessary( f ) ).get --- "import"
 
     val deep = E.deep --- "toDeep"
     VeriT.isValid( deep.toDisjunction ) !-- "verit validity"
@@ -114,7 +115,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
 class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
   override def test( implicit testRun: TestRun ) = {
-    val E = addSymmetry( VeriTParser.getExpansionProof( f.getAbsolutePath ).get ) --- "import"
+    val E = addSymmetry( VeriTParser.getExpansionProof( f ).get ) --- "import"
 
     val deep = E.deep --- "toDeep"
     MiniSAT.isValid( deep.toDisjunction ) !-- "minisat validity"

@@ -3,9 +3,11 @@ package at.logic.gapt.formats.leancop
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.expansion.{ ExpansionTree, ExpansionSequent, formulaToExpansionTree }
+import at.logic.gapt.proofs.expansion.{ ExpansionSequent, ExpansionTree, formulaToExpansionTree }
+import java.io.{ FileReader, Reader, StringReader }
 
-import java.io.{ Reader, FileReader }
+import at.logic.gapt.formats.InputFile
+
 import scala.util.parsing.combinator._
 import scala.collection.immutable.HashMap
 
@@ -18,8 +20,8 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
 
   private val nLine = sys.props( "line.separator" )
 
-  def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
-    getExpansionProof( new FileReader( filename ) )
+  def getExpansionProof( file: InputFile ): Option[ExpansionSequent] = {
+    getExpansionProof( new StringReader( file.read ) )
   }
 
   def getExpansionProof( reader: Reader ): Option[ExpansionSequent] = {

@@ -3,6 +3,7 @@ package at.logic.gapt.provers.eprover
 import java.io.IOException
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser, tptpToString }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
@@ -21,7 +22,7 @@ class EProver extends ResolutionProver with ExternalProgram {
         val lines = output.split( "\n" )
         if ( lines.contains( "# SZS status Unsatisfiable" ) )
           RefutationSketchToResolution( TptpProofParser.parse(
-            lines.filterNot( _ startsWith "# " ).mkString( "\n" ),
+            StringInputFile( lines.filterNot( _ startsWith "# " ).mkString( "\n" ) ),
             labelledCNF mapValues { Seq( _ ) }
           ) ).toOption
         else None

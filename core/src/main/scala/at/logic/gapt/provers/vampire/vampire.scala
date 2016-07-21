@@ -3,6 +3,7 @@ package at.logic.gapt.provers.vampire
 import java.io.IOException
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.{ FOLClause, HOLClause }
@@ -24,7 +25,7 @@ class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() )
           tptpIn
         ).split( "\n" )
         if ( output.head startsWith "Refutation" ) {
-          val sketch = TptpProofParser.parse( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) )._2
+          val sketch = TptpProofParser.parse( StringInputFile( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) ) )._2
           val Success( resolution ) = RefutationSketchToResolution( sketch )
           Some( fixDerivation( resolution, cnf ) )
         } else None

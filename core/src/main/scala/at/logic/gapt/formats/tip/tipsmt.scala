@@ -4,6 +4,7 @@ import java.io.IOException
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.lisp._
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
@@ -137,17 +138,14 @@ class TipSmtParser {
 }
 
 object TipSmtParser extends ExternalProgram {
-  def parse( tipBench: String ): TipProblem = {
+  def parse( tipBench: InputFile ): TipProblem = {
     val tipSmtParser = new TipSmtParser
-    SExpressionParser.parseString( tipBench ) foreach tipSmtParser.parse
+    SExpressionParser( tipBench ) foreach tipSmtParser.parse
     tipSmtParser.toProblem
   }
 
-  def parseFile( filename: String ): TipProblem =
-    parse( Source fromFile filename mkString )
-
-  def fixupAndParse( contents: String ): TipProblem =
-    parse( runProcess(
+  def fixupAndParse( tipBench: InputFile ): TipProblem =
+    parse( StringInputFile( runProcess(
       Seq(
         "tip",
         "--type-skolem-conjecture",
@@ -159,12 +157,9 @@ object TipSmtParser extends ExternalProgram {
         "--uncurry-theory",
         "--let-lift"
       ),
-      contents,
+      tipBench.read,
       catchStderr = true
-    ) )
-
-  def fixupAndParseFile( filename: String ): TipProblem =
-    fixupAndParse( Source fromFile filename mkString )
+    ) ) )
 
   val isInstalled =
     try { runProcess( Seq( "tip", "--help" ), "" ); true }

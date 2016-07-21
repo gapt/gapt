@@ -4,6 +4,7 @@ import java.io.IOException
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
+import at.logic.gapt.formats.{ StringInputFile, InputFile }
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.formats.prover9.{ Prover9TermParser, Prover9TermParserLadrStyle }
@@ -15,7 +16,6 @@ import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
 
 object Prover9 extends Prover9( extraCommands = _ => Seq() )
 class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
@@ -39,7 +39,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
   private[prover9] def parseProof( p9Output: String ) = {
     val ivy = runProcess( Seq( "prooftrans", "ivy" ), p9Output )
 
-    val ivyProof = IvyParser.parseString( ivy )
+    val ivyProof = IvyParser( StringInputFile( ivy ) )
 
     IvyToResolution( ivyProof )
   }
@@ -85,20 +85,17 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
 object Prover9Importer extends ExternalProgram {
   override val isInstalled: Boolean = Prover9 isInstalled
 
-  def robinsonProofFromFile( p9File: String ): ResolutionProof =
-    robinsonProof( Source fromFile p9File mkString )
-
-  def robinsonProof( p9Output: String ): ResolutionProof = {
+  def robinsonProof( p9Output: InputFile ): ResolutionProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
-    val fixedP9Output = runProcess( Seq( "prooftrans" ), loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ) )
+    val fixedP9Output = runProcess(
+      Seq( "prooftrans" ),
+      loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ).read
+    )
 
     Prover9 parseProof fixedP9Output
   }
 
-  def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( ResolutionProof, HOLSequent ) =
-    robinsonProofWithReconstructedEndSequent( Source fromFile p9File mkString )
-
-  def reconstructEndSequent( p9Output: String ): HOLSequent = {
+  private def reconstructEndSequent( p9Output: String ): HOLSequent = {
     val lines = p9Output split "\n" toSeq
 
     val parser = if ( lines contains "set(prolog_style_variables)." )
@@ -127,12 +124,12 @@ object Prover9Importer extends ExternalProgram {
     assumptions ++: Sequent() :++ goals distinct
   }
 
-  def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( ResolutionProof, HOLSequent ) = {
+  def robinsonProofWithReconstructedEndSequent( p9Output: InputFile ): ( ResolutionProof, HOLSequent ) = {
     val p9Output_ = loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output )
 
     val resProof = robinsonProof( p9Output_ )
     val endSequent = existsclosure {
-      val tptpEndSequent = reconstructEndSequent( p9Output_ )
+      val tptpEndSequent = reconstructEndSequent( p9Output_.read )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
         resProof.subProofs.collect { case Input( seq ) => seq.toDisjunction } ++: Sequent()
@@ -146,15 +143,9 @@ object Prover9Importer extends ExternalProgram {
     ( fixedResProof, endSequent )
   }
 
-  def lkProofFromFile( p9File: String ): LKProof =
-    lkProof( Source fromFile p9File mkString )
-
-  def lkProof( p9Output: String ): LKProof =
+  def lkProof( p9Output: InputFile ): LKProof =
     ResolutionToLKProof( robinsonProofWithReconstructedEndSequent( p9Output )._1 )
 
-  def expansionProofFromFile( p9File: String ): ExpansionProof =
-    expansionProof( Source.fromFile( p9File ).mkString )
-
-  def expansionProof( p9Output: String ): ExpansionProof =
+  def expansionProof( p9Output: InputFile ): ExpansionProof =
     ResolutionToExpansionProof( robinsonProofWithReconstructedEndSequent( p9Output )._1 )
 }

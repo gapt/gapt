@@ -4,8 +4,9 @@ import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ instantiate, isPrenex, removeQuantifiers }
 import at.logic.gapt.proofs.expansion._
-import java.io.{ FileReader, Reader }
+import java.io.{ FileReader, Reader, StringReader }
 
+import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs.Sequent
 
 import scala.collection.immutable.HashMap
@@ -174,8 +175,8 @@ object VeriTParser extends RegexParsers {
     Seq( ( eq_congr_pred, args1 ++ args2 ) )
   }
 
-  def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
-    getExpansionProof( new FileReader( filename ) )
+  def getExpansionProof( file: InputFile ): Option[ExpansionSequent] = {
+    getExpansionProof( new StringReader( file.read ) )
   }
 
   def getExpansionProofWithSymmetry( fileName: String ): Option[ExpansionSequent] =
@@ -192,7 +193,7 @@ object VeriTParser extends RegexParsers {
     }
   }
 
-  def isUnsat( filename: String ): Boolean = isUnsat( new FileReader( filename ) )
+  def isUnsat( file: InputFile ): Boolean = isUnsat( new StringReader( file.read ) )
 
   def isUnsat( reader: Reader ): Boolean = {
     parseAll( parseUnsat, reader ) match {

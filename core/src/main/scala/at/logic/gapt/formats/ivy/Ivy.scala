@@ -3,6 +3,7 @@ package at.logic.gapt.formats.ivy
 
 import at.logic.gapt.formats.lisp._
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.logging.Logger
 
@@ -17,11 +18,8 @@ object IvyParser extends Logger {
   override def loggerName = "IvyParserLogger"
 
   //calls the sexpression parser on the given file and parses it, needs a naming convention
-  def apply( fn: String ): IvyResolutionProof =
-    parse( SExpressionParser.parseFile( fn ) )
-
-  def parseString( sexpr: String ): IvyResolutionProof =
-    parse( SExpressionParser.parseString( sexpr ) )
+  def apply( fn: InputFile ): IvyResolutionProof =
+    parse( SExpressionParser( fn ) )
 
   def parse( exp: Seq[SExpression] ): IvyResolutionProof = {
     require( exp.length >= 1, "An ivy proof must contain at least one proof object, not " + exp.length + "! " )

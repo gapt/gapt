@@ -1,13 +1,11 @@
 package at.logic.gapt.formats.ivy
 
+import at.logic.gapt.formats.ClasspathInputFile
 import org.specs2.matcher.MatchResult
 import org.specs2.specification.core.Fragments
-
 import conversion.IvyToResolution
 import org.specs2.mutable._
 import at.logic.gapt.formats.lisp.{ LList, SExpressionParser }
-
-import scala.io.Source
 
 /**
  * Test for the Ivy interface.
@@ -15,7 +13,7 @@ import scala.io.Source
 class IvyToResolutionTest extends Specification {
 
   def parse( file: String ): MatchResult[Any] = {
-    val result = SExpressionParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream file ).mkString )
+    val result = SExpressionParser( ClasspathInputFile( file ) )
     result must not beEmpty
     val proof = result.head
     proof match {

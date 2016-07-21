@@ -78,7 +78,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       case Seq( file ) => file
     }
 
-    val tptp = TptpParser.loadFile( tptpInputFile )
+    val tptp = TptpParser.load( tptpInputFile )
     getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
       case Some( proof ) =>
         println( "% SZS status Unsatisfiable" )

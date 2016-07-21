@@ -1,9 +1,8 @@
 package at.logic.gapt.formats.lisp
 
-import scala.io.Source
 import scala.util.{ Success, Failure, Try }
 import at.logic.gapt.formats.lisp
-import scala.collection.immutable
+import at.logic.gapt.formats.InputFile
 import org.parboiled2._
 
 /**
@@ -46,13 +45,8 @@ case class LCons( car: SExpression, cdr: SExpression ) extends SExpression {
 }
 
 object SExpressionParser {
-  def apply( fn: String ): List[SExpression] = parseFile( fn )
-
-  def parseFile( fn: String ): List[SExpression] =
-    parseString( Source.fromFile( fn ).mkString )
-
-  def parseString( s: String ): List[SExpression] = {
-    val parser = new SExpressionParser( s )
+  def apply( fn: InputFile ): List[SExpression] = {
+    val parser = new SExpressionParser( fn.read )
     parser.File.run() match {
       case Failure( error: ParseError ) =>
         throw new IllegalArgumentException( parser.formatError( error ) )
@@ -61,8 +55,8 @@ object SExpressionParser {
     }
   }
 
-  def tryParseString( s: String ): Try[List[SExpression]] =
-    new SExpressionParser( s ).File.run().map { _.toList }
+  def tryParse( fn: InputFile ): Try[List[SExpression]] =
+    new SExpressionParser( fn.read ).File.run().map { _.toList }
 
 }
 

@@ -1,6 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.InputFile
 import org.parboiled2._
 
 import scala.util.{ Failure, Success }
@@ -105,22 +106,21 @@ class TptpParser( val input: ParserInput ) extends Parser {
 }
 
 object TptpParser {
-  def parseString( input: String, sourceName: String = "<string>" ): TptpFile = {
+  def parse( file: InputFile ): TptpFile = {
+    val input = file.read
     val parser = new TptpParser( input )
     parser.TPTP_file.run() match {
       case Failure( error: ParseError ) =>
-        throw new IllegalArgumentException( s"Parse error in $sourceName:\n" +
+        throw new IllegalArgumentException( s"Parse error in ${file.fileName}:\n" +
           parser.formatError( error, new ErrorFormatter( showTraces = true ) ) )
       case Failure( exception ) => throw exception
       case Success( value )     => value
     }
   }
 
-  def parseFile( fileName: String ): TptpFile =
-    parseString( io.Source.fromFile( fileName ).mkString, fileName )
-  def loadFile( fileName: String ): TptpFile =
-    resolveIncludes( TptpFile( Seq( IncludeDirective( fileName, None ) ) ), parseFile )
+  def load( file: InputFile ): TptpFile =
+    resolveIncludes( parse( file ), parse( _ ) )
 
   def main( args: Array[String] ): Unit =
-    print( loadFile( args.head ) )
+    print( load( args.head ) )
 }

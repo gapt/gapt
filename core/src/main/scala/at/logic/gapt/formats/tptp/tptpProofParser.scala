@@ -2,6 +2,7 @@ package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ CNFn, CNFp, univclosure }
+import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import at.logic.gapt.proofs.sketch._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
@@ -9,11 +10,11 @@ import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
 import scala.collection.mutable
 
 object TptpProofParser {
-  def parse( out: String, labelledCNF: Map[String, Seq[FOLClause]] ): RefutationSketch =
-    parseSteps( TptpParser.parseString( out ), labelledCNF )
+  def parse( out: InputFile, labelledCNF: Map[String, Seq[FOLClause]] ): RefutationSketch =
+    parseSteps( TptpParser.parse( out ), labelledCNF )
 
-  def parse( out: String ): ( Sequent[FOLFormula], RefutationSketch ) = {
-    val tptpFile_ = TptpParser.parseString( out )
+  def parse( out: InputFile ): ( Sequent[FOLFormula], RefutationSketch ) = {
+    val tptpFile_ = TptpParser.parse( out )
     val tptpFile = inventSources( tptpFile_ )
     val ( endSequent, labelledCNF ) = extractEndSequentAndCNF( tptpFile )
     endSequent -> parseSteps( tptpFile, labelledCNF )
