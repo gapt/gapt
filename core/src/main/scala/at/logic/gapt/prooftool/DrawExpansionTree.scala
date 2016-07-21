@@ -232,8 +232,8 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
    * @return A string containing the quantifier block represented by this quantifier node.
    */
   def quantifierBlock( vars: List[Var], f: HOLFormula ): String = f match {
-    case All( _, _ ) => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\forall " + LatexExporter( v ) + ")" )
-    case Ex( _, _ )  => vars.foldLeft( "" )( ( str: String, v: Var ) => str + "(\\exists " + LatexExporter( v ) + ")" )
+    case All( _, _ ) => vars.map( v => "\\forall " + LatexExporter( v ) + "\\:" ).mkString
+    case Ex( _, _ )  => vars.map( v => "\\exists " + LatexExporter( v ) + "\\:" ).mkString
   }
 
   // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
