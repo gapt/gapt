@@ -1251,7 +1251,7 @@ fof(suc_0, conjecture, p(s(s('0')))).
 
 You can also parse TPTP problems:
 \begin{clilisting}
-gapt> val tptp = TptpParser.loadFile("examples/import/irrationals.p")
+gapt> val tptp = TptpParser.load("examples/import/irrationals.p")
 tptp: at.logic.gapt.formats.tptp.TptpFile =
 fof(a, axiom, i(sr2)).
 fof(b, axiom, ~ i(two)).
@@ -1659,7 +1659,7 @@ P(s(s(s(s(s(s(s(s(s(0)))))))))): o    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
-gapt> val q = CutIntroduction.compressLKProof( p,                                   DeltaTableMethod(), verbose=true )
+gapt> val q = CutIntroduction.compressLKProof(p, method=DeltaTableMethod(), verbose=true)
 Total inferences in the input proof: 36
 Quantifier inferences in the input proof: 9
 End sequent: ∀x (P(x) ⊃ P(s(x))), P(0): o :- P(s(s(s(s(s(s(s(s(s(0)))))))))): o
