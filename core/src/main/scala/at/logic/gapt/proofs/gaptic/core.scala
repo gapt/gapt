@@ -86,6 +86,13 @@ case class ProofState private (
   override def toString = toSigRelativeString
   def toSigRelativeString( implicit sig: BabelSignature ) =
     subGoals.map { _.toPrettyString }.mkString( "\n" )
+
+  def +[A]( tactical: Tactical[A] ): ProofState =
+    tactical( this ) match {
+      case Success( ( _, newState ) ) => newState
+      case Failure( errors ) =>
+        throw new TacticFailureException( ( this +: errors.toList ).mkString( "\n" ) )
+    }
 }
 
 /**
