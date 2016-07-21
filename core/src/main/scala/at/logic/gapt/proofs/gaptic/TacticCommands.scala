@@ -307,10 +307,9 @@ trait TacticCommands {
    *
    * `Γ :- Δ, ∃x,,1,,...∃x,,n,,.A, A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,]`.
    * @param applyToLabel The label of the formula `∃x,,1,,...∃x,,n,,.A`.
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
+  def exR( applyToLabel: String, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -322,10 +321,9 @@ trait TacticCommands {
    * `Γ :- Δ, ∃x,,1,,...∃x,,n,,.A, A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,]`.
    *
    * This will only work if there is exactly one existential formula in the succedent!
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms, instantiateOnce = false )
+  def exR( terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -336,10 +334,9 @@ trait TacticCommands {
    *
    * `A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,], ∀x,,1,,,...,∀x,,n,,.A, Γ :- Δ`.
    * @param applyToLabel The label of the formula `∀x,,1,,,...,∀x,,n,,.A`.
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
+  def allL( applyToLabel: String, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -351,10 +348,9 @@ trait TacticCommands {
    * A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,], ∀x,,1,,,...,∀x,,n,,.A, Γ :- Δ.
    *
    * This will only work if there is exactly one universal formula in the antecedent!
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms, instantiateOnce = false )
+  def allL( terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -562,12 +558,11 @@ trait TacticCommands {
   /**
    * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.
    * The formulas with labels `L,,1,,,...,L,,n,,` will be removed from the current goal.
-   * @param l The label `L,,1,,`.
-   * @param ls The labels `L,,2,,`,...,`,,Ln,,`.
+   * @param ls The labels `L,,1,,`,...,`,,Ln,,`.
    *
    */
-  def forget( l: String, ls: String* ): Tactical[Unit] =
-    Tactical.sequence( l +: ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () )
+  def forget( ls: String* ): Tactical[Unit] =
+    Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () )
 
   /**
    * Moves the specified goal to the front of the goal list.
