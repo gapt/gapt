@@ -33,6 +33,9 @@ class MetricsPrinter extends MetricsCollector {
   def jsonify( v: Any ): JValue = v match {
     case l: Long    => JInt( l )
     case l: Int     => JInt( l )
+    case l: BigInt  => JInt( l )
+    case l: Double  => JDouble( l )
+    case l: Float   => JDouble( l )
     case b: Boolean => JBool( b )
     case l: Seq[_]  => JArray( l map jsonify toList )
     case s          => JString( s toString )
