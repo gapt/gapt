@@ -104,7 +104,7 @@ lazy val root = project.in( file( "." ) ).
 
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
-        Attributed.data( fullClasspath.in( cli, Compile ).value )
+        Attributed.data( fullClasspath.in( cli, Compile ).value ++ fullClasspath.in( testing, Compile ).value distinct )
       ) )
       def mkScript( file: File, extraArgs: String* ) = {
         IO.write(
@@ -115,6 +115,7 @@ lazy val root = project.in( file( "." ) ).
       }
       (
         mkScript( target.value / "run" ),
+        mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
         mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
         mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
         mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" )
