@@ -82,11 +82,10 @@ object testCutIntro extends App {
   def loadProofForCutIntro( fileName: String ) = fileName match {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
-      val hasEquality = containsEqualityReasoning( p )
       metrics.value( "lkinf_input", rulesNumber( p ) )
-      Some( eliminateCutsET( LKToExpansionProof( p ) ) -> hasEquality )
+      Some( eliminateCutsET( LKToExpansionProof( p ) ) -> CutIntroduction.guessBackgroundTheory( p ) )
     case _ =>
-      loadExpansionProof( fileName )
+      loadExpansionProof.withBackgroundTheory( fileName )
   }
 
   metrics.time( "total" ) {
@@ -106,10 +105,10 @@ object testCutIntro extends App {
     }
 
     parseResult foreach {
-      case ( expansionProof, hasEquality ) =>
-        metrics.value( "has_equality", hasEquality )
+      case ( expansionProof, backgroundTheory ) =>
+        metrics.value( "has_equality", backgroundTheory.hasEquality )
         try metrics.time( "cutintro" ) {
-          CutIntroduction.compressToLK( expansionProof, hasEquality, parseMethod( methodName ), verbose = false ) match {
+          CutIntroduction.compressToLK( expansionProof, backgroundTheory, method = parseMethod( methodName ), verbose = false ) match {
             case Some( _ ) => metrics.value( "status", "ok" )
             case None =>
               if ( metricsPrinter.data( "termset_trivial" ) == true )

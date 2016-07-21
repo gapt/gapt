@@ -161,25 +161,23 @@ object freeHOVariables {
 }
 
 /**
- * Return the list of all atoms *with duplicates* in the given argument.
- * TODO: why a list? why duplicates? why not a set?
+ * Return the list of all atoms in the given argument.
  */
 object atoms {
-  def apply( f: HOLFormula ): List[HOLFormula] = f match {
-    case Neg( f )         => apply( f )
-    case And( f1, f2 )    => apply( f1 ) ++ apply( f2 )
-    case Or( f1, f2 )     => apply( f1 ) ++ apply( f2 )
-    case Imp( f1, f2 )    => apply( f1 ) ++ apply( f2 )
-    case Ex( v, f )       => apply( f )
-    case All( v, f )      => apply( f )
-    case Bottom() | Top() => List()
-    case HOLAtom( _, _ )  => List( f )
+  def apply( f: HOLFormula ): Set[HOLAtom] = f match {
+    case f: HOLAtom       => Set( f )
+    case And( x, y )      => apply( x ) union apply( y )
+    case Or( x, y )       => apply( x ) union apply( y )
+    case Imp( x, y )      => apply( x ) union apply( y )
+    case Neg( x )         => apply( x )
+    case Top() | Bottom() => Set()
+    case Ex( x, y )       => apply( y )
+    case All( x, y )      => apply( y )
   }
 
-  def apply( s: HOLSequent ): List[HOLFormula] = {
-    val all = s.antecedent ++ s.succedent
-    all.foldLeft( List[HOLFormula]() ) { case ( acc, f ) => apply( f ) ++ acc }
-  }
+  def apply( f: FOLFormula ): Set[FOLAtom] = atoms( f: HOLFormula ).asInstanceOf[Set[FOLAtom]]
+
+  def apply( s: HOLSequent ): Set[HOLAtom] = atoms( s.toImplication )
 }
 
 /**

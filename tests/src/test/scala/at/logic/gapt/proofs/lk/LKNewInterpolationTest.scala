@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.cutintro.EquationalProver
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._

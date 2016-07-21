@@ -15,7 +15,7 @@ object loadAndCompress extends App {
     if ( fileName endsWith ".termset" ) {
       Source.fromFile( fileName ).getLines().map( parseTerm ).toSet
     } else {
-      val Some( ( expansion, _ ) ) = loadExpansionProof( fileName )
+      val Some( expansion ) = loadExpansionProof( fileName )
       FOLInstanceTermEncoding( expansion )._1
     }
 

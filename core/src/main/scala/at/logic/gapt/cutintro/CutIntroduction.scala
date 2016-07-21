@@ -9,9 +9,12 @@ import at.logic.gapt.grammars.reforest.Reforest
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ numberOfLogicalInferencesRes, simplifyResolutionProof }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
+import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.provers.smtlib.Z3
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.logging.{ Logger, metrics }
 import at.logic.gapt.utils.runProcess
 
@@ -183,16 +186,64 @@ class CutIntroUnprovableException( msg: String ) extends CutIntroException( msg 
 
 object CutIntroduction {
 
-  def compressToSolutionStructure( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[SolutionStructure] = {
+  trait BackgroundTheory {
+    def hasEquality: Boolean
+    def prover: Prover
+  }
+  object BackgroundTheory {
+    case object Equality extends BackgroundTheory {
+      val hasEquality = true
+      object prover extends Prover {
+        private val smtSolver =
+          if ( Z3 isInstalled ) Z3
+          else if ( VeriT isInstalled ) VeriT
+          else new Escargot( splitting = true, equality = true, propositional = true )
+
+        override def startIncrementalSession() = smtSolver.startIncrementalSession()
+        override def isValid( s: HOLSequent ): Boolean = smtSolver isValid s
+        override def getLKProof( s: HOLSequent ) = EquationalLKProver getLKProof s
+      }
+    }
+    case object PureFOL extends BackgroundTheory {
+      val hasEquality = false
+      object prover extends OneShotProver {
+        def getLKProof( seq: HOLSequent ) = LKProver getLKProof seq
+        override def isValid( seq: HOLSequent ) = Sat4j isValid seq
+      }
+    }
+  }
+
+  def guessBackgroundTheory( sequent: HOLSequent ): BackgroundTheory =
+    if ( atoms( sequent ).exists( Eq.unapply( _ ).isDefined ) )
+      BackgroundTheory.Equality
+    else
+      BackgroundTheory.PureFOL
+
+  def guessBackgroundTheory( solutionStructure: SolutionStructure ): BackgroundTheory =
+    guessBackgroundTheory( solutionStructure.endSequent )
+
+  def guessBackgroundTheory( expansionProof: ExpansionProof ): BackgroundTheory =
+    guessBackgroundTheory( expansionProof.shallow )
+
+  def guessBackgroundTheory( lk: LKProof ): BackgroundTheory =
+    if ( containsEqualityReasoning( lk ) )
+      BackgroundTheory.Equality
+    else
+      BackgroundTheory.PureFOL
+
+  def compressToSolutionStructure(
+    ep:               ExpansionProof,
+    backgroundTheory: BackgroundTheory     = null,
+    method:           GrammarFindingMethod = DeltaTableMethod(),
+    verbose:          Boolean              = false
+  ): Option[SolutionStructure] = {
     require(
       isFOLPrenexSigma1( ep.shallow ),
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
     )
 
-    val prover = if ( hasEquality ) EquationalProver else BasicProver
-
     val herbrandSequent = extractInstances( ep )
-    val herbrandSequentProof = prover.getLKProof( herbrandSequent ).getOrElse {
+    val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
       throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
@@ -243,18 +294,18 @@ object CutIntroduction {
       val grammar = vtratgToSEHS( encoding, vtratGrammar )
 
       val canonicalSS = SolutionStructure( grammar, computeCanonicalSolution( grammar ) )
-      require( canonicalSS.isValid( prover ) )
+      require( canonicalSS.isValid( backgroundTheory.prover ) )
 
-      val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, prover, hasEquality ) }
+      val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, backgroundTheory.prover, backgroundTheory.hasEquality ) }
       if ( verbose ) for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex ) {
         println( s"CNF of minimized cut-formula number $i:" )
         for ( clause <- CNFp( cf ) )
           println( s"  $clause" )
       }
-      require( minimizedSS.isValid( prover ) )
+      require( minimizedSS.isValid( backgroundTheory.prover ) )
 
       val beautifiedSS = metrics.time( "beausol" ) { beautifySolution( minimizedSS ) }
-      require( beautifiedSS.isValid( prover ) )
+      require( beautifiedSS.isValid( backgroundTheory.prover ) )
 
       def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
         metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
@@ -291,7 +342,7 @@ object CutIntroduction {
         }
 
         val ehsSequent = beautifiedSS.getDeep
-        val ehsResolutionProof = prover.getLKProof( ehsSequent ).getOrElse {
+        val ehsResolutionProof = backgroundTheory.prover.getLKProof( ehsSequent ).getOrElse {
           throw new CutIntroUnprovableException( "Cannot prove extended Herbrand sequent." )
         }
         metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
@@ -306,11 +357,11 @@ object CutIntroduction {
     }
   }
 
-  def constructLKProof( solStruct: SolutionStructure, hasEquality: Boolean, verbose: Boolean = false ): LKProof = {
-    val prover = if ( hasEquality ) EquationalProver else BasicProver
+  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory = null, verbose: Boolean = false ): LKProof = {
+    if ( backgroundTheory == null ) return constructLKProof( solStruct, guessBackgroundTheory( solStruct ), verbose )
 
     val proofWithStructuralRules = metrics.time( "prcons" ) {
-      buildProofWithCut( solStruct, prover )
+      buildProofWithCut( solStruct, backgroundTheory.prover )
     }
 
     val proof = metrics.time( "cleanproof" ) {
@@ -329,19 +380,22 @@ object CutIntroduction {
     proof
   }
 
-  def compressToLK( ep: ExpansionProof, hasEquality: Boolean, method: GrammarFindingMethod, verbose: Boolean ): Option[LKProof] =
-    compressToSolutionStructure( ep, hasEquality, method, verbose ) map { constructLKProof( _, hasEquality, verbose ) }
+  def compressToLK( ep: ExpansionProof, backgroundTheory: BackgroundTheory = null, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] = {
+    if ( backgroundTheory == null ) return compressToLK( ep, guessBackgroundTheory( ep ), method, verbose )
+    compressToSolutionStructure( ep, backgroundTheory, method, verbose ) map { constructLKProof( _, backgroundTheory, verbose ) }
+  }
 
-  def compressLKProof( p: LKProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] = {
+  def compressLKProof( p: LKProof, backgroundTheory: BackgroundTheory = null, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] = {
+    if ( backgroundTheory == null ) return compressLKProof( p, guessBackgroundTheory( p ), method, verbose )
+
     val clean_proof = cleanStructuralRules( p )
 
     if ( verbose )
       println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
 
     val ep = eliminateCutsET( LKToExpansionProof( clean_proof ) )
-    val hasEquality = containsEqualityReasoning( clean_proof )
 
-    compressToLK( ep, hasEquality, method, verbose )
+    compressToLK( ep, backgroundTheory, method, verbose )
   }
 
   /**

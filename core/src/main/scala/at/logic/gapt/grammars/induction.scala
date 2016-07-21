@@ -3,8 +3,8 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLSubTerms
 import at.logic.gapt.expr.fol.Utils.numeral
-import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
-import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
+import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.utils.logging.Logger
 
 object SipGrammar {
@@ -82,20 +82,6 @@ object stableSipGrammar {
   }
 }
 
-object atoms {
-  def apply( f: FOLFormula ): Set[FOLFormula] = f match {
-    case FOLAtom( _, _ )  => Set( f )
-    case And( x, y )      => apply( x ) union apply( y )
-    case Or( x, y )       => apply( x ) union apply( y )
-    case Imp( x, y )      => apply( x ) union apply( y )
-    case Neg( x )         => apply( x )
-    case Top() | Bottom() => Set()
-    case Ex( x, y )       => apply( y )
-    case All( x, y )      => apply( y )
-  }
-}
-
-// TODO: only supports one instance language at the moment
 case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   def productionIsIncluded( p: SipGrammar.Production ) = FOLAtom( s"sp,$p" )
 
