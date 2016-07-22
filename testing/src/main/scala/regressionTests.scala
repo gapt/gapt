@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import java.io.{ File, FileWriter, StringReader }
+import java.io.{ File, FileWriter }
 
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
@@ -11,14 +11,13 @@ import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ Sequent, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
+import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.glob
 
 import scala.concurrent.duration._
@@ -50,7 +49,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
 
     ( E.shallow == p.endSequent ) !-- "shallow sequent of expansion proof"
 
-    Prover9.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
+    Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
       ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
       ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
@@ -97,8 +96,6 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       }
 
     skolemize( p ) --? "skolemize"
-
-    Escargot.getLKProof( deep ).get --? "Escargot getLKProof deep"
   }
 }
 
