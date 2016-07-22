@@ -2,39 +2,59 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Context, Sequent }
 
-object Pi2Pigeonhole {
-  val zero = FOLConst( "0" )
-  val s = FOLFunctionConst( "s", 1 )
-  val one = s( zero )
-
-  val M = FOLFunctionConst( "M", 2 )
-
-  val f = FOLFunctionConst( "f", 1 )
-  val lteq = FOLAtomConst( "<=", 2 )
-
-  val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
+object Pi2Pigeonhole extends TacticsProof {
+  ctx += Context.Sort( "i" )
+  ctx += hoc"0: i"
+  ctx += hoc"s: i>i"
+  ctx += hoc"M: i>i>i"
+  ctx += hoc"f: i>i"
+  ctx += hoc"'<=': i>i>o"
 
   val proof = Lemma(
-    ( "maxlt" -> All( x, All( y, lteq( x, M( x, y ) ) & lteq( y, M( x, y ) ) ) ) ) +:
-      ( "bound" -> All( x, Eq( f( x ), zero ) | Eq( f( x ), s( zero ) ) ) ) +:
-      ( "ltsuc" -> All( x, All( y, lteq( s( x ), y ) --> lteq( x, y ) ) ) ) +:
+    ( "maxlt" -> hof"∀x∀y (x <= M x y  ∧  y <= M x y)" ) +:
+      ( "bound" -> hof"∀x (f x = 0  ∨  f x = s 0)" ) +:
       Sequent()
-      :+ ( "t" -> Ex( x, Ex( y, lteq( s( x ), y ) & ( f( x ) === f( y ) ) ) ) )
+      :+ ( "t" -> hof"∃x ∃y (s x <= y  ∧  f x = f y)" )
   ) {
-      cut( "I0", All( x, Ex( y, lteq( x, y ) & ( f( y ) === zero ) ) ) )
-      cut( "I1", All( x, Ex( y, lteq( x, y ) & ( f( y ) === one ) ) ) )
+      cut( "I0", hof"∀x ∃y (x <= y  ∧  f y = 0)" )
+      cut( "I1", hof"∀x ∃y (x <= y  ∧  f y = s 0)" )
 
       forget( "t" ); decompose; escargot
 
-      forget( "I0" )
-      allL( "I1", zero ); decompose
-      allL( "I1", s( y ) ); decompose
-      forget( "I1" ); escargot
+      allL( "I1", le"0" ); decompose
+      allL( "I1", le"s y" ); decompose
+      forget( "I0", "I1" ); escargot
 
-      allL( "I0", zero ); decompose
-      allL( "I0", s( y ) ); decompose
+      allL( "I0", le"0" ); decompose
+      allL( "I0", le"s y" ); decompose
       forget( "I0" ); escargot
+    }
+}
+
+object Pi3Pigeonhole extends TacticsProof {
+  ctx += Context.Sort( "i" )
+  ctx += hoc"0: i"
+  ctx += hoc"s: i>i"
+  ctx += hoc"M: i>i>i"
+  ctx += hoc"f: i>i"
+  ctx += hoc"'<=': i>i>o"
+
+  val proof = Lemma(
+    ( "maxlt" -> hof"∀x∀y (x <= M x y  ∧  y <= M x y)" ) +:
+      ( "bound" -> hof"∀x (f x = 0  ∨  f x = s 0)" ) +:
+      Sequent()
+      :+ ( "t" -> hof"∃x ∃y (s x <= y  ∧  f x = f y)" )
+  ) {
+      cut( "I", hof"∃z ∀x ∃y (x <= y  ∧  f y = z)" )
+
+      exR( "I", le"0" ); exR( "I", le"s 0" )
+      forget( "t", "I" ); decompose; escargot
+
+      decompose
+      allL( "I", le"0" ); decompose
+      allL( "I", le"s y" ); decompose
+      forget( "I" ); escargot
     }
 }
