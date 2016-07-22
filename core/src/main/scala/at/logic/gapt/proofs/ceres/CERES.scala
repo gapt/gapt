@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
 
 /**
  * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
@@ -51,7 +51,7 @@ class CERES {
    *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof ): LKProof = apply( p, Prover9 )
+  def apply( p: LKProof ): LKProof = apply( p, Escargot )
   def apply( p: LKProof, prover: ResolutionProver ): LKProof = apply( p, CERES.skipNothing, prover )
 
   /**
@@ -63,7 +63,7 @@ class CERES {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Prover9 )
+  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Escargot )
   def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = {
     val es = p.endSequent
     val p_ = regularize( AtomicExpansion( p ) )
