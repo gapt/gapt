@@ -62,10 +62,19 @@ object beautifySolution {
 
     val newUs = for ( ( ( u, uInst ), j ) <- ehs.sehs.us.zipWithIndex ) yield u -> ( uInst ++ addUs.filter { _._1 == j }.map { _._2 } )
 
-    val ( nontrivialSS, nontrivialCFs ) = ( ehs.sehs.ss zip newCFs ).filter { _._2 != Top() }.unzip
+    val nonTrivialIndices = newCFs.indices.filterNot { i =>
+      newCFs.drop( i ).contains( Top() ) ||
+        newCFs( i ) == Bottom()
+    }
+    val nontrivialSS = nonTrivialIndices.map( ehs.sehs.ss )
+    val nontrivialCFs = nonTrivialIndices.map( newCFs )
 
-    val newSEHS = SchematicExtendedHerbrandSequent( newUs, nontrivialSS )
-    SolutionStructure( newSEHS, nontrivialCFs )
+    val grounding = FOLSubstitution( newCFs.indices.diff( nonTrivialIndices ).
+      flatMap( ehs.sehs.eigenVariables ).
+      map( v => v -> FOLConst( v.name ) ) )
+
+    val newSEHS = SchematicExtendedHerbrandSequent( grounding( newUs ), nontrivialSS.map( ss => ss._1 -> grounding( ss._2 ) ) )
+    SolutionStructure( newSEHS, grounding( nontrivialCFs ) )
   }
 
 }

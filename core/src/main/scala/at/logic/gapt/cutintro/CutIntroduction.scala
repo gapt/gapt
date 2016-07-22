@@ -81,7 +81,7 @@ case object ReforestMethod extends GrammarFindingMethod {
  * @param us  Formulas of the original end-sequent, together with their instances.
  * @param ss  Instances of the cut-implications.
  */
-case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, List[List[FOLTerm]] )], ss: List[( List[FOLVar], List[List[FOLTerm]] )] ) {
+case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, Seq[Seq[FOLTerm]] )], ss: Seq[( Seq[FOLVar], Seq[Seq[FOLTerm]] )] ) {
   require( ss.forall { case ( vars, inst ) => inst.forall { case termlist => vars.length == termlist.length } } )
 
   us.antecedent foreach {
@@ -163,7 +163,7 @@ object sehsToVTRATG {
   def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VectTratGrammar = {
     val freeVars = freeVariables( sehs.us.elements.flatMap { _._2 } ++ sehs.ss.flatMap { _._2 } flatten ) ++ sehs.eigenVariables.flatten
     val axiom = rename( FOLVar( "x" ), freeVars )
-    val nonTerminals = sehs.eigenVariables
+    val nonTerminals = sehs.eigenVariables.map( _.toList )
     val instances = for ( ( f, us ) <- sehs.us; u <- us ) yield instantiate( f, u )
     val productionsFromAx = for ( t <- encoding encode instances ) yield List( axiom ) -> List( t.asInstanceOf[FOLTerm] )
     val otherProds = for ( ( ev, ss ) <- sehs.ss; s <- ss ) yield ev -> s
@@ -173,7 +173,7 @@ object sehsToVTRATG {
       case FOLVar( n ) => FOLVar( n ) -> FOLConst( n )
     } )
 
-    VectTratGrammar( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1 -> grounding( p._2 ).toList } )
+    VectTratGrammar( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
   }
 }
 
@@ -237,6 +237,9 @@ object CutIntroduction {
     method:           GrammarFindingMethod = DeltaTableMethod(),
     verbose:          Boolean              = false
   ): Option[SolutionStructure] = {
+    if ( backgroundTheory == null )
+      return compressToSolutionStructure( ep, guessBackgroundTheory( ep ), method, verbose )
+
     require(
       isFOLPrenexSigma1( ep.shallow ),
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"

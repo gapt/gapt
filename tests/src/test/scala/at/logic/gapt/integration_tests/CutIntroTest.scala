@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.{ containsQuantifier, formulaToSequent, lcomp }
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
+import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof, FOLInstanceTermEncoding }
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber }
 import at.logic.gapt.provers.escargot.Escargot
@@ -97,6 +97,15 @@ class CutIntroTest extends Specification {
         case p: ForallLeftRule => p.mainFormula == hof"!x q(x)"
         case _                 => false
       } must haveSize( 1 )
+    }
+
+    "filter bottom during beautification" in {
+      val Some( expansion ) = Escargot.getExpansionProof( formulaToSequent pos hof"!x (p x -> p (s x)) -> (p 0 -> p ${Numeral( 9 )})" )
+      val weirdExpansion = ExpansionProof(
+        ETWeakening( hof"!x (p x & -p x)", false ) +:
+          expansion.expansionSequent
+      )
+      CutIntroduction.compressToSolutionStructure( weirdExpansion ) must beNone
     }
   }
 }
