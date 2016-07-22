@@ -18,6 +18,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.prover9.Prover9Importer
+import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.utils.glob
 
 import scala.concurrent.duration._
@@ -31,8 +32,8 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent( f ) --- "import"
 
     ResolutionToExpansionProof( robinson ) --? "RobinsonToExpansionProof" map { E2 =>
-      VeriT.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
-      VeriT.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
+      Z3.isValid( E2.deep ) !-- "toDeep validity of RobinsonToExpansionProof"
+      Z3.isValid( extractInstances( E2 ) ) !-- "extractInstances validity of RobinsonToExpansionProof"
     }
 
     BabelParser.parse( reconstructedEndSequent.toImplication.toString ) == reconstructedEndSequent.toImplication !-- "babel round-trip"
@@ -63,11 +64,11 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
       solveQuasiPropositional( deep ).isRight !-- "solveQuasiPropositional"
     }
     ExpansionProofToLK( E ).isRight !-- "expansionProofToLKProof"
-    VeriT.isValid( deep ) !-- "verit validity"
+    Z3.isValid( deep ) !-- "validity of deep formula"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        VeriT.isValid( Sequent() :++ recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem language validity"
+        Z3.isValid( Sequent() :++ recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem language validity"
       }
 
     // FIXME: extend to equality
@@ -85,14 +86,14 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
         CERES( q ) --? "CERES (cut-intro)"
 
         LKToExpansionProof( q ) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
-          VeriT.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"
+          Z3.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"
           eliminateCutsET( expQ ) --? "expansion tree cut-elimination (cut-intro)" foreach { expQstar =>
-            VeriT.isValid( expQstar.deep ) !-- "cut-elim expansion tree validity (cut-intro)"
+            Z3.isValid( expQstar.deep ) !-- "cut-elim expansion tree validity (cut-intro)"
           }
           ExpansionProofToLK( expQ ).isRight !-- "ExpansionProofToLK (cut-intro)"
         }
 
-        VeriT.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"
+        Z3.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"
       }
 
     skolemize( p ) --? "skolemize"
