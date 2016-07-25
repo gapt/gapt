@@ -40,10 +40,12 @@ object UnitResolutionToLKProof {
         case p @ Paramod( q1, _, _, q2, i2, ctx ) =>
           val shouldFlip2 = shouldFlip( q2 )
           val lkAux = maybeFlip( p.rewrittenAuxFormula, shouldFlip2 )
-          if ( lk.conclusion.zipWithIndex.exists { case ( a, i ) => a == lkAux && !i.sameSideAs( i2 ) } ) {
+          if ( lk.conclusion.contains( lkAux, i2.isAnt ) ) {
             val lkMain = maybeFlip( p.auxFormula, shouldFlip2 )
             val lkEq = maybeFlip( q1.conclusion( Suc( 0 ) ), shouldFlip( q1 ) )
-            lk = WeakeningLeftRule( lk, lkEq )
+            if ( ( i2.isSuc && lkEq == lkAux ) || !lk.conclusion.antecedent.contains( lkEq ) ) {
+              lk = WeakeningLeftRule( lk, lkEq )
+            }
             if ( i2.isSuc )
               lk = EqualityLeftRule( lk, lkEq, lkAux, lkMain )
             else
@@ -52,7 +54,11 @@ object UnitResolutionToLKProof {
         case Flip( _, _ ) =>
       }
 
-      lk = ContractionMacroRule( lk )
+      if ( lk.conclusion.isTaut ) {
+        lk = LogicalAxiom( lk.conclusion.antecedent intersect lk.conclusion.succedent head )
+      } else {
+        lk = ContractionMacroRule( lk )
+      }
     }
 
     val expectedConclusion = proof.subProofs.collect { case Input( seq ) => seq.swapped }.fold( Sequent() )( _ ++ _ )
