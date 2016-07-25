@@ -2,6 +2,10 @@
 
 ## Version 2.3 (unreleased)
 
+* String interpolators for sequents
+* `:-` operator to construct sequents
+* `loadExpansionProof` provides convenient access to TSTP proof import
+* Refactored prooftool supports n-ary inferences now
 * Conversion of unit-equational resolution proofs to unary LK proofs
 * Support for Vampire 4.1
 * Support for SPASS 3.9
