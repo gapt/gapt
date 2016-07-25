@@ -65,6 +65,7 @@
     {→}{{\ensuremath{\rightarrow}} }1%
     {∀}{{\ensuremath{\forall}}}1%
     {∃}{{\ensuremath{\exists}}}1%
+    {⊢}{{\ensuremath{\vdash}} }1%
     {ι}{{\ensuremath{\iota}}}1%
     {α}{{\ensuremath{\alpha}}}1%
     {β}{{\ensuremath{\beta}}}1%
@@ -438,13 +439,13 @@ one on the right the succedent. Usually, but not always, the elements of the seq
 In GAPT, you can create sequents by supplying an antecedent and a succedent:
 
 \begin{clilisting}
-gapt> val S1 = Sequent() // the empty sequent
+gapt> val S1 = Sequent()
 S1: at.logic.gapt.proofs.Sequent[Nothing] =  ⊢
 
-gapt> val S2 = Sequent(List(1,2), List(3,4)) // a sequent of Ints
+gapt> val S2 = Sequent(List(1,2), List(3,4))
 S2: at.logic.gapt.proofs.Sequent[Int] = 1, 2 :- 3, 4
 
-gapt> val S3 = Sequent(List(foa"A", foa"B"), List(foa"C", foa"D")) // a sequent of FOL atoms
+gapt> val S3 = Sequent(List(foa"A", foa"B"), List(foa"C", foa"D"))
 S3: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.FOLAtom] = A, B ⊢ C, D
 
 \end{clilisting}
@@ -457,6 +458,7 @@ res5: at.logic.gapt.proofs.HOLSequent = P(a), a = b ⊢ P(b)
 \end{clilisting}
 
 The following prefixes are available (a clause is a sequent of atoms):
+
 \begin{tabular}{r l}
 \cli{hos} & higher-order (formula) sequent \\
 \cli{hcl} & higher-order clause \\
