@@ -1,6 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 
 object TPTPFOLExporter {
@@ -31,6 +32,10 @@ object TPTPFOLExporter {
 
     TptpFile( file.result() )
   }
+
+  def apply( sequentSet: Iterable[HOLSequent] ): TptpFile =
+    TptpFile( for ( ( seq, i ) <- sequentSet.toSeq.zipWithIndex )
+      yield AnnotatedFormula( "fof", s"seq_$i", "axiom", univclosure( seq.toDisjunction ), Seq() ) )
 
   def exportLabelledCNF( cnf: Iterable[( String, HOLClause )] ): TptpFile =
     TptpFile( cnf.toSeq.map( c => exportClause( c._2, c._1 ) ) )

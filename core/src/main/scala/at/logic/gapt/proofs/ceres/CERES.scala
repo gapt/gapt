@@ -72,7 +72,10 @@ class CERES {
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
 
     prover.getResolutionProof( tapecl ) match {
-      case None => throw new Exception( "The characteristic clause set could not be refuted." )
+      case None => throw new Exception(
+        "The characteristic clause set could not be refuted:\n" +
+          TPTPFOLExporter( tapecl )
+      )
       case Some( rp ) =>
         apply( es, proj, eliminateSplitting( rp ) )
     }
