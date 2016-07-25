@@ -129,6 +129,16 @@ object ast {
     }
   }
 
+  def infers( exprs: Seq[Expr], env: Map[String, Type], s0: Map[TypeVarIdx, Type] ): UnificationError \/ ( Map[TypeVarIdx, Type], Seq[Type] ) =
+    exprs match {
+      case Seq() => ( s0 -> Seq() ).right
+      case expr +: rest =>
+        for {
+          ( s1, exprt ) <- infer( expr, env, s0 )
+          ( s2, restts ) <- infers( rest, env, s1 )
+        } yield ( s2, exprt +: restts )
+    }
+
   def infer( expr: Expr, env: Map[String, Type], s0: Map[TypeVarIdx, Type] ): UnificationError \/ ( Map[TypeVarIdx, Type], Type ) =
     expr match {
       case TypeAnnotation( e, t ) =>
@@ -185,11 +195,13 @@ object ast {
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
     case Lifted( e, ty, fvs ) => e
   }
-  def toRealExpr( expr: Expr, sig: BabelSignature ): UnificationError \/ real.LambdaExpression = {
-    val fi = freeIdentifers( expr ) diff polymorphic
+  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): UnificationError \/ Seq[real.LambdaExpression] = {
+    val fi = expr.view.flatMap( freeIdentifers ).toSet diff polymorphic
     val freeVars = fi filter sig.isVar
     val startingEnv = fi.map { i => i -> sig.getType( i ) }
-    for ( ( assg, _ ) <- infer( expr, startingEnv.toMap, Map() ) )
-      yield toRealExpr( expr, assg.withDefaultValue( BaseType( "i" ) ), freeVars )
+    for ( ( assg, _ ) <- infers( expr, startingEnv.toMap, Map() ) )
+      yield expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
   }
+  def toRealExpr( expr: Expr, sig: BabelSignature ): UnificationError \/ real.LambdaExpression =
+    toRealExprs( Seq( expr ), sig ).map( _.head )
 }

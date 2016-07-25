@@ -1,5 +1,8 @@
 package at.logic.gapt.proofs
 
+import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
+
 import scala.collection.GenTraversable
 import scalaz.Functor
 
@@ -71,14 +74,19 @@ case class Suc( k: Int ) extends SequentIndex {
  */
 case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
 
-  override def toString: String = {
-    val stringified = this map { _.toString }
-    val multiLine = stringified.exists { _ contains "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
-    if ( multiLine )
-      s"${stringified.antecedent.mkString( ",\n" )}\n:-\n${stringified.succedent.mkString( ",\n" )}"
-    else
-      s"${stringified.antecedent.mkString( ", " )} :- ${stringified.succedent.mkString( ", " )}"
-  }
+  override def toString = toSigRelativeString
+
+  def toSigRelativeString( implicit sig: BabelSignature ): String =
+    if ( forall { _.isInstanceOf[HOLFormula] } ) {
+      new BabelExporter( unicode = true, sig = sig ).export( this.asInstanceOf[HOLSequent] )
+    } else {
+      val stringified = this map { _.toString }
+      val multiLine = stringified.exists { _ contains "\n" } || stringified.elements.map { _.length + 2 }.sum > 80
+      if ( multiLine )
+        s"${stringified.antecedent.mkString( ",\n" )}\n:-\n${stringified.succedent.mkString( ",\n" )}"
+      else
+        s"${stringified.antecedent.mkString( ", " )} :- ${stringified.succedent.mkString( ", " )}"
+    }
 
   /**
    * Equality treating each side of the sequent as a set.

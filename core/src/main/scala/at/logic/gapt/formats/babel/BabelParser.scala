@@ -2,6 +2,7 @@ package at.logic.gapt.formats.babel
 
 import at.logic.gapt.{ expr => real }
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
+import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 
 import scalaz._
 import Scalaz._
@@ -115,6 +116,10 @@ object BabelParserCombinators {
   val TypeParens: P[ast.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
   val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
+
+  val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
+    map { case ( ant, suc ) => HOLSequent( ant, suc ) }
+  val SequentAndNothingElse = P( "" ~ Sequent ~ End )
 }
 
 object BabelParser {
@@ -146,4 +151,21 @@ object BabelParser {
   /** Parses text as a formula, or throws an exception. */
   def parseFormula( text: String )( implicit sig: BabelSignature ): HOLFormula =
     tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
+
+  def tryParseSequent( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ Sequent[LambdaExpression] = {
+    import fastparse.core.Parsed._
+    SequentAndNothingElse.parse( text ) match {
+      case Success( exprSequent, _ ) =>
+        val transformed = exprSequent.map( astTransformer )
+        ast.toRealExprs( transformed.elements, sig ).leftMap { unifError =>
+          BabelUnificationError( s"Cannot type-check ${transformed.map( ast.readable )}:\n$unifError" )
+        }.map { sequentElements =>
+          val ( ant, suc ) = sequentElements.
+            splitAt( exprSequent.antecedent.size )
+          HOLSequent( ant, suc )
+        }
+      case parseError: Failure =>
+        BabelParsingError( ParseError( parseError ) ).left
+    }
+  }
 }

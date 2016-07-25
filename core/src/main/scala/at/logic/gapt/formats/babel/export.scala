@@ -1,6 +1,7 @@
 package at.logic.gapt.formats.babel
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLSequent
 import org.bitbucket.inkytonik.kiama.output.PrettyPrinter
 import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
 
@@ -38,6 +39,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     val knownTypesFromSig = knownConstantTypesFromSig( constants( expr ) )
     pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
+  def export( sequent: HOLSequent ): String = {
+    val knownTypesFromSig = knownConstantTypesFromSig( constants( sequent ) )
+    pretty( group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ) ).layout
+  }
   def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) ).layout
 
   object prio {
@@ -62,6 +67,19 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     TopC.name, BottomC.name, NegC.name, AndC.name, OrC.name, ImpC.name,
     ForallC.name, ExistsC.name
   )
+
+  def show( sequent: HOLSequent, bound: Set[String], t0: Map[String, LambdaExpression] ): ( Doc, Map[String, LambdaExpression] ) = {
+    var t1 = t0
+    val docSequent = sequent map { formula =>
+      val ( formulaDoc, t1_ ) = show( formula, true, bound, t1, prio.max )
+      t1 = t1_
+      formulaDoc
+    }
+    ( vsep( docSequent.antecedent.toList, comma ) <@>
+      ( if ( unicode ) "⊢" else ":-" ) <@>
+      vsep( docSequent.succedent.toList, comma ),
+      t1 )
+  }
 
   /**
    * Converts a lambda expression into a document.

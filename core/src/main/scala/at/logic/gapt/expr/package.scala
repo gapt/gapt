@@ -1,7 +1,7 @@
 package at.logic.gapt
 
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.utils.NameGenerator
 
 import scala.annotation.implicitNotFound
@@ -219,7 +219,7 @@ package object expr extends DefaultReplaceables {
     import at.logic.gapt.formats.babel._
     import scalaz.{ \/-, -\/ }
 
-    private def interpolate( args: Seq[LambdaExpression], baseAstTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
+    private def interpolateHelper( args: Seq[LambdaExpression] ): ( String, ast.Expr => ast.Expr ) = {
       val strings = sc.parts.toList
       val expressions = args.toList
 
@@ -244,9 +244,15 @@ package object expr extends DefaultReplaceables {
         case expr: ast.Lifted => expr
       }
 
+      ( stringsNew.mkString ++ strings.last, repl )
+    }
+
+    private def interpolate( args: Seq[LambdaExpression], baseAstTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
+      val ( combined, repl ) = interpolateHelper( args )
+
       def astTransformer( expr: ast.Expr ): ast.Expr = baseAstTransformer( repl( expr ) )
 
-      BabelParser.tryParse( stringsNew.mkString ++ strings.last, astTransformer ) match {
+      BabelParser.tryParse( combined, astTransformer ) match {
         case -\/( error ) => throw new IllegalArgumentException(
           s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
         )
@@ -386,6 +392,27 @@ package object expr extends DefaultReplaceables {
       case expr =>
         throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL constant. Parse it with fot." )
     }
+
+    /** Parses a string as a [[at.logic.gapt.proofs.HOLSequent]]. */
+    def hos( args: LambdaExpression* ): HOLSequent = {
+      val ( combined, repl ) = interpolateHelper( args )
+
+      BabelParser.tryParseSequent( combined, e => ast.TypeAnnotation( repl( e ), ast.Bool ) ) match {
+        case -\/( error ) => throw new IllegalArgumentException(
+          s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
+        )
+        case \/-( sequent ) => sequent.map( _.asInstanceOf[HOLFormula] )
+      }
+    }
+
+    /** Parses a string as a [[at.logic.gapt.proofs.HOLClause]]. */
+    def hcl( args: LambdaExpression* ): HOLClause = hos( args: _* ).map( _.asInstanceOf[HOLAtom] )
+
+    /** Parses a string as a [[at.logic.gapt.proofs.FOLSequent]]. */
+    def fos( args: LambdaExpression* ): FOLSequent = hos( args: _* ).map( _.asInstanceOf[FOLFormula] )
+
+    /** Parses a string as a [[at.logic.gapt.proofs.FOLClause]]. */
+    def fcl( args: LambdaExpression* ): FOLClause = hos( args: _* ).map( _.asInstanceOf[FOLAtom] )
 
     private def placeholder = "__qq_"
   }
