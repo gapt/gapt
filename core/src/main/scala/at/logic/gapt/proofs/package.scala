@@ -36,4 +36,8 @@ package object proofs {
     def negative = clause.antecedent
     def positive = clause.succedent
   }
+
+  implicit class SeqWrapper[+A]( val s: Seq[A] ) extends AnyVal {
+    def :-[B >: A]( that: Seq[B] ): Sequent[B] = Sequent( s, that )
+  }
 }
