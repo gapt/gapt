@@ -150,7 +150,7 @@ object collectExperimentResults extends App {
 object findNonTrivialTSTPExamples extends App {
   case class TermSetStats( fileName: String, size: Int, numFuns: Int )
 
-  val p9Files = glob( "testing/TSTP/prover9/**/*.s.out" )
+  val p9Files = glob( "testing/TSTP/prover9/**/*.s" )
 
   val stats = p9Files map { fn =>
     try {
