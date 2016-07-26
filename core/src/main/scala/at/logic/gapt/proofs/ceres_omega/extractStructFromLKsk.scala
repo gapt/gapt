@@ -16,7 +16,7 @@ object extractStructFromLKsk {
     apply( p, p.conclusion map { _ => false }, cutFormulaPred )
 
   def apply( p: LKskProof, isCutAncestor: Sequent[Boolean], cutFormulaPred: HOLFormula => Boolean ): Struct[Label] = p match {
-    //TODO: I think the labels are always empty, because cut-ancestors never lead into skolem quantifier rules. perhaps check.
+    //TODO: At the moment, the labels are always empty. It should be the labels from the axiom partner though.
     case Axiom( antLabel, sucLabel, atom ) =>
       ( isCutAncestor( Ant( 0 ) ), isCutAncestor( Suc( 0 ) ) ) match {
         case ( true, true ) =>
@@ -51,15 +51,14 @@ object extractStructFromLKsk {
 
       val struct = apply( upperProof, new_occs, cutFormulaPred )
       val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
+      val eqf = p.conclusion( e_idx_conclusion )
       //println( "eql: " + p.endSequent( eq ) )
       ( isCutAncestor( p.mainIndices( 0 ) ), isCutAncestor( e_idx_conclusion ) ) match {
         case ( true, true ) =>
           struct
         case ( true, false ) =>
-          val eqf = p.conclusion( e_idx_conclusion )
           Plus[Label]( A( eqf._2, List( eqf._1 ) ), struct )
         case ( false, true ) =>
-          val eqf = p.conclusion( e_idx_conclusion )
           Times( Dual( A( eqf._2, List( eqf._1 ) ) ), struct, List( eqf._1 ) )
         case ( false, false ) =>
           struct

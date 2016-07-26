@@ -72,14 +72,15 @@ object StructCreators extends Logger {
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         val struct = extract[Data]( upperProof, new_occs )
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
+        val eqformula = upperProof.endSequent( eq )
         //println( "eql: " + p.endSequent( eq ) )
         ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
           case ( true, false ) =>
-            Plus( A( p.mainFormulas( 0 ), Nil ), struct )
+            Plus( A( eqformula, Nil ), struct )
           case ( false, true ) =>
-            Times( Dual( A( p.endSequent( eq ), Nil ) ), struct, Nil )
+            Times( Dual( A( eqformula, Nil ) ), struct, Nil )
           case ( false, false ) =>
             struct
         }

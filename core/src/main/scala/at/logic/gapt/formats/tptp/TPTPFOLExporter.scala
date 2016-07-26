@@ -9,7 +9,7 @@ object TPTPFOLExporter {
     TptpFile( Seq( AnnotatedFormula( "fof", "formula", "conjecture", formula, Seq() ) ) )
 
   def apply( sequent: HOLSequent ): TptpFile = {
-    require( freeVariables( sequent ).isEmpty )
+    require( freeVariables( sequent ).isEmpty, s"Sequent $sequent is not ground! " )
 
     val file = Seq.newBuilder[TptpInput]
 

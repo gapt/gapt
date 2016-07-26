@@ -39,6 +39,7 @@ class TPTPHOLExporter {
    */
   def apply( ls: List[HOLSequent], positive: Boolean ): String = {
     require( ls.nonEmpty, "Cannot export an empty sequent list!" )
+//    require( ls.flatMap( x => freeVariables( x ) ).isEmpty, "Can only export ground sequent sets!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( ls )
 
     var index = 0
