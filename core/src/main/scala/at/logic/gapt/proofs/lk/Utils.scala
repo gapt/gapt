@@ -32,10 +32,17 @@ object freeVariablesLK {
 }
 
 object groundFreeVarsLK {
-  def apply( p: LKProof ): LKProof =
-    Substitution( freeVariablesLK( p ) map {
-      case v @ Var( n, t ) => v -> Const( n, t )
-    } )( p )
+  def getMap( p: LKProof ) = {
+    val nameGen = rename.awayFrom( containedNames( p ) )
+    for ( v @ Var( n, t ) <- freeVariablesLK( p ) ) yield v -> Const( nameGen fresh n, t )
+  }
+
+  def apply( p: LKProof ): LKProof = Substitution( getMap( p ) )( p )
+
+  def wrap[I, O]( p: LKProof )( f: LKProof => I )( implicit ev: Replaceable[I, O] ): O = {
+    val grounding = getMap( p )
+    TermReplacement.hygienic( f( Substitution( grounding )( p ) ), grounding.map( _.swap ).toMap )
+  }
 }
 
 object cutFormulas {

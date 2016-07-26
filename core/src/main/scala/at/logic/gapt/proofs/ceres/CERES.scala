@@ -64,7 +64,7 @@ class CERES {
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Escargot )
-  def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = {
+  def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
     val es = p.endSequent
     val p_ = regularize( AtomicExpansion( p ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
