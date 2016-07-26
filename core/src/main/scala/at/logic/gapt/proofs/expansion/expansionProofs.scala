@@ -174,11 +174,7 @@ object eliminateMerges {
       case ETOr( t, s )                 => ETOr( merge( t ), merge( s ) )
       case ETImp( t, s )                => ETImp( merge( t ), merge( s ) )
       case ETWeakQuantifier( shallow, inst ) =>
-        ETWeakQuantifier(
-          shallow,
-          for ( ( selectedTerm, child ) <- inst )
-            yield selectedTerm -> merge( child )
-        )
+        ETWeakQuantifier( shallow, Map() ++ inst.mapValues( merge ) )
       case tree: ETStrongQuantifier => tree.copy( child = merge( tree.child ) )
       case tree: ETSkolemQuantifier => tree.copy( child = merge( tree.child ) )
     }
