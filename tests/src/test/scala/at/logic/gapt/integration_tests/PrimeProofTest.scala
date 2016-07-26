@@ -147,26 +147,15 @@ class PrimeProofTest extends Specification {
     }
 
     def euclid( n: Int ) = {
-      skipped( "Does not work right now - without definition elimination the end-sequent looks skolemized but it isn't." )
-      checkForProverOrSkip
+      if ( n >= 2 ) skipped( "LK proof construction runs out of memory" )
 
-      val euclidN = prime.euclid( 3 )
+      val euclidN = prime.euclid( n )
       val proof = euclidN.proof
-      //      val deproof = DefinitionElimination( proofdb.Definitions )( proof )
+      val deproof = DefinitionElimination( euclidN.ctx.definitions )( proof )
 
-      val proof_sk = skolemize( regularize( AtomicExpansion( proof ) ) )
-      val s = extractStruct( proof_sk, CERES.skipEquations )
+      val proof_sk = skolemize( regularize( AtomicExpansion( deproof ) ) )
 
-      val cs = deleteTautologies( CharacteristicClauseSet( s ) )
-      val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
-      //      val writer = new java.io.FileWriter( "target" + separator + "euclid-" + n + "-cs.tptp" )
-      //      writer.write( tptp.toString )
-      //      writer.flush
-      val projs = Projections( proof_sk, CERES.skipEquations )
-      val path = "target" + separator + "euclid-" + n + "-sk.xml"
-
-      Prover9 getResolutionProof cs must beSome
-      cs foreach println
+      CERES( proof_sk )
       ok
     }
 
