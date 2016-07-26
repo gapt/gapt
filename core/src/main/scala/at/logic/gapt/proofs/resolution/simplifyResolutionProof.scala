@@ -36,6 +36,12 @@ object simplifyResolutionProof {
             } getOrElse q4
           } getOrElse q3
       }
+      case Flip( p1, i1 ) => simplified( p1 ) match {
+        case q1 =>
+          q1.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).find( _ sameSideAs i1 ) map { i2 =>
+            Flip( q1, i2 )
+          } getOrElse q1
+      }
       // FIXME: descend into propositional part?
       case _ => Factor( p )
     } ) ensuring { res => res.conclusion == res.conclusion.distinct && res.conclusion.isSubMultisetOf( p.conclusion ) }
