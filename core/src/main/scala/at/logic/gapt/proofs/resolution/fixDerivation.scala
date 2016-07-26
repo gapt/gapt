@@ -64,6 +64,10 @@ object fixDerivation extends Logger {
   private def findFirstSome[A, B]( seq: Seq[A] )( f: A => Option[B] ): Option[B] =
     seq.view.flatMap( f( _ ) ).headOption
 
+  def apply( p: ResolutionProof, cs: Iterable[ResolutionProof] ): ResolutionProof = {
+    val csMap = cs.view.map( c => c.conclusion -> c ).toMap
+    mapInputClauses( apply( p, csMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) )( csMap )
+  }
   def apply( p: ResolutionProof, cs: Traversable[HOLClause] ): ResolutionProof =
     apply( p, cs.toSeq )
   def apply( p: ResolutionProof, cs: Seq[HOLClause] ): ResolutionProof =
