@@ -46,7 +46,7 @@ class DrawSequent[T](
 
   val turnstileLabel = LatexLabel( main, ft, "\\vdash" ) // \u22a2
 
-  val elementLabelSequent = sequent map { f => LatexLabel( main, ft, sequent_element_renderer( f ), Color.WHITE ) }
+  val elementLabelSequent = sequent map { f => LatexLabel( main, ft, sequent_element_renderer( f ) ) }
   val commaLabelSequent = sequent map { _ => LatexLabel( main, ft, "," ) }
 
   contents ++= removeLast( ( elementLabelSequent.antecedent zip commaLabelSequent.antecedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
@@ -55,8 +55,8 @@ class DrawSequent[T](
 
   // FIXME: figure out why + 10?  Is it the Label adding an inset?  Is the FlowPanel adding gaps?
   // It probably comes from the commas, which we render as JLabels and not as TeXIcons...
-  val width = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconWidth ).sum + 30
-  val height = contents.map( _.asInstanceOf[LatexLabel].myicon.getIconHeight ).max + font.getSize / 2
+  val width = contents.map( _.asInstanceOf[LatexLabel].myIcon.getIconWidth ).sum + 30
+  val height = contents.map( _.asInstanceOf[LatexLabel].myIcon.getIconHeight ).max + font.getSize / 2
   preferredSize = new Dimension( width, height )
   maximumSize = new Dimension( Int.MaxValue, height )
 
@@ -95,13 +95,18 @@ object LatexLabel {
 
   def clearCache() = this.synchronized( cache.clear() )
 
-  def apply( main: ProofToolViewer[_], font: Font, latexText: String, color: Color = Color.white ): LatexLabel = {
+  def apply( main: ProofToolViewer[_], font: Font, latexText: String ): LatexLabel = {
     val icon = this.synchronized( cache.getOrElseUpdate(
       ( latexText, font ),
       new TeXFormula( latexText ).
         createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF )
     ) )
-    new LatexLabel( main, font, latexText, icon, color )
+    if ( latexText == "," )
+      new LatexCommaLabel( main, font, icon )
+    else if ( latexText == "\\vdash" )
+      new LatexTurnstileLabel( main, font, icon )
+    else
+      new LatexFormulaLabel( main, font, latexText, icon )
   }
 }
 
@@ -109,21 +114,23 @@ class LatexLabel(
   main:          ProofToolViewer[_],
   val ft:        Font,
   val latexText: String,
-  val myicon:    TeXIcon,
-  color:         Color
+  val myIcon:    TeXIcon
 )
-    extends Label( "", myicon, Alignment.Center ) {
-  background = color
+    extends Label( "", myIcon, Alignment.Center ) {
+  background = Color.white
   foreground = Color.black
   font = ft
   opaque = true
-  yLayoutAlignment = 0.5
-  if ( latexText == "," ) {
-    border = Swing.EmptyBorder( font.getSize / 5, 2, 0, font.getSize / 5 )
-    icon = null
-    text = latexText
-  }
-  if ( latexText == "\\vdash" ) border = Swing.EmptyBorder( font.getSize / 6 )
+  yLayoutAlignment = 0
+}
+
+class LatexFormulaLabel(
+  main:      ProofToolViewer[_],
+  ft:        Font,
+  latexText: String,
+  myIcon:    TeXIcon
+)
+    extends LatexLabel( main, ft, latexText, myIcon ) {
 
   listenTo( mouse.moves, mouse.clicks, main.publisher )
   reactions += {
@@ -151,4 +158,24 @@ class LatexLabel(
       d.location = locationOnScreen
       d.open()
   }
+}
+
+class LatexCommaLabel(
+  main:   ProofToolViewer[_],
+  ft:     Font,
+  myicon: TeXIcon
+)
+    extends LatexLabel( main, ft, ",", myicon ) {
+  border = Swing.EmptyBorder( font.getSize / 5, 2, 0, font.getSize / 5 )
+  icon = null
+  text = latexText
+}
+
+class LatexTurnstileLabel(
+  main:   ProofToolViewer[_],
+  ft:     Font,
+  myicon: TeXIcon
+)
+    extends LatexLabel( main, ft, "\\vdash", myicon ) {
+  border = Swing.EmptyBorder( font.getSize / 6 )
 }

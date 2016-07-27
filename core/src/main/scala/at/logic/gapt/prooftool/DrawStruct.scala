@@ -138,7 +138,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
         mylabel.listenTo( mouse.clicks, main.publisher )
         mylabel.reactions += {
           case ShowLeaf =>
-            mylabel.icon = mylabel.myicon
+            mylabel.icon = mylabel.myIcon
             mylabel.text = ""
           case HideLeaf =>
             mylabel.text = "x"
@@ -148,7 +148,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
               mylabel.text = "x"
               mylabel.icon = null
             } else {
-              mylabel.icon = mylabel.myicon
+              mylabel.icon = mylabel.myIcon
               mylabel.text = ""
             }
         }

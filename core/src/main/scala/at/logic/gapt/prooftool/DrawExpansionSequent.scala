@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent
  * @param from Number of the first tree to be switched
  * @param to Number of the second tree to be switched
  */
-private[prooftool] class SwitchEvent( val from: Int, val to: Int ) extends Event
+private[prooftool] case class SwitchEvent( from: Int, to: Int ) extends Event
 
 /**
  * This class takes care of drawing an ExpansionSequent.
@@ -89,7 +89,7 @@ class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree], ft
   numLabels.foreach { listenTo( _ ) }
 
   val drawnTrees = new Array[DrawExpansionTree]( n ) // Draw all the trees. This is a mutable array so we can reorder the drawn trees.
-  for ( i <- 0 to n - 1 )
+  for ( i <- 0 until n )
     drawnTrees( i ) = new DrawExpansionTree( main, trees( i ), ft )
 
   drawLines()
