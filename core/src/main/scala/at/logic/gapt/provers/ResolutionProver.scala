@@ -25,7 +25,7 @@ trait ResolutionProver extends OneShotProver {
   def getResolutionProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
     getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
-      mapInputClauses( resolution, factorEarly = true )( cnfMap )
+      mapInputClauses( resolution )( cnfMap )
     }
   }
 

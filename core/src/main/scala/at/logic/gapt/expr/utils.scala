@@ -156,19 +156,19 @@ object rename {
   def awayFrom( blacklist: Iterable[VarOrConst] ): NameGenerator =
     new NameGenerator( blacklist map { _.name } )
 
-  def apply( v: Var, blackList: Iterable[Var] ): Var = awayFrom( blackList ).fresh( v )
-  def apply( v: FOLVar, blackList: Iterable[Var] ): FOLVar = awayFrom( blackList ).fresh( v )
-  def apply( c: Const, blackList: Iterable[Const] ): Const = awayFrom( blackList ).fresh( c )
-  def apply( c: FOLConst, blackList: Iterable[Const] ): FOLConst = awayFrom( blackList ).fresh( c )
+  def apply( v: Var, blackList: Iterable[VarOrConst] ): Var = awayFrom( blackList ).fresh( v )
+  def apply( v: FOLVar, blackList: Iterable[VarOrConst] ): FOLVar = awayFrom( blackList ).fresh( v )
+  def apply( c: Const, blackList: Iterable[VarOrConst] ): Const = awayFrom( blackList ).fresh( c )
+  def apply( c: FOLConst, blackList: Iterable[VarOrConst] ): FOLConst = awayFrom( blackList ).fresh( c )
 
   /**
    * renames a set of variables to pairwise distinct variables while avoiding names from blackList.
    */
-  def apply( vs: Iterable[FOLVar], blackList: Iterable[FOLVar] ): Map[FOLVar, FOLVar] = {
+  def apply( vs: Iterable[FOLVar], blackList: Iterable[VarOrConst] ): Map[FOLVar, FOLVar] = {
     val nameGen = awayFrom( blackList )
     vs map { v => v -> nameGen.fresh( v ) } toMap
   }
-  def apply( vs: Iterable[Var], blackList: Iterable[Var] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
+  def apply( vs: Iterable[Var], blackList: Iterable[VarOrConst] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
     val nameGen = awayFrom( blackList )
     vs map { v => v -> nameGen.fresh( v ) } toMap
   }

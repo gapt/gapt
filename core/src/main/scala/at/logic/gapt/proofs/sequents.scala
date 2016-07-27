@@ -383,6 +383,14 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
   def indexOfInAnt[B >: A]( elem: B ): SequentIndex = Ant( antecedent indexOf elem )
   def indexOfInSuc[B >: A]( elem: B ): SequentIndex = Suc( succedent indexOf elem )
 
+  def indexOfPolOption[B >: A]( elem: B, pol: Boolean ): Option[SequentIndex] = {
+    val idx = if ( pol ) succedent.indexOf( elem ) else antecedent.indexOf( elem )
+    if ( idx == -1 )
+      None
+    else
+      Some( if ( pol ) Suc( idx ) else Ant( idx ) )
+  }
+
   def swapped: Sequent[A] = Sequent( succedent, antecedent )
 
   def exists( p: A => Boolean ): Boolean = antecedent.exists( p ) || succedent.exists( p )
