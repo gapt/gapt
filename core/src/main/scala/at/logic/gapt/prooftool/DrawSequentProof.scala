@@ -15,23 +15,19 @@ import scala.swing.event._
  * @param main The instance of [[at.logic.gapt.prooftool.SequentProofViewer]] that this belongs to.
  * @param proof The proof being displayed.
  * @param fSize The font size.
- * @param hideContexts Whether the contexts of sequents should be hidden.
  * @param auxIndices The indices of the auxiliary formulas of the bottommost inference.
- * @param markCutAncestors Whether the ancestors of cut formulas should be marked.
  * @param cutAncestorIndices The indices of ancestors of cut formulas in the end sequent.
- * @param sequent_element_renderer
+ * @param sequentElementRenderer
  * @param pos The position of this proof relative to the main proof being displayed.
  */
 class DrawSequentProof[F, T <: SequentProof[F, T]](
-    val main:                 SequentProofViewer[F, T],
-    val proof:                SequentProof[F, T],
-    private val fSize:        Int,
-    var hideContexts:         Boolean,
-    val auxIndices:           Set[SequentIndex],
-    var markCutAncestors:     Boolean,
-    val cutAncestorIndices:   Set[SequentIndex],
-    sequent_element_renderer: F => String,
-    val pos:                  List[Int]
+    val main:               SequentProofViewer[F, T],
+    val proof:              SequentProof[F, T],
+    private val fSize:      Int,
+    val auxIndices:         Set[SequentIndex],
+    val cutAncestorIndices: Set[SequentIndex],
+    sequentElementRenderer: F => String,
+    val pos:                List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   var collapsed = false
   private val ft = new Font( SANS_SERIF, PLAIN, fSize )
@@ -44,15 +40,14 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   }
 
   private val endSequentPanel = {
-    val visibleFormulas = if ( hideContexts ) proof.mainIndices.toSet ++ auxIndices else proof.conclusion.indices.toSet
-    val colors = proof.conclusion.indicesSequent map { i => if ( markCutAncestors && cutAncestorIndices.contains( i ) ) Color.green else Color.white }
+    val mainAuxIndices = proof.mainIndices.toSet ++ auxIndices
     val ds = DrawSequent(
       main,
       proof.conclusion,
       ft,
-      proof.conclusion.indicesSequent map visibleFormulas.contains,
-      colors,
-      sequent_element_renderer
+      mainAuxIndices,
+      cutAncestorIndices,
+      sequentElementRenderer
     )
     ds.border = Swing.EmptyBorder
     ds.listenTo( ds.mouse.moves, ds.mouse.clicks, ds.mouse.wheel, main.publisher )
@@ -78,11 +73,9 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       main,
       p,
       fSize,
-      hideContexts,
       proof.auxIndices.head.toSet,
-      markCutAncestors,
       cutAncestorIndicesNew( i ),
-      sequent_element_renderer,
+      sequentElementRenderer,
       pos :+ i
     )
   }

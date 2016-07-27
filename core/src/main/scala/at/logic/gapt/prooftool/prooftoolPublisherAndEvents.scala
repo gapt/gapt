@@ -17,6 +17,10 @@ case class HideProof( pos: List[Int] ) extends Event
 case class ShowProof( pos: List[Int] ) extends Event
 case class HideSequentProof( pos: List[Int] ) extends Event
 case class ShowSequentProof( pos: List[Int] ) extends Event
+case object HideSequentContexts extends Event
+case object ShowAllFormulas extends Event
+case object MarkCutAncestors extends Event
+case object UnmarkCutAncestors extends Event
 
 case object ShowDebugBorders extends Event
 case object HideDebugBorders extends Event

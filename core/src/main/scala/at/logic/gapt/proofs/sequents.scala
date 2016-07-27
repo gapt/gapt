@@ -355,12 +355,12 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
     }
   }
 
-  def delete( i: SequentIndex ): Sequent[A] = focus( i )._2
+  def delete( i: SequentIndex ): Sequent[A] = delete( Seq( i ) )
 
-  def delete( is: SequentIndex* ): Sequent[A] = ( this /: is.sorted.reverse )( ( acc, i ) => acc delete i )
-
-  def delete( is: Seq[SequentIndex] )( implicit dummyImplicit: DummyImplicit ): Sequent[A] =
+  def delete( is: Seq[SequentIndex] ): Sequent[A] =
     zipWithIndex filterNot { is contains _._2 } map { _._1 }
+
+  def delete( is: SequentIndex* )( implicit d: DummyImplicit ): Sequent[A] = delete( is )
 
   def zipWithIndex: Sequent[( A, SequentIndex )] =
     Sequent(

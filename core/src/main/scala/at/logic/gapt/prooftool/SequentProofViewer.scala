@@ -38,9 +38,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     this,
     proof,
     fSize,
-    hideContexts = false,
     Set(),
-    markCutAncestors = false,
     Set(),
     sequent_element_renderer,
     Nil
@@ -48,17 +46,9 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
 
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
 
-  def hideSequentContext() {
-    mainComponent.hideContexts = true
-    mainComponent.revalidate()
-    scrollPane.cursor = java.awt.Cursor.getDefaultCursor
-  }
+  def hideSequentContext() = publisher.publish( HideSequentContexts )
 
-  def showAllFormulas() {
-    mainComponent.hideContexts = false
-    mainComponent.revalidate()
-    scrollPane.cursor = java.awt.Cursor.getDefaultCursor
-  }
+  def showAllFormulas() = publisher.publish( ShowAllFormulas )
 
   /**
    * Displays the dag proof in sunburst form.
@@ -138,14 +128,13 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
 
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    mainComponent.markCutAncestors = true
-    mainComponent.revalidate()
+    publisher.publish( MarkCutAncestors )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def removeMarking(): Unit = {
-    mainComponent.markCutAncestors = false
-    mainComponent.revalidate()
+    scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+    publisher.publish( UnmarkCutAncestors )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
@@ -178,14 +167,13 @@ class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofView
 
   def markCutAncestors() {
     scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    mainComponent.markCutAncestors = true
-    mainComponent.revalidate()
+    publisher.publish( MarkCutAncestors )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 
   def removeMarking(): Unit = {
-    mainComponent.markCutAncestors = false
-    mainComponent.revalidate()
+    scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+    publisher.publish( UnmarkCutAncestors )
     scrollPane.cursor = java.awt.Cursor.getDefaultCursor
   }
 

@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import at.logic.gapt.expr._
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
 import java.awt.{ Color, Dimension, Font }
@@ -15,42 +15,43 @@ import at.logic.gapt.formats.latex.LatexExporter
 import collection.mutable
 
 object DrawSequent {
-  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, visibility: Sequent[Boolean], colors: Sequent[Color], t_renderer: T => String ): DrawSequent[T] =
-    new DrawSequent[T]( main, seq, visibility, colors, ft, t_renderer )
-  def apply[T]( main: ProofToolViewer[_], seq: Sequent[T], ft: Font, t_renderer: T => String ): DrawSequent[T] =
-    DrawSequent( main, seq, ft, seq.map( _ => true ), seq.map( _ => Color.white ), t_renderer )
+  def apply[T](
+    main: ProofToolViewer[_],
+    seq:  Sequent[T], ft: Font,
+    mainAuxIndices:     Set[SequentIndex],
+    cutAncestorIndices: Set[SequentIndex],
+    t_renderer:         T => String
+  ): DrawSequent[T] = new DrawSequent[T]( main, seq, mainAuxIndices, cutAncestorIndices, ft, t_renderer )
+
+  def apply[T](
+    main:       ProofToolViewer[_],
+    seq:        Sequent[T],
+    ft:         Font,
+    t_renderer: T => String
+  ): DrawSequent[T] = DrawSequent( main, seq, ft, Set(), Set(), t_renderer )
 }
 
 class DrawSequent[T](
     main:                         ProofToolViewer[_],
     val sequent:                  Sequent[T],
-    val visibility:               Sequent[Boolean],
-    val colors:                   Sequent[Color],
+    val mainAuxIndices:           Set[SequentIndex],
+    val cutAncestorIndices:       Set[SequentIndex],
     val ft:                       Font,
     val sequent_element_renderer: T => String
 ) extends FlowPanel {
   opaque = false // Necessary to draw the proof properly
   hGap = 0 // no gap between components
 
-  listenTo( main.publisher )
+  val contextIndices = sequent.indices.toSet diff mainAuxIndices
 
-  private var first = true
-  for ( ( f, v, c ) <- zip3( sequent, visibility, colors ).antecedent ) {
-    if ( v ) {
-      if ( !first ) contents += LatexLabel( main, ft, "," )
-      else first = false
-      contents += LatexLabel( main, ft, sequent_element_renderer( f ), c )
-    }
-  }
-  contents += LatexLabel( main, ft, "\\vdash" ) // \u22a2
-  first = true
-  for ( ( f, v, c ) <- zip3( sequent, visibility, colors ).succedent ) {
-    if ( v ) {
-      if ( !first ) contents += LatexLabel( main, ft, "," )
-      else first = false
-      contents += LatexLabel( main, ft, sequent_element_renderer( f ), c )
-    }
-  }
+  val turnstileLabel = LatexLabel( main, ft, "\\vdash" ) // \u22a2
+
+  val elementLabelSequent = sequent map { f => LatexLabel( main, ft, sequent_element_renderer( f ), Color.WHITE ) }
+  val commaLabelSequent = sequent map { _ => LatexLabel( main, ft, "," ) }
+
+  contents ++= removeLast( ( elementLabelSequent.antecedent zip commaLabelSequent.antecedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
+  contents += turnstileLabel
+  contents ++= removeLast( ( elementLabelSequent.succedent zip commaLabelSequent.succedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
 
   // FIXME: figure out why + 10?  Is it the Label adding an inset?  Is the FlowPanel adding gaps?
   // It probably comes from the commas, which we render as JLabels and not as TeXIcons...
@@ -59,7 +60,34 @@ class DrawSequent[T](
   preferredSize = new Dimension( width, height )
   maximumSize = new Dimension( Int.MaxValue, height )
 
-  private def zip3[A, B, C]( seq1: Sequent[A], seq2: Sequent[B], seq3: Sequent[C] ): Sequent[( A, B, C )] = ( ( seq1 zip seq2 ) zip seq3 ) map { x => ( x._1._1, x._1._2, x._2 ) }
+  listenTo( main.publisher )
+
+  reactions += {
+    case HideSequentContexts =>
+      for ( i <- contextIndices ) {
+        elementLabelSequent( i ).visible = false
+        commaLabelSequent( i ).visible = false
+      }
+
+    case ShowAllFormulas =>
+      for ( i <- contextIndices ) {
+        elementLabelSequent( i ).visible = true
+        commaLabelSequent( i ).visible = true
+      }
+
+    case MarkCutAncestors =>
+      for ( i <- cutAncestorIndices )
+        elementLabelSequent( i ).background = Color.GREEN
+
+    case UnmarkCutAncestors =>
+      for ( i <- cutAncestorIndices )
+        elementLabelSequent( i ).background = Color.WHITE
+  }
+
+  private def removeLast[T]( xs: Seq[T] ): Seq[T] = xs match {
+    case Seq() => Seq()
+    case _     => xs.init
+  }
 }
 
 object LatexLabel {
@@ -77,7 +105,13 @@ object LatexLabel {
   }
 }
 
-class LatexLabel( main: ProofToolViewer[_], val ft: Font, val latexText: String, val myicon: TeXIcon, var color: Color )
+class LatexLabel(
+  main:          ProofToolViewer[_],
+  val ft:        Font,
+  val latexText: String,
+  val myicon:    TeXIcon,
+  color:         Color
+)
     extends Label( "", myicon, Alignment.Center ) {
   background = color
   foreground = Color.black
