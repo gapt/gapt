@@ -21,8 +21,8 @@ object ReductionDemo extends Script {
   //  val sequent = groundFreeVariables( eliminateCutsET( LKToExpansionProof( nTape3.preprocessed_input_proof ) ).deep )._1
 
   val reduction =
-    LambdaEliminationReductionRes |>
-      HOFunctionReductionRes |>
+    LambdaEliminationReductionRes() |>
+      HOFunctionReductionRes() |>
       CNFReductionResRes |>
       PredicateReductionCNF |>
       ErasureReductionCNF

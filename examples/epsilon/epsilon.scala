@@ -22,6 +22,6 @@ object epsilon extends Script {
   val Some( irratProof ) = Escargot getEpsilonProof irratProblem
   println( irratProof )
 
-  val reduction = LambdaEliminationReduction |> HOFunctionReduction
+  val reduction = LambdaEliminationReduction() |> HOFunctionReduction()
   require( Escargot isValid reduction.forward( irratProof.deep )._1 )
 }
