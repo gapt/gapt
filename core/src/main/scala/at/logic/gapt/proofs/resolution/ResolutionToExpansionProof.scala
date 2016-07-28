@@ -32,7 +32,7 @@ object ResolutionToExpansionProof {
    * introduced by structural clausification.
    */
   def withDefs( proof: ResolutionProof, addConclusion: Boolean = true ): ExpansionProofWithCut = {
-    val nameGen = rename.awayFrom( proof.subProofs.flatMap( _.conclusion.elements ).flatMap( variables( _ ) ) )
+    val nameGen = rename.awayFrom( containedNames( proof ) )
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
 
@@ -122,8 +122,8 @@ object ResolutionToExpansionProof {
       case p @ Subst( q, subst ) =>
         val subFVs = freeVariables( q.conclusion )
         propg( p, q, _.map( _.map1( _ compose subst restrict subFVs ) ) )
-      case p @ Resolution( q1, i1, q2, i2 ) =>
-        val atom = q1.conclusion( i1 ).asInstanceOf[HOLAtom]
+      case p @ Resolution( q1, i1, q2, i2 ) if p.resolvedLiteral.isInstanceOf[HOLAtom] =>
+        val atom = p.resolvedLiteral.asInstanceOf[HOLAtom]
         val Seq( oc1, oc2 ) = p.occConnectors
         propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], false ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], true ) ) ) )

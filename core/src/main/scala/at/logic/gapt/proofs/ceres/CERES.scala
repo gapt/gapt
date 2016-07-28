@@ -110,7 +110,7 @@ class CERES {
     for {
       proj <- projections
       sub <- clauseSubsumption( proj.endSequent diff endsequent, axfs )
-    } return ContractionMacroRule( sub( proj ), endsequent ++ axfs )
+    } return WeakeningContractionMacroRule( sub( proj ), endsequent ++ axfs )
 
     throw new Exception( "Could not find a projection to " + axfs + " in " +
       projections.map( _.endSequent.diff( endsequent ) ).mkString( "{\n", ";\n", "\n}" ) )
