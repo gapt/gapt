@@ -101,6 +101,7 @@ object testCutIntro extends App {
           case _: StackOverflowError => "parsing_stack_overflow"
           case _: Throwable          => "parsing_other_exception"
         } )
+        metrics.value( "exception", e.getMessage )
         throw e
     }
 
@@ -127,6 +128,7 @@ object testCutIntro extends App {
               case _: LKRuleCreationException             => "lk_rule_creation_exception"
               case _: Throwable                           => "cutintro_other_exception"
             } )
+            metrics.value( "exception", e.getMessage )
             throw e
         }
     }
