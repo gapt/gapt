@@ -37,10 +37,10 @@ object simplifyResolutionProof {
           } getOrElse q3
       }
       case Flip( p1, i1 ) => simplified( p1 ) match {
-        case q1 =>
-          q1.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).find( _ sameSideAs i1 ) map { i2 =>
-            Flip( q1, i2 )
-          } getOrElse q1
+        case q2 =>
+          q2.conclusion.indicesWhere( _ == p1.conclusion( i1 ) ).find( _ sameSideAs i1 ) map { i2 =>
+            Factor( Flip( q2, i2 ) )
+          } getOrElse q2
       }
       // FIXME: descend into propositional part?
       case _ => Factor( p )
