@@ -431,9 +431,10 @@ object CutIntroduction {
       } else {
         var lhs = ithCut( i - 1 )
         for {
-          ( u, insts ) <- solStruct.sehs.us
-          inst <- insts.distinct
+          ( ( u, insts ), idx ) <- solStruct.sehs.us.zipWithIndex
+          inst <- insts
           if freeVariables( inst ).intersect( solStruct.sehs.eigenVariables( i ).toSet ).nonEmpty
+          if lhs.conclusion.contains( instantiate( u, inst ), idx.isSuc )
         } lhs = WeakQuantifierBlock( lhs, u, inst )
         lhs = ForallRightBlock( lhs, solStruct.cutFormulas( i ), solStruct.sehs.eigenVariables( i ) )
         lhs = ContractionMacroRule( lhs )
@@ -451,9 +452,9 @@ object CutIntroduction {
 
     var proof = ithCut( solStruct.formulas.indices.last )
     for {
-      ( u, insts ) <- solStruct.sehs.us
-      inst <- insts.distinct
-      if freeVariables( inst ).isEmpty
+      ( ( u, insts ), idx ) <- solStruct.sehs.us.zipWithIndex
+      inst <- insts
+      if proof.conclusion.contains( instantiate( u, inst ), idx.isSuc )
     } proof = WeakQuantifierBlock( proof, u, inst )
     WeakeningContractionMacroRule( proof, solStruct.endSequent, strict = true )
   }
