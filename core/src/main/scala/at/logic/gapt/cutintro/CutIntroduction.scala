@@ -245,14 +245,6 @@ object CutIntroduction {
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
     )
 
-    val herbrandSequent = extractInstances( ep )
-    val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
-      throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
-    }
-    metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
-    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
-    metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
-
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
     if ( verbose )
@@ -269,6 +261,14 @@ object CutIntroduction {
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
     metrics.value( "termset_trivial", termset.size == termset.map { case FOLFunction( r, _ ) => r }.size )
     if ( verbose ) println( s"Size of term set: ${termset.size}" )
+
+    val herbrandSequent = extractInstances( ep )
+    val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
+      throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
+    }
+    metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
+    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
+    metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
 
     /********** Grammar finding **********/
     metrics.time( "grammar" ) {
