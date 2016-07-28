@@ -206,6 +206,7 @@ object Reforest {
 
   def compress( s: ReforestState ): ReforestState = {
     val stats = s.stats
+    if ( stats.isEmpty ) return s
     val ( feat, freq ) = stats.maxBy { _._2 }
     if ( freq > 1 ) compress( s abbreviate feat )
     else s
