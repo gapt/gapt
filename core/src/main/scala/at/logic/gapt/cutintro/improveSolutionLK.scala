@@ -52,15 +52,21 @@ object improveSolutionLK {
    */
   private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula =
     for ( session <- prover.startIncrementalSession() ) yield {
-      session declareSymbolsIn ( instances.flatMap { _.map.values } + start ++ context.elements )
-      session assert context.toNegConjunction
+      val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
+      val nameGen = rename.awayFrom( names )
+      val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
+        yield v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+      val groundInstances = instances.map( grounding.compose )
+
+      session declareSymbolsIn ( names ++ containedNames( grounding ) )
+      session assert grounding( context.toNegConjunction )
 
       val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
       def checkSolution( cnf: Set[FOLClause] ): Unit =
         if ( !isSolution.contains( cnf ) ) {
           if ( session withScope {
-            for ( inst <- instances; clause <- cnf ) session assert inst( clause.toDisjunction )
+            for ( inst <- groundInstances; clause <- cnf ) session assert inst( clause.toDisjunction )
             !session.checkSat()
           } ) {
             isSolution( cnf ) = true
