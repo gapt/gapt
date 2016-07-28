@@ -183,7 +183,6 @@ case class DeltaTableMethod(
     n append "_dtable"
     if ( subsumedRowMerging ) n append "_ss"
     for ( l <- keyLimit ) n append s"_lim$l"
-    n append "_new"
     n.result()
   }
 }
