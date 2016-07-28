@@ -84,9 +84,11 @@ object simplify {
  */
 object CNFp {
   def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
-  def apply( f: HOLFormula ): Set[HOLClause] =
+  def apply( f: HOLFormula ): Set[HOLClause] = {
+    require( !containsStrongQuantifier( f, pol = false ), s"Formula contains strong quantifiers: $f" )
     structuralCNF.onProofs( Seq( Input( Sequent() :+ f ) ), propositional = false, structural = false ).
       map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) )
+  }
 }
 
 /**
