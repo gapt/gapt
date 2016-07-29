@@ -139,6 +139,11 @@ abstract class LambdaExpression {
   def toSigRelativeString( implicit sig: BabelSignature ) =
     new BabelExporter( unicode = true, sig = sig ).export( this )
 
+  def toUntypedString( implicit sig: BabelSignature ) =
+    new BabelExporter( unicode = true, sig = implicitly, omitTypes = true ).export( this )
+  def toUntypedAsciiString( implicit sig: BabelSignature ) =
+    new BabelExporter( unicode = false, sig = implicitly, omitTypes = true ).export( this )
+
   def &( that: LambdaExpression ): HOLFormula = And( this, that )
   def |( that: LambdaExpression ): HOLFormula = Or( this, that )
   def unary_- : HOLFormula = Neg( this )
