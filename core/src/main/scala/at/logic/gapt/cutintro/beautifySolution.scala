@@ -21,6 +21,22 @@ object beautifySolution {
       case ( cf, k ) =>
         var cnf = CNFp( cf )
 
+        // subsumption
+        cnf = cnf filter { cls =>
+          val subsumingFormulas = for {
+            ( ( vs, cnfs ), j ) <- esCNFs.zipWithIndex.elements
+            esCNF <- cnfs
+            subst <- clauseSubsumption( esCNF, cls )
+          } yield ( j, subst.asFOLSubstitution( vs ).toList )
+          subsumingFormulas.headOption match {
+            case Some( ( j, inst ) ) =>
+              for ( s <- ehs.sehs.ss( k )._2 )
+                addUs += j -> FOLSubstitution( ehs.sehs.ss( k )._1 zip s )( inst ).toList
+              false
+            case None => true
+          }
+        }
+
         // unit resolution
         cnf = cnf map {
           _.zipWithIndex filter {
@@ -39,22 +55,6 @@ object beautifySolution {
                   true
               }
           } map { _._1 }
-        }
-
-        // subsumption
-        cnf = cnf filter { cls =>
-          val subsumingFormulas = for {
-            ( ( vs, cnfs ), j ) <- esCNFs.zipWithIndex.elements
-            esCNF <- cnfs
-            subst <- clauseSubsumption( esCNF, cls )
-          } yield ( j, subst.asFOLSubstitution( vs ).toList )
-          subsumingFormulas.headOption match {
-            case Some( ( j, inst ) ) =>
-              for ( s <- ehs.sehs.ss( k )._2 )
-                addUs += j -> FOLSubstitution( ehs.sehs.ss( k )._1 zip s )( inst ).toList
-              false
-            case None => true
-          }
         }
 
         simplify( And( cnf map { _.toImplication } ) )
