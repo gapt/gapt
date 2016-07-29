@@ -119,7 +119,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
    */
   protected def mkSym( idx: SequentIndex ) = {
     val idxPart = idx match { case Ant( i ) => s"a$i" case Suc( i ) => s"s$i" }
-    nameGen fresh s"$idxPart:${matrices( idx ).toString.replaceAll( "\\s", "" ).take( 30 )}"
+    nameGen fresh s"$idxPart:${matrices( idx ).toUntypedAsciiString.replaceAll( "\\s", "" ).take( 30 )}"
   }
 
   /**
