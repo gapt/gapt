@@ -20,15 +20,24 @@ object linearizeStrictPartialOrder {
         case Some( next ) =>
           build( set - next, relation filterNot { _._1 == next }, prefix :+ next )
         case None =>
-          val start = set.head
-          val cycle = start +: walk( start, relation ).drop( 1 ).takeWhile( _ != start ) :+ start
-          Left( cycle.toList )
+          Left( findCycle( set.head, relation ) )
       }
     }
 
-  private def walk[T]( start: T, relation: Set[( T, T )] ): Stream[T] = {
-    val Some( ( _, next ) ) = relation find { _._1 == start }
-    next #:: walk( next, relation )
+  private def findCycle[T]( start: T, relation: Set[( T, T )] ): Seq[T] = {
+    def walkDown( start: T, alreadyVisited: List[T] ): Seq[T] = {
+      val Some( ( _, next ) ) = relation find { _._2 == start }
+      if ( alreadyVisited contains next )
+        next :: ( alreadyVisited.takeWhile( _ != next ) :+ next )
+      else
+        walkDown( next, next :: alreadyVisited )
+    }
+    walkDown( start, start :: Nil )
+  }
+
+  private def walkDown[T]( start: T, relation: Set[( T, T )] ): Stream[T] = {
+    val Some( ( _, next ) ) = relation find { _._2 == start }
+    start #:: walkDown( next, relation )
   }
 }
 

@@ -1,6 +1,6 @@
 package at.logic.gapt.grammars
 
-import at.logic.gapt.expr.{ Apps, Const, LambdaExpression, Var, freeVariables }
+import at.logic.gapt.expr.{ Apps, Const, LambdaExpression, Substitution, Var, freeVariables }
 
 import scala.collection.mutable
 
@@ -10,28 +10,34 @@ import scala.collection.mutable
  */
 object leastGeneralGeneralization {
   def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
-    val vars = mutable.Map[( LambdaExpression, LambdaExpression ), Var]()
-    val subst1 = mutable.Map[Var, LambdaExpression]()
-    val subst2 = mutable.Map[Var, LambdaExpression]()
+    val lgg = new leastGeneralGeneralization
+    ( lgg( a, b ), lgg.subst1, lgg.subst2 )
+  }
+  def apply( a: Seq[LambdaExpression], b: Seq[LambdaExpression] ): ( Seq[LambdaExpression], collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+    val lgg = new leastGeneralGeneralization
+    ( ( a, b ).zipped.map( lgg.apply ), lgg.subst1, lgg.subst2 )
+  }
+}
+class leastGeneralGeneralization {
+  val vars = mutable.Map[( LambdaExpression, LambdaExpression ), Var]()
+  val subst1 = mutable.Map[Var, LambdaExpression]()
+  val subst2 = mutable.Map[Var, LambdaExpression]()
 
-    var i = 0
-    def lgg( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
-      val Apps( fa, as ) = a
-      val Apps( fb, bs ) = b
-      if ( fa.isInstanceOf[Const] && fa == fb ) {
-        fa( ( as, bs ).zipped map lgg: _* )
-      } else {
-        vars.getOrElseUpdate( a -> b, {
-          i = i + 1
-          val v = Var( s"x$i", a.exptype )
-          subst1( v ) = a
-          subst2( v ) = b
-          v
-        } )
-      }
+  var i = 0
+  def apply( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
+    val Apps( fa, as ) = a
+    val Apps( fb, bs ) = b
+    if ( fa.isInstanceOf[Const] && fa == fb ) {
+      fa( ( as, bs ).zipped map apply: _* )
+    } else {
+      vars.getOrElseUpdate( a -> b, {
+        i = i + 1
+        val v = Var( s"x$i", a.exptype )
+        subst1( v ) = a
+        subst2( v ) = b
+        v
+      } )
     }
-
-    ( lgg( a, b ), subst1, subst2 )
   }
 }
 

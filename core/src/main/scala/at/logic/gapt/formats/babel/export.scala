@@ -16,7 +16,7 @@ import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
  * @param unicode  Whether to output logical connectives using Unicode symbols.
  * @param sig  The Babel signature, to decide whether we need to escape constants because they do not fit the naming convention.
  */
-class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrinter {
+class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = false ) extends PrettyPrinter {
 
   override val defaultIndent = 2
 
@@ -150,14 +150,14 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
       case Const( name, ty ) =>
         if ( t0.get( name ).exists { _ != expr } || sig.isVar( name ) || logicalConstName( name ) || name == EqC.name )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
+        else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
       case Var( name, ty ) =>
         if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.isVar( name ) ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
+        else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
@@ -191,7 +191,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
       ) ) )
 
     val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
-    if ( knownType || expr.exptype == Ti || hdKnown1 ) {
+    if ( omitTypes || knownType || expr.exptype == Ti || hdKnown1 ) {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.app )
       ( showFunCall( hd_, args_, p ), t2 )
     } else {

@@ -95,12 +95,12 @@ object tautologifyInitialUnitClauses {
    * resulting resolution proof has the same structure as the original proof.
    */
   def apply( p: ResolutionProof, shouldTautologify: HOLSequent => Boolean ): ResolutionProof =
-    mapInputClauses.withOccConn( p, factorEverything = true ) {
+    mapInputClauses( p ) {
       case clause @ Sequent( Seq(), Seq( a ) ) if shouldTautologify( clause ) =>
-        Taut( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq() +: Sequent() :+ Seq( Suc( 0 ) ) )
+        Taut( a )
       case clause @ Sequent( Seq( a ), Seq() ) if shouldTautologify( clause ) =>
-        Taut( a ) -> OccConnector( a +: Clause() :+ a, clause, Seq( Ant( 0 ) ) +: Sequent() :+ Seq() )
-      case clause => Input( clause ) -> OccConnector( clause )
+        Taut( a )
+      case clause => Input( clause )
     }
 }
 

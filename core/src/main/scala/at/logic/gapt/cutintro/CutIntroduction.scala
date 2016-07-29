@@ -245,14 +245,6 @@ object CutIntroduction {
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
     )
 
-    val herbrandSequent = extractInstances( ep )
-    val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
-      throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
-    }
-    metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
-    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
-    metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
-
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
     if ( verbose )
@@ -269,6 +261,14 @@ object CutIntroduction {
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
     metrics.value( "termset_trivial", termset.size == termset.map { case FOLFunction( r, _ ) => r }.size )
     if ( verbose ) println( s"Size of term set: ${termset.size}" )
+
+    val herbrandSequent = extractInstances( ep )
+    val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
+      throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
+    }
+    metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
+    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
+    metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
 
     /********** Grammar finding **********/
     metrics.time( "grammar" ) {
@@ -431,9 +431,10 @@ object CutIntroduction {
       } else {
         var lhs = ithCut( i - 1 )
         for {
-          ( u, insts ) <- solStruct.sehs.us
-          inst <- insts.distinct
+          ( ( u, insts ), idx ) <- solStruct.sehs.us.zipWithIndex
+          inst <- insts
           if freeVariables( inst ).intersect( solStruct.sehs.eigenVariables( i ).toSet ).nonEmpty
+          if lhs.conclusion.contains( instantiate( u, inst ), idx.isSuc )
         } lhs = WeakQuantifierBlock( lhs, u, inst )
         lhs = ForallRightBlock( lhs, solStruct.cutFormulas( i ), solStruct.sehs.eigenVariables( i ) )
         lhs = ContractionMacroRule( lhs )
@@ -451,9 +452,9 @@ object CutIntroduction {
 
     var proof = ithCut( solStruct.formulas.indices.last )
     for {
-      ( u, insts ) <- solStruct.sehs.us
-      inst <- insts.distinct
-      if freeVariables( inst ).isEmpty
+      ( ( u, insts ), idx ) <- solStruct.sehs.us.zipWithIndex
+      inst <- insts
+      if proof.conclusion.contains( instantiate( u, inst ), idx.isSuc )
     } proof = WeakQuantifierBlock( proof, u, inst )
     WeakeningContractionMacroRule( proof, solStruct.endSequent, strict = true )
   }
