@@ -1,10 +1,10 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.expr.{ LambdaExpression, HOLFormula }
+import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.proofs.lk.LKProof
-import java.io.{ BufferedWriter => JBufferedWriter, FileWriter => JFileWriter, InputStream }
+import java.io.{ InputStream, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
 
-import scala.io.Source
+import at.logic.gapt.formats.InputFile
 
 /**
  * Top-level interface to LLK Parsing
@@ -16,12 +16,7 @@ object loadLLK {
       |
       |Load an LLK proof from path and return its proof database.
       |""".stripMargin
-  def apply( filename: String ): ExtendedProofDatabase = {
-    val tokens = LLKProofParser.parseFile( filename )
-    LLKProofParser.createLKProof( tokens )
-  }
-  def apply( stream: InputStream ) =
-    LLKProofParser.parseString( Source.fromInputStream( stream ).mkString )
+  def apply( filename: InputFile ): ExtendedProofDatabase = LLKProofParser( filename )
 }
 
 object exportLLK {

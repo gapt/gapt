@@ -3,10 +3,11 @@ package at.logic.gapt.proofs.ceres_omega
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.replaceAbstractions
 import at.logic.gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, regularize, LKToLKsk }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, LKToLKsk, regularize }
 import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
@@ -15,17 +16,15 @@ import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.logging.Logger
 import org.specs2.mutable._
 
-import scala.io.Source
-
 //TODO: Fix the test!
 
 class ceres_omegaTest extends Specification with Logger {
 
   def load( file: String, pname: String ) =
-    LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( file ) mkString ).proof( pname )
+    LLKProofParser( ClasspathInputFile( file ) ).proof( pname )
 
   def prepareProof( file: String, proofname: String ) = {
-    val p = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream file ).mkString )
+    val p = LLKProofParser( ClasspathInputFile( file ) )
     val elp = AtomicExpansion( DefinitionElimination( p.Definitions )( regularize( p.proof( proofname ) ) ) )
     val selp = LKToLKsk( elp )
     val struct = extractStructFromLKsk( selp )
@@ -74,7 +73,7 @@ class ceres_omegaTest extends Specification with Logger {
   "Ceres omega Projections" should {
     "be computed for a cut-free proof" in {
       val filename = "tape3ex.llk"
-      val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
+      val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "INFTAPE" ) ) )
       val selp = LKToLKsk( elp )
       val proj = Projections( selp, CERES.skipPropositional )
@@ -87,7 +86,7 @@ class ceres_omegaTest extends Specification with Logger {
 
     "be computed for the ntape proof" in {
       val filename = "tape3ex.llk"
-      val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
+      val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
       val selp = LKToLKsk( elp )
       val proj = Projections( selp, CERES.skipPropositional )
@@ -126,7 +125,7 @@ class ceres_omegaTest extends Specification with Logger {
 
     "be computed for the first-order permutation example" in {
       val filename = "perm.llk"
-      val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
+      val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "AxProof" ) ) )
       val selp = LKToLKsk( elp )
 

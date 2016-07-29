@@ -5,6 +5,9 @@ import at.logic.gapt.formats.llk.ast.LambdaAST
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.lk.LKProof
 import java.io.FileReader
+
+import at.logic.gapt.formats.InputFile
+
 import scala.collection.immutable.PagedSeq
 import scala.util.parsing.input.PagedSeqReader
 
@@ -145,22 +148,10 @@ trait LatexReplacementParser extends DeclarationParser {
 }
 
 object LLKProofParser extends LLKProofParser {
-  def apply( fileName: String ): ExtendedProofDatabase = createLKProof( parseFile( fileName ) )
-
-  def parseString( string: String ): ExtendedProofDatabase = createLKProof( parse( string ) )
+  def apply( file: InputFile ): ExtendedProofDatabase = createLKProof( parse( file.read ) )
 }
 
 class LLKProofParser extends DeclarationParser with LatexReplacementParser with TokenToLKConverter {
-
-  def parseFile( fn: String ): List[Token] = {
-    val reader = new PagedSeqReader( new PagedSeq[Char]( new FileReader( fn ).read ) )
-
-    parseAll( rules, reader ) match {
-      case Success( r, _ ) => r
-      case NoSuccess( msg, input ) =>
-        throw new HybridLatexParserException( "Error parsing Hybrid Latex/LK in " + fn + " at position " + input.pos + ": " + msg )
-    }
-  }
 
   def parse( in: CharSequence ): List[Token] = {
     parseAll( rules, in ) match {

@@ -19,8 +19,6 @@ import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.formats.ClasspathInputFile
 import org.specs2.mutable._
 
-import scala.io.Source
-
 class MiscTest extends Specification {
 
   "The system" should {
@@ -67,7 +65,7 @@ class MiscTest extends Specification {
     }
 
     "extract expansion tree from tape proof" in {
-      val db = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream "tape3.llk" ).mkString )
+      val db = LLKProofParser( ClasspathInputFile( "tape3.llk" ) )
       // I have no idea why, but this makes the code get the correct proof
       val p = db.proof( "TAPEPROOF" )
       val elp = AtomicExpansion( DefinitionElimination( db.Definitions )( p ) )

@@ -2,10 +2,11 @@ package at.logic.gapt.cli
 
 import at.logic.gapt.examples.Script
 
-import scala.io.Source
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
 import at.logic.gapt.utils.logging.Logger
+
+import better.files._
 
 object CLIMain extends Logger {
 
@@ -21,7 +22,7 @@ object CLIMain extends Logger {
  conditions; type `copying' for details.
 """
 
-  val imports = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "gapt-cli-prelude.scala" ) ).mkString
+  val imports = getClass.getClassLoader.getResourceAsStream( "gapt-cli-prelude.scala" ).content.mkString
 
   def main( args: Array[String] ): Unit = {
     val settings = new Settings
@@ -42,7 +43,7 @@ object CLIMain extends Logger {
 
         // Strip package declaration, the script compiler doesn't like it.
         val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
-        val scriptSrc = Source.fromFile( scriptFile ).mkString match {
+        val scriptSrc = scriptFile.toFile.contentAsString match {
           case packageRegex( restOfScript ) => restOfScript
           case scriptWithoutPackage         => scriptWithoutPackage
         }

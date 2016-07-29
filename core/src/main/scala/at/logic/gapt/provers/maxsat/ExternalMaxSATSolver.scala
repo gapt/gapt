@@ -9,7 +9,7 @@ import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 class ExternalMaxSATSolver( val command: String* ) extends MaxSATSolver with ExternalProgram {
   protected def runProgram( dimacsInput: String ): String =
     withTempFile.fromString( dimacsInput ) { inFile =>
-      runProcess.withExitValue( command :+ inFile )._2
+      runProcess.withExitValue( command :+ inFile.pathAsString )._2
     }
 
   def solve( hard: DIMACS.CNF, soft: Seq[( DIMACS.Clause, Int )] ): Option[DIMACS.Model] =

@@ -201,6 +201,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scalaz" %% "scalaz-core" % "7.2.4",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",
+      "com.github.pathikrit" %% "better-files" % "2.16.0",
       "org.slf4j" % "slf4j-api" % "1.7.21",
       "org.slf4j" % "slf4j-log4j12" % "1.7.21",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",

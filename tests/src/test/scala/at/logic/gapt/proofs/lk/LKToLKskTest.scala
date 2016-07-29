@@ -7,8 +7,6 @@ import at.logic.gapt.formats.llk.loadLLK
 import at.logic.gapt.proofs.{ Ant, Suc }
 import org.specs2.mutable._
 
-import scala.io.Source
-
 class LKToLKskTest extends Specification {
   "single strong quantifier inference" in {
     val f = FOLAtom( "p", FOLVar( "x" ) )

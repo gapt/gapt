@@ -16,7 +16,7 @@ import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.viper.ViperOptions.FloatRange
 
 import scala.collection.mutable
-import scala.io.{ Source, StdIn }
+import scala.io.StdIn
 
 case class ViperOptions(
   instanceNumber:   Int                = 3,

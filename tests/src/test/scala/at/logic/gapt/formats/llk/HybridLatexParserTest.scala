@@ -2,9 +2,8 @@ package at.logic.gapt.formats.llk
 
 import at.logic.gapt.formats.llk.ast.LambdaAST
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.ClasspathInputFile
 import org.specs2.mutable._
-
-import scala.io.Source
 
 class LLKTest extends Specification {
   val p1 =
@@ -32,7 +31,7 @@ class LLKTest extends Specification {
   }
 
   def llkFromClasspath( filename: String ) =
-    LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream filename ).mkString )
+    LLKProofParser( ClasspathInputFile( filename ) )
 
   "Hybrid Latex-GAPT" should {
     "correctly handle latex macros in formulas (1)" in {

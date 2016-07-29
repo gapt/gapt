@@ -4,12 +4,12 @@ import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.tptp.TptpProofParser
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 
-import scala.io.Source
+import better.files._
 
 object testTstpImport extends App {
   val Array( filename ) = args
 
-  val tstpOutput = Source fromFile filename mkString
+  val tstpOutput = filename.toFile.contentAsString
 
   if ( !tstpOutput.contains( "CNFRefutation" ) )
     println( "NOT_CNF_REFUTATION" )

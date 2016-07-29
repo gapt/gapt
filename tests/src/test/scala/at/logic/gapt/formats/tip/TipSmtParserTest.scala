@@ -6,8 +6,6 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
-import scala.io.Source
-
 class TipSmtParserTest extends Specification {
 
   "bin_distrib.smt2" in {

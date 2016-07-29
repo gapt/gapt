@@ -9,7 +9,6 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
 import scala.collection.mutable
-import scala.io.Source
 
 class TipSmtParser {
   val typeDecls = mutable.Map[String, TBase]()

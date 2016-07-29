@@ -6,7 +6,6 @@ import java.io.File.separator
 
 import at.logic.gapt.formats.{ ClasspathInputFile, StringInputFile }
 
-import scala.io.Source
 import scala.util.{ Failure, Success }
 
 /**

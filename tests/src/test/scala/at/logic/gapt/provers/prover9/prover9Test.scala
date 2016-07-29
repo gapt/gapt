@@ -6,8 +6,6 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.Input
 import org.specs2.mutable._
 
-import scala.io.Source
-
 class Prover9Test extends Specification with SequentMatchers {
   args( skipAll = !Prover9.isInstalled )
   "The Prover9 interface" should {

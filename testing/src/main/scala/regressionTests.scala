@@ -1,7 +1,5 @@
 package at.logic.gapt.testing
 
-import java.io.{ File, FileWriter }
-
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.babel.BabelParser
@@ -19,13 +17,14 @@ import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.utils.glob
 
 import scala.concurrent.duration._
 import scala.util.Random
 import scala.xml.XML
 
-class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
+import better.files._
+
+class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
   override def timeout = Some( 10 minutes )
 
   override def test( implicit testRun: TestRun ) = {
@@ -100,7 +99,7 @@ class Prover9TestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   }
 }
 
-class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.getName ) {
+class LeanCoPTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
   override def timeout = Some( 2 minutes )
 
   override def test( implicit testRun: TestRun ) = {
@@ -111,7 +110,7 @@ class LeanCoPTestCase( f: File ) extends RegressionTestCase( f.getParentFile.get
   }
 }
 
-class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
+class VeriTTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
   override def test( implicit testRun: TestRun ) = {
     val E = addSymmetry( VeriTParser.getExpansionProof( f ).get ) --- "import"
 
@@ -122,13 +121,13 @@ class VeriTTestCase( f: File ) extends RegressionTestCase( f.getName ) {
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
-  def prover9Proofs = glob( "testing/TSTP/prover9/**/*.s" )
-  def leancopProofs = glob( "testing/TSTP/leanCoP/**/*.s" )
-  def veritProofs = glob( "testing/veriT-SMT-LIB/**/*.proof_flat" )
+  def prover9Proofs = file"testing/TSTP/prover9".glob( "**/*.s" ).toSeq
+  def leancopProofs = file"testing/TSTP/leanCoP".glob( "**/*.s" ).toSeq
+  def veritProofs = file"testing/veriT-SMT-LIB".glob( "**/*.proof_flat" ).toSeq
 
-  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( new File( fn ) ) }
-  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( new File( fn ) ) }
-  def veritTestCases = veritProofs map { fn => new VeriTTestCase( new File( fn ) ) }
+  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toJava ) }
+  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toJava ) }
+  def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toJava ) }
 
   def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases
 
@@ -143,20 +142,20 @@ object RegressionTests extends App {
 
   val total = testCases.length
   var started = 0
-  val out = new FileWriter( "target/regression-test-results.xml" )
-  out write "<testsuite>\n"
-  testCases.par foreach { tc =>
-    started += 1
-    println( s"[${( 100 * started ) / total}%] $tc" )
-    try {
-      val res = runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) { tc.run().toJUnitXml }
-      out.synchronized { XML.write( out, res, enc = "", xmlDecl = false, doctype = null ); out.flush() }
-    } catch {
-      case t: Throwable =>
-        println( s"$tc failed:" )
-        t.printStackTrace()
+  for ( out <- file"target/regression-test-results.xml".printWriter( autoFlush = true ) ) {
+    out write "<testsuite>\n"
+    testCases.par foreach { tc =>
+      started += 1
+      println( s"[${( 100 * started ) / total}%] $tc" )
+      try {
+        val res = runOutOfProcess( Seq( "-Xmx1G", "-Xss30m" ) ) { tc.run().toJUnitXml }
+        out.synchronized { XML.write( out, res, enc = "", xmlDecl = false, doctype = null ); out.flush() }
+      } catch {
+        case t: Throwable =>
+          println( s"$tc failed:" )
+          t.printStackTrace()
+      }
     }
+    out write "</testsuite>\n"
   }
-  out write "</testsuite>\n"
-  out.close()
 }

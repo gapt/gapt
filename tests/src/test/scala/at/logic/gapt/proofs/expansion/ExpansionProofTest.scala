@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKToExpansionProof }
@@ -10,8 +11,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
-
-import scala.io.Source
+import better.files._
 
 class ExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 
@@ -55,7 +55,7 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "tape proof cut elimination" in {
-    val pdb = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( "tape3ex.llk" ) ).mkString )
+    val pdb = LLKProofParser( ClasspathInputFile( "tape3ex.llk" ) )
     val lk = DefinitionElimination( pdb.Definitions )( pdb proof "TAPEPROOF" )
     val expansion = LKToExpansionProof( lk )
     val cutfree = eliminateCutsET( expansion )

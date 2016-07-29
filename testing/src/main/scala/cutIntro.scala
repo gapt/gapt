@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import java.io._
+import java.io.PrintWriter
 
 import at.logic.gapt.cutintro._
 import at.logic.gapt.examples._
@@ -12,14 +12,14 @@ import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.logging.{ MetricsCollector, metrics }
-import at.logic.gapt.utils.{ glob, withTimeout }
+import at.logic.gapt.utils.withTimeout
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.io.Source
 import scala.util.{ Failure, Success }
+import better.files._
 
 class MetricsPrinter extends MetricsCollector {
   val data = mutable.Map[String, Any]()
@@ -138,21 +138,21 @@ object testCutIntro extends App {
 object collectExperimentResults extends App {
   val metricsLineRegex = """METRICS (.*)""".r
 
-  def parseOut( fn: String ) =
-    JObject( Source.fromFile( fn ).getLines().collect {
+  def parseOut( fn: File ) =
+    JObject( fn.lines.collect {
       case metricsLineRegex( json ) => parse( json )
     }.collect {
       case JObject( map ) => map
     }.flatten.toList )
 
-  val allResults = JArray( glob( "**/stdout" ) map parseOut toList )
+  val allResults = JArray( file".".glob( "**/stdout" ) map parseOut toList )
   print( compact( render( allResults ) ) )
 }
 
 object findNonTrivialTSTPExamples extends App {
-  case class TermSetStats( fileName: String, size: Int, numFuns: Int )
+  case class TermSetStats( file: File, size: Int, numFuns: Int )
 
-  val p9Files = glob( "testing/TSTP/prover9/**/*.s" )
+  val p9Files = file"testing/TSTP/prover9".glob( "**/*.s" ).toSeq
 
   val stats = p9Files map { fn =>
     try {
@@ -171,8 +171,8 @@ object findNonTrivialTSTPExamples extends App {
   val trivial = stats flatMap { _.toOption } filter { s => s.size <= s.numFuns }
 
   val csv = new PrintWriter( "testing/resultsCutIntro/tstp_non_trivial_termset.csv" )
-  interesting.sortBy( _.fileName ) foreach { s =>
-    csv.println( s"${s.fileName},${s.numFuns},${s.size}" )
+  interesting.sortBy( _.file.pathAsString ) foreach { s =>
+    csv.println( s"${file".".relativize( s.file )},${s.numFuns},${s.size}" )
   }
   csv.close()
 

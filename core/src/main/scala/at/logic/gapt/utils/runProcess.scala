@@ -5,13 +5,14 @@ import java.io.IOException
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
+
+import better.files._
 
 object runProcess {
 
   def withTempInputFile( cmd: Seq[String], input: String, catchStderr: Boolean = false ): String =
     withTempFile.fromString( input ) { tempFile =>
-      apply( cmd :+ tempFile, "", catchStderr )
+      apply( cmd :+ tempFile.pathAsString, "", catchStderr )
     }
 
   def apply( cmd: Seq[String], stdin: String = "", catchStderr: Boolean = false ): String =
@@ -33,7 +34,7 @@ object runProcess {
     try {
       val stdout = Future {
         blocking {
-          Source.fromInputStream( p.getInputStream ).mkString
+          p.getInputStream.content.mkString
         }
       }
 

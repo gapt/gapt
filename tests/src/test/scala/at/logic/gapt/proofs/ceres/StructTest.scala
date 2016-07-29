@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk._
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
 import at.logic.gapt.proofs.HOLSequent
@@ -8,12 +9,11 @@ import org.specs2.matcher.MatchResult
 import org.specs2.mutable._
 
 import scala.collection.Set
-import scala.io.Source
 
 class StructTest extends Specification {
   "Struct extraction" should {
     "work for the permutation proof" in {
-      val proof: LKProof = LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( "perm.llk" ) mkString ).proof( "TheProof" )
+      val proof: LKProof = LLKProofParser( ClasspathInputFile( "perm.llk" ) ).proof( "TheProof" )
       val struct = extractStruct( proof )
       val cs = CharacteristicClauseSet( struct )
       //println( coloredStructString( struct ) )

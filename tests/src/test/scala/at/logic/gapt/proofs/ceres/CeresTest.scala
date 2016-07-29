@@ -8,15 +8,14 @@ import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, gaptic }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.{ formulaToSequent, isAtom }
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.lk.CutRule
 import org.specs2.mutable._
-
-import scala.io.Source
 
 class CeresTest extends Specification with SequentMatchers {
 
   def load( file: String, pname: String ) =
-    LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( file ) mkString ).proof( pname )
+    LLKProofParser( ClasspathInputFile( file ) ).proof( pname )
 
   "Struct extraction" should {
     "work for the permutation proof" in {
