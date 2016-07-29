@@ -1701,18 +1701,18 @@ Smallest grammar of size 8:
 Non-terminal vectors: (x0), (x1)
 Terminals:
   0
-  'a0:P(x)⊃P(s(x))':i>i
-  'a1:P(0):o'
+  'a0:P(x)->P(s(x))':i>i
+  'a1:P(0)'
   s:i>i
   's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
-x0 → 'a0:P(x)⊃P(s(x))'(s(s(x1)))
+x0 → 'a0:P(x)->P(s(x))'(s(s(x1)))
 
-x0 → 'a0:P(x)⊃P(s(x))'(s(x1))
+x0 → 'a0:P(x)->P(s(x))'(s(x1))
 
-x0 → 'a0:P(x)⊃P(s(x))'(x1)
+x0 → 'a0:P(x)->P(s(x))'(x1)
 
-x0 → 'a1:P(0):o'
+x0 → 'a1:P(0)'
 
 x0 → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
@@ -1728,18 +1728,18 @@ Beautified grammar of size 8:
 Non-terminal vectors: (x), (x1)
 Terminals:
   0
-  'a0:P(x)⊃P(s(x))':i>i
-  'a1:P(0):o'
+  'a0:P(x)->P(s(x))':i>i
+  'a1:P(0)'
   s:i>i
   's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
-x → 'a0:P(x)⊃P(s(x))'(s(s(x1)))
+x → 'a0:P(x)->P(s(x))'(s(s(x1)))
 
-x → 'a0:P(x)⊃P(s(x))'(s(x1))
+x → 'a0:P(x)->P(s(x))'(s(x1))
 
-x → 'a0:P(x)⊃P(s(x))'(x1)
+x → 'a0:P(x)->P(s(x))'(x1)
 
-x → 'a1:P(0):o'
+x → 'a1:P(0)'
 
 x → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
 
