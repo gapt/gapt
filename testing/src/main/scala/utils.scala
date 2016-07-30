@@ -8,6 +8,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.xml.Elem
+import scala.sys.process._
 import better.files._
 
 /**
@@ -176,11 +177,11 @@ object runOutOfProcess {
         serialize[InputType]( inputFile, () => f )
 
         val javaBinary = sys.props( "java.home" ) / "bin" / "java"
-        runProcess( Seq( javaBinary.pathAsString ) ++
+        ( Seq( javaBinary.pathAsString ) ++
           extraJvmArgs ++
           Seq( "-cp", System.getProperty( "java.class.path" ),
             getClass.getCanonicalName.dropRight( 1 ),
-            inputFile.pathAsString, outputFile.pathAsString ) )
+            inputFile.pathAsString, outputFile.pathAsString ) ) !
 
         deserialize[OutputType]( outputFile )
       }
