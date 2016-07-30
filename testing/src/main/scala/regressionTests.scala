@@ -25,7 +25,7 @@ import scala.xml.XML
 import better.files._
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
-  override def timeout = Some( 10 minutes )
+  override def timeout = Some( 3 minutes )
 
   override def test( implicit testRun: TestRun ) = {
     val ( robinson, reconstructedEndSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent( f ) --- "import"
