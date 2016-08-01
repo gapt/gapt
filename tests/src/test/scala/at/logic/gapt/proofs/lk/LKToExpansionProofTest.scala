@@ -124,6 +124,15 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
         u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), le"λx ∃y y=x".asInstanceOf[Abs] ) ) qed )
       LKToExpansionProof( lk ).shallow must_== lk.conclusion
     }
+
+    "equation left rule" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"a=b" ) ).
+        u( WeakeningLeftRule( _, hof"b=c" ) ).
+        u( EqualityLeftRule( _, hof"a=b", hof"b=c", hof"a=c" ) ).
+        qed
+      LKToExpansionProof( lk ).shallow must_== lk.conclusion
+    }
   }
 }
 

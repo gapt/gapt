@@ -131,32 +131,13 @@ object LKToExpansionProof {
       ( subCuts, subSequent.delete( aux ) :+ ETWeakQuantifier( proof.mainFormulas.head, Map( t -> subSequent( aux ) ) ) )
 
     // Equality rules
-    case p @ EqualityLeftRule( subProof, eq, aux, con ) =>
-      val ( subCuts, sequent ) = extract( subProof )
-      val eqTree = sequent( eq )
-      val ( auxTree, subSequent ) = sequent.focus( aux )
+    case p: EqualityRule =>
+      val ( subCuts, sequent ) = extract( p.subProof )
+      val auxTree = sequent( p.aux )
 
-      val newAuxTree = replaceWithContext( auxTree, con, p.by )
-      val newEqTree = eqTree match {
-        case ETWeakening( f: HOLAtom, pol ) => ETAtom( f, pol )
-        case ETAtom( f, pol )               => ETAtom( f, pol )
-        case ETDefinition( _, _, _ )        => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
-        case _                              => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
-      }
-      ( subCuts, newAuxTree +: subSequent.updated( eq, newEqTree ) )
-
-    case p @ EqualityRightRule( subProof, eq, aux, con ) =>
-      val ( subCuts, sequent ) = extract( subProof )
-      val eqTree = sequent( eq )
-      val ( auxTree, subSequent ) = sequent.focus( aux )
-
-      val newAuxTree = replaceWithContext( auxTree, con, p.by )
-      val newEqTree = eqTree match {
-        case ETWeakening( f: HOLAtom, pol ) => ETAtom( f, pol )
-        case ETAtom( f, pol )               => ETAtom( f, pol )
-        case ETDefinition( _, _, _ )        => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
-        case _                              => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
-      }
-      ( subCuts, subSequent.updated( eq, newEqTree ) :+ newAuxTree )
+      val newAuxTree = replaceWithContext( auxTree, p.replacementContext, p.by )
+      val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], false ), sequent( p.eq ) )
+      val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
+      ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
   }
 }
