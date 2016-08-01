@@ -1046,7 +1046,7 @@ format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
 res20: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p392]
+Some([p383]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
@@ -1611,49 +1611,48 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p730] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
-⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (CutRule(p1, Suc(0), p729, Ant(2)))
-[p729] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-0 = 0
-⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p728, Suc(1), Suc(0)))
-[p728] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-0 = 0
-⊢
-∃x_1 ∃y_0 (s(x_1) <= y_0 ∧ f(x_1) = f(y_0)),
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p727, Ant(3), Ant(1)))
-[p727] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-0 = 0,
+[p759] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
 ⊢
-∃x_1 ∃y_0 (s(x_1) <= y_0 ∧ f(x_1) = f(y_0)),
-∃...
+∃x_1 ∃y_0 (s(x_1) <= y_0 ∧ f(x_1) = f(y_0))    (ContractionRightRule(p758, Suc(1), Suc(0)))
+[p758] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
+⊢
+∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
+∃x_1 ∃y_0 (s(x_1) <= y_0 ∧ f(x_1) = f(y_0))    (ContractionLeftRule(p757, Ant(2), Ant(1)))
+[p757] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
+⊢
+∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
+∃x_1 ∃y_0 (s(x_1) <= y_0 ∧ f(x_1) = f(y_0))    (ContractionLeftRule(p756, Ant(3), Ant(0)))
+[p756] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0))
-  +^{s(M(s(M(x_0, x)), s(M(x_0, x))))}
-    (∀y_0 (s(M(s(M(x_0, x)), s(M(x_0, x)))) <=
-            M(s(M(s(M(x_0, x)), s(M(x_0, x)))), y_0) ∧
-          y_0 <= M(s(M(s(M(x_0, x)), s(M(x_0, x)))), y_0))
-      +^{s(M(s(M(x_0, x)), s(M(x_0, x))))}
-        ((s(M(s(M(x_0, x)), s(M(x_0, x)))) <=
-            M(
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
+  +^{M(
+      s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
+      s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5)))}
+    ((f(M(
+            s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
+            s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5)))) =
+        0)- ∨
+      (f(M(
+            s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
+            s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5)))) =
+        s(0))-)
+  +^{M(s(M(s(M(x_0, x)), s(M(x_0, x)))), s(M(s(M(x_0, x)), s(M(x_0, x)))))}
+    ((f(M(
             s(M(s(M(x_0, x)), s(M(x_0, x)))),
-            s(M(s(M(x_0, x)), s(M(x_0, x))))))- ∧
-          (s(M(s(M(x_0, x)), s(M(x_0, x)))) <=
-            M(
+            s(M(s(M(x_0, x)), s(M(x_0, x)))))) =
+        0)- ∨
+      (f(M(
             s(M(s(M(x_0, x)), s(M(x_0, x)))),
-            s(M(s(M(x_0, x)), s(M(x_0, x))))))-))
-  +^{s(M(s(M(x_3, x_4)), s(M(x_3, x_4))))}
-    (∀y_0 (s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))) <=
-            M(s(M(s(M(x_3, x_4)), ...
+            s(M(s(M(x_0, x)), s(M(x_0, x)))))) =
+        s(0)...
 gapt> prooftool(et)
 
 \end{clilisting}
