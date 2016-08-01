@@ -18,8 +18,8 @@ trait SatMatchers extends OptionMatchers {
   def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
   def beEUnsat =
-    beSome ^^ { ( f: HOLFormula ) => new Escargot( splitting = false, equality = true, propositional = true ).getResolutionProof( f ) }
+    beSome ^^ { ( f: HOLFormula ) => new Escargot( splitting = false, equality = true, propositional = true ).getResolutionProof( -f ) }
   def beEValid = beEUnsat ^^ { ( f: HOLFormula ) => -f }
-  def beEValidSequent = beEUnsat ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
+  def beEValidSequent = beEValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
 }
