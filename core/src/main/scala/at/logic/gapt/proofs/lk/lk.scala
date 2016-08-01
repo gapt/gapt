@@ -1165,6 +1165,11 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
 
     case _                    => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
+
+  def apply( subProof: LKProof, aux: SequentIndex, mainFormula: HOLFormula, eigenVariable: Var ): ForallRightRule =
+    mainFormula match {
+      case All( v, _ ) => ForallRightRule( subProof, aux, eigenVariable, v )
+    }
 }
 
 /**
@@ -1292,6 +1297,11 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
 
     case _                   => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
+
+  def apply( subProof: LKProof, aux: SequentIndex, mainFormula: HOLFormula, eigenVariable: Var ): ExistsLeftRule =
+    mainFormula match {
+      case Ex( v, _ ) => ExistsLeftRule( subProof, aux, eigenVariable, v )
+    }
 }
 
 /**
