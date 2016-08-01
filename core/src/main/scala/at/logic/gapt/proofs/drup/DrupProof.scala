@@ -59,7 +59,7 @@ object DrupToResolutionProof {
     var emptyClause: Option[ResProofThunk] = None
     // All unit clauses that we have found so far, indexed by their one literal
     val unitIndex = mutable.Map[Literal, ResProofThunk]()
-    // All non-unit clauses that we have found so far, indexed by all of their literals
+    // All non-unit clauses that we have found so far, indexed by the first two literals
     val nonUnitIndex = mutable.Map[Literal, Map[HOLSequent, Name[ResolutionProof]]]().withDefaultValue( Map() )
 
     def negate( lit: Literal ) = ( lit._1, !lit._2 )
@@ -91,13 +91,17 @@ object DrupToResolutionProof {
                 val negLit = negate( lit )
                 val qs = nonUnitIndex( negLit )
                 nonUnitIndex.remove( negLit )
-                for ( lit_ <- qs.keySet.flatMap( _.polarizedElements ) if lit_ != negLit )
-                  nonUnitIndex( lit_ ) --= qs.keys
+                for {
+                  q <- qs.keys
+                  lit_ <- q.polarizedElements.view.take( 2 )
+                  if lit_ != negLit
+                } nonUnitIndex( lit_ ) -= q
 
                 // .map removes duplicate clauses
                 qs.map( resolve( _, p, negLit ) ).foreach( add )
               } else {
-                for ( lit <- lits ) nonUnitIndex( lit ) += p
+                val watched = lits.view.take( 2 )
+                for ( lit <- watched ) nonUnitIndex( lit ) += p
               }
           }
         }
