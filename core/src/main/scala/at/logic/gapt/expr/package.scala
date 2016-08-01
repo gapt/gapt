@@ -93,6 +93,13 @@ package object expr extends DefaultReplaceables {
   }
 
   /**
+   * Testifies that an Option of substitutable objects is itself substitutable (by mapping over it).
+   */
+  implicit def SubstitutableOption[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Option[T], Option[U]] = new Substitutable[S, Option[T], Option[U]] {
+    override def applySubstitution( sub: S, option: Option[T] ): Option[U] = option map { ev.applySubstitution( sub, _ ) }
+  }
+
+  /**
    * Testifies that a Sequent of substitutable objects is itself substitutable (by mapping over it).
    *
    * @param ev
