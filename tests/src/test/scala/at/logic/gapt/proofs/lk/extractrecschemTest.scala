@@ -66,8 +66,6 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
         forget( "hyp" ); allL( le"c" ).forget; decompose; exR( le"y" ).forget; chain( "cut" )
       }
 
-    println( p )
-
     val recschem = extractRecSchem( p )
     And( recschem.language ) must beUnsat
   }

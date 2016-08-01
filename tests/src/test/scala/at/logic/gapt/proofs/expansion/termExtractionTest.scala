@@ -1,43 +1,35 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import org.specs2.mutable._
 
 class TermExtractionTest extends Specification {
   val Seq( x, y ) = Seq( "x", "y" ).map( FOLVar( _ ) )
   val esP = All( x, FOLAtom( "P", x, y ) )
   val esR = Ex( x, FOLAtom( "R", x ) )
-  val endSequent = HOLSequent(
-    Seq( esP ),
-    Seq( esR )
+  val endSequent = hos"!x P x y :- ?x R x"
+
+  val expansion = ExpansionProof(
+    ETWeakQuantifier( hof"!x P x d", Map(
+      le"c" -> ETAtom( hoa"P c d", false ),
+      le"d" -> ETAtom( hoa"P d d", false )
+    ) ) +: Sequent()
   )
 
-  val instP = All( x, FOLAtom( "P", x, FOLConst( "d" ) ) )
-  val expTreeP = ETWeakQuantifier( instP, Map(
-    FOLConst( "c" ) -> ETAtom( FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ), false ),
-    FOLConst( "d" ) -> ETAtom( FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) ), false )
-  ) )
-
-  val expSeq = ExpansionSequent( Seq( expTreeP ), Seq() )
-
   "extractInstances" in {
-    extractInstances( expSeq ).antecedent must contain( exactly(
-      FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ).asInstanceOf[HOLFormula],
-      FOLAtom( "P", FOLConst( "d" ), FOLConst( "d" ) )
-    ) )
+    extractInstances( expansion ).antecedent must contain( exactly( hof"P c d", hof"P d d" ) )
   }
 
   "TermInstanceEncoding" should {
     val encoding = FOLInstanceTermEncoding( endSequent )
     "encode the instance terms as arguments" in {
-      encoding.encode( expSeq ).map {
-        case FOLFunction( _, args ) => args
-      } must contain( exactly( Seq( FOLConst( "c" ).asInstanceOf[FOLTerm] ), Seq( FOLConst( "d" ) ) ) )
+      encoding.encode( expansion ).map {
+        case Apps( _, as ) => as
+      } must contain( exactly( Seq( le"c" ), Seq( le"d" ) ) )
     }
     "decode correctly" in {
-      encoding.decodeToPolarizedFormula( encoding.encode( -FOLAtom( "P", FOLConst( "c" ), FOLConst( "d" ) ) ) ) must_==
-        ( FOLAtom( "P", FOLConst( "c" ), FOLVar( "y" ) ) -> false )
+      encoding.decodeToPolarizedFormula( encoding.encode( hof"P c d" ) ) must_== ( hof"P c y", false )
     }
   }
 }

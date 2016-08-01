@@ -93,9 +93,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   val matrices = endSequent map { removeAllQuantifiers( _ ) }
 
   /**
-   * The propositional matrices of the end-sequent, where the formulas in the antecedent are negated.
+   * The propositional matrices of the end-sequent, where the formulas in the succedent are negated.
    */
-  val signedMatrices = matrices.map( -_, identity )
+  val signedMatrices = matrices.map( identity, -_ )
 
   private def getWeakQuantVars( esFormula: HOLFormula, pol: Boolean ): Seq[Var] = esFormula match {
     case All( x, t ) if !pol => x +: getWeakQuantVars( t, pol )
@@ -149,7 +149,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
    * Encodes a sequent consisting of instances of an instance sequent.
    */
   def encode( instance: HOLSequent ): Set[LambdaExpression] =
-    instance.map( -_, identity ).elements map encode toSet
+    instance.map( identity, -_ ).elements map encode toSet
 
   /**
    * Encodes an expansion sequent (of an instance proof).

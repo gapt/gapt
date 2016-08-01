@@ -108,7 +108,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
       for ( ( inst, _ ) <- instanceProofs ) {
         val genLang = rs.parametricLanguage( inst: _* )
-        require( Z3 isValid Or( genLang ), s"Generated instance language for $inst not tautological" )
+        require( Z3 isUnsat And( genLang ), s"Generated instance language for $inst not tautological" )
       }
 
       findMinimalCounterexample( instanceProofs.keys, rs ) match {
@@ -153,7 +153,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   }
 
   def findMinimalCounterexample( correctInstances: Iterable[Instance], logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
-    def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isValid Or( logicalRS.parametricLanguage( inst: _* ) )
+    def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isUnsat And( logicalRS.parametricLanguage( inst: _* ) )
     val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
     val failedInstOption = ( 0 to options.tautCheckNumber ).
       map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
@@ -168,7 +168,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       import Scalaz._
       val minimalCounterExample = failedInst.toList.
         traverse( i => instantiateRS.subTerms( i ).filter( _.exptype == i.exptype ).toList ).
-        filterNot { i => Z3 isValid Or( logicalRS.parametricLanguage( i: _* ) ) }.
+        filterNot( checkInst ).
         minBy { _ map { expressionSize( _ ) } sum }
       info( s"Minimal counterexample: ${minimalCounterExample.map { _.toSigRelativeString }}" )
       minimalCounterExample
@@ -188,7 +188,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val B = homogenized.nonTerminals.find( _.name == "B" ).get
     val pi1QTys = FunctionType.unapply( B.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
-    val canSol = And( homogenized generatedTerms B( axiomArgs: _* )( canSolInst: _* )( ws: _* ) map { -_ } )
+    val canSol = And( homogenized generatedTerms B( axiomArgs )( canSolInst )( ws ) )
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
     info()

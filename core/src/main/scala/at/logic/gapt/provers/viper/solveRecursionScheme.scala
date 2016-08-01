@@ -120,8 +120,7 @@ object qbupForRecSchem {
       case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
       case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
         HOLAtom( Var( s"X_$name", ty )( args: _* ) )
-      case Neg( formula ) => formula
-      case formula        => -formula
+      case formula: HOLFormula => formula
     }
 
     val lhss = canonicalRsLHS( recSchem )
