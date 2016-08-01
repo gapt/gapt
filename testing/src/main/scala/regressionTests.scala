@@ -1,6 +1,6 @@
 package at.logic.gapt.testing
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.{ And, HOLFormula }
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leancop.LeanCoPParser
@@ -21,7 +21,6 @@ import at.logic.gapt.provers.smtlib.Z3
 import scala.concurrent.duration._
 import scala.util.Random
 import scala.xml.XML
-
 import better.files._
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
@@ -67,7 +66,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       extractRecSchem( p ) --? "extractRecSchem" map { recSchem =>
-        Z3.isValid( Sequent() :++ recSchem.languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem language validity"
+        Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
       }
 
     // FIXME: extend to equality
@@ -92,7 +91,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
           ExpansionProofToLK( expQ ).isRight !-- "ExpansionProofToLK (cut-intro)"
         }
 
-        Z3.isValid( Sequent() :++ extractRecSchem( q ).languageWithDummyParameters.map( _.asInstanceOf[HOLFormula] ) ) !-- "extractRecSchem validity (cut-intro)"
+        Z3.isUnsat( And( extractRecSchem( q ).languageWithDummyParameters ) ) !-- "extractRecSchem validity (cut-intro)"
       }
 
     skolemize( p ) --? "skolemize"

@@ -52,33 +52,27 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val p = CutRule( p5, q4, cutf )
 
     val recSchem = extractRecSchem( p )
-    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
-
-    Sat4j.isValid( Sequent() :++ lang ) must beTrue
+    And( recSchem.language ) must beUnsat
   }
 
-  "bottom" in { Or( extractRecSchem( BottomAxiom ).language.map { _.asInstanceOf[HOLFormula] } ) must beValid }
-  "top" in { Or( extractRecSchem( TopAxiom ).language.map { _.asInstanceOf[HOLFormula] } ) must beValid }
+  "bottom" in { And( extractRecSchem( BottomAxiom ).language ) must beUnsat }
+  "top" in { And( extractRecSchem( TopAxiom ).language ) must beUnsat }
 
   "pi2 pigeonhole" in {
     val p = Pi2Pigeonhole.proof
     val recSchem = extractRecSchem( p )
 
-    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
-
-    Escargot isValid ( Sequent() :++ lang ) must beTrue
+    And( recSchem.language ) must beEUnsat
   }
 
   "tape proof" in {
     val proof = DefinitionElimination( tape.defs )( tape.p )
 
     val recSchem = extractRecSchem( proof )
-    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
-    Escargot isValid ( Sequent() :++ lang ) must_== true
+    And( recSchem.language ) must beEUnsat
 
     val recSchemWithEq = extractRecSchem( proof, includeEqTheory = true )
-    val langWithEq = recSchemWithEq.language.map( _.asInstanceOf[HOLFormula] )
-    Or( langWithEq ) must beValid
+    And( recSchemWithEq.language ) must beUnsat
   }
 
   "urban tape proof" in {
@@ -86,7 +80,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 
     val recSchem = extractRecSchem( proof )
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
-    Escargot isValid ( Sequent() :++ lang ) must_== true
+    And( recSchem.language ) must beEUnsat
   }
 
   "simple pi3" in {
@@ -120,7 +114,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       // println( s"$name: $ty" )
     }
 
-    Or( recschem.language.map( _.asInstanceOf[FOLFormula] ) ) must beValid
+    And( recschem.language ) must beUnsat
   }
 
   "numeral induction" in {
@@ -159,11 +153,11 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       b ( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ) qed )
 
     val recSchem = extractRecSchem( proof )
-    Or( recSchem.parametricLanguage( s( s( o ) ) ) map { _.asInstanceOf[HOLFormula] } ) must beValid
+    And( recSchem.parametricLanguage( s( s( o ) ) ) ) must beUnsat
   }
 }
 
-class Pi2FactorialPOC extends Specification {
+class Pi2FactorialPOC extends Specification with SatMatchers {
   val A = Const( "A", Ti -> To )
   val B = Const( "B", Ti -> ( Ti -> ( ( Ti -> To ) -> To ) ) )
   val C = Const( "C", Ti -> To )
@@ -215,7 +209,7 @@ class Pi2FactorialPOC extends Specification {
   "languages should be tautologies" in {
     Fragment.foreach( 0 to 7 ) { i =>
       s"n = $i" in {
-        Escargot isValid ( lang( i ) ++: Sequent() ) must beTrue
+        And( lang( i ) ) must beEUnsat
       }
     }
   }
