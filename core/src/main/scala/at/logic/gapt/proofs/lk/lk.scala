@@ -1473,7 +1473,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   override def formulasToBeDeleted = Seq( Seq( aux ) )
 
   def auxInConclusion = mainIndices.head
-  def eqInConclusion: SequentIndex
+  def eqInConclusion = getOccConnector.child( eq )
 
 }
 
@@ -1504,8 +1504,6 @@ case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIn
   override def name = "eq:l"
 
   override def mainFormulaSequent = mainFormula +: Sequent()
-
-  def eqInConclusion = eq + 1
 }
 
 object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
@@ -1611,8 +1609,6 @@ case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentI
   override def name = "eq:r"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
-
-  def eqInConclusion = eq
 }
 
 object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {

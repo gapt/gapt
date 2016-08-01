@@ -1425,4 +1425,13 @@ class LKNewTest extends Specification {
     }
   }
 
+  "equality left rule eqInConclusion" in {
+    val elr = ProofBuilder.
+      c( LogicalAxiom( hof"a=b" ) ).
+      u( WeakeningLeftRule( _, hof"b=c" ) ).
+      u( EqualityLeftRule( _, hof"a=b", hof"b=c", hof"a=c" ) ).
+      qed.asInstanceOf[EqualityLeftRule]
+    elr.conclusion( elr.eqInConclusion ) must_== hof"a=b"
+  }
+
 }
