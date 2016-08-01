@@ -189,11 +189,11 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
     ( proofNew, ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) ) )
   }
 
-  override protected def visitForallLeft( proof: ForallLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
-    val proofNew = ForallLeftRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
-  }
+  override protected def visitForallLeft( proof: ForallLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProofNew, subConnector ) ) =>
+        ForallLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
+    }
 
   override protected def visitForallRight( proof: ForallRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
     val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
@@ -207,11 +207,11 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
     ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
   }
 
-  override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
-    val proofNew = ExistsRightRule( subProofNew, TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
-  }
+  override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProofNew, subConnector ) ) =>
+        ExistsRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ), TermReplacement( proof.term, repl ) )
+    }
 
   override protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
     val ( subProofNew, subConnector ) = recurse( proof.subProof, () )
