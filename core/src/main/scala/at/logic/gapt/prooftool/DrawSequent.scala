@@ -121,7 +121,7 @@ class LatexLabel(
   foreground = Color.black
   font = ft
   opaque = true
-  yLayoutAlignment = 0
+  yLayoutAlignment = 0.5
 }
 
 class LatexFormulaLabel(

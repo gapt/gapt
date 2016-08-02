@@ -24,8 +24,11 @@ private[prooftool] case class SwitchEvent( from: Int, to: Int ) extends Event
  * @param expSequent The expansion sequent to be displayed
  * @param fSize The font size.
  */
-class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: ExpansionSequent,
-                            private val fSize: Int ) extends SplitPane( Orientation.Vertical ) {
+class DrawExpansionSequent(
+  val main:          ExpansionSequentViewer,
+  val expSequent:    ExpansionSequent,
+  private val fSize: Int
+) extends SplitPane( Orientation.Vertical ) {
 
   //Code for window geometry and appearance
   background = new Color( 255, 255, 255 )
