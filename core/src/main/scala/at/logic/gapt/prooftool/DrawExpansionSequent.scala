@@ -25,9 +25,9 @@ private[prooftool] case class SwitchEvent( from: Int, to: Int ) extends Event
  * @param fSize The font size.
  */
 class DrawExpansionSequent(
-  val main:          ExpansionSequentViewer,
-  val expSequent:    ExpansionSequent,
-  private val fSize: Int
+    val main:          ExpansionSequentViewer,
+    val expSequent:    ExpansionSequent,
+    private val fSize: Int
 ) extends SplitPane( Orientation.Vertical ) {
 
   //Code for window geometry and appearance
