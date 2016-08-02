@@ -179,4 +179,8 @@ class SubstitutionsTest extends Specification {
       Substitution( y -> x )( formula ) must_== formula
     }
   }
+
+  "injective renaming" in {
+    Substitution( hov"x" -> le"c" ).isInjectiveRenaming must_== false
+  }
 }

@@ -61,7 +61,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   //REMARK: this does not imply the substitution is injective
   def isRenaming = map.forall( p => p._2.isInstanceOf[Var] )
 
-  def isInjectiveRenaming = domain.forall { v => v.isInstanceOf[Var] && domain.forall { u => u == v || map( u ) != map( v ) } }
+  def isInjectiveRenaming = domain.forall { v => map( v ).isInstanceOf[Var] && domain.forall { u => u == v || map( u ) != map( v ) } }
 
   override def toString() = map.map( x => x._1 + " -> " + x._2 ).mkString( "Substitution(", ",", ")" )
 
