@@ -32,7 +32,7 @@ object loadExpansionProof {
 
       metrics.value( "tstp_is_cnf_ref", tstpOutput contains "CNFRefutation" )
 
-      val ( endSequent, sketch ) = TptpProofParser parse StringInputFile( tstpOutput )
+      val ( endSequent, sketch ) = TptpProofParser.parse( StringInputFile( tstpOutput ), ignoreStrongQuants = true )
       metrics.value( "tstp_sketch_size", sketch.subProofs.size )
 
       RefutationSketchToResolution( sketch ) map { resProof =>
