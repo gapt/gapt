@@ -23,42 +23,17 @@ import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
 
-import scalaz.\/-
+import scalaz.{ \/, \/- }
 
 object prooftool {
+
   /**
    * Displays various objects in prooftool. Creates an instance of the appropriate viewer.
    *
    * @param obj The object to be displayed.
    * @param name The title to be displayed.
    */
-  def apply( obj: AnyRef, name: String = "prooftool" ): Unit =
-    obj match {
-      case Some( wrapped: AnyRef ) => apply( wrapped, name )
-      case \/-( wrapped: AnyRef )  => apply( wrapped, name )
-      case p: LKProof              => new LKProofViewer( name, p ).showFrame()
-      case p: LKskProof            => new LKskProofViewer( name, p ).showFrame()
-      case p: SequentProof[f, t] =>
-        def renderer( x: f ): String = x match {
-          case e: LambdaExpression => LatexExporter( e )
-          case _                   => x.toString
-        }
-        new SequentProofViewer( name, p, renderer ).showFrame()
-      case ep: ExpansionProofWithCut => apply( ep.expansionWithCutAxiom, name )
-      case ep: ExpansionProof        => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
-      case struct: Struct[d]         => new StructViewer[d]( name, struct ).showFrame()
-      case list: Iterable[s] if list.forall {
-        case sequent: Sequent[f] => sequent.forall( _.isInstanceOf[HOLFormula] )
-        case _                   => false
-      } => new ListViewer( name, list.toList.asInstanceOf[List[HOLSequent]] ).showFrame()
-      case seq: Sequent[f] if seq.forall( _.isInstanceOf[HOLFormula] ) =>
-        new ListViewer( name, List( seq.asInstanceOf[HOLSequent] ) ).showFrame()
-      case db: ExtendedProofDatabase =>
-        for ( ( pName, p ) <- db.proofs )
-          prooftool( p, pName )
-
-      case _ => throw new IllegalArgumentException( s"Objects of type ${obj.getClass} can't be displayed." )
-    }
+  def apply[T: ProoftoolViewable]( obj: T, name: String = "prooftool" ): Unit = implicitly[ProoftoolViewable[T]].display( obj, name )
 }
 
 /**
