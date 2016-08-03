@@ -240,6 +240,9 @@ object CutIntroduction {
     if ( backgroundTheory == null )
       return compressToSolutionStructure( ep, guessBackgroundTheory( ep ), method, verbose )
 
+    if ( !isPrenex( ep.shallow ) )
+      return compressToSolutionStructure( prenexifyET( ep ), backgroundTheory, method, verbose )
+
     require(
       isFOLPrenexSigma1( ep.shallow ),
       "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
