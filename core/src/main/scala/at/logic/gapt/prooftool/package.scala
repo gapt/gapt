@@ -1,13 +1,14 @@
 package at.logic.gapt
 
-import at.logic.gapt.expr.LambdaExpression
+import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
-import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.lksk.LKskProof
+import at.logic.gapt.proofs.resolution.ResolutionProof
+import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 
 import scala.annotation.implicitNotFound
 import scalaz.{ \/, \/- }
@@ -17,9 +18,17 @@ import scalaz.{ \/, \/- }
  */
 package object prooftool {
 
+  /**
+   * A typeclass for things that can be displayed in Prooftool.
+   * @tparam T The type of the displayed object.
+   */
   @implicitNotFound( "No implementation of ProoftoolViewable found for type ${T}." )
   trait ProoftoolViewable[T] {
     def display( x: T, name: String ): Unit
+  }
+
+  object ProoftoolViewable {
+    def apply[T: ProoftoolViewable] = implicitly[ProoftoolViewable[T]]
   }
 
   implicit object LKProofViewable extends ProoftoolViewable[LKProof] {
@@ -28,6 +37,10 @@ package object prooftool {
 
   implicit object LKSKProofViewable extends ProoftoolViewable[LKskProof] {
     override def display( x: LKskProof, name: String ) = new LKskProofViewer( name, x ).showFrame()
+  }
+
+  implicit object ResolutionProofViewable extends ProoftoolViewable[ResolutionProof] {
+    override def display( p: ResolutionProof, name: String ) = SequentProofViewable[HOLFormula, ResolutionProof].display( p.asInstanceOf[SequentProof[HOLFormula, ResolutionProof]], name )
   }
 
   implicit def SequentProofViewable[F, T <: SequentProof[F, T]] = new ProoftoolViewable[SequentProof[F, T]] {
@@ -46,7 +59,7 @@ package object prooftool {
 
   implicit object ExpansionProofWithCutViewable extends ProoftoolViewable[ExpansionProofWithCut] {
     override def display( ep: ExpansionProofWithCut, name: String ) = {
-      prooftool( ep.expansionWithCutAxiom, name )
+      ProoftoolViewable[ExpansionProof].display( ep.expansionWithCutAxiom, name )
     }
   }
 
@@ -65,20 +78,20 @@ package object prooftool {
   implicit object ProofDatabaseViewable extends ProoftoolViewable[ExtendedProofDatabase] {
     override def display( db: ExtendedProofDatabase, name: String ) = {
       for ( ( pName, p ) <- db.proofs )
-        prooftool( p, pName )
+        ProoftoolViewable[LKProof].display( p, pName )
     }
   }
 
   implicit def OptionViewable[T: ProoftoolViewable] = new ProoftoolViewable[Option[T]] {
     override def display( x: Option[T], name: String ) = x match {
-      case Some( y ) => implicitly[ProoftoolViewable[T]].display( y, name )
+      case Some( y ) => ProoftoolViewable[T].display( y, name )
       case None      => throw new IllegalArgumentException
     }
   }
 
-  implicit def DisjViewable[T: ProoftoolViewable] = new ProoftoolViewable[\/[_, T]] {
-    override def display( x: \/[_, T], name: String ) = x match {
-      case \/-( y ) => implicitly[ProoftoolViewable[T]].display( y, name )
+  implicit def DisjViewable[T: ProoftoolViewable, S] = new ProoftoolViewable[\/[S, T]] {
+    override def display( x: \/[S, T], name: String ) = x match {
+      case \/-( y ) => ProoftoolViewable[T].display( y, name )
       case _        => throw new IllegalArgumentException
     }
   }

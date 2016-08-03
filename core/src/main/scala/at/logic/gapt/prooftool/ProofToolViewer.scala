@@ -1,40 +1,31 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.lksk.LKskProof
-import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentProof }
-import com.itextpdf.awt.PdfGraphics2D
-
-import scala.swing._
-import scala.swing.event.Key
-import swing.Dialog.Message
-import swing.Swing.EmptyIcon
-import javax.swing.filechooser.FileFilter
-import javax.swing.WindowConstants
-
-import at.logic.gapt.formats.latex.LatexExporter
-import java.awt.image.BufferedImage
-import javax.imageio.ImageIO
 import java.awt.Color
 import java.awt.Font._
+import java.awt.image.BufferedImage
 import java.io.File
+import javax.imageio.ImageIO
+import javax.swing.WindowConstants
+import javax.swing.filechooser.FileFilter
 
-import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
-import at.logic.gapt.formats.llk.ExtendedProofDatabase
-import at.logic.gapt.proofs.ceres.Struct
+import com.itextpdf.awt.PdfGraphics2D
 
-import scalaz.{ \/, \/- }
+import scala.swing.Dialog.Message
+import scala.swing.Swing.EmptyIcon
+import scala.swing._
+import scala.swing.event.Key
 
 object prooftool {
 
   /**
    * Displays various objects in prooftool. Creates an instance of the appropriate viewer.
    *
+   * This is implemented via a type class. For instances, see the prooftool package object.
+   *
    * @param obj The object to be displayed.
    * @param name The title to be displayed.
    */
-  def apply[T: ProoftoolViewable]( obj: T, name: String = "prooftool" ): Unit = implicitly[ProoftoolViewable[T]].display( obj, name )
+  def apply[T: ProoftoolViewable]( obj: T, name: String = "prooftool" ): Unit = ProoftoolViewable[T].display( obj, name )
 }
 
 /**
@@ -159,8 +150,9 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
       case FileChooser.Result.Approve => try {
         mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
         import java.io.FileOutputStream
-        import com.itextpdf.text.{ Document, Rectangle => PdfRectangle }
+
         import com.itextpdf.text.pdf.PdfWriter
+        import com.itextpdf.text.{ Document, Rectangle => PdfRectangle }
 
         val width = component.size.width
         val height = component.size.height
@@ -218,7 +210,6 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     currentFontSize * 3 / 2 match {
       case j: Int if j > 72 =>
       case j: Int =>
-        currentFontSize = j
         resizeContent( j )
     }
   }
@@ -230,7 +221,6 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     currentFontSize / 3 * 2 match {
       case j: Int if j < 1 =>
       case j: Int =>
-        currentFontSize = j
         resizeContent( j )
     }
   }
@@ -329,6 +319,12 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   def debugMenuContents: Seq[Component] = Seq( showDebugBordersButton )
 }
 
+/**
+ * A Prooftool window where the main component is contained in a ScrollPane.
+ * @param name The name to be displayed at the top.
+ * @param content The object to be displayed.
+ * @tparam T The type of content.
+ */
 abstract class ScrollableProofToolViewer[+T]( name: String, content: T ) extends ProofToolViewer( name, content ) {
 
   lazy val scrollPane = new PTScrollPane
