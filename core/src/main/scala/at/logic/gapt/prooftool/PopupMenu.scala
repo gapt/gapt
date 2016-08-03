@@ -75,7 +75,7 @@ object PopupMenu {
 
       contents += new MenuItem( Action( "Expand all" ) { trees.foreach( det => expandRecursive( det, det.expansionTree.shallow ) ) } )
       contents += new MenuItem( Action( "Reset" ) {
-        ced.treeList = new TreeListPanel( main, ced.cedent, ced.ft )
+        ced.treeList = new TreeListPanel( main, ced.cedent )
         ced.scrollPane.contents = ced.treeList
         ced.revalidate()
       } )

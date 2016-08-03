@@ -14,7 +14,7 @@ import scala.swing.event.Key
 
 class ListViewer( name: String, list: List[HOLSequent] ) extends ScrollableProofToolViewer[List[HOLSequent]]( name, list ) with Savable[List[HOLSequent]] {
   override type MainComponentType = DrawList
-  override def createMainComponent( fSize: Int ) = new DrawList( this, list, fSize )
+  override def createMainComponent = new DrawList( this, list )
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
 
   def fSave( name: String, list: List[HOLSequent] ) {

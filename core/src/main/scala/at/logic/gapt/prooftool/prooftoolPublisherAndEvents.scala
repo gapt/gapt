@@ -1,9 +1,11 @@
 package at.logic.gapt.prooftool
 
+import java.awt.Color
+
 import at.logic.gapt.proofs.{ DagProof, SequentProof }
 
 import scala.swing.event.Event
-import scala.swing.{ Color, Publisher }
+import scala.swing.{ Color, Component, Publisher, Reactor }
 
 class ProofToolPublisher extends Publisher
 
@@ -21,7 +23,7 @@ case object HideSequentContexts extends Event
 case object ShowAllFormulas extends Event
 case object MarkCutAncestors extends Event
 case object UnmarkCutAncestors extends Event
+case object FontChanged extends Event
 
 case object ShowDebugBorders extends Event
 case object HideDebugBorders extends Event
-

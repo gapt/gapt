@@ -17,6 +17,7 @@ import at.logic.gapt.formats.latex.LatexExporter
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Color
+import java.awt.Font._
 import java.io.File
 
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
@@ -73,8 +74,22 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   protected val nLine = sys.props( "line.separator" )
   val dnLine = nLine + nLine
   var DEBUG = false
+
+  // Font
   val defaultFontSize = 12
-  var currentFontSize = defaultFontSize
+  private var currentFontSize_ = defaultFontSize
+  def currentFontSize = currentFontSize_
+  def currentFontSize_=( sz: Int ) = {
+    currentFontSize_ = sz
+    font = new Font( SANS_SERIF, PLAIN, sz )
+  }
+  private var font_ = new Font( SANS_SERIF, PLAIN, currentFontSize )
+  def font = font_
+  def font_=( ft: Font ) = {
+    font_ = ft
+    publisher.publish( FontChanged )
+    mainComponent.revalidate()
+  }
   var launcher_history = List[( String, AnyRef, Int )]()
   val publisher = new ProofToolPublisher
 
@@ -112,9 +127,9 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
     peer setDefaultCloseOperation WindowConstants.DISPOSE_ON_CLOSE
   }
 
-  var mainComponent = createMainComponent( defaultFontSize )
+  val mainComponent = createMainComponent
 
-  protected var contentPanel_ = new PTContentPanel( this, name, mainComponent, defaultFontSize )
+  protected var contentPanel_ = new PTContentPanel( this, name, mainComponent )
   def contentPanel = contentPanel_
   def contentPanel_=( p: PTContentPanel ) = {
     contentPanel_ = p
@@ -127,7 +142,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   // Function that creates the main component from the content object, e.g., put an LKProof in a DrawSequentProof object.
   // Subclasses need to implement this!
-  def createMainComponent( fSize: Int ): MainComponentType
+  def createMainComponent: MainComponentType
 
   /**
    * Resizes the content to a new font size.
@@ -136,8 +151,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
    */
   def resizeContent( fSize: Int ): Unit = {
     mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    mainComponent = createMainComponent( fSize )
-    contentPanel = new PTContentPanel( this, name, mainComponent, fSize )
+    currentFontSize = fSize
     mainPanel.cursor = java.awt.Cursor.getDefaultCursor
   }
 

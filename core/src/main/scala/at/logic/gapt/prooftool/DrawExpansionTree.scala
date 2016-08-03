@@ -19,7 +19,7 @@ object ExpansionTreeState extends Enumeration {
   val Close, Open, Expand = Value
 }
 
-class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionTree, private val ft: Font ) extends BoxPanel( Orientation.Horizontal ) {
+class DrawExpansionTree( val main: ProofToolViewer[_], val expansionTree: ExpansionTree ) extends BoxPanel( Orientation.Horizontal ) {
 
   import ExpansionTreeState._
 
@@ -28,6 +28,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
   xLayoutAlignment = 0
   private val state = scala.collection.mutable.Map.empty[HOLFormula, ExpansionTreeState.Value]
   val highlightColor = Color.red
+  val ft = main.font
   initialize
 
   def initialize = {
@@ -69,7 +70,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
 
     expTree match {
       case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) | ETDefinition( _, _, _ ) =>
-        val lbl = LatexLabel( main, ft, LatexExporter( expTree.shallow ) )
+        val lbl = LatexLabel( main, LatexExporter( expTree.shallow ) )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
         contents += lbl
       case ETNeg( t ) =>
@@ -156,7 +157,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
         if ( state.get( formula ) == Some( Expand ) ) {
           // We first consider the case that the top-level quantifier is expanded.
           if ( subtrees != Nil ) {
-            val lbl = LatexLabel( main, ft, getMatrixSymbol( formula ) )
+            val lbl = LatexLabel( main, getMatrixSymbol( formula ) )
             lbl.reactions += {
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 => close( formula )
               case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -170,7 +171,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
           }
         } else {
           // The current tree is either open or closed.
-          val lbl = LatexLabel( main, ft, quantifiers )
+          val lbl = LatexLabel( main, quantifiers )
           val subF = dropQuants( formula, depth )
 
           if ( allow ) lbl.reactions += {
@@ -228,7 +229,8 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
   }
 
   /**
-   * @param et A ExpansionTree (either StrongQuantifier or WeakQuantifier)
+   * @param vars
+   * @param f
    * @return A string containing the quantifier block represented by this quantifier node.
    */
   def quantifierBlock( vars: List[Var], f: HOLFormula ): String = f match {
@@ -274,7 +276,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
     border = Swing.EmptyBorder( 0, ft.getSize, 0, ft.getSize )
 
     list.foreach( et => {
-      val bp = new DrawExpansionTree( main, et, ft )
+      val bp = new DrawExpansionTree( main, et )
       bp.border = Swing.EmptyBorder( 3 )
       contents += bp
     } )
@@ -396,7 +398,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
         contents += label( "\\forall " + LatexExporter.escapeName( v.name ) + " ", ft )
         contents += drawFormula( f )
       case _ =>
-        val lbl = LatexLabel( main, ft, LatexExporter( formula ) )
+        val lbl = LatexLabel( main, LatexExporter( formula ) )
         lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks )
         contents += lbl
     }
@@ -415,7 +417,7 @@ class DrawExpansionTree( main: ProofToolViewer[_], val expansionTree: ExpansionT
       reactions += {
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
           val color = RGBColorChooser( this, e.point.x, e.point.y )
-          if ( color != None ) {
+          if ( color.isDefined ) {
             backgroundColor = color.get
             peer.dispatchEvent( new MouseEvent( peer, e.peer.getID, e.peer.getWhen, e.modifiers, e.point.x, e.point.y, e.clicks, e.triggersPopup, MouseEvent.BUTTON1 ) )
           }
