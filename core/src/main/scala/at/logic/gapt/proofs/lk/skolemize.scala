@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemSymbolFactory
-import at.logic.gapt.proofs.{ Ant, Sequent }
+import at.logic.gapt.proofs.{ Ant, HOLSequent, Sequent }
 import at.logic.gapt.utils.StreamUtils
 import StreamUtils._
 
@@ -28,6 +28,12 @@ object skolemize {
 
   def apply( formula: HOLFormula ): HOLFormula =
     apply( formula, inSuc = true )
+
+  def apply( sequent: HOLSequent ): HOLSequent = {
+    val factory = rename.awayFrom( containedNames( sequent ) )
+    for ( ( f, i ) <- sequent.zipWithIndex )
+      yield apply( f, i.isSuc, Seq(), factory.freshStream( "s" ) )
+  }
 
   private def maybeSkolemize( formula: HOLFormula, inSuc: Boolean, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[String] )] ): HOLFormula =
     contextAndSymbols match {
