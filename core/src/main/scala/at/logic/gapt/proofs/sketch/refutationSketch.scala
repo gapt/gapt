@@ -75,7 +75,7 @@ case class SketchSplitCombine( splitCases: Seq[RefutationSketch] ) extends Refut
 }
 
 case class UnprovableSketchInference( inference: RefutationSketch ) {
-  override def toString = s"Unprovable inference:\n$inference\n"
+  override def toString = s"\nCannot prove\n${inference.conclusion}\n\nfrom\n\n${inference.immediateSubProofs.map( _.conclusion ).mkString( "\n\n" )}\n"
 }
 
 object RefutationSketchToResolution {

@@ -83,17 +83,14 @@ object testCutIntro extends App {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
       metrics.value( "lkinf_input", rulesNumber( p ) )
-      Some( eliminateCutsET( LKToExpansionProof( p ) ) -> CutIntroduction.guessBackgroundTheory( p ) )
+      eliminateCutsET( LKToExpansionProof( p ) ) -> CutIntroduction.guessBackgroundTheory( p )
     case _ =>
       loadExpansionProof.withBackgroundTheory( fileName )
   }
 
   metrics.time( "total" ) {
-    val parseResult = try metrics.time( "parse" ) {
-      loadProofForCutIntro( fileName ) orElse {
-        metrics.value( "status", "parsing_proof_not_found" )
-        None
-      }
+    val ( expansionProof, backgroundTheory ) = try metrics.time( "parse" ) {
+      loadProofForCutIntro( fileName )
     } catch {
       case e: Throwable =>
         metrics.value( "status", e match {
@@ -105,32 +102,29 @@ object testCutIntro extends App {
         throw e
     }
 
-    parseResult foreach {
-      case ( expansionProof, backgroundTheory ) =>
-        metrics.value( "has_equality", backgroundTheory.hasEquality )
-        try metrics.time( "cutintro" ) {
-          CutIntroduction.compressToLK( expansionProof, backgroundTheory, method = parseMethod( methodName ), verbose = false ) match {
-            case Some( _ ) => metrics.value( "status", "ok" )
-            case None =>
-              if ( metricsPrinter.data( "termset_trivial" ) == true )
-                metrics.value( "status", "cutintro_termset_trivial" )
-              else
-                metrics.value( "status", "cutintro_uncompressible" )
-          }
-        }
-        catch {
-          case e: Throwable =>
-            metrics.value( "status", e match {
-              case _: OutOfMemoryError                    => "cutintro_out_of_memory"
-              case _: StackOverflowError                  => "cutintro_stack_overflow"
-              case _: CutIntroUnprovableException         => "cutintro_ehs_unprovable"
-              case _: CutIntroNonCoveringGrammarException => "cutintro_noncovering_grammar"
-              case _: LKRuleCreationException             => "lk_rule_creation_exception"
-              case _: Throwable                           => "cutintro_other_exception"
-            } )
-            metrics.value( "exception", e.toString )
-            throw e
-        }
+    metrics.value( "has_equality", backgroundTheory.hasEquality )
+    try metrics.time( "cutintro" ) {
+      CutIntroduction.compressToLK( expansionProof, backgroundTheory, method = parseMethod( methodName ), verbose = false ) match {
+        case Some( _ ) => metrics.value( "status", "ok" )
+        case None =>
+          if ( metricsPrinter.data( "termset_trivial" ) == true )
+            metrics.value( "status", "cutintro_termset_trivial" )
+          else
+            metrics.value( "status", "cutintro_uncompressible" )
+      }
+    }
+    catch {
+      case e: Throwable =>
+        metrics.value( "status", e match {
+          case _: OutOfMemoryError                    => "cutintro_out_of_memory"
+          case _: StackOverflowError                  => "cutintro_stack_overflow"
+          case _: CutIntroUnprovableException         => "cutintro_ehs_unprovable"
+          case _: CutIntroNonCoveringGrammarException => "cutintro_noncovering_grammar"
+          case _: LKRuleCreationException             => "lk_rule_creation_exception"
+          case _: Throwable                           => "cutintro_other_exception"
+        } )
+        metrics.value( "exception", e.toString )
+        throw e
     }
   }
 }

@@ -1,53 +1,58 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.{ Sequent, SequentIndex }
-import at.logic.gapt.expr._
-import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
-import java.awt.{ Color, Dimension, Font }
-import java.awt.image.BufferedImage
-
-import swing._
-import event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 import java.awt.event.MouseEvent
+import java.awt.{ Color, Dimension, Font }
 
-import at.logic.gapt.formats.latex.LatexExporter
+import at.logic.gapt.proofs.{ Sequent, SequentIndex }
+import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
 
-import collection.mutable
+import scala.collection.mutable
+import scala.swing._
+import scala.swing.event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 
 object DrawSequent {
   def apply[T](
-    main: ProofToolViewer[_],
-    seq:  Sequent[T], ft: Font,
+    main:               ProofToolViewer[_],
+    seq:                Sequent[T],
     mainAuxIndices:     Set[SequentIndex],
     cutAncestorIndices: Set[SequentIndex],
     t_renderer:         T => String
-  ): DrawSequent[T] = new DrawSequent[T]( main, seq, mainAuxIndices, cutAncestorIndices, ft, t_renderer )
+  ): DrawSequent[T] = new DrawSequent[T]( main, seq, mainAuxIndices, cutAncestorIndices, t_renderer )
 
   def apply[T](
     main:       ProofToolViewer[_],
     seq:        Sequent[T],
-    ft:         Font,
     t_renderer: T => String
-  ): DrawSequent[T] = DrawSequent( main, seq, ft, Set(), Set(), t_renderer )
+  ): DrawSequent[T] = DrawSequent( main, seq, Set(), Set(), t_renderer )
 }
 
+/**
+ * Draws a sequent.
+ * @param main The main Prooftool window that this belongs to.
+ * @param sequent The sequent to be displayed.
+ * @param mainAuxIndices The indices of main and aux formulas. Relevant for hiding contexts.
+ * @param cutAncestorIndices The indices of cut ancestors.
+ * @param sequentElementRenderer The function that turns elements of the sequent into strings.
+ * @tparam T The type of elements of the sequent.
+ */
 class DrawSequent[T](
-    main:                         ProofToolViewer[_],
-    val sequent:                  Sequent[T],
-    val mainAuxIndices:           Set[SequentIndex],
-    val cutAncestorIndices:       Set[SequentIndex],
-    val ft:                       Font,
-    val sequent_element_renderer: T => String
+    val main:                   ProofToolViewer[_],
+    val sequent:                Sequent[T],
+    val mainAuxIndices:         Set[SequentIndex],
+    val cutAncestorIndices:     Set[SequentIndex],
+    val sequentElementRenderer: T => String
 ) extends FlowPanel {
   opaque = false // Necessary to draw the proof properly
   hGap = 0 // no gap between components
 
   val contextIndices = sequent.indices.toSet diff mainAuxIndices
 
-  val turnstileLabel = LatexLabel( main, ft, "\\vdash" ) // \u22a2
+  val turnstileLabel = new LatexTurnstileLabel( main ) // \u22a2
 
-  val elementLabelSequent = sequent map { f => LatexLabel( main, ft, sequent_element_renderer( f ) ) }
-  val commaLabelSequent = sequent map { _ => LatexLabel( main, ft, "," ) }
+  val elementLabelSequent = sequent map { f => LatexLabel( main, sequentElementRenderer( f ) ) }
+  val commaLabelSequent = sequent map { _ => new CommaLabel( main ) }
+
+  val contentLabels = elementLabelSequent.antecedent ++ Seq( turnstileLabel ) ++ elementLabelSequent.succedent
 
   contents ++= removeLast( ( elementLabelSequent.antecedent zip commaLabelSequent.antecedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
   contents += turnstileLabel
@@ -55,8 +60,8 @@ class DrawSequent[T](
 
   // FIXME: figure out why + 10?  Is it the Label adding an inset?  Is the FlowPanel adding gaps?
   // It probably comes from the commas, which we render as JLabels and not as TeXIcons...
-  val width = contents.map( _.asInstanceOf[LatexLabel].myIcon.getIconWidth ).sum + 30
-  val height = contents.map( _.asInstanceOf[LatexLabel].myIcon.getIconHeight ).max + font.getSize / 2
+  var width = contentLabels.map( _.icon.getIconWidth ).sum + 30
+  var height = contentLabels.map( _.icon.getIconHeight ).max + font.getSize / 2
   preferredSize = new Dimension( width, height )
   maximumSize = new Dimension( Int.MaxValue, height )
 
@@ -82,57 +87,93 @@ class DrawSequent[T](
     case UnmarkCutAncestors =>
       for ( i <- cutAncestorIndices )
         elementLabelSequent( i ).background = Color.WHITE
+
+    case FontChanged =>
+      width = contentLabels.map( _.icon.getIconWidth ).sum + 30
+      height = contentLabels.map( _.icon.getIconHeight ).max + font.getSize / 2
+      preferredSize = new Dimension( width, height )
   }
 
-  private def removeLast[T]( xs: Seq[T] ): Seq[T] = xs match {
+  private def removeLast[S]( xs: Seq[S] ): Seq[S] = xs match {
     case Seq() => Seq()
     case _     => xs.init
   }
 }
 
-object LatexLabel {
+/**
+ * Creates Latex icons from strings.
+ */
+object LatexIcon {
   private val cache = mutable.Map[( String, Font ), TeXIcon]()
 
   def clearCache() = this.synchronized( cache.clear() )
 
-  def apply( main: ProofToolViewer[_], font: Font, latexText: String ): LatexLabel = {
-    val icon = this.synchronized( cache.getOrElseUpdate(
-      ( latexText, font ),
-      new TeXFormula( latexText ).
-        createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF )
-    ) )
+  /**
+   * Turns latex code into an icon.
+   * @param latexText The Latex code to be rendered as an icon.
+   * @param font The font.
+   * @return An icon displaying latexText.
+   */
+  def apply( latexText: String, font: Font ): TeXIcon = synchronized( cache.getOrElseUpdate(
+    ( latexText, font ),
+    new TeXFormula( latexText ).
+      createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF )
+  ) )
+}
+
+object LatexLabel {
+
+  /**
+   * Factory for LatexLabels.
+   * @param main The main window that the label will belong to.
+   * @param latexText The text the label will display.
+   */
+  def apply( main: ProofToolViewer[_], latexText: String ): LatexLabel = {
+    val icon = LatexIcon( latexText, main.font )
     if ( latexText == "," )
-      new LatexCommaLabel( main, font, icon )
+      throw new IllegalArgumentException( "Use `new CommaLabel(main)`" )
     else if ( latexText == "\\vdash" )
-      new LatexTurnstileLabel( main, font, icon )
+      new LatexTurnstileLabel( main )
     else
-      new LatexFormulaLabel( main, font, latexText, icon )
+      new LatexFormulaLabel( main, latexText )
   }
 }
 
-class LatexLabel(
-  main:          ProofToolViewer[_],
-  val ft:        Font,
-  val latexText: String,
-  val myIcon:    TeXIcon
-)
-    extends Label( "", myIcon, Alignment.Center ) {
+/**
+ * A label displaying an icon that is rendered using Latex.
+ * @param main The main Prooftool window that this belongs to.
+ * @param latexText The latex code to be displayed.
+ */
+class LatexLabel( val main: ProofToolViewer[_], val latexText: String ) extends Label( "", null, Alignment.Center ) {
   background = Color.white
   foreground = Color.black
-  font = ft
   opaque = true
   yLayoutAlignment = 0.5
+
+  icon = LatexIcon( latexText, main.font )
+
+  listenTo( main.publisher )
+
+  reactions += {
+    case FontChanged =>
+      icon = LatexIcon( latexText, main.font )
+  }
 }
 
+/**
+ * LatexLabel for displaying formulas.
+ *
+ * The difference from plain LatexLabel is that it reacts to the mouse.
+ * @param main The main Prooftool window that this belongs to.
+ * @param latexText The latex code to be displayed.
+ */
 class LatexFormulaLabel(
   main:      ProofToolViewer[_],
-  ft:        Font,
-  latexText: String,
-  myIcon:    TeXIcon
+  latexText: String
 )
-    extends LatexLabel( main, ft, latexText, myIcon ) {
+    extends LatexLabel( main, latexText ) {
 
-  listenTo( mouse.moves, mouse.clicks, main.publisher )
+  listenTo( mouse.moves, mouse.clicks )
   reactions += {
     case e: MouseEntered => foreground = Color.blue
     case e: MouseExited  => foreground = Color.black
@@ -160,22 +201,26 @@ class LatexFormulaLabel(
   }
 }
 
-class LatexCommaLabel(
-  main:   ProofToolViewer[_],
-  ft:     Font,
-  myicon: TeXIcon
-)
-    extends LatexLabel( main, ft, ",", myicon ) {
+/**
+ * Label for displaying commas.
+ * @param main The main Prooftool window that this belongs to.
+ */
+class CommaLabel( val main: ProofToolViewer[_] ) extends Label( ",", icon0 = null, Alignment.Center ) {
   border = Swing.EmptyBorder( font.getSize / 5, 2, 0, font.getSize / 5 )
-  icon = null
-  text = latexText
+  font = main.font
+
+  listenTo( main.publisher )
+
+  reactions += {
+    case FontChanged =>
+      font = main.font
+  }
 }
 
-class LatexTurnstileLabel(
-  main:   ProofToolViewer[_],
-  ft:     Font,
-  myicon: TeXIcon
-)
-    extends LatexLabel( main, ft, "\\vdash", myicon ) {
+/**
+ * Latexlabel for displaying the turnstile symbol (u+22a2, ⊢)
+ * @param main The main Prooftool window that this belongs to.
+ */
+class LatexTurnstileLabel( main: ProofToolViewer[_] ) extends LatexLabel( main, "\\vdash" ) {
   border = Swing.EmptyBorder( font.getSize / 6 )
 }

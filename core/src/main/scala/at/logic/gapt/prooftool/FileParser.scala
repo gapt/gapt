@@ -8,6 +8,7 @@ import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof, lk }
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, loadLLK }
+import at.logic.gapt.proofs.resolution.ResolutionProof
 
 import scala.swing.Dialog
 
@@ -40,7 +41,7 @@ class FileParser( main: ProofToolViewer[_] ) {
   def getResolutionProofs = resProofs
 
   private var proofdb = ExtendedProofDatabase( Map(), Map(), Map() )
-  private var resProofs: List[( String, SequentProof[_, _] )] = Nil
+  private var resProofs: List[( String, ResolutionProof )] = Nil
 
   object TermType extends Enumeration {
     val ClauseTerm, ProjectionTerm, ResolutionTerm, Unknown = Value

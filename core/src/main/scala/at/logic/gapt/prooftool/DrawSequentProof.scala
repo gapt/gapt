@@ -14,7 +14,6 @@ import scala.swing.event._
  * A panel containing a sequent proof.
  * @param main The instance of [[at.logic.gapt.prooftool.SequentProofViewer]] that this belongs to.
  * @param proof The proof being displayed.
- * @param fSize The font size.
  * @param auxIndices The indices of the auxiliary formulas of the bottommost inference.
  * @param cutAncestorIndices The indices of ancestors of cut formulas in the end sequent.
  * @param sequentElementRenderer
@@ -23,14 +22,12 @@ import scala.swing.event._
 class DrawSequentProof[F, T <: SequentProof[F, T]](
     val main:               SequentProofViewer[F, T],
     val proof:              SequentProof[F, T],
-    private val fSize:      Int,
     val auxIndices:         Set[SequentIndex],
     val cutAncestorIndices: Set[SequentIndex],
     sequentElementRenderer: F => String,
     val pos:                List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   var collapsed = false
-  private val ft = new Font( SANS_SERIF, PLAIN, fSize )
   private var lineHidden_ = 0
   def lineHidden = lineHidden_
   def lineHidden_=( i: Int ) = {
@@ -44,7 +41,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val ds = DrawSequent(
       main,
       proof.conclusion,
-      ft,
       mainAuxIndices,
       cutAncestorIndices,
       sequentElementRenderer
@@ -72,7 +68,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     new DrawSequentProof(
       main,
       p,
-      fSize,
       proof.auxIndices.head.toSet,
       cutAncestorIndicesNew( i ),
       sequentElementRenderer,
@@ -80,8 +75,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     )
   }
 
-  val subProofsPanel = new SubproofsPanel( this, subProofs, fSize )
-  val linePanel = new ProofLinePanel( this, proof.name, fSize )
+  val subProofsPanel = new SubproofsPanel( this, subProofs )
+  val linePanel = new ProofLinePanel( this, proof.name )
 
   contents += Swing.VGlue
   contents += subProofsPanel
@@ -177,12 +172,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
  * A panel containing the subproofs of a proof arranged side by side.
  * @param parent The [[at.logic.gapt.prooftool.DrawSequentProof]] instance that this belongs to.
  * @param subProofs The The [[at.logic.gapt.prooftool.DrawSequentProof]] instances containing the subproofs.
- * @param fSize The font size.
  */
 class SubproofsPanel[F, T <: SequentProof[F, T]](
     val parent:    DrawSequentProof[F, T],
-    val subProofs: Seq[DrawSequentProof[F, T]],
-    val fSize:     Int
+    val subProofs: Seq[DrawSequentProof[F, T]]
 ) extends BoxPanel( Orientation.Horizontal ) {
 
   subProofs.foreach( contents += _ )
@@ -199,6 +192,7 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
 
   border = Swing.EmptyBorder( 0, 0, 0, 0 )
   opaque = false
+
   listenTo( parent.main.publisher )
   reactions += {
     case ShowDebugBorders =>
@@ -213,16 +207,24 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
  * Panel that contains an inference line and the name of the inference.
  * @param parent The [[at.logic.gapt.prooftool.DrawSequentProof]] instance that this belongs to.
  * @param proofName The name of the inference.
- * @param fSize The font size.
  */
 class ProofLinePanel[F, T <: SequentProof[F, T]](
     val parent:    DrawSequentProof[F, T],
-    val proofName: String,
-    val fSize:     Int
+    val proofName: String
 ) extends FlowPanel {
-
-  val labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
-  val labelFontMetrics = peer.getFontMetrics( labelFont )
+  private var fSize_ = parent.main.currentFontSize
+  def fSize = fSize_
+  def fSize_=( sz: Int ) = {
+    fSize_ = sz
+    labelFont = new Font( SANS_SERIF, ITALIC, fSize - 2 )
+  }
+  private var labelFont_ = new Font( SANS_SERIF, ITALIC, fSize - 2 )
+  def labelFont = labelFont_
+  def labelFont_=( ft: Font ) = {
+    labelFont_ = ft
+    computeLineWidth()
+  }
+  def labelFontMetrics = peer.getFontMetrics( labelFont )
 
   def computeLineWidth() = {
     val newLineWidth = Seq( lineWidth, parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth ).max
@@ -260,5 +262,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
     case HideDebugBorders =>
       border = Swing.EmptyBorder
 
+    case FontChanged =>
+      fSize = parent.main.currentFontSize
   }
 }

@@ -34,10 +34,9 @@ abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T
  */
 class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: SequentProof[F, T], sequent_element_renderer: F => String ) extends DagProofViewer[T]( name, proof ) {
   override type MainComponentType = DrawSequentProof[F, T]
-  override def createMainComponent( fSize: Int ) = new DrawSequentProof(
+  override def createMainComponent = new DrawSequentProof(
     this,
     proof,
-    fSize,
     Set(),
     Set(),
     sequent_element_renderer,

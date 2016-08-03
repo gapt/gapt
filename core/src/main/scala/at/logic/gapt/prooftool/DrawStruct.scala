@@ -10,11 +10,11 @@ import java.awt.event.{ MouseEvent, MouseMotionListener }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs.ceres.Struct
 
-class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val fSize: Int, private var str: String ) extends BorderPanel with MouseMotionListener {
+class DrawStruct[D]( val main: StructViewer[D], val struct: Struct[D], private var str: String ) extends BorderPanel with MouseMotionListener {
   background = new Color( 255, 255, 255 )
   opaque = false
 
-  private val ft = new Font( SANS_SERIF, PLAIN, fSize )
+  private def fSize = main.currentFontSize
   private val bd = Swing.EmptyBorder( fSize / 2 )
   private val tx = LatexExporter( struct.label )
   private var drawLines = true
@@ -32,7 +32,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
       case utree if struct.children.size == 1 =>
         val mylabel = utree.label match {
           case _ => new Label( tx ) {
-            font = ft
+            font = main.font
             val myicon = icon
           }
         }
@@ -83,7 +83,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
             }
         }
         layout( mylabel ) = Position.North
-        layout( new DrawStruct( main, utree.children.head, fSize, str ) {
+        layout( new DrawStruct( main, utree.children.head, str ) {
           listenTo( mylabel, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
@@ -97,7 +97,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
             opaque = true
           }
           border = bd
-          font = ft
+          font = main.font
           listenTo( mouse.clicks, main.publisher )
           reactions += {
             case ShowLeaf =>
@@ -116,14 +116,14 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
           }
         }
         layout( label ) = Position.North
-        layout( new DrawStruct( main, btree.children( 0 ), fSize, str ) {
+        layout( new DrawStruct( main, btree.children( 0 ), str ) {
           listenTo( label, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
             case HideTree => visible = false
           }
         } ) = Position.West
-        layout( new DrawStruct( main, btree.children( 1 ), fSize, str ) {
+        layout( new DrawStruct( main, btree.children( 1 ), str ) {
           listenTo( label, main.publisher )
           reactions += {
             case ShowLeaf => visible = true
@@ -131,14 +131,14 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
           }
         } ) = Position.East
       case ltree =>
-        val mylabel = LatexLabel( main, ft, tx )
+        val mylabel = LatexLabel( main, tx )
         if ( !str.isEmpty && tx.contains( str ) ) mylabel.background = new Color( 0, 255, 0 )
         else mylabel.opaque = false
         mylabel.border = bd
         mylabel.listenTo( mouse.clicks, main.publisher )
         mylabel.reactions += {
           case ShowLeaf =>
-            mylabel.icon = mylabel.myIcon
+            mylabel.icon = LatexIcon( tx, main.font )
             mylabel.text = ""
           case HideLeaf =>
             mylabel.text = "x"
@@ -148,7 +148,7 @@ class DrawStruct[D]( main: StructViewer[D], val struct: Struct[D], private val f
               mylabel.text = "x"
               mylabel.icon = null
             } else {
-              mylabel.icon = mylabel.myIcon
+              mylabel.icon = LatexIcon( tx, main.font )
               mylabel.text = ""
             }
         }

@@ -36,13 +36,11 @@ class PTScrollPane extends ScrollPane {
  * @param main The main window that this belongs to.
  * @param str
  * @param content An object that displays some content, e.g., a DrawSequentProof
- * @param fSize Font size.
  */
 class PTContentPanel(
-    val main:          ProofToolViewer[_],
-    val str:           String,
-    val content:       Component,
-    private val fSize: Int
+    val main:    ProofToolViewer[_],
+    val str:     String,
+    val content: Component
 ) extends BorderPanel with MouseMotionListener {
   val niceName: String = str match {
     case s: String if s == "\\psi" || s == "psi" => "ψ"
@@ -61,8 +59,6 @@ class PTContentPanel(
   border = Swing.CompoundBorder( bd, Swing.EmptyBorder( 15 ) )
 
   background = new Color( 255, 255, 255 )
-
-  def fontSize = fSize
 
   layout( content ) = Position.Center
 

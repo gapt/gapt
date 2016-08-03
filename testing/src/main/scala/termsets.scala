@@ -27,7 +27,7 @@ object dumpTermset extends App {
     Files.write( outFile, termset.map( termToString ).toSeq.
       sorted.map( _ + "\n" ).mkString.getBytes( "UTF-8" ) )
 
-  val Some( expansionProof ) = loadExpansionProof( inputFileName )
+  val expansionProof = loadExpansionProof( inputFileName )
   val termSet = FOLInstanceTermEncoding( expansionProof )._1
   writeTermset( Paths get outputFileName, simplifyNames( termSet ) )
 }
