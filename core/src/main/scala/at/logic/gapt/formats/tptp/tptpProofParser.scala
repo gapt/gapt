@@ -55,19 +55,19 @@ object TptpProofParser {
 
   def extractEndSequentAndCNF( stepList: TptpFile ): ( Sequent[FOLFormula], Map[String, Seq[FOLClause]] ) = {
     var endSequent = Sequent[FOLFormula]()
-    var labelledCNF = Map[String, Seq[FOLClause]]()
+    val labelledCNF = mutable.Map[String, Seq[FOLClause]]().withDefaultValue( Seq() )
 
     stepList.inputs foreach {
       case AnnotatedFormula( "fof", _, "conjecture", formula: FOLFormula, Seq( TptpTerm( "file", _, TptpTerm( label ) ) ) ) =>
         endSequent :+= formula
-        labelledCNF += label -> CNFn( formula ).toSeq
+        labelledCNF( label ) ++= CNFn( formula ).toSeq
       case AnnotatedFormula( lang, _, _, formula: FOLFormula, Seq( TptpTerm( "file", _, TptpTerm( label ) ) ) ) =>
         endSequent +:= ( if ( lang == "cnf" ) univclosure( formula ) else formula )
-        labelledCNF += label -> CNFp( formula ).toSeq
+        labelledCNF( label ) ++= CNFp( formula ).toSeq
       case _ =>
     }
 
-    endSequent -> labelledCNF
+    endSequent -> labelledCNF.toMap
   }
 
   def getParents( justification: GeneralTerm ): Seq[String] = justification match {
