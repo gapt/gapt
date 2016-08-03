@@ -81,6 +81,8 @@ object isPrenex {
     case HOLAtom( _, _ )  => true
     case _                => throw new Exception( "ERROR: Unknow operator encountered while checking for prenex formula: " + this )
   }
+
+  def apply( sequent: HOLSequent ): Boolean = sequent.forall( isPrenex( _ ) )
 }
 
 /**
