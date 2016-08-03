@@ -104,11 +104,6 @@ object tautologifyInitialUnitClauses {
     }
 }
 
-object containedVariables {
-  def apply( p: ResolutionProof ): Set[Var] =
-    p.subProofs.flatMap { subProof => freeVariables( subProof.conclusion ) }
-}
-
 object findDerivationViaResolution {
   /**
    * Finds a resolution derivation of a clause from a set of clauses.
@@ -137,7 +132,7 @@ object findDerivationViaResolution {
     prover.getResolutionProof( bs ++ negatedClausesA ) map { refutation =>
       val tautologified = tautologifyInitialUnitClauses( eliminateSplitting( refutation ), negatedClausesA.toSet )
 
-      val toUnusedVars = rename( grounding.map( _._1 ), containedVariables( tautologified ) )
+      val toUnusedVars = rename( grounding.map( _._1 ), containedNames( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }
       val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[LambdaExpression, LambdaExpression] )
       val derivationInOrigVars = Subst( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
