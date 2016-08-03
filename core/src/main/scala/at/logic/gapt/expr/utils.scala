@@ -36,26 +36,22 @@ object isInVNF {
  * and the bound variables are disjoint from the free ones.
  */
 object toVNF {
-  def apply( e: LambdaExpression ): LambdaExpression = {
-    val seen = mutable.Set[Var]()
-
-    def makeDistinct( e: LambdaExpression ): LambdaExpression = e match {
-      case v @ Var( _, _ ) =>
-        seen += v; v
-      case Const( _, _ ) => e
-      case App( a, b )   => App( makeDistinct( a ), makeDistinct( b ) )
-      case Abs( v, a ) if seen contains v =>
-        val newVar = rename( v, seen )
-        makeDistinct( Abs( newVar, Substitution( v -> newVar )( a ) ) )
-      case Abs( v, a ) if !( seen contains v ) =>
-        seen += v
-        Abs( v, makeDistinct( a ) )
-    }
-
-    makeDistinct( e )
+  def apply( e: LambdaExpression, nameGen: NameGenerator ): LambdaExpression = e match {
+    case v: VarOrConst => v
+    case App( a, b )   => App( apply( a, nameGen ), apply( b, nameGen ) )
+    case Abs( v, a ) =>
+      val v_ = nameGen.fresh( v )
+      if ( v == v_ ) Abs( v, apply( a, nameGen ) )
+      else Abs( v_, apply( Substitution( v -> v_ )( a ), nameGen ) )
   }
 
+  def apply( e: LambdaExpression ): LambdaExpression = apply( e, rename.awayFrom( freeVariables( e ) ) )
   def apply( f: HOLFormula ): HOLFormula = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+
+  def apply( sequent: HOLSequent ): HOLSequent = {
+    val nameGen = rename.awayFrom( freeVariables( sequent ) )
+    sequent.map( apply( _, nameGen ).asInstanceOf[HOLFormula] )
+  }
 }
 
 /**
