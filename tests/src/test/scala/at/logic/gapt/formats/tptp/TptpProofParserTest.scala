@@ -17,6 +17,7 @@ class TptpProofParserTest extends Specification {
     "ALG011-1_Metis---2.3.UNS-CRf.s",
     "GEO008-3_iprover-1.4.tptp",
     "LCL101-1_Vampire---4.0.UNS-REF.s",
+    "SYN728-1_VampireZ3---1.0.UNS-Ref.s",
     "HEN005-6_SPASS-3.7.UNS-Ref.s",
     "counting-cnf.vampire.tptp"
   ) ) { fn =>

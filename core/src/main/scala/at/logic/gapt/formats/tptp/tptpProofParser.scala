@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol.{ CNFn, CNFp, containsStrongQuantifier, univclosur
 import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import at.logic.gapt.proofs.sketch._
-import at.logic.gapt.proofs.{ FOLClause, HOLClause, Sequent }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, HOLSequent, Sequent }
 
 import scala.collection.mutable
 
@@ -79,6 +79,15 @@ object TptpProofParser {
     case TptpTerm( dagSource )                                      => Seq( dagSource )
   }
 
+  def findClauseRenaming( from: HOLSequent, to: HOLSequent ): Option[Map[Var, Var]] =
+    if ( from.sizes != to.sizes )
+      None
+    else for {
+      subst <- clauseSubsumption( from, to )
+      // FIXME: this would only be correct if we considered all subsumptions...
+      if subst.isInjectiveRenaming
+    } yield subst.map.map { case ( l: Var, r: Var ) => l -> r }
+
   def parseSteps( stepList: TptpFile, labelledCNF: Map[String, Seq[FOLClause]] ): RefutationSketch = {
     val steps = ( for ( input @ AnnotatedFormula( _, name, _, _, _ ) <- stepList.inputs ) yield name -> input ).toMap
 
@@ -108,18 +117,15 @@ object TptpProofParser {
         val sketchParents = getParents( justification ) flatMap convert
         val splitParents = sketchParents map { parent0 =>
           var parent = parent0
-          while ( parent.conclusion.nonEmpty ) {
-            val ( comp, subst ) = splDefs.values.view.
-              flatMap { d => clauseSubsumption( d.clause, parent.conclusion ) filter { _.isInjectiveRenaming } map { d -> _ } }.
-              headOption.getOrElse {
-                throw new IllegalArgumentException( parent.conclusion.toString )
-              }
-            parent = SketchComponentElim( parent, comp match {
-              case AvatarNonGroundComp( splAtom, defn, vars ) =>
-                AvatarNonGroundComp( splAtom, defn, subst( vars ).map( _.asInstanceOf[Var] ) )
-              case AvatarGroundComp( _, _ ) => comp
-            } )
-          }
+          for {
+            clauseComponent <- AvatarSplit.getComponents( parent0.conclusion )
+            comp <- splDefs.values
+            renaming <- findClauseRenaming( comp.clause, clauseComponent )
+          } parent = SketchComponentElim( parent, comp match {
+            case comp @ AvatarNonGroundComp( _, _, vars ) => comp.copy( vars = vars.map( renaming ) )
+            case AvatarGroundComp( _, _ )                 => comp
+          } )
+          require( parent.conclusion.isEmpty )
           parent
         }
         Seq( SketchSplitCombine( splitParents ) )
@@ -134,11 +140,10 @@ object TptpProofParser {
           clauseComponent <- AvatarSplit.getComponents( splittedClause.conclusion )
           ( splAtom: FOLAtom, i ) <- assertion.zipWithIndex
           comp <- splDefs.get( ( splAtom, i.isSuc ) )
-          subst <- clauseSubsumption( comp.clause, clauseComponent )
+          renaming <- findClauseRenaming( comp.clause, clauseComponent )
         } p = SketchComponentElim( p, comp match {
-          case comp @ AvatarNonGroundComp( _, _, vars ) =>
-            comp.copy( vars = subst( vars ).map( _.asInstanceOf[Var] ) )
-          case AvatarGroundComp( _, _ ) => comp
+          case comp @ AvatarNonGroundComp( _, _, vars ) => comp.copy( vars = vars.map( renaming ) )
+          case AvatarGroundComp( _, _ )                 => comp
         } )
 
         require( p.conclusion.isEmpty, s"$assertion\n$splittedClause\n$splDefs" )
