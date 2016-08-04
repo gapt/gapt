@@ -61,7 +61,7 @@ object UnitResolutionToLKProof {
       }
     }
 
-    val expectedConclusion = proof.subProofs.collect { case Input( seq ) => seq.swapped }.fold( Sequent() )( _ ++ _ )
+    val expectedConclusion = proof.subProofs.collect { case Input( seq ) => seq.swapped }.flattenS
 
     require(
       lk.conclusion isSubMultisetOf expectedConclusion,

@@ -52,13 +52,13 @@ class TPTPHOLExporter {
       thf_type_dec( index, v, vnames ) + nLine
     }
 
-    val vdecs = vdecs_.foldLeft( "" )( _ ++ _ )
+    val vdecs = vdecs_.mkString
 
     val cdecs_ = for ( c <- cs if c.name != "=" ) yield {
       index = index + 1
       thf_type_dec( index, c, cnames ) + nLine
     }
-    val cdecs = cdecs_.foldLeft( "" )( _ ++ _ )
+    val cdecs = cdecs_.mkString
 
     val sdecs = positive match {
       case true =>

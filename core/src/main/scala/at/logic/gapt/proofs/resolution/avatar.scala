@@ -127,10 +127,10 @@ object AvatarNonGroundComp {
     def unapply( f: HOLFormula ): Some[( Seq[Var], HOLSequent )] = f match {
       case All.Block( vars, litDisj ) =>
         val Or.nAry( lits ) = litDisj
-        Some( ( vars, lits.map {
+        Some( ( vars, lits.flatMapS {
           case Neg( a ) => a +: Sequent()
           case a        => Sequent() :+ a
-        }.fold( Sequent() )( _ ++ _ ) ) )
+        } ) )
     }
 
     def canonize( definition: HOLFormula ): HOLFormula = definition match {

@@ -40,4 +40,12 @@ package object proofs {
   implicit class SeqWrapper[+A]( val s: Seq[A] ) extends AnyVal {
     def :-[B >: A]( that: Seq[B] ): Sequent[B] = Sequent( s, that )
   }
+
+  // The "S" suffixes are necessary to disambiguate from the flatten and flatMap member methods.
+  implicit class SequentFlattenOp[A]( val sequentCollection: Traversable[Sequent[A]] ) extends AnyVal {
+    def flattenS: Sequent[A] = sequentCollection.fold( Sequent() )( _ ++ _ )
+  }
+  implicit class SequentFlatMapOp[A]( val collection: Traversable[A] ) extends AnyVal {
+    def flatMapS[B]( f: A => Sequent[B] ) = collection.view.map( f ).flattenS
+  }
 }

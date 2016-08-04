@@ -66,7 +66,7 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
    *
    * These assertions indicate the splitting assumptions this proof depends on.
    */
-  val assertions: HOLClause = immediateSubProofs.map( _.assertions ).fold( Sequent() )( _ ++ _ ).distinct
+  val assertions: HOLClause = immediateSubProofs.flatMapS( _.assertions ).distinct
 
   /** Definitions introduced by the bottom-most inference rule. */
   def introducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()

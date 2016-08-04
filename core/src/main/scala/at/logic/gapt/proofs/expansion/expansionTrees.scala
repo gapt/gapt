@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions, containsQuantifierOnLogicalLevel, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.proofs.{ DagProof, Sequent }
+import at.logic.gapt.proofs._
 
 import scala.collection.mutable
 
@@ -598,7 +598,7 @@ object prenexifyET {
   def apply( ep: ExpansionProof ): ExpansionProof =
     eliminateMerges( ExpansionProof(
       ep.expansionSequent.elements.
-        map( toSequent ).fold( Sequent() )( _ ++ _ ).
+        flatMapS( toSequent ).
         map( apply )
     ) )
 }
