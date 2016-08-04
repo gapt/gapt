@@ -52,10 +52,10 @@ object simplePi1RecSchemTempl {
             ctrs flatMap { ctr =>
               val FunctionType( _, ctrArgTys ) = ctr.exptype
               val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
-              val lhs = indLemmaNT( axiomArgs: _* )( axiomArgs2.take( indLemmaArgIdx ): _* )( ctr( ctrArgs: _* ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ): _* )( lhsPi1QArgs: _* )
+              val lhs = indLemmaNT( axiomArgs )( axiomArgs2.take( indLemmaArgIdx ) )( ctr( ctrArgs: _* ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ) )( lhsPi1QArgs )
               val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
                 case ( ctrArgTy, ctrArgIdx ) =>
-                  lhs -> indLemmaNT( axiomArgs: _* )( axiomArgs2.take( indLemmaArgIdx ): _* )( ctrArgs( ctrArgIdx ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ): _* )( rhsPi1QArgs: _* )
+                  lhs -> indLemmaNT( axiomArgs )( axiomArgs2.take( indLemmaArgIdx ) )( ctrArgs( ctrArgIdx ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ) )( rhsPi1QArgs )
               }
               recRules :+ ( lhs -> Var( "u", instTT ) )
             }
@@ -115,9 +115,9 @@ object homogenizeRS {
 }
 
 object qbupForRecSchem {
-  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): HOLFormula = {
+  def apply( recSchem: RecursionScheme, conj: HOLFormula )( implicit ctx: Context ): HOLFormula = {
     def convert( term: LambdaExpression ): HOLFormula = term match {
-      case Apps( ax, _ ) if ax == recSchem.axiom => Bottom()
+      case Apps( ax, args ) if ax == recSchem.axiom => instantiate( conj, args )
       case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
         HOLAtom( Var( s"X_$name", ty )( args: _* ) )
       case formula: HOLFormula => formula

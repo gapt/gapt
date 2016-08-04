@@ -8,8 +8,9 @@ import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, extractInstances }
-import at.logic.gapt.proofs.lk.skolemize
+import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
+import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
@@ -29,6 +30,7 @@ case class ViperOptions(
   tautCheckSize:    FloatRange         = ( 2, 3 ),
   canSolSize:       FloatRange         = ( 2, 4 ),
   forgetOne:        Boolean            = false,
+  prooftool:        Boolean            = false,
   verbose:          Boolean            = true
 )
 object ViperOptions {
@@ -54,6 +56,7 @@ object ViperOptions {
     case "tchksize"   => opts.copy( tautCheckSize = parseRange( v ) )
     case "cansolsize" => opts.copy( canSolSize = parseRange( v ) )
     case "forgetone"  => opts.copy( forgetOne = v.toBoolean )
+    case "prooftool"  => opts.copy( prooftool = v.toBoolean )
   }
 
   def parse( opts: Map[String, String] ) =
@@ -63,7 +66,7 @@ object ViperOptions {
 class Viper( val problem: TipProblem, val options: ViperOptions ) {
   implicit var ctx = problem.context
 
-  val sequent @ Sequent( theory, Seq( All.Block( vs, _ ) ) ) = problem.toSequent
+  val sequent @ Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = problem.toSequent
   val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
 
   def info() = if ( options.verbose ) println()
@@ -90,7 +93,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       msrsf
   }
 
-  def solve(): LambdaExpression = {
+  def solve(): LKProof = {
     info( sequent )
     info()
 
@@ -108,7 +111,10 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
       for ( ( inst, _ ) <- instanceProofs ) {
         val genLang = rs.parametricLanguage( inst: _* )
-        require( Z3 isUnsat And( genLang ), s"Generated instance language for $inst not tautological" )
+        require(
+          Z3.isValid( And( genLang ) --> instantiate( conj, inst ) ),
+          s"Generated instance language for $inst not tautological"
+        )
       }
 
       findMinimalCounterexample( instanceProofs.keys, rs ) match {
@@ -129,14 +135,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
         term <- encoding.encode( es.expansionSequent.antecedent ++: Sequent() )
       } yield inst -> term
 
-    val rsWithoutConclusion = grammarFinder.find( taggedLanguage.toSet )
-
-    val conclusions =
-      for {
-        ( inst, es ) <- instanceProofs
-        term <- encoding.encode( Sequent() :++ es.expansionSequent.succedent )
-      } yield Rule( rsWithoutConclusion.axiom( vs ), term )
-    val rs = rsWithoutConclusion.copy( rules = rsWithoutConclusion.rules ++ conclusions )
+    val rs = grammarFinder.find( taggedLanguage.toSet )
 
     info( s"Found recursion scheme:\n$rs\n" )
     for ( ( Apps( _, inst ), terms ) <- taggedLanguage groupBy { _._1 } ) {
@@ -153,7 +152,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   }
 
   def findMinimalCounterexample( correctInstances: Iterable[Instance], logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
-    def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3 isUnsat And( logicalRS.parametricLanguage( inst: _* ) )
+    def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3.isValid( And( logicalRS.parametricLanguage( inst: _* ) ) --> instantiate( conj, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
     val failedInstOption = ( 0 to options.tautCheckNumber ).
       map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
@@ -178,8 +177,10 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   def solveRecSchem( rs: RecursionScheme ) = {
     val homogenized = homogenizeRS( rs )
 
-    val qbup @ Ex( x_G, qbupMatrix ) = qbupForRecSchem( homogenized )
-    info( s"QBUP:\n${qbup.toSigRelativeString}\n" )
+    val spwi = ProofByRecursionScheme( sequent, homogenized, implicitly )
+
+    val qbup @ Ex( x_G, qbupMatrix ) = spwi.solutionCondition
+    info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
     val axiomArgs = homogenized.rules.collectFirst { case Rule( Apps( Const( "A", _ ), args ), _ ) => args }.get
 
@@ -196,11 +197,17 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( axiomArgs: _* )( canSolInst: _* )( ws: _* ), canSol, forgetOne = options.forgetOne )
     info()
 
-    val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
-    info( Z3 isValid skolemize( formula ) )
 
-    solution
+    val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
+    require( Z3 isValid skolemize( formula ), s"Solution not valid" )
+
+    val proof = spwi.lkProof( Seq( solution ), EquationalLKProver )
+    info( s"Found proof with ${proof.dagLike.size} inferences" )
+
+    if ( options.prooftool ) prooftool( proof )
+
+    proof
   }
 
   def getInstanceProof( inst: Seq[LambdaExpression] ) = {
