@@ -90,14 +90,14 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
   def skolemFunctions =
     SkolemFunctions( subProofs.collect { case p: SkolemQuantResolutionRule => p.skolemConst -> p.skolemDef } )
 
-  def conclusionString = {
+  def stringifiedConclusion = {
     val assertionString =
       if ( assertions.isEmpty ) ""
       else s"   <- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
     conclusion.toString + assertionString
   }
   override protected def stepString( subProofLabels: Map[Any, String] ) =
-    s"$conclusionString   (${super[DagProof].stepString( subProofLabels )})"
+    s"$stringifiedConclusion   (${super[DagProof].stepString( subProofLabels )})"
 
   /** Is this a proof of the empty clause with empty assertions, and consistent definitions? */
   def isProof = {

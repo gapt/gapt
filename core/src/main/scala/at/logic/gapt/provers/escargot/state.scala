@@ -26,7 +26,7 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
 
-  override def toString = s"[$index] ${proof.conclusionString}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
+  override def toString = s"[$index] ${proof.stringifiedConclusion}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
 }
 
