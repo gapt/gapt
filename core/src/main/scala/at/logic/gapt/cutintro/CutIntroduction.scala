@@ -18,10 +18,6 @@ import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.logging.{ Logger, metrics }
 import at.logic.gapt.utils.runProcess
 
-class CutIntroException( msg: String ) extends Exception( msg )
-class CutIntroNonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
-  extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
-
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar]
   def name: String
@@ -177,14 +173,17 @@ object sehsToVTRATG {
   }
 }
 
-/**
- * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
- * In practice it does happen if the method used for searching a proof covers a too
- * weak theory (e.g. no equality) or is not complete.
- */
-class CutIntroUnprovableException( msg: String ) extends CutIntroException( msg )
-
 object CutIntroduction {
+
+  class CutIntroException( msg: String ) extends Exception( msg )
+  class NonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
+    extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
+  /**
+   * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
+   * In practice it does happen if the method used for searching a proof covers a too
+   * weak theory (e.g. no equality) or is not complete.
+   */
+  class UnprovableException( msg: String, sequent: HOLSequent ) extends CutIntroException( s"$msg\n$sequent" )
 
   trait BackgroundTheory {
     def hasEquality: Boolean
@@ -267,7 +266,7 @@ object CutIntroduction {
 
     val herbrandSequent = extractInstances( ep )
     val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
-      throw new CutIntroUnprovableException( "Cannot prove Herbrand sequent." )
+      throw new UnprovableException( "Cannot prove Herbrand sequent.", herbrandSequent )
     }
     metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
@@ -286,7 +285,7 @@ object CutIntroduction {
       metrics.value( "grammar_lang_size", generatedLanguage.size )
       termset foreach { term =>
         if ( !( generatedLanguage contains term ) )
-          throw new CutIntroNonCoveringGrammarException( vtratGrammar, term )
+          throw new NonCoveringGrammarException( vtratGrammar, term )
       }
 
       metrics.value( "grammar_size", vtratGrammar.size )
@@ -349,7 +348,7 @@ object CutIntroduction {
 
         val ehsSequent = beautifiedSS.getDeep
         val ehsResolutionProof = backgroundTheory.prover.getLKProof( ehsSequent ).getOrElse {
-          throw new CutIntroUnprovableException( "Cannot prove extended Herbrand sequent." )
+          throw new UnprovableException( "Cannot prove extended Herbrand sequent.", ehsSequent )
         }
         metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
         metrics.value( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
@@ -430,7 +429,7 @@ object CutIntroduction {
       val context = availableESInstanceFormulas :++ availableCutFormulas
 
       if ( i == -1 ) {
-        ContractionMacroRule( prover getLKProof context getOrElse { throw new CutIntroUnprovableException( context.toString ) } )
+        ContractionMacroRule( prover getLKProof context getOrElse { throw new UnprovableException( "Cannot prove solution condition 0:", context ) } )
       } else {
         var lhs = ithCut( i - 1 )
         for {
@@ -443,7 +442,7 @@ object CutIntroduction {
         lhs = ContractionMacroRule( lhs )
 
         val rhsQfSequent = ( for ( inst <- solStruct.sehs.ss( i )._2 ) yield instantiate( solStruct.cutFormulas( i ), inst ) ) ++: context
-        var rhs = prover getLKProof rhsQfSequent getOrElse { throw new CutIntroUnprovableException( rhsQfSequent.toString ) }
+        var rhs = prover getLKProof rhsQfSequent getOrElse { throw new UnprovableException( s"Cannot prove solution condition ${i + 1}:", rhsQfSequent ) }
         rhs = WeakeningContractionMacroRule( rhs, rhsQfSequent, strict = true )
         for ( inst <- solStruct.sehs.ss( i )._2 )
           rhs = ForallLeftBlock( rhs, solStruct.cutFormulas( i ), inst )
