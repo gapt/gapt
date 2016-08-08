@@ -214,7 +214,7 @@ case class RewriteTactic(
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  * @param ctx A [[at.logic.gapt.proofs.Context]]. Used to find the constructors of inductive types.
  */
-case class InductionTactic( mode: TacticApplyMode )( implicit ctx: Context ) extends Tactic[Unit] {
+case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Context ) extends Tactic[Unit] {
 
   /**
    * Reads the constructors of type `t` from the context.
@@ -231,18 +231,19 @@ case class InductionTactic( mode: TacticApplyMode )( implicit ctx: Context ) ext
 
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, main @ All( v @ Var( name, t: TBase ), formula ), idx: Suc ) <- findFormula( goal, mode )
-      constrs <- getConstructors( goal, t )
+      ( label, main, idx: Suc ) <- findFormula( goal, mode )
+      formula = main
+      constrs <- getConstructors( goal, v.exptype.asInstanceOf[TBase] )
     } yield {
       val cases = constrs map { constr =>
         val FunctionType( _, argTypes ) = constr.exptype
         var nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
-        val evs = argTypes map { at => nameGen.fresh( if ( at == t ) v else Var( "x", at ) ) }
-        val hyps = NewLabels( goal.labelledSequent, s"IH$name" ) zip ( evs filter { _.exptype == t } map { ev => Substitution( v -> ev )( formula ) } )
+        val evs = argTypes map { at => nameGen.fresh( if ( at == v.exptype ) v else Var( "x", at ) ) }
+        val hyps = NewLabels( goal.labelledSequent, s"IH${v.name}" ) zip ( evs filter { _.exptype == v.exptype } map { ev => Substitution( v -> ev )( formula ) } )
         val subGoal = hyps ++: goal.labelledSequent.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
         InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
       }
-      () -> InductionRule( cases, main )
+      () -> InductionRule( cases, Abs( v, main ), v )
     }
 }
 

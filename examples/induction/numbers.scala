@@ -13,13 +13,13 @@ object numbers extends TacticsProof {
     Sequent()
 
   val plus0r = Lemma( plusth :+ ( "goal" -> hof"∀x x+0=x" ) ) {
-    induction
+    decompose; induction( hov"x:nat" )
     rewrite.many ltr "plus0"; refl
     rewrite.many ltr ( "plussuc", "IHx_0" ); refl
   }
 
   val plussucr = Lemma( plusth :+ ( "goal" -> hof"∀x∀y x+s(y)=s(x+y)" ) ) {
-    induction onAll decompose
+    decompose; induction( hov"x:nat" )
     rewrite.many ltr "plus0"; refl
     rewrite.many ltr ( "plussuc", "IHx_0" ); refl
   }
@@ -27,7 +27,7 @@ object numbers extends TacticsProof {
   val pluscomm = Lemma( plusth :+ ( "goal" -> hof"∀x∀y x+y=y+x" ) ) {
     include( "plus0r", plus0r )
     include( "plussucr", plussucr )
-    induction onAll decompose
+    decompose; induction( hov"x:nat" )
     rewrite.many ltr ( "plus0", "plus0r" ); refl
     rewrite.many ltr ( "plussucr", "plussuc", "IHx_0" ); refl
   }

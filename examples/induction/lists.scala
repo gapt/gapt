@@ -16,7 +16,7 @@ object lists extends TacticsProof {
       Sequent()
 
   val appnil = Lemma( appth :+ ( "goal" -> hof"∀x x+nil = x" ) ) {
-    induction
+    decompose; induction( hov"x:list" )
     chain( "nilapp" )
     rewrite.many ltr ( "consapp", "IHx_0" ) in "goal"
     refl
@@ -29,7 +29,7 @@ object lists extends TacticsProof {
   }
 
   val appassoc = Lemma( appth :+ ( "goal" -> hof"∀x ∀y ∀z x+(y+z) = (x+y)+z" ) ) {
-    induction onAll decompose
+    decompose; induction( hov"x:list" )
     rewrite.many ltr "nilapp"; refl
     rewrite.many ltr ( "consapp", "IHx_0" ); refl
   }
@@ -43,14 +43,14 @@ object lists extends TacticsProof {
   val apprev = Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"∀x ∀y rev(x+y) = rev(y) + rev(x)" ) ) {
     include( "appnil", appnil )
     include( "appassoc", appassoc )
-    induction onAll decompose
+    decompose; induction( hov"x:list" )
     rewrite.many ltr ( "nilapp", "revnil", "appnil" ); refl
     rewrite.many ltr ( "consapp", "revcons", "IHx_0", "appassoc" ); refl
   }
 
   val revrev = Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"∀x rev(rev(x)) = x" ) ) {
     include( "apprev", apprev )
-    induction onAll decompose
+    decompose; induction( hov"x:list" )
     rewrite.many ltr "revnil"; refl
     rewrite.many ltr ( "revcons", "apprev", "IHx_0", "revnil", "nilapp", "consapp" ); refl
   }
@@ -62,14 +62,14 @@ object lists extends TacticsProof {
       Sequent()
 
   val mapapp = Lemma( ( appth ++ mapth ) :+ ( "goal" -> hof"∀f ∀xs ∀ys map f (xs + ys) = map f xs + map f ys" ) ) {
-    allR; induction onAll decompose
+    decompose; induction( hov"xs:list" )
     rewrite.many ltr ( "nilapp", "mapnil" ); refl
     rewrite.many ltr ( "consapp", "mapcons", "IHxs_0" ); refl
   }
 
   val maprev = Lemma( ( appth ++ revth ++ mapth ) :+ ( "goal" -> hof"∀f ∀xs map f (rev xs) = rev (map f xs)" ) ) {
     include( "mapapp", mapapp )
-    allR; induction
+    decompose; induction( hov"xs:list" )
     rewrite.many ltr ( "revnil", "mapnil" ); refl
     rewrite.many ltr ( "revcons", "mapcons", "mapapp", "IHxs_0", "mapnil" ); refl
   }
@@ -78,7 +78,7 @@ object lists extends TacticsProof {
   Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "*" ) in "example"; refl }
 
   val mapfusion = Lemma( mapth :+ ( "goal" -> hof"∀f ∀g ∀xs map (f*g) xs = map f (map g xs)" ) ) {
-    allR; allR; induction
+    decompose; induction( hov"xs:list" )
     rewrite.many ltr "mapnil"; refl
     rewrite.many ltr ( "mapcons", "IHxs_0" ); unfold( "*" ) in "goal"; refl
   }

@@ -443,7 +443,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the succedent!
    * @param ctx A [[at.logic.gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
    */
-  def induction( implicit ctx: Context ) = InductionTactic( UniqueFormula )
+  def induction( on: Var )( implicit ctx: Context ) = InductionTactic( UniqueFormula, on )
 
   /**
    * Applies the `Induction` tactic to the current subgoal: The goal
@@ -454,7 +454,7 @@ trait TacticCommands {
    * @param label The label of the formula `∀x.A`.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
    */
-  def induction( label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ) )
+  def induction( on: Var, label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ), on )
 
   // Meta
 
