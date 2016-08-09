@@ -289,6 +289,7 @@ object CutIntroduction {
       }
 
       metrics.value( "grammar_size", vtratGrammar.size )
+      metrics.value( "grammar_wsize", vtratGrammar.weightedSize )
       metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
       if ( verbose ) {
@@ -329,6 +330,7 @@ object CutIntroduction {
       val lcompBeauSol = beautifiedSS.formulas.map( lcomp( _ ) ).sum
       val beauGrammar = sehsToVTRATG( encoding, beautifiedSS.sehs )
       metrics.value( "beaugrammar_size", beauGrammar.size )
+      metrics.value( "beaugrammar_wsize", beauGrammar.weightedSize )
       metrics.value( "beaugrammar_scomp", beauGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
       metrics.value( "beausol", beautifiedSS.formulas.map( _.toString ) )
 
