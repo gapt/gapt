@@ -183,7 +183,7 @@ object hSolveQBUP {
     val xGenArgs = xInstArgs.zipWithIndex.map { case ( a, i ) => Var( s"x$i", a.exptype ) }
     val xGen = x( xGenArgs: _* )
     val Some( matching ) = syntacticMatching( xGen, xInst )
-    conseqs foreach { conseq =>
+    conseqs.toSeq.sortBy( lcomp( _ ) ).foreach { conseq =>
       val genConseq = TermReplacement( conseq, matching.map.map( _.swap ) )
       val sol = Abs( xGenArgs, genConseq )
       if ( Z3 isValid skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) {
