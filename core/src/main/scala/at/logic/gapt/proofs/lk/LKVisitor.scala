@@ -267,7 +267,7 @@ trait LKVisitor[T] {
         InductionRule(
           for ( ( c, ( subProof, subConn ) ) <- proof.cases zip subProofs )
             yield InductionCase( subProof, c.constructor, c.hypotheses map subConn.child, c.eigenVars, subConn.child( c.conclusion ) ),
-          proof.mainFormula
+          proof.formula, proof.term
         )
     }
 

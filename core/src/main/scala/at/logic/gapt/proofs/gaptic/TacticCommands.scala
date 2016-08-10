@@ -443,7 +443,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the succedent!
    * @param ctx A [[at.logic.gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
    */
-  def induction( implicit ctx: Context ) = InductionTactic( UniqueFormula )
+  def induction( on: Var )( implicit ctx: Context ) = InductionTactic( UniqueFormula, on )
 
   /**
    * Applies the `Induction` tactic to the current subgoal: The goal
@@ -454,7 +454,7 @@ trait TacticCommands {
    * @param label The label of the formula `∀x.A`.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
    */
-  def induction( label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ) )
+  def induction( on: Var, label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ), on )
 
   // Meta
 
@@ -626,5 +626,27 @@ trait TacticCommands {
    */
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success
+  }
+
+  /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
+  def haveInstance( formula: HOLFormula, polarity: Boolean ): Tactical[String] = {
+    def findInstances( labelledSequent: Sequent[( String, HOLFormula )] ): Seq[( String, Seq[LambdaExpression] )] = {
+      val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
+        case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity   => ( l, vs, m )
+        case ( ( l, All.Block( vs, m ) ), i ) if i.isAnt && !polarity => ( l, vs, m )
+      }
+      for {
+        ( l, vs, m ) <- quantifiedFormulas.elements
+        subst <- syntacticMatching( List( m -> formula ), freeVariables( m ).diff( vs.toSet ).map( v => v -> v ).toMap )
+      } yield l -> subst( vs )
+    }
+
+    for {
+      goal <- currentGoal
+      inst <- findInstances( goal.labelledSequent ).headOption.
+        toTactical( s"Could not find instance $formula in " + ( if ( polarity ) "succedent" else "antecedent" ), goal )
+      ( label, terms ) = inst
+      newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity ) exR( label, terms: _* ) else allL( label, terms: _* )
+    } yield newLabel
   }
 }

@@ -64,8 +64,8 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
   private def findEigenVars( occ: SequentIndex, p: LKProof ): List[Var] = p match {
     case StrongQuantifierRule( subProof, aux, eigen, quant, pol ) if occ == p.mainIndices.head =>
       eigen :: findEigenVars( aux, subProof )
-    case p @ InductionRule( _, _ ) if p.mainIndices contains occ =>
-      p.quant :: findEigenVars( p.cases.head.conclusion, p.cases.head.proof )
+    case p @ InductionRule( _, _, _ ) if p.mainIndices contains occ =>
+      findEigenVars( p.cases.head.conclusion, p.cases.head.proof )
     case p: ContractionRule if !p.mainIndices.contains( occ ) =>
       findEigenVars( p.getOccConnector parent occ, p.subProof )
     case p: CutRule =>
@@ -125,27 +125,25 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
 
       val rules2 = getRules( q2, axiom, occConn2.parent( symbols, Some( symbol ) ), context )
       rules1 ++ rules2
-    case p @ InductionRule( cases, main ) =>
-      val ( indVar :: eigenVars ) = findEigenVars( p.mainIndices.head, p )
-      val symbol = axiom match { case Apps( head, args ) => head( args.dropRight( eigenVars.size + 1 ): _* ) }
+    case p @ InductionRule( cases, main, term ) =>
+      val symbol = ( axiom, p.formula ) match {
+        case ( Apps( Const( _, ty ), args ), Abs( _, All.Block( vs, _ ) ) ) =>
+          Const( mkFreshSymbol(), ty )( args.dropRight( vs.size + 1 ) )
+      }
 
       val caseRules = ( cases, p.occConnectors ).zipped flatMap { ( c, o ) =>
-        val caseAxiom = symbol( c.constructor( c.eigenVars: _* ) )( findEigenVars( c.conclusion, c.proof ): _* )
+        val caseAxiom = symbol( c.constructor( c.eigenVars ) )( findEigenVars( c.conclusion, c.proof ) )
 
         var caseSymbols = o.parents( symbols ).map( _.head )
         ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, hypVar ) =>
           caseSymbols = caseSymbols.updated( hyp, Some( symbol( hypVar ) ) )
         }
         caseSymbols = caseSymbols.updated( c.conclusion, None ) // FIXME: pi2-induction
-        caseSymbols = caseSymbols.map( Substitution(
-          ( indVar -> c.constructor( c.eigenVars: _* ) ) +:
-            ( eigenVars zip findEigenVars( c.conclusion, c.proof ) ): _*
-        )( _ ) )
 
         getRules( c.proof, caseAxiom, caseSymbols, context ++ c.eigenVars )
       }
 
-      caseRules.toSet
+      caseRules.toSet + Rule( axiom, symbol( p.term )( findEigenVars( p.mainIndices.head, p ) ) )
     case p: EqualityRule if !includeEqTheory =>
       getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) ++
         symbols( p.eqInConclusion ).map( Rule( axiom, _ ) )

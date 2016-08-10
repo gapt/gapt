@@ -888,7 +888,7 @@ val catassoc =
       Sequent()
       :+ ("goal" -> hof"∀x ∀y ∀z x+(y+z) = (x+y)+z")
     ) {
-  induction onAll decompose
+  decompose; induction(hov"x: list")
   rewrite.many ltr "nilcat"; refl
   rewrite.many ltr ("conscat", "IHx_0"); refl
 }
@@ -2171,7 +2171,7 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
     \noLine
     \UnaryInfCm{\mathcal{S}_n}
     \RightLabelm{(\mt{ind})}
-    \QuaternaryInfC{$\Gamma \seq \Delta, \forall x F[x]$}
+    \QuaternaryInfC{$\Gamma \seq \Delta, F[t]$}
   \end{prooftree}
 
   In the case of the natural numbers, there are two constructors: $0$ of arity 0 and $s$ of arity 1. Consequently, the induction rule reduces to
@@ -2184,7 +2184,7 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
     \noLine
     \UnaryInfCm{F[x], \Gamma_2 \seq \Delta_2, F[sx]}
     \RightLabelm{(\mt{ind})}
-    \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, \forall x F[x]}
+    \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, F[t]}
   \end{prooftree}
 
 \subsection{Resolution}

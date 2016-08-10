@@ -85,7 +85,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
         :+ ( "conj" -> hof"p(x, c)" )
     ) {
         cut( "cut", hof"∀x ∀y p(x, y)" ); forget( "conj" )
-        induction.onAll( decompose )
+        allR; induction( hov"x:Nat" ).onAll( decompose )
         chain( "base" )
         chain( "step" ); chain( "IHx_0" )
 

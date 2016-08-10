@@ -22,8 +22,8 @@ object freeVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
     case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
       apply( subProof ) - eigen
-    case InductionRule( cases, main ) =>
-      freeVariables( p.conclusion ) ++ ( cases flatMap { c =>
+    case InductionRule( cases, main, term ) =>
+      freeVariables( p.conclusion ) ++ freeVariables( term ) ++ ( cases flatMap { c =>
         apply( c.proof ) -- c.eigenVars
       } )
     case _ =>
@@ -101,7 +101,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
   }
 
   protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
-    val InductionRule( cases, main ) = proof
+    val InductionRule( cases, main, term ) = proof
 
     val newQuant = nameGen.fresh( proof.quant )
 
@@ -112,7 +112,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
     }
 
     val ( casesNew, subConnectors ) = newCasesConnectors.unzip
-    val proofNew = InductionRule( casesNew, proof.mainFormula )
+    val proofNew = InductionRule( casesNew, proof.formula, term )
     val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
     val connector = if ( subConnectors_.isEmpty ) OccConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
 

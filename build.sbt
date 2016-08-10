@@ -197,7 +197,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.parboiled" %% "parboiled" % "2.1.3",
       "com.lihaoyi" %% "fastparse" % "0.3.7",
       "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
-      "com.lihaoyi" %% "sourcecode" % "0.1.1",
+      "com.lihaoyi" %% "sourcecode" % "0.1.2",
       "org.scalaz" %% "scalaz-core" % "7.2.4",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
       "org.apache.commons" % "commons-lang3" % "3.4",

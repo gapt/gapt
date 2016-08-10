@@ -64,6 +64,8 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
 
   def size = productions.size
 
+  def weightedSize = productions.toSeq.map( _._1.size ).sum
+
   def language: Set[FOLTerm] = {
     var lang = Set[FOLTerm]( axiom )
     nonTerminals.foreach { a =>

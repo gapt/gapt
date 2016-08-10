@@ -102,7 +102,7 @@ object cleanStructuralRules {
           + ( proofNew.getRightOccConnector * rightSubConnector_ * p.getRightOccConnector.inv ) )
       }
 
-    case p @ InductionRule( cases, main ) =>
+    case p @ InductionRule( cases, main, term ) =>
 
       if ( cases.isEmpty )
         ( p, OccConnector( p.endSequent ) )
@@ -137,7 +137,7 @@ object cleanStructuralRules {
             ( InductionCase( subProofNew_, c.constructor, hypothesesNew, c.eigenVars, conclusionNew ), subConnector_ )
           } ).unzip
 
-          val proofNew = InductionRule( casesNew, main )
+          val proofNew = InductionRule( casesNew, main, term )
           val occConnectorsNew = for ( i <- p.immediateSubProofs.indices ) yield proofNew.occConnectors( i ) * subConnectorsNew( i ) * p.occConnectors( i ).inv
 
           val occConnectorNew = occConnectorsNew.reduceLeft( _ + _ )

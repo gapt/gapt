@@ -14,7 +14,7 @@ object moveStrongQuantifierRulesDown {
     case p @ ForallRightRule( subProof, aux: Suc, _, _ ) if p.mainIndices contains idx =>
       if ( quantNum == 0 ) false
       else isUnderInduction( subProof, aux, quantNum - 1 )
-    case p @ InductionRule( _, _ ) if p.mainIndices contains idx => true
+    case p @ InductionRule( _, _, _ ) if p.mainIndices contains idx => true
     case _ =>
       ( for (
         ( q, o ) <- p.immediateSubProofs zip p.occConnectors;
@@ -84,7 +84,7 @@ object moveStrongQuantifierRulesDown {
           case EqualityLeftRule( _, eq, aux, con )         => EqualityLeftRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), con )
           case EqualityRightRule( _, eq, aux, con )        => EqualityRightRule( qs( 0 ), oc( 0 ).child( eq ), oc( 0 ).child( aux ), con )
 
-          case p @ InductionRule( cases, main ) =>
+          case p @ InductionRule( cases, main, term ) =>
             p.copy( ( cases, qs, oc ).zipped map { ( c, q, o ) =>
               c.copy( proof = q, hypotheses = c.hypotheses map o.child, conclusion = o.child( c.conclusion ) )
             } )
