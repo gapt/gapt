@@ -94,7 +94,7 @@ class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree] ) e
 
   val drawnTrees = new Array[DrawExpansionTree]( n ) // Draw all the trees. This is a mutable array so we can reorder the drawn trees.
   for ( i <- 0 until n )
-    drawnTrees( i ) = new DrawExpansionTree( main, trees( i ) )
+    drawnTrees( i ) = DrawExpansionTree( main, trees( i ) )
 
   drawLines()
 

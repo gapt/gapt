@@ -52,11 +52,11 @@ object PopupMenu {
   }
 
   // PopupMenu for Expansion Trees.
-  def apply( det: DrawExpansionTree, f: HOLFormula, component: Component, x: Int, y: Int ) {
+  def apply( det: DrawETQuantifierBlock, component: Component, x: Int, y: Int ) {
     val popupMenu = new PopupMenu {
-      contents += new MenuItem( Action( "Close" ) { det.close( f ) } )
-      contents += new MenuItem( Action( "Open" ) { det.open( f ) } )
-      contents += new MenuItem( Action( "Expand" ) { det.expand( f ) } )
+      contents += new MenuItem( Action( "Close" ) { det.close() } )
+      contents += new MenuItem( Action( "Open" ) { det.open() } )
+      contents += new MenuItem( Action( "Expand" ) { det.expand() } )
     }
     popupMenu.show( component, x, y )
   }
@@ -65,15 +65,10 @@ object PopupMenu {
   def apply( main: ExpansionSequentViewer, ced: CedentPanel, x: Int, y: Int ) {
     val popupMenu = new PopupMenu {
       val trees = ced.treeList.drawnTrees
-      contents += new MenuItem( Action( "Close all" ) { trees.foreach( det => det.close( det.expansionTree.shallow ) ) } )
-      contents += new MenuItem( Action( "Open all" ) {
-        for ( det <- trees ) {
-          val subFs = firstQuantifiers( det.expansionTree.shallow )
-          subFs.foreach( det.open )
-        }
-      } )
+      contents += new MenuItem( Action( "Close all" ) { trees.foreach( det => det.closeAll() ) } )
+      contents += new MenuItem( Action( "Open all" ) { trees.foreach( det => det.openAll() ) } )
 
-      contents += new MenuItem( Action( "Expand all" ) { trees.foreach( det => expandRecursive( det, det.expansionTree.shallow ) ) } )
+      contents += new MenuItem( Action( "Expand all" ) { trees.foreach( det => det.expandAll() ) } )
       contents += new MenuItem( Action( "Reset" ) {
         ced.treeList = new TreeListPanel( main, ced.cedent )
         ced.scrollPane.contents = ced.treeList
@@ -90,20 +85,6 @@ object PopupMenu {
     case Or( l, r )               => firstQuantifiers( l ) ++ firstQuantifiers( r )
     case Neg( l )                 => firstQuantifiers( l )
     case All( _, _ ) | Ex( _, _ ) => List( f )
-  }
-
-  def expandRecursive( det: DrawExpansionTree, f: HOLFormula ): Unit = f match {
-    case HOLAtom( _, _ ) =>
-    case And( l, r ) =>
-      expandRecursive( det, l ); expandRecursive( det, r )
-    case Imp( l, r ) =>
-      expandRecursive( det, l ); expandRecursive( det, r )
-    case Or( l, r ) =>
-      expandRecursive( det, l ); expandRecursive( det, r )
-    case Neg( l ) => expandRecursive( det, l )
-    case All( _, l ) =>
-      det.expand( f ); expandRecursive( det, l )
-    case Ex( _, l ) => det.expand( f ); expandRecursive( det, l )
   }
 }
 
