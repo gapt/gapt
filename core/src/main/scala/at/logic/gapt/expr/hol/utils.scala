@@ -318,7 +318,7 @@ object removeQuantifiers {
    * Removes the leading n quantifiers of a formula.
    * It's only well-defined for formulas that begin with at least n quantifiers.
    *
-   * @param formula A Formula
+   * @param f A Formula
    * @param n Number of quantifiers to be removed
    * @throws exception in case f does not start with n quantifiers.
    * @return form without the first n quantifiers
@@ -507,5 +507,45 @@ object formulaToSequent {
     case Neg( a )    => pos( a )
     case Top()       => Sequent()
     case _           => formula +: Sequent()
+  }
+}
+
+/**
+ * Rewrites a formula modulo the absorption properties for Top / Bottom
+ */
+object simplify_top_bot {
+  /**
+   * fixed point of simplify
+   * @param f the formula to be simplified
+   */
+  def apply( f: HOLFormula ): HOLFormula = {
+    val g = simplify( f )
+    if ( f == g ) f else apply( g )
+  }
+
+  /**
+   * Uses the absorption laws of Top/Bottom for rewriting a formulas in innermost-out fashion. This may result
+   * in additional rewrite positions. Only the fixed point of simplify does not have any occurrences of the removed
+   * pattern anymore.
+   * @param f the formula to be simplified
+   */
+  def simplify( f: HOLFormula ): HOLFormula = f match {
+    case Top()              => f
+    case Bottom()           => f
+    case HOLAtom( a )       => f
+    case Neg( g )           => Neg( simplify( g ) )
+    case And( Top(), g )    => simplify( g )
+    case And( g, Top() )    => simplify( g )
+    case And( g, h )        => And( simplify( g ), simplify( h ) )
+    case Or( Bottom(), g )  => simplify( g )
+    case Or( g, Bottom() )  => simplify( g )
+    case Or( g, h )         => Or( simplify( g ), simplify( h ) )
+    case Imp( Top(), g )    => simplify( g )
+    case Imp( Bottom(), _ ) => Top()
+    case Imp( g, Bottom() ) => Neg( simplify( g ) )
+    case Imp( _, Top() )    => Top()
+    case Imp( g, h )        => Imp( simplify( g ), simplify( h ) )
+    case All( x, t )        => All( x, simplify( t ) )
+    case Ex( x, t )         => Ex( x, simplify( t ) )
   }
 }

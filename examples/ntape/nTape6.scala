@@ -129,27 +129,27 @@ object nTape6 {
    *
    * @param path
    */
-  def export( path: String = "." ) {
+  def export( path: String = ".", separate_axioms: Boolean = false ) {
     val f = path + File.separator + fn
     //sc
-    TPTPHOLExporter( List( s0a ), f + "0-minimal.tptp", true ) //provable by agsyhol
-    TPTPHOLExporter( List( s0b ), f + "0-with-witness.tptp", true ) //provable by agsyhol
+    TPTPHOLExporter( s0a, f + "0-minimal.tptp", separate_axioms ) //provable by agsyhol
+    TPTPHOLExporter( s0b, f + "0-with-witness.tptp", separate_axioms ) //provable by agsyhol
     //sc1
-    TPTPHOLExporter( List( s1a ), f + "1-minimal.tptp", true ) //timeout
-    TPTPHOLExporter( List( s1b ), f + "1-withness-no-arith.tptp", true ) //timeout
-    TPTPHOLExporter( List( s1c ), f + "1-with-witness.tptp", true ) //provable by leo 2, satallax, agsyhol
-    TPTPHOLExporter( List( s1d ), f + "1-without-witness.tptp", true ) //timeout
+    TPTPHOLExporter( s1a, f + "1-minimal.tptp", separate_axioms ) //timeout
+    TPTPHOLExporter( s1b, f + "1-withness-no-arith.tptp", separate_axioms ) //timeout
+    TPTPHOLExporter( s1c, f + "1-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax, agsyhol
+    TPTPHOLExporter( s1d, f + "1-without-witness.tptp", separate_axioms ) //timeout
     //sc2
-    TPTPHOLExporter( List( s2b ), f + "2-with-witness.tptp", true ) //provable by leo 2, satallax
-    TPTPHOLExporter( List( s2c ), f + "2-without-witness.tptp", true ) //timeout
+    TPTPHOLExporter( s2b, f + "2-with-witness.tptp", separate_axioms ) //provable by leo 2, satallax
+    TPTPHOLExporter( s2c, f + "2-without-witness.tptp", separate_axioms ) //timeout
 
     //sc2 with different witness
-    TPTPHOLExporter( List( s2d ), f + "2-with-witness2.tptp", true ) //provable by leo 2, satallax
-    //TPTPHOLExporter( List( s2e ), f + "2-with-witness2-help.tptp", true ) //provable by leo 2, satallax
+    TPTPHOLExporter( s2d, f + "2-with-witness2.tptp", separate_axioms ) //provable by leo 2, satallax
+    //TPTPHOLExporter(  s2e , f + "2-with-witness2-help.tptp" , separate_axioms ) //provable by leo 2, satallax
 
     //these are some experiments
-    //TPTPHOLExporter( List( cuts0a ), f + "0-cut1.tptp", true )
-    //TPTPHOLExporter( List( cuts0b ), f + "0-cut2.tptp", true )
-    //TPTPHOLExporter( List( consistent ), f + "0-consistent.tptp", true )
+    //TPTPHOLExporter(  cuts0a , f + "0-cut1.tptp" , separate_axioms )
+    //TPTPHOLExporter(  cuts0b , f + "0-cut2.tptp" , separate_axioms )
+    //TPTPHOLExporter(  consistent , f + "0-consistent.tptp" , separate_axioms )
   }
 }

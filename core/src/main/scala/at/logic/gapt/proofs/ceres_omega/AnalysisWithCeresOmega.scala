@@ -185,7 +185,7 @@ abstract class AnalysisWithCeresOmega {
    * @param filename The name of the file to export to
    */
   def export_thf( filename: String ): Unit = {
-    TPTPHOLExporter( preprocessed_css, filename, false )
+    TPTPHOLExporter( preprocessed_css, filename )
   }
 
   /**
@@ -224,6 +224,10 @@ abstract class AnalysisWithCeresOmega {
     }
   }
 
+  def thf_reproving_deep( filename: String ) = {
+    TPTPHOLExporter.apply( expansion_proof.expansionSequent, filename, true, true )
+  }
+
   def printStatistics() = {
     println( "------------ Proof sizes --------------" )
     println( s"Input proof            : ${input_proof.treeLike.size}" )
@@ -246,7 +250,7 @@ abstract class AnalysisWithCeresOmega {
    * Prints the preprocessed characteristic sequent set in TPTP THF format. Use [[export_thf]] to write it to a file.
    */
   def print_css_thf(): Unit = {
-    println( TPTPHOLExporter( preprocessed_css, false ) )
+    println( TPTPHOLExporter.export_negative( preprocessed_css ) )
   }
 
 }
