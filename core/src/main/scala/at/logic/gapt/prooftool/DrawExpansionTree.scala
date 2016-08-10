@@ -529,17 +529,17 @@ class DrawETNonQuantifier(
 }
 
 object ETStrongQuantifierBlock {
-  def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[List[LambdaExpression], ExpansionTree] )] = et match {
+  def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = et match {
     case ETStrongQuantifier( _, eigen, ETStrongQuantifierBlock( _, depth, children ) ) =>
       Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( eigen +: t, child ) ) )
     case ETSkolemQuantifier( _, st, _, ETStrongQuantifierBlock( _, depth, children ) ) =>
       Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( st +: t, child ) ) )
-    case _ => Some( ( et.shallow, 0, Map( List[LambdaExpression]() -> et ) ) )
+    case _ => Some( ( et.shallow, 0, Map( Seq[LambdaExpression]() -> et ) ) )
   }
 }
 
 object ETQuantifierBlock {
-  def unapply( et: ExpansionTree ) = et match {
+  def unapply( et: ExpansionTree ): Option[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = et match {
     case ETStrongQuantifierBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
     case ETWeakQuantifierBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
     case _ => None
