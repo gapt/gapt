@@ -45,7 +45,7 @@ abstract class DrawExpansionTree(
 
     formula match {
       case Neg( f ) =>
-        val conn = label( "¬", ft )
+        val conn = label( "¬" )
         val subF = drawFormula( f )
         this.listenTo( conn.mouse.moves )
         this.reactions += {
@@ -57,8 +57,8 @@ abstract class DrawExpansionTree(
         contents += conn
         contents += subF
       case And( f1, f2 ) =>
-        val parenthesis = connectParentheses( label( "(", ft ), label( ")", ft ) )
-        val conn = label( "∧", ft )
+        val parenthesis = connectedParentheses
+        val conn = label( "∧" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
         this.listenTo( conn.mouse.moves, parenthesis._1.mouse.moves, parenthesis._2.mouse.moves )
@@ -78,8 +78,8 @@ abstract class DrawExpansionTree(
         contents += subF2
         contents += parenthesis._2
       case Or( f1, f2 ) =>
-        val parenthesis = connectParentheses( label( "(", ft ), label( ")", ft ) )
-        val conn = label( "∨", ft )
+        val parenthesis = connectedParentheses
+        val conn = label( "∨" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
         this.listenTo( conn.mouse.moves, parenthesis._1.mouse.moves, parenthesis._2.mouse.moves )
@@ -99,8 +99,8 @@ abstract class DrawExpansionTree(
         contents += subF2
         contents += parenthesis._2
       case Imp( f1, f2 ) =>
-        val parenthesis = connectParentheses( label( "(", ft ), label( ")", ft ) )
-        val conn = label( "⊃", ft )
+        val parenthesis = connectedParentheses
+        val conn = label( "⊃" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
         this.listenTo( conn.mouse.moves, parenthesis._1.mouse.moves, parenthesis._2.mouse.moves )
@@ -120,10 +120,10 @@ abstract class DrawExpansionTree(
         contents += subF2
         contents += parenthesis._2
       case Ex( v, f ) =>
-        contents += label( "\\exists " + LatexExporter.escapeName( v.name ) + " ", ft )
+        contents += label( "\\exists " + LatexExporter.escapeName( v.name ) + " " )
         contents += drawFormula( f )
       case All( v, f ) =>
-        contents += label( "\\forall " + LatexExporter.escapeName( v.name ) + " ", ft )
+        contents += label( "\\forall " + LatexExporter.escapeName( v.name ) + " " )
         contents += drawFormula( f )
       case _ =>
         val lbl = LatexLabel( main, LatexExporter( formula ) )
@@ -132,12 +132,9 @@ abstract class DrawExpansionTree(
     }
   }
 
-  def label( s: String, fnt: Font ) = new MyLabel {
-    background = Color.white
-    yLayoutAlignment = 0.5
-    font = fnt
-    icon = new TeXFormula( s ).createTeXIcon( TeXConstants.STYLE_DISPLAY, fnt.getSize, TeXFormula.SANSSERIF )
-
+  def label( s: String ) = if ( s == "," )
+    new CommaLabel( main )
+  else new LatexLabel( main, s ) {
     if ( s == "(" || s == ")" ) {
       opaque = true
       tooltip = "Click to mark/unmark."
@@ -146,19 +143,22 @@ abstract class DrawExpansionTree(
         case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
           val color = RGBColorChooser( this, e.point.x, e.point.y )
           if ( color.isDefined ) {
-            backgroundColor = color.get
+            background = color.get
             peer.dispatchEvent( new MouseEvent( peer, e.peer.getID, e.peer.getWhen, e.modifiers, e.point.x, e.point.y, e.clicks, e.triggersPopup, MouseEvent.BUTTON1 ) )
           }
       }
     }
+
   }
 
-  def connectParentheses( left: MyLabel, right: MyLabel ) = {
+  def connectedParentheses = {
+    val left = label( "(" )
+    val right = label( ")" )
     left.reactions += {
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
-        if ( left.background == Color.white || left.background != left.backgroundColor ) {
-          left.background = left.backgroundColor
-          right.background = left.backgroundColor
+        if ( left.background == Color.white || left.background != left.background ) {
+          left.background = left.background
+          right.background = left.background
         } else {
           left.background = Color.white
           right.background = Color.white
@@ -166,14 +166,15 @@ abstract class DrawExpansionTree(
     }
     right.reactions += {
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON1 =>
-        if ( right.background == Color.white || right.background != right.backgroundColor ) {
-          left.background = right.backgroundColor
-          right.background = right.backgroundColor
+        if ( right.background == Color.white || right.background != right.background ) {
+          left.background = right.background
+          right.background = right.background
         } else {
           left.background = Color.white
           right.background = Color.white
         }
     }
+
     ( left, right )
   }
 
@@ -393,25 +394,25 @@ class DrawETQuantifierBlock(
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
 
-    contents += label( "\\langle", ft )
+    contents += label( "\\langle" )
     var firstList = true
     list.foreach( l => {
       if ( !firstList ) {
-        val lbl = label( "\\; ; \\;", ft )
+        val lbl = label( "\\; ; \\;" )
         lbl.yLayoutAlignment = 0.35
         contents += lbl
       } else firstList = false
       var firstTerm = true
       l.foreach( t => {
         if ( !firstTerm ) {
-          val lbl = label( ",", ft )
+          val lbl = label( "," )
           lbl.yLayoutAlignment = 0
           contents += lbl
         } else firstTerm = false
-        contents += label( LatexExporter( t ), ft )
+        contents += label( LatexExporter( t ) )
       } )
     } )
-    contents += label( "\\rangle", ft )
+    contents += label( "\\rangle" )
   }
 
   override def expandAll() = {
@@ -444,7 +445,7 @@ class DrawETNonQuantifier(
       Seq()
 
     case ETNeg( t ) =>
-      val conn = label( "¬", ft )
+      val conn = label( "¬" )
       val subF = DrawExpansionTree( main, t, outerQuantifier )
       this.listenTo( conn.mouse.moves )
       this.reactions += {
@@ -458,8 +459,8 @@ class DrawETNonQuantifier(
       Seq( subF )
 
     case ETAnd( t1, t2 ) =>
-      val parentheses = connectParentheses( label( "(", ft ), label( ")", ft ) )
-      val conn = label( "∧", ft )
+      val parentheses = connectedParentheses
+      val conn = label( "∧" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
       this.listenTo( conn.mouse.moves, parentheses._1.mouse.moves, parentheses._2.mouse.moves )
@@ -481,8 +482,8 @@ class DrawETNonQuantifier(
       Seq( subF1, subF2 )
 
     case ETOr( t1, t2 ) =>
-      val parentheses = connectParentheses( label( "(", ft ), label( ")", ft ) )
-      val conn = label( "∨", ft )
+      val parentheses = connectedParentheses
+      val conn = label( "∨" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
       this.listenTo( conn.mouse.moves, parentheses._1.mouse.moves, parentheses._2.mouse.moves )
@@ -504,8 +505,8 @@ class DrawETNonQuantifier(
       Seq( subF1, subF2 )
 
     case ETImp( t1, t2 ) =>
-      val parentheses = connectParentheses( label( "(", ft ), label( ")", ft ) )
-      val conn = label( "⊃", ft )
+      val parentheses = connectedParentheses
+      val conn = label( "⊃" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
       this.listenTo( conn.mouse.moves, parentheses._1.mouse.moves, parentheses._2.mouse.moves )

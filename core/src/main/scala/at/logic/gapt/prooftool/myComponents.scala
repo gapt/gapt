@@ -85,13 +85,6 @@ class PTContentPanel(
   }
 }
 
-// This component is used in DrawExpansionTree
-class MyLabel extends Label {
-  private var varBackgroundColor = Color.cyan
-  def backgroundColor = varBackgroundColor
-  def backgroundColor_=( c: Color ) { varBackgroundColor = c }
-}
-
 // This component is used in RGBColorChooser
 class Spinner[T]( model: SpinnerModel ) extends Component {
   override lazy val peer: JSpinner = new JSpinner( model ) with SuperMixin
