@@ -230,6 +230,15 @@ object CutIntroduction {
     else
       BackgroundTheory.PureFOL
 
+  private def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
+    metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
+    metrics.value( s"${name}sol_scomp", solStruct.formulas.map( expressionSize( _ ) ).sum )
+    metrics.value( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp( f ).size ).sum )
+    val clauseSizes = solStruct.formulas.flatMap( CNFp.apply ).map( _.size )
+    metrics.value( s"${name}sol_maxclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.max )
+    metrics.value( s"${name}sol_avgclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.sum.toFloat / clauseSizes.size )
+  }
+
   def compressToSolutionStructure(
     ep:               ExpansionProof,
     backgroundTheory: BackgroundTheory     = null,
@@ -301,6 +310,7 @@ object CutIntroduction {
 
       val canonicalSS = SolutionStructure( grammar, computeCanonicalSolution( grammar ) )
       require( canonicalSS.isValid( backgroundTheory.prover ) )
+      solStructMetrics( canonicalSS, "can" )
 
       val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, backgroundTheory.prover, backgroundTheory.hasEquality ) }
       if ( verbose ) for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex ) {
@@ -309,20 +319,10 @@ object CutIntroduction {
           println( s"  $clause" )
       }
       require( minimizedSS.isValid( backgroundTheory.prover ) )
+      solStructMetrics( minimizedSS, "min" )
 
       val beautifiedSS = metrics.time( "beausol" ) { beautifySolution( minimizedSS ) }
       require( beautifiedSS.isValid( backgroundTheory.prover ) )
-
-      def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
-        metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
-        metrics.value( s"${name}sol_scomp", solStruct.formulas.map( expressionSize( _ ) ).sum )
-        metrics.value( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp( f ).size ).sum )
-        val clauseSizes = solStruct.formulas.flatMap( CNFp.apply ).map( _.size )
-        metrics.value( s"${name}sol_maxclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.max )
-        metrics.value( s"${name}sol_avgclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.sum.toFloat / clauseSizes.size )
-      }
-      solStructMetrics( canonicalSS, "can" )
-      solStructMetrics( minimizedSS, "min" )
       solStructMetrics( beautifiedSS, "beau" )
 
       val lcompCanonicalSol = canonicalSS.formulas.map( lcomp( _ ) ).sum
