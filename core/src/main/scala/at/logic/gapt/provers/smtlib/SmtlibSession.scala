@@ -146,9 +146,13 @@ abstract class ExternalSmtlibProgram extends SmtlibSession {
     in.flush()
     val res = out.readLine()
     if ( debug ) println( s"-> $res" )
-    require( res != null, s"SMT solver terminated unexpectedly on $input" )
+    if ( res == null ) throw new ExternalSmtlibProgram.UnexpectedTerminationException( input )
     SExpressionParser( StringInputFile( res ) ).head
   }
 
   override def close() = process.destroy()
+}
+object ExternalSmtlibProgram {
+  class UnexpectedTerminationException( input: SExpression )
+    extends Exception( s"SMT solver terminated unexpectedly on $input" )
 }

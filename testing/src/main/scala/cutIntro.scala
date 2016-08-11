@@ -11,6 +11,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
+import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
 import at.logic.gapt.utils.logging.{ MetricsCollector, metrics }
 import at.logic.gapt.utils.withTimeout
 import org.json4s._
@@ -116,12 +117,13 @@ object testCutIntro extends App {
     catch {
       case e: Throwable =>
         metrics.value( "status", e match {
-          case _: OutOfMemoryError                            => "cutintro_out_of_memory"
-          case _: StackOverflowError                          => "cutintro_stack_overflow"
-          case _: CutIntroduction.UnprovableException         => "cutintro_ehs_unprovable"
+          case _: OutOfMemoryError => "cutintro_out_of_memory"
+          case _: StackOverflowError => "cutintro_stack_overflow"
+          case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
           case _: CutIntroduction.NonCoveringGrammarException => "cutintro_noncovering_grammar"
-          case _: LKRuleCreationException                     => "lk_rule_creation_exception"
-          case _: Throwable                                   => "cutintro_other_exception"
+          case _: LKRuleCreationException => "lk_rule_creation_exception"
+          case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
+          case _: Throwable => "cutintro_other_exception"
         } )
         metrics.value( "exception", e.toString )
         throw e
