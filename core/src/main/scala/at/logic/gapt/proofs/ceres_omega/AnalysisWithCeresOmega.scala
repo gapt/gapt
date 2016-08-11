@@ -224,8 +224,15 @@ abstract class AnalysisWithCeresOmega {
     }
   }
 
-  def thf_reproving_deep( filename: String ) = {
-    TPTPHOLExporter.apply( expansion_proof.expansionSequent, filename, true, true )
+  def thf_reproving_deep( filename: Option[String] ): String = {
+    filename match {
+      case Some( fn ) =>
+        TPTPHOLExporter.apply( expansion_proof.expansionSequent, fn, true, true )
+      case None =>
+        ()
+    }
+
+    TPTPHOLExporter.export( expansion_proof.expansionSequent, true, true )
   }
 
   def printStatistics() = {
