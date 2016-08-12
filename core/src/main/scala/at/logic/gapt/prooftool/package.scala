@@ -1,6 +1,6 @@
 package at.logic.gapt
 
-import at.logic.gapt.expr.{ HOLFormula, LambdaExpression, Not }
+import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
@@ -10,6 +10,7 @@ import at.logic.gapt.proofs.lksk.LKskProof
 import at.logic.gapt.proofs.ral.RalProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
+import at.logic.gapt.utils.Not
 
 import scala.annotation.implicitNotFound
 import scalaz.{ \/, \/- }

@@ -2,26 +2,11 @@ package at.logic.gapt
 
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent, Sequent }
-import at.logic.gapt.utils.NameGenerator
+import at.logic.gapt.utils.{ NameGenerator, Not }
 
 import scala.annotation.implicitNotFound
 
 package object expr extends DefaultReplaceables {
-
-  /**
-   * Together with the scala `<:<` construct, the Not trait allows us to express that a type is not a subtype of another. This works in the following manner:
-   * Suppose you have types `S <: T` and a function `foo[T]` that you only want to apply to elements of type T that are not of type S.
-   * Then you can write `foo[T](implicit notAnS: Not[S <:<T])`.
-   *
-   * TODO: Add an "ambiguous implicit" annotation to make this clearer. My scala version does not currently support this.
-   *
-   * @tparam T
-   */
-  trait Not[T]
-
-  implicit def notDefault[T]: Not[T] = null
-
-  implicit def notSpecific[T]( implicit ev: T ): Not[T] = null
 
   /**
    * Trait that describes the following relation between types `S`, `T`, `U`: If a substitution of type `S` is applied
