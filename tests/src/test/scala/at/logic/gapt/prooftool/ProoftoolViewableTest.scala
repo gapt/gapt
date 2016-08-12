@@ -23,8 +23,10 @@ class ProoftoolViewableTest extends Specification {
     implicitly[ProoftoolViewable[RefutationSketch]]
     implicitly[ProoftoolViewable[ImpRightRule]]
 
-    implicitly[ProoftoolViewable[Option[ResolutionProof]]]
-    implicitly[ProoftoolViewable[Any \/ ResolutionProof]]
+    def forall[Viewable: ProoftoolViewable, Error] = {
+      implicitly[ProoftoolViewable[Option[Viewable]]]
+      implicitly[ProoftoolViewable[Error \/ Viewable]]
+    }
 
     implicitly[ProoftoolViewable[ExpansionProof]]
     implicitly[ProoftoolViewable[ExpansionProofWithCut]]
@@ -34,7 +36,8 @@ class ProoftoolViewableTest extends Specification {
     implicitly[ProoftoolViewable[HOLSequent]]
     implicitly[ProoftoolViewable[ExtendedProofDatabase]]
 
-    implicitly[ProoftoolViewable[Struct[Any]]]
+    def forall_[Data] =
+      implicitly[ProoftoolViewable[Struct[Data]]]
 
     ok
   }
