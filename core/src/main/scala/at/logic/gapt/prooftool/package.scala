@@ -13,16 +13,13 @@ import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import scala.annotation.implicitNotFound
 import scalaz.{ \/, \/- }
 
-/**
- * Created by sebastian on 8/2/16.
- */
 package object prooftool {
 
   /**
    * A typeclass for things that can be displayed in Prooftool.
    * @tparam T The type of the displayed object.
    */
-  @implicitNotFound( "No implementation of ProoftoolViewable found for type ${T}." )
+  @implicitNotFound( "Prooftool cannot show objects of type ${T}.\n(To support the type ${T}, add an implicit instance of ProoftoolViewable[${T}].)" )
   trait ProoftoolViewable[T] {
     def display( x: T, name: String ): Unit
   }
