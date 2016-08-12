@@ -31,7 +31,7 @@ object evalCodeSnippetsInLatex {
       repl command CLIMain.imports
 
       // don't open prooftool
-      repl command "def prooftool(x: Any): Unit = ()"
+      repl command "def prooftool[T: at.logic.gapt.prooftool.ProoftoolViewable](x: T, name: String = \"\"): Unit = ()"
 
       // don't open help
       repl command "def help(x: Any*): Unit = ()"
