@@ -267,11 +267,13 @@ object CutIntroduction {
     /********** Term set Extraction **********/
     val encoding = FOLInstanceTermEncoding( endSequent )
     val termset = groundTerms( encoding encode ep ) map { _.asInstanceOf[FOLTerm] }
+    val weightedTermsetSize = termset.view.map { case Apps( _, args ) => args.size }.sum
 
     metrics.value( "termset", termset.size )
+    metrics.value( "termset_wsize", weightedTermsetSize )
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
     metrics.value( "termset_trivial", termset.size == termset.map { case FOLFunction( r, _ ) => r }.size )
-    if ( verbose ) println( s"Size of term set: ${termset.size}" )
+    if ( verbose ) println( s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)" )
 
     val herbrandSequent = extractInstances( ep )
     val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
@@ -302,7 +304,7 @@ object CutIntroduction {
       metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
       if ( verbose ) {
-        println( s"Smallest grammar of size ${vtratGrammar.size}:" )
+        println( s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):" )
         println( vtratGrammar )
       }
 
@@ -336,7 +338,7 @@ object CutIntroduction {
 
       if ( beautifiedSS.formulas.nonEmpty ) {
         if ( verbose ) {
-          println( s"Beautified grammar of size ${beauGrammar.size}:" )
+          println( s"Beautified grammar of size ${beauGrammar.size} (weighted by vector size = ${beauGrammar.weightedSize}):" )
           println( beauGrammar )
           println( s"Size of the canonical solution: $lcompCanonicalSol" )
           println( s"Size of the minimized solution: $lcompMinSol" )

@@ -1695,8 +1695,8 @@ gapt> val q = CutIntroduction.compressLKProof(p, method=DeltaTableMethod(), verb
 Total inferences in the input proof: 36
 Quantifier inferences in the input proof: 9
 End sequent: ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))
-Size of term set: 11
-Smallest grammar of size 8:
+Size of term set: 11 (weighted by root symbol arity = 9)
+Smallest grammar of size 8 (weighted by vector size = 8):
 Non-terminal vectors: (x0), (x1)
 Terminals:
   0
@@ -1723,7 +1723,7 @@ x1 → s(s(s(s(s(s(0))))))
 
 CNF of minimized cut-formula number 0:
   P(x1) ⊢ P(s(s(s(x1))))
-Beautified grammar of size 8:
+Beautified grammar of size 8 (weighted by vector size = 8):
 Non-terminal vectors: (x), (x1)
 Terminals:
   0
