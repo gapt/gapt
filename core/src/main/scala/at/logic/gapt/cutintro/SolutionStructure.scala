@@ -43,7 +43,7 @@ case class SolutionStructure( sehs: SchematicExtendedHerbrandSequent, formulas: 
   }
 
   def instantiatedSolutionCondition( i: Int ) = {
-    val esInsts = sehs.esInstancesInScope( i )
+    val esInsts = sehs.esInstancesInScope( i + 1 )
     val lowerCuts = formulas.drop( i + 1 )
     val cutInsts = if ( i == -1 ) Seq() else sehs.substitutions( i ).map( _( formulas( i ) ) )
     cutInsts ++: esInsts :++ lowerCuts

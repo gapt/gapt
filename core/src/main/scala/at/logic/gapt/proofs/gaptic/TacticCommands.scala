@@ -649,4 +649,7 @@ trait TacticCommands {
       newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity ) exR( label, terms: _* ) else allL( label, terms: _* )
     } yield newLabel
   }
+
+  def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
+    Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.isSuc ) )
 }

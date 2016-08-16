@@ -424,45 +424,37 @@ object CutIntroduction {
   }
 
   def buildProofWithCut( solStruct: SolutionStructure, prover: Prover ): LKProof = {
-    // ithCut(i) returns a proof that ends in (availableESInstanceFormulas ++ endSequent :+ qfCutFormulas(i+1) :+ ... :+ qfCutFormulas(n))
-    def ithCut( i: Int ): LKProof = {
-      val eigenVariablesInScope = ( for ( ( evs, j ) <- solStruct.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j ) yield ev ).toSet
-      val availableESInstanceFormulas = for ( ( u, insts ) <- solStruct.sehs.us; inst <- insts if freeVariables( inst ) subsetOf eigenVariablesInScope ) yield instantiate( u, inst )
-      val availableCutFormulas = for ( ( cf, j ) <- solStruct.formulas.zipWithIndex if i < j ) yield cf
-      // Instances of the sequent on the right side of the cut, without the instances of the cut-formula.
-      val context = availableESInstanceFormulas :++ availableCutFormulas
+    import at.logic.gapt.proofs.gaptic._
 
-      if ( i == -1 ) {
-        ContractionMacroRule( prover getLKProof context getOrElse { throw new UnprovableException( "Cannot prove solution condition 0:", context ) } )
-      } else {
-        var lhs = ithCut( i - 1 )
-        for {
-          ( ( u, insts ), idx ) <- solStruct.sehs.us.zipWithIndex
-          inst <- insts
-          if freeVariables( inst ).intersect( solStruct.sehs.eigenVariables( i ).toSet ).nonEmpty
-          if lhs.conclusion.contains( instantiate( u, inst ), idx.isSuc )
-        } lhs = WeakQuantifierBlock( lhs, u, inst )
-        lhs = ForallRightBlock( lhs, solStruct.cutFormulas( i ), solStruct.sehs.eigenVariables( i ) )
-        lhs = ContractionMacroRule( lhs )
+    var state = ProofState(
+      for ( ( formula, idx ) <- solStruct.endSequent.zipWithIndex )
+        yield idx.toString -> formula
+    )
 
-        val rhsQfSequent = ( for ( inst <- solStruct.sehs.ss( i )._2 ) yield instantiate( solStruct.cutFormulas( i ), inst ) ) ++: context
-        var rhs = prover getLKProof rhsQfSequent getOrElse { throw new UnprovableException( s"Cannot prove solution condition ${i + 1}:", rhsQfSequent ) }
-        rhs = WeakeningContractionMacroRule( rhs, rhsQfSequent, strict = true )
-        for ( inst <- solStruct.sehs.ss( i )._2 )
-          rhs = ForallLeftBlock( rhs, solStruct.cutFormulas( i ), inst )
-        rhs = ContractionMacroRule( rhs )
+    def addNewInstances( instances: FOLSequent ) =
+      currentGoal.flatMap( curGoal => haveInstances( instances.distinct diff curGoal.conclusion ) )
 
-        ContractionMacroRule( CutRule( lhs, rhs, solStruct.cutFormulas( i ) ) )
-      }
+    def insertProofOfSolutionCondition( i: Int ) = {
+      val solCond = solStruct.instantiatedSolutionCondition( i )
+      insert( prover.getLKProof( solCond ).
+        getOrElse( throw new UnprovableException( s"Cannot prove solution condition ${i + 1}", solCond ) ) )
     }
 
-    var proof = ithCut( solStruct.formulas.indices.last )
-    for {
-      ( ( u, insts ), idx ) <- solStruct.sehs.us.zipWithIndex
-      inst <- insts
-      if proof.conclusion.contains( instantiate( u, inst ), idx.isSuc )
-    } proof = WeakQuantifierBlock( proof, u, inst )
-    WeakeningContractionMacroRule( proof, solStruct.endSequent, strict = true )
+    for ( ( ( evs, ss ), i ) <- solStruct.sehs.ss.zipWithIndex.reverse ) {
+      state += addNewInstances( solStruct.sehs.esInstancesInScope( i + 1 ) )
+
+      state += cut( s"cut$i", solStruct.cutFormulas( i ) )
+      for ( ev <- evs ) state += allR( s"cut$i", ev )
+
+      state += focus( 1 )
+      for ( inst <- ss ) state += allL( s"cut$i", inst: _* )
+      state += insertProofOfSolutionCondition( i )
+    }
+
+    state += addNewInstances( solStruct.sehs.endSequentInstances )
+    state += insertProofOfSolutionCondition( -1 )
+
+    state.result
   }
 }
 

@@ -214,6 +214,13 @@ trait Tactical[+T] { self =>
 object Tactical {
   def sequence[T]( tacticals: Seq[Tactical[T]] ): Tactical[List[T]] =
     tacticals.toList.sequence
+
+  def sequence[T]( tacticals: Sequent[Tactical[T]] ): Tactical[Sequent[T]] =
+    sequence( tacticals.elements ).map( resultElements =>
+      Sequent(
+        resultElements.take( tacticals.antecedent.size ),
+        resultElements.drop( tacticals.antecedent.size )
+      ) )
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>

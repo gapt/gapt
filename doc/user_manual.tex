@@ -1763,19 +1763,19 @@ Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p24, Ant(1), Ant(0)))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), 0, x1))
 [p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+P(0) ⊃ P(s(s(s(0)))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p23, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
 [p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0),
-P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0))))))))))
+P(0) ⊃ P(s(s(s(0)))),
+P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0)...
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
+[p22] ∀x1...
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
