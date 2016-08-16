@@ -238,7 +238,7 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  override def conclusion: Sequent[HOLFormula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
+  override val conclusion: Sequent[HOLFormula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )
   override def occConnectors: Seq[OccConnector[HOLFormula]] =
