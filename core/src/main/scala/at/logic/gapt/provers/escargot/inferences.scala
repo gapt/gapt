@@ -59,7 +59,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   import state.{ DerivedCls, SimpCls, termOrdering, nameGen }
 
   def subsume( a: Cls, b: Cls ): Option[Substitution] =
-    if ( a.assertion isSubsetOf b.assertion ) subsume( a.clause, b.clause )
+    if ( a.assertion isSubMultisetOf b.assertion ) subsume( a.clause, b.clause )
     else None
   def subsume( a: HOLSequent, b: HOLSequent ): Option[Substitution] =
     if ( propositional ) {
@@ -168,7 +168,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     def canonize( expr: LambdaExpression, assertion: HOLClause, existing: Set[Cls] ): LambdaExpression = {
       val eqs = for {
         c <- existing
-        if c.assertion isSubsetOf assertion
+        if c.assertion isSubMultisetOf assertion
         Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
         if matching( t, s ).isDefined
         if matching( s, t ).isDefined
@@ -231,7 +231,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       val eqs = for {
         c <- existing
         Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
-        if c.assertion isSubsetOf given.assertion
+        if c.assertion isSubMultisetOf given.assertion
         ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
         if !t_.isInstanceOf[Var]
         if !termOrdering.lt( t_, s_ )
