@@ -159,6 +159,8 @@ case class TacticalFailure( tactical: Tactical[_], goal: Option[OpenAssumption],
   override def toString = toSigRelativeString
   def toSigRelativeString( implicit sig: BabelSignature ) =
     s"$tactical: $message:${goal.map( "\n" + _.toPrettyString ).getOrElse( "" )}"
+  def reassignTactical( newTactical: Tactical[_] ) =
+    TacticalFailure( newTactical, goal, s"$tactical: $message" )
 }
 
 trait Tactical[+T] { self =>
@@ -188,12 +190,14 @@ trait Tactical[+T] { self =>
     override def toString = s"$self andThen $t2"
   }
 
-  def map[S]( f: T => S ): Tactical[S] = new Tactical[S] {
+  def map[S]( f: T => S )( implicit file: sourcecode.File, line: sourcecode.Line ): Tactical[S] = new Tactical[S] {
     def apply( proofState: ProofState ) = self( proofState ) map { x => f( x._1 ) -> x._2 }
+    override def toString = s"$self.map(<${file.value}:${line.value}>)"
   }
 
-  def flatMap[S]( f: T => Tactical[S] ): Tactical[S] = new Tactical[S] {
+  def flatMap[S]( f: T => Tactical[S] )( implicit file: sourcecode.File, line: sourcecode.Line ): Tactical[S] = new Tactical[S] {
     def apply( proofState: ProofState ) = self( proofState ) flatMap { x => f( x._1 )( x._2 ) }
+    override def toString = s"$self.flatMap(<${file.value}:${line.value}>)"
   }
 
   def onAllSubGoals: Tactical[Unit] = new Tactical[Unit] {
@@ -210,17 +214,30 @@ trait Tactical[+T] { self =>
     def apply( goal: OpenAssumption ) = self( ProofState( goal ) ) map { case ( res, p ) => res -> p.partialProof }
     override def toString = s"$self.asTactic"
   }
+
+  def aka( newName: => String ): Tactical[T] = new Tactical[T] {
+    def apply( proofState: ProofState ) = self( proofState )
+    override def toString = newName
+  }
 }
 object Tactical {
+  def apply[T]( tactical: Tactical[T] )( implicit name: sourcecode.Name, args: sourcecode.Args ): Tactical[T] =
+    new Tactical[T] {
+      def apply( proofState: ProofState ) = tactical( proofState ).leftMap( _.map( _.reassignTactical( this ) ) )
+      override def toString =
+        if ( args.value.isEmpty ) name.value
+        else s"${name.value}(${args.value.flatten.map( _.value ).mkString( ", " )})"
+    }
+
   def sequence[T]( tacticals: Seq[Tactical[T]] ): Tactical[List[T]] =
-    tacticals.toList.sequence
+    tacticals.toList.sequence.aka( s"sequence(${tacticals.mkString( ", " )})" )
 
   def sequence[T]( tacticals: Sequent[Tactical[T]] ): Tactical[Sequent[T]] =
     sequence( tacticals.elements ).map( resultElements =>
       Sequent(
         resultElements.take( tacticals.antecedent.size ),
         resultElements.drop( tacticals.antecedent.size )
-      ) )
+      ) ).aka( s"sequence($tacticals)" )
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>
@@ -260,6 +277,17 @@ trait Tactic[+T] extends Tactical[T] { self =>
     override def toString = s"$self onAll $t2"
   }
 
+  override def aka( newName: => String ): Tactic[T] = new Tactic[T] {
+    def apply( goal: OpenAssumption ) = self( goal )
+    override def toString = newName
+  }
+
+  def cut( errorMessage: String ): Tactic[T] = new Tactic[T] {
+    def apply( goal: OpenAssumption ) =
+      self( goal ).leftMap( _ => NonEmptyList( TacticalFailure( self, Some( goal ), errorMessage ) ) )
+    override def toString = self.toString
+  }
+
   protected def findFormula( goal: OpenAssumption, mode: TacticApplyMode ): FindFormula =
     new FindFormula( goal, mode )
   protected class FindFormula( goal: OpenAssumption, mode: TacticApplyMode ) {
@@ -285,6 +313,14 @@ trait Tactic[+T] extends Tactical[T] { self =>
     def flatMap[U]( func: Val => ValidationNel[TacticalFailure, U] ): ValidationNel[TacticalFailure, U] =
       withFilter( _ => true ).flatMap( func )
   }
+}
+object Tactic {
+  def apply[T]( tactic: Tactic[T] )( implicit name: sourcecode.Name, args: sourcecode.Args ): Tactic[T] =
+    new Tactic[T] {
+      def apply( goal: OpenAssumption ) = tactic( goal )
+      override def toString =
+        if ( args.value.isEmpty ) name.value else s"$name(${args.value.mkString( ", " )})"
+    }
 }
 
 /**

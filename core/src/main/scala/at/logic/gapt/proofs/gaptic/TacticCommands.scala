@@ -44,7 +44,8 @@ trait TacticCommands {
   /**
    * Attempts to apply the tactics `axiomTop`, `axiomBot`, `axiomRefl`, and `axiomLog`.
    */
-  def trivial = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
+  def trivial: Tactic[Unit] = Tactic { axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog }.
+    cut( "Not a valid initial sequent" )
 
   /**
    * Applies the `NegLeft` tactic to the current subgoal: The goal
@@ -478,7 +479,7 @@ trait TacticCommands {
    * @param proof The proof to insert as a lemma by a cut.
    * @param label the label for φ in the subgoal
    */
-  def include( label: String, proof: LKProof ): Tactical[Unit] =
+  def include( label: String, proof: LKProof ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
       diff = proof.conclusion diff goal.conclusion
@@ -486,19 +487,21 @@ trait TacticCommands {
       _ <- cut( label, cutFormula )
       _ <- insert( proof )
     } yield ()
+  }
 
   /**
    * Declares the current subgoal as a theory axiom, i.e. a sequent that is contained in the background theory. This
    * closes the goal.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
    */
-  def theory( implicit ctx: Context ): Tactical[Unit] =
+  def theory( implicit ctx: Context ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
       theoryAxiom <- ctx.theory( goal.conclusion collect { case a: HOLAtom => a } ).
         toTactical( "does not follow from theory", goal )
       _ <- insert( theoryAxiom )
     } yield ()
+  }
 
   /**
    * Repeats a tactical until it fails.
@@ -510,7 +513,7 @@ trait TacticCommands {
    * Leaves a hole in the current proof by inserting a dummy proof of the empty sequent.
    */
   @deprecated( "Proof not finished!", since = "the dawn of time" )
-  def sorry = insert( TheoryAxiom( Clause() ) )
+  def sorry: Tactic[Unit] = Tactic { insert( TheoryAxiom( Clause() ) ) }
 
   /**
    * Tactic that immediately fails.
@@ -529,10 +532,14 @@ trait TacticCommands {
    * - `∧:l`
    * - `∨:r`
    * - `⊃:r`
-   * - `∃:l`
    * - `∀:r`
+   * - `∃:l`
    */
-  def decompose = DecomposeTactic
+  def decompose: Tactical[Unit] = repeat(
+    NegLeftTactic( AnyFormula ) orElse NegRightTactic( AnyFormula ) orElse
+      AndLeftTactic( AnyFormula ) orElse OrRightTactic( AnyFormula ) orElse ImpRightTactic( AnyFormula ) orElse
+      ForallRightTactic( AnyFormula ) orElse ExistsLeftTactic( AnyFormula )
+  )
 
   def destruct( label: String ) = DestructTactic( label )
 
@@ -562,7 +569,7 @@ trait TacticCommands {
    *
    */
   def forget( ls: String* ): Tactical[Unit] =
-    Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () )
+    Tactical( Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () ) )
 
   /**
    * Moves the specified goal to the front of the goal list.
@@ -626,10 +633,11 @@ trait TacticCommands {
    */
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success
+    override def toString = "currentGoal"
   }
 
   /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
-  def haveInstance( formula: HOLFormula, polarity: Polarity ): Tactical[String] = {
+  def haveInstance( formula: HOLFormula, polarity: Polarity ): Tactical[String] = Tactical {
     def findInstances( labelledSequent: Sequent[( String, HOLFormula )] ): Seq[( String, Seq[LambdaExpression] )] = {
       val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
         case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity.inSuc  => ( l, vs, m )

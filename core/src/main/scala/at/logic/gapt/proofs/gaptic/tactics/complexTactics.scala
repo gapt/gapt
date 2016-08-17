@@ -15,23 +15,6 @@ import Validation.FlatMap._
 import at.logic.gapt.utils.ScalazHelpers._
 
 /**
- * Repeatedly applies unambiguous unary rules to the entire goal.
- */
-case object DecomposeTactic extends Tactical[Unit] {
-  def apply( proofState: ProofState ) = {
-    RepeatTactic(
-      NegLeftTactic( AnyFormula ) orElse
-        NegRightTactic( AnyFormula ) orElse
-        AndLeftTactic( AnyFormula ) orElse
-        OrRightTactic( AnyFormula ) orElse
-        ImpRightTactic( AnyFormula ) orElse
-        ForallRightTactic( AnyFormula ) orElse
-        ExistsLeftTactic( AnyFormula )
-    )( proofState )
-  }
-}
-
-/**
  * Attempts to decompose a formula by trying all tactics that don't require additional information.
  *
  * Note that this tactic only decomposes the outermost symbol, i.e. it only performs one step.
@@ -62,7 +45,7 @@ case class DestructTactic( applyToLabel: String ) extends Tactic[Any] {
           impR( existingLabel ) orElse
           negL( existingLabel ) orElse
           negR( existingLabel )
-        tac( goal )
+        tac( goal ).leftMap( _ => NonEmptyList( TacticalFailure( this, Some( goal ), s"Cannot destruct ${goalSequent( i )._2}" ) ) )
       case None => TacticalFailure( this, Some( goal ), "No destructible formula found." ).failureNel
     }
   }
