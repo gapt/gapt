@@ -23,7 +23,7 @@ object ExpansionTreeState extends Enumeration {
  * Draws an expansion tree. Abstract because most of the work is done by subclasses for quantifier and non-quantifier nodes.
  * @param main The main prooftool window that this belongs to.
  * @param expansionTree The expansion tree being displayed.
- * @param outerQuantifier The object drawing the quantifier imeediately outside this one (if any).
+ * @param outerQuantifier The object drawing the innermost enclosing quantifier (if any).
  */
 abstract class DrawExpansionTree(
     val main:            ProofToolViewer[_],
@@ -36,7 +36,7 @@ abstract class DrawExpansionTree(
   xLayoutAlignment = 0
   val highlightColor = Color.red
   val ft = main.font
-  def subTrees: Seq[DrawExpansionTree]
+  def subTrees: Vector[DrawExpansionTree]
 
   def drawFormula( formula: HOLFormula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
@@ -57,7 +57,7 @@ abstract class DrawExpansionTree(
         contents += conn
         contents += subF
       case And( f1, f2 ) =>
-        val parenthesis = connectedParentheses
+        val parenthesis = connectedParentheses()
         val conn = label( "∧" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
@@ -78,7 +78,7 @@ abstract class DrawExpansionTree(
         contents += subF2
         contents += parenthesis._2
       case Or( f1, f2 ) =>
-        val parenthesis = connectedParentheses
+        val parenthesis = connectedParentheses()
         val conn = label( "∨" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
@@ -99,7 +99,7 @@ abstract class DrawExpansionTree(
         contents += subF2
         contents += parenthesis._2
       case Imp( f1, f2 ) =>
-        val parenthesis = connectedParentheses
+        val parenthesis = connectedParentheses()
         val conn = label( "⊃" )
         val subF1 = drawFormula( f1 )
         val subF2 = drawFormula( f2 )
@@ -151,7 +151,7 @@ abstract class DrawExpansionTree(
 
   }
 
-  def connectedParentheses = {
+  def connectedParentheses() = {
     val left = label( "(" )
     val right = label( ")" )
     left.reactions += {
@@ -224,8 +224,8 @@ class DrawETQuantifierBlock(
   import ExpansionTreeState._
 
   val ETQuantifierBlock( formula, depth, instances ) = expansionTree
-  val terms = instances.toList.map( i => i._1 )
-  val subTrees = for ( et <- instances.toList.map( i => i._2 ) ) yield DrawExpansionTree( main, et, Some( this ) )
+  val terms = instances.toVector.map( i => i._1 )
+  val subTrees = for ( et <- instances.toVector.map( i => i._2 ) ) yield DrawExpansionTree( main, et, Some( this ) )
   val quantifiers = quantifierBlockString( takeQuants( formula, depth ), formula ) // quantifiers is a string containing the quantifier block represented by this weak node.
   val subF = dropQuants( formula, depth )
   val headLabelExpanded = formula match {
@@ -388,30 +388,30 @@ class DrawETQuantifierBlock(
       case Ex( x, f )  => x +: takeQuants( f, howMany - 1 )
     }
 
-  // Draws <t_1,...,t_n ; ... ; s_1,...,s_n>
-  // List of terms are separated by ; and terms in a list by ,
-  def drawTerms( list: Seq[Seq[LambdaExpression]] ) = new BoxPanel( Orientation.Horizontal ) {
+  def drawTerms( list: Seq[Seq[LambdaExpression]] ) = new BoxPanel( Orientation.Vertical ) {
+    background = new Color( 255, 255, 255 )
+    yLayoutAlignment = 0.5
+
+    for ( v <- list )
+      contents += drawTermVector( v )
+  }
+
+  def drawTermVector( list: Seq[LambdaExpression] ) = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
 
     contents += label( "\\langle" )
-    var firstList = true
-    list.foreach( l => {
-      if ( !firstList ) {
-        val lbl = label( "\\; ; \\;" )
-        lbl.yLayoutAlignment = 0.35
+    var firstTerm = true
+
+    for ( t <- list ) {
+      if ( !firstTerm ) {
+        val lbl = label( "," )
+        //lbl.yLayoutAlignment = 0
         contents += lbl
-      } else firstList = false
-      var firstTerm = true
-      l.foreach( t => {
-        if ( !firstTerm ) {
-          val lbl = label( "," )
-          lbl.yLayoutAlignment = 0
-          contents += lbl
-        } else firstTerm = false
-        contents += label( LatexExporter( t ) )
-      } )
-    } )
+      } else firstTerm = false
+      contents += label( LatexExporter( t ) )
+    }
+
     contents += label( "\\rangle" )
   }
 
@@ -442,7 +442,7 @@ class DrawETNonQuantifier(
       val lbl = LatexLabel( main, LatexExporter( expansionTree.shallow ) )
       lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
       contents += lbl
-      Seq()
+      Vector()
 
     case ETNeg( t ) =>
       val conn = label( "¬" )
@@ -456,10 +456,10 @@ class DrawETNonQuantifier(
       }
       contents += conn
       contents += subF
-      Seq( subF )
+      Vector( subF )
 
     case ETAnd( t1, t2 ) =>
-      val parentheses = connectedParentheses
+      val parentheses = connectedParentheses()
       val conn = label( "∧" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
@@ -479,10 +479,10 @@ class DrawETNonQuantifier(
       contents += conn
       contents += subF2
       contents += parentheses._2
-      Seq( subF1, subF2 )
+      Vector( subF1, subF2 )
 
     case ETOr( t1, t2 ) =>
-      val parentheses = connectedParentheses
+      val parentheses = connectedParentheses()
       val conn = label( "∨" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
@@ -502,10 +502,10 @@ class DrawETNonQuantifier(
       contents += conn
       contents += subF2
       contents += parentheses._2
-      Seq( subF1, subF2 )
+      Vector( subF1, subF2 )
 
     case ETImp( t1, t2 ) =>
-      val parentheses = connectedParentheses
+      val parentheses = connectedParentheses()
       val conn = label( "⊃" )
       val subF1 = DrawExpansionTree( main, t1, outerQuantifier )
       val subF2 = DrawExpansionTree( main, t2, outerQuantifier )
@@ -525,7 +525,7 @@ class DrawETNonQuantifier(
       contents += conn
       contents += subF2
       contents += parentheses._2
-      Seq( subF1, subF2 )
+      Vector( subF1, subF2 )
   }
 }
 
