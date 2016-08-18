@@ -13,13 +13,8 @@ object ResolutionToExpansionProof {
 
   def apply( proof: ResolutionProof ): ExpansionProof = {
     val expansionWithDefs = withDefs( proof )
-    val containsEquality = proof.subProofs.exists {
-      case Refl( _ )                   => true
-      case Paramod( _, _, _, _, _, _ ) => true
-      case _                           => false
-    }
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
-    eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquality, defConsts ) )
+    eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
   }
 
   private implicit class RichPair[A, B]( val pair: ( A, B ) ) extends AnyVal {

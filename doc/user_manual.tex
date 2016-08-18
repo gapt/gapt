@@ -1691,8 +1691,7 @@ P(s(s(s(s(s(s(s(s(0...
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
-gapt> val q = CutIntroduction.compressLKProof(p, method=DeltaTableMethod(), verbose=true)
-Total inferences in the input proof: 36
+gapt> val q = CutIntroduction(p, method=DeltaTableMethod(), verbose=true)
 Quantifier inferences in the input proof: 9
 End sequent: ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))
 Size of term set: 11 (weighted by root symbol arity = 9)

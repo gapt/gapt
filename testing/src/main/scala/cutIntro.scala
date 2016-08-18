@@ -84,13 +84,14 @@ object testCutIntro extends App {
     case proofSeqRegex( name, n ) =>
       val p = proofSequences.find( _.name == name ).get( n.toInt )
       metrics.value( "lkinf_input", rulesNumber( p ) )
-      eliminateCutsET( LKToExpansionProof( p ) ) -> CutIntroduction.guessBackgroundTheory( p )
+      CutIntroduction.InputProof.fromLK( p )
     case _ =>
-      loadExpansionProof.withBackgroundTheory( fileName )
+      val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( fileName )
+      CutIntroduction.InputProof( exp, bgTh )
   }
 
   metrics.time( "total" ) {
-    val ( expansionProof, backgroundTheory ) = try metrics.time( "parse" ) {
+    val inputProof = try metrics.time( "parse" ) {
       loadProofForCutIntro( fileName )
     } catch {
       case e: Throwable =>
@@ -103,9 +104,9 @@ object testCutIntro extends App {
         throw e
     }
 
-    metrics.value( "has_equality", backgroundTheory.hasEquality )
+    metrics.value( "has_equality", inputProof.backgroundTheory.hasEquality )
     try metrics.time( "cutintro" ) {
-      CutIntroduction.compressToLK( expansionProof, backgroundTheory, method = parseMethod( methodName ), verbose = false ) match {
+      CutIntroduction( inputProof, method = parseMethod( methodName ), verbose = false ) match {
         case Some( _ ) => metrics.value( "status", "ok" )
         case None =>
           if ( metricsPrinter.data( "termset_trivial" ) == true )

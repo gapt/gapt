@@ -16,7 +16,7 @@ import better.files._
 class ExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 
   "linear example cut intro" in {
-    val Some( p ) = CutIntroduction.compressLKProof( LinearExampleProof( 6 ) )
+    val Some( p ) = CutIntroduction( LinearExampleProof( 6 ) )
     val e = LKToExpansionProof( p )
     e.deep must beValidSequent
     eliminateCutsET( e ).deep must beValidSequent

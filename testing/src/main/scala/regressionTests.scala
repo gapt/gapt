@@ -77,7 +77,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
-      ( CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false ) --? "cut-introduction" flatten ) foreach { q =>
+      ( CutIntroduction( p ) --? "cut-introduction" flatten ) foreach { q =>
 
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"

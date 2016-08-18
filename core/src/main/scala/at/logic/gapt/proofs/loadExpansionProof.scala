@@ -24,7 +24,7 @@ object loadExpansionProof {
     case fileName if fileName contains "/leanCoP" =>
       val Some( expSeq ) = LeanCoPParser.getExpansionProof( extractFromTSTPCommentsIfNecessary( file ) )
       val p = ExpansionProof( expSeq )
-      p -> CutIntroduction.guessBackgroundTheory( p )
+      p -> CutIntroduction.BackgroundTheory.guess( p.shallow )
     case fileName if fileName contains "/Prover9" =>
       val ( resProof, endSequent ) = Prover9Importer.robinsonProofWithReconstructedEndSequent( file )
       loadResolutionProof( resProof, endSequent )

@@ -9,6 +9,7 @@ import at.logic.gapt.grammars.reforest.Reforest
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
@@ -210,25 +211,42 @@ object CutIntroduction {
         override def isValid( seq: HOLSequent ) = Sat4j isValid seq
       }
     }
+
+    def guess( sequent: HOLSequent ): BackgroundTheory =
+      if ( atoms( sequent ).exists( Eq.unapply( _ ).isDefined ) ) Equality else PureFOL
+    def guess( lk: LKProof ): BackgroundTheory =
+      if ( containsEqualityReasoning( lk ) ) Equality else PureFOL
+    def guess( p: ResolutionProof ): BackgroundTheory =
+      if ( containsEquationalReasoning( p ) ) Equality else PureFOL
   }
 
-  def guessBackgroundTheory( sequent: HOLSequent ): BackgroundTheory =
-    if ( atoms( sequent ).exists( Eq.unapply( _ ).isDefined ) )
-      BackgroundTheory.Equality
-    else
-      BackgroundTheory.PureFOL
+  abstract case class InputProof private (
+      expansionProof:   ExpansionProof,
+      backgroundTheory: BackgroundTheory
+  ) {
+    require(
+      isFOLPrenexSigma1( expansionProof.shallow ),
+      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
+    )
+  }
+  object InputProof {
+    def apply( expansionProof: ExpansionProof, backgroundTheory: BackgroundTheory ): InputProof =
+      if ( isPrenex( expansionProof.shallow ) )
+        new InputProof( expansionProof, backgroundTheory ) {}
+      else
+        new InputProof( prenexifyET( expansionProof ), backgroundTheory ) {}
 
-  def guessBackgroundTheory( solutionStructure: SolutionStructure ): BackgroundTheory =
-    guessBackgroundTheory( solutionStructure.endSequent )
+    implicit def fromLK( p: LKProof ): InputProof =
+      apply( eliminateCutsET( LKToExpansionProof( p ) ), BackgroundTheory.guess( p ) )
 
-  def guessBackgroundTheory( expansionProof: ExpansionProof ): BackgroundTheory =
-    guessBackgroundTheory( expansionProof.shallow )
+    implicit def fromExpansionProofWithCut( p: ExpansionProofWithCut ): InputProof =
+      fromExpansionProof( eliminateCutsET( p ) )
+    implicit def fromExpansionProof( p: ExpansionProof ): InputProof =
+      apply( p, BackgroundTheory.guess( p.shallow ) )
 
-  def guessBackgroundTheory( lk: LKProof ): BackgroundTheory =
-    if ( containsEqualityReasoning( lk ) )
-      BackgroundTheory.Equality
-    else
-      BackgroundTheory.PureFOL
+    implicit def fromResolutionProof( p: ResolutionProof ): InputProof =
+      apply( ResolutionToExpansionProof( p ), BackgroundTheory.guess( p ) )
+  }
 
   private def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
     metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
@@ -240,21 +258,11 @@ object CutIntroduction {
   }
 
   def compressToSolutionStructure(
-    ep:               ExpansionProof,
-    backgroundTheory: BackgroundTheory     = null,
-    method:           GrammarFindingMethod = DeltaTableMethod(),
-    verbose:          Boolean              = false
+    inputProof: InputProof,
+    method:     GrammarFindingMethod = DeltaTableMethod(),
+    verbose:    Boolean              = false
   ): Option[SolutionStructure] = {
-    if ( backgroundTheory == null )
-      return compressToSolutionStructure( ep, guessBackgroundTheory( ep ), method, verbose )
-
-    if ( !isPrenex( ep.shallow ) )
-      return compressToSolutionStructure( prenexifyET( ep ), backgroundTheory, method, verbose )
-
-    require(
-      isFOLPrenexSigma1( ep.shallow ),
-      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
-    )
+    val InputProof( ep, backgroundTheory ) = inputProof
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
@@ -366,9 +374,7 @@ object CutIntroduction {
     }
   }
 
-  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory = null, verbose: Boolean = false ): LKProof = {
-    if ( backgroundTheory == null ) return constructLKProof( solStruct, guessBackgroundTheory( solStruct ), verbose )
-
+  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory, verbose: Boolean = false ): LKProof = {
     val proofWithStructuralRules = metrics.time( "prcons" ) {
       buildProofWithCut( solStruct, backgroundTheory.prover )
     }
@@ -389,23 +395,16 @@ object CutIntroduction {
     proof
   }
 
-  def compressToLK( ep: ExpansionProof, backgroundTheory: BackgroundTheory = null, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] = {
-    if ( backgroundTheory == null ) return compressToLK( ep, guessBackgroundTheory( ep ), method, verbose )
-    compressToSolutionStructure( ep, backgroundTheory, method, verbose ) map { constructLKProof( _, backgroundTheory, verbose ) }
-  }
+  def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
+    compressToSolutionStructure( inputProof, method, verbose ) map { constructLKProof( _, inputProof.backgroundTheory, verbose ) }
 
-  def compressLKProof( p: LKProof, backgroundTheory: BackgroundTheory = null, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] = {
-    if ( backgroundTheory == null ) return compressLKProof( p, guessBackgroundTheory( p ), method, verbose )
+  @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
+  def compressToLK( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
+    apply( inputProof, method, verbose )
 
-    val clean_proof = cleanStructuralRules( p )
-
-    if ( verbose )
-      println( s"Total inferences in the input proof: ${rulesNumber( clean_proof )}" )
-
-    val ep = eliminateCutsET( LKToExpansionProof( clean_proof ) )
-
-    compressToLK( ep, backgroundTheory, method, verbose )
-  }
+  @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
+  def compressLKProof( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
+    apply( inputProof, method, verbose )
 
   /**
    * Computes the modified canonical solution, where instances of

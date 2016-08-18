@@ -24,8 +24,10 @@ object dtable extends Script {
     val Some( autoMin ) = minimalExpansionSequent( automaticProof, Sat4j )
   }
 
-  CutIntroduction.compressToLK( constructedProof, backgroundTheory = CutIntroduction.BackgroundTheory.PureFOL,
+  CutIntroduction(
+    constructedProof,
     method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ),
-    verbose = true )
+    verbose = true
+  )
 
 }

@@ -13,7 +13,7 @@ object ReforestDemo extends Script {
   println( grammar.toRecursionScheme )
   //  println( grammar.toVTRATG )
 
-  CutIntroduction.compressLKProof(
+  CutIntroduction(
     SumExampleProof( 16 ),
     method = ReforestMethod,
     verbose = true
