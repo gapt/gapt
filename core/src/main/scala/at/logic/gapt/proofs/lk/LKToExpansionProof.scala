@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
-import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, To, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, Polarity, To, Var, freeVariables, rename }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion._
 
@@ -24,24 +24,24 @@ object LKToExpansionProof {
   private def extract( proof: LKProof ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
-    case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, false ) ), Seq( ETAtom( atom, true ) ) )
+    case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
 
-    case ReflexivityAxiom( s )         => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), true ) ) )
+    case ReflexivityAxiom( s )         => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), Polarity.InSuccedent ) ) )
 
-    case TopAxiom                      => Seq() -> Sequent( Seq(), Seq( ETTop( true ) ) )
+    case TopAxiom                      => Seq() -> Sequent( Seq(), Seq( ETTop( Polarity.InSuccedent ) ) )
 
-    case BottomAxiom                   => Seq() -> Sequent( Seq( ETBottom( false ) ), Seq() )
+    case BottomAxiom                   => Seq() -> Sequent( Seq( ETBottom( Polarity.InAntecedent ) ), Seq() )
 
-    case TheoryAxiom( sequent )        => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.isSuc ) )
+    case TheoryAxiom( sequent )        => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.polarity ) )
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>
       val ( subCuts, subSequent ) = extract( subProof )
-      subCuts -> ( ETWeakening( formula, false ) +: subSequent )
+      subCuts -> ( ETWeakening( formula, Polarity.InAntecedent ) +: subSequent )
 
     case WeakeningRightRule( subProof, formula ) =>
       val ( subCuts, subSequent ) = extract( subProof )
-      subCuts -> ( subSequent :+ ETWeakening( formula, true ) )
+      subCuts -> ( subSequent :+ ETWeakening( formula, Polarity.InSuccedent ) )
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
       val ( subCuts, subSequent ) = extract( subProof )
@@ -136,7 +136,7 @@ object LKToExpansionProof {
       val auxTree = sequent( p.aux )
 
       val newAuxTree = replaceWithContext( auxTree, p.replacementContext, p.by )
-      val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], false ), sequent( p.eq ) )
+      val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], Polarity.InAntecedent ), sequent( p.eq ) )
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
   }

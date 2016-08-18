@@ -18,12 +18,12 @@ class CanonicalSolutionTest extends Specification {
 
   val seq0 = ExpansionSequent( Seq(), Seq() )
   val seq1 = ExpansionSequent(
-    Seq( formulaToExpansionTree( f1, List( FOLSubstitution( x -> nu ) ), false ) ),
+    Seq( formulaToExpansionTree( f1, List( FOLSubstitution( x -> nu ) ), Polarity.InAntecedent ) ),
     Seq()
   )
   val seq2 = ExpansionSequent(
-    Seq( formulaToExpansionTree( f0, false ) ),
-    Seq( formulaToExpansionTree( f2, true ) )
+    Seq( formulaToExpansionTree( f0, Polarity.InAntecedent ) ),
+    Seq( formulaToExpansionTree( f2, Polarity.InSuccedent ) )
   )
 
   val ts = List( FOLConst( "0" ) )

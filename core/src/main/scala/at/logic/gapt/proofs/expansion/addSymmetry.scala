@@ -40,7 +40,7 @@ object addSymmetry {
     if ( subs.length == 0 ) s
     else {
 
-      val et = formulaToExpansionTree( eq_symm, subs.toList, false )
+      val et = formulaToExpansionTree( eq_symm, subs.toList, Polarity.InAntecedent )
 
       // This expansion sequent should be a tautology.
       // (Not adding the expensive check)

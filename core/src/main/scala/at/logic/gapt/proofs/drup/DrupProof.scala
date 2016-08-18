@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.drup
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.{ HOLFormula, Polarity }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 
@@ -53,8 +53,8 @@ object DrupToResolutionProof {
   private type ResProofThunk = ( HOLSequent, Name[ResolutionProof] )
 
   private def unitPropagationProver( cnf: Iterable[ResProofThunk] ): ResolutionProof = {
-    // An atom together with a polarity (true iff it is in the succedent)
-    type Literal = ( HOLFormula, Boolean )
+    // An atom together with a polarity
+    type Literal = ( HOLFormula, Polarity )
 
     var emptyClause: Option[ResProofThunk] = None
     // All unit clauses that we have found so far, indexed by their one literal
@@ -64,7 +64,7 @@ object DrupToResolutionProof {
 
     def negate( lit: Literal ) = ( lit._1, !lit._2 )
     def resolve( p: ResProofThunk, unit: ResProofThunk, lit: Literal ): ResProofThunk =
-      if ( lit._2 ) ( p._1.removeFromSuccedent( lit._1 ), Need( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
+      if ( lit._2.inSuc ) ( p._1.removeFromSuccedent( lit._1 ), Need( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
       else ( p._1.removeFromAntecedent( lit._1 ), Need( Factor( Resolution( unit._2.value, p._2.value, lit._1 ) ) ) )
 
     // Handle a new clause, and fully interreduce it with the clauses we have found so far

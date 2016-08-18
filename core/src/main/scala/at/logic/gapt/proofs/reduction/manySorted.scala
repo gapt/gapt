@@ -342,15 +342,15 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
       ETWeakQuantifier(
         unguard( shallow ),
         insts map {
-          case ( t, ETImp( _, inst ) ) if !et.polarity => t -> unguard( inst )
-          case ( t, ETAnd( _, inst ) ) if et.polarity  => t -> unguard( inst )
+          case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
+          case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
         }
       )
   }
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
     ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
-      case ( et, i ) if !extraAxioms.contains( et.shallow, i.isSuc ) =>
+      case ( et, i ) if !extraAxioms.contains( et.shallow, i.polarity ) =>
         unguard( et )
     } )
 }

@@ -102,7 +102,7 @@ class CutIntroTest extends Specification {
     "filter bottom during beautification" in {
       val Some( expansion ) = Escargot.getExpansionProof( formulaToSequent pos hof"!x (p x -> p (s x)) -> (p 0 -> p ${Numeral( 9 )})" )
       val weirdExpansion = ExpansionProof(
-        ETWeakening( hof"!x (p x & -p x)", false ) +:
+        ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
           expansion.expansionSequent
       )
       CutIntroduction.compressToSolutionStructure( weirdExpansion ) must beNone

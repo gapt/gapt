@@ -15,13 +15,13 @@ class minimalExpansionSequentTest extends Specification {
   val et1: ExpansionTree =
     ETWeakQuantifier(
       All( x, HOLAtom( P, x :: Nil ) ),
-      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), false ), d -> ETAtom( HOLAtom( P, d :: Nil ), false ) )
+      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InAntecedent ), d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InAntecedent ) )
     )
 
   val et2: ExpansionTree =
     ETWeakQuantifier(
       Ex( x, HOLAtom( P, x :: Nil ) ),
-      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), true ), d -> ETAtom( HOLAtom( P, d :: Nil ), true ) )
+      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InSuccedent ), d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InSuccedent ) )
     )
 
   val eSeq = ExpansionSequent( List( et1 ), List( et2 ) )
@@ -30,21 +30,21 @@ class minimalExpansionSequentTest extends Specification {
     ExpansionSequent( List(
       ETWeakQuantifier(
         All( x, HOLAtom( P, x :: Nil ) ),
-        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), false ) )
+        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InAntecedent ) )
       )
     ), List(
       ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: Nil ) ),
-        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), true ) )
+        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InSuccedent ) )
       )
     ) ),
     ExpansionSequent( List( ETWeakQuantifier(
       All( x, HOLAtom( P, x :: Nil ) ),
-      Map( d -> ETAtom( HOLAtom( P, d :: Nil ), false ) )
+      Map( d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InAntecedent ) )
     ) ), List(
       ETWeakQuantifier(
         Ex( x, HOLAtom( P, x :: Nil ) ),
-        Map( d -> ETAtom( HOLAtom( P, d :: Nil ), true ) )
+        Map( d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InSuccedent ) )
       )
     ) )
   )
@@ -55,7 +55,7 @@ class minimalExpansionSequentTest extends Specification {
     }
 
     "handle weakening" in {
-      val E = ETAtom( FOLAtom( "Q" ), false ) +: Sequent() :+ ETImp( ETWeakening( FOLAtom( "P" ), false ), ETAtom( FOLAtom( "Q" ), true ) )
+      val E = ETAtom( FOLAtom( "Q" ), Polarity.InAntecedent ) +: Sequent() :+ ETImp( ETWeakening( FOLAtom( "P" ), Polarity.InAntecedent ), ETAtom( FOLAtom( "Q" ), Polarity.InSuccedent ) )
       val Some( minSeq ) = minimalExpansionSequent( E, Sat4j )
       Sat4j.isValid( minSeq.deep ) must_== true
     }

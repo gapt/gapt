@@ -272,7 +272,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
       newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
       proof_ : ValidationNel[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
         case ( p :: ps, _ ) =>
-          DefinitionRule( newGoal, normalized, main, idx.isSuc ).successNel[TacticalFailure]
+          DefinitionRule( newGoal, normalized, main, idx.polarity ).successNel[TacticalFailure]
         case ( Nil, hd +: tl ) =>
           UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
         case _ =>

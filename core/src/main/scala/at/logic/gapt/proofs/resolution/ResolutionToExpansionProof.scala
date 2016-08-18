@@ -39,7 +39,7 @@ object ResolutionToExpansionProof {
     val cuts = mutable.Buffer[ETImp]()
     var expansionSequent: ExpansionSequent =
       if ( !addConclusion ) Sequent()
-      else proof.conclusion.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, false ), ETAtom( _, true ) )
+      else proof.conclusion.zipWithIndex.map { case ( a: HOLAtom, i ) => ETAtom( a, !i.polarity ) }
     val splitDefn = mutable.Map[HOLAtom, HOLFormula]()
     val splitCutL = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
     val splitCutR = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
@@ -48,8 +48,7 @@ object ResolutionToExpansionProof {
       val fvsQ = freeVariables( q.conclusion )
       val newEs = f( expansions( p ) ).map( _.map1( _.restrict( fvsQ ) ) )
       for ( ( s, e ) <- newEs ) {
-        for ( et <- e.antecedent ) require( et.polarity )
-        for ( et <- e.succedent ) require( !et.polarity )
+        for ( ( et, i ) <- e.zipWithIndex ) require( et.polarity == !i.polarity )
         require( e.shallow == s( q.conclusion ).map( BetaReduction.betaNormalize ) )
       }
       expansions( q ) = expansions( q ) union newEs
@@ -87,25 +86,25 @@ object ResolutionToExpansionProof {
     }
 
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
-      Set( Substitution() -> sequent.map( _.asInstanceOf[HOLAtom] ).map( ETAtom( _, true ), ETAtom( _, false ) ) )
+      Set( Substitution() -> sequent.zipWithIndex.map { case ( a: HOLAtom, i ) => ETAtom( a, !i.polarity ) } )
 
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
     proof.dagLike.postOrder.reverse.foreach {
       case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
-        expansionSequent :+= ETMerge( f, true, expansions( p ).map( _._2.elements.head ) )
+        expansionSequent :+= ETMerge( f, Polarity.InSuccedent, expansions( p ).map( _._2.elements.head ) )
         clear( p )
       case p @ Input( Sequent( Seq(), Seq( f ) ) ) if freeVariables( f ).isEmpty =>
-        expansionSequent +:= ETMerge( f, false, expansions( p ).map( _._2.elements.head ) )
+        expansionSequent +:= ETMerge( f, Polarity.InAntecedent, expansions( p ).map( _._2.elements.head ) )
         clear( p )
       case p @ Input( seq ) =>
         val fvs = freeVariables( seq ).toSeq
         val sh = All.Block( fvs, seq.toDisjunction )
         expansionSequent +:= ETWeakQuantifierBlock( sh, fvs.size,
-          for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.toDisjunction( false ) )
+          for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
         clear( p )
       case p @ Defn( _, _ ) =>
-        expansionSequent +:= ETMerge( p.definitionFormula, false, expansions( p ).map( _._2.elements.head ) )
+        expansionSequent +:= ETMerge( p.definitionFormula, Polarity.InAntecedent, expansions( p ).map( _._2.elements.head ) )
         clear( p )
       case p @ Taut( f ) =>
         for {
@@ -125,15 +124,15 @@ object ResolutionToExpansionProof {
       case p @ Resolution( q1, i1, q2, i2 ) if p.resolvedLiteral.isInstanceOf[HOLAtom] =>
         val atom = p.resolvedLiteral.asInstanceOf[HOLAtom]
         val Seq( oc1, oc2 ) = p.occConnectors
-        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], false ) ) ) )
-        propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], true ) ) ) )
+        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InAntecedent ) ) ) )
+        propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InSuccedent ) ) ) )
       case p @ DefIntro( q, i, defAtom, definition ) =>
         val Seq( oc ) = p.occConnectors
-        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated( i, ETDefinedAtom( es._1( defAtom ).asInstanceOf[HOLAtom], i.isAnt, definition ) ) ) )
+        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated( i, ETDefinedAtom( es._1( defAtom ).asInstanceOf[HOLAtom], !i.polarity, definition ) ) ) )
 
       case p @ Paramod( q1, i1, ltr, q2, i2, ctx ) =>
         val Seq( oc1, oc2 ) = p.occConnectors
-        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], false ) ) ) )
+        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], Polarity.InAntecedent ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2 ).updated( i2, replaceWithContext( es._2( p.mainIndices.head ), es._1( ctx ).asInstanceOf[Abs], es._1( p.t ) ) ) ) )
 
       case p @ AvatarSplit( q, indices, AvatarGroundComp( atom, pol ) ) =>
@@ -145,12 +144,12 @@ object ResolutionToExpansionProof {
         splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
           definition,
           renaming( vars ).map( _.asInstanceOf[Var] ),
-          formulaToExpansionTree( renaming( comp.disjunction ), true )
+          formulaToExpansionTree( renaming( comp.disjunction ), Polarity.InSuccedent )
         )
         val Seq( oc ) = p.occConnectors
         propg( p, q, _.map( es => renaming.compose( es._1 ) -> oc.parents( es._2 ).zipWithIndex.map {
           case ( Seq( et ), _ ) => et
-          case ( Seq(), idx )   => ETAtom( renaming( q.conclusion( idx ) ).asInstanceOf[HOLAtom], idx.isAnt )
+          case ( Seq(), idx )   => ETAtom( renaming( q.conclusion( idx ) ).asInstanceOf[HOLAtom], !idx.polarity )
         } ) )
       case p @ AvatarComponent( AvatarGroundComp( _, _ ) ) =>
         clear( p )
@@ -161,7 +160,7 @@ object ResolutionToExpansionProof {
         splitCutR( splAtom ) ::= ETWeakQuantifierBlock(
           definition, vars.size,
           for ( ( s, es ) <- expansions( p ) )
-            yield s( vars ) -> es.toDisjunction( false )
+            yield s( vars ) -> es.toDisjunction( Polarity.Negative )
         )
         clear( p )
       case p @ AvatarContradiction( q ) =>
@@ -172,21 +171,21 @@ object ResolutionToExpansionProof {
 
       case p @ TopL( q, i ) =>
         val Seq( oc ) = p.occConnectors
-        propgm2( p, q, oc.parent( _, ETTop( true ) ) )
+        propgm2( p, q, oc.parent( _, ETTop( !i.polarity ) ) )
       case p @ BottomR( q, i ) =>
         val Seq( oc ) = p.occConnectors
-        propgm2( p, q, oc.parent( _, ETBottom( false ) ) )
-      case p: NegL  => prop1( p, ETNeg( _ ) )
-      case p: NegR  => prop1( p, ETNeg( _ ) )
-      case p: AndL  => prop2( p, ETAnd( _, _ ) )
-      case p: OrR   => prop2( p, ETOr( _, _ ) )
-      case p: ImpR  => prop2( p, ETImp( _, _ ) )
-      case p: AndR1 => prop1s( p, ( s, et ) => ETAnd( et, ETWeakening( s( p.sub2 ), false ) ) )
-      case p: OrL1  => prop1s( p, ( s, et ) => ETOr( et, ETWeakening( s( p.sub2 ), true ) ) )
-      case p: ImpL1 => prop1s( p, ( s, et ) => ETImp( et, ETWeakening( s( p.sub2 ), true ) ) )
-      case p: AndR2 => prop1s( p, ( s, et ) => ETAnd( ETWeakening( s( p.sub1 ), false ), et ) )
-      case p: OrL2  => prop1s( p, ( s, et ) => ETOr( ETWeakening( s( p.sub1 ), true ), et ) )
-      case p: ImpL2 => prop1s( p, ( s, et ) => ETImp( ETWeakening( s( p.sub1 ), false ), et ) )
+        propgm2( p, q, oc.parent( _, ETBottom( !i.polarity ) ) )
+      case p: NegL  => prop1( p, ETNeg )
+      case p: NegR  => prop1( p, ETNeg )
+      case p: AndL  => prop2( p, ETAnd )
+      case p: OrR   => prop2( p, ETOr )
+      case p: ImpR  => prop2( p, ETImp )
+      case p: AndR1 => prop1s( p, ( s, et ) => ETAnd( et, ETWeakening( s( p.sub2 ), Polarity.InAntecedent ) ) )
+      case p: OrL1  => prop1s( p, ( s, et ) => ETOr( et, ETWeakening( s( p.sub2 ), Polarity.InSuccedent ) ) )
+      case p: ImpL1 => prop1s( p, ( s, et ) => ETImp( et, ETWeakening( s( p.sub2 ), Polarity.InSuccedent ) ) )
+      case p: AndR2 => prop1s( p, ( s, et ) => ETAnd( ETWeakening( s( p.sub1 ), Polarity.InAntecedent ), et ) )
+      case p: OrL2  => prop1s( p, ( s, et ) => ETOr( ETWeakening( s( p.sub1 ), Polarity.InSuccedent ), et ) )
+      case p: ImpL2 => prop1s( p, ( s, et ) => ETImp( ETWeakening( s( p.sub1 ), Polarity.InAntecedent ), et ) )
       case p: WeakQuantResolutionRule =>
         val Seq( oc ) = p.occConnectors
         val subFVs = freeVariables( p.subProof.conclusion )
@@ -202,7 +201,10 @@ object ResolutionToExpansionProof {
     }
 
     for ( ( splAtom, defn ) <- splitDefn )
-      cuts += ETImp( ETMerge( defn, true, splitCutL( splAtom ) ), ETMerge( defn, false, splitCutR( splAtom ) ) )
+      cuts += ETImp(
+        ETMerge( defn, Polarity.InSuccedent, splitCutL( splAtom ) ),
+        ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) )
+      )
 
     eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
   }

@@ -20,9 +20,9 @@ object TptpProofParser {
       case AnnotatedFormula( _, _, _, _, TptpTerm( "introduced", FOLVar( avatar ), _ ) +: _ ) if avatar.startsWith( "AVATAR" ) =>
         false
       case AnnotatedFormula( _, label, "conjecture", formula, _ ) =>
-        containsStrongQuantifier( formula, true )
+        containsStrongQuantifier( formula, Polarity.InSuccedent )
       case AnnotatedFormula( _, label, _, formula, _ ) =>
-        containsStrongQuantifier( formula, false )
+        containsStrongQuantifier( formula, Polarity.InAntecedent )
       case _ => false
     }.collect { case f: AnnotatedFormula => f.name }.toSet
     if ( stepsWithStrongQuants.isEmpty )
@@ -99,9 +99,9 @@ object TptpProofParser {
       splAtoms += splAtom
       val comps = defn match {
         case splAtom @ FOLAtom( _, _ ) if freeVariables( splAtom ).isEmpty =>
-          Seq( false, true ) map { AvatarGroundComp( splAtom, _ ) }
+          Polarity.values.map { AvatarGroundComp( splAtom, _ ) }
         case Neg( splAtom @ FOLAtom( _, _ ) ) if freeVariables( splAtom ).isEmpty =>
-          Seq( false, true ) map { AvatarGroundComp( splAtom, _ ) }
+          Polarity.values.map { AvatarGroundComp( splAtom, _ ) }
         case _ =>
           Seq( AvatarNonGroundComp( splAtom, AvatarNonGroundComp.DefinitionFormula.canonize( defn ) ) )
       }

@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.Polarity.{ Negative, Positive }
+import at.logic.gapt.expr.{ HOLFormula, Polarity }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 
 import scala.collection.GenTraversable
@@ -34,14 +35,18 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
    */
   def -( i: Int ): SequentIndex
 
-  def isAnt: Boolean
-  def isSuc: Boolean
+  def polarity: Polarity
+  def isAnt = polarity.inAnt
+  def isSuc = polarity.inSuc
 
   def sameSideAs( that: SequentIndex ): Boolean =
-    ( this, that ) match {
-      case ( Ant( _ ), Ant( _ ) ) => true
-      case ( Suc( _ ), Suc( _ ) ) => true
-      case _                      => false
+    this.polarity == that.polarity
+}
+object SequentIndex {
+  def apply( polarity: Polarity, k: Int ): SequentIndex =
+    polarity match {
+      case Positive => Suc( k )
+      case Negative => Ant( k )
     }
 }
 
@@ -51,8 +56,7 @@ case class Ant( k: Int ) extends SequentIndex {
   def +( i: Int ) = Ant( k + i )
   def -( i: Int ) = Ant( k - i )
 
-  override def isAnt: Boolean = true
-  override def isSuc: Boolean = false
+  def polarity = Polarity.InAntecedent
 }
 
 case class Suc( k: Int ) extends SequentIndex {
@@ -61,8 +65,7 @@ case class Suc( k: Int ) extends SequentIndex {
   def +( i: Int ) = Suc( k + i )
   def -( i: Int ) = Suc( k - i )
 
-  override def isAnt: Boolean = false
-  override def isSuc: Boolean = true
+  def polarity = Polarity.InSuccedent
 }
 
 /**
@@ -110,7 +113,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    *
    * @return
    */
-  def polarizedElements: Seq[( A, Boolean )] = map( _ -> false, _ -> true ).elements
+  def polarizedElements: Seq[( A, Polarity )] = map( _ -> Polarity.InAntecedent, _ -> Polarity.InSuccedent ).elements
 
   /**
    * Returns true iff both cedents are empty.
@@ -278,8 +281,13 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    */
   def contains[B]( el: B ): Boolean = elements contains el
 
-  def contains[B]( el: B, isSuc: Boolean ): Boolean =
-    if ( isSuc ) succedent contains el else antecedent contains el
+  def cedent( polarity: Polarity ) = polarity match {
+    case Positive => succedent
+    case Negative => antecedent
+  }
+
+  def contains[B]( el: B, polarity: Polarity ): Boolean =
+    cedent( polarity ).contains( el )
 
   /**
    * Returns the element at some SequentIndex.
@@ -333,8 +341,8 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    */
   def indicesWhere( p: A => Boolean ): Seq[SequentIndex] = indices filter { i => p( this( i ) ) }
 
-  def indicesWherePol( p: A => Boolean, pol: Boolean ): Seq[SequentIndex] =
-    indices filter { i => ( i.isSuc == pol ) && p( this( i ) ) }
+  def indicesWherePol( p: A => Boolean, pol: Polarity ): Seq[SequentIndex] =
+    indices filter { i => ( i.polarity == pol ) && p( this( i ) ) }
 
   /**
    * "Focuses on one element of the seuqent, i.e. returns element at index and the rest of the sequent.
@@ -378,18 +386,16 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 
-  def indexOfPol[B >: A]( elem: B, inSuc: Boolean ): SequentIndex =
-    if ( inSuc ) indexOfInSuc( elem ) else indexOfInAnt( elem )
-  def indexOfInAnt[B >: A]( elem: B ): SequentIndex = Ant( antecedent indexOf elem )
-  def indexOfInSuc[B >: A]( elem: B ): SequentIndex = Suc( succedent indexOf elem )
+  def indexOfPol[B >: A]( elem: B, polarity: Polarity ): SequentIndex =
+    SequentIndex( polarity, cedent( polarity ).indexOf( elem ) )
+  def indexOfInAnt[B >: A]( elem: B ): SequentIndex = indexOfPol( elem, Polarity.InAntecedent )
+  def indexOfInSuc[B >: A]( elem: B ): SequentIndex = indexOfPol( elem, Polarity.InSuccedent )
 
-  def indexOfPolOption[B >: A]( elem: B, pol: Boolean ): Option[SequentIndex] = {
-    val idx = if ( pol ) succedent.indexOf( elem ) else antecedent.indexOf( elem )
-    if ( idx == -1 )
-      None
-    else
-      Some( if ( pol ) Suc( idx ) else Ant( idx ) )
-  }
+  def indexOfPolOption[B >: A]( elem: B, pol: Polarity ): Option[SequentIndex] =
+    cedent( pol ).indexOf( elem ) match {
+      case -1  => None
+      case idx => Some( SequentIndex( pol, idx ) )
+    }
 
   def swapped: Sequent[A] = Sequent( succedent, antecedent )
 
@@ -423,11 +429,10 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
 object Sequent {
   def apply[A](): Sequent[A] = Sequent( Seq(), Seq() )
 
-  def apply[A]( polarizedElements: Seq[( A, Boolean )] ): Sequent[A] =
-    Sequent(
-      polarizedElements.filter( _._2 == false ).map( _._1 ),
-      polarizedElements.filter( _._2 == true ).map( _._1 )
-    )
+  def apply[A]( polarizedElements: Seq[( A, Polarity )] ): Sequent[A] = {
+    val ( ant, suc ) = polarizedElements.view.partition( _._2.inAnt )
+    Sequent( ant.map( _._1 ), suc.map( _._1 ) )
+  }
 
   implicit val SequentFunctor = new Functor[Sequent] {
     def map[A, B]( fa: Sequent[A] )( f: A => B ): Sequent[B] = fa.map( f )

@@ -55,7 +55,7 @@ class VeriT extends OneShotProver with ExternalProgram {
 
       val exp_seq_quant = exp_seq filter { e => containsQuantifier( e.shallow ) }
 
-      val prop = for ( ( f, idx ) <- s.zipWithIndex ) yield formulaToExpansionTree( f, idx.isSuc )
+      val prop = for ( ( f, idx ) <- s.zipWithIndex ) yield formulaToExpansionTree( f, idx.polarity )
 
       val quasi_taut = exp_seq_quant ++ prop
       val taut = addSymmetry( quasi_taut )

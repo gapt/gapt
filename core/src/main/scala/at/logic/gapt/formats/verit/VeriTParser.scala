@@ -228,12 +228,12 @@ object VeriTParser extends RegexParsers {
       val axioms = r.map( p => p._2 ).flatten
 
       // Transform all pairs into expansion trees
-      val inputET = input.map( p => formulaToExpansionTree( p, false ) )
+      val inputET = input.map( p => formulaToExpansionTree( p, Polarity.InAntecedent ) )
 
       val axiomET = for {
         ( ax @ All.Block( vs, _ ), insts ) <- axioms.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
       } yield ETWeakQuantifierBlock( ax, vs.size,
-        insts.map( inst => inst -> formulaToExpansionTree( instantiate( ax, inst ), false ) ) )
+        insts.map( inst => inst -> formulaToExpansionTree( instantiate( ax, inst ), Polarity.InAntecedent ) ) )
 
       Some( axiomET ++: inputET ++: Sequent() )
   }

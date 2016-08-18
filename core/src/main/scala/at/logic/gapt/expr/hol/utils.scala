@@ -125,29 +125,26 @@ object containsQuantifierOnLogicalLevel {
 }
 
 object containsStrongQuantifier {
-  def apply( f: HOLFormula, pol: Boolean ): Boolean = f match {
+  def apply( f: HOLFormula, pol: Polarity ): Boolean = f match {
     case Top() | Bottom() => false
     case And( s, t )      => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
     case Or( s, t )       => containsStrongQuantifier( s, pol ) || containsStrongQuantifier( t, pol )
     case Imp( s, t )      => containsStrongQuantifier( s, !pol ) || containsStrongQuantifier( t, pol )
     case Neg( s )         => containsStrongQuantifier( s, !pol )
-    case All( x, s )      => if ( pol == true ) true else containsStrongQuantifier( s, pol )
-    case Ex( x, s )       => if ( pol == false ) true else containsStrongQuantifier( s, pol )
+    case All( x, s )      => pol.inSuc || containsStrongQuantifier( s, pol )
+    case Ex( x, s )       => pol.inAnt || containsStrongQuantifier( s, pol )
     case HOLAtom( _, _ )  => false
-    case _                => throw new Exception( "Unhandled case!" )
   }
 
   def apply( s: HOLSequent ): Boolean =
-    s.antecedent.exists( x => containsStrongQuantifier( x, false ) ) ||
-      s.succedent.exists( x => containsStrongQuantifier( x, true ) )
+    s.polarizedElements.exists( ( apply: ( HOLFormula, Polarity ) => Boolean ).tupled )
 }
 
 object containsWeakQuantifier {
-  def apply( f: HOLFormula, pol: Boolean ): Boolean = containsStrongQuantifier( f, !pol )
+  def apply( f: HOLFormula, pol: Polarity ): Boolean = containsStrongQuantifier( f, !pol )
 
   def apply( s: HOLSequent ): Boolean =
-    s.antecedent.exists( x => containsWeakQuantifier( x, false ) ) ||
-      s.succedent.exists( x => containsWeakQuantifier( x, true ) )
+    s.polarizedElements.exists( ( apply: ( HOLFormula, Polarity ) => Boolean ).tupled )
 }
 
 object freeHOVariables {

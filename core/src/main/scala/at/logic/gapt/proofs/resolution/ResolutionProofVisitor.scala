@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.{ HOLFormula, Polarity }
 import at.logic.gapt.proofs.SequentIndex
 
 import scala.collection.mutable
@@ -38,7 +38,7 @@ class ResolutionProofVisitor {
 
   def recurse( proof: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( proof, apply( proof ) )
 
-  def copyUnary( old: ResolutionProof, newSub: ResolutionProof, aux: HOLFormula, pol: Boolean ): ResolutionProof =
+  def copyUnary( old: ResolutionProof, newSub: ResolutionProof, aux: HOLFormula, pol: Polarity ): ResolutionProof =
     newSub.conclusion.indexOfPolOption( aux, pol ) match {
       case Some( idx ) => copyUnary( old, newSub, idx )
       case None        => newSub
@@ -79,8 +79,8 @@ class ResolutionProofVisitor {
   def visitResolution( p: Resolution ): ResolutionProof = {
     val q1 = recurse( p.subProof1 )
     val q2 = recurse( p.subProof2 )
-    q1.conclusion.indexOfPolOption( p.resolvedLiteral, true ).fold( q1 ) { i1 =>
-      q2.conclusion.indexOfPolOption( p.resolvedLiteral, false ).fold( q2 ) { i2 =>
+    q1.conclusion.indexOfPolOption( p.resolvedLiteral, Polarity.InSuccedent ).fold( q1 ) { i1 =>
+      q2.conclusion.indexOfPolOption( p.resolvedLiteral, Polarity.InAntecedent ).fold( q2 ) { i2 =>
         Resolution( q1, i1, q2, i2 )
       }
     }
@@ -88,22 +88,22 @@ class ResolutionProofVisitor {
   def visitParamod( p: Paramod ): ResolutionProof = {
     val q1 = recurse( p.subProof1 )
     val q2 = recurse( p.subProof2 )
-    q1.conclusion.indexOfPolOption( p.subProof1.conclusion( p.eqIdx ), true ).fold( q1 ) { i1 =>
-      q2.conclusion.indexOfPolOption( p.subProof2.conclusion( p.auxIdx ), p.auxIdx.isSuc ).fold( q2 ) { i2 =>
+    q1.conclusion.indexOfPolOption( p.subProof1.conclusion( p.eqIdx ), Polarity.InSuccedent ).fold( q1 ) { i1 =>
+      q2.conclusion.indexOfPolOption( p.subProof2.conclusion( p.auxIdx ), p.auxIdx.polarity ).fold( q2 ) { i2 =>
         Paramod( q1, i1, p.leftToRight, q2, i2, p.context )
       }
     }
   }
-  def visitFlip( p: Flip ): ResolutionProof = copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.isSuc )
+  def visitFlip( p: Flip ): ResolutionProof = copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
 
   def visitDefn( p: Defn ): ResolutionProof = p
-  def visitDefIntro( p: DefIntro ): ResolutionProof = copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.isSuc )
+  def visitDefIntro( p: DefIntro ): ResolutionProof = copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
 
   def visitAvatarContradiction( p: AvatarContradiction ): ResolutionProof = AvatarContradiction( recurse( p.subProof ) )
   def visitAvatarComponent( p: AvatarComponent ): ResolutionProof = p
   def visitAvatarSplit( p: AvatarSplit ): ResolutionProof = AvatarSplit( recurse( p.subProof ), p.component )
 
   def visitPropositional( p: PropositionalResolutionRule ): ResolutionProof =
-    copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.isSuc )
+    copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
 
 }

@@ -10,13 +10,13 @@ import at.logic.gapt.proofs.HOLSequent
  * (right side of the sequent).
  */
 object formulaToExpansionTree {
-  def apply( form: HOLFormula, pos: Boolean ): ExpansionTree = {
+  def apply( form: HOLFormula, pos: Polarity ): ExpansionTree = {
     assert( !containsQuantifier( form ) )
     apply( form, List(), pos )
   }
 
   @deprecated( "Substitute and merge expansion trees instead", "2016-01-13" )
-  def apply( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = {
+  def apply( form: HOLFormula, subs: List[_ <: Substitution], pos: Polarity ): ExpansionTree = {
     // form's quantified variables must be pairwise distinct
     assert( isInVNF( form ), "formulaToExpansionTree: bound variables are not pairwise distinct." )
     // substitutions should not have variable capture
@@ -24,20 +24,20 @@ object formulaToExpansionTree {
     apply_( form, subs, pos )
   }
 
-  private def apply_( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = form match {
+  private def apply_( form: HOLFormula, subs: List[_ <: Substitution], pos: Polarity ): ExpansionTree = form match {
     case a: HOLAtom    => ETAtom( a, pos )
     case Neg( f )      => ETNeg( apply_( f, subs, !pos ) )
     case And( f1, f2 ) => ETAnd( apply_( f1, subs, pos ), apply_( f2, subs, pos ) )
     case Or( f1, f2 )  => ETOr( apply_( f1, subs, pos ), apply_( f2, subs, pos ) )
     case Imp( f1, f2 ) => ETImp( apply_( f1, subs, !pos ), apply_( f2, subs, pos ) )
     case All( v, f ) => pos match {
-      case true => // Strong quantifier
+      case Polarity.InSuccedent => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
         assert( valid_subs.length == 1, ( "Found no substitutions for " + v + " in " + subs ) )
         val next_f = valid_subs.head( f )
         val ev = valid_subs.head( v ).asInstanceOf[Var]
         ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) )
-      case false => // Weak quantifier
+      case Polarity.InAntecedent => // Weak quantifier
         ETWeakQuantifier( form, subs.filter( _.domain.contains( v ) ).groupBy( _( v ) ) map {
           case ( t, subsWithT ) =>
             val next_f = Substitution( v -> t )( f )
@@ -45,13 +45,13 @@ object formulaToExpansionTree {
         } )
     }
     case Ex( v, f ) => pos match {
-      case true => // Weak quantifier
+      case Polarity.InSuccedent => // Weak quantifier
         ETWeakQuantifier( form, subs.filter( _.domain.contains( v ) ).groupBy( _( v ) ) map {
           case ( t, subsWithT ) =>
             val next_f = Substitution( v -> t )( f )
             ( t, apply_( next_f, subsWithT, pos ) )
         } )
-      case false => // Strong quantifier
+      case Polarity.InAntecedent => // Strong quantifier
         val valid_subs = subs.filter( s => s.domain.contains( v ) )
         assert( valid_subs.length == 1 )
         val next_f = valid_subs.head( f )

@@ -629,11 +629,11 @@ trait TacticCommands {
   }
 
   /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
-  def haveInstance( formula: HOLFormula, polarity: Boolean ): Tactical[String] = {
+  def haveInstance( formula: HOLFormula, polarity: Polarity ): Tactical[String] = {
     def findInstances( labelledSequent: Sequent[( String, HOLFormula )] ): Seq[( String, Seq[LambdaExpression] )] = {
       val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
-        case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity   => ( l, vs, m )
-        case ( ( l, All.Block( vs, m ) ), i ) if i.isAnt && !polarity => ( l, vs, m )
+        case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity.inSuc  => ( l, vs, m )
+        case ( ( l, All.Block( vs, m ) ), i ) if i.isAnt && polarity.inAnt => ( l, vs, m )
       }
       for {
         ( l, vs, m ) <- quantifiedFormulas.elements
@@ -644,12 +644,12 @@ trait TacticCommands {
     for {
       goal <- currentGoal
       inst <- findInstances( goal.labelledSequent ).headOption.
-        toTactical( s"Could not find instance $formula in " + ( if ( polarity ) "succedent" else "antecedent" ), goal )
+        toTactical( s"Could not find instance $formula in " + ( if ( polarity.inSuc ) "succedent" else "antecedent" ), goal )
       ( label, terms ) = inst
-      newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity ) exR( label, terms: _* ) else allL( label, terms: _* )
+      newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity.inSuc ) exR( label, terms: _* ) else allL( label, terms: _* )
     } yield newLabel
   }
 
   def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
-    Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.isSuc ) )
+    Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
 }

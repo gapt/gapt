@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
+import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs._
@@ -138,9 +139,9 @@ object AvatarNonGroundComp {
     }
   }
 }
-case class AvatarGroundComp( atom: HOLAtom, polarity: Boolean ) extends AvatarDefinition {
+case class AvatarGroundComp( atom: HOLAtom, polarity: Polarity ) extends AvatarDefinition {
   require( freeVariables( atom ).isEmpty )
-  def assertion = if ( polarity ) Sequent() :+ atom else atom +: Sequent()
+  def assertion = Sequent( Seq( atom -> polarity ) )
   def clause = assertion
   def inducedDefinitions = Map()
 }

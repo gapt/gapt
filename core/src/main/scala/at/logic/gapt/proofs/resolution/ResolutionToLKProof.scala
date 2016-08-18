@@ -31,7 +31,7 @@ object ResolutionToLKProof {
 
     def reducef( p: PropositionalResolutionRule )( func: HOLFormula => LKProof ) = {
       val q = f( p.subProof )
-      reduceAxiom( q, q.conclusion.indexOfPol( p.subProof.conclusion( p.idx ), p.idx.isSuc ) )( func )
+      reduceAxiom( q, q.conclusion.indexOfPol( p.subProof.conclusion( p.idx ), p.idx.polarity ) )( func )
     }
 
     def contract( p: ResolutionProof, q: LKProof ) =
@@ -193,7 +193,7 @@ object ResolutionToLKProof {
       }
       def contract( subProof: LKProof, subConn: OccConnector[HOLFormula] ): ( LKProof, OccConnector[HOLFormula] ) = {
         val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )
-        val newIndicesByFormula = newIndices.groupBy( i => subProof.conclusion( i ) -> i.isSuc )
+        val newIndicesByFormula = newIndices.groupBy( i => subProof.conclusion( i ) -> i.polarity )
         newIndicesByFormula.find( ni => ni._2.size > formulaMultiplicities( ni._1 ) ) match {
           case Some( ( _, Seq( i, j, _* ) ) ) =>
             val contracted = if ( i.isSuc ) ContractionRightRule( subProof, i, j ) else ContractionLeftRule( subProof, i, j )

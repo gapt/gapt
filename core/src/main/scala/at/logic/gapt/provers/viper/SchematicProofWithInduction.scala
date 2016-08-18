@@ -24,7 +24,7 @@ case class ProofByRecursionScheme(
 
   val theory = for {
     ( f, i ) <- endSequent.zipWithIndex
-    if !containsStrongQuantifier( f, i.isSuc )
+    if !containsStrongQuantifier( f, i.polarity )
   } yield s"th_$i".replace( ")", "" ).replace( "(", "" ) -> f
   val Sequent( _, Seq( conj @ All.Block( paramVars, _ ) ) ) = endSequent
 
@@ -79,9 +79,9 @@ case class ProofByRecursionScheme(
     } yield subst( rhs )
     instanceTerms.foreach {
       case Apps( nt: Const, args ) if recSchem.nonTerminals.contains( nt ) =>
-        state += haveInstance( instantiate( lemma( solution, nt ), args ), false )
-      case Neg( form )      => state += haveInstance( form, true ).orElse( haveInstance( -form, false ) )
-      case form: HOLFormula => state += haveInstance( form, false )
+        state += haveInstance( instantiate( lemma( solution, nt ), args ), Polarity.InAntecedent )
+      case Neg( form )      => state += haveInstance( form, Polarity.InAntecedent ).orElse( haveInstance( -form, Polarity.InSuccedent ) )
+      case form: HOLFormula => state += haveInstance( form, Polarity.InAntecedent )
     }
     for {
       ( label, form ) <- state.currentSubGoalOption.get.labelledSequent

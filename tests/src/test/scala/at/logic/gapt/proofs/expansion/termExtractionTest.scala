@@ -12,8 +12,8 @@ class TermExtractionTest extends Specification {
 
   val expansion = ExpansionProof(
     ETWeakQuantifier( hof"!x P x d", Map(
-      le"c" -> ETAtom( hoa"P c d", false ),
-      le"d" -> ETAtom( hoa"P d d", false )
+      le"c" -> ETAtom( hoa"P c d", Polarity.InAntecedent ),
+      le"d" -> ETAtom( hoa"P d d", Polarity.InAntecedent )
     ) ) +: Sequent()
   )
 
@@ -29,7 +29,7 @@ class TermExtractionTest extends Specification {
       } must contain( exactly( Seq( le"c" ), Seq( le"d" ) ) )
     }
     "decode correctly" in {
-      encoding.decodeToPolarizedFormula( encoding.encode( hof"P c d" ) ) must_== ( hof"P c y", false )
+      encoding.decodeToPolarizedFormula( encoding.encode( hof"P c d" ) ) must_== ( hof"P c y", Polarity.InAntecedent )
     }
   }
 }

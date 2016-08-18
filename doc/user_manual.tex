@@ -1253,10 +1253,10 @@ The LeanCoP interface supports the \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
 res32: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(∀x (p(x) ⊃ p(s(x)))
+Some(p(0)-,
+∀x (p(x) ⊃ p(s(x)))
   +^{0} (p(0)+ ⊃ p(s(0))-)
-  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
-p(0)-
+  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
 :-
 p(s(s(0)))+)
 

@@ -372,8 +372,8 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
       if ( comps.size >= 2 ) {
         val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
-          case Sequent( Seq( a: HOLAtom ), Seq() ) => AvatarGroundComp( a, false )
-          case Sequent( Seq(), Seq( a: HOLAtom ) ) => AvatarGroundComp( a, true )
+          case Sequent( Seq( a: HOLAtom ), Seq() ) => AvatarGroundComp( a, Polarity.InAntecedent )
+          case Sequent( Seq(), Seq( a: HOLAtom ) ) => AvatarGroundComp( a, Polarity.InSuccedent )
         }
         val nonPropComps =
           for ( c <- comps if freeVariables( c ).nonEmpty )
@@ -383,7 +383,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         var inferred = Set( DerivedCls( given, split ) )
         for ( comp <- propComps; if !componentAlreadyDefined( comp.atom ) ) {
           componentAlreadyDefined += comp.atom
-          for ( pol <- Seq( false, true ) )
+          for ( pol <- Polarity.values )
             inferred += DerivedCls( given, AvatarComponent( AvatarGroundComp( comp.atom, pol ) ) )
         }
         for ( comp <- nonPropComps if !componentAlreadyDefined( comp.atom ) ) {

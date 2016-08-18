@@ -18,13 +18,13 @@ class SolveTest extends Specification with SequentMatchers {
       val formula = hof"∃x (¬d(x) ∨ ∀y d(y))"
 
       val inst1 = ETOr(
-        ETNeg( ETAtom( hoa"d(u)", false ) ), // -d(u)
-        ETStrongQuantifier( hof"∀y d(y)", hov"v", ETAtom( hoa"d(v)", true ) ) // forall y d(y) +^v d(v)
+        ETNeg( ETAtom( hoa"d(u)", Polarity.InAntecedent ) ), // -d(u)
+        ETStrongQuantifier( hof"∀y d(y)", hov"v", ETAtom( hoa"d(v)", Polarity.InSuccedent ) ) // forall y d(y) +^v d(v)
       )
 
       val inst2 = ETOr(
-        ETNeg( ETAtom( hoa"d(c)", false ) ), // -d(c)
-        ETStrongQuantifier( hof"∀y d(y)", hov"u", ETAtom( hoa"d(u)", true ) ) // forall y d(y) +^u d(u)
+        ETNeg( ETAtom( hoa"d(c)", Polarity.InAntecedent ) ), // -d(c)
+        ETStrongQuantifier( hof"∀y d(y)", hov"u", ETAtom( hoa"d(u)", Polarity.InSuccedent ) ) // forall y d(y) +^u d(u)
       )
 
       // here, the second tree, containing c, must be expanded before u, as u is used as eigenvar in the c branch
@@ -54,8 +54,8 @@ class SolveTest extends Specification with SequentMatchers {
   }
 
   "ExpansionProofToLK" should {
-    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( true ) ) ) must_== \/-( TopAxiom ) }
-    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( false ) +: Sequent() ) ) must_== \/-( BottomAxiom ) }
+    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( Polarity.InSuccedent ) ) ) must_== \/-( TopAxiom ) }
+    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( Polarity.InAntecedent ) +: Sequent() ) ) must_== \/-( BottomAxiom ) }
 
     "equality" in {
       val Some( expansion ) = Escargot getExpansionProof existsclosure(
@@ -69,18 +69,18 @@ class SolveTest extends Specification with SequentMatchers {
     }
 
     "cuts" in {
-      val es = ETAtom( hoa"p 0", false ) +:
+      val es = ETAtom( hoa"p 0", Polarity.InAntecedent ) +:
         ETWeakQuantifier( hof"∀x (p x ⊃ p (s x))", Map(
-          le"z" -> ETImp( ETAtom( hoa"p z", true ), ETAtom( hoa"p (s z)", false ) ),
-          le"s z" -> ETImp( ETAtom( hoa"p (s z)", true ), ETAtom( hoa"p (s (s z))", false ) )
-        ) ) +: Sequent() :+ ETAtom( hoa"p (s (s (s (s 0))))", true )
+          le"z" -> ETImp( ETAtom( hoa"p z", Polarity.InSuccedent ), ETAtom( hoa"p (s z)", Polarity.InAntecedent ) ),
+          le"s z" -> ETImp( ETAtom( hoa"p (s z)", Polarity.InSuccedent ), ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) )
+        ) ) +: Sequent() :+ ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
       val cutf = hof"∀x (p x ⊃ p (s (s x)))"
       val cut = ETImp(
         ETStrongQuantifier( cutf, hov"z",
-          ETImp( ETAtom( hoa"p z", false ), ETAtom( hoa"p (s (s z))", true ) ) ),
+          ETImp( ETAtom( hoa"p z", Polarity.InAntecedent ), ETAtom( hoa"p (s (s z))", Polarity.InSuccedent ) ) ),
         ETWeakQuantifier( cutf, Map(
-          le"0" -> ETImp( ETAtom( hoa"p 0", true ), ETAtom( hoa"p (s (s 0))", false ) ),
-          le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", true ), ETAtom( hoa"p (s (s (s (s 0))))", false ) )
+          le"0" -> ETImp( ETAtom( hoa"p 0", Polarity.InSuccedent ), ETAtom( hoa"p (s (s 0))", Polarity.InAntecedent ) ),
+          le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", Polarity.InSuccedent ), ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InAntecedent ) )
         ) )
       )
       val epwc = ExpansionProofWithCut( Seq( cut ), es )
@@ -100,8 +100,8 @@ class SolveTest extends Specification with SequentMatchers {
       val et = ETWeakQuantifier(
         hof"∃x true",
         Map(
-          le"c" -> ETTop( true ),
-          le"d" -> ETTop( true )
+          le"c" -> ETTop( Polarity.InSuccedent ),
+          le"d" -> ETTop( Polarity.InSuccedent )
         )
       )
       ExpansionProofToLK( ExpansionProof( Sequent() :+ et ) ) must beLike {

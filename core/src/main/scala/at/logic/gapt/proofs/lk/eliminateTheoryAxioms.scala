@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ containsWeakQuantifier, isPrenex, CNFp }
-import at.logic.gapt.proofs.{ OccConnector, HOLClause, Sequent }
+import at.logic.gapt.expr.hol.{ CNFp, containsStrongQuantifier, containsWeakQuantifier, isPrenex }
+import at.logic.gapt.proofs.{ HOLClause, OccConnector, Sequent }
 
 import scalaz.{ -\/, \/- }
 
@@ -37,7 +37,7 @@ object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
    */
   protected override def visitTheoryAxiom( proof: TheoryAxiom, formula: HOLFormula ) = {
     require( isPrenex( formula ), s"Formula $formula is not prenex." )
-    require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
+    require( !containsStrongQuantifier( formula, Polarity.InAntecedent ), s"Formula $formula contains strong quantifiers." )
 
     val All.Block( vars, matrix ) = formula
     val cnf = CNFp( matrix )

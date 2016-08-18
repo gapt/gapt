@@ -97,22 +97,22 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
    */
   val signedMatrices = matrices.map( identity, -_ )
 
-  private def getWeakQuantVars( esFormula: HOLFormula, pol: Boolean ): Seq[Var] = esFormula match {
-    case All( x, t ) if !pol => x +: getWeakQuantVars( t, pol )
-    case Ex( x, t ) if pol   => x +: getWeakQuantVars( t, pol )
-    case All( x, t ) if pol  => getWeakQuantVars( t, pol )
-    case Ex( x, t ) if !pol  => getWeakQuantVars( t, pol )
-    case And( t, s )         => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
-    case Or( t, s )          => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
-    case Imp( t, s )         => getWeakQuantVars( t, !pol ) ++ getWeakQuantVars( s, pol )
-    case Neg( t )            => getWeakQuantVars( t, !pol )
+  private def getWeakQuantVars( esFormula: HOLFormula, pol: Polarity ): Seq[Var] = esFormula match {
+    case All( x, t ) if pol.inAnt => x +: getWeakQuantVars( t, pol )
+    case Ex( x, t ) if pol.inSuc  => x +: getWeakQuantVars( t, pol )
+    case All( x, t ) if pol.inSuc => getWeakQuantVars( t, pol )
+    case Ex( x, t ) if pol.inAnt  => getWeakQuantVars( t, pol )
+    case And( t, s )              => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
+    case Or( t, s )               => getWeakQuantVars( t, pol ) ++ getWeakQuantVars( s, pol )
+    case Imp( t, s )              => getWeakQuantVars( t, !pol ) ++ getWeakQuantVars( s, pol )
+    case Neg( t )                 => getWeakQuantVars( t, !pol )
     case Top() | Bottom() | HOLAtom( _, _ ) =>
       Seq()
   }
   /**
    * The quantified variables of each formula in the end-sequent.
    */
-  val quantVars = endSequent.map( getWeakQuantVars( _, pol = false ), getWeakQuantVars( _, pol = true ) )
+  val quantVars = endSequent.map( getWeakQuantVars( _, Polarity.InAntecedent ), getWeakQuantVars( _, Polarity.InSuccedent ) )
 
   /**
    * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
@@ -187,8 +187,8 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
    *
    * The resulting instance can contain alpha in the inductive case.
    */
-  def decodeToPolarizedFormula( term: LambdaExpression ): ( HOLFormula, Boolean ) =
-    decodeOption( term ) map { case ( idx, subst ) => subst( matrices( idx ) ) -> idx.isSuc } get
+  def decodeToPolarizedFormula( term: LambdaExpression ): ( HOLFormula, Polarity ) =
+    decodeOption( term ) map { case ( idx, subst ) => subst( matrices( idx ) ) -> idx.polarity } get
 
   def decodeToSignedFormula( term: LambdaExpression ): HOLFormula =
     decodeOption( term ) map { case ( idx, subst ) => subst( signedMatrices( idx ) ) } get
@@ -199,7 +199,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   def decodeToExpansionSequent( terms: Iterable[LambdaExpression] ): ExpansionSequent =
     Sequent( terms flatMap decodeOption groupBy { _._1 } map {
       case ( idx, instances ) =>
-        formulaToExpansionTree( endSequent( idx ), instances map { _._2 } toList, idx.isSuc ) -> idx.isSuc
+        formulaToExpansionTree( endSequent( idx ), instances map { _._2 } toList, idx.polarity ) -> idx.polarity
     } toSeq )
 
   def encode( recursionScheme: RecursionScheme ): RecursionScheme = {

@@ -1868,11 +1868,11 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
 }
 
 object DefinitionRule {
-  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula, isSuc: Boolean ): LKProof =
-    if ( isSuc )
-      DefinitionRightRule( subProof, auxFormula, mainFormula )
-    else
-      DefinitionLeftRule( subProof, auxFormula, mainFormula )
+  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula, polarity: Polarity ): LKProof =
+    polarity match {
+      case Polarity.InSuccedent  => DefinitionRightRule( subProof, auxFormula, mainFormula )
+      case Polarity.InAntecedent => DefinitionLeftRule( subProof, auxFormula, mainFormula )
+    }
 }
 
 object consoleString {

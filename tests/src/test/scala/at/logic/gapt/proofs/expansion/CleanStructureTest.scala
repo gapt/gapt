@@ -16,29 +16,29 @@ class CleanStructureTest extends Specification {
     def R( x: FOLTerm, y: FOLTerm ) = FOLAtom( "R", List( x, y ) )
 
     "correctly reduce a weak conjunction" in {
-      val et = ETAnd( ETWeakening( P, true ), ETWeakening( Q, true ) )
+      val et = ETAnd( ETWeakening( P, Polarity.InSuccedent ), ETWeakening( Q, Polarity.InSuccedent ) )
 
-      cleanStructureET( et ) must beEqualTo( ETWeakening( And( P, Q ), true ) )
+      cleanStructureET( et ) must beEqualTo( ETWeakening( And( P, Q ), Polarity.InSuccedent ) )
     }
 
     "correctly reduce a weak disjunction" in {
-      val et = ETOr( ETWeakening( P, true ), ETWeakening( Q, true ) )
+      val et = ETOr( ETWeakening( P, Polarity.InSuccedent ), ETWeakening( Q, Polarity.InSuccedent ) )
 
-      cleanStructureET( et ) must beEqualTo( ETWeakening( Or( P, Q ), true ) )
+      cleanStructureET( et ) must beEqualTo( ETWeakening( Or( P, Q ), Polarity.InSuccedent ) )
     }
 
     "correctly reduce a weak implication" in {
-      val et = ETImp( ETWeakening( P, false ), ETWeakening( Q, true ) )
+      val et = ETImp( ETWeakening( P, Polarity.InAntecedent ), ETWeakening( Q, Polarity.InSuccedent ) )
 
-      cleanStructureET( et ) must beEqualTo( ETWeakening( Imp( P, Q ), true ) )
+      cleanStructureET( et ) must beEqualTo( ETWeakening( Imp( P, Q ), Polarity.InSuccedent ) )
     }
 
     "correctly reduce a weak quantifier" in {
       val et = ETWeakQuantifier(
         univclosure( R( x, y ) ),
         Map(
-          c -> ETWeakQuantifier( All( y, R( c, y ) ), Map( e -> ETWeakening( R( c, e ), false ) ) ),
-          d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), false ) ) )
+          c -> ETWeakQuantifier( All( y, R( c, y ) ), Map( e -> ETWeakening( R( c, e ), Polarity.InAntecedent ) ) ),
+          d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) )
         )
       )
 
@@ -46,7 +46,7 @@ class CleanStructureTest extends Specification {
         ETWeakQuantifier(
           univclosure( R( x, y ) ),
           Map(
-            d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), false ) ) )
+            d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) )
           )
         )
       )

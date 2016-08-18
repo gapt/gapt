@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.expansion
 
+import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions, containsQuantifierOnLogicalLevel, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
@@ -10,7 +11,7 @@ import scala.collection.mutable
 trait ExpansionTree extends DagProof[ExpansionTree] {
   def shallow: HOLFormula
   def deep: HOLFormula
-  def polarity: Boolean
+  def polarity: Polarity
 
   def apply( pos: HOLPosition ): Set[ExpansionTree] = getAtHOLPosition( this, pos )
 
@@ -19,9 +20,9 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
   override def toString = toSigRelativeString
 }
 
-case class ETWeakening( formula: HOLFormula, polarity: Boolean ) extends ExpansionTree {
+case class ETWeakening( formula: HOLFormula, polarity: Polarity ) extends ExpansionTree {
   def shallow = formula
-  def deep = if ( polarity ) Bottom() else Top()
+  def deep = if ( polarity.inSuc ) Bottom() else Top()
   def immediateSubProofs = Seq()
 }
 
@@ -43,13 +44,13 @@ case class ETMerge( child1: ExpansionTree, child2: ExpansionTree ) extends Binar
   require( child1.shallow == child2.shallow )
   val shallow = child1.shallow
 
-  def deep = if ( polarity ) child1.deep | child2.deep else child1.deep & child2.deep
+  def deep = if ( polarity.positive ) child1.deep | child2.deep else child1.deep & child2.deep
 }
 object ETMerge {
   def apply( nonEmptyChildren: Iterable[ExpansionTree] ): ExpansionTree =
     nonEmptyChildren reduce { ETMerge( _, _ ) }
 
-  def apply( shallow: HOLFormula, polarity: Boolean, children: Iterable[ExpansionTree] ): ExpansionTree = {
+  def apply( shallow: HOLFormula, polarity: Polarity, children: Iterable[ExpansionTree] ): ExpansionTree = {
     for ( ch <- children ) {
       require( ch.polarity == polarity )
       require( ch.shallow == shallow )
@@ -58,13 +59,13 @@ object ETMerge {
   }
 }
 
-case class ETAtom( atom: HOLAtom, polarity: Boolean ) extends ExpansionTree {
+case class ETAtom( atom: HOLAtom, polarity: Polarity ) extends ExpansionTree {
   def shallow = atom
   def deep = atom
   def immediateSubProofs = Seq()
 }
 
-case class ETDefinedAtom( atom: HOLAtom, polarity: Boolean, definition: LambdaExpression ) extends ExpansionTree {
+case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definition: LambdaExpression ) extends ExpansionTree {
   val Apps( definitionConst: Const, arguments ) = atom
   require( freeVariables( definition ).isEmpty )
 
@@ -73,13 +74,13 @@ case class ETDefinedAtom( atom: HOLAtom, polarity: Boolean, definition: LambdaEx
   def immediateSubProofs = Seq()
 }
 
-case class ETTop( polarity: Boolean ) extends ExpansionTree {
+case class ETTop( polarity: Polarity ) extends ExpansionTree {
   val shallow = Top()
   def deep = Top()
   def immediateSubProofs = Seq()
 }
 
-case class ETBottom( polarity: Boolean ) extends ExpansionTree {
+case class ETBottom( polarity: Polarity ) extends ExpansionTree {
   val shallow = Bottom()
   def deep = Bottom()
   def immediateSubProofs = Seq()
@@ -122,8 +123,8 @@ object ETQuantifier {
 
 case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpression, ExpansionTree] ) extends ETQuantifier {
   val ( polarity, boundVar, qfFormula ) = shallow match {
-    case Ex( x, t )  => ( true, x, t )
-    case All( x, t ) => ( false, x, t )
+    case Ex( x, t )  => ( Polarity.InSuccedent, x, t )
+    case All( x, t ) => ( Polarity.InAntecedent, x, t )
   }
 
   for ( ( selectedTerm, child ) <- instances ) {
@@ -133,7 +134,7 @@ case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpressio
   }
 
   def deep =
-    if ( polarity ) Or( instances.values map { _.deep } )
+    if ( polarity.inSuc ) Or( instances.values map { _.deep } )
     else And( instances.values map { _.deep } )
 
   def immediateSubProofs = instances.values.toSeq
@@ -172,8 +173,8 @@ object ETWeakQuantifierBlock {
       }
 
     val numberQuants = ( et.polarity, et.shallow ) match {
-      case ( true, Ex.Block( vs, _ ) )   => vs.size
-      case ( false, All.Block( vs, _ ) ) => vs.size
+      case ( Polarity.InSuccedent, Ex.Block( vs, _ ) )   => vs.size
+      case ( Polarity.InAntecedent, All.Block( vs, _ ) ) => vs.size
     }
 
     walk( et, Seq(), numberQuants )
@@ -184,8 +185,8 @@ object ETWeakQuantifierBlock {
 
 case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: ExpansionTree ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
-    case Ex( x, t )  => ( false, x, t )
-    case All( x, t ) => ( true, x, t )
+    case Ex( x, t )  => ( Polarity.InAntecedent, x, t )
+    case All( x, t ) => ( Polarity.InSuccedent, x, t )
   }
 
   require( child.polarity == polarity )
@@ -216,8 +217,8 @@ case class ETSkolemQuantifier(
     child:      ExpansionTree
 ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
-    case Ex( x, t )  => ( false, x, t )
-    case All( x, t ) => ( true, x, t )
+    case Ex( x, t )  => ( Polarity.InAntecedent, x, t )
+    case All( x, t ) => ( Polarity.InSuccedent, x, t )
   }
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
@@ -523,46 +524,52 @@ object cleanStructureET {
 }
 
 object prenexifyET {
+  private def weakQuantifier( polarity: Polarity ) =
+    polarity match {
+      case Positive => Ex
+      case Negative => All
+    }
+
   private def handleBinary(
     f1: HOLFormula, f2: HOLFormula,
-    p1: Boolean, p2: Boolean,
-    newPol: Boolean,
+    p1: Polarity, p2: Polarity,
+    newPol: Polarity,
     shConn: ( HOLFormula, HOLFormula ) => HOLFormula
   ): HOLFormula = {
     val f1_ = apply( f1, p1 )
     val f2_ = apply( f2, p2 )
 
-    val Some( ( vs1, matrix1 ) ) = ( if ( p1 ) Ex else All ).Block.unapply( f1 )
-    val Some( ( vs2_, matrix2 ) ) = ( if ( p2 ) Ex else All ).Block.unapply( f2 )
+    val Some( ( vs1, matrix1 ) ) = weakQuantifier( p1 ).Block.unapply( f1 )
+    val Some( ( vs2_, matrix2 ) ) = weakQuantifier( p2 ).Block.unapply( f2 )
     val vs2 = vs2_.map( rename( vs2_, vs1 ) )
 
-    ( if ( newPol ) Ex else All ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
+    weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
   }
 
-  private def apply( formula: HOLFormula, pol: Boolean ): HOLFormula = formula match {
+  private def apply( formula: HOLFormula, pol: Polarity ): HOLFormula = formula match {
     case _ if !containsQuantifierOnLogicalLevel( formula ) => formula
     case Neg( a ) => Neg( apply( a, !pol ) )
     case And( a, b ) => handleBinary( a, b, pol, pol, pol, And( _, _ ) )
     case Or( a, b ) => handleBinary( a, b, pol, pol, pol, Or( _, _ ) )
     case Imp( a, b ) => handleBinary( a, b, !pol, pol, pol, Imp( _, _ ) )
-    case All.Block( vs, f ) if vs.nonEmpty && !pol => All.Block( vs, apply( f, pol ) )
-    case Ex.Block( vs, f ) if vs.nonEmpty && pol => Ex.Block( vs, apply( f, pol ) )
+    case All.Block( vs, f ) if vs.nonEmpty && pol.inAnt => All.Block( vs, apply( f, pol ) )
+    case Ex.Block( vs, f ) if vs.nonEmpty && pol.inSuc => Ex.Block( vs, apply( f, pol ) )
   }
 
   private def handleBinary(
     et1: ExpansionTree, et2: ExpansionTree,
-    newPol: Boolean,
+    newPol: Polarity,
     shConn: ( HOLFormula, HOLFormula ) => HOLFormula,
     etConn: ( ExpansionTree, ExpansionTree ) => ExpansionTree
   ): ExpansionTree = {
     val ETWeakQuantifierBlock( sh1, n1, insts1 ) = apply( et1 )
     val ETWeakQuantifierBlock( sh2, n2, insts2 ) = apply( et2 )
 
-    val Some( ( vs1, matrix1 ) ) = ( if ( et1.polarity ) Ex else All ).Block.unapply( sh1 )
-    val Some( ( vs2_, matrix2 ) ) = ( if ( et2.polarity ) Ex else All ).Block.unapply( sh2 )
+    val Some( ( vs1, matrix1 ) ) = weakQuantifier( et1.polarity ).Block.unapply( sh1 )
+    val Some( ( vs2_, matrix2 ) ) = weakQuantifier( et2.polarity ).Block.unapply( sh2 )
     val vs2 = vs2_.map( rename( vs2_, vs1 ) )
 
-    val sh = ( if ( newPol ) Ex else All ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
+    val sh = weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
 
     val weak2 = ETWeakening( matrix2, et2.polarity )
     val insts1New = for ( ( ts, inst ) <- insts1 ) yield ts ++ vs2 -> etConn( inst, weak2 )
@@ -576,8 +583,8 @@ object prenexifyET {
     case _ if !containsQuantifierOnLogicalLevel( et.shallow ) => et
     case ETNeg( a ) =>
       val ETWeakQuantifierBlock( sh, n, insts ) = apply( a )
-      val Some( ( vs, matrix ) ) = ( if ( a.polarity ) Ex else All ).Block.unapply( sh )
-      ETWeakQuantifierBlock( ( if ( a.polarity ) All else Ex ).Block( vs, -matrix ), n,
+      val Some( ( vs, matrix ) ) = weakQuantifier( a.polarity ).Block.unapply( sh )
+      ETWeakQuantifierBlock( weakQuantifier( a.polarity ).Block( vs, -matrix ), n,
         Map() ++ insts.mapValues( ETNeg ) )
     case ETAnd( a, b ) => handleBinary( a, b, et.polarity, And( _, _ ), ETAnd )
     case ETOr( a, b )  => handleBinary( a, b, et.polarity, Or( _, _ ), ETOr )
@@ -587,12 +594,12 @@ object prenexifyET {
   }
 
   def toSequent( et: ExpansionTree ): Sequent[ExpansionTree] = et match {
-    case ETNeg( a )                    => toSequent( a )
-    case ETAnd( a, b ) if !et.polarity => toSequent( a ) ++ toSequent( b )
-    case ETImp( a, b ) if et.polarity  => toSequent( a ) ++ toSequent( b )
-    case ETOr( a, b ) if et.polarity   => toSequent( a ) ++ toSequent( b )
-    case _ if et.polarity              => Sequent() :+ et
-    case _ if !et.polarity             => et +: Sequent()
+    case ETNeg( a )                         => toSequent( a )
+    case ETAnd( a, b ) if et.polarity.inAnt => toSequent( a ) ++ toSequent( b )
+    case ETImp( a, b ) if et.polarity.inSuc => toSequent( a ) ++ toSequent( b )
+    case ETOr( a, b ) if et.polarity.inSuc  => toSequent( a ) ++ toSequent( b )
+    case _ if et.polarity.inSuc             => Sequent() :+ et
+    case _ if et.polarity.inAnt             => et +: Sequent()
   }
 
   def apply( ep: ExpansionProof ): ExpansionProof =

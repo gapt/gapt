@@ -7,37 +7,37 @@ import at.logic.gapt.utils.StreamUtils
 import StreamUtils._
 
 object skolemize {
-  def apply( formula: HOLFormula, inSuc: Boolean, context: Seq[LambdaExpression], skolemSymbols: Stream[String] ): HOLFormula = formula match {
+  def apply( formula: HOLFormula, pol: Polarity, context: Seq[LambdaExpression], skolemSymbols: Stream[String] ): HOLFormula = formula match {
     case Bottom() | Top() | HOLAtom( _, _ ) =>
       formula
-    case Neg( f )            => Neg( skolemize( f, !inSuc, context, skolemSymbols ) )
-    case And( l, r )         => And( skolemize( l, inSuc, context, even( skolemSymbols ) ), skolemize( r, inSuc, context, odd( skolemSymbols ) ) )
-    case Or( l, r )          => Or( skolemize( l, inSuc, context, even( skolemSymbols ) ), skolemize( r, inSuc, context, odd( skolemSymbols ) ) )
-    case Imp( l, r )         => Imp( skolemize( l, !inSuc, context, even( skolemSymbols ) ), skolemize( r, inSuc, context, odd( skolemSymbols ) ) )
-    case Ex( x, f ) if inSuc => Ex( x, skolemize( f, inSuc, context :+ x, skolemSymbols ) )
-    case Ex( x, f ) if !inSuc =>
+    case Neg( f )                => Neg( skolemize( f, !pol, context, skolemSymbols ) )
+    case And( l, r )             => And( skolemize( l, pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
+    case Or( l, r )              => Or( skolemize( l, pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
+    case Imp( l, r )             => Imp( skolemize( l, !pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
+    case Ex( x, f ) if pol.inSuc => Ex( x, skolemize( f, pol, context :+ x, skolemSymbols ) )
+    case Ex( x, f ) if pol.inAnt =>
       val sym = Const( skolemSymbols.head, FunctionType( x.exptype, context.map( _.exptype ) ) )
       val skolemFunction = sym( context: _* )
-      skolemize( Substitution( x -> skolemFunction )( f ), inSuc, context, skolemSymbols.tail )
-    case All( x, f ) if !inSuc => All( x, skolemize( f, inSuc, context :+ x, skolemSymbols ) )
-    case All( x, f ) if inSuc  => skolemize( Ex( x, -f ), !inSuc, context, skolemSymbols ) match { case Neg( f_ ) => f_ }
+      skolemize( Substitution( x -> skolemFunction )( f ), pol, context, skolemSymbols.tail )
+    case All( x, f ) if pol.inAnt => All( x, skolemize( f, pol, context :+ x, skolemSymbols ) )
+    case All( x, f ) if pol.inSuc => skolemize( Ex( x, -f ), !pol, context, skolemSymbols ) match { case Neg( f_ ) => f_ }
   }
 
-  def apply( formula: HOLFormula, inSuc: Boolean ): HOLFormula =
-    apply( formula, inSuc, Seq(), new SkolemSymbolFactory( constants( formula ) ).getSkolemSymbols )
+  def apply( formula: HOLFormula, pol: Polarity ): HOLFormula =
+    apply( formula, pol, Seq(), new SkolemSymbolFactory( constants( formula ) ).getSkolemSymbols )
 
   def apply( formula: HOLFormula ): HOLFormula =
-    apply( formula, inSuc = true )
+    apply( formula, Polarity.InSuccedent )
 
   def apply( sequent: HOLSequent ): HOLSequent = {
     val factory = rename.awayFrom( containedNames( sequent ) )
     for ( ( f, i ) <- sequent.zipWithIndex )
-      yield apply( f, i.isSuc, Seq(), factory.freshStream( "s" ) )
+      yield apply( f, i.polarity, Seq(), factory.freshStream( "s" ) )
   }
 
-  private def maybeSkolemize( formula: HOLFormula, inSuc: Boolean, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[String] )] ): HOLFormula =
+  private def maybeSkolemize( formula: HOLFormula, pol: Polarity, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[String] )] ): HOLFormula =
     contextAndSymbols match {
-      case Some( ( context, skolemSymbols ) ) => skolemize( formula, inSuc, context, skolemSymbols )
+      case Some( ( context, skolemSymbols ) ) => skolemize( formula, pol, context, skolemSymbols )
       case None                               => formula
     }
 
@@ -55,10 +55,10 @@ object skolemize {
     // Here we only need to copy contextAndSymbols correctly
     case proof @ WeakeningLeftRule( subProof, formula ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      WeakeningLeftRule( subProof_, maybeSkolemize( formula, false, contextAndSymbols( proof.mainIndices.head ) ) )
+      WeakeningLeftRule( subProof_, maybeSkolemize( formula, Polarity.InAntecedent, contextAndSymbols( proof.mainIndices.head ) ) )
     case proof @ WeakeningRightRule( subProof, formula ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      WeakeningRightRule( subProof_, maybeSkolemize( formula, true, contextAndSymbols( proof.mainIndices.head ) ) )
+      WeakeningRightRule( subProof_, maybeSkolemize( formula, Polarity.InSuccedent, contextAndSymbols( proof.mainIndices.head ) ) )
     case proof @ ContractionLeftRule( subProof, aux1, aux2 ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
       ContractionLeftRule( subProof_, aux1, aux2 )
@@ -131,23 +131,23 @@ object skolemize {
     // We do it as in the old LK: skolemize both the before and after formulas using the same stream of skolem symbols.
     case proof @ DefinitionLeftRule( subProof, aux, main ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      DefinitionLeftRule( subProof_, aux, maybeSkolemize( main, false, contextAndSymbols( proof.mainIndices.head ) ) )
+      DefinitionLeftRule( subProof_, aux, maybeSkolemize( main, Polarity.InAntecedent, contextAndSymbols( proof.mainIndices.head ) ) )
     case proof @ DefinitionRightRule( subProof, aux, main ) =>
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      DefinitionRightRule( subProof_, aux, maybeSkolemize( main, true, contextAndSymbols( proof.mainIndices.head ) ) )
+      DefinitionRightRule( subProof_, aux, maybeSkolemize( main, Polarity.InSuccedent, contextAndSymbols( proof.mainIndices.head ) ) )
 
     // Weak quantifier rules:
     case proof @ ForallLeftRule( subProof, aux, matrix, term, v ) =>
       val ctxAndSym = contextAndSymbols( proof.mainIndices.head )
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head )
         .updated( aux, ctxAndSym map { case ( context, symbols ) => ( context :+ term ) -> symbols } ) )
-      val All( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, false, ctxAndSym )
+      val All( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, Polarity.InAntecedent, ctxAndSym )
       ForallLeftRule( subProof_, aux, matrix_, term, v )
     case proof @ ExistsRightRule( subProof, aux, matrix, term, v ) =>
       val ctxAndSym = contextAndSymbols( proof.mainIndices.head )
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head )
         .updated( aux, ctxAndSym map { case ( context, symbols ) => ( context :+ term ) -> symbols } ) )
-      val Ex( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, true, ctxAndSym )
+      val Ex( v_, matrix_ ) = maybeSkolemize( proof.mainFormula, Polarity.InSuccedent, ctxAndSym )
       ExistsRightRule( subProof_, aux, matrix_, term, v )
 
     // Strong quantifier rules:

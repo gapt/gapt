@@ -36,6 +36,6 @@ object ReductionDemo extends Script {
   println( res_ )
 
   for ( Input( seq ) <- res_.subProofs )
-    require( sequent.contains( seq.elements.head, seq.antecedent.nonEmpty ) )
+    require( sequent.contains( seq.elements.head, !seq.indices.head.polarity ) )
 
 }

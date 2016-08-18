@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr.{ Eq, HOLFormula }
-import at.logic.gapt.proofs.{ Ant, Sequent, Suc }
+import at.logic.gapt.proofs.{ Ant, Suc }
 import at.logic.gapt.proofs.lk._
 
 object UnitResolutionToLKProof {
@@ -40,7 +40,7 @@ object UnitResolutionToLKProof {
         case p @ Paramod( q1, _, _, q2, i2, ctx ) =>
           val shouldFlip2 = shouldFlip( q2 )
           val lkAux = maybeFlip( p.rewrittenAuxFormula, shouldFlip2 )
-          if ( lk.conclusion.contains( lkAux, i2.isAnt ) ) {
+          if ( lk.conclusion.contains( lkAux, !i2.polarity ) ) {
             val lkMain = maybeFlip( p.auxFormula, shouldFlip2 )
             val lkEq = maybeFlip( q1.conclusion( Suc( 0 ) ), shouldFlip( q1 ) )
             if ( ( i2.isSuc && lkEq == lkAux ) || !lk.conclusion.antecedent.contains( lkEq ) ) {

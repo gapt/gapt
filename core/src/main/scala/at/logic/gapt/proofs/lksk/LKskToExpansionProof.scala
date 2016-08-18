@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lksk
 
 import at.logic.gapt.expr.hol.{ HOLPosition, containsQuantifier, containsQuantifierOnLogicalLevel }
-import at.logic.gapt.expr.{ Eq, HOLAtom }
+import at.logic.gapt.expr.{ Eq, HOLAtom, Polarity }
 import at.logic.gapt.proofs.{ Ant, Sequent, Suc }
 import at.logic.gapt.proofs.expansion._
 
@@ -24,18 +24,18 @@ object LKskToExpansionProof {
     val r = proof match {
 
       // Axioms
-      case Axiom( l_ant, l_suc, atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, false ) ), Seq( ETAtom( atom, true ) ) )
+      case Axiom( l_ant, l_suc, atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
 
-      case Reflexivity( l, s )                  => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), true ) ) )
+      case Reflexivity( l, s )                  => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), Polarity.InSuccedent ) ) )
 
       // Structural rules
       case WeakeningLeft( subProof, ( l, formula ) ) =>
         val ( subCuts, subSequent ) = extract( subProof )
-        subCuts -> ( ETWeakening( formula, false ) +: subSequent )
+        subCuts -> ( ETWeakening( formula, Polarity.InAntecedent ) +: subSequent )
 
       case WeakeningRight( subProof, ( l, formula ) ) =>
         val ( subCuts, subSequent ) = extract( subProof )
-        subCuts -> ( subSequent :+ ETWeakening( formula, true ) )
+        subCuts -> ( subSequent :+ ETWeakening( formula, Polarity.InSuccedent ) )
 
       case ContractionLeft( subProof, aux1, aux2 ) =>
         val ( subCuts, subSequent ) = extract( subProof )
@@ -146,8 +146,8 @@ object LKskToExpansionProof {
         ( subCuts, subSequent :+ newTree )
     }
 
-    r._2.antecedent.map( x => require( !x.polarity, s"Polarity of antecedent formula ${x.shallow} is positive in rule ${proof.longName}!" ) )
-    r._2.succedent.map( x => require( x.polarity, s"Polarity of antecedent formula ${x.shallow} is negative in rule ${proof.longName}!" ) )
+    r._2.antecedent.map( x => require( x.polarity.inAnt, s"Polarity of antecedent formula ${x.shallow} is positive in rule ${proof.longName}!" ) )
+    r._2.succedent.map( x => require( x.polarity.inSuc, s"Polarity of antecedent formula ${x.shallow} is negative in rule ${proof.longName}!" ) )
     r
   }
 }

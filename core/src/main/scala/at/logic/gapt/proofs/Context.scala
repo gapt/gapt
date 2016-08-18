@@ -66,11 +66,6 @@ trait BackgroundTheory {
 
 /** Background theory that only validates clauses that are subsumed by axioms. */
 case class SubsumptionTheory( axioms: HOLFormula* ) extends BackgroundTheory {
-  for ( formula <- axioms ) {
-    require( isPrenex( formula ), s"Formula $formula is not prenex." )
-    require( !containsWeakQuantifier( formula, true ), s"Formula $formula contains weak quantifiers." )
-  }
-
   private val cnf = CNFp( And( axioms ) )
 
   def solve( atomicSeq: HOLClause ): Option[LKProof] =

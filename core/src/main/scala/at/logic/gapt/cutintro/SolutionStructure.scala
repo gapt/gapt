@@ -29,14 +29,14 @@ case class SolutionStructure( sehs: SchematicExtendedHerbrandSequent, formulas: 
       case ( ( u, insts ), idx ) =>
         val Some( ( vs, f ) ) = if ( idx.isAnt ) All.Block.unapply( u ) else Ex.Block.unapply( u )
         ETWeakQuantifierBlock( u, vs.size,
-          for ( inst <- insts ) yield inst -> formulaToExpansionTree( Substitution( vs zip inst )( f ), idx.isSuc ) )
+          for ( inst <- insts ) yield inst -> formulaToExpansionTree( Substitution( vs zip inst )( f ), idx.polarity ) )
     }
 
     val cuts = for ( ( ( eigenVar, cutImplInst ), formula ) <- sehs.ss zip formulas )
       yield ETImp(
-      ETStrongQuantifierBlock( All.Block( eigenVar, formula ), eigenVar, formulaToExpansionTree( formula, true ) ),
+      ETStrongQuantifierBlock( All.Block( eigenVar, formula ), eigenVar, formulaToExpansionTree( formula, Polarity.Positive ) ),
       ETWeakQuantifierBlock( All.Block( eigenVar, formula ), eigenVar.size,
-        for ( inst <- cutImplInst ) yield inst -> formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), false ) )
+        for ( inst <- cutImplInst ) yield inst -> formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) )
     )
 
     eliminateMerges( ExpansionProofWithCut( cuts, nonCutPart ) )

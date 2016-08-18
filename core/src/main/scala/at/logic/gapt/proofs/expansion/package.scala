@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, LambdaExpression, Replaceable, containedNames }
+import at.logic.gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, LambdaExpression, Polarity, containedNames }
 
 package object expansion {
   type ExpansionSequent = Sequent[ExpansionTree]
@@ -15,7 +15,7 @@ package object expansion {
     def shallow = sequent map { _.shallow }
     def deep = sequent map { _.deep }
 
-    def toDisjunction( polarity: Boolean ) =
+    def toDisjunction( polarity: Polarity ) =
       sequent.map( ETNeg( _ ), identity ).
         elements.
         reduceOption( ETOr( _, _ ) ).

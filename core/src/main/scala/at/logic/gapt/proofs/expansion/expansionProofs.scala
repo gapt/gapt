@@ -42,7 +42,8 @@ object linearizeStrictPartialOrder {
 }
 
 case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
-  for ( ( tree, index ) <- expansionSequent.zipWithIndex ) require( tree.polarity == index.isSuc )
+  for ( ( tree, index ) <- expansionSequent.zipWithIndex )
+    require( tree.polarity == index.polarity, s"Wrong polarity, ${index.polarity} expected:\n$tree" )
 
   {
     val evs = mutable.Set[Var]()
@@ -357,7 +358,7 @@ object eliminateCutsET {
       val needExtraCopy = matchingSubstOption.isEmpty
 
       val newCuts = for ( ( subst, ( term, instance ) ) <- substs zip instances ) yield {
-        if ( instance.polarity ) ETImp( matchingSubst( instance ), subst( child ) )
+        if ( instance.polarity.positive ) ETImp( matchingSubst( instance ), subst( child ) )
         else ETImp( subst( child ), matchingSubst( instance ) )
       }
 
@@ -407,23 +408,23 @@ object eliminateDefsET {
 
     var insts = Map() ++ insts0.groupBy( _._1 ).mapValues { repls =>
       val shallow = repls.head._2.shallow
-      ETMerge( shallow, true, repls.map( _._2 ).filter( _.polarity ) ) ->
-        ETMerge( shallow, false, repls.map( _._2 ).filter( !_.polarity ) )
+      ETMerge( shallow, Polarity.Positive, repls.map( _._2 ).filter( _.polarity.positive ) ) ->
+        ETMerge( shallow, Polarity.Negative, repls.map( _._2 ).filter( _.polarity.negative ) )
     }
 
-    val rest = ep.expansionSequent.filterNot { et => !et.polarity && et.shallow == definitionFormula }
+    val rest = ep.expansionSequent.filterNot { et => et.polarity.inAnt && et.shallow == definitionFormula }
     val usesites = rest.elements.flatMap { _.subProofs }.
       collect { case ETDefinedAtom( Apps( `definitionConst`, args ), pol, _ ) => ( args, pol ) }.toSet
     insts = Map() ++
       usesites.map { _._1 }.map { as =>
         val ras = Substitution( vs zip as )( definedFormula )
-        as -> ( ETWeakening( ras, true ), ETWeakening( ras, false ) )
+        as -> ( ETWeakening( ras, Polarity.Positive ), ETWeakening( ras, Polarity.Negative ) )
       } ++
       insts
 
     if ( !pureFolWithoutEq ) {
-      val newNegRepl = ETMerge( definedFormula, false, insts.values.map { _._2 }.map { generalizeET( _, definedFormula ) } )
-      val newPosRepl = ETMerge( definedFormula, true, insts.values.map { _._1 }.map { generalizeET( _, definedFormula ) } )
+      val newNegRepl = ETMerge( definedFormula, Polarity.Negative, insts.values.map { _._2 }.map { generalizeET( _, definedFormula ) } )
+      val newPosRepl = ETMerge( definedFormula, Polarity.Positive, insts.values.map { _._1 }.map { generalizeET( _, definedFormula ) } )
       insts = insts map { case ( as, _ ) => as -> Substitution( vs zip as )( newPosRepl -> newNegRepl ) }
     }
 
@@ -445,7 +446,7 @@ object eliminateDefsET {
       case ETSkolemQuantifier( sh, st, sd, ch ) => ETSkolemQuantifier( replf( sh ), st, sd, repl( ch ) )
 
       case ETDefinedAtom( Apps( `definitionConst`, as ), pol, _ ) =>
-        if ( pol ) insts( as )._1 else insts( as )._2
+        if ( pol.positive ) insts( as )._1 else insts( as )._2
       case ETDefinedAtom( _, _, _ )                          => et
       case ETAtom( Apps( f, _ ), _ ) if f != definitionConst => et
     }

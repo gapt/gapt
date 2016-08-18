@@ -39,13 +39,13 @@ object fixDerivation extends Logger {
       var p = Factor( Subst( Input( from ), s ) )
 
       val needToFlip = for ( ( a, i ) <- p.conclusion.zipWithIndex ) yield a match {
-        case _ if to.contains( a, i isSuc ) => false
-        case Eq( t, s ) if to.contains( Eq( s, t ), i isSuc ) => true
+        case _ if to.contains( a, i.polarity ) => false
+        case Eq( t, s ) if to.contains( Eq( s, t ), i.polarity ) => true
         case _ => return None
       }
 
       for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
-        p = Flip( p, p.conclusion.indexOfPol( a, i isSuc ) )
+        p = Flip( p, p.conclusion.indexOfPol( a, i.polarity ) )
 
       p = Factor( p )
       p
