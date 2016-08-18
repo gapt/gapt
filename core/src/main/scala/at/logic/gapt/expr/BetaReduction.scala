@@ -22,8 +22,6 @@ package at.logic.gapt.expr
  */
 object BetaReduction {
 
-  class ReductionException( msg: String ) extends Exception( msg )
-
   abstract class Strategy extends Enumeration
   object StrategyOuterInner extends Strategy {
     val Outermost = Value
