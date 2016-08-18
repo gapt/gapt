@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.tptp
 
-import java.io.{ BufferedWriter, FileWriter }
+import better.files._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.replaceAbstractions
@@ -32,12 +32,7 @@ class TPTPHOLExporter {
    * @param ls the list of sequents to export
    * @param filename the filename
    */
-  def apply( ls: List[HOLSequent], filename: String ): Unit = {
-    val file = new BufferedWriter( new FileWriter( filename ) )
-    file.write( export_negative( ls ) )
-    file.close
-    ()
-  }
+  def apply( ls: List[HOLSequent], filename: String ) = filename.toFile < export_negative( ls )
 
   /**
    * Exports a sequent as TPTP thf problem to prove validity
@@ -45,12 +40,7 @@ class TPTPHOLExporter {
    * @param seq the sequent to export
    * @param filename the filename
    */
-  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ): Unit = {
-    val file = new BufferedWriter( new FileWriter( filename ) )
-    file.write( export_positive( seq, separate_axioms ) )
-    file.close
-    ()
-  }
+  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ) = filename.toFile < export_positive( seq, separate_axioms )
 
   /**
    * Exports an expansion proof as TPTP thf problem to prove validity
@@ -61,12 +51,8 @@ class TPTPHOLExporter {
    * @param lambda_lifting apply lambda lifting to deep formula and add the definitions into to the antecedent of the formula
    */
   def apply( seq: ExpansionSequent, filename: String,
-             maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ): Unit = {
-    val file = new BufferedWriter( new FileWriter( filename ) )
-    file.write( export( seq, maximize_axiom_declarations, lambda_lifting ) )
-    file.close
-    ()
-  }
+             maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ) =
+    filename.toFile < export( seq, maximize_axiom_declarations, lambda_lifting )
 
   /**
    * Exports an expansion proof as TPTP thf problem. The antedent of the

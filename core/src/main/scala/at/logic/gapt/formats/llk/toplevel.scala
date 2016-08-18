@@ -2,7 +2,8 @@ package at.logic.gapt.formats.llk
 
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.proofs.lk.LKProof
-import java.io.{ InputStream, BufferedWriter => JBufferedWriter, FileWriter => JFileWriter }
+
+import better.files._
 
 import at.logic.gapt.formats.InputFile
 
@@ -31,11 +32,7 @@ object exportLLK {
     """.stripMargin
   def apply( lkproof: LKProof, enable_latex: Boolean ) = LLKExporter( lkproof, enable_latex )
   def apply( lkproof: LKProof ) = LLKExporter( lkproof, true )
-  def apply( lkproof: LKProof, filename: String ) = {
-    val file = new JBufferedWriter( new JFileWriter( filename ) )
-    file.write( LLKExporter( lkproof, true ) )
-    file.close
-  }
+  def apply( lkproof: LKProof, filename: String ) = filename.toFile < LLKExporter( lkproof, true )
 }
 
 object parseLLKExp {
