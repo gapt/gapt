@@ -7,7 +7,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, gaptic }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.expr.hol.{ formulaToSequent, isAtom }
+import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.lk.CutRule
 import org.specs2.mutable._
@@ -79,9 +79,7 @@ class CeresTest extends Specification with SequentMatchers {
   }
 
   "work for the example in issue 555" in {
-    val Some( proof ) = Escargot.getLKProof(
-      formulaToSequent pos hof"f 0 = t & !x (f (s x) = f x) -> f ${Numeral( 9 )} = t"
-    )
+    val Some( proof ) = Escargot.getLKProof( hos"f 0 = t, !x (f (s x) = f x) :- f ${Numeral( 9 )} = t" )
     val Some( proofWithCut ) = CutIntroduction( proof )
     val acnf = CERES( proofWithCut )
     for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue

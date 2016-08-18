@@ -3,7 +3,7 @@ package at.logic.gapt.integration_tests
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Numeral, Utils }
-import at.logic.gapt.expr.hol.{ containsQuantifier, formulaToSequent, lcomp }
+import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof, FOLInstanceTermEncoding }
@@ -88,7 +88,7 @@ class CutIntroTest extends Specification {
     }
 
     "introduce weak quantifiers as low as possible" in {
-      val endSequent = formulaToSequent.pos( hof"!x q(x) & (q(c)->p(0)) & !x (p(x)&q(c)->p(s(x))) -> p(${Numeral( 9 )})" )
+      val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral( 9 )})"
       val Some( proof ) = Escargot.getLKProof( endSequent )
       val Some( proofWithCut ) = CutIntroduction( proof, method = DeltaTableMethod(), verbose = false )
 
@@ -100,7 +100,7 @@ class CutIntroTest extends Specification {
     }
 
     "filter bottom during beautification" in {
-      val Some( expansion ) = Escargot.getExpansionProof( formulaToSequent pos hof"!x (p x -> p (s x)) -> (p 0 -> p ${Numeral( 9 )})" )
+      val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" )
       val weirdExpansion = ExpansionProof(
         ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
           expansion.expansionSequent
