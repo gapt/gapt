@@ -1,7 +1,7 @@
 package at.logic.gapt.examples.poset
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object proof extends TacticsProof {

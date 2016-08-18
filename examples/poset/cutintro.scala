@@ -9,20 +9,9 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.sat.Sat4j
 
-object dtable extends Script {
+object cutintro extends Script {
 
   val constructedProof = eliminateCutsET( LKToExpansionProof( proof.cycleImpliesEqual4 ) )
-  //  println( extractRecSchem( proof.cycleImpliesEqual4 ) )
-  //  InstanceTermEncoding( proof.cycleImpliesEqual4 )._1.toSeq sortBy { _.toString } foreach println
-
-  if ( false ) {
-    val removeEq = Map( EqC( Ti ) -> FOLAtomConst( "E", 2 ) )
-    val Some( automaticProof ) =
-      Prover9.getExpansionProof(
-        TermReplacement( proof.cycleImpliesEqual4.endSequent, removeEq.toMap )
-      ) map { TermReplacement( _, removeEq.map( _.swap ) ) }
-    val Some( autoMin ) = minimalExpansionSequent( automaticProof, Sat4j )
-  }
 
   CutIntroduction(
     constructedProof,
