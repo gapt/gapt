@@ -1,8 +1,6 @@
 
 package at.logic.gapt.integration_tests
 
-import java.io.InputStreamReader
-
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.cutintro._
@@ -112,8 +110,7 @@ class MiscTest extends Specification {
 
     "load veriT proofs pi and verify the validity of Deep(pi) using sat4j" in {
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
-        val p = VeriTParser.getExpansionProof( new InputStreamReader( getClass.getClassLoader getResourceAsStream s"test${i}.verit" ) ).get
-        val taut_p = addSymmetry( p )
+        val taut_p = VeriTParser.getExpansionProofWithSymmetry( ClasspathInputFile( s"test$i.verit" ) ).get
         val seq = taut_p.deep
 
         Sat4j.isValid( seq ) must beTrue

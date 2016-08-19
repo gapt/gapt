@@ -23,3 +23,13 @@ case class OnDiskInputFile( file: File ) extends InputFile {
   def fileName = file.pathAsString
   def read = file.contentAsString
 }
+
+case class ClasspathInputFile( fileName: String, classLoader: ClassLoader ) extends InputFile {
+  def read = classLoader.getResourceAsStream( fileName ).content.mkString
+}
+object ClasspathInputFile {
+  def apply( fileName: String ): ClasspathInputFile =
+    ClasspathInputFile( fileName, Thread.currentThread.getContextClassLoader )
+  def apply( fileName: String, relativeToClass: Class[_] ): ClasspathInputFile =
+    ClasspathInputFile( fileName, relativeToClass.getClassLoader )
+}

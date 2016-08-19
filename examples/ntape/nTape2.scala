@@ -2,16 +2,17 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.expr.fol.replaceAbstractions
 import at.logic.gapt.expr.{ Abs, Const, HOLAtom, LambdaExpression, To }
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import at.logic.gapt.formats.llk.loadLLK
-import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionTree, ExpansionProofWithCut }
+import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProofWithCut, ExpansionTree }
 
 /**
  * Version 2 of the higher-order n-Tape proof.
  */
 class nTape2 extends AnalysisWithCeresOmega {
 
-  override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream "ntape/ntape2.llk" )
+  override def proofdb() = loadLLK( ClasspathInputFile( "ntape/ntape2.llk" ) )
 
   override def root_proof() = "TAPEPROOF"
 

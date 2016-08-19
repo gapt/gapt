@@ -1,11 +1,11 @@
 package at.logic.gapt.cli
 
 import at.logic.gapt.examples.Script
+import at.logic.gapt.formats.ClasspathInputFile
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
 import at.logic.gapt.utils.logging.Logger
-
 import better.files._
 
 object CLIMain extends Logger {
@@ -22,7 +22,7 @@ object CLIMain extends Logger {
  conditions; type `copying' for details.
 """
 
-  val imports = getClass.getClassLoader.getResourceAsStream( "gapt-cli-prelude.scala" ).content.mkString
+  val imports = ClasspathInputFile( "gapt-cli-prelude.scala", getClass ).read
 
   def main( args: Array[String] ): Unit = {
     val settings = new Settings

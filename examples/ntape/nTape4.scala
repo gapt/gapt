@@ -2,6 +2,7 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.expr.hol.freeHOVariables
 import at.logic.gapt.expr.{ Eq, Ti, Var }
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.loadLLK
 import at.logic.gapt.proofs.ceres.{ deleteTautologies, subsumedClausesRemoval }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
@@ -14,7 +15,7 @@ import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 class nTape4( val size: Int ) extends AnalysisWithCeresOmega {
   require( 1 < size && size < 5, "We have only instances 2 to 4." )
 
-  override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream s"ntape/ntape4-$size.llk" )
+  override def proofdb() = loadLLK( ClasspathInputFile( s"ntape/ntape4-$size.llk" ) )
 
   override def root_proof() = "TAPEPROOF"
 
