@@ -19,29 +19,29 @@ class TapeTest extends Specification with SequentMatchers {
       val proof_sk = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
       //println( LatexLLKExporter( proof_sk, true ) )
 
-      println( proof_sk )
+      //      println( proof_sk )
       val s = StructCreators.extract( proof_sk )
 
-      println( s"struct: $s" )
+      //      println( s"struct: $s" )
       val cs_ = CharacteristicClauseSet( s )
-      println( cs_.size )
+      //      println( cs_.size )
       val cs = deleteTautologies( cs_ )
-      cs.map( x => println( s"Clause: $x" ) )
+      //      cs.map( x => println( s"Clause: $x" ) )
       val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
-      println( s"tptp string:\n$tptp" )
+      //      println( s"tptp string:\n$tptp" )
       //      val writer = new java.io.FileWriter( "target" + separator + "tape-cs.tptp" )
       //      writer.write( tptp.toString )
       //      writer.flush
       val projs = Projections( proof_sk )
       //projs.toList.map( x => { println( x.endSequent diff proof_sk.endSequent ) } )
-      println( LatexLLKExporter( projs.toList( 0 ), true ) )
+      //      println( LatexLLKExporter( projs.toList( 0 ), true ) )
       cs.map( x => {
-        print( s"projection for clause $x " )
+        //        print( s"projection for clause $x " )
         projs.exists( _.endSequent.diff( proof_sk.endSequent ) setEquals x ) match {
-          case true =>
-            println( " found!" );
+          case true  =>
+          //            println( " found!" );
           case false =>
-            println( " not found!" )
+          //            println( " not found!" )
         }
         //cs.asInstanceOf[Set[HOLSequent]].contains( pes ) must beTrue
       } )
