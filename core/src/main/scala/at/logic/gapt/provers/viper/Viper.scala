@@ -180,22 +180,22 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
     val spwi = ProofByRecursionScheme( sequent, homogenized, implicitly )
 
-    val qbup @ Ex( x_G, qbupMatrix ) = spwi.solutionCondition
+    val qbup @ Ex( x_B, qbupMatrix ) = spwi.solutionCondition
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
-    val axiomArgs = homogenized.rules.collectFirst { case Rule( Apps( Const( "A", _ ), args ), _ ) => args }.get
-
+    val axiomArgs = for ( ( t, i ) <- paramTypes.zipWithIndex ) yield Var( s"y_$i", t )
     val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
+    val pi1QTys = FunctionType.unapply( x_B.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
+    val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
+    val xInst = x_B( axiomArgs: _* )( canSolInst: _* )( ws: _* ).asInstanceOf[HOLFormula]
+
     info( s"Canonical solution at $canSolInst:" )
-    val B = homogenized.nonTerminals.find( _.name == "B" ).get
-    val pi1QTys = FunctionType.unapply( B.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
-    val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w$i", t )
-    val canSol = And( homogenized generatedTerms B( axiomArgs )( canSolInst )( ws ) )
+    val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
     info()
 
-    val Some( solution ) = hSolveQBUP( qbupMatrix, x_G( axiomArgs: _* )( canSolInst: _* )( ws: _* ), canSol, forgetOne = options.forgetOne )
+    val Some( solution ) = hSolveQBUP( qbupMatrix, xInst, Z3 )
     info()
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )

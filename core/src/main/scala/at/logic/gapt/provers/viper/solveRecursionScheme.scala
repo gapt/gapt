@@ -4,10 +4,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
 import at.logic.gapt.proofs.lk.skolemize
-import at.logic.gapt.proofs.{ Context, FiniteContext, HOLClause }
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
-import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.provers.verit.VeriT
+import at.logic.gapt.provers.Prover
 
 import scala.collection.mutable
 
@@ -137,60 +136,106 @@ object qbupForRecSchem {
 }
 
 object hSolveQBUP {
-
-  private def getConjuncts( f: HOLFormula ): Set[HOLFormula] = f match {
-    case All( _, g )                                 => getConjuncts( g )
-    case And( g1, g2 )                               => getConjuncts( g1 ) union getConjuncts( g2 )
-    case _ if !containsQuantifierOnLogicalLevel( f ) => Set( f )
-  }
-
-  def findConseq( start: HOLFormula, cond: HOLFormula, Xinst: LambdaExpression, subst: Substitution, forgetOne: Boolean ): Set[HOLFormula] = {
+  def findConseq( start: HOLFormula, conds: Seq[( Set[Substitution], HOLFormula )],
+                  prover: Prover ): Set[HOLFormula] = {
     val isSolution = mutable.Map[Set[HOLClause], Boolean]()
+    def checkSol( cnf: Set[HOLClause] ) = isSolution.getOrElseUpdate( cnf, {
+      val cnfForm = And( cnf.map( _.toDisjunction ) )
+      val cond = And( for ( ( substs, f ) <- conds ) yield And( substs.map( _( cnfForm ) ) ) --> f )
+      prover.isValid( cond )
+    } )
 
-    def checkSol( cnf: Set[HOLClause] ): Unit =
-      if ( !isSolution.contains( cnf ) ) {
-        val substCnfFormula = subst( And( cnf map { _.toDisjunction } ) )
-        if ( VeriT isValid TermReplacement( cond, Map( Xinst -> substCnfFormula ) ) ) {
-          isSolution( cnf ) = true
-          forgetfulPropResolve( cnf ) foreach checkSol
-          forgetfulPropParam( cnf ) foreach checkSol
-          if ( forgetOne ) for ( c <- cnf ) checkSol( cnf - c )
-        } else {
-          isSolution( cnf ) = false
+    val didInferences = mutable.Set[Set[HOLClause]]()
+    def forgetfulInferences( cnf: Set[HOLClause] ): Unit =
+      if ( !didInferences( cnf ) ) {
+        if ( checkSol( cnf ) ) {
+          forgetfulPropResolve( cnf ) foreach forgetfulInferences
+          forgetfulPropParam( cnf ) foreach forgetfulInferences
         }
+        didInferences += cnf
       }
+    forgetfulInferences( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
 
-    checkSol( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
+    val didForget = mutable.Set[Set[HOLClause]]()
+    def forgetClauses( cnf: Set[HOLClause] ): Unit =
+      if ( !didForget( cnf ) ) {
+        if ( checkSol( cnf ) ) for ( c <- cnf ) forgetClauses( cnf - c )
+        didForget += cnf
+      }
+    for ( ( cnf, true ) <- isSolution.toSeq ) forgetClauses( cnf )
 
-    isSolution collect { case ( sol, true ) => And( sol map { _.toDisjunction } ) } toSet
+    isSolution collect { case ( sol, true ) => simplify( And( sol map { _.toImplication } ) ) } toSet
   }
 
-  def apply( qbupMatrix: HOLFormula, xInst: LambdaExpression, start: HOLFormula, forgetOne: Boolean ): Option[LambdaExpression] = {
-    val Apps( x: Var, xInstArgs ) = xInst
-    val conjuncts = getConjuncts( qbupMatrix )
-
-    // FIXME: more than one condition
-    val ( searchCondition, searchSubst ) = conjuncts flatMap { c =>
-      val xOccs = subTerms( c ) collect { case occ @ Apps( `x`, args ) if args.size == xInstArgs.size => occ }
-      // FIXME: two-sided mgu
-      syntacticMGU( xOccs map { _ -> xInst } ) map { mgu =>
-        mgu( c ) -> mgu
+  def getSequents( qbupMatrix: HOLFormula, x: Var ): Seq[HOLSequent] = {
+    val qbupSequents = And.nAry.unapply( qbupMatrix ).get.
+      map { case All.Block( _, matrix ) => formulaToSequent.pos( matrix ) }
+    for ( seq <- qbupSequents; formula <- seq )
+      formula match {
+        case Apps( `x`, _ ) =>
+        case other =>
+          require( !containsQuantifier( other ) )
+          require( !freeVariables( other ).contains( x ) )
       }
-    } head
+    qbupSequents
+  }
 
-    val conseqs = findConseq( start, searchCondition, searchSubst( xInst ), searchSubst, forgetOne )
+  def canonicalSolution( qbupMatrix: HOLFormula, xInst: HOLFormula ): HOLFormula = {
+    val Apps( x: Var, xInstArgs ) = xInst
+    val qbupSequents = getSequents( qbupMatrix, x )
 
-    val xGenArgs = xInstArgs.zipWithIndex.map { case ( a, i ) => Var( s"x$i", a.exptype ) }
+    val posOccurs = for {
+      seq <- qbupSequents
+      ( occ @ Apps( `x`, _ ), idx ) <- seq.zipWithIndex.succedent
+    } yield occ -> seq.delete( idx )
+    def mkCanSol( xInst: HOLFormula ): HOLFormula =
+      ( for {
+        ( occ, seq ) <- posOccurs.view
+        subst <- syntacticMatching( occ, xInst )
+      } yield subst( seq ).map {
+        case nextOcc @ Apps( `x`, _ ) => mkCanSol( nextOcc )
+        case notX                     => notX
+      }.toNegConjunction ).headOption.getOrElse(
+        throw new IllegalArgumentException( s"Cannot backchain $xInst in:\n\n${qbupSequents.mkString( "\n\n" )}" )
+      )
+
+    mkCanSol( xInst )
+  }
+
+  def apply( qbupMatrix: HOLFormula, xInst: HOLFormula, prover: Prover ): Option[LambdaExpression] = {
+    val Apps( x: Var, xInstArgs ) = xInst
+    val qbupSequents = getSequents( qbupMatrix, x )
+
+    val start = canonicalSolution( qbupMatrix, xInst )
+
+    def mkSearchCond( substs0: Set[Substitution], seq0: HOLSequent ): Option[( Set[Substitution], HOLFormula )] = {
+      val renaming = Substitution( rename( freeVariables( seq0 ) - x, freeVariables( xInst ) ) )
+      val seq = renaming( seq0 )
+      val substs = substs0.map( renaming.compose )
+
+      seq.indicesWhere { case Apps( hd, _ ) => hd == x } match {
+        case occs if occs.exists( _.isSuc ) => None
+        case Seq()                          => Some( substs -> seq.toImplication )
+        case Seq( occ, _* ) =>
+          syntacticMGU( xInst, seq( occ ) ).flatMap( subst =>
+            mkSearchCond( substs.map( subst.compose ) + subst, subst( seq.delete( occ ) ) ) )
+      }
+    }
+
+    val searchConds = qbupSequents.flatMap( mkSearchCond( Set(), _ ) )
+
+    val conseqs = findConseq( start, searchConds, prover )
+
+    val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.exptype )
     val xGen = x( xGenArgs: _* )
     val Some( matching ) = syntacticMatching( xGen, xInst )
     conseqs.toSeq.sortBy( lcomp( _ ) ).foreach { conseq =>
       val genConseq = TermReplacement( conseq, matching.map.map( _.swap ) )
       val sol = Abs( xGenArgs, genConseq )
-      if ( Z3 isValid skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) {
+      if ( prover.isValid( skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) ) {
         return Some( sol )
       }
     }
     None
   }
-
 }
