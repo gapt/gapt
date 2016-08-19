@@ -1,6 +1,7 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.epsilon.Epsilon
 import at.logic.gapt.proofs.expansion.linearizeStrictPartialOrder
 
 /**
@@ -27,6 +28,13 @@ case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
     skolemDefs.keySet,
     for ( ( s, d ) <- skolemDefs; s_ <- constants( d ) if skolemDefs contains s_ ) yield s -> s_
   )
+
+  def epsilonDefinitions =
+    for ( skConst <- dependencyOrder )
+      yield skConst -> ( skolemDefs( skConst ) match {
+      case Abs.Block( vs, Ex( v, f ) )  => Abs.Block( vs, Epsilon( v, f ) )
+      case Abs.Block( vs, All( v, f ) ) => Abs.Block( vs, Epsilon( v, -f ) )
+    } )
 
   override def toString =
     ( for ( s <- dependencyOrder ) yield s"$s → ${skolemDefs( s )}\n" ).mkString

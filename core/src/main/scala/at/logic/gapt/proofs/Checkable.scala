@@ -2,6 +2,7 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.epsilon.EpsilonC
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
@@ -28,6 +29,7 @@ object Checkable {
     def check( context: Context, expr: LambdaExpression ): Unit =
       expr match {
         case _: LogicalConstant =>
+        case EpsilonC( _ )      =>
         case c @ Const( "=", _ ) =>
           require( EqC.unapply( c ).isDefined )
         case c @ Const( name, _ ) =>
@@ -59,15 +61,11 @@ object Checkable {
 
       var ctx = context
 
-      val skolemFuns = SkolemFunctions( p.subProofs.collect {
+      val skolemFunctions = SkolemFunctions( p.subProofs.collect {
         case sk: SkolemQuantifierRule =>
           sk.skolemConst -> sk.skolemDef
       } )
-      // FIXME: just make sure they are fresh for now
-      for ( ( c, skD ) <- skolemFuns.skolemDefs ) {
-        ctx.check( skD )
-        ctx += c
-      }
+      for ( ( c, epsD ) <- skolemFunctions.epsilonDefinitions ) ctx += ( c.name, epsD )
 
       for ( q <- p.subProofs )
         ctx.check( q.endSequent )
@@ -111,11 +109,7 @@ object Checkable {
       context.check( ep.shallow )
 
       var ctx = context
-      // FIXME: just make sure they are fresh for now
-      for ( ( c, skD ) <- ep.skolemFunctions.skolemDefs ) {
-        ctx.check( skD )
-        ctx += c
-      }
+      for ( ( c, epsD ) <- ep.skolemFunctions.epsilonDefinitions ) ctx += ( c.name, epsD )
 
       ep.subProofs.foreach {
         case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
@@ -144,11 +138,7 @@ object Checkable {
     def check( context0: Context, p: ResolutionProof ) = {
       var ctx = context0
 
-      // FIXME: just make sure they are fresh for now
-      for ( ( c, skD ) <- p.skolemFunctions.skolemDefs ) {
-        ctx.check( skD )
-        ctx += c
-      }
+      for ( ( c, epsD ) <- p.skolemFunctions.epsilonDefinitions ) ctx += ( c.name, epsD )
 
       for ( Defn( defConst, defn ) <- p.subProofs )
         ctx += ( defConst.name, defn )
