@@ -179,8 +179,8 @@ object VeriTParser extends RegexParsers {
     getExpansionProof( new StringReader( file.read ) )
   }
 
-  def getExpansionProofWithSymmetry( fileName: String ): Option[ExpansionSequent] =
-    getExpansionProof( fileName ) map { addSymmetry( _ ) }
+  def getExpansionProofWithSymmetry( file: InputFile ): Option[ExpansionSequent] =
+    getExpansionProof( file ) map { addSymmetry( _ ) }
 
   // NOTE: The expansion proof returned is a tautology modulo symmetry!!!!
   def getExpansionProof( reader: Reader ): Option[ExpansionSequent] = {

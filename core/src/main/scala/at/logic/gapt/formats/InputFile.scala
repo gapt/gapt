@@ -7,6 +7,7 @@ trait InputFile {
   def fileName: String
 }
 object InputFile {
+  @deprecated( "Disambiguate file names from strings by using file\"proof.s\" or \"proof.s\".toFile", since = "2.3" )
   implicit def fromFileName( fileName: String ): OnDiskInputFile = OnDiskInputFile( fileName.toFile )
   implicit def fromFile( file: File ): OnDiskInputFile = OnDiskInputFile( file )
   def fromString( content: String ) = StringInputFile( content )

@@ -18,6 +18,7 @@ import at.logic.gapt.provers.viper.ViperOptions.FloatRange
 
 import scala.collection.mutable
 import scala.io.StdIn
+import better.files._
 
 case class ViperOptions(
   instanceNumber:   Int                = 3,
@@ -266,7 +267,7 @@ object Viper {
       case Seq( "-" ) =>
         parseCode( StringInputFile( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString ), options )
       case Seq( fn ) =>
-        parseCode( fn, options )
+        parseCode( fn.toFile, options )
       case cmdLineOptRegex( k, v ) +: rest =>
         parseArgs( rest, options + ( k -> v ) )
     }

@@ -21,6 +21,7 @@ import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import better.files._
+import better.files._
 
 class MetricsPrinter extends MetricsCollector {
   val data = mutable.Map[String, Any]()
@@ -86,7 +87,7 @@ object testCutIntro extends App {
       metrics.value( "lkinf_input", rulesNumber( p ) )
       CutIntroduction.InputProof.fromLK( p )
     case _ =>
-      val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( fileName )
+      val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( fileName.toFile )
       CutIntroduction.InputProof( exp, bgTh )
   }
 

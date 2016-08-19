@@ -111,7 +111,7 @@ class LeanCoPTestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
 class VeriTTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
   override def test( implicit testRun: TestRun ) = {
-    val E = addSymmetry( VeriTParser.getExpansionProof( f ).get ) --- "import"
+    val E = VeriTParser.getExpansionProofWithSymmetry( f ).get --- "import"
 
     val deep = E.deep --- "toDeep"
     MiniSAT.isValid( deep.toDisjunction ) !-- "minisat validity"

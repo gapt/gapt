@@ -7,6 +7,8 @@ import at.logic.gapt.proofs.loadExpansionProof
 
 import scala.App
 
+import better.files._
+
 object dumpTermset extends App {
   val Array( inputFileName, outputFileName ) = args
 
@@ -27,7 +29,7 @@ object dumpTermset extends App {
     Files.write( outFile, termset.map( termToString ).toSeq.
       sorted.map( _ + "\n" ).mkString.getBytes( "UTF-8" ) )
 
-  val expansionProof = loadExpansionProof( inputFileName )
+  val expansionProof = loadExpansionProof( inputFileName.toFile )
   val termSet = FOLInstanceTermEncoding( expansionProof )._1
   writeTermset( Paths get outputFileName, simplifyNames( termSet ) )
 }
