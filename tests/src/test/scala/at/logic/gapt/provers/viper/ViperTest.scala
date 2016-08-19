@@ -2,6 +2,7 @@ package at.logic.gapt.provers.viper
 
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
 import org.specs2.mutable.Specification
@@ -20,6 +21,8 @@ class ViperTest extends Specification {
     ) ) { prob =>
       prob in {
         var extraOptions = Map( "verbose" -> "false", "fixup" -> "false" )
+        if ( prob.startsWith( "prod_prop_31" ) && !OpenWBO.isInstalled )
+          skipped( "only works with open-wbo at the moment" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )
