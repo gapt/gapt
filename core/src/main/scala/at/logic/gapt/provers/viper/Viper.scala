@@ -6,7 +6,7 @@ import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
@@ -114,52 +114,50 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     }
 
     while ( true ) {
-      val rs = findRecursionScheme( instanceProofs )
+      val spwi = findSPWI( instanceProofs )
 
       for ( ( inst, _ ) <- instanceProofs ) {
-        val genLang = rs.parametricLanguage( inst: _* )
+        val genLang = spwi.generatedLanguage( inst )
         require(
           smtSolver.isValid( And( genLang ) --> instantiate( conj, inst ) ),
           s"Generated instance language for $inst not tautological"
         )
       }
 
-      findMinimalCounterexample( instanceProofs.keys, rs ) match {
+      findMinimalCounterexample( instanceProofs.keys, spwi ) match {
         case Some( inst ) =>
           instanceProofs( inst ) = getInstanceProof( inst )
 
         case None =>
-          return solveRecSchem( rs )
+          return solveSPWI( spwi )
       }
     }
     throw new IllegalArgumentException
   }
 
-  def findRecursionScheme( instanceProofs: Iterable[( Instance, ExpansionProof )] ): RecursionScheme = {
+  def findSPWI( instanceProofs: Iterable[( Instance, ExpansionProof )] ): SchematicProofWithInduction = {
     val taggedLanguage =
       for {
         ( inst, es ) <- instanceProofs
         term <- encoding.encode( es.expansionSequent.antecedent ++: Sequent() )
       } yield inst -> term
 
-    val rs = grammarFinder.find( taggedLanguage.toSet )
+    val spwi = grammarFinder.find( sequent, encoding, implicitly[FiniteContext], taggedLanguage.toSet )
 
-    info( s"Found recursion scheme:\n$rs\n" )
+    info( s"Found schematic proof with induction:\n$spwi\n" )
     for ( ( Apps( _, inst ), terms ) <- taggedLanguage groupBy { _._1 } ) {
-      val genLang = rs.parametricLanguage( inst: _* )
+      val genLang = spwi.generatedLanguage( inst ).map( encoding.encode )
       require(
         terms.map { _._2 }.toSet subsetOf genLang,
         s"Terms not covered by recursion scheme in $inst:\n${terms.map { _._2.toSigRelativeString }.mkString( "\n" )}"
       )
     }
 
-    val logicalRS = encoding decode rs
-    info( s"Logical recursion scheme:\n$logicalRS\n" )
-    logicalRS
+    spwi
   }
 
-  def findMinimalCounterexample( correctInstances: Iterable[Instance], logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
-    def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( logicalRS.parametricLanguage( inst: _* ) ) --> instantiate( conj, inst ) )
+  def findMinimalCounterexample( correctInstances: Iterable[Instance], spwi: SchematicProofWithInduction ): Option[Seq[LambdaExpression]] = {
+    def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
     val failedInstOption = ( 0 to options.tautCheckNumber ).
       map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
@@ -181,11 +179,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     }
   }
 
-  def solveRecSchem( rs: RecursionScheme ) = {
-    val homogenized = homogenizeRS( rs )
-
-    val spwi = ProofByRecursionScheme( sequent, homogenized, implicitly )
-
+  def solveSPWI( spwi: SchematicProofWithInduction ) = {
     val qbup @ Ex( x_B, qbupMatrix ) = spwi.solutionCondition
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 

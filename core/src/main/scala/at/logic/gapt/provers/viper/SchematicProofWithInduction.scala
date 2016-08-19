@@ -13,6 +13,9 @@ trait SchematicProofWithInduction {
   def endSequent: HOLSequent
   def solutionCondition: HOLFormula
   def lkProof( solution: Seq[LambdaExpression], prover: Prover ): LKProof
+
+  def paramVars: Seq[Var]
+  def generatedLanguage( inst: Seq[LambdaExpression] ): Set[HOLFormula]
 }
 
 case class ProofByRecursionScheme(
@@ -34,7 +37,10 @@ case class ProofByRecursionScheme(
     if recSchem.nonTerminals.contains( nt1 )
     if recSchem.nonTerminals.contains( nt2 )
   } yield nt2 -> nt1
-  val Right( dependencyOrder ) = linearizeStrictPartialOrder( recSchem.nonTerminals, dependencyRelation )
+  val Right( dependencyOrder ) = linearizeStrictPartialOrder(
+    recSchem.nonTerminals,
+    dependencyRelation ++ recSchem.nonTerminals.filter( _ != recSchem.axiom ).map( _ -> recSchem.axiom )
+  )
 
   val hoVarMapping = for {
     nt @ Const( v, t ) <- dependencyOrder.reverse
@@ -137,4 +143,6 @@ case class ProofByRecursionScheme(
     cleanStructuralRules( state.result )
   }
 
+  def generatedLanguage( inst: Seq[LambdaExpression] ) =
+    recSchem.parametricLanguage( inst: _* ).map( _.asInstanceOf[HOLFormula] )
 }

@@ -23,7 +23,7 @@ case class MaxSatRecSchemFinder(
   val A = Const( "A", FunctionType( instanceType, paramTys ) )
   val template = simplePi1RecSchemTempl( A( vs ), pi1QTys )
 
-  def find( taggedLanguage: Set[( Seq[LambdaExpression], LambdaExpression )] ): RecursionScheme = {
+  def findRS( taggedLanguage: Set[( Seq[LambdaExpression], LambdaExpression )] ): RecursionScheme = {
     val targets = for ( ( ts, r ) <- taggedLanguage ) yield A( ts ) -> r
     template.findMinimalCoverViaInst( targets, weight = grammarWeighting )
   }
@@ -44,8 +44,8 @@ object simplePi1RecSchemTempl {
     val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )
 
     val indLemmaRules = axiomArgTys.zipWithIndex.flatMap {
-      case ( indLemmaArgTy: TBase, indLemmaArgIdx ) =>
-        ctx.typeDef( indLemmaArgTy.name ).get match {
+      case ( indLemmaArgTy, indLemmaArgIdx ) =>
+        ctx.typeDef( indLemmaArgTy.asInstanceOf[TBase].name ).get match {
           case Context.Sort( _ ) => Seq()
           case Context.InductiveType( indTy, ctrs ) =>
             ctrs flatMap { ctr =>
