@@ -1,6 +1,7 @@
 package at.logic.gapt.examples
 import org.specs2.mutable._
 
-class Pi2PigeonholeTest extends Specification {
-  "produce a proof" in { Pi2Pigeonhole; ok }
+class PigeonholeTest extends Specification {
+  "pi2" in { Pi2Pigeonhole.ctx.check( Pi2Pigeonhole.proof ); ok }
+  "pi3" in { Pi3Pigeonhole.ctx.check( Pi3Pigeonhole.proof ); ok }
 }

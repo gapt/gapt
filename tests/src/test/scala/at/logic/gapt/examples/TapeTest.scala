@@ -6,7 +6,7 @@ import org.specs2.mutable.Specification
 class TapeTest extends Specification {
 
   "tape" in {
-    tape
+    tape.ctx.check( tape.p )
     ok
   }
 
@@ -19,7 +19,7 @@ class TapeTest extends Specification {
 
 class TapeUrbanTest extends Specification {
   "urban tape" in {
-    tapeUrban
+    tapeUrban.ctx.check( tapeUrban.sigma )
     ok
   }
 

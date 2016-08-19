@@ -1,13 +1,15 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFp, isPrenex, containsWeakQuantifier }
+import at.logic.gapt.expr.hol.{ CNFp, containsWeakQuantifier, isPrenex }
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
-import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom }
+import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKProof, TheoryAxiom }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
+
+import scalaz.ValidationNel
 
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
@@ -20,8 +22,6 @@ import at.logic.gapt.provers.escargot.Escargot
  *
  * Hence we store all information necessary to validate these inferences inside a
  * [[Context]] object.  For completeness, it also includes the collection of constant symbols.
- *
- * TODO: implement validation
  *
  * Having this information available is also important for a second reason: it allows
  * us make decisions based on the current context:
@@ -50,11 +50,19 @@ trait Context extends BabelSignature {
 
   def typeDef( ty: TBase ): Option[TypeDef] = typeDef( ty.name )
 
+  def +( const: Const ): Context
+  def +( defn: ( String, LambdaExpression ) ): Context
+
+  def normalize( expression: LambdaExpression ): LambdaExpression
+
   override def apply( s: String ): babel.VarConst =
     constant( s ) match {
       case Some( c ) => babel.IsConst( babel.ast.liftType( c.exptype ) )
       case None      => babel.IsVar( babel.ast.freshTypeVar() )
     }
+
+  def check[T: Checkable]( t: T ): Unit =
+    implicitly[Checkable[T]].check( this, t )
 }
 
 /**
@@ -164,8 +172,7 @@ case class FiniteContext(
     )
 
     require( freeVariables( by ).isEmpty, s"In definition $name -> $by: contains free variables ${freeVariables( by )}" )
-    for ( c <- at.logic.gapt.expr.constants( by ) if EqC.unapply( c ).isEmpty )
-      require( constant( c.name ) contains c, s"In definition $name -> $by: constant $c not defined yet" )
+    check( by )
     copy( constants = constants + what, definitions = definitions + ( what -> by ) )
   }
 
@@ -176,6 +183,9 @@ case class FiniteContext(
 
   def +( newTheory: BackgroundTheory ): FiniteContext =
     copy( backgroundTheory = newTheory )
+
+  def normalize( expression: LambdaExpression ): LambdaExpression =
+    BetaReduction.betaNormalize( DefinitionElimination( definitions )( expression ) )
 }
 
 object Context {

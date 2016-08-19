@@ -214,6 +214,8 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
     if ( options.prooftool ) prooftool( proof )
 
+    ctx.check( proof )
+
     proof
   }
 

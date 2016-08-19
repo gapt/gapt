@@ -8,7 +8,8 @@ class PrimeTest extends Specification {
   "prime proof" in {
     Fragments.foreach( 0 to 5 ) { i =>
       s"n = $i" in {
-        prime.prime( i ).proof
+        val primeI = prime.prime( i )
+        primeI.ctx.check( primeI.proof )
         ok
       }
     }
@@ -17,7 +18,8 @@ class PrimeTest extends Specification {
   "euclid proof" in {
     Fragments.foreach( 0 to 5 ) { i =>
       s"n = $i" in {
-        prime.euclid( i ).proof
+        val euclidI = prime.euclid( i )
+        euclidI.ctx.check( euclidI.proof )
         ok
       }
     }
