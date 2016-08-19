@@ -28,17 +28,8 @@ object VeriTParser extends RegexParsers {
   // Assuming all the antecedents of the implication are ordered:
   // ( =(x0, x1)  ^  =(x1, x2)  ^ ... ^  =(xn-1, xn)  ->  =(x0, xn) )
   // in veriT is *always* ( not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) )
-  val transAx = fof"!x!y!z (x=y & y=z -> x=z)"
+  private val transAx = fof"!x!y!z (x=y & y=z -> x=z)"
   def getEqTransInstances( l: List[FOLFormula] ): Instances = {
-    val x = FOLVar( "x" )
-    val y = FOLVar( "y" )
-    val z = FOLVar( "z" )
-    val eq1 = Eq( x, y )
-    val eq2 = Eq( y, z )
-    val eq3 = Eq( x, z )
-    val imp = Imp( And( eq1, eq2 ), eq3 )
-    val eq_trans = All( x, All( y, All( z, imp ) ) )
-
     // Transforms a transitivity chain (represented as a list):
     //
     // [ not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) ]
@@ -105,7 +96,7 @@ object VeriTParser extends RegexParsers {
     }
 
     val instances = unfoldChain( l )
-    instances map { eq_trans -> _ }
+    instances map { transAx -> _ }
   }
 
   // Assuming all the antecedents of the implication are ordered:
