@@ -259,7 +259,7 @@ object Viper {
     }
   def parseCode( tipSmtCode: InputFile, options: Map[String, String] ): ( TipProblem, ViperOptions ) = {
     val options_ = ViperOptions.parse(
-      Map( "fixup" -> ( !TipSmtParser.isInstalled ).toString )
+      Map( "fixup" -> TipSmtParser.isInstalled.toString )
         ++ options ++ extractOptions( tipSmtCode )
     )
     val problem =
