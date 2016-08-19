@@ -12,8 +12,8 @@ import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
+import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.ViperOptions.FloatRange
 
 import scala.collection.mutable
@@ -23,7 +23,7 @@ import better.files._
 case class ViperOptions(
   instanceNumber:   Int                = 3,
   instanceSize:     FloatRange         = ( 0, 3 ),
-  instanceProver:   String             = "spass_nopred",
+  instanceProver:   String             = "escargot",
   findingMethod:    String             = "maxsat",
   quantTys:         Option[Seq[TBase]] = None,
   grammarWeighting: Rule => Int        = _ => 1,
@@ -32,6 +32,7 @@ case class ViperOptions(
   canSolSize:       FloatRange         = ( 2, 4 ),
   forgetOne:        Boolean            = false,
   prooftool:        Boolean            = false,
+  fixup:            Boolean            = false,
   verbose:          Boolean            = true
 )
 object ViperOptions {
@@ -58,6 +59,7 @@ object ViperOptions {
     case "cansolsize" => opts.copy( canSolSize = parseRange( v ) )
     case "forgetone"  => opts.copy( forgetOne = v.toBoolean )
     case "prooftool"  => opts.copy( prooftool = v.toBoolean )
+    case "fixup"      => opts.copy( fixup = v.toBoolean )
   }
 
   def parse( opts: Map[String, String] ) =
@@ -94,6 +96,10 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       msrsf
   }
 
+  val smtSolver =
+    if ( VeriT.isInstalled ) VeriT
+    else new Escargot( splitting = true, propositional = true, equality = true )
+
   def solve(): LKProof = {
     info( sequent )
     info()
@@ -113,7 +119,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       for ( ( inst, _ ) <- instanceProofs ) {
         val genLang = rs.parametricLanguage( inst: _* )
         require(
-          Z3.isValid( And( genLang ) --> instantiate( conj, inst ) ),
+          smtSolver.isValid( And( genLang ) --> instantiate( conj, inst ) ),
           s"Generated instance language for $inst not tautological"
         )
       }
@@ -153,7 +159,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   }
 
   def findMinimalCounterexample( correctInstances: Iterable[Instance], logicalRS: RecursionScheme ): Option[Seq[LambdaExpression]] = {
-    def checkInst( inst: Seq[LambdaExpression] ): Boolean = Z3.isValid( And( logicalRS.parametricLanguage( inst: _* ) ) --> instantiate( conj, inst ) )
+    def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( logicalRS.parametricLanguage( inst: _* ) ) --> instantiate( conj, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
     val failedInstOption = ( 0 to options.tautCheckNumber ).
       map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
@@ -195,13 +201,13 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       info( cls map { _.toSigRelativeString } )
     info()
 
-    val Some( solution ) = hSolveQBUP( qbupMatrix, xInst, Z3 )
+    val Some( solution ) = hSolveQBUP( qbupMatrix, xInst, smtSolver )
     info()
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    require( Z3 isValid skolemize( formula ), s"Solution not valid" )
+    require( smtSolver isValid skolemize( formula ), s"Solution not valid" )
 
     val proof = spwi.lkProof( Seq( solution ), EquationalLKProver )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
@@ -232,7 +238,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       case "escargot" =>
         Escargot.getExpansionProof( instanceSequent ).get
     }
-    require( Z3 isValid instProof.deep )
+    require( smtSolver.isValid( instProof.deep ) )
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )
@@ -252,11 +258,14 @@ object Viper {
       case optionRegex( k, v ) => ( k, v )
     }
   def parseCode( tipSmtCode: InputFile, options: Map[String, String] ): ( TipProblem, ViperOptions ) = {
-    val options_ = options ++ extractOptions( tipSmtCode )
+    val options_ = ViperOptions.parse(
+      Map( "fixup" -> ( !TipSmtParser.isInstalled ).toString )
+        ++ options ++ extractOptions( tipSmtCode )
+    )
     val problem =
-      if ( options_ contains "nofixup" ) TipSmtParser parse tipSmtCode
-      else TipSmtParser fixupAndParse tipSmtCode
-    ( problem, ViperOptions parse options_ )
+      if ( options_.fixup ) TipSmtParser fixupAndParse tipSmtCode
+      else TipSmtParser parse tipSmtCode
+    ( problem, options_ )
   }
   val cmdLineOptRegex = """--([a-z]+)=(.*)""".r
   def parseArgs( args: Seq[String], options: Map[String, String] ): ( TipProblem, ViperOptions ) =

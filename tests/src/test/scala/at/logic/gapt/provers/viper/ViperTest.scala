@@ -16,15 +16,20 @@ class ViperTest extends Specification {
       "general", "generaldiffconcl", "linear",
       "square",
       "minus", "plus0",
-      "prod_prop_31"
+      "prod_prop_31", "prod_prop_31_monomorphic"
     ) ) { prob =>
       prob in {
-        if ( !SPASS.isInstalled || !Z3.isInstalled || !TipSmtParser.isInstalled ) skipped
+        var extraOptions = Map( "verbose" -> "false", "fixup" -> "false" )
+        if ( prob == "prod_prop_31" ) {
+          if ( !TipSmtParser.isInstalled )
+            skipped( "tip tool required for preprocessing" )
+          extraOptions += "fixup" -> "true"
+        }
         val ( problem, options ) = Viper.parseCode(
           ClasspathInputFile( s"induction/$prob.smt2" ),
-          Map( "verbose" -> "false" )
+          extraOptions
         )
-        new Viper( problem, options ).solve()
+        val lk = new Viper( problem, options ).solve()
         ok
       }
     }
