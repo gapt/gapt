@@ -49,7 +49,7 @@ case class ProofByRecursionScheme(
   val hoVars = hoVarMapping.map( _._2 )
   val hoVarMap = hoVarMapping.toMap
 
-  val solutionConditions = {
+  lazy val solutionConditions = {
     val conds = Seq.newBuilder[HOLSequent]
     lkProof( hoVars, new OneShotProver {
       def getLKProof( seq: HOLSequent ) = {
@@ -60,7 +60,7 @@ case class ProofByRecursionScheme(
     conds.result()
   }
 
-  val solutionCondition = Ex.Block(
+  lazy val solutionCondition = Ex.Block(
     hoVars,
     And( solutionConditions.map( cond =>
       All.Block( freeVariables( cond ).toSeq.diff( hoVars ), cond.toImplication ) ) )
@@ -86,7 +86,7 @@ case class ProofByRecursionScheme(
     instanceTerms.foreach {
       case Apps( nt: Const, args ) if recSchem.nonTerminals.contains( nt ) =>
         state += haveInstance( instantiate( lemma( solution, nt ), args ), Polarity.InAntecedent )
-      case Neg( form )      => state += haveInstance( form, Polarity.InAntecedent ).orElse( haveInstance( -form, Polarity.InSuccedent ) )
+      case Neg( form )      => state += haveInstance( form, Polarity.InSuccedent ).orElse( haveInstance( -form, Polarity.InAntecedent ) )
       case form: HOLFormula => state += haveInstance( form, Polarity.InAntecedent )
     }
     for {
