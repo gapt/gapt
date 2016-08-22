@@ -229,13 +229,33 @@ object hSolveQBUP {
     val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.exptype )
     val xGen = x( xGenArgs: _* )
     val Some( matching ) = syntacticMatching( xGen, xInst )
-    conseqs.toSeq.sortBy( lcomp( _ ) ).foreach { conseq =>
-      val genConseq = TermReplacement( conseq, matching.map.map( _.swap ) )
-      val sol = Abs( xGenArgs, genConseq )
-      if ( prover.isValid( skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) ) {
-        return Some( sol )
-      }
+    def checkSolutionMatrix( matrix: HOLFormula ) = {
+      val sol = Abs( xGenArgs, matrix )
+      if ( prover.isValid( skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) )
+        Some( sol )
+      else None
     }
-    None
+    // try uniform replacements first
+    conseqs.toSeq.sortBy( expressionSize( _ ) ).view.flatMap { conseq =>
+      val genConseq = TermReplacement( conseq, matching.map.map( _.swap ) )
+      checkSolutionMatrix( genConseq )
+    }.headOption.
+      // now try replacing each occurrence
+      orElse( conseqs.toSeq.sortBy( c => matching.map.values.flatMap( c.find ).size ).view.flatMap { conseq =>
+        def generalize( genConseq: LambdaExpression, poss: List[HOLPosition] ): Option[LambdaExpression] = poss match {
+          case Nil =>
+            checkSolutionMatrix( genConseq.asInstanceOf[HOLFormula] )
+          case pos :: poss_ =>
+            genConseq.get( pos ) match {
+              case None =>
+                generalize( genConseq, poss_ )
+              case Some( termToGen ) =>
+                matching.map.filter( _._2 == termToGen ).keys.view.flatMap { repl =>
+                  generalize( genConseq.replace( pos, repl ), poss_ )
+                }.headOption.orElse( generalize( genConseq, poss_ ) )
+            }
+        }
+        generalize( conseq, matching.map.values.flatMap( conseq.find ).toList.sortBy( _.list.size ) )
+      }.headOption )
   }
 }

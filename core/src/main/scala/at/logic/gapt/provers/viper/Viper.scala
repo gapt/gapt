@@ -189,7 +189,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
     val xInst = x_B( axiomArgs: _* )( canSolInst: _* )( ws: _* ).asInstanceOf[HOLFormula]
 
-    info( s"Canonical solution at $canSolInst:" )
+    info( s"Canonical solution at ${xInst.toSigRelativeString}:" )
     val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )

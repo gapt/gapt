@@ -15,6 +15,7 @@ class ViperTest extends Specification {
       "appnil",
       "comm", "comm1", "commsx",
       "general", "generaldiffconcl", "linear",
+      "linear2par",
       "square",
       "minus", "plus0",
       "prod_prop_31", "prod_prop_31_monomorphic"
