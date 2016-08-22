@@ -1,6 +1,7 @@
 package at.logic.gapt.examples.prime
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs._
@@ -18,7 +19,7 @@ trait PrimeDefinitions extends TacticsProof {
   ctx += Const( "*", Ti -> ( Ti -> Ti ) )
   ctx += Const( "<", Ti -> ( Ti -> To ) )
 
-  ctx += SubsumptionTheory(
+  Seq(
     hof" ∀x ∀y (x + 1) * y + x + 1 = (x + 1) * (y + 1)",
     hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * u  * v)",
     hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * v  * u)",
@@ -38,7 +39,7 @@ trait PrimeDefinitions extends TacticsProof {
     hof"∀x ∀y ∀z (1<y ∧ x=0+z*y ⊃ x!=1)",
     hof"∀x ∀y ∀z (y*z=x ⊃ x=0+z*y)",
     hof"∀x ∀y1 ∀y2 ∀z x + y1*z + y2*z = x + (y1+y2)*z"
-  )
+  ).flatMap( CNFp( _ ) ).foreach( ctx += _ )
 
   //Definitions
   ctx += "set_1" -> le" λk λl l = k"
@@ -62,7 +63,7 @@ trait PrimeDefinitions extends TacticsProof {
   val p = for ( i <- 0 to k )
     yield FOLConst( s"p_$i" )
 
-  ctx ++= p
+  for ( c <- p ) ctx += c
 
   def F( k: Int ) = Const( s"F[$k]", To )
   def S( k: Int ) = Const( s"S[$k]", Ti -> To )

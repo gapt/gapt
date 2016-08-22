@@ -2,9 +2,11 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLPosition
-import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate, isPrenex }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs._
+import at.logic.gapt.provers.{ Prover, ResolutionProver }
+import at.logic.gapt.provers.escargot.Escargot
 
 object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
 
@@ -1262,6 +1264,29 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     val p2 = EqualityRightRule( p1, Ant( 0 ), aux, mainFormula )
 
     CutRule( leftSubProof, eq, p2, p2.getOccConnector.child( Ant( 0 ) ) )
+  }
+}
+
+object FOTheoryMacroRule {
+  def apply( sequent: HOLSequent, prover: ResolutionProver = Escargot )( implicit ctx: Context ): LKProof =
+    option( sequent, prover ).getOrElse {
+      throw new IllegalArgumentException( s"Cannot prove $sequent in:\n$ctx" )
+    }
+  def option( sequent: HOLSequent, prover: ResolutionProver = Escargot )( implicit ctx: Context ): Option[LKProof] = {
+    import at.logic.gapt.proofs.resolution._
+    val axioms = ctx.axioms.toSet
+    val nameGen = rename.awayFrom( containedNames( axioms + sequent ) )
+    val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+    val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
+    prover.getResolutionProof( cnf.map( Input ) ) map { p =>
+      var lk = ResolutionToLKProof( p, {
+        case Input( seq ) if axioms.contains( seq ) => TheoryAxiom( seq.map( _.asInstanceOf[HOLAtom] ) )
+        case Input( unit ) if unit.size == 1        => LogicalAxiom( unit.elements.head )
+      } )
+      lk = TermReplacement.hygienic( lk, grounding.map( _.swap ).toMap )
+      lk = cleanCuts( lk )
+      lk
+    }
   }
 }
 

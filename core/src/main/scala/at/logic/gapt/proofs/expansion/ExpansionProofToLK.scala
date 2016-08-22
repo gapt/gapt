@@ -8,7 +8,7 @@ import scalaz._
 import Scalaz._
 
 object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
-  def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( ctx.theory _ )
+  def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( FOTheoryMacroRule.option( _ ) )
 }
 object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 

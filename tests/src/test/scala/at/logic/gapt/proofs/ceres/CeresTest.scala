@@ -4,7 +4,7 @@ import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.formats.llk._
 import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, gaptic }
+import at.logic.gapt.proofs.{ Context, Sequent, gaptic }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.isAtom
@@ -55,7 +55,7 @@ class CeresTest extends Specification with SequentMatchers {
   }
 
   "second-order definitions" in {
-    implicit var ctx = FiniteContext()
+    implicit var ctx = Context()
     ctx += Context.Sort( "i" )
     ctx += hof"in x X = (X x: o)"
     ctx ++= Seq( hoc"P:i>i>o", hoc"c:i", hoc"f:i>i", hoc"g:i>i" )

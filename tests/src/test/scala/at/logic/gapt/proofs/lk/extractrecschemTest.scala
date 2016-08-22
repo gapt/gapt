@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.grammars.RecursionScheme
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
@@ -71,7 +71,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "numeral induction" in {
-    implicit var ctx = FiniteContext()
+    implicit var ctx = Context()
     ctx += Context.InductiveType( "Nat", hoc"Zero: Nat", hoc"Suc: Nat>Nat" )
     ctx += Context.Sort( "Witness" )
     ctx += hoc"p: Nat>Witness>o"
@@ -98,7 +98,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 }
 
 class Pi2FactorialPOC extends Specification with SatMatchers {
-  implicit var ctx = FiniteContext()
+  implicit var ctx = Context()
   ctx += Context.InductiveType( "i", hoc"0:i", hoc"s:i>i" )
 
   ctx += hoc"'+': i>i>i"

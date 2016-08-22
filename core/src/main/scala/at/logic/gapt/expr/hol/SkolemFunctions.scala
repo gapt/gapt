@@ -29,15 +29,17 @@ case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
     for ( ( s, d ) <- skolemDefs; s_ <- constants( d ) if skolemDefs contains s_ ) yield s -> s_
   )
 
+  def orderedDefinitions = dependencyOrder.map( c => c -> skolemDefs( c ) )
+
   def epsilonDefinitions =
-    for ( skConst <- dependencyOrder )
+    for ( ( skConst, skDef ) <- orderedDefinitions )
       yield skConst -> ( skolemDefs( skConst ) match {
       case Abs.Block( vs, Ex( v, f ) )  => Abs.Block( vs, Epsilon( v, f ) )
       case Abs.Block( vs, All( v, f ) ) => Abs.Block( vs, Epsilon( v, -f ) )
     } )
 
   override def toString =
-    ( for ( s <- dependencyOrder ) yield s"$s → ${skolemDefs( s )}\n" ).mkString
+    ( for ( ( s, d ) <- orderedDefinitions ) yield s"$s → $d\n" ).mkString
 }
 object SkolemFunctions {
   def apply( skolemDefs: Iterable[( Const, LambdaExpression )] ): SkolemFunctions =

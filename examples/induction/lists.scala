@@ -1,6 +1,6 @@
 package at.logic.gapt.examples.induction
 
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.extractRecSchem

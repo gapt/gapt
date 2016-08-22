@@ -2,7 +2,6 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.epsilon.EpsilonC
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
@@ -11,6 +10,10 @@ trait Checkable[-T] {
   def check( context: Context, obj: T ): Unit
 }
 object Checkable {
+  implicit object contextElementIsCheckable extends Checkable[Context.Element] {
+    def check( context: Context, elem: Context.Element ): Unit = elem.checkAdmissibility( context )
+  }
+
   implicit object typeIsCheckable extends Checkable[Ty] {
     override def check( context: Context, ty: Ty ): Unit =
       ty match {
@@ -29,7 +32,6 @@ object Checkable {
     def check( context: Context, expr: LambdaExpression ): Unit =
       expr match {
         case _: LogicalConstant =>
-        case EpsilonC( _ )      =>
         case c @ Const( "=", _ ) =>
           require( EqC.unapply( c ).isDefined )
         case c @ Const( name, _ ) =>
@@ -65,7 +67,7 @@ object Checkable {
         case sk: SkolemQuantifierRule =>
           sk.skolemConst -> sk.skolemDef
       } )
-      for ( ( c, epsD ) <- skolemFunctions.epsilonDefinitions ) ctx += ( c.name, epsD )
+      skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
 
       for ( q <- p.subProofs )
         ctx.check( q.endSequent )
@@ -82,11 +84,12 @@ object Checkable {
           val Some( Context.InductiveType( _, ctrs ) ) = ctx.typeDef( q.indTy.asInstanceOf[TBase] )
           require( q.cases.map( _.constructor ) == ctrs )
         case sk: SkolemQuantifierRule =>
+          require( ctx.skolemDef( sk.skolemConst ).contains( sk.skolemDef ) )
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>
         case TheoryAxiom( sequent ) =>
-          require( ctx.theory( sequent ).isDefined )
+          require( ctx.axioms.exists { ax => clauseSubsumption( ax, sequent ).isDefined } )
         case TopAxiom | BottomAxiom
           | _: NegLeftRule | _: NegRightRule
           | _: AndLeftRule | _: AndRightRule
@@ -109,7 +112,7 @@ object Checkable {
       context.check( ep.shallow )
 
       var ctx = context
-      for ( ( c, epsD ) <- ep.skolemFunctions.epsilonDefinitions ) ctx += ( c.name, epsD )
+      ep.skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
 
       ep.subProofs.foreach {
         case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
@@ -117,7 +120,8 @@ object Checkable {
         case ETWeakQuantifier( _, insts ) =>
           insts.keys.foreach( ctx.check( _ ) )
         case ETStrongQuantifier( _, _, _ ) =>
-        case ETSkolemQuantifier( _, skT, skD, _ ) =>
+        case sk @ ETSkolemQuantifier( _, skT, skD, _ ) =>
+          require( ctx.skolemDef( sk.skolemConst ).contains( skD ) )
           ctx.check( skT )
         case d @ ETDefinition( _, defExpr, child ) =>
           require( ctx.definition( d.pred.name ).contains( defExpr ) )
@@ -138,7 +142,7 @@ object Checkable {
     def check( context0: Context, p: ResolutionProof ) = {
       var ctx = context0
 
-      for ( ( c, epsD ) <- p.skolemFunctions.epsilonDefinitions ) ctx += ( c.name, epsD )
+      p.skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
 
       for ( Defn( defConst, defn ) <- p.subProofs )
         ctx += ( defConst.name, defn )
@@ -161,6 +165,7 @@ object Checkable {
         case Defn( _, _ )               => // already checked
         case _: WeakQuantResolutionRule =>
         case q: SkolemQuantResolutionRule =>
+          require( ctx.skolemDef( q.skolemConst ).contains( q.skolemDef ) )
           ctx.check( q.skolemTerm )
         case q @ DefIntro( _, _, defAtom, defn ) =>
           require( ctx.definition( q.defConst.name ).contains( defn ) )

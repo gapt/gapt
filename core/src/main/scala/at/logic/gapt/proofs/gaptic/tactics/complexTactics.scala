@@ -242,7 +242,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
       case Some( by ) =>
         ( Con( definition, by.exptype ), by ).success
       case None =>
-        TacticalFailure( this, None, s"Definition $definition not present in context" ).failureNel
+        TacticalFailure( this, None, s"Definition $definition not present in context: $ctx" ).failureNel
     }
 
   def apply( goal: OpenAssumption ) =

@@ -10,13 +10,14 @@ import at.logic.gapt.proofs.ceres.{ deleteTautologies, _ }
 import java.io.File.separator
 
 import at.logic.gapt.examples.tape
+import at.logic.gapt.provers.prover9.Prover9
 import org.specs2.mutable._
 
 class TapeTest extends Specification with SequentMatchers {
   "The system" should {
 
     "parse, skolemize, extract and refute the css of the tape proof" in {
-      val proof_sk = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
+      val proof_sk = skolemize( tape.p )
       //println( LatexLLKExporter( proof_sk, true ) )
 
       //      println( proof_sk )
@@ -51,23 +52,26 @@ class TapeTest extends Specification with SequentMatchers {
 
     "apply the full CERES method" in {
       //get the proof
-      val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
+      val proof = skolemize( tape.p )
       val ancf = CERES( proof, Escargot )
+      tape.ctx.check( ancf )
       ancf.endSequent must beMultiSetEqual( proof.endSequent )
-
     }
 
     "apply the full CERES method and skip cuts on equations" in {
-      val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
+      val proof = skolemize( tape.p )
       val acnf = CERES( proof, CERES.skipEquations, Escargot )
+      tape.ctx.check( acnf )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
 
     "apply the full CERES method and skip cuts on equations, then cut-eliminate cuts of equations" in {
+      skipped( "resulting LK proof has a few million inferences" )
       //get the proof
-      val proof = skolemize( regularize( DefinitionElimination( tape.defs )( tape.p ) ) )
+      val proof = skolemize( tape.p )
       val acnf = CERES( proof, CERES.skipEquations, Escargot )
-      val eqacnf = CERES( acnf, _ match { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true }, Escargot )
+      val eqacnf = CERES( acnf, _ match { case Eq( _, _ ) => true; case FOLAtom( _, _ ) => false; case _ => true }, Prover9 )
+      tape.ctx.check( eqacnf )
       eqacnf.endSequent must beMultiSetEqual( proof.endSequent )
 
     }

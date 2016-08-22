@@ -116,7 +116,7 @@ class PrimeProofTest extends Specification {
       if ( false ) {
         if ( VeriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
-          val definitionFreeProof = DefinitionElimination( primeN.ctx.definitions )( proof ) // can't extract ETs in the presence of definitions currently
+          val definitionFreeProof = DefinitionElimination( primeN.ctx.definitions.toMap )( proof ) // can't extract ETs in the presence of definitions currently
           val etSeq = LKToExpansionProof( definitionFreeProof )
           val fSequent = etSeq.deep
           VeriT.isValid( fSequent ) must beTrue
@@ -151,7 +151,7 @@ class PrimeProofTest extends Specification {
 
       val euclidN = prime.euclid( n )
       val proof = euclidN.proof
-      val deproof = DefinitionElimination( euclidN.ctx.definitions )( proof )
+      val deproof = DefinitionElimination( euclidN.ctx.definitions.toMap )( proof )
 
       val proof_sk = skolemize( regularize( AtomicExpansion( deproof ) ) )
 

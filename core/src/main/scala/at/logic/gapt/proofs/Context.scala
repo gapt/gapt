@@ -1,15 +1,10 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFp, containsWeakQuantifier, isPrenex }
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
-import at.logic.gapt.proofs.lk.{ DefinitionElimination, LKProof, TheoryAxiom }
-import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.escargot.Escargot
-
-import scalaz.ValidationNel
+import at.logic.gapt.proofs.lk.DefinitionElimination
 
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
@@ -34,26 +29,33 @@ import scalaz.ValidationNel
  *  - [[at.logic.gapt.proofs.expansion.ExpansionProofToLK]] uses the information about the background theory
  *    to produce LK proofs modulo the background theory.
  */
-trait Context extends BabelSignature {
+class Context private ( val elements: Vector[Element] ) extends BabelSignature {
+  val constants = elements.flatMap( _.consts )
+  private val constantsMap = constants.map( c => c.name -> c ).toMap
+  private val typeDefsMap = elements.flatMap( el => el.tys.map( _.name -> el ) ).toMap
+  val definitions = elements.flatMap( _.defs )
+  private val definitionMap = definitions.map { case ( c, d ) => c.name -> d }.toMap
+  val axioms = elements.flatMap( _.axioms )
+
   /** Returns Some(const) if name is a constant. */
-  def constant( name: String ): Option[Const]
+  def constant( name: String ): Option[Const] = constantsMap.get( name )
   /** Returns Some(typeDef) if name is a base type. */
-  def typeDef( name: String ): Option[TypeDef]
+  def typeDef( name: String ): Option[Element] = typeDefsMap.get( name )
   /** Returns Some(expandedDefinition) if name is a defined constant. */
-  def definition( name: String ): Option[LambdaExpression]
-  /**
-   * Returns Some(lkProof) if clause is valid modulo the background theory.
-   *
-   * lkProof should end in a minimal sub-sequent of clause that is still valid.
-   */
-  def theory( clause: HOLClause ): Option[LKProof]
+  def definition( name: String ): Option[LambdaExpression] = definitionMap.get( name )
 
-  def typeDef( ty: TBase ): Option[TypeDef] = typeDef( ty.name )
+  def typeDef( ty: TBase ): Option[Element] = typeDef( ty.name )
 
-  def +( const: Const ): Context
-  def +( defn: ( String, LambdaExpression ) ): Context
+  def skolemDef( skSym: Const ): Option[LambdaExpression] =
+    elements.collect { case SkolemFun( `skSym`, defn ) => defn }.headOption
 
-  def normalize( expression: LambdaExpression ): LambdaExpression
+  def +( element: Element ): Context = {
+    check( element )
+    new Context( elements :+ element )
+  }
+
+  def normalize( expression: LambdaExpression ): LambdaExpression =
+    BetaReduction.betaNormalize( DefinitionElimination( definitions.toMap )( expression ) )
 
   override def apply( s: String ): babel.VarConst =
     constant( s ) match {
@@ -63,138 +65,52 @@ trait Context extends BabelSignature {
 
   def check[T: Checkable]( t: T ): Unit =
     implicitly[Checkable[T]].check( this, t )
-}
 
-/**
- * Represents the background theory of a proof.
- */
-trait BackgroundTheory {
-  def solve( atomicSeq: HOLClause ): Option[LKProof]
-}
+  def ++( elements: Traversable[Element] ): Context =
+    elements.foldLeft( this )( _ + _ )
 
-/** Background theory that only validates clauses that are subsumed by axioms. */
-case class SubsumptionTheory( axioms: HOLFormula* ) extends BackgroundTheory {
-  private val cnf = CNFp( And( axioms ) )
-
-  def solve( atomicSeq: HOLClause ): Option[LKProof] =
-    ( for {
-      clause <- cnf
-      sub <- clauseSubsumption( clause, atomicSeq )
-    } yield TheoryAxiom( sub( clause ).map( _.asInstanceOf[HOLAtom] ) ) ).headOption
-}
-
-/**
- * Background theory that validates clauses which are first-order consequences of the axioms.
- *
- * The consequence is checked using a first-order prover.
- */
-case class FOTheory( solver: ResolutionProver, axioms: HOLFormula* ) extends BackgroundTheory {
-  require( freeVariables( axioms ).isEmpty )
-
-  def solve( atomicSeq: HOLClause ): Option[LKProof] =
-    solver getLKProof ( axioms ++: atomicSeq, addWeakenings = false ) map { p =>
-      TheoryAxiom( p.conclusion intersect atomicSeq map { _.asInstanceOf[HOLAtom] } )
-    }
-}
-
-object FOTheory {
-  def apply( axioms: HOLFormula* ): FOTheory = FOTheory( Escargot, axioms: _* )
-}
-
-/** A finite [[Context]]. */
-case class FiniteContext(
-    constants:        Set[Const]                   = Set(),
-    definitions:      Map[Const, LambdaExpression] = Map(),
-    typeDefs:         Set[Context.TypeDef]         = Set( Context.oTypeDef ),
-    backgroundTheory: BackgroundTheory             = FOTheory()
-) extends Context {
-  val constantsMap = constants.map { c => c.name -> c }.toMap
-  val typeDefsMap = typeDefs.map { td => td.ty.name -> td }.toMap
-  val definitionMap = definitions map { case ( w, b ) => w.name -> b }
-  for ( ( c, d ) <- definitions ) require( c.exptype == d.exptype )
-
-  def constant( name: String ) = constantsMap get name
-  def definition( name: String ) = definitionMap get name
-  def typeDef( name: String ) = typeDefsMap get name
-
-  def theory( atomicSeq: HOLClause ): Option[LKProof] = backgroundTheory.solve( atomicSeq )
-
-  def +( const: Const ): FiniteContext = {
-    require(
-      !( constantsMap get const.name exists { _ != const } ),
-      s"Constant ${const.name} is already defined as ${constantsMap get const.name get}."
-    )
-
-    for ( t <- baseTypes( const.exptype ) ) require(
-      typeDef( t.name ).isDefined,
-      s"Constant definition contains undeclared type ${t.name}."
-    )
-
-    copy( constants = constants + const )
-  }
-  def ++( consts: Iterable[Const] ): FiniteContext =
-    consts.foldLeft( this )( _ + _ )
-
-  def +( typeDef: TypeDef ): FiniteContext = {
-    require(
-      !( typeDefsMap get typeDef.ty.name exists { _ != typeDef } ),
-      s"Type ${typeDef.ty.name} is already defined as ${typeDefsMap get typeDef.ty.name get}."
-    )
-    typeDef match {
-      case Sort( _ ) => copy( typeDefs = typeDefs + typeDef )
-      case InductiveType( _, constructors ) =>
-        require(
-          constructors.map { _.toString } == constructors.map { _.toString }.distinct,
-          s"Names of type constructors are not distinct."
-        )
-        for ( const <- constructors )
-          require(
-            !( constantsMap get const.name exists { _ != const } ),
-            s"Constant ${const.name} is already defined as ${constantsMap get const.name get}."
-          )
-        copy( typeDefs = typeDefs + typeDef, constants = constants ++ constructors )
-    }
-  }
-  def ++( typeDefs: Iterable[TypeDef] )( implicit dummyImplicit: DummyImplicit ): FiniteContext =
-    typeDefs.foldLeft( this )( _ + _ )
-
-  def +( defn: ( String, LambdaExpression ) ): FiniteContext = {
-    val ( name, by ) = defn
-    val what = Const( name, by.exptype )
-    require(
-      definition( name ).isEmpty,
-      s"In definition $name -> $by: $name is already defined as ${definition( name ).get}."
-    )
-
-    require(
-      constant( name ).isEmpty,
-      s"In definition $name -> $by: Constant $name is already defined as ${constantsMap get name get}."
-    )
-
-    require( freeVariables( by ).isEmpty, s"In definition $name -> $by: contains free variables ${freeVariables( by )}" )
-    check( by )
-    copy( constants = constants + what, definitions = definitions + ( what -> by ) )
-  }
-
-  def +( equation: HOLFormula ): FiniteContext = equation match {
-    case Eq( Apps( VarOrConst( definedConstName, _ ), arguments ), definition ) =>
-      this + ( definedConstName -> Abs( arguments map { _.asInstanceOf[Var] }, definition ) )
-  }
-
-  def +( newTheory: BackgroundTheory ): FiniteContext =
-    copy( backgroundTheory = newTheory )
-
-  def normalize( expression: LambdaExpression ): LambdaExpression =
-    BetaReduction.betaNormalize( DefinitionElimination( definitions )( expression ) )
+  override def toString = elements.mkString( "\n" )
 }
 
 object Context {
+  val empty: Context = new Context( Vector() )
+  def apply(): Context = empty + oTypeDef
+  def apply( elements: Traversable[Element] ): Context =
+    empty ++ elements
+
+  trait Element {
+    def checkAdmissibility( ctx: Context ): Unit
+
+    def tys: Vector[TBase] = Vector()
+    def consts: Vector[Const] = Vector()
+    def defs: Vector[( Const, LambdaExpression )] = Vector()
+    def axioms: Vector[HOLSequent] = Vector()
+  }
+  object Element {
+    implicit def fromSort( ty: TBase ): Element = Sort( ty )
+    implicit def fromConst( const: Const ): Element = ConstDecl( const )
+    implicit def fromDefn( defn: ( String, LambdaExpression ) ): Element =
+      Definition( Const( defn._1, defn._2.exptype ), defn._2 )
+    implicit def fromDefnEq( eq: HOLFormula ): Element = eq match {
+      case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
+        Definition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) )
+    }
+    implicit def fromAxiom( axiom: HOLSequent ): Element = Axiom( axiom )
+  }
+
   /** Definition of a base type.  Either [[Sort]] or [[InductiveType]]. */
-  sealed trait TypeDef { def ty: TBase }
+  sealed trait TypeDef extends Element {
+    def ty: TBase
+    override def tys = Vector( ty )
+  }
   /** Uninterpreted base type. */
-  case class Sort( ty: TBase ) extends TypeDef
+  case class Sort( ty: TBase ) extends TypeDef {
+    def checkAdmissibility( ctx: Context ) = {
+      require( ctx.typeDef( ty ).isEmpty, s"Type ${ty.name} is already defined as ${ctx.typeDef( ty ).get}." )
+    }
+  }
   /** Inductive base type with constructors. */
-  case class InductiveType( ty: TBase, constructors: Seq[Const] ) extends TypeDef {
+  case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {
     for ( constr <- constructors ) {
       val FunctionType( ty_, _ ) = constr.exptype
       require(
@@ -202,16 +118,73 @@ object Context {
         s"Base type $ty and type constructor $constr don't agree."
       )
     }
+
+    override def consts = constructors
+
+    def checkAdmissibility( ctx: Context ) = {
+      require(
+        constructors.map( _.name ) == constructors.map( _.name ).distinct,
+        s"Names of type constructors are not distinct."
+      )
+      ctx + Sort( ty ) ++ constructors.map( ConstDecl )
+    }
   }
 
   object Sort {
     def apply( tyName: String ): Sort = Sort( TBase( tyName ) )
   }
   object InductiveType {
+    def apply( ty: TBase, constructors: Seq[Const] ): InductiveType =
+      InductiveType( ty, constructors.toVector )
     def apply( tyName: String, constructors: Const* ): InductiveType =
       InductiveType( TBase( tyName ), constructors )
   }
 
-  val oTypeDef = Context.InductiveType( "o", Top(), Bottom() )
-  val iTypeDef = Context.Sort( "i" )
+  case class ConstDecl( const: Const ) extends Element {
+    override def consts = Vector( const )
+    def checkAdmissibility( ctx: Context ) = {
+      require(
+        ctx.constant( const.name ).isEmpty,
+        s"Constant $const is already defined as ${ctx.constant( const.name ).get}."
+      )
+      ctx.check( const.exptype )
+    }
+  }
+
+  case class Definition( what: Const, by: LambdaExpression ) extends Element {
+    val Const( name, ty ) = what
+    require( ty == by.exptype )
+    require( freeVariables( by ).isEmpty, s"$this: contains free variables ${freeVariables( by )}" )
+
+    override def consts = Vector( what )
+    override def defs = Vector( what -> by )
+
+    def checkAdmissibility( ctx: Context ) = {
+      ctx.check( ConstDecl( what ) )
+      ctx.check( by )
+    }
+  }
+
+  case class Axiom( sequent: HOLSequent ) extends Element {
+    override def axioms = Vector( sequent )
+
+    def checkAdmissibility( ctx: Context ) =
+      sequent.foreach( ctx.check( _ ) )
+  }
+
+  case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Element {
+    val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix ) ) = defn
+    require( sym.exptype == FunctionType( boundVariable.exptype, argumentVariables.map( _.exptype ) ) )
+    require( freeVariables( defn ).isEmpty )
+
+    override def consts = Vector( sym )
+
+    def checkAdmissibility( ctx: Context ) = {
+      ctx.check( ConstDecl( sym ) )
+      ctx.check( defn )
+    }
+  }
+
+  val oTypeDef = InductiveType( "o", Top(), Bottom() )
+  val iTypeDef = Sort( "i" )
 }

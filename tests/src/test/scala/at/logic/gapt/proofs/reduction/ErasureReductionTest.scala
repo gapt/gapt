@@ -12,14 +12,14 @@ import org.specs2.mutable._
 
 class ErasureReductionTest extends Specification with SatMatchers {
   "two-sorted" in {
-    implicit var ctx = FiniteContext()
+    implicit var ctx = Context()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += Context.Sort( "witness" )
     ctx += hoc"f: witness > witness"
     ctx += hoc"P: nat > witness > o"
     ctx += hoc"Q: nat > o"
 
-    val red = new ErasureReductionHelper( ctx.constants )
+    val red = new ErasureReductionHelper( ctx.constants.toSet )
 
     val c1 = Clause() :+ hoa"P 0 y"
     val c2 = hoa"P x (f y)" +: Clause() :+ hoa"P (s x) y"
@@ -42,13 +42,13 @@ class ErasureReductionTest extends Specification with SatMatchers {
   }
 
   "variables as weak quantifier instances" in {
-    implicit var ctx = FiniteContext()
+    implicit var ctx = Context()
     ctx += Context.Sort( "foo" )
     ctx += hoc"P: foo>o"
 
     val sequent = hof"∀x P x" +: Sequent() :+ hof"∃x P x"
 
-    val red = new ErasureReductionHelper( ctx.constants )
+    val red = new ErasureReductionHelper( ctx.constants.toSet )
 
     val deepAtom = red.forward( hof"P z", Map( hov"z: foo" -> FOLVar( "z" ) ) ).asInstanceOf[FOLAtom]
     val firstOrderEP =

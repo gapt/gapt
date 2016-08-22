@@ -2,7 +2,7 @@ package at.logic.gapt.formats.tip
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ existsclosure, univclosure }
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
   val FunctionType( datatype, fieldTypes ) = constr.exptype
@@ -23,6 +23,7 @@ case class TipDatatype( t: TBase, constructors: Seq[TipConstructor] ) {
 case class TipFun( fun: Const, definitions: Seq[HOLFormula] )
 
 case class TipProblem(
+    ctx:   Context,
     sorts: Seq[TBase], datatypes: Seq[TipDatatype],
     uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
     assumptions: Seq[HOLFormula], goal: HOLFormula
@@ -50,12 +51,5 @@ case class TipProblem(
       :+ goal
   )
 
-  def context =
-    FiniteContext(
-      constants = Set() ++ uninterpretedConsts ++ functions.map { _.fun } ++
-      datatypes.flatMap { _.constructors }.flatMap { c => c.projectors :+ c.constr },
-      definitions = Map(),
-      typeDefs = Set() ++ sorts.map { Context.Sort( _ ) } ++
-        datatypes.map { dt => Context.InductiveType( dt.t, dt.constructors.map { _.constr } ) }
-    )
+  def context: Context = ctx
 }

@@ -490,6 +490,20 @@ trait TacticCommands {
   }
 
   /**
+   * Solves the current subgoal as a first-order consequence of the background theory. This
+   * closes the goal.
+   * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
+   */
+  def foTheory( implicit ctx: Context ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: HOLAtom => a } ).
+        toTactical( "does not follow from theory", goal )
+      _ <- insert( theoryAxiom )
+    } yield ()
+  }
+
+  /**
    * Declares the current subgoal as a theory axiom, i.e. a sequent that is contained in the background theory. This
    * closes the goal.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
@@ -497,9 +511,9 @@ trait TacticCommands {
   def theory( implicit ctx: Context ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
-      theoryAxiom <- ctx.theory( goal.conclusion collect { case a: HOLAtom => a } ).
+      theoryAxiom <- ctx.axioms.find( clauseSubsumption( _, goal.conclusion ).isDefined ).
         toTactical( "does not follow from theory", goal )
-      _ <- insert( theoryAxiom )
+      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[HOLAtom] ) ) )
     } yield ()
   }
 

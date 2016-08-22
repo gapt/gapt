@@ -15,7 +15,7 @@ case class MaxSatRecSchemFinder(
     pi1QTys:          Seq[TBase],
     instanceType:     Ty,
     grammarWeighting: Rule => Int,
-    context:          FiniteContext
+    context:          Context
 ) extends InductiveGrammarFindingMethod {
   implicit def ctx = context
 
@@ -30,7 +30,7 @@ case class MaxSatRecSchemFinder(
 }
 
 object simplePi1RecSchemTempl {
-  def apply( axiom: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: FiniteContext ): RecSchemTemplate = {
+  def apply( axiom: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
     val nameGen = rename.awayFrom( ctx.constants )
 
     val Apps( axiomNT: Const, axiomArgs ) = axiom

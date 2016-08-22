@@ -6,7 +6,7 @@ import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
@@ -83,7 +83,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
   val grammarFinder = options.findingMethod match {
     case "maxsat" =>
       val pi1QTys = options.quantTys getOrElse {
-        ctx.typeDefs.toSeq collect { case InductiveType( ty, _ ) if ty != To => ty }
+        ctx.elements collect { case InductiveType( ty, _ ) if ty != To => ty }
       }
 
       val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType, options.grammarWeighting, implicitly )
@@ -142,7 +142,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
         term <- encoding.encode( es.expansionSequent.antecedent ++: Sequent() )
       } yield inst -> term
 
-    val spwi = grammarFinder.find( sequent, encoding, implicitly[FiniteContext], taggedLanguage.toSet )
+    val spwi = grammarFinder.find( sequent, encoding, implicitly[Context], taggedLanguage.toSet )
 
     info( s"Found schematic proof with induction:\n$spwi\n" )
     for ( ( Apps( _, inst ), terms ) <- taggedLanguage groupBy { _._1 } ) {
