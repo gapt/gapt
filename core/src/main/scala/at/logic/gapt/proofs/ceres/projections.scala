@@ -74,8 +74,8 @@ object Projections {
       case ForallSkRightRule( p, a, m, t, d )     => handleSkQuantRule( proof, p, a, m, t, d, ForallSkRightRule.apply, pred )
       case ExistsSkLeftRule( p, a, m, t, d )      => handleSkQuantRule( proof, p, a, m, t, d, ExistsSkLeftRule.apply, pred )
 
-      case DefinitionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
-      case DefinitionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
+      case DefinitionLeftRule( p, a,d, c )          => handleDefRule( proof, p, a, d, c, DefinitionLeftRule.apply, pred )
+      case DefinitionRightRule( p, a,d, c )         => handleDefRule( proof, p, a, d, c, DefinitionRightRule.apply, pred )
       case EqualityLeftRule( p1, e, a, con )      => handleEqRule( proof, p1, e, a, con, EqualityLeftRule.apply, pred )
       case EqualityRightRule( p1, e, a, con )     => handleEqRule( proof, p1, e, a, con, EqualityRightRule.apply, pred )
       case rule @ CutRule( p1, a1, p2, a2 ) =>
@@ -178,14 +178,14 @@ object Projections {
     else s.map( pm => constructor( pm, m ) )
   }
 
-  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula,
-                     constructor: ( LKProof, SequentIndex, HOLFormula ) => LKProof,
+  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, d:(String, LambdaExpression),  c: Abs,
+                     constructor: ( LKProof, SequentIndex,(String, LambdaExpression), Abs ) => LKProof,
                      pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
       val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      constructor( pm, a_, f )
+      constructor( pm, a_, d, c )
     } )
   }
 

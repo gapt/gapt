@@ -97,10 +97,8 @@ object Checkable {
           | _: ImpLeftRule | _: ImpRightRule =>
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
-        case DefinitionLeftRule( q, aux, main ) =>
-          require( ctx.normalize( q.conclusion( aux ) ) == ctx.normalize( main ) )
-        case DefinitionRightRule( q, aux, main ) =>
-          require( ctx.normalize( q.conclusion( aux ) ) == ctx.normalize( main ) )
+        case DefinitionLeftRule( _, _, defn, _ ) => ???
+        case DefinitionRightRule( q, aux, defn, _ ) => ???
       }
     }
   }

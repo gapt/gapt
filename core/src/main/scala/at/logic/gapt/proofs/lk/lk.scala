@@ -2,12 +2,13 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLPosition
-import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
+import at.logic.gapt.expr.hol.{HOLPosition, instantiate}
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.ListSupport
 import ListSupport.pairs
 
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
 
@@ -1483,7 +1484,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
         ( t, s, false )
       } else {
         throw LKRuleCreationException( s"Inserting $s into context yields $insertS; inserting" +
-          s" $t yields $insertT. Neither is equal to ${auxFormula}." )
+          s" $t yields $insertT. Neither is equal to $auxFormula." )
       }
     case _ => throw LKRuleCreationException( s"Formula $equation is not an equation." )
   }
@@ -1785,6 +1786,35 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaE
   override def name = "ind"
 }
 
+abstract class DefinitionRule extends UnaryLKProof with CommonRule {
+  def subProof: LKProof
+  def aux: SequentIndex
+  def definition: (String, LambdaExpression)
+  def replacementContext: Abs
+
+  val (what, by) = definition
+  val deftype = by.exptype
+  val const = Const(what, deftype)
+
+  val mainFormula_ = BetaReduction.betaNormalize(App(replacementContext, const))
+  val auxFormula_ = BetaReduction.betaNormalize(App(replacementContext, by))
+
+  val mainFormula = mainFormula_ match {
+    case f: HOLFormula => f
+    case _ => throw LKRuleCreationException(s"Cannot reduce $mainFormula_ to HOL formula).")
+  }
+
+  require(BetaReduction.betaNormalize(subProof.endSequent(aux)) == auxFormula_, s"Applying context $replacementContext to expression $by does not yield $subProof.endSequent(aux).")
+}
+
+object DefinitionRule {
+  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: (String, LambdaExpression), mainFormula: HOLFormula, polarity: Polarity ): LKProof =
+    polarity match {
+      case Polarity.InSuccedent  => DefinitionRightRule( subProof, auxFormula, definition, mainFormula )
+      case Polarity.InAntecedent => DefinitionLeftRule( subProof, auxFormula, definition, mainFormula )
+    }
+}
+
 /**
  * An LKProof ending with a definition on the left:
  *
@@ -1799,13 +1829,14 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaE
  *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
- * @param main The formula B that A is to be replaced with.
+ * @param definition The definition to be introduced.
+  *@param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
-case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: HOLFormula )
-    extends UnaryLKProof with CommonRule {
+case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, definition: (String, LambdaExpression ), replacementContext: Abs)
+    extends DefinitionRule {
   override def name = "d:l"
   override def auxIndices = Seq( Seq( aux ) )
-  override def mainFormulaSequent = main +: Sequent()
+  override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
 object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" ) {
@@ -1814,15 +1845,33 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
    * Convenience constructor for d:l that, given an aux and main formula, will attempt to infer the main formula.
    *
    * @param subProof The subproof.
-   * @param auxFormula The aux formula.
+   * @param aux The aux formula.
    * @param mainFormula The main formula.
    * @return
    */
-  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula ): DefinitionLeftRule = {
+  def apply(subProof: LKProof, aux: IndexOrFormula, definition: (String, LambdaExpression), mainFormula: HOLFormula ): DefinitionLeftRule = {
     val premise = subProof.endSequent
-    val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
+    val (indices, _) = findAndValidate(premise)(Seq(aux), Seq())
 
-    DefinitionLeftRule( subProof, Ant( indices( 0 ) ), mainFormula )
+    val auxFormula = premise(Ant(indices.head))
+    val auxFormulaReduced = BetaReduction.betaNormalize(auxFormula)
+
+    val (what, by) = definition
+    val deftype = by.exptype
+    val const = Const(what, deftype)
+
+    val tryProof = mainFormula.find(const).toSet.subsets().foldLeft(Failure(new Exception("dummy")): Try[DefinitionLeftRule]) { (acc, set) => acc match {
+      case Failure(_) =>
+        val ctx = replacementContext(deftype, mainFormula, set)
+        Try(DefinitionLeftRule(subProof, Ant(indices(0)), definition, ctx))
+      case _ => acc
+    }
+    }
+
+    tryProof match {
+      case Success(p) => p
+      case Failure(_) => throw LKRuleCreationException(s"No possible replacement of $what by $by in $mainFormula to yield $auxFormulaReduced.")
+    }
   }
 }
 
@@ -1840,13 +1889,14 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
- * @param main The formula B that A is to be replaced with.
+ * @param definition The definition to be introduced.
+  *@param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
-case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, main: HOLFormula )
-    extends UnaryLKProof with CommonRule {
+case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, definition: (String, LambdaExpression ), replacementContext: Abs)
+    extends DefinitionRule {
   override def name = "d:r"
   override def auxIndices = Seq( Seq( aux ) )
-  override def mainFormulaSequent = Sequent() :+ main
+  override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
 object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule" ) {
@@ -1855,25 +1905,37 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
    * Convenience constructor for d:r that, given an aux and main formula, will attempt to infer the main formula.
    *
    * @param subProof The subproof.
-   * @param auxFormula The aux formula.
+   * @param aux The aux formula or its index.
    * @param mainFormula The main formula.
    * @return
    */
-  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula ): DefinitionRightRule = {
+  def apply( subProof: LKProof, aux: IndexOrFormula, definition: (String, LambdaExpression), mainFormula: HOLFormula ): DefinitionRightRule = {
     val premise = subProof.endSequent
-    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
+    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( aux ) )
 
-    DefinitionRightRule( subProof, Suc( indices( 0 ) ), mainFormula )
+    val auxFormula = premise(Suc(indices.head))
+    val auxFormulaReduced = BetaReduction.betaNormalize(auxFormula)
+
+    val (what, by) = definition
+    val deftype = by.exptype
+    val const = Const(what, deftype)
+
+    val tryProof = mainFormula.find(const).toSet.subsets().foldLeft(Failure(new Exception("dummy")): Try[DefinitionRightRule]) { (acc, set) => acc match {
+      case Failure(_) =>
+        val ctx = replacementContext(deftype, mainFormula, set)
+        Try(DefinitionRightRule(subProof, Suc(indices(0)), definition, ctx))
+      case _ => acc
+    }
+    }
+
+    tryProof match {
+      case Success(p) => p
+      case Failure(_) => throw LKRuleCreationException(s"No possible replacement of $what by $by in $mainFormula to yield $auxFormulaReduced.")
+    }
   }
 }
 
-object DefinitionRule {
-  def apply( subProof: LKProof, auxFormula: HOLFormula, mainFormula: HOLFormula, polarity: Polarity ): LKProof =
-    polarity match {
-      case Polarity.InSuccedent  => DefinitionRightRule( subProof, auxFormula, mainFormula )
-      case Polarity.InAntecedent => DefinitionLeftRule( subProof, auxFormula, mainFormula )
-    }
-}
+
 
 object consoleString {
   /**
