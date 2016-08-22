@@ -5,6 +5,7 @@ import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.spass.SPASS
+import at.logic.gapt.provers.verit.VeriT
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
 
@@ -24,6 +25,8 @@ class ViperTest extends Specification {
         var extraOptions = Map( "verbose" -> "false", "fixup" -> "false" )
         if ( prob.startsWith( "prod_prop_31" ) && !OpenWBO.isInstalled )
           skipped( "only works with open-wbo at the moment" )
+        if ( prob == "comms0" && !VeriT.isInstalled )
+          skipped( "does not work on travis atm" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )
