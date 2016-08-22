@@ -13,7 +13,7 @@ class ViperTest extends Specification {
   "known to be working problems" in {
     Fragments.foreach( Seq(
       "appnil",
-      "comm", "comm1", "commsx",
+      "comm", "comm1", "commsx", "comms0",
       "general", "generaldiffconcl", "linear",
       "linear2par",
       "square",
