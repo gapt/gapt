@@ -244,9 +244,9 @@ object minimizeRecursionScheme extends Logger {
     val instRS = instantiateRS( recSchem, instTerms )
 
     val formula = new RecSchemGenLangFormula( instRS, targetFilter )
-    val ruleCorrespondence = for ( ir <- instRS.rules ) yield formula.ruleIncluded( ir ) --> Or(
+    val ruleCorrespondence = for ( ir <- instRS.rules.toSeq ) yield formula.ruleIncluded( ir ) --> Or(
       for {
-        r <- recSchem.rules
+        r <- recSchem.rules.toSeq
         _ <- syntacticMatching( List( r.lhs -> ir.lhs, r.rhs -> ir.rhs ) )
       } yield formula.ruleIncluded( r )
     )
