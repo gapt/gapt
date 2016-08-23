@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
@@ -50,7 +51,7 @@ object ViperOptions {
     case "findmth"    => opts.copy( findingMethod = v )
     case "qtys"       => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ) )
     case "gramw" => v match {
-      case "scomp"  => opts.copy( grammarWeighting = r => randomInstance.exprSize( r.lhs ) + randomInstance.exprSize( r.rhs ) )
+      case "scomp"  => opts.copy( grammarWeighting = r => folTermSize( r.lhs ) + folTermSize( r.rhs ) )
       case "nprods" => opts.copy( grammarWeighting = _ => 1 )
     }
     case "tchknum"    => opts.copy( tautCheckNumber = v.toInt )
@@ -152,10 +153,10 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
 
   def findMinimalCounterexample( correctInstances: Iterable[Instance], spwi: SchematicProofWithInduction ): Option[Seq[LambdaExpression]] = {
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
-    val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
+    val scale = ( 5 +: correctInstances.toSeq.map( folTermSize( _ ) ) ).max
     val failedInstOption = ( 0 to options.tautCheckNumber ).
       map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
-      distinct.sortBy { _.map( randomInstance.exprSize ).sum }.view.
+      distinct.sortBy( folTermSize( _ ) ).view.
       filterNot { inst =>
         val ok = checkInst( inst )
         info( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
@@ -165,7 +166,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
       import scalaz._
       import Scalaz._
       val minimalCounterExample = failedInst.toList.
-        traverse( i => instantiateRS.subTerms( i ).filter( _.exptype == i.exptype ).toList ).
+        traverse( i => folSubTerms( i ).filter( _.exptype == i.exptype ).toList ).
         filterNot( checkInst ).
         minBy { _ map { expressionSize( _ ) } sum }
       info( s"Minimal counterexample: ${minimalCounterExample.map { _.toSigRelativeString }}" )

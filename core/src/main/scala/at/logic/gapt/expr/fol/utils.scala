@@ -59,6 +59,14 @@ object folSubTerms {
 
 }
 
+object folTermSize {
+  def apply( t: LambdaExpression ): Int =
+    t match { case Apps( hd, as ) => 1 + apply( as ) }
+
+  def apply( ts: Traversable[LambdaExpression] ): Int =
+    ts.view.map( apply ).sum
+}
+
 object Numeral {
   def apply( k: Int ): FOLTerm = k match {
     case 0 => FOLFunction( "0" )

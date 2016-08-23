@@ -240,7 +240,7 @@ object minimizeRecursionScheme extends Logger {
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
     val targets_ = grounding( targets.toSet )
 
-    val instTerms = targets_.map { _._1 }.flatMap { case Apps( _, as ) => as }.flatMap { instantiateRS.subTerms }
+    val instTerms = targets_.map { _._1 }.flatMap { case Apps( _, as ) => as }.flatMap { folSubTerms( _ ) }
     val instRS = instantiateRS( recSchem, instTerms )
 
     val formula = new RecSchemGenLangFormula( instRS, targetFilter )

@@ -6,10 +6,6 @@ import at.logic.gapt.expr._
 
 object instantiateRS {
 
-  def subTerms( expr: LambdaExpression ): Set[LambdaExpression] = expr match {
-    case Apps( hd, args ) => args.flatMap { subTerms }.toSet + expr
-  }
-
   def apply( recursionScheme: RecursionScheme, terms: Set[LambdaExpression] ): RecursionScheme = {
     val sts = terms.groupBy { _.exptype }.withDefaultValue( Set() )
 
