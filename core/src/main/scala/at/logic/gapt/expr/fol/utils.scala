@@ -147,7 +147,6 @@ object Sigma {
     case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
     case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
     case Ex.Block( vars, g ) =>
-      println( s"$vars, $g" )
       g match {
         case Pi( i ) => Some( i + 1 )
       }

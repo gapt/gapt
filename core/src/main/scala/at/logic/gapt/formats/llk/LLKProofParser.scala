@@ -161,8 +161,6 @@ class LLKProofParser extends DeclarationParser with LatexReplacementParser with 
     }
   }
 
-  override def d[T]( r: T ): T = { println( r ); r }
-
   lazy val rules: PackratParser[List[Token]] = rep1( ( rule1 | rule2 | rule3 | decl | comment ) )
 
   lazy val comment: PackratParser[RToken] = ( "%" ~> "[^%]*".r <~ "%" ) ^^ { _ =>

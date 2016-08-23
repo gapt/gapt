@@ -174,7 +174,7 @@ object sehsToVTRATG {
   }
 }
 
-object CutIntroduction {
+object CutIntroduction extends Logger {
 
   class CutIntroException( msg: String ) extends Exception( msg )
   class NonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
@@ -259,18 +259,16 @@ object CutIntroduction {
 
   def compressToSolutionStructure(
     inputProof: InputProof,
-    method:     GrammarFindingMethod = DeltaTableMethod(),
-    verbose:    Boolean              = false
+    method:     GrammarFindingMethod = DeltaTableMethod()
   ): Option[SolutionStructure] = {
     val InputProof( ep, backgroundTheory ) = inputProof
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
-    if ( verbose )
-      println( s"Quantifier inferences in the input proof: ${numberOfInstancesET( ep.expansionSequent )}" )
+    info( s"Quantifier inferences in the input proof: ${numberOfInstancesET( ep.expansionSequent )}" )
 
     val endSequent = ep.shallow
-    if ( verbose ) println( s"End sequent: $endSequent" )
+    info( s"End sequent: $endSequent" )
 
     /********** Term set Extraction **********/
     val encoding = FOLInstanceTermEncoding( endSequent )
@@ -281,7 +279,7 @@ object CutIntroduction {
     metrics.value( "termset_wsize", weightedTermsetSize )
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
     metrics.value( "termset_trivial", termset.size == termset.map { case FOLFunction( r, _ ) => r }.size )
-    if ( verbose ) println( s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)" )
+    info( s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)" )
 
     val herbrandSequent = extractInstances( ep )
     val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
@@ -297,7 +295,7 @@ object CutIntroduction {
     }.filter { g =>
       g.productions.exists( _._1 != g.axiomVect )
     }.orElse {
-      if ( verbose ) println( "No grammar found." )
+      info( "No grammar found." )
       None
     }.flatMap { vtratGrammar =>
       val generatedLanguage = vtratGrammar.language
@@ -311,10 +309,7 @@ object CutIntroduction {
       metrics.value( "grammar_wsize", vtratGrammar.weightedSize )
       metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
-      if ( verbose ) {
-        println( s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):" )
-        println( vtratGrammar )
-      }
+      info( s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):\n$vtratGrammar" )
 
       val grammar = vtratgToSEHS( encoding, vtratGrammar )
 
@@ -323,11 +318,8 @@ object CutIntroduction {
       solStructMetrics( canonicalSS, "can" )
 
       val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, backgroundTheory.prover, backgroundTheory.hasEquality ) }
-      if ( verbose ) for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex ) {
-        println( s"CNF of minimized cut-formula number $i:" )
-        for ( clause <- CNFp( cf ) )
-          println( s"  $clause" )
-      }
+      for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex )
+        info( s"CNF of minimized cut-formula number $i:\n${CNFp( cf ).map( "  " + _ ).mkString( "\n" )}" )
       require( minimizedSS.isValid( backgroundTheory.prover ) )
       solStructMetrics( minimizedSS, "min" )
 
@@ -345,18 +337,20 @@ object CutIntroduction {
       metrics.value( "beausol", beautifiedSS.formulas.map( _.toString ) )
 
       if ( beautifiedSS.formulas.nonEmpty ) {
-        if ( verbose ) {
-          println( s"Beautified grammar of size ${beauGrammar.size} (weighted by vector size = ${beauGrammar.weightedSize}):" )
-          println( beauGrammar )
-          println( s"Size of the canonical solution: $lcompCanonicalSol" )
-          println( s"Size of the minimized solution: $lcompMinSol" )
-          println( s"Size of the beautified solution: $lcompBeauSol" )
-          for ( ( cf, i ) <- beautifiedSS.formulas.zipWithIndex ) {
-            println( s"CNF of beautified cut-formula number $i:" )
-            for ( clause <- CNFp( cf ) )
-              println( s"  $clause" )
-          }
+        if ( beautifiedSS.sehs == minimizedSS.sehs ) {
+          info( "Beautification did not change the grammar." )
+        } else {
+          info( s"Beautified grammar of size ${beauGrammar.size} (weighted by vector size = ${beauGrammar.weightedSize}):\n$beauGrammar" )
         }
+        if ( beautifiedSS == minimizedSS ) {
+          info( "Beautification did not change the solution." )
+        } else {
+          info( s"Size of the beautified solution: $lcompBeauSol" )
+          for ( ( cf, i ) <- beautifiedSS.formulas.zipWithIndex )
+            info( s"CNF of minimized cut-formula number $i:\n${CNFp( cf ).map( "  " + _ ).mkString( "\n" )}" )
+        }
+        info( s"Size of the canonical solution: $lcompCanonicalSol" )
+        info( s"Size of the minimized solution: $lcompMinSol" )
 
         val ehsSequent = beautifiedSS.getDeep
         val ehsResolutionProof = backgroundTheory.prover.getLKProof( ehsSequent ).getOrElse {
@@ -368,13 +362,13 @@ object CutIntroduction {
 
         Some( beautifiedSS )
       } else {
-        if ( verbose ) println( "No non-trivial lemma found." )
+        info( "No non-trivial lemma found." )
         None
       }
     }
   }
 
-  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory, verbose: Boolean = false ): LKProof = {
+  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory ): LKProof = {
     val proofWithStructuralRules = metrics.time( "prcons" ) {
       buildProofWithCut( solStruct, backgroundTheory.prover )
     }
@@ -386,25 +380,23 @@ object CutIntroduction {
     metrics.value( "lkcuts_output", cutsNumber( proof ) )
     metrics.value( "lkinf_output", rulesNumber( proof ) )
     metrics.value( "lkquant_output", quantRulesNumber( proof ) )
-    if ( verbose ) {
-      println( s"Number of cuts introduced: ${cutsNumber( proof )}" )
-      println( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
-      println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
-    }
+    info( s"Number of cuts introduced: ${cutsNumber( proof )}" )
+    info( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
+    info( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
 
     proof
   }
 
-  def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    compressToSolutionStructure( inputProof, method, verbose ) map { constructLKProof( _, inputProof.backgroundTheory, verbose ) }
+  def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod() ): Option[LKProof] =
+    compressToSolutionStructure( inputProof, method ) map { constructLKProof( _, inputProof.backgroundTheory ) }
 
   @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
   def compressToLK( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    apply( inputProof, method, verbose )
+    apply( inputProof, method )
 
   @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
   def compressLKProof( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    apply( inputProof, method, verbose )
+    apply( inputProof, method )
 
   /**
    * Computes the modified canonical solution, where instances of

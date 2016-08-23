@@ -1,10 +1,9 @@
 package at.logic.gapt.formats.llk
 
 import at.logic.gapt.formats.llk.LLKTypes.{ LLKSignature, emptyLLKSignature }
-
 import util.parsing.combinator.JavaTokenParsers
-import scala.util.parsing.combinator.PackratParsers
 
+import scala.util.parsing.combinator.PackratParsers
 import at.logic.gapt.expr._
 
 /**
@@ -36,10 +35,6 @@ object LLKASTParser extends LLKASTParser;
 //Parser from strings to ast
 class LLKASTParser extends JavaTokenParsers with PackratParsers {
   import ast.LambdaAST
-  /* debug transformers */
-  def d[T]( s: String, f: T ): T = { println( s + ": " + f ); f }
-  def d[T]( f: T ): T = d( "(debug)", f )
-
   /* The main entry point to the parser for prover9 formulas. To parse literals, use literal as the entry point. */
   def parseFormula( s: String ): LambdaAST = parseAll( formula, s ) match {
     case Success( result, _ ) => result

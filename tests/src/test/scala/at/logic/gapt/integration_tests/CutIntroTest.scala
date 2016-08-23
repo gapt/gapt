@@ -26,13 +26,17 @@ class CutIntroTest extends Specification {
       val ( termset, _ ) = FOLInstanceTermEncoding( proof )
       val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
 
-      CutIntroduction(
-        proof,
-        method = DeltaTableMethod(),
-        verbose = false
-      ) must beSome
+      CutIntroduction( proof ) must beSome
 
       set must contain( exactly( LinearExampleTermset( 9 ): _* ) )
+    }
+
+    "maxsat method" in {
+      CutIntroduction( LinearExampleProof( 9 ), method = MaxSATMethod( 1 ) ) must beSome
+    }
+
+    "reforest method" in {
+      CutIntroduction( LinearExampleProof( 9 ), method = ReforestMethod ) must beSome
     }
 
     "linear equality example" in {
@@ -46,7 +50,7 @@ class CutIntroTest extends Specification {
         Sequent()
         :+ ( f( ( g ^ 9 )( c ) ) === f( c ) )
       )
-      val Some( q ) = CutIntroduction( p, method = DeltaTableMethod(), verbose = false )
+      val Some( q ) = CutIntroduction( p )
       val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
       cutFormulas must contain( atMost(
         All( x, f( ( g ^ 3 )( x ) ) === f( x ) ),
@@ -90,7 +94,7 @@ class CutIntroTest extends Specification {
     "introduce weak quantifiers as low as possible" in {
       val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral( 9 )})"
       val Some( proof ) = Escargot.getLKProof( endSequent )
-      val Some( proofWithCut ) = CutIntroduction( proof, method = DeltaTableMethod(), verbose = false )
+      val Some( proofWithCut ) = CutIntroduction( proof )
 
       // !x q(x) must only be instantiated once, even though it is used in both branches of the cut.
       proofWithCut.treeLike.postOrder.filter {

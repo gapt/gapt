@@ -13,9 +13,9 @@ object ReforestDemo extends Script {
   println( grammar.toRecursionScheme )
   //  println( grammar.toVTRATG )
 
+  CutIntroduction.makeVerbose()
   CutIntroduction(
     SumExampleProof( 16 ),
-    method = ReforestMethod,
-    verbose = true
+    method = ReforestMethod
   )
 }

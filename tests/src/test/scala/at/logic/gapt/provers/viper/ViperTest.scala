@@ -22,7 +22,7 @@ class ViperTest extends Specification {
       "prod_prop_31", "prod_prop_31_monomorphic"
     ) ) { prob =>
       prob in {
-        var extraOptions = Map( "verbose" -> "false", "fixup" -> "false" )
+        var extraOptions = Map( "fixup" -> "false" )
         if ( prob.startsWith( "prod_prop_31" ) && !OpenWBO.isInstalled )
           skipped( "only works with open-wbo at the moment" )
         if ( prob == "comms0" && !VeriT.isInstalled )

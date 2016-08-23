@@ -15,6 +15,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.ViperOptions.FloatRange
+import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
 import scala.io.StdIn
@@ -32,8 +33,7 @@ case class ViperOptions(
   canSolSize:       FloatRange         = ( 2, 4 ),
   forgetOne:        Boolean            = false,
   prooftool:        Boolean            = false,
-  fixup:            Boolean            = false,
-  verbose:          Boolean            = true
+  fixup:            Boolean            = false
 )
 object ViperOptions {
   type FloatRange = ( Float, Float )
@@ -44,7 +44,6 @@ object ViperOptions {
   }
 
   private def parseAndApply( k: String, v: String, opts: ViperOptions ): ViperOptions = k match {
-    case "verbose"    => opts.copy( verbose = v.toBoolean )
     case "instnum"    => opts.copy( instanceNumber = v.toInt )
     case "instsize"   => opts.copy( instanceSize = parseRange( v ) )
     case "instprover" => opts.copy( instanceProver = v )
@@ -66,14 +65,11 @@ object ViperOptions {
     opts.foldLeft( ViperOptions() )( ( opts_, opt ) => parseAndApply( opt._1, opt._2, opts_ ) )
 }
 
-class Viper( val problem: TipProblem, val options: ViperOptions ) {
+class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger {
   implicit var ctx = problem.context
 
   val sequent @ Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = problem.toSequent
   val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
-
-  def info() = if ( options.verbose ) println()
-  def info( msg: Any ) = if ( options.verbose ) println( msg )
 
   def inside( range: FloatRange, scale: Float = 1 ) = ( f: Float ) => scale * range._1 <= f && f <= scale * range._2
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
@@ -91,7 +87,6 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       info( "Recursion scheme template:" )
       for ( ( lhs, rhs ) <- msrsf.template.template.toSeq.sortBy( _._1.toString ) )
         info( s"$lhs -> $rhs" )
-      info()
 
       msrsf
   }
@@ -102,7 +97,6 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
   def solve(): LKProof = {
     info( sequent )
-    info()
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
     var ttl = options.instanceNumber * 10
@@ -193,10 +187,8 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
-    info()
 
     val Some( solution ) = hSolveQBUP( qbupMatrix, xInst, smtSolver )
-    info()
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
@@ -238,15 +230,14 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )
-    encoding.encode( instProof ).toSeq.map( _.toString ).sorted.foreach( info )
-    info()
+    encoding.encode( instProof ).toSeq.map( _.toString ).sorted.foreach( info( _ ) )
 
     instProof
   }
 
 }
 
-object Viper {
+object Viper extends Logger {
 
   val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,.]*)\s*""".r
   def extractOptions( tipSmtCode: InputFile ) =
@@ -279,7 +270,12 @@ object Viper {
 
   def main( args: Array[String] ): Unit = {
     val ( problem, options ) = parseArgs( args, Map() )
-    new Viper( problem, options ).solve()
+    val viper = new Viper( problem, options )
+
+    viper.makeVerbose()
+    Logger.setConsolePattern( "%message%n" )
+
+    viper.solve()
   }
 
 }

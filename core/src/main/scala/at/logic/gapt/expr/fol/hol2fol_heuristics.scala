@@ -17,7 +17,6 @@ import at.logic.gapt.utils.logging.Logger
 object undoHol2Fol extends Logger {
   type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )
 
-  override def loggerName = "HOL2FOLLogger"
   /**
    * Translate the fol formula e to a hol formula over the given signature for constants and variables.
    *

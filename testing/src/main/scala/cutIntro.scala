@@ -107,7 +107,7 @@ object testCutIntro extends App {
 
     metrics.value( "has_equality", inputProof.backgroundTheory.hasEquality )
     try metrics.time( "cutintro" ) {
-      CutIntroduction( inputProof, method = parseMethod( methodName ), verbose = false ) match {
+      CutIntroduction( inputProof, method = parseMethod( methodName ) ) match {
         case Some( _ ) => metrics.value( "status", "ok" )
         case None =>
           if ( metricsPrinter.data( "termset_trivial" ) == true )

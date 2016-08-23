@@ -34,7 +34,6 @@ object LLKFormatter {
  * object to create LambdaExpressions from hol ASTs.
  */
 trait TokenToLKConverter extends Logger {
-  override def loggerName = "LLKLogger"
   import LLKFormatter._
 
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */

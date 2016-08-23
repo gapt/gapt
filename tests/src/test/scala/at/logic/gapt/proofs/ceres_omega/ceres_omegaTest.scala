@@ -99,18 +99,18 @@ class ceres_omegaTest extends Specification with Logger {
       val ( pqs, abspcss ) = replaceAbstractions( formulas( pcss ) )
       val ( cqs, abscss ) = replaceAbstractions( formulas( css ) )
 
-      debug( "=== projection css ===" )
-      abspcss.map( x => debug( x.toString ) )
-      debug( "=== projection replacement terms ===" )
-      pqs.map( x => debug( x._2 + " -> " + x._1 ) )
-      debug( TPTPFOLExporter.tptp_problem( abspcss.asInstanceOf[List[HOLClause]] ).toString )
+      info( "=== projection css ===" )
+      abspcss.map( x => info( x.toString ) )
+      info( "=== projection replacement terms ===" )
+      pqs.map( x => info( x._2 + " -> " + x._1 ) )
+      info( TPTPFOLExporter.tptp_problem( abspcss.asInstanceOf[List[HOLClause]] ).toString )
 
-      debug( "=== computed css ===" )
-      abscss.map( x => debug( x.toString ) )
-      debug( TPTPFOLExporter.tptp_problem( abscss.asInstanceOf[List[HOLClause]] ).toString )
+      info( "=== computed css ===" )
+      abscss.map( x => info( x.toString ) )
+      info( TPTPFOLExporter.tptp_problem( abscss.asInstanceOf[List[HOLClause]] ).toString )
 
-      debug( "=== css replacement terms ===" )
-      cqs.map( x => debug( x._2 + " -> " + x._1 ) )
+      info( "=== css replacement terms ===" )
+      cqs.map( x => info( x._2 + " -> " + x._1 ) )
 
       /*
       pcss.forall( x => css.exists( y =>

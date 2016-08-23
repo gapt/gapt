@@ -1691,70 +1691,7 @@ P(s(s(s(s(s(s(s(s(0...
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
-gapt> val q = CutIntroduction(p, method=DeltaTableMethod(), verbose=true)
-Quantifier inferences in the input proof: 9
-End sequent: ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))
-Size of term set: 11 (weighted by root symbol arity = 9)
-Smallest grammar of size 8 (weighted by vector size = 8):
-Non-terminal vectors: (x0), (x1)
-Terminals:
-  0
-  'a0:P(x)->P(s(x))':i>i
-  'a1:P(0)'
-  s:i>i
-  's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
-
-x0 → 'a0:P(x)->P(s(x))'(s(s(x1)))
-
-x0 → 'a0:P(x)->P(s(x))'(s(x1))
-
-x0 → 'a0:P(x)->P(s(x))'(x1)
-
-x0 → 'a1:P(0)'
-
-x0 → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
-
-x1 → 0
-
-x1 → s(s(s(0)))
-
-x1 → s(s(s(s(s(s(0))))))
-
-CNF of minimized cut-formula number 0:
-  P(x1) ⊢ P(s(s(s(x1))))
-Beautified grammar of size 8 (weighted by vector size = 8):
-Non-terminal vectors: (x), (x1)
-Terminals:
-  0
-  'a0:P(x)->P(s(x))':i>i
-  'a1:P(0)'
-  s:i>i
-  's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
-
-x → 'a0:P(x)->P(s(x))'(s(s(x1)))
-
-x → 'a0:P(x)->P(s(x))'(s(x1))
-
-x → 'a0:P(x)->P(s(x))'(x1)
-
-x → 'a1:P(0)'
-
-x → 's0:P(s(s(s(s(s(s(s(s(s(0)))))))))'
-
-x1 → 0
-
-x1 → s(s(s(0)))
-
-x1 → s(s(s(s(s(s(0))))))
-
-Size of the canonical solution: 11
-Size of the minimized solution: 3
-Size of the beautified solution: 3
-CNF of beautified cut-formula number 0:
-  P(x1) ⊢ P(s(s(s(x1))))
-Number of cuts introduced: 1
-Total inferences in the proof with cut(s): 27
-Quantifier inferences in the proof with cut(s): 7
+gapt> val q = CutIntroduction(p, method=DeltaTableMethod())
 q: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (CutRule(p14, Suc(0), p26, Ant(0)))
 [p26] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p25, Ant(1), Ant(0)))
@@ -1780,7 +1717,14 @@ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
 problem and an external MaxSAT-solver to a
 minimal grammar corresponding to a proof with a cut with two cuts, one with $1$
-quantifier, one with $2$ quantifiers.
+quantifier, one with $2$ quantifiers.  If you want to see more information
+about what is happening during cut-introduction, you can make the output more
+verbose by running:
+
+\begin{clilisting}
+gapt> CutIntroduction.makeVerbose()
+
+\end{clilisting}
 
 \subsection{Tree grammars}
 
@@ -1811,14 +1755,14 @@ Productions:
   x2 -> s(s(0))
 
 gapt> lang.toSet subsetOf grammar.language
-res48: Boolean = true
+res49: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
-res49: at.logic.gapt.grammars.TratGrammar =
+res50: at.logic.gapt.grammars.TratGrammar =
 Axiom: x0
 Non-terminals: x0, x1, x2
 Productions:
@@ -1852,7 +1796,7 @@ P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) �
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
 gapt> Escargot.getExpansionProof(problem)
-res50: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res51: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -1892,7 +1836,7 @@ P_P(f_nil) ∧
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function1>
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
-res51: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
