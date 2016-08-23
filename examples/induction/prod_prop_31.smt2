@@ -2,7 +2,7 @@
 ; Andrew Ireland and Alan Bundy, JAR 1996
 
 ; for performance:
-; viper cansolsize 2,2
+; viper cansolsize 2,3
 ; viper gramw scomp
 
 (declare-datatypes (a)
