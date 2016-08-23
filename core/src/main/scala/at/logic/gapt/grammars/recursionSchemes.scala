@@ -506,23 +506,26 @@ object recSchemToVTRATG {
     nts
   }
 
-  def apply( recSchem: RecursionScheme ): VectTratGrammar = {
+  def apply( recSchem: RecursionScheme ): VTRATG = {
+    val nameGen = rename.awayFrom( containedNames( recSchem ) )
+
     val ntCorrespondence = orderedNonTerminals( recSchem ).reverse map {
-      case nt @ Const( name, FOLHeadType( Ti, n ) ) =>
-        nt -> ( 0 until n ).map { i => FOLVar( s"${name}_$i" ) }.toList
+      case nt @ Const( name, FunctionType( _, argTypes ) ) =>
+        nt -> ( for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( nameGen.fresh( s"x_${name}_$i" ), t ) )
     }
     val ntMap = ntCorrespondence.toMap
 
-    val axiom = FOLVar( "A" )
+    val FunctionType( axiomType, _ ) = recSchem.axiom.exptype
+    val axiom = Var( nameGen.fresh( s"x_${recSchem.axiom.name}" ), axiomType )
     val nonTerminals = List( axiom ) +: ( ntCorrespondence map { _._2 } filter { _.nonEmpty } )
     val productions = recSchem.rules map {
       case Rule( Apps( nt1: Const, vars1 ), Apps( nt2: Const, args2 ) ) if recSchem.nonTerminals.contains( nt1 ) && recSchem.nonTerminals.contains( nt2 ) =>
         val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
-        ntMap( nt2 ) -> args2.map( subst( _ ) ).map( _.asInstanceOf[FOLTerm] )
+        ntMap( nt2 ) -> args2.map( subst( _ ) )
       case Rule( Apps( nt1: Const, vars1 ), rhs ) if recSchem.nonTerminals.contains( nt1 ) =>
         val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
-        List( axiom ) -> List( subst( rhs ).asInstanceOf[FOLTerm] )
+        List( axiom ) -> List( subst( rhs ) )
     }
-    VectTratGrammar( axiom, nonTerminals, productions )
+    VTRATG( axiom, nonTerminals, productions )
   }
 }

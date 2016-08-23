@@ -2,7 +2,7 @@ package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
 
-private class VtratgExporter( unicode: Boolean, vtratg: VectTratGrammar )
+private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
     extends BabelExporter( unicode, vtratg.babelSignature ) {
 
   def csep( docs: List[Doc] ): Doc = ssep( docs, line( ", " ) )
@@ -33,13 +33,15 @@ private class VtratgExporter( unicode: Boolean, vtratg: VectTratGrammar )
 
 }
 
-object VectTratGrammar {
-  type NonTerminalVect = List[FOLVar]
-  type Production = ( NonTerminalVect, List[FOLTerm] )
+object VTRATG {
+  type NonTerminalVect = List[Var]
+  type Production = ( NonTerminalVect, List[LambdaExpression] )
 }
 
-case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.NonTerminalVect], productions: Set[VectTratGrammar.Production] ) {
-  import VectTratGrammar._
+case class VTRATG( axiom: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], productions: Set[VTRATG.Production] ) {
+  import VTRATG._
+
+  def termType = axiom.exptype
 
   def axiomVect: NonTerminalVect = List( axiom )
 
@@ -59,6 +61,8 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
         require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
       }
       require( a.size == t.size, s"vector production $p has sides of different length" )
+      for ( ( ai, ti ) <- a zip t )
+        require( ai.exptype == ti.exptype, s"vector production $p has mismatching types" )
   }
   require( nonTerminals contains axiomVect, s"axiom is unknown non-terminal vector $axiom" )
 
@@ -66,62 +70,17 @@ case class VectTratGrammar( axiom: FOLVar, nonTerminals: Seq[VectTratGrammar.Non
 
   def weightedSize = productions.toSeq.map( _._1.size ).sum
 
-  def language: Set[FOLTerm] = {
-    var lang = Set[FOLTerm]( axiom )
+  def language: Set[LambdaExpression] = {
+    var lang = Set[LambdaExpression]( axiom )
     nonTerminals.foreach { a =>
       val P_a = productions( a )
       if ( P_a.nonEmpty )
         lang = P_a.flatMap { p =>
-          FOLSubstitution( p.zipped )( lang )
+          Substitution( p.zipped )( lang )
         }
     }
     lang filter ( freeVariables( _ ).isEmpty )
   }
 
   override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).export()
-}
-
-object TratGrammar {
-  type Production = ( FOLVar, FOLTerm )
-
-  def asVectTratGrammarProduction( p: Production ): VectTratGrammar.Production =
-    List( p._1 ) -> List( p._2 )
-}
-
-case class TratGrammar( axiom: FOLVar, nonTerminals: Seq[FOLVar], productions: Set[TratGrammar.Production] ) {
-  import TratGrammar._
-
-  private val nLine = sys.props( "line.separator" )
-
-  def productions( nonTerminal: FOLVar ): Set[Production] = productions filter ( _._1 == nonTerminal )
-  def rightHandSides( nonTerminal: FOLVar ) = productions( nonTerminal ) map ( _._2 )
-
-  productions foreach {
-    case p @ ( a, t ) =>
-      require( nonTerminals contains a, s"unknown non-terminal $a in $p" )
-      val allowedNonTerminals = nonTerminals.drop( nonTerminals.indexOf( a ) + 1 ).toSet
-      freeVariables( t ) foreach { fv =>
-        require( allowedNonTerminals contains fv, s"acyclicity violated in $p: $fv not in $allowedNonTerminals" )
-      }
-  }
-  require( nonTerminals contains axiom, s"axiom is unknown non-terminal $axiom" )
-
-  def toVectTratGrammar: VectTratGrammar = VectTratGrammar(
-    axiom, nonTerminals map ( List( _ ) ),
-    productions map asVectTratGrammarProduction
-  )
-
-  def language: Set[FOLTerm] = toVectTratGrammar language
-
-  override def toString: String = {
-    val s = new StringBuilder
-    s append s"Axiom: $axiom" + nLine
-    s append s"Non-terminals: ${nonTerminals.mkString( ", " )}" + nLine
-    s append s"Productions:" + nLine
-    productions.toSeq.sortBy { case ( a, t ) => ( nonTerminals.indexOf( a ), t.toString ) } foreach {
-      case ( a, t ) =>
-        s append s"  $a -> $t" + nLine
-    }
-    s.toString()
-  }
 }

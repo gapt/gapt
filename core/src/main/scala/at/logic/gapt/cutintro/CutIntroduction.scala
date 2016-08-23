@@ -20,12 +20,12 @@ import at.logic.gapt.utils.logging.{ Logger, metrics }
 import at.logic.gapt.utils.runProcess
 
 trait GrammarFindingMethod {
-  def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar]
+  def findGrammars( lang: Set[FOLTerm] ): Option[VTRATG]
   def name: String
 }
 
 case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
+  override def findGrammars( lang: Set[FOLTerm] ): Option[VTRATG] =
     Some( findMinimalVectGrammar( lang, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
@@ -142,14 +142,14 @@ case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, Seq[Seq[F
 }
 
 object vtratgToSEHS {
-  def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): SchematicExtendedHerbrandSequent = {
+  def apply( encoding: InstanceTermEncoding, g: VTRATG ): SchematicExtendedHerbrandSequent = {
     val us = encoding.endSequent zip encoding.symbols map {
       case ( u: FOLFormula, sym ) =>
         u -> g.rightHandSides( g.axiomVect ).map( _.head ).toList.
           collect { case Apps( `sym`, args ) => args map { _.asInstanceOf[FOLTerm] } }
     }
     val slist = g.nonTerminals.filter( _ != g.axiomVect ).
-      map { a => a -> g.rightHandSides( a ).toList }.
+      map { a => a.map( _.asInstanceOf[FOLVar] ) -> g.rightHandSides( a ).toList.map( _.map( _.asInstanceOf[FOLTerm] ) ) }.
       filter( _._2.nonEmpty ).toList
 
     SchematicExtendedHerbrandSequent( us, slist )
@@ -157,7 +157,7 @@ object vtratgToSEHS {
 }
 
 object sehsToVTRATG {
-  def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VectTratGrammar = {
+  def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VTRATG = {
     val freeVars = freeVariables( sehs.us.elements.flatMap { _._2 } ++ sehs.ss.flatMap { _._2 } flatten ) ++ sehs.eigenVariables.flatten
     val axiom = rename( FOLVar( "x" ), freeVars )
     val nonTerminals = sehs.eigenVariables.map( _.toList )
@@ -170,14 +170,14 @@ object sehsToVTRATG {
       case FOLVar( n ) => FOLVar( n ) -> FOLConst( n )
     } )
 
-    VectTratGrammar( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
+    VTRATG( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
   }
 }
 
 object CutIntroduction extends Logger {
 
   class CutIntroException( msg: String ) extends Exception( msg )
-  class NonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
+  class NonCoveringGrammarException( grammar: VTRATG, term: FOLTerm )
     extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
   /**
    * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.

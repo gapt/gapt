@@ -20,7 +20,7 @@ object SipGrammar {
 
   def gamma_i( i: Int ) = FOLVar( s"γ_$i" )
 
-  def instantiate( prod: Production, n: Int ): Set[Production] = prod match {
+  def instantiate( prod: Production, n: Int ): Set[VTRATG.Production] = ( prod match {
     case ( `tau`, r ) =>
       var instanceProductions = Set[Production]()
       if ( !freeVariables( r ).contains( gamma ) )
@@ -36,7 +36,7 @@ object SipGrammar {
       gamma_i( i ) -> FOLSubstitution( alpha -> numeral( n ), nu -> numeral( i ), gamma -> gamma_i( i + 1 ) )( r )
     } toSet
     case ( `gammaEnd`, r ) => Set( gamma_i( n ) -> FOLSubstitution( alpha -> numeral( n ) )( r ) )
-  }
+  } ).map { case ( l, r ) => List( l ) -> List( r ) }
 }
 
 case class SipGrammar( productions: Set[SipGrammar.Production] ) {
@@ -45,7 +45,7 @@ case class SipGrammar( productions: Set[SipGrammar.Production] ) {
   override def toString: String = productions.map { case ( a, t ) => s"$a -> $t" }.toSeq.sorted.mkString( sys.props( "line.separator" ) )
 
   def instanceGrammar( n: Int ) =
-    TratGrammar( tau, tau +: ( 0 until n ).inclusive.map( gamma_i ),
+    VTRATG( tau, List( tau ) +: ( 0 until n ).inclusive.map( gamma_i ).map( List( _ ) ),
       productions flatMap { p => instantiate( p, n ) } )
 }
 
@@ -86,12 +86,12 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   def productionIsIncluded( p: SipGrammar.Production ) = FOLAtom( s"sp,$p" )
 
   def coversLanguageFamily( langs: Seq[stableSipGrammar.InstanceLanguage] ) = {
-    val cs = Seq.newBuilder[FOLFormula]
+    val cs = Seq.newBuilder[HOLFormula]
     langs foreach {
       case ( n, lang ) =>
-        val tratMinForm = new GrammarMinimizationFormula( g.instanceGrammar( n ) ) {
-          override def productionIsIncluded( p: TratGrammar.Production ) = FOLAtom( s"p,$n,$p" )
-          override def valueOfNonTerminal( t: FOLTerm, a: FOLVar, rest: FOLTerm ) = FOLAtom( s"v,$n,$t,$a=$rest" )
+        val tratMinForm = new VectGrammarMinimizationFormula( g.instanceGrammar( n ) ) {
+          override def productionIsIncluded( p: VTRATG.Production ) = FOLAtom( s"p,$n,$p" )
+          override def valueOfNonTerminal( t: LambdaExpression, a: Var, rest: LambdaExpression ) = FOLAtom( s"v,$n,$t,$a=$rest" )
         }
         val instanceCovForm = tratMinForm.coversLanguage( lang )
         cs += instanceCovForm

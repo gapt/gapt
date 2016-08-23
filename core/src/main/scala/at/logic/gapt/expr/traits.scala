@@ -260,10 +260,16 @@ object HOLAtomConst {
 }
 
 object HOLAtom {
+  def apply( head: String, args: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): HOLAtom =
+    apply( head, args )
+  def apply( head: String, args: Seq[LambdaExpression] ): HOLAtom =
+    Apps( Const( head, FunctionType( To, args.map( _.exptype ) ) ), args ).asInstanceOf[HOLAtom]
+
   def apply( head: LambdaExpression, args: LambdaExpression* ): HOLAtom =
     apply( head, args toList )
   def apply( head: LambdaExpression, args: List[LambdaExpression] ): HOLAtom =
     Apps( head, args ).asInstanceOf[HOLAtom]
+
   def unapply( e: HOLAtom ): Option[( LambdaExpression, List[LambdaExpression] )] = e match {
     case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.exptype == To => Some( head, args )
     case _ => None

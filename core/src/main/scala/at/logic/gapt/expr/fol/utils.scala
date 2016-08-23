@@ -184,11 +184,11 @@ object Delta {
 
 trait CountingFormulas {
   def exactly: {
-    def noneOf( fs: Seq[FOLFormula] ): FOLFormula
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula
+    def noneOf( fs: Seq[HOLFormula] ): HOLFormula
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula
   }
   def atMost: {
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula
   }
 }
 
@@ -196,9 +196,9 @@ object thresholds extends CountingFormulas {
 
   object exactly {
 
-    def noneOf( fs: Seq[FOLFormula] ): FOLFormula = -Or( fs )
+    def noneOf( fs: Seq[HOLFormula] ): HOLFormula = -Or( fs )
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = fs match {
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = fs match {
       case Seq()    => Bottom()
       case Seq( f ) => f
       case _ =>
@@ -210,7 +210,7 @@ object thresholds extends CountingFormulas {
 
   object atMost {
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = fs match {
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = fs match {
       case Seq() | Seq( _ ) => Top()
       case _ =>
         val ( a, b ) = fs.splitAt( fs.size / 2 )
@@ -225,15 +225,15 @@ object naive extends CountingFormulas {
 
   object exactly {
 
-    def noneOf( fs: Seq[FOLFormula] ): FOLFormula = -Or( fs )
+    def noneOf( fs: Seq[HOLFormula] ): HOLFormula = -Or( fs )
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = Or( fs ) & atMost.oneOf( fs )
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = Or( fs ) & atMost.oneOf( fs )
 
   }
 
   object atMost {
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
 
   }
 

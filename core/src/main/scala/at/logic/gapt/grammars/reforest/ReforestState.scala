@@ -192,7 +192,7 @@ case class ReforestState(
   def toRecursionScheme: RecursionScheme =
     RecursionScheme( axiom, for ( ( nt, rhss ) <- rules.toSet; rhs <- rhss ) yield Rule( nt, rhs ) )
 
-  def toVTRATG: VectTratGrammar = recSchemToVTRATG( toRecursionScheme )
+  def toVTRATG: VTRATG = recSchemToVTRATG( toRecursionScheme )
 
 }
 

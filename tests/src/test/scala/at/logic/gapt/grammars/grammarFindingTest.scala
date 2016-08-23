@@ -22,7 +22,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       vtg( Seq( "x" ), Seq( "y->c" ) ) must throwA[IllegalArgumentException]
     }
     "check that production sides have same length" in {
-      VectTratGrammar( FOLVar( "x" ), Seq( List( FOLVar( "x" ) ) ),
+      VTRATG( FOLVar( "x" ), Seq( List( FOLVar( "x" ) ) ),
         Set( List( FOLVar( "x" ) ) -> List( FOLConst( "a" ), FOLConst( "b" ) ) ) ) must throwA[IllegalArgumentException]
     }
     "correctly compute the language" in {
@@ -89,18 +89,6 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
   }
 
-  "normal forms grammars" should {
-    "not contain tau->alpha" in {
-      val l = Set( "r(c)", "r(d)" ) map parseTerm
-
-      val g = stableProofGrammar( l, 1 )
-      g.productions must not contain ( g.axiom -> g.nonTerminals( 1 ) )
-
-      val vg = stableProofVectGrammar( l, Seq( 1 ) )
-      vg.productions must not contain ( List( vg.axiom ) -> vg.nonTerminals( 1 ) )
-    }
-  }
-
   "TermGenerationFormula" should {
     "work for production vectors" in {
       val g = vtg(
@@ -135,7 +123,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "not generate term if production not included" in {
       val g = tg( "x->c" )
       val p = g.productions.head
-      val formula = new GrammarMinimizationFormula( g )
+      val formula = new VectGrammarMinimizationFormula( g )
       And(
         formula.generatesTerm( parseTerm( "c" ) ),
         Neg( formula.productionIsIncluded( p ) )
@@ -148,9 +136,9 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
     "generate term if only tau-productions are allowed" in {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
-      val g = stableProofGrammar( l toSet, 4 )
-      val formula = new GrammarMinimizationFormula( g )
-      val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiom ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
+      val g = stableProofVectGrammar( l toSet, Seq( 1, 1, 1, 1 ) )
+      val formula = new VectGrammarMinimizationFormula( g )
+      val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiomVect ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) must beSat
     }
     "work for vtrat grammar with only tau-productions" in {
@@ -191,8 +179,8 @@ class GrammarFindingTest extends Specification with SatMatchers {
   "minimizeGrammar" should {
     "remove redundant productions" in {
       val g = tg( "x->c", "x->d" )
-      val minG = minimizeGrammar( g, Set( "c" ) map parseTerm )
-      minG.productions must beEqualTo( Seq( "x->c" ) map parseProduction )
+      val minG = minimizeVectGrammar( g, Set( "c" ) map parseTerm )
+      minG.productions must_== Set( List( fov"x" ) -> List( fot"c" ) )
     }
   }
 
@@ -217,7 +205,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
   "findMinimalGrammar" should {
     "find covering grammar of minimal size" in {
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
-      val g = findMinimalGrammar( l map parseTerm, 1 )
+      val g = findMinimalVectGrammar( l.map( parseTerm ).toSet, Seq( 1 ) )
       covers( g, l: _* )
       g.productions.size must beEqualTo( 2 + 3 )
       g.language must_== l.map( parseTerm ).toSet
@@ -239,45 +227,43 @@ class GrammarFindingTest extends Specification with SatMatchers {
         case ( ( n, l_str ), sizeOfMinG ) =>
           val l = l_str map parseTerm
           s"for $l with $n non-terminals" in {
-            val g = findMinimalGrammar( l, n )
+            val g = findMinimalVectGrammar( l, ( 1 to n ).map( _ => 1 ) )
             g.productions.size must_== sizeOfMinG
-            ( l diff g.language ) must_== Set()
+            ( l.toSet diff g.language ) must_== Set()
           }
       }
     }
   }
 
-  def parseProduction( p: String ): TratGrammar.Production =
+  def parseProduction( p: String ): ( FOLVar, FOLTerm ) =
     p.split( "->" ) match {
       case Array( a, t ) => FOLVar( a ) -> parseTerm( t )
     }
 
   def tg( prods: String* ) = {
     val ps = prods map parseProduction
-    TratGrammar( FOLVar( "x" ), ps map ( _._1 ) distinct, ps toSet )
+    val nts = ps.map( _._1 ).distinct.map( List( _ ) )
+    VTRATG( FOLVar( "x" ), nts, ps.map { case ( l, r ) => List( l ) -> List( r ) }.toSet )
   }
 
   def vtg( nts: Seq[String], prods: Seq[String]* ) =
-    VectTratGrammar( FOLVar( "x" ), nts map { nt => nt.split( "," ).map( FOLVar( _ ) ).toList },
+    VTRATG( FOLVar( "x" ), nts map { nt => nt.split( "," ).map( FOLVar( _ ) ).toList },
       prods map { vect =>
         vect.toList map parseProduction unzip
       } toSet )
 
-  def covers( g: VectTratGrammar, terms: String* ): MatchResult[Any] = {
+  def covers( g: VTRATG, terms: String* ): MatchResult[Any] = {
     terms foreach { term =>
       new TermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g generates $term" must beSat
     }
     ok
   }
 
-  def doesNotCover( g: VectTratGrammar, terms: String* ): MatchResult[Any] = {
+  def doesNotCover( g: VTRATG, terms: String* ): MatchResult[Any] = {
     terms foreach { term =>
       new TermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g does NOT generate $term" must beUnsat
     }
     ok
   }
-
-  def covers( g: TratGrammar, terms: String* ): MatchResult[Any] = covers( g toVectTratGrammar, terms: _* )
-  def doesNotCover( g: TratGrammar, terms: String* ): MatchResult[Any] = doesNotCover( g toVectTratGrammar, terms: _* )
 
 }

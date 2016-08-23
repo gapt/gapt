@@ -29,6 +29,6 @@ object vtrat_comparison extends Script {
   println( terms.toSet diff minimized.language )
   println( recSchemToVTRATG( minimized ) )
 
-  val minG = time { minimizeVectGrammar( nfG, terms, bestAvailableMaxSatSolver ) }
+  val minG = time { minimizeVectGrammar( nfG, terms.toSet, bestAvailableMaxSatSolver ) }
   println( minG )
 }

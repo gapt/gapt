@@ -148,12 +148,12 @@ object deltaTableAlgorithm {
     else minGrammars minBy { g => g._1.size + g._2.size }
   }
 
-  def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VectTratGrammar = {
-    val alpha = freeVariables( us ).toList.sortBy { _.toString }.asInstanceOf[List[FOLVar]]
-    val tau = rename( FOLVar( "x0" ), alpha )
-    VectTratGrammar( tau, Seq( List( tau ), alpha ),
-      ( for ( subst <- s ) yield alpha -> alpha.map { subst( _ ).asInstanceOf[FOLTerm] } )
-        union ( for ( u <- us ) yield List( tau ) -> List( u.asInstanceOf[FOLTerm] ) ) )
+  def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VTRATG = {
+    val alpha = freeVariables( us ).toList.sortBy { _.toString }
+    val tau = rename( Var( "x0", us.headOption.map( _.exptype ).getOrElse( Ti ) ), alpha )
+    VTRATG( tau, Seq( List( tau ), alpha ),
+      ( for ( subst <- s ) yield alpha -> alpha.map { subst( _ ) } )
+        union ( for ( u <- us ) yield List( tau ) -> List( u ) ) )
   }
 
 }
@@ -165,7 +165,7 @@ case class DeltaTableMethod(
 ) extends GrammarFindingMethod {
   import deltaTableAlgorithm._
 
-  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] = {
+  override def findGrammars( lang: Set[FOLTerm] ): Option[VTRATG] = {
     val langSet = lang.toSet[LambdaExpression]
 
     var dtable = createTable( langSet, keyLimit, singleQuantifier )
