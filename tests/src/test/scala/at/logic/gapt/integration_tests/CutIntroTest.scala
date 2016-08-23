@@ -18,7 +18,8 @@ class CutIntroTest extends Specification {
   }
 
   "maxsat method" in {
-    CutIntroduction( LinearExampleProof( 9 ), method = MaxSATMethod( 1 ) ) must beSome
+    val Some( proof ) = Escargot.getLKProof( hos"!y p(0,y), !x!y (p x (f y) & p x (g y) -> p (s x) y) :- p ${Numeral( 2 )} c" )
+    CutIntroduction( proof, method = MaxSATMethod( 1 ) ) must beSome
   }
 
   "reforest method" in {
