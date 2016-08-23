@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof, FOLInstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof }
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber }
 import at.logic.gapt.provers.escargot.Escargot

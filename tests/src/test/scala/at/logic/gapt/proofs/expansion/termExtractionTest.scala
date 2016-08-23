@@ -22,7 +22,7 @@ class TermExtractionTest extends Specification {
   }
 
   "TermInstanceEncoding" should {
-    val encoding = FOLInstanceTermEncoding( endSequent )
+    val encoding = InstanceTermEncoding( endSequent )
     "encode the instance terms as arguments" in {
       encoding.encode( expansion ).map {
         case Apps( _, as ) => as

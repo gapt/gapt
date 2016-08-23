@@ -226,7 +226,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 }
 
 object InstanceTermEncoding {
-  def apply( endSequent: HOLSequent, instanceTermType: Ty = TBase( "InstanceTermType" ) ): InstanceTermEncoding =
+  def defaultType = TBase( "_Inst" )
+
+  def apply( endSequent: HOLSequent, instanceTermType: Ty = defaultType ): InstanceTermEncoding =
     new InstanceTermEncoding( endSequent map { toVNF( _ ) }, instanceTermType )
 
   def apply( expansionSequent: ExpansionSequent ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
@@ -243,26 +245,5 @@ object InstanceTermEncoding {
   def apply( lkProof: LKProof ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
     val encoding = InstanceTermEncoding( lkProof.endSequent )
     encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ) -> encoding
-  }
-}
-
-object FOLInstanceTermEncoding {
-  def apply( endSequent: HOLSequent ): InstanceTermEncoding =
-    InstanceTermEncoding( endSequent, Ti )
-
-  def apply( expansionSequent: ExpansionSequent ): ( Set[FOLTerm], InstanceTermEncoding ) = {
-    val encoding = FOLInstanceTermEncoding( expansionSequent.shallow )
-    encoding.encode( expansionSequent ).map( _.asInstanceOf[FOLTerm] ) -> encoding
-  }
-
-  def apply( expansionProof: ExpansionProof ): ( Set[FOLTerm], InstanceTermEncoding ) =
-    apply( expansionProof.expansionSequent )
-
-  def apply( expansionProof: ExpansionProofWithCut ): ( Set[FOLTerm], InstanceTermEncoding ) =
-    apply( eliminateCutsET( expansionProof ).expansionSequent )
-
-  def apply( lkProof: LKProof ): ( Set[FOLTerm], InstanceTermEncoding ) = {
-    val encoding = FOLInstanceTermEncoding( lkProof.endSequent )
-    encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ).map( _.asInstanceOf[FOLTerm] ) -> encoding
   }
 }

@@ -23,10 +23,6 @@ class ViperTest extends Specification {
     ) ) { prob =>
       prob in {
         var extraOptions = Map( "fixup" -> "false" )
-        if ( prob.startsWith( "prod_prop_31" ) && !OpenWBO.isInstalled )
-          skipped( "only works with open-wbo at the moment" )
-        if ( prob == "comms0" && !VeriT.isInstalled )
-          skipped( "does not work on travis atm" )
         if ( prob == "linear2par" )
           skipped( "takes too long" )
         if ( prob == "prod_prop_31" ) {

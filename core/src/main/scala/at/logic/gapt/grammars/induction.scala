@@ -1,7 +1,7 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubTerms
+import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
@@ -58,7 +58,7 @@ object stableSipGrammar {
     val allTerms = instanceLanguages.flatMap( _._2 )
     val topLevelStableTerms = stableTerms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
     val argumentStableTerms = stableTerms(
-      FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
+      folSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
       Seq( gamma, alpha, nu )
     )
 

@@ -2,11 +2,10 @@ package at.logic.gapt.testing
 import java.nio.file._
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
+import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.loadExpansionProof
 
 import scala.App
-
 import better.files._
 
 object dumpTermset extends App {
@@ -30,6 +29,7 @@ object dumpTermset extends App {
       sorted.map( _ + "\n" ).mkString.getBytes( "UTF-8" ) )
 
   val expansionProof = loadExpansionProof( inputFileName.toFile )
-  val termSet = FOLInstanceTermEncoding( expansionProof )._1
+  val encoding = InstanceTermEncoding( expansionProof.shallow, Ti )
+  val termSet = encoding.encode( expansionProof ).map( _.asInstanceOf[FOLTerm] )
   writeTermset( Paths get outputFileName, simplifyNames( termSet ) )
 }

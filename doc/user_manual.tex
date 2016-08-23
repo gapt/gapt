@@ -1740,26 +1740,26 @@ able to automatically find a (V)TRATG that covers this language:
 gapt> val lang = 1 to 18 map { Numeral(_) }
 lang: scala.collection.immutable.IndexedSeq[at.logic.gapt.expr.FOLTerm] = Vector(s(0), s(s(0)), s(s(s(0))), s(s(s(s(0)))), s(s(s(s(s(0))))), s(s(s(s(s(s(0)))))), s(s(s(s(s(s(s(0))))))), s(s(s(s(s(s(s(s(0)))))))), s(s(s(s(s(s(s(s(s(0))))))))), s(s(s(s(s(s(s(s(s(s(0)))))))))), s(s(s(s(s(s(s(s(s(s(s(0))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))))))), s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))))))))
 
-gapt> val grammar = findMinimalVectGrammar(lang.toSet, Seq(1,1))
+gapt> val grammar = findMinimalVTRATG(lang.toSet, 2)
 grammar: at.logic.gapt.grammars.VTRATG =
-Non-terminal vectors: (x0), (x_0_0), (x_1_0)
+Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x0 → s(s(s(s(s(s(s(s(s(s(x_0_0))))))))))
+x_0 → s(x_1)
 
-x0 → s(x_0_0)
+x_0 → x_1
 
-x_0_0 → s(s(x_1_0))
+x_1 → s(s(s(s(s(s(s(s(s(s(s(s(x_2))))))))))))
 
-x_0_0 → s(x_1_0)
+x_1 → s(s(s(s(s(s(x_2))))))
 
-x_0_0 → x_1_0
+x_1 → x_2
 
-x_1_0 → 0
+x_2 → s(0)
 
-x_1_0 → s(s(s(0)))
+x_2 → s(s(s(0)))
 
-x_1_0 → s(s(s(s(s(s(0))))))
+x_2 → s(s(s(s(s(0)))))
 
 gapt> lang.toSet subsetOf grammar.language
 res49: Boolean = true
@@ -1768,20 +1768,22 @@ res49: Boolean = true
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
-gapt> minimizeVectGrammar(grammar, Set(1,2,4,5) map {Numeral(_)})
+gapt> minimizeVTRATG(grammar, (1 to 5).map(Numeral(_)).toSet)
 res50: at.logic.gapt.grammars.VTRATG =
-Non-terminal vectors: (x0), (x_0_0), (x_1_0)
+Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x0 → s(x_0_0)
+x_0 → s(x_1)
 
-x_0_0 → s(x_1_0)
+x_0 → x_1
 
-x_0_0 → x_1_0
+x_1 → x_2
 
-x_1_0 → 0
+x_2 → s(0)
 
-x_1_0 → s(s(s(0)))
+x_2 → s(s(s(0)))
+
+x_2 → s(s(s(s(s(0)))))
 
 \end{clilisting}
 

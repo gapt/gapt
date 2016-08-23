@@ -97,7 +97,7 @@ case class ReforestState(
 
     val maxArity = rhss.map { case Apps( c: Const, as ) => as.size }.max
     val argtypes = ( 0 until maxArity ) map { _ => Ti } // TODO
-    val newNT = Const( s"B$highestNTIndex", FunctionType( Ti, argtypes ) )
+    val newNT = Const( s"B$highestNTIndex", FunctionType( axiom.exptype, argtypes ) )
     val newArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
     val args1 = mutable.Set[Seq[LambdaExpression]]()
@@ -197,12 +197,11 @@ case class ReforestState(
 }
 
 object Reforest {
-  def start( lang: Traversable[LambdaExpression] ): ReforestState =
-    ReforestState(
-      axiom = FOLConst( "A" ),
-      rules = Map( FOLConst( "A" ) -> lang.toSet ),
-      highestNTIndex = 0
-    )
+  def start( lang: Traversable[LambdaExpression] ): ReforestState = {
+    val termType = lang.headOption.map( _.exptype ).getOrElse( Ti )
+    val axiom = Const( "A", termType )
+    ReforestState( axiom, rules = Map( axiom -> lang.toSet ), highestNTIndex = 0 )
+  }
 
   def compress( s: ReforestState ): ReforestState = {
     val stats = s.stats

@@ -1,11 +1,11 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.cutintro.{ ExternalReforestMethod, ReforestMethod, CutIntroduction }
+import at.logic.gapt.cutintro.{ ReforestMethod, CutIntroduction }
 import at.logic.gapt.grammars.reforest.Reforest
-import at.logic.gapt.proofs.expansion.{ InstanceTermEncoding, FOLInstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 
 object ReforestDemo extends Script {
-  val ( lang, _ ) = FOLInstanceTermEncoding(
+  val ( lang, _ ) = InstanceTermEncoding(
     LinearExampleProof( 32 )
   )
 

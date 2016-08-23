@@ -113,7 +113,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       )
       val p = List( "z->d" ) map parseProduction unzip
 
-      val f = new TermGenerationFormula( g, parseTerm( "r(c)" ) )
+      val f = new VtratgTermGenerationFormula( g, parseTerm( "r(c)" ) )
       And( f.formula, Neg( f.vectProductionIsIncluded( p ) ) ) must beSat
     }
     "generate term with 2 productions" in {
@@ -136,7 +136,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
     "generate term if only tau-productions are allowed" in {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
-      val g = stableProofVectGrammar( l toSet, Seq( 1, 1, 1, 1 ) )
+      val g = stableVTRATG( l toSet, Seq( 1, 1, 1, 1 ) )
       val formula = new VectGrammarMinimizationFormula( g )
       val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiomVect ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) must beSat
@@ -171,7 +171,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq( "x->f(y2,y3)" ),
         Seq( "y1->c", "y2->d", "y3->d" )
       )
-      val formula = new TermGenerationFormula( g, parseTerm( "f(c,d)" ) )
+      val formula = new VtratgTermGenerationFormula( g, parseTerm( "f(c,d)" ) )
       formula.formula & -formula.vectProductionIsIncluded( List( parseProduction( "x->f(y1,y2)" ) ).unzip ) must beUnsat
     }
   }
@@ -179,7 +179,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
   "minimizeGrammar" should {
     "remove redundant productions" in {
       val g = tg( "x->c", "x->d" )
-      val minG = minimizeVectGrammar( g, Set( "c" ) map parseTerm )
+      val minG = minimizeVTRATG( g, Set( "c" ) map parseTerm )
       minG.productions must_== Set( List( fov"x" ) -> List( fot"c" ) )
     }
   }
@@ -192,7 +192,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq( "x->f(y)" ),
         Seq( "y->c" )
       )
-      val minG = minimizeVectGrammar( g, Set( "f(c)" ) map parseTerm,
+      val minG = minimizeVTRATG( g, Set( "f(c)" ) map parseTerm,
         weight = prod => if ( prod == List( parseProduction( "x->f(c)" ) ).unzip ) 3 else 1 )
       minG must_== vtg(
         Seq( "x", "y" ),
@@ -205,7 +205,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
   "findMinimalGrammar" should {
     "find covering grammar of minimal size" in {
       val l = Seq( "g(c,c)", "g(d,d)", "g(e,e)", "f(c,c)", "f(d,d)", "f(e,e)" )
-      val g = findMinimalVectGrammar( l.map( parseTerm ).toSet, Seq( 1 ) )
+      val g = findMinimalVTRATG( l.map( parseTerm ).toSet, Seq( 1 ) )
       covers( g, l: _* )
       g.productions.size must beEqualTo( 2 + 3 )
       g.language must_== l.map( parseTerm ).toSet
@@ -227,7 +227,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         case ( ( n, l_str ), sizeOfMinG ) =>
           val l = l_str map parseTerm
           s"for $l with $n non-terminals" in {
-            val g = findMinimalVectGrammar( l, ( 1 to n ).map( _ => 1 ) )
+            val g = findMinimalVTRATG( l.toSet, ( 1 to n ).map( _ => 1 ) )
             g.productions.size must_== sizeOfMinG
             ( l.toSet diff g.language ) must_== Set()
           }
@@ -254,14 +254,14 @@ class GrammarFindingTest extends Specification with SatMatchers {
 
   def covers( g: VTRATG, terms: String* ): MatchResult[Any] = {
     terms foreach { term =>
-      new TermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g generates $term" must beSat
+      new VtratgTermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g generates $term" must beSat
     }
     ok
   }
 
   def doesNotCover( g: VTRATG, terms: String* ): MatchResult[Any] = {
     terms foreach { term =>
-      new TermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g does NOT generate $term" must beUnsat
+      new VtratgTermGenerationFormula( g, parseTerm( term ) ).formula aka s"$g does NOT generate $term" must beUnsat
     }
     ok
   }

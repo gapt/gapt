@@ -3,6 +3,7 @@
 
 ; for performance:
 ; viper cansolsize 2,2
+; viper gramw scomp
 
 (declare-datatypes (a)
   ((list (nil) (cons (head a) (tail (list a))))))

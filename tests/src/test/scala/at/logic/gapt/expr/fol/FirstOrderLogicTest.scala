@@ -236,11 +236,11 @@ class FirstOrderLogicTest extends Specification {
     val fgab = FOLFunction( "f", ga, b )
 
     "work correctly on a FOLTerm" in {
-      FOLSubTerms( fgab ) must beEqualTo( Set( a, b, ga, fgab ) )
+      folSubTerms( fgab ) must beEqualTo( Set( a, b, ga, fgab ) )
     }
 
     "work correctly on a List[FOLTerm]" in {
-      FOLSubTerms( fgab :: ga :: Nil ) must beEqualTo( Set( a, b, ga, fgab ) )
+      folSubTerms( fgab :: ga :: Nil ) must beEqualTo( Set( a, b, ga, fgab ) )
     }
   }
 }

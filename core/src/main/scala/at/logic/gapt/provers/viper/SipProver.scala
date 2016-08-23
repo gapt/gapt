@@ -50,7 +50,7 @@ class SipProver(
     }
     require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
-    val termEncoding = FOLInstanceTermEncoding( endSequent )
+    val termEncoding = InstanceTermEncoding( endSequent, Ti )
     var instanceLanguages = instanceProofs map {
       case ( n, expSeq ) =>
         n -> termEncoding.encode( expSeq ).map( _.asInstanceOf[FOLTerm] )
