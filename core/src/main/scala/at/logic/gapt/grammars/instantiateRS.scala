@@ -11,9 +11,10 @@ object instantiateRS {
 
     recursionScheme.copy( rules = recursionScheme.rules flatMap {
       case rule @ Rule( Apps( nt, args ), rhs ) =>
-        for {
-          subst <- args.filterNot { _.isInstanceOf[Var] }.flatMap { freeVariables( _ ) }.traverse( v => sts( v.exptype ) map { v -> _ } toList )
-        } yield Substitution( subst )( rule )
+        args.filterNot { _.isInstanceOf[Var] }.
+          flatMap { freeVariables( _ ) }.
+          traverse { v => sts( v.exptype ).map { v -> _ }.toList }.
+          map { Substitution( _ )( rule ) }
     } )
   }
 
