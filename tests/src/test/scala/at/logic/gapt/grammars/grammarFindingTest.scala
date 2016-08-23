@@ -138,7 +138,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       val l = Seq( "f(c)", "f(d)", "g(c)", "g(d)" ) map parseTerm
       val g = stableVTRATG( l toSet, Seq( 1, 1, 1, 1 ) )
       val formula = new VectGrammarMinimizationFormula( g )
-      val onlyTauProd = And( g.productions.toList.filter( _._1 != g.axiomVect ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
+      val onlyTauProd = And( g.productions.toList.filter( _._1 != g.startSymbolNT ).map { p => Neg( formula.productionIsIncluded( p ) ) } )
       And( formula.generatesTerm( l( 0 ) ), onlyTauProd ) must beSat
     }
     "work for vtrat grammar with only tau-productions" in {

@@ -116,10 +116,10 @@ object vtratgToSEHS {
   def apply( encoding: InstanceTermEncoding, g: VTRATG ): SchematicExtendedHerbrandSequent = {
     val us = encoding.endSequent zip encoding.symbols map {
       case ( u: FOLFormula, sym ) =>
-        u -> g.rightHandSides( g.axiomVect ).map( _.head ).toList.
+        u -> g.rightHandSides( g.startSymbolNT ).map( _.head ).toList.
           collect { case Apps( `sym`, args ) => args map { _.asInstanceOf[FOLTerm] } }
     }
-    val slist = g.nonTerminals.filter( _ != g.axiomVect ).
+    val slist = g.nonTerminals.filter( _ != g.startSymbolNT ).
       map { a => a.map( _.asInstanceOf[FOLVar] ) -> g.rightHandSides( a ).toList.map( _.map( _.asInstanceOf[FOLTerm] ) ) }.
       filter( _._2.nonEmpty ).toList
 
@@ -130,10 +130,10 @@ object vtratgToSEHS {
 object sehsToVTRATG {
   def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VTRATG = {
     val freeVars = freeVariables( sehs.us.elements.flatMap { _._2 } ++ sehs.ss.flatMap { _._2 } flatten ) ++ sehs.eigenVariables.flatten
-    val axiom = rename( Var( "x", encoding.instanceTermType ), freeVars )
+    val startSymbol = rename( Var( "x", encoding.instanceTermType ), freeVars )
     val nonTerminals = sehs.eigenVariables.map( _.toList )
     val instances = for ( ( f, us ) <- sehs.us; u <- us ) yield instantiate( f, u )
-    val productionsFromAx = for ( t <- encoding encode instances ) yield List( axiom ) -> List( t )
+    val productionsFromAx = for ( t <- encoding encode instances ) yield List( startSymbol ) -> List( t )
     val otherProds = for ( ( ev, ss ) <- sehs.ss; s <- ss ) yield ev -> s
     val productions = productionsFromAx ++ otherProds
 
@@ -141,7 +141,7 @@ object sehsToVTRATG {
       case FOLVar( n ) => FOLVar( n ) -> FOLConst( n )
     } )
 
-    VTRATG( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
+    VTRATG( startSymbol, List( startSymbol ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
   }
 }
 
@@ -264,7 +264,7 @@ object CutIntroduction extends Logger {
     metrics.time( "grammar" ) {
       method.findGrammars( termset )
     }.filter { g =>
-      g.productions.exists( _._1 != g.axiomVect )
+      g.productions.exists( _._1 != g.startSymbolNT )
     }.orElse {
       info( "No grammar found." )
       None

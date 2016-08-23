@@ -91,7 +91,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: LambdaExpression ) {
         handledPAs += pa
       }
     for ( ( ntv, i ) <- g.nonTerminals.zipWithIndex ) possibleAssignments += ( i -> ntv.map { _ => notASubTerm } )
-    discoverAssignments( Map( g.axiom -> t ) )
+    discoverAssignments( Map( g.startSymbol -> t ) )
     val possibleValues = Map() ++ handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
 
     def Match( ntIdx: Int, t: List[LambdaExpression], s: List[LambdaExpression] ) =
@@ -114,8 +114,8 @@ class VtratgTermGenerationFormula( g: VTRATG, t: LambdaExpression ) {
 
     val cs = Seq.newBuilder[HOLFormula]
 
-    // value of axiom must be t
-    cs += valueOfNonTerminal( g.axiom, t )
+    // value of startSymbol must be t
+    cs += valueOfNonTerminal( g.startSymbol, t )
 
     possibleAssignments foreach { assignment =>
       cs += simplify( Case( assignment._1, assignment._2 ) )
@@ -159,9 +159,9 @@ object stableVTRATG {
     apply( lang, Var( "x_0", termType ), rhsNonTerminals )
   }
 
-  def apply( lang: Set[LambdaExpression], axiom: Var, nonTermVects: Seq[NonTerminalVect] ): VTRATG = {
+  def apply( lang: Set[LambdaExpression], startSymbol: Var, nonTermVects: Seq[NonTerminalVect] ): VTRATG = {
     val subTermsPerType = folSubTerms( lang ).groupBy( _.exptype )
-    val axiomNFs = stableTerms( lang, nonTermVects flatten )
+    val startSymbolNFs = stableTerms( lang, nonTermVects flatten )
     val argumentNFsPerType = nonTermVects.flatten.map( _.exptype ).distinct.map { t =>
       t -> stableTerms( subTermsPerType( t ), nonTermVects.tail.flatten )
     }.toMap
@@ -169,8 +169,8 @@ object stableVTRATG {
     import scalaz._
     import Scalaz._
 
-    VTRATG( axiom, List( axiom ) +: nonTermVects,
-      axiomNFs.map( List( axiom ) -> List( _ ) ) ++
+    VTRATG( startSymbol, List( startSymbol ) +: nonTermVects,
+      startSymbolNFs.map( List( startSymbol ) -> List( _ ) ) ++
         nonTermVects.zipWithIndex.flatMap {
           case ( a, i ) =>
             val allowedNonTerms = nonTermVects.drop( i + 1 ).flatten.toSet
@@ -192,7 +192,7 @@ object minimizeVTRATG {
       if atomsInHard contains atom
     } yield -atom -> weight( p )
     metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
-      case Some( interp ) => VTRATG( g.axiom, g.nonTerminals,
+      case Some( interp ) => VTRATG( g.startSymbol, g.nonTerminals,
         g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }

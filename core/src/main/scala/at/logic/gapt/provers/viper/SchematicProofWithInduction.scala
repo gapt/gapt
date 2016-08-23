@@ -39,12 +39,12 @@ case class ProofByRecursionScheme(
   } yield nt2 -> nt1
   val Right( dependencyOrder ) = linearizeStrictPartialOrder(
     recSchem.nonTerminals,
-    dependencyRelation ++ recSchem.nonTerminals.filter( _ != recSchem.axiom ).map( _ -> recSchem.axiom )
+    dependencyRelation ++ recSchem.nonTerminals.filter( _ != recSchem.startSymbol ).map( _ -> recSchem.startSymbol )
   )
 
   val hoVarMapping = for {
     nt @ Const( v, t ) <- dependencyOrder.reverse
-    if nt != recSchem.axiom
+    if nt != recSchem.startSymbol
   } yield nt -> Var( s"X_$v", t )
   val hoVars = hoVarMapping.map( _._2 )
   val hoVarMap = hoVarMapping.toMap
@@ -128,14 +128,14 @@ case class ProofByRecursionScheme(
 
   def lkProof( solution: Seq[LambdaExpression], prover: Prover ): LKProof = {
     var state = ProofState( theory :+ ( "goal" -> conj ) )
-    for ( nt <- dependencyOrder if nt != recSchem.axiom ) {
+    for ( nt <- dependencyOrder if nt != recSchem.startSymbol ) {
       val lem = lemma( solution, nt )
       state += cut( s"lem_${nt.name}", lem )
       state += insert( mkLemma( solution, nt, prover ) )
     }
 
     for ( v <- paramVars ) state += allR( v )
-    state = mkInsts( state, solution, recSchem.axiom( paramVars ) )
+    state = mkInsts( state, solution, recSchem.startSymbol( paramVars ) )
     val proof = prover.getLKProof( state.currentSubGoalOption.get.conclusion ).
       getOrElse( throw new Exception( s"Unprovable: ${state.currentSubGoalOption.get}" ) )
     state += insert( proof )

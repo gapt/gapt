@@ -38,12 +38,12 @@ object VTRATG {
   type Production = ( NonTerminalVect, List[LambdaExpression] )
 }
 
-case class VTRATG( axiom: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], productions: Set[VTRATG.Production] ) {
+case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], productions: Set[VTRATG.Production] ) {
   import VTRATG._
 
-  def termType = axiom.exptype
+  def termType = startSymbol.exptype
 
-  def axiomVect: NonTerminalVect = List( axiom )
+  def startSymbolNT: NonTerminalVect = List( startSymbol )
 
   def productions( nonTerminalVect: NonTerminalVect ): Set[Production] = productions filter ( _._1 == nonTerminalVect )
   def rightHandSides( nonTerminal: NonTerminalVect ) = productions( nonTerminal ) map ( _._2 )
@@ -64,14 +64,14 @@ case class VTRATG( axiom: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], produc
       for ( ( ai, ti ) <- a zip t )
         require( ai.exptype == ti.exptype, s"vector production $p has mismatching types" )
   }
-  require( nonTerminals contains axiomVect, s"axiom is unknown non-terminal vector $axiom" )
+  require( nonTerminals contains startSymbolNT, s"start symbol is unknown non-terminal vector $startSymbol" )
 
   def size = productions.size
 
   def weightedSize = productions.toSeq.map( _._1.size ).sum
 
   def language: Set[LambdaExpression] = {
-    var lang = Set[LambdaExpression]( axiom )
+    var lang = Set[LambdaExpression]( startSymbol )
     nonTerminals.foreach { a =>
       val P_a = productions( a )
       if ( P_a.nonEmpty )

@@ -11,7 +11,7 @@ case class Digram( c1: Const, i: Int, c2: Const ) extends Feature
 case class RigidTrigram( c: Const, i: Int, j: Int ) extends Feature
 
 case class ReforestState(
-    axiom:          Const,
+    startSymbol:    Const,
     rules:          Map[LambdaExpression, Set[LambdaExpression]],
     highestNTIndex: Int
 ) {
@@ -97,7 +97,7 @@ case class ReforestState(
 
     val maxArity = rhss.map { case Apps( c: Const, as ) => as.size }.max
     val argtypes = ( 0 until maxArity ) map { _ => Ti } // TODO
-    val newNT = Const( s"B$highestNTIndex", FunctionType( axiom.exptype, argtypes ) )
+    val newNT = Const( s"B$highestNTIndex", FunctionType( startSymbol.exptype, argtypes ) )
     val newArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
     val args1 = mutable.Set[Seq[LambdaExpression]]()
@@ -190,7 +190,7 @@ case class ReforestState(
     ( for ( ( lhs, rhss ) <- rules; rhs <- rhss ) yield s"$lhs -> $rhs\n" ).toSeq.sorted.mkString
 
   def toRecursionScheme: RecursionScheme =
-    RecursionScheme( axiom, for ( ( nt, rhss ) <- rules.toSet; rhs <- rhss ) yield Rule( nt, rhs ) )
+    RecursionScheme( startSymbol, for ( ( nt, rhss ) <- rules.toSet; rhs <- rhss ) yield Rule( nt, rhs ) )
 
   def toVTRATG: VTRATG = recSchemToVTRATG( toRecursionScheme )
 
@@ -199,8 +199,8 @@ case class ReforestState(
 object Reforest {
   def start( lang: Traversable[LambdaExpression] ): ReforestState = {
     val termType = lang.headOption.map( _.exptype ).getOrElse( Ti )
-    val axiom = Const( "A", termType )
-    ReforestState( axiom, rules = Map( axiom -> lang.toSet ), highestNTIndex = 0 )
+    val startSymbol = Const( "A", termType )
+    ReforestState( startSymbol, rules = Map( startSymbol -> lang.toSet ), highestNTIndex = 0 )
   }
 
   def compress( s: ReforestState ): ReforestState = {

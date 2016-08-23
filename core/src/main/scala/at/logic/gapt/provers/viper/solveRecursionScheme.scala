@@ -30,20 +30,20 @@ case class MaxSatRecSchemFinder(
 }
 
 object simplePi1RecSchemTempl {
-  def apply( axiom: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
+  def apply( startSymbol: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
     val nameGen = rename.awayFrom( ctx.constants )
 
-    val Apps( axiomNT: Const, axiomArgs ) = axiom
-    val FunctionType( instTT, axiomArgTys ) = axiomNT.exptype
+    val Apps( startSymbolNT: Const, startSymbolArgs ) = startSymbol
+    val FunctionType( instTT, startSymbolArgTys ) = startSymbolNT.exptype
     // TODO: handle strong quantifiers in conclusion correctly
-    val axiomArgs2 = for ( ( t, i ) <- axiomArgTys.zipWithIndex ) yield Var( s"x_$i", t )
+    val startSymbolArgs2 = for ( ( t, i ) <- startSymbolArgTys.zipWithIndex ) yield Var( s"x_$i", t )
 
-    val indLemmaNT = Const( nameGen fresh "B", FunctionType( instTT, axiomArgTys ++ axiomArgTys ++ pi1QTys ) )
+    val indLemmaNT = Const( nameGen fresh "B", FunctionType( instTT, startSymbolArgTys ++ startSymbolArgTys ++ pi1QTys ) )
 
     val lhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
     val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )
 
-    val indLemmaRules = axiomArgTys.zipWithIndex.flatMap {
+    val indLemmaRules = startSymbolArgTys.zipWithIndex.flatMap {
       case ( indLemmaArgTy, indLemmaArgIdx ) =>
         ctx.typeDef( indLemmaArgTy.asInstanceOf[TBase].name ).get match {
           case Context.Sort( _ ) => Seq()
@@ -51,10 +51,10 @@ object simplePi1RecSchemTempl {
             ctrs flatMap { ctr =>
               val FunctionType( _, ctrArgTys ) = ctr.exptype
               val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
-              val lhs = indLemmaNT( axiomArgs )( axiomArgs2.take( indLemmaArgIdx ) )( ctr( ctrArgs: _* ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ) )( lhsPi1QArgs )
+              val lhs = indLemmaNT( startSymbolArgs )( startSymbolArgs2.take( indLemmaArgIdx ) )( ctr( ctrArgs: _* ) )( startSymbolArgs2.drop( indLemmaArgIdx + 1 ) )( lhsPi1QArgs )
               val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
                 case ( ctrArgTy, ctrArgIdx ) =>
-                  lhs -> indLemmaNT( axiomArgs )( axiomArgs2.take( indLemmaArgIdx ) )( ctrArgs( ctrArgIdx ) )( axiomArgs2.drop( indLemmaArgIdx + 1 ) )( rhsPi1QArgs )
+                  lhs -> indLemmaNT( startSymbolArgs )( startSymbolArgs2.take( indLemmaArgIdx ) )( ctrArgs( ctrArgIdx ) )( startSymbolArgs2.drop( indLemmaArgIdx + 1 ) )( rhsPi1QArgs )
               }
               recRules :+ ( lhs -> Var( "u", instTT ) )
             }
@@ -62,11 +62,11 @@ object simplePi1RecSchemTempl {
     }
 
     RecSchemTemplate(
-      axiomNT,
+      startSymbolNT,
       indLemmaRules.toSet
-        + ( axiomNT( axiomArgs: _* ) -> indLemmaNT( axiomArgs: _* )( axiomArgs: _* )( rhsPi1QArgs: _* ) )
-        + ( axiomNT( axiomArgs: _* ) -> Var( "u", instTT ) )
-    //        + ( indLemmaNT( axiomArgs: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) )
+        + ( startSymbolNT( startSymbolArgs: _* ) -> indLemmaNT( startSymbolArgs: _* )( startSymbolArgs: _* )( rhsPi1QArgs: _* ) )
+        + ( startSymbolNT( startSymbolArgs: _* ) -> Var( "u", instTT ) )
+    //        + ( indLemmaNT( startSymbolArgs: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) )
     )
   }
 }
@@ -116,7 +116,7 @@ object homogenizeRS {
 object qbupForRecSchem {
   def apply( recSchem: RecursionScheme, conj: HOLFormula )( implicit ctx: Context ): HOLFormula = {
     def convert( term: LambdaExpression ): HOLFormula = term match {
-      case Apps( ax, args ) if ax == recSchem.axiom => instantiate( conj, args )
+      case Apps( ax, args ) if ax == recSchem.startSymbol => instantiate( conj, args )
       case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
         HOLAtom( Var( s"X_$name", ty )( args: _* ) )
       case formula: HOLFormula => formula

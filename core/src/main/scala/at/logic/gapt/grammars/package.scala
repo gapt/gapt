@@ -18,13 +18,13 @@ package object grammars {
   implicit object recSchemIsReplacable extends ClosedUnderReplacement[RecursionScheme] {
     def replace( rs: RecursionScheme, p: PartialFunction[LambdaExpression, LambdaExpression] ) =
       RecursionScheme(
-        TermReplacement( rs.axiom, p ).asInstanceOf[Const],
+        TermReplacement( rs.startSymbol, p ).asInstanceOf[Const],
         rs.nonTerminals.map( TermReplacement( _, p ).asInstanceOf[Const] ),
         TermReplacement( rs.rules, p )
       )
 
     def names( rs: RecursionScheme ) =
-      containedNames( rs.rules ) ++ containedNames( rs.nonTerminals ) + rs.axiom
+      containedNames( rs.rules ) ++ containedNames( rs.nonTerminals ) + rs.startSymbol
   }
 
 }

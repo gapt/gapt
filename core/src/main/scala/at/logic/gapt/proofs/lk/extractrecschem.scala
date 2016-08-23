@@ -16,11 +16,11 @@ object extractRecSchem {
       case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, -matrix )
     }
     val context = freeVariablesLK( p ).toList.sortBy( _.toString )
-    val axiom = Const( "A", FunctionType( To, context.map( _.exptype ) ) )
-    RecursionScheme( axiom, new extractRecSchem( includeTheoryAxioms, includeEqTheory ).
+    val startSymbol = Const( "A", FunctionType( To, context.map( _.exptype ) ) )
+    RecursionScheme( startSymbol, new extractRecSchem( includeTheoryAxioms, includeEqTheory ).
       getRules(
         regularize( moveStrongQuantifierRulesDown( AtomicExpansion( p ) ) ),
-        axiom( context: _* ), symbols.map( Some( _ ) ), context
+        startSymbol( context: _* ), symbols.map( Some( _ ) ), context
       ) map {
           case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
         } )
@@ -79,13 +79,13 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
     case _ => Nil
   }
 
-  private def allRules( symbols: Sequent[Option[LambdaExpression]], axiom: LambdaExpression ) =
-    symbols.elements.flatten.map( Rule( axiom, _ ) ).toSet
+  private def allRules( symbols: Sequent[Option[LambdaExpression]], startSymbol: LambdaExpression ) =
+    symbols.elements.flatten.map( Rule( startSymbol, _ ) ).toSet
 
-  def getRules( p: LKProof, axiom: LambdaExpression, symbols: Sequent[Option[LambdaExpression]], context: List[Var] ): Set[Rule] = p match {
-    case ReflexivityAxiom( term ) if includeEqTheory                                     => allRules( symbols, axiom ) + Rule( axiom, term === term )
-    case TheoryAxiom( sequent ) if includeTheoryAxioms                                   => allRules( symbols, axiom ) + Rule( axiom, sequent.toImplication )
-    case _: LogicalAxiom | _: ReflexivityAxiom | _: TheoryAxiom | BottomAxiom | TopAxiom => allRules( symbols, axiom )
+  def getRules( p: LKProof, startSymbol: LambdaExpression, symbols: Sequent[Option[LambdaExpression]], context: List[Var] ): Set[Rule] = p match {
+    case ReflexivityAxiom( term ) if includeEqTheory                                     => allRules( symbols, startSymbol ) + Rule( startSymbol, term === term )
+    case TheoryAxiom( sequent ) if includeTheoryAxioms                                   => allRules( symbols, startSymbol ) + Rule( startSymbol, sequent.toImplication )
+    case _: LogicalAxiom | _: ReflexivityAxiom | _: TheoryAxiom | BottomAxiom | TopAxiom => allRules( symbols, startSymbol )
     case WeakQuantifierRule( q, aux, _, term, v, pol ) =>
       val main = p.mainIndices.head
       val appSym = App( symbols( main ).get, term )
@@ -97,14 +97,14 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
           expCpsSym.exptype match {
             case To =>
               getRules( q, expCpsSym, p.occConnectors.head.parent( symbols ).updated( aux, None ), eigenvars ++ context ) +
-                Rule( axiom, App( appSym, cpsSym ) )
+                Rule( startSymbol, App( appSym, cpsSym ) )
             case nextCpsType -> To =>
               val nextCpsSym = Var( mkFreshVar(), nextCpsType )
               getRules( q, App( expCpsSym, nextCpsSym ), p.occConnectors.head.parent( symbols ).updated( aux, Some( nextCpsSym ) ), nextCpsSym :: eigenvars ++ context ) +
-                Rule( axiom, App( appSym, cpsSym ) )
+                Rule( startSymbol, App( appSym, cpsSym ) )
           }
         case _ =>
-          getRules( q, axiom, p.occConnectors.head.parent( symbols ).updated( aux, Some( appSym ) ), context )
+          getRules( q, startSymbol, p.occConnectors.head.parent( symbols ).updated( aux, Some( appSym ) ), context )
       }
     case QuantifiedCut( q1, aux1, q2, aux2, pol ) =>
       val symType = FunctionType( if ( pol ) symbolTypeP( q1.endSequent( aux1 ) ) else symbolTypeN( q1.endSequent( aux1 ) ), context.map( _.exptype ) )
@@ -123,10 +123,10 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
           getRules( q1, fullHypSym, occConn1.parent( symbols, Some( introSym ) ), introSym :: eigenvars ++ context )
       }
 
-      val rules2 = getRules( q2, axiom, occConn2.parent( symbols, Some( symbol ) ), context )
+      val rules2 = getRules( q2, startSymbol, occConn2.parent( symbols, Some( symbol ) ), context )
       rules1 ++ rules2
     case p @ InductionRule( cases, main, term ) =>
-      val symbol = ( axiom, p.formula ) match {
+      val symbol = ( startSymbol, p.formula ) match {
         case ( Apps( Const( _, ty ), args ), Abs( _, All.Block( vs, _ ) ) ) =>
           Const( mkFreshSymbol(), ty )( args.dropRight( vs.size + 1 ) )
       }
@@ -143,22 +143,22 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
         getRules( c.proof, caseAxiom, caseSymbols, context ++ c.eigenVars )
       }
 
-      caseRules.toSet + Rule( axiom, symbol( p.term )( findEigenVars( p.mainIndices.head, p ) ) )
+      caseRules.toSet + Rule( startSymbol, symbol( p.term )( findEigenVars( p.mainIndices.head, p ) ) )
     case p: EqualityRule if !includeEqTheory =>
-      getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) ++
-        symbols( p.eqInConclusion ).map( Rule( axiom, _ ) )
+      getRules( p.subProof, startSymbol, p.getOccConnector parent symbols, context ) ++
+        symbols( p.eqInConclusion ).map( Rule( startSymbol, _ ) )
     case p: EqualityLeftRule if includeEqTheory =>
-      getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) ++
-        symbols( p.eqInConclusion ).map( Rule( axiom, _ ) ) +
-        Rule( axiom, ( p.equation & p.mainFormula ) --> p.auxFormula )
+      getRules( p.subProof, startSymbol, p.getOccConnector parent symbols, context ) ++
+        symbols( p.eqInConclusion ).map( Rule( startSymbol, _ ) ) +
+        Rule( startSymbol, ( p.equation & p.mainFormula ) --> p.auxFormula )
     case p: EqualityRightRule if includeEqTheory =>
-      getRules( p.subProof, axiom, p.getOccConnector parent symbols, context ) ++
-        symbols( p.eqInConclusion ).map( Rule( axiom, _ ) ) +
-        Rule( axiom, ( p.equation & p.auxFormula ) --> p.mainFormula )
+      getRules( p.subProof, startSymbol, p.getOccConnector parent symbols, context ) ++
+        symbols( p.eqInConclusion ).map( Rule( startSymbol, _ ) ) +
+        Rule( startSymbol, ( p.equation & p.auxFormula ) --> p.mainFormula )
     case _ =>
       ( for (
         ( q, occConn ) <- p.immediateSubProofs zip p.occConnectors;
-        rule <- getRules( q, axiom, occConn.parent( symbols, None ), context )
+        rule <- getRules( q, startSymbol, occConn.parent( symbols, None ), context )
       ) yield rule ).toSet
   }
 }
