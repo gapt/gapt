@@ -24,7 +24,7 @@ class ViperTest extends Specification {
       prob in {
         var extraOptions = Map( "fixup" -> "false" )
         if ( prob == "linear2par" )
-          skipped( "takes too long" )
+          skipped( "needs careful choice of instance for canonical substitution" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )

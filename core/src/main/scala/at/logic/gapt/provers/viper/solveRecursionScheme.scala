@@ -15,6 +15,7 @@ case class MaxSatRecSchemFinder(
     pi1QTys:          Seq[TBase],
     instanceType:     Ty,
     grammarWeighting: Rule => Int,
+    viaInst:          Boolean,
     context:          Context
 ) extends InductiveGrammarFindingMethod {
   implicit def ctx = context
@@ -25,7 +26,10 @@ case class MaxSatRecSchemFinder(
 
   def findRS( taggedLanguage: Set[( Seq[LambdaExpression], LambdaExpression )] ): RecursionScheme = {
     val targets = for ( ( ts, r ) <- taggedLanguage ) yield A( ts ) -> r
-    template.findMinimalCoverViaInst( targets, weight = grammarWeighting )
+    if ( viaInst )
+      template.findMinimalCoverViaInst( targets, weight = grammarWeighting )
+    else
+      template.findMinimalCover( targets, weight = grammarWeighting )
   }
 }
 

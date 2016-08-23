@@ -30,7 +30,7 @@ case class ViperOptions(
   quantTys:         Option[Seq[TBase]] = None,
   grammarWeighting: Rule => Int        = _ => 1,
   tautCheckNumber:  Int                = 10,
-  tautCheckSize:    FloatRange         = ( 0, 3 ),
+  tautCheckSize:    FloatRange         = ( 2, 3 ),
   canSolSize:       FloatRange         = ( 2, 4 ),
   forgetOne:        Boolean            = false,
   prooftool:        Boolean            = false,
@@ -79,12 +79,14 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
   type Instance = Seq[LambdaExpression]
 
   val grammarFinder = options.findingMethod match {
-    case "maxsat" =>
+    case "maxsat" | "maxsatinst" =>
       val pi1QTys = options.quantTys getOrElse {
         ctx.elements collect { case InductiveType( ty, _ ) if ty != To => ty }
       }
 
-      val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType, options.grammarWeighting, implicitly )
+      val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType,
+        options.grammarWeighting, options.findingMethod == "maxsatinst",
+        implicitly )
 
       info( "Recursion scheme template:" )
       for ( ( lhs, rhs ) <- msrsf.template.template.toSeq.sortBy( _._1.toString ) )
@@ -150,9 +152,11 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
   def findMinimalCounterexample( correctInstances: Iterable[Instance], spwi: SchematicProofWithInduction ): Option[Seq[LambdaExpression]] = {
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( folTermSize( _ ) ) ).max
-    val failedInstOption = instanceGen.
-      generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber ).
-      toSeq.sortBy( folTermSize( _ ) ).view.
+    val testInstances =
+      instanceGen.generate( 0, paramTypes.size, 10 ) ++
+        instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber )
+    val failedInstOption = testInstances.toSeq.
+      sortBy( folTermSize( _ ) ).view.
       filterNot { inst =>
         val ok = checkInst( inst )
         info( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
