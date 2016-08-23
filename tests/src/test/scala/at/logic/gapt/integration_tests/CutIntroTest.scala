@@ -26,21 +26,12 @@ class CutIntroTest extends Specification {
   }
 
   "linear equality example" in {
-    val f = FOLFunctionConst( "f", 1 )
-    val g = FOLFunctionConst( "g", 1 )
-    val x = FOLVar( "x" )
-    val c = FOLConst( "c" )
-
-    val Some( p ) = Escargot getLKProof (
-      All( x, f( g( x ) ) === f( x ) ) +:
-      Sequent()
-      :+ ( f( ( g ^ 9 )( c ) ) === f( c ) )
-    )
+    val Some( p ) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0"
     val Some( q ) = CutIntroduction( p )
     val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
     cutFormulas must contain( atMost(
-      All( x, f( ( g ^ 3 )( x ) ) === f( x ) ),
-      All( x, f( x ) === f( ( g ^ 3 )( x ) ) )
+      hof"!x f (s (s (s x))) = f x",
+      hof"!x f x = f (s (s (s x)))"
     ) )
   }
 
