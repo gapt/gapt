@@ -1,5 +1,5 @@
 ; viper qtys witness
-; viper tchksize 0.5,1
+; viper tchksize 0,1
 ; viper cansolsize 2,2
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
