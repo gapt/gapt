@@ -3,7 +3,9 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.provers.escargot.Escargot
+
 import scalaz._
 import Scalaz._
 
@@ -57,9 +59,11 @@ class ExpansionProofToLK(
   private def tryDef( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
       case ( e @ ETDefinedAtom( atom, pol, definition ), i ) =>
-        mapIf( solve( cuts, expSeq.updated( i, ETAtom( atom, pol ) ) ), atom, pol ) { DefinitionRule( _, atom, e.shallow, pol ) }
+        val defi = Definition(e.definitionConst, e.definition)
+        mapIf( solve( cuts, expSeq.updated( i, ETAtom( atom, pol ) ) ), atom, pol ) { DefinitionRule( _, atom, defi, e.shallow, pol ) }
       case ( e @ ETDefinition( sh, defExpr, ch ), i ) =>
-        mapIf( solve( cuts, expSeq.updated( i, ch ) ), ch.shallow, i.polarity ) { DefinitionRule( _, ch.shallow, sh, i.polarity ) }
+        val definition = Definition(e.pred, defExpr)
+        mapIf( solve( cuts, expSeq.updated( i, ch ) ), ch.shallow, i.polarity ) { DefinitionRule( _, ch.shallow, definition, sh, i.polarity ) }
     }
 
   private def tryMerge( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =

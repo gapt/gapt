@@ -6,6 +6,7 @@ import at.logic.gapt.expr.hol.{HOLPosition, instantiate}
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.ListSupport
 import ListSupport.pairs
+import at.logic.gapt.proofs.Context.Definition
 
 import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
@@ -1789,14 +1790,12 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaE
 abstract class DefinitionRule extends UnaryLKProof with CommonRule {
   def subProof: LKProof
   def aux: SequentIndex
-  def definition: (String, LambdaExpression)
+  def definition: Definition
   def replacementContext: Abs
 
-  val (what, by) = definition
-  val deftype = by.exptype
-  val const = Const(what, deftype)
+  val Definition(what, by) = definition
 
-  val mainFormula_ = BetaReduction.betaNormalize(App(replacementContext, const))
+  val mainFormula_ = BetaReduction.betaNormalize(App(replacementContext, what))
   val auxFormula_ = BetaReduction.betaNormalize(App(replacementContext, by))
 
   val mainFormula = mainFormula_ match {
@@ -1808,7 +1807,7 @@ abstract class DefinitionRule extends UnaryLKProof with CommonRule {
 }
 
 object DefinitionRule {
-  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: (String, LambdaExpression), mainFormula: HOLFormula, polarity: Polarity ): LKProof =
+  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: Definition, mainFormula: HOLFormula, polarity: Polarity ): LKProof =
     polarity match {
       case Polarity.InSuccedent  => DefinitionRightRule( subProof, auxFormula, definition, mainFormula )
       case Polarity.InAntecedent => DefinitionLeftRule( subProof, auxFormula, definition, mainFormula )
@@ -1832,7 +1831,7 @@ object DefinitionRule {
  * @param definition The definition to be introduced.
   *@param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
-case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, definition: (String, LambdaExpression ), replacementContext: Abs)
+case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, definition: Definition, replacementContext: Abs)
     extends DefinitionRule {
   override def name = "d:l"
   override def auxIndices = Seq( Seq( aux ) )
@@ -1849,20 +1848,19 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
    * @param mainFormula The main formula.
    * @return
    */
-  def apply(subProof: LKProof, aux: IndexOrFormula, definition: (String, LambdaExpression), mainFormula: HOLFormula ): DefinitionLeftRule = {
+  def apply(subProof: LKProof, aux: IndexOrFormula, definition: Definition, mainFormula: HOLFormula ): DefinitionLeftRule = {
     val premise = subProof.endSequent
     val (indices, _) = findAndValidate(premise)(Seq(aux), Seq())
 
     val auxFormula = premise(Ant(indices.head))
     val auxFormulaReduced = BetaReduction.betaNormalize(auxFormula)
 
-    val (what, by) = definition
-    val deftype = by.exptype
-    val const = Const(what, deftype)
+    val Definition(what, by) = definition
 
-    val tryProof = mainFormula.find(const).toSet.subsets().foldLeft(Failure(new Exception("dummy")): Try[DefinitionLeftRule]) { (acc, set) => acc match {
+
+    val tryProof = mainFormula.find(what).toSet.subsets().foldLeft(Failure(new Exception("dummy")): Try[DefinitionLeftRule]) { (acc, set) => acc match {
       case Failure(_) =>
-        val ctx = replacementContext(deftype, mainFormula, set)
+        val ctx = replacementContext(definition.ty, mainFormula, set)
         Try(DefinitionLeftRule(subProof, Ant(indices(0)), definition, ctx))
       case _ => acc
     }
@@ -1892,7 +1890,7 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  * @param definition The definition to be introduced.
   *@param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
-case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, definition: (String, LambdaExpression ), replacementContext: Abs)
+case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, definition: Definition, replacementContext: Abs)
     extends DefinitionRule {
   override def name = "d:r"
   override def auxIndices = Seq( Seq( aux ) )
@@ -1909,7 +1907,7 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
    * @param mainFormula The main formula.
    * @return
    */
-  def apply( subProof: LKProof, aux: IndexOrFormula, definition: (String, LambdaExpression), mainFormula: HOLFormula ): DefinitionRightRule = {
+  def apply( subProof: LKProof, aux: IndexOrFormula, definition: Definition, mainFormula: HOLFormula ): DefinitionRightRule = {
     val premise = subProof.endSequent
     val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( aux ) )
 
@@ -1917,12 +1915,11 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
     val auxFormulaReduced = BetaReduction.betaNormalize(auxFormula)
 
     val (what, by) = definition
-    val deftype = by.exptype
-    val const = Const(what, deftype)
 
-    val tryProof = mainFormula.find(const).toSet.subsets().foldLeft(Failure(new Exception("dummy")): Try[DefinitionRightRule]) { (acc, set) => acc match {
+
+    val tryProof = mainFormula.find(what).toSet.subsets().foldLeft(Failure(new Exception("dummy")): Try[DefinitionRightRule]) { (acc, set) => acc match {
       case Failure(_) =>
-        val ctx = replacementContext(deftype, mainFormula, set)
+        val ctx = replacementContext(definition.ty, mainFormula, set)
         Try(DefinitionRightRule(subProof, Suc(indices(0)), definition, ctx))
       case _ => acc
     }

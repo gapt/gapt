@@ -5,9 +5,10 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.hol.{ containsStrongQuantifier, HOLPosition }
+import at.logic.gapt.expr.hol.{HOLPosition, containsStrongQuantifier}
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.ceres.Pickrule._
 
@@ -178,7 +179,7 @@ object Projections {
     else s.map( pm => constructor( pm, m ) )
   }
 
-  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, d:(String, LambdaExpression),  c: Abs,
+  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, d: Definition,  c: Abs,
                      constructor: ( LKProof, SequentIndex,(String, LambdaExpression), Abs ) => LKProof,
                      pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )

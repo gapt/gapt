@@ -1,12 +1,13 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr.{ Const => Con, _ }
+import at.logic.gapt.expr.{Const => Con, _}
 import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
+import at.logic.gapt.provers.escargot.{Escargot, NonSplittingEscargot}
 import at.logic.gapt.provers.prover9.Prover9
 
 import scalaz._
@@ -255,7 +256,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
       newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
       proof_ : ValidationNel[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
         case ( p :: ps, _ ) =>
-          DefinitionRule( newGoal, normalized, main, idx.polarity ).successNel[TacticalFailure]
+          DefinitionRule( newGoal, normalized, Definition(what, by), main, idx.polarity ).successNel[TacticalFailure]
         case ( Nil, hd +: tl ) =>
           UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
         case _ =>

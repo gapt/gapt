@@ -130,11 +130,11 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
         indCase( substitution, _ )
       }, substitution( main ).asInstanceOf[Abs], substitution( term ) )
 
-    case DefinitionLeftRule( subProof, aux, main ) =>
+    case DefinitionLeftRule( subProof, aux, definition, context ) =>
       val subProofNew = applySubstitution( substitution, subProof )
       DefinitionLeftRule( subProofNew, aux, betaNormalize( substitution( main ) ) )
 
-    case DefinitionRightRule( subProof, aux, main ) =>
+    case DefinitionRightRule( subProof, aux, definition, context ) =>
       val subProofNew = applySubstitution( substitution, subProof )
       DefinitionRightRule( subProofNew, aux, betaNormalize( substitution( main ) ) )
 
