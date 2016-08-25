@@ -1,4 +1,4 @@
-; viper instprover escargot
+; viper qtys
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 

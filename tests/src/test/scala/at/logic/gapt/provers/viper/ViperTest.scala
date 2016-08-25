@@ -22,13 +22,9 @@ class ViperTest extends Specification {
       "prod_prop_31", "prod_prop_31_monomorphic"
     ) ) { prob =>
       prob in {
-        var extraOptions = Map( "verbose" -> "false", "fixup" -> "false" )
-        if ( prob.startsWith( "prod_prop_31" ) && !OpenWBO.isInstalled )
-          skipped( "only works with open-wbo at the moment" )
-        if ( prob == "comms0" && !VeriT.isInstalled )
-          skipped( "does not work on travis atm" )
+        var extraOptions = Map( "fixup" -> "false" )
         if ( prob == "linear2par" )
-          skipped( "takes too long" )
+          skipped( "needs careful choice of instance for canonical substitution" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )

@@ -21,7 +21,7 @@ object vtrat_comparison extends Script {
 
   println( lcomp( simplify( toNNF( ( new RecSchemGenLangFormula( nfRecSchem ) )( targets ) ) ) ) )
 
-  val nfG = stableProofVectGrammar( terms, Seq( 2 ) )
+  val nfG = stableVTRATG( terms.toSet, Seq( 2 ) )
   println( lcomp( simplify( toNNF( new VectGrammarMinimizationFormula( nfG ).coversLanguage( terms ) ) ) ) )
 
   val minimized = time { minimizeRecursionScheme( nfRecSchem, targets, solver = bestAvailableMaxSatSolver ) }
@@ -29,6 +29,6 @@ object vtrat_comparison extends Script {
   println( terms.toSet diff minimized.language )
   println( recSchemToVTRATG( minimized ) )
 
-  val minG = time { minimizeVectGrammar( nfG, terms, bestAvailableMaxSatSolver ) }
+  val minG = time { minimizeVTRATG( nfG, terms.toSet, bestAvailableMaxSatSolver ) }
   println( minG )
 }

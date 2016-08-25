@@ -204,7 +204,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 
   def encode( recursionScheme: RecursionScheme ): RecursionScheme = {
     val encodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( To, argTypes ) ) => c -> Const( name, FunctionType( instanceTermType, argTypes ) ) }.toMap
-    RecursionScheme( encodedNTs( recursionScheme.axiom ), encodedNTs.values.toSet,
+    RecursionScheme( encodedNTs( recursionScheme.startSymbol ), encodedNTs.values.toSet,
       recursionScheme.rules map {
         case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if encodedNTs contains rhsNT =>
           Rule( encodedNTs( lhsNT )( lhsArgs: _* ), encodedNTs( rhsNT )( rhsArgs: _* ) )
@@ -215,7 +215,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 
   def decode( recursionScheme: RecursionScheme ): RecursionScheme = {
     val decodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( `instanceTermType`, argTypes ) ) => c -> Const( name, FunctionType( To, argTypes ) ) }.toMap
-    RecursionScheme( decodedNTs( recursionScheme.axiom ), decodedNTs.values.toSet,
+    RecursionScheme( decodedNTs( recursionScheme.startSymbol ), decodedNTs.values.toSet,
       recursionScheme.rules map {
         case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if decodedNTs contains rhsNT =>
           Rule( decodedNTs( lhsNT )( lhsArgs: _* ), decodedNTs( rhsNT )( rhsArgs: _* ) )
@@ -226,7 +226,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 }
 
 object InstanceTermEncoding {
-  def apply( endSequent: HOLSequent, instanceTermType: Ty = TBase( "InstanceTermType" ) ): InstanceTermEncoding =
+  def defaultType = TBase( "_Inst" )
+
+  def apply( endSequent: HOLSequent, instanceTermType: Ty = defaultType ): InstanceTermEncoding =
     new InstanceTermEncoding( endSequent map { toVNF( _ ) }, instanceTermType )
 
   def apply( expansionSequent: ExpansionSequent ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
@@ -243,26 +245,5 @@ object InstanceTermEncoding {
   def apply( lkProof: LKProof ): ( Set[LambdaExpression], InstanceTermEncoding ) = {
     val encoding = InstanceTermEncoding( lkProof.endSequent )
     encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ) -> encoding
-  }
-}
-
-object FOLInstanceTermEncoding {
-  def apply( endSequent: HOLSequent ): InstanceTermEncoding =
-    InstanceTermEncoding( endSequent, Ti )
-
-  def apply( expansionSequent: ExpansionSequent ): ( Set[FOLTerm], InstanceTermEncoding ) = {
-    val encoding = FOLInstanceTermEncoding( expansionSequent.shallow )
-    encoding.encode( expansionSequent ).map( _.asInstanceOf[FOLTerm] ) -> encoding
-  }
-
-  def apply( expansionProof: ExpansionProof ): ( Set[FOLTerm], InstanceTermEncoding ) =
-    apply( expansionProof.expansionSequent )
-
-  def apply( expansionProof: ExpansionProofWithCut ): ( Set[FOLTerm], InstanceTermEncoding ) =
-    apply( eliminateCutsET( expansionProof ).expansionSequent )
-
-  def apply( lkProof: LKProof ): ( Set[FOLTerm], InstanceTermEncoding ) = {
-    val encoding = FOLInstanceTermEncoding( lkProof.endSequent )
-    encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ).map( _.asInstanceOf[FOLTerm] ) -> encoding
   }
 }

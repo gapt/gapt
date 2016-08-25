@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
@@ -15,25 +16,25 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.ViperOptions.FloatRange
+import at.logic.gapt.utils.logging.Logger
 
 import scala.collection.mutable
 import scala.io.StdIn
 import better.files._
 
 case class ViperOptions(
-  instanceNumber:   Int                = 3,
-  instanceSize:     FloatRange         = ( 0, 3 ),
+  instanceNumber:   Int                = 10,
+  instanceSize:     FloatRange         = ( 0, 2 ),
   instanceProver:   String             = "escargot",
   findingMethod:    String             = "maxsat",
   quantTys:         Option[Seq[TBase]] = None,
   grammarWeighting: Rule => Int        = _ => 1,
-  tautCheckNumber:  Int                = 20,
+  tautCheckNumber:  Int                = 10,
   tautCheckSize:    FloatRange         = ( 2, 3 ),
   canSolSize:       FloatRange         = ( 2, 4 ),
   forgetOne:        Boolean            = false,
   prooftool:        Boolean            = false,
-  fixup:            Boolean            = false,
-  verbose:          Boolean            = true
+  fixup:            Boolean            = false
 )
 object ViperOptions {
   type FloatRange = ( Float, Float )
@@ -44,14 +45,13 @@ object ViperOptions {
   }
 
   private def parseAndApply( k: String, v: String, opts: ViperOptions ): ViperOptions = k match {
-    case "verbose"    => opts.copy( verbose = v.toBoolean )
     case "instnum"    => opts.copy( instanceNumber = v.toInt )
     case "instsize"   => opts.copy( instanceSize = parseRange( v ) )
     case "instprover" => opts.copy( instanceProver = v )
     case "findmth"    => opts.copy( findingMethod = v )
     case "qtys"       => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ).map( TBase ) ) )
     case "gramw" => v match {
-      case "scomp"  => opts.copy( grammarWeighting = r => randomInstance.exprSize( r.lhs ) + randomInstance.exprSize( r.rhs ) )
+      case "scomp"  => opts.copy( grammarWeighting = r => folTermSize( r.lhs ) + folTermSize( r.rhs ) )
       case "nprods" => opts.copy( grammarWeighting = _ => 1 )
     }
     case "tchknum"    => opts.copy( tautCheckNumber = v.toInt )
@@ -66,32 +66,31 @@ object ViperOptions {
     opts.foldLeft( ViperOptions() )( ( opts_, opt ) => parseAndApply( opt._1, opt._2, opts_ ) )
 }
 
-class Viper( val problem: TipProblem, val options: ViperOptions ) {
+class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger {
   implicit var ctx = problem.context
 
   val sequent @ Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = problem.toSequent
   val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
 
-  def info() = if ( options.verbose ) println()
-  def info( msg: Any ) = if ( options.verbose ) println( msg )
+  val instanceGen = new EnumeratingInstanceGenerator( paramTypes, implicitly )
 
-  def inside( range: FloatRange, scale: Float = 1 ) = ( f: Float ) => scale * range._1 <= f && f <= scale * range._2
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
 
   type Instance = Seq[LambdaExpression]
 
   val grammarFinder = options.findingMethod match {
-    case "maxsat" =>
+    case "maxsat" | "maxsatinst" =>
       val pi1QTys = options.quantTys getOrElse {
         ctx.elements collect { case InductiveType( ty, _ ) if ty != To => ty }
       }
 
-      val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType, options.grammarWeighting, implicitly )
+      val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType,
+        options.grammarWeighting, options.findingMethod == "maxsatinst",
+        implicitly )
 
       info( "Recursion scheme template:" )
       for ( ( lhs, rhs ) <- msrsf.template.template.toSeq.sortBy( _._1.toString ) )
         info( s"$lhs -> $rhs" )
-      info()
 
       msrsf
   }
@@ -102,16 +101,10 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
   def solve(): LKProof = {
     info( sequent )
-    info()
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
-    var ttl = options.instanceNumber * 10
-    while ( instanceProofs.size < options.instanceNumber && ttl > 0 ) {
-      ttl -= 1
-      val inst = randomInstance.generate( paramTypes, inside( options.instanceSize ) )
-      if ( !instanceProofs.contains( inst ) )
-        instanceProofs( inst ) = getInstanceProof( inst )
-    }
+    for ( inst <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
+      instanceProofs( inst ) = getInstanceProof( inst )
 
     while ( true ) {
       val spwi = findSPWI( instanceProofs )
@@ -120,7 +113,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
         val genLang = spwi.generatedLanguage( inst )
         require(
           smtSolver.isValid( And( genLang ) --> instantiate( conj, inst ) ),
-          s"Generated instance language for $inst not tautological"
+          s"Generated instance language for $inst not tautological:\n${genLang.map( _.toSigRelativeString ).mkString( "\n" )}"
         )
       }
 
@@ -158,10 +151,12 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
 
   def findMinimalCounterexample( correctInstances: Iterable[Instance], spwi: SchematicProofWithInduction ): Option[Seq[LambdaExpression]] = {
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
-    val scale = ( 5 +: correctInstances.toSeq.map( _.map( randomInstance.exprSize ).sum ) ).max
-    val failedInstOption = ( 0 to options.tautCheckNumber ).
-      map { _ => randomInstance.generate( paramTypes, inside( options.tautCheckSize, scale ) ) }.
-      distinct.sortBy { _.map( randomInstance.exprSize ).sum }.view.
+    val scale = ( 5 +: correctInstances.toSeq.map( folTermSize( _ ) ) ).max
+    val testInstances =
+      instanceGen.generate( 0, paramTypes.size, 10 ) ++
+        instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber )
+    val failedInstOption = testInstances.toSeq.
+      sortBy( folTermSize( _ ) ).view.
       filterNot { inst =>
         val ok = checkInst( inst )
         info( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
@@ -171,7 +166,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
       import scalaz._
       import Scalaz._
       val minimalCounterExample = failedInst.toList.
-        traverse( i => instantiateRS.subTerms( i ).filter( _.exptype == i.exptype ).toList ).
+        traverse( i => folSubTerms( i ).filter( _.exptype == i.exptype ).toList ).
         filterNot( checkInst ).
         minBy { _ map { expressionSize( _ ) } sum }
       info( s"Minimal counterexample: ${minimalCounterExample.map { _.toSigRelativeString }}" )
@@ -184,7 +179,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
     val axiomArgs = for ( ( t, i ) <- paramTypes.zipWithIndex ) yield Var( s"y_$i", t )
-    val canSolInst = randomInstance.generate( paramTypes, inside( options.canSolSize ) )
+    val canSolInst = instanceGen.generate( options.canSolSize._1, options.canSolSize._2, 1 ).head
     val pi1QTys = FunctionType.unapply( x_B.exptype ).get._2.drop( axiomArgs.size + canSolInst.size )
     val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
     val xInst = x_B( axiomArgs: _* )( canSolInst: _* )( ws: _* ).asInstanceOf[HOLFormula]
@@ -193,10 +188,8 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
-    info()
 
     val Some( solution ) = hSolveQBUP( qbupMatrix, xInst, smtSolver )
-    info()
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
@@ -238,15 +231,14 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) {
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )
-    encoding.encode( instProof ).toSeq.map( _.toString ).sorted.foreach( info )
-    info()
+    encoding.encode( instProof ).toSeq.map( _.toString ).sorted.foreach( info( _ ) )
 
     instProof
   }
 
 }
 
-object Viper {
+object Viper extends Logger {
 
   val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,.]*)\s*""".r
   def extractOptions( tipSmtCode: InputFile ) =
@@ -256,7 +248,7 @@ object Viper {
   def parseCode( tipSmtCode: InputFile, options: Map[String, String] ): ( TipProblem, ViperOptions ) = {
     val options_ = ViperOptions.parse(
       Map( "fixup" -> TipSmtParser.isInstalled.toString )
-        ++ options ++ extractOptions( tipSmtCode )
+        ++ extractOptions( tipSmtCode ) ++ options
     )
     val problem =
       if ( options_.fixup ) TipSmtParser fixupAndParse tipSmtCode
@@ -279,7 +271,12 @@ object Viper {
 
   def main( args: Array[String] ): Unit = {
     val ( problem, options ) = parseArgs( args, Map() )
-    new Viper( problem, options ).solve()
+    val viper = new Viper( problem, options )
+
+    viper.makeVerbose()
+    Logger.setConsolePattern( "%message%n" )
+
+    viper.solve()
   }
 
 }

@@ -122,6 +122,6 @@ object CountingEquivalence {
   def apply( n: Int ): FOLFormula = {
     val Seq( x, y, z ) = Seq( fov"x", fov"y", fov"z" )
     val as = 0 to n map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-    All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
+    ( All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as ) ).asInstanceOf[FOLFormula]
   }
 }

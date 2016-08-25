@@ -34,42 +34,37 @@ object FOLFunctionArgs {
  * Generation of first-order subterms (note that this notion differs from
  * lambda subterms).
  */
-object FOLSubTerms {
-  /**
-   * Generate all subterms of a FOLTerm.
-   */
-  def apply( t: FOLTerm ): Set[FOLTerm] = {
-    val subterms = mutable.Set[FOLTerm]()
-    apply_( t, subterms )
-    subterms.toSet
+object folSubTerms {
+  def apply( t: LambdaExpression ): Set[LambdaExpression] = apply( Some( t ) )
+
+  def apply( language: Traversable[LambdaExpression] ): Set[LambdaExpression] = {
+    val subTerms = mutable.Set[LambdaExpression]()
+    for ( t <- language ) walk( t, subTerms )
+    subTerms.toSet
   }
 
-  /**
-   * Generate all subterms of a list of FOLTerms.
-   */
-  def apply( language: GenTraversable[FOLTerm] ): Set[FOLTerm] = {
-    val subterms = mutable.Set[FOLTerm]()
-    language.foreach( apply_( _, subterms ) )
-    subterms.toSet
-  }
+  def apply( t: FOLTerm ): Set[FOLTerm] = apply( Some( t ) )
 
-  /**
-   * Generate all subterms of a FOLTerm using a mutable set for efficiency.
-   * @param term term, which is processed
-   * @param subterms for speeding up the process, if there are already some computed subterms
-   * @return the set of all first-order subterms of term
-   */
-  private def apply_( term: FOLTerm, subterms: mutable.Set[FOLTerm] ): Unit = {
+  def apply( language: Traversable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
+    apply( language: Traversable[LambdaExpression] ).asInstanceOf[Set[FOLTerm]]
+
+  private def walk( term: LambdaExpression, subterms: mutable.Set[LambdaExpression] ): Unit =
     // if the term is not in the set of subterms yet, add it and add all its subterms
     // this check avoids duplicate addition of all subterms of a subterm
     if ( !subterms.contains( term ) ) {
       subterms += term
-      term match {
-        case FOLFunction( _, args ) => args.foreach( apply_( _, subterms ) )
-      }
+      val Apps( _, args ) = term
+      args.foreach( walk( _, subterms ) )
     }
-  }
 
+}
+
+object folTermSize {
+  def apply( t: LambdaExpression ): Int =
+    t match { case Apps( hd, as ) => 1 + apply( as ) }
+
+  def apply( ts: Traversable[LambdaExpression] ): Int =
+    ts.view.map( apply ).sum
 }
 
 object Numeral {
@@ -147,7 +142,6 @@ object Sigma {
     case Or( g, h )      => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
     case Imp( g, h )     => Some( Math.max( unapply( g ).get, unapply( h ).get ) )
     case Ex.Block( vars, g ) =>
-      println( s"$vars, $g" )
       g match {
         case Pi( i ) => Some( i + 1 )
       }
@@ -185,11 +179,11 @@ object Delta {
 
 trait CountingFormulas {
   def exactly: {
-    def noneOf( fs: Seq[FOLFormula] ): FOLFormula
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula
+    def noneOf( fs: Seq[HOLFormula] ): HOLFormula
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula
   }
   def atMost: {
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula
   }
 }
 
@@ -197,9 +191,9 @@ object thresholds extends CountingFormulas {
 
   object exactly {
 
-    def noneOf( fs: Seq[FOLFormula] ): FOLFormula = -Or( fs )
+    def noneOf( fs: Seq[HOLFormula] ): HOLFormula = -Or( fs )
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = fs match {
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = fs match {
       case Seq()    => Bottom()
       case Seq( f ) => f
       case _ =>
@@ -211,7 +205,7 @@ object thresholds extends CountingFormulas {
 
   object atMost {
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = fs match {
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = fs match {
       case Seq() | Seq( _ ) => Top()
       case _ =>
         val ( a, b ) = fs.splitAt( fs.size / 2 )
@@ -226,15 +220,15 @@ object naive extends CountingFormulas {
 
   object exactly {
 
-    def noneOf( fs: Seq[FOLFormula] ): FOLFormula = -Or( fs )
+    def noneOf( fs: Seq[HOLFormula] ): HOLFormula = -Or( fs )
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = Or( fs ) & atMost.oneOf( fs )
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = Or( fs ) & atMost.oneOf( fs )
 
   }
 
   object atMost {
 
-    def oneOf( fs: Seq[FOLFormula] ): FOLFormula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
+    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
 
   }
 

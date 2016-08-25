@@ -8,7 +8,6 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
 import at.logic.gapt.utils.logging.Logger
-
 import better.files._
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
@@ -65,18 +64,18 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     }
   }
 
-  def enableDebugging(): Unit = {
-    import org.apache.log4j._
-    Logger.getLogger( classOf[EscargotState] ).setLevel( Level.DEBUG )
-  }
+  def makeVerbose() = Logger.makeVerbose( classOf[EscargotState] )
 
   def main( args: Array[String] ): Unit = {
+    Logger.useTptpComments()
+
     val tptpInputFile = args.toSeq match {
       case Seq() =>
         println( "Usage: escargot [-v] tptp-problem.p" )
         sys.exit( 1 )
       case Seq( "-v", file ) =>
-        enableDebugging(); file
+        makeVerbose()
+        file
       case Seq( file ) => file
     }
 

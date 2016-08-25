@@ -15,8 +15,6 @@ import scala.collection.mutable
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
 object IvyParser extends Logger {
-  override def loggerName = "IvyParserLogger"
-
   //calls the sexpression parser on the given file and parses it, needs a naming convention
   def apply( fn: InputFile ): IvyResolutionProof =
     parse( SExpressionParser( fn ) )

@@ -13,10 +13,10 @@ object cutintro extends Script {
 
   val constructedProof = eliminateCutsET( LKToExpansionProof( proof.cycleImpliesEqual4 ) )
 
+  CutIntroduction.makeVerbose()
   CutIntroduction(
     constructedProof,
-    method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ),
-    verbose = true
+    method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) )
   )
 
 }

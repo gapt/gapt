@@ -3,7 +3,7 @@ import at.logic.gapt.examples.{ Script, UniformAssociativity3ExampleProof }
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars.{ SipRecSchem, minimizeRecursionScheme, minimizeSipGrammar, stableSipGrammar }
-import at.logic.gapt.proofs.expansion.{ ExpansionSequent, FOLInstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.{ ExpansionSequent, InstanceTermEncoding }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.{ Ant, Sequent, Suc }
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
@@ -24,7 +24,7 @@ object sip_comparison extends Script {
   val instanceProofs =
     ( 0 until 6 ).map { n => n -> removeEqAxioms( LKToExpansionProof( UniformAssociativity3ExampleProof( n ) ).expansionSequent ) }
 
-  val termEncoding = FOLInstanceTermEncoding( endSequent )
+  val termEncoding = InstanceTermEncoding( endSequent, Ti )
   var instanceLanguages = instanceProofs map {
     case ( n, expSeq ) =>
       n -> termEncoding.encode( expSeq ).map( _.asInstanceOf[FOLTerm] )

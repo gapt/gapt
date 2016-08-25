@@ -7,10 +7,10 @@ import org.specs2.mutable._
 class RecursionSchemeTest extends Specification with SatMatchers {
 
   def covers( rs: RecursionScheme, ts: LambdaExpression* ) =
-    ( new RecSchemGenLangFormula( rs ) )( ts map { rs.axiom -> _ } ) aka s"$rs generates $ts" must beSat
+    ( new RecSchemGenLangFormula( rs ) )( ts map { rs.startSymbol -> _ } ) aka s"$rs generates $ts" must beSat
 
   def doesNotCover( rs: RecursionScheme, t: LambdaExpression ) =
-    ( new RecSchemGenLangFormula( rs ) )( Set( rs.axiom -> t ) ) aka s"$rs generates $t" must beUnsat
+    ( new RecSchemGenLangFormula( rs ) )( Set( rs.startSymbol -> t ) ) aka s"$rs generates $t" must beUnsat
 
   "RecSchemGenLangFormula" should {
     "first-order" in {

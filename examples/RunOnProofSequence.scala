@@ -9,7 +9,6 @@ import at.logic.gapt.proofs.{ Ant, Suc, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.viper.SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
-import org.apache.log4j.{ Level, Logger }
 
 import scala.collection.immutable.HashMap
 

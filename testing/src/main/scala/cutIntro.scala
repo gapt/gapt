@@ -4,7 +4,7 @@ import java.io.PrintWriter
 
 import at.logic.gapt.cutintro._
 import at.logic.gapt.examples._
-import at.logic.gapt.expr.FOLFunction
+import at.logic.gapt.expr.Apps
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
@@ -20,7 +20,6 @@ import org.json4s.native.JsonMethods._
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
-import better.files._
 import better.files._
 
 class MetricsPrinter extends MetricsCollector {
@@ -107,7 +106,7 @@ object testCutIntro extends App {
 
     metrics.value( "has_equality", inputProof.backgroundTheory.hasEquality )
     try metrics.time( "cutintro" ) {
-      CutIntroduction( inputProof, method = parseMethod( methodName ), verbose = false ) match {
+      CutIntroduction( inputProof, method = parseMethod( methodName ) ) match {
         case Some( _ ) => metrics.value( "status", "ok" )
         case None =>
           if ( metricsPrinter.data( "termset_trivial" ) == true )
@@ -157,8 +156,8 @@ object findNonTrivialTSTPExamples extends App {
       println( fn )
       withTimeout( 60 seconds ) {
         val p = Prover9Importer.expansionProof( fn )
-        val terms = FOLInstanceTermEncoding( p.shallow ).encode( p )
-        val functions = terms map { case FOLFunction( f, _ ) => f }
+        val terms = InstanceTermEncoding( p.shallow ).encode( p )
+        val functions = terms map { case Apps( f, _ ) => f }
 
         Success( TermSetStats( fn, terms.size, functions.size ) )
       }

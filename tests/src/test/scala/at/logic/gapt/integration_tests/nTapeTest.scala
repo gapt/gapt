@@ -64,20 +64,7 @@ class nTapeTest extends Specification {
     }
 
     "evaluate the formulas in the if-then-else tests" in {
-      nTape6.sequents.s0a
-      nTape6.sequents.s0b
-
-      nTape6.sequents.s1a
-      nTape6.sequents.s1b
-      nTape6.sequents.s1c
-      nTape6.sequents.s1d
-
-      nTape6.sequents.s2b
-      nTape6.sequents.s2c
-      nTape6.sequents.s2d
-      nTape6.sequents.s2e
-
-      nTape6.sequents.consistent
+      nTape6.sequents
       ok( "terms created" )
     }
   }

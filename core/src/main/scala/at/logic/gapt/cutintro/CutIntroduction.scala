@@ -3,7 +3,6 @@ package at.logic.gapt.cutintro
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.grammars._
 import at.logic.gapt.grammars.reforest.Reforest
 import at.logic.gapt.proofs._
@@ -17,16 +16,15 @@ import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.logging.{ Logger, metrics }
-import at.logic.gapt.utils.runProcess
 
 trait GrammarFindingMethod {
-  def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar]
+  def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG]
   def name: String
 }
 
 case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[FOLTerm] ): Option[VectTratGrammar] =
-    Some( findMinimalVectGrammar( lang, nonTerminalLengths, solver ) )
+  override def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG] =
+    Some( findMinimalVTRATG( lang, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
 }
@@ -35,35 +33,8 @@ object MaxSATMethod {
     MaxSATMethod( bestAvailableMaxSatSolver, nonTerminalLengths: _* )
 }
 
-case class ExternalReforestMethod( command: Seq[String] = Seq( "reforest" ) ) extends GrammarFindingMethod {
-  def findRecSchem( lang: Set[FOLTerm] ): RecursionScheme = {
-    val renaming = for ( ( c, i ) <- constants( lang ).zipWithIndex ) yield c -> FOLFunctionConst( s"f$i", arity( c.exptype ) )
-
-    def toReforestInput( term: LambdaExpression ): String = term match {
-      case FOLFunction( f, Seq() ) => f
-      case FOLFunction( f, as )    => s"$f(${as map toReforestInput mkString ","})"
-    }
-
-    val input = lang map { TermReplacement( _, renaming.toMap[LambdaExpression, LambdaExpression] ) } map toReforestInput mkString "\n"
-    val output = runProcess( command, input )
-
-    import Prover9TermParserLadrStyle.parseTerm
-    val back = renaming.map { _.swap }.toMap[LambdaExpression, LambdaExpression]
-    val rules = output split "\n" map { line =>
-      val Array( lhs, rhs ) = line split "->"
-      Rule( parseTerm( lhs ), TermReplacement( parseTerm( rhs ), back ) )
-    }
-    RecursionScheme( FOLConst( "A0" ), rules toSet )
-  }
-
-  override def findGrammars( lang: Set[FOLTerm] ) =
-    Some( recSchemToVTRATG( findRecSchem( lang ) ) )
-
-  override def name = "reforest_hs"
-}
-
 case object ReforestMethod extends GrammarFindingMethod {
-  def findGrammars( lang: Set[FOLTerm] ) = {
+  def findGrammars( lang: Set[LambdaExpression] ) = {
     var state = Reforest start lang
     state = Reforest full state
     Some( state.toVTRATG )
@@ -142,14 +113,14 @@ case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, Seq[Seq[F
 }
 
 object vtratgToSEHS {
-  def apply( encoding: InstanceTermEncoding, g: VectTratGrammar ): SchematicExtendedHerbrandSequent = {
+  def apply( encoding: InstanceTermEncoding, g: VTRATG ): SchematicExtendedHerbrandSequent = {
     val us = encoding.endSequent zip encoding.symbols map {
       case ( u: FOLFormula, sym ) =>
-        u -> g.rightHandSides( g.axiomVect ).map( _.head ).toList.
+        u -> g.rightHandSides( g.startSymbolNT ).map( _.head ).toList.
           collect { case Apps( `sym`, args ) => args map { _.asInstanceOf[FOLTerm] } }
     }
-    val slist = g.nonTerminals.filter( _ != g.axiomVect ).
-      map { a => a -> g.rightHandSides( a ).toList }.
+    val slist = g.nonTerminals.filter( _ != g.startSymbolNT ).
+      map { a => a.map( _.asInstanceOf[FOLVar] ) -> g.rightHandSides( a ).toList.map( _.map( _.asInstanceOf[FOLTerm] ) ) }.
       filter( _._2.nonEmpty ).toList
 
     SchematicExtendedHerbrandSequent( us, slist )
@@ -157,12 +128,12 @@ object vtratgToSEHS {
 }
 
 object sehsToVTRATG {
-  def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VectTratGrammar = {
+  def apply( encoding: InstanceTermEncoding, sehs: SchematicExtendedHerbrandSequent ): VTRATG = {
     val freeVars = freeVariables( sehs.us.elements.flatMap { _._2 } ++ sehs.ss.flatMap { _._2 } flatten ) ++ sehs.eigenVariables.flatten
-    val axiom = rename( FOLVar( "x" ), freeVars )
+    val startSymbol = rename( Var( "x", encoding.instanceTermType ), freeVars )
     val nonTerminals = sehs.eigenVariables.map( _.toList )
     val instances = for ( ( f, us ) <- sehs.us; u <- us ) yield instantiate( f, u )
-    val productionsFromAx = for ( t <- encoding encode instances ) yield List( axiom ) -> List( t.asInstanceOf[FOLTerm] )
+    val productionsFromAx = for ( t <- encoding encode instances ) yield List( startSymbol ) -> List( t )
     val otherProds = for ( ( ev, ss ) <- sehs.ss; s <- ss ) yield ev -> s
     val productions = productionsFromAx ++ otherProds
 
@@ -170,14 +141,14 @@ object sehsToVTRATG {
       case FOLVar( n ) => FOLVar( n ) -> FOLConst( n )
     } )
 
-    VectTratGrammar( axiom, List( axiom ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
+    VTRATG( startSymbol, List( startSymbol ) +: nonTerminals, productions map { p => p._1.toList -> grounding( p._2 ).toList } )
   }
 }
 
-object CutIntroduction {
+object CutIntroduction extends Logger {
 
   class CutIntroException( msg: String ) extends Exception( msg )
-  class NonCoveringGrammarException( grammar: VectTratGrammar, term: FOLTerm )
+  class NonCoveringGrammarException( grammar: VTRATG, term: LambdaExpression )
     extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
   /**
    * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
@@ -259,29 +230,27 @@ object CutIntroduction {
 
   def compressToSolutionStructure(
     inputProof: InputProof,
-    method:     GrammarFindingMethod = DeltaTableMethod(),
-    verbose:    Boolean              = false
+    method:     GrammarFindingMethod = DeltaTableMethod()
   ): Option[SolutionStructure] = {
     val InputProof( ep, backgroundTheory ) = inputProof
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
-    if ( verbose )
-      println( s"Quantifier inferences in the input proof: ${numberOfInstancesET( ep.expansionSequent )}" )
+    info( s"Quantifier inferences in the input proof: ${numberOfInstancesET( ep.expansionSequent )}" )
 
     val endSequent = ep.shallow
-    if ( verbose ) println( s"End sequent: $endSequent" )
+    info( s"End sequent: $endSequent" )
 
     /********** Term set Extraction **********/
-    val encoding = FOLInstanceTermEncoding( endSequent )
-    val termset = groundTerms( encoding encode ep ) map { _.asInstanceOf[FOLTerm] }
+    val encoding = InstanceTermEncoding( endSequent )
+    val termset = groundTerms( encoding encode ep )
     val weightedTermsetSize = termset.view.map { case Apps( _, args ) => args.size }.sum
 
     metrics.value( "termset", termset.size )
     metrics.value( "termset_wsize", weightedTermsetSize )
     metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
-    metrics.value( "termset_trivial", termset.size == termset.map { case FOLFunction( r, _ ) => r }.size )
-    if ( verbose ) println( s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)" )
+    metrics.value( "termset_trivial", termset.size == termset.map { case Apps( r, _ ) => r }.size )
+    info( s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)" )
 
     val herbrandSequent = extractInstances( ep )
     val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
@@ -295,9 +264,9 @@ object CutIntroduction {
     metrics.time( "grammar" ) {
       method.findGrammars( termset )
     }.filter { g =>
-      g.productions.exists( _._1 != g.axiomVect )
+      g.productions.exists( _._1 != g.startSymbolNT )
     }.orElse {
-      if ( verbose ) println( "No grammar found." )
+      info( "No grammar found." )
       None
     }.flatMap { vtratGrammar =>
       val generatedLanguage = vtratGrammar.language
@@ -311,10 +280,7 @@ object CutIntroduction {
       metrics.value( "grammar_wsize", vtratGrammar.weightedSize )
       metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
-      if ( verbose ) {
-        println( s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):" )
-        println( vtratGrammar )
-      }
+      info( s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):\n$vtratGrammar" )
 
       val grammar = vtratgToSEHS( encoding, vtratGrammar )
 
@@ -323,11 +289,8 @@ object CutIntroduction {
       solStructMetrics( canonicalSS, "can" )
 
       val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, backgroundTheory.prover, backgroundTheory.hasEquality ) }
-      if ( verbose ) for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex ) {
-        println( s"CNF of minimized cut-formula number $i:" )
-        for ( clause <- CNFp( cf ) )
-          println( s"  $clause" )
-      }
+      for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex )
+        info( s"CNF of minimized cut-formula number $i:\n${CNFp( cf ).map( "  " + _ ).mkString( "\n" )}" )
       require( minimizedSS.isValid( backgroundTheory.prover ) )
       solStructMetrics( minimizedSS, "min" )
 
@@ -345,18 +308,20 @@ object CutIntroduction {
       metrics.value( "beausol", beautifiedSS.formulas.map( _.toString ) )
 
       if ( beautifiedSS.formulas.nonEmpty ) {
-        if ( verbose ) {
-          println( s"Beautified grammar of size ${beauGrammar.size} (weighted by vector size = ${beauGrammar.weightedSize}):" )
-          println( beauGrammar )
-          println( s"Size of the canonical solution: $lcompCanonicalSol" )
-          println( s"Size of the minimized solution: $lcompMinSol" )
-          println( s"Size of the beautified solution: $lcompBeauSol" )
-          for ( ( cf, i ) <- beautifiedSS.formulas.zipWithIndex ) {
-            println( s"CNF of beautified cut-formula number $i:" )
-            for ( clause <- CNFp( cf ) )
-              println( s"  $clause" )
-          }
+        if ( beautifiedSS.sehs == minimizedSS.sehs ) {
+          info( "Beautification did not change the grammar." )
+        } else {
+          info( s"Beautified grammar of size ${beauGrammar.size} (weighted by vector size = ${beauGrammar.weightedSize}):\n$beauGrammar" )
         }
+        if ( beautifiedSS == minimizedSS ) {
+          info( "Beautification did not change the solution." )
+        } else {
+          info( s"Size of the beautified solution: $lcompBeauSol" )
+          for ( ( cf, i ) <- beautifiedSS.formulas.zipWithIndex )
+            info( s"CNF of minimized cut-formula number $i:\n${CNFp( cf ).map( "  " + _ ).mkString( "\n" )}" )
+        }
+        info( s"Size of the canonical solution: $lcompCanonicalSol" )
+        info( s"Size of the minimized solution: $lcompMinSol" )
 
         val ehsSequent = beautifiedSS.getDeep
         val ehsResolutionProof = backgroundTheory.prover.getLKProof( ehsSequent ).getOrElse {
@@ -368,13 +333,13 @@ object CutIntroduction {
 
         Some( beautifiedSS )
       } else {
-        if ( verbose ) println( "No non-trivial lemma found." )
+        info( "No non-trivial lemma found." )
         None
       }
     }
   }
 
-  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory, verbose: Boolean = false ): LKProof = {
+  def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory ): LKProof = {
     val proofWithStructuralRules = metrics.time( "prcons" ) {
       buildProofWithCut( solStruct, backgroundTheory.prover )
     }
@@ -386,25 +351,23 @@ object CutIntroduction {
     metrics.value( "lkcuts_output", cutsNumber( proof ) )
     metrics.value( "lkinf_output", rulesNumber( proof ) )
     metrics.value( "lkquant_output", quantRulesNumber( proof ) )
-    if ( verbose ) {
-      println( s"Number of cuts introduced: ${cutsNumber( proof )}" )
-      println( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
-      println( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
-    }
+    info( s"Number of cuts introduced: ${cutsNumber( proof )}" )
+    info( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
+    info( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )
 
     proof
   }
 
-  def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    compressToSolutionStructure( inputProof, method, verbose ) map { constructLKProof( _, inputProof.backgroundTheory, verbose ) }
+  def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod() ): Option[LKProof] =
+    compressToSolutionStructure( inputProof, method ) map { constructLKProof( _, inputProof.backgroundTheory ) }
 
   @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
   def compressToLK( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    apply( inputProof, method, verbose )
+    apply( inputProof, method )
 
   @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
   def compressLKProof( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    apply( inputProof, method, verbose )
+    apply( inputProof, method )
 
   /**
    * Computes the modified canonical solution, where instances of

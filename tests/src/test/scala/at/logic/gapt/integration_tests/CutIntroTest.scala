@@ -6,107 +6,77 @@ import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof, FOLInstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof }
 import at.logic.gapt.cutintro._
 import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
 class CutIntroTest extends Specification {
-  private def LinearExampleTermset( n: Int ): List[FOLTerm] =
-    if ( n == 0 )
-      List[FOLTerm]()
-    else
-      Utils.numeral( n - 1 ) :: LinearExampleTermset( n - 1 )
+  "deltatable method" in {
+    CutIntroduction( LinearExampleProof( 9 ), method = DeltaTableMethod() ) must beSome
+  }
 
-  "CutIntroduction" should {
-    "extract and decompose the termset of the linear example proof (n = 9)" in {
-      val proof = LinearExampleProof( 9 )
+  "maxsat method" in {
+    val Some( proof ) = Escargot.getLKProof( hos"!y p(0,y), !x!y (p x (f y) & p x (g y) -> p (s x) y) :- p ${Numeral( 2 )} c" )
+    CutIntroduction( proof, method = MaxSATMethod( 1 ) ) must beSome
+  }
 
-      val ( termset, _ ) = FOLInstanceTermEncoding( proof )
-      val set = termset collect { case FOLFunction( _, List( arg ) ) => arg }
+  "reforest method" in {
+    CutIntroduction( LinearExampleProof( 9 ), method = ReforestMethod ) must beSome
+  }
 
-      CutIntroduction(
-        proof,
-        method = DeltaTableMethod(),
-        verbose = false
-      ) must beSome
+  "linear equality example" in {
+    val Some( p ) = Escargot getLKProof hos"!x f (s x) = f x :- f ${Numeral( 9 )} = f 0"
+    val Some( q ) = CutIntroduction( p )
+    val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
+    cutFormulas must contain( atMost(
+      hof"!x f (s (s (s x))) = f x",
+      hof"!x f x = f (s (s (s x)))"
+    ) )
+  }
 
-      set must contain( exactly( LinearExampleTermset( 9 ): _* ) )
-    }
+  "introduce two cuts into linear example proof with improveSolutionLK" in {
+    val us = ( fof"P 0" -> Seq( Seq() ) ) +:
+      ( fof"!x (P x -> P (s x))" -> Seq( Seq( fot"x_1" ), Seq( fot"s x_1" ) ) ) +:
+      Sequent() :+ ( fof"P ${Numeral( 8 )}" -> Seq( Seq() ) )
+    val ss = Seq(
+      Seq( fov"x_1" ) -> Seq( Seq( fot"x_2" ), Seq( fot"s (s x_2)" ) ),
+      Seq( fov"x_2" ) -> Seq( Seq( fot"0" ), Seq( Numeral( 4 ) ) )
+    )
+    val sehs = SchematicExtendedHerbrandSequent( us, ss )
 
-    "linear equality example" in {
-      val f = FOLFunctionConst( "f", 1 )
-      val g = FOLFunctionConst( "g", 1 )
-      val x = FOLVar( "x" )
-      val c = FOLConst( "c" )
+    val solStruct = SolutionStructure( sehs, CutIntroduction.computeCanonicalSolution( sehs ) )
+    val prover = CutIntroduction.BackgroundTheory.PureFOL.prover
+    val improved = improveSolutionLK( solStruct, prover, hasEquality = false )
+    val pwc = CutIntroduction.buildProofWithCut( improved, prover )
 
-      val Some( p ) = Escargot getLKProof (
-        All( x, f( g( x ) ) === f( x ) ) +:
-        Sequent()
-        :+ ( f( ( g ^ 9 )( c ) ) === f( c ) )
-      )
-      val Some( q ) = CutIntroduction( p, method = DeltaTableMethod(), verbose = false )
-      val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
-      cutFormulas must contain( atMost(
-        All( x, f( ( g ^ 3 )( x ) ) === f( x ) ),
-        All( x, f( x ) === f( ( g ^ 3 )( x ) ) )
-      ) )
-    }
+    val cf1 = fof"P x_1 -> P (s (s x_1))"
+    val cf2 = fof"P x_2 -> P (s (s (s (s x_2))))"
+    improved.formulas must_== Seq( cf1, cf2 )
 
-    "introduce two cuts into linear example proof with improveSolutionLK" in {
-      def fun( n: Int, t: FOLTerm ): FOLTerm = if ( n == 0 ) t else FOLFunction( "s", fun( n - 1, t ) :: Nil )
-      val proof = LinearExampleProof( 8 )
-      val f = proof.endSequent( Ant( 0 ) ).asInstanceOf[FOLFormula]
-      val a1 = FOLVar( "α_1" )
-      val a2 = FOLVar( "α_2" )
-      val zero = FOLConst( "0" )
+    quantRulesNumber( pwc ) must_== sehs.size
+  }
 
-      val u1 = a1
-      val u2 = fun( 1, a1 )
-      val us = for ( f <- proof.endSequent )
-        yield f.asInstanceOf[FOLFormula] -> ( if ( containsQuantifier( f ) ) List( List( u1 ), List( u2 ) ) else List( List() ) )
-      val s11 = a2
-      val s12 = fun( 2, a2 )
-      val s21 = zero
-      val s22 = fun( 4, zero )
+  "introduce weak quantifiers as low as possible" in {
+    val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral( 9 )})"
+    val Some( proof ) = Escargot.getLKProof( endSequent )
+    val Some( proofWithCut ) = CutIntroduction( proof )
 
-      val ss = ( a1 :: Nil, ( s11 :: Nil ) :: ( s12 :: Nil ) :: Nil ) :: ( a2 :: Nil, ( s21 :: Nil ) :: ( s22 :: Nil ) :: Nil ) :: Nil
-      val grammar = new SchematicExtendedHerbrandSequent( us, ss )
-      val ehs = SolutionStructure( grammar, CutIntroduction.computeCanonicalSolution( grammar ) )
-      val prover = CutIntroduction.BackgroundTheory.PureFOL.prover
-      val result_new = improveSolutionLK( ehs, prover, hasEquality = false )
-      val r_proof = CutIntroduction.buildProofWithCut( result_new, prover )
+    // !x q(x) must only be instantiated once, even though it is used in both branches of the cut.
+    proofWithCut.treeLike.postOrder.filter {
+      case p: ForallLeftRule => p.mainFormula == hof"!x q(x)"
+      case _                 => false
+    } must haveSize( 1 )
+  }
 
-      // expected result
-      val cf1 = FOLAtom( "P", a1 ) --> FOLAtom( "P", fun( 2, a1 ) )
-      val cf2 = FOLAtom( "P", a2 ) --> FOLAtom( "P", fun( 4, a2 ) )
-
-      result_new.formulas must beEqualTo( cf1 :: cf2 :: Nil )
-
-      quantRulesNumber( r_proof ) must_== grammar.size
-    }
-
-    "introduce weak quantifiers as low as possible" in {
-      val endSequent = hos"!x q(x), q(c)->p(0), !x (p(x)&q(c)->p(s(x))) :- p(${Numeral( 9 )})"
-      val Some( proof ) = Escargot.getLKProof( endSequent )
-      val Some( proofWithCut ) = CutIntroduction( proof, method = DeltaTableMethod(), verbose = false )
-
-      // !x q(x) must only be instantiated once, even though it is used in both branches of the cut.
-      proofWithCut.treeLike.postOrder.filter {
-        case p: ForallLeftRule => p.mainFormula == hof"!x q(x)"
-        case _                 => false
-      } must haveSize( 1 )
-    }
-
-    "filter bottom during beautification" in {
-      val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" )
-      val weirdExpansion = ExpansionProof(
-        ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
-          expansion.expansionSequent
-      )
-      CutIntroduction.compressToSolutionStructure( weirdExpansion ) must beNone
-    }
+  "filter bottom during beautification" in {
+    val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" )
+    val weirdExpansion = ExpansionProof(
+      ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
+        expansion.expansionSequent
+    )
+    CutIntroduction.compressToSolutionStructure( weirdExpansion ) must beNone
   }
 }
 

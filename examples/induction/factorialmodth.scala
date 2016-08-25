@@ -10,12 +10,12 @@ import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.viper._
 import SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
-import org.apache.log4j.{ Logger, Level }
+import at.logic.gapt.utils.logging.Logger
 
 object factorialmodth extends Script {
 
-  for ( n <- Seq( classOf[SipProver].getName, FindFormulaH.getClass.getName ) )
-    Logger.getLogger( n ).setLevel( Level.DEBUG )
+  Logger.makeVerbose( classOf[SipProver] )
+  FindFormulaH.makeVerbose()
 
   val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +: "g(x*s(y),y) = g(x,s(y))" +: "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula ) map univclosure.apply ) :+ FOLSubstitution( FOLVar( "x" ) -> alpha )( parseFormula( "g(s(0), x) = f(x)" ) )
 

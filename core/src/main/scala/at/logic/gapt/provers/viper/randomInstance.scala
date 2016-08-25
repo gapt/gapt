@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.utils.NameGenerator
 
@@ -21,19 +22,12 @@ object randomInstance {
       case Context.InductiveType( _, ctrs ) =>
         val ctr = ctrs( Random.nextInt( ctrs.size ) )
         val FunctionType( _, argTypes ) = ctr.exptype
-        val args = argTypes map {
-          case at: TBase => generate( at, nameGen )
-        }
+        val args = argTypes.map { at => generate( at.asInstanceOf[TBase], nameGen ) }
         ctr( args: _* )
     }
   }
 
-  def exprSize( e: LambdaExpression ): Int = e match {
-    case _: Var        => 0
-    case Apps( _, as ) => 1 + as.map( exprSize ).sum
-  }
-
   def generate( tys: Seq[TBase], cond: Float => Boolean )( implicit ctx: Context ): Seq[LambdaExpression] =
-    Stream.continually( generate( tys ) ).filter( insts => cond( insts.map( exprSize ).sum.toFloat / insts.size ) ).head
+    Stream.continually( generate( tys ) ).filter( insts => cond( folTermSize( insts ).toFloat / insts.size ) ).head
 
 }
