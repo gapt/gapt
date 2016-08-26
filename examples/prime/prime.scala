@@ -517,7 +517,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
     }
   }
   // Proof of EXT, F[k], PRIME-DIV :- S[k] = comp({1})
-  def psi1: LKProof = Lemma(
+  val psi1: LKProof = Lemma(
     ( "EXT" -> extensionality ) +: ( s"F[$k]" -> F( k ).asInstanceOf[HOLFormula] ) +: ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: Sequent() :+ "goal" -> hof" ${S( k )} = compN(set_1 1)"
   ) {
       chain( "EXT" )
@@ -530,7 +530,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
       insert( psi1Right )
     }
 
-  def FR: LKProof = Lemma(
+  val FR: LKProof = Lemma(
     ( "Ant" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> R( k ).asInstanceOf[HOLFormula] )
   ) {
       unfold( s"R[$k]" ) in "Suc"
@@ -588,7 +588,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
     }
   }
 
-  def FQ: LKProof = Lemma(
+  val FQ: LKProof = Lemma(
     ( "Ant" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> Q( k ).asInstanceOf[HOLFormula] )
   ) {
       cut( s"R[$k]", R( k ).asInstanceOf[HOLFormula] )
@@ -596,7 +596,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
       insert( RQ( k ) )
     }
 
-  def pgt0: LKProof = Lemma(
+  val pgt0: LKProof = Lemma(
     ( "Ant" -> fof"PRIME(n)" ) +: Sequent() :+ ( "Suc" -> fof"0 < n" )
   ) {
       cut( "CF", fof" 1 < n" )
@@ -652,7 +652,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
     }
   }
 
-  def psi2: LKProof = Lemma(
+  val psi2: LKProof = Lemma(
     ( "Ant0" -> hof"${F( k )}" ) +: ( "Ant1" -> hof" REM" ) +: ( "EXT" -> extensionality ) +: ( "PRE" -> hof"PRE" ) +: Sequent() :+ ( "Suc" -> hof" C ${S( k )}" )
   ) {
       cut( s"Q[$k]", Q( k ).asInstanceOf[HOLFormula] )
@@ -661,7 +661,7 @@ case class prime( k: Int ) extends PrimeDefinitions {
       insert( psi2Right( k ) )
     }
 
-  def proof: LKProof = {
+  val proof: LKProof = {
     val endSequent = ( "EXT" -> extensionality ) +: ( s"F[$k]" -> hof" ${F( k )}" ) +: ( "REM" -> hof" REM" ) +: ( "PRE" -> hof"PRE" ) +: ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: Sequent()
 
     Lemma( endSequent ) {
