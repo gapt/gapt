@@ -191,8 +191,7 @@ object skolemizeInferences {
     conv(
       p_,
       for ( ( f, i ) <- p_.endSequent.zipWithIndex )
-        yield conv.Info( Seq( f ), isCutAnc = false, Seq(),
-        Seq( i match { case Ant( j ) => -j - 1 case Suc( j ) => j + 1 } ) ),
+        yield conv.Info( Seq( f ), isCutAnc = false, Seq(), Seq( i.toInt ) ),
       Substitution()
     )
   }
