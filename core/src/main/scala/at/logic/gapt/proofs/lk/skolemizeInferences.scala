@@ -22,7 +22,7 @@ private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boole
 
     def atPosition( pos: Int* ): Info = atPosition( HOLPosition( pos: _* ) )
     def atPosition( pos: HOLPosition ): Info =
-      copy( generalizedFormulas.flatMap( _.get( pos ).asInstanceOf[Option[HOLFormula]] ) )
+      copy( generalizedFormulas.filter( !_.isInstanceOf[HOLAtom] ).flatMap( _.get( pos ) ).map( _.asInstanceOf[HOLFormula] ) )
 
     def instantiateQuantifier( term: LambdaExpression ) =
       copy(
@@ -37,13 +37,13 @@ private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boole
     def addGeneralization( formula: HOLFormula ) =
       copy( generalizedFormulas = generalizedFormulas :+ formula )
   }
-  // We maintain the invariant that subst(info.map(_.generalizedFormula)) is beta-equal to the end-sequent of the resulting proof.
+  // We maintain the invariant that subst(info.map(_.generalizedFormula)) is beta-delta-equal to the end-sequent of the resulting proof.
   def apply( p: LKProof, info: Sequent[Info], subst: Substitution ): LKProof = {
     def sub( e: LambdaExpression ): LambdaExpression = BetaReduction.betaNormalize( subst( e ) )
     def suba( f: HOLAtom ): HOLAtom = sub( f ).asInstanceOf[HOLAtom]
     def subf( f: HOLFormula ): HOLFormula = sub( f ).asInstanceOf[HOLFormula]
 
-    val p_ = p match {
+    p match {
       case LogicalAxiom( atom )     => LogicalAxiom( subf( atom ) )
       case ReflexivityAxiom( term ) => ReflexivityAxiom( sub( term ) )
       case TheoryAxiom( axiom )     => TheoryAxiom( axiom map suba )
@@ -124,6 +124,11 @@ private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boole
           apply( q2, p.getRightOccConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2
         )
 
+      case p @ DefinitionLeftRule( q, a, m ) =>
+        DefinitionLeftRule( apply( q, p.getOccConnector.parent( info ).updated( a, info( p.mainIndices.head ).addGeneralization( q.conclusion( a ) ) ), subst ), a, subf( m ) )
+      case p @ DefinitionRightRule( q, a, m ) =>
+        DefinitionRightRule( apply( q, p.getOccConnector.parent( info ).updated( a, info( p.mainIndices.head ).addGeneralization( q.conclusion( a ) ) ), subst ), a, subf( m ) )
+
       case p @ WeakQuantifierRule( q, a, _, term, bound, pol ) =>
         val freshVar = nameGen fresh bound
         val q_ = apply( q, p.occConnectors.head.parent( info ).
@@ -168,19 +173,6 @@ private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boole
         if ( pol ) ForallSkRightRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ), skolemDef )
         else ExistsSkLeftRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ), skolemDef )
     }
-
-    require(
-      info.map( _.generalizedFormula ).map( subf ) == p_.endSequent,
-      s"""
-         |Expected:
-         |${info.map( _.generalizedFormula ).map( subf )}
-         |
-         |Actual:
-         |${p_.endSequent}
-       """.stripMargin
-    )
-
-    p_
   }
 }
 
