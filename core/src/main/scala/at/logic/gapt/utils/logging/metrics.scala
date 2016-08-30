@@ -13,7 +13,13 @@ object IgnoreMetrics extends MetricsCollector {
 }
 
 object PrintMetrics extends MetricsCollector {
-  override def time[T]( key: String )( f: => T ): T = f
+  override def time[T]( key: String )( f: => T ): T = {
+    val begin = System.currentTimeMillis()
+    val res = f
+    val end = System.currentTimeMillis()
+    println( s"time_$key = ${end - begin}ms" )
+    res
+  }
   override def value( key: String, value: => Any ) = println( s"$key = $value" )
 }
 
