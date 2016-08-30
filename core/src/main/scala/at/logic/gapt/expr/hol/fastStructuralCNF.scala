@@ -7,17 +7,17 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
-object fastStructuralCNF {
+case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: Boolean = false ) {
 
-  def apply( formula: HOLFormula, propositional: Boolean ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) =
-    apply( formula +: Sequent(), propositional )
+  def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) =
+    apply( formula +: Sequent() )
 
-  def apply( endSequent: FOLSequent, propositional: Boolean )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
-    val ( cnf, definitions ) = apply( endSequent.asInstanceOf[HOLSequent], propositional )
+  def apply( endSequent: FOLSequent )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
+    val ( cnf, definitions ) = apply( endSequent.asInstanceOf[HOLSequent] )
     ( cnf.map { _.asInstanceOf[FOLClause] }, definitions )
   }
 
-  def apply( endSequent: HOLSequent, propositional: Boolean ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: HOLSequent ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
@@ -100,7 +100,7 @@ object fastStructuralCNF {
         case _                                       => suc += f
       }
 
-      val expandBackTranfs = seq.map( left, right )
+      seq.map( left, right )
 
       if ( !trivial && ant.intersect( suc ).isEmpty )
         split( Sequent( ant.toSeq, suc.toSeq ) )
@@ -149,11 +149,8 @@ object fastStructuralCNF {
       )
       val repl = const( fvs: _* )
       if ( !alreadyDefined ) {
-        if ( i isAnt ) {
-          expand( Sequent( Seq( f ), Seq( repl ) ) )
-        } else {
-          expand( Sequent( Seq( repl ), Seq( f ) ) )
-        }
+        if ( i.isAnt || bidirectionalDefs ) expand( Sequent( Seq( f ), Seq( repl ) ) )
+        if ( i.isSuc || bidirectionalDefs ) expand( Sequent( Seq( repl ), Seq( f ) ) )
       }
       split( seq.updated( i, repl ) )
     }

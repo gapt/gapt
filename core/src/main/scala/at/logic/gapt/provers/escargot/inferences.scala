@@ -95,7 +95,12 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     poss.toMap
   }
 
-  object Clausification extends Clausifier( propositional, structural = true, nameGen = state.nameGen ) with InferenceRule {
+  object Clausification extends Clausifier(
+    propositional,
+    structural = true,
+    bidirectionalDefs = false,
+    nameGen = state.nameGen
+  ) with InferenceRule {
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[Cls] ) =
       if ( given.clause.forall( _.isInstanceOf[HOLAtom] ) ) ( Set(), Set() )
       else {

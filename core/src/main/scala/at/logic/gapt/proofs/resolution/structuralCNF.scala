@@ -8,30 +8,37 @@ import scala.collection.mutable
 
 object structuralCNF {
   def apply(
-    endSequent:    HOLSequent,
-    propositional: Boolean    = false, structural: Boolean = true
+    endSequent:        HOLSequent,
+    propositional:     Boolean    = false,
+    structural:        Boolean    = true,
+    bidirectionalDefs: Boolean    = false
   ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     onProofs(
       endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input( _ ) ).elements,
-      propositional, structural
+      propositional, structural, bidirectionalDefs
     )
   }
 
   def onProofs(
-    proofs:        Iterable[ResolutionProof],
-    propositional: Boolean                   = false,
-    structural:    Boolean                   = true
+    proofs:            Iterable[ResolutionProof],
+    propositional:     Boolean                   = false,
+    structural:        Boolean                   = true,
+    bidirectionalDefs: Boolean                   = false
   ): Set[ResolutionProof] = {
-    val clausifier = new Clausifier( propositional, structural, rename.awayFrom( proofs.flatMap( containedNames( _ ) ) ) )
+    val clausifier = new Clausifier( propositional, structural, bidirectionalDefs, rename.awayFrom( proofs.flatMap( containedNames( _ ) ) ) )
     proofs foreach clausifier.expand
     clausifier.cnf.toSet
   }
 }
 
-class Clausifier( propositional: Boolean, structural: Boolean, nameGen: NameGenerator ) {
+class Clausifier(
+    propositional: Boolean, structural: Boolean,
+    bidirectionalDefs: Boolean,
+    nameGen:           NameGenerator
+) {
   val cnf = mutable.Set[ResolutionProof]()
   val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
   val skConsts = mutable.Map[LambdaExpression, Const]()
@@ -140,7 +147,8 @@ class Clausifier( propositional: Boolean, structural: Boolean, nameGen: NameGene
     )
     if ( !alreadyDefined ) {
       val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definition ) )( AllR( _, Suc( 0 ), _ ) )
-      expand( ImpR( if ( i isAnt ) AndR2( defn, Suc( 0 ) ) else AndR1( defn, Suc( 0 ) ), Suc( 0 ) ) )
+      if ( i.isAnt || bidirectionalDefs ) expand( AndR2( defn, Suc( 0 ) ) )
+      if ( i.isSuc || bidirectionalDefs ) expand( AndR1( defn, Suc( 0 ) ) )
     }
     expand( DefIntro( p, i, const( fvs: _* ), definition ) )
   }
