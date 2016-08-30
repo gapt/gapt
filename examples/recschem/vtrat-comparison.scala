@@ -3,13 +3,16 @@ package at.logic.gapt.examples.recschem
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.expr.hol.{ toNNF, simplify, lcomp }
+import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.grammars._
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
+import at.logic.gapt.utils.logging.{ PrintMetrics, metrics }
 import at.logic.gapt.utils.time
 
 object vtrat_comparison extends Script {
-  val N = 8
+  metrics.current.value = PrintMetrics
+
+  val N = 11
   val terms = ( 0 until N ).map { i => FOLFunction( "r", Numeral( i ), Numeral( N - i ) ) }.toSet
 
   val A = FOLConst( "A" )
