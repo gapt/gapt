@@ -14,7 +14,7 @@ proofs.
 
 Requirements:
  * Unix-compatible environment
- * Java 1.7 or later
+ * Java 8 or later
 
  See https://github.com/gapt/gapt/wiki/External-software for details.
 

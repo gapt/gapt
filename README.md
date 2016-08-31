@@ -61,7 +61,7 @@ for more details.
 
 ### System requirements
 
-* Java 7 (or later)
+* Java 8 (or later)
 * optional: [external tools](https://github.com/gapt/gapt/wiki/External-software)
 * for development: [sbt](http://www.scala-sbt.org/)
 
