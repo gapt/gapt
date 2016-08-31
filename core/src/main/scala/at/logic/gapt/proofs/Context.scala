@@ -59,8 +59,8 @@ class Context private ( val elements: Vector[Element] ) extends BabelSignature {
 
   override def apply( s: String ): babel.VarConst =
     constant( s ) match {
-      case Some( c ) => babel.IsConst( babel.ast.liftType( c.exptype ) )
-      case None      => babel.IsVar( babel.ast.freshTypeVar() )
+      case Some( c ) => babel.IsConst( Some( c.exptype ) )
+      case None      => babel.IsVar( None )
     }
 
   def check[T: Checkable]( t: T ): Unit =
@@ -74,9 +74,16 @@ class Context private ( val elements: Vector[Element] ) extends BabelSignature {
 
 object Context {
   val empty: Context = new Context( Vector() )
-  def apply(): Context = empty + oTypeDef
+  def apply(): Context = default
   def apply( elements: Traversable[Element] ): Context =
     empty ++ elements
+
+  val withoutEquality = empty ++ Seq(
+    InductiveType( "o", Top(), Bottom() ),
+    ConstDecl( NegC() ), ConstDecl( AndC() ), ConstDecl( OrC() ), ConstDecl( ImpC() ),
+    ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) )
+  )
+  val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
   trait Element {
     def checkAdmissibility( ctx: Context ): Unit
@@ -185,6 +192,5 @@ object Context {
     }
   }
 
-  val oTypeDef = InductiveType( "o", Top(), Bottom() )
   val iTypeDef = Sort( "i" )
 }

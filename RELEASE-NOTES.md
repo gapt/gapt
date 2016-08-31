@@ -11,6 +11,7 @@
 * Special class for polarities instead of Booleans
 * Support for Vampire 4.1
 * Support for SPASS 3.9
+* Context now support polymorphic declarations (for equality, ...)
 
 ## Version 2.2 (released on 2016-07-09)
 
