@@ -2,6 +2,7 @@
 
 ## Version 2.3 (unreleased)
 
+* The minimum required Java version is now Java 8
 * String interpolators for sequents
 * `:-` operator to construct sequents
 * `loadExpansionProof` provides convenient access to TSTP proof import
