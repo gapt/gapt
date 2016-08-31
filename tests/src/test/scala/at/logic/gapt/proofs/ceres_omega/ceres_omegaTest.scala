@@ -6,13 +6,10 @@ import at.logic.gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, f
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
-import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, LKToLKsk, regularize }
-import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
-import at.logic.gapt.proofs.lksk._
-import at.logic.gapt.proofs.ral._
+import at.logic.gapt.proofs.ceres._
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, CutRule, DefinitionElimination, regularize, skolemizeInferences }
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.proofs.resolution.{ Input, Resolution, Subst }
 import at.logic.gapt.utils.logging.Logger
 import org.specs2.mutable._
 
@@ -26,8 +23,8 @@ class ceres_omegaTest extends Specification with Logger {
   def prepareProof( file: String, proofname: String ) = {
     val p = LLKProofParser( ClasspathInputFile( file ) )
     val elp = AtomicExpansion( DefinitionElimination( p.Definitions )( regularize( p.proof( proofname ) ) ) )
-    val selp = LKToLKsk( elp )
-    val struct = extractStructFromLKsk( selp )
+    val selp = skolemizeInferences( elp )
+    val struct = extractStruct( selp )
     val ls = StandardClauseSet( struct )
     val proj = Projections( selp )
     ( selp, ls, struct, proj )
@@ -48,14 +45,14 @@ class ceres_omegaTest extends Specification with Logger {
     val sub1 = Substitution( y0, Abs( y, HOLAtom( p, List( s, y ) ) ) )
     val sub2 = Substitution( x0, s )
 
-    val r1 = RalInitial( c1 map { Seq[LambdaExpression]() -> _ } )
-    val r2 = RalInitial( c2 map { Seq[LambdaExpression]() -> _ } )
-    val r3 = RalInitial( c3 map { Seq[LambdaExpression]() -> _ } )
+    val r1 = Input( c1 )
+    val r2 = Input( c2 )
+    val r3 = Input( c3 )
 
-    val r4 = RalSub( r1, sub1 )
-    val r3a = RalSub( r3, sub2 )
-    val r5 = RalCut( r3a, Seq( Suc( 0 ) ), r4, Seq( Ant( 0 ) ) )
-    val r6 = RalCut( r5, Seq( Suc( 0 ) ), r2, Seq( Ant( 0 ) ) )
+    val r4 = Subst( r1, sub1 )
+    val r3a = Subst( r3, sub2 )
+    val r5 = Resolution( r3a, Suc( 0 ), r4, Ant( 0 ) )
+    val r6 = Resolution( r5, Suc( 0 ), r2, Ant( 0 ) )
     r6
   }
 
@@ -64,9 +61,9 @@ class ceres_omegaTest extends Specification with Logger {
     val Some( c2 ) = cs.find( x => ( x.antecedent.size == 1 ) && ( x.succedent.size == 0 ) )
     val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )
 
-    val r1 = RalInitial( c1 map { Seq[LambdaExpression]() -> _ } )
-    val r2 = RalInitial( c2 map { Seq[LambdaExpression]() -> _ } )
-    val r3 = RalInitial( c3 map { Seq[LambdaExpression]() -> _ } )
+    val r1 = Input( c1 )
+    val r2 = Input( c2 )
+    val r3 = Input( c3 )
 
   }
 
@@ -75,9 +72,9 @@ class ceres_omegaTest extends Specification with Logger {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "INFTAPE" ) ) )
-      val selp = LKToLKsk( elp )
+      val selp = skolemizeInferences( elp )
       val proj = Projections( selp, CERES.skipPropositional )
-      val struct = extractStructFromLKsk( selp, CERES.skipPropositional )
+      val struct = extractStruct( selp, CERES.skipPropositional )
       val css = StandardClauseSet( struct )
 
       css.size must_== proj.size
@@ -88,16 +85,15 @@ class ceres_omegaTest extends Specification with Logger {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
-      val selp = LKToLKsk( elp )
+      val selp = skolemizeInferences( elp )
       val proj = Projections( selp, CERES.skipPropositional )
-      val struct = extractStructFromLKsk( selp, CERES.skipPropositional )
+      val struct = extractStruct( selp, CERES.skipPropositional )
       val css = StandardClauseSet( struct, false )
       //css.map( println )
 
-      val pcss = proj.map( x => x._1.conclusion.zipWithIndex.filter( pair => x._2( pair._2 ) ).map( _._1 ) )
-      def formulas( set: Set[Sequent[LabelledFormula]] ) = set.map( x => x.map( _._2 ) ).toList
-      val ( pqs, abspcss ) = replaceAbstractions( formulas( pcss ) )
-      val ( cqs, abscss ) = replaceAbstractions( formulas( css ) )
+      val pcss = proj.map( _.conclusion )
+      val ( pqs, abspcss ) = replaceAbstractions( pcss.toList )
+      val ( cqs, abscss ) = replaceAbstractions( css.toList )
 
       info( "=== projection css ===" )
       abspcss.map( x => info( x.toString ) )
@@ -127,9 +123,9 @@ class ceres_omegaTest extends Specification with Logger {
       val filename = "perm.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "AxProof" ) ) )
-      val selp = LKToLKsk( elp )
+      val selp = skolemizeInferences( elp )
 
-      val cutformulas = selp.dagLike.breadthFirst.filter( { case Cut( _, _, _, _ ) => true; case _ => false } )
+      val cutformulas = selp.dagLike.breadthFirst.filter( { case CutRule( _, _, _, _ ) => true; case _ => false } )
       cutformulas.size must_== 5 //4 from binary equation translation, 1 from proof
 
       val proj = Projections( selp, x => containsQuantifierOnLogicalLevel( x ) || freeHOVariables( x ).nonEmpty )

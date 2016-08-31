@@ -6,9 +6,6 @@ import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.lksk.LKskProof
-import at.logic.gapt.proofs.ral.RalProof
-import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import at.logic.gapt.utils.Not
 
@@ -34,14 +31,9 @@ package object prooftool {
     override def display( x: LKProof, name: String ) = new LKProofViewer( name, x ).showFrame()
   }
 
-  implicit object LKSKProofViewable extends ProoftoolViewable[LKskProof] {
-    override def display( x: LKskProof, name: String ) = new LKskProofViewer( name, x ).showFrame()
-  }
-
   implicit def SequentProofViewable[F, T <: SequentProof[F, T]](
     implicit
-    notLK:   Not[T <:< LKProof],
-    notLKsk: Not[T <:< LKskProof]
+    notLK: Not[T <:< LKProof]
   ) = new ProoftoolViewable[SequentProof[F, T]] {
     override def display( p: SequentProof[F, T], name: String ) = {
       def renderer( x: F ): String = x match {

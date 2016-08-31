@@ -39,7 +39,6 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
     val p = WeakeningContractionMacroRule( ResolutionToLKProof( robinson ), reconstructedEndSequent ) --- "RobinsonToLK"
 
     regularize( p ) --? "regularize"
-    LKToLKsk( p ) --? "LKToLKsk"
 
     val E = LKToExpansionProof( p ) --- "LKToExpansionProof"
     val deep = E.deep

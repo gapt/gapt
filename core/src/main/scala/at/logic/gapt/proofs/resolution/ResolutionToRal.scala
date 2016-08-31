@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.undoHol2Fol.Signature
 import at.logic.gapt.expr.fol.{ undoHol2Fol, replaceAbstractions }
 import at.logic.gapt.proofs.{ Suc, Ant }
-import at.logic.gapt.proofs.ral._
 
 object ResolutionToRal extends ResolutionToRal {
   /* One of our heuristics maps higher-order types into first-order ones. When the proof is converted to Ral,
@@ -27,25 +26,23 @@ abstract class ResolutionToRal {
 
   def convert_context( con: Abs ): Abs
 
-  def apply( p: ResolutionProof ): RalProof = p match {
-    case _: InitialClause     => RalInitial( p.conclusion map convert_formula map { Seq[LambdaExpression]() -> _ } )
-    case Factor( p1, i1, i2 ) => RalFactor( apply( p1 ), i1, i2 )
+  def apply( p: ResolutionProof ): ResolutionProof = p match {
+    case Input( cls )         => Input( cls map convert_formula )
+    case Taut( f )            => Taut( convert_formula( f ) )
+    case Refl( t )            => convert_formula( t === t ) match { case Eq( t_, _ ) => Refl( t_ ) }
+    case Factor( p1, i1, i2 ) => Factor( apply( p1 ), i1, i2 )
     case Subst( p1, subst ) =>
       val substNew = convert_substitution( subst )
-      RalSub( apply( p1 ), substNew )
+      Subst( apply( p1 ), substNew )
     case p @ Resolution( p1, i1, p2, i2 ) =>
       val p1New = apply( p1 )
       val p2New = apply( p2 )
-      RalCut( p1New, Seq( p1New.conclusion.find( _._2 == convert_formula( p.resolvedLiteral ) ).get ),
-        p2New, Seq( p2New.conclusion.find( _._2 == convert_formula( p.resolvedLiteral ) ).get ) )
+      Resolution( p1New, i1, p2New, i2 )
     case Paramod( p1, eq @ Suc( _ ), dir, p2, lit, con: Abs ) =>
       val p1New = apply( p1 )
       val p2New = apply( p2 )
-      RalPara( p1New, p1New.conclusion.find( _._2 == convert_formula( p1.conclusion( eq ) ) ).get.asInstanceOf[Suc],
-        p2New, p2New.conclusion.find( _._2 == convert_formula( p2.conclusion( lit ) ) ).get,
-        convert_context( con ), dir )
-    case Flip( p1, i1 ) =>
-      apply( Flip.simulate( p1, i1 ) )
+      Paramod( p1New, eq, dir, p2New, lit, convert_context( con ) )
+    case Flip( p1, i1 ) => Flip( apply( p1 ), i1 )
   }
 }
 

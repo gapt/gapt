@@ -1,7 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.ceres_omega.{ AnalysisWithCeresOmega, ceres_omega }
+import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import at.logic.gapt.formats.llk.loadLLK
 
 /**
