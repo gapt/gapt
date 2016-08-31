@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
-object proof extends TacticsProof {
+object proof extends TacticsProof( Context.withoutEquality ) {
   ctx += Context.Sort( "i" )
   ctx += hoc"f: i>i>i"
   ctx += hoc"'=':i>i>o"

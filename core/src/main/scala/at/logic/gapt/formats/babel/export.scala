@@ -29,18 +29,17 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def knownConstantTypesFromSig( consts: Iterable[Const] ) =
     consts flatMap { c =>
       sig( c.name ) match {
-        case IsConst( ast.TypeVar( _ ) ) => None
-        case IsConst( astType ) if astType == ast.liftType( c.exptype ) => Some( c.name -> c )
-        case _ => None
+        case IsConst( Some( ty ) ) if ty == c.exptype => Some( c.name -> c )
+        case _                                        => None
       }
     }
 
   def export( expr: LambdaExpression ): String = {
-    val knownTypesFromSig = knownConstantTypesFromSig( constants( expr ) )
+    val knownTypesFromSig = knownConstantTypesFromSig( constants.all( expr ) )
     pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
   def export( sequent: HOLSequent ): String = {
-    val knownTypesFromSig = knownConstantTypesFromSig( constants( sequent ) )
+    val knownTypesFromSig = knownConstantTypesFromSig( sequent.elements.view.flatMap( constants.all ).toSet )
     pretty( group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ) ).layout
   }
   def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) ).layout
@@ -63,12 +62,8 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   }
 
   val infixRel = Set( "<", "<=", ">", ">=" )
-  val logicalConstName = Set(
-    TopC.name, BottomC.name, NegC.name, AndC.name, OrC.name, ImpC.name,
-    ForallC.name, ExistsC.name
-  )
 
-  def show( sequent: HOLSequent, bound: Set[String], t0: Map[String, LambdaExpression] ): ( Doc, Map[String, LambdaExpression] ) = {
+  def show( sequent: HOLSequent, bound: Set[String], t0: Map[String, VarOrConst] ): ( Doc, Map[String, VarOrConst] ) = {
     var t1 = t0
     val docSequent = sequent map { formula =>
       val ( formulaDoc, t1_ ) = show( formula, true, bound, t1, prio.max )
@@ -101,9 +96,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     expr:      LambdaExpression,
     knownType: Boolean,
     bound:     Set[String],
-    t0:        Map[String, LambdaExpression],
+    t0:        Map[String, VarOrConst],
     p:         Int
-  ): ( Doc, Map[String, LambdaExpression] ) =
+  ): ( Doc, Map[String, VarOrConst] ) =
     expr match {
       case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )
@@ -147,14 +142,14 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
       case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
-      case Const( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || sig.isVar( name ) || logicalConstName( name ) || name == EqC.name )
+      case expr @ Const( name, ty ) =>
+        if ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.isVar( name ) )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
-      case Var( name, ty ) =>
+      case expr @ Var( name, ty ) =>
         if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.isVar( name ) ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
@@ -167,9 +162,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     expr:      LambdaExpression,
     knownType: Boolean,
     bound:     Set[String],
-    t0:        Map[String, LambdaExpression],
+    t0:        Map[String, VarOrConst],
     p:         Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val Apps( hd, args ) = expr
     val hdSym = hd match {
       case Const( n, _ ) => Some( n )
@@ -209,9 +204,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     b:             LambdaExpression,
     knownType:     Boolean,
     bound:         Set[String],
-    t0:            Map[String, LambdaExpression],
+    t0:            Map[String, VarOrConst],
     p:             Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val ( a_, t1 ) = show( a, knownType, bound, t0, prio + leftPrioBias )
     val ( b_, t2 ) = show( b, knownType, bound, t1, prio + rightPrioBias )
     ( parenIf( p, prio, a_ <+> sym <@> b_ ), t2 )
@@ -226,9 +221,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     b:             LambdaExpression,
     knownType:     Boolean,
     bound:         Set[String],
-    t0:            Map[String, LambdaExpression],
+    t0:            Map[String, VarOrConst],
     p:             Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val Const( cn, argt1 -> ( argt2 -> rett ) ) = c
     val cKnown = t0.get( cn ).contains( c )
     if ( t0.get( cn ).exists { _ != c } ) {
@@ -248,9 +243,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     v:     Var,
     e:     LambdaExpression,
     bound: Set[String],
-    t0:    Map[String, LambdaExpression],
+    t0:    Map[String, VarOrConst],
     p:     Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val Var( vn, vt ) = v
     val ( e_, t1 ) = show( e, true, bound + vn, t0 - vn, prio.quantOrNeg + 1 )
     val v_ =
@@ -281,6 +276,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   def show( ty: Ty, needParens: Boolean ): Doc = ty match {
     case TBase( name ) => showName( name )
+    case TVar( name )  => "?" <> showName( name )
     case a -> b if !needParens =>
       group( show( a, true ) <> ">" <@@> show( b, false ) )
     case _ => parens( nest( show( ty, false ) ) )

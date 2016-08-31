@@ -17,7 +17,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
       case Negative => doc <> "-"
     }
 
-  def show( et: ExpansionTree, t0: Map[String, LambdaExpression], p: Int ): ( Doc, Map[String, LambdaExpression] ) = et match {
+  def show( et: ExpansionTree, t0: Map[String, VarOrConst], p: Int ): ( Doc, Map[String, VarOrConst] ) = et match {
     case ETTop( pol )    => ( addPol( "⊤", pol ), t0 )
     case ETBottom( pol ) => ( addPol( "⊥", pol ), t0 )
     case ETWeakening( f, pol ) =>
