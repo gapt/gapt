@@ -539,8 +539,8 @@ object prenexifyET {
     val f1_ = apply( f1, p1 )
     val f2_ = apply( f2, p2 )
 
-    val Some( ( vs1, matrix1 ) ) = weakQuantifier( p1 ).Block.unapply( f1 )
-    val Some( ( vs2_, matrix2 ) ) = weakQuantifier( p2 ).Block.unapply( f2 )
+    val Some( ( vs1, matrix1 ) ) = weakQuantifier( p1 ).Block.unapply( f1_ )
+    val Some( ( vs2_, matrix2 ) ) = weakQuantifier( p2 ).Block.unapply( f2_ )
     val vs2 = vs2_.map( rename( vs2_, vs1 ) )
 
     weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
