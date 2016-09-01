@@ -16,6 +16,17 @@ private class skolemizeInferences(
 
   val skolemDefs = mutable.Map[( LambdaExpression, PosInEndSequent ), Const]()
 
+  // The general idea is that as we proceed upwards through the proof, we maintain
+  // certain information about each formula in the current sequent.
+  //
+  // In particular, we keep a list of *generalizations* of each formula.  The generalization happens in weak
+  // quantifier inferences: instead of instantiating with the term, we instantiate with a fresh variable.
+  // lowerWeakQuantifierTermVars is the list of these fresh variables that were already used for
+  // descendents of the formula.
+  //
+  // These generalizations are connected to the current sequent via a substitution (there is only one substitution
+  // for the whole sequent, so it is not included in the per-formula Info).  This substitution maps each of the
+  // generalizations to the current formula.
   case class Info(
       generalizedFormulas:         Seq[HOLFormula],
       isCutAnc:                    Boolean,
