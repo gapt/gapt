@@ -28,9 +28,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   def knownConstantTypesFromSig( consts: Iterable[Const] ) =
     consts flatMap { c =>
-      sig( c.name ) match {
-        case IsConst( Some( ty ) ) if ty == c.exptype => Some( c.name -> c )
-        case _                                        => None
+      sig.signatureLookup( c.name ) match {
+        case BabelSignature.IsConst( ty ) if ty == c.exptype =>
+          Some( c.name -> c )
+        case _ => None
       }
     }
 
@@ -143,14 +144,14 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
       case expr @ Const( name, ty ) =>
-        if ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.isVar( name ) )
+        if ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.signatureLookup( name ).isVar )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
       case expr @ Var( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.isVar( name ) ) )
+        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.signatureLookup( name ).isVar ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )

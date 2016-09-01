@@ -15,15 +15,7 @@ abstract class BabelSignature {
    * @param s The name of the symbol.
    * @return Either IsVar(type) or IsConst(type).
    */
-  def apply( s: String ): VarConst
-
-  /**
-   * Returns true iff the symbol with the given identifier is a variable.
-   *
-   * @param s The name of the symbol.
-   * @return
-   */
-  def isVar( s: String ): Boolean = apply( s ).isVar
+  def signatureLookup( s: String ): BabelSignature.VarConst
 }
 
 /**
@@ -38,16 +30,24 @@ object BabelSignature {
   implicit val defaultSignature = new BabelSignature {
     val varPattern = "[u-zU-Z].*".r
 
-    override def apply( s: String ): VarConst =
+    def signatureLookup( s: String ): VarConst =
       Context.default.constant( s ) match {
-        case Some( c ) => IsConst( Some( c.exptype ) )
+        case Some( c ) => IsConst( c.exptype )
         case None =>
           s match {
-            case varPattern() => IsVar( None )
-            case _            => IsConst( None )
+            case varPattern() => IsVar
+            case _            => IsUnknownConst
           }
       }
   }
+
+  sealed abstract class VarConst( val isVar: Boolean )
+  /** Variable without known type. */
+  case object IsVar extends VarConst( true )
+  /** Constant without known type. */
+  case object IsUnknownConst extends VarConst( false )
+  /** Constant with known type. */
+  case class IsConst( ty: Ty ) extends VarConst( false )
 }
 
 /**
@@ -56,29 +56,13 @@ object BabelSignature {
  * @param map A map from strings to types.
  */
 case class MapBabelSignature( map: Map[String, Ty] ) extends BabelSignature {
-  override def apply( x: String ): VarConst =
+  def signatureLookup( x: String ): BabelSignature.VarConst =
     if ( map contains x )
-      IsConst( Some( map( x ) ) )
+      BabelSignature.IsConst( map( x ) )
     else
-      IsVar( None )
+      BabelSignature.IsVar
 }
 object MapBabelSignature {
   def apply( consts: Iterable[real.Const] ): MapBabelSignature =
     MapBabelSignature( consts.view map { c => c.name -> c.exptype } toMap )
-}
-
-/**
- * Class with two possible cases, one for variables and one for constants.
- */
-sealed trait VarConst {
-  def ty: Option[Ty]
-  def isVar: Boolean
-}
-
-case class IsVar( ty: Option[Ty] ) extends VarConst {
-  def isVar = true
-}
-
-case class IsConst( ty: Option[Ty] ) extends VarConst {
-  def isVar = false
 }

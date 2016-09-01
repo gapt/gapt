@@ -212,12 +212,12 @@ object ast {
   }
   def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): UnificationError \/ Seq[real.LambdaExpression] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet
-    val freeVars = fi filter sig.isVar
+    val freeVars = fi.filter( sig.signatureLookup( _ ).isVar )
     val startingEnv = fi.map { i =>
-      i -> ( sig.apply( i ) match {
-        case IsConst( Some( ty ) ) => () => liftTypePoly( ty )
-        case IsVar( Some( ty ) ) => () => liftTypeMono( ty )
-        case IsConst( None ) | IsVar( None ) =>
+      i -> ( sig.signatureLookup( i ) match {
+        case BabelSignature.IsConst( ty ) =>
+          () => liftTypePoly( ty )
+        case BabelSignature.IsUnknownConst | BabelSignature.IsVar =>
           val fixedMeta = freshMetaType()
           () => fixedMeta
       } )

@@ -57,10 +57,10 @@ class Context private ( val elements: Vector[Element] ) extends BabelSignature {
   def normalize( expression: LambdaExpression ): LambdaExpression =
     BetaReduction.betaNormalize( DefinitionElimination( definitions.toMap )( expression ) )
 
-  override def apply( s: String ): babel.VarConst =
+  def signatureLookup( s: String ): BabelSignature.VarConst =
     constant( s ) match {
-      case Some( c ) => babel.IsConst( Some( c.exptype ) )
-      case None      => babel.IsVar( None )
+      case Some( c ) => BabelSignature.IsConst( c.exptype )
+      case None      => BabelSignature.IsVar
     }
 
   def check[T: Checkable]( t: T ): Unit =
