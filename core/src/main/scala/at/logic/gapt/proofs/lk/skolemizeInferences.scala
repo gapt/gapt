@@ -7,7 +7,11 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
-private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boolean ) {
+private class skolemizeInferences(
+    nameGen:            NameGenerator,
+    proofTheoretic:     Boolean,
+    skolemizeAboveCuts: Boolean
+) {
   type PosInEndSequent = Seq[Int]
 
   val skolemDefs = mutable.Map[( LambdaExpression, PosInEndSequent ), Const]()
@@ -150,15 +154,15 @@ private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boole
         if ( p.aux.isSuc ) ForallSkRightRule( q_, p.aux, subf( p.mainFormula ), sub( p.skolemTerm ), p.skolemDef )
         else ExistsSkLeftRule( q_, p.aux, subf( p.mainFormula ), sub( p.skolemTerm ), p.skolemDef )
 
-      // cut-ancestors
-      case p @ StrongQuantifierRule( q, a, eigen, quant, pol ) if info( p.mainIndices.head ).isCutAnc =>
+      // Eigenvariable inferences that we keep
+      case p @ StrongQuantifierRule( q, a, eigen, quant, pol ) if info( p.mainIndices.head ).isCutAnc && !skolemizeAboveCuts =>
         val q_ = apply( q, p.occConnectors.head.parent( info ).
           updated( a, info( p.mainIndices.head ).instantiateQuantifier( eigen ) ),
           subst )
         if ( pol ) ForallRightRule( q_, a, eigen, quant )
         else ExistsLeftRule( q_, a, eigen, quant )
 
-      // end-sequent ancestors
+      // Eigenvariable inferences that are Skolemized
       case p @ StrongQuantifierRule( q, a, eigen, quant, pol ) =>
         val Some( genFormula ) = info( p.mainIndices.head ).generalizedFormulas.find( !_.isInstanceOf[HOLAtom] )
         val argVars_ = info( p.mainIndices.head ).lowerWeakQuantifierTermVars ++ freeVariables( genFormula )
@@ -187,9 +191,9 @@ object skolemizeInferences {
    *                        that the expansion proof of the Skolemized proof can be deskolemized using the naive
    *                        linear-time algorithm.
    */
-  def apply( p: LKProof, proofTheoretic: Boolean = true ): LKProof = {
+  def apply( p: LKProof, proofTheoretic: Boolean = true, skolemizeAboveCuts: Boolean = false ): LKProof = {
     val p_ = regularize( p )
-    val conv = new skolemizeInferences( rename.awayFrom( containedNames( p_ ) ), proofTheoretic )
+    val conv = new skolemizeInferences( rename.awayFrom( containedNames( p_ ) ), proofTheoretic, skolemizeAboveCuts )
     conv(
       p_,
       for ( ( f, i ) <- p_.endSequent.zipWithIndex )
