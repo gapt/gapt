@@ -34,7 +34,7 @@ object ResolutionToExpansionProof {
     val cuts = mutable.Buffer[ETImp]()
     var expansionSequent: ExpansionSequent =
       if ( !addConclusion ) Sequent()
-      else proof.conclusion.zipWithIndex.map { case ( a: HOLAtom, i ) => ETAtom( a, !i.polarity ) }
+      else proof.conclusion.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[HOLAtom], !i.polarity ) }
     val splitDefn = mutable.Map[HOLAtom, HOLFormula]()
     val splitCutL = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
     val splitCutR = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
@@ -81,7 +81,7 @@ object ResolutionToExpansionProof {
     }
 
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
-      Set( Substitution() -> sequent.zipWithIndex.map { case ( a: HOLAtom, i ) => ETAtom( a, !i.polarity ) } )
+      Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[HOLAtom], !i.polarity ) } )
 
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
