@@ -125,9 +125,11 @@ private class skolemizeInferences( nameGen: NameGenerator, proofTheoretic: Boole
         )
 
       case p @ DefinitionLeftRule( q, a, m ) =>
-        DefinitionLeftRule( apply( q, p.getOccConnector.parent( info ).updated( a, info( p.mainIndices.head ).addGeneralization( q.conclusion( a ) ) ), subst ), a, subf( m ) )
+        DefinitionLeftRule( apply( q, p.getOccConnector.parent( info ).
+          updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst ), a, subf( m ) )
       case p @ DefinitionRightRule( q, a, m ) =>
-        DefinitionRightRule( apply( q, p.getOccConnector.parent( info ).updated( a, info( p.mainIndices.head ).addGeneralization( q.conclusion( a ) ) ), subst ), a, subf( m ) )
+        DefinitionRightRule( apply( q, p.getOccConnector.parent( info ).
+          updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst ), a, subf( m ) )
 
       case p @ WeakQuantifierRule( q, a, _, term, bound, pol ) =>
         val freshVar = nameGen fresh bound
