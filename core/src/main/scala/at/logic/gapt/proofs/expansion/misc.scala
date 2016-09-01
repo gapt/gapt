@@ -4,14 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 
 object formulaToExpansionTree {
-  private object Quant {
-    def unapply( f: HOLFormula ) = f match {
-      case All( v, g ) => Some( ( v, g, true ) )
-      case Ex( v, g )  => Some( ( v, g, false ) )
-      case _           => None
-    }
-  }
-
   def apply( formula: HOLFormula, pol: Polarity ): ExpansionTree =
     conv( formula, formula, Set(), pol )
 

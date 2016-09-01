@@ -58,7 +58,7 @@ object ExpansionToResolutionProof {
         clausify( es.delete( i ) :+ a, ImpL1( p, i ) ) union
           clausify( b +: es.delete( i ), ImpL2( p, i ) )
 
-      case ( ETWeakQuantifier( sh @ Quant( v, _ ), insts ), i ) =>
+      case ( ETWeakQuantifier( sh @ Quant( v, _, isForall ), insts ), i ) =>
         val ev = rename( v, freeVariables( p.conclusion ) )
         val p1 = if ( i.isAnt ) ExL( p, i, ev ) else AllR( p, i, ev )
         insts.flatMap {

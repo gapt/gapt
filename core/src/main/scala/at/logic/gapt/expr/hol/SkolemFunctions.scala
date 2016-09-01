@@ -19,7 +19,7 @@ import at.logic.gapt.utils.linearizeStrictPartialOrder
  */
 case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
   skolemDefs foreach {
-    case ( s, d @ Abs.Block( vs, Quant( v, f ) ) ) =>
+    case ( s, d @ Abs.Block( vs, Quant( v, f, isForall ) ) ) =>
       require( s.exptype == FunctionType( v.exptype, vs map { _.exptype } ) )
       require( freeVariables( d ).isEmpty )
   }

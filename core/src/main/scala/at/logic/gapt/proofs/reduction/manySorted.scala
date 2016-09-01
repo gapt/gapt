@@ -207,7 +207,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETWeakQuantifier( _, insts ), Quant( x, sh ) ) =>
+    case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
       ETWeakQuantifier(
         shallow,
         for ( ( t: FOLTerm, inst ) <- insts ) yield {

@@ -180,7 +180,7 @@ object Context {
   }
 
   case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Element {
-    val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix ) ) = defn
+    val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix, isForall ) ) = defn
     require( sym.exptype == FunctionType( boundVariable.exptype, argumentVariables.map( _.exptype ) ) )
     require( freeVariables( defn ).isEmpty )
 

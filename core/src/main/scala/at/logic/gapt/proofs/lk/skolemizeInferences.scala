@@ -42,7 +42,7 @@ private class skolemizeInferences(
     def instantiateQuantifier( term: LambdaExpression ) =
       copy(
         generalizedFormulas = generalizedFormulas.
-          collect { case quant @ Quant( _, _ ) => BetaReduction.betaNormalize( instantiate( quant, term ) ) },
+          collect { case quant @ Quant( _, _, _ ) => BetaReduction.betaNormalize( instantiate( quant, term ) ) },
         position = position :+ 1
       )
 
@@ -153,7 +153,7 @@ private class skolemizeInferences(
             instantiateWeakQuantifier( freshVar ).
             addGeneralization( q.conclusion( a ) ) ),
           subst compose Substitution( freshVar -> term ) )
-        val Quant( v, matrix ) = subf( p.mainFormulas.head )
+        val Quant( v, matrix, _ ) = subf( p.mainFormulas.head )
         if ( pol ) ExistsRightRule( q_, a, matrix, sub( term ), v )
         else ForallLeftRule( q_, a, matrix, sub( term ), v )
 
