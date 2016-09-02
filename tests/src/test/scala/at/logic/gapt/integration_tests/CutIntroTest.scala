@@ -8,7 +8,7 @@ import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof }
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, WeakQuantifierRule, quantRulesNumber }
+import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber, weakQuantRulesNumber }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
@@ -51,10 +51,7 @@ class CutIntroTest extends Specification {
       """
     CutIntroduction( expansion, method = DeltaTableMethod( subsumedRowMerging = true ) ) must beLike {
       case Some( lk ) =>
-        lk.treeLike.postOrder.count {
-          case WeakQuantifierRule( _, _, _, _, _, _ ) => true
-          case _                                      => false
-        } must_== ( 2 * 2 + 3 )
+        weakQuantRulesNumber( lk ) must_== ( 2 * 2 + 3 )
     }
   }
 
