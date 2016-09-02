@@ -329,7 +329,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         p1__ = Subst( c1.proof, mgu )
         p2__ = Subst( p2_, mgu )
         ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
-        context = replacementContext( s.exptype, atom, pos2_, t, s )
+        context = replacementContext( s.exptype, atom, pos2_ )
       } yield DerivedCls( c1, c2, Paramod( p1__, i1, leftToRight, p2__, i2, context ) )
 
       inferred.toSet

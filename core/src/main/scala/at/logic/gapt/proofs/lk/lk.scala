@@ -1582,8 +1582,8 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
 
         } else {
-          val contextS = replacementContext( s.exptype, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ), s, t )
-          val contextT = replacementContext( t.exptype, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ), s, t )
+          val contextS = replacementContext( s.exptype, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ) )
+          val contextT = replacementContext( t.exptype, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ) )
 
           val Abs( vS, restS ) = contextS
           val Abs( vT, restT ) = contextT
@@ -1687,8 +1687,8 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
 
         } else {
-          val contextS = replacementContext( s.exptype, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ), s, t )
-          val contextT = replacementContext( t.exptype, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ), s, t )
+          val contextS = replacementContext( s.exptype, auxFormula, auxFormula.find( s ) intersect mainFormula.find( t ) )
+          val contextT = replacementContext( t.exptype, auxFormula, auxFormula.find( t ) intersect mainFormula.find( s ) )
 
           val Abs( vS, restS ) = contextS
           val Abs( vT, restT ) = contextT
