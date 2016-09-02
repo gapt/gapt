@@ -36,6 +36,11 @@ class CutIntroTest extends Specification {
     ) )
   }
 
+  "non-prenex proofs" in {
+    val Some( expansion ) = Escargot.getExpansionProof( hof"p 0 & !x (p x -> p (s x)) -> p ${Numeral( 9 )}" )
+    CutIntroduction( expansion ) must beSome
+  }
+
   "introduce two cuts into linear example proof with improveSolutionLK" in {
     val us = ( fof"P 0" -> Seq( Seq() ) ) +:
       ( fof"!x (P x -> P (s x))" -> Seq( Seq( fot"x_1" ), Seq( fot"s x_1" ) ) ) +:
