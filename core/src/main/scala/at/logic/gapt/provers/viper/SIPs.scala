@@ -7,11 +7,11 @@ import at.logic.gapt.grammars.SipGrammar
 import at.logic.gapt.proofs.FOLClause
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
+import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 

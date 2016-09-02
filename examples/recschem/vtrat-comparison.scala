@@ -6,8 +6,7 @@ import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.grammars._
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
-import at.logic.gapt.utils.logging.{ PrintMetrics, metrics }
-import at.logic.gapt.utils.time
+import at.logic.gapt.utils.{ PrintMetrics, metrics, time }
 
 object vtrat_comparison extends Script {
   metrics.current.value = PrintMetrics

@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lksk.LKskProof._
 import at.logic.gapt.proofs.lksk
 import at.logic.gapt.proofs.lk
 import at.logic.gapt.proofs.lksk._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 class LKToLKsk( skolemSymbolFactory: SkolemSymbolFactory ) extends Logger {
   type HPathsSequent = Sequent[List[HPath]]

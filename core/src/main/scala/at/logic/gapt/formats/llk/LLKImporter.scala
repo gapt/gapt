@@ -5,12 +5,12 @@ import at.logic.gapt.formats.llk.ast.LambdaAST
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.BetaReduction._
-import at.logic.gapt.utils.logging.Logger
 import at.logic.gapt.proofs.lk._
 import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import EquationVerifier._
+import at.logic.gapt.utils.Logger
 
 import scalaz.\/-
 

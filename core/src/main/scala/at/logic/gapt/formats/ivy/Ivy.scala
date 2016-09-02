@@ -5,7 +5,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 

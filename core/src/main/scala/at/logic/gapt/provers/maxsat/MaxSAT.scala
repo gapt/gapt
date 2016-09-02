@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.utils.logging.{ Logger, metrics }
+import at.logic.gapt.utils.{ Logger, metrics }
 
 /**
  * Solver for Weighted Partial MaxSAT problems.

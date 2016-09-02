@@ -15,7 +15,7 @@ import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.logging.{ Logger, metrics }
+import at.logic.gapt.utils.{ Logger, metrics }
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG]

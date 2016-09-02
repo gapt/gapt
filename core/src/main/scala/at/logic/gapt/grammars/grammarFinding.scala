@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.thresholds._
 import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.logging.metrics
+import at.logic.gapt.utils.metrics
 
 import scala.collection.{ GenTraversable, mutable }
 

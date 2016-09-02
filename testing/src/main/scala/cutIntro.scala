@@ -12,8 +12,7 @@ import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
-import at.logic.gapt.utils.logging.{ MetricsCollector, metrics }
-import at.logic.gapt.utils.withTimeout
+import at.logic.gapt.utils.{ MetricsCollector, metrics, withTimeout }
 import org.json4s._
 import org.json4s.native.JsonMethods._
 

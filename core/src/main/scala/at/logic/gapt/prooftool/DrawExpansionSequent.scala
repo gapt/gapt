@@ -2,14 +2,15 @@ package at.logic.gapt.prooftool
 
 // The code in this file displays expansion sequents.
 
-import at.logic.gapt.utils.logging.Logger
-
 import swing._
-import java.awt.{ Dimension, Font, Color }
+import java.awt.{ Color, Dimension, Font }
 import java.awt.Font._
-import scala.swing.event.{ MouseExited, MouseEntered, UIElementResized, MouseClicked, Event }
+
+import scala.swing.event.{ Event, MouseClicked, MouseEntered, MouseExited, UIElementResized }
 import at.logic.gapt.proofs.expansion._
 import java.awt.event.MouseEvent
+
+import at.logic.gapt.utils.Logger
 
 /**
  * These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.

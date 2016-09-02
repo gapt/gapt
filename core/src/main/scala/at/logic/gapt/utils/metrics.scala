@@ -1,4 +1,4 @@
-package at.logic.gapt.utils.logging
+package at.logic.gapt.utils
 
 import scala.util.DynamicVariable
 

@@ -2,10 +2,10 @@ package at.logic.gapt.cli
 
 import at.logic.gapt.examples.Script
 import at.logic.gapt.formats.ClasspathInputFile
+import at.logic.gapt.utils.Logger
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
-import at.logic.gapt.utils.logging.Logger
 import better.files._
 
 object CLIMain extends Logger {

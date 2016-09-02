@@ -5,9 +5,10 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ Sequent, HOLClause, HOLSequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
+
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
 

@@ -7,7 +7,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.proofs.{ Ant, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.ral._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 object ceres_omega extends ceres_omega
 

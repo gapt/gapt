@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 import better.files._
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
