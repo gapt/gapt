@@ -1,9 +1,22 @@
 package at.logic.gapt.expr
 
+import at.logic.gapt.expr.ExpressionParseHelper.Splice
 import at.logic.gapt.formats.babel._
 import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent }
 
 import scalaz.{ -\/, \/- }
+
+object ExpressionParseHelper {
+  abstract class Splice[+ForType] {
+    def spliceIn: ast.Expr
+  }
+  implicit class IdentifierSplice[+T]( val ident: String ) extends Splice[T] {
+    def spliceIn = ast.Ident( ident, ast.freshMetaType() )
+  }
+  implicit class ExpressionSplice[+ExprType <: LambdaExpression]( val expr: ExprType ) extends Splice[ExprType] {
+    def spliceIn = ast.LiftWhitebox( expr )
+  }
+}
 
 /**
  * Extension class that provides string interpolation functions for various expression types.
@@ -13,17 +26,12 @@ import scalaz.{ -\/, \/- }
 class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) {
   private implicit def _sig = sig
 
-  private def interpolateHelper( args: Seq[LambdaExpression] ): ( String, ast.Expr => ast.Expr ) = {
-    val strings = sc.parts.toList
-    val expressions = args.toList
-
-    val stringsNew = for ( ( s, i ) <- strings.init.zipWithIndex ) yield s ++ placeholder + i
-
+  private def interpolateHelper( expressions: Seq[Splice[LambdaExpression]] ): ( String, ast.Expr => ast.Expr ) = {
     def repl( expr: ast.Expr ): ast.Expr = expr match {
       case ast.TypeAnnotation( e, ty ) => ast.TypeAnnotation( repl( e ), ty )
       case ast.Ident( name, ty ) if name startsWith placeholder =>
         val i = name.drop( placeholder.length ).toInt
-        ast.LiftWhitebox( expressions( i ) )
+        expressions( i ).spliceIn
       case expr: ast.Ident => expr
       case ast.Abs( v, sub ) =>
         repl( v ) match {
@@ -38,10 +46,10 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
       case expr: ast.Lifted => expr
     }
 
-    ( stringsNew.mkString ++ strings.last, repl )
+    ( sc.parts.init.zipWithIndex.map { case ( s, i ) => s ++ placeholder + i }.mkString ++ sc.parts.last, repl )
   }
 
-  private def interpolate( args: Seq[LambdaExpression], baseAstTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
+  private def interpolate( args: Seq[Splice[LambdaExpression]], baseAstTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
     val ( combined, repl ) = interpolateHelper( args )
 
     def astTransformer( expr: ast.Expr ): ast.Expr = baseAstTransformer( repl( expr ) )
@@ -60,7 +68,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * Parses a string as a [[LambdaExpression]].
    *
    */
-  def le( args: LambdaExpression* ): LambdaExpression = interpolate( args, identity )
+  def le( args: Splice[LambdaExpression]* ): LambdaExpression = interpolate( args, identity )
 
   /**
    * Parses a string as a [[HOLFormula]].
@@ -68,7 +76,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def hof( args: LambdaExpression* ): HOLFormula = interpolate( args, ast.TypeAnnotation( _, ast.Bool ) ).asInstanceOf[HOLFormula]
+  def hof( args: Splice[LambdaExpression]* ): HOLFormula = interpolate( args, ast.TypeAnnotation( _, ast.Bool ) ).asInstanceOf[HOLFormula]
 
   /**
    * Parses a string as a [[HOLAtom]].
@@ -76,7 +84,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def hoa( args: LambdaExpression* ): HOLAtom = hof( args: _* ) match {
+  def hoa( args: Splice[LambdaExpression]* ): HOLAtom = hof( args: _* ) match {
     case atom: HOLAtom => atom
     case expr =>
       throw new IllegalArgumentException( s"Expression $expr appears not to be a HOL atom. Parse it with hof." )
@@ -88,7 +96,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def hov( args: LambdaExpression* ): Var = le( args: _* ) match {
+  def hov( args: Splice[LambdaExpression]* ): Var = le( args: _* ) match {
     case v: Var => v
     case expr =>
       throw new IllegalArgumentException( s"Expression $expr cannot be read as a variable. Parse it with le." )
@@ -100,7 +108,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def hoc( args: LambdaExpression* ): Const = {
+  def hoc( args: Splice[LambdaExpression]* ): Const = {
     import fastparse.core.ParseError
     import fastparse.core.Parsed._
     require( args.isEmpty )
@@ -121,7 +129,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def foe( args: FOLExpression* ): FOLExpression = le( args: _* ) match {
+  def foe( args: Splice[FOLExpression]* ): FOLExpression = le( args: _* ) match {
     case folExpression: FOLExpression => folExpression
     case expr =>
       throw new IllegalArgumentException( s"Expression $expr appears not to be a FOL expression. Parse it with le." )
@@ -133,7 +141,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def fof( args: FOLExpression* ): FOLFormula = hof( args: _* ) match {
+  def fof( args: Splice[FOLExpression]* ): FOLFormula = hof( args: _* ) match {
     case formula: FOLFormula => formula
     case expr =>
       throw new IllegalArgumentException( s"Formula $expr appears not to be a FOL formula. Parse it with hof." )
@@ -145,7 +153,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def foa( args: FOLExpression* ): FOLAtom = fof( args: _* ) match {
+  def foa( args: Splice[FOLExpression]* ): FOLAtom = fof( args: _* ) match {
     case atom: FOLAtom => atom
     case expr =>
       throw new IllegalArgumentException( s"Formula $expr appears not to be an atom. Parse it with fof." )
@@ -157,7 +165,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def fot( args: FOLTerm* ): FOLTerm = le( args: _* ) match {
+  def fot( args: Splice[FOLTerm]* ): FOLTerm = le( args: _* ) match {
     case term: FOLTerm => term
     case expr =>
       throw new IllegalArgumentException( s"Expression $expr appears not to be FOL term. Parse it with le." )
@@ -169,7 +177,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def fov( args: FOLTerm* ): FOLVar = fot( args: _* ) match {
+  def fov( args: Splice[FOLTerm]* ): FOLVar = fot( args: _* ) match {
     case v: FOLVar => v
     case expr =>
       throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL variable. Parse it with fot." )
@@ -181,14 +189,14 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def foc( args: FOLTerm* ): FOLConst = fot( args: _* ) match {
+  def foc( args: Splice[FOLTerm]* ): FOLConst = fot( args: _* ) match {
     case c: FOLConst => c
     case expr =>
       throw new IllegalArgumentException( s"Term $expr cannot be read as a FOL constant. Parse it with fot." )
   }
 
   /** Parses a string as a [[at.logic.gapt.proofs.HOLSequent]]. */
-  def hos( args: LambdaExpression* ): HOLSequent = {
+  def hos( args: Splice[LambdaExpression]* ): HOLSequent = {
     val ( combined, repl ) = interpolateHelper( args )
 
     BabelParser.tryParseSequent( combined, e => ast.TypeAnnotation( repl( e ), ast.Bool ) ) match {
@@ -200,13 +208,13 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   }
 
   /** Parses a string as a [[at.logic.gapt.proofs.HOLClause]]. */
-  def hcl( args: LambdaExpression* ): HOLClause = hos( args: _* ).map( _.asInstanceOf[HOLAtom] )
+  def hcl( args: Splice[LambdaExpression]* ): HOLClause = hos( args: _* ).map( _.asInstanceOf[HOLAtom] )
 
   /** Parses a string as a [[at.logic.gapt.proofs.FOLSequent]]. */
-  def fos( args: LambdaExpression* ): FOLSequent = hos( args: _* ).map( _.asInstanceOf[FOLFormula] )
+  def fos( args: Splice[LambdaExpression]* ): FOLSequent = hos( args: _* ).map( _.asInstanceOf[FOLFormula] )
 
   /** Parses a string as a [[at.logic.gapt.proofs.FOLClause]]. */
-  def fcl( args: LambdaExpression* ): FOLClause = hos( args: _* ).map( _.asInstanceOf[FOLAtom] )
+  def fcl( args: Splice[LambdaExpression]* ): FOLClause = hos( args: _* ).map( _.asInstanceOf[FOLAtom] )
 
   private def placeholder = "__qq_"
 }
