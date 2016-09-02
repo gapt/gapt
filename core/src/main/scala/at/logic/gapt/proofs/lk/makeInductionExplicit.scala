@@ -36,7 +36,6 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     }
 
     val indprin = inductionPrinciple( indty, constrs )
-    val All( pred, Imp( _, allForm ) ) = indprin
 
     val hypP = hyps.reduceLeft( ( p, hyp ) =>
       AndRightRule( p, p.conclusion.indices.last,
@@ -45,7 +44,7 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     val explicitFOLp =
       ProofBuilder.
         c( LogicalAxiom( proof.mainFormula ) ).
-        u( ForallLeftRule( _, Ant( 0 ), allForm, proof.term ) ).
+        u( ForallLeftRule( _, Ant( 0 ), All( proof.quant, proof.qfFormula ), proof.term ) ).
         u( ImpLeftRule( hypP, hypP.conclusion.indices.last, _, Ant( 0 ) ) ).
         qed
     val explicitHOLp =
