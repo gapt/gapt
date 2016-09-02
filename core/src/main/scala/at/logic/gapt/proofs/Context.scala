@@ -5,6 +5,7 @@ import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.proofs.lk.DefinitionElimination
+import at.logic.gapt.proofs.resolution.AvatarGeneralNonGroundComp
 
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
@@ -163,6 +164,8 @@ object Context {
       ctx.check( ConstDecl( what ) )
       ctx.check( by )
     }
+
+    def toTuple: ( Const, LambdaExpression ) = ( what, by )
   }
 
   case class Axiom( sequent: HOLSequent ) extends Element {

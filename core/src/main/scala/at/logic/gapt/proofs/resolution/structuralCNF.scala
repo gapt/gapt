@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.NameGenerator
 
@@ -9,13 +10,14 @@ import scala.collection.mutable
 object structuralCNF {
   def apply(
     endSequent:    HOLSequent,
-    propositional: Boolean    = false, structural: Boolean = true
+    propositional: Boolean    = false,
+    structural:    Boolean    = true
   ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     onProofs(
-      endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input( _ ) ).elements,
+      endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input ).elements,
       propositional, structural
     )
   }
@@ -131,18 +133,19 @@ class Clausifier( propositional: Boolean, structural: Boolean, nameGen: NameGene
   // both the abbreviated sequent, and (the necessary part of) the definition.
   def abbrev( p: ResolutionProof, i: SequentIndex ): Unit = {
     val f = p.conclusion( i )
-    val fvs = if ( propositional ) Seq() else freeVariables( f ).toSeq
-    val definition = Abs( fvs, f )
-    val alreadyDefined = defs isDefinedAt definition
+    val fvs = if ( propositional ) Nil else freeVariables( f ).toList
+    val definedFormula = Abs( fvs, f )
+    val alreadyDefined = defs isDefinedAt definedFormula
     val const = defs.getOrElseUpdate(
-      Abs( fvs, f ),
+      definedFormula,
       HOLAtomConst( mkAbbrevSym(), fvs map { _.exptype }: _* )
     )
     if ( !alreadyDefined ) {
-      val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definition ) )( AllR( _, Suc( 0 ), _ ) )
+      val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definedFormula ) )( AllR( _, Suc( 0 ), _ ) )
       expand( ImpR( if ( i isAnt ) AndR2( defn, Suc( 0 ) ) else AndR1( defn, Suc( 0 ) ), Suc( 0 ) ) )
     }
-    expand( DefIntro( p, i, const( fvs: _* ), definition ) )
+    val definition = Definition( const, definedFormula )
+    expand( DefIntro( p, i, definition, fvs ) )
   }
 
 }

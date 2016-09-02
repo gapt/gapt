@@ -261,7 +261,7 @@ class ReductiveCutElimination {
         val rSubProofNew = Substitution( eigen, term )( rSubProof )
         CutRule( lSubProof, rSubProofNew, left.auxFormulas.head.head )
 
-      case ( DefinitionRightRule( lSubProof, a1, main1 ), DefinitionLeftRule( rSubProof, a2, main2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( DefinitionRightRule( lSubProof, a1, definition1, ctx1 ), DefinitionLeftRule( rSubProof, a2, definition2, ctx2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         CutRule( lSubProof, a1, rSubProof, a2 )
 
       // If no grade reduction rule can be applied -- in particular, if one of the cut formulas is not introduced directly above the cut
@@ -324,19 +324,19 @@ class ReductiveCutElimination {
             CutRule( leftSubProof, a1, cutSub, cutSub.getLeftOccConnector.child( a2 ) )
         }
 
-      case l @ DefinitionLeftRule( subProof, a, main ) =>
+      case l @ DefinitionLeftRule( subProof, a, d, c ) =>
 
         val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
         val aNew = cutSub.getLeftOccConnector.child( a )
-        DefinitionLeftRule( cutSub, aNew, main )
+        DefinitionLeftRule( cutSub, aNew, d, c )
 
-      case l @ DefinitionRightRule( subProof, a, main ) if left.mainIndices.head != aux1 =>
+      case l @ DefinitionRightRule( subProof, a, d, c ) if left.mainIndices.head != aux1 =>
 
         val aux1Sub = l.getOccConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
         val aNew = cutSub.getLeftOccConnector.child( a )
-        DefinitionRightRule( cutSub, aNew, main )
+        DefinitionRightRule( cutSub, aNew, d, c )
 
       case l @ AndLeftRule( subProof, a1, a2 ) =>
 
@@ -524,17 +524,17 @@ class ReductiveCutElimination {
             CutRule( leftSubProof, a1, cutSub, cutSub.getRightOccConnector.child( a2 ) )
         }
 
-      case r @ DefinitionLeftRule( subProof, a, main ) if right.mainIndices.head != aux2 =>
+      case r @ DefinitionLeftRule( subProof, a, d, c ) if right.mainIndices.head != aux2 =>
         val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightOccConnector.child( a )
-        DefinitionLeftRule( cutSub, aNew, main )
+        DefinitionLeftRule( cutSub, aNew, d, c )
 
-      case r @ DefinitionRightRule( subProof, a, main ) =>
+      case r @ DefinitionRightRule( subProof, a, d, c ) =>
         val aux2Sub = r.getOccConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightOccConnector.child( a )
-        DefinitionLeftRule( cutSub, aNew, main )
+        DefinitionLeftRule( cutSub, aNew, d, c )
 
       case r @ AndLeftRule( subProof, a1, a2 ) if right.mainIndices.head != aux2 =>
         val aux2Sub = r.getOccConnector.parent( aux2 )

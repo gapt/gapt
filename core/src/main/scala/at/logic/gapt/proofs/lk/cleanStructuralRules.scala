@@ -419,26 +419,26 @@ object cleanStructuralRules {
           ( proofNew, proofNew.getOccConnector * subConnector_ * p.getOccConnector.inv )
       }
 
-    case p @ DefinitionLeftRule( subProof, aux, main ) =>
+    case p @ DefinitionLeftRule( subProof, aux, definition, ctx ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = DefinitionLeftRule( subProofNew, a, main )
+          val proofNew = DefinitionLeftRule( subProofNew, a, definition, ctx )
           ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
 
         case _ => // The aux formula is weak → do nothing
           ( subProofNew, subConnector * p.getOccConnector.inv )
       }
 
-    case p @ DefinitionRightRule( subProof, aux, main ) =>
+    case p @ DefinitionRightRule( subProof, aux, definition, ctx ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = DefinitionRightRule( subProofNew, a, main )
+          val proofNew = DefinitionRightRule( subProofNew, a, definition, ctx )
           ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
 
         case _ => // The aux formula is weak → do nothing

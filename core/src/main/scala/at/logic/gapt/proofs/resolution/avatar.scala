@@ -99,6 +99,11 @@ abstract class AvatarGeneralNonGroundComp extends AvatarDefinition {
 
   def inducedDefinitions = Map( atom.asInstanceOf[HOLAtomConst] -> definition )
 
+  def toDefinition: Context.Definition = {
+    val Apps( const: Const, args: List[Var] ) = atom
+    Context.Definition( const, Abs( args, definition ) )
+  }
+
   val componentClause = subst( canonicalClause )
 }
 case class AvatarNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var] ) extends AvatarGeneralNonGroundComp {

@@ -110,10 +110,10 @@ class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpressi
         sequent. We use exchange macro rules to artificially replicate the movement of formulas that the definition
          rule would have performed.*/
 
-    case DefinitionLeftRule( subProof, aux, _,_ ) =>
+    case DefinitionLeftRule( subProof, aux, _, _ ) =>
       ExchangeLeftMacroRule( apply( subProof ), aux )
 
-    case DefinitionRightRule( subProof, aux, _,_ ) =>
+    case DefinitionRightRule( subProof, aux, _, _ ) =>
       ExchangeRightMacroRule( apply( subProof ), aux )
 
     case InductionRule( cases, main, term ) =>

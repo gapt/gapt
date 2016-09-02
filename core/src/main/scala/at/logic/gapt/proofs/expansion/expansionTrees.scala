@@ -2,8 +2,9 @@ package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions, containsQuantifierOnLogicalLevel, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, containsQuantifierOnLogicalLevel, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -18,12 +19,6 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
   def toSigRelativeString( implicit sig: BabelSignature ) =
     new ExpansionTreePrettyPrinter( sig ).export( this )
   override def toString = toSigRelativeString
-}
-
-case class ETWeakening( formula: HOLFormula, polarity: Polarity ) extends ExpansionTree {
-  def shallow = formula
-  def deep = if ( polarity.inSuc ) Bottom() else Top()
-  def immediateSubProofs = Seq()
 }
 
 trait UnaryExpansionTree extends ExpansionTree {
@@ -59,19 +54,27 @@ object ETMerge {
   }
 }
 
+case class ETWeakening( formula: HOLFormula, polarity: Polarity ) extends ExpansionTree {
+  def shallow = formula
+  def deep = if ( polarity.inSuc ) Bottom() else Top()
+  def immediateSubProofs = Seq()
+}
+
 case class ETAtom( atom: HOLAtom, polarity: Polarity ) extends ExpansionTree {
   def shallow = atom
   def deep = atom
   def immediateSubProofs = Seq()
 }
 
-case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definition: LambdaExpression ) extends ExpansionTree {
+case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definedExpr: LambdaExpression ) extends ExpansionTree {
   val Apps( definitionConst: Const, arguments ) = atom
-  require( freeVariables( definition ).isEmpty )
+  require( freeVariables( definedExpr ).isEmpty )
 
-  val shallow = BetaReduction.betaNormalize( definition( arguments: _* ) ).asInstanceOf[HOLFormula]
+  val shallow = BetaReduction.betaNormalize( definedExpr( arguments: _* ) ).asInstanceOf[HOLFormula]
   def deep = atom
   def immediateSubProofs = Seq()
+
+  val definition = Definition( definitionConst, definedExpr )
 }
 
 case class ETTop( polarity: Polarity ) extends ExpansionTree {
@@ -246,6 +249,8 @@ case class ETDefinition( shallow: HOLAtom, definedExpr: LambdaExpression, child:
 
   val polarity = child.polarity
   def deep = child.deep
+
+  val definition = Definition( pred, definedExpr )
 }
 
 private[expansion] object replaceET {

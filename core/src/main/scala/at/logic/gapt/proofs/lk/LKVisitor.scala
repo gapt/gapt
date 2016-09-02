@@ -274,13 +274,13 @@ trait LKVisitor[T] {
   protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        DefinitionLeftRule( subProof, subConn.child( proof.aux ), proof.main )
+        DefinitionLeftRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
     }
 
   protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.main )
+        DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
     }
 
 }

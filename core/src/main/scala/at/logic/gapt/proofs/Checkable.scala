@@ -97,8 +97,8 @@ object Checkable {
           | _: ImpLeftRule | _: ImpRightRule =>
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
-        case DefinitionLeftRule( _, _, defn, _ ) => ???
-        case DefinitionRightRule( q, aux, defn, _ ) => ???
+        case DefinitionLeftRule( _, _, defn, _ ) => require( context.definitions contains defn.toTuple )
+        case DefinitionRightRule( _, _, defn, _ ) => require( context.definitions contains defn.toTuple )
       }
     }
   }
@@ -165,8 +165,8 @@ object Checkable {
         case q: SkolemQuantResolutionRule =>
           require( ctx.skolemDef( q.skolemConst ).contains( q.skolemDef ) )
           ctx.check( q.skolemTerm )
-        case q @ DefIntro( _, _, defAtom, defn ) =>
-          require( ctx.definition( q.defConst.name ).contains( defn ) )
+        case q @ DefIntro( _, _, definition, _ ) =>
+          require( ctx.definition( definition.what.name ).contains( definition.by ) )
         case _: PropositionalResolutionRule =>
         case _: AvatarComponent | _: AvatarSplit | _: AvatarContradiction =>
         case _: Flip | _: Paramod =>

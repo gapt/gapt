@@ -11,14 +11,15 @@ import org.slf4j.LoggerFactory
 
 import scala.annotation.tailrec
 import EquationVerifier._
+import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 
 import scalaz.\/-
 
 object LLKFormatter {
   /* formats a sequent */
   def f( fs: HOLSequent ): String = {
-    " " + fs.antecedent.map(toLLKString.apply).mkString(", ") + " :- " +
-      fs.succedent.map(toLLKString.apply).mkString(", ") + " "
+    " " + fs.antecedent.map( toLLKString.apply ).mkString( ", " ) + " :- " +
+      fs.succedent.map( toLLKString.apply ).mkString( ", " ) + " "
   }
 
   def f( s: Substitution ): String = {
@@ -85,13 +86,13 @@ trait TokenToLKConverter extends Logger {
   def createLKProof( l: List[Token] ): ExtendedProofDatabase = {
     //seperate rule tokens from type declaration tokens
     val ( rtokens, tatokens ) = l.partition {
-      case RToken(_, _, _, _, _) => true;
-      case _ => false;
+      case RToken( _, _, _, _, _ ) => true;
+      case _                       => false;
     }.asInstanceOf[( List[RToken], List[Token] )] //need to cast because partition returns Tokens
     val ( ttokens, atokens ) = tatokens.partition {
-      case TToken(_, _, _) => true;
-      case t@AToken(_, _, _, _) => false;
-      case t: Token => throw new Exception("Severe error: rule tokens were already filtered out, but rule " + t + " still contained!")
+      case TToken( _, _, _ )        => true;
+      case t @ AToken( _, _, _, _ ) => false;
+      case t: Token                 => throw new Exception( "Severe error: rule tokens were already filtered out, but rule " + t + " still contained!" )
     }.asInstanceOf[( List[TToken], List[AToken] )] //need to cast because partition returns Tokens
     //println("creating naming!")
     val naming = createNaming( ttokens )
@@ -105,7 +106,7 @@ trait TokenToLKConverter extends Logger {
 
     //println(definitions)
     //seperate inferences for the different (sub)proofs
-    val ( last, rm ) = rtokens.foldLeft( List[RToken](), Map[HOLFormula, List[RToken]]() )((current, token ) => {
+    val ( last, rm ) = rtokens.foldLeft( List[RToken](), Map[HOLFormula, List[RToken]]() )( ( current, token ) => {
       token match {
         case RToken( "CONTINUEWITH", Some( name ), a, s, _ ) =>
           //put proof under name into map, continue with empty rulelist
@@ -761,10 +762,10 @@ trait TokenToLKConverter extends Logger {
 
     ( auxsequent, mainsequent ) match {
       case ( HOLSequent( Nil, List( aux ) ), HOLSequent( Nil, List( main ) ) ) =>
-        val rule = DefinitionRightRule( parent, aux, main )
+        val rule = MagicRule.Right( parent, aux, main, "d:r" )
         rule :: stack
       case ( HOLSequent( List( aux ), Nil ), HOLSequent( List( main ), Nil ) ) =>
-        val rule = DefinitionLeftRule( parent, aux, main )
+        val rule = MagicRule.Left( parent, aux, main, "d:l" )
         rule :: stack
       case _ =>
         throw new HybridLatexParserException( "Error in creation of definition rule, can not infer " + f( mainsequent ) + " from " + f( auxsequent ) )
@@ -876,7 +877,7 @@ trait TokenToLKConverter extends Logger {
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2 )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
+    val axrule = MagicRule.Left( axproof, axiomconjunction, axformula, "d:l" )
 
     val Eq( s, t ) = auxf
 
@@ -970,7 +971,7 @@ trait TokenToLKConverter extends Logger {
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2 )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
+    val axrule = MagicRule.Left( axproof, axiomconjunction, axformula, "d:l" )
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
 
     /*
@@ -1185,7 +1186,7 @@ trait TokenToLKConverter extends Logger {
   private def c( e: LambdaExpression ): HOLFormula =
     e match {
       case formula: HOLFormula => formula
-      case _ => throw new Exception("Could not convert " + e + " to a HOL Formula!")
+      case _                   => throw new Exception( "Could not convert " + e + " to a HOL Formula!" )
     }
 
   def getAxiomLookupProof( name: HOLFormula, axiom: HOLFormula, instance: HOLFormula,
@@ -1193,7 +1194,7 @@ trait TokenToLKConverter extends Logger {
     axiomconj match {
       case x if x syntaxEquals name =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
-        ( axiomconj, DefinitionLeftRule( pi, axiom, name ) )
+        ( axiomconj, MagicRule.Left( pi, axiom, name, "d:l" ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>
         val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub )

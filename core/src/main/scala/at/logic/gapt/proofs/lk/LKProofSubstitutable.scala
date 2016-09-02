@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import BetaReduction._
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs.OccConnector
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 
@@ -132,11 +133,16 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case DefinitionLeftRule( subProof, aux, definition, context ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      DefinitionLeftRule( subProofNew, aux, betaNormalize( substitution( main ) ) )
+      DefinitionLeftRule( subProofNew, aux, definition, betaNormalize( substitution( context ) ).asInstanceOf[Abs] )
 
     case DefinitionRightRule( subProof, aux, definition, context ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      DefinitionRightRule( subProofNew, aux, betaNormalize( substitution( main ) ) )
+      DefinitionRightRule( subProofNew, aux, definition, betaNormalize( substitution( context ) ).asInstanceOf[Abs] )
+
+    case MagicRule( subProof, aux, main, name ) =>
+      val subProofNew = applySubstitution( substitution, subProof )
+      val mainNew = substitution( main )
+      MagicRule( subProofNew, aux, mainNew, name )
 
     case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
@@ -250,12 +256,14 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
   override protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
-        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.main, repl ) )
+        val definitionNew = TermReplacement( proof.definition, repl )
+        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[HOLFormula] )
     }
 
   override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
-        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.main, repl ) )
+        val definitionNew = TermReplacement( proof.definition, repl )
+        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[HOLFormula] )
     }
 }

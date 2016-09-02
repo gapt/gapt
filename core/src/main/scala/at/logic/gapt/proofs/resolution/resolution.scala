@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -358,11 +359,12 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
  *
  * This inference should only be used on descendants of Input inferences.
  */
-case class DefIntro( subProof: ResolutionProof, idx: SequentIndex,
-                     defAtom: HOLAtom, definition: LambdaExpression ) extends PropositionalResolutionRule {
-  val Apps( defConst: HOLAtomConst, defArgs ) = defAtom
-  requireEq( subProof.conclusion( idx ), BetaReduction.betaNormalize( definition( defArgs: _* ) ) )
-  override def introducedDefinitions = Map( defConst -> definition )
+case class DefIntro( subProof: ResolutionProof, idx: SequentIndex, definition: Definition, args: Seq[LambdaExpression] ) extends PropositionalResolutionRule {
+  val Definition( defConst: HOLAtomConst, by ) = definition
+  val defAtom = defConst( args ).asInstanceOf[HOLAtom]
+  val expandedFormula = BetaReduction.betaNormalize( Apps( by, args ) )
+  requireEq( subProof.conclusion( idx ), expandedFormula )
+  override def introducedDefinitions = Map( defConst -> by )
   override def mainFormulaSequent =
     if ( idx isAnt ) defAtom +: Sequent()
     else Sequent() :+ defAtom

@@ -1,6 +1,7 @@
 
 package at.logic.gapt.expr
 
+import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.utils.Not
 
@@ -60,6 +61,14 @@ private[expr] trait DefaultReplaceables {
 
     def names( obj: Substitution ) =
       obj.map.keySet ++ obj.map.values flatMap { containedNames( _ ) }
+  }
+
+  implicit object definitionReplaceable extends ClosedUnderReplacement[Definition] {
+    def replace( definition: Definition, p: PartialFunction[LambdaExpression, LambdaExpression] ): Definition =
+      Definition( TermReplacement( definition.what, p ).asInstanceOf[Const], TermReplacement( definition.by, p ) )
+
+    def names( obj: Definition ) =
+      Set[VarOrConst]( obj.what ) union lambdaExpressionReplacer.names( obj.by )
   }
 
   implicit def sequentReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Sequent[I], Sequent[O]] =

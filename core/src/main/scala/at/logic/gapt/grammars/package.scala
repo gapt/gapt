@@ -15,7 +15,7 @@ package object grammars {
     def names( rule: Rule ) = containedNames( rule.lhs ) ++ containedNames( rule.rhs )
   }
 
-  implicit object recSchemIsReplacable extends ClosedUnderReplacement[RecursionScheme] {
+  implicit object recSchemIsReplaceable extends ClosedUnderReplacement[RecursionScheme] {
     def replace( rs: RecursionScheme, p: PartialFunction[LambdaExpression, LambdaExpression] ) =
       RecursionScheme(
         TermReplacement( rs.startSymbol, p ).asInstanceOf[Const],

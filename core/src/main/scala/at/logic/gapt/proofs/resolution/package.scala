@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Definition
 
 import scala.collection.mutable
 
@@ -45,8 +46,11 @@ package object resolution {
           AvatarSplit( f( q ), indices, TermReplacement( component, repl ) )
         case AvatarContradiction( q )     => AvatarContradiction( f( q ) )
         case AvatarComponent( component ) => AvatarComponent( TermReplacement( component, repl ) )
-        case DefIntro( q, i, defAtom, definition ) =>
-          DefIntro( f( q ), i, TermReplacement( defAtom, repl ), TermReplacement( definition, repl ) )
+        case p @ DefIntro( q, i, definition, args ) =>
+          val Definition( what, by ) = definition
+          val definitionNew = Definition( TermReplacement( what, repl ).asInstanceOf[Const], TermReplacement( by, repl ) )
+          val argsNew = TermReplacement( args, repl )
+          DefIntro( f( q ), i, definitionNew, argsNew )
         case Flip( q, i )                => Flip( f( q ), i )
         case TopL( q, i )                => TopL( f( q ), i )
         case BottomR( q, i )             => BottomR( f( q ), i )
@@ -82,9 +86,10 @@ package object resolution {
             ns ++= containedNames( comp )
           case Subst( _, subst ) =>
             ns ++= containedNames( subst )
-          case DefIntro( _, _, defAtom, defn ) =>
-            ns ++= containedNames( defAtom )
-            ns ++= containedNames( defn )
+          case DefIntro( _, _, definition, repContext ) =>
+            val Definition( what, by ) = definition
+            ns ++= containedNames( what )
+            ns ++= containedNames( by )
           case Defn( defConst, definition ) =>
             ns += defConst
             ns ++= containedNames( definition )

@@ -58,12 +58,10 @@ class ExpansionProofToLK(
 
   private def tryDef( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case ( e @ ETDefinedAtom( atom, pol, definition ), i ) =>
-        val defi = Definition(e.definitionConst, e.definition)
-        mapIf( solve( cuts, expSeq.updated( i, ETAtom( atom, pol ) ) ), atom, pol ) { DefinitionRule( _, atom, defi, e.shallow, pol ) }
+      case ( e @ ETDefinedAtom( atom, pol, definedExpr ), i ) =>
+        mapIf( solve( cuts, expSeq.updated( i, ETAtom( atom, pol ) ) ), atom, pol ) { DefinitionRule( _, atom, e.definition, e.shallow, pol ) }
       case ( e @ ETDefinition( sh, defExpr, ch ), i ) =>
-        val definition = Definition(e.pred, defExpr)
-        mapIf( solve( cuts, expSeq.updated( i, ch ) ), ch.shallow, i.polarity ) { DefinitionRule( _, ch.shallow, definition, sh, i.polarity ) }
+        mapIf( solve( cuts, expSeq.updated( i, ch ) ), ch.shallow, i.polarity ) { DefinitionRule( _, ch.shallow, e.definition, sh, i.polarity ) }
     }
 
   private def tryMerge( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =

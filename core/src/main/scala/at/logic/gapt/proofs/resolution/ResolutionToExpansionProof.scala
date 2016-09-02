@@ -121,9 +121,9 @@ object ResolutionToExpansionProof {
         val Seq( oc1, oc2 ) = p.occConnectors
         propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InAntecedent ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InSuccedent ) ) ) )
-      case p @ DefIntro( q, i, defAtom, definition ) =>
+      case p @ DefIntro( q, i, definition, repContext ) =>
         val Seq( oc ) = p.occConnectors
-        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated( i, ETDefinedAtom( es._1( defAtom ).asInstanceOf[HOLAtom], !i.polarity, definition ) ) ) )
+        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated( i, ETDefinedAtom( es._1( p.defAtom ).asInstanceOf[HOLAtom], !i.polarity, p.by ) ) ) )
 
       case p @ Paramod( q1, i1, ltr, q2, i2, ctx ) =>
         val Seq( oc1, oc2 ) = p.occConnectors

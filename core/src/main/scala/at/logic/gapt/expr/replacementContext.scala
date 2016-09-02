@@ -16,10 +16,12 @@ object replacementContext {
    * @param terms Optional additional terms whose free variables are not valid choices for x.
    * @return
    */
-  def apply( ty: Ty,
-             exp: LambdaExpression,
-             positions: Iterable[LambdaPosition],
-             terms: LambdaExpression* ): Abs = {
+  def apply(
+    ty:        Ty,
+    exp:       LambdaExpression,
+    positions: Iterable[LambdaPosition],
+    terms:     LambdaExpression*
+  ): Abs = {
     val x = rename( Var( "x", ty ), freeVariables( exp ) ++ terms flatMap { freeVariables( _ ) } )
 
     Abs( x, positions.foldLeft( exp ) { ( acc, p ) => acc.replace( p, x ) } )
@@ -34,10 +36,12 @@ object replacementContext {
    * @param terms Optional additional terms whose free variables are not valid choices for x.
    * @return
    */
-  def apply( ty: Ty,
-             exp: LambdaExpression,
-             positions: Iterable[HOLPosition],
-             terms: LambdaExpression* )( implicit d: DummyImplicit ): Abs = apply( ty, exp, positions map { HOLPosition.toLambdaPosition( exp ) }, terms: _* )
+  def apply(
+    ty:        Ty,
+    exp:       LambdaExpression,
+    positions: Iterable[HOLPosition],
+    terms:     LambdaExpression*
+  )( implicit d: DummyImplicit ): Abs = apply( ty, exp, positions map { HOLPosition.toLambdaPosition( exp ) }, terms: _* )
 
   /**
    * Transforms the expression φ to λx.φ' by replacing all occurrences of t in φ with x.

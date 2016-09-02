@@ -1,13 +1,13 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr.{Const => Con, _}
+import at.logic.gapt.expr.{ Const => Con, _ }
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.provers.escargot.{Escargot, NonSplittingEscargot}
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.prover9.Prover9
 
 import scalaz._
@@ -238,10 +238,10 @@ case class UnfoldTacticHelper( definition: String, definitions: Seq[String] )( i
 }
 
 case class UnfoldTactic( target: String, definition: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
-  def getDef: ValidationNel[TacticalFailure, ( Con, LambdaExpression )] =
+  def getDef: ValidationNel[TacticalFailure, Definition] =
     ctx.definition( definition ) match {
       case Some( by ) =>
-        ( Con( definition, by.exptype ), by ).success
+        Definition( Con( definition, by.exptype ), by ).success
       case None =>
         TacticalFailure( this, None, s"Definition $definition not present in context: $ctx" ).failureNel
     }
@@ -249,14 +249,15 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
   def apply( goal: OpenAssumption ) =
     for {
       ( label, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
-      defn <- getDef; ( what, by ) = defn
+      defn <- getDef; Definition( what, by ) = defn
       defPositions = main.find( what )
       unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
       normalized = BetaReduction.betaNormalize( unfolded )
+      repContext = replacementContext.abstractTerm( main )( what )
       newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
       proof_ : ValidationNel[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
         case ( p :: ps, _ ) =>
-          DefinitionRule( newGoal, normalized, Definition(what, by), main, idx.polarity ).successNel[TacticalFailure]
+          DefinitionRule( newGoal, normalized, defn, repContext, idx.polarity ).successNel[TacticalFailure]
         case ( Nil, hd +: tl ) =>
           UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
         case _ =>

@@ -127,15 +127,6 @@ object skolemize {
       val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
       EqualityRightRule( subProof_, eq, aux, con )
 
-    // Definition rules:
-    // We do it as in the old LK: skolemize both the before and after formulas using the same stream of skolem symbols.
-    case proof @ DefinitionLeftRule( subProof, aux, main ) =>
-      val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      DefinitionLeftRule( subProof_, aux, maybeSkolemize( main, Polarity.InAntecedent, contextAndSymbols( proof.mainIndices.head ) ) )
-    case proof @ DefinitionRightRule( subProof, aux, main ) =>
-      val subProof_ = apply( subProof, proof.getOccConnector.parents( contextAndSymbols ).map( _.head ) )
-      DefinitionRightRule( subProof_, aux, maybeSkolemize( main, Polarity.InSuccedent, contextAndSymbols( proof.mainIndices.head ) ) )
-
     // Weak quantifier rules:
     case proof @ ForallLeftRule( subProof, aux, matrix, term, v ) =>
       val ctxAndSym = contextAndSymbols( proof.mainIndices.head )
