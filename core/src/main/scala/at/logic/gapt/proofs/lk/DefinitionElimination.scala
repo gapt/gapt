@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Ant
 
 object DefinitionElimination {
   def apply( dmap: Map[_ <: LambdaExpression, _ <: LambdaExpression] ): DefinitionElimination =
@@ -119,5 +120,10 @@ class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpressi
     case InductionRule( cases, main, term ) =>
       InductionRule( cases map { cs => cs.copy( proof = apply( cs.proof ) ) }, apply( main ).asInstanceOf[Abs], apply( term ) )
 
+    case MagicRule( subProof, aux, main, name ) if name == "d:l" =>
+      ExchangeLeftMacroRule( apply( subProof ), aux )
+
+    case MagicRule( subProof, aux, main, name ) if name == "d:r" =>
+      ExchangeRightMacroRule( apply( subProof ), aux )
   }
 }

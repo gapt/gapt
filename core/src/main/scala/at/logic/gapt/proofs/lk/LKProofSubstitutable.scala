@@ -257,13 +257,13 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
         val definitionNew = TermReplacement( proof.definition, repl )
-        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[HOLFormula] )
+        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
     }
 
   override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
         val definitionNew = TermReplacement( proof.definition, repl )
-        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[HOLFormula] )
+        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
     }
 }

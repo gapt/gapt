@@ -5,7 +5,19 @@
     </encoder>
   </appender>
 
-  <root level="warn">
+  <appender name="escargot-output" class="ch.qos.logback.core.FileAppender">
+    <file>escargot.txt</file>
+    <encoder>
+      <pattern>%msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <logger name="at.logic.gapt.provers.escargot.impl.EscargotState">
+    <appender-ref ref="escargot-output"/>
+  </logger>
+
+  <root level="trace">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
+
