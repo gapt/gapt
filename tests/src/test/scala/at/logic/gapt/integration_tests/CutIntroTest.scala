@@ -8,7 +8,7 @@ import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.expansion.{ ETWeakening, ExpansionProof }
 import at.logic.gapt.cutintro._
-import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber }
+import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftRule, quantRulesNumber, weakQuantRulesNumber }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
@@ -34,6 +34,25 @@ class CutIntroTest extends Specification {
       hof"!x f (s (s (s x))) = f x",
       hof"!x f x = f (s (s (s x)))"
     ) )
+  }
+
+  "non-prenex proofs" in {
+    val Some( expansion ) = Escargot.getExpansionProof( hof"p 0 & !x (p x -> p (s x)) -> p ${Numeral( 9 )}" )
+    CutIntroduction( expansion ) must beSome
+  }
+
+  "delta table with row merging" in {
+    val Some( expansion ) = Escargot getExpansionProof
+      hos"""
+          p 0, q 0,
+          !x (p x -> p (s x)),
+          !x (q x -> q (s x))
+       :- p ${Numeral( 6 )} & q ${Numeral( 6 )}
+      """
+    CutIntroduction( expansion, method = DeltaTableMethod( subsumedRowMerging = true ) ) must beLike {
+      case Some( lk ) =>
+        weakQuantRulesNumber( lk ) must_== ( 2 * 2 + 3 )
+    }
   }
 
   "introduce two cuts into linear example proof with improveSolutionLK" in {

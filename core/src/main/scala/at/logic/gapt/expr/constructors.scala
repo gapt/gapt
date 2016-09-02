@@ -89,7 +89,14 @@ class QuantifierHelper( val q: QuantifierC ) {
 object All extends QuantifierHelper( ForallC )
 object Ex extends QuantifierHelper( ExistsC )
 
-object Quant { def unapply( f: HOLFormula ) = All.unapply( f ) orElse Ex.unapply( f ) }
+object Quant {
+  def unapply( f: HOLFormula ): Option[( Var, HOLFormula, Boolean )] =
+    f match {
+      case All( v, g ) => Some( ( v, g, true ) )
+      case Ex( v, g )  => Some( ( v, g, false ) )
+      case _           => None
+    }
+}
 
 class BinaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply( a: LambdaExpression, b: LambdaExpression ): HOLFormula =

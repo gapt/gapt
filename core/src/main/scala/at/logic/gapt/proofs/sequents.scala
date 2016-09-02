@@ -41,6 +41,9 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
 
   def sameSideAs( that: SequentIndex ): Boolean =
     this.polarity == that.polarity
+
+  /** Injective conversion to integers. */
+  def toInt: Int
 }
 object SequentIndex {
   def apply( polarity: Polarity, k: Int ): SequentIndex =
@@ -57,6 +60,8 @@ case class Ant( k: Int ) extends SequentIndex {
   def -( i: Int ) = Ant( k - i )
 
   def polarity = Polarity.InAntecedent
+
+  def toInt = -k - 1
 }
 
 case class Suc( k: Int ) extends SequentIndex {
@@ -66,6 +71,8 @@ case class Suc( k: Int ) extends SequentIndex {
   def -( i: Int ) = Suc( k - i )
 
   def polarity = Polarity.InSuccedent
+
+  def toInt = k
 }
 
 /**

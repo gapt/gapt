@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.{ Logger, metrics }
 
 import scala.collection.mutable
 
@@ -227,7 +227,7 @@ object minimizeRecursionScheme extends Logger {
     val hard = formula( targets_ )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
-    val interp = solver.solve( hard, soft ).get
+    val interp = metrics.time( "maxsat" ) { solver.solve( hard, soft ).get }
     RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
 

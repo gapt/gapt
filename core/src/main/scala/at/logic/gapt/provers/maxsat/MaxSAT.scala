@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.models.Interpretation
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.utils.logging.{ Logger, metrics }
+import at.logic.gapt.utils.{ Logger, metrics }
 
 /**
  * Solver for Weighted Partial MaxSAT problems.
@@ -41,7 +41,7 @@ abstract class MaxSATSolver extends Logger {
    */
   def solve( hard: HOLFormula, soft: TraversableOnce[( HOLFormula, Int )] ): Option[Interpretation] = {
     solve(
-      metrics.time( "tseitin" ) { fastStructuralCNF( hard, propositional = true )._1 },
+      metrics.time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
       soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten
     )
   }

@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 /**
  * Algorithms extracting structs from LK proofs, preparing them for gui code etc.

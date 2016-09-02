@@ -2,7 +2,7 @@ package at.logic.gapt.testing
 
 import at.logic.gapt.proofs.expansion.numberOfInstancesET
 import at.logic.gapt.proofs.loadExpansionProof
-import at.logic.gapt.utils.logging.{ PrintMetrics, metrics }
+import at.logic.gapt.utils.{ PrintMetrics, metrics }
 import better.files._
 
 object testTstpImport extends App {

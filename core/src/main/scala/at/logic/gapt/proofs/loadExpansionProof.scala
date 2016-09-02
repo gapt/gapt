@@ -9,8 +9,7 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, addSymmetry }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning, numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.utils.logging.metrics
-
+import at.logic.gapt.utils.metrics
 import better.files._
 
 import scalaz.Success

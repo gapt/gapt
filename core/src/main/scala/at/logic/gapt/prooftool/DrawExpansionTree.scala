@@ -1,7 +1,6 @@
 package at.logic.gapt.prooftool
 
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.logging.Logger
 
 import swing._
 import scala.swing.event.{ MouseClicked, MouseEntered, MouseExited }
@@ -13,6 +12,7 @@ import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 
 import at.logic.gapt.formats.latex.LatexExporter
+import at.logic.gapt.utils.Logger
 import org.slf4j.LoggerFactory
 
 object ExpansionTreeState extends Enumeration {

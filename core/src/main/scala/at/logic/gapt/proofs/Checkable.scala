@@ -22,6 +22,7 @@ object Checkable {
             context.typeDef( name ).isDefined,
             s"Unknown base type: $name"
           )
+        case TVar( _ ) =>
         case in -> out =>
           check( context, in )
           check( context, out )
@@ -31,12 +32,9 @@ object Checkable {
   implicit object expressionIsCheckable extends Checkable[LambdaExpression] {
     def check( context: Context, expr: LambdaExpression ): Unit =
       expr match {
-        case _: LogicalConstant =>
-        case c @ Const( "=", _ ) =>
-          require( EqC.unapply( c ).isDefined )
         case c @ Const( name, _ ) =>
           require(
-            context.constant( name ).contains( c ),
+            context.constant( name ).exists( defC => typeMatching( defC.exptype, c.exptype ).isDefined ),
             s"Unknown constant: $c"
           )
         case Var( _, t ) => context.check( t )

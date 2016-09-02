@@ -127,6 +127,7 @@ object LatexExporter {
     'Ω' -> "\\Omega",
     'ω' -> "\\omega",
 
+    '-' -> "\\text{-}",
     '_' -> "\\_"
   )
   private val indexedName = """(.*)_(\d+)""".r
@@ -138,6 +139,7 @@ object LatexExporter {
 
   private def apply( ty: Ty, prio: Int ): String = ty match {
     case t -> s     => parenIf( prio, 0, s"${apply( t, 0 )} \\rightarrow ${apply( s, 1 )}" )
+    case TVar( t )  => escapeName( "?" + t )
     case TBase( t ) => escapeName( t )
   }
   def apply( ty: Ty ): String = apply( ty, 2 )

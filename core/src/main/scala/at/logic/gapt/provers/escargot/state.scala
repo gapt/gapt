@@ -6,8 +6,7 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.{ LPO, TermOrdering }
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.utils.NameGenerator
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.{ Logger, NameGenerator }
 
 import scala.collection.mutable
 

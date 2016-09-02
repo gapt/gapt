@@ -207,7 +207,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETWeakQuantifier( _, insts ), Quant( x, sh ) ) =>
+    case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
       ETWeakQuantifier(
         shallow,
         for ( ( t: FOLTerm, inst ) <- insts ) yield {
@@ -740,7 +740,8 @@ case object CNFReductionResRes extends Reduction[HOLSequent, Set[HOLClause], Res
  */
 case object CNFReductionSequentsResRes extends Reduction[Set[HOLSequent], Set[HOLClause], ResolutionProof, ResolutionProof] {
   override def forward( problem: Set[HOLSequent] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val clausifier = new Clausifier( propositional = false, structural = false, nameGen = rename.awayFrom( containedNames( problem ) ) )
+    val clausifier = new Clausifier( propositional = false, structural = false, bidirectionalDefs = false,
+      nameGen = rename.awayFrom( containedNames( problem ) ) )
     problem.map( Input ).foreach( clausifier.expand )
     (
       Set() ++ clausifier.cnf.view.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),

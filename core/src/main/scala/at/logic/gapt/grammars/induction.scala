@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )

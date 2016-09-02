@@ -1,16 +1,11 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLPosition
-import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
-import at.logic.gapt.proofs._
-import at.logic.gapt.utils.ListSupport
-import ListSupport.pairs
-import at.logic.gapt.expr.Polarity.{ Negative, Positive }
+import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.Context.Definition
+import at.logic.gapt.proofs._
 
 import scala.collection.mutable
-import scala.util.{ Failure, Success, Try }
 
 abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
 

@@ -13,7 +13,7 @@ import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 import org.specs2.mutable._
 
 //TODO: Fix the test!

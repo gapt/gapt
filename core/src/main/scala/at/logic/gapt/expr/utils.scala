@@ -105,12 +105,11 @@ object freeVariables {
  * Returns the set of non-logical constants occuring in the given argument.
  */
 object constants {
-  def apply( expression: LambdaExpression ): Set[Const] = {
+  def all( expression: LambdaExpression ): Set[Const] = {
     val cs = mutable.Set[Const]()
     def f( e: LambdaExpression ): Unit = e match {
-      case _: Var             =>
-      case _: LogicalConstant =>
-      case c: Const           => cs += c
+      case _: Var   =>
+      case c: Const => cs += c
       case App( exp, arg ) =>
         f( exp ); f( arg )
       case Abs( v, exp ) => f( exp )
@@ -118,6 +117,8 @@ object constants {
     f( expression )
     cs.toSet
   }
+  def apply( expression: LambdaExpression ): Set[Const] =
+    all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
   def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
 

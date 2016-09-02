@@ -11,11 +11,12 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lksk.LKskProof.{ Label, LabelledFormula, LabelledSequent }
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ceres_omega.Pickrule._
+import at.logic.gapt.utils.Logger
 
 case class ProjectionException( message: String, original_proof: LKskProof, new_proofs: List[LKskProof], nested: Exception )
   extends Exception( message, nested ) {}
 
-object Projections extends at.logic.gapt.utils.logging.Logger {
+object Projections extends Logger {
   def reflexivity_projection( es: LabelledSequent, term: LambdaExpression, label: Label ): ( LKskProof, Sequent[Boolean] ) = {
     require( term.exptype == Ti, "Only first order reflexivity projections are allowed!" )
     // create a fresh variable to create x = x

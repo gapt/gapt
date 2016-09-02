@@ -3,11 +3,11 @@ package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, containsStrongQuantifier, instantiate }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
-import at.logic.gapt.proofs.expansion.linearizeStrictPartialOrder
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom, WeakeningMacroRule, cleanStructuralRules }
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.provers.{ OneShotProver, Prover }
+import at.logic.gapt.utils.linearizeStrictPartialOrder
 
 trait SchematicProofWithInduction {
   def endSequent: HOLSequent

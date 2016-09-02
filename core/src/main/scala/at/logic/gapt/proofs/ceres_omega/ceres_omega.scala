@@ -5,11 +5,9 @@ import at.logic.gapt.proofs.lksk.LKskProof._
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.ceres.Struct
-import at.logic.gapt.utils.ListSupport._
 import at.logic.gapt.proofs.{ Ant, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.ral._
-import at.logic.gapt.utils.ListSupport
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 object ceres_omega extends ceres_omega
 
@@ -311,6 +309,12 @@ class ceres_omega extends Logger {
   /* removes the final end-sequent from a projection's current end-sequent */
   def filterEndsequent( root: LabelledSequent, cut_anc: Sequent[Boolean] ) =
     root.zipWithIndex.filter( x => cut_anc( x._2 ) ).map( _._1 )
+
+  private def removeFirstWhere[A]( s: List[A], prop: A => Boolean ): List[A] = s match {
+    case Nil                    => Nil
+    case x :: xs if prop( x )   => xs
+    case x :: xs /* !prop(x) */ => x :: removeFirstWhere( xs, prop )
+  }
 
   def diffModuloOccurrence( from: Seq[LabelledFormula], what: Seq[( RalProof.Label, HOLFormula )] ) = {
     what.foldLeft( from.toList )( ( l, occ ) =>

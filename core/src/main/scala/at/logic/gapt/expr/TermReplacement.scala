@@ -12,7 +12,7 @@ trait Replaceable[-I, +O] {
 }
 trait ClosedUnderReplacement[T] extends Replaceable[T, T]
 
-private[expr] trait DefaultReplaceables {
+object Replaceable {
 
   private object lambdaExpressionReplacer extends ClosedUnderReplacement[LambdaExpression] {
     def replace( term: LambdaExpression, map: PartialFunction[LambdaExpression, LambdaExpression] ): LambdaExpression =

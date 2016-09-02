@@ -77,18 +77,18 @@ object BabelParserCombinators {
         case ( a, "!=", b ) => ast.Neg( ast.Eq( a, b ) )
         case ( a, "=", b )  => ast.Eq( a, b )
         case ( a, r, b ) =>
-          ast.TypeAnnotation( ast.App( ast.App( ast.Ident( r, ast.freshTypeVar() ), a ), b ), ast.Bool )
+          ast.TypeAnnotation( ast.App( ast.App( ast.Ident( r, ast.freshMetaType() ), a ), b ), ast.Bool )
       }.reduceLeft( ast.And )
   }
 
   val PlusMinus: P[ast.Expr] = P( TimesDiv ~/ ( ( "+" | "-" ).! ~ TimesDiv ).rep ) map {
     case ( first, rest ) =>
-      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshTypeVar() ), a ), b ) }
+      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshMetaType() ), a ), b ) }
   }
 
   val TimesDiv: P[ast.Expr] = P( App ~/ ( ( "*" | "/" ).! ~ App ).rep ) map {
     case ( first, rest ) =>
-      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshTypeVar() ), a ), b ) }
+      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshMetaType() ), a ), b ) }
   }
 
   val Tuple: P[Seq[ast.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
@@ -111,11 +111,12 @@ object BabelParserCombinators {
   val VarLiteral = P( "#v(" ~/ Var ~ ")" ) map { ast.LiftBlackbox }
   val ConstLiteral = P( "#c(" ~/ Const ~ ")" ) map { ast.LiftBlackbox }
 
-  val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshTypeVar() ) ) )
+  val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshMetaType() ) ) )
 
   val TypeParens: P[ast.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
-  val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
+  val TypeVar: P[ast.Type] = P( "?" ~/ Name ).map( ast.VarType )
+  val Type: P[ast.Type] = P( ( TypeParens | TypeVar | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
 
   val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }

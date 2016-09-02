@@ -10,7 +10,7 @@ import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.viper._
 import SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 object factorialmodth extends Script {
 

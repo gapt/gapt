@@ -120,8 +120,7 @@ object PigeonHolePrinciple {
  */
 object CountingEquivalence {
   def apply( n: Int ): FOLFormula = {
-    val Seq( x, y, z ) = Seq( fov"x", fov"y", fov"z" )
-    val as = 0 to n map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-    ( All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as ) ).asInstanceOf[FOLFormula]
+    val as = 0 to n map { i => hof"!x?y ${s"a$i"} x y z" }
+    hof"!z ${thresholds.exactly oneOf as} <-> !z ${naive.exactly oneOf as}".asInstanceOf[FOLFormula]
   }
 }

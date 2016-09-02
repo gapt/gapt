@@ -16,7 +16,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.ViperOptions.FloatRange
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 import scala.io.StdIn

@@ -8,10 +8,10 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.{ OneShotProver, Prover }
-import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 trait SolutionFinder {
   def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula]

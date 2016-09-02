@@ -8,12 +8,11 @@ object ExpansionProofToEpsilon {
 
   def apply( e: ExpansionProof ): EpsilonProof = {
     val skolemToEpsilonMap = e.skolemFunctions.skolemDefs.map {
-      case ( sk, Abs.Block( vs, q @ Quant( x, _ ) ) ) =>
+      case ( sk, Abs.Block( vs, q @ Quant( x, _, isForall ) ) ) =>
         val x_ = rename( x, vs )
-        ( sk: LambdaExpression ) -> Abs.Block( vs, Epsilon( x_, epsilonize( q match {
-          case All( _, _ ) => -instantiate( q, x_ )
-          case Ex( _, _ )  => instantiate( q, x_ )
-        } ) ) )
+        ( sk: LambdaExpression ) -> Abs.Block( vs, Epsilon( x_, epsilonize(
+          if ( isForall ) -instantiate( q, x_ ) else instantiate( q, x_ )
+        ) ) )
     }
     def replaceSkolemByEpsilon( t: LambdaExpression ) =
       BetaReduction.betaNormalize( TermReplacement( t, skolemToEpsilonMap ) )

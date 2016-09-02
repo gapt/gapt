@@ -2,7 +2,7 @@ package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.epsilon.Epsilon
-import at.logic.gapt.proofs.expansion.linearizeStrictPartialOrder
+import at.logic.gapt.utils.linearizeStrictPartialOrder
 
 /**
  * List of definitions of Skolem symbols.
@@ -19,7 +19,7 @@ import at.logic.gapt.proofs.expansion.linearizeStrictPartialOrder
  */
 case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
   skolemDefs foreach {
-    case ( s, d @ Abs.Block( vs, Quant( v, f ) ) ) =>
+    case ( s, d @ Abs.Block( vs, Quant( v, f, isForall ) ) ) =>
       require( s.exptype == FunctionType( v.exptype, vs map { _.exptype } ) )
       require( freeVariables( d ).isEmpty )
   }

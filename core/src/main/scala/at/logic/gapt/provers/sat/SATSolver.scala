@@ -22,7 +22,7 @@ trait SATSolver extends OneShotProver {
   }
 
   def solve( formula: HOLFormula ): Option[Interpretation] = {
-    val ( cnf, definitions ) = fastStructuralCNF( formula, propositional = true )
+    val ( cnf, definitions ) = fastStructuralCNF()( formula )
     solve( cnf ) map {
       case i: MapBasedInterpretation =>
         // remove abbreviations for subformulas
@@ -49,7 +49,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
 
   def getDrupProof( formula: HOLFormula ): Option[DrupProof] = getDrupProof( Sequent() :+ formula )
   def getDrupProof( sequent: HOLSequent ): Option[DrupProof] =
-    getDrupProof( fastStructuralCNF( sequent, propositional = true )._1 )
+    getDrupProof( fastStructuralCNF()( sequent )._1 )
   def getDrupProof( cnf: Traversable[HOLClause] ): Option[DrupProof] = {
     val encoding = new DIMACSEncoding
     val dimacsCNF = encoding.encodeCNF( cnf )
