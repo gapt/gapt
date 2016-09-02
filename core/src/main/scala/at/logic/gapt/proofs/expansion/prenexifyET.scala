@@ -22,8 +22,10 @@ object prenexifyET {
     val f2_ = apply( f2, p2 )
 
     val Some( ( vs1, matrix1 ) ) = weakQuantifier( p1 ).Block.unapply( f1_ )
-    val Some( ( vs2_, matrix2 ) ) = weakQuantifier( p2 ).Block.unapply( f2_ )
-    val vs2 = vs2_.map( rename( vs2_, vs1 ) )
+    val Some( ( vs2_, matrix2_ ) ) = weakQuantifier( p2 ).Block.unapply( f2_ )
+    val renaming = rename( vs2_, vs1 )
+    val vs2 = vs2_.map( renaming )
+    val matrix2 = Substitution( renaming )( matrix2_ )
 
     weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
   }
@@ -40,25 +42,35 @@ object prenexifyET {
 
   private def handleBinary(
     et1: ExpansionTree, et2: ExpansionTree,
-    newPol: Polarity,
-    shConn: ( HOLFormula, HOLFormula ) => HOLFormula,
-    etConn: ( ExpansionTree, ExpansionTree ) => ExpansionTree
+    newPol:           Polarity,
+    shConn:           ( HOLFormula, HOLFormula ) => HOLFormula,
+    etConn:           ( ExpansionTree, ExpansionTree ) => ExpansionTree,
+    binaryInPolarity: Polarity
   ): ExpansionTree = {
     val ETWeakQuantifierBlock( sh1, n1, insts1 ) = apply( et1 )
     val ETWeakQuantifierBlock( sh2, n2, insts2 ) = apply( et2 )
 
     val Some( ( vs1, matrix1 ) ) = weakQuantifier( et1.polarity ).Block.unapply( sh1 )
-    val Some( ( vs2_, matrix2 ) ) = weakQuantifier( et2.polarity ).Block.unapply( sh2 )
-    val vs2 = vs2_.map( rename( vs2_, vs1 ) )
+    val Some( ( vs2_, matrix2_ ) ) = weakQuantifier( et2.polarity ).Block.unapply( sh2 )
+    val renaming = rename( vs2_, vs1 )
+    val vs2 = vs2_.map( renaming )
+    val matrix2 = Substitution( renaming )( matrix2_ )
 
     val sh = weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
 
-    val weak2 = ETWeakening( matrix2, et2.polarity )
-    val insts1New = for ( ( ts, inst ) <- insts1 ) yield ts ++ vs2 -> etConn( inst, weak2 )
-    val weak1 = ETWeakening( matrix1, et1.polarity )
-    val insts2New = for ( ( ts, inst ) <- insts2 ) yield vs1 ++ ts -> etConn( weak1, inst )
-
-    ETWeakQuantifierBlock( sh, n1 + n2, Seq() ++ insts1New ++ insts2New )
+    ETWeakQuantifierBlock( sh, n1 + n2,
+      if ( newPol == binaryInPolarity ) {
+        for {
+          ( ts1, inst1 ) <- insts1
+          ( ts2, inst2 ) <- insts2
+        } yield ts1 ++ ts2 -> etConn( inst1, inst2 )
+      } else {
+        val weak1 = ETWeakening( matrix1, et1.polarity )
+        val weak2 = ETWeakening( matrix2, et2.polarity )
+        val insts1New = for ( ( ts, inst ) <- insts1 ) yield ts ++ vs2 -> etConn( inst, weak2 )
+        val insts2New = for ( ( ts, inst ) <- insts2 ) yield vs1 ++ ts -> etConn( weak1, inst )
+        Seq() ++ insts1New ++ insts2New
+      } )
   }
 
   def apply( et: ExpansionTree ): ExpansionTree = et match {
@@ -68,9 +80,9 @@ object prenexifyET {
       val Some( ( vs, matrix ) ) = weakQuantifier( a.polarity ).Block.unapply( sh )
       ETWeakQuantifierBlock( weakQuantifier( a.polarity ).Block( vs, -matrix ), n,
         Map() ++ insts.mapValues( ETNeg ) )
-    case ETAnd( a, b ) => handleBinary( a, b, et.polarity, And( _, _ ), ETAnd )
-    case ETOr( a, b )  => handleBinary( a, b, et.polarity, Or( _, _ ), ETOr )
-    case ETImp( a, b ) => handleBinary( a, b, et.polarity, Imp( _, _ ), ETImp )
+    case ETAnd( a, b ) => handleBinary( a, b, et.polarity, And( _, _ ), ETAnd, Polarity.InSuccedent )
+    case ETOr( a, b )  => handleBinary( a, b, et.polarity, Or( _, _ ), ETOr, Polarity.InAntecedent )
+    case ETImp( a, b ) => handleBinary( a, b, et.polarity, Imp( _, _ ), ETImp, Polarity.InAntecedent )
     case ETWeakQuantifierBlock( sh1, n1, insts1 ) =>
       ETWeakQuantifierBlock( apply( sh1, et.polarity ), n1, Map() ++ insts1.mapValues( apply ) )
   }
