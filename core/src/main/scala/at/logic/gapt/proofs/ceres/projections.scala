@@ -6,7 +6,6 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres.Pickrule._
 import at.logic.gapt.proofs.lk._

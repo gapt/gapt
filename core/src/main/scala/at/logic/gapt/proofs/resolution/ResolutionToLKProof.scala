@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs.{ Ant, OccConnector, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.lk._
 

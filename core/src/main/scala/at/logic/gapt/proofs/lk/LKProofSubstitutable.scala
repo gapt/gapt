@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import BetaReduction._
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs.OccConnector
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 

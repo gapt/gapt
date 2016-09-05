@@ -4,7 +4,6 @@ import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ HOLPosition, containsQuantifierOnLogicalLevel, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable

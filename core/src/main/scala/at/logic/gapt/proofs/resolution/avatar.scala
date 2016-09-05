@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs._
@@ -99,9 +98,9 @@ abstract class AvatarGeneralNonGroundComp extends AvatarDefinition {
 
   def inducedDefinitions = Map( atom.asInstanceOf[HOLAtomConst] -> definition )
 
-  def toDefinition: Context.Definition = {
+  def toDefinition: Definition = {
     val Apps( const: Const, args: List[Var] ) = atom
-    Context.Definition( const, Abs( args, definition ) )
+    Definition( const, Abs( args, definition ) )
   }
 
   val componentClause = subst( canonicalClause )

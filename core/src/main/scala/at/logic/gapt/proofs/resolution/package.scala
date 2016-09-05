@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.Definition
 
 import scala.collection.mutable
 

@@ -10,9 +10,10 @@ class InterpolationException( msg: String ) extends Exception( msg )
 
 object ExtractInterpolant {
   def apply( p: LKProof, isPositive: Sequent[Boolean] ) =
-    Interpolate( p, isPositive indicesWhere { _ == false }, isPositive indicesWhere { _ == true } )
+    Interpolate( p, isPositive )._3
 
-  def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = Interpolate( p, npart, ppart )._3
+  def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) =
+    Interpolate( p, p.conclusion.indicesSequent.map( ppart.contains ) )._3
 
   /**
    * Given sequents negative: \Gamma |- \Delta and positive: \Pi |- \Lambda,
@@ -22,12 +23,10 @@ object ExtractInterpolant {
    */
   def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): HOLFormula = {
     val seq = negative ++ positive
+    val part = negative.map( _ => false ) ++ positive.map( _ => true )
     val p = prover.getLKProof( seq ).get
 
-    val npart = p.endSequent.filter { fo => negative.contains( fo ) }
-    val ppart = p.endSequent.filter { fo => positive.contains( fo ) }
-
-    apply( p, npart.indices, ppart.indices )
+    apply( p, part )
   }
 }
 
@@ -42,413 +41,290 @@ object Interpolate {
    * \Gamma |- \Delta, I and I, \Pi |- \Lambda
    *
    * @param p     the LK proof from which the interpolant is to be extracted
-   * @param npart the negative part of the partition of the end-sequent of p
-   * @param ppart the positive part of the partition of the end-sequent of p
+   * @param color  indicates which formulas are in the positive part
    * @return      a triple consisting of ( a proof of \Gamma |- \Delta, I,
    *              a proof of I, \Pi |- \Lambda, the FOLFormula I )
-   * @throws InterpolationException if the input proof is not propositional,
-   *         contains non-atomic cuts or if (npart,ppart) is not a partition of its
-   *         end-sequent.
    */
-  def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ): ( LKProof, LKProof, HOLFormula ) = p match {
+  def apply( p: LKProof, color: Sequent[Boolean] ): ( LKProof, LKProof, HOLFormula ) = p match {
+    case _ if p.conclusion.sizes != color.sizes =>
+      throw new IllegalArgumentException( s"Partition $color has different size than end-sequent:\n${p.conclusion}" )
 
     // axioms
 
-    case LogicalAxiom( atom ) => {
-      assert( npart.size + ppart.size == 2 )
-      val inNpart = npart.filter( ind => p.endSequent( ind ) == atom )
-      val inPpart = ppart.filter( ind => p.endSequent( ind ) == atom )
-
+    case LogicalAxiom( atom ) =>
       /*
        * Distinguish cases according to the partitions of the formulas in the logical axiom:
        * Case: A :- A and :-   => Interpolant: ⊥   =>   Result: A :- A,⊥ and ⊥ :-
-       * 
+       *
        * Case: :- and A :- A   => Interpolant: ⊤   =>   Result: :- ⊤ and ⊤,A :- A
-       * 
+       *
        * Case: :- A and A :-   => Interpolant: ¬A  =>   Result: :- A,¬A and ¬A,A :-
-       * 
+       *
        * Case: A :- and :- A   => Interpolant: A   =>   Result: A :- A and A :- A
        */
-      if ( inNpart.size == 2 ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
-      else if ( inNpart.size == 1 && inPpart.size == 1 ) {
-        if ( inNpart( 0 ).isInstanceOf[Ant] && inPpart( 0 ).isInstanceOf[Suc] ) ( p, p, atom )
-        else if ( inNpart( 0 ).isInstanceOf[Suc] && inPpart( 0 ).isInstanceOf[Ant] ) ( NegRightRule( p, atom ), NegLeftRule( p, atom ), Neg( atom ) )
-        else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-      } else if ( inPpart.size == 2 ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      color.elements match {
+        case Seq( false, false ) => ( WeakeningRightRule( p, Bottom() ), BottomAxiom, Bottom() )
+        case Seq( false, true )  => ( p, p, atom )
+        case Seq( true, false )  => ( NegRightRule( p, atom ), NegLeftRule( p, atom ), -atom )
+        case Seq( true, true )   => ( TopAxiom, WeakeningLeftRule( p, Top() ), Top() )
+      }
 
     /*
      * Possible partitions
-     * 
+     *
      * Case: :- ⊤ and :-  => Interpolant: ⊥   =>  Result: :- ⊤,⊥ and ⊥ :-
-     * 
+     *
      * Case: :- and :- ⊤  => Interpolant: ⊤   =>  Result: :- ⊤ and ⊤ :- ⊤
      */
-    case TopAxiom => {
-      assert( npart.size + ppart.size == 1 )
-      val inNpart = npart.filter( ind => p.endSequent( ind ) == Top() )
-      val inPpart = ppart.filter( ind => p.endSequent( ind ) == Top() )
-
-      if ( inNpart.size == 1 ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
-      else if ( inPpart.size == 1 ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+    case TopAxiom =>
+      if ( !color( Suc( 0 ) ) ) ( WeakeningRightRule( p, Bottom() ), BottomAxiom, Bottom() )
+      else ( TopAxiom, WeakeningLeftRule( p, Top() ), Top() )
 
     /*
      * Possible Partitions:
-     * 
+     *
      * Case: ⊥ :- and :-  => Interpolant: ⊥   =>  Result: ⊥ :- ⊥ and ⊥ :-
-     * 
+     *
      * Case: :- and ⊥ :-  => Interpolant: ⊤   =>  Result: :- ⊤ and ⊤,⊥ :-
      */
-    case BottomAxiom => {
-      assert( npart.size + ppart.size == 1 )
-      val inNpart = npart.filter( ind => p.endSequent( ind ) == Bottom() )
-      val inPpart = ppart.filter( ind => p.endSequent( ind ) == Bottom() )
-
-      if ( inNpart.size == 1 ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
-      else if ( inPpart.size == 1 ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+    case BottomAxiom =>
+      if ( !color( Ant( 0 ) ) ) ( WeakeningRightRule( p, Bottom() ), BottomAxiom, Bottom() )
+      else ( TopAxiom, WeakeningLeftRule( p, Top() ), Top() )
 
     /*
      * Possible Partitions:
-     * 
+     *
      * Case: :- s=s and :-  => Interpolant: ⊥   =>  Result: :- s=s,⊥ and ⊥ :-
-     * 
+     *
      * Case: :- and :- s=s  => Interpolant: ⊤   =>  Result: :- ⊤ and ⊤ :- s=s
      */
-    case ReflexivityAxiom( term ) => {
-      assert( npart.size + ppart.size == 1 )
-      val atom = Eq( term, term )
-      val inNpart = npart.filter( ind => p.endSequent( ind ) == atom )
-      val inPpart = ppart.filter( ind => p.endSequent( ind ) == atom )
-
-      if ( inNpart.size == 1 ) ( WeakeningRightRule( p, Bottom() ), Axiom( Bottom() :: Nil, Nil ), Bottom() )
-      else if ( inPpart.size == 1 ) ( Axiom( Nil, Top() :: Nil ), WeakeningLeftRule( p, Top() ), Top() )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+    case ReflexivityAxiom( term ) =>
+      if ( !color( Suc( 0 ) ) ) ( WeakeningRightRule( p, Bottom() ), BottomAxiom, Bottom() )
+      else ( TopAxiom, WeakeningLeftRule( p, Top() ), Top() )
 
     // structural rules
 
-    case WeakeningLeftRule( subProof, formula ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val inNpart = npart.filter( ind => p.endSequent.indices.contains( ind ) )
-      val inPpart = ppart.filter( ind => p.endSequent.indices.contains( ind ) )
+    case p @ WeakeningLeftRule( subProof, formula ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
 
-      // p.mainIndices refers to the index of the formula introduced by WeakeningLeft in the end-sequent of the proof p
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( WeakeningLeftRule( up_nproof, formula ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, WeakeningLeftRule( up_pproof, formula ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( WeakeningLeftRule( up_nproof, formula ), up_pproof, up_I )
+      else ( up_nproof, WeakeningLeftRule( up_pproof, formula ), up_I )
 
-    case WeakeningRightRule( subProof, formula ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+    case p @ WeakeningRightRule( subProof, formula ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( WeakeningRightRule( up_nproof, formula ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, WeakeningRightRule( up_pproof, formula ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( WeakeningRightRule( up_nproof, formula ), up_pproof, up_I )
+      else ( up_nproof, WeakeningRightRule( up_pproof, formula ), up_I )
 
-    case ContractionLeftRule( subProof, aux1, aux2 ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula = p.mainFormulas( 0 )
+    case p @ ContractionLeftRule( subProof, aux1, aux2 ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val formula = p.mainFormulas.head
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( ContractionLeftRule( up_nproof, formula ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, ContractionLeftRule( up_pproof, formula ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( ContractionLeftRule( up_nproof, formula ), up_pproof, up_I )
+      else ( up_nproof, ContractionLeftRule( up_pproof, formula ), up_I )
 
-    case ContractionRightRule( subProof, aux1, aux2 ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula = p.mainFormulas( 0 )
+    case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val formula = p.mainFormulas.head
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( ContractionRightRule( up_nproof, formula ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, ContractionRightRule( up_pproof, formula ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( ContractionRightRule( up_nproof, formula ), up_pproof, up_I )
+      else ( up_nproof, ContractionRightRule( up_pproof, formula ), up_I )
 
-    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpCutLeft( p, npart, ppart, aux1 )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpCutRight( p, npart, ppart, aux2 )
+    case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      // FIXME: WTF???
+      val colorsOfCutFormulaDuplicates = p.conclusion.zip( color ).filter( _._1 == p.cutFormula ).map( _._2 )
+      val cutFormulaColor =
+        colorsOfCutFormulaDuplicates.contains( true ) && !colorsOfCutFormulaDuplicates.contains( false )
 
-      val up1_nFormulas = up1_nproof.endSequent.formulas
-      val up2_nFormulas = up2_nproof.endSequent.formulas
-      val up1_pFormulas = up1_pproof.endSequent.formulas
-      val up2_pFormulas = up2_pproof.endSequent.formulas
-      val cutFormula = p.auxFormulas( 0 )( 0 )
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color, cutFormulaColor ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color, cutFormulaColor ) )
 
-      if ( ( up1_nFormulas.contains( cutFormula ) && up2_nFormulas.contains( cutFormula ) ) ) {
-        val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( CutRule( up1_nproof, cutFormula, up2_nproof, cutFormula ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
-
-        ( np, pp, ipl )
-      } else if ( ( up1_pFormulas.contains( cutFormula ) && up2_pFormulas.contains( cutFormula ) ) ) {
-        val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
-        val pp = AndLeftRule( CutRule( up1_pproof, cutFormula, up2_pproof, cutFormula ), up1_I, up2_I )
-
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !cutFormulaColor )
+        (
+          OrRightRule( CutRule( up1_nproof, up2_nproof, p.cutFormula ), up1_I, up2_I ),
+          OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
+          Or( up1_I, up2_I )
+        )
+      else
+        (
+          AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
+          AndLeftRule( CutRule( up1_pproof, up2_pproof, p.cutFormula ), up1_I, up2_I ),
+          And( up1_I, up2_I )
+        )
 
     // propositional rules
 
-    case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p, npart, ppart )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p, npart, ppart )
-      val formula1 = p.auxFormulas( 0 )( 0 )
-      val formula2 = p.auxFormulas( 1 )( 0 )
+    case p @ AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color ) )
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) {
-        val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( AndRightRule( up1_nproof, formula1, up2_nproof, formula2 ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
+      if ( !color( p.mainIndices.head ) )
+        (
+          OrRightRule( AndRightRule( up1_nproof, p.leftConjunct, up2_nproof, p.rightConjunct ), up1_I, up2_I ),
+          OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
+          Or( up1_I, up2_I )
+        )
+      else
+        (
+          AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
+          AndLeftRule( AndRightRule( up1_pproof, p.leftConjunct, up2_pproof, p.rightConjunct ), up1_I, up2_I ),
+          And( up1_I, up2_I )
+        )
 
-        ( np, pp, ipl )
-      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
-        val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
-        val pp = AndLeftRule( AndRightRule( up1_pproof, formula1, up2_pproof, formula2 ), up1_I, up2_I )
+    case p @ AndLeftRule( subProof, aux1, aux2 ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
 
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( AndLeftRule( up_nproof, p.leftConjunct, p.rightConjunct ), up_pproof, up_I )
+      else ( up_nproof, AndLeftRule( up_pproof, p.leftConjunct, p.rightConjunct ), up_I )
 
-    case AndLeftRule( subProof, aux1, aux2 ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula1 = p.auxFormulas( 0 )( 0 )
-      val formula2 = p.auxFormulas( 0 )( 1 )
+    case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color ) )
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( AndLeftRule( up_nproof, formula1, formula2 ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, AndLeftRule( up_pproof, formula1, formula2 ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) )
+        (
+          OrRightRule( OrLeftRule( up1_nproof, p.leftDisjunct, up2_nproof, p.rightDisjunct ), up1_I, up2_I ),
+          OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
+          Or( up1_I, up2_I )
+        )
+      else
+        (
+          AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
+          AndLeftRule( OrLeftRule( up1_pproof, p.leftDisjunct, up2_pproof, p.rightDisjunct ), up1_I, up2_I ),
+          And( up1_I, up2_I )
+        )
 
-    case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p, npart, ppart )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p, npart, ppart )
-      val formula1 = p.auxFormulas( 0 )( 0 )
-      val formula2 = p.auxFormulas( 1 )( 0 )
+    case p @ OrRightRule( subProof, aux1, aux2 ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val formula1 = p.leftDisjunct
+      val formula2 = p.rightDisjunct
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) {
-        val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( OrLeftRule( up1_nproof, formula1, up2_nproof, formula2 ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
+      if ( !color( p.mainIndices.head ) ) ( OrRightRule( up_nproof, formula1, formula2 ), up_pproof, up_I )
+      else ( up_nproof, OrRightRule( up_pproof, formula1, formula2 ), up_I )
 
-        ( np, pp, ipl )
-      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
-        val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
-        val pp = AndLeftRule( OrLeftRule( up1_pproof, formula1, up2_pproof, formula2 ), up1_I, up2_I )
+    case p @ NegLeftRule( subProof, aux ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
 
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( NegLeftRule( up_nproof, subProof.endSequent( aux ) ), up_pproof, up_I )
+      else ( up_nproof, NegLeftRule( up_pproof, subProof.endSequent( aux ) ), up_I )
 
-    case OrRightRule( subProof, aux1, aux2 ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula1 = p.auxFormulas( 0 )( 0 )
-      val formula2 = p.auxFormulas( 0 )( 1 )
+    case p @ NegRightRule( subProof, aux ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( OrRightRule( up_nproof, formula1, formula2 ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, OrRightRule( up_pproof, formula1, formula2 ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( NegRightRule( up_nproof, subProof.endSequent( aux ) ), up_pproof, up_I )
+      else ( up_nproof, NegRightRule( up_pproof, subProof.endSequent( aux ) ), up_I )
 
-    case NegLeftRule( subProof, aux ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+    case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color ) )
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( NegLeftRule( up_nproof, subProof.endSequent( aux ) ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, NegLeftRule( up_pproof, subProof.endSequent( aux ) ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) )
+        (
+          OrRightRule( ImpLeftRule( up1_nproof, p.impPremise, up2_nproof, p.impConclusion ), up1_I, up2_I ),
+          OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
+          Or( up1_I, up2_I )
+        )
+      else
+        (
+          AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
+          AndLeftRule( ImpLeftRule( up1_pproof, p.impPremise, up2_pproof, p.impConclusion ), up1_I, up2_I ),
+          And( up1_I, up2_I )
+        )
 
-    case NegRightRule( subProof, aux ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
+    case p @ ImpRightRule( subProof, aux1, aux2 ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
 
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( NegRightRule( up_nproof, subProof.endSequent( aux ) ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, NegRightRule( up_pproof, subProof.endSequent( aux ) ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
-
-    case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) => {
-      val ( up1_nproof, up1_pproof, up1_I ) = applyUpBinaryLeft( p, npart, ppart )
-      val ( up2_nproof, up2_pproof, up2_I ) = applyUpBinaryRight( p, npart, ppart )
-      val formula1 = p.auxFormulas( 0 )( 0 )
-      val formula2 = p.auxFormulas( 1 )( 0 )
-
-      if ( npart.contains( p.mainIndices( 0 ) ) ) {
-        val ipl = Or( up1_I, up2_I )
-        val np = OrRightRule( ImpLeftRule( up1_nproof, formula1, up2_nproof, formula2 ), up1_I, up2_I )
-        val pp = OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I )
-
-        ( np, pp, ipl )
-      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
-        val ipl = And( up1_I, up2_I )
-        val np = AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I )
-        val pp = AndLeftRule( ImpLeftRule( up1_pproof, formula1, up2_pproof, formula2 ), up1_I, up2_I )
-
-        ( np, pp, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
-
-    case ImpRightRule( subProof, aux1, aux2 ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val formula1 = p.auxFormulas( 0 )( 0 )
-      val formula2 = p.auxFormulas( 0 )( 1 )
-
-      if ( npart.contains( p.mainIndices( 0 ) ) ) ( ImpRightRule( up_nproof, formula1, formula2 ), up_pproof, up_I )
-      else if ( ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, ImpRightRule( up_pproof, formula1, formula2 ), up_I )
-      else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+      if ( !color( p.mainIndices.head ) ) ( ImpRightRule( up_nproof, p.impPremise, p.impConclusion ), up_pproof, up_I )
+      else ( up_nproof, ImpRightRule( up_pproof, p.impPremise, p.impConclusion ), up_I )
 
     // equality rules
 
-    case EqualityRightRule( subProof, eq, aux, con ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val auxFormula = subProof.endSequent( aux )
-      val eqIndex = p.occConnectors( 0 ).child( eq )
+    case p @ EqualityRightRule( subProof, eq, aux, con ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply(
+        p.subProof,
+        p.getOccConnector.parent( color ).
+          updated( eq, color( p.eqInConclusion ) ).
+          updated( aux, color( p.auxInConclusion ) )
+      )
 
+      ( color( p.eqInConclusion ), color( p.mainIndices.head ) ) match {
+        case ( false, false ) => ( EqualityRightRule( up_nproof, eq, p.auxFormula, con ), up_pproof, up_I )
+        case ( true, true )   => ( up_nproof, EqualityRightRule( up_pproof, eq, p.auxFormula, con ), up_I )
+        case ( true, false ) =>
+          val ipl = Imp( p.equation, up_I )
+
+          val up_nproof1 = WeakeningLeftRule( up_nproof, p.equation )
+          val up_nproof2 = EqualityRightRule( up_nproof1, eq, p.auxFormula, con )
+          val up_nproof3 = ImpRightRule( up_nproof2, p.equation, up_I )
+
+          val up_pproof1 = ImpLeftRule( LogicalAxiom( p.equation ), p.equation, up_pproof, up_I )
+          val up_pproof2 = ContractionLeftRule( up_pproof1, p.equation )
+
+          ( up_nproof3, up_pproof2, ipl )
+        case ( false, true ) =>
+          val ipl = And( p.equation, up_I )
+
+          val up_nproof1 = AndRightRule( LogicalAxiom( p.equation ), up_nproof, And( p.equation, up_I ) )
+          val up_nproof2 = ContractionLeftRule( up_nproof1, p.equation )
+
+          val up_pproof1 = WeakeningLeftRule( up_pproof, p.equation )
+          val up_pproof2 = EqualityRightRule( up_pproof1, eq, p.auxFormula, con )
+          val up_pproof3 = AndLeftRule( up_pproof2, p.equation, up_I )
+
+          ( up_nproof2, up_pproof3, ipl )
+      }
+
+    case p @ EqualityLeftRule( subProof, eq, aux, con ) =>
+      val ( up_nproof, up_pproof, up_I ) = apply(
+        p.subProof,
+        p.getOccConnector.parent( color ).
+          updated( eq, color( p.eqInConclusion ) ).
+          updated( aux, color( p.auxInConclusion ) )
+      )
       var ipl = up_I
 
-      if ( npart.contains( eqIndex ) && npart.contains( p.mainIndices( 0 ) ) ) ( EqualityRightRule( up_nproof, eq, auxFormula, con ), up_pproof, up_I )
-      else if ( ppart.contains( eqIndex ) && ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityRightRule( up_pproof, eq, auxFormula, con ), up_I )
-      else if ( npart.contains( p.mainIndices( 0 ) ) ) {
-        ipl = Imp( p.endSequent( eqIndex ), up_I )
+      ( color( p.eqInConclusion ), color( p.mainIndices.head ) ) match {
+        case ( false, false ) => ( EqualityLeftRule( up_nproof, eq, p.auxFormula, con ), up_pproof, up_I )
+        case ( true, true )   => ( up_nproof, EqualityLeftRule( up_pproof, eq, p.auxFormula, con ), up_I )
+        case ( true, false ) =>
+          ipl = Imp( p.equation, up_I )
 
-        val up_nproof1 = WeakeningLeftRule( up_nproof, p.endSequent( eqIndex ) )
-        val up_nproof2 = EqualityRightRule( up_nproof1, eq, auxFormula, con )
-        val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eqIndex ), up_I )
+          val up_nproof1 = WeakeningLeftRule( up_nproof, p.equation )
+          val up_nproof2 = EqualityLeftRule( up_nproof1, eq, p.auxFormula, con )
+          val up_nproof3 = ImpRightRule( up_nproof2, p.equation, up_I )
 
-        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ) ), p.endSequent( eqIndex ), up_pproof, up_I )
-        val up_pproof2 = ContractionLeftRule( up_pproof1, p.endSequent( eqIndex ) )
+          val up_pproof1 = ImpLeftRule( LogicalAxiom( p.equation ), p.equation, up_pproof, up_I )
+          val up_pproof2 = ContractionLeftRule( up_pproof1, p.equation )
 
-        ( up_nproof3, up_pproof2, ipl )
-      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
-        ipl = And( p.endSequent( eqIndex ), up_I )
+          ( up_nproof3, up_pproof2, ipl )
+        case ( false, true ) =>
+          ipl = And( p.equation, up_I )
 
-        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eqIndex ) ), up_nproof, And( p.endSequent( eqIndex ), up_I ) )
-        val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eqIndex ) )
+          val up_nproof1 = AndRightRule( LogicalAxiom( p.equation ), up_nproof, And( p.equation, up_I ) )
+          val up_nproof2 = ContractionLeftRule( up_nproof1, p.equation )
 
-        val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eqIndex ) )
-        val up_pproof2 = EqualityRightRule( up_pproof1, eq, auxFormula, con )
-        val up_pproof3 = AndLeftRule( up_pproof2, p.endSequent( eqIndex ), up_I )
+          val up_pproof1 = WeakeningLeftRule( up_pproof, p.equation )
+          val up_pproof2 = EqualityLeftRule( up_pproof1, eq, p.auxFormula, con )
+          val up_pproof3 = AndLeftRule( up_pproof2, p.equation, up_I )
 
-        ( up_nproof2, up_pproof3, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
-
-    case EqualityLeftRule( subProof, eq, aux, con ) => {
-      val ( up_nproof, up_pproof, up_I ) = applyUpUnary( p, npart, ppart )
-      val auxFormula = subProof.endSequent( aux )
-      val eqIndex = p.occConnectors( 0 ).child( eq )
-
-      var ipl = up_I
-
-      if ( npart.contains( eqIndex ) && npart.contains( p.mainIndices( 0 ) ) ) ( EqualityLeftRule( up_nproof, eq, auxFormula, con ), up_pproof, up_I )
-      else if ( ppart.contains( eqIndex ) && ppart.contains( p.mainIndices( 0 ) ) ) ( up_nproof, EqualityLeftRule( up_pproof, eq, auxFormula, con ), up_I )
-      else if ( npart.contains( p.mainIndices( 0 ) ) ) {
-        ipl = Imp( p.endSequent( eqIndex ), up_I )
-
-        val up_nproof1 = WeakeningLeftRule( up_nproof, p.endSequent( eqIndex ) )
-        val up_nproof2 = EqualityLeftRule( up_nproof1, eq, auxFormula, con )
-        val up_nproof3 = ImpRightRule( up_nproof2, p.endSequent( eqIndex ), up_I )
-
-        val up_pproof1 = ImpLeftRule( LogicalAxiom( p.endSequent( eqIndex ) ), p.endSequent( eqIndex ), up_pproof, up_I )
-        val up_pproof2 = ContractionLeftRule( up_pproof1, p.endSequent( eqIndex ) )
-
-        ( up_nproof3, up_pproof2, ipl )
-      } else if ( ppart.contains( p.mainIndices( 0 ) ) ) {
-        ipl = And( p.endSequent( eqIndex ), up_I )
-
-        val up_nproof1 = AndRightRule( LogicalAxiom( p.endSequent( eqIndex ) ), up_nproof, And( p.endSequent( eqIndex ), up_I ) )
-        val up_nproof2 = ContractionLeftRule( up_nproof1, p.endSequent( eqIndex ) )
-
-        val up_pproof1 = WeakeningLeftRule( up_pproof, p.endSequent( eqIndex ) )
-        val up_pproof2 = EqualityLeftRule( up_pproof1, eq, auxFormula, con )
-        val up_pproof3 = AndLeftRule( up_pproof2, p.endSequent( eqIndex ), up_I )
-
-        ( up_nproof2, up_pproof3, ipl )
-      } else throw new InterpolationException( "Negative and positive part must form a partition of the end-sequent." )
-    }
+          ( up_nproof2, up_pproof3, ipl )
+      }
 
     case p @ ForallLeftRule( subProof, aux, main, term, quantVar ) =>
-      val ( nproof, pproof, interpolant ) = apply( subProof, npart map p.getOccConnector.parent, ppart map p.getOccConnector.parent )
+      val ( nproof, pproof, interpolant ) = apply( subProof, p.getOccConnector.parent( color ) )
 
-      if ( npart contains p.mainIndices( 0 ) ) {
+      if ( !color( p.mainIndices.head ) )
         ( ForallLeftRule( nproof, p.mainFormula, term ), pproof, interpolant )
-      } else {
+      else
         ( nproof, ForallLeftRule( pproof, p.mainFormula, term ), interpolant )
-      }
 
     case p @ ExistsRightRule( subProof, aux, main, term, quantVar ) =>
-      val ( nproof, pproof, interpolant ) = apply( subProof, npart map p.getOccConnector.parent, ppart map p.getOccConnector.parent )
+      val ( nproof, pproof, interpolant ) = apply( subProof, p.getOccConnector.parent( color ) )
 
-      if ( npart contains p.mainIndices( 0 ) ) {
+      if ( !color( p.mainIndices.head ) )
         ( ExistsRightRule( nproof, p.mainFormula, term ), pproof, interpolant )
-      } else {
+      else
         ( nproof, ExistsRightRule( pproof, p.mainFormula, term ), interpolant )
-      }
-
-    case _ => throw new InterpolationException( "Unknown inference rule of type: " + p.name.toString() + "." )
-  }
-
-  private def applyUpUnary( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
-    val up_npart = npart.flatMap { ind => p.occConnectors( 0 ).parents( ind ) }
-    val up_ppart = ppart.flatMap { ind => p.occConnectors( 0 ).parents( ind ) }
-
-    apply( p.immediateSubProofs( 0 ), up_npart, up_ppart )
-  }
-
-  private def applyUpBinaryLeft( p1: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
-    val up_npart = npart.flatMap { ind => p1.occConnectors( 0 ).parents( ind ) }
-    val up_ppart = ppart.flatMap { ind => p1.occConnectors( 0 ).parents( ind ) }
-
-    apply( p1.immediateSubProofs( 0 ), up_npart, up_ppart )
-  }
-
-  private def applyUpBinaryRight( p2: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) = {
-    val up_npart = npart.flatMap { ind => p2.occConnectors( 1 ).parents( ind ) }
-    val up_ppart = ppart.flatMap { ind => p2.occConnectors( 1 ).parents( ind ) }
-
-    apply( p2.immediateSubProofs( 1 ), up_npart, up_ppart )
-  }
-
-  private def applyUpCutLeft( p1: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex], aux1: SequentIndex ) = {
-    var up_npart = npart.flatMap { ind => p1.occConnectors( 0 ).parents( ind ) }
-    var up_ppart = ppart.flatMap { ind => p1.occConnectors( 0 ).parents( ind ) }
-
-    val auxFormula = p1.immediateSubProofs( 0 ).endSequent( aux1 )
-    val nFormulas = npart.filter { ind => p1.endSequent( ind ) == auxFormula }
-    val pFormulas = ppart.filter { ind => p1.endSequent( ind ) == auxFormula }
-
-    if ( !pFormulas.isEmpty && nFormulas.isEmpty ) {
-      up_ppart :+= aux1
-    } else {
-      up_npart :+= aux1
-    }
-
-    apply( p1.immediateSubProofs( 0 ), up_npart, up_ppart )
-  }
-
-  private def applyUpCutRight( p2: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex], aux2: SequentIndex ) = {
-    var up_npart = npart.flatMap { ind => p2.occConnectors( 1 ).parents( ind ) }
-    var up_ppart = ppart.flatMap { ind => p2.occConnectors( 1 ).parents( ind ) }
-
-    val auxFormula = p2.immediateSubProofs( 1 ).endSequent( aux2 )
-    val nFormulas = npart.filter { ind => p2.endSequent( ind ) == auxFormula }
-    val pFormulas = ppart.filter { ind => p2.endSequent( ind ) == auxFormula }
-
-    if ( !pFormulas.isEmpty && nFormulas.isEmpty ) {
-      up_ppart :+= aux2
-    } else {
-      up_npart :+= aux2
-    }
-
-    apply( p2.immediateSubProofs( 1 ), up_npart, up_ppart )
   }
 
 }

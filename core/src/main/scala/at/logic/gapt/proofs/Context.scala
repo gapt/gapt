@@ -1,9 +1,10 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.{ Definition => EDefinition, _ }
 import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
+import at.logic.gapt.expr
 import at.logic.gapt.proofs.lk.DefinitionElimination
 import at.logic.gapt.proofs.resolution.AvatarGeneralNonGroundComp
 
@@ -98,10 +99,10 @@ object Context {
     implicit def fromSort( ty: TBase ): Element = Sort( ty )
     implicit def fromConst( const: Const ): Element = ConstDecl( const )
     implicit def fromDefn( defn: ( String, LambdaExpression ) ): Element =
-      Definition( Const( defn._1, defn._2.exptype ), defn._2 )
+      Definition( EDefinition( Const( defn._1, defn._2.exptype ), defn._2 ) )
     implicit def fromDefnEq( eq: HOLFormula ): Element = eq match {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
-        Definition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) )
+        Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
     }
     implicit def fromAxiom( axiom: HOLSequent ): Element = Axiom( axiom )
   }
@@ -159,20 +160,14 @@ object Context {
     }
   }
 
-  case class Definition( what: Const, by: LambdaExpression ) extends Element {
-    val Const( name, ty ) = what
-    require( ty == by.exptype )
-    require( freeVariables( by ).isEmpty, s"$this: contains free variables ${freeVariables( by )}" )
-
-    override def consts = Vector( what )
-    override def defs = Vector( what -> by )
+  case class Definition( definition: EDefinition ) extends Element {
+    override def consts = Vector( definition.what )
+    override def defs = Vector( definition.what -> definition.by )
 
     def checkAdmissibility( ctx: Context ) = {
-      ctx.check( ConstDecl( what ) )
-      ctx.check( by )
+      ctx.check( ConstDecl( definition.what ) )
+      ctx.check( definition.by )
     }
-
-    def toTuple: ( Const, LambdaExpression ) = ( what, by )
   }
 
   case class Axiom( sequent: HOLSequent ) extends Element {

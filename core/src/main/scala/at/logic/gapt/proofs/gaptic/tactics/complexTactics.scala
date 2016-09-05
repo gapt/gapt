@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr.{ Const => Con, _ }
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.gaptic._

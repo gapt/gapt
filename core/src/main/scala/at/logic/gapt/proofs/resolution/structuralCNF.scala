@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.NameGenerator
 
