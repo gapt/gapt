@@ -1818,16 +1818,14 @@ object DefinitionRule {
  *
  * <pre>
  *       (π)
- *    A, Γ :- Δ
+ *    A[φ], Γ :- Δ
  *   -----------d:l
- *    B, Γ :- Δ
+ *    A[c], Γ :- Δ
  * </pre>
- *
- * Currently, the formulas A and B can be completely arbitrary.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
- * @param definition The definition to be introduced.
+ * @param definition The definition c := φ.
  * @param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
 case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, definition: Definition, replacementContext: Abs )
@@ -1890,16 +1888,14 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  *
  * <pre>
  *       (π)
- *    Γ :- Δ, A
+ *    Γ :- Δ, A[φ]
  *   -----------d:l
- *    Γ :- Δ, B
+ *    Γ :- Δ, A[c]
  * </pre>
- *
- * Currently, the formulas A and B can be completely arbitrary.
  *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
- * @param definition The definition to be introduced.
+ * @param definition The definition c := φ.
  * @param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
 case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, definition: Definition, replacementContext: Abs )
