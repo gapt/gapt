@@ -64,8 +64,7 @@
 \PREDDEF{I(s)  }{  ( all x  exists y (x<y & f(y) = s))  }
 \FUNDEF{t(h,n,x,y)  }{  \ite{ \benc{x<n+1} }{h(x)}{y}} 
 \FUNDEF{\ienc{i}  }{  1 \bm i }
-% \FUNDEF{\ite{\ienc{i}}{x}{y}  }{  \ienc{i}*x + (1 \bm \ienc{i})*y} %
-% \FUNDEF{\ite{\benc{X}}{x}{y}  }{  \benc{X}*x + (1 \bm \benc{X})*y} %
+\FUNDEF{\ite{z}{x}{y}  }{  z*x + (1 \bm z)*y}
 
 % ===== END OF DEFINITIONS ===== %
 

@@ -58,7 +58,7 @@ class nTapeTest extends Specification {
       ok( "computations done" )
     }
 
-    "calulate the css for version 5 of the n-tape proof" in {
+    "calulate the css for version 5 with arithmetical if-then-else of the n-tape proof" in {
       nTape5Arith( 2 ).preprocessed_css_hol_clauses
       ok( "computations done" )
     }

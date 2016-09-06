@@ -1798,7 +1798,7 @@ abstract class DefinitionRule extends UnaryLKProof with CommonRule {
     case _             => throw LKRuleCreationException( s"Cannot reduce $mainFormula_ to HOL formula)." )
   }
 
-  require( BetaReduction.betaNormalize( subProof.endSequent( aux ) ) == auxFormula_, s"Applying context $replacementContext to expression $by does not yield $subProof.endSequent(aux)." )
+  require( BetaReduction.betaNormalize( subProof.endSequent( aux ) ) == auxFormula_, s"Applying context $replacementContext to expression $by does not yield ${subProof.endSequent( aux )} but $auxFormula_." )
 }
 
 object DefinitionRule {
@@ -1871,14 +1871,23 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
 
     val Definition( what, by ) = definition
 
-    mainFormula.find( what ) match {
+    val possible_inferences = mainFormula.find( what ).flatMap( p => {
+      val ctx = replacementContext( definition.ty, mainFormula, List( p ) )
+      try {
+        List( DefinitionLeftRule( subProof, Ant( indices( 0 ) ), definition, ctx ) )
+      } catch {
+        case e: Exception =>
+          List()
+      }
+    } )
+
+    possible_inferences match {
       case List( p ) =>
-        val ctx = replacementContext( definition.ty, mainFormula, List( p ) )
-        DefinitionLeftRule( subProof, Ant( indices( 0 ) ), definition, ctx )
+        p
       case Nil =>
         throw LKRuleCreationException( s"Defined expression $what not found in main formula $mainFormula." )
       case _ =>
-        throw LKRuleCreationException( s"Defined expression $what found multiple times in main formula $mainFormula." )
+        throw LKRuleCreationException( s"Multiple sound definition inferences found, please specify context!" )
     }
   }
 }
@@ -1941,14 +1950,23 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
 
     val Definition( what, by ) = definition
 
-    mainFormula.find( what ) match {
+    val possible_inferences = mainFormula.find( what ).flatMap( p => {
+      val ctx = replacementContext( definition.ty, mainFormula, List( p ) )
+      try {
+        List( DefinitionRightRule( subProof, Suc( indices( 0 ) ), definition, ctx ) )
+      } catch {
+        case e: Exception =>
+          List()
+      }
+    } )
+
+    possible_inferences match {
       case List( p ) =>
-        val ctx = replacementContext( definition.ty, mainFormula, List( p ) )
-        DefinitionRightRule( subProof, Suc( indices( 0 ) ), definition, ctx )
+        p
       case Nil =>
         throw LKRuleCreationException( s"Defined expression $what not found in main formula $mainFormula." )
       case _ =>
-        throw LKRuleCreationException( s"Defined expression $what found multiple times in main formula $mainFormula." )
+        throw LKRuleCreationException( s"Multiple sound definition inferences found, please specify context!" )
     }
   }
 }

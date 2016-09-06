@@ -100,7 +100,7 @@ trait TokenToLKConverter extends Logger {
     val axioms = unclosedaxioms map ( x => ( x._1, univclosure( x._2 ) ) )
     //println(axioms)
     //println("creating definitions!")
-    val definitions = createDefinitions( naming, atokens, axioms )
+    val llk_definitions = createDefinitions( naming, atokens, axioms )
 
     //println(definitions)
     //seperate inferences for the different (sub)proofs
@@ -134,10 +134,10 @@ trait TokenToLKConverter extends Logger {
     //proof completion in dependency order
     val proofs = ordering.foldLeft( Map[HOLFormula, LKProof]() )( ( proofs_done, f ) => {
       //println("Processing (sub)proof "+this.f(f))
-      val f_proof: LKProof = completeProof( f, proofs_done, naming, rm( f ), axioms, definitions )
+      val f_proof: LKProof = completeProof( f, proofs_done, naming, rm( f ), axioms, llk_definitions )
       proofs_done + ( ( f, f_proof ) )
     } )
-    ExtendedProofDatabase( proofs, axioms, definitions )
+    ExtendedProofDatabase( proofs, axioms, llk_definitions )
   }
 
   /* Creates the subproof proofname from a list of rules. Uses the naming function to create basic term and
@@ -286,7 +286,7 @@ trait TokenToLKConverter extends Logger {
 
         // --- definition rules ---
         case "DEF" =>
-          proofstack = handleDefinitions( proofstack, name, fs, auxterm, naming, rt )
+          proofstack = handleDefinitions( proofstack, name, fs, auxterm, naming, rt, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
             "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
@@ -745,12 +745,13 @@ trait TokenToLKConverter extends Logger {
 
         inferences.head :: stack
 
-      case _ => throw new Exception( "Epected equational rule but got rule name: " + ruletype )
+      case _ => throw new Exception( "Expected equational rule but got rule name: " + ruletype )
     }
   }
 
   //TODO: integrate which definitions were used into the proof
-  def handleDefinitions( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleDefinitions( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST],
+                         naming: ( String ) => LambdaExpression, rt: RToken, llk_definitions: Map[LambdaExpression, LambdaExpression] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parent :: stack = current_proof
     val ( mainsequent, auxsequent, context ) = filterContext( parent.endSequent, fs )
@@ -758,12 +759,30 @@ trait TokenToLKConverter extends Logger {
     require( ( auxsequent.antecedent.size == mainsequent.antecedent.size ) &&
       ( auxsequent.succedent.size == mainsequent.succedent.size ), "The definition needs to be on the same side!" )
 
+    val definitions = llk_definitions.toList.map( llkd => llkDefinitionToLKDefinition( llkd._1, llkd._2 ) )
+
     ( auxsequent, mainsequent ) match {
       case ( HOLSequent( Nil, List( aux ) ), HOLSequent( Nil, List( main ) ) ) =>
-        val rule = MagicRule.Right( parent, aux, main, "d:r" )
+
+        //try each definition to infer the main formula
+        val rule = definitions.dropWhile( d => try {
+          DefinitionRightRule( parent, aux, d, main );
+          false
+        } catch { case e: Exception => true } ) match {
+          case d :: _ => DefinitionRightRule( parent, aux, d, main )
+          case _ =>
+            throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
+        }
         rule :: stack
       case ( HOLSequent( List( aux ), Nil ), HOLSequent( List( main ), Nil ) ) =>
-        val rule = MagicRule.Left( parent, aux, main, "d:l" )
+        //try each definition to infer the main formula
+        val rule = definitions.dropWhile( d => try {
+          DefinitionLeftRule( parent, aux, d, main ); false
+        } catch { case e: Exception => true } ) match {
+          case d :: _ => DefinitionLeftRule( parent, aux, d, main )
+          case _ =>
+            throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
+        }
         rule :: stack
       case _ =>
         throw new HybridLatexParserException( "Error in creation of definition rule, can not infer " + f( mainsequent ) + " from " + f( auxsequent ) )
@@ -874,8 +893,10 @@ trait TokenToLKConverter extends Logger {
     val ( name, axiom, sub2 ) = candidates.head
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
-    val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2 )
-    val axrule = MagicRule.Left( axproof, axiomconjunction, axformula, "d:l" )
+    val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
+    val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2, defs )
+    val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
+    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axdef, axformula )
 
     val Eq( s, t ) = auxf
 
@@ -968,19 +989,11 @@ trait TokenToLKConverter extends Logger {
     val ( name, axiom, sub2 ) = candidates.head
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
-    val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2 )
-    val axrule = MagicRule.Left( axproof, axiomconjunction, axformula, "d:l" )
+    val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
+    val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2, defs )
+    val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
+    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axdef, axformula )
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
-
-    /*
-    require(auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not "+f(auxsequent))
-    val newproof = auxsequent match {
-      case FSequent(List(f), Nil) =>
-        ContractionMacroRule(CutRule(axrule, oldproof, auxf), fs)
-    }
-
-    newproof::rest
-    */
   }
 
   /* given a map of elements to lists of dependant elements (e.g. a node's children in a graph), calculate a list l where
@@ -1100,6 +1113,14 @@ trait TokenToLKConverter extends Logger {
     case _           => f == what
   }
 
+  def llkDefinitionToLKDefinition( exp: LambdaExpression, to: LambdaExpression ) = exp match {
+    case Apps( c @ Const( _, _ ), args ) if args.forall( { case Var( _, _ ) => true; case _ => false } ) =>
+      val vs = args.map( { case v @ Var( _, _ ) => v } )
+      Definition( c, Abs.Block( vs, to ) )
+    case _ =>
+      throw new Exception( s"Can not convert LLK Definition $exp -> $to to LK Definition!" )
+  }
+
   /* Creates the definition map from a list of ATokens. Also adds a defintion for all the axioms. */
   def createDefinitions( naming: String => LambdaExpression, l: List[AToken], axioms: Map[HOLFormula, HOLFormula] ): Map[LambdaExpression, LambdaExpression] = {
     val preddefs = l.filter( _.rule == "PREDDEF" ).foldLeft( Map[LambdaExpression, LambdaExpression]() )( ( map, token ) => {
@@ -1188,18 +1209,21 @@ trait TokenToLKConverter extends Logger {
     }
 
   def getAxiomLookupProof( name: HOLFormula, axiom: HOLFormula, instance: HOLFormula,
-                           axiomconj: HOLFormula, axiomproof: LKProof, sub: Substitution ): ( HOLFormula, LKProof ) = {
+                           axiomconj: HOLFormula, axiomproof: LKProof, sub: Substitution, definitions: List[Definition] ): ( HOLFormula, LKProof ) = {
     axiomconj match {
-      case x if x syntaxEquals name =>
+      case HOLAtom( c @ Const( n, To ), List() ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
-        ( axiomconj, MagicRule.Left( pi, axiom, name, "d:l" ) )
+        val d = definitions.find( _.what == c ).getOrElse(
+          throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" )
+        )
+        ( axiomconj, DefinitionLeftRule( pi, axiom, d, axiomconj ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>
-        val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub )
+        val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub, definitions )
         ( axiomconj, AndLeftRule( WeakeningLeftRule( uproof, y ), aux, y ) )
 
       case And( x, y ) if formula_contains_atom( y, name ) =>
-        val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, y, axiomproof, sub )
+        val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, y, axiomproof, sub, definitions )
         ( axiomconj, AndLeftRule( WeakeningLeftRule( uproof, x ), x, aux ) )
 
       case _ =>
