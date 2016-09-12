@@ -191,10 +191,6 @@ private class skolemizeInferences(
           subst compose Substitution( eigen -> skolemTerm ) )
         if ( pol ) ForallSkRightRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ), skolemDef )
         else ExistsSkLeftRule( q_, a, subf( p.mainFormulas.head ), sub( skolemTerm ), skolemDef )
-
-      case p @ MagicRule( q, a, m, n ) =>
-        MagicRule( apply( q, p.getOccConnector.parent( info ).
-          updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst ), a, subf( m ), n )
     }
   }
 }

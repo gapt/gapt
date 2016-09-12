@@ -1971,47 +1971,6 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
   }
 }
 
-/**
- * Unary rule that replaces any formula with any other formula.
- *
- * Obviously highly unsound. Don't use it without a good reason!
- *
- * @param subProof The subproof.
- * @param aux The index of the formula to be replaced.
- * @param main The replacement formula.
- * @param name The label to be used for the rule.
- */
-case class MagicRule( subProof: LKProof, aux: SequentIndex, main: HOLFormula, override val name: String ) extends UnaryLKProof with CommonRule {
-  override def auxIndices = Seq( Seq( aux ) )
-  override def mainFormulaSequent = aux match {
-    case Ant( _ ) => main +: Sequent()
-    case Suc( _ ) => Sequent() :+ main
-  }
-}
-
-object MagicRule extends ConvenienceConstructor( "MagicRule" ) {
-
-  def Left( subProof: LKProof, auxFormula: HOLFormula, main: HOLFormula, name: String ): MagicRule = {
-    val premise = subProof.endSequent
-    val auxIndex = {
-      val ( ai, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-      Ant( ai.head )
-    }
-
-    MagicRule( subProof, auxIndex, main, name )
-  }
-
-  def Right( subProof: LKProof, auxFormula: HOLFormula, main: HOLFormula, name: String ): MagicRule = {
-    val premise = subProof.endSequent
-    val auxIndex = {
-      val ( _, si ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
-      Suc( si.head )
-    }
-
-    MagicRule( subProof, auxIndex, main, name )
-  }
-}
-
 object consoleString {
   /**
    * Produces a console-readable string representation of the lowermost rule.

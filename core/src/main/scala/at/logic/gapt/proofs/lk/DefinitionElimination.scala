@@ -119,11 +119,5 @@ class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpressi
 
     case InductionRule( cases, main, term ) =>
       InductionRule( cases map { cs => cs.copy( proof = apply( cs.proof ) ) }, apply( main ).asInstanceOf[Abs], apply( term ) )
-
-    case MagicRule( subProof, aux, main, name ) if name == "d:l" =>
-      ExchangeLeftMacroRule( apply( subProof ), aux )
-
-    case MagicRule( subProof, aux, main, name ) if name == "d:r" =>
-      ExchangeRightMacroRule( apply( subProof ), aux )
   }
 }

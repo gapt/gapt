@@ -3,10 +3,13 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 
 object clauseSubsumption {
-  def apply( from: Sequent[LambdaExpression], to: Sequent[LambdaExpression],
-             alreadyFixed:        Map[Var, LambdaExpression] = Map(),
-             multisetSubsumption: Boolean                    = false,
-             matchingAlgorithm:   MatchingAlgorithm          = syntacticMatching ): Option[Substitution] = {
+  def apply(
+    from:                Sequent[LambdaExpression],
+    to:                  Sequent[LambdaExpression],
+    alreadyFixed:        Map[Var, LambdaExpression] = Map(),
+    multisetSubsumption: Boolean                    = false,
+    matchingAlgorithm:   MatchingAlgorithm          = syntacticMatching
+  ): Option[Substitution] = {
     if ( multisetSubsumption )
       if ( from.antecedent.size > to.antecedent.size || from.succedent.size > to.succedent.size )
         return None

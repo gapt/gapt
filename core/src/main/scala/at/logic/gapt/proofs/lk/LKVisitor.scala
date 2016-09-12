@@ -119,9 +119,6 @@ trait LKVisitor[T] {
 
     case p: DefinitionRightRule =>
       visitDefinitionRight( p, otherArg )
-
-    case p: MagicRule =>
-      visitMagic( p, otherArg )
   }
 
   def transportToSubProof( arg: T, proof: LKProof, subProofIdx: Int ): T = arg
@@ -285,11 +282,4 @@ trait LKVisitor[T] {
       case Seq( ( subProof, subConn ) ) =>
         DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
     }
-
-  protected def visitMagic( proof: MagicRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
-    one2one( proof, otherArg ) {
-      case Seq( ( subProof, subConn ) ) =>
-        MagicRule( subProof, subConn.child( proof.aux ), proof.main, proof.name )
-    }
-
 }

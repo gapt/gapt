@@ -138,11 +138,6 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val subProofNew = applySubstitution( substitution, subProof )
       DefinitionRightRule( subProofNew, aux, definition, betaNormalize( substitution( context ) ).asInstanceOf[Abs] )
 
-    case MagicRule( subProof, aux, main, name ) =>
-      val subProofNew = applySubstitution( substitution, subProof )
-      val mainNew = substitution( main )
-      MagicRule( subProofNew, aux, mainNew, name )
-
     case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
 
