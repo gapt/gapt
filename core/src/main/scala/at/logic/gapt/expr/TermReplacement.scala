@@ -1,7 +1,6 @@
 
 package at.logic.gapt.expr
 
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.utils.Not
 
