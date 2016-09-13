@@ -692,7 +692,7 @@ object ContractionMacroRule extends ConvenienceConstructor( "ContractionMacroRul
    * @param targetSequent The target sequent.
    * @param strict If true, the end sequent of p must 1.) contain every formula at least as often as targetSequent
    *               and 2.) contain no formula that isn't contained at least once in targetSequent.
-   * @return s1 with its end sequent contracted down to targetSequent.
+   * @return p with its end sequent contracted down to targetSequent.
    */
   def apply( p: LKProof, targetSequent: HOLSequent, strict: Boolean = true ): LKProof = withOccConnector( p, targetSequent, strict )._1
 

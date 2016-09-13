@@ -66,20 +66,5 @@ object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
     }
   }
 
-  protected override def visitCut( proof: CutRule, formula: HOLFormula ) = contractAfter( super.visitCut )( proof, formula )
-
-  protected override def visitAndRight( proof: AndRightRule, formula: HOLFormula ) = contractAfter( super.visitAndRight )( proof, formula )
-
-  protected override def visitOrLeft( proof: OrLeftRule, formula: HOLFormula ) = contractAfter( super.visitOrLeft )( proof, formula )
-
-  protected override def visitImpLeft( proof: ImpLeftRule, formula: HOLFormula ) = contractAfter( super.visitImpLeft )( proof, formula )
-
-  protected override def visitInduction( proof: InductionRule, formula: HOLFormula ) = contractAfter( super.visitInduction )( proof, formula )
-
-  private def contractAfter[A]( visitingFunction: ( A, HOLFormula ) => ( LKProof, OccConnector[HOLFormula] ) )( proof: A, formula: HOLFormula ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val ( subProof, subConn ) = visitingFunction( proof, formula )
-    val ( proofNew, conn ) = ContractionLeftMacroRule.withOccConnector( subProof, formula )
-
-    ( proofNew, conn * subConn )
-  }
+  protected override def recurse( proof: LKProof, formula: HOLFormula ) = contractAfter( super.recurse( _, formula ) )( proof )
 }

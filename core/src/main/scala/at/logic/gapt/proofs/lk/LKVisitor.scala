@@ -29,7 +29,7 @@ trait LKVisitor[T] {
     ( result._1, result._2 )
   }
 
-  def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
+  protected def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
     case p: OpenAssumption =>
       visitOpenAssumption( p, otherArg )
 
@@ -282,4 +282,34 @@ trait LKVisitor[T] {
       case Seq( ( subProof, subConn ) ) =>
         DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
     }
+
+  /**
+   * Inserts contractions after the supplied visiting function is called.
+   * Only formula occurrences that were not in the old proof -- i.e., that have been added by the visitor -- are contracted.
+   * @param visitingFunction The visiting function after which contractions should be inserted.
+   *                         In most cases, just using `recurse` here should be fine.
+   * @param proof The proof on which to call the visiting function.
+   * @return A proof and occ connector similar to those returned by visitingFunction(proof), but with all duplicate new formulas contracted.
+   */
+  def contractAfter( visitingFunction: ( LKProof ) => ( LKProof, OccConnector[HOLFormula] ) )( proof: LKProof ): ( LKProof, OccConnector[HOLFormula] ) = {
+    val ( subProof, subConn ) = visitingFunction( proof )
+
+    val newFormulas = subProof.endSequent.indicesSequent
+      .filter { subConn.parents( _ ).isEmpty } // Formula occurrences that were not in the old proof
+      .groupBy( subProof.endSequent( _ ) ) // Group them by formula
+      .filterNot( _._2.length < 2 ) // Take only the formulas with at least two occurrences
+      .map { _._2 } // Take only the indices
+
+    val ( leftProof, leftConn ) = newFormulas.antecedent.foldLeft( ( subProof, subConn ) ) { ( acc, indices ) =>
+      val ( p, c ) = acc
+      val ( pNew, cNew ) = ContractionLeftMacroRule.withOccConnector( p, indices )
+      ( pNew, cNew * c )
+    }
+
+    newFormulas.succedent.foldLeft( ( leftProof, leftConn ) ) { ( acc, indices ) =>
+      val ( p, c ) = acc
+      val ( pNew, cNew ) = ContractionRightMacroRule.withOccConnector( p, indices )
+      ( pNew, cNew * c )
+    }
+  }
 }
