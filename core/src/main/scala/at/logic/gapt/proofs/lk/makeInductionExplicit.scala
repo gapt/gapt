@@ -16,8 +16,10 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
   }
 
-  def apply( p: LKProof ): LKProof =
-    ContractionMacroRule( apply( p, () ) )
+  override def recurse( p: LKProof, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
+    contractAfter( super.recurse( _, otherArg ) )( p )
+
+  def apply( p: LKProof ): LKProof = apply( p, () )
 
   override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
     val indty = proof.indTy
