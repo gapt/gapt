@@ -66,5 +66,5 @@ object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
     }
   }
 
-  protected override def recurse( proof: LKProof, formula: HOLFormula ) = contractAfter( super.recurse( _, formula ) )( proof )
+  protected override def recurse( proof: LKProof, formula: HOLFormula ) = contractAfter( super.recurse )( proof, formula )
 }

@@ -284,15 +284,14 @@ trait LKVisitor[T] {
     }
 
   /**
-   * Inserts contractions after the supplied visiting function is called.
+   * Transforms a visiting function by inserting contractions after it.
    * Only formula occurrences that were not in the old proof -- i.e., that have been added by the visitor -- are contracted.
    * @param visitingFunction The visiting function after which contractions should be inserted.
    *                         In most cases, just using `recurse` here should be fine.
-   * @param proof The proof on which to call the visiting function.
-   * @return A proof and occ connector similar to those returned by visitingFunction(proof), but with all duplicate new formulas contracted.
+   * @return A new visiting function that behaves the same as the old one, but contracts all duplicate new formulas at the end.
    */
-  def contractAfter( visitingFunction: ( LKProof ) => ( LKProof, OccConnector[HOLFormula] ) )( proof: LKProof ): ( LKProof, OccConnector[HOLFormula] ) = {
-    val ( subProof, subConn ) = visitingFunction( proof )
+  def contractAfter[A]( visitingFunction: ( LKProof, A ) => ( LKProof, OccConnector[HOLFormula] ) ): ( LKProof, A ) => ( LKProof, OccConnector[HOLFormula] ) = { ( proof, otherArg ) =>
+    val ( subProof, subConn ) = visitingFunction( proof, otherArg )
 
     val newFormulas = subProof.endSequent.indicesSequent
       .filter { subConn.parents( _ ).isEmpty } // Formula occurrences that were not in the old proof
