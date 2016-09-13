@@ -17,7 +17,7 @@ object makeInductionExplicit extends LKVisitor[Unit] {
   }
 
   override def recurse( p: LKProof, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
-    contractAfter( super.recurse( _, otherArg ) )( p )
+    contractAfter( super.recurse )( p, otherArg )
 
   def apply( p: LKProof ): LKProof = apply( p, () )
 
