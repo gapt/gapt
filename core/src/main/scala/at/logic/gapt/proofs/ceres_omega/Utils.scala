@@ -14,6 +14,8 @@ import at.logic.gapt.proofs.lksk._
 //TODO: generalize the definition of fitting (add a predicate which decides if a candidate fits)
 object Pickrule {
   type zipIndex = ( LabelledFormula, SequentIndex )
+  val pick_from_es = false
+  val pick_from_cutanc = true
 
   /**
    * picks one occurrences from the candidates s.t. formulas (if it exists) are identical
@@ -62,7 +64,6 @@ object Pickrule {
    */
   def pick1( es: LabelledSequent, aux: SequentIndex, candidates: Seq[zipIndex] ): ( SequentIndex, Seq[zipIndex] ) = {
     val auxformula = es( aux )
-    //TODO: add restriction to es-ancestor
     candidates.find( _._1 == auxformula ) match {
       case Some( ( _, index ) ) => ( index, candidates filterNot ( _._2 == index ) )
       case None                 => throw new Exception( "Can not find suitable occurrence for " + auxformula + " in " + candidates.toString )
@@ -78,13 +79,14 @@ object Pickrule {
    * @param old_parents The parents of p.
    * @param new_parents The intended parents for p'
    * @param old_aux The indices of the auxiliary formulas in the parents
+   * @param pick_cut_ancestor if true, pick only from cut-ancestors. if false, pick only from end-sequent ancestors
    * @return a list of indices in new_parents where the formulas match old_aux
    */
   def pickrule( p: LKskProof, old_parents: Seq[LKskProof], new_parents: Seq[( LKskProof, Sequent[Boolean] )],
-                old_aux: List[SequentIndex] ): List[SequentIndex] = {
+                old_aux: List[SequentIndex], pick_cut_ancestor: Boolean ): List[SequentIndex] = {
     //debug("Pick for rule: "+p.name)
-    //TODO: adapt for additional exclusion list
-    val s = new_parents map ( _._1.conclusion.zipWithIndex )
+    //candidates are filtered to be only cut- or es- ancestors before being passed to pick1 / pick2
+    val s = new_parents map ( np => np._1.conclusion.zipWithIndex.filter { case ( _, idx ) => np._2( idx ) == pick_cut_ancestor } )
     p match {
       //Unary rules
       case _: WeakeningLeft =>

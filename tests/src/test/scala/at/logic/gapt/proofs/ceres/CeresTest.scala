@@ -9,7 +9,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.lk.CutRule
+import at.logic.gapt.proofs.lk.{ CutRule, ReductiveCutElimination }
 import org.specs2.mutable._
 
 class CeresTest extends Specification with SequentMatchers {
@@ -39,6 +39,12 @@ class CeresTest extends Specification with SequentMatchers {
       val acnf = CERES( proof, Escargot )
       acnf.endSequent must beMultiSetEqual( proof.endSequent )
     }
+  }
+
+  "a simple intuitionistic proof" in {
+    val proof = simple.fol2.proof
+    val acnf = ReductiveCutElimination( CERES( proof ) )
+    acnf.endSequent must beMultiSetEqual( proof.endSequent )
   }
 
   "many-sorted proofs" in {

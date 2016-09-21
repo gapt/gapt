@@ -4,21 +4,21 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.replaceAbstractions
 import at.logic.gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.llk.LLKProofParser
+import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, LKToLKsk, regularize }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, LKToLKsk, regularize, LKProof }
 import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.utils.Logger
 import org.specs2.mutable._
 
 //TODO: Fix the test!
 
-class ceres_omegaTest extends Specification with Logger {
+class ceres_omegaTest extends Specification with SequentMatchers with Logger {
 
   def load( file: String, pname: String ) =
     LLKProofParser( ClasspathInputFile( file ) ).proof( pname )
@@ -150,6 +150,17 @@ class ceres_omegaTest extends Specification with Logger {
       //val et = LKskToExpansionProof( acnf )
       ok
     }
+
+    "a simple intuitionistic proof" in {
+      object CE extends AnalysisWithCeresOmega {
+        override def proofdb() = ExtendedProofDatabase( Map[HOLFormula, LKProof]( hof"THEPROOF" -> simple.fol2.proof ), Map(), Map() )
+        override def root_proof = "THEPROOF";
+        override def skip_strategy() = CERES.skipNothing
+      }
+
+      CE.acnf.conclusion must beMultiSetEqual( CE.lksk_proof.conclusion )
+    }
+
   }
 
 }
