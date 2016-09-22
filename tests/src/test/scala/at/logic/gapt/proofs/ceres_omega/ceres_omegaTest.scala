@@ -7,12 +7,13 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres.CERES
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, LKToLKsk, regularize, LKProof }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, DefinitionElimination, LKProof, LKToLKsk, regularize }
 import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.proofs.lksk._
 import at.logic.gapt.proofs.ral._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.SequentMatchers
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.Logger
 import org.specs2.mutable._
 
@@ -141,17 +142,18 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
 
   "Ceres_omega" should {
     "handle a proof with a manual refutation (1)" in {
-      //skipped( "ceres omega still has problems" )
+      skipped( "refutation1 throws errors during creation; don't know if LKskToExpansionProof works" )
       val ( p, cs, struct, proj ) = prepareProof( "llk/simple-leibnizeq.llk", "THEPROOF" )
-      //val rp = refutation1( cs.map( _.map( _._2 ) ) )
+      val rp = refutation1( cs.map( _.map( _._2 ) ) )
 
-      //val ( acnf, _ ) = ceres_omega( proj, rp, p.conclusion, struct )
+      val ( acnf, _ ) = ceres_omega( proj, rp, p.conclusion, struct )
       //TODO: fix LKskToExpansionProof
-      //val et = LKskToExpansionProof( acnf )
+      val et = LKskToExpansionProof( acnf )
       ok
     }
 
     "a simple intuitionistic proof" in {
+      if ( !Prover9.isInstalled ) skipped( "No Prover9 installed!" )
       object CE extends AnalysisWithCeresOmega {
         override def proofdb() = ExtendedProofDatabase( Map[HOLFormula, LKProof]( hof"THEPROOF" -> simple.fol2.proof ), Map(), Map() )
         override def root_proof = "THEPROOF";
