@@ -45,7 +45,7 @@ class EscargotState extends Logger {
   var newlyDerived = Set[Cls]()
   val usable = mutable.Set[Cls]()
   var workedOff = Set[Cls]()
-  val locked = mutable.Set[Cls]()
+  val locked = mutable.Set[( Cls, Option[HOLClause] )]()
 
   var avatarModel = MapBasedInterpretation( Map() )
   var emptyClauses = mutable.Map[HOLClause, Cls]()
@@ -78,7 +78,7 @@ class EscargotState extends Logger {
       if ( isActive( c ) ) {
         usable += c
       } else if ( c.clause.nonEmpty ) {
-        locked += c
+        locked += ( c -> None )
       }
     }
     newlyDerived = Set()
@@ -91,8 +91,12 @@ class EscargotState extends Logger {
     for ( r <- inferences if !discarded ) {
       val ( i, d ) = r( given, workedOff )
       inferred ++= i
-      workedOff --= d
-      if ( d contains given ) discarded = true
+      for ( ( c, reason ) <- d ) {
+        workedOff -= c
+        if ( c == given ) discarded = true
+        if ( !reason.isSubMultisetOf( c.assertion ) )
+          locked += ( c -> Some( reason ) )
+      }
     }
 
     if ( !discarded ) workedOff += given
@@ -123,18 +127,18 @@ class EscargotState extends Logger {
       avatarModel.model.keys.map( a => a -> model.interpretAtom( a ) ).toMap
     )
 
-    for ( cls <- locked.toSet if isActive( cls ) ) {
-      locked -= cls
+    for ( ( cls, reason ) <- locked.toSet if isActive( cls ) && reason.forall { !isActive( _ ) } ) {
+      locked -= ( cls -> reason )
       usable += cls
     }
     for ( cls <- usable if cls.clause.isEmpty ) usable -= cls
     for ( cls <- workedOff if !isActive( cls ) ) {
       workedOff -= cls
-      locked += cls
+      locked += ( cls -> None )
     }
     for ( cls <- usable if !isActive( cls ) ) {
       usable -= cls
-      locked += cls
+      locked += ( cls -> None )
     }
   }
 
