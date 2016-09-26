@@ -1,11 +1,11 @@
 package at.logic.gapt.prooftool
 
 import java.awt.Font._
+import java.awt.event.{ MouseEvent, MouseMotionListener }
 import java.awt.{ Color, RenderingHints }
-import java.awt.event.{ ComponentEvent, MouseEvent, MouseMotionListener }
 
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ Sequent, SequentIndex, SequentProof, lk }
+import at.logic.gapt.proofs.{ SequentIndex, SequentProof }
 
 import scala.swing._
 import scala.swing.event._
@@ -16,7 +16,6 @@ import scala.swing.event._
  * @param proof The proof being displayed.
  * @param auxIndices The indices of the auxiliary formulas of the bottommost inference.
  * @param cutAncestorIndices The indices of ancestors of cut formulas in the end sequent.
- * @param sequentElementRenderer
  * @param pos The position of this proof relative to the main proof being displayed.
  */
 class DrawSequentProof[F, T <: SequentProof[F, T]](
@@ -28,12 +27,12 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val pos:                List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   var collapsed = false
-  private var lineHidden_ = 0
-  def lineHidden = lineHidden_
-  def lineHidden_=( i: Int ) = {
+  private var lineHideLevel_ = 0
+  def lineHideLevel = lineHideLevel_
+  def lineHideLevel_=( i: Int ) = {
     require( i >= 0 )
-    lineHidden_ = i
-    linePanel.visible = lineHidden == 0
+    lineHideLevel_ = i
+    linePanel.visible = lineHideLevel == 0
   }
 
   private val endSequentPanel = {
@@ -71,7 +70,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof.auxIndices.head.toSet,
       cutAncestorIndicesNew( i ),
       sequentElementRenderer,
-      pos :+ i
+      i :: pos
     )
   }
 
@@ -127,7 +126,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     case ShowSequentProof( p ) if p == pos =>
       collapsed = false
       contents( 1 ) = subProofsPanel
-      lineHidden -= 1
+      lineHideLevel -= 1
 
     case HideSequentProof( p ) if p == pos =>
       collapsed = true
@@ -139,22 +138,22 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
           xLayoutAlignment = java.awt.Component.CENTER_ALIGNMENT
           text = "(...)"
         }
-        lineHidden += 1
+        lineHideLevel += 1
       }
 
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
-          lineHidden += 1
-          main.publisher.publish( HideEndSequent( pos :+ 0 ) )
+          lineHideLevel += 1
+          main.publisher.publish( HideEndSequent( 0 :: pos ) )
         case _ =>
       }
 
     case HideEndSequent( p ) if p == pos =>
       endSequentPanel.visible = false
 
-    case ShowAllRules( p ) if pos startsWith p =>
-      lineHidden = if ( lineHidden > 0 ) lineHidden - 1 else 0
+    case ShowAllRules( p ) if pos endsWith p =>
+      lineHideLevel = if ( lineHideLevel > 0 ) lineHideLevel - 1 else 0
       endSequentPanel.visible = true
 
     case ShowDebugBorders =>
