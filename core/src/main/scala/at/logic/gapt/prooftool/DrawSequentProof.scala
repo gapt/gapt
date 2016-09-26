@@ -77,7 +77,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   val subProofsPanel = new SubproofsPanel( this, subProofs )
   val linePanel = new ProofLinePanel( this, proof.name )
 
-  contents += Swing.VGlue
+  if ( pos.isEmpty ) contents += Swing.VGlue
   contents += subProofsPanel
   contents += linePanel
   contents += endSequentPanel
@@ -178,7 +178,8 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
     val subProofs: Seq[DrawSequentProof[F, T]]
 ) extends BoxPanel( Orientation.Horizontal ) {
 
-  subProofs.foreach( contents += _ )
+  subProofs.foreach( contents += )
+  subProofs.foreach( _.yLayoutAlignment = 1 ) // Forces the subproof panels to align along their bottom edges
 
   def getEndSequentWidth() = subProofs match {
     case Seq() => 0
