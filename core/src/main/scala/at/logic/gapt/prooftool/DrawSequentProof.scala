@@ -222,21 +222,20 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
   def labelFont = labelFont_
   def labelFont_=( ft: Font ) = {
     labelFont_ = ft
-    computeLineWidth()
+    computeLineWidth( fontSizeHasChanged = true )
   }
   def labelFontMetrics = peer.getFontMetrics( labelFont )
 
-  def computeLineWidth() = {
-    val newLineWidth = Seq( lineWidth, parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth ).max
-    if ( newLineWidth != lineWidth ) {
-      lineWidth = newLineWidth
-      val width = lineWidth + labelFontMetrics.stringWidth( proofName ) * 2 + fSize
-      val height = labelFontMetrics.getHeight + fSize / 4
-      preferredSize = new Dimension( width, height )
-      minimumSize = preferredSize
-      maximumSize = preferredSize
-      revalidate()
-    }
+  def computeLineWidth( fontSizeHasChanged: Boolean = false ): Unit = {
+    val newLineWidth = math.max( parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth )
+    if ( !fontSizeHasChanged && lineWidth >= newLineWidth ) return // ensure convergence
+    lineWidth = newLineWidth
+    val width = lineWidth + labelFontMetrics.stringWidth( proofName ) * 2 + fSize
+    val height = labelFontMetrics.getHeight + fSize / 4
+    preferredSize = new Dimension( width, height )
+    minimumSize = preferredSize
+    maximumSize = preferredSize
+    revalidate()
   }
 
   var lineWidth = 0; computeLineWidth()
