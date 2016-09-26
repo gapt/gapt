@@ -42,6 +42,8 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     Nil
   )
 
+  scrollPane.border = Swing.EmptyBorder( 0, 0, 10, 0 )
+
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), sunburstViewButton )
 
   def hideSequentContext() = publisher.publish( HideSequentContexts )

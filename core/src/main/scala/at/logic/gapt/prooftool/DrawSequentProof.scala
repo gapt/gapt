@@ -81,6 +81,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   contents += subProofsPanel
   contents += linePanel
   contents += endSequentPanel
+  if ( pos.isEmpty ) contents += Swing.VGlue
 
   def endSequentWidth = endSequentPanel.width
   def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2
