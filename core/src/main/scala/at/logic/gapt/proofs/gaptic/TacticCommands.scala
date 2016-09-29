@@ -57,7 +57,7 @@ trait TacticCommands {
    * `Γ :- Δ, A`.
    * @param applyToLabel The label of the formula `¬A`.
    */
-  def negL( applyToLabel: String ) = new NegLeftTactic( OnLabel( applyToLabel ) )
+  def negL( applyToLabel: String ) = NegLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `NegLeft` tactic to the current subgoal: The goal
@@ -70,7 +70,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one negated formula in the antecedent!
    */
-  def negL = new NegLeftTactic()
+  def negL = NegLeftTactic()
 
   /**
    * Applies the `NegRight` tactic to the current subgoal: The goal
@@ -82,7 +82,7 @@ trait TacticCommands {
    * `A, Γ :- Δ`.
    * @param applyToLabel The label of the formula `¬A`.
    */
-  def negR( applyToLabel: String ) = new NegRightTactic( OnLabel( applyToLabel ) )
+  def negR( applyToLabel: String ) = NegRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `NegRight` tactic to the current subgoal: The goal
@@ -95,7 +95,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one negated formula in the succedent!
    */
-  def negR = new NegRightTactic()
+  def negR = NegRightTactic()
 
   /**
    * Applies the `AndLeft` tactic to the current subgoal: The goal
@@ -107,7 +107,7 @@ trait TacticCommands {
    * `A, B, Γ :- Δ`.
    * @param applyToLabel The label of the formula `A ∧ B`.
    */
-  def andL( applyToLabel: String ) = new AndLeftTactic( OnLabel( applyToLabel ) )
+  def andL( applyToLabel: String ) = AndLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `AndLeft` tactic to the current subgoal: The goal
@@ -120,7 +120,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one conjunctive formula in the antecedent!
    */
-  def andL = new AndLeftTactic()
+  def andL = AndLeftTactic()
 
   /**
    * Applies the `AndRight` tactic to the current subgoal: The goal
@@ -132,7 +132,7 @@ trait TacticCommands {
    * `Γ :- Δ, A` and `Γ :- Δ, B`.
    * @param applyToLabel The label of the formula `A ∧ B`.
    */
-  def andR( applyToLabel: String ) = new AndRightTactic( OnLabel( applyToLabel ) )
+  def andR( applyToLabel: String ) = AndRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `AndRight` tactic to the current subgoal: The goal
@@ -145,7 +145,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one conjunctive formula in the succedent!
    */
-  def andR = new AndRightTactic()
+  def andR = AndRightTactic()
 
   /**
    * Applies the `OrLeft` tactic to the current subgoal: The goal
@@ -157,7 +157,7 @@ trait TacticCommands {
    * `A, Γ :- Δ` and `B, Γ :- Δ`.
    * @param applyToLabel The label of the formula `A ∨ B`.
    */
-  def orL( applyToLabel: String ) = new OrLeftTactic( OnLabel( applyToLabel ) )
+  def orL( applyToLabel: String ) = OrLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `OrLeft` tactic to the current subgoal: The goal
@@ -170,7 +170,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one disjunctive formula in the antecedent!
    */
-  def orL = new OrLeftTactic()
+  def orL = OrLeftTactic()
 
   /**
    * Applies the `OrRight` tactic to the current subgoal: The goal
@@ -182,7 +182,7 @@ trait TacticCommands {
    * `Γ :- Δ, A, B`.
    * @param applyToLabel The label of the formula `A ∨ B`.
    */
-  def orR( applyToLabel: String ) = new OrRightTactic( OnLabel( applyToLabel ) )
+  def orR( applyToLabel: String ) = OrRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `OrRight` tactic to the current subgoal: The goal
@@ -195,7 +195,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one disjunctive formula in the succedent!
    */
-  def orR = new OrRightTactic()
+  def orR = OrRightTactic()
 
   /**
    * Applies the `ImpLeft` tactic to the current subgoal: The goal
@@ -207,7 +207,7 @@ trait TacticCommands {
    * `Γ :- Δ, A` and `B, Γ :- Δ`.
    * @param applyToLabel The label of the formula `A → B`.
    */
-  def impL( applyToLabel: String ) = new ImpLeftTactic( OnLabel( applyToLabel ) )
+  def impL( applyToLabel: String ) = ImpLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ImpLeft` tactic to the current subgoal: The goal
@@ -220,7 +220,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one implicative formula in the antecedent!
    */
-  def impL = new ImpLeftTactic()
+  def impL = ImpLeftTactic()
 
   /**
    * Applies the `ImpRight` tactic to the current subgoal: The goal
@@ -232,7 +232,7 @@ trait TacticCommands {
    * `A, Γ :- Δ, B`.
    * @param applyToLabel The label of the formula `A → B`.
    */
-  def impR( applyToLabel: String ) = new ImpRightTactic( OnLabel( applyToLabel ) )
+  def impR( applyToLabel: String ) = ImpRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ImpRight` tactic to the current subgoal: The goal
@@ -245,7 +245,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one implicative formula in the succedent!
    */
-  def impR = new ImpRightTactic()
+  def impR = ImpRightTactic()
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -258,7 +258,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∃x.A`.
    * @param eigenVariable The variable `α`.
    */
-  def exL( applyToLabel: String, eigenVariable: Var ) = new ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
+  def exL( applyToLabel: String, eigenVariable: Var ) = ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -272,7 +272,7 @@ trait TacticCommands {
    * This will only work if there is exactly one existential formula in the antecedent!
    * @param eigenVariable The variable `α`.
    */
-  def exL( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
+  def exL( eigenVariable: Var ) = ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -284,7 +284,7 @@ trait TacticCommands {
    * `A, Γ :- Δ`.
    * @param applyToLabel The label of the formula `∃x.A`.
    */
-  def exL( applyToLabel: String ) = new ExistsLeftTactic( OnLabel( applyToLabel ) )
+  def exL( applyToLabel: String ) = ExistsLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -297,7 +297,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one existential formula in the antecedent!
    */
-  def exL = new ExistsLeftTactic()
+  def exL = ExistsLeftTactic()
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -310,7 +310,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∃x,,1,,...∃x,,n,,.A`.
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( applyToLabel: String, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
+  def exR( applyToLabel: String, terms: LambdaExpression* ) = ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -324,7 +324,7 @@ trait TacticCommands {
    * This will only work if there is exactly one existential formula in the succedent!
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
+  def exR( terms: LambdaExpression* ) = ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -337,7 +337,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∀x,,1,,,...,∀x,,n,,.A`.
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( applyToLabel: String, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
+  def allL( applyToLabel: String, terms: LambdaExpression* ) = ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -351,7 +351,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the antecedent!
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
+  def allL( terms: LambdaExpression* ) = ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -364,7 +364,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∀x.A`.
    * @param eigenVariable The variable `α`.
    */
-  def allR( applyToLabel: String, eigenVariable: Var ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
+  def allR( applyToLabel: String, eigenVariable: Var ) = ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -378,7 +378,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the succedent!
    * @param eigenVariable The variable `α`.
    */
-  def allR( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
+  def allR( eigenVariable: Var ) = ForallRightTactic( eigenVariable = Some( eigenVariable ) )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -390,7 +390,7 @@ trait TacticCommands {
    * `Γ :- Δ, A`.
    * @param applyToLabel The label of the formula `∀x.A`.
    */
-  def allR( applyToLabel: String ) = new ForallRightTactic( OnLabel( applyToLabel ) )
+  def allR( applyToLabel: String ) = ForallRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -403,7 +403,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one universal formula in the succedent!
    */
-  def allR = new ForallRightTactic()
+  def allR = ForallRightTactic()
 
   /**
    * Applies the `Cut` tactic to the current subgoal: The goal
@@ -589,13 +589,13 @@ trait TacticCommands {
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.
    */
-  def focus( indexOfSubGoal: Int ) = new FocusTactical( Left( indexOfSubGoal ) )
+  def focus( indexOfSubGoal: Int ) = FocusTactical( Left( indexOfSubGoal ) )
 
   /**
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.
    */
-  def focus( indexOfSubGoal: OpenAssumptionIndex ) = new FocusTactical( Right( indexOfSubGoal ) )
+  def focus( indexOfSubGoal: OpenAssumptionIndex ) = FocusTactical( Right( indexOfSubGoal ) )
 
   /**
    * Changes the provided label. Syntax:
