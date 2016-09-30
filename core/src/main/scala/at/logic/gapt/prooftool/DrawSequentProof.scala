@@ -75,7 +75,17 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   }
 
   val subProofsPanel = new SubproofsPanel( this, subProofs )
+  val subProofsHiddenPanel = new BoxPanel( Orientation.Vertical ) {
+    opaque = false
+    contents += new Label( "CollapsedProof" ) {
+      xLayoutAlignment = java.awt.Component.CENTER_ALIGNMENT
+      text = "(...)"
+    }
+
+  }
   val linePanel = new ProofLinePanel( this, proof.name )
+
+  val subProofsPanelIndex = if ( pos.isEmpty ) 1 else 0
 
   if ( pos.isEmpty ) contents += Swing.VGlue
   contents += subProofsPanel
@@ -83,20 +93,44 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   contents += endSequentPanel
   if ( pos.isEmpty ) contents += Swing.VGlue
 
+  def lineWidth() = linePanel.width
   def endSequentWidth = endSequentPanel.width
-  def endSequentMarginWidth = ( size.width - endSequentWidth ) / 2
+  def subProofsWidth() = subProofsPanel.width()
 
-  //FIXME: What is this used for?
-  def getLocationOfProof( p: SequentProof[_, _] ): Option[Point] = {
-    if ( p == proof ) {
-      Some( new Point( location.x + bounds.width / 2, location.y + bounds.height ) )
-    } else {
-      contents.view.
-        collect { case dp: DrawSequentProof[_, _] => dp.getLocationOfProof( p ) }.
-        flatten.headOption
+  def width() = {
+    val lowerWidth = math.max( lineWidth(), endSequentWidth )
+
+    if ( collapsed ) lowerWidth else math.max( lowerWidth, subProofsWidth() )
+  }
+
+  def endSequentLeftMarginWidth(): Int = {
+    ( width() / 2 - endSequentWidth * ( 1 - endSequentPanel.xLayoutAlignment ) ).toInt
+  }
+
+  def endSequentRightMarginWidth(): Int = {
+    ( width() / 2 - endSequentWidth * endSequentPanel.xLayoutAlignment ).toInt
+  }
+
+  subProofsPanel.xLayoutAlignment = 0.5
+  endSequentPanel.xLayoutAlignment = {
+    if ( subProofs.isEmpty )
+      0.5
+    else {
+      val y = subProofsPanel.endSequentRightMarginWidth().toDouble
+
+      ( subProofsPanel.endSequentWidth() / 2 + y ) / subProofsPanel.width()
     }
   }
 
+  linePanel.xLayoutAlignment = {
+    if ( subProofs.isEmpty )
+      0.5
+    else {
+      val y = subProofsPanel.endSequentRightMarginWidth().toDouble
+
+      ( subProofsPanel.endSequentWidth() / 2 + y ) / subProofsPanel.width()
+    }
+  }
   /*
    * Window management stuff & reactions
    */
@@ -126,21 +160,13 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
     case ShowSequentProof( p ) if p == pos =>
       collapsed = false
-      contents( 1 ) = subProofsPanel
+      contents( subProofsPanelIndex ) = subProofsPanel
       lineHideLevel -= 1
 
     case HideSequentProof( p ) if p == pos =>
       collapsed = true
-      contents( 1 ) = new BoxPanel( Orientation.Vertical ) {
-        opaque = false
-
-        contents += Swing.VGlue
-        contents += new Label( "CollapsedProof" ) {
-          xLayoutAlignment = java.awt.Component.CENTER_ALIGNMENT
-          text = "(...)"
-        }
-        lineHideLevel += 1
-      }
+      contents( subProofsPanelIndex ) = subProofsHiddenPanel
+      lineHideLevel += 1
 
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
@@ -181,14 +207,22 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
   subProofs.foreach( contents += )
   subProofs.foreach( _.yLayoutAlignment = 1 ) // Forces the subproof panels to align along their bottom edges
 
-  def getEndSequentWidth() = subProofs match {
+  def width(): Int = subProofs.map( _.width() ).sum
+
+  def endSequentLeftMarginWidth() = subProofs match {
     case Seq() => 0
     case _ =>
-      val leftMargin = subProofs.head.endSequentMarginWidth
-      val rightMargin = subProofs.last.endSequentMarginWidth
+      subProofs.head.endSequentLeftMarginWidth()
+  }
 
-      // FIXME: consider both sides separately
-      size.width - 2 * math.min( leftMargin, rightMargin )
+  def endSequentRightMarginWidth() = subProofs match {
+    case Seq() => 0
+    case _ =>
+      subProofs.last.endSequentRightMarginWidth()
+  }
+
+  def endSequentWidth() = {
+    width() - endSequentLeftMarginWidth() - endSequentRightMarginWidth()
   }
 
   border = Swing.EmptyBorder( 0, 0, 0, 0 )
@@ -228,18 +262,19 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
   def labelFontMetrics = peer.getFontMetrics( labelFont )
 
   def computeLineWidth( fontSizeHasChanged: Boolean = false ): Unit = {
-    val newLineWidth = math.max( parent.subProofsPanel.getEndSequentWidth(), parent.endSequentWidth )
+    val newLineWidth = math.max( parent.subProofsPanel.endSequentWidth(), parent.endSequentWidth )
     if ( !fontSizeHasChanged && lineWidth >= newLineWidth ) return // ensure convergence
     lineWidth = newLineWidth
-    val width = lineWidth + labelFontMetrics.stringWidth( proofName ) * 2 + fSize
-    val height = labelFontMetrics.getHeight + fSize / 4
+    labelWidth = labelFontMetrics.stringWidth( proofName ) * 2 + fSize
+    width = lineWidth + labelWidth
+    height = labelFontMetrics.getHeight + fSize / 4
     preferredSize = new Dimension( width, height )
     minimumSize = preferredSize
     maximumSize = preferredSize
     revalidate()
   }
 
-  var lineWidth = 0; computeLineWidth()
+  var width = 0; var height = 0; var lineWidth = 0; var labelWidth = 0; computeLineWidth()
 
   override def paintComponent( g: Graphics2D ): Unit = {
     val leftPoint = ( size.width - lineWidth ) / 2

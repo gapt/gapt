@@ -46,6 +46,9 @@ object PopupMenu {
                 dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )
             }
           }
+          contents += new MenuItem( Action( "View proof in new window" ) {
+            prooftool( dsp.proof )
+          } )
       }
     }
     popupMenu.show( dsp, x, y )

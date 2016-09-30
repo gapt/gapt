@@ -63,7 +63,7 @@ class DrawSequent[T](
   var width = contentLabels.map( _.icon.getIconWidth ).sum + 30
   var height = contentLabels.map( _.icon.getIconHeight ).max + font.getSize / 2
   preferredSize = new Dimension( width, height )
-  maximumSize = new Dimension( Int.MaxValue, height )
+  maximumSize = new Dimension( 2 * width, height )
 
   listenTo( main.publisher )
 
