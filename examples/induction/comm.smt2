@@ -1,5 +1,9 @@
 ; viper cansolsize 2,2
 
+; This is needed for qmaxsat, otherwise we get a grammar corresponding to a
+; quantified lemma:
+; viper qtys
+
 (declare-datatypes () ((nat (o) (s (p nat)))))
 (define-fun-rec plus ((x nat) (y nat)) nat
   (match y
