@@ -26,6 +26,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     sequentElementRenderer: F => String,
     val pos:                List[Int]
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
+  val defaultBorder = Swing.LineBorder( Color.WHITE )
   var collapsed = false
   private var lineHideLevel_ = 0
   def lineHideLevel = lineHideLevel_
@@ -47,8 +48,15 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     ds.border = Swing.EmptyBorder
     ds.listenTo( ds.mouse.moves, ds.mouse.clicks, ds.mouse.wheel, main.publisher )
     ds.reactions += {
-      case e: MouseEntered => ds.contents.foreach( x => x.foreground = Color.BLUE )
-      case e: MouseExited  => ds.contents.foreach( x => x.foreground = Color.BLACK )
+      case e: MouseEntered =>
+        ds.contents.foreach( x => x.foreground = Color.BLUE )
+        if ( pos.nonEmpty )
+          this.border = Swing.LineBorder( Color.RED )
+      case e: MouseWheelMoved =>
+        main.scrollPane.peer.dispatchEvent( e.peer )
+      case e: MouseExited =>
+        ds.contents.foreach( x => x.foreground = Color.BLACK )
+        this.border = defaultBorder
       //        This functionality can be written later if needed
       case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
         PopupMenu( DrawSequentProof.this, e.point.x, e.point.y )
@@ -94,48 +102,46 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   if ( pos.isEmpty ) contents += Swing.VGlue
 
   def lineWidth() = linePanel.width
-  def endSequentWidth = endSequentPanel.width
+  def endSequentWidth() = endSequentPanel.width
   def subProofsWidth() = subProofsPanel.width()
 
   def width() = {
-    val lowerWidth = math.max( lineWidth(), endSequentWidth )
+    val lowerWidth = math.max( lineWidth(), endSequentWidth() )
 
     if ( collapsed ) lowerWidth else math.max( lowerWidth, subProofsWidth() )
   }
 
   def endSequentLeftMarginWidth(): Int = {
-    ( width() / 2 - endSequentWidth * ( 1 - endSequentPanel.xLayoutAlignment ) ).toInt
+    ( width() / 2 - endSequentWidth * endSequentPanel.xLayoutAlignment ).toInt
+    //( width() * subProofsPanel.xLayoutAlignment - endSequentWidth() / 2 ).toInt
   }
 
   def endSequentRightMarginWidth(): Int = {
-    ( width() / 2 - endSequentWidth * endSequentPanel.xLayoutAlignment ).toInt
+    ( width() / 2 - endSequentWidth * ( 1 - endSequentPanel.xLayoutAlignment ) ).toInt
+    //( width() * ( 1 - subProofsPanel.xLayoutAlignment ) - endSequentWidth() / 2 ).toInt
   }
 
   subProofsPanel.xLayoutAlignment = 0.5
-  endSequentPanel.xLayoutAlignment = {
-    if ( subProofs.isEmpty )
-      0.5
-    else {
-      val y = subProofsPanel.endSequentRightMarginWidth().toDouble
+  endSequentPanel.xLayoutAlignment = ( subProofsWidth() * ( 1 - 2 * subProofsPanel.endSequentMidpoint() ) + lineWidth() ) / ( 2 * lineWidth() )
+  linePanel.xLayoutAlignment = ( subProofsWidth() * ( 1 - 2 * subProofsPanel.endSequentMidpoint() ) + lineWidth() ) / ( 2 * lineWidth() )
 
-      ( subProofsPanel.endSequentWidth() / 2 + y ) / subProofsPanel.width()
-    }
-  }
+  /*subProofsPanel.xLayoutAlignment = subProofsPanel.endSequentMidpoint()
+  linePanel.xLayoutAlignment = 0.5
+  subProofsPanel.xLayoutAlignment = 0.5*/
 
-  linePanel.xLayoutAlignment = {
-    if ( subProofs.isEmpty )
-      0.5
-    else {
-      val y = subProofsPanel.endSequentRightMarginWidth().toDouble
+  /*if ( pos.isEmpty ) {
+    println( s"subproof width: ${subProofsWidth()}" )
+    println( s"left margin width: ${subProofsPanel.endSequentLeftMarginWidth()}" )
+    println( s"right margin width: ${subProofsPanel.endSequentRightMarginWidth()}" )
+    println( s"end sequent midpoint: ${subProofsPanel.endSequentMidpoint()}" )
+    println( s"line panel alignment: ${linePanel.xLayoutAlignment}" )
+  }*/
 
-      ( subProofsPanel.endSequentWidth() / 2 + y ) / subProofsPanel.width()
-    }
-  }
   /*
    * Window management stuff & reactions
    */
   opaque = false
-  border = Swing.EmptyBorder
+  border = defaultBorder
 
   this.peer.setAutoscrolls( true )
   this.peer.addMouseMotionListener( this )
@@ -188,7 +194,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       endSequentPanel.border = Swing.LineBorder( Color.MAGENTA ) // DEBUG
 
     case HideDebugBorders =>
-      border = Swing.EmptyBorder
+      border = defaultBorder
       endSequentPanel.border = Swing.EmptyBorder
   }
 
@@ -223,6 +229,18 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
 
   def endSequentWidth() = {
     width() - endSequentLeftMarginWidth() - endSequentRightMarginWidth()
+  }
+
+  /**
+   * The midpoint of the end sequent in relation to the width of the entire panel.
+   * @return
+   */
+  def endSequentMidpoint() = subProofs match {
+    case Seq() => 0.5
+    case _ =>
+      val x = endSequentLeftMarginWidth().toDouble
+
+      ( endSequentWidth() / 2 + x ) / width()
   }
 
   border = Swing.EmptyBorder( 0, 0, 0, 0 )
@@ -262,11 +280,17 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
   def labelFontMetrics = peer.getFontMetrics( labelFont )
 
   def computeLineWidth( fontSizeHasChanged: Boolean = false ): Unit = {
-    val newLineWidth = math.max( parent.subProofsPanel.endSequentWidth(), parent.endSequentWidth )
+    val newLineWidth = math.max( parent.subProofsPanel.endSequentWidth(), parent.endSequentWidth() )
     if ( !fontSizeHasChanged && lineWidth >= newLineWidth ) return // ensure convergence
     lineWidth = newLineWidth
     labelWidth = labelFontMetrics.stringWidth( proofName ) * 2 + fSize
     width = lineWidth + labelWidth
+    if ( parent.pos.isEmpty ) {
+      println( s"parent.subProofsPanel.endSequentWidth(): ${parent.subProofsPanel.endSequentWidth()}" )
+      println( s"parent.endSequentWidth(): ${parent.endSequentWidth()}" )
+      println( s"line width set to $newLineWidth" )
+      println( s"width set to $width" )
+    }
     height = labelFontMetrics.getHeight + fSize / 4
     preferredSize = new Dimension( width, height )
     minimumSize = preferredSize
