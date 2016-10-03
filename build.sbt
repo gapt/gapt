@@ -45,7 +45,7 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.8.4"
+val specs2Version = "3.8.5"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
@@ -195,11 +195,11 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.3",
-      "com.lihaoyi" %% "fastparse" % "0.3.7",
+      "com.lihaoyi" %% "fastparse" % "0.4.1",
       "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.2",
-      "org.scalaz" %% "scalaz-core" % "7.2.5",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
+      "org.scalaz" %% "scalaz-core" % "7.2.6",
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.4",
       "com.github.pathikrit" %% "better-files" % "2.16.0",
       "ch.qos.logback" % "logback-classic" % "1.1.7",
@@ -276,7 +276,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.4.0"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.4.1"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )

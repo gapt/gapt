@@ -3,6 +3,7 @@ package at.logic.gapt.expr
 import at.logic.gapt.expr.ExpressionParseHelper.Splice
 import at.logic.gapt.formats.babel._
 import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent }
+import fastparse.core.ParseError
 
 import scalaz.{ -\/, \/- }
 
@@ -109,12 +110,11 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @return
    */
   def hoc( args: Splice[LambdaExpression]* ): Const = {
-    import fastparse.core.ParseError
-    import fastparse.core.Parsed._
+    import fastparse.all.Parsed._
     require( args.isEmpty )
     BabelParserCombinators.ConstAndNothingElse.parse( sc.parts.head ) match {
       case Success( c, _ ) => c
-      case f: Failure =>
+      case f @ Failure( _, _, _ ) =>
         throw new IllegalArgumentException(
           s"Cannot parse constant at ${file.value}:${line.value}:\n${ParseError( f ).getMessage}"
         )
