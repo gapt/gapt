@@ -2,14 +2,15 @@ package at.logic.gapt.formats.babel
 
 import at.logic.gapt.{ expr => real }
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import fastparse.core.ParseError
 
 import scalaz._
 import Scalaz._
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
 case class BabelUnificationError( reason: String ) extends BabelParseError( reason )
-case class BabelParsingError( parseError: fastparse.core.ParseError ) extends BabelParseError( parseError.getMessage )
+case class BabelParsingError( parseError: fastparse.all.Parsed.Failure ) extends BabelParseError( ParseError( parseError ).getMessage )
 
 object BabelLexical {
   import fastparse.all._
@@ -125,7 +126,7 @@ object BabelParserCombinators {
 
 object BabelParser {
   import BabelParserCombinators._
-  import fastparse.noApi._
+  import fastparse.all._
 
   /**
    * Parses text as a lambda expression, or returns a parse error.
@@ -134,15 +135,14 @@ object BabelParser {
    * @param sig  Babel signature that specifies which free variables are constants.
    */
   def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ LambdaExpression = {
-    import fastparse.core.Parsed._
     ExprAndNothingElse.parse( text ) match {
-      case Success( expr, _ ) =>
+      case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
         ast.toRealExpr( transformedExpr, sig ).leftMap { unifError =>
           BabelUnificationError( s"Cannot type-check ${ast.readable( transformedExpr )}:\n$unifError" )
         }
-      case parseError: Failure =>
-        BabelParsingError( ParseError( parseError ) ).left
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        BabelParsingError( parseError ).left
     }
   }
 
@@ -154,9 +154,8 @@ object BabelParser {
     tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
 
   def tryParseSequent( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ Sequent[LambdaExpression] = {
-    import fastparse.core.Parsed._
     SequentAndNothingElse.parse( text ) match {
-      case Success( exprSequent, _ ) =>
+      case Parsed.Success( exprSequent, _ ) =>
         val transformed = exprSequent.map( astTransformer )
         ast.toRealExprs( transformed.elements, sig ).leftMap { unifError =>
           BabelUnificationError( s"Cannot type-check ${transformed.map( ast.readable )}:\n$unifError" )
@@ -165,8 +164,8 @@ object BabelParser {
             splitAt( exprSequent.antecedent.size )
           HOLSequent( ant, suc )
         }
-      case parseError: Failure =>
-        BabelParsingError( ParseError( parseError ) ).left
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        BabelParsingError( parseError ).left
     }
   }
 }
