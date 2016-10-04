@@ -234,16 +234,17 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       ( Set(), existing.collect { case e if subsume( given, e ).isDefined => e -> given.assertion } )
   }
 
-  object ForwardUnitRewriting extends InferenceRule {
-    def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] ) = {
+  object ForwardUnitRewriting extends SimplificationRule {
+    def simplify( given: Cls, existing: Set[Cls] ): Option[( Cls, HOLClause )] = {
       val eqs = for {
         c <- existing
+        if c.assertion isSubMultisetOf given.assertion // FIXME
         Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
         ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
         if !t_.isInstanceOf[Var]
         if !termOrdering.lt( t_, s_ )
       } yield ( t_, s_, c, leftToRight )
-      if ( eqs isEmpty ) return ( Set(), Set() )
+      if ( eqs isEmpty ) return None
 
       var p = given.proof
       var didRewrite = true
@@ -266,9 +267,9 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       }
 
       if ( p != given.proof ) {
-        ( Set( SimpCls( given, p ) ), Set( given -> reason ) )
+        Some( SimpCls( given, p ) -> reason )
       } else {
-        ( Set(), Set() )
+        None
       }
     }
   }
