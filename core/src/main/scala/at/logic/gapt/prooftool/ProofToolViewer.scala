@@ -71,11 +71,6 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
       mnemonic = Key.V
       contents ++= viewMenuContents
     }
-
-    contents += new Menu( "Debug" ) {
-      mnemonic = Key.D
-      contents ++= debugMenuContents
-    }
   }
 
   def showFrame() {
