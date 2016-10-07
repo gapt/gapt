@@ -1,7 +1,7 @@
 package at.logic.gapt.prooftool
 
 import java.awt.event.MouseEvent
-import java.awt.{ Color, Dimension, Font }
+import java.awt.{ Color, Font }
 
 import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
@@ -41,9 +41,8 @@ class DrawSequent[T](
     val mainAuxIndices:         Set[SequentIndex],
     val cutAncestorIndices:     Set[SequentIndex],
     val sequentElementRenderer: T => String
-) extends FlowPanel {
+) extends BoxPanel( Orientation.Horizontal ) {
   opaque = false // Necessary to draw the proof properly
-  hGap = 0 // no gap between components
 
   val contextIndices = sequent.indices.toSet diff mainAuxIndices
 
@@ -58,12 +57,7 @@ class DrawSequent[T](
   contents += turnstileLabel
   contents ++= removeLast( ( elementLabelSequent.succedent zip commaLabelSequent.succedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
 
-  // FIXME: figure out why + 10?  Is it the Label adding an inset?  Is the FlowPanel adding gaps?
-  // It probably comes from the commas, which we render as JLabels and not as TeXIcons...
-  var width = contentLabels.map( _.icon.getIconWidth ).sum + 30
-  var height = contentLabels.map( _.icon.getIconHeight ).max + font.getSize / 2
-  preferredSize = new Dimension( width, height )
-  maximumSize = new Dimension( 2 * width, height )
+  def width() = size.width
 
   listenTo( main.publisher )
 
@@ -89,9 +83,6 @@ class DrawSequent[T](
         elementLabelSequent( i ).background = Color.WHITE
 
     case FontChanged =>
-      width = contentLabels.map( _.icon.getIconWidth ).sum + 30
-      height = contentLabels.map( _.icon.getIconHeight ).max + font.getSize / 2
-      preferredSize = new Dimension( width, height )
   }
 
   private def removeLast[S]( xs: Seq[S] ): Seq[S] = xs match {
@@ -129,7 +120,6 @@ object LatexLabel {
    * @param latexText The text the label will display.
    */
   def apply( main: ProofToolViewer[_], latexText: String ): LatexLabel = {
-    val icon = LatexIcon( latexText, main.font )
     if ( latexText == "," )
       throw new IllegalArgumentException( "Use `new CommaLabel(main)`" )
     else if ( latexText == "\\vdash" )
@@ -148,7 +138,8 @@ class LatexLabel( val main: ProofToolViewer[_], val latexText: String ) extends 
   background = Color.white
   foreground = Color.black
   opaque = true
-  yLayoutAlignment = 0.5
+  def defaultBorder = Swing.EmptyBorder
+  border = defaultBorder
 
   icon = LatexIcon( latexText, main.font )
 
@@ -157,6 +148,7 @@ class LatexLabel( val main: ProofToolViewer[_], val latexText: String ) extends 
   reactions += {
     case FontChanged =>
       icon = LatexIcon( latexText, main.font )
+      border = defaultBorder
   }
 }
 
@@ -206,7 +198,8 @@ class LatexFormulaLabel(
  * @param main The main Prooftool window that this belongs to.
  */
 class CommaLabel( val main: ProofToolViewer[_] ) extends Label( ",", icon0 = null, Alignment.Center ) {
-  border = Swing.EmptyBorder( font.getSize / 5, 2, 0, font.getSize / 5 )
+  def defaultBorder = Swing.EmptyBorder( font.getSize / 5, 2, 0, font.getSize / 5 )
+  border = defaultBorder
   font = main.font
 
   listenTo( main.publisher )
@@ -214,6 +207,7 @@ class CommaLabel( val main: ProofToolViewer[_] ) extends Label( ",", icon0 = nul
   reactions += {
     case FontChanged =>
       font = main.font
+      border = defaultBorder
   }
 }
 
@@ -222,5 +216,5 @@ class CommaLabel( val main: ProofToolViewer[_] ) extends Label( ",", icon0 = nul
  * @param main The main Prooftool window that this belongs to.
  */
 class LatexTurnstileLabel( main: ProofToolViewer[_] ) extends LatexLabel( main, "\\vdash" ) {
-  border = Swing.EmptyBorder( font.getSize / 6 )
+  override def defaultBorder = Swing.EmptyBorder( font.getSize / 6 )
 }

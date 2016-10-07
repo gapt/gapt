@@ -51,10 +51,10 @@ object MenuButtons {
   /**
    *
    * @param main An instance of ProoftoolViewer
-   * @return A menu button that calls main's zoomIn function.
+   * @return A menu button that calls main's increaseFontSize function.
    */
-  def zoomInButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Zoom in" ) {
-    main.zoomIn()
+  def increaseFontSizeButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Increase font size" ) {
+    main.increaseFontSize()
   } ) {
     this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_UP, ActionEvent.ALT_MASK ) )
 
@@ -63,10 +63,10 @@ object MenuButtons {
   /**
    *
    * @param main An instance of ProoftoolViewer
-   * @return A menu button that calls main's zoomOUt function.
+   * @return A menu button that calls main's decreaseFontSize function.
    */
-  def zoomOutButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Zoom out" ) {
-    main.zoomOut()
+  def decreaseFontSizeButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Decrease font size" ) {
+    main.decreaseFontSize()
   } ) {
     this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_DOWN, ActionEvent.ALT_MASK ) )
   }

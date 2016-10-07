@@ -38,9 +38,9 @@ object PopupMenu {
         case _ =>
           contents += new Separator
           contents += new CheckMenuItem( "Hide proof above" ) {
-            selected = dsp.collapsed
+            selected = dsp.subProofsPanel.collapsed
             action = Action( "Hide proof above" ) {
-              if ( dsp.collapsed )
+              if ( dsp.subProofsPanel.collapsed )
                 dsp.main.publisher.publish( ShowSequentProof( dsp.pos ) )
               else
                 dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )

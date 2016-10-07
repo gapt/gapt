@@ -206,7 +206,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   /**
    * Zooms in by multiplying font size by 3/2.
    */
-  def zoomIn() {
+  def increaseFontSize() {
     currentFontSize * 3 / 2 match {
       case j: Int if j > 72 =>
       case j: Int =>
@@ -217,7 +217,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
   /**
    * Zooms out by multiplying font size by 2/3.
    */
-  def zoomOut() {
+  def decreaseFontSize() {
     currentFontSize / 3 * 2 match {
       case j: Int if j < 1 =>
       case j: Int =>
@@ -295,9 +295,9 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
 
   protected def exportToPNGButton = MenuButtons.exportToPNGButton( this )
 
-  protected def zoomInButton = MenuButtons.zoomInButton( this )
+  protected def zoomInButton = MenuButtons.increaseFontSizeButton( this )
 
-  protected def zoomOutButton = MenuButtons.zoomOutButton( this )
+  protected def zoomOutButton = MenuButtons.decreaseFontSizeButton( this )
 
   protected def showDebugBordersButton = MenuButtons.ShowDebugBordersButton( this )
 
