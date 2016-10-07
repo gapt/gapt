@@ -77,41 +77,35 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   contents += endSequentPanel
   if ( pos.isEmpty ) contents += Swing.VGlue
 
-  private val suggestedSubproofsAlignment = 0.5
-
   private def lineWidth() = linePanel.width()
   def endSequentWidth() = endSequentPanel.width()
   def subProofsWidth() = subProofsPanel.width()
   def width() = size.width
   def endSequentLeftMarginWidth() = ( width * subProofsPanel.xLayoutAlignment - endSequentWidth * endSequentPanel.xLayoutAlignment ).toInt
   def endSequentRightMarginWidth() = ( width * ( 1 - subProofsPanel.xLayoutAlignment ) - endSequentWidth * ( 1 - endSequentPanel.xLayoutAlignment ) ).toInt
-  updateAlignments()
+
+  linePanel.xLayoutAlignment = 0.5
+  endSequentPanel.xLayoutAlignment = 0.5
+  subProofsPanel.xLayoutAlignment = 0.5
+
+  updateSubProofAlignment()
+  revalidate()
+  repaint()
 
   /**
    * Recomputes the alignments of the subproofs, line, and end sequent panels.
    */
-  private def updateAlignments() = {
-    val subProofsEndSequentMidpoint = if ( subProofs.isEmpty )
+  private def updateSubProofAlignment() = {
+
+    // This value is equal to the middle of the end sequents of the subproofs as a fraction of the width of the subproofs.
+    val subProofsAligmentNew = if ( subProofs.isEmpty )
       0.5
     else
       ( subProofsPanel.endSequentWidth().toDouble / 2 + subProofsPanel.endSequentLeftMarginWidth() ) / subProofsPanel.width()
 
-    val suggestedLineAlignment = ( subProofsWidth() * ( 1 - 2 * subProofsEndSequentMidpoint ) + lineWidth() ) / ( 2 * lineWidth() )
-
-    if ( suggestedLineAlignment < 0.0 ) {
-      linePanel.xLayoutAlignment = 0.0
-      subProofsPanel.xLayoutAlignment = suggestedSubproofsAlignment - suggestedLineAlignment * subProofsWidth / lineWidth
-    } else if ( suggestedLineAlignment > 1.0 ) {
-      linePanel.xLayoutAlignment = 1.0
-      subProofsPanel.xLayoutAlignment = suggestedSubproofsAlignment - suggestedLineAlignment * subProofsWidth / lineWidth
-    } else {
-      linePanel.xLayoutAlignment = suggestedLineAlignment
-      subProofsPanel.xLayoutAlignment = suggestedSubproofsAlignment
+    if ( subProofsPanel.xLayoutAlignment != subProofsAligmentNew ) {
+      subProofsPanel.xLayoutAlignment = subProofsAligmentNew
     }
-
-    // The end sequent is always centered below the line.
-    endSequentPanel.xLayoutAlignment = linePanel.xLayoutAlignment
-
     revalidate()
     repaint()
   }
@@ -168,9 +162,10 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
     case FontChanged =>
       revalidate()
+      repaint()
 
     case UIElementResized( _ ) | UIElementHidden( _ ) | UIElementShown( _ ) =>
-      updateAlignments()
+      updateSubProofAlignment()
 
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
       PopupMenu( this, e.point.x, e.point.y )
@@ -221,6 +216,7 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
       contents.clear()
       subProofs.foreach( contents += )
       parent.lineHideLevel -= 1
+      revalidate()
       repaint()
 
     case HideSequentProof( p ) if p == parent.pos =>
@@ -228,6 +224,7 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
       contents.clear()
       contents += subProofsHiddenLabel
       parent.lineHideLevel += 1
+      revalidate()
       repaint()
   }
 }
