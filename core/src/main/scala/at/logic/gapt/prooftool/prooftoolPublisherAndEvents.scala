@@ -24,6 +24,7 @@ case object ShowAllFormulas extends Event
 case object MarkCutAncestors extends Event
 case object UnmarkCutAncestors extends Event
 case object FontChanged extends Event
+case object AlignmentChanged extends Event
 
 case object ShowDebugBorders extends Event
 case object HideDebugBorders extends Event

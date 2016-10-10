@@ -28,11 +28,15 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   val defaultBorder = Swing.LineBorder( Color.WHITE )
 
-  private var lineHideLevel_ = 0
-  def lineHideLevel = lineHideLevel_
-  def lineHideLevel_=( i: Int ) = {
-    require( i >= 0 )
-    lineHideLevel_ = i
+  private var lineHideLevel = 0
+
+  private def showLine() = {
+    lineHideLevel = if ( lineHideLevel == 0 ) 0 else lineHideLevel - 1
+    linePanel.visible = lineHideLevel == 0
+  }
+
+  private def hideLine() = {
+    lineHideLevel += 1
     linePanel.visible = lineHideLevel == 0
   }
 
@@ -77,7 +81,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   contents += endSequentPanel
   if ( pos.isEmpty ) contents += Swing.VGlue
 
-  private def lineWidth() = linePanel.width()
   def endSequentWidth() = endSequentPanel.width()
   def subProofsWidth() = subProofsPanel.width()
   def width() = size.width
@@ -105,6 +108,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
     if ( subProofsPanel.xLayoutAlignment != subProofsAligmentNew ) {
       subProofsPanel.xLayoutAlignment = subProofsAligmentNew
+      publish( AlignmentChanged )
+
     }
     revalidate()
     repaint()
@@ -127,6 +132,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   }
 
   listenTo( mouse.moves, mouse.clicks, mouse.wheel, main.publisher, endSequentPanel, linePanel, subProofsPanel )
+  deafTo( this )
   reactions += {
     case e: MouseDragged =>
       main.scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.MOVE_CURSOR )
@@ -149,8 +155,14 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       endSequentPanel.visible = false
 
     case ShowAllRules( p ) if pos endsWith p =>
-      lineHideLevel = if ( lineHideLevel > 0 ) lineHideLevel - 1 else 0
+      showLine()
       endSequentPanel.visible = true
+
+    case ShowSequentProof( p ) if p == pos =>
+      showLine()
+
+    case HideSequentProof( p ) if p == pos =>
+      hideLine()
 
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.BLUE ) // DEBUG
@@ -165,6 +177,9 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       repaint()
 
     case UIElementResized( _ ) | UIElementHidden( _ ) | UIElementShown( _ ) =>
+      updateSubProofAlignment()
+
+    case AlignmentChanged =>
       updateSubProofAlignment()
 
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
@@ -215,7 +230,6 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
       collapsed = false
       contents.clear()
       subProofs.foreach( contents += )
-      parent.lineHideLevel -= 1
       revalidate()
       repaint()
 
@@ -223,9 +237,11 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
       collapsed = true
       contents.clear()
       contents += subProofsHiddenLabel
-      parent.lineHideLevel += 1
       revalidate()
       repaint()
+
+    case AlignmentChanged =>
+      publish( AlignmentChanged )
   }
 }
 
@@ -254,7 +270,7 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
 
   private def updateWidth( fontSizeHasChanged: Boolean = false ): Unit = {
     val newLineWidth = math.max( parent.subProofsPanel.endSequentWidth(), parent.endSequentPanel.width() )
-    if ( !fontSizeHasChanged && lineWidth == newLineWidth ) return // ensure convergence
+    if ( !fontSizeHasChanged && math.abs( lineWidth - newLineWidth ) <= 2 ) return // ensure convergence
     lineWidth = newLineWidth
     val labelWidth = labelFontMetrics.stringWidth( proofName ) * 2 + fSize
     _width = lineWidth + labelWidth
@@ -280,8 +296,9 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
 
   border = Swing.EmptyBorder
   listenTo( parent.main.publisher, parent.endSequentPanel, parent.subProofsPanel )
+  deafTo( this )
   reactions += {
-    case UIElementShown( _ ) | UIElementResized( _ ) => updateWidth()
+    case UIElementShown( _ ) | UIElementResized( _ ) | AlignmentChanged => updateWidth()
 
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.RED ) // DEBUG
