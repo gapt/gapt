@@ -1,6 +1,6 @@
 # Release notes for GAPT
 
-## Version 2.3 (unreleased)
+## Version 2.3 (release on 2016-10-10)
 
 * The minimum required Java version is now Java 8
 * String interpolators for sequents
@@ -12,6 +12,8 @@
 * Support for Vampire 4.1
 * Support for SPASS 3.9
 * Context now support polymorphic declarations (for equality, ...)
+* Many-sorted grammars
+* Sound definition rules for LK
 
 ## Version 2.2 (released on 2016-07-09)
 
