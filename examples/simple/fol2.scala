@@ -1,4 +1,4 @@
-package simple
+package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.ceres.CERES
