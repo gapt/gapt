@@ -2,14 +2,15 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.formats.llk._
-import at.logic.gapt.proofs.SequentMatchers
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.proofs.{ Context, Sequent, gaptic }
+import at.logic.gapt.examples._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.ClasspathInputFile
+import at.logic.gapt.proofs.SequentMatchers
+import at.logic.gapt.proofs.{ Context, Sequent, gaptic }
 import at.logic.gapt.proofs.lk.{ CutRule, ReductiveCutElimination }
+import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 
 class CeresTest extends Specification with SequentMatchers {
@@ -42,7 +43,7 @@ class CeresTest extends Specification with SequentMatchers {
   }
 
   "a simple intuitionistic proof" in {
-    val proof = simple.fol2.proof
+    val proof = fol2.proof
     val acnf = ReductiveCutElimination( CERES( proof ) )
     acnf.endSequent must beMultiSetEqual( proof.endSequent )
   }

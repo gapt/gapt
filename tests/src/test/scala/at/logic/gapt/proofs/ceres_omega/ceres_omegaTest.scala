@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.ceres_omega
 
+import at.logic.gapt.examples._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.replaceAbstractions
 import at.logic.gapt.expr.hol.{ HOLOrdering, containsQuantifierOnLogicalLevel, freeHOVariables }
@@ -155,7 +156,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     "a simple intuitionistic proof" in {
       if ( !Prover9.isInstalled ) skipped( "No Prover9 installed!" )
       object CE extends AnalysisWithCeresOmega {
-        override def proofdb() = ExtendedProofDatabase( Map[HOLFormula, LKProof]( hof"THEPROOF" -> simple.fol2.proof ), Map(), Map() )
+        override def proofdb() = ExtendedProofDatabase( Map[HOLFormula, LKProof]( hof"THEPROOF" -> fol2.proof ), Map(), Map() )
         override def root_proof = "THEPROOF";
         override def skip_strategy() = CERES.skipNothing
       }
