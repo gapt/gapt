@@ -1,3 +1,5 @@
+package at.logic.gapt.examples.tip.isaplanner
+
 import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
@@ -14,8 +16,8 @@ object isaplanner10 extends TacticsProof {
     case ( f, _ )        => "goal" -> f
   }
 
-  Lemma( sequent ) {
-    allR;
+  val proof = Lemma( sequent ) {
+    allR
     induction( hov"m:Nat" )
     // base case
     allL( "h1", le"Z:Nat" )

@@ -1,3 +1,5 @@
+package at.logic.gapt.examples.tip.isaplanner
+
 import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
@@ -5,8 +7,8 @@ import at.logic.gapt.proofs.Context.{ InductiveType, Sort }
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
-object isaplanner18 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( file"examples/tip/isaplanner/prop_18.smt2" )
+object isaplanner12 extends TacticsProof {
+  val bench = TipSmtParser.fixupAndParse( file"examples/tip/isaplanner/prop_12.smt2" )
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {
@@ -14,23 +16,18 @@ object isaplanner18 extends TacticsProof {
     case ( f, _ )        => "goal" -> f
   }
 
-  Lemma( sequent ) {
+  val proof = Lemma( sequent ) {
     allR
-    induction( hov"i:Nat" )
+    allR
+    induction( hov"n:Nat" )
     // Base case
     allR
-    allL( "h4", le"plus(Z:Nat, m:Nat):Nat" )
-    axiomLog
+    allL( "h5", le"map2(f,xs:list):list" )
+    allL( "h5", le"xs:list" )
+    eql( "h5_0", "goal" ).fromLeftToRight
+    eql( "h5_1", "goal" ).fromLeftToRight
+    refl
     // Inductive case
     allR
-    allL( "IHi_0", le"m:Nat" )
-    allL( "h5", le"i_0:Nat", le"plus(S(i_0:Nat):Nat, m:Nat)" )
-    andL
-    impL( "h5_0_1" )
-    allL( "h2", le"i_0:Nat", le"m:Nat" )
-    eql( "h2_0", "h5_0_1" )
-    axiomLog
-
-    axiomLog
   }
 }

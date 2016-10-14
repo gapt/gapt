@@ -1,3 +1,5 @@
+package at.logic.gapt.examples.tip.isaplanner
+
 import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
@@ -41,7 +43,7 @@ object isaplanner08 extends TacticsProof {
     axiomLog
   }
 
-  Lemma( sequent.antecedent ++: Sequent() :+
+  val proof = Lemma( sequent.antecedent ++: Sequent() :+
     ( "goal" -> hof"minus(plus(k, m), plus(k, n)) = minus(m, n)" ) ) {
     induction( hov"k:Nat" )
     insert( baseCase )

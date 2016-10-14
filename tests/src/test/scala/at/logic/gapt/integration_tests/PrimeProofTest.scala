@@ -110,7 +110,7 @@ class PrimeProofTest extends Specification {
       checkForProverOrSkip
       if ( !Z3.isInstalled ) skipped
 
-      val primeN = prime.prime( n )
+      val primeN = prime.furstenberg( n )
       val proof = primeN.proof
 
       if ( false ) {

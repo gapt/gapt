@@ -1,4 +1,5 @@
 package at.logic.gapt.examples.prime
+
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._

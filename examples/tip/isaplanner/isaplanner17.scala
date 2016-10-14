@@ -1,3 +1,5 @@
+package at.logic.gapt.examples.tip.isaplanner
+
 import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
@@ -14,7 +16,7 @@ object isaplanner17 extends TacticsProof {
     case ( f, _ )        => "goal" -> f
   }
 
-  Lemma( sequent ) {
+  val proof = Lemma( sequent ) {
     allR
     induction( hov"n:Nat" )
     // base case
@@ -27,16 +29,16 @@ object isaplanner17 extends TacticsProof {
     impR
     axiomLog
     // inductive case
-    allL( "h2", le"n_0:Nat" );
-    allL( "h6", le"n_0:Nat" );
-    forget( "h0", "h1", "h2", "h3", "h5", "h6", "h7", "h8" );
-    andR;
-    impR;
-    negL( "h2_0" );
-    axiomLog;
+    allL( "h2", le"n_0:Nat" )
+    allL( "h6", le"n_0:Nat" )
+    forget( "h0", "h1", "h2", "h3", "h5", "h6", "h7", "h8" )
+    andR
+    impR
+    negL( "h2_0" )
+    axiomLog
 
-    impR;
-    negL( "h6_0" );
-    axiomLog;
+    impR
+    negL( "h6_0" )
+    axiomLog
   }
 }

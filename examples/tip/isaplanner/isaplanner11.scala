@@ -1,3 +1,5 @@
+package at.logic.gapt.examples.tip.isaplanner
+
 import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
@@ -15,7 +17,7 @@ object isaplanner11 extends TacticsProof {
     case ( f, _ )        => "goal" -> f
   }
 
-  Lemma( sequent ) {
-    trivial;
+  val proof = Lemma( sequent ) {
+    trivial
   }
 }

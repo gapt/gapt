@@ -8,7 +8,7 @@ class PrimeTest extends Specification {
   "prime proof" in {
     Fragments.foreach( 0 to 5 ) { i =>
       s"n = $i" in {
-        val primeI = prime.prime( i )
+        val primeI = prime.furstenberg( i )
         primeI.ctx.check( primeI.proof )
         ok
       }
