@@ -13,7 +13,7 @@ object unrollLoop {
   }
 }
 
-case class SimpleInductionProblem( val gamma: Seq[FOLFormula], val alphaVar: FOLVar, val B: FOLFormula ) {
+case class SimpleInductionProblem( gamma: Seq[FOLFormula], alphaVar: FOLVar, B: FOLFormula ) {
   def sequent = HOLSequent( gamma, List( B ) )
 
   def instanceSequent( n: Int ) = {
@@ -22,7 +22,7 @@ case class SimpleInductionProblem( val gamma: Seq[FOLFormula], val alphaVar: FOL
   }
 }
 
-case class SimpleLoopProblem( val loop: ForLoop, val gamma: Seq[FOLFormula], val precondition: FOLFormula, val postcondition: FOLFormula ) {
+case class SimpleLoopProblem( loop: ForLoop, gamma: Seq[FOLFormula], precondition: FOLFormula, postcondition: FOLFormula ) {
   val programVariables = usedVariables( loop.body ).distinct diff List( loop.indexVar, loop.limit )
 
   def stateFunctionSymbol( programVariable: FOLVar ): String = programVariable match { case FOLVar( sym ) => s"sigma_$sym" }
