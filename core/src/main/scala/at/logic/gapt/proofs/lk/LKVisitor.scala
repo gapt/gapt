@@ -299,16 +299,18 @@ trait LKVisitor[T] {
       .filterNot( _._2.length < 2 ) // Take only the formulas with at least two occurrences
       .map { _._2 } // Take only the indices
 
-    val ( leftProof, leftConn ) = newFormulas.antecedent.foldLeft( ( subProof, subConn ) ) { ( acc, indices ) =>
+    val ( leftProof, leftConn ) = newFormulas.antecedent.foldLeft( ( subProof, OccConnector( subProof.endSequent ) ) ) { ( acc, indices ) =>
       val ( p, c ) = acc
-      val ( pNew, cNew ) = ContractionLeftMacroRule.withOccConnector( p, indices )
+      val ( pNew, cNew ) = ContractionLeftMacroRule.withOccConnector( p, indices map { c.child } )
       ( pNew, cNew * c )
     }
 
-    newFormulas.succedent.foldLeft( ( leftProof, leftConn ) ) { ( acc, indices ) =>
+    val ( rightProof, rightConn ) = newFormulas.succedent.foldLeft( ( leftProof, leftConn ) ) { ( acc, indices ) =>
       val ( p, c ) = acc
-      val ( pNew, cNew ) = ContractionRightMacroRule.withOccConnector( p, indices )
+      val ( pNew, cNew ) = ContractionRightMacroRule.withOccConnector( p, indices map { c.child } )
       ( pNew, cNew * c )
     }
+
+    ( rightProof, rightConn * subConn )
   }
 }

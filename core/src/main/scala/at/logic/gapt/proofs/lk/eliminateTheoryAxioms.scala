@@ -9,25 +9,25 @@ import scalaz.{ -\/, \/- }
 /**
  * Object for calling the `eliminateTheoryAxiom` transformation.
  */
-object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
+object eliminateTheoryAxioms extends LKVisitor[Seq[HOLFormula]] {
   /**
-   * Eliminates some theory axioms from `proof`, namely those subsumed by `formula`.
-   * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+   * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
+   * @param formulas A list of HOLFormulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
    * @param proof An LKProof.
    * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
    *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`; `conn` is an
    *         OccConnector relating `proof` and `proof'`.
    */
-  def withOccConnector( formula: HOLFormula )( proof: LKProof ) = recurse( proof, formula )
+  def withOccConnector( formulas: HOLFormula* )( proof: LKProof ) = recurse( proof, formulas )
 
   /**
-   * Eliminates some theory axioms from `proof`, namely those subsumed by `formula`.
-   * @param formula A HOLFormula. Must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+   * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
+   * @param formulas A list of HOLFormulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
    * @param proof An LKProof.
    * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
    *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`.
    */
-  def apply( formula: HOLFormula )( proof: LKProof ) = withOccConnector( formula )( proof )._1
+  def apply( formulas: HOLFormula* )( proof: LKProof ) = withOccConnector( formulas: _* )( proof )._1
 
   /**
    *
@@ -35,36 +35,43 @@ object eliminateTheoryAxioms extends LKVisitor[HOLFormula] {
    * @return If A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,, is subsumed by F, returns a proof of
    *         F, A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,,. Otherwise the input axiom.
    */
-  protected override def visitTheoryAxiom( proof: TheoryAxiom, formula: HOLFormula ) = {
-    require( isPrenex( formula ), s"Formula $formula is not prenex." )
-    require( !containsStrongQuantifier( formula, Polarity.InAntecedent ), s"Formula $formula contains strong quantifiers." )
+  protected override def visitTheoryAxiom( proof: TheoryAxiom, formulas: Seq[HOLFormula] ) = {
 
-    val All.Block( vars, matrix ) = formula
-    val cnf = CNFp( matrix )
-    val cnfFormula = And( cnf map { _.toDisjunction } )
     val TheoryAxiom( sequent ) = proof
-    val subs = cnf map {
-      clauseSubsumption( _, sequent )
-    }
-    val maybeSub = subs.find( _.nonEmpty )
+    formulas match {
+      case Seq() => ( proof, OccConnector( sequent ) )
 
-    maybeSub match {
-      case Some( Some( sub ) ) =>
-        val terms = for ( x <- vars ) yield sub.map.getOrElse( x, x )
+      case formula +: rest =>
+        require( isPrenex( formula ), s"Formula $formula is not prenex." )
+        require( !containsStrongQuantifier( formula, Polarity.InAntecedent ), s"Formula $formula contains strong quantifiers." )
 
-        val maybeProof = for {
-          subroof <- solvePropositional( sub( matrix ) +: sequent )
-        } yield ForallLeftBlock( subroof, formula, terms )
-
-        val subProof = maybeProof match {
-          case \/-( p )   => p
-          case -\/( seq ) => throw new Exception( s"Sequent $seq is not provable." )
+        val All.Block( vars, matrix ) = formula
+        val cnf = CNFp( matrix )
+        val cnfFormula = And( cnf map {
+          _.toDisjunction
+        } )
+        val subs = cnf map {
+          clauseSubsumption( _, sequent )
         }
-        ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ) )
+        val maybeSub = subs.find( _.nonEmpty )
 
-      case _ => ( proof, OccConnector( sequent ) )
+        maybeSub match {
+          case Some( Some( sub ) ) =>
+            val terms = for ( x <- vars ) yield sub.map.getOrElse( x, x )
+
+            val maybeProof = for {
+              subroof <- solvePropositional( sub( matrix ) +: sequent )
+            } yield ForallLeftBlock( subroof, formula, terms )
+
+            val subProof = maybeProof match {
+              case \/-( p )   => p
+              case -\/( seq ) => throw new Exception( s"Sequent $seq is not provable." )
+            }
+            ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ) )
+
+          case _ => visitTheoryAxiom( proof, rest )
+        }
     }
   }
-
-  protected override def recurse( proof: LKProof, formula: HOLFormula ) = contractAfter( super.recurse )( proof, formula )
+  protected override def recurse( proof: LKProof, formulas: Seq[HOLFormula] ) = contractAfter( super.recurse )( proof, formulas )
 }

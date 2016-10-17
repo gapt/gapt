@@ -9,12 +9,12 @@ import org.specs2.mutable.Specification
 class EliminateTheoryAxiomsTest extends Specification with SequentMatchers {
 
   "tape" in {
-    val ax = univclosure( And( tape.ctx.axioms.map( _.toDisjunction ) ) )
-    val withoutThAx = eliminateTheoryAxioms( tape.p, ax )
+    val ax = tape.ctx.axioms.map( a => univclosure( a.toDisjunction ) )
+    val withoutThAx = eliminateTheoryAxioms( ax: _* )( tape.p )
     withoutThAx.subProofs.filter { _.isInstanceOf[TheoryAxiom] } must_== Set()
     tape.ctx.check( withoutThAx )
     // TODO: multiset equality
-    withoutThAx.conclusion must beSetEqual( ax +: tape.p.conclusion )
+    withoutThAx.conclusion must beSetEqual( ax ++: tape.p.conclusion )
   }
 
 }
