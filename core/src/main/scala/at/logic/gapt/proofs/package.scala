@@ -15,6 +15,12 @@ package object proofs {
     def toConjunction = And( sequent.map( -_, identity ).elements )
     def toNegConjunction = And( sequent.map( identity, -_ ).elements )
     def toImplication = And( sequent.antecedent ) --> Or( sequent.succedent )
+    def toFormula: HOLFormula = sequent match {
+      case Sequent( Seq(), Seq() ) => Bottom()
+      case Sequent( ant, Seq() )   => Neg( And( ant ) )
+      case Sequent( Seq(), suc )   => Or( suc )
+      case _                       => sequent.toImplication
+    }
   }
 
   implicit class RichFOLSequent( val sequent: FOLSequent ) extends AnyVal {
@@ -22,6 +28,7 @@ package object proofs {
     def toConjunction = ( sequent: HOLSequent ).toConjunction.asInstanceOf[FOLFormula]
     def toNegConjunction = ( sequent: HOLSequent ).toNegConjunction.asInstanceOf[FOLFormula]
     def toImplication = ( sequent: HOLSequent ).toImplication.asInstanceOf[FOLFormula]
+    def toFormula = ( sequent: HOLSequent ).toFormula.asInstanceOf[FOLFormula]
   }
 
   val Clause = Sequent

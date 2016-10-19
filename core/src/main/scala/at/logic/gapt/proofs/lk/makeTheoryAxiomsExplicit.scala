@@ -7,16 +7,18 @@ import at.logic.gapt.proofs.{ HOLClause, OccConnector, Sequent }
 import scalaz.{ -\/, \/- }
 
 /**
- * Object for calling the `eliminateTheoryAxiom` transformation.
+ * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.
+ *
+ * It replaces theory axioms on sequents S that are subsumed by Π with propositional proofs of Π, S.
  */
-object eliminateTheoryAxioms extends LKVisitor[Seq[HOLFormula]] {
+object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
   /**
    * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
    * @param formulas A list of HOLFormulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
    * @param proof An LKProof.
-   * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
-   *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`; `conn` is an
-   *         OccConnector relating `proof` and `proof'`.
+   * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
+   *         is removed in `proof'` and elements of `formulas` may occur in the antecedent of the end sequent of `proof'`;
+   *        `conn` is an OccConnector relating `proof` and `proof'`.
    */
   def withOccConnector( formulas: HOLFormula* )( proof: LKProof ) = recurse( proof, formulas )
 
@@ -24,15 +26,15 @@ object eliminateTheoryAxioms extends LKVisitor[Seq[HOLFormula]] {
    * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
    * @param formulas A list of HOLFormulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
    * @param proof An LKProof.
-   * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formula`
-   *         is removed in `proof'` and `formula` may occur in the antecedent of the end sequent of `proof'`.
+   * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
+   *         is removed in `proof'` and elements of `formula` may occur in the antecedent of the end sequent of `proof'`.
    */
   def apply( formulas: HOLFormula* )( proof: LKProof ) = withOccConnector( formulas: _* )( proof )._1
 
   /**
    *
    * @param proof A theory axiom with sequent A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,,.
-   * @return If A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,, is subsumed by F, returns a proof of
+   * @return If A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,, is subsumed by some F in formulas, returns a proof of
    *         F, A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,,. Otherwise the input axiom.
    */
   protected override def visitTheoryAxiom( proof: TheoryAxiom, formulas: Seq[HOLFormula] ) = {

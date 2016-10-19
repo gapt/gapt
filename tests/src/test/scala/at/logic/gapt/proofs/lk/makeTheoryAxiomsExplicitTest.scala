@@ -6,11 +6,11 @@ import at.logic.gapt.expr.hol.univclosure
 import at.logic.gapt.proofs.SequentMatchers
 import org.specs2.mutable.Specification
 
-class EliminateTheoryAxiomsTest extends Specification with SequentMatchers {
+class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
 
   "tape" in {
     val ax = tape.ctx.axioms.map( a => univclosure( a.toDisjunction ) )
-    val withoutThAx = eliminateTheoryAxioms( ax: _* )( tape.p )
+    val withoutThAx = makeTheoryAxiomsExplicit( ax: _* )( tape.p )
     withoutThAx.subProofs.filter { _.isInstanceOf[TheoryAxiom] } must_== Set()
     tape.ctx.check( withoutThAx )
     // TODO: multiset equality

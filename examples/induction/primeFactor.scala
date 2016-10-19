@@ -2,7 +2,7 @@ package at.logic.gapt.examples.induction
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.univclosure
-import at.logic.gapt.proofs.{Context, _}
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 
 object primeFactor extends TacticsProof {
