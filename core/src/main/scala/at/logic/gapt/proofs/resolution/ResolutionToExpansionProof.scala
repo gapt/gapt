@@ -8,7 +8,46 @@ import at.logic.gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
 
-/** Converts a resolution proof to an expansion proof. */
+/**
+ * Converts a resolution proof to an expansion proof.
+ *
+ * Let us first ignore splitting and subformula definitions for simplicity.
+ * However we may still have clausification inferences.
+ * The conversion then proceeds bottom-up through the resolution proof (to be precise: in a reverse post-order traversal).
+ *
+ * At each point in the algorithm, we associate with every subproof a set of expansion sequents and associated substitutions,
+ * i.e. we keep a `Map[ResolutionProof, Set[(Substitution, ExpansionSequent)] ]` with the following properties:
+ * 1. the conjunction of all deep sequents (each interpreted as a disjunction) is unsatisfiable, and
+ * 2. the substitution applied to the shallow sequent is always equal to the conclusion of the subproof.
+ *
+ * In every step we consider a subproof, empty its `Set[(Substitution, ExpansionSequent)]`,
+ * and add in exchange the appropriate sets to its premises, while keeping the invariant.  In this manner,
+ * these sets propagate upwards through the proof to the input sequents.
+ *
+ * Let us first consider the common case that the input sequents are ground unit sequents: i.e. if we obtained a resolution
+ * proof for `∀x A(x), ∀x B(x) :- ∀x C(x)`, then we would have the input sequents `:- ∀x A(x)`, `:- ∀x B(x)`, and `∀x C(x) :-`.
+ * When we have finally propagated all the sets up to the input sequents, the invariant guarantees the following:
+ * we have expansion sequents with the input sequents as shallow sequents (at this point we use the
+ * requirement that the input sequents are ground), such that the conjunction of the deep sequents
+ * (interpreted as disjunctions) is unsatisfiable.
+ * This immediately implies that if we combine the expansions of the input sequents into a sequent, we get an
+ * expansion proof of `∀x A(x), ∀x B(x) :- ∀x C(x)`.
+ *
+ * In the unlikely case that the resolution proof starts from clauses, we just pretend that the clauses are derived
+ * from formulas--that is, we instead of beginning with `D(x), E(x,y) :- F(y)` we just imagine the proof begins with
+ * `:- ∀x ∀y (¬D(x) ∨ ¬E(x,y) ∨ F(y))`.
+ *
+ * Splitting inferences are converted to cuts in the expansion proof: formally, we can first skip all the splitting
+ * inferences in the resoltion proof; the assertions now become part of the clauses, and we get additional input sequents.
+ * For example, consider the clauses `:- A(x), B(y)`, `A(c) :-`, and `B(c) :-`.  The natural way to refute these clauses
+ * is to split the first clause into `:- A(x) <-- s1` and `:- B(y) <-- s2`, then perform unit resolution twice, and
+ * then have a propositional contradiction.  After skipping the splitting inferences we would get a proof starting from
+ * `:- s1, s2`, `s1 :- A(x)`, `s2 :- B(x)`, `A(c) :-`, and `B(c) :-`.  If we replace `s1 := ∀x A(x)` and `s2 := ∀x B(x)`
+ * everywhere in the resulting expansion proof, then we can package up the expansions of `s1 :- A(x)` and `s2 :- B(x)` as cuts.
+ * The other clauses are then precisely the clause we had before splitting.
+ *
+ * Subformula definitions are eliminated after the conversion to expansion proofs, see [[eliminateDefsET]].
+ */
 object ResolutionToExpansionProof {
 
   def apply( proof: ResolutionProof ): ExpansionProof = {
