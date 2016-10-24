@@ -2,6 +2,8 @@
 
 ## Version 2.4 (unreleased)
 
+* LKsk and Ral are replaced by the standard calculi, CERESω is now just CERES.
+
 ## Version 2.3 (release on 2016-10-10)
 
 * The minimum required Java version is now Java 8

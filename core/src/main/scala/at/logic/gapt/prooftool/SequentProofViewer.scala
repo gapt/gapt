@@ -5,8 +5,6 @@ import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
-import at.logic.gapt.proofs.lksk.LKskProof
-import at.logic.gapt.proofs.lksk.LKskProof.LabelledFormula
 import at.logic.gapt.formats.llk.exportLLK
 
 import scala.swing._
@@ -24,7 +22,7 @@ abstract class DagProofViewer[T <: DagProof[T]]( name: String, proof: DagProof[T
 }
 
 /**
- * A ProofToolViewer for sequent proofs. Used for LKsk and RAL proofs.
+ * A ProofToolViewer for sequent proofs.
  *
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
@@ -146,31 +144,4 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
   def viewExpansionProofButton = new MenuItem( Action( "View expansion proof" ) {
     expansionTree()
   } )
-}
-
-/**
- * A ProofToolViewer for LKsk proofs.
- *
- * @param name The name to be displayed at the top.
- * @param proof The proof to be displayed.
- */
-class LKskProofViewer( name: String, proof: LKskProof ) extends SequentProofViewer[LabelledFormula, LKskProof]( name, proof, lf => LatexExporter( lf._2 ) ) {
-  override val content: LKskProof = proof
-  override def fileMenuContents = Seq( openButton, new Separator, exportToPDFButton, exportToPNGButton )
-
-  def hideStructuralRules(): Unit = publisher.publish( HideStructuralRules )
-  def showAllRules(): Unit = publisher.publish( ShowAllRules( Nil ) )
-
-  def markCutAncestors() {
-    scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    publisher.publish( MarkCutAncestors )
-    scrollPane.cursor = java.awt.Cursor.getDefaultCursor
-  }
-
-  def removeMarking(): Unit = {
-    scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-    publisher.publish( UnmarkCutAncestors )
-    scrollPane.cursor = java.awt.Cursor.getDefaultCursor
-  }
-
 }

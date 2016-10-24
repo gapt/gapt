@@ -3,7 +3,6 @@ package at.logic.gapt.prooftool
 import java.awt.{ Color, Font }
 import Font._
 
-import at.logic.gapt.proofs.lksk.LKskProof.{ LabelledFormula, LabelledSequent }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.latex.LatexExporter

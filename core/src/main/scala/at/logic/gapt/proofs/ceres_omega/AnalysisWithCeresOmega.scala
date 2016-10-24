@@ -7,11 +7,9 @@ import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.fol.{ reduceHolToFol, replaceAbstractions, undoHol2Fol }
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
-import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
-import at.logic.gapt.proofs.lksk.{ LKskProof, LKskToExpansionProof }
-import at.logic.gapt.proofs.{ HOLClause, Sequent }
-import at.logic.gapt.proofs.ceres_omega._
-import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, Resolution2RalWithAbstractions }
+import at.logic.gapt.proofs.ceres._
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import at.logic.gapt.proofs.resolution.{ Resolution2RalWithAbstractions, ResolutionToLKProof }
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.utils.{ TimeOutException, withTimeout }
@@ -67,7 +65,7 @@ abstract class AnalysisWithCeresOmega {
   def root_proof(): String
 
   /** Determines if and which cuts should be taken into accoutn for cut-elimination. Default: propositional cuts are skipped. */
-  def skip_strategy() = ceres_omega.skip_propositional( _ )
+  def skip_strategy() = CERES.skipPropositional( _ )
 
   /**
    * Timeout for call to theorem provers.
@@ -105,12 +103,12 @@ abstract class AnalysisWithCeresOmega {
   /**
    * The processed input proof converted to LKsk.
    */
-  lazy val lksk_proof = LKToLKsk( preprocessed_input_proof )
+  lazy val lksk_proof = skolemizeInferences( preprocessed_input_proof )
 
   /**
    * The struct of the proof. It is an intermediate representation of the characteristic sequent set.
    */
-  lazy val struct = extractStructFromLKsk( lksk_proof, skip_strategy() )
+  lazy val struct = extractStruct( lksk_proof, skip_strategy() )
 
   /**
    * The set of projections of the [[preprocessed_input_proof]].
@@ -125,8 +123,8 @@ abstract class AnalysisWithCeresOmega {
   /**
    * The characteristic sequent set ([[css]]) after removal of labels and subsumption
    */
-  lazy val preprocessed_css = {
-    val stripped_css = css.map( _.map( LKskProof.getFormula ) )
+  lazy val preprocessed_css: List[HOLSequent] = {
+    val stripped_css = css
     subsumedClausesRemoval( stripped_css.toList )
   }
 
@@ -192,7 +190,7 @@ abstract class AnalysisWithCeresOmega {
    * The ral version of the first-order refutation ([[fol_refutation]]), with all necessary simplifications undone
    */
   lazy val ral_refutation = {
-    val signature = undoHol2Fol.getSignature( lksk_proof, LKskProof.getFormula )
+    val signature = undoHol2Fol.getSignature( lksk_proof, identity[HOLFormula] )
 
     val converter = Resolution2RalWithAbstractions( signature, abstracted_constants_map )
 
@@ -202,12 +200,12 @@ abstract class AnalysisWithCeresOmega {
   /**
    * The simulation of the [[ral_refutation]] on the [[projections]] i.e. an LKsk proof where cuts only work on atom formulas
    */
-  lazy val acnf = ceres_omega( projections, ral_refutation, lksk_proof.conclusion, struct )._1
+  lazy val acnf = CERES( lksk_proof.conclusion, projections, ral_refutation )
 
   /**
    * The expansion proof of the cut-free proof [[acnf]].
    */
-  lazy val expansion_proof = LKskToExpansionProof( acnf )
+  lazy val expansion_proof = LKToExpansionProof( acnf )
 
   /**
    * A first-order conversion of the deep formula of the [[expansion_proof]].
