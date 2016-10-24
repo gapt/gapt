@@ -18,21 +18,21 @@ object isaplanner21 extends TacticsProof {
 
   val proof = Lemma( sequent ) {
     allR
-    induction(hov"n:Nat")
+    induction( hov"n:Nat" )
     // base case
     allR
-    allL("h3", le"plus(Z:Nat, m:Nat):Nat")
+    allL( "h3", le"plus(Z:Nat, m:Nat):Nat" )
     axiomLog
     // inductive case
     allR
-    allL("h2", le"n_0:Nat", le"m:Nat")
-    eql("h2_0", "goal")
-    allL("h5", le"n_0:Nat", le"plus(n_0:Nat,m:Nat):Nat")
+    allL( "h2", le"n_0:Nat", le"m:Nat" )
+    eql( "h2_0", "goal" )
+    allL( "h5", le"n_0:Nat", le"plus(n_0:Nat,m:Nat):Nat" )
     andL
-    impL("h5_0_1")
-        allL("IHn_0", le"m:Nat")
-        axiomLog
-        
-        axiomLog
+    impL( "h5_0_1" )
+    allL( "IHn_0", le"m:Nat" )
+    axiomLog
+
+    axiomLog
   }
 }

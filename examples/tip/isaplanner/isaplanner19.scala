@@ -19,39 +19,39 @@ object isaplanner19 extends TacticsProof {
 
   val proof = Lemma( sequent ) {
     allR
-    induction(hov"n:Nat")
+    induction( hov"n:Nat" )
     // base case
     allR
-    allL("h8", le"xs:list")
-    eql("h8_0", "goal").fromLeftToRight
-    induction(hov"xs:list")
-    allL("h3", le"Z:Nat")
-    eql("h6", "goal").fromLeftToRight
-    eql("h3_0", "goal").fromLeftToRight
+    allL( "h8", le"xs:list" )
+    eql( "h8_0", "goal" ).fromLeftToRight
+    induction( hov"xs:list" )
+    allL( "h3", le"Z:Nat" )
+    eql( "h6", "goal" ).fromLeftToRight
+    eql( "h3_0", "goal" ).fromLeftToRight
     refl
 
-    allL("h7", le"x:sk", le"xs_0:list")
-    allL("h4", le"len(xs_0:list):Nat")
-    eql("h7_0", "goal")
-    eql("h4_0", "goal").fromLeftToRight
+    allL( "h7", le"x:sk", le"xs_0:list" )
+    allL( "h4", le"len(xs_0:list):Nat" )
+    eql( "h7_0", "goal" )
+    eql( "h4_0", "goal" ).fromLeftToRight
     refl
 
     // inductive case
     allR
-    induction(hov"xs:list")
-    allL("h9", le"n_0:Nat")
-    allL("h3", le"S(n_0:Nat):Nat")
-    eql("h9_0", "goal").fromLeftToRight
-    eql("h6", "goal").fromLeftToRight
-    eql("h3_0", "goal").fromLeftToRight
+    induction( hov"xs:list" )
+    allL( "h9", le"n_0:Nat" )
+    allL( "h3", le"S(n_0:Nat):Nat" )
+    eql( "h9_0", "goal" ).fromLeftToRight
+    eql( "h6", "goal" ).fromLeftToRight
+    eql( "h3_0", "goal" ).fromLeftToRight
     refl
-    allL("h10", le"n_0:Nat", le"x:sk", le"xs_0:list")
-    allL("h7",  le"x:sk", le"xs_0:list")
-    allL("h5", le"len(xs_0:list):Nat", le"n_0:Nat")
-    allL("IHn_0", le"xs_0:list")
-    eql("h10_0", "goal")
-    eql("h7_0", "goal")
-    eql("h5_0", "goal")
+    allL( "h10", le"n_0:Nat", le"x:sk", le"xs_0:list" )
+    allL( "h7", le"x:sk", le"xs_0:list" )
+    allL( "h5", le"len(xs_0:list):Nat", le"n_0:Nat" )
+    allL( "IHn_0", le"xs_0:list" )
+    eql( "h10_0", "goal" )
+    eql( "h7_0", "goal" )
+    eql( "h5_0", "goal" )
     axiomLog
   }
 }

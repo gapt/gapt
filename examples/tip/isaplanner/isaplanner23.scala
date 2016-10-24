@@ -19,30 +19,30 @@ object isaplanner23 extends TacticsProof {
 
   val proof = Lemma( sequent ) {
     allR
-    induction(hov"a:Nat")
+    induction( hov"a:Nat" )
     allR
-    allL("h1", le"b:Nat")
-    eql("h1_0", "goal").fromLeftToRight
-    induction(hov"b:Nat")
-    allL("h1", le"Z:Nat")
-    eql("h1_1", "goal").fromLeftToRight
+    allL( "h1", le"b:Nat" )
+    eql( "h1_0", "goal" ).fromLeftToRight
+    induction( hov"b:Nat" )
+    allL( "h1", le"Z:Nat" )
+    eql( "h1_1", "goal" ).fromLeftToRight
     refl
-    allL("h2", le"b_0:Nat")
-    eql("h2_0", "goal").fromLeftToRight
+    allL( "h2", le"b_0:Nat" )
+    eql( "h2_0", "goal" ).fromLeftToRight
     refl
     allR
-    induction(hov"b:Nat")
-    allL("h1", le"S(a_0:Nat):Nat")
-    allL("h2", le"a_0:Nat")
-    eql("h2_0", "goal").fromLeftToRight
-    eql("h1_0", "goal").fromLeftToRight
+    induction( hov"b:Nat" )
+    allL( "h1", le"S(a_0:Nat):Nat" )
+    allL( "h2", le"a_0:Nat" )
+    eql( "h2_0", "goal" ).fromLeftToRight
+    eql( "h1_0", "goal" ).fromLeftToRight
     refl
-    allL("h3", le"a_0:Nat", le"b_0:Nat")
-    allL("h3", le"b_0:Nat", le"a_0:Nat")
-    allL("IHa_0", le"b_0:Nat")
-    eql("h3_0", "goal")
-    eql("h3_1", "goal")
-    eql("IHa_0_0", "goal").fromLeftToRight
+    allL( "h3", le"a_0:Nat", le"b_0:Nat" )
+    allL( "h3", le"b_0:Nat", le"a_0:Nat" )
+    allL( "IHa_0", le"b_0:Nat" )
+    eql( "h3_0", "goal" )
+    eql( "h3_1", "goal" )
+    eql( "IHa_0_0", "goal" ).fromLeftToRight
     refl
 
   }

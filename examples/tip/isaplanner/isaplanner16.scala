@@ -20,8 +20,8 @@ object isaplanner16 extends TacticsProof {
     allR
     allR
     impR
-    eql("goal_0", "goal_1")
-    allL("h4", le"x:Nat")
+    eql( "goal_0", "goal_1" )
+    allL( "h4", le"x:Nat" )
     axiomLog
   }
 }
