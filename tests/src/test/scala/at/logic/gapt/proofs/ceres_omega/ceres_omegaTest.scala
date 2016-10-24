@@ -38,9 +38,9 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     val Some( c3 ) = cs.find( x => ( x.antecedent.size == 0 ) && ( x.succedent.size == 1 ) )
 
     val y = Var( "y", Ti )
-    val x0 = Var( "x0", Ti )
+    val x0 = Var( "x", Ti )
     val p = Const( "P", Ti -> ( Ti -> To ) )
-    val y0 = Var( "Y0", Ti -> To )
+    val y0 = Var( "Y", Ti -> To )
 
     val s = c2.antecedent( 0 ) match { case HOLAtom( _, List( s, _ ) ) => s }
 
@@ -139,12 +139,10 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
 
   "Ceres_omega" should {
     "handle a proof with a manual refutation (1)" in {
-      skipped( "refutation1 throws errors during creation; don't know if LKskToExpansionProof works" )
       val ( p, cs, struct, proj ) = prepareProof( "llk/simple-leibnizeq.llk", "THEPROOF" )
       val rp = refutation1( cs )
 
       val acnf = CERES( p.conclusion, proj, rp )
-      //TODO: fix LKskToExpansionProof
       val et = LKToExpansionProof( acnf )
       ok
     }
