@@ -4,62 +4,101 @@ import java.awt.event.MouseEvent
 import java.awt.{ Color, Font }
 
 import scala.collection.mutable
-import at.logic.gapt.proofs.{ Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ Sequent, SequentIndex, SequentProof }
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
 
 import scala.swing._
 import scala.swing.event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 
 object DrawSequent {
-  def apply[T](
-    main:               ProofToolViewer[_],
-    seq:                Sequent[T],
-    mainAuxIndices:     Set[SequentIndex],
-    cutAncestorIndices: Set[SequentIndex],
-    t_renderer:         T => String
-  ): DrawSequent[T] = new DrawSequent[T]( main, seq, mainAuxIndices, cutAncestorIndices, t_renderer )
+  /**
+   * Draws a sequent that is part of a sequent proof.
+   * @param parent The DrawSequentProof object that this belongs to.
+   * @param seq The sequent to be displayed.
+   * @param mainAuxIndices The indices of main and aux formulas. Relevant for hiding contexts.
+   * @param cutAncestorIndices The indices of cut ancestors.
+   * @param sequentElementRenderer The function that turns elements of the sequent into strings.
+   * @tparam F The type of elements of the sequent.
+   */
+  def apply[F, T <: SequentProof[F, T]](
+    parent:                 DrawSequentProof[F, T],
+    seq:                    Sequent[F],
+    mainAuxIndices:         Set[SequentIndex],
+    cutAncestorIndices:     Set[SequentIndex],
+    sequentElementRenderer: F => String
+  ): DrawSequentInProof[F, T] = new DrawSequentInProof[F, T]( parent, seq, mainAuxIndices, cutAncestorIndices, sequentElementRenderer )
 
-  def apply[T](
-    main:       ProofToolViewer[_],
-    seq:        Sequent[T],
-    t_renderer: T => String
-  ): DrawSequent[T] = DrawSequent( main, seq, Set(), Set(), t_renderer )
+  /**
+   * Draws a sequent.
+   * @param main The main Prooftool window that this belongs to.
+   * @param seq The sequent to be displayed.
+   * @param sequentElementRenderer The function that turns elements of the sequent into strings.
+   * @tparam F The type of elements of the sequent.
+   */
+  def apply[F, M <: ProofToolViewer[_]](
+    main:                   M,
+    seq:                    Sequent[F],
+    sequentElementRenderer: F => String
+  ): DrawSequent[F, M] = new DrawSequent( main, seq, sequentElementRenderer )
 }
 
 /**
  * Draws a sequent.
  * @param main The main Prooftool window that this belongs to.
  * @param sequent The sequent to be displayed.
- * @param mainAuxIndices The indices of main and aux formulas. Relevant for hiding contexts.
- * @param cutAncestorIndices The indices of cut ancestors.
  * @param sequentElementRenderer The function that turns elements of the sequent into strings.
- * @tparam T The type of elements of the sequent.
+ * @tparam F The type of elements of the sequent.
  */
-class DrawSequent[T](
-    val main:                   ProofToolViewer[_],
-    val sequent:                Sequent[T],
-    val mainAuxIndices:         Set[SequentIndex],
-    val cutAncestorIndices:     Set[SequentIndex],
-    val sequentElementRenderer: T => String
+class DrawSequent[F, M <: ProofToolViewer[_]](
+    val main:                   M,
+    val sequent:                Sequent[F],
+    val sequentElementRenderer: F => String
 ) extends BoxPanel( Orientation.Horizontal ) {
   opaque = false // Necessary to draw the proof properly
 
-  val contextIndices = sequent.indices.toSet diff mainAuxIndices
-  val mainAuxIndicesAnt = mainAuxIndices filter { _.isAnt }
-  val mainAuxIndicesSuc = mainAuxIndices filterNot { _.isAnt }
-
   val turnstileLabel = new LatexTurnstileLabel( main ) // \u22a2
 
-  val elementLabelSequent = sequent map { f => LatexLabel( main, sequentElementRenderer( f ) ) }
+  val elementLabelSequent = sequent map { f => new LatexFormulaLabel( main, sequentElementRenderer( f ) ) }
   val commaLabelSequent = sequent map { _ => new CommaLabel( main ) }
-
-  val contentLabels = elementLabelSequent.antecedent ++ Seq( turnstileLabel ) ++ elementLabelSequent.succedent
 
   contents ++= removeLast( ( elementLabelSequent.antecedent zip commaLabelSequent.antecedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
   contents += turnstileLabel
   contents ++= removeLast( ( elementLabelSequent.succedent zip commaLabelSequent.succedent ) flatMap { case ( x, y ) => Seq( x, y ) } )
 
   def width() = size.width
+
+  private def removeLast[S]( xs: Seq[S] ): Seq[S] = xs match {
+    case Seq() => Seq()
+    case _     => xs.init
+  }
+}
+
+/**
+ * Draws a sequent that is part of a sequent proof.
+ *
+ * Unlike the general DrawSequent class, this contains logic relating to main/aux formulas and cut ancestors.
+ *
+ * @param parent The DrawSequentProof object that this belongs to.
+ * @param sequent The sequent to be displayed.
+ * @param mainAuxIndices The indices of main and aux formulas. Relevant for hiding contexts.
+ * @param cutAncestorIndices The indices of cut ancestors.
+ * @param sequentElementRenderer The function that turns elements of the sequent into strings.
+ * @tparam F The type of elements of the sequent.
+ */
+class DrawSequentInProof[F, T <: SequentProof[F, T]](
+    val parent:             DrawSequentProof[F, T],
+    sequent:                Sequent[F],
+    val mainAuxIndices:     Set[SequentIndex],
+    val cutAncestorIndices: Set[SequentIndex],
+    sequentElementRenderer: F => String
+) extends DrawSequent[F, SequentProofViewer[F, T]]( parent.main, sequent, sequentElementRenderer ) {
+  require( mainAuxIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos} is undefined for some indices in $mainAuxIndices." )
+  require( cutAncestorIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos}  is undefined for some indices in $cutAncestorIndices." )
+
+  val pos = parent.pos
+  val contextIndices = sequent.indices.toSet diff mainAuxIndices
+  val mainAuxIndicesAnt = mainAuxIndices filter { _.isAnt }
+  val mainAuxIndicesSuc = mainAuxIndices filterNot { _.isAnt }
 
   listenTo( main.publisher )
 
@@ -90,19 +129,34 @@ class DrawSequent[T](
 
     case MarkCutAncestors =>
       for ( i <- cutAncestorIndices )
-        elementLabelSequent( i ).background = Color.GREEN
+        elementLabelSequent( i ).mark()
 
     case UnmarkCutAncestors =>
       for ( i <- cutAncestorIndices )
-        elementLabelSequent( i ).background = Color.WHITE
+        elementLabelSequent( i ).unmark()
 
-    case FontChanged =>
+    case MarkAncestors( p, is ) if p == pos =>
+      for ( i <- is )
+        elementLabelSequent( i ).mark()
+
+    case MarkDescendants( p, is ) if p == pos =>
+      for ( i <- is )
+        elementLabelSequent( i ).mark()
+
+    case UnmarkAllFormulas =>
+      elementLabelSequent.foreach {
+        _.resetMarkLevel()
+      }
   }
 
-  private def removeLast[S]( xs: Seq[S] ): Seq[S] = xs match {
-    case Seq() => Seq()
-    case _     => xs.init
+  // Add reactions to formulas
+  for ( ( f, i ) <- elementLabelSequent.zipWithIndex ) {
+    f.reactions += {
+      case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 && e.clicks == 1 =>
+        PopupMenu( main, f, pos, i, e.point.x, e.point.y )
+    }
   }
+
 }
 
 /**
@@ -178,6 +232,25 @@ class LatexFormulaLabel(
   latexText: String
 )
     extends LatexLabel( main, latexText ) {
+
+  private var markLevel = 0
+
+  def mark(): Unit = {
+    markLevel += 1
+    background = Color.GREEN
+  }
+
+  def unmark(): Unit = {
+    markLevel = if ( markLevel == 0 ) 0 else markLevel - 1
+    assert( markLevel >= 0 )
+
+    if ( markLevel == 0 ) background = Color.WHITE
+  }
+
+  def resetMarkLevel(): Unit = {
+    markLevel = 0
+    background = Color.WHITE
+  }
 
   listenTo( mouse.moves, mouse.clicks )
   reactions += {

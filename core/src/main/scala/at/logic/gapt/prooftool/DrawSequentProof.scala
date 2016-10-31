@@ -45,7 +45,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   val endSequentPanel = {
     val mainAuxIndices = proof.mainIndices.toSet ++ auxIndices
     DrawSequent(
-      main,
+      this,
       proof.conclusion,
       mainAuxIndices,
       cutAncestorIndices,
@@ -64,7 +64,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     new DrawSequentProof(
       main,
       p,
-      proof.auxIndices.head.toSet,
+      proof.auxIndices( i ).toSet,
       cutAncestorIndicesNew( i ),
       sequentElementRenderer,
       i :: pos
@@ -186,8 +186,8 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
     case e: MouseClicked if e.peer.getButton == MouseEvent.BUTTON3 =>
       PopupMenu( this, e.point.x, e.point.y )
-  }
 
+  }
 }
 
 /**

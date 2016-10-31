@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import at.logic.gapt.proofs.{ DagProof, SequentProof }
+import at.logic.gapt.proofs.{ DagProof, SequentIndex, SequentProof }
 import at.logic.gapt.proofs.lk.{ InitialSequent, LKProof }
 
 import swing.SequentialContainer.Wrapper
@@ -52,6 +52,30 @@ object PopupMenu {
       }
     }
     popupMenu.show( dsp, x, y )
+  }
+
+  /**
+   * A popup menu for individual formulas in a sequent proof.
+   * @param main The main window that contains this menu.
+   * @param lbl The label that spawned the menu.
+   * @param pos The position of the sequent in which lbl resides.
+   * @param i The index of lbl within its sequent.
+   */
+  def apply[F, T <: SequentProof[F, T]]( main: SequentProofViewer[F, T], lbl: LatexLabel, pos: List[Int], i: SequentIndex, x: Int, y: Int ): Unit = {
+    val popupMenu = new PopupMenu {
+      contents += new MenuItem( Action( "Mark ancestors" ) {
+        main.markAncestors( pos, Set( i ) )
+      } )
+      contents += new MenuItem( Action( "Mark descendants" ) {
+        main.markDescendants( pos, Set( i ) )
+      } )
+
+      contents += new MenuItem( Action( "Mark ancestors & descendants" ) {
+        main.markAncestorsAndDescendants( pos, Set( i ) )
+      } )
+    }
+
+    popupMenu.show( lbl, x, y )
   }
 
   // PopupMenu for Expansion Trees.

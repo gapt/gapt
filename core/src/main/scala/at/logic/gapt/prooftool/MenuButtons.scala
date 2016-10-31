@@ -101,10 +101,10 @@ object MenuButtons {
 
   /**
    *
-   * @param main An instance of ProoftoolViewer with ContainsLKProof.
+   * @param main An instance of ProoftoolViewer with ContainsSequentProof.
    * @return A menu button that calls main's hideSequentContext/showAllFormulas function.
    */
-  def hideContextsButton( main: ProofToolViewer[_] with ContainsLKProof ) = new CheckMenuItem( "Hide sequent contexts" ) {
+  def hideContextsButton( main: ProofToolViewer[_] with ContainsSequentProof ) = new CheckMenuItem( "Hide sequent contexts" ) {
     outer =>
 
     action = Action( "Hide sequent contexts" ) {
@@ -127,9 +127,13 @@ object MenuButtons {
       if ( outer.selected )
         main.markCutAncestors()
       else
-        main.removeMarking()
+        main.unmarkCutAncestors()
     }
   }
+
+  def removeAllMarkingsButton( main: ProofToolViewer[_] with ContainsSequentProof ) = new MenuItem( Action( "Remove all markings" ) {
+    main.removeAllMarkings()
+  } )
 
   def ShowDebugBordersButton( main: ProofToolViewer[_] ) = new CheckMenuItem( "Show debug borders" ) {
     outer =>
@@ -156,20 +160,7 @@ trait Savable[-T] {
   def fSave( name: String, obj: T ): Unit
 }
 
-/**
- * A trait for ProofToolViewer objects that contain (old or new) LK proofs.
- */
-trait ContainsLKProof {
-  /**
-   * Hides structural rules in the proof.
-   */
-  def hideStructuralRules(): Unit
-
-  /**
-   * Shows all rules in the proof.
-   */
-  def showAllRules(): Unit
-
+trait ContainsSequentProof {
   /**
    * Hides all formulas except main and auxiliary ones.
    */
@@ -181,12 +172,32 @@ trait ContainsLKProof {
   def showAllFormulas(): Unit
 
   /**
+   * Removes all markings.
+   */
+  def removeAllMarkings(): Unit
+}
+
+/**
+ * A trait for ProofToolViewer objects that contain (old or new) LK proofs.
+ */
+trait ContainsLKProof extends ContainsSequentProof {
+  /**
+   * Hides structural rules in the proof.
+   */
+  def hideStructuralRules(): Unit
+
+  /**
+   * Shows all rules in the proof.
+   */
+  def showAllRules(): Unit
+
+  /**
    * Marks the ancestors of cut formulas.
    */
   def markCutAncestors(): Unit
 
   /**
-   * Removes all markings.
+   * Unmarks the ancestors of cut formulas.
    */
-  def removeMarking(): Unit
+  def unmarkCutAncestors(): Unit
 }

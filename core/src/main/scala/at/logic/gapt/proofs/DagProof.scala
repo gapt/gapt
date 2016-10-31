@@ -39,6 +39,18 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
   def subProofs: Set[Proof] = dagLike foreach { _ => () }
 
   /**
+   * Returns the subproof at the given position: p.subProofAt(Nil) is p itself; p.subProofAt(i :: is) is the ith
+   * subproof of p.subProofAt(is).
+   */
+  def subProofAt( pos: List[Int] ): Proof = pos match {
+    case Nil => this
+    case i :: is =>
+      val sub = subProofAt( is )
+      require( sub.immediateSubProofs isDefinedAt i, s"Proof $sub does not have an immediate subproof with index $i." )
+      sub.immediateSubProofs( i )
+  }
+
+  /**
    * Depth of the proof, which is the maximum length of a path you can take via [[immediateSubProofs]].
    */
   def depth: Int = {
