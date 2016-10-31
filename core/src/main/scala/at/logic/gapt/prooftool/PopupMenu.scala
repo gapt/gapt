@@ -47,7 +47,10 @@ object PopupMenu {
             }
           }
           contents += new MenuItem( Action( "View proof in new window" ) {
-            prooftool( dsp.proof )
+            dsp.proof match {
+              case p: LKProof            => prooftool( p )
+              case p: SequentProof[F, T] => prooftool( p )
+            }
           } )
       }
     }
