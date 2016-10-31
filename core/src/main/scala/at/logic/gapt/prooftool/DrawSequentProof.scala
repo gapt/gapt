@@ -32,12 +32,14 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
   private def showLine() = {
     lineHideLevel = if ( lineHideLevel == 0 ) 0 else lineHideLevel - 1
+    assert( lineHideLevel >= 0 )
+
     linePanel.visible = lineHideLevel == 0
   }
 
   private def hideLine() = {
     lineHideLevel += 1
-    linePanel.visible = lineHideLevel == 0
+    linePanel.visible = false
   }
 
   val endSequentPanel = {
@@ -146,7 +148,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     case HideStructuralRules => //Fix: contraction is still drawn when a weakening is followed by a contraction.
       proof match {
         case _: WeakeningLeftRule | _: WeakeningRightRule | _: ContractionLeftRule | _: ContractionRightRule =>
-          lineHideLevel += 1
+          hideLine()
           main.publisher.publish( HideEndSequent( 0 :: pos ) )
         case _ =>
       }
@@ -270,17 +272,17 @@ class ProofLinePanel[F, T <: SequentProof[F, T]](
 
   private def updateWidth( fontSizeHasChanged: Boolean = false ): Unit = {
     val newLineWidth = math.max( parent.subProofsPanel.endSequentWidth(), parent.endSequentPanel.width() )
-    if ( !fontSizeHasChanged && math.abs( lineWidth - newLineWidth ) <= 2 ) return // ensure convergence
-    lineWidth = newLineWidth
-    val labelWidth = labelFontMetrics.stringWidth( proofName ) * 2 + fSize
-    _width = lineWidth + labelWidth
-    val height = labelFontMetrics.getHeight + fSize / 4
-    preferredSize = new Dimension( _width, height )
-    minimumSize = preferredSize
-    maximumSize = preferredSize
-    repaint()
+    if ( fontSizeHasChanged || math.abs( lineWidth - newLineWidth ) > 2 ) {
+      lineWidth = newLineWidth
+      val labelWidth = labelFontMetrics.stringWidth( proofName ) * 2 + fSize
+      _width = lineWidth + labelWidth
+      val height = labelFontMetrics.getHeight + fSize / 4
+      preferredSize = new Dimension( _width, height )
+      minimumSize = preferredSize
+      maximumSize = preferredSize
+      repaint()
+    }
   }
-
   def width() = _width
   private var _width = 0; private var lineWidth = 0; updateWidth()
 
