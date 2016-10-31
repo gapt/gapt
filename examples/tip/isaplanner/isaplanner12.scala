@@ -27,7 +27,17 @@ object isaplanner12 extends TacticsProof {
     eql( "h5_0", "goal" ).fromLeftToRight
     eql( "h5_1", "goal" ).fromLeftToRight
     refl
-    // Inductive case
+    // Step case
     allR
+    induction( hov"xs:list" )
+    /// Base case
+    rewrite.many ltr "h3"
+    rewrite.many ltr "h6"
+    rewrite.many ltr "h3"
+    refl
+    /// Step case
+    rewrite.many ltr "h4"
+    rewrite.many ltr "h7"
+    chain( "IHn_0" )
   }
 }
