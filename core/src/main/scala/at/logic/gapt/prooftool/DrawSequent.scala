@@ -3,10 +3,10 @@ package at.logic.gapt.prooftool
 import java.awt.event.MouseEvent
 import java.awt.{ Color, Font }
 
+import scala.collection.mutable
 import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula, TeXIcon }
 
-import scala.collection.mutable
 import scala.swing._
 import scala.swing.event.{ MouseClicked, MouseEntered, MouseExited, WindowDeactivated }
 
@@ -45,6 +45,8 @@ class DrawSequent[T](
   opaque = false // Necessary to draw the proof properly
 
   val contextIndices = sequent.indices.toSet diff mainAuxIndices
+  val mainAuxIndicesAnt = mainAuxIndices filter { _.isAnt }
+  val mainAuxIndicesSuc = mainAuxIndices filterNot { _.isAnt }
 
   val turnstileLabel = new LatexTurnstileLabel( main ) // \u22a2
 
@@ -68,11 +70,23 @@ class DrawSequent[T](
         commaLabelSequent( i ).visible = false
       }
 
+      if ( mainAuxIndicesAnt.size == 1 )
+        commaLabelSequent( mainAuxIndicesAnt.head ).visible = false
+
+      if ( mainAuxIndicesSuc.size == 1 )
+        commaLabelSequent( mainAuxIndicesSuc.head ).visible = false
+
     case ShowAllFormulas =>
       for ( i <- contextIndices ) {
         elementLabelSequent( i ).visible = true
         commaLabelSequent( i ).visible = true
       }
+
+      if ( mainAuxIndicesAnt.size == 1 )
+        commaLabelSequent( mainAuxIndicesAnt.head ).visible = true
+
+      if ( mainAuxIndicesSuc.size == 1 )
+        commaLabelSequent( mainAuxIndicesSuc.head ).visible = true
 
     case MarkCutAncestors =>
       for ( i <- cutAncestorIndices )
