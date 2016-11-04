@@ -8,9 +8,20 @@ import at.logic.gapt.proofs._
 
 import scala.collection.mutable
 
+/**
+ * A tree collecting instances of a formula. See TODO
+ */
 trait ExpansionTree extends DagProof[ExpansionTree] {
+  /**
+   * The formula represented by this tree.
+   */
   def shallow: HOLFormula
+
+  /**
+   * The formula represented by this tree, fully instantiated.
+   */
   def deep: HOLFormula
+
   def polarity: Polarity
 
   def apply( pos: HOLPosition ): Set[ExpansionTree] = getAtHOLPosition( this, pos )
@@ -20,17 +31,30 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
   override def toString = toSigRelativeString
 }
 
+/**
+ * An expansion tree with one subtree.
+ */
 trait UnaryExpansionTree extends ExpansionTree {
   def child: ExpansionTree
   def immediateSubProofs = Seq( child )
 }
 
+/**
+ * An expansion tree with two subtrees.
+ */
 trait BinaryExpansionTree extends ExpansionTree {
   def child1: ExpansionTree
   def child2: ExpansionTree
   def immediateSubProofs = Seq( child1, child2 )
 }
 
+/**
+ * A node signifying that two trees need to be merged.
+ *
+ * The two trees must have the same shallow formula.
+ * @param child1 The left subtree.
+ * @param child2 The right subtree.
+ */
 case class ETMerge( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryExpansionTree {
   require( child1.polarity == child2.polarity )
   val polarity = child1.polarity
@@ -53,18 +77,27 @@ object ETMerge {
   }
 }
 
+/**
+ * A tree representing a formula that originates from a weakening.
+ * @param formula The represented formula.
+ */
 case class ETWeakening( formula: HOLFormula, polarity: Polarity ) extends ExpansionTree {
   def shallow = formula
   def deep = if ( polarity.inSuc ) Bottom() else Top()
   def immediateSubProofs = Seq()
 }
 
+/**
+ * A tree representing an atomic formula.
+ * @param atom The represented atom.
+ */
 case class ETAtom( atom: HOLAtom, polarity: Polarity ) extends ExpansionTree {
   def shallow = atom
   def deep = atom
   def immediateSubProofs = Seq()
 }
 
+// TODO: Document this
 case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definedExpr: LambdaExpression ) extends ExpansionTree {
   val Apps( definitionConst: Const, arguments ) = atom
   require( freeVariables( definedExpr ).isEmpty )
@@ -76,24 +109,39 @@ case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definedExpr: Lambda
   val definition = Definition( definitionConst, definedExpr )
 }
 
+/**
+ * A tree representing ⊤.
+ */
 case class ETTop( polarity: Polarity ) extends ExpansionTree {
   val shallow = Top()
   def deep = Top()
   def immediateSubProofs = Seq()
 }
 
+/**
+ * A tree representing ⊥.
+ */
 case class ETBottom( polarity: Polarity ) extends ExpansionTree {
   val shallow = Bottom()
   def deep = Bottom()
   def immediateSubProofs = Seq()
 }
 
+/**
+ * A tree representing ¬A.
+ * @param child A tree representing A.
+ */
 case class ETNeg( child: ExpansionTree ) extends UnaryExpansionTree {
   val polarity = !child.polarity
   val shallow = -child.shallow
   def deep = -child.deep
 }
 
+/**
+ * A tree representing A ∧ B.
+ * @param child1 A tree representing A.
+ * @param child2 A tree representing B.
+ */
 case class ETAnd( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryExpansionTree {
   require( child1.polarity == child2.polarity )
   val polarity = child1.polarity
@@ -101,6 +149,11 @@ case class ETAnd( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   def deep = child1.deep & child2.deep
 }
 
+/**
+ * A tree representing A ∨ B.
+ * @param child1 A tree representing A.
+ * @param child2 A tree representing B.
+ */
 case class ETOr( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryExpansionTree {
   require( child1.polarity == child2.polarity )
   val polarity = child1.polarity
@@ -108,6 +161,11 @@ case class ETOr( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryEx
   def deep = child1.deep | child2.deep
 }
 
+/**
+ * A tree representing A ⊃ B.
+ * @param child1 A tree representing A.
+ * @param child2 A tree representing B.
+ */
 case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryExpansionTree {
   require( child1.polarity != child2.polarity )
   val polarity = child2.polarity
@@ -115,14 +173,29 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   def deep = child1.deep --> child2.deep
 }
 
+/**
+ * A general trait for trees representing quantified formulas.
+ */
 trait ETQuantifier extends ExpansionTree {
   def instances: Traversable[( LambdaExpression, ExpansionTree )]
 }
+
 object ETQuantifier {
   def unapply( et: ETQuantifier ): Some[( HOLFormula, Traversable[( LambdaExpression, ExpansionTree )] )] =
     Some( et.shallow -> et.instances )
 }
 
+/**
+ * A tree representing a formula beginning with a weak quantifier, i.e., a positive existential or negative universal.
+ *
+ * It has the form Qx.A +^t,,1,,^ E,,1,, + … +^t,,n,,^ E,,n,,, where t,,1,,,…,t,,n,, are lambda terms of the same type
+ * as x and E,,i,, is an expansion tree of A[x\t,,i,,].
+ *
+ * Its deep formula is E,,1,,.deep ∨ … ∨ E,,n,,.deep (in the case of an existential) or E,,1,,.deep ∧ … ∧ E,,n,,.deep
+ * (in the case of a universal).
+ * @param shallow The formula Qx.A.
+ * @param instances A map containing the pairs t,,1,, → E,,1,,,…,t,,n,, → E,,n,,.
+ */
 case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpression, ExpansionTree] ) extends ETQuantifier {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( Polarity.InSuccedent, x, t )
@@ -149,6 +222,10 @@ object ETWeakQuantifier {
     ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1 ).mapValues( children => ETMerge( children.map { _._2 } ) ) )
   }
 }
+
+/**
+ * Creates or matches a block of weak quantifiers.
+ */
 object ETWeakQuantifierBlock {
   def apply( shallow: HOLFormula, blockSize: Int, instances: Iterable[( Seq[LambdaExpression], ExpansionTree )] ): ExpansionTree =
     if ( blockSize == 0 ) {
@@ -185,6 +262,16 @@ object ETWeakQuantifierBlock {
   }
 }
 
+/**
+ * A tree representing a formula beginning with a strong quantifier, i.e., a positive universal or a negative existential.
+ *
+ * It has the form Qx.A +^α^ E, where α is a variable (called the eigenvariable) and E is an expansion tree of A[x\α].
+ *
+ * Its deep formula is the deep formula of E.
+ * @param shallow The formula A.
+ * @param eigenVariable The variable α.
+ * @param child The subtree E.
+ */
 case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: ExpansionTree ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( Polarity.InAntecedent, x, t )
@@ -212,6 +299,14 @@ object ETStrongQuantifierBlock {
   }
 }
 
+// TODO: Document this
+/**
+ * A tree representing a formula beginning with a strong quantifier, i.e., a positive universal or a negative existential.
+ * @param shallow
+ * @param skolemTerm
+ * @param skolemDef
+ * @param child
+ */
 case class ETSkolemQuantifier(
     shallow:    HOLFormula,
     skolemTerm: LambdaExpression,
@@ -239,7 +334,7 @@ case class ETSkolemQuantifier(
  *
  * @param shallow An atom P(x,,1,,,..., x,,n,,) where P stands for a more complex formula.
  * @param definedExpr The expression that P abbreviates. Must have the same type as P.
- * @param child An expansion tree with shallowFormula definedExpr(x,,1,,,...,x,,n,,)
+ * @param child An expansion tree of definedExpr(x,,1,,,...,x,,n,,).
  */
 case class ETDefinition( shallow: HOLAtom, definedExpr: LambdaExpression, child: ExpansionTree ) extends UnaryExpansionTree {
   val HOLAtom( pred: Const, args ) = shallow
@@ -328,11 +423,17 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
   }
 }
 
+/**
+ * Returns the eigenvariables in an expansion tree or expansion sequent.
+ */
 object eigenVariablesET {
   def apply( tree: ExpansionTree ): Set[Var] = tree.subProofs collect { case ETStrongQuantifier( _, v, _ ) => v }
   def apply( s: ExpansionSequent ): Set[Var] = s.elements.flatMap { apply }.toSet
 }
 
+/**
+ * Cleans up an expansion tree by introducing weakenings as late as possible.
+ */
 object cleanStructureET {
   def apply( t: ExpansionTree ): ExpansionTree = t match {
     case ETNeg( s ) => apply( s ) match {
