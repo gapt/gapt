@@ -204,7 +204,8 @@ lazy val core = project.in( file( "core" ) ).
       "com.github.pathikrit" %% "better-files" % "2.16.0",
       "ch.qos.logback" % "logback-classic" % "1.1.7",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5",
+      "org.typelevel" %% "cats" % "0.8.0"
     ),
 
     // UI

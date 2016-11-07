@@ -46,6 +46,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
       case formula +: rest =>
         require( isPrenex( formula ), s"Formula $formula is not prenex." )
         require( !containsStrongQuantifier( formula, Polarity.InAntecedent ), s"Formula $formula contains strong quantifiers." )
+        require( freeVariables( formula ).isEmpty, s"Formula $formula is not fully quantified." )
 
         val All.Block( vars, matrix ) = formula
         val cnf = CNFp( matrix )

@@ -42,9 +42,9 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
    * @return The unique parent of idx.
    */
   def parent( idx: SequentIndex ): SequentIndex = parents( idx ) match {
-    case Seq()    => throw new NoSuchElementException( s"Index $idx has no parent in sequent $upperSequent." )
+    case Seq()    => throw new NoSuchElementException( s"When calling parent on OccConnector $this: Index $idx has no parent in sequent $upperSequent." )
     case Seq( p ) => p
-    case _        => throw new Exception( s"Index $idx has more than one parent in sequent $upperSequent." )
+    case _        => throw new Exception( s"When calling parent on OccConnector $this: Index $idx has more than one parent in sequent $upperSequent." )
   }
 
   /**
@@ -91,9 +91,9 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
    * @return The unique child of idx.
    */
   def child( idx: SequentIndex ): SequentIndex = children( idx ) match {
-    case Seq()    => throw new NoSuchElementException( s"Index $idx has no child in sequent $lowerSequent." )
+    case Seq()    => throw new NoSuchElementException( s"When calling child on OccConnector $this: Index $idx has no child in sequent $lowerSequent." )
     case Seq( c ) => c
-    case _        => throw new Exception( s"Index $idx has more than one child in sequent $lowerSequent." )
+    case _        => throw new Exception( s"When calling child on OccConnector $this: Index $idx has more than one child in sequent $lowerSequent." )
   }
 
   /**

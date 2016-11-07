@@ -262,13 +262,12 @@ trait LKVisitor[T] {
     }
 
   protected def visitInduction( proof: InductionRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
-    one2one( proof, otherArg ) {
-      case subProofs =>
-        InductionRule(
-          for ( ( c, ( subProof, subConn ) ) <- proof.cases zip subProofs )
-            yield InductionCase( subProof, c.constructor, c.hypotheses map subConn.child, c.eigenVars, subConn.child( c.conclusion ) ),
-          proof.formula, proof.term
-        )
+    one2one( proof, otherArg ) { subProofs =>
+      InductionRule(
+        for ( ( c, ( subProof, subConn ) ) <- proof.cases zip subProofs )
+          yield InductionCase( subProof, c.constructor, c.hypotheses map subConn.child, c.eigenVars, subConn.child( c.conclusion ) ),
+        proof.formula, proof.term
+      )
     }
 
   protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
