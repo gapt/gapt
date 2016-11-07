@@ -1299,7 +1299,8 @@ times(sr2, sr2) = two,
 \subsection{Built-in superposition prover}
 
 GAPT contains a simple built-in superposition prover called Escargot.  It is
-used for proof replay to import proofs from other provers.  You can use it with
+used for proof replay to import proofs from other provers. Escargot can natively
+solve many-sorted problems, see Section~\ref{sec:many_sorted}. You can use it with
 the same interface as \cli{Prover9} and the other first-order provers:
 
 \begin{clilisting}
@@ -1784,7 +1785,7 @@ x_2 → s(s(s(s(s(0)))))
 
 \end{clilisting}
 
-\subsection{Many-sorted logic}
+\subsection{Many-sorted logic}\label{sec:many_sorted}
 
 The lambda calculus implemented in GAPT supports multiple base sorts.  When
 entering a many-sorted formula you need to provide enough type annotations to
