@@ -28,6 +28,14 @@ trait Substitutable[-S <: Substitution, -T, +U] {
 object Substitutable {
 
   /**
+   * Creates an instance of the substitutable typeclass from a function.
+   * @param applySub How applying a substitution is supposed to work.
+   */
+  def instance[S <: Substitution, T, U]( applySub: ( S, T ) => U ): Substitutable[S, T, U] = new Substitutable[S, T, U] {
+    override def applySubstitution( sub: S, arg: T ): U = applySub( sub, arg )
+  }
+
+  /**
    * The general method for applying substitutions to lambda expressions.
    *
    * @param sub A substitution.
@@ -48,15 +56,12 @@ object Substitutable {
 
   /**
    * Testifies that a Set of substitutable objects is itself substitutable (by mapping over it).
-   *
-   * @param ev
-   * @tparam S
-   * @tparam T
-   * @tparam U
-   * @return
    */
-  implicit def SubstitutableSet[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Set[T], Set[U]] = new Substitutable[S, Set[T], Set[U]] {
-    override def applySubstitution( sub: S, set: Set[T] ): Set[U] = set.map( ev.applySubstitution( sub, _ ) )
+  implicit def SubstitutableSet[S <: Substitution, T, U](
+    implicit
+    ev: Substitutable[S, T, U]
+  ): Substitutable[S, Set[T], Set[U]] = instance { ( sub: S, set: Set[T] ) =>
+    set.map( ev.applySubstitution( sub, _ ) )
   }
 
   /**
@@ -68,15 +73,21 @@ object Substitutable {
    * @tparam U
    * @return
    */
-  implicit def SubstitutableSeq[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Seq[T], Seq[U]] = new Substitutable[S, Seq[T], Seq[U]] {
-    override def applySubstitution( sub: S, seq: Seq[T] ): Seq[U] = seq.map( ev.applySubstitution( sub, _ ) )
+  implicit def SubstitutableSeq[S <: Substitution, T, U](
+    implicit
+    ev: Substitutable[S, T, U]
+  ): Substitutable[S, Seq[T], Seq[U]] = instance { ( sub: S, seq: Seq[T] ) =>
+    seq.map( ev.applySubstitution( sub, _ ) )
   }
 
   /**
    * Testifies that an Option of substitutable objects is itself substitutable (by mapping over it).
    */
-  implicit def SubstitutableOption[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Option[T], Option[U]] = new Substitutable[S, Option[T], Option[U]] {
-    override def applySubstitution( sub: S, option: Option[T] ): Option[U] = option map { ev.applySubstitution( sub, _ ) }
+  implicit def SubstitutableOption[S <: Substitution, T, U](
+    implicit
+    ev: Substitutable[S, T, U]
+  ): Substitutable[S, Option[T], Option[U]] = instance { ( sub: S, opt: Option[T] ) =>
+    opt map { ev.applySubstitution( sub, _ ) }
   }
 
   /**
@@ -88,8 +99,11 @@ object Substitutable {
    * @tparam U
    * @return
    */
-  implicit def SubstitutableSequent[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Sequent[T], Sequent[U]] = new Substitutable[S, Sequent[T], Sequent[U]] {
-    override def applySubstitution( sub: S, sequent: Sequent[T] ): Sequent[U] = sequent map { ev.applySubstitution( sub, _ ) }
+  implicit def SubstitutableSequent[S <: Substitution, T, U](
+    implicit
+    ev: Substitutable[S, T, U]
+  ): Substitutable[S, Sequent[T], Sequent[U]] = instance { ( sub: S, sequent: Sequent[T] ) =>
+    sequent map { ev.applySubstitution( sub, _ ) }
   }
 
   /**
@@ -99,24 +113,24 @@ object Substitutable {
     implicit
     ev1: Substitutable[S, T1, U1],
     ev2: Substitutable[S, T2, U2]
-  ): Substitutable[S, ( T1, T2 ), ( U1, U2 )] = new Substitutable[S, ( T1, T2 ), ( U1, U2 )] {
-    override def applySubstitution( sub: S, pair: ( T1, T2 ) ): ( U1, U2 ) = ( ev1.applySubstitution( sub, pair._1 ), ev2.applySubstitution( sub, pair._2 ) )
+  ): Substitutable[S, ( T1, T2 ), ( U1, U2 )] = instance { ( sub: S, pair: ( T1, T2 ) ) =>
+    ( ev1.applySubstitution( sub, pair._1 ), ev2.applySubstitution( sub, pair._2 ) )
   }
 
   /**
    * Testifies that type `FOLTerm` is closed under `FOLSub`.
    *
    */
-  implicit object FOLTermClosedUnderFOLSub extends ClosedUnderFOLSub[FOLTerm] {
-    override def applySubstitution( sub: FOLSubstitution, x: FOLTerm ): FOLTerm = applySub( sub, x ).asInstanceOf[FOLTerm]
+  implicit val FOLTermClosedUnderFOLSub: ClosedUnderFOLSub[FOLTerm] = instance { ( sub: FOLSubstitution, x: FOLTerm ) =>
+    applySub( sub, x ).asInstanceOf[FOLTerm]
   }
 
   /**
    * Testifies that type `FOLAtom` is closed under `FOLSub`.
    *
    */
-  implicit object FOLAtomClosedUnderFOLSub extends ClosedUnderFOLSub[FOLAtom] {
-    override def applySubstitution( sub: FOLSubstitution, x: FOLAtom ): FOLAtom = applySub( sub, x ).asInstanceOf[FOLAtom]
+  implicit val FOLAtomClosedUnderFOLSub: ClosedUnderFOLSub[FOLAtom] = instance { ( sub: FOLSubstitution, x: FOLAtom ) =>
+    applySub( sub, x ).asInstanceOf[FOLAtom]
   }
 
   /**
@@ -126,8 +140,11 @@ object Substitutable {
    * @tparam T
    * @return
    */
-  implicit def FOLFormulaClosedUnderFOLSub[T <: FOLFormula]( implicit notAnAtom: Not[T <:< FOLAtom] ) = new Substitutable[FOLSubstitution, T, FOLFormula] {
-    override def applySubstitution( sub: FOLSubstitution, x: T ): FOLFormula = applySub( sub, x ).asInstanceOf[FOLFormula]
+  implicit def FOLFormulaClosedUnderFOLSub[T <: FOLFormula](
+    implicit
+    notAnAtom: Not[T <:< FOLAtom]
+  ) = instance { ( sub: FOLSubstitution, x: T ) =>
+    applySub( sub, x ).asInstanceOf[FOLFormula]
   }
 
   /**
@@ -138,8 +155,12 @@ object Substitutable {
    * @tparam T
    * @return
    */
-  implicit def FOLExpressionClosedUnderFOLSub[T <: FOLExpression]( implicit notATerm: Not[T <:< FOLTerm], notAFormula: Not[T <:< FOLFormula] ) = new Substitutable[FOLSubstitution, T, FOLExpression] {
-    override def applySubstitution( sub: FOLSubstitution, x: T ): FOLExpression = applySub( sub, x ).asInstanceOf[FOLExpression]
+  implicit def FOLExpressionClosedUnderFOLSub[T <: FOLExpression](
+    implicit
+    notATerm:    Not[T <:< FOLTerm],
+    notAFormula: Not[T <:< FOLFormula]
+  ) = instance { ( sub: FOLSubstitution, x: T ) =>
+    applySub( sub, x ).asInstanceOf[FOLExpression]
   }
 
   /**
@@ -149,8 +170,11 @@ object Substitutable {
    * @tparam T
    * @return
    */
-  implicit def HOLFormulaClosedUnderFOLSub[T <: HOLFormula]( implicit notAFOLFormula: Not[T <:< FOLFormula] ) = new Substitutable[FOLSubstitution, T, HOLFormula] {
-    override def applySubstitution( sub: FOLSubstitution, x: T ): HOLFormula = applySub( sub, x ).asInstanceOf[HOLFormula]
+  implicit def HOLFormulaClosedUnderFOLSub[T <: HOLFormula](
+    implicit
+    notAFOLFormula: Not[T <:< FOLFormula]
+  ) = instance { ( sub: FOLSubstitution, x: T ) =>
+    applySub( sub, x ).asInstanceOf[HOLFormula]
   }
 
   /**
@@ -159,8 +183,11 @@ object Substitutable {
    * @tparam S
    * @return
    */
-  implicit def FOLAtomSubstitutable[S <: Substitution]( implicit notAFOLSub: Not[S <:< FOLSubstitution] ) = new Substitutable[S, FOLAtom, HOLAtom] {
-    override def applySubstitution( sub: S, x: FOLAtom ): HOLAtom = applySub( sub, x ).asInstanceOf[HOLAtom]
+  implicit def FOLAtomSubstitutable[S <: Substitution](
+    implicit
+    notAFOLSub: Not[S <:< FOLSubstitution]
+  ): Substitutable[S, FOLAtom, HOLAtom] = instance { ( sub: S, x: FOLAtom ) =>
+    applySub( sub, x ).asInstanceOf[HOLAtom]
   }
 
   /**
@@ -170,8 +197,12 @@ object Substitutable {
    * @tparam S
    * @return
    */
-  implicit def HOLFormulaClosedUnderSub[S <: Substitution, T <: HOLFormula]( implicit notAFOLSub: Not[S <:< FOLSubstitution], notAFOLAtom: Not[T <:< FOLAtom] ) = new Substitutable[S, T, HOLFormula] {
-    override def applySubstitution( sub: S, x: T ): HOLFormula = applySub( sub, x ).asInstanceOf[HOLFormula]
+  implicit def HOLFormulaClosedUnderSub[S <: Substitution, T <: HOLFormula](
+    implicit
+    notAFOLSub:  Not[S <:< FOLSubstitution],
+    notAFOLAtom: Not[T <:< FOLAtom]
+  ) = instance { ( sub: S, x: T ) =>
+    applySub( sub, x ).asInstanceOf[HOLFormula]
   }
 
   /**
@@ -181,8 +212,12 @@ object Substitutable {
    * @tparam S
    * @return
    */
-  implicit def FOLExpressionSubstitutable[S <: Substitution, T <: FOLExpression]( implicit notAFOLSub: Not[S <:< FOLSubstitution], notAFOLAtom: Not[T <:< FOLAtom] ) = new Substitutable[S, T, LambdaExpression] {
-    override def applySubstitution( sub: S, t: T ): LambdaExpression = applySub( sub, t )
+  implicit def FOLExpressionSubstitutable[S <: Substitution, T <: FOLExpression](
+    implicit
+    notAFOLSub:  Not[S <:< FOLSubstitution],
+    notAFOLAtom: Not[T <:< FOLAtom]
+  ) = instance { ( sub: S, t: T ) =>
+    applySub( sub, t )
   }
 
   /**
@@ -193,7 +228,11 @@ object Substitutable {
    * @tparam T
    * @return
    */
-  implicit def LambdaExpressionClosedUnderSub[T <: LambdaExpression]( implicit notAFOLExpression: Not[T <:< FOLExpression], notAHOLFormula: Not[T <:< HOLFormula] ) = new Substitutable[Substitution, T, LambdaExpression] {
-    override def applySubstitution( sub: Substitution, t: T ): LambdaExpression = applySub( sub, t )
+  implicit def LambdaExpressionClosedUnderSub[T <: LambdaExpression](
+    implicit
+    notAFOLExpression: Not[T <:< FOLExpression],
+    notAHOLFormula:    Not[T <:< HOLFormula]
+  ) = instance { ( sub: Substitution, t: T ) =>
+    applySub( sub, t )
   }
 }
