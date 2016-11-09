@@ -97,7 +97,25 @@ case class ETAtom( atom: HOLAtom, polarity: Polarity ) extends ExpansionTree {
   def immediateSubProofs = Seq()
 }
 
-// TODO: Document this
+/**
+ * A tree whose deep formula is an atom, and whose shallow formula is the definitional expansion of the atom.
+ *
+ * This tree is used as an intermediate data structure during proof import from
+ * clausal provers.  During clausification, it is often advantageous to abbreviate subformulas
+ * by fresh atoms.  (This is necessary for polynomial-time clausification.)  These subformula abbreviations are
+ * then translated into expansion trees using defined atoms and extra axioms.  If we replace a subformula φ(x,y) by
+ * the atom D(x,y), then we have an ETDefinedAtom(D(x,y), ..., λxλy φ(x,y)) as an expansion of the subformula, as well
+ * as expansions of the extra axiom ∀x∀y(D(x,y) <-> φ(x,y)).
+ *
+ * Another way to view defined atoms is the extracted expansions of non-atomic logical axioms in LK.  Consider a proof
+ * in LK of φ:-φ that consists of just LogicalAxiom(φ).  Instead of first performing an atomic expansion, we could
+ * directly extract an expansion proof with defined atoms:  ETDefinedAtom(D, InAnt, φ) :- ETDefinedAtom(D, InSuc, φ)
+ * This expansion proof has the deep sequent D:-D and the shallow sequent φ:-φ.  (NB: this extraction is not implemented.)
+ *
+ * @param atom The atom (whose predicate symbol is defined)
+ * @param polarity Polarity of the atom.
+ * @param definedExpr Definitional expansion of the predicate symbol.
+ */
 case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definedExpr: LambdaExpression ) extends ExpansionTree {
   val Apps( definitionConst: Const, arguments ) = atom
   require( freeVariables( definedExpr ).isEmpty )
@@ -299,13 +317,20 @@ object ETStrongQuantifierBlock {
   }
 }
 
-// TODO: Document this
 /**
  * A tree representing a formula beginning with a strong quantifier, i.e., a positive universal or a negative existential.
- * @param shallow
- * @param skolemTerm
- * @param skolemDef
- * @param child
+ *
+ * As an example let us consider an expansion proof of ∀z P(c,z) :- ∃x ∀y P(x,y).
+ * For Skolemization we introduce the Skolem function `s_1` (for the single strong quantifier), this function
+ * has the Skolem definition `λx ∀y P(x,y)` (see [[at.logic.gapt.expr.hol.SkolemFunctions]] for details).
+ * The natural expansion proof has the deep formula `P(c,s_1(c)) :- P(c,s_1(c))`, so we need a Skolem node with the
+ * shallow formula `∀y P(c,y)`, and deep formula `P(c,s_1(c))`.  This Skolem node is constructed as
+ * `ETSkolemQuantifier(∀y P(c,y), s_1(c), λx ∀y P(x,y), ETAtom(P(c,s_1(c)), InSuc))`.
+ *
+ * @param shallow  Shallow formula of the expansion tree.
+ * @param skolemTerm  Skolem term that instantiates the strong quantifier, e.g. s_3(c)
+ * @param skolemDef  Skolem definition for the Skolem symbol, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
+ * @param child  Expansion tree of the instantiated formula.
  */
 case class ETSkolemQuantifier(
     shallow:    HOLFormula,
