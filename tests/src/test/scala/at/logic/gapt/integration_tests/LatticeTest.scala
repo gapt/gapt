@@ -18,27 +18,21 @@ import org.specs2.mutable._
 class LatticeTest extends Specification with SequentMatchers {
   "The system" should {
     "parse, skolemize, and extract the clause set for the lattice proof" in {
-      val proof = skolemize( DefinitionElimination( lattice.defs )( lattice.p ) )
-
-      val s = extractStruct( proof, CERES.skipEquations )
+      val s = extractStruct( lattice.p, CERES.skipEquations )
       val css = CharacteristicClauseSet( s )
       Escargot getResolutionProof css must beSome
     }
 
     "parse, skolemize and apply CERES to the lattice proof" in {
-      val proof = skolemize( DefinitionElimination( lattice.defs )( lattice.p ) )
-
-      val acnf = CERES( skolemize( proof ), CERES.skipNothing, Escargot )
-      acnf.endSequent must beMultiSetEqual( proof.endSequent )
+      val acnf = CERES( lattice.p, CERES.skipNothing, Escargot )
+      acnf.endSequent must beMultiSetEqual( lattice.p.endSequent )
       for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
 
     "parse, skolemize and apply CERES to the lattice proof, skipping equational inferences" in {
-      val proof = skolemize( DefinitionElimination( lattice.defs )( lattice.p ) )
-
-      val acnf = CERES( skolemize( proof ), CERES.skipEquations, Escargot )
-      acnf.endSequent must beMultiSetEqual( proof.endSequent )
+      val acnf = CERES( lattice.p, CERES.skipEquations, Escargot )
+      acnf.endSequent must beMultiSetEqual( lattice.p.endSequent )
       for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
       ok
     }
