@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFp, containsStrongQuantifier, containsWeakQuantifier, isPrenex }
-import at.logic.gapt.proofs.{ HOLClause, OccConnector, Sequent }
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.proofs.{ Context, HOLClause, OccConnector, Sequent }
 
 import scalaz.{ -\/, \/- }
 
@@ -29,7 +29,9 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
    * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
    *         is removed in `proof'` and elements of `formula` may occur in the antecedent of the end sequent of `proof'`.
    */
-  def apply( formulas: HOLFormula* )( proof: LKProof ) = withOccConnector( formulas: _* )( proof )._1
+  def apply( formulas: HOLFormula* )( proof: LKProof ): LKProof = withOccConnector( formulas: _* )( proof )._1
+
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.axioms map { s => univclosure( s.toFormula ) }: _* )( proof )
 
   /**
    *
