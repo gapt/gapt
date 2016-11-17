@@ -10,7 +10,7 @@ import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
 
 /**
- * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
+ * This implementation of the CERES method does the proof reconstruction via ResolutionToLKProof.
  */
 object CERES extends CERES {
   def skipNothing: HOLFormula => Boolean = _ => true
@@ -61,7 +61,7 @@ class CERES {
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @param pred a predicate to specify which cut formulas to eliminate
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
-   * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
+   * @return an LK Proof with at most atomic cuts
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Escargot )
   def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
@@ -77,12 +77,12 @@ class CERES {
           TPTPFOLExporter( tapecl )
       )
       case Some( rp ) =>
-        apply( es, proj, eliminateSplitting( rp ) )
+        cleanStructuralRules( apply( es, proj, eliminateSplitting( rp ) ) )
     }
   }
 
   /**
-   * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * Applies the CERES method to a first order proof with equality. Internally this is handled by the ResolutionToLKProof method.
    *
    * @param endsequent The end-sequent of the original proof
    * @param projections The projections of the original proof
