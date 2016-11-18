@@ -8,7 +8,7 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, CutRule, DefinitionElimination, LKProof, LKToExpansionProof, regularize, skolemizeInferences }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, CutRule, eliminateDefinitions, LKProof, LKToExpansionProof, regularize, skolemizeInferences }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ Input, Resolution, Subst }
 import at.logic.gapt.provers.prover9.Prover9
@@ -24,7 +24,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
 
   def prepareProof( file: String, proofname: String ) = {
     val p = LLKProofParser( ClasspathInputFile( file ) )
-    val elp = AtomicExpansion( DefinitionElimination( p.Definitions )( regularize( p.proof( proofname ) ) ) )
+    val elp = AtomicExpansion( eliminateDefinitions( p.Definitions )( regularize( p.proof( proofname ) ) ) )
     val selp = skolemizeInferences( elp )
     val struct = extractStruct( selp )
     val ls = StandardClauseSet( struct )
@@ -73,7 +73,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     "be computed for a cut-free proof" in {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
-      val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "INFTAPE" ) ) )
+      val elp = AtomicExpansion( eliminateDefinitions( pdb.Definitions )( regularize( pdb proof "INFTAPE" ) ) )
       val selp = skolemizeInferences( elp )
       val proj = Projections( selp, CERES.skipPropositional )
       val struct = extractStruct( selp, CERES.skipPropositional )
@@ -86,7 +86,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     "be computed for the ntape proof" in {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
-      val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
+      val elp = AtomicExpansion( eliminateDefinitions( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
       val selp = skolemizeInferences( elp )
       val proj = Projections( selp, CERES.skipPropositional )
       val struct = extractStruct( selp, CERES.skipPropositional )
@@ -124,7 +124,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     "be computed for the first-order permutation example" in {
       val filename = "perm.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
-      val elp = AtomicExpansion( DefinitionElimination( pdb.Definitions )( regularize( pdb proof "AxProof" ) ) )
+      val elp = AtomicExpansion( eliminateDefinitions( pdb.Definitions )( regularize( pdb proof "AxProof" ) ) )
       val selp = skolemizeInferences( elp )
 
       val cutformulas = selp.dagLike.breadthFirst.filter( { case CutRule( _, _, _, _ ) => true; case _ => false } )

@@ -82,7 +82,7 @@ abstract class AnalysisWithCeresOmega {
   /**
    * The input proof (TAPEPROOF) after preprocessing step 1: definition elimination
    */
-  lazy val preprocessed_input_proof1 = DefinitionElimination( proofdb.Definitions )( input_proof )
+  lazy val preprocessed_input_proof1 = eliminateDefinitions( proofdb.Definitions )( input_proof )
 
   /**
    * The input proof after preprocessing step 2: expansion of logical axioms to atomic axioms

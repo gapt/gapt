@@ -20,7 +20,7 @@ object ResolutionToLKProof {
         ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
     } )
     if ( proof.definitions.isEmpty ) lk
-    else DefinitionElimination( proof.definitions )( lk )
+    else eliminateDefinitions( proof.definitions )( lk )
   }
 
   def asDerivation( proof: ResolutionProof ): LKProof =

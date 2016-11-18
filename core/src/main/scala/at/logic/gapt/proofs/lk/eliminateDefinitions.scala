@@ -1,13 +1,15 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.{ Ant, Context }
 
-object DefinitionElimination {
-  def apply( dmap: Map[_ <: LambdaExpression, _ <: LambdaExpression] ): DefinitionElimination =
-    new DefinitionElimination( dmap.toMap )
+object eliminateDefinitions {
+  def apply( dmap: Map[_ <: LambdaExpression, _ <: LambdaExpression] ): eliminateDefinitions =
+    new eliminateDefinitions( dmap.toMap )
+
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.definitions.toMap )( proof )
 }
-class DefinitionElimination private ( dmap: Map[LambdaExpression, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
+class eliminateDefinitions private ( dmap: Map[LambdaExpression, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
   private val requiresMatching = dmap.keys exists { !_.isInstanceOf[Const] }
 
   def apply( e: LambdaExpression ): LambdaExpression = BetaReduction.betaNormalize( replace( e ) )

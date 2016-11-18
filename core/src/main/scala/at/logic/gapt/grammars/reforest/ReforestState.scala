@@ -2,7 +2,7 @@ package at.logic.gapt.grammars.reforest
 
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars._
-import at.logic.gapt.proofs.lk.DefinitionElimination
+import at.logic.gapt.proofs.lk.eliminateDefinitions
 
 import scala.collection.mutable
 
@@ -161,7 +161,7 @@ case class ReforestState(
 
   def expand( nts: Traversable[LambdaExpression] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
-    val simpl = DefinitionElimination( nts map { nt => nt -> rules( nt ).head } toMap )
+    val simpl = eliminateDefinitions( nts map { nt => nt -> rules( nt ).head } toMap )
 
     copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { simpl( _ ) } } )
   }

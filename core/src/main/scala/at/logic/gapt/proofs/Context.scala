@@ -5,7 +5,7 @@ import at.logic.gapt.formats.babel
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr
-import at.logic.gapt.proofs.lk.DefinitionElimination
+import at.logic.gapt.proofs.lk.eliminateDefinitions
 import at.logic.gapt.proofs.resolution.AvatarGeneralNonGroundComp
 
 /**
@@ -57,7 +57,7 @@ class Context private ( val elements: Vector[Element] ) extends BabelSignature {
   }
 
   def normalize( expression: LambdaExpression ): LambdaExpression =
-    BetaReduction.betaNormalize( DefinitionElimination( definitions.toMap )( expression ) )
+    BetaReduction.betaNormalize( eliminateDefinitions( definitions.toMap )( expression ) )
 
   def signatureLookup( s: String ): BabelSignature.VarConst =
     constant( s ) match {

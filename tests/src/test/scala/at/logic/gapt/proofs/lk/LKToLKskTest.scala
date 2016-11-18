@@ -107,13 +107,13 @@ class LKToLKskTest extends Specification {
   }
 
   "lattice proof" in {
-    val lk = regularize( DefinitionElimination( lattice.defs )( lattice.p ) )
+    val lk = regularize( eliminateDefinitions( lattice.defs )( lattice.p ) )
     val lksk = skolemizeInferences( lk )
     lksk.conclusion must_== lk.conclusion
   }
 
   "tape proof" in {
-    val lk = DefinitionElimination( tape.defs )( tape.p )
+    val lk = eliminateDefinitions( tape.defs )( tape.p )
     val lksk = skolemizeInferences( lk )
     lksk.conclusion must_== lk.conclusion
   }
@@ -121,7 +121,7 @@ class LKToLKskTest extends Specification {
   "higher order tape proof" in {
     def load( fn: String ): LKProof = {
       val pdb = loadLLK( ClasspathInputFile( fn ) )
-      AtomicExpansion( DefinitionElimination( pdb.Definitions )( pdb proof "TAPEPROOF" ) )
+      AtomicExpansion( eliminateDefinitions( pdb.Definitions )( pdb proof "TAPEPROOF" ) )
     }
 
     "2 copies tape proof" in {

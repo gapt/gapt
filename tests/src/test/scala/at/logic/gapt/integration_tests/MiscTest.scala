@@ -66,7 +66,7 @@ class MiscTest extends Specification {
       val db = LLKProofParser( ClasspathInputFile( "tape3.llk" ) )
       // I have no idea why, but this makes the code get the correct proof
       val p = db.proof( "TAPEPROOF" )
-      val elp = AtomicExpansion( DefinitionElimination( db.Definitions )( p ) )
+      val elp = AtomicExpansion( eliminateDefinitions( db.Definitions )( p ) )
       val reg = regularize( elp )
       val lksk_proof = skolemizeInferences( reg )
       // TODO

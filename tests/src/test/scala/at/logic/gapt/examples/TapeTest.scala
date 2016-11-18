@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.proofs.lk.DefinitionElimination
+import at.logic.gapt.proofs.lk.eliminateDefinitions
 import org.specs2.mutable.Specification
 
 class TapeTest extends Specification {
@@ -11,7 +11,7 @@ class TapeTest extends Specification {
   }
 
   "definition elimination" in {
-    DefinitionElimination( tape.defs.toMap )( tape.p )
+    eliminateDefinitions( tape.defs.toMap )( tape.p )
     ok
   }
 
@@ -24,7 +24,7 @@ class TapeUrbanTest extends Specification {
   }
 
   "definition elimination" in {
-    DefinitionElimination( tapeUrban.defs.toMap )( tapeUrban.sigma )
+    eliminateDefinitions( tapeUrban.defs.toMap )( tapeUrban.sigma )
     ok
   }
 }

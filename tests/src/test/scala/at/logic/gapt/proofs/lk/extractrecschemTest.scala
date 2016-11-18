@@ -38,7 +38,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "tape proof" in {
-    val proof = DefinitionElimination( tape.defs )( tape.p )
+    val proof = eliminateDefinitions( tape.defs )( tape.p )
 
     val recSchem = extractRecSchem( proof )
     And( recSchem.language ) must beEUnsat
@@ -48,7 +48,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "urban tape proof" in {
-    val proof = DefinitionElimination( tapeUrban.defs )( tapeUrban.sigma )
+    val proof = eliminateDefinitions( tapeUrban.defs )( tapeUrban.sigma )
 
     val recSchem = extractRecSchem( proof )
     val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )

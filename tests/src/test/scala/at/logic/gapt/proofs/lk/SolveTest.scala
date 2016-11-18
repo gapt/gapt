@@ -90,7 +90,7 @@ class SolveTest extends Specification with SequentMatchers {
     }
 
     "read back higher order prime divisor proof" in {
-      val p = DefinitionElimination( primediv.defs )( primediv.proof )
+      val p = eliminateDefinitions( primediv.defs )( primediv.proof )
       ExpansionProofToLK.withTheory( primediv.ctx )( LKToExpansionProof( p ) ) must beLike {
         case \/-( p_ ) => p_.conclusion must beMultiSetEqual( p.conclusion )
       }
