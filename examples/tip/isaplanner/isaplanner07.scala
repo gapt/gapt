@@ -46,4 +46,6 @@ object isaplanner07 extends TacticsProof {
     axiomLog
 
   }
+
+  val proof2 = proveWithInductionAxioms( sequent, "goal", List( hov"n:Nat", hov"m:Nat" ), independentInductionAxioms ) get
 }
