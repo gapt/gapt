@@ -3,12 +3,30 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Ant, Context }
 
+/**
+ * Eliminates definitions from a lambda expression, HOL formula, or LK proof.
+ */
 object eliminateDefinitions {
+  /**
+   * Creates a new `eliminateDefinitions` object.
+   * @param dmap The definitions to be eliminated.
+   */
   def apply( dmap: Map[_ <: LambdaExpression, _ <: LambdaExpression] ): eliminateDefinitions =
     new eliminateDefinitions( dmap.toMap )
 
+  /**
+   * Given an implicit [[at.logic.gapt.proofs.Context]] in scope, this removes all definitions in that context from a
+   * proof.
+   * @param proof The proof to be transformed.
+   * @param ctx An implicit context. Definitions in this will be removed from proof.
+   */
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.definitions.toMap )( proof )
 }
+
+/**
+ * Implements definition elimination.
+ * @param dmap A map containing the definitions to be eliminated.
+ */
 class eliminateDefinitions private ( dmap: Map[LambdaExpression, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
   private val requiresMatching = dmap.keys exists { !_.isInstanceOf[Const] }
 
