@@ -3,7 +3,7 @@ package at.logic.gapt.provers.escargot
 import at.logic.gapt.examples.{ BussTautology, CountingEquivalence, Permutations, PigeonHolePrinciple }
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.existsclosure
+import at.logic.gapt.expr.hol.existentialClosure
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.proofs.Sequent
 import org.specs2.mutable._
@@ -11,7 +11,7 @@ import org.specs2.mutable._
 class EscargotTest extends Specification {
   import BabelParser.parseFormula
 
-  def parse( formulas: String* ) = existsclosure { ( formulas map parseFormula ) ++: Sequent() }
+  def parse( formulas: String* ) = existentialClosure { ( formulas map parseFormula ) ++: Sequent() }
   def test( formulas: String* ) = Escargot getResolutionProof parse( formulas: _* )
 
   "simple" in { test( "P(x)", "-P(c)" ) must beSome }

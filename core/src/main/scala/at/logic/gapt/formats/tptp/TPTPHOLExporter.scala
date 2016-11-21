@@ -215,7 +215,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: HOLSequent ): HOLFormula = univclosure( fs.toDisjunction )
+  def closedFormula( fs: HOLSequent ): HOLFormula = universalClosure( fs.toDisjunction )
 
   def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )

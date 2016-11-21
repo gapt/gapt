@@ -128,7 +128,7 @@ object qbupForRecSchem {
 
     val lhss = canonicalRsLHS( recSchem )
 
-    existsclosure( And( for ( lhs <- lhss ) yield All.Block(
+    existentialClosure( And( for ( lhs <- lhss ) yield All.Block(
       freeVariables( lhs ) toSeq,
       formulaToSequent.pos( And( for {
         Rule( lhs_, rhs ) <- recSchem.rules

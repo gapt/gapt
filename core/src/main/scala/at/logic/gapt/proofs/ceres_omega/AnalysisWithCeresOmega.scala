@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres_omega
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.tptp.TPTPHOLExporter
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._

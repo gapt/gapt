@@ -1,7 +1,7 @@
 package at.logic.gapt.examples.induction
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 
@@ -27,7 +27,7 @@ object primeFactor extends TacticsProof {
 
   theoryAxioms foreach { ctx += _ }
 
-  val theoryFormulas = theoryAxioms map { s => univclosure( s.toImplication ) }
+  val theoryFormulas = theoryAxioms map { s => universalClosure( s.toImplication ) }
 
   val ax = hof" ∀n (n = 1 ∨ prime(n) ∨ ∃l (div(l,n) ∧ 1 < l ∧ l < n))"
   def primeDiv( n: FOLTerm ) = hof"∃k ($n < 2 ∨ (div(k,$n) ∧ prime(k)))"

@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.tptp
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ CNFn, CNFp, containsStrongQuantifier, univclosure }
+import at.logic.gapt.expr.hol.{ CNFn, CNFp, containsStrongQuantifier, universalClosure }
 import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs.resolution.{ AvatarDefinition, AvatarGroundComp, AvatarNonGroundComp, AvatarSplit }
 import at.logic.gapt.proofs.sketch._
@@ -62,7 +62,7 @@ object TptpProofParser {
         endSequent :+= formula
         labelledCNF( label ) ++= CNFn( formula ).toSeq
       case AnnotatedFormula( lang, _, _, formula: FOLFormula, Seq( TptpTerm( "file", _, TptpTerm( label ) ) ) ) =>
-        endSequent +:= ( if ( lang == "cnf" ) univclosure( formula ) else formula )
+        endSequent +:= ( if ( lang == "cnf" ) universalClosure( formula ) else formula )
         labelledCNF( label ) ++= CNFp( formula ).toSeq
       case _ =>
     }

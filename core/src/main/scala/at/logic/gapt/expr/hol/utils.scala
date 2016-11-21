@@ -117,8 +117,8 @@ object containsQuantifierOnLogicalLevel {
     case Or( x, y )         => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
     case Imp( x, y )        => containsQuantifierOnLogicalLevel( x ) || containsQuantifierOnLogicalLevel( y )
     case Neg( x )           => containsQuantifierOnLogicalLevel( x )
-    case Ex( x, f )         => true
-    case All( x, f )        => true
+    case Ex( x, g )         => true
+    case All( x, g )        => true
     case HOLAtom( x, args ) => false // contents of atoms is ignored
     case _                  => throw new Exception( "Unrecognized symbol." )
   }
@@ -189,9 +189,9 @@ object numOfAtoms {
     case Imp( f1, f2 )    => apply( f1 ) + apply( f2 )
     case And( f1, f2 )    => apply( f1 ) + apply( f2 )
     case Or( f1, f2 )     => apply( f1 ) + apply( f2 )
-    case Ex( x, f )       => apply( f )
-    case All( x, f )      => apply( f )
-    case Neg( f )         => apply( f )
+    case Ex( x, g )       => apply( g )
+    case All( x, g )      => apply( g )
+    case Neg( g )         => apply( g )
     case _                => throw new Exception( "ERROR: Unexpected case while counting the number of atoms." )
   }
 }
@@ -215,48 +215,22 @@ object lcomp {
   def apply( seq: HOLSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
 }
 
-object variablesAll {
-  /**
-   * If formula starts with ∀x,,1,,…∀x,,n,,, returns [x,,1,,,…,x,,n,,]. Otherwise returns Nil.
-   *
-   * @param formula The formula under consideration.
-   * @return
-   */
-  def apply( formula: HOLFormula ): List[Var] = formula match {
-    case All( v, f ) => v +: apply( f )
-    case _           => Nil
-  }
-}
-
-object variablesEx {
-  /**
-   * If formula starts with ∃x,,1,,…∃x,,n,,, returns [x,,1,,,…,x,,n,,]. Otherwise returns Nil.
-   *
-   * @param formula The formula under consideration.
-   * @return
-   */
-  def apply( formula: HOLFormula ): List[Var] = formula match {
-    case Ex( v, f ) => v +: apply( f )
-    case _          => Nil
-  }
-}
-
-object univclosure {
+object universalClosure {
   /**
    * Closes the given formula universally
    * @param f the formula to be closed
-   * @return forall x_1 ... forall x_n f, where {x_i | 1 <= i <= n} = FV(f)
+   * @return forall x,,1,,... forall x,,n,, f, where {x,,i,, | 1 <= i <= n} = FV(f)
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => All( v, g ) )
 
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
-object existsclosure {
+object existentialClosure {
   /**
    * Closes the given formula existentially
    * @param f the formula to be closed
-   * @return exists x_1 ... exists x_n f, where {x_i | 1 <= i <= n} = FV(f)
+   * @return exists x,,1,, ... exists x,,n,, f, where {x,,i,, | 1 <= i <= n} = FV(f)
    */
   def apply( f: HOLFormula ): HOLFormula = freeVariables( f ).foldRight( f )( ( v, g ) => Ex( v, g ) )
 
@@ -265,7 +239,7 @@ object existsclosure {
   /**
    * Closes all formulas on the right of the sequent existentially and all formulas on the left universally.
    */
-  def apply( seq: HOLSequent ): HOLSequent = seq.map( univclosure( _ ), existsclosure( _ ) )
+  def apply( seq: HOLSequent ): HOLSequent = seq.map( universalClosure( _ ), existentialClosure( _ ) )
 }
 
 /**
@@ -282,52 +256,12 @@ object dualize {
     case Neg( HOLAtom( x, args ) ) => HOLAtom( x, args )
     case And( f1, f2 )             => Or( apply( f1 ), apply( f2 ) )
     case Or( f1, f2 )              => And( apply( f1 ), apply( f2 ) )
-    case All( v, f )               => Ex( v, apply( f ) )
-    case Ex( v, f )                => All( v, apply( f ) )
+    case All( v, g )               => Ex( v, apply( g ) )
+    case Ex( v, g )                => All( v, apply( g ) )
     case _                         => throw new Exception( "Formula not in NNF!" )
   }
 
   def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
-}
-
-object removeQuantifiers {
-  /**
-   * Removes the outermost block of quantifiers from a formula f.
-   * @param f the formula of the form Qx1.Qx2. ... .Qxn.F[x1,...xn] where F is quantifier free. (n may be 0)
-   * @return the stripped formula F[x1,...,xn]
-   */
-  def apply( f: HOLFormula ): HOLFormula = {
-    f match {
-      case Top() | Bottom() |
-        HOLAtom( _, _ ) |
-        Imp( _, _ ) |
-        And( _, _ ) |
-        Or( _, _ ) |
-        Neg( _ ) => f
-      case Ex( x, f0 )  => apply( f0 )
-      case All( x, f0 ) => apply( f0 )
-      case _            => throw new Exception( "ERROR: Unexpected case while extracting the matrix of a formula." )
-    }
-  }
-  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
-
-  /**
-   * Removes the leading n quantifiers of a formula.
-   * It's only well-defined for formulas that begin with at least n quantifiers.
-   *
-   * @param f A Formula
-   * @param n Number of quantifiers to be removed
-   * @throws exception in case f does not start with n quantifiers.
-   * @return form without the first n quantifiers
-   */
-  def apply( f: HOLFormula, n: Int ): HOLFormula =
-    if ( n == 0 )
-      f
-    else f match {
-      case All( _, g ) => apply( g, n - 1 )
-      case Ex( _, g )  => apply( g, n - 1 )
-      case _           => throw new Exception( "Trying to remove too many quantifiers!" )
-    }
 }
 
 object removeAllQuantifiers {
@@ -409,8 +343,8 @@ object instantiate {
 
 object normalizeFreeVariables {
   /**
-   * Systematically renames the free variables by their left-to-right occurence in a HOL Formula f to x_{i} where all
-   * x_{i} are different from the names of all bound variables in the term. I.e. reversing the substitution yields
+   * Systematically renames the free variables by their left-to-right occurence in a HOL Formula f to x,,i,, where all
+   * x,,i,, are different from the names of all bound variables in the term. I.e. reversing the substitution yields
    * the syntactically same formula.
    *
    * @param f the formula to be normalized
@@ -438,7 +372,7 @@ object normalizeFreeVariables {
     apply( f, () => {
       var name = "x_{" + i + "}"
       do {
-        i = i + 1;
+        i = i + 1
         name = "x_{" + i + "}"
       } while ( blacklist.contains( name ) )
       name
@@ -448,8 +382,8 @@ object normalizeFreeVariables {
   /**
    * Works exactly like normalizeFreeVaribles(f:Formula) but allows the specification of your own name generator.
    * Please note that such a normalized formula is still only unique up to alpha equality. Compare for example
-   * (all y P(x,y)) with (all x_{0} P(x,x_{0}):
-   * the first normalizes to (all y P(x_{0},y whereas the second normalizes to (all x_{0}1 P(x_{0},x_{0}1).
+   * (∀y P(x,y)) with (∀x,,0,, P(x,x,,0,,):
+   * the first normalizes to (∀y P(x,,0,,,y)) whereas the second normalizes to (∀x_{0}1 P(x_{0},x_{0}1).
    *
    * @param f the formula to be normalized
    * @param freshName a function which generates a fresh name every call.

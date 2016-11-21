@@ -9,7 +9,7 @@ import scalaz._
 import Scalaz._
 import Validation.FlatMap._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.escargot.Escargot
@@ -243,7 +243,7 @@ object sequentialInductionAxioms extends InductionStrategy {
       val ( lvs, _ :: gvs ) = vs.span( _ != v )
       val inductiveCases = cs map { c => inductiveCase( f, vs, v, c ) }
       val conclusion = All( v, All.Block( gvs, f ) )
-      univclosure( All.Block( lvs, And( inductiveCases ) --> conclusion ) )
+      universalClosure( All.Block( lvs, And( inductiveCases ) --> conclusion ) )
     }
   }
 

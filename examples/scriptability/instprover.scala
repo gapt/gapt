@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.babel.BabelParser.parseFormula
 import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, minimalExpansionSequent }
 import at.logic.gapt.proofs.resolution.{ expansionProofFromInstances, structuralCNF }
@@ -14,7 +14,7 @@ object instprover extends Script {
 
   val endSequent = Stream.continually( Console.in.readLine() ).
     takeWhile( _ != null ).map( _.trim ).filter( _.nonEmpty ).
-    map( parseFormula ).map( univclosure( _ ).asInstanceOf[FOLFormula] ) ++: Sequent()
+    map( parseFormula ).map( universalClosure( _ ).asInstanceOf[FOLFormula] ) ++: Sequent()
 
   val justifications = structuralCNF( endSequent )
   val cnf = justifications map { _.conclusion.asInstanceOf[FOLClause] }

@@ -3,7 +3,7 @@ package at.logic.gapt.provers.spass
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
@@ -33,7 +33,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
   def cls2dfg( cls: FOLClause ): String = {
     val cls_ = FOLSubstitution( freeVariables( cls ).zipWithIndex.
       map { case ( v, i ) => v -> FOLVar( s"X$i" ) } )( cls )
-    s"formula(${expr2dfg( univclosure( cls_.toDisjunction ) )})."
+    s"formula(${expr2dfg( universalClosure( cls_.toDisjunction ) )})."
   }
 
   override def getResolutionProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
@@ -100,8 +100,8 @@ class SPASS extends ResolutionProver with ExternalProgram {
           val splitAtom1 = FOLAtom( nameGen.freshWithIndex( "_split1" ) )
           val splitAtom2 = FOLAtom( nameGen.freshWithIndex( "_split2" ) )
 
-          val comp1 = AvatarNonGroundComp( splitAtom1, univclosure( part1.toDisjunction ) )
-          val comp2 = AvatarNonGroundComp( splitAtom2, univclosure( part2.toDisjunction ) )
+          val comp1 = AvatarNonGroundComp( splitAtom1, universalClosure( part1.toDisjunction ) )
+          val comp2 = AvatarNonGroundComp( splitAtom2, universalClosure( part2.toDisjunction ) )
 
           val emptyClause = SketchComponentElim( SketchComponentElim( splittingClause, comp1 ), comp2 )
 

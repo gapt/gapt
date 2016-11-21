@@ -128,7 +128,7 @@ object Prover9Importer extends ExternalProgram {
     val p9Output_ = loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output )
 
     val resProof = robinsonProof( p9Output_ )
-    val endSequent = existsclosure {
+    val endSequent = existentialClosure {
       val tptpEndSequent = reconstructEndSequent( p9Output_.read )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match

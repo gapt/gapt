@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import org.specs2.mutable._
 
 class CleanStructureTest extends Specification {
@@ -35,7 +35,7 @@ class CleanStructureTest extends Specification {
 
     "correctly reduce a weak quantifier" in {
       val et = ETWeakQuantifier(
-        univclosure( R( x, y ) ),
+        universalClosure( R( x, y ) ),
         Map(
           c -> ETWeakQuantifier( All( y, R( c, y ) ), Map( e -> ETWeakening( R( c, e ), Polarity.InAntecedent ) ) ),
           d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) )
@@ -44,7 +44,7 @@ class CleanStructureTest extends Specification {
 
       cleanStructureET( et ) must beEqualTo(
         ETWeakQuantifier(
-          univclosure( R( x, y ) ),
+          universalClosure( R( x, y ) ),
           Map(
             d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) )
           )

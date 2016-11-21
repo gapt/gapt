@@ -287,7 +287,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   val nonEmptyWitnesses = baseTypes.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
   val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForType( w.exptype )( w ) }
 
-  val extraAxioms = existsclosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
+  val extraAxioms = existentialClosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
   val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
 
   private def guard( formula: HOLFormula ): HOLFormula = formula match {
@@ -309,7 +309,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   def forward( cnf: Set[HOLClause] ): Set[HOLClause] =
     extraAxiomClauses union cnf.map( forward )
   def forward( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
-    CNFp( guard( univclosure( clause.toImplication ) ) ).head
+    CNFp( guard( universalClosure( clause.toImplication ) ) ).head
 
   def back( proof: ResolutionProof ): ResolutionProof =
     mapInputClauses( proof ) { cls =>
@@ -430,7 +430,7 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
         _.exptype
       } ) )
       replacements( lam ) = lamSym( fvs: _* )
-      extraAxioms += univclosure( equalOrEquivalent( replacements( lam )( x ), t ) )
+      extraAxioms += universalClosure( equalOrEquivalent( replacements( lam )( x ), t ) )
       replacements( lam )
   }
 
@@ -570,7 +570,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
       val varGen = rename.awayFrom( Set[Var]() )
       val gArgVars = pappArgTypes map { Var( varGen freshWithIndex "x", _ ) }
       val fArgVars = argTypes map { Var( varGen freshWithIndex "y", _ ) }
-      univclosure( equalOrEquivalent(
+      universalClosure( equalOrEquivalent(
         applyFunctions( partialAppType )( partialApplicationFun( gArgVars: _* ) )( fArgVars: _* ),
         newConstants( g )( gArgVars: _* )( fArgVars: _* )
       ) )

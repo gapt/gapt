@@ -3,7 +3,7 @@ package at.logic.gapt.provers.leancop
 import java.io.{ IOException, StringReader }
 
 import at.logic.gapt.expr.{ All, Eq, Substitution, TermReplacement }
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.leancop.LeanCoPParser
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
@@ -22,7 +22,7 @@ class LeanCoP extends OneShotProver with ExternalProgram {
     getExpansionProof( s ).isDefined
 
   override def getExpansionProof( s: HOLSequent ): Option[ExpansionProof] = {
-    val cnf = structuralCNF( s ).map( c => univclosure( c.conclusion.toDisjunction ) -> c ).toMap
+    val cnf = structuralCNF( s ).map( c => universalClosure( c.conclusion.toDisjunction ) -> c ).toMap
     // LeanCoP doesn't like empty clauses
     for ( ( _, clause ) <- cnf if clause.isProof ) return Some( ResolutionToExpansionProof( clause ) )
 

@@ -97,7 +97,7 @@ trait TokenToLKConverter extends Logger {
     //println("creating axioms!")
     val unclosedaxioms = createAxioms( naming, atokens )
     //println("closing axioms!")
-    val axioms = unclosedaxioms map ( x => ( x._1, univclosure( x._2 ) ) )
+    val axioms = unclosedaxioms map ( x => ( x._1, universalClosure( x._2 ) ) )
     //println(axioms)
     //println("creating definitions!")
     val llk_definitions = createDefinitions( naming, atokens, axioms )

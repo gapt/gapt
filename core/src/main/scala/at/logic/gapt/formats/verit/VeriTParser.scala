@@ -2,7 +2,7 @@ package at.logic.gapt.formats.verit
 
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ instantiate, isPrenex, removeQuantifiers }
+import at.logic.gapt.expr.hol.{ instantiate, isPrenex }
 import at.logic.gapt.proofs.expansion._
 import java.io.{ FileReader, Reader, StringReader }
 

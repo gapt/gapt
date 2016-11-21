@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.tip
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ existsclosure, univclosure }
+import at.logic.gapt.expr.hol.{ existentialClosure, universalClosure }
 import at.logic.gapt.proofs.{ Context, Sequent }
 
 case class TipConstructor( constr: Const, projectors: Seq[Const] ) {
@@ -37,12 +37,12 @@ case class TipProblem(
       if i1 < i2 // ignore symmetric pairs
       FunctionType( _, args1 ) = ctr1.exptype
       FunctionType( _, args2 ) = ctr2.exptype
-    } yield univclosure(
+    } yield universalClosure(
       ctr1( ( for ( ( t, j ) <- args1.zipWithIndex ) yield Var( s"x$j", t ) ): _* ) !==
         ctr2( ( for ( ( t, j ) <- args2.zipWithIndex ) yield Var( s"y$j", t ) ): _* )
     )
 
-  def toSequent = existsclosure(
+  def toSequent = existentialClosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
       functions.flatMap( _.definitions ) ++:
       constructorInjectivity ++:

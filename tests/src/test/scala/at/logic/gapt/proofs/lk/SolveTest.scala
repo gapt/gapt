@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.examples.{ BussTautology, primediv }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.existsclosure
+import at.logic.gapt.expr.hol.existentialClosure
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.prooftool.prooftool
@@ -58,7 +58,7 @@ class SolveTest extends Specification with SequentMatchers {
     "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( Polarity.InAntecedent ) +: Sequent() ) ) must_== \/-( BottomAxiom ) }
 
     "equality" in {
-      val Some( expansion ) = Escargot getExpansionProof existsclosure(
+      val Some( expansion ) = Escargot getExpansionProof existentialClosure(
         hof"x+(y+z) = (x+y)+z" +:
           hof"x+y = y+x" +:
           Sequent()

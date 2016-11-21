@@ -1,7 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, extractStruct }
 import at.logic.gapt.proofs.lk.{ AtomicExpansion, LKToExpansionProof }

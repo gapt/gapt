@@ -2,7 +2,7 @@ package at.logic.gapt.examples.induction
 
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
@@ -17,9 +17,9 @@ object factorialmodth extends Script {
   Logger.makeVerbose( classOf[SipProver] )
   FindFormulaH.makeVerbose()
 
-  val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +: "g(x*s(y),y) = g(x,s(y))" +: "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula ) map univclosure.apply ) :+ FOLSubstitution( FOLVar( "x" ) -> alpha )( parseFormula( "g(s(0), x) = f(x)" ) )
+  val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +: "g(x*s(y),y) = g(x,s(y))" +: "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula ) map universalClosure.apply ) :+ FOLSubstitution( FOLVar( "x" ) -> alpha )( parseFormula( "g(s(0), x) = f(x)" ) )
 
-  val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map univclosure.apply
+  val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map universalClosure.apply
 
   val modThProver = new OneShotProver {
     override def getLKProof( seq: HOLSequent ): Option[LKProof] =

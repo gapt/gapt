@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.escargot.impl
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.LPO
@@ -369,7 +369,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
     var componentCache = mutable.Map[HOLFormula, FOLAtom]()
     def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
-      val definition @ All.Block( vs, _ ) = univclosure( comp.toDisjunction )
+      val definition @ All.Block( vs, _ ) = universalClosure( comp.toDisjunction )
       AvatarNonGroundComp( componentCache.getOrElseUpdate(
         definition,
         FOLAtom( nameGen.freshWithIndex( "split" ) )

@@ -31,7 +31,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
    */
   def apply( formulas: HOLFormula* )( proof: LKProof ): LKProof = withOccConnector( formulas: _* )( proof )._1
 
-  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.axioms map { s => univclosure( s.toFormula ) }: _* )( proof )
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.axioms map { s => universalClosure( s.toFormula ) }: _* )( proof )
 
   /**
    *
