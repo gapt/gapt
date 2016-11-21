@@ -29,7 +29,7 @@ class CanonicalSolutionTest extends Specification {
   val ts = List( FOLConst( "0" ) )
   val us = List( FOLConst( "0" ) )
 
-  val sip = new SimpleInductionProof( seq0, seq1, seq2, ts, us )
+  val sip = new SimpleInductionProofU( seq0, seq1, seq2, ts, us )
 
   val sol = Imp( FOLAtom( "P", FOLConst( "0" ) ), FOLAtom( "P", nu ) )
 

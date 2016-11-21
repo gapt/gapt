@@ -73,26 +73,26 @@ class InductionProverTest extends Specification {
     val ExpSeq2 = ExpansionSequent( List( et7 ), List( et8 ) )
 
     "be constructed correctly" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
 
       success
     }
 
     "produce an LKProof" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
       p.toLKProof( Escargot )
 
       success
     }
 
     "produce a SIP grammar" in {
-      new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
+      new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
 
       success
     }
 
     "find the induction formula" in {
-      val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
+      val sip = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
       FindFormulaH( sip, 0, prover = Escargot ) must_== Some( g( gamma, nu ) === m( gamma, f( nu ) ) )
     }
   }
@@ -170,26 +170,26 @@ class InductionProverTest extends Specification {
     val F = assoc( alpha, gamma, nu )
 
     "be constructed correctly" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
 
       success
     }
 
     "produce an LKProof" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
       p.toLKProof( Escargot )
 
       success
     }
 
     "produce a SIP grammar" in {
-      new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
+      new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
 
       success
     }
 
     "find the induction formula" in {
-      val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
+      val sip = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
       FindFormulaH( sip, 0, prover = Escargot ) must_== Some( assoc( alpha, gamma, nu ) )
     }
   }

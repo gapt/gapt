@@ -32,7 +32,7 @@ object factorialmodth extends Script {
   object patchingSolFinder extends SolutionFinder {
     val n = 0
 
-    override def findSolution( sip: SimpleInductionProof ): Option[FOLFormula] = {
+    override def findSolution( sip: SimpleInductionProofU ): Option[FOLFormula] = {
       // We could pass the whole theory here, but ForgetfulParamodulate only does ground
       // paramodulation--so we give just the correct instance.
       val canSolModTh = canonicalSolution( sip, n )
