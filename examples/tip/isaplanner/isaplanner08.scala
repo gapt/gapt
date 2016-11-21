@@ -43,10 +43,14 @@ object isaplanner08 extends TacticsProof {
     axiomLog
   }
 
-  val proof = Lemma( sequent.antecedent ++: Sequent() :+
+  val proof1 = Lemma( sequent.antecedent ++: Sequent() :+
     ( "goal" -> hof"minus(plus(k, m), plus(k, n)) = minus(m, n)" ) ) {
     induction( hov"k:Nat" )
     insert( baseCase )
     insert( inductiveCase )
   }
+
+  val proof2 = proveWithInductionAxioms( sequent, "goal", List( hov"k:Nat" ), independentInductionAxioms ) get
+
+  val proof3 = proveWithInductionAxioms( sequent, "goal", List( hov"k:Nat" ), sequentialInductionAxioms ) get
 }
