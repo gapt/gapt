@@ -640,7 +640,7 @@ Each proof is then assigned to a Scala variable.  The function
 gaptic language.  The first argument of \cli{Lemma} is the labelled end
 sequent, i.e. the sequent you want to prove in which each formula has a string
 label.  The second argument consists of a list of statements, called tactics,
-separated by line breaks:
+separated by line breaks.
 
 At the moment, there are two ways to execute gaptic scripts:
 \begin{enumerate}
@@ -708,7 +708,7 @@ val lemmaEx =
 Most tactics can be called with or without a label argument. If a tactic is
 called with a label, it will be applied to that specific formula, if possible.
 Otherwise, the system will attempt to determine a target formula on its own. If
-there is no such formula or more than one, the tactic will fail.
+there is either no applicable formula or more than one, the tactic will fail.
 
 We now give a description of a few tactics, you can see the full list in the
 API documentation:
@@ -760,13 +760,13 @@ val axiomEx =
 \begin{tacticsoutput}
 \end{tacticsoutput}
 
-The tactic \cli{eql} covers the left and right equality rules. The tactic takes
-as first argument the label of an equality to use from the antecedent. The
-second argument is the label of the formula to apply the rule to. Furthermore,
-it can be specified if the equality should be used from left to right or vice
-versa. Also, a target formula can be specified, if not all occurrences need to
-be replaced (in either direction). If neither direction nor a target formula is
-specified, the tactic will only work if the direction is unambiguous.
+The tactic \cli{eql} covers the left and right equality rules. Its first argument
+is the label of an equality in the antecedent. The second argument is the label 
+of the formula to apply the rule to. Furthermore, you may specify if the equality
+should be used from left to right or vice versa. Also, a target formula can be 
+specified, if not all occurrences need to be replaced (in either direction). 
+If neither direction nor a target formula is specified, the tactic will only
+work if the direction is unambiguous.
 
 \begin{tacticslisting}
 val eqEx = Lemma(Sequent(
