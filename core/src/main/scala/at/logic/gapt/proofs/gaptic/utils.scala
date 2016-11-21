@@ -15,7 +15,7 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.escargot.Escargot
 
 trait InductionStrategy {
-  def inductionAxioms( f: HOLFormula, vs: Seq[Var] )( implicit ctx: Context ): ValidationNel[String, Seq[HOLFormula]]
+  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ValidationNel[String, List[HOLFormula]]
 }
 object proveWithInductionAxioms {
 
@@ -98,9 +98,10 @@ object independentInductionAxioms extends InductionStrategy {
    * @return Either a list of induction axioms, or an error message if one of
    * the axioms could not be created.
    */
-  def inductionAxioms( formula: HOLFormula, variables: Seq[Var] )( implicit ctx: Context ): ValidationNel[String, Seq[HOLFormula]] =
+  def inductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ValidationNel[String, List[HOLFormula]] =
     {
-      val axs = makeInductionAxioms( removeUniversalQuantifierPrefix( formula ), variables )
+      val All.Block( _, formula1 ) = formula
+      val axs = makeInductionAxioms( formula1, variables )
       axs filter { _.isFailure } match {
         case failure :: _ => for { _ <- failure } yield { List() }
         case _            => ( axs map { _ | Top() } ).success
@@ -115,7 +116,7 @@ object independentInductionAxioms extends InductionStrategy {
    * @return A list of either induction axioms or errors. A an error message is
    * in the list if the corresponding axiom could not be created.
    */
-  private def makeInductionAxioms( formula: HOLFormula, variables: Seq[Var] )( implicit ctx: Context ): Seq[ValidationNel[String, HOLFormula]] =
+  private def makeInductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): List[ValidationNel[String, HOLFormula]] =
     variables map { v => makeAxiom( formula, v ) }
 
   /**
@@ -124,11 +125,11 @@ object independentInductionAxioms extends InductionStrategy {
    * @param formula The formula subject to the induction axiom.
    * @param variable The induction variable.
    * @return Either a formula of the form:
-   * !x_1,...,x_{k-1},x_{k+1},...,x_n( <IC(F,c_1,x_k)> ^...^ <IC(F,c_m,x_k)> -> !x_k F ),
-   * given a formula F, a variable x_k such that
-   * - F has free variables x_1,...,x_n
-   * - x_k is inductive and has constructors c_1,...,c_m
-   * - IC(F,c_i,x_k), with i = {1,...,m} symbolises the i-th inductive case;
+   * ∀x,,1,,,...,x,,k-1,,,x,,k+1,,,...,x,,n,,( <IC(F,c,,1,,,x,,k,,)> ∧...∧ <IC(F,c,,m,,,x,,k,,)> -> ∀x,,k,, F ),
+   * given a formula F, a variable x,,k,, such that
+   * - F has free variables x,,1,,,...,x,,n,,
+   * - x,,k,, is inductive and has constructors c,,1,,,...,c,,m,,
+   * - IC(F,c,,i,,,x,,k,,), with i = {1,...,m} symbolises the i-th inductive case;
    * or an error message if one of the above conditions is violated.
    */
   private def makeAxiom( formula: HOLFormula, variable: Var )( implicit ctx: Context ): ValidationNel[String, HOLFormula] =
@@ -137,7 +138,7 @@ object independentInductionAxioms extends InductionStrategy {
     } yield {
       val ics = constructors map { c => inductiveCase( formula, c, variable ) }
       val concl = All( variable, formula )
-      val fvs = freeVariables( formula ).toSeq
+      val fvs = freeVariables( formula ).toList
       All.Block( fvs filter { _ != variable }, And( ics ) --> concl )
     }
 
@@ -149,15 +150,15 @@ object independentInductionAxioms extends InductionStrategy {
    * @param constructor The constructor corresponding to the returned inductive case.
    * @param variable The induction variable.
    * @return Returns a formula of the form:
-   *     !y_1',...,!y_n'((F[y_1'/x] ^ ... ^ F[y_n'/x])
-   *                      -> !z_1',...,!z_l' F[c(y_1',...y_n',z_1',...,z_l')/x]),
+   *     ∀y,,1,,',...,∀y,,n,,'((F[y,,1,,'/x] ∧ ... ∧ F[y,,n,,'/x])
+   *                      -> ∀z,,1,,',...,∀z,,l,,' F[c(y,,1,,',...y,,n,,',z,,1,,',...,z,,l,,')/x]),
    * for a given variable x, a constructor c and a formula F such that
    * - x is of inductive type with constructor c
    * - x is a free variable of F
-   * - c has free variables y_1,...,y_n,z_1,...,z_l
-   * - the variables y_1,...,y_n are of the same type as x
-   * - variables z_1,...,z_l are not of the same type as x
-   * - variables y_1',...,y_n',z_1',...,z_l' are fresh variables for F.
+   * - c has free variables y,,1,,,...,y,,n,,,z,,1,,,...,z,,l,,
+   * - the variables y,,1,,,...,y,,n,, are of the same type as x
+   * - variables z,,1,,,...,z,,l,, are not of the same type as x
+   * - variables y,,1,,',...,y,,n,,',z,,1,,',...,z,,l,,' are fresh variables for F.
    */
   private def inductiveCase(
     formula:     HOLFormula,
@@ -181,26 +182,6 @@ object independentInductionAxioms extends InductionStrategy {
     }
 }
 
-object removeUniversalQuantifierPrefix {
-  /**
-   * Removes all leading universal quantifiers from the given formula.
-   * @param f The formula from which the leading universal quantifiers are to be removed.
-   * @return The formula f without leading universal quantifiers.
-   */
-  def apply( f: HOLFormula ): HOLFormula = f match {
-    case HOLAtom( _, _ )
-      | Top()
-      | Bottom()
-      | Imp( _, _ )
-      | And( _, _ )
-      | Or( _, _ )
-      | Neg( _ )
-      | Ex( _, _ ) => f
-    case All( _, f0 ) => removeUniversalQuantifierPrefix( f0 )
-    case _            => throw new Exception( "ERROR: Unexpected case while removing outermost universal quantifiers from a formula" )
-  }
-}
-
 object sequentialInductionAxioms extends InductionStrategy {
 
   /**
@@ -211,15 +192,15 @@ object sequentialInductionAxioms extends InductionStrategy {
    * @param ctx The context defining types, constants, etc.
    * @return Failure if the one of the given variables is not of inductive type.
    * Otherwise a list of induction axioms of the form:
-   * !A!{X<x}( IC(x,c1) ^ ... ^ IC(x,cl) -> !x!{X>x}!{X'}F ),
+   * ∀A∀{X < x}( IC(x,c,,1,,) ∧ ... ∧ IC(x,c,,l,,) -> ∀x∀{X > x}∀{X'}F ),
    * where
    * the input variables are X
-   * the input formula is of the form F' = !{X U X'}F
+   * the input formula is of the form F' = ∀{X U X'}F
    * FV(F') = A
    * x in X
-   * {X<x} and {X>x} are subsets of X containing all variables with index smaller/greater than the index of x.
+   * {X < x} and {X > x} are subsets of X containing all variables with index smaller/greater than the index of x.
    */
-  def inductionAxioms( f: HOLFormula, vs: Seq[Var] )( implicit ctx: Context ): ValidationNel[String, Seq[HOLFormula]] = {
+  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ValidationNel[String, List[HOLFormula]] = {
     val validations = makeInductionAxioms( f, vs )
     validations filter { _.isFailure } match {
       case e :: _ => for ( _ <- e ) yield List()
@@ -236,10 +217,10 @@ object sequentialInductionAxioms extends InductionStrategy {
    * @return A list of validations containing either an axiom or an error message. The form of the axioms is as
    *         described for the inductionAxioms method.
    */
-  private def makeInductionAxioms( f: HOLFormula, vs: Seq[Var] )( implicit ctx: Context ): Seq[ValidationNel[String, HOLFormula]] = {
-    val fvs = freeVariables( f ).toSeq
-    val f1 = removeUniversalQuantifierPrefix( f )
-    val xvs = freeVariables( f1 ).toSeq.diff( fvs ).diff( vs )
+  private def makeInductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): List[ValidationNel[String, HOLFormula]] = {
+    val fvs = freeVariables( f ).toList
+    val All.Block( _, f1 ) = f
+    val xvs = freeVariables( f1 ).toList.diff( fvs ).diff( vs )
     val f2 = All.Block( xvs, f1 )
     vs map {
       v => inductionAxiom( f2, vs, v )
@@ -250,16 +231,16 @@ object sequentialInductionAxioms extends InductionStrategy {
    * Computes an induction axiom for the given formula and variable.
    *
    * @param f The formula for which the induction axiom is generated.
-   * @param vs The list of variables equal to {X<v} ++ [v] ++ {X>v}.
+   * @param vs The list of variables equal to {X < v} ++ [v] ++ {X > v}.
    * @param v The variable for which the induction axiom is generated.
    * @param ctx The context defining types, constants, etc.
    * @return An induction axiom if v is of inductive type, an error message otherwise.
    */
-  private def inductionAxiom( f: HOLFormula, vs: Seq[Var], v: Var )( implicit ctx: Context ): ValidationNel[String, HOLFormula] = {
+  private def inductionAxiom( f: HOLFormula, vs: List[Var], v: Var )( implicit ctx: Context ): ValidationNel[String, HOLFormula] = {
     for {
       cs <- getConstructors( baseType( v ), ctx )
     } yield {
-      val ( lvs, gvs ) = splitVarsAt( vs, v )
+      val ( lvs, _ :: gvs ) = vs.span( _ != v )
       val inductiveCases = cs map { c => inductiveCase( f, vs, v, c ) }
       val conclusion = All( v, All.Block( gvs, f ) )
       univclosure( All.Block( lvs, And( inductiveCases ) --> conclusion ) )
@@ -270,13 +251,13 @@ object sequentialInductionAxioms extends InductionStrategy {
    * Generates the inductive case of the given formula, variable and constructor.
    *
    * @param f The formula for which the inductive case is generated.
-   * @param vs The list of variables equal to {X<v} ++ [v] ++ {X>v}.
+   * @param vs The list of variables equal to {X < v} ++ [v] ++ {X > v}.
    * @param v The variable for which the inductive case is generated.
    * @param c The constructor of this inductive case.
    * @return The formula representing the inductive case.
    */
-  private def inductiveCase( f: HOLFormula, vs: Seq[Var], v: Var, c: Con ): HOLFormula = {
-    val ( _, gvs ) = splitVarsAt( vs, v )
+  private def inductiveCase( f: HOLFormula, vs: List[Var], v: Var, c: Con ): HOLFormula = {
+    val ( _, _ :: gvs ) = vs.span( _ != v )
     val FunctionType( _, ats ) = c.exptype
     val nameGenerator = rename.awayFrom( freeVariables( f ) )
     val evs = ats map {
@@ -294,19 +275,6 @@ object sequentialInductionAxioms extends InductionStrategy {
       And( hyps ) --> concl
     )
   }
-
-  /**
-   * Splits a list of variables at the given variable.
-   *
-   * @param vs The list of variables to be split.
-   * @param v The variable around which the list is to be split
-   * @return Given a variable xk and a list x1,...,xn such that xk occurs in the list and
-   * the variables in the list are pairwise distinct, the result is (x1,...,x{k-1}; x{k+1},...xn).
-   */
-  private def splitVarsAt( vs: Seq[Var], v: Var ): ( Seq[Var], Seq[Var] ) = {
-    val i = vs.indexOf( v )
-    ( vs.take( i ), vs.drop( i + 1 ) )
-  }
 }
 
 object getConstructors {
@@ -318,9 +286,9 @@ object getConstructors {
    */
   def apply(
     typ: TBase, ctx: Context
-  ): ValidationNel[String, Seq[Con]] =
+  ): ValidationNel[String, List[Con]] =
     ctx.typeDef( typ.name ) match {
-      case Some( Context.InductiveType( _, constructors ) ) => constructors.success
+      case Some( Context.InductiveType( _, constructors ) ) => constructors.toList.success
       case Some( typeDef ) => s"Type $typ is not inductively defined: $typeDef".failureNel
       case None => s"Type $typ is not defined".failureNel
     }
