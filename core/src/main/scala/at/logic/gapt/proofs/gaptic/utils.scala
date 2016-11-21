@@ -138,7 +138,7 @@ object independentInductionAxioms extends InductionStrategy {
       val ics = constructors map { c => inductiveCase( formula, c, variable ) }
       val concl = All( variable, formula )
       val fvs = freeVariables( formula ).toSeq
-      partialUniversalClosure( fvs filter { _ != variable }, and( ics ) --> concl )
+      All.Block( fvs filter { _ != variable }, And( ics ) --> concl )
     }
 
   /**
@@ -175,8 +175,8 @@ object independentInductionAxioms extends InductionStrategy {
       val hyps = ivs map { iv => Substitution( variable -> iv )( formula ) }
       val concl = Substitution( variable -> constructor( evs: _* ) )( formula )
 
-      partialUniversalClosure(
-        ivs, and( hyps ) --> partialUniversalClosure( ovs, concl )
+      All.Block(
+        ivs, And( hyps ) --> All.Block( ovs, concl )
       )
     }
 }
@@ -199,23 +199,6 @@ object removeUniversalQuantifierPrefix {
     case All( _, f0 ) => removeUniversalQuantifierPrefix( f0 )
     case _            => throw new Exception( "ERROR: Unexpected case while removing outermost universal quantifiers from a formula" )
   }
-}
-
-object and {
-  /**
-   * Returns the conjunction of a sequence of formulas.
-   *
-   * @param formulas The conjuncts of the returned formula.
-   * @return A conjunction of the given formulas. The ordering
-   * of the conjuncts corresponds to the ordering of the formulas
-   * in the input sequence.
-   */
-  def apply( formulas: Seq[HOLFormula] ): HOLFormula =
-    formulas match {
-      case Seq( f )          => f
-      case Seq( f, fs @ _* ) => And( f, and( fs ) )
-      case _                 => Top()
-    }
 }
 
 object sequentialInductionAxioms extends InductionStrategy {
@@ -257,7 +240,7 @@ object sequentialInductionAxioms extends InductionStrategy {
     val fvs = freeVariables( f ).toSeq
     val f1 = removeUniversalQuantifierPrefix( f )
     val xvs = freeVariables( f1 ).toSeq.diff( fvs ).diff( vs )
-    val f2 = partialUniversalClosure( xvs, f1 )
+    val f2 = All.Block( xvs, f1 )
     vs map {
       v => inductionAxiom( f2, vs, v )
     }
@@ -278,8 +261,8 @@ object sequentialInductionAxioms extends InductionStrategy {
     } yield {
       val ( lvs, gvs ) = splitVarsAt( vs, v )
       val inductiveCases = cs map { c => inductiveCase( f, vs, v, c ) }
-      val conclusion = All( v, partialUniversalClosure( gvs, f ) )
-      univclosure( partialUniversalClosure( lvs, and( inductiveCases ) --> conclusion ) )
+      val conclusion = All( v, All.Block( gvs, f ) )
+      univclosure( All.Block( lvs, And( inductiveCases ) --> conclusion ) )
     }
   }
 
@@ -302,13 +285,13 @@ object sequentialInductionAxioms extends InductionStrategy {
     val yvs = evs filter { _.exptype == v.exptype }
     val zvs = evs filter { _.exptype != v.exptype }
     val hyps = yvs map {
-      yv => partialUniversalClosure( gvs, Substitution( v -> yv )( f ) )
+      yv => All.Block( gvs, Substitution( v -> yv )( f ) )
     }
-    val concl = partialUniversalClosure( zvs ++ gvs, Substitution( v -> c( evs: _* ) )( f ) )
+    val concl = All.Block( zvs ++ gvs, Substitution( v -> c( evs: _* ) )( f ) )
 
-    partialUniversalClosure(
+    All.Block(
       yvs,
-      and( hyps ) --> concl
+      And( hyps ) --> concl
     )
   }
 
@@ -369,22 +352,4 @@ object findFormula {
       case _         => s"Label $label not found" failureNel
     }
   }
-}
-
-object partialUniversalClosure {
-
-  /**
-   * Universally closes a formula for a given sequence of variables.
-   *
-   * @param variables The variables to be universally bound in the closure.
-   * @param formula The formula to be subject to the universal closure.
-   * @return Given variables x1,...,xn and a formula F, the formula
-   * !x1...!xn F is returned.
-   * @todo Replace the recursion by a fold over the variables.
-   */
-  def apply( variables: Seq[Var], formula: HOLFormula ): HOLFormula =
-    variables match {
-      case Seq( v, vs @ _* ) => All( v, partialUniversalClosure( vs, formula ) )
-      case _                 => formula
-    }
 }
