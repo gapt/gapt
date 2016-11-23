@@ -30,4 +30,8 @@ object isaplanner10 extends TacticsProof {
     eql( "h3_0", "goal" )
     axiomLog
   }
+
+  val proof2 = proveWithInductionAxioms( sequent, "goal", List( hov"m:Nat" ), independentInductionAxioms ) get
+
+  val proof3 = proveWithInductionAxioms( sequent, "goal", List( hov"m:Nat" ), sequentialInductionAxioms ) get
 }
