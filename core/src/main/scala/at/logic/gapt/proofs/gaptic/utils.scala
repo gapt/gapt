@@ -15,9 +15,12 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.escargot.Escargot
 
 trait InductionStrategy {
-  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ValidationNel[String, List[HOLFormula]]
+  type ThrowsError[T] = ValidationNel[String, T]
+  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
 }
 object proveWithInductionAxioms {
+
+  type ThrowsError[T] = ValidationNel[String, T]
 
   /**
    * Tries to prove a sequent with induction axioms for a formula.
@@ -61,7 +64,7 @@ object proveWithInductionAxioms {
     label:     String,
     variables: List[Var],
     strategy:  InductionStrategy
-  )( implicit ctx: Context ): ValidationNel[String, Sequent[( String, HOLFormula )]] = {
+  )( implicit ctx: Context ): ThrowsError[Sequent[( String, HOLFormula )]] = {
     for {
       formula <- findFormula( sequent, label )
       axioms <- strategy.inductionAxioms( formula, variables )
@@ -98,14 +101,10 @@ object independentInductionAxioms extends InductionStrategy {
    * @return Either a list of induction axioms, or an error message if one of
    * the axioms could not be created.
    */
-  def inductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ValidationNel[String, List[HOLFormula]] =
+  def inductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
     {
       val All.Block( _, formula1 ) = formula
-      val axs = makeInductionAxioms( formula1, variables )
-      axs filter { _.isFailure } match {
-        case failure :: _ => for { _ <- failure } yield { List() }
-        case _            => ( axs map { _ | Top() } ).success
-      }
+      makeInductionAxioms( formula1, variables )
     }
 
   /**
@@ -116,8 +115,8 @@ object independentInductionAxioms extends InductionStrategy {
    * @return A list of either induction axioms or errors. A an error message is
    * in the list if the corresponding axiom could not be created.
    */
-  private def makeInductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): List[ValidationNel[String, HOLFormula]] =
-    variables map { v => makeAxiom( formula, v ) }
+  private def makeInductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+    variables.traverse( v => makeAxiom( formula, v ) )
 
   /**
    * Computes an induction axiom for the given formula and the given variable.
@@ -132,7 +131,7 @@ object independentInductionAxioms extends InductionStrategy {
    * - IC(F,c,,i,,,x,,k,,), with i = {1,...,m} symbolises the i-th inductive case;
    * or an error message if one of the above conditions is violated.
    */
-  private def makeAxiom( formula: HOLFormula, variable: Var )( implicit ctx: Context ): ValidationNel[String, HOLFormula] =
+  private def makeAxiom( formula: HOLFormula, variable: Var )( implicit ctx: Context ): ThrowsError[HOLFormula] =
     for {
       constructors <- getConstructors( baseType( variable ), ctx )
     } yield {
@@ -200,29 +199,12 @@ object sequentialInductionAxioms extends InductionStrategy {
    * x in X
    * {X < x} and {X > x} are subsets of X containing all variables with index smaller/greater than the index of x.
    */
-  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ValidationNel[String, List[HOLFormula]] = {
-    val validations = makeInductionAxioms( f, vs )
-    validations filter { _.isFailure } match {
-      case e :: _ => for ( _ <- e ) yield List()
-      case _      => validations map { _ | Top() } success
-    }
-  }
-
-  /**
-   * Computes a sequence of induction axioms for the given formula and variables.
-   *
-   * @param f The formula for which to compute induction axioms.
-   * @param vs The variables for which induction axioms are generated.
-   * @param ctx The context defining types, constants etc.
-   * @return A list of validations containing either an axiom or an error message. The form of the axioms is as
-   *         described for the inductionAxioms method.
-   */
-  private def makeInductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): List[ValidationNel[String, HOLFormula]] = {
+  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] = {
     val fvs = freeVariables( f ).toList
     val All.Block( _, f1 ) = f
     val xvs = freeVariables( f1 ).toList.diff( fvs ).diff( vs )
     val f2 = All.Block( xvs, f1 )
-    vs map {
+    vs.traverse {
       v => inductionAxiom( f2, vs, v )
     }
   }
@@ -236,7 +218,7 @@ object sequentialInductionAxioms extends InductionStrategy {
    * @param ctx The context defining types, constants, etc.
    * @return An induction axiom if v is of inductive type, an error message otherwise.
    */
-  private def inductionAxiom( f: HOLFormula, vs: List[Var], v: Var )( implicit ctx: Context ): ValidationNel[String, HOLFormula] = {
+  private def inductionAxiom( f: HOLFormula, vs: List[Var], v: Var )( implicit ctx: Context ): ThrowsError[HOLFormula] = {
     for {
       cs <- getConstructors( baseType( v ), ctx )
     } yield {
