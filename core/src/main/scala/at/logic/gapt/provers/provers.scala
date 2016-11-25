@@ -74,14 +74,30 @@ trait Prover {
   def getEpsilonProof( formula: HOLFormula ): Option[EpsilonProof] =
     getEpsilonProof( Sequent() :+ formula )
 
+  /**
+   * Method for running a session.
+   * @param program A proof session.
+   * @tparam A The return type of the session.
+   * @return The result of running the session.
+   */
   def runSession[A]( program: Session[A] ): A
 }
 
+/**
+ * A prover that interprets Sessions as stack operations.
+ */
 trait OneShotProver extends Prover {
   override def runSession[A]( program: Session[A] ): A = program.foldMap[Id]( new StackSessionCompiler( this.isValid ) )
 }
 
+/**
+ * A prover that determines validity via an incremental proof session.
+ */
 trait IncrementalProver extends Prover {
+
+  /**
+   * Tests the validity of a sequent.
+   */
   def isValidProgram( seq: HOLSequent ): Session[Boolean] = {
     val ( groundSeq, _ ) = groundFreeVariables( seq )
     for {
@@ -90,6 +106,7 @@ trait IncrementalProver extends Prover {
       sat <- checkSat
     } yield !sat
   }
+
   override def getLKProof( seq: HOLSequent ): Option[LKProof] = ???
   override def isValid( seq: HOLSequent ): Boolean = runSession( isValidProgram( seq ) )
 }

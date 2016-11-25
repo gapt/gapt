@@ -19,15 +19,11 @@ class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
     }
 
   override def runSession[A]( program: Session[A] ) = {
-    val p = for {
-      _ <- setLogic( logic )
-      result <- program
-    } yield result
-    val compiler = new ExternalSMTLibSessionCompiler {
-      override def command = Seq( "cvc4", "--lang", "smt", "--incremental" )
-    }
+    val p = wrap( setLogic( logic ), close )( program )
 
-    p.foldMap( compiler )
+    p.foldMap( new ExternalSMTLibSessionCompiler {
+      override def command = Seq( "cvc4", "--lang", "smt", "--incremental" )
+    } )
   }
 }
 

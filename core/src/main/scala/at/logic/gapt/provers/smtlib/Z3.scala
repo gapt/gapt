@@ -12,17 +12,11 @@ object Z3 extends Z3( "QF_UF" )
 class Z3( val logic: String ) extends IncrementalProver with ExternalProgram {
 
   override def runSession[A]( program: Session[A] ) = {
-    val p = for {
-      _ <- setLogic( logic )
-      result <- program
-      _ <- close
-    } yield result
+    val p = wrap( setLogic( logic ), close )( program )
 
-    val compiler = new ExternalSMTLibSessionCompiler {
+    p.foldMap( new ExternalSMTLibSessionCompiler {
       override def command = Seq( "z3", "-smt2", "-in" )
-    }
-
-    p.foldMap( compiler )
+    } )
   }
   override val isInstalled: Boolean =
     try {
