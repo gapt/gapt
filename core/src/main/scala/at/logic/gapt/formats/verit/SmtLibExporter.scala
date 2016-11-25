@@ -2,7 +2,8 @@ package at.logic.gapt.formats.verit
 
 import at.logic.gapt.expr.{ TBase, Const }
 import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.provers.smtlib.BenchmarkRecordingSession
+import at.logic.gapt.provers.Session._
+import at.logic.gapt.provers.Session.Compilers._
 
 object SmtLibExporter {
 
@@ -12,12 +13,18 @@ object SmtLibExporter {
    * @param s Sequent to export.
    * @return SMT-LIB benchmark.
    */
-  def apply( s: HOLSequent ): ( String, Map[TBase, TBase], Map[Const, Const] ) =
-    for ( session <- new BenchmarkRecordingSession ) yield {
-      session setLogic "QF_UF"
-      session declareSymbolsIn s.elements
-      s.map( identity, -_ ) foreach session.assert
-      session.checkSat()
-      ( session.getBenchmark(), session.typeRenaming.map.toMap, session.termRenaming.map.toMap )
-    }
+  def apply( s: HOLSequent ): ( String, Map[TBase, TBase], Map[Const, Const] ) = {
+    val p = for {
+      _ <- setLogic( "QF_UF" )
+      _ <- declareSymbolsIn( s.elements )
+      _ <- assert( s.map( identity, -_ ).elements.toList )
+      _ <- checkSat
+    } yield ()
+
+    val benchmarkRecorder = new BenchmarkCompiler
+
+    p.foldMap( benchmarkRecorder )
+
+    ( benchmarkRecorder.getBenchmark(), benchmarkRecorder.typeRenaming.map.toMap, benchmarkRecorder.termRenaming.map.toMap )
+  }
 }

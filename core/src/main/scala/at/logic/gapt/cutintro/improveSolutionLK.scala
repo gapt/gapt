@@ -1,10 +1,11 @@
 package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ simplify, CNFp, lcomp, instantiate }
+import at.logic.gapt.expr.hol.{ CNFp, instantiate, lcomp, simplify }
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
-import at.logic.gapt.proofs.{ RichFOLSequent, FOLClause, Sequent }
+import at.logic.gapt.proofs.{ FOLClause, RichFOLSequent, Sequent }
 import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.Session._
 
 import scala.collection.mutable
 
@@ -50,39 +51,53 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
    */
-  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula =
-    for ( session <- prover.startIncrementalSession() ) yield {
-      val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
-      val nameGen = rename.awayFrom( names )
-      val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
-        yield v -> Const( nameGen.fresh( v.name ), v.exptype ) )
-      val groundInstances = instances.map( grounding.compose )
+  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula = {
+    val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
+    val nameGen = rename.awayFrom( names )
+    val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
+      yield v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+    val groundInstances = instances.map( grounding.compose )
+    val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
-      session declareSymbolsIn ( names ++ containedNames( grounding ) )
-      session assert grounding( context.toNegConjunction )
+    val init = for {
+      _ <- declareSymbolsIn( names ++ containedNames( grounding ) )
+      _ <- assert( grounding( context.toNegConjunction ) )
+    } yield ()
 
-      val isSolution = mutable.Map[Set[FOLClause], Boolean]()
+    def checkSolution( cnf: Set[FOLClause] ): Unit = if ( !isSolution.contains( cnf ) ) {
+      val checkSolutionProgram: Session[Boolean] = {
+        val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
+        for {
+          _ <- init
+          _ <- assert( clauses.toList )
+          sat <- checkSat
+        } yield sat
+      }
 
-      def checkSolution( cnf: Set[FOLClause] ): Unit =
-        if ( !isSolution.contains( cnf ) ) {
-          if ( session withScope {
-            for ( inst <- groundInstances; clause <- cnf ) session assert inst( clause.toDisjunction )
-            !session.checkSat()
-          } ) {
-            isSolution( cnf ) = true
-            forgetfulPropResolve( cnf ) foreach checkSolution
-            if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
-            if ( forgetOne ) for ( c <- cnf ) checkSolution( cnf - c )
-          } else {
-            isSolution( cnf ) = false
-          }
-        }
-
-      checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
-
-      val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
-      solutions minBy { lcomp( _ ) }
+      if ( !prover.runSession( checkSolutionProgram ) ) {
+        isSolution( cnf ) = true
+        forgetfulPropResolve( cnf ) foreach checkSolution
+        if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
+        if ( forgetOne ) for ( c <- cnf ) checkSolution( cnf - c )
+      } else {
+        isSolution( cnf ) = false
+      }
     }
+    checkSolution( CNFp( start ).map {
+      _.distinct.sortBy {
+        _.hashCode
+      }
+    } )
+
+    val solutions = isSolution collect {
+      case ( cnf, true ) => simplify( And( cnf map {
+        _.toImplication
+      } ) )
+    }
+    solutions minBy {
+      lcomp( _ )
+    }
+  }
 
   /**
    * Improves a formula with regard to its logical complexity by taking backwards consequences under the constraint that the following sequent is valid:
