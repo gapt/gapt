@@ -6,6 +6,7 @@ import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Context.{ InductiveType, Sort }
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.viper.{ AnalyticInductionProver, independentInductionAxioms }
 
 /* This proof is not a s.i.p because of the subinduction,
  * in the base case of the primary induction.
@@ -47,5 +48,5 @@ object isaplanner07 extends TacticsProof {
 
   }
 
-  val proof2 = proveWithInductionAxioms( sequent, "goal", List( hov"n:Nat", hov"m:Nat" ), independentInductionAxioms ) get
+  val proof2 = AnalyticInductionProver( sequent, "goal", List( hov"n:Nat", hov"m:Nat" ), independentInductionAxioms ) get
 }

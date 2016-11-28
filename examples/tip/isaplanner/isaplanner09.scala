@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, sequentialInductionAxioms }
 import better.files._
 
 object isaplanner09 extends TacticsProof {
@@ -50,5 +51,6 @@ object isaplanner09 extends TacticsProof {
     axiomLog
   }
 
-  val proof2 = proveWithInductionAxioms( sequent, "goal", List( hov"i:Nat", hov"j:Nat" ), sequentialInductionAxioms ) get
+  val proof2 = AnalyticInductionProver( sequent, "goal", List( hov"i:Nat", hov"j:Nat" ), sequentialInductionAxioms ) get
+  val proof3 = AnalyticInductionProver( bench, ProverOptions( sequentialInductionAxioms ) )
 }

@@ -6,6 +6,7 @@ import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Context.{ InductiveType, Sort }
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.viper.{ AnalyticInductionProver, independentInductionAxioms }
 
 object isaplanner43 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( file"examples/tip/isaplanner/prop_43.smt2" )
@@ -16,5 +17,5 @@ object isaplanner43 extends TacticsProof {
     case ( f, _ )        => "goal" -> f
   }
 
-  val proof1 = proveWithInductionAxioms( sequent, "goal", List( hov"xs:list" ), independentInductionAxioms ) get
+  val proof1 = AnalyticInductionProver( sequent, "goal", List( hov"xs:list" ), independentInductionAxioms ) get
 }
