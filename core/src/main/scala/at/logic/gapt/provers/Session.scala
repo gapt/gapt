@@ -164,7 +164,7 @@ object Session {
   /**
    * Asserts a list of formulas.
    */
-  def assert( formulas: List[HOLFormula] ): Session[Unit] = formulas.traverseU_( assert )
+  def assert( formulas: List[HOLFormula] ): Session[Unit] = formulas.traverse_( assert )
 
   /**
    * Pushes the stack, then runs f, then pops the stack.
@@ -195,8 +195,8 @@ object Session {
     }
 
     for {
-      _ <- ts.toList.traverseU_( declareSort )
-      _ <- cs.toList.traverseU_( declareFun )
+      _ <- ts.toList.traverse_( declareSort )
+      _ <- cs.toList.traverse_( declareFun )
     } yield ()
   }
 
@@ -207,12 +207,12 @@ object Session {
 
   /**
    * Contains various functions for interpreting a value of type Session.
-    *
-    * A "compiler" is a natural transformation from SessionCommand to Id; i.e. a function that can transform any
-    * SessionCommand[A] to an Id[A] (= A).
-    *
-    * Given such a transformation comp: SessionCommand ~> Id, you can use it to interpret a session program p via
-    * p.foldMap(comp).
+   *
+   * A "compiler" is a natural transformation from SessionCommand to Id; i.e. a function that can transform any
+   * SessionCommand[A] to an Id[A] (= A).
+   *
+   * Given such a transformation comp: SessionCommand ~> Id, you can use it to interpret a session program p via
+   * p.foldMap(comp).
    */
   object Compilers {
 

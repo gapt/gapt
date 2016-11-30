@@ -9,7 +9,7 @@ import scala.util.Random
 
 object randomInstance {
 
-  def generate( tys: Seq[TBase] )( implicit ctx: Context ): Seq[LambdaExpression] = {
+  def generate( tys: List[TBase] )( implicit ctx: Context ): List[LambdaExpression] = {
     val nameGen = new NameGenerator( Set() )
     tys.map( generate( _, nameGen ) )
   }
@@ -27,7 +27,7 @@ object randomInstance {
     }
   }
 
-  def generate( tys: Seq[TBase], cond: Float => Boolean )( implicit ctx: Context ): Seq[LambdaExpression] =
+  def generate( tys: List[TBase], cond: Float => Boolean )( implicit ctx: Context ): List[LambdaExpression] =
     Stream.continually( generate( tys ) ).filter( insts => cond( folTermSize( insts ).toFloat / insts.size ) ).head
 
 }

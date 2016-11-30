@@ -21,7 +21,9 @@ lazy val commonSettings = Seq(
   ) ),
 
   scalaVersion := "2.11.8",
+  scalaOrganization in ThisBuild := "org.typelevel",
   scalacOptions in Compile ++= Seq(
+    "-Ypartial-unification",
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
@@ -31,6 +33,8 @@ lazy val commonSettings = Seq(
 
   // scalaz-stream is not on maven.org
   resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
+  resolvers += Resolver.sonatypeRepo("releases"),
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
 
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
