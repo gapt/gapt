@@ -3,7 +3,7 @@ package at.logic.gapt.examples.tip.isaplanner
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ TacticsProof, _ }
 import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.provers.viper.{ AnalyticInductionProver, independentInductionAxioms, sequentialInductionAxioms }
+import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms, sequentialInductionAxioms }
 
 object isaplanner06 extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
@@ -47,8 +47,10 @@ object isaplanner06 extends TacticsProof {
 
   val target = theory :+ ( "goal" -> hof"∀x ∀y x-(x+y) = 0" )
 
-  val proof2 = AnalyticInductionProver( target, "goal", List( hov"x:nat" ), independentInductionAxioms ) get
+  val aipOptions1 = new ProverOptions( escargot, independentInductionAxioms )
+  val proof2 = new AnalyticInductionProver( aipOptions1 ) solve ( target, "goal", List( hov"x:nat" ) )
 
-  val proof3 = AnalyticInductionProver( target, "goal", List( hov"x:nat" ), sequentialInductionAxioms ) get
+  val aipOptions2 = new ProverOptions( escargot, sequentialInductionAxioms )
+  val proof3 = new AnalyticInductionProver( aipOptions2 ) solve ( target, "goal", List( hov"x:nat" ) )
 }
 
