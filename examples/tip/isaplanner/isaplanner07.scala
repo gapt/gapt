@@ -1,11 +1,11 @@
 package at.logic.gapt.examples.tip.isaplanner
 
-import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.Context.{ InductiveType, Sort }
-import at.logic.gapt.proofs.{ Ant, Sequent }
+import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms }
+import better.files._
 
 /* This proof is not a s.i.p because of the subinduction,
  * in the base case of the primary induction.
@@ -47,5 +47,6 @@ object isaplanner07 extends TacticsProof {
 
   }
 
-  val proof2 = proveWithInductionAxioms( sequent, "goal", List( hov"n:Nat", hov"m:Nat" ), independentInductionAxioms ) get
+  val aipOptions = new ProverOptions( escargot, independentInductionAxioms )
+  val proof2 = new AnalyticInductionProver( aipOptions ) solve ( sequent, "goal", List( hov"n:Nat", hov"m:Nat" ) )
 }

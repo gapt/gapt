@@ -1,26 +1,109 @@
-/* Utility functions for gaptic proofs */
+package at.logic.gapt.provers.viper
 
-package at.logic.gapt.proofs.gaptic
-
-import at.logic.gapt.expr.{ Const => Con }
-import at.logic.gapt.proofs.{ Context, Sequent }
-
-import scalaz._
-import Scalaz._
-import Validation.FlatMap._
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
+import at.logic.gapt.expr.hol._
+import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, TBase, Var, freeVariables, rename, Const => Con }
+import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.proofs.expansion.ExpansionProofToLK
+import at.logic.gapt.proofs.gaptic.NewLabels
 import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.reduction.{ ErasureReductionET, PredicateReductionET }
+import at.logic.gapt.proofs.{ Ant, Context, HOLSequent, Sequent }
+import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.spass.SPASS
+import at.logic.gapt.provers.vampire.Vampire
+import better.files._
+
+import scalaz.Scalaz._
+import scalaz.Validation.FlatMap.ValidationFlatMapRequested
+import scalaz.{ Failure, Success, ValidationNel }
 
 trait InductionStrategy {
   type ThrowsError[T] = ValidationNel[String, T]
   def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
 }
-object proveWithInductionAxioms {
+
+trait InternalProver {
+  def prove( problem: HOLSequent ): Option[LKProof]
+}
+
+object prover9 extends InternalProver {
+  override def prove( sequent: HOLSequent ): Option[LKProof] = {
+    val problem = sequent.toImplication
+    val reduction = PredicateReductionET |> ErasureReductionET
+    val ( folProblem, back ) = reduction forward ( Sequent() :+ problem )
+    for {
+      expansionProof <- Prover9.getExpansionProof( folProblem ).map( back )
+      proof <- ExpansionProofToLK( expansionProof ).toOption
+    } yield proof
+  }
+}
+
+object escargot extends InternalProver {
+  override def prove( problem: HOLSequent ): Option[LKProof] =
+    for {
+      expansionProof <- Escargot.getExpansionProof( problem )
+      proof <- ExpansionProofToLK( expansionProof ).toOption
+    } yield proof
+}
+
+object vampire extends InternalProver {
+  override def prove( sequent: HOLSequent ): Option[LKProof] = {
+    val problem = sequent.toImplication
+    val reduction = PredicateReductionET |> ErasureReductionET
+    val ( folProblem, back ) = reduction forward ( Sequent() :+ problem )
+    for {
+      expansionProof <- Vampire.getExpansionProof( folProblem ).map( back )
+      proof <- ExpansionProofToLK( expansionProof ).toOption
+    } yield proof
+  }
+}
+
+object eprover extends InternalProver {
+  override def prove( sequent: HOLSequent ): Option[LKProof] = {
+    val problem = sequent.toImplication
+    val reduction = PredicateReductionET |> ErasureReductionET
+    val ( folProblem, back ) = reduction forward ( Sequent() :+ problem )
+    for {
+      expansionProof <- EProver.getExpansionProof( folProblem ).map( back )
+      proof <- ExpansionProofToLK( expansionProof ).toOption
+    } yield proof
+  }
+}
+
+object spass extends InternalProver {
+  override def prove( sequent: HOLSequent ): Option[LKProof] = {
+    val problem = sequent.toImplication
+    val reduction = PredicateReductionET |> ErasureReductionET
+    val ( folProblem, back ) = reduction forward ( Sequent() :+ problem )
+    for {
+      expansionProof <- SPASS.getExpansionProof( folProblem ).map( back )
+      proof <- ExpansionProofToLK( expansionProof ).toOption
+    } yield proof
+  }
+}
+
+case class ProverOptions( prover: InternalProver, axiomType: InductionStrategy )
+
+class AnalyticInductionProver( options: ProverOptions ) {
 
   type ThrowsError[T] = ValidationNel[String, T]
+
+  /**
+   * Tries to prove a tip problem with induction axioms.
+   *
+   * @param problem The problem to solve.
+   * @return If the problem admits a proof, then a proofs is returned, otherwise either None is returned or
+   *         the method does not terminate.
+   */
+  def solve( problem: TipProblem ): Option[LKProof] = {
+    val sequent = problem.toSequent.zipWithIndex.map {
+      case ( f, Ant( i ) ) => s"h$i" -> f
+      case ( f, _ )        => "goal" -> f
+    }
+    solve( sequent, "goal" )( problem.ctx )
+  }
 
   /**
    * Tries to prove a sequent with induction axioms for a formula.
@@ -29,23 +112,50 @@ object proveWithInductionAxioms {
    * @param label The label designating the formula for which the induction axioms are generated
    * @param variables The variables for which an induction is to be carried out.
    * @param context The context defining types, constants, etc.
-   * @param strategy The strategy used for the generation of the induction axioms.
    * @return An LK proof of the given sequent if a proof exists, otherwise if there is no proof this method
    *         may either not terminate or return None.
-   * @throws Exception If a the label does not uniquely determine a formula in the sequent, or if one of the variables
-   *                   is not of inductive type.
    */
-  def apply(
+  def solve(
     sequent:   Sequent[( String, HOLFormula )],
     label:     String,
-    variables: List[Var],
-    strategy:  InductionStrategy
+    variables: List[Var]
   )( implicit context: Context ): Option[LKProof] = {
-    prepareSequent( sequent, label, variables, strategy ) match {
-      case Success( inductiveSequent ) => Escargot.getExpansionProof( inductiveSequent map { case ( _, f ) => f } ) map { ExpansionProofToLK( _ ).toOption.get }
+    validate( prepareSequent( sequent, label, variables, options.axiomType ) )
+  }
+
+  /**
+   * Tries to prove a sequent with induction axioms for a formula.
+   * The given sequent will be enriched by induction axioms for every free variable and every variable bound in the
+   * universal quantifier prefix of the formula designated by the label.
+   *
+   * @param sequent The sequent to prove.
+   * @param label The label designating the formula for which the induction axioms are generated
+   * @param context The context defining types, constants, etc.
+   * @return An LK proof of the given sequent if a proof exists, otherwise if there is no proof this method
+   *         may either not terminate or return None.
+   */
+  def solve(
+    sequent: Sequent[( String, HOLFormula )],
+    label:   String
+  )( implicit context: Context ): Option[LKProof] = {
+    validate( prepareSequent( sequent, label, options.axiomType ) )
+  }
+
+  /**
+   * Handles possible errors.
+   *
+   * @param validation A validation value.
+   * @return If the given validation is a success an LK proof is returned if the contained sequent is provable,
+   *         otherwise either None is returned or the method does not terminate. If the validation value is a
+   *         failure an exception is thrown.
+   * @throws Exception If the label does not uniquely determine a formula in the sequent, or if one of the variables
+   *                   is not of inductive type.
+   */
+  private def validate( validation: ThrowsError[Sequent[( String, HOLFormula )]] ): Option[LKProof] =
+    validation match {
+      case Success( inductiveSequent ) => options.prover.prove( inductiveSequent map { case ( _, f ) => f } )
       case Failure( es )               => throw new Exception( es.tail.foldLeft( es.head ) { _ ++ "\n" ++ _ } )
     }
-  }
 
   /**
    * Adds induction axioms for a formula to a given sequent.
@@ -59,7 +169,7 @@ object proveWithInductionAxioms {
    *         in the given sequent and all of the given variables are of inductive type (w.r.t. the given context).
    *         Otherwise a string describing the error is returned.
    */
-  def prepareSequent(
+  private def prepareSequent(
     sequent:   Sequent[( String, HOLFormula )],
     label:     String,
     variables: List[Var],
@@ -74,7 +184,47 @@ object proveWithInductionAxioms {
   }
 
   /**
+   * Adds induction axioms for a formula to a given sequent.
+   *
+   * @param sequent The sequent to which the induction axioms are added.
+   * @param label The label which designates a formula in the sequent.
+   * @param strategy The strategy which is used to generate the induction axioms.
+   * @param ctx The context which defines types, constants, etc.
+   * @return A sequent with induction axioms for the formula designated by the given label. The returned sequent
+   *         contains one axioms for every free variable and every universally quantified in the universal quantifier
+   *         prefix of the formula.
+   */
+  private def prepareSequent(
+    sequent:  Sequent[( String, HOLFormula )],
+    label:    String,
+    strategy: InductionStrategy
+  )( implicit ctx: Context ): ThrowsError[Sequent[( String, HOLFormula )]] = {
+    for {
+      formula <- findFormula( sequent, label )
+      All.Block( _, f ) = formula
+      variables = freeVariables( f ).filter( { hasInductiveType( _ ) } ).toList
+      axioms <- strategy.inductionAxioms( formula, variables )
+    } yield {
+      ( axioms zip variables ).foldLeft( sequent )( { labelInductionAxiom( label, _, _ ) } )
+    }
+  }
+
+  /**
+   * Checks whether the given variable has is of inductive type in the given context.
+   *
+   * @param v The variable for which to check the type.
+   * @param ctx The context w.r.t. to which the variable's type is checked.
+   * @return Returns true if the variable v is of inductive type in the context ctx, false otherwise.
+   */
+  private def hasInductiveType( v: Var )( implicit ctx: Context ): Boolean =
+    ctx.typeDef( baseType( v ).name ) match {
+      case Some( Context.InductiveType( _, _ ) ) => true
+      case _                                     => false
+    }
+
+  /**
    * Adds a labelled induction axiom to the sequent.
+   *
    * @param label The label of the formula to which the induction axiom belongs.
    * @param sequent The sequent to which the labelled axiom is added.
    * @param axvar A pair containing the induction axiom and its associated variable.
@@ -302,4 +452,74 @@ object findFormula {
       case _         => s"Label $label not found" failureNel
     }
   }
+}
+
+object aip {
+
+  val provers: Map[String, InternalProver] = Map(
+    "prover9" -> prover9,
+    "eprover" -> eprover,
+    "escargot" -> escargot,
+    "spass" -> spass,
+    "vampire" -> vampire
+  )
+
+  def main( args: Array[String] ): Unit = {
+    try {
+      val ( problem, options ) = parseArguments( args )
+      val ( result, t ) = time {
+        new AnalyticInductionProver( options ) solve problem
+      }
+      val status = result match {
+        case None => "failure";
+        case _    => "success"
+      }
+      println( args( 0 ) + " " + args( 1 ) + " " + args( 2 ) + " " + status + " " + formatSeconds( t ) )
+    } catch {
+      case e: Exception => {
+        println( args( 0 ) + " " + args( 1 ) + " " + args( 2 ) + " " + "error" + " " + -1 )
+        System.err.print( args( 0 ) + " " + args( 1 ) + " " + args( 2 ) + " " + "error" + " " + -1 + " : " )
+        e.printStackTrace( System.err )
+      }
+    }
+  }
+
+  def formatSeconds( ns: Long ): String = "%.2f" format ( ns.toDouble / 1000000000 )
+
+  def time[R]( block: => R ): ( R, Long ) = {
+    val t0 = System.nanoTime
+    val r = block
+    val t1 = System.nanoTime
+    ( r, t1 - t0 )
+  }
+
+  def parseArguments( args: Array[String] ): ( TipProblem, ProverOptions ) =
+    args match {
+      case Array( p, a, f ) =>
+        val strategy = validateAxiomType( a )
+        val prover = validateProver( p )
+        ( TipSmtParser fixupAndParse f.toFile, ProverOptions( prover, strategy ) )
+      case _ =>
+        printUsage
+        sys exit 1
+    }
+
+  def validateAxiomType( str: String ): InductionStrategy =
+    str match {
+      case "sequential"  => sequentialInductionAxioms
+      case "independent" => independentInductionAxioms
+      case _ =>
+        println( s"Invalid argument $str" )
+        sys exit 1
+    }
+
+  def validateProver( prover: String ): InternalProver =
+    provers.get( prover ) match {
+      case Some( internalProver ) => internalProver
+      case _ =>
+        println( s"Invalid argument for prover: $prover" )
+        sys exit 1
+    }
+
+  def printUsage(): Unit = println( "aip <prover> <axiomType> <tip-file>" )
 }
