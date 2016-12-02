@@ -7,6 +7,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.lisp._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.provers.Session.{ Session, SessionCommand }
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
 import cats.free.Free.liftF
 import cats.free._
@@ -31,11 +32,6 @@ object Session {
   sealed trait SessionCommand[A]
 
   private object SessionCommand {
-
-    /**
-     * Closes the session.
-     */
-    case object Close extends SessionCommand[Unit]
 
     /**
      * Pushes the current assertions and declarations on the stack.
@@ -102,11 +98,6 @@ object Session {
    */
 
   /**
-   * Closes the session.
-   */
-  def close = liftF( Close )
-
-  /**
    * Pushes the current assertions and declarations on the stack.
    */
   def push = liftF( Push )
@@ -169,12 +160,12 @@ object Session {
   /**
    * Pushes the stack, then runs f, then pops the stack.
    */
-  def withScope[A]( f: Session[A] ): Session[A] = wrap( push, pop )( f )
+  def withScope[A]( f: Session[A] ): Session[A] = wrap( push, f, pop )
 
   /**
    * Encloses the session `f` between `before` and `after`.
    */
-  def wrap[A]( before: Session[Unit], after: Session[Unit] )( f: Session[A] ) = for {
+  def wrap[A]( before: Session[Unit], f: Session[A], after: Session[Unit] ): Session[A] = for {
     _ <- before
     x <- f
     _ <- after
@@ -208,48 +199,68 @@ object Session {
   /**
    * Contains various functions for interpreting a value of type Session.
    *
-   * A "compiler" is a natural transformation from SessionCommand to Id; i.e. a function that can transform any
+   * A "runner" contains a natural transformation from SessionCommand to Id; i.e. a function that can transform any
    * SessionCommand[A] to an Id[A] (= A).
    *
    * Given such a transformation comp: SessionCommand ~> Id, you can use it to interpret a session program p via
    * p.foldMap(comp).
    */
-  object Compilers {
+  object Runners {
 
     /**
-     * A compiler that interprets a Session by communicating with an SMTLib process. The process is left abstract --
+     * Runs a session. What that means, exactly, is up to the concrete implementation.
+     */
+    abstract class SessionRunner {
+      /**
+       * Interprets a single session command.
+       */
+      protected def interpretCommand[A]( command: SessionCommand[A] ): A
+
+      /**
+       * Runs a session by wrapping the `interpretCommand` function into a natural transformation
+       * trans: SessionCommand ~> Id and calling session.foldMap(trans).
+       */
+      def run[A]( session: Session[A] ): A = {
+        val trans = new ( SessionCommand ~> Id ) {
+          def apply[A]( command: SessionCommand[A] ): A = interpretCommand( command )
+        }
+        session.foldMap( trans )
+      }
+    }
+
+    /**
+     * A runner that interprets a Session by communicating with an SMTLib process. The process is left abstract --
      * it might not be an external program.
      *
-     * Subclasses must implement the tell, ask, and close functions.
+     * Subclasses must implement the tell and ask functions.
      */
-    abstract class SMTLibSessionCompiler extends ( SessionCommand ~> Id ) {
-      def tell( input: SExpression ): Unit
-      def ask( input: SExpression ): SExpression
-      def close(): Unit
+    abstract class SMTLibSessionRunner extends SessionRunner {
+      protected def tell( input: SExpression ): Unit
+      protected def ask( input: SExpression ): SExpression
 
-      def apply[A]( command: SessionCommand[A] ): Id[A] = command match {
-        case Close               => close()
-        case Push                => apply( Tell( LFun( "push", LAtom( "1" ) ) ) )
-        case Pop                 => apply( Tell( LFun( "pop", LAtom( "1" ) ) ) )
-        case DeclareSort( sort ) => apply( Tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) ) )
+      protected def interpretCommand[A]( command: SessionCommand[A] ): A = command match {
+        case Push                => tell( LFun( "push", LAtom( "1" ) ) )
+        case Pop                 => tell( LFun( "pop", LAtom( "1" ) ) )
+        case DeclareSort( sort ) => tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
           case Const( name, FunctionType( TBase( retType ), argTypes ) ) =>
-            apply( Tell( LFun( "declare-fun", LAtom( name ),
+            tell( LFun( "declare-fun", LAtom( name ),
               LList( argTypes map { case TBase( argType ) => LAtom( argType ) }: _* ),
-              LAtom( retType ) ) ) )
+              LAtom( retType ) ) )
         }
-        case Assert( formula )                => apply( Tell( LFun( "assert", convert( formula ) ) ) )
+        case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
 
-        case AssertLabelled( formula, label ) => apply( Tell( LFun( "assert", LFun( "!", convert( formula ), LAtom( ":named" ), LAtom( label ) ) ) ) )
+        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LAtom( ":named" ), LAtom( label ) ) ) )
         case CheckSat => ask( LFun( "check-sat" ) ) match {
           case LAtom( "sat" )   => true
           case LAtom( "unsat" ) => false
         }
-        case SetLogic( logic )         => apply( Tell( LFun( "set-logic", LAtom( logic ) ) ) )
-        case SetOption( option, args ) => apply( Tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) ) )
+        case SetLogic( logic )         => tell( LFun( "set-logic", LAtom( logic ) ) )
+        case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) )
         case Ask( input )              => ask( input )
         case Tell( input )             => tell( input )
       }
+
       object typeRenaming {
         val map = mutable.Map[TBase, TBase]()
 
@@ -298,22 +309,20 @@ object Session {
     }
 
     /**
-     * An SMTLibSessionCompiler that actually communicates with an external program.
-     *
-     * Subclasses need to implement the command function.
+     * An SMTLibSessionRunner that actually communicates with an external program.
+     * @param command The command & list of options used to start the external program.
      */
-    abstract class ExternalSMTLibSessionCompiler extends SMTLibSessionCompiler {
-      def command: Seq[String]
+    class ExternalSMTLibSessionRunner( command: String* ) extends SMTLibSessionRunner {
       val process = new ProcessBuilder( command: _* ).redirectError( Redirect.INHERIT ).start()
       val in = new PrintWriter( process.getOutputStream )
       val out = new BufferedReader( new InputStreamReader( process.getInputStream ) )
 
-      override def tell( input: SExpression ) = {
+      protected def tell( input: SExpression ) = {
         //if ( debug ) println( input )
         in println input
       }
 
-      override def ask( input: SExpression ) = {
+      protected def ask( input: SExpression ) = {
         //if ( debug ) println( input )
         in println input
         in.flush()
@@ -322,43 +331,39 @@ object Session {
         if ( res == null ) throw new ExternalSmtlibProgram.UnexpectedTerminationException( input )
         SExpressionParser( StringInputFile( res ) ).head
       }
-
-      override def close() = process.destroy()
     }
 
     /**
-     * An SMTLibSessionCompiler that writes to a string.
+     * An SMTLibSessionRunner that writes all commands sequentially to a string.
      *
      * Its `tell` simply writes to the string, while its `ask` writes
      * to the string and receives dummy replies.
      */
-    class BenchmarkCompiler extends SMTLibSessionCompiler {
+    class BenchmarkRecorder extends SMTLibSessionRunner {
       private val nLine = sys.props( "line.separator" )
 
       private val benchmark = new StringBuilder
       def getBenchmark() = benchmark.result()
 
-      override def tell( input: SExpression ) = benchmark append input append nLine
-      override def ask( input: SExpression ) = {
+      protected def tell( input: SExpression ) = benchmark append input append nLine
+      protected def ask( input: SExpression ) = {
         tell( input )
         input match {
           case LFun( "check-sat" ) => LAtom( "unsat" )
           case _                   => LList()
         }
       }
-
-      override def close() = ()
     }
 
     /**
-     * A compiler that interprets a session by literally manipulating a stack of sets of formulas.
-     * @param checkValidity The function the compiler uses to test validity of sequents.
+     * A runner that interprets a session by manipulating a stack of sets of formulas.
+     * @param checkValidity The function the runner uses to test validity of sequents.
      */
-    class StackSessionCompiler( checkValidity: HOLSequent => Boolean ) extends ( SessionCommand ~> Id ) {
+    class StackSessionRunner( checkValidity: HOLSequent => Boolean ) extends SessionRunner {
       val formulaStack = mutable.Stack[Set[HOLFormula]]()
       var assertedFormulas = Set[HOLFormula]()
 
-      override def apply[A]( command: SessionCommand[A] ): Id[A] = command match {
+      protected def interpretCommand[A]( command: SessionCommand[A] ): Id[A] = command match {
         case Push =>
           formulaStack push assertedFormulas; ()
         case Pop =>

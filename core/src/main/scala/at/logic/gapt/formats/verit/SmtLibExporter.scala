@@ -3,7 +3,7 @@ package at.logic.gapt.formats.verit
 import at.logic.gapt.expr.{ TBase, Const }
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.provers.Session._
-import at.logic.gapt.provers.Session.Compilers._
+import at.logic.gapt.provers.Session.Runners._
 
 object SmtLibExporter {
 
@@ -21,9 +21,9 @@ object SmtLibExporter {
       _ <- checkSat
     } yield ()
 
-    val benchmarkRecorder = new BenchmarkCompiler
+    val benchmarkRecorder = new BenchmarkRecorder
 
-    p.foldMap( benchmarkRecorder )
+    benchmarkRecorder.run( p )
 
     ( benchmarkRecorder.getBenchmark(), benchmarkRecorder.typeRenaming.map.toMap, benchmarkRecorder.termRenaming.map.toMap )
   }

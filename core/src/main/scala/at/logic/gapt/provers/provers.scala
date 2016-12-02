@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import Session._
-import Compilers._
+import Runners._
 import cats.{ Id, ~> }
 import cats.implicits._
 
@@ -87,7 +87,7 @@ trait Prover {
  * A prover that interprets Sessions as stack operations.
  */
 trait OneShotProver extends Prover {
-  override def runSession[A]( program: Session[A] ): A = program.foldMap[Id]( new StackSessionCompiler( this.isValid ) )
+  override def runSession[A]( program: Session[A] ): A = new StackSessionRunner( this.isValid ).run( program )
 }
 
 /**

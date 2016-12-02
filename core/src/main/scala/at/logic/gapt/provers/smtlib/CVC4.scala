@@ -2,10 +2,11 @@ package at.logic.gapt.provers.smtlib
 
 import java.io.IOException
 
-import at.logic.gapt.provers.Session.Compilers.ExternalSMTLibSessionCompiler
+import at.logic.gapt.provers.Session.Runners.ExternalSMTLibSessionRunner
 import at.logic.gapt.provers.IncrementalProver
 import at.logic.gapt.provers.Session._
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
+import cats.implicits._
 
 object CVC4 extends CVC4( "QF_UF" )
 class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
@@ -19,11 +20,11 @@ class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
     }
 
   override def runSession[A]( program: Session[A] ) = {
-    val p = wrap( setLogic( logic ), close )( program )
+    val runner = new ExternalSMTLibSessionRunner( "cvc4", "--lang", "smt", "--incremental" )
+    val result = runner.run( setLogic( logic ) followedBy program )
+    runner.process.destroy()
 
-    p.foldMap( new ExternalSMTLibSessionCompiler {
-      override def command = Seq( "cvc4", "--lang", "smt", "--incremental" )
-    } )
+    result
   }
 }
 
