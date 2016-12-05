@@ -1,6 +1,6 @@
 import better.files._
+import at.logic.gapt._
 import at.logic.gapt.examples._
-import at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr.hol._
