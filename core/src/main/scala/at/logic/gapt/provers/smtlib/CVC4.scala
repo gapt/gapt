@@ -6,7 +6,9 @@ import at.logic.gapt.provers.Session.Runners.ExternalSMTLibSessionRunner
 import at.logic.gapt.provers.IncrementalProver
 import at.logic.gapt.provers.Session._
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
-import cats.implicits._
+
+import scalaz._
+import Scalaz._
 
 object CVC4 extends CVC4( "QF_UF" )
 class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
@@ -21,7 +23,7 @@ class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
 
   override def runSession[A]( program: Session[A] ) = {
     val runner = new ExternalSMTLibSessionRunner( "cvc4", "--lang", "smt", "--incremental" )
-    val result = runner.run( setLogic( logic ) followedBy program )
+    val result = runner.run( setLogic( logic ) >> program )
     runner.process.destroy()
 
     result

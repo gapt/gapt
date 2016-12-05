@@ -9,8 +9,6 @@ import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import Session._
 import Runners._
-import cats.{ Id, ~> }
-import cats.implicits._
 
 import scala.collection.mutable
 

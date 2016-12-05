@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.lisp.{ LAtom, LFun, LList, SExpression }
 import org.specs2.mutable._
 import at.logic.gapt.provers.Session._
-import cats.implicits._
+import scalaz.Scalaz._
 
 class Z3SessionTest extends Specification {
 
