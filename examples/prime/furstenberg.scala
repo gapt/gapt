@@ -50,9 +50,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       forget( "Suc_0_0", "Suc_0_1" )
       exL( fov"l_1" )
       exR( fot" (l_0 + 1) * l_1 + l_0" ).forget
-      cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" )
-
-      theory
+      cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" ) left theory
 
       eql( "CF", "Suc_1" )
       forget( "CF" )
