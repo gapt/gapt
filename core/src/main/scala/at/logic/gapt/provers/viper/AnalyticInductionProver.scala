@@ -3,12 +3,13 @@ package at.logic.gapt.provers.viper
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, TBase, Var, freeVariables, rename, Const => Con }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK }
+import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.gaptic.NewLabels
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.reduction.{ ErasureReductionET, PredicateReductionET, Reduction }
+import at.logic.gapt.proofs.reduction._
+import at.logic.gapt.proofs.resolution.eliminateSplitting
 import at.logic.gapt.proofs.{ Ant, Context, HOLSequent, Sequent }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
@@ -25,28 +26,6 @@ trait InductionStrategy {
   def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
 }
 
-class IdentityReduction[P, S] extends Reduction[P, P, S, S] {
-  override def forward( problem: P ): ( P, ( S ) => S ) = ( problem, solution => solution )
-}
-object IdentityReduction extends IdentityReduction[HOLSequent, ExpansionProof]
-
-class ReductionProver( val prover: Prover, val reduction: Reduction[HOLSequent, HOLSequent, ExpansionProof, ExpansionProof] ) {
-  /**
-   * Tries to prove a higher-order logic sequent by applying a reduction.
-   *
-   * @param sequent The sequent to prove.
-   * @return An LK proof if the sequent is provable, otherwise either None is returned or the method does
-   *         not terminate.
-   */
-  def prove( sequent: HOLSequent ): Option[LKProof] = {
-    val ( folProblem, back ) = reduction forward ( Sequent() :+ sequent.toImplication )
-    for {
-      expansionProof <- prover getExpansionProof ( folProblem ) map back
-      proof <- ExpansionProofToLK( expansionProof ) toOption
-    } yield proof
-  }
-}
-
 trait InternalProver {
   /**
    * Tries to prove a possibly many-sorted higher-order logic sequent.
@@ -57,11 +36,79 @@ trait InternalProver {
   def prove( sequent: HOLSequent ): Option[LKProof]
 }
 
-object escargot extends ReductionProver( Escargot, IdentityReduction ) with InternalProver
-object prover9 extends ReductionProver( Prover9, PredicateReductionET |> ErasureReductionET ) with InternalProver
-object eprover extends ReductionProver( EProver, PredicateReductionET |> ErasureReductionET ) with InternalProver
-object vampire extends ReductionProver( Vampire, PredicateReductionET |> ErasureReductionET ) with InternalProver
-object spass extends ReductionProver( SPASS, PredicateReductionET |> ErasureReductionET ) with InternalProver
+object escargot extends InternalProver {
+  /**
+   * Tries to prove a possibly many-sorted higher-order logic sequent.
+   *
+   * @param sequent The sequent to prove.
+   * @return An LK proof if the sequent is provable, otherwise None or the method does not terminate.
+   */
+  override def prove( sequent: HOLSequent ): Option[LKProof] =
+    for {
+      expansionProof <- Escargot.getExpansionProof( sequent )
+      proof <- ExpansionProofToLK( expansionProof ) toOption
+    } yield proof
+}
+
+object prover9 extends InternalProver {
+  /**
+   * Tries to prove a possibly many-sorted higher-order logic sequent.
+   *
+   * @param sequent The sequent to prove.
+   * @return An LK proof if the sequent is provable, otherwise None or the method does not terminate.
+   */
+  override def prove( sequent: HOLSequent ): Option[LKProof] =
+    searchProof( Prover9 )( sequent )
+}
+
+object eprover extends InternalProver {
+  /**
+   * Tries to prove a possibly many-sorted higher-order logic sequent.
+   *
+   * @param sequent The sequent to prove.
+   * @return An LK proof if the sequent is provable, otherwise None or the method does not terminate.
+   */
+  override def prove( sequent: HOLSequent ): Option[LKProof] =
+    searchProof( EProver )( sequent )
+}
+object vampire extends InternalProver {
+  /**
+   * Tries to prove a possibly many-sorted higher-order logic sequent.
+   *
+   * @param sequent The sequent to prove.
+   * @return An LK proof if the sequent is provable, otherwise None or the method does not terminate.
+   */
+  override def prove( sequent: HOLSequent ): Option[LKProof] =
+    searchProof( Vampire )( sequent )
+}
+object spass extends InternalProver {
+  /**
+   * Tries to prove a possibly many-sorted higher-order logic sequent.
+   *
+   * @param sequent The sequent to prove.
+   * @return An LK proof if the sequent is provable, otherwise None or the method does not terminate.
+   */
+  override def prove( sequent: HOLSequent ): Option[LKProof] =
+    searchProof( SPASS )( sequent )
+}
+
+private object searchProof {
+  /**
+   * Tries to prove a possibly many-sorted higher-order logic sequent by applying the many-sorted to fol
+   * reduction.
+   *
+   * @param prover The resolution prover which is used to carry out the proof search
+   * @param sequent The sequent to prove.
+   * @return An LK proof if the sequent is provable, otherwise None or the method does not terminate.
+   */
+  def apply( prover: ResolutionProver )( sequent: HOLSequent ): Option[LKProof] = {
+    val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
+    val ( folProblem, back ) = reduction forward sequent
+    for {
+      resolutionProof <- prover.getResolutionProof( folProblem )
+    } yield back( eliminateSplitting( resolutionProof ) )
+  }
+}
 
 case class ProverOptions( prover: InternalProver, axiomType: InductionStrategy )
 
