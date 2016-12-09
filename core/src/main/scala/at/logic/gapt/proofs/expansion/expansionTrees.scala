@@ -9,7 +9,9 @@ import at.logic.gapt.proofs._
 import scala.collection.mutable
 
 /**
- * A tree collecting instances of a formula. See TODO
+ * A tree collecting instances of a formula. See, e.g., M. Baaz, S. Hetzl,
+ * D. Weller: On the complexity of proof deskolemization, Journal of Symbolic
+ * Logic, 77(2), 2012 for a formulation close to the one implemented here.
  */
 trait ExpansionTree extends DagProof[ExpansionTree] {
   /**

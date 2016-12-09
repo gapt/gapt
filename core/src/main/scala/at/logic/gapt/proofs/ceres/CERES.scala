@@ -61,7 +61,7 @@ class CERES {
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @param pred a predicate to specify which cut formulas to eliminate
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
-   * @return an LK Proof with at most atomic cuts
+   * @return an LK Proof where all cuts are quantifier-free
    */
   def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Escargot )
   def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
