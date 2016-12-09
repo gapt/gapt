@@ -482,7 +482,9 @@ object findFormula {
 
 object aip {
 
-  val provers: Map[String, InternalProver] = Map(
+  private class ValidationException( message: String ) extends Exception( message )
+
+  private val provers: Map[String, InternalProver] = Map(
     "prover9" -> prover9,
     "eprover" -> eprover,
     "escargot" -> escargot,
@@ -500,52 +502,59 @@ object aip {
         case None => "failure";
         case _    => "success"
       }
-      println( args( 0 ) + " " + args( 1 ) + " " + args( 2 ) + " " + status + " " + formatSeconds( t ) )
+      println( outputMessage( args, status, t ) )
     } catch {
+      case e: ValidationException => {
+        println( e getMessage )
+      }
       case e: Exception => {
-        println( args( 0 ) + " " + args( 1 ) + " " + args( 2 ) + " " + "error" + " " + -1 )
-        System.err.print( args( 0 ) + " " + args( 1 ) + " " + args( 2 ) + " " + "error" + " " + -1 + " : " )
+        val errorMessage = outputMessage( args, "error", -1 )
+        System.out.println( errorMessage )
+        System.err.print( errorMessage + " : " )
         e.printStackTrace( System.err )
       }
     }
   }
 
-  def formatSeconds( ns: Long ): String = "%.2f" format ( ns.toDouble / 1000000000 )
+  private def outputMessage( args: Array[String], status: String, time: Long ) = {
+    val t =
+      if ( time >= 0 )
+        "%.2f".format( nanoSeconds2Seconds( time ) )
+      else
+        "-1"
+    "%s %s %s %s %s".format( args( 0 ), args( 1 ), args( 2 ), status, t )
+  }
+  private def nanoSeconds2Seconds( ns: Long ): Double = ns.toDouble / 1000000000
 
-  def time[R]( block: => R ): ( R, Long ) = {
+  private def time[R]( block: => R ): ( R, Long ) = {
     val t0 = System.nanoTime
     val r = block
     val t1 = System.nanoTime
     ( r, t1 - t0 )
   }
 
-  def parseArguments( args: Array[String] ): ( TipProblem, ProverOptions ) =
+  private def parseArguments( args: Array[String] ): ( TipProblem, ProverOptions ) =
     args match {
       case Array( p, a, f ) =>
         val strategy = validateAxiomType( a )
         val prover = validateProver( p )
         ( TipSmtParser fixupAndParse f.toFile, ProverOptions( prover, strategy ) )
-      case _ =>
-        printUsage
-        sys exit 1
+      case _ => throw new ValidationException( usage )
     }
 
-  def validateAxiomType( str: String ): InductionStrategy =
+  private def validateAxiomType( str: String ): InductionStrategy =
     str match {
       case "sequential"  => sequentialInductionAxioms
       case "independent" => independentInductionAxioms
-      case _ =>
-        println( s"Invalid argument $str" )
-        sys exit 1
+      case _             => throw new ValidationException( s"Invalid argument $str" )
     }
 
-  def validateProver( prover: String ): InternalProver =
+  private def validateProver( prover: String ): InternalProver =
     provers.get( prover ) match {
       case Some( internalProver ) => internalProver
       case _ =>
-        println( s"Invalid argument for prover: $prover" )
-        sys exit 1
+        throw new ValidationException( s"Invalid argument for prover: $prover" )
     }
 
-  def printUsage(): Unit = println( "aip <prover> <axiomType> <tip-file>" )
+  private def usage = "aip <prover> <axiomType> <tip-file>"
 }
