@@ -7,7 +7,6 @@ package at.logic.gapt.expr
 import org.specs2.mutable._
 
 import BetaReduction._
-import ImplicitStandardStrategy._
 import org.specs2.execute.Success
 
 class SubstitutionsTest extends Specification {

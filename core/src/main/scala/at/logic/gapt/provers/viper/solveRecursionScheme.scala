@@ -49,9 +49,10 @@ object simplePi1RecSchemTempl {
 
     val indLemmaRules = startSymbolArgTys.zipWithIndex.flatMap {
       case ( indLemmaArgTy, indLemmaArgIdx ) =>
-        ctx.typeDef( indLemmaArgTy.asInstanceOf[TBase].name ).get match {
-          case Context.Sort( _ ) => Seq()
-          case Context.InductiveType( indTy, ctrs ) =>
+        val indTy = indLemmaArgTy.asInstanceOf[TBase]
+        ctx.getConstructors( indTy ) match {
+          case None => Seq()
+          case Some( ctrs ) =>
             ctrs flatMap { ctr =>
               val FunctionType( _, ctrArgTys ) = ctr.exptype
               val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
@@ -87,8 +88,8 @@ object canonicalRsLHS {
         case idcs =>
           val newArgs = for ( ( TBase( indTyName ), idx ) <- argTypes.zipWithIndex ) yield if ( !idcs.contains( idx ) ) List( args( idx ) )
           else {
-            val TBase( indTyName ) = argTypes( idx )
-            val Some( Context.InductiveType( indTy, ctrs ) ) = ctx.typeDef( indTyName )
+            val indTy = argTypes( idx ).asInstanceOf[TBase]
+            val Some( ctrs ) = ctx.getConstructors( indTy )
             for {
               ctr <- ctrs.toList
               FunctionType( _, ctrArgTys ) = ctr.exptype

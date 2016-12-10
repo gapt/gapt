@@ -205,12 +205,13 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
    * @param t A base type.
    * @return Either a list containing the constructors of `t` or a TacticalFailure.
    */
-  private def getConstructors( goal: OpenAssumption, t: TBase ): ValidationNel[TacticalFailure, Seq[Con]] =
-    ctx.typeDef( t.name ) match {
-      case Some( Context.InductiveType( _, constructors ) ) => constructors.success
-      case Some( typeDef ) => TacticalFailure( this, Some( goal ), s"Type $t is not inductively defined: $typeDef" ).failureNel
-      case None => TacticalFailure( this, Some( goal ), s"Type $t is not defined" ).failureNel
+  private def getConstructors( goal: OpenAssumption, t: TBase ): ValidationNel[TacticalFailure, Seq[Con]] = {
+    ( ctx.isType( t ), ctx.getConstructors( t ) ) match {
+      case ( true, Some( constructors ) ) => constructors.success
+      case ( true, None )                 => TacticalFailure( this, Some( goal ), s"Type $t is not inductively defined" ).failureNel
+      case ( false, _ )                   => TacticalFailure( this, Some( goal ), s"Type $t is not defined" ).failureNel
     }
+  }
 
   def apply( goal: OpenAssumption ) =
     for {

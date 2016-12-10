@@ -18,7 +18,7 @@ import scala.util.parsing.input.PagedSeqReader
 case class ExtendedProofDatabase(
     eproofs:      Map[HOLFormula, LKProof],
     eaxioms:      Map[HOLFormula, HOLFormula],
-    edefinitions: Map[LambdaExpression, LambdaExpression]
+    edefinitions: Map[Const, LambdaExpression]
 ) {
   val proofs = eproofs.map( x =>
     x._1 match {

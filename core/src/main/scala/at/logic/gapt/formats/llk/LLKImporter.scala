@@ -137,7 +137,7 @@ trait TokenToLKConverter extends Logger {
       val f_proof: LKProof = completeProof( f, proofs_done, naming, rm( f ), axioms, llk_definitions )
       proofs_done + ( ( f, f_proof ) )
     } )
-    ExtendedProofDatabase( proofs, axioms, llk_definitions )
+    ExtendedProofDatabase( proofs, axioms, llk_definitions.map( d => llkDefinitionToLKDefinition( d._1, d._2 ).toTuple ) )
   }
 
   /* Creates the subproof proofname from a list of rules. Uses the naming function to create basic term and
@@ -852,7 +852,7 @@ trait TokenToLKConverter extends Logger {
   /* =============== Macro Rules ============================ */
 
   val axioms_prove_sequent = HOLSequent( List( HOLAtom( Const( "AX", To ), Nil ) ), Nil )
-  def normalize( exp: LambdaExpression ) = betaNormalize( exp )( StrategyOuterInner.Outermost ).asInstanceOf[LambdaExpression]
+  def normalize( exp: LambdaExpression ) = betaNormalize( exp )
 
   def handleEQAxiom( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST],
                      subterm: List[( ast.Var, LambdaAST )], naming: ( String ) => LambdaExpression,
@@ -948,7 +948,7 @@ trait TokenToLKConverter extends Logger {
     )
 
     val HOLSequent( List( auxf_ ), Nil ) = auxsequent
-    val auxf = c( betaNormalize( auxf_.asInstanceOf[LambdaExpression] )( StrategyOuterInner.Outermost ) )
+    val auxf = c( normalize( auxf_ ) )
 
     //println("auxf="+f(auxf))
 
@@ -960,7 +960,7 @@ trait TokenToLKConverter extends Logger {
     val candidates = axs.flatMap( s => {
       val ( name, ax1 ) = s
       val ( _, ax2 ) = stripUniversalQuantifiers( ax1 )
-      val ax = betaNormalize( sub( ax2 ).asInstanceOf[LambdaExpression] )( StrategyOuterInner.Outermost )
+      val ax = betaNormalize( sub( ax2 ) )
       //println("Trying: "+ f(ax))
       val r1 = syntacticMatching( ax, auxf ) match {
         case Some( sub ) if sub( ax ) syntaxEquals auxf => ( name, ax1, sub ) :: Nil

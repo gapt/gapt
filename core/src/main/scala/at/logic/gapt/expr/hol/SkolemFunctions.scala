@@ -38,6 +38,11 @@ case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
       case Abs.Block( vs, All( v, f ) ) => Abs.Block( vs, Epsilon( v, -f ) )
     } )
 
+  def +( sym: Const, defn: LambdaExpression ): SkolemFunctions = {
+    require( !skolemDefs.contains( sym ), s"Skolem symbol $sym already defined as ${skolemDefs( sym )}" )
+    copy( skolemDefs + ( sym -> defn ) )
+  }
+
   override def toString =
     ( for ( ( s, d ) <- orderedDefinitions ) yield s"$s → $d\n" ).mkString
 }

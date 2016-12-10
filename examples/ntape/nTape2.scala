@@ -26,7 +26,7 @@ object nTape2 extends nTape2
 
 object nTapeInstances {
   //prints the interesting terms from the expansion sequent
-  def printInstances( expansion_proof: ExpansionProofWithCut, definitions: Map[LambdaExpression, LambdaExpression] ) = {
+  def printInstances( expansion_proof: ExpansionProofWithCut, definitions: Map[Const, LambdaExpression] ) = {
     println( "------------ Witness Terms from Expansion Proof --------------" )
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect

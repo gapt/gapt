@@ -16,10 +16,10 @@ object randomInstance {
   def generate( ty: TBase )( implicit ctx: Context ): LambdaExpression = generate( ty, new NameGenerator( Set() ) )
 
   def generate( ty: TBase, nameGen: NameGenerator )( implicit ctx: Context ): LambdaExpression = {
-    ctx.typeDef( ty ).get match {
-      case Context.Sort( _ ) =>
+    ctx.getConstructors( ty ) match {
+      case None =>
         Var( nameGen freshWithIndex "x", ty )
-      case Context.InductiveType( _, ctrs ) =>
+      case Some( ctrs ) =>
         val ctr = ctrs( Random.nextInt( ctrs.size ) )
         val FunctionType( _, argTypes ) = ctr.exptype
         val args = argTypes.map { at => generate( at.asInstanceOf[TBase], nameGen ) }

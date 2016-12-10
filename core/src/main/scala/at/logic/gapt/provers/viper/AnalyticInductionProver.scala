@@ -243,10 +243,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return Returns true if the variable v is of inductive type in the context ctx, false otherwise.
    */
   private def hasInductiveType( v: Var )( implicit ctx: Context ): Boolean =
-    ctx.typeDef( baseType( v ).name ) match {
-      case Some( Context.InductiveType( _, _ ) ) => true
-      case _                                     => false
-    }
+    ctx.getConstructors( baseType( v ) ).isDefined
 
   /**
    * Adds a labelled induction axiom to the sequent.
@@ -445,10 +442,10 @@ object getConstructors {
   def apply(
     typ: TBase, ctx: Context
   ): ValidationNel[String, List[Con]] =
-    ctx.typeDef( typ.name ) match {
-      case Some( Context.InductiveType( _, constructors ) ) => constructors.toList.success
-      case Some( typeDef ) => s"Type $typ is not inductively defined: $typeDef".failureNel
-      case None => s"Type $typ is not defined".failureNel
+    ( ctx.isType( typ ), ctx.getConstructors( typ ) ) match {
+      case ( true, Some( constructors ) ) => constructors.toList.success
+      case ( true, None )                 => s"Type $typ is not inductively defined".failureNel
+      case ( false, _ )                   => s"Type $typ is not defined".failureNel
     }
 }
 
