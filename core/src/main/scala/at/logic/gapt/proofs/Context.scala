@@ -276,6 +276,7 @@ object Context {
         constructors.map( _.name ) == constructors.map( _.name ).distinct,
         s"Names of type constructors are not distinct."
       )
+      ctx + ty ++ constructors.map( ConstDecl ) // check that constants are well-typed
       ctx.state.update[BaseTypes]( _ + ty )
         .update[Constants]( _ ++ constructors )
         .update[StructurallyInductiveTypes]( _ + ( ty, constructors ) )
@@ -293,13 +294,19 @@ object Context {
   }
 
   case class ConstDecl( const: Const ) extends Element {
-    override def apply( ctx: Context ): State = ctx.state.update[Constants]( _ + const )
+    override def apply( ctx: Context ): State = {
+      ctx.check( const.exptype )
+      ctx.state.update[Constants]( _ + const )
+    }
   }
 
   case class Definition( definition: EDefinition ) extends Element {
-    override def apply( ctx: Context ): State =
+    override def apply( ctx: Context ): State = {
+      ctx.check( definition.what.exptype )
+      ctx.check( definition.by )
       ctx.state.update[Constants]( _ + definition.what )
         .update[Definitions]( _ + definition )
+    }
   }
 
   case class Axiom( sequent: HOLSequent ) extends Element {
@@ -317,7 +324,7 @@ object Context {
     require( freeVariables( defn ).isEmpty )
 
     override def apply( ctx: Context ): State = {
-      ctx.check( sym )
+      ctx.check( sym.exptype )
       ctx.check( defn )
       ctx.state.update[Constants]( _ + sym )
         .update[SkolemFunctions]( _ + ( sym, defn ) )
