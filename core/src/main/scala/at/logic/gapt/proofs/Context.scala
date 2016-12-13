@@ -209,6 +209,8 @@ object Context {
     def +( ty: TBase, ctrs: Vector[Const] ) =
       copy( constructors + ( ty -> ctrs ) )
 
+    def types: Set[TBase] = constructors.keySet
+
     override def toString: String = constructors.toSeq.sortBy( _._1.name ).
       map { case ( t, cs ) => s"$t: ${cs.mkString( ", " )}" }.mkString( "\n" )
   }

@@ -6,7 +6,7 @@ import at.logic.gapt.expr.hol.{ CNFp, instantiate }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
-import at.logic.gapt.proofs.Context.InductiveType
+import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
@@ -80,9 +80,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
 
   val grammarFinder = options.findingMethod match {
     case "maxsat" | "maxsatinst" =>
-      val pi1QTys = options.quantTys getOrElse {
-        ctx.elements collect { case InductiveType( ty, _ ) if ty != To => ty }
-      }
+      val pi1QTys = options.quantTys getOrElse ctx.get[StructurallyInductiveTypes].types.diff( Set( To ) ).toSeq
 
       val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType,
         options.grammarWeighting, options.findingMethod == "maxsatinst",
