@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
  *
  * Each of these different kinds of information is stored in a separate [[Facet]]
  * of the context.  Each modification or addition to the context is recorded as
- * an [[Element]].  Adding information is only possible by adding it as an [[Element]].
+ * an [[Update]].  Adding information is only possible by adding it as an [[Update]].
  * (Basically a Context is an extensible LCF-style kernel.)
  *
  * There are several inferences in our LK proofs for which it is not enough that are
@@ -35,7 +35,7 @@ import scala.reflect.ClassTag
  *  - [[at.logic.gapt.proofs.expansion.ExpansionProofToLK]] uses the information about the background theory
  *    to produce LK proofs modulo the background theory.
  */
-class Context private ( val state: State, val elements: List[Element] ) extends BabelSignature {
+class Context private ( val state: State, val updates: List[Update] ) extends BabelSignature {
   /** Gets a facet of this context, intializing it if it is not present yet. */
   def get[T: Facet]: T = state.get[T]
 
@@ -45,14 +45,18 @@ class Context private ( val state: State, val elements: List[Element] ) extends 
 
   /** Returns Some(const) if name is a constant. */
   def constant( name: String ): Option[Const] = get[Constants].constants.get( name )
+
   /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
   def getConstructors( ty: TBase ): Option[Vector[Const]] =
     get[StructurallyInductiveTypes].constructors.get( ty )
+
   /** Returns true iff ty is a defined base type. */
   def isType( ty: TBase ): Boolean = get[BaseTypes].baseTypes.contains( ty )
+
   /** Returns Some(expandedDefinition) if c is a defined constant. */
   def definition( c: Const ): Option[LambdaExpression] =
     get[Definitions].definitions.get( c )
+
   /** Returns Some(expandedDefinition) if name is a defined constant. */
   def definition( name: String ): Option[LambdaExpression] =
     get[Definitions].definitions.find( _._1.name == name ).map( _._2 )
@@ -73,8 +77,8 @@ class Context private ( val state: State, val elements: List[Element] ) extends 
    *
    * If this is not a valid addition, then an exception is thrown.
    */
-  def +( element: Element ): Context =
-    new Context( element( this ), element :: elements )
+  def +( update: Update ): Context =
+    new Context( update( this ), update :: updates )
 
   /** Normalizes an expression with the reduction rules stored in this context. */
   def normalize( expression: LambdaExpression ): LambdaExpression =
@@ -89,11 +93,11 @@ class Context private ( val state: State, val elements: List[Element] ) extends 
   def check[T: Checkable]( t: T ): Unit =
     implicitly[Checkable[T]].check( this, t )
 
-  def ++( elements: Traversable[Element] ): Context =
-    elements.foldLeft( this )( _ + _ )
+  def ++( updates: Traversable[Update] ): Context =
+    updates.foldLeft( this )( _ + _ )
 
   override def toString =
-    s"${state}Elements:\n${elements.view.reverse.map( x => s"  $x\n" ).mkString}"
+    s"${state}Updates:\n${updates.view.reverse.map( x => s"  $x\n" ).mkString}"
 }
 
 object Context {
@@ -182,7 +186,7 @@ object Context {
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
-  /** Definitions that define a constant by an expression of the same that. */
+  /** Definitions that define a constant by an expression of the same type. */
   case class Definitions( definitions: Map[Const, LambdaExpression] ) extends ReductionRule {
     def +( defn: EDefinition ) = {
       require( !definitions.contains( defn.what ) )
@@ -218,8 +222,8 @@ object Context {
 
   val empty: Context = new Context( State(), List() )
   def apply(): Context = default
-  def apply( elements: Traversable[Element] ): Context =
-    empty ++ elements
+  def apply( updates: Traversable[Update] ): Context =
+    empty ++ updates
 
   val withoutEquality = empty ++ Seq(
     InductiveType( "o", Top(), Bottom() ),
@@ -229,33 +233,33 @@ object Context {
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
   /**
-   * Element of a context.
+   * Update of a context.
    *
-   * An element stores (potentially multiple) modifications to a [[Context]].
+   * An update stores (potentially multiple) modifications to a [[Context]].
    * It is represented by a function that takes a [[Context]], and returns the modified [[State]].
    */
-  trait Element {
+  trait Update {
     /**
-     * Applies the modifications of this element to ctx.
+     * Applies the modifications of this update to ctx.
      *
      * Throws an exception if the modifications are invalid (for example if we would redefine a constant).
      */
     def apply( ctx: Context ): State
   }
-  object Element {
-    implicit def fromSort( ty: TBase ): Element = Sort( ty )
-    implicit def fromConst( const: Const ): Element = ConstDecl( const )
-    implicit def fromDefn( defn: ( String, LambdaExpression ) ): Element =
+  object Update {
+    implicit def fromSort( ty: TBase ): Update = Sort( ty )
+    implicit def fromConst( const: Const ): Update = ConstDecl( const )
+    implicit def fromDefn( defn: ( String, LambdaExpression ) ): Update =
       Definition( EDefinition( Const( defn._1, defn._2.exptype ), defn._2 ) )
-    implicit def fromDefnEq( eq: HOLFormula ): Element = eq match {
+    implicit def fromDefnEq( eq: HOLFormula ): Update = eq match {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
         Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
     }
-    implicit def fromAxiom( axiom: HOLSequent ): Element = Axiom( axiom )
+    implicit def fromAxiom( axiom: HOLSequent ): Update = Axiom( axiom )
   }
 
   /** Definition of a base type.  Either [[Sort]] or [[InductiveType]]. */
-  sealed trait TypeDef extends Element {
+  sealed trait TypeDef extends Update {
     def ty: TBase
   }
   /** Uninterpreted base type. */
@@ -295,14 +299,14 @@ object Context {
       InductiveType( TBase( tyName ), constructors )
   }
 
-  case class ConstDecl( const: Const ) extends Element {
+  case class ConstDecl( const: Const ) extends Update {
     override def apply( ctx: Context ): State = {
       ctx.check( const.exptype )
       ctx.state.update[Constants]( _ + const )
     }
   }
 
-  case class Definition( definition: EDefinition ) extends Element {
+  case class Definition( definition: EDefinition ) extends Update {
     override def apply( ctx: Context ): State = {
       ctx.check( definition.what.exptype )
       ctx.check( definition.by )
@@ -311,7 +315,7 @@ object Context {
     }
   }
 
-  case class Axiom( sequent: HOLSequent ) extends Element {
+  case class Axiom( sequent: HOLSequent ) extends Update {
     override def apply( ctx: Context ): State = {
       sequent.foreach( ctx.check( _ ) )
       ctx.state.update[Axioms]( _ + sequent )
@@ -320,7 +324,7 @@ object Context {
 
   implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
-  case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Element {
+  case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Update {
     val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix, isForall ) ) = defn
     require( sym.exptype == FunctionType( boundVariable.exptype, argumentVariables.map( _.exptype ) ) )
     require( freeVariables( defn ).isEmpty )

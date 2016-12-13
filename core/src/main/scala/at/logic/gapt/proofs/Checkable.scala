@@ -11,8 +11,8 @@ trait Checkable[-T] {
   def check( context: Context, obj: T ): Unit
 }
 object Checkable {
-  implicit object contextElementIsCheckable extends Checkable[Context.Element] {
-    def check( context: Context, elem: Context.Element ): Unit = elem( context )
+  implicit object contextElementIsCheckable extends Checkable[Context.Update] {
+    def check( context: Context, elem: Context.Update ): Unit = elem( context )
   }
 
   implicit object typeIsCheckable extends Checkable[Ty] {

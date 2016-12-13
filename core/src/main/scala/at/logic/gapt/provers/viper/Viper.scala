@@ -81,7 +81,6 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
   val grammarFinder = options.findingMethod match {
     case "maxsat" | "maxsatinst" =>
       val pi1QTys = options.quantTys getOrElse ctx.get[StructurallyInductiveTypes].types.diff( Set( To ) ).toSeq
-
       val msrsf = MaxSatRecSchemFinder( vs.map( _.exptype ), pi1QTys, encoding.instanceTermType,
         options.grammarWeighting, options.findingMethod == "maxsatinst",
         implicitly )
