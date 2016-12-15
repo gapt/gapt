@@ -36,7 +36,7 @@ import scala.reflect.ClassTag
  *    to produce LK proofs modulo the background theory.
  */
 class Context private ( val state: State, val updates: List[Update] ) extends BabelSignature {
-  /** Gets a facet of this context, intializing it if it is not present yet. */
+  /** Gets a facet of this context, initializing it if it is not present yet. */
   def get[T: Facet]: T = state.get[T]
 
   def constants: Iterable[Const] = get[Constants].constants.values
