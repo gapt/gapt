@@ -276,13 +276,23 @@ object Context {
         s"Base type $ty and type constructor $constr don't agree."
       )
     }
+    require(
+      constructors.map( _.name ) == constructors.map( _.name ).distinct,
+      s"Names of type constructors are not distinct."
+    )
 
     override def apply( ctx: Context ): State = {
-      require(
-        constructors.map( _.name ) == constructors.map( _.name ).distinct,
-        s"Names of type constructors are not distinct."
-      )
-      ctx + ty ++ constructors.map( ConstDecl ) // check that constants are well-typed
+      require( !ctx.isType( ty ), s"Type $ty already defined" )
+      for ( Const( ctr, FunctionType( _, fieldTys ) ) <- constructors ) {
+        require( ctx.constant( ctr ).isEmpty, s"Constructor $ctr is already a declared constant" )
+        for ( fieldTy <- fieldTys ) {
+          if ( fieldTy == ty ) {
+            // positive occurrence of the inductive type
+          } else {
+            ctx.check( fieldTy )
+          }
+        }
+      }
       ctx.state.update[BaseTypes]( _ + ty )
         .update[Constants]( _ ++ constructors )
         .update[StructurallyInductiveTypes]( _ + ( ty, constructors ) )
