@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, sequentialInductionAxioms }
 import better.files._
 
@@ -121,8 +120,4 @@ object isaplanner24 extends TacticsProof {
 
   val options = ProverOptions( escargot, sequentialInductionAxioms )
   val proof2 = new AnalyticInductionProver( options ) lkProof ( ( "refl" -> hof"!x equal(x,x)" ) +: sequent, "goal" )
-
-  override def main( args: Array[String] ): Unit = {
-    prooftool( proof2 )
-  }
 }
