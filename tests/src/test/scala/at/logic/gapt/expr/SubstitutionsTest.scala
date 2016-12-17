@@ -188,5 +188,8 @@ class SubstitutionsTest extends Specification {
     Substitution( hov"x" -> le"f (g z) (g z)", hov"y" -> le"g z" ).isInjectiveOnDomain must_== false
     Substitution( hov"x" -> le"f (g z) (h z)", hov"y" -> le"g z" ).isInjectiveOnDomain must_== true
     Substitution( hov"x" -> le"g y" ).isInjectiveOnDomain must_== true
+    Substitution( hov"x" -> le"y" ).isInjective( Set( hov"x" ) ) must_== true
+    Substitution( hov"x" -> le"f z", hov"y" -> le"z" ).isInjective( Set( hov"x" ) ) must_== true
+    Substitution( hov"x" -> le"y" ).isInjective( Set( hov"x", hov"y" ) ) must_== false
   }
 }

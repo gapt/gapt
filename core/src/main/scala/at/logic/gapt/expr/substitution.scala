@@ -65,8 +65,8 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 
   def isInjectiveOnDomain: Boolean = isInjective( domain )
   def isInjective( dom: Set[Var] ): Boolean =
-    domain.forall { x =>
-      val images = ( dom - x ).map( map )
+    dom.forall { x =>
+      val images = ( dom - x ).map( apply( _ ) )
       def solve( term: LambdaExpression ): Boolean =
         images( term ) || ( term match {
           case Const( _, _ ) => true
