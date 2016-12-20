@@ -2,6 +2,7 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.Context.BaseTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
@@ -10,16 +11,16 @@ trait Checkable[-T] {
   def check( context: Context, obj: T ): Unit
 }
 object Checkable {
-  implicit object contextElementIsCheckable extends Checkable[Context.Element] {
-    def check( context: Context, elem: Context.Element ): Unit = elem.checkAdmissibility( context )
+  implicit object contextElementIsCheckable extends Checkable[Context.Update] {
+    def check( context: Context, elem: Context.Update ): Unit = elem( context )
   }
 
   implicit object typeIsCheckable extends Checkable[Ty] {
     override def check( context: Context, ty: Ty ): Unit =
       ty match {
-        case TBase( name ) =>
+        case ty @ TBase( name ) =>
           require(
-            context.typeDef( name ).isDefined,
+            context.isType( ty ),
             s"Unknown base type: $name"
           )
         case TVar( _ ) =>
@@ -79,7 +80,7 @@ object Checkable {
         case q @ InductionRule( cases, formula, term ) =>
           ctx.check( formula )
           ctx.check( term )
-          val Some( Context.InductiveType( _, ctrs ) ) = ctx.typeDef( q.indTy.asInstanceOf[TBase] )
+          val Some( ctrs ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] )
           require( q.cases.map( _.constructor ) == ctrs )
         case sk: SkolemQuantifierRule =>
           require( ctx.skolemDef( sk.skolemConst ).contains( sk.skolemDef ) )
@@ -95,8 +96,8 @@ object Checkable {
           | _: ImpLeftRule | _: ImpRightRule =>
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
-        case DefinitionLeftRule( _, _, defn, _ ) => require( context.definitions contains defn.toTuple )
-        case DefinitionRightRule( _, _, defn, _ ) => require( context.definitions contains defn.toTuple )
+        case DefinitionLeftRule( _, _, defn, _ ) => require( context.definitions( defn.what ) == defn.by )
+        case DefinitionRightRule( _, _, defn, _ ) => require( context.definitions( defn.what ) == defn.by )
       }
     }
   }
@@ -120,9 +121,9 @@ object Checkable {
           require( ctx.skolemDef( sk.skolemConst ).contains( skD ) )
           ctx.check( skT )
         case d @ ETDefinition( _, defExpr, child ) =>
-          require( ctx.definition( d.pred.name ).contains( defExpr ) )
+          require( ctx.contains( d.definition ) )
         case d @ ETDefinedAtom( _, _, defn ) =>
-          require( ctx.definition( d.definitionConst.name ).contains( defn ) )
+          require( ctx.contains( d.definition ) )
       }
     }
   }
@@ -164,7 +165,7 @@ object Checkable {
           require( ctx.skolemDef( q.skolemConst ).contains( q.skolemDef ) )
           ctx.check( q.skolemTerm )
         case q @ DefIntro( _, _, definition, _ ) =>
-          require( ctx.definition( definition.what.name ).contains( definition.by ) )
+          require( ctx.contains( definition ) )
         case _: PropositionalResolutionRule =>
         case _: AvatarComponent | _: AvatarSplit | _: AvatarContradiction =>
         case _: Flip | _: Paramod =>

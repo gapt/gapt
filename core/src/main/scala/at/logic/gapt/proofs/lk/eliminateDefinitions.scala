@@ -11,7 +11,7 @@ object eliminateDefinitions {
    * Creates a new `eliminateDefinitions` object.
    * @param dmap The definitions to be eliminated.
    */
-  def apply( dmap: Map[_ <: LambdaExpression, _ <: LambdaExpression] ): eliminateDefinitions =
+  def apply( dmap: Map[_ <: Const, _ <: LambdaExpression] ): eliminateDefinitions =
     new eliminateDefinitions( dmap.toMap )
 
   /**
@@ -27,27 +27,16 @@ object eliminateDefinitions {
  * Implements definition elimination.
  * @param dmap A map containing the definitions to be eliminated.
  */
-class eliminateDefinitions private ( dmap: Map[LambdaExpression, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
-  private val requiresMatching = dmap.keys exists { !_.isInstanceOf[Const] }
+class eliminateDefinitions private ( dmap: Map[Const, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
+  private object betaDeltaReduction extends ReductionRule {
+    override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
+      dmap.toMap[LambdaExpression, LambdaExpression].
+        get( head ).map( by => ( by, args ) ).
+        orElse( BetaReduction.reduce( normalizer, head, args ) )
+  }
 
-  def apply( e: LambdaExpression ): LambdaExpression = BetaReduction.betaNormalize( replace( e ) )
-  def apply( f: HOLFormula ): HOLFormula = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
-
-  private def replace( e: LambdaExpression ): LambdaExpression =
-    replaceTopLevel( e ) map replace getOrElse ( e match {
-      case App( a, b ) => App( replace( a ), replace( b ) )
-      case Abs( v, t ) => Abs( v, replace( t ) )
-      case _           => e
-    } )
-
-  private def replaceTopLevel( e: LambdaExpression ): Option[LambdaExpression] =
-    if ( requiresMatching )
-      ( for {
-        ( l, r ) <- dmap.view
-        subst <- syntacticMatching( l, e )
-      } yield subst( r ) ) headOption
-    else
-      dmap get e
+  def apply( e: LambdaExpression ): LambdaExpression = normalize( betaDeltaReduction, e )
+  def apply( f: HOLFormula ): HOLFormula = apply( f: LambdaExpression ).asInstanceOf[HOLFormula]
 
   def apply( proof: LKProof ): LKProof = proof match {
     // introductory rules

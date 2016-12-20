@@ -9,7 +9,7 @@ import org.specs2.mutable.Specification
 class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
 
   "tape" in {
-    val ax = tape.ctx.axioms.map( a => universalClosure( a.toDisjunction ) )
+    val ax = tape.ctx.axioms.toSeq.map( a => universalClosure( a.toDisjunction ) )
     val withoutThAx = makeTheoryAxiomsExplicit( ax: _* )( tape.p )
     withoutThAx.subProofs.filter { _.isInstanceOf[TheoryAxiom] } must_== Set()
     tape.ctx.check( withoutThAx )

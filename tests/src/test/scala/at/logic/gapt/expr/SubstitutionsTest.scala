@@ -7,7 +7,6 @@ package at.logic.gapt.expr
 import org.specs2.mutable._
 
 import BetaReduction._
-import ImplicitStandardStrategy._
 import org.specs2.execute.Success
 
 class SubstitutionsTest extends Specification {
@@ -182,5 +181,15 @@ class SubstitutionsTest extends Specification {
 
   "injective renaming" in {
     Substitution( hov"x" -> le"c" ).isInjectiveRenaming must_== false
+  }
+
+  "injectivity test" in {
+    Substitution( hov"x" -> le"y", hov"z" -> le"e" ).isInjectiveOnDomain must_== false
+    Substitution( hov"x" -> le"f (g z) (g z)", hov"y" -> le"g z" ).isInjectiveOnDomain must_== false
+    Substitution( hov"x" -> le"f (g z) (h z)", hov"y" -> le"g z" ).isInjectiveOnDomain must_== true
+    Substitution( hov"x" -> le"g y" ).isInjectiveOnDomain must_== true
+    Substitution( hov"x" -> le"y" ).isInjective( Set( hov"x" ) ) must_== true
+    Substitution( hov"x" -> le"f z", hov"y" -> le"z" ).isInjective( Set( hov"x" ) ) must_== true
+    Substitution( hov"x" -> le"y" ).isInjective( Set( hov"x", hov"y" ) ) must_== false
   }
 }

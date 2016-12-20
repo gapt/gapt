@@ -54,6 +54,7 @@
   inputencoding=utf8,
   extendedchars=true,
   columns=flexible,
+  upquote=true,
   morecomment=[l][\bfseries]{gapt> },
   literate=%
     % FIXME: figure out why the Unicode symbols "eat" their trailing spaces
@@ -645,29 +646,21 @@ or have it automatically eliminate all definitions in the current context. Some 
 The typical way to declare a context is by starting with a default value and adding elements to it.
 The \cli{Context.default} object contains only the sort \cli{o} (truth values) and the fundamental logical
 symbols:
-\begin{clilisting}
-gapt> implicit var ctx = Context.default
-ctx: at.logic.gapt.proofs.Context =
-InductiveType(o,Vector(⊤, ⊥))
-ConstDecl('¬')
-ConstDecl('∧')
-ConstDecl('∨')
-ConstDecl('⊃')
-ConstDecl('∀')
-ConstDecl('∃')
-ConstDecl('=')
-
-gapt> ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
-
-gapt> ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
-
-gapt> ctx += hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
-
-gapt> ctx += "1" -> le" s 0" //Adding a definition
-
-gapt> ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
-
-\end{clilisting}
+\begin{tacticslisting}[nosig]
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context
+ 
+ object ContextExample {
+   implicit var ctx = Context.default
+   ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
+   ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
+   ctx += hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
+   ctx += "1" -> le" s 0" //Adding a definition
+   ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
+ }
+\end{tacticslisting}
+\begin{tacticsoutput}
+\end{tacticsoutput}
 
 It is important that you declare the context as \cli{implicit}, so that it can be found automatically
 by the functions requiring it.
@@ -982,13 +975,13 @@ iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
-res14: Boolean = true
+res9: Boolean = true
 
 \end{clilisting}
 shows\footnote{In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.} that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
-res15: Boolean = false
+res10: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
@@ -1016,16 +1009,16 @@ gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
-res16: Boolean = false
+res11: Boolean = false
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res17: Boolean = true
+res12: Boolean = true
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
-res18: Boolean = false
+res13: Boolean = false
 
 \end{clilisting}
 
@@ -1038,7 +1031,7 @@ gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
-res19: String =
+res14: String =
 "p cnf 9 12
 -1 -2 0
 -3 -4 0
@@ -1060,19 +1053,19 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res20: at.logic.gapt.expr.HOLAtom = R(p_2, h_3): o
+res15: at.logic.gapt.expr.HOLAtom = R(p_2, h_3): o
 
 \end{clilisting}
 
 GAPT also supports other SAT solvers such as MiniSAT or Glucose out of the box:
 \begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT isValid PigeonHolePrinciple(3,2)
-res21: Boolean = true
+res16: Boolean = true
 
 \end{clilisting}
 \begin{clilisting}[Glucose.isInstalled]
 gapt> Glucose isValid PigeonHolePrinciple(3,2)
-res22: Boolean = true
+res17: Boolean = true
 
 \end{clilisting}
 
@@ -1083,14 +1076,14 @@ gapt> val solver = new ExternalSATSolver("minisat", "-mem-lim=1024")
 solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-mem-lim=1024")
 
 gapt> solver isValid PigeonHolePrinciple(3,2)
-res23: Boolean = true
+res18: Boolean = true
 
 \end{clilisting}
 
 GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 \begin{clilisting}
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
-res24: Option[at.logic.gapt.proofs.drup.DrupProof] =
+res19: Option[at.logic.gapt.proofs.drup.DrupProof] =
 Some([derive]  ⊢
 [derive] R(p_3, h_3) ⊢
 [derive]  ⊢ R(p_4, h_1)
@@ -1119,7 +1112,7 @@ Just as in the first-order prover interface, you can call
 format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
-res25: Option[at.logic.gapt.proofs.lk.LKProof] =
+res20: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p383]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
@@ -1154,10 +1147,10 @@ Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
 gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
-res26: Option[at.logic.gapt.models.Interpretation] =
-Some(#v(a: o) -> false
-#v(b: o) -> false
-#v(c: o) -> true)
+res21: Option[at.logic.gapt.models.Interpretation] =
+Some(a:o -> false
+b:o -> false
+c:o -> true)
 
 \end{clilisting}
 
@@ -1171,27 +1164,23 @@ formulas.  For example we can check whether a quantifier-free formula is a
 quasi-tautology using veriT:
 \begin{clilisting}
 gapt> val f = hof"(a=b | a=c) & P(c) & P(b) -> P(a)"
-f: at.logic.gapt.expr.HOLFormula =
-(#v(a: i) = #v(b: i) ∨ #v(a: i) = #v(c: i)) ∧
-    #v(P: i>o)(#v(c: i)) ∧
-    #v(P: i>o)(#v(b: i)) ⊃
-  #v(P: i>o)(#v(a: i))
+f: at.logic.gapt.expr.HOLFormula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \end{clilisting}
 
 \begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
-res27: Boolean = true
+res22: Boolean = true
 
 \end{clilisting}
 
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
 \begin{clilisting}[Z3.isInstalled && CVC4.isInstalled]
 gapt> Z3 isValid f
-res28: Boolean = true
+res23: Boolean = true
 
 gapt> CVC4 isValid f
-res29: Boolean = true
+res24: Boolean = true
 
 \end{clilisting}
 
@@ -1200,31 +1189,18 @@ note that we apply a drastic renaming to the constant symbols in order to
 support arbitrary (even Unicode) names in GAPT:
 \begin{clilisting}
 gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
-java.util.NoSuchElementException: key not found: #v(a: i)
-  at scala.collection.MapLike$class.default(MapLike.scala:228)
-  at scala.collection.AbstractMap.default(Map.scala:59)
-  at scala.collection.MapLike$class.apply(MapLike.scala:141)
-  at scala.collection.AbstractMap.apply(Map.scala:59)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:65)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:57)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:55)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:54)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:54)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:56)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.convert(SmtlibSession.scala:53)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.assert(SmtlibSession.scala:94)
-  at at.logic.gapt.formats.verit.SmtLibExporter$$anonfun$apply$1$$anonfun$apply$4.apply(SmtLibExporter.scala:19)
-  at at.logic.gapt.formats.verit.SmtLibExporter$$anonfun$apply$1$$anonfun$apply$4.apply(SmtLibExporter.scala:19)
-  at scala.collection.immutable.List.foreach(List.scala:381)
-  at at.logic.gapt.proofs.Sequent.foreach(sequents.scala:427)
-  at at.logic.gapt.formats.verit.SmtLibExporter$$anonfun$apply$1.apply(SmtLibExporter.scala:19)
-  at at.logic.gapt.formats.verit.SmtLibExporter$$anonfun$apply$1.apply(SmtLibExporter.scala:16)
-  at at.logic.gapt.provers.IncrementalProvingSession$class.flatMap(provers.scala:152)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.flatMap(SmtlibSession.scala:13)
-  at at.logic.gapt.provers.IncrementalProvingSession$class.map(provers.scala:151)
-  at at.logic.gapt.provers.smtlib.SmtlibSession.map(SmtlibSession.scala:13)
-  at at.logic.gapt.formats.verit.SmtLibExporter$.apply(SmtLibExporter.scala:16)
-  ... 27 elided
+benchmark: String =
+"(set-logic QF_UF)
+(declare-sort t1 0)
+(declare-fun f1 (t1) Bool)
+(declare-fun f2 () t1)
+(declare-fun f3 () t1)
+(declare-fun f4 () t1)
+(assert (not (=> (and (and (or (= f4 f2) (= f4 f3)) (f1 f3)) (f1 f2)) (f1 f4))))
+(check-sat)
+"
+typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
+constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(a -> f4:t1, P:i>o -> f1:t1>Bool, b -> f2:t1, c -> f3:t1)
 
 \end{clilisting}
 
@@ -1234,33 +1210,22 @@ and congruences) from veriT's proof output:
 gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x = y ⊃ y = x)
-  +^{#v(a: i)}
-    (∀y (#v(a: i) = y ⊃ y = #v(a: i))
-      +^{#v(b: i)} ((#v(a: i) = #v(b: i))+ ⊃ (#v(b: i) = #v(a: i))-)
-      +^{#v(c: i)} ((#v(a: i) = #v(c: i))+ ⊃ (#v(c: i) = #v(a: i))-)),
-∀x1 ∀y1 (x1 = y1 ∧ #v(P: i>o)(x1) ⊃ #v(P: i>o)(y1))
-  +^{#v(b: i)}
-    (∀y1 (#v(b: i) = y1 ∧ #v(P: i>o)(#v(b: i)) ⊃ #v(P: i>o)(y1))
-      +^{#v(a: i)}
-        ((#v(b: i) = #v(a: i))+ ∧ #v(P: i>o)(#v(b: i))+ ⊃
-          #v(P: i>o)(#v(a: i))-))
-  +^{#v(c: i)}
-    (∀y1 (#v(c: i) = y1 ∧ #v(P: i>o)(#v(c: i)) ⊃ #v(P: i>o)(y1))
-      +^{#v(a: i)}
-        ((#v(c: i) = #v(a: i))+ ∧ #v(P: i>o)(#v(c: i))+ ⊃
-          #v(P: i>o)(#v(a: i))-))
+  +^{a}
+    (∀y (a = y ⊃ y = a)
+      +^{b} ((a = b)+ ⊃ (b = a)-)
+      +^{c} ((a = c)+ ⊃ (c = a)-)),
+∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1))
+  +^{b} (∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-))
+  +^{c} (∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-))
 :-
-(((#v(a: i) = #v(b: i))- ∨ (#v(a: i) = #v(c: i))-) ∧ #v(P: i>o)(#v(c: i))-) ∧
-   ...
+(((a = b)- ∨ (a = c)-) ∧ P(c)-) ∧ P(b)- ⊃ P(a)+
+
 gapt> extractInstances(expansionProof) foreach println
-#v(a: i) = #v(c: i) ⊃ #v(c: i) = #v(a: i)
-#v(a: i) = #v(b: i) ⊃ #v(b: i) = #v(a: i)
-#v(c: i) = #v(a: i) ∧ #v(P: i>o)(#v(c: i)) ⊃ #v(P: i>o)(#v(a: i))
-#v(b: i) = #v(a: i) ∧ #v(P: i>o)(#v(b: i)) ⊃ #v(P: i>o)(#v(a: i))
-(#v(a: i) = #v(b: i) ∨ #v(a: i) = #v(c: i)) ∧
-    #v(P: i>o)(#v(c: i)) ∧
-    #v(P: i>o)(#v(b: i)) ⊃
-  #v(P: i>o)(#v(a: i))
+a = b ⊃ b = a
+a = c ⊃ c = a
+b = a ∧ P(b) ⊃ P(a)
+c = a ∧ P(c) ⊃ P(a)
+(a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \end{clilisting}
 
@@ -1274,124 +1239,50 @@ LeanCoP interface reads back expansion proofs (and converts them to LK if desire
 Here is how you can get all of these kinds of proofs using Prover9:
 \begin{clilisting}
 gapt> val sequent = hos"p(0), !x (p(x) -> p(s(x))) :- p(s(s(0)))"
-sequent: at.logic.gapt.proofs.HOLSequent =
-#v(p: Nat>o)(0:Nat),
-∀x (#v(p: Nat>o)(x:Nat) ⊃ #v(p: Nat>o)(s(x): Nat))
-⊢
-#v(p: Nat>o)(s(s(0)))
+sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))
 
 \end{clilisting}
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-scala.MatchError: f1(f2(f2(f0:Nat): Nat)): o (of class at.logic.gapt.expr.determineTraits$App_with_HOLAtom)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:67)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:70)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:66)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)
-  at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)
-  at scala.collection.TraversableLike$class.map(TraversableLike.scala:234)
-  at scala.collection.AbstractTraversable.map(Traversable.scala:104)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:25)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:24)
-  at at.logic.gapt.provers.renameConstantsToFi$.wrap(utils.scala:20)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:23)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:27)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:42)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$class.isValid(ResolutionProver.scala:23)
-  at at.logic.gapt.provers.prover9.Prover9.isValid(prover9.scala:21)
-  ... 27 elided
+res26: Boolean = true
 
 gapt> Prover9 getResolutionProof sequent
-scala.MatchError: f1(f2(f2(f0:Nat): Nat)): o (of class at.logic.gapt.expr.determineTraits$App_with_HOLAtom)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:67)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:70)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:66)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)
-  at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)
-  at scala.collection.TraversableLike$class.map(TraversableLike.scala:234)
-  at scala.collection.AbstractTraversable.map(Traversable.scala:104)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:25)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:24)
-  at at.logic.gapt.provers.renameConstantsToFi$.wrap(utils.scala:20)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:23)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:27)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:42)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  ... 27 elided
+res27: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
+[p12] p(s(0)) ⊢    (Resolution(p9, Suc(0), p11, Ant(0)))
+[p11] p(s(s(0))) ⊢    (Subst(p10, Substitution()))
+[p10] p(s(s(0))) ⊢    (Input(p(s(s(0))) ⊢ ))
+[p9] p(s(0)) ⊢ p(s(s(0)))   (Subst(p6, Substitution(v0 -> s(0))))
+[p8]  ⊢ p(s(0))   (Resolution(p2, Suc(0), p7, Ant(0)))
+[p7] p(0) ⊢ p(s(0))   (Subst(p6, Substitution(v0 -> 0)))
+[p6] p(v0) ⊢ p(s(v0))   (Subst(p5, Substitution(x -> v0)))
+[p5] p(x) ⊢ p(s(x))   (ImpR(p4, Suc(0)))
+[p4]  ⊢ p(x) ⊃ p(s(x))   (AllR(p3, Suc(0), x))
+[p3]  ⊢ ∀x (p(x) ⊃ p(s(x)))   (Input( ⊢ ∀x (p(x) ⊃ p(s(x)))))
+[p2]  ⊢ p(0)   (Subst(p1, Substitution()))
+[p1]  ⊢ p(0)   (Input( ⊢ p(0)))
+)
 
 gapt> Prover9 getLKProof sequent
-scala.MatchError: f1(f2(f2(f0:Nat): Nat)): o (of class at.logic.gapt.expr.determineTraits$App_with_HOLAtom)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:67)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:70)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:66)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)
-  at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)
-  at scala.collection.TraversableLike$class.map(TraversableLike.scala:234)
-  at scala.collection.AbstractTraversable.map(Traversable.scala:104)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:25)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:24)
-  at at.logic.gapt.provers.renameConstantsToFi$.wrap(utils.scala:20)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:23)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:27)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:42)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$$anonfun$getLKProof$1.apply(ResolutionProver.scala:15)
-  at at.logic.gapt.provers.ResolutionProver$$anonfun$getLKProof$1.apply(ResolutionProver.scala:14)
-  at at.logic.gapt.provers.groundFreeVariables$.wrap(utils.scala:43)
-  at at.logic.gapt.provers.ResolutionProver$class.getLKProof(ResolutionProver.scala:14)
-  at at.logic.gapt.provers.prover9.Prover9.getLKProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$class.getLKProof(ResolutionProver.scala:11)
-  at at.logic.gapt.provers.prover9.Prover9.getLKProof(prover9.scala:21)
-  ... 27 elided
-
+res28: Option[at.logic.gapt.proofs.lk.LKProof] =
+Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0), ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
+[p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
+[p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
+[p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
+[p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
+[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
 gapt> Prover9 getExpansionProof sequent
-scala.MatchError: f1(f2(f2(f0:Nat): Nat)): o (of class at.logic.gapt.expr.determineTraits$App_with_HOLAtom)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:67)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:70)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:66)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$at$logic$gapt$provers$prover9$Prover9$$toP9Input$1.apply(prover9.scala:55)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.TraversableLike$$anonfun$map$1.apply(TraversableLike.scala:234)
-  at scala.collection.mutable.ResizableArray$class.foreach(ResizableArray.scala:59)
-  at scala.collection.mutable.ArrayBuffer.foreach(ArrayBuffer.scala:48)
-  at scala.collection.TraversableLike$class.map(TraversableLike.scala:234)
-  at scala.collection.AbstractTraversable.map(Traversable.scala:104)
-  at at.logic.gapt.provers.prover9.Prover9.at$logic$gapt$provers$prover9$Prover9$$toP9Input(prover9.scala:55)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:25)
-  at at.logic.gapt.provers.prover9.Prover9$$anonfun$getResolutionProof$1.apply(prover9.scala:24)
-  at at.logic.gapt.provers.renameConstantsToFi$.wrap(utils.scala:20)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:23)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:27)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$class.getResolutionProof(ResolutionProver.scala:42)
-  at at.logic.gapt.provers.prover9.Prover9.getResolutionProof(prover9.scala:21)
-  at at.logic.gapt.provers.ResolutionProver$$anonfun$getExpansionProof$1.apply(ResolutionProver.scala:49)
-  at at.logic.gapt.provers.ResolutionProver$$anonfun$getExpansionProof$1.apply(ResolutionProver.scala:48)
-  at at.logic.gapt.provers.groundFreeVariables$.wrap(utils.scala:43)
-  at at.logic.gapt.provers.ResolutionProver$class.getExpansionProof(ResolutionProver.scala:48)
-  at at.logic.gapt.provers.prover9.Prover9.getExpansionProof(prover9.scala:21)
-  ... 27 elided
+res29: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(p(0)-,
+∀x (p(x) ⊃ p(s(x)))
+  +^{0} (p(0)+ ⊃ p(s(0))-)
+  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+:-
+p(s(s(0)))+)
 
 \end{clilisting}
 
@@ -1400,8 +1291,16 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res35: Option[at.logic.gapt.proofs.lk.LKProof] = None
-
+res30: Option[at.logic.gapt.proofs.lk.LKProof] =
+Some([p11] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p1, Suc(0), p10, Ant(1)))
+[p10] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p9, Ant(2), Ant(0)))
+[p9] ∀x (p(x) ⊃ p(s(x))), p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p4, Suc(0), p8, Ant(1)))
+[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p7, Suc(0), p5, Ant(0)))
+[p7] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p6, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
+[p6] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p5, Ant(0)))
+[p5] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
+[p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
+[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0)...
 \end{clilisting}
 
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
@@ -1409,27 +1308,11 @@ Note that \cli{getLKProof} only works for sequents without strong quantifiers
 will happily return expansion proofs with Skolem quantifiers in that case:
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
-java.lang.IllegalArgumentException: requirement failed
-  at scala.Predef$.require(Predef.scala:212)
-  at at.logic.gapt.expr.hol.SkolemFunctions$$anonfun$1.apply(SkolemFunctions.scala:24)
-  at at.logic.gapt.expr.hol.SkolemFunctions$$anonfun$1.apply(SkolemFunctions.scala:21)
-  at scala.collection.immutable.Map$Map2.foreach(Map.scala:137)
-  at at.logic.gapt.expr.hol.SkolemFunctions.<init>(SkolemFunctions.scala:21)
-  at at.logic.gapt.expr.hol.SkolemFunctions$.apply(SkolemFunctions.scala:46)
-  at at.logic.gapt.proofs.expansion.ExpansionProof.<init>(expansionProofs.scala:34)
-  at at.logic.gapt.proofs.expansion.replaceET$.apply(expansionTrees.scala:377)
-  at at.logic.gapt.proofs.expansion.package$expansionProofsAreReplaceable$.replace(package.scala:42)
-  at at.logic.gapt.proofs.expansion.package$expansionProofsAreReplaceable$.replace(package.scala:41)
-  at at.logic.gapt.expr.TermReplacement$.apply(TermReplacement.scala:136)
-  at at.logic.gapt.expr.TermReplacement$.hygienic(TermReplacement.scala:152)
-  at at.logic.gapt.provers.groundFreeVariables$$anonfun$wrap$2.apply(utils.scala:43)
-  at scala.Option.map(Option.scala:146)
-  at at.logic.gapt.provers.groundFreeVariables$.wrap(utils.scala:43)
-  at at.logic.gapt.provers.ResolutionProver$class.getExpansionProof(ResolutionProver.scala:48)
-  at at.logic.gapt.provers.prover9.Prover9.getExpansionProof(prover9.scala:21)
-  at at.logic.gapt.provers.Prover$class.getExpansionProof(provers.scala:63)
-  at at.logic.gapt.provers.prover9.Prover9.getExpansionProof(prover9.scala:21)
-  ... 27 elided
+res31: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(
+:-
+∃x ∀y p(x, y) +sk^{s_0} (∀y p(s_0, y) +^{s_1} p(s_0, s_1)-) ⊃
+  ∀y ∃x p(x, y) +sk^{s_1} (∃x p(x, s_1) +^{s_0} p(s_0, s_1)+))
 
 \end{clilisting}
 
@@ -1450,13 +1333,10 @@ You can also export sequents as TPTP problems if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter(sequent)
-java.lang.IllegalArgumentException: requirement failed: Sequent #v(p: Nat>o)(0:Nat),
-∀x (#v(p: Nat>o)(x:Nat) ⊃ #v(p: Nat>o)(s(x): Nat))
-⊢
-#v(p: Nat>o)(s(s(0))) is not ground!
-  at scala.Predef$.require(Predef.scala:224)
-  at at.logic.gapt.formats.tptp.TPTPFOLExporter$.apply(TPTPFOLExporter.scala:12)
-  ... 27 elided
+res33: at.logic.gapt.formats.tptp.TptpFile =
+fof(ant_0, axiom, p('0')).
+fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
+fof(suc_0, conjecture, p(s(s('0')))).
 
 \end{clilisting}
 
@@ -1472,7 +1352,7 @@ fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
 fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
 
 gapt> tptp.toSequent
-res39: at.logic.gapt.proofs.HOLSequent =
+res34: at.logic.gapt.proofs.HOLSequent =
 i(sr2),
 ¬i(two),
 times(sr2, sr2) = two,
@@ -1492,17 +1372,20 @@ the same interface as \cli{Prover9} and the other first-order provers:
 
 \begin{clilisting}
 gapt> val formula = fof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
-java.lang.IllegalArgumentException: Formula ∀x ∀y ∀z (x + y + (z:Nat): Nat) = x + (y + z) ∧ ∀x ∀y x + y = y + x ⊃
-  #v(d: Nat) + #v(a: Nat) + #v(c: Nat) + #v(b: Nat) =
-    #v(a: Nat) + #v(b: Nat) + #v(c: Nat) + #v(d: Nat) appears not to be a FOL formula. Parse it with hof.
-  at at.logic.gapt.expr.ExpressionParseHelper.fof(ExpressionParseHelper.scala:147)
-  ... 27 elided
+formula: at.logic.gapt.expr.FOLFormula =
+∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x ⊃
+  d + a + c + b = a + b + c + d
 
 gapt> Escargot getResolutionProof formula
-<console>:127: error: not found: value formula
-      Escargot getResolutionProof formula
-                                  ^
-
+res35: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+Some([p39]  ⊢    (Resolution(p1, Suc(0), p38, Ant(0)))
+[p38] b + (c + (a + d)) = b + (c + (a + d)) ⊢    (Paramod(p7, Suc(0), true, p37, Ant(0), λx b + (c + (a + d)) = b + (c + x)))
+[p37] b + (c + (a + d)) = b + (c + (d + a)) ⊢    (Paramod(p18, Suc(0), true, p36, Ant(0), λx b + (c + (a + d)) = x))
+[p36] b + (c + (a + d)) = c + (b + (d + a)) ⊢    (Paramod(p19, Suc(0), true, p35, Ant(0), λx b + (c + (a + d)) = c + x))
+[p35] b + (c + (a + d)) = c + (d + (b + a)) ⊢    (Paramod(p20, Suc(0), true, p34, Ant(0), λx b + (c + (a + d)) = x))
+[p34] b + (c + (a + d)) = d + (c + (b + a)) ⊢    (Flip(p33, Ant(0)))
+[p33] d + (c + (b + a)) = b + (c + (a + d)) ⊢    (Paramod(p21, Suc(0), true, p32, Ant(0), λx x = b + (c + (a + d))))
+[p32] c + ...
 \end{clilisting}
 
 \subsection{Built-in tableaux prover}
@@ -1511,38 +1394,29 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
-res41: at.logic.gapt.proofs.lk.LKProof =
-[p5]  ⊢ #v(a: o) ⊃ #v(b: o) ⊃ #v(a: o) ∧ #v(b: o)    (ImpRightRule(p4, Ant(0), Suc(0)))
-[p4] #v(a: o) ⊢ #v(b: o) ⊃ #v(a: o) ∧ #v(b: o)    (ImpRightRule(p3, Ant(1), Suc(0)))
-[p3] #v(a: o), #v(b: o) ⊢ #v(a: o) ∧ #v(b: o)    (AndRightRule(p1, Suc(0), p2, Suc(0)))
-[p2] #v(b: o) ⊢ #v(b: o)    (LogicalAxiom(#v(b: o)))
-[p1] #v(a: o) ⊢ #v(a: o)    (LogicalAxiom(#v(a: o)))
+res36: at.logic.gapt.proofs.lk.LKProof =
+[p5]  ⊢ a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] a ⊢ b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p3] a, b ⊢ a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
+[p2] b ⊢ b    (LogicalAxiom(b:o))
+[p1] a ⊢ a    (LogicalAxiom(a:o))
 
 \end{clilisting}
 
 The tableaux prover can also prove quasi-tautologies if you call it as \texttt{solveQuasiPropositional}:
 \begin{clilisting}
 gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
-res42: at.logic.gapt.proofs.lk.LKProof =
-[p9]
-⊢
-#v(a: i) = #v(b: i) ∧ #v(f: i>i)(#v(a: i)) = #v(b: i) ⊃
-  #v(a: i) = #v(f: i>i)(#v(f: i>i)(#v(b: i)))    (ImpRightRule(p8, Ant(0), Suc(0)))
-[p8] #v(a: i) = #v(b: i) ∧ #v(f: i>i)(#v(a: i)) = #v(b: i)
-⊢
-#v(a: i) = #v(f: i>i)(#v(f: i>i)(#v(b: i)))    (AndLeftRule(p7, Ant(1), Ant(0)))
-[p7] #v(f: i>i)(#v(a: i)) = #v(b: i),
-#v(a: i) = #v(b: i)
-⊢
-#v(a: i) = #v(f: i>i)(#v(f: i>i)(#v(b: i)))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx #v(f: i>i)(#v(a: i)) = x))
-[p6] #v(a: i) = #v(b: i),
-#v(f: i>i)(#v(a: i)) = #v(a: i)
-⊢
-#v(a: i) = #v(f: i>i)(#v(f: i>i)(#v(b: i)))    (EqualityRightRule(p5, Ant(0), Suc(0), λx #v(a: i) = #v(f: i>i)(#v(f: i>i)(x))))
-[p5] #v(a: i) = #v(b: i),
-#v(f: i>i)(#v(a: i)) = #v(a: i)
-⊢
-#v(a: i) = #v(f: i>i)(#v(f: i>i)(#v(a: i))) ...
+res37: at.logic.gapt.proofs.lk.LKProof =
+[p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
+[p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
+[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
+[p6] a = b, f(a) = a ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx a = f(f(x))))
+[p5] a = b, f(a) = a ⊢ a = f(f(a))    (WeakeningLeftRule(p4, a = b))
+[p4] f(a) = a ⊢ a = f(f(a))    (EqualityRightRule(p3, Ant(0), Suc(0), λx a = f(x)))
+[p3] f(a) = a ⊢ a = f(a)    (EqualityRightRule(p2, Ant(0), Suc(0), λx a = x))
+[p2] f(a) = a ⊢ a = a    (WeakeningLeftRule(p1, f(a) = a))
+[p1]  ⊢ a = a    (ReflexivityAxiom(a))
+
 \end{clilisting}
 
 \subsection{Cut-elimination (Gentzen's method)}
@@ -1586,35 +1460,35 @@ is implemented for proofs and can be used, e.g.~as follows:
 \begin{clilisting}
 gapt> var p: LKProof = LogicalAxiom(hof"P(x,y)")
 p: at.logic.gapt.proofs.lk.LKProof =
-[p1] #v(P: i>i>o)(x, y) ⊢ #v(P: i>i>o)(x, y)    (LogicalAxiom(#v(P: i>i>o)(x, y): o))
+[p1] P(x, y) ⊢ P(x, y)    (LogicalAxiom(P(x, y): o))
 
 gapt> p = ExistsRightRule(p, hof"?x P(x,y)", le"x")
-p: at.logic.gapt.proofs.lk.LKProof = [p2] #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ExistsRightRule(p1, Suc(0), #v(P: i>i>o)(x, y): o, x, x))
-[p1] #v(P: i>i>o)(x, y) ⊢ #v(P: i>i>o)(x, y)    (LogicalAxiom(#v(P: i>i>o)(x, y): o))
+p: at.logic.gapt.proofs.lk.LKProof = [p2] P(x, y) ⊢ ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
+[p1] P(x, y) ⊢ P(x, y)    (LogicalAxiom(P(x, y): o))
 
 gapt> p = ForallLeftRule(p, hof"!y P(x,y)", le"y")
-p: at.logic.gapt.proofs.lk.LKProof = [p3] ∀y #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ForallLeftRule(p2, Ant(0), #v(P: i>i>o)(x, y): o, y, y))
-[p2] #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ExistsRightRule(p1, Suc(0), #v(P: i>i>o)(x, y): o, x, x))
-[p1] #v(P: i>i>o)(x, y) ⊢ #v(P: i>i>o)(x, y)    (LogicalAxiom(#v(P: i>i>o)(x, y): o))
+p: at.logic.gapt.proofs.lk.LKProof = [p3] ∀y P(x, y) ⊢ ∃x P(x, y)    (ForallLeftRule(p2, Ant(0), P(x, y): o, y, y))
+[p2] P(x, y) ⊢ ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
+[p1] P(x, y) ⊢ P(x, y)    (LogicalAxiom(P(x, y): o))
 
 gapt> p = ForallRightRule(p, hof"!y?x P(x,y)", fov"y")
-p: at.logic.gapt.proofs.lk.LKProof = [p4] ∀y #v(P: i>i>o)(x, y) ⊢ ∀y ∃x #v(P: i>i>o)(x, y)    (ForallRightRule(p3, Suc(0), y, y))
-[p3] ∀y #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ForallLeftRule(p2, Ant(0), #v(P: i>i>o)(x, y): o, y, y))
-[p2] #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ExistsRightRule(p1, Suc(0), #v(P: i>i>o)(x, y): o, x, x))
-[p1] #v(P: i>i>o)(x, y) ⊢ #v(P: i>i>o)(x, y)    (LogicalAxiom(#v(P: i>i>o)(x, y): o))
+p: at.logic.gapt.proofs.lk.LKProof = [p4] ∀y P(x, y) ⊢ ∀y ∃x P(x, y)    (ForallRightRule(p3, Suc(0), y, y))
+[p3] ∀y P(x, y) ⊢ ∃x P(x, y)    (ForallLeftRule(p2, Ant(0), P(x, y): o, y, y))
+[p2] P(x, y) ⊢ ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
+[p1] P(x, y) ⊢ P(x, y)    (LogicalAxiom(P(x, y): o))
 
 gapt> p = ExistsLeftRule(p, hof"?x!y P(x,y)", fov"x")
-p: at.logic.gapt.proofs.lk.LKProof = [p5] ∃x ∀y #v(P: i>i>o)(x, y) ⊢ ∀y ∃x #v(P: i>i>o)(x, y)    (ExistsLeftRule(p4, Ant(0), x, x))
-[p4] ∀y #v(P: i>i>o)(x, y) ⊢ ∀y ∃x #v(P: i>i>o)(x, y)    (ForallRightRule(p3, Suc(0), y, y))
-[p3] ∀y #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ForallLeftRule(p2, Ant(0), #v(P: i>i>o)(x, y): o, y, y))
-[p2] #v(P: i>i>o)(x, y) ⊢ ∃x #v(P: i>i>o)(x, y)    (ExistsRightRule(p1, Suc(0), #v(P: i>i>o)(x, y): o, x, x))
-[p1] #v(P: i>i>o)(x, y) ⊢ #v(P: i>i>o)(x, y)    (LogicalAxiom(#v(P: i>i>o)(x, y): o))
+p: at.logic.gapt.proofs.lk.LKProof = [p5] ∃x ∀y P(x, y) ⊢ ∀y ∃x P(x, y)    (ExistsLeftRule(p4, Ant(0), x, x))
+[p4] ∀y P(x, y) ⊢ ∀y ∃x P(x, y)    (ForallRightRule(p3, Suc(0), y, y))
+[p3] ∀y P(x, y) ⊢ ∃x P(x, y)    (ForallLeftRule(p2, Ant(0), P(x, y): o, y, y))
+[p2] P(x, y) ⊢ ∃x P(x, y)    (ExistsRightRule(p1, Suc(0), P(x, y): o, x, x))
+[p1] P(x, y) ⊢ P(x, y)    (LogicalAxiom(P(x, y): o))
 
 gapt> val q = skolemize(p)
 q: at.logic.gapt.proofs.lk.LKProof =
-[p3] ∀y #v(P: i>i>o)(s_0, y) ⊢ ∃x #v(P: i>i>o)(x, s_1)    (ForallLeftRule(p2, Ant(0), #v(P: i>i>o)(s_0, y): o, s_1, y))
-[p2] #v(P: i>i>o)(s_0, s_1) ⊢ ∃x #v(P: i>i>o)(x, s_1)    (ExistsRightRule(p1, Suc(0), #v(P: i>i>o)(x, s_1): o, s_0, x))
-[p1] #v(P: i>i>o)(s_0, s_1) ⊢ #v(P: i>i>o)(s_0, s_1)    (LogicalAxiom(#v(P: i>i>o)(s_0, s_1): o))
+[p3] ∀y P(s_0, y) ⊢ ∃x P(x, s_1)    (ForallLeftRule(p2, Ant(0), P(s_0, y): o, s_1, y))
+[p2] P(s_0, s_1) ⊢ ∃x P(x, s_1)    (ExistsRightRule(p1, Suc(0), P(x, s_1): o, s_0, x))
+[p1] P(s_0, s_1) ⊢ P(s_0, s_1)    (LogicalAxiom(P(s_0, s_1): o))
 
 \end{clilisting}
 
@@ -1639,24 +1513,23 @@ and $\Gamma_2\seq\Delta_2$. For instance, suppose pr is the following proof:
 First, we construct the proof pr:
 \begin{clilisting}
 gapt> val axpa = LogicalAxiom( fof"P(a)" )
-java.lang.IllegalArgumentException: Formula #v(P: i>o)(#v(a: i)): o appears not to be a FOL formula. Parse it with hof.
-  at at.logic.gapt.expr.ExpressionParseHelper.fof(ExpressionParseHelper.scala:147)
-  ... 27 elided
+axpa: at.logic.gapt.proofs.lk.LogicalAxiom =
+[p1] P(a) ⊢ P(a)    (LogicalAxiom(P(a): o))
 
 gapt> val axpb = LogicalAxiom( fof"P(b)" )
-java.lang.IllegalArgumentException: Formula #v(P: i>o)(#v(b: i)): o appears not to be a FOL formula. Parse it with hof.
-  at at.logic.gapt.expr.ExpressionParseHelper.fof(ExpressionParseHelper.scala:147)
-  ... 27 elided
+axpb: at.logic.gapt.proofs.lk.LogicalAxiom =
+[p1] P(b) ⊢ P(b)    (LogicalAxiom(P(b): o))
 
 gapt> val proof = WeakeningLeftRule( axpa, fof"a=b" )
-<console>:126: error: not found: value axpa
-      val proof = WeakeningLeftRule( axpa, fof"a=b" )
-                                     ^
+proof: at.logic.gapt.proofs.lk.WeakeningLeftRule =
+[p2] a = b, P(a) ⊢ P(a)    (WeakeningLeftRule(p1, a = b))
+[p1] P(a) ⊢ P(a)    (LogicalAxiom(P(a): o))
 
 gapt> val pr = EqualityRightRule( proof, fof"a=b", Suc( 0 ), fof"P(b)" )
-<console>:126: error: not found: value proof
-      val pr = EqualityRightRule( proof, fof"a=b", Suc( 0 ), fof"P(b)" )
-                                  ^
+pr: at.logic.gapt.proofs.lk.EqualityRightRule =
+[p3] a = b, P(a) ⊢ P(b)    (EqualityRightRule(p2, Ant(0), Suc(0), λx P(x): o))
+[p2] a = b, P(a) ⊢ P(a)    (WeakeningLeftRule(p1, a = b))
+[p1] P(a) ⊢ P(a)    (LogicalAxiom(P(a): o))
 
 \end{clilisting}
 In order to apply interpolation, we need to specify a partition of the end-sequent into $\Gamma_1 \seq \Delta_1$ and $\Gamma_2 \seq \Delta_2$, i.e. into the negative (npart) and positive (ppart) part, respectively. In this case, we set $\Delta_1 = \{ P(b) \}$, $\Gamma_2 = \{ a=b, P(a) \}$ and $\Gamma_1 = \Delta_2 = \emptyset$.
@@ -1664,9 +1537,7 @@ In order to apply interpolation, we need to specify a partition of the end-seque
 Then we can call \texttt{ExtractInterpolant( pr, npart, ppart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
 \begin{clilisting}
 gapt> val I = ExtractInterpolant( pr, Seq( Suc( 0 ) ), Seq( Ant( 0 ), Ant( 1 ) ) )
-<console>:126: error: not found: value pr
-      val I = ExtractInterpolant( pr, Seq( Suc( 0 ) ), Seq( Ant( 0 ), Ant( 1 ) ) )
-                                  ^
+I: at.logic.gapt.expr.HOLFormula = a = b ⊃ ¬P(a)
 
 \end{clilisting}
 
@@ -1713,17 +1584,17 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res43: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res38: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res44: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
+res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
 ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
 P(x, a) ⊃ Q(x, a)
 ⊢
 ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
-res45: Boolean = true
+res40: Boolean = true
 
 \end{clilisting}
 
@@ -1733,7 +1604,7 @@ a procedure to eliminate such cuts in expansion proofs as described
 in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
-res46: at.logic.gapt.proofs.expansion.ExpansionProof =
+res41: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
   +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
 :-
@@ -1746,7 +1617,7 @@ We can also convert expansion proofs to LK; this works even in the presence of
 cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
-res47: at.logic.gapt.proofs.lk.LKProof =
+res42: at.logic.gapt.proofs.lk.LKProof =
 [p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
 [p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
@@ -1987,40 +1858,32 @@ entering a many-sorted formula you need to provide enough type annotations to
 infer the types:
 \begin{clilisting}
 gapt> val formula = hof"P(cons(0:nat, cons(s(0), nil)): list)"
-java.lang.IllegalArgumentException: Parse error at <console>:126:
-Cannot type-check (((P:_6f1) ((((cons:_24c) ((0:_121):nat)) (((cons:_dfa) ((s:_22c) (0:_4b6))) (nil:_48a))):list)):o):
-Cannot unify types Nat and nat in
-_387 = _6f1
-_204 = _24c
-_121 = Nat
-Nat = nat
-
-  at at.logic.gapt.expr.ExpressionParseHelper.interpolate(ExpressionParseHelper.scala:59)
-  at at.logic.gapt.expr.ExpressionParseHelper.hof(ExpressionParseHelper.scala:80)
-  ... 27 elided
+formula: at.logic.gapt.expr.HOLFormula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
 
 gapt> val axiom = hof"P(nil) & !x!y!z (P(x) -> P(cons(y: nat, cons(z, x)): list))"
-axiom: at.logic.gapt.expr.HOLFormula =
-#v(P: list>o)(#v(nil: list)) ∧
-  ∀x ∀y ∀z (#v(P: list>o)(x:list) ⊃
-      #v(P: list>o)(#v(cons: nat>list>list)(
-            y:nat,
-            #v(cons: nat>list>list)(z:nat, x): list):
-          list))
+axiom: at.logic.gapt.expr.HOLFormula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
 
 gapt> val problem = hof"$axiom -> $formula"
-<console>:127: error: not found: value formula
-      val problem = hof"$axiom -> $formula"
-                                   ^
+problem: at.logic.gapt.expr.HOLFormula =
+P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) ⊃
+  P(cons(0, cons(s(0), nil)))
 
 \end{clilisting}
 
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
 gapt> Escargot.getExpansionProof(problem)
-<console>:127: error: not found: value problem
-      Escargot.getExpansionProof(problem)
-                                 ^
+res51: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(
+:-
+P(nil:list)- ∧
+    (∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+      +^{nil}
+        (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
+          +^{0}
+            (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
+            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+  P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
 
@@ -2032,17 +1895,35 @@ gapt> val reduction = PredicateReductionET |> ErasureReductionET
 reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.expansion.ExpansionProof,at.logic.gapt.proofs.expansion.ExpansionProof] = PredicateReductionET |> ErasureReductionET
 
 gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
-<console>:127: error: not found: value problem
-      val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
-                                                                      ^
+firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
+∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
+∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
+⊤ ⊃ P_is_list(f_nil),
+∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
+⊤ ⊃ P_is_nat(f_0),
+P_is_nat(f_nonempty_nat),
+P_is_o(f_nonempty_o),
+P_is_list(f_nonempty_list)
+⊢
+P_P(f_nil) ∧
+    ∀x (P_is_list(x) ⊃
+        ∀y (P_is_nat(y) ⊃
+            ∀z (P_is_nat(z) ⊃ P_P(x) ⊃ P_P(f_cons(y, f_cons(z, x)))))) ⊃
+  P_P(f_cons(f_0, f_cons(f_s(f_0), f_nil)))
+back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function1>
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
-<console>:127: error: not found: value firstOrderProblem
-      Prover9 getExpansionProof firstOrderProblem map back
-                                ^
-<console>:127: error: not found: value back
-      Prover9 getExpansionProof firstOrderProblem map back
-                                                      ^
+res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(
+:-
+P(nil:list)- ∧
+    (∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+      +^{nil}
+        (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
+          +^{0}
+            (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
+            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+  P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
 

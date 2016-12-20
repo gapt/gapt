@@ -63,6 +63,19 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
 
   def isInjectiveRenaming = domain.forall { v => map( v ).isInstanceOf[Var] && domain.forall { u => u == v || map( u ) != map( v ) } }
 
+  def isInjectiveOnDomain: Boolean = isInjective( domain )
+  def isInjective( dom: Set[Var] ): Boolean =
+    dom.forall { x =>
+      val images = ( dom - x ).map( apply( _ ) )
+      def solve( term: LambdaExpression ): Boolean =
+        images( term ) || ( term match {
+          case Const( _, _ ) => true
+          case App( a, b )   => solve( a ) && solve( b )
+          case Var( _, _ )   => false
+        } )
+      !solve( map( x ) )
+    }
+
   override def toString() = map.map( x => x._1 + " -> " + x._2 ).mkString( "Substitution(", ",", ")" )
 
   def asFOLSubstitution: FOLSubstitution =

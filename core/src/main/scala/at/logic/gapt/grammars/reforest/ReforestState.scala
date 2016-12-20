@@ -2,7 +2,6 @@ package at.logic.gapt.grammars.reforest
 
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars._
-import at.logic.gapt.proofs.lk.eliminateDefinitions
 
 import scala.collection.mutable
 
@@ -161,9 +160,18 @@ case class ReforestState(
 
   def expand( nts: Traversable[LambdaExpression] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
-    val simpl = eliminateDefinitions( nts map { nt => nt -> rules( nt ).head } toMap )
 
-    copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { simpl( _ ) } } )
+    object reduceUnambiguousNonTerminals extends ReductionRule {
+      val headMap = nts.collect { case nt @ Apps( f: Const, xs ) => f -> ( xs.map( _.asInstanceOf[Var] ), rules( nt ).head ) }.toMap
+      override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
+        headMap.toMap[LambdaExpression, ( List[Var], LambdaExpression )].get( head ).map {
+          case ( xs, repl ) =>
+            require( xs.size == args.size )
+            Substitution( xs zip args )( repl ) -> Nil
+        }
+    }
+
+    copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { normalize( reduceUnambiguousNonTerminals, _ ) } } )
   }
 
   def expandUseless: ReforestState = {

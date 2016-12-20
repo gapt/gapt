@@ -48,9 +48,9 @@ object isaplanner06 extends TacticsProof {
   val target = theory :+ ( "goal" -> hof"∀x ∀y x-(x+y) = 0" )
 
   val aipOptions1 = new ProverOptions( escargot, independentInductionAxioms )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) solve ( target, "goal", List( hov"x:nat" ) )
+  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( target, "goal", List( hov"x:nat" ) )
 
   val aipOptions2 = new ProverOptions( escargot, sequentialInductionAxioms )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) solve ( target, "goal", List( hov"x:nat" ) )
+  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( target, "goal", List( hov"x:nat" ) )
 }
 
