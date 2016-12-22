@@ -1333,7 +1333,7 @@ You can also export sequents as TPTP problems if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter(sequent)
-res34: at.logic.gapt.formats.tptp.TptpFile =
+res33: at.logic.gapt.formats.tptp.TptpFile =
 fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
 fof(suc_0, conjecture, p(s(s('0')))).
@@ -1352,7 +1352,7 @@ fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
 fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
 
 gapt> tptp.toSequent
-res35: at.logic.gapt.proofs.HOLSequent =
+res34: at.logic.gapt.proofs.HOLSequent =
 i(sr2),
 ¬i(two),
 times(sr2, sr2) = two,
@@ -1377,7 +1377,7 @@ formula: at.logic.gapt.expr.FOLFormula =
   d + a + c + b = a + b + c + d
 
 gapt> Escargot getResolutionProof formula
-res36: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res35: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p39]  ⊢    (Resolution(p1, Suc(0), p38, Ant(0)))
 [p38] b + (c + (a + d)) = b + (c + (a + d)) ⊢    (Paramod(p7, Suc(0), true, p37, Ant(0), λx b + (c + (a + d)) = b + (c + x)))
 [p37] b + (c + (a + d)) = b + (c + (d + a)) ⊢    (Paramod(p18, Suc(0), true, p36, Ant(0), λx b + (c + (a + d)) = x))
@@ -1394,7 +1394,7 @@ GAPT contains a  built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
-res37: at.logic.gapt.proofs.lk.LKProof =
+res36: at.logic.gapt.proofs.lk.LKProof =
 [p5]  ⊢ a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a ⊢ b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b ⊢ a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -1406,7 +1406,7 @@ res37: at.logic.gapt.proofs.lk.LKProof =
 The tableaux prover can also prove quasi-tautologies if you call it as \texttt{solveQuasiPropositional}:
 \begin{clilisting}
 gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
-res38: at.logic.gapt.proofs.lk.LKProof =
+res37: at.logic.gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
 [p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
@@ -1584,17 +1584,17 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res38: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
+res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
 ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
 P(x, a) ⊃ Q(x, a)
 ⊢
 ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
-res41: Boolean = true
+res40: Boolean = true
 
 \end{clilisting}
 
@@ -1604,7 +1604,7 @@ a procedure to eliminate such cuts in expansion proofs as described
 in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
-res42: at.logic.gapt.proofs.expansion.ExpansionProof =
+res41: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
   +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
 :-
@@ -1617,7 +1617,7 @@ We can also convert expansion proofs to LK; this works even in the presence of
 cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
-res43: at.logic.gapt.proofs.lk.LKProof =
+res42: at.logic.gapt.proofs.lk.LKProof =
 [p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
 [p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
@@ -1873,7 +1873,7 @@ P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) �
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
 gapt> Escargot.getExpansionProof(problem)
-res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res51: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
