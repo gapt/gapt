@@ -16,6 +16,14 @@ case class AxiomSummary(
   maxTime:    Double
 )
 
+case class ProblemSummary(
+    problem: String,
+    provers: Seq[String],
+    axioms:  Seq[String]
+) {
+  override def toString = s"$problem {${provers.mkString( " " )}} {${axioms.mkString( " " )}}"
+}
+
 class AipResultAnalyzer( file: String ) {
 
   val data = parseRunData( Source.fromFile( file ) )
@@ -70,6 +78,20 @@ class AipResultAnalyzer( file: String ) {
     }
     provers map { summarizeProver( _ ) }
   }
+
+  def summarizeByProblem(): Seq[ProblemSummary] = {
+    val problems = data.map( _.file ).distinct
+    for {
+      problem <- problems
+      problemData = data.filter( _.file == problem )
+    } yield {
+      ProblemSummary(
+        problem,
+        problemData.map( _.prover ).distinct,
+        problemData.map( _.axiomType ).distinct
+      )
+    }
+  }
 }
 
 private object Statistics {
@@ -80,18 +102,31 @@ private object Statistics {
 object ara {
   def main( args: Array[String] ): Unit = {
     if ( args.isEmpty ) {
-      println( "usage: ara file..." )
+      println( "usage: ara [prover-summary|problem-summary] file..." )
       sys exit 1
     }
-    try
-      args.zip( args.map( new AipResultAnalyzer( _ ).summarize() ) ).foreach {
-        case ( file, summaries ) => {
-          println( s"$file:" )
-          summaries foreach { s: Summary => println( renderSummary( s ) ) }
-          println
+    try {
+      args.head match {
+        case "prover-summary" =>
+          args.tail.zip( args.tail.map( new AipResultAnalyzer( _ ).summarize() ) ).foreach {
+            case ( file, summaries ) => {
+              println( s"$file:" )
+              summaries foreach { s: Summary => println( renderSummary( s ) ) }
+              println
+            }
+          }
+        case "problem-summary" =>
+          args.tail.zip( args.tail.map( new AipResultAnalyzer( _ ).summarizeByProblem() ) ).foreach {
+            case ( file, summary ) => {
+              println( s"$file" )
+              println( summary.map( "\t" + _.toString ).mkString( "\n" ) )
+            }
+          }
+        case command => {
+          println( s"ara: '$command' is not an ara command." )
         }
       }
-    catch {
+    } catch {
       case e: ParseException => println( e.getMessage )
     }
   }
