@@ -182,7 +182,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A sequent.
    * @throws Exception If the validation value represents a validation failure.
    */
-  private def validate( validation: ThrowsError[Sequent[( String, HOLFormula )]] ): Sequent[( String, HOLFormula )] =
+  private def validate( validation: ThrowsError[HOLSequent] ): HOLSequent =
     validation.valueOr( es => throw new Exception( es.tail.foldLeft( es.head ) { _ ++ "\n" ++ _ } ) )
 
   /**
@@ -197,7 +197,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
     sequent:   Sequent[( String, HOLFormula )],
     label:     String,
     variables: List[Var]
-  )( implicit ctx: Context ): Sequent[( String, HOLFormula )] =
+  )( implicit ctx: Context ): HOLSequent =
     validate( prepareSequent( sequent, label, variables ) )
 
   /**
@@ -211,7 +211,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
   private def inductiveSequent(
     sequent: Sequent[( String, HOLFormula )],
     label:   String
-  )( implicit ctx: Context ): Sequent[( String, HOLFormula )] =
+  )( implicit ctx: Context ): HOLSequent =
     validate( prepareSequent( sequent, label ) )
 
   /**
@@ -229,12 +229,12 @@ class AnalyticInductionProver( options: ProverOptions ) {
     sequent:   Sequent[( String, HOLFormula )],
     label:     String,
     variables: List[Var]
-  )( implicit ctx: Context ): ThrowsError[Sequent[( String, HOLFormula )]] = {
+  )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       formula <- findFormula( sequent, label )
       axioms <- options.axiomType.inductionAxioms( formula, variables )
     } yield {
-      ( axioms zip variables ).foldLeft( sequent )( { labelInductionAxiom( label, _, _ ) } )
+      axioms ++: labeledSequentToHOLSequent( sequent )
     }
   }
 
@@ -251,14 +251,14 @@ class AnalyticInductionProver( options: ProverOptions ) {
   private def prepareSequent(
     sequent: Sequent[( String, HOLFormula )],
     label:   String
-  )( implicit ctx: Context ): ThrowsError[Sequent[( String, HOLFormula )]] = {
+  )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       formula <- findFormula( sequent, label )
       All.Block( _, f ) = formula
       variables = freeVariables( f ).filter( { hasInductiveType( _ ) } ).toList
       axioms <- options.axiomType.inductionAxioms( formula, variables )
     } yield {
-      ( axioms zip variables ).foldLeft( sequent )( { labelInductionAxiom( label, _, _ ) } )
+      axioms ++: labeledSequentToHOLSequent( sequent )
     }
   }
 
@@ -271,24 +271,23 @@ class AnalyticInductionProver( options: ProverOptions ) {
    */
   private def hasInductiveType( v: Var )( implicit ctx: Context ): Boolean =
     ctx.getConstructors( baseType( v ) ).isDefined
+}
 
+object combinedInductionAxioms extends InductionStrategy {
   /**
-   * Adds a labelled induction axiom to the sequent.
+   * Computes induction axioms for a formula and variables.
    *
-   * @param label The label of the formula to which the induction axiom belongs.
-   * @param sequent The sequent to which the labelled axiom is added.
-   * @param axvar A pair containing the induction axiom and its associated variable.
-   * @return The initial sequent with the labelled induction axiom in its left side.
+   * @param f   The formula for which induction axioms are to be generated.
+   * @param vs  The variables for which induction axioms are to be generated.
+   * @param ctx Defines inductive types etc.
+   * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
+   *         could not be generated.
    */
-  private def labelInductionAxiom(
-    label:   String,
-    sequent: Sequent[( String, HOLFormula )],
-    axvar:   ( HOLFormula, Var )
-  ): Sequent[( String, HOLFormula )] = {
-    axvar match {
-      case ( axiom, variable ) => ( NewLabels( sequent, s"IA/$label/${variable.name}/" )( 0 ) -> axiom ) +: sequent
-    }
-  }
+  override def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+    for {
+      sequentialAxioms <- sequentialInductionAxioms.inductionAxioms( f, vs )( ctx )
+      independentAxioms <- independentInductionAxioms.inductionAxioms( f, vs )( ctx )
+    } yield ( sequentialAxioms ++ independentAxioms ).distinct
 }
 
 object independentInductionAxioms extends InductionStrategy {
@@ -525,7 +524,8 @@ object aip {
 
   val axioms = Map[String, InductionStrategy](
     "sequential" -> sequentialInductionAxioms,
-    "independent" -> independentInductionAxioms
+    "independent" -> independentInductionAxioms,
+    "combined" -> combinedInductionAxioms
   )
 
   val provers = Map[String, InternalProver](
@@ -682,7 +682,7 @@ object aip {
       |  --prover           use the specified prover for proof search, possible values for
       |                       this option are: escargot, prover9, vampire, spass, eprover.
       |  --axioms           use the specified type of induction axioms, possible values
-      |                       are: independent, sequential.
+      |                       are: independent, sequential, combined.
       |  --witness          search for the specified type of proof, legal values are:
       |                       existential, lkproof, expansionproof, resolutionproof. If the value
       |                       existential is provided for this option, the prover will only check

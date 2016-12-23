@@ -80,10 +80,10 @@ class AipResultAnalyzer( file: String ) {
   }
 
   def summarizeByProblem(): Seq[ProblemSummary] = {
-    val problems = data.map( _.file ).distinct
+    val problems = data.filter( _.status == "success" ).map( _.file ).distinct
     for {
       problem <- problems
-      problemData = data.filter( _.file == problem )
+      problemData = data.filter( _.file == problem ).filter( _.status == "success" )
     } yield {
       ProblemSummary(
         problem,
