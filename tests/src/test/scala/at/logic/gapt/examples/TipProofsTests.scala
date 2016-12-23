@@ -1,10 +1,11 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.examples.tip.isaplanner._
+import at.logic.gapt.examples.tip.grammars._
 import at.logic.gapt.formats.tip.TipSmtParser
 import org.specs2.mutable.Specification
 
-class IsaplannerTests extends Specification {
+class TipProofsTests extends Specification {
 
   def requireTip( test: => Any ) = {
     if ( TipSmtParser.isInstalled ) {
@@ -14,6 +15,10 @@ class IsaplannerTests extends Specification {
     }
   }
 
+  // grammars
+  requireTip { "simp_expr_unambig1" in { simp_expr_unambig1; ok } }
+
+  // isaplanner
   "isaplanner06" in { isaplanner06; ok }
 
   requireTip { "isaplanner07" in { isaplanner07; ok } }
