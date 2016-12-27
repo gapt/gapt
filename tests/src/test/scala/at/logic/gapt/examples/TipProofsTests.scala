@@ -1,7 +1,8 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.examples.tip.isaplanner._
 import at.logic.gapt.examples.tip.grammars._
+import at.logic.gapt.examples.tip.isaplanner._
+import at.logic.gapt.examples.tip.prod._
 import at.logic.gapt.formats.tip.TipSmtParser
 import org.specs2.mutable.Specification
 
@@ -59,4 +60,7 @@ class TipProofsTests extends Specification {
   requireTip { "isaplanner42" in { isaplanner42; ok } }
   requireTip { "isaplanner43" in { isaplanner43; ok } }
   requireTip { "isaplanner44" in { isaplanner44; ok } }
+
+  // prod
+  requireTip { "prop_01" in { prop_01; ok } }
 }
