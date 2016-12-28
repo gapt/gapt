@@ -20,6 +20,7 @@ class TipProofsTests extends Specification {
   requireTip { "simp_expr_unambig1" in { simp_expr_unambig1; ok } }
 
   // isaplanner
+  requireTip { "isaplanner03" in { isaplanner03; ok } }
   "isaplanner06" in { isaplanner06; ok }
 
   requireTip { "isaplanner07" in { isaplanner07; ok } }
