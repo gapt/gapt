@@ -64,4 +64,5 @@ class TipProofsTests extends Specification {
 
   // prod
   requireTip { "prop_01" in { prop_01; ok } }
+  requireTip { "prop_13" in { prop_13; ok } }
 }
