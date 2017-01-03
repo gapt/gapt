@@ -134,7 +134,7 @@ object BabelParser {
    * @param astTransformer  Function to apply to the Babel AST before type inference.
    * @param sig  Babel signature that specifies which free variables are constants.
    */
-  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ LambdaExpression = {
+  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, LambdaExpression] = {
     ExprAndNothingElse.parse( text ) match {
       case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
@@ -142,7 +142,7 @@ object BabelParser {
           BabelUnificationError( s"Cannot type-check ${ast.readable( transformedExpr )}:\n$unifError" )
         }
       case parseError @ Parsed.Failure( _, _, _ ) =>
-        BabelParsingError( parseError ).left
+        Left( BabelParsingError( parseError ) )
     }
   }
 
@@ -153,7 +153,7 @@ object BabelParser {
   def parseFormula( text: String )( implicit sig: BabelSignature ): HOLFormula =
     tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
 
-  def tryParseSequent( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ Sequent[LambdaExpression] = {
+  def tryParseSequent( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[LambdaExpression]] = {
     SequentAndNothingElse.parse( text ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = exprSequent.map( astTransformer )
@@ -165,7 +165,7 @@ object BabelParser {
           HOLSequent( ant, suc )
         }
       case parseError @ Parsed.Failure( _, _, _ ) =>
-        BabelParsingError( parseError ).left
+        Left( BabelParsingError( parseError ) )
     }
   }
 }

@@ -5,8 +5,6 @@ import at.logic.gapt.formats.babel._
 import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent }
 import fastparse.core.ParseError
 
-import scalaz.{ -\/, \/- }
-
 object ExpressionParseHelper {
   abstract class Splice[+ForType] {
     def spliceIn: ast.Expr
@@ -56,10 +54,10 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
     def astTransformer( expr: ast.Expr ): ast.Expr = baseAstTransformer( repl( expr ) )
 
     BabelParser.tryParse( combined, astTransformer ) match {
-      case -\/( error ) => throw new IllegalArgumentException(
+      case Left( error ) => throw new IllegalArgumentException(
         s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
       )
-      case \/-( expr ) => expr
+      case Right( expr ) => expr
     }
   }
 
@@ -200,10 +198,10 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
     val ( combined, repl ) = interpolateHelper( args )
 
     BabelParser.tryParseSequent( combined, e => ast.TypeAnnotation( repl( e ), ast.Bool ) ) match {
-      case -\/( error ) => throw new IllegalArgumentException(
+      case Left( error ) => throw new IllegalArgumentException(
         s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
       )
-      case \/-( sequent ) => sequent.map( _.asInstanceOf[HOLFormula] )
+      case Right( sequent ) => sequent.map( _.asInstanceOf[HOLFormula] )
     }
   }
 
