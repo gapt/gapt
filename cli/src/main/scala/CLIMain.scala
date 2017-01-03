@@ -6,7 +6,7 @@ import at.logic.gapt.utils.Logger
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
-import better.files._
+import ammonite.ops._
 
 object CLIMain extends Logger {
 
@@ -43,7 +43,7 @@ object CLIMain extends Logger {
 
         // Strip package declaration, the script compiler doesn't like it.
         val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
-        val scriptSrc = scriptFile.toFile.contentAsString match {
+        val scriptSrc = read( Path( scriptFile, pwd ) ) match {
           case packageRegex( restOfScript ) => restOfScript
           case scriptWithoutPackage         => scriptWithoutPackage
         }

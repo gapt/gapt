@@ -3,18 +3,19 @@ package at.logic.gapt.testing
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle._
 import at.logic.gapt.proofs.loadExpansionProof
-import better.files._
+import ammonite.ops._
 
 object loadAndCompress extends App {
   val Array( methodName, fileName ) = args
+  val path = Path( fileName, pwd )
 
   val method = parseMethod( methodName )
 
   val termSet =
-    if ( fileName endsWith ".termset" ) {
-      fileName.toFile.lines.map( parseTerm )
+    if ( path.ext == "termset" ) {
+      read.lines( path ).map( parseTerm )
     } else {
-      val expansion = loadExpansionProof( fileName.toFile )
+      val expansion = loadExpansionProof( path )
       InstanceTermEncoding( expansion )._1
     }
 

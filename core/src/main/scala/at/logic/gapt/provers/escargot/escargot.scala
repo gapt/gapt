@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
 import at.logic.gapt.utils.Logger
-import better.files._
+import ammonite.ops._
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
   def lpoHeuristic( cnf: Traversable[HOLSequent] ): LPO = {
@@ -79,7 +79,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
       case Seq( file ) => file
     }
 
-    val tptp = TptpParser.load( tptpInputFile.toFile )
+    val tptp = TptpParser.load( FilePath( tptpInputFile ) )
     getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
       case Some( proof ) =>
         println( "% SZS status Unsatisfiable" )

@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.tptp
 
-import better.files._
+import ammonite.ops._
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.replaceAbstractions
@@ -32,7 +32,8 @@ class TPTPHOLExporter {
    * @param ls the list of sequents to export
    * @param filename the filename
    */
-  def apply( ls: List[HOLSequent], filename: String ) = filename.toFile < export_negative( ls )
+  def apply( ls: List[HOLSequent], filename: String ) =
+    write( Path( filename, pwd ), export_negative( ls ) )
 
   /**
    * Exports a sequent as TPTP thf problem to prove validity
@@ -40,7 +41,8 @@ class TPTPHOLExporter {
    * @param seq the sequent to export
    * @param filename the filename
    */
-  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ) = filename.toFile < export_positive( seq, separate_axioms )
+  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ) =
+    write( Path( filename, pwd ), export_positive( seq, separate_axioms ) )
 
   /**
    * Exports an expansion proof as TPTP thf problem to prove validity
@@ -52,7 +54,7 @@ class TPTPHOLExporter {
    */
   def apply( seq: ExpansionSequent, filename: String,
              maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ) =
-    filename.toFile < export( seq, maximize_axiom_declarations, lambda_lifting )
+    write( Path( filename, pwd ), export( seq, maximize_axiom_declarations, lambda_lifting ) )
 
   /**
    * Exports an expansion proof as TPTP thf problem. The antedent of the

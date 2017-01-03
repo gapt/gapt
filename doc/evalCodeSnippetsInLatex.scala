@@ -6,7 +6,7 @@ import scala.sys.process
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter._
 
-import better.files._
+import ammonite.ops._
 
 object evalCodeSnippetsInLatex {
 
@@ -123,7 +123,7 @@ object evalCodeSnippetsInLatex {
 
   def main( args: Array[String] ) = {
     val Array( inFile ) = args
-    processLines( inFile.toFile.lines.toStream, mkInterp() )
+    processLines( read.lines( Path( inFile, pwd ) ).toStream, mkInterp() )
   }
 
 }

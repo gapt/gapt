@@ -6,12 +6,14 @@ import at.logic.gapt.expr.Top
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 
+import ammonite.ops._
+
 class ExternalSATSolver( val command: String* ) extends SATSolver with ExternalProgram {
   protected def runProgram( dimacsInput: String ): Option[String] =
     withTempFile.fromString( dimacsInput ) { dimacsInputFile =>
       withTempFile { dimacsOutputFile =>
-        runProcess.withExitValue( command ++ Seq( dimacsInputFile.pathAsString, dimacsOutputFile.pathAsString ) ) match {
-          case ( 10, _ ) => /* SAT */ Some( dimacsOutputFile.contentAsString )
+        runProcess.withExitValue( command ++ Seq( dimacsInputFile.toString, dimacsOutputFile.toString ) ) match {
+          case ( 10, _ ) => /* SAT */ Some( read ! dimacsOutputFile )
           case ( 20, _ ) => /* UNSAT */ None
           case ( 1, str ) =>
             throw new Exception( s"Error executing external sat prover $command: $str" )

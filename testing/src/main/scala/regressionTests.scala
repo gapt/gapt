@@ -1,5 +1,7 @@
 package at.logic.gapt.testing
 
+import java.io.{ FileWriter, PrintWriter }
+
 import at.logic.gapt.expr.{ And, HOLFormula }
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.babel.BabelParser
@@ -21,7 +23,7 @@ import at.logic.gapt.provers.smtlib.Z3
 import scala.concurrent.duration._
 import scala.util.Random
 import scala.xml.XML
-import better.files._
+import ammonite.ops._
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
   override def timeout = Some( 3 minutes )
@@ -119,13 +121,13 @@ class VeriTTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
-  def prover9Proofs = file"testing/TSTP/prover9".glob( "**/*.s" ).toSeq
-  def leancopProofs = file"testing/TSTP/leanCoP".glob( "**/*.s" ).toSeq
-  def veritProofs = file"testing/veriT-SMT-LIB".glob( "**/*.proof_flat" ).toSeq
+  def prover9Proofs = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
+  def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
+  def veritProofs = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "proof_flat" )
 
-  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toJava ) }
-  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toJava ) }
-  def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toJava ) }
+  def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toIO ) }
+  def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }
+  def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
 
   def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases
 
@@ -140,7 +142,8 @@ object RegressionTests extends App {
 
   val total = testCases.length
   var started = 0
-  for ( out <- file"target/regression-test-results.xml".printWriter( autoFlush = true ) ) {
+  val out = new PrintWriter( new FileWriter( pwd / "target" / "regression-test-results.xml" toIO ), true )
+  try {
     out write "<testsuite>\n"
     testCases.par foreach { tc =>
       started += 1
@@ -155,5 +158,5 @@ object RegressionTests extends App {
       }
     }
     out write "</testsuite>\n"
-  }
+  } finally out.close()
 }
