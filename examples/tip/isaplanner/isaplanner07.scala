@@ -12,7 +12,7 @@ import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, esc
  */
 object isaplanner07 extends TacticsProof {
 
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_07.smt2", getClass ) )
+  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/benchmarks/isaplanner/prop_07.smt2", getClass ) )
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

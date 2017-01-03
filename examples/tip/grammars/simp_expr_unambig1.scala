@@ -1,15 +1,13 @@
 package at.logic.gapt.examples.tip.grammars
 
-import better.files._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.Context.{ InductiveType, Sort }
-import at.logic.gapt.proofs.{ Ant, Suc, Sequent }
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
 
 object simp_expr_unambig1 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/grammars/simp_expr_unambig1.smt2", getClass ) )
+  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/benchmarks/grammars/simp_expr_unambig1.smt2", getClass ) )
   ctx = bench.ctx
 
   val theory = Sequent(

@@ -9,7 +9,7 @@ import at.logic.gapt.provers.viper.sequentialInductionAxioms
 
 object isaplanner03 extends TacticsProof {
 
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_03.smt2", getClass ) )
+  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/benchmarks/isaplanner/prop_03.smt2", getClass ) )
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {
