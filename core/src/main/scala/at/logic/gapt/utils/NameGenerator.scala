@@ -37,4 +37,6 @@ class NameGenerator( initiallyUsed: Iterable[String] ) {
   }
 
   def freshStream( name: String ) = Stream.continually( freshWithIndex( name ) )
+
+  def fork: NameGenerator = new NameGenerator( used )
 }
