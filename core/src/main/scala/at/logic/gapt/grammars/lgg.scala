@@ -1,21 +1,39 @@
 package at.logic.gapt.grammars
 
-import at.logic.gapt.expr.{ Apps, Const, LambdaExpression, Substitution, Var, freeVariables }
+import at.logic.gapt.expr._
 
 import scala.collection.mutable
+
+abstract class GeneralLeastGeneralGeneralization {
+  def fast( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] )
+
+  def apply( as: LambdaExpression* ): ( LambdaExpression, Map[LambdaExpression, Substitution] ) =
+    apply( as )
+
+  def apply( as: Traversable[LambdaExpression] ): ( LambdaExpression, Map[LambdaExpression, Substitution] ) =
+    apply( as.toList )
+
+  def apply( as: List[LambdaExpression] ): ( LambdaExpression, Map[LambdaExpression, Substitution] ) =
+    as match {
+      case Nil      => throw new IllegalArgumentException( "Cannot compute lgg of empty list" )
+      case a :: Nil => ( a, Map( a -> Substitution() ) )
+      case a :: as_ =>
+        val ( lgg_, substs_ ) = apply( as_ )
+        val ( lgg, map_, mapA ) = fast( lgg_, a )
+        val subst_ = Substitution( map_ )
+        val substA = Substitution( mapA )
+        ( lgg, Map() ++ substs_.mapValues( s_ => subst_.compose( s_ ).restrict( map_.keySet ) ) + ( a -> substA ) )
+    }
+}
 
 /**
  * Computes the minimum of two terms in the subsumption lattice,
  * together with the substitutions witnessing the subsumption.
  */
-object leastGeneralGeneralization {
-  def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+object leastGeneralGeneralization extends GeneralLeastGeneralGeneralization {
+  def fast( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
     val lgg = new leastGeneralGeneralization
     ( lgg( a, b ), lgg.subst1, lgg.subst2 )
-  }
-  def apply( a: Seq[LambdaExpression], b: Seq[LambdaExpression] ): ( Seq[LambdaExpression], collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
-    val lgg = new leastGeneralGeneralization
-    ( ( a, b ).zipped.map( lgg.apply ), lgg.subst1, lgg.subst2 )
   }
 }
 class leastGeneralGeneralization {
@@ -46,8 +64,8 @@ class leastGeneralGeneralization {
  * terms with at most one free variable, together with the substitutions
  * witnessing the subsumption.
  */
-object leastGeneralGeneralization1 {
-  def apply( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+object leastGeneralGeneralization1 extends GeneralLeastGeneralGeneralization {
+  def fast( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
     def lgg( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b

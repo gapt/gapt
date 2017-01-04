@@ -27,8 +27,8 @@ object deltaTableAlgorithm {
 
       val ( newLGG, substCurLGG, substNewTerm ) =
         if ( currentLGG == null ) ( newTerm, Map[Var, LambdaExpression](), Map[Var, LambdaExpression]() )
-        else if ( singleVariable ) leastGeneralGeneralization1( currentLGG, newTerm )
-        else leastGeneralGeneralization( currentLGG, newTerm )
+        else if ( singleVariable ) leastGeneralGeneralization1.fast( currentLGG, newTerm )
+        else leastGeneralGeneralization.fast( currentLGG, newTerm )
 
       if ( !newLGG.isInstanceOf[Var] && maxArity.forall { substCurLGG.size <= _ } ) {
         val newSubst = currentSubst.map { subst => Substitution( Map() ++ substCurLGG.mapValues( subst( _ ) ) ) } + Substitution( substNewTerm )
