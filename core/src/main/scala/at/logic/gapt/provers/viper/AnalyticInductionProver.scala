@@ -15,7 +15,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.vampire.Vampire
-import better.files._
+import ammonite.ops._
 
 import scalaz.Scalaz._
 import scalaz.Validation.FlatMap.ValidationFlatMapRequested
@@ -566,7 +566,7 @@ object aip {
       }
       try {
         val aip = new AnalyticInductionProver( compileProverOptions( options ) )
-        val problem = TipSmtParser fixupAndParse options.infile.toFile
+        val problem = TipSmtParser fixupAndParse FilePath( options.infile )
         val ( witness, t ) = time {
           witnessAipInvokers.get( options.witness ).get( aip, problem )
         }

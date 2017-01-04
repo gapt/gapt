@@ -6,7 +6,7 @@ import at.logic.gapt.utils.Logger
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
-import better.files._
+import ammonite.ops._
 
 object CLIMain extends Logger {
 
@@ -23,6 +23,10 @@ object CLIMain extends Logger {
 """
 
   val imports = ClasspathInputFile( "gapt-cli-prelude.scala", getClass ).read
+
+  class ScriptsResultHolder( var result: Seq[Script] = Seq() ) {
+    def add( script: Script ): Unit = result :+= script
+  }
 
   def main( args: Array[String] ): Unit = {
     val settings = new Settings
@@ -43,20 +47,28 @@ object CLIMain extends Logger {
 
         // Strip package declaration, the script compiler doesn't like it.
         val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
-        val scriptSrc = scriptFile.toFile.contentAsString match {
+        val scriptSrc = read( Path( scriptFile, pwd ) ) match {
           case packageRegex( restOfScript ) => restOfScript
           case scriptWithoutPackage         => scriptWithoutPackage
         }
 
         val intp = new IMain( settings )
-        intp beQuietDuring { intp.interpret( imports + scriptSrc ) }
+        intp.beQuietDuring {
+          intp.interpret( imports + scriptSrc )
 
-        // Execute all defined objects of type Script.
-        for {
-          defTerm <- intp.namedDefinedTerms
-          if intp.typeOfTerm( defTerm.toString ) <:< intp.global.typeOf[Script]
-        } intp eval defTerm.toString match {
-          case script: Script => script main scriptArgs.toArray
+          val scriptsName = intp.naming.freshUserTermName()
+          val scripts = new ScriptsResultHolder
+          intp.bind( scriptsName.toString, scripts )
+
+          // Execute all defined objects of type Script.
+          // TODO(gabriel): use reflection again
+          for {
+            defTerm <- intp.namedDefinedTerms
+            if intp.typeOfTerm( defTerm.toString ) <:< intp.global.typeOf[Script]
+          } intp.interpret( s"$scriptsName.add($defTerm)\n" )
+
+          for ( script <- scripts.result )
+            script.main( scriptArgs.toArray )
         }
 
       case _ =>
@@ -65,14 +77,13 @@ object CLIMain extends Logger {
         sys.props( "scala.shell.prompt" ) = sys.props( "line.separator" ) + "gapt> "
 
         val repl = new ILoop {
-          override def printWelcome = {
-            println( welcomeMessage )
-            intp beQuietDuring {
-              print( "Importing gapt... " )
-              processLine( imports )
-              println( "done." )
-            }
+          override def createInterpreter() = {
+            in = InteractiveReader()
+            intp = new ILoopInterpreter()
+            intp.setContextClassLoader()
+            intp.beQuietDuring( intp.interpret( imports ) )
           }
+          override def printWelcome() = print( welcomeMessage )
         }
 
         repl process settings

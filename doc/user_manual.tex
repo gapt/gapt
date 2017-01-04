@@ -1342,7 +1342,7 @@ fof(suc_0, conjecture, p(s(s('0')))).
 
 You can also parse TPTP problems:
 \begin{clilisting}
-gapt> val tptp = TptpParser.load(file"examples/import/irrationals.p")
+gapt> val tptp = TptpParser.load(pwd/"examples"/"import"/"irrationals.p")
 tptp: at.logic.gapt.formats.tptp.TptpFile =
 fof(a, axiom, i(sr2)).
 fof(b, axiom, ~ i(two)).

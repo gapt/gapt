@@ -20,7 +20,7 @@ import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 import scala.io.StdIn
-import better.files._
+import ammonite.ops._
 
 case class ViperOptions(
   instanceNumber:   Int                = 10,
@@ -261,7 +261,7 @@ object Viper extends Logger {
       case Seq( "-" ) =>
         parseCode( StringInputFile( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString ), options )
       case Seq( fn ) =>
-        parseCode( fn.toFile, options )
+        parseCode( FilePath( fn ), options )
       case cmdLineOptRegex( k, v ) +: rest =>
         parseArgs( rest, options + ( k -> v ) )
     }

@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionP
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.metrics
-import better.files._
+import ammonite.ops._
 
 import scalaz.Success
 
@@ -20,7 +20,7 @@ object loadExpansionProof {
 
   def withBackgroundTheory( file: InputFile ): ( ExpansionProof, CutIntroduction.BackgroundTheory ) = file.fileName match {
     case fileName if fileName endsWith ".proof_flat" =>
-      val Some( expSeq ) = VeriTParser.getExpansionProofWithSymmetry( fileName.toFile )
+      val Some( expSeq ) = VeriTParser.getExpansionProofWithSymmetry( FilePath( fileName ) )
       ExpansionProof( expSeq ) -> CutIntroduction.BackgroundTheory.PureFOL
     case fileName if fileName contains "/leanCoP" =>
       val Some( expSeq ) = LeanCoPParser.getExpansionProof( extractFromTSTPCommentsIfNecessary( file ) )

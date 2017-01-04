@@ -1,4 +1,4 @@
-import better.files._
+import ammonite.ops._
 import at.logic.gapt._
 import at.logic.gapt.examples._
 import at.logic.gapt.expr._

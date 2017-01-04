@@ -1,31 +1,31 @@
 package at.logic.gapt.formats
 
-import better.files._
+import ammonite.ops._
 
 trait InputFile {
   def read: String
   def fileName: String
 }
 object InputFile {
-  @deprecated( "Disambiguate file names from strings by using file\"proof.s\" or \"proof.s\".toFile", since = "2.3" )
-  implicit def fromFileName( fileName: String ): OnDiskInputFile = OnDiskInputFile( fileName.toFile )
-  implicit def fromFile( file: File ): OnDiskInputFile = OnDiskInputFile( file )
+  @deprecated( "Disambiguate file names from strings by using FilePath(\"proof.s\")", since = "2.3" )
+  implicit def fromFileName( fileName: String ): OnDiskInputFile = fromPath( FilePath( fileName ) )
+  implicit def fromPath( file: FilePath ): OnDiskInputFile = OnDiskInputFile( Path( file, pwd ) )
   def fromString( content: String ) = StringInputFile( content )
-  implicit def fromJavaFile( file: java.io.File ): OnDiskInputFile = OnDiskInputFile( file.toScala )
+  implicit def fromJavaFile( file: java.io.File ): OnDiskInputFile = OnDiskInputFile( Path( file ) )
   implicit def fromInputStream( stream: java.io.InputStream ): InputFile =
-    StringInputFile( stream.content.mkString )
+    StringInputFile( read ! stream )
 }
 case class StringInputFile( content: String ) extends InputFile {
   def fileName = "<string>"
   def read = content
 }
-case class OnDiskInputFile( file: File ) extends InputFile {
-  def fileName = file.pathAsString
-  def read = file.contentAsString
+case class OnDiskInputFile( file: Path ) extends InputFile {
+  def fileName = file.toString
+  def read = ammonite.ops.read ! file
 }
 
 case class ClasspathInputFile( fileName: String, classLoader: ClassLoader ) extends InputFile {
-  def read = classLoader.getResourceAsStream( fileName ).content.mkString
+  def read = ammonite.ops.read ! classLoader.getResourceAsStream( fileName )
 }
 object ClasspathInputFile {
   def apply( fileName: String ): ClasspathInputFile =

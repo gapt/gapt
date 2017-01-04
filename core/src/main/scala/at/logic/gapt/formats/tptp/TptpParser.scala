@@ -3,7 +3,7 @@ package at.logic.gapt.formats.tptp
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.InputFile
 import org.parboiled2._
-import better.files._
+import ammonite.ops._
 
 import scala.util.{ Failure, Success }
 
@@ -120,8 +120,8 @@ object TptpParser {
   }
 
   def load( file: InputFile ): TptpFile =
-    resolveIncludes( parse( file ), fileName => parse( fileName.toFile ) )
+    resolveIncludes( parse( file ), fileName => parse( FilePath( fileName ) ) )
 
   def main( args: Array[String] ): Unit =
-    print( load( args.head.toFile ) )
+    print( load( FilePath( args.head ) ) )
 }

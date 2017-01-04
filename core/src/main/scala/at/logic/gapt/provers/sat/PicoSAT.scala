@@ -6,6 +6,8 @@ import at.logic.gapt.expr.Top
 import at.logic.gapt.formats.dimacs.{ DIMACS, readDIMACS, readDRUP, writeDIMACS }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
 
+import ammonite.ops._
+
 private object picoSatHelper {
   def getDefaultExecutableName() =
     try {
@@ -26,12 +28,12 @@ class PicoSAT( command: String* ) extends DrupSolver with ExternalProgram {
       withTempFile { drupOutputFile =>
         withTempFile { modelOutputFile =>
           runProcess.withExitValue( command ++ Seq(
-            "-r", drupOutputFile.pathAsString,
-            "-o", modelOutputFile.pathAsString,
-            dimacsInputFile.pathAsString
+            "-r", drupOutputFile.toString,
+            "-o", modelOutputFile.toString,
+            dimacsInputFile.toString
           ) ) match {
-            case ( 10, _ ) => /* SAT */ Right( modelOutputFile.contentAsString )
-            case ( 20, _ ) => /* UNSAT */ Left( drupOutputFile.contentAsString )
+            case ( 10, _ ) => /* SAT */ Right( read ! modelOutputFile )
+            case ( 20, _ ) => /* UNSAT */ Left( read ! drupOutputFile )
             case ( 1, str ) =>
               throw new Exception( s"Error executing external sat prover $command: $str" )
           }

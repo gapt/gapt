@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import better.files._
+import ammonite.ops._
 import at.logic.gapt.expr.HOLFormula
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs._
@@ -156,15 +156,15 @@ class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[H
     chooser.showSaveDialog( mBar ) match {
       case FileChooser.Result.Approve =>
         scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-        val result = chooser.selectedFile.getPath
+        val result = chooser.selectedFile.getAbsolutePath
         // val pair = body.getContent.getData.get
         try {
           if ( result.endsWith( ".llk" ) || chooser.fileFilter.getDescription == ".llk" ) {
             val filename = if ( result.endsWith( ".llk" ) ) result else result + ".llk"
-            filename.toFile < exportLLK( proof )
+            write( Path( filename ), exportLLK( proof ) )
           } else if ( result.endsWith( ".tex" ) || chooser.fileFilter.getDescription == ".tex" ) {
             val filename = if ( result.endsWith( ".tex" ) ) result else result + ".tex"
-            filename.toFile < LatexExporter( proof )
+            write( Path( filename ), LatexExporter( proof ) )
           } else infoMessage( "Proofs cannot be saved in this format." )
         } catch { case e: Throwable => errorMessage( "Cannot save the proof! " + dnLine + getExceptionString( e ) ) }
         finally { scrollPane.cursor = java.awt.Cursor.getDefaultCursor }

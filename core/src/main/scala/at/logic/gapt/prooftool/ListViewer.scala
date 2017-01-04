@@ -1,6 +1,6 @@
 package at.logic.gapt.prooftool
 
-import better.files._
+import ammonite.ops._
 
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
@@ -28,7 +28,7 @@ class ListViewer( name: String, list: List[HOLSequent] ) extends ScrollableProof
           }
           if ( result.endsWith( ".tptp" ) || chooser.fileFilter.getDescription == ".tptp" ) {
             val filename = if ( result.endsWith( ".tptp" ) ) result else result + ".tptp"
-            filename.toFile < TPTPFOLExporter( existentialClosure( ls.map( _.toImplication ) ++: Sequent() ) ).toString
+            write( Path( filename, pwd ), TPTPFOLExporter( existentialClosure( ls.map( _.toImplication ) ++: Sequent() ) ).toString )
           } else infoMessage( "Lists cannot be saved in this format." )
         } catch { case e: Throwable => errorMessage( "Cannot save the list! " + dnLine + getExceptionString( e ) ) }
         finally { mainPanel.cursor = java.awt.Cursor.getDefaultCursor }

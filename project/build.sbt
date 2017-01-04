@@ -1,9 +1,9 @@
 resolvers += Classpaths.sbtPluginReleases
 logLevel := Level.Warn
 
-libraryDependencies += "org.apache.commons" % "commons-compress" % "1.12"
+libraryDependencies += "org.apache.commons" % "commons-compress" % "1.13"
 
-addSbtPlugin( "org.scoverage" %% "sbt-scoverage" % "1.4.0" )
+addSbtPlugin( "org.scoverage" %% "sbt-scoverage" % "1.5.0" )
 
 // Provides an assembly task which produces a fat jar with all dependencies included.
 addSbtPlugin( "com.eed3si9n" % "sbt-assembly" % "0.14.3" )

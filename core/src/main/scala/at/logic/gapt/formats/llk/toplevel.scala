@@ -3,7 +3,7 @@ package at.logic.gapt.formats.llk
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
 import at.logic.gapt.proofs.lk.LKProof
 
-import better.files._
+import ammonite.ops._
 
 import at.logic.gapt.formats.InputFile
 
@@ -32,7 +32,7 @@ object exportLLK {
     """.stripMargin
   def apply( lkproof: LKProof, enable_latex: Boolean ) = LLKExporter( lkproof, enable_latex )
   def apply( lkproof: LKProof ) = LLKExporter( lkproof, true )
-  def apply( lkproof: LKProof, filename: String ) = filename.toFile < LLKExporter( lkproof, true )
+  def apply( lkproof: LKProof, filename: String ) = write( Path( filename, pwd ), LLKExporter( lkproof, true ) )
 }
 
 object parseLLKExp {
