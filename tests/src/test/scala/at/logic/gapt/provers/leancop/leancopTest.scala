@@ -1,11 +1,12 @@
 package at.logic.gapt.provers.leancop
 
+import at.logic.gapt.examples.BussTautology
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Sequent, HOLSequent }
-
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class LeanCoPProverTest extends Specification {
+class LeanCoPProverTest extends Specification with SatMatchers {
   args( skipAll = !LeanCoP.isInstalled )
 
   "LeanCoP" should {
@@ -39,8 +40,20 @@ class LeanCoPProverTest extends Specification {
       LeanCoP.getExpansionProof( seq ) must beSome
     }
 
-    //    "validate the buss tautology for n=1" in { leanCoP.isValid( BussTautology( 1 ) ) must beTrue }
+    "linear example" in {
+      LeanCoP getExpansionProof hof"p 0 & !x (p x -> p (s x)) -> p (s (s (s 0)))" must beLike {
+        case Some( expansion ) =>
+          expansion.deep must beValidSequent
+      }
+    }
 
-    // top/bottom cannot be parsed yet
+    "validate the buss tautology for n=2" in { LeanCoP.isValid( BussTautology( 2 ) ) must beTrue }
+
+    "not prove a or b" in { LeanCoP getExpansionProof hof"a | b" must beNone }
+
+    "prove top" in { LeanCoP.getLKProof( Sequent() :+ Top() ) must beSome }
+    "not prove bottom" in { LeanCoP.getLKProof( Sequent() :+ Bottom() ) must beNone }
+    "not refute top" in { LeanCoP.getLKProof( Top() +: Sequent() ) must beNone }
+    "refute bottom" in { LeanCoP.getLKProof( Bottom() +: Sequent() ) must beSome }
   }
 }

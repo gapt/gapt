@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.expansion
 
+import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 
@@ -7,13 +8,16 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
 
   def export( et: ExpansionTree ): String = {
     val knownTypesFromSig = knownConstantTypesFromSig( constants( et.deep ) union constants( et.shallow ) )
-    pretty( group( show( et, knownTypesFromSig.toMap, prio.max )._1 ) )
+    pretty( group( show( et, knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
 
-  def addPol( doc: Doc, pol: Boolean ) =
-    if ( pol ) doc <> "+" else doc <> "-"
+  def addPol( doc: Doc, pol: Polarity ) =
+    pol match {
+      case Positive => doc <> "+"
+      case Negative => doc <> "-"
+    }
 
-  def show( et: ExpansionTree, t0: Map[String, LambdaExpression], p: Int ): ( Doc, Map[String, LambdaExpression] ) = et match {
+  def show( et: ExpansionTree, t0: Map[String, VarOrConst], p: Int ): ( Doc, Map[String, VarOrConst] ) = et match {
     case ETTop( pol )    => ( addPol( "⊤", pol ), t0 )
     case ETBottom( pol ) => ( addPol( "⊥", pol ), t0 )
     case ETWeakening( f, pol ) =>
@@ -61,7 +65,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
           t2 = t4
           ( pretty( term_ ), group( nest( "+^{" <> term_ <> "}" <@> child_ ) ) )
       }
-      parenIf( p, prio.conj, vsep( sh_ +: insts_.sortBy( _._1 ).map( _._2 ) ) ) -> t2
+      parenIf( p, prio.conj, vsep( sh_ +: insts_.sortBy( _._1.layout ).map( _._2 ) ) ) -> t2
     case et @ ETDefinedAtom( atom, pol, _ ) =>
       val ( sh_, t1 ) = show( et.shallow, true, Set(), t0, prio.conj )
       val ( child_, t2 ) = show( ETAtom( atom, pol ), t1, prio.conj )

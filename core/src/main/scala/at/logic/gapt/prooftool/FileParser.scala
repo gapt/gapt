@@ -1,43 +1,31 @@
 package at.logic.gapt.prooftool
 
-import java.io.{ FileInputStream, InputStream, InputStreamReader }
-import java.util.zip.GZIPInputStream
-
 import at.logic.gapt.formats.ivy.IvyParser
-import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ HOLSequent, SequentProof, lk }
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, loadLLK }
+import at.logic.gapt.proofs.resolution.ResolutionProof
 
-import scala.swing.Dialog
+import ammonite.ops._
 
 class FileParser( main: ProofToolViewer[_] ) {
 
   def ivyFileReader( path: String ) {
-    val ivy = IvyToRobinson( IvyParser( path ) )
-    // proofdb = new ProofDatabase(Map(), ("ivy_proof", RobinsonToLK(ivy))::Nil, Nil, Nil)
+    val ivy = IvyToResolution( IvyParser( FilePath( path ) ) )
     resProofs = ( "ivy_proof", ivy ) :: Nil
   }
 
   def llkFileReader( filename: String ) {
     resProofs = Nil
-    //  val start = System.currentTimeMillis()
-    proofdb = loadLLK( filename )
-    //  val end = System.currentTimeMillis()
-    //  println("parsing took " + (end - start).toString)
+    proofdb = loadLLK( FilePath( filename ) )
   }
 
   def parseFile( path: String ) {
     val dnLine = sys.props( "line.separator" ) + sys.props( "line.separator" )
     try {
       if ( path.endsWith( ".llk" ) ) llkFileReader( path )
-      //      else if ( path.endsWith( ".lksc" ) ) lksCNTFileReader( fileStreamReader( path ) )
-      //      else if ( path.endsWith( ".lks" ) ) lksFileReader( fileStreamReader( path ) )
-      //      else if ( path.endsWith( ".lks.gz" ) ) lksFileReader( gzFileStreamReader( path ) )
       else if ( path.endsWith( ".ivy" ) ) ivyFileReader( path )
-      //  else if (path.endsWith(".ivy.gz")) ivyFileReader(path) // This will be added later
       else main.warningMessage( "Can not recognize file extension: " + path.substring( path.lastIndexOf( "." ) ) )
-      main.publisher.publish( ProofDbChanged )
     } catch {
       case err: Throwable =>
         main.errorMessage( "Could not load file: " + path + "!" + dnLine + main.getExceptionString( err ) )
@@ -49,7 +37,7 @@ class FileParser( main: ProofToolViewer[_] ) {
   def getResolutionProofs = resProofs
 
   private var proofdb = ExtendedProofDatabase( Map(), Map(), Map() )
-  private var resProofs: List[( String, SequentProof[_, _] )] = Nil
+  private var resProofs: List[( String, ResolutionProof )] = Nil
 
   object TermType extends Enumeration {
     val ClauseTerm, ProjectionTerm, ResolutionTerm, Unknown = Value

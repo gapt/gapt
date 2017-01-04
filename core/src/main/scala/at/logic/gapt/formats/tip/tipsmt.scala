@@ -3,14 +3,16 @@ package at.logic.gapt.formats.tip
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.lisp._
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
 import scala.collection.mutable
-import scala.io.Source
 
 class TipSmtParser {
+  var ctx = Context()
+
   val typeDecls = mutable.Map[String, TBase]()
   val funDecls = mutable.Map[String, Const]()
 
@@ -27,24 +29,35 @@ class TipSmtParser {
 
   def parse( sexp: SExpression ) = sexp match {
     case LFun( "declare-sort", LAtom( name ), LAtom( "0" ) ) =>
-      declare( TBase( name ) )
+      val t = TBase( name )
+      declare( t )
+      ctx += t
     case LFun( "declare-datatypes", LList(), LList( LFun( name, constructors @ _* ) ) ) =>
       val t = TBase( name )
       declare( t )
       val dt = TipDatatype( t, constructors map { parseConstructor( _, t ) } )
+      ctx += Context.InductiveType( t, dt.constructors.map( _.constr ) )
       datatypes += dt
       dt.constructors foreach { ctr =>
         declare( ctr.constr )
-        ctr.projectors foreach declare
+        for ( proj <- ctr.projectors ) {
+          declare( proj )
+          ctx += proj
+        }
       }
     case LFun( "declare-const", LAtom( name ), LAtom( typeName ) ) =>
-      declare( Const( name, typeDecls( typeName ) ) )
+      val c = Const( name, typeDecls( typeName ) )
+      declare( c )
+      ctx += c
     case LFun( "declare-fun", LAtom( name ), LList( argTypes @ _* ), LAtom( retType ) ) =>
-      declare( Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) ) )
+      val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) )
+      declare( f )
+      ctx += f
     case LFun( "define-fun" | "define-fun-rec", LAtom( name ), LList( args @ _* ), LAtom( retType ), body ) =>
       val argVars = for ( LFun( argName, LAtom( argType ) ) <- args ) yield Var( argName, typeDecls( argType ) )
       val funConst = Const( name, FunctionType( typeDecls( retType ), argVars.map( _.exptype ) ) )
       declare( funConst )
+      ctx += funConst
       functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
     case LFun( "assert", formula ) =>
       assumptions += parseExpression( formula, Map() ).asInstanceOf[HOLFormula]
@@ -129,6 +142,7 @@ class TipSmtParser {
 
   def toProblem: TipProblem =
     TipProblem(
+      ctx,
       typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions,
@@ -137,17 +151,14 @@ class TipSmtParser {
 }
 
 object TipSmtParser extends ExternalProgram {
-  def parse( tipBench: String ): TipProblem = {
+  def parse( tipBench: InputFile ): TipProblem = {
     val tipSmtParser = new TipSmtParser
-    SExpressionParser.parseString( tipBench ) foreach tipSmtParser.parse
+    SExpressionParser( tipBench ) foreach tipSmtParser.parse
     tipSmtParser.toProblem
   }
 
-  def parseFile( filename: String ): TipProblem =
-    parse( Source fromFile filename mkString )
-
-  def fixupAndParse( contents: String ): TipProblem =
-    parse( runProcess(
+  def fixupAndParse( tipBench: InputFile ): TipProblem =
+    parse( StringInputFile( runProcess(
       Seq(
         "tip",
         "--type-skolem-conjecture",
@@ -159,12 +170,9 @@ object TipSmtParser extends ExternalProgram {
         "--uncurry-theory",
         "--let-lift"
       ),
-      contents,
+      tipBench.read,
       catchStderr = true
-    ) )
-
-  def fixupAndParseFile( filename: String ): TipProblem =
-    fixupAndParse( Source fromFile filename mkString )
+    ) ) )
 
   val isInstalled =
     try { runProcess( Seq( "tip", "--help" ), "" ); true }

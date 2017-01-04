@@ -1,6 +1,5 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.formats.latex.UnicodeToLatex
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.lk._
@@ -181,9 +180,9 @@ class LLKExporter( val expandTex: Boolean ) {
     case EqualityRightRule( p1, _, _, _ ) =>
       generateProof( p1, "\\UEQR" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     //definition rules
-    case DefinitionLeftRule( p1, _, _ ) =>
+    case DefinitionLeftRule( p1, _, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
-    case DefinitionRightRule( p1, _, _ ) =>
+    case DefinitionRightRule( p1, _, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
 
     //TODO: this is only a way to write out the proof, but it cannot be read back in (labels are not handled by llk so far)

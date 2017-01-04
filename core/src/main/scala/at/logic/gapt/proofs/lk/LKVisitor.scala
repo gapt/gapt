@@ -29,7 +29,7 @@ trait LKVisitor[T] {
     ( result._1, result._2 )
   }
 
-  final def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = proof match {
+  protected def recurse( proof: LKProof, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
     case p: OpenAssumption =>
       visitOpenAssumption( p, otherArg )
 
@@ -93,8 +93,14 @@ trait LKVisitor[T] {
     case p: ForallRightRule =>
       visitForallRight( p, otherArg )
 
+    case p: ForallSkRightRule =>
+      visitForallSkRight( p, otherArg )
+
     case p: ExistsLeftRule =>
       visitExistsLeft( p, otherArg )
+
+    case p: ExistsSkLeftRule =>
+      visitExistsSkLeft( p, otherArg )
 
     case p: ExistsRightRule =>
       visitExistsRight( p, otherArg )
@@ -115,205 +121,195 @@ trait LKVisitor[T] {
       visitDefinitionRight( p, otherArg )
   }
 
+  def transportToSubProof( arg: T, proof: LKProof, subProofIdx: Int ): T = arg
+
+  def one2one( proof: LKProof, arg: T )( func: Seq[( LKProof, OccConnector[HOLFormula] )] => LKProof ): ( LKProof, OccConnector[HOLFormula] ) = {
+    val visitedChildren =
+      for ( ( subProof, idx ) <- proof.immediateSubProofs.zipWithIndex )
+        yield recurse( subProof, transportToSubProof( arg, proof, idx ) )
+    val newProof = func( visitedChildren )
+    val conn = ( newProof.occConnectors, visitedChildren, proof.occConnectors ).zipped.map( _ * _._2 * _.inv ).reduce( _ + _ )
+    ( newProof, conn )
+  }
+
+  def withIdentityOccConnector( proof: LKProof ): ( LKProof, OccConnector[HOLFormula] ) =
+    ( proof, OccConnector( proof.endSequent ) )
+
   /*
    * Visiting methods. The implementations given here simply reconstruct the corresponding rule.
    * Different proof transformations can be implemented by overriding some of these methods.
    */
 
-  protected def visitOpenAssumption( proof: OpenAssumption, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( proof, OccConnector( proof.endSequent ), otherArg )
+  protected def visitOpenAssumption( proof: OpenAssumption, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( proof, OccConnector( proof.endSequent ), otherArg )
+  protected def visitLogicalAxiom( proof: LogicalAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( proof, OccConnector( proof.endSequent ), otherArg )
+  protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( proof, OccConnector( proof.endSequent ), otherArg )
+  protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( proof )
 
-  protected def visitTopAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( TopAxiom, OccConnector( TopAxiom.endSequent ), otherArg )
+  protected def visitTopAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( TopAxiom )
 
-  protected def visitBottomAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = ( BottomAxiom, OccConnector( BottomAxiom.endSequent ), otherArg )
+  protected def visitBottomAxiom( otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = withIdentityOccConnector( BottomAxiom )
 
-  protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
+  protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = {
+    val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
     val proofNew = WeakeningLeftRule( subProofNew, proof.mainFormula )
     val connector = ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
 
-    ( proofNew, connector, otherArgNew )
+    ( proofNew, connector )
   }
 
-  protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
+  protected def visitWeakeningRight( proof: WeakeningRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) = {
+    val ( subProofNew, subConnector ) = recurse( proof.subProof, transportToSubProof( otherArg, proof, 0 ) )
     val proofNew = WeakeningRightRule( subProofNew, proof.mainFormula )
     val connector = ( proofNew.getOccConnector * subConnector * proof.getOccConnector.inv ) + ( proofNew.mainIndices( 0 ), proof.mainIndices( 0 ) )
 
-    ( proofNew, connector, otherArgNew )
+    ( proofNew, connector )
   }
 
-  protected def visitContractionLeft( proof: ContractionLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val List( aux1, aux2 ) = proof.auxIndices( 0 ) map subConnector.child
-    val proofNew = ContractionLeftRule( subProofNew, aux1, aux2 )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
+  protected def visitContractionLeft( proof: ContractionLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => ContractionLeftRule( subProof, subConn child proof.aux1, subConn child proof.aux2 ) }
 
-    ( proofNew, connector, otherArgNew )
-  }
+  protected def visitContractionRight( proof: ContractionRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => ContractionRightRule( subProof, subConn child proof.aux1, subConn child proof.aux2 ) }
 
-  protected def visitContractionRight( proof: ContractionRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val List( aux1, aux2 ) = proof.auxIndices( 0 ) map subConnector.child
-    val proofNew = ContractionRightRule( subProofNew, aux1, aux2 )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitCut( proof: CutRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( leftSubProofNew, leftSubConnector, otherArgNew_ ) = recurse( proof.leftSubProof, otherArg )
-    val ( rightSubProofNew, rightSubConnector, otherArgNew ) = recurse( proof.rightSubProof, otherArgNew_ )
-    val ( aux1, aux2 ) = ( leftSubConnector.child( proof.aux1 ), rightSubConnector.child( proof.aux2 ) )
-    val proofNew = CutRule( leftSubProofNew, aux1, rightSubProofNew, aux2 )
-    val connector = ( proofNew.getLeftOccConnector * leftSubConnector * proof.getLeftOccConnector.inv ) + ( proofNew.getRightOccConnector * rightSubConnector * proof.getRightOccConnector.inv )
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitNegLeft( proof: NegLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = NegLeftRule( subProofNew, subConnector.child( proof.aux ) )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, otherArgNew )
-  }
-
-  protected def visitNegRight( proof: NegRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = NegRightRule( subProofNew, subConnector.child( proof.aux ) )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv, otherArgNew )
-  }
-
-  protected def visitAndLeft( proof: AndLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val List( aux1, aux2 ) = proof.auxIndices( 0 ) map subConnector.child
-    val proofNew = AndLeftRule( subProofNew, aux1, aux2 )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitAndRight( proof: AndRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( leftSubProofNew, leftSubConnector, otherArgNew_ ) = recurse( proof.leftSubProof, otherArg )
-    val ( rightSubProofNew, rightSubConnector, otherArgNew ) = recurse( proof.rightSubProof, otherArgNew_ )
-    val proofNew = AndRightRule( leftSubProofNew, leftSubConnector.child( proof.aux1 ), rightSubProofNew, rightSubConnector.child( proof.aux2 ) )
-    ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * proof.getLeftOccConnector.inv ) + ( proofNew.getRightOccConnector * rightSubConnector * proof.getRightOccConnector.inv ), otherArgNew )
-  }
-
-  protected def visitOrLeft( proof: OrLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( leftSubProofNew, leftSubConnector, otherArgNew_ ) = recurse( proof.leftSubProof, otherArg )
-    val ( rightSubProofNew, rightSubConnector, otherArgNew ) = recurse( proof.rightSubProof, otherArgNew_ )
-    val proofNew = OrLeftRule( leftSubProofNew, leftSubConnector.child( proof.aux1 ), rightSubProofNew, rightSubConnector.child( proof.aux2 ) )
-    ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * proof.getLeftOccConnector.inv ) + ( proofNew.getRightOccConnector * rightSubConnector * proof.getRightOccConnector.inv ), otherArgNew )
-  }
-
-  protected def visitOrRight( proof: OrRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val List( aux1, aux2 ) = proof.auxIndices( 0 ) map subConnector.child
-    val proofNew = OrRightRule( subProofNew, aux1, aux2 )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitImpLeft( proof: ImpLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( leftSubProofNew, leftSubConnector, otherArgNew_ ) = recurse( proof.leftSubProof, otherArg )
-    val ( rightSubProofNew, rightSubConnector, otherArgNew ) = recurse( proof.rightSubProof, otherArgNew_ )
-    val proofNew = ImpLeftRule( leftSubProofNew, leftSubConnector.child( proof.aux1 ), rightSubProofNew, rightSubConnector.child( proof.aux2 ) )
-    ( proofNew, ( proofNew.getLeftOccConnector * leftSubConnector * proof.getLeftOccConnector.inv ) + ( proofNew.getRightOccConnector * rightSubConnector * proof.getRightOccConnector.inv ), otherArgNew )
-  }
-
-  protected def visitImpRight( proof: ImpRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val List( aux1, aux2 ) = proof.auxIndices( 0 ) map subConnector.child
-    val proofNew = ImpRightRule( subProofNew, aux1, aux2 )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitForallLeft( proof: ForallLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = ForallLeftRule( subProofNew, subConnector.child( proof.aux ), proof.A, proof.term, proof.v )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitForallRight( proof: ForallRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = ForallRightRule( subProofNew, subConnector.child( proof.aux ), proof.eigenVariable, proof.quantifiedVariable )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = ExistsLeftRule( subProofNew, subConnector.child( proof.aux ), proof.eigenVariable, proof.quantifiedVariable )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitExistsRight( proof: ExistsRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = ExistsRightRule( subProofNew, subConnector.child( proof.aux ), proof.A, proof.term, proof.v )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = EqualityLeftRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), proof.replacementContext )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitEqualityRight( proof: EqualityRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = EqualityRightRule( subProofNew, subConnector.child( proof.eq ), subConnector.child( proof.aux ), proof.replacementContext )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitInduction( proof: InductionRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    var otherArgNew = otherArg
-    val casesConnectors = for ( c <- proof.cases ) yield {
-      val ( subProofNew, subConnector, otherArgNew_ ) = recurse( c.proof, otherArgNew )
-      otherArgNew = otherArgNew_
-      InductionCase( subProofNew, c.constructor, c.hypotheses map subConnector.child, c.eigenVars, subConnector.child( c.conclusion ) ) -> subConnector
+  protected def visitCut( proof: CutRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof1, subConn1 ), ( subProof2, subConn2 ) ) =>
+        CutRule( subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2 )
     }
 
-    val ( casesNew, subConnectors ) = casesConnectors.unzip
-    val proofNew = InductionRule( casesNew, proof.mainFormula )
-    val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
-    val connector = if ( subConnectors_.isEmpty ) OccConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
+  protected def visitNegLeft( proof: NegLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => NegLeftRule( subProof, subConn child proof.aux ) }
 
-    ( proofNew, connector, otherArgNew )
+  protected def visitNegRight( proof: NegRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => NegRightRule( subProof, subConn child proof.aux ) }
+
+  protected def visitAndLeft( proof: AndLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => AndLeftRule( subProof, subConn child proof.aux1, subConn child proof.aux2 ) }
+
+  protected def visitAndRight( proof: AndRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof1, subConn1 ), ( subProof2, subConn2 ) ) =>
+        AndRightRule( subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2 )
+    }
+
+  protected def visitOrLeft( proof: OrLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof1, subConn1 ), ( subProof2, subConn2 ) ) =>
+        OrLeftRule( subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2 )
+    }
+
+  protected def visitOrRight( proof: OrRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => OrRightRule( subProof, subConn child proof.aux1, subConn child proof.aux2 ) }
+
+  protected def visitImpLeft( proof: ImpLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof1, subConn1 ), ( subProof2, subConn2 ) ) =>
+        ImpLeftRule( subProof1, subConn1 child proof.aux1, subProof2, subConn2 child proof.aux2 )
+    }
+
+  protected def visitImpRight( proof: ImpRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { case Seq( ( subProof, subConn ) ) => ImpRightRule( subProof, subConn child proof.aux1, subConn child proof.aux2 ) }
+
+  protected def visitForallLeft( proof: ForallLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        ForallLeftRule( subProof, subConn.child( proof.aux ), proof.A, proof.term, proof.v )
+    }
+
+  protected def visitForallRight( proof: ForallRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        ForallRightRule( subProof, subConn.child( proof.aux ), proof.eigenVariable, proof.quantifiedVariable )
+    }
+
+  protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        ForallSkRightRule( subProof, subConn.child( proof.aux ), proof.mainFormula, proof.skolemTerm, proof.skolemDef )
+    }
+
+  protected def visitExistsLeft( proof: ExistsLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        ExistsLeftRule( subProof, subConn.child( proof.aux ), proof.eigenVariable, proof.quantifiedVariable )
+    }
+
+  protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        ExistsSkLeftRule( subProof, subConn.child( proof.aux ), proof.mainFormula, proof.skolemTerm, proof.skolemDef )
+    }
+
+  protected def visitExistsRight( proof: ExistsRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        ExistsRightRule( subProof, subConn.child( proof.aux ), proof.A, proof.term, proof.v )
+    }
+
+  protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        EqualityLeftRule( subProof, subConn.child( proof.eq ), subConn.child( proof.aux ), proof.replacementContext )
+    }
+
+  protected def visitEqualityRight( proof: EqualityRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        EqualityRightRule( subProof, subConn.child( proof.eq ), subConn.child( proof.aux ), proof.replacementContext )
+    }
+
+  protected def visitInduction( proof: InductionRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) { subProofs =>
+      InductionRule(
+        for ( ( c, ( subProof, subConn ) ) <- proof.cases zip subProofs )
+          yield InductionCase( subProof, c.constructor, c.hypotheses map subConn.child, c.eigenVars, subConn.child( c.conclusion ) ),
+        proof.formula, proof.term
+      )
+    }
+
+  protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        DefinitionLeftRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
+    }
+
+  protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula] ) =
+    one2one( proof, otherArg ) {
+      case Seq( ( subProof, subConn ) ) =>
+        DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
+    }
+
+  /**
+   * Transforms a visiting function by inserting contractions after it.
+   * Only formula occurrences that were not in the old proof -- i.e., that have been added by the visitor -- are contracted.
+   * @param visitingFunction The visiting function after which contractions should be inserted.
+   *                         In most cases, just using `recurse` here should be fine.
+   * @return A new visiting function that behaves the same as the old one, but contracts all duplicate new formulas at the end.
+   */
+  def contractAfter[A]( visitingFunction: ( LKProof, A ) => ( LKProof, OccConnector[HOLFormula] ) ): ( LKProof, A ) => ( LKProof, OccConnector[HOLFormula] ) = { ( proof, otherArg ) =>
+    val ( subProof, subConn ) = visitingFunction( proof, otherArg )
+
+    val newFormulas = subProof.endSequent.indicesSequent
+      .filter { subConn.parents( _ ).isEmpty } // Formula occurrences that were not in the old proof
+      .groupBy( subProof.endSequent( _ ) ) // Group them by formula
+      .filterNot( _._2.length < 2 ) // Take only the formulas with at least two occurrences
+      .map { _._2 } // Take only the indices
+
+    val ( leftProof, leftConn ) = newFormulas.antecedent.foldLeft( ( subProof, OccConnector( subProof.endSequent ) ) ) { ( acc, indices ) =>
+      val ( p, c ) = acc
+      val ( pNew, cNew ) = ContractionLeftMacroRule.withOccConnector( p, indices map { c.child } )
+      ( pNew, cNew * c )
+    }
+
+    val ( rightProof, rightConn ) = newFormulas.succedent.foldLeft( ( leftProof, leftConn ) ) { ( acc, indices ) =>
+      val ( p, c ) = acc
+      val ( pNew, cNew ) = ContractionRightMacroRule.withOccConnector( p, indices map { c.child } )
+      ( pNew, cNew * c )
+    }
+
+    ( rightProof, rightConn * subConn )
   }
-
-  protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), proof.main )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
-  protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: T ): ( LKProof, OccConnector[HOLFormula], T ) = {
-    val ( subProofNew, subConnector, otherArgNew ) = recurse( proof.subProof, otherArg )
-    val proofNew = DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), proof.main )
-    val connector = proofNew.getOccConnector * subConnector * proof.getOccConnector.inv
-
-    ( proofNew, connector, otherArgNew )
-  }
-
 }

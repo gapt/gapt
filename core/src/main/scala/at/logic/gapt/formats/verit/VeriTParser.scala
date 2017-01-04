@@ -2,9 +2,13 @@ package at.logic.gapt.formats.verit
 
 import at.logic.gapt.expr.BetaReduction._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ removeQuantifiers, instantiate, isPrenex }
+import at.logic.gapt.expr.hol.{ instantiate, isPrenex }
 import at.logic.gapt.proofs.expansion._
-import java.io.{ Reader, FileReader }
+import java.io.{ FileReader, Reader, StringReader }
+
+import at.logic.gapt.formats.InputFile
+import at.logic.gapt.proofs.Sequent
+
 import scala.collection.immutable.HashMap
 import scala.util.parsing.combinator._
 
@@ -13,29 +17,19 @@ class VeriTUnfoldingTransitivityException( msg: String ) extends Exception( msg:
 
 object VeriTParser extends RegexParsers {
 
-  type Instances = ( FOLFormula, List[FOLFormula] )
+  type Instances = Seq[( FOLFormula, Seq[FOLTerm] )]
 
   private val nLine = sys.props( "line.separator" )
 
-  def getEqReflInstances( f: List[FOLFormula] ): Instances = {
-    val x = FOLVar( "x" )
-    val eq_refl = All( x, Eq( x, x ) )
-    ( eq_refl, f )
-  }
+  private val reflAx = fof"!x x=x"
+  private def getEqReflInstances( f: List[FOLFormula] ): Instances =
+    f map { case Eq( t, t_ ) if t == t_ => reflAx -> Seq( t ) }
 
   // Assuming all the antecedents of the implication are ordered:
   // ( =(x0, x1)  ^  =(x1, x2)  ^ ... ^  =(xn-1, xn)  ->  =(x0, xn) )
   // in veriT is *always* ( not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) )
+  private val transAx = fof"!x!y!z (x=y & y=z -> x=z)"
   def getEqTransInstances( l: List[FOLFormula] ): Instances = {
-    val x = FOLVar( "x" )
-    val y = FOLVar( "y" )
-    val z = FOLVar( "z" )
-    val eq1 = Eq( x, y )
-    val eq2 = Eq( y, z )
-    val eq3 = Eq( x, z )
-    val imp = Imp( And( eq1, eq2 ), eq3 )
-    val eq_trans = All( x, All( y, All( z, imp ) ) )
-
     // Transforms a transitivity chain (represented as a list):
     //
     // [ not =(x0, x1) , not =(x1, x2) , ... , not =(xn-1, xn) , =(x0, xn) ]
@@ -48,7 +42,7 @@ object VeriTParser extends RegexParsers {
     // =(x0, xn-1) ^ =(xn-1, xn) -> =(x0, xn)
     //
     def unfoldChain( l: List[FOLFormula] ) = unfoldChain_( l.tail, l( 0 ) )
-    def unfoldChain_( l: List[FOLFormula], c: FOLFormula ): List[FOLFormula] = l.head match {
+    def unfoldChain_( l: List[FOLFormula], c: FOLFormula ): List[Seq[FOLTerm]] = l.head match {
       case Neg( Eq( x0, x1 ) ) => c match {
         // Note that the variables are:
         // x2=x3 ^ x0=x1
@@ -57,42 +51,22 @@ object VeriTParser extends RegexParsers {
         // x=y ^ y=z -> x=z
         case Neg( Eq( x2, x3 ) ) if x3 == x0 =>
           val newc = Neg( Eq( x2, x1 ) )
-          // Instances
-          val f1 = instantiate( eq_trans, x2 )
-          val f2 = instantiate( f1, x0 ) // or x3, should be the same
-          val f3 = instantiate( f2, x1 )
-
-          f3 :: unfoldChain_( l.tail, newc )
+          Seq( x2, x0, x1 ) :: unfoldChain_( l.tail, newc )
 
         // x=y ^ z=y -> x=z
         case Neg( Eq( x2, x3 ) ) if x3 == x1 =>
           val newc = Neg( Eq( x2, x0 ) )
-          // Instances
-          val f1 = instantiate( eq_trans, x2 )
-          val f2 = instantiate( f1, x1 ) // or x3, should be the same
-          val f3 = instantiate( f2, x0 )
-
-          f3 :: unfoldChain_( l.tail, newc )
+          Seq( x2, x1, x0 ) :: unfoldChain_( l.tail, newc )
 
         // y=x ^ z=y -> x=z
         case Neg( Eq( x2, x3 ) ) if x2 == x1 =>
           val newc = Neg( Eq( x3, x0 ) )
-          // Instances
-          val f1 = instantiate( eq_trans, x3 )
-          val f2 = instantiate( f1, x1 ) // or x2, should be the same
-          val f3 = instantiate( f2, x0 )
-
-          f3 :: unfoldChain_( l.tail, newc )
+          Seq( x3, x1, x0 ) :: unfoldChain_( l.tail, newc )
 
         // y=x ^ y=z -> x=z
         case Neg( ( Eq( x2, x3 ) ) ) if x2 == x0 =>
           val newc = Neg( Eq( x3, x1 ) )
-          // Instances
-          val f1 = instantiate( eq_trans, x3 )
-          val f2 = instantiate( f1, x0 ) // or x2, should be the same
-          val f3 = instantiate( f2, x1 )
-
-          f3 :: unfoldChain_( l.tail, newc )
+          Seq( x3, x0, x1 ) :: unfoldChain_( l.tail, newc )
 
         case Neg( ( Eq( x2, x3 ) ) ) =>
           throw new VeriTUnfoldingTransitivityException( "ERROR: the conclusion of the previous terms have" +
@@ -122,7 +96,7 @@ object VeriTParser extends RegexParsers {
     }
 
     val instances = unfoldChain( l )
-    ( eq_trans, instances )
+    instances map { transAx -> _ }
   }
 
   // Assuming all the antecedents of the implication are ordered:
@@ -130,48 +104,21 @@ object VeriTParser extends RegexParsers {
   // in veriT is *always* ( not =(x0, y0) , not =(x1, y1) , ... , not =(xn, yn), =(f x0...xn, f y0...yn) )
   def getEqCongrInstances( f: List[FOLFormula] ): Instances = {
 
-    def getFunctionName( f: FOLFormula ): String = f match {
-      case Eq( f1, _ ) => f1 match {
-        case FOLFunction( n, _ ) => n.toString
-      }
-    }
-
-    def getArgsLst( f: FOLFormula ) = f match {
-      case Eq( f1, f2 ) => ( f1, f2 ) match {
-        case ( FOLFunction( _, args1 ), FOLFunction( _, args2 ) ) => ( args1, args2 )
-      }
-    }
-
     // Generate the eq_congruent formula with the right number of literals
-    def gen_eq_congr( n: Int, fname: String ): FOLFormula = {
+    def gen_eq_congr( n: Int, fname: Const ): FOLFormula = {
       val listX = ( for { i <- 1 to n } yield FOLVar( "x" + i ) ).toList
       val listY = ( for { i <- 1 to n } yield FOLVar( "y" + i ) ).toList
       val equalities = ( listX, listY ).zipped map ( Eq( _, _ ) )
-      val conj = And( equalities )
-      val name = fname
-      val f1 = FOLFunction( name, listX )
-      val f2 = FOLFunction( name, listY )
-      val last_eq = Eq( f1, f2 )
-      val matrix = Imp( conj, last_eq )
+      val matrix = And( equalities ) --> ( fname( listX ) === fname( listY ) )
 
-      val quantY = listY.foldRight( matrix ) {
-        case ( yi, f ) => All( yi, f )
-      }
-
-      listX.foldRight( quantY ) {
-        case ( xi, f ) => All( xi, f )
-      }
+      All.Block( listX ++ listY, matrix ).asInstanceOf[FOLFormula]
     }
 
-    val fname = getFunctionName( f.last )
-    val n = getArgsLst( f.last )._1.size
-    val eq_congr = gen_eq_congr( n, fname )
+    val Eq( Apps( fname: Const, args1 ), Apps( _, args2 ) ) = f.last
 
-    val ( args1, args2 ) = getArgsLst( f.last )
-    val eqs_correct = ( args1, args2 ).zipped map ( Eq( _, _ ) )
-    val instance = Imp( And( eqs_correct ), f.last )
+    val eq_congr = gen_eq_congr( args1.size, fname )
 
-    ( eq_congr, List( instance ) )
+    Seq( ( eq_congr, args1 ++ args2 map { _.asInstanceOf[FOLTerm] } ) )
   }
 
   // Assuming all the antecedents of the implication are ordered:
@@ -213,26 +160,18 @@ object VeriTParser extends RegexParsers {
     }
 
     val pname = getPredName( f.last )
-    val n = getArgsLst( f( f.length - 2 ), f( f.length - 1 ) )._1.size
-    val eq_congr_pred = gen_eq_congr_pred( n, pname )
-
     val ( args1, args2 ) = getArgsLst( f( f.length - 2 ), f( f.length - 1 ) )
-    val eqs_correct = ( args1, args2 ).zipped map ( Eq( _, _ ) )
-    val ( p1, p2 ) = ( f( f.length - 2 ), f( f.length - 1 ) ) match {
-      case ( Neg( f1 ), f2 ) => ( f1, f2 )
-      case ( f1, Neg( f2 ) ) => ( f2, f1 )
-    }
-    val instance = Imp( And( eqs_correct :+ p1 ), p2 )
+    val eq_congr_pred = gen_eq_congr_pred( args1.size, pname )
 
-    ( eq_congr_pred, List( instance ) )
+    Seq( ( eq_congr_pred, args1 ++ args2 ) )
   }
 
-  def getExpansionProof( filename: String ): Option[ExpansionSequent] = {
-    getExpansionProof( new FileReader( filename ) )
+  def getExpansionProof( file: InputFile ): Option[ExpansionSequent] = {
+    getExpansionProof( new StringReader( file.read ) )
   }
 
-  def getExpansionProofWithSymmetry( fileName: String ): Option[ExpansionSequent] =
-    getExpansionProof( fileName ) map { addSymmetry( _ ) }
+  def getExpansionProofWithSymmetry( file: InputFile ): Option[ExpansionSequent] =
+    getExpansionProof( file ) map { addSymmetry( _ ) }
 
   // NOTE: The expansion proof returned is a tautology modulo symmetry!!!!
   def getExpansionProof( reader: Reader ): Option[ExpansionSequent] = {
@@ -245,7 +184,7 @@ object VeriTParser extends RegexParsers {
     }
   }
 
-  def isUnsat( filename: String ): Boolean = isUnsat( new FileReader( filename ) )
+  def isUnsat( file: InputFile ): Boolean = isUnsat( new StringReader( file.read ) )
 
   def isUnsat( reader: Reader ): Boolean = {
     parseAll( parseUnsat, reader ) match {
@@ -279,36 +218,15 @@ object VeriTParser extends RegexParsers {
 
       val axioms = r.map( p => p._2 ).flatten
 
-      // Join the instances of the same quantified formula
-      val keys = axioms.map( p => p._1 ).distinct
-      val joinedInst = keys.foldLeft( List[Instances]() ) {
-        case ( acc, f ) =>
-          val keyf = axioms.filter( p => p._1 == f )
-          val allInst = keyf.foldLeft( List[FOLFormula]() )( ( acc, p ) => p._2 ++ acc )
-          ( f, allInst.distinct ) :: acc
-      }
-
       // Transform all pairs into expansion trees
-      val inputET = input.map( p => formulaToExpansionTree( p, false ) )
-      val axiomET = joinedInst.map {
-        case p =>
-          // Match p._1 and p._2 to get the variable mapping
-          assert( isPrenex( p._1 ) )
-          val fMatrix = removeQuantifiers( p._1 )
-          val instances = p._2
-          val subs = instances.foldLeft( List[FOLSubstitution]() ) {
-            case ( lst, instance ) =>
-              syntacticMatching( fMatrix, instance ) match {
-                case Some( s ) => s :: lst
-                case None      => lst
-              }
-          }
-          formulaToExpansionTree( p._1, subs, false )
-      }
-      val ant = axiomET ++ inputET
+      val inputET = input.map( p => formulaToExpansionTree( p, Polarity.InAntecedent ) )
 
-      val cons = List()
-      Some( new ExpansionSequent( ant.toSeq, cons.toSeq ) )
+      val axiomET = for {
+        ( ax @ All.Block( vs, _ ), insts ) <- axioms.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
+      } yield ETWeakQuantifierBlock( ax, vs.size,
+        insts.map( inst => inst -> formulaToExpansionTree( instantiate( ax, inst ), Polarity.InAntecedent ) ) )
+
+      Some( axiomET ++: inputET ++: Sequent() )
   }
 
   def parseUnsat: Parser[Boolean] = title ~ rep( success ) ~> ( unsat ^^ { case s => true } | sat ^^ { case s => false } ) <~ success
@@ -382,8 +300,7 @@ object VeriTParser extends RegexParsers {
   def expression: Parser[FOLFormula] = formula | let
   def formula: Parser[FOLFormula] = andFormula | orFormula | notFormula | implFormula | pred
 
-  def term: Parser[FOLTerm] = variable | constant | function
-  def variable: Parser[FOLTerm] = var_name ^^ { case n => FOLVar( n ) }
+  def term: Parser[FOLTerm] = constant | function
   def constant: Parser[FOLTerm] = name ^^ { case n => FOLConst( n ) }
   def function: Parser[FOLTerm] = "(" ~> name ~ rep( term ) <~ ")" ^^ {
     case name ~ args =>
@@ -432,7 +349,5 @@ object VeriTParser extends RegexParsers {
   }
 
   def name: Parser[String] = """[^ ():$]+""".r
-  // FIXME: this is a hack to read variables generated by VeriTExporter
-  def var_name: Parser[String] = """[^ ():$]+""".r <~ "$"
 
 }

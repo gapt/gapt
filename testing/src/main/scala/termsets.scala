@@ -1,13 +1,16 @@
 package at.logic.gapt.testing
-import java.nio.file._
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.FOLInstanceTermEncoding
+import at.logic.gapt.proofs.expansion.InstanceTermEncoding
+import at.logic.gapt.proofs.loadExpansionProof
 
 import scala.App
+import ammonite.ops._
 
 object dumpTermset extends App {
   val Array( inputFileName, outputFileName ) = args
+  val inputPath = Path( inputFileName, pwd )
+  val outputPath = Path( outputFileName, pwd )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
     val renaming: Map[LambdaExpression, LambdaExpression] =
@@ -23,10 +26,10 @@ object dumpTermset extends App {
   }
 
   def writeTermset( outFile: Path, termset: Set[FOLTerm] ) =
-    Files.write( outFile, termset.map( termToString ).toSeq.
-      sorted.map( _ + "\n" ).mkString.getBytes( "UTF-8" ) )
+    write.over( outFile, termset.map( termToString ).toSeq.sorted.map( _ + "\n" ).mkString )
 
-  val Some( ( expansionProof, _ ) ) = loadProof( inputFileName )
-  val termSet = FOLInstanceTermEncoding( expansionProof )._1
-  writeTermset( Paths get outputFileName, simplifyNames( termSet ) )
+  val expansionProof = loadExpansionProof( inputPath )
+  val encoding = InstanceTermEncoding( expansionProof.shallow, Ti )
+  val termSet = encoding.encode( expansionProof ).map( _.asInstanceOf[FOLTerm] )
+  writeTermset( outputPath, simplifyNames( termSet ) )
 }

@@ -1,7 +1,5 @@
 package at.logic.gapt.utils
 
-import at.logic.gapt.utils.logging.Logger
-
 import scala.concurrent._
 import scala.concurrent.duration._
 

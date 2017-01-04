@@ -2,7 +2,7 @@ package at.logic.gapt.examples.ntape
 
 import at.logic.gapt.examples.Script
 import at.logic.gapt.proofs.ceres.StructCreators
-import at.logic.gapt.proofs.lk.{ LKToLKsk, AtomicExpansion, regularize, DefinitionElimination }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, regularize, eliminateDefinitions }
 import java.nio.file.{ Paths, Files }
 
 import at.logic.gapt.expr.hol._

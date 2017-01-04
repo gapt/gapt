@@ -5,9 +5,8 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"
-  private def getRenaming( seq: HOLSequent ): Map[Const, Const] = getRenaming( constants( seq ) )
-  private def getRenaming( cnf: Traversable[HOLClause] ): Map[Const, Const] =
-    getRenaming( cnf.flatMap( constants( _ ) ).toSet )
+  private def getRenaming[I, O]( obj: I )( implicit ev: Replaceable[I, O] ): Map[Const, Const] =
+    getRenaming( containedNames( obj ).collect { case c: Const => c } )
   private def getRenaming( constants: Set[Const] ): Map[Const, Const] =
     constants.toSeq.zipWithIndex.map {
       case ( c @ EqC( _ ), _ ) => c -> c
@@ -15,15 +14,11 @@ object renameConstantsToFi {
     }.toMap
   private def invertRenaming( map: Map[Const, Const] ) = map.map( _.swap )
 
-  def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, Const], Map[Const, Const] ) = {
-    val renaming = getRenaming( seq )
-    val renamedSeq = TermReplacement( seq, renaming.toMap )
-    ( renamedSeq, renaming, invertRenaming( renaming ) )
-  }
-  def apply( cnf: Traversable[HOLClause] ): ( Traversable[HOLClause], Map[Const, Const], Map[Const, Const] ) = {
-    val renaming = getRenaming( cnf )
-    val renamedCNF = cnf.map( TermReplacement( _, renaming.toMap ) )
-    ( renamedCNF, renaming, invertRenaming( renaming ) )
+  def wrap[I1, O1, I2, O2]( input: I1 )( func: ( Map[Const, Const], O1 ) => I2 )( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): O2 = {
+    val renaming = getRenaming( input )
+    val renamedInput = TermReplacement( input, renaming.toMap )
+    val renamedOutput = func( renaming, renamedInput )
+    TermReplacement.hygienic( renamedOutput, renaming.map( _.swap ) )
   }
 }
 
@@ -34,12 +29,17 @@ object groundFreeVariables {
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =
-    getGroundingMap( variables( seq ), constants( seq ) )
+    getGroundingMap( freeVariables( seq ), constants( seq ) )
 
   def apply( seq: HOLSequent ): ( HOLSequent, Map[Const, Var] ) = {
     val groundingMap = getGroundingMap( seq )
     val groundSeq = Substitution( groundingMap )( seq )
     val unground = groundingMap.map { case ( f, t ) => ( t, f ) }
     ( groundSeq, unground.toMap )
+  }
+
+  def wrap[I, O]( seq: HOLSequent )( f: HOLSequent => Option[I] )( implicit ev: Replaceable[I, O] ): Option[O] = {
+    val ( renamedSeq, invertRenaming ) = groundFreeVariables( seq )
+    f( renamedSeq ) map { TermReplacement.hygienic( _, invertRenaming ) }
   }
 }

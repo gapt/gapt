@@ -1,12 +1,13 @@
 package at.logic.gapt.provers.vampire
 
+import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.{ Clause, Sequent, SequentMatchers, HOLSequent }
+import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import org.specs2.mutable._
-
 import at.logic.gapt.expr._
+import at.logic.gapt.utils.SatMatchers
 
-class VampireTest extends Specification with SequentMatchers {
+class VampireTest extends Specification with SequentMatchers with SatMatchers {
 
   args( skipAll = !Vampire.isInstalled )
 
@@ -15,7 +16,7 @@ class VampireTest extends Specification with SequentMatchers {
       val p = FOLAtom( "P", Nil )
       val s1 = HOLSequent( Nil, p :: Nil )
       val s2 = HOLSequent( p :: Nil, Nil )
-      Vampire getRobinsonProof ( s1 :: s2 :: Nil ) must beSome
+      Vampire getResolutionProof ( s1 :: s2 :: Nil ) must beSome
     }
   }
 
@@ -47,7 +48,7 @@ class VampireTest extends Specification with SequentMatchers {
       val s2 = HOLSequent( Nil, List( k ) )
       val s3 = HOLSequent( Nil, List( s ) )
       val t1 = HOLSequent( List( skk_i ), Nil )
-      Vampire getRobinsonProof List( s1, s2, s3, t1 ) must beSome
+      Vampire getResolutionProof List( s1, s2, s3, t1 ) must beSome
     }
   }
 
@@ -55,7 +56,7 @@ class VampireTest extends Specification with SequentMatchers {
     "not refute { :- P; Q :- }" in {
       val s1 = HOLSequent( Nil, List( FOLAtom( "P", Nil ) ) )
       val t1 = HOLSequent( List( FOLAtom( "Q", Nil ) ), Nil )
-      Vampire getRobinsonProof List( s1, t1 ) must beNone
+      Vampire getResolutionProof List( s1, t1 ) must beNone
     }
   }
 
@@ -100,17 +101,20 @@ class VampireTest extends Specification with SequentMatchers {
 
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      Vampire.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) =>
-          cnf must contain( atLeast( p.inputClauses ) )
-      }
+      Vampire.getResolutionProof( cnf ) must beSome
     }
 
-    "large cnf" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val as = ( 0 to 2 ) map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-      val endSequent = Sequent() :+ ( All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as ) )
-      Vampire getRobinsonProof endSequent must beSome
+    "large cnf" in { Vampire getResolutionProof CountingEquivalence( 2 ) must beSome }
+
+    "smt splitting" in {
+      val smtVampire = new Vampire( extraArgs = Seq( "-sas", "z3" ) )
+      if ( !smtVampire.isInstalled ) skipped
+      smtVampire getExpansionProof hof"""
+          a=b | b=c | c=d | !x f x = g x ->
+            f a = f b | f b = f c | f c = f d | f a = g a
+        """ must beLike {
+        case Some( proof ) => proof.deep must beEValidSequent
+      }
     }
   }
 

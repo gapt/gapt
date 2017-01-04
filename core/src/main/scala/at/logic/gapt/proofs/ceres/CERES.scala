@@ -3,15 +3,14 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.formats.llk.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, RobinsonToLK }
+import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.expr._
 import at.logic.gapt.provers.ResolutionProver
-
-import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.escargot.Escargot
 
 /**
- * This implementation of the CERES method does the proof reconstruction via Robinson2LK.
+ * This implementation of the CERES method does the proof reconstruction via ResolutionToLKProof.
  */
 object CERES extends CERES {
   def skipNothing: HOLFormula => Boolean = _ => true
@@ -52,7 +51,7 @@ class CERES {
    *          also each formula must be a FOLFormula, since the prover9 interface returns proofs from the FOL layer
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( p: LKProof ): LKProof = apply( p, Prover9 )
+  def apply( p: LKProof ): LKProof = apply( p, Escargot )
   def apply( p: LKProof, prover: ResolutionProver ): LKProof = apply( p, CERES.skipNothing, prover )
 
   /**
@@ -62,93 +61,59 @@ class CERES {
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @param pred a predicate to specify which cut formulas to eliminate
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
-   * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
+   * @return an LK Proof where all cuts are quantifier-free
    */
-  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Prover9 )
-  def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = {
+  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Escargot )
+  def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
     val es = p.endSequent
-    val p_ = regularize( AtomicExpansion( p ) )
+    val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
-    val proj = Projections( p_, pred ) + CERES.refProjection( es )
-    /*
-    val cs_ = cs.asInstanceOf[Set[HOLSequent]]
-    var count = 0;
-    for ( p <- proj ) {
-      if ( !cs_.contains( p.endSequent diff es ) ) {
-        println( LLKExporter.generateProof( p, "Proj" + count, true ) )
-        println()
-        count = count + 1
-      }
-    }*/
-
+    val proj = Projections( p_, pred )
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
-    //println( TPTPFOLExporter.tptp_problem( tapecl.toList ) )
-    //println( "original css size: " + cs.size )
-    //println( "after subsumption:" + tapecl.size )
 
-    prover.getRobinsonProof( tapecl ) match {
-      case None => throw new Exception( "Prover9 could not refute the characteristic clause set!" )
+    prover.getResolutionProof( tapecl ) match {
+      case None => throw new Exception(
+        "The characteristic clause set could not be refuted:\n" +
+          TPTPFOLExporter( tapecl )
+      )
       case Some( rp ) =>
-        //println( s"refutation:\n$rp" )
-        apply( es, proj, rp )
+        cleanStructuralRules( apply( es, proj, eliminateSplitting( rp ) ) )
     }
   }
 
   /**
-   * Applies the CERES method to a first order proof with equality. Internally this is handled by the RobinsoToLK method.
+   * Applies the CERES method to a first order proof with equality. Internally this is handled by the ResolutionToLKProof method.
    *
    * @param endsequent The end-sequent of the original proof
-   * @param proj The projections of the original proof
+   * @param projections The projections of the original proof
    * @param rp A resolution refutation
    * @return an LK Proof in Atomic Cut Normal Form (ACNF) i.e. without quantified cuts
    */
-  def apply( endsequent: HOLSequent, proj: Set[LKProof], rp: ResolutionProof ) = {
-    RobinsonToLK( rp, endsequent, fc => CERES.findMatchingProjection( endsequent, proj + CERES.refProjection( endsequent ) )( fc ) )
+  def apply( endsequent: HOLSequent, projections: Set[LKProof], rp: ResolutionProof ) = {
+    WeakeningContractionMacroRule(
+      ResolutionToLKProof( rp, findMatchingProjection( endsequent, projections ) ),
+      endsequent
+    )
   }
 
-  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( axfs: HOLSequent ): LKProof = {
-    val nLine = sys.props( "line.separator" )
-    //println( s"end-sequent: $endsequent" )
-    //println( s"looking for projection to $axfs" )
-    projections.find( x => clauseSubsumption( x.endSequent diff endsequent, axfs ).isDefined ) match {
-      case None => throw new Exception( "Could not find a projection to " + axfs + " in " +
-        projections.map( _.endSequent.diff( endsequent ) ).mkString( "{" + nLine, ";" + nLine, nLine + "}" ) )
-      case Some( proj ) =>
-        val Some( sub ) = clauseSubsumption( proj.endSequent diff endsequent, axfs )
-        val subproj = sub( proj )
-        val duplicates = ( subproj.endSequent diff endsequent ) diff axfs
-        //println( s"duplicates: $duplicates" )
-        //println( subproj.endSequent )
-        val cleft = duplicates.antecedent.foldLeft( subproj )( ( p, el ) => {
-          require(
-            p.endSequent.antecedent.filter( _ == el ).size >= 2,
-            s"Could not contract formula $el in proof $p. Can not match projection $subproj to clause $axfs."
-          )
-          ContractionLeftRule( p, el )
-        } )
-        val cright = duplicates.succedent.foldLeft( cleft )( ( p, el ) => {
-          require(
-            p.endSequent.succedent.filter( _ == el ).size >= 2,
-            s"Could not contract formula $el in proof $p. Can not match projection $subproj to clause $axfs."
-          )
-          ContractionRightRule( p, el )
+  /**
+   * Finds the matching projection of an input clause in the set of projections.
+   * @param endsequent The common end-sequent of all projections.
+   * @param projections The set of projections.
+   * @param input_clause The clause we need to project to.
+   * @return An LK proof endsequent x input_clause contained in projections
+   * @note This method is passed to ResolutionToLKProof, which handles the simulation of the reflexivity introduction
+   *       rule by itself.
+   */
+  def findMatchingProjection( endsequent: HOLSequent, projections: Set[LKProof] )( input_clause: Input ): LKProof = {
+    val axfs = input_clause.conclusion
+    for {
+      proj <- projections
+      sub <- clauseSubsumption( proj.endSequent diff endsequent, axfs )
+    } return WeakeningContractionMacroRule( sub( proj ), endsequent ++ axfs )
 
-        } )
-        require(
-          ( cright.endSequent diff endsequent ).multiSetEquals( axfs ),
-          "Instance of projection with end-sequent " + subproj.endSequent + " is not equal to "
-            + axfs + " x " + endsequent
-        )
-        subproj
-    }
-  }
-
-  def refProjection( es: HOLSequent ): LKProof = {
-    require( es.formulas.nonEmpty, "Can not project reflexivity to an empty end-sequent!" )
-    val x = Var( "x", Ti ).asInstanceOf[Var]
-    val axiomseq = HOLSequent( Nil, List( Eq( x, x ) ) )
-    //addWeakenings(Axiom(axiomseq.antecedent, axiomseq.succedent), axiomseq compose es)
-    WeakeningMacroRule( Axiom( axiomseq.antecedent, axiomseq.succedent ), axiomseq ++ es )
+    throw new Exception( "Could not find a projection to " + axfs + " in " +
+      projections.map( _.endSequent.diff( endsequent ) ).mkString( "{\n", ";\n", "\n}" ) )
   }
 
 }

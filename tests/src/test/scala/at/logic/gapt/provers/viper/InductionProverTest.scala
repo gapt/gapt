@@ -36,24 +36,24 @@ class InductionProverTest extends Specification {
 
     // Induction base
 
-    val et1 = ETAtom( f0, false )
-    val et2 = ETWeakQuantifier( All( x, g0( x ) ), Map( beta -> ETAtom( g0( beta ), false ) ) )
-    val et3 = ETWeakQuantifier( All( x, uR( x ) ), Map( beta -> ETAtom( uR( beta ), false ) ) )
+    val et1 = ETAtom( f0, Polarity.InAntecedent )
+    val et2 = ETWeakQuantifier( All( x, g0( x ) ), Map( beta -> ETAtom( g0( beta ), Polarity.InAntecedent ) ) )
+    val et3 = ETWeakQuantifier( All( x, uR( x ) ), Map( beta -> ETAtom( uR( beta ), Polarity.InAntecedent ) ) )
 
     val ExpSeq0 = ExpansionSequent( List( et1, et2, et3 ), Nil )
 
     // Induction step
 
-    val et4 = ETWeakQuantifier( All( x, fST( x ) ), Map( nu -> ETAtom( fST( nu ), false ) ) )
+    val et4 = ETWeakQuantifier( All( x, fST( x ) ), Map( nu -> ETAtom( fST( nu ), Polarity.InAntecedent ) ) )
     val et5 = ETWeakQuantifier( All( x, All( z, gST( x, z ) ) ), Map(
       gamma -> ETWeakQuantifier( All( z, gST( gamma, z ) ), Map(
-        nu -> ETAtom( gST( gamma, nu ), false )
+        nu -> ETAtom( gST( gamma, nu ), Polarity.InAntecedent )
       ) )
     ) )
     val et6 = ETWeakQuantifier( All( x, All( z, All( w, ASSO( x, z, w ) ) ) ), Map(
       gamma -> ETWeakQuantifier( All( z, All( w, ASSO( gamma, z, w ) ) ), Map(
         s( nu ) -> ETWeakQuantifier( All( w, ASSO( gamma, s( nu ), w ) ), Map(
-          f( nu ) -> ETAtom( ASSO( gamma, s( nu ), f( nu ) ), false )
+          f( nu ) -> ETAtom( ASSO( gamma, s( nu ), f( nu ) ), Polarity.InAntecedent )
         ) )
       ) )
     ) )
@@ -64,35 +64,35 @@ class InductionProverTest extends Specification {
 
     // Conclusion
 
-    val et7 = ETWeakQuantifier( All( x, uL( x ) ), Map( f( alpha ) -> ETAtom( uL( f( alpha ) ), false ) ) )
+    val et7 = ETWeakQuantifier( All( x, uL( x ) ), Map( f( alpha ) -> ETAtom( uL( f( alpha ) ), Polarity.InAntecedent ) ) )
 
-    val et8 = ETAtom( Eq( g( s( zero ), alpha ), f( alpha ) ), true )
+    val et8 = ETAtom( Eq( g( s( zero ), alpha ), f( alpha ) ), Polarity.InSuccedent )
 
     val u = List( s( zero ) )
 
     val ExpSeq2 = ExpansionSequent( List( et7 ), List( et8 ) )
 
     "be constructed correctly" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
 
       success
     }
 
     "produce an LKProof" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
       p.toLKProof( Escargot )
 
       success
     }
 
     "produce a SIP grammar" in {
-      new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
+      new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
 
       success
     }
 
     "find the induction formula" in {
-      val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
+      val sip = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
       FindFormulaH( sip, 0, prover = Escargot ) must_== Some( g( gamma, nu ) === m( gamma, f( nu ) ) )
     }
   }
@@ -128,8 +128,8 @@ class InductionProverTest extends Specification {
     val ForAllAddS = All.Block( List( x, y ), addS( x, y ) )
 
     val et1 = ETWeakQuantifier( ForAllAdd0, Map(
-      beta -> ETAtom( add0( beta ), false ),
-      plus( alpha, beta ) -> ETAtom( add0( plus( alpha, beta ) ), false )
+      beta -> ETAtom( add0( beta ), Polarity.InAntecedent ),
+      plus( alpha, beta ) -> ETAtom( add0( plus( alpha, beta ) ), Polarity.InAntecedent )
     ) )
 
     val ExpSeq0 = ExpansionSequent( List( et1 ), Nil )
@@ -140,19 +140,19 @@ class InductionProverTest extends Specification {
         gamma ->
           ETWeakQuantifier(
             All( y, addS( gamma, y ) ),
-            Map( nu -> ETAtom( addS( gamma, nu ), false ) )
+            Map( nu -> ETAtom( addS( gamma, nu ), Polarity.InAntecedent ) )
           ),
 
         alpha ->
           ETWeakQuantifier(
             All( y, addS( alpha, y ) ),
-            Map( plus( gamma, nu ) -> ETAtom( addS( alpha, plus( gamma, nu ) ), false ) )
+            Map( plus( gamma, nu ) -> ETAtom( addS( alpha, plus( gamma, nu ) ), Polarity.InAntecedent ) )
           ),
 
         plus( alpha, gamma ) ->
           ETWeakQuantifier(
             All( y, addS( plus( alpha, gamma ), y ) ),
-            Map( nu -> ETAtom( addS( plus( alpha, gamma ), nu ), false ) )
+            Map( nu -> ETAtom( addS( plus( alpha, gamma ), nu ), Polarity.InAntecedent ) )
           )
       )
     )
@@ -165,31 +165,31 @@ class InductionProverTest extends Specification {
 
     val u = List( alpha )
 
-    val ExpSeq2 = ExpansionSequent( Nil, List( ETAtom( B, true ) ) )
+    val ExpSeq2 = ExpansionSequent( Nil, List( ETAtom( B, Polarity.InSuccedent ) ) )
 
     val F = assoc( alpha, gamma, nu )
 
     "be constructed correctly" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
 
       success
     }
 
     "produce an LKProof" in {
-      val p = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
+      val p = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, F )
       p.toLKProof( Escargot )
 
       success
     }
 
     "produce a SIP grammar" in {
-      new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
+      new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u ).toSipGrammar
 
       success
     }
 
     "find the induction formula" in {
-      val sip = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
+      val sip = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
       FindFormulaH( sip, 0, prover = Escargot ) must_== Some( assoc( alpha, gamma, nu ) )
     }
   }

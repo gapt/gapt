@@ -4,45 +4,44 @@ import java.io.IOException
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
+import at.logic.gapt.formats.{ StringInputFile, InputFile }
 import at.logic.gapt.formats.ivy.IvyParser
-import at.logic.gapt.formats.ivy.conversion.IvyToRobinson
+import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.formats.prover9.{ Prover9TermParser, Prover9TermParserLadrStyle }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
 import scala.collection.mutable.ArrayBuffer
-import scala.io.Source
 
 object Prover9 extends Prover9( extraCommands = _ => Seq() )
 class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
-  def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
-    withRenamedConstants( cnf ) {
-      case ( renaming, cnf ) =>
+  def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
+    renameConstantsToFi.wrap( cnf.toSeq )(
+      ( renaming, cnf: Seq[HOLClause] ) => {
         val p9Input = toP9Input( cnf, renaming )
         runProcess.withExitValue( Seq( "prover9" ), p9Input ) match {
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }
-    } map {
-      mapInputClauses( _ ) { clause =>
-        cnf.view flatMap { ourClause =>
-          syntacticMatching( ourClause.toDisjunction.asInstanceOf[FOLFormula], clause.toDisjunction.asInstanceOf[FOLFormula] ) map { matching =>
-            Instance( InputClause( ourClause.map { _.asInstanceOf[FOLAtom] } ), matching )
-          }
-        } head
       }
-    }
+    ) map {
+        mapInputClauses( _ ) { clause =>
+          cnf.view flatMap { ourClause =>
+            syntacticMatching( ourClause.toDisjunction, clause.toDisjunction ) map { Subst( Input( ourClause ), _ ) }
+          } head
+        }
+      }
 
   private[prover9] def parseProof( p9Output: String ) = {
     val ivy = runProcess( Seq( "prooftrans", "ivy" ), p9Output )
 
-    val ivyProof = IvyParser.parseString( ivy )
+    val ivyProof = IvyParser( StringInputFile( ivy ) )
 
-    IvyToRobinson( ivyProof )
+    IvyToResolution( ivyProof )
   }
 
   private def toP9Input( cnf: Traversable[HOLClause], renaming: Map[Const, Const] ): String = {
@@ -86,20 +85,17 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
 object Prover9Importer extends ExternalProgram {
   override val isInstalled: Boolean = Prover9 isInstalled
 
-  def robinsonProofFromFile( p9File: String ): ResolutionProof =
-    robinsonProof( Source fromFile p9File mkString )
-
-  def robinsonProof( p9Output: String ): ResolutionProof = {
+  def robinsonProof( p9Output: InputFile ): ResolutionProof = {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
-    val fixedP9Output = runProcess( Seq( "prooftrans" ), p9Output )
+    val fixedP9Output = runProcess(
+      Seq( "prooftrans" ),
+      loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ).read
+    )
 
     Prover9 parseProof fixedP9Output
   }
 
-  def robinsonProofWithReconstructedEndSequentFromFile( p9File: String ): ( ResolutionProof, HOLSequent ) =
-    robinsonProofWithReconstructedEndSequent( Source fromFile p9File mkString )
-
-  def reconstructEndSequent( p9Output: String ): HOLSequent = {
+  private def reconstructEndSequent( p9Output: String ): HOLSequent = {
     val lines = p9Output split "\n" toSeq
 
     val parser = if ( lines contains "set(prolog_style_variables)." )
@@ -128,13 +124,15 @@ object Prover9Importer extends ExternalProgram {
     assumptions ++: Sequent() :++ goals distinct
   }
 
-  def robinsonProofWithReconstructedEndSequent( p9Output: String ): ( ResolutionProof, HOLSequent ) = {
-    val resProof = robinsonProof( p9Output )
-    val endSequent = existsclosure {
-      val tptpEndSequent = reconstructEndSequent( p9Output )
+  def robinsonProofWithReconstructedEndSequent( p9Output: InputFile ): ( ResolutionProof, HOLSequent ) = {
+    val p9Output_ = loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output )
+
+    val resProof = robinsonProof( p9Output_ )
+    val endSequent = existentialClosure {
+      val tptpEndSequent = reconstructEndSequent( p9Output_.read )
       if ( containsStrongQuantifier( tptpEndSequent ) ) {
         // in this case the prover9 proof contains skolem symbols which we do not try to match
-        resProof.inputClauses.map( _.toDisjunction ) ++: Sequent()
+        resProof.subProofs.collect { case Input( seq ) => seq.toDisjunction } ++: Sequent()
       } else {
         formulaToSequent.pos( tptpEndSequent.toDisjunction )
       }
@@ -145,19 +143,9 @@ object Prover9Importer extends ExternalProgram {
     ( fixedResProof, endSequent )
   }
 
-  def lkProofFromFile( p9File: String ): LKProof =
-    lkProof( Source fromFile p9File mkString )
+  def lkProof( p9Output: InputFile ): LKProof =
+    ResolutionToLKProof( robinsonProofWithReconstructedEndSequent( p9Output )._1 )
 
-  def lkProof( p9Output: String ): LKProof = {
-    val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
-    RobinsonToLK( fixedResProof, endSequent )
-  }
-
-  def expansionProofFromFile( p9File: String ): ExpansionProof =
-    expansionProof( Source.fromFile( p9File ).mkString )
-
-  def expansionProof( p9Output: String ): ExpansionProof = {
-    val ( fixedResProof, endSequent ) = robinsonProofWithReconstructedEndSequent( p9Output )
-    RobinsonToExpansionProof( fixedResProof, endSequent )
-  }
+  def expansionProof( p9Output: InputFile ): ExpansionProof =
+    ResolutionToExpansionProof( robinsonProofWithReconstructedEndSequent( p9Output )._1 )
 }

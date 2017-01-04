@@ -2,13 +2,15 @@ package at.logic.gapt.formats.babel
 
 import at.logic.gapt.{ expr => real }
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import fastparse.core.ParseError
 
 import scalaz._
 import Scalaz._
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
 case class BabelUnificationError( reason: String ) extends BabelParseError( reason )
-case class BabelParsingError( parseError: fastparse.core.ParseError ) extends BabelParseError( parseError.getMessage )
+case class BabelParsingError( parseError: fastparse.all.Parsed.Failure ) extends BabelParseError( ParseError( parseError ).getMessage )
 
 object BabelLexical {
   import fastparse.all._
@@ -76,18 +78,18 @@ object BabelParserCombinators {
         case ( a, "!=", b ) => ast.Neg( ast.Eq( a, b ) )
         case ( a, "=", b )  => ast.Eq( a, b )
         case ( a, r, b ) =>
-          ast.TypeAnnotation( ast.App( ast.App( ast.Ident( r, ast.freshTypeVar() ), a ), b ), ast.Bool )
+          ast.TypeAnnotation( ast.App( ast.App( ast.Ident( r, ast.freshMetaType() ), a ), b ), ast.Bool )
       }.reduceLeft( ast.And )
   }
 
   val PlusMinus: P[ast.Expr] = P( TimesDiv ~/ ( ( "+" | "-" ).! ~ TimesDiv ).rep ) map {
     case ( first, rest ) =>
-      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshTypeVar() ), a ), b ) }
+      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshMetaType() ), a ), b ) }
   }
 
   val TimesDiv: P[ast.Expr] = P( App ~/ ( ( "*" | "/" ).! ~ App ).rep ) map {
     case ( first, rest ) =>
-      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshTypeVar() ), a ), b ) }
+      rest.foldLeft( first ) { case ( a, ( o, b ) ) => ast.App( ast.App( ast.Ident( o, ast.freshMetaType() ), a ), b ) }
   }
 
   val Tuple: P[Seq[ast.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
@@ -110,16 +112,21 @@ object BabelParserCombinators {
   val VarLiteral = P( "#v(" ~/ Var ~ ")" ) map { ast.LiftBlackbox }
   val ConstLiteral = P( "#c(" ~/ Const ~ ")" ) map { ast.LiftBlackbox }
 
-  val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshTypeVar() ) ) )
+  val Ident: P[ast.Ident] = P( Name.map( ast.Ident( _, ast.freshMetaType() ) ) )
 
   val TypeParens: P[ast.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[ast.Type] = P( Name ).map( ast.BaseType )
-  val Type: P[ast.Type] = P( ( TypeParens | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
+  val TypeVar: P[ast.Type] = P( "?" ~/ Name ).map( ast.VarType )
+  val Type: P[ast.Type] = P( ( TypeParens | TypeVar | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( ast.ArrType ) }
+
+  val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
+    map { case ( ant, suc ) => HOLSequent( ant, suc ) }
+  val SequentAndNothingElse = P( "" ~ Sequent ~ End )
 }
 
 object BabelParser {
   import BabelParserCombinators._
-  import fastparse.noApi._
+  import fastparse.all._
 
   /**
    * Parses text as a lambda expression, or returns a parse error.
@@ -127,16 +134,15 @@ object BabelParser {
    * @param astTransformer  Function to apply to the Babel AST before type inference.
    * @param sig  Babel signature that specifies which free variables are constants.
    */
-  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): BabelParseError \/ LambdaExpression = {
-    import fastparse.core.Parsed._
+  def tryParse( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, LambdaExpression] = {
     ExprAndNothingElse.parse( text ) match {
-      case Success( expr, _ ) =>
+      case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
         ast.toRealExpr( transformedExpr, sig ).leftMap { unifError =>
           BabelUnificationError( s"Cannot type-check ${ast.readable( transformedExpr )}:\n$unifError" )
         }
-      case parseError: Failure =>
-        BabelParsingError( ParseError( parseError ) ).left
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        Left( BabelParsingError( parseError ) )
     }
   }
 
@@ -146,4 +152,20 @@ object BabelParser {
   /** Parses text as a formula, or throws an exception. */
   def parseFormula( text: String )( implicit sig: BabelSignature ): HOLFormula =
     tryParse( text, ast.TypeAnnotation( _, ast.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
+
+  def tryParseSequent( text: String, astTransformer: ast.Expr => ast.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[LambdaExpression]] = {
+    SequentAndNothingElse.parse( text ) match {
+      case Parsed.Success( exprSequent, _ ) =>
+        val transformed = exprSequent.map( astTransformer )
+        ast.toRealExprs( transformed.elements, sig ).leftMap { unifError =>
+          BabelUnificationError( s"Cannot type-check ${transformed.map( ast.readable )}:\n$unifError" )
+        }.map { sequentElements =>
+          val ( ant, suc ) = sequentElements.
+            splitAt( exprSequent.antecedent.size )
+          HOLSequent( ant, suc )
+        }
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        Left( BabelParsingError( parseError ) )
+    }
+  }
 }

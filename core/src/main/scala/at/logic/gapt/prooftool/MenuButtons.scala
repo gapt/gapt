@@ -51,10 +51,10 @@ object MenuButtons {
   /**
    *
    * @param main An instance of ProoftoolViewer
-   * @return A menu button that calls main's zoomIn function.
+   * @return A menu button that calls main's increaseFontSize function.
    */
-  def zoomInButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Zoom in" ) {
-    main.zoomIn()
+  def increaseFontSizeButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Increase font size" ) {
+    main.increaseFontSize()
   } ) {
     this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_UP, ActionEvent.ALT_MASK ) )
 
@@ -63,10 +63,10 @@ object MenuButtons {
   /**
    *
    * @param main An instance of ProoftoolViewer
-   * @return A menu button that calls main's zoomOUt function.
+   * @return A menu button that calls main's decreaseFontSize function.
    */
-  def zoomOutButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Zoom out" ) {
-    main.zoomOut()
+  def decreaseFontSizeButton( main: ProofToolViewer[_] ) = new MenuItem( Action( "Decrease font size" ) {
+    main.decreaseFontSize()
   } ) {
     this.peer.setAccelerator( KeyStroke.getKeyStroke( KeyEvent.VK_DOWN, ActionEvent.ALT_MASK ) )
   }
@@ -101,10 +101,10 @@ object MenuButtons {
 
   /**
    *
-   * @param main An instance of ProoftoolViewer with ContainsLKProof.
+   * @param main An instance of ProoftoolViewer with ContainsSequentProof.
    * @return A menu button that calls main's hideSequentContext/showAllFormulas function.
    */
-  def hideContextsButton( main: ProofToolViewer[_] with ContainsLKProof ) = new CheckMenuItem( "Hide sequent contexts" ) {
+  def hideContextsButton( main: ProofToolViewer[_] with ContainsSequentProof ) = new CheckMenuItem( "Hide sequent contexts" ) {
     outer =>
 
     action = Action( "Hide sequent contexts" ) {
@@ -127,7 +127,22 @@ object MenuButtons {
       if ( outer.selected )
         main.markCutAncestors()
       else
-        main.removeMarking()
+        main.unmarkCutAncestors()
+    }
+  }
+
+  def removeAllMarkingsButton( main: ProofToolViewer[_] with ContainsSequentProof ) = new MenuItem( Action( "Remove all markings" ) {
+    main.removeAllMarkings()
+  } )
+
+  def ShowDebugBordersButton( main: ProofToolViewer[_] ) = new CheckMenuItem( "Show debug borders" ) {
+    outer =>
+
+    action = Action( "Show debug borders" ) {
+      if ( outer.selected )
+        main.publisher.publish( ShowDebugBorders )
+      else
+        main.publisher.publish( HideDebugBorders )
     }
   }
 }
@@ -145,20 +160,7 @@ trait Savable[-T] {
   def fSave( name: String, obj: T ): Unit
 }
 
-/**
- * A trait for ProofToolViewer objects that contain (old or new) LK proofs.
- */
-trait ContainsLKProof {
-  /**
-   * Hides structural rules in the proof.
-   */
-  def hideStructuralRules(): Unit
-
-  /**
-   * Shows all rules in the proof.
-   */
-  def showAllRules(): Unit
-
+trait ContainsSequentProof {
   /**
    * Hides all formulas except main and auxiliary ones.
    */
@@ -170,12 +172,32 @@ trait ContainsLKProof {
   def showAllFormulas(): Unit
 
   /**
+   * Removes all markings.
+   */
+  def removeAllMarkings(): Unit
+}
+
+/**
+ * A trait for ProofToolViewer objects that contain (old or new) LK proofs.
+ */
+trait ContainsLKProof extends ContainsSequentProof {
+  /**
+   * Hides structural rules in the proof.
+   */
+  def hideStructuralRules(): Unit
+
+  /**
+   * Shows all rules in the proof.
+   */
+  def showAllRules(): Unit
+
+  /**
    * Marks the ancestors of cut formulas.
    */
   def markCutAncestors(): Unit
 
   /**
-   * Removes all markings.
+   * Unmarks the ancestors of cut formulas.
    */
-  def removeMarking(): Unit
+  def unmarkCutAncestors(): Unit
 }

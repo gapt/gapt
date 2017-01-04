@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object primediv extends TacticsProof {
@@ -61,5 +61,5 @@ object primediv extends TacticsProof {
     refl
   }
 
-  val defs = ctx.definitions
+  val defs = ctx.definitions.toMap
 }

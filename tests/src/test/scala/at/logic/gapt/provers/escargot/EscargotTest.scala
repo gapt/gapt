@@ -1,9 +1,9 @@
 package at.logic.gapt.provers.escargot
 
-import at.logic.gapt.examples.{ Permutations, PigeonHolePrinciple, BussTautology }
+import at.logic.gapt.examples.{ BussTautology, CountingEquivalence, Permutations, PigeonHolePrinciple }
 import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.existsclosure
+import at.logic.gapt.expr.hol.existentialClosure
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.proofs.Sequent
 import org.specs2.mutable._
@@ -11,8 +11,8 @@ import org.specs2.mutable._
 class EscargotTest extends Specification {
   import BabelParser.parseFormula
 
-  def parse( formulas: String* ) = existsclosure { ( formulas map parseFormula ) ++: Sequent() }
-  def test( formulas: String* ) = Escargot getRobinsonProof parse( formulas: _* )
+  def parse( formulas: String* ) = existentialClosure { ( formulas map parseFormula ) ++: Sequent() }
+  def test( formulas: String* ) = Escargot getResolutionProof parse( formulas: _* )
 
   "simple" in { test( "P(x)", "-P(c)" ) must beSome }
 
@@ -30,9 +30,9 @@ class EscargotTest extends Specification {
   "double" in { test( "f(x) = g(g(x))", "g(g(g(x))) = x", "g(c) != f(f(c))" ) must beSome }
   "cond eq" in { test( "p(c)", "p(x) -> p(f(x))", "p(x) -> f(x) = g(x)", "f(f(c)) != g(g(c))" ) must beSome }
 
-  "buss taut" in { Escargot getRobinsonProof BussTautology( 4 ) must beSome }
-  "php" in { Escargot getRobinsonProof PigeonHolePrinciple( 3, 2 ) must beSome }
-  "perms" in { Escargot getRobinsonProof Permutations( 5 ) must beSome }
+  "buss taut" in { Escargot getResolutionProof BussTautology( 4 ) must beSome }
+  "php" in { Escargot getResolutionProof PigeonHolePrinciple( 3, 2 ) must beSome }
+  "perms" in { Escargot getResolutionProof Permutations( 5 ) must beSome }
 
   "los" in {
     test(
@@ -45,15 +45,10 @@ class EscargotTest extends Specification {
 
   "davis putnam" in { test( "-(exists x exists y all z ((f(x,y) -> f(y,z) & f(z,z)) & (f(x,y) & g(x,y) -> g(x,z) & g(z,z))))" ) must beSome }
 
-  "large cnf" in {
-    val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-    val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-    Escargot getRobinsonProof formula must beSome
-  }
+  "large cnf" in { Escargot getResolutionProof CountingEquivalence( 5 ) must beSome }
 
-  "drinker" in { Escargot getRobinsonProof hof"?x (p(x) -> !y p(y))" must beSome }
-  "barber" in { Escargot getRobinsonProof hof"-?x !y (shaves(x,y) <-> -shaves(y,y))" must beSome }
+  "drinker" in { Escargot getResolutionProof hof"?x (p(x) -> !y p(y))" must beSome }
+  "barber" in { Escargot getResolutionProof hof"-?x !y (shaves(x,y) <-> -shaves(y,y))" must beSome }
 
   "two plus two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "s(s(0)) + s(s(0)) != s(s(s(s(0))))" ) must beSome }
   "two times two" in { test( "x + 0 = x", "x + s(y) = s(x+y)", "x * 0 = 0", "x*s(y) = (x*y) + x", "s(s(0)) * s(s(0)) != s(s(s(s(0))))" ) must beSome }
@@ -110,4 +105,6 @@ class EscargotTest extends Specification {
       "a*i(a) != 1"
     ) must beSome
   }
+
+  "primitive support for lambdas" in { test( "!y (^x f(x,y)) = g(y) & r(g(c)) & -r(^x f(x,c))" ) must beSome }
 }

@@ -26,37 +26,37 @@ class TermReplacementTest extends Specification {
   val hc = FOLFunction( "h", FOLConst( "c0" ) :: Nil )
 
   object proof1 {
-    val p1 = InputClause( c1 +: c1 +: Clause() :+ c3 )
-    val p2 = InputClause( Clause() :+ c2 )
-    val p3 = InputClause( c4 +: Clause() )
+    val p1 = Input( c1 +: c1 +: Clause() :+ c3 )
+    val p2 = Input( Clause() :+ c2 )
+    val p3 = Input( c4 +: Clause() )
     val p5 = MguResolution( p2, Suc( 0 ), p1, Ant( 1 ) )
     val p6 = MguResolution( p5, Suc( 0 ), p3, Ant( 0 ) )
     val p7 = MguResolution( p2, Suc( 0 ), p6, Ant( 0 ) )
   }
 
   object proof2 {
-    val q1 = InputClause( d1 +: d1 +: Clause() :+ d3 )
-    val q2 = InputClause( Clause() :+ d2 )
-    val q3 = InputClause( d4 +: Clause() )
+    val q1 = Input( d1 +: d1 +: Clause() :+ d3 )
+    val q2 = Input( Clause() :+ d2 )
+    val q3 = Input( d4 +: Clause() )
     val q5 = MguResolution( q2, Suc( 0 ), q1, Ant( 1 ) )
     val q6 = MguResolution( q5, Suc( 0 ), q3, Ant( 0 ) )
     val q7 = MguResolution( q2, Suc( 0 ), q6, Ant( 0 ) )
   }
 
   object proof3 {
-    val p0 = InputClause( c1 +: c2 +: Clause() :+ c3 )
+    val p0 = Input( c1 +: c2 +: Clause() :+ c3 )
     val p1 = Factor( p0, Ant( 0 ), Ant( 1 ) )
-    val p2 = InputClause( Clause() :+ c2 )
-    val p3 = InputClause( c4 +: Clause() )
+    val p2 = Input( Clause() :+ c2 )
+    val p3 = Input( c4 +: Clause() )
     val p5 = MguResolution( p2, Suc( 0 ), p1, Ant( 0 ) )
     val p6 = MguResolution( p5, Suc( 0 ), p3, Ant( 0 ) )
   }
 
   object proof4 {
-    val q0 = InputClause( d1 +: d2 +: Clause() :+ d3 )
+    val q0 = Input( d1 +: d2 +: Clause() :+ d3 )
     val q1 = MguFactor( q0, Ant( 0 ), Ant( 1 ) )
-    val q2 = InputClause( Clause() :+ d2 )
-    val q3 = InputClause( d4 +: Clause() )
+    val q2 = Input( Clause() :+ d2 )
+    val q3 = Input( d4 +: Clause() )
     val q5 = MguResolution( q2, Suc( 0 ), q1, Ant( 0 ) )
     val q6 = MguResolution( q5, Suc( 0 ), q3, Ant( 0 ) )
 

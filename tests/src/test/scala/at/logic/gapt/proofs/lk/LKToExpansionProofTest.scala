@@ -47,7 +47,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
 
       val E = LKToExpansionProof( p5 ).expansionSequent
 
-      E.antecedent mustEqual List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), beta, ETAtom( HOLAtom( P, beta :: Nil ), false ) ) )
+      E.antecedent mustEqual List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), beta, ETAtom( HOLAtom( P, beta :: Nil ), Polarity.InAntecedent ) ) )
       // this assumes that the first variable wins, f(beta) would also be valid
       val f_alpha = HOLFunction( f, beta :: Nil )
       E.succedent mustEqual List( ETWeakQuantifier(
@@ -57,8 +57,8 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
             ETWeakQuantifier(
               Ex( z, HOLAtom( Q, f_alpha :: z :: Nil ) ),
               Map(
-                c -> ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ), true ),
-                d -> ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ), true )
+                c -> ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ), Polarity.InSuccedent ),
+                d -> ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ), Polarity.InSuccedent )
               )
             )
         )
@@ -122,6 +122,15 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
         u ( ExistsRightRule( _, hof"∃x x=c", le"c" ) )
         u ( WeakeningLeftRule( _, hof"c=d" ) )
         u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), le"λx ∃y y=x".asInstanceOf[Abs] ) ) qed )
+      LKToExpansionProof( lk ).shallow must_== lk.conclusion
+    }
+
+    "equation left rule" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"a=b" ) ).
+        u( WeakeningLeftRule( _, hof"b=c" ) ).
+        u( EqualityLeftRule( _, hof"a=b", hof"b=c", hof"a=c" ) ).
+        qed
       LKToExpansionProof( lk ).shallow must_== lk.conclusion
     }
   }

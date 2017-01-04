@@ -2,7 +2,7 @@ package at.logic.gapt.expr
 
 import scala.collection.GenTraversable
 
-/*
+/**
  * A substitution is a mapping from variables to lambda-expressions which differs from the identity
  * on finitely many variables. Therefore:
  *  1) each variable is mapped to only one lambda expression
@@ -35,10 +35,6 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   def domain: Set[Var] = map.keySet
   def range: Set[Var] = map.values.toSet[LambdaExpression].flatMap( freeVariables( _ ) )
 
-  def ::( sub: ( Var, LambdaExpression ) ) = new Substitution( map + sub )
-
-  def ::( otherSubstitution: Substitution ) = new Substitution( map ++ otherSubstitution.map )
-
   override def hashCode = map.hashCode
 
   override def equals( a: Any ) = a match {
@@ -47,7 +43,7 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
   }
 
   // an identity function maps all variables to themselves
-  def isIdentity = map.filterNot( ( p: ( Var, LambdaExpression ) ) => p._1 == p._2 ).isEmpty
+  def isIdentity = map.forall( p => p._1 == p._2 )
 
   // make sure the overriden keys are of the applying sub
   // note: compose is in function application notation i.e. (sigma compose tau) apply x = sigma(tau(x)) = x.tau.sigma
@@ -59,11 +55,26 @@ class Substitution( val map: Map[Var, LambdaExpression] ) {
     Substitution( map ++ newMap )
   }
 
+  def restrict( newDomain: Iterable[Var] ): Substitution =
+    Substitution( newDomain.view.map( v => v -> this( v ) ) )
+
   //REMARK: this does not imply the substitution is injective
   def isRenaming = map.forall( p => p._2.isInstanceOf[Var] )
 
-  //TODO: implement
-  def isInjectiveRenaming = throw new Exception( "Not yet implemented!" )
+  def isInjectiveRenaming = domain.forall { v => map( v ).isInstanceOf[Var] && domain.forall { u => u == v || map( u ) != map( v ) } }
+
+  def isInjectiveOnDomain: Boolean = isInjective( domain )
+  def isInjective( dom: Set[Var] ): Boolean =
+    dom.forall { x =>
+      val images = ( dom - x ).map( apply( _ ) )
+      def solve( term: LambdaExpression ): Boolean =
+        images( term ) || ( term match {
+          case Const( _, _ ) => true
+          case App( a, b )   => solve( a ) && solve( b )
+          case Var( _, _ )   => false
+        } )
+      !solve( map( x ) )
+    }
 
   override def toString() = map.map( x => x._1 + " -> " + x._2 ).mkString( "Substitution(", ",", ")" )
 

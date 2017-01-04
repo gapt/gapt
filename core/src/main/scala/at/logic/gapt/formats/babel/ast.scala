@@ -1,8 +1,8 @@
 package at.logic.gapt.formats.babel
 
-import scalaz._
-import Scalaz._
 import at.logic.gapt.{ expr => real }
+
+import scala.collection.mutable
 
 /**
  * Intermediate representation for expressions parsed by Babel.
@@ -14,23 +14,24 @@ import at.logic.gapt.{ expr => real }
  * It differs from the "real" lambda calculus in [[at.logic.gapt.expr]]
  * in three major ways:
  *
- *  1. There are type variables.
+ *  1. There are type meta-variables.
  *  1. There are type annotations.
  *  1. Free variables, bound variables, and constants are not
  *     distinguished; they are all stored as "identifiers".
  */
 object ast {
 
-  class TypeVarIdx {
+  class MetaTypeIdx {
     override def toString = Integer toHexString hashCode() take 3
   }
-  def gensym() = new TypeVarIdx
+  def gensym() = new MetaTypeIdx
 
   sealed trait Type
   case class BaseType( name: String ) extends Type
   case class ArrType( a: Type, b: Type ) extends Type
-  case class TypeVar( idx: TypeVarIdx ) extends Type
-  def freshTypeVar() = TypeVar( gensym() )
+  case class VarType( name: String ) extends Type
+  case class MetaType( idx: MetaTypeIdx ) extends Type
+  def freshMetaType() = MetaType( gensym() )
 
   sealed trait Expr
   case class TypeAnnotation( expr: Expr, ty: Type ) extends Expr
@@ -41,8 +42,9 @@ object ast {
 
   def readable( t: Type ): String = t match {
     case BaseType( name ) => name
+    case VarType( name )  => s"?$name"
     case ArrType( a, b )  => s"(${readable( a )}>${readable( b )})"
-    case TypeVar( idx )   => s"_$idx"
+    case MetaType( idx )  => s"_$idx"
   }
   def readable( e: Expr ): String = e match {
     case TypeAnnotation( expr, ty ) => s"(${readable( expr )}:${readable( ty )})"
@@ -55,7 +57,7 @@ object ast {
   def Bool = BaseType( "o" )
 
   def Eq( a: Expr, b: Expr ) = {
-    val argType = freshTypeVar()
+    val argType = freshMetaType()
     val eqType = ArrType( argType, ArrType( argType, Bool ) )
     App( App( Ident( real.EqC.name, eqType ), a ), b )
   }
@@ -74,90 +76,116 @@ object ast {
   def Imp = BinaryConn( real.ImpC )
 
   def Quant( name: String ): ( Ident, Expr ) => Expr = ( v, sub ) =>
-    App( Ident( name, ArrType( ArrType( freshTypeVar(), Bool ), Bool ) ), Abs( v, sub ) )
+    App( Ident( name, ArrType( ArrType( freshMetaType(), Bool ), Bool ) ), Abs( v, sub ) )
   def Ex: ( Ident, Expr ) => Expr = Quant( real.ExistsC.name )
   def All = Quant( real.ForallC.name )
 
-  def liftType( t: real.Ty ): Type = t match {
+  def liftTypePoly( t: real.Ty ) = {
+    val vars = mutable.Map[real.TVar, Type]()
+    def lift( t: real.Ty ): Type = t match {
+      case t: real.TVar         => vars.getOrElse( t, freshMetaType() )
+      case real.TBase( name )   => BaseType( name )
+      case real.`->`( in, out ) => ArrType( lift( in ), lift( out ) )
+    }
+    lift( t )
+  }
+
+  def liftTypeMono( t: real.Ty ): Type = t match {
+    case real.TVar( name )    => VarType( name )
     case real.TBase( name )   => BaseType( name )
-    case real.`->`( in, out ) => ArrType( liftType( in ), liftType( out ) )
+    case real.`->`( in, out ) => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
   def LiftBlackbox( e: real.LambdaExpression ) =
-    Lifted( e, liftType( e.exptype ), Map() )
+    Lifted( e, liftTypeMono( e.exptype ), Map() )
 
   def LiftWhitebox( e: real.LambdaExpression ) =
-    Lifted( e, liftType( e.exptype ),
+    Lifted( e, liftTypeMono( e.exptype ),
       real.freeVariables( e ).
-      map { case real.Var( name, ty ) => name -> liftType( ty ) }.
+      map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
       toMap )
 
-  def freeVars( t: Type ): Set[TypeVarIdx] = t match {
-    case BaseType( name ) => Set()
-    case ArrType( a, b )  => freeVars( a ) union freeVars( b )
-    case TypeVar( idx )   => Set( idx )
+  def freeMetas( t: Type ): Set[MetaTypeIdx] = t match {
+    case BaseType( _ ) | VarType( _ ) => Set()
+    case ArrType( a, b )              => freeMetas( a ) union freeMetas( b )
+    case MetaType( idx )              => Set( idx )
   }
 
-  def subst( t: Type, assg: Map[TypeVarIdx, Type] ): Type = t match {
-    case BaseType( _ )   => t
-    case ArrType( a, b ) => ArrType( subst( a, assg ), subst( b, assg ) )
-    case TypeVar( idx )  => assg.get( idx ).fold( t )( subst( _, assg ) )
+  def subst( t: Type, assg: Map[MetaTypeIdx, Type] ): Type = t match {
+    case BaseType( _ ) | VarType( _ ) => t
+    case ArrType( a, b )              => ArrType( subst( a, assg ), subst( b, assg ) )
+    case MetaType( idx )              => assg.get( idx ).fold( t )( subst( _, assg ) )
   }
   type UnificationError = String
-  def printCtx( eqs: List[( Type, Type )], assg: Map[TypeVarIdx, Type] ): String =
-    ( assg.map { case ( idx, t ) => s"${readable( TypeVar( idx ) )} = ${readable( t )}\n" } ++
+  def printCtx( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): String =
+    ( assg.map { case ( idx, t ) => s"${readable( MetaType( idx ) )} = ${readable( t )}\n" } ++
       eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
 
-  def solve( eqs: List[( Type, Type )], assg: Map[TypeVarIdx, Type] ): UnificationError \/ Map[TypeVarIdx, Type] = eqs match {
-    case Nil => assg.right
+  def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): Either[UnificationError, Map[MetaTypeIdx, Type]] = eqs match {
+    case Nil => Right( assg )
     case ( first :: rest ) => first match {
       case ( ArrType( a1, b1 ), ArrType( a2, b2 ) ) =>
         solve( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, assg )
       case ( BaseType( n1 ), BaseType( n2 ) ) if n1 == n2 => solve( rest, assg )
-      case ( t1 @ TypeVar( i1 ), t2 ) if assg contains i1 =>
+      case ( VarType( n1 ), VarType( n2 ) ) if n1 == n2   => solve( rest, assg )
+      case ( t1 @ MetaType( i1 ), t2 ) if assg contains i1 =>
         solve( ( assg( i1 ) -> t2 ) :: rest, assg )
-      case ( t1 @ TypeVar( i1 ), t2 ) =>
+      case ( t1 @ MetaType( i1 ), t2 ) =>
         val t2_ = subst( t2, assg )
         if ( t1 == t2_ )
           solve( rest, assg )
-        else if ( freeVars( t2_ ) contains i1 )
-          s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )} in\n${printCtx( eqs, assg )}".left
+        else if ( freeMetas( t2_ ) contains i1 )
+          Left( s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )} in\n${printCtx( eqs, assg )}" )
         else
           solve( rest, assg + ( i1 -> t2_ ) )
-      case ( t1, t2: TypeVar ) => solve( ( t2 -> t1 ) :: rest, assg )
-      case ( t1, t2 )          => s"Cannot unify types ${readable( t1 )} and ${readable( t2 )} in\n${printCtx( eqs, assg )}".left
+      case ( t1, t2: MetaType ) => solve( ( t2 -> t1 ) :: rest, assg )
+      case ( t1, t2 )           => Left( s"Cannot unify types ${readable( t1 )} and ${readable( t2 )} in\n${printCtx( eqs, assg )}" )
     }
   }
 
-  def infer( expr: Expr, env: Map[String, Type], s0: Map[TypeVarIdx, Type] ): UnificationError \/ ( Map[TypeVarIdx, Type], Type ) =
+  def infers( exprs: Seq[Expr], env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): Either[UnificationError, ( Map[MetaTypeIdx, Type], Seq[Type] )] =
+    exprs match {
+      case Seq() => Right( s0 -> Seq() )
+      case expr +: rest =>
+        for {
+          r1 <- infer( expr, env, s0 )
+          ( s1, exprt ) = r1
+          r2 <- infers( rest, env, s1 )
+          ( s2, restts ) = r2
+        } yield ( s2, exprt +: restts )
+    }
+
+  def infer( expr: Expr, env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): Either[UnificationError, ( Map[MetaTypeIdx, Type], Type )] =
     expr match {
       case TypeAnnotation( e, t ) =>
         for {
-          ( s1, et ) <- infer( e, env, s0 )
+          r1 <- infer( e, env, s0 )
+          ( s1, et ) = r1
           s2 <- solve( List( et -> t ), s1 )
         } yield ( s2, et )
       case Ident( n, t ) =>
         if ( env contains n )
-          for ( s1 <- solve( List( env( n ) -> t ), s0 ) ) yield ( s1, t )
-        else ( s0 -> t ).right
+          for ( s1 <- solve( List( env( n )() -> t ), s0 ) ) yield ( s1, t )
+        else Right( s0 -> t )
       case Abs( Ident( vn, vt ), t ) =>
         for {
-          ( s1, subt ) <- infer( t, env + ( vn -> vt ), s0 )
+          r1 <- infer( t, env + ( vn -> ( () => vt ) ), s0 )
+          ( s1, subt ) = r1
         } yield ( s1, ArrType( vt, subt ) )
       case App( a, b ) =>
-        val appType = freshTypeVar()
+        val appType = freshMetaType()
         for {
-          ( s1, at ) <- infer( a, env, s0 )
-          ( s2, bt ) <- infer( b, env, s1 )
+          r1 <- infer( a, env, s0 )
+          ( s1, at ) = r1
+          r2 <- infer( b, env, s1 )
+          ( s2, bt ) = r2
           s3 <- solve( List( at -> ArrType( bt, appType ) ), s2 )
         } yield ( s3, appType )
       case Lifted( e, ty, fvs ) =>
         for {
-          s1 <- solve( fvs.mapKeys( env( _ ) ).toList, s0 )
+          s1 <- solve( ( for ( ( n, t ) <- fvs.view ) yield env( n )() -> t ).toList, s0 )
         } yield ( s1, ty )
     }
-
-  val polymorphic = Set( real.EqC.name, real.ForallC.name, real.ExistsC.name )
 
   def freeIdentifers( expr: Expr ): Set[String] = expr match {
     case TypeAnnotation( e, ty ) => freeIdentifers( e )
@@ -167,13 +195,14 @@ object ast {
     case Lifted( e, ty, fvs )    => fvs.keySet
   }
 
-  def toRealType( ty: Type, assg: Map[TypeVarIdx, Type] ): real.Ty = ty match {
+  def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
     case BaseType( name ) => real.TBase( name )
+    case VarType( name )  => real.TVar( name )
     case ArrType( a, b )  => toRealType( a, assg ) -> toRealType( b, assg )
-    case TypeVar( idx )   => toRealType( assg( idx ), assg )
+    case MetaType( idx )  => toRealType( assg( idx ), assg )
   }
 
-  def toRealExpr( expr: Expr, assg: Map[TypeVarIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
+  def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
     case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
     case expr @ Ident( name, ty ) =>
       if ( bound( name ) ) real.Var( name, toRealType( ty, assg ) )
@@ -185,11 +214,21 @@ object ast {
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
     case Lifted( e, ty, fvs ) => e
   }
-  def toRealExpr( expr: Expr, sig: BabelSignature ): UnificationError \/ real.LambdaExpression = {
-    val fi = freeIdentifers( expr ) diff polymorphic
-    val freeVars = fi filter sig.isVar
-    val startingEnv = fi.map { i => i -> sig.getType( i ) }
-    for ( ( assg, _ ) <- infer( expr, startingEnv.toMap, Map() ) )
-      yield toRealExpr( expr, assg.withDefaultValue( BaseType( "i" ) ), freeVars )
+  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[UnificationError, Seq[real.LambdaExpression]] = {
+    val fi = expr.view.flatMap( freeIdentifers ).toSet
+    val freeVars = fi.filter( sig.signatureLookup( _ ).isVar )
+    val startingEnv = fi.map { i =>
+      i -> ( sig.signatureLookup( i ) match {
+        case BabelSignature.IsConst( ty ) =>
+          () => liftTypePoly( ty )
+        case BabelSignature.IsUnknownConst | BabelSignature.IsVar =>
+          val fixedMeta = freshMetaType()
+          () => fixedMeta
+      } )
+    }
+    for ( r <- infers( expr, startingEnv.toMap, Map() ); ( assg, _ ) = r )
+      yield expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
   }
+  def toRealExpr( expr: Expr, sig: BabelSignature ): Either[UnificationError, real.LambdaExpression] =
+    toRealExprs( Seq( expr ), sig ).map( _.head )
 }

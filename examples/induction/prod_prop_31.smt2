@@ -1,8 +1,9 @@
 ; Property from "Productive Use of Failure in Inductive Proof",
 ; Andrew Ireland and Alan Bundy, JAR 1996
 
-; FIXME doesn't work with any other size
-; viper cansolsize 2,2
+; for performance:
+; viper cansolsize 2,3
+; viper gramw scomp
 
 (declare-datatypes (a)
   ((list (nil) (cons (head a) (tail (list a))))))

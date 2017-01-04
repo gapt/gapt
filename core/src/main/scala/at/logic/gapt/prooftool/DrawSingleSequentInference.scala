@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.lk.{ ExistsRightRule, ForallLeftRule }
 import scala.swing._
 import java.awt.Color
 
-import at.logic.gapt.formats.latex.LatexUIRenderer
+import at.logic.gapt.formats.latex.LatexExporter
 
 class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value, sequent_element_renderer: F => String ) extends ScrollPane {
 
@@ -60,41 +60,29 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolVie
 
   def init() {
     rule.contents.clear()
-    if ( p() != None ) rule.contents += LatexLabel( main, font, p().get.name )
+    if ( p() != None ) rule.contents += LatexLabel( main, p().get.name )
     rule.contents += Swing.Glue
 
     auxiliaries.contents.clear()
     val aux = for ( proof <- p().toList; ( auxIndices, premise ) <- proof.auxIndices zip proof.premises )
       yield for ( ( f, i ) <- premise.zipWithIndex if auxIndices contains i ) yield f
-    for ( x <- aux ) auxiliaries.contents += DrawSequent[F]( main, x, font, "", sequent_element_renderer )
+    for ( x <- aux ) auxiliaries.contents += DrawSequent( main, x, sequent_element_renderer )
     auxiliaries.contents += Swing.Glue
 
     primaries.contents.clear()
     val primary = for ( proof <- p() ) yield for ( ( f, i ) <- proof.conclusion.zipWithIndex if proof.mainIndices contains i ) yield f
-    for ( prim <- primary ) primaries.contents += DrawSequent[F]( main, prim, font, "", sequent_element_renderer )
+    for ( prim <- primary ) primaries.contents += DrawSequent( main, prim, sequent_element_renderer )
     primaries.contents += Swing.Glue
 
     substitution.contents.clear()
     p() match {
       case Some( proof: ForallLeftRule ) =>
-        substitution.contents += LatexLabel( main, font, LatexUIRenderer.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, LatexExporter( proof.term ) )
       case Some( proof: ExistsRightRule ) =>
-        substitution.contents += LatexLabel( main, font, LatexUIRenderer.formulaToLatexString( proof.term ) )
+        substitution.contents += LatexLabel( main, LatexExporter( proof.term ) )
       case _ =>
     }
     substitution.contents += Swing.Glue
-  }
-
-  def adjustOrientation( o: Orientation.Value ) {
-    val new_orientation = if ( o == Orientation.Vertical || auxiliaries.size.width > bounds.width )
-      Orientation.Vertical
-    else Orientation.Horizontal
-    if ( orientation != new_orientation ) {
-      orientation = new_orientation
-      setContents()
-      revalidate()
-      repaint()
-    }
   }
 
 }

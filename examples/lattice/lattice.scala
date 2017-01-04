@@ -1,7 +1,8 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, FOTheory, FiniteContext, Sequent }
+import at.logic.gapt.expr.hol.CNFp
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object lattice extends TacticsProof {
@@ -9,14 +10,14 @@ object lattice extends TacticsProof {
   ctx += hoc"cap: i>i>i"
   ctx += hoc"cup: i>i>i"
 
-  ctx += FOTheory(
+  Seq(
     hof"∀x∀y cap x y = cap y x",
     hof"∀x∀y∀z cap (cap x y) z = cap x (cap y z)",
     hof"∀x cap x x = x",
     hof"∀x∀y cup x y = cup y x",
     hof"∀x∀y∀z cup (cup x y) z = cup x (cup y z)",
     hof"∀x cup x x = x"
-  )
+  ).flatMap( CNFp( _ ) ).foreach( ctx += _ )
 
   ctx += hof"(x <= y) = (cap x y = x)"
   ctx += hof"L1 = (∀x∀y (cap x y = x <-> cup x y = y))"
@@ -29,7 +30,7 @@ object lattice extends TacticsProof {
   ctx += hof"LUB = (∀x∀y (x <= cup x y ∧ y <= cup x y ∧ ∀z (x<=z ∧ y<=z ⊃ cup x y <= z)))"
   ctx += hof"L3 = (POSET ∧ (GLB ∧ LUB))"
 
-  val defs = ctx.definitions
+  val defs = ctx.definitions.toMap
 
   //
   // Left sub proof
@@ -54,7 +55,7 @@ object lattice extends TacticsProof {
     allL( "L1", le"cup x_0 y_0", le"z_0" )
     andL( "L1_2" )
     impL( "L1_2_1" )
-    theory
+    foTheory
     prop
   }
 
@@ -65,7 +66,7 @@ object lattice extends TacticsProof {
     allL( "L1", le"x", le"cup x y" )
     andL
     impL( "L1_0_1" )
-    theory
+    foTheory
     prop
   }
 
@@ -77,7 +78,7 @@ object lattice extends TacticsProof {
     andR
     andR
     insert( p_5_1 )
-    cut( "cupcomm", hof"cup x_0 y_0 = cup y_0 x_0" ); theory
+    cut( "cupcomm", hof"cup x_0 y_0 = cup y_0 x_0" ); foTheory
     rewrite ltr "cupcomm" in "LUB"
     insert( p_5_1 )
     insert( p_6 )
@@ -87,13 +88,13 @@ object lattice extends TacticsProof {
   val p_4 = Lemma( Sequent( Nil, Seq( "a" -> hof"∀z (z <= x_0 ∧ z <= y_0 ⊃ z <= cap x_0 y_0)" ) ) ) {
     unfold( "<=" ) in "a"
     decompose
-    theory
+    foTheory
   }
 
   // finishes showing that meet is lower bound for \leq
   val p_3_1 = Lemma( Sequent( Nil, Seq( "a" -> hof"cap x_0 y_0 <= y_0" ) ) ) {
     unfold( "<=" ) in "a"
-    theory
+    foTheory
   }
 
   // show that meet is lower bound for \leq
@@ -103,7 +104,7 @@ object lattice extends TacticsProof {
     decompose
     andR
     andR
-    unfold( "<=" ) in "a"; theory
+    unfold( "<=" ) in "a"; foTheory
     insert( p_3_1 )
     insert( p_4 )
     insert( p_5 )
@@ -114,7 +115,7 @@ object lattice extends TacticsProof {
     unfold( "T" ) in "T"
     decompose
     unfold( "<=" ) in ( "T_0_0", "T_0_1", "T_1" )
-    theory
+    foTheory
   }
 
   // show anti-symmetry
@@ -122,7 +123,7 @@ object lattice extends TacticsProof {
     andR
     unfold( "AS" ) in "a"
     decompose
-    unfold( "<=" ) in ( "a_0_0", "a_0_1" ); theory
+    unfold( "<=" ) in ( "a_0_0", "a_0_1" ); foTheory
     insert( p_2 )
   }
 
@@ -134,7 +135,7 @@ object lattice extends TacticsProof {
     andR
     repeat( unfold( "R", "<=" ) in "L3" )
     decompose
-    theory
+    foTheory
     insert( p_1 )
     insert( p_3 )
   }

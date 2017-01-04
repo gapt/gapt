@@ -1,9 +1,10 @@
 package at.logic.gapt.provers.smtlib
 
-import java.io.{ InputStreamReader, BufferedReader, PrintWriter }
+import java.io.{ BufferedReader, InputStreamReader, PrintWriter }
 import java.lang.ProcessBuilder.Redirect
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.lisp._
 import at.logic.gapt.provers.IncrementalProvingSession
 
@@ -145,9 +146,13 @@ abstract class ExternalSmtlibProgram extends SmtlibSession {
     in.flush()
     val res = out.readLine()
     if ( debug ) println( s"-> $res" )
-    require( res != null, s"SMT solver terminated unexpectedly on $input" )
-    SExpressionParser.parseString( res ).head
+    if ( res == null ) throw new ExternalSmtlibProgram.UnexpectedTerminationException( input )
+    SExpressionParser( StringInputFile( res ) ).head
   }
 
   override def close() = process.destroy()
+}
+object ExternalSmtlibProgram {
+  class UnexpectedTerminationException( input: SExpression )
+    extends Exception( s"SMT solver terminated unexpectedly on $input" )
 }

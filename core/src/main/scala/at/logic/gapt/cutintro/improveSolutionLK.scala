@@ -15,29 +15,28 @@ object improveSolutionLK {
    *
    * Maintains the invariant that the cut-formulas can be realized in an LK proof.
    */
-  def apply( ehs: ExtendedHerbrandSequent, prover: Prover, hasEquality: Boolean,
+  def apply( ehs: SolutionStructure, prover: Prover, hasEquality: Boolean,
              forgetOne:    Boolean = false,
-             minimizeBack: Boolean = false ): ExtendedHerbrandSequent = {
-    val qfCutFormulas = mutable.Seq( ( ehs.cutFormulas, ehs.sehs.eigenVariables ).zipped map { instantiate( _, _ ) }: _* )
+             minimizeBack: Boolean = false ): SolutionStructure = {
+    val formulasInImprovement = ehs.formulas.to[mutable.Seq]
 
-    for ( i <- qfCutFormulas.indices.reverse ) {
+    for ( i <- formulasInImprovement.indices.reverse ) {
       val eigenVariablesInScope = for ( ( evs, j ) <- ehs.sehs.eigenVariables.zipWithIndex; ev <- evs if i < j ) yield ev
-      val availableInstances = ehs.prop ++ ehs.inst filter { inst => freeVariables( inst ) subsetOf eigenVariablesInScope.toSet }
-      val availableCutFormulas = for ( ( cf, j ) <- qfCutFormulas.zipWithIndex if i < j ) yield cf
+      val availableInstances = ehs.endSequentInstances filter { inst => freeVariables( inst ) subsetOf eigenVariablesInScope.toSet }
+      val availableCutFormulas = for ( ( cf, j ) <- formulasInImprovement.zipWithIndex if i < j ) yield cf
       val context = availableInstances :++ availableCutFormulas
       val instances = ehs.sehs.ss( i ) match {
         case ( ev, instanceTerms ) =>
           for ( terms <- instanceTerms ) yield FOLSubstitution( ev zip terms )
       }
-      qfCutFormulas( i ) = improve( context, qfCutFormulas( i ), instances toSet, prover, hasEquality, forgetOne )
+      formulasInImprovement( i ) = improve( context, formulasInImprovement( i ), instances toSet, prover, hasEquality, forgetOne )
     }
 
-    if ( minimizeBack && qfCutFormulas.size == 1 ) {
-      val context = ehs.prop ++ ehs.inst
-      qfCutFormulas( 0 ) = improveBack( context, qfCutFormulas( 0 ), prover )
+    if ( minimizeBack && formulasInImprovement.size == 1 ) {
+      formulasInImprovement( 0 ) = improveBack( ehs.endSequentInstances, formulasInImprovement( 0 ), prover )
     }
 
-    ehs.copy( cutFormulas = ( ehs.sehs.eigenVariables, qfCutFormulas ).zipped map { All.Block( _, _ ) } )
+    ehs.copy( formulas = formulasInImprovement )
   }
 
   /**
@@ -53,15 +52,21 @@ object improveSolutionLK {
    */
   private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula =
     for ( session <- prover.startIncrementalSession() ) yield {
-      session declareSymbolsIn ( instances.flatMap { _.map.values } + start ++ context.elements )
-      session assert context.toNegConjunction
+      val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
+      val nameGen = rename.awayFrom( names )
+      val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
+        yield v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+      val groundInstances = instances.map( grounding.compose )
+
+      session declareSymbolsIn ( names ++ containedNames( grounding ) )
+      session assert grounding( context.toNegConjunction )
 
       val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
       def checkSolution( cnf: Set[FOLClause] ): Unit =
         if ( !isSolution.contains( cnf ) ) {
           if ( session withScope {
-            for ( inst <- instances; clause <- cnf ) session assert inst( clause.toDisjunction )
+            for ( inst <- groundInstances; clause <- cnf ) session assert inst( clause.toDisjunction )
             !session.checkSat()
           } ) {
             isSolution( cnf ) = true
@@ -73,7 +78,7 @@ object improveSolutionLK {
           }
         }
 
-      checkSolution( CNFp.toClauseList( start ).map { _.distinct.sortBy { _.hashCode } }.toSet )
+      checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
 
       val solutions = isSolution collect { case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) ) }
       solutions minBy { lcomp( _ ) }
@@ -89,7 +94,7 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    */
   private def improveBack( context: Sequent[FOLFormula], start: FOLFormula, prover: Prover ): FOLFormula =
-    simplify( And( CNFp.toClauseList( start ) map { improveBack( context, _, prover ).toImplication } ) )
+    simplify( And( CNFp( start ) map { improveBack( context, _, prover ).toImplication } ) )
 
   private def improveBack( context: Sequent[FOLFormula], start: FOLClause, prover: Prover ): FOLClause = {
     val isSolution = mutable.Map[FOLClause, Boolean]()

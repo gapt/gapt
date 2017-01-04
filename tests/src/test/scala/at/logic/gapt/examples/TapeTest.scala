@@ -1,17 +1,17 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.proofs.lk.DefinitionElimination
+import at.logic.gapt.proofs.lk.eliminateDefinitions
 import org.specs2.mutable.Specification
 
 class TapeTest extends Specification {
 
   "tape" in {
-    tape
+    tape.ctx.check( tape.p )
     ok
   }
 
   "definition elimination" in {
-    DefinitionElimination( tape.defs.toMap )( tape.p )
+    eliminateDefinitions( tape.defs.toMap )( tape.p )
     ok
   }
 
@@ -19,12 +19,12 @@ class TapeTest extends Specification {
 
 class TapeUrbanTest extends Specification {
   "urban tape" in {
-    tapeUrban
+    tapeUrban.ctx.check( tapeUrban.sigma )
     ok
   }
 
   "definition elimination" in {
-    DefinitionElimination( tapeUrban.defs.toMap )( tapeUrban.sigma )
+    eliminateDefinitions( tapeUrban.defs.toMap )( tapeUrban.sigma )
     ok
   }
 }

@@ -1,55 +1,114 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs._
+import at.logic.gapt.proofs.HOLSequent
 
+import scala.collection.mutable
+
+/**
+ * Eliminate [[AvatarSplit]], [[AvatarComponent]], [[AvatarContradiction]]
+ * splitting inferences from a resolution proof.
+ */
 object eliminateSplitting {
-  def apply( p: ResolutionProof ): ResolutionProof = p match {
-    case Splitting( splittingClause, part1, part2, case1, case2 ) =>
-      justOne( Splitting( splittingClause, part1, part2, apply( case1 ), apply( case2 ) ) )
-    case _ => p
+
+  def apply( p: ResolutionProof ): ResolutionProof = {
+    if ( !p.subProofs.exists { _.isInstanceOf[AvatarContradiction] } ) return p
+    nonGroundSplits( groundSplits( p ) )
   }
 
-  def justOne( split: Splitting ): ResolutionProof = {
-    val Splitting( splittingClause, part1, part2, subProof1, subProof2 ) = split
+  /**
+   * Eliminates splitting inferences on ground literals by replacing them with [[Taut]].
+   */
+  private def groundSplits( p: ResolutionProof ): ResolutionProof =
+    new ResolutionProofVisitor {
+      override def visitAvatarComponent( p: AvatarComponent ): ResolutionProof =
+        p.component match {
+          case AvatarGroundComp( atom, _ ) => Taut( atom )
+          case _                           => p
+        }
 
-    val nameGen = rename.awayFrom(
-      splittingClause.subProofs union subProof1.subProofs union subProof2.subProofs
-        collect { case Instance( _, subst ) => subst.domain } flatten
-    )
+      override def visitAvatarSplit( p: AvatarSplit ): ResolutionProof =
+        p.component match {
+          case AvatarGroundComp( atom, _ ) => recurse( p.subProof )
+          case _                           => super.visitAvatarSplit( p )
+        }
+    }.apply( p )
 
-    val projections1 = for ( ( a, i ) <- part1.zipWithIndex if freeVariables( a ).isEmpty )
-      yield mapInputClauses.withOccConn( subProof1, factorEverything = true ) {
-      case clause if clause == part1 =>
-        TautologyClause( a ) -> OccConnector( a +: Clause() :+ a, clause,
-          if ( i isSuc ) Seq() +: Sequent() :+ Seq( i )
-          else Seq( i ) +: Sequent() :+ Seq() )
-      case clause => InputClause( clause ) -> OccConnector( clause )
+  /**
+   * Given a non-ground splitting component C with atom A and a proof that ends with A in the assertion,
+   * eliminate [[AvatarSplit]] inferences that move C into the assertion,
+   * and return a proof that ends with C in the conclusion.
+   */
+  private def project( p: ResolutionProof, splAtom: HOLAtom ): ( ResolutionProof, Seq[Var], HOLSequent ) = {
+    val ngc = p.subProofs.collect { case AvatarSplit( _, _, comp @ AvatarNonGroundComp( `splAtom`, _, _ ) ) => comp }.head
+    val newVs = ngc.vars map rename( ngc.vars, containedNames( p ) )
+    val newClause = Substitution( ngc.vars zip newVs )( ngc.clause )
+
+    val visitor = new ResolutionProofVisitor {
+      override def visitAvatarSplit( p: AvatarSplit ): ResolutionProof =
+        p.component match {
+          case AvatarNonGroundComp( `splAtom`, _, vs ) =>
+            Subst( recurse( p.subProof ), Substitution( vs zip newVs ) )
+          case _ => super.visitAvatarSplit( p )
+        }
     }
 
-    val part2renaming = freeVariables( part2 ).map { v => v -> nameGen.fresh( v ) }
-    val renamedSplittingClause = Instance( splittingClause, Substitution( part2renaming ) )
-    val renamedPart1OccConn = OccConnector( part1, Substitution( part2renaming )( splittingClause.conclusion ).map { _.asInstanceOf[HOLAtom] },
-      for ( ( a, i ) <- part1.zipWithIndex ) yield Seq( splittingClause.conclusion.indexOfPol( a, i.isSuc ) ) )
-    val renamedDerivationOfPart2 = mapInputClauses.withOccConn( subProof1, factorEverything = true ) { clause =>
-      if ( clause == part1 ) {
-        renamedSplittingClause -> renamedPart1OccConn.inv
-      } else {
-        InputClause( clause ) -> OccConnector( clause )
-      }
-    }
-    val derivationOfPart2 = Instance( renamedDerivationOfPart2, Substitution( part2renaming.map { _.swap } ) )
-    require( derivationOfPart2.conclusion isSubMultisetOf part2 )
-
-    val finalProof = mapInputClauses( subProof2, factorEarly = true ) { clause =>
-      if ( clause == part2 ) {
-        derivationOfPart2
-      } else {
-        projections1.find( _.conclusion isSubsetOf clause ).map( projections1( _ ) ).getOrElse( InputClause( clause ) )
-      }
-    }
-    require( finalProof.conclusion.isEmpty )
-
-    finalProof
+    ( visitor( p ), newVs, newClause )
   }
+
+  /**
+   * Given a non-ground splitting component C with atom A as well as a projection that ends with C in the conclusion,
+   * replace all [[AvatarComponent]] inferences for that component with the projection.
+   */
+  private def replace( p: ResolutionProof, splAtom: HOLAtom, proj: ResolutionProof, projVars: Seq[Var] ) =
+    new ResolutionProofVisitor {
+      override def visitAvatarComponent( p: AvatarComponent ): ResolutionProof =
+        p.component match {
+          case AvatarNonGroundComp( `splAtom`, _, vs ) =>
+            Subst( proj, Substitution( projVars zip vs ) )
+          case _ => p
+        }
+    }.apply( p )
+
+  /**
+   * Eliminate non-ground splitting inferences.  This procedure is similar to Π_1-normalization in natural deduction.
+   * As a strategy, we pick a top-most resolution inference on a splitting atom (i.e. one that is
+   * right below [[AvatarContradiction]] inferences), call [[project]] on the left sub-proof,
+   * and then put the projection in the right sub-proof with [[replace]].
+   */
+  // TODO: SMT splitting
+  private def nonGroundSplits( p: ResolutionProof ): ResolutionProof = {
+    val memo = mutable.Map[ResolutionProof, ResolutionProof]()
+    def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
+      case AvatarContradiction( p1 ) => AvatarContradiction( Factor( p1 ) )
+      case Resolution( p1, i1, p2, i2 ) =>
+        val splAtom = p1.conclusion( i1 ).asInstanceOf[HOLAtom]
+        ( f( p1 ), f( p2 ) ) match {
+          case ( Factor.Block( AvatarContradiction( q1 ) ), Factor.Block( AvatarContradiction( q2 ) ) ) =>
+            if ( q1.assertions.succedent.contains( splAtom ) ) {
+              val ( proj, projVars, projClause ) = project( q1, splAtom )
+              val repld = replace( q2, splAtom, proj, projVars )
+              Factor( if ( repld.assertions.nonEmpty ) AvatarContradiction( repld ) else repld )
+            } else {
+              AvatarContradiction( Factor( Resolution.maybe( Factor( q1 ), Factor( q2 ), splAtom ) ) )
+            }
+          case ( Factor.Block( AvatarContradiction( q1 ) ), q2 ) =>
+            AvatarContradiction( Factor( Resolution.maybe( Factor( q1 ), q2, splAtom ) ) )
+          case ( q1, Factor.Block( AvatarContradiction( q2 ) ) ) =>
+            AvatarContradiction( Factor( Resolution.maybe( q1, Factor( q2 ), splAtom ) ) )
+          case ( q1, q2 ) =>
+            Factor( Resolution.maybe( q1, q2, splAtom ) )
+        }
+      case Factor( p1, i1, i2 ) => f( p1 )
+      case _ =>
+        require( !p.subProofs.exists { _.isInstanceOf[AvatarContradiction] } )
+        p
+    } )
+
+    f( p ) match {
+      case AvatarContradiction( q ) => q
+      case q                        => q
+    }
+  }
+
 }

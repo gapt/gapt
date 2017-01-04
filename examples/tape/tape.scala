@@ -1,7 +1,8 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, FOTheory, FiniteContext, Sequent }
+import at.logic.gapt.expr.hol.CNFp
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object tape extends TacticsProof {
@@ -12,12 +13,12 @@ object tape extends TacticsProof {
   ctx += hof"A = (∀x (f(x) = 0 ∨ f(x) = 1))"
   ctx += hof"I(v) = (∀x ∃y f(x+y) = v)"
 
-  ctx += FOTheory(
+  Seq(
     hof"∀x∀y x+y = y+x",
     hof"∀x∀y∀z (x+y)+z = x+(y+z)",
     hof"∀x 0+x = x",
     hof"∀x∀y x+y+1 != x"
-  )
+  ).flatMap( CNFp( _ ) ).foreach( ctx += _ )
 
   val lhs = Lemma( ( "A" -> fof"A" ) +: Sequent()
     :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {
@@ -33,7 +34,7 @@ object tape extends TacticsProof {
     forget( "A" )
     destruct( "A_0" )
     trivial
-    theory
+    foTheory
   }
 
   val rhs = Lemma( ( "Iv" -> fof"I(v)" ) +: Sequent()
@@ -48,9 +49,9 @@ object tape extends TacticsProof {
     forget( "C" )
     destruct( "C_0" )
     negR
-    theory
+    foTheory
     rewrite rtl "Iv_1" in "Iv_0"
-    theory
+    foTheory
   }
 
   val p = Lemma( ( "A" -> fof"A" ) +: Sequent()
@@ -61,5 +62,5 @@ object tape extends TacticsProof {
     repeat( insert( rhs ) )
   }
 
-  val defs = ctx.definitions
+  val defs = ctx.definitions.toMap
 }

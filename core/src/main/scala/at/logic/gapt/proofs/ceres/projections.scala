@@ -5,26 +5,12 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.hol.{ containsStrongQuantifier, HOLPosition }
-import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.ceres.Pickrule._
+import at.logic.gapt.proofs.lk._
 
-case class ProjectionException( message: String, original_proof: LKProof, new_proofs: List[LKProof], nested: Exception )
-  extends Exception( message, nested ) {}
-
-object Projections extends at.logic.gapt.utils.logging.Logger {
-
-  def reflexivity_projection( proof: LKProof, t: Ty = Ti ): LKProof = {
-    val es = proof.endSequent
-    val x = Var( "x", t )
-    val x_ = rename( x, freeVariables( es ) )
-    val ax: LKProof = Axiom( Nil, List( Eq( x_, x_ ) ) )
-    val left = es.antecedent.foldLeft( ax )( ( p, f ) => WeakeningLeftRule( p, f ) )
-    val right = es.succedent.foldLeft( left )( ( p, f ) => WeakeningRightRule( p, f ) )
-    right
-  }
+object Projections {
 
   // This method computes the standard projections according to the original CERES definition.
   def apply( proof: LKProof ): Set[LKProof] =
@@ -60,73 +46,64 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     implicit val c_ancs = cut_ancs
     //proof.occConnectors
 
-    try {
-      val r: Set[LKProof] = proof match {
-        /* Structural rules except cut */
-        case InitialSequent( s )                    => Set( Axiom( s ) )
+    proof match {
+      /* Structural rules except cut */
+      case InitialSequent( s )                    => Set( Axiom( s ) )
 
-        case ContractionLeftRule( p, a1, a2 )       => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply, pred )
-        case ContractionRightRule( p, a1, a2 )      => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply, pred )
-        case WeakeningLeftRule( p, m )              => handleWeakeningRule( proof, p, m, WeakeningLeftRule.apply, pred )
-        case WeakeningRightRule( p, m )             => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply, pred )
+      case ContractionLeftRule( p, a1, a2 )       => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply, pred )
+      case ContractionRightRule( p, a1, a2 )      => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply, pred )
+      case WeakeningLeftRule( p, m )              => handleWeakeningRule( proof, p, m, WeakeningLeftRule.apply, pred )
+      case WeakeningRightRule( p, m )             => handleWeakeningRule( proof, p, m, WeakeningRightRule.apply, pred )
 
-        /* Logical rules */
-        case AndRightRule( p1, a1, p2, a2 )         => handleBinaryRule( proof, p1, p2, a1, a2, AndRightRule.apply, pred )
-        case OrLeftRule( p1, a1, p2, a2 )           => handleBinaryRule( proof, p1, p2, a1, a2, OrLeftRule.apply, pred )
-        case ImpLeftRule( p1, a1, p2, a2 )          => handleBinaryRule( proof, p1, p2, a1, a2, ImpLeftRule.apply, pred )
-        case NegLeftRule( p, a )                    => handleNegRule( proof, p, a, NegLeftRule.apply, pred )
-        case NegRightRule( p, a )                   => handleNegRule( proof, p, a, NegRightRule.apply, pred )
-        case OrRightRule( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, OrRightRule.apply, pred )
-        case AndLeftRule( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, AndLeftRule.apply, pred )
-        case ImpRightRule( p, a1, a2 )              => handleUnaryRule( proof, p, a1, a2, ImpRightRule.apply, pred )
+      /* Logical rules */
+      case AndRightRule( p1, a1, p2, a2 )         => handleBinaryRule( proof, p1, p2, a1, a2, AndRightRule.apply, pred )
+      case OrLeftRule( p1, a1, p2, a2 )           => handleBinaryRule( proof, p1, p2, a1, a2, OrLeftRule.apply, pred )
+      case ImpLeftRule( p1, a1, p2, a2 )          => handleBinaryRule( proof, p1, p2, a1, a2, ImpLeftRule.apply, pred )
+      case NegLeftRule( p, a )                    => handleNegRule( proof, p, a, NegLeftRule.apply, pred )
+      case NegRightRule( p, a )                   => handleNegRule( proof, p, a, NegRightRule.apply, pred )
+      case OrRightRule( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, OrRightRule.apply, pred )
+      case AndLeftRule( p, a1, a2 )               => handleUnaryRule( proof, p, a1, a2, AndLeftRule.apply, pred )
+      case ImpRightRule( p, a1, a2 )              => handleUnaryRule( proof, p, a1, a2, ImpRightRule.apply, pred )
 
-        /* quantifier rules  */
-        case ForallRightRule( p, a, eigenv, qvar )  => handleStrongQuantRule( proof, p, ForallRightRule.apply, pred )
-        case ExistsLeftRule( p, a, eigenvar, qvar ) => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
-        case ForallLeftRule( p, a, f, t, v )        => handleWeakQuantRule( proof, p, a, f, t, v, ForallLeftRule.apply, pred )
-        case ExistsRightRule( p, a, f, t, v )       => handleWeakQuantRule( proof, p, a, f, t, v, ExistsRightRule.apply, pred )
+      /* quantifier rules  */
+      case ForallRightRule( p, a, eigenv, qvar )  => handleStrongQuantRule( proof, p, ForallRightRule.apply, pred )
+      case ExistsLeftRule( p, a, eigenvar, qvar ) => handleStrongQuantRule( proof, p, ExistsLeftRule.apply, pred )
+      case ForallLeftRule( p, a, f, t, v )        => handleWeakQuantRule( proof, p, a, f, t, v, ForallLeftRule.apply, pred )
+      case ExistsRightRule( p, a, f, t, v )       => handleWeakQuantRule( proof, p, a, f, t, v, ExistsRightRule.apply, pred )
+      case ForallSkRightRule( p, a, m, t, d )     => handleSkQuantRule( proof, p, a, m, t, d, ForallSkRightRule.apply, pred )
+      case ExistsSkLeftRule( p, a, m, t, d )      => handleSkQuantRule( proof, p, a, m, t, d, ExistsSkLeftRule.apply, pred )
 
-        case DefinitionLeftRule( p, a, m )          => handleDefRule( proof, p, a, m, DefinitionLeftRule.apply, pred )
-        case DefinitionRightRule( p, a, m )         => handleDefRule( proof, p, a, m, DefinitionRightRule.apply, pred )
-        case EqualityLeftRule( p1, e, a, con )      => handleEqRule( proof, p1, e, a, con, EqualityLeftRule.apply, pred )
-        case EqualityRightRule( p1, e, a, con )     => handleEqRule( proof, p1, e, a, con, EqualityRightRule.apply, pred )
-        case rule @ CutRule( p1, a1, p2, a2 ) =>
-          if ( pred( rule.cutFormula ) ) {
-            /* this cut is taken into account */
-            val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, true )
-            val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, true )
-            require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
-            require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
-            val s1 = apply( p1, new_cut_ancs_left, pred )
-            val s2 = apply( p2, new_cut_ancs_right, pred )
-            handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs_left, new_cut_ancs_right )
-          } else {
-            /* this cut is skipped */
-            //println( "SKIPPING CUT" )
-            val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, false )
-            val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, false )
-            require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
-            require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
-            val s1 = apply( p1, new_cut_ancs_left, pred )
-            val s2 = apply( p2, new_cut_ancs_right, pred )
-            s1.foldLeft( Set.empty[LKProof] )( ( s, pm1 ) =>
-              s ++ s2.map( pm2 => {
-                require( p1.conclusion( a1 ) == p2.conclusion( a2 ), "Original cut formulas must be equal!" )
-                val List( aux1, aux2 ) = pickrule( proof, List( p1, p2 ), List( pm1, pm2 ), List( a1, a2 ) )
-                require( pm1.conclusion( aux1 ) == pm2.conclusion( aux2 ), "New cut formulas must be equal!" )
-                CutRule( pm1, aux1, pm2, aux2 )
-              } ) )
-          }
-        case _ => throw new Exception( "No such a rule in Projections.apply" )
-      }
-      r
-    } catch {
-      case e: ProjectionException =>
-        //println("passing exception up...")
-        //throw ProjectionException(e.getMessage, proof, Nil, null)
-        throw e
-      case e: Exception =>
-        throw ProjectionException( "Error computing projection: " + e.getMessage + sys.props( "line.separator" ) + e.getStackTrace, proof, Nil, e )
+      case DefinitionLeftRule( p, a, d, c )       => handleDefRule( proof, p, a, d, c, DefinitionLeftRule.apply, pred )
+      case DefinitionRightRule( p, a, d, c )      => handleDefRule( proof, p, a, d, c, DefinitionRightRule.apply, pred )
+      case EqualityLeftRule( p1, e, a, con )      => handleEqRule( proof, p1, e, a, con, EqualityLeftRule.apply, pred )
+      case EqualityRightRule( p1, e, a, con )     => handleEqRule( proof, p1, e, a, con, EqualityRightRule.apply, pred )
+      case rule @ CutRule( p1, a1, p2, a2 ) =>
+        if ( pred( rule.cutFormula ) ) {
+          /* this cut is taken into account */
+          val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, default = true )
+          val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, default = true )
+          require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+          require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+          val s1 = apply( p1, new_cut_ancs_left, pred )
+          val s2 = apply( p2, new_cut_ancs_right, pred )
+          handleBinaryCutAnc( proof, p1, p2, s1, s2, new_cut_ancs_left, new_cut_ancs_right )
+        } else {
+          /* this cut is skipped */
+          //println( "SKIPPING CUT" )
+          val new_cut_ancs_left = mapToUpperProof( proof.occConnectors( 0 ), cut_ancs, default = false )
+          val new_cut_ancs_right = mapToUpperProof( proof.occConnectors( 1 ), cut_ancs, default = false )
+          require( new_cut_ancs_left.size == p1.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+          require( new_cut_ancs_right.size == p2.endSequent.size, "Cut ancestor information does not fit to end-sequent!" )
+          val s1 = apply( p1, new_cut_ancs_left, pred )
+          val s2 = apply( p2, new_cut_ancs_right, pred )
+          s1.foldLeft( Set.empty[LKProof] )( ( s, pm1 ) =>
+            s ++ s2.map( pm2 => {
+              require( p1.conclusion( a1 ) == p2.conclusion( a2 ), "Original cut formulas must be equal!" )
+              val List( aux1, aux2 ) = pickrule( proof, List( p1, p2 ), List( pm1, pm2 ), List( a1, a2 ) )
+              require( pm1.conclusion( aux1 ) == pm2.conclusion( aux2 ), "New cut formulas must be equal!" )
+              CutRule( pm1, aux1, pm2, aux2 )
+            } ) )
+        }
     }
   }
 
@@ -200,14 +177,14 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     else s.map( pm => constructor( pm, m ) )
   }
 
-  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula,
-                     constructor: ( LKProof, SequentIndex, HOLFormula ) => LKProof,
+  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, d: Definition, c: Abs,
+                     constructor: ( LKProof, SequentIndex, Definition, Abs ) => LKProof,
                      pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
       val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
-      constructor( pm, a_, f )
+      constructor( pm, a_, d, c )
     } )
   }
 
@@ -230,6 +207,17 @@ object Projections extends at.logic.gapt.utils.logging.Logger {
     else s.map( pm => {
       val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
       constructor( pm, a_, f, t, qvar )
+    } )
+  }
+
+  def handleSkQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, m: HOLFormula, t: LambdaExpression, d: LambdaExpression,
+                         constructor: ( LKProof, SequentIndex, HOLFormula, LambdaExpression, LambdaExpression ) => LKProof,
+                         pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+    val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
+    if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
+    else s.map( pm => {
+      val List( a_ ) = pickrule( proof, List( p ), List( pm ), List( a ) )
+      constructor( pm, a_, m, t, d )
     } )
   }
 

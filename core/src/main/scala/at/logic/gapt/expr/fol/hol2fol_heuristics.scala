@@ -1,9 +1,9 @@
 package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.{ Ty, Ti, To }
+import at.logic.gapt.expr.{ Ti, To, Ty }
 import at.logic.gapt.proofs.SequentProof
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
@@ -17,7 +17,6 @@ import at.logic.gapt.utils.logging.Logger
 object undoHol2Fol extends Logger {
   type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )
 
-  override def loggerName = "HOL2FOLLogger"
   /**
    * Translate the fol formula e to a hol formula over the given signature for constants and variables.
    *

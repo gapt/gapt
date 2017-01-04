@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import org.specs2.mutable._
 
 class FixDerivationTest extends Specification with SequentMatchers {
@@ -78,7 +78,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
       val q = FOLAtom( "q" )
       val r = FOLAtom( "r" )
 
-      val der = Resolution( InputClause( Clause() :+ q :+ r ), Suc( 0 ), InputClause( q +: Clause() :+ p ), Ant( 0 ) )
+      val der = Resolution( Input( Clause() :+ q :+ r ), Suc( 0 ), Input( q +: Clause() :+ p ), Ant( 0 ) )
       val cq = HOLClause( Nil, q :: Nil )
       val cqp = HOLClause( q :: Nil, p :: Nil )
 
@@ -93,10 +93,10 @@ class FixDerivationTest extends Specification with SequentMatchers {
       val r = FOLAtom( "r" )
 
       val der = Resolution(
-        InputClause( Clause() :+ q :+ r ),
+        Input( Clause() :+ q :+ r ),
         Suc( 0 ),
         Factor(
-          InputClause( q +: Clause() :+ p :+ p ),
+          Input( q +: Clause() :+ p :+ p ),
           Suc( 0 ), Suc( 1 )
         ),
         Ant( 0 )
@@ -111,31 +111,32 @@ class FixDerivationTest extends Specification with SequentMatchers {
 
   }
 
-  "mapInputClauses" should {
+  "mapInputs" should {
     "factor reordered clauses" in {
       val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
       val c = FOLConst( "c" )
       val p = FOLAtomConst( "p", 1 )
 
-      val p1 = InputClause( Clause() :+ p( x ) :+ p( y ) )
-      val p2 = InputClause( p( c ) +: Clause() )
-      val p3 = Instance( p1, Substitution( x -> c, y -> c ) )
+      val p1 = Input( Clause() :+ p( x ) :+ p( y ) )
+      val p2 = Input( p( c ) +: Clause() )
+      val p3 = Subst( p1, Substitution( x -> c, y -> c ) )
       val p4 = Factor( p3, Suc( 0 ), Suc( 1 ) )
       val p5 = Resolution( p4, Suc( 0 ), p2, Ant( 0 ) )
 
       mapInputClauses( p5 ) {
-        case Clause( ant, suc ) => InputClause( Clause( ant.reverse, suc.reverse ) )
+        case Sequent( ant, suc ) => Input( Clause( ant.reverse, suc.reverse ) )
       }.conclusion must_== Clause()
     }
   }
 
   "findDerivationViaResolution" should {
     def check( a: HOLClause, bs: Set[_ <: HOLClause] ) = {
-      findDerivationViaResolution( a, bs, prover = Escargot ) must beLike {
+      findDerivationViaResolution( a, bs, prover = NonSplittingEscargot ) must beLike {
         case Some( p ) =>
           p.conclusion.isSubMultisetOf( a ) aka s"${p.conclusion} subclause of $a" must_== true
-          foreach( p.inputClauses ) { inputClause =>
-            bs.toSet[HOLClause] must contain( inputClause )
+          val inputClauses = p.subProofs.collect { case Input( seq ) => seq }
+          foreach( inputClauses ) { inputClause =>
+            bs.toSet[HOLSequent] must contain( inputClause )
           }
       }
     }

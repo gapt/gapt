@@ -1,7 +1,8 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.linearizeStrictPartialOrder
+import at.logic.gapt.proofs.epsilon.Epsilon
+import at.logic.gapt.utils.linearizeStrictPartialOrder
 
 /**
  * List of definitions of Skolem symbols.
@@ -18,7 +19,7 @@ import at.logic.gapt.proofs.expansion.linearizeStrictPartialOrder
  */
 case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
   skolemDefs foreach {
-    case ( s, d @ Abs.Block( vs, Quant( v, f ) ) ) =>
+    case ( s, d @ Abs.Block( vs, Quant( v, f, isForall ) ) ) =>
       require( s.exptype == FunctionType( v.exptype, vs map { _.exptype } ) )
       require( freeVariables( d ).isEmpty )
   }
@@ -28,8 +29,22 @@ case class SkolemFunctions( skolemDefs: Map[Const, LambdaExpression] ) {
     for ( ( s, d ) <- skolemDefs; s_ <- constants( d ) if skolemDefs contains s_ ) yield s -> s_
   )
 
+  def orderedDefinitions = dependencyOrder.map( c => c -> skolemDefs( c ) )
+
+  def epsilonDefinitions =
+    for ( ( skConst, skDef ) <- orderedDefinitions )
+      yield skConst -> ( skolemDefs( skConst ) match {
+      case Abs.Block( vs, Ex( v, f ) )  => Abs.Block( vs, Epsilon( v, f ) )
+      case Abs.Block( vs, All( v, f ) ) => Abs.Block( vs, Epsilon( v, -f ) )
+    } )
+
+  def +( sym: Const, defn: LambdaExpression ): SkolemFunctions = {
+    require( !skolemDefs.contains( sym ), s"Skolem symbol $sym already defined as ${skolemDefs( sym )}" )
+    copy( skolemDefs + ( sym -> defn ) )
+  }
+
   override def toString =
-    ( for ( s <- dependencyOrder ) yield s"$s → ${skolemDefs( s )}\n" ).mkString
+    ( for ( ( s, d ) <- orderedDefinitions ) yield s"$s → $d\n" ).mkString
 }
 object SkolemFunctions {
   def apply( skolemDefs: Iterable[( Const, LambdaExpression )] ): SkolemFunctions =

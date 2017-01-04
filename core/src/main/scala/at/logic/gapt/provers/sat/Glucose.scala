@@ -3,7 +3,7 @@ package at.logic.gapt.provers.sat
 import at.logic.gapt.formats.dimacs.{ DIMACS, readDRUP, writeDIMACS }
 import at.logic.gapt.utils.{ runProcess, withTempFile }
 
-import scala.io.Source
+import ammonite.ops._
 
 object Glucose extends Glucose( "glucose" )
 class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with DrupSolver {
@@ -12,11 +12,11 @@ class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with 
       withTempFile { dimacsOutputFile =>
         runProcess.withExitValue( command ++ Seq(
           "-certified", s"-certified-output=$dimacsOutputFile",
-          dimacsInputFile
+          dimacsInputFile.toString
         ) ) match {
           // Glucose segfaults when run with -certified on a satisfiable problem
           case ( 10 | 139, _ ) => /* SAT */ None
-          case ( 20 | 134, _ ) => /* UNSAT */ Some( Source.fromFile( dimacsOutputFile ).mkString )
+          case ( 20 | 134, _ ) => /* UNSAT */ Some( read ! dimacsOutputFile )
           case ( 1, str ) =>
             throw new Exception( s"Error executing external sat prover $command: $str" )
         }

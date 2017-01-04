@@ -5,9 +5,10 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ Sequent, HOLClause, HOLSequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
+
 import scala.annotation.tailrec
 import scala.util.control.TailCalls._
 
@@ -26,17 +27,17 @@ class CharacteristicClauseSet[Data] {
     case Dual( A( Bottom(), _ ) )    => Set()
     case Dual( A( f, _ ) ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
-    case EmptyPlusJunction()            => Set()
-    case EmptyTimesJunction()           => Set( HOLClause( Nil, Nil ) )
-    case Plus( EmptyPlusJunction(), x ) => apply( x )
-    case Plus( x, EmptyPlusJunction() ) => apply( x )
-    case Plus( A( f1, _ ), Dual( A( f2, _ ) ) ) if f1 == f2 =>
-      Set()
-    case Plus( Dual( A( f2, _ ) ), A( f1, _ ) ) if f1 == f2 =>
-      Set()
+    case EmptyPlusJunction()                 => Set()
+    case EmptyTimesJunction()                => Set( HOLClause( Nil, Nil ) )
+    case Plus( EmptyPlusJunction(), x )      => apply( x )
+    case Plus( x, EmptyPlusJunction() )      => apply( x )
     case Plus( x, y )                        => apply( x ) ++ apply( y )
     case Times( EmptyTimesJunction(), x, _ ) => apply( x )
     case Times( x, EmptyTimesJunction(), _ ) => apply( x )
+    case Times( A( f1, _ ), Dual( A( f2, _ ) ), _ ) if f1 == f2 => //would result in a tautology f :- f
+      Set()
+    case Times( Dual( A( f2, _ ) ), A( f1, _ ), _ ) if f1 == f2 => //would result in a tautology f :- f
+      Set()
     case Times( x, y, _ ) =>
       val xs = apply( x )
       val ys = apply( y )

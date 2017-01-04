@@ -2,6 +2,10 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.resolution.UnitResolutionToLKProof
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.groundFreeVariables
+
 import scalaz._
 import Scalaz._
 
@@ -12,7 +16,7 @@ trait SolveUtils {
   /**
    * Applies the function f, if maybeProof is \/-(proof) and formula is present in polarity pol in proof.
    */
-  protected def mapIf( maybeProof: UnprovableOrLKProof, formula: HOLFormula, pol: Boolean )( f: LKProof => LKProof ) =
+  protected def mapIf( maybeProof: UnprovableOrLKProof, formula: HOLFormula, pol: Polarity )( f: LKProof => LKProof ) =
     maybeProof map { p => if ( p.conclusion.contains( formula, pol ) ) f( p ) else p }
 
   /**
@@ -20,8 +24,8 @@ trait SolveUtils {
    */
   protected def mapIf(
     maybeProof: UnprovableOrLKProof,
-    formula1:   HOLFormula, pol1: Boolean,
-    formula2: HOLFormula, pol2: Boolean
+    formula1:   HOLFormula, pol1: Polarity,
+    formula2: HOLFormula, pol2: Polarity
   )( f: LKProof => LKProof ) =
     maybeProof map { p =>
       if ( p.conclusion.contains( formula1, pol1 ) || p.conclusion.contains( formula2, pol2 ) ) f( p )
@@ -29,7 +33,12 @@ trait SolveUtils {
     }
 }
 
-object solvePropositional extends SolveUtils {
+object solvePropositional extends solvePropositional( _ => None )
+object solveQuasiPropositional extends solvePropositional( Escargot.getAtomicLKProof )
+
+class solvePropositional(
+    theorySolver: HOLClause => Option[LKProof]
+) extends SolveUtils {
   type Error = HOLSequent
 
   def apply( formula: HOLFormula ): UnprovableOrLKProof =
@@ -46,6 +55,7 @@ object solvePropositional extends SolveUtils {
       orElse( tryNullary( seq ) ).
       orElse( tryUnary( seq ) ).
       orElse( tryBinary( seq ) ).
+      orElse( tryTheory( seq ) ).
       getOrElse( seq.left ).
       map {
         ContractionMacroRule( _ ).
@@ -73,33 +83,36 @@ object solvePropositional extends SolveUtils {
 
   private def tryUnary( seq: HOLSequent ): Option[UnprovableOrLKProof] =
     seq.zipWithIndex.elements collectFirst {
-      case ( Neg( f ), i: Ant ) => mapIf( solve( seq.delete( i ) :+ f ), f, true ) { NegLeftRule( _, f ) }
-      case ( Neg( f ), i: Suc ) => mapIf( solve( f +: seq.delete( i ) ), f, false ) { NegRightRule( _, f ) }
+      case ( Neg( f ), i: Ant ) => mapIf( solve( seq.delete( i ) :+ f ), f, !i.polarity ) { NegLeftRule( _, f ) }
+      case ( Neg( f ), i: Suc ) => mapIf( solve( f +: seq.delete( i ) ), f, !i.polarity ) { NegRightRule( _, f ) }
 
       case ( e @ And( f, g ), i: Ant ) =>
-        mapIf( solve( f +: g +: seq.delete( i ) ), f, false, g, false ) { AndLeftMacroRule( _, f, g ) }
+        mapIf( solve( f +: g +: seq.delete( i ) ), f, i.polarity, g, i.polarity ) { AndLeftMacroRule( _, f, g ) }
       case ( e @ Or( f, g ), i: Suc ) =>
-        mapIf( solve( seq.delete( i ) :+ f :+ g ), f, true, g, true ) { OrRightMacroRule( _, f, g ) }
+        mapIf( solve( seq.delete( i ) :+ f :+ g ), f, i.polarity, g, i.polarity ) { OrRightMacroRule( _, f, g ) }
       case ( e @ Imp( f, g ), i: Suc ) =>
-        mapIf( solve( f +: seq.delete( i ) :+ g ), f, false, g, true ) { ImpRightMacroRule( _, f, g ) }
+        mapIf( solve( f +: seq.delete( i ) :+ g ), f, !i.polarity, g, i.polarity ) { ImpRightMacroRule( _, f, g ) }
     }
 
   private def tryBinary( seq: HOLSequent ): Option[UnprovableOrLKProof] = {
-    def handle( i: SequentIndex, e: HOLFormula, f: HOLFormula, fPol: Boolean, g: HOLFormula, gPol: Boolean,
+    def handle( i: SequentIndex, e: HOLFormula, f: HOLFormula, fPol: Polarity, g: HOLFormula, gPol: Polarity,
                 rule: ( LKProof, LKProof, HOLFormula ) => LKProof ) =
-      solve( if ( fPol ) seq.delete( i ) :+ f else f +: seq.delete( i ) ) flatMap { p1 =>
+      solve( if ( fPol.inSuc ) seq.delete( i ) :+ f else f +: seq.delete( i ) ) flatMap { p1 =>
         if ( !p1.conclusion.contains( f, fPol ) ) p1.right
-        else solve( if ( gPol ) seq.delete( i ) :+ g else g +: seq.delete( i ) ) map { p2 =>
+        else solve( if ( gPol.inSuc ) seq.delete( i ) :+ g else g +: seq.delete( i ) ) map { p2 =>
           if ( !p2.conclusion.contains( g, gPol ) ) p2
           else rule( p1, p2, e )
         }
       }
 
     seq.zipWithIndex.elements collectFirst {
-      case ( e @ And( f, g ), i: Suc ) => handle( i, e, f, true, g, true, AndRightRule( _, _, _ ) )
-      case ( e @ Or( f, g ), i: Ant )  => handle( i, e, f, false, g, false, OrLeftRule( _, _, _ ) )
-      case ( e @ Imp( f, g ), i: Ant ) => handle( i, e, f, true, g, false, ImpLeftRule( _, _, _ ) )
+      case ( e @ And( f, g ), i: Suc ) => handle( i, e, f, i.polarity, g, i.polarity, AndRightRule( _, _, _ ) )
+      case ( e @ Or( f, g ), i: Ant )  => handle( i, e, f, i.polarity, g, i.polarity, OrLeftRule( _, _, _ ) )
+      case ( e @ Imp( f, g ), i: Ant ) => handle( i, e, f, !i.polarity, g, i.polarity, ImpLeftRule( _, _, _ ) )
     }
   }
+
+  private def tryTheory( seq: HOLSequent ): Option[UnprovableOrLKProof] =
+    theorySolver( seq collect { case atom: HOLAtom => atom } ).map { _.right }
 
 }

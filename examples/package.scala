@@ -19,8 +19,6 @@ package object examples {
 
 package examples {
 
-  import at.logic.gapt.proofs.FiniteContext
-
   class Script extends scala.App {
     def run() = main( Array() )
   }

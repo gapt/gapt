@@ -29,7 +29,7 @@ case object LogicalAxiomTactic extends Tactic[Unit] {
 case object TopAxiomTactic extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) =
     for ( ( _, Top(), _: Suc ) <- findFormula( goal, AnyFormula ) )
-      yield () -> BottomAxiom
+      yield () -> TopAxiom
 }
 
 /**

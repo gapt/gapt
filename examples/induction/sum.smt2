@@ -1,3 +1,4 @@
+; viper cansolsize 2,2
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (declare-fun P (nat nat) Bool)

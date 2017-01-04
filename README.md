@@ -2,6 +2,8 @@
 vim:spell spelllang=en:
 -->
 ## GAPT: General Architecture for Proof Theory
+
+[![Join the chat at https://gitter.im/gapt/gapt](https://badges.gitter.im/gapt/gapt.svg)](https://gitter.im/gapt/gapt?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Build Status](https://travis-ci.org/gapt/gapt.svg?branch=master)](https://travis-ci.org/gapt/gapt) [![codecov.io](https://codecov.io/github/gapt/gapt/coverage.svg?branch=master)](https://codecov.io/github/gapt/gapt?branch=master)
 
 GAPT is a proof theory framework developed primarily at the Vienna University
@@ -18,10 +20,10 @@ Contact: [mailing list](https://groups.google.com/forum/#!forum/gapt-group)
 ### Example
 
 One of the many features GAPT supports is an implementation of [Herbrand's
-theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how can
+theorem](https://en.wikipedia.org/wiki/Herbrand%27s_theorem).  Here is how you can
 automatically generate a Herbrand disjunction in GAPT:
 ```scala
-Prover9 getExpansionProof hof"P(c) ∨ P(d) ⊃ ∃x P(x)" map { _.deep }
+Prover9 getExpansionProof fof"P(c) ∨ P(d) ⊃ ∃x P(x)" map { _.deep }
 ```
 which returns the following Herbrand disjunction (the quantifier on the right
 has been expanded):
@@ -38,9 +40,9 @@ into the [API documentation](http://logic.at/gapt/api/) for reference as well.
 There are [binary distributions](https://logic.at/gapt) available, you only
 need to have Java installed to run them:
 ```
-wget https://logic.at/gapt/downloads/gapt-2.1.tar.gz
-tar xf gapt-2.1.tar.gz
-cd gapt-2.1
+wget https://logic.at/gapt/downloads/gapt-2.3.tar.gz
+tar xf gapt-2.3.tar.gz
+cd gapt-2.3
 ./gapt.sh
 ```
 This will drop you into a scala REPL with GAPT pre-loaded.
@@ -49,7 +51,7 @@ If you want to use GAPT in your project, all you have to do is add two lines to
 your SBT build file:
 ```scala
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.1"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.3"
 ```
 
 If you want to use the unstable git version of GAPT, you can use `sbt
@@ -61,7 +63,7 @@ for more details.
 
 ### System requirements
 
-* Java 7 (or later)
+* Java 8 (or later)
 * optional: [external tools](https://github.com/gapt/gapt/wiki/External-software)
 * for development: [sbt](http://www.scala-sbt.org/)
 

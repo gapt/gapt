@@ -1,27 +1,14 @@
 package at.logic.gapt.testing
 
-import at.logic.gapt.formats.tptp.TptpProofParser
-import at.logic.gapt.proofs.sketch.RefutationSketchToRobinson
-
-import scala.io.Source
+import ammonite.ops.FilePath
+import at.logic.gapt.proofs.expansion.numberOfInstancesET
+import at.logic.gapt.proofs.loadExpansionProof
+import at.logic.gapt.utils.{ PrintMetrics, metrics }
 
 object testTstpImport extends App {
   val Array( filename ) = args
-
-  val tstpOutput = Source fromFile filename mkString
-
-  if ( !tstpOutput.contains( "CNFRefutation" ) )
-    println( "NOT_CNF_REFUTATION" )
-
-  val ( endSequent, sketch ) = TptpProofParser parse tstpOutput
-  println( s"SKETCH_SIZE ${sketch.subProofs.size}" )
-
-  val resolution = RefutationSketchToRobinson( sketch ) getOrElse {
-    println( "FAIL_SKETCH_CONVERSION" )
-    sys exit 1
-  }
-
-  println( s"RESOLUTION_SIZE ${resolution.subProofs.size}" )
-
+  metrics.current.value = PrintMetrics
+  val exp = loadExpansionProof( FilePath( filename ) )
+  println( s"num_insts = ${numberOfInstancesET( exp )}" )
   println( "OK" )
 }

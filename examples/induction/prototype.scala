@@ -2,20 +2,21 @@ package at.logic.gapt.examples.induction
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Utils, reduceHolToFol }
-import at.logic.gapt.expr.hol.{ instantiate, univclosure }
+import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.provers.viper.SimpleInductionProof._
 import at.logic.gapt.provers.viper._
-import org.apache.log4j.{ Level, Logger }
+import at.logic.gapt.utils.Logger
+import ammonite.ops._
 
 object prototype extends Script {
 
   // doesn't work: associativity instances are too complicated
   val assocES = HOLSequent(
     Seq( "s(x+y) = x+s(y)", "x+0 = x" )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Eq(
       FOLFunction( "+", FOLFunction( "+", alpha, alpha ), alpha ),
       FOLFunction( "+", alpha, FOLFunction( "+", alpha, alpha ) )
@@ -24,7 +25,7 @@ object prototype extends Script {
 
   val commES = HOLSequent(
     Seq( "s(x+y) = x+s(y)", "s(x+y) = s(x)+y", "x+0 = x", "0+x = x" )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Eq(
       FOLFunction( "+", FOLConst( "k" ), alpha ),
       FOLFunction( "+", alpha, FOLConst( "k" ) )
@@ -42,7 +43,7 @@ object prototype extends Script {
       "1*x = x",
       "(x*y)*z = x*(y*z)"
     )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Eq(
       FOLFunction( "g", FOLConst( "1" ), alpha ),
       FOLFunction( "f", alpha )
@@ -56,25 +57,25 @@ object prototype extends Script {
       "0+x = x", "x+0 = x",
       "s(x)+y = s(x+y)", "x + s(y) = s(x+y)"
     )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Ex( FOLVar( "x" ), Eq( FOLFunction( "+", FOLVar( "x" ), alpha ), FOLFunction( "f", alpha ) ) ) )
   )
 
   val generalES = HOLSequent(
     Seq( "P(0,x)", "P(x,f(y)) & P(x,g(y)) -> P(s(x),y)" )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( FOLAtom( "P", alpha, FOLConst( "c" ) ) )
   )
 
   val generalDiffConclES = HOLSequent(
     Seq( "P(0,x)", "P(x,f(y)) & P(x,g(y)) -> P(s(x),y)", "P(x,y) -> Q(x)" )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( FOLAtom( "Q", alpha ) )
   )
 
   val linearES = HOLSequent(
     Seq( "P(x) -> P(s(x))", "P(0)" )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( FOLAtom( "P", alpha ) )
   )
 
@@ -85,7 +86,7 @@ object prototype extends Script {
   //
   // interesting failures:
   //   prod/prop_16.smt2
-  lazy val tipES = reduceHolToFol( TipSmtParser.parseFile( "/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2" ).toSequent ) match {
+  lazy val tipES = reduceHolToFol( TipSmtParser.parse( Path( "/home/gebner/tip-benchs/benchmarks/isaplanner/prop_10.smt2" ) ).toSequent ) match {
     case Sequent( theory, Seq( All( v, concl ) ) ) =>
       val repl = Map[LambdaExpression, LambdaExpression]( FOLConst( "Z" ) -> FOLConst( "0" ), FOLFunctionConst( "S", 1 ) -> FOLFunctionConst( "s", 1 ) )
       TermReplacement( reduceHolToFol( Sequent( theory, Seq( Substitution( v -> alpha )( concl ) ) ) ), repl )
@@ -94,7 +95,7 @@ object prototype extends Script {
   val sumES = HOLSequent(
     List(
       FOLAtom( "P", List( alpha, FOLConst( "0" ) ) ),
-      univclosure( parseFormula( "P(s(x),y) -> P(x,s(y))" ) )
+      universalClosure( parseFormula( "P(s(x),y) -> P(x,s(y))" ) )
     ),
     List(
       FOLAtom( "P", List( FOLConst( "0" ), alpha ) )
@@ -107,7 +108,7 @@ object prototype extends Script {
       "P(0,0)",
       "P(x,y) -> P(s(x),y)",
       "P(x,y) -> P(x,s(y))"
-    ) map { s => univclosure( parseFormula( s ) ) },
+    ) map { s => universalClosure( parseFormula( s ) ) },
     List(
       FOLAtom( "P", List( FOLVar( "α" ), FOLVar( "α" ) ) )
     )
@@ -118,7 +119,7 @@ object prototype extends Script {
     List(
       "x+0=x",
       "x+s(y)=s(x+y)"
-    ) map { s => univclosure( parseFormula( s ) ) },
+    ) map { s => universalClosure( parseFormula( s ) ) },
     List(
       FOLSubstitution( FOLVar( "x" ), FOLVar( "α" ) )( parseFormula( "x+s(x)=s(x)+x" ) )
     )
@@ -129,7 +130,7 @@ object prototype extends Script {
     List(
       "x+0=x",
       "x+s(y)=s(x+y)"
-    ) map { s => univclosure( parseFormula( s ) ) },
+    ) map { s => universalClosure( parseFormula( s ) ) },
     List(
       FOLSubstitution( FOLVar( "x" ), FOLVar( "α" ) )( parseFormula( "x+s(0)=s(0)+x" ) )
     )
@@ -137,7 +138,7 @@ object prototype extends Script {
 
   val assoc2ES = HOLSequent(
     Seq( "s(x+y) = x+s(y)", "x+0 = x" )
-      map ( s => univclosure( parseFormula( s ) ) ),
+      map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Eq(
       FOLFunction( "+", FOLFunction( "+", Utils.numeral( 2 ), alpha ), alpha ),
       FOLFunction( "+", Utils.numeral( 2 ), FOLFunction( "+", alpha, alpha ) )
@@ -151,7 +152,7 @@ object prototype extends Script {
       "even(0)",
       "-even(s(0))",
       "even(s(s(x))) <-> even(x)"
-    ) map ( s => univclosure( parseFormula( s ) ) ),
+    ) map ( s => universalClosure( parseFormula( s ) ) ),
     List(
       FOLSubstitution( FOLVar( "x" ), FOLVar( "α" ) )( parseFormula( "even(x+x)" ) )
     )
@@ -162,7 +163,7 @@ object prototype extends Script {
     List(
       "P(0)", "-P(s(0))", "P(s(s(x))) <-> P(x)",
       "Q(0)", "Q(s(x)) <-> -Q(x)"
-    ) map ( s => univclosure( parseFormula( s ) ) ),
+    ) map ( s => universalClosure( parseFormula( s ) ) ),
     List(
       FOLSubstitution( FOLVar( "x" ), FOLVar( "α" ) )( parseFormula( "P(x) <-> Q(x)" ) )
     )
@@ -172,7 +173,7 @@ object prototype extends Script {
     List(
       "x+s(y) = s(x+y)", "x+0 = x",
       "s(x)*y = s(x*y)", "0*x = x"
-    ) map ( s => univclosure( parseFormula( s ) ) ),
+    ) map ( s => universalClosure( parseFormula( s ) ) ),
     List(
       FOLSubstitution( FOLVar( "x" ), FOLVar( "α" ) )( parseFormula( "x+x = x*x" ) )
     )
@@ -183,7 +184,7 @@ object prototype extends Script {
       "p(0) = 0",
       "x-s(y) = p(x-y)",
       "x - 0 = x"
-    ) map { s => univclosure( parseFormula( s ) ) },
+    ) map { s => universalClosure( parseFormula( s ) ) },
     List(
       FOLSubstitution( FOLVar( "x" ), alpha )( parseFormula( "0 - x = 0" ) )
     )
@@ -193,7 +194,7 @@ object prototype extends Script {
 
   println( s"Proving $endSequent" )
 
-  Logger.getLogger( classOf[SipProver].getName ).setLevel( Level.DEBUG )
+  Logger.makeVerbose( classOf[SipProver] )
 
   val sipProver = new SipProver( solutionFinder = new HeuristicSolutionFinder( 1 ), instances = 0 until 3 )
 

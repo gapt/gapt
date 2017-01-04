@@ -12,7 +12,7 @@ class CNFTest extends Specification {
       val nQa = Neg( Qa )
       val PavQa = Or( Pa, Qa )
       val f = And( PavQa, nQa )
-      CNFp.toClauseList( f ).toSet must beEqualTo( Set( HOLClause( List(), List( Pa, Qa ) ), HOLClause( List( Qa ), List() ) ) )
+      CNFp( f ) must beEqualTo( Set( HOLClause( List(), List( Pa, Qa ) ), HOLClause( List( Qa ), List() ) ) )
     }
   }
 }

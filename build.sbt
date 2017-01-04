@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
-val Version = "2.2-SNAPSHOT"
+val Version = "2.4-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -20,7 +20,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" )
   ) ),
 
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.12.1",
   scalacOptions in Compile ++= Seq(
     "-deprecation",
     "-language:postfixOps",
@@ -45,12 +45,13 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
+val specs2Version = "3.8.6"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
-    "org.specs2" %% "specs2-core" % "3.7.3",
-    "org.specs2" %% "specs2-junit" % "3.7.3", // needed for junitxml output
-    "org.specs2" %% "specs2-matcher" % "3.7.3"
+    "org.specs2" %% "specs2-core" % specs2Version,
+    "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output
+    "org.specs2" %% "specs2-matcher" % specs2Version
   ) map ( _ % Test )
 )
 
@@ -82,6 +83,7 @@ lazy val root = project.in( file( "." ) ).
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
     inConfig( BuildSbtConfig )( configScalariformSettings ++ commonSettings ),
@@ -102,7 +104,7 @@ lazy val root = project.in( file( "." ) ).
 
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
-        Attributed.data( fullClasspath.in( cli, Compile ).value )
+        Attributed.data( fullClasspath.in( cli, Compile ).value ++ fullClasspath.in( testing, Compile ).value distinct )
       ) )
       def mkScript( file: File, extraArgs: String* ) = {
         IO.write(
@@ -113,7 +115,9 @@ lazy val root = project.in( file( "." ) ).
       }
       (
         mkScript( target.value / "run" ),
+        mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
         mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
+        mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
         mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" )
       )
     },
@@ -130,7 +134,7 @@ lazy val root = project.in( file( "." ) ).
       Process( List( "latexmk", "-pdf", "user_manual.tex" ), baseDir / "doc" ) !
 
       val filesToIncludeAsIs = List(
-        "COPYING", "gapt.sh", "include.sh", "examples"
+        "COPYING", "gapt.sh", "escargot.sh", "viper.sh", "include.sh", "examples"
       )
       val entries = List( ( assembly.value, s"gapt-$version.jar" ) ) ++
         filesToIncludeAsIs.flatMap { fn => recursiveListFiles( baseDir / fn ) }
@@ -188,26 +192,27 @@ lazy val core = project.in( file( "core" ) ).
     description := "General Architecture for Proof Theory",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.5",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.2",
-      "com.lihaoyi" %% "fastparse" % "0.3.7",
-      "com.googlecode.kiama" %% "kiama" % "1.8.0",
-      "com.lihaoyi" %% "sourcecode" % "0.1.1",
-      "org.scalaz" %% "scalaz-core" % "7.2.2",
-      "org.scala-lang.modules" %% "scala-xml" % "1.0.5",
-      "org.apache.commons" % "commons-lang3" % "3.4",
-      "org.slf4j" % "slf4j-api" % "1.7.21",
-      "org.slf4j" % "slf4j-log4j12" % "1.7.21",
+      "org.parboiled" %% "parboiled" % "2.1.3",
+      "com.lihaoyi" %% "fastparse" % "0.4.2",
+      "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
+      "com.lihaoyi" %% "sourcecode" % "0.1.3",
+      "org.scalaz" %% "scalaz-core" % "7.2.8",
+      "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
+      "org.apache.commons" % "commons-lang3" % "3.5",
+      "com.lihaoyi" %% "ammonite-ops" % "0.8.1",
+      "ch.qos.logback" % "logback-classic" % "1.1.8",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5",
+      "org.typelevel" %% "cats" % "0.8.1"
     ),
 
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
-      "com.itextpdf" % "itextpdf" % "5.5.9",
-      "org.scilab.forge" % "jlatexmath" % "1.0.2"
+      "com.itextpdf" % "itextpdf" % "5.5.10",
+      "org.scilab.forge" % "jlatexmath" % "1.0.4"
     )
   )
 
@@ -232,6 +237,7 @@ lazy val tests = project.in( file( "tests" ) ).
   disablePlugins( JUnitXmlReportPlugin ).
   settings(
     testForkedParallel := true,
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -241,6 +247,7 @@ lazy val userManual = project.in( file( "doc" ) ).
   settings(
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value,
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -251,10 +258,10 @@ lazy val cli = project.in( file( "cli" ) ).
     mainClass := Some( "at.logic.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "jline" % "jline" % "2.14.1"
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ),
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map()
   )
 
@@ -267,9 +274,10 @@ lazy val testing = project.in( file( "testing" ) ).
     name := "gapt-testing",
     description := "gapt extended regression tests",
 
+    bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.3.0"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.0"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )

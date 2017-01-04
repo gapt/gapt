@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.{ Logger, metrics }
 
 import scala.collection.mutable
 
@@ -29,7 +29,7 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
   def csep( docs: List[Doc] ): Doc = ssep( docs, line( ", " ) )
 
   def export(): String = {
-    val nonTerminals = rs.axiom +: ( rs.nonTerminals - rs.axiom ).toList.sortBy { _.name }
+    val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
     val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
       nonTerminals map { show( _, false, Set(), Map(), prio.max )._1 }
     ) ) )
@@ -46,13 +46,13 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
           show( rhs, true, Set(), knownTypes, prio.impl )._1 ) )
     } ) )
 
-    pretty( group( ntDecl <> line <> tDecl <> line <> line <> rules <> line ) )
+    pretty( group( ntDecl <> line <> tDecl <> line <> line <> rules <> line ) ).layout
   }
 
 }
 
-case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[Rule] ) {
-  require( nonTerminals contains axiom )
+case class RecursionScheme( startSymbol: Const, nonTerminals: Set[Const], rules: Set[Rule] ) {
+  require( nonTerminals contains startSymbol )
   rules foreach {
     case Rule( Apps( leftHead: Const, _ ), _ ) =>
       require( nonTerminals contains leftHead )
@@ -65,7 +65,7 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
 
   def language: Set[LambdaExpression] = parametricLanguage()
   def languageWithDummyParameters: Set[LambdaExpression] =
-    axiom.exptype match {
+    startSymbol.exptype match {
       case FunctionType( _, argtypes ) =>
         parametricLanguage( argtypes.zipWithIndex.map { case ( t, i ) => Const( s"dummy$i", t ) }: _* )
     }
@@ -74,8 +74,8 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
     rules collect { case r @ Rule( Apps( `nonTerminal`, _ ), _ ) => r }
 
   def parametricLanguage( params: LambdaExpression* ): Set[LambdaExpression] = {
-    require( params.size == arity( axiom ) )
-    generatedTerms( axiom( params: _* ) )
+    require( params.size == arity( startSymbol ) )
+    generatedTerms( startSymbol( params: _* ) )
   }
 
   def generatedTerms( from: LambdaExpression ): Set[LambdaExpression] = {
@@ -99,15 +99,15 @@ case class RecursionScheme( axiom: Const, nonTerminals: Set[Const], rules: Set[R
 }
 
 object RecursionScheme {
-  def apply( axiom: Const, rules: ( LambdaExpression, LambdaExpression )* ): RecursionScheme =
-    apply( axiom, rules map { case ( from, to ) => Rule( from, to ) } toSet )
+  def apply( startSymbol: Const, rules: ( LambdaExpression, LambdaExpression )* ): RecursionScheme =
+    apply( startSymbol, rules map { case ( from, to ) => Rule( from, to ) } toSet )
 
-  def apply( axiom: Const, nonTerminals: Set[Const], rules: ( LambdaExpression, LambdaExpression )* ): RecursionScheme =
-    RecursionScheme( axiom, nonTerminals, rules map { case ( from, to ) => Rule( from, to ) } toSet )
+  def apply( startSymbol: Const, nonTerminals: Set[Const], rules: ( LambdaExpression, LambdaExpression )* ): RecursionScheme =
+    RecursionScheme( startSymbol, nonTerminals, rules map { case ( from, to ) => Rule( from, to ) } toSet )
 
-  def apply( axiom: Const, rules: Set[Rule] ): RecursionScheme = {
-    val nonTerminals = rules.map { case Rule( Apps( head: Const, _ ), _ ) => head } + axiom
-    RecursionScheme( axiom, nonTerminals, rules )
+  def apply( startSymbol: Const, rules: Set[Rule] ): RecursionScheme = {
+    val nonTerminals = rules.map { case Rule( Apps( head: Const, _ ), _ ) => head } + startSymbol
+    RecursionScheme( startSymbol, nonTerminals, rules )
   }
 }
 
@@ -141,7 +141,7 @@ class RecSchemGenLangFormula(
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
   def derivable( from: LambdaExpression, to: LambdaExpression ) = FOLAtom( s"$from=>$to" )
 
-  private val rulesPerNonTerminal = recursionScheme.rules.
+  private val rulesPerNonTerminal = Map() ++ recursionScheme.rules.
     groupBy { case Rule( _, Apps( nt: Const, _ ) ) => nt }.mapValues( _.toSeq )
   def reverseMatches( against: LambdaExpression ) =
     against match {
@@ -227,8 +227,8 @@ object minimizeRecursionScheme extends Logger {
     val hard = formula( targets_ )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
-    val interp = solver.solve( hard, soft ).get
-    RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+    val interp = metrics.time( "maxsat" ) { solver.solve( hard, soft ).get }
+    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
 
   def viaInst( recSchem: RecursionScheme, targets: Traversable[( LambdaExpression, LambdaExpression )],
@@ -240,13 +240,13 @@ object minimizeRecursionScheme extends Logger {
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
     val targets_ = grounding( targets.toSet )
 
-    val instTerms = targets_.map { _._1 }.flatMap { case Apps( _, as ) => as }.flatMap { instantiateRS.subTerms }
+    val instTerms = targets_.map { _._1 }.flatMap { case Apps( _, as ) => as }.flatMap { folSubTerms( _ ) }
     val instRS = instantiateRS( recSchem, instTerms )
 
     val formula = new RecSchemGenLangFormula( instRS, targetFilter )
-    val ruleCorrespondence = for ( ir <- instRS.rules ) yield formula.ruleIncluded( ir ) --> Or(
+    val ruleCorrespondence = for ( ir <- instRS.rules.toSeq ) yield formula.ruleIncluded( ir ) --> Or(
       for {
-        r <- recSchem.rules
+        r <- recSchem.rules.toSeq
         _ <- syntacticMatching( List( r.lhs -> ir.lhs, r.rhs -> ir.rhs ) )
       } yield formula.ruleIncluded( r )
     )
@@ -254,7 +254,7 @@ object minimizeRecursionScheme extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = solver.solve( hard, soft ).get
-    RecursionScheme( recSchem.axiom, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
   }
 }
 
@@ -298,7 +298,7 @@ object SipRecSchem extends RecSchemTemplate(
     stableRecSchem( toTargets( instanceLanguages ) toSet )
 }
 
-case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, LambdaExpression )] ) {
+case class RecSchemTemplate( startSymbol: Const, template: Set[( LambdaExpression, LambdaExpression )] ) {
   val nonTerminals: Set[Const] = template map { case ( Apps( nt: Const, _ ), _ ) => nt }
 
   val isSubtermC = "is_subterm"
@@ -450,14 +450,14 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
           map( s => Rule( from, Substitution( s )( to ) ) )
     }
 
-    // Filter out rules that only used variables that are passed unchanged from the axiom.
+    // Filter out rules that only used variables that are passed unchanged from the startSymbol.
     targets.map { case ( Apps( nt: Const, _ ), _ ) => nt }.toSeq match {
-      case Seq( axiom ) =>
-        ( nonTerminals - axiom ) foreach { nt =>
-          constraints( axiom -> nt ) match {
+      case Seq( startSymbol ) =>
+        ( nonTerminals - startSymbol ) foreach { nt =>
+          constraints( startSymbol -> nt ) match {
             case And.nAry( constr ) =>
               val identicalArgs = constr.collect {
-                case Eq( ntArg, axiomArg ) => canonicalArgs( nt ).indexOf( ntArg )
+                case Eq( ntArg, startSymbolArg ) => canonicalArgs( nt ).indexOf( ntArg )
               }.toSet
               rules = rules filter {
                 case Rule( Apps( `nt`, args ), to ) =>
@@ -468,7 +468,7 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
         }
     }
 
-    RecursionScheme( axiom, nonTerminals, rules )
+    RecursionScheme( startSymbol, nonTerminals, rules )
   }
 
   def findMinimalCover(
@@ -488,8 +488,8 @@ case class RecSchemTemplate( axiom: Const, template: Set[( LambdaExpression, Lam
 }
 
 object RecSchemTemplate {
-  def apply( axiom: Const, rules: ( LambdaExpression, LambdaExpression )* ): RecSchemTemplate =
-    RecSchemTemplate( axiom, rules toSet )
+  def apply( startSymbol: Const, rules: ( LambdaExpression, LambdaExpression )* ): RecSchemTemplate =
+    RecSchemTemplate( startSymbol, rules toSet )
 }
 
 object recSchemToVTRATG {
@@ -506,23 +506,26 @@ object recSchemToVTRATG {
     nts
   }
 
-  def apply( recSchem: RecursionScheme ): VectTratGrammar = {
+  def apply( recSchem: RecursionScheme ): VTRATG = {
+    val nameGen = rename.awayFrom( containedNames( recSchem ) )
+
     val ntCorrespondence = orderedNonTerminals( recSchem ).reverse map {
-      case nt @ Const( name, FOLHeadType( Ti, n ) ) =>
-        nt -> ( 0 until n ).map { i => FOLVar( s"${name}_$i" ) }.toList
+      case nt @ Const( name, FunctionType( _, argTypes ) ) =>
+        nt -> ( for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( nameGen.fresh( s"x_${name}_$i" ), t ) )
     }
     val ntMap = ntCorrespondence.toMap
 
-    val axiom = FOLVar( "A" )
-    val nonTerminals = List( axiom ) +: ( ntCorrespondence map { _._2 } filter { _.nonEmpty } )
+    val FunctionType( startSymbolType, _ ) = recSchem.startSymbol.exptype
+    val startSymbol = Var( nameGen.fresh( s"x_${recSchem.startSymbol.name}" ), startSymbolType )
+    val nonTerminals = List( startSymbol ) +: ( ntCorrespondence map { _._2 } filter { _.nonEmpty } )
     val productions = recSchem.rules map {
       case Rule( Apps( nt1: Const, vars1 ), Apps( nt2: Const, args2 ) ) if recSchem.nonTerminals.contains( nt1 ) && recSchem.nonTerminals.contains( nt2 ) =>
         val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
-        ntMap( nt2 ) -> args2.map( subst( _ ) ).map( _.asInstanceOf[FOLTerm] )
+        ntMap( nt2 ) -> args2.map( subst( _ ) )
       case Rule( Apps( nt1: Const, vars1 ), rhs ) if recSchem.nonTerminals.contains( nt1 ) =>
         val subst = Substitution( vars1.map( _.asInstanceOf[Var] ) zip ntMap( nt1 ) )
-        List( axiom ) -> List( subst( rhs ).asInstanceOf[FOLTerm] )
+        List( startSymbol ) -> List( subst( rhs ) )
     }
-    VectTratGrammar( axiom, nonTerminals, productions )
+    VTRATG( startSymbol, nonTerminals, productions )
   }
 }

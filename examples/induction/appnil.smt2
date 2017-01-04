@@ -1,4 +1,4 @@
-; viper cansolsize 2,2
+; viper cansolsize 2,3
 
 (declare-sort i 0)
 (declare-datatypes () ((list (nil) (cons (head i) (tail list)))))

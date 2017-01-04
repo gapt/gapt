@@ -2,7 +2,6 @@ package at.logic.gapt.grammars.reforest
 
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars._
-import at.logic.gapt.proofs.lk.DefinitionElimination
 
 import scala.collection.mutable
 
@@ -11,7 +10,7 @@ case class Digram( c1: Const, i: Int, c2: Const ) extends Feature
 case class RigidTrigram( c: Const, i: Int, j: Int ) extends Feature
 
 case class ReforestState(
-    axiom:          Const,
+    startSymbol:    Const,
     rules:          Map[LambdaExpression, Set[LambdaExpression]],
     highestNTIndex: Int
 ) {
@@ -97,7 +96,7 @@ case class ReforestState(
 
     val maxArity = rhss.map { case Apps( c: Const, as ) => as.size }.max
     val argtypes = ( 0 until maxArity ) map { _ => Ti } // TODO
-    val newNT = Const( s"B$highestNTIndex", FunctionType( Ti, argtypes ) )
+    val newNT = Const( s"B$highestNTIndex", FunctionType( startSymbol.exptype, argtypes ) )
     val newArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
     val args1 = mutable.Set[Seq[LambdaExpression]]()
@@ -161,9 +160,18 @@ case class ReforestState(
 
   def expand( nts: Traversable[LambdaExpression] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
-    val simpl = DefinitionElimination( nts map { nt => nt -> rules( nt ).head } toMap )
 
-    copy( rules = rules -- nts mapValues { _ map { simpl( _ ) } } )
+    object reduceUnambiguousNonTerminals extends ReductionRule {
+      val headMap = nts.collect { case nt @ Apps( f: Const, xs ) => f -> ( xs.map( _.asInstanceOf[Var] ), rules( nt ).head ) }.toMap
+      override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
+        headMap.toMap[LambdaExpression, ( List[Var], LambdaExpression )].get( head ).map {
+          case ( xs, repl ) =>
+            require( xs.size == args.size )
+            Substitution( xs zip args )( repl ) -> Nil
+        }
+    }
+
+    copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { normalize( reduceUnambiguousNonTerminals, _ ) } } )
   }
 
   def expandUseless: ReforestState = {
@@ -190,22 +198,22 @@ case class ReforestState(
     ( for ( ( lhs, rhss ) <- rules; rhs <- rhss ) yield s"$lhs -> $rhs\n" ).toSeq.sorted.mkString
 
   def toRecursionScheme: RecursionScheme =
-    RecursionScheme( axiom, for ( ( nt, rhss ) <- rules.toSet; rhs <- rhss ) yield Rule( nt, rhs ) )
+    RecursionScheme( startSymbol, for ( ( nt, rhss ) <- rules.toSet; rhs <- rhss ) yield Rule( nt, rhs ) )
 
-  def toVTRATG: VectTratGrammar = recSchemToVTRATG( toRecursionScheme )
+  def toVTRATG: VTRATG = recSchemToVTRATG( toRecursionScheme )
 
 }
 
 object Reforest {
-  def start( lang: Traversable[LambdaExpression] ): ReforestState =
-    ReforestState(
-      axiom = FOLConst( "A" ),
-      rules = Map( FOLConst( "A" ) -> lang.toSet ),
-      highestNTIndex = 0
-    )
+  def start( lang: Traversable[LambdaExpression] ): ReforestState = {
+    val termType = lang.headOption.map( _.exptype ).getOrElse( Ti )
+    val startSymbol = Const( "A", termType )
+    ReforestState( startSymbol, rules = Map( startSymbol -> lang.toSet ), highestNTIndex = 0 )
+  }
 
   def compress( s: ReforestState ): ReforestState = {
     val stats = s.stats
+    if ( stats.isEmpty ) return s
     val ( feat, freq ) = stats.maxBy { _._2 }
     if ( freq > 1 ) compress( s abbreviate feat )
     else s

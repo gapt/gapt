@@ -3,81 +3,85 @@ package at.logic.gapt.formats.ivy
 import org.specs2.mutable._
 import at.logic.gapt.formats.lisp._
 import java.io.File.separator
-import scala.io.Source
-import scala.util.{ Success, Failure }
+
+import at.logic.gapt.formats.{ ClasspathInputFile, StringInputFile }
+
+import scala.util.{ Failure, Success }
 
 /**
  * Test for the Ivy interface.
  */
 class IvyTest extends Specification {
   def parseClasspathFile( filename: String ) =
-    SExpressionParser parseString Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( filename ) ).mkString
+    SExpressionParser( ClasspathInputFile( filename ) )
+  def tryParseString( string: String ) =
+    SExpressionParser.tryParse( StringInputFile( string ) )
 
   "The Ivy Parser " should {
     " parse an empty list " in {
-      SExpressionParser.tryParseString( "()" ) must_== Success( List( LList() ) )
+      tryParseString( "()" ) must_== Success( List( LList() ) )
     }
 
     " not parse an empty list + garbage" in {
-      SExpressionParser.tryParseString( "())" ) must beLike { case Failure( _ ) => ok }
+      tryParseString( "())" ) must beLike { case Failure( _ ) => ok }
     }
 
     " parse the atom a1" in {
-      SExpressionParser.tryParseString( "a1" ) must_== Success( List( LAtom( "a1" ) ) )
+      tryParseString( "a1" ) must_== Success( List( LAtom( "a1" ) ) )
     }
 
     " parse the atom a2(space)" in {
-      SExpressionParser.tryParseString( "a2    " ) must_== Success( List( LAtom( "a2" ) ) )
+      tryParseString( "a2    " ) must_== Success( List( LAtom( "a2" ) ) )
     }
 
     """ parse the atom "a b c" """ in {
-      SExpressionParser.tryParseString( """"a b c"""" ) must_== Success( List( LAtom( "a b c" ) ) )
+      tryParseString( """"a b c"""" ) must_== Success( List( LAtom( "a b c" ) ) )
     }
 
     " parse the list (c1 (c2 c2) c) " in {
-      SExpressionParser.tryParseString( "(c1 (c2 c2) c)" ) must_== Success(
+      tryParseString( "(c1 (c2 c2) c)" ) must_== Success(
         LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) :: Nil
       )
     }
 
     " parse the list c4;;comment" in {
-      SExpressionParser.tryParseString( "c4;;comment" ) must_== Success(
+      tryParseString( "c4;;comment" ) must_== Success(
         LAtom( "c4" ) :: Nil
       )
     }
 
     " parse the comments ;;comment 1<newline>;;comment 2" in {
-      SExpressionParser.tryParseString( ";;comment 1\r\n;;comment 2" ) must_== Success( List() )
+      tryParseString( ";;comment 1\r\n;;comment 2" ) must_== Success( List() )
     }
 
     " parse the list ;;comment<newline>c5" in {
-      SExpressionParser.tryParseString( ";;comment\nc5" ) must_== Success( List( LAtom( "c5" ) ) )
+      tryParseString( ";;comment\nc5" ) must_== Success( List( LAtom( "c5" ) ) )
     }
 
     " parse the list (c1 (c2 c2) c) ;;comment" in {
-      SExpressionParser.tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
+      tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
         LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) :: Nil
       )
     }
 
     " parse the list (c1 (c2 c2)  ;;comment<newline>c)" in {
-      SExpressionParser.tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
+      tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
         LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) :: Nil
       )
     }
 
     " parse the list (c1 \"c2 c2\" c) " in {
-      SExpressionParser.tryParseString( "(c1 \"c2 c2\" c)" ) must_== Success(
+      tryParseString( "(c1 \"c2 c2\" c)" ) must_== Success(
         List( LFun( "c1", LAtom( "c2 c2" ), LAtom( "c" ) ) )
       )
     }
 
     " parse the list_ a1 b " in {
-      SExpressionParser.tryParseString( "a1 b" ) must_== Success( List( LAtom( "a1" ), LAtom( "b" ) ) )
+      tryParseString( "a1 b" ) must_== Success( List( LAtom( "a1" ), LAtom( "b" ) ) )
     }
 
     " parse the list ;;comment 1\n(c1 (c2 c2)  ;;comment 2\nc)" in {
-      SExpressionParser.tryParseString( "(\n;;comment 1\nc1 (c2 c2) c);;comment 2" ) must_== Success(
+      tryParseString( "(\n;;comment 1\nc1 (c2 c2) c);;comment 2" ) must_== Success(
         List( LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) )
       )
     }

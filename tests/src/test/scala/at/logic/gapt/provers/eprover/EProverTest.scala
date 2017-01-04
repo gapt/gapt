@@ -47,10 +47,7 @@ class EProverTest extends Specification with SequentMatchers {
 
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      EProver.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) =>
-          cnf must contain( atLeast( p.inputClauses ) )
-      }
+      EProver.getResolutionProof( cnf ) must beSome
     }
   }
 

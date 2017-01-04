@@ -1,71 +1,37 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.expr.hol.instantiate
 
-/**
- * Builds an expansion tree from a formula and a map from variables to terms.
- * The paremeter pos is true if  the formula is to be considered positive
- * (right side of the sequent).
- */
-@deprecated( "Substitute and merge expansion trees instead", "2016-01-13" )
 object formulaToExpansionTree {
-  def apply( form: HOLFormula, pos: Boolean ): ExpansionTree = {
-    assert( !containsQuantifier( form ) )
-    apply( form, List(), pos )
-  }
+  def apply( formula: HOLFormula, pol: Polarity ): ExpansionTree =
+    conv( formula, formula, Set(), pol )
 
-  def apply( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = {
-    // form's quantified variables must be pairwise distinct
-    assert( isInVNF( form ), "formulaToExpansionTree: bound variables are not pairwise distinct." )
-    // substitutions should not have variable capture
-    assert( subs.forall( s => s.domain intersect s.range isEmpty ), "formulaToExpansionTree: substitutions have variable capture." )
-    apply_( form, subs, pos )
-  }
+  def apply( formula: HOLFormula, substitutions: Traversable[_ <: Substitution], pol: Polarity ): ExpansionTree =
+    conv( formula, formula, substitutions.toSet, pol )
 
-  private def apply_( form: HOLFormula, subs: List[_ <: Substitution], pos: Boolean ): ExpansionTree = form match {
-    case a: HOLAtom    => ETAtom( a, pos )
-    case Neg( f )      => ETNeg( apply_( f, subs, !pos ) )
-    case And( f1, f2 ) => ETAnd( apply_( f1, subs, pos ), apply_( f2, subs, pos ) )
-    case Or( f1, f2 )  => ETOr( apply_( f1, subs, pos ), apply_( f2, subs, pos ) )
-    case Imp( f1, f2 ) => ETImp( apply_( f1, subs, !pos ), apply_( f2, subs, pos ) )
-    case All( v, f ) => pos match {
-      case true => // Strong quantifier
-        val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        assert( valid_subs.length == 1, ( "Found no substitutions for " + v + " in " + subs ) )
-        val next_f = valid_subs.head( f )
-        val ev = valid_subs.head( v ).asInstanceOf[Var]
-        ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) )
-      case false => // Weak quantifier
-        ETWeakQuantifier( form, subs.filter( _.domain.contains( v ) ).groupBy( _( v ) ) map {
-          case ( t, subsWithT ) =>
-            val next_f = Substitution( v -> t )( f )
-            ( t, apply_( next_f, subsWithT, pos ) )
-        } )
+  private def conv( formula: HOLFormula, origFormula: HOLFormula, substitutions: Set[Substitution], pol: Polarity ): ExpansionTree =
+    ( formula, origFormula ) match {
+      case ( a: HOLAtom, _ )              => ETAtom( a, pol )
+      case ( Top(), _ )                   => ETTop( pol )
+      case ( Bottom(), _ )                => ETBottom( pol )
+      case ( Neg( f ), Neg( of ) )        => ETNeg( conv( f, of, substitutions, !pol ) )
+      case ( And( f, g ), And( of, og ) ) => ETAnd( conv( f, of, substitutions, pol ), conv( g, og, substitutions, pol ) )
+      case ( Or( f, g ), Or( of, og ) )   => ETOr( conv( f, of, substitutions, pol ), conv( g, og, substitutions, pol ) )
+      case ( Imp( f, g ), Imp( of, og ) ) => ETImp( conv( f, of, substitutions, !pol ), conv( g, og, substitutions, pol ) )
+      case ( _, Quant( v, f, isAll ) ) if isAll == pol.inAnt =>
+        ETWeakQuantifier( formula, Map() ++ substitutions.groupBy( _( v ) ).
+          map { case ( term, insts ) => term -> conv( instantiate( formula, term ), f, insts, pol ) } )
+      case ( _, Quant( v, f, isAll ) ) if isAll == pol.inSuc =>
+        ETMerge( formula, pol, substitutions.groupBy( _( v ) ).
+          map { case ( ev: Var, insts ) => ETStrongQuantifier( formula, ev, conv( instantiate( formula, ev ), f, insts, pol ) ) } )
     }
-    case Ex( v, f ) => pos match {
-      case true => // Weak quantifier
-        ETWeakQuantifier( form, subs.filter( _.domain.contains( v ) ).groupBy( _( v ) ) map {
-          case ( t, subsWithT ) =>
-            val next_f = Substitution( v -> t )( f )
-            ( t, apply_( next_f, subsWithT, pos ) )
-        } )
-      case false => // Strong quantifier
-        val valid_subs = subs.filter( s => s.domain.contains( v ) )
-        assert( valid_subs.length == 1 )
-        val next_f = valid_subs.head( f )
-        val ev = valid_subs.head( v ).asInstanceOf[Var]
-        ETStrongQuantifier( form, ev, apply_( next_f, valid_subs, pos ) ).asInstanceOf[ExpansionTree]
-    }
-    case Top()    => ETTop( pos )
-    case Bottom() => ETBottom( pos )
-    case _        => throw new Exception( "Error transforming a formula into an expansion tree: " + form )
-  }
 }
 
 object numberOfInstancesET {
   def apply( t: ExpansionTree ): Int =
-    t.subProofs collect { case ETWeakQuantifier( _, instances ) => instances.size } sum
+    t.treeLike.postOrder collect { case ETWeakQuantifier( _, instances ) => instances.size } sum
   def apply( s: ExpansionSequent ): Int = s.elements map apply sum
+  def apply( ep: ExpansionProof ): Int = apply( ep.expansionSequent )
+  def apply( epwc: ExpansionProofWithCut ): Int = apply( epwc.expansionWithCutAxiom )
 }

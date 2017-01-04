@@ -1392,7 +1392,7 @@ class LKNewTest extends Specification {
           InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
           InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
         ),
-        All( x, Pxy )
+        Abs( x, Pxy ), x
       )
 
       success
@@ -1423,6 +1423,15 @@ class LKNewTest extends Specification {
       val desiredES = a +: a +: Sequent() :+ a :+ a
       WeakeningContractionMacroRule( LogicalAxiom( a ), desiredES, strict = true ).endSequent must_== desiredES
     }
+  }
+
+  "equality left rule eqInConclusion" in {
+    val elr = ProofBuilder.
+      c( LogicalAxiom( hof"a=b" ) ).
+      u( WeakeningLeftRule( _, hof"b=c" ) ).
+      u( EqualityLeftRule( _, hof"a=b", hof"b=c", hof"a=c" ) ).
+      qed.asInstanceOf[EqualityLeftRule]
+    elr.conclusion( elr.eqInConclusion ) must_== hof"a=b"
   }
 
 }

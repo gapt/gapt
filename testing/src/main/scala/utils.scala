@@ -2,13 +2,14 @@ package at.logic.gapt.testing
 
 import java.io._
 
-import at.logic.gapt.utils.{ TimeOutException, withTempFile, withTimeout }
+import at.logic.gapt.utils.{ TimeOutException, runProcess, withTempFile, withTimeout }
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.sys.process._
 import scala.xml.Elem
+import scala.sys.process._
+import ammonite.ops._
 
 /**
  * Single regression test case, e.g. Prover9TestCase.ALG-123.
@@ -156,17 +157,17 @@ object runOutOfProcess {
 
   def main( args: Array[String] ): Unit = try args match {
     case Array( inFile, outFile ) =>
-      val f: InputType = deserialize( inFile )
-      serialize[OutputType]( outFile, try Right( f() ) catch { case t: Throwable => Left( t ) } )
+      val f: InputType = deserialize( Path( inFile ) )
+      serialize[OutputType]( Path( outFile ), try Right( f() ) catch { case t: Throwable => Left( t ) } )
   } finally System.exit( 0 )
 
-  private def serialize[T]( fileName: String, obj: T ) = {
-    val oos = new ObjectOutputStream( new FileOutputStream( fileName ) )
+  private def serialize[T]( file: Path, obj: T ) = {
+    val oos = new ObjectOutputStream( new FileOutputStream( file.toIO ) )
     try oos.writeObject( obj ) finally oos.close()
   }
 
-  private def deserialize[T]( fileName: String ): T = {
-    val ois = new ObjectInputStream( new FileInputStream( fileName ) )
+  private def deserialize[T]( file: Path ): T = {
+    val ois = new ObjectInputStream( new FileInputStream( file.toIO ) )
     try ois.readObject().asInstanceOf[T] finally ois.close()
   }
 
@@ -175,11 +176,12 @@ object runOutOfProcess {
       withTempFile { outputFile =>
         serialize[InputType]( inputFile, () => f )
 
-        val javaBinary = new File( new File( System.getProperty( "java.home" ), "bin" ), "java" ).getAbsolutePath
-        ( Seq( javaBinary ) ++ extraJvmArgs ++
+        val javaBinary = Path( sys.props( "java.home" ) ) / "bin" / "java"
+        ( Seq( javaBinary.toString ) ++
+          extraJvmArgs ++
           Seq( "-cp", System.getProperty( "java.class.path" ),
             getClass.getCanonicalName.dropRight( 1 ),
-            inputFile, outputFile ) ) !
+            inputFile.toString, outputFile.toString ) ) !
 
         deserialize[OutputType]( outputFile )
       }

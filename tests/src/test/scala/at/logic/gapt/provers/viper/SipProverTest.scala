@@ -15,12 +15,12 @@ class SipProverTest extends Specification {
     val endSequent = fof"P(0)" +: fof"!x (P(x) -> P(s(x)))" +: Sequent() :+ fof"P($alpha)"
 
     def instanceProof( n: Int ): ExpansionProof = {
-      val instP0 = formulaToExpansionTree( endSequent( Ant( 0 ) ), false )
+      val instP0 = formulaToExpansionTree( endSequent( Ant( 0 ) ), Polarity.InAntecedent )
       val instPs = formulaToExpansionTree(
         endSequent( Ant( 1 ) ),
-        ( 0 until n ).toList map { i => FOLSubstitution( fov"x" -> Utils.numeral( i ) ) }, false
+        ( 0 until n ).toList map { i => FOLSubstitution( fov"x" -> Utils.numeral( i ) ) }, Polarity.InAntecedent
       )
-      val instPa = formulaToExpansionTree( FOLSubstitution( alpha -> Utils.numeral( n ) )( endSequent( Suc( 0 ) ) ), true )
+      val instPa = formulaToExpansionTree( FOLSubstitution( alpha -> Utils.numeral( n ) )( endSequent( Suc( 0 ) ) ), Polarity.InSuccedent )
       ExpansionProof( instP0 +: instPs +: Sequent() :+ instPa )
     }
 

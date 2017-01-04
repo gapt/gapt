@@ -8,13 +8,13 @@ import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.{ OneShotProver, Prover }
-import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 trait SolutionFinder {
-  def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula]
+  def findSolution( schematicSIP: SimpleInductionProofU ): Option[FOLFormula]
 }
 
 class SipProver(
@@ -33,7 +33,7 @@ class SipProver(
   override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
     getSimpleInductionProof( endSequent ).map( _.toLKProof )
 
-  def getSimpleInductionProof( endSequent: HOLSequent ): Option[SimpleInductionProof] = {
+  def getSimpleInductionProof( endSequent: HOLSequent ): Option[SimpleInductionProofU] = {
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
     }
@@ -43,14 +43,14 @@ class SipProver(
 
   }
 
-  def getSimpleInductionProof( endSequent: HOLSequent, instanceProofs: Seq[( Int, ExpansionProof )] ): Option[SimpleInductionProof] = {
+  def getSimpleInductionProof( endSequent: HOLSequent, instanceProofs: Seq[( Int, ExpansionProof )] ): Option[SimpleInductionProofU] = {
 
     val inductionVariable = freeVariables( endSequent.formulas.toList.map( _.asInstanceOf[FOLExpression] ) ) match {
       case singleton if singleton.size == 1 => singleton.head
     }
     require( inductionVariable == SimpleInductionProof.alpha ) // TODO: maybe relax this restriction
 
-    val termEncoding = FOLInstanceTermEncoding( endSequent )
+    val termEncoding = InstanceTermEncoding( endSequent, Ti )
     var instanceLanguages = instanceProofs map {
       case ( n, expSeq ) =>
         n -> termEncoding.encode( expSeq ).map( _.asInstanceOf[FOLTerm] )
@@ -90,7 +90,7 @@ class SipProver(
 
       ( 0 until 3 ) foreach { i =>
         lazy val C_i = canonicalSolution( schematicSip, i )
-        debug( s"C_$i =$nLine${CNFp( C_i ).map( _.mkString( ", " ) ).mkString( nLine )}" )
+        debug( s"C_$i =$nLine${CNFp( C_i ).mkString( nLine )}" )
       }
 
       solutionFinder.findSolution( schematicSip ).map( schematicSip.solve )

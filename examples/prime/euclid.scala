@@ -1,4 +1,5 @@
 package at.logic.gapt.examples.prime
+
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
@@ -39,7 +40,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
       }
   }
 
-  def splitgt0( label: String ): Tactical[Unit] =
+  def splitgt0( label: String ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
       subst <- syntacticMatching( hof"a*b + 1 = 1", goal( label ) ).
@@ -50,6 +51,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
       _ <- forget( label ); _ <- renameLabel( l ) to label
       _ <- orL( label )
     } yield ()
+  }
 
   def prodgt0( i: Int ): LKProof = Lemma(
     ( "gt0" -> hof"${prod( i )} + 1 = 1" ) +:

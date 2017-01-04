@@ -4,14 +4,14 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.SipGrammar
-import at.logic.gapt.proofs.FOLClause
+import at.logic.gapt.proofs.{ FOLClause, HOLSequent }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.resolution.{ forgetfulPropResolve, forgetfulPropParam }
+import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 
@@ -25,7 +25,7 @@ import scala.collection.mutable
  * @param u Terms used in the conclusion
  * @param inductionFormula The formula induced over. This argument defaults to X(α, ν, γ) with X a second-order variable, i.e. an unknown induction formula.
  */
-class SimpleInductionProof(
+abstract class SimpleInductionProof(
     val ExpSeq0:          ExpansionSequent,
     val ExpSeq1:          ExpansionSequent,
     val ExpSeq2:          ExpansionSequent,
@@ -53,30 +53,18 @@ class SimpleInductionProof(
     require( inductionFormula.isInstanceOf[FOLFormula], "F is neither X(α, ν, γ) nor first order" )
   }
 
-  private def F( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): HOLFormula = {
+  protected def F( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): HOLFormula = {
     val sub = FOLSubstitution( List( alpha -> x1, nu -> x2, gamma -> x3 ) )
     sub( inductionFormula )
   }
 
-  private def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
-    if ( indFormIsQuantified )
-      All( y, F( x1, x2, y ) ).asInstanceOf[FOLFormula]
-    else
-      F( x1, x2, gamma ).asInstanceOf[FOLFormula]
+  protected def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula
 
-  val Sequent0 = Gamma0 :+ F( alpha, zero, beta )
+  def Sequent0: HOLSequent
 
-  val Ft = if ( t.isEmpty )
-    List( F( alpha, nu, gamma ) )
-  else
-    t map { F( alpha, nu, _ ) }
-  val Sequent1 = Ft ++: Gamma1 :+ F( alpha, snu, gamma )
+  def Sequent1: HOLSequent
 
-  val Fu = if ( u.isEmpty )
-    List( F( alpha, alpha, gamma ) )
-  else
-    u map { F( alpha, alpha, _ ) }
-  val Sequent2 = Fu ++: Gamma2
+  def Sequent2: HOLSequent
 
   /**
    * Returns true iff the induction formula needs to be quantified over.
@@ -104,7 +92,13 @@ class SimpleInductionProof(
    * @param f A FOLFormula
    * @return This with the induction formula replaced by f
    */
-  def solve( f: FOLFormula ): SimpleInductionProof = new SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, f )
+  def solve( f: FOLFormula ): SimpleInductionProofU = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u, f )
+
+  protected def baseProof( pi0: LKProof ): LKProof
+
+  protected def stepProof( pi1: LKProof ): LKProof
+
+  protected def conclusionProof( pi2: LKProof ): LKProof
 
   /**
    * Converts this into an LKProof, with user-supplied proofs π,,0,,, π,,1,,, π,,2,,.
@@ -120,56 +114,18 @@ class SimpleInductionProof(
       require( u.nonEmpty, "Induction formula contains γ, but no cut terms have been supplied." )
     }
 
-    // Induction base
-    val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
-    val inductionBase2 = ContractionMacroRule(
-      if ( indFormIsQuantified )
-        ForallRightRule( inductionBase1, Fprime( alpha, zero ), beta )
-      else
-        inductionBase1
-    )
-
-    // Induction step
-    val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
-    val inductionStep2 =
-      if ( indFormIsQuantified ) {
-        t.foldLeft( inductionStep1 ) {
-          ( acc, ti ) => ForallLeftRule( acc, All( y, F( alpha, nu, y ) ), ti )
-        }
-      } else
-        inductionStep1
-
-    val inductionStep3 = ContractionMacroRule(
-      if ( indFormIsQuantified )
-        ForallRightRule( inductionStep2, All( y, F( alpha, snu, y ) ), gamma )
-      else
-        inductionStep2
-    )
-
-    // Conclusion
-    val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
-    val conclusion2 = ContractionMacroRule(
-      if ( indFormIsQuantified ) {
-        u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
-          ( acc: LKProof, ui ) => ForallLeftRule( acc, All( y, F( alpha, alpha, y ) ), ui )
-        }
-      } else
-        conclusion1
-    )
     val x = FOLVar( "x" )
-    val conclusion3 = ForallLeftRule( conclusion2, All( x, Fprime( alpha, x ) ), alpha )
 
-    // Combining the proofs
     val inductionProof = ContractionMacroRule( NaturalNumberInductionRule(
-      inductionBase2,
+      baseProof( pi0 ),
       Fprime( alpha, zero ),
-      inductionStep3,
+      stepProof( pi1 ),
       Fprime( alpha, nu ),
       Fprime( alpha, snu ),
       All( x, Fprime( alpha, x ) )
     ) )
 
-    cleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusion3, All( x, Fprime( alpha, x ) ) ) ) )
+    cleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusionProof( pi2 ), All( x, Fprime( alpha, x ) ) ) ) )
   }
 
   /**
@@ -226,6 +182,95 @@ class SimpleInductionProof(
    * @param pi2 Proof of the conclusion.
    * @return The nth instance of this sip.
    */
+  def toInstanceLKProof( n: Int, pi0: LKProof, pi1: LKProof, pi2: LKProof, rename: Boolean ): LKProof
+}
+
+object SimpleInductionProof {
+  val y = FOLVar( "y" )
+  val zero = FOLConst( "0" )
+  val alpha = FOLVar( "α" )
+  val beta = FOLVar( "β" )
+  val gamma = FOLVar( "γ" )
+  val nu = FOLVar( "ν" )
+  val snu = FOLFunction( "s", List( nu ) )
+  val X = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), alpha, nu, gamma )
+
+}
+
+class SimpleInductionProofU(
+    ExpSeq0:          ExpansionSequent,
+    ExpSeq1:          ExpansionSequent,
+    ExpSeq2:          ExpansionSequent,
+    t:                List[FOLTerm],
+    u:                List[FOLTerm],
+    inductionFormula: HOLFormula       = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
+) extends SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, inductionFormula ) {
+  import SimpleInductionProof._
+
+  protected override def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
+    if ( indFormIsQuantified )
+      All( y, F( x1, x2, y ) ).asInstanceOf[FOLFormula]
+    else
+      F( x1, x2, gamma ).asInstanceOf[FOLFormula]
+
+  override val Sequent0: HOLSequent = Gamma0 :+ F( alpha, zero, beta )
+
+  private val Ft = if ( t.isEmpty )
+    List( F( alpha, nu, gamma ) )
+  else
+    t map { F( alpha, nu, _ ) }
+
+  override val Sequent1 = Ft ++: Gamma1 :+ F( alpha, snu, gamma )
+
+  private val Fu = if ( u.isEmpty )
+    List( F( alpha, alpha, gamma ) )
+  else
+    u map { F( alpha, alpha, _ ) }
+
+  override val Sequent2 = Fu ++: Gamma2
+
+  override def baseProof( pi0: LKProof ) = {
+    val inductionBase1 = proofFromInstances( pi0, ExpSeq0 )
+    ContractionMacroRule(
+      if ( indFormIsQuantified )
+        ForallRightRule( inductionBase1, Fprime( alpha, zero ), beta )
+      else
+        inductionBase1
+    )
+  }
+
+  override def stepProof( pi1: LKProof ) = {
+    val inductionStep1 = proofFromInstances( pi1, ExpSeq1 )
+    val inductionStep2 =
+      if ( indFormIsQuantified ) {
+        t.foldLeft( inductionStep1 ) {
+          ( acc, ti ) => ForallLeftRule( acc, All( y, F( alpha, nu, y ) ), ti )
+        }
+      } else
+        inductionStep1
+
+    ContractionMacroRule(
+      if ( indFormIsQuantified )
+        ForallRightRule( inductionStep2, All( y, F( alpha, snu, y ) ), gamma )
+      else
+        inductionStep2
+    )
+  }
+
+  override def conclusionProof( pi2: LKProof ) = {
+    val conclusion1 = proofFromInstances( pi2, ExpSeq2 )
+    val conclusion2 = ContractionMacroRule(
+      if ( indFormIsQuantified ) {
+        u.foldLeft( conclusion1.asInstanceOf[LKProof] ) {
+          ( acc: LKProof, ui ) => ForallLeftRule( acc, All( y, F( alpha, alpha, y ) ), ui )
+        }
+      } else
+        conclusion1
+    )
+    val x = FOLVar( "x" )
+    ForallLeftRule( conclusion2, All( x, Fprime( alpha, x ) ), alpha )
+  }
+
   def toInstanceLKProof( n: Int, pi0: LKProof, pi1: LKProof, pi2: LKProof, rename: Boolean ): LKProof = {
     def num( k: Int ) = Utils.numeral( k )
     def gam( k: Int ) = FOLVar( "γ_" + k )
@@ -296,7 +341,7 @@ class SimpleInductionProof(
   def toSipGrammar: SipGrammar = {
     import SipGrammar._
 
-    val termEncoding = FOLInstanceTermEncoding( EndSequent )
+    val termEncoding = InstanceTermEncoding( EndSequent, Ti )
     val terms = termEncoding.encode( ExpSeq0 ) ++ termEncoding.encode( ExpSeq1 ) ++ termEncoding.encode( ExpSeq2 ) map { _.asInstanceOf[FOLTerm] }
     val tauProductions = terms map { x => tau -> x }
     val gammaProductions = t map { ti => gamma -> ti }
@@ -304,18 +349,6 @@ class SimpleInductionProof(
 
     SipGrammar( tauProductions ++ gammaProductions ++ gammaEndProductions )
   }
-}
-
-object SimpleInductionProof {
-  val y = FOLVar( "y" )
-  val zero = FOLConst( "0" )
-  val alpha = FOLVar( "α" )
-  val beta = FOLVar( "β" )
-  val gamma = FOLVar( "γ" )
-  val nu = FOLVar( "ν" )
-  val snu = FOLFunction( "s", List( nu ) )
-  val X = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), alpha, nu, gamma )
-
 }
 
 object decodeSipGrammar {
@@ -343,7 +376,7 @@ object decodeSipGrammar {
     if ( ts isEmpty ) ts += FOLConst( "0" )
     if ( us isEmpty ) us += FOLConst( "0" )
 
-    new SimpleInductionProof(
+    new SimpleInductionProofU(
       encoding.decodeToExpansionSequent( seq0 ),
       encoding.decodeToExpansionSequent( seq1 ),
       encoding.decodeToExpansionSequent( seq2 ),
@@ -355,7 +388,7 @@ object decodeSipGrammar {
 object canonicalSolution {
   import SimpleInductionProof._
 
-  def apply( sip: SimpleInductionProof, i: Int ): FOLFormula = i match {
+  def apply( sip: SimpleInductionProofU, i: Int ): FOLFormula = i match {
     case 0 => FOLSubstitution( beta -> gamma )( sip.Gamma0.toNegConjunction ).asInstanceOf[FOLFormula]
     case _ =>
       val C_ = apply( sip, i - 1 )
@@ -374,7 +407,7 @@ object findConseq extends Logger {
   import SimpleInductionProof._
   type CNF = Set[FOLClause]
 
-  def apply( S: SimpleInductionProof, n: Int, A: CNF, M: Set[CNF], forgetClauses: Boolean, prover: Prover ): Set[CNF] = {
+  def apply( S: SimpleInductionProofU, n: Int, A: CNF, M: Set[CNF], forgetClauses: Boolean, prover: Prover ): Set[CNF] = {
     val num = Utils.numeral( n )
     val Gamma2n = FOLSubstitution( alpha, num )( S.Gamma2 )
 
@@ -396,8 +429,8 @@ object findConseq extends Logger {
     }
   }
 
-  def apply( S: SimpleInductionProof, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = VeriT ): Set[CNF] =
-    apply( S, n, CNFp.toClauseList( A ).map { _.distinct.sortBy { _.hashCode } }.toSet, M, forgetClauses, prover )
+  def apply( S: SimpleInductionProofU, n: Int, A: FOLFormula, M: Set[CNF], forgetClauses: Boolean = false, prover: Prover = VeriT ): Set[CNF] =
+    apply( S, n, CNFp( A ).map { _.distinct.sortBy { _.hashCode } }, M, forgetClauses, prover )
 
   def ForgetOne( A: CNF ) = for ( a <- A ) yield A - a
 }
@@ -405,12 +438,12 @@ object findConseq extends Logger {
 object FindFormulaH extends Logger {
   import SimpleInductionProof._
 
-  def apply( S: SimpleInductionProof, n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ): Option[FOLFormula] = {
+  def apply( S: SimpleInductionProofU, n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ): Option[FOLFormula] = {
     val CSn = canonicalSolution( S, n )
     apply( CSn, S, n, forgetClauses, prover )
   }
 
-  def apply( CSn: FOLFormula, S: SimpleInductionProof, n: Int, forgetClauses: Boolean, prover: Prover ): Option[FOLFormula] = {
+  def apply( CSn: FOLFormula, S: SimpleInductionProofU, n: Int, forgetClauses: Boolean, prover: Prover ): Option[FOLFormula] = {
     val num = Utils.numeral( n )
     debug( "Calling findConseq …" )
     val M = findConseq( S, n, CSn, Set[Set[FOLClause]](), forgetClauses, prover ).toList.sortBy( l => ( l map ( _.length ) ).sum )
@@ -435,6 +468,6 @@ object FindFormulaH extends Logger {
 }
 
 class HeuristicSolutionFinder( n: Int, forgetClauses: Boolean = false, prover: Prover = VeriT ) extends SolutionFinder {
-  override def findSolution( schematicSIP: SimpleInductionProof ): Option[FOLFormula] =
+  override def findSolution( schematicSIP: SimpleInductionProofU ): Option[FOLFormula] =
     FindFormulaH( schematicSIP, n, forgetClauses, prover )
 }

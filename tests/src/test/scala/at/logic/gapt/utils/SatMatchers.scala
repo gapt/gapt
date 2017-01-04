@@ -12,14 +12,14 @@ trait SatMatchers extends OptionMatchers {
   def beUnsat = beNone ^^ { ( f: HOLFormula ) => Sat4j.solve( f ) }
 
   def beSat =
-    beNone ^^ { ( f: HOLFormula ) => new Escargot( equality = false, propositional = true ).getRobinsonProof( f ) } and
+    beNone ^^ { ( f: HOLFormula ) => new Escargot( splitting = false, equality = false, propositional = true ).getResolutionProof( f ) } and
       beSome ^^ { ( f: HOLFormula ) => Sat4j.solve( f ) }
   def beValid = beUnsat ^^ { ( f: HOLFormula ) => -f }
   def beValidSequent = beValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
   def beEUnsat =
-    beSome ^^ { ( f: HOLFormula ) => new Escargot( equality = true, propositional = true ).getRobinsonProof( f ) }
+    beSome ^^ { ( f: HOLFormula ) => new Escargot( splitting = false, equality = true, propositional = true ).getResolutionProof( -f ) }
   def beEValid = beEUnsat ^^ { ( f: HOLFormula ) => -f }
-  def beEValidSequent = beEUnsat ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
+  def beEValidSequent = beEValid ^^ { ( sequent: HOLSequent ) => sequent.toDisjunction }
 
 }

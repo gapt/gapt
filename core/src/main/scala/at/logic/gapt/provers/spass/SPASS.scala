@@ -3,11 +3,11 @@ package at.logic.gapt.provers.spass
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.resolution.{ ResolutionProof, fixDerivation }
+import at.logic.gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
-import at.logic.gapt.provers.ResolutionProver
+import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 import org.parboiled2._
 
@@ -33,11 +33,11 @@ class SPASS extends ResolutionProver with ExternalProgram {
   def cls2dfg( cls: FOLClause ): String = {
     val cls_ = FOLSubstitution( freeVariables( cls ).zipWithIndex.
       map { case ( v, i ) => v -> FOLVar( s"X$i" ) } )( cls )
-    s"formula(${expr2dfg( univclosure( cls_.toDisjunction ) )})."
+    s"formula(${expr2dfg( universalClosure( cls_.toDisjunction ) )})."
   }
 
-  override def getRobinsonProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = withRenamedConstants( clauses ) {
-    case ( renaming, cnf ) =>
+  override def getResolutionProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
+    ( renaming, cnf: Seq[HOLClause] ) => {
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
       val list_of_formulae =
@@ -47,11 +47,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
          |end_of_list.
        """.stripMargin
 
+      val consts = cnf.view.flatMap( constants( _ ) ).toSet
       val list_of_symbols = {
         val buf = new StringBuilder
         buf append "list_of_symbols.\n"
-
-        val consts = cnf.view.flatMap( constants( _ ) ).toSet
 
         val funs = consts filter { _.isInstanceOf[FOLPartialTerm] }
         if ( funs nonEmpty ) buf append s"functions[${funs map { _.name } mkString ","}].\n"
@@ -92,58 +91,76 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
         val inferences = proof map InferenceParser.parseInference
 
+        val nameGen = rename.awayFrom( consts )
+
+        class SpassSplit( splittingClause: RefutationSketch, part1: FOLClause ) {
+          require( part1 isSubMultisetOf splittingClause.conclusion )
+          val part2 = splittingClause.conclusion diff part1
+
+          val splitAtom1 = FOLAtom( nameGen.freshWithIndex( "_split1" ) )
+          val splitAtom2 = FOLAtom( nameGen.freshWithIndex( "_split2" ) )
+
+          val comp1 = AvatarNonGroundComp( splitAtom1, universalClosure( part1.toDisjunction ) )
+          val comp2 = AvatarNonGroundComp( splitAtom2, universalClosure( part2.toDisjunction ) )
+
+          val emptyClause = SketchComponentElim( SketchComponentElim( splittingClause, comp1 ), comp2 )
+
+          val addAxioms1 = Seq( SketchComponentIntro( comp1 ) )
+
+          val groundNegPart1 =
+            for ( ( a, i ) <- comp1.componentClause.zipWithIndex.elements if freeVariables( a ).isEmpty )
+              yield AvatarNegNonGroundComp( comp1.atom, comp1.definition, comp1.vars, i )
+          val addAxioms2 = Seq( comp2 ) ++ groundNegPart1 map { SketchComponentIntro( _ ) }
+        }
+
         val inference2sketch = mutable.Map[Int, RefutationSketch]()
-        val splitStack = mutable.Stack[( Int, FOLClause, Option[Int] )]()
+        val splitStack = mutable.Stack[( Int, SpassSplit, Option[Int] )]()
+        val splitCases = Seq.newBuilder[RefutationSketch]
         def finishSplit( infNum: Int, splitLevel: Int ): Unit =
           if ( splitLevel > 0 ) splitStack.pop() match {
-            case ( splitCls, part1, None ) =>
-              splitStack push ( ( splitCls, part1, Some( infNum ) ) )
-            case ( splitCls, part1, Some( case1 ) ) =>
-              inference2sketch( infNum ) = SketchSplit(
-                inference2sketch( splitCls ), part1,
-                inference2sketch( case1 ), inference2sketch( infNum )
-              )
+            case ( splitCls, split, None ) =>
+              splitStack push ( ( splitCls, split, Some( infNum ) ) )
+            case ( splitCls, split, Some( case1 ) ) =>
               finishSplit( infNum, splitLevel - 1 )
           }
         inferences foreach {
           case ( num, 0, "Inp", _, clause ) =>
             val Some( clauseInOurCNF ) = cnf.find( clauseSubsumption( _, clause, matchingAlgorithm = fixDerivation.matchingModEq ).isDefined )
             inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( clauseInOurCNF map { _.asInstanceOf[FOLAtom] } ) ) )
+            if ( clause isEmpty ) splitCases += inference2sketch( num )
           case ( num, splitLevel, "Spt", Seq( splitClauseNum ), part1 ) =>
             val splitClause = inference2sketch( splitClauseNum ).conclusion
             val Some( subst ) = clauseSubsumption( part1, splitClause )
             require( subst.isRenaming )
             val correctPart1 = subst.asFOLSubstitution( part1 )
-            splitStack push ( ( splitClauseNum, correctPart1, None ) )
-            inference2sketch( num ) = SketchInference( splitClause, Seq( SketchAxiom( correctPart1 ) ) )
+            val split = new SpassSplit( inference2sketch( splitClauseNum ), correctPart1 )
+            splitCases += split.emptyClause
+            splitStack push ( ( splitClauseNum, split, None ) )
+            inference2sketch( num ) = SketchInference( splitClause, split.addAxioms1 )
           case ( num, splitLevel, "Spt", _, clause ) =>
-            val splitClause = inference2sketch( splitStack.top._1 ).conclusion
-            val correctClause =
-              if ( clauseSubsumption( clause, splitClause ).isDefined ) {
-                splitClause diff splitStack.top._2
-              } else {
-                require( clause.size == 1 && freeVariables( clause ).isEmpty )
-                require( clause.swapped isSubsetOf splitStack.top._2 )
-                clause
-              }
-            inference2sketch( num ) = SketchInference( clause, Seq( SketchAxiom( correctClause ) ) )
+            val split = splitStack.top._2
+            inference2sketch( num ) = SketchInference( clause, split.addAxioms2 )
           case ( num, splitLevel, _, premises, clause ) =>
             val p = SketchInference( clause, premises map inference2sketch )
             inference2sketch( num ) = p
 
-            if ( clause isEmpty ) finishSplit( num, splitLevel )
+            if ( clause isEmpty ) {
+              splitCases += p
+              finishSplit( num, splitLevel )
+            }
         }
 
-        val sketch = inference2sketch( inferences.last._1 )
+        val sketch = SketchSplitCombine( splitCases.result() )
 
-        RefutationSketchToRobinson( sketch ) match {
+        RefutationSketchToResolution( sketch ) match {
           case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )
           case scalaz.Success( resProof ) => Some( resProof )
         }
       } else {
         None
       }
-  }
+    }
+  )
 
   class InferenceParser( val input: ParserInput ) extends Parser {
     def Num = rule { capture( oneOrMore( CharPredicate.Digit ) ) ~> { _.toInt } }
@@ -154,10 +171,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
 
     def Justification: Rule1[( Int, String, Seq[Int] )] = rule {
       "[" ~ Num ~ ":" ~ Name ~ optional( ":" ~ oneOrMore( Backreference ).separatedBy( "," ) ) ~ "]" ~>
-        ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( splitLevel, inferenceType, premises.getOrElse( Seq() ) ) )
+        ( ( splitLevel: Int, inferenceType: String, premises: Option[Seq[Int]] ) => ( splitLevel, inferenceType, premises.getOrElse( Seq() ).distinct ) )
     }
 
-    def isVar( n: String ) = n.head.isUpper
+    def isVar( n: String ) = n.head.isUpper || 'u'.to( 'z' ).contains( n.head )
     def Term: Rule1[FOLTerm] = rule {
       Name ~ optional( "(" ~ zeroOrMore( Term ).separatedBy( "," ) ~ ")" ) ~>
         ( ( name: String, args: Option[Seq[FOLTerm]] ) => if ( isVar( name ) ) FOLVar( name ) else FOLFunction( name, args.getOrElse( Seq() ) ) )

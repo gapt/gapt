@@ -16,10 +16,12 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
   }
 
-  def apply( p: LKProof ): LKProof =
-    ContractionMacroRule( apply( p, () ) )
+  override def recurse( p: LKProof, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
+    contractAfter( super.recurse )( p, otherArg )
 
-  override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula], Unit ) = {
+  def apply( p: LKProof ): LKProof = apply( p, () )
+
+  override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
     val indty = proof.indTy
     val constrs = proof.cases.map { _.constructor }
 
@@ -36,18 +38,21 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     }
 
     val indprin = inductionPrinciple( indty, constrs )
-    val All( pred, Imp( _, _ ) ) = indprin
 
     val hypP = hyps.reduceLeft( ( p, hyp ) =>
       AndRightRule( p, p.conclusion.indices.last,
         hyp, hyp.conclusion.indices.last ) )
 
-    val explicitFOLp = ImpLeftRule( hypP, hypP.conclusion.indices.last,
-      LogicalAxiom( proof.mainFormula ), Ant( 0 ) )
+    val explicitFOLp =
+      ProofBuilder.
+        c( LogicalAxiom( proof.mainFormula ) ).
+        u( ForallLeftRule( _, Ant( 0 ), All( proof.quant, proof.qfFormula ), proof.term ) ).
+        u( ImpLeftRule( hypP, hypP.conclusion.indices.last, _, Ant( 0 ) ) ).
+        qed
     val explicitHOLp =
       ForallLeftRule( explicitFOLp, indprin, Abs( proof.quant, proof.qfFormula ) )
 
-    val ( proof_, occConn, _ ) = recurse( explicitHOLp, () )
-    ( proof_, occConn * OccConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv, () )
+    val ( proof_, occConn ) = recurse( explicitHOLp, () )
+    ( proof_, occConn * OccConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv )
   }
 }

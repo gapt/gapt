@@ -8,21 +8,3 @@ fi
 prover=$1
 
 tar -xzf $prover.tar.gz
-
-for prob_group in `ls -d $prover/*`
-do
-  echo "Processing directory $prob_group"
-  for problem in `ls -d $prob_group/*`
-  do
-    for file in `ls $problem/*.s`
-    do
-      if [ "$1" = "prover9" ]; then
-	# For prover 9
-	sed 's/^% //g' $file > $file.out
-      elif [ "$1" = "leanCoP" ]; then
-	# For leanCoP
-	sed 's/^% \([fof,cnf,\n]\)/\1/g' $file > $file.out
-      fi
-    done
-  done
-done

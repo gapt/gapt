@@ -3,13 +3,15 @@ package at.logic.gapt.examples.recschem
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
-import at.logic.gapt.expr.hol.{ toNNF, simplify, lcomp }
+import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.grammars._
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
-import at.logic.gapt.utils.time
+import at.logic.gapt.utils.{ PrintMetrics, metrics, time }
 
 object vtrat_comparison extends Script {
-  val N = 8
+  metrics.current.value = PrintMetrics
+
+  val N = 11
   val terms = ( 0 until N ).map { i => FOLFunction( "r", Numeral( i ), Numeral( N - i ) ) }.toSet
 
   val A = FOLConst( "A" )
@@ -21,7 +23,7 @@ object vtrat_comparison extends Script {
 
   println( lcomp( simplify( toNNF( ( new RecSchemGenLangFormula( nfRecSchem ) )( targets ) ) ) ) )
 
-  val nfG = stableProofVectGrammar( terms, Seq( 2 ) )
+  val nfG = stableVTRATG( terms.toSet, Seq( 2 ) )
   println( lcomp( simplify( toNNF( new VectGrammarMinimizationFormula( nfG ).coversLanguage( terms ) ) ) ) )
 
   val minimized = time { minimizeRecursionScheme( nfRecSchem, targets, solver = bestAvailableMaxSatSolver ) }
@@ -29,6 +31,6 @@ object vtrat_comparison extends Script {
   println( terms.toSet diff minimized.language )
   println( recSchemToVTRATG( minimized ) )
 
-  val minG = time { minimizeVectGrammar( nfG, terms, bestAvailableMaxSatSolver ) }
+  val minG = time { minimizeVTRATG( nfG, terms.toSet, bestAvailableMaxSatSolver ) }
   println( minG )
 }

@@ -15,17 +15,17 @@ import scalaz.\/-
 class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends ProofToolViewer[ExpansionSequent]( name, es ) {
   override type MainComponentType = DrawExpansionSequent
 
-  override def createMainComponent( fSize: Int ) = new DrawExpansionSequent( this, es, fSize )
+  override def createMainComponent = new DrawExpansionSequent( this, es )
 
   override def viewMenuContents = super.viewMenuContents ++ Seq( new Separator(), viewLKProofButton )
 
   def lkproof() {
     try {
-      scrollPane.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
+      mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
       val \/-( p ) = ExpansionProofToLK( ExpansionProof( content ) )
       val viewer = new LKProofViewer( "LK proof", p )
       viewer.showFrame()
-      scrollPane.cursor = java.awt.Cursor.getDefaultCursor
+      mainPanel.cursor = java.awt.Cursor.getDefaultCursor
     } catch {
       case e: Throwable =>
         errorMessage( "Cannot extract LK proof!" + dnLine + getExceptionString( e ) )

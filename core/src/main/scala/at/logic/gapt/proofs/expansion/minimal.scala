@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
 
@@ -214,7 +214,12 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
   def generateSuccessorTrees( tree: ExpansionTree ): Seq[ExpansionTree] = tree match {
     case ETAtom( _, _ )      => Nil
     case ETWeakening( _, _ ) => Nil
-    case ETNeg( s )          => generateSuccessorTrees( s ).map( ETNeg.apply )
+    case ETTop( _ )          => Nil
+    case ETBottom( _ )       => Nil
+    case _: ETDefinedAtom    => Nil
+    case ETDefinition( sh, defexpr, child ) =>
+      generateSuccessorTrees( child ).map( ETDefinition( sh, defexpr, _ ) )
+    case ETNeg( s ) => generateSuccessorTrees( s ).map( ETNeg.apply )
     case ETAnd( left, right ) =>
       val sLeft = generateSuccessorTrees( left )
       val sRight = generateSuccessorTrees( right )

@@ -1,12 +1,22 @@
 package at.logic.gapt.formats.tptp
 
-import java.io.{ FileWriter, BufferedWriter }
+import ammonite.ops._
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.replaceAbstractions
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.expansion.{ ETAnd, ETAtom, ETTop, ExpansionProof, ExpansionSequent, ExpansionTree }
+import at.logic.gapt.provers.groundFreeVariables
+
+sealed class TPTPFormulaRole
+case object TPTPAxiom extends TPTPFormulaRole { override def toString() = "axiom" }
+case object TPTPDefinition extends TPTPFormulaRole { override def toString() = "definition" }
+case object TPTPConjecture extends TPTPFormulaRole { override def toString() = "conjecture" }
+case object TPTPNegatedConjecture extends TPTPFormulaRole { override def toString() = "negated_conjecture" }
 
 object TPTPHOLExporter extends TPTPHOLExporter
+
 class TPTPHOLExporter {
   /**
    * Exports the given FSequent list to the THF fragment of TPTP. The default behavior of the exporter
@@ -17,25 +27,57 @@ class TPTPHOLExporter {
   private val nLine = sys.props( "line.separator" )
 
   /**
-   * Exports a sequent set as TPTP thf problem
+   * Exports a sequent set as TPTP thf problem to prove unsatisfiability
+   *
    * @param ls the list of sequents to export
    * @param filename the filename
-   * @param positive if true we check ls for validity, if false (default), we check for unsatisfiability
    */
-  def apply( ls: List[HOLSequent], filename: String, positive: Boolean = false ): Unit = {
-    val file = new BufferedWriter( new FileWriter( filename ) )
-    file.write( apply( ls, positive ) )
-    file.close
-    ()
+  def apply( ls: List[HOLSequent], filename: String ) =
+    write( Path( filename, pwd ), export_negative( ls ) )
+
+  /**
+   * Exports a sequent as TPTP thf problem to prove validity
+   *
+   * @param seq the sequent to export
+   * @param filename the filename
+   */
+  def apply( seq: HOLSequent, filename: String, separate_axioms: Boolean = false ) =
+    write( Path( filename, pwd ), export_positive( seq, separate_axioms ) )
+
+  /**
+   * Exports an expansion proof as TPTP thf problem to prove validity
+   *
+   * @param seq the sequent to export
+   * @param filename the filename
+   * @param maximize_axiom_declarations if true, all conjunctions
+   * @param lambda_lifting apply lambda lifting to deep formula and add the definitions into to the antecedent of the formula
+   */
+  def apply( seq: ExpansionSequent, filename: String,
+             maximize_axiom_declarations: Boolean, lambda_lifting: Boolean ) =
+    write( Path( filename, pwd ), export( seq, maximize_axiom_declarations, lambda_lifting ) )
+
+  /**
+   * Exports an expansion proof as TPTP thf problem. The antedent of the
+   *
+   * @param ep the expansion proof to export
+   * @param maximize_axiom_declarations if true, all conjunctions
+   * @param lambda_lifting apply lambda lifting to deep formula and add the definitions into to the antecedent of the formula
+   */
+  def export( ep: ExpansionSequent, maximize_axiom_declarations: Boolean = true, lambda_lifting: Boolean = false ): String = {
+    val ep1 = if ( maximize_axiom_declarations ) simplify_antecedent( ep ) else ep
+    val es1: HOLSequent = if ( lambda_lifting ) lambda_lift_and_add_definitions( ep1.deep ) else ep1.deep
+    val ( es2, _ ) = groundFreeVariables( es1 )
+    val es3 = if ( maximize_axiom_declarations ) simplify_antecedent2( es2 ) else es2 //the deep conversion in the antecedent also introduces conjunctions
+    val es4 = es3.map( simplify.apply ) //remove top / bottom if possible
+    export_positive( es4, maximize_axiom_declarations )
   }
 
   /**
-   * Exports a sequent set as TPTP thf problem
+   * Exports a sequent set as TPTP thf problem to prove unsatisfiability
    *
    * @param ls the list of sequents to export
-   * @param positive if true (default) we check ls for validity, if false, we check for unsatisfiability
    */
-  def apply( ls: List[HOLSequent], positive: Boolean ): String = {
+  def export_negative( ls: List[HOLSequent] ): String = {
     require( ls.nonEmpty, "Cannot export an empty sequent list!" )
     val ( vs, vnames, cs, cnames ) = createNamesFromSequent( ls )
 
@@ -44,32 +86,17 @@ class TPTPHOLExporter {
     val types = for ( seq <- ls; f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.exptype ) ) yield t
     val tdecls = for ( t <- types.distinct if t != Ti && t != To ) yield { index += 1; s"thf($index, type, $t: $$tType).$nLine" }
 
-    val vdecs_ = for ( v <- vs ) yield {
-      index = index + 1
-      thf_type_dec( index, v, vnames ) + nLine
-    }
-
-    val vdecs = vdecs_.foldLeft( "" )( _ ++ _ )
-
     val cdecs_ = for ( c <- cs if c.name != "=" ) yield {
       index = index + 1
       thf_type_dec( index, c, cnames ) + nLine
     }
-    val cdecs = cdecs_.foldLeft( "" )( _ ++ _ )
+    val cdecs = cdecs_.mkString
 
-    val sdecs = positive match {
-      case true =>
-        for ( fs <- ls ) yield {
-          index = index + 1
-          //thf_sequent_dec( index, fs, vnames, cnames ) + nLine //leo doesn't support sequents?
-          thf_formula_dec( index, fs.toImplication, vnames, cnames ) + nLine
-        }
-      case false =>
-        val negClauses = Neg( And( ls.map( closedFormula ) ) )
-        index = index + 1
-        // since in thf conjectures are seen as conjunction. the negated cnf is one big formula
-        List( thf_formula_dec( index, negClauses, vnames, cnames ) )
-
+    val sdecs = {
+      val negClauses = Neg( And( ls.map( closedFormula ) ) )
+      index = index + 1
+      // since in thf conjectures are seen as conjunction. the negated cnf is one big formula
+      List( thf_formula_dec( index, negClauses, TPTPConjecture, vnames, cnames ) )
     }
 
     s"% type declarations$nLine" + tdecls.mkString +
@@ -77,6 +104,48 @@ class TPTPHOLExporter {
       "% constant type declarations" + nLine + cdecs +
       "% sequents" + nLine + sdecs.foldLeft( "" )( ( s, x ) => s + x + nLine )
 
+  }
+
+  /**
+   * Exports a sequent as TPTP thf problem to prove validity
+   *
+   * @param seq the sequent to be proved valid
+   */
+  def export_positive( seq: HOLSequent, separate_axioms: Boolean = false ): String = {
+    require( freeVariables( seq ).isEmpty, "Can only export ground positive sequent sets!" )
+    val ( vs, vnames, cs, cnames ) = createNamesFromSequent( seq :: Nil )
+
+    var index = 0
+
+    val types = for ( f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.exptype ) ) yield t
+    val tdecls = for ( t <- types.distinct if t != Ti && t != To ) yield {
+      index += 1; s"thf($index, type, $t: $$tType).$nLine"
+    }
+
+    val cdecs_ = for ( c <- cs if c.name != "=" ) yield {
+      index = index + 1
+      thf_type_dec( index, c, cnames ) + nLine
+    }
+    val cdecs = cdecs_.mkString
+
+    val sdecs = separate_axioms match {
+      case true =>
+        val axioms = seq.antecedent
+        val goal = Or( seq.succedent ) // work around different ATP's interpretations of multiple conclusions
+        val axiom_decs =
+          for ( fs <- axioms ) yield {
+            index = index + 1
+            thf_formula_dec( index, fs, TPTPAxiom, vnames, cnames )
+          }
+        ( axiom_decs.foldLeft( "" )( ( s, x ) => s + x + nLine )
+          + thf_formula_dec( index + 1, goal, TPTPConjecture, vnames, cnames ) )
+      case false =>
+        thf_formula_dec( index + 1, seq.toImplication, TPTPConjecture, vnames, cnames )
+    }
+
+    "% type declarations" + nLine + tdecls.mkString +
+      "% constant type declarations" + nLine + cdecs +
+      "% sequents" + nLine + sdecs
   }
 
   def printStatistics( vnames: NameMap, cnames: CNameMap ): Unit = {
@@ -148,7 +217,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: HOLSequent ): HOLFormula = univclosure( fs.toDisjunction )
+  def closedFormula( fs: HOLSequent ): HOLFormula = universalClosure( fs.toDisjunction )
 
   def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )
@@ -159,20 +228,10 @@ class TPTPHOLExporter {
     }
   } )
 
-  def thf_sequent_dec( i: Int, f: HOLSequent, vmap: NameMap, cmap: CNameMap ) = {
-    "thf(" + i + ", conjecture, [" +
-      ( f.antecedent.map( f => thf_formula( f, vmap, cmap ) ).mkString( "," ) ) +
-      "] --> [" +
-      ( f.succedent.map( f => thf_formula( f, vmap, cmap ) ).mkString( "," ) ) +
-      "] )."
-  }
-
-  def thf_formula_dec( i: Int, f: HOLFormula, vmap: NameMap, cmap: CNameMap ) = {
-    "thf(" + i + ", conjecture, " + thf_formula( f, vmap, cmap, true ) + " )."
-  }
-
-  def thf_negformula_dec( i: Int, f: HOLFormula, vmap: NameMap, cmap: CNameMap ) = {
-    "thf(" + i + ", negated_conjecture, " + thf_formula( f, vmap, cmap, true ) + " )."
+  def thf_formula_dec( i: Int, f: HOLFormula, role: TPTPFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
+    val f_str = thf_formula( f, vmap, cmap, true )
+    val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => x :: Nil } ) //add comment after newline
+    s"${nLine}% formula: $internal_str ${nLine}thf(${i}, ${role}, ${f_str} )."
   }
 
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
@@ -277,6 +336,60 @@ class TPTPHOLExporter {
     case Var( _, _ )                => set
     case App( s, t )                => getConsts( s, getConsts( t, set ) )
     case Abs( x, t )                => getConsts( t, set )
+  }
+
+  def simplify_antecedent( es: ExpansionSequent ): ExpansionSequent = {
+    es.antecedent.flatMap( {
+      case ETAnd( e1, e2 ) => List( e1, e2 )
+      case e               => List( e )
+    } ) match {
+      case ant if ant == es.antecedent => es
+      case ant /* ant !- es.antecedent */ =>
+        val ant0 = ant.filterNot( _.deep == Top() )
+        val et = Sequent( ant0, es.succedent )
+        simplify_antecedent( et )
+    }
+  }
+
+  def simplify_antecedent2( es: HOLSequent ): HOLSequent = {
+    es.antecedent.flatMap( {
+      case And( e1, e2 ) => List( e1, e2 )
+      case e             => List( e )
+    } ) match {
+      case ant if ant == es.antecedent => es
+      case ant /* ant !- es.antecedent */ =>
+        val ant0 = ant.filterNot( _ == Top() )
+        val et = Sequent( ant0, es.succedent )
+        simplify_antecedent2( et )
+    }
+  }
+
+  def strip_lambdas( e: LambdaExpression, context: List[Var] ): ( LambdaExpression, List[Var] ) =
+    e match {
+      case Abs( v, t ) => strip_lambdas( t, v :: context )
+      case t           => ( t, context.reverse )
+    }
+
+  def lambda_lift_and_add_definitions( seq: HOLSequent ): HOLSequent = {
+    val ( cmap, seq0 :: Nil ) = replaceAbstractions( seq :: Nil )
+    val qaxioms: Seq[HOLFormula] = cmap.toSeq.map {
+      case ( term_, name ) => {
+        //term_ should be closed, but to be sure we add the free variables the variables stripped from the outer-most
+        //lambda-block in term_
+        val fv = freeVariables( term_ ).toList
+        val ( term, all_vars ) = strip_lambdas( term_, fv )
+        //create the type of q
+        val qtype = all_vars.foldRight( term.exptype )( { case ( v, t ) => v.exptype -> t } )
+        // apply it to the arguments
+        val q_function = Apps( Const( name, qtype ), all_vars )
+        // build the formula equating it to the stripped term
+        val eq: HOLFormula = Eq( q_function, term )
+        // and close the formula universally
+        val axiom = all_vars.foldRight( eq ) { case ( v, f ) => All( v, f ) }
+        axiom
+      }
+    }
+    qaxioms ++: seq0
   }
 
 }

@@ -17,7 +17,7 @@ object PCNF {
   def apply( s: HOLSequent, a: HOLClause ): LKProof =
     ( for (
       ( f, idx ) <- s.zipWithIndex.elements;
-      cnfClause <- if ( idx isAnt ) CNFp.toClauseList( f ) else CNFn.toFClauseList( f );
+      cnfClause <- if ( idx isAnt ) CNFp( f ) else CNFn( f );
       if cnfClause == a
     ) yield {
       val pcnf = if ( idx isAnt ) PCNFp( f, cnfClause ) else PCNFn( f, cnfClause )
@@ -64,8 +64,8 @@ object PCNF {
   }
 
   def containsClauseN( formula: HOLFormula, clause: HOLSequent ): Boolean =
-    CNFn.toFClauseList( formula ) exists { _ isSubMultisetOf clause }
+    CNFn( formula ) exists { _ isSubMultisetOf clause }
   def containsClauseP( formula: HOLFormula, clause: HOLSequent ): Boolean =
-    CNFp.toClauseList( formula ) exists { _ isSubMultisetOf clause }
+    CNFp( formula ) exists { _ isSubMultisetOf clause }
 }
 

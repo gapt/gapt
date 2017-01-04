@@ -1,119 +1,89 @@
-/*
- * BetaReduction.scala
- *
- */
-
 package at.logic.gapt.expr
 
-/* The BetaReduction object encapsulates two functions:
- * 1) betaNormalize, which transforms a lambda expression to beta normal form.
- * 2) betaReduce, which applies only one rewrite step to a lambda expression.
+import at.logic.gapt.proofs.Context
+
+import scala.annotation.tailrec
+
+/**
+ * Expression-level reduction rule.
  *
- * These functions take additional arguments specifying which strategy should
- * be used for reduction. The chosen strategies determine which redex is
- * selected for reduction first. The strategy options are implemented as
- * an Enumeration and are:
- * 1) Outermost (call-by-name) or Innermost (call-by-value)
- * 2) Leftmost or Rightmost [these are only relevant for betaReduce]
- *
- * In principle, betaNormalize could have been implemented as a while loop
- * iterating betaReduce. However, for efficiency reasons, this has not been done.
- *
+ * Examples are beta-reduction in [[BetaReduction]], and delta-reduction in [[Context.Definitions]].
  */
-object BetaReduction {
-
-  class ReductionException( msg: String ) extends Exception( msg )
-
-  abstract class Strategy extends Enumeration
-  object StrategyOuterInner extends Strategy {
-    val Outermost = Value
-    val Innermost = Value
-  }
-  object StrategyLeftRight extends Strategy {
-    val Leftmost = Value
-    val Rightmost = Value
-  }
-
-  object ImplicitStandardStrategy {
-    implicit val implicitOuter = StrategyOuterInner.Outermost
-    implicit val implicitLeft = StrategyLeftRight.Leftmost
-  }
-
-  def betaNormalize( expression: LambdaExpression )( implicit strategy: StrategyOuterInner.Value = ImplicitStandardStrategy.implicitOuter ): LambdaExpression = expression match {
-    case App( Abs( x, body ), arg ) => strategy match {
-      // If it is outermost strategy, we first reduce the current redex by applying sigma,
-      // and then we call betaNormalize recursively on the result.
-      case StrategyOuterInner.Outermost =>
-        val sigma = Substitution( x, arg )
-        betaNormalize( sigma( body ) )
-      case StrategyOuterInner.Innermost =>
-        val sigma = Substitution( x, betaNormalize( arg ) )
-        sigma( betaNormalize( body ) )
+trait ReductionRule {
+  /** Performs a one-step reduction of head(args: _*). */
+  def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )]
+}
+object ReductionRule {
+  def apply( rules: ReductionRule* ): ReductionRule = apply( rules )
+  def apply( rules: Traversable[ReductionRule] ): ReductionRule = {
+    val rules_ = rules.toList
+    new ReductionRule {
+      override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ) =
+        rules_.view.flatMap( r => r.reduce( normalizer, head, args ) ).headOption
     }
-    case App( m, n ) =>
-      val mnorm = betaNormalize( m )
-      mnorm match {
-        case _: Abs => betaNormalize( App( mnorm, betaNormalize( n ) ) )
-        case _      => App( mnorm, betaNormalize( n ) )
-      }
-    case Abs( x, m ) => Abs( x, betaNormalize( m ) )
-    case x: Var      => x
-    case x: Const    => x
+  }
+}
+
+class Normalizer( rule: ReductionRule ) {
+  def normalize( expr: LambdaExpression ): LambdaExpression = {
+    val Apps( hd, as ) = expr
+    val ( hd_, as_ ) = appWHNF( hd, as )
+    Apps( hd_ match {
+      case Abs.Block( xs, e ) if xs.nonEmpty =>
+        Abs.Block( xs, normalize( e ) )
+      case _ => hd_
+    }, as_.map( normalize ) )
   }
 
-  def betaReduce( expression: LambdaExpression )( implicit strategyOI: StrategyOuterInner.Value = ImplicitStandardStrategy.implicitOuter, strategyLR: StrategyLeftRight.Value = ImplicitStandardStrategy.implicitLeft ): LambdaExpression = expression match {
+  def whnf( expr: LambdaExpression ): LambdaExpression = {
+    val Apps( hd, as ) = expr
+    val ( hd_, as_ ) = appWHNF( hd, as )
+    Apps( hd_, as_ )
+  }
 
-    case App( Abs( x, t ), arg ) => strategyOI match {
+  @tailrec
+  final def appWHNF( hd: LambdaExpression, as: List[LambdaExpression] ): ( LambdaExpression, List[LambdaExpression] ) =
+    rule.reduce( this, hd, as ) match {
+      case Some( ( Apps( hd_, as__ ), as_ ) ) =>
+        if ( as__.isEmpty )
+          appWHNF( hd_, as_ )
+        else
+          appWHNF( hd_, as__ ++: as_ )
+      case None =>
+        ( hd, as )
+    }
+}
 
-      case StrategyOuterInner.Outermost =>
-        val sigma = Substitution( x, arg )
-        sigma( t )
+object normalize {
+  def apply( rule: ReductionRule, expr: LambdaExpression ): LambdaExpression =
+    new Normalizer( rule ).normalize( expr )
 
-      case StrategyOuterInner.Innermost => strategyLR match {
+  def apply( expr: LambdaExpression )( implicit ctx: Context = Context.empty ): LambdaExpression = {
+    val redRules = ctx.reductionRules.toVector
+    apply( if ( redRules.isEmpty ) BetaReduction else ReductionRule( BetaReduction +: redRules ), expr )
+  }
+}
 
-        case StrategyLeftRight.Rightmost =>
-          val argr = betaReduce( arg )( strategyOI, strategyLR ) // Since it is innerrightmost redex strategy, we try first to reduce the argument.
-          if ( argr != arg ) App( Abs( x, t ), argr ) // If it succeeds, great!
-          else { // If it doesn't, then we try to find an innermost redex in the left side, i.e. in the body.
-            val bodyr = betaReduce( t )( strategyOI, strategyLR )
-            if ( bodyr != t ) App( Abs( x, bodyr ), arg ) // If it succeeds, great!
-            else {
-              val sigma = Substitution( x, arg )
-              sigma( t )
-            }
-          }
-
-        case StrategyLeftRight.Leftmost => // Analogous to the previous case, but giving priority to the left side (body) instead of the ride side (arg)
-          val bodyr = betaReduce( t )( strategyOI, strategyLR )
-          if ( bodyr != t ) App( Abs( x, bodyr ), arg )
-          else {
-            val argr = betaReduce( arg )( strategyOI, strategyLR )
-            if ( argr != arg ) App( Abs( x, t ), argr )
-            else {
-              val sigma = Substitution( x, arg )
-              sigma( t )
-            }
-          }
-      }
+object BetaReduction extends ReductionRule {
+  @tailrec
+  def reduce( head: LambdaExpression, args: List[LambdaExpression], subst: Map[Var, LambdaExpression] = Map() ): Option[( LambdaExpression, List[LambdaExpression] )] =
+    ( head, args ) match {
+      case ( Abs( x, e ), a :: as ) =>
+        reduce( e, as, subst + ( x -> a ) )
+      case _ if subst.nonEmpty =>
+        Some( Substitution( subst )( head ) -> args )
+      case _ => None
     }
 
-    case App( m, n ) => strategyLR match {
-      case StrategyLeftRight.Leftmost => {
-        val mr = betaReduce( m )( strategyOI, strategyLR ) // Since it is leftmost redex strategy, we try first to reduce the left side (m).
-        if ( mr != m ) App( mr, n ) // If it succeeds, great!
-        else App( m, betaReduce( n )( strategyOI, strategyLR ) ) // If it doesn't, then we try to find and reduce a redex in the right side (n)
-      }
-      case StrategyLeftRight.Rightmost => {
-        val nr = betaReduce( n )( strategyOI, strategyLR ) // Since it is rightmost redex strategy, we try first to reduce the right side (n).
-        if ( nr != n ) App( m, nr ) // If it succeeds, great!
-        else App( betaReduce( m )( strategyOI, strategyLR ), n ) // If it doesn't, then we try to find and reduce a redex in the left side (m)
-      }
-    }
+  override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
+    if ( args.isEmpty )
+      None
+    else
+      reduce( head, args )
 
-    case Abs( x, m ) => Abs( x, betaReduce( m )( strategyOI, strategyLR ) )
-    case x: Var      => x
-  }
+  def betaNormalize( expression: LambdaExpression ): LambdaExpression =
+    normalize( expression )
 
-  def betaReduce( f: HOLFormula ): HOLFormula = betaReduce( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
-  def betaNormalize( f: HOLFormula ): HOLFormula = betaNormalize( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+  def betaNormalize( f: HOLFormula ): HOLFormula =
+    betaNormalize( f: LambdaExpression ).asInstanceOf[HOLFormula]
 }

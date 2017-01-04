@@ -1,14 +1,11 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubTerms
+import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.thresholds._
-import at.logic.gapt.expr.hol.lcomp
-import at.logic.gapt.expr.hol.simplify
-import at.logic.gapt.expr.hol.toNNF
+import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.ListSupport
-import at.logic.gapt.utils.logging.metrics
+import at.logic.gapt.utils.metrics
 
 import scala.collection.{ GenTraversable, mutable }
 
@@ -66,40 +63,40 @@ object stableTerms {
   }
 }
 
-class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
-  import VectTratGrammar._
+class VtratgTermGenerationFormula( g: VTRATG, t: LambdaExpression ) {
+  import VTRATG._
 
-  def vectProductionIsIncluded( p: Production ): FOLFormula = FOLAtom( "prodinc", p._1 ++ p._2 )
-  def valueOfNonTerminal( n: FOLVar, value: FOLTerm ): FOLFormula = FOLAtom( "ntval", n, value )
+  def vectProductionIsIncluded( p: Production ) = HOLAtom( "prodinc", p._1 ++ p._2 )
+  def valueOfNonTerminal( n: Var, value: LambdaExpression ) = HOLAtom( "ntval", n, value )
 
-  def formula: FOLFormula = {
+  def formula: HOLFormula = {
     val notASubTerm = rename( FOLConst( "⊥" ), constants( t ) )
 
     // we try not generate the formulas for all subterms, but only for those which are needed
-    val possibleAssignments = mutable.Set[( Int, List[FOLTerm] )]()
+    val possibleAssignments = mutable.Set[( Int, List[LambdaExpression] )]()
     val containingNTIdx = g.nonTerminals.zipWithIndex.flatMap { case ( ns, i ) => ns map { _ -> i } }.toMap
-    val handledPAs = mutable.Set[Map[FOLVar, FOLTerm]]()
-    def discoverAssignments( pa: Map[FOLVar, FOLTerm] ): Unit =
+    val handledPAs = mutable.Set[Map[Var, LambdaExpression]]()
+    def discoverAssignments( pa: Map[Var, LambdaExpression] ): Unit =
       if ( pa.nonEmpty && !handledPAs.contains( pa ) ) {
         val lowestNTVectIdx = pa.keys.map( containingNTIdx ).min
         val lowestNTVect = g.nonTerminals( lowestNTVectIdx )
         g.productions( lowestNTVect ) foreach { p =>
           val pairs = for ( ( nt, s ) <- p.zipped; t <- pa.get( nt ) ) yield s -> t
           syntacticMatching( pairs toList, pa ) foreach { matching =>
-            discoverAssignments( matching.folmap -- lowestNTVect )
+            discoverAssignments( matching.map -- lowestNTVect )
           }
         }
         possibleAssignments += ( lowestNTVectIdx -> lowestNTVect.map { pa.getOrElse( _, notASubTerm ) } )
         handledPAs += pa
       }
     for ( ( ntv, i ) <- g.nonTerminals.zipWithIndex ) possibleAssignments += ( i -> ntv.map { _ => notASubTerm } )
-    discoverAssignments( Map( g.axiom -> t ) )
-    val possibleValues = handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
+    discoverAssignments( Map( g.startSymbol -> t ) )
+    val possibleValues = Map() ++ handledPAs.toSet.flatten.groupBy( _._1 ).mapValues( _.map( _._2 ) )
 
-    def Match( ntIdx: Int, t: List[FOLTerm], s: List[FOLTerm] ) =
+    def Match( ntIdx: Int, t: List[LambdaExpression], s: List[LambdaExpression] ) =
       syntacticMatching( s zip t filter { _._2 != notASubTerm } ) match {
         case Some( matching ) =>
-          And( matching.folmap.toSeq map {
+          And( matching.map.toSeq map {
             case ( beta, r ) if possibleValues( beta ) contains r =>
               valueOfNonTerminal( beta, r )
             case _ => Bottom()
@@ -107,17 +104,17 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
         case None => Bottom()
       }
 
-    def Case( ntIdx: Int, t: List[FOLTerm] ) =
+    def Case( ntIdx: Int, t: List[LambdaExpression] ) =
       if ( t forall { _ == notASubTerm } ) Top()
       else And( ( g.nonTerminals( ntIdx ), t ).zipped map valueOfNonTerminal ) --> Or( g.productions( g.nonTerminals( ntIdx ) ).toSeq map {
         case p @ ( _, s ) =>
           vectProductionIsIncluded( p ) & Match( ntIdx, t, s )
       } )
 
-    val cs = Seq.newBuilder[FOLFormula]
+    val cs = Seq.newBuilder[HOLFormula]
 
-    // value of axiom must be t
-    cs += valueOfNonTerminal( g.axiom, t )
+    // value of startSymbol must be t
+    cs += valueOfNonTerminal( g.startSymbol, t )
 
     possibleAssignments foreach { assignment =>
       cs += simplify( Case( assignment._1, assignment._2 ) )
@@ -133,123 +130,92 @@ class TermGenerationFormula( g: VectTratGrammar, t: FOLTerm ) {
   }
 }
 
-class VectGrammarMinimizationFormula( g: VectTratGrammar ) {
-  import VectTratGrammar._
+class VectGrammarMinimizationFormula( g: VTRATG ) {
+  import VTRATG._
 
-  def vectProductionIsIncluded( p: Production ) = FOLAtom( "prodinc", p._1 ++ p._2 )
-  def valueOfNonTerminal( t: FOLTerm, n: FOLVar, rest: FOLTerm ) = FOLAtom( "ntval", t, n, rest )
+  def productionIsIncluded( p: Production ) = HOLAtom( "prodinc", p._1 ++ p._2 )
+  def valueOfNonTerminal( t: LambdaExpression, n: Var, rest: LambdaExpression ) = HOLAtom( "ntval", t, n, rest )
 
-  def generatesTerm( t: FOLTerm ) = new TermGenerationFormula( g, t ) {
+  def generatesTerm( t: LambdaExpression ) = new VtratgTermGenerationFormula( g, t ) {
     override def vectProductionIsIncluded( p: Production ) =
-      VectGrammarMinimizationFormula.this.vectProductionIsIncluded( p )
-    override def valueOfNonTerminal( n: FOLVar, value: FOLTerm ) =
+      VectGrammarMinimizationFormula.this.productionIsIncluded( p )
+    override def valueOfNonTerminal( n: Var, value: LambdaExpression ) =
       VectGrammarMinimizationFormula.this.valueOfNonTerminal( t, n, value )
   }.formula
 
-  def coversLanguage( lang: Traversable[FOLTerm] ) = And( lang map generatesTerm )
+  def coversLanguage( lang: Traversable[LambdaExpression] ) = And( lang map generatesTerm )
 }
 
-class GrammarMinimizationFormula( g: TratGrammar ) extends VectGrammarMinimizationFormula( g toVectTratGrammar ) {
-  def productionIsIncluded( p: TratGrammar.Production ) = FOLAtom( "prodinc", p._1, p._2 )
-  override def vectProductionIsIncluded( p: VectTratGrammar.Production ) = productionIsIncluded( p._1( 0 ), p._2( 0 ) )
-}
+object stableVTRATG {
+  import VTRATG._
 
-object stableProofGrammar {
-  def apply( lang: Set[FOLTerm], n: Int ) = {
-    val rhsNonTerminals = ( 1 until n ).inclusive map { i => FOLVar( s"x$i" ) }
-    val topLevelStableTerms = stableTerms( lang, rhsNonTerminals ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentStableTerms = stableTerms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), rhsNonTerminals.tail )
-    val axiom = FOLVar( "x0" )
-    TratGrammar( axiom, axiom +: rhsNonTerminals, topLevelStableTerms.map( axiom -> _ ) ++ argumentStableTerms.flatMap { st =>
-      val fvs = freeVariables( st )
-      val lowestIndex = ( fvs.map( rhsNonTerminals.indexOf( _ ) ) + rhsNonTerminals.size ).min
-      ( 0 until lowestIndex ) map { i => rhsNonTerminals( i ) -> st }
-    } )
-  }
-}
-
-object minimizeGrammar {
-  def apply( g: TratGrammar, lang: Set[FOLTerm], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ): TratGrammar = {
-    val formula = new GrammarMinimizationFormula( g )
-    val hard = formula.coversLanguage( lang )
-    val atomsInHard = atoms( hard )
-    val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
-    maxSATSolver.solve( hard, soft ) match {
-      case Some( interp ) => TratGrammar( g.axiom, g.nonTerminals,
-        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
-      case None => throw new Exception( "Grammar does not cover language." )
-    }
-  }
-}
-
-object findMinimalGrammar {
-  def apply( lang: Traversable[FOLTerm], numberOfNonTerminals: Int, maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ) = {
-    val polynomialSizedCoveringGrammar = stableProofGrammar( lang toSet, numberOfNonTerminals )
-    minimizeGrammar( polynomialSizedCoveringGrammar, lang toSet, maxSATSolver )
-  }
-}
-
-object takeN {
-  def apply[A]( n: Int, from: Set[A] ): Seq[List[A]] = n match {
-    case 0 => Seq( Nil )
-    case _ =>
-      takeN( n - 1, from ) flatMap { rest =>
-        from.map( _ :: rest )
-      }
-  }
-}
-
-object stableProofVectGrammar {
-  import VectTratGrammar._
-
-  def apply( lang: Set[FOLTerm], arities: Seq[Int] ): VectTratGrammar = {
-    val rhsNonTerminals = arities.zipWithIndex map {
-      case ( arity, i ) =>
-        ( 0 until arity ).map( j => FOLVar( s"x_${i}_$j" ) ).toList
-    }
-    apply( lang, FOLVar( "x0" ), rhsNonTerminals )
+  def apply( lang: Set[LambdaExpression], arities: VtratgParameter ): VTRATG = {
+    val termType = lang.headOption.map( _.exptype ).getOrElse( Ti )
+    val rhsNonTerminals =
+      for ( ( tys, i ) <- arities.nonTerminalTypes.zipWithIndex )
+        yield for ( ( ty, j ) <- tys.toList.zipWithIndex )
+        yield Var( if ( tys.size <= 1 ) s"x_${i + 1}" else s"x_${i + 1}_$j", ty )
+    apply( lang, Var( "x_0", termType ), rhsNonTerminals )
   }
 
-  def apply( lang: Set[FOLTerm], axiom: FOLVar, nonTermVects: Seq[NonTerminalVect] ): VectTratGrammar = {
-    val topLevelNFs = stableTerms( lang, nonTermVects flatten ).filter( !_.isInstanceOf[FOLVar] )
-    val argumentNFs = stableTerms( FOLSubTerms( lang flatMap { case FOLFunction( _, as ) => as } ), nonTermVects.tail flatten )
+  def apply( lang: Set[LambdaExpression], startSymbol: Var, nonTermVects: Seq[NonTerminalVect] ): VTRATG = {
+    val subTermsPerType = folSubTerms( lang ).groupBy( _.exptype )
+    val startSymbolNFs = stableTerms( lang, nonTermVects flatten )
+    val argumentNFsPerType = nonTermVects.flatten.map( _.exptype ).distinct.map { t =>
+      t -> stableTerms( subTermsPerType( t ), nonTermVects.tail.flatten )
+    }.toMap
 
-    VectTratGrammar( axiom, List( axiom ) +: nonTermVects,
-      topLevelNFs.map( List( axiom ) -> List( _ ) ) ++
+    import scalaz._
+    import Scalaz._
+
+    VTRATG( startSymbol, List( startSymbol ) +: nonTermVects,
+      startSymbolNFs.map( List( startSymbol ) -> List( _ ) ) ++
         nonTermVects.zipWithIndex.flatMap {
           case ( a, i ) =>
             val allowedNonTerms = nonTermVects.drop( i + 1 ).flatten.toSet
-            val allowedRHS = argumentNFs filter { st => freeVariables( st ) subsetOf allowedNonTerms }
-            takeN( a.size, allowedRHS ).map( a -> _ )
+            a.traverse( v => argumentNFsPerType( v.exptype ).view.filter( freeVariables( _ ).subsetOf( allowedNonTerms ) ).toList ).map( a -> _ )
         } )
   }
 }
 
-object minimizeVectGrammar {
-  def apply( g: VectTratGrammar, lang: Set[FOLTerm], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
-             weight: VectTratGrammar.Production => Int = _ => 1 ): VectTratGrammar = {
+object minimizeVTRATG {
+  def apply( g: VTRATG, lang: Set[LambdaExpression], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
+             weight: VTRATG.Production => Int = _ => 1 ): VTRATG = {
     val formula = new VectGrammarMinimizationFormula( g )
     val hard = metrics.time( "minform" ) { formula.coversLanguage( lang ) }
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
     val atomsInHard = atoms( hard )
     val soft = for {
       p <- g.productions
-      atom = formula vectProductionIsIncluded p
+      atom = formula productionIsIncluded p
       if atomsInHard contains atom
     } yield -atom -> weight( p )
     metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
-      case Some( interp ) => VectTratGrammar( g.axiom, g.nonTerminals,
-        g.productions filter { p => interp.interpret( formula.vectProductionIsIncluded( p ) ) } )
+      case Some( interp ) => VTRATG( g.startSymbol, g.nonTerminals,
+        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }
   }
 }
 
-object findMinimalVectGrammar {
-  def apply( lang: Set[FOLTerm], aritiesOfNonTerminals: Seq[Int], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
-             weight: VectTratGrammar.Production => Int = _ => 1 ) = {
-    val polynomialSizedCoveringGrammar = metrics.time( "stabgrammar" ) { stableProofVectGrammar( lang, aritiesOfNonTerminals ) }
+case class VtratgParameter( nonTerminalTypes: Seq[Seq[TBase]] )
+object VtratgParameter {
+  implicit def forFolTratg( numberNonTerminals: Int ): VtratgParameter =
+    ( 1 to numberNonTerminals ).map( _ => 1 )
+  implicit def forFolVtratg( vectorArities: Seq[Int] ): VtratgParameter =
+    vectorArities.map( i => ( 1 to i ).map( _ => Ti ) )
+  implicit def forManySortedTratg( nonTerminalTypes: Seq[TBase] ): VtratgParameter =
+    nonTerminalTypes.map( Seq( _ ) )
+  implicit def forManySortedVtratg( nonTerminalTypeVectors: Seq[Seq[TBase]] ): VtratgParameter =
+    VtratgParameter( nonTerminalTypeVectors )
+}
+
+object findMinimalVTRATG {
+  def apply( lang: Set[LambdaExpression], aritiesOfNonTerminals: VtratgParameter,
+             maxSATSolver: MaxSATSolver             = bestAvailableMaxSatSolver,
+             weight:       VTRATG.Production => Int = _ => 1 ) = {
+    val polynomialSizedCoveringGrammar = metrics.time( "stabgrammar" ) { stableVTRATG( lang, aritiesOfNonTerminals ) }
     metrics.value( "stabgrammar", polynomialSizedCoveringGrammar.size )
-    minimizeVectGrammar( polynomialSizedCoveringGrammar, lang, maxSATSolver, weight )
+    minimizeVTRATG( polynomialSizedCoveringGrammar, lang, maxSATSolver, weight )
   }
 }

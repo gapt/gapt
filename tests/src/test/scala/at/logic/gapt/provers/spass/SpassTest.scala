@@ -1,8 +1,9 @@
 package at.logic.gapt.provers.spass
 
+import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.expr.hol.structuralCNF
+import at.logic.gapt.proofs.resolution.{ AvatarComponent, AvatarNegNonGroundComp, ResolutionToLKProof }
 import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
@@ -50,25 +51,22 @@ class SpassTest extends Specification with SequentMatchers with SatMatchers {
 
     "handle weird sequents" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      SPASS.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => cnf must contain( atLeast( p.inputClauses ) )
-      }
+      SPASS.getResolutionProof( cnf ) must beSome
     }
 
     "large cnf" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val as = 0 to 3 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-      val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-      val ( cnf, _, _ ) = structuralCNF( -formula, false, false )
-      SPASS getRobinsonProof cnf must beLike { case Some( p ) => cnf must contain( atLeast( p.inputClauses ) ) }
-      SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
+      SPASS getExpansionProof CountingEquivalence( 3 ) must beLike { case Some( p ) => p.deep must beValidSequent }
     }
 
     "bug with quantified splitting" in {
-      val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-      val as = 0 to 2 map { i => All( x, Ex( y, FOLAtom( s"a$i", x, y, z ) ) ) }
-      val formula = All( z, thresholds.exactly oneOf as ) <-> All( z, naive.exactly oneOf as )
-      SPASS getExpansionProof formula must beLike { case Some( p ) => p.deep must beValidSequent }
+      SPASS getExpansionProof CountingEquivalence( 2 ) must beLike { case Some( p ) => p.deep must beValidSequent }
+    }
+
+    "bug with ground parts in quantified splits" in {
+      val Some( res ) = SPASS.getResolutionProof( CountingEquivalence( 1 ) )
+      res.subProofs.collect { case AvatarComponent( c: AvatarNegNonGroundComp ) => c } must not( beEmpty )
+      ResolutionToLKProof( res )
+      ok
     }
   }
 

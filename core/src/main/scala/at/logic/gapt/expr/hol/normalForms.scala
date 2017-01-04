@@ -1,8 +1,8 @@
 package at.logic.gapt.expr.hol
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ FOLClause, HOLClause }
-import at.logic.gapt.utils.ListSupport
+import at.logic.gapt.proofs.resolution.{ Input, structuralCNF }
+import at.logic.gapt.proofs.{ Clause, FOLClause, HOLClause, Sequent }
 
 /**
  * Transforms a formula to negation normal form (transforming also
@@ -81,39 +81,14 @@ object simplify {
  * to the input formula.
  *
  * The computation is done by expanding the input formula using distributivity.
- *
- * Quantifiers are removed in the process.
  */
 object CNFp {
-  def apply( f: HOLFormula ): List[List[HOLFormula]] = f match {
-    case Bottom()        => List( List() )
-    case Top()           => List()
-    case HOLAtom( _, _ ) => List( List( f ) )
-    case Neg( f1 )       => CNFn( f1 )
-    case And( f1, f2 )   => apply( f1 ) ++ apply( f2 )
-    case Or( f1, f2 )    => ListSupport.times( apply( f1 ), apply( f2 ) )
-    case Imp( f1, f2 )   => ListSupport.times( CNFn( f1 ), apply( f2 ) )
-    case All( _, f1 )    => apply( f1 )
-    case Ex( _, f1 )     => apply( f1 )
-    case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: HOLFormula ): Set[HOLClause] = {
+    require( !containsStrongQuantifier( f, Polarity.Negative ), s"Formula contains strong quantifiers: $f" )
+    structuralCNF.onProofs( Seq( Input( Sequent() :+ f ) ), propositional = false, structural = false ).
+      map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) )
   }
-
-  def toClauseList( f: HOLFormula ): List[HOLClause] = {
-    apply( f ).distinct.map(
-      literals => {
-        val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) ).map( _.asInstanceOf[HOLAtom] )
-        val pos = literals.filterNot( isNeg( _ ) ).map( _.asInstanceOf[HOLAtom] )
-        HOLClause( neg, pos )
-      }
-    )
-  }
-
-  def toClauseList( f: FOLFormula ): List[FOLClause] = toClauseList( f.asInstanceOf[HOLFormula] ).asInstanceOf[List[FOLClause]]
-
-  def toFormulaList( f: HOLFormula ): List[HOLFormula] = apply( f ).map( Or( _ ) )
-
-  def toFormula( f: HOLFormula ): HOLFormula = And( toFormulaList( f ) )
-  def toFormula( f: FOLFormula ): FOLFormula = toFormula( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
 }
 
 /**
@@ -121,38 +96,10 @@ object CNFp {
  * to the negation of the input formula.
  *
  * The computation is done by expanding the input formula using distributivity.
- *
- * Quantifiers are removed in the process.
  */
 object CNFn {
-  def apply( f: HOLFormula ): List[List[HOLFormula]] = f match {
-    case Bottom()        => List()
-    case Top()           => List( List() )
-    case HOLAtom( _, _ ) => List( List( Neg( f ) ) )
-    case Neg( f1 )       => CNFp( f1 )
-    case And( f1, f2 )   => ListSupport.times( apply( f1 ), apply( f2 ) )
-    case Or( f1, f2 )    => apply( f1 ) ++ apply( f2 )
-    case Imp( f1, f2 )   => CNFp( f1 ) ++ apply( f2 )
-    case All( _, f1 )    => apply( f1 )
-    case Ex( _, f1 )     => apply( f1 )
-    case _               => throw new IllegalArgumentException( "unknown head of formula: " + f.toString )
-  }
-
-  def toFClauseList( f: HOLFormula ): List[HOLClause] = {
-    apply( f ).distinct.map(
-      literals => {
-        val neg = literals.filter( isNeg( _ ) ).map( removeNeg( _ ) ).map( _.asInstanceOf[HOLAtom] )
-        val pos = literals.filterNot( isNeg( _ ) ).map( _.asInstanceOf[HOLAtom] )
-        HOLClause( neg, pos )
-      }
-    )
-  }
-
-  def toClauseList( f: FOLFormula ): List[FOLClause] = toFClauseList( f.asInstanceOf[HOLFormula] ).asInstanceOf[List[FOLClause]]
-
-  def toFormulaList( f: HOLFormula ): List[HOLFormula] = apply( f ).map( Or( _ ) )
-
-  def toFormula( f: HOLFormula ): HOLFormula = And( toFormulaList( f ) )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: HOLFormula ): Set[HOLClause] = CNFp( -f )
 }
 
 /**
@@ -160,14 +107,10 @@ object CNFn {
  * to the input formula.
  *
  * The computation is done by expanding the input formula using distributivity.
- *
- * Quantifiers are removed in the process.
  */
 object DNFp {
-  def toFormulaList( f: HOLFormula ): List[HOLFormula] = CNFn.toFormulaList( f ).map( dualize( _ ) )
-  def toFormulaList( f: FOLFormula ): List[FOLFormula] = toFormulaList( f.asInstanceOf[HOLFormula] ).asInstanceOf[List[FOLFormula]]
-
-  def toFormula( f: HOLFormula ): HOLFormula = Or( toFormulaList( f ) )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: HOLFormula ): Set[HOLClause] = CNFn( f ).map( _.swapped )
 }
 
 /**
@@ -175,10 +118,9 @@ object DNFp {
  * to the negation of the input formula.
  *
  * The computation is done by expanding the input formula using distributivity.
- *
- * Quantifiers are removed in the process.
  */
 object DNFn {
-  def toFormula( f: HOLFormula ): HOLFormula = dualize( CNFp.toFormula( f ) )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: HOLFormula ): Set[HOLClause] = CNFp( f ).map( _.swapped )
 }
 

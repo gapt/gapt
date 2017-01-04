@@ -105,7 +105,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
       case Eq( a: FOLVar, b ) if known isDefinedAt a =>
         i( b, known( a ).exptype )
       case Eq( a, b: FOLVar ) if known isDefinedAt b =>
-        i( b, known( b ).exptype )
+        i( a, known( b ).exptype )
       case Eq( a: FOLVar, b: FOLVar ) => i( b, i( a, Ti ) ) // hope for the best...
       case Apps( c: FOLAtomConst, args ) =>
         predicateReification( c ) match {
@@ -138,7 +138,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
   def infer( clause: FOLClause, known: Map[FOLVar, Var] ): Map[FOLVar, Var] =
     clause.elements.foldRight( known )( infer )
 
-  def back( proof: ResolutionProof, originalInputClauses: Set[HOLClause] ): ResolutionProof = {
+  def back( proof: ResolutionProof, originalInputs: Set[HOLClause] ): ResolutionProof = {
     import at.logic.gapt.proofs.resolution._
 
     val memo = mutable.Map[( ResolutionProof, Map[FOLVar, Var] ), ResolutionProof]()
@@ -148,15 +148,15 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     }
 
     def g( p: ResolutionProof, vars: Map[FOLVar, Var] ): ResolutionProof = memo.getOrElseUpdate( ( p, vars ), p match {
-      case ReflexivityClause( term: FOLTerm ) => ReflexivityClause( back( term, vars ) )
-      case TautologyClause( atom: FOLAtom )   => TautologyClause( back( atom, vars ) )
-      case InputClause( clause ) =>
+      case Refl( term: FOLTerm ) => Refl( back( term, vars ) )
+      case Taut( atom: FOLAtom ) => Taut( back( atom, vars ) )
+      case Input( clause ) =>
         ( for (
-          original <- originalInputClauses;
+          original <- originalInputs;
           subst <- syntacticMatching( original.toDisjunction, back( clause.toDisjunction.asInstanceOf[FOLFormula], vars ) )
-        ) yield Instance( InputClause( original ), subst ) ).head
+        ) yield Subst.ifNecessary( Input( original ), subst ) ).head
 
-      case Instance( subProof, subst ) =>
+      case Subst( subProof, subst ) =>
         val subProofVars = freeVariables( subProof.conclusion ).map {
           case v @ FOLVar( name ) =>
             v -> Var( name, subst( v ) match {
@@ -170,7 +170,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
           case v @ FOLVar( name ) =>
             subProofVars( v ) -> back( subst( v ).asInstanceOf[FOLTerm], vars )
         } )
-        Instance( subProof_, newSubst )
+        Subst( subProof_, newSubst )
 
       case Factor( subProof, idx1, idx2 ) =>
         Factor( f( subProof, vars ), idx1, idx2 )
@@ -181,22 +181,18 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
         val q2 = f( subProof2, subProofVars )
         Resolution( q1, idx1, q2, idx2 )
 
-      case Paramodulation( subProof1, eq, subProof2, lit, Abs( v: FOLVar, con: FOLAtom ), ltr ) =>
+      case Paramod( subProof1, eq, ltr, subProof2, lit, Abs( v: FOLVar, con: FOLAtom ) ) =>
         val subProofVars = infer( subProof1.conclusion( eq ).asInstanceOf[FOLAtom], vars )
         val q1 = f( subProof1, subProofVars )
         val q2 = f( subProof2, subProofVars )
         val conVars = infer( con, vars )
         val newCon = Abs( conVars( v ), back( con, conVars ) )
-        Paramodulation( q1, eq, q2, lit, newCon, ltr )
+        Paramod( q1, eq, ltr, q2, lit, newCon )
 
-      case Splitting( p0, c1, c2, p1, p2 ) =>
-        val subProofVars = infer( p0.conclusion.map { _.asInstanceOf[FOLAtom] }, vars )
-        Splitting(
-          f( p0, subProofVars ),
-          c1 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
-          c2 map { a => back( a.asInstanceOf[FOLAtom], subProofVars ) },
-          f( p1, vars ), f( p2, vars )
-        )
+      case Flip( subProof1, idx1 ) =>
+        Flip( f( subProof1, vars ), idx1 )
+
+      // FIXME: propositional
     } )
 
     f( proof, Map() )
@@ -211,7 +207,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
     case ( ETAnd( a, b ), And( sha, shb ) )  => ETAnd( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETOr( a, b ), Or( sha, shb ) )    => ETOr( back( a, sha, freeVars ), back( b, shb, freeVars ) )
     case ( ETImp( a, b ), Imp( sha, shb ) )  => ETImp( back( a, sha, freeVars ), back( b, shb, freeVars ) )
-    case ( ETWeakQuantifier( _, insts ), Quant( x, sh ) ) =>
+    case ( ETWeakQuantifier( _, insts ), Quant( x, sh, isForall ) ) =>
       ETWeakQuantifier(
         shallow,
         for ( ( t: FOLTerm, inst ) <- insts ) yield {
@@ -291,8 +287,8 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   val nonEmptyWitnesses = baseTypes.map { ty => Const( nameGen fresh s"nonempty_$ty", ty ) }
   val nonEmptyAxioms = nonEmptyWitnesses.map { w => predicateForType( w.exptype )( w ) }
 
-  val extraAxioms = existsclosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
-  val extraAxiomClauses = CNFn.toFClauseList( extraAxioms.toDisjunction ).toSet
+  val extraAxioms = existentialClosure( predicateAxioms ++: nonEmptyAxioms ++: Sequent() )
+  val extraAxiomClauses = CNFn( extraAxioms.toDisjunction )
 
   private def guard( formula: HOLFormula ): HOLFormula = formula match {
     case Top() | Bottom() | HOLAtom( _, _ ) => formula
@@ -313,15 +309,15 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
   def forward( cnf: Set[HOLClause] ): Set[HOLClause] =
     extraAxiomClauses union cnf.map( forward )
   def forward( clause: HOLClause )( implicit dummyImplicit: DummyImplicit ): HOLClause =
-    CNFp.toClauseList( guard( univclosure( clause.toImplication ) ) ).head
+    CNFp( guard( universalClosure( clause.toImplication ) ) ).head
 
   def back( proof: ResolutionProof ): ResolutionProof =
     mapInputClauses( proof ) { cls =>
       val clauseWithoutPredicates = cls filterNot { case Apps( c: HOLAtomConst, _ ) => predicates contains c }
       if ( clauseWithoutPredicates.nonEmpty )
-        InputClause( clauseWithoutPredicates )
+        Input( clauseWithoutPredicates )
       else
-        InputClause( cls )
+        Input( cls )
     }
 
   def unguard( formula: HOLFormula ): HOLFormula = formula match {
@@ -346,15 +342,15 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
       ETWeakQuantifier(
         unguard( shallow ),
         insts map {
-          case ( t, ETImp( _, inst ) ) if !et.polarity => t -> unguard( inst )
-          case ( t, ETAnd( _, inst ) ) if et.polarity  => t -> unguard( inst )
+          case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
+          case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
         }
       )
   }
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
     ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
-      case ( et, i ) if !extraAxioms.contains( et.shallow, i.isSuc ) =>
+      case ( et, i ) if !extraAxioms.contains( et.shallow, i.polarity ) =>
         unguard( et )
     } )
 }
@@ -381,32 +377,60 @@ case object PredicateReductionET extends Reduction_[HOLSequent, ExpansionProof] 
   }
 }
 
-private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: Set[Abs] ) {
+private object removeReflsAndTauts {
+  def apply( proof: ResolutionProof ): ResolutionProof =
+    new ResolutionProofVisitor {
+      override def apply( p: ResolutionProof ): ResolutionProof = {
+        for {
+          Eq( t, t_ ) <- p.conclusion.succedent
+          if t == t_
+        } return Refl( t )
+        if ( p.conclusion.isTaut )
+          return Taut( p.conclusion.antecedent intersect p.conclusion.succedent head )
+        super.apply( p )
+      }
+    }.apply( proof )
+}
+
+private object definitionIntroducingBackReplacement {
+  def apply( proof: ResolutionProof, defs: Map[Const, LambdaExpression] ): ResolutionProof = {
+    val nonBoolReplaced = TermReplacement( proof, defs.filterNot { _._1.isInstanceOf[HOLAtomConst] }.toMap )
+    new ResolutionProofVisitor {
+      override def apply( p: ResolutionProof ): ResolutionProof =
+        p.conclusion match {
+          case Sequent( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ =>
+            Refl( t )
+          case Sequent( Seq(), Seq( And( Imp( f @ Apps( c: HOLAtomConst, args ), g ), Imp( g_, f_ ) ) ) ) if f == f_ && g == g_ && defs.contains( c ) =>
+            var defn: ResolutionProof = Defn( c, defs( c ) )
+            for ( ev <- args ) defn = AllR( defn, Suc( 0 ), ev.asInstanceOf[Var] )
+            defn
+          case _ => super.apply( p )
+        }
+    }.apply( nonBoolReplaced )
+  }
+}
+
+private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: Set[Abs], addAxioms: Boolean ) {
   val nameGen = rename.awayFrom( constants )
 
   private val replacements = mutable.Map[Abs, LambdaExpression]()
   private val extraAxioms = mutable.Buffer[HOLFormula]()
+
+  def equalOrEquivalent( a: LambdaExpression, b: LambdaExpression ) =
+    if ( a.exptype == To ) a <-> b else a === b
 
   private def setup( e: LambdaExpression ): LambdaExpression = e match {
     case App( a, b )                           => App( setup( a ), setup( b ) )
     case v: Var                                => v
     case c: Const                              => c
     case lam: Abs if replacements contains lam => replacements( lam )
-    case lam @ Abs( x, t: HOLFormula ) =>
-      val fvs = freeVariables( lam ).toSeq
-      val lamSym = Const( nameGen freshWithIndex "lambda", FunctionType( lam.exptype, fvs.map {
-        _.exptype
-      } ) )
-      replacements( lam ) = lamSym( fvs: _* )
-      extraAxioms += univclosure( replacements( lam )( x ) <-> t )
-      replacements( lam )
     case lam @ Abs( x, t ) =>
       val fvs = freeVariables( lam ).toSeq
       val lamSym = Const( nameGen freshWithIndex "lambda", FunctionType( lam.exptype, fvs.map {
         _.exptype
       } ) )
       replacements( lam ) = lamSym( fvs: _* )
-      extraAxioms += univclosure( replacements( lam )( x ) === t )
+      extraAxioms += universalClosure( equalOrEquivalent( replacements( lam )( x ), t ) )
       replacements( lam )
   }
 
@@ -422,6 +446,8 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
   }
 
   lambdas foreach setup
+  if ( !addAxioms ) extraAxioms.clear()
+  val extraAxiomClauses = extraAxioms.flatMap { case All.Block( vs, f ) => Seq( Seq() :- Seq( f ) ) }
 
   def delambdaify( e: LambdaExpression ): LambdaExpression = e match {
     case App( a, b )       => App( delambdaify( a ), delambdaify( b ) )
@@ -441,28 +467,79 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
   }
 
   def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent map delambdaify
+
+  def forward( cnf: Set[HOLSequent] ): Set[HOLSequent] =
+    cnf.map( _.map( delambdaify ).map( _.asInstanceOf[HOLAtom] ) ) ++ extraAxiomClauses
+
+  val backReplacements = replacements.
+    map { case ( abs, Apps( c: Const, args ) ) => c -> Abs( args.map( _.asInstanceOf[Var] ), abs ) }
+
+  def back( expansion: ExpansionProof ): ExpansionProof =
+    ExpansionProof( TermReplacement(
+      expansion.expansionSequent.filterNot { e => extraAxioms.contains( e.shallow ) },
+      { case expr => BetaReduction.betaNormalize( TermReplacement( expr, backReplacements.toMap ) ) }
+    ) )
+
+  def back( resolution: ResolutionProof ): ResolutionProof =
+    definitionIntroducingBackReplacement( resolution, backReplacements.toMap )
 }
 
 /**
  * Replaces lambda abstractions by fresh function symbols, together with axioms that axiomatize them.
  */
-case object LambdaEliminationReduction extends OneWayReduction_[HOLSequent] {
+case class LambdaEliminationReduction( extraAxioms: Boolean = true ) extends OneWayReduction_[HOLSequent] {
   override def forward( problem: HOLSequent ) = {
     val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }.toSet
-    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas )
+    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas, extraAxioms )
     ( helper.forward( problem ), _ => throw new UnsupportedOperationException )
   }
 }
 
-private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[Var] ) {
-  private val nameGen = rename.awayFrom( constants )
-  val baseTys = ( Set[LambdaExpression]() ++ constants ++ variables ) map { _.exptype } flatMap { baseTypes( _ ) }
+/**
+ * Replaces lambda abstractions by fresh function symbols, together with axioms that axiomatize them.
+ */
+case class LambdaEliminationReductionET( extraAxioms: Boolean = true ) extends Reduction_[HOLSequent, ExpansionProof] {
+  override def forward( problem: HOLSequent ): ( HOLSequent, ( ExpansionProof ) => ExpansionProof ) = {
+    val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }
+    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas, extraAxioms )
+    ( helper.forward( problem ), helper.back( _ ) )
+  }
+}
+
+/**
+ * Replaces lambda abstractions by fresh function symbols, together with axioms that axiomatize them.
+ */
+case class LambdaEliminationReductionRes( extraAxioms: Boolean = true ) extends Reduction_[HOLSequent, ResolutionProof] {
+  override def forward( problem: HOLSequent ): ( HOLSequent, ( ResolutionProof ) => ResolutionProof ) = {
+    val lambdas = atoms( problem ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }
+    val helper = new LambdaEliminationReductionHelper( constants( problem ), lambdas, extraAxioms )
+    ( helper.forward( problem ), helper.back( _ ) )
+  }
+}
+
+/**
+ * Replaces lambda abstractions by fresh function symbols, together with axioms that axiomatize them.
+ */
+case class LambdaEliminationReductionCNFRes( extraAxioms: Boolean = true ) extends Reduction_[Set[HOLSequent], ResolutionProof] {
+  override def forward( problem: Set[HOLSequent] ): ( Set[HOLSequent], ( ResolutionProof ) => ResolutionProof ) = {
+    val lambdas = problem.flatMap( atoms( _ ) ).flatMap { subTerms( _ ) }.collect { case a: Abs => a }
+    val helper = new LambdaEliminationReductionHelper( problem.flatMap( constants( _ ) ), lambdas, extraAxioms )
+    ( helper.forward( problem ), helper.back )
+  }
+}
+
+private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms: Boolean ) {
+  private val nameGen = rename.awayFrom( names )
+  val baseTys = names map { _.exptype } flatMap { baseTypes( _ ) }
   private val typeNameGen = new NameGenerator( baseTys.map { _.name } )
 
-  val partialAppTypes = ( Set[LambdaExpression]() ++ constants ++ variables ) map { _.exptype } flatMap {
+  val partialAppTypes = names map { _.exptype } flatMap {
     case FunctionType( _, argTypes ) =>
       argTypes.filterNot { _.isInstanceOf[TBase] }
   } map { t => ( TBase( typeNameGen freshWithIndex "fun" ), t ) } toMap
+
+  def equalOrEquivalent( a: LambdaExpression, b: LambdaExpression ) =
+    if ( a.exptype == To ) a <-> b else a === b
 
   val partiallyAppedTypes = partialAppTypes.map { _.swap }
 
@@ -474,18 +551,18 @@ private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[V
   val partialApplicationFuns =
     for {
       ( partialAppType, funType @ FunctionType( ret, argTypes ) ) <- partialAppTypes
-      g @ Const( _, FunctionType( `ret`, gArgTypes ) ) <- constants
+      g @ Const( _, FunctionType( `ret`, gArgTypes ) ) <- names
       if gArgTypes endsWith argTypes
     } yield ( Const(
       nameGen freshWithIndex "partial",
       FunctionType( partialAppType, gArgTypes.dropRight( argTypes.size ) map reduceArgTy )
     ), g, funType )
 
-  val newConstants = constants.map {
+  val newConstants = names.collect {
     case c @ Const( n, t ) => c -> Const( n, reduceFunTy( t ) )
   }.toMap
 
-  val extraAxioms =
+  val extraAxioms = if ( !addExtraAxioms ) Set() else
     for {
       f @ Const( _, FunctionType( ret, ( partialAppType: TBase ) :: argTypes ) ) <- applyFunctions.values
       ( partialApplicationFun @ Const( _, FunctionType( `partialAppType`, pappArgTypes ) ), g, _ ) <- partialApplicationFuns
@@ -493,9 +570,12 @@ private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[V
       val varGen = rename.awayFrom( Set[Var]() )
       val gArgVars = pappArgTypes map { Var( varGen freshWithIndex "x", _ ) }
       val fArgVars = argTypes map { Var( varGen freshWithIndex "y", _ ) }
-      univclosure( applyFunctions( partialAppType )( partialApplicationFun( gArgVars: _* ) )( fArgVars: _* ) ===
-        newConstants( g )( gArgVars: _* )( fArgVars: _* ) )
+      universalClosure( equalOrEquivalent(
+        applyFunctions( partialAppType )( partialApplicationFun( gArgVars: _* ) )( fArgVars: _* ),
+        newConstants( g )( gArgVars: _* )( fArgVars: _* )
+      ) )
     }
+  val extraAxiomClauses = extraAxioms.flatMap { case All.Block( vs, f ) => Seq( Seq() :- Seq( f ) ) }
 
   def reduceFunTy( t: Ty ): Ty = {
     val FunctionType( ret, args ) = t
@@ -506,6 +586,7 @@ private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[V
     case _        => partiallyAppedTypes( t )
   }
 
+  def reduce( f: HOLFormula ): HOLFormula = reduce( f: LambdaExpression ).asInstanceOf[HOLFormula]
   def reduce( e: LambdaExpression ): LambdaExpression = e match {
     case All( Var( x, t ), f ) => All( Var( x, reduceArgTy( t ) ), reduce( f ) )
     case Ex( Var( x, t ), f )  => Ex( Var( x, reduceArgTy( t ) ), reduce( f ) )
@@ -526,16 +607,96 @@ private class HOFunctionReductionHelper( constants: Set[Const], variables: Set[V
     //    case Abs( Var( x, t ), b ) => Abs( Var( x, reduceArgTy( t ) ), reduce( b ) )
   }
 
-  def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map { reduce( _ ).asInstanceOf[HOLFormula] }
+  def forward( sequent: HOLSequent ): HOLSequent = extraAxioms ++: sequent.map( reduce )
+
+  def forward( cnf: Set[HOLSequent] ): Set[HOLSequent] =
+    extraAxiomClauses.toSet ++ cnf.map( _.map( reduce ) )
+
+  def back( formula: HOLFormula ): HOLFormula = back( formula: LambdaExpression ).asInstanceOf[HOLFormula]
+  def back( expr: LambdaExpression ): LambdaExpression = expr match {
+    case Top() | Bottom() => expr
+    case Neg( f )         => Neg( back( f ) )
+    case And( f, g )      => And( back( f ), back( g ) )
+    case Or( f, g )       => Or( back( f ), back( g ) )
+    case Imp( f, g )      => Imp( back( f ), back( g ) )
+    case All( x, f )      => All( back( x ).asInstanceOf[Var], back( f ) )
+    case Ex( x, f )       => Ex( back( x ).asInstanceOf[Var], back( f ) )
+    case Eq( a, b )       => Eq( back( a ), back( b ) )
+
+    case Apps( f, args ) if partialApplicationFuns.exists { _._1 == f } =>
+      partialApplicationFuns.find { _._1 == f }.get._2( args.map( back ) )
+    case Apps( app, Seq( f, args @ _* ) ) if applyFunctions.exists { _._2 == app } =>
+      back( f )( args.map( back ) )
+    case Apps( f: Const, args ) => newConstants.map( _.swap ).getOrElse( f, f )( args map back )
+
+    case Var( n, t: TBase )     => Var( n, partiallyAppedTypes.map( _.swap ).getOrElse( t, t ) )
+
+    case Abs( v, f )            => Abs( back( v ).asInstanceOf[Var], back( f ) )
+  }
+
+  def back( et: ExpansionTree ): ExpansionTree = et match {
+    case ETMerge( a, b )        => ETMerge( back( a ), back( b ) )
+    case ETWeakening( f, pol )  => ETWeakening( back( f ), pol )
+    case ETAtom( atom, pol )    => ETAtom( back( atom ).asInstanceOf[HOLAtom], pol )
+    case _: ETTop | _: ETBottom => et
+    case ETNeg( a )             => ETNeg( back( a ) )
+    case ETAnd( a, b )          => ETAnd( back( a ), back( b ) )
+    case ETOr( a, b )           => ETOr( back( a ), back( b ) )
+    case ETImp( a, b )          => ETImp( back( a ), back( b ) )
+    case ETWeakQuantifier( shallow, insts ) =>
+      ETWeakQuantifier(
+        back( shallow ),
+        for ( ( t, c ) <- insts ) yield back( t ) -> back( c )
+      )
+  }
+
+  def back( expansionProof: ExpansionProof ): ExpansionProof =
+    ExpansionProof( expansionProof.expansionSequent.zipWithIndex collect {
+      case ( et, i ) if !( i.isAnt && extraAxioms.toSeq.contains( et.shallow ) ) =>
+        back( et )
+    } )
+
+  def back( resolutionProof: ResolutionProof ): ResolutionProof =
+    removeReflsAndTauts( TermReplacement( resolutionProof, { case expr => back( expr ) } ) )
 }
 
 /**
  * Replaces the use of higher-order functions by fresh function symbols, together with axioms that axiomatize them.
  */
-case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
+case class HOFunctionReduction( extraAxioms: Boolean = true ) extends OneWayReduction_[HOLSequent] {
   override def forward( problem: HOLSequent ) = {
-    val helper = new HOFunctionReductionHelper( constants( problem ), variables( problem ) )
+    val helper = new HOFunctionReductionHelper( containedNames( problem ), extraAxioms )
     ( helper.forward( problem ), _ => throw new UnsupportedOperationException )
+  }
+}
+
+/**
+ * Replaces the use of higher-order functions by fresh function symbols, together with axioms that axiomatize them.
+ */
+case class HOFunctionReductionET( extraAxioms: Boolean = true ) extends Reduction_[HOLSequent, ExpansionProof] {
+  override def forward( problem: HOLSequent ) = {
+    val helper = new HOFunctionReductionHelper( containedNames( problem ), extraAxioms )
+    ( helper.forward( problem ), helper.back( _ ) )
+  }
+}
+
+/**
+ * Replaces the use of higher-order functions by fresh function symbols, together with axioms that axiomatize them.
+ */
+case class HOFunctionReductionRes( extraAxioms: Boolean = true ) extends Reduction_[HOLSequent, ResolutionProof] {
+  override def forward( problem: HOLSequent ) = {
+    val helper = new HOFunctionReductionHelper( containedNames( problem ), extraAxioms )
+    ( helper.forward( problem ), helper.back( _ ) )
+  }
+}
+
+/**
+ * Replaces the use of higher-order functions by fresh function symbols, together with axioms that axiomatize them.
+ */
+case class HOFunctionReductionCNFRes( extraAxioms: Boolean = true ) extends Reduction_[Set[HOLSequent], ResolutionProof] {
+  override def forward( problem: Set[HOLSequent] ) = {
+    val helper = new HOFunctionReductionHelper( containedNames( problem ), extraAxioms )
+    ( helper.forward( problem ), helper.back )
   }
 }
 
@@ -544,8 +705,9 @@ case object HOFunctionReduction extends OneWayReduction_[HOLSequent] {
  */
 case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], ExpansionProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => ExpansionProof ) = {
-    val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
-    ( cnf, RobinsonToExpansionProof( _, problem, justs, defs ) )
+    val cnf = structuralCNF( problem, propositional = false )
+    ( cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
+      res => ResolutionToExpansionProof( mapInputClauses( res )( seq => cnf.find( _.conclusion == seq ).get ) ) )
   }
 }
 
@@ -554,8 +716,37 @@ case object CNFReductionExpRes extends Reduction[HOLSequent, Set[HOLClause], Exp
  */
 case object CNFReductionLKRes extends Reduction[HOLSequent, Set[HOLClause], LKProof, ResolutionProof] {
   override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => LKProof ) = {
-    val ( cnf, justs, defs ) = structuralCNF( problem, true, false )
-    ( cnf, RobinsonToLK( _, problem, justs, defs, addWeakenings = true ) )
+    val cnf = structuralCNF( problem, propositional = false )
+    ( cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
+      res => ResolutionToLKProof( mapInputClauses( res )( seq => cnf.find( _.conclusion == seq ).get ) ) )
+  }
+}
+
+/**
+ * Reduces finding a resolution proof for a sequent to finding a resolution proof of a clause set.
+ */
+case object CNFReductionResRes extends Reduction[HOLSequent, Set[HOLClause], ResolutionProof, ResolutionProof] {
+  override def forward( problem: HOLSequent ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
+    val cnf = structuralCNF( problem, propositional = false, structural = false /* FIXME */ )
+    (
+      cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
+      fixDerivation( _, cnf )
+    )
+  }
+}
+
+/**
+ * Reduces finding a resolution proof for a sequent set to finding a resolution proof of a clause set.
+ */
+case object CNFReductionSequentsResRes extends Reduction[Set[HOLSequent], Set[HOLClause], ResolutionProof, ResolutionProof] {
+  override def forward( problem: Set[HOLSequent] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
+    val clausifier = new Clausifier( propositional = false, structural = false, bidirectionalDefs = false,
+      nameGen = rename.awayFrom( containedNames( problem ) ) )
+    problem.map( Input ).foreach( clausifier.expand )
+    (
+      Set() ++ clausifier.cnf.view.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ),
+      fixDerivation( _, clausifier.cnf )
+    )
   }
 }
 

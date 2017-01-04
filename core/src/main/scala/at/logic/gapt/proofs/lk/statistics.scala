@@ -33,6 +33,14 @@ object cutsNumber {
     }
 }
 
+object inductionsNumber {
+  def apply( p: LKProof ): Int =
+    p.treeLike.postOrder count {
+      case InductionRule( _, _, _ ) => true
+      case _                        => false
+    }
+}
+
 object rulesNumber {
   def apply( p: LKProof ): Int = p.treeLike.size.toInt
 }
@@ -43,6 +51,7 @@ object printProofStats {
       s"""
          |Inferences: ${rulesNumber( p )}
          |Cuts: ${cutsNumber( p )}
+         |Inductions: ${inductionsNumber( p )}
          |Strong quantifier inferences: ${strongQuantRulesNumber( p )}
          |Weak quantifier inferences: ${weakQuantRulesNumber( p )}
          |Equality inferences: ${p.treeLike.postOrder.count { _.isInstanceOf[EqualityRule] }}

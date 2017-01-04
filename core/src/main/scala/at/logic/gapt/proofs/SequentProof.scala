@@ -44,20 +44,15 @@ trait SequentProof[+Formula, This <: SequentProof[Formula, This]] extends DagPro
 
 trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentProof[Formula, This] { self: This =>
 
-  private def concat[A]( sequents: Seq[Sequent[A]] ) = sequents match {
-    case Seq() => Sequent()
-    case _     => sequents.reduce( _ ++ _ )
-  }
-
   protected def formulasToBeDeleted = auxIndices
 
   protected def mainFormulaSequent: Sequent[Formula]
 
   protected def contexts = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.delete( is )
 
-  override lazy val conclusion = mainFormulaSequent.antecedent ++: concat( contexts ) :++ mainFormulaSequent.succedent
+  override lazy val conclusion = mainFormulaSequent.antecedent ++: contexts.flattenS :++ mainFormulaSequent.succedent
 
-  override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: concat( contexts ).map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
+  override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: contexts.flattenS.map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
 
   private val contextIndices = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.indicesSequent.delete( is )
 
@@ -69,6 +64,6 @@ trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentP
     val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => formulasToBeDeleted( i ) )
     val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => formulasToBeDeleted( i ) )
     new OccConnector( conclusion, premises( i ),
-      auxIndicesAntecedent ++: ( concat( leftContextIndices ) ++ currentContextIndices ++ concat( rightContextIndices ) ) :++ auxIndicesSuccedent )
+      auxIndicesAntecedent ++: ( leftContextIndices.flattenS ++ currentContextIndices ++ rightContextIndices.flattenS ) :++ auxIndicesSuccedent )
   }
 }

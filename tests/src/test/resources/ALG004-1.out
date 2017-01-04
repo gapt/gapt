@@ -1,28 +1,3 @@
-%------------------------------------------------------------------------------
-File       : Prover9---1109a
-Problem    : ALG004-1 : TPTP v5.3.0. Released v2.2.0.
-Transform  : none
-Format     : tptp:raw
-Command    : run_prover9 %d %s
-
-Computer   : gettysburg.cs.miami.edu
-Model      : x86_64 x86_64
-CPU        : Intel(R) Core(TM)2 CPU          6600  @ 2.40GHz @ 2400MHz
-Memory     : 1003MB
-OS         : Linux 2.6.32.26-175.fc12.x86_64
-CPULimit   : 300s
-DateTime   : Wed Jun 13 11:05:56 EDT 2012
-
-Result     : Unsatisfiable 2.69s
-Output     : Refutation 2.69s
-Verified   : 
-Statistics : -
-
-Comments   : 
-%------------------------------------------------------------------------------
-%----ERROR: Could not form TPTP format derivation
-%------------------------------------------------------------------------------
-%----ORIGINAL SYSTEM OUTPUT
 ============================== Prover9 ===============================
 Prover9 (32) version 2009-11A, November 2009.
 Process 7551 was started by tptp on gettysburg.cs.miami.edu,
@@ -122,5 +97,3 @@ THEOREM PROVED
 Exiting with 1 proof.
 Process 7551 exit (max_proofs) Wed Jun 13 11:05:59 2012
 Prover9 interrupted
-
-%------------------------------------------------------------------------------

@@ -2,7 +2,7 @@ package at.logic.gapt.examples.induction
 
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.univclosure
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
@@ -10,16 +10,16 @@ import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.viper._
 import SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
-import org.apache.log4j.{ Logger, Level }
+import at.logic.gapt.utils.Logger
 
 object factorialmodth extends Script {
 
-  for ( n <- Seq( classOf[SipProver].getName, FindFormulaH.getClass.getName ) )
-    Logger.getLogger( n ).setLevel( Level.DEBUG )
+  Logger.makeVerbose( classOf[SipProver] )
+  FindFormulaH.makeVerbose()
 
-  val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +: "g(x*s(y),y) = g(x,s(y))" +: "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula ) map univclosure.apply ) :+ FOLSubstitution( FOLVar( "x" ) -> alpha )( parseFormula( "g(s(0), x) = f(x)" ) )
+  val factorialES = ( ( ( "s(0) = f(0)" +: "s(x)*f(x) = f(s(x))" +: "g(x,0) = x" +: "g(x*s(y),y) = g(x,s(y))" +: "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula ) map universalClosure.apply ) :+ FOLSubstitution( FOLVar( "x" ) -> alpha )( parseFormula( "g(s(0), x) = f(x)" ) )
 
-  val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map univclosure.apply
+  val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map universalClosure.apply
 
   val modThProver = new OneShotProver {
     override def getLKProof( seq: HOLSequent ): Option[LKProof] =
@@ -32,7 +32,7 @@ object factorialmodth extends Script {
   object patchingSolFinder extends SolutionFinder {
     val n = 0
 
-    override def findSolution( sip: SimpleInductionProof ): Option[FOLFormula] = {
+    override def findSolution( sip: SimpleInductionProofU ): Option[FOLFormula] = {
       // We could pass the whole theory here, but ForgetfulParamodulate only does ground
       // paramodulation--so we give just the correct instance.
       val canSolModTh = canonicalSolution( sip, n )

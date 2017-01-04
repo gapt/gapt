@@ -37,8 +37,8 @@ class Sat4jTest extends Specification {
   "empty clause is unsat" in { Sat4j.solve( Seq( Seq() ) ) must beNone }
 
   "proof import" in {
-    "pigeonhole 4 3" in { Sat4j getRobinsonProof PigeonHolePrinciple( 4, 3 ) must beSome }
-    "buss 5" in { Sat4j getRobinsonProof BussTautology( 5 ) must beSome }
-    "to be or not to be" in { Sat4j getRobinsonProof hof"be ∨ ¬be" must beSome }
+    "pigeonhole 4 3" in { Sat4j getResolutionProof PigeonHolePrinciple( 4, 3 ) must beSome }
+    "buss 5" in { Sat4j getResolutionProof BussTautology( 5 ) must beSome }
+    "to be or not to be" in { Sat4j getResolutionProof hof"be ∨ ¬be" must beSome }
   }
 }

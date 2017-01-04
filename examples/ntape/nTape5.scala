@@ -1,5 +1,6 @@
 package at.logic.gapt.examples
 
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.loadLLK
 
 /**
@@ -10,7 +11,7 @@ import at.logic.gapt.formats.llk.loadLLK
  * work.
  */
 class nTape5( _size: Int ) extends nTape4( _size ) {
-  override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream s"ntape/ntape5-$size.llk" )
+  override def proofdb() = loadLLK( ClasspathInputFile( s"ntape/ntape5-$size.llk" ) )
 }
 
 /**
@@ -37,7 +38,7 @@ object nTape5 {
  * for specific upper bounds n. Since the instantiated proofs were generated manually, only nTape5Arith(2) works.
  */
 class nTape5Arith( _size: Int ) extends nTape4( _size ) {
-  override def proofdb() = loadLLK( getClass.getClassLoader getResourceAsStream s"ntape/ntape5-${size}-arithmetic-ite.llk" )
+  override def proofdb() = loadLLK( ClasspathInputFile( s"ntape/ntape5-$size-arithmetic-ite.llk" ) )
 }
 
 /**

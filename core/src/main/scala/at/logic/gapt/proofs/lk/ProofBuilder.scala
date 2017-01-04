@@ -1,5 +1,7 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.proofs.resolution.ResolutionProof
+
 /**
  * Class for convenient construction of proofs.
  * Allows you to write proofs post-order style (à la Bussproofs). Example:
@@ -16,7 +18,7 @@ package at.logic.gapt.proofs.lk
  *
  * @param proofStack
  */
-class ProofBuilder private ( private val proofStack: Seq[LKProof] ) {
+class ProofBuilder[Proof] private[lk] ( private val proofStack: Seq[Proof] ) {
 
   /**
    * Pushes a proof onto the stack.
@@ -24,7 +26,7 @@ class ProofBuilder private ( private val proofStack: Seq[LKProof] ) {
    * @param proof An LKProof.
    * @return
    */
-  def c( proof: LKProof ) = new ProofBuilder( proof +: proofStack )
+  def c( proof: Proof ) = new ProofBuilder( proof +: proofStack )
 
   /**
    * Applies a unary inference to the top element of the proof stack.
@@ -32,7 +34,7 @@ class ProofBuilder private ( private val proofStack: Seq[LKProof] ) {
    * @param inference A function LKProof => LKProof.
    * @return
    */
-  def u( inference: LKProof => LKProof ) = proofStack match {
+  def u( inference: Proof => Proof ) = proofStack match {
     case p +: rest => new ProofBuilder( inference( proofStack.head ) +: proofStack.tail )
     case _         => throw new Exception( "Cannot apply unary inference to empty stack." )
   }
@@ -43,7 +45,7 @@ class ProofBuilder private ( private val proofStack: Seq[LKProof] ) {
    * @param inference A function (LKProof, LKProof) => LKProof
    * @return
    */
-  def b( inference: ( LKProof, LKProof ) => LKProof ) = proofStack match {
+  def b( inference: ( Proof, Proof ) => Proof ) = proofStack match {
     case Seq()            => throw new Exception( "Cannot apply binary inference to empty stack." )
     case p +: Seq()       => throw new Exception( "Cannot apply binary inference to stack with only one element." )
     case p2 +: p1 +: rest => new ProofBuilder( inference( p1, p2 ) +: rest )
@@ -61,4 +63,5 @@ class ProofBuilder private ( private val proofStack: Seq[LKProof] ) {
   }
 }
 
-object ProofBuilder extends ProofBuilder( Seq() )
+object ProofBuilder extends ProofBuilder[LKProof]( Seq() )
+object ResolutionProofBuilder extends ProofBuilder[ResolutionProof]( Seq() )

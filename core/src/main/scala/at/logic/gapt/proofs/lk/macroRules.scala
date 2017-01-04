@@ -2,9 +2,11 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.FOLPosition
-import at.logic.gapt.expr.hol.{ HOLPosition, isPrenex, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate, isPrenex }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs._
+import at.logic.gapt.provers.{ Prover, ResolutionProver }
+import at.logic.gapt.provers.escargot.Escargot
 
 object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
 
@@ -558,6 +560,15 @@ object ExistsRightBlock {
   }
 }
 
+object WeakQuantifierBlock {
+  def apply( p: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ) =
+    main match {
+      case _ if terms.isEmpty => p
+      case All( _, _ )        => ForallLeftBlock( p, main, terms )
+      case Ex( _, _ )         => ExistsRightBlock( p, main, terms )
+    }
+}
+
 /**
  * This macro rule simulates a series of contractions in the antecedent.
  *
@@ -681,7 +692,7 @@ object ContractionMacroRule extends ConvenienceConstructor( "ContractionMacroRul
    * @param targetSequent The target sequent.
    * @param strict If true, the end sequent of p must 1.) contain every formula at least as often as targetSequent
    *               and 2.) contain no formula that isn't contained at least once in targetSequent.
-   * @return s1 with its end sequent contracted down to targetSequent.
+   * @return p with its end sequent contracted down to targetSequent.
    */
   def apply( p: LKProof, targetSequent: HOLSequent, strict: Boolean = true ): LKProof = withOccConnector( p, targetSequent, strict )._1
 
@@ -1256,6 +1267,29 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
   }
 }
 
+object FOTheoryMacroRule {
+  def apply( sequent: HOLSequent, prover: ResolutionProver = Escargot )( implicit ctx: Context ): LKProof =
+    option( sequent, prover ).getOrElse {
+      throw new IllegalArgumentException( s"Cannot prove $sequent in:\n$ctx" )
+    }
+  def option( sequent: HOLSequent, prover: ResolutionProver = Escargot )( implicit ctx: Context ): Option[LKProof] = {
+    import at.logic.gapt.proofs.resolution._
+    val axioms = ctx.axioms.toSet
+    val nameGen = rename.awayFrom( containedNames( axioms + sequent ) )
+    val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+    val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
+    prover.getResolutionProof( cnf.map( Input ) ) map { p =>
+      var lk = ResolutionToLKProof( p, {
+        case Input( seq ) if axioms.contains( seq ) => TheoryAxiom( seq.map( _.asInstanceOf[HOLAtom] ) )
+        case Input( unit ) if unit.size == 1        => LogicalAxiom( unit.elements.head )
+      } )
+      lk = TermReplacement.hygienic( lk, grounding.map( _.swap ).toMap )
+      lk = cleanCuts( lk )
+      lk
+    }
+  }
+}
+
 /**
  * Move a formula to the beginning of the antecedent, where the main formula is customarily placed.
  * <pre>
@@ -1309,7 +1343,7 @@ object NaturalNumberInductionRule extends ConvenienceConstructor( "NaturalNumber
    * @param aux3 The index of A[sy].
    * @param mainFormula The formula ∀x. A[x].
    */
-  def apply( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, mainFormula: FOLFormula ): InductionRule = {
+  def apply( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex, aux3: SequentIndex, mainFormula: FOLFormula ): ForallRightRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
 
     val ( aZero, aX, aSx ) = ( leftPremise( aux1 ).asInstanceOf[FOLFormula], rightPremise( aux2 ).asInstanceOf[FOLFormula], rightPremise( aux3 ).asInstanceOf[FOLFormula] )
@@ -1333,7 +1367,8 @@ object NaturalNumberInductionRule extends ConvenienceConstructor( "NaturalNumber
     val baseCase = InductionCase( leftSubProof, FOLConst( "0" ), Seq(), Seq(), aux1 )
     val stepCase = InductionCase( rightSubProof, FOLFunctionConst( "s", 1 ), Seq( aux2 ), Seq( x ), aux3 )
 
-    InductionRule( Seq( baseCase, stepCase ), mainFormula )
+    val All( y, a ) = mainFormula
+    ForallRightRule( InductionRule( Seq( baseCase, stepCase ), Abs( y, a ), y ), mainFormula, y )
   }
 
   /**
@@ -1357,7 +1392,7 @@ object NaturalNumberInductionRule extends ConvenienceConstructor( "NaturalNumber
    * @param aux3 The index of A[sy] or the formula itself.
    * @param mainFormula The formula ∀x. A[x].
    */
-  def apply( leftSubProof: LKProof, aux1: IndexOrFormula, rightSubProof: LKProof, aux2: IndexOrFormula, aux3: IndexOrFormula, mainFormula: FOLFormula ): InductionRule = {
+  def apply( leftSubProof: LKProof, aux1: IndexOrFormula, rightSubProof: LKProof, aux2: IndexOrFormula, aux3: IndexOrFormula, mainFormula: FOLFormula ): ForallRightRule = {
     val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
     val ( _, leftIndicesSuc ) = findAndValidate( leftPremise )( Seq(), Seq( aux1 ) )
     val ( rightIndicesAnt, rightIndicesSuc ) = findAndValidate( rightPremise )( Seq( aux2 ), Seq( aux3 ) )

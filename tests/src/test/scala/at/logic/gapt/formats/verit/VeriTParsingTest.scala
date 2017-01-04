@@ -1,13 +1,12 @@
 package at.logic.gapt.formats.verit
 
-import java.io.InputStreamReader
-
+import at.logic.gapt.formats.ClasspathInputFile
 import org.specs2.mutable._
 
 class VeriTParsingTest extends Specification {
 
   def parseClasspathFile( filename: String ) =
-    VeriTParser.getExpansionProof( new InputStreamReader( getClass.getClassLoader.getResourceAsStream( filename ) ) )
+    VeriTParser.getExpansionProof( ClasspathInputFile( filename ) )
 
   "The veriT parser" should {
     "parse correctly the simplest proof of the database" in {

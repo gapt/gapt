@@ -1,18 +1,22 @@
 package at.logic.gapt.proofs.ceres
 
+import at.logic.gapt.cutintro.CutIntroduction
 import at.logic.gapt.formats.llk._
-import at.logic.gapt.proofs.SequentMatchers
-import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.proofs.{ Context, FiniteContext, Sequent, gaptic }
+import at.logic.gapt.examples._
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.fol.Numeral
+import at.logic.gapt.expr.hol.isAtom
+import at.logic.gapt.formats.ClasspathInputFile
+import at.logic.gapt.proofs.SequentMatchers
+import at.logic.gapt.proofs.{ Context, Sequent, gaptic }
+import at.logic.gapt.proofs.lk.{ CutRule, ReductiveCutElimination }
+import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
-
-import scala.io.Source
 
 class CeresTest extends Specification with SequentMatchers {
 
   def load( file: String, pname: String ) =
-    LLKProofParser.parseString( Source fromInputStream getClass.getClassLoader.getResourceAsStream( file ) mkString ).proof( pname )
+    LLKProofParser( ClasspathInputFile( file ) ).proof( pname )
 
   "Struct extraction" should {
     "work for the permutation proof" in {
@@ -38,6 +42,12 @@ class CeresTest extends Specification with SequentMatchers {
     }
   }
 
+  "a simple intuitionistic proof" in {
+    val proof = fol2.proof
+    val acnf = ReductiveCutElimination( CERES( proof ) )
+    acnf.endSequent must beMultiSetEqual( proof.endSequent )
+  }
+
   "many-sorted proofs" in {
     import gaptic._
     val p = Lemma( Sequent() :+ ( "goal" ->
@@ -52,7 +62,7 @@ class CeresTest extends Specification with SequentMatchers {
   }
 
   "second-order definitions" in {
-    implicit var ctx = FiniteContext()
+    implicit var ctx = Context()
     ctx += Context.Sort( "i" )
     ctx += hof"in x X = (X x: o)"
     ctx ++= Seq( hoc"P:i>i>o", hoc"c:i", hoc"f:i>i", hoc"g:i>i" )
@@ -73,6 +83,14 @@ class CeresTest extends Specification with SequentMatchers {
       }
 
     CERES( p, Escargot ).conclusion must beMultiSetEqual( p.conclusion )
+  }
+
+  "work for the example in issue 555" in {
+    val Some( proof ) = Escargot.getLKProof( hos"f 0 = t, !x (f (s x) = f x) :- f ${Numeral( 9 )} = t" )
+    val Some( proofWithCut ) = CutIntroduction( proof )
+    val acnf = CERES( proofWithCut )
+    for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
+    ok
   }
 
 }

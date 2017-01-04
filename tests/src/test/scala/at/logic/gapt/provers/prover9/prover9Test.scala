@@ -1,11 +1,10 @@
 package at.logic.gapt.provers.prover9
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs._
-
+import at.logic.gapt.proofs.resolution.Input
 import org.specs2.mutable._
-
-import scala.io.Source
 
 class Prover9Test extends Specification with SequentMatchers {
   args( skipAll = !Prover9.isInstalled )
@@ -50,14 +49,14 @@ class Prover9Test extends Specification with SequentMatchers {
 
     "handle exit code 2" in {
       val cnf = Set( Clause(), hoa"a" +: Clause() )
-      Prover9.getRobinsonProof( cnf ) must beLike {
-        case Some( p ) => cnf must contain( atLeast( p.inputClauses ) )
+      Prover9.getResolutionProof( cnf ) must beLike {
+        case Some( p ) => cnf must contain( atLeast( p.subProofs.collect { case Input( seq ) => seq.asInstanceOf[HOLClause] } ) )
       }
     }
   }
 
   "Prover9 proof output loader" should {
-    def load( fn: String ) = Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( fn ) ).mkString
+    def load( fn: String ) = ClasspathInputFile( fn )
 
     "goat puzzle PUZ047+1.out" in {
       Prover9Importer.lkProof( load( "PUZ047+1.out" ) )

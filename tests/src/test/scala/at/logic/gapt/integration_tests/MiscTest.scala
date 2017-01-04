@@ -1,8 +1,6 @@
 
 package at.logic.gapt.integration_tests
 
-import java.io.InputStreamReader
-
 import at.logic.gapt.examples.LinearExampleProof
 import at.logic.gapt.formats.llk.LLKProofParser
 import at.logic.gapt.cutintro._
@@ -12,17 +10,12 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.verit.VeriTParser
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.provers.maxsat.MaxSat4j
 import at.logic.gapt.provers.prover9.{ Prover9, Prover9Importer }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.proofs.ceres._
-import java.io.File.separator
 
-import org.specs2.execute.Success
+import at.logic.gapt.formats.ClasspathInputFile
 import org.specs2.mutable._
-
-import scala.io.Source
 
 class MiscTest extends Specification {
 
@@ -45,12 +38,12 @@ class MiscTest extends Specification {
 
     "perform cut introduction on an example proof" in {
       val p = LinearExampleProof( 4 )
-      CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false ) must beSome
+      CutIntroduction( p, method = DeltaTableMethod() ) must beSome
     }
 
     "introduce a cut and eliminate it via Gentzen in the LinearExampleProof (n = 9)" in {
       val p = LinearExampleProof( 9 )
-      val Some( pi ) = CutIntroduction.compressLKProof( p, method = DeltaTableMethod(), verbose = false )
+      val Some( pi ) = CutIntroduction( p, method = DeltaTableMethod() )
       val pe = ReductiveCutElimination( pi )
 
       ReductiveCutElimination.isCutFree( p ) must beEqualTo( true )
@@ -62,7 +55,7 @@ class MiscTest extends Specification {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
 
       val p1 = lkProofFromClasspath( "SYN726-1.out" )
-      val Some( p2 ) = CutIntroduction.compressLKProof( p1, method = DeltaTableMethod(), verbose = false )
+      val Some( p2 ) = CutIntroduction( p1, method = DeltaTableMethod() )
       val p3 = ReductiveCutElimination( p2 )
 
       ReductiveCutElimination.isCutFree( p2 ) must beEqualTo( false )
@@ -70,12 +63,12 @@ class MiscTest extends Specification {
     }
 
     "extract expansion tree from tape proof" in {
-      val db = LLKProofParser.parseString( Source.fromInputStream( getClass.getClassLoader getResourceAsStream "tape3.llk" ).mkString )
+      val db = LLKProofParser( ClasspathInputFile( "tape3.llk" ) )
       // I have no idea why, but this makes the code get the correct proof
       val p = db.proof( "TAPEPROOF" )
-      val elp = AtomicExpansion( DefinitionElimination( db.Definitions )( p ) )
+      val elp = AtomicExpansion( eliminateDefinitions( db.Definitions )( p ) )
       val reg = regularize( elp )
-      val lksk_proof = LKToLKsk( reg )
+      val lksk_proof = skolemizeInferences( reg )
       // TODO
       val et = LKToExpansionProof( reg ) // must throwA[IllegalArgumentException] // currently contains problematic definitions
       ok
@@ -117,8 +110,7 @@ class MiscTest extends Specification {
 
     "load veriT proofs pi and verify the validity of Deep(pi) using sat4j" in {
       for ( i <- List( 0, 1 ) ) { // Tests 2 and 4 take comparatively long, test 3 fails with StackOverflow
-        val p = VeriTParser.getExpansionProof( new InputStreamReader( getClass.getClassLoader getResourceAsStream s"test${i}.verit" ) ).get
-        val taut_p = addSymmetry( p )
+        val taut_p = VeriTParser.getExpansionProofWithSymmetry( ClasspathInputFile( s"test$i.verit" ) ).get
         val seq = taut_p.deep
 
         Sat4j.isValid( seq ) must beTrue
@@ -149,7 +141,7 @@ class MiscTest extends Specification {
     }
 
     def lkProofFromClasspath( filename: String ) =
-      Prover9Importer lkProof Source.fromInputStream( getClass.getClassLoader.getResourceAsStream( filename ) ).mkString
+      Prover9Importer lkProof ClasspathInputFile( filename )
 
     "load Prover9 proof without equality reasoning, extract expansion sequent E, verify deep formula of E using sat4j and readback E to LK" in {
       if ( !Prover9.isInstalled ) skipped( "Prover9 is not installed" )
@@ -182,7 +174,7 @@ class MiscTest extends Specification {
       val expseq = LKToExpansionProof( lkproof1 )
       val deep = expseq.deep
 
-      solve.solvePropositional( deep ).isDefined must beTrue
+      solvePropositional( deep ).isRight must beTrue
     }
 
     "load Prover9 proof with top and bottom constants, convert it to sequent calculus and extract the deep formula from its expansion sequent" in {

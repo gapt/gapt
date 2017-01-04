@@ -44,7 +44,8 @@ trait TacticCommands {
   /**
    * Attempts to apply the tactics `axiomTop`, `axiomBot`, `axiomRefl`, and `axiomLog`.
    */
-  def trivial = axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog
+  def trivial: Tactic[Unit] = Tactic { axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog }.
+    cut( "Not a valid initial sequent" )
 
   /**
    * Applies the `NegLeft` tactic to the current subgoal: The goal
@@ -56,7 +57,7 @@ trait TacticCommands {
    * `Γ :- Δ, A`.
    * @param applyToLabel The label of the formula `¬A`.
    */
-  def negL( applyToLabel: String ) = new NegLeftTactic( OnLabel( applyToLabel ) )
+  def negL( applyToLabel: String ) = NegLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `NegLeft` tactic to the current subgoal: The goal
@@ -69,7 +70,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one negated formula in the antecedent!
    */
-  def negL = new NegLeftTactic()
+  def negL = NegLeftTactic()
 
   /**
    * Applies the `NegRight` tactic to the current subgoal: The goal
@@ -81,7 +82,7 @@ trait TacticCommands {
    * `A, Γ :- Δ`.
    * @param applyToLabel The label of the formula `¬A`.
    */
-  def negR( applyToLabel: String ) = new NegRightTactic( OnLabel( applyToLabel ) )
+  def negR( applyToLabel: String ) = NegRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `NegRight` tactic to the current subgoal: The goal
@@ -94,7 +95,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one negated formula in the succedent!
    */
-  def negR = new NegRightTactic()
+  def negR = NegRightTactic()
 
   /**
    * Applies the `AndLeft` tactic to the current subgoal: The goal
@@ -106,7 +107,7 @@ trait TacticCommands {
    * `A, B, Γ :- Δ`.
    * @param applyToLabel The label of the formula `A ∧ B`.
    */
-  def andL( applyToLabel: String ) = new AndLeftTactic( OnLabel( applyToLabel ) )
+  def andL( applyToLabel: String ) = AndLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `AndLeft` tactic to the current subgoal: The goal
@@ -119,7 +120,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one conjunctive formula in the antecedent!
    */
-  def andL = new AndLeftTactic()
+  def andL = AndLeftTactic()
 
   /**
    * Applies the `AndRight` tactic to the current subgoal: The goal
@@ -131,7 +132,7 @@ trait TacticCommands {
    * `Γ :- Δ, A` and `Γ :- Δ, B`.
    * @param applyToLabel The label of the formula `A ∧ B`.
    */
-  def andR( applyToLabel: String ) = new AndRightTactic( OnLabel( applyToLabel ) )
+  def andR( applyToLabel: String ) = AndRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `AndRight` tactic to the current subgoal: The goal
@@ -144,7 +145,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one conjunctive formula in the succedent!
    */
-  def andR = new AndRightTactic()
+  def andR = AndRightTactic()
 
   /**
    * Applies the `OrLeft` tactic to the current subgoal: The goal
@@ -156,7 +157,7 @@ trait TacticCommands {
    * `A, Γ :- Δ` and `B, Γ :- Δ`.
    * @param applyToLabel The label of the formula `A ∨ B`.
    */
-  def orL( applyToLabel: String ) = new OrLeftTactic( OnLabel( applyToLabel ) )
+  def orL( applyToLabel: String ) = OrLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `OrLeft` tactic to the current subgoal: The goal
@@ -169,7 +170,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one disjunctive formula in the antecedent!
    */
-  def orL = new OrLeftTactic()
+  def orL = OrLeftTactic()
 
   /**
    * Applies the `OrRight` tactic to the current subgoal: The goal
@@ -181,7 +182,7 @@ trait TacticCommands {
    * `Γ :- Δ, A, B`.
    * @param applyToLabel The label of the formula `A ∨ B`.
    */
-  def orR( applyToLabel: String ) = new OrRightTactic( OnLabel( applyToLabel ) )
+  def orR( applyToLabel: String ) = OrRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `OrRight` tactic to the current subgoal: The goal
@@ -194,7 +195,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one disjunctive formula in the succedent!
    */
-  def orR = new OrRightTactic()
+  def orR = OrRightTactic()
 
   /**
    * Applies the `ImpLeft` tactic to the current subgoal: The goal
@@ -206,7 +207,7 @@ trait TacticCommands {
    * `Γ :- Δ, A` and `B, Γ :- Δ`.
    * @param applyToLabel The label of the formula `A → B`.
    */
-  def impL( applyToLabel: String ) = new ImpLeftTactic( OnLabel( applyToLabel ) )
+  def impL( applyToLabel: String ) = ImpLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ImpLeft` tactic to the current subgoal: The goal
@@ -219,7 +220,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one implicative formula in the antecedent!
    */
-  def impL = new ImpLeftTactic()
+  def impL = ImpLeftTactic()
 
   /**
    * Applies the `ImpRight` tactic to the current subgoal: The goal
@@ -231,7 +232,7 @@ trait TacticCommands {
    * `A, Γ :- Δ, B`.
    * @param applyToLabel The label of the formula `A → B`.
    */
-  def impR( applyToLabel: String ) = new ImpRightTactic( OnLabel( applyToLabel ) )
+  def impR( applyToLabel: String ) = ImpRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ImpRight` tactic to the current subgoal: The goal
@@ -244,7 +245,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one implicative formula in the succedent!
    */
-  def impR = new ImpRightTactic()
+  def impR = ImpRightTactic()
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -257,7 +258,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∃x.A`.
    * @param eigenVariable The variable `α`.
    */
-  def exL( applyToLabel: String, eigenVariable: Var ) = new ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
+  def exL( applyToLabel: String, eigenVariable: Var ) = ExistsLeftTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -271,7 +272,7 @@ trait TacticCommands {
    * This will only work if there is exactly one existential formula in the antecedent!
    * @param eigenVariable The variable `α`.
    */
-  def exL( eigenVariable: Var ) = new ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
+  def exL( eigenVariable: Var ) = ExistsLeftTactic( eigenVariable = Some( eigenVariable ) )
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -283,7 +284,7 @@ trait TacticCommands {
    * `A, Γ :- Δ`.
    * @param applyToLabel The label of the formula `∃x.A`.
    */
-  def exL( applyToLabel: String ) = new ExistsLeftTactic( OnLabel( applyToLabel ) )
+  def exL( applyToLabel: String ) = ExistsLeftTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ExistsLeft` tactic to the current subgoal: The goal
@@ -296,7 +297,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one existential formula in the antecedent!
    */
-  def exL = new ExistsLeftTactic()
+  def exL = ExistsLeftTactic()
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -307,10 +308,9 @@ trait TacticCommands {
    *
    * `Γ :- Δ, ∃x,,1,,...∃x,,n,,.A, A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,]`.
    * @param applyToLabel The label of the formula `∃x,,1,,...∃x,,n,,.A`.
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
+  def exR( applyToLabel: String, terms: LambdaExpression* ) = ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -322,10 +322,9 @@ trait TacticCommands {
    * `Γ :- Δ, ∃x,,1,,...∃x,,n,,.A, A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,]`.
    *
    * This will only work if there is exactly one existential formula in the succedent!
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( term: LambdaExpression, terms: LambdaExpression* ) = new ExistsRightTactic( UniqueFormula, term +: terms, instantiateOnce = false )
+  def exR( terms: LambdaExpression* ) = ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -336,10 +335,9 @@ trait TacticCommands {
    *
    * `A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,], ∀x,,1,,,...,∀x,,n,,.A, Γ :- Δ`.
    * @param applyToLabel The label of the formula `∀x,,1,,,...,∀x,,n,,.A`.
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( applyToLabel: String, term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( OnLabel( applyToLabel ), term +: terms, instantiateOnce = false )
+  def allL( applyToLabel: String, terms: LambdaExpression* ) = ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -351,10 +349,9 @@ trait TacticCommands {
    * A[x,,1,,\t,,1,,,...,x,,n,,\t,,n,,], ∀x,,1,,,...,∀x,,n,,.A, Γ :- Δ.
    *
    * This will only work if there is exactly one universal formula in the antecedent!
-   * @param term The term `t,,1,,`.
-   * @param terms The terms `t,,2,,,...,t,,n,,`.
+   * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( term: LambdaExpression, terms: LambdaExpression* ) = new ForallLeftTactic( UniqueFormula, term +: terms, instantiateOnce = false )
+  def allL( terms: LambdaExpression* ) = ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -367,7 +364,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∀x.A`.
    * @param eigenVariable The variable `α`.
    */
-  def allR( applyToLabel: String, eigenVariable: Var ) = new ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
+  def allR( applyToLabel: String, eigenVariable: Var ) = ForallRightTactic( OnLabel( applyToLabel ), Some( eigenVariable ) )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -381,7 +378,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the succedent!
    * @param eigenVariable The variable `α`.
    */
-  def allR( eigenVariable: Var ) = new ForallRightTactic( eigenVariable = Some( eigenVariable ) )
+  def allR( eigenVariable: Var ) = ForallRightTactic( eigenVariable = Some( eigenVariable ) )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -393,7 +390,7 @@ trait TacticCommands {
    * `Γ :- Δ, A`.
    * @param applyToLabel The label of the formula `∀x.A`.
    */
-  def allR( applyToLabel: String ) = new ForallRightTactic( OnLabel( applyToLabel ) )
+  def allR( applyToLabel: String ) = ForallRightTactic( OnLabel( applyToLabel ) )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -406,7 +403,7 @@ trait TacticCommands {
    *
    * This will only work if there is exactly one universal formula in the succedent!
    */
-  def allR = new ForallRightTactic()
+  def allR = ForallRightTactic()
 
   /**
    * Applies the `Cut` tactic to the current subgoal: The goal
@@ -447,7 +444,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the succedent!
    * @param ctx A [[at.logic.gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
    */
-  def induction( implicit ctx: Context ) = InductionTactic( UniqueFormula )
+  def induction( on: Var )( implicit ctx: Context ) = InductionTactic( UniqueFormula, on )
 
   /**
    * Applies the `Induction` tactic to the current subgoal: The goal
@@ -458,7 +455,7 @@ trait TacticCommands {
    * @param label The label of the formula `∀x.A`.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. It must contain an inductive definition of the type of `x`.
    */
-  def induction( label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ) )
+  def induction( on: Var, label: String )( implicit ctx: Context ) = InductionTactic( OnLabel( label ), on )
 
   // Meta
 
@@ -482,7 +479,7 @@ trait TacticCommands {
    * @param proof The proof to insert as a lemma by a cut.
    * @param label the label for φ in the subgoal
    */
-  def include( label: String, proof: LKProof ): Tactical[Unit] =
+  def include( label: String, proof: LKProof ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
       diff = proof.conclusion diff goal.conclusion
@@ -490,19 +487,35 @@ trait TacticCommands {
       _ <- cut( label, cutFormula )
       _ <- insert( proof )
     } yield ()
+  }
+
+  /**
+   * Solves the current subgoal as a first-order consequence of the background theory. This
+   * closes the goal.
+   * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
+   */
+  def foTheory( implicit ctx: Context ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: HOLAtom => a } ).
+        toTactical( "does not follow from theory", goal )
+      _ <- insert( theoryAxiom )
+    } yield ()
+  }
 
   /**
    * Declares the current subgoal as a theory axiom, i.e. a sequent that is contained in the background theory. This
    * closes the goal.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The current subgoal must be contained in its background theory.
    */
-  def theory( implicit ctx: Context ): Tactical[Unit] =
+  def theory( implicit ctx: Context ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
-      theoryAxiom <- ctx.theory( goal.conclusion collect { case a: HOLAtom => a } ).
+      theoryAxiom <- ctx.axioms.find( clauseSubsumption( _, goal.conclusion ).isDefined ).
         toTactical( "does not follow from theory", goal )
-      _ <- insert( theoryAxiom )
+      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[HOLAtom] ) ) )
     } yield ()
+  }
 
   /**
    * Repeats a tactical until it fails.
@@ -514,7 +527,7 @@ trait TacticCommands {
    * Leaves a hole in the current proof by inserting a dummy proof of the empty sequent.
    */
   @deprecated( "Proof not finished!", since = "the dawn of time" )
-  def sorry = insert( TheoryAxiom( Clause() ) )
+  def sorry: Tactic[Unit] = Tactic { insert( TheoryAxiom( Clause() ) ) }
 
   /**
    * Tactic that immediately fails.
@@ -533,10 +546,14 @@ trait TacticCommands {
    * - `∧:l`
    * - `∨:r`
    * - `⊃:r`
-   * - `∃:l`
    * - `∀:r`
+   * - `∃:l`
    */
-  def decompose = DecomposeTactic
+  def decompose: Tactical[Unit] = repeat(
+    NegLeftTactic( AnyFormula ) orElse NegRightTactic( AnyFormula ) orElse
+      AndLeftTactic( AnyFormula ) orElse OrRightTactic( AnyFormula ) orElse ImpRightTactic( AnyFormula ) orElse
+      ForallRightTactic( AnyFormula ) orElse ExistsLeftTactic( AnyFormula )
+  )
 
   def destruct( label: String ) = DestructTactic( label )
 
@@ -547,6 +564,7 @@ trait TacticCommands {
    * found and inserted.
    */
   def prop = PropTactic
+  def quasiprop = QuasiPropTactic
 
   /**
    * Calls `prover9` on the current subgoal.
@@ -561,24 +579,23 @@ trait TacticCommands {
   /**
    * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.
    * The formulas with labels `L,,1,,,...,L,,n,,` will be removed from the current goal.
-   * @param l The label `L,,1,,`.
-   * @param ls The labels `L,,2,,`,...,`,,Ln,,`.
+   * @param ls The labels `L,,1,,`,...,`,,Ln,,`.
    *
    */
-  def forget( l: String, ls: String* ): Tactical[Unit] =
-    Tactical.sequence( l +: ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () )
+  def forget( ls: String* ): Tactical[Unit] =
+    Tactical( Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () ) )
 
   /**
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.
    */
-  def focus( indexOfSubGoal: Int ) = new FocusTactical( Left( indexOfSubGoal ) )
+  def focus( indexOfSubGoal: Int ) = FocusTactical( Left( indexOfSubGoal ) )
 
   /**
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.
    */
-  def focus( indexOfSubGoal: OpenAssumptionIndex ) = new FocusTactical( Right( indexOfSubGoal ) )
+  def focus( indexOfSubGoal: OpenAssumptionIndex ) = FocusTactical( Right( indexOfSubGoal ) )
 
   /**
    * Changes the provided label. Syntax:
@@ -595,14 +612,14 @@ trait TacticCommands {
    *
    * {{{
    *   rewrite.many ltr "equation1" in "target"
-   *   rewrite.many ltr ("equation1", "eq2") rtl ("eq3", "eq4") in "target"
+   *   rewrite.many ltr ("equation1", "eq2") rtl ("eq3", "eq4") in "target" subst (hov"x" -> le"f(f(c))")
    * }}}
    *
    * `ltr`: rewrite left-to-right using this equation
    * `rtl`: rewrite right-to-left using this equation
    * `many`: rewrite as long as possible (default is to only rewrite once)
    */
-  def rewrite = RewriteTactic( equations = Seq(), target = None, once = true )
+  def rewrite = RewriteTactic( equations = Seq(), target = None, once = true, fixedSubst = Map() )
 
   /**
    * Replaces a defined constant with its definition. Syntax:
@@ -630,5 +647,31 @@ trait TacticCommands {
    */
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
     def apply( goal: OpenAssumption ) = ( goal -> goal ).success
+    override def toString = "currentGoal"
   }
+
+  /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
+  def haveInstance( formula: HOLFormula, polarity: Polarity ): Tactical[String] = Tactical {
+    def findInstances( labelledSequent: Sequent[( String, HOLFormula )] ): Seq[( String, Seq[LambdaExpression] )] = {
+      val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
+        case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity.inSuc  => ( l, vs, m )
+        case ( ( l, All.Block( vs, m ) ), i ) if i.isAnt && polarity.inAnt => ( l, vs, m )
+      }
+      for {
+        ( l, vs, m ) <- quantifiedFormulas.elements
+        subst <- syntacticMatching( List( m -> formula ), freeVariables( m ).diff( vs.toSet ).map( v => v -> v ).toMap )
+      } yield l -> subst( vs )
+    }
+
+    for {
+      goal <- currentGoal
+      inst <- findInstances( goal.labelledSequent ).headOption.
+        toTactical( s"Could not find instance $formula in " + ( if ( polarity.inSuc ) "succedent" else "antecedent" ), goal )
+      ( label, terms ) = inst
+      newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity.inSuc ) exR( label, terms: _* ) else allL( label, terms: _* )
+    } yield newLabel
+  }
+
+  def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
+    Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
 }

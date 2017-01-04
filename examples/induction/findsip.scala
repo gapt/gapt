@@ -1,10 +1,10 @@
 package at.logic.gapt.examples.induction
 import at.logic.gapt.examples.{ Script, UniformAssociativity3ExampleProof }
-import at.logic.gapt.expr.FOLTerm
-import at.logic.gapt.expr.hol.{ toNNF, simplify, lcomp }
-import at.logic.gapt.grammars.{ minimizeSipGrammar, SipGrammarMinimizationFormula, stableSipGrammar }
-import at.logic.gapt.proofs.expansion.{ FOLInstanceTermEncoding, ExpansionSequent }
-import at.logic.gapt.proofs.{ Suc, Ant, HOLSequent }
+import at.logic.gapt.expr.{ FOLTerm, Ti }
+import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
+import at.logic.gapt.grammars.{ SipGrammarMinimizationFormula, minimizeSipGrammar, stableSipGrammar }
+import at.logic.gapt.proofs.expansion.{ ExpansionSequent, InstanceTermEncoding }
+import at.logic.gapt.proofs.{ Ant, HOLSequent, Suc }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
@@ -34,7 +34,7 @@ object findsip extends Script {
 
   private val nLine = sys.props( "line.separator" )
 
-  val encoding = FOLInstanceTermEncoding( endSequent )
+  val encoding = InstanceTermEncoding( endSequent, Ti )
   var instanceLanguages = instanceSequents.map {
     case ( n, seq ) =>
       n -> encoding.encode( seq ).map( _.asInstanceOf[FOLTerm] )

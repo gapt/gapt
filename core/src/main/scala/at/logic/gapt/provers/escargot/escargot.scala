@@ -1,453 +1,17 @@
 package at.logic.gapt.provers.escargot
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.tptp.{ TptpParser, resolutionToTptp, tptpProblemToResolution }
 import at.logic.gapt.proofs._
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.utils.logging.Logger
-
-import scala.collection.mutable
-
-trait TermOrdering {
-  def lt( e1: LambdaExpression, e2: LambdaExpression ): Boolean = lt( e1, e2, treatVarsAsConsts = false )
-  def lt( e1: LambdaExpression, e2: LambdaExpression, treatVarsAsConsts: Boolean ): Boolean
-}
-
-case class LPO( precedence: Seq[Const] = Seq(), typeOrder: Set[( Ty, Ty )] = Set() ) extends TermOrdering {
-  val precIdx: Map[Const, Int] = precedence.zipWithIndex.toMap
-
-  def lt( e1: LambdaExpression, e2: LambdaExpression, treatVarsAsConsts: Boolean ): Boolean = {
-    val memo = mutable.Map[( LambdaExpression, LambdaExpression ), Boolean]()
-
-    def precLt( h1: LambdaExpression, h2: LambdaExpression ) =
-      ( h1, h2 ) match {
-        case ( c1: Const, c2: Const )                  => precIdx.getOrElse( c1, -1 ) < precIdx.getOrElse( c2, -1 )
-        case ( _: Var, _: Const ) if treatVarsAsConsts => true
-        case ( v1: Var, v2: Var ) if treatVarsAsConsts => v1.toString < v2.toString
-        case _                                         => false
-      }
-
-    def memoLt( e1: LambdaExpression, e2: LambdaExpression ): Boolean =
-      memo.getOrElseUpdate( ( e1, e2 ), typeOrder( e1.exptype, e2.exptype ) || {
-        val Apps( c1, as1 ) = e1
-        val Apps( c2, as2 ) = e2
-        if ( as2 contains e1 ) true
-        else if ( as2 exists { memoLt( e1, _ ) } ) true
-        else if ( precLt( c1, c2 ) ) as1.forall { memoLt( _, e2 ) }
-        else if ( c1 == c2 ) {
-          def lex( as1: List[LambdaExpression], as2: List[LambdaExpression] ): Boolean =
-            ( as1, as2 ) match {
-              case ( a1 :: as1_, a2 :: as2_ ) if a1 == a2 => lex( as1_, as2_ )
-              case ( a1 :: as1_, a2 :: as2_ ) if memoLt( a1, a2 ) => as1_ forall { memoLt( _, e2 ) }
-              case _ => false
-            }
-          lex( as1, as2 )
-        } else false
-      } )
-
-    memoLt( e1, e2 )
-  }
-}
-
-case class KBO( precedence: Seq[Const], constWeights: Map[Const, Int] = Map() ) extends TermOrdering {
-  val precIdx: Map[Const, Int] = precedence.zipWithIndex.toMap
-  val varWeight = ( constWeights.filterKeys { arity( _ ) == 1 }.values.toSet + 1 ).min
-
-  def lt( e1: LambdaExpression, e2: LambdaExpression, treatVarsAsConsts: Boolean ): Boolean = {
-    val w1 = weight( e1 )
-    val w2 = weight( e2 )
-
-    if ( w1 > w2 ) return false
-    if ( !treatVarsAsConsts ) if ( occs( e1 ) diff occs( e2 ) nonEmpty ) return false
-
-    if ( w1 < w2 ) return true
-
-    val Apps( c1, as1 ) = e1
-    val Apps( c2, as2 ) = e2
-
-    def lex( as1: List[LambdaExpression], as2: List[LambdaExpression] ): Boolean =
-      ( as1, as2 ) match {
-        case ( a1 :: as1_, a2 :: as2_ ) if a1 == a2 => lex( as1_, as2_ )
-        case ( a1 :: as1_, a2 :: as2_ ) if lt( a1, a2, treatVarsAsConsts ) => true
-        case _ => false
-      }
-
-    val precLt = ( c1, c2 ) match {
-      case ( c1: Const, c2: Const )                  => precIdx.getOrElse( c1, -1 ) < precIdx.getOrElse( c2, -1 )
-      case ( _: Var, _: Const ) if treatVarsAsConsts => true
-      case ( v1: Var, v2: Var ) if treatVarsAsConsts => v1.toString < v2.toString
-      case _                                         => false
-    }
-
-    if ( precLt ) true
-    else if ( c1 == c2 ) lex( as1, as2 )
-    else false
-  }
-
-  def occs( expr: LambdaExpression ): Seq[Var] = {
-    val r = Seq.newBuilder[Var]
-    def f( e: LambdaExpression ): Unit = e match {
-      case App( a, b ) =>
-        f( a ); f( b )
-      case v: Var => r += v
-      case _      =>
-    }
-    f( expr )
-    r.result()
-  }
-
-  def weight( expr: LambdaExpression ): Int = expr match {
-    case c: Const           => constWeights.getOrElse( c, 1 )
-    case v: Var             => varWeight
-    case Apps( head, args ) => weight( head ) + args.map( weight ).sum
-  }
-}
-
-class EscargotLoop extends Logger {
-  var termOrdering: TermOrdering = LPO()
-  var hasEquality = true
-  var propositional = false
-
-  class Cls( val proof: ResolutionProof, val index: Int ) {
-    def clause = proof.conclusion
-
-    val maximal = for {
-      ( a, i ) <- clause.zipWithIndex.elements
-      if !clause.elements.exists { x => a != x && termOrdering.lt( a, x ) }
-    } yield i
-
-    val selected = ( maximal.filter { _.isAnt } ++ clause.indicesSequent.antecedent ).take( 1 )
-
-    val weight = clause.elements.map { expressionSize( _ ) }.sum
-
-    override def toString = s"[$index] $clause   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
-    override def hashCode = index
-  }
-
-  private var clsIdx = 0
-  def InputCls( clause: HOLClause ): Cls = { clsIdx += 1; new Cls( InputClause( clause ), clsIdx ) }
-  def SimpCls( parent: Cls, newProof: ResolutionProof ): Cls = new Cls( newProof, parent.index )
-  def DerivedCls( parent: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
-  def DerivedCls( parent1: Cls, parent2: Cls, newProof: ResolutionProof ): Cls = { clsIdx += 1; new Cls( newProof, clsIdx ) }
-
-  def subsume( a: HOLClause, b: HOLClause ): Option[Substitution] =
-    if ( propositional ) {
-      if ( a isSubMultisetOf b ) Some( Substitution() )
-      else None
-    } else clauseSubsumption( a, b, multisetSubsumption = true )
-  def unify( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
-    if ( propositional ) {
-      if ( a == b ) Some( Substitution() )
-      else None
-    } else syntacticMGU( a, b )
-  def matching( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
-    if ( propositional ) {
-      if ( a == b ) Some( Substitution() )
-      else None
-    } else syntacticMatching( a, b )
-
-  var newlyDerived = mutable.Set[Cls]()
-  val usable = mutable.Set[Cls]()
-  val workedOff = mutable.Set[Cls]()
-
-  def preprocessing() = {
-    deleteDuplicates()
-    if ( hasEquality ) unitRewriteNew()
-    if ( hasEquality ) orderEquations()
-    tautologyDeletion()
-    if ( hasEquality ) equalityResolution()
-    if ( hasEquality ) reflexivityDeletion()
-    factorClauses()
-    deleteDuplicates()
-    subsumptionDeletion()
-  }
-
-  def deleteDuplicates() =
-    for ( ( _, group ) <- newlyDerived groupBy { _.clause } )
-      newlyDerived --= group.tail
-
-  def unitRewriteNew() =
-    for ( cls <- newlyDerived if unitRewriting( workedOff, cls ) )
-      newlyDerived -= cls
-
-  def orderEquations() =
-    newlyDerived = newlyDerived map { cls =>
-      val toFlip = cls.clause filter {
-        case Eq( t, s ) => termOrdering.lt( s, t )
-        case _          => false
-      }
-      var p = cls.proof
-      for ( e <- toFlip ) p = Flip( p, p.conclusion indexOf e )
-      SimpCls( cls, p )
-    }
-
-  def factorClauses() =
-    newlyDerived = newlyDerived map { cls =>
-      SimpCls( cls, Factor( cls.proof )._1 )
-    }
-
-  def tautologyDeletion() =
-    newlyDerived = newlyDerived filterNot { _.clause.isTaut }
-
-  def reflexivityDeletion() =
-    newlyDerived = newlyDerived filterNot { _.clause.succedent.collect { case Eq( t, t_ ) if t == t_ => () }.nonEmpty }
-
-  def equalityResolution() =
-    newlyDerived = newlyDerived map { cls =>
-      val refls = cls.clause.antecedent collect { case Eq( t, t_ ) if t == t_ => t }
-      SimpCls( cls, refls.foldRight( cls.proof )( ( t, proof ) =>
-        Resolution( ReflexivityClause( t ), Suc( 0 ), proof, proof.conclusion.indexOfInAnt( t === t ) ) ) )
-    }
-
-  def canonize( expr: LambdaExpression ): LambdaExpression = {
-    val eqs = for {
-      c <- workedOff
-      Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
-      if matching( t, s ).isDefined
-      if matching( s, t ).isDefined
-      ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
-      if !termOrdering.lt( t_, s_ )
-    } yield ( t_, s_, c, leftToRight )
-    if ( eqs isEmpty ) return expr
-
-    var e = expr
-    var didRewrite = true
-    while ( didRewrite ) {
-      didRewrite = false
-      for {
-        ( subterm, pos ) <- LambdaPosition getPositions e groupBy { e( _ ) } if !didRewrite
-        if !subterm.isInstanceOf[Var]
-        ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
-        subst <- matching( t_, subterm )
-        if termOrdering.lt( subst( s_ ), subterm, treatVarsAsConsts = true )
-      } {
-        for ( p <- pos ) e = e.replace( p, subst( s_ ) )
-        didRewrite = true
-      }
-    }
-    e
-  }
-
-  def isReflModE( cls: Cls ) =
-    cls.clause.succedent exists {
-      case Eq( t, s ) => canonize( t ) == canonize( s )
-      case _          => false
-    }
-
-  def clauseProcessing() = {
-    usable ++= newlyDerived
-    newlyDerived.clear()
-  }
-
-  def subsumptionDeletion() =
-    for {
-      cls1 <- newlyDerived
-      cls2 <- newlyDerived if cls1 != cls2
-      if newlyDerived contains cls1
-      _ <- subsume( cls2.clause, cls1.clause )
-    } newlyDerived -= cls1
-
-  def forwardSubsumption() =
-    for {
-      existing <- workedOff
-      cls <- newlyDerived
-      _ <- subsume( existing.clause, cls.clause )
-    } newlyDerived -= cls
-
-  def backwardSubsumption( given: Cls ) =
-    for {
-      existing <- workedOff
-      _ <- subsume( given.clause, existing.clause )
-    } workedOff -= existing
-
-  def inferenceComputation( given: Cls ): Unit = {
-    if ( hasEquality ) {
-      unitRewriting( given )
-      if ( !workedOff.contains( given ) )
-        return
-    }
-
-    orderedResolution( given )
-    if ( hasEquality ) orderedParamodulation( given )
-    factoring( given )
-    if ( hasEquality ) unifyingEqualityResolution( given )
-  }
-
-  def factoring( given: Cls ): Unit =
-    for {
-      i <- given.maximal; j <- given.maximal
-      if i < j && i.sameSideAs( j )
-      mgu <- unify( given.clause( i ), given.clause( j ) )
-    } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
-
-  def unifyingEqualityResolution( given: Cls ): Unit =
-    for {
-      i <- if ( given.selected.nonEmpty ) given.selected else given.maximal if i.isAnt
-      Eq( t, s ) <- Some( given.clause( i ) )
-      mgu <- unify( t, s )
-    } newlyDerived += DerivedCls( given, Instance( given.proof, mgu ) )
-
-  def orderedResolution( given: Cls ): Unit =
-    for ( existing <- workedOff ) {
-      orderedResolution( given, existing )
-      orderedResolution( existing, given )
-    }
-
-  def orderedResolution( c1: Cls, c2: Cls ): Unit = {
-    if ( c2.selected.nonEmpty ) return
-    val renaming = Substitution( rename( freeVariables( c2.clause ), freeVariables( c1.clause ) ) )
-    val p2_ = Instance( c2.proof, renaming )
-    for {
-      i1 <- if ( c1.selected.nonEmpty ) c1.selected else c1.maximal
-      a1 = c1.clause( i1 ) if i1 isAnt;
-      i2 <- c2.maximal if i2 isSuc;
-      mgu <- unify( p2_.conclusion( i2 ), a1 )
-      if c1.selected.nonEmpty || !c1.maximal.exists { i1_ => i1_ != i1 && termOrdering.lt( a1, mgu( c1.clause( i1_ ) ) ) }
-      if !c2.maximal.exists { i2_ => i2_ != i2 && termOrdering.lt( mgu( p2_.conclusion( i2 ) ), mgu( p2_.conclusion( i2_ ) ) ) }
-      ( p1__, conn1 ) = Factor( Instance( c1.proof, mgu ) )
-      ( p2__, conn2 ) = Factor( Instance( p2_, mgu ) )
-    } newlyDerived += DerivedCls( c1, c2, Resolution( p2__, conn2 child i2, p1__, conn1 child i1 ) )
-  }
-
-  def orderedParamodulation( given: Cls ): Unit =
-    for ( existing <- workedOff ) {
-      orderedParamodulation( given, existing )
-      orderedParamodulation( existing, given )
-    }
-
-  def orderedParamodulation( c1: Cls, c2: Cls ): Unit = {
-    if ( c1.selected.nonEmpty ) return
-    val renaming = Substitution( rename( freeVariables( c2.clause ), freeVariables( c1.clause ) ) )
-    val p2_ = Instance( c2.proof, renaming )
-
-    def isReductive( atom: HOLFormula, i: SequentIndex, pos: LambdaPosition ): Boolean =
-      ( atom, i, pos.toList ) match {
-        case ( Eq( t, s ), _: Suc, 2 :: _ )      => !termOrdering.lt( s, t )
-        case ( Eq( t, s ), _: Suc, 1 :: 2 :: _ ) => !termOrdering.lt( t, s )
-        case _                                   => true
-      }
-
-    for {
-      i1 <- c1.maximal; Eq( t, s ) <- Some( c1.clause( i1 ) ) if i1.isSuc
-      ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) ) if !termOrdering.lt( t_, s_ )
-      i2 <- if ( c2.selected.nonEmpty ) c2.selected else c2.maximal
-      a2 = p2_.conclusion( i2 )
-      ( st2, pos2 ) <- LambdaPosition getPositions a2 groupBy { a2( _ ) }
-      if !st2.isInstanceOf[Var]
-      mgu <- unify( t_, st2 )
-      if !termOrdering.lt( mgu( t_ ), mgu( s_ ) )
-      pos2_ = pos2 filter { isReductive( mgu( a2 ), i2, _ ) } if pos2_.nonEmpty
-      p1__ = Instance( c1.proof, mgu )
-      p2__ = Instance( p2_, mgu )
-      ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
-      context = replacementContext( s.exptype, atom, pos2_.distinct, t, s )
-
-    } newlyDerived += DerivedCls( c1, c2, Paramodulation( p1__, i1, p2__, i2, context, leftToRight ) )
-  }
-
-  def unitRewriting( given: Cls ): Unit = {
-    if ( unitRewriting( workedOff - given, given ) )
-      workedOff -= given
-    else
-      for ( existing <- workedOff if existing != given if unitRewriting( Some( given ), existing ) )
-        workedOff -= existing
-  }
-
-  def unitRewriting( cs: Traversable[Cls], c2: Cls ): Boolean = {
-    val eqs = for {
-      c <- cs
-      Sequent( Seq(), Seq( Eq( t, s ) ) ) <- Seq( c.clause )
-      ( t_, s_, leftToRight ) <- Seq( ( t, s, true ), ( s, t, false ) )
-      if !t_.isInstanceOf[Var]
-      if !termOrdering.lt( t_, s_ )
-    } yield ( t_, s_, c, leftToRight )
-    if ( eqs isEmpty ) return false
-
-    var p = c2.proof
-    // Depends on the implementation detail that Paramodulation does not change indices.
-    for ( i <- p.conclusion.indices ) {
-      var didRewrite = true
-      while ( didRewrite ) {
-        didRewrite = false
-        for {
-          ( subterm, pos ) <- LambdaPosition getPositions p.conclusion( i ) groupBy { p.conclusion( i )( _ ) } if !didRewrite
-          if !subterm.isInstanceOf[Var]
-          ( t_, s_, c1, leftToRight ) <- eqs if !didRewrite
-          subst <- matching( t_, subterm )
-          if termOrdering.lt( subst( s_ ), subterm )
-        } {
-          p = Paramodulation( Instance( c1.proof, subst ), Suc( 0 ),
-            p, i, replacementContext( t_.exptype, p.conclusion( i ), pos.toSeq ), leftToRight )
-          didRewrite = true
-        }
-      }
-    }
-
-    if ( p != c2.proof ) {
-      newlyDerived += SimpCls( c2, p )
-      true
-    } else {
-      false
-    }
-  }
-
-  def isSubsumedByWorkedOff( given: Cls ) =
-    workedOff exists { cls => subsume( cls.clause, given.clause ) isDefined }
-
-  var strategy = 0
-  def choose(): Cls = {
-    strategy = ( strategy + 1 ) % 6
-    if ( strategy < 1 ) usable minBy { _.index }
-    else if ( strategy < 3 ) {
-      val pos = usable filter { _.clause.antecedent.isEmpty }
-      if ( pos isEmpty ) choose()
-      else pos minBy { cls => ( cls.weight, cls.index ) }
-    } else if ( strategy < 5 ) {
-      val nonPos = usable filter { _.clause.antecedent.nonEmpty }
-      if ( nonPos isEmpty ) choose()
-      else nonPos minBy { cls => ( cls.weight, cls.index ) }
-    } else {
-      usable minBy { cls => ( cls.weight, cls.index ) }
-    }
-  }
-
-  def loop(): Option[ResolutionProof] = {
-    preprocessing()
-
-    clauseProcessing()
-
-    while ( usable.nonEmpty ) {
-      for ( cls <- usable if cls.clause.isEmpty )
-        return Some( cls.proof )
-
-      val given = choose()
-      usable -= given
-
-      val shouldDiscard = isSubsumedByWorkedOff( given ) || ( hasEquality && isReflModE( given ) )
-
-      debug( s"[wo=${workedOff.size},us=${usable.size}] ${if ( shouldDiscard ) "discarded" else "kept"}: $given" )
-
-      if ( !shouldDiscard ) {
-        backwardSubsumption( given )
-        workedOff += given
-
-        inferenceComputation( given )
-
-        preprocessing()
-        forwardSubsumption()
-
-        clauseProcessing()
-
-        // TODO: check workedOff for isReflModE
-      }
-    }
-
-    None
-  }
-}
-
-object Escargot extends Escargot( equality = true, propositional = false ) {
-  def lpoHeuristic( cnf: Traversable[HOLClause] ): LPO = {
+import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
+import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
+import at.logic.gapt.utils.Logger
+import ammonite.ops._
+
+object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
+  def lpoHeuristic( cnf: Traversable[HOLSequent] ): LPO = {
     val consts = constants( cnf flatMap { _.elements } )
 
     val boolOnTermLevel = consts exists { case Const( _, FunctionType( _, from ) ) => from contains To }
@@ -461,15 +25,92 @@ object Escargot extends Escargot( equality = true, propositional = false ) {
 
     LPO( precedence, if ( boolOnTermLevel ) Set() else ( types - To ) map { ( _, To ) } )
   }
-}
 
-class Escargot( equality: Boolean, propositional: Boolean ) extends ResolutionProver {
-  override def getRobinsonProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
-    val loop = new EscargotLoop
-    loop.hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
-    loop.propositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
-    loop.termOrdering = Escargot.lpoHeuristic( cnf )
-    loop.newlyDerived ++= cnf.map { loop.InputCls }
-    loop.loop()
+  def setupDefaults(
+    state:     EscargotState,
+    splitting: Boolean, equality: Boolean, propositional: Boolean
+  ) = {
+    val standardInferences = new StandardInferences( state, propositional )
+    import standardInferences._
+
+    // Preprocessing rules
+    state.preprocessingRules :+= DuplicateDeletion
+    if ( equality ) {
+      state.preprocessingRules :+= ForwardUnitRewriting
+      state.preprocessingRules :+= OrderEquations
+      state.preprocessingRules :+= EqualityResolution
+      state.preprocessingRules :+= ReflexivityDeletion
+    }
+    state.preprocessingRules :+= TautologyDeletion
+    state.preprocessingRules :+= ClauseFactoring
+    state.preprocessingRules :+= DuplicateDeletion
+    state.preprocessingRules :+= SubsumptionInterreduction
+    state.preprocessingRules :+= ForwardSubsumption
+
+    // Inference rules
+    state.inferences :+= ForwardSubsumption
+    if ( equality ) state.inferences :+= ReflModEqDeletion
+    state.inferences :+= BackwardSubsumption
+    if ( equality ) {
+      state.inferences :+= ForwardUnitRewriting
+      state.inferences :+= BackwardUnitRewriting
+    }
+    if ( splitting ) state.inferences :+= AvatarSplitting
+    state.inferences :+= OrderedResolution
+    state.inferences :+= Factoring
+    if ( equality ) {
+      state.inferences :+= Superposition
+      state.inferences :+= UnifyingEqualityResolution
+    }
   }
+
+  def makeVerbose() = Logger.makeVerbose( classOf[EscargotState] )
+
+  def main( args: Array[String] ): Unit = {
+    Logger.useTptpComments()
+
+    val tptpInputFile = args.toSeq match {
+      case Seq() =>
+        println( "Usage: escargot [-v] tptp-problem.p" )
+        sys.exit( 1 )
+      case Seq( "-v", file ) =>
+        makeVerbose()
+        file
+      case Seq( file ) => file
+    }
+
+    val tptp = TptpParser.load( FilePath( tptpInputFile ) )
+    getResolutionProof( structuralCNF.onProofs( tptpProblemToResolution( tptp ) ) ) match {
+      case Some( proof ) =>
+        println( "% SZS status Unsatisfiable" )
+        println( "% SZS output start CNFRefutation" )
+        print( resolutionToTptp( proof ) )
+        println( "% SZS output end CNFRefutation" )
+      case None =>
+        println( "% SZS status Satisfiable" )
+    }
+  }
+}
+object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
+
+class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
+  override def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
+    val hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
+    val isPropositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
+
+    val state = new EscargotState
+    Escargot.setupDefaults( state, splitting, hasEquality, isPropositional )
+    state.nameGen = rename.awayFrom( cnf.view.flatMap( constants( _ ) ).toSet )
+    state.termOrdering = Escargot.lpoHeuristic( cnf )
+    state.newlyDerived ++= cnf.map { state.InputCls }
+    state.loop()
+  }
+
+  def getAtomicLKProof( sequent: HOLClause ): Option[LKProof] =
+    groundFreeVariables.wrap( sequent ) { sequent =>
+      getResolutionProof( sequent.map( _.asInstanceOf[HOLAtom] ).
+        map( Sequent() :+ _, _ +: Sequent() ).elements ) map { resolution =>
+        UnitResolutionToLKProof( resolution )
+      }
+    }
 }

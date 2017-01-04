@@ -1,11 +1,11 @@
 package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLSubTerms
+import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.Utils.numeral
-import at.logic.gapt.expr.hol.{ toNNF, lcomp, simplify }
-import at.logic.gapt.provers.maxsat.{ bestAvailableMaxSatSolver, MaxSATSolver }
-import at.logic.gapt.utils.logging.Logger
+import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
+import at.logic.gapt.utils.Logger
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -20,7 +20,7 @@ object SipGrammar {
 
   def gamma_i( i: Int ) = FOLVar( s"γ_$i" )
 
-  def instantiate( prod: Production, n: Int ): Set[Production] = prod match {
+  def instantiate( prod: Production, n: Int ): Set[VTRATG.Production] = ( prod match {
     case ( `tau`, r ) =>
       var instanceProductions = Set[Production]()
       if ( !freeVariables( r ).contains( gamma ) )
@@ -36,7 +36,7 @@ object SipGrammar {
       gamma_i( i ) -> FOLSubstitution( alpha -> numeral( n ), nu -> numeral( i ), gamma -> gamma_i( i + 1 ) )( r )
     } toSet
     case ( `gammaEnd`, r ) => Set( gamma_i( n ) -> FOLSubstitution( alpha -> numeral( n ) )( r ) )
-  }
+  } ).map { case ( l, r ) => List( l ) -> List( r ) }
 }
 
 case class SipGrammar( productions: Set[SipGrammar.Production] ) {
@@ -45,7 +45,7 @@ case class SipGrammar( productions: Set[SipGrammar.Production] ) {
   override def toString: String = productions.map { case ( a, t ) => s"$a -> $t" }.toSeq.sorted.mkString( sys.props( "line.separator" ) )
 
   def instanceGrammar( n: Int ) =
-    TratGrammar( tau, tau +: ( 0 until n ).inclusive.map( gamma_i ),
+    VTRATG( tau, List( tau ) +: ( 0 until n ).inclusive.map( gamma_i ).map( List( _ ) ),
       productions flatMap { p => instantiate( p, n ) } )
 }
 
@@ -58,7 +58,7 @@ object stableSipGrammar {
     val allTerms = instanceLanguages.flatMap( _._2 )
     val topLevelStableTerms = stableTerms( allTerms, Seq( gamma, alpha, nu ) ).filter( !_.isInstanceOf[FOLVar] )
     val argumentStableTerms = stableTerms(
-      FOLSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
+      folSubTerms( allTerms flatMap { case FOLFunction( _, as ) => as } ),
       Seq( gamma, alpha, nu )
     )
 
@@ -82,30 +82,16 @@ object stableSipGrammar {
   }
 }
 
-object atoms {
-  def apply( f: FOLFormula ): Set[FOLFormula] = f match {
-    case FOLAtom( _, _ )  => Set( f )
-    case And( x, y )      => apply( x ) union apply( y )
-    case Or( x, y )       => apply( x ) union apply( y )
-    case Imp( x, y )      => apply( x ) union apply( y )
-    case Neg( x )         => apply( x )
-    case Top() | Bottom() => Set()
-    case Ex( x, y )       => apply( y )
-    case All( x, y )      => apply( y )
-  }
-}
-
-// TODO: only supports one instance language at the moment
 case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   def productionIsIncluded( p: SipGrammar.Production ) = FOLAtom( s"sp,$p" )
 
   def coversLanguageFamily( langs: Seq[stableSipGrammar.InstanceLanguage] ) = {
-    val cs = Seq.newBuilder[FOLFormula]
+    val cs = Seq.newBuilder[HOLFormula]
     langs foreach {
       case ( n, lang ) =>
-        val tratMinForm = new GrammarMinimizationFormula( g.instanceGrammar( n ) ) {
-          override def productionIsIncluded( p: TratGrammar.Production ) = FOLAtom( s"p,$n,$p" )
-          override def valueOfNonTerminal( t: FOLTerm, a: FOLVar, rest: FOLTerm ) = FOLAtom( s"v,$n,$t,$a=$rest" )
+        val tratMinForm = new VectGrammarMinimizationFormula( g.instanceGrammar( n ) ) {
+          override def productionIsIncluded( p: VTRATG.Production ) = FOLAtom( s"p,$n,$p" )
+          override def valueOfNonTerminal( t: LambdaExpression, a: Var, rest: LambdaExpression ) = FOLAtom( s"v,$n,$t,$a=$rest" )
         }
         val instanceCovForm = tratMinForm.coversLanguage( lang )
         cs += instanceCovForm

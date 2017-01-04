@@ -11,17 +11,6 @@ import scala.collection.GenTraversable
 import scala.collection.mutable
 
 /**
- * Matches constants and variables, but nothing else.
- */
-object VarOrConst {
-  def unapply( e: LambdaExpression ): Option[( String, Ty )] = e match {
-    case Var( name, et )   => Some( ( name, et ) )
-    case Const( name, et ) => Some( ( name, et ) )
-    case _                 => None
-  }
-}
-
-/**
  * A lambda term is in variable-normal form (VNF) if different binders bind
  * different variables, and bound variables are disjoint from the free ones.
  */
@@ -47,26 +36,22 @@ object isInVNF {
  * and the bound variables are disjoint from the free ones.
  */
 object toVNF {
-  def apply( e: LambdaExpression ): LambdaExpression = {
-    val seen = mutable.Set[Var]()
-
-    def makeDistinct( e: LambdaExpression ): LambdaExpression = e match {
-      case v @ Var( _, _ ) =>
-        seen += v; v
-      case Const( _, _ ) => e
-      case App( a, b )   => App( makeDistinct( a ), makeDistinct( b ) )
-      case Abs( v, a ) if seen contains v =>
-        val newVar = rename( v, seen )
-        makeDistinct( Abs( newVar, Substitution( v -> newVar )( a ) ) )
-      case Abs( v, a ) if !( seen contains v ) =>
-        seen += v
-        Abs( v, makeDistinct( a ) )
-    }
-
-    makeDistinct( e )
+  def apply( e: LambdaExpression, nameGen: NameGenerator ): LambdaExpression = e match {
+    case v: VarOrConst => v
+    case App( a, b )   => App( apply( a, nameGen ), apply( b, nameGen ) )
+    case Abs( v, a ) =>
+      val v_ = nameGen.fresh( v )
+      if ( v == v_ ) Abs( v, apply( a, nameGen ) )
+      else Abs( v_, apply( Substitution( v -> v_ )( a ), nameGen ) )
   }
 
+  def apply( e: LambdaExpression ): LambdaExpression = apply( e, rename.awayFrom( freeVariables( e ) ) )
   def apply( f: HOLFormula ): HOLFormula = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+
+  def apply( sequent: HOLSequent ): HOLSequent = {
+    val nameGen = rename.awayFrom( freeVariables( sequent ) )
+    sequent.map( apply( _, nameGen ).asInstanceOf[HOLFormula] )
+  }
 }
 
 /**
@@ -120,12 +105,11 @@ object freeVariables {
  * Returns the set of non-logical constants occuring in the given argument.
  */
 object constants {
-  def apply( expression: LambdaExpression ): Set[Const] = {
+  def all( expression: LambdaExpression ): Set[Const] = {
     val cs = mutable.Set[Const]()
     def f( e: LambdaExpression ): Unit = e match {
-      case _: Var             =>
-      case _: LogicalConstant =>
-      case c: Const           => cs += c
+      case _: Var   =>
+      case c: Const => cs += c
       case App( exp, arg ) =>
         f( exp ); f( arg )
       case Abs( v, exp ) => f( exp )
@@ -133,6 +117,8 @@ object constants {
     f( expression )
     cs.toSet
   }
+  def apply( expression: LambdaExpression ): Set[Const] =
+    all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
   def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
 
@@ -164,24 +150,22 @@ object expressionSize {
  * is not in the blackList.
  */
 object rename {
-  def awayFrom( blacklist: Iterable[Var] ): NameGenerator =
-    new NameGenerator( blacklist map { _.name } )
-  def awayFrom( blacklist: Iterable[Const] )( implicit dummyImplicit: DummyImplicit ): NameGenerator =
+  def awayFrom( blacklist: Iterable[VarOrConst] ): NameGenerator =
     new NameGenerator( blacklist map { _.name } )
 
-  def apply( v: Var, blackList: Iterable[Var] ): Var = awayFrom( blackList ).fresh( v )
-  def apply( v: FOLVar, blackList: Iterable[Var] ): FOLVar = awayFrom( blackList ).fresh( v )
-  def apply( c: Const, blackList: Iterable[Const] ): Const = awayFrom( blackList ).fresh( c )
-  def apply( c: FOLConst, blackList: Iterable[Const] ): FOLConst = awayFrom( blackList ).fresh( c )
+  def apply( v: Var, blackList: Iterable[VarOrConst] ): Var = awayFrom( blackList ).fresh( v )
+  def apply( v: FOLVar, blackList: Iterable[VarOrConst] ): FOLVar = awayFrom( blackList ).fresh( v )
+  def apply( c: Const, blackList: Iterable[VarOrConst] ): Const = awayFrom( blackList ).fresh( c )
+  def apply( c: FOLConst, blackList: Iterable[VarOrConst] ): FOLConst = awayFrom( blackList ).fresh( c )
 
   /**
    * renames a set of variables to pairwise distinct variables while avoiding names from blackList.
    */
-  def apply( vs: Iterable[FOLVar], blackList: Iterable[FOLVar] ): Map[FOLVar, FOLVar] = {
+  def apply( vs: Iterable[FOLVar], blackList: Iterable[VarOrConst] ): Map[FOLVar, FOLVar] = {
     val nameGen = awayFrom( blackList )
     vs map { v => v -> nameGen.fresh( v ) } toMap
   }
-  def apply( vs: Iterable[Var], blackList: Iterable[Var] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
+  def apply( vs: Iterable[Var], blackList: Iterable[VarOrConst] )( implicit dummyImplicit: DummyImplicit ): Map[Var, Var] = {
     val nameGen = awayFrom( blackList )
     vs map { v => v -> nameGen.fresh( v ) } toMap
   }

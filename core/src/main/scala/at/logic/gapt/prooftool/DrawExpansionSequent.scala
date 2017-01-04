@@ -2,66 +2,39 @@ package at.logic.gapt.prooftool
 
 // The code in this file displays expansion sequents.
 
-import at.logic.gapt.utils.logging.Logger
-
 import swing._
-import java.awt.{ Dimension, Font, Color }
+import java.awt.{ Color, Dimension, Font }
 import java.awt.Font._
-import scala.swing.event.{ MouseExited, MouseEntered, UIElementResized, MouseClicked, Event }
+
+import scala.swing.event.{ Event, MouseClicked, MouseEntered, MouseExited, UIElementResized }
 import at.logic.gapt.proofs.expansion._
 import java.awt.event.MouseEvent
 
-trait DrawExpSeqLogger extends Logger {
-  override def loggerName = "DrawExpSeqLogger"
-}
+import at.logic.gapt.utils.Logger
 
 /**
  * These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
  * @param from Number of the first tree to be switched
  * @param to Number of the second tree to be switched
  */
-private[prooftool] class SwitchEvent( val from: Int, val to: Int ) extends Event
+private[prooftool] case class SwitchEvent( from: Int, to: Int ) extends Event
 
 /**
  * This class takes care of drawing an ExpansionSequent.
  * @param main: The main window that this belongs to.
  * @param expSequent The expansion sequent to be displayed
- * @param fSize The font size.
  */
-class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: ExpansionSequent,
-                            private val fSize: Int ) extends SplitPane( Orientation.Vertical ) with DrawExpSeqLogger {
-
+class DrawExpansionSequent(
+    val main:       ExpansionSequentViewer,
+    val expSequent: ExpansionSequent
+) extends SplitPane( Orientation.Vertical ) {
   //Code for window geometry and appearance
   background = new Color( 255, 255, 255 )
-  private val ft = new Font( SANS_SERIF, PLAIN, fSize )
-  preferredSize = calculateOptimalSize
-  dividerLocation =
-    /*if ( expSequent.antecedent.isEmpty )
-      preferredSize.width / 5
-    else if ( expSequent.succedent.isEmpty )
-      preferredSize.width * 4 / 5
-    else*/
-    preferredSize.width / 2
-
-  listenTo( main.scrollPane )
-  reactions += {
-    case UIElementResized( main.scrollPane ) =>
-      preferredSize = calculateOptimalSize
-      revalidate()
-  }
-
-  def calculateOptimalSize = {
-    val width = main.scrollPane.size.width
-    val height = main.scrollPane.size.height
-    if ( width > 100 && height > 200 )
-      new Dimension( width - 70, height - 150 )
-    else new Dimension( width, height )
-  }
 
   //Code for contents
   val mExpSequent = expSequent
-  val antecedentPanel: CedentPanel = new CedentPanel( main, mExpSequent.antecedent, "Antecedent", ft )
-  val succedentPanel: CedentPanel = new CedentPanel( main, mExpSequent.succedent, "Succedent", ft )
+  val antecedentPanel: CedentPanel = new CedentPanel( main, mExpSequent.antecedent, "Antecedent" )
+  val succedentPanel: CedentPanel = new CedentPanel( main, mExpSequent.succedent, "Succedent" )
   leftComponent = antecedentPanel
   rightComponent = succedentPanel
 }
@@ -70,13 +43,12 @@ class DrawExpansionSequent( val main: ExpansionSequentViewer, val expSequent: Ex
  * Class for displaying a list of expansion trees and a title.
  * @param cedent The list of expansion trees to be displayed
  * @param title The title to be displayed at the top
- * @param ft The font to be used
  */
-class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree], val title: String, val ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
+class CedentPanel( val main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree], val title: String ) extends BoxPanel( Orientation.Vertical ) {
 
   //Code for the title label
   val titleLabel = new Label( title ) {
-    font = ft.deriveFont( Font.BOLD )
+    font = main.font.deriveFont( Font.BOLD )
     opaque = true
     border = Swing.EmptyBorder( 10 )
     listenTo( mouse.clicks, mouse.moves )
@@ -89,7 +61,7 @@ class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree],
   }
 
   //Code for the expansion tree list
-  var treeList = new TreeListPanel( main, cedent, ft ) //treeList is the panel that contains the list of trees. It's contained in a ScrollPane.
+  var treeList = new TreeListPanel( main, cedent ) //treeList is the panel that contains the list of trees. It's contained in a ScrollPane.
   val scrollPane = new ScrollPane {
     peer.getVerticalScrollBar.setUnitIncrement( 20 )
     peer.getHorizontalScrollBar.setUnitIncrement( 20 )
@@ -100,14 +72,20 @@ class CedentPanel( main: ExpansionSequentViewer, val cedent: Seq[ExpansionTree],
   //Add the title label and the scroll pane to the contents
   contents += titleLabel
   contents += scrollPane
+
+  listenTo( main.publisher )
+
+  reactions += {
+    case FontChanged =>
+      titleLabel.font = main.font.deriveFont( Font.BOLD )
+  }
 }
 
 /**
  * Class that displays a list of expansion trees.
  * @param trees The list of trees to be displayed
- * @param ft The font
  */
-class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree], ft: Font ) extends BoxPanel( Orientation.Vertical ) with DrawExpSeqLogger {
+class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree] ) extends BoxPanel( Orientation.Vertical ) {
   background = new Color( 255, 255, 255 )
 
   val n = trees.length
@@ -116,8 +94,8 @@ class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree], ft
   numLabels.foreach { listenTo( _ ) }
 
   val drawnTrees = new Array[DrawExpansionTree]( n ) // Draw all the trees. This is a mutable array so we can reorder the drawn trees.
-  for ( i <- 0 to n - 1 )
-    drawnTrees( i ) = new DrawExpansionTree( main, trees( i ), ft )
+  for ( i <- 0 until n )
+    drawnTrees( i ) = DrawExpansionTree( main, trees( i ) )
 
   drawLines()
 
@@ -175,7 +153,7 @@ class TreeListPanel( main: ExpansionSequentViewer, trees: Seq[ExpansionTree], ft
             if ( that == this ) // If this is already selected, it becomes deselected.
               deselect()
             else { // If another numLabel is selected, a SwitchEvent is published and the other label is deselected.
-              publish( new SwitchEvent( this.number, that.number ) )
+              publish( SwitchEvent( this.number, that.number ) )
               that.deselect()
             }
         }

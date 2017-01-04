@@ -97,8 +97,6 @@ abstract class LambdaExpression {
   def replace( pos: HOLPosition, replacement: LambdaExpression ): LambdaExpression =
     HOLPosition.replace( this, pos, replacement )
 
-  def replace( pos: Seq[HOLPosition], replacement: LambdaExpression ): LambdaExpression = HOLPosition.replace( this, pos, replacement )
-
   /**
    * Tests whether this expression has a subexpression at a given position.
    *
@@ -139,6 +137,11 @@ abstract class LambdaExpression {
   def toSigRelativeString( implicit sig: BabelSignature ) =
     new BabelExporter( unicode = true, sig = sig ).export( this )
 
+  def toUntypedString( implicit sig: BabelSignature ) =
+    new BabelExporter( unicode = true, sig = implicitly, omitTypes = true ).export( this )
+  def toUntypedAsciiString( implicit sig: BabelSignature ) =
+    new BabelExporter( unicode = false, sig = implicitly, omitTypes = true ).export( this )
+
   def &( that: LambdaExpression ): HOLFormula = And( this, that )
   def |( that: LambdaExpression ): HOLFormula = Or( this, that )
   def unary_- : HOLFormula = Neg( this )
@@ -146,7 +149,8 @@ abstract class LambdaExpression {
   def <->( that: LambdaExpression ) = And( Imp( this, that ), Imp( that, this ) )
   def ===( that: LambdaExpression ) = Eq( this, that )
   def !==( that: LambdaExpression ) = Neg( Eq( this, that ) )
-  def apply( that: LambdaExpression* ) = App( this, that )
+  def apply( that: LambdaExpression* ): LambdaExpression = App( this, that )
+  def apply( that: Iterable[LambdaExpression] ): LambdaExpression = App( this, that.toSeq )
 
   def ^( n: Int )( that: LambdaExpression ): LambdaExpression =
     if ( n == 0 ) that else ( this ^ ( n - 1 ) )( this( that ) )
@@ -155,7 +159,7 @@ abstract class LambdaExpression {
 // Defines the elements that generate lambda-expressions: variables,
 // applications and abstractions (and constants).
 
-class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
+class Var private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
 
   // Syntactic equality: two variables are equal if they have the same name and the same type
   def syntaxEquals( e: LambdaExpression ) = e match {
@@ -173,7 +177,7 @@ class Var private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpr
   override val hashCode = 41 * "Var".hashCode + exptype.hashCode
 }
 
-class Const private[expr] ( val name: String, val exptype: Ty ) extends LambdaExpression {
+class Const private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
 
   def syntaxEquals( e: LambdaExpression ) = e match {
     case Const( n, t ) => ( n == name && t == exptype )

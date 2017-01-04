@@ -1,0 +1,618 @@
+fof(f215,plain,(
+  $false),
+  inference(sat_splitting_refutation,[],[f6,f12,f3,f16,f35,f2,f19,f46,f4,f41,f20,f43,f24,f37,f31,f47,f10,f49,f13,f39,f44,f1,f50,f15,f53,f23,f52,f54,f34,f17,f55,f18,f22,f58,f33,f28,f59,f32,f60,f30,f61,f14,f62,f5,f65,f11,f67,f63,f21,f68,f66,f64,f9,f57,f69,f8,f40,f48,f38,f45,f42,f36,f51,f56,f77,f78,f88,f95,f99,f103,f104,f105,f108,f106,f118,f117,f113,f124,f125,f123,f112,f121,f109,f120,f110,f119,f111,f129,f134,f133,f131,f136,f143,f144,f142,f141,f138,f146,f147,f154,f159,f168,f167,f160,f164,f174,f175,f180,f181,f182,f183,f188,f189,f149,f139,f137,f202,f200,f206,f211,f209,f207,f169,f210,f166,f165,f214])).
+fof(f214,plain,(
+  $false | ($spl32 | $spl40 | $spl42)),
+  inference(resolution,[],[f64,f203])).
+fof(f203,plain,(
+  ( ! [X0] : (~a2(s_4(s_13),X0,s_13)) ) | ($spl32 | $spl40)),
+  inference(resolution,[],[f63,f59])).
+fof(f165,plain,(
+  ( ! [X7] : (a2(X7,s_2(X7,s_13),s_13)) ) | $spl62),
+  inference(cnf_transformation,[],[f165_D])).
+fof(f165_D,plain,(
+  ( ! [X7] : (a2(X7,s_2(X7,s_13),s_13)) ) <=> ~$spl62),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl62])])).
+fof(f166,plain,(
+  ( ! [X6] : (a1(X6,s_3(X6,s_13),s_13)) ) | $spl64),
+  inference(cnf_transformation,[],[f166_D])).
+fof(f166_D,plain,(
+  ( ! [X6] : (a1(X6,s_3(X6,s_13),s_13)) ) <=> ~$spl64),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl64])])).
+fof(f210,plain,(
+  ( ! [X0,X1] : (a1(X0,s_3(X0,s_13),s_13) | a2(X1,s_2(X1,s_13),s_13)) ) | ($spl30 | $spl40 | $spl52)),
+  inference(resolution,[],[f204,f69])).
+fof(f204,plain,(
+  ( ! [X1] : (~a0(s_0(s_13),X1,s_13)) ) | ($spl30 | $spl40)),
+  inference(resolution,[],[f63,f58])).
+fof(f169,plain,(
+  ( ! [X16] : (a0(X16,s_5(X16,s_13),s_13)) ) | $spl70),
+  inference(cnf_transformation,[],[f169_D])).
+fof(f169_D,plain,(
+  ( ! [X16] : (a0(X16,s_5(X16,s_13),s_13)) ) <=> ~$spl70),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl70])])).
+fof(f207,plain,(
+  ( ! [X0,X1] : (a0(X0,s_5(X0,s_13),s_13) | a1(X1,s_3(X1,s_13),s_13)) ) | ($spl32 | $spl40 | $spl52)),
+  inference(resolution,[],[f203,f69])).
+fof(f209,plain,(
+  $false | ($spl30 | $spl40 | $spl70)),
+  inference(resolution,[],[f204,f169])).
+fof(f211,plain,(
+  $false | ($spl30 | $spl40 | $spl46)),
+  inference(resolution,[],[f204,f66])).
+fof(f206,plain,(
+  $false | ($spl32 | $spl40 | $spl62)),
+  inference(resolution,[],[f203,f165])).
+fof(f200,plain,(
+  $false | ($spl26 | $spl42 | $spl70)),
+  inference(resolution,[],[f190,f169])).
+fof(f190,plain,(
+  ( ! [X0] : (~a0(s_0(s_13),X0,s_13)) ) | ($spl26 | $spl42)),
+  inference(resolution,[],[f64,f55])).
+fof(f202,plain,(
+  $false | ($spl26 | $spl42 | $spl46)),
+  inference(resolution,[],[f190,f66])).
+fof(f137,plain,(
+  ~'D_1'(s_13) | $spl59),
+  inference(cnf_transformation,[],[f137_D])).
+fof(f137_D,plain,(
+  ~'D_1'(s_13) <=> ~$spl59),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl59])])).
+fof(f139,plain,(
+  'D_2'(s_13) | $spl60),
+  inference(cnf_transformation,[],[f139_D])).
+fof(f139_D,plain,(
+  'D_2'(s_13) <=> ~$spl60),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl60])])).
+fof(f149,plain,(
+  'D_2'(s_13) | ~'D_1'(s_13) | $spl50),
+  inference(resolution,[],[f68,f7])).
+fof(f7,axiom,(
+  ( ! [X0,X1] : (a1(X1,s_3(X1,X0),X0) | 'D_2'(X0) | ~'D_1'(X0)) )),
+  file('counting-cnf.tptp',sequent6)).
+fof(f189,plain,(
+  $false | ($spl40 | $spl60)),
+  inference(subsumption_resolution,[],[f187,f139])).
+fof(f187,plain,(
+  ~'D_2'(s_13) | $spl40),
+  inference(resolution,[],[f63,f29])).
+fof(f29,axiom,(
+  ( ! [X0,X1] : (~a1(s_1(X0),X1,X0) | ~'D_2'(X0)) )),
+  file('counting-cnf.tptp',sequent28)).
+fof(f188,plain,(
+  $false | ($spl40 | $spl50)),
+  inference(resolution,[],[f63,f68])).
+fof(f183,plain,(
+  'D_2'(s_13) | ($spl50 | $spl58)),
+  inference(subsumption_resolution,[],[f149,f136])).
+fof(f182,plain,(
+  ~'D_1'(s_13) | ($spl50 | $spl61)),
+  inference(subsumption_resolution,[],[f149,f138])).
+fof(f181,plain,(
+  $false | ($spl34 | $spl59 | $spl64)),
+  inference(subsumption_resolution,[],[f178,f137])).
+fof(f178,plain,(
+  'D_1'(s_13) | ($spl34 | $spl64)),
+  inference(resolution,[],[f166,f60])).
+fof(f180,plain,(
+  $false | ($spl50 | $spl64)),
+  inference(resolution,[],[f166,f68])).
+fof(f175,plain,(
+  $false | ($spl36 | $spl59 | $spl62)),
+  inference(subsumption_resolution,[],[f171,f137])).
+fof(f171,plain,(
+  'D_1'(s_13) | ($spl36 | $spl62)),
+  inference(resolution,[],[f165,f61])).
+fof(f174,plain,(
+  $false | ($spl48 | $spl62)),
+  inference(resolution,[],[f165,f67])).
+fof(f164,plain,(
+  ( ! [X10,X11] : (a0(X10,s_5(X10,s_13),s_13) | a1(X11,s_3(X11,s_13),s_13)) ) | ($spl48 | $spl52)),
+  inference(resolution,[],[f69,f67])).
+fof(f160,plain,(
+  ( ! [X17,X16] : (a0(X16,s_5(X16,s_13),s_13) | a2(X17,s_2(X17,s_13),s_13)) ) | ($spl50 | $spl52)),
+  inference(resolution,[],[f69,f68])).
+fof(f167,plain,(
+  ( ! [X15] : (a2(X15,s_2(X15,s_6),s_6)) ) | $spl66),
+  inference(cnf_transformation,[],[f167_D])).
+fof(f167_D,plain,(
+  ( ! [X15] : (a2(X15,s_2(X15,s_6),s_6)) ) <=> ~$spl66),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl66])])).
+fof(f168,plain,(
+  ( ! [X14] : (a0(X14,s_5(X14,s_6),s_6)) ) | $spl68),
+  inference(cnf_transformation,[],[f168_D])).
+fof(f168_D,plain,(
+  ( ! [X14] : (a0(X14,s_5(X14,s_6),s_6)) ) <=> ~$spl68),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl68])])).
+fof(f159,plain,(
+  ( ! [X14,X15] : (a0(X14,s_5(X14,s_6),s_6) | a2(X15,s_2(X15,s_6),s_6)) ) | ($spl22 | $spl52)),
+  inference(resolution,[],[f69,f53])).
+fof(f154,plain,(
+  ( ! [X6,X7] : (a1(X6,s_3(X6,s_13),s_13) | a2(X7,s_2(X7,s_13),s_13)) ) | ($spl44 | $spl52)),
+  inference(resolution,[],[f69,f65])).
+fof(f147,plain,(
+  $false | ($spl38 | $spl44 | $spl59)),
+  inference(subsumption_resolution,[],[f145,f137])).
+fof(f145,plain,(
+  'D_1'(s_13) | ($spl38 | $spl44)),
+  inference(resolution,[],[f65,f62])).
+fof(f146,plain,(
+  $false | ($spl44 | $spl46)),
+  inference(resolution,[],[f65,f66])).
+fof(f138,plain,(
+  ~'D_2'(s_13) | $spl61),
+  inference(cnf_transformation,[],[f138_D])).
+fof(f138_D,plain,(
+  ~'D_2'(s_13) <=> ~$spl61),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl61])])).
+fof(f141,plain,(
+  ~'D_2'(s_13) | ($spl26 | $spl46)),
+  inference(resolution,[],[f66,f85])).
+fof(f85,plain,(
+  ( ! [X2,X1] : (~a0(s_0(X1),X2,X1) | ~'D_2'(X1)) ) | $spl26),
+  inference(resolution,[],[f55,f27])).
+fof(f27,axiom,(
+  ( ! [X0,X1] : (a2(X1,s_2(X1,X0),X0) | ~'D_2'(X0)) )),
+  file('counting-cnf.tptp',sequent26)).
+fof(f142,plain,(
+  ~'D_1'(s_13) | $spl46),
+  inference(resolution,[],[f66,f26])).
+fof(f26,axiom,(
+  ( ! [X0,X1] : (~a0(s_0(X0),X1,X0) | ~'D_1'(X0)) )),
+  file('counting-cnf.tptp',sequent25)).
+fof(f144,plain,(
+  $false | ($spl46 | $spl58)),
+  inference(subsumption_resolution,[],[f142,f136])).
+fof(f143,plain,(
+  $false | ($spl26 | $spl46 | $spl60)),
+  inference(subsumption_resolution,[],[f141,f139])).
+fof(f136,plain,(
+  'D_1'(s_13) | $spl58),
+  inference(cnf_transformation,[],[f136_D])).
+fof(f136_D,plain,(
+  'D_1'(s_13) <=> ~$spl58),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl58])])).
+fof(f131,plain,(
+  'D_1'(s_13) | ($spl36 | $spl42)),
+  inference(resolution,[],[f64,f61])).
+fof(f133,plain,(
+  'D_2'(s_13) | ~'D_1'(s_13) | $spl42),
+  inference(resolution,[],[f64,f25])).
+fof(f25,axiom,(
+  ( ! [X0,X1] : (~a2(s_4(X0),X1,X0) | 'D_2'(X0) | ~'D_1'(X0)) )),
+  file('counting-cnf.tptp',sequent24)).
+fof(f134,plain,(
+  $false | ($spl42 | $spl48)),
+  inference(resolution,[],[f64,f67])).
+fof(f129,plain,(
+  $false | ($spl34 | $spl40 | $spl46)),
+  inference(subsumption_resolution,[],[f128,f101])).
+fof(f101,plain,(
+  'D_1'(s_13) | ($spl34 | $spl40)),
+  inference(resolution,[],[f60,f63])).
+fof(f128,plain,(
+  ~'D_1'(s_13) | $spl46),
+  inference(resolution,[],[f66,f26])).
+fof(f111,plain,(
+  ~'D_2'(s_6) | $spl57),
+  inference(cnf_transformation,[],[f111_D])).
+fof(f111_D,plain,(
+  ~'D_2'(s_6) <=> ~$spl57),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl57])])).
+fof(f119,plain,(
+  ~'D_2'(s_6) | ($spl0 | $spl26)),
+  inference(resolution,[],[f35,f85])).
+fof(f110,plain,(
+  ~'D_1'(s_6) | $spl55),
+  inference(cnf_transformation,[],[f110_D])).
+fof(f110_D,plain,(
+  ~'D_1'(s_6) <=> ~$spl55),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl55])])).
+fof(f120,plain,(
+  ~'D_1'(s_6) | $spl0),
+  inference(resolution,[],[f35,f26])).
+fof(f109,plain,(
+  'D_1'(s_6) | $spl54),
+  inference(cnf_transformation,[],[f109_D])).
+fof(f109_D,plain,(
+  'D_1'(s_6) <=> ~$spl54),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl54])])).
+fof(f121,plain,(
+  'D_1'(s_6) | ($spl10 | $spl36)),
+  inference(resolution,[],[f44,f61])).
+fof(f112,plain,(
+  'D_2'(s_6) | $spl56),
+  inference(cnf_transformation,[],[f112_D])).
+fof(f112_D,plain,(
+  'D_2'(s_6) <=> ~$spl56),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl56])])).
+fof(f123,plain,(
+  'D_2'(s_6) | ~'D_1'(s_6) | $spl10),
+  inference(resolution,[],[f44,f25])).
+fof(f125,plain,(
+  $false | ($spl10 | $spl36 | $spl55)),
+  inference(subsumption_resolution,[],[f121,f110])).
+fof(f124,plain,(
+  $false | ($spl10 | $spl24)),
+  inference(resolution,[],[f44,f54])).
+fof(f113,plain,(
+  ~'D_2'(s_6) | $spl24),
+  inference(resolution,[],[f54,f27])).
+fof(f117,plain,(
+  'D_1'(s_6) | ($spl18 | $spl38)),
+  inference(resolution,[],[f62,f50])).
+fof(f118,plain,(
+  $false | ($spl18 | $spl38 | $spl55)),
+  inference(subsumption_resolution,[],[f117,f110])).
+fof(f106,plain,(
+  'D_2'(s_6) | ~'D_1'(s_6) | $spl22),
+  inference(resolution,[],[f53,f7])).
+fof(f108,plain,(
+  $false | ($spl14 | $spl22 | $spl34)),
+  inference(subsumption_resolution,[],[f107,f100])).
+fof(f100,plain,(
+  'D_1'(s_6) | ($spl14 | $spl34)),
+  inference(resolution,[],[f60,f47])).
+fof(f107,plain,(
+  ~'D_1'(s_6) | ($spl14 | $spl22)),
+  inference(subsumption_resolution,[],[f106,f70])).
+fof(f70,plain,(
+  ~'D_2'(s_6) | $spl14),
+  inference(resolution,[],[f29,f47])).
+fof(f105,plain,(
+  $false | ($spl14 | $spl22)),
+  inference(resolution,[],[f53,f47])).
+fof(f104,plain,(
+  $false | ($spl34 | $spl40 | $spl42)),
+  inference(subsumption_resolution,[],[f101,f81])).
+fof(f81,plain,(
+  ~'D_1'(s_13) | ($spl40 | $spl42)),
+  inference(subsumption_resolution,[],[f80,f79])).
+fof(f79,plain,(
+  ~'D_2'(s_13) | $spl40),
+  inference(resolution,[],[f63,f29])).
+fof(f80,plain,(
+  'D_2'(s_13) | ~'D_1'(s_13) | $spl42),
+  inference(resolution,[],[f64,f25])).
+fof(f103,plain,(
+  $false | ($spl0 | $spl14 | $spl34)),
+  inference(subsumption_resolution,[],[f100,f98])).
+fof(f98,plain,(
+  ~'D_1'(s_6) | $spl0),
+  inference(resolution,[],[f35,f26])).
+fof(f99,plain,(
+  $false | ($spl0 | $spl14 | $spl30)),
+  inference(resolution,[],[f89,f35])).
+fof(f89,plain,(
+  ( ! [X0] : (~a0(s_0(s_6),X0,s_6)) ) | ($spl14 | $spl30)),
+  inference(resolution,[],[f58,f47])).
+fof(f95,plain,(
+  $false | ($spl10 | $spl14 | $spl32)),
+  inference(resolution,[],[f92,f44])).
+fof(f92,plain,(
+  ( ! [X0] : (~a2(s_4(s_6),X0,s_6)) ) | ($spl14 | $spl32)),
+  inference(resolution,[],[f59,f47])).
+fof(f88,plain,(
+  $false | ($spl10 | $spl14 | $spl26 | $spl38)),
+  inference(subsumption_resolution,[],[f87,f76])).
+fof(f76,plain,(
+  ~'D_1'(s_6) | ($spl10 | $spl14)),
+  inference(subsumption_resolution,[],[f74,f70])).
+fof(f74,plain,(
+  'D_2'(s_6) | ~'D_1'(s_6) | $spl10),
+  inference(resolution,[],[f25,f44])).
+fof(f87,plain,(
+  'D_1'(s_6) | ($spl10 | $spl26 | $spl38)),
+  inference(resolution,[],[f84,f62])).
+fof(f84,plain,(
+  ( ! [X0] : (~a0(s_0(s_6),X0,s_6)) ) | ($spl10 | $spl26)),
+  inference(resolution,[],[f55,f44])).
+fof(f78,plain,(
+  $false | ($spl10 | $spl14 | $spl36)),
+  inference(subsumption_resolution,[],[f72,f76])).
+fof(f72,plain,(
+  'D_1'(s_6) | ($spl10 | $spl36)),
+  inference(resolution,[],[f61,f44])).
+fof(f77,plain,(
+  $false | ($spl10 | $spl14 | $spl34)),
+  inference(subsumption_resolution,[],[f76,f71])).
+fof(f71,plain,(
+  'D_1'(s_6) | ($spl14 | $spl34)),
+  inference(resolution,[],[f60,f47])).
+fof(f56,plain,(
+  'D_0' | $spl28),
+  inference(cnf_transformation,[],[f56_D])).
+fof(f56_D,plain,(
+  'D_0' <=> ~$spl28),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl28])])).
+fof(f51,plain,(
+  ~'D_3' | $spl21),
+  inference(cnf_transformation,[],[f51_D])).
+fof(f51_D,plain,(
+  ~'D_3' <=> ~$spl21),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl21])])).
+fof(f36,plain,(
+  ~'D_5' | $spl3),
+  inference(cnf_transformation,[],[f36_D])).
+fof(f36_D,plain,(
+  ~'D_5' <=> ~$spl3),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl3])])).
+fof(f42,plain,(
+  ~'D_6' | $spl9),
+  inference(cnf_transformation,[],[f42_D])).
+fof(f42_D,plain,(
+  ~'D_6' <=> ~$spl9),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl9])])).
+fof(f45,plain,(
+  ~'D_7' | $spl13),
+  inference(cnf_transformation,[],[f45_D])).
+fof(f45_D,plain,(
+  ~'D_7' <=> ~$spl13),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl13])])).
+fof(f38,plain,(
+  ~'D_8' | $spl5),
+  inference(cnf_transformation,[],[f38_D])).
+fof(f38_D,plain,(
+  ~'D_8' <=> ~$spl5),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl5])])).
+fof(f48,plain,(
+  ~'D_9' | $spl17),
+  inference(cnf_transformation,[],[f48_D])).
+fof(f48_D,plain,(
+  ~'D_9' <=> ~$spl17),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl17])])).
+fof(f40,plain,(
+  ~'D_4' | $spl7),
+  inference(cnf_transformation,[],[f40_D])).
+fof(f40_D,plain,(
+  ~'D_4' <=> ~$spl7),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl7])])).
+fof(f8,axiom,(
+  ~'D_4' | ~'D_9' | ~'D_8' | ~'D_7' | ~'D_6' | ~'D_5' | ~'D_3' | 'D_0'),
+  file('counting-cnf.tptp',sequent7)).
+fof(f69,plain,(
+  ( ! [X2,X0,X3,X1] : (a0(X0,s_5(X0,X1),X1) | a1(X2,s_3(X2,X1),X1) | a2(X3,s_2(X3,X1),X1)) ) | $spl52),
+  inference(cnf_transformation,[],[f69_D])).
+fof(f69_D,plain,(
+  ( ! [X2,X0,X3,X1] : (a0(X0,s_5(X0,X1),X1) | a1(X2,s_3(X2,X1),X1) | a2(X3,s_2(X3,X1),X1)) ) <=> ~$spl52),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl52])])).
+fof(f57,plain,(
+  ~'D_0' | $spl29),
+  inference(cnf_transformation,[],[f57_D])).
+fof(f57_D,plain,(
+  ~'D_0' <=> ~$spl29),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl29])])).
+fof(f9,axiom,(
+  ( ! [X2,X0,X3,X1] : (~'D_0' | a0(X0,s_5(X0,X1),X1) | a2(X3,s_2(X3,X1),X1) | a1(X2,s_3(X2,X1),X1)) )),
+  file('counting-cnf.tptp',sequent8)).
+fof(f64,plain,(
+  ( ! [X2] : (a2(X2,s_18(X2),s_13)) ) | $spl42),
+  inference(cnf_transformation,[],[f64_D])).
+fof(f64_D,plain,(
+  ( ! [X2] : (a2(X2,s_18(X2),s_13)) ) <=> ~$spl42),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl42])])).
+fof(f66,plain,(
+  ( ! [X2] : (a0(X2,s_14(X2),s_13)) ) | $spl46),
+  inference(cnf_transformation,[],[f66_D])).
+fof(f66_D,plain,(
+  ( ! [X2] : (a0(X2,s_14(X2),s_13)) ) <=> ~$spl46),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl46])])).
+fof(f68,plain,(
+  ( ! [X0] : (~a1(s_17,X0,s_13)) ) | $spl50),
+  inference(cnf_transformation,[],[f68_D])).
+fof(f68_D,plain,(
+  ( ! [X0] : (~a1(s_17,X0,s_13)) ) <=> ~$spl50),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl50])])).
+fof(f21,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a1(s_17,X0,s_13) | a0(X2,s_14(X2),s_13) | a2(X1,s_18(X1),s_13)) )),
+  file('counting-cnf.tptp',sequent20)).
+fof(f63,plain,(
+  ( ! [X1] : (a1(X1,s_15(X1),s_13)) ) | $spl40),
+  inference(cnf_transformation,[],[f63_D])).
+fof(f63_D,plain,(
+  ( ! [X1] : (a1(X1,s_15(X1),s_13)) ) <=> ~$spl40),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl40])])).
+fof(f67,plain,(
+  ( ! [X0] : (~a2(s_16,X0,s_13)) ) | $spl48),
+  inference(cnf_transformation,[],[f67_D])).
+fof(f67_D,plain,(
+  ( ! [X0] : (~a2(s_16,X0,s_13)) ) <=> ~$spl48),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl48])])).
+fof(f11,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a2(s_16,X0,s_13) | a0(X2,s_14(X2),s_13) | a1(X1,s_15(X1),s_13)) )),
+  file('counting-cnf.tptp',sequent10)).
+fof(f65,plain,(
+  ( ! [X0] : (~a0(s_19,X0,s_13)) ) | $spl44),
+  inference(cnf_transformation,[],[f65_D])).
+fof(f65_D,plain,(
+  ( ! [X0] : (~a0(s_19,X0,s_13)) ) <=> ~$spl44),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl44])])).
+fof(f5,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a0(s_19,X0,s_13) | a2(X2,s_18(X2),s_13) | a1(X1,s_15(X1),s_13)) )),
+  file('counting-cnf.tptp',sequent4)).
+fof(f62,plain,(
+  ( ! [X0,X1] : (a0(X1,s_5(X1,X0),X0) | 'D_1'(X0)) ) | $spl38),
+  inference(cnf_transformation,[],[f62_D])).
+fof(f62_D,plain,(
+  ( ! [X0,X1] : (a0(X1,s_5(X1,X0),X0) | 'D_1'(X0)) ) <=> ~$spl38),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl38])])).
+fof(f14,axiom,(
+  ( ! [X0,X1] : ('D_0' | 'D_1'(X0) | a0(X1,s_5(X1,X0),X0)) )),
+  file('counting-cnf.tptp',sequent13)).
+fof(f61,plain,(
+  ( ! [X0,X1] : (~a2(s_4(X0),X1,X0) | 'D_1'(X0)) ) | $spl36),
+  inference(cnf_transformation,[],[f61_D])).
+fof(f61_D,plain,(
+  ( ! [X0,X1] : (~a2(s_4(X0),X1,X0) | 'D_1'(X0)) ) <=> ~$spl36),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl36])])).
+fof(f30,axiom,(
+  ( ! [X0,X1] : ('D_0' | 'D_1'(X0) | ~a2(s_4(X0),X1,X0)) )),
+  file('counting-cnf.tptp',sequent29)).
+fof(f60,plain,(
+  ( ! [X0,X1] : (~a1(s_1(X0),X1,X0) | 'D_1'(X0)) ) | $spl34),
+  inference(cnf_transformation,[],[f60_D])).
+fof(f60_D,plain,(
+  ( ! [X0,X1] : (~a1(s_1(X0),X1,X0) | 'D_1'(X0)) ) <=> ~$spl34),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl34])])).
+fof(f32,axiom,(
+  ( ! [X0,X1] : ('D_0' | 'D_1'(X0) | ~a1(s_1(X0),X1,X0)) )),
+  file('counting-cnf.tptp',sequent31)).
+fof(f59,plain,(
+  ( ! [X2,X0,X1] : (~a1(s_1(X0),X2,X0) | ~a2(s_4(X0),X1,X0)) ) | $spl32),
+  inference(cnf_transformation,[],[f59_D])).
+fof(f59_D,plain,(
+  ( ! [X2,X0,X1] : (~a1(s_1(X0),X2,X0) | ~a2(s_4(X0),X1,X0)) ) <=> ~$spl32),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl32])])).
+fof(f28,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a2(s_4(X0),X2,X0) | ~a1(s_1(X0),X1,X0)) )),
+  file('counting-cnf.tptp',sequent27)).
+fof(f33,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a1(s_1(X0),X2,X0) | ~a2(s_4(X0),X1,X0)) )),
+  file('counting-cnf.tptp',sequent32)).
+fof(f58,plain,(
+  ( ! [X2,X0,X1] : (~a1(s_1(X0),X1,X0) | ~a0(s_0(X0),X2,X0)) ) | $spl30),
+  inference(cnf_transformation,[],[f58_D])).
+fof(f58_D,plain,(
+  ( ! [X2,X0,X1] : (~a1(s_1(X0),X1,X0) | ~a0(s_0(X0),X2,X0)) ) <=> ~$spl30),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl30])])).
+fof(f22,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a0(s_0(X0),X1,X0) | ~a1(s_1(X0),X2,X0)) )),
+  file('counting-cnf.tptp',sequent21)).
+fof(f18,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a0(s_0(X0),X2,X0) | ~a1(s_1(X0),X1,X0)) )),
+  file('counting-cnf.tptp',sequent17)).
+fof(f55,plain,(
+  ( ! [X2,X0,X1] : (~a2(s_4(X0),X2,X0) | ~a0(s_0(X0),X1,X0)) ) | $spl26),
+  inference(cnf_transformation,[],[f55_D])).
+fof(f55_D,plain,(
+  ( ! [X2,X0,X1] : (~a2(s_4(X0),X2,X0) | ~a0(s_0(X0),X1,X0)) ) <=> ~$spl26),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl26])])).
+fof(f17,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a0(s_0(X0),X2,X0) | ~a2(s_4(X0),X1,X0)) )),
+  file('counting-cnf.tptp',sequent16)).
+fof(f34,axiom,(
+  ( ! [X2,X0,X1] : (~'D_0' | ~a0(s_0(X0),X1,X0) | ~a2(s_4(X0),X2,X0)) )),
+  file('counting-cnf.tptp',sequent33)).
+fof(f54,plain,(
+  ( ! [X0] : (~a2(s_9,X0,s_6)) ) | $spl24),
+  inference(cnf_transformation,[],[f54_D])).
+fof(f54_D,plain,(
+  ( ! [X0] : (~a2(s_9,X0,s_6)) ) <=> ~$spl24),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl24])])).
+fof(f52,plain,(
+  'D_3' | $spl20),
+  inference(cnf_transformation,[],[f52_D])).
+fof(f52_D,plain,(
+  'D_3' <=> ~$spl20),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl20])])).
+fof(f23,axiom,(
+  ( ! [X0] : ('D_3' | ~a2(s_9,X0,s_6)) )),
+  file('counting-cnf.tptp',sequent22)).
+fof(f53,plain,(
+  ( ! [X0] : (~a1(s_8,X0,s_6)) ) | $spl22),
+  inference(cnf_transformation,[],[f53_D])).
+fof(f53_D,plain,(
+  ( ! [X0] : (~a1(s_8,X0,s_6)) ) <=> ~$spl22),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl22])])).
+fof(f15,axiom,(
+  ( ! [X0] : ('D_3' | ~a1(s_8,X0,s_6)) )),
+  file('counting-cnf.tptp',sequent14)).
+fof(f50,plain,(
+  ( ! [X0] : (~a0(s_7,X0,s_6)) ) | $spl18),
+  inference(cnf_transformation,[],[f50_D])).
+fof(f50_D,plain,(
+  ( ! [X0] : (~a0(s_7,X0,s_6)) ) <=> ~$spl18),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl18])])).
+fof(f1,axiom,(
+  ( ! [X0] : ('D_3' | ~a0(s_7,X0,s_6)) )),
+  file('counting-cnf.tptp',sequent0)).
+fof(f44,plain,(
+  ( ! [X0] : (a2(X0,s_12(X0),s_6)) ) | $spl10),
+  inference(cnf_transformation,[],[f44_D])).
+fof(f44_D,plain,(
+  ( ! [X0] : (a2(X0,s_12(X0),s_6)) ) <=> ~$spl10),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl10])])).
+fof(f39,plain,(
+  'D_8' | $spl4),
+  inference(cnf_transformation,[],[f39_D])).
+fof(f39_D,plain,(
+  'D_8' <=> ~$spl4),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl4])])).
+fof(f13,axiom,(
+  ( ! [X0] : ('D_8' | a2(X0,s_12(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent12)).
+fof(f49,plain,(
+  'D_9' | $spl16),
+  inference(cnf_transformation,[],[f49_D])).
+fof(f49_D,plain,(
+  'D_9' <=> ~$spl16),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl16])])).
+fof(f10,axiom,(
+  ( ! [X0] : ('D_9' | a2(X0,s_12(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent9)).
+fof(f47,plain,(
+  ( ! [X0] : (a1(X0,s_11(X0),s_6)) ) | $spl14),
+  inference(cnf_transformation,[],[f47_D])).
+fof(f47_D,plain,(
+  ( ! [X0] : (a1(X0,s_11(X0),s_6)) ) <=> ~$spl14),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl14])])).
+fof(f31,axiom,(
+  ( ! [X0] : ('D_9' | a1(X0,s_11(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent30)).
+fof(f37,plain,(
+  'D_5' | $spl2),
+  inference(cnf_transformation,[],[f37_D])).
+fof(f37_D,plain,(
+  'D_5' <=> ~$spl2),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl2])])).
+fof(f24,axiom,(
+  ( ! [X0] : ('D_5' | a2(X0,s_12(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent23)).
+fof(f43,plain,(
+  'D_6' | $spl8),
+  inference(cnf_transformation,[],[f43_D])).
+fof(f43_D,plain,(
+  'D_6' <=> ~$spl8),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl8])])).
+fof(f20,axiom,(
+  ( ! [X0] : ('D_6' | a1(X0,s_11(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent19)).
+fof(f41,plain,(
+  'D_4' | $spl6),
+  inference(cnf_transformation,[],[f41_D])).
+fof(f41_D,plain,(
+  'D_4' <=> ~$spl6),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl6])])).
+fof(f4,axiom,(
+  ( ! [X0] : ('D_4' | a1(X0,s_11(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent3)).
+fof(f46,plain,(
+  'D_7' | $spl12),
+  inference(cnf_transformation,[],[f46_D])).
+fof(f46_D,plain,(
+  'D_7' <=> ~$spl12),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl12])])).
+fof(f19,axiom,(
+  ( ! [X0] : ('D_7' | a1(X0,s_11(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent18)).
+fof(f2,axiom,(
+  ( ! [X0] : ('D_7' | a2(X0,s_12(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent1)).
+fof(f35,plain,(
+  ( ! [X0] : (a0(X0,s_10(X0),s_6)) ) | $spl0),
+  inference(cnf_transformation,[],[f35_D])).
+fof(f35_D,plain,(
+  ( ! [X0] : (a0(X0,s_10(X0),s_6)) ) <=> ~$spl0),
+  introduced(sat_splitting_component,[new_symbols(naming,[$spl0])])).
+fof(f16,axiom,(
+  ( ! [X0] : ('D_6' | a0(X0,s_10(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent15)).
+fof(f3,axiom,(
+  ( ! [X0] : ('D_4' | a0(X0,s_10(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent2)).
+fof(f12,axiom,(
+  ( ! [X0] : ('D_8' | a0(X0,s_10(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent11)).
+fof(f6,axiom,(
+  ( ! [X0] : ('D_5' | a0(X0,s_10(X0),s_6)) )),
+  file('counting-cnf.tptp',sequent5)).

@@ -102,7 +102,7 @@ object cleanStructuralRules {
           + ( proofNew.getRightOccConnector * rightSubConnector_ * p.getRightOccConnector.inv ) )
       }
 
-    case p @ InductionRule( cases, main ) =>
+    case p @ InductionRule( cases, main, term ) =>
 
       if ( cases.isEmpty )
         ( p, OccConnector( p.endSequent ) )
@@ -137,7 +137,7 @@ object cleanStructuralRules {
             ( InductionCase( subProofNew_, c.constructor, hypothesesNew, c.eigenVars, conclusionNew ), subConnector_ )
           } ).unzip
 
-          val proofNew = InductionRule( casesNew, main )
+          val proofNew = InductionRule( casesNew, main, term )
           val occConnectorsNew = for ( i <- p.immediateSubProofs.indices ) yield proofNew.occConnectors( i ) * subConnectorsNew( i ) * p.occConnectors( i ).inv
 
           val occConnectorNew = occConnectorsNew.reduceLeft( _ + _ )
@@ -339,6 +339,19 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getOccConnector.inv )
       }
 
+    case p @ ForallSkRightRule( subProof, aux, main, skTerm, skDef ) =>
+      val ( subProofNew, subConnector ) = apply_( subProof, reductive )
+
+      subConnector.children( aux ) match {
+
+        case Seq( a ) => // The inference is performed on a non-weak formula → just do it
+          val proofNew = ForallSkRightRule( subProofNew, a, main, skTerm, skDef )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ => // The aux formula is weak → do nothing
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
@@ -346,6 +359,19 @@ object cleanStructuralRules {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
           val proofNew = ExistsLeftRule( subProofNew, a, eigen, quant )
+          ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
+
+        case _ => // The aux formula is weak → do nothing
+          ( subProofNew, subConnector * p.getOccConnector.inv )
+      }
+
+    case p @ ExistsSkLeftRule( subProof, aux, main, skTerm, skDef ) =>
+      val ( subProofNew, subConnector ) = apply_( subProof, reductive )
+
+      subConnector.children( aux ) match {
+
+        case Seq( a ) => // The inference is performed on a non-weak formula → just do it
+          val proofNew = ExistsSkLeftRule( subProofNew, a, main, skTerm, skDef )
           ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
 
         case _ => // The aux formula is weak → do nothing
@@ -393,26 +419,26 @@ object cleanStructuralRules {
           ( proofNew, proofNew.getOccConnector * subConnector_ * p.getOccConnector.inv )
       }
 
-    case p @ DefinitionLeftRule( subProof, aux, main ) =>
+    case p @ DefinitionLeftRule( subProof, aux, definition, ctx ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = DefinitionLeftRule( subProofNew, a, main )
+          val proofNew = DefinitionLeftRule( subProofNew, a, definition, ctx )
           ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
 
         case _ => // The aux formula is weak → do nothing
           ( subProofNew, subConnector * p.getOccConnector.inv )
       }
 
-    case p @ DefinitionRightRule( subProof, aux, main ) =>
+    case p @ DefinitionRightRule( subProof, aux, definition, ctx ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
 
       subConnector.children( aux ) match {
 
         case Seq( a ) => // The inference is performed on a non-weak formula → just do it
-          val proofNew = DefinitionRightRule( subProofNew, a, main )
+          val proofNew = DefinitionRightRule( subProofNew, a, definition, ctx )
           ( proofNew, proofNew.getOccConnector * subConnector * p.getOccConnector.inv )
 
         case _ => // The aux formula is weak → do nothing

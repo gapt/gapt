@@ -1,9 +1,11 @@
 package at.logic.gapt.proofs.drup
 
-import at.logic.gapt.proofs.{ HOLClause, Sequent }
+import at.logic.gapt.expr.{ HOLFormula, Polarity }
+import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 
 import scala.collection.mutable
+import scalaz.{ Name, Need, Value }
 
 sealed abstract class DrupProofLine extends Product {
   def clause: HOLClause
@@ -44,46 +46,87 @@ object DrupProof {
 }
 
 object DrupToResolutionProof {
-  def unitPropagationProver( cnf0: Set[ResolutionProof] ): ResolutionProof = {
-    val cnf = cnf0.to[mutable.Set]
+  // We operate on pairs of clauses and resolution proofs.
+  //   - Proofs are computed only when needed (Name[_] does lazy evaluation)
+  //   - The clauses can be smaller than the conclusion of the proof,
+  //      e.g. we can have a pair (:- a, Taut(a))
+  private type ResProofThunk = ( HOLSequent, Name[ResolutionProof] )
 
-    var didPropagate = true
-    while ( didPropagate ) {
-      for ( c <- cnf if c.conclusion.isEmpty ) return c
-      didPropagate = false
-      for {
-        c1 <- cnf if c1.conclusion.size == 1
-        ( a1, i1 ) <- c1.conclusion.zipWithIndex
-        c2 <- cnf
-        ( a2, i2 ) <- c2.conclusion.zipWithIndex
-        if !i1.sameSideAs( i2 )
-        if a1 == a2
-      } {
-        didPropagate = true
-        cnf -= c2
-        cnf += Factor(
-          if ( i1.isSuc ) Resolution( c1, i1, c2, i2 )
-          else Resolution( c2, i2, c1, i1 )
-        )._1
+  private def unitPropagationProver( cnf: Iterable[ResProofThunk] ): ResolutionProof = {
+    // An atom together with a polarity
+    type Literal = ( HOLFormula, Polarity )
+
+    var emptyClause: Option[ResProofThunk] = None
+    // All unit clauses that we have found so far, indexed by their one literal
+    val unitIndex = mutable.Map[Literal, ResProofThunk]()
+    // All non-unit clauses that we have found so far, indexed by the first two literals
+    val nonUnitIndex = mutable.Map[Literal, Map[HOLSequent, Name[ResolutionProof]]]().withDefaultValue( Map() )
+
+    def negate( lit: Literal ) = ( lit._1, !lit._2 )
+    def resolve( p: ResProofThunk, unit: ResProofThunk, lit: Literal ): ResProofThunk =
+      if ( lit._2.inSuc ) ( p._1.removeFromSuccedent( lit._1 ), Need( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
+      else ( p._1.removeFromAntecedent( lit._1 ), Need( Factor( Resolution( unit._2.value, p._2.value, lit._1 ) ) ) )
+
+    // Handle a new clause, and fully interreduce it with the clauses we have found so far
+    def add( p: ResProofThunk ): Unit =
+      if ( emptyClause.isDefined ) {
+        // already found empty clause somewhere else
+      } else if ( p._1.isEmpty ) {
+        emptyClause = Some( p )
+      } else {
+        val lits = p._1.polarizedElements
+        if ( lits.exists( unitIndex.contains ) ) {
+          // subsumed by unit clause
+        } else {
+          lits.find( l => unitIndex.contains( negate( l ) ) ) match {
+            case Some( lit ) =>
+              val q = unitIndex( negate( lit ) )
+              add( resolve( p, q, lit ) )
+            case None =>
+              if ( lits.size == 1 ) { // found unit clause
+                val lit = lits.head
+                unitIndex( lit ) = p
+
+                // propagate
+                val negLit = negate( lit )
+                val qs = nonUnitIndex( negLit )
+                nonUnitIndex.remove( negLit )
+                for {
+                  q <- qs.keys
+                  lit_ <- q.polarizedElements.view.take( 2 )
+                  if lit_ != negLit
+                } nonUnitIndex( lit_ ) -= q
+
+                // .map removes duplicate clauses
+                qs.map( resolve( _, p, negLit ) ).foreach( add )
+              } else {
+                val watched = lits.view.take( 2 )
+                for ( lit <- watched ) nonUnitIndex( lit ) += p
+              }
+          }
+        }
       }
-    }
 
-    throw new IllegalArgumentException
+    cnf.toSeq.sortBy( _._1.size ).foreach( add )
+
+    emptyClause.get._2.value
   }
 
   def unitPropagationReplay( cnf: Iterable[ResolutionProof], toDerive: HOLClause ): ResolutionProof = {
-    val negatedUnitClauses = toDerive.map( Sequent() :+ _, _ +: Sequent() ).elements.toSet
-    val inputClausesForProver = cnf.map( p => p.conclusion -> p ).toMap
-    val emptyClause = unitPropagationProver( ( inputClausesForProver.keySet ++ negatedUnitClauses ).map( InputClause ) )
-    val derivation = tautologifyInitialUnitClauses( emptyClause, negatedUnitClauses )
-    mapInputClauses( derivation )( inputClausesForProver )
+    val inputClauses = for ( p <- cnf ) yield p.conclusion -> Value( p )
+    val negatedUnitClauses =
+      for {
+        ( a, i ) <- toDerive.zipWithIndex.elements
+        concl = if ( i.isSuc ) Seq( a ) :- Seq() else Seq() :- Seq( a )
+      } yield concl -> Need( Taut( a ) )
+    unitPropagationProver( inputClauses ++ negatedUnitClauses )
   }
 
   def apply( drup: DrupProof ): ResolutionProof = {
     val cnf = mutable.Set[ResolutionProof]()
     drup.refutation foreach {
       case DrupInput( clause ) =>
-        cnf += InputClause( clause )
+        cnf += Input( clause )
       case DrupDerive( clause ) =>
         cnf += unitPropagationReplay( cnf, clause )
       case DrupForget( clause ) =>

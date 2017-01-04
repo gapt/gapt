@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
-import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, To, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, Polarity, To, Var, freeVariables, rename }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion._
 
@@ -24,24 +24,24 @@ object LKToExpansionProof {
   private def extract( proof: LKProof ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
-    case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, false ) ), Seq( ETAtom( atom, true ) ) )
+    case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
 
-    case ReflexivityAxiom( s )         => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), true ) ) )
+    case ReflexivityAxiom( s )         => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), Polarity.InSuccedent ) ) )
 
-    case TopAxiom                      => Seq() -> Sequent( Seq(), Seq( ETTop( true ) ) )
+    case TopAxiom                      => Seq() -> Sequent( Seq(), Seq( ETTop( Polarity.InSuccedent ) ) )
 
-    case BottomAxiom                   => Seq() -> Sequent( Seq( ETBottom( false ) ), Seq() )
+    case BottomAxiom                   => Seq() -> Sequent( Seq( ETBottom( Polarity.InAntecedent ) ), Seq() )
 
-    case TheoryAxiom( sequent )        => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.isSuc ) )
+    case TheoryAxiom( sequent )        => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.polarity ) )
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>
       val ( subCuts, subSequent ) = extract( subProof )
-      subCuts -> ( ETWeakening( formula, false ) +: subSequent )
+      subCuts -> ( ETWeakening( formula, Polarity.InAntecedent ) +: subSequent )
 
     case WeakeningRightRule( subProof, formula ) =>
       val ( subCuts, subSequent ) = extract( subProof )
-      subCuts -> ( subSequent :+ ETWeakening( formula, true ) )
+      subCuts -> ( subSequent :+ ETWeakening( formula, Polarity.InSuccedent ) )
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
       val ( subCuts, subSequent ) = extract( subProof )
@@ -114,41 +114,30 @@ object LKToExpansionProof {
       val ( subCuts, subSequent ) = extract( subProof )
       ( subCuts, subSequent.delete( aux ) :+ ETStrongQuantifier( proof.mainFormulas.head, eigen, subSequent( aux ) ) )
 
+    case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, subSequent.delete( aux ) :+ ETSkolemQuantifier( main, skT, skD, subSequent( aux ) ) )
+
     case ExistsLeftRule( subProof, aux, eigen, _ ) =>
       val ( subCuts, subSequent ) = extract( subProof )
       ( subCuts, ETStrongQuantifier( proof.mainFormulas.head, eigen, subSequent( aux ) ) +: subSequent.delete( aux ) )
+
+    case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+      ( subCuts, ETSkolemQuantifier( main, skT, skD, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
     case ExistsRightRule( subProof, aux, _, t, _ ) =>
       val ( subCuts, subSequent ) = extract( subProof )
       ( subCuts, subSequent.delete( aux ) :+ ETWeakQuantifier( proof.mainFormulas.head, Map( t -> subSequent( aux ) ) ) )
 
     // Equality rules
-    case p @ EqualityLeftRule( subProof, eq, aux, con ) =>
-      val ( subCuts, sequent ) = extract( subProof )
-      val eqTree = sequent( eq )
-      val ( auxTree, subSequent ) = sequent.focus( aux )
+    case p: EqualityRule =>
+      val ( subCuts, sequent ) = extract( p.subProof )
+      val auxTree = sequent( p.aux )
 
-      val newAuxTree = replaceWithContext( auxTree, con, p.by )
-      val newEqTree = eqTree match {
-        case ETWeakening( f: HOLAtom, pol ) => ETAtom( f, pol )
-        case ETAtom( f, pol )               => ETAtom( f, pol )
-        case ETDefinition( _, _, _ )        => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
-        case _                              => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
-      }
-      ( subCuts, newAuxTree +: subSequent.updated( eq, newEqTree ) )
-
-    case p @ EqualityRightRule( subProof, eq, aux, con ) =>
-      val ( subCuts, sequent ) = extract( subProof )
-      val eqTree = sequent( eq )
-      val ( auxTree, subSequent ) = sequent.focus( aux )
-
-      val newAuxTree = replaceWithContext( auxTree, con, p.by )
-      val newEqTree = eqTree match {
-        case ETWeakening( f: HOLAtom, pol ) => ETAtom( f, pol )
-        case ETAtom( f, pol )               => ETAtom( f, pol )
-        case ETDefinition( _, _, _ )        => throw new IllegalArgumentException( "Definition nodes can't be handled at this time." )
-        case _                              => throw new IllegalArgumentException( s"Node $eqTree can't be handled at this time." )
-      }
-      ( subCuts, subSequent.updated( eq, newEqTree ) :+ newAuxTree )
+      val newAuxTree = replaceWithContext( auxTree, p.replacementContext, p.by )
+      val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], Polarity.InAntecedent ), sequent( p.eq ) )
+      val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
+      ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
   }
 }

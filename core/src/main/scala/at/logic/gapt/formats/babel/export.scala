@@ -1,7 +1,9 @@
 package at.logic.gapt.formats.babel
 
 import at.logic.gapt.expr._
-import org.kiama.output.PrettyPrinter
+import at.logic.gapt.proofs.HOLSequent
+import org.bitbucket.inkytonik.kiama.output.PrettyPrinter
+import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
 
 /**
  * Exports lambda expressions in the Babel format.
@@ -14,7 +16,7 @@ import org.kiama.output.PrettyPrinter
  * @param unicode  Whether to output logical connectives using Unicode symbols.
  * @param sig  The Babel signature, to decide whether we need to escape constants because they do not fit the naming convention.
  */
-class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrinter {
+class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = false ) extends PrettyPrinter {
 
   override val defaultIndent = 2
 
@@ -26,17 +28,22 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
 
   def knownConstantTypesFromSig( consts: Iterable[Const] ) =
     consts flatMap { c =>
-      sig( c.name ) match {
-        case IsConst( ast.TypeVar( _ ) ) => None
-        case IsConst( astType ) if astType == ast.liftType( c.exptype ) => Some( c.name -> c )
+      sig.signatureLookup( c.name ) match {
+        case BabelSignature.IsConst( ty ) if ty == c.exptype =>
+          Some( c.name -> c )
         case _ => None
       }
     }
 
   def export( expr: LambdaExpression ): String = {
-    val knownTypesFromSig = knownConstantTypesFromSig( constants( expr ) )
-    pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) )
+    val knownTypesFromSig = knownConstantTypesFromSig( constants.all( expr ) )
+    pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
+  def export( sequent: HOLSequent ): String = {
+    val knownTypesFromSig = knownConstantTypesFromSig( sequent.elements.view.flatMap( constants.all ).toSet )
+    pretty( group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ) ).layout
+  }
+  def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) ).layout
 
   object prio {
     val ident = 0
@@ -56,10 +63,19 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
   }
 
   val infixRel = Set( "<", "<=", ">", ">=" )
-  val logicalConstName = Set(
-    TopC.name, BottomC.name, NegC.name, AndC.name, OrC.name, ImpC.name,
-    ForallC.name, ExistsC.name
-  )
+
+  def show( sequent: HOLSequent, bound: Set[String], t0: Map[String, VarOrConst] ): ( Doc, Map[String, VarOrConst] ) = {
+    var t1 = t0
+    val docSequent = sequent map { formula =>
+      val ( formulaDoc, t1_ ) = show( formula, true, bound, t1, prio.max )
+      t1 = t1_
+      formulaDoc
+    }
+    ( vsep( docSequent.antecedent.toList, comma ) <@>
+      ( if ( unicode ) "⊢" else ":-" ) <@>
+      vsep( docSequent.succedent.toList, comma ),
+      t1 )
+  }
 
   /**
    * Converts a lambda expression into a document.
@@ -81,9 +97,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     expr:      LambdaExpression,
     knownType: Boolean,
     bound:     Set[String],
-    t0:        Map[String, LambdaExpression],
+    t0:        Map[String, VarOrConst],
     p:         Int
-  ): ( Doc, Map[String, LambdaExpression] ) =
+  ): ( Doc, Map[String, VarOrConst] ) =
     expr match {
       case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )
@@ -127,17 +143,17 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
 
       case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
-      case Const( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || sig.isVar( name ) || logicalConstName( name ) || name == EqC.name )
+      case expr @ Const( name, ty ) =>
+        if ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.signatureLookup( name ).isVar )
           ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
+        else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
-      case Var( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.isVar( name ) ) )
+      case expr @ Var( name, ty ) =>
+        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.signatureLookup( name ).isVar ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( ty == Ti || knownType || t0.get( name ).contains( expr ) )
+        else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
@@ -147,9 +163,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     expr:      LambdaExpression,
     knownType: Boolean,
     bound:     Set[String],
-    t0:        Map[String, LambdaExpression],
+    t0:        Map[String, VarOrConst],
     p:         Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val Apps( hd, args ) = expr
     val hdSym = hd match {
       case Const( n, _ ) => Some( n )
@@ -171,7 +187,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
       ) ) )
 
     val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
-    if ( knownType || expr.exptype == Ti || hdKnown1 ) {
+    if ( omitTypes || knownType || expr.exptype == Ti || hdKnown1 ) {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.app )
       ( showFunCall( hd_, args_, p ), t2 )
     } else {
@@ -189,9 +205,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     b:             LambdaExpression,
     knownType:     Boolean,
     bound:         Set[String],
-    t0:            Map[String, LambdaExpression],
+    t0:            Map[String, VarOrConst],
     p:             Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val ( a_, t1 ) = show( a, knownType, bound, t0, prio + leftPrioBias )
     val ( b_, t2 ) = show( b, knownType, bound, t1, prio + rightPrioBias )
     ( parenIf( p, prio, a_ <+> sym <@> b_ ), t2 )
@@ -206,9 +222,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     b:             LambdaExpression,
     knownType:     Boolean,
     bound:         Set[String],
-    t0:            Map[String, LambdaExpression],
+    t0:            Map[String, VarOrConst],
     p:             Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val Const( cn, argt1 -> ( argt2 -> rett ) ) = c
     val cKnown = t0.get( cn ).contains( c )
     if ( t0.get( cn ).exists { _ != c } ) {
@@ -228,9 +244,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
     v:     Var,
     e:     LambdaExpression,
     bound: Set[String],
-    t0:    Map[String, LambdaExpression],
+    t0:    Map[String, VarOrConst],
     p:     Int
-  ): ( Doc, Map[String, LambdaExpression] ) = {
+  ): ( Doc, Map[String, VarOrConst] ) = {
     val Var( vn, vt ) = v
     val ( e_, t1 ) = show( e, true, bound + vn, t0 - vn, prio.quantOrNeg + 1 )
     val v_ =
@@ -261,6 +277,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature ) extends PrettyPrint
 
   def show( ty: Ty, needParens: Boolean ): Doc = ty match {
     case TBase( name ) => showName( name )
+    case TVar( name )  => "?" <> showName( name )
     case a -> b if !needParens =>
       group( show( a, true ) <> ">" <@@> show( b, false ) )
     case _ => parens( nest( show( ty, false ) ) )

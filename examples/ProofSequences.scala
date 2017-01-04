@@ -2,7 +2,7 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Numeral, Utils }
-import at.logic.gapt.expr.hol.{ instantiate, univclosure }
+import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk._
@@ -933,11 +933,11 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
         c acc
         u ( WeakeningLeftMacroRule( _, Seq( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), fST( num( i ) ), gST( product( i + 2 ), num( i ) ) ) ) )
         u ( EqualityRightRule( _, ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
-        u ( ForallLeftBlock( _, univclosure( ASSO( x, y, z ) ), List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ) )
+        u ( ForallLeftBlock( _, universalClosure( ASSO( x, y, z ) ), List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ) )
         u ( EqualityRightRule( _, fST( num( i ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
         u ( EqualityRightRule( _, gST( product( i + 2 ), num( i ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) ) )
-        u ( ForallLeftRule( _, univclosure( fST( x ) ), num( i ) ) )
-        u ( ForallLeftBlock( _, univclosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
+        u ( ForallLeftRule( _, universalClosure( fST( x ) ), num( i ) ) )
+        u ( ForallLeftBlock( _, universalClosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
         u ( ContractionMacroRule( _ ) ) qed )
     }
 
@@ -958,7 +958,7 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
       uR( x ),
       uL( x ),
       ASSO( x, y, z )
-    ) map univclosure.apply,
+    ) map universalClosure.apply,
     List(
       target( num( n ) )
     )
