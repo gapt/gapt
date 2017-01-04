@@ -24,75 +24,56 @@ package object prooftool {
   }
 
   object ProoftoolViewable {
-
     def apply[T: ProoftoolViewable] = implicitly[ProoftoolViewable[T]]
   }
 
-  /**
-   * Creates an instance of the ProoftoolViewable typeclass from a function.
-   */
-  def instance[T]( disp: ( T, String ) => Unit ): ProoftoolViewable[T] = new ProoftoolViewable[T] {
-    override def display( x: T, name: String ) = disp( x, name )
-  }
-
-  implicit val LKProofViewable: ProoftoolViewable[LKProof] = instance { ( x: LKProof, name: String ) =>
-    new LKProofViewer( name, x ).showFrame()
-  }
+  implicit val LKProofViewable: ProoftoolViewable[LKProof] =
+    ( x, name ) => new LKProofViewer( name, x ).showFrame()
 
   implicit def SequentProofViewable[F, T <: SequentProof[F, T]](
     implicit
     notLK: Not[T <:< LKProof]
-  ) = instance { ( p: SequentProof[F, T], name: String ) =>
+  ): ProoftoolViewable[SequentProof[F, T]] = {
     def renderer( x: F ): String = x match {
       case e: LambdaExpression => LatexExporter( e )
       case _                   => x.toString
     }
-    new SequentProofViewer( name, p, renderer ).showFrame()
+
+    ( p, name ) => new SequentProofViewer( name, p, renderer ).showFrame()
   }
 
-  implicit val ExpansionProofViewable: ProoftoolViewable[ExpansionProof] = instance { ( ep: ExpansionProof, name: String ) =>
-    new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
+  implicit val ExpansionProofViewable: ProoftoolViewable[ExpansionProof] =
+    ( ep, name ) => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
+
+  implicit val ExpansionProofWithCutViewable: ProoftoolViewable[ExpansionProofWithCut] =
+    ( ep, name ) => ProoftoolViewable[ExpansionProof].display( ep.expansionWithCutAxiom, name )
+
+  implicit def StructViewable[D]: ProoftoolViewable[Struct[D]] =
+    ( s, name ) => new StructViewer[D]( name, s ).showFrame()
+
+  implicit val ListViewable: ProoftoolViewable[Iterable[HOLSequent]] =
+    ( list, name ) => new ListViewer( name, list.toList ).showFrame()
+
+  implicit val SequentViewable: ProoftoolViewable[HOLSequent] =
+    ( seq, name ) => new ListViewer( name, List( seq ) ).showFrame()
+
+  implicit val ProofDatabaseViewable: ProoftoolViewable[ExtendedProofDatabase] =
+    ( db, _ ) =>
+      for ( ( pName, p ) <- db.proofs )
+        ProoftoolViewable[LKProof].display( p, pName )
+
+  implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] = {
+    case ( Some( y ), name ) => ProoftoolViewable[T].display( y, name )
+    case _                   => throw new IllegalArgumentException
   }
 
-  implicit val ExpansionProofWithCutViewable: ProoftoolViewable[ExpansionProofWithCut] = instance { ( ep: ExpansionProofWithCut, name: String ) =>
-    ProoftoolViewable[ExpansionProof].display( ep.expansionWithCutAxiom, name )
+  implicit def DisjViewable[T: ProoftoolViewable, S]: ProoftoolViewable[S \/ T] = {
+    case ( \/-( y ), name ) => ProoftoolViewable[T].display( y, name )
+    case ( -\/( y ), _ )    => throw new IllegalArgumentException( y.toString )
   }
 
-  implicit def StructViewable[D] = instance { ( s: Struct[D], name: String ) =>
-    new StructViewer[D]( name, s ).showFrame()
-  }
-
-  implicit val ListViewable: ProoftoolViewable[Iterable[HOLSequent]] = instance { ( list: Iterable[HOLSequent], name: String ) =>
-    new ListViewer( name, list.toList ).showFrame()
-  }
-
-  implicit val SequentViewable: ProoftoolViewable[HOLSequent] = instance { ( seq: HOLSequent, name: String ) =>
-    new ListViewer( name, List( seq ) ).showFrame()
-  }
-
-  implicit val ProofDatabaseViewable: ProoftoolViewable[ExtendedProofDatabase] = instance { ( db: ExtendedProofDatabase, name: String ) =>
-    for ( ( pName, p ) <- db.proofs )
-      ProoftoolViewable[LKProof].display( p, pName )
-  }
-
-  implicit def OptionViewable[T: ProoftoolViewable] = instance { ( x: Option[T], name: String ) =>
-    x match {
-      case Some( y ) => ProoftoolViewable[T].display( y, name )
-      case None      => throw new IllegalArgumentException
-    }
-  }
-
-  implicit def DisjViewable[T: ProoftoolViewable, S] = instance { ( x: \/[S, T], name: String ) =>
-    x match {
-      case \/-( y ) => ProoftoolViewable[T].display( y, name )
-      case -\/( y ) => throw new IllegalArgumentException( y.toString )
-    }
-  }
-
-  implicit def EitherViewable[T: ProoftoolViewable, S] = instance { ( x: Either[S, T], name: String ) =>
-    x match {
-      case Right( y ) => ProoftoolViewable[T].display( y, name )
-      case Left( y )  => throw new IllegalArgumentException( y.toString )
-    }
+  implicit def EitherViewable[T: ProoftoolViewable, S]: ProoftoolViewable[Either[S, T]] = {
+    case ( Right( y ), name ) => ProoftoolViewable[T].display( y, name )
+    case ( Left( y ), _ )     => throw new IllegalArgumentException( y.toString )
   }
 }
