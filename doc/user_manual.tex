@@ -751,7 +751,7 @@ b: ∀x (P(x) ⊃ Q(x))
 :-
 c: Q(a): o
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:47)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -801,7 +801,7 @@ a: P(a): o
 :-
 c: Q(a): o
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:47)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -930,7 +930,7 @@ A: A:o
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:47)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1702,21 +1702,21 @@ gapt> prooftool(acnf)
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
 ∀x_0 ∀y (x_0 <= M(x_0, y) ∧ y <= M(x_0, y))
-  +^{s(M(s(M(x_3, x_4)), s(M(x_3, x_4))))}
-    (∀y (s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))) <=
-            M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), y) ∧
-          y <= M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), y))
-      +^{s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5))}
-        ((s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))) <=
+  +^{s(M(s(M(x_4, x_5)), s(M(x_4, x_5))))}
+    (∀y (s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))) <=
+            M(s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))), y) ∧
+          y <= M(s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))), y))
+      +^{s(M(s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))), x_6))}
+        ((s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))) <=
             M(
-            s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
-            s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5))))- ∧
-          (s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5)) <=
+            s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))),
+            s(M(s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))), x_6))))- ∧
+          (s(M(s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))), x_6)) <=
             M(
-            s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
-            s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5))))-)
-      +^{x_5}
-        ((s(M(s(M(x_3, x_4)), s(M(x_3, x_4)...
+            s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))),
+            s(M(s(M(s(M(x_4, x_5)), s(M(x_4, x_5)))), x_6))))-)
+      +^{x_6}
+        ((s(M(s(M(x_4, x_5)), s(M(x_4, x_5)...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1763,19 +1763,18 @@ Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), 0, x1))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
 [p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0) ⊃ P(s(s(s(0)))),
+P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
 [p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0) ⊃ P(s(s(s(0)))),
+P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
-[p22] ∀x1...
+P(s(s(s(s(s(s(s(s(s(0)))...
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
@@ -1809,21 +1808,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(x_1)
+x_0 → s(s(s(s(s(s(s(s(s(s(s(s(x_1))))))))))))
+
+x_0 → s(s(s(s(s(s(x_1))))))
 
 x_0 → x_1
 
-x_1 → s(s(s(s(s(s(s(s(s(s(s(s(x_2))))))))))))
+x_1 → s(s(s(s(s(x_2)))))
 
-x_1 → s(s(s(s(s(s(x_2))))))
+x_1 → s(s(s(x_2)))
 
-x_1 → x_2
+x_1 → s(x_2)
+
+x_2 → 0
 
 x_2 → s(0)
-
-x_2 → s(s(s(0)))
-
-x_2 → s(s(s(s(s(0)))))
 
 gapt> lang.toSet subsetOf grammar.language
 res49: Boolean = true
@@ -1837,17 +1836,17 @@ res50: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(x_1)
-
 x_0 → x_1
 
-x_1 → x_2
+x_1 → s(s(s(s(s(x_2)))))
+
+x_1 → s(s(s(x_2)))
+
+x_1 → s(x_2)
+
+x_2 → 0
 
 x_2 → s(0)
-
-x_2 → s(s(s(0)))
-
-x_2 → s(s(s(s(s(0)))))
 
 \end{clilisting}
 
@@ -1901,16 +1900,16 @@ firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
 ⊤ ⊃ P_is_list(f_nil),
 ∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ⊤ ⊃ P_is_nat(f_0),
-P_is_nat(f_nonempty_nat),
 P_is_o(f_nonempty_o),
-P_is_list(f_nonempty_list)
+P_is_list(f_nonempty_list),
+P_is_nat(f_nonempty_nat)
 ⊢
 P_P(f_nil) ∧
     ∀x (P_is_list(x) ⊃
         ∀y (P_is_nat(y) ⊃
             ∀z (P_is_nat(z) ⊃ P_P(x) ⊃ P_P(f_cons(y, f_cons(z, x)))))) ⊃
   P_P(f_cons(f_0, f_cons(f_s(f_0), f_nil)))
-back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function1>
+back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = at.logic.gapt.proofs.reduction.CombinedReduction$$Lambda$3814/1074556047@75e18f65
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
 res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
