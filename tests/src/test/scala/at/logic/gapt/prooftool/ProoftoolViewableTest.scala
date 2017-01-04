@@ -22,6 +22,7 @@ class ProoftoolViewableTest extends Specification {
     def forall[Viewable: ProoftoolViewable, Error] = {
       implicitly[ProoftoolViewable[Option[Viewable]]]
       implicitly[ProoftoolViewable[Error \/ Viewable]]
+      implicitly[ProoftoolViewable[Either[Error, Viewable]]]
     }
 
     implicitly[ProoftoolViewable[ExpansionProof]]

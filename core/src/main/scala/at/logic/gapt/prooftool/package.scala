@@ -10,7 +10,7 @@ import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import at.logic.gapt.utils.Not
 
 import scala.annotation.implicitNotFound
-import scalaz.{ \/, \/- }
+import scalaz.{ -\/, \/, \/- }
 
 package object prooftool {
 
@@ -85,7 +85,14 @@ package object prooftool {
   implicit def DisjViewable[T: ProoftoolViewable, S] = instance { ( x: \/[S, T], name: String ) =>
     x match {
       case \/-( y ) => ProoftoolViewable[T].display( y, name )
-      case _        => throw new IllegalArgumentException
+      case -\/( y ) => throw new IllegalArgumentException( y.toString )
+    }
+  }
+
+  implicit def EitherViewable[T: ProoftoolViewable, S] = instance { ( x: Either[S, T], name: String ) =>
+    x match {
+      case Right( y ) => ProoftoolViewable[T].display( y, name )
+      case Left( y )  => throw new IllegalArgumentException( y.toString )
     }
   }
 }

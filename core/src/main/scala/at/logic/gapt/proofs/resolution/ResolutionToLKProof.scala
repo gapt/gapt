@@ -6,7 +6,6 @@ import at.logic.gapt.proofs.{ Ant, OccConnector, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.lk._
 
 import scala.collection.mutable
-import scalaz.\/-
 
 object ResolutionToLKProof {
 
@@ -16,7 +15,7 @@ object ResolutionToLKProof {
       case Sequent( Seq( f ), Seq() ) if freeVariables( f ).isEmpty => LogicalAxiom( f )
       case seq =>
         val fvs = freeVariables( seq ).toSeq
-        val \/-( proj ) = solvePropositional( seq.toDisjunction +: seq )
+        val Right( proj ) = solvePropositional( seq.toDisjunction +: seq )
         ForallLeftBlock( proj, All.Block( fvs, seq.toDisjunction ), fvs )
     } )
     if ( proof.definitions.isEmpty ) lk
@@ -75,14 +74,14 @@ object ResolutionToLKProof {
 
       case p @ AvatarContradiction( q ) => f( q )
       case AvatarComponent( comp @ AvatarNonGroundComp( splAtom, aux, vars ) ) =>
-        val \/-( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
+        val Right( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
         val p2 = ForallLeftBlock( p1, aux, vars )
 
         val p3 = DefinitionLeftRule( p2, aux, comp.toDefinition, splAtom )
         p3
       case AvatarComponent( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
       case AvatarComponent( comp @ AvatarNegNonGroundComp( splAtom, aux, vars, idx ) ) =>
-        val \/-( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
+        val Right( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
         val p2 = ForallRightBlock( p1, aux, vars )
         val p3 = DefinitionRightRule( p2, aux, comp.toDefinition, splAtom )
         p3

@@ -4,8 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.{ Context, HOLClause, OccConnector, Sequent }
 
-import scalaz.{ -\/, \/- }
-
 /**
  * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.
  *
@@ -69,8 +67,8 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
             } yield ForallLeftBlock( subroof, formula, terms )
 
             val subProof = maybeProof match {
-              case \/-( p )   => p
-              case -\/( seq ) => throw new Exception( s"Sequent $seq is not provable." )
+              case Right( p )  => p
+              case Left( seq ) => throw new Exception( s"Sequent $seq is not provable." )
             }
             ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ) )
 

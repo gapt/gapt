@@ -3,11 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.Definition
 import at.logic.gapt.provers.escargot.Escargot
-
-import scalaz._
-import Scalaz._
 
 object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
   def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( FOTheoryMacroRule.option( _ ) )
@@ -39,7 +35,7 @@ class ExpansionProofToLK(
       orElse( tryCut( cuts, expSeq ) ).
       orElse( tryBinary( cuts, expSeq ) ).
       orElse( tryTheory( cuts, expSeq ) ).
-      getOrElse( ( cuts, expSeq ).left ).
+      getOrElse( Left( cuts -> expSeq ) ).
       map {
         ContractionMacroRule( _ ).
           ensuring { _.conclusion isSubsetOf expSeq.map { _.shallow } }
@@ -48,13 +44,13 @@ class ExpansionProofToLK(
   private def tryAxiom( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     val shallowSequent = expSeq map { _.shallow }
     if ( shallowSequent.isTaut )
-      Some( LogicalAxiom( shallowSequent.antecedent intersect shallowSequent.succedent head ).right )
+      Some( Right( LogicalAxiom( shallowSequent.antecedent intersect shallowSequent.succedent head ) ) )
     else
       None
   }
 
   private def tryTheory( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
-    theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ).map { _.right }
+    theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ).map { Right( _ ) }
 
   private def tryDef( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
@@ -72,8 +68,8 @@ class ExpansionProofToLK(
 
   private def tryNullary( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case ( ETTop( _ ), i: Suc )    => TopAxiom.right
-      case ( ETBottom( _ ), i: Ant ) => BottomAxiom.right
+      case ( ETTop( _ ), i: Suc )    => Right( TopAxiom )
+      case ( ETBottom( _ ), i: Ant ) => Right( BottomAxiom )
     }
 
   private def tryWeakening( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
@@ -106,7 +102,7 @@ class ExpansionProofToLK(
     def handle( i: SequentIndex, e: ExpansionTree, f: ExpansionTree, g: ExpansionTree,
                 rule: ( LKProof, LKProof, HOLFormula ) => LKProof ) =
       solve( cuts, if ( f.polarity.inSuc ) expSeq.delete( i ) :+ f else f +: expSeq.delete( i ) ) flatMap { p1 =>
-        if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) p1.right
+        if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
         else solve( cuts, if ( g.polarity.inSuc ) expSeq.delete( i ) :+ g else g +: expSeq.delete( i ) ) map { p2 =>
           if ( !p2.conclusion.contains( g.shallow, g.polarity ) ) p2
           else rule( p1, p2, e.shallow )
@@ -174,7 +170,7 @@ class ExpansionProofToLK(
       case ( ETImp( cut1, cut2 ), i ) if freeVariables( cut1.shallow ) intersect upcomingEVs isEmpty =>
         val newCuts = cuts.zipWithIndex.filter { _._2 != i }.map { _._1 }
         solve( newCuts, expSeq :+ cut1 ) flatMap { p1 =>
-          if ( !p1.conclusion.contains( cut1.shallow, Polarity.InSuccedent ) ) p1.right
+          if ( !p1.conclusion.contains( cut1.shallow, Polarity.InSuccedent ) ) Right( p1 )
           else solve( newCuts, cut2 +: expSeq ) map { p2 =>
             if ( !p2.conclusion.contains( cut2.shallow, Polarity.InAntecedent ) ) p2
             else CutRule( p1, p2, cut1.shallow )

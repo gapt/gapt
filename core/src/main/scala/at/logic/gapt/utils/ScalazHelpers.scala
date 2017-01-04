@@ -7,4 +7,8 @@ object ScalazHelpers {
     def get: B = ( disj: @unchecked ) match { case \/-( b ) => b }
   }
 
+  implicit class RichEither[A, B]( val disj: Either[A, B] ) extends AnyVal {
+    def get: B = ( disj: @unchecked ) match { case Right( b ) => b }
+  }
+
 }
