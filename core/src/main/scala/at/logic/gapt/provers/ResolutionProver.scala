@@ -64,7 +64,13 @@ trait ResolutionProver extends OneShotProver {
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
     withGroundVariables2( seq ) { seq =>
       val ( cnf, justs, defs ) = structuralCNF( seq, generateJustifications = true, propositional = false )
-      getRobinsonProof( cnf ).map( RobinsonToExpansionProof( _, seq, justs, defs ) )
+      println("seq: " + seq)
+      println("cnf: " + cnf)
+      val robinson = getRobinsonProof( cnf )
+      //println("robinson : " + robinson)
+      val ret = robinson.map( RobinsonToExpansionProof( _, seq, justs, defs ) )
+      println("expansion: " + ret)
+      ret
     }
 
 }

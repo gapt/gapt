@@ -41,6 +41,8 @@ object structuralCNF {
         skolemizedFormula,
         Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
       )
+      println ("skolemTerm       : " + skolemConst( fvs: _* ))
+      println ("skolemizedFormula: " + skolemizedFormula)
       ( skolemConst( fvs: _* ), skolemizedFormula )
     }
 
@@ -50,8 +52,9 @@ object structuralCNF {
     // Since we the CNF of the negation of endSequent, we start with the following set of sequents:
     // For every formula in the antecedent:  :- formula
     // For every formula in the succedent:   formula -:
+    println("endSequent...: " + endSequent.map( Sequent() :+ _, _ +: Sequent() ).zipWithIndex )
     for ( ( initial, index ) <- endSequent.map( Sequent() :+ _, _ +: Sequent() ).zipWithIndex )
-      expand( initial, es => ProjectionFromEndSequent( es.swapped, index ) )
+      expand(initial, es => ProjectionFromEndSequent(es.swapped, index))
     // If we interpret the sequents in this set as a disjunction, their conjunction is equivalent to the original formula.
 
     // In each step we simplify the sequents in this set and make them more like clauses.
@@ -169,7 +172,7 @@ object structuralCNF {
           abbrev( seq, splits.head, backTrans )
         case Seq( i ) => splitAt( seq, i, backTrans )
         case Seq() =>
-          val clause = seq.map { _.asInstanceOf[HOLAtom] }
+          val clause: Clause[HOLAtom] = seq.map { _.asInstanceOf[HOLAtom] }
           cnf += clause
           if ( generateJustifications )
             justifications( clause ) = backTrans( clause.map( ETAtom( _, true ), ETAtom( _, false ) ) )

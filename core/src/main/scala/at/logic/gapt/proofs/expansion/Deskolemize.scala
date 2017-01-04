@@ -27,12 +27,14 @@ class Deskolemize extends SolveUtils {
 
   def desk(polarity: Boolean, m: Int, selected: List[LambdaExpression], a: LambdaExpression, e: ExpansionTree) : ExpansionTree = {
     println ("------------------------------------------------------------------")
-    println ("polarity: " + polarity)
-    println ("m       : " + m)
-    println ("selected: " + selected)
-    println ("a       : " + a)
-    println ("e       : " + e)
-    println ("class   : " + e.getClass())
+    println ("polarity : " + polarity)
+    println ("m        : " + m)
+    println ("selected : " + selected)
+    println ("a        : " + a)
+    println ("e        : " + e)
+    println ("class    : " + e.getClass())
+    println ("e.deep   : " + e.deep)
+    println ("e.shallow: " + e.shallow)
     // TODO a needed? information seems to be available inside of ExpansionTree objects
     (a, e) match {
       case (_, ETBottom(_)) => e
@@ -82,8 +84,25 @@ class Deskolemize extends SolveUtils {
           desk(polarity, m + q, selected, a2, e2)
         )
       }
-      case (All(x, a1), _) if polarity => {
+      case (All(x, a1), ETSkolemQuantifier(s, skTerm, skDef, e1)) if polarity => {
+        /*
+      //case (All(x, a1), _) if polarity => {
         // TODO
+        println("x     : " + x)
+        println("a1    : " + a1)
+        println("s     : " + s)
+        println("skTerm: " + skTerm)
+        println("skDef : " + skDef)
+        println("e1    : " + e1)
+        val pos: List[HOLPosition] = a1.find(x)
+        val fprime: LambdaExpression = a1.replace(pos, skTerm)
+        val tmp = (skTerm -> desk(polarity, m + 1, selected, fprime, e1)) :: Nil
+        println("s:  " + s)
+        println("tmp: " + tmp)
+        val ret = ETWeakQuantifier(s, tmp.toMap)
+        */
+        println("STRONG ALL: ")
+        println()
         e
       }
       case (All(x, a1), q @ ETWeakQuantifier(s, i)) if !polarity => {
@@ -101,8 +120,10 @@ class Deskolemize extends SolveUtils {
         println( "WeakQuantifier tmp: " + tmp)
         ETWeakQuantifier(s, tmp)
       }
-      case (Ex(x, a1), _) if !polarity => {
+      case (Ex(x, a1), ETSkolemQuantifier(s, skTerm, skDef, e1)) if !polarity => {
         // TODO
+        println("STRONG EX")
+        println()
         e
       }
       case (Ex(x, a1), q @ ETWeakQuantifier(s, i)) if polarity => {
