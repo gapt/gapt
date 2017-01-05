@@ -41,36 +41,32 @@ object prop_32 extends TacticsProof {
     rewrite.many ltr "IHxs_0" in "append_comm"; refl
   }
 
-  val rot_gen = hof"!xs!ys!zs append(rotate(length(xs), append(xs,ys)), zs) = append(ys, append(xs, zs))"
-  val rot_gen_proof = Lemma( theory :+
-    ( "rot_gen" -> rot_gen ) ) {
-    allR; induction( hov"xs:list" )
+  val rot_gen = ( append_nil_left_id & append_comm ) -->
+    hof"!xs!ys rotate(length(xs), append(xs,ys)) = append(ys, xs)"
+
+  val rot_gen_proof = Lemma( theory :+ ( "rot_gen" -> rot_gen ) ) {
+    impR; andL; allR; induction( hov"xs:list" )
     //- BC
-    allR; allR
-    rewrite.many ltr "h3" in "rot_gen"
-    rewrite.many ltr "h7" in "rot_gen"
-    rewrite.many ltr "h5" in "rot_gen"; refl
-    //- IC
-    allR; allR
-    rewrite.many ltr "h4" in "rot_gen"
-    rewrite ltr "h6" in "rot_gen"
-    rewrite.many ltr "h9" in "rot_gen"
-    cut( "append_comm", hof"!xs!ys!zs append(xs,append(ys,zs)) = append(append(xs,ys),zs)" )
-    insert( append_comm_proof )
-    rewrite rtl "append_comm" in "rot_gen"
-    rewrite.many ltr "IHxs_0" in "rot_gen"
     escargot
-    /* FIXME: Is it possible to finish this proof without instantiating xs
-     * in append_comm nor in any other derived formula to anything else than xs_0 and
-     * without using induction on a variable other than xs?
-     */
+    //- IC
+    allR
+    rewrite.many ltr "h4" in "rot_gen_1"
+    rewrite.many ltr "h6" in "rot_gen_1"
+    escargot
+  }
+
+  val lemma = append_nil_left_id & append_comm & rot_gen
+
+  val lemma_proof = Lemma( theory :+ ( "lemma" -> lemma ) ) {
+    andR; andR;
+    insert( append_nil_left_id_proof )
+    insert( append_comm_proof )
+    insert( rot_gen_proof )
   }
 
   val proof = Lemma( sequent ) {
-    cut( "rot_gen", rot_gen )
-    insert( rot_gen_proof )
-    cut( "append_nil_left_id", append_nil_left_id )
-    insert( append_nil_left_id_proof )
+    cut( "lemma", lemma )
+    insert( lemma_proof )
     escargot
   }
 }
