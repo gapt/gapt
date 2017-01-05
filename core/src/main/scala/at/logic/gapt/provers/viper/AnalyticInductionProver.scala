@@ -564,6 +564,9 @@ object aip {
         println( helpMessage )
         System exit 0
       }
+      if ( options.infile == null ) {
+        throw new ValidationException( usage )
+      }
       try {
         val aip = new AnalyticInductionProver( compileProverOptions( options ) )
         val problem = TipSmtParser fixupAndParse FilePath( options.infile )
@@ -621,7 +624,7 @@ object aip {
     args match {
       case cmdOptRegex( k, v ) :: remainder => parseArguments( options + ( k -> v ), remainder )
       case infile :: Nil                    => parseOptions( options, infile )
-      case Nil                              => throw new ValidationException( usage )
+      case Nil                              => parseOptions( options, null )
       case _                                => throw new ValidationException( "Illegal command line arguments" )
     }
   }

@@ -267,13 +267,18 @@ object Viper extends Logger {
     }
 
   def main( args: Array[String] ): Unit = {
-    val ( problem, options ) = parseArgs( args, Map() )
-    val viper = new Viper( problem, options )
+    args match {
+      case Array( "aip", _@ _* ) => aip.main( args.tail )
+      case _ => {
+        val ( problem, options ) = parseArgs( args, Map() )
+        val viper = new Viper( problem, options )
 
-    viper.makeVerbose()
-    Logger.setConsolePattern( "%message%n" )
+        viper.makeVerbose()
+        Logger.setConsolePattern( "%message%n" )
 
-    viper.solve()
+        viper.solve()
+      }
+    }
   }
 
 }
