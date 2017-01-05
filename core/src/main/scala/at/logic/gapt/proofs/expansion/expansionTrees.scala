@@ -222,6 +222,13 @@ case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpressio
     case All( x, t ) => ( Polarity.InAntecedent, x, t )
   }
 
+  val m = instances.map { case (selectedTerm, child) =>
+    (selectedTerm, child, BetaReduction.betaNormalize( Substitution( boundVar -> selectedTerm )( qfFormula ) ))
+  }
+  for ( n <- m ) {
+    require(n != null)
+  }
+
   for ( ( selectedTerm, child ) <- instances ) {
     require( child.polarity == polarity )
     val correctShallow = BetaReduction.betaNormalize( Substitution( boundVar -> selectedTerm )( qfFormula ) )
@@ -346,7 +353,10 @@ case class ETSkolemQuantifier(
   }
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
-  require( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ) == shallow )
+  val lt = skolemDef( skolemArgs: _* )
+  val bn = BetaReduction.betaNormalize( lt )
+  require( bn == shallow )
+  //require( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ) == shallow )
 
   require( child.polarity == polarity )
   require( child.shallow == Substitution( boundVar -> skolemTerm )( qfFormula ) )

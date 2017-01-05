@@ -3,13 +3,13 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.lk.{LKProof, SolveUtils, TopAxiom}
+import at.logic.gapt.proofs.lk.{ LKProof, SolveUtils, TopAxiom }
 
 import scala.collection.immutable.Iterable
 
 /**
-  * Created by matthias on 5/12/16.
-  */
+ * Created by matthias on 5/12/16.
+ */
 object Deskolemize extends Deskolemize {
 }
 
@@ -25,7 +25,7 @@ class Deskolemize extends SolveUtils {
     Sequent(deskAnt, deskSucc)
   }
 
-  def desk(polarity: Boolean, m: Int, selected: List[LambdaExpression], a: LambdaExpression, e: ExpansionTree) : ExpansionTree = {
+  def desk(polarity: Boolean, m: Int, selected: List[LambdaExpression], a: HOLFormula, e: ExpansionTree) : ExpansionTree = {
     println ("------------------------------------------------------------------")
     println ("polarity : " + polarity)
     println ("m        : " + m)
@@ -35,7 +35,7 @@ class Deskolemize extends SolveUtils {
     println ("class    : " + e.getClass())
     println ("e.deep   : " + e.deep)
     println ("e.shallow: " + e.shallow)
-    // TODO a needed? information seems to be available inside of ExpansionTree objects
+    val ret =
     (a, e) match {
       case (_, ETBottom(_)) => e
       case (_, ETTop(_))    => e
@@ -84,43 +84,35 @@ class Deskolemize extends SolveUtils {
           desk(polarity, m + q, selected, a2, e2)
         )
       }
-      case (All(x, a1), ETSkolemQuantifier(s, skTerm, skDef, e1)) if polarity => {
-        /*
-      //case (All(x, a1), _) if polarity => {
-        // TODO
-        println("x     : " + x)
-        println("a1    : " + a1)
-        println("s     : " + s)
-        println("skTerm: " + skTerm)
-        println("skDef : " + skDef)
-        println("e1    : " + e1)
-        val pos: List[HOLPosition] = a1.find(x)
-        val fprime: LambdaExpression = a1.replace(pos, skTerm)
-        val tmp = (skTerm -> desk(polarity, m + 1, selected, fprime, e1)) :: Nil
-        println("s:  " + s)
-        println("tmp: " + tmp)
-        val ret = ETWeakQuantifier(s, tmp.toMap)
-        */
+      case (All(x, a1), e) if polarity => {
+        val sym = Const( "s_" + (m + 1), FunctionType( x.exptype, selected.map( _.exptype ) ) )
+        val skolemFunction = sym( selected: _* )
         println("STRONG ALL: ")
-        println()
-        e
+
+        val pos: List[HOLPosition] = a1.find(x)
+        val fprime: HOLFormula = Substitution( x -> skolemFunction )(a1)
+        println ("fprime: " + fprime)
+        val inner = desk(true, m+1, selected, fprime, e)
+        println("inner: " + inner)
+        ETSkolemQuantifier(a, skolemFunction, Abs(x, a), inner)
       }
       case (All(x, a1), q @ ETWeakQuantifier(s, i)) if !polarity => {
         println( "WeakQuantifier x: " + x)
         println( "WeakQuantifier a1: " + a1)
         println( "WeakQuantifier s: " + s)
         println( "WeakQuantifier i: " + i)
+
         val tmp = i.map{ case (t, v) => {
           val pos: List[HOLPosition] = a1.find(x)
-          val fprime: LambdaExpression = a1.replace(pos, t)
+          val fprime: HOLFormula = Substitution( x -> t )(a1)
           println( "WeakQuantifier v: " + v)
           println( "WeakQuantifier f: " + a1 + "\n  {" + x + " -> " + t + "}--> fprime: " + fprime)
           (t -> desk(false, m, t :: selected, fprime, v))
         } }
         println( "WeakQuantifier tmp: " + tmp)
-        ETWeakQuantifier(s, tmp)
+        ETWeakQuantifier(a, tmp)
       }
-      case (Ex(x, a1), ETSkolemQuantifier(s, skTerm, skDef, e1)) if !polarity => {
+      case (Ex(x, a1), e) if !polarity => {
         // TODO
         println("STRONG EX")
         println()
@@ -133,13 +125,13 @@ class Deskolemize extends SolveUtils {
         println( "WeakQuantifier i: " + i)
         val tmp = i.map{ case (t, v) => {
           val pos: List[HOLPosition] = a1.find(x)
-          val fprime: LambdaExpression = a1.replace(pos, t)
+          val fprime: HOLFormula = Substitution( x -> t )(a1)
           println( "WeakQuantifier v: " + v)
           println( "WeakQuantifier f: " + a1 + "\n  {" + x + " -> " + t + "}--> fprime: " + fprime)
           (t -> desk(true, m, t :: selected, fprime, v))
         } }
         println( "WeakQuantifier tmp: " + tmp)
-        ETWeakQuantifier(s, tmp)
+        ETWeakQuantifier(a, tmp)
       }
       case (_, ETSkolemQuantifier(a1, skTerm, skDef, e1)) => {
         println("a1    : " + a1)
@@ -148,7 +140,8 @@ class Deskolemize extends SolveUtils {
         println("e1    : " + e1)
         desk(polarity, m, selected, a1, e1)
       }
-      case (_, ETAtom(a, p)) => {
+      case (FOLAtom(_,_), ETAtom(_, _)) => {
+        println ("ETAtom")
         e
       }
       case (_, _) => {
@@ -157,6 +150,12 @@ class Deskolemize extends SolveUtils {
         e
       }
     }
+    println("---------------------------")
+    println("a: " + a)
+    println("e: " + e)
+    println("desk ret: " + ret)
+    println("---------------------------")
+    ret
   }
 
 
