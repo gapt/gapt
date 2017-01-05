@@ -4,6 +4,9 @@
 
 * Update to Scala 2.12
 * LKsk and Ral are replaced by the standard calculi, CERESω is now just CERES.
+* Analytic induction prover
+* Tons of proofs for problems from TIP
+* Refactored Context data structure to enable future support for recursors
 
 ## Version 2.3 (release on 2016-10-10)
 
