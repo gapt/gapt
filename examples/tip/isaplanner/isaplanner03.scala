@@ -81,7 +81,7 @@ object isaplanner03 extends TacticsProof {
     axiomLog
   }
 
-  val inductionAxiom = sequentialInductionAxioms.inductionAxioms( sequent.succedent.head._2, List( hov"xs:list" ) ).valueOr( es => throw new Exception( es.head ) ).head
+  val inductionAxiom = sequentialInductionAxioms( sequent.succedent.head._2, List( hov"xs:list" ) ).valueOr( es => throw new Exception( es.head ) ).head
   val proof2 = Lemma( ( "IAxs_0" -> inductionAxiom ) +: sequent ) {
     escargot
   }

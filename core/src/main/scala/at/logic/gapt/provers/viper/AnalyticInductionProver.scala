@@ -21,7 +21,7 @@ import scalaz.Scalaz._
 import scalaz.Validation.FlatMap.ValidationFlatMapRequested
 import scalaz.ValidationNel
 
-trait InductionStrategy {
+trait InductionAxioms {
   type ThrowsError[T] = ValidationNel[String, T]
 
   /**
@@ -32,7 +32,7 @@ trait InductionStrategy {
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
+  def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
 }
 
 object prover9 extends ManySortedProver( Prover9 )
@@ -97,8 +97,8 @@ class ManySortedProver( prover: ResolutionProver ) extends InternalProver( prove
 }
 
 case class ProverOptions(
-  prover:    InternalProver    = new InternalProver( Escargot ),
-  axiomType: InductionStrategy = sequentialInductionAxioms
+  prover:    InternalProver  = new InternalProver( Escargot ),
+  axiomType: InductionAxioms = sequentialInductionAxioms
 )
 case class AipOptions(
   printSummary: Boolean = false,
@@ -232,7 +232,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
   )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       formula <- findFormula( sequent, label )
-      axioms <- options.axiomType.inductionAxioms( formula, variables )
+      axioms <- options.axiomType( formula, variables )
     } yield {
       axioms ++: labeledSequentToHOLSequent( sequent )
     }
@@ -256,7 +256,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
       formula <- findFormula( sequent, label )
       All.Block( _, f ) = formula
       variables = freeVariables( f ).filter( { hasInductiveType( _ ) } ).toList
-      axioms <- options.axiomType.inductionAxioms( formula, variables )
+      axioms <- options.axiomType( formula, variables )
     } yield {
       axioms ++: labeledSequentToHOLSequent( sequent )
     }
@@ -273,7 +273,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
     ctx.getConstructors( baseType( v ) ).isDefined
 }
 
-object combinedInductionAxioms extends InductionStrategy {
+object combinedInductionAxioms extends InductionAxioms {
   /**
    * Computes induction axioms for a formula and variables.
    *
@@ -283,14 +283,14 @@ object combinedInductionAxioms extends InductionStrategy {
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  override def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+  override def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
     for {
-      sequentialAxioms <- sequentialInductionAxioms.inductionAxioms( f, vs )( ctx )
-      independentAxioms <- independentInductionAxioms.inductionAxioms( f, vs )( ctx )
+      sequentialAxioms <- sequentialInductionAxioms( f, vs )( ctx )
+      independentAxioms <- independentInductionAxioms( f, vs )( ctx )
     } yield ( sequentialAxioms ++ independentAxioms ).distinct
 }
 
-object independentInductionAxioms extends InductionStrategy {
+object independentInductionAxioms extends InductionAxioms {
 
   /**
    * Computes the induction axioms for the given formula and variables.
@@ -300,7 +300,7 @@ object independentInductionAxioms extends InductionStrategy {
    * @return Either a list of induction axioms, or an error message if one of
    * the axioms could not be created.
    */
-  def inductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+  override def apply( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
     {
       val All.Block( _, formula1 ) = formula
       makeInductionAxioms( formula1, variables )
@@ -380,7 +380,7 @@ object independentInductionAxioms extends InductionStrategy {
     }
 }
 
-object sequentialInductionAxioms extends InductionStrategy {
+object sequentialInductionAxioms extends InductionAxioms {
 
   /**
    * Computes a sequence of induction axioms for the given formula and variables.
@@ -398,7 +398,7 @@ object sequentialInductionAxioms extends InductionStrategy {
    * x in X
    * {X < x} and {X > x} are subsets of X containing all variables with index smaller/greater than the index of x.
    */
-  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] = {
+  override def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] = {
     val fvs = freeVariables( f ).toList
     val All.Block( _, f1 ) = f
     val xvs = freeVariables( f1 ).toList.diff( fvs ).diff( vs )
@@ -522,7 +522,7 @@ object aip {
 
   type AipInvokation[P, W] = ( AnalyticInductionProver, P ) => W
 
-  val axioms = Map[String, InductionStrategy](
+  val axioms = Map[String, InductionAxioms](
     "sequential" -> sequentialInductionAxioms,
     "independent" -> independentInductionAxioms,
     "combined" -> combinedInductionAxioms
