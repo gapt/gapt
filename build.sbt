@@ -204,8 +204,7 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "ammonite-ops" % "0.8.1",
       "ch.qos.logback" % "logback-classic" % "1.1.8",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5",
-      "org.typelevel" %% "cats" % "0.8.1"
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
 
     // UI
