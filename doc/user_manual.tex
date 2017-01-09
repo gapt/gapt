@@ -523,10 +523,10 @@ The inference rules are defined in appendix \ref{app:sequent_calculus}.
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
-of the inference rules. For entering bigger proofs, it is more convenient to
-use the ``gaptic'' tactics language, defined in section \ref{sec:gaptic}.
+of the inference rules. We discuss this possibility in this section. For
+entering bigger proofs, it is more convenient to use the ``gaptic'' tactics
+language which is discussed in section \ref{sec:gaptic}.
 
-\subsubsection{Top-down proof construction}\label{sec:proofs-top-down}
 We start with the axioms:
 %
 \begin{clilisting}
@@ -642,7 +642,6 @@ proof transformation: you may manually pass it a list of definitions to eliminat
 or have it automatically eliminate all definitions in the current context. Some \cli{gaptic} tactics
 (see \ref{sec:gaptic}) also require a context.
 
-\subsubsection{Creating a context}\label{sec:context-creation}
 The typical way to declare a context is by starting with a default value and adding elements to it.
 The \cli{Context.default} object contains only the sort \cli{o} (truth values) and the fundamental logical
 symbols:
@@ -670,9 +669,9 @@ by the functions requiring it.
 \subsection{Gaptic}\label{sec:gaptic}
 
 GAPT contains a tactics language called \cli{gaptic}.  In contrast to the
-top-down construction presented in section \ref{sec:proofs-top-down},
+top-down construction presented in section \ref{sec:entering_proofs},
 gaptic allows a comfortable bottom-up development of proofs, similar
-to popular proof assistants such as Coq, etc.
+to popular proof assistants such as Coq, Isabelle, etc.
 
 Gaptic can not be (easily) used in the interactive Scala shell, as it requires
 multi-line input.  Gaptic scripts are usually developed as external files:
@@ -777,8 +776,8 @@ called with a label, it will be applied to that specific formula, if possible.
 Otherwise, the system will attempt to determine a target formula on its own. If
 there is either no applicable formula or more than one, the tactic will fail.
 
-\subsubsection{Overview of tactics}\label{sec:gaptic-tactics-overview}
-We now give a description of a few tactics, you can see the full list in the
+\subsubsection{Basic tactics}\label{sec:gaptic-basic-tactics}
+We now give a description of a few basic tactics, you can find the full list in the
 API documentation:
 \begin{clilisting}
 gapt> help(at.logic.gapt.proofs.gaptic.TacticCommands)
@@ -1641,12 +1640,10 @@ see~\cite{Hetzl13Understanding} for a detailed description.
 
 \subsection{Cut-elimination by resolution (CERES)}\label{sec:ceres}
 
-Cut-elimination by resolution (CERES) is a method which simplifies the cut
- formulas in a proof: a proof with arbitrary cut-formulas is transformed
- into a proof with atomic cuts. Since Expansion Proofs can be extracted
- directly from a proof with quantifier-free cut-formulas, we can skip
- the elimination of atomic cuts which has a worst time complexity
- exponential in the size of the proof.
+Cut-elimination by resolution (CERES) is a method which transforms a
+proof with arbitrary cut-formulas into one with only atomic cuts~\cite{Baaz00CutElimination,Baaz2011}. Since
+expansion proofs can be extracted directly from a proof with quantifier-free
+cut-formulas, we can skip the elimination of atomic cuts.
 
 For instance, the example proof \texttt{Pi2Pigeonhole} formalizes
  the fact that given an aviary with two holes and an infinite number
