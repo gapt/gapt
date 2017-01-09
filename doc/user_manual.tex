@@ -1387,9 +1387,25 @@ Some([p39]  ⊢    (Resolution(p1, Suc(0), p38, Ant(0)))
 [p32] c + ...
 \end{clilisting}
 
+\subsection{Built-in inductive theorem prover}
+
+GAPT contains a built-in inductive theorem prover: viper (Vienna inductive theorem prover). It
+can be started from the command line using the \texttt{viper.sh} script. It takes input in the
+TIP format~\cite{Claessen15TIP}. Viper has a mode for analytic induction and a mode for 
+the tree grammar-based method described in~\cite{Eberhard15Inductive}. As of version 2.4 of GAPT,
+viper is in an early stage of development. The tree grammar-based method is invoked as in:
+\begin{lstlisting}
+./viper.sh examples/induction/prod_prop_31.smt2
+\end{lstlisting}
+The analytic mode is invoked as in:
+\begin{lstlisting}
+./viper.sh aip examples/tip/isaplanner/prop_06.smt2
+\end{lstlisting}
+
+
 \subsection{Built-in tableaux prover}
 
-GAPT contains a  built-in tableaux prover for propositional logic
+GAPT contains a built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
