@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
 
 object simp_expr_unambig1 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/benchmarks/grammars/simp_expr_unambig1.smt2", getClass ) )
+  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/grammars/simp_expr_unambig1.smt2", getClass ) )
   ctx = bench.ctx
 
   val theory = Sequent(

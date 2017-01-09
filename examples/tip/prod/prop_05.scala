@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
 object prop_05 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/benchmarks/prod/prop_05.smt2", getClass ) )
+  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/prod/prop_05.smt2", getClass ) )
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {
