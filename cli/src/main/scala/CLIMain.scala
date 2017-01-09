@@ -15,7 +15,7 @@ object CLIMain extends Logger {
     *    Welcome to the GAPT shell!     *
     *************************************
 
- Copyright (C) 2009-2016  GAPT developers
+ Copyright (C) 2009-2017  GAPT developers
 
  This program comes with ABSOLUTELY NO WARRANTY. This is free
  software, and you are welcome to redistribute it under certain
