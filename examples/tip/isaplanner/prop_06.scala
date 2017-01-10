@@ -52,5 +52,7 @@ object isaplanner06 extends TacticsProof {
 
   val aipOptions2 = new ProverOptions( escargot, sequentialInductionAxioms )
   val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( target, "goal", List( hov"x:nat" ) )
+
+  val proof4 = AnalyticInductionProver.singleInduction( target, hov"m:nat" )
 }
 

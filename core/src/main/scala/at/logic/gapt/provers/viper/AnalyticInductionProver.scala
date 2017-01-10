@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, TBase, Var, freeVariables, rename, Const => Con }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.proofs.expansion.ExpansionProof
-import at.logic.gapt.proofs.gaptic.NewLabels
+import at.logic.gapt.proofs.gaptic.{ Lemma, NewLabels }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, eliminateSplitting }
@@ -16,6 +16,7 @@ import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.vampire.Vampire
 import ammonite.ops._
+import at.logic.gapt.proofs.gaptic._
 
 import scalaz.Scalaz._
 import scalaz.Validation.FlatMap.ValidationFlatMapRequested
@@ -26,6 +27,7 @@ trait InductionAxioms {
 
   /**
    * Computes induction axioms for a formula and variables.
+   *
    * @param f The formula for which induction axioms are to be generated.
    * @param vs The variables for which induction axioms are to be generated.
    * @param ctx Defines inductive types etc.
@@ -44,6 +46,7 @@ object spass extends ManySortedProver( SPASS )
 class InternalProver( prover: ResolutionProver ) {
   /**
    * Checks a sequent for validity.
+   *
    * @param sequent The sequent to check for validity.
    * @return true if the sequent is valid, else false or the method does not terminate.
    */
@@ -51,6 +54,7 @@ class InternalProver( prover: ResolutionProver ) {
 
   /**
    * Tries to compute a resolution proof for a sequent.
+   *
    * @param sequent The sequent to prove.
    * @return A resolution proof if the sequent is provable, otherwise None or the method does not terminate.
    */
@@ -58,6 +62,7 @@ class InternalProver( prover: ResolutionProver ) {
 
   /**
    * Tries to compute an expansion proof for a sequent.
+   *
    * @param sequent The sequent to prove.
    * @return An expansion proof if the sequent is provable, otherwise None or the method does not terminate.
    */
@@ -65,6 +70,7 @@ class InternalProver( prover: ResolutionProver ) {
 
   /**
    * Tries to compute a LK proof for a sequent.
+   *
    * @param sequent The sequent to prove.
    * @return A LK proof if the sequent is provable, otherwise None or the method does not terminate.
    */
@@ -110,6 +116,26 @@ case class AipOptions(
   infile:       String  = null
 )
 
+object AnalyticInductionProver {
+
+  /**
+   * Tries to prove the given sequent by using a single induction on the specified variable.
+   *
+   * @param sequent A sequent of the form `Γ, :- ∀x.A`
+   * @param variable An eigenvariable `α` for the sequent `Γ, :- ∀x.A`
+   * @param ctx The context which defines the inductive types, etc.
+   * @return If the sequent is provable with at most one induction on `α` then a proof which uses a single induction
+   *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
+   *         throws an exception.
+   */
+  def singleInduction( sequent: Sequent[( String, HOLFormula )], variable: Var )( implicit ctx: Context ): LKProof =
+    Lemma( sequent ) {
+      allR( variable ); induction( on = variable )
+      decompose.onAllSubGoals
+      repeat( at.logic.gapt.proofs.gaptic.escargot )
+    }
+}
+
 class AnalyticInductionProver( options: ProverOptions ) {
 
   type ThrowsError[T] = ValidationNel[String, T]
@@ -119,6 +145,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to prove a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -130,6 +157,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute a LK proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param variables The variables for which induction axioms are added.
@@ -145,6 +173,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute a LK proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -156,6 +185,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute a resolution proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -167,6 +197,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute an expansion proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -178,6 +209,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Extracts the inductive sequent from a validation value.
+   *
    * @param validation The validation value from which the sequent is extracted.
    * @return A sequent.
    * @throws Exception If the validation value represents a validation failure.
@@ -187,6 +219,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Computes a sequent enriched by induction axioms.
+   *
    * @param sequent The sequent to which induction axioms are added.
    * @param label The formula for which induction axioms are to be generated.
    * @param variables The variables for which induction axioms are to be generated.
@@ -202,6 +235,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Computes a sequent enriched by induction axioms.
+   *
    * @param sequent The sequent to which induction axioms are added.
    * @param label The formula for which induction axioms are to be generated.
    * @param ctx Defines inductive types etc.
