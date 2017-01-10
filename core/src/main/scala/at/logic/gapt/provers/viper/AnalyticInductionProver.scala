@@ -128,12 +128,14 @@ object AnalyticInductionProver {
    *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
    *         throws an exception.
    */
-  def singleInduction( sequent: Sequent[( String, HOLFormula )], variable: Var )( implicit ctx: Context ): LKProof =
-    Lemma( sequent ) {
-      allR( variable ); induction( on = variable )
-      decompose.onAllSubGoals
-      repeat( at.logic.gapt.proofs.gaptic.escargot )
-    }
+  def singleInduction( sequent: Sequent[( String, HOLFormula )], variable: Var )( implicit ctx: Context ): LKProof = {
+    var state = ProofState( sequent )
+    state += allR( variable );
+    state += induction( on = variable )
+    state += decompose.onAllSubGoals
+    state += repeat( at.logic.gapt.proofs.gaptic.escargot )
+    state.result
+  }
 }
 
 class AnalyticInductionProver( options: ProverOptions ) {
