@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. */
-object isaplanner23 extends TacticsProof {
+object prop_23 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_23.smt2", getClass ) )
   ctx = bench.ctx
 

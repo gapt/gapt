@@ -2,7 +2,6 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.examples.tip.grammars._
 import at.logic.gapt.examples.tip.isaplanner._
-import at.logic.gapt.examples.tip.prod._
 import at.logic.gapt.formats.tip.TipSmtParser
 import org.specs2.mutable.Specification
 
@@ -17,57 +16,57 @@ class TipProofsTests extends Specification {
   }
 
   // grammars
-  requireTip { "simp_expr_unambig1" in { simp_expr_unambig1; ok } }
+  requireTip { "grammars/simp_expr_unambig1" in { simp_expr_unambig1; ok } }
 
   // isaplanner
-  requireTip { "isaplanner03" in { isaplanner03; ok } }
-  "isaplanner06" in { isaplanner06; ok }
+  requireTip { "isaplanner/prop_03" in { prop_03; ok } }
+  "isaplanner/prop_06" in { prop_06; ok }
 
-  requireTip { "isaplanner07" in { isaplanner07; ok } }
-  requireTip { "isaplanner08" in { isaplanner08; ok } }
-  requireTip { "isaplanner09" in { isaplanner09; ok } }
-  requireTip { "isaplanner10" in { isaplanner10; ok } }
-  requireTip { "isaplanner11" in { isaplanner11; ok } }
-  requireTip { "isaplanner12" in { isaplanner12; ok } }
-  requireTip { "isaplanner13" in { isaplanner13; ok } }
-  requireTip { "isaplanner14" in { isaplanner14; ok } }
-  requireTip { "isaplanner15" in { isaplanner15; ok } }
-  requireTip { "isaplanner16" in { isaplanner16; ok } }
-  requireTip { "isaplanner17" in { isaplanner17; ok } }
-  requireTip { "isaplanner18" in { isaplanner18; ok } }
-  requireTip { "isaplanner19" in { isaplanner19; ok } }
+  requireTip { "isaplanner/prop_07" in { prop_07; ok } }
+  requireTip { "isaplanner/prop_08" in { prop_08; ok } }
+  requireTip { "isaplanner/prop_09" in { prop_09; ok } }
+  requireTip { "isaplanner/prop_10" in { prop_10; ok } }
+  requireTip { "isaplanner/prop_11" in { prop_11; ok } }
+  requireTip { "isaplanner/prop_12" in { prop_12; ok } }
+  requireTip { "isaplanner/prop_13" in { prop_13; ok } }
+  requireTip { "isaplanner/prop_14" in { prop_14; ok } }
+  requireTip { "isaplanner/prop_15" in { prop_15; ok } }
+  requireTip { "isaplanner/prop_16" in { prop_16; ok } }
+  requireTip { "isaplanner/prop_17" in { prop_17; ok } }
+  requireTip { "isaplanner/prop_18" in { prop_18; ok } }
+  requireTip { "isaplanner/prop_19" in { prop_19; ok } }
 
-  requireTip { "isaplanner21" in { isaplanner21; ok } }
-  requireTip { "isaplanner22" in { isaplanner22; ok } }
-  requireTip { "isaplanner23" in { isaplanner23; ok } }
-  requireTip { "isaplanner24" in { isaplanner24; ok } }
+  requireTip { "isaplanner/prop_21" in { prop_21; ok } }
+  requireTip { "isaplanner/prop_22" in { prop_22; ok } }
+  requireTip { "isaplanner/prop_23" in { prop_23; ok } }
+  requireTip { "isaplanner/prop_24" in { prop_24; ok } }
 
-  requireTip { "isaplanner26" in { isaplanner26; ok } }
-  requireTip { "isaplanner27" in { isaplanner27; ok } }
-  requireTip { "isaplanner28" in { isaplanner28; ok } }
-  requireTip { "isaplanner29" in { isaplanner29; ok } }
-  requireTip { "isaplanner30" in { isaplanner30; ok } }
-  requireTip { "isaplanner31" in { isaplanner31; ok } }
-  requireTip { "isaplanner32" in { isaplanner32; ok } }
-  requireTip { "isaplanner33" in { isaplanner33; ok } }
-  requireTip { "isaplanner34" in { isaplanner34; ok } }
-  requireTip { "isaplanner35" in { isaplanner35; ok } }
-  requireTip { "isaplanner36" in { isaplanner36; ok } }
-  requireTip { "isaplanner37" in { isaplanner37; ok } }
-  requireTip { "isaplanner38" in { isaplanner38; ok } }
-  requireTip { "isaplanner39" in { isaplanner39; ok } }
-  requireTip { "isaplanner40" in { isaplanner40; ok } }
-  requireTip { "isaplanner41" in { isaplanner41; ok } }
-  requireTip { "isaplanner42" in { isaplanner42; ok } }
-  requireTip { "isaplanner43" in { isaplanner43; ok } }
-  requireTip { "isaplanner44" in { isaplanner44; ok } }
+  requireTip { "isaplanner/prop_26" in { prop_26; ok } }
+  requireTip { "isaplanner/prop_27" in { prop_27; ok } }
+  requireTip { "isaplanner/prop_28" in { prop_28; ok } }
+  requireTip { "isaplanner/prop_29" in { prop_29; ok } }
+  requireTip { "isaplanner/prop_30" in { prop_30; ok } }
+  requireTip { "isaplanner/prop_31" in { prop_31; ok } }
+  requireTip { "isaplanner/prop_32" in { prop_32; ok } }
+  requireTip { "isaplanner/prop_33" in { prop_33; ok } }
+  requireTip { "isaplanner/prop_34" in { prop_34; ok } }
+  requireTip { "isaplanner/prop_35" in { prop_35; ok } }
+  requireTip { "isaplanner/prop_36" in { prop_36; ok } }
+  requireTip { "isaplanner/prop_37" in { prop_37; ok } }
+  requireTip { "isaplanner/prop_38" in { prop_38; ok } }
+  requireTip { "isaplanner/prop_39" in { prop_39; ok } }
+  requireTip { "isaplanner/prop_40" in { prop_40; ok } }
+  requireTip { "isaplanner/prop_41" in { prop_41; ok } }
+  requireTip { "isaplanner/prop_42" in { prop_42; ok } }
+  requireTip { "isaplanner/prop_43" in { prop_43; ok } }
+  requireTip { "isaplanner/prop_44" in { prop_44; ok } }
 
   // prod
-  requireTip { "prop_01" in { prop_01; ok } }
-  requireTip { "prop_04" in { prop_04; ok } }
-  requireTip { "prop_05" in { prop_05; ok } }
-  requireTip { "prop_06" in { prop_06; ok } }
-  requireTip { "prop_13" in { prop_13; ok } }
-  requireTip { "prop_15" in { prop_15; ok } }
-  requireTip { "prop_32" in { prop_32; ok } }
+  requireTip { "prod/prop_01" in { at.logic.gapt.examples.tip.prod.prop_01; ok } }
+  requireTip { "prod/prop_04" in { at.logic.gapt.examples.tip.prod.prop_04; ok } }
+  requireTip { "prod/prop_05" in { at.logic.gapt.examples.tip.prod.prop_05; ok } }
+  requireTip { "prod/prop_06" in { at.logic.gapt.examples.tip.prod.prop_06; ok } }
+  requireTip { "prod/prop_13" in { at.logic.gapt.examples.tip.prod.prop_13; ok } }
+  requireTip { "prod/prop_15" in { at.logic.gapt.examples.tip.prod.prop_15; ok } }
+  requireTip { "prod/prop_32" in { at.logic.gapt.examples.tip.prod.prop_32; ok } }
 }

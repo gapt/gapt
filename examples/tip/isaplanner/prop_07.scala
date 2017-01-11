@@ -10,7 +10,7 @@ import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, esc
 /* This proof is not a s.i.p because of the subinduction,
  * in the base case of the primary induction.
  */
-object isaplanner07 extends TacticsProof {
+object prop_07 extends TacticsProof {
 
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_07.smt2", getClass ) )
   ctx = bench.ctx

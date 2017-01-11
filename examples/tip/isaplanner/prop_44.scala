@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms }
 
-object isaplanner44 extends TacticsProof {
+object prop_44 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_44.smt2", getClass ) )
   ctx = bench.ctx
 

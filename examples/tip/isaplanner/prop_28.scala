@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
 
 /* This is not a s.i.p because of the subinduction for equal(x,x). */
-object isaplanner28 extends TacticsProof {
+object prop_28 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_28.smt2", getClass ) )
   ctx = bench.ctx
 

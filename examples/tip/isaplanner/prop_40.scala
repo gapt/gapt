@@ -5,7 +5,7 @@ import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
 
-object isaplanner40 extends TacticsProof {
+object prop_40 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_40.smt2", getClass ) )
   ctx = bench.ctx
 

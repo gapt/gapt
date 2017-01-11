@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.gaptic._
 /* This is not a s.i.p because of the nested induction which is
  * required to prove equal(x,x).
  */
-object isaplanner29 extends TacticsProof {
+object prop_29 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_29.smt2", getClass ) )
   ctx = bench.ctx
 

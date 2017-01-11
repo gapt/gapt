@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.provers.viper.sequentialInductionAxioms
 
-object isaplanner03 extends TacticsProof {
+object prop_03 extends TacticsProof {
 
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_03.smt2", getClass ) )
   ctx = bench.ctx

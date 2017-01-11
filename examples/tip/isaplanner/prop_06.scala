@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.gaptic.{ TacticsProof, _ }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms, sequentialInductionAxioms }
 
-object isaplanner06 extends TacticsProof {
+object prop_06 extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
   ctx += hoc"'+': nat>nat>nat"
   ctx += hoc"'-': nat>nat>nat"
