@@ -1,6 +1,8 @@
 # Release notes for GAPT
 
-## Version 2.4 (unreleased)
+## Version 2.5 (unreleased)
+
+## Version 2.4 (released on 2017-01-13)
 
 * Update to Scala 2.12
 * LKsk and Ral are replaced by the standard calculi, CERESω is now just CERES.
