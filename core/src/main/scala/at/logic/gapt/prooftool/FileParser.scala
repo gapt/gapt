@@ -6,18 +6,18 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, loadLLK }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 
-import better.files._
+import ammonite.ops._
 
 class FileParser( main: ProofToolViewer[_] ) {
 
   def ivyFileReader( path: String ) {
-    val ivy = IvyToResolution( IvyParser( path.toFile ) )
+    val ivy = IvyToResolution( IvyParser( FilePath( path ) ) )
     resProofs = ( "ivy_proof", ivy ) :: Nil
   }
 
   def llkFileReader( filename: String ) {
     resProofs = Nil
-    proofdb = loadLLK( filename.toFile )
+    proofdb = loadLLK( FilePath( filename ) )
   }
 
   def parseFile( path: String ) {

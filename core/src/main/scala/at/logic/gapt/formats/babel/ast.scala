@@ -1,7 +1,5 @@
 package at.logic.gapt.formats.babel
 
-import scalaz._
-import Scalaz._
 import at.logic.gapt.{ expr => real }
 
 import scala.collection.mutable
@@ -123,8 +121,8 @@ object ast {
     ( assg.map { case ( idx, t ) => s"${readable( MetaType( idx ) )} = ${readable( t )}\n" } ++
       eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
 
-  def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): UnificationError \/ Map[MetaTypeIdx, Type] = eqs match {
-    case Nil => assg.right
+  def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): Either[UnificationError, Map[MetaTypeIdx, Type]] = eqs match {
+    case Nil => Right( assg )
     case ( first :: rest ) => first match {
       case ( ArrType( a1, b1 ), ArrType( a2, b2 ) ) =>
         solve( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, assg )
@@ -137,49 +135,55 @@ object ast {
         if ( t1 == t2_ )
           solve( rest, assg )
         else if ( freeMetas( t2_ ) contains i1 )
-          s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )} in\n${printCtx( eqs, assg )}".left
+          Left( s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )} in\n${printCtx( eqs, assg )}" )
         else
           solve( rest, assg + ( i1 -> t2_ ) )
       case ( t1, t2: MetaType ) => solve( ( t2 -> t1 ) :: rest, assg )
-      case ( t1, t2 )           => s"Cannot unify types ${readable( t1 )} and ${readable( t2 )} in\n${printCtx( eqs, assg )}".left
+      case ( t1, t2 )           => Left( s"Cannot unify types ${readable( t1 )} and ${readable( t2 )} in\n${printCtx( eqs, assg )}" )
     }
   }
 
-  def infers( exprs: Seq[Expr], env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): UnificationError \/ ( Map[MetaTypeIdx, Type], Seq[Type] ) =
+  def infers( exprs: Seq[Expr], env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): Either[UnificationError, ( Map[MetaTypeIdx, Type], Seq[Type] )] =
     exprs match {
-      case Seq() => ( s0 -> Seq() ).right
+      case Seq() => Right( s0 -> Seq() )
       case expr +: rest =>
         for {
-          ( s1, exprt ) <- infer( expr, env, s0 )
-          ( s2, restts ) <- infers( rest, env, s1 )
+          r1 <- infer( expr, env, s0 )
+          ( s1, exprt ) = r1
+          r2 <- infers( rest, env, s1 )
+          ( s2, restts ) = r2
         } yield ( s2, exprt +: restts )
     }
 
-  def infer( expr: Expr, env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): UnificationError \/ ( Map[MetaTypeIdx, Type], Type ) =
+  def infer( expr: Expr, env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): Either[UnificationError, ( Map[MetaTypeIdx, Type], Type )] =
     expr match {
       case TypeAnnotation( e, t ) =>
         for {
-          ( s1, et ) <- infer( e, env, s0 )
+          r1 <- infer( e, env, s0 )
+          ( s1, et ) = r1
           s2 <- solve( List( et -> t ), s1 )
         } yield ( s2, et )
       case Ident( n, t ) =>
         if ( env contains n )
           for ( s1 <- solve( List( env( n )() -> t ), s0 ) ) yield ( s1, t )
-        else ( s0 -> t ).right
+        else Right( s0 -> t )
       case Abs( Ident( vn, vt ), t ) =>
         for {
-          ( s1, subt ) <- infer( t, env + ( vn -> ( () => vt ) ), s0 )
+          r1 <- infer( t, env + ( vn -> ( () => vt ) ), s0 )
+          ( s1, subt ) = r1
         } yield ( s1, ArrType( vt, subt ) )
       case App( a, b ) =>
         val appType = freshMetaType()
         for {
-          ( s1, at ) <- infer( a, env, s0 )
-          ( s2, bt ) <- infer( b, env, s1 )
+          r1 <- infer( a, env, s0 )
+          ( s1, at ) = r1
+          r2 <- infer( b, env, s1 )
+          ( s2, bt ) = r2
           s3 <- solve( List( at -> ArrType( bt, appType ) ), s2 )
         } yield ( s3, appType )
       case Lifted( e, ty, fvs ) =>
         for {
-          s1 <- solve( fvs.mapKeys( env( _ )() ).toList, s0 )
+          s1 <- solve( ( for ( ( n, t ) <- fvs.view ) yield env( n )() -> t ).toList, s0 )
         } yield ( s1, ty )
     }
 
@@ -210,7 +214,7 @@ object ast {
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
     case Lifted( e, ty, fvs ) => e
   }
-  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): UnificationError \/ Seq[real.LambdaExpression] = {
+  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[UnificationError, Seq[real.LambdaExpression]] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet
     val freeVars = fi.filter( sig.signatureLookup( _ ).isVar )
     val startingEnv = fi.map { i =>
@@ -222,9 +226,9 @@ object ast {
           () => fixedMeta
       } )
     }
-    for ( ( assg, _ ) <- infers( expr, startingEnv.toMap, Map() ) )
+    for ( r <- infers( expr, startingEnv.toMap, Map() ); ( assg, _ ) = r )
       yield expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
   }
-  def toRealExpr( expr: Expr, sig: BabelSignature ): UnificationError \/ real.LambdaExpression =
+  def toRealExpr( expr: Expr, sig: BabelSignature ): Either[UnificationError, real.LambdaExpression] =
     toRealExprs( Seq( expr ), sig ).map( _.head )
 }

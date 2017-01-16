@@ -26,9 +26,9 @@ package object resolution {
       val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
       def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
-        case Input( sequent )             => Input( TermReplacement( sequent, repl ) )
-        case Refl( term )                 => Refl( TermReplacement( term, repl ) )
-        case Taut( formula )              => Taut( TermReplacement( formula, repl ) )
+        case Input( sequent )             => Input( TermReplacement( sequent, repl ) map BetaReduction.betaNormalize )
+        case Refl( term )                 => Refl( BetaReduction betaNormalize TermReplacement( term, repl ) )
+        case Taut( formula )              => Taut( BetaReduction betaNormalize TermReplacement( formula, repl ) )
         case Defn( defConst, definition ) => Defn( TermReplacement( defConst, repl ).asInstanceOf[HOLAtomConst], TermReplacement( definition, repl ) )
         case Factor( q, i1, i2 )          => Factor( f( q ), i1, i2 )
         case Subst( q, subst )            => Subst( f( q ), TermReplacement( subst, repl ) )

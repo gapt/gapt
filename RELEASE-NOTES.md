@@ -1,8 +1,14 @@
 # Release notes for GAPT
 
-## Version 2.4 (unreleased)
+## Version 2.5 (unreleased)
 
+## Version 2.4 (released on 2017-01-13)
+
+* Update to Scala 2.12
 * LKsk and Ral are replaced by the standard calculi, CERESω is now just CERES.
+* Analytic induction prover
+* Tons of proofs for problems from TIP
+* Refactored Context data structure to enable future support for recursors
 
 ## Version 2.3 (release on 2016-10-10)
 

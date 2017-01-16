@@ -352,7 +352,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
     indices filter { i => ( i.polarity == pol ) && p( this( i ) ) }
 
   /**
-   * "Focuses on one element of the seuqent, i.e. returns element at index and the rest of the sequent.
+   * Focuses on one element of the sequent, i.e. returns element at index and the rest of the sequent.
    *
    * @param i A SequentIndex.
    * @return A pair consisting of this(i) and the rest of this.

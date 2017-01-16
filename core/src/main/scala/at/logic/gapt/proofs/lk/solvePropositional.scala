@@ -2,25 +2,20 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.UnitResolutionToLKProof
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.groundFreeVariables
-
-import scalaz._
-import Scalaz._
 
 trait SolveUtils {
   type Error
-  type UnprovableOrLKProof = Error \/ LKProof
+  type UnprovableOrLKProof = Either[Error, LKProof]
 
   /**
-   * Applies the function f, if maybeProof is \/-(proof) and formula is present in polarity pol in proof.
+   * Applies the function f, if maybeProof is Right(proof) and formula is present in polarity pol in proof.
    */
   protected def mapIf( maybeProof: UnprovableOrLKProof, formula: HOLFormula, pol: Polarity )( f: LKProof => LKProof ) =
     maybeProof map { p => if ( p.conclusion.contains( formula, pol ) ) f( p ) else p }
 
   /**
-   * Applies the function f, if maybeProof is \/-(proof) and one of formula{1,2} is present in polarity pol{1,2} in proof.
+   * Applies the function f, if maybeProof is Right(proof) and one of formula{1,2} is present in polarity pol{1,2} in proof.
    */
   protected def mapIf(
     maybeProof: UnprovableOrLKProof,
@@ -56,7 +51,7 @@ class solvePropositional(
       orElse( tryUnary( seq ) ).
       orElse( tryBinary( seq ) ).
       orElse( tryTheory( seq ) ).
-      getOrElse( seq.left ).
+      getOrElse( Left( seq ) ).
       map {
         ContractionMacroRule( _ ).
           ensuring { _.conclusion isSubsetOf seq }
@@ -65,14 +60,14 @@ class solvePropositional(
 
   private def tryAxiom( seq: HOLSequent ): Option[UnprovableOrLKProof] =
     if ( seq.isTaut )
-      Some( LogicalAxiom( seq.antecedent intersect seq.succedent head ).right )
+      Some( Right( LogicalAxiom( seq.antecedent intersect seq.succedent head ) ) )
     else
       None
 
   private def tryNullary( seq: HOLSequent ): Option[UnprovableOrLKProof] =
     seq.zipWithIndex.elements collectFirst {
-      case ( Top(), i: Suc )    => TopAxiom.right
-      case ( Bottom(), i: Ant ) => BottomAxiom.right
+      case ( Top(), i: Suc )    => Right( TopAxiom )
+      case ( Bottom(), i: Ant ) => Right( BottomAxiom )
     }
 
   private def tryWeakening( seq: HOLSequent ): Option[UnprovableOrLKProof] =
@@ -98,7 +93,7 @@ class solvePropositional(
     def handle( i: SequentIndex, e: HOLFormula, f: HOLFormula, fPol: Polarity, g: HOLFormula, gPol: Polarity,
                 rule: ( LKProof, LKProof, HOLFormula ) => LKProof ) =
       solve( if ( fPol.inSuc ) seq.delete( i ) :+ f else f +: seq.delete( i ) ) flatMap { p1 =>
-        if ( !p1.conclusion.contains( f, fPol ) ) p1.right
+        if ( !p1.conclusion.contains( f, fPol ) ) Right( p1 )
         else solve( if ( gPol.inSuc ) seq.delete( i ) :+ g else g +: seq.delete( i ) ) map { p2 =>
           if ( !p2.conclusion.contains( g, gPol ) ) p2
           else rule( p1, p2, e )
@@ -113,6 +108,6 @@ class solvePropositional(
   }
 
   private def tryTheory( seq: HOLSequent ): Option[UnprovableOrLKProof] =
-    theorySolver( seq collect { case atom: HOLAtom => atom } ).map { _.right }
+    theorySolver( seq collect { case atom: HOLAtom => atom } ).map( Right( _ ) )
 
 }

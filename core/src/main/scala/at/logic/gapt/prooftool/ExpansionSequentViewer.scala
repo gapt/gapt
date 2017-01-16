@@ -2,9 +2,7 @@ package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionSequent }
 
-import scala.swing.event.Key
 import scala.swing.{ Separator, Menu, Action, MenuItem }
-import scalaz.\/-
 
 /**
  * ProofToolViewer for expansion sequents.
@@ -22,7 +20,7 @@ class ExpansionSequentViewer( name: String, es: ExpansionSequent ) extends Proof
   def lkproof() {
     try {
       mainPanel.cursor = new java.awt.Cursor( java.awt.Cursor.WAIT_CURSOR )
-      val \/-( p ) = ExpansionProofToLK( ExpansionProof( content ) )
+      val Right( p ) = ExpansionProofToLK( ExpansionProof( content ) )
       val viewer = new LKProofViewer( "LK proof", p )
       viewer.showFrame()
       mainPanel.cursor = java.awt.Cursor.getDefaultCursor

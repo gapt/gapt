@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, TBase, Var, freeVariables, rename, Const => Con }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.proofs.expansion.ExpansionProof
-import at.logic.gapt.proofs.gaptic.NewLabels
+import at.logic.gapt.proofs.gaptic.{ Lemma, NewLabels }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, eliminateSplitting }
@@ -15,24 +15,26 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.vampire.Vampire
-import better.files._
+import ammonite.ops._
+import at.logic.gapt.proofs.gaptic._
 
 import scalaz.Scalaz._
 import scalaz.Validation.FlatMap.ValidationFlatMapRequested
 import scalaz.ValidationNel
 
-trait InductionStrategy {
+trait InductionAxioms {
   type ThrowsError[T] = ValidationNel[String, T]
 
   /**
    * Computes induction axioms for a formula and variables.
+   *
    * @param f The formula for which induction axioms are to be generated.
    * @param vs The variables for which induction axioms are to be generated.
    * @param ctx Defines inductive types etc.
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
+  def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]]
 }
 
 object prover9 extends ManySortedProver( Prover9 )
@@ -44,6 +46,7 @@ object spass extends ManySortedProver( SPASS )
 class InternalProver( prover: ResolutionProver ) {
   /**
    * Checks a sequent for validity.
+   *
    * @param sequent The sequent to check for validity.
    * @return true if the sequent is valid, else false or the method does not terminate.
    */
@@ -51,6 +54,7 @@ class InternalProver( prover: ResolutionProver ) {
 
   /**
    * Tries to compute a resolution proof for a sequent.
+   *
    * @param sequent The sequent to prove.
    * @return A resolution proof if the sequent is provable, otherwise None or the method does not terminate.
    */
@@ -58,6 +62,7 @@ class InternalProver( prover: ResolutionProver ) {
 
   /**
    * Tries to compute an expansion proof for a sequent.
+   *
    * @param sequent The sequent to prove.
    * @return An expansion proof if the sequent is provable, otherwise None or the method does not terminate.
    */
@@ -65,6 +70,7 @@ class InternalProver( prover: ResolutionProver ) {
 
   /**
    * Tries to compute a LK proof for a sequent.
+   *
    * @param sequent The sequent to prove.
    * @return A LK proof if the sequent is provable, otherwise None or the method does not terminate.
    */
@@ -97,8 +103,8 @@ class ManySortedProver( prover: ResolutionProver ) extends InternalProver( prove
 }
 
 case class ProverOptions(
-  prover:    InternalProver    = new InternalProver( Escargot ),
-  axiomType: InductionStrategy = sequentialInductionAxioms
+  prover:    InternalProver  = new InternalProver( Escargot ),
+  axiomType: InductionAxioms = sequentialInductionAxioms
 )
 case class AipOptions(
   printSummary: Boolean = false,
@@ -110,6 +116,28 @@ case class AipOptions(
   infile:       String  = null
 )
 
+object AnalyticInductionProver {
+
+  /**
+   * Tries to prove the given sequent by using a single induction on the specified variable.
+   *
+   * @param sequent A sequent of the form `Γ, :- ∀x.A`
+   * @param variable An eigenvariable `α` for the sequent `Γ, :- ∀x.A`
+   * @param ctx The context which defines the inductive types, etc.
+   * @return If the sequent is provable with at most one induction on `α` then a proof which uses a single induction
+   *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
+   *         throws an exception.
+   */
+  def singleInduction( sequent: Sequent[( String, HOLFormula )], variable: Var )( implicit ctx: Context ): LKProof = {
+    var state = ProofState( sequent )
+    state += allR( variable );
+    state += induction( on = variable )
+    state += decompose.onAllSubGoals
+    state += repeat( at.logic.gapt.proofs.gaptic.escargot )
+    state.result
+  }
+}
+
 class AnalyticInductionProver( options: ProverOptions ) {
 
   type ThrowsError[T] = ValidationNel[String, T]
@@ -119,6 +147,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to prove a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -130,6 +159,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute a LK proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param variables The variables for which induction axioms are added.
@@ -145,6 +175,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute a LK proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -156,6 +187,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute a resolution proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -167,6 +199,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Tries to compute an expansion proof for a sequent by using analytic induction.
+   *
    * @param sequent The sequent to prove.
    * @param label The label of the formula for which induction axioms are added.
    * @param ctx Defines inductive types etc.
@@ -178,15 +211,17 @@ class AnalyticInductionProver( options: ProverOptions ) {
 
   /**
    * Extracts the inductive sequent from a validation value.
+   *
    * @param validation The validation value from which the sequent is extracted.
    * @return A sequent.
    * @throws Exception If the validation value represents a validation failure.
    */
-  private def validate( validation: ThrowsError[Sequent[( String, HOLFormula )]] ): Sequent[( String, HOLFormula )] =
+  private def validate( validation: ThrowsError[HOLSequent] ): HOLSequent =
     validation.valueOr( es => throw new Exception( es.tail.foldLeft( es.head ) { _ ++ "\n" ++ _ } ) )
 
   /**
    * Computes a sequent enriched by induction axioms.
+   *
    * @param sequent The sequent to which induction axioms are added.
    * @param label The formula for which induction axioms are to be generated.
    * @param variables The variables for which induction axioms are to be generated.
@@ -197,11 +232,12 @@ class AnalyticInductionProver( options: ProverOptions ) {
     sequent:   Sequent[( String, HOLFormula )],
     label:     String,
     variables: List[Var]
-  )( implicit ctx: Context ): Sequent[( String, HOLFormula )] =
+  )( implicit ctx: Context ): HOLSequent =
     validate( prepareSequent( sequent, label, variables ) )
 
   /**
    * Computes a sequent enriched by induction axioms.
+   *
    * @param sequent The sequent to which induction axioms are added.
    * @param label The formula for which induction axioms are to be generated.
    * @param ctx Defines inductive types etc.
@@ -211,7 +247,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
   private def inductiveSequent(
     sequent: Sequent[( String, HOLFormula )],
     label:   String
-  )( implicit ctx: Context ): Sequent[( String, HOLFormula )] =
+  )( implicit ctx: Context ): HOLSequent =
     validate( prepareSequent( sequent, label ) )
 
   /**
@@ -229,12 +265,12 @@ class AnalyticInductionProver( options: ProverOptions ) {
     sequent:   Sequent[( String, HOLFormula )],
     label:     String,
     variables: List[Var]
-  )( implicit ctx: Context ): ThrowsError[Sequent[( String, HOLFormula )]] = {
+  )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       formula <- findFormula( sequent, label )
-      axioms <- options.axiomType.inductionAxioms( formula, variables )
+      axioms <- options.axiomType( formula, variables )
     } yield {
-      ( axioms zip variables ).foldLeft( sequent )( { labelInductionAxiom( label, _, _ ) } )
+      axioms ++: labeledSequentToHOLSequent( sequent )
     }
   }
 
@@ -251,14 +287,14 @@ class AnalyticInductionProver( options: ProverOptions ) {
   private def prepareSequent(
     sequent: Sequent[( String, HOLFormula )],
     label:   String
-  )( implicit ctx: Context ): ThrowsError[Sequent[( String, HOLFormula )]] = {
+  )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       formula <- findFormula( sequent, label )
       All.Block( _, f ) = formula
       variables = freeVariables( f ).filter( { hasInductiveType( _ ) } ).toList
-      axioms <- options.axiomType.inductionAxioms( formula, variables )
+      axioms <- options.axiomType( formula, variables )
     } yield {
-      ( axioms zip variables ).foldLeft( sequent )( { labelInductionAxiom( label, _, _ ) } )
+      axioms ++: labeledSequentToHOLSequent( sequent )
     }
   }
 
@@ -271,27 +307,26 @@ class AnalyticInductionProver( options: ProverOptions ) {
    */
   private def hasInductiveType( v: Var )( implicit ctx: Context ): Boolean =
     ctx.getConstructors( baseType( v ) ).isDefined
-
-  /**
-   * Adds a labelled induction axiom to the sequent.
-   *
-   * @param label The label of the formula to which the induction axiom belongs.
-   * @param sequent The sequent to which the labelled axiom is added.
-   * @param axvar A pair containing the induction axiom and its associated variable.
-   * @return The initial sequent with the labelled induction axiom in its left side.
-   */
-  private def labelInductionAxiom(
-    label:   String,
-    sequent: Sequent[( String, HOLFormula )],
-    axvar:   ( HOLFormula, Var )
-  ): Sequent[( String, HOLFormula )] = {
-    axvar match {
-      case ( axiom, variable ) => ( NewLabels( sequent, s"IA/$label/${variable.name}/" )( 0 ) -> axiom ) +: sequent
-    }
-  }
 }
 
-object independentInductionAxioms extends InductionStrategy {
+object combinedInductionAxioms extends InductionAxioms {
+  /**
+   * Computes induction axioms for a formula and variables.
+   *
+   * @param f   The formula for which induction axioms are to be generated.
+   * @param vs  The variables for which induction axioms are to be generated.
+   * @param ctx Defines inductive types etc.
+   * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
+   *         could not be generated.
+   */
+  override def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+    for {
+      sequentialAxioms <- sequentialInductionAxioms( f, vs )( ctx )
+      independentAxioms <- independentInductionAxioms( f, vs )( ctx )
+    } yield ( sequentialAxioms ++ independentAxioms ).distinct
+}
+
+object independentInductionAxioms extends InductionAxioms {
 
   /**
    * Computes the induction axioms for the given formula and variables.
@@ -301,7 +336,7 @@ object independentInductionAxioms extends InductionStrategy {
    * @return Either a list of induction axioms, or an error message if one of
    * the axioms could not be created.
    */
-  def inductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+  override def apply( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
     {
       val All.Block( _, formula1 ) = formula
       makeInductionAxioms( formula1, variables )
@@ -381,7 +416,7 @@ object independentInductionAxioms extends InductionStrategy {
     }
 }
 
-object sequentialInductionAxioms extends InductionStrategy {
+object sequentialInductionAxioms extends InductionAxioms {
 
   /**
    * Computes a sequence of induction axioms for the given formula and variables.
@@ -399,7 +434,7 @@ object sequentialInductionAxioms extends InductionStrategy {
    * x in X
    * {X < x} and {X > x} are subsets of X containing all variables with index smaller/greater than the index of x.
    */
-  def inductionAxioms( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] = {
+  override def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] = {
     val fvs = freeVariables( f ).toList
     val All.Block( _, f1 ) = f
     val xvs = freeVariables( f1 ).toList.diff( fvs ).diff( vs )
@@ -523,9 +558,10 @@ object aip {
 
   type AipInvokation[P, W] = ( AnalyticInductionProver, P ) => W
 
-  val axioms = Map[String, InductionStrategy](
+  val axioms = Map[String, InductionAxioms](
     "sequential" -> sequentialInductionAxioms,
-    "independent" -> independentInductionAxioms
+    "independent" -> independentInductionAxioms,
+    "combined" -> combinedInductionAxioms
   )
 
   val provers = Map[String, InternalProver](
@@ -564,9 +600,12 @@ object aip {
         println( helpMessage )
         System exit 0
       }
+      if ( options.infile == null ) {
+        throw new ValidationException( usage )
+      }
       try {
         val aip = new AnalyticInductionProver( compileProverOptions( options ) )
-        val problem = TipSmtParser fixupAndParse options.infile.toFile
+        val problem = TipSmtParser fixupAndParse FilePath( options.infile )
         val ( witness, t ) = time {
           witnessAipInvokers.get( options.witness ).get( aip, problem )
         }
@@ -621,7 +660,7 @@ object aip {
     args match {
       case cmdOptRegex( k, v ) :: remainder => parseArguments( options + ( k -> v ), remainder )
       case infile :: Nil                    => parseOptions( options, infile )
-      case Nil                              => throw new ValidationException( usage )
+      case Nil                              => parseOptions( options, null )
       case _                                => throw new ValidationException( "Illegal command line arguments" )
     }
   }
@@ -682,7 +721,7 @@ object aip {
       |  --prover           use the specified prover for proof search, possible values for
       |                       this option are: escargot, prover9, vampire, spass, eprover.
       |  --axioms           use the specified type of induction axioms, possible values
-      |                       are: independent, sequential.
+      |                       are: independent, sequential, combined.
       |  --witness          search for the specified type of proof, legal values are:
       |                       existential, lkproof, expansionproof, resolutionproof. If the value
       |                       existential is provided for this option, the prover will only check

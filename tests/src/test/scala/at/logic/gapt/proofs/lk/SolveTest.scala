@@ -5,11 +5,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existentialClosure
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
-import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
-
-import scalaz.\/-
 
 class SolveTest extends Specification with SequentMatchers {
   "SolveTest" should {
@@ -31,7 +28,7 @@ class SolveTest extends Specification with SequentMatchers {
       val et = ETWeakQuantifier( formula, Map( le"u" -> inst1, le"c" -> inst2 ) )
       val etSeq = Sequent() :+ et
 
-      val \/-( lkProof ) = ExpansionProofToLK( ExpansionProof( etSeq ) )
+      val Right( lkProof ) = ExpansionProofToLK( ExpansionProof( etSeq ) )
       lkProof.endSequent must beMultiSetEqual( etSeq.shallow )
     }
 
@@ -54,8 +51,8 @@ class SolveTest extends Specification with SequentMatchers {
   }
 
   "ExpansionProofToLK" should {
-    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( Polarity.InSuccedent ) ) ) must_== \/-( TopAxiom ) }
-    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( Polarity.InAntecedent ) +: Sequent() ) ) must_== \/-( BottomAxiom ) }
+    "top" in { ExpansionProofToLK( ExpansionProof( Sequent() :+ ETTop( Polarity.InSuccedent ) ) ) must_== Right( TopAxiom ) }
+    "bottom" in { ExpansionProofToLK( ExpansionProof( ETBottom( Polarity.InAntecedent ) +: Sequent() ) ) must_== Right( BottomAxiom ) }
 
     "equality" in {
       val Some( expansion ) = Escargot getExpansionProof existentialClosure(
@@ -64,7 +61,7 @@ class SolveTest extends Specification with SequentMatchers {
           Sequent()
           :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
       )
-      val \/-( lk ) = ExpansionProofToLK( expansion )
+      val Right( lk ) = ExpansionProofToLK( expansion )
       lk.conclusion must beMultiSetEqual( expansion.shallow )
     }
 
@@ -85,14 +82,14 @@ class SolveTest extends Specification with SequentMatchers {
       )
       val epwc = ExpansionProofWithCut( Seq( cut ), es )
       ExpansionProofToLK( epwc ) must beLike {
-        case \/-( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
+        case Right( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
       }
     }
 
     "read back higher order prime divisor proof" in {
       val p = eliminateDefinitions( primediv.defs )( primediv.proof )
       ExpansionProofToLK.withTheory( primediv.ctx )( LKToExpansionProof( p ) ) must beLike {
-        case \/-( p_ ) => p_.conclusion must beMultiSetEqual( p.conclusion )
+        case Right( p_ ) => p_.conclusion must beMultiSetEqual( p.conclusion )
       }
     }
 
@@ -105,7 +102,7 @@ class SolveTest extends Specification with SequentMatchers {
         )
       )
       ExpansionProofToLK( ExpansionProof( Sequent() :+ et ) ) must beLike {
-        case \/-( p ) => p.conclusion must_== ( Sequent() :+ et.shallow )
+        case Right( p ) => p.conclusion must_== ( Sequent() :+ et.shallow )
       }
     }
 
@@ -113,7 +110,7 @@ class SolveTest extends Specification with SequentMatchers {
       val formula = hof"?x!y p(x,y) -> !y?x p(x,y)"
       val Some( skolemExpansion ) = Escargot getExpansionProof formula
       ExpansionProofToLK( skolemExpansion ) must beLike {
-        case \/-( p ) => p.conclusion must_== ( Sequent() :+ formula )
+        case Right( p ) => p.conclusion must_== ( Sequent() :+ formula )
       }
     }
 

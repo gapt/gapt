@@ -10,8 +10,6 @@ import java.io._
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
 
-import scalaz.\/-
-
 object VeriT extends VeriT
 class VeriT extends OneShotProver with ExternalProgram {
 
@@ -65,7 +63,7 @@ class VeriT extends OneShotProver with ExternalProgram {
   }
 
   override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ep =>
-    val \/-( p ) = PropositionalExpansionProofToLK( ep )
+    val Right( p ) = PropositionalExpansionProofToLK( ep )
     p
   }
 

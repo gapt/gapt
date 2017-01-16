@@ -1,4 +1,4 @@
-import better.files._
+import ammonite.ops._
 import at.logic.gapt._
 import at.logic.gapt.examples._
 import at.logic.gapt.expr._
@@ -11,6 +11,7 @@ import at.logic.gapt.formats.tptp._
 import at.logic.gapt.formats.verit._
 import at.logic.gapt.formats.llk._
 import at.logic.gapt.formats.latex._
+import at.logic.gapt.formats.lean._
 import at.logic.gapt.grammars._
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.drup._

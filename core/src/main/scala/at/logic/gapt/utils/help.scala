@@ -9,18 +9,16 @@ import java.nio.file.{ Files, Paths }
  */
 object help {
   private val tarballPathBase = Paths.get( "apidocs" ).toAbsolutePath
-  private val tarballPathIndex = tarballPathBase.resolve( "index.html" )
-  private val devPathBase = Paths.get( "core", "target", "scala-2.11", "api" ).toAbsolutePath
-  private val devPathIndex = devPathBase.resolve( "index.html" )
+  private val devPathBase = Paths.get( "target", "scala-2.12", "unidoc" ).toAbsolutePath
 
   private val websitePath = "https://logic.at/gapt/api/"
 
   private val ( indexURI, localDocs, basePath ) = {
 
-    if ( Files.exists( tarballPathIndex ) )
-      ( tarballPathIndex.toUri.toString, true, Some( tarballPathBase ) )
-    else if ( Files.exists( devPathIndex ) )
-      ( devPathIndex.toUri.toString, true, Some( devPathBase ) )
+    if ( Files.exists( tarballPathBase ) )
+      ( tarballPathBase.toUri.toString, true, Some( tarballPathBase ) )
+    else if ( Files.exists( devPathBase ) )
+      ( devPathBase.toUri.toString, true, Some( devPathBase ) )
     else
       ( websitePath, false, None )
   }
@@ -71,7 +69,8 @@ object help {
         className
       else
         objectName
-    val url = indexURI + "#" + finalName
+    val url = indexURI + finalName.replace( ".", "/" ) + ".html"
+    println( url )
     val pb = new ProcessBuilder( "xdg-open", url )
     val p = pb.start()
     p.waitFor()

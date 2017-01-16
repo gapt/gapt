@@ -11,7 +11,6 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
-import better.files._
 
 class ExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 

@@ -17,7 +17,7 @@ object subsetLGGs {
       if ( maxSize > 0 && terms.nonEmpty ) {
         val ( t :: rest ) = terms
 
-        val newLGG = if ( currentLGG == null ) t else leastGeneralGeneralization( currentLGG, t )._1
+        val newLGG = if ( currentLGG == null ) t else leastGeneralGeneralization.fast( currentLGG, t )._1
         lggs += newLGG
         if ( !newLGG.isInstanceOf[Var] ) findLGGs( newLGG, rest, maxSize - 1 )
 

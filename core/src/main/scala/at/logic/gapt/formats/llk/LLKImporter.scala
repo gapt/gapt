@@ -11,8 +11,6 @@ import scala.annotation.tailrec
 import EquationVerifier._
 import at.logic.gapt.utils.Logger
 
-import scalaz.\/-
-
 object LLKFormatter {
   /* formats a sequent */
   def f( fs: HOLSequent ): String = {
@@ -183,7 +181,7 @@ trait TokenToLKConverter extends Logger {
           )
         case "AUTOPROP" =>
           try {
-            val \/-( rule ) = solvePropositional( HOLSequent( ant, suc ) )
+            val Right( rule ) = solvePropositional( HOLSequent( ant, suc ) )
             proofstack = rule :: proofstack
             require(
               proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),

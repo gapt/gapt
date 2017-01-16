@@ -1,12 +1,13 @@
 package at.logic.gapt.testing
 
+import java.io.Writer
+
 import at.logic.gapt.cli.CLIMain
 
 import scala.sys.process
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter._
-
-import better.files._
+import ammonite.ops._
 
 object evalCodeSnippetsInLatex {
 
@@ -17,7 +18,16 @@ object evalCodeSnippetsInLatex {
 
     sys.props( "scala.shell.prompt" ) = "\ngapt> "
 
-    val repl = new ILoop
+    val repl = new ILoop( None, new JPrintWriter( new Writer() {
+      val lambdaRegex = """(?<= )[A-Za-z.0-9]+\$\$Lambda\$\d+/\d+@[0-9a-f]+""".r
+
+      override def flush() = Console.out.flush()
+      override def write( cbuf: Array[Char], off: Int, len: Int ) = {
+        val string = new String( cbuf, off, len )
+        Console.out.print( lambdaRegex.replaceAllIn( string, "<function>" ) )
+      }
+      override def close() = {}
+    } ) )
 
     // the following is code that would be executed by repl.process()
     repl.settings = settings
@@ -123,7 +133,7 @@ object evalCodeSnippetsInLatex {
 
   def main( args: Array[String] ) = {
     val Array( inFile ) = args
-    processLines( inFile.toFile.lines.toStream, mkInterp() )
+    processLines( read.lines( Path( inFile, pwd ) ).toStream, mkInterp() )
   }
 
 }

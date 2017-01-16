@@ -1,8 +1,3 @@
-/*
- * typedLambdaCalculus.scala
- *
- */
-
 package at.logic.gapt.expr
 
 import at.logic.gapt.expr.hol.HOLPosition
@@ -11,10 +6,11 @@ import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 
 import scala.annotation.tailrec
 
-// Collects all methods that operate on LambdaExpressions
 abstract class LambdaExpression {
 
-  // Expression type [should it be here?]
+  /**
+   * Type of this expression (e.g. i>i>o).
+   */
   def exptype: Ty
 
   def hashCode: Int
@@ -25,7 +21,9 @@ abstract class LambdaExpression {
     case _ => false
   }
 
-  // Syntactic equality
+  /**
+   * Syntactic equality (takes names of variables in binders into account).
+   */
   def syntaxEquals( e: LambdaExpression ): Boolean
 
   /**
@@ -53,17 +51,11 @@ abstract class LambdaExpression {
 
   /**
    * Tests whether this Expression has a subexpression at the given position.
-   *
-   * @param p
-   * @return
    */
   def isDefinedAt( p: LambdaPosition ): Boolean = p.isDefined( this )
 
   /**
    * Returns the subexpression at the given position, if it exists.
-   *
-   * @param p
-   * @return
    */
   def get( p: LambdaPosition ): Option[LambdaExpression] = p.get( this )
 
@@ -156,14 +148,9 @@ abstract class LambdaExpression {
     if ( n == 0 ) that else ( this ^ ( n - 1 ) )( this( that ) )
 }
 
-// Defines the elements that generate lambda-expressions: variables,
-// applications and abstractions (and constants).
-
 class Var private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
-
-  // Syntactic equality: two variables are equal if they have the same name and the same type
   def syntaxEquals( e: LambdaExpression ) = e match {
-    case Var( n, t ) => ( n == name && t == exptype )
+    case Var( n, t ) => n == name && t == exptype
     case _           => false
   }
 
@@ -174,13 +161,13 @@ class Var private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst
       case _                  => false
     }
 
-  override val hashCode = 41 * "Var".hashCode + exptype.hashCode
+  override val hashCode = 42 + exptype.hashCode
 }
 
 class Const private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
 
   def syntaxEquals( e: LambdaExpression ) = e match {
-    case Const( n, t ) => ( n == name && t == exptype )
+    case Const( n, t ) => n == name && t == exptype
     case _             => false
   }
 
@@ -200,8 +187,9 @@ class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpress
     }
 
   def syntaxEquals( e: LambdaExpression ) = e match {
-    case App( a, b ) => ( a.syntaxEquals( function ) && b.syntaxEquals( arg ) && e.exptype == exptype )
-    case _           => false
+    case App( a, b ) => e.exptype == exptype &&
+      a.syntaxEquals( function ) && b.syntaxEquals( arg )
+    case _ => false
   }
 
   private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
@@ -228,7 +216,7 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
     case _ => false
   }
 
-  override val hashCode = 41 * "Abs".hashCode + term.hashCode
+  override val hashCode = 41 * term.hashCode
 }
 
 object Var {
@@ -252,7 +240,7 @@ object Apps {
   def apply( function: LambdaExpression, arguments: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression =
     apply( function, arguments )
 
-  // create an n-ary application with left-associative parentheses
+  /** Create an n-ary application with left-associative parentheses. */
   def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression =
     arguments.foldLeft( function )( App( _, _ ) )
 
@@ -277,7 +265,7 @@ object Abs {
     def apply( vars: Seq[Var], expr: LambdaExpression ) = Abs( vars, expr )
     def unapply( e: LambdaExpression ): Some[( List[Var], LambdaExpression )] = e match {
       case Abs( v, e_ ) => e_ match { case Block( vs, e__ ) => Some( ( v :: vs, e__ ) ) }
-      case e            => Some( ( Nil, e ) )
+      case e_           => Some( ( Nil, e_ ) )
     }
   }
 }

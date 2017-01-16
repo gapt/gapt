@@ -150,7 +150,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.4-SNAPSHOT}
+{\Large Version 2.5-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -215,7 +215,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.3"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.4"
 \end{lstlisting}
 
 \end{enumerate}
@@ -269,6 +269,7 @@ functionality of these systems will not be available.
 \item Sat4J (\url{http://sat4j.org/})
 \item OpenWBO (\url{http://sat.inesc-id.pt/open-wbo/})
 \item CVC4 (\url{http://cvc4.cs.nyu.edu/web/})
+\item TIP tools (\url{https://github.com/tip-org/tools})
 \end{itemize}
 
 \section{Data structures}
@@ -523,10 +524,10 @@ The inference rules are defined in appendix \ref{app:sequent_calculus}.
 
 There are various possibilities for entering proofs into the system. The most
 basic one is a direct top-down proof-construction using the constructors
-of the inference rules. For entering bigger proofs, it is more convenient to
-use the ``gaptic'' tactics language, defined in section \ref{sec:gaptic}.
+of the inference rules. We discuss this possibility in this section. For
+entering bigger proofs, it is more convenient to use the ``gaptic'' tactics
+language which is discussed in section \ref{sec:gaptic}.
 
-\subsubsection{Top-down proof construction}\label{sec:proofs-top-down}
 We start with the axioms:
 %
 \begin{clilisting}
@@ -642,7 +643,6 @@ proof transformation: you may manually pass it a list of definitions to eliminat
 or have it automatically eliminate all definitions in the current context. Some \cli{gaptic} tactics
 (see \ref{sec:gaptic}) also require a context.
 
-\subsubsection{Creating a context}\label{sec:context-creation}
 The typical way to declare a context is by starting with a default value and adding elements to it.
 The \cli{Context.default} object contains only the sort \cli{o} (truth values) and the fundamental logical
 symbols:
@@ -670,9 +670,9 @@ by the functions requiring it.
 \subsection{Gaptic}\label{sec:gaptic}
 
 GAPT contains a tactics language called \cli{gaptic}.  In contrast to the
-top-down construction presented in section \ref{sec:proofs-top-down},
+top-down construction presented in section \ref{sec:entering_proofs},
 gaptic allows a comfortable bottom-up development of proofs, similar
-to popular proof assistants such as Coq, etc.
+to popular proof assistants such as Coq, Isabelle, etc.
 
 Gaptic can not be (easily) used in the interactive Scala shell, as it requires
 multi-line input.  Gaptic scripts are usually developed as external files:
@@ -751,7 +751,7 @@ b: ∀x (P(x) ⊃ Q(x))
 :-
 c: Q(a): o
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:47)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -777,8 +777,8 @@ called with a label, it will be applied to that specific formula, if possible.
 Otherwise, the system will attempt to determine a target formula on its own. If
 there is either no applicable formula or more than one, the tactic will fail.
 
-\subsubsection{Overview of tactics}\label{sec:gaptic-tactics-overview}
-We now give a description of a few tactics, you can see the full list in the
+\subsubsection{Basic tactics}\label{sec:gaptic-basic-tactics}
+We now give a description of a few basic tactics, you can find the full list in the
 API documentation:
 \begin{clilisting}
 gapt> help(at.logic.gapt.proofs.gaptic.TacticCommands)
@@ -801,7 +801,7 @@ a: P(a): o
 :-
 c: Q(a): o
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:47)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -930,7 +930,7 @@ A: A:o
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:47)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1342,7 +1342,7 @@ fof(suc_0, conjecture, p(s(s('0')))).
 
 You can also parse TPTP problems:
 \begin{clilisting}
-gapt> val tptp = TptpParser.load(file"examples/import/irrationals.p")
+gapt> val tptp = TptpParser.load(pwd/"examples"/"import"/"irrationals.p")
 tptp: at.logic.gapt.formats.tptp.TptpFile =
 fof(a, axiom, i(sr2)).
 fof(b, axiom, ~ i(two)).
@@ -1388,9 +1388,25 @@ Some([p39]  ⊢    (Resolution(p1, Suc(0), p38, Ant(0)))
 [p32] c + ...
 \end{clilisting}
 
+\subsection{Built-in inductive theorem prover}
+
+GAPT contains a built-in inductive theorem prover: viper (Vienna inductive theorem prover). It
+can be started from the command line using the \texttt{viper.sh} script. It takes input in the
+TIP format~\cite{Claessen15TIP}. Viper has a mode for analytic induction and a mode for 
+the tree grammar-based method described in~\cite{Eberhard15Inductive}. As of version 2.4 of GAPT,
+viper is in an early stage of development. The tree grammar-based method is invoked as in:
+\begin{lstlisting}
+./viper.sh examples/induction/prod_prop_31.smt2
+\end{lstlisting}
+The analytic mode is invoked as in:
+\begin{lstlisting}
+./viper.sh aip examples/tip/isaplanner/prop_06.smt2
+\end{lstlisting}
+
+
 \subsection{Built-in tableaux prover}
 
-GAPT contains a  built-in tableaux prover for propositional logic
+GAPT contains a built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
@@ -1641,12 +1657,10 @@ see~\cite{Hetzl13Understanding} for a detailed description.
 
 \subsection{Cut-elimination by resolution (CERES)}\label{sec:ceres}
 
-Cut-elimination by resolution (CERES) is a method which simplifies the cut
- formulas in a proof: a proof with arbitrary cut-formulas is transformed
- into a proof with atomic cuts. Since Expansion Proofs can be extracted
- directly from a proof with quantifier-free cut-formulas, we can skip
- the elimination of atomic cuts which has a worst time complexity
- exponential in the size of the proof.
+Cut-elimination by resolution (CERES) is a method which transforms a
+proof with arbitrary cut-formulas into one with only atomic cuts~\cite{Baaz00CutElimination,Baaz2011}. Since
+expansion proofs can be extracted directly from a proof with quantifier-free
+cut-formulas, we can skip the elimination of atomic cuts.
 
 For instance, the example proof \texttt{Pi2Pigeonhole} formalizes
  the fact that given an aviary with two holes and an infinite number
@@ -1679,44 +1693,48 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p253] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
-⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p252, Suc(1), Suc(0)))
-[p252] ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
-⊢
-∃x_0 ∃y_0 (s(x_0) <= y_0 ∧ f(x_0) = f(y_0)),
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p251, Ant(2), Ant(1)))
-[p251] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_0 ∀y (x_0 <= M(x_0, y) ∧ y <= M(x_0, y)),
+[p230] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
 ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
 ⊢
-∃x_0 ∃y_0 (s(x_0) <= y_0 ∧ f(x_0) = f(y_0)),
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p250, Ant(3), Ant(0)))
-[p250] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
-∀x_0 ∀y (x_0 <= M(x_0, y) ∧ y <= M(x_0, y)),
-∀x_1 ∀y (x_1 <=...
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (CutRule(p1, Suc(0), p229, Ant(0)))
+[p229] 0 = 0,
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
+⊢
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p228, Ant(2), Ant(3)))
+[p228] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
+0 = 0,
+0 = 0
+⊢
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p227, Suc(1), Suc(0)))
+[p227] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
+0 = 0,
+0 = 0
+⊢
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p226, Ant(3), Ant(1))...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_0 ∀y (x_0 <= M(x_0, y) ∧ y <= M(x_0, y))
-  +^{s(M(s(M(x_3, x_4)), s(M(x_3, x_4))))}
-    (∀y (s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))) <=
-            M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), y) ∧
-          y <= M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), y))
-      +^{s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5))}
-        ((s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))) <=
-            M(
-            s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
-            s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5))))- ∧
-          (s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5)) <=
-            M(
-            s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))),
-            s(M(s(M(s(M(x_3, x_4)), s(M(x_3, x_4)))), x_5))))-)
-      +^{x_5}
-        ((s(M(s(M(x_3, x_4)), s(M(x_3, x_4)...
+∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
+  +^{M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_2)))}
+    ((f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_2)))) = 0)- ∨
+      (f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_2)))) = s(0))-)
+  +^{M(s(M(s(y_1), s(y_1))), x_2)}
+    ((f(M(s(M(s(y_1), s(y_1))), x_2)) = 0)- ∨
+      (f(M(s(M(s(y_1), s(y_1))), x_2)) = s(0))-)
+  +^{M(s(y_1), s(M(s(y_1), x_2)))}
+    ((f(M(s(y_1), s(M(s(y_1), x_2)))) = 0)- ∨
+      (f(M(s(y_1), s(M(s(y_1), x_2)))) = s(0))-)
+  +^{M(s(y_1), s(y_1))}
+    ((f(M(s(y_1), s(y_1))) = 0)- ∨ (f(M(s(y_1), s(y_1))) = s(0))-)
+  +^{M(s(y_1), x_2)}
+    ((f(M(s(y_1), x_2)) = 0)- ∨ (f(M(s(y_1), x_2)) = s(0))-)
+  +^{y_1} ((f(y_1) = 0)- ∨ (f(y_1) = s(0))-),
+∀x_1 ∀y_0 (...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1763,19 +1781,18 @@ Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), 0, x1))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
 [p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0) ⊃ P(s(s(s(0)))),
+P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
 [p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0) ⊃ P(s(s(s(0)))),
+P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
-[p22] ∀x1...
+P(s(s(s(s(s(s(s(s(s(0)))...
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
@@ -1813,17 +1830,17 @@ x_0 → s(x_1)
 
 x_0 → x_1
 
-x_1 → s(s(s(s(s(s(s(s(s(s(s(s(x_2))))))))))))
+x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
 
-x_1 → s(s(s(s(s(s(x_2))))))
+x_1 → s(s(s(s(s(s(s(x_2)))))))
 
-x_1 → x_2
+x_1 → s(x_2)
 
-x_2 → s(0)
+x_2 → 0
 
-x_2 → s(s(s(0)))
+x_2 → s(s(0))
 
-x_2 → s(s(s(s(s(0)))))
+x_2 → s(s(s(s(0))))
 
 gapt> lang.toSet subsetOf grammar.language
 res49: Boolean = true
@@ -1841,13 +1858,13 @@ x_0 → s(x_1)
 
 x_0 → x_1
 
-x_1 → x_2
+x_1 → s(x_2)
 
-x_2 → s(0)
+x_2 → 0
 
-x_2 → s(s(s(0)))
+x_2 → s(s(0))
 
-x_2 → s(s(s(s(s(0)))))
+x_2 → s(s(s(s(0))))
 
 \end{clilisting}
 
@@ -1896,21 +1913,21 @@ reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequ
 
 gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
 firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
-∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
+∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
 ⊤ ⊃ P_is_list(f_nil),
-∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ⊤ ⊃ P_is_nat(f_0),
-P_is_nat(f_nonempty_nat),
+∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
 P_is_o(f_nonempty_o),
-P_is_list(f_nonempty_list)
+P_is_list(f_nonempty_list),
+P_is_nat(f_nonempty_nat)
 ⊢
 P_P(f_nil) ∧
     ∀x (P_is_list(x) ⊃
         ∀y (P_is_nat(y) ⊃
             ∀z (P_is_nat(z) ⊃ P_P(x) ⊃ P_P(f_cons(y, f_cons(z, x)))))) ⊃
   P_P(f_cons(f_0, f_cons(f_s(f_0), f_nil)))
-back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function1>
+back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
 res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =

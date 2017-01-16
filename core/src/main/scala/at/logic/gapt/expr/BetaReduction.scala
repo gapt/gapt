@@ -17,10 +17,7 @@ object ReductionRule {
   def apply( rules: ReductionRule* ): ReductionRule = apply( rules )
   def apply( rules: Traversable[ReductionRule] ): ReductionRule = {
     val rules_ = rules.toList
-    new ReductionRule {
-      override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ) =
-        rules_.view.flatMap( r => r.reduce( normalizer, head, args ) ).headOption
-    }
+    ( normalizer, head, args ) => rules_.view.flatMap( r => r.reduce( normalizer, head, args ) ).headOption
   }
 }
 
