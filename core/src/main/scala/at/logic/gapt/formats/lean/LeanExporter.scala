@@ -131,16 +131,16 @@ class LeanExporter {
       val all = nameMap.getLeanName( c.name, CONST )
       s"def $all {a : Type} (P : a -> Prop) := ∀x, P x\n\n"
     case Context.Sort( sort ) =>
-      s"parameter ${nameMap.getLeanName( sort.name, TY )} : Type\n\n"
+      s"constant ${nameMap.getLeanName( sort.name, TY )} : Type\n\n"
     case Context.Definition( Definition( Const( n, ty ), by ) ) =>
       val what = nameMap.getLeanName( n, CONST )
       s"def $what : ${export( ty )} := ${export( by )}\n\n"
     case Context.Axiom( ax ) =>
       val axName = nameMap.nameGenerator.fresh( "ax" )
       axiomNames( ax ) = axName
-      s"parameter $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
+      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
     case Context.ConstDecl( Const( n, t ) ) =>
-      s"parameter ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n\n"
+      s"constant ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n\n"
     case Context.InductiveType( ty, ctrs ) =>
       s"inductive ${nameMap.getLeanName( ty.name, TY )} : Type\n" +
         ctrs.map { case Const( n, t ) => s"| ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n" }.mkString +
@@ -184,7 +184,17 @@ class LeanExporter {
         for ( i <- p.mainIndices )
           rule += s" $hypName${hs( i )}"
         out ++= s"apply ($rule), "
-        for ( ( q, occConn, auxs ) <- ( p.immediateSubProofs, p.occConnectors, p.auxIndices ).zipped ) {
+        for ( ( q, occConn_, auxs_ ) <- ( p.immediateSubProofs, p.occConnectors, p.auxIndices ).zipped ) {
+          val ( occConn, auxs ) = p match {
+            case p: EqualityRule =>
+              (
+                occConn_.copy( parentsSequent = occConn_.parentsSequent.
+                  updated( p.eqInConclusion, Seq( p.eq ) ).
+                  updated( p.auxInConclusion, Seq( p.aux ) ) ),
+                Seq( p.aux )
+              )
+            case _ => ( occConn_, auxs_ )
+          }
           val hs_ = auxs.zip( Stream.from( ( 0 +: hs.elements ).max + 1 ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )
           out ++= "intros"
           p match {
@@ -192,13 +202,8 @@ class LeanExporter {
               out ++= s" ${nameMap.getLeanName( p.eigenVariable.name, VAR )}"
             case _ =>
           }
-          p match {
-            case p: EqualityRule =>
-              out ++= s" $hypName${hs_( p.aux )}"
-            case _ =>
-              for ( a <- auxs )
-                out ++= s" $hypName${hs_( a )}"
-          }
+          for ( a <- auxs )
+            out ++= s" $hypName${hs_( a )}"
           out ++= ",\n"
           f( q, hs_ )
         }
@@ -221,9 +226,9 @@ class LeanExporter {
   def mkFile( includeDirectly: Boolean )( f: => String ): String =
     mkImport( includeDirectly ) +
       "noncomputable theory\n\n" +
-      "namespace gapt_export\nsection\n\n" +
+      "namespace gapt_export\n\n" +
       f +
-      "\nend\nend gapt_export\n"
+      "\nend gapt_export\n"
 }
 object LeanExporter {
   def apply( ctx: Context ): String = apply( ctx, includeDirectly = false )
