@@ -1,13 +1,16 @@
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.expansion.Deskolemize
+import at.logic.gapt.proofs.{HOLSequent, Sequent}
+import at.logic.gapt.proofs.expansion.{Deskolemize, Pr, eigenVariablesET}
 import at.logic.gapt.proofs.lk.{LKProof, skolemize}
+import at.logic.gapt.prooftool.DrawSequent
 //import at.logic.gapt.proofs.resolution.{RobinsonToExpansionProof, RobinsonToLK}
 import at.logic.gapt.provers.vampire.Vampire
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionTree }
 import at.logic.gapt.proofs.lk.{ LKToExpansionProof, consoleString }
+
+import collection.immutable.Map
 
 object synthex extends Script {
 
@@ -28,60 +31,24 @@ object synthex extends Script {
 
   val thm = hof"!x i(x)"
 
-  //val drinker = hof"?x (d(x) -> !y d(y))"
-  //val problem = Sequent() :+ drinker
-
   //val problem = peano5 +: peano7 +: lem1 +: lem2 +: lem4 +: lem5 +:
-    //defleq +: defpow2 +: defind +: ind +: thm1 +: Sequent() :+ thm
+  //  defleq +: defpow2 +: defind +: ind +: thm1 +: Sequent() :+ thm
 
-  val problem = Sequent() :+ hof"?x (P x -> !y P y)"
+  val problem = Sequent() :+ hof"?x (P x -> !y (x = x & P y))"
   println( "Problem" )
   println( problem )
 
-  //val robinsonProof = Vampire getRobinsonProof problem
-  //println( "Resolution" )
-  //println( robinsonProof )
-  val skProblem = skolemize(problem)
-  val expansionProof: Option[ExpansionProof] = Vampire getExpansionProof skProblem
-  //val expansionProof: Option[ExpansionProof] = Prover9 getExpansionProof problem
-  //val lkProof: Option[LKProof] = Prover9 getLKProof problem
-  //println("ExpansionProof")
-  //println(expansionProof)
-  //println("LKProof")
-  //println(lkProof)
+  val expansionProof: Option[ExpansionProof] = Vampire getExpansionProof problem
 
   val expansionSequent: Sequent[ExpansionTree] = expansionProof.get.expansionSequent
-  /*
-  println( "RobinsonToLK")
-  val lkProof = RobinsonToLK.apply(robinsonProof.get)
-  println( lkProof )
-
-  println( "LKToExpansionProof")
-  val expansionProof = LKToExpansionProof.apply(lkProof)
-  println(expansionProof)
-
-  val lkRefutation =  ExpansionProofToLK.apply(RobinsonToExpansionProof.apply(robinsonProof.get)).toOption.get
-
-  println( "ExpansionProof.shallow" )
-  println( RobinsonToExpansionProof.apply(robinsonProof.get).shallow )
-  println( "ExpansionProofToLK" )
-  println( lkRefutation )
-  println( "ExpansionProof" )
-  println( RobinsonToExpansionProof.apply(robinsonProof.get) )
-
-  println( "ExpansionProofToLK.endSequent" )
-  val sequent = lkRefutation.endSequent
-  println( sequent )
-  */
 
   println( "ExpansionSequent" )
   println( expansionSequent )
 
-  /*println( "ExpansionSequent.shallow" )
-  println( expansionSequent.shallow )
-  */
 
-  val desk = Deskolemize.apply( problem, expansionSequent )
-  println( "Deskolemize" )
-  println( desk )
+  println( variables(expansionSequent.shallow) )
+  val desk: Sequent[ExpansionTree] = Deskolemize(expansionSequent)
+  println(desk)
+
+  println(ExpansionProofToLK(ExpansionProof(desk)))
 }
