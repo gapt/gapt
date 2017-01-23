@@ -360,18 +360,17 @@ case class ETSkolemQuantifier(
  * Expansion tree node for definitions.
  *
  * @param shallow An atom P(x,,1,,,..., x,,n,,) where P stands for a more complex formula.
- * @param definedExpr The expression that P abbreviates. Must have the same type as P.
- * @param child An expansion tree of definedExpr(x,,1,,,...,x,,n,,).
+ * @param definition The definition P → ψ.
+ * @param child An expansion tree of ψ(x,,1,,,...,x,,n,,).
  */
-case class ETDefinition( shallow: HOLAtom, definedExpr: LambdaExpression, child: ExpansionTree ) extends UnaryExpansionTree {
+case class ETDefinition( shallow: HOLAtom, definition: Definition, child: ExpansionTree ) extends UnaryExpansionTree {
   val HOLAtom( pred: Const, args ) = shallow
-  require( pred.exptype == definedExpr.exptype )
-  require( child.shallow == BetaReduction.betaNormalize( App( definedExpr, args ) ), s"child.shallow = ${child.shallow}; App(rhs, args) = ${App( definedExpr, args )}" )
+  val Definition( what, by ) = definition
+  require( what == pred, s"Predicate symbol $pred of atom does not agree with defined symbol $what." )
+  require( child.shallow == BetaReduction.betaNormalize( App( by, args ) ), s"child.shallow = ${child.shallow}; App(rhs, args) = ${App( by, args )}" )
 
   val polarity = child.polarity
   def deep = child.deep
-
-  val definition = Definition( pred, definedExpr )
 }
 
 private[expansion] object replaceET {

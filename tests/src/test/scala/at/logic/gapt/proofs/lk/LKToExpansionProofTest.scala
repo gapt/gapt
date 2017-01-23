@@ -178,6 +178,18 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
 
       e.shallow must_== fos":- h x = f (g x) ∨ ¬ f(g x) = f (g x)"
     }
+
+    "fail on simple example with atom definitions" in {
+      val d = Definition( hoc"P: o", le"Q & R" )
+      val S = hoc"S: o > o"
+
+      val p = ProofBuilder.
+        c( LogicalAxiom( hof"$S(Q & R)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), d, le"λ (x: o) $S(x)".asInstanceOf[Abs] ) ).
+        qed
+
+      LKToExpansionProof( p ) must throwAn[IllegalArgumentException]
+    }
   }
 }
 

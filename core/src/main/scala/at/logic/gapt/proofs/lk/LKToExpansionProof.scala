@@ -147,7 +147,7 @@ object LKToExpansionProof {
             case a: HOLAtom => // atom is in top position
               val ( subCuts, subSequent ) = extract( subProof )
 
-              ( subCuts, ETDefinition( a, defn.by, subSequent( aux ) ) +: subSequent.delete( aux ) )
+              ( subCuts, ETDefinition( a, defn, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
             case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
           }
@@ -167,7 +167,7 @@ object LKToExpansionProof {
             case a: HOLAtom => // atom is in top position
               val ( subCuts, subSequent ) = extract( subProof )
 
-              ( subCuts, subSequent.delete( aux ) :+ ETDefinition( a, defn.by, subSequent( aux ) ) )
+              ( subCuts, subSequent.delete( aux ) :+ ETDefinition( a, defn, subSequent( aux ) ) )
 
             case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
           }
