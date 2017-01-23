@@ -133,6 +133,51 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
         qed
       LKToExpansionProof( lk ).shallow must_== lk.conclusion
     }
+
+    "handle atom definitions in top position" in {
+      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+
+      val p = ProofBuilder.
+        c( LogicalAxiom( fof"x = x" ) ).
+        u( NegRightRule( _, Ant( 0 ) ) ).
+        u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), d, fof"P(x)" ) ).
+        u( OrRightMacroRule( _, fof"P(x)", fof"Q(x)" ) ).
+        qed
+
+      val e = LKToExpansionProof( p )
+
+      e.deep must_== fos" :- x = x ∨ (¬ x = x) ∨ false"
+    }
+
+    "refuse to handle atom definitions in non-top position" in {
+      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+
+      val p = ProofBuilder.
+        c( LogicalAxiom( fof"x = x" ) ).
+        u( NegRightRule( _, Ant( 0 ) ) ).
+        u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
+        u( OrRightMacroRule( _, fof"x = x ∨ ¬ x = x", fof"Q(x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), d, fof"P(x) ∨ Q(x)" ) ).
+        qed
+
+      LKToExpansionProof( p ) must throwAn[IllegalArgumentException]
+    }
+
+    "handle term definitions" in {
+      val d = Definition( hoc"h: i>i", le" λx f (g x)" )
+
+      val p = ProofBuilder.
+        c( LogicalAxiom( fof"f( g x) = f (g x)" ) ).
+        u( NegRightRule( _, Ant( 0 ) ) ).
+        u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), d, fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
+        qed
+
+      val e = LKToExpansionProof( p )
+
+      e.shallow must_== fos":- h x = f (g x) ∨ ¬ f(g x) = f (g x)"
+    }
   }
 }
 

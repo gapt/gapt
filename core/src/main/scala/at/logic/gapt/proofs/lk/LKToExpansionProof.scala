@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
-import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, Polarity, To, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ Abs, All, And, Apps, Const, Definition, Eq, FunctionType, HOLAtom, Polarity, To, Var, freeVariables, rename }
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.expansion._
 
@@ -139,5 +139,45 @@ object LKToExpansionProof {
       val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], Polarity.InAntecedent ), sequent( p.eq ) )
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
+
+    case p @ DefinitionLeftRule( subProof, aux, defn, ctx ) =>
+      defn.ty match {
+        case FunctionType( To, argTypes ) => // atom definition
+          p.mainFormula match {
+            case a: HOLAtom => // atom is in top position
+              val ( subCuts, subSequent ) = extract( subProof )
+
+              ( subCuts, ETDefinition( a, defn.by, subSequent( aux ) ) +: subSequent.delete( aux ) )
+
+            case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
+          }
+
+        case _ => // term definition
+          val ( subCuts, subSequent ) = extract( subProof )
+          val auxTree = subSequent( p.aux )
+
+          val newAuxTree = replaceWithContext( auxTree, p.replacementContext, defn.what )
+          ( subCuts, newAuxTree +: subSequent.delete( aux ) )
+      }
+
+    case p @ DefinitionRightRule( subProof, aux, defn, ctx ) =>
+      defn.ty match {
+        case FunctionType( To, argTypes ) => // atom definition
+          p.mainFormula match {
+            case a: HOLAtom => // atom is in top position
+              val ( subCuts, subSequent ) = extract( subProof )
+
+              ( subCuts, subSequent.delete( aux ) :+ ETDefinition( a, defn.by, subSequent( aux ) ) )
+
+            case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
+          }
+
+        case _ => // term definition
+          val ( subCuts, subSequent ) = extract( subProof )
+          val auxTree = subSequent( p.aux )
+
+          val newAuxTree = replaceWithContext( auxTree, p.replacementContext, defn.what )
+          ( subCuts, subSequent.delete( aux ) :+ newAuxTree )
+      }
   }
 }
