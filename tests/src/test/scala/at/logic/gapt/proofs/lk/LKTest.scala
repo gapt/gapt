@@ -6,7 +6,7 @@ import at.logic.gapt.proofs._
 import org.specs2.execute.Success
 import org.specs2.mutable._
 
-class LKNewTest extends Specification {
+class LKTest extends Specification {
   val c = FOLConst( "c" )
   val d = FOLConst( "d" )
   val alpha = FOLVar( "α" )
