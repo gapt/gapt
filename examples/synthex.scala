@@ -1,7 +1,7 @@
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.proofs.expansion.{Deskolemize, ExpansionProof, ExpansionProofToLK}
+import at.logic.gapt.proofs.expansion.{ deskolemizeET, ExpansionProof, ExpansionProofToLK }
 import at.logic.gapt.provers.vampire.Vampire
 
 object synthex extends Script {
@@ -28,15 +28,14 @@ object synthex extends Script {
   //  defleq +: defpow2 +: defind +: ind +: thm1 +: Sequent() :+ thm
 
   val problem = Sequent() :+ hof"?x (P x -> !y (x = x & P y))"
-  println("Problem")
-  println(problem)
+  println( "Problem" )
+  println( problem )
 
   val expansionProof: Option[ExpansionProof] = Vampire getExpansionProof problem
-  println(expansionProof.get)
-  val desk: ExpansionProof = Deskolemize(expansionProof.get)
-  println(desk)
-  println(ExpansionProofToLK(desk))
-
+  println( expansionProof.get )
+  val desk: ExpansionProof = deskolemizeET( expansionProof.get )
+  println( desk )
+  println( ExpansionProofToLK( desk ) )
 
   /*
   var i = 918
