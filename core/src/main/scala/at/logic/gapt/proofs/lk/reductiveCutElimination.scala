@@ -1,11 +1,3 @@
-
-/*
- * ReductiveCutElim.scala
- *
- * To change this template, choose Tools | Template Manager
- * and open the template in the editor.
- */
-
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._

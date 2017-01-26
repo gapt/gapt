@@ -1,10 +1,10 @@
 package at.logic.gapt.provers.viper
 
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, TBase, Var, freeVariables, rename, Const => Con }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.proofs.expansion.ExpansionProof
-import at.logic.gapt.proofs.gaptic.{ Lemma, NewLabels }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, eliminateSplitting }
@@ -309,6 +309,24 @@ class AnalyticInductionProver( options: ProverOptions ) {
     ctx.getConstructors( baseType( v ) ).isDefined
 }
 
+class UserDefinedInductionAxioms( axioms: List[String] ) extends InductionAxioms {
+  /**
+   * Returns user defined induction axioms.
+   *
+   * @param f   The formula for which induction axioms are to be generated.
+   * @param vs  The variables for which induction axioms are to be generated.
+   * @param ctx Defines inductive types etc.
+   * @return Either a list of induction axioms or a non empty list of strings describing why induction axioms
+   *         could not be generated.
+   */
+  override def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+    try {
+      axioms map { s => StringContext( s ).hof( s ) } success
+    } catch {
+      case e: IllegalArgumentException => e.getMessage().failureNel
+    }
+}
+
 object combinedInductionAxioms extends InductionAxioms {
   /**
    * Computes induction axioms for a formula and variables.
@@ -350,7 +368,9 @@ object independentInductionAxioms extends InductionAxioms {
    * @return A list of either induction axioms or errors. A an error message is
    * in the list if the corresponding axiom could not be created.
    */
-  private def makeInductionAxioms( formula: HOLFormula, variables: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
+  private def makeInductionAxioms(
+    formula: HOLFormula, variables: List[Var]
+  )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
     variables.traverse( v => makeAxiom( formula, v ) )
 
   /**
@@ -591,7 +611,7 @@ object aip {
     } )
   )
 
-  val cmdOptRegex = """--([a-zA-Z0-9-]+)(?:=(\S*))?""".r
+  val cmdOptRegex = """--([a-zA-Z0-9-]+)(?:=(.*))?""".r
 
   def main( args: Array[String] ): Unit = {
     try {
@@ -681,11 +701,7 @@ object aip {
           case None => throw new ValidationException( invalidArgument( option, value ) )
           case _    => options.copy( witness = value )
         }
-      case "axioms" =>
-        axioms.get( value ) match {
-          case None => throw new ValidationException( invalidArgument( option, value ) )
-          case _    => options.copy( axioms = value )
-        }
+      case "axioms" => options.copy( axioms = value )
       case "print-summary" =>
         if ( value == null )
           options.copy( printSummary = true )
@@ -719,21 +735,27 @@ object aip {
       |
       |  --help             outputs this help text.
       |  --prover           use the specified prover for proof search, possible values for
-      |                       this option are: escargot, prover9, vampire, spass, eprover.
+      |                       this option are: 'escargot', 'prover9', 'vampire', 'spass', 'eprover'.
       |  --axioms           use the specified type of induction axioms, possible values
-      |                       are: independent, sequential, combined.
+      |                       are: 'independent', 'sequential', 'combined' or user defined axioms of the form
+      |                       <axiom_1>; <axiom_2>; ... <axiom_n>.
       |  --witness          search for the specified type of proof, legal values are:
-      |                       existential, lkproof, expansionproof, resolutionproof. If the value
+      |                       'existential', 'lkproof', 'expansionproof', 'resolutionproof'. If the value
       |                       existential is provided for this option, the prover will only check
       |                       the validity of the given problem without providing a proof.
       |  --print-summary    print a one-liner summarizing the results of the run.
       |  --print-proof      print the proof if one was found.
     """.stripMargin
 
-  private def compileProverOptions( options: AipOptions ): ProverOptions =
+  private def compileProverOptions( options: AipOptions ): ProverOptions = {
+    val inductionType = axioms.get( options.axioms ) match {
+      case Some( it ) => it
+      case _          => new UserDefinedInductionAxioms( options.axioms.split( ";" ) toList )
+    }
     ProverOptions(
       provers.get( options.prover ).get,
-      axioms.get( options.axioms ).get
+      inductionType
     )
+  }
 
 }
