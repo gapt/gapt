@@ -44,20 +44,41 @@ class Deskolemize extends SolveUtils with Logger {
     val m: Set[LambdaExpression] = terms.elements.reduce(_ union _)
     val n = m.flatMap(replacement(_, skolemTerms, nameGenerator)).toMap
     println("map " + n)
-
-    apply(expansionProof.expansionSequent, n)
+    // TODO f shouldn't always get a fresh variable, reuse for terms already seen
+    var mm: Map[LambdaExpression, LambdaExpression] = Map.empty
+    def f: PartialFunction[LambdaExpression, LambdaExpression] = {
+      case a@App(e1, e2) if skolemTerms.contains(e1) => {
+        if (!mm.contains(a)) {
+          val v = Var(nameGenerator.fresh("v"), Ti)
+          mm = mm.+((a, v))
+          v
+        } else {
+          mm(a)
+        }
+      }
+      case c: Const if skolemTerms.contains(c) => {
+        if (!mm.contains(c)) {
+          val v = Var(nameGenerator.fresh("v"), Ti)
+          mm = mm.+((c, v))
+          v
+        } else {
+          mm(c)
+        }
+      }
+    }
+    apply(expansionProof.expansionSequent, f)(skolemTerms, nameGenerator)
   }
 
-  def apply(es: ExpansionSequent, repl: PartialFunction[LambdaExpression, LambdaExpression]): ExpansionSequent = {
+  def apply(es: ExpansionSequent, repl: PartialFunction[LambdaExpression, LambdaExpression])(implicit skolemTerms: Set[LambdaExpression], nameGenerator: NameGenerator): ExpansionSequent = {
     for { e <- es } yield apply(e, repl)
   }
 
-  def apply(e: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression]): ExpansionTree = {
+  def apply(e: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression])(implicit skolemTerms: Set[LambdaExpression], nameGenerator: NameGenerator): ExpansionTree = {
     rm(e, repl)
   }
 
   // TODO unify with replaceET? code is very similar
-  def rm( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression]): ExpansionTree = et match {
+  def rm( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression])(implicit skolemTerms: Set[LambdaExpression], nameGenerator: NameGenerator): ExpansionTree = et match {
     case ETMerge( child1, child2 ) => ETMerge( rm( child1, repl ), rm( child2, repl ) )
 
     case et @ ETWeakening( formula, _ ) =>
@@ -81,6 +102,7 @@ class Deskolemize extends SolveUtils with Logger {
             println(s"selectedTerm: $selectedTerm")
             val t = TermReplacement(selectedTerm, repl)
             println(s"t: $t")
+
             (TermReplacement(selectedTerm, repl), rm(child, repl))
         }
       )
@@ -93,6 +115,9 @@ class Deskolemize extends SolveUtils with Logger {
       println(s"skolemTerm: $skolemTerm")
       val t = TermReplacement(skolemTerm, repl)
       println(s"t: $t")
+      println("shallow: "+ TermReplacement(shallow, repl))
+      val m = rm(child, repl)
+      println("child: " +m )
       ETStrongQuantifier(
         TermReplacement(shallow, repl),
         TermReplacement(skolemTerm, repl).asInstanceOf[Var],
