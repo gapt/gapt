@@ -1,16 +1,9 @@
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{HOLSequent, Sequent}
-import at.logic.gapt.proofs.expansion.{Deskolemize, Pr, eigenVariablesET}
-import at.logic.gapt.proofs.lk.{LKProof, skolemize}
-import at.logic.gapt.prooftool.DrawSequent
-//import at.logic.gapt.proofs.resolution.{RobinsonToExpansionProof, RobinsonToLK}
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.expansion.Deskolemize
+import at.logic.gapt.proofs.expansion.{ExpansionProof, ExpansionProofToLK, ExpansionTree}
 import at.logic.gapt.provers.vampire.Vampire
-import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, ExpansionTree }
-import at.logic.gapt.proofs.lk.{ LKToExpansionProof, consoleString }
-
-import collection.immutable.Map
 
 object synthex extends Script {
 
@@ -23,7 +16,8 @@ object synthex extends Script {
   val defleq = hof"!x!y (x<=y <-> (x=y | x<y))"
   val defpow2 = hof"!x x*x = pow2(x)"
   val defind = hof"!x (i(x) <-> ?y (x < pow2(s y) & pow2(y) <= x))"
-  val thm1 = hof"""!y!x (
+  val thm1 =
+    hof"""!y!x (
     s(x)<pow2(s y) & x<pow2(s y) & pow2(y)<=x ->
       s(x)<pow2(s y) & pow2(y)<=s(x)
   )"""
@@ -31,24 +25,38 @@ object synthex extends Script {
 
   val thm = hof"!x i(x)"
 
-  //val problem = peano5 +: peano7 +: lem1 +: lem2 +: lem4 +: lem5 +:
-  //  defleq +: defpow2 +: defind +: ind +: thm1 +: Sequent() :+ thm
+  val problem = peano5 +: peano7 +: lem1 +: lem2 +: lem4 +: lem5 +:
+    defleq +: defpow2 +: defind +: ind +: thm1 +: Sequent() :+ thm
 
-  val problem = Sequent() :+ hof"?x (P x -> !y (x = x & P y))"
-  println( "Problem" )
-  println( problem )
+  //val problem = Sequent() :+ hof"?x (P x -> !y (x = x & P y))"
+  println("Problem")
+  println(problem)
 
   val expansionProof: Option[ExpansionProof] = Vampire getExpansionProof problem
-
-  val expansionSequent: Sequent[ExpansionTree] = expansionProof.get.expansionSequent
-
-  println( "ExpansionSequent" )
-  println( expansionSequent )
-
-
-  println( variables(expansionSequent.shallow) )
-  val desk: Sequent[ExpansionTree] = Deskolemize(expansionSequent)
+  println(expansionProof.get)
+  val desk: Sequent[ExpansionTree] = Deskolemize(expansionProof.get)
   println(desk)
-
   println(ExpansionProofToLK(ExpansionProof(desk)))
+
+  /*
+  var i = 918
+  var break = false
+  while (i < 100000 && !break) {
+    try {
+      println ("trying seed " + i)
+      val vmp = new Vampire(commandName = "vampire", extraArgs = Seq("--time_limit", "1m", "--random_seed", i.toString))
+      val expansionProof: Option[ExpansionProof] = vmp getExpansionProof problem
+      println(expansionProof.get)
+
+      val desk: Sequent[ExpansionTree] = Deskolemize(expansionProof.get)
+      println(desk)
+
+      println(ExpansionProofToLK(ExpansionProof(desk)))
+      break = true
+    } catch {
+      case e => println ("timeout")
+    }
+    i+=1
+  }
+  */
 }
