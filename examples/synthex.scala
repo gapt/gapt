@@ -1,8 +1,10 @@
-import at.logic.gapt.examples.Script
+import at.logic.gapt.examples.{Pi2Pigeonhole, Pi3Pigeonhole, Script}
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion.Deskolemize
 import at.logic.gapt.proofs.expansion.{ExpansionProof, ExpansionProofToLK, ExpansionTree}
+import at.logic.gapt.proofs.lk.{LKToExpansionProof, skolemize}
 import at.logic.gapt.provers.vampire.Vampire
 
 object synthex extends Script {
@@ -34,9 +36,10 @@ object synthex extends Script {
 
   val expansionProof: Option[ExpansionProof] = Vampire getExpansionProof problem
   println(expansionProof.get)
-  val desk: Sequent[ExpansionTree] = Deskolemize(expansionProof.get)
+  val desk: ExpansionProof = Deskolemize(expansionProof.get)
   println(desk)
-  println(ExpansionProofToLK(ExpansionProof(desk)))
+  println(ExpansionProofToLK(desk))
+
 
   /*
   var i = 918

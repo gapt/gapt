@@ -24,27 +24,20 @@ class Deskolemize extends SolveUtils with Logger {
     case _ => None
   }
 
-  def apply(expansionProof: ExpansionProof): Sequent[ExpansionTree] = {
+  def apply(expansionProof: ExpansionProof): ExpansionProof = {
 
     val skolemTerms: Set[LambdaExpression] = expansionProof.skolemFunctions.skolemDefs.keys.toSet
     println(expansionProof.skolemFunctions)
     val nameGenerator = rename.awayFrom(containedNames(expansionProof))
     println(s"skolemTerms: $skolemTerms")
-    val repl: Map[LambdaExpression, LambdaExpression] = skolemTerms.collect {
-      case c: Const if c.exptype == Ti => (c, Var(nameGenerator.fresh( "v" ), Ti))
-      case c: Const => (c, Var(nameGenerator.fresh( "v" ), Ti))
-      //case c: Const => (App(c, ), Var(nameGenerator.fresh( "v" ), Ti))
-      case a @ App(e, _)  => (a, Var(nameGenerator.fresh( "v" ), Ti))
-    }.toMap
-    println(repl)
 
+    // separate pass to collect all terms, use to precompute map
     val terms = for {e <- expansionProof.expansionSequent} yield collect(e)
     println(s"terms: $terms")
-    println("flatmap: " + terms.elements.reduce(_ union _).flatMap(replacement(_, skolemTerms, nameGenerator)))
-    val m: Set[LambdaExpression] = terms.elements.reduce(_ union _)
-    val n = m.flatMap(replacement(_, skolemTerms, nameGenerator)).toMap
-    println("map " + n)
-    // TODO f shouldn't always get a fresh variable, reuse for terms already seen
+    val m = terms.elements.reduce(_ union _).flatMap(replacement(_, skolemTerms, nameGenerator)).toMap
+    println("map " + m)
+
+    // Partial function and mutable map for reuse of assigned variables
     var mm: Map[LambdaExpression, LambdaExpression] = Map.empty
     def f: PartialFunction[LambdaExpression, LambdaExpression] = {
       case a@App(e1, e2) if skolemTerms.contains(e1) => {
@@ -66,19 +59,19 @@ class Deskolemize extends SolveUtils with Logger {
         }
       }
     }
-    apply(expansionProof.expansionSequent, f)(skolemTerms, nameGenerator)
+    ExpansionProof(apply(expansionProof.expansionSequent, f))
   }
 
-  def apply(es: ExpansionSequent, repl: PartialFunction[LambdaExpression, LambdaExpression])(implicit skolemTerms: Set[LambdaExpression], nameGenerator: NameGenerator): ExpansionSequent = {
+  def apply(es: ExpansionSequent, repl: PartialFunction[LambdaExpression, LambdaExpression]): ExpansionSequent = {
     for { e <- es } yield apply(e, repl)
   }
 
-  def apply(e: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression])(implicit skolemTerms: Set[LambdaExpression], nameGenerator: NameGenerator): ExpansionTree = {
+  def apply(e: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression]): ExpansionTree = {
     rm(e, repl)
   }
 
   // TODO unify with replaceET? code is very similar
-  def rm( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression])(implicit skolemTerms: Set[LambdaExpression], nameGenerator: NameGenerator): ExpansionTree = et match {
+  def rm( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression]): ExpansionTree = et match {
     case ETMerge( child1, child2 ) => ETMerge( rm( child1, repl ), rm( child2, repl ) )
 
     case et @ ETWeakening( formula, _ ) =>
@@ -99,10 +92,6 @@ class Deskolemize extends SolveUtils with Logger {
         TermReplacement(shallow, repl),
         instances.map {
           case (selectedTerm, child) =>
-            println(s"selectedTerm: $selectedTerm")
-            val t = TermReplacement(selectedTerm, repl)
-            println(s"t: $t")
-
             (TermReplacement(selectedTerm, repl), rm(child, repl))
         }
       )
@@ -112,12 +101,6 @@ class Deskolemize extends SolveUtils with Logger {
         TermReplacement( eigenVariable, repl ).asInstanceOf[Var], rm( child, repl )
       )
     case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
-      println(s"skolemTerm: $skolemTerm")
-      val t = TermReplacement(skolemTerm, repl)
-      println(s"t: $t")
-      println("shallow: "+ TermReplacement(shallow, repl))
-      val m = rm(child, repl)
-      println("child: " +m )
       ETStrongQuantifier(
         TermReplacement(shallow, repl),
         TermReplacement(skolemTerm, repl).asInstanceOf[Var],
