@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, Sequent, SequentIndex, Suc }
+import at.logic.gapt.proofs.{SequentIndex}
 import ReductiveCutElimination._
 import at.logic.gapt.expr.hol.isAtom
 
@@ -70,12 +70,12 @@ object ReductiveCutElimination {
    * @return True if proof is ACNF  False otherwise.
    */
   def isACNFTop( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ )         => true
-    case UnaryLKProof( _, subProof ) => isACNFTop( subProof )
+    case InitialSequent( _ )   => true
+    case UnaryLKProof( _, sb ) => isACNFTop( sb )
     case CutRule( lsb, l, rsb, r ) =>
       if ( isAtom( lsb.endSequent.apply( l ) ) )
         if ( introOrCut( lsb, lsb.endSequent.apply( l ) ) && introOrCut( rsb, rsb.endSequent.apply( r ) ) )
-          isACNFTop( lsb ) && isACNFTop( lsb )
+          isACNFTop( lsb ) && isACNFTop( rsb )
         else false
       else false
     case BinaryLKProof( _, lsb, rsb ) => isACNFTop( lsb ) && isACNFTop( rsb )
@@ -135,20 +135,22 @@ class ReductiveCutElimination {
     if ( !recordSteps ) steps += pr
     pr
   }
+  /**
+    * This algorithm implements a generalization of the Gentzen method which
+    * reduces all cuts to atomic cuts and pushes these cuts to the leaves of the proof.
+    *
+    * @param proof The proof to subject to cut-elimination.
+    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
 
+    * @return The cut-free proof.
+    */
   def elimToACNFTopByUppermostRankReducibleCut( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isACNFTop( pr ) },
       { ( p, cut ) =>
         cut match {
           case CutRule( lsb, l, rsb, r ) =>
             if ( isAtom( lsb.endSequent.apply( l ) ) )
-              ( ( !introOrCut( lsb, lsb.endSequent.apply( l ) ) &&
-                introOrCut( rsb, rsb.endSequent.apply( r ) ) ) ||
-                ( introOrCut( lsb, lsb.endSequent.apply( l ) ) &&
-                  !introOrCut( rsb, rsb.endSequent.apply( r ) ) ) ||
-                  ( !introOrCut( lsb, lsb.endSequent.apply( l ) ) &&
-                    !introOrCut( rsb, rsb.endSequent.apply( r ) ) ) )
-            //!( introOrCut( lsb, lsb.endSequent.apply( l ) ) && introOrCut( rsb, rsb.endSequent.apply( r ) ) )
+              !( introOrCut( lsb, lsb.endSequent.apply( l ) ) && introOrCut( rsb, rsb.endSequent.apply( r ) ) )
             else isACNFTop( lsb ) && isACNFTop( rsb )
         }
       },
@@ -162,7 +164,15 @@ class ReductiveCutElimination {
         }
       },
       cleanStructRules )
+  /**
+    * This algorithm implements a generalization of the Gentzen method which
+    * reduces all cuts to atomic cuts.
+    *
+    * @param proof The proof to subject to cut-elimination.
+    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
 
+    * @return The cut-free proof.
+    */
   def elimToACNFByUppermostNonAtomicCut( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isACNF( pr ) },
       { ( _, cut ) =>
@@ -186,9 +196,11 @@ class ReductiveCutElimination {
    * have been eliminated.
    *
    * @param proof The proof to subject to cut-elimination.
-   * @return The cut-free proof.
+   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
+
+    * @return The cut-free proof.
    */
-  def eliminateAllByUppermost( proof: LKProof, CleanStructRules: Boolean = true ): LKProof =
+  def eliminateAllByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isCutFree( pr ) },
       { ( _, cut ) =>
         cut match {
@@ -196,7 +208,7 @@ class ReductiveCutElimination {
         }
       },
       { pr => pr match { case CutRule( lsb, l, rsb, r ) => reduceGrade( lsb, l, rsb, r ) } },
-      CleanStructRules )
+      cleanStructRules )
 
   // TODO: Implement this properly, i.e. with SequentIndices.
   /**
@@ -207,8 +219,7 @@ class ReductiveCutElimination {
    * @return A proof with one less cut.
    */
   private def cutElim( proof: LKProof, reduce: LKProof => LKProof )( implicit pred: LKProof => Boolean ): LKProof = proof match {
-    case InitialSequent( _ ) =>
-      proof
+    case InitialSequent( _ ) => proof
 
     case WeakeningLeftRule( subProof, formula ) =>
       WeakeningLeftRule( cutElim( subProof, reduce ), formula )
