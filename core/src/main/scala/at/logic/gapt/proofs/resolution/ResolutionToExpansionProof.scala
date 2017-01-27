@@ -37,7 +37,7 @@ import scala.collection.mutable
  *
  * In the unlikely case that the resolution proof starts from clauses, we just pretend that the clauses are derived
  * from formulas--that is, we instead of beginning with `D(x), E(x,y) :- F(y)` we just imagine the proof begins with
- * `:- ∀x ∀y (¬D(x) ∨ ¬E(x,y) ∨ F(y))`.*
+ * `:- ∀x ∀y (¬D(x) ∨ ¬E(x,y) ∨ F(y))`.
  *
  * Splitting inferences are converted to cuts in the expansion proof: formally, we can first skip all the splitting
  * inferences in the resoltion proof; the assertions now become part of the clauses, and we get additional input sequents.
