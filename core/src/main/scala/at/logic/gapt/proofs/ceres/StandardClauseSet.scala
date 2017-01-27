@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, MultisetSequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.Logger
 
@@ -16,19 +16,19 @@ import scala.util.control.TailCalls._
  * Calculates the characteristic clause set
  */
 class CharacteristicClauseSet[Data] {
-  def apply( struct: Struct[Data] ): Set[HOLClause] = struct match {
-    case A( fo: HOLAtom, _ ) => Set( HOLClause( Nil, List( fo ) ) )
+  def apply( struct: Struct[Data] ): Set[MultisetSequent[HOLAtom]] = struct match {
+    case A( fo: HOLAtom, _ ) => Set( MultisetSequent[HOLAtom]( Sequent( Nil, List( fo ) ) ) )
     case A( Top(), _ )       => Set()
-    case A( Bottom(), _ )    => Set( HOLClause( Nil, Nil ) )
+    case A( Bottom(), _ )    => Set( MultisetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
     case A( f, _ ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
-    case Dual( A( fo: HOLAtom, _ ) ) => Set( HOLClause( List( fo ), Nil ) )
-    case Dual( A( Top(), _ ) )       => Set( HOLClause( Nil, Nil ) )
+    case Dual( A( fo: HOLAtom, _ ) ) => Set( MultisetSequent[HOLAtom]( Sequent( List( fo ), Nil ) ) )
+    case Dual( A( Top(), _ ) )       => Set( MultisetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
     case Dual( A( Bottom(), _ ) )    => Set()
     case Dual( A( f, _ ) ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
     case EmptyPlusJunction()                 => Set()
-    case EmptyTimesJunction()                => Set( HOLClause( Nil, Nil ) )
+    case EmptyTimesJunction()                => Set( MultisetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
     case Plus( EmptyPlusJunction(), x )      => apply( x )
     case Plus( x, EmptyPlusJunction() )      => apply( x )
     case Plus( x, y )                        => apply( x ) ++ apply( y )
@@ -41,21 +41,30 @@ class CharacteristicClauseSet[Data] {
     case Times( x, y, _ ) =>
       val xs = apply( x )
       val ys = apply( y )
-      xs.flatMap( x1 => ys.flatMap( y1 => Set( delta_compose( x1, y1 ) ) ) )
+      xs.flatMap( ( x1: MultisetSequent[HOLAtom] ) => ys.flatMap( ( y1: MultisetSequent[HOLAtom] ) => {
+        delta_compose( x1, y1 ) match {
+          case Some( m ) => Set( m ).toTraversable
+          case None      => Set().toTraversable
+        }
+      } ) )
     case _ => throw new Exception( "Unhandled case: " + struct )
   }
 
   private def compose[T]( fs1: Sequent[T], fs2: Sequent[T] ) = fs1 ++ fs2
 
   /* Like compose, but does not duplicate common terms */
-  private def delta_compose[T]( fs1: Sequent[T], fs2: Sequent[T] ) = Sequent[T](
-    fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
-    fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
-  )
+  private def delta_compose[T]( fs1: MultisetSequent[T], fs2: MultisetSequent[T] ): Option[MultisetSequent[T]] = {
+    val ante1 = fs1.sequent.antecedent.distinct.toSet ++ fs2.sequent.antecedent.distinct.toSet.diff( fs1.sequent.antecedent.distinct.toSet )
+    val suc1 = fs1.sequent.succedent.distinct.toSet ++ fs2.sequent.succedent.distinct.toSet.diff( fs1.sequent.succedent.distinct.toSet )
+    val anteSucInter = ante1 & suc1
+    if ( anteSucInter.isEmpty ) Some( MultisetSequent[T]( Sequent[T]( ante1.toSeq, suc1.toSeq ) ) )
+    else None
+
+  }
 }
 
 object CharacteristicClauseSet {
-  def apply[Data]( struct: Struct[Data] ) = ( new CharacteristicClauseSet[Data] )( struct )
+  def apply[Data]( struct: Struct[Data] ): Set[HOLClause] = ( new CharacteristicClauseSet[Data] )( struct ).map( y => y.sequent )
 }
 
 object SimplifyStruct {

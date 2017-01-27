@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{SequentIndex}
+import at.logic.gapt.proofs.{ SequentIndex }
 import ReductiveCutElimination._
 import at.logic.gapt.expr.hol.isAtom
 
@@ -20,33 +20,44 @@ object ReductiveCutElimination {
    * have been eliminated.
    *
    * @param proof The proof to subject to cut-elimination or restructuring.
-   * @param mode Tells the algorithm what to output. 0 or None means cut-free proof, 1 means first ACNF found
-   *  2 means ACNF top
    *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
    * default value is on, i.e. clean the structural rules
    * @return A proof.
    */
-  def apply( proof: LKProof, mode: Option[Int] = None, cleanStructRules: Boolean = true ) = mode match {
-    case Some( i ) => i match {
-      case 0 => new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
-      case 1 => new ReductiveCutElimination().elimToACNFByUppermostNonAtomicCut( proof, cleanStructRules )
-      case 2 => new ReductiveCutElimination().elimToACNFTopByUppermostRankReducibleCut( proof, cleanStructRules )
-    }
-    case None => new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
-  }
+  def apply( proof: LKProof, cleanStructRules: Boolean = true ) =
+    new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
+
+  /**
+   * Reduces proof to ACNF using reductive cut elimination
+   *
+   * @param proof The proof to subject to cut-elimination or restructuring.
+   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+   * default value is on, i.e. clean the structural rules
+   * @return A proof.
+   */
+  def reduceToACNF( proof: LKProof, cleanStructRules: Boolean = true ) =
+    new ReductiveCutElimination().elimToACNFByUppermostNonAtomicCut( proof, cleanStructRules )
+
+  /**
+   * Reduces proof to ACNF top using reductive cut elimination
+   *
+   * @param proof The proof to subject to cut-elimination or restructuring.
+   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+   * default value is on, i.e. clean the structural rules
+   * @return A proof.
+   */
+  def reduceToACNFTop( proof: LKProof, cleanStructRules: Boolean = true ) =
+    new ReductiveCutElimination().elimToACNFTopByUppermostRankReducibleCut( proof, cleanStructRules )
 
   /**
    * This method checks whether a proof is cut-free.
-   *
    * @param proof The proof to check for cut-freeness.
    * @return True if proof does not contain the cut rule, False otherwise.
    */
   def isCutFree( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ )         => true
-    case UnaryLKProof( _, subProof ) => isCutFree( subProof )
-    case p: CutRule                  => false
-    case BinaryLKProof( _, leftSubProof, rightSubProof ) =>
-      isCutFree( leftSubProof ) && isCutFree( rightSubProof )
+    case InitialSequent( _ ) => true
+    case p: CutRule          => false
+    case _                   => proof.immediateSubProofs.forall( isACNF )
   }
 
   /**
@@ -56,12 +67,11 @@ object ReductiveCutElimination {
    * @return True if proof is ACNF  False otherwise.
    */
   def isACNF( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ )         => true
-    case UnaryLKProof( _, subProof ) => isACNF( subProof )
+    case InitialSequent( _ ) => true
     case CutRule( lsb, l, rsb, _ ) =>
-      if ( isAtom( lsb.endSequent.apply( l ) ) ) isACNF( lsb ) && isACNF( rsb )
+      if ( isAtom( lsb.endSequent( l ) ) ) isACNF( lsb ) && isACNF( rsb )
       else false
-    case BinaryLKProof( _, lsb, rsb ) => isACNF( lsb ) && isACNF( rsb )
+    case _ => proof.immediateSubProofs.forall( isACNF )
   }
   /**
    * This method checks whether a proof is ACNF top
@@ -70,15 +80,15 @@ object ReductiveCutElimination {
    * @return True if proof is ACNF  False otherwise.
    */
   def isACNFTop( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ )   => true
-    case UnaryLKProof( _, sb ) => isACNFTop( sb )
+    case InitialSequent( _ ) => true
     case CutRule( lsb, l, rsb, r ) =>
-      if ( isAtom( lsb.endSequent.apply( l ) ) )
-        if ( introOrCut( lsb, lsb.endSequent.apply( l ) ) && introOrCut( rsb, rsb.endSequent.apply( r ) ) )
+      if ( isAtom( lsb.endSequent( l ) ) )
+        if ( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) )
           isACNFTop( lsb ) && isACNFTop( rsb )
         else false
       else false
-    case BinaryLKProof( _, lsb, rsb ) => isACNFTop( lsb ) && isACNFTop( rsb )
+    case _ => proof.immediateSubProofs.forall( isACNF )
+
   }
   /**
    * Checks if the first rule in  proof is a leave, a cut rule or a weakening rule on an
@@ -136,55 +146,55 @@ class ReductiveCutElimination {
     pr
   }
   /**
-    * This algorithm implements a generalization of the Gentzen method which
-    * reduces all cuts to atomic cuts and pushes these cuts to the leaves of the proof.
-    *
-    * @param proof The proof to subject to cut-elimination.
-    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-
-    * @return The cut-free proof.
-    */
+   * This algorithm implements a generalization of the Gentzen method which
+   * reduces all cuts to atomic cuts and pushes these cuts to the leaves of the proof.
+   *
+   * @param proof The proof to subject to cut-elimination.
+   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
+   *
+   * @return The cut-free proof.
+   */
   def elimToACNFTopByUppermostRankReducibleCut( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isACNFTop( pr ) },
       { ( p, cut ) =>
         cut match {
           case CutRule( lsb, l, rsb, r ) =>
-            if ( isAtom( lsb.endSequent.apply( l ) ) )
-              !( introOrCut( lsb, lsb.endSequent.apply( l ) ) && introOrCut( rsb, rsb.endSequent.apply( r ) ) )
+            if ( isAtom( lsb.endSequent( l ) ) )
+              !( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) )
             else isACNFTop( lsb ) && isACNFTop( rsb )
         }
       },
       { pr =>
         pr match {
           case CutRule( lsb, l, rsb, r ) =>
-            if ( isAtom( lsb.endSequent.apply( l ) ) )
-              if ( introOrCut( lsb, lsb.endSequent.apply( l ) ) ) reduceRankRight( lsb, l, rsb, r )
+            if ( isAtom( lsb.endSequent( l ) ) )
+              if ( introOrCut( lsb, lsb.endSequent( l ) ) ) reduceRankRight( lsb, l, rsb, r )
               else reduceRankLeft( lsb, l, rsb, r )
             else reduceGrade( lsb, l, rsb, r )
         }
       },
       cleanStructRules )
   /**
-    * This algorithm implements a generalization of the Gentzen method which
-    * reduces all cuts to atomic cuts.
-    *
-    * @param proof The proof to subject to cut-elimination.
-    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-
-    * @return The cut-free proof.
-    */
+   * This algorithm implements a generalization of the Gentzen method which
+   * reduces all cuts to atomic cuts.
+   *
+   * @param proof The proof to subject to cut-elimination.
+   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
+   *
+   * @return The cut-free proof.
+   */
   def elimToACNFByUppermostNonAtomicCut( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isACNF( pr ) },
       { ( _, cut ) =>
         cut match {
           case CutRule( lsb, l, rsb, _ ) =>
-            !isAtom( lsb.endSequent.apply( l ) ) && isACNF( lsb ) && isACNF( rsb )
+            !isAtom( lsb.endSequent( l ) ) && isACNF( lsb ) && isACNF( rsb )
         }
       },
       { pr =>
         pr match {
           case CutRule( lsb, l, rsb, r ) =>
-            if ( isAtom( lsb.endSequent.apply( l ) ) ) reduceRankLeft( lsb, l, rsb, r )
+            if ( isAtom( lsb.endSequent( l ) ) ) reduceRankLeft( lsb, l, rsb, r )
             else reduceGrade( lsb, l, rsb, r )
         }
       },
@@ -197,8 +207,8 @@ class ReductiveCutElimination {
    *
    * @param proof The proof to subject to cut-elimination.
    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-
-    * @return The cut-free proof.
+   *
+   * @return The cut-free proof.
    */
   def eliminateAllByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isCutFree( pr ) },
@@ -283,7 +293,7 @@ class ReductiveCutElimination {
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       if ( pred( proof ) ) reduce( proof )
-      else CutRule( cutElim( leftSubProof, reduce ), leftSubProof.endSequent.apply( aux1 ), cutElim( rightSubProof, reduce ), rightSubProof.endSequent.apply( aux2 ) )
+      else CutRule( cutElim( leftSubProof, reduce ), leftSubProof.endSequent( aux1 ), cutElim( rightSubProof, reduce ), rightSubProof.endSequent( aux2 ) )
 
   }
   //reduceGrade( leftSubProof, aux1, rightSubProof, aux2 )

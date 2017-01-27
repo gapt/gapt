@@ -75,6 +75,18 @@ case class Suc( k: Int ) extends SequentIndex {
   def toInt = k
 }
 
+case class MultisetSequent[+A]( sequent: Sequent[A] ) {
+  override def equals( that: Any ): Boolean = that match {
+    case Sequent( ante, suc ) => {
+      ( ( this.sequent.antecedent.distinct.toSet diff ante.distinct.toSet ).isEmpty &&
+        ( this.sequent.succedent.distinct.toSet diff suc.distinct.toSet ).isEmpty )
+    }
+    case _ => false
+  }
+  override def hashCode = this.sequent.antecedent.distinct.toSet.hashCode() + this.sequent.succedent.distinct.toSet.hashCode() // permutation-invariant hashcode
+
+}
+
 /**
  * A sequent is a pair of sequences of elements of type A, typically written as a,,1,,,…,a,,m,, :- b,,1,,,…,b,,n,,.
  *
