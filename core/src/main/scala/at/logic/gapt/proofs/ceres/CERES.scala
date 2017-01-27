@@ -4,8 +4,9 @@ import at.logic.gapt.formats.llk.LLKExporter
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
 
@@ -97,6 +98,30 @@ class CERES {
   }
 
   /**
+   * Computes the expansion proof of the CERES-normal form using projections and the resolution refutation.
+   *
+   * @param p a first-order LKProof without strong quantifiers in the end-sequent
+   *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
+   * @return an expansion proof of the CERES-normal form computed from the projections and the resolution refutation
+   */
+  def CERESExpansionProof( p: LKProof, prover: ResolutionProver ): ExpansionProof = {
+    val es = p.endSequent
+    val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
+    val cs = CharacteristicClauseSet( StructCreators.extract( p_, CERES.skipNothing ) )
+    val proj = Projections( p_, CERES.skipNothing )
+    val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
+
+    prover.getResolutionProof( tapecl ) match {
+      case None => throw new Exception(
+        "The characteristic clause set could not be refuted:\n" +
+          TPTPFOLExporter( tapecl )
+      )
+      case Some( rp ) =>
+        ResolutionToExpansionProof( eliminateSplitting( rp ), findPartialExpansionSequent( es, proj ) )
+    }
+  }
+
+  /**
    * Finds the matching projection of an input clause in the set of projections.
    * @param endsequent The common end-sequent of all projections.
    * @param projections The set of projections.
@@ -116,4 +141,46 @@ class CERES {
       projections.map( _.endSequent.diff( endsequent ) ).mkString( "{\n", ";\n", "\n}" ) )
   }
 
+  /**
+   * Computes the partial expansion sequent of the matching projection of an input clause in the set of projections.
+   * @param endsequent The common end-sequent of all projections.
+   * @param projections The set of projections.
+   * @param input The clause we need to project to, the expansion sequent we want to modify and a set which we do not change.
+   * @return An expansion sequent of the projection corresponding to the input clause, without the clause part (we compute
+   *         the expansion trees of all formulas in the end-sequent of the projection except of the formulas corresponding
+   *         to the input clause).
+   */
+  def findPartialExpansionSequent( endsequent: HOLSequent, projections: Set[LKProof] )( input: Input, expSeq: ExpansionSequent, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
+    var expansionSequent = LKToExpansionProof( findMatchingProjection( endsequent, projections )( input ) ).expansionSequent
+
+    for ( c <- input.sequent.antecedent ) {
+      expansionSequent.indicesWhere( _.shallow == c ).find( _.isAnt ) match {
+        case None => throw new Exception(
+          "Clause not contained in expansion sequent"
+        )
+        case Some( index ) =>
+          expansionSequent = expansionSequent.delete( index )
+      }
+    }
+
+    for ( c <- input.sequent.succedent ) {
+      expansionSequent.indicesWhere( _.shallow == c ).find( _.isSuc ) match {
+        case None => throw new Exception(
+          "Clause not contained in expansion sequent"
+        )
+        case Some( index ) =>
+          expansionSequent = expansionSequent.delete( index )
+      }
+    }
+
+    var retSeq: ExpansionSequent = Sequent()
+
+    retSeq = expSeq
+
+    for ( subst <- set.map( _._1 ).seq ) {
+      retSeq ++= subst( expansionSequent )
+    }
+
+    return retSeq
+  }
 }

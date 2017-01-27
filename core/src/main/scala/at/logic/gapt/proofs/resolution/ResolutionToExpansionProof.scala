@@ -9,7 +9,9 @@ import at.logic.gapt.provers.sat.Sat4j
 import scala.collection.mutable
 
 /**
- * Converts a resolution proof to an expansion proof.
+ * Converts a resolution proof to an expansion proof.*
+ * ResolutionToExpansionProof( rp ) will return the expansion proof of rp and ResolutionToExpansionProof( rp, input )
+ * is used by the CERES method to return the expansion proof of the ACNF, which is extracted from the proof projections.
  *
  * Let us first ignore splitting and subformula definitions for simplicity.
  * However we may still have clausification inferences.
@@ -35,7 +37,7 @@ import scala.collection.mutable
  *
  * In the unlikely case that the resolution proof starts from clauses, we just pretend that the clauses are derived
  * from formulas--that is, we instead of beginning with `D(x), E(x,y) :- F(y)` we just imagine the proof begins with
- * `:- ∀x ∀y (¬D(x) ∨ ¬E(x,y) ∨ F(y))`.
+ * `:- ∀x ∀y (¬D(x) ∨ ¬E(x,y) ∨ F(y))`.*
  *
  * Splitting inferences are converted to cuts in the expansion proof: formally, we can first skip all the splitting
  * inferences in the resoltion proof; the assertions now become part of the clauses, and we get additional input sequents.
@@ -51,7 +53,31 @@ import scala.collection.mutable
 object ResolutionToExpansionProof {
 
   def apply( proof: ResolutionProof ): ExpansionProof = {
-    val expansionWithDefs = withDefs( proof )
+    var retSeq: ExpansionSequent = Sequent()
+    val exp = apply( proof, {
+      case ( Input( Sequent( Seq( f ), Seq() ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
+        retSeq = expSeq
+        retSeq :+= ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) )
+        retSeq
+
+      case ( Input( Sequent( Seq(), Seq( f ) ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
+        retSeq = expSeq
+        retSeq +:= ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) )
+        retSeq
+
+      case ( Input( seq ), expSeq, set ) =>
+        retSeq = expSeq
+        val fvs = freeVariables( seq ).toSeq
+        val sh = All.Block( fvs, seq.toDisjunction )
+        retSeq +:= ETWeakQuantifierBlock( sh, fvs.size,
+          for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
+        retSeq
+    } )
+    exp
+  }
+
+  def apply( proof: ResolutionProof, input: ( Input, ExpansionSequent, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent ): ExpansionProof = {
+    val expansionWithDefs = withDefs( proof, input )
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
   }
@@ -65,7 +91,7 @@ object ResolutionToExpansionProof {
    * Performs the conversion without eliminating the definitions
    * introduced by structural clausification.
    */
-  def withDefs( proof: ResolutionProof, addConclusion: Boolean = true ): ExpansionProofWithCut = {
+  def withDefs( proof: ResolutionProof, input: ( Input, ExpansionSequent, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent, addConclusion: Boolean = true ): ExpansionProofWithCut = {
     val nameGen = rename.awayFrom( containedNames( proof ) )
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
@@ -122,20 +148,31 @@ object ResolutionToExpansionProof {
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
       Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[HOLAtom], !i.polarity ) } )
 
+    def perfMerges( expansionSequent: ExpansionSequent ): ExpansionSequent = {
+      var expSeq = expansionSequent
+      var retSeq: ExpansionSequent = Sequent()
+
+      for ( t1 <- expSeq.antecedent ) {
+        if ( !retSeq.shallow.antecedent.contains( t1.shallow ) ) {
+          retSeq +:= ETMerge( t1.shallow, Polarity.InAntecedent, expSeq.antecedent.filter( _.shallow == t1.shallow ) )
+          expSeq = Sequent( expSeq.antecedent.filter( _.shallow != t1.shallow ), expSeq.succedent )
+        }
+      }
+
+      for ( t1 <- expSeq.succedent ) {
+        if ( !retSeq.shallow.succedent.contains( t1.shallow ) ) {
+          retSeq :+= ETMerge( t1.shallow, Polarity.InSuccedent, expSeq.succedent.filter( _.shallow == t1.shallow ) )
+          expSeq = Sequent( expSeq.antecedent, expSeq.succedent.filter( _.shallow != t1.shallow ) )
+        }
+      }
+
+      return retSeq
+    }
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
     proof.dagLike.postOrder.reverse.foreach {
-      case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
-        expansionSequent :+= ETMerge( f, Polarity.InSuccedent, expansions( p ).map( _._2.elements.head ) )
-        clear( p )
-      case p @ Input( Sequent( Seq(), Seq( f ) ) ) if freeVariables( f ).isEmpty =>
-        expansionSequent +:= ETMerge( f, Polarity.InAntecedent, expansions( p ).map( _._2.elements.head ) )
-        clear( p )
       case p @ Input( seq ) =>
-        val fvs = freeVariables( seq ).toSeq
-        val sh = All.Block( fvs, seq.toDisjunction )
-        expansionSequent +:= ETWeakQuantifierBlock( sh, fvs.size,
-          for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
+        expansionSequent = input( Input( seq ), expansionSequent, expansions( p ) )
         clear( p )
       case p @ Defn( _, _ ) =>
         expansionSequent +:= ETMerge( p.definitionFormula, Polarity.InAntecedent, expansions( p ).map( _._2.elements.head ) )
@@ -240,6 +277,6 @@ object ResolutionToExpansionProof {
         ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) )
       )
 
-    eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
+    eliminateMerges( ExpansionProofWithCut( cuts, perfMerges( expansionSequent ) ) )
   }
 }
