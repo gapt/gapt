@@ -107,6 +107,28 @@ object ReductiveCutElimination {
   }
 }
 
+/**
+ * -   * This methods implements a version of Gentzen's cut-elimination
+ * -   * proof parameterized by a strategy given by pred_cut and
+ * -   * pred_done.
+ * -   *
+ * -   * The method traverses an LKProof recursively from the bottom
+ * -   * up. When it reaches a cut, the method calls pred_cut(global, sub),
+ * -   * where global is complete proof under consideration, while sub
+ * -   * is the subproof of global ending in the cut. If this call returns
+ * -   * true, the cut is reduced using the usual Gentzen cut-elimination
+ * -   * rules. If the call returns false, the traversion continues.
+ * -   *
+ * -   * After every application of a reduction, pred_done(global) is called.
+ * -   * If it returns true, the algorithm terminates, returning the current proof.
+ * -   * If it returns false, the algorithm continues to traverse the proof.
+ * -   *
+ * -   * This means that pred_cut and pred_done allow the definition of a (not necessarily
+ * -   * terminating!) cut-elimination strategy. A standard implementation (reducing
+ * -   * left-uppermost cuts until the proof is cut-free) is provided by another
+ * -   * apply method in this class.
+ */
+
 class ReductiveCutElimination {
   val steps = mutable.Buffer[LKProof]()
   var recordSteps: Boolean = false
