@@ -75,16 +75,16 @@ case class Suc( k: Int ) extends SequentIndex {
   def toInt = k
 }
 
-case class MultisetSequent[+A]( sequent: Sequent[A] ) {
+/**
+ * Used for clause set extraction
+ * @param sequent A sequent.
+ */
+case class SetSequent[+A]( sequent: Sequent[A] ) {
   override def equals( that: Any ): Boolean = that match {
-    case Sequent( ante, suc ) => {
-      ( ( this.sequent.antecedent.distinct.toSet diff ante.distinct.toSet ).isEmpty &&
-        ( this.sequent.succedent.distinct.toSet diff suc.distinct.toSet ).isEmpty )
-    }
-    case _ => false
+    case SetSequent( Sequent( ante, suc ) ) => this.sequent.antecedent.toSet == ante.toSet && this.sequent.succedent.toSet == suc.toSet
+    case _                                  => false
   }
   override def hashCode = this.sequent.antecedent.distinct.toSet.hashCode() + this.sequent.succedent.distinct.toSet.hashCode() // permutation-invariant hashcode
-
 }
 
 /**
