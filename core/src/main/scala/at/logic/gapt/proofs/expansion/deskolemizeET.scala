@@ -12,7 +12,7 @@ class deskolemizeET {
     val nameGenerator = rename.awayFrom( containedNames( expansionProof ) )
     val skolemTerms = expansionProof.subProofs.collect { case e: ETSkolemQuantifier => e.skolemTerm }
     val repl = skolemTerms.map {
-      case t if skolemTerms.contains( t ) => ( t, Var( nameGenerator.fresh( "v" ), t.exptype ) )
+      t => ( t, Var( nameGenerator.fresh( "v" ), t.exptype ) )
     }.toMap
 
     ExpansionProof( apply( expansionProof.expansionSequent, repl ) )
