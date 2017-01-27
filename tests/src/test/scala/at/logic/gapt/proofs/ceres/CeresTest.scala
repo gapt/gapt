@@ -9,11 +9,12 @@ import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.SequentMatchers
 import at.logic.gapt.proofs.{ Context, Sequent, gaptic }
-import at.logic.gapt.proofs.lk.{ CutRule, ReductiveCutElimination }
+import at.logic.gapt.proofs.lk.{ CutRule, LKToExpansionProof, ReductiveCutElimination }
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class CeresTest extends Specification with SequentMatchers {
+class CeresTest extends Specification with SequentMatchers with SatMatchers {
 
   def load( file: String, pname: String ) =
     LLKProofParser( ClasspathInputFile( file ) ).proof( pname )
@@ -92,5 +93,4 @@ class CeresTest extends Specification with SequentMatchers {
     for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
     ok
   }
-
 }

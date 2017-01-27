@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.ResolutionProofBuilder
 import at.logic.gapt.proofs.{ Ant, Clause, Sequent, Suc }
 import at.logic.gapt.utils.SatMatchers
@@ -111,7 +112,26 @@ class ResolutionTest extends Specification with SatMatchers {
     val proof = Resolution( Resolution( AvatarContradiction( split ), Suc( 0 ), case1, Ant( 0 ) ), Suc( 0 ), case2, Ant( 0 ) )
     proof.isProof must_== true
 
-    ResolutionToExpansionProof.withDefs( proof ).deep must beValidSequent
+    var retSeq: ExpansionSequent = Sequent()
+    ResolutionToExpansionProof.withDefs( proof, {
+      case ( Input( Sequent( Seq( f ), Seq() ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
+        retSeq = expSeq
+        retSeq :+= ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) )
+        retSeq
+
+      case ( Input( Sequent( Seq(), Seq( f ) ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
+        retSeq = expSeq
+        retSeq +:= ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) )
+        retSeq
+
+      case ( Input( seq ), expSeq, set ) =>
+        retSeq = expSeq
+        val fvs = freeVariables( seq ).toSeq
+        val sh = All.Block( fvs, seq.toDisjunction )
+        retSeq +:= ETWeakQuantifierBlock( sh, fvs.size,
+          for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
+        retSeq
+    } ).deep must beValidSequent
     val expansion = ResolutionToExpansionProof( proof )
     expansion.deep must beValidSequent
     val Some( resFromExp ) = ExpansionToResolutionProof( expansion )
