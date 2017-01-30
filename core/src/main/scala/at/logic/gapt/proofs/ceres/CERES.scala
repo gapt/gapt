@@ -150,7 +150,7 @@ class CERES {
    *         the expansion trees of all formulas in the end-sequent of the projection except of the formulas corresponding
    *         to the input clause).
    */
-  def findPartialExpansionSequent( endsequent: HOLSequent, projections: Set[LKProof] )( input: Input, expSeq: ExpansionSequent, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
+  def findPartialExpansionSequent( endsequent: HOLSequent, projections: Set[LKProof] )( input: Input, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
     var expansionSequent = LKToExpansionProof( findMatchingProjection( endsequent, projections )( input ) ).expansionSequent
 
     for ( c <- input.sequent.antecedent ) {
@@ -174,8 +174,6 @@ class CERES {
     }
 
     var retSeq: ExpansionSequent = Sequent()
-
-    retSeq = expSeq
 
     for ( subst <- set.map( _._1 ).seq ) {
       retSeq ++= subst( expansionSequent )

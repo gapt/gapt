@@ -113,25 +113,7 @@ class ResolutionTest extends Specification with SatMatchers {
     proof.isProof must_== true
 
     var retSeq: ExpansionSequent = Sequent()
-    ResolutionToExpansionProof.withDefs( proof, {
-      case ( Input( Sequent( Seq( f ), Seq() ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
-        retSeq = expSeq
-        retSeq :+= ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) )
-        retSeq
-
-      case ( Input( Sequent( Seq(), Seq( f ) ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
-        retSeq = expSeq
-        retSeq +:= ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) )
-        retSeq
-
-      case ( Input( seq ), expSeq, set ) =>
-        retSeq = expSeq
-        val fvs = freeVariables( seq ).toSeq
-        val sh = All.Block( fvs, seq.toDisjunction )
-        retSeq +:= ETWeakQuantifierBlock( sh, fvs.size,
-          for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
-        retSeq
-    } ).deep must beValidSequent
+    ResolutionToExpansionProof.withDefs( proof, ResolutionToExpansionProof.setInput() ).deep must beValidSequent
     val expansion = ResolutionToExpansionProof( proof )
     expansion.deep must beValidSequent
     val Some( resFromExp ) = ExpansionToResolutionProof( expansion )

@@ -21,25 +21,7 @@ object expansionProofFromInstances {
 
     var retSeq: ExpansionSequent = Sequent()
     val expansionWithDefs = ExpansionProofWithCut( Sequent( proofs.
-      flatMapS( ResolutionToExpansionProof.withDefs( _, {
-        case ( Input( Sequent( Seq( f ), Seq() ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
-          retSeq = expSeq
-          retSeq :+= ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) )
-          retSeq
-
-        case ( Input( Sequent( Seq(), Seq( f ) ) ), expSeq, set ) if freeVariables( f ).isEmpty =>
-          retSeq = expSeq
-          retSeq +:= ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) )
-          retSeq
-
-        case ( Input( seq ), expSeq, set ) =>
-          retSeq = expSeq
-          val fvs = freeVariables( seq ).toSeq
-          val sh = All.Block( fvs, seq.toDisjunction )
-          retSeq +:= ETWeakQuantifierBlock( sh, fvs.size,
-            for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
-          retSeq
-      }, addConclusion = false ).expansionWithCutAxiom.expansionSequent ).
+      flatMapS( ResolutionToExpansionProof.withDefs( _, ResolutionToExpansionProof.setInput(), addConclusion = false ).expansionWithCutAxiom.expansionSequent ).
       polarizedElements.groupBy( pe => pe._1.shallow -> pe._2 ).
       values.map( g => ETMerge( g.map( _._1 ) ) -> g.head._2 ).toSeq ) )
 
