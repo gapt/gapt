@@ -45,7 +45,7 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.8.6"
+val specs2Version = "3.8.7"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   libraryDependencies ++= Seq(
@@ -194,22 +194,22 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.5",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.3",
+      "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "0.4.2",
       "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.3",
       "org.scalaz" %% "scalaz-core" % "7.2.8",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
-      "com.lihaoyi" %% "ammonite-ops" % "0.8.1",
-      "ch.qos.logback" % "logback-classic" % "1.1.8",
+      "com.lihaoyi" %% "ammonite-ops" % "0.8.2",
+      "ch.qos.logback" % "logback-classic" % "1.1.9",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
       "com.itextpdf" % "itextpdf" % "5.5.10",
       "org.scilab.forge" % "jlatexmath" % "1.0.4"
     )

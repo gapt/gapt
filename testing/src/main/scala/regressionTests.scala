@@ -24,6 +24,7 @@ import scala.concurrent.duration._
 import scala.util.Random
 import scala.xml.XML
 import ammonite.ops._
+import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
   override def timeout = Some( 3 minutes )
@@ -119,17 +120,34 @@ class VeriTTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
   }
 }
 
+class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
+  override def timeout = Some( 2 minutes )
+
+  override def test( implicit testRun: TestRun ) = {
+    val tptpDir = Path( f ) / up / up / up
+    val tptpProblem = resolveIncludes( TptpParser.parse( f ), path => TptpParser.parse( tptpDir / RelPath( path ) ) )
+
+    val sequent = tptpProblem.toSequent
+
+    val resolution = Escargot.getResolutionProof( sequent ).get --- "Escargot"
+
+    val expansion = ResolutionToExpansionProof( resolution ) --- "ResolutionToExpansionProof"
+  }
+}
+
 // Usage: RegressionTests [<test number limit>]
 object RegressionTests extends App {
   def prover9Proofs = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
   def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
   def veritProofs = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "proof_flat" )
+  def tptpProblems = ls.rec( pwd / "testing" / "TPTP" / "Problems" ).filter( _.ext == "p" )
 
   def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toIO ) }
   def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }
   def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
+  def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
 
-  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases
+  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 
