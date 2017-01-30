@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ Definition => EDefinition, _ }
+import at.logic.gapt.expr.{LambdaExpression, Definition => EDefinition, _}
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr.hol.SkolemFunctions
@@ -231,6 +231,12 @@ object Context {
     ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) )
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
+
+  case class ProofNames(names: Set[(LambdaExpression,HOLSequent)]){
+    def +( name: LambdaExpression, linkquent:HOLSequent ) = copy(names + ((name , linkquent)))
+  }
+  implicit val  ProofsFacet: Facet[ProofNames] = Facet(ProofNames(Set[(LambdaExpression, HOLSequent)]()))
+
 
   /**
    * Update of a context.

@@ -56,6 +56,23 @@ abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
   }
 }
 
+
+
+
+/**
+  * An LKProof deriving a sequent from another sequent:
+  * <pre>
+  *        (π)
+  *      Γ :- Δ
+  *    ----------
+  *     Γ' :- Δ'
+  * </pre>
+  */
+
+
+
+
+
 /**
  * An LKProof deriving a sequent from another sequent:
  * <pre>
@@ -175,6 +192,12 @@ object Eigenvariable {
     case _                => None
   }
 }
+
+
+case class ProofLink(referencedProof: LambdaExpression, linkquent:Sequent[HOLFormula]) extends InitialSequent {
+  override def conclusion = linkquent
+}
+
 
 /**
  * An LKProof consisting of a single sequent:
