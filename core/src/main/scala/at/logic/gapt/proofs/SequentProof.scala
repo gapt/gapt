@@ -36,7 +36,7 @@ trait SequentProof[+Formula, This <: SequentProof[Formula, This]] extends DagPro
   /**
    * A list of occurrence connectors, one for each immediate subproof.
    */
-  def occConnectors: Seq[OccConnector[Formula]]
+  def occConnectors: Seq[SequentConnector]
 
   override protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$conclusion    (${super.stepString( subProofLabels )})"
@@ -63,7 +63,7 @@ trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentP
     val rightContextIndices = rightContext.map( c => c.map( _ => Seq() ) )
     val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => formulasToBeDeleted( i ) )
     val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => formulasToBeDeleted( i ) )
-    new OccConnector( conclusion, premises( i ),
+    SequentConnector( conclusion, premises( i ),
       auxIndicesAntecedent ++: ( leftContextIndices.flattenS ++ currentContextIndices ++ rightContextIndices.flattenS ) :++ auxIndicesSuccedent )
   }
 }

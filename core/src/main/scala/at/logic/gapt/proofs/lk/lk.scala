@@ -78,7 +78,7 @@ abstract class UnaryLKProof extends LKProof {
    *
    * @return
    */
-  def getOccConnector: OccConnector[HOLFormula] = occConnectors.head
+  def getSequentConnector: SequentConnector = occConnectors.head
 
   /**
    * The upper sequent of the rule.
@@ -123,14 +123,14 @@ abstract class BinaryLKProof extends LKProof {
    *
    * @return
    */
-  def getLeftOccConnector: OccConnector[HOLFormula] = occConnectors.head
+  def getLeftSequentConnector: SequentConnector = occConnectors.head
 
   /**
    * The object connecting the lower and right upper sequents.
    *
    * @return
    */
-  def getRightOccConnector: OccConnector[HOLFormula] = occConnectors.tail.head
+  def getRightSequentConnector: SequentConnector = occConnectors.tail.head
 
   /**
    * The left upper sequent of the rule.
@@ -1492,7 +1492,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
   override def formulasToBeDeleted = Seq( Seq( aux ) )
 
   def auxInConclusion = mainIndices.head
-  def eqInConclusion = getOccConnector.child( eq )
+  def eqInConclusion = getSequentConnector.child( eq )
 
 }
 

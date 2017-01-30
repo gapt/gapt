@@ -6,25 +6,26 @@ import scala.collection.mutable
  * This class models the connection of formula occurrences between two sequents in a proof.
  *
  * The most basic use case is that of connecting the conclusion of an LK inference with one of the premises.
- * This is the origin of the names "lowerSequent" and "upperSequent".
+ * This is the origin of the names "lowerSizes" and "upperSizes".
  *
- * @param lowerSequent One of the two sequents to be connected.
- * @param upperSequent The other of the two sequents to be connected.
+ * @param lowerSizes The dimensions of the first ("lower") of the two connected sequents.
+ * @param upperSizes The dimensions of the second ("upper") of the two connected sequents.
  * @param parentsSequent A sequent of lists of indices such that for each index i of lowerSequent, parentsSequent(i)
  *                       is the list of indices of the parents of i in upperSequent.
- * @tparam A The type of sequents that this connects.
  */
-case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A], parentsSequent: Sequent[Seq[SequentIndex]] ) {
-  require( parentsSequent.sizes == lowerSequent.sizes )
-  require( parentsSequent.elements.flatten.toSet subsetOf upperSequent.indices.toSet )
+case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ), parentsSequent: Sequent[Seq[SequentIndex]] ) {
+  require( parentsSequent.sizes == lowerSizes )
+  require( parentsSequent.elements.flatten.forall { _ withinSizes upperSizes } )
 
+  val ( antL, sucL ) = lowerSizes
+  val ( antU, sucU ) = upperSizes
   /**
    * Analogous to parentsSequent, but in the other direction.
    *
    * @return A sequent of lists of indices such that for each index i of upperSequent, childrenSequent(i)
    *                       is the list of indices of the children of i in lowerSequent.
    */
-  def childrenSequent = upperSequent.indicesSequent map children
+  def childrenSequent: Sequent[Seq[SequentIndex]] = Sequent( antU, sucU ) map children
 
   /**
    * Given a SequentIndex for the lower sequent, this returns the list of parents of that occurrence in the upper sequent (if defined).
@@ -42,9 +43,9 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
    * @return The unique parent of idx.
    */
   def parent( idx: SequentIndex ): SequentIndex = parents( idx ) match {
-    case Seq()    => throw new NoSuchElementException( s"When calling parent on OccConnector $this: Index $idx has no parent in sequent $upperSequent." )
+    case Seq()    => throw new NoSuchElementException( s"When calling parent on SequentConnector $this: Index $idx has no parent in $parentsSequent." )
     case Seq( p ) => p
-    case _        => throw new Exception( s"When calling parent on OccConnector $this: Index $idx has more than one parent in sequent $upperSequent." )
+    case _        => throw new Exception( s"When calling parent on SequentConnector $this: Index $idx has more than one parent in $parentsSequent." )
   }
 
   /**
@@ -57,7 +58,7 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
    * parents(lowerTs) will then contain the correct labels for the formulas in the upper sequent.
    */
   def parents[T]( lowerTs: Sequent[T] ): Sequent[Seq[T]] = {
-    require( lowerTs.sizes == lowerSequent.sizes )
+    require( lowerTs.sizes == lowerSizes )
     childrenSequent map { _ map { lowerTs( _ ) } }
   }
 
@@ -78,7 +79,7 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
    * @return The list of children of idx.
    */
   def children( idx: SequentIndex ): Seq[SequentIndex] =
-    if ( upperSequent isDefinedAt idx )
+    if ( idx withinSizes upperSizes )
       parentsSequent indicesWhere { _ contains idx }
     else
       throw new IndexOutOfBoundsException
@@ -91,99 +92,99 @@ case class OccConnector[+A]( lowerSequent: Sequent[A], upperSequent: Sequent[A],
    * @return The unique child of idx.
    */
   def child( idx: SequentIndex ): SequentIndex = children( idx ) match {
-    case Seq()    => throw new NoSuchElementException( s"When calling child on OccConnector $this: Index $idx has no child in sequent $lowerSequent." )
+    case Seq()    => throw new NoSuchElementException( s"When calling child on SequentConnector $this: Index $idx has no child in $parentsSequent." )
     case Seq( c ) => c
-    case _        => throw new Exception( s"When calling child on OccConnector $this: Index $idx has more than one child in sequent $lowerSequent." )
+    case _        => throw new Exception( s"When calling child on SequentConnector $this: Index $idx has more than one child in $parentsSequent." )
   }
 
   /**
-   * Concatenates two OccConnectors.
+   * Concatenates two SequentConnectors.
    *
-   * @param that An OccConnector. upperSequent of this must have the same dimensions as lowerSequent of that.
-   * @tparam B The type of that.
-   * @return An OccConnector that connects the lower sequent of this with the upper sequent of that.
+   * @param that An SequentConnector. upperSizes of this must be the same as lowerSizes of that.
+   * @return An SequentConnector that connects the lower sequent of this with the upper sequent of that.
    */
-  def *[B >: A]( that: OccConnector[B] ) = {
-    require( this.upperSequent.sizes == that.lowerSequent.sizes )
-    OccConnector( this.lowerSequent, that.upperSequent, this.parentsSequent map { _ flatMap that.parents distinct } )
+  def *( that: SequentConnector ) = {
+    require( this.upperSizes == that.lowerSizes )
+    SequentConnector( this.lowerSizes, that.upperSizes, this.parentsSequent map { _ flatMap that.parents distinct } )
   }
 
   /**
-   * Inverts an OccConnector.
+   * Inverts an SequentConnector.
    *
-   * @return This OccConnector with its lower and upper sequents (and parents and children methods) switched around.
+   * @return This SequentConnector with its lower and upper sizes (and parents and children methods) switched around.
    */
-  def inv: OccConnector[A] = OccConnector( upperSequent, lowerSequent, childrenSequent )
+  def inv: SequentConnector = SequentConnector( upperSizes, lowerSizes, childrenSequent )
 
   /**
-   * Forms the union of two OccConnectors.
+   * Forms the union of two SequentConnectors.
    *
-   * @param that An OccConnector. Must have the same upper and lower sequent as this.
-   * @tparam B The type of B.
-   * @return A new OccConnector o such that for any i, o.parents(i) = this.parents(i) ∪ that.parents(i).
+   * @param that An SequentConnector. Must have the same upper and lower sizes as this.
+   * @return A new SequentConnector o such that for any i, o.parents(i) = this.parents(i) ∪ that.parents(i).
    */
-  def +[B >: A]( that: OccConnector[B] ) = {
-    require( this.lowerSequent == that.lowerSequent )
-    require( this.upperSequent == that.upperSequent )
-    OccConnector( lowerSequent, upperSequent, lowerSequent.indicesSequent map { i => this.parents( i ) ++ that.parents( i ) distinct } )
+  def +( that: SequentConnector ) = {
+    require( this.lowerSizes == that.lowerSizes )
+    require( this.upperSizes == that.upperSizes )
+    SequentConnector( lowerSizes, upperSizes, Sequent( antL, sucL ) map { i => this.parents( i ) ++ that.parents( i ) distinct } )
   }
 
   /**
-   * Adds a child/parent pair to an OccConnector.
+   * Adds a child/parent pair to an SequentConnector.
    *
    * @param child An index of lowerSequent.
    * @param parent An index of upperSequent.
-   * @return A new OccConnector in which parents(child) contains parent.
+   * @return A new SequentConnector in which parents(child) contains parent.
    */
   def +( child: SequentIndex, parent: SequentIndex ) = {
-    require( lowerSequent isDefinedAt child )
-    require( upperSequent isDefinedAt parent )
-    OccConnector( lowerSequent, upperSequent,
+    require( child withinSizes lowerSizes )
+    require( parent withinSizes upperSizes )
+    SequentConnector( lowerSizes, upperSizes,
       parentsSequent.updated( child, parents( child ) :+ parent distinct ) )
   }
 
   /**
-   * Removes a child/parent pair from an OccConnector.
+   * Removes a child/parent pair from an SequentConnector.
    * @param child An index of lowerSequent.
    * @param parent An index of upperSequent. Must be a parent of child.
-   * @return A new OccConnector in which parents(child) no longer contains parent.
+   * @return A new SequentConnector in which parents(child) no longer contains parent.
    */
   def -( child: SequentIndex, parent: SequentIndex ) = {
-    require( lowerSequent isDefinedAt child )
-    require( upperSequent isDefinedAt parent )
-    require( parentsSequent( child ) contains parent )
-
-    OccConnector( lowerSequent, upperSequent,
+    require( child withinSizes lowerSizes )
+    require( parent withinSizes upperSizes )
+    SequentConnector( lowerSizes, upperSizes,
       parentsSequent.updated( child, parents( child ) diff Seq( parent ) ) )
   }
 }
 
-object OccConnector {
+object SequentConnector {
   /**
-   * Constructs the trivial OccConnector of a sequent.
+   * Constructs the trivial SequentConnector of a sequent.
    *
    * @param sequent A sequent.
-   * @tparam A The type of sequent.
-   * @return An OccConnector that connects every index of sequent to itself.
+   * @return An SequentConnector that connects every index of sequent to itself.
    */
-  def apply[A]( sequent: Sequent[A] ): OccConnector[A] = OccConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
+  def apply( sequent: Sequent[_] ): SequentConnector = SequentConnector( sequent, sequent, sequent.indicesSequent map { Seq( _ ) } )
 
   /**
-   * Creates an OccConnector that connects all occurrences of an object in the antecedents of two sequents, and analogously
+   * Connects two given sequents via a given parentsSequent.
+   */
+  def apply( lowerSequent: Sequent[_], upperSequent: Sequent[_], parentsSequent: Sequent[Seq[SequentIndex]] ): SequentConnector = SequentConnector( lowerSequent.sizes, upperSequent.sizes, parentsSequent )
+
+  /**
+   * Creates an SequentConnector that connects all occurrences of an object in the antecedents of two sequents, and analogously
    * for the succedents.
    */
-  def findEquals[A]( firstSequent: Sequent[A], secondSequent: Sequent[A] ): OccConnector[A] = {
+  def findEquals[A]( firstSequent: Sequent[A], secondSequent: Sequent[A] ): SequentConnector = {
     val parentsSequent = firstSequent map ( x => secondSequent.indicesWhere( _ == x ) filter { _.isAnt }, x => secondSequent.indicesWhere( _ == x ) filter { _.isSuc } )
 
-    OccConnector( firstSequent, secondSequent, parentsSequent )
+    SequentConnector( firstSequent, secondSequent, parentsSequent )
   }
 
   /**
-   * Guesses an OccConnector, such that each element in lowerSequent gets connected to a different element in upperSequent.
+   * Guesses an SequentConnector, such that each element in lowerSequent gets connected to a different element in upperSequent.
    */
-  def guessInjection[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): OccConnector[A] = {
+  def guessInjection[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): SequentConnector = {
     val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
-    OccConnector( lowerSequent, upperSequent, lowerSequent.zipWithIndex.map {
+    SequentConnector( lowerSequent, upperSequent, lowerSequent.zipWithIndex.map {
       case ( atom, newIdx ) =>
         val oldIdx = upperSequent.indicesWhere( _ == atom ).
           filterNot( alreadyUsedOldIndices.contains ).

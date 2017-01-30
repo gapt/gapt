@@ -25,7 +25,7 @@ class LKTest extends Specification {
   val Pc = FOLAtom( "P", c )
   val Pd = FOLAtom( "P", d )
 
-  private def testParents( o: OccConnector[HOLFormula], ruleName: String )( sequent: HOLSequent, parents: Seq[SequentIndex]* ): Success = {
+  private def testParents( o: SequentConnector, ruleName: String )( sequent: HOLSequent, parents: Seq[SequentIndex]* ): Success = {
     val ( m, n ) = sequent.sizes
     for ( ( i, ps ) <- sequent.indices zip parents ) {
       o.parents( i ) aka s"$ruleName: Parents of $i in $sequent should be $ps" must beEqualTo( ps )
@@ -35,7 +35,7 @@ class LKTest extends Specification {
     success
   }
 
-  private def testChildren( o: OccConnector[HOLFormula], ruleName: String )( sequent: HOLSequent, children: Seq[SequentIndex]* ): Success = {
+  private def testChildren( o: SequentConnector, ruleName: String )( sequent: HOLSequent, children: Seq[SequentIndex]* ): Success = {
     val ( m, n ) = sequent.sizes
     for ( ( i, cs ) <- sequent.indices zip children ) {
       o.children( i ) aka s"$ruleName: Children of $i in $sequent should be $cs" must beEqualTo( cs )
@@ -105,7 +105,7 @@ class LKTest extends Specification {
       //end sequent of p: B, A :- A
       val p = WeakeningLeftRule( LogicalAxiom( A ), B )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "w_l" )(
         p.premise,
@@ -145,7 +145,7 @@ class LKTest extends Specification {
       // end sequent of p: A :- A, B
       val p = WeakeningRightRule( LogicalAxiom( A ), B )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "w_r" )(
         p.endSequent,
@@ -208,7 +208,7 @@ class LKTest extends Specification {
       // end sequent of p: A, B, C :- A, B
       val p = ContractionLeftRule( TheoryAxiom( B +: A +: C +: A +: Sequent() :+ A :+ B ), A )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testParents( o, "c_l" )(
         p.endSequent,
@@ -278,7 +278,7 @@ class LKTest extends Specification {
       // end sequent of p: A, B :- B, C, A
       val p = ContractionRightRule( TheoryAxiom( A +: B +: Sequent() :+ A :+ B :+ A :+ C ), Suc( 0 ), Suc( 2 ) )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testParents( o, "c_r" )(
         p.endSequent,
@@ -344,8 +344,8 @@ class LKTest extends Specification {
 
       // end sequent of p: A, B, D, E, F :- A, C, B, E
       val p = CutRule( p1, p2, B )
-      val oL = p.getLeftOccConnector
-      val oR = p.getRightOccConnector
+      val oL = p.getLeftSequentConnector
+      val oR = p.getRightSequentConnector
 
       testChildren( oL, "cut" )(
         p.leftPremise,
@@ -442,7 +442,7 @@ class LKTest extends Specification {
       // end sequent of p: ¬D, A, B :- C, E
       val p = NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D :+ E ), D )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "¬:l" )(
         p.premise,
@@ -510,7 +510,7 @@ class LKTest extends Specification {
       // end sequent of p: A, C :- D, E, ¬B
       val p = NegRightRule( TheoryAxiom( A +: B +: C +: Sequent() :+ D :+ E ), B )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "¬:r" )(
         p.premise,
@@ -578,7 +578,7 @@ class LKTest extends Specification {
       // end sequent of p: A∧A, B, C :- A, B
       val p = AndLeftRule( TheoryAxiom( B +: A +: C +: A +: Sequent() :+ A :+ B ), A, A )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testParents( o, "∧_l" )(
         p.endSequent,
@@ -654,8 +654,8 @@ class LKTest extends Specification {
       // end sequent of p: A, A :- B, D, B, F, C∧E
       val p = AndRightRule( ax1, ax2, And( C, E ) )
 
-      val oL = p.getLeftOccConnector
-      val oR = p.getRightOccConnector
+      val oL = p.getLeftSequentConnector
+      val oR = p.getRightSequentConnector
 
       testChildren( oL, "∧:r" )(
         p.leftPremise,
@@ -753,8 +753,8 @@ class LKTest extends Specification {
       // end sequent of p: B∨E, A, C, A, F :- D, C
       val p = OrLeftRule( ax1, ax2, Or( B, E ) )
 
-      val oL = p.getLeftOccConnector
-      val oR = p.getRightOccConnector
+      val oL = p.getLeftSequentConnector
+      val oR = p.getRightSequentConnector
 
       testChildren( oL, "∨:l" )(
         p.leftPremise,
@@ -845,7 +845,7 @@ class LKTest extends Specification {
       // end sequent of p: A :- B, D, B, C∨E
       val p = OrRightRule( TheoryAxiom( A +: Sequent() :+ B :+ C :+ D :+ E :+ B ), Or( C, E ) )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testParents( o, "∨:r" )(
         p.endSequent,
@@ -921,8 +921,8 @@ class LKTest extends Specification {
       // end sequent of p: C -> E, A, A, F :- B, D, C
       val p = ImpLeftRule( ax1, ax2, Imp( C, E ) )
 
-      val oL = p.getLeftOccConnector
-      val oR = p.getRightOccConnector
+      val oL = p.getLeftSequentConnector
+      val oR = p.getRightSequentConnector
 
       testChildren( oL, "→:l" )(
         p.leftPremise,
@@ -1013,7 +1013,7 @@ class LKTest extends Specification {
       // end sequent of p: A, C :- D, F, B→E
       val p = ImpRightRule( TheoryAxiom( A +: B +: C +: Sequent() :+ D :+ E :+ F ), Imp( B, E ) )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testParents( o, "→:r" )(
         p.endSequent,
@@ -1090,7 +1090,7 @@ class LKTest extends Specification {
       // end sequent of p: A :- B, C, ∀x.P
       val p = ForallRightRule( ax, All( x, P( x ) ), alpha )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "∀:r" )(
         p.premise,
@@ -1164,7 +1164,7 @@ class LKTest extends Specification {
       // end sequent of p: ∀x.P, A, B :- C
       val p = ExistsLeftRule( ax, Ex( x, P( x ) ), alpha )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "∃:l" )(
         p.premise,
@@ -1250,7 +1250,7 @@ class LKTest extends Specification {
       // end sequent of p1: P(d), A, c = d, B, C :- D, P(d), E
       val p = EqualityLeftRule( ax, Ant( 1 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "eq" )(
         p.premise,
@@ -1344,7 +1344,7 @@ class LKTest extends Specification {
       // end sequent of p2: A, c = d, B, C :- D, E, P(c)
       val p = EqualityRightRule( ax, Ant( 1 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] )
 
-      val o = p.getOccConnector
+      val o = p.getSequentConnector
 
       testChildren( o, "eq" )(
         p.premise,

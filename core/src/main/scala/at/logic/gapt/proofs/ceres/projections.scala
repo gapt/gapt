@@ -108,13 +108,13 @@ object Projections {
   }
 
   /* finds the cut ancestor sequent in the parent connected with the occurrence connector */
-  def copySetToAncestor( connector: OccConnector[HOLFormula], s: Sequent[Boolean] ) = {
+  def copySetToAncestor( connector: SequentConnector, s: Sequent[Boolean] ) = {
     connector.parents( s ).map( _.head )
   }
 
   /* traces the ancestor relationship to infer cut-formulas in the parent proof. if a formula does not have parents,
      use default */
-  private def mapToUpperProof[Formula]( conn: OccConnector[Formula], cut_occs: Sequent[Boolean], default: Boolean ) =
+  private def mapToUpperProof[Formula]( conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
   def handleBinaryESAnc( proof: LKProof, parent1: LKProof, parent2: LKProof, s1: Set[LKProof], s2: Set[LKProof],

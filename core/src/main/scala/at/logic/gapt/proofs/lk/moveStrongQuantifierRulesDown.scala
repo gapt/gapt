@@ -22,19 +22,19 @@ object moveStrongQuantifierRulesDown {
       ) yield isUnderInduction( q, aux.asInstanceOf[Suc], quantNum ) ) exists identity
   }
 
-  private def apply( p: LKProof, eigenVariables: Sequent[Seq[Var]] ): ( LKProof, OccConnector[HOLFormula] ) = p.conclusion.zipWithIndex.elements.view.collect {
+  private def apply( p: LKProof, eigenVariables: Sequent[Seq[Var]] ): ( LKProof, SequentConnector ) = p.conclusion.zipWithIndex.elements.view.collect {
     case ( All.Block( vs, f ), i @ Suc( _ ) ) if vs.size > eigenVariables( i ).size && !isUnderInduction( p, i, eigenVariables( i ).size ) =>
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ) ++ eigenVariables.elements.flatten )
       val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
       val q_ = ForallRightRule( q, oc.child( i ), eigen, v )
-      ( q_, q_.getOccConnector * oc )
+      ( q_, q_.getSequentConnector * oc )
     case ( Ex.Block( vs, f ), i @ Ant( _ ) ) if vs.size > eigenVariables( i ).size =>
       val v = vs( eigenVariables( i ).size )
       val eigen = rename( v, freeVariablesLK( p ) ++ eigenVariables.elements.flatten )
       val ( q, oc ) = apply( p, eigenVariables.updated( i, eigenVariables( i ) :+ eigen ) )
       val q_ = ExistsLeftRule( q, oc.child( i ), eigen, v )
-      ( q_, q_.getOccConnector * oc )
+      ( q_, q_.getSequentConnector * oc )
   }.headOption getOrElse {
     p match {
       case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
@@ -46,16 +46,16 @@ object moveStrongQuantifierRulesDown {
         )
         ( q, oc * p.occConnectors( 0 ).inv )
 
-      case _: InitialSequent => ( p, OccConnector( p.endSequent ) )
+      case _: InitialSequent => ( p, SequentConnector( p.endSequent ) )
 
       case p @ WeakeningLeftRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
         val q = WeakeningLeftRule( q1, instantiate( formula, eigenVariables( p.mainIndices.head ) ) )
-        ( q, q.getOccConnector * oc * p.getOccConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
+        ( q, q.getSequentConnector * oc * p.getSequentConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
       case p @ WeakeningRightRule( subProof, formula ) =>
         val ( q1, oc ) = apply( subProof, p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ) )
         val q = WeakeningRightRule( q1, instantiate( formula, eigenVariables( p.mainIndices.head ) ) )
-        ( q, q.getOccConnector * oc * p.getOccConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
+        ( q, q.getSequentConnector * oc * p.getSequentConnector.inv + ( q.mainIndices.head, p.mainIndices.head ) )
 
       case _ =>
         val ( qs, oc ) = ( for ( ( subProof, occConn ) <- p.immediateSubProofs zip p.occConnectors )

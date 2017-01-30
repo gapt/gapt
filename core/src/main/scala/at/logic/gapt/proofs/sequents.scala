@@ -44,6 +44,8 @@ sealed abstract class SequentIndex extends Ordered[SequentIndex] {
 
   /** Injective conversion to integers. */
   def toInt: Int
+
+  def withinSizes( p: ( Int, Int ) ): Boolean
 }
 object SequentIndex {
   def apply( polarity: Polarity, k: Int ): SequentIndex =
@@ -62,6 +64,8 @@ case class Ant( k: Int ) extends SequentIndex {
   def polarity = Polarity.InAntecedent
 
   def toInt = -k - 1
+
+  def withinSizes( p: ( Int, Int ) ): Boolean = k < p._1
 }
 
 case class Suc( k: Int ) extends SequentIndex {
@@ -73,6 +77,8 @@ case class Suc( k: Int ) extends SequentIndex {
   def polarity = Polarity.InSuccedent
 
   def toInt = k
+
+  def withinSizes( p: ( Int, Int ) ): Boolean = k < p._2
 }
 
 /**
@@ -338,7 +344,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    *
    * @return
    */
-  def indicesSequent: Sequent[SequentIndex] = Sequent( antecedent.indices map { i => Ant( i ) }, succedent.indices map { i => Suc( i ) } )
+  def indicesSequent: Sequent[SequentIndex] = Sequent( sizes._1, sizes._2 )
 
   /**
    * Returns the list of indices of elements satisfying some predicate.
@@ -440,6 +446,11 @@ object Sequent {
     val ( ant, suc ) = polarizedElements.view.partition( _._2.inAnt )
     Sequent( ant.map( _._1 ), suc.map( _._1 ) )
   }
+
+  /**
+   * Returns a generic sequent of sizes (m, n): Ant(0),…,Ant(m-1) :- Suc(0),…,Suc(n-1)
+   */
+  def apply( m: Int, n: Int ): Sequent[SequentIndex] = ( 0 until m ).map { Ant } ++: Sequent() :++ ( 0 until n ).map { Suc }
 
   implicit val SequentFunctor = new Functor[Sequent] {
     def map[A, B]( fa: Sequent[A] )( f: A => B ): Sequent[B] = fa.map( f )
