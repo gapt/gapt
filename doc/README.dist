@@ -9,17 +9,15 @@ automated and interactive theorem provers whose focus is the construction of
 proofs, GAPT concentrates on the transformation and further processing of
 proofs.
 
- Website: http://www.logic.at/gapt
- Contact: gapt@logic.at
+ Website: https://logic.at/gapt
+ Contact: https://groups.google.com/forum/#!forum/gapt-group
 
 Requirements:
  * Unix-compatible environment
  * Java 8 or later
 
- See https://github.com/gapt/gapt/wiki/External-software for details.
-
 Starting GAPT:
- The script gapt.sh start the command-line interface of GAPT.
+ The script gapt.sh starts the command-line interface of GAPT.
 
 Using GAPT:
  Please see the file user_manual.pdf in this distribution for details.
