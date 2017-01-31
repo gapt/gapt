@@ -367,7 +367,8 @@ case class ETDefinition( shallow: HOLAtom, definition: Definition, child: Expans
   val HOLAtom( pred: Const, args ) = shallow
   val Definition( what, by ) = definition
   require( what == pred, s"Predicate symbol $pred of atom does not agree with defined symbol $what." )
-  require( child.shallow == BetaReduction.betaNormalize( App( by, args ) ), s"child.shallow = ${child.shallow}; App(rhs, args) = ${App( by, args )}" )
+  val definitionUnfolded = BetaReduction.betaNormalize( App( by, args ) )
+  require( child.shallow == definitionUnfolded, s"Applying definition $definition to arguments $args should yield ${child.shallow} (shallow formula of child), but is $definitionUnfolded." )
 
   val polarity = child.polarity
   def deep = child.deep

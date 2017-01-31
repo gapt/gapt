@@ -396,6 +396,29 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
     case Suc( j ) => Sequent( antecedent, succedent.updated( j, elem ) )
   }
 
+  /**
+   * Modifies a sequent by applying f to the i-th element and moving the result to the beginning of the antecedent
+   * or the end of the succedent, as appropriate.
+   */
+  def modify[B >: A]( i: SequentIndex )( f: A => B ): Sequent[B] = if ( i isAnt ) {
+    f( this( i ) ) +: this.delete( i )
+  } else {
+    this.delete( i ) :+ f( this( i ) )
+  }
+
+  /**
+   * Modifies a sequent by applying f to the i-th and j-th element and moving the result to the beginning of the antecedent
+   * or the end of the succedent, as appropriate.
+   */
+  def modify2[B >: A]( i: SequentIndex, j: SequentIndex )( f: ( A, A ) => B ): Sequent[B] = {
+    require( i sameSideAs j )
+    if ( i isAnt ) {
+      f( this( i ), this( j ) ) +: this.delete( i, j )
+    } else {
+      this.delete( i, j ) :+ f( this( i ), this( j ) )
+    }
+  }
+
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
   def indexOf[B >: A]( elem: B ): SequentIndex = indexOfOption( elem ) get
 
