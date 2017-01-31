@@ -1,11 +1,15 @@
-package at.logic.gapt.formats.babel
+package at.logic.gapt.expr
 
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.{ expr => real }
 
 import scala.collection.mutable
 
 /**
- * Intermediate representation for expressions parsed by Babel.
+ * Intermediate representation for expressions without explicit types.
+ *
+ * The main application is during parsing: the [[at.logic.gapt.formats.babel.BabelParser]]
+ * produces pre-expressions.
  *
  * This representation is intended to be as simple as possible, all
  * higher-level constructs (such as <-> or ∀) are already desugared
@@ -19,7 +23,7 @@ import scala.collection.mutable
  *  1. Free variables, bound variables, and constants are not
  *     distinguished; they are all stored as "identifiers".
  */
-object ast {
+object preExpr {
 
   class MetaTypeIdx {
     override def toString = Integer toHexString hashCode() take 3

@@ -7,13 +7,13 @@ import fastparse.core.ParseError
 
 object ExpressionParseHelper {
   abstract class Splice[+ForType] {
-    def spliceIn: ast.Expr
+    def spliceIn: preExpr.Expr
   }
   implicit class IdentifierSplice[+T]( val ident: String ) extends Splice[T] {
-    def spliceIn = ast.Ident( ident, ast.freshMetaType() )
+    def spliceIn = preExpr.Ident( ident, preExpr.freshMetaType() )
   }
   implicit class ExpressionSplice[+ExprType <: LambdaExpression]( val expr: ExprType ) extends Splice[ExprType] {
-    def spliceIn = ast.LiftWhitebox( expr )
+    def spliceIn = preExpr.LiftWhitebox( expr )
   }
 }
 
@@ -25,33 +25,33 @@ object ExpressionParseHelper {
 class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) {
   private implicit def _sig = sig
 
-  private def interpolateHelper( expressions: Seq[Splice[LambdaExpression]] ): ( String, ast.Expr => ast.Expr ) = {
-    def repl( expr: ast.Expr ): ast.Expr = expr match {
-      case ast.TypeAnnotation( e, ty ) => ast.TypeAnnotation( repl( e ), ty )
-      case ast.Ident( name, ty ) if name startsWith placeholder =>
+  private def interpolateHelper( expressions: Seq[Splice[LambdaExpression]] ): ( String, preExpr.Expr => preExpr.Expr ) = {
+    def repl( expr: preExpr.Expr ): preExpr.Expr = expr match {
+      case preExpr.TypeAnnotation( e, ty ) => preExpr.TypeAnnotation( repl( e ), ty )
+      case preExpr.Ident( name, ty ) if name startsWith placeholder =>
         val i = name.drop( placeholder.length ).toInt
         expressions( i ).spliceIn
-      case expr: ast.Ident => expr
-      case ast.Abs( v, sub ) =>
+      case expr: preExpr.Ident => expr
+      case preExpr.Abs( v, sub ) =>
         repl( v ) match {
-          case vNew @ ast.Ident( _, _ ) => // If repl(v) = v.
-            ast.Abs( vNew, repl( sub ) )
-          case ast.Lifted( Var( vNew, _ ), ty, _ ) => // If repl(v) = v'.
-            ast.Abs( ast.Ident( vNew, ty ), repl( sub ) )
+          case vNew @ preExpr.Ident( _, _ ) => // If repl(v) = v.
+            preExpr.Abs( vNew, repl( sub ) )
+          case preExpr.Lifted( Var( vNew, _ ), ty, _ ) => // If repl(v) = v'.
+            preExpr.Abs( preExpr.Ident( vNew, ty ), repl( sub ) )
           case _ => // Otherwise
             throw new IllegalArgumentException( "Trying to substitute non-variable term in binding." )
         }
-      case ast.App( a, b )  => ast.App( repl( a ), repl( b ) )
-      case expr: ast.Lifted => expr
+      case preExpr.App( a, b )  => preExpr.App( repl( a ), repl( b ) )
+      case expr: preExpr.Lifted => expr
     }
 
     ( sc.parts.init.zipWithIndex.map { case ( s, i ) => s ++ placeholder + i }.mkString ++ sc.parts.last, repl )
   }
 
-  private def interpolate( args: Seq[Splice[LambdaExpression]], baseAstTransformer: ast.Expr => ast.Expr ): LambdaExpression = {
+  private def interpolate( args: Seq[Splice[LambdaExpression]], baseAstTransformer: preExpr.Expr => preExpr.Expr ): LambdaExpression = {
     val ( combined, repl ) = interpolateHelper( args )
 
-    def astTransformer( expr: ast.Expr ): ast.Expr = baseAstTransformer( repl( expr ) )
+    def astTransformer( expr: preExpr.Expr ): preExpr.Expr = baseAstTransformer( repl( expr ) )
 
     BabelParser.tryParse( combined, astTransformer ) match {
       case Left( error ) => throw new IllegalArgumentException(
@@ -75,7 +75,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def hof( args: Splice[LambdaExpression]* ): HOLFormula = interpolate( args, ast.TypeAnnotation( _, ast.Bool ) ).asInstanceOf[HOLFormula]
+  def hof( args: Splice[LambdaExpression]* ): HOLFormula = interpolate( args, preExpr.TypeAnnotation( _, preExpr.Bool ) ).asInstanceOf[HOLFormula]
 
   /**
    * Parses a string as a [[HOLAtom]].
@@ -197,7 +197,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   def hos( args: Splice[LambdaExpression]* ): HOLSequent = {
     val ( combined, repl ) = interpolateHelper( args )
 
-    BabelParser.tryParseSequent( combined, e => ast.TypeAnnotation( repl( e ), ast.Bool ) ) match {
+    BabelParser.tryParseSequent( combined, e => preExpr.TypeAnnotation( repl( e ), preExpr.Bool ) ) match {
       case Left( error ) => throw new IllegalArgumentException(
         s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
       )
