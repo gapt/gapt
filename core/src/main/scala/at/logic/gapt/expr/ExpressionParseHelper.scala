@@ -13,7 +13,7 @@ object ExpressionParseHelper {
     def spliceIn = preExpr.Ident( ident, preExpr.freshMetaType() )
   }
   implicit class ExpressionSplice[+ExprType <: LambdaExpression]( val expr: ExprType ) extends Splice[ExprType] {
-    def spliceIn = preExpr.LiftWhitebox( expr )
+    def spliceIn = preExpr.QuoteWhitebox( expr )
   }
 }
 
@@ -36,13 +36,13 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
         repl( v ) match {
           case vNew @ preExpr.Ident( _, _ ) => // If repl(v) = v.
             preExpr.Abs( vNew, repl( sub ) )
-          case preExpr.Lifted( Var( vNew, _ ), ty, _ ) => // If repl(v) = v'.
+          case preExpr.Quoted( Var( vNew, _ ), ty, _ ) => // If repl(v) = v'.
             preExpr.Abs( preExpr.Ident( vNew, ty ), repl( sub ) )
           case _ => // Otherwise
             throw new IllegalArgumentException( "Trying to substitute non-variable term in binding." )
         }
       case preExpr.App( a, b )  => preExpr.App( repl( a ), repl( b ) )
-      case expr: preExpr.Lifted => expr
+      case expr: preExpr.Quoted => expr
     }
 
     ( sc.parts.init.zipWithIndex.map { case ( s, i ) => s ++ placeholder + i }.mkString ++ sc.parts.last, repl )

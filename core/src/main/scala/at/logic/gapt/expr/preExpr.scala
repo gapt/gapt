@@ -28,21 +28,20 @@ object preExpr {
   class MetaTypeIdx {
     override def toString = Integer toHexString hashCode() take 3
   }
-  def gensym() = new MetaTypeIdx
 
   sealed trait Type
   case class BaseType( name: String ) extends Type
   case class ArrType( a: Type, b: Type ) extends Type
   case class VarType( name: String ) extends Type
   case class MetaType( idx: MetaTypeIdx ) extends Type
-  def freshMetaType() = MetaType( gensym() )
+  def freshMetaType() = MetaType( new MetaTypeIdx )
 
   sealed trait Expr
   case class TypeAnnotation( expr: Expr, ty: Type ) extends Expr
   case class Ident( name: String, ty: Type ) extends Expr
   case class Abs( v: Ident, sub: Expr ) extends Expr
   case class App( a: Expr, b: Expr ) extends Expr
-  case class Lifted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
+  case class Quoted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
 
   def readable( t: Type ): String = t match {
     case BaseType( name ) => name
@@ -55,7 +54,7 @@ object preExpr {
     case Ident( name, ty )          => s"($name:${readable( ty )})"
     case Abs( v, sub )              => s"(^${readable( v )} ${readable( sub )})"
     case App( a, b )                => s"(${readable( a )} ${readable( b )})"
-    case Lifted( e, ty, fvs )       => s"#lifted($e, ${readable( ty )}${fvs map { case ( n, t ) => s", $n -> ${readable( t )}" } mkString})"
+    case Quoted( e, ty, fvs )       => s"#lifted($e, ${readable( ty )}${fvs map { case ( n, t ) => s", $n -> ${readable( t )}" } mkString})"
   }
 
   def Bool = BaseType( "o" )
@@ -66,14 +65,14 @@ object preExpr {
     App( App( Ident( real.EqC.name, eqType ), a ), b )
   }
 
-  def Top = LiftBlackbox( real.Top() )
-  def Bottom = LiftBlackbox( real.Bottom() )
+  def Top = QuoteBlackbox( real.Top() )
+  def Bottom = QuoteBlackbox( real.Bottom() )
 
-  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( LiftBlackbox( c() ), a )
+  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( QuoteBlackbox( c() ), a )
   def Neg = UnaryConn( real.NegC )
 
   def BinaryConn( c: real.MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
-    App( App( LiftBlackbox( c() ), a ), b )
+    App( App( QuoteBlackbox( c() ), a ), b )
   def And = BinaryConn( real.AndC )
   def Or = BinaryConn( real.OrC )
   def Bicond( a: Expr, b: Expr ) = And( Imp( a, b ), Imp( b, a ) )
@@ -100,11 +99,11 @@ object preExpr {
     case real.`->`( in, out ) => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
-  def LiftBlackbox( e: real.LambdaExpression ) =
-    Lifted( e, liftTypeMono( e.exptype ), Map() )
+  def QuoteBlackbox( e: real.LambdaExpression ) =
+    Quoted( e, liftTypeMono( e.exptype ), Map() )
 
-  def LiftWhitebox( e: real.LambdaExpression ) =
-    Lifted( e, liftTypeMono( e.exptype ),
+  def QuoteWhitebox( e: real.LambdaExpression ) =
+    Quoted( e, liftTypeMono( e.exptype ),
       real.freeVariables( e ).
       map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
       toMap )
@@ -185,7 +184,7 @@ object preExpr {
           ( s2, bt ) = r2
           s3 <- solve( List( at -> ArrType( bt, appType ) ), s2 )
         } yield ( s3, appType )
-      case Lifted( e, ty, fvs ) =>
+      case Quoted( e, ty, fvs ) =>
         for {
           s1 <- solve( ( for ( ( n, t ) <- fvs.view ) yield env( n )() -> t ).toList, s0 )
         } yield ( s1, ty )
@@ -196,7 +195,7 @@ object preExpr {
     case Ident( name, ty )       => Set( name )
     case Abs( v, sub )           => freeIdentifers( sub ) - v.name
     case App( a, b )             => freeIdentifers( a ) union freeIdentifers( b )
-    case Lifted( e, ty, fvs )    => fvs.keySet
+    case Quoted( e, ty, fvs )    => fvs.keySet
   }
 
   def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
@@ -216,7 +215,7 @@ object preExpr {
       real.Abs( toRealExpr( v, assg, bound_ ).asInstanceOf[real.Var], toRealExpr( sub, assg, bound_ ) )
     case App( a, b ) =>
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
-    case Lifted( e, ty, fvs ) => e
+    case Quoted( e, ty, fvs ) => e
   }
   def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[UnificationError, Seq[real.LambdaExpression]] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet

@@ -109,8 +109,8 @@ object BabelParserCombinators {
   val Const = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ) )
   }
-  val VarLiteral = P( "#v(" ~/ Var ~ ")" ) map { preExpr.LiftBlackbox }
-  val ConstLiteral = P( "#c(" ~/ Const ~ ")" ) map { preExpr.LiftBlackbox }
+  val VarLiteral = P( "#v(" ~/ Var ~ ")" ) map { preExpr.QuoteBlackbox }
+  val ConstLiteral = P( "#c(" ~/ Const ~ ")" ) map { preExpr.QuoteBlackbox }
 
   val Ident: P[preExpr.Ident] = P( Name.map( preExpr.Ident( _, preExpr.freshMetaType() ) ) )
 
