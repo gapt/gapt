@@ -3,13 +3,15 @@ package at.logic.gapt.formats.babel
 import at.logic.gapt.{ expr => real }
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression, preExpr }
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import fastparse.StringReprOps
 import fastparse.core.ParseError
+import fastparse.utils.IndexedParserInput
 
 import scalaz._
 import Scalaz._
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
-case class BabelUnificationError( reason: String ) extends BabelParseError( reason )
+case class BabelElabError( reason: String ) extends BabelParseError( reason )
 case class BabelParsingError( parseError: fastparse.all.Parsed.Failure ) extends BabelParseError( ParseError( parseError ).getMessage )
 
 object BabelLexical {
@@ -40,36 +42,46 @@ object BabelParserCombinators {
   val White = fastparse.WhitespaceApi.Wrapper( Whitespace )
   import White._
 
+  def MarkPos( p: P[preExpr.Expr] ): P[preExpr.Expr] =
+    ( Index ~ p ~ Index ).map {
+      case ( _, e @ preExpr.LocAnnotation( _, _ ), _ ) => e
+      case ( begin, e, end ) =>
+        preExpr.LocAnnotation( e, preExpr.Location( begin, end ) )
+    }
+
+  def PE( p: => P[preExpr.Expr] )( implicit name: sourcecode.Name ): P[preExpr.Expr] =
+    P( MarkPos( p ) )( name )
+
   val ExprAndNothingElse: P[preExpr.Expr] = P( "" ~ Expr ~ End )
   val ConstAndNothingElse: P[real.Const] = P( "" ~ Const ~ End )
 
   val Expr: P[preExpr.Expr] = P( Lam )
 
   val BoundVar: P[preExpr.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2 ) ) )
-  val Lam: P[preExpr.Expr] = P( ( ( "^" | "\\" | "λ" ) ~/ BoundVar ~ "=>".? ~ Lam ).map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
+  val Lam: P[preExpr.Expr] = PE( ( ( "^" | "\\" | "λ" ) ~/ BoundVar ~ "=>".? ~ Lam ).map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
 
-  val TypeAnnotation: P[preExpr.Expr] = P( Impl ~/ ( ":" ~ Type ).? ) map {
+  val TypeAnnotation: P[preExpr.Expr] = PE( ( Impl ~/ ( ":" ~ Type ).? ) map {
     case ( expr, Some( ty ) ) => preExpr.TypeAnnotation( expr, ty )
     case ( expr, None )       => expr
-  }
+  } )
 
-  val Impl: P[preExpr.Expr] = P( Bicond.rep( 1, "->" | "⊃" ) ).map( _.reduceRight( preExpr.Imp ) )
-  val Bicond: P[preExpr.Expr] = P( Disj.rep( 1, "<->" ) ).map {
+  val Impl = PE( Bicond.rep( 1, "->" | "⊃" ).map( _.reduceRight( preExpr.Imp ) ) )
+  val Bicond = PE( Disj.rep( 1, "<->" ).map {
     case Seq( formula ) => formula
     case formulas       => ( formulas, formulas.tail ).zipped.map( preExpr.Bicond ).reduceLeft( preExpr.And )
-  }
+  } )
 
-  val Disj = P( Conj.rep( 1, "|" | "∨" ) ).map( _.reduceLeft( preExpr.Or ) )
+  val Disj = PE( Conj.rep( 1, "|" | "∨" ).map( _.reduceLeft( preExpr.Or ) ) )
 
-  val Conj = P( QuantOrNeg.rep( 1, "&" | "∧" ) ).map( _.reduceLeft( preExpr.And ) )
+  val Conj = PE( QuantOrNeg.rep( 1, "&" | "∧" ).map( _.reduceLeft( preExpr.And ) ) )
 
   val QuantOrNeg: P[preExpr.Expr] = P( Ex | All | Neg | InfixRel )
-  val Ex = P( ( "?" | "∃" | kw( "exists" ) ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.Ex.tupled )
-  val All = P( ( "!" | "∀" | kw( "all" ) ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.All.tupled )
-  val Neg: P[preExpr.Expr] = P( ( "-" | "¬" ) ~ QuantOrNeg ).map( preExpr.Neg )
+  val Ex = PE( ( ( "?" | "∃" | kw( "exists" ) ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.Ex.tupled ) )
+  val All = PE( ( ( "!" | "∀" | kw( "all" ) ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.All.tupled ) )
+  val Neg = PE( ( ( "-" | "¬" ) ~ QuantOrNeg ).map( preExpr.Neg ) )
 
   val InfixRelSym = P( "<=" | ">=" | "<" | ">" | "=" | "!=" )
-  val InfixRel = P( PlusMinus ~/ ( InfixRelSym.! ~ PlusMinus ).rep ) map {
+  val InfixRel = PE( ( PlusMinus ~/ ( InfixRelSym.! ~ PlusMinus ).rep ) map {
     case ( first, Seq() ) => first
     case ( first, conds ) =>
       val terms = first +: conds.map { _._2 }
@@ -80,28 +92,28 @@ object BabelParserCombinators {
         case ( a, r, b ) =>
           preExpr.TypeAnnotation( preExpr.App( preExpr.App( preExpr.Ident( r, preExpr.freshMetaType() ), a ), b ), preExpr.Bool )
       }.reduceLeft( preExpr.And )
-  }
+  } )
 
-  val PlusMinus: P[preExpr.Expr] = P( TimesDiv ~/ ( ( "+" | "-" ).! ~ TimesDiv ).rep ) map {
+  val PlusMinus = PE( ( TimesDiv ~/ ( ( "+" | "-" ).! ~ TimesDiv ).rep ) map {
     case ( first, rest ) =>
       rest.foldLeft( first ) { case ( a, ( o, b ) ) => preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType() ), a ), b ) }
-  }
+  } )
 
-  val TimesDiv: P[preExpr.Expr] = P( App ~/ ( ( "*" | "/" ).! ~ App ).rep ) map {
+  val TimesDiv = PE( ( App ~/ ( ( "*" | "/" ).! ~ App ).rep ) map {
     case ( first, rest ) =>
       rest.foldLeft( first ) { case ( a, ( o, b ) ) => preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType() ), a ), b ) }
-  }
+  } )
 
   val Tuple: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
-  val App: P[preExpr.Expr] = P( "@".? ~ Atom ~/ ( Tuple | Atom.map( Seq( _ ) ) ).rep ) map {
+  val App = PE( ( "@".? ~ Atom ~/ ( Tuple | Atom.map( Seq( _ ) ) ).rep ) map {
     case ( expr, args ) => args.flatten.foldLeft( expr )( preExpr.App )
-  }
+  } )
 
-  val Parens: P[preExpr.Expr] = P( "(" ~/ Expr ~/ ")" )
-  val Atom: P[preExpr.Expr] = P( Parens | True | False | VarLiteral | ConstLiteral | Ident )
+  val Parens = PE( "(" ~/ Expr ~/ ")" )
+  val Atom = PE( Parens | True | False | VarLiteral | ConstLiteral | Ident )
 
-  val True = P( kw( "true" ) | "⊤" ).map( _ => preExpr.Top )
-  val False = P( kw( "false" ) | "⊥" ).map( _ => preExpr.Bottom )
+  val True = PE( ( kw( "true" ) | "⊤" ).map( _ => preExpr.Top ) )
+  val False = PE( ( kw( "false" ) | "⊥" ).map( _ => preExpr.Bottom ) )
 
   val Var = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Var( name, preExpr.toRealType( ty, Map() ) )
@@ -109,8 +121,8 @@ object BabelParserCombinators {
   val Const = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ) )
   }
-  val VarLiteral = P( "#v(" ~/ Var ~ ")" ) map { preExpr.QuoteBlackbox }
-  val ConstLiteral = P( "#c(" ~/ Const ~ ")" ) map { preExpr.QuoteBlackbox }
+  val VarLiteral = PE( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } )
+  val ConstLiteral = PE( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } )
 
   val Ident: P[preExpr.Ident] = P( Name.map( preExpr.Ident( _, preExpr.freshMetaType() ) ) )
 
@@ -128,6 +140,17 @@ object BabelParser {
   import BabelParserCombinators._
   import fastparse.all._
 
+  private def ppElabError( text: String, err: preExpr.ElabError ): BabelParseError = BabelElabError {
+    import preExpr._
+    s"""
+       |${err.msg}
+       |
+       |  ${err.loc.fold( "" )( loc => text.substring( loc.begin, loc.end ) )}
+       |${err.expected.map( e => s"\nexpected: ${readable( instantiate( e, err.assg ) )}\n" ).getOrElse( "" )}
+       |actual: ${readable( instantiate( err.actual, err.assg ) )}
+     """.stripMargin
+  }
+
   /**
    * Parses text as a lambda expression, or returns a parse error.
    *
@@ -138,9 +161,7 @@ object BabelParser {
     ExprAndNothingElse.parse( text ) match {
       case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
-        preExpr.toRealExpr( transformedExpr, sig ).leftMap { unifError =>
-          BabelUnificationError( s"Cannot type-check ${preExpr.readable( transformedExpr )}:\n$unifError" )
-        }
+        preExpr.toRealExpr( transformedExpr, sig ).leftMap( ppElabError( text, _ ) )
       case parseError @ Parsed.Failure( _, _, _ ) =>
         Left( BabelParsingError( parseError ) )
     }
@@ -157,9 +178,7 @@ object BabelParser {
     SequentAndNothingElse.parse( text ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = exprSequent.map( astTransformer )
-        preExpr.toRealExprs( transformed.elements, sig ).leftMap { unifError =>
-          BabelUnificationError( s"Cannot type-check ${transformed.map( preExpr.readable )}:\n$unifError" )
-        }.map { sequentElements =>
+        preExpr.toRealExprs( transformed.elements, sig ).leftMap( ppElabError( text, _ ) ).map { sequentElements =>
           val ( ant, suc ) = sequentElements.
             splitAt( exprSequent.antecedent.size )
           HOLSequent( ant, suc )

@@ -27,6 +27,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
 
   private def interpolateHelper( expressions: Seq[Splice[LambdaExpression]] ): ( String, preExpr.Expr => preExpr.Expr ) = {
     def repl( expr: preExpr.Expr ): preExpr.Expr = expr match {
+      case preExpr.LocAnnotation( e, loc ) => preExpr.LocAnnotation( repl( e ), loc )
       case preExpr.TypeAnnotation( e, ty ) => preExpr.TypeAnnotation( repl( e ), ty )
       case preExpr.Ident( name, ty ) if name startsWith placeholder =>
         val i = name.drop( placeholder.length ).toInt
