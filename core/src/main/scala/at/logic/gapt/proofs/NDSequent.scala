@@ -14,7 +14,6 @@ import at.logic.gapt.expr.Polarity
 case class NDSequent[+A]( assumptions: Seq[A], conclusion: A )
 
 object NDSequent {
-  def apply[A]( el: A ): NDSequent[A] = NDSequent( Seq(), el )
 
   def apply[A]( polarizedElements: Seq[( A, Polarity )] ): NDSequent[A] = {
     val ( ant, suc ) = polarizedElements.view.partition( _._2.inAnt )
