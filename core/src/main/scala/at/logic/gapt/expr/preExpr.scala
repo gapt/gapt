@@ -124,9 +124,11 @@ object preExpr {
     case ArrType( a, b )              => ArrType( subst( a, assg ), subst( b, assg ) )
     case MetaType( idx )              => assg.get( idx ).fold( t )( subst( _, assg ) )
   }
-  trait UnificationError
+  trait UnificationError {
+    def assg: Map[MetaTypeIdx, Type]
+  }
   case class OccursCheck( t1: MetaType, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
-  case class Mismatch( t1: Type, t2: Type ) extends UnificationError
+  case class Mismatch( t1: Type, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
   def printCtx( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): String =
     ( assg.map { case ( idx, t ) => s"${readable( MetaType( idx ) )} = ${readable( t )}\n" } ++
       eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
@@ -149,7 +151,7 @@ object preExpr {
         else
           solve( rest, assg + ( i1 -> t2_ ) )
       case ( t1, t2: MetaType ) => solve( ( t2 -> t1 ) :: rest, assg )
-      case ( t1, t2 )           => Left( Mismatch( t1, t2 ) )
+      case ( t1, t2 )           => Left( Mismatch( t1, t2, assg ) )
     }
   }
 
@@ -199,13 +201,16 @@ object preExpr {
         for {
           r1 <- infer( e, env, s0 )
           ( s1, et ) = r1
-          s2 <- solve( List( et -> t ), s1 ).leftMap( _ => ElabError( loc, s"mismatched annotated type", Some( t ), et, s1 ) )
+          s2 <- solve( List( et -> t ), s1 ).
+            leftMap( err => ElabError( loc, s"mismatched annotated type", Some( t ), et, err.assg ) )
         } yield ( s2, et )
       case Ident( n, t ) =>
         if ( env contains n ) {
           val tyInEnv = env( n )()
-          for ( s1 <- solve( List( tyInEnv -> t ), s0 ).leftMap( _ => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, s0 ) ) )
-            yield ( s1, t )
+          for (
+            s1 <- solve( List( tyInEnv -> t ), s0 ).
+              leftMap( err => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, err.assg ) )
+          ) yield ( s1, t )
         } else Right( s0 -> t )
       case Abs( Ident( vn, vt ), t ) =>
         for {
@@ -219,11 +224,11 @@ object preExpr {
           r1 <- infer( a, env, s0 )
           ( s1, at ) = r1
           s2 <- solve( List( at -> ArrType( argType, resType ) ), s1 ).
-            leftMap( _ => ElabError( locOf( a ).orElse( loc ), "function type expected", None, at, s1 ) )
+            leftMap( err => ElabError( locOf( a ).orElse( loc ), "function type expected", None, at, err.assg ) )
           r3 <- infer( b, env, s2 )
           ( s3, bt ) = r3
           s4 <- solve( List( bt -> argType ), s3 ).
-            leftMap( _ => ElabError( locOf( b ).orElse( loc ), "mismatched argument type", Some( argType ), bt, s3 ) )
+            leftMap( err => ElabError( locOf( b ).orElse( loc ), "mismatched argument type", Some( argType ), bt, err.assg ) )
         } yield ( s4, resType )
       case Quoted( e, ty, fvs ) =>
         def solveFVs( fvs: List[( String, Type )], s0: Map[MetaTypeIdx, Type] ): Either[ElabError, Map[MetaTypeIdx, Type]] =
@@ -232,8 +237,8 @@ object preExpr {
             case ( ( name, fvTy ) :: rest ) =>
               val tyInEnv = env( name )()
               for {
-                s1 <- solve( List( tyInEnv -> fvTy ), s0 ).leftMap( _ =>
-                  ElabError( loc, s"mismatched type for free variable $name in quote $e", Some( tyInEnv ), fvTy, s0 ) )
+                s1 <- solve( List( tyInEnv -> fvTy ), s0 ).leftMap( err =>
+                  ElabError( loc, s"mismatched type for free variable $name in quote $e", Some( tyInEnv ), fvTy, err.assg ) )
                 s2 <- solveFVs( rest, s1 )
               } yield s2
           }
