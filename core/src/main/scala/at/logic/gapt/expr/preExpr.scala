@@ -47,19 +47,28 @@ object preExpr {
   case class App( a: Expr, b: Expr ) extends Expr
   case class Quoted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
 
-  def readable( t: Type ): String = t match {
-    case BaseType( name ) => name
-    case VarType( name )  => s"?$name"
-    case ArrType( a, b )  => s"(${readable( a )}>${readable( b )})"
-    case MetaType( idx )  => s"_$idx"
-  }
-  def readable( e: Expr ): String = e match {
-    case LocAnnotation( expr, _ )   => readable( expr )
-    case TypeAnnotation( expr, ty ) => s"(${readable( expr )}:${readable( ty )})"
-    case Ident( name, ty )          => s"($name:${readable( ty )})"
-    case Abs( v, sub )              => s"(^${readable( v )} ${readable( sub )})"
-    case App( a, b )                => s"(${readable( a )} ${readable( b )})"
-    case Quoted( e, ty, fvs )       => s"#lifted($e, ${readable( ty )}${fvs map { case ( n, t ) => s", $n -> ${readable( t )}" } mkString})"
+  class ReadablePrinter( assg: Map[MetaTypeIdx, Type], sig: BabelSignature ) {
+    private val printMetaTypeIdx: MetaTypeIdx => String = {
+      val names = Stream.from( 1 ).map( i => s"_$i" ).iterator
+      val cache = mutable.Map[MetaTypeIdx, String]()
+      idx => cache.getOrElseUpdate( idx, names.next() )
+    }
+
+    def apply( t: Type ): String = t match {
+      case BaseType( name ) => name
+      case VarType( name )  => s"?$name"
+      case ArrType( a, b )  => s"(${apply( a )}>${apply( b )})"
+      case MetaType( idx ) =>
+        assg.get( idx ).map( apply ).getOrElse( printMetaTypeIdx( idx ) )
+    }
+    def apply( e: Expr ): String = e match {
+      case LocAnnotation( expr, _ )   => apply( expr )
+      case TypeAnnotation( expr, ty ) => s"(${apply( expr )}:${apply( ty )})"
+      case Ident( name, ty )          => s"($name:${apply( ty )})"
+      case Abs( v, sub )              => s"(^${apply( v )} ${apply( sub )})"
+      case App( a, b )                => s"(${apply( a )} ${apply( b )})"
+      case Quoted( e, ty, fvs )       => s"#quote(${e.toSigRelativeString( sig )}, ${apply( ty )}${fvs map { case ( n, t ) => s", $n -> ${apply( t )}" } mkString})"
+    }
   }
 
   def Bool = BaseType( "o" )
@@ -129,9 +138,6 @@ object preExpr {
   }
   case class OccursCheck( t1: MetaType, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
   case class Mismatch( t1: Type, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
-  def printCtx( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): String =
-    ( assg.map { case ( idx, t ) => s"${readable( MetaType( idx ) )} = ${readable( t )}\n" } ++
-      eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
 
   def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): Either[UnificationError, Map[MetaTypeIdx, Type]] = eqs match {
     case Nil => Right( assg )
@@ -154,14 +160,6 @@ object preExpr {
       case ( t1, t2 )           => Left( Mismatch( t1, t2, assg ) )
     }
   }
-
-  def instantiate( ty: Type, s: Map[MetaTypeIdx, Type] ): Type =
-    ty match {
-      case BaseType( name ) => BaseType( name )
-      case ArrType( a, b )  => ArrType( instantiate( a, s ), instantiate( b, s ) )
-      case VarType( name )  => VarType( name )
-      case MetaType( idx )  => s.getOrElse( idx, MetaType( idx ) )
-    }
 
   case class ElabError( loc: Option[Location], msg: String, expected: Option[Type], actual: Type, assg: Map[MetaTypeIdx, Type] )
 
@@ -224,11 +222,11 @@ object preExpr {
           r1 <- infer( a, env, s0 )
           ( s1, at ) = r1
           s2 <- solve( List( at -> ArrType( argType, resType ) ), s1 ).
-            leftMap( err => ElabError( locOf( a ).orElse( loc ), "function type expected", None, at, err.assg ) )
+            leftMap( err => ElabError( locOf( a ).orElse( loc ), "not a function", None, at, err.assg ) )
           r3 <- infer( b, env, s2 )
           ( s3, bt ) = r3
           s4 <- solve( List( bt -> argType ), s3 ).
-            leftMap( err => ElabError( locOf( b ).orElse( loc ), "mismatched argument type", Some( argType ), bt, err.assg ) )
+            leftMap( err => ElabError( locOf( b ).orElse( loc ), "incorrect type for argument", Some( argType ), bt, err.assg ) )
         } yield ( s4, resType )
       case Quoted( e, ty, fvs ) =>
         def solveFVs( fvs: List[( String, Type )], s0: Map[MetaTypeIdx, Type] ): Either[ElabError, Map[MetaTypeIdx, Type]] =

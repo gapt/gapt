@@ -140,7 +140,7 @@ object BabelParser {
   import BabelParserCombinators._
   import fastparse.all._
 
-  private def ppElabError( text: String, err: preExpr.ElabError ): BabelParseError = BabelElabError {
+  private def ppElabError( text: String, err: preExpr.ElabError )( implicit sig: BabelSignature ): BabelParseError = BabelElabError {
     import preExpr._
 
     val Location( begin, endAfterWS ) = err.loc.getOrElse( Location( 0, text.size ) )
@@ -148,23 +148,26 @@ object BabelParser {
     val snippet =
       text.view.zipWithIndex.
         map {
-          case ( '\n', _ )                      => '\n'
-          case ( _, i ) if i == begin           => '╘'
-          case ( _, i ) if i == end - 1         => '╛'
-          case ( _, i ) if begin < i && i < end => '═'
-          case ( _, i )                         => ' '
+          case ( '\n', _ )                            => '\n'
+          case ( _, i ) if i == begin && i == end - 1 => '╨'
+          case ( _, i ) if i == begin                 => '╘'
+          case ( _, i ) if i == end - 1               => '╛'
+          case ( _, i ) if begin < i && i < end       => '═'
+          case ( _, _ )                               => ' '
         }.mkString.lines.zip( text.lines ).
         map {
           case ( markers, code ) if markers.trim.nonEmpty => s"  $code\n  $markers\n"
           case ( _, code )                                => s"  $code\n"
         }.mkString.stripLineEnd
 
+    val readable = new preExpr.ReadablePrinter( err.assg, sig )
+
     s"""
        |${err.msg}
        |
        |$snippet
-       |${err.expected.map( e => s"\nexpected: ${readable( instantiate( e, err.assg ) )}\n" ).getOrElse( "" )}
-       |actual: ${readable( instantiate( err.actual, err.assg ) )}
+       |${err.expected.map( e => s"\nexpected type: ${readable( e )}\n" ).getOrElse( "" )}
+       |actual type: ${readable( err.actual )}
      """.stripMargin
   }
 
