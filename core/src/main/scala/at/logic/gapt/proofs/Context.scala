@@ -4,6 +4,7 @@ import at.logic.gapt.expr.{LambdaExpression, Definition => EDefinition, _}
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.lk.LKProof
 
 import scala.reflect.ClassTag
 
@@ -237,7 +238,10 @@ object Context {
   }
   implicit val  ProofsFacet: Facet[ProofNames] = Facet(ProofNames(Set[(LambdaExpression, HOLSequent)]()))
 
-
+  case class ProofDefinitions(components: Set[(LambdaExpression,LKProof)]){
+    def +( name: LambdaExpression, linkproof:LKProof ) = copy(components + ((name , linkproof)) )
+  }
+  implicit val  ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet(ProofDefinitions(Set[(LambdaExpression, LKProof)]()))
   /**
    * Update of a context.
    *
@@ -338,6 +342,7 @@ object Context {
     }
   }
 
+
   implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
   case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Update {
@@ -350,6 +355,63 @@ object Context {
       ctx.check( defn )
       ctx.state.update[Constants]( _ + sym )
         .update[SkolemFunctions]( _ + ( sym, defn ) )
+    }
+  }
+
+  case class ProofNameDeclaration(lhs: LambdaExpression, endSequent: HOLSequent) extends Update{
+    override def apply( ctx: Context ): State = {
+      endSequent.foreach(ctx.check(_))
+      val fvEs= freeVariables(endSequent)
+      lhs match{
+        case Apps(c: Const, vs) => {
+            if(fvEs == vs) ctx.state.update[ProofNames]( _ + (lhs,endSequent) )
+            else  throw new IllegalArgumentException("variables of "+lhs.toString()+
+              " do not match the free variables of "+endSequent.toString())
+        }
+        case _ => throw new IllegalArgumentException(lhs.toString()+" is a malformed proof name")
+      }
+
+
+    }
+  }
+
+  case class ProofDefinitionDeclaration(lhs: LambdaExpression, linkProof: LKProof) extends Update{
+    override def apply( ctx: Context ): State = {
+      linkProof.endSequent.foreach(ctx.check(_))
+      lhs match{
+        case Apps(c: Const, vs) => {
+          vs.foreach(ctx.check(_))
+          val decName = ctx.get[ProofNames].names.fold(None:Option[(LambdaExpression, HOLSequent)])((x,y) => {
+               x match {
+                 case Some(thing) => Some(thing)
+                 case None => y match {
+                   case (Apps(c2: Const, vs2),_) => if(c2 == c && vs.size == vs2.size){
+                     if((vs zip vs2).fold(true)((x,y) => {
+                       if(x == true) y match {
+                            case (a:LambdaExpression, b:LambdaExpression)   =>
+                              if(syntacticMatching(a, b)== None) false
+                              else true
+                            case _ => false
+                          }
+                       else false
+                     } ) == true) Some(y)
+                     else None
+                   }
+                   else None
+                   case _ =>   throw new IllegalArgumentException("Context contains malformed proof name")
+                 }
+               }
+
+
+          })
+          if(decName != None) ctx.state.update[ProofDefinitions]( _ + (lhs,linkProof) )
+          else  throw new IllegalArgumentException("No proof named "+lhs.toString()+
+            " in conext")
+        }
+        case _ => throw new IllegalArgumentException(lhs.toString()+" is a malformed proof name")
+      }
+
+
     }
   }
 }
