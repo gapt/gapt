@@ -2,6 +2,12 @@ package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 
+/**
+ * Deskolemization of expansion trees.
+ *
+ * We first gather the skolem terms in a given [[ExpansionProof]] from the [[ETSkolemQuantifier]]s.
+ * Then replace each [[ETSkolemQuantifier]] by [[ETStrongQuantifier]], and each skolem term within, by a fresh eigenvariable.
+ */
 object deskolemizeET extends deskolemizeET {
 }
 

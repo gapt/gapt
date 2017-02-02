@@ -10,12 +10,10 @@ class deskolemizeETTest extends Specification with SatMatchers {
 
   "DrinkersParadox deskolemization" in {
 
-    val x0 = Var( "x_0", Ti )
-    val s0 = Const( "s_0", Ti -> Ti )
     val ep = ExpansionProof( Sequent() :+ ETWeakQuantifier( hof"?x (P x -> !y (x = x & P y))", Map(
-      x0 -> ETImp(
+      le"x_0" -> ETImp(
         ETWeakening( hof"P x_0", Negative ),
-        ETSkolemQuantifier( hof"!y (x_0 = x_0 & P y)", le"s_0 x_0", Abs( Var( "x", Ti ), hof"!y (x = x & P y)" ),
+        ETSkolemQuantifier( hof"!y (x_0 = x_0 & P y)", le"s_0 x_0", le"^x !y (x = x & P y)",
           ETAnd( ETAtom( hoa"x_0 = x_0", Positive ), ETAtom( hoa"P (s_0 x_0)", Positive ) ) )
       ),
       le"s_0 x_0" -> ETImp(
@@ -23,9 +21,11 @@ class deskolemizeETTest extends Specification with SatMatchers {
         ETWeakening( hof"!y ((s_0 x_0) = (s_0 x_0) & P y)", Positive )
       )
     ) ) )
+    val desk = deskolemizeET( ep )
 
     ep.deep must beEValidSequent
-    deskolemizeET( ep ).deep must beEValidSequent
+    desk.deep must beEValidSequent
+    ep.shallow must_== desk.shallow
   }
 
 }
