@@ -6,8 +6,7 @@ import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
 import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
-import scalaz.Traverse
-import scalaz.std.list._
+import cats.syntax.traverse._, cats.instances.list._
 
 object enumerateTerms {
   private def normalizeFreeVars( expr: LambdaExpression ): LambdaExpression = {
@@ -28,7 +27,7 @@ object enumerateTerms {
     val nonConstantCtrs = ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filterNot { _.exptype.isInstanceOf[TBase] }
 
     def take( tys: Seq[Ty] ): Seq[Seq[LambdaExpression]] =
-      Traverse[List].traverse( tys.toList )( t => terms.filter( _.exptype == t ).toList )
+      tys.toList.traverse( t => terms.filter( _.exptype == t ).toList )
     def iterate() =
       nonConstantCtrs.flatMap {
         case ctr @ Const( _, FunctionType( _, argTypes ) ) =>

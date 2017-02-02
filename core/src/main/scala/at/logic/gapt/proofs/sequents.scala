@@ -3,9 +3,10 @@ package at.logic.gapt.proofs
 import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr.{ HOLFormula, Polarity }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
+import cats.Functor
+import cats.kernel.Monoid
 
 import scala.collection.GenTraversable
-import scalaz.{ Functor, Monoid }
 
 /**
  * Represents an index of an element in a sequent.
@@ -480,7 +481,7 @@ object Sequent {
   }
 
   implicit def SequentMonoid[A] = new Monoid[Sequent[A]] {
-    override def zero = Sequent()
-    override def append( s1: Sequent[A], s2: => Sequent[A] ): Sequent[A] = s1 ++ s2
+    override def empty = Sequent()
+    override def combine( s1: Sequent[A], s2: Sequent[A] ): Sequent[A] = s1 ++ s2
   }
 }

@@ -7,8 +7,7 @@ import fastparse.StringReprOps
 import fastparse.core.ParseError
 import fastparse.utils.IndexedParserInput
 
-import scalaz._
-import Scalaz._
+import cats.syntax.either._
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
 case class BabelElabError( reason: String ) extends BabelParseError( reason )

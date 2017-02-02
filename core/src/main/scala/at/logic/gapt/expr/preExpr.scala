@@ -1,8 +1,8 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.utils.ScalazHelpers.RichEither
 import at.logic.gapt.{ expr => real }
+import cats.syntax.either._
 
 import scala.collection.mutable
 
