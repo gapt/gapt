@@ -18,3 +18,10 @@ object ndexample extends Script {
   val a6 = AndIntroRule(a4, a5)
   println(a6)
 }
+
+object ndImpElimExample extends Script {
+  val a1 = LogicalAxiom( hof"a" )
+  val a2 = LogicalAxiom( Imp( hof"a",hof"b" )  )
+  val a3 = ImpElimRule(a2,a1)
+  println(a3)
+}

@@ -373,6 +373,41 @@ object AndIntroRule extends ConvenienceConstructor( "AndIntroRule" ) {
 }
 
 /**
+  * An NDProof ending with elimination of an implication:
+  * <pre>
+  *     (π1)       (π2)
+  *  Γ :- A→B    Π :- A
+  * --------------------------
+  *     Γ, Π :- B
+  * </pre>
+  *
+  * @param leftSubProof The proof π,,1,,.
+  * @param rightSubProof The proof π,,2,,
+  */
+case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
+  extends BinaryNDProof with CommonRule {
+
+  val aux1 = Suc( 0 )
+  val aux2 = Suc( 0 )
+
+  val implication = leftPremise( aux1 )
+  val antecedent = rightPremise( aux2 )
+
+  val mainFormula = implication match {
+    case Imp( antecedent, consequent ) => consequent
+    case Imp( _,_ ) => throw NDRuleCreationException( s"Proposed main formula $antecedent is not the antecedent of $implication." )
+    case _ => throw NDRuleCreationException( s"Proposed main formula $implication is not an implication." )
+  }
+
+  def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
+
+  override def name = "\u2283:i"
+
+  override def mainFormulaSequent =  Sequent() :+ mainFormula
+
+}
+
+/**
   * Class for reducing boilerplate code in ND companion objects.
   *
   * @param longName The long name of the rule.
