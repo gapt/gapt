@@ -39,7 +39,6 @@ object cleanStructuralRules {
   private def apply_( proof: LKProof, reductive: Boolean ): ( LKProof, OccConnector[HOLFormula] ) = proof match {
     case InitialSequent( sequent ) =>
       ( proof, OccConnector( sequent ) )
-
     case p @ WeakeningLeftRule( subProof, formula ) =>
       val ( subProofNew, subConnector ) = apply_( subProof, reductive )
       ( subProofNew, subConnector * p.getOccConnector.inv )

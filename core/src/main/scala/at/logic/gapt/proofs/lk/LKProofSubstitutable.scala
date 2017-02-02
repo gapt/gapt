@@ -176,6 +176,10 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
     val proofNew = TheoryAxiom( TermReplacement( proof.conclusion, repl ) )
     ( proofNew, OccConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
   }
+  override protected def visitProofLink( proof: ProofLink, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
+    val proofNew = ProofLink( proof.referencedProof, TermReplacement( proof.conclusion, repl ) )
+    ( proofNew, OccConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
+  }
 
   override protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
     val ( subProofNew, subConnector ) = recurse( proof.subProof, () )

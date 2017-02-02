@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{LambdaExpression, Definition => EDefinition, _}
+import at.logic.gapt.expr.{ LambdaExpression, Definition => EDefinition, _ }
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr.hol.SkolemFunctions
@@ -233,15 +233,16 @@ object Context {
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
-  case class ProofNames(names: Set[(LambdaExpression,HOLSequent)]){
-    def +( name: LambdaExpression, linkquent:HOLSequent ) = copy(names + ((name , linkquent)))
+  case class ProofNames( names: Set[( LambdaExpression, HOLSequent )] ) {
+    def +( name: LambdaExpression, linkquent: HOLSequent ) = copy( names + ( ( name, linkquent ) ) )
   }
-  implicit val  ProofsFacet: Facet[ProofNames] = Facet(ProofNames(Set[(LambdaExpression, HOLSequent)]()))
+  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Set[( LambdaExpression, HOLSequent )]() ) )
 
-  case class ProofDefinitions(components: Set[(LambdaExpression,LKProof)]){
-    def +( name: LambdaExpression, linkproof:LKProof ) = copy(components + ((name , linkproof)) )
+  case class ProofDefinitions( components: Set[( LambdaExpression, LKProof )] ) {
+    def +( name: LambdaExpression, linkproof: LKProof ) = copy( components + ( ( name, linkproof ) ) )
   }
-  implicit val  ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet(ProofDefinitions(Set[(LambdaExpression, LKProof)]()))
+  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Set[( LambdaExpression, LKProof )]() ) )
+
   /**
    * Update of a context.
    *
@@ -342,7 +343,6 @@ object Context {
     }
   }
 
-
   implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
   case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Update {
@@ -358,59 +358,62 @@ object Context {
     }
   }
 
-  case class ProofNameDeclaration(lhs: LambdaExpression, endSequent: HOLSequent) extends Update{
+  case class ProofNameDeclaration( lhs: LambdaExpression, endSequent: HOLSequent ) extends Update {
     override def apply( ctx: Context ): State = {
-      endSequent.foreach(ctx.check(_))
-      val fvEs= freeVariables(endSequent)
-      lhs match{
-        case Apps(c: Const, vs) => {
-            if(fvEs == vs) ctx.state.update[ProofNames]( _ + (lhs,endSequent) )
-            else  throw new IllegalArgumentException("variables of "+lhs.toString()+
-              " do not match the free variables of "+endSequent.toString())
+      endSequent.foreach( ctx.check( _ ) )
+      val fvEs = freeVariables( endSequent )
+      lhs match {
+        case Apps( c: Const, vs: Seq[LambdaExpression] ) => {
+          val varcheck: Boolean = ( fvEs.toList zip vs.toList ).fold( true )( ( x, y ) => {
+            val yy = y.asInstanceOf[( LambdaExpression, LambdaExpression )]
+            val xx = x.asInstanceOf[Boolean]
+            if ( yy._1 == yy._2 && xx ) true else false
+          } ).asInstanceOf[Boolean]
+          if ( varcheck ) ctx.state.update[ProofNames]( _ + ( lhs, endSequent ) )
+          else throw new IllegalArgumentException( "variables of " + lhs.toString() + "   " + vs.toString() +
+            " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString() )
         }
-        case _ => throw new IllegalArgumentException(lhs.toString()+" is a malformed proof name")
-      }
+        case _ => throw new IllegalArgumentException( lhs.toString() + "  is a malformed proof name" )
+        // case _ => throw new IllegalArgumentException(  lhs.toString() +" is a malformed proof name" )
 
+      }
 
     }
   }
 
-  case class ProofDefinitionDeclaration(lhs: LambdaExpression, linkProof: LKProof) extends Update{
+  case class ProofDefinitionDeclaration( lhs: LambdaExpression, linkProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
-      linkProof.endSequent.foreach(ctx.check(_))
-      lhs match{
-        case Apps(c: Const, vs) => {
-          vs.foreach(ctx.check(_))
-          val decName = ctx.get[ProofNames].names.fold(None:Option[(LambdaExpression, HOLSequent)])((x,y) => {
-               x match {
-                 case Some(thing) => Some(thing)
-                 case None => y match {
-                   case (Apps(c2: Const, vs2),_) => if(c2 == c && vs.size == vs2.size){
-                     if((vs zip vs2).fold(true)((x,y) => {
-                       if(x == true) y match {
-                            case (a:LambdaExpression, b:LambdaExpression)   =>
-                              if(syntacticMatching(a, b)== None) false
-                              else true
-                            case _ => false
-                          }
-                       else false
-                     } ) == true) Some(y)
-                     else None
-                   }
-                   else None
-                   case _ =>   throw new IllegalArgumentException("Context contains malformed proof name")
-                 }
-               }
+      linkProof.endSequent.foreach( ctx.check( _ ) )
+      lhs match {
+        case Apps( c: Const, vs ) => {
+          vs.foreach( ctx.check( _ ) )
+          val decName = ctx.get[ProofNames].names.fold( None: Option[( LambdaExpression, HOLSequent )] )( ( x, y ) => {
+            x match {
+              case Some( thing ) => Some( thing )
+              case None => y match {
+                case ( Apps( c2: Const, vs2 ), _ ) => if ( c2 == c && vs.size == vs2.size ) {
+                  if ( ( vs zip vs2 ).fold( true )( ( x, y ) => {
+                    if ( x == true ) y match {
+                      case ( a: LambdaExpression, b: LambdaExpression ) =>
+                        if ( syntacticMatching( b, a ) == None ) false
+                        else true
+                      case _ => false
+                    }
+                    else false
+                  } ) == true ) Some( y )
+                  else None
+                } else None
+                case _ => throw new IllegalArgumentException( "Context contains malformed proof name" )
+              }
+            }
 
-
-          })
-          if(decName != None) ctx.state.update[ProofDefinitions]( _ + (lhs,linkProof) )
-          else  throw new IllegalArgumentException("No proof named "+lhs.toString()+
-            " in conext")
+          } )
+          if ( decName != None ) ctx.state.update[ProofDefinitions]( _ + ( lhs, linkProof ) )
+          else throw new IllegalArgumentException( "No proof named " + lhs.toString() +
+            " in conext" )
         }
-        case _ => throw new IllegalArgumentException(lhs.toString()+" is a malformed proof name")
+        case _ => throw new IllegalArgumentException( lhs.toString() + " is a malformed proof name" )
       }
-
 
     }
   }

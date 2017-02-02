@@ -1,14 +1,59 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
+import at.logic.gapt.expr.{ Apps, _ }
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
+import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
+
 import scalaz._
 import Scalaz._
 import Validation.FlatMap._
 
+/**
+ * Closes a goal with a proof link
+ *
+ * @param proofName The name of the proof proving the goal.
+ */
+case class ProofLinkTactic( proofName: String )( implicit ctx: Context ) extends Tactic[Unit] {
+  def apply( goal: OpenAssumption ) = {
+    val theProof = ctx.get[ProofNames].names.fold( None: Option[( LambdaExpression, Sequent[HOLFormula] )] )( ( rightProof, proofInCtx ) => {
+      rightProof match {
+        case Some( thing ) => Some( thing )
+        case None => proofInCtx match {
+          case ( Apps( at.logic.gapt.expr.Const( proofInCtxName, t ), args ), es: Sequent[HOLFormula] ) =>
+            if ( proofName == proofInCtxName ) {
+              val theSubs: Option[Substitution] = clauseSubsumption( es, goal.conclusion )
+              theSubs match {
+                case Some( sub ) => {
+                  println( "four" )
+                  Some( ( sub( Apps( at.logic.gapt.expr.Const( proofInCtxName, t ), args ) ), sub( es ) ) )
+                }
+                case None => {
+                  println( "three" )
+                  None
+                }
+              }
+            } else {
+              println( "two" )
+              None
+            }
+          case _ => {
+            println( "one" )
+            None
+          }
+        }
+      }
+
+    } )
+    theProof match {
+      case Some( ( l: LambdaExpression, es: Sequent[HOLFormula] ) ) => ( (), ProofLink( l, es ) ).success
+      case None => TacticalFailure( this, Some( goal ), "Cannot be proven from the specified proof" ).failureNel
+    }
+
+  }
+}
 /**
  * Closes a goal of the form A, Γ :- Δ, Δ
  */
