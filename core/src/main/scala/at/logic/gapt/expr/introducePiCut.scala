@@ -145,6 +145,114 @@ class pi2SeHs(
 
 }
 
+class LeafIndex(
+  var oneToMList: Set[Int],
+  var oneToPList: Set[Int]
+) {}
+
+class LiteralWithIndexLists(
+    val literal:       FOLFormula,
+    val leafIndexList: List[LeafIndex],
+    val numberOfDNTAs: Int
+) {
+  // require( numberOfDNTAs == leafIndexList.length )
+}
+
+class ClauseWithIndexLists(
+    val literals: List[LiteralWithIndexLists]
+) {
+
+  // require( literals.tail.forall( _.numberOfDNTAs == literals.head.numberOfDNTAs ) )
+
+  def numberOfDNTAs: Int = this.literals.head.numberOfDNTAs
+
+  def leafIndexList: List[LeafIndex] = {
+
+    val leafIndexListBuffer: List[LeafIndex] = this.literals.head.leafIndexList
+    this.literals.tail.foreach( literal => for ( leafNumber <- 0 until literal.numberOfDNTAs ) {
+      leafIndexListBuffer( leafNumber ).oneToPList = leafIndexListBuffer( leafNumber ).oneToPList.intersect( literal.leafIndexList( leafNumber ).oneToPList )
+      leafIndexListBuffer( leafNumber ).oneToMList = leafIndexListBuffer( leafNumber ).oneToMList.union( literal.leafIndexList( leafNumber ).oneToMList )
+    } )
+    leafIndexListBuffer
+  }
+
+  def isAllowedAtLeastAsSubformula: Boolean = {
+
+    var bool: Boolean = false
+    this.leafIndexList.foreach( leafNumber => {
+      if ( leafNumber.oneToPList.nonEmpty ) {
+        bool = true
+      }
+    } )
+    bool
+  }
+
+  def isAllowed: Boolean = {
+
+    var bool: Boolean = false
+    if ( this.isAllowedAtLeastAsSubformula ) {
+      bool = true
+      this.leafIndexList.foreach( leafNumber => {
+        if ( leafNumber.oneToMList.isEmpty ) {
+          bool = false
+        }
+      } )
+    }
+    bool
+  }
+
+  def formula: FOLFormula = {
+
+    var formulaBuffer: FOLFormula = literals.head.literal
+    literals.tail.foreach( literal => formulaBuffer = And( formulaBuffer, literal.literal ) )
+    formulaBuffer
+  }
+
+}
+
+class ClausesWithIndexLists(
+    val clauses: List[ClauseWithIndexLists]
+) {
+
+  private def leafIndexList: List[LeafIndex] = {
+
+    var emptyList: Boolean = false
+    val leafIndexListBuffer: List[LeafIndex] = this.clauses.head.leafIndexList
+    this.clauses.tail.foreach( clause => for ( leafNumber <- 0 until clause.numberOfDNTAs; if !emptyList ) {
+      leafIndexListBuffer( leafNumber ).oneToPList = leafIndexListBuffer( leafNumber ).oneToPList.union( clause.leafIndexList( leafNumber ).oneToPList )
+      leafIndexListBuffer( leafNumber ).oneToMList = leafIndexListBuffer( leafNumber ).oneToMList.intersect( clause.leafIndexList( leafNumber ).oneToMList )
+      if ( leafIndexListBuffer( leafNumber ).oneToMList.isEmpty ) {
+        emptyList = true
+      }
+    } )
+    if ( emptyList ) {
+      leafIndexListBuffer( 0 ).oneToPList = Set()
+    }
+    leafIndexListBuffer
+  }
+
+  def isSolution: Boolean = {
+
+    var bool: Boolean = true
+    this.leafIndexList.forall( leafNumber => {
+      if ( leafNumber.oneToPList.isEmpty ) {
+        bool = false
+      } else if ( leafNumber.oneToMList.isEmpty ) {
+        bool = false
+      }
+      bool
+    } )
+  }
+
+  def formula: FOLFormula = {
+
+    var formulaBuffer: FOLFormula = this.clauses.head.formula
+    this.clauses.tail.foreach( clause => formulaBuffer = Or( formulaBuffer, clause.formula ) )
+    formulaBuffer
+  }
+
+}
+
 object introducePi2Cut {
 
   def apply(
@@ -152,6 +260,9 @@ object introducePi2Cut {
     nameOfExistentialVariable: FOLVar  = fov"yCut",
     nameOfUniversalVariable:   FOLVar  = fov"xCut"
   ): Option[FOLFormula] = {
+
+    val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
+    val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
 
     val literals = scala.collection.mutable.Set[FOLFormula]()
     val DNTA = scala.collection.mutable.Set[Sequent[FOLFormula]]()
@@ -175,16 +286,81 @@ object introducePi2Cut {
       seHs.substitutionPairsBeta(),
       seHs.universalEigenvariable,
       seHs.existentialEigenvariables,
-      rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable ),
-      rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
+      nameOfExistentialVariableChecked,
+      nameOfUniversalVariableChecked
     )
 
+    val literalsWithIndexLists: Set[LiteralWithIndexLists] = computeTheIndexListsForTheLiterals(
+      unifiedLiterals,
+      DNTAList,
+      seHs,
+      nameOfExistentialVariableChecked,
+      nameOfUniversalVariableChecked
+    )
+
+    for ( literal <- literalsWithIndexLists ) {
+      println( "literal" )
+      println( literal.literal )
+      println( "literalAsClauseProps" )
+      println( "isAllowed" )
+      println( new ClauseWithIndexLists( List( literal ) ).isAllowed )
+      println( "isAllowedAtLeastAs..." )
+      println( new ClauseWithIndexLists( List( literal ) ).isAllowedAtLeastAsSubformula )
+      println( "IndexLists" )
+      for ( leafNumber <- literal.leafIndexList ) {
+        if ( leafNumber.oneToPList.nonEmpty && leafNumber.oneToMList.nonEmpty ) {
+          println( "PList" )
+          println( leafNumber.oneToPList )
+          println( "MList" )
+          println( leafNumber.oneToMList )
+        }
+      }
+      println( literal.numberOfDNTAs )
+    }
+
+    if ( literalsWithIndexLists.size > 1 ) {
+      if ( seHs.noSolutionHasBeenFound ) {
+
+        println( "printSomething2" )
+
+        val allowedClausesWithIndexLists: Set[ClauseWithIndexLists] = checkAndBuildAllowedClausesHead(
+          literalsWithIndexLists,
+          seHs
+        )
+
+        println( "Clauses" )
+        for ( clause <- allowedClausesWithIndexLists ) {
+          println( clause.formula )
+        }
+
+        if ( seHs.noSolutionHasBeenFound ) {
+
+          println( "printSomething3" )
+
+          for ( numberOfClauses <- 2 to allowedClausesWithIndexLists.size; if seHs.noSolutionHasBeenFound ) {
+            for ( subset <- allowedClausesWithIndexLists.subsets( numberOfClauses ); if seHs.noSolutionHasBeenFound ) {
+              val clausesWithIndexLists = new ClausesWithIndexLists( subset.toList )
+              if ( clausesWithIndexLists.isSolution ) {
+                seHs.noSolutionHasBeenFound = false
+                seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+              }
+              println( "Checked Formula" )
+              println( clausesWithIndexLists.formula )
+            }
+          }
+        }
+      }
+    }
+
+    println( "printSomething1" )
+
+    /*
     val allowedClausesIndex: ( List[( Set[FOLFormula], List[Int], List[( Int, List[Int] )] )] ) = allowedClausesWithIndex(
       unifiedLiterals,
       DNTAList,
       seHs,
-      rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable ),
-      rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
+      nameOfUniversalVariableChecked,
+      nameOfExistentialVariableChecked
     )
 
     if ( seHs.noSolutionHasBeenFound ) {
@@ -201,12 +377,142 @@ object introducePi2Cut {
         }
       }
     }
+    */
 
     if ( !seHs.noSolutionHasBeenFound ) {
       seHs.balancedSolution
     } else {
       None
     }
+
+  }
+
+  private def checkAndBuildAllowedClausesHead(
+    literalsWithIndexLists: Set[LiteralWithIndexLists],
+    seHs:                   pi2SeHs
+  ): ( Set[ClauseWithIndexLists] ) = {
+
+    var allowedClausesWithIndexListsMutable = scala.collection.mutable.Set[ClauseWithIndexLists]()
+    val literalsWithIndexListsMutable = scala.collection.mutable.Set( literalsWithIndexLists.toList: _* )
+
+    for ( literalWithIndexLists <- literalsWithIndexLists ) {
+      val clause = new ClauseWithIndexLists( List( literalWithIndexLists ) )
+      if ( clause.isAllowed ) {
+        allowedClausesWithIndexListsMutable += clause
+      } else if ( !clause.isAllowedAtLeastAsSubformula ) {
+        literalsWithIndexListsMutable -= literalWithIndexLists
+      }
+    }
+
+    checkAndBuildAllowedClauses(
+      literalsWithIndexListsMutable,
+      allowedClausesWithIndexListsMutable,
+      seHs,
+      2
+    ).toSet
+
+  }
+
+  private def checkAndBuildAllowedClauses(
+    literalsWithIndexLists:       scala.collection.mutable.Set[LiteralWithIndexLists],
+    allowedClausesWithIndexLists: scala.collection.mutable.Set[ClauseWithIndexLists],
+    seHs:                         pi2SeHs,
+    subsetSize:                   Int
+  ): ( scala.collection.mutable.Set[ClauseWithIndexLists] ) = {
+
+    for ( subset <- literalsWithIndexLists.subsets( subsetSize ); if seHs.noSolutionHasBeenFound ) {
+      val clauseWithIndexLists = new ClauseWithIndexLists( subset.toList )
+      if ( clauseWithIndexLists.isAllowed ) {
+        allowedClausesWithIndexLists += clauseWithIndexLists
+        val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
+        if ( clausesWithIndexLists.isSolution ) {
+          seHs.noSolutionHasBeenFound = false
+          seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+        }
+      } else if ( !clauseWithIndexLists.isAllowedAtLeastAsSubformula ) {
+        for ( literal <- subset ) {
+          literalsWithIndexLists -= literal
+        }
+      }
+      println( "clause" )
+      println( clauseWithIndexLists.formula )
+      println( "noSolutionHasBeenFound" )
+      println( seHs.noSolutionHasBeenFound )
+      println( "isAllowedAsSubformula" )
+      println( clauseWithIndexLists.isAllowedAtLeastAsSubformula )
+      println( "isAllowed" )
+      println( clauseWithIndexLists.isAllowed )
+    }
+
+    println( allowedClausesWithIndexLists )
+    //println( subsetSize )
+
+    if ( seHs.noSolutionHasBeenFound && ( 2 > subsetSize ) ) { // if ( seHs.noSolutionHasBeenFound && ( literalsWithIndexLists.size > subsetSize ) ) {
+      checkAndBuildAllowedClauses(
+        literalsWithIndexLists,
+        allowedClausesWithIndexLists,
+        seHs,
+        subsetSize + 1
+      )
+    } else {
+      allowedClausesWithIndexLists
+    }
+
+  }
+
+  private def computeTheIndexListsForTheLiterals(
+    unifiedLiterals:       Set[FOLFormula],
+    nonTautologicalLeaves: List[Sequent[FOLFormula]],
+    seHs:                  pi2SeHs,
+    y:                     FOLVar,
+    x:                     FOLVar
+  ): ( Set[LiteralWithIndexLists] ) = {
+
+    val literalWithIndexListsSet = scala.collection.mutable.Set[LiteralWithIndexLists]()
+
+    for ( literal <- unifiedLiterals; if seHs.noSolutionHasBeenFound ) {
+
+      var leafOfIndexList: List[LeafIndex] = Nil
+
+      for ( leaf <- nonTautologicalLeaves ) {
+
+        val leafIndex = new LeafIndex( Set(), Set() )
+
+        for ( existsIndex <- 0 until seHs.multiplicityOfBeta ) {
+
+          val subs = Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )
+          val subsetSequent: Sequent[FOLFormula] = subs( literal ).asInstanceOf[FOLFormula] +: Sequent()
+          if ( subsetSequent.isSubsetOf( leaf ) ) {
+            leafIndex.oneToPList += existsIndex
+          }
+        }
+
+        for ( forallIndex <- 0 until seHs.multiplicityOfAlpha ) {
+
+          val subs: Substitution = Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )
+          val subsetSequent: Sequent[FOLFormula] = Neg( subs( literal ).asInstanceOf[FOLFormula] ) +: Sequent()
+          if ( !leaf.intersect( subsetSequent ).isEmpty ) {
+            leafIndex.oneToMList += forallIndex
+          }
+
+        }
+
+        leafOfIndexList = leafOfIndexList :+ leafIndex
+
+      }
+
+      val literalWithIndexLists = new LiteralWithIndexLists( literal, leafOfIndexList, nonTautologicalLeaves.length )
+      literalWithIndexListsSet += literalWithIndexLists
+
+      val clausesWithIndexLists = new ClausesWithIndexLists( List( new ClauseWithIndexLists( List( literalWithIndexLists ) ) ) )
+      if ( clausesWithIndexLists.isSolution ) {
+        seHs.noSolutionHasBeenFound = false
+        seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+      }
+
+    }
+
+    literalWithIndexListsSet.toSet
 
   }
 
@@ -221,12 +527,12 @@ object introducePi2Cut {
     var clausesPlusIndex = scala.collection.mutable.Set[( Set[FOLFormula], List[Int], List[( Int, List[Int] )] )]()
     val literalsBuffer = scala.collection.mutable.Set( literals.toList: _* )
 
-    clausesPlusIndex = recursionAllowedClausesWithIndex( 1, literalsBuffer, clausesPlusIndex, nonTautologicalLeaves, seHs, x, y )
+    clausesPlusIndex = recursionAllowedClausesWithIndexOld( 1, literalsBuffer, clausesPlusIndex, nonTautologicalLeaves, seHs, x, y )
 
     clausesPlusIndex.toList
   }
 
-  private def recursionAllowedClausesWithIndex(
+  private def recursionAllowedClausesWithIndexOld(
     subsetSize:            Int,
     literals:              scala.collection.mutable.Set[FOLFormula],
     clausesPlusIndex:      scala.collection.mutable.Set[( Set[FOLFormula], List[Int], List[( Int, List[Int] )] )],
@@ -252,7 +558,7 @@ object introducePi2Cut {
           }
 
           if ( subsetSequent.isSubsetOf( leaf ) ) {
-            exists = exists :+ nonTautologicalLeaves.indexOf( leaf )
+            exists = exists :+ nonTautologicalLeaves.indexOf( leaf ) // leaf + List[IndexAlphaTiAlpha] + List[IndexRiBetai]
           }
         }
 
@@ -314,7 +620,7 @@ object introducePi2Cut {
     } else if ( !seHs.noSolutionHasBeenFound ) {
       clausesPlusIndex
     } else {
-      recursionAllowedClausesWithIndex( subsetSize + 1, literals, clausesPlusIndex, nonTautologicalLeaves, seHs, x, y )
+      recursionAllowedClausesWithIndexOld( subsetSize + 1, literals, clausesPlusIndex, nonTautologicalLeaves, seHs, x, y )
     }
   }
 
