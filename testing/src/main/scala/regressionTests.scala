@@ -132,6 +132,11 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
     val resolution = Escargot.getResolutionProof( sequent ).get --- "Escargot"
 
     val expansion = ResolutionToExpansionProof( resolution ) --- "ResolutionToExpansionProof"
+
+    deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
+      desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
+      Z3.isValid( expansion.deep ) !-- "deskolemized deep formula validity"
+    }
   }
 }
 
