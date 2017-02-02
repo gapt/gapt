@@ -12,8 +12,6 @@ import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.utils.metrics
 import ammonite.ops._
 
-import scalaz.Success
-
 object loadExpansionProof {
 
   def apply( file: InputFile ): ExpansionProof = withBackgroundTheory( file )._1
@@ -37,7 +35,7 @@ object loadExpansionProof {
       val ( endSequent, sketch ) = TptpProofParser.parse( StringInputFile( tstpOutput ), ignoreStrongQuants = true )
       metrics.value( "tstp_sketch_size", sketch.subProofs.size )
 
-      val Success( resProof ) = RefutationSketchToResolution( sketch )
+      val Right( resProof ) = RefutationSketchToResolution( sketch )
       loadResolutionProof( resProof, endSequent )
   }
 

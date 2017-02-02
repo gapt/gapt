@@ -11,8 +11,6 @@ import at.logic.gapt.proofs.{ FOLClause, HOLClause }
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 
-import scalaz.Success
-
 object Metis extends Metis
 
 class Metis extends ResolutionProver with ExternalProgram {
@@ -31,7 +29,8 @@ class Metis extends ResolutionProver with ExternalProgram {
           RefutationSketchToResolution( TptpProofParser.parse( StringInputFile( tptpDerivation ), labelledCNF mapValues {
             Seq( _ )
           } ) ) match {
-            case Success( proof ) => Some( proof )
+            case Right( proof ) => Some( proof )
+            case Left( error )  => throw new IllegalArgumentException( error.toString )
           }
         } else if ( lines.exists( _.startsWith( "SZS status Satisfiable" ) ) ) {
           None
