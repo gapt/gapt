@@ -146,8 +146,8 @@ class pi2SeHs(
 }
 
 class LeafIndex(
-  var oneToMList: Set[Int],
-  var oneToPList: Set[Int]
+  val oneToMList: Set[Int],
+  val oneToPList: Set[Int]
 ) {}
 
 class LiteralWithIndexLists(
@@ -166,20 +166,26 @@ class ClauseWithIndexLists(
 
   def numberOfDNTAs: Int = this.literals.head.numberOfDNTAs
 
-  def leafIndexList: List[LeafIndex] = {
+  def leafIndexListClause: List[LeafIndex] = {
 
-    val leafIndexListBuffer: List[LeafIndex] = this.literals.head.leafIndexList
-    this.literals.tail.foreach( literal => for ( leafNumber <- 0 until literal.numberOfDNTAs ) {
-      leafIndexListBuffer( leafNumber ).oneToPList = leafIndexListBuffer( leafNumber ).oneToPList.intersect( literal.leafIndexList( leafNumber ).oneToPList )
-      leafIndexListBuffer( leafNumber ).oneToMList = leafIndexListBuffer( leafNumber ).oneToMList.union( literal.leafIndexList( leafNumber ).oneToMList )
-    } )
-    leafIndexListBuffer
+    var leafIndexListClauseBuffer: List[LeafIndex] = Nil
+    for ( leafNumber <- 0 until this.literals.head.numberOfDNTAs ) {
+      var leafIndexListClauseBufferM = this.literals.head.leafIndexList( leafNumber ).oneToMList
+      var leafIndexListClauseBufferP = this.literals.head.leafIndexList( leafNumber ).oneToPList
+      this.literals.tail.foreach( literal => {
+        leafIndexListClauseBufferM = leafIndexListClauseBufferM.union( literal.leafIndexList( leafNumber ).oneToMList )
+        leafIndexListClauseBufferP = leafIndexListClauseBufferP.intersect( literal.leafIndexList( leafNumber ).oneToPList )
+      } )
+      val leafIn = new LeafIndex( leafIndexListClauseBufferM, leafIndexListClauseBufferP )
+      leafIndexListClauseBuffer = leafIndexListClauseBuffer :+ leafIn
+    }
+    leafIndexListClauseBuffer
   }
 
   def isAllowedAtLeastAsSubformula: Boolean = {
 
     var bool: Boolean = false
-    this.leafIndexList.foreach( leafNumber => {
+    this.leafIndexListClause.foreach( leafNumber => {
       if ( leafNumber.oneToPList.nonEmpty ) {
         bool = true
       }
@@ -192,7 +198,7 @@ class ClauseWithIndexLists(
     var bool: Boolean = false
     if ( this.isAllowedAtLeastAsSubformula ) {
       bool = true
-      this.leafIndexList.foreach( leafNumber => {
+      this.leafIndexListClause.foreach( leafNumber => {
         if ( leafNumber.oneToMList.isEmpty ) {
           bool = false
         }
@@ -214,27 +220,32 @@ class ClausesWithIndexLists(
     val clauses: List[ClauseWithIndexLists]
 ) {
 
-  private def leafIndexList: List[LeafIndex] = {
+  private def leafIndexListClauses: List[LeafIndex] = {
 
     var emptyList: Boolean = false
-    val leafIndexListBuffer: List[LeafIndex] = this.clauses.head.leafIndexList
-    this.clauses.tail.foreach( clause => for ( leafNumber <- 0 until clause.numberOfDNTAs; if !emptyList ) {
-      leafIndexListBuffer( leafNumber ).oneToPList = leafIndexListBuffer( leafNumber ).oneToPList.union( clause.leafIndexList( leafNumber ).oneToPList )
-      leafIndexListBuffer( leafNumber ).oneToMList = leafIndexListBuffer( leafNumber ).oneToMList.intersect( clause.leafIndexList( leafNumber ).oneToMList )
-      if ( leafIndexListBuffer( leafNumber ).oneToMList.isEmpty ) {
-        emptyList = true
-      }
-    } )
-    if ( emptyList ) {
-      leafIndexListBuffer( 0 ).oneToPList = Set()
+    var leafIndexListClausesBuffer: List[LeafIndex] = Nil
+    for ( leafNumber <- 0 until this.clauses.head.numberOfDNTAs; if !emptyList ) {
+      var leafIndexListClausesBufferM = this.clauses.head.leafIndexListClause( leafNumber ).oneToMList
+      var leafIndexListClausesBufferP = this.clauses.head.leafIndexListClause( leafNumber ).oneToPList
+      this.clauses.tail.foreach( clause => {
+        if ( !emptyList ) {
+          leafIndexListClausesBufferM = leafIndexListClausesBufferM.intersect( clause.leafIndexListClause( leafNumber ).oneToMList )
+          leafIndexListClausesBufferP = leafIndexListClausesBufferP.union( clause.leafIndexListClause( leafNumber ).oneToPList )
+        }
+        if ( leafIndexListClausesBufferM.isEmpty ) {
+          emptyList = true
+        }
+      } )
+      val leafIn = new LeafIndex( leafIndexListClausesBufferM, leafIndexListClausesBufferP )
+      leafIndexListClausesBuffer = leafIndexListClausesBuffer :+ leafIn
     }
-    leafIndexListBuffer
+    leafIndexListClausesBuffer
   }
 
   def isSolution: Boolean = {
 
     var bool: Boolean = true
-    this.leafIndexList.forall( leafNumber => {
+    this.leafIndexListClauses.forall( leafNumber => {
       if ( leafNumber.oneToPList.isEmpty ) {
         bool = false
       } else if ( leafNumber.oneToMList.isEmpty ) {
@@ -476,14 +487,15 @@ object introducePi2Cut {
 
       for ( leaf <- nonTautologicalLeaves ) {
 
-        val leafIndex = new LeafIndex( Set(), Set() )
+        var leafIndexP = Set[Int]()
+        var leafIndexM = Set[Int]()
 
         for ( existsIndex <- 0 until seHs.multiplicityOfBeta ) {
 
           val subs = Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )
           val subsetSequent: Sequent[FOLFormula] = subs( literal ).asInstanceOf[FOLFormula] +: Sequent()
           if ( subsetSequent.isSubsetOf( leaf ) ) {
-            leafIndex.oneToPList += existsIndex
+            leafIndexP += existsIndex
           }
         }
 
@@ -492,11 +504,12 @@ object introducePi2Cut {
           val subs: Substitution = Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )
           val subsetSequent: Sequent[FOLFormula] = Neg( subs( literal ).asInstanceOf[FOLFormula] ) +: Sequent()
           if ( !leaf.intersect( subsetSequent ).isEmpty ) {
-            leafIndex.oneToMList += forallIndex
+            leafIndexM += forallIndex
           }
 
         }
 
+        val leafIndex = new LeafIndex( leafIndexM, leafIndexP )
         leafOfIndexList = leafOfIndexList :+ leafIndex
 
       }
