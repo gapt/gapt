@@ -54,7 +54,7 @@ class CeresTest extends Specification with SequentMatchers {
       hof"P(0:nat) & !x (P x -> P (s x)) -> P(s(s(s(s(0)))))" ) ) {
 
       cut( "lem", hof"!x (P(x:nat) -> P (s (s x)))" ) onAll decompose
-      repeat( chain( "goal_0_1" ) ); trivial
+      repeat( chain( "goal_0_1" ).at( "lem_1" ) ); trivial
       repeat( chain( "lem" ) ); trivial
     }
 
