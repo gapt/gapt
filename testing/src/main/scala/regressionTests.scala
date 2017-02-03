@@ -135,7 +135,8 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
     deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
-      Z3.isValid( expansion.deep ) !-- "deskolemized deep formula validity"
+      Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
+      ExpansionProofToLK( desk ) --- "ExpansionProofToLK on deskolemization"
     }
   }
 }
