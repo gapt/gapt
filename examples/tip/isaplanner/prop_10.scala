@@ -36,4 +36,6 @@ object prop_10 extends TacticsProof {
 
   val aipOptions2 = new ProverOptions( escargot, sequentialInductionAxioms )
   val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent, "goal", List( hov"m:Nat" ) )
+
+  val proof4 = Lemma( sequent ) { viper }
 }
