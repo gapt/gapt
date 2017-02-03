@@ -9,6 +9,7 @@ import org.specs2.mutable.Specification
 class IntroducePiCutTest extends Specification {
 
   /*
+  */
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)|Q(f1(x)))"
@@ -93,8 +94,8 @@ class IntroducePiCutTest extends Specification {
       )
     }
   }
-  */
 
+  /*
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -128,7 +129,6 @@ class IntroducePiCutTest extends Specification {
       )
     }
   }
-  /*
   */
 
 }

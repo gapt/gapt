@@ -407,7 +407,7 @@ object introducePi2Cut {
     for ( literalWithIndexLists <- literalsWithIndexLists ) {
       val clause = new ClauseWithIndexLists( List( literalWithIndexLists ) )
       allowedClausesWithIndexListsMutable += clause
-      if ( !clause.isAllowedAtLeastAsSubformula ) {
+      if ( !clause.isAllowedAtLeastAsSubformula && !clause.isAllowed ) {
         literalsWithIndexListsMutable -= literalWithIndexLists
       }
     }
@@ -509,13 +509,13 @@ object introducePi2Cut {
       }
 
       val literalWithIndexLists = new LiteralWithIndexLists( literal, leafOfIndexList, nonTautologicalLeaves.length )
+      val clauseWithIndexLists = new ClauseWithIndexLists( List( literalWithIndexLists ) )
 
       if ( foundNonEmptyPList ) {
 
         literalWithIndexListsSet += literalWithIndexLists
 
         if ( !foundEmptyMOrPList ) {
-          val clauseWithIndexLists = new ClauseWithIndexLists( List( literalWithIndexLists ) )
           val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
           if ( clausesWithIndexLists.isSolution ) {
             seHs.noSolutionHasBeenFound = false
