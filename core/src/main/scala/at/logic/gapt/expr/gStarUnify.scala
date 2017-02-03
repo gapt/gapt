@@ -6,6 +6,7 @@ package at.logic.gapt.expr
 object gStarUnify {
 
   def apply(
+    seHs:                      pi2SeHs,
     setOfLiterals:             Set[FOLFormula],
     productionRulesX:          Set[( LambdaExpression, LambdaExpression )],
     productionRulesY:          Set[( LambdaExpression, LambdaExpression )],
@@ -15,17 +16,9 @@ object gStarUnify {
     nameOfUniversalVariable:   FOLVar
   ): Set[FOLFormula] = {
 
-    val productionRulesXS: scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )] = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
-    productionRulesX.foreach( element => {
-      productionRulesXS += element
-      productionRulesXS += element.swap
-    } )
+    val productionRulesXS: Set[( LambdaExpression, LambdaExpression )] = productionRulesX ++ productionRulesX.map( _.swap )
 
-    val productionRulesYS: scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )] = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
-    productionRulesY.foreach( element => {
-      productionRulesYS += element
-      productionRulesYS += element.swap
-    } )
+    val productionRulesYS: Set[( LambdaExpression, LambdaExpression )] = productionRulesY ++ productionRulesY.map( _.swap )
 
     val literals = sortAndAtomize( setOfLiterals )
     val ( posAtoms, negAtoms ) = literals
