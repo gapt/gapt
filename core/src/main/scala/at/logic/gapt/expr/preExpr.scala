@@ -1,11 +1,16 @@
-package at.logic.gapt.formats.babel
+package at.logic.gapt.expr
 
+import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.utils.ScalazHelpers.RichEither
 import at.logic.gapt.{ expr => real }
 
 import scala.collection.mutable
 
 /**
- * Intermediate representation for expressions parsed by Babel.
+ * Intermediate representation for expressions without explicit types.
+ *
+ * The main application is during parsing: the [[at.logic.gapt.formats.babel.BabelParser]]
+ * produces pre-expressions.
  *
  * This representation is intended to be as simple as possible, all
  * higher-level constructs (such as <-> or ∀) are already desugared
@@ -19,39 +24,51 @@ import scala.collection.mutable
  *  1. Free variables, bound variables, and constants are not
  *     distinguished; they are all stored as "identifiers".
  */
-object ast {
+object preExpr {
 
   class MetaTypeIdx {
     override def toString = Integer toHexString hashCode() take 3
   }
-  def gensym() = new MetaTypeIdx
 
   sealed trait Type
   case class BaseType( name: String ) extends Type
   case class ArrType( a: Type, b: Type ) extends Type
   case class VarType( name: String ) extends Type
   case class MetaType( idx: MetaTypeIdx ) extends Type
-  def freshMetaType() = MetaType( gensym() )
+  def freshMetaType() = MetaType( new MetaTypeIdx )
+
+  case class Location( begin: Int, end: Int )
 
   sealed trait Expr
+  case class LocAnnotation( expr: Expr, loc: Location ) extends Expr
   case class TypeAnnotation( expr: Expr, ty: Type ) extends Expr
   case class Ident( name: String, ty: Type ) extends Expr
   case class Abs( v: Ident, sub: Expr ) extends Expr
   case class App( a: Expr, b: Expr ) extends Expr
-  case class Lifted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
+  case class Quoted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
 
-  def readable( t: Type ): String = t match {
-    case BaseType( name ) => name
-    case VarType( name )  => s"?$name"
-    case ArrType( a, b )  => s"(${readable( a )}>${readable( b )})"
-    case MetaType( idx )  => s"_$idx"
-  }
-  def readable( e: Expr ): String = e match {
-    case TypeAnnotation( expr, ty ) => s"(${readable( expr )}:${readable( ty )})"
-    case Ident( name, ty )          => s"($name:${readable( ty )})"
-    case Abs( v, sub )              => s"(^${readable( v )} ${readable( sub )})"
-    case App( a, b )                => s"(${readable( a )} ${readable( b )})"
-    case Lifted( e, ty, fvs )       => s"#lifted($e, ${readable( ty )}${fvs map { case ( n, t ) => s", $n -> ${readable( t )}" } mkString})"
+  class ReadablePrinter( assg: Map[MetaTypeIdx, Type], sig: BabelSignature ) {
+    private val printMetaTypeIdx: MetaTypeIdx => String = {
+      val names = Stream.from( 1 ).map( i => s"_$i" ).iterator
+      val cache = mutable.Map[MetaTypeIdx, String]()
+      idx => cache.getOrElseUpdate( idx, names.next() )
+    }
+
+    def apply( t: Type ): String = t match {
+      case BaseType( name ) => name
+      case VarType( name )  => s"?$name"
+      case ArrType( a, b )  => s"(${apply( a )}>${apply( b )})"
+      case MetaType( idx ) =>
+        assg.get( idx ).map( apply ).getOrElse( printMetaTypeIdx( idx ) )
+    }
+    def apply( e: Expr ): String = e match {
+      case LocAnnotation( expr, _ )   => apply( expr )
+      case TypeAnnotation( expr, ty ) => s"(${apply( expr )}:${apply( ty )})"
+      case Ident( name, ty )          => s"($name:${apply( ty )})"
+      case Abs( v, sub )              => s"(^${apply( v )} ${apply( sub )})"
+      case App( a, b )                => s"(${apply( a )} ${apply( b )})"
+      case Quoted( e, ty, fvs )       => s"#quote(${e.toSigRelativeString( sig )}, ${apply( ty )}${fvs map { case ( n, t ) => s", $n -> ${apply( t )}" } mkString})"
+    }
   }
 
   def Bool = BaseType( "o" )
@@ -62,14 +79,14 @@ object ast {
     App( App( Ident( real.EqC.name, eqType ), a ), b )
   }
 
-  def Top = LiftBlackbox( real.Top() )
-  def Bottom = LiftBlackbox( real.Bottom() )
+  def Top = QuoteBlackbox( real.Top() )
+  def Bottom = QuoteBlackbox( real.Bottom() )
 
-  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( LiftBlackbox( c() ), a )
+  def UnaryConn( c: real.MonomorphicLogicalC ): Expr => Expr = a => App( QuoteBlackbox( c() ), a )
   def Neg = UnaryConn( real.NegC )
 
   def BinaryConn( c: real.MonomorphicLogicalC ): ( Expr, Expr ) => Expr = ( a, b ) =>
-    App( App( LiftBlackbox( c() ), a ), b )
+    App( App( QuoteBlackbox( c() ), a ), b )
   def And = BinaryConn( real.AndC )
   def Or = BinaryConn( real.OrC )
   def Bicond( a: Expr, b: Expr ) = And( Imp( a, b ), Imp( b, a ) )
@@ -96,11 +113,11 @@ object ast {
     case real.`->`( in, out ) => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
-  def LiftBlackbox( e: real.LambdaExpression ) =
-    Lifted( e, liftTypeMono( e.exptype ), Map() )
+  def QuoteBlackbox( e: real.LambdaExpression ) =
+    Quoted( e, liftTypeMono( e.exptype ), Map() )
 
-  def LiftWhitebox( e: real.LambdaExpression ) =
-    Lifted( e, liftTypeMono( e.exptype ),
+  def QuoteWhitebox( e: real.LambdaExpression ) =
+    Quoted( e, liftTypeMono( e.exptype ),
       real.freeVariables( e ).
       map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
       toMap )
@@ -116,10 +133,11 @@ object ast {
     case ArrType( a, b )              => ArrType( subst( a, assg ), subst( b, assg ) )
     case MetaType( idx )              => assg.get( idx ).fold( t )( subst( _, assg ) )
   }
-  type UnificationError = String
-  def printCtx( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): String =
-    ( assg.map { case ( idx, t ) => s"${readable( MetaType( idx ) )} = ${readable( t )}\n" } ++
-      eqs.map { case ( t1, t2 ) => s"${readable( t1 )} = ${readable( t2 )}\n" } ).mkString
+  trait UnificationError {
+    def assg: Map[MetaTypeIdx, Type]
+  }
+  case class OccursCheck( t1: MetaType, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
+  case class Mismatch( t1: Type, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
 
   def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): Either[UnificationError, Map[MetaTypeIdx, Type]] = eqs match {
     case Nil => Right( assg )
@@ -135,15 +153,33 @@ object ast {
         if ( t1 == t2_ )
           solve( rest, assg )
         else if ( freeMetas( t2_ ) contains i1 )
-          Left( s"Cannot unify types: ${readable( t1 )} occurs in ${readable( t2_ )} in\n${printCtx( eqs, assg )}" )
+          Left( OccursCheck( t1, t2_, assg ) )
         else
           solve( rest, assg + ( i1 -> t2_ ) )
       case ( t1, t2: MetaType ) => solve( ( t2 -> t1 ) :: rest, assg )
-      case ( t1, t2 )           => Left( s"Cannot unify types ${readable( t1 )} and ${readable( t2 )} in\n${printCtx( eqs, assg )}" )
+      case ( t1, t2 )           => Left( Mismatch( t1, t2, assg ) )
     }
   }
 
-  def infers( exprs: Seq[Expr], env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): Either[UnificationError, ( Map[MetaTypeIdx, Type], Seq[Type] )] =
+  case class ElabError( loc: Option[Location], msg: String, expected: Option[Type], actual: Type, assg: Map[MetaTypeIdx, Type] )
+
+  def locOf( expr: Expr ): Option[Location] =
+    expr match {
+      case LocAnnotation( _, loc ) => Some( loc )
+      case TypeAnnotation( _, _ )  => None
+      case Ident( _, _ )           => None
+      case Abs( _, sub )           => locOf( sub )
+      case App( a, b ) =>
+        ( locOf( a ), locOf( b ) ) match {
+          case ( None, None )                 => None
+          case ( Some( loc ), None )          => Some( loc )
+          case ( None, Some( loc ) )          => Some( loc )
+          case ( Some( loc1 ), Some( loc2 ) ) => Some( Location( math.min( loc1.begin, loc2.begin ), math.max( loc2.end, loc2.end ) ) )
+        }
+      case Quoted( _, _, _ ) => None
+    }
+
+  def infers( exprs: Seq[Expr], env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] )( implicit loc: Option[Location] ): Either[ElabError, ( Map[MetaTypeIdx, Type], Seq[Type] )] =
     exprs match {
       case Seq() => Right( s0 -> Seq() )
       case expr +: rest =>
@@ -155,44 +191,65 @@ object ast {
         } yield ( s2, exprt +: restts )
     }
 
-  def infer( expr: Expr, env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] ): Either[UnificationError, ( Map[MetaTypeIdx, Type], Type )] =
+  def infer( expr: Expr, env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] )( implicit loc: Option[Location] ): Either[ElabError, ( Map[MetaTypeIdx, Type], Type )] =
     expr match {
+      case LocAnnotation( e, loc_ ) =>
+        infer( e, env, s0 )( Some( loc_ ) )
       case TypeAnnotation( e, t ) =>
         for {
           r1 <- infer( e, env, s0 )
           ( s1, et ) = r1
-          s2 <- solve( List( et -> t ), s1 )
+          s2 <- solve( List( et -> t ), s1 ).
+            leftMap( err => ElabError( loc, s"mismatched annotated type", Some( t ), et, err.assg ) )
         } yield ( s2, et )
       case Ident( n, t ) =>
-        if ( env contains n )
-          for ( s1 <- solve( List( env( n )() -> t ), s0 ) ) yield ( s1, t )
-        else Right( s0 -> t )
+        if ( env contains n ) {
+          val tyInEnv = env( n )()
+          for (
+            s1 <- solve( List( tyInEnv -> t ), s0 ).
+              leftMap( err => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, err.assg ) )
+          ) yield ( s1, t )
+        } else Right( s0 -> t )
       case Abs( Ident( vn, vt ), t ) =>
         for {
           r1 <- infer( t, env + ( vn -> ( () => vt ) ), s0 )
           ( s1, subt ) = r1
         } yield ( s1, ArrType( vt, subt ) )
       case App( a, b ) =>
-        val appType = freshMetaType()
+        val resType = freshMetaType()
+        val argType = freshMetaType()
         for {
           r1 <- infer( a, env, s0 )
           ( s1, at ) = r1
-          r2 <- infer( b, env, s1 )
-          ( s2, bt ) = r2
-          s3 <- solve( List( at -> ArrType( bt, appType ) ), s2 )
-        } yield ( s3, appType )
-      case Lifted( e, ty, fvs ) =>
-        for {
-          s1 <- solve( ( for ( ( n, t ) <- fvs.view ) yield env( n )() -> t ).toList, s0 )
-        } yield ( s1, ty )
+          s2 <- solve( List( at -> ArrType( argType, resType ) ), s1 ).
+            leftMap( err => ElabError( locOf( a ).orElse( loc ), "not a function", None, at, err.assg ) )
+          r3 <- infer( b, env, s2 )
+          ( s3, bt ) = r3
+          s4 <- solve( List( bt -> argType ), s3 ).
+            leftMap( err => ElabError( locOf( b ).orElse( loc ), "incorrect type for argument", Some( argType ), bt, err.assg ) )
+        } yield ( s4, resType )
+      case Quoted( e, ty, fvs ) =>
+        def solveFVs( fvs: List[( String, Type )], s0: Map[MetaTypeIdx, Type] ): Either[ElabError, Map[MetaTypeIdx, Type]] =
+          fvs match {
+            case Nil => Right( s0 )
+            case ( ( name, fvTy ) :: rest ) =>
+              val tyInEnv = env( name )()
+              for {
+                s1 <- solve( List( tyInEnv -> fvTy ), s0 ).leftMap( err =>
+                  ElabError( loc, s"mismatched type for free variable $name in quote $e", Some( tyInEnv ), fvTy, err.assg ) )
+                s2 <- solveFVs( rest, s1 )
+              } yield s2
+          }
+        for ( s1 <- solveFVs( fvs.toList, s0 ) ) yield ( s1, ty )
     }
 
   def freeIdentifers( expr: Expr ): Set[String] = expr match {
+    case LocAnnotation( e, _ )   => freeIdentifers( e )
     case TypeAnnotation( e, ty ) => freeIdentifers( e )
     case Ident( name, ty )       => Set( name )
     case Abs( v, sub )           => freeIdentifers( sub ) - v.name
     case App( a, b )             => freeIdentifers( a ) union freeIdentifers( b )
-    case Lifted( e, ty, fvs )    => fvs.keySet
+    case Quoted( e, ty, fvs )    => fvs.keySet
   }
 
   def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
@@ -203,6 +260,7 @@ object ast {
   }
 
   def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
+    case LocAnnotation( e, _ )   => toRealExpr( e, assg, bound )
     case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
     case expr @ Ident( name, ty ) =>
       if ( bound( name ) ) real.Var( name, toRealType( ty, assg ) )
@@ -212,9 +270,9 @@ object ast {
       real.Abs( toRealExpr( v, assg, bound_ ).asInstanceOf[real.Var], toRealExpr( sub, assg, bound_ ) )
     case App( a, b ) =>
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
-    case Lifted( e, ty, fvs ) => e
+    case Quoted( e, ty, fvs ) => e
   }
-  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[UnificationError, Seq[real.LambdaExpression]] = {
+  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[ElabError, Seq[real.LambdaExpression]] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet
     val freeVars = fi.filter( sig.signatureLookup( _ ).isVar )
     val startingEnv = fi.map { i =>
@@ -226,9 +284,9 @@ object ast {
           () => fixedMeta
       } )
     }
-    for ( r <- infers( expr, startingEnv.toMap, Map() ); ( assg, _ ) = r )
+    for ( r <- infers( expr, startingEnv.toMap, Map() )( None ); ( assg, _ ) = r )
       yield expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
   }
-  def toRealExpr( expr: Expr, sig: BabelSignature ): Either[UnificationError, real.LambdaExpression] =
+  def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.LambdaExpression] =
     toRealExprs( Seq( expr ), sig ).map( _.head )
 }

@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.proofs.{ Ant, OccConnector, Sequent, SequentIndex, Suc }
+import at.logic.gapt.proofs.{ Ant, SequentConnector, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.lk._
 
 import scala.collection.mutable
@@ -159,7 +159,7 @@ object ResolutionToLKProof {
     new LKVisitor[Sequent[Boolean]] {
       val formula = proof.conclusion( idx )
       val proofToInsert = func( formula )
-      val connToInsert = OccConnector( proofToInsert.endSequent, formula +: Sequent() :+ formula,
+      val connToInsert = SequentConnector( proofToInsert.endSequent, formula +: Sequent() :+ formula,
         for ( i <- proofToInsert.endSequent.indicesSequent )
           yield if ( proofToInsert.endSequent( i ) == formula )
           Seq( if ( idx.isSuc ) Ant( 0 ) else Suc( 0 ) )
@@ -176,50 +176,50 @@ object ResolutionToLKProof {
       override def visitLogicalAxiom( proof: LogicalAxiom, isAncestor: Sequent[Boolean] ) =
         isAncestor.find( _ == true ) match {
           case Some( i ) => ( proofToInsert, connToInsert )
-          case None      => withIdentityOccConnector( proof )
+          case None      => withIdentitySequentConnector( proof )
         }
 
       // Contract ancestors as soon as possible, and then skip the following contractions.
-      override def recurse( proof: LKProof, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) = {
+      override def recurse( proof: LKProof, isAncestor: Sequent[Boolean] ): ( LKProof, SequentConnector ) = {
         if ( isAncestor.forall( _ == false ) ) {
-          ( proof, OccConnector( proof.conclusion ) )
+          ( proof, SequentConnector( proof.conclusion ) )
         } else {
           val mainAncestors = proof.mainIndices.filter( isAncestor( _ ) )
           if ( !proof.isInstanceOf[LogicalAxiom] && mainAncestors.nonEmpty ) {
             val mainAncestor = mainAncestors.head
             val ( proof3, conn ) = if ( mainAncestor.isAnt ) {
               val proof2 = CutRule( LogicalAxiom( proof.conclusion( mainAncestor ) ), Suc( 0 ), proof, mainAncestor )
-              recurse( proof2, proof2.getRightOccConnector.inv.parent( isAncestor, true ) )
+              recurse( proof2, proof2.getRightSequentConnector.inv.parent( isAncestor, true ) )
             } else {
               val proof2 = CutRule( proof, mainAncestor, LogicalAxiom( proof.conclusion( mainAncestor ) ), Ant( 0 ) )
-              recurse( proof2, proof2.getLeftOccConnector.inv.parent( isAncestor, true ) )
+              recurse( proof2, proof2.getLeftSequentConnector.inv.parent( isAncestor, true ) )
             }
             // FIXME: do this properly
             val proof4 = ReductiveCutElimination( proof3 )
-            ( proof4, OccConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
+            ( proof4, SequentConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
           } else {
             val ( proofNew, conn ) = super.recurse( proof, isAncestor )
             contract( proofNew, conn )
           }
         }
       }
-      def contract( subProof: LKProof, subConn: OccConnector[HOLFormula] ): ( LKProof, OccConnector[HOLFormula] ) = {
+      def contract( subProof: LKProof, subConn: SequentConnector ): ( LKProof, SequentConnector ) = {
         val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )
         val newIndicesByFormula = newIndices.groupBy( i => subProof.conclusion( i ) -> i.polarity )
         newIndicesByFormula.find( ni => ni._2.size > formulaMultiplicities( ni._1 ) ) match {
           case Some( ( _, Seq( i, j, _* ) ) ) =>
             val contracted = if ( i.isSuc ) ContractionRightRule( subProof, i, j ) else ContractionLeftRule( subProof, i, j )
-            ( contracted, contracted.getOccConnector * subConn )
+            ( contracted, contracted.getSequentConnector * subConn )
           case None => ( subProof, subConn )
         }
       }
-      override def visitContractionLeft( proof: ContractionLeftRule, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) =
+      override def visitContractionLeft( proof: ContractionLeftRule, isAncestor: Sequent[Boolean] ): ( LKProof, SequentConnector ) =
         one2one( proof, isAncestor ) {
           case Seq( ( subProof, subConn ) ) =>
             if ( subConn.children( proof.aux1 ).isEmpty ) return ( subProof, subConn )
             ContractionLeftRule( subProof, subConn child proof.aux1, subConn child proof.aux2 )
         }
-      override def visitContractionRight( proof: ContractionRightRule, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) =
+      override def visitContractionRight( proof: ContractionRightRule, isAncestor: Sequent[Boolean] ): ( LKProof, SequentConnector ) =
         one2one( proof, isAncestor ) {
           case Seq( ( subProof, subConn ) ) =>
             if ( subConn.children( proof.aux1 ).isEmpty ) return ( subProof, subConn )

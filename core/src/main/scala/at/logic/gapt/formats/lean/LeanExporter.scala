@@ -163,11 +163,11 @@ class LeanExporter {
 
     import at.logic.gapt.proofs.lk._
     def f( p: LKProof, hs: Sequent[Int] ): Unit = p match {
-      case p: ContractionLeftRule  => f( p.subProof, p.getOccConnector.parent( hs ) )
-      case p: ContractionRightRule => f( p.subProof, p.getOccConnector.parent( hs ) )
-      case p: WeakeningLeftRule    => f( p.subProof, p.getOccConnector.parent( hs ) )
-      case p: WeakeningRightRule   => f( p.subProof, p.getOccConnector.parent( hs ) )
-      case p: DefinitionRule       => f( p.subProof, p.getOccConnector.parent( hs ) )
+      case p: ContractionLeftRule  => f( p.subProof, p.getSequentConnector.parent( hs ) )
+      case p: ContractionRightRule => f( p.subProof, p.getSequentConnector.parent( hs ) )
+      case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ) )
+      case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ) )
+      case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ) )
       case _: TheoryAxiom          => out ++= "exact sorry,\n"
       case _ =>
         var rule = s"gapt.lk.${p.longName}"

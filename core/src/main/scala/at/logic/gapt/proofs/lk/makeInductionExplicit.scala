@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, OccConnector }
+import at.logic.gapt.proofs.{ Ant, SequentConnector }
 
 object makeInductionExplicit extends LKVisitor[Unit] {
   def inductionPrinciple( indty: Ty, constrs: Seq[Const] ) = {
@@ -16,12 +16,12 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
   }
 
-  override def recurse( p: LKProof, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) =
+  override def recurse( p: LKProof, otherArg: Unit ): ( LKProof, SequentConnector ) =
     contractAfter( super.recurse )( p, otherArg )
 
   def apply( p: LKProof ): LKProof = apply( p, () )
 
-  override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
+  override def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
     val indty = proof.indTy
     val constrs = proof.cases.map { _.constructor }
 
@@ -53,6 +53,6 @@ object makeInductionExplicit extends LKVisitor[Unit] {
       ForallLeftRule( explicitFOLp, indprin, Abs( proof.quant, proof.qfFormula ) )
 
     val ( proof_, occConn ) = recurse( explicitHOLp, () )
-    ( proof_, occConn * OccConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv )
+    ( proof_, occConn * SequentConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv )
   }
 }

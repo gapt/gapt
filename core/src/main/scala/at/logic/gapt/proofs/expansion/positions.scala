@@ -70,20 +70,6 @@ object replaceAtHOLPosition {
  */
 object replaceWithContext {
   /**
-   * Instantiates the quantifier inside a replacement context.
-   *
-   * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
-   */
-  private def instReplCtx( ctx: Abs, term: LambdaExpression ): Abs =
-    ctx match {
-      case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
-        val newX = rename( x, freeVariables( term ) )
-        instReplCtx( Abs( newX, Substitution( x -> newX )( quantFormula ) ), term )
-      case Abs( x, quantFormula: HOLFormula ) =>
-        Abs( x, instantiate( quantFormula, term ) )
-    }
-
-  /**
    *
    * @param et An expansion tree.
    * @param replacementContext A replacement context, i.e. a lambda expression of the form λx.E.
@@ -117,6 +103,80 @@ object replaceWithContext {
       case _ => throw new IllegalArgumentException( s"Tree $et and context $replacementContext could not be handled." )
     }
   }
+}
+
+/**
+ * Inserts a definition into an expansion tree by either creating an ETDefinition node at the appropriate place or
+ * else just replacing terms.
+ */
+object insertDefinition {
+  def apply( et: ExpansionTree, defn: Definition, replacementContext: Abs ): ExpansionTree = {
+    val Abs( v, expr ) = replacementContext
+
+    def definitionApplied = BetaReduction.betaNormalize( App( replacementContext, defn.what ) )
+
+    ( et, expr ) match {
+      case ( _, Apps( `v`, _ ) ) => // ctx = λ v. v […]
+        ETDefinition( definitionApplied.asInstanceOf[HOLAtom], defn, et )
+
+      case ( ETDefinition( shallow, defn_, child ), _ ) =>
+        ETDefinition( shallow, defn_, insertDefinition( child, defn, replacementContext ) )
+
+      case ( ETNeg( s ), Neg( f ) ) =>
+        ETNeg( insertDefinition( s, defn, Abs( v, f ) ) )
+
+      case ( ETAnd( l, r ), And( f, g ) ) =>
+        ETAnd( insertDefinition( l, defn, Abs( v, f ) ), insertDefinition( r, defn, Abs( v, g ) ) )
+
+      case ( ETOr( l, r ), Or( f, g ) ) =>
+        ETOr( insertDefinition( l, defn, Abs( v, f ) ), insertDefinition( r, defn, Abs( v, g ) ) )
+
+      case ( ETImp( l, r ), Imp( f, g ) ) =>
+        ETImp( insertDefinition( l, defn, Abs( v, f ) ), insertDefinition( r, defn, Abs( v, g ) ) )
+
+      case ( ETStrongQuantifier( shallow, eigen, child ), Quant( _, _, _ ) ) =>
+        val shallowNew = definitionApplied.asInstanceOf[HOLFormula]
+        ETStrongQuantifier( shallowNew, eigen, insertDefinition( child, defn, instReplCtx( replacementContext, eigen ) ) )
+
+      case ( ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ), Quant( x, f, _ ) ) =>
+        throw new IllegalArgumentException( "Skolem nodes are not handled at this time." )
+
+      case ( ETWeakQuantifier( shallow, instances ), Quant( _, _, _ ) ) =>
+        val shallowNew = definitionApplied.asInstanceOf[HOLFormula]
+        val instancesNew: Map[LambdaExpression, ExpansionTree] = ( for {
+          ( t, e ) <- instances
+          ctxNew = instReplCtx( replacementContext, t )
+          treeNew = insertDefinition( e, defn, ctxNew )
+        } yield ( t, treeNew ) ).toMap
+
+        ETWeakQuantifier( shallowNew, instancesNew )
+
+      case ( ETMerge( l, r ), _ ) =>
+        ETMerge( insertDefinition( l, defn, replacementContext ), insertDefinition( r, defn, replacementContext ) )
+
+      case ( ETWeakening( formula, pol ), _ ) =>
+        ETWeakening( definitionApplied.asInstanceOf[HOLFormula], pol )
+
+      case _ =>
+        replaceWithContext( et, replacementContext, defn.what )
+    }
+  }
+}
+
+/**
+ * Instantiates the quantifier inside a replacement context.
+ *
+ * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
+ */
+private[expansion] object instReplCtx {
+  def apply( ctx: Abs, term: LambdaExpression ): Abs =
+    ctx match {
+      case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
+        val newX = rename( x, freeVariables( term ) )
+        instReplCtx( Abs( newX, Substitution( x -> newX )( quantFormula ) ), term )
+      case Abs( x, quantFormula: HOLFormula ) =>
+        Abs( x, instantiate( quantFormula, term ) )
+    }
 }
 
 object generalizeET {

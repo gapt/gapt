@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.gaptic
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ SequentConnector, Sequent, SequentIndex }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.gaptic.tactics.SkipTactical
@@ -66,14 +66,14 @@ case class ProofState private (
   def replace( proofSegment: LKProof ): ProofState = replace( subGoals.head.index, proofSegment )
 
   class ProofSegmentInsertionVisitor( failOnMissingSubgoal: Boolean ) extends LKVisitor[Unit] {
-    override def visitOpenAssumption( p: OpenAssumption, dummy: Unit ): ( LKProof, OccConnector[HOLFormula] ) = {
+    override def visitOpenAssumption( p: OpenAssumption, dummy: Unit ): ( LKProof, SequentConnector ) = {
       finishedSubGoals.get( p.index ) match {
         case Some( segment ) =>
           val subProof = recurse( segment, () )._1
           require( subProof.conclusion multiSetEquals segment.conclusion )
           val segment_ = WeakeningContractionMacroRule( subProof, p.conclusion )
           require( segment_.conclusion multiSetEquals p.conclusion )
-          ( segment_, OccConnector.guessInjection( segment_.conclusion, p.conclusion ).inv )
+          ( segment_, SequentConnector.guessInjection( segment_.conclusion, p.conclusion ).inv )
         case None if failOnMissingSubgoal  => throw new IllegalArgumentException( s"Subgoal still open: $p" )
         case None if !failOnMissingSubgoal => super.visitOpenAssumption( p, dummy )
       }

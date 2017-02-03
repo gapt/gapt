@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
-import at.logic.gapt.expr.{ All, And, Const, Eq, HOLAtom, Polarity, To, Var, freeVariables, rename }
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
@@ -61,7 +61,7 @@ object LKToExpansionProof {
       val cuts = if ( containsQuantifierOnLogicalLevel( c.cutFormula ) )
         newCut +: ( leftCuts ++ rightCuts )
       else leftCuts ++ rightCuts
-      ( cuts, leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
+      cuts -> ( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
 
     // Propositional rules
     case NegLeftRule( subProof, aux ) =>
@@ -81,14 +81,14 @@ object LKToExpansionProof {
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
       val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
-      ( leftCuts ++ rightCuts, ( leftSubSequent ++ rightSubSequent ) :+ ETAnd( leftSubTree, rightSubTree ) )
+      ( leftCuts ++ rightCuts ) -> ( leftSubSequent ++ rightSubSequent :+ ETAnd( leftSubTree, rightSubTree ) )
 
     case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
       val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
-      ( leftCuts ++ rightCuts, ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
+      ( leftCuts ++ rightCuts ) -> ( ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
 
     case OrRightRule( subProof, aux1, aux2 ) =>
       val ( subCuts, subSequent ) = extract( subProof )
@@ -139,5 +139,12 @@ object LKToExpansionProof {
       val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], Polarity.InAntecedent ), sequent( p.eq ) )
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
+
+    case p: DefinitionRule =>
+      val ( subCuts, subSequent ) = extract( p.subProof )
+
+      subCuts -> subSequent.modify( p.aux ) {
+        insertDefinition( _, p.definition, p.replacementContext )
+      }
   }
 }

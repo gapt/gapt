@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.sketch
 
 import at.logic.gapt.expr.{ FOLAtom, HOLAtom, clauseSubsumption }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.{ FOLClause, HOLClause, OccConnector, SequentProof }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, SequentConnector, SequentProof }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.sat.Sat4j
@@ -20,7 +20,7 @@ import scalaz._
  * These two cases are modelled as [[SketchAxiom]] and [[SketchInference]].
  */
 sealed trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
-  override def occConnectors = immediateSubProofs map { p => OccConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
+  override def occConnectors = immediateSubProofs map { p => SequentConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
   override def mainIndices = Seq()
   override def auxIndices = immediateSubProofs map { _ => Seq() }
 }

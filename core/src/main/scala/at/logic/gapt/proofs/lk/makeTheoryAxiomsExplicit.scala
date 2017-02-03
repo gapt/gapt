@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.proofs.{ Context, HOLClause, OccConnector, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLClause, SequentConnector, Sequent }
 
 /**
  * Given a list of formulas Π, this transforms a proof π of Σ :- Δ into a proof π' of Π, Σ :- Δ.
@@ -16,9 +16,9 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
    * @param proof An LKProof.
    * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
    *         is removed in `proof'` and elements of `formulas` may occur in the antecedent of the end sequent of `proof'`;
-   *        `conn` is an OccConnector relating `proof` and `proof'`.
+   *        `conn` is an SequentConnector relating `proof` and `proof'`.
    */
-  def withOccConnector( formulas: HOLFormula* )( proof: LKProof ) = recurse( proof, formulas )
+  def withSequentConnector( formulas: HOLFormula* )( proof: LKProof ) = recurse( proof, formulas )
 
   /**
    * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
@@ -27,7 +27,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
    * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
    *         is removed in `proof'` and elements of `formula` may occur in the antecedent of the end sequent of `proof'`.
    */
-  def apply( formulas: HOLFormula* )( proof: LKProof ): LKProof = withOccConnector( formulas: _* )( proof )._1
+  def apply( formulas: HOLFormula* )( proof: LKProof ): LKProof = withSequentConnector( formulas: _* )( proof )._1
 
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.axioms.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
 
@@ -41,7 +41,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
 
     val TheoryAxiom( sequent ) = proof
     formulas match {
-      case Seq() => ( proof, OccConnector( sequent ) )
+      case Seq() => ( proof, SequentConnector( sequent ) )
 
       case formula +: rest =>
         require( isPrenex( formula ), s"Formula $formula is not prenex." )
@@ -70,7 +70,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
               case Right( p )  => p
               case Left( seq ) => throw new Exception( s"Sequent $seq is not provable." )
             }
-            ( subProof, OccConnector.findEquals( subProof.endSequent, sequent ) )
+            ( subProof, SequentConnector.findEquals( subProof.endSequent, sequent ) )
 
           case _ => visitTheoryAxiom( proof, rest )
         }
