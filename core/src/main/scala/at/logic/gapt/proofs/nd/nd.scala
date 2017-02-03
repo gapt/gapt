@@ -375,7 +375,7 @@ object AndIntroRule extends ConvenienceConstructor( "AndIntroRule" ) {
 /**
   * An NDProof ending with elimination of an implication:
   * <pre>
-  *     (π1)       (π2)
+  *   (π1)        (π2)
   *  Γ :- A→B    Π :- A
   * --------------------------
   *     Γ, Π :- B
@@ -387,24 +387,96 @@ object AndIntroRule extends ConvenienceConstructor( "AndIntroRule" ) {
 case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
   extends BinaryNDProof with CommonRule {
 
-  val aux1 = Suc( 0 )
-  val aux2 = Suc( 0 )
+  val aux = Suc( 0 )
 
-  val implication = leftPremise( aux1 )
-  val antecedent = rightPremise( aux2 )
+  val implication = leftPremise( aux )
+  val antecedent = rightPremise( aux )
 
   val mainFormula = implication match {
-    case Imp( antecedent, consequent ) => consequent
+    case Imp( `antecedent`, consequent ) => consequent
     case Imp( _,_ ) => throw NDRuleCreationException( s"Proposed main formula $antecedent is not the antecedent of $implication." )
     case _ => throw NDRuleCreationException( s"Proposed main formula $implication is not an implication." )
   }
 
-  def auxIndices = Seq( Seq( aux1 ), Seq( aux2 ) )
+  def auxIndices = Seq( Seq( aux ), Seq( aux ) )
+
+  override def name = "\u2283:e"
+
+  override def mainFormulaSequent =  Sequent() :+ mainFormula
+}
+
+/**
+  * An NDProof ending with introduction of an implication:
+  * <pre>
+  *         (π)
+  *     A, Γ :- B
+  *    --------------
+  *     Γ :- A → B
+  * </pre>
+  *
+  * @param subProof The subproof π.
+  * @param aux The index of A.
+  */
+case class ImpIntroRule( subProof: NDProof, aux: SequentIndex )
+  extends UnaryNDProof with CommonRule {
+
+  validateIndices( premise, Seq( aux ) )
+
+  val impPremise = premise( aux )
+  val impConclusion = premise( Suc(0) )
+  val mainFormula = Imp( impPremise, impConclusion )
+
+  override def auxIndices = Seq( Seq( aux, Suc(0) ) )
 
   override def name = "\u2283:i"
 
-  override def mainFormulaSequent =  Sequent() :+ mainFormula
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
 
+object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
+
+  /**
+    * Convenience constructor for →:i.
+    * The aux formula can be given as an index or a formula. If it is given as a formula, the constructor
+    * will attempt to find an appropriate index on its own.
+    *
+    * @param subProof The subproof.
+    * @param impPremise Index of the premise of the implication or the premise itself.
+    * @return
+    */
+  def apply( subProof: NDProof, impPremise: IndexOrFormula ): ImpIntroRule = {
+    val premise = subProof.endSequent
+
+    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Left( Suc(0)) )
+
+    new ImpIntroRule( subProof, Ant( antIndices( 0 ) )  )
+  }
+
+  /**
+    * Convenience constructor for →:i that, given a proposed main formula A → B, will attempt to create an inference with this main formula.
+    *
+    * @param subProof The subproof.
+    * @param mainFormula The formula to be inferred. Must be of the form A → B.
+    * @return
+    */
+  def apply( subProof: NDProof, mainFormula: HOLFormula ): ImpIntroRule = mainFormula match {
+    case Imp( f, _ ) => apply( subProof, f)
+    case _           => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not an implication." )
+  }
+
+  /**
+    * Convenience constructor for →:i
+    * If the subproof has precisely one element in the antecedent of its premise, this element will be the aux index.
+    *
+    * @param subProof The subproof.
+    * @return
+    */
+  def apply( subProof: NDProof ): ImpIntroRule = {
+    val premise = subProof.endSequent
+
+    if (premise.antecedent.size == 1) apply( subProof, Ant(0))
+    else throw NDRuleCreationException( s"Antecedent of $premise doesn't have precisely one element." )
+  }
 }
 
 /**

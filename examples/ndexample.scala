@@ -25,3 +25,9 @@ object ndImpElimExample extends Script {
   val a3 = ImpElimRule(a2,a1)
   println(a3)
 }
+
+object ndImpIntroExample extends Script {
+  val a1 = LogicalAxiom ( hof"a" )
+  val a2 = ImpIntroRule ( a1 )
+  println(a2)
+}
