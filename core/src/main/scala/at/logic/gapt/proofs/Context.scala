@@ -364,22 +364,15 @@ object Context {
       val fvEs = freeVariables( endSequent )
       lhs match {
         case Apps( c: Const, vs: Seq[LambdaExpression] ) => {
-          val varcheck: Boolean = ( vs == vs.distinct &&
+          val varcheck: Boolean = vs == vs.distinct &&
             vs.forall( _.isInstanceOf[Var] ) &&
             ( freeVariables( endSequent ).toSet[LambdaExpression] ).subsetOf( vs.toSet ) &&
-            vs.toSet.subsetOf( ( freeVariables( endSequent ).toSet[LambdaExpression] ) ) )
-          /*( fvEs.toList zip vs.toList ).fold( true )( ( x, y ) => {
-            val yy = y.asInstanceOf[( LambdaExpression, LambdaExpression )]
-            val xx = x.asInstanceOf[Boolean]
-            if ( yy._1 == yy._2 && xx ) true else false
-          } ).asInstanceOf[Boolean]*/
+            vs.toSet.subsetOf( ( freeVariables( endSequent ).toSet[LambdaExpression] ) )
           if ( varcheck ) ctx.state.update[ProofNames]( _ + ( lhs, endSequent ) )
           else throw new IllegalArgumentException( "variables of " + lhs.toString() + "   " + vs.toString() +
             " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString() )
         }
         case _ => throw new IllegalArgumentException( lhs.toString() + "  is a malformed proof name" )
-        // case _ => throw new IllegalArgumentException(  lhs.toString() +" is a malformed proof name" )
-
       }
 
     }
