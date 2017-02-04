@@ -7,33 +7,36 @@ object gStarUnify {
 
   def apply(
     seHs:                      pi2SeHs,
-    setOfLiterals:             Set[FOLFormula],
-    productionRulesX:          Set[( LambdaExpression, LambdaExpression )],
-    productionRulesY:          Set[( LambdaExpression, LambdaExpression )],
-    universalEigenvariable:    FOLVar,
-    existentialEigenvariables: List[FOLVar],
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
   ): Set[FOLFormula] = {
 
-    val productionRulesXS: Set[( LambdaExpression, LambdaExpression )] = productionRulesX ++ productionRulesX.map( _.swap )
-
-    val productionRulesYS: Set[( LambdaExpression, LambdaExpression )] = productionRulesY ++ productionRulesY.map( _.swap )
-
-    val literals = sortAndAtomize( setOfLiterals )
+    val literals = seHs.sortAndAtomize
     val ( posAtoms, negAtoms ) = literals
 
     val unifiedLiterals = scala.collection.mutable.Set[FOLFormula]()
 
+    /*
+    val unifiedLiteralsB: Set[FOLFormula] = for {
+      posAt <- posAtoms
+      negAt <- negAtoms
+      lit <- unifyLiterals(
+        seHs,
+        posAt,
+        negAt,
+        nameOfExistentialVariable,
+        nameOfUniversalVariable
+      )
+      litPosNeg <- Seq( lit, Neg( lit ) )
+    } yield litPosNeg
+    */
+
     posAtoms.foreach( posAt =>
       negAtoms.foreach( negAt =>
         unifyLiterals(
+          seHs,
           posAt,
           negAt,
-          productionRulesXS.toSet,
-          productionRulesYS.toSet,
-          universalEigenvariable,
-          existentialEigenvariables,
           nameOfExistentialVariable,
           nameOfUniversalVariable
         ) match {
@@ -51,31 +54,10 @@ object gStarUnify {
 
   }
 
-  private def sortAndAtomize( literals: Set[FOLFormula] ): ( Set[FOLFormula], Set[FOLFormula] ) = {
-
-    val posLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
-    val negLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
-
-    for ( literal <- literals ) {
-
-      literal match {
-        case Neg( t ) => negLiterals += t
-        case _        => posLiterals += literal
-      }
-
-    }
-
-    ( posLiterals.toSet, negLiterals.toSet )
-
-  }
-
   private def unifyLiterals(
+    seHs:                      pi2SeHs,
     posAt:                     FOLFormula,
     negAt:                     FOLFormula,
-    productionRulesX:          Set[( LambdaExpression, LambdaExpression )],
-    productionRulesY:          Set[( LambdaExpression, LambdaExpression )],
-    universalEigenvariable:    FOLVar,
-    existentialEigenvariables: List[FOLVar],
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
   ): Option[FOLFormula] = {
@@ -86,11 +68,8 @@ object gStarUnify {
     val unifiedLiteral: Option[FOLFormula] = nameOfPos match {
       case t if ( ( nameOfNeg == t ) && ( argsP.length == argsN.length ) ) => {
         val unifiedArgs = unify(
+          seHs,
           argsP.zip( argsN ),
-          productionRulesX,
-          productionRulesY,
-          universalEigenvariable,
-          existentialEigenvariables,
           nameOfExistentialVariable,
           nameOfUniversalVariable
         )
@@ -115,11 +94,8 @@ object gStarUnify {
   }
 
   private def unify(
+    seHs:                      pi2SeHs,
     zippedArgs:                List[( LambdaExpression, LambdaExpression )],
-    productionRulesX:          Set[( LambdaExpression, LambdaExpression )],
-    productionRulesY:          Set[( LambdaExpression, LambdaExpression )],
-    universalEigenvariable:    FOLVar,
-    existentialEigenvariables: List[FOLVar],
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
   ): Option[Seq[FOLTerm]] = {
@@ -134,7 +110,7 @@ object gStarUnify {
 
       val ( tL, tR ) = t
 
-      productionRulesX.foreach( productionRuleX => if ( !stopIt ) {
+      seHs.productionRulesXS.foreach( productionRuleX => if ( !stopIt ) {
 
         val ( productionRuleXL, productionRuleXR ) = productionRuleX
 
@@ -151,7 +127,7 @@ object gStarUnify {
 
       stopIt = false
 
-      productionRulesY.foreach( productionRuleY => if ( ( !stopIt ) && ( !stopItAll ) ) {
+      seHs.productionRulesYS.foreach( productionRuleY => if ( ( !stopIt ) && ( !stopItAll ) ) {
 
         val ( productionRuleYL, productionRuleYR ) = productionRuleY
 
@@ -175,7 +151,7 @@ object gStarUnify {
 
           var tLWasAEigenvariable: Boolean = false
 
-          if ( tL.syntaxEquals( universalEigenvariable ) ) {
+          if ( tL.syntaxEquals( seHs.universalEigenvariable ) ) {
 
             tLWasAEigenvariable = true
 
@@ -186,7 +162,7 @@ object gStarUnify {
 
           }
 
-          existentialEigenvariables.foreach( existentialEigenvariable => if ( tL.syntaxEquals( existentialEigenvariable ) && !tLWasAEigenvariable ) {
+          seHs.existentialEigenvariables.foreach( existentialEigenvariable => if ( tL.syntaxEquals( existentialEigenvariable ) && !tLWasAEigenvariable ) {
 
             tLWasAEigenvariable = true
 
@@ -211,11 +187,8 @@ object gStarUnify {
           if ( ( !tLWasAEigenvariable ) ) {
 
             unify(
+              seHs,
               argsOfArgL.zip( argsOfArgR ),
-              productionRulesX,
-              productionRulesY,
-              universalEigenvariable,
-              existentialEigenvariables,
               nameOfExistentialVariable,
               nameOfUniversalVariable
             ) match {
@@ -231,11 +204,8 @@ object gStarUnify {
         } else if ( ( nameOfArgL == nameOfArgR ) && ( argsOfArgL.length == argsOfArgR.length ) ) {
 
           unify(
+            seHs,
             argsOfArgL.zip( argsOfArgR ),
-            productionRulesX,
-            productionRulesY,
-            universalEigenvariable,
-            existentialEigenvariables,
             nameOfExistentialVariable,
             nameOfUniversalVariable
           ) match {

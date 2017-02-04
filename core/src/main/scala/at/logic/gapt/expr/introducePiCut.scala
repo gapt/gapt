@@ -23,40 +23,56 @@ class pi2SeHs(
 
   // (alpha,r_1),...,(alpha,r_m)
   //////////////////////////////
-  def substitutionPairsAlpha(): Set[( LambdaExpression, LambdaExpression )] = {
+  def substitutionPairsAlpha(): List[( LambdaExpression, LambdaExpression )] = {
 
+    /*
+    substitutionsForAlpha().map( instance => ( universalEigenvariable.asInstanceOf, instance ) )
+    */
     val substitutionPairsAlpha = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
     substitutionsForAlpha.foreach( instance => {
       val buffer: ( LambdaExpression, LambdaExpression ) = ( universalEigenvariable, instance )
       substitutionPairsAlpha += buffer
     } )
-    substitutionPairsAlpha.toSet
+    substitutionPairsAlpha.toList
   }
 
   // (beta_i,t_1(alpha)),...,(beta_i,t_p(alpha))
   //////////////////////////////////////////////
-  def substitutionPairsBetaI( index: Int ): Set[( LambdaExpression, LambdaExpression )] = {
+  def substitutionPairsBetaI( index: Int ): List[( LambdaExpression, LambdaExpression )] = {
 
+    /*
+    substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1).asInstanceOf, instanceB ) )
+    */
     val substitutionPairsBetaI = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
     substitutionsForBetaWithAlpha.foreach( instanceB => {
       val buffer: ( LambdaExpression, LambdaExpression ) = ( existentialEigenvariables( index - 1 ), instanceB )
       substitutionPairsBetaI += buffer
     } )
-    substitutionPairsBetaI.toSet
+    substitutionPairsBetaI.toList
   }
 
   // (beta_1,t_1(alpha)),...,(beta_1,t_p(alpha)),
   //                     ...                    ,
   // (beta_m,t_1(alpha)),...,(beta_m,t_p(alpha))
   ///////////////////////////////////////////////
-  def substitutionPairsBeta(): Set[( LambdaExpression, LambdaExpression )] = {
+  def substitutionPairsBeta(): List[( LambdaExpression, LambdaExpression )] = {
 
+    (
+      for (index <- 1 to multiplicityOfAlpha)
+        yield substitutionPairsBetaI(multiplicityOfAlpha - index + 1)
+      ).toList.flatten
+    /*
     val substitutionPairsBeta = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
     for ( index <- 1 to multiplicityOfAlpha ) {
       substitutionPairsBeta ++= substitutionPairsBetaI( multiplicityOfAlpha - index + 1 )
     }
     substitutionPairsBeta.toSet
+    */
   }
+
+  def productionRulesXS: List[( LambdaExpression, LambdaExpression )] = substitutionPairsAlpha() ++ substitutionPairsAlpha().map( _.swap )
+
+  def productionRulesYS: List[( LambdaExpression, LambdaExpression )] = substitutionPairsBeta() ++ substitutionPairsBeta().map( _.swap )
 
   // (alpha->r_1),...,(alpha->r_m)
   ////////////////////////////////
@@ -175,6 +191,25 @@ class pi2SeHs(
     val DNTAList = DNTA.toList
 
     ( literals.toSet, DNTAList )
+  }
+
+  def sortAndAtomize: ( Set[FOLFormula], Set[FOLFormula] ) = {
+
+    val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
+    val posLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
+    val negLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
+
+    for ( literal <- literals ) {
+
+      literal match {
+        case Neg( t ) => negLiterals += t
+        case _        => posLiterals += literal
+      }
+
+    }
+
+    ( posLiterals.toSet, negLiterals.toSet )
+
   }
 
 }
@@ -308,31 +343,10 @@ object introducePi2Cut {
     val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
     val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
 
-    /*
-    val literals = scala.collection.mutable.Set[FOLFormula]()
-    val DNTA = scala.collection.mutable.Set[Sequent[FOLFormula]]()
-
-    CNFp( seHs.reducedRepresentationToFormula ).foreach( clause => if ( !clause.isTaut ) {
-      var NTAClause: Sequent[FOLFormula] = clause
-      for ( literal <- clause.succedent ) {
-        NTAClause = Neg( literal ) +: NTAClause
-      }
-      NTAClause = NTAClause.antecedent ++: Sequent()
-      DNTA += NTAClause // define for fol and hol sequents
-      clause.antecedent.foreach( atom => literals += atom )
-      clause.succedent.foreach( atom => literals += Neg( atom ) )
-    } )
-    */
-
-    val ( literals, dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
+    val ( _ , dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
 
     val unifiedLiterals: Set[FOLFormula] = gStarUnify(
       seHs,
-      literals,
-      seHs.substitutionPairsAlpha(),
-      seHs.substitutionPairsBeta(),
-      seHs.universalEigenvariable,
-      seHs.existentialEigenvariables,
       nameOfExistentialVariableChecked,
       nameOfUniversalVariableChecked
     )
@@ -356,7 +370,7 @@ object introducePi2Cut {
           seHs
         )
 
-        numberOfAllowedClauses = Option(allowedClausesWithIndexLists.size)
+        numberOfAllowedClauses = Option( allowedClausesWithIndexLists.size )
         numberOfCheckedFormulas = allowedClausesWithIndexLists.size
 
         if ( seHs.noSolutionHasBeenFound ) {
@@ -383,7 +397,7 @@ object introducePi2Cut {
         println( "Number of allowed clauses" )
         println( t )
       }
-      case None =>
+      case None => println( "No 'allowed clauses' were computed" )
     }
     println( "Number of checked Formulas" )
     println( numberOfCheckedFormulas )
@@ -509,13 +523,13 @@ object introducePi2Cut {
       }
 
       val literalWithIndexLists = new LiteralWithIndexLists( literal, leafOfIndexList, nonTautologicalLeaves.length )
-      val clauseWithIndexLists = new ClauseWithIndexLists( List( literalWithIndexLists ) )
 
       if ( foundNonEmptyPList ) {
 
         literalWithIndexListsSet += literalWithIndexLists
 
         if ( !foundEmptyMOrPList ) {
+          val clauseWithIndexLists = new ClauseWithIndexLists( List( literalWithIndexLists ) )
           val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
           if ( clausesWithIndexLists.isSolution ) {
             seHs.noSolutionHasBeenFound = false
