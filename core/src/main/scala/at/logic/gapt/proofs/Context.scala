@@ -240,10 +240,15 @@ object Context {
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames(Map[String, (LambdaExpression, HOLSequent)]() ) )
 
-  case class ProofDefinitions( components: Set[( LambdaExpression, LKProof )] ) {
-    def +( name: LambdaExpression, linkproof: LKProof ) = copy( components + ( ( name, linkproof ) ) )
+  case class ProofDefinitions( components: Map[String, Set[( LambdaExpression, LKProof )]] ) {
+    def +(name: String, linkpression: LambdaExpression, linkproof: LKProof) = {
+      if(components.keySet.contains(name))
+         copy(components + ((name, (components.get(name).toSet + (linkpression, linkproof)).asInstanceOf[Set[(LambdaExpression, LKProof)]])))
+      else
+         copy(components + ((name,  (linkpression, linkproof).asInstanceOf[Set[(LambdaExpression, LKProof)]])))
+    }
   }
-  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Set[( LambdaExpression, LKProof )]() ) )
+  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( LambdaExpression, LKProof )]]() ) )
 
   /**
    * Update of a context.
@@ -386,14 +391,14 @@ object Context {
     override def apply( ctx: Context ): State = {
       linkProof.endSequent.foreach( ctx.check( _ ) )
       lhs match {
-        case Apps( c: Const, vs ) => {
+        case Apps(  at.logic.gapt.expr.Const(c,t), vs ) => {
           vs.foreach( ctx.check( _ ) )
           val decName = ctx.get[ProofNames].names.keySet.map(key => ctx.get[ProofNames].names.get(key).get)
             .fold( None: Option[( LambdaExpression, HOLSequent )] )( ( x, y ) => {
             x match {
               case Some( thing ) => Some( thing )
               case None => y match {
-                case ( Apps( c2: Const, vs2 ), _ ) => if ( c2 == c && vs.size == vs2.size ) {
+                case ( Apps( at.logic.gapt.expr.Const(c2,t), vs2 ), _ ) => if ( c2 == c && vs.size == vs2.size ) {
                   if ( ( vs zip vs2 ).fold( true )( ( x, y ) => {
                     if ( x == true ) y match {
                       case ( a: LambdaExpression, b: LambdaExpression ) =>
@@ -410,7 +415,7 @@ object Context {
             }
 
           } )
-          if ( decName != None ) ctx.state.update[ProofDefinitions]( _ + ( lhs, linkProof ) )
+          if ( decName != None ) ctx.state.update[ProofDefinitions]( _ + (c, lhs, linkProof ) )
           else throw new IllegalArgumentException( "No proof named " + lhs.toString() +
             " in conext" )
         }
