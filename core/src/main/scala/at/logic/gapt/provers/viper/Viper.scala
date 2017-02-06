@@ -160,8 +160,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
         ok
       }.headOption
     failedInstOption map { failedInst =>
-      import scalaz._
-      import Scalaz._
+      import cats.syntax.traverse._, cats.instances.list._
       val minimalCounterExample = failedInst.toList.
         traverse( i => folSubTerms( i ).filter( _.exptype == i.exptype ).toList ).
         filterNot( checkInst ).

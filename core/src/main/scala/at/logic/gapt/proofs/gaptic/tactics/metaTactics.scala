@@ -3,8 +3,6 @@ package at.logic.gapt.proofs.gaptic.tactics
 import at.logic.gapt.expr.clauseSubsumption
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import scalaz._
-import Scalaz._
 
 /**
  * Applies the given [[Tactical]] to the proof state until it fails.

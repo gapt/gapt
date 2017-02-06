@@ -18,12 +18,10 @@ import at.logic.gapt.provers.vampire.Vampire
 import ammonite.ops._
 import at.logic.gapt.proofs.gaptic._
 
-import scalaz.Scalaz._
-import scalaz.Validation.FlatMap.ValidationFlatMapRequested
-import scalaz.ValidationNel
+import cats.syntax.all._, cats.instances.all._
 
 trait InductionAxioms {
-  type ThrowsError[T] = ValidationNel[String, T]
+  type ThrowsError[T] = Either[String, T]
 
   /**
    * Computes induction axioms for a formula and variables.
@@ -140,7 +138,7 @@ object AnalyticInductionProver {
 
 class AnalyticInductionProver( options: ProverOptions ) {
 
-  type ThrowsError[T] = ValidationNel[String, T]
+  type ThrowsError[T] = Either[String, T]
 
   private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, HOLFormula )] ) =
     sequent map { case ( _, f ) => f }
@@ -217,7 +215,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @throws Exception If the validation value represents a validation failure.
    */
   private def validate( validation: ThrowsError[HOLSequent] ): HOLSequent =
-    validation.valueOr( es => throw new Exception( es.tail.foldLeft( es.head ) { _ ++ "\n" ++ _ } ) )
+    validation.valueOr( e => throw new Exception( e ) )
 
   /**
    * Computes a sequent enriched by induction axioms.
@@ -321,9 +319,9 @@ class UserDefinedInductionAxioms( axioms: List[String] ) extends InductionAxioms
    */
   override def apply( f: HOLFormula, vs: List[Var] )( implicit ctx: Context ): ThrowsError[List[HOLFormula]] =
     try {
-      axioms map { s => StringContext( s ).hof( s ) } success
+      Right( axioms map { s => StringContext( s ).hof( s ) } )
     } catch {
-      case e: IllegalArgumentException => e.getMessage().failureNel
+      case e: IllegalArgumentException => Left( e.getMessage )
     }
 }
 
@@ -523,11 +521,11 @@ object getConstructors {
    */
   def apply(
     typ: TBase, ctx: Context
-  ): ValidationNel[String, List[Con]] =
+  ): Either[String, List[Con]] =
     ( ctx.isType( typ ), ctx.getConstructors( typ ) ) match {
-      case ( true, Some( constructors ) ) => constructors.toList.success
-      case ( true, None )                 => s"Type $typ is not inductively defined".failureNel
-      case ( false, _ )                   => s"Type $typ is not defined".failureNel
+      case ( true, Some( constructors ) ) => Right( constructors.toList )
+      case ( true, None )                 => Left( s"Type $typ is not inductively defined" )
+      case ( false, _ )                   => Left( s"Type $typ is not defined" )
     }
 }
 
@@ -550,11 +548,11 @@ object findFormula {
    * @return The formula designated by the given label or an error message if the formula
    *         is not be uniquely determined by the label.
    */
-  def apply( sequent: Sequent[( String, HOLFormula )], label: String ): ValidationNel[String, HOLFormula] = {
+  def apply( sequent: Sequent[( String, HOLFormula )], label: String ): Either[String, HOLFormula] = {
     sequent.succedent filter { case ( l, f ) => l == label } match {
-      case lf :: Nil => lf._2.success
-      case lf :: _   => "Formula could not be uniquely determined" failureNel
-      case _         => s"Label $label not found" failureNel
+      case lf :: Nil => Right( lf._2 )
+      case lf :: _   => Left( "Formula could not be uniquely determined" )
+      case _         => Left( s"Label $label not found" )
     }
   }
 }

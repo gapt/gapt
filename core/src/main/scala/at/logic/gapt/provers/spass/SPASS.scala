@@ -153,8 +153,8 @@ class SPASS extends ResolutionProver with ExternalProgram {
         val sketch = SketchSplitCombine( splitCases.result() )
 
         RefutationSketchToResolution( sketch ) match {
-          case scalaz.Failure( errors )   => throw new IllegalArgumentException( errors.list.toList mkString "\n" )
-          case scalaz.Success( resProof ) => Some( resProof )
+          case Left( error )     => throw new IllegalArgumentException( error.toString )
+          case Right( resProof ) => Some( resProof )
         }
       } else {
         None

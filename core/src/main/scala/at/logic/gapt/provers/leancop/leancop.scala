@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, expansionProofFromInstances, structuralCNF }
 import at.logic.gapt.provers.{ OneShotProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, runProcess, withTempFile }
-import at.logic.gapt.utils.ScalazHelpers._
+import at.logic.gapt.utils.EitherHelpers._
 
 object LeanCoP extends LeanCoP
 class LeanCoP extends OneShotProver with ExternalProgram {
