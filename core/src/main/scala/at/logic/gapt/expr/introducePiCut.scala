@@ -193,6 +193,79 @@ class pi2SeHs(
     ( literals.toSet, DNTAList )
   }
 
+  def language: (Set[LambdaExpression]) = {
+
+    val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
+    literals.map(literal=>{
+      literal match {
+        case Neg( t ) => {
+          val Apps(name,_) = t
+          name
+        }
+        case t => {
+          val Apps(name,_) = t
+          name
+        }
+      }
+    })
+  }
+
+  def theDNTAsInTheLanguage( unifiedLiterals: Set[FOLFormula] ) : (List[Sequent[FOLFormula]]) = {
+
+    val ( _, oldDNTAs ) = this.literalsInTheDNTAsAndTheDNTAs
+    val newDNTAs = oldDNTAs.map( leaf => {
+      leaf.antecedent.filter( literal => {
+        literal match {
+          case Neg(t) => {
+            val isNotInLanguage: Boolean = unifiedLiterals.forall( opponent => {
+              val Apps(nameOfLiteral,_) = t
+              val Apps(nameOfOpponent,_) = opponent
+              if (nameOfLiteral.syntaxEquals(nameOfOpponent)) {
+                false
+              } else {
+                true
+              }
+            })
+            !isNotInLanguage
+          }
+          case t => {
+            val isNotInLanguage: Boolean = unifiedLiterals.forall( opponent => {
+            val Apps(nameOfLiteral,_) = t
+            val Apps(nameOfOpponent,_) = opponent
+            if (nameOfLiteral.syntaxEquals(nameOfOpponent)) {
+              false
+            } else {
+              true
+            }
+          })
+            !isNotInLanguage
+          }
+        }
+      }).foldLeft(Sequent[FOLFormula]())( (a,b) => b +: a )
+    })
+
+    val DNTA = scala.collection.mutable.Set(newDNTAs.head)
+    newDNTAs.tail.foreach( DNTAClause => {
+      var dontAdd: Boolean = false
+      val DNTABuffer = DNTA
+      DNTABuffer.foreach( existingClause => {
+        if ( !dontAdd ) {
+          if ( existingClause.isSubsetOf( DNTAClause ) ) {
+            DNTA -= existingClause
+          } else if ( DNTAClause.isSubsetOf( existingClause ) ) {
+            dontAdd = true
+          }
+        }
+      })
+      if ( !dontAdd ) {
+        DNTA += DNTAClause // define for fol and hol sequents
+      }
+    } )
+
+    DNTA.toList
+
+  }
+
   val sortAndAtomize: ( Set[FOLFormula], Set[FOLFormula] ) = {
 
     val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
@@ -332,9 +405,11 @@ class ClausesWithIndexLists(
 
     var bool: Boolean = true
     if ( clauses.length == 1 ) {
-      if ( clauses.head.isAllowedAtLeastAsSubformula ) {
+      if (clauses.head.isAllowedAtLeastAsSubformula) {
         this.leafIndexListClauses.forall( leafNumber => {
           if ( leafNumber.oneToPList.isEmpty ) {
+            bool = false
+          } else if ( leafNumber.oneToMList.isEmpty ) {
             bool = false
           }
           bool
@@ -374,13 +449,34 @@ object introducePi2Cut {
     val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
     val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
 
-    val ( _ , dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
-
     val unifiedLiterals: Set[FOLFormula] = gStarUnify(
       seHs,
       nameOfExistentialVariableChecked,
       nameOfUniversalVariableChecked
     )
+
+    /*
+    val ( literals, _ ) = seHs.literalsInTheDNTAsAndTheDNTAs
+    val languageSize = literals.map(literal=>{
+      literal match {
+        case Neg( t ) => {
+          val Apps(name,_) = t
+          name
+        }
+        case t => {
+          val Apps(name,_) = t
+          name
+        }
+      }
+    }).size
+    if (languageSize<seHs.language.size) {
+      val dNTAList = seHs.theDNTAsInTheLanguage( unifiedLiterals )
+    } else {
+      val ( _, dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
+    }
+    */
+
+    val ( _, dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
 
     val literalsWithIndexLists: Set[LiteralWithIndexLists] = computeTheIndexListsForTheLiterals(
       unifiedLiterals,
@@ -406,7 +502,7 @@ object introducePi2Cut {
 
         if ( seHs.noSolutionHasBeenFound ) {
           for ( numberOfClauses <- 2 to allowedClausesWithIndexLists.size; if seHs.noSolutionHasBeenFound ) {
-            for ( subset <- allowedClausesWithIndexLists.subsets( numberOfClauses ); if seHs.noSolutionHasBeenFound ) {
+            for ( subset <- allowedClausesWithIndexLists.subsets( 2 ); if seHs.noSolutionHasBeenFound ) { // !!!!!!!!!!!!!!!!!!!!! for testing set to two
               val clausesWithIndexLists = new ClausesWithIndexLists( subset.toList )
               if ( clausesWithIndexLists.isSolution ) {
                 seHs.noSolutionHasBeenFound = false
@@ -451,9 +547,15 @@ object introducePi2Cut {
 
     for ( literalWithIndexLists <- literalsWithIndexLists ) {
       val clause = new ClauseWithIndexLists( List( literalWithIndexLists ) )
-      allowedClausesWithIndexListsMutable += clause
-      if ( !clause.isAllowedAtLeastAsSubformula && !clause.isAllowed ) {
-        literalsWithIndexListsMutable -= literalWithIndexLists
+      val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) = checkNecessityOfNewAndOldClause( clause, allowedClausesWithIndexListsMutable.toList )
+      if ( !clauseIsUnnecessary ) {
+        allowedClausesWithIndexListsMutable += clause
+        if ( !clause.isAllowedAtLeastAsSubformula && !clause.isAllowed ) {
+          literalsWithIndexListsMutable -= literalWithIndexLists
+        }
+        for ( unnecessaryClause <- listOfUnnecessaryClauses ) {
+          allowedClausesWithIndexListsMutable -= unnecessaryClause
+        }
       }
     }
 
@@ -476,11 +578,17 @@ object introducePi2Cut {
     for ( subset <- literalsWithIndexLists.subsets( subsetSize ); if seHs.noSolutionHasBeenFound ) {
       val clauseWithIndexLists = new ClauseWithIndexLists( subset.toList )
       if ( clauseWithIndexLists.isAllowed ) {
-        allowedClausesWithIndexLists += clauseWithIndexLists
-        val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
-        if ( clausesWithIndexLists.isSolution ) {
-          seHs.noSolutionHasBeenFound = false
-          seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+        val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) = checkNecessityOfNewAndOldClause( clauseWithIndexLists, allowedClausesWithIndexLists.toList )
+        if ( !clauseIsUnnecessary ) {
+          allowedClausesWithIndexLists += clauseWithIndexLists
+          val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
+          if ( clausesWithIndexLists.isSolution ) {
+            seHs.noSolutionHasBeenFound = false
+            seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+          }
+          for ( unnecessaryClause <- listOfUnnecessaryClauses ) {
+            allowedClausesWithIndexLists -= unnecessaryClause
+          }
         }
       } else if ( !clauseWithIndexLists.isAllowedAtLeastAsSubformula ) {
         for ( literal <- subset ) {
@@ -582,6 +690,52 @@ object introducePi2Cut {
     }
 
     literalWithIndexListsSet.toSet
+
+  }
+
+  private def checkNecessityOfNewAndOldClause(
+                                    newClause:  ClauseWithIndexLists,
+                                    oldClauses: List[ClauseWithIndexLists]
+                                    ): ( Boolean, List[ClauseWithIndexLists] ) = {
+
+    if ( oldClauses == Nil ) {
+      ( false, Nil )
+    } else {
+      val clauseIsNotSubsetOfI = new Array[Boolean](oldClauses.length)
+      val iIsNotSubsetOfClause = new Array[Boolean](oldClauses.length)
+
+      for ( leafNumber <- 0 until newClause.numberOfDNTAs ) {
+        for ( oldClause <- oldClauses; if !clauseIsNotSubsetOfI(oldClauses.indexOf(oldClause)) ||
+          !iIsNotSubsetOfClause(oldClauses.indexOf(oldClause)) ) {
+
+          if ( !clauseIsNotSubsetOfI(oldClauses.indexOf(oldClause)) ) {
+            if ( !newClause.leafIndexListClause(leafNumber).oneToMList.subsetOf( oldClause.leafIndexListClause(leafNumber).oneToMList ) ||
+              !newClause.leafIndexListClause(leafNumber).oneToPList.subsetOf( oldClause.leafIndexListClause(leafNumber).oneToPList ) ) {
+              clauseIsNotSubsetOfI(oldClauses.indexOf(oldClause)) = true
+            }
+          }
+
+          if ( !iIsNotSubsetOfClause(oldClauses.indexOf(oldClause)) ) {
+            if ( !oldClause.leafIndexListClause(leafNumber).oneToMList.subsetOf( newClause.leafIndexListClause(leafNumber).oneToMList ) ||
+              !oldClause.leafIndexListClause(leafNumber).oneToPList.subsetOf( newClause.leafIndexListClause(leafNumber).oneToPList ) ) {
+              iIsNotSubsetOfClause(oldClauses.indexOf(oldClause)) = true
+            }
+          }
+        }
+      }
+
+      var clauseIsUnnecessary: Boolean = false
+      var listOfUnnecessaryClauses: List[ ClauseWithIndexLists ] = Nil
+      for ( i <- 0 until oldClauses.length; if !clauseIsUnnecessary ) {
+        if ( !clauseIsNotSubsetOfI(i) ) {
+          clauseIsUnnecessary = true
+        } else if ( !iIsNotSubsetOfClause(i) ) {
+          listOfUnnecessaryClauses = listOfUnnecessaryClauses :+ oldClauses(i)
+        }
+      }
+
+      ( clauseIsUnnecessary, listOfUnnecessaryClauses )
+    }
 
   }
 

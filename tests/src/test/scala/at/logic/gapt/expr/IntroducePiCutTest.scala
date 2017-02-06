@@ -9,7 +9,6 @@ import org.specs2.mutable.Specification
 class IntroducePiCutTest extends Specification {
 
   /*
-  */
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)|Q(f1(x)))"
@@ -95,7 +94,6 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  /*
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -115,6 +113,94 @@ class IntroducePiCutTest extends Specification {
       val D = fof"$Pcgy2"
       val Rere = A3 +: B1 +: B2 +: B3 +: C3 +: Sequent() :+ D
       val seHs = new pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)" ) )
+      val xName = fov"xName"
+      val yName = fov"yName"
+      introducePi2Cut( seHs, yName, xName ) must beOneOf (
+        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
+        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
+        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
+        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
+        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
+        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
+        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
+        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+      )
+    }
+  }
+  */
+
+  "This" should {
+    "be computed correctly" in {
+      val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
+      val Pxf2x = fof"(P(x)&Q(f2(x)))|(P(f2(x))&Q(x))"
+      val Pxff1x = fof"(P(x)&Q(f(f1(x))))|(P(f(f1(x)))&Q(x))"
+      val Pxff2x = fof"(P(x)&Q(f(f2(x))))|(P(f(f2(x)))&Q(x))"
+      val Pcfy1 = fof"(P(c)&Q(f(y1)))|(P(f(y1))&Q(c))"
+      val Pfy1fy2 = fof"(P(f(y1))&Q(f(y2)))|(P(f(y2))&Q(f(y1)))"
+      val Pcgy2 = fof"(P(c)&Q(g(y2)))|(P(g(y2))&Q(c))"
+      val A2 = fof"$Pxf1x|$Pxf2x"
+      val B1 = fof"$Pxf1x->$Pxff1x"
+      val B2 = fof"$Pxf2x->$Pxff2x"
+      val C3 = fof"$Pcfy1&$Pfy1fy2->$Pcgy2"
+      val D = fof"$Pcgy2"
+      val Rere = A2 +: B1 +: B2 +: C3 +: Sequent() :+ D
+      val seHs = new pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)", fot"f2(x)" ) )
+      val xName = fov"xName"
+      val yName = fov"yName"
+      introducePi2Cut( seHs, yName, xName ) must beOneOf (
+        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
+        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
+        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
+        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
+        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
+        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
+        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
+        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+      )
+    }
+  }
+
+  /*
+  "This" should {
+    "be computed correctly" in {
+      val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
+      val Pxff1x = fof"(P(x)&Q(f(f1(x))))|(P(f(f1(x)))&Q(x))"
+      val Pcfy1 = fof"(P(c)&Q(f(y1)))|(P(f(y1))&Q(c))"
+      val Pfy1fy2 = fof"(P(f(y1))&Q(f(y2)))|(P(f(y2))&Q(f(y1)))"
+      val Pcgy2 = fof"(P(c)&Q(g(y2)))|(P(g(y2))&Q(c))"
+      val A1 = fof"$Pxf1x"
+      val B1 = fof"$Pxf1x->$Pxff1x"
+      val C3 = fof"$Pcfy1&$Pfy1fy2->$Pcgy2"
+      val D = fof"$Pcgy2"
+      val Rere = A1 +: B1 +: C3 +: Sequent() :+ D
+      val seHs = new pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)" ) )
+      val xName = fov"xName"
+      val yName = fov"yName"
+      introducePi2Cut( seHs, yName, xName ) must beOneOf (
+        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
+        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
+        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
+        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
+        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
+        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
+        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
+        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+      )
+    }
+  }
+
+  "This" should {
+    "be computed correctly" in {
+      val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
+      val Pxff1x = fof"(P(x)&Q(f(f1(x))))|(P(f(f1(x)))&Q(x))"
+      val Pcfy1 = fof"(P(c)&Q(f(y1)))|(P(f(y1))&Q(c))"
+      val Pcgy1 = fof"(P(c)&Q(g(y1)))|(P(g(y1))&Q(c))"
+      val A1 = fof"$Pxf1x"
+      val B1 = fof"$Pxf1x->$Pxff1x"
+      val C2 = fof"$Pcfy1->$Pcgy1"
+      val D = fof"$Pcgy1"
+      val Rere = A1 +: B1 +: C2 +: Sequent() :+ D
+      val seHs = new pi2SeHs( Rere, fov"x", List( fov"y1" ), List( fot"c" ), List( fot"f1(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf (
