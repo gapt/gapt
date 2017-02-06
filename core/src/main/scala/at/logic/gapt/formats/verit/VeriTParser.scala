@@ -229,7 +229,7 @@ object VeriTParser extends RegexParsers {
       Some( axiomET ++: inputET ++: Sequent() )
   }
 
-  def parseUnsat: Parser[Boolean] = title ~ rep( success ) ~> ( unsat ^^ { case s => true } | sat ^^ { case s => false } ) <~ success
+  def parseUnsat: Parser[Boolean] = title ~ rep( success ) ~> ( unsat ^^ { case s => true } | sat ^^ { case s => false } ) <~ rep( success )
 
   def label: Parser[String] = ".c" ~ """\d+""".r ^^ { case s1 ~ s2 => s1 ++ s2 }
 

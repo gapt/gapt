@@ -44,7 +44,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
     for {
       goal <- currentGoal
       subst <- syntacticMatching( hof"a*b + 1 = 1", goal( label ) ).
-        toTactical( s"$label is no product", goal )
+        toTactical( s"$label is no product" )
       l = NewLabel( goal.labelledSequent, label )
       _ <- cut( l, subst( hof"a+1=1 ∨ b+1=1" ) )
       _ <- destruct( l ); _ <- theory
