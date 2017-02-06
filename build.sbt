@@ -30,11 +30,6 @@ lazy val commonSettings = Seq(
     "-unchecked"
   ),
 
-  // scalaz-stream is not on maven.org
-  resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
-  resolvers += Resolver.sonatypeRepo("releases"),
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.3"),
-
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
   baseDirectory in run := file( "." ),
@@ -85,6 +80,7 @@ lazy val root = project.in( file( "." ) ).
   settings(
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
+
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
@@ -200,7 +196,6 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "fastparse" % "0.4.2",
       "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.3",
-      "org.scalaz" %% "scalaz-core" % "7.2.8",
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",

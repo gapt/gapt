@@ -4,6 +4,7 @@ import tactics._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.viper.ViperTactic
 
 /**
  * Predefined tactics in gaptic.
@@ -678,4 +679,6 @@ trait TacticCommands {
 
   def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
     Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
+
+  def viper( implicit ctx: Context ): ViperTactic = new ViperTactic
 }
