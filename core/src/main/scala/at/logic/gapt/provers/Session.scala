@@ -9,14 +9,19 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.provers.Session.{ Session, SessionCommand }
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
+import cats.free.Free.liftF
+import cats.free._
+import cats.implicits._
+import cats.{ Id, ~> }
 
 import scala.collection.mutable
-import scalaz.{ Free, ~>, Id }
-import scalaz.Free._
-import scalaz.Scalaz._
 
 /**
- * Implementation of proof sessions via the scalaz free monad. See [[http://typelevel.org/cats/datatypes/freemonad.html]].
+ * Created by sebastian on 24.11.16.
+ */
+
+/**
+ * Implementation of proof sessions via the cats free monad. See [[http://typelevel.org/cats/datatypes/freemonad.html]].
  */
 object Session {
 
