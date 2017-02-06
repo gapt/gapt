@@ -28,41 +28,8 @@ private object getAtHOLPosition {
 }
 
 object replaceAtHOLPosition {
-  def apply( et: ExpansionTree, pos: HOLPosition, exp: LambdaExpression ): ExpansionTree = {
-    val rest = pos.tail
-    ( et, pos.head ) match {
-      case ( ETMerge( left, right ), _ )                => ETMerge( replaceAtHOLPosition( left, pos, exp ), replaceAtHOLPosition( right, pos, exp ) )
-
-      case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )     => et
-      case ( ETAtom( formula, polarity ), _ )           => ETAtom( formula.replace( pos, exp ).asInstanceOf[HOLAtom], polarity )
-      case ( et @ ETDefinedAtom( atom, _, _ ), _ )      => et.copy( atom = atom.replace( pos, exp ).asInstanceOf[HOLAtom] )
-
-      case ( ETWeakening( formula, polarity ), _ )      => ETWeakening( formula.replace( pos, exp ), polarity )
-
-      case ( ETNeg( sub ), 1 )                          => ETNeg( replaceAtHOLPosition( sub, rest, exp ) )
-
-      case ( ETAnd( left, right ), 1 )                  => ETAnd( replaceAtHOLPosition( left, rest, exp ), right )
-      case ( ETAnd( left, right ), 2 )                  => ETAnd( left, replaceAtHOLPosition( right, rest, exp ) )
-
-      case ( ETOr( left, right ), 1 )                   => ETOr( replaceAtHOLPosition( left, rest, exp ), right )
-      case ( ETOr( left, right ), 2 )                   => ETOr( left, replaceAtHOLPosition( right, rest, exp ) )
-
-      case ( ETImp( left, right ), 1 )                  => ETImp( replaceAtHOLPosition( left, rest, exp ), right )
-      case ( ETImp( left, right ), 2 )                  => ETImp( left, replaceAtHOLPosition( right, rest, exp ) )
-
-      //FIXME: Quantifier cases are not entirely safe: What if the eigenvariable or the instances are replaced?
-      case ( ETStrongQuantifier( formula, v, sub ), 1 ) => ETStrongQuantifier( formula.replace( pos, exp ), v, replaceAtHOLPosition( sub, rest, exp ) )
-      case ( ETSkolemQuantifier( formula, skt, skf, sub ), 1 ) =>
-        ETSkolemQuantifier( formula.replace( pos, exp ), skt, skf, replaceAtHOLPosition( sub, rest, exp ) )
-
-      case ( ETWeakQuantifier( formula, instances ), 1 ) =>
-        ETWeakQuantifier(
-          formula.replace( pos, exp ),
-          for ( ( term, instance ) <- instances )
-            yield term -> replaceAtHOLPosition( instance, rest, exp )
-        )
-    }
-  }
+  def apply( et: ExpansionTree, pos: HOLPosition, exp: LambdaExpression ): ExpansionTree =
+    replaceWithContext( et, replacementContext( et.shallow( pos ).exptype, et.shallow, Some( pos ) ), exp )
 }
 
 /**
@@ -92,8 +59,20 @@ object replaceWithContext {
       case ( ETImp( left, right ), Abs( v, Imp( l, r ) ) ) => ETImp( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
       case ( ETStrongQuantifier( formula, x, sub ), _ ) =>
         ETStrongQuantifier( newFormula, x, apply( sub, instReplCtx( replacementContext, x ), exp ) )
-      case ( ETSkolemQuantifier( formula, skTerm, skDef, sub ), _ ) =>
-        ETSkolemQuantifier( newFormula, skTerm, skDef, apply( sub, instReplCtx( replacementContext, skTerm ), exp ) )
+
+      case ( ETSkolemQuantifier( formula, skTerm @ Apps( skConst, skArgs ), skDef, sub ), _ ) =>
+        val boundVars = freeVariables( formula ) ++ freeVariables( skTerm ) ++ freeVariables( exp )
+        val nameGen = rename.awayFrom( boundVars )
+
+        val newSkArgs = skArgs.map( a => nameGen.fresh( Var( "x", a.exptype ) ) )
+        val lhs = newFormula
+        val rhs = BetaReduction.betaNormalize( skDef( newSkArgs ) )
+        val subst = syntacticMGU( lhs, rhs, boundVars ).
+          getOrElse( throw new IllegalArgumentException( s"Cannot unify $lhs =?= $rhs" ) )
+        val newSkTerm = subst( skConst( newSkArgs ) )
+
+        ETSkolemQuantifier( newFormula, newSkTerm, skDef, apply( sub, instReplCtx( replacementContext, newSkTerm ), exp ) )
+
       case ( ETWeakQuantifier( formula, instances ), _ ) =>
         ETWeakQuantifier(
           newFormula,
@@ -181,7 +160,11 @@ private[expansion] object instReplCtx {
 
 object generalizeET {
   def apply( et: ExpansionTree, newShallow: HOLFormula ): ExpansionTree =
-    HOLPosition.differingPositions( et.shallow, newShallow ).foldLeft( et )( ( et_, pos ) =>
-      replaceAtHOLPosition( et_, pos, newShallow( pos ) ) )
+    HOLPosition.differingPositions( et.shallow, newShallow ).
+      groupBy( pos => ( et.shallow( pos ), newShallow( pos ) ) ).
+      foldLeft( et ) {
+        case ( et_, ( ( what, by ), poss ) ) =>
+          replaceWithContext( et_, replacementContext( what.exptype, et_.shallow, poss ), by )
+      }
 }
 
