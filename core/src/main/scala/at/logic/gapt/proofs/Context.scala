@@ -233,10 +233,12 @@ object Context {
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
-  case class ProofNames( names: Set[( LambdaExpression, HOLSequent )] ) {
-    def +( name: LambdaExpression, linkquent: HOLSequent ) = copy( names + ( ( name, linkquent ) ) )
+  case class ProofNames( names:   Map[String, (LambdaExpression, HOLSequent)] ) {
+    def +(name:String,linkpression: LambdaExpression, linkquent: HOLSequent ) = copy( names + (( name, (linkpression,linkquent)))  )
   }
-  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Set[( LambdaExpression, HOLSequent )]() ) )
+
+
+  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames(Map[String, (LambdaExpression, HOLSequent)]() ) )
 
   case class ProofDefinitions( components: Set[( LambdaExpression, LKProof )] ) {
     def +( name: LambdaExpression, linkproof: LKProof ) = copy( components + ( ( name, linkproof ) ) )
@@ -363,14 +365,16 @@ object Context {
       endSequent.foreach( ctx.check( _ ) )
       val fvEs = freeVariables( endSequent )
       lhs match {
-        case Apps( c: Const, vs: Seq[LambdaExpression] ) => {
+        case Apps( at.logic.gapt.expr.Const(c,t), vs: Seq[LambdaExpression] ) => {
+          val nameIsThere = ctx.get[ProofNames].names.keySet.contains(c)
           val varcheck: Boolean = vs == vs.distinct &&
             vs.forall( _.isInstanceOf[Var] ) &&
             ( freeVariables( endSequent ).toSet[LambdaExpression] ).subsetOf( vs.toSet ) &&
-            vs.toSet.subsetOf( ( freeVariables( endSequent ).toSet[LambdaExpression] ) )
-          if ( varcheck ) ctx.state.update[ProofNames]( _ + ( lhs, endSequent ) )
+            vs.toSet.subsetOf( ( freeVariables( endSequent ).toSet[LambdaExpression] ) ) &&
+            !nameIsThere
+          if ( varcheck ) ctx.state.update[ProofNames]( _ + (c, lhs, endSequent))
           else throw new IllegalArgumentException( "variables of " + lhs.toString() + "   " + vs.toString() +
-            " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString() )
+            " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString()+ " or duplicate proof name" )
         }
         case _ => throw new IllegalArgumentException( lhs.toString() + "  is a malformed proof name" )
       }
@@ -384,7 +388,8 @@ object Context {
       lhs match {
         case Apps( c: Const, vs ) => {
           vs.foreach( ctx.check( _ ) )
-          val decName = ctx.get[ProofNames].names.fold( None: Option[( LambdaExpression, HOLSequent )] )( ( x, y ) => {
+          val decName = ctx.get[ProofNames].names.keySet.map(key => ctx.get[ProofNames].names.get(key).get)
+            .fold( None: Option[( LambdaExpression, HOLSequent )] )( ( x, y ) => {
             x match {
               case Some( thing ) => Some( thing )
               case None => y match {
