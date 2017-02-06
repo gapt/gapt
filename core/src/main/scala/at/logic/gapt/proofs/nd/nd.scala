@@ -163,16 +163,17 @@ object InitialSequent {
 /**
  * An NDProof consisting of a logical axiom:
  * <pre>
- *    --------ax
- *     A :- A
+ *    -----------ax
+ *     Γ, A :- A
  * </pre>
  * with A atomic.
  *
+ * @param context The context Γ.
  * @param A The atom A.
  */
-case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
+case class LogicalAxiom( context: Seq[HOLFormula], A: HOLFormula ) extends InitialSequent {
   override def name = "ax"
-  override def conclusion = NDSequent( Seq( A ), A )
+  override def conclusion = NDSequent( context :+ A, A )
   def mainFormula = A
 }
 
@@ -206,41 +207,6 @@ case class AndElim1Rule( subProof: NDProof )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object AndElim1Rule extends ConvenienceConstructor( "AndElim1Rule" ) {
-
-  /*
-  /**
-    * Convenience constructor for ∧:l.
-    * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-    * will attempt to find an appropriate index on its own.
-    *
-    * @param subProof The subproof.
-    * @param conjunct Index of the left conjunct or the conjunct itself.
-    * @return
-    */
-  def apply( subProof: NDProof, conjunct: HOLFormula ): AndElim1Rule = {
-    val premise = subProof.endSequent
-
-    val ( indices, _ ) = findAndValidate( premise )( Seq( Right(conjunct) ), Right(conjunct) )
-
-    AndElim1Rule( subProof )
-  }
-  */
-
-  /**
-    * Convenience constructor for ∧:e1.
-    * Given a proposed main formula A, it will attempt to create an inference with this main formula.
-    *
-    * @param subProof The subproof.
-    * @param mainFormula The main formula to be inferred.
-    * @return
-    */
-  def apply( subProof: NDProof, mainFormula: HOLFormula ): AndElim1Rule = mainFormula match {
-    case f : HOLFormula => apply( subProof, f )
-    case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
-  }
-}
-
 /**
   * An NDProof ending with elimination of the left conjunct
   * <pre>
@@ -271,41 +237,6 @@ case class AndElim2Rule( subProof: NDProof )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
-object AndElim2Rule extends ConvenienceConstructor( "AndElim2Rule" ) {
-
-  /*
-  /**
-    * Convenience constructor for ∧:e2.
-    * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-    * will attempt to find an appropriate index on its own.
-    *
-    * @param subProof The subproof.
-    * @param conjunct Index of the left conjunct or the conjunct itself.
-    * @return
-    */
-  def apply( subProof: NDProof, conjunct: HOLFormula ): AndElim2Rule = {
-    val premise = subProof.endSequent
-
-    val ( indices, _ ) = findAndValidate( premise )( Seq( Right(conjunct) ), Right(conjunct) )
-
-    AndElim2Rule( subProof )
-  }
-  */
-
-  /**
-    * Convenience constructor for ∧:e2.
-    * Given a proposed main formula A, it will attempt to create an inference with this main formula.
-    *
-    * @param subProof The subproof.
-    * @param mainFormula The main formula to be inferred.
-    * @return
-    */
-  def apply( subProof: NDProof, mainFormula: HOLFormula ): AndElim2Rule = mainFormula match {
-    case f : HOLFormula => apply( subProof, f )
-    case _ => throw NDRuleCreationException( s"." )
-  }
-}
-
 /**
   * An NDProof ending with a conjunction on the right:
   * <pre>
@@ -333,43 +264,6 @@ case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
   override def name = "∧:i"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
-}
-
-object AndIntroRule extends ConvenienceConstructor( "AndIntroRule" ) {
-
-  /**
-    * Convenience constructor for ∧:r.
-    * Each of the aux formulas can be given as an index or a formula. If it is given as a formula, the constructor
-    * will attempt to find an appropriate index on its own.
-    *
-    * @param leftSubProof The left subproof.
-    * @param leftConjunct Index of the left conjunct or the conjunct itself.
-    * @param rightSubProof The right subproof.
-    * @param rightConjunct Index of the right conjunct or the conjunct itself.
-    * @return
-    */
-  def apply( leftSubProof: NDProof, leftConjunct: IndexOrFormula, rightSubProof: NDProof, rightConjunct: IndexOrFormula ): AndIntroRule = {
-    val ( leftPremise, rightPremise ) = ( leftSubProof.endSequent, rightSubProof.endSequent )
-
-    val ( _, leftIndex ) = findAndValidate( leftPremise )( Seq(), leftConjunct )
-    val ( _, rightIndex ) = findAndValidate( rightPremise )( Seq(), rightConjunct )
-
-    new AndIntroRule( leftSubProof, rightSubProof )
-  }
-
-  /**
-    * Convenience constructor for ∧:r.
-    * Given a proposed main formula A ∧ B, it will attempt to create an inference with this main formula.
-    *
-    * @param leftSubProof The left subproof.
-    * @param rightSubProof The right subproof.
-    * @param mainFormula The formula to be inferred. Must be of the form A ∧ B.
-    * @return
-    */
-  def apply( leftSubProof: NDProof, rightSubProof: NDProof, mainFormula: HOLFormula ): AndIntroRule = mainFormula match {
-    case And( f, g ) => apply( leftSubProof, rightSubProof )
-    case _           => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
-  }
 }
 
 /**
