@@ -9,6 +9,16 @@ import org.specs2.mutable.Specification
 class IntroducePiCutTest extends Specification {
 
   /*
+  */
+  // 459 ms
+  // Number of non-tautological leaves
+  //   2
+  // Number of unified literals
+  //   4
+  // Number of allowed clauses (without unnecessary clauses)
+  //   2
+  // Number of checked Formulas
+  //   3
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)|Q(f1(x)))"
@@ -30,6 +40,15 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
+  /*
+  // 566 ms
+  // Number of non-tautological leaves
+  //   96
+  // Number of unified literals
+  //   10
+  // No 'allowed clauses' were computed
+  // Number of checked Formulas
+  //   5
   "This" should {
     "be computed correctly" in {
       val A4 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))|P(x,f4(x))"
@@ -47,6 +66,14 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
+  // 512 ms
+  // Number of non-tautological leaves
+  //   24
+  // Number of unified literals
+  //   8
+  // No 'allowed clauses' were computed
+  // Number of checked Formulas
+  //   5
   "This" should {
     "be computed correctly" in {
       val A3 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))"
@@ -63,6 +90,15 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
+  // 1 sec
+  // Number of non-tautological leaves
+  //   86
+  // Number of unified literals
+  //   22
+  // Number of allowed clauses (without unnecessary clauses)
+  //   5
+  // Number of checked Formulas
+  //   5
   "This" should {
     "be computed correctly" in {
       val T1 = fof"Pkl(0,y1)&Pg(f(0),f(y1))"
@@ -94,6 +130,15 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
+  // Don't test this if you don't have enough time (7h)
+  // Number of non-tautological leaves
+  //   1386
+  // Number of unified literals
+  //   20
+  // Number of allowed clauses (without unnecessary clauses)
+  //   13
+  // Number of checked Formulas
+  //   21
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -127,8 +172,16 @@ class IntroducePiCutTest extends Specification {
       )
     }
   }
-  */
 
+  // 52 sec
+  // Number of non-tautological leaves
+  //   308
+  // Number of unified literals
+  //   16
+  // Number of allowed clauses (without unnecessary clauses)
+  //   11
+  // Number of checked Formulas
+  //   62
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -160,7 +213,15 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  /*
+  // 661 ms
+  // Number of non-tautological leaves
+  //   44
+  // Number of unified literals
+  //   8
+  // Number of allowed clauses (without unnecessary clauses)
+  //   7
+  // Number of checked Formulas
+  //   18
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -189,6 +250,15 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
+  // 563 ms
+  // Number of non-tautological leaves
+  //   16
+  // Number of unified literals
+  //   8
+  // Number of allowed clauses (without unnecessary clauses)
+  //   5
+  // Number of checked Formulas
+  //   12
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
