@@ -40,34 +40,34 @@ abstract class NDProof extends SequentProof[HOLFormula, NDProof] {
 }
 
 /**
-  * An NDProof deriving a sequent from another sequent:
-  * <pre>
-  *        (π)
-  *      Γ :- Δ
-  *    ----------
-  *     Γ' :- Δ'
-  * </pre>
-  */
+ * An NDProof deriving a sequent from another sequent:
+ * <pre>
+ *        (π)
+ *      Γ :- Δ
+ *    ----------
+ *     Γ' :- Δ'
+ * </pre>
+ */
 abstract class UnaryNDProof extends NDProof {
   /**
-    * The immediate subproof of the rule.
-    *
-    * @return
-    */
+   * The immediate subproof of the rule.
+   *
+   * @return
+   */
   def subProof: NDProof
 
   /**
-    * The object connecting the lower and upper sequents.auxFormulas
-    *
-    * @return
-    */
+   * The object connecting the lower and upper sequents.auxFormulas
+   *
+   * @return
+   */
   def getSequentConnector: SequentConnector = occConnectors.head
 
   /**
-    * The upper sequent of the rule.
-    *
-    * @return
-    */
+   * The upper sequent of the rule.
+   *
+   * @return
+   */
   def premise = subProof.endSequent
 
   override def immediateSubProofs = Seq( subProof )
@@ -78,55 +78,55 @@ object UnaryNDProof {
 }
 
 /**
-  * An NDProof deriving a sequent from two other sequents:
-  * <pre>
-  *     (π1)     (π2)
-  *    Γ :- Δ   Γ' :- Δ'
-  *   ------------------
-  *        Π :- Λ
-  * </pre>
-  */
+ * An NDProof deriving a sequent from two other sequents:
+ * <pre>
+ *     (π1)     (π2)
+ *    Γ :- Δ   Γ' :- Δ'
+ *   ------------------
+ *        Π :- Λ
+ * </pre>
+ */
 abstract class BinaryNDProof extends NDProof {
   /**
-    * The immediate left subproof of the rule.
-    *
-    * @return
-    */
+   * The immediate left subproof of the rule.
+   *
+   * @return
+   */
   def leftSubProof: NDProof
 
   /**
-    * The immediate right subproof of the rule.
-    *
-    * @return
-    */
+   * The immediate right subproof of the rule.
+   *
+   * @return
+   */
   def rightSubProof: NDProof
 
   /**
-    * The object connecting the lower and left upper sequents.
-    *
-    * @return
-    */
+   * The object connecting the lower and left upper sequents.
+   *
+   * @return
+   */
   def getLeftSequentConnector: SequentConnector = occConnectors.head
 
   /**
-    * The object connecting the lower and right upper sequents.
-    *
-    * @return
-    */
+   * The object connecting the lower and right upper sequents.
+   *
+   * @return
+   */
   def getRightSequentConnector: SequentConnector = occConnectors.tail.head
 
   /**
-    * The left upper sequent of the rule.
-    *
-    * @return
-    */
+   * The left upper sequent of the rule.
+   *
+   * @return
+   */
   def leftPremise = leftSubProof.endSequent
 
   /**
-    * The right upper sequent of the rule.
-    *
-    * @return
-    */
+   * The right upper sequent of the rule.
+   *
+   * @return
+   */
   def rightPremise = rightSubProof.endSequent
 
   override def immediateSubProofs = Seq( leftSubProof, rightSubProof )
@@ -243,41 +243,40 @@ object InitialSequent {
 /**
  * An NDProof consisting of a logical axiom:
  * <pre>
- *    -----------ax
- *     Γ, A :- A
+ *    --------ax
+ *     A :- A
  * </pre>
  * with A atomic.
  *
- * @param context The context Γ.
  * @param A The atom A.
  */
-case class LogicalAxiom( context: Seq[HOLFormula], A: HOLFormula ) extends InitialSequent {
+case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
   override def name = "ax"
-  override def conclusion = NDSequent( context :+ A, A )
+  override def conclusion = NDSequent( Seq( A ), A )
   def mainFormula = A
 }
 
 /**
-  * An NDProof ending with elimination of the right conjunct
-  * <pre>
-  *         (π)
-  *      Γ :- A ∧ B
-  *    --------------
-  *        Γ :- A
-  * </pre>
-  *
-  * @param subProof The subproof π.
-  */
+ * An NDProof ending with elimination of the right conjunct
+ * <pre>
+ *         (π)
+ *      Γ :- A ∧ B
+ *    --------------
+ *        Γ :- A
+ * </pre>
+ *
+ * @param subProof The subproof π.
+ */
 case class AndElim1Rule( subProof: NDProof )
-  extends UnaryNDProof with CommonRule {
+    extends UnaryNDProof with CommonRule {
 
-  val aux = Suc( 0 )
+  def aux = Suc( 0 )
 
-  val conjunction = premise( aux )
+  def conjunction = premise( aux )
 
-  val mainFormula = conjunction match {
+  def mainFormula = conjunction match {
     case And( leftConjunct, _ ) => leftConjunct
-    case _ => throw new Exception("")
+    case _                      => throw new Exception( "" )
   }
 
   override def auxIndices = Seq( Seq( aux ) )
@@ -288,26 +287,26 @@ case class AndElim1Rule( subProof: NDProof )
 }
 
 /**
-  * An NDProof ending with elimination of the left conjunct
-  * <pre>
-  *         (π)
-  *      Γ :- A ∧ B
-  *    --------------
-  *        Γ :- B
-  * </pre>
-  *
-  * @param subProof The subproof π.
-  */
+ * An NDProof ending with elimination of the left conjunct
+ * <pre>
+ *         (π)
+ *      Γ :- A ∧ B
+ *    --------------
+ *        Γ :- B
+ * </pre>
+ *
+ * @param subProof The subproof π.
+ */
 case class AndElim2Rule( subProof: NDProof )
-  extends UnaryNDProof with CommonRule {
+    extends UnaryNDProof with CommonRule {
 
-  val aux = Suc( 0 )
+  def aux = Suc( 0 )
 
-  val conjunction = premise( aux )
+  def conjunction = premise( aux )
 
-  val mainFormula = conjunction match {
+  def mainFormula = conjunction match {
     case And( _, rightConjunct ) => rightConjunct
-    case _ => throw NDRuleCreationException( s"Proposed main formula $conjunction is not a conjunction." )
+    case _                       => throw NDRuleCreationException( s"Proposed main formula $conjunction is not a conjunction." )
   }
 
   override def auxIndices = Seq( Seq( aux ) )
@@ -318,26 +317,26 @@ case class AndElim2Rule( subProof: NDProof )
 }
 
 /**
-  * An NDProof ending with a conjunction on the right:
-  * <pre>
-  *    (π1)      (π2)
-  *   Γ :- A    Π :- B
-  * --------------------
-  *     Γ, Π :- A∧B
-  * </pre>
-  *
-  * @param leftSubProof The proof π,,1,,.
-  * @param rightSubProof The proof π,,2,,
-  */
+ * An NDProof ending with a conjunction on the right:
+ * <pre>
+ *    (π1)      (π2)
+ *   Γ :- A    Π :- B
+ * --------------------
+ *     Γ, Π :- A∧B
+ * </pre>
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param rightSubProof The proof π,,2,,
+ */
 case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
-  extends BinaryNDProof with CommonRule {
+    extends BinaryNDProof with CommonRule {
 
-  val aux = Suc( 0 )
+  def aux = Suc( 0 )
 
-  val leftConjunct = leftPremise( aux )
-  val rightConjunct = rightPremise( aux )
+  def leftConjunct = leftPremise( aux )
+  def rightConjunct = rightPremise( aux )
 
-  val mainFormula = And( leftConjunct, rightConjunct )
+  def mainFormula = And( leftConjunct, rightConjunct )
 
   def auxIndices = Seq( Seq( aux ), Seq( aux ) )
 
@@ -467,60 +466,60 @@ case class OrIntro2Rule( subProof: NDProof, leftDisjunct: HOLFormula )
 }
 
 /**
-  * An NDProof ending with elimination of an implication:
-  * <pre>
-  *   (π1)        (π2)
-  *  Γ :- A→B    Π :- A
-  * --------------------------
-  *     Γ, Π :- B
-  * </pre>
-  *
-  * @param leftSubProof The proof π,,1,,.
-  * @param rightSubProof The proof π,,2,,
-  */
+ * An NDProof ending with elimination of an implication:
+ * <pre>
+ *   (π1)        (π2)
+ *  Γ :- A→B    Π :- A
+ * --------------------------
+ *     Γ, Π :- B
+ * </pre>
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param rightSubProof The proof π,,2,,
+ */
 case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
-  extends BinaryNDProof with CommonRule {
+    extends BinaryNDProof with CommonRule {
 
-  val aux = Suc( 0 )
+  def aux = Suc( 0 )
 
-  val implication = leftPremise( aux )
+  def implication = leftPremise( aux )
   val antecedent = rightPremise( aux )
 
-  val mainFormula = implication match {
+  def mainFormula = implication match {
     case Imp( `antecedent`, consequent ) => consequent
-    case Imp( _,_ ) => throw NDRuleCreationException( s"Proposed main formula $antecedent is not the antecedent of $implication." )
-    case _ => throw NDRuleCreationException( s"Proposed main formula $implication is not an implication." )
+    case Imp( _, _ )                     => throw NDRuleCreationException( s"Proposed main formula $antecedent is not the antecedent of $implication." )
+    case _                               => throw NDRuleCreationException( s"Proposed main formula $implication is not an implication." )
   }
 
   def auxIndices = Seq( Seq( aux ), Seq( aux ) )
 
   override def name = "\u2283:e"
 
-  override def mainFormulaSequent =  Sequent() :+ mainFormula
+  override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
 /**
-  * An NDProof ending with introduction of an implication:
-  * <pre>
-  *         (π)
-  *     A, Γ :- B
-  *    --------------
-  *     Γ :- A → B
-  * </pre>
-  *
-  * @param subProof The subproof π.
-  * @param aux The index of A.
-  */
+ * An NDProof ending with introduction of an implication:
+ * <pre>
+ *         (π)
+ *     A, Γ :- B
+ *    --------------
+ *     Γ :- A → B
+ * </pre>
+ *
+ * @param subProof The subproof π.
+ * @param aux The index of A.
+ */
 case class ImpIntroRule( subProof: NDProof, aux: SequentIndex )
-  extends UnaryNDProof with CommonRule {
+    extends UnaryNDProof with CommonRule {
 
   validateIndices( premise, Seq( aux ) )
 
-  val impPremise = premise( aux )
-  val impConclusion = premise( Suc(0) )
-  val mainFormula = Imp( impPremise, impConclusion )
+  def impPremise = premise( aux )
+  def impConclusion = premise( Suc( 0 ) )
+  def mainFormula = Imp( impPremise, impConclusion )
 
-  override def auxIndices = Seq( Seq( aux, Suc(0) ) )
+  override def auxIndices = Seq( Seq( aux, Suc( 0 ) ) )
 
   override def name = "\u2283:i"
 
@@ -530,20 +529,20 @@ case class ImpIntroRule( subProof: NDProof, aux: SequentIndex )
 object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
 
   /**
-    * Convenience constructor for →:i.
-    * The aux formula can be given as an index or a formula. If it is given as a formula, the constructor
-    * will attempt to find an appropriate index on its own.
-    *
-    * @param subProof The subproof.
-    * @param impPremise Index of the premise of the implication or the premise itself.
-    * @return
-    */
+   * Convenience constructor for →:i.
+   * The aux formula can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param impPremise Index of the premise of the implication or the premise itself.
+   * @return
+   */
   def apply( subProof: NDProof, impPremise: IndexOrFormula ): ImpIntroRule = {
     val premise = subProof.endSequent
 
-    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Left( Suc(0)) )
+    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Left( Suc( 0 ) ) )
 
-    new ImpIntroRule( subProof, Ant( antIndices( 0 ) )  )
+    new ImpIntroRule( subProof, Ant( antIndices( 0 ) ) )
   }
 
   /**
@@ -553,28 +552,29 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
     * @param subProof The subproof.
     * @return
     */
+
   def apply( subProof: NDProof ): ImpIntroRule = {
     val premise = subProof.endSequent
 
-    if (premise.antecedent.size == 1) apply( subProof, Ant(0))
+    if ( premise.antecedent.size == 1 ) apply( subProof, Ant( 0 ) )
     else throw NDRuleCreationException( s"Antecedent of $premise doesn't have precisely one element." )
   }
 }
 
 /**
-  * Class for reducing boilerplate code in ND companion objects.
-  *
-  * @param longName The long name of the rule.
-  */
+ * Class for reducing boilerplate code in ND companion objects.
+ *
+ * @param longName The long name of the rule.
+ */
 class ConvenienceConstructor( val longName: String ) {
   type IndexOrFormula = Either[SequentIndex, HOLFormula]
 
   /**
-    * Create an NDRuleCreationException with a message starting with "Cannot create $longName: ..."
-    *
-    * @param text The rest of the message.
-    * @return
-    */
+   * Create an NDRuleCreationException with a message starting with "Cannot create $longName: ..."
+   *
+   * @param text The rest of the message.
+   * @return
+   */
   protected def NDRuleCreationException( text: String ): NDRuleCreationException = new NDRuleCreationException( longName, text )
 
   def findIndicesOrFormulasInPremise( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndexFormula: IndexOrFormula ): ( Seq[HOLFormula], Seq[Int], HOLFormula, Int ) = {
@@ -610,16 +610,16 @@ class ConvenienceConstructor( val longName: String ) {
     }
 
     val suc = sucIndexFormula match {
-        case Left( Suc( i: Int ) ) =>
-          ( premise( Suc( i ) ), i )
+      case Left( Suc( i: Int ) ) =>
+        ( premise( Suc( i ) ), i )
 
-        case Right( f: HOLFormula ) =>
-          val i = premise.succedent.indexOf( f )
+      case Right( f: HOLFormula ) =>
+        val i = premise.succedent.indexOf( f )
 
-          ( f, i )
+        ( f, i )
 
-        case Left( i: Ant ) => throw NDRuleCreationException( s"Index $i should be in the succedent." )
-      }
+      case Left( i: Ant ) => throw NDRuleCreationException( s"Index $i should be in the succedent." )
+    }
 
     val ( antFormulas, antIndices ) = ant.unzip
 
@@ -629,13 +629,13 @@ class ConvenienceConstructor( val longName: String ) {
   }
 
   /**
-    * Throws an exception if the output of findFormulasInPremise contains any -1 entries.
-    *
-    * @param premise The sequent in question.
-    * @param antFormulas The list of formulas in the antecedent.
-    * @param antIndices The list of indices corresponding to antFormulas.
-    * @return
-    */
+   * Throws an exception if the output of findFormulasInPremise contains any -1 entries.
+   *
+   * @param premise The sequent in question.
+   * @param antFormulas The list of formulas in the antecedent.
+   * @param antIndices The list of indices corresponding to antFormulas.
+   * @return
+   */
   protected def validateIndices( premise: HOLSequent )( antFormulas: Seq[HOLFormula], antIndices: Seq[Int] ) = {
     val antMap = scala.collection.mutable.HashMap.empty[HOLFormula, Int]
 
@@ -651,14 +651,14 @@ class ConvenienceConstructor( val longName: String ) {
   }
 
   /**
-    * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
-    * list contains a -1.
-    *
-    * @param premise The sequent in question.
-    * @param antIndicesFormulas The list of indices or formulas in the antecedent.
-    * @param sucIndexFormula The list of indices or formulas in the succedent.
-    * @return
-    */
+   * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
+   * list contains a -1.
+   *
+   * @param premise The sequent in question.
+   * @param antIndicesFormulas The list of indices or formulas in the antecedent.
+   * @param sucIndexFormula The list of indices or formulas in the succedent.
+   * @return
+   */
   protected def findAndValidate( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndexFormula: IndexOrFormula ): ( Seq[Int], Int ) = {
     val ( antFormulas, antIndices, sucFormula, sucIndex ) = findIndicesOrFormulasInPremise( premise )( antIndicesFormulas, sucIndexFormula )
     validateIndices( premise )( antFormulas, antIndices )
