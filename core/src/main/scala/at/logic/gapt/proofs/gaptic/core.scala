@@ -1,18 +1,39 @@
 package at.logic.gapt.proofs.gaptic
 
+import java.util.Locale
+
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ SequentConnector, Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ HOLSequent, Sequent, SequentConnector, SequentIndex }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.formats.babel.BabelSignature
-
+import at.logic.gapt.utils.NameGenerator
 import cats.syntax.all._
 import cats.instances.all._
+
+object guessLabels {
+  def suggestLabel( formula: HOLFormula, idx: SequentIndex, nameGen: NameGenerator ): String =
+    formula match {
+      case Const( name, _ ) => nameGen.fresh( name )
+      case _ if idx.isSuc   => nameGen.fresh( "g" )
+      case _ if idx.isAnt   => nameGen.freshWithIndex( "h" )
+    }
+
+  def apply( sequent: HOLSequent ): Sequent[( String, HOLFormula )] = {
+    val nameGen = new NameGenerator( Set() )
+    for ( ( f, i ) <- sequent.zipWithIndex )
+      yield suggestLabel( f, i, nameGen ) -> f
+  }
+}
 
 object ProofState {
   def apply( initialGoal: OpenAssumption ): ProofState =
     ProofState( initialGoal, List( initialGoal ), Map() )
   def apply( initialGoal: Sequent[( String, HOLFormula )] ): ProofState =
     ProofState( OpenAssumption( initialGoal ) )
+  def apply( initialGoal: HOLSequent )( implicit dummyImplicit: DummyImplicit ): ProofState =
+    apply( guessLabels( initialGoal ) )
+  def apply( initialGoal: HOLFormula ): ProofState =
+    apply( Sequent() :+ initialGoal )
 }
 case class ProofState private (
     initialGoal:      OpenAssumption,
