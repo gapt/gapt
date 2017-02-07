@@ -53,13 +53,13 @@ import scala.collection.mutable
 object ResolutionToExpansionProof {
 
   def apply( proof: ResolutionProof ): ExpansionProof = {
-    apply( proof, setInput() )
+    apply( proof, inputsAsExpansionSequent )
   }
 
-  def setInput()( input: Input, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
+  def inputsAsExpansionSequent( input: Input, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
     input match {
       case ( Input( Sequent( Seq( f ), Seq() ) ) ) if freeVariables( f ).isEmpty =>
-        Sequent().:+( ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) ) )
+        Sequent() :+ ( ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) ) )
 
       case ( Input( Sequent( Seq(), Seq( f ) ) ) ) if freeVariables( f ).isEmpty =>
         Sequent().+:( ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) ) )
