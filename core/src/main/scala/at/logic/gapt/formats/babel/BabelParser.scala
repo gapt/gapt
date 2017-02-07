@@ -2,11 +2,12 @@ package at.logic.gapt.formats.babel
 
 import at.logic.gapt.{ expr => real }
 import at.logic.gapt.expr.{ HOLFormula, LambdaExpression, preExpr }
+import at.logic.gapt.proofs.gaptic.guessLabels
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.utils.NameGenerator
 import fastparse.StringReprOps
 import fastparse.core.ParseError
 import fastparse.utils.IndexedParserInput
-
 import cats.syntax.either._
 
 sealed abstract class BabelParseError( message: String ) extends IllegalArgumentException( message )
@@ -133,6 +134,11 @@ object BabelParserCombinators {
   val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
   val SequentAndNothingElse = P( "" ~ Sequent ~ End )
+
+  val LabelledFormula = P( ( Name ~ ":" ~ !"-" ).? ~ Expr )
+  val LabelledSequent = P( LabelledFormula.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ LabelledFormula.rep( sep = "," ) ).
+    map { case ( ant, suc ) => HOLSequent( ant, suc ) }
+  val LabelledSequentAndNothingElse = P( "" ~ LabelledSequent ~ End )
 }
 
 object BabelParser {
@@ -201,6 +207,25 @@ object BabelParser {
           val ( ant, suc ) = sequentElements.
             splitAt( exprSequent.antecedent.size )
           HOLSequent( ant, suc )
+        }
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        Left( BabelParsingError( parseError ) )
+    }
+  }
+
+  def tryParseLabelledSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[( String, HOLFormula )]] = {
+    LabelledSequentAndNothingElse.parse( text ) match {
+      case Parsed.Success( exprSequent, _ ) =>
+        val transformed = for ( ( l, f ) <- exprSequent ) yield l -> preExpr.TypeAnnotation( astTransformer( f ), preExpr.Bool )
+        preExpr.toRealExprs( transformed.elements.map( _._2 ), sig ).leftMap( ppElabError( text, _ ) ).map { sequentElements =>
+          val ( ant, suc ) = exprSequent.map( _._1 ).elements.
+            zip( sequentElements.map( _.asInstanceOf[HOLFormula] ) ).
+            splitAt( exprSequent.antecedent.size )
+          val nameGen = new NameGenerator( exprSequent.elements.view.flatMap( _._1 ).toSet )
+          HOLSequent( ant, suc ).zipWithIndex.map {
+            case ( ( Some( l ), f ), _ ) => l -> f
+            case ( ( None, f ), i )      => guessLabels.suggestLabel( f, i, nameGen ) -> f
+          }
         }
       case parseError @ Parsed.Failure( _, _, _ ) =>
         Left( BabelParsingError( parseError ) )

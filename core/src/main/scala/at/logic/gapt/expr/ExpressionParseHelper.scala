@@ -2,7 +2,7 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.expr.ExpressionParseHelper.Splice
 import at.logic.gapt.formats.babel._
-import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent }
+import at.logic.gapt.proofs.{ FOLClause, FOLSequent, HOLClause, HOLSequent, Sequent }
 import fastparse.core.ParseError
 
 object ExpressionParseHelper {
@@ -203,6 +203,18 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
         s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
       )
       case Right( sequent ) => sequent.map( _.asInstanceOf[HOLFormula] )
+    }
+  }
+
+  /** Parses a string as a labelled sequent. */
+  def hols( args: Splice[LambdaExpression]* ): Sequent[( String, HOLFormula )] = {
+    val ( combined, repl ) = interpolateHelper( args )
+
+    BabelParser.tryParseLabelledSequent( combined, repl ) match {
+      case Left( error ) => throw new IllegalArgumentException(
+        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
+      )
+      case Right( sequent ) => sequent
     }
   }
 

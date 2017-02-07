@@ -37,9 +37,8 @@ object lattice extends TacticsProof {
   //
 
   // show that join is _least_ upper bound for \leq
-  val p_6 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" ->
-    hof"∀z (x_0 <= z ∧ y_0 <= z ⊃ cup x_0 y_0 <= z)" ) ) ) {
-    unfold( "<=" ) in "a"
+  val p_6 = Lemma( hols"L1 :- ∀z (x_0 <= z ∧ y_0 <= z ⊃ cup x_0 y_0 <= z)" ) {
+    unfold( "<=" ) in "g"
     allR( hov"z_0" )
     impR
     andL
@@ -60,8 +59,8 @@ object lattice extends TacticsProof {
   }
 
   // continues showing that join is upper bound for \leq
-  val p_5_1 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> hof"x <= cup x y" ) ) ) {
-    unfold( "<=" ) in "a"
+  val p_5_1 = Lemma( hols"L1 :- x <= cup x y" ) {
+    unfold( "<=" ) in "g"
     unfold( "L1" ) in "L1"
     allL( "L1", le"x", le"cup x y" )
     andL
@@ -71,7 +70,7 @@ object lattice extends TacticsProof {
   }
 
   // show that join is upper bound for \leq
-  val p_5 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "LUB" -> FOLAtom( "LUB" ) ) ) ) {
+  val p_5 = Lemma( hols"L1 :- LUB" ) {
     unfold( "LUB" ) in "LUB"
     allR( "LUB", hov"x_0" )
     allR( "LUB", hov"y_0" )
@@ -85,33 +84,33 @@ object lattice extends TacticsProof {
   }
 
   //show that meet is _greatest_ lower bound for \leq
-  val p_4 = Lemma( Sequent( Nil, Seq( "a" -> hof"∀z (z <= x_0 ∧ z <= y_0 ⊃ z <= cap x_0 y_0)" ) ) ) {
-    unfold( "<=" ) in "a"
+  val p_4 = Lemma( hols":- ∀z (z <= x_0 ∧ z <= y_0 ⊃ z <= cap x_0 y_0)" ) {
+    unfold( "<=" ) in "g"
     decompose
     foTheory
   }
 
   // finishes showing that meet is lower bound for \leq
-  val p_3_1 = Lemma( Sequent( Nil, Seq( "a" -> hof"cap x_0 y_0 <= y_0" ) ) ) {
-    unfold( "<=" ) in "a"
+  val p_3_1 = Lemma( hols":- cap x_0 y_0 <= y_0" ) {
+    unfold( "<=" ) in "g"
     foTheory
   }
 
   // show that meet is lower bound for \leq
-  val p_3 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "a" -> And( FOLAtom( "GLB" ), FOLAtom( "LUB" ) ) ) ) ) {
+  val p_3 = Lemma( hols"L1 :- GLB & LUB" ) {
     andR
-    unfold( "GLB" ) in "a"
+    unfold( "GLB" ) in "g"
     decompose
     andR
     andR
-    unfold( "<=" ) in "a"; foTheory
+    unfold( "<=" ) in "g"; foTheory
     insert( p_3_1 )
     insert( p_4 )
     insert( p_5 )
   }
 
   // show transitivity
-  val p_2 = Lemma( Sequent( Nil, Seq( "T" -> FOLAtom( "T" ) ) ) ) {
+  val p_2 = Lemma( hols":- T" ) {
     unfold( "T" ) in "T"
     decompose
     unfold( "<=" ) in ( "T_0_0", "T_0_1", "T_1" )
@@ -119,16 +118,16 @@ object lattice extends TacticsProof {
   }
 
   // show anti-symmetry
-  val p_1 = Lemma( Sequent( Nil, Seq( "a" -> And( FOLAtom( "AS" ), FOLAtom( "T" ) ) ) ) ) {
+  val p_1 = Lemma( hols":- AS & T" ) {
     andR
-    unfold( "AS" ) in "a"
+    unfold( "AS" ) in "g"
     decompose
-    unfold( "<=" ) in ( "a_0_0", "a_0_1" ); foTheory
+    unfold( "<=" ) in ( "g_0_0", "g_0_1" ); foTheory
     insert( p_2 )
   }
 
   // split up POSET, show reflexivity
-  val p1_3 = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "L3" -> FOLAtom( "L3" ) ) ) ) {
+  val p1_3 = Lemma( hols"L1 :- L3" ) {
     unfold( "L3" ) in "L3"
     andR
     unfold( "POSET" ) in "L3"
@@ -145,7 +144,7 @@ object lattice extends TacticsProof {
   //
 
   // finishes r_2
-  val r_2_1 = Lemma( Sequent( Seq( "LUB" -> FOLAtom( "LUB" ) ), Seq( "a" -> hof"x_0 <= cup x_0 y_0" ) ) ) {
+  val r_2_1 = Lemma( hols"LUB :- x_0 <= cup x_0 y_0" ) {
     unfold( "LUB" ) in "LUB"
     allL( "LUB", hov"x_0", hov"y_0" )
     andL
@@ -154,26 +153,22 @@ object lattice extends TacticsProof {
   }
 
   // absorption law 2 - difficult direction
-  val r_2 = Lemma( Sequent(
-    Seq( "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ),
-      "a" -> hof"∀z (z <= cup x_0 y_0 ∧ z <= x_0 ⊃ z <= cap (cup x_0 y_0) x_0)" ),
-    Seq( "b" -> hof"x_0 <= cap (cup x_0 y_0) x_0" )
-  ) ) {
-    allL( "a", le"x_0" )
-    impL
-    andR
-    insert( r_2_1 )
-    unfold( "R" ) in "R"
-    allL( "R", le"x_0" )
-    axiomLog
-    prop
-  }
+  val r_2 = Lemma(
+    hols"""LUB, R, ∀z (z <= cup x_0 y_0 ∧ z <= x_0 ⊃ z <= cap (cup x_0 y_0) x_0) :-
+      x_0 <= cap (cup x_0 y_0) x_0"""
+  ) {
+      allL( "h_0", le"x_0" )
+      impL
+      andR
+      insert( r_2_1 )
+      unfold( "R" ) in "R"
+      allL( "R", le"x_0" )
+      axiomLog
+      prop
+    }
 
   // apply anti-symmetry to show absorption law 2 (+ easy direction)
-  val q_2 = Lemma( Sequent(
-    Seq( "GLB" -> FOLAtom( "GLB" ), "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ), "AS" -> FOLAtom( "AS" ) ),
-    Seq( "a" -> hof"∀x∀y cap (cup x y) x = x" )
-  ) ) {
+  val q_2 = Lemma( hols"GLB, LUB, R, AS :- ∀x∀y cap (cup x y) x = x" ) {
     decompose
     unfold( "GLB" ) in "GLB"; allL( "GLB", le"cup x y", le"x" ); decompose
     unfold( "AS" ) in "AS"; chain( "AS" )
@@ -182,7 +177,7 @@ object lattice extends TacticsProof {
   }
 
   // finishes r_1
-  val r_1_1 = Lemma( Sequent( Seq( "GLB" -> FOLAtom( "GLB" ) ), Seq( "a" -> hof"cap x_0 y_0 <= x_0" ) ) ) {
+  val r_1_1 = Lemma( hols"GLB :- cap x_0 y_0 <= x_0" ) {
     unfold( "GLB" ) in "GLB"
     allL( "GLB", le"x_0", le"y_0" )
     forget( "GLB" )
@@ -192,26 +187,18 @@ object lattice extends TacticsProof {
   }
 
   // absorption law 1 - difficult direction
-  val r_1 = Lemma( Sequent(
-    Seq( "GLB" -> FOLAtom( "GLB" ), "R" -> FOLAtom( "R" ),
-      "a" -> hof"∀z (cap x_0 y_0 <= z ∧ x_0 <= z ⊃ cup (cap x_0 y_0) x_0 <= z)" ),
-    Seq( "b" -> hof"cup (cap x_0 y_0) x_0 <= x_0" )
-  ) ) {
-    allL( "a", le"x_0" )
-    impL
-    andR
+  val r_1 = Lemma( hols"""
+    GLB, R, ∀z (cap x_0 y_0 <= z ∧ x_0 <= z ⊃ cup (cap x_0 y_0) x_0 <= z) :-
+    cup (cap x_0 y_0) x_0 <= x_0
+    """ ) {
+    chain( "h_0" )
     insert( r_1_1 )
     unfold( "R" ) in "R"
-    allL( "R", le"x_0" )
-    axiomLog
-    prop
+    chain( "R" )
   }
 
   // apply anti-symmetry to show absorption law 1 (+ easy direction)
-  val q_1 = Lemma( Sequent(
-    Seq( "GLB" -> FOLAtom( "GLB" ), "LUB" -> FOLAtom( "LUB" ), "R" -> FOLAtom( "R" ), "AS" -> FOLAtom( "AS" ) ),
-    Seq( "a" -> hof"∀x∀y (cup (cap x y) x = x)" )
-  ) ) {
+  val q_1 = Lemma( hols"GLB, LUB, R, AS :- ∀x∀y (cup (cap x y) x = x)" ) {
     decompose
     unfold( "AS" ) in "AS"
     allL( "AS", le"cup (cap x y) x", le"x" )
@@ -228,7 +215,7 @@ object lattice extends TacticsProof {
     axiomLog
   }
 
-  val p3_2 = Lemma( Sequent( Seq( "L3" -> FOLAtom( "L3" ) ), Seq( "L2" -> FOLAtom( "L2" ) ) ) ) {
+  val p3_2 = Lemma( hols"L3 :- L2" ) {
     unfold( "L3" ) in "L3"
     decompose
     unfold( "POSET" ) in "L3_0"
@@ -240,8 +227,8 @@ object lattice extends TacticsProof {
   }
 
   // Main proof
-  val p = Lemma( Sequent( Seq( "L1" -> FOLAtom( "L1" ) ), Seq( "L2" -> FOLAtom( "L2" ) ) ) ) {
-    cut( "L3", FOLAtom( "L3" ) )
+  val p = Lemma( hols"L1 :- L2" ) {
+    cut( "L3", hof"L3" )
     insert( p1_3 )
     insert( p3_2 )
   }

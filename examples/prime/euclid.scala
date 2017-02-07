@@ -7,10 +7,7 @@ import at.logic.gapt.proofs.lk.LKProof
 
 case class euclid( k: Int ) extends PrimeDefinitions {
   def ldivprod( i: Int ): LKProof = {
-    val sequent =
-      ( "linp" -> hof"${P( i )} l" ) +:
-        Sequent() :+
-        ( "div" -> hof"DIV l ${prod( i )}" )
+    val sequent = hols"linp: ${P( i )} l  :-  div: DIV l ${prod( i )}"
 
     if ( i == 0 )
       Lemma( sequent ) {
@@ -53,44 +50,37 @@ case class euclid( k: Int ) extends PrimeDefinitions {
     } yield ()
   }
 
-  def prodgt0( i: Int ): LKProof = Lemma(
-    ( "gt0" -> hof"${prod( i )} + 1 = 1" ) +:
-      ( "fk" -> hof"${F( k )}" ) +:
-      Sequent()
-  ) {
-      unfold( prod( i ).name ) in "gt0"
+  def prodgt0( i: Int ): LKProof = Lemma( hols"gt0: ${prod( i )} + 1 = 1, fk: ${F( k )} :-" ) {
+    unfold( prod( i ).name ) in "gt0"
 
-      if ( i > 0 ) splitgt0( "gt0" ) andThen insert( prodgt0( i - 1 ) ) else skip
+    if ( i > 0 ) splitgt0( "gt0" ) andThen insert( prodgt0( i - 1 ) ) else skip
 
-      unfold( F( k ).name ) in "fk"
-      allL( "fk", p( i ) ).forget; decompose; destruct( "fk_1" )
-      Tactical.sequence( for ( j <- i to k reverse ) yield repeat( unfold( P( j ).name, "union", "set_1" ) in "fk_1" ) )
-      decompose; trivial
-      unfold( "PRIME" ) in "fk_1"; decompose
+    unfold( F( k ).name ) in "fk"
+    allL( "fk", p( i ) ).forget; decompose; destruct( "fk_1" )
+    Tactical.sequence( for ( j <- i to k reverse ) yield repeat( unfold( P( j ).name, "union", "set_1" ) in "fk_1" ) )
+    decompose; trivial
+    unfold( "PRIME" ) in "fk_1"; decompose
 
-      theory
-    }
+    theory
+  }
 
   val proof =
-    Lemma(
-      ( "fk" -> hof"${F( k )}" ) +:
-        ( "primediv" -> hof"'PRIME-DIV'" ) +: Sequent()
-    ) {
-        unfold( "PRIME-DIV" ) in "primediv"
-        allL( "primediv", le"${prod( k )} + 1" ).forget
-        destruct( "primediv" ) onAll decompose
+    Lemma( hols"fk: ${F( k )}, primediv: 'PRIME-DIV' :-" ) {
+      unfold( "PRIME-DIV" ) in "primediv"
+      allL( "primediv", le"${prod( k )} + 1" ).forget
+      destruct( "primediv" ) onAll decompose
 
-        insert( prodgt0( k ) )
+      insert( prodgt0( k ) )
 
-        unfold( s"F[$k]" ) in "fk"
-        allL( "fk", le"l" ).forget; decompose
-        destruct( "fk_0" ); trivial
-        include( "ldivprod", ldivprod( k ) )
-        unfold( "PRIME" ) in "primediv_0"
-        unfold( "DIV" ) in ( "ldivprod", "primediv_1" )
-        decompose
-        rewrite rtl "ldivprod" in "primediv_1"
-        theory
-      }
+      unfold( s"F[$k]" ) in "fk"
+      allL( "fk", le"l" ).forget; decompose
+      destruct( "fk_0" ); trivial
+      include( "ldivprod", ldivprod( k ) )
+      unfold( "PRIME" ) in "primediv_0"
+      unfold( "DIV" ) in ( "ldivprod", "primediv_1" )
+      decompose
+      rewrite rtl "ldivprod" in "primediv_1"
+      theory
+    }
 }
 object euclid3 extends euclid( 3 )
