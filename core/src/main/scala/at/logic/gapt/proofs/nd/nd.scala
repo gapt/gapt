@@ -190,16 +190,14 @@ case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
 case class AndElim1Rule( subProof: NDProof )
     extends UnaryNDProof with CommonRule {
 
-  def aux = Suc( 0 )
+  val conjunction = premise( Suc( 0 ) )
 
-  def conjunction = premise( aux )
-
-  def mainFormula = conjunction match {
+  val mainFormula = conjunction match {
     case And( leftConjunct, _ ) => leftConjunct
     case _                      => throw new Exception( "" )
   }
 
-  override def auxIndices = Seq( Seq( aux ) )
+  override def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
   override def name = "∧:e1"
 
@@ -220,16 +218,14 @@ case class AndElim1Rule( subProof: NDProof )
 case class AndElim2Rule( subProof: NDProof )
     extends UnaryNDProof with CommonRule {
 
-  def aux = Suc( 0 )
+  val conjunction = premise( Suc( 0 ) )
 
-  def conjunction = premise( aux )
-
-  def mainFormula = conjunction match {
+  val mainFormula = conjunction match {
     case And( _, rightConjunct ) => rightConjunct
     case _                       => throw NDRuleCreationException( s"Proposed main formula $conjunction is not a conjunction." )
   }
 
-  override def auxIndices = Seq( Seq( aux ) )
+  override def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
   override def name = "∧:e2"
 
@@ -251,14 +247,12 @@ case class AndElim2Rule( subProof: NDProof )
 case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
     extends BinaryNDProof with CommonRule {
 
-  def aux = Suc( 0 )
+  val leftConjunct = leftPremise( Suc( 0 ) )
+  val rightConjunct = rightPremise( Suc( 0 ) )
 
-  def leftConjunct = leftPremise( aux )
-  def rightConjunct = rightPremise( aux )
+  val mainFormula = And( leftConjunct, rightConjunct )
 
-  def mainFormula = And( leftConjunct, rightConjunct )
-
-  def auxIndices = Seq( Seq( aux ), Seq( aux ) )
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 
   override def name = "∧:i"
 
@@ -280,18 +274,16 @@ case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
 case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
     extends BinaryNDProof with CommonRule {
 
-  def aux = Suc( 0 )
+  val implication = leftPremise( Suc( 0 ) )
+  val antecedent = rightPremise( Suc( 0 ) )
 
-  def implication = leftPremise( aux )
-  val antecedent = rightPremise( aux )
-
-  def mainFormula = implication match {
+  val mainFormula = implication match {
     case Imp( `antecedent`, consequent ) => consequent
     case Imp( _, _ )                     => throw NDRuleCreationException( s"Proposed main formula $antecedent is not the antecedent of $implication." )
     case _                               => throw NDRuleCreationException( s"Proposed main formula $implication is not an implication." )
   }
 
-  def auxIndices = Seq( Seq( aux ), Seq( aux ) )
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 
   override def name = "\u2283:e"
 
@@ -315,9 +307,9 @@ case class ImpIntroRule( subProof: NDProof, aux: SequentIndex )
 
   validateIndices( premise, Seq( aux ) )
 
-  def impPremise = premise( aux )
-  def impConclusion = premise( Suc( 0 ) )
-  def mainFormula = Imp( impPremise, impConclusion )
+  val impPremise = premise( aux )
+  val impConclusion = premise( Suc( 0 ) )
+  val mainFormula = Imp( impPremise, impConclusion )
 
   override def auxIndices = Seq( Seq( aux, Suc( 0 ) ) )
 
