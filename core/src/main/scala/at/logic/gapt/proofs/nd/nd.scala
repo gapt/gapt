@@ -163,17 +163,16 @@ object InitialSequent {
 /**
  * An NDProof consisting of a logical axiom:
  * <pre>
- *    -----------ax
- *     Γ, A :- A
+ *    --------ax
+ *     A :- A
  * </pre>
  * with A atomic.
  *
- * @param context The context Γ.
  * @param A The atom A.
  */
-case class LogicalAxiom( context: Seq[HOLFormula], A: HOLFormula ) extends InitialSequent {
+case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
   override def name = "ax"
-  override def conclusion = NDSequent( context :+ A, A )
+  override def conclusion = NDSequent( Seq( A ), A )
   def mainFormula = A
 }
 

@@ -6,8 +6,8 @@ import at.logic.gapt.proofs.nd._
 import at.logic.gapt.prooftool.prooftool
 
 object ndexample extends Script {
-  val a1 = LogicalAxiom( Seq(), hof"a" )
-  val a2 = LogicalAxiom( Seq(), hof"b" )
+  val a1 = LogicalAxiom( hof"a" )
+  val a2 = LogicalAxiom( hof"b" )
   val a3 = AndIntroRule(a1, a2)
 
   val a4 = AndElim1Rule(a3)
@@ -22,14 +22,14 @@ object ndexample extends Script {
 }
 
 object ndImpElimExample extends Script {
-  val a1 = LogicalAxiom( Seq(), hof"a" )
-  val a2 = LogicalAxiom( Seq(), hof"a -> b" )
+  val a1 = LogicalAxiom( hof"a" )
+  val a2 = LogicalAxiom( hof"a -> b" )
   val a3 = ImpElimRule(a2,a1)
   println(a3)
 }
 
 object ndImpIntroExample extends Script {
-  val a1 = LogicalAxiom ( Seq(), hof"a" )
+  val a1 = LogicalAxiom ( hof"a" )
   val a2 = ImpIntroRule ( a1 )
   println(a2)
 }
