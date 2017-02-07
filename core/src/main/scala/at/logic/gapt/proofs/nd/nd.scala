@@ -562,6 +562,32 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
 }
 
 /**
+  * An NDProof eliminating ⊥ :
+  * <pre>
+  *       (π)
+  *     Γ :- ⊥
+  *     --------
+  *     Γ :- A
+  * </pre>
+  *
+  * @param subProof The subproof π.
+  * @param mainFormula The formula A.
+  */
+case class BottomElimRule(subProof: NDProof, mainFormula: HOLFormula)
+    extends UnaryNDProof with CommonRule {
+
+  val bottom = premise(Suc(0))
+
+  require(bottom == Bottom(), s"Formula $bottom is not ⊥.")
+
+  override def auxIndices = Seq( Seq( Suc(0) ) )
+
+  override def name = "⊥:e"
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+/**
  * Class for reducing boilerplate code in ND companion objects.
  *
  * @param longName The long name of the rule.

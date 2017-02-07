@@ -33,7 +33,6 @@ object ndImpIntroExample extends Script {
   val a1 = LogicalAxiom ( hof"a" )
   val a2 = ImpIntroRule ( a1 )
   println(a2)
-  prooftool.apply(a2)
 }
 
 object ndOrExample extends Script {
@@ -50,4 +49,10 @@ object ndOrExample extends Script {
   println(a7)
   val a8 = OrIntro2Rule(a1, hof"a")
   println(a8)
+}
+
+object ndBottomExample extends Script {
+  val a1 = LogicalAxiom( Bottom() )
+  val a2 = BottomElimRule( a1, hof"a" )
+  println(a2)
 }
