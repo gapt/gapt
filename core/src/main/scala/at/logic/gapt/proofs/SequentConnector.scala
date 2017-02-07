@@ -14,7 +14,7 @@ import scala.collection.mutable
  *                       is the list of indices of the parents of i in upperSequent.
  */
 case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ), parentsSequent: Sequent[Seq[SequentIndex]] ) {
-  require( parentsSequent.sizes == lowerSizes )
+  require( parentsSequent.sizes == lowerSizes, s"Sizes ${parentsSequent.sizes} of parents sequent $parentsSequent don't agree with lower sizes $lowerSizes." )
   require( parentsSequent.elements.flatten.forall { _ withinSizes upperSizes } )
 
   val ( antL, sucL ) = lowerSizes
