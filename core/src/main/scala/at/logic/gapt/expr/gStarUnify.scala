@@ -6,7 +6,7 @@ package at.logic.gapt.expr
 object gStarUnify {
 
   def apply(
-    seHs:                      pi2SeHs,
+    seHs:                      Pi2SeHs,
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
   ): Set[FOLFormula] = {
@@ -55,7 +55,7 @@ object gStarUnify {
   }
 
   private def unifyLiterals(
-    seHs:                      pi2SeHs,
+    seHs:                      Pi2SeHs,
     posAt:                     FOLFormula,
     negAt:                     FOLFormula,
     nameOfExistentialVariable: FOLVar,
@@ -94,7 +94,7 @@ object gStarUnify {
   }
 
   private def unify(
-    seHs:                      pi2SeHs,
+    seHs:                      Pi2SeHs,
     zippedArgs:                List[( LambdaExpression, LambdaExpression )],
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
