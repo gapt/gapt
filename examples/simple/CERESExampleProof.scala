@@ -11,8 +11,8 @@ object CERESExpansionExampleProof {
   val z = FOLVar( "z" )
 
   def f( x: FOLTerm ) = FOLFunction( "f", List( x ) )
-  def g( x: FOLTerm ) = FOLFunction( "g", x )
-  def P( x: FOLTerm ) = FOLFunction( "P", x )
+  def g( x: FOLTerm ) = FOLFunction( "g", List( x ) )
+  def P( x: FOLTerm ) = FOLFunction( "P", List( x ) )
 
   def ax1 = Eq( f( f( z ) ), g( z ) )
   def seq = Sequent( Seq(), Seq( ax1 ) )

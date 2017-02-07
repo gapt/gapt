@@ -9,7 +9,7 @@ import at.logic.gapt.provers.sat.Sat4j
 import scala.collection.mutable
 
 /**
- * Converts a resolution proof to an expansion proof.*
+ * Converts a resolution proof to an expansion proof.
  * ResolutionToExpansionProof( rp ) will return the expansion proof of rp and ResolutionToExpansionProof( rp, input )
  * is used by the CERES method to return the expansion proof of the ACNF, which is extracted from the proof projections.
  *
@@ -62,13 +62,13 @@ object ResolutionToExpansionProof {
         Sequent() :+ ( ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) ) )
 
       case ( Input( Sequent( Seq(), Seq( f ) ) ) ) if freeVariables( f ).isEmpty =>
-        Sequent().+:( ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) ) )
+        ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) ) +: Sequent()
 
       case ( Input( seq ) ) =>
         val fvs = freeVariables( seq ).toSeq
         val sh = All.Block( fvs, seq.toDisjunction )
-        Sequent().+:( ETWeakQuantifierBlock( sh, fvs.size,
-          for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) ) )
+        ETWeakQuantifierBlock( sh, fvs.size,
+          for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) ) +: Sequent()
     }
   }
 
