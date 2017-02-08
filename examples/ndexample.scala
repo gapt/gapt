@@ -6,6 +6,17 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.nd._
 import at.logic.gapt.prooftool.prooftool
 
+object ndWeakeningExample extends Script {
+  val a1 = LogicalAxiom( hof"a" )
+  val a2 = WeakeningRule( a1, hof"b" )
+  println( a2 )
+}
+
+object ndLogicalAxiomExample extends Script {
+  val a1 = LogicalAxiom( hof"a", Seq( hof"b", hof"c" ) )
+  println( a1 )
+}
+
 object ndAndExample extends Script {
   val a1 = LogicalAxiom( hof"a" )
   val a2 = LogicalAxiom( hof"b" )

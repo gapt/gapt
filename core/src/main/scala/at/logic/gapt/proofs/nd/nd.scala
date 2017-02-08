@@ -249,6 +249,27 @@ object InitialSequent {
 }
 
 /**
+ * An NDProof ending with weakening:
+ * <pre>
+ *        (π)
+ *       Γ :- Δ
+ *     ---------wkn
+ *     A, Γ :- Δ
+ * </pre>
+ *
+ * @param subProof The subproof π.
+ * @param formula The formula A.
+ */
+case class WeakeningRule( subProof: NDProof, formula: HOLFormula )
+    extends UnaryNDProof with CommonRule {
+  override def auxIndices = Seq( Seq() )
+  override def name = "wkn"
+  def mainFormula = formula
+
+  override def mainFormulaSequent = mainFormula +: Sequent()
+}
+
+/**
  * An NDProof consisting of a logical axiom:
  * <pre>
  *    --------ax
@@ -262,6 +283,15 @@ case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
   override def name = "ax"
   override def conclusion = NDSequent( Seq( A ), A )
   def mainFormula = A
+}
+
+object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
+  def apply( A: HOLFormula, context: Seq[HOLFormula] ): NDProof = {
+
+    context.foldLeft[NDProof]( LogicalAxiom( A ) ) { ( ant, c ) =>
+      WeakeningRule( ant, c )
+    }
+  }
 }
 
 /**
