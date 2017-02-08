@@ -270,6 +270,53 @@ case class WeakeningRule( subProof: NDProof, formula: HOLFormula )
 }
 
 /**
+ * An NDProof ending with a contraction:
+ * <pre>
+ *         (π)
+ *     A, A, Γ :- Δ
+ *    --------------ctr
+ *      A, Γ :- Δ
+ * </pre>
+ *
+ * @param subProof The subproof π.
+ * @param aux1 The index of one occurrence of A.
+ * @param aux2 The index of the other occurrence of A.
+ */
+case class ContractionRule( subProof: NDProof, aux1: SequentIndex, aux2: SequentIndex ) extends UnaryNDProof with CommonRule {
+
+  validateIndices( premise, Seq( aux1, aux2 ) )
+
+  if ( premise( aux1 ) != premise( aux2 ) )
+    throw NDRuleCreationException( s"Auxiliary formulas ${premise( aux1 )} and ${premise( aux2 )} are not equal." )
+
+  val mainFormula = premise( aux1 )
+
+  override def auxIndices = Seq( Seq( aux1, aux2 ) )
+
+  override def name = "ctr"
+
+  override def mainFormulaSequent = mainFormula +: Sequent()
+}
+
+object ContractionRule extends ConvenienceConstructor( "ContractionRule" ) {
+  /**
+   * Convenience constructor for ctr that, given a formula to contract, will automatically pick the first two occurrences of that formula.
+   *
+   * @param subProof The subproof π.
+   * @param f The formula to contract.
+   * @return
+   */
+  def apply( subProof: NDProof, f: HOLFormula ): ContractionRule = {
+    val premise = subProof.endSequent
+
+    val ( indices, _ ) = findAndValidate( premise )( Seq( Right( f ), Right( f ) ), Left( Suc( 0 ) ) )
+
+    new ContractionRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+  }
+
+}
+
+/**
  * An NDProof consisting of a logical axiom:
  * <pre>
  *    --------ax
@@ -286,6 +333,20 @@ case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
 }
 
 object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
+
+  /**
+   * Convenience constructor for ax, taking a context.
+   * Applies the axiom rule followed by 0 or more weakenings.
+   * <pre>
+   *    --------ax
+   *     A :- A
+   *    -----------wkn*
+   *     Γ, A :- A
+   * </pre>
+   * @param A The atom a.
+   * @param context The context Γ.
+   * @return
+   */
   def apply( A: HOLFormula, context: Seq[HOLFormula] ): NDProof = {
 
     context.foldLeft[NDProof]( LogicalAxiom( A ) ) { ( ant, c ) =>

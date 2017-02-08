@@ -4,7 +4,14 @@ import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.nd._
-import at.logic.gapt.prooftool.prooftool
+
+object ex extends Script {
+  val a1 = LogicalAxiom( hof"p" )
+  val a2 = AndIntroRule( a1, a1 )
+  val a3 = ContractionRule( a2, hof"p" )
+  val a4 = ImpIntroRule( a3 )
+  println( a4 )
+}
 
 object ndWeakeningExample extends Script {
   val a1 = LogicalAxiom( hof"a" )
@@ -27,8 +34,10 @@ object ndAndExample extends Script {
   val a5 = AndElim2Rule( a3 )
 
   val a6 = AndIntroRule( a4, a5 )
-  println( a6 )
-  prooftool.apply( a6 )
+
+  val a7 = ContractionRule( a6, hof"a" )
+  val a8 = ContractionRule( a7, hof"b" )
+  println( a8 )
 }
 
 object ndForallExample extends Script {
