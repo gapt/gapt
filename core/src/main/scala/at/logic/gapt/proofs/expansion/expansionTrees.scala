@@ -100,36 +100,6 @@ case class ETAtom( atom: HOLAtom, polarity: Polarity ) extends ExpansionTree {
 }
 
 /**
- * A tree whose deep formula is an atom, and whose shallow formula is the definitional expansion of the atom.
- *
- * This tree is used as an intermediate data structure during proof import from
- * clausal provers.  During clausification, it is often advantageous to abbreviate subformulas
- * by fresh atoms.  (This is necessary for polynomial-time clausification.)  These subformula abbreviations are
- * then translated into expansion trees using defined atoms and extra axioms.  If we replace a subformula φ(x,y) by
- * the atom D(x,y), then we have an ETDefinedAtom(D(x,y), ..., λxλy φ(x,y)) as an expansion of the subformula, as well
- * as expansions of the extra axiom ∀x∀y(D(x,y) <-> φ(x,y)).
- *
- * Another way to view defined atoms is the extracted expansions of non-atomic logical axioms in LK.  Consider a proof
- * in LK of φ:-φ that consists of just LogicalAxiom(φ).  Instead of first performing an atomic expansion, we could
- * directly extract an expansion proof with defined atoms:  ETDefinedAtom(D, InAnt, φ) :- ETDefinedAtom(D, InSuc, φ)
- * This expansion proof has the deep sequent D:-D and the shallow sequent φ:-φ.  (NB: this extraction is not implemented.)
- *
- * @param atom The atom (whose predicate symbol is defined)
- * @param polarity Polarity of the atom.
- * @param definedExpr Definitional expansion of the predicate symbol.
- */
-case class ETDefinedAtom( atom: HOLAtom, polarity: Polarity, definedExpr: LambdaExpression ) extends ExpansionTree {
-  val Apps( definitionConst: Const, arguments ) = atom
-  require( freeVariables( definedExpr ).isEmpty )
-
-  val shallow = BetaReduction.betaNormalize( definedExpr( arguments: _* ) ).asInstanceOf[HOLFormula]
-  def deep = atom
-  def immediateSubProofs = Seq()
-
-  val definition = Definition( definitionConst, definedExpr )
-}
-
-/**
  * A tree representing ⊤.
  */
 case class ETTop( polarity: Polarity ) extends ExpansionTree {
@@ -360,16 +330,9 @@ case class ETSkolemQuantifier(
  * Expansion tree node for definitions.
  *
  * @param shallow An atom P(x,,1,,,..., x,,n,,) where P stands for a more complex formula.
- * @param definition The definition P → ψ.
  * @param child An expansion tree of ψ(x,,1,,,...,x,,n,,).
  */
-case class ETDefinition( shallow: HOLAtom, definition: Definition, child: ExpansionTree ) extends UnaryExpansionTree {
-  val HOLAtom( pred: Const, args ) = shallow
-  val Definition( what, by ) = definition
-  require( what == pred, s"Predicate symbol $pred of atom does not agree with defined symbol $what." )
-  val definitionUnfolded = BetaReduction.betaNormalize( App( by, args ) )
-  require( child.shallow == definitionUnfolded, s"Applying definition $definition to arguments $args should yield ${child.shallow} (shallow formula of child), but is $definitionUnfolded." )
-
+case class ETDefinition( shallow: HOLFormula, child: ExpansionTree ) extends UnaryExpansionTree {
   val polarity = child.polarity
   def deep = child.deep
 }
@@ -385,8 +348,8 @@ private[expansion] object replaceET {
       et.copy( formula = TermReplacement( formula, repl ) )
     case et @ ETAtom( atom, _ ) =>
       et.copy( atom = TermReplacement( atom, repl ) )
-    case ETDefinedAtom( atom, pol, definition ) =>
-      ETDefinedAtom( TermReplacement( atom, repl ), pol, TermReplacement( definition, repl ) )
+    case ETDefinition( sh, child ) =>
+      ETDefinition( TermReplacement( sh, repl ), replaceET( child, repl ) )
 
     case _: ETTop | _: ETBottom  => et
     case ETNeg( child )          => ETNeg( replaceET( child, repl ) )
@@ -424,8 +387,8 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
       et.copy( formula = subst( formula ) )
     case et @ ETAtom( atom, _ ) =>
       et.copy( atom = subst( atom ).asInstanceOf[HOLAtom] )
-    case et @ ETDefinedAtom( atom, _, _ ) =>
-      et.copy( atom = subst( atom ).asInstanceOf[HOLAtom] )
+    case ETDefinition( sh, ch ) =>
+      ETDefinition( subst( sh ), applySubstitution( subst, ch ) )
 
     case _: ETTop | _: ETBottom  => et
     case ETNeg( child )          => ETNeg( applySubstitution( subst, child ) )

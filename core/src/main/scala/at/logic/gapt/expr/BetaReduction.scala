@@ -38,6 +38,9 @@ class Normalizer( rule: ReductionRule ) {
     Apps( hd_, as_ )
   }
 
+  def isDefEq( a: LambdaExpression, b: LambdaExpression ): Boolean =
+    normalize( a ) == normalize( b )
+
   @tailrec
   final def appWHNF( hd: LambdaExpression, as: List[LambdaExpression] ): ( LambdaExpression, List[LambdaExpression] ) =
     rule.reduce( this, hd, as ) match {

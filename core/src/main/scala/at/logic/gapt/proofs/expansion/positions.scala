@@ -51,7 +51,6 @@ object replaceWithContext {
       case ( ETMerge( left, right ), _ )                   => ETMerge( apply( left, replacementContext, exp ), apply( right, replacementContext, exp ) )
       case ( ETTop( _ ), _ ) | ( ETBottom( _ ), _ )        => et
       case ( et @ ETAtom( formula, _ ), _ )                => et.copy( atom = newAtom )
-      case ( et @ ETDefinedAtom( atom, _, _ ), _ )         => et.copy( atom = newAtom )
       case ( et @ ETWeakening( formula, _ ), _ )           => et.copy( formula = newFormula )
       case ( ETNeg( sub ), Abs( v, Neg( f ) ) )            => ETNeg( apply( sub, Abs( v, f ), exp ) )
       case ( ETAnd( left, right ), Abs( v, And( l, r ) ) ) => ETAnd( apply( left, Abs( v, l ), exp ), apply( right, Abs( v, r ), exp ) )
@@ -92,14 +91,14 @@ object insertDefinition {
   def apply( et: ExpansionTree, defn: Definition, replacementContext: Abs ): ExpansionTree = {
     val Abs( v, expr ) = replacementContext
 
-    def definitionApplied = BetaReduction.betaNormalize( App( replacementContext, defn.what ) )
+    def definitionApplied = BetaReduction.betaNormalize( App( replacementContext, defn.what ) ).asInstanceOf[HOLFormula]
 
     ( et, expr ) match {
       case ( _, Apps( `v`, _ ) ) => // ctx = λ v. v […]
-        ETDefinition( definitionApplied.asInstanceOf[HOLAtom], defn, et )
+        ETDefinition( definitionApplied, et )
 
-      case ( ETDefinition( shallow, defn_, child ), _ ) =>
-        ETDefinition( shallow, defn_, insertDefinition( child, defn, replacementContext ) )
+      case ( ETDefinition( _, child ), _ ) =>
+        ETDefinition( definitionApplied, child )
 
       case ( ETNeg( s ), Neg( f ) ) =>
         ETNeg( insertDefinition( s, defn, Abs( v, f ) ) )

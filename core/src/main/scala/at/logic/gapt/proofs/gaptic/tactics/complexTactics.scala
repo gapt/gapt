@@ -193,7 +193,7 @@ case class UnfoldTactic( target: String, definition: String, definitions: Seq[St
       newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
       proof_ : Either[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
         case ( p :: ps, _ ) =>
-          Right( DefinitionRule( newGoal, normalized, defn, repContext, idx.polarity ) )
+          Right( DefinitionRule( newGoal, normalized, main, idx.polarity ) )
         case ( Nil, hd +: tl ) =>
           UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
         case _ =>

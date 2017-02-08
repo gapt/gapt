@@ -17,15 +17,15 @@ object eliminateMerges {
     var eigenVarSubst = Substitution()
 
     def merge( tree: ExpansionTree ): ExpansionTree = tree match {
-      case ETMerge( t, s )              => merge2( t, s )
-      case _: ETDefinedAtom | _: ETAtom => tree
-      case tree: ETDefinition           => tree.copy( child = merge( tree.child ) )
-      case ETWeakening( formula, pol )  => ETWeakening( formula, pol )
-      case _: ETTop | _: ETBottom       => tree
-      case ETNeg( t )                   => ETNeg( merge( t ) )
-      case ETAnd( t, s )                => ETAnd( merge( t ), merge( s ) )
-      case ETOr( t, s )                 => ETOr( merge( t ), merge( s ) )
-      case ETImp( t, s )                => ETImp( merge( t ), merge( s ) )
+      case ETMerge( t, s )             => merge2( t, s )
+      case _: ETAtom                   => tree
+      case tree: ETDefinition          => tree.copy( child = merge( tree.child ) )
+      case ETWeakening( formula, pol ) => ETWeakening( formula, pol )
+      case _: ETTop | _: ETBottom      => tree
+      case ETNeg( t )                  => ETNeg( merge( t ) )
+      case ETAnd( t, s )               => ETAnd( merge( t ), merge( s ) )
+      case ETOr( t, s )                => ETOr( merge( t ), merge( s ) )
+      case ETImp( t, s )               => ETImp( merge( t ), merge( s ) )
       case ETWeakQuantifier( shallow, inst ) =>
         ETWeakQuantifier( shallow, Map() ++ inst.mapValues( merge ) )
       case tree: ETStrongQuantifier => tree.copy( child = merge( tree.child ) )
@@ -39,11 +39,11 @@ object eliminateMerges {
           case t: ETMerge => ETMerge( t, merge( s ) )
           case t          => merge2( t, s )
         }
-      case ( t, s: ETMerge ) => merge2( s, t )
+      case ( t, s: ETMerge )        => merge2( s, t )
       case ( t: ETAtom, _: ETAtom ) => t
-      case ( t @ ETDefinedAtom( a1, _, d1 ), ETDefinedAtom( a2, _, d2 ) ) if d1 == d2 => t
-      case ( ETDefinition( shallow, def1, t1 ), ETDefinition( _, def2, t2 ) ) if def1 == def2 =>
-        ETDefinition( shallow, def1, merge2( t1, t2 ) )
+      case ( ETDefinition( sh, t ), ETDefinition( _, s ) ) =>
+        if ( t.shallow == s.shallow ) ETDefinition( sh, merge2( t, s ) )
+        else ETMerge( merge( tree1 ), merge( tree2 ) )
       case ( t: ETTop, _: ETTop )               => t
       case ( t: ETBottom, _: ETBottom )         => t
       case ( ETNeg( t ), ETNeg( s ) )           => ETNeg( merge2( t, s ) )

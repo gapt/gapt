@@ -37,19 +37,6 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
     }
   )
 
-  val atomDefs =
-    subProofs collect {
-      case d: ETDefinedAtom => d.definitionConst -> d.definedExpr
-      case d: ETDefinition  => d.definition.toTuple
-    } groupBy { _._1 } map {
-      case ( c, ds ) =>
-        require(
-          ds.size == 1,
-          s"Inconsistent definition $c:\n${ds.map { _._2 }.mkString( "\n" )}"
-        )
-        c -> ds.head._2
-    }
-
   /**
    * Contains the pair (x, y) iff x occurs as a selected term in any sort of quantifier node
    * below the strong quantifier node introducing y.

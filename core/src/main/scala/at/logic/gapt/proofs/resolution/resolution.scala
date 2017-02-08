@@ -363,6 +363,7 @@ case class DefIntro( subProof: ResolutionProof, idx: SequentIndex, definition: D
   val defAtom = defConst( args ).asInstanceOf[HOLAtom]
   val expandedFormula = BetaReduction.betaNormalize( Apps( by, args ) )
   requireEq( subProof.conclusion( idx ), expandedFormula )
+  def auxFormula = expandedFormula.asInstanceOf[HOLFormula]
   override def introducedDefinitions = Map( defConst -> by )
   override def mainFormulaSequent =
     if ( idx isAnt ) defAtom +: Sequent()

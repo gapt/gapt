@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.containsQuantifierOnLogicalLevel
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.sat.Sat4j
@@ -59,7 +58,7 @@ object ResolutionToExpansionProof {
   def inputsAsExpansionSequent( input: Input, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
     input match {
       case ( Input( Sequent( Seq( f ), Seq() ) ) ) if freeVariables( f ).isEmpty =>
-        Sequent() :+ ( ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) ) )
+        Sequent() :+ ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) )
 
       case ( Input( Sequent( Seq(), Seq( f ) ) ) ) if freeVariables( f ).isEmpty =>
         ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) ) +: Sequent()
@@ -178,7 +177,13 @@ object ResolutionToExpansionProof {
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InSuccedent ) ) ) )
       case p @ DefIntro( q, i, definition, repContext ) =>
         val Seq( oc ) = p.occConnectors
-        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated( i, ETDefinedAtom( es._1( p.defAtom ).asInstanceOf[HOLAtom], !i.polarity, p.by ) ) ) )
+        propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated(
+          i,
+          ETDefinition(
+            es._1( p.auxFormula ),
+            ETAtom( es._1( p.defAtom ).asInstanceOf[HOLAtom], !i.polarity )
+          )
+        ) ) )
 
       case p @ Paramod( q1, i1, ltr, q2, i2, ctx ) =>
         val Seq( oc1, oc2 ) = p.occConnectors
