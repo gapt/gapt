@@ -10,6 +10,8 @@ import scala.collection.mutable
 
 /**
  * Converts a resolution proof to an expansion proof.
+ * ResolutionToExpansionProof( rp ) will return the expansion proof of rp and ResolutionToExpansionProof( rp, input )
+ * is used by the CERES method to return the expansion proof of the ACNF, which is extracted from the proof projections.
  *
  * Let us first ignore splitting and subformula definitions for simplicity.
  * However we may still have clausification inferences.
@@ -51,7 +53,27 @@ import scala.collection.mutable
 object ResolutionToExpansionProof {
 
   def apply( proof: ResolutionProof ): ExpansionProof = {
-    val expansionWithDefs = withDefs( proof )
+    apply( proof, inputsAsExpansionSequent )
+  }
+
+  def inputsAsExpansionSequent( input: Input, set: Set[( Substitution, ExpansionSequent )] ): ExpansionSequent = {
+    input match {
+      case ( Input( Sequent( Seq( f ), Seq() ) ) ) if freeVariables( f ).isEmpty =>
+        Sequent() :+ ( ETMerge( f, Polarity.InSuccedent, set.map( _._2.elements.head ) ) )
+
+      case ( Input( Sequent( Seq(), Seq( f ) ) ) ) if freeVariables( f ).isEmpty =>
+        ETMerge( f, Polarity.InAntecedent, set.map( _._2.elements.head ) ) +: Sequent()
+
+      case ( Input( seq ) ) =>
+        val fvs = freeVariables( seq ).toSeq
+        val sh = All.Block( fvs, seq.toDisjunction )
+        ETWeakQuantifierBlock( sh, fvs.size,
+          for ( ( subst, es ) <- set ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) ) +: Sequent()
+    }
+  }
+
+  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent ): ExpansionProof = {
+    val expansionWithDefs = withDefs( proof, input )
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
   }
@@ -65,7 +87,7 @@ object ResolutionToExpansionProof {
    * Performs the conversion without eliminating the definitions
    * introduced by structural clausification.
    */
-  def withDefs( proof: ResolutionProof, addConclusion: Boolean = true ): ExpansionProofWithCut = {
+  def withDefs( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent, addConclusion: Boolean = true ): ExpansionProofWithCut = {
     val nameGen = rename.awayFrom( containedNames( proof ) )
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
@@ -122,20 +144,14 @@ object ResolutionToExpansionProof {
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
       Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[HOLAtom], !i.polarity ) } )
 
+    def perfMerges( expansionSequent: ExpansionSequent ): ExpansionSequent = {
+      expansionSequent.groupBy( _.shallow ).map( ets => ETMerge( ets._2 ) )
+    }
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
     proof.dagLike.postOrder.reverse.foreach {
-      case p @ Input( Sequent( Seq( f ), Seq() ) ) if freeVariables( f ).isEmpty =>
-        expansionSequent :+= ETMerge( f, Polarity.InSuccedent, expansions( p ).map( _._2.elements.head ) )
-        clear( p )
-      case p @ Input( Sequent( Seq(), Seq( f ) ) ) if freeVariables( f ).isEmpty =>
-        expansionSequent +:= ETMerge( f, Polarity.InAntecedent, expansions( p ).map( _._2.elements.head ) )
-        clear( p )
       case p @ Input( seq ) =>
-        val fvs = freeVariables( seq ).toSeq
-        val sh = All.Block( fvs, seq.toDisjunction )
-        expansionSequent +:= ETWeakQuantifierBlock( sh, fvs.size,
-          for ( ( subst, es ) <- expansions( p ) ) yield subst( fvs ) -> es.toDisjunction( Polarity.Negative ) )
+        expansionSequent ++= input( Input( seq ), expansions( p ) )
         clear( p )
       case p @ Defn( _, _ ) =>
         expansionSequent +:= ETMerge( p.definitionFormula, Polarity.InAntecedent, expansions( p ).map( _._2.elements.head ) )
@@ -240,6 +256,6 @@ object ResolutionToExpansionProof {
         ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) )
       )
 
-    eliminateMerges( ExpansionProofWithCut( cuts, expansionSequent ) )
+    eliminateMerges( ExpansionProofWithCut( cuts, perfMerges( expansionSequent ) ) )
   }
 }
