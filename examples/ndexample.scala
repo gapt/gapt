@@ -22,20 +22,27 @@ object ndAndExample extends Script {
 
 object ndForallExample extends Script {
   val a1 = LogicalAxiom( hof"!x P x" )
-  val a2 = ForallElimRule( a1, hov"v")
+  val a2 = ForallElimRule( a1, hov"v" )
 
   //val a3 = ForallIntroRule( a2, hov"v", hov"y" )
   val a3 = ForallIntroRule( a2, hof"!y P y", hov"v" )
   val a4 = ImpIntroRule( a3 )
 
   val b1 = LogicalAxiom( hof"!y P y" )
-  val b2 = ForallElimRule( b1, hov"v")
+  val b2 = ForallElimRule( b1, hov"v" )
   val b3 = ForallIntroRule( b2, hof"!x P x", hov"v" )
   val b4 = ImpIntroRule( b3 )
 
-  val res = AndIntroRule(a4, b4)
+  val res = AndIntroRule( a4, b4 )
 
-  println(res)
+  println( res )
+}
+
+object ndInductionExample extends Script {
+  val a1 = LogicalAxiom( hof"A 0" )
+  val a2 = LogicalAxiom( hof"!x (A x -> A (s x))" )
+  val a3 = InductionRule( a1, a2, hoc"t:i" )
+  println( a3 )
 }
 
 object ndImpElimExample extends Script {

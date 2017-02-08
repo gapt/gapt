@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.nd
 
-import at.logic.gapt.expr.{freeVariables, _}
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -598,13 +598,11 @@ case class BottomElimRule( subProof: NDProof, mainFormula: HOLFormula )
  * @param subProof The proof π.
  * @param eigenVariable The variable α.
  * @param quantifiedVariable The variable x.
-*/
+ */
 case class ForallIntroRule( subProof: NDProof, eigenVariable: Var, quantifiedVariable: Var )
-  extends UnaryNDProof with CommonRule with Eigenvariable {
+    extends UnaryNDProof with CommonRule with Eigenvariable {
 
-  def aux = Suc( 0 )
-
-  val ( auxFormula, context ) = premise focus aux
+  val ( auxFormula, context ) = premise focus Suc( 0 )
 
   //eigenvariable condition
   if ( freeVariables( context ) contains eigenVariable )
@@ -619,7 +617,7 @@ case class ForallIntroRule( subProof: NDProof, eigenVariable: Var, quantifiedVar
 
   override def name = "∀:i"
 
-  def auxIndices = Seq( Seq( aux ) )
+  def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
@@ -627,73 +625,105 @@ case class ForallIntroRule( subProof: NDProof, eigenVariable: Var, quantifiedVar
 object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
 
   /**
-    * Convenience constructor for ∀:i that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
-    *
-    * @param subProof      The subproof.
-    * @param mainFormula   The formula to be inferred. Must be of the form ∀x.A.
-    * @param eigenVariable A variable α such that A[α] occurs in the premise.
-    * @return
-    */
-  def apply(subProof: NDProof, mainFormula: HOLFormula, eigenVariable: Var): ForallIntroRule = mainFormula match {
-    case All(v, subFormula) =>
-      val auxFormula = Substitution(v, eigenVariable)(subFormula)
+   * Convenience constructor for ∀:i that, given a main formula and an eigenvariable, will try to construct an inference with that instantiation.
+   *
+   * @param subProof      The subproof.
+   * @param mainFormula   The formula to be inferred. Must be of the form ∀x.A.
+   * @param eigenVariable A variable α such that A[α] occurs in the premise.
+   * @return
+   */
+  def apply( subProof: NDProof, mainFormula: HOLFormula, eigenVariable: Var ): ForallIntroRule = mainFormula match {
+    case All( v, subFormula ) =>
+      val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
       val premise = subProof.endSequent
 
-      val (_, indices) = findAndValidate(premise)(Seq(), Right(auxFormula))
+      val ( _, indices ) = findAndValidate( premise )( Seq(), Right( auxFormula ) )
 
-      ForallIntroRule(subProof, eigenVariable, v)
+      ForallIntroRule( subProof, eigenVariable, v )
 
-    case _ => throw NDRuleCreationException(s"Proposed main formula $mainFormula is not universally quantified.")
+    case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 }
 
 /**
-  * An NDProof ending with a universal quantifier elimination:
-  * <pre>
-  *        (π)
-  *      Γ :- ∀x.A
-  *     -------------∀:l
-  *      Γ :- A[x\t]
-  * </pre>
-  *
-  * @param subProof The proof π.
-  * @param A The formula A.
-  * @param term The term t.
-  * @param v The variable x.
-  */
+ * An NDProof ending with a universal quantifier elimination:
+ * <pre>
+ *        (π)
+ *      Γ :- ∀x.A
+ *     -------------∀:l
+ *      Γ :- A[x\t]
+ * </pre>
+ *
+ * @param subProof The proof π.
+ * @param A The formula A.
+ * @param term The term t.
+ * @param v The variable x.
+ */
 case class ForallElimRule( subProof: NDProof, A: HOLFormula, term: LambdaExpression, v: Var )
-  extends UnaryNDProof with CommonRule {
+    extends UnaryNDProof with CommonRule {
 
-  def aux = Suc(0)
-
-  val mainFormula = Substitution(v, term)(A)
+  val mainFormula = Substitution( v, term )( A )
 
   override def name = "∀:l"
 
-  def auxIndices = Seq(Seq(aux))
+  def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
 object ForallElimRule extends ConvenienceConstructor( "ForallElimRule" ) {
   /**
-    * Convenience constructor for ∀:l that, given a term, will try to construct an inference with that instantiation.
-    *
-    * @param subProof    The subproof.
-    * @param term        A term t such that A[t] occurs in the premise.
-    * @return
-    */
-  def apply(subProof: NDProof, term: LambdaExpression): ForallElimRule = {
+   * Convenience constructor for ∀:l that, given a term, will try to construct an inference with that instantiation.
+   *
+   * @param subProof    The subproof.
+   * @param term        A term t such that A[t] occurs in the premise.
+   * @return
+   */
+  def apply( subProof: NDProof, term: LambdaExpression ): ForallElimRule = {
     val premise = subProof.endSequent
 
     val universal = premise( Suc( 0 ) )
 
     universal match {
-      case All(v, subFormula) => ForallElimRule(subProof, subFormula, term, v)
-      case _                  => throw NDRuleCreationException( s"Proposed main formula $universal is not universally quantified." )
+      case All( v, subFormula ) => ForallElimRule( subProof, subFormula, term, v )
+      case _                    => throw NDRuleCreationException( s"Proposed main formula $universal is not universally quantified." )
     }
   }
+}
+
+/**
+ * An NDProof ending with induction:
+ * <pre>
+ *    (π1)         (π2)
+ *   Γ :- A(0)    Π :- ∀α.A(α) → A(s(α))
+ * ---------------------------------------ind
+ *               Γ, Π :- A(t)
+ * </pre>
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param rightSubProof The proof π,,2,,
+ */
+case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: LambdaExpression )
+    extends BinaryNDProof with CommonRule {
+
+  val baseCase = leftPremise( Suc( 0 ) )
+  val stepCase = rightPremise( Suc( 0 ) )
+
+  val ( v, a ) = stepCase match {
+    case All( v, Imp( a1, a2 ) ) if Substitution( v, le"s $v" )( a1 ) == a2 => ( v, a1 )
+    case _ => throw NDRuleCreationException( s"Formula $stepCase is not of the form ∀α.A(α) → A(s(α))." )
+  }
+
+  require( Substitution( v, le"0" )( a ) == baseCase, throw NDRuleCreationException( s"Formula $baseCase is not of the form A(0)." ) )
+
+  val mainFormula = Substitution( v, term )( a )
+
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
+
+  override def name = "ind"
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
 /**
