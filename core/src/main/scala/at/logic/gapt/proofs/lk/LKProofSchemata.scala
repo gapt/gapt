@@ -25,6 +25,17 @@ class LKProofSchemata {
    */
   def InstantiateNumerically( ProofName: String, args: Seq[LambdaExpression],
                               MaxDepth: ( Seq[LambdaExpression] => Int ) = MaxDepthInit )( implicit ctx: Context ): Option[LKProof] = {
+
+    val canonicalName = ctx.get[Context.ProofNames].names.get(ProofName)
+    val invariants = ctx.get[Context.ProofDefinitions].components.get(ProofName)
+    (canonicalName,invariants) match{
+
+      case (Some(name),Some(invar)) => {
+        None
+      }
+      case _ => None
+    }
+
     //We should require the first numericArgs args to be variable free.
     //if numericArgs is greater than the size of args we have an error
     //if the size of args is greater than the expected number of arges for proofName
