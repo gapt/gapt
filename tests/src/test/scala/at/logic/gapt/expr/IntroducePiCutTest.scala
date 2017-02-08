@@ -34,13 +34,12 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf(
-        Option( fof"P($xName)|Q(f($yName))" ),
-        Option( fof"Q(f($yName))|P($xName)" )
+        (Option( fof"P($xName)|Q(f($yName))" ),yName,xName),
+        (Option( fof"Q(f($yName))|P($xName)" ),yName,xName)
       )
     }
   }
 
-  /*
   // 566 ms
   // Number of non-tautological leaves
   //   96
@@ -62,7 +61,7 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2", fov"y3" ), List( fot"c", fot"f(y1)", fot"f(y2)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)", fot"f4(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must_== ( Option( fof"P($xName,f($yName))" ) )
+      introducePi2Cut( seHs, yName, xName ) must_== ( (Option( fof"P($xName,f($yName))" ),yName,xName) )
     }
   }
 
@@ -86,7 +85,7 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must_== ( Option( fof"P($xName,f($yName))" ) )
+      introducePi2Cut( seHs, yName, xName ) must_== ( (Option( fof"P($xName,f($yName))" ),yName,xName) )
     }
   }
 
@@ -124,12 +123,13 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        Option( fof"Pklg($xName,$yName)&Pg(f($yName),s(0))" ),
-        Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" )
+        (Option( fof"Pklg($xName,$yName)&Pg(f($yName),s(0))" ),yName,xName),
+        (Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" ),yName,xName)
       )
     }
   }
 
+  /*
   // Don't test this if you don't have enough time (7h)
   // Number of non-tautological leaves
   //   1386
@@ -161,14 +161,14 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
-        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
-        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
-        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
-        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
-        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+        (Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ),yName,xName)
       )
     }
   }
@@ -201,17 +201,18 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
-        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
-        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
-        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
-        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
-        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+        (Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ),yName,xName)
       )
     }
   }
+  */
 
   // 661 ms
   // Number of non-tautological leaves
@@ -238,14 +239,14 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
-        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
-        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
-        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
-        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
-        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+        (Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ),yName,xName)
       )
     }
   }
@@ -274,17 +275,16 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),
-        Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),
-        Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),
-        Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),
-        Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),
-        Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),
-        Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" )
+        (Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),yName,xName),
+        (Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),yName,xName),
+        (Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),yName,xName),
+        (Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ),yName,xName)
       )
     }
   }
-  */
 
 }

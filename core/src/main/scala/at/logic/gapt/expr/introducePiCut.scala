@@ -436,7 +436,7 @@ object introducePi2Cut {
     seHs:                      Pi2SeHs,
     nameOfExistentialVariable: FOLVar  = fov"yCut",
     nameOfUniversalVariable:   FOLVar  = fov"xCut"
-  ): Option[FOLFormula] = {
+  ): ( Option[FOLFormula], FOLVar, FOLVar ) = {
 
     val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
     val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
@@ -524,9 +524,9 @@ object introducePi2Cut {
     println( numberOfCheckedFormulas )
 
     if ( !seHs.noSolutionHasBeenFound ) {
-      seHs.balancedSolution
+      ( seHs.balancedSolution, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
     } else {
-      None
+      ( None, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
     }
 
   }
