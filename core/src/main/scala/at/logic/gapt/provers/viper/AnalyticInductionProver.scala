@@ -550,9 +550,9 @@ object findFormula {
    */
   def apply( sequent: Sequent[( String, HOLFormula )], label: String ): Either[String, HOLFormula] = {
     sequent.succedent filter { case ( l, f ) => l == label } match {
-      case lf :: Nil => Right( lf._2 )
-      case lf :: _   => Left( "Formula could not be uniquely determined" )
-      case _         => Left( s"Label $label not found" )
+      case Vector( lf ) => Right( lf._2 )
+      case lf +: _      => Left( "Formula could not be uniquely determined" )
+      case _            => Left( s"Label $label not found" )
     }
   }
 }

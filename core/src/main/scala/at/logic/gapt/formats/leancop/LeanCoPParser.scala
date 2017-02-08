@@ -210,12 +210,12 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
               map + ( name -> ( ( f_original, sublst ) ) )
           }
 
-          val ( ant, succ ) = formula_substitutions.foldLeft( ( List[ExpansionTree](), List[ExpansionTree]() ) ) {
+          val ( ant, succ ) = formula_substitutions.foldLeft( ( Vector[ExpansionTree](), Vector[ExpansionTree]() ) ) {
             case ( ( a, s ), ( name, ( form, sublst ) ) ) =>
               val pos = if ( input_formulas( name )._2 == "axiom" ) Polarity.InAntecedent else Polarity.InSuccedent
               val et = formulaToExpansionTree( form, sublst, pos )
-              if ( pos.inSuc ) ( a, ( et :: s ) )
-              else ( ( et :: a ), s )
+              if ( pos.inSuc ) ( a, ( et +: s ) )
+              else ( ( et +: a ), s )
           }
 
           Some( new ExpansionSequent( ant, succ ) )

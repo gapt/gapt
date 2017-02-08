@@ -140,11 +140,14 @@ object LKToExpansionProof {
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
 
-    case p: DefinitionRule =>
-      val ( subCuts, subSequent ) = extract( p.subProof )
+    case DefinitionLeftRule( subProof, aux, defn, ctx ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
 
-      subCuts -> subSequent.modify( p.aux ) {
-        insertDefinition( _, p.definition, p.replacementContext )
-      }
+      ( subCuts, insertDefinition( subSequent( aux ), defn, ctx ) +: subSequent.delete( aux ) )
+
+    case DefinitionRightRule( subProof, aux, defn, ctx ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
+
+      ( subCuts, subSequent.delete( aux ) :+ insertDefinition( subSequent( aux ), defn, ctx ) )
   }
 }
