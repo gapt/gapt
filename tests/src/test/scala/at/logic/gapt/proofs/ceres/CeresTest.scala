@@ -93,4 +93,18 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
     for ( CutRule( p1, a1, p2, a2 ) <- acnf.subProofs ) isAtom( p1.endSequent( a1 ) ) must beTrue
     ok
   }
+
+  "extraction of expansions from projections" should {
+    "work for simple fol proofs" in {
+      val p = fol1.proof
+      val e = CERES.CERESExpansionProof( p, Escargot )
+      e.deep must beValidSequent
+    }
+
+    "work for proofs with equality" in {
+      val p = Pi2Pigeonhole.proof
+      val e = CERES.CERESExpansionProof( p, Escargot )
+      e.deep must beEValidSequent
+    }
+  }
 }
