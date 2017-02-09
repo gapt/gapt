@@ -651,6 +651,98 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
 }
 
 /**
+ * An NDProof ending with elimination of a negation:
+ * <pre>
+ *   (π1)      (π2)
+ *  Γ :- A    Π :- ¬A
+ * -------------------
+ *     Γ, Π :- ⊥
+ * </pre>
+ *
+ * @param leftSubProof The proof π,,1,,.
+ * @param rightSubProof The proof π,,2,,
+ */
+case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
+  extends BinaryNDProof with CommonRule {
+
+  val formula= leftPremise( Suc( 0 ) )
+  val negatedFormula = rightPremise( Suc( 0 ) )
+
+  val mainFormula = if ( negatedFormula == Neg( formula ) ) Bottom() else throw NDRuleCreationException( s"Formula $negatedFormula is not the negation of $formula." )
+
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
+
+  override def name = "¬:e"
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+/**
+ * An NDProof ending with introduction of a negation:
+ * <pre>
+ *         (π)
+ *     A, Γ :- ⊥
+ *    -----------
+ *     Γ :- ¬A
+ * </pre>
+ *
+ * @param subProof The subproof π.
+ * @param aux The index of A.
+ */
+case class NegIntroRule( subProof: NDProof, aux: SequentIndex )
+  extends UnaryNDProof with CommonRule {
+
+  validateIndices( premise, Seq( aux ) )
+
+  val bottom = premise( Suc( 0 ) )
+
+  require( bottom  == Bottom(), s"Formula $bottom is not ⊥." )
+
+  val formula = premise( aux )
+  val mainFormula = Neg( formula )
+
+  override def auxIndices = Seq( Seq( aux, Suc( 0 ) ) )
+
+  override def name = "¬:i"
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
+
+  /**
+   * Convenience constructor for ¬:i.
+   * The aux formula can be given as an index or a formula. If it is given as a formula, the constructor
+   * will attempt to find an appropriate index on its own.
+   *
+   * @param subProof The subproof.
+   * @param negation Index of the negation or the negation itself.
+   * @return
+   */
+  def apply( subProof: NDProof, negation: IndexOrFormula ): NegIntroRule = {
+    val premise = subProof.endSequent
+
+    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( negation ), Left( Suc( 0 ) ) )
+
+    new NegIntroRule( subProof, Ant( antIndices( 0 ) ) )
+  }
+
+  /**
+   * Convenience constructor for ¬:i
+   * If the subproof has precisely one element in the antecedent of its premise, this element will be the aux index.
+   *
+   * @param subProof The subproof.
+   * @return
+   */
+  def apply( subProof: NDProof ): NegIntroRule = {
+    val premise = subProof.endSequent
+
+    if ( premise.antecedent.size == 1 ) apply( subProof, Ant( 0 ) )
+    else throw NDRuleCreationException( s"Antecedent of $premise doesn't have precisely one element." )
+  }
+}
+
+/**
  * An NDProof eliminating ⊥ :
  * <pre>
  *       (π)
