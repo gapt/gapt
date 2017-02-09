@@ -5,7 +5,6 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 
 import scala.collection.mutable
-import scalaz.{ Name, Need, Value }
 
 sealed abstract class DrupProofLine extends Product {
   def clause: HOLClause
@@ -46,6 +45,11 @@ object DrupProof {
 }
 
 object DrupToResolutionProof {
+  private trait Name[+T] { def value: T }
+  private class Need[T]( thunk: => T ) extends Name[T] { lazy override val value: T = thunk }
+  private object Need { def apply[T]( thunk: => T ) = new Need( thunk ) }
+  private case class Value[T]( value: T ) extends Name[T]
+
   // We operate on pairs of clauses and resolution proofs.
   //   - Proofs are computed only when needed (Name[_] does lazy evaluation)
   //   - The clauses can be smaller than the conclusion of the proof,

@@ -165,8 +165,7 @@ object stableVTRATG {
       t -> stableTerms( subTermsPerType( t ), nonTermVects.tail.flatten )
     }.toMap
 
-    import scalaz._
-    import Scalaz._
+    import cats.syntax.all._, cats.instances.all._
 
     VTRATG( startSymbol, List( startSymbol ) +: nonTermVects,
       startSymbolNFs.map( List( startSymbol ) -> List( _ ) ) ++

@@ -50,7 +50,7 @@ object StructCreators extends Logger {
   def extract[Data]( p: LKProof, predicate: HOLFormula => Boolean ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ) )( predicate )
 
-  private def mapToUpperProof[Formula]( conn: OccConnector[Formula], cut_occs: Sequent[Boolean], default: Boolean ) =
+  private def mapToUpperProof[Formula]( conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
   def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean] )( implicit pred: HOLFormula => Boolean ): Struct[Data] = {
@@ -158,7 +158,7 @@ object StructCreators extends Logger {
       case false =>
         val cutAncInAntecedent = cutanc_seq.antecedent.map( x => Dual[Data]( A( x, Nil ) ) )
         val cutAncInSuccedent = cutanc_seq.succedent.map( x => A[Data]( x ) )
-        val structs: Seq[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
+        val structs: Vector[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
         val r = Times[Data]( structs, List[Data]() )
         r
     }

@@ -31,8 +31,6 @@ package object expansion {
 
     def names( proof: ExpansionTree ) =
       proof.subProofs flatMap {
-        case p: ETDefinition       => containedNames( p.shallow ) ++ containedNames( p.definedExpr )
-        case p: ETDefinedAtom      => containedNames( p.shallow ) ++ containedNames( p.definedExpr )
         case p: ETSkolemQuantifier => containedNames( p.shallow ) ++ containedNames( p.skolemDef )
         case p: ETStrongQuantifier => containedNames( p.shallow ) + p.eigenVariable
         case p                     => containedNames( p.shallow )

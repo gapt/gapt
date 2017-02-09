@@ -67,24 +67,24 @@ private class skolemizeInferences(
       case BottomAxiom              => BottomAxiom
 
       case p @ ContractionLeftRule( q, a1, a2 ) =>
-        ContractionLeftRule( apply( q, p.getOccConnector parent info, subst ), a1, a2 )
+        ContractionLeftRule( apply( q, p.getSequentConnector parent info, subst ), a1, a2 )
       case p @ ContractionRightRule( q, a1, a2 ) =>
-        ContractionRightRule( apply( q, p.getOccConnector parent info, subst ), a1, a2 )
+        ContractionRightRule( apply( q, p.getSequentConnector parent info, subst ), a1, a2 )
 
       case p @ WeakeningLeftRule( q, f ) =>
-        WeakeningLeftRule( apply( q, p.getOccConnector parent info, subst ), subf( f ) )
+        WeakeningLeftRule( apply( q, p.getSequentConnector parent info, subst ), subf( f ) )
       case p @ WeakeningRightRule( q, f ) =>
-        WeakeningRightRule( apply( q, p.getOccConnector parent info, subst ), subf( f ) )
+        WeakeningRightRule( apply( q, p.getSequentConnector parent info, subst ), subf( f ) )
 
       case p @ NegLeftRule( q, a ) =>
-        NegLeftRule( apply( q, p.getOccConnector.parent( info ).updated( a, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a )
+        NegLeftRule( apply( q, p.getSequentConnector.parent( info ).updated( a, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a )
       case p @ NegRightRule( q, a ) =>
-        NegRightRule( apply( q, p.getOccConnector.parent( info ).updated( a, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a )
+        NegRightRule( apply( q, p.getSequentConnector.parent( info ).updated( a, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a )
 
       case p @ AndLeftRule( q, a1, a2 ) =>
         AndLeftRule( apply(
           q,
-          p.getOccConnector.parent( info ).
+          p.getSequentConnector.parent( info ).
             updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ).
             updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ),
           subst
@@ -92,7 +92,7 @@ private class skolemizeInferences(
       case p @ OrRightRule( q, a1, a2 ) =>
         OrRightRule( apply(
           q,
-          p.getOccConnector.parent( info ).
+          p.getSequentConnector.parent( info ).
             updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ).
             updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ),
           subst
@@ -100,7 +100,7 @@ private class skolemizeInferences(
       case p @ ImpRightRule( q, a1, a2 ) =>
         ImpRightRule( apply(
           q,
-          p.getOccConnector.parent( info ).
+          p.getSequentConnector.parent( info ).
             updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ).
             updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ),
           subst
@@ -108,23 +108,23 @@ private class skolemizeInferences(
 
       case p @ AndRightRule( q1, a1, q2, a2 ) =>
         AndRightRule(
-          apply( q1, p.getLeftOccConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
-          apply( q2, p.getRightOccConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
+          apply( q1, p.getLeftSequentConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
+          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
         )
       case p @ OrLeftRule( q1, a1, q2, a2 ) =>
         OrLeftRule(
-          apply( q1, p.getLeftOccConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
-          apply( q2, p.getRightOccConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
+          apply( q1, p.getLeftSequentConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
+          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
         )
       case p @ ImpLeftRule( q1, a1, q2, a2 ) =>
         ImpLeftRule(
-          apply( q1, p.getLeftOccConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
-          apply( q2, p.getRightOccConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
+          apply( q1, p.getLeftSequentConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
+          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
         )
 
       case p: EqualityRule =>
         val subProofNew =
-          apply( p.subProof, p.getOccConnector.parent( info ).
+          apply( p.subProof, p.getSequentConnector.parent( info ).
             updated( p.aux, info( p.auxInConclusion ).copy( generalizedFormulas = Seq( p.auxFormula ) ) ).
             updated( p.eq, info( p.eqInConclusion ) ),
             subst )
@@ -135,18 +135,18 @@ private class skolemizeInferences(
 
       case p @ CutRule( q1, a1, q2, a2 ) =>
         CutRule(
-          apply( q1, p.getLeftOccConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a1,
-          apply( q2, p.getRightOccConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2
+          apply( q1, p.getLeftSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a1,
+          apply( q2, p.getRightSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2
         )
 
-      case p @ DefinitionLeftRule( q, a, d, c ) =>
-        val qNew = apply( q, p.getOccConnector.parent( info ).
+      case p @ DefinitionLeftRule( q, a, m ) =>
+        val qNew = apply( q, p.getSequentConnector.parent( info ).
           updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst )
-        DefinitionLeftRule( qNew, a, d, subst( c ).asInstanceOf[Abs] )
-      case p @ DefinitionRightRule( q, a, d, c ) =>
-        val qNew = apply( q, p.getOccConnector.parent( info ).
+        DefinitionLeftRule( qNew, a, subst( m ) )
+      case p @ DefinitionRightRule( q, a, m ) =>
+        val qNew = apply( q, p.getSequentConnector.parent( info ).
           updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst )
-        DefinitionRightRule( qNew, a, d, subst( c ).asInstanceOf[Abs] )
+        DefinitionRightRule( qNew, a, subst( m ) )
 
       case p @ WeakQuantifierRule( q, a, _, term, bound, pol ) =>
         val freshVar = nameGen fresh bound

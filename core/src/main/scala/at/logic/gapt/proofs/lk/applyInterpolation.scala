@@ -105,26 +105,26 @@ object Interpolate {
     // structural rules
 
     case p @ WeakeningLeftRule( subProof, formula ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) ) ( WeakeningLeftRule( up_nproof, formula ), up_pproof, up_I )
       else ( up_nproof, WeakeningLeftRule( up_pproof, formula ), up_I )
 
     case p @ WeakeningRightRule( subProof, formula ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) ) ( WeakeningRightRule( up_nproof, formula ), up_pproof, up_I )
       else ( up_nproof, WeakeningRightRule( up_pproof, formula ), up_I )
 
     case p @ ContractionLeftRule( subProof, aux1, aux2 ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
       val formula = p.mainFormulas.head
 
       if ( !color( p.mainIndices.head ) ) ( ContractionLeftRule( up_nproof, formula ), up_pproof, up_I )
       else ( up_nproof, ContractionLeftRule( up_pproof, formula ), up_I )
 
     case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
       val formula = p.mainFormulas.head
 
       if ( !color( p.mainIndices.head ) ) ( ContractionRightRule( up_nproof, formula ), up_pproof, up_I )
@@ -136,8 +136,8 @@ object Interpolate {
       val cutFormulaColor =
         colorsOfCutFormulaDuplicates.contains( true ) && !colorsOfCutFormulaDuplicates.contains( false )
 
-      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color, cutFormulaColor ) )
-      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color, cutFormulaColor ) )
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftSequentConnector.parent( color, cutFormulaColor ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightSequentConnector.parent( color, cutFormulaColor ) )
 
       if ( !cutFormulaColor )
         (
@@ -155,8 +155,8 @@ object Interpolate {
     // propositional rules
 
     case p @ AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color ) )
-      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color ) )
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftSequentConnector.parent( color ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) )
         (
@@ -172,14 +172,14 @@ object Interpolate {
         )
 
     case p @ AndLeftRule( subProof, aux1, aux2 ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) ) ( AndLeftRule( up_nproof, p.leftConjunct, p.rightConjunct ), up_pproof, up_I )
       else ( up_nproof, AndLeftRule( up_pproof, p.leftConjunct, p.rightConjunct ), up_I )
 
     case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color ) )
-      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color ) )
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftSequentConnector.parent( color ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) )
         (
@@ -195,7 +195,7 @@ object Interpolate {
         )
 
     case p @ OrRightRule( subProof, aux1, aux2 ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
       val formula1 = p.leftDisjunct
       val formula2 = p.rightDisjunct
 
@@ -203,20 +203,20 @@ object Interpolate {
       else ( up_nproof, OrRightRule( up_pproof, formula1, formula2 ), up_I )
 
     case p @ NegLeftRule( subProof, aux ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) ) ( NegLeftRule( up_nproof, subProof.endSequent( aux ) ), up_pproof, up_I )
       else ( up_nproof, NegLeftRule( up_pproof, subProof.endSequent( aux ) ), up_I )
 
     case p @ NegRightRule( subProof, aux ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) ) ( NegRightRule( up_nproof, subProof.endSequent( aux ) ), up_pproof, up_I )
       else ( up_nproof, NegRightRule( up_pproof, subProof.endSequent( aux ) ), up_I )
 
     case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftOccConnector.parent( color ) )
-      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightOccConnector.parent( color ) )
+      val ( up1_nproof, up1_pproof, up1_I ) = apply( p.leftSubProof, p.getLeftSequentConnector.parent( color ) )
+      val ( up2_nproof, up2_pproof, up2_I ) = apply( p.rightSubProof, p.getRightSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) )
         (
@@ -232,7 +232,7 @@ object Interpolate {
         )
 
     case p @ ImpRightRule( subProof, aux1, aux2 ) =>
-      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getOccConnector.parent( color ) )
+      val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) ) ( ImpRightRule( up_nproof, p.impPremise, p.impConclusion ), up_pproof, up_I )
       else ( up_nproof, ImpRightRule( up_pproof, p.impPremise, p.impConclusion ), up_I )
@@ -242,7 +242,7 @@ object Interpolate {
     case p @ EqualityRightRule( subProof, eq, aux, con ) =>
       val ( up_nproof, up_pproof, up_I ) = apply(
         p.subProof,
-        p.getOccConnector.parent( color ).
+        p.getSequentConnector.parent( color ).
           updated( eq, color( p.eqInConclusion ) ).
           updated( aux, color( p.auxInConclusion ) )
       )
@@ -277,7 +277,7 @@ object Interpolate {
     case p @ EqualityLeftRule( subProof, eq, aux, con ) =>
       val ( up_nproof, up_pproof, up_I ) = apply(
         p.subProof,
-        p.getOccConnector.parent( color ).
+        p.getSequentConnector.parent( color ).
           updated( eq, color( p.eqInConclusion ) ).
           updated( aux, color( p.auxInConclusion ) )
       )
@@ -311,7 +311,7 @@ object Interpolate {
       }
 
     case p @ ForallLeftRule( subProof, aux, main, term, quantVar ) =>
-      val ( nproof, pproof, interpolant ) = apply( subProof, p.getOccConnector.parent( color ) )
+      val ( nproof, pproof, interpolant ) = apply( subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) )
         ( ForallLeftRule( nproof, p.mainFormula, term ), pproof, interpolant )
@@ -319,7 +319,7 @@ object Interpolate {
         ( nproof, ForallLeftRule( pproof, p.mainFormula, term ), interpolant )
 
     case p @ ExistsRightRule( subProof, aux, main, term, quantVar ) =>
-      val ( nproof, pproof, interpolant ) = apply( subProof, p.getOccConnector.parent( color ) )
+      val ( nproof, pproof, interpolant ) = apply( subProof, p.getSequentConnector.parent( color ) )
 
       if ( !color( p.mainIndices.head ) )
         ( ExistsRightRule( nproof, p.mainFormula, term ), pproof, interpolant )

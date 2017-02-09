@@ -9,8 +9,6 @@ import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.sketch.RefutationSketch
 import org.specs2.mutable.Specification
 
-import scalaz.\/
-
 class ProoftoolViewableTest extends Specification {
 
   "implicit instances" in {
@@ -21,7 +19,6 @@ class ProoftoolViewableTest extends Specification {
 
     def forall[Viewable: ProoftoolViewable, Error] = {
       implicitly[ProoftoolViewable[Option[Viewable]]]
-      implicitly[ProoftoolViewable[Error \/ Viewable]]
       implicitly[ProoftoolViewable[Either[Error, Viewable]]]
     }
 

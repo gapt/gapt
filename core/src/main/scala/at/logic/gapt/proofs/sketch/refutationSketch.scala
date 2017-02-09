@@ -2,14 +2,14 @@ package at.logic.gapt.proofs.sketch
 
 import at.logic.gapt.expr.{ FOLAtom, HOLAtom, clauseSubsumption }
 import at.logic.gapt.proofs.resolution._
-import at.logic.gapt.proofs.{ FOLClause, HOLClause, OccConnector, SequentProof }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, SequentConnector, SequentProof }
 import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
-import scalaz.Scalaz._
-import scalaz._
+import cats.instances.all._
+import cats.syntax.all._
 
 /**
  * Intermediate data structure intendend for the proof replay in the TPTP proof import.
@@ -20,7 +20,7 @@ import scalaz._
  * These two cases are modelled as [[SketchAxiom]] and [[SketchInference]].
  */
 sealed trait RefutationSketch extends SequentProof[FOLAtom, RefutationSketch] {
-  override def occConnectors = immediateSubProofs map { p => OccConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
+  override def occConnectors = immediateSubProofs map { p => SequentConnector( conclusion, p.conclusion, p.conclusion map { _ => Seq() } ) }
   override def mainIndices = Seq()
   override def auxIndices = immediateSubProofs map { _ => Seq() }
 }
@@ -89,8 +89,8 @@ object RefutationSketchToResolution {
    * @param prover  Resolution prover used to reconstruct the inferences.
    * @return  <code>Some(proof)</code> if all inferences could be reconstructed, <code>None</code> otherwise.
    */
-  def apply( sketch: RefutationSketch, prover: ResolutionProver = NonSplittingEscargot ): ValidationNel[UnprovableSketchInference, ResolutionProof] = {
-    type ErrorOr[X] = ValidationNel[UnprovableSketchInference, X]
+  def apply( sketch: RefutationSketch, prover: ResolutionProver = NonSplittingEscargot ): Either[UnprovableSketchInference, ResolutionProof] = {
+    type ErrorOr[X] = Either[UnprovableSketchInference, X]
     val memo = mutable.Map[RefutationSketch, ErrorOr[ResolutionProof]]()
 
     def findDerivation( a: FOLClause, bs: List[ResolutionProof] ): Option[ResolutionProof] = {
@@ -99,27 +99,25 @@ object RefutationSketchToResolution {
         map( mapInputClauses( _ )( bs.map { p => p.conclusion -> p }.toMap ) )
     }
     def solve( s: RefutationSketch ): ErrorOr[ResolutionProof] = memo.getOrElseUpdate( s, s match {
-      case SketchAxiom( axiom ) => Success( Input( axiom ) )
+      case SketchAxiom( axiom ) => Right( Input( axiom ) )
       case s @ SketchInference( conclusion, from ) =>
-        import Validation.FlatMap._
         for {
-          solvedFrom <- Applicative[ErrorOr].traverse( from.toList )( solve )
-          deriv <- findDerivation( s.conclusion, solvedFrom ).map { _.success }.
-            getOrElse { UnprovableSketchInference( s ).failureNel }
+          solvedFrom <- from.toList.traverse( solve )
+          deriv <- findDerivation( s.conclusion, solvedFrom ).map { Right( _ ) }.
+            getOrElse { Left( UnprovableSketchInference( s ) ) }
         } yield deriv
       case SketchSplitCombine( cases ) =>
-        import Validation.FlatMap._
-        Applicative[ErrorOr].traverse( cases.toList )( solve ).flatMap { solvedCases =>
+        cases.toList.traverse( solve ).flatMap { solvedCases =>
           solvedCases.find( p => p.conclusion.isEmpty && p.assertions.isEmpty ).
             orElse( Sat4j.getResolutionProof( solvedCases.map( AvatarContradiction( _ ) ) ) ).
             orElse( NonSplittingEscargot.getResolutionProof( solvedCases.map( AvatarContradiction( _ ) ) ) ).
-            map( _.success ).getOrElse( UnprovableSketchInference( s ).failureNel )
+            map( Right( _ ) ).getOrElse( Left( UnprovableSketchInference( s ) ) )
         }
       case SketchComponentElim( from, comp ) =>
         for ( solvedFrom <- solve( from ) )
           yield AvatarSplit( solvedFrom, comp )
       case SketchComponentIntro( comp ) =>
-        AvatarComponent( comp ).success
+        Right( AvatarComponent( comp ) )
     } )
     solve( sketch ) map { simplifyResolutionProof( _ ) }
   }

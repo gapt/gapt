@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.proofs.{ Ant, OccConnector, Sequent, SequentIndex, Suc }
+import at.logic.gapt.proofs.{ Ant, SequentConnector, Sequent, SequentIndex, Suc }
 import at.logic.gapt.proofs.lk._
 
 import scala.collection.mutable
@@ -43,15 +43,14 @@ object ResolutionToLKProof {
 
       case p @ Defn( defConst, defExpr ) =>
         val phi = BetaReduction.betaNormalize( defExpr( p.vars ) ).asInstanceOf[HOLFormula]
-        val definition = Definition( defConst, defExpr )
-        val ctx = replacementContext.abstractTerm( defConst( p.vars: _* ) )( defConst )
+        val defAtom = p.defConst( p.vars ).asInstanceOf[HOLFormula]
 
         ProofBuilder.
           c( LogicalAxiom( phi ) ).
-          u( DefinitionLeftRule( _, Ant( 0 ), definition, ctx ) ).
+          u( DefinitionLeftRule( _, Ant( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           c( LogicalAxiom( phi ) ).
-          u( DefinitionRightRule( _, Suc( 0 ), definition, ctx ) ).
+          u( DefinitionRightRule( _, Suc( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
           u( ForallRightBlock( _, p.definitionFormula, p.vars ) ).
@@ -77,13 +76,13 @@ object ResolutionToLKProof {
         val Right( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
         val p2 = ForallLeftBlock( p1, aux, vars )
 
-        val p3 = DefinitionLeftRule( p2, aux, comp.toDefinition, splAtom )
+        val p3 = DefinitionLeftRule( p2, aux, splAtom )
         p3
       case AvatarComponent( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
       case AvatarComponent( comp @ AvatarNegNonGroundComp( splAtom, aux, vars, idx ) ) =>
         val Right( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
         val p2 = ForallRightBlock( p1, aux, vars )
-        val p3 = DefinitionRightRule( p2, aux, comp.toDefinition, splAtom )
+        val p3 = DefinitionRightRule( p2, aux, splAtom )
         p3
       case AvatarSplit( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarSplit( q, _, comp @ AvatarNonGroundComp( splAtom, aux, vars ) ) =>
@@ -103,22 +102,14 @@ object ResolutionToLKProof {
           }
         mkOr( comp.disjunction )
         p_ = ForallRightBlock( p_, aux, vars )
-        p_ = DefinitionRightRule( p_, aux, comp.toDefinition, splAtom )
+        p_ = DefinitionRightRule( p_, aux, splAtom )
         p_
 
-      case DefIntro( q, i: Suc, definition, args ) =>
-        val Definition( what, by ) = definition
-        val tp = what.exptype
-        val X = rename awayFrom freeVariables( args ) fresh Var( "X", tp )
-        val ctx = Abs( X, Apps( X, args ) )
-        DefinitionRightRule( f( q ), q.conclusion( i ), definition, ctx )
+      case p @ DefIntro( q, i: Suc, definition, args ) =>
+        DefinitionRightRule( f( q ), q.conclusion( i ), p.defAtom )
 
-      case DefIntro( q, i: Ant, definition, args ) =>
-        val Definition( what, by ) = definition
-        val tp = what.exptype
-        val X = rename awayFrom freeVariables( args ) fresh Var( "X", tp )
-        val ctx = Abs( X, Apps( X, args ) )
-        DefinitionLeftRule( f( q ), q.conclusion( i ), definition, ctx )
+      case p @ DefIntro( q, i: Ant, definition, args ) =>
+        DefinitionLeftRule( f( q ), q.conclusion( i ), p.defAtom )
 
       case p @ Flip( q, i: Ant ) =>
         CutRule( mkSymmProof( p.s, p.t ), f( q ), q.conclusion( i ) )
@@ -159,7 +150,7 @@ object ResolutionToLKProof {
     new LKVisitor[Sequent[Boolean]] {
       val formula = proof.conclusion( idx )
       val proofToInsert = func( formula )
-      val connToInsert = OccConnector( proofToInsert.endSequent, formula +: Sequent() :+ formula,
+      val connToInsert = SequentConnector( proofToInsert.endSequent, formula +: Sequent() :+ formula,
         for ( i <- proofToInsert.endSequent.indicesSequent )
           yield if ( proofToInsert.endSequent( i ) == formula )
           Seq( if ( idx.isSuc ) Ant( 0 ) else Suc( 0 ) )
@@ -176,50 +167,50 @@ object ResolutionToLKProof {
       override def visitLogicalAxiom( proof: LogicalAxiom, isAncestor: Sequent[Boolean] ) =
         isAncestor.find( _ == true ) match {
           case Some( i ) => ( proofToInsert, connToInsert )
-          case None      => withIdentityOccConnector( proof )
+          case None      => withIdentitySequentConnector( proof )
         }
 
       // Contract ancestors as soon as possible, and then skip the following contractions.
-      override def recurse( proof: LKProof, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) = {
+      override def recurse( proof: LKProof, isAncestor: Sequent[Boolean] ): ( LKProof, SequentConnector ) = {
         if ( isAncestor.forall( _ == false ) ) {
-          ( proof, OccConnector( proof.conclusion ) )
+          ( proof, SequentConnector( proof.conclusion ) )
         } else {
           val mainAncestors = proof.mainIndices.filter( isAncestor( _ ) )
           if ( !proof.isInstanceOf[LogicalAxiom] && mainAncestors.nonEmpty ) {
             val mainAncestor = mainAncestors.head
             val ( proof3, conn ) = if ( mainAncestor.isAnt ) {
               val proof2 = CutRule( LogicalAxiom( proof.conclusion( mainAncestor ) ), Suc( 0 ), proof, mainAncestor )
-              recurse( proof2, proof2.getRightOccConnector.inv.parent( isAncestor, true ) )
+              recurse( proof2, proof2.getRightSequentConnector.inv.parent( isAncestor, true ) )
             } else {
               val proof2 = CutRule( proof, mainAncestor, LogicalAxiom( proof.conclusion( mainAncestor ) ), Ant( 0 ) )
-              recurse( proof2, proof2.getLeftOccConnector.inv.parent( isAncestor, true ) )
+              recurse( proof2, proof2.getLeftSequentConnector.inv.parent( isAncestor, true ) )
             }
             // FIXME: do this properly
             val proof4 = ReductiveCutElimination( proof3 )
-            ( proof4, OccConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
+            ( proof4, SequentConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
           } else {
             val ( proofNew, conn ) = super.recurse( proof, isAncestor )
             contract( proofNew, conn )
           }
         }
       }
-      def contract( subProof: LKProof, subConn: OccConnector[HOLFormula] ): ( LKProof, OccConnector[HOLFormula] ) = {
+      def contract( subProof: LKProof, subConn: SequentConnector ): ( LKProof, SequentConnector ) = {
         val newIndices = subConn.parentsSequent.indicesWhere( _.isEmpty )
         val newIndicesByFormula = newIndices.groupBy( i => subProof.conclusion( i ) -> i.polarity )
         newIndicesByFormula.find( ni => ni._2.size > formulaMultiplicities( ni._1 ) ) match {
           case Some( ( _, Seq( i, j, _* ) ) ) =>
             val contracted = if ( i.isSuc ) ContractionRightRule( subProof, i, j ) else ContractionLeftRule( subProof, i, j )
-            ( contracted, contracted.getOccConnector * subConn )
+            ( contracted, contracted.getSequentConnector * subConn )
           case None => ( subProof, subConn )
         }
       }
-      override def visitContractionLeft( proof: ContractionLeftRule, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) =
+      override def visitContractionLeft( proof: ContractionLeftRule, isAncestor: Sequent[Boolean] ): ( LKProof, SequentConnector ) =
         one2one( proof, isAncestor ) {
           case Seq( ( subProof, subConn ) ) =>
             if ( subConn.children( proof.aux1 ).isEmpty ) return ( subProof, subConn )
             ContractionLeftRule( subProof, subConn child proof.aux1, subConn child proof.aux2 )
         }
-      override def visitContractionRight( proof: ContractionRightRule, isAncestor: Sequent[Boolean] ): ( LKProof, OccConnector[HOLFormula] ) =
+      override def visitContractionRight( proof: ContractionRightRule, isAncestor: Sequent[Boolean] ): ( LKProof, SequentConnector ) =
         one2one( proof, isAncestor ) {
           case Seq( ( subProof, subConn ) ) =>
             if ( subConn.children( proof.aux1 ).isEmpty ) return ( subProof, subConn )

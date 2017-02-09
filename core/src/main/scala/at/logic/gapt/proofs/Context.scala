@@ -81,9 +81,17 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def +( update: Update ): Context =
     new Context( update( this ), update :: updates )
 
+  def normalizer = {
+    val redRules = reductionRules.toVector
+    new Normalizer( if ( redRules.isEmpty ) BetaReduction else ReductionRule( BetaReduction +: redRules ) )
+  }
+
   /** Normalizes an expression with the reduction rules stored in this context. */
   def normalize( expression: LambdaExpression ): LambdaExpression =
-    at.logic.gapt.expr.normalize( expression )( this )
+    normalizer.normalize( expression )
+
+  def isDefEq( a: LambdaExpression, b: LambdaExpression ): Boolean =
+    normalizer.isDefEq( a, b )
 
   def signatureLookup( s: String ): BabelSignature.VarConst =
     constant( s ) match {

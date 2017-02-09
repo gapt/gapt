@@ -204,9 +204,9 @@ object Factor {
     }
     p_
   }
-  def withOccConn( p: ResolutionProof ): ( ResolutionProof, OccConnector[HOLFormula] ) = {
+  def withOccConn( p: ResolutionProof ): ( ResolutionProof, SequentConnector ) = {
     var p_ = p
-    var conn = OccConnector( p_.conclusion )
+    var conn = SequentConnector( p_.conclusion )
     for ( ( a, i ) <- p.conclusion.diff( p.conclusion.distinct ).zipWithIndex ) {
       val Seq( j1, j2, _* ) = p_.conclusion.zipWithIndex.elements.filter( _._2 sameSideAs i ).filter( _._1 == a ).map( _._2 )
       p_ = Factor( p_, j1, j2 )
@@ -241,8 +241,8 @@ case class Subst( subProof: ResolutionProof, substitution: Substitution ) extend
   override val conclusion: Sequent[HOLFormula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )
-  override def occConnectors: Seq[OccConnector[HOLFormula]] =
-    Seq( OccConnector( conclusion, subProof.conclusion, subProof.conclusion.indicesSequent.map( Seq( _ ) ) ) )
+  override def occConnectors: Seq[SequentConnector] =
+    Seq( SequentConnector( conclusion, subProof.conclusion, subProof.conclusion.indicesSequent.map( Seq( _ ) ) ) )
   override def immediateSubProofs: Seq[ResolutionProof] = Seq( subProof )
 }
 object Subst {
@@ -363,6 +363,7 @@ case class DefIntro( subProof: ResolutionProof, idx: SequentIndex, definition: D
   val defAtom = defConst( args ).asInstanceOf[HOLAtom]
   val expandedFormula = BetaReduction.betaNormalize( Apps( by, args ) )
   requireEq( subProof.conclusion( idx ), expandedFormula )
+  def auxFormula = expandedFormula.asInstanceOf[HOLFormula]
   override def introducedDefinitions = Map( defConst -> by )
   override def mainFormulaSequent =
     if ( idx isAnt ) defAtom +: Sequent()

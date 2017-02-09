@@ -6,7 +6,7 @@ import at.logic.gapt.proofs._
 import org.specs2.execute.Success
 import org.specs2.mutable._
 
-class LKNewInterpolationTest extends Specification with SequentMatchers {
+class LKInterpolationTest extends Specification with SequentMatchers {
 
   "correctly interpolate a logical axiom with top" in {
     val ax = LogicalAxiom( hof"p" )

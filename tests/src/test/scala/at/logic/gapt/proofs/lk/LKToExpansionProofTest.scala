@@ -1,13 +1,13 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.{ Pi2Pigeonhole, LinearExampleProof }
+import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Suc, Ant, Sequent }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class LKToExpansionProofTest extends Specification with SatMatchers {
+class LKToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 
   "The expansion tree extraction" should {
 
@@ -17,48 +17,39 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
     }
 
     "do merge triggering a substitution triggering a merge" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"P: i>o"
+      ctx += hoc"Q: i>i>o"
+      ctx += hoc"f: i>i"
+      ctx += hcl"P α, P β :- Q (f α) c, Q (f β) d"
 
-      val alpha = Var( "\\alpha", Ti )
-      val beta = Var( "\\beta", Ti )
-      val c = Const( "c", Ti )
-      val d = Const( "d", Ti )
-      val f = Const( "f", Ti -> Ti )
-      val x = Var( "x", Ti )
-      val y = Var( "y", Ti )
-      val z = Var( "z", Ti )
-      val P = Const( "P", Ti -> To )
-      val Q = Const( "Q", Ti -> ( Ti -> To ) )
+      val p = ProofBuilder.
+        c( TheoryAxiom( hcl"P α, P β :- Q (f α) c, Q (f β) d" ) ).
+        u( ExistsRightRule( _, hof"∃z Q (f α) z", le"c" ) ).
+        u( ExistsRightRule( _, hof"∃z Q (f β) z", le"d" ) ).
+        u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f α" ) ).
+        u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f β" ) ).
+        u( ContractionRightRule( _, hof"∃y ∃z Q y z" ) ).
+        u( ExistsLeftRule( _, hof"∃x P x", hov"α" ) ).
+        u( ExistsLeftRule( _, hof"∃x P x", hov"β" ) ).
+        u( ContractionLeftRule( _, hof"∃x P x" ) ).
+        qed
 
-      val p0 = Axiom(
-        List( HOLAtom( P, alpha :: Nil ), HOLAtom( P, beta :: Nil ) ), // P(a), P(b)
-        List( HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: c :: Nil ), HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: d :: Nil ) )
-      ) // Q(f(a), c), Q(f(b), d)
-      val p1 = ExistsRightRule( p0, Ex( z, HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: z :: Nil ) ), c )
-      val p2 = ExistsRightRule( p1, Ex( z, HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: z :: Nil ) ), d )
+      val E = LKToExpansionProof( p ).expansionSequent
 
-      val p2_1 = ExistsRightRule( p2, Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ), HOLFunction( f, alpha :: Nil ) )
-      val p2_2 = ExistsRightRule( p2_1, Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ), HOLFunction( f, beta :: Nil ) )
-
-      val p2_3 = ContractionRightRule( p2_2, Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ) )
-
-      val p3 = ExistsLeftRule( p2_3, Ex( x, HOLAtom( P, x :: Nil ) ), alpha )
-      val p4 = ExistsLeftRule( p3, Ex( x, HOLAtom( P, x :: Nil ) ), beta )
-      val p5 = ContractionLeftRule( p4, Ex( x, HOLAtom( P, x :: Nil ) ) )
-
-      val E = LKToExpansionProof( p5 ).expansionSequent
-
-      E.antecedent mustEqual List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), beta, ETAtom( HOLAtom( P, beta :: Nil ), Polarity.InAntecedent ) ) )
-      // this assumes that the first variable wins, f(beta) would also be valid
-      val f_alpha = HOLFunction( f, beta :: Nil )
-      E.succedent mustEqual List( ETWeakQuantifier(
-        Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ),
+      E.antecedent must_== Seq( ETStrongQuantifier( hof"∃x P x", hov"β", ETAtom( hoa"P β", Polarity.InAntecedent ) ) )
+      // this assumes that the first variable wins, f(β) would also be valid
+      val f_alpha = le"f β"
+      E.succedent must_== Seq( ETWeakQuantifier(
+        hof"∃y ∃z Q y z",
         Map(
           f_alpha ->
             ETWeakQuantifier(
-              Ex( z, HOLAtom( Q, f_alpha :: z :: Nil ) ),
+              hof"∃z Q $f_alpha z",
               Map(
-                c -> ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ), Polarity.InSuccedent ),
-                d -> ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ), Polarity.InSuccedent )
+                le"c" -> ETAtom( hoa"Q $f_alpha c", Polarity.InSuccedent ),
+                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent )
               )
             )
         )
@@ -135,48 +126,118 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
     }
 
     "handle atom definitions in top position" in {
-      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"Q: i>o"
+      ctx += hof"P x = (x = x ∨ (¬ x = x))"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"x = x" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, fof"P(x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), fof"P(x)" ) ).
         u( OrRightMacroRule( _, fof"P(x)", fof"Q(x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
 
+      ctx.check( e )
+      ctx.check( p )
+
       e.deep must_== fos" :- x = x ∨ (¬ x = x) ∨ false"
     }
 
-    "refuse to handle atom definitions in non-top position" in {
-      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+    "handle atom definitions in non-top position" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"Q:i>o"
+      ctx += hof"P x = (x = x ∨ (¬ x = x))"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"x = x" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
         u( OrRightMacroRule( _, fof"x = x ∨ ¬ x = x", fof"Q(x)" ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, fof"P(x) ∨ Q(x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), fof"P(x) ∨ Q(x)" ) ).
         qed
 
-      LKToExpansionProof( p ) must throwAn[IllegalArgumentException]
+      val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
+
+      e.shallow must_== hos" :- P(x) ∨ Q(x)"
     }
 
     "handle term definitions" in {
-      val d = Definition( hoc"h: i>i", le" λx f (g x)" )
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"f: i>i"
+      ctx += hoc"g: i>i"
+      ctx += hof"h x = f (g x)"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"f( g x) = f (g x)" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
 
+      ctx.check( p )
+      ctx.check( e )
+
       e.shallow must_== fos":- h x = f (g x) ∨ ¬ f(g x) = f (g x)"
+    }
+
+    "work on a simple example of a term definition of type o" in {
+      implicit var ctx = Context()
+      ctx += hoc"Q: o"
+      ctx += hoc"R: o"
+      ctx += hoc"S: o >o"
+      ctx += hof"P = (Q & R)"
+
+      val p = ProofBuilder.
+        c( LogicalAxiom( hof"S(Q & R)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), hof"S P" ) ).
+        qed
+
+      val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
+
+      e.shallow must_== hos"S(Q & R) :- S(P)"
+    }
+
+    "fail on double negation definition example" in {
+      implicit var ctx = Context()
+      ctx += hof"n X = (-X)"
+
+      val p = ProofBuilder.
+        c( LogicalAxiom( hoa"X" ) ).
+        u( NegLeftRule( _, Suc( 0 ) ) ).
+        u( NegRightRule( _, Ant( 0 ) ) ).
+        u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), hof"X -> n (n X)" ) ).
+        qed
+
+      val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
+
+      e.shallow must_== hos":- X -> n (n X)"
+    }
+
+    "lattice with definitions" in {
+      import lattice._
+      val exp = LKToExpansionProof( lattice.p )
+      val Right( lk ) = ExpansionProofToLK.withTheory( implicitly )( exp )
+      ctx.check( exp )
+      ctx.check( lk )
+      exp.shallow must beMultiSetEqual( lk.conclusion )
     }
   }
 }

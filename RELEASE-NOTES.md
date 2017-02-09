@@ -2,6 +2,11 @@
 
 ## Version 2.5 (unreleased)
 
+* Support veriT stable2016
+* CERES version that directly produces expansion proofs
+* Deskolemization
+* Better error messages in Babel, the formula parser
+
 ## Version 2.4 (released on 2017-01-13)
 
 * Update to Scala 2.12

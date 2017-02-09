@@ -104,7 +104,7 @@ class ExpansionProofDefinitionEliminationTest extends Specification with SatMatc
       hof"∃x (P x ∧ P (f x) ⊃ P (f x))",
       Map( le"c" ->
         ETImp(
-          ETDefinedAtom( hoa"D c", Polarity.InAntecedent, ctx.definition( "D" ).get ),
+          ETDefinition( hof"P c & P (f c)", ETAtom( hoa"D c", Polarity.InAntecedent ) ),
           ETAtom( hoa"P (f c)", Polarity.InSuccedent )
         ) )
     )

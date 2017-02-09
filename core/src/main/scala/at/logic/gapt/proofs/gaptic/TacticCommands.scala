@@ -4,9 +4,7 @@ import tactics._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
-
-import scalaz._
-import Scalaz._
+import at.logic.gapt.provers.viper.ViperTactic
 
 /**
  * Predefined tactics in gaptic.
@@ -49,7 +47,7 @@ trait TacticCommands {
   /**
    * Attempts to apply the tactics `axiomTop`, `axiomBot`, `axiomRefl`, and `axiomLog`.
    */
-  def trivial: Tactic[Unit] = Tactic { axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog }.
+  def trivial: Tactical[Unit] = Tactical { axiomTop orElse axiomBot orElse axiomRefl orElse axiomLog }.
     cut( "Not a valid initial sequent" )
 
   /**
@@ -503,7 +501,7 @@ trait TacticCommands {
     for {
       goal <- currentGoal
       theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: HOLAtom => a } ).
-        toTactical( "does not follow from theory", goal )
+        toTactical( "does not follow from theory" )
       _ <- insert( theoryAxiom )
     } yield ()
   }
@@ -517,7 +515,7 @@ trait TacticCommands {
     for {
       goal <- currentGoal
       theoryAxiom <- ctx.axioms.find( clauseSubsumption( _, goal.conclusion ).isDefined ).
-        toTactical( "does not follow from theory", goal )
+        toTactical( "does not follow from theory" )
       _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[HOLAtom] ) ) )
     } yield ()
   }
@@ -538,8 +536,7 @@ trait TacticCommands {
    * Tactic that immediately fails.
    */
   def fail = new Tactical[Nothing] {
-    def apply( proofState: ProofState ): ValidationNel[TacticalFailure, ( Nothing, ProofState )] =
-      TacticalFailure( this, None, "explicit fail" ).failureNel
+    def apply( proofState: ProofState ) = Left( TacticalFailure( this, Some( proofState ), "explicit fail" ) )
     override def toString = "fail"
   }
 
@@ -554,13 +551,21 @@ trait TacticCommands {
    * - `∀:r`
    * - `∃:l`
    */
-  def decompose: Tactical[Unit] = repeat(
-    NegLeftTactic( AnyFormula ) orElse NegRightTactic( AnyFormula ) orElse
-      AndLeftTactic( AnyFormula ) orElse OrRightTactic( AnyFormula ) orElse ImpRightTactic( AnyFormula ) orElse
-      ForallRightTactic( AnyFormula ) orElse ExistsLeftTactic( AnyFormula )
-  )
+  def decompose: Tactical[Unit] = Tactical {
+    repeat {
+      NegLeftTactic( AnyFormula ) orElse NegRightTactic( AnyFormula ) orElse
+        AndLeftTactic( AnyFormula ) orElse OrRightTactic( AnyFormula ) orElse ImpRightTactic( AnyFormula ) orElse
+        ForallRightTactic( AnyFormula ) orElse ExistsLeftTactic( AnyFormula )
+    }
+  }
 
-  def destruct( label: String ) = DestructTactic( label )
+  def destruct( label: String ): Tactical[Any] = Tactical {
+    allR( label ) orElse exL( label ) orElse
+      andL( label ) orElse andR( label ) orElse
+      orL( label ) orElse orR( label ) orElse
+      impL( label ) orElse impR( label ) orElse
+      negL( label ) orElse negR( label )
+  }.cut( s"Cannot destruct $label" )
 
   def chain( h: String ) = ChainTactic( h )
 
@@ -645,13 +650,13 @@ trait TacticCommands {
   /**
    * Does nothing.
    */
-  def skip = SkipTactical
+  def skip: Tactical[Unit] = Tactical { proofState => Right( ( (), proofState ) ) }
 
   /**
    * Retrieves the current subgoal.
    */
   def currentGoal: Tactic[OpenAssumption] = new Tactic[OpenAssumption] {
-    def apply( goal: OpenAssumption ) = ( goal -> goal ).success
+    def apply( goal: OpenAssumption ) = Right( goal -> goal )
     override def toString = "currentGoal"
   }
 
@@ -671,7 +676,7 @@ trait TacticCommands {
     for {
       goal <- currentGoal
       inst <- findInstances( goal.labelledSequent ).headOption.
-        toTactical( s"Could not find instance $formula in " + ( if ( polarity.inSuc ) "succedent" else "antecedent" ), goal )
+        toTactical( s"Could not find instance $formula in " + ( if ( polarity.inSuc ) "succedent" else "antecedent" ) )
       ( label, terms ) = inst
       newLabel <- if ( terms.isEmpty ) TacticalMonad.pure( label ) else if ( polarity.inSuc ) exR( label, terms: _* ) else allL( label, terms: _* )
     } yield newLabel
@@ -679,4 +684,6 @@ trait TacticCommands {
 
   def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
     Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
+
+  def viper( implicit ctx: Context ): ViperTactic = new ViperTactic
 }
