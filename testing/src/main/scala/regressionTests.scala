@@ -84,6 +84,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         if ( !containsEqualityReasoning( q ) )
           ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
+        CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"
 
         LKToExpansionProof( q ) --? "LKToExpansionProof (cut-intro)" foreach { expQ =>
           Z3.isValid( expQ.deep ) !-- "expansion tree validity with cut (cut-intro)"
@@ -125,7 +126,7 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
   override def test( implicit testRun: TestRun ) = {
     val tptpDir = Path( f ) / up / up / up
-    val tptpProblem = resolveIncludes( TptpParser.parse( f ), path => TptpParser.parse( tptpDir / RelPath( path ) ) )
+    val tptpProblem = resolveIncludes( TptpParser.parse( f ), path => TptpParser.parse( tptpDir / RelPath( path ) ) ) --- "TptpParser"
 
     val sequent = tptpProblem.toSequent
 

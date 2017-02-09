@@ -104,7 +104,7 @@ class CERES {
    *          (i.e. structural rules, cut, logical rules, equational rules but no definitions, schema,higher order)
    * @return an expansion proof of the CERES-normal form computed from the projections and the resolution refutation
    */
-  def CERESExpansionProof( p: LKProof, prover: ResolutionProver ): ExpansionProof = {
+  def CERESExpansionProof( p: LKProof, prover: ResolutionProver = Escargot ): ExpansionProof = {
     val es = p.endSequent
     val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, CERES.skipNothing ) )
