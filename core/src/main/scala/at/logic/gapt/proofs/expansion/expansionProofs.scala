@@ -40,7 +40,7 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val atomDefs =
     subProofs collect {
       case d: ETDefinedAtom => d.definitionConst -> d.definedExpr
-      case d: ETDefinition  => d.pred -> d.definedExpr
+      case d: ETDefinition  => d.definition.toTuple
     } groupBy { _._1 } map {
       case ( c, ds ) =>
         require(

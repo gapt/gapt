@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.{ Ant, OccConnector }
+import at.logic.gapt.proofs.{ Ant, SequentConnector }
 
 /**
  * Created by sebastian on 21.06.16.
@@ -21,14 +21,14 @@ object cleanCuts extends LKVisitor[Unit] {
       case ( LogicalAxiom( _ ), _ ) =>
         val ( subProofNew, subConnector ) = recurse( rightSubProof, () )
         val parentsSequent = p.endSequent.indicesSequent map { Seq( _ ) } delete Ant( 0 ) insertAt ( aux2, Seq( Ant( 0 ) ) )
-        val connector = OccConnector( rightSubProof.endSequent, p.endSequent, parentsSequent )
+        val connector = SequentConnector( rightSubProof.endSequent, p.endSequent, parentsSequent )
         ( subProofNew, connector * subConnector )
 
       case ( _, LogicalAxiom( _ ) ) =>
         val ( subProofNew, subConnector ) = recurse( leftSubProof, () )
         val last = p.endSequent.indices.last
         val parentsSequent = p.endSequent.indicesSequent map { Seq( _ ) } delete last insertAt ( aux1, Seq( last ) )
-        val connector = OccConnector( leftSubProof.endSequent, p.endSequent, parentsSequent )
+        val connector = SequentConnector( leftSubProof.endSequent, p.endSequent, parentsSequent )
         ( subProofNew, connector * subConnector )
 
       case _ => super.visitCut( p, () )

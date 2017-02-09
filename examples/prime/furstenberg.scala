@@ -14,276 +14,251 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
   // The paper says X = Y <-> X subset Y ∧ Y subset X, but the current proof uses the definition
   // X = Y <-> ∀x (x ∈ X <-> x ∈ Y). Taking the latter for now.
-  val extensionality = hof"∀X ∀Y ( (∀x (X(x) <-> Y(x))) -> X = Y )"
+  ctx += hof"EXT = (∀X ∀Y ((∀x (X x <-> Y x)) -> X = Y))"
 
   /* -------------
    * | Subproofs |
    * -------------
    */
 
-  val deMorgan1 = Lemma(
-    ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof"compN(union X Y) = intersection(compN X)(compN Y)" )
-  ) {
-      chain( "EXT" )
-      forget( "EXT" )
-      allR
-      repeat( unfold( "compN", "intersection", "union" ) in "Suc" )
-      prop
+  val deMorgan1 = Lemma( hols"EXT :- compN(union X Y) = intersection(compN X)(compN Y)" ) {
+    unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
+    allR
+    repeat( unfold( "compN", "intersection", "union" ) in "g" )
+    prop
+  }
 
-    }
+  val intersectionOpen: LKProof = Lemma( hols"O(X), O(Y) :- O(intersection X Y)" ) {
+    unfold( "O" ) in ( "h_0", "h_1", "g" )
+    allR
+    impR
+    allL( "h_0", fov"m" ).forget
+    unfold( "intersection" ) in "g_0"
+    andL
+    impL left trivial
 
-  val intersectionOpen: LKProof = Lemma(
-    ( "Ant0" -> hof" O(X)" ) +: ( "Ant1" -> hof" O(Y)" ) +: Sequent() :+ ( "Suc" -> hof" O(intersection X Y)" )
-  ) {
-      unfold( "O" ) in ( "Ant0", "Ant1", "Suc" )
-      allR
-      impR
-      allL( "Ant0", fov"m" ).forget
-      unfold( "intersection" ) in "Suc_0"
-      andL
-      impL left trivial
+    exL( fov"l_0" )
+    allL( "h_1", fov"m" ).forget
+    impL left trivial
 
-      exL( fov"l_0" )
-      allL( "Ant1", fov"m" ).forget
-      impL left trivial
+    forget( "g_0_0", "g_0_1" )
+    exL( fov"l_1" )
+    exR( fot" (l_0 + 1) * l_1 + l_0" ).forget
+    cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" ) left theory
 
-      forget( "Suc_0_0", "Suc_0_1" )
-      exL( fov"l_1" )
-      exR( fot" (l_0 + 1) * l_1 + l_0" ).forget
-      cut( "CF", hoa" (l_0 + 1) * l_1 + l_0 + 1 = (l_0 + 1) * (l_1 + 1)" ) left theory
+    eql( "CF", "g_1" )
+    forget( "CF" )
+    repeat( unfold( "subset", "intersection" ) in "g_1" )
+    decompose
+    andR
 
-      eql( "CF", "Suc_1" )
-      forget( "CF" )
-      repeat( unfold( "subset", "intersection" ) in "Suc_1" )
-      decompose
-      andR
+    forget( "h_1" )
+    unfold( "subset" ) in "h_0"
+    allL( "h_0", fov"n" ).forget
+    impL right trivial
 
-      forget( "Ant1" )
-      unfold( "subset" ) in "Ant0"
-      allL( "Ant0", fov"n" ).forget
-      impL right trivial
+    forget( "g_1_1" )
+    unfold( "ν" ) in ( "g_1_0", "h_0" )
+    exL
+    exR( fot"n_0 * (l_1 + 1)" ).forget
+    theory
 
-      forget( "Suc_1_1" )
-      unfold( "ν" ) in ( "Suc_1_0", "Ant0" )
-      exL
-      exR( fot"n_0 * (l_1 + 1)" ).forget
-      theory
+    forget( "h_0" )
+    unfold( "subset" ) in "h_1"
+    allL( "h_1", fov"n" ).forget
+    impL right trivial
 
-      forget( "Ant0" )
-      unfold( "subset" ) in "Ant1"
-      allL( "Ant1", fov"n" ).forget
-      impL right trivial
+    forget( "g_1_1" )
+    unfold( "ν" ) in ( "g_1_0", "h_1" )
+    exL
+    exR( fot"n_0 * (l_0 + 1)" ).forget
+    theory
+  }
 
-      forget( "Suc_1_1" )
-      unfold( "ν" ) in ( "Suc_1_0", "Ant1" )
-      exL
-      exR( fot"n_0 * (l_0 + 1)" ).forget
-      theory
+  val unionClosed = Lemma( hols"C(X), C(Y), EXT :- C(union X Y)" ) {
+    unfold( "C" ) in ( "h_0", "h_1", "g" )
+    cut( "CF", hof" compN(union X Y) = intersection(compN X)(compN Y)" )
 
-    }
+    insert( deMorgan1 )
 
-  val unionClosed = Lemma(
-    ( "Ant0" -> hof"C(X)" ) +: ( "Ant1" -> hof" C(Y)" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof" C(union X Y)" )
-  ) {
-      unfold( "C" ) in ( "Ant0", "Ant1", "Suc" )
-      cut( "CF", hof" compN(union X Y) = intersection(compN X)(compN Y)" )
+    eql( "CF", "g" )
+    forget( "CF" )
+    insert( intersectionOpen )
+  }
 
-      insert( deMorgan1 )
+  val progClosed = Lemma( hols"PRE, REM, '0<l': 0 < l, EXT :- C(ν 0 l)" ) {
+    unfold( "C" ) in "g"
+    cut( "CF", hof" U(0,l) = compN(ν 0 l)" )
 
-      eql( "CF", "Suc" )
-      forget( "CF" )
-      insert( intersectionOpen )
-    }
+    forget( "PRE", "g" )
+    unfold( "EXT" ).in( "EXT" ); chain( "EXT" ); forget( "EXT" )
+    allR
+    andR
 
-  val progClosed = Lemma(
-    ( "PRE" -> hof"PRE" ) +: ( "REM" -> hof"REM" ) +: ( "0<l" -> hof" 0 < l" ) +: ( "EXT" -> extensionality ) +: Sequent() :+ ( "Suc" -> hof"C(ν 0 l)" )
-  ) {
-      unfold( "C" ) in "Suc"
-      cut( "CF", hof" U(0,l) = compN(ν 0 l)" )
+    forget( "REM" )
+    repeat( unfold( "compN", "U" ) in "CF" )
+    decompose
+    unfold( "ν" ) in ( "CF_0_1", "CF_1" )
+    exL( "CF_0_1" )
+    exL( "CF_1" )
+    eql( "CF_0_1", "CF_1" )
+    forget( "CF_0_1" )
+    cut( "tri", fof"¬0 = i" )
 
-      forget( "PRE", "Suc" )
-      chain( "EXT" )
-      forget( "EXT" )
-      allR
-      andR
+    forget( "CF_0_0_0", "CF_1", "0<l" )
+    decompose
+    theory
 
-      forget( "REM" )
-      repeat( unfold( "compN", "U" ) in "CF" )
-      decompose
-      unfold( "ν" ) in ( "CF_0_1", "CF_1" )
-      exL( "CF_0_1" )
-      exL( "CF_1" )
-      eql( "CF_0_1", "CF_1" )
-      forget( "CF_0_1" )
-      cut( "tri", fof"¬0 = i" )
+    forget( "CF_0_0_1" )
+    decompose
+    theory
 
-      forget( "CF_0_0_0", "CF_1", "0<l" )
-      decompose
-      theory
+    impR
+    unfold( "REM" ) in "REM"
+    allL( fov"l" ).forget
+    impL left trivial
 
-      forget( "CF_0_0_1" )
-      decompose
-      theory
+    forget( "0<l" )
+    allL( fov"x" ).forget
+    decompose
+    unfold( "U" ) in "CF_1"
+    exR( fov"k" ).forget
+    andR right trivial
 
-      impR
-      unfold( "REM" ) in "REM"
-      allL( fov"l" ).forget
-      impL left trivial
+    andR left trivial
 
-      forget( "0<l" )
-      allL( fov"x" ).forget
-      decompose
-      unfold( "U" ) in "CF_1"
-      exR( fov"k" ).forget
-      andR right trivial
+    unfold( "compN" ) in "CF_0"
+    decompose
+    eql( "CF_1", "REM_1" )
+    trivial
 
-      andR left trivial
+    forget( "REM", "EXT" )
+    eql( "CF", "g" )
+    forget( "CF" )
+    unfold( "O" ) in "g"
+    decompose
+    unfold( "PRE" ) in "PRE"
+    allL( "PRE", fov"l" ).forget
+    impL left trivial
 
-      unfold( "compN" ) in "CF_0"
-      decompose
-      eql( "CF_1", "REM_1" )
-      trivial
+    forget( "0<l" )
+    exL
+    exR( fov"m_0" ).forget
+    rewrite rtl "PRE" in "g_1"
+    forget( "PRE" )
+    unfold( "subset" ) in "g_1"
+    unfold( "U" ) in "g_0"
+    decompose
+    unfold( "U" ) in "g_1_1"
+    exR( fov"i" ).forget
+    andR
 
-      forget( "REM", "EXT" )
-      eql( "CF", "Suc" )
-      forget( "CF" )
-      unfold( "O" ) in "Suc"
-      decompose
-      unfold( "PRE" ) in "PRE"
-      allL( "PRE", fov"l" ).forget
-      impL left trivial
+    andR; trivial; prop
 
-      forget( "0<l" )
-      exL
-      exR( fov"m_0" ).forget
-      rewrite rtl "PRE" in "Suc_1"
-      forget( "PRE" )
-      unfold( "subset" ) in "Suc_1"
-      unfold( "U" ) in "Suc_0"
-      decompose
-      unfold( "U" ) in "Suc_1_1"
-      exR( fov"i" ).forget
-      andR
+    forget( "g_0_0_0", "g_0_0_1" )
+    unfold( "ν" ) in ( "g_0_1", "g_1_0", "g_1_1" )
+    decompose
+    exR( fot"n_0 + n_1" ).forget
+    rewrite.many ltr ( "g_0_1", "g_1_0" )
+    theory
+  }
 
-      andR; trivial; prop
+  // Proof that complement(complement(X)) = X (under hof"EXT").
+  val compCompProof = Lemma( hols"EXT :- comp: compN(compN(X)) = X" ) {
+    unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
+    allR( "comp", fov"x" )
+    unfold( "compN" ) in "comp"
+    prop
+  }
 
-      forget( "Suc_0_0_0", "Suc_0_0_1" )
-      unfold( "ν" ) in ( "Suc_0_1", "Suc_1_0", "Suc_1_1" )
-      decompose
-      exR( fot"n_0 + n_1" ).forget
-      rewrite.many ltr ( "Suc_0_1", "Suc_1_0" )
-      theory
-    }
+  // Proof that if complement(X) is closed, X is open (under hof"EXT").
+  val openClosedProof = Lemma( hols"EXT, C: C(compN(X)) :- O: O(X)" ) {
+    unfold( "C" ) in "C"
+    cut( "CF", hof" compN(compN(X)) = X" )
 
-  // Proof that complement(complement(X)) = X (under extensionality).
-  val compCompProof = Lemma(
-    ( "EXT" -> extensionality ) +: Sequent() :+ "comp" -> hof" compN(compN(X)) = X"
-  ) {
-      chain( "EXT" )
-      forget( "EXT" )
-      allR( "comp", fov"x" )
-      unfold( "compN" ) in "comp"
-      prop
-    }
+    //Left subproof of the cut:
+    forget( "C", "O" )
+    insert( compCompProof )
 
-  // Proof that if complement(X) is closed, X is open (under extensionality).
-  val openClosedProof = Lemma(
-    ( "EXT" -> extensionality ) +: ( "C" -> hof" C(compN(X))" ) +: Sequent() :+ "O" -> hof"O(X)"
-  ) {
-      unfold( "C" ) in "C"
-      cut( "CF", hof" compN(compN(X)) = X" )
-
-      //Left subproof of the cut:
-      forget( "C", "O" )
-      insert( compCompProof )
-
-      //Right subproof of the cut:
-      forget( "EXT" )
-      eql( "CF", "C" ).fromLeftToRight
-      forget( "CF" )
-      repeat( unfold( "O", "ν", "subset" ) in ( "O", "C" ) )
-      trivial
-    }
+    //Right subproof of the cut:
+    forget( "EXT" )
+    eql( "CF", "C" ).fromLeftToRight
+    forget( "CF" )
+    repeat( unfold( "O", "ν", "subset" ) in ( "O", "C" ) )
+    trivial
+  }
 
   // Proof that {1} is nonempty
-  val singletonNonempty = Lemma(
-    Sequent() :+ "nonempty" -> hof" ¬empty(set_1(1))"
-  ) {
-      repeat( unfold( "empty", "set_1" ) in "nonempty" )
-      decompose
-      exR( "nonempty", hoc" 1:i" )
-      trivial
-    }
+  val singletonNonempty = Lemma( hols":- nonempty: ¬empty(set_1(1))" ) {
+    repeat( unfold( "empty", "set_1" ) in "nonempty" )
+    decompose
+    exR( "nonempty", hoc" 1:i" )
+    trivial
+  }
 
   // Proof that {1} is finite
-  val singletonFinite = Lemma(
-    ( "infinite" -> hof" INF (set_1 1)" ) +: Sequent()
-  ) {
-      repeat( unfold( "INF", "set_1" ) in "infinite" )
-      allL( "infinite", hoc"1: i" ).forget
-      exL( "infinite" )
-      theory
-    }
+  val singletonFinite = Lemma( hols"infinite: INF (set_1 1) :-" ) {
+    repeat( unfold( "INF", "set_1" ) in "infinite" )
+    allL( "infinite", hoc"1: i" ).forget
+    exL( "infinite" )
+    theory
+  }
 
   // Proof of INF(S), S subset X :- INF(X).
   // S and X are free.
-  val infiniteSubset = Lemma(
-    ( "subset_inf" -> hof"INF(S)" ) +: ( "subset" -> hof" subset S X" ) +: Sequent() :+ "set_inf" -> hof"INF(X)"
-  ) {
-      unfold( "INF" ) in ( "subset_inf", "set_inf" )
-      allR( "set_inf" )
-      allL( "subset_inf", fov"k" ).forget
-      exL( "subset_inf" )
-      exR( "set_inf", fov"l" ).forget
-      unfold( "subset" ) in "subset"
-      chain( "subset" )
-      trivial
-    }
+  val infiniteSubset = Lemma( hols"subset_inf: INF(S), subset: subset S X :- set_inf: INF(X)" ) {
+    unfold( "INF" ) in ( "subset_inf", "set_inf" )
+    allR( "set_inf" )
+    allL( "subset_inf", fov"k" ).forget
+    exL( "subset_inf" )
+    exR( "set_inf", fov"l" ).forget
+    unfold( "subset" ) in "subset"
+    chain( "subset" )
+    trivial
+  }
 
   // Proof that every nonempty open set is infinite.
-  val phi2 = Lemma(
-    ( "open" -> hof" O(X)" ) +: ( "nonempty" -> hof" ¬ empty X" ) +: Sequent() :+ "infinite" -> hof" INF X"
-  ) {
-      unfold( "empty" ) in "nonempty"
-      unfold( "O" ) in "open"
-      decompose
-      allL( fov"n" ).forget
-      impL left trivial
+  val phi2 = Lemma( hols"open: O(X), nonempty: ¬ empty X :- infinite: INF X" ) {
+    unfold( "empty" ) in "nonempty"
+    unfold( "O" ) in "open"
+    decompose
+    allL( fov"n" ).forget
+    impL left trivial
 
-      forget( "nonempty" )
-      exL
-      cut( "CF", hof"INF(ν(n, l+1))" )
+    forget( "nonempty" )
+    exL
+    cut( "CF", hof"INF(ν(n, l+1))" )
 
-      // Left subproof: ν(n, l+1) is infinite
-      forget( "open", "infinite" )
-      unfold( "INF" ) in "CF"
-      allR
-      exR( fot" n * (l + (1 + 1)) + l * (k+1)" ).forget
-      unfold( "ν" ) in "CF"
-      exR( fot"n +(k + 1)" ).forget
-      theory
+    // Left subproof: ν(n, l+1) is infinite
+    forget( "open", "infinite" )
+    unfold( "INF" ) in "CF"
+    allR
+    exR( fot" n * (l + (1 + 1)) + l * (k+1)" ).forget
+    unfold( "ν" ) in "CF"
+    exR( fot"n +(k + 1)" ).forget
+    theory
 
-      // Right subproof:
-      insert( infiniteSubset )
-    }
+    // Right subproof:
+    insert( infiniteSubset )
+  }
 
   /**
    * Proof of x ∈ S[n] :- ∃y ( y ∈ P[n] ∧ x ∈ ν(0,y) )
    */
   def varrho2( n: Int ): LKProof = {
-    val endSequent = ( "Ant" -> hof" ${S( n )}(x)" ) +: Sequent() :+ ( "Suc" -> hof"∃y (${P( n )}(y) ∧ ν 0 y x)" )
+    val endSequent = hols"${S( n )}(x) :- ∃y (${P( n )}(y) ∧ ν 0 y x)"
 
     n match {
       case 0 =>
         Lemma( endSequent ) {
-          unfold( "S[0]" ) in "Ant"
+          unfold( "S[0]" ) in "h_0"
           exR( p( 0 ) ).forget
           andR
 
-          repeat( unfold( "P[0]", "set_1" ) in "Suc" )
+          repeat( unfold( "P[0]", "set_1" ) in "g" )
           trivial
 
-          unfold( "ν" ) in ( "Ant", "Suc" )
+          unfold( "ν" ) in ( "h_0", "g" )
           exL
           exR( fov"n" ).forget
           trivial
@@ -291,39 +266,39 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
       case _ =>
         Lemma( endSequent ) {
-          repeat( unfold( s"S[$n]", "union" ) in "Ant" )
+          repeat( unfold( s"S[$n]", "union" ) in "h_0" )
           orL
 
           cut( "CF", hof"∃y (${P( n - 1 )}(y) ∧ ν 0 y x)" )
 
-          forget( "Suc" )
+          forget( "g" )
           insert( varrho2( n - 1 ) )
 
-          forget( "Ant" )
+          forget( "h_0" )
           exL
           exR( fov"y" ).forget
           andR
 
-          repeat( unfold( s"P[$n]", "union", "set_1" ) in "Suc" )
+          repeat( unfold( s"P[$n]", "union", "set_1" ) in "g" )
           prop
 
           andL
-          unfold( "ν" ) in ( "CF_1", "Suc" )
+          unfold( "ν" ) in ( "CF_1", "g" )
           exL
-          exR( "Suc", fov"n" ).forget
+          exR( "g", fov"n" ).forget
           trivial
 
           exR( p( n ) ).forget
           andR
 
-          forget( "Ant" )
-          repeat( unfold( s"P[$n]", "union", "set_1" ) in "Suc" )
+          forget( "h_0" )
+          repeat( unfold( s"P[$n]", "union", "set_1" ) in "g" )
           orR
           trivial
 
-          repeat( unfold( "ν" ) in ( "Ant", "Suc" ) )
+          repeat( unfold( "ν" ) in ( "h_0", "g" ) )
           exL
-          exR( "Suc", fov"n" ).forget
+          exR( "g", fov"n" ).forget
           trivial
         }
 
@@ -331,234 +306,216 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   // Proof of F[k] :- x ∈ S[k] -> x ∈ comp({1})
-  val psi1Left: LKProof = {
-    val endSequent = ( "Ant1" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> hof" ${S( k )}(x) -> compN(set_1(1))(x) " )
-
-    Lemma( endSequent ) {
+  val psi1Left: LKProof =
+    Lemma( hols"h: ${F( k )} :- ${S( k )}(x) -> compN(set_1(1))(x)" ) {
       decompose
-      unfold( "compN" ) in "Suc_1"
+      unfold( "compN" ) in "g_1"
       cut( "CF", hof"¬x = 1" )
 
-      forget( "Suc_1" )
+      forget( "g_1" )
       cut( "CF2", hof" ∃y (${P( k )}(y) ∧ ν(0,y)(x))" )
 
-      forget( "Ant1", "CF" )
+      forget( "h", "CF" )
       insert( varrho2( k ) )
 
-      forget( "Suc_0" )
-      unfold( s"F[$k]" ) in "Ant1"
+      forget( "g_0" )
+      unfold( s"F[$k]" ) in "h"
       decompose
-      allL( "Ant1", fov"y" )
+      allL( "h", fov"y" )
       decompose
-      forget( "Ant1_0_0", "Ant1" )
+      forget( "h_0_0", "h" )
       impL
 
-      unfold( s"P[$k]", ( k to 0 by -1 ) map { j => s"P[$j]" }: _* ) in ( "CF2_0", "Ant1_0_1" )
-      unfold( "union", "set_1" ) in ( "CF2_0", "Ant1_0_1" )
+      unfold( s"P[$k]", ( k to 0 by -1 ) map { j => s"P[$j]" }: _* ) in ( "CF2_0", "h_0_1" )
+      unfold( "union", "set_1" ) in ( "CF2_0", "h_0_1" )
       prop
 
-      unfold( "PRIME" ) in "Ant1_0_1"
+      unfold( "PRIME" ) in "h_0_1"
       decompose
-      forget( "Ant1_0_1_1" )
+      forget( "h_0_1_1" )
       unfold( "ν" ) in "CF2_1"
       decompose
       theory
 
-      unfold( "set_1" ) in "Suc_1"
+      unfold( "set_1" ) in "g_1"
       decompose
       trivial
     }
+
+  val Pi_1 = Lemma( hols"'Prime-Div': 'PRIME-DIV', 'x!=1': ¬x = 1, Fk: ∀l (PRIME(l) <-> X(l)) :- ∃y (X(y) ∧ ν 0 y x)" ) {
+    unfold( "PRIME-DIV" ) in "Prime-Div"
+    allL( "Prime-Div", fov"x" ).forget
+    impL left trivial
+
+    exL( "Prime-Div" )
+    exR( "g", fov"l" ).forget
+    allL( "Fk", fov"l" ).forget
+    decompose
+    impL( "Fk_0" ) left trivial
+
+    forget( "Prime-Div_0" )
+    andR left trivial
+
+    unfold( "DIV" ) in "Prime-Div_1"
+    unfold( "ν" ) in "g"
+    exL
+    exR( fov"m" ).forget
+    theory
   }
 
-  val Pi_1 = Lemma(
-    ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: ( "x!=1" -> hof" ¬x = 1" ) +: ( s"F[$k]" -> hof" ∀l (PRIME(l) <-> X(l))" ) +: Sequent() :+ ( "Suc" -> hof"∃y (X(y) ∧ ν 0 y x)" )
-  ) {
-      unfold( "PRIME-DIV" ) in "Prime-Div"
-      allL( "Prime-Div", fov"x" ).forget
-      impL left trivial
-
-      exL( "Prime-Div" )
-      exR( "Suc", fov"l" ).forget
-      allL( s"F[$k]", fov"l" ).forget
-      decompose
-      impL( s"F[$k]_0" ) left trivial
-
-      forget( "Prime-Div_0" )
-      andR left trivial
-
-      forget( s"F[$k]_0" )
-      unfold( "DIV" ) in "Prime-Div_1"
-      unfold( "ν" ) in "Suc"
-      exL
-      exR( fov"m" ).forget
-      theory
-    }
-
   def lambda( n: Int ): LKProof = {
-    val endSequent = ( "Ant0" -> hof" ${P( n )}(y)" ) +: ( "Ant1" -> hof" ν 0 y x" ) +: Sequent() :+ "Suc" -> hof" ${S( n )}(x)"
+    val endSequent = hols"${P( n )}(y), ν 0 y x :- ${S( n )}(x)"
 
     n match {
       case 0 =>
         Lemma( endSequent ) {
-          repeat( unfold( s"P[0]", "set_1" ) in "Ant0" )
-          unfold( s"S[0]" ) in "Suc"
-          eql( "Ant0", "Suc" )
+          repeat( unfold( s"P[0]", "set_1" ) in "h_0" )
+          unfold( s"S[0]" ) in "g"
+          eql( "h_0", "g" )
           trivial
         }
 
       case _ =>
         Lemma( endSequent ) {
-          repeat( unfold( s"P[$n]", s"S[$n]", "union" ) in ( "Ant0", "Suc" ) )
+          repeat( unfold( s"P[$n]", s"S[$n]", "union" ) in ( "h_0", "g" ) )
           orR
           orL left insert( lambda( n - 1 ) )
 
-          unfold( "set_1" ) in "Ant0"
-          eql( "Ant0", "Suc_1" )
+          unfold( "set_1" ) in "h_0"
+          eql( "h_0", "g_1" )
           trivial
         }
     }
   }
 
-  val psi1Right: LKProof = {
-    val endSequent = ( s"F[$k]" -> F( k ).asInstanceOf[HOLFormula] ) +: ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: Sequent() :+ ( "Suc" -> hof" compN(set_1(1))(x) -> ${S( k )}(x)" )
-
-    Lemma( endSequent ) {
+  val psi1Right: LKProof =
+    Lemma( hols"Fk: ${F( k )}, 'Prime-Div': 'PRIME-DIV' :- compN(set_1(1))(x) -> ${S( k )}(x)" ) {
       decompose
-      repeat( unfold( "compN", "set_1" ) in "Suc_0" )
+      repeat( unfold( "compN", "set_1" ) in "g_0" )
       cut( "CF", hof"∃y (${P( k )}(y) ∧ ν 0 y x)" )
 
-      unfold( s"F[$k]" ) in s"F[$k]"
+      unfold( s"F[$k]" ) in "Fk"
       insert( Pi_1 )
 
-      forget( "Prime-Div", s"F[$k]", "Suc_0" )
+      forget( "Prime-Div", "Fk", "g_0" )
       decompose
       insert( lambda( k ) )
     }
-  }
   // Proof of EXT, F[k], PRIME-DIV :- S[k] = comp({1})
-  val psi1: LKProof = Lemma(
-    ( "EXT" -> extensionality ) +: ( s"F[$k]" -> F( k ).asInstanceOf[HOLFormula] ) +: ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: Sequent() :+ "goal" -> hof" ${S( k )} = compN(set_1 1)"
-  ) {
-      chain( "EXT" )
-      forget( "EXT" )
-      allR( "goal" )
-      andR( "goal" )
+  val psi1: LKProof = Lemma( hols"EXT, Fk: ${F( k )}, 'Prime-Div': 'PRIME-DIV' :- ${S( k )} = compN(set_1 1)" ) {
+    unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
+    allR( "g" )
+    andR( "g" )
 
-      insert( psi1Left )
+    insert( psi1Left )
 
-      insert( psi1Right )
-    }
+    insert( psi1Right )
+  }
 
-  val FR: LKProof = Lemma(
-    ( "Ant" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> R( k ).asInstanceOf[HOLFormula] )
-  ) {
-      unfold( s"R[$k]" ) in "Suc"
-      allR
-      unfold( s"F[$k]" ) in "Ant"
-      allL( fov" y" )
-      andL
-      trivial
-    }
+  val FR: LKProof = Lemma( hols"Fk: ${F( k )} :- Rk: ${R( k )}" ) {
+    unfold( s"R[$k]" ) in "Rk"
+    allR
+    unfold( s"F[$k]" ) in "Fk"
+    allL( fov" y" )
+    andL
+    trivial
+  }
 
   def RQ( n: Int ): LKProof = {
-    val endSequent = ( "Ant" -> R( n ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> Q( n ).asInstanceOf[HOLFormula] )
+    val endSequent = hols"Rn: ${R( n )} :- Qn: ${Q( n )}"
 
     n match {
       case 0 =>
         Lemma( endSequent ) {
-          unfold( s"Q[0]" ) in "Suc"
-          unfold( s"R[0]" ) in "Ant"
+          unfold( s"Q[0]" ) in "Qn"
+          unfold( s"R[0]" ) in "Rn"
           allL( p( 0 ) ).forget
           impL right trivial
 
-          repeat( unfold( "P[0]", "set_1" ) in "Ant" )
+          repeat( unfold( "P[0]", "set_1" ) in "Rn" )
           trivial
         }
 
       case _ =>
         Lemma( endSequent ) {
-          unfold( s"Q[$n]" ) in "Suc"
-          cut( s"R[${n - 1}]", R( n - 1 ).asInstanceOf[HOLFormula] )
+          unfold( s"Q[$n]" ) in "Qn"
+          cut( "Rn1", R( n - 1 ).asInstanceOf[HOLFormula] )
 
           //forget( "Suc" )
-          unfold( s"R[${n - 1}]" ) in s"R[${n - 1}]"
+          unfold( s"R[${n - 1}]" ) in "Rn1"
           allR
           impR
-          unfold( s"R[$n]" ) in "Ant"
+          unfold( s"R[$n]" ) in "Rn"
           allL( fov"y" ).forget
           impL right trivial
 
-          repeat( unfold( s"P[$n]", "union" ) in "Ant" )
+          repeat( unfold( s"P[$n]", "union" ) in "Rn" )
           prop
 
           andR
 
           insert( RQ( n - 1 ) )
 
-          forget( s"R[${n - 1}]" )
-          unfold( s"R[$n]" ) in "Ant"
+          forget( "Rn1" )
+          unfold( s"R[$n]" ) in "Rn"
           allL( p( n ) ).forget
           impL right trivial
 
-          repeat( unfold( s"P[$n]", "union", "set_1" ) in "Ant" )
+          repeat( unfold( s"P[$n]", "union", "set_1" ) in "Rn" )
           orR
           trivial
         }
     }
   }
 
-  val FQ: LKProof = Lemma(
-    ( "Ant" -> F( k ).asInstanceOf[HOLFormula] ) +: Sequent() :+ ( "Suc" -> Q( k ).asInstanceOf[HOLFormula] )
-  ) {
-      cut( s"R[$k]", R( k ).asInstanceOf[HOLFormula] )
-      insert( FR )
-      insert( RQ( k ) )
-    }
+  val FQ: LKProof = Lemma( hols"${F( k )} :- ${Q( k )}" ) {
+    cut( s"Rk", R( k ).asInstanceOf[HOLFormula] )
+    insert( FR )
+    insert( RQ( k ) )
+  }
 
-  val pgt0: LKProof = Lemma(
-    ( "Ant" -> fof"PRIME(n)" ) +: Sequent() :+ ( "Suc" -> fof"0 < n" )
-  ) {
-      cut( "CF", fof" 1 < n" )
+  val pgt0: LKProof = Lemma( hols"prime: PRIME(n) :- pos: 0 < n" ) {
+    cut( "CF", fof" 1 < n" )
 
-      forget( "Suc" )
-      unfold( "PRIME" ) in "Ant"
-      andL
-      trivial
+    forget( "pos" )
+    unfold( "PRIME" ) in "prime"
+    andL
+    trivial
 
-      forget( "Ant" )
-      cut( "CF2", fof" 0 + 1 = 1" )
+    forget( "prime" )
+    cut( "CF2", fof" 0 + 1 = 1" )
 
-      theory
+    theory
 
-      eql( "CF2", "CF" )
-      theory
+    eql( "CF2", "CF" )
+    theory
 
-    }
+  }
 
   def psi2Right( n: Int ): LKProof = {
-    val endSequent = ( "EXT" -> extensionality ) +: ( "PRE" -> hof"PRE" ) +: ( s"Q[$n]" -> Q( n ).asInstanceOf[HOLFormula] ) +: ( "REM" -> hof" REM" ) +: Sequent() :+ ( "Suc" -> hof" C ${S( n )}" )
+    val endSequent = hols"EXT, PRE, Qn: ${Q( n )}, REM :- C: C ${S( n )}"
 
     n match {
       case 0 =>
         Lemma( endSequent ) {
-          unfold( "Q[0]" ) in s"Q[$n]"
+          unfold( "Q[0]" ) in "Qn"
           cut( "0<p0", fof" 0 < ${p( 0 )}" )
 
           insert( pgt0 )
 
-          unfold( "S[0]" ) in "Suc"
+          unfold( "S[0]" ) in "C"
           insert( progClosed )
         }
 
       case _ =>
         Lemma( endSequent ) {
-          unfold( s"Q[$n]" ) in s"Q[$n]"
+          unfold( s"Q[$n]" ) in "Qn"
           andL
           cut( s"0<p$n", fof" 0 < ${p( n )}" )
 
           insert( pgt0 )
 
-          unfold( s"S[$n]" ) in "Suc"
+          unfold( s"S[$n]" ) in "C"
           cut( "CF", hof" C(ν 0 ${p( n )})" )
 
           insert( progClosed )
@@ -566,24 +523,19 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           cut( "CF2", hof" C(${S( n - 1 )})" )
           insert( psi2Right( n - 1 ) )
           insert( unionClosed )
-
         }
     }
   }
 
-  val psi2: LKProof = Lemma(
-    ( "Ant0" -> hof"${F( k )}" ) +: ( "Ant1" -> hof" REM" ) +: ( "EXT" -> extensionality ) +: ( "PRE" -> hof"PRE" ) +: Sequent() :+ ( "Suc" -> hof" C ${S( k )}" )
-  ) {
-      cut( s"Q[$k]", Q( k ).asInstanceOf[HOLFormula] )
+  val psi2: LKProof = Lemma( hols"${F( k )}, REM, EXT, PRE :- C ${S( k )}" ) {
+    cut( s"Q[$k]", Q( k ).asInstanceOf[HOLFormula] )
 
-      insert( FQ )
-      insert( psi2Right( k ) )
-    }
+    insert( FQ )
+    insert( psi2Right( k ) )
+  }
 
-  val proof: LKProof = {
-    val endSequent = ( "EXT" -> extensionality ) +: ( s"F[$k]" -> hof" ${F( k )}" ) +: ( "REM" -> hof" REM" ) +: ( "PRE" -> hof"PRE" ) +: ( "Prime-Div" -> hof" 'PRIME-DIV'" ) +: Sequent()
-
-    Lemma( endSequent ) {
+  val proof: LKProof =
+    Lemma( hols"EXT, ${F( k )}, REM, PRE, 'PRIME-DIV' :-" ) {
       cut( "INF {1}", hof" INF (set_1 1)" ) right insert( singletonFinite )
       cut( "nonempty {1}", hof" ¬ empty (set_1 1)" )
       insert( singletonNonempty )
@@ -597,6 +549,5 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       forget( "CF" )
       insert( psi2 )
     }
-  }
 }
 object furstenberg3 extends furstenberg( 3 )

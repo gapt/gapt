@@ -760,7 +760,7 @@ trait TokenToLKConverter extends Logger {
     val definitions = llk_definitions.toList.map( llkd => llkDefinitionToLKDefinition( llkd._1, llkd._2 ) )
 
     ( auxsequent, mainsequent ) match {
-      case ( HOLSequent( Nil, List( aux ) ), HOLSequent( Nil, List( main ) ) ) =>
+      case ( HOLSequent( Vector(), Vector( aux ) ), HOLSequent( Vector(), Vector( main ) ) ) =>
 
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
@@ -772,7 +772,7 @@ trait TokenToLKConverter extends Logger {
             throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
         rule :: stack
-      case ( HOLSequent( List( aux ), Nil ), HOLSequent( List( main ), Nil ) ) =>
+      case ( HOLSequent( Vector( aux ), Vector() ), HOLSequent( Vector( main ), Vector() ) ) =>
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
           DefinitionLeftRule( parent, aux, d, main ); false
@@ -903,22 +903,22 @@ trait TokenToLKConverter extends Logger {
     require( mainsequent.formulas.size == 1, "Exactly one main formula required, not " + f( mainsequent ) )
     require( auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not " + f( auxsequent ) )
     val newproof = auxsequent match {
-      case HOLSequent( Nil, List( formula ) ) =>
+      case HOLSequent( Vector(), Vector( formula ) ) =>
         require(
           mainsequent.antecedent.isEmpty && mainsequent.succedent.size == 1,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
             + f( mainsequent ) + " and " + f( auxsequent )
         )
-        val HOLSequent( Nil, List( main ) ) = mainsequent
+        val HOLSequent( Vector(), Vector( main ) ) = mainsequent
         CutRule( axrule, auxf, EqualityRightRule( WeakeningLeftRule( oldproof, auxf ), auxf, formula, main ), auxf )
 
-      case HOLSequent( List( formula ), Nil ) =>
+      case HOLSequent( Vector( formula ), Vector() ) =>
         require(
           mainsequent.antecedent.size == 1 && mainsequent.succedent.isEmpty,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
             + f( mainsequent ) + " and " + f( auxsequent )
         )
-        val HOLSequent( List( main ), Nil ) = mainsequent
+        val HOLSequent( Vector( main ), Vector() ) = mainsequent
         CutRule( axrule, auxf, EqualityLeftRule( WeakeningLeftRule( oldproof, auxf ), auxf, formula, main ), auxf )
     }
 
@@ -945,7 +945,7 @@ trait TokenToLKConverter extends Logger {
       "Auxformula formula in inst axiom rule need to be on the lh side of the sequent, not " + f( auxsequent )
     )
 
-    val HOLSequent( List( auxf_ ), Nil ) = auxsequent
+    val HOLSequent( Vector( auxf_ ), Vector() ) = auxsequent
     val auxf = c( normalize( auxf_ ) )
 
     //println("auxf="+f(auxf))

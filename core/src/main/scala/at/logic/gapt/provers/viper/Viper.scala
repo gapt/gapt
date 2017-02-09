@@ -7,7 +7,7 @@ import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule, instantiateRS }
 import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, extractInstances }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
@@ -66,10 +66,10 @@ object ViperOptions {
     opts.foldLeft( ViperOptions() )( ( opts_, opt ) => parseAndApply( opt._1, opt._2, opts_ ) )
 }
 
-class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger {
-  implicit var ctx = problem.context
+class Viper( val ctx: Context, val sequent: HOLSequent, val options: ViperOptions ) extends Logger {
+  implicit def ctx_ = ctx
 
-  val sequent @ Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = problem.toSequent
+  val Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = sequent
   val paramTypes = vs.map( _.exptype ).map( _.asInstanceOf[TBase] )
 
   val instanceGen = new EnumeratingInstanceGenerator( paramTypes, implicitly )
@@ -150,7 +150,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( folTermSize( _ ) ) ).max
     val testInstances =
-      instanceGen.generate( 0, paramTypes.size, 10 ) ++
+      instanceGen.generate( 0, 5, 10 ) ++
         instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber )
     val failedInstOption = testInstances.toSeq.
       sortBy( folTermSize( _ ) ).view.
@@ -160,8 +160,7 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
         ok
       }.headOption
     failedInstOption map { failedInst =>
-      import scalaz._
-      import Scalaz._
+      import cats.syntax.traverse._, cats.instances.list._
       val minimalCounterExample = failedInst.toList.
         traverse( i => folSubTerms( i ).filter( _.exptype == i.exptype ).toList ).
         filterNot( checkInst ).
@@ -235,6 +234,35 @@ class Viper( val problem: TipProblem, val options: ViperOptions ) extends Logger
 
 }
 
+class ViperTactic( options: ViperOptions = ViperOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
+  import at.logic.gapt.proofs.gaptic._
+
+  def copy( options: ViperOptions ) = new ViperTactic( options )
+
+  def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
+  def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
+  def instanceProver( prover: String ) = copy( options.copy( instanceProver = prover ) )
+  def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
+  def quantTys( tys: Seq[TBase] ) = copy( options.copy( quantTys = Some( tys ) ) )
+  def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
+  def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
+  def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
+  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
+  def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
+
+  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
+    val viper = new Viper( ctx, goal.conclusion, options )
+    try {
+      Right( () -> viper.solve() )
+    } catch {
+      case t: Throwable =>
+        Left( TacticalFailure( this, t.toString ) )
+    }
+  }
+
+  override def toString = options.toString
+}
+
 object Viper extends Logger {
 
   val optionRegex = """;\s*viper\s+([a-z]+)\s*([A-Za-z0-9,.]*)\s*""".r
@@ -271,7 +299,7 @@ object Viper extends Logger {
       case Array( "aip", _@ _* ) => aip.main( args.tail )
       case _ => {
         val ( problem, options ) = parseArgs( args, Map() )
-        val viper = new Viper( problem, options )
+        val viper = new Viper( problem.ctx, problem.toSequent, options )
 
         viper.makeVerbose()
         Logger.setConsolePattern( "%message%n" )

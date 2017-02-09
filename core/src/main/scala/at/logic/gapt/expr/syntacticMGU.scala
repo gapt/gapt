@@ -43,4 +43,11 @@ object syntacticMGU {
       FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
     }
   def apply( a: FOLExpression, b: FOLExpression ): Option[FOLSubstitution] = apply( List( a -> b ) )
+
+  def apply( a: LambdaExpression, b: LambdaExpression, treatAsConstant: Set[Var] ): Option[Substitution] = {
+    val nameGen = rename.awayFrom( constants( a ) ++ constants( b ) )
+    val grounding = treatAsConstant.map( v => v -> nameGen.fresh( Const( v.name, v.exptype ) ) )
+    apply( Substitution( grounding )( a ), Substitution( grounding )( b ) ).map( mgu =>
+      TermReplacement( mgu, grounding.map( _.swap ).toMap ) )
+  }
 }

@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
-import at.logic.gapt.expr.{ Abs, All, And, Apps, Const, Definition, Eq, FunctionType, HOLAtom, Polarity, To, Var, freeVariables, rename }
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
@@ -61,7 +61,7 @@ object LKToExpansionProof {
       val cuts = if ( containsQuantifierOnLogicalLevel( c.cutFormula ) )
         newCut +: ( leftCuts ++ rightCuts )
       else leftCuts ++ rightCuts
-      ( cuts, leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
+      cuts -> ( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
 
     // Propositional rules
     case NegLeftRule( subProof, aux ) =>
@@ -81,14 +81,14 @@ object LKToExpansionProof {
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
       val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
-      ( leftCuts ++ rightCuts, ( leftSubSequent ++ rightSubSequent ) :+ ETAnd( leftSubTree, rightSubTree ) )
+      ( leftCuts ++ rightCuts ) -> ( leftSubSequent ++ rightSubSequent :+ ETAnd( leftSubTree, rightSubTree ) )
 
     case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
       val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
-      ( leftCuts ++ rightCuts, ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
+      ( leftCuts ++ rightCuts ) -> ( ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
 
     case OrRightRule( subProof, aux1, aux2 ) =>
       val ( subCuts, subSequent ) = extract( subProof )
@@ -140,44 +140,14 @@ object LKToExpansionProof {
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
 
-    case p @ DefinitionLeftRule( subProof, aux, defn, ctx ) =>
-      defn.ty match {
-        case FunctionType( To, argTypes ) => // atom definition
-          p.mainFormula match {
-            case a: HOLAtom => // atom is in top position
-              val ( subCuts, subSequent ) = extract( subProof )
+    case DefinitionLeftRule( subProof, aux, defn, ctx ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
 
-              ( subCuts, ETDefinition( a, defn.by, subSequent( aux ) ) +: subSequent.delete( aux ) )
+      ( subCuts, insertDefinition( subSequent( aux ), defn, ctx ) +: subSequent.delete( aux ) )
 
-            case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
-          }
+    case DefinitionRightRule( subProof, aux, defn, ctx ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
 
-        case _ => // term definition
-          val ( subCuts, subSequent ) = extract( subProof )
-          val auxTree = subSequent( p.aux )
-
-          val newAuxTree = replaceWithContext( auxTree, p.replacementContext, defn.what )
-          ( subCuts, newAuxTree +: subSequent.delete( aux ) )
-      }
-
-    case p @ DefinitionRightRule( subProof, aux, defn, ctx ) =>
-      defn.ty match {
-        case FunctionType( To, argTypes ) => // atom definition
-          p.mainFormula match {
-            case a: HOLAtom => // atom is in top position
-              val ( subCuts, subSequent ) = extract( subProof )
-
-              ( subCuts, subSequent.delete( aux ) :+ ETDefinition( a, defn.by, subSequent( aux ) ) )
-
-            case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
-          }
-
-        case _ => // term definition
-          val ( subCuts, subSequent ) = extract( subProof )
-          val auxTree = subSequent( p.aux )
-
-          val newAuxTree = replaceWithContext( auxTree, p.replacementContext, defn.what )
-          ( subCuts, subSequent.delete( aux ) :+ newAuxTree )
-      }
+      ( subCuts, subSequent.delete( aux ) :+ insertDefinition( subSequent( aux ), defn, ctx ) )
   }
 }

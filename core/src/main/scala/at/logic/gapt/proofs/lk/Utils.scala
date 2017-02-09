@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ OccConnector, Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ SequentConnector, Sequent, SequentIndex }
 import at.logic.gapt.utils.NameGenerator
 
 object containsEqualityReasoning {
@@ -15,6 +15,14 @@ object containsEqualityReasoning {
       case EqualityLeftRule( _, _, _, _ )  => true
       case EqualityRightRule( _, _, _, _ ) => true
       case _                               => false
+    }
+}
+
+object containsDefinitionRules {
+  def apply( proof: LKProof ): Boolean =
+    proof.subProofs.exists {
+      case DefinitionLeftRule( _, _, _, _ ) | DefinitionRightRule( _, _, _, _ ) => true
+      case _ => false
     }
 }
 
@@ -89,7 +97,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
     val eigenNew = nameGen.fresh( eigen )
     val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
     val proofNew = ForallRightRule( subProofNew, aux, eigenNew, quant )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
+    ( proofNew, proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv )
   }
 
   protected override def visitExistsLeft( proof: ExistsLeftRule, arg: Unit ) = {
@@ -97,7 +105,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
     val eigenNew = nameGen.fresh( eigen )
     val ( subProofNew, subConnector ) = recurse( Substitution( eigen -> eigenNew )( subProof ), () )
     val proofNew = ExistsLeftRule( subProofNew, aux, eigenNew, quant )
-    ( proofNew, proofNew.getOccConnector * subConnector * proof.getOccConnector.inv )
+    ( proofNew, proofNew.getSequentConnector * subConnector * proof.getSequentConnector.inv )
   }
 
   protected override def visitInduction( proof: InductionRule, arg: Unit ) = {
@@ -114,7 +122,7 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
     val ( casesNew, subConnectors ) = newCasesConnectors.unzip
     val proofNew = InductionRule( casesNew, proof.formula, term )
     val subConnectors_ = for ( ( c1, c2, c3 ) <- ( proofNew.occConnectors, subConnectors, proof.occConnectors ).zipped ) yield c1 * c2 * c3.inv
-    val connector = if ( subConnectors_.isEmpty ) OccConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
+    val connector = if ( subConnectors_.isEmpty ) SequentConnector( proofNew.endSequent ) else subConnectors_.reduceLeft( _ + _ )
 
     ( proofNew, connector )
   }

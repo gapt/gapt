@@ -29,9 +29,6 @@ lazy val commonSettings = Seq(
     "-unchecked"
   ),
 
-  // scalaz-stream is not on maven.org
-  resolvers += "Scalaz Bintray Repo" at "http://dl.bintray.com/scalaz/releases",
-
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
   baseDirectory in run := file( "." ),
@@ -194,22 +191,22 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.5",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-      "org.parboiled" %% "parboiled" % "2.1.3",
+      "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "0.4.2",
       "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.3",
-      "org.scalaz" %% "scalaz-core" % "7.2.8",
+      "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
-      "com.lihaoyi" %% "ammonite-ops" % "0.8.1",
-      "ch.qos.logback" % "logback-classic" % "1.1.8",
+      "com.lihaoyi" %% "ammonite-ops" % "0.8.2",
+      "ch.qos.logback" % "logback-classic" % "1.1.9",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.0-M2",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
       "com.itextpdf" % "itextpdf" % "5.5.10",
       "org.scilab.forge" % "jlatexmath" % "1.0.4"
     )
