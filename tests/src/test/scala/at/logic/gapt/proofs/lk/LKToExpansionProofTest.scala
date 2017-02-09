@@ -1,13 +1,13 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.{ Pi2Pigeonhole, LinearExampleProof }
+import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Suc, Ant, Sequent }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class LKToExpansionProofTest extends Specification with SatMatchers {
+class LKToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 
   "The expansion tree extraction" should {
 
@@ -135,79 +135,118 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
     }
 
     "handle atom definitions in top position" in {
-      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"Q: i>o"
+      ctx += hof"P x = (x = x ∨ (¬ x = x))"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"x = x" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, fof"P(x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), fof"P(x)" ) ).
         u( OrRightMacroRule( _, fof"P(x)", fof"Q(x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
 
+      ctx.check( e )
+      ctx.check( p )
+
       e.deep must_== fos" :- x = x ∨ (¬ x = x) ∨ false"
     }
 
     "handle atom definitions in non-top position" in {
-      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"Q:i>o"
+      ctx += hof"P x = (x = x ∨ (¬ x = x))"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"x = x" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
         u( OrRightMacroRule( _, fof"x = x ∨ ¬ x = x", fof"Q(x)" ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, fof"P(x) ∨ Q(x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), fof"P(x) ∨ Q(x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
 
       e.shallow must_== hos" :- P(x) ∨ Q(x)"
     }
 
     "handle term definitions" in {
-      val d = Definition( hoc"h: i>i", le" λx f (g x)" )
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"f: i>i"
+      ctx += hoc"g: i>i"
+      ctx += hof"h x = f (g x)"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"f( g x) = f (g x)" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), fof"h x = f (g x) ∨ ¬ f (g x) = f (g x)" ) ).
         qed
 
       val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
 
       e.shallow must_== fos":- h x = f (g x) ∨ ¬ f(g x) = f (g x)"
     }
 
     "work on a simple example of a term definition of type o" in {
-      val d = Definition( hoc"P: o", le"Q & R" )
-      val S = hoc"S: o > o"
+      implicit var ctx = Context()
+      ctx += hoc"Q: o"
+      ctx += hoc"R: o"
+      ctx += hoc"S: o >o"
+      ctx += hof"P = (Q & R)"
 
       val p = ProofBuilder.
-        c( LogicalAxiom( hof"$S(Q & R)" ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, le"λ (x: o) $S(x)".asInstanceOf[Abs] ) ).
+        c( LogicalAxiom( hof"S(Q & R)" ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), hof"S P" ) ).
         qed
 
       val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
 
       e.shallow must_== hos"S(Q & R) :- S(P)"
     }
 
     "fail on double negation definition example" in {
-
-      val d = Definition( hoc" n: o>o", le"λx ¬x" )
+      implicit var ctx = Context()
+      ctx += hof"n X = (-X)"
 
       val p = ProofBuilder.
         c( LogicalAxiom( hoa"X" ) ).
         u( NegLeftRule( _, Suc( 0 ) ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
-        u( DefinitionRightRule( _, Suc( 0 ), d, le"λ(x: o>o) X -> x (x X)".asInstanceOf[Abs] ) ).
+        u( DefinitionRightRule( _, Suc( 0 ), hof"X -> n (n X)" ) ).
         qed
 
-      LKToExpansionProof( p ) must throwAn[IllegalArgumentException]
+      val e = LKToExpansionProof( p )
+
+      ctx.check( p )
+      ctx.check( e )
+
+      e.shallow must_== hos":- X -> n (n X)"
+    }
+
+    "lattice with definitions" in {
+      import lattice._
+      val exp = LKToExpansionProof( lattice.p )
+      val Right( lk ) = ExpansionProofToLK.withTheory( implicitly )( exp )
+      ctx.check( exp )
+      ctx.check( lk )
+      exp.shallow must beMultiSetEqual( lk.conclusion )
     }
   }
 }

@@ -40,8 +40,8 @@ class deskolemizeET {
       et.copy( formula = TermReplacement( formula, repl ) )
     case et @ ETAtom( atom, _ ) =>
       et.copy( atom = TermReplacement( atom, repl ) )
-    case ETDefinedAtom( atom, pol, definition ) =>
-      ETDefinedAtom( TermReplacement( atom, repl ), pol, TermReplacement( definition, repl ) )
+    case ETDefinition( sh, ch ) =>
+      ETDefinition( TermReplacement( sh, repl ), rm( ch, repl ) )
 
     case _: ETTop | _: ETBottom  => et
     case ETNeg( child )          => ETNeg( rm( child, repl ) )

@@ -90,6 +90,9 @@ object All extends QuantifierHelper( ForallC )
 object Ex extends QuantifierHelper( ExistsC )
 
 object Quant {
+  def apply( x: Var, sub: HOLFormula, pol: Boolean ): HOLFormula =
+    if ( pol ) All( x, sub ) else Ex( x, sub )
+
   def unapply( f: HOLFormula ): Option[( Var, HOLFormula, Boolean )] =
     f match {
       case All( v, g ) => Some( ( v, g, true ) )
