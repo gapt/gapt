@@ -17,48 +17,39 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
     }
 
     "do merge triggering a substitution triggering a merge" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"P: i>o"
+      ctx += hoc"Q: i>i>o"
+      ctx += hoc"f: i>i"
+      ctx += hcl"P α, P β :- Q (f α) c, Q (f β) d"
 
-      val alpha = Var( "\\alpha", Ti )
-      val beta = Var( "\\beta", Ti )
-      val c = Const( "c", Ti )
-      val d = Const( "d", Ti )
-      val f = Const( "f", Ti -> Ti )
-      val x = Var( "x", Ti )
-      val y = Var( "y", Ti )
-      val z = Var( "z", Ti )
-      val P = Const( "P", Ti -> To )
-      val Q = Const( "Q", Ti -> ( Ti -> To ) )
+      val p = ProofBuilder.
+        c( TheoryAxiom( hcl"P α, P β :- Q (f α) c, Q (f β) d" ) ).
+        u( ExistsRightRule( _, hof"∃z Q (f α) z", le"c" ) ).
+        u( ExistsRightRule( _, hof"∃z Q (f β) z", le"d" ) ).
+        u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f α" ) ).
+        u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f β" ) ).
+        u( ContractionRightRule( _, hof"∃y ∃z Q y z" ) ).
+        u( ExistsLeftRule( _, hof"∃x P x", hov"α" ) ).
+        u( ExistsLeftRule( _, hof"∃x P x", hov"β" ) ).
+        u( ContractionLeftRule( _, hof"∃x P x" ) ).
+        qed
 
-      val p0 = Axiom(
-        List( HOLAtom( P, alpha :: Nil ), HOLAtom( P, beta :: Nil ) ), // P(a), P(b)
-        List( HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: c :: Nil ), HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: d :: Nil ) )
-      ) // Q(f(a), c), Q(f(b), d)
-      val p1 = ExistsRightRule( p0, Ex( z, HOLAtom( Q, HOLFunction( f, alpha :: Nil ) :: z :: Nil ) ), c )
-      val p2 = ExistsRightRule( p1, Ex( z, HOLAtom( Q, HOLFunction( f, beta :: Nil ) :: z :: Nil ) ), d )
+      val E = LKToExpansionProof( p ).expansionSequent
 
-      val p2_1 = ExistsRightRule( p2, Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ), HOLFunction( f, alpha :: Nil ) )
-      val p2_2 = ExistsRightRule( p2_1, Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ), HOLFunction( f, beta :: Nil ) )
-
-      val p2_3 = ContractionRightRule( p2_2, Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ) )
-
-      val p3 = ExistsLeftRule( p2_3, Ex( x, HOLAtom( P, x :: Nil ) ), alpha )
-      val p4 = ExistsLeftRule( p3, Ex( x, HOLAtom( P, x :: Nil ) ), beta )
-      val p5 = ContractionLeftRule( p4, Ex( x, HOLAtom( P, x :: Nil ) ) )
-
-      val E = LKToExpansionProof( p5 ).expansionSequent
-
-      E.antecedent mustEqual List( ETStrongQuantifier( Ex( x, HOLAtom( P, x :: Nil ) ), beta, ETAtom( HOLAtom( P, beta :: Nil ), Polarity.InAntecedent ) ) )
-      // this assumes that the first variable wins, f(beta) would also be valid
-      val f_alpha = HOLFunction( f, beta :: Nil )
-      E.succedent mustEqual List( ETWeakQuantifier(
-        Ex( y, Ex( z, HOLAtom( Q, y :: z :: Nil ) ) ),
+      E.antecedent must_== Seq( ETStrongQuantifier( hof"∃x P x", hov"β", ETAtom( hoa"P β", Polarity.InAntecedent ) ) )
+      // this assumes that the first variable wins, f(β) would also be valid
+      val f_alpha = le"f β"
+      E.succedent must_== Seq( ETWeakQuantifier(
+        hof"∃y ∃z Q y z",
         Map(
           f_alpha ->
             ETWeakQuantifier(
-              Ex( z, HOLAtom( Q, f_alpha :: z :: Nil ) ),
+              hof"∃z Q $f_alpha z",
               Map(
-                c -> ETAtom( HOLAtom( Q, f_alpha :: c :: Nil ), Polarity.InSuccedent ),
-                d -> ETAtom( HOLAtom( Q, f_alpha :: d :: Nil ), Polarity.InSuccedent )
+                le"c" -> ETAtom( hoa"Q $f_alpha c", Polarity.InSuccedent ),
+                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent )
               )
             )
         )
