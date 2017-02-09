@@ -130,13 +130,13 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
         indCase( substitution, _ )
       }, substitution( main ).asInstanceOf[Abs], substitution( term ) )
 
-    case DefinitionLeftRule( subProof, aux, definition, context ) =>
+    case DefinitionLeftRule( subProof, aux, main ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      DefinitionLeftRule( subProofNew, aux, definition, betaNormalize( substitution( context ) ).asInstanceOf[Abs] )
+      DefinitionLeftRule( subProofNew, aux, substitution( main ) )
 
-    case DefinitionRightRule( subProof, aux, definition, context ) =>
+    case DefinitionRightRule( subProof, aux, main ) =>
       val subProofNew = applySubstitution( substitution, subProof )
-      DefinitionRightRule( subProofNew, aux, definition, betaNormalize( substitution( context ) ).asInstanceOf[Abs] )
+      DefinitionRightRule( subProofNew, aux, substitution( main ) )
 
     case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
@@ -250,14 +250,12 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
   override protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
-        val definitionNew = TermReplacement( proof.definition, repl )
-        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
+        DefinitionLeftRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
     }
 
   override protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
-        val definitionNew = TermReplacement( proof.definition, repl )
-        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), definitionNew, TermReplacement( proof.replacementContext, repl ).asInstanceOf[Abs] )
+        DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
     }
 }

@@ -21,7 +21,7 @@ object containsEqualityReasoning {
 object containsDefinitionRules {
   def apply( proof: LKProof ): Boolean =
     proof.subProofs.exists {
-      case DefinitionLeftRule( _, _, _, _ ) | DefinitionRightRule( _, _, _, _ ) => true
+      case DefinitionLeftRule( _, _, _ ) | DefinitionRightRule( _, _, _ ) => true
       case _ => false
     }
 }

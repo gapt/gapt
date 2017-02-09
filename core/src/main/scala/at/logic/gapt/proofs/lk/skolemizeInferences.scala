@@ -139,14 +139,14 @@ private class skolemizeInferences(
           apply( q2, p.getRightSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2
         )
 
-      case p @ DefinitionLeftRule( q, a, d, c ) =>
+      case p @ DefinitionLeftRule( q, a, m ) =>
         val qNew = apply( q, p.getSequentConnector.parent( info ).
           updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst )
-        DefinitionLeftRule( qNew, a, d, subst( c ).asInstanceOf[Abs] )
-      case p @ DefinitionRightRule( q, a, d, c ) =>
+        DefinitionLeftRule( qNew, a, subst( m ) )
+      case p @ DefinitionRightRule( q, a, m ) =>
         val qNew = apply( q, p.getSequentConnector.parent( info ).
           updated( a, info( p.mainIndices.head ).copy( generalizedFormulas = Seq( q.conclusion( a ) ) ) ), subst )
-        DefinitionRightRule( qNew, a, d, subst( c ).asInstanceOf[Abs] )
+        DefinitionRightRule( qNew, a, subst( m ) )
 
       case p @ WeakQuantifierRule( q, a, _, term, bound, pol ) =>
         val freshVar = nameGen fresh bound

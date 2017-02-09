@@ -764,10 +764,10 @@ trait TokenToLKConverter extends Logger {
 
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
-          DefinitionRightRule( parent, aux, d, main );
+          DefinitionRightRule( parent, aux, main );
           false
         } catch { case e: Exception => true } ) match {
-          case d :: _ => DefinitionRightRule( parent, aux, d, main )
+          case d :: _ => DefinitionRightRule( parent, aux, main )
           case _ =>
             throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
@@ -775,9 +775,9 @@ trait TokenToLKConverter extends Logger {
       case ( HOLSequent( Vector( aux ), Vector() ), HOLSequent( Vector( main ), Vector() ) ) =>
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
-          DefinitionLeftRule( parent, aux, d, main ); false
+          DefinitionLeftRule( parent, aux, main ); false
         } catch { case e: Exception => true } ) match {
-          case d :: _ => DefinitionLeftRule( parent, aux, d, main )
+          case d :: _ => DefinitionLeftRule( parent, aux, main )
           case _ =>
             throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
@@ -894,7 +894,7 @@ trait TokenToLKConverter extends Logger {
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axdef, axformula )
+    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
 
     val Eq( s, t ) = auxf
 
@@ -990,7 +990,7 @@ trait TokenToLKConverter extends Logger {
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axdef, axformula )
+    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
   }
 
@@ -1214,7 +1214,7 @@ trait TokenToLKConverter extends Logger {
         val d = definitions.find( _.what == c ).getOrElse(
           throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" )
         )
-        ( axiomconj, DefinitionLeftRule( pi, axiom, d, axiomconj ) )
+        ( axiomconj, DefinitionLeftRule( pi, axiom, axiomconj ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>
         val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub, definitions )

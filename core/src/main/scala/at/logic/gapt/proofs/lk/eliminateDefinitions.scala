@@ -120,11 +120,17 @@ class eliminateDefinitions private ( dmap: Map[Const, LambdaExpression] ) extend
         sequent. We use exchange macro rules to artificially replicate the movement of formulas that the definition
          rule would have performed.*/
 
-    case DefinitionLeftRule( subProof, aux, _, _ ) =>
-      ExchangeLeftMacroRule( apply( subProof ), aux )
+    case proof @ DefinitionLeftRule( subProof, aux, _ ) =>
+      if ( apply( proof.auxFormula ) == apply( proof.mainFormula ) )
+        ExchangeLeftMacroRule( apply( subProof ), aux )
+      else
+        DefinitionLeftRule( apply( subProof ), aux, apply( proof.mainFormula ) )
 
-    case DefinitionRightRule( subProof, aux, _, _ ) =>
-      ExchangeRightMacroRule( apply( subProof ), aux )
+    case proof @ DefinitionRightRule( subProof, aux, _ ) =>
+      if ( apply( proof.auxFormula ) == apply( proof.mainFormula ) )
+        ExchangeRightMacroRule( apply( subProof ), aux )
+      else
+        DefinitionRightRule( apply( subProof ), aux, apply( proof.mainFormula ) )
 
     case InductionRule( cases, main, term ) =>
       InductionRule( cases map { cs => cs.copy( proof = apply( cs.proof ) ) }, apply( main ).asInstanceOf[Abs], apply( term ) )
