@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Sequent, SequentIndex }
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
@@ -15,13 +14,13 @@ object LKToExpansionProof {
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
    */
-  def apply( proof: LKProof ): ExpansionProofWithCut = {
+  def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProofWithCut = {
     val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
     val theory_ = theory.groupBy { _.shallow }.values.toSeq.map { ETMerge( _ ) }
-    eliminateMerges( ExpansionProofWithCut( theory_ ++: expansionSequent ) )
+    eliminateMerges( moveDefsUpward( ExpansionProofWithCut( theory_ ++: expansionSequent ) ) )
   }
 
-  private def extract( proof: LKProof ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
+  private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
     case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
@@ -54,13 +53,13 @@ object LKToExpansionProof {
     case c @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
-      val newCut = ETWeakQuantifier(
-        ExpansionProofWithCut.cutAxiom,
-        Map( c.cutFormula -> ETImp( leftSequent( aux1 ), rightSequent( aux2 ) ) )
-      )
-      val cuts = if ( containsQuantifierOnLogicalLevel( c.cutFormula ) )
-        newCut +: ( leftCuts ++ rightCuts )
-      else leftCuts ++ rightCuts
+      val cutImp = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
+      val newCut = ETWeakQuantifier( ExpansionProofWithCut.cutAxiom, Map( c.cutFormula -> cutImp ) )
+      val cuts =
+        if ( !isPropositionalET( cutImp ) )
+          newCut +: ( leftCuts ++ rightCuts )
+        else
+          leftCuts ++ rightCuts
       cuts -> ( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
 
     // Propositional rules

@@ -337,6 +337,14 @@ case class ETDefinition( shallow: HOLFormula, child: ExpansionTree ) extends Una
   def deep = child.deep
 }
 
+object ETDefinition {
+  def ifNecessary( shallow: HOLFormula, child: ExpansionTree ): ExpansionTree =
+    if ( child.shallow == shallow )
+      child
+    else
+      ETDefinition( shallow, child )
+}
+
 private[expansion] object replaceET {
   def apply( ep: ExpansionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionProof =
     ExpansionProof( ep.expansionSequent map { replaceET( _, repl ) } )
@@ -419,6 +427,21 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
 object eigenVariablesET {
   def apply( tree: ExpansionTree ): Set[Var] = tree.subProofs collect { case ETStrongQuantifier( _, v, _ ) => v }
   def apply( s: ExpansionSequent ): Set[Var] = s.elements.flatMap { apply }.toSet
+}
+
+object isPropositionalET {
+  def apply( tree: ExpansionTree ): Boolean =
+    tree match {
+      case ETWeakening( _, _ ) => true
+      case ETMerge( a, b ) => isPropositionalET( a ) && isPropositionalET( b )
+      case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) => true
+      case ETNeg( sub ) => isPropositionalET( sub )
+      case ETAnd( a, b ) => isPropositionalET( a ) && isPropositionalET( b )
+      case ETOr( a, b ) => isPropositionalET( a ) && isPropositionalET( b )
+      case ETImp( a, b ) => isPropositionalET( a ) && isPropositionalET( b )
+      case ETDefinition( _, sub ) => isPropositionalET( sub )
+      case _ => false
+    }
 }
 
 /**

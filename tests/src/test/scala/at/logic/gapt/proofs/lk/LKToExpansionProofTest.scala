@@ -1,13 +1,13 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole }
+import at.logic.gapt.examples.{ LinearExampleProof, Pi2Pigeonhole, lattice }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, Context, Sequent, Suc }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
-class LKToExpansionProofTest extends Specification with SatMatchers {
+class LKToExpansionProofTest extends Specification with SatMatchers with SequentMatchers {
 
   "The expansion tree extraction" should {
 
@@ -135,7 +135,10 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
     }
 
     "handle atom definitions in top position" in {
-      val d = Definition( hoc"P: i>o", le" λx (x = x ∨ (¬ x = x))" )
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"Q: i>o"
+      ctx += hof"P x = (x = x ∨ (¬ x = x))"
 
       val p = ProofBuilder.
         c( LogicalAxiom( fof"x = x" ) ).
@@ -146,6 +149,9 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
         qed
 
       val e = LKToExpansionProof( p )
+
+      ctx.check( e )
+      ctx.check( p )
 
       e.deep must_== fos" :- x = x ∨ (¬ x = x) ∨ false"
     }
@@ -232,6 +238,15 @@ class LKToExpansionProofTest extends Specification with SatMatchers {
       ctx.check( e )
 
       e.shallow must_== hos":- X -> n (n X)"
+    }
+
+    "lattice with definitions" in {
+      import lattice._
+      val exp = LKToExpansionProof( lattice.p )
+      val Right( lk ) = ExpansionProofToLK.withTheory( implicitly )( exp )
+      ctx.check( exp )
+      ctx.check( lk )
+      exp.shallow must beMultiSetEqual( lk.conclusion )
     }
   }
 }
