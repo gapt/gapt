@@ -108,3 +108,19 @@ object negationExample extends Script {
   val a4 = NegIntroRule( a3, Ant( 0 ) )
   println( a4 )
 }
+
+object existsIntroExample extends Script {
+  val a1 = LogicalAxiom( hof"P a b")
+  val a2 = ExistsIntroRule( a1, hof"P x b", hoc"a : i", hov"x" )
+  println( a2 )
+
+  val a3 = ExistsIntroRule( a1, hof"?x P x b", hoc"a : i" )
+  println( a3 )
+
+  val a4 = LogicalAxiom( hof"P x b" )
+  val a5 = ExistsIntroRule( a4, hof"?x P x b" )
+  println( a5 )
+
+  val a6 = ExistsIntroRule( a5, hof"?y ?x P x y", hoc"b : i" )
+  println( a6 )
+}

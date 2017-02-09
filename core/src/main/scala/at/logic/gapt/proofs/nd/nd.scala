@@ -343,7 +343,8 @@ object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
    *    -----------wkn*
    *     Γ, A :- A
    * </pre>
-   * @param A The atom a.
+    *
+    * @param A The atom a.
    * @param context The context Γ.
    * @return
    */
@@ -872,6 +873,74 @@ object ForallElimRule extends ConvenienceConstructor( "ForallElimRule" ) {
       case All( v, subFormula ) => ForallElimRule( subProof, subFormula, term, v )
       case _                    => throw NDRuleCreationException( s"Proposed main formula $universal is not universally quantified." )
     }
+  }
+}
+
+/**
+ * An NDProof ending with an existential quantifier introduction:
+ * <pre>
+ *        (π)
+ *      Γ :- A[x\t]
+ *     ------------
+ *      Γ :- ∃x.A
+ * </pre>
+ *
+ * @param subProof The proof π.
+ * @param A The formula A.
+ * @param term The term t.
+ * @param v The variable x.
+ */
+case class ExistsIntroRule( subProof: NDProof, A: HOLFormula, term: LambdaExpression, v: Var )
+    extends UnaryNDProof with CommonRule {
+
+  if ( premise( Suc( 0 ) ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
+    throw NDRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( Suc( 0 ) )}." )
+
+  val mainFormula = BetaReduction.betaNormalize( Ex( v, A ) )
+
+  override def name = "∃:i"
+
+  def auxIndices = Seq( Seq( Suc ( 0 ) ) )
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
+
+  /**
+   * Convenience constructor for ∃:i that, given a main formula and a term, will try to construct an inference with that instantiation.
+   *
+   * @param subProof    The subproof.
+   * @param mainFormula The formula to be inferred. Must be of the form ∃x.A.
+   * @param term        A term t such that A[t] occurs in the premise.
+   * @return
+   */
+  def apply( subProof: NDProof, mainFormula: HOLFormula, term: LambdaExpression ): ExistsIntroRule = {
+    val premise = subProof.endSequent
+
+    mainFormula match {
+      case Ex( v, subFormula ) =>
+
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term ) ( subFormula ) )
+
+        if ( premise( Suc( 0 ) ) == auxFormula ) ExistsIntroRule( subProof, subFormula, term, v )
+        else throw NDRuleCreationException( s"Formula $auxFormula is not the succedent of $premise." )
+
+      case _                   => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    }
+  }
+
+  /**
+   * Convenience constructor for ∃:i that, given a main formula, will try to construct an inference with that formula.
+   *
+   * @param subProof    The subproof.
+   * @param mainFormula The formula to be inferred. Must be of the form ∃x.A. The premise must contain A.
+   * @return
+   */
+  def apply( subProof: NDProof, mainFormula: HOLFormula ): ExistsIntroRule = mainFormula match {
+    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+
+    case _                   => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 }
 
