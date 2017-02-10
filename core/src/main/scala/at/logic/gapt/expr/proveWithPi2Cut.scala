@@ -1,9 +1,9 @@
 package at.logic.gapt.expr
 
-import at.logic.gapt.proofs.{Context, Sequent}
-import at.logic.gapt.proofs.gaptic.Lemma
-import at.logic.gapt.proofs.gaptic.tactics
-import at.logic.gapt.proofs.gaptic.tactics.CutTactic
+import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.proofs.gaptic.{ Lemma, guessLabels, tactics }
+import at.logic.gapt.proofs.gaptic.tactics.{ CutTactic, ExistsRightTactic, ForallRightTactic, PropTactic }
 import at.logic.gapt.proofs.lk.LKProof
 
 /**
@@ -37,23 +37,44 @@ object proveWithPi2Cut {
     nameOfUnVa:                   FOLVar
   ): ( Option[LKProof] ) = {
 
-    val listAnt:Seq[String] = (for {
+    val listAnt: Seq[String] = ( for {
       i <- 0 until endSequent.antecedent.size
-    } yield i.toString)
-    val listSuc:Seq[String] = (for {
+    } yield i.toString )
+    val listSuc: Seq[String] = ( for {
       i <- endSequent.antecedent.size until endSequent.antecedent.size + endSequent.succedent.size
-    } yield i.toString).toList
+    } yield i.toString ).toList
 
     var ctx = Context.default
     ctx += Context.Sort( "i" )
+    for ( c <- constants( seHs.reducedRepresentation.antecedent ++: endSequent :++ seHs.reducedRepresentation.succedent ) ) ctx += c
+    //for ( c <- constants( seHs.reducedRepresentation ) ) ctx += c
+    // val unEi = seHs.universalEigenvariable
+    // ctx += fov"$unEi:i"
+    // for ( ei <- seHs.existentialEigenvariables ) ctx += fov"$ei: i"
+    //for {
+    //  c <- seHs.substitutionsForAlpha
+    //  d <- constants( c.asInstanceOf[FOLTerm] )
+    //} ctx += d
+    //for {
+    //  c <- seHs.substitutionsForBetaWithAlpha
+    //  d <- constants( c.asInstanceOf[FOLTerm] )
+    //} ctx += d
 
-    val proof = Lemma(
-      (listAnt.zip(endSequent.antecedent),listSuc.zip(endSequent.succedent)).asInstanceOf[Sequent[(String,FOLFormula)]]
-    ) {
-      CutTactic("Cut",hof"!$nameOfUnVa?$nameOfExVa$cutFormulaWithoutQuantifiers")
+    var state = ProofState( guessLabels( endSequent ) )
+    state += cut( "Cut", fof"!$nameOfUnVa ?$nameOfExVa $cutFormulaWithoutQuantifiers " )
+    state += allR( "Cut", seHs.universalEigenvariable )
+    for ( t <- seHs.substitutionsForBetaWithAlpha ) state += exR( "Cut", t )
+    state += haveInstances( seHs.reducedRepresentation )
+    state += prop
+    for ( i <- 0 until seHs.multiplicityOfAlpha ) {
+      state += allL( "Cut", seHs.substitutionsForAlpha( i ) )
+      state += exR( "Cut", seHs.existentialEigenvariables( i ) )
     }
+    state += haveInstances( seHs.reducedRepresentation )
+    state += prop
+    val proof = state.result
 
-    None
+    Some( proof )
   }
 
 }

@@ -3,8 +3,8 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk.LKProof
 import org.specs2.mutable.Specification
 /**
-  * Created by root on 08.02.17.
-  */
+ * Created by root on 08.02.17.
+ */
 class ProveWithPi2CutTest extends Specification {
 
   "This" should {
@@ -40,10 +40,10 @@ class ProveWithPi2CutTest extends Specification {
       val fRef = fof"!u!v Pg(u,v)->Pg(v,u)"
       val endSequent = fRef +: fGamma1 +: fGamma2 +: fDelta1 +: fDelta2 +: Sequent() :+ eT :+ feI0
       val proof: Option[LKProof] = proveWithPi2Cut( endSequent, seHs, yName, xName )
-      (proof match {
+      ( proof match {
         case Some( t ) => true
-        case _ => false
-      })must_==true
+        case _         => false
+      } ) must_== true
     }
   }
 

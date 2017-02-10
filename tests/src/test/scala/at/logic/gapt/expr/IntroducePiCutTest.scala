@@ -4,8 +4,8 @@ import at.logic.gapt.proofs.Sequent
 import org.specs2.mutable.Specification
 
 /**
-  * Created by root on 02.02.17.
-  */
+ * Created by root on 02.02.17.
+ */
 class IntroducePiCutTest extends Specification {
 
   /*
@@ -34,8 +34,8 @@ class IntroducePiCutTest extends Specification {
       val xName = fov"xName"
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf(
-        (Option( fof"P($xName)|Q(f($yName))" ),yName,xName),
-        (Option( fof"Q(f($yName))|P($xName)" ),yName,xName)
+        ( Option( fof"P($xName)|Q(f($yName))" ), yName, xName ),
+        ( Option( fof"Q(f($yName))|P($xName)" ), yName, xName )
       )
     }
   }
@@ -61,7 +61,7 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2", fov"y3" ), List( fot"c", fot"f(y1)", fot"f(y2)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)", fot"f4(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must_== ( (Option( fof"P($xName,f($yName))" ),yName,xName) )
+      introducePi2Cut( seHs, yName, xName ) must_== ( ( Option( fof"P($xName,f($yName))" ), yName, xName ) )
     }
   }
 
@@ -85,7 +85,7 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must_== ( (Option( fof"P($xName,f($yName))" ),yName,xName) )
+      introducePi2Cut( seHs, yName, xName ) must_== ( ( Option( fof"P($xName,f($yName))" ), yName, xName ) )
     }
   }
 
@@ -122,9 +122,9 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"0", fot"s(y1)" ), List( fot"M(c,x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        (Option( fof"Pklg($xName,$yName)&Pg(f($yName),s(0))" ),yName,xName),
-        (Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" ),yName,xName)
+      introducePi2Cut( seHs, yName, xName ) must beOneOf(
+        ( Option( fof"Pklg($xName,$yName)&Pg(f($yName),s(0))" ), yName, xName ),
+        ( Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" ), yName, xName )
       )
     }
   }
@@ -238,15 +238,15 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        (Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),yName,xName),
-        (Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),yName,xName),
-        (Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),yName,xName),
-        (Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),yName,xName),
-        (Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),yName,xName),
-        (Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),yName,xName),
-        (Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),yName,xName),
-        (Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ),yName,xName)
+      introducePi2Cut( seHs, yName, xName ) must beOneOf(
+        ( Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ), yName, xName ),
+        ( Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ), yName, xName ),
+        ( Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ), yName, xName ),
+        ( Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ), yName, xName ),
+        ( Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ), yName, xName ),
+        ( Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ), yName, xName ),
+        ( Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ), yName, xName ),
+        ( Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ), yName, xName )
       )
     }
   }
@@ -274,15 +274,15 @@ class IntroducePiCutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1" ), List( fot"c" ), List( fot"f1(x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      introducePi2Cut( seHs, yName, xName ) must beOneOf (
-        (Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ),yName,xName),
-        (Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ),yName,xName),
-        (Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ),yName,xName),
-        (Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ),yName,xName),
-        (Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ),yName,xName),
-        (Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ),yName,xName),
-        (Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ),yName,xName),
-        (Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ),yName,xName)
+      introducePi2Cut( seHs, yName, xName ) must beOneOf(
+        ( Option( fof"P($xName)&Q(f($yName))|P(f($yName))&Q($xName)" ), yName, xName ),
+        ( Option( fof"P($xName)&Q(f($yName))|Q($xName)&P(f($yName))" ), yName, xName ),
+        ( Option( fof"Q(f($yName))&P($xName)|P(f($yName))&Q($xName)" ), yName, xName ),
+        ( Option( fof"Q(f($yName))&P($xName)|Q($xName)&P(f($yName))" ), yName, xName ),
+        ( Option( fof"P(f($yName))&Q($xName)|P($xName)&Q(f($yName))" ), yName, xName ),
+        ( Option( fof"Q($xName)&P(f($yName))|P($xName)&Q(f($yName))" ), yName, xName ),
+        ( Option( fof"P(f($yName))&Q($xName)|Q(f($yName))&P($xName)" ), yName, xName ),
+        ( Option( fof"Q($xName)&P(f($yName))|Q(f($yName))&P($xName)" ), yName, xName )
       )
     }
   }
