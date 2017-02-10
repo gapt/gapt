@@ -29,7 +29,7 @@ object setlikeLK {
   type SetlikeLKProof = DagProof[SetSequent[HOLFormula], SetlikeInference[LKInference]]
 
   def lkToSetlikeLK( lk: LKProof ): SetlikeLKProof =
-    lk.flatMap[SetSequent[HOLFormula], SetlikeInference[LKInference]] {
+    lk.flatMap {
       case _: Contraction => Seq()
       case inf            => Seq( SetlikeInference( inf ) )
     }

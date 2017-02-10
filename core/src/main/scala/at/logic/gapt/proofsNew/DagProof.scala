@@ -16,7 +16,7 @@ trait Inference[+Jdg] {
  * Proofs are recursive structures that are represented as case classes.  Equality is standard case class equality
  * (but implemented in such a way that it is efficient on DAGs).
  */
-final class DagProof[+Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val immediateSubProofs: Vector[DagProof[Jdg, Inf]] ) { self =>
+final class DagProof[Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val immediateSubProofs: Vector[DagProof[Jdg, Inf]] ) { self =>
   require(
     inference.premises.size == immediateSubProofs.size,
     s"Inference has ${inference.premises.size} premises, but ${immediateSubProofs.size} sub-proofs were provided."
@@ -43,7 +43,7 @@ final class DagProof[+Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val imme
   /**
    * Set of all (transitive) sub-proofs including this.
    */
-  def subProofs[Jdg_ >: Jdg, Inf_ >: Inf <: Inference[Jdg_]]: Set[DagProof[Jdg_, Inf_]] = dagLike foreach { _ => () }
+  def subProofs[Inf_ >: Inf <: Inference[Jdg]]: Set[DagProof[Jdg, Inf_]] = dagLike foreach { _ => () }
 
   def map[Jdg_, Inf_ <: Inference[Jdg_]]( f: Inf => Inf_ ): DagProof[Jdg_, Inf_] = {
     val cache = mutable.Map[DagProof[Jdg, Inf], DagProof[Jdg_, Inf_]]()
@@ -63,6 +63,9 @@ final class DagProof[+Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val imme
 
   def collect[Jdg_, Inf_ <: Inference[Jdg_]]( f: PartialFunction[Inf, Inf_] ): DagProof[Jdg_, Inf_] =
     flatMap[Jdg_, Inf_]( inf => if ( f.isDefinedAt( inf ) ) List( f( inf ) ) else Nil )
+
+  def weakenJudgments[Jdg_ >: Jdg]: DagProof[Jdg_, Inf] =
+    asInstanceOf[DagProof[Jdg_, Inf]]
 
   /**
    * Returns the subproof at the given position: p.subProofAt(Nil) is p itself; p.subProofAt(i :: is) is the ith
@@ -141,7 +144,7 @@ object DagProof {
     checkEqual( a, b )
   }
 
-  class TreeLikeOps[+Jdg, +Inf <: Inference[Jdg]]( val self: DagProof[Jdg, Inf] ) extends AnyVal {
+  class TreeLikeOps[Jdg, +Inf <: Inference[Jdg]]( val self: DagProof[Jdg, Inf] ) extends AnyVal {
 
     /**
      * Iterate over all sub-proofs including this in post-order.
@@ -188,13 +191,13 @@ object DagProof {
     }
   }
 
-  class DagLikeOps[+Jdg, +Inf <: Inference[Jdg]]( val self: DagProof[Jdg, Inf] ) extends AnyVal {
+  class DagLikeOps[Jdg, +Inf <: Inference[Jdg]]( val self: DagProof[Jdg, Inf] ) extends AnyVal {
 
     /**
      * Iterate over all sub-proofs including this in post-order, ignoring duplicates.
      * @return Set of all visited sub-proofs including this.
      */
-    def foreach[Jdg_ >: Jdg, Inf_ >: Inf <: Inference[Jdg_]]( f: DagProof[Jdg, Inf] => Unit ): Set[DagProof[Jdg_, Inf_]] = {
+    def foreach[Inf_ >: Inf <: Inference[Jdg]]( f: DagProof[Jdg, Inf] => Unit ): Set[DagProof[Jdg, Inf_]] = {
       val seen = mutable.Set[DagProof[Jdg, Inf]]()
 
       def traverse( p: DagProof[Jdg, Inf] ): Unit =

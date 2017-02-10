@@ -8,8 +8,8 @@ package object lk {
   implicit object lKProofSubstitutable extends ClosedUnderSub[LKProof] {
     override def applySubstitution( sub: Substitution, arg: LKProof ): LKProof =
       arg match {
-        case DagProof( TopAxiom )                => DagProof[HOLSequent, LKInference]( TopAxiom )
-        case DagProof( LogicalAxiom( formula ) ) => DagProof[HOLSequent, LKInference]( LogicalAxiom( sub( formula ) ) )
+        case DagProof( TopAxiom )                => DagProof( TopAxiom )
+        case DagProof( LogicalAxiom( formula ) ) => DagProof( LogicalAxiom( sub( formula ) ) )
         case DagProof( NegLeft( _, aux ), subProof ) =>
           LKProofBuilder.c( applySubstitution( sub, subProof ) ).u( NegLeft( _, aux ) ).qed
         case DagProof( NegRight( _, aux ), subProof ) =>
