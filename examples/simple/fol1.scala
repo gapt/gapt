@@ -11,12 +11,8 @@ object fol1 extends TacticsProof {
   ctx += hoc"a: i"
   ctx += hoc"b: i"
 
-  val proof = Lemma( Sequent(
-    Seq( "L" -> fof"(all x all y (P(x,y) -> Q(x,y)))" ),
-    Seq( "R" -> fof"(exists x exists y (-Q(x,y) -> -P(x,y)))" )
-  ) ) {
-
-    cut( "C", fof"(all x exists y (-P(x,y) | Q(x,y)))" )
+  val proof = Lemma( hols"L: !x!y (P x y -> Q x y) :- R: ?x?y (-Q x y -> - P x y)" ) {
+    cut( "C", fof"!x?y (-P x y | Q x y)" )
 
     // left subproof
     allR( "C" )

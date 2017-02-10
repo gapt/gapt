@@ -531,7 +531,7 @@ trait TacticCommands {
    * Tactic that immediately fails.
    */
   def fail = new Tactical[Nothing] {
-    def apply( proofState: ProofState ) = Left( TacticalFailure( this, None, "explicit fail" ) )
+    def apply( proofState: ProofState ) = Left( TacticalFailure( this, Some( proofState ), "explicit fail" ) )
     override def toString = "fail"
   }
 

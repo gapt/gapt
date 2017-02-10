@@ -89,7 +89,7 @@ case class Suc( k: Int ) extends SequentIndex {
  * @param succedent The second list.
  * @tparam A The type of the elements of the sequent.
  */
-case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
+case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
 
   override def toString = toSigRelativeString
 
@@ -120,14 +120,14 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    *
    * @return Antecedent concatenated with succedent.
    */
-  def elements: Seq[A] = antecedent ++ succedent
+  def elements: Vector[A] = antecedent ++ succedent
 
   /**
    * Sequence of elements together with polarities of type Boolean signifying whether an element is in the antecedent or succedent.
    *
    * @return
    */
-  def polarizedElements: Seq[( A, Polarity )] = map( _ -> Polarity.InAntecedent, _ -> Polarity.InSuccedent ).elements
+  def polarizedElements: Vector[( A, Polarity )] = map( _ -> Polarity.InAntecedent, _ -> Polarity.InSuccedent ).elements
 
   /**
    * Returns true iff both cedents are empty.
@@ -180,7 +180,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the antecedent
    */
-  def +:[B >: A]( e: B ) = copy( antecedent = e +: this.antecedent )
+  def +:[B >: A]( e: B ): Sequent[B] = copy( antecedent = e +: this.antecedent )
 
   /**
    * Adds a sequent of elements to the antecedent. New elements are always outermost, i.e. on the very left.
@@ -188,7 +188,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the antecedent.
    */
-  def ++:[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
+  def ++:[B >: A]( es: Traversable[B] ): Sequent[B] = es.foldRight[Sequent[B]]( this )( _ +: _ )
 
   /**
    * Adds an element to the succedent. New elements are always outermost, i.e. on the very right.
@@ -196,7 +196,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    * @param e An element of type B > A
    * @return The sequent with e added to the succedent
    */
-  def :+[B >: A]( e: B ) = copy( succedent = this.succedent :+ e )
+  def :+[B >: A]( e: B ): Sequent[B] = copy( succedent = this.succedent :+ e )
 
   /**
    * Adds a sequence of elements to the succedent. New elements are always outermost, i.e. on the very right.
@@ -204,7 +204,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    * @param es A collection of elements of type B > A.
    * @return The sequent with es added to the succedent.
    */
-  def :++[B >: A]( es: GenTraversable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
+  def :++[B >: A]( es: Traversable[B] ): Sequent[B] = es.foldLeft[Sequent[B]]( this )( _ :+ _ )
 
   def ++[B >: A]( that: Sequent[B] ) = Sequent( this.antecedent ++ that.antecedent, this.succedent ++ that.succedent )
 
@@ -338,7 +338,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    *
    * @return
    */
-  def indices: Seq[SequentIndex] = indicesSequent.elements
+  def indices: Vector[SequentIndex] = indicesSequent.elements
 
   /**
    * Returns the range of indices of the sequent as a sequent.
@@ -353,9 +353,9 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    * @param p A function of type A => Boolean.
    * @return
    */
-  def indicesWhere( p: A => Boolean ): Seq[SequentIndex] = indices filter { i => p( this( i ) ) }
+  def indicesWhere( p: A => Boolean ): Vector[SequentIndex] = indices filter { i => p( this( i ) ) }
 
-  def indicesWherePol( p: A => Boolean, pol: Polarity ): Seq[SequentIndex] =
+  def indicesWherePol( p: A => Boolean, pol: Polarity ): Vector[SequentIndex] =
     indices filter { i => ( i.polarity == pol ) && p( this( i ) ) }
 
   /**
@@ -365,7 +365,7 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
    * @return A pair consisting of this(i) and the rest of this.
    */
   def focus( i: SequentIndex ): ( A, Sequent[A] ) = {
-    def listFocus( xs: Seq[A] )( i: Int ): ( A, Seq[A] ) = ( xs( i ), xs.take( i ) ++ xs.drop( i + 1 ) )
+    def listFocus( xs: Vector[A] )( i: Int ): ( A, Vector[A] ) = ( xs( i ), xs.take( i ) ++ xs.drop( i + 1 ) )
 
     i match {
       case Ant( k ) =>
@@ -395,29 +395,6 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
   def updated[B >: A]( index: SequentIndex, elem: B ): Sequent[B] = index match {
     case Ant( i ) => Sequent( antecedent.updated( i, elem ), succedent )
     case Suc( j ) => Sequent( antecedent, succedent.updated( j, elem ) )
-  }
-
-  /**
-   * Modifies a sequent by applying f to the i-th element and moving the result to the beginning of the antecedent
-   * or the end of the succedent, as appropriate.
-   */
-  def modify[B >: A]( i: SequentIndex )( f: A => B ): Sequent[B] = if ( i isAnt ) {
-    f( this( i ) ) +: this.delete( i )
-  } else {
-    this.delete( i ) :+ f( this( i ) )
-  }
-
-  /**
-   * Modifies a sequent by applying f to the i-th and j-th element and moving the result to the beginning of the antecedent
-   * or the end of the succedent, as appropriate.
-   */
-  def modify2[B >: A]( i: SequentIndex, j: SequentIndex )( f: ( A, A ) => B ): Sequent[B] = {
-    require( i sameSideAs j )
-    if ( i isAnt ) {
-      f( this( i ), this( j ) ) +: this.delete( i, j )
-    } else {
-      this.delete( i, j ) :+ f( this( i ), this( j ) )
-    }
   }
 
   def indexOfOption[B >: A]( elem: B ): Option[SequentIndex] = find( _ == elem )
@@ -459,14 +436,16 @@ case class Sequent[+A]( antecedent: Seq[A], succedent: Seq[A] ) {
 
   def withFilter( p: A => Boolean ): Sequent[A] = filter( p )
 
-  def groupBy[B]( f: A => B ): Sequent[( B, Seq[A] )] =
-    Sequent( antecedent groupBy f toSeq, succedent groupBy f toSeq )
+  def groupBy[B]( f: A => B ): Sequent[( B, Vector[A] )] =
+    Sequent( antecedent groupBy f toVector, succedent groupBy f toVector )
 }
 
 object Sequent {
-  def apply[A](): Sequent[A] = Sequent( Seq(), Seq() )
+  def apply[A](): Sequent[A] = Sequent( Vector(), Vector() )
 
-  def apply[A]( polarizedElements: Seq[( A, Polarity )] ): Sequent[A] = {
+  def apply[A]( ant: Traversable[A], suc: Traversable[A] ): Sequent[A] = Sequent( ant.toVector, suc.toVector )
+
+  def apply[A]( polarizedElements: Traversable[( A, Polarity )] ): Sequent[A] = {
     val ( ant, suc ) = polarizedElements.view.partition( _._2.inAnt )
     Sequent( ant.map( _._1 ), suc.map( _._1 ) )
   }

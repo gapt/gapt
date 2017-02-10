@@ -1785,32 +1785,17 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaE
 abstract class DefinitionRule extends UnaryLKProof with CommonRule {
   def subProof: LKProof
   def aux: SequentIndex
-  def definition: Definition
-  def replacementContext: Abs
-
-  val Definition( what, by ) = definition
-
-  val mainFormula_ = BetaReduction.betaNormalize( App( replacementContext, what ) )
-  val auxFormula_ = BetaReduction.betaNormalize( App( replacementContext, by ) )
-
-  val mainFormula = mainFormula_ match {
-    case f: HOLFormula => f
-    case _             => throw LKRuleCreationException( s"Cannot reduce $mainFormula_ to HOL formula)." )
-  }
-
-  require( BetaReduction.betaNormalize( subProof.endSequent( aux ) ) == auxFormula_, s"Applying context $replacementContext to expression $by does not yield ${subProof.endSequent( aux )} but $auxFormula_." )
+  def auxFormula: HOLFormula = premise( aux )
+  def mainFormula: HOLFormula
 }
 
-object DefinitionRule {
-  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: Definition, replacementContext: Abs, polarity: Polarity ): LKProof = polarity match {
-    case Polarity.InSuccedent  => DefinitionRightRule( subProof, auxFormula, definition, replacementContext )
-    case Polarity.InAntecedent => DefinitionLeftRule( subProof, auxFormula, definition, replacementContext )
+object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
+  def apply( subProof: LKProof, aux: SequentIndex, main: HOLFormula ): LKProof =
+    apply( subProof, aux, main, aux.polarity )
+  def apply( subProof: LKProof, aux: IndexOrFormula, main: HOLFormula, polarity: Polarity ): LKProof = polarity match {
+    case Polarity.InSuccedent  => DefinitionRightRule( subProof, aux, main )
+    case Polarity.InAntecedent => DefinitionLeftRule( subProof, aux, main )
   }
-  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: Definition, mainFormula: HOLFormula, polarity: Polarity ): LKProof =
-    polarity match {
-      case Polarity.InSuccedent  => DefinitionRightRule( subProof, auxFormula, definition, mainFormula )
-      case Polarity.InAntecedent => DefinitionLeftRule( subProof, auxFormula, definition, mainFormula )
-    }
 }
 
 /**
@@ -1828,29 +1813,13 @@ object DefinitionRule {
  * @param definition The definition c := φ.
  * @param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
-case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, definition: Definition, replacementContext: Abs )
-    extends DefinitionRule {
+case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: HOLFormula ) extends DefinitionRule {
   override def name = "d:l"
   override def auxIndices = Seq( Seq( aux ) )
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
 object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" ) {
-
-  /**
-   *
-   * @param subProof The proof π.
-   * @param auxFormula The aux formula.
-   * @param definition The definition to be introduced.
-   * @param replacementContext A term λx.A[x] that designates the positions for the definition.
-   * @return
-   */
-  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: Definition, replacementContext: Abs ): DefinitionLeftRule = {
-    val premise = subProof.endSequent
-    val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-
-    DefinitionLeftRule( subProof, Ant( indices( 0 ) ), definition, replacementContext )
-  }
 
   /**
    * Convenience constructor for d:l that, given an aux and main formula, will attempt to infer the replacement context.
@@ -1862,33 +1831,11 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
    * @param mainFormula The main formula. Must contain definition exactly once.
    * @return
    */
-  def apply( subProof: LKProof, aux: IndexOrFormula, definition: Definition, mainFormula: HOLFormula ): DefinitionLeftRule = {
+  def apply( subProof: LKProof, aux: IndexOrFormula, mainFormula: HOLFormula ): DefinitionLeftRule = {
     val premise = subProof.endSequent
     val ( indices, _ ) = findAndValidate( premise )( Seq( aux ), Seq() )
 
-    val auxFormula = premise( Ant( indices.head ) )
-    val auxFormulaReduced = BetaReduction.betaNormalize( auxFormula )
-
-    val Definition( what, by ) = definition
-
-    val possible_inferences = mainFormula.find( what ).flatMap( p => {
-      val ctx = replacementContext( definition.ty, mainFormula, List( p ) )
-      try {
-        List( DefinitionLeftRule( subProof, Ant( indices( 0 ) ), definition, ctx ) )
-      } catch {
-        case e: Exception =>
-          List()
-      }
-    } )
-
-    possible_inferences match {
-      case List( p ) =>
-        p
-      case Nil =>
-        throw LKRuleCreationException( s"Defined expression $what not found in main formula $mainFormula." )
-      case _ =>
-        throw LKRuleCreationException( s"Multiple sound definition inferences found, please specify context!" )
-    }
+    DefinitionLeftRule( subProof, Ant( indices( 0 ) ), mainFormula )
   }
 }
 
@@ -1907,29 +1854,13 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  * @param definition The definition c := φ.
  * @param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
-case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, definition: Definition, replacementContext: Abs )
-    extends DefinitionRule {
+case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: HOLFormula ) extends DefinitionRule {
   override def name = "d:r"
   override def auxIndices = Seq( Seq( aux ) )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
 object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule" ) {
-
-  /**
-   *
-   * @param subProof The proof π.
-   * @param auxFormula The aux formula.
-   * @param definition The definition to be introduced.
-   * @param replacementContext A term λx.A[x] that designates the positions for the definition.
-   * @return
-   */
-  def apply( subProof: LKProof, auxFormula: HOLFormula, definition: Definition, replacementContext: Abs ): DefinitionRightRule = {
-    val premise = subProof.endSequent
-    val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
-
-    DefinitionRightRule( subProof, Suc( indices( 0 ) ), definition, replacementContext )
-  }
 
   /**
    * Convenience constructor for d:r that, given an aux and main formula, will attempt to infer the replacement context.
@@ -1941,33 +1872,11 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
    * @param mainFormula The main formula. Must contain definition exactly once.
    * @return
    */
-  def apply( subProof: LKProof, aux: IndexOrFormula, definition: Definition, mainFormula: HOLFormula ): DefinitionRightRule = {
+  def apply( subProof: LKProof, aux: IndexOrFormula, mainFormula: HOLFormula ): DefinitionRightRule = {
     val premise = subProof.endSequent
     val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( aux ) )
 
-    val auxFormula = premise( Suc( indices.head ) )
-    val auxFormulaReduced = BetaReduction.betaNormalize( auxFormula )
-
-    val Definition( what, by ) = definition
-
-    val possible_inferences = mainFormula.find( what ).flatMap( p => {
-      val ctx = replacementContext( definition.ty, mainFormula, List( p ) )
-      try {
-        List( DefinitionRightRule( subProof, Suc( indices( 0 ) ), definition, ctx ) )
-      } catch {
-        case e: Exception =>
-          List()
-      }
-    } )
-
-    possible_inferences match {
-      case List( p ) =>
-        p
-      case Nil =>
-        throw LKRuleCreationException( s"Defined expression $what not found in main formula $mainFormula." )
-      case _ =>
-        throw LKRuleCreationException( s"Multiple sound definition inferences found, please specify context!" )
-    }
+    DefinitionRightRule( subProof, Suc( indices( 0 ) ), mainFormula )
   }
 }
 

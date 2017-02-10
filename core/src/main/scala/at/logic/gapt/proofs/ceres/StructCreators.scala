@@ -158,7 +158,7 @@ object StructCreators extends Logger {
       case false =>
         val cutAncInAntecedent = cutanc_seq.antecedent.map( x => Dual[Data]( A( x, Nil ) ) )
         val cutAncInSuccedent = cutanc_seq.succedent.map( x => A[Data]( x ) )
-        val structs: Seq[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
+        val structs: Vector[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
         val r = Times[Data]( structs, List[Data]() )
         r
     }

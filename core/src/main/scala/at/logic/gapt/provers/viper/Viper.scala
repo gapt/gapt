@@ -150,7 +150,7 @@ class Viper( val ctx: Context, val sequent: HOLSequent, val options: ViperOption
     def checkInst( inst: Seq[LambdaExpression] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( folTermSize( _ ) ) ).max
     val testInstances =
-      instanceGen.generate( 0, paramTypes.size, 10 ) ++
+      instanceGen.generate( 0, 5, 10 ) ++
         instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber )
     val failedInstOption = testInstances.toSeq.
       sortBy( folTermSize( _ ) ).view.

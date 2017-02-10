@@ -1693,48 +1693,48 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p230] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+[p218] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (CutRule(p1, Suc(0), p229, Ant(0)))
-[p229] 0 = 0,
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (CutRule(p1, Suc(0), p217, Ant(0)))
+[p217] 0 = 0,
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p228, Ant(2), Ant(3)))
-[p228] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p216, Ant(2), Ant(3)))
+[p216] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
 0 = 0,
 0 = 0
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p227, Suc(1), Suc(0)))
-[p227] ∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p215, Suc(1), Suc(0)))
+[p215] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 ∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
 0 = 0,
 0 = 0
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0)),
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p226, Ant(3), Ant(1))...
+∃x_0 ∃y_0 (s(x_0) <= y_0 ∧ f(x_0) = f(y_0)),
+∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p214, Ant(3), A...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_1 (f(x_1) = 0 ∨ f(x_1) = s(0))
-  +^{M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_2)))}
-    ((f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_2)))) = 0)- ∨
-      (f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_2)))) = s(0))-)
-  +^{M(s(M(s(y_1), s(y_1))), x_2)}
-    ((f(M(s(M(s(y_1), s(y_1))), x_2)) = 0)- ∨
-      (f(M(s(M(s(y_1), s(y_1))), x_2)) = s(0))-)
-  +^{M(s(y_1), s(M(s(y_1), x_2)))}
-    ((f(M(s(y_1), s(M(s(y_1), x_2)))) = 0)- ∨
-      (f(M(s(y_1), s(M(s(y_1), x_2)))) = s(0))-)
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+  +^{M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_1)))}
+    ((f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_1)))) = 0)- ∨
+      (f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_1)))) = s(0))-)
+  +^{M(s(M(s(y_1), s(y_1))), x_1)}
+    ((f(M(s(M(s(y_1), s(y_1))), x_1)) = 0)- ∨
+      (f(M(s(M(s(y_1), s(y_1))), x_1)) = s(0))-)
+  +^{M(s(y_1), s(M(s(y_1), x_1)))}
+    ((f(M(s(y_1), s(M(s(y_1), x_1)))) = 0)- ∨
+      (f(M(s(y_1), s(M(s(y_1), x_1)))) = s(0))-)
   +^{M(s(y_1), s(y_1))}
     ((f(M(s(y_1), s(y_1))) = 0)- ∨ (f(M(s(y_1), s(y_1))) = s(0))-)
-  +^{M(s(y_1), x_2)}
-    ((f(M(s(y_1), x_2)) = 0)- ∨ (f(M(s(y_1), x_2)) = s(0))-)
+  +^{M(s(y_1), x_1)}
+    ((f(M(s(y_1), x_1)) = 0)- ∨ (f(M(s(y_1), x_1)) = s(0))-)
   +^{y_1} ((f(y_1) = 0)- ∨ (f(y_1) = s(0))-),
-∀x_1 ∀y_0 (...
+∀x_1 ∀y (x_...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1952,7 +1952,14 @@ P(nil:list)- ∧
 
 \subsection{LK}\label{app:sequent_calculus}
 
-The rules of LK are listed below. Proof trees are constructed top-down, starting with axioms and with each rule introducing new inferences. With the exception of the definition rules, the constructors of the rules only allow inferences that are actually valid. Note that the rules are presented here as if they always act upon the outermost formulas in the upper sequent, but this is only for convenience of presentation. The basic constructors actually require the user to specify on which concrete formulas the inference should be performed.
+The rules of LK are listed below. Proof trees are constructed top-down,
+starting with axioms and with each rule introducing new inferences. With the
+exception of the definition rules, theory axioms, and induction rules, the
+constructors of the rules only allow inferences that are actually valid. Note
+that the rules are presented here as if they always act upon the outermost
+formulas in the upper sequent, but this is only for convenience of
+presentation. The basic constructors actually require the user to specify on
+which concrete formulas the inference should be performed.
 
 Apart from those basic constructors, there is also a multitude of convenience constructors that facilitate easier proof construction. Moreover, there are so-called macro rules that reduce several inferences to a single command (e.g. introducing quantifier blocks). See the API documentation of the individual rules for details.
 
@@ -2192,7 +2199,9 @@ Each equation rule replaces an arbitrary number of occurrences of $T$.
  \UnaryInfCm{\Gamma \seq \Delta, B}
  \DisplayProof
 \end{center}
-These definition rules are extremely liberal, as they allow the replacement of any formula by any other formula.
+These definition rules are extremely liberal, as they allow the replacement of
+any formula by any other formula.  When checking these rule against a context,
+we verify that both $A$ and $B$ normalize to the same normal form.
 
 \subsubsection*{Induction}
 The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],\dots,F[x_{k_i}], \Gamma_i \seq \Delta_i, F[c_i(x_1,\dots,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
@@ -2483,8 +2492,7 @@ nodes, definitions, merges, and cuts~\cite{Hetzl2013Expansion}.
   \cli{ETAtom} & $A$ \quad (where $A$ is a HOL atom) \\
 \cli{ETWeakening} & $\mathsf{wk}(\varphi)$ \quad (where $\varphi$ is a formula) \\
 \cli{ETMerge} & $E_1 \sqcup E_2$ \\
-\cli{ETDefinition} & $D +_\mathsf{def} E$ \quad (where $D$ is a defined atom expanding to the shallow formula of $E$) \\
-\cli{ETDefinedAtom} & $\varphi +_\mathsf{def} D$ \quad (where $D$ is a defined atom expanding to $\varphi$) \\
+\cli{ETDefinition} & $D +_\mathsf{def} E$ \quad (where $D$ is definitionally equal to the shallow formula of $E$) \\
 \cli{ETTop} & $\top$ \\
 \cli{ETBottom} & $\bot$ \\
 \cli{ETNeg} & $\neg E$ \\

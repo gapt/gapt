@@ -1,11 +1,10 @@
 package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.resolution.Defn
 
 object eliminateDefsET {
   object DefinitionFormula {
-    def unapply( f: HOLFormula ) = f match {
+    def unapply( f: HOLFormula ): Option[( List[Var], HOLAtomConst, HOLFormula )] = f match {
       case All.Block( vs, And( Imp( Apps( d1: HOLAtomConst, vs1 ), r1 ),
         Imp( r2, Apps( d2, vs2 ) ) ) ) if d1 == d2 && r1 == r2 && vs == vs1 && vs == vs2 =>
         Some( ( vs, d1, r2 ) )
@@ -15,13 +14,22 @@ object eliminateDefsET {
   private val negReplPos = HOLPosition( 1, 2 )
   private val posReplPos = HOLPosition( 2, 1 )
 
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean ): ExpansionProofWithCut = {
+    val definitions = ep.expansionSequent.antecedent.collect {
+      case DefinitionFormula( _, c, _ ) => c
+    }
+    apply( ep, pureFolWithoutEq, definitions.toSet )
+  }
+
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProofWithCut =
     ExpansionProofWithCut( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ) )
   private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProof = {
-    val definition = ep.atomDefs.getOrElse( definitionConst, return ep )
-    val Abs.Block( vs, definedFormula: HOLFormula ) = definition
+    val definitionFormula @ DefinitionFormula( vs, _, definedFormula ) =
+      ep.expansionSequent.antecedent.map( _.shallow ).find {
+        case DefinitionFormula( _, `definitionConst`, _ ) => true
+        case _ => false
+      }.getOrElse( return ep )
 
-    val definitionFormula = Defn( definitionConst.asInstanceOf[HOLAtomConst], definition ).definitionFormula
     val insts0 = for {
       ETWeakQuantifierBlock( `definitionFormula`, n, insts ) <- ep.expansionSequent.antecedent
       ( as, inst ) <- insts
@@ -36,7 +44,7 @@ object eliminateDefsET {
 
     val rest = ep.expansionSequent.filterNot { et => et.polarity.inAnt && et.shallow == definitionFormula }
     val usesites = rest.elements.flatMap { _.subProofs }.
-      collect { case ETDefinedAtom( Apps( `definitionConst`, args ), pol, _ ) => ( args, pol ) }.toSet
+      collect { case ETAtom( Apps( `definitionConst`, args ), pol ) => ( args, pol ) }.toSet
     insts = Map() ++
       usesites.map { _._1 }.map { as =>
         val ras = Substitution( vs zip as )( definedFormula )
@@ -67,9 +75,9 @@ object eliminateDefsET {
       case ETStrongQuantifier( sh, ev, ch )     => ETStrongQuantifier( replf( sh ), ev, repl( ch ) )
       case ETSkolemQuantifier( sh, st, sd, ch ) => ETSkolemQuantifier( replf( sh ), st, sd, repl( ch ) )
 
-      case ETDefinedAtom( Apps( `definitionConst`, as ), pol, _ ) =>
+      case ETDefinition( _, ETAtom( Apps( `definitionConst`, as ), pol ) ) =>
         if ( pol.positive ) insts( as )._1 else insts( as )._2
-      case ETDefinedAtom( _, _, _ )                          => et
+      case ETDefinition( _, _ )                              => et
       case ETAtom( Apps( f, _ ), _ ) if f != definitionConst => et
     }
 

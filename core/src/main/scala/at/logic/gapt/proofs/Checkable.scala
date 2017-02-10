@@ -2,7 +2,6 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.Context.BaseTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
@@ -96,8 +95,11 @@ object Checkable {
           | _: ImpLeftRule | _: ImpRightRule =>
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
-        case DefinitionLeftRule( _, _, defn, _ ) => require( context.definitions( defn.what ) == defn.by )
-        case DefinitionRightRule( _, _, defn, _ ) => require( context.definitions( defn.what ) == defn.by )
+        case d: DefinitionRule =>
+          require(
+            ctx.isDefEq( d.mainFormula, d.auxFormula ),
+            s"${ctx.normalize( d.mainFormula )} != ${ctx.normalize( d.auxFormula )}"
+          )
       }
     }
   }
@@ -120,10 +122,11 @@ object Checkable {
         case sk @ ETSkolemQuantifier( _, skT, skD, _ ) =>
           require( ctx.skolemDef( sk.skolemConst ).contains( skD ) )
           ctx.check( skT )
-        case d @ ETDefinition( _, defExpr, child ) =>
-          require( ctx.contains( d.definition ) )
-        case d @ ETDefinedAtom( _, _, defn ) =>
-          require( ctx.contains( d.definition ) )
+        case ETDefinition( sh, child ) =>
+          require(
+            ctx.isDefEq( sh, child.shallow ),
+            s"${ctx.normalize( sh )} != ${ctx.normalize( child.shallow )}"
+          )
       }
     }
   }

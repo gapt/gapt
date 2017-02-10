@@ -12,25 +12,24 @@ object Pi2Pigeonhole extends TacticsProof {
   ctx += hoc"f: i>i"
   ctx += hoc"'<=': i>i>o"
 
-  val proof = Lemma(
-    ( "maxlt" -> hof"∀x∀y (x <= M x y  ∧  y <= M x y)" ) +:
-      ( "bound" -> hof"∀x (f x = 0  ∨  f x = s 0)" ) +:
-      Sequent()
-      :+ ( "t" -> hof"∃x ∃y (s x <= y  ∧  f x = f y)" )
-  ) {
-      cut( "I0", hof"∀x ∃y (x <= y  ∧  f y = 0)" )
-      cut( "I1", hof"∀x ∃y (x <= y  ∧  f y = s 0)" )
+  val proof = Lemma( hols"""
+      maxlt: ∀x∀y (x <= M x y  ∧  y <= M x y),
+      bound: ∀x (f x = 0  ∨  f x = s 0)
+      :- t: ∃x ∃y (s x <= y  ∧  f x = f y)
+  """ ) {
+    cut( "I0", hof"∀x ∃y (x <= y  ∧  f y = 0)" )
+    cut( "I1", hof"∀x ∃y (x <= y  ∧  f y = s 0)" )
 
-      forget( "t" ); decompose; escargot
+    forget( "t" ); decompose; escargot
 
-      allL( "I1", le"0" ); decompose
-      allL( "I1", le"s y" ); decompose
-      forget( "I0", "I1" ); escargot
+    allL( "I1", le"0" ); decompose
+    allL( "I1", le"s y" ); decompose
+    forget( "I0", "I1" ); escargot
 
-      allL( "I0", le"0" ); decompose
-      allL( "I0", le"s y" ); decompose
-      forget( "I0" ); escargot
-    }
+    allL( "I0", le"0" ); decompose
+    allL( "I0", le"s y" ); decompose
+    forget( "I0" ); escargot
+  }
 }
 
 object Pi3Pigeonhole extends TacticsProof {
@@ -41,20 +40,19 @@ object Pi3Pigeonhole extends TacticsProof {
   ctx += hoc"f: i>i"
   ctx += hoc"'<=': i>i>o"
 
-  val proof = Lemma(
-    ( "maxlt" -> hof"∀x∀y (x <= M x y  ∧  y <= M x y)" ) +:
-      ( "bound" -> hof"∀x (f x = 0  ∨  f x = s 0)" ) +:
-      Sequent()
-      :+ ( "t" -> hof"∃x ∃y (s x <= y  ∧  f x = f y)" )
-  ) {
-      cut( "I", hof"∃z ∀x ∃y (x <= y  ∧  f y = z)" )
+  val proof = Lemma( hols"""
+      maxlt: ∀x∀y (x <= M x y  ∧  y <= M x y),
+      bound: ∀x (f x = 0  ∨  f x = s 0)
+      :- t: ∃x ∃y (s x <= y  ∧  f x = f y)
+  """ ) {
+    cut( "I", hof"∃z ∀x ∃y (x <= y  ∧  f y = z)" )
 
-      exR( "I", le"0" ); exR( "I", le"s 0" )
-      forget( "t", "I" ); decompose; escargot
+    exR( "I", le"0" ); exR( "I", le"s 0" )
+    forget( "t", "I" ); decompose; escargot
 
-      decompose
-      allL( "I", le"0" ); decompose
-      allL( "I", le"s y" ); decompose
-      forget( "I" ); escargot
-    }
+    decompose
+    allL( "I", le"0" ); decompose
+    allL( "I", le"s y" ); decompose
+    forget( "I" ); escargot
+  }
 }

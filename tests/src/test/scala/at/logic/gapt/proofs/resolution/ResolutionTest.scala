@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.ResolutionProofBuilder
 import at.logic.gapt.proofs.{ Ant, Clause, Sequent, Suc }
 import at.logic.gapt.utils.SatMatchers
@@ -111,7 +112,7 @@ class ResolutionTest extends Specification with SatMatchers {
     val proof = Resolution( Resolution( AvatarContradiction( split ), Suc( 0 ), case1, Ant( 0 ) ), Suc( 0 ), case2, Ant( 0 ) )
     proof.isProof must_== true
 
-    ResolutionToExpansionProof.withDefs( proof ).deep must beValidSequent
+    ResolutionToExpansionProof.withDefs( proof, ResolutionToExpansionProof.inputsAsExpansionSequent ).deep must beValidSequent
     val expansion = ResolutionToExpansionProof( proof )
     expansion.deep must beValidSequent
     val Some( resFromExp ) = ExpansionToResolutionProof( expansion )
