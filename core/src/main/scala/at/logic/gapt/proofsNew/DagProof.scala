@@ -45,24 +45,24 @@ final class DagProof[Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val immed
    */
   def subProofs[Inf_ >: Inf <: Inference[Jdg]]: Set[DagProof[Jdg, Inf_]] = dagLike foreach { _ => () }
 
-  def map[Jdg_, Inf_ <: Inference[Jdg_]]( f: Inf => Inf_ ): DagProof[Jdg_, Inf_] = {
+  def flatMapD[Jdg_, Inf_ <: Inference[Jdg_]]( f: ( Inf, Vector[DagProof[Jdg_, Inf_]] ) => DagProof[Jdg_, Inf_] ): DagProof[Jdg_, Inf_] = {
     val cache = mutable.Map[DagProof[Jdg, Inf], DagProof[Jdg_, Inf_]]()
     def go( p: DagProof[Jdg, Inf] ): DagProof[Jdg_, Inf_] = cache.getOrElse(
       p,
-      DagProof( f( p.inference ), p.immediateSubProofs.map( go ) )
+      f( p.inference, p.immediateSubProofs.map( go ) )
     )
     go( this )
   }
 
-  def flatMap[Jdg_, Inf_ <: Inference[Jdg_]]( f: Inf => Traversable[Inf_] ): DagProof[Jdg_, Inf_] = {
-    var builder = new DagProofBuilder[Jdg_, Inf_]
-    for ( p <- treeLike.postOrder; inf_ <- f( p.inference ) )
-      builder = builder.c( inf_ )
-    builder.qed
-  }
+  def flatMap[Jdg_, Inf_ <: Inference[Jdg_]]( f: Inf => Traversable[Inf_] ): DagProof[Jdg_, Inf_] =
+    flatMapD[Jdg_, Inf_]( ( inf, premises ) => f( inf ).
+      foldLeft( new DagProofBuilder[Jdg_, Inf_]( premises.reverseIterator.toList ) )( _ c _ ).qed )
+
+  def map[Jdg_, Inf_ <: Inference[Jdg_]]( f: Inf => Inf_ ): DagProof[Jdg_, Inf_] =
+    flatMap( inf => f( inf ) :: Nil )
 
   def collect[Jdg_, Inf_ <: Inference[Jdg_]]( f: PartialFunction[Inf, Inf_] ): DagProof[Jdg_, Inf_] =
-    flatMap[Jdg_, Inf_]( inf => if ( f.isDefinedAt( inf ) ) List( f( inf ) ) else Nil )
+    flatMap[Jdg_, Inf_]( inf => if ( f.isDefinedAt( inf ) ) f( inf ) :: Nil else Nil )
 
   def weakenJudgments[Jdg_ >: Jdg]: DagProof[Jdg_, Inf] =
     asInstanceOf[DagProof[Jdg_, Inf]]
