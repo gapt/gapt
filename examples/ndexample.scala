@@ -124,3 +124,13 @@ object existsIntroExample extends Script {
   val a6 = ExistsIntroRule( a5, hof"?y ?x P x y", hoc"b : i" )
   println( a6 )
 }
+
+object existsElimExample extends Script {
+  val a1 = LogicalAxiom( hof"?x P x" )
+  val a2 = LogicalAxiom( hof"!x (P x -> Q)" )
+  val a3 = ForallElimRule( a2, hov"y" )
+  val a4 = LogicalAxiom( hof"P y" )
+  val a5 = ImpElimRule( a3, a4 )
+  val a6 = ExistsElimRule( a1, a5, hov"y" )
+  println( a6 )
+}

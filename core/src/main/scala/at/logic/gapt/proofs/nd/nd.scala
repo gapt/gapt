@@ -945,6 +945,100 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
 }
 
 /**
+ * An NDProof ending with an existential quantifier elimination:
+ * <pre>
+ *         (π1)         (π2)
+ *     Γ :- ∃x.A   Δ, A[x\α] :- B
+ *     --------------------------
+ *        Γ, Δ :- B
+ * </pre>
+ * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ, Δ. and B
+ *
+ * @param leftSubProof The proof π1.
+ * @param rightSubProof The proof π2.
+ * @param aux The index of A[x\α].
+ * @param eigenVariable The variable α.
+ */
+case class ExistsElimRule( leftSubProof: NDProof, rightSubProof: NDProof, aux: SequentIndex, eigenVariable: Var )
+  extends BinaryNDProof with CommonRule with Eigenvariable {
+
+  validateIndices( rightPremise, Seq( aux ) )
+
+  val ( existentialFormula, leftContext ) = leftPremise focus Suc( 0 )
+
+  val ( auxFormula, rightContext ) = rightPremise focus aux
+
+  //eigenvariable condition
+  if ( freeVariables( rightContext ) contains eigenVariable )
+    throw NDRuleCreationException( s"Eigenvariable condition is violated: $rightContext contains $eigenVariable" )
+  if ( freeVariables( leftContext ) contains eigenVariable )
+    throw NDRuleCreationException( s"Eigenvariable condition is violated: $leftContext contains $eigenVariable" )
+
+  val ( quantifiedVariable, subFormula ) = existentialFormula match {
+    case Ex( variable, sub ) => ( variable, sub )
+    case _                   => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
+  }
+
+  val auxShouldBe = BetaReduction.betaNormalize( Substitution( quantifiedVariable, eigenVariable )( subFormula ) )
+
+  if ( auxShouldBe != auxFormula ) throw NDRuleCreationException( s"Formula $auxFormula should be $auxShouldBe." )
+
+  val mainFormula = rightPremise( Suc( 0 ) )
+
+  override def name = "∃:e"
+
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( aux, Suc( 0 ) ) )
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
+
+  /**
+   * Convenience constructor for ∃:l that, given an eigenvariable, will try to construct an inference with that instantiation.
+   *
+   * @param leftSubProof The proof π1.
+   * @param rightSubProof The proof π2.
+   * @param eigenVariable A variable α such that A[α] occurs in the premise.
+   * @return
+   */
+  def apply( leftSubProof: NDProof, rightSubProof: NDProof, eigenVariable: Var ): ExistsElimRule = {
+
+    val existentialFormula = leftSubProof.conclusion( Suc( 0 ) )
+
+    existentialFormula match {
+      case Ex( v, subFormula ) =>
+        val auxFormula = Substitution( v, eigenVariable )( subFormula )
+
+        val premise = rightSubProof.endSequent
+
+        val ( indices, _ ) = findAndValidate( premise )( Seq( Right( auxFormula ) ), Left( Suc( 0 ) ) )
+        ExistsElimRule( leftSubProof, rightSubProof, Ant( indices( 0 ) ), eigenVariable )
+
+      case _                   => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
+    }
+  }
+
+  /**
+   * Convenience constructor for ∃:l that, given only its subproofs, will try to construct an inference with that formula.
+   *
+   * @param leftSubProof The proof π1.
+   * @param rightSubProof The proof π2.
+   * @return
+   */
+  def apply( leftSubProof: NDProof, rightSubProof: NDProof ): ExistsElimRule = {
+
+    val existentialFormula = leftSubProof.conclusion( Suc( 0 ) )
+
+    existentialFormula match {
+      case Ex( v, subFormula ) => apply( leftSubProof, rightSubProof, v )
+
+      case _                   => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
+    }
+  }
+}
+
+/**
  * An NDProof ending with induction:
  * <pre>
  *    (π1)         (π2)
@@ -1068,12 +1162,12 @@ class ConvenienceConstructor( val longName: String ) {
   }
 
   /**
-   * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair of lists of indices and throw an exception if either
-   * list contains a -1.
+   * Combines findIndicesOrFormulasInPremise and validateIndices. That is, it will return a pair of a lists of indices
+   * and an index, and throw an exception if either  list contains a -1.
    *
    * @param premise The sequent in question.
    * @param antIndicesFormulas The list of indices or formulas in the antecedent.
-   * @param sucIndexFormula The list of indices or formulas in the succedent.
+   * @param sucIndexFormula The index or formula in the succedent.
    * @return
    */
   protected def findAndValidate( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndexFormula: IndexOrFormula ): ( Seq[Int], Int ) = {
