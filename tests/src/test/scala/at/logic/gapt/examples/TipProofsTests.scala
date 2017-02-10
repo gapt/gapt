@@ -79,4 +79,6 @@ class TipProofsTests extends Specification {
   requireTip { "prod/prop_30" in { at.logic.gapt.examples.tip.prod.prop_30; ok } }
   requireTip { "prod/prop_32" in { at.logic.gapt.examples.tip.prod.prop_32; ok } }
   requireTip { "prod/prop_33" in { at.logic.gapt.examples.tip.prod.prop_33; ok } }
+  requireTip { "prod/prop_34" in { at.logic.gapt.examples.tip.prod.prop_34; ok } }
+  requireTip { "prod/prop_35" in { at.logic.gapt.examples.tip.prod.prop_35; ok } }
 }
