@@ -134,3 +134,12 @@ object existsElimExample extends Script {
   val a6 = ExistsElimRule( a1, a5, hov"y" )
   println( a6 )
 }
+
+object lemExample extends Script {
+  val a1 = LogicalAxiom( hof"P" )
+  val a2 = LogicalAxiom( hof"¬P" )
+  val a3 = OrIntro1Rule( a1, hof"¬P" )
+  val a4 = OrIntro2Rule( a2, hof"P" )
+  val a5 = lawOfExcludedMiddleRule( a3, a4, Ant( 0 ), Ant( 0 ) )
+  println( a5 )
+}

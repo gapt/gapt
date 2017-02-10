@@ -1073,6 +1073,43 @@ case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: L
 }
 
 /**
+ * An NDProof ending with the law of excluded middle:
+ *<pre>
+ *       (π1)       (π2)
+ *    Γ, A :- B   Π, ¬A :- B
+ *  -------------------------
+ *          Γ, Π :- B
+ *</pre>
+ *
+ *@param leftSubProof The proof π1
+ *@param rightSubProof The proof π2
+ *@param aux1 The index of A
+ *@param aux2 The index of ¬A
+ */
+case class lawOfExcludedMiddleRule( leftSubProof: NDProof, rightSubProof: NDProof, aux1: SequentIndex, aux2: SequentIndex )
+  extends BinaryNDProof with CommonRule{
+
+  validateIndices( leftPremise, Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ) )
+
+  val formulaA = leftPremise( aux1 )
+  val formulaNegA = rightPremise( aux2 )
+
+  require( Neg( formulaA) == formulaNegA, s"Formula $formulaNegA is not the negation of $formulaA." )
+
+  val leftB = leftPremise( Suc( 0 ) )
+  val rightB = rightPremise( Suc( 0 ) )
+
+  val mainFormula = if ( leftB == rightB ) leftB else throw NDRuleCreationException( s"Formula $leftB is not equal to $rightB." )
+
+  override def name = "LEM"
+
+  def auxIndices = Seq( Seq( aux1, Suc( 0 ) ), Seq( aux2, Suc( 0 ) ) )
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+/**
  * Class for reducing boilerplate code in ND companion objects.
  *
  * @param longName The long name of the rule.
