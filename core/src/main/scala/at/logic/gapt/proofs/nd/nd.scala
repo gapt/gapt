@@ -343,8 +343,8 @@ object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
    *    -----------wkn*
    *     Γ, A :- A
    * </pre>
-    *
-    * @param A The atom a.
+   *
+   * @param A The atom a.
    * @param context The context Γ.
    * @return
    */
@@ -664,9 +664,9 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
  * @param rightSubProof The proof π,,2,,
  */
 case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
-  extends BinaryNDProof with CommonRule {
+    extends BinaryNDProof with CommonRule {
 
-  val formula= leftPremise( Suc( 0 ) )
+  val formula = leftPremise( Suc( 0 ) )
   val negatedFormula = rightPremise( Suc( 0 ) )
 
   val mainFormula = if ( negatedFormula == Neg( formula ) ) Bottom() else throw NDRuleCreationException( s"Formula $negatedFormula is not the negation of $formula." )
@@ -691,13 +691,13 @@ case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * @param aux The index of A.
  */
 case class NegIntroRule( subProof: NDProof, aux: SequentIndex )
-  extends UnaryNDProof with CommonRule {
+    extends UnaryNDProof with CommonRule {
 
   validateIndices( premise, Seq( aux ) )
 
   val bottom = premise( Suc( 0 ) )
 
-  require( bottom  == Bottom(), s"Formula $bottom is not ⊥." )
+  require( bottom == Bottom(), s"Formula $bottom is not ⊥." )
 
   val formula = premise( aux )
   val mainFormula = Neg( formula )
@@ -900,7 +900,7 @@ case class ExistsIntroRule( subProof: NDProof, A: HOLFormula, term: LambdaExpres
 
   override def name = "∃:i"
 
-  def auxIndices = Seq( Seq( Suc ( 0 ) ) )
+  def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
@@ -921,12 +921,12 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
     mainFormula match {
       case Ex( v, subFormula ) =>
 
-        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term ) ( subFormula ) )
+        val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
 
         if ( premise( Suc( 0 ) ) == auxFormula ) ExistsIntroRule( subProof, subFormula, term, v )
         else throw NDRuleCreationException( s"Formula $auxFormula is not the succedent of $premise." )
 
-      case _                   => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+      case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
     }
   }
 
@@ -960,7 +960,7 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
  * @param eigenVariable The variable α.
  */
 case class ExistsElimRule( leftSubProof: NDProof, rightSubProof: NDProof, aux: SequentIndex, eigenVariable: Var )
-  extends BinaryNDProof with CommonRule with Eigenvariable {
+    extends BinaryNDProof with CommonRule with Eigenvariable {
 
   validateIndices( rightPremise, Seq( aux ) )
 
@@ -1015,7 +1015,7 @@ object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
         val ( indices, _ ) = findAndValidate( premise )( Seq( Right( auxFormula ) ), Left( Suc( 0 ) ) )
         ExistsElimRule( leftSubProof, rightSubProof, Ant( indices( 0 ) ), eigenVariable )
 
-      case _                   => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
+      case _ => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
     }
   }
 
@@ -1074,20 +1074,20 @@ case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: L
 
 /**
  * An NDProof ending with the law of excluded middle:
- *<pre>
+ * <pre>
  *       (π1)       (π2)
  *    Γ, A :- B   Π, ¬A :- B
  *  -------------------------
  *          Γ, Π :- B
- *</pre>
+ * </pre>
  *
- *@param leftSubProof The proof π1
- *@param rightSubProof The proof π2
- *@param aux1 The index of A
- *@param aux2 The index of ¬A
+ * @param leftSubProof The proof π1
+ * @param rightSubProof The proof π2
+ * @param aux1 The index of A
+ * @param aux2 The index of ¬A
  */
-case class lawOfExcludedMiddleRule( leftSubProof: NDProof, rightSubProof: NDProof, aux1: SequentIndex, aux2: SequentIndex )
-  extends BinaryNDProof with CommonRule{
+case class LawOfExcludedMiddleRule( leftSubProof: NDProof, rightSubProof: NDProof, aux1: SequentIndex, aux2: SequentIndex )
+    extends BinaryNDProof with CommonRule {
 
   validateIndices( leftPremise, Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ) )
@@ -1095,7 +1095,7 @@ case class lawOfExcludedMiddleRule( leftSubProof: NDProof, rightSubProof: NDProo
   val formulaA = leftPremise( aux1 )
   val formulaNegA = rightPremise( aux2 )
 
-  require( Neg( formulaA) == formulaNegA, s"Formula $formulaNegA is not the negation of $formulaA." )
+  require( Neg( formulaA ) == formulaNegA, s"Formula $formulaNegA is not the negation of $formulaA." )
 
   val leftB = leftPremise( Suc( 0 ) )
   val rightB = rightPremise( Suc( 0 ) )

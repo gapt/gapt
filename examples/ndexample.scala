@@ -74,7 +74,7 @@ object ndImpElimExample extends Script {
 
 object ndImpIntroExample extends Script {
   val a1 = LogicalAxiom( hof"a", Seq( hof"b" ) )
-  val a2 = ImpIntroRule( a1 , Ant( 0 ) )
+  val a2 = ImpIntroRule( a1, Ant( 0 ) )
   val a3 = ImpIntroRule( a2 )
   println( a3 )
 }
@@ -110,7 +110,7 @@ object negationExample extends Script {
 }
 
 object existsIntroExample extends Script {
-  val a1 = LogicalAxiom( hof"P a b")
+  val a1 = LogicalAxiom( hof"P a b" )
   val a2 = ExistsIntroRule( a1, hof"P x b", hoc"a : i", hov"x" )
   println( a2 )
 
@@ -140,6 +140,6 @@ object lemExample extends Script {
   val a2 = LogicalAxiom( hof"¬P" )
   val a3 = OrIntro1Rule( a1, hof"¬P" )
   val a4 = OrIntro2Rule( a2, hof"P" )
-  val a5 = lawOfExcludedMiddleRule( a3, a4, Ant( 0 ), Ant( 0 ) )
+  val a5 = LawOfExcludedMiddleRule( a3, a4, Ant( 0 ), Ant( 0 ) )
   println( a5 )
 }
