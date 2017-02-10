@@ -241,19 +241,18 @@ object Context {
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
-  case class ProofNames( names:   Map[String, (LambdaExpression, HOLSequent)] ) {
-    def +(name:String,linkpression: LambdaExpression, linkquent: HOLSequent ) = copy( names + (( name, (linkpression,linkquent)))  )
+  case class ProofNames( names: Map[String, ( LambdaExpression, HOLSequent )] ) {
+    def +( name: String, linkpression: LambdaExpression, linkquent: HOLSequent ) = copy( names + ( ( name, ( linkpression, linkquent ) ) ) )
   }
 
-
-  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames(Map[String, (LambdaExpression, HOLSequent)]() ) )
+  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( LambdaExpression, HOLSequent )]() ) )
 
   case class ProofDefinitions( components: Map[String, Set[( LambdaExpression, LKProof )]] ) {
-    def +(name: String, linkpression: LambdaExpression, linkproof: LKProof) = {
-      if(components.keySet.contains(name))
-         copy(components + ((name, (components.get(name).toSet + (linkpression, linkproof)).asInstanceOf[Set[(LambdaExpression, LKProof)]])))
-      else
-         copy(components + ((name,  (linkpression, linkproof).asInstanceOf[Set[(LambdaExpression, LKProof)]])))
+    def +( name: String, linkpression: LambdaExpression, linkproof: LKProof ) = {
+      components.get( name ) match {
+        case Some( s ) => copy( components + ( ( name, ( s + ( ( linkpression, linkproof ) ) ) ) ) )
+        case None      => copy( components + ( ( name, Set( ( linkpression, linkproof ) ) ) ) )
+      }
     }
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( LambdaExpression, LKProof )]]() ) )
@@ -378,16 +377,16 @@ object Context {
       endSequent.foreach( ctx.check( _ ) )
       val fvEs = freeVariables( endSequent )
       lhs match {
-        case Apps( at.logic.gapt.expr.Const(c,t), vs: Seq[LambdaExpression] ) => {
-          val nameIsThere = ctx.get[ProofNames].names.keySet.contains(c)
+        case Apps( at.logic.gapt.expr.Const( c, t ), vs: Seq[LambdaExpression] ) => {
+          val nameIsThere = ctx.get[ProofNames].names.keySet.contains( c )
           val varcheck: Boolean = vs == vs.distinct &&
             vs.forall( _.isInstanceOf[Var] ) &&
             ( freeVariables( endSequent ).toSet[LambdaExpression] ).subsetOf( vs.toSet ) &&
             vs.toSet.subsetOf( ( freeVariables( endSequent ).toSet[LambdaExpression] ) ) &&
             !nameIsThere
-          if ( varcheck ) ctx.state.update[ProofNames]( _ + (c, lhs, endSequent))
+          if ( varcheck ) ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
           else throw new IllegalArgumentException( "variables of " + lhs.toString() + "   " + vs.toString() +
-            " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString()+ " or duplicate proof name" )
+            " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString() + " or duplicate proof name" )
         }
         case _ => throw new IllegalArgumentException( lhs.toString() + "  is a malformed proof name" )
       }
@@ -399,31 +398,31 @@ object Context {
     override def apply( ctx: Context ): State = {
       linkProof.endSequent.foreach( ctx.check( _ ) )
       lhs match {
-        case Apps(  at.logic.gapt.expr.Const(c,t), vs ) => {
+        case Apps( at.logic.gapt.expr.Const( c, t ), vs ) => {
           vs.foreach( ctx.check( _ ) )
-          val decName = ctx.get[ProofNames].names.keySet.map(key => ctx.get[ProofNames].names.get(key).get)
+          val decName = ctx.get[ProofNames].names.keySet.map( key => ctx.get[ProofNames].names.get( key ).get )
             .fold( None: Option[( LambdaExpression, HOLSequent )] )( ( x, y ) => {
-            x match {
-              case Some( thing ) => Some( thing )
-              case None => y match {
-                case ( Apps( at.logic.gapt.expr.Const(c2,t), vs2 ), _ ) => if ( c2 == c && vs.size == vs2.size ) {
-                  if ( ( vs zip vs2 ).fold( true )( ( x, y ) => {
-                    if ( x == true ) y match {
-                      case ( a: LambdaExpression, b: LambdaExpression ) =>
-                        if ( syntacticMatching( b, a ) == None ) false
-                        else true
-                      case _ => false
-                    }
-                    else false
-                  } ) == true ) Some( y )
-                  else None
-                } else None
-                case _ => throw new IllegalArgumentException( "Context contains malformed proof name" )
+              x match {
+                case Some( thing ) => Some( thing )
+                case None => y match {
+                  case ( Apps( at.logic.gapt.expr.Const( c2, t ), vs2 ), _ ) => if ( c2 == c && vs.size == vs2.size ) {
+                    if ( ( vs zip vs2 ).fold( true )( ( x, y ) => {
+                      if ( x == true ) y match {
+                        case ( a: LambdaExpression, b: LambdaExpression ) =>
+                          if ( syntacticMatching( b, a ) == None ) false
+                          else true
+                        case _ => false
+                      }
+                      else false
+                    } ) == true ) Some( y )
+                    else None
+                  } else None
+                  case _ => throw new IllegalArgumentException( "Context contains malformed proof name" )
+                }
               }
-            }
 
-          } )
-          if ( decName != None ) ctx.state.update[ProofDefinitions]( _ + (c, lhs, linkProof ) )
+            } )
+          if ( decName != None ) ctx.state.update[ProofDefinitions]( _ + ( c, lhs, linkProof ) )
           else throw new IllegalArgumentException( "No proof named " + lhs.toString() +
             " in conext" )
         }

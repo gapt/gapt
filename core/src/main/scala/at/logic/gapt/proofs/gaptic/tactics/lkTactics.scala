@@ -7,33 +7,19 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
 
-
 /**
  * Closes a goal with a proof link
  *
  * @param proofName The name of the proof proving the goal.
  */
 case class ProofLinkTactic( proofName: String )( implicit ctx: Context ) extends Tactic[Unit] {
-  def apply( goal: OpenAssumption ) = ctx.get[ProofNames].names.fold( None: Option[( LambdaExpression, Sequent[HOLFormula] )] )( ( rightProof, proofInCtx ) => {
-    rightProof match {
-      case None => proofInCtx match {
-        case ( Apps( at.logic.gapt.expr.Const( proofInCtxName, t ), args ), es: Sequent[HOLFormula] ) =>
-          if ( proofName == proofInCtxName )
-            clauseSubsumption( es, goal.conclusion ) match {
-              case Some( sub ) =>
-                Some( ( sub( Apps( at.logic.gapt.expr.Const( proofInCtxName, t ), args ) ), sub( es ) ) )
-              case None => None
-            }
-          else None
-        case _ => None
-      }
-      case Some( thing ) => Some( thing )
+  def apply( goal: OpenAssumption ) = ctx.get[ProofNames].names.get( proofName ) match {
+    case Some( ( Apps( c, args ), linkEs ) ) => clauseSubsumption( linkEs, goal.conclusion ) match {
+      case Some( sub ) => Right( (), ProofLink( sub( Apps( c, args ) ), sub( linkEs ) ) )
+      case None        => Left( TacticalFailure( this, "Mismatch between  goal " + goal.toString + " and  Linkquent " + linkEs.toString ) )
     }
-  } ) match {
-    case Some( ( l: LambdaExpression, es: Sequent[HOLFormula] ) ) => Right( (), ProofLink( l, es ) )
-    case None => Left(TacticalFailure( this,  "Cannot be proven from the specified proof" ))
+    case None => Left( TacticalFailure( this, "Proof " + proofName + " not defined in context" ) )
   }
-
 }
 /**
  * Closes a goal of the form A, Γ :- Δ, Δ

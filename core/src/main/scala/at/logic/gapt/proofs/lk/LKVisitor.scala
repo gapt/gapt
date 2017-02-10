@@ -154,7 +154,6 @@ trait LKVisitor[T] {
 
   protected def visitTopAxiom( otherArg: T ): ( LKProof, SequentConnector ) = withIdentitySequentConnector( TopAxiom )
 
-
   protected def visitBottomAxiom( otherArg: T ): ( LKProof, SequentConnector ) = withIdentitySequentConnector( BottomAxiom )
 
   protected def visitWeakeningLeft( proof: WeakeningLeftRule, otherArg: T ): ( LKProof, SequentConnector ) = {
