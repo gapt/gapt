@@ -31,13 +31,13 @@ class ProveWithPi2CutTest extends Specification {
       val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"0", fot"s(y1)" ), List( fot"M(c,x)" ) )
       val xName = fov"xName"
       val yName = fov"yName"
-      val eT = fof"?u?v Pkl(u,v)&Pg(f(u),f(v))"
-      val feI0 = fof"?v Pkl(c,v)&Pg(f(v),0)"
-      val fGamma1 = fof"!u!v Pklg(u,M(u,v))&Pklg(v,M(u,v))"
-      val fGamma2 = fof"!u Pg(f(u),0)|Pg(f(u),s(0))"
-      val fDelta1 = fof"!u!v!w (Pg(u,v)&Pg(v,w))->Pg(u,w)"
-      val fDelta2 = fof"!u!v Pklg(s(u),v)->Pkl(u,v)"
-      val fRef = fof"!u!v Pg(u,v)->Pg(v,u)"
+      val eT = fof"?u?v (Pkl(u,v)&Pg(f(u),f(v)))"
+      val feI0 = fof"?v (Pklg(c,v)&Pg(f(v),0))"
+      val fGamma1 = fof"!u!v (Pklg(u,M(u,v))&Pklg(v,M(u,v)))"
+      val fGamma2 = fof"!u (Pg(f(u),0)|Pg(f(u),s(0)))"
+      val fDelta1 = fof"!u!v!w ((Pg(u,v)&Pg(v,w))->Pg(u,w))"
+      val fDelta2 = fof"!u!v (Pklg(s(u),v)->Pkl(u,v))"
+      val fRef = fof"!u!v (Pg(u,v)->Pg(v,u))"
       val endSequent = fRef +: fGamma1 +: fGamma2 +: fDelta1 +: fDelta2 +: Sequent() :+ eT :+ feI0
       val proof: Option[LKProof] = proveWithPi2Cut( endSequent, seHs, yName, xName )
       ( proof match {

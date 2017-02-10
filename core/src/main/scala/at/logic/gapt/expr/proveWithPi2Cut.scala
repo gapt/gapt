@@ -3,7 +3,7 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.{ Lemma, guessLabels, tactics }
-import at.logic.gapt.proofs.gaptic.tactics.{ CutTactic, ExistsRightTactic, ForallRightTactic, PropTactic }
+import at.logic.gapt.proofs.gaptic.tactics._
 import at.logic.gapt.proofs.lk.LKProof
 
 /**
@@ -61,14 +61,14 @@ object proveWithPi2Cut {
     //} ctx += d
 
     var state = ProofState( guessLabels( endSequent ) )
-    state += cut( "Cut", fof"!$nameOfUnVa ?$nameOfExVa $cutFormulaWithoutQuantifiers " )
+    state += cut( "Cut", fof"!$nameOfUnVa ?$nameOfExVa ($cutFormulaWithoutQuantifiers )" )
     state += allR( "Cut", seHs.universalEigenvariable )
-    for ( t <- seHs.substitutionsForBetaWithAlpha ) state += exR( "Cut", t )
+    for ( t <- seHs.substitutionsForBetaWithAlpha ) { state += exR( "Cut", t ) }
     state += haveInstances( seHs.reducedRepresentation )
     state += prop
     for ( i <- 0 until seHs.multiplicityOfAlpha ) {
       state += allL( "Cut", seHs.substitutionsForAlpha( i ) )
-      state += exR( "Cut", seHs.existentialEigenvariables( i ) )
+      state += exL( "Cut_" + i.toString, seHs.existentialEigenvariables( i ) )
     }
     state += haveInstances( seHs.reducedRepresentation )
     state += prop
