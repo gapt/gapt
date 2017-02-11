@@ -1,5 +1,5 @@
 package at.logic.gapt.proofs.lk
-import at.logic.gapt.expr.{ LambdaExpression, _ }
+import at.logic.gapt.expr.{ LambdaExpression, syntacticMatching, _ }
 import at.logic.gapt.proofs._
 
 /**
@@ -49,11 +49,12 @@ class LKProofSchemata {
       case Apps( at.logic.gapt.expr.Const( c, _ ), vs ) =>
         Instantiate( c, subs( vs ) )( ctx ) match {
           case Some( p ) => Some( p )
-          case None      => None
+          case _         => None
         }
       case _ => None
     }
     case LogicalAxiom( form )  => Some( LogicalAxiom( subs( form ) ) )
+
     case ReflexivityAxiom( s ) => Some( ReflexivityAxiom( subs( s ) ) )
     case TheoryAxiom( conclusion ) => conclusion match {
       case Sequent( ant, suc ) => Some( TheoryAxiom( Sequent( ant.map( x => subs( x ).asInstanceOf[HOLAtom] ), suc.map( x => subs( x ).asInstanceOf[HOLAtom] ) ) ) )
