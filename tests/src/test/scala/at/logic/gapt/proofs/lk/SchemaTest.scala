@@ -31,11 +31,11 @@ class SchemaTest extends Specification {
   }
 
   "Testing  Nia-schema Large" in {
-    LKProofSchemata.Instantiate( "omega", Seq( le"((s:w>w) ((s:w>w) ((s:w>w) (0:w))))" ) )( niaSchema.ctx ) mustNotEqual None
+    LKProofSchemata.Instantiate( "omega", Seq( le"(s (s ((s:w>w) (0:w))))" ) )( niaSchema.ctx ) mustNotEqual None
   }
 
   "Testing Nia-schema Super Large" in {
-    LKProofSchemata.Instantiate( "omega", Seq( le"((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) ((s:w>w) (0:w)))))))))))))))))))))))))))))))))" ) )( niaSchema.ctx ) mustNotEqual None
+    LKProofSchemata.Instantiate( "omega", Seq( le"(s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s (s ((s:w>w) (0:w)))))))))))))))))))))))))))))))))" ) )( niaSchema.ctx ) mustNotEqual None
 
   }
 
