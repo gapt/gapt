@@ -3,23 +3,23 @@ import at.logic.gapt.expr.{ LambdaExpression, syntacticMatching, _ }
 import at.logic.gapt.proofs._
 
 /**
- * The plan is to put all future function, classes, etc. dealing with linkProof schemata into this file.
- * Created by Ermine516 on 02.02.17.
+ * The plan is to put all future functions, classes, etc. dealing with Proof schemata into this file.
+ * Created by David M. Cerna on 02.02.17.
  */
 
 /**
- * The Point of this class is to allow the instantiation of linkProof schemata.
- * We provide two functions, one for linkProof schemata indexed by inductive datatypes
- * and one for linkProof schemata indexed by numeric expressions only.
+ * The Point of this class is to allow the instantiation of Proof schemata.
  */
-class LKProofSchemata {
-
+object LKProofSchemata {
   /**
-   * Note that there is no guarantee that instantiated linkProof schemata will result in a finite
-   * linkProof, thus one must provide a maxdepth function which takes a sequence of lambda expressions
-   * and returns an integer. That is the max depth to unroll the linkProof schemata two.
+   * Given a proof name found in the context and a set of arguments matching
+   * the argument list of the chosen proof name this function constructs an
+   * instantiation of that proof. Note that this can result in an infinite
+   * loop or no proof depending on how the chosen arguments are used in the
+   * the chosen proof
+   *
    * @param ProofName The name of the linkProof
-   * @param args The arguements for the free parameters of the linkProof.
+   * @param args The arguments for the free parameters of the linkProof.
    */
   def Instantiate( ProofName: String, args: Seq[LambdaExpression] )( implicit ctx: Context ): Option[LKProof] = {
 
@@ -44,6 +44,13 @@ class LKProofSchemata {
       case _ => None
     }
   }
+  /**
+   * This function traverses a schematic proofs and applies the proof and variable substitutions where
+   * needed.
+   *
+   * @param subs The substitutions for the free parameters
+   * @param linkProof The proof we are traversing
+   */
   def buildProof( subs: Substitution, linkProof: LKProof )( implicit ctx: Context ): Option[LKProof] = linkProof match {
     case ProofLink( le, _ ) => le match {
       case Apps( at.logic.gapt.expr.Const( c, _ ), vs ) =>
