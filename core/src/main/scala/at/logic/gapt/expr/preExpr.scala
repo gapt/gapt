@@ -2,7 +2,12 @@ package at.logic.gapt.expr
 
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.{ expr => real }
+import cats.Monad
+import cats.data.StateT
+import cats.syntax.traverse._
 import cats.syntax.either._
+import cats.instances.list._
+import cats.instances.either._
 
 import scala.collection.mutable
 
@@ -161,8 +166,6 @@ object preExpr {
     }
   }
 
-  case class ElabError( loc: Option[Location], msg: String, expected: Option[Type], actual: Type, assg: Map[MetaTypeIdx, Type] )
-
   def locOf( expr: Expr ): Option[Location] =
     expr match {
       case LocAnnotation( _, loc ) => Some( loc )
@@ -179,68 +182,53 @@ object preExpr {
       case Quoted( _, _, _ ) => None
     }
 
-  def infers( exprs: Seq[Expr], env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] )( implicit loc: Option[Location] ): Either[ElabError, ( Map[MetaTypeIdx, Type], Seq[Type] )] =
-    exprs match {
-      case Seq() => Right( s0 -> Seq() )
-      case expr +: rest =>
-        for {
-          r1 <- infer( expr, env, s0 )
-          ( s1, exprt ) = r1
-          r2 <- infers( rest, env, s1 )
-          ( s2, restts ) = r2
-        } yield ( s2, exprt +: restts )
-    }
+  type ElabState = Map[MetaTypeIdx, Type]
+  case class ElabError( loc: Option[Location], msg: String, expected: Option[Type], actual: Type, assg: ElabState )
+  type ElabResult[X] = Either[ElabError, X]
+  type Elab[X] = StateT[ElabResult, ElabState, X]
 
-  def infer( expr: Expr, env: Map[String, () => Type], s0: Map[MetaTypeIdx, Type] )( implicit loc: Option[Location] ): Either[ElabError, ( Map[MetaTypeIdx, Type], Type )] =
+  def infers( exprs: Seq[Expr], env: Map[String, () => Type] )( implicit loc: Option[Location] ): Elab[List[Type]] =
+    exprs.toList.traverse( infer( _, env ) )
+
+  def unify( a: Type, b: Type, mkErr: UnificationError => ElabError ): Elab[Unit] =
+    StateT.modifyF[ElabResult, ElabState]( solve( List( a -> b ), _ ).leftMap( mkErr ) )
+
+  def infer( expr: Expr, env: Map[String, () => Type] )( implicit loc: Option[Location] ): Elab[Type] =
     expr match {
       case LocAnnotation( e, loc_ ) =>
-        infer( e, env, s0 )( Some( loc_ ) )
+        infer( e, env )( Some( loc_ ) )
       case TypeAnnotation( e, t ) =>
         for {
-          r1 <- infer( e, env, s0 )
-          ( s1, et ) = r1
-          s2 <- solve( List( et -> t ), s1 ).
-            leftMap( err => ElabError( loc, s"mismatched annotated type", Some( t ), et, err.assg ) )
-        } yield ( s2, et )
+          et <- infer( e, env )
+          _ <- unify( et, t, err => ElabError( loc, s"mismatched annotated type", Some( t ), et, err.assg ) )
+        } yield et
       case Ident( n, t ) =>
         if ( env contains n ) {
           val tyInEnv = env( n )()
-          for (
-            s1 <- solve( List( tyInEnv -> t ), s0 ).
-              leftMap( err => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, err.assg ) )
-          ) yield ( s1, t )
-        } else Right( s0 -> t )
+          for {
+            _ <- unify( tyInEnv, t, err => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, err.assg ) )
+          } yield t
+        } else Monad[Elab].pure( t )
       case Abs( Ident( vn, vt ), t ) =>
         for {
-          r1 <- infer( t, env + ( vn -> ( () => vt ) ), s0 )
-          ( s1, subt ) = r1
-        } yield ( s1, ArrType( vt, subt ) )
+          subt <- infer( t, env + ( vn -> ( () => vt ) ) )
+        } yield ArrType( vt, subt ): Type
       case App( a, b ) =>
         val resType = freshMetaType()
         val argType = freshMetaType()
         for {
-          r1 <- infer( a, env, s0 )
-          ( s1, at ) = r1
-          s2 <- solve( List( at -> ArrType( argType, resType ) ), s1 ).
-            leftMap( err => ElabError( locOf( a ).orElse( loc ), "not a function", None, at, err.assg ) )
-          r3 <- infer( b, env, s2 )
-          ( s3, bt ) = r3
-          s4 <- solve( List( bt -> argType ), s3 ).
-            leftMap( err => ElabError( locOf( b ).orElse( loc ), "incorrect type for argument", Some( argType ), bt, err.assg ) )
-        } yield ( s4, resType )
+          at <- infer( a, env )
+          _ <- unify( at, ArrType( argType, resType ), err => ElabError( locOf( a ).orElse( loc ), "not a function", None, at, err.assg ) )
+          bt <- infer( b, env )
+          _ <- unify( bt, argType, err => ElabError( locOf( b ).orElse( loc ), "incorrect type for argument", Some( argType ), bt, err.assg ) )
+        } yield resType: Type
       case Quoted( e, ty, fvs ) =>
-        def solveFVs( fvs: List[( String, Type )], s0: Map[MetaTypeIdx, Type] ): Either[ElabError, Map[MetaTypeIdx, Type]] =
-          fvs match {
-            case Nil => Right( s0 )
-            case ( ( name, fvTy ) :: rest ) =>
-              val tyInEnv = env( name )()
-              for {
-                s1 <- solve( List( tyInEnv -> fvTy ), s0 ).leftMap( err =>
-                  ElabError( loc, s"mismatched type for free variable $name in quote $e", Some( tyInEnv ), fvTy, err.assg ) )
-                s2 <- solveFVs( rest, s1 )
-              } yield s2
-          }
-        for ( s1 <- solveFVs( fvs.toList, s0 ) ) yield ( s1, ty )
+        fvs.toList.traverse {
+          case ( name, fvTy ) =>
+            val tyInEnv = env( name )()
+            unify( tyInEnv, fvTy, err =>
+              ElabError( loc, s"mismatched type for free variable $name in quote $e", Some( tyInEnv ), fvTy, err.assg ) )
+        }.map( _ => ty )
     }
 
   def freeIdentifers( expr: Expr ): Set[String] = expr match {
@@ -262,7 +250,7 @@ object preExpr {
   def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
     case LocAnnotation( e, _ )   => toRealExpr( e, assg, bound )
     case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
-    case expr @ Ident( name, ty ) =>
+    case Ident( name, ty ) =>
       if ( bound( name ) ) real.Var( name, toRealType( ty, assg ) )
       else real.Const( name, toRealType( ty, assg ) )
     case Abs( v @ Ident( vn, _ ), sub ) =>
@@ -270,7 +258,7 @@ object preExpr {
       real.Abs( toRealExpr( v, assg, bound_ ).asInstanceOf[real.Var], toRealExpr( sub, assg, bound_ ) )
     case App( a, b ) =>
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
-    case Quoted( e, ty, fvs ) => e
+    case Quoted( e, _, _ ) => e
   }
   def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[ElabError, Seq[real.LambdaExpression]] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet
@@ -284,8 +272,10 @@ object preExpr {
           () => fixedMeta
       } )
     }
-    for ( r <- infers( expr, startingEnv.toMap, Map() )( None ); ( assg, _ ) = r )
-      yield expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
+    infers( expr, startingEnv.toMap )( None ).run( Map() ).map {
+      case ( assg, _ ) =>
+        expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
+    }
   }
   def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.LambdaExpression] =
     toRealExprs( Seq( expr ), sig ).map( _.head )
