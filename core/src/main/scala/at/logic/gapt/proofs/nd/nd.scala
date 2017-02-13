@@ -1082,11 +1082,11 @@ case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: L
  * </pre>
  *
  * @param leftSubProof The proof π1
- * @param rightSubProof The proof π2
  * @param aux1 The index of A
+ * @param rightSubProof The proof π2
  * @param aux2 The index of ¬A
  */
-case class LawOfExcludedMiddleRule( leftSubProof: NDProof, rightSubProof: NDProof, aux1: SequentIndex, aux2: SequentIndex )
+case class LawOfExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
     extends BinaryNDProof with CommonRule {
 
   validateIndices( leftPremise, Seq( aux1 ) )

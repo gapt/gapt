@@ -140,6 +140,6 @@ object lemExample extends Script {
   val a2 = LogicalAxiom( hof"¬P" )
   val a3 = OrIntro1Rule( a1, hof"¬P" )
   val a4 = OrIntro2Rule( a2, hof"P" )
-  val a5 = LawOfExcludedMiddleRule( a3, a4, Ant( 0 ), Ant( 0 ) )
+  val a5 = LawOfExcludedMiddleRule( a3, Ant( 0 ), a4, Ant( 0 ) )
   println( a5 )
 }
