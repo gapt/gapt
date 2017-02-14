@@ -418,5 +418,4 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
 }
-}
 
