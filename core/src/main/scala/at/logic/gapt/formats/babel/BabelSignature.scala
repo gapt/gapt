@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.babel
 
-import ast._
-import at.logic.gapt.expr.Ty
+import at.logic.gapt.expr.preExpr._
+import at.logic.gapt.expr.{ Ty, preExpr }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.{ expr => real }
 

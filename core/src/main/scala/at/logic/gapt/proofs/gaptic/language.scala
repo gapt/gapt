@@ -6,8 +6,6 @@ import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk._
 
 import language.experimental.macros
-import scalaz._
-import Scalaz._
 
 object Lemma {
   def apply[T]( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.applyImpl
@@ -28,14 +26,9 @@ object LemmaMacros {
           t
         )
     } ) match {
-      case Success( ( _, newState ) ) => newState
-      case Failure( errors ) =>
-        throw new TacticFailureException(
-          s"Failed to apply tactic $tactical to proof state with sub goals:\n" +
-            proofState.subGoals.map { _.toPrettyString + "\n" }.mkString +
-            "CAUSED BY:\n" +
-            errors.toList.map { _.toSigRelativeString }.mkString( "\n" )
-        )
+      case Right( ( _, newState ) ) => newState
+      case Left( error ) =>
+        throw new TacticFailureException( error.toSigRelativeString )
     }
 
   def finishProof( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =

@@ -1,9 +1,9 @@
 package at.logic.gapt.formats.lisp
 
-import scala.util.{ Success, Failure, Try }
-import at.logic.gapt.formats.lisp
-import at.logic.gapt.formats.InputFile
+import at.logic.gapt.formats.{ InputFile, lisp }
 import org.parboiled2._
+
+import scala.util.{ Failure, Success, Try }
 
 /**
  * Lisp SExpression Datatypes and Parser

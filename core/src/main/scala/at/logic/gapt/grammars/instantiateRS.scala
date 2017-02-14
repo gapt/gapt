@@ -1,8 +1,7 @@
 package at.logic.gapt.grammars
 
-import scalaz._
-import Scalaz._
 import at.logic.gapt.expr._
+import cats.instances.list._, cats.syntax.traverse._
 
 object instantiateRS {
 

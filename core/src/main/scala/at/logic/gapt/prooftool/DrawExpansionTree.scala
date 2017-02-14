@@ -438,7 +438,7 @@ class DrawETNonQuantifier(
 ) extends DrawExpansionTree( main, expansionTree, outerQuantifier ) {
 
   override val subTrees = expansionTree match {
-    case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) | ETDefinition( _, _, _ ) =>
+    case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) | ETDefinition( _, _ ) =>
       val lbl = LatexLabel( main, LatexExporter( expansionTree.shallow ) )
       lbl.deafTo( lbl.mouse.moves, lbl.mouse.clicks ) // We don't want atoms to react to mouse behavior.
       contents += lbl

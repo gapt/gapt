@@ -34,7 +34,7 @@ class ViperTest extends Specification {
           ClasspathInputFile( s"induction/$prob.smt2" ),
           extraOptions
         )
-        val lk = new Viper( problem, options ).solve()
+        val lk = new Viper( problem.ctx, problem.toSequent, options ).solve()
         ok
       }
     }

@@ -97,8 +97,8 @@ object canonicalRsLHS {
               ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _*
             )
           }
-          import scalaz._, Scalaz._
-          newArgs.traverse( identity ).map( nt( _: _* ) ): List[LambdaExpression]
+          import cats.syntax.traverse._, cats.instances.list._
+          newArgs.traverse( identity ).map( nt( _: _* ) )
       }
     }
 }

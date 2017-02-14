@@ -111,7 +111,7 @@ case class ProofByRecursionScheme(
     } yield i
 
     state += vs.indices.map( i =>
-      if ( indArgs( i ) ) allR( "goal" ).flatMap( induction( _, "goal" ) ).asTactic
+      if ( indArgs( i ) ) allR( "goal" ).flatMap( induction( _, "goal" ) ).onCurrentSubGoal
       else allR( "goal" ) ).foldRight( TacticalMonad.pure( () ) )( _ onAll _ )
 
     while ( state.currentSubGoalOption.nonEmpty ) {

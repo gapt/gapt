@@ -20,7 +20,7 @@ object SATProblems {
     c1 :: c2 :: Nil
   }
   def getProblem3a() = Or( pc, Neg( pc ) )
-  def getProblem3b() = new HOLSequent( Nil, Or( pc, Neg( pc ) ) :: Nil )
+  def getProblem3b() = HOLSequent( Nil, Or( pc, Neg( pc ) ) :: Nil )
   def getProblem4() = pc
   def getProblem5() = {
     val c1 = HOLClause( Nil, pc :: Nil )

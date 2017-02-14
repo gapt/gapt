@@ -55,11 +55,11 @@ object Times {
     new Times( left, right, Nil )
 
   //create a series of of times applications and add the same data to each
-  def apply[Data]( structs: Seq[Struct[Data]], aux: List[Data] ): Struct[Data] = structs match {
-    case Nil                       => EmptyTimesJunction()
-    case EmptyTimesJunction() :: l => apply( l, aux )
-    case s1 :: Nil                 => s1
-    case s1 :: tail                => apply( s1, apply( tail, aux ), aux )
+  def apply[Data]( structs: Vector[Struct[Data]], aux: List[Data] ): Struct[Data] = structs match {
+    case Vector()                  => EmptyTimesJunction()
+    case EmptyTimesJunction() +: l => apply( l, aux )
+    case Vector( s1 )              => s1
+    case s1 +: tail                => apply( s1, apply( tail, aux ), aux )
   }
 
   def unapply[Data]( t: Times[Data] ) = Some( ( t.left, t.right, t.data ) )

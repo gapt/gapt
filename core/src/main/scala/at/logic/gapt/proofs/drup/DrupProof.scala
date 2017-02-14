@@ -3,9 +3,9 @@ package at.logic.gapt.proofs.drup
 import at.logic.gapt.expr.{ HOLFormula, Polarity }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
+import cats.{ Eval, Later, Now }
 
 import scala.collection.mutable
-import scalaz.{ Name, Need, Value }
 
 sealed abstract class DrupProofLine extends Product {
   def clause: HOLClause
@@ -47,10 +47,10 @@ object DrupProof {
 
 object DrupToResolutionProof {
   // We operate on pairs of clauses and resolution proofs.
-  //   - Proofs are computed only when needed (Name[_] does lazy evaluation)
+  //   - Proofs are computed only when needed (Eval[_] does lazy evaluation)
   //   - The clauses can be smaller than the conclusion of the proof,
   //      e.g. we can have a pair (:- a, Taut(a))
-  private type ResProofThunk = ( HOLSequent, Name[ResolutionProof] )
+  private type ResProofThunk = ( HOLSequent, Eval[ResolutionProof] )
 
   private def unitPropagationProver( cnf: Iterable[ResProofThunk] ): ResolutionProof = {
     // An atom together with a polarity
@@ -60,12 +60,12 @@ object DrupToResolutionProof {
     // All unit clauses that we have found so far, indexed by their one literal
     val unitIndex = mutable.Map[Literal, ResProofThunk]()
     // All non-unit clauses that we have found so far, indexed by the first two literals
-    val nonUnitIndex = mutable.Map[Literal, Map[HOLSequent, Name[ResolutionProof]]]().withDefaultValue( Map() )
+    val nonUnitIndex = mutable.Map[Literal, Map[HOLSequent, Eval[ResolutionProof]]]().withDefaultValue( Map() )
 
     def negate( lit: Literal ) = ( lit._1, !lit._2 )
     def resolve( p: ResProofThunk, unit: ResProofThunk, lit: Literal ): ResProofThunk =
-      if ( lit._2.inSuc ) ( p._1.removeFromSuccedent( lit._1 ), Need( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
-      else ( p._1.removeFromAntecedent( lit._1 ), Need( Factor( Resolution( unit._2.value, p._2.value, lit._1 ) ) ) )
+      if ( lit._2.inSuc ) ( p._1.removeFromSuccedent( lit._1 ), Later( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
+      else ( p._1.removeFromAntecedent( lit._1 ), Later( Factor( Resolution( unit._2.value, p._2.value, lit._1 ) ) ) )
 
     // Handle a new clause, and fully interreduce it with the clauses we have found so far
     def add( p: ResProofThunk ): Unit =
@@ -113,12 +113,12 @@ object DrupToResolutionProof {
   }
 
   def unitPropagationReplay( cnf: Iterable[ResolutionProof], toDerive: HOLClause ): ResolutionProof = {
-    val inputClauses = for ( p <- cnf ) yield p.conclusion -> Value( p )
+    val inputClauses = for ( p <- cnf ) yield p.conclusion -> Now( p )
     val negatedUnitClauses =
       for {
         ( a, i ) <- toDerive.zipWithIndex.elements
         concl = if ( i.isSuc ) Seq( a ) :- Seq() else Seq() :- Seq( a )
-      } yield concl -> Need( Taut( a ) )
+      } yield concl -> Later( Taut( a ) )
     unitPropagationProver( inputClauses ++ negatedUnitClauses )
   }
 
