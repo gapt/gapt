@@ -24,6 +24,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
 
     case ProofLink( referencedProof, linkquent ) =>
       ProofLink( betaNormalize( substitution( referencedProof ) ), linkquent.map { f => betaNormalize( substitution( f ) ) } )
+
     case InitialSequent( sequent ) =>
       Axiom( sequent.map { f => betaNormalize( substitution( f ) ) } )
 
