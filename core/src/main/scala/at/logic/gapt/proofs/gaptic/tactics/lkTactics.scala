@@ -5,9 +5,6 @@ import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import scalaz._
-import Scalaz._
-import Validation.FlatMap._
 
 /**
  * Closes a goal of the form A, Γ :- Δ, Δ
@@ -17,8 +14,8 @@ case object LogicalAxiomTactic extends Tactic[Unit] {
     val candidates = goal.conclusion.antecedent intersect goal.conclusion.succedent
 
     candidates match {
-      case Seq( formula, _* ) => ( (), LogicalAxiom( formula ) ).success
-      case _                  => TacticalFailure( this, Some( goal ), "not a logical axiom" ).failureNel
+      case Seq( formula, _* ) => Right( () -> LogicalAxiom( formula ) )
+      case _                  => Left( TacticalFailure( this, "not a logical axiom" ) )
     }
   }
 }
@@ -194,11 +191,11 @@ abstract class StrongQuantTactic extends Tactic[Var] {
     eigenVariable match {
       case Some( ev ) =>
         if ( freeVariables( goal.conclusion ) contains ev )
-          TacticalFailure( this, Some( goal ), "Provided eigenvariable would violate eigenvariable condition." ).failureNel
+          Left( TacticalFailure( this, "Provided eigenvariable would violate eigenvariable condition." ) )
         else
-          ev.success
+          Right( ev )
       case None =>
-        rename( bound, freeVariables( goal.conclusion ) ).success
+        Right( rename( bound, freeVariables( goal.conclusion ) ) )
     }
 }
 
@@ -292,7 +289,7 @@ case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends BinaryT
     val rightPremise = OpenAssumption( ( cutLabel, cutFormula ) +: goalSequent )
 
     val auxProof = CutRule( leftPremise, Suc( leftPremise.labelledSequent.succedent.length - 1 ), rightPremise, Ant( 0 ) )
-    ( () -> auxProof ).success
+    Right( () -> auxProof )
   }
 }
 
@@ -317,7 +314,7 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRi
     ) yield ( eqIndex, formulaIndex )
 
     indices.headOption match {
-      case None => TacticalFailure( this, Some( goal ), "label not found" ).failureNel
+      case None => Left( TacticalFailure( this, "label not found" ) )
       case Some( ( equalityIndex, formulaIndex ) ) =>
         val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
         val ( _, auxFormula ) = goalSequent( formulaIndex )
@@ -400,8 +397,9 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRi
             val newGoal = goalSequent.updated( formulaIndex, formulaLabel -> x )
             val premise = OpenAssumption( newGoal )
 
-            ( (), if ( formulaIndex.isAnt ) EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula ) else EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) ).success
-          case _ => TacticalFailure( this, Some( goal ), "FIXME" ).failureNel
+            Right( ( (), if ( formulaIndex.isAnt ) EqualityLeftRule( premise, equalityIndex, formulaIndex, auxFormula )
+            else EqualityRightRule( premise, equalityIndex, formulaIndex, auxFormula ) ) )
+          case _ => Left( TacticalFailure( this, "FIXME" ) )
         }
     }
   }

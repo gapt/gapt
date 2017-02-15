@@ -43,15 +43,14 @@ object ResolutionToLKProof {
 
       case p @ Defn( defConst, defExpr ) =>
         val phi = BetaReduction.betaNormalize( defExpr( p.vars ) ).asInstanceOf[HOLFormula]
-        val definition = Definition( defConst, defExpr )
-        val ctx = replacementContext.abstractTerm( defConst( p.vars: _* ) )( defConst )
+        val defAtom = p.defConst( p.vars ).asInstanceOf[HOLFormula]
 
         ProofBuilder.
           c( LogicalAxiom( phi ) ).
-          u( DefinitionLeftRule( _, Ant( 0 ), definition, ctx ) ).
+          u( DefinitionLeftRule( _, Ant( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           c( LogicalAxiom( phi ) ).
-          u( DefinitionRightRule( _, Suc( 0 ), definition, ctx ) ).
+          u( DefinitionRightRule( _, Suc( 0 ), defAtom ) ).
           u( ImpRightRule( _, Ant( 0 ), Suc( 0 ) ) ).
           b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
           u( ForallRightBlock( _, p.definitionFormula, p.vars ) ).
@@ -77,13 +76,13 @@ object ResolutionToLKProof {
         val Right( p1 ) = solvePropositional( comp.disjunction +: comp.clause )
         val p2 = ForallLeftBlock( p1, aux, vars )
 
-        val p3 = DefinitionLeftRule( p2, aux, comp.toDefinition, splAtom )
+        val p3 = DefinitionLeftRule( p2, aux, splAtom )
         p3
       case AvatarComponent( AvatarGroundComp( atom, _ ) ) => LogicalAxiom( atom )
       case AvatarComponent( comp @ AvatarNegNonGroundComp( splAtom, aux, vars, idx ) ) =>
         val Right( p1 ) = solvePropositional( comp.clause :+ comp.disjunction )
         val p2 = ForallRightBlock( p1, aux, vars )
-        val p3 = DefinitionRightRule( p2, aux, comp.toDefinition, splAtom )
+        val p3 = DefinitionRightRule( p2, aux, splAtom )
         p3
       case AvatarSplit( q, indices, AvatarGroundComp( _, _ ) ) => f( q )
       case p @ AvatarSplit( q, _, comp @ AvatarNonGroundComp( splAtom, aux, vars ) ) =>
@@ -103,22 +102,14 @@ object ResolutionToLKProof {
           }
         mkOr( comp.disjunction )
         p_ = ForallRightBlock( p_, aux, vars )
-        p_ = DefinitionRightRule( p_, aux, comp.toDefinition, splAtom )
+        p_ = DefinitionRightRule( p_, aux, splAtom )
         p_
 
-      case DefIntro( q, i: Suc, definition, args ) =>
-        val Definition( what, by ) = definition
-        val tp = what.exptype
-        val X = rename awayFrom freeVariables( args ) fresh Var( "X", tp )
-        val ctx = Abs( X, Apps( X, args ) )
-        DefinitionRightRule( f( q ), q.conclusion( i ), definition, ctx )
+      case p @ DefIntro( q, i: Suc, definition, args ) =>
+        DefinitionRightRule( f( q ), q.conclusion( i ), p.defAtom )
 
-      case DefIntro( q, i: Ant, definition, args ) =>
-        val Definition( what, by ) = definition
-        val tp = what.exptype
-        val X = rename awayFrom freeVariables( args ) fresh Var( "X", tp )
-        val ctx = Abs( X, Apps( X, args ) )
-        DefinitionLeftRule( f( q ), q.conclusion( i ), definition, ctx )
+      case p @ DefIntro( q, i: Ant, definition, args ) =>
+        DefinitionLeftRule( f( q ), q.conclusion( i ), p.defAtom )
 
       case p @ Flip( q, i: Ant ) =>
         CutRule( mkSymmProof( p.s, p.t ), f( q ), q.conclusion( i ) )

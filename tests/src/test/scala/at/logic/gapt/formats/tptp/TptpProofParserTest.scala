@@ -8,8 +8,6 @@ import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragments
 
-import scalaz._
-
 class TptpProofParserTest extends Specification {
 
   Fragments.foreach( Seq(
@@ -25,7 +23,7 @@ class TptpProofParserTest extends Specification {
       val ( endSequent, sketch ) = TptpProofParser.parse( ClasspathInputFile( fn ) )
       sketch.conclusion must_== Clause()
 
-      val Success( robinson ) = RefutationSketchToResolution( sketch )
+      val Right( robinson ) = RefutationSketchToResolution( sketch )
       robinson.conclusion must_== Clause()
 
       val fixed = fixDerivation( robinson, endSequent )

@@ -66,11 +66,7 @@ class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( u
           ( pretty( term_ ), group( nest( "+^{" <> term_ <> "}" <@> child_ ) ) )
       }
       parenIf( p, prio.conj, vsep( sh_ +: insts_.sortBy( _._1.layout ).map( _._2 ) ) ) -> t2
-    case et @ ETDefinedAtom( atom, pol, _ ) =>
-      val ( sh_, t1 ) = show( et.shallow, true, Set(), t0, prio.conj )
-      val ( child_, t2 ) = show( ETAtom( atom, pol ), t1, prio.conj )
-      parenIf( p, prio.conj, sh_ <+> "+def" <@> child_ ) -> t2
-    case ETDefinition( shallow, _, child ) =>
+    case ETDefinition( shallow, child ) =>
       val ( sh_, t1 ) = show( shallow, true, Set(), t0, prio.conj )
       val ( child_, t2 ) = show( child, t1, prio.conj )
       parenIf( p, prio.conj, sh_ <+> "+def" <@> child_ ) -> t2

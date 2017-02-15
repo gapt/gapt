@@ -10,7 +10,6 @@ import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import at.logic.gapt.utils.Not
 
 import scala.annotation.implicitNotFound
-import scalaz.{ -\/, \/, \/- }
 
 package object prooftool {
 
@@ -65,11 +64,6 @@ package object prooftool {
   implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] = {
     case ( Some( y ), name ) => ProoftoolViewable[T].display( y, name )
     case _                   => throw new IllegalArgumentException
-  }
-
-  implicit def DisjViewable[T: ProoftoolViewable, S]: ProoftoolViewable[S \/ T] = {
-    case ( \/-( y ), name ) => ProoftoolViewable[T].display( y, name )
-    case ( -\/( y ), _ )    => throw new IllegalArgumentException( y.toString )
   }
 
   implicit def EitherViewable[T: ProoftoolViewable, S]: ProoftoolViewable[Either[S, T]] = {

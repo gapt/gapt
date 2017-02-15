@@ -273,13 +273,13 @@ trait LKVisitor[T] {
   protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        DefinitionLeftRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
+        DefinitionLeftRule( subProof, subConn.child( proof.aux ), proof.mainFormula )
     }
 
   protected def visitDefinitionRight( proof: DefinitionRightRule, otherArg: T ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProof, subConn ) ) =>
-        DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.definition, proof.replacementContext )
+        DefinitionRightRule( subProof, subConn.child( proof.aux ), proof.mainFormula )
     }
 
   /**

@@ -760,24 +760,24 @@ trait TokenToLKConverter extends Logger {
     val definitions = llk_definitions.toList.map( llkd => llkDefinitionToLKDefinition( llkd._1, llkd._2 ) )
 
     ( auxsequent, mainsequent ) match {
-      case ( HOLSequent( Nil, List( aux ) ), HOLSequent( Nil, List( main ) ) ) =>
+      case ( HOLSequent( Vector(), Vector( aux ) ), HOLSequent( Vector(), Vector( main ) ) ) =>
 
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
-          DefinitionRightRule( parent, aux, d, main );
+          DefinitionRightRule( parent, aux, main );
           false
         } catch { case e: Exception => true } ) match {
-          case d :: _ => DefinitionRightRule( parent, aux, d, main )
+          case d :: _ => DefinitionRightRule( parent, aux, main )
           case _ =>
             throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
         rule :: stack
-      case ( HOLSequent( List( aux ), Nil ), HOLSequent( List( main ), Nil ) ) =>
+      case ( HOLSequent( Vector( aux ), Vector() ), HOLSequent( Vector( main ), Vector() ) ) =>
         //try each definition to infer the main formula
         val rule = definitions.dropWhile( d => try {
-          DefinitionLeftRule( parent, aux, d, main ); false
+          DefinitionLeftRule( parent, aux, main ); false
         } catch { case e: Exception => true } ) match {
-          case d :: _ => DefinitionLeftRule( parent, aux, d, main )
+          case d :: _ => DefinitionLeftRule( parent, aux, main )
           case _ =>
             throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
@@ -894,7 +894,7 @@ trait TokenToLKConverter extends Logger {
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axdef, axformula )
+    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
 
     val Eq( s, t ) = auxf
 
@@ -903,22 +903,22 @@ trait TokenToLKConverter extends Logger {
     require( mainsequent.formulas.size == 1, "Exactly one main formula required, not " + f( mainsequent ) )
     require( auxsequent.formulas.size == 1, "Excatly one auxiliary formula needed in parent, not " + f( auxsequent ) )
     val newproof = auxsequent match {
-      case HOLSequent( Nil, List( formula ) ) =>
+      case HOLSequent( Vector(), Vector( formula ) ) =>
         require(
           mainsequent.antecedent.isEmpty && mainsequent.succedent.size == 1,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
             + f( mainsequent ) + " and " + f( auxsequent )
         )
-        val HOLSequent( Nil, List( main ) ) = mainsequent
+        val HOLSequent( Vector(), Vector( main ) ) = mainsequent
         CutRule( axrule, auxf, EqualityRightRule( WeakeningLeftRule( oldproof, auxf ), auxf, formula, main ), auxf )
 
-      case HOLSequent( List( formula ), Nil ) =>
+      case HOLSequent( Vector( formula ), Vector() ) =>
         require(
           mainsequent.antecedent.size == 1 && mainsequent.succedent.isEmpty,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
             + f( mainsequent ) + " and " + f( auxsequent )
         )
-        val HOLSequent( List( main ), Nil ) = mainsequent
+        val HOLSequent( Vector( main ), Vector() ) = mainsequent
         CutRule( axrule, auxf, EqualityLeftRule( WeakeningLeftRule( oldproof, auxf ), auxf, formula, main ), auxf )
     }
 
@@ -945,7 +945,7 @@ trait TokenToLKConverter extends Logger {
       "Auxformula formula in inst axiom rule need to be on the lh side of the sequent, not " + f( auxsequent )
     )
 
-    val HOLSequent( List( auxf_ ), Nil ) = auxsequent
+    val HOLSequent( Vector( auxf_ ), Vector() ) = auxsequent
     val auxf = c( normalize( auxf_ ) )
 
     //println("auxf="+f(auxf))
@@ -990,7 +990,7 @@ trait TokenToLKConverter extends Logger {
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
     val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, oldproof, sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
-    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axdef, axformula )
+    val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
   }
 
@@ -1214,7 +1214,7 @@ trait TokenToLKConverter extends Logger {
         val d = definitions.find( _.what == c ).getOrElse(
           throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" )
         )
-        ( axiomconj, DefinitionLeftRule( pi, axiom, d, axiomconj ) )
+        ( axiomconj, DefinitionLeftRule( pi, axiom, axiomconj ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>
         val ( aux, uproof ) = getAxiomLookupProof( name, axiom, instance, x, axiomproof, sub, definitions )

@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, instantiate }
-import at.logic.gapt.expr.{ Abs, All, And, Apps, Const, Definition, Eq, FunctionType, HOLAtom, Polarity, To, Var, freeVariables, rename }
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
@@ -15,13 +14,13 @@ object LKToExpansionProof {
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
    */
-  def apply( proof: LKProof ): ExpansionProofWithCut = {
+  def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProofWithCut = {
     val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
     val theory_ = theory.groupBy { _.shallow }.values.toSeq.map { ETMerge( _ ) }
-    eliminateMerges( ExpansionProofWithCut( theory_ ++: expansionSequent ) )
+    eliminateMerges( moveDefsUpward( ExpansionProofWithCut( theory_ ++: expansionSequent ) ) )
   }
 
-  private def extract( proof: LKProof ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
+  private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
     case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
@@ -54,14 +53,14 @@ object LKToExpansionProof {
     case c @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
-      val newCut = ETWeakQuantifier(
-        ExpansionProofWithCut.cutAxiom,
-        Map( c.cutFormula -> ETImp( leftSequent( aux1 ), rightSequent( aux2 ) ) )
-      )
-      val cuts = if ( containsQuantifierOnLogicalLevel( c.cutFormula ) )
-        newCut +: ( leftCuts ++ rightCuts )
-      else leftCuts ++ rightCuts
-      ( cuts, leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
+      val cutImp = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
+      val newCut = ETWeakQuantifier( ExpansionProofWithCut.cutAxiom, Map( c.cutFormula -> cutImp ) )
+      val cuts =
+        if ( !isPropositionalET( cutImp ) )
+          newCut +: ( leftCuts ++ rightCuts )
+        else
+          leftCuts ++ rightCuts
+      cuts -> ( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
 
     // Propositional rules
     case NegLeftRule( subProof, aux ) =>
@@ -81,14 +80,14 @@ object LKToExpansionProof {
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
       val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
-      ( leftCuts ++ rightCuts, ( leftSubSequent ++ rightSubSequent ) :+ ETAnd( leftSubTree, rightSubTree ) )
+      ( leftCuts ++ rightCuts ) -> ( leftSubSequent ++ rightSubSequent :+ ETAnd( leftSubTree, rightSubTree ) )
 
     case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val ( leftSubTree, leftSubSequent ) = leftSequent.focus( aux1 )
       val ( rightSubTree, rightSubSequent ) = rightSequent.focus( aux2 )
-      ( leftCuts ++ rightCuts, ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
+      ( leftCuts ++ rightCuts ) -> ( ETOr( leftSubTree, rightSubTree ) +: ( leftSubSequent ++ rightSubSequent ) )
 
     case OrRightRule( subProof, aux1, aux2 ) =>
       val ( subCuts, subSequent ) = extract( subProof )
@@ -140,44 +139,14 @@ object LKToExpansionProof {
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
 
-    case p @ DefinitionLeftRule( subProof, aux, defn, ctx ) =>
-      defn.ty match {
-        case FunctionType( To, argTypes ) => // atom definition
-          p.mainFormula match {
-            case a: HOLAtom => // atom is in top position
-              val ( subCuts, subSequent ) = extract( subProof )
+    case DefinitionLeftRule( subProof, aux, main ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
 
-              ( subCuts, ETDefinition( a, defn, subSequent( aux ) ) +: subSequent.delete( aux ) )
+      ( subCuts, ETDefinition( main, subSequent( aux ) ) +: subSequent.delete( aux ) )
 
-            case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
-          }
+    case DefinitionRightRule( subProof, aux, main ) =>
+      val ( subCuts, subSequent ) = extract( subProof )
 
-        case _ => // term definition
-          val ( subCuts, subSequent ) = extract( subProof )
-          val auxTree = subSequent( p.aux )
-
-          val newAuxTree = replaceWithContext( auxTree, p.replacementContext, defn.what )
-          ( subCuts, newAuxTree +: subSequent.delete( aux ) )
-      }
-
-    case p @ DefinitionRightRule( subProof, aux, defn, ctx ) =>
-      defn.ty match {
-        case FunctionType( To, argTypes ) => // atom definition
-          p.mainFormula match {
-            case a: HOLAtom => // atom is in top position
-              val ( subCuts, subSequent ) = extract( subProof )
-
-              ( subCuts, subSequent.delete( aux ) :+ ETDefinition( a, defn, subSequent( aux ) ) )
-
-            case _ => throw new IllegalArgumentException( s"Definition $defn is used within a larger formula ${p.mainFormula} in sequent ${subProof.endSequent}." )
-          }
-
-        case _ => // term definition
-          val ( subCuts, subSequent ) = extract( subProof )
-          val auxTree = subSequent( p.aux )
-
-          val newAuxTree = replaceWithContext( auxTree, p.replacementContext, defn.what )
-          ( subCuts, subSequent.delete( aux ) :+ newAuxTree )
-      }
+      ( subCuts, subSequent.delete( aux ) :+ ETDefinition( main, subSequent( aux ) ) )
   }
 }

@@ -1,30 +1,39 @@
 package at.logic.gapt.proofs
 
-import scalaz._
-import Scalaz._
+import cats.Monad
+
+import scala.annotation.tailrec
+import scala.util.{ Left, Right }
 
 package object gaptic extends TacticCommands {
 
   /**
-   * Implementation of the [[scalaz.Monad]] typeclass for Tacticals.
+   * Implementation of the [[cats.Monad]] typeclass for Tacticals.
    */
   implicit object TacticalMonad extends Monad[Tactical] {
-    def point[A]( a: => A ): Tactical[A] = new Tactical[A] {
-      def apply( proofState: ProofState ) = ( a -> proofState ).success
-    }
+    override def pure[A]( x: A ): Tactical[A] = s => Right( x -> s )
 
-    def bind[A, B]( fa: Tactical[A] )( f: A => Tactical[B] ): Tactical[B] =
-      fa flatMap f
+    override def flatMap[A, B]( fa: Tactical[A] )( f: ( A ) => Tactical[B] ): Tactical[B] =
+      fa.flatMap( f )
+
+    override def tailRecM[A, B]( a: A )( f: ( A ) => Tactical[Either[A, B]] ): Tactical[B] = proofState => {
+      @tailrec
+      def recurse( a: A, proofState: ProofState ): Either[TacticalFailure, ( B, ProofState )] =
+        f( a )( proofState ) match {
+          case Left( error )                          => Left( error )
+          case Right( ( Left( a_ ), proofState_ ) )   => recurse( a_, proofState_ )
+          case Right( ( Right( res ), proofState_ ) ) => Right( res -> proofState_ )
+        }
+      recurse( a, proofState )
+    }
   }
 
   implicit class TacticalOptionOps[T]( option: Option[T] ) {
-    def toTactical( errorMsg: String ): Tactical[T] = toTactical( errorMsg, None )
-    def toTactical( errorMsg: String, goal: OpenAssumption ): Tactical[T] = toTactical( errorMsg, Some( goal ) )
-    def toTactical( errorMsg: String, goal: Option[OpenAssumption] ): Tactical[T] = new Tactical[T] {
+    def toTactical( errorMsg: String ): Tactical[T] = new Tactical[T] {
       override def apply( proofState: ProofState ) =
         option match {
-          case None          => TacticalFailure( this, goal, errorMsg ).failureNel
-          case Some( value ) => ( value -> proofState ).success
+          case None          => Left( TacticalFailure( this, proofState, errorMsg ) )
+          case Some( value ) => Right( value -> proofState )
         }
 
       override def toString = s"$option.toTactical"
