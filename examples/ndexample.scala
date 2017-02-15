@@ -5,6 +5,26 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.nd._
 
+object doubleNegationElim extends Script {
+  val a1 = LogicalAxiom( hof"¬¬A" )
+  val a2 = LogicalAxiom( hof"¬A" )
+  val a3 = NegElimRule( a1, a2 )
+  val a4 = BottomElimRule( a3, hof"A" )
+
+  val b1 = LogicalAxiom( hof"A" )
+
+  val c1 = LogicalAxiom( hof"A" )
+  val c2 = LogicalAxiom( hof"¬A" )
+  val c3 = OrIntro1Rule( c1, hof"¬A" )
+  val c4 = OrIntro2Rule( c2, hof"A" )
+  val c5 = ExcludedMiddleRule( c3, Ant( 0 ), c4, Ant( 0 ) )
+
+  val a5 = OrElimRule( b1, a4, c5 )
+  val a6 = ImpIntroRule( a5 )
+
+  println( a6 )
+}
+
 object ex extends Script {
   val a1 = LogicalAxiom( hof"p" )
   val a2 = AndIntroRule( a1, a1 )
@@ -102,8 +122,8 @@ object ndBottomExample extends Script {
 }
 
 object negationExample extends Script {
-  val a1 = LogicalAxiom( hof"a" )
-  val a2 = LogicalAxiom( hof"¬a" )
+  val a1 = LogicalAxiom( hof"¬a" )
+  val a2 = LogicalAxiom( hof"a" )
   val a3 = NegElimRule( a1, a2 )
   val a4 = NegIntroRule( a3, Ant( 0 ) )
   println( a4 )
@@ -140,6 +160,6 @@ object lemExample extends Script {
   val a2 = LogicalAxiom( hof"¬P" )
   val a3 = OrIntro1Rule( a1, hof"¬P" )
   val a4 = OrIntro2Rule( a2, hof"P" )
-  val a5 = LawOfExcludedMiddleRule( a3, Ant( 0 ), a4, Ant( 0 ) )
+  val a5 = ExcludedMiddleRule( a3, Ant( 0 ), a4, Ant( 0 ) )
   println( a5 )
 }

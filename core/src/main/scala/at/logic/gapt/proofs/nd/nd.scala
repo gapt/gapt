@@ -655,7 +655,7 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
  * An NDProof ending with elimination of a negation:
  * <pre>
  *   (π1)      (π2)
- *  Γ :- A    Π :- ¬A
+ *  Γ :- ¬A    Π :- A
  * -------------------
  *     Γ, Π :- ⊥
  * </pre>
@@ -666,8 +666,8 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
 case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
     extends BinaryNDProof with CommonRule {
 
-  val formula = leftPremise( Suc( 0 ) )
-  val negatedFormula = rightPremise( Suc( 0 ) )
+  val negatedFormula = leftPremise( Suc( 0 ) )
+  val formula = rightPremise( Suc( 0 ) )
 
   val mainFormula = if ( negatedFormula == Neg( formula ) ) Bottom() else throw NDRuleCreationException( s"Formula $negatedFormula is not the negation of $formula." )
 
@@ -1086,7 +1086,7 @@ case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: L
  * @param rightSubProof The proof π2
  * @param aux2 The index of ¬A
  */
-case class LawOfExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
+case class ExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
     extends BinaryNDProof with CommonRule {
 
   validateIndices( leftPremise, Seq( aux1 ) )
