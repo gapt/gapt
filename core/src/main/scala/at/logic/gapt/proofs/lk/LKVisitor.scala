@@ -44,6 +44,7 @@ trait LKVisitor[T] {
 
     case p: ProofLink =>
       visitProofLink( p, otherArg )
+
     case TopAxiom =>
       visitTopAxiom( otherArg )
 

@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProofSchemata
 
-//val two = LKProofSchemata.Instantiate("omega",Seq(le"((s:w>w) (0:w))",le"(0:w)"))(niaSchema.ctx)
+//val two = LKProofSchemata.Instantiate("omega",Seq(le"((s:w>w) (0:w))",le"(0:w)"))(gniaSchema.ctx)
 
 object gniaSchema extends TacticsProof {
   ctx += Context.Sort( "i" )
@@ -33,27 +33,33 @@ object gniaSchema extends TacticsProof {
   ctx += hos"LEQ(g(p),q):- LE(p,q)"
   ctx += hos"LEQ(max(a, b), c) :- LEQ(a, c)"
   ctx += hos"LEQ(max(a, b), c) :- LEQ(b, c)"
- 
-//Schematic Definitions
+
+  //Schematic Definitions
 
   //The Name declaration of proof nu
-  val esnu = Sequent( 
-      Seq(hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )", 
-          hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
-          hof"E(f(A),n)",
-          hof"!x?y(LEQ(x,y) & E(f(y),n))"), 
-      Seq(hof"Ech(m,A)"))
+  val esnu = Sequent(
+    Seq(
+      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )",
+      hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
+      hof"E(f(A),n)",
+      hof"!x?y(LEQ(x,y) & E(f(y),n))"
+    ),
+    Seq( hof"Ech(m,A)" )
+  )
 
-ctx += Context.ProofNameDeclaration( le"nu n m A", esnu)
+  ctx += Context.ProofNameDeclaration( le"nu n m A", esnu )
 
- //The Name declaration of proof mu
-  val esmu = Sequent( 
-      Seq(hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )", 
-          hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
-          hof"!x?y(LEQ(x,y) & E(f(y),n))"), 
-      Seq(hof"?p Ech(m,p)"))
+  //The Name declaration of proof mu
+  val esmu = Sequent(
+    Seq(
+      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )",
+      hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
+      hof"!x?y(LEQ(x,y) & E(f(y),n))"
+    ),
+    Seq( hof"?p Ech(m,p)" )
+  )
 
-ctx += Context.ProofNameDeclaration( le"mu n m", esmu)
+  ctx += Context.ProofNameDeclaration( le"mu n m", esmu )
 
   //The Name declaration of proof chi
   val eschi = Sequent(
@@ -65,22 +71,25 @@ ctx += Context.ProofNameDeclaration( le"mu n m", esmu)
     Seq( hof"POR(n,a)" )
   )
   ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
- //The Name declaration of proof nuPrime
-  val esnuPrime = Sequent( 
-      Seq(hof"!x POR(0,x) = E(f(x),0)",
-          hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))",
-          hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )", 
-          hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
-          hof"E(f(A),0)",
-          hof"!x?y(LEQ(x,y) & POR(0,y))"), 
-      Seq(hof"Ech(m,A)"))
+  //The Name declaration of proof nuPrime
+  val esnuPrime = Sequent(
+    Seq(
+      hof"!x POR(0,x) = E(f(x),0)",
+      hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))",
+      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )",
+      hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
+      hof"E(f(A),0)",
+      hof"!x?y(LEQ(x,y) & POR(0,y))"
+    ),
+    Seq( hof"Ech(m,A)" )
+  )
 
-ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
+  ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime )
 
   //The Name declaration of proof omega
   val esOmega = Sequent(
     Seq(
-      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )", 
+      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )",
       hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
       hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))",
       hof"!x POR(0,x) = E(f(x),0)",
@@ -90,12 +99,12 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
   )
   ctx += Context.ProofNameDeclaration( le"omega n m", esOmega )
 
-//The Name declaration of proof phi
+  //The Name declaration of proof phi
   val esphi = Sequent(
     Seq(
       hof"!x POR(0,x) = E(f(x),0)",
       hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))",
-      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )", 
+      hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )",
       hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
       hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))",
       hof"!x POR(0,x) = E(f(x),0)",
@@ -106,18 +115,21 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
   ctx += Context.ProofNameDeclaration( le"phi n m", esphi )
 
   //The base case of  nu
-  val esNuBc = Sequent(Seq( 
-         ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )"),
-         ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )"),
-         ( "Ant_2" -> hof"E(f(A),n)" ),
-         ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )),
-     Seq(( "Suc_0" -> hof"Ech(0,A)")))
+  val esNuBc = Sequent(
+    Seq(
+    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+    ( "Ant_2" -> hof"E(f(A),n)" ),
+    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+  ),
+    Seq( ( "Suc_0" -> hof"Ech(0,A)" ) )
+  )
   val NuBc = Lemma( esNuBc ) {
-    allL("Ant_3", le"g(A)" )
-    allL("Ant_1", fov"A" )
+    allL( "Ant_3", le"g(A)" )
+    allL( "Ant_1", fov"A" )
     rewrite ltr "Ant_1_0" in "Suc_0"
-    exL( fov"B")
-    exR( fov"B")
+    exL( fov"B" )
+    exR( fov"B" )
     andL
     andR
     foTheory
@@ -125,100 +137,107 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
   }
   ctx += Context.ProofDefinitionDeclaration( le"nu n 0 A", NuBc )
 
-
- //The step case of  nu
-  val esNuSc = Sequent(Seq( 
-         ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )"),
-         ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )"),
-         ( "Ant_2" -> hof"E(f(A),n)" ),
-         ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )),
-     Seq(( "Suc_0" -> hof"Ech(s(m),A)")))
+  //The step case of  nu
+  val esNuSc = Sequent(
+    Seq(
+    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+    ( "Ant_2" -> hof"E(f(A),n)" ),
+    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+  ),
+    Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) )
+  )
   val NuSc = Lemma( esNuSc ) {
-    allL("Ant_3", le"g(A)" )
-    allL("Ant_0", fov"A" )
+    allL( "Ant_3", le"g(A)" )
+    allL( "Ant_0", fov"A" )
     rewrite ltr "Ant_0_0" in "Suc_0"
-    exL( fov"B")
-    exR( fov"B")
+    exL( fov"B" )
+    exR( fov"B" )
     andL
     andR
     andR
-    pLink("nu")
+    pLink( "nu" )
     foTheory
     foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"nu n (s m) A", NuSc )
 
-
- //The base case of  nuPrime
-  val esNuPrimeBc = Sequent(Seq( 
-         ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )"),
-         ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )"),
-         ( "Ant_2" -> hof"E(f(A),0)" ),
-         ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
-         ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
-         ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )),
-     Seq(( "Suc_0" -> hof"Ech(0,A)")))
+  //The base case of  nuPrime
+  val esNuPrimeBc = Sequent(
+    Seq(
+    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+    ( "Ant_2" -> hof"E(f(A),0)" ),
+    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
+    ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
+    ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )
+  ),
+    Seq( ( "Suc_0" -> hof"Ech(0,A)" ) )
+  )
   val NuPrimeBc = Lemma( esNuPrimeBc ) {
-    allL("Ant_3", le"g(A)" )
-    allL("Ant_1", fov"A" )
+    allL( "Ant_3", le"g(A)" )
+    allL( "Ant_1", fov"A" )
     rewrite ltr "Ant_1_0" in "Suc_0"
-    exL( fov"B")
-    exR( fov"B")
+    exL( fov"B" )
+    exR( fov"B" )
     andL
     andR
     foTheory
-    allL("Ant_5", fov"B" )
+    allL( "Ant_5", fov"B" )
     rewrite ltr "Ant_5_0" in "Ant_3_0_1"
     foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"nuPrime 0 A", NuPrimeBc )
 
-
- //The step case of  nuPrime
-  val esNuPrimeSc = Sequent(Seq( 
-         ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )"),
-         ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )"),
-         ( "Ant_2" -> hof"E(f(A),0)" ),
-         ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
-         ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
-         ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )),
-     Seq(( "Suc_0" -> hof"Ech(s(m),A)")))
+  //The step case of  nuPrime
+  val esNuPrimeSc = Sequent(
+    Seq(
+    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+    ( "Ant_2" -> hof"E(f(A),0)" ),
+    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
+    ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
+    ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )
+  ),
+    Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) )
+  )
   val NuPrimeSc = Lemma( esNuPrimeSc ) {
-    allL("Ant_3", le"g(A)" )
-    allL("Ant_0", fov"A" )
+    allL( "Ant_3", le"g(A)" )
+    allL( "Ant_0", fov"A" )
     rewrite ltr "Ant_0_0" in "Suc_0"
-    exL( fov"B")
-    exR( fov"B")
-    andL 
-    allL("Ant_5", fov"B" )
+    exL( fov"B" )
+    exR( fov"B" )
+    andL
+    allL( "Ant_5", fov"B" )
     rewrite ltr "Ant_5_0" in "Ant_3_0_1"
     andR
     andR
-    pLink("nuPrime")
+    pLink( "nuPrime" )
     foTheory
     foTheory
-    
+
   }
   ctx += Context.ProofDefinitionDeclaration( le"nuPrime (s m) A", NuPrimeSc )
 
-
-   //The base case of  mu
-  val esMuBc = Sequent(Seq( 
-         ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )"),
-         ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )"),
-         ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )),
+  //The base case of  mu
+  val esMuBc = Sequent(
+    Seq(
+    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+    ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+  ),
     Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) )
   )
   val muBc = Lemma( esMuBc ) {
-    allL("Ant_2" , hoc"z:i" )
+    allL( "Ant_2", hoc"z:i" )
     exL( fov"B" )
-    allL("Ant_2" , le"(g B)" )
+    allL( "Ant_2", le"(g B)" )
     exL( fov"A" )
     exR( fov"B" )
-    allL("Ant_1" , fov"B" ) 
+    allL( "Ant_1", fov"B" )
     rewrite ltr "Ant_1_0" in "Suc_0_0"
-    exR("Suc_0_0", fov"A" )
-    andL("Ant_2_1")
+    exR( "Suc_0_0", fov"A" )
+    andL( "Ant_2_1" )
     andL
     andR
     foTheory
@@ -226,31 +245,32 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu n 0", muBc )
 
-
-//The step case of  mu
-  val esMuSc = Sequent(Seq( 
-         ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )"),
-         ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )"),
-         ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )),
+  //The step case of  mu
+  val esMuSc = Sequent(
+    Seq(
+    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+    ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+  ),
     Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) )
   )
   val muSc = Lemma( esMuSc ) {
-    allL("Ant_2" , hoc"z:i" )
+    allL( "Ant_2", hoc"z:i" )
     exL( fov"B" )
-    allL("Ant_2" , le"(g B)" )
+    allL( "Ant_2", le"(g B)" )
     exL( fov"A" )
     exR( fov"B" )
-    allL("Ant_0" , fov"B" ) 
+    allL( "Ant_0", fov"B" )
     rewrite ltr "Ant_0_0" in "Suc_0_0"
-    exR("Suc_0_0", fov"A" )
-    andL("Ant_2_1")
+    exR( "Suc_0_0", fov"A" )
+    andL( "Ant_2_1" )
     andL
     andR
-    andR  
-    pLink("nu")
+    andR
+    pLink( "nu" )
     foTheory
     foTheory
-    
+
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu n (s m)", muSc )
 
@@ -293,13 +313,12 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
 
-
- //The base case of phi
+  //The base case of phi
   val esphiBc = Sequent(
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))   " ), 
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))   " ),
       ( "Ant_3" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
       ( "Ant_4" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" )
     ),
@@ -311,13 +330,12 @@ ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime)
     allL( "Ant_2", le"(g B)" )
     exL( fov"A" )
     exR( fov"A" )
-    andL("Ant_2_1")
+    andL( "Ant_2_1" )
     allL( "Ant_1", fov"A" )
     rewrite ltr "Ant_1_0" in "Ant_2_1_1"
-    pLink("nuPrime")
+    pLink( "nuPrime" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi 0 m", phiBc )
-
 
   //The step case of phi
 

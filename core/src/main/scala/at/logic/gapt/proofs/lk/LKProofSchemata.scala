@@ -18,12 +18,12 @@ object LKProofSchemata {
    * loop or no proof depending on how the chosen arguments are used in the
    * the chosen proof
    *
-   * @param ProofName The name of the linkProof
+   * @param proofName The name of the linkProof
    * @param args The arguments for the free parameters of the linkProof.
    */
-  def Instantiate( ProofName: String, args: Seq[LambdaExpression] )( implicit ctx: Context ): Option[LKProof] = {
+  def Instantiate( proofName: String, args: Seq[LambdaExpression] )( implicit ctx: Context ): Option[LKProof] = {
 
-    ( ctx.get[Context.ProofNames].names.get( ProofName ), ctx.get[Context.ProofDefinitions].components.get( ProofName ) ) match {
+    ( ctx.get[Context.ProofNames].names.get( proofName ), ctx.get[Context.ProofDefinitions].components.get( proofName ) ) match {
       case ( Some( ( Apps( _, cargs ), _ ) ), Some( invar ) ) =>
         if ( cargs.size == args.size ) invar.fold( None )(
           ( found, search ) => {

@@ -65,16 +65,6 @@ abstract class LKProof extends SequentProof[HOLFormula, LKProof] {
  *     Γ' :- Δ'
  * </pre>
  */
-
-/**
- * An LKProof deriving a sequent from another sequent:
- * <pre>
- *        (π)
- *      Γ :- Δ
- *    ----------
- *     Γ' :- Δ'
- * </pre>
- */
 abstract class UnaryLKProof extends LKProof {
   /**
    * The immediate subproof of the rule.
