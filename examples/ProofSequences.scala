@@ -3,7 +3,6 @@ package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ Numeral, Utils }
 import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
-import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.gaptic._
@@ -31,7 +30,7 @@ object LinearExampleProof extends ProofSequence {
     require( n >= 0, "n must be nonnegative" )
 
     val num = Utils.numeral( n )
-    val ax = fof"(all x (P(x) -> P(s(x))))"
+    val ax = fof"!x (P x -> P (s x))"
     val p0 = foa"P(0)"
     val pn = foa"P($num)"
     Lemma( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
@@ -62,8 +61,8 @@ object SquareDiagonalExampleProof extends ProofSequence {
     val num = Utils.numeral( n )
     val p00 = foa"P(0,0)"
     val pnn = foa"P($num, $num)"
-    val axX = fof"(all x all y (P(x,y) -> P(s(x), y)))"
-    val axY = fof"(all x all y (P(x,y) -> P(x, s(y))))"
+    val axX = fof"!x!y (P(x,y) -> P(s(x), y))"
+    val axY = fof"!x!y (P(x,y) -> P(x, s(y)))"
 
     Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) andThen chain( "AxX" ) )
@@ -93,8 +92,8 @@ object SquareEdgesExampleProof extends ProofSequence {
     val num = Utils.numeral( n )
     val p00 = foa"P(0,0)"
     val pnn = foa"P($num, $num)"
-    val axX = fof"(all x all y (P(x,y) -> P(s(x), y)))"
-    val axY = fof"(all x all y (P(x,y) -> P(x, s(y))))"
+    val axX = fof"!x!y (P(x,y) -> P(s(x), y))"
+    val axY = fof"!x!y (P(x,y) -> P(x, s(y)))"
 
     Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) )
@@ -127,8 +126,8 @@ object SquareEdges2DimExampleProof extends ProofSequence {
     val snb = Utils.iterateTerm( FOLConst( "b" ), "s_y", n )
     val pab = foa"P(a,b)"
     val pnn = foa"P($sna, $snb)"
-    val axX = fof"(all x all y (P(x,y) -> P(s_x(x), y)))"
-    val axY = fof"(all x all y (P(x,y) -> P(x, s_y(y))))"
+    val axX = fof"!x!y (P(x,y) -> P(s_x(x), y))"
+    val axY = fof"!x!y (P(x,y) -> P(x, s_y(y)))"
 
     Lemma( Sequent( Seq( "Pab" -> pab, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) )
@@ -685,10 +684,10 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
   def f2( arg1: FOLTerm, sym: String, arg2: FOLTerm ): FOLTerm = f2( sym, arg1, arg2 )
 
   val f_ax_1 = Eq( f1( f, Utils.numeral( 0 ) ), f1( s, Utils.numeral( 0 ) ) )
-  val f_ax_2 = Prover9TermParserLadrStyle.parseFormula( "(all x f(s(x)) = s(x) * f(x))" )
+  val f_ax_2 = fof"!x f(s(x)) = s(x) * f(x)"
 
   val g_ax_1 = new AllQuantifiedConditionalAxiomHelper( y :: Nil, Nil, Eq( y, f2( g, Utils.numeral( 0 ), y ) ) )
-  val g_ax_2 = Prover9TermParserLadrStyle.parseFormula( "(all x (all y g(s(x), y) = g(x, y * s(x))))" )
+  val g_ax_2 = fof"!x!y g(s(x), y) = g(x, y * s(x))"
 
   val g_compat_2 = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Eq( y, z ) :: Nil, Eq( f2( g, x, y ), f2( g, x, z ) ) )
 

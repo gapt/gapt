@@ -19,7 +19,7 @@ object PDAnalysis extends AnalysisWithCeresOmega {
   override def root_proof() = "THEPROOF";
 
   // the substitution from the paper. the skolem symbol might be wrong.
-  val sub = Substitution( hov"X:nat>o" -> le"\(x:nat) exists (z:nat) (D z (s_1 : nat) & x < (s_1 : nat) & z > (1:nat))" )
+  val sub = Substitution( hov"X:nat>o" -> le"^(x:nat) ?(z:nat) (D z (s_1 : nat) & x < (s_1 : nat) & z > (1:nat))" )
 
   lazy val css_ : Set[HOLSequent] = {
     def subf( t: HOLFormula ) =

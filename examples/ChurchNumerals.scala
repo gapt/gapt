@@ -58,7 +58,7 @@ object is_num {
  */
 object plus {
   def apply( e1: LambdaExpression, e2: LambdaExpression ) =
-    BetaReduction.betaNormalize( le"^(x:i>i) => ^(u:i) => (($e1 x) (($e2 x) u))" )
+    BetaReduction.betaNormalize( le"^(x:i>i) ^(u:i) $e1 x ($e2 x u)" )
 }
 
 /**
@@ -66,7 +66,7 @@ object plus {
  */
 object times {
   def apply( e1: LambdaExpression, e2: LambdaExpression ) =
-    BetaReduction.betaNormalize( le"^u ($e2 ($e1 u))" )
+    BetaReduction.betaNormalize( le"^u $e2 ($e1 u)" )
 }
 
 /**
@@ -74,5 +74,5 @@ object times {
  */
 object cond {
   def apply( e1: LambdaExpression, e2: LambdaExpression, c: LambdaExpression ) =
-    BetaReduction.betaNormalize( le"^(u:i>i) => ^ (x:i) => $c (^(y:i) => $e2 u x ) ($e1 u x)" )
+    BetaReduction.betaNormalize( le"^(u:i>i) ^(x:i) $c (^(y:i) $e2 u x) ($e1 u x)" )
 }
