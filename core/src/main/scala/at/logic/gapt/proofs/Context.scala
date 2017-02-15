@@ -372,22 +372,12 @@ object Context {
   case class ProofNameDeclaration( lhs: LambdaExpression, endSequent: HOLSequent ) extends Update {
     override def apply( ctx: Context ): State = {
       endSequent.foreach( ctx.check( _ ) )
-      val fvEs = freeVariables( endSequent )
-      lhs match {
-        case Apps( at.logic.gapt.expr.Const( c, t ), vs: Seq[LambdaExpression] ) => {
-          val nameIsThere = ctx.get[ProofNames].names.keySet.contains( c )
-          val varcheck: Boolean = vs == vs.distinct &&
-            vs.forall( _.isInstanceOf[Var] ) &&
-            ( freeVariables( endSequent ).toSet[LambdaExpression] ).subsetOf( vs.toSet ) &&
-            vs.toSet.subsetOf( ( freeVariables( endSequent ).toSet[LambdaExpression] ) ) &&
-            !nameIsThere
-          if ( varcheck ) ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
-          else throw new IllegalArgumentException( "variables of " + lhs.toString() + "   " + vs.toString() +
-            " do not match the free variables of " + endSequent.toString() + "   " + fvEs.toString() + " or duplicate proof name" )
-        }
-        case _ => throw new IllegalArgumentException( lhs.toString() + "  is a malformed proof name" )
-      }
-
+      val Apps( Const( c, _ ), vs ) = lhs
+      require( !ctx.get[ProofNames].names.keySet.contains( c ) )
+      require( vs == vs.distinct )
+      require( vs.forall( _.isInstanceOf[Var] ) )
+      require( freeVariables( endSequent ) == vs.toSet )
+      ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
     }
   }
 

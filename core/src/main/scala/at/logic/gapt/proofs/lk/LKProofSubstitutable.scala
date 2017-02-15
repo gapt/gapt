@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import BetaReduction._
+import BetaReduction.{ betaNormalize, _ }
 import at.logic.gapt.proofs.SequentConnector
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 
@@ -22,6 +22,8 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
   override def applySubstitution( substitution: Substitution, proof: LKProof ): LKProof = proof match {
     case _ if substitution isIdentity => proof
 
+    case ProofLink( referencedProof, linkquent ) =>
+      ProofLink( betaNormalize( substitution( referencedProof ) ), linkquent.map { f => betaNormalize( substitution( f ) ) } )
     case InitialSequent( sequent ) =>
       Axiom( sequent.map { f => betaNormalize( substitution( f ) ) } )
 
