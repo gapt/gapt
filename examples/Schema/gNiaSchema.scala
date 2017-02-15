@@ -117,11 +117,11 @@ object gniaSchema extends TacticsProof {
   //The base case of  nu
   val esNuBc = Sequent(
     Seq(
-    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
-    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
-    ( "Ant_2" -> hof"E(f(A),n)" ),
-    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
-  ),
+      ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+      ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+      ( "Ant_2" -> hof"E(f(A),n)" ),
+      ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+    ),
     Seq( ( "Suc_0" -> hof"Ech(0,A)" ) )
   )
   val NuBc = Lemma( esNuBc ) {
@@ -140,11 +140,11 @@ object gniaSchema extends TacticsProof {
   //The step case of  nu
   val esNuSc = Sequent(
     Seq(
-    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
-    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
-    ( "Ant_2" -> hof"E(f(A),n)" ),
-    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
-  ),
+      ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+      ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+      ( "Ant_2" -> hof"E(f(A),n)" ),
+      ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+    ),
     Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) )
   )
   val NuSc = Lemma( esNuSc ) {
@@ -165,13 +165,13 @@ object gniaSchema extends TacticsProof {
   //The base case of  nuPrime
   val esNuPrimeBc = Sequent(
     Seq(
-    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
-    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
-    ( "Ant_2" -> hof"E(f(A),0)" ),
-    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
-    ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
-    ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )
-  ),
+      ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+      ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+      ( "Ant_2" -> hof"E(f(A),0)" ),
+      ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
+      ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
+      ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )
+    ),
     Seq( ( "Suc_0" -> hof"Ech(0,A)" ) )
   )
   val NuPrimeBc = Lemma( esNuPrimeBc ) {
@@ -192,13 +192,13 @@ object gniaSchema extends TacticsProof {
   //The step case of  nuPrime
   val esNuPrimeSc = Sequent(
     Seq(
-    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
-    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
-    ( "Ant_2" -> hof"E(f(A),0)" ),
-    ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
-    ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
-    ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )
-  ),
+      ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+      ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+      ( "Ant_2" -> hof"E(f(A),0)" ),
+      ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ),
+      ( "Ant_4" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))" ),
+      ( "Ant_5" -> hof"!x POR(0,x) = E(f(x),0)" )
+    ),
     Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) )
   )
   val NuPrimeSc = Lemma( esNuPrimeSc ) {
@@ -222,10 +222,10 @@ object gniaSchema extends TacticsProof {
   //The base case of  mu
   val esMuBc = Sequent(
     Seq(
-    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
-    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
-    ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
-  ),
+      ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+      ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+      ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+    ),
     Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) )
   )
   val muBc = Lemma( esMuBc ) {
@@ -248,10 +248,10 @@ object gniaSchema extends TacticsProof {
   //The step case of  mu
   val esMuSc = Sequent(
     Seq(
-    ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
-    ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
-    ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
-  ),
+      ( "Ant_0" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
+      ( "Ant_1" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" ),
+      ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" )
+    ),
     Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) )
   )
   val muSc = Lemma( esMuSc ) {
