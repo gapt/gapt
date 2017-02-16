@@ -241,3 +241,14 @@ case object EscargotTactic extends Tactic[Unit] {
       case Some( expansion ) => Right( () -> ExpansionProofToLK( expansion ).right.get )
     }
 }
+
+/**
+  * Calls Escargot on the subgoal.
+  */
+case object EscargotTacticDeskolemized extends Tactic[Unit] {
+  
+  import at.logic.gapt.proofs.expansion.deskolemizeET
+
+  override def apply( goal: OpenAssumption ) =
+    Escargot getExpansionProof goal.conclusion toSuccessNel TacticalFailure( this, Some( goal ), "search failed" ) map { p => () -> ExpansionProofToLK( deskolemizeET(p) ).get }
+}

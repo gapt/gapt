@@ -5,8 +5,9 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.provers.viper.sequentialInductionAxioms
-import cats.syntax.either._
+import at.logic.gapt.provers.viper.aip.axioms.SequentialInductionAxioms
+
+import cats.syntax.all._, cats.instances.all._
 
 object prop_03 extends TacticsProof {
 
@@ -82,7 +83,11 @@ object prop_03 extends TacticsProof {
     axiomLog
   }
 
-  val inductionAxiom = sequentialInductionAxioms( sequent.succedent.head._2, List( hov"xs:list" ) ).valueOr( es => throw new Exception( es ) ).head
+  val inductionAxiom = SequentialInductionAxioms()
+    .forVariables( List( hov"xs:list" ) )
+    .forLabel( "goal" )( sequent )
+    .valueOr( e => throw new Exception( e ) ).head.formula
+
   val proof2 = Lemma( ( "IAxs_0" -> inductionAxiom ) +: sequent ) {
     escargot
   }

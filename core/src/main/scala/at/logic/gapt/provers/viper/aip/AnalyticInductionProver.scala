@@ -1,0 +1,172 @@
+package at.logic.gapt.provers.viper.aip
+
+import at.logic.gapt.expr.{ HOLFormula, Var }
+import at.logic.gapt.formats.tip.TipProblem
+import at.logic.gapt.proofs.gaptic.{ escargot => escargotTactic, _ }
+import at.logic.gapt.proofs.lk.{ CutRule, LKProof }
+import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
+import at.logic.gapt.provers.viper.aip.axioms.{ Axiom, AxiomFactory, SequentialInductionAxioms }
+import at.logic.gapt.provers.viper.aip.provers.{ InternalProver, escargot }
+import cats.syntax.all._
+
+case class ProverOptions(
+  prover:       InternalProver = escargot,
+  axiomFactory: AxiomFactory   = SequentialInductionAxioms()
+)
+
+object AnalyticInductionProver {
+
+  /**
+   * Tries to prove the given sequent by using a single induction on the specified variable.
+   *
+   * @param sequent  A sequent of the form `Γ, :- ∀x.A`
+   * @param variable An eigenvariable `α` for the sequent `Γ, :- ∀x.A`
+   * @param ctx      The context which defines the inductive types, etc.
+   * @return If the sequent is provable with at most one induction on `α` then a proof which uses a single induction
+   *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
+   *         throws an exception.
+   */
+  def singleInduction( sequent: Sequent[( String, HOLFormula )], variable: Var )( implicit ctx: Context ): LKProof = {
+    var state = ProofState( sequent )
+    state += allR( variable );
+    state += induction( on = variable )
+    state += decompose.onAllSubGoals
+    state += repeat( escargotTactic )
+    state.result
+  }
+}
+
+class AnalyticInductionProver( options: ProverOptions ) {
+
+  private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, HOLFormula )] ) =
+    sequent map { case ( _, f ) => f }
+
+  /**
+   * Tries to prove a sequent by using analytic induction.
+   *
+   * @param sequent The sequent to prove.
+   * @param ctx     Defines inductive types etc.
+   * @return true if the sequent is provable with analytic induction, otherwise either false or the method does
+   *         not terminate.
+   */
+  def isValid( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ) =
+    options.prover.isValid( inductiveSequent( sequent ) )
+
+  /**
+   * Tries to compute a LK proof for a sequent by using analytic induction.
+   *
+   * @param sequent The sequent to prove.
+   * @param ctx     Defines inductive types etc.
+   * @return An LK proof if the sequent is provable with analytic induction, otherwise either None or the method does
+   *         not terminate.
+   */
+  def lkProof(
+    sequent: Sequent[( String, HOLFormula )]
+  )( implicit ctx: Context ) = options.prover.lkProof( inductiveSequent( sequent ) )
+
+  /**
+   * Proves a TIP problem by using induction.
+   *
+   * @param problem The problem to prove
+   * @return A proof if the problem is provable with the prover's induction schemes, otherwise None or the
+   *         method does not terminate.
+   */
+  def proveTipProblem( problem: TipProblem ): Option[LKProof] =
+    inductiveLKProof( tipProblemToSequent( problem )._1 )( problem.ctx )
+
+  /**
+   * Proves the given sequent by using induction.
+   *
+   * @param sequent The sequent to be proven.
+   * @param ctx Defines the constants, types, etc.
+   * @return An inductive proof the sequent is provable with the prover's induction schemes, otherwise None or
+   *         the method does not terminate.
+   */
+  def inductiveLKProof( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): Option[LKProof] = {
+    val axioms = validate( options.axiomFactory( sequent ) )
+    val prover = options.prover
+    for {
+      mainProof <- prover.lkProof( axioms.map( _.formula ) ++: sequent.map( _._2 ) )
+    } yield {
+      cutAxioms( mainProof, axioms )
+    }
+  }
+
+  /**
+   * Cuts the specified axioms from the proof.
+   *
+   * @param proof The proof from which some axioms are to be cut. The end-sequent of this proof must
+   *              contain the given axioms.
+   * @param axioms The axioms to be cut out of the proof.
+   * @return A proof whose end-sequent does not contain the specified axioms.
+   */
+  private def cutAxioms( proof: LKProof, axioms: List[Axiom] ): LKProof =
+    axioms.foldRight( proof ) { ( axiom, mainProof ) => CutRule( axiom.proof, mainProof, axiom.formula ) }
+
+  /**
+   * Tries to compute a resolution proof for a sequent by using analytic induction.
+   *
+   * @param sequent The sequent to prove.
+   * @param ctx     Defines inductive types etc.
+   * @return A resolution proof if the sequent is provable with analytic induction, otherwise either None or the
+   *         method does not terminate.
+   */
+  def resolutionProof( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ) =
+    options.prover.resolutionProof( inductiveSequent( sequent ) )
+
+  /**
+   * Tries to compute an expansion proof for a sequent by using analytic induction.
+   *
+   * @param sequent The sequent to prove.
+   * @param ctx     Defines inductive types etc.
+   * @return An expansion proof if the sequent is provable with analytic induction, otherwise either None or the
+   *         method does not terminate.
+   */
+  def expansionProof( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ) =
+    options.prover.expansionProof( inductiveSequent( sequent ) )
+
+  /**
+   * Extracts the inductive sequent from a validation value.
+   *
+   * @tparam T the validations success value type
+   * @param validation The validation value from which the sequent is extracted.
+   * @return A sequent.
+   * @throws Exception If the validation value represents a validation failure.
+   */
+  private def validate[T]( validation: ThrowsError[T] ): T =
+    validation.valueOr( e => throw new Exception( e ) )
+
+  /**
+   * Computes a sequent enriched by induction axioms.
+   *
+   * @param sequent The sequent to which induction axioms are added.
+   * @param ctx     Defines inductive types etc.
+   * @return The original sequent enriched by induction axioms for all free variables and all outer-most universally
+   *         quantified variables.
+   */
+  private def inductiveSequent(
+    sequent: Sequent[( String, HOLFormula )]
+  )( implicit ctx: Context ): HOLSequent =
+    validate( prepareSequent( sequent ) )
+
+  /**
+   * Adds induction axioms for a formula to a given sequent.
+   *
+   * @param sequent The sequent to which the induction axioms are added.
+   * @param ctx     The context which defines types, constants, etc.
+   * @return A sequent with induction axioms for the specified formula and variables if label designates a formula
+   *         in the given sequent and all of the given variables are of inductive type (w.r.t. the given context).
+   *         Otherwise a string describing the error is returned.
+   */
+  private def prepareSequent(
+    sequent: Sequent[( String, HOLFormula )]
+  )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
+    for {
+      axioms <- options.axiomFactory( sequent )
+    } yield {
+      axioms.map( {
+        _.formula
+      } ) ++: labeledSequentToHOLSequent( sequent )
+    }
+  }
+}

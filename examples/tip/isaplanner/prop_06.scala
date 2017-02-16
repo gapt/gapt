@@ -3,7 +3,9 @@ package at.logic.gapt.examples.tip.isaplanner
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ TacticsProof, _ }
 import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms, sequentialInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
+import at.logic.gapt.provers.viper.aip.provers.escargot
+import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_06 extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
@@ -47,11 +49,11 @@ object prop_06 extends TacticsProof {
 
   val target = theory :+ ( "goal" -> hof"∀x ∀y x-(x+y) = 0" )
 
-  val aipOptions1 = new ProverOptions( escargot, independentInductionAxioms )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( target, "goal", List( hov"x:nat" ) )
+  val aipOptions1 = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"x:nat" ) ).forLabel( "goal" ) )
+  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( target )
 
-  val aipOptions2 = new ProverOptions( escargot, sequentialInductionAxioms )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( target, "goal", List( hov"x:nat" ) )
+  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"x:nat" ) ).forLabel( "goal" ) )
+  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( target )
 
   val proof4 = AnalyticInductionProver.singleInduction( target, hov"m:nat" )
 }

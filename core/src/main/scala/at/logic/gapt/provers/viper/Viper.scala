@@ -296,7 +296,7 @@ object Viper extends Logger {
 
   def main( args: Array[String] ): Unit = {
     args match {
-      case Array( "aip", _@ _* ) => aip.main( args.tail )
+      case Array( "aip", _@ _* ) => aip.cli.aip.main( args.tail )
       case _ => {
         val ( problem, options ) = parseArgs( args, Map() )
         val viper = new Viper( problem.ctx, problem.toSequent, options )

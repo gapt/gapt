@@ -5,7 +5,9 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms, sequentialInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
+import at.logic.gapt.provers.viper.aip.provers.escargot
+import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_10 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_10.smt2", getClass ) )
@@ -31,11 +33,11 @@ object prop_10 extends TacticsProof {
     axiomLog
   }
 
-  val aipOptions1 = new ProverOptions( escargot, independentInductionAxioms )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent, "goal", List( hov"m:Nat" ) )
+  val aipOptions1 = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
+  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent )
 
-  val aipOptions2 = new ProverOptions( escargot, sequentialInductionAxioms )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent, "goal", List( hov"m:Nat" ) )
+  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
+  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent )
 
   val proof4 = Lemma( sequent ) { viper }
 }
