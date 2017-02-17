@@ -34,17 +34,17 @@ object LKProofSchemata {
 
       } else found
     } )
-    buildProof( subs( lkp ), ( subs, ctx ) )
+    buildProof( subs( lkp ), ( ctx ) )
   }
   /**
    * buildProof uses the  LKVisitor trait to unroll proof links
    *
    */
-  object buildProof extends LKVisitor[( Substitution, Context )] {
-    override def visitProofLink( proof: ProofLink, otherArg: ( Substitution, Context ) ): ( LKProof, SequentConnector ) = {
+  object buildProof extends LKVisitor[Context] {
+    override def visitProofLink( proof: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
       val Apps( Const( c, _ ), vs ) = proof.referencedProof
-      val upProof = otherArg._1( Instantiate( c, otherArg._1( vs ) )( otherArg._2 ) )
-      ( upProof, SequentConnector.guessInjection( upProof.endSequent, proof.conclusion ) )
+      val upProof = Instantiate( c, vs )( otherArg )
+      ( upProof, SequentConnector.guessInjection( upProof.endSequent, proof.conclusion ).inv )
     }
   }
 
