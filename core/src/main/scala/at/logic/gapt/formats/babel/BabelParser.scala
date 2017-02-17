@@ -58,7 +58,7 @@ object BabelParserCombinators {
   val Expr: P[preExpr.Expr] = P( Lam )
 
   val BoundVar: P[preExpr.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2 ) ) )
-  val Lam: P[preExpr.Expr] = PE( ( ( "^" | "\\" | "λ" ) ~/ BoundVar ~ "=>".? ~ Lam ).map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
+  val Lam: P[preExpr.Expr] = PE( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
 
   val TypeAnnotation: P[preExpr.Expr] = PE( ( Impl ~/ ( ":" ~ Type ).? ) map {
     case ( expr, Some( ty ) ) => preExpr.TypeAnnotation( expr, ty )
@@ -76,8 +76,8 @@ object BabelParserCombinators {
   val Conj = PE( QuantOrNeg.rep( 1, "&" | "∧" ).map( _.reduceLeft( preExpr.And ) ) )
 
   val QuantOrNeg: P[preExpr.Expr] = P( Ex | All | Neg | InfixRel )
-  val Ex = PE( ( ( "?" | "∃" | kw( "exists" ) ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.Ex.tupled ) )
-  val All = PE( ( ( "!" | "∀" | kw( "all" ) ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.All.tupled ) )
+  val Ex = PE( ( ( "?" | "∃" ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.Ex.tupled ) )
+  val All = PE( ( ( "!" | "∀" ) ~/ BoundVar ~ QuantOrNeg ).map( preExpr.All.tupled ) )
   val Neg = PE( ( ( "-" | "¬" ) ~ QuantOrNeg ).map( preExpr.Neg ) )
 
   val InfixRelSym = P( "<=" | ">=" | "<" | ">" | "=" | "!=" )
@@ -105,7 +105,7 @@ object BabelParserCombinators {
   } )
 
   val Tuple: P[Seq[preExpr.Expr]] = P( "(" ~/ Expr.rep( sep = "," ) ~ ")" )
-  val App = PE( ( "@".? ~ Atom ~/ ( Tuple | Atom.map( Seq( _ ) ) ).rep ) map {
+  val App = PE( ( Atom ~/ ( Tuple | Atom.map( Seq( _ ) ) ).rep ) map {
     case ( expr, args ) => args.flatten.foldLeft( expr )( preExpr.App )
   } )
 
