@@ -5,9 +5,10 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.provers.viper.aip.axioms.SequentialInductionAxioms
-
-import cats.syntax.all._, cats.instances.all._
+import at.logic.gapt.provers.viper.aip.axioms.{ SequentialInductionAxioms, StandardInductionAxioms }
+import at.logic.gapt.provers.viper.aip.provers.{ escargot => manySortedProver }
+import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
+import cats.syntax.all._
 
 object prop_03 extends TacticsProof {
 
@@ -91,4 +92,14 @@ object prop_03 extends TacticsProof {
   val proof2 = Lemma( ( "IAxs_0" -> inductionAxiom ) +: sequent ) {
     escargot
   }
+
+  val proof3 = new AnalyticInductionProver(
+    new ProverOptions(
+      manySortedProver,
+      StandardInductionAxioms()
+        .forVariables( hov"xs:list" )
+        .forLabel( "goal" )
+    )
+  ) lkProof ( sequent ) get
+
 }

@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.provers.viper.aip.axioms.SequentialInductionAxioms
 import at.logic.gapt.provers.viper.aip.provers.escargot
-import at.logic.gapt.provers.viper.aip.{AnalyticInductionProver, ProverOptions}
+import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_09 extends TacticsProof {
 
@@ -53,8 +53,8 @@ object prop_09 extends TacticsProof {
   }
 
   val aipOptions1 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"i:Nat", hov"j:Nat" ) ).forLabel( "goal" ) )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent )
+  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent ) get
 
   val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent )
+  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
 }
