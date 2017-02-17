@@ -197,7 +197,7 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))   " )
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))" )
     ),
     Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
   )
@@ -228,9 +228,9 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))   " )
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" )
     ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   )
   val phiSc = Lemma( esphiSc ) {
     cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))" )

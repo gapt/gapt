@@ -106,9 +106,7 @@ object gniaSchema extends TacticsProof {
       hof"!x!y POR(s(y),x) = (E(f(x),s(y)) | POR(y,x))",
       hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )",
       hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )",
-      hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))",
-      hof"!x POR(0,x) = E(f(x),0)",
-      hof"!x?y (LEQ(x,y) & POR(n,y) )   "
+      hof"!x?y (LEQ(x,y) & POR(n,y) )"
     ),
     Seq( hof"?p Ech(m,p)" )
   )
@@ -318,7 +316,7 @@ object gniaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))   " ),
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))" ),
       ( "Ant_3" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
       ( "Ant_4" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" )
     ),
@@ -343,11 +341,11 @@ object gniaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))   " ),
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" ),
       ( "Ant_3" -> hof"!x!y(Ech(s(y),x) = (?p(Ech(y,p) & LE(x,p) &  E(f(x),f(p)) )) )" ),
       ( "Ant_4" -> hof"!x( Ech(0,x) = (  ?p(  LE(x,p) &  E(f(x),f(p))  )  )  )" )
     ),
-    Seq( ( "Suc_0" -> hof"?p Ech(m,p) " ) )
+    Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) )
   )
   val phiSc = Lemma( esphiSc ) {
     cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))" )
