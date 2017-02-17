@@ -34,9 +34,12 @@ case class IndependentInductionAxioms(
   override def apply( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
-      variables = vsel( formula, ctx )
+      inductionVariables = vsel( formula, ctx )
+      freeVars = freeVariables( formula ).toList
       All.Block( _, formula1 ) = formula
-      axioms <- makeInductionAxioms( formula1, variables )
+      variablesToBeClosed = freeVariables( formula1 ).toList.diff( inductionVariables ).diff( freeVars )
+      formula2 = All.Block( variablesToBeClosed, formula1 )
+      axioms <- makeInductionAxioms( formula2, inductionVariables )
     } yield axioms
   }
 
@@ -51,7 +54,7 @@ case class IndependentInductionAxioms(
   private def makeInductionAxioms(
     formula: HOLFormula, variables: List[Var]
   )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
-    variables.traverse[ThrowsError, Axiom]( v => makeAxiom( formula, v ) )
+    variables.traverse[ThrowsError, Axiom]( v => makeAxiom( formula, v, variables ) )
 
   /**
    * Computes an induction axiom for the given formula and the given variable.
@@ -66,7 +69,9 @@ case class IndependentInductionAxioms(
    *         - IC(F,c,,i,,,x,,k,,), with i = {1,...,m} symbolises the i-th inductive case;
    *         or an error message if one of the above conditions is violated.
    */
-  private def makeAxiom( formula: HOLFormula, variable: Var )( implicit ctx: Context ): ThrowsError[Axiom] =
+  private def makeAxiom(
+    formula: HOLFormula, variable: Var, variables: List[Var]
+  )( implicit ctx: Context ): ThrowsError[Axiom] =
     for {
       constructors <- getConstructors( baseType( variable ), ctx )
     } yield {
@@ -74,9 +79,7 @@ case class IndependentInductionAxioms(
       val concl = All( variable, formula )
       val fvs = freeVariables( formula ).toList
       new Axiom {
-        val formula = All.Block( fvs filter {
-          _ != variable
-        }, And( ics ) --> concl )
+        val formula = All.Block( variables filter { _ != variable }, And( ics ) --> concl )
         val proof = proveAxiom( formula, variable )
       }
     }

@@ -1,6 +1,5 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, Var, freeVariables, rename, Const => Con }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
@@ -72,7 +71,7 @@ case class SequentialInductionAxioms(
       val inductiveCases = cs map { c => inductiveCase( f, vs, v, c ) }
       val conclusion = All( v, All.Block( gvs, f ) )
       new Axiom {
-        val formula = universalClosure( All.Block( lvs, And( inductiveCases ) --> conclusion ) )
+        val formula = All.Block( lvs, And( inductiveCases ) --> conclusion )
         val proof = proveAxiom( formula, v )
       }
     }
