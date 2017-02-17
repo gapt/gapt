@@ -38,20 +38,23 @@ object PopupMenu {
         case _ =>
           contents += new Separator
           contents += new CheckMenuItem( "Hide proof above" ) {
-            selected = dsp.subProofsPanel.collapsed
+            selected = dsp.aboveLinePanel match {
+              case _: CollapsedSubproofsPanel[F, T] => true
+              case _                                => false
+            }
             action = Action( "Hide proof above" ) {
-              if ( dsp.subProofsPanel.collapsed )
-                dsp.main.publisher.publish( ShowSequentProof( dsp.pos ) )
-              else
-                dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )
+              dsp.aboveLinePanel match {
+                case _: CollapsedSubproofsPanel[F, T] => dsp.main.publisher.publish( ShowSequentProof( dsp.pos ) )
+                case _                                => dsp.main.publisher.publish( HideSequentProof( dsp.pos ) )
+              }
             }
+            contents += new MenuItem( Action( "View proof in new window" ) {
+              dsp.proof match {
+                case p: LKProof            => prooftool( p )
+                case p: SequentProof[F, T] => prooftool( p )
+              }
+            } )
           }
-          contents += new MenuItem( Action( "View proof in new window" ) {
-            dsp.proof match {
-              case p: LKProof            => prooftool( p )
-              case p: SequentProof[F, T] => prooftool( p )
-            }
-          } )
       }
     }
     popupMenu.show( dsp, x, y )
