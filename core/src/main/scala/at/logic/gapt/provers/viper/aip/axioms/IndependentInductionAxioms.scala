@@ -23,6 +23,8 @@ case class IndependentInductionAxioms(
 
   def forVariables( variables: List[Var] ) = copy( vsel = ( _, _ ) => variables )
 
+  def forVariables( variables: Var* ) = copy( vsel = ( _, _) => variables.toList )
+
   def forLabel( label: String ) = copy( fsel = findFormula( _, label ) )
 
   /**
