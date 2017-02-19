@@ -13,4 +13,12 @@ trait AxiomFactory {
    *         could not be generated.
    */
   def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]]
+
+  final def :/\:( otherFactory: AxiomFactory ): AxiomFactory = new AxiomFactory {
+    override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+      for {
+        axiomsLeft <- AxiomFactory.this( sequent )
+        axiomsRight <- otherFactory( sequent )
+      } yield axiomsLeft ::: axiomsRight
+  }
 }

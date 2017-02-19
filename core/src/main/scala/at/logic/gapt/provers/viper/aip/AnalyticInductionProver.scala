@@ -34,6 +34,11 @@ object AnalyticInductionProver {
     state += repeat( escargotTactic )
     state.result
   }
+
+  // todo add a comment
+  def apply( axioms: AxiomFactory, prover: InternalProver ) = new AnalyticInductionProver(
+    new ProverOptions( prover, axioms )
+  )
 }
 
 class AnalyticInductionProver( options: ProverOptions ) {

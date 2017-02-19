@@ -23,7 +23,11 @@ case class SequentialInductionAxioms(
 
   def forVariables( variables: List[Var] ) = copy( vsel = ( _, _ ) => variables )
 
+  def forVariables( variables: Var* ) = copy( vsel = ( _, _ ) => variables.toList )
+
   def forLabel( label: String ) = copy( fsel = findFormula( _, label ) )
+
+  def forFormula( formula: HOLFormula ) = copy( fsel = _ => Right( formula ) )
 
   /**
    * Computes sequential induction axioms for a sequent.

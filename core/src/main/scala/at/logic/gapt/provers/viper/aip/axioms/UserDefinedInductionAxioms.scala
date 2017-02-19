@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.gaptic.OpenAssumption
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip.ThrowsError
 
-class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFactory {
+case class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFactory {
   /**
    * Returns user defined induction axioms.
    *

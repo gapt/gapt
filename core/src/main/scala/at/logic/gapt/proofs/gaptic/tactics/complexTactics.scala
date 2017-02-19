@@ -3,12 +3,16 @@ package at.logic.gapt.proofs.gaptic.tactics
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansion.ExpansionProofToLK
+import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.proofs.reduction._
+import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, eliminateSplitting }
 import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.prover9.Prover9
-
+import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
+import at.logic.gapt.provers.viper.aip.axioms.{ AxiomFactory, CombinedInductionAxioms }
+import at.logic.gapt.provers.viper.aip.provers.InternalProver
 import cats.syntax.all._
 
 /**
@@ -243,12 +247,16 @@ case object EscargotTactic extends Tactic[Unit] {
 }
 
 /**
-  * Calls Escargot on the subgoal.
-  */
-case object EscargotTacticDeskolemized extends Tactic[Unit] {
-  
-  import at.logic.gapt.proofs.expansion.deskolemizeET
-
+ * Calls the analytic induction prover on the subgoal
+ */
+case class AnalyticInductionTactic( axioms: AxiomFactory, prover: InternalProver )( implicit ctx: Context ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
-    Escargot getExpansionProof goal.conclusion toSuccessNel TacticalFailure( this, Some( goal ), "search failed" ) map { p => () -> ExpansionProofToLK( deskolemizeET(p) ).get }
+    AnalyticInductionProver( axioms, prover ) inductiveLKProof ( goal.labelledSequent ) match {
+      case None       => Left( TacticalFailure( this, "search failed" ) )
+      case Some( lk ) => Right( () -> lk )
+    }
+
+  def withAxioms( axiom: AxiomFactory ): AnalyticInductionTactic =
+    copy( axioms = axiom )
 }
+
