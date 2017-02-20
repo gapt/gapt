@@ -7,6 +7,12 @@ import at.logic.gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
 
+object StandardInductionAxioms {
+  def apply( variable: Var, formula: HOLFormula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    apply( ( _, _ ) => variable :: Nil, ( _ ) => Right( formula ) )( Sequent() ).map( _.head )
+  }
+}
+
 case class StandardInductionAxioms(
     variableSelector: VariableSelector = allVariablesSelector( _ )( _ ),
     formulaSelector:  FormulaSelector  = firstFormulaSelector( _ )
@@ -18,7 +24,7 @@ case class StandardInductionAxioms(
 
   def forVariables( variables: Var* ) = copy( variableSelector = ( _, _ ) => variables.toList )
 
-  def forFormula( formula: HOLFormula ) = copy ( formulaSelector = (_) => Right(formula) )
+  def forFormula( formula: HOLFormula ) = copy( formulaSelector = ( _ ) => Right( formula ) )
 
   /**
    * Computes induction axioms for a given sequent.

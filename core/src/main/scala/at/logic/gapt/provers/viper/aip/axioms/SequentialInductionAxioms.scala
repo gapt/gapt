@@ -1,10 +1,9 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, Substitution, Var, freeVariables, rename, Const => Con }
-import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.expr.{ All, HOLFormula, Var, freeVariables, Const => Con }
+import at.logic.gapt.proofs.gaptic.{ ProofState, allR, insert, repeat }
 import at.logic.gapt.proofs.{ Context, Sequent }
-import at.logic.gapt.provers.viper.aip.{ ThrowsError, baseType, findFormula, getConstructors }
+import at.logic.gapt.provers.viper.aip.{ ThrowsError, findFormula }
 import cats.instances.all._
 import cats.syntax.all._
 
@@ -46,139 +45,30 @@ case class SequentialInductionAxioms(
    */
   override def apply( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
-      f <- fsel( sequent )
-      vs = vsel( f, ctx )
-      fvs = freeVariables( f ).toList
-      All.Block( _, f1 ) = f
-      xvs = freeVariables( f1 ).toList.diff( fvs ).diff( vs )
-      f2 = All.Block( xvs, f1 )
-      axioms <- vs.traverse[ThrowsError, Axiom] {
-        v => inductionAxiom( f2, vs, v )
-      }
+      formula <- fsel( sequent )
+      variables = vsel( formula, ctx )
+      axioms <- variables.traverse[ThrowsError, Axiom] { v: Var => inductionAxiom( variables, v, formula ) }
     } yield axioms
   }
 
-  /**
-   * Computes an induction axiom for the given formula and variable.
-   *
-   * @param f   The formula for which the induction axiom is generated.
-   * @param vs  The list of variables equal to {X < v} ++ [v] ++ {X > v}.
-   * @param v   The variable for which the induction axiom is generated.
-   * @param ctx The context defining types, constants, etc.
-   * @return An induction axiom if v is of inductive type, an error message otherwise.
-   */
-  private def inductionAxiom( f: HOLFormula, vs: List[Var], v: Var )( implicit ctx: Context ): ThrowsError[Axiom] = {
-    for {
-      cs <- getConstructors( baseType( v ), ctx )
-    } yield {
-      val ( lvs, _ :: gvs ) = vs.span( _ != v )
-      val inductiveCases = cs map { c => inductiveCase( f, vs, v, c ) }
-      val conclusion = All( v, All.Block( gvs, f ) )
+  private def inductionAxiom( variables: List[Var], variable: Var, formula: HOLFormula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }
+    val inductionFormula = All.Block( innerVariables, inductionQuantifierForm( variables, formula ) )
+
+    StandardInductionAxioms( variable, inductionFormula ).map { axiom =>
       new Axiom {
-        private val inductionFormula = All.Block( gvs, f )
-        val formula = All.Block( lvs, And( inductiveCases ) --> conclusion )
-
-        /**
-         * @return An inductive proof of the axiom.
-         */
+        val formula = All.Block( outerVariables, axiom.formula )
         def proof = {
-          val inductiveCaseProofs = cs map { inductiveCaseProof( _ ) }
-          var proofState = ProofState(
-            Sequent( Nil, formula :: Nil )
-          )
-          proofState += repeat( allR )
-          proofState += impR
-          proofState += allR( v )
-          proofState += induction( v )
-          proofState += repeat( andL ).onAllSubGoals
-          inductiveCaseProofs foreach {
-            proofState += insert( _ )
-          }
-          proofState.result
-        }
-
-        /**
-         * Computes proof of the inductive case corresponding to a given constructor.
-         * @param constructor The constructor whose associated inductive case is proved.
-         * @return A proof of the inductive case associated with the constructor.
-         */
-        private def inductiveCaseProof( constructor: Con ): LKProof = {
-          val inductiveCaseFormula = inductiveCase( f, vs, v, constructor )
-          val ( primaryVariables, secondaryVariables, inductionCaseConclusion ) =
-            insertConstructor( v, constructor, inductionFormula )
-          val inductionHypotheses = primaryVariables map {
-            primaryVariable => Substitution( v -> primaryVariable )( inductionFormula )
-          }
-          var proofState = ProofState(
-            Sequent(
-              "icf" -> inductiveCaseFormula ::
-                inductionHypotheses.zipWithIndex.map( { case ( hyp, index ) => s"ih$index" -> hyp } ),
-              "goal" -> inductionCaseConclusion :: Nil
-            )
-          )
-          proofState += allL( "icf", primaryVariables: _* ) orElse skip
-          proofState += impL
-          if ( primaryVariables.isEmpty )
-            proofState += trivial
-          else
-            primaryVariables foreach {
-              _ => proofState += andR andThen trivial orElse trivial
-            }
-          proofState += allL( secondaryVariables: _* ) orElse skip
-          proofState += trivial
-
-          proofState.result
+          ProofState( Sequent() :+ formula ) + repeat( allR ) + insert( axiom.proof ) result
         }
       }
     }
   }
 
-  /**
-   * Generates the inductive case of the given formula, variable and constructor.
-   *
-   * @param f  The formula for which the inductive case is generated.
-   * @param vs The list of variables equal to {X < v} ++ [v] ++ {X > v}.
-   * @param v  The variable for which the inductive case is generated.
-   * @param c  The constructor of this inductive case.
-   * @return The formula representing the inductive case.
-   */
-  private def inductiveCase( f: HOLFormula, vs: List[Var], v: Var, c: Con ): HOLFormula = {
-    val ( _, _ :: gvs ) = vs.span( _ != v )
-    val inductionFormula = All.Block( gvs, f )
-    val ( primaryVariables, secondaryVariables, inductionConclusion ) = insertConstructor( v, c, inductionFormula )
-    val inductionHypotheses = primaryVariables.map( pv => Substitution( v -> pv )( inductionFormula ) )
+  private def inductionQuantifierForm( inductionVariables: List[Var], formula: HOLFormula ): HOLFormula = {
+    val All.Block( _, matrix ) = formula
+    val quantifierPrefix = freeVariables( matrix ).diff( freeVariables( formula ) ).diff( inductionVariables.toSet ).toSeq
 
-    All.Block( primaryVariables, And( inductionHypotheses ) --> All.Block( secondaryVariables, inductionConclusion ) )
-  }
-
-  /**
-   * Substitutes the a free variable by a constructor.
-   *
-   * @param freeVariable The free variable which is to be replaced by the given constructor.
-   * @param constructor The constructor to be inserted at all occurrences of the specified freeVariable.
-   * @param formula The formula in which the substitution is to be carried out.
-   * @return A three tuple whose first component contains a list of all newly introduced free variables that
-   *         are of the same type as the type to which the constructor belongs, the second component contains
-   *         a list of all newly introduced variables that are of a different type than the constructor's type,
-   *         the third component contains the result of the substitution.
-   */
-  private def insertConstructor(
-    freeVariable: Var, constructor: Con, formula: HOLFormula
-  ): ( List[Var], List[Var], HOLFormula ) = {
-    val FunctionType( _, argumentTypes ) = constructor.exptype
-    val nameGenerator = rename.awayFrom( freeVariables( formula ) )
-    val newVariables = argumentTypes map {
-      argumentType =>
-        nameGenerator.fresh(
-          if ( argumentType == freeVariable.exptype )
-            freeVariable
-          else
-            Var( "x", argumentType )
-        )
-    }
-    val ( primaryVariables, secondaryVariables ) = newVariables partition {
-      _.exptype == freeVariable.exptype
-    }
-    ( primaryVariables, secondaryVariables, Substitution( freeVariable -> constructor( newVariables: _* ) )( formula ) )
+    All.Block( quantifierPrefix, matrix )
   }
 }
