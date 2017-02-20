@@ -4,10 +4,10 @@ import at.logic.gapt.expr._
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.provers.viper.aip.axioms.{ SequentialInductionAxioms, StandardInductionAxioms }
-import at.logic.gapt.provers.viper.aip.provers.{ escargot => manySortedProver }
-import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
+import at.logic.gapt.proofs.{Ant, Sequent}
+import at.logic.gapt.provers.viper.aip.axioms.{SequentialInductionAxioms, StandardInductionAxioms}
+import at.logic.gapt.provers.viper.aip.provers.{escargot => manySortedProver}
+import at.logic.gapt.provers.viper.aip.{AnalyticInductionProver, ProverOptions}
 import cats.syntax.all._
 
 object prop_03 extends TacticsProof {
@@ -98,7 +98,7 @@ object prop_03 extends TacticsProof {
       manySortedProver,
       StandardInductionAxioms()
         .forVariables( hov"xs:list" )
-        .forLabel( "goal" )
+        .forFormula( hof"∀ys ∀n le(count(n, xs), count(n, append(xs, ys)))")
     )
   ) lkProof ( sequent ) get
 

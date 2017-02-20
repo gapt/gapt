@@ -18,6 +18,8 @@ case class StandardInductionAxioms(
 
   def forVariables( variables: Var* ) = copy( variableSelector = ( _, _ ) => variables.toList )
 
+  def forFormula( formula: HOLFormula ) = copy ( formulaSelector = (_) => Right(formula) )
+
   /**
    * Computes induction axioms for a given sequent.
    *
