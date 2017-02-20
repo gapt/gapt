@@ -361,7 +361,7 @@ object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
  * <pre>
  *         (π)
  *      Γ :- A ∧ B
- *    --------------
+ *    --------------∧:e1
  *        Γ :- A
  * </pre>
  *
@@ -389,7 +389,7 @@ case class AndElim1Rule( subProof: NDProof )
  * <pre>
  *         (π)
  *      Γ :- A ∧ B
- *    --------------
+ *    --------------∧:e2
  *        Γ :- B
  * </pre>
  *
@@ -417,7 +417,7 @@ case class AndElim2Rule( subProof: NDProof )
  * <pre>
  *    (π1)      (π2)
  *   Γ :- A    Π :- B
- * --------------------
+ * --------------------∧:i
  *     Γ, Π :- A∧B
  * </pre>
  *
@@ -444,7 +444,7 @@ case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * <pre>
  *     (π1)         (π2)         (π3)
  *   Γ, A :- C    Δ, B :- C    Π :- A∨B
- * -------------------------------------
+ * -------------------------------------∨:e
  *           Γ, Δ, Π :- C
  * </pre>
  *
@@ -512,7 +512,7 @@ object OrElimRule extends ConvenienceConstructor( "OrElimRule" ) {
  * <pre>
  *       (π)
  *     Γ :- A
- *    --------------
+ *    ------------∨:i1
  *     Γ :- A ∨ B
  * </pre>
  *
@@ -537,7 +537,7 @@ case class OrIntro1Rule( subProof: NDProof, rightDisjunct: HOLFormula )
  * <pre>
  *       (π)
  *     Γ :- A
- *    --------------
+ *    ------------∨:i2
  *     Γ :- B ∨ A
  * </pre>
  *
@@ -562,7 +562,7 @@ case class OrIntro2Rule( subProof: NDProof, leftDisjunct: HOLFormula )
  * <pre>
  *   (π1)        (π2)
  *  Γ :- A→B    Π :- A
- * --------------------------
+ * -------------------- →:e
  *     Γ, Π :- B
  * </pre>
  *
@@ -583,7 +583,7 @@ case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 
-  override def name = "\u2283:e"
+  override def name = "→:e"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
@@ -593,7 +593,7 @@ case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * <pre>
  *         (π)
  *     A, Γ :- B
- *    --------------
+ *    ------------ →:i
  *     Γ :- A → B
  * </pre>
  *
@@ -611,7 +611,7 @@ case class ImpIntroRule( subProof: NDProof, aux: SequentIndex )
 
   override def auxIndices = Seq( Seq( aux, Suc( 0 ) ) )
 
-  override def name = "\u2283:i"
+  override def name = "→:i"
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
@@ -656,7 +656,7 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
  * <pre>
  *   (π1)      (π2)
  *  Γ :- ¬A    Π :- A
- * -------------------
+ * ------------------- ¬:e
  *     Γ, Π :- ⊥
  * </pre>
  *
@@ -683,7 +683,7 @@ case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * <pre>
  *         (π)
  *     A, Γ :- ⊥
- *    -----------
+ *    ----------- ¬:i
  *     Γ :- ¬A
  * </pre>
  *
@@ -748,7 +748,7 @@ object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
  * <pre>
  *       (π)
  *     Γ :- ⊥
- *     --------
+ *    -------- ⊥:e
  *     Γ :- A
  * </pre>
  *
@@ -835,7 +835,7 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
  * <pre>
  *        (π)
  *      Γ :- ∀x.A
- *     -------------∀:l
+ *     -------------∀:e
  *      Γ :- A[x\t]
  * </pre>
  *
@@ -849,7 +849,7 @@ case class ForallElimRule( subProof: NDProof, A: HOLFormula, term: LambdaExpress
 
   val mainFormula = Substitution( v, term )( A )
 
-  override def name = "∀:l"
+  override def name = "∀:e"
 
   def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
@@ -858,7 +858,7 @@ case class ForallElimRule( subProof: NDProof, A: HOLFormula, term: LambdaExpress
 
 object ForallElimRule extends ConvenienceConstructor( "ForallElimRule" ) {
   /**
-   * Convenience constructor for ∀:l that, given a term, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∀:e that, given a term, will try to construct an inference with that instantiation.
    *
    * @param subProof    The subproof.
    * @param term        A term t such that A[t] occurs in the premise.
@@ -881,7 +881,7 @@ object ForallElimRule extends ConvenienceConstructor( "ForallElimRule" ) {
  * <pre>
  *        (π)
  *      Γ :- A[x\t]
- *     ------------
+ *     ------------∃:i
  *      Γ :- ∃x.A
  * </pre>
  *
@@ -949,7 +949,7 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
  * <pre>
  *         (π1)         (π2)
  *     Γ :- ∃x.A   Δ, A[x\α] :- B
- *     --------------------------
+ *    ----------------------------∃:e
  *        Γ, Δ :- B
  * </pre>
  * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ, Δ. and B
@@ -995,7 +995,7 @@ case class ExistsElimRule( leftSubProof: NDProof, rightSubProof: NDProof, aux: S
 object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
 
   /**
-   * Convenience constructor for ∃:l that, given an eigenvariable, will try to construct an inference with that instantiation.
+   * Convenience constructor for ∃:e that, given an eigenvariable, will try to construct an inference with that instantiation.
    *
    * @param leftSubProof The proof π1.
    * @param rightSubProof The proof π2.
@@ -1020,7 +1020,7 @@ object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
   }
 
   /**
-   * Convenience constructor for ∃:l that, given only its subproofs, will try to construct an inference with that formula.
+   * Convenience constructor for ∃:e that, given only its subproofs, will try to construct an inference with that formula.
    *
    * @param leftSubProof The proof π1.
    * @param rightSubProof The proof π2.
@@ -1073,11 +1073,11 @@ case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: L
 }
 
 /**
- * An NDProof ending with the law of excluded middle:
+ * An NDProof ending with excluded middle:
  * <pre>
  *       (π1)       (π2)
  *    Γ, A :- B   Π, ¬A :- B
- *  -------------------------
+ *  -------------------------EM
  *          Γ, Π :- B
  * </pre>
  *
@@ -1102,7 +1102,7 @@ case class ExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightS
 
   val mainFormula = if ( leftB == rightB ) leftB else throw NDRuleCreationException( s"Formula $leftB is not equal to $rightB." )
 
-  override def name = "LEM"
+  override def name = "EM"
 
   def auxIndices = Seq( Seq( aux1, Suc( 0 ) ), Seq( aux2, Suc( 0 ) ) )
 
