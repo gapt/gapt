@@ -58,8 +58,15 @@ object prop_09 extends TacticsProof {
   val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
   val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
 
+  import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic.{independentAxioms, sequentialAxioms}
+
   val proof4 = Lemma( sequent ) {
     analyticInduction withAxioms
-      SequentialInductionAxioms().forAllVariables.forLabel( "goal" )
+      sequentialAxioms.forAllVariables.forLabel( "goal" )
+  }
+
+  val proof5 = Lemma( sequent ) {
+    analyticInduction withAxioms
+      sequentialAxioms.forAllVariables.forLabel( "goal" ) :/\: independentAxioms.forVariables( hov"i:Nat" )
   }
 }

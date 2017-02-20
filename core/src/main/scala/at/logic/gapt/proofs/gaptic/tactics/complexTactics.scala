@@ -3,12 +3,12 @@ package at.logic.gapt.proofs.gaptic.tactics
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansion.{ExpansionProofToLK, deskolemizeET}
+import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.reduction._
-import at.logic.gapt.proofs.resolution.{ResolutionToLKProof, eliminateSplitting}
-import at.logic.gapt.provers.escargot.{Escargot, NonSplittingEscargot}
+import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, eliminateSplitting }
+import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 import at.logic.gapt.provers.viper.aip.axioms._
@@ -247,9 +247,9 @@ case object EscargotTactic extends Tactic[Unit] {
 }
 
 object AnalyticInductionTactic {
-  def sequentialAxioms  = SequentialInductionAxioms()
+  def sequentialAxioms = SequentialInductionAxioms()
   def independentAxioms = IndependentInductionAxioms()
-  def standardAxioms    = StandardInductionAxioms()
+  def standardAxioms = StandardInductionAxioms()
 }
 /**
  * Calls the analytic induction prover on the subgoal

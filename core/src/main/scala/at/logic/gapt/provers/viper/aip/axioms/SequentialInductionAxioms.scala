@@ -144,26 +144,11 @@ case class SequentialInductionAxioms(
    */
   private def inductiveCase( f: HOLFormula, vs: List[Var], v: Var, c: Con ): HOLFormula = {
     val ( _, _ :: gvs ) = vs.span( _ != v )
-    val FunctionType( _, ats ) = c.exptype
-    val nameGenerator = rename.awayFrom( freeVariables( f ) )
-    val evs = ats map {
-      at => nameGenerator.fresh( if ( at == v.exptype ) v else Var( "x", at ) )
-    }
-    val yvs = evs filter {
-      _.exptype == v.exptype
-    }
-    val zvs = evs filter {
-      _.exptype != v.exptype
-    }
-    val hyps = yvs map {
-      yv => All.Block( gvs, Substitution( v -> yv )( f ) )
-    }
-    val concl = All.Block( zvs ++ gvs, Substitution( v -> c( evs: _* ) )( f ) )
+    val inductionFormula = All.Block( gvs, f )
+    val ( primaryVariables, secondaryVariables, inductionConclusion ) = insertConstructor( v, c, inductionFormula )
+    val inductionHypotheses = primaryVariables.map( pv => Substitution( v -> pv )( inductionFormula ) )
 
-    All.Block(
-      yvs,
-      And( hyps ) --> concl
-    )
+    All.Block( primaryVariables, And( inductionHypotheses ) --> All.Block( secondaryVariables, inductionConclusion ) )
   }
 
   /**
