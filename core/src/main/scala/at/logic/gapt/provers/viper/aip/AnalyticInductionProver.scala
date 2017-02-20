@@ -35,7 +35,13 @@ object AnalyticInductionProver {
     state.result
   }
 
-  // todo add a comment
+  /**
+   * Creates a new analytic induction prover.
+   *
+   * @param axioms The axiom factories used by the prover.
+   * @param prover The internal prover that is to be used for proof search.
+   * @return A new analytic induction prover that uses the provided objects for proof search.
+   */
   def apply( axioms: AxiomFactory, prover: InternalProver ) = new AnalyticInductionProver(
     new ProverOptions( prover, axioms )
   )
