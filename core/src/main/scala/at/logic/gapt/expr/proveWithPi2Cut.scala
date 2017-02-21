@@ -37,28 +37,17 @@ object proveWithPi2Cut {
     nameOfUnVa:                   FOLVar
   ): ( Option[LKProof] ) = {
 
-    val listAnt: Seq[String] = ( for {
-      i <- 0 until endSequent.antecedent.size
-    } yield i.toString )
-    val listSuc: Seq[String] = ( for {
-      i <- endSequent.antecedent.size until endSequent.antecedent.size + endSequent.succedent.size
-    } yield i.toString ).toList
+    //val listAnt: Seq[String] = ( for {
+    //  i <- 0 until endSequent.antecedent.size
+    //} yield i.toString )
+    //val listSuc: Seq[String] = ( for {
+    //  i <- endSequent.antecedent.size until endSequent.antecedent.size + endSequent.succedent.size
+    //} yield i.toString ).toList
 
     var ctx = Context.default
     ctx += Context.Sort( "i" )
     for ( c <- constants( seHs.reducedRepresentation.antecedent ++: endSequent :++ seHs.reducedRepresentation.succedent ) ) ctx += c
-    //for ( c <- constants( seHs.reducedRepresentation ) ) ctx += c
-    // val unEi = seHs.universalEigenvariable
-    // ctx += fov"$unEi:i"
-    // for ( ei <- seHs.existentialEigenvariables ) ctx += fov"$ei: i"
-    //for {
-    //  c <- seHs.substitutionsForAlpha
-    //  d <- constants( c.asInstanceOf[FOLTerm] )
-    //} ctx += d
-    //for {
-    //  c <- seHs.substitutionsForBetaWithAlpha
-    //  d <- constants( c.asInstanceOf[FOLTerm] )
-    //} ctx += d
+    // for ( c <- constants( seHs.substitutionsForBetaWithAlpha ); if !ctx.contains( c.asInstanceOf ) ) ctx += c
 
     var state = ProofState( guessLabels( endSequent ) )
     state += cut( "Cut", fof"!$nameOfUnVa ?$nameOfExVa ($cutFormulaWithoutQuantifiers )" )

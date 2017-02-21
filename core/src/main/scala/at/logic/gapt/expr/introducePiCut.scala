@@ -1,7 +1,7 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ FOLClause, Sequent }
 
 /**
  * Created by root on 26.01.17.
@@ -169,7 +169,7 @@ case class Pi2SeHs(
       for ( literal <- clause.succedent ) {
         NTAClause = Neg( literal ) +: NTAClause
       }
-      NTAClause = NTAClause.antecedent ++: Sequent()
+      NTAClause = NTAClause.antecedent.toSet ++: Sequent()
       val DNTABuffer = DNTA.toList
       var dontAdd: Boolean = false
       DNTABuffer.foreach( DNTAClause => {
