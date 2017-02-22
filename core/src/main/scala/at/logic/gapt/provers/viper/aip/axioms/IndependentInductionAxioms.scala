@@ -1,12 +1,11 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, And, Const => Con, FunctionType, HOLFormula, Substitution, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ All, HOLFormula, Var, freeVariables }
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip._
-
-import cats.syntax.all._, cats.instances.all._
+import cats.instances.all._
+import cats.syntax.all._
 
 /**
  * Generates independent induction axioms.
@@ -27,6 +26,8 @@ case class IndependentInductionAxioms(
 
   def forLabel( label: String ) = copy( fsel = findFormula( _, label ) )
 
+  def forFormula( formula: HOLFormula ) = copy( fsel = _ => Right( formula ) )
+
   /**
    * Generates independent induction axioms for the given sequent.
    *
@@ -36,124 +37,49 @@ case class IndependentInductionAxioms(
   override def apply( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
-      inductionVariables = vsel( formula, ctx )
-      freeVars = freeVariables( formula ).toList
-      All.Block( _, formula1 ) = formula
-      variablesToBeClosed = freeVariables( formula1 ).toList.diff( inductionVariables ).diff( freeVars )
-      formula2 = All.Block( variablesToBeClosed, formula1 )
-      axioms <- makeInductionAxioms( formula2, inductionVariables )
+      variables = vsel( formula, ctx )
+      axioms <- variables.traverse[ThrowsError, Axiom] {
+        variable => inductionAxiom( variables, variable, formula )
+      }
     } yield axioms
   }
 
   /**
-   * Computes the list of induction axioms for a given formula and variables.
+   * The quantifier induction form of a given formula and induction variables.
    *
-   * @param formula   The formula for which the induction axioms are generated.
-   * @param variables The variables for which an induction axiom is generated.
-   * @return A list of either induction axioms or errors. A an error message is
-   *         in the list if the corresponding axiom could not be created.
+   * @param inductionVariables Inductive variables x_1,...,x_n that may possibly occur in the given formula.
+   * @param formula A formula of the form `∀Xφ`.
+   * @return A formula of the form `∀Yφ` where Y does not contain any of x_1,...,x_n.
    */
-  private def makeInductionAxioms(
-    formula: HOLFormula, variables: List[Var]
-  )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
-    variables.traverse[ThrowsError, Axiom]( v => makeAxiom( formula, v, variables ) )
+  private def inductionQuantifierForm( inductionVariables: List[Var], formula: HOLFormula ) = {
+    val All.Block( _, matrix ) = formula
+    val quantifierPrefix = freeVariables( matrix ).diff( freeVariables( formula ) ).diff( inductionVariables toSet ) toSeq
+
+    All.Block( quantifierPrefix, matrix )
+  }
 
   /**
-   * Computes an induction axiom for the given formula and the given variable.
+   * The independent induction axiom for the given variables, and formula.
    *
-   * @param formula  The formula subject to the induction axiom.
-   * @param variable The induction variable.
-   * @return Either a formula of the form:
-   *         ∀x,,1,,,...,x,,k-1,,,x,,k+1,,,...,x,,n,,( <IC(F,c,,1,,,x,,k,,)> ∧...∧ <IC(F,c,,m,,,x,,k,,)> -> ∀x,,k,, F ),
-   *         given a formula F, a variable x,,k,, such that
-   *         - F has free variables x,,1,,,...,x,,n,,
-   *         - x,,k,, is inductive and has constructors c,,1,,,...,c,,m,,
-   *         - IC(F,c,,i,,,x,,k,,), with i = {1,...,m} symbolises the i-th inductive case;
-   *         or an error message if one of the above conditions is violated.
+   * @param inductionVariables All the inductive variables that are considered for the induction. This list of
+   *                           variables also contains the main induction variable `variable`.
+   * @param variable The inductive variable on which the induction is carried out.
+   * @param formula The formula on whose induction quantifier form the induction is carried out.
+   * @param ctx Defines constants, types, etc.
+   * @return An independent induction axiom.
    */
-  private def makeAxiom(
-    formula: HOLFormula, variable: Var, variables: List[Var]
-  )( implicit ctx: Context ): ThrowsError[Axiom] =
-    for {
-      constructors <- getConstructors( baseType( variable ), ctx )
-    } yield {
-      val ics = constructors map { c => inductiveCase( formula, c, variable ) }
-      val concl = All( variable, formula )
-      val fvs = freeVariables( formula ).toList
+  private def inductionAxiom(
+    inductionVariables: List[Var], variable: Var, formula: HOLFormula
+  )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    val auxiliaryVariables = inductionVariables filter { _ != variable }
+    val inductionFormula = inductionQuantifierForm( inductionVariables, formula )
+    StandardInductionAxioms( variable, inductionFormula ) map { axiom =>
       new Axiom {
-        val formula = All.Block( variables filter { _ != variable }, And( ics ) --> concl )
-        val proof = proveAxiom( formula, variable )
+        val formula = All.Block( auxiliaryVariables, axiom.formula )
+        def proof = {
+          ProofState( Sequent() :+ formula ) + repeat( allR ) + insert( axiom.proof ) result
+        }
       }
     }
-
-  /**
-   * Computes a proof for an independent induction axiom.
-   *
-   * @param axiom    The induction axiom to be proved.
-   * @param variable The variable for which the axiom describes an induction.
-   * @param ctx      The context which specifies constants, types, etc.
-   * @return A proof of the given induction axiom.
-   */
-  private def proveAxiom( axiom: HOLFormula, variable: Var )( implicit ctx: Context ): LKProof =
-    ( ProofState( Sequent() :+ ( "" -> axiom ) ) + axiomProof( variable ) ).result
-
-  /**
-   * Tactical for independent induction axioms.
-   *
-   * @param variable The variable associated with the induction axiom.
-   * @param ctx      The context defining constants, types, etc.
-   * @return A tactical which can be used to create a proof of the induction axiom associated with the
-   *         variable.
-   */
-  private def axiomProof( variable: Var )( implicit ctx: Context ): Tactical[Unit] =
-    for {
-      _ <- repeat( allR )
-      _ <- impR
-      _ <- allR( variable )
-      _ <- induction( variable )
-      _ <- decompose.onAllSubGoals
-      _ <- repeat( escargot )
-    } yield ()
-
-  /**
-   * Returns a formula expressing the inductive case for a given constructor, formula
-   * and variable.
-   *
-   * @param formula     The formula to be used for the inductive case.
-   * @param constructor The constructor corresponding to the returned inductive case.
-   * @param variable    The induction variable.
-   * @return Returns a formula of the form:
-   *         ∀y,,1,,',...,∀y,,n,,'((F[y,,1,,'/x] ∧ ... ∧ F[y,,n,,'/x])
-   *         -> ∀z,,1,,',...,∀z,,l,,' F[c(y,,1,,',...y,,n,,',z,,1,,',...,z,,l,,')/x]),
-   *         for a given variable x, a constructor c and a formula F such that
-   *         - x is of inductive type with constructor c
-   *         - x is a free variable of F
-   *         - c has free variables y,,1,,,...,y,,n,,,z,,1,,,...,z,,l,,
-   *         - the variables y,,1,,,...,y,,n,, are of the same type as x
-   *         - variables z,,1,,,...,z,,l,, are not of the same type as x
-   *         - variables y,,1,,',...,y,,n,,',z,,1,,',...,z,,l,,' are fresh variables for F.
-   */
-  private def inductiveCase(
-    formula:     HOLFormula,
-    constructor: Con,
-    variable:    Var
-  )( implicit ctx: Context ): HOLFormula = {
-    val FunctionType( _, argumentTypes ) = constructor.exptype
-    val nameGenerator = rename.awayFrom( freeVariables( formula ) )
-    val evs = argumentTypes map {
-      at => nameGenerator.fresh( if ( at == variable.exptype ) variable else Var( "x", at ) )
-    }
-    val ivs = evs filter {
-      _.exptype == variable.exptype
-    }
-    val ovs = evs filter {
-      _.exptype != variable.exptype
-    }
-    val hyps = ivs map { iv => Substitution( variable -> iv )( formula ) }
-    val concl = Substitution( variable -> constructor( evs: _* ) )( formula )
-
-    All.Block(
-      ivs, And( hyps ) --> All.Block( ovs, concl )
-    )
   }
 }
