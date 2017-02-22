@@ -152,6 +152,8 @@ object Session {
    */
   def tell( input: SExpression ) = liftF( Tell( input ) )
 
+  def skip: Session[Unit] = Free.pure[SessionCommand, Unit]( () )
+
   /**
    * Asserts a list of formulas.
    */
@@ -196,6 +198,8 @@ object Session {
    */
   def declareSymbolsIn( expressions: LambdaExpression* )( implicit d: DummyImplicit ): Session[Unit] = declareSymbolsIn( expressions.toList )
 
+  def when( p: Boolean )( s: Session[Unit] ) = if ( p ) s else skip
+
   /**
    * Contains various functions for interpreting a value of type Session.
    *
@@ -222,7 +226,7 @@ object Session {
        */
       def run[A]( session: Session[A] ): A = {
         val trans = new ( SessionCommand ~> Id ) {
-          def apply[A]( command: SessionCommand[A] ): A = interpretCommand( command )
+          def apply[B]( command: SessionCommand[B] ): B = interpretCommand( command )
         }
         session.foldMap( trans )
       }

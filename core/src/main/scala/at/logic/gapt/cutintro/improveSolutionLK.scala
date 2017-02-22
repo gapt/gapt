@@ -6,6 +6,7 @@ import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolv
 import at.logic.gapt.proofs.{ FOLClause, RichFOLSequent, Sequent }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.Session._
+import cats.implicits._
 
 import scala.collection.mutable
 
@@ -59,35 +60,34 @@ object improveSolutionLK {
     val groundInstances = instances.map( grounding.compose )
     val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
-    val init = for {
+    val init: Session[Unit] = for {
       _ <- declareSymbolsIn( names ++ containedNames( grounding ) )
       _ <- assert( grounding( context.toNegConjunction ) )
     } yield ()
 
-    def checkSolution( cnf: Set[FOLClause] ): Unit = if ( !isSolution.contains( cnf ) ) {
-      val checkSolutionProgram: Session[Boolean] = {
-        val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
-        for {
-          _ <- init
-          _ <- assert( clauses.toList )
-          sat <- checkSat
-        } yield sat
-      }
+    def checkSolution( cnf: Set[FOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
+      val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
 
-      if ( !prover.runSession( checkSolutionProgram ) ) {
-        isSolution( cnf ) = true
-        forgetfulPropResolve( cnf ) foreach checkSolution
-        if ( hasEquality ) forgetfulPropParam( cnf ) foreach checkSolution
-        if ( forgetOne ) for ( c <- cnf ) checkSolution( cnf - c )
-      } else {
-        isSolution( cnf ) = false
+      withScope( assert( clauses.toList ) followedBy checkSat ) flatMap { sat: Boolean =>
+        isSolution( cnf ) = !sat
+
+        when( !sat ) {
+          forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) followedBy
+            when( hasEquality ) {
+              forgetfulPropParam( cnf ).toList.traverse_( checkSolution )
+            } followedBy
+            when( forgetOne ) {
+              cnf.toList.traverse_( c => checkSolution( cnf - c ) )
+            }
+        }
       }
     }
-    checkSolution( CNFp( start ).map {
+
+    prover.runSession( init followedBy checkSolution( CNFp( start ).map {
       _.distinct.sortBy {
         _.hashCode
       }
-    } )
+    } ) )
 
     val solutions = isSolution collect {
       case ( cnf, true ) => simplify( And( cnf map {
