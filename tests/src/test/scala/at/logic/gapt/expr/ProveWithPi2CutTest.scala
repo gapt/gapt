@@ -65,6 +65,7 @@ class ProveWithPi2CutTest extends Specification {
   }
 
 
+  /*
   "This" should {
     "be computed correctly" in {
       val A3 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))"
@@ -91,7 +92,6 @@ class ProveWithPi2CutTest extends Specification {
   }
 
 
-  /*
   "This" should {
     "be computed correctly" in {
       val T1 = fof"Pkl(0,y1)&Pg(f(0),f(y1))"
@@ -163,6 +163,7 @@ class ProveWithPi2CutTest extends Specification {
       }) must_== true
     }
   }
+  */
 
 
   "This" should {
@@ -220,6 +221,5 @@ class ProveWithPi2CutTest extends Specification {
       }) must_== true
     }
   }
-  */
 
 }

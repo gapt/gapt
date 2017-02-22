@@ -37,20 +37,13 @@ object proveWithPi2Cut {
     nameOfUnVa:                   FOLVar
   ): ( Option[LKProof] ) = {
 
-    //val listAnt: Seq[String] = ( for {
-    //  i <- 0 until endSequent.antecedent.size
-    //} yield i.toString )
-    //val listSuc: Seq[String] = ( for {
-    //  i <- endSequent.antecedent.size until endSequent.antecedent.size + endSequent.succedent.size
-    //} yield i.toString ).toList
-
     var ctx = Context.default
     ctx += Context.Sort( "i" )
     for ( c <- constants( seHs.reducedRepresentation.antecedent ++: endSequent :++ seHs.reducedRepresentation.succedent ) ) ctx += c
-    for ( c <- constants( seHs.substitutionsForBetaWithAlpha ); if !ctx.constants.exists( t => t==c ) ) ctx += c
-    for ( c <- constants( seHs.substitutionsForAlpha ); if !ctx.constants.exists( t => t==c ) ) ctx += c
-    for ( c <- constants( seHs.existentialEigenvariables ); if !ctx.constants.exists( t => t==c ) ) ctx += c
-    for ( c <- constants( seHs.universalEigenvariable ); if !ctx.constants.exists( t => t==c ) ) ctx += c
+    for ( c <- constants( seHs.substitutionsForBetaWithAlpha ); if !ctx.constants.exists( t => t == c ) ) ctx += c
+    for ( c <- constants( seHs.substitutionsForAlpha ); if !ctx.constants.exists( t => t == c ) ) ctx += c
+    for ( c <- constants( seHs.existentialEigenvariables ); if !ctx.constants.exists( t => t == c ) ) ctx += c
+    for ( c <- constants( seHs.universalEigenvariable ); if !ctx.constants.exists( t => t == c ) ) ctx += c
 
     var state = ProofState( guessLabels( endSequent ) )
     state += cut( "Cut", fof"!$nameOfUnVa ?$nameOfExVa ($cutFormulaWithoutQuantifiers )" )

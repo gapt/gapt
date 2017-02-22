@@ -250,7 +250,7 @@ case class Pi2SeHs(
         }
       } )
       if ( !dontAdd ) {
-        DNTA += DNTAClause // define for fol and hol sequents
+        DNTA += DNTAClause
       }
     } )
 
@@ -509,19 +509,19 @@ object introducePi2Cut {
       }
     }
 
-    println( "Number of non-tautological leaves" )
-    println( dNTAList.length )
-    println( "Number of unified literals" )
-    println( unifiedLiterals.size )
-    numberOfAllowedClauses match {
-      case Some( t ) => {
-        println( "Number of allowed clauses" )
-        println( t )
-      }
-      case None => println( "No 'allowed clauses' were computed" )
-    }
-    println( "Number of checked Formulas" )
-    println( numberOfCheckedFormulas )
+    // println( "Number of non-tautological leaves" )
+    // println( dNTAList.length )
+    // println( "Number of unified literals" )
+    // println( unifiedLiterals.size )
+    // numberOfAllowedClauses match {
+    //   case Some( t ) => {
+    //     println( "Number of allowed clauses" )
+    //     println( t )
+    //   }
+    //   case None => println( "No 'allowed clauses' were computed" )
+    // }
+    // println( "Number of checked Formulas" )
+    // println( numberOfCheckedFormulas )
 
     if ( !seHs.noSolutionHasBeenFound ) {
       ( seHs.balancedSolution, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
