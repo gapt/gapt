@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, HOLFormula, Var, freeVariables, Const => Con }
+import at.logic.gapt.expr.{ All, HOLFormula, Var, freeVariables }
 import at.logic.gapt.proofs.gaptic.{ ProofState, allR, insert, repeat }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip.{ ThrowsError, findFormula }
@@ -51,7 +51,18 @@ case class SequentialInductionAxioms(
     } yield axioms
   }
 
-  private def inductionAxiom( variables: List[Var], variable: Var, formula: HOLFormula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+  /**
+   * A sequential induction axiom for the given induction variables and formula.
+   *
+   * @param variables The inductive variables which are considered for this axiom.
+   * @param variable The variable on which the induction is carried out.
+   * @param formula The formula for which the axiom is generated.
+   * @param ctx Defines constants, types, etc.
+   * @return A sequential induction axiom.
+   */
+  private def inductionAxiom(
+    variables: List[Var], variable: Var, formula: HOLFormula
+  )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }
     val inductionFormula = All.Block( innerVariables, inductionQuantifierForm( variables, formula ) )
 
@@ -65,6 +76,13 @@ case class SequentialInductionAxioms(
     }
   }
 
+  /**
+   * The quantifier induction form of a given formula and induction variables.
+   *
+   * @param inductionVariables Inductive variables x_1,...,x_n that may possibly occur in the given formula.
+   * @param formula A formula of the form `∀Xφ`.
+   * @return A formula of the form `∀Yφ` where Y does not contain any of x_1,...,x_n.
+   */
   private def inductionQuantifierForm( inductionVariables: List[Var], formula: HOLFormula ): HOLFormula = {
     val All.Block( _, matrix ) = formula
     val quantifierPrefix = freeVariables( matrix ).diff( freeVariables( formula ) ).diff( inductionVariables.toSet ).toSeq
