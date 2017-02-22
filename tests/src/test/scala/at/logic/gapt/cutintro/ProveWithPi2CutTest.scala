@@ -1,4 +1,5 @@
-package at.logic.gapt.expr
+package at.logic.gapt.cutintro
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk.LKProof
 import org.specs2.mutable.Specification
@@ -6,7 +7,6 @@ import org.specs2.mutable.Specification
  * Created by root on 08.02.17.
  */
 class ProveWithPi2CutTest extends Specification {
-
 
   /*
   */
@@ -37,7 +37,6 @@ class ProveWithPi2CutTest extends Specification {
     }
   }
 
-
   "This" should {
     "be computed correctly" in {
       val A4 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))|P(x,f4(x))"
@@ -63,7 +62,6 @@ class ProveWithPi2CutTest extends Specification {
       } ) must_== true
     }
   }
-
 
   /*
   "This" should {
@@ -165,7 +163,6 @@ class ProveWithPi2CutTest extends Specification {
   }
   */
 
-
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -189,11 +186,10 @@ class ProveWithPi2CutTest extends Specification {
       val proof: Option[LKProof] = proveWithPi2Cut( endSequent, seHs, yName, xName )
       ( proof match {
         case Some( t ) => true
-        case _ => false
-      }) must_== true
+        case _         => false
+      } ) must_== true
     }
   }
-
 
   "This" should {
     "be computed correctly" in {
@@ -217,8 +213,8 @@ class ProveWithPi2CutTest extends Specification {
       val proof: Option[LKProof] = proveWithPi2Cut( endSequent, seHs, yName, xName )
       ( proof match {
         case Some( t ) => true
-        case _ => false
-      }) must_== true
+        case _         => false
+      } ) must_== true
     }
   }
 

@@ -1,5 +1,5 @@
-package at.logic.gapt.expr
-
+package at.logic.gapt.cutintro
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.{ Lemma, guessLabels, tactics }

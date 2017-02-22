@@ -1,4 +1,5 @@
-package at.logic.gapt.expr
+package at.logic.gapt.cutintro
+import at.logic.gapt.expr._
 
 /**
  * Created by root on 26.01.17.

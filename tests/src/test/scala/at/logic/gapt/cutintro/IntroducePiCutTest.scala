@@ -1,5 +1,5 @@
-package at.logic.gapt.expr
-
+package at.logic.gapt.cutintro
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import org.specs2.mutable.Specification
 
