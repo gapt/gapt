@@ -1,6 +1,6 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.expr.fol.replaceAbstractions
+import at.logic.gapt.expr.fol.{ Counter, replaceAbstractions }
 import at.logic.gapt.expr.{ Abs, Const, HOLAtom, LambdaExpression, To }
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
@@ -18,7 +18,7 @@ class nTape2 extends AnalysisWithCeresOmega {
 
   override def printStatistics() = {
     super.printStatistics()
-    nTapeInstances.printInstances( this.expansion_proof, this.proofdb.Definitions )
+    nTapeInstances.printInstances( this.expansion_proof, this.proofdb().Definitions )
   }
 }
 
@@ -37,7 +37,7 @@ object nTapeInstances {
 
     val List( ind1, ind2 ): List[ExpansionTree] = indet match {
       case ETWeakQuantifier( _, instances ) =>
-        instances.map( _._2 ).toList
+        instances.values.toList
     }
 
     val ( ind1base, ind1step ) = ind1 match {
@@ -67,13 +67,7 @@ object nTapeInstances {
     ( ind1base, ind1step, ind2base, ind2step ) match {
       case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
         val map = Map[LambdaExpression, String]()
-        val counter = new {
-          private var state = 0;
-
-          def nextId = {
-            state = state + 1; state
-          }
-        }
+        val counter = new Counter
 
         val ( map1, sb1 ) = replaceAbstractions( sb, map, counter )
         val ( map2, ss1 ) = replaceAbstractions( ss, map1, counter )

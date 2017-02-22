@@ -9,7 +9,7 @@ import org.specs2.mutable._
 
 class hol2folTest extends Specification {
   def imap = Map[LambdaExpression, String]() // the scope for most tests is just the term itself
-  def iid = new { var idd = 0; def nextId = { idd = idd + 1; idd } }
+  def iid = new Counter
 
   "HOL terms" should {
     val hx = Var( "x", Ti -> Ti )
