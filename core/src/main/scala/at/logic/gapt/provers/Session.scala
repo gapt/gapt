@@ -325,18 +325,19 @@ object Session {
       val process = new ProcessBuilder( command: _* ).redirectError( Redirect.INHERIT ).start()
       val in = new PrintWriter( process.getOutputStream )
       val out = new BufferedReader( new InputStreamReader( process.getInputStream ) )
+      var debug = false
 
       protected def tell( input: SExpression ) = {
-        //if ( debug ) println( input )
+        if ( debug ) println( input )
         in println input
       }
 
       protected def ask( input: SExpression ) = {
-        //if ( debug ) println( input )
+        if ( debug ) println( input )
         in println input
         in.flush()
         val res = out.readLine()
-        //if ( debug ) println( s"-> $res" )
+        if ( debug ) println( s"-> $res" )
         if ( res == null ) throw new ExternalSmtlibProgram.UnexpectedTerminationException( input )
         SExpressionParser( StringInputFile( res ) ).head
       }
