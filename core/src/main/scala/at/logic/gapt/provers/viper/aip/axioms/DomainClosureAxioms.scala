@@ -7,7 +7,9 @@ import at.logic.gapt.provers.viper.aip.{ LabelledSequent, ThrowsError, getConstr
 import cats.instances.all._
 import cats.syntax.all._
 
-case class DomainClosureAxioms( types: List[TBase] ) {
+case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory {
+
+  def forTypes( types: TBase* ) = copy( types = types.toList )
 
   /**
    * Computes domain closure axioms.
@@ -16,7 +18,7 @@ case class DomainClosureAxioms( types: List[TBase] ) {
    * @param ctx Defines the constants, types, etc.
    * @return A list of domain closure axioms or an error message if the axioms could not be constructed.
    */
-  def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
     types.traverse[ThrowsError, Axiom] { t => domainClosureAxiom( t ) }
 
   /**
