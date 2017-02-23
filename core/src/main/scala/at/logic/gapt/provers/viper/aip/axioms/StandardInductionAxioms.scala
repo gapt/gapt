@@ -107,7 +107,7 @@ case class StandardInductionAxioms(
             primaryVariables foreach {
               _ => proofState += andR andThen trivial orElse trivial
             }
-          proofState += allL( secondaryVariables: _* ) orElse skip
+          proofState += allL( "icf_0", secondaryVariables: _* ) orElse skip
           proofState += trivial
 
           proofState.result
