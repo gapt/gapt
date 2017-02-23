@@ -250,6 +250,8 @@ object AnalyticInductionTactic {
   def sequentialAxioms = SequentialInductionAxioms()
   def independentAxioms = IndependentInductionAxioms()
   def standardAxioms = StandardInductionAxioms()
+  def domainClosure = DomainClosureAxioms()
+  def tipDomainClosure = TipDomainClosureAxioms()
 }
 /**
  * Calls the analytic induction prover on the subgoal
