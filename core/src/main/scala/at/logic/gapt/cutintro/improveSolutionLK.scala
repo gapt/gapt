@@ -52,7 +52,8 @@ object improveSolutionLK {
    * @param prover  Prover to check the validity of the constraint.
    * @param hasEquality  If set to true, use forgetful paramodulation in addition to resolution.
    */
-  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover, hasEquality: Boolean, forgetOne: Boolean ): FOLFormula = {
+  private def improve( context: Sequent[FOLFormula], start: FOLFormula, instances: Set[FOLSubstitution], prover: Prover,
+                       hasEquality: Boolean, forgetOne: Boolean ): FOLFormula = {
     val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
     val nameGen = rename.awayFrom( names )
     val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
@@ -60,43 +61,30 @@ object improveSolutionLK {
     val groundInstances = instances.map( grounding.compose )
     val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 
-    val init: Session[Unit] = for {
-      _ <- declareSymbolsIn( names ++ containedNames( grounding ) )
-      _ <- assert( grounding( context.toNegConjunction ) )
-    } yield ()
-
     def checkSolution( cnf: Set[FOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
       val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
 
-      withScope( assert( clauses.toList ) followedBy checkSat ) flatMap { sat: Boolean =>
-        isSolution( cnf ) = !sat
+      withScope( assert( clauses.toList ) >> checkUnsat ).flatMap { isSol =>
+        isSolution( cnf ) = isSol
 
-        when( !sat ) {
-          forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) followedBy
-            when( hasEquality ) {
-              forgetfulPropParam( cnf ).toList.traverse_( checkSolution )
-            } followedBy
-            when( forgetOne ) {
-              cnf.toList.traverse_( c => checkSolution( cnf - c ) )
-            }
+        when( isSol ) {
+          forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) >>
+            forgetfulPropParam( cnf ).toList.traverse_( checkSolution ) >>
+            when( forgetOne ) { cnf.toList.traverse_( c => checkSolution( cnf - c ) ) }
         }
       }
     }
 
-    prover.runSession( init followedBy checkSolution( CNFp( start ).map {
-      _.distinct.sortBy {
-        _.hashCode
-      }
-    } ) )
+    prover.runSession {
+      declareSymbolsIn( names ++ containedNames( grounding ) ) >>
+        assert( grounding( context.toNegConjunction ) ) >>
+        checkSolution( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
+    }
 
     val solutions = isSolution collect {
-      case ( cnf, true ) => simplify( And( cnf map {
-        _.toImplication
-      } ) )
+      case ( cnf, true ) => simplify( And( cnf map { _.toImplication } ) )
     }
-    solutions minBy {
-      lcomp( _ )
-    }
+    solutions minBy { lcomp( _ ) }
   }
 
   /**

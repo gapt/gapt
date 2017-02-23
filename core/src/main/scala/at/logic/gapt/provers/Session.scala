@@ -123,6 +123,11 @@ object Session {
   def checkSat: Session[Boolean] = liftF( CheckSat )
 
   /**
+   * Checks whether the current set of declarations and assertions is not satisfiable.
+   */
+  def checkUnsat: Session[Boolean] = checkSat.map( !_ )
+
+  /**
    * Sets the logic to be used for the session.
    */
   def setLogic( logic: String ) = liftF( SetLogic( logic ) )
