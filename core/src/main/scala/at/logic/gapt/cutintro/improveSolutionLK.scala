@@ -69,7 +69,7 @@ object improveSolutionLK {
 
         when( isSol ) {
           forgetfulPropResolve( cnf ).toList.traverse_( checkSolution ) >>
-            forgetfulPropParam( cnf ).toList.traverse_( checkSolution ) >>
+            when( hasEquality ) { forgetfulPropParam( cnf ).toList.traverse_( checkSolution ) } >>
             when( forgetOne ) { cnf.toList.traverse_( c => checkSolution( cnf - c ) ) }
         }
       }
