@@ -205,7 +205,7 @@ trait Tactical[+T] { self =>
    * @param t2
    * @return
    */
-  def orElse[S >: T]( t2: Tactical[S] ): Tactical[S] = {
+  def orElse[S >: T]( t2: => Tactical[S] ): Tactical[S] = {
     val t1 = this
 
     new Tactical[S] {
@@ -216,7 +216,7 @@ trait Tactical[+T] { self =>
     }
   }
 
-  def andThen[S]( t2: Tactical[S] ): Tactical[S] = new Tactical[S] {
+  def andThen[S]( t2: => Tactical[S] ): Tactical[S] = new Tactical[S] {
     def apply( proofState: ProofState ) = self( proofState ) flatMap { x => t2( x._2 ) }
     override def toString = s"$self andThen $t2"
   }

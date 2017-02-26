@@ -5,7 +5,7 @@ import java.io.IOException
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, freeVariablesLK }
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess, withTempFile }
 import at.logic.gapt.proofs._
 
@@ -150,7 +150,10 @@ class LeanExporter {
   def export( p: LKProof ): String = {
     val out = new StringBuilder
 
-    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )} : ${export( p.endSequent )} :=\n"
+    val fvParams = freeVariablesLK( p ).toSeq.sortBy( _.name )
+      .map( v => s" (${nameMap.getLeanName( v.name, VAR )} : ${export( v.exptype )})" ).mkString
+
+    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )}$fvParams : ${export( p.endSequent )} :=\n"
     out ++= "begin\n"
 
     val hs = p.endSequent.indicesSequent.map {
