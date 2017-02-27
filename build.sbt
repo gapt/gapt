@@ -22,6 +22,7 @@ lazy val commonSettings = Seq(
 
   scalaVersion := "2.12.1",
   scalacOptions in Compile ++= Seq(
+    "-Ypartial-unification",
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
