@@ -60,6 +60,11 @@ class TipProofsTests extends Specification {
   requireTip { "isaplanner/prop_42" in { prop_42; ok } }
   requireTip { "isaplanner/prop_43" in { prop_43; ok } }
   requireTip { "isaplanner/prop_44" in { prop_44; ok } }
+  requireTip { "isaplanner/prop_45" in { prop_45; ok } }
+  requireTip { "isaplanner/prop_46" in { prop_46; ok } }
+  requireTip { "isaplanner/prop_47" in { prop_47; ok } }
+  requireTip { "isaplanner/prop_48" in { prop_48; ok } }
+  requireTip { "isaplanner/prop_49" in { prop_49; ok } }
 
   // prod
   requireTip { "prod/prop_01" in { at.logic.gapt.examples.tip.prod.prop_01; ok } }
@@ -79,4 +84,6 @@ class TipProofsTests extends Specification {
   requireTip { "prod/prop_30" in { at.logic.gapt.examples.tip.prod.prop_30; ok } }
   requireTip { "prod/prop_32" in { at.logic.gapt.examples.tip.prod.prop_32; ok } }
   requireTip { "prod/prop_33" in { at.logic.gapt.examples.tip.prod.prop_33; ok } }
+  requireTip { "prod/prop_34" in { at.logic.gapt.examples.tip.prod.prop_34; ok } }
+  requireTip { "prod/prop_35" in { at.logic.gapt.examples.tip.prod.prop_35; ok } }
 }
