@@ -16,38 +16,45 @@ object LKToND {
    * @return The natural deduction proof translate(π).
    */
   def apply( proof: LKProof ): NDProof = {
-    translate(proof)
+    translate(proof, Suc(0))
   }
 
-  private def exchange( subProof: NDProof, left: SequentIndex, right: SequentIndex ): (NDProof, SequentIndex) = {
+  private def exchange( subProof: NDProof, left: SequentIndex, right: SequentIndex ): NDProof = {
     val (l, _) = subProof.endSequent.focus(left)
     val (r, _) = subProof.endSequent.focus(right)
 
-    val notA = nd.LogicalAxiom( hof"-${l}" )
-    val notB = nd.LogicalAxiom( hof"-${r}" )
 
-    println("notA")
-    println(notA)
-    println("notB")
-    println(notB)
-    println("subProof")
-    println(subProof)
-    val s1 = NegElimRule( subProof, notB )
-    val s2 = BottomElimRule( s1, hof"-${l}" )
+    val notRt = nd.LogicalAxiom( hof"-${r}" )
+
+    val Neg(strip) = l
+    val rt = nd.LogicalAxiom( hof"${strip}" )
+
+    //println("notRt")
+    //println(notRt)
+    //println("subProof")
+    //println(subProof)
+    val s1 = NegElimRule( notRt, subProof )
+    val s2 = BottomElimRule( s1, strip )
+    //println("s2")
+    //println(s2)
     val i = s2.endSequent.find{ case `l` => true; case _ => false }.get
 
-    val ret = ExcludedMiddleRule( notA, Ant(0), s2, i )
-    val j = ret.endSequent.find{ case `r` => true; case _ => false }.get
-    (ret, j)
+    //println (i)
+    //println (rt)
+    val ret = ExcludedMiddleRule( rt, Ant( 0 ), s2, i )
+
+    //println("ret")
+    //println(ret)
+    ret
   }
 
-  private def translate( proof: LKProof ): NDProof = proof match {
+  private def translate( proof: LKProof, focus: SequentIndex ): NDProof = proof match {
 
     // Axioms
     case LogicalAxiom( atom: HOLAtom ) =>
       val ret = nd.LogicalAxiom( atom )
-      println(proof.name)
-      println( ret )
+      //println(proof.name)
+      //println( ret )
 
       ret
 
@@ -65,16 +72,18 @@ object LKToND {
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>
-      val ret = WeakeningRule(translate(subProof), formula)
-      println(proof.name)
-      println(ret)
+      //translate(subProof, focus)
+      val ret = WeakeningRule(translate(subProof, focus), formula)
+      //println(proof.name)
+      //println(ret)
 
       ret
 
     case WeakeningRightRule( subProof, formula ) =>
-      val ret = WeakeningRule(translate(subProof), hof"-${formula}")
-      println(proof.name)
-      println(ret)
+      //translate(subProof, focus)
+      val ret = WeakeningRule(translate(subProof, focus), hof"-${formula}")
+      //println(proof.name)
+      //println(ret)
 
       ret
 
@@ -104,21 +113,41 @@ object LKToND {
       ???
 
     case OrRightRule( subProof, aux1, aux2 ) =>
+
       val (l, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux1)
       val (r, s2): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux2)
 
       // TODO move Delta to LHS of sequent
       val seq = le"-${l}" +: s1
-      println(seq)
+      //println(seq)
+      println(proof.name)
+      println ("subProof")
+      println (subProof)
 
-      val lp = OrIntro1Rule(translate(subProof), l)
+      val t = translate(subProof, aux2)
+
+      println(proof.name)
+      println ("t")
+      println (t)
+      println("proof")
+      println(proof)
+      println(s"focus: ${focus}")
+      val ff = proof.endSequent(focus)
+      println(s"ff: ${ff}")
+
+      val lp = OrIntro2Rule(t, l)
 
       val rp1 = nd.LogicalAxiom( l )
       val rp2 = OrIntro1Rule( rp1, r )
 
-      val ret = ExcludedMiddleRule(lp, Ant(0), rp2, Ant(0))
-      println(proof.name)
-      println( ret )
+      //println("lp")
+      //println(lp)
+      //println("rp2")
+      //println(rp2)
+
+      val ret = ExcludedMiddleRule(rp2, Ant(0), lp, Ant(0))
+      //println(proof.name)
+      //println( ret )
 
       ret
 
@@ -126,18 +155,31 @@ object LKToND {
       ???
 
     case ImpRightRule( subProof, aux1, aux2 ) =>
+
       val (l, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux1)
       val (r, s2): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux2)
 
+      println(proof.name)
+      println ("subProof")
+      println (subProof)
       // TODO find correct formula
       // TODO possibly exchange
-      val t = translate(subProof)
+      val t = translate(subProof, aux2)
+      println(proof.name)
+      println ("t")
+      println (t)
 
+      println(s"focus: ${focus}")
       println("proof")
       println(proof)
-      println(s"t.endSequent = ${t.endSequent}")
-      println(s"l = ${l}")
-      println(s"r = ${r}")
+      val ff = proof.endSequent(focus)
+      println(s"ff: ${ff}")
+
+      //println("proof")
+      //println(proof)
+      //println(s"t.endSequent = ${t.endSequent}")
+      //println(s"l = ${l}")
+      //println(s"r = ${r}")
       val il = t.endSequent.find{ case `l` => true; case _ => false }
       val ir = t.endSequent.find{ case `r` => true; case _ => false }
 
@@ -145,20 +187,28 @@ object LKToND {
         case (Some(il), Some(ir)) if il.isAnt && ir.isSuc =>
           ImpIntroRule(t, il)
         case (Some(il), Some(ir)) if il.isAnt && !ir.isSuc =>
-          val (s, i) = exchange(t, ir, Suc( 0 ))
-          ImpIntroRule(s, i)
+          val ir = t.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
+          val s = exchange(t, ir.get, Suc( 0 ) )
+          val i = t.endSequent.find{ case `l` => true; case _ => false }
+          ImpIntroRule(s, i.get)
         case (Some(il), Some(ir)) if !il.isAnt && !ir.isSuc =>
-          val (s, i) = exchange(t, il, ir)
-          ImpIntroRule(s, i)
+          val s = exchange(t, il, ir)
+          val i = t.endSequent.find{ case `l` => true; case _ => false }
+          ImpIntroRule(s, i.get)
         case (Some(il), Some(ir)) if !il.isAnt && ir.isSuc =>
           // I think this case cannot happen
           ???
+        case (Some(il), None) if il.isAnt =>
+          val ir = t.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
+          val s = exchange(t, ir.get, Suc( 0 ) )
+          val i = t.endSequent.find{ case `l` => true; case _ => false }
+          ImpIntroRule(s, i.get)
         case _ =>
           ???
       }
 
-      println(proof.name)
-      println( ret )
+      //println(proof.name)
+      //println( ret )
 
       ret
 

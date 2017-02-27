@@ -2,6 +2,7 @@ import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.prooftool.prooftool
 
 // Example 0.1.6
 object ex0_1_6 extends Script {
@@ -30,5 +31,9 @@ object ex0_1_6_short extends Script {
 
   println( s6 )
 
-  LKToND( s6 )
+  val nd = LKToND( s6 )
+  println( "ex0_1_6_short" )
+  println( nd )
+
+  //prooftool( nd )
 }
