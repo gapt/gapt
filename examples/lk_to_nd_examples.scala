@@ -37,3 +37,24 @@ object ex0_1_6_short extends Script {
 
   //prooftool( nd )
 }
+
+object demorgan extends Script {
+  val s1 = LogicalAxiom( hof"A" )
+  val s2 = WeakeningRightRule( s1, hof"B" )
+  val s3 = OrRightRule( s2, hof"A | B" )
+  val s4 = NegLeftRule( s3, hof"A | B")
+  val s5 = NegRightRule( s4, hof"A" )
+
+  val r1 = LogicalAxiom( hof"B" )
+  val r2 = WeakeningRightRule( r1, hof"A" )
+  val r3 = OrRightRule( r2, hof"A | B" )
+  val r4 = NegLeftRule( r3, hof"A | B")
+  val r5 = NegRightRule( r4, hof"B" )
+
+  val p1 = AndRightRule( s5, r5, hof"-A & -B")
+  val p2 = ContractionLeftRule( p1, hof"-(A | B)")
+  println( p2 )
+
+  val nd = LKToND(p2)
+  println(nd)
+}

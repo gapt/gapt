@@ -48,6 +48,76 @@ object LKToND {
     ret
   }
 
+  private def applyRule(in: NDProof, l: HOLFormula, il: Option[SequentIndex], r: HOLFormula, ir: Option[SequentIndex], rule: (NDProof, SequentIndex)=> NDProof ) = {
+    (il, ir) match {
+      case (Some(il), Some(ir)) if il.isAnt && ir.isSuc =>
+        rule(in, il)
+      case _ =>
+        val ir = in.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
+        val (p, j) = ir match {
+          case Some(ir) => (in, ir)
+          case None => (WeakeningRule(in, hof"-${r}"), Ant(0))
+        }
+        val s = exchange(p, j, Suc( 0 ) )
+
+        val il = s.endSequent.find{ case `l` => true; case _ => false }
+        val (p2, i) = il match {
+          case Some(il) => (s, il)
+          case None => (WeakeningRule(s, l), Ant(0))
+        }
+        rule(p2, i)
+    }
+  }
+
+  // TODO what if -l is on RHS? Need to exchange? for NegL, the rule would just duplicate -l anyhow
+  private def applyRule2(in: NDProof, l: HOLFormula, il: Option[SequentIndex], rule: (NDProof, SequentIndex)=> NDProof ) = {
+    il match {
+      case Some(il) if il.isAnt =>
+        rule(in, il)
+      case _ =>
+        val p = WeakeningRule(in, l)
+        rule(p, Ant(0))
+    }
+  }
+
+  private def applyRule3(in: NDProof, r: HOLFormula, ir: Option[SequentIndex], rule: (NDProof, SequentIndex)=> NDProof ) = {
+    ir match {
+      case Some(ir) if ir.isSuc =>
+        rule(in, Ant(0))
+      case _ =>
+        val ir = in.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
+        val (p, j) = ir match {
+          case Some(ir) => (in, ir)
+          case None => (WeakeningRule(in, hof"-${r}"), Ant(0))
+        }
+        val s = exchange(p, j, Suc( 0 ) )
+
+        rule(s, Ant(0))
+    }
+  }
+
+  private def applyBinaryRule(inl: NDProof, l: HOLFormula, il: Option[SequentIndex], inr: NDProof, r: HOLFormula, ir: Option[SequentIndex], rule: (NDProof, SequentIndex, NDProof, SequentIndex) => NDProof ) = {
+    (il, ir) match {
+      case (Some(il), Some(ir)) if il.isSuc && ir.isSuc =>
+        rule(inl, il, inr, ir)
+      case _ =>
+        val ir = inr.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
+        val (p, j) = ir match {
+          case Some(ir) => (inr, ir)
+          case None => (WeakeningRule(inr, hof"-${r}"), Ant(0))
+        }
+        val s = exchange(p, j, Suc( 0 ) )
+
+        val il = inl.endSequent.find{ case s if s == hof"-${l}" => true; case _ => false }
+        val (p2, i) = il match {
+          case Some(il) => (inl, il)
+          case None => (WeakeningRule(inl, l), Ant(0))
+        }
+        val s2 = exchange(p2, i, Suc( 0 ) )
+        rule(s, j, s2, i)
+    }
+  }
+
   private def translate( proof: LKProof, focus: SequentIndex ): NDProof = proof match {
 
     // Axioms
@@ -72,23 +142,20 @@ object LKToND {
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>
-      //translate(subProof, focus)
-      val ret = WeakeningRule(translate(subProof, focus), formula)
-      //println(proof.name)
-      //println(ret)
-
-      ret
+      translate(subProof, focus)
 
     case WeakeningRightRule( subProof, formula ) =>
-      //translate(subProof, focus)
-      val ret = WeakeningRule(translate(subProof, focus), hof"-${formula}")
-      //println(proof.name)
-      //println(ret)
-
-      ret
+      translate(subProof, focus)
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
-      ???
+      val (l, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux1)
+      val (r, s2): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux2)
+
+      val t = translate(subProof, aux2)
+
+      assert (l == r)
+
+      ContractionRule(t, l)
 
     case ContractionRightRule( subProof, aux1, aux2 ) =>
       ???
@@ -98,58 +165,91 @@ object LKToND {
 
     // Propositional rules
     case NegLeftRule( subProof, aux ) =>
-      ???
+      val (r, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux)
+
+      val tr = translate(subProof, aux)
+
+      val ir = tr.endSequent.find{ case `r` => true; case _ => false }
+
+      def rule (in: NDProof, ir: SequentIndex) = {
+        val s = nd.LogicalAxiom( hof"-${r}" )
+        NegElimRule( s, in )
+      }
+
+      applyRule3( tr, r, ir, rule )
 
     case NegRightRule( subProof, aux ) =>
-      ???
+      val (l, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux)
+
+      val tl = translate(subProof, aux)
+
+      val il = tl.endSequent.find{ case `l` => true; case _ => false }
+
+      def rule (in: NDProof, il: SequentIndex) = {
+        NegIntroRule(in, il)
+      }
+
+      applyRule2(tl, l, il, rule)
 
     case AndLeftRule( subProof, aux1, aux2 ) =>
       ???
 
     case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      ???
+
+      val (l, s1): (HOLFormula, Sequent[HOLFormula]) = leftSubProof.endSequent.focus(aux1)
+      val (r, s2): (HOLFormula, Sequent[HOLFormula]) = rightSubProof.endSequent.focus(aux2)
+
+      val tl = translate(leftSubProof, aux1)
+      val tr = translate(rightSubProof, aux2)
+
+      val il = tl.endSequent.find{ case `l` => true; case _ => false }
+      val ir = tr.endSequent.find{ case `r` => true; case _ => false }
+
+      def rule (inl: NDProof, il: SequentIndex, inr: NDProof, ir: SequentIndex) = {
+        AndIntroRule(inl, inr)
+      }
+
+      applyBinaryRule(tl, l, il, tr, r, ir, rule)
 
     case OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       ???
+
+    case OrRightRule( sp1 @ WeakeningRightRule(sp2, f), aux1, aux2 ) =>
+      val (l, s1): (HOLFormula, Sequent[HOLFormula]) = sp1.endSequent.focus(aux1)
+      val (r, s2): (HOLFormula, Sequent[HOLFormula]) = sp1.endSequent.focus(aux2)
+
+      //TODO remove focus argument
+      val t = translate(sp2, aux1)
+      f match {
+        case `l` =>
+          OrIntro2Rule(t, f)
+        case `r` =>
+          OrIntro1Rule(t, f)
+      }
 
     case OrRightRule( subProof, aux1, aux2 ) =>
 
       val (l, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux1)
       val (r, s2): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux2)
 
-      // TODO move Delta to LHS of sequent
-      val seq = le"-${l}" +: s1
-      //println(seq)
-      println(proof.name)
-      println ("subProof")
-      println (subProof)
-
       val t = translate(subProof, aux2)
 
-      println(proof.name)
-      println ("t")
-      println (t)
-      println("proof")
-      println(proof)
-      println(s"focus: ${focus}")
-      val ff = proof.endSequent(focus)
-      println(s"ff: ${ff}")
+      println(t)
 
-      val lp = OrIntro2Rule(t, l)
+      val il = t.endSequent.find{ case s if s == hof"-${l}" => true; case _ => false }
+      val ir = t.endSequent.find{ case `r` => true; case _ => false }
 
-      val rp1 = nd.LogicalAxiom( l )
-      val rp2 = OrIntro1Rule( rp1, r )
+      def rule (in: NDProof, il: SequentIndex) = {
 
-      //println("lp")
-      //println(lp)
-      //println("rp2")
-      //println(rp2)
+        println("in")
+        println(in)
+        val lp = OrIntro2Rule(in, l)
+        val rp1 = nd.LogicalAxiom(l)
+        val rp2 = OrIntro1Rule(rp1, r)
+        ExcludedMiddleRule(rp2, Ant(0), lp, il)
+      }
 
-      val ret = ExcludedMiddleRule(rp2, Ant(0), lp, Ant(0))
-      //println(proof.name)
-      //println( ret )
-
-      ret
+      applyRule(t, Neg(l), il, r, ir, rule)
 
     case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       ???
@@ -159,58 +259,17 @@ object LKToND {
       val (l, s1): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux1)
       val (r, s2): (HOLFormula, Sequent[HOLFormula]) = subProof.endSequent.focus(aux2)
 
-      println(proof.name)
-      println ("subProof")
-      println (subProof)
-      // TODO find correct formula
-      // TODO possibly exchange
       val t = translate(subProof, aux2)
-      println(proof.name)
-      println ("t")
-      println (t)
 
-      println(s"focus: ${focus}")
-      println("proof")
-      println(proof)
-      val ff = proof.endSequent(focus)
-      println(s"ff: ${ff}")
-
-      //println("proof")
-      //println(proof)
-      //println(s"t.endSequent = ${t.endSequent}")
-      //println(s"l = ${l}")
-      //println(s"r = ${r}")
       val il = t.endSequent.find{ case `l` => true; case _ => false }
       val ir = t.endSequent.find{ case `r` => true; case _ => false }
 
-      val ret = (il, ir) match {
-        case (Some(il), Some(ir)) if il.isAnt && ir.isSuc =>
-          ImpIntroRule(t, il)
-        case (Some(il), Some(ir)) if il.isAnt && !ir.isSuc =>
-          val ir = t.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
-          val s = exchange(t, ir.get, Suc( 0 ) )
-          val i = t.endSequent.find{ case `l` => true; case _ => false }
-          ImpIntroRule(s, i.get)
-        case (Some(il), Some(ir)) if !il.isAnt && !ir.isSuc =>
-          val s = exchange(t, il, ir)
-          val i = t.endSequent.find{ case `l` => true; case _ => false }
-          ImpIntroRule(s, i.get)
-        case (Some(il), Some(ir)) if !il.isAnt && ir.isSuc =>
-          // I think this case cannot happen
-          ???
-        case (Some(il), None) if il.isAnt =>
-          val ir = t.endSequent.find{ case s if s == hof"-${r}" => true; case _ => false }
-          val s = exchange(t, ir.get, Suc( 0 ) )
-          val i = t.endSequent.find{ case `l` => true; case _ => false }
-          ImpIntroRule(s, i.get)
-        case _ =>
-          ???
+      def rule (in: NDProof, il: SequentIndex) = {
+        ImpIntroRule(in, il)
       }
 
-      //println(proof.name)
-      //println( ret )
+      applyRule(t, l, il, r, ir, rule)
 
-      ret
 
     // Quantifier rules
     case ForallLeftRule( subProof, aux, _, t, _ ) =>
