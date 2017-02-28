@@ -11,16 +11,16 @@ case class euclid( k: Int ) extends PrimeDefinitions {
 
     if ( i == 0 )
       Lemma( sequent ) {
-        repeat( unfold( P( i ).name, "set_1" ) in "linp" )
-        repeat( unfold( "DIV", prod( i ).name ) in "div" )
+        unfold( P( i ).name, "set_1" ) in "linp"
+        unfold( "DIV", prod( i ).name ) in "div"
         exR( le"1" ).forget
         rewrite ltr "linp" in "div"
         theory
       }
     else
       Lemma( sequent ) {
-        repeat( unfold( P( i ).name, "union" ) in "linp" )
-        repeat( unfold( "DIV", prod( i ).name ) in "div" )
+        unfold( P( i ).name, "union" ) in "linp"
+        unfold( "DIV", prod( i ).name ) in "div"
         destruct( "linp" )
 
         include( "IH", ldivprod( i - 1 ) )
@@ -57,7 +57,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
 
     unfold( F( k ).name ) in "fk"
     allL( "fk", p( i ) ).forget; decompose; destruct( "fk_1" )
-    Tactical.sequence( for ( j <- i to k reverse ) yield repeat( unfold( P( j ).name, "union", "set_1" ) in "fk_1" ) )
+    Tactical.sequence( for ( j <- i to k reverse ) yield unfold( P( j ).name, "union", "set_1" ) in "fk_1" )
     decompose; trivial
     unfold( "PRIME" ) in "fk_1"; decompose
 

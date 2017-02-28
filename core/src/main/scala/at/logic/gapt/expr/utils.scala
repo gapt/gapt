@@ -101,6 +101,21 @@ object freeVariables {
   def apply( seq: FOLSequent )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = apply( seq.elements )
 }
 
+object typeVariables {
+  def apply( t: Ty ): Set[TVar] = t match {
+    case a -> b   => apply( a ) ++ apply( b )
+    case _: TBase => Set()
+    case t: TVar  => Set( t )
+  }
+
+  def apply( e: LambdaExpression ): Set[TVar] = e match {
+    case Const( _, t ) => apply( t )
+    case Var( _, t )   => apply( t )
+    case App( a, b )   => apply( a ) ++ apply( b )
+    case Abs( v, s )   => apply( s ) ++ apply( v )
+  }
+}
+
 /**
  * Returns the set of non-logical constants occuring in the given argument.
  */

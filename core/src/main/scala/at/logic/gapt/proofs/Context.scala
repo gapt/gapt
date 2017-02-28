@@ -40,7 +40,11 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def get[T: Facet]: T = state.get[T]
 
   def constants: Iterable[Const] = get[Constants].constants.values
-  def definitions: Map[Const, LambdaExpression] = get[Definitions].definitions
+  def definitions: Map[Const, LambdaExpression] =
+    for {
+      ( what, by ) <- get[Definitions].definitions
+      whatC <- constant( what )
+    } yield whatC -> by
   def axioms: Set[HOLSequent] = get[Axioms].axioms
 
   /** Returns Some(const) if name is a constant. */
@@ -55,18 +59,18 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
 
   /** Returns Some(expandedDefinition) if c is a defined constant. */
   def definition( c: Const ): Option[LambdaExpression] =
-    get[Definitions].definitions.get( c )
-
-  /** Returns Some(expandedDefinition) if name is a defined constant. */
-  def definition( name: String ): Option[LambdaExpression] =
-    get[Definitions].definitions.find( _._1.name == name ).map( _._2 )
+    for {
+      defC <- get[Constants].constants.get( c.name )
+      subst <- syntacticMatching( defC, c )
+      defn <- get[Definitions].definitions.get( c.name )
+    } yield subst( defn )
 
   /** Returns a collection of all (expression-level) reduction rules of this context. */
   def reductionRules: Iterable[ReductionRule] = state.getAll[ReductionRule]
 
   /** Returns true iff the context contains the definition defn (the definitional expansion has to match as well). */
   def contains( defn: EDefinition ): Boolean =
-    get[Definitions].definitions.get( defn.what ).contains( defn.by )
+    definition( defn.what ).contains( defn.by )
 
   /** Returns the Skolem definition of skSym.  See [[at.logic.gapt.expr.hol.SkolemFunctions]]. */
   def skolemDef( skSym: Const ): Option[LambdaExpression] =
@@ -195,17 +199,26 @@ object Context {
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
   /** Definitions that define a constant by an expression of the same type. */
-  case class Definitions( definitions: Map[Const, LambdaExpression] ) extends ReductionRule {
+  case class Definitions( definitions: Map[String, LambdaExpression] ) extends ReductionRule {
     def +( defn: EDefinition ) = {
-      require( !definitions.contains( defn.what ) )
-      copy( definitions + ( defn.what -> defn.by ) )
+      require( !definitions.contains( defn.what.name ) )
+      copy( definitions + ( defn.what.name -> defn.by ) )
     }
 
     override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
-      definitions.toMap[LambdaExpression, LambdaExpression].get( head ).map( by => ( by, args ) )
+      head match {
+        case Const( n, t ) if definitions.contains( n ) =>
+          val by = definitions( n )
+          val Some( subst ) = syntacticMatching( by.exptype, t )
+          Some( subst( by ) -> args )
+        case _ => None
+      }
 
-    override def toString = definitions.toSeq.sortBy( _._1.name ).
+    override def toString = definitions.toSeq.sortBy( _._1 ).
       map { case ( w, b ) => s"$w -> $b" }.mkString( "\n" )
+
+    def filter( p: ( ( String, LambdaExpression ) ) => Boolean ): Definitions =
+      copy( definitions.filter( p ) )
   }
   implicit val defsFacet: Facet[Definitions] = Facet( Definitions( Map() ) )
 
@@ -283,6 +296,7 @@ object Context {
         ty == ty_,
         s"Base type $ty and type constructor $constr don't agree."
       )
+      require( typeVariables( constr ) subsetOf typeVariables( ty ) )
     }
     require(
       constructors.map( _.name ) == constructors.map( _.name ).distinct,

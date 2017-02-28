@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Definitions
 import at.logic.gapt.proofs.{ Ant, Context }
 
 /**
@@ -12,7 +13,7 @@ object eliminateDefinitions {
    * @param dmap The definitions to be eliminated.
    */
   def apply( dmap: Map[_ <: Const, _ <: LambdaExpression] ): eliminateDefinitions =
-    new eliminateDefinitions( dmap.toMap )
+    new eliminateDefinitions( Context.Definitions( dmap.map( x => x._1.name -> x._2 ) ) )
 
   /**
    * Given an implicit [[at.logic.gapt.proofs.Context]] in scope, this removes all definitions in that context from a
@@ -20,20 +21,16 @@ object eliminateDefinitions {
    * @param proof The proof to be transformed.
    * @param ctx An implicit context. Definitions in this will be removed from proof.
    */
-  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.definitions.toMap )( proof )
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
+    new eliminateDefinitions( ctx.get[Definitions] ).apply( proof )
 }
 
 /**
  * Implements definition elimination.
  * @param dmap A map containing the definitions to be eliminated.
  */
-class eliminateDefinitions private ( dmap: Map[Const, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
-  private object betaDeltaReduction extends ReductionRule {
-    override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
-      dmap.toMap[LambdaExpression, LambdaExpression].
-        get( head ).map( by => ( by, args ) ).
-        orElse( BetaReduction.reduce( normalizer, head, args ) )
-  }
+class eliminateDefinitions private ( dmap: Context.Definitions ) extends Function[LambdaExpression, LambdaExpression] {
+  private val betaDeltaReduction = ReductionRule( BetaReduction, dmap )
 
   def apply( e: LambdaExpression ): LambdaExpression = normalize( betaDeltaReduction, e )
   def apply( f: HOLFormula ): HOLFormula = apply( f: LambdaExpression ).asInstanceOf[HOLFormula]

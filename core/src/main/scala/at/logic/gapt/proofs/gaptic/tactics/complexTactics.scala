@@ -33,7 +33,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
       case ( _, quantifiedFormula @ All.Block( hypVar, hypInner @ Imp.Block( _, hypTargetMatch ) ), _ ) =>
 
         def getSubst( f: HOLFormula ): Option[Substitution] =
-          syntacticMatching( List( hypTargetMatch -> f ), substitution ++ freeVariables( quantifiedFormula ).map( v => v -> v ) ).headOption
+          syntacticMatching( List( hypTargetMatch -> f ), PreSubstitution( substitution ++ freeVariables( quantifiedFormula ).map( v => v -> v ) ) ).headOption
 
         // Find target index and substitution
         findFormula( goal, target ).withFilter { case ( _, f, idx ) => idx.isSuc && getSubst( f ).isDefined }.map {
@@ -107,7 +107,7 @@ case class RewriteTactic(
       ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.labelledSequent.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
-      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), fixedSubst ++ freeVariables( quantEq ).map { v => v -> v }.toMap )
+      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), PreSubstitution( fixedSubst ++ freeVariables( quantEq ).map { v => v -> v } ) )
     } return {
       val newTgt = tgt.replace( pos, subst( s_ ) )
       val newGoal = OpenAssumption( goal.labelledSequent.updated( tgtIdx, target -> newTgt ) )
@@ -171,40 +171,23 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
     }
 }
 
-case class UnfoldTacticHelper( definition: String, definitions: Seq[String] )( implicit ctx: Context ) {
-  def in( label: String, labels: String* ) = labels.foldLeft[Tactical[Unit]]( UnfoldTactic( label, definition, definitions ) ) {
-    ( acc, l ) => acc andThen UnfoldTactic( l, definition, definitions )
+case class UnfoldTacticHelper( definitions: Seq[String] )( implicit ctx: Context ) {
+  def in( labels: String* ) = labels.foldLeft[Tactical[Unit]]( skip ) {
+    ( acc, l ) => acc andThen UnfoldTactic( l, definitions )
   }
 }
 
-case class UnfoldTactic( target: String, definition: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
-  def getDef: Either[TacticalFailure, Definition] =
-    ctx.definition( definition ) match {
-      case Some( by ) =>
-        Right( Definition( Const( definition, by.exptype ), by ) )
-      case None =>
-        Left( TacticalFailure( this, s"Definition $definition not present in context: $ctx" ) )
-    }
+case class UnfoldTactic( target: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
+  def unfold( main: HOLFormula ): HOLFormula = {
+    val defsToUnfold = ctx.get[Context.Definitions].filter( definitions contains _._1 )
+    normalize( ReductionRule( defsToUnfold, BetaReduction ), main ).asInstanceOf[HOLFormula]
+  }
 
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
-      defn <- getDef; Definition( what, by ) = defn
-      defPositions = main.find( what )
-      unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
-      normalized = BetaReduction.betaNormalize( unfolded )
-      repContext = replacementContext.abstractTerm( main )( what )
-      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
-      proof_ : Either[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
-        case ( p :: ps, _ ) =>
-          Right( DefinitionRule( newGoal, normalized, main, idx.polarity ) )
-        case ( Nil, hd +: tl ) =>
-          UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
-        case _ =>
-          Left( TacticalFailure( this, None, s"Definition $definition not found in formula $main." ) )
-      }
-      proof <- proof_
-    } yield () -> proof
+      ( label: String, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> unfold( main ) ) )
+    } yield () -> DefinitionRule( newGoal, idx, main )
 }
 
 /**

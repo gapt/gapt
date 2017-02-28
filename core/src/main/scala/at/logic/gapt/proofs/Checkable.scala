@@ -34,7 +34,7 @@ object Checkable {
       expr match {
         case c @ Const( name, _ ) =>
           require(
-            context.constant( name ).exists( defC => typeMatching( defC.exptype, c.exptype ).isDefined ),
+            context.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
             s"Unknown constant: $c"
           )
         case Var( _, t ) => context.check( t )

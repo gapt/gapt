@@ -45,14 +45,6 @@ object baseTypes {
   }
 }
 
-object typeVars {
-  def apply( t: Ty ): Set[TVar] = t match {
-    case a -> b   => apply( a ) ++ apply( b )
-    case t: TBase => Set()
-    case t: TVar  => Set( t )
-  }
-}
-
 object typeMatching {
   def apply( a: Ty, b: Ty ): Option[Map[TVar, Ty]] =
     apply( List( ( a, b ) ), Map[TVar, Ty]() )
