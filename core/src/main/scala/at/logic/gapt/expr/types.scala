@@ -45,23 +45,5 @@ object baseTypes {
   }
 }
 
-object typeMatching {
-  def apply( a: Ty, b: Ty ): Option[Map[TVar, Ty]] =
-    apply( List( ( a, b ) ), Map[TVar, Ty]() )
-
-  def apply( pairs: List[( Ty, Ty )], alreadyFixedSubst: Map[TVar, Ty] ): Option[Map[TVar, Ty]] =
-    pairs match {
-      case Nil => Some( alreadyFixedSubst )
-      case first :: rest =>
-        first match {
-          case ( TBase( n ), TBase( n_ ) ) if n == n_ => apply( rest, alreadyFixedSubst )
-          case ( a1 -> b1, a2 -> b2 ) => apply( ( a1, a2 ) :: ( b1, b2 ) :: rest, alreadyFixedSubst )
-          case ( v: TVar, t ) if !alreadyFixedSubst.contains( v ) => apply( rest, alreadyFixedSubst.updated( v, t ) )
-          case ( v: TVar, t ) if alreadyFixedSubst.get( v ).contains( t ) => apply( rest, alreadyFixedSubst )
-          case _ => None
-        }
-    }
-}
-
 object Ti extends TBase( "i" )
 object To extends TBase( "o" )
