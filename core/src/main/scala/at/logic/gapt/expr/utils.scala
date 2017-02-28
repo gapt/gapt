@@ -103,9 +103,9 @@ object freeVariables {
 
 object typeVariables {
   def apply( t: Ty ): Set[TVar] = t match {
-    case a -> b   => apply( a ) ++ apply( b )
-    case _: TBase => Set()
-    case t: TVar  => Set( t )
+    case a -> b         => apply( a ) ++ apply( b )
+    case TBase( _, ps ) => ps.view.flatMap( apply ).toSet
+    case t: TVar        => Set( t )
   }
 
   def apply( e: LambdaExpression ): Set[TVar] = e match {

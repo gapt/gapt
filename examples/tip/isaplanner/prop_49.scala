@@ -32,7 +32,7 @@ object prop_49 extends TacticsProof {
     //- cut - IC - IB
     escargot
     //- cut - IC - IC
-    analyticInduction withAxioms tipDomainClosure.forTypes( listType )
+    sorry // analyticInduction withAxioms tipDomainClosure.forTypes( listType )
     //-
     escargot
   }

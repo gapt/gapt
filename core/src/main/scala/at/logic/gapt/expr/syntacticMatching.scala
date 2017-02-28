@@ -30,7 +30,7 @@ object syntacticMatching extends syntacticMatching {
     apply( pairs, PreSubstitution() ).headOption
 
   def apply( a: Ty, b: Ty ): Option[Substitution] =
-    apply( List( Const( "", a ) -> Const( "", b ) ), PreSubstitution() ).headOption
+    apply( Nil, List( ( a, b ) ), PreSubstitution() ).headOption
 }
 class syntacticMatching extends MatchingAlgorithm {
   def apply(
@@ -55,7 +55,8 @@ class syntacticMatching extends MatchingAlgorithm {
     case ( Nil, Nil ) => alreadyFixedSubst.toSubstitution :: Nil
     case ( _, first :: rest ) =>
       first match {
-        case ( TBase( a ), TBase( b ) ) if a == b => apply( pairs, rest, alreadyFixedSubst )
+        case ( TBase( a, as ), TBase( b, bs ) ) if a == b =>
+          apply( pairs, ( as, bs ).zipped.toList ::: rest, alreadyFixedSubst )
         case ( a: TVar, b ) if alreadyFixedSubst.typeMap.get( a ).contains( b ) =>
           apply( pairs, rest, alreadyFixedSubst )
         case ( a: TVar, b ) if !alreadyFixedSubst.typeMap.contains( a ) =>
@@ -73,21 +74,22 @@ class syntacticMatching extends MatchingAlgorithm {
           apply( rest, ( t1, t2 ) :: tyPairs, alreadyFixedSubst )
 
         case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
-          val v_ = rename(
+          val v1_ = rename(
             v1,
             alreadyFixedSubst.domain ++
               pairs.flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } toList
           )
+          val v2_ = Var( v1_.name, v2.exptype )
           apply(
-            ( Substitution( v1 -> v_ )( e1 ) -> Substitution( v2 -> v_ )( e2 ) ) :: rest,
-            ( v1.exptype, v2.exptype ) :: tyPairs, alreadyFixedSubst
-          ).map { subst => Substitution( subst.map - v_ ) }
+            ( v1_ -> v2_ ) :: ( Substitution( v1 -> v1_ )( e1 ) -> Substitution( v2 -> v2_ )( e2 ) ) :: rest,
+            tyPairs, alreadyFixedSubst
+          ).map { subst => Substitution( subst.map - v1_ ) }
 
         case ( v: Var, exp ) if alreadyFixedSubst.map.get( v ).contains( exp ) =>
           apply( rest, tyPairs, alreadyFixedSubst )
 
         case ( v: Var, exp ) if !alreadyFixedSubst.map.contains( v ) =>
-          apply( rest, tyPairs, alreadyFixedSubst + ( v, exp ) )
+          apply( rest, ( v.exptype, exp.exptype ) :: tyPairs, alreadyFixedSubst + ( v, exp ) )
 
         case _ => Nil
       }

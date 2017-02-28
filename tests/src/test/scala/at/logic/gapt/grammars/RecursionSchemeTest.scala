@@ -94,7 +94,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
 
     "many-sorted terms" in {
       "simple example" in {
-        val Seq( ta, tb, tc ) = Seq( "ta", "tb", "tc" ) map TBase
+        val Seq( ta, tb, tc ) = Seq( "ta", "tb", "tc" ).map( TBase( _ ) )
         val A = Const( "A", ta )
         val B = Const( "B", tb -> ta )
         val r = Const( "r", tb -> ( tc -> ta ) )

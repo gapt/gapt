@@ -113,7 +113,7 @@ trait SequentsListLatexExporter {
   }
 
   def typeToString( t: Ty, outermost: Boolean = true ): String = t match {
-    case TBase( name ) => name
+    case TBase( name, _ ) => name
     case t1 -> t2 =>
       typeToString_( t1 ) +
         " > " +
@@ -121,7 +121,7 @@ trait SequentsListLatexExporter {
   }
 
   def typeToString_( t: Ty ): String = t match {
-    case TBase( name ) => name
+    case TBase( name, _ ) => name
     case t1 -> t2 =>
       ( "(" ) +
         typeToString_( t1 ) +

@@ -226,7 +226,7 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 }
 
 object InstanceTermEncoding {
-  def defaultType = TBase( "_Inst" )
+  def defaultType = TBase( "_Inst", Nil )
 
   def apply( endSequent: HOLSequent, instanceTermType: Ty = defaultType ): InstanceTermEncoding =
     new InstanceTermEncoding( endSequent map { toVNF( _ ) }, instanceTermType )

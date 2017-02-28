@@ -61,9 +61,9 @@ class TAOrdering extends Ordering[Ty] {
     case ( t1 -> t2, t3 -> t4 ) =>
       val r = compare( t1, t3 )
       if ( r == 0 ) compare( t2, t4 ) else r
-    case ( _, _ -> _ )                => -1
-    case ( _ -> _, _ )                => 1
+    case ( _, _ -> _ )                      => -1
+    case ( _ -> _, _ )                      => 1
 
-    case ( TBase( x_ ), TBase( y_ ) ) => x_ compare y_
+    case ( TBase( x_, _ ), TBase( y_, _ ) ) => x_ compare y_
   }
 }

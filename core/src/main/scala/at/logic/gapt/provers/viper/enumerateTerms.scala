@@ -22,7 +22,7 @@ object enumerateTerms {
     val terms = mutable.Set[LambdaExpression]()
 
     terms ++= ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filter { _.exptype.isInstanceOf[TBase] }
-    terms ++= ( ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].types ).map( Var( "x", _ ) )
+    terms ++= ( ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].constructors.keySet ).values.map( Var( "x", _ ) )
 
     val nonConstantCtrs = ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filterNot { _.exptype.isInstanceOf[TBase] }
 

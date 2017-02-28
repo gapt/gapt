@@ -52,10 +52,19 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
 
   /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
   def getConstructors( ty: TBase ): Option[Vector[Const]] =
-    get[StructurallyInductiveTypes].constructors.get( ty )
+    for {
+      declT <- get[BaseTypes].baseTypes.get( ty.name )
+      ctrs <- get[StructurallyInductiveTypes].constructors.get( ty.name )
+      subst <- syntacticMatching( declT, ty )
+    } yield ctrs.map( subst( _ ).asInstanceOf[Const] )
 
   /** Returns true iff ty is a defined base type. */
-  def isType( ty: TBase ): Boolean = get[BaseTypes].baseTypes.contains( ty )
+  def isType( ty: TBase ): Boolean = (
+    for {
+      declT <- get[BaseTypes].baseTypes.get( ty.name )
+      _ <- syntacticMatching( declT, ty )
+    } yield ()
+  ).isDefined
 
   /** Returns Some(expandedDefinition) if c is a defined constant. */
   def definition( c: Const ): Option[LambdaExpression] =
@@ -169,17 +178,18 @@ object Context {
   }
 
   /** Base types, including inductive types. */
-  case class BaseTypes( baseTypes: Set[TBase] ) {
+  case class BaseTypes( baseTypes: Map[String, TBase] ) {
     def +( ty: TBase ): BaseTypes = {
+      require( ty.params.forall( _.isInstanceOf[TVar] ) && ty.params == ty.params.distinct )
       require(
-        !baseTypes.contains( ty ),
+        !baseTypes.contains( ty.name ),
         s"Base type $ty already defined."
       )
-      copy( baseTypes + ty )
+      copy( baseTypes + ( ty.name -> ty ) )
     }
-    override def toString = baseTypes.toSeq.sortBy( _.name ).mkString( ", " )
+    override def toString = baseTypes.toSeq.sortBy( _._1 ).map( _._2 ).mkString( ", " )
   }
-  implicit val baseTypesFacet: Facet[BaseTypes] = Facet( BaseTypes( Set[TBase]() ) )
+  implicit val baseTypesFacet: Facet[BaseTypes] = Facet( BaseTypes( Map() ) )
 
   /** Constant symbols, including defined constants, constructors, etc. */
   case class Constants( constants: Map[String, Const] ) {
@@ -230,13 +240,11 @@ object Context {
   implicit val axiomsFacet: Facet[Axioms] = Facet( Axioms( Set[HOLSequent]() ) )
 
   /** Inductive types, for each type we store its list of constructors. */
-  case class StructurallyInductiveTypes( constructors: Map[TBase, Vector[Const]] ) {
-    def +( ty: TBase, ctrs: Vector[Const] ) =
+  case class StructurallyInductiveTypes( constructors: Map[String, Vector[Const]] ) {
+    def +( ty: String, ctrs: Vector[Const] ) =
       copy( constructors + ( ty -> ctrs ) )
 
-    def types: Set[TBase] = constructors.keySet
-
-    override def toString: String = constructors.toSeq.sortBy( _._1.name ).
+    override def toString: String = constructors.toSeq.sortBy( _._1 ).
       map { case ( t, cs ) => s"$t: ${cs.mkString( ", " )}" }.mkString( "\n" )
   }
   implicit val structIndTysFacet: Facet[StructurallyInductiveTypes] = Facet( StructurallyInductiveTypes( Map() ) )
@@ -317,7 +325,7 @@ object Context {
       }
       ctx.state.update[BaseTypes]( _ + ty )
         .update[Constants]( _ ++ constructors )
-        .update[StructurallyInductiveTypes]( _ + ( ty, constructors ) )
+        .update[StructurallyInductiveTypes]( _ + ( ty.name, constructors ) )
     }
   }
 
@@ -325,10 +333,10 @@ object Context {
     def apply( tyName: String ): Sort = Sort( TBase( tyName ) )
   }
   object InductiveType {
-    def apply( ty: TBase, constructors: Seq[Const] ): InductiveType =
-      InductiveType( ty, constructors.toVector )
+    def apply( ty: Ty, constructors: Const* ): InductiveType =
+      InductiveType( ty.asInstanceOf[TBase], constructors.toVector )
     def apply( tyName: String, constructors: Const* ): InductiveType =
-      InductiveType( TBase( tyName ), constructors )
+      InductiveType( TBase( tyName ), constructors: _* )
   }
 
   case class ConstDecl( const: Const ) extends Update {

@@ -86,7 +86,7 @@ object canonicalRsLHS {
       }.toSeq match {
         case Seq() => Some( nt( args: _* ) )
         case idcs =>
-          val newArgs = for ( ( TBase( indTyName ), idx ) <- argTypes.zipWithIndex ) yield if ( !idcs.contains( idx ) ) List( args( idx ) )
+          val newArgs = for ( ( _: TBase, idx ) <- argTypes.zipWithIndex ) yield if ( !idcs.contains( idx ) ) List( args( idx ) )
           else {
             val indTy = argTypes( idx ).asInstanceOf[TBase]
             val Some( ctrs ) = ctx.getConstructors( indTy )

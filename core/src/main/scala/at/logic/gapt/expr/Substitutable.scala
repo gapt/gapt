@@ -30,7 +30,8 @@ object Substitutable {
   implicit object SubstitutableTy extends ClosedUnderSub[Ty] {
     override def applySubstitution( sub: Substitution, ty: Ty ): Ty = ty match {
       case _ if sub.typeMap.isEmpty => ty
-      case ty @ TBase( _ )          => ty
+      case ty @ TBase( _, Nil )     => ty
+      case TBase( n, ps )           => TBase( n, ps.map( applySubstitution( sub, _ ) ) )
       case in -> out                => applySubstitution( sub, in ) -> applySubstitution( sub, out )
       case v @ TVar( _ )            => sub.typeMap.getOrElse( v, v )
     }

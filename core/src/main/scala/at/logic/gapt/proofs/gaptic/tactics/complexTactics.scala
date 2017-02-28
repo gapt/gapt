@@ -248,5 +248,8 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: InternalProver
 
   def withAxioms( axiom: AxiomFactory ): AnalyticInductionTactic =
     copy( axioms = axiom )
+
+  def withProver( prover: InternalProver ): AnalyticInductionTactic =
+    copy( prover = prover )
 }
 
