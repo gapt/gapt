@@ -1,6 +1,8 @@
 # Release notes for GAPT
 
-## Version 2.5 (unreleased)
+## Version 2.6 (unreleased)
+
+## Version 2.5 (released on 2017-02-22)
 
 * Support veriT stable2016
 * CERES version that directly produces expansion proofs
