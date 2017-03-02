@@ -18,6 +18,9 @@ object ex0_1_6 extends Script {
   val s10 = ContractionRightRule( s9, hof"(A -> B) | (B -> A)" )
 
   println( s10 )
+
+  val nd = LKToND( s10 )
+  println(nd)
 }
 
 // Example 0.1.6 short
@@ -127,6 +130,19 @@ object orLeft4 extends Script {
   println( nd )
 }
 
+object orLeft5 extends Script {
+  val l1 = LogicalAxiom( hof"A" )
+  val l2 = WeakeningLeftRule( l1, hof"A" )
+  val l3 = NegRightRule( l2, hof"A" )
+  val r1 = LogicalAxiom( hof"B" )
+  val r2 = WeakeningRightRule( r1, hof"B" )
+  val p = OrLeftRule( l3, r2, hof"A | B" )
+  println( p )
+
+  val nd = LKToND( p, Suc(2) )
+  println( nd )
+}
+
 object impRight1 extends Script {
   val p1 = LogicalAxiom( hof"A" )
   val p2 = WeakeningRightRule( p1, hof"B" )
@@ -141,6 +157,66 @@ object orRight1 extends Script {
   val r1 = LogicalAxiom( hof"A" )
   val r2 = WeakeningRightRule( r1, hof"B" )
   val p = OrRightRule( r2, hof"A | B" )
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object negRight1 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = WeakeningLeftRule( p1, hof"B" )
+  val p = NegRightRule( p2, hof"B" )
+
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object weakenContractRight1 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = WeakeningRightRule( p1, hof"A" )
+  val p = ContractionRightRule( p2, hof"A" )
+
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object cut1 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = LogicalAxiom( hof"A" )
+  val p = CutRule( p1, Suc( 0 ), p2, Ant( 0 ) )
+
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object cut2 extends Script {
+  val l1 = LogicalAxiom( hof"A" )
+  val l2 = WeakeningLeftRule( l1, hof"B" )
+  val r1 = LogicalAxiom( hof"A" )
+  val r2 = WeakeningRightRule( r1, hof"C" )
+  val p = CutRule( l2, Suc( 0 ), r2, Ant( 0 ) )
+
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object impLeft1 extends Script {
+  // TODO too many weakenings
+  val l1 = LogicalAxiom( hof"A" )
+  val l2 = WeakeningRightRule( l1, hof"C" )
+  val r1 = LogicalAxiom( hof"B" )
+  val r2 = WeakeningLeftRule( r1, hof"D" )
+  val p = ImpLeftRule(l2, r2, hof"A -> B")
+
   println( p )
 
   val nd = LKToND( p )
