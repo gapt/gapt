@@ -82,7 +82,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: LambdaExpression ) {
         val lowestNTVect = g.nonTerminals( lowestNTVectIdx )
         g.productions( lowestNTVect ) foreach { p =>
           val pairs = for ( ( nt, s ) <- p.zipped; t <- pa.get( nt ) ) yield s -> t
-          syntacticMatching( pairs toList, pa ) foreach { matching =>
+          syntacticMatching( pairs.toList, PreSubstitution( pa ) ) foreach { matching =>
             discoverAssignments( matching.map -- lowestNTVect )
           }
         }

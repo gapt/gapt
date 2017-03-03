@@ -252,9 +252,9 @@ object Session {
         case Pop                 => tell( LFun( "pop", LAtom( "1" ) ) )
         case DeclareSort( sort ) => tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
-          case Const( name, FunctionType( TBase( retType ), argTypes ) ) =>
+          case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
             tell( LFun( "declare-fun", LAtom( name ),
-              LList( argTypes map { case TBase( argType ) => LAtom( argType ) }: _* ),
+              LList( argTypes map { case TBase( argType, Nil ) => LAtom( argType ) }: _* ),
               LAtom( retType ) ) )
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
@@ -275,8 +275,8 @@ object Session {
 
         private var i = 0
         def apply( t: TBase ): TBase = map.getOrElseUpdate( t, t match {
-          case To => TBase( "Bool" )
-          case _  => i += 1; TBase( s"t$i" )
+          case To => TBase( "Bool", Nil )
+          case _  => i += 1; TBase( s"t$i", Nil )
         } )
 
         def apply( t: Ty ): Ty = t match {

@@ -266,12 +266,12 @@ class TPTPHOLExporter {
 
   def getTypeString( t: Ty ): String = getTypeString( t, true )
   def getTypeString( t: Ty, outer: Boolean ): String = t match {
-    case Ti                => "$i"
-    case To                => "$o"
-    case TBase( name )     => name
-    case t1 -> t2 if outer => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
-    case t1 -> t2          => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
-    case _                 => throw new Exception( "TPTP type export for " + t + " not implemented!" )
+    case Ti                 => "$i"
+    case To                 => "$o"
+    case TBase( name, Nil ) => name
+    case t1 -> t2 if outer  => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
+    case t1 -> t2           => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
+    case _                  => throw new Exception( "TPTP type export for " + t + " not implemented!" )
   }
 
   def mkVarName( str: String, map: Map[Var, String] ) = {

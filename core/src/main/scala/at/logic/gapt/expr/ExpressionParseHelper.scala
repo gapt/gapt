@@ -62,6 +62,14 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
     }
   }
 
+  def ty( args: Nothing* ): Ty =
+    BabelParser.tryParseType( sc.parts.mkString ) match {
+      case Left( error ) => throw new IllegalArgumentException(
+        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
+      )
+      case Right( ty ) => ty
+    }
+
   // Higher order parsers
 
   /**

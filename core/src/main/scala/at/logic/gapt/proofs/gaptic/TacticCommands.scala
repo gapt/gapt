@@ -636,12 +636,11 @@ trait TacticCommands {
    *
    * NB: This will only replace the first definition it finds in each supplied formula. If you want to unfold all definitions,
    * use `repeat`.
-   * @param definition The definition `def1`.
-   * @param definitions The definitions `def2`,...,`defn`.
+   * @param definitions The definitions `def1`,...,`defn`.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The definitions you want to unfold need to be present in `ctx`.
    */
-  def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
-    UnfoldTacticHelper( definition, definitions )
+  def unfold( definitions: String* )( implicit ctx: Context ) =
+    UnfoldTacticHelper( definitions )
 
   /**
    * Does nothing.
@@ -665,7 +664,7 @@ trait TacticCommands {
       }
       for {
         ( l, vs, m ) <- quantifiedFormulas.elements
-        subst <- syntacticMatching( List( m -> formula ), freeVariables( m ).diff( vs.toSet ).map( v => v -> v ).toMap )
+        subst <- syntacticMatching( List( m -> formula ), PreSubstitution( freeVariables( m ).diff( vs.toSet ).map( v => v -> v ) ) )
       } yield l -> subst( vs )
     }
 

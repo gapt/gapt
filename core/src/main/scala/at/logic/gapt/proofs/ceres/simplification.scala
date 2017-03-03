@@ -26,7 +26,7 @@ object simpleUnitResolutionNormalization {
   }
   private def matchPos( posUnit: List[HOLSequent], s: HOLSequent ): HOLSequent = {
     val restDomain = ( s.antecedent.flatMap( x => freeVariables( x ).toList ) ++ s.succedent.flatMap( x => freeVariables( x ).toList ) ).toSet
-    val newAnt = s.antecedent.filter( x => posUnit.forall( y => syntacticMatching( List( y.succedent.head -> x ), restDomain map { v => v -> v } toMap ) == None ) )
+    val newAnt = s.antecedent.filter( x => posUnit.forall( y => syntacticMatching( List( y.succedent.head -> x ), PreSubstitution( restDomain.map { v => v -> v } ) ).isEmpty ) )
     if ( newAnt.size == s.antecedent.size ) s else new HOLSequent( newAnt, s.succedent )
   }
 }

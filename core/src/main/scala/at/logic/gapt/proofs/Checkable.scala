@@ -17,11 +17,12 @@ object Checkable {
   implicit object typeIsCheckable extends Checkable[Ty] {
     override def check( context: Context, ty: Ty ): Unit =
       ty match {
-        case ty @ TBase( name ) =>
+        case ty @ TBase( name, params ) =>
           require(
             context.isType( ty ),
             s"Unknown base type: $name"
           )
+          params.foreach( check( context, _ ) )
         case TVar( _ ) =>
         case in -> out =>
           check( context, in )
@@ -34,7 +35,7 @@ object Checkable {
       expr match {
         case c @ Const( name, _ ) =>
           require(
-            context.constant( name ).exists( defC => typeMatching( defC.exptype, c.exptype ).isDefined ),
+            context.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
             s"Unknown constant: $c"
           )
         case Var( _, t ) => context.check( t )

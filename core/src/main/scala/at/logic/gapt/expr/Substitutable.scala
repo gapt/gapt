@@ -27,6 +27,19 @@ trait Substitutable[-S <: Substitution, -T, +U] {
 
 object Substitutable {
 
+  implicit object SubstitutableTy extends ClosedUnderSub[Ty] {
+    override def applySubstitution( sub: Substitution, ty: Ty ): Ty = ty match {
+      case _ if sub.typeMap.isEmpty => ty
+      case ty @ TBase( _, Nil )     => ty
+      case TBase( n, ps )           => TBase( n, ps.map( applySubstitution( sub, _ ) ) )
+      case in -> out                => applySubstitution( sub, in ) -> applySubstitution( sub, out )
+      case v @ TVar( _ )            => sub.typeMap.getOrElse( v, v )
+    }
+  }
+
+  private def substVar( sub: Substitution, v: Var ): Var =
+    if ( sub.typeMap.isEmpty ) v else Var( v.name, SubstitutableTy.applySubstitution( sub, v.exptype ) )
+
   /**
    * The general method for applying substitutions to lambda expressions.
    *
@@ -35,15 +48,17 @@ object Substitutable {
    * @return The substituted lambda expression.
    */
   private def applySub( sub: Substitution, t: LambdaExpression ): LambdaExpression = t match {
-    case v: Var                               => sub.map.getOrElse( v, v )
-    case c: Const                             => c
+    case _ if sub.isEmpty => t
+    case v: Var           => sub.map.getOrElse( v, substVar( sub, v ) )
+    case c @ Const( x, ty ) =>
+      if ( sub.typeMap.isEmpty ) c else Const( x, SubstitutableTy.applySubstitution( sub, ty ) )
     case App( a, b )                          => App( applySub( sub, a ), applySub( sub, b ) )
-    case Abs( v, s ) if sub.domain contains v => applySub( Substitution( sub.map - v ), t )
-    case Abs( v, s ) if sub.range contains v =>
+    case Abs( v, _ ) if sub.domain contains v => applySub( Substitution( sub.map - v ), t )
+    case Abs( v, s ) if sub.range contains v => // TODO: this check is wrong with type substitutions
       // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
       val newV = rename( v, freeVariables( s ) union sub.range )
       applySub( sub, Abs( newV, applySub( Substitution( v -> newV ), s ) ) )
-    case Abs( v, s ) => Abs( v, applySub( sub, s ) )
+    case Abs( v, s ) => Abs( substVar( sub, v ), applySub( sub, s ) )
   }
 
   /**

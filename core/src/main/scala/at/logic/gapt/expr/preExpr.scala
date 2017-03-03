@@ -36,7 +36,7 @@ object preExpr {
   }
 
   sealed trait Type
-  case class BaseType( name: String ) extends Type
+  case class BaseType( name: String, params: List[Type] ) extends Type
   case class ArrType( a: Type, b: Type ) extends Type
   case class VarType( name: String ) extends Type
   case class MetaType( idx: MetaTypeIdx ) extends Type
@@ -60,9 +60,9 @@ object preExpr {
     }
 
     def apply( t: Type ): String = t match {
-      case BaseType( name ) => name
-      case VarType( name )  => s"?$name"
-      case ArrType( a, b )  => s"(${apply( a )}>${apply( b )})"
+      case BaseType( name, params ) => s"$name${params.map( x => " " + apply( x ) ).mkString}"
+      case VarType( name )          => s"?$name"
+      case ArrType( a, b )          => s"(${apply( a )}>${apply( b )})"
       case MetaType( idx ) =>
         assg.get( idx ).map( apply ).getOrElse( printMetaTypeIdx( idx ) )
     }
@@ -76,7 +76,7 @@ object preExpr {
     }
   }
 
-  def Bool = BaseType( "o" )
+  def Bool = BaseType( "o", List() )
 
   def Eq( a: Expr, b: Expr ) = {
     val argType = freshMetaType()
@@ -105,17 +105,17 @@ object preExpr {
   def liftTypePoly( t: real.Ty ) = {
     val vars = mutable.Map[real.TVar, Type]()
     def lift( t: real.Ty ): Type = t match {
-      case t: real.TVar         => vars.getOrElse( t, freshMetaType() )
-      case real.TBase( name )   => BaseType( name )
-      case real.`->`( in, out ) => ArrType( lift( in ), lift( out ) )
+      case t: real.TVar               => vars.getOrElseUpdate( t, freshMetaType() )
+      case real.TBase( name, params ) => BaseType( name, params.map( lift ) )
+      case real.`->`( in, out )       => ArrType( lift( in ), lift( out ) )
     }
     lift( t )
   }
 
   def liftTypeMono( t: real.Ty ): Type = t match {
-    case real.TVar( name )    => VarType( name )
-    case real.TBase( name )   => BaseType( name )
-    case real.`->`( in, out ) => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
+    case real.TVar( name )          => VarType( name )
+    case real.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
+    case real.`->`( in, out )       => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
   def QuoteBlackbox( e: real.LambdaExpression ) =
@@ -128,15 +128,17 @@ object preExpr {
       toMap )
 
   def freeMetas( t: Type ): Set[MetaTypeIdx] = t match {
-    case BaseType( _ ) | VarType( _ ) => Set()
-    case ArrType( a, b )              => freeMetas( a ) union freeMetas( b )
-    case MetaType( idx )              => Set( idx )
+    case BaseType( _, params ) => params.view.flatMap( freeMetas ).toSet
+    case VarType( _ )          => Set()
+    case ArrType( a, b )       => freeMetas( a ) union freeMetas( b )
+    case MetaType( idx )       => Set( idx )
   }
 
   def subst( t: Type, assg: Map[MetaTypeIdx, Type] ): Type = t match {
-    case BaseType( _ ) | VarType( _ ) => t
-    case ArrType( a, b )              => ArrType( subst( a, assg ), subst( b, assg ) )
-    case MetaType( idx )              => assg.get( idx ).fold( t )( subst( _, assg ) )
+    case BaseType( n, ps ) => BaseType( n, ps.map( subst( _, assg ) ) )
+    case VarType( _ )      => t
+    case ArrType( a, b )   => ArrType( subst( a, assg ), subst( b, assg ) )
+    case MetaType( idx )   => assg.get( idx ).fold( t )( subst( _, assg ) )
   }
   trait UnificationError {
     def assg: Map[MetaTypeIdx, Type]
@@ -149,8 +151,9 @@ object preExpr {
     case ( first :: rest ) => first match {
       case ( ArrType( a1, b1 ), ArrType( a2, b2 ) ) =>
         solve( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, assg )
-      case ( BaseType( n1 ), BaseType( n2 ) ) if n1 == n2 => solve( rest, assg )
-      case ( VarType( n1 ), VarType( n2 ) ) if n1 == n2   => solve( rest, assg )
+      case ( BaseType( n1, ps1 ), BaseType( n2, ps2 ) ) if n1 == n2 =>
+        solve( ( ps1, ps2 ).zipped.toList ::: rest, assg )
+      case ( VarType( n1 ), VarType( n2 ) ) if n1 == n2 => solve( rest, assg )
       case ( t1 @ MetaType( i1 ), t2 ) if assg contains i1 =>
         solve( ( assg( i1 ) -> t2 ) :: rest, assg )
       case ( t1 @ MetaType( i1 ), t2 ) =>
@@ -241,10 +244,10 @@ object preExpr {
   }
 
   def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
-    case BaseType( name ) => real.TBase( name )
-    case VarType( name )  => real.TVar( name )
-    case ArrType( a, b )  => toRealType( a, assg ) -> toRealType( b, assg )
-    case MetaType( idx )  => toRealType( assg( idx ), assg )
+    case BaseType( name, params ) => real.TBase( name, params.map( toRealType( _, assg ) ) )
+    case VarType( name )          => real.TVar( name )
+    case ArrType( a, b )          => toRealType( a, assg ) -> toRealType( b, assg )
+    case MetaType( idx )          => toRealType( assg( idx ), assg )
   }
 
   def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
@@ -274,7 +277,7 @@ object preExpr {
     }
     infers( expr, startingEnv.toMap )( None ).run( Map() ).map {
       case ( assg, _ ) =>
-        expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i" ) ), freeVars ) )
+        expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i", Nil ) ), freeVars ) )
     }
   }
   def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.LambdaExpression] =

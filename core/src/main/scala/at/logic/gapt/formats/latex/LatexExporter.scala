@@ -138,9 +138,9 @@ object LatexExporter {
   }
 
   private def apply( ty: Ty, prio: Int ): String = ty match {
-    case t -> s     => parenIf( prio, 0, s"${apply( t, 0 )} \\rightarrow ${apply( s, 1 )}" )
-    case TVar( t )  => escapeName( "?" + t )
-    case TBase( t ) => escapeName( t )
+    case t -> s         => parenIf( prio, 0, s"${apply( t, 0 )} \\rightarrow ${apply( s, 1 )}" )
+    case TVar( t )      => escapeName( "?" + t )
+    case TBase( t, ps ) => ( escapeName( t ) :: ps.map( apply( _, 0 ) ) ).mkString( " " )
   }
   def apply( ty: Ty ): String = apply( ty, 2 )
 

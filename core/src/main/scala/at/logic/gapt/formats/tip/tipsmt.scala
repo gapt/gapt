@@ -36,7 +36,7 @@ class TipSmtParser {
       val t = TBase( name )
       declare( t )
       val dt = TipDatatype( t, constructors map { parseConstructor( _, t ) } )
-      ctx += Context.InductiveType( t, dt.constructors.map( _.constr ) )
+      ctx += Context.InductiveType( t, dt.constructors.map( _.constr ): _* )
       datatypes += dt
       dt.constructors foreach { ctr =>
         declare( ctr.constr )

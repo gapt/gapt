@@ -24,7 +24,7 @@ object fixDerivation extends Logger {
   object matchingModEq extends syntacticMatching {
     override def apply(
       pairs:             List[( LambdaExpression, LambdaExpression )],
-      alreadyFixedSubst: Map[Var, LambdaExpression]
+      alreadyFixedSubst: PreSubstitution
     ): Traversable[Substitution] =
       pairs match {
         case ( ( Eq( t1, s1 ), Eq( t2, s2 ) ) :: rest ) =>

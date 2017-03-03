@@ -15,8 +15,8 @@ class LogicalConstantsTest extends Specification {
       }
 
       ExistsC( TBase( "foo" ) ) must beLike {
-        case ForallC( _ )              => ko
-        case ExistsC( TBase( "foo" ) ) => ok
+        case ForallC( _ )                   => ko
+        case ExistsC( TBase( "foo", Nil ) ) => ok
       }
     }
   }

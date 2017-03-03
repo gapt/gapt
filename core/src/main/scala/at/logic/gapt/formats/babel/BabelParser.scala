@@ -127,9 +127,11 @@ object BabelParserCombinators {
   val Ident: P[preExpr.Ident] = P( Name.map( preExpr.Ident( _, preExpr.freshMetaType() ) ) )
 
   val TypeParens: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
-  val TypeBase: P[preExpr.Type] = P( Name ).map( preExpr.BaseType )
+  val TypeBase: P[preExpr.Type] = P( Name ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
   val TypeVar: P[preExpr.Type] = P( "?" ~/ Name ).map( preExpr.VarType )
-  val Type: P[preExpr.Type] = P( ( TypeParens | TypeVar | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  val TypeAtom: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
+  val Type: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  val TypeAndNothingElse = P( "" ~ Type ~ End )
 
   val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
@@ -198,6 +200,15 @@ object BabelParser {
   /** Parses text as a formula, or throws an exception. */
   def parseFormula( text: String )( implicit sig: BabelSignature ): HOLFormula =
     tryParse( text, preExpr.TypeAnnotation( _, preExpr.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
+
+  def tryParseType( text: String ): Either[BabelParseError, real.Ty] = {
+    TypeAndNothingElse.parse( text ) match {
+      case Parsed.Success( expr, _ ) =>
+        Right( preExpr.toRealType( expr, Map() ) )
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        Left( BabelParsingError( parseError ) )
+    }
+  }
 
   def tryParseSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[LambdaExpression]] = {
     SequentAndNothingElse.parse( text ) match {

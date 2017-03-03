@@ -276,8 +276,8 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   }
 
   def show( ty: Ty, needParens: Boolean ): Doc = ty match {
-    case TBase( name ) => showName( name )
-    case TVar( name )  => "?" <> showName( name )
+    case TBase( name, params ) => hsep( showName( name ) :: params.map( show( _, needParens = true ) ) )
+    case TVar( name )          => "?" <> showName( name )
     case a -> b if !needParens =>
       group( show( a, true ) <> ">" <@@> show( b, false ) )
     case _ => parens( nest( show( ty, false ) ) )

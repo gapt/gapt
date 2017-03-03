@@ -75,9 +75,9 @@ class LeanExporter {
   val axiomNames = mutable.Map[HOLSequent, String]()
 
   def export( ty: Ty ): String = ty match {
-    case TBase( name ) => nameMap.getLeanName( name, TY )
-    case TVar( _ )     => "_"
-    case a -> b        => s"(${export( a )} -> ${export( b )})"
+    case TBase( name, params ) => ( nameMap.getLeanName( name, TY ) :: params.map( export ) ).mkString( " " )
+    case TVar( _ )             => "_"
+    case a -> b                => s"(${export( a )} -> ${export( b )})"
   }
 
   def exportBinder( sym: String, x: Var, sub: LambdaExpression ): String = {
@@ -109,7 +109,7 @@ class LeanExporter {
   def export( sequent: HOLSequent ): String = export( mkSequentFormula( sequent ) )
 
   def export( upd: Context.Update ): String = upd match {
-    case Context.InductiveType( TBase( "o" ), _ ) =>
+    case Context.InductiveType( To, _ ) =>
       nameMap.register( "o", TY, "Prop" )
       nameMap.register( TopC.name, CONST, "true" )
       nameMap.register( BottomC.name, CONST, "false" )

@@ -36,7 +36,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
       val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
       val Seq( f, g, h ) = Seq( "f", "g", "h" ) map { FOLFunctionConst( _, 1 ) }
 
-      def m( a: LambdaExpression, b: LambdaExpression ) = fixDerivation.matchingModEq( List( a -> b ), Map() )
+      def m( a: LambdaExpression, b: LambdaExpression ) = fixDerivation.matchingModEq( List( a -> b ), PreSubstitution() )
 
       m( f( x ) === g( y ), f( y ) === g( x ) ) must contain( exactly( Substitution( x -> y, y -> x ) ) )
       m( f( x ) === f( y ), f( y ) === f( x ) ) must contain( exactly( Substitution( x -> x, y -> y ), Substitution( x -> y, y -> x ) ) )
