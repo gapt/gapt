@@ -470,7 +470,7 @@ case class OrElimRule( leftSubProof: NDProof, aux1: SequentIndex, middleSubProof
   val leftC = leftPremise( Suc( 0 ) )
   val middleC = middlePremise( Suc( 0 ) )
 
-  val mainFormula = if ( leftC == middleC ) leftC else throw NDRuleCreationException( s"Formulas $leftC an $middleC are not the same." )
+  val mainFormula = if ( leftC == middleC ) leftC else throw NDRuleCreationException( s"Formulas $leftC and $middleC are not the same." )
 
   def auxIndices = Seq( Seq( aux1, Suc( 0 ) ), Seq( aux2, Suc( 0 ) ), Seq( Suc( 0 ) ) )
 

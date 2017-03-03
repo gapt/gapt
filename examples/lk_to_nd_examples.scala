@@ -95,7 +95,6 @@ object orLeft1 extends Script {
 }
 
 object orLeft2 extends Script {
-  // TODO: weakening missing
   val l1 = LogicalAxiom( hof"A" )
   val r1 = LogicalAxiom( hof"A" )
   val p = OrLeftRule( l1, r1, hof"A | A" )
@@ -230,5 +229,16 @@ object lem extends Script {
 
   println( s3 )
   val nd = LKToND( s3 )
+  println( nd )
+}
+
+object weakeningRight1 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = WeakeningRightRule( p1, hof"A" )
+  val p3 = WeakeningRightRule( p2, hof"B" )
+
+  println( p3 )
+
+  val nd = LKToND( p3, Suc( 1 ) )
   println( nd )
 }
