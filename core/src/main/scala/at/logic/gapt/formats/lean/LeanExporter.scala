@@ -5,7 +5,7 @@ import java.io.IOException
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, freeVariablesLK }
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess, withTempFile }
 import at.logic.gapt.proofs._
 
@@ -150,7 +150,10 @@ class LeanExporter {
   def export( p: LKProof ): String = {
     val out = new StringBuilder
 
-    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )} : ${export( p.endSequent )} :=\n"
+    val fvParams = freeVariablesLK( p ).toSeq.sortBy( _.name )
+      .map( v => s" (${nameMap.getLeanName( v.name, VAR )} : ${export( v.exptype )})" ).mkString
+
+    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )}$fvParams : ${export( p.endSequent )} :=\n"
     out ++= "begin\n"
 
     val hs = p.endSequent.indicesSequent.map {
@@ -162,12 +165,12 @@ class LeanExporter {
     out ++= s"gapt.lk.sequent_formula_to_hyps ${mkHypNameList( hs.antecedent )} ${mkHypNameList( hs.succedent )},\n"
 
     import at.logic.gapt.proofs.lk._
-    def f( p: LKProof, hs: Sequent[Int] ): Unit = p match {
-      case p: ContractionLeftRule  => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: ContractionRightRule => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ) )
+    def f( p: LKProof, hs: Sequent[Int], hi: Int ): Unit = p match {
+      case p: ContractionLeftRule  => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: ContractionRightRule => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
       case _: TheoryAxiom          => out ++= "exact sorry,\n"
       case _ =>
         var rule = s"gapt.lk.${p.longName}"
@@ -195,7 +198,7 @@ class LeanExporter {
               )
             case _ => ( occConn_, auxs_ )
           }
-          val hs_ = auxs.zip( Stream.from( ( 0 +: hs.elements ).max + 1 ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )
+          val hs_ = auxs.zip( Stream.from( hi ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )
           out ++= "intros"
           p match {
             case p: Eigenvariable =>
@@ -205,10 +208,10 @@ class LeanExporter {
           for ( a <- auxs )
             out ++= s" $hypName${hs_( a )}"
           out ++= ",\n"
-          f( q, hs_ )
+          f( q, hs_, math.max( ( hs_.elements :+ 0 ).max + 1, hi ) )
         }
     }
-    f( p, hs )
+    f( p, hs, ( hs.elements :+ 0 ).max + 1 )
 
     out ++= "end\n"
     out.result()

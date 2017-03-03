@@ -15,7 +15,7 @@ class Z3ProverTest extends Specification {
   args( skipAll = !Z3.isInstalled )
 
   "z3" should {
-    "prove a v not a" in {
+    "prove a ∨ ¬ a" in {
       val a = FOLAtom( "a" )
       Z3.isValid( Or( a, Neg( a ) ) ) must_== true
     }

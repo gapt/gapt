@@ -43,7 +43,7 @@ class EscargotTest extends Specification {
     ) must beSome
   }
 
-  "davis putnam" in { test( "-(exists x exists y all z ((f(x,y) -> f(y,z) & f(z,z)) & (f(x,y) & g(x,y) -> g(x,z) & g(z,z))))" ) must beSome }
+  "davis putnam" in { test( "-(?x ?y !z ((f(x,y) -> f(y,z) & f(z,z)) & (f(x,y) & g(x,y) -> g(x,z) & g(z,z))))" ) must beSome }
 
   "large cnf" in { Escargot getResolutionProof CountingEquivalence( 5 ) must beSome }
 

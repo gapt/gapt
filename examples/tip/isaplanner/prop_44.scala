@@ -5,7 +5,9 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms.IndependentInductionAxioms
+import at.logic.gapt.provers.viper.aip.provers.escargot
+import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_44 extends TacticsProof {
   val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_44.smt2", getClass ) )
@@ -16,6 +18,6 @@ object prop_44 extends TacticsProof {
     case ( f, _ )        => "goal" -> f
   }
 
-  val aipOptions = new ProverOptions( escargot, independentInductionAxioms )
-  val proof1 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent, "goal", List( hov"ys:list2" ) )
+  val aipOptions = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"ys:list2" ) ).forLabel( "goal" ) )
+  val proof1 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent ) get
 }

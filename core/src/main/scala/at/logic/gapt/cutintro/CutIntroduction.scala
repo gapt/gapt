@@ -9,6 +9,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning }
+import at.logic.gapt.provers.Session.Session
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
@@ -170,7 +171,7 @@ object CutIntroduction extends Logger {
           else if ( VeriT isInstalled ) VeriT
           else new Escargot( splitting = true, equality = true, propositional = true )
 
-        override def startIncrementalSession() = smtSolver.startIncrementalSession()
+        override def runSession[A]( program: Session[A] ) = smtSolver.runSession( program )
         override def isValid( s: HOLSequent ): Boolean = smtSolver isValid s
         override def getLKProof( s: HOLSequent ) = EquationalLKProver getLKProof s
       }

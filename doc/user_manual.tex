@@ -150,7 +150,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.5-SNAPSHOT}
+{\Large Version 2.6-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -215,7 +215,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.4"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.5"
 \end{lstlisting}
 
 \end{enumerate}
@@ -815,7 +815,7 @@ The following example shows the use of the \cli{trivial} tactic to end the proof
 \begin{tacticslisting}
 val axiomEx =
   Lemma(Sequent(Nil,
-      Seq("D" -> fof"exists x (P x -> all y P y)"))) {
+      Seq("D" -> fof"?x (P x -> !y P y)"))) {
     exR(fot"c")
     impR
     allR
@@ -863,7 +863,7 @@ sequent after instantiations while the strong quantifier formulas are
 automatically removed.
 \begin{tacticslisting}
 val quantEx = Lemma(Sequent(
-    Seq("D" -> fof"(all x (P(x) & (exists y -P(y))))"),
+    Seq("D" -> fof"(!x (P(x) & (?y -P(y))))"),
     Nil)) {
   allL(fot"c")
   andL
@@ -906,7 +906,7 @@ provided the tactic simply fails.
 \begin{tacticslisting}
 val cutEx = Lemma(Sequent(
     Seq("A" -> fof"A"),
-    Seq("C" -> fof"(exists x exists y ( -x=y & f(x)=f(y) ))"))) {
+    Seq("C" -> fof"?x?y ( -x=y & f(x)=f(y) )"))) {
   cut("I1", fof"I(1)")
   cut("I0", fof"I(0)")
 }

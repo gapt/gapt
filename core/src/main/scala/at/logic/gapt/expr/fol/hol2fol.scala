@@ -4,6 +4,14 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.proofs.HOLSequent
 
+class Counter {
+  private var state = 0
+  def nextId(): Int = {
+    state = state + 1
+    state
+  }
+}
+
 object reduceHolToFol extends reduceHolToFol
 /**
  * Creates a FOL formula from a HOL formula, but applies transformations which do _not_ preserve validity!
@@ -30,7 +38,7 @@ class reduceHolToFol {
    * @return the reduced FOL expression
    */
   def apply( term: LambdaExpression ): FOLExpression = {
-    val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
+    val counter = new Counter
     val emptymap = Map[LambdaExpression, String]()
     apply( term, emptymap, counter )._1
   }
@@ -52,7 +60,7 @@ class reduceHolToFol {
    * @return the reduced fsequent
    */
   def apply( fs: HOLSequent ): HOLSequent = {
-    val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
+    val counter = new Counter
     val emptymap = Map[LambdaExpression, String]()
     apply( fs, emptymap, counter )._1
   }
@@ -64,7 +72,7 @@ class reduceHolToFol {
    * @return the reduced fsequent
    */
   def apply( fs: List[HOLSequent] ): List[HOLSequent] = {
-    val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
+    val counter = new Counter
     val emptymap = Map[LambdaExpression, String]()
     apply( fs, emptymap, counter )._1
   }
@@ -77,7 +85,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced formula and the updated scope
    */
-  def apply( formula: HOLFormula, scope: Map[LambdaExpression, String], id: { def nextId: Int } ): ( FOLFormula, Map[LambdaExpression, String] ) = {
+  def apply( formula: HOLFormula, scope: Map[LambdaExpression, String], id: Counter ): ( FOLFormula, Map[LambdaExpression, String] ) = {
     val ( scope_, qterm ) = replaceAbstractions( formula, scope, id )
     ( apply_( qterm ).asInstanceOf[FOLFormula], scope_ )
   }
@@ -90,7 +98,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( term: LambdaExpression, scope: Map[LambdaExpression, String], id: { def nextId: Int } ) = {
+  def apply( term: LambdaExpression, scope: Map[LambdaExpression, String], id: Counter ) = {
     val ( scope_, qterm ) = replaceAbstractions( term, scope, id )
     ( apply_( qterm ), scope_ )
   }
@@ -103,7 +111,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( s: HOLSequent, scope: Map[LambdaExpression, String], id: { def nextId: Int } ): ( HOLSequent, Map[LambdaExpression, String] ) = {
+  def apply( s: HOLSequent, scope: Map[LambdaExpression, String], id: Counter ): ( HOLSequent, Map[LambdaExpression, String] ) = {
     val ( scope1, ant ) = s.antecedent.foldLeft( ( scope, List[HOLFormula]() ) )( ( r, formula ) => {
       val ( scope_, f_ ) = replaceAbstractions( formula, r._1, id )
       ( scope_, f_.asInstanceOf[HOLFormula] :: r._2 )
@@ -124,7 +132,7 @@ class reduceHolToFol {
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
-  def apply( fss: List[HOLSequent], scope: Map[LambdaExpression, String], id: { def nextId: Int } ): ( List[HOLSequent], Map[LambdaExpression, String] ) = {
+  def apply( fss: List[HOLSequent], scope: Map[LambdaExpression, String], id: Counter ): ( List[HOLSequent], Map[LambdaExpression, String] ) = {
     fss.foldRight( ( List[HOLSequent](), scope ) )( ( fs, pair ) => {
       val ( list, scope ) = pair
       val ( fs_, scope_ ) = apply( fs, scope, id )
@@ -143,7 +151,7 @@ class reduceHolToFol {
       case Const( n, To )   => FOLAtom( n, Nil )
       case Var( n, _ )      => FOLVar( n )
       case Const( n, _ )    => FOLConst( n )
-      case Neg( n )         => Neg( apply_( n ).asInstanceOf[FOLFormula] )
+      case Neg( n )         => Neg( apply_( n ) )
       case And( n1, n2 )    => And( apply_( n1 ), apply_( n2 ) )
       case Or( n1, n2 )     => Or( apply_( n1 ), apply_( n2 ) )
       case Imp( n1, n2 )    => Imp( apply_( n1 ), apply_( n2 ) )
@@ -212,7 +220,7 @@ class replaceAbstractions {
   type ConstantsMap = Map[LambdaExpression, String]
 
   def apply( l: List[HOLSequent] ): ( ConstantsMap, List[HOLSequent] ) = {
-    val counter = new { private var state = 0; def nextId = { state = state + 1; state } }
+    val counter = new Counter
     l.foldLeft( ( Map[LambdaExpression, String](), List[HOLSequent]() ) )( ( rec, el ) => {
       val ( scope_, f ) = rec
       val ( nscope, rfs ) = replaceAbstractions( el, scope_, counter )
@@ -221,7 +229,7 @@ class replaceAbstractions {
     } )
   }
 
-  def apply( f: HOLSequent, scope: ConstantsMap, id: { def nextId: Int } ): ( ConstantsMap, HOLSequent ) = {
+  def apply( f: HOLSequent, scope: ConstantsMap, id: Counter ): ( ConstantsMap, HOLSequent ) = {
     val ( scope1, ant ) = f.antecedent.foldLeft( ( scope, List[HOLFormula]() ) )( ( rec, formula ) => {
       val ( scope_, f ) = rec
       val ( nscope, nformula ) = replaceAbstractions( formula, scope_, id )
@@ -237,13 +245,7 @@ class replaceAbstractions {
   }
 
   def apply( e: LambdaExpression ): LambdaExpression = {
-    val counter = new {
-      private var state = 0;
-
-      def nextId = {
-        state = state + 1; state
-      }
-    }
+    val counter = new Counter
     apply( e, Map[LambdaExpression, String](), counter )._2
   }
 
@@ -251,7 +253,7 @@ class replaceAbstractions {
     apply( formula.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
 
   // scope and id are used to give the same names for new functions and constants between different calls of this method
-  def apply( e: LambdaExpression, scope: ConstantsMap, id: { def nextId: Int } ): ( ConstantsMap, LambdaExpression ) = e match {
+  def apply( e: LambdaExpression, scope: ConstantsMap, id: Counter ): ( ConstantsMap, LambdaExpression ) = e match {
     case Var( _, _ ) =>
       ( scope, e )
     case Const( _, _ ) =>
@@ -278,7 +280,7 @@ class replaceAbstractions {
       //println("norm: "+normalizeda)
       //update scope with a new constant if neccessary
       //println(scope)
-      val scope_ = if ( scope contains normalizeda ) scope else scope + ( ( normalizeda, ( "q_{" + id.nextId + "}" ) ) )
+      val scope_ = if ( scope contains normalizeda ) scope else scope + ( ( normalizeda, "q_{" + id.nextId + "}" ) )
       //println(scope_)
       val sym = scope_( normalizeda )
       val freeVarList = freeVariables( e ).toList.sortBy( _.toString ).asInstanceOf[List[LambdaExpression]]
@@ -307,7 +309,7 @@ class undoReplaceAbstractions {
   )
   def apply( f: HOLFormula, map: ConstantsMap ): HOLFormula = apply( f.asInstanceOf[LambdaExpression], map ).asInstanceOf[HOLFormula]
   def apply( e: LambdaExpression, map: ConstantsMap ): LambdaExpression = {
-    val stringsmap = map.map( x => ( x._2.toString(), x._1 ) ) //inverting the map works because the symbols are unique
+    val stringsmap = map.map( x => ( x._2.toString, x._1 ) ) //inverting the map works because the symbols are unique
     HOLPosition.getPositions( e ).foldLeft( e )( ( exp, position ) =>
       //we check if the position is a constant with an abstraction symbol
       e( position ) match {
@@ -342,9 +344,9 @@ object changeTypeIn {
 
   //Remark: this only works for changing the type of leaves in the term tree!
   def apply( e: LambdaExpression, tmap: TypeMap ): LambdaExpression = e match {
-    case Var( name, ta ) => if ( tmap contains name.toString() ) Var( name, tmap( name.toString() ) ) else
+    case Var( name, ta ) => if ( tmap contains name.toString ) Var( name, tmap( name.toString ) ) else
       Var( name, ta )
-    case Const( name, ta ) => if ( tmap contains name.toString() ) Const( name, tmap( name.toString() ) ) else
+    case Const( name, ta ) => if ( tmap contains name.toString ) Const( name, tmap( name.toString ) ) else
       Const( name, ta )
     case HOLFunction( Const( f, exptype ), args ) =>
       val args_ = args.map( x => apply( x, tmap ) )
