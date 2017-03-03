@@ -238,6 +238,7 @@ class ReductiveCutElimination {
     },
       cleanStructRules )
   }
+
   // TODO: Implement this properly, i.e. with SequentIndices.
   /**
    * Recursively traverses a proof until it finds a cut to reduce.
@@ -315,14 +316,14 @@ class ReductiveCutElimination {
 
   }
   /**
-   * Grade reduction rules, i.e. rules that reduce the complexity of a cut formula or remove a cut altogether.
-   *
-   * @param left The left subproof of the cut inference.
-   * @param aux1 The index of the cut formula in the left subproof.
-   * @param right The right subproof of the cut inference.
-   * @param aux2 The index of the cut formula in the right subproof.
-   * @return
-   */
+    * Grade reduction rules, i.e. rules that reduce the complexity of a cut formula or remove a cut altogether.
+    *
+    * @param left The left subproof of the cut inference.
+    * @param aux1 The index of the cut formula in the left subproof.
+    * @param right The right subproof of the cut inference.
+    * @param aux2 The index of the cut formula in the right subproof.
+    * @return
+    */
   private def reduceGrade( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof =
     ( left, right ) match {
 
@@ -386,14 +387,14 @@ class ReductiveCutElimination {
     }
 
   /**
-   * Reduces the rank of the cut by permuting it upwards on the left-hand side.
-   *
-   * @param left The left subproof of the cut inference.
-   * @param aux1 The index of the cut formula in the left subproof.
-   * @param right The right subproof of the cut inference.
-   * @param aux2 The index of the cut formula in the right subproof.
-   * @return
-   */
+    * Reduces the rank of the cut by permuting it upwards on the left-hand side.
+    *
+    * @param left The left subproof of the cut inference.
+    * @param aux1 The index of the cut formula in the left subproof.
+    * @param right The right subproof of the cut inference.
+    * @param aux2 The index of the cut formula in the right subproof.
+    * @return
+    */
   private def reduceRankLeft( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof = {
 
     left match {
@@ -414,11 +415,11 @@ class ReductiveCutElimination {
 
       case l @ ContractionRightRule( subProof, a1, a2 ) =>
         if ( l.mainIndices.head == aux1 ) { // The left cut formula is the main formula of the contraction: Duplicate right proof
-          val tmp = CutRule( subProof, a1, right, aux2 )
+        val tmp = CutRule( subProof, a1, right, aux2 )
           val tmp2 = CutRule( tmp, tmp.getLeftSequentConnector.child( a2 ), right, aux2 )
           regularize( ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) ) )
         } else { // The contraction operates on the context: Swap the inferences
-          val aux1Sub = l.getSequentConnector.parent( aux1 )
+        val aux1Sub = l.getSequentConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
           val ( a1New, a2New ) = ( cutSub.getLeftSequentConnector.child( a1 ), cutSub.getLeftSequentConnector.child( a2 ) )
           ContractionRightRule( cutSub, a1New, a2New )
@@ -439,19 +440,19 @@ class ReductiveCutElimination {
             CutRule( leftSubProof, a1, cutSub, cutSub.getLeftSequentConnector.child( a2 ) )
         }
 
+      case l @ DefinitionLeftRule( subProof, a, m ) =>
+
+        val aux1Sub = l.getSequentConnector.parent( aux1 )
+        val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
+        val aNew = cutSub.getLeftSequentConnector.child( a )
+        DefinitionLeftRule( cutSub, aNew, m )
+
       case l @ DefinitionRightRule( subProof, a, m ) if left.mainIndices.head != aux1 =>
 
         val aux1Sub = l.getSequentConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
         val aNew = cutSub.getLeftSequentConnector.child( a )
         DefinitionRightRule( cutSub, aNew, m )
-
-      case l @ AndLeftRule( subProof, a1, a2 ) =>
-
-        val aux1Sub = l.getSequentConnector.parent( aux1 )
-        val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftSequentConnector.child( a1 ), cutSub.getLeftSequentConnector.child( a2 ) )
-        AndLeftRule( cutSub, a1New, a2New )
 
       case l @ AndLeftRule( subProof, a1, a2 ) =>
 
@@ -579,14 +580,14 @@ class ReductiveCutElimination {
   }
 
   /**
-   * Reduces the rank of the cut by permuting it upwards on the right-hand side.
-   *
-   * @param left The left subproof of the cut inference.
-   * @param aux1 The index of the cut formula in the left subproof.
-   * @param right The right subproof of the cut inference.
-   * @param aux2 The index of the cut formula in the right subproof.
-   * @return
-   */
+    * Reduces the rank of the cut by permuting it upwards on the right-hand side.
+    *
+    * @param left The left subproof of the cut inference.
+    * @param aux1 The index of the cut formula in the left subproof.
+    * @param right The right subproof of the cut inference.
+    * @param aux2 The index of the cut formula in the right subproof.
+    * @return
+    */
   private def reduceRankRight( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof = {
 
     right match {

@@ -210,8 +210,8 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val ProofFinC1C2 = CutRule( ProofC2, Suc( 0 ), ProofFinC1, Ant( 6 ) )
     val Proof: LKProof = CutRule( ProofC3, Suc( 0 ), ProofFinC1C2, Ant( 10 ) )
     val R = new ReductiveCutElimination()
-    val ACNFProof = R.elimToACNFByUppermostNonAtomicCut( Proof, false )
-    val ACNFTopProof = R.elimToACNFTopByUppermostRankReducibleCut( Proof, false )
+    val ACNFProof = R.eliminateToACNFByUppermost( Proof, false )
+    val ACNFTopProof = R.eliminateToACNFTopByUppermost( Proof, false )
     ReductiveCutElimination.isACNFTop( ACNFProof ) mustEqual false
     ReductiveCutElimination.isACNFTop( ACNFTopProof ) mustEqual true
     ReductiveCutElimination.isACNF( ACNFTopProof ) mustEqual true
