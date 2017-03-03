@@ -186,8 +186,6 @@ object Eigenvariable {
   }
 }
 
-
-
 /**
  * An LKProof consisting of a single sequent:
  * <pre>
