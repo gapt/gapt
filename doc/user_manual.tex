@@ -992,15 +992,15 @@ Furthermore,
 \begin{clilisting}
 gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
 m: at.logic.gapt.models.Interpretation =
-R(p_1, h_1): o -> false
+R(p_1, h_1): o -> true
 R(p_1, h_2): o -> false
-R(p_1, h_3): o -> true
-R(p_2, h_1): o -> true
-R(p_2, h_2): o -> false
+R(p_1, h_3): o -> false
+R(p_2, h_1): o -> false
+R(p_2, h_2): o -> true
 R(p_2, h_3): o -> false
 R(p_3, h_1): o -> false
-R(p_3, h_2): o -> true
-R(p_3, h_3): o -> false
+R(p_3, h_2): o -> false
+R(p_3, h_3): o -> true
 
 \end{clilisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
@@ -1012,10 +1012,10 @@ gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
-res11: Boolean = false
+res11: Boolean = true
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res12: Boolean = true
+res12: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
@@ -1028,7 +1028,7 @@ res13: Boolean = false
 We can also convert $\neg\mathrm{PHP}_{3,3}$ into DIMACS format:
 \begin{clilisting}
 gapt> val cnf = structuralCNF(Sequent() :+ PigeonHolePrinciple(3,3)).map(_.conclusion.asInstanceOf[HOLClause])
-cnf: scala.collection.immutable.Set[at.logic.gapt.proofs.HOLClause] = Set(R(p_2, h_3), R(p_1, h_3) ⊢ , R(p_3, h_1), R(p_1, h_1) ⊢ , R(p_2, h_1), R(p_1, h_1) ⊢ , R(p_3, h_2), R(p_2, h_2) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2),  ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_3, h_3), R(p_2, h_3) ⊢ , R(p_3, h_3), R(p_1, h_3) ⊢ , R(p_2, h_2), R(p_1, h_2) ⊢ ,  ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_3, h_1), R(p_2, h_1) ⊢ , R(p_3, h_2), R(p_1, h_2) ⊢ )
+cnf: scala.collection.immutable.Set[at.logic.gapt.proofs.HOLClause] = Set(R(p_3, h_1), R(p_2, h_1) ⊢ ,  ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_2, h_1), R(p_1, h_1) ⊢ , R(p_2, h_2), R(p_1, h_2) ⊢ , R(p_2, h_3), R(p_1, h_3) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_3, h_2), R(p_2, h_2) ⊢ , R(p_3, h_3), R(p_1, h_3) ⊢ , R(p_3, h_1), R(p_1, h_1) ⊢ ,  ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_3, h_3), R(p_2, h_3) ⊢ , R(p_3, h_2), R(p_1, h_2) ⊢ )
 
 gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
@@ -1037,17 +1037,17 @@ gapt> writeDIMACS(encoding encodeCNF cnf)
 res14: String =
 "p cnf 9 12
 -1 -2 0
--3 -4 0
--5 -4 0
--6 -7 0
-2 4 8 0
-9 3 6 0
--9 -1 0
--9 -2 0
--7 -8 0
-1 5 7 0
--3 -5 0
--6 -8 0
+3 2 4 0
+-2 -5 0
+-4 -6 0
+-3 -7 0
+7 5 6 0
+-8 -4 0
+-9 -7 0
+-1 -5 0
+9 1 8 0
+-9 -3 0
+-8 -6 0
 "
 
 \end{clilisting}
@@ -1056,7 +1056,7 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res15: at.logic.gapt.expr.HOLAtom = R(p_2, h_3): o
+res15: at.logic.gapt.expr.HOLAtom = R(p_3, h_1): o
 
 \end{clilisting}
 
@@ -1088,26 +1088,27 @@ GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
 res19: Option[at.logic.gapt.proofs.drup.DrupProof] =
 Some([derive]  ⊢
-[derive] R(p_3, h_3) ⊢
-[derive]  ⊢ R(p_4, h_1)
-[derive] R(p_4, h_3) ⊢ R(p_3, h_1), R(p_1, h_1)
-[derive]  ⊢ R(p_2, h_1), R(p_4, h_1)
-[derive] R(p_4, h_2) ⊢ R(p_2, h_1)
-[input] R(p_1, h_2), R(p_4, h_2) ⊢
-[input] R(p_1, h_3), R(p_3, h_3) ⊢
-[input]  ⊢ R(p_3, h_1), R(p_3, h_2), R(p_3, h_3)
-[input] R(p_2, h_2), R(p_3, h_2) ⊢
+[derive] R(p_3, h_2) ⊢
+[derive]  ⊢ R(p_4, h_3)
+[derive] R(p_3, h_3) ⊢ R(p_2, h_1), R(p_1, h_1)
+[derive] R(p_4, h_2) ⊢ R(p_3, h_1)
+[derive] R(p_3, h_1) ⊢ R(p_4, h_3)
+[input] R(p_1, h_1), R(p_4, h_1) ⊢
+[input]  ⊢ R(p_1, h_1), R(p_1, h_2), R(p_1, h_3)
+[input] R(p_3, h_2), R(p_4, h_2) ⊢
 [input] R(p_1, h_1), R(p_2, h_1) ⊢
-[input] R(p_1, h_3), R(p_2, h_3) ⊢
-[input]  ⊢ R(p_1, h_2), R(p_1, h_3), R(p_1, h_1)
-[input] R(p_3, h_1), R(p_2, h_1) ⊢
-[input] R(p_3, h_1), R(p_1, h_1) ⊢
+[input] R(p_2, h_1), R(p_3, h_1) ⊢
+[input]  ⊢ R(p_2, h_1), R(p_2, h_2), R(p_2, h_3)
+[input] R(p_1, h_2), R(p_4, h_2) ⊢
+[input] R(p_3, h_3), R(p_2, h_3) ⊢
 [input] R(p_2, h_2), R(p_4, h_2) ⊢
-[input] R(p_2, h_3), R(p_4, h_3) ⊢
-[input] R(p_2, h_3), R(p_3, h_3) ⊢
-[input]  ⊢ R(p_2, h_2), R(p_2, h_3), R(p_2, h_1)
-[input] R(p_1, h_2), R(p_2, h_2) ⊢
-[input] R(p_3, h_1), R(p_4, ...
+[input] R(p_3, h_3), R(p_4, h_3) ⊢
+[input] R(p_1, h_3), R(p_2, h_3) ⊢
+[input] R(p_3, h_1), R(p_4, h_1) ⊢
+[input] R(p_4, h_3), R(p_1, h_3) ⊢
+[input] R(p_2, h_2), R(p_3, h_2) ⊢
+[input] R(p_1, h_2), R(p_3, h_2) ⊢
+[input] R...
 \end{clilisting}
 
 Just as in the first-order prover interface, you can call
@@ -1116,7 +1117,7 @@ format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
 res20: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p383]
+Some([p402]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
@@ -1195,15 +1196,15 @@ gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent()
 benchmark: String =
 "(set-logic QF_UF)
 (declare-sort t1 0)
-(declare-fun f1 (t1) Bool)
-(declare-fun f2 () t1)
+(declare-fun f1 () t1)
+(declare-fun f2 (t1) Bool)
 (declare-fun f3 () t1)
 (declare-fun f4 () t1)
-(assert (not (=> (and (and (or (= f4 f2) (= f4 f3)) (f1 f3)) (f1 f2)) (f1 f4))))
+(assert (not (=> (and (and (or (= f4 f1) (= f4 f3)) (f2 f3)) (f2 f1)) (f2 f4))))
 (check-sat)
 "
 typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
-constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(a -> f4:t1, P:i>o -> f1:t1>Bool, b -> f2:t1, c -> f3:t1)
+constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f1:t1, P:i>o -> f2:t1>Bool, c -> f3:t1, a -> f4:t1)
 
 \end{clilisting}
 
@@ -1280,10 +1281,10 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
 gapt> Prover9 getExpansionProof sequent
 res29: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(p(0)-,
-∀x (p(x) ⊃ p(s(x)))
+Some(∀x (p(x) ⊃ p(s(x)))
   +^{0} (p(0)+ ⊃ p(s(0))-)
-  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+p(0)-
 :-
 p(s(s(0)))+)
 
@@ -1381,14 +1382,13 @@ formula: at.logic.gapt.expr.FOLFormula =
 
 gapt> Escargot getResolutionProof formula
 res35: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
-Some([p39]  ⊢    (Resolution(p1, Suc(0), p38, Ant(0)))
-[p38] b + (c + (a + d)) = b + (c + (a + d)) ⊢    (Paramod(p7, Suc(0), true, p37, Ant(0), λx b + (c + (a + d)) = b + (c + x)))
-[p37] b + (c + (a + d)) = b + (c + (d + a)) ⊢    (Paramod(p18, Suc(0), true, p36, Ant(0), λx b + (c + (a + d)) = x))
-[p36] b + (c + (a + d)) = c + (b + (d + a)) ⊢    (Paramod(p19, Suc(0), true, p35, Ant(0), λx b + (c + (a + d)) = c + x))
-[p35] b + (c + (a + d)) = c + (d + (b + a)) ⊢    (Paramod(p20, Suc(0), true, p34, Ant(0), λx b + (c + (a + d)) = x))
-[p34] b + (c + (a + d)) = d + (c + (b + a)) ⊢    (Flip(p33, Ant(0)))
-[p33] d + (c + (b + a)) = b + (c + (a + d)) ⊢    (Paramod(p21, Suc(0), true, p32, Ant(0), λx x = b + (c + (a + d))))
-[p32] c + ...
+Some([p34]  ⊢    (Resolution(p1, Suc(0), p33, Ant(0)))
+[p33] d + (b + (c + a)) = d + (b + (c + a)) ⊢    (Paramod(p17, Suc(0), true, p32, Ant(0), λx d + (b + (c + a)) = d + x))
+[p32] d + (b + (c + a)) = d + (c + (b + a)) ⊢    (Paramod(p18, Suc(0), true, p31, Ant(0), λx x = d + (c + (b + a))))
+[p31] b + (d + (c + a)) = d + (c + (b + a)) ⊢    (Paramod(p19, Suc(0), true, p30, Ant(0), λx b + x = d + (c + (b + a))))
+[p30] b + (c + (d + a)) = d + (c + (b + a)) ⊢    (Paramod(p20, Suc(0), true, p29, Ant(0), λx b + (c + (d + a)) = d + x))
+[p29] b + (c + (d + a)) = d + (b + a + c) ⊢    (Paramod(p21, Suc(0), true, p28, Ant(0), λx b + (c + (d + a)) = d + (x + c)))
+[p28] b + (c + (d + a)) = d + (a + b + c) ⊢    (Paramod(p22, Suc(0), tru...
 \end{clilisting}
 
 \subsection{Built-in inductive theorem prover}
@@ -1696,48 +1696,43 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p218] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
+[p286] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (CutRule(p1, Suc(0), p217, Ant(0)))
-[p217] 0 = 0,
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y))
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p285, Suc(1), Suc(0)))
+[p285] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p216, Ant(2), Ant(3)))
-[p216] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-0 = 0,
-0 = 0
+∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p284, Ant(2), Ant(1)))
+[p284] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
 ⊢
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionRightRule(p215, Suc(1), Suc(0)))
-[p215] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y (x_1 <= M(x_1, y) ∧ y <= M(x_1, y)),
-0 = 0,
-0 = 0
-⊢
-∃x_0 ∃y_0 (s(x_0) <= y_0 ∧ f(x_0) = f(y_0)),
-∃x ∃y_0 (s(x) <= y_0 ∧ f(x) = f(y_0))    (ContractionLeftRule(p214, Ant(3), A...
+∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p283, Ant(2), Ant(0)))
+[p283] ∀x_2 (f(x_2) = 0 ∨ f(x_2) = s(0)),
+∀x_1 ∀y_0 ...
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-  +^{M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_1)))}
-    ((f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_1)))) = 0)- ∨
-      (f(M(s(M(s(y_1), s(y_1))), s(M(s(M(s(y_1), s(y_1))), x_1)))) = s(0))-)
-  +^{M(s(M(s(y_1), s(y_1))), x_1)}
-    ((f(M(s(M(s(y_1), s(y_1))), x_1)) = 0)- ∨
-      (f(M(s(M(s(y_1), s(y_1))), x_1)) = s(0))-)
-  +^{M(s(y_1), s(M(s(y_1), x_1)))}
-    ((f(M(s(y_1), s(M(s(y_1), x_1)))) = 0)- ∨
-      (f(M(s(y_1), s(M(s(y_1), x_1)))) = s(0))-)
-  +^{M(s(y_1), s(y_1))}
-    ((f(M(s(y_1), s(y_1))) = 0)- ∨ (f(M(s(y_1), s(y_1))) = s(0))-)
-  +^{M(s(y_1), x_1)}
-    ((f(M(s(y_1), x_1)) = 0)- ∨ (f(M(s(y_1), x_1)) = s(0))-)
-  +^{y_1} ((f(y_1) = 0)- ∨ (f(y_1) = s(0))-),
-∀x_1 ∀y (x_...
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
+  +^{s(M(x, 0))}
+    (∀y_0 (s(M(x, 0)) <= M(s(M(x, 0)), y_0) ∧ y_0 <= M(s(M(x, 0)), y_0))
+      +^{s(M(x, 0))}
+        ((s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0))))- ∧
+          wk-{s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0)))}))
+  +^{s(M(x, x_0))}
+    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧
+          y_0 <= M(s(M(x, x_0)), y_0))
+      +^{s(M(x, x_0))}
+        ((s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0))))- ∧
+          wk-{s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0)))}))
+  +^{s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0))))))}
+    (∀y_0 (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
+            M(s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))), y_0) ∧
+          y_0 <= M(s(M(x_1, s(M(s(M(...
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1784,18 +1779,19 @@ Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(s(s(s(0)))))), x1))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), 0, x1))
 [p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
+P(0) ⊃ P(s(s(s(0)))),
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
 [p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
 ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(s(s(s(s(s(s(0))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
+P(0) ⊃ P(s(s(s(0)))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0)))...
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
+[p22] ∀x1...
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
@@ -1829,21 +1825,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(x_1)
+x_0 → s(s(s(s(s(s(x_1))))))
+
+x_0 → s(s(s(x_1)))
 
 x_0 → x_1
 
-x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
+x_1 → s(s(s(x_2)))
 
-x_1 → s(s(s(s(s(s(s(x_2)))))))
+x_1 → s(s(x_2))
 
 x_1 → s(x_2)
 
 x_2 → 0
 
-x_2 → s(s(0))
-
-x_2 → s(s(s(s(0))))
+x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res49: Boolean = true
@@ -1857,17 +1853,17 @@ res50: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(x_1)
+x_0 → s(s(s(x_1)))
 
 x_0 → x_1
+
+x_1 → s(s(s(x_2)))
+
+x_1 → s(s(x_2))
 
 x_1 → s(x_2)
 
 x_2 → 0
-
-x_2 → s(s(0))
-
-x_2 → s(s(s(s(0))))
 
 \end{clilisting}
 
@@ -1916,14 +1912,14 @@ reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequ
 
 gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
 firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
-∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
-∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
 ⊤ ⊃ P_is_list(f_nil),
-⊤ ⊃ P_is_nat(f_0),
+∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
+∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
+⊤ ⊃ P_is_nat(f_0),
 P_is_o(f_nonempty_o),
-P_is_list(f_nonempty_list),
-P_is_nat(f_nonempty_nat)
+P_is_nat(f_nonempty_nat),
+P_is_list(f_nonempty_list)
 ⊢
 P_P(f_nil) ∧
     ∀x (P_is_list(x) ⊃
