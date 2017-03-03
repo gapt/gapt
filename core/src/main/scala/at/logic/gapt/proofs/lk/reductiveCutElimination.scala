@@ -132,8 +132,6 @@ class ReductiveCutElimination {
    * left-uppermost cuts until the proof is cut-free) is provided by another
    * apply method in this class.
    *
-   *
-   *
    * @param proof The proof to subject to cut-elimination.
    * @param pred_done A predicate deciding when to terminate the algorithm.
    * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
