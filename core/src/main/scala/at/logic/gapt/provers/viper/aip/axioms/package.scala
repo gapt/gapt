@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip
 
-import at.logic.gapt.expr.{ All, And, Const => Con, FunctionType, HOLFormula, Substitution, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ All, And, FunctionType, HOLFormula, LambdaExpression, Substitution, Var, freeVariables, rename, Const => Con }
 import at.logic.gapt.proofs.{ Context, Sequent }
 
 package object axioms {
@@ -44,7 +44,7 @@ package object axioms {
    * @return An induction axiom representing an induction on the specified variable and formula with one induction
    *         case for each of the constructors.
    */
-  def inductionAxiom( inductionVariable: Var, formula: HOLFormula, constructors: Seq[Con] )( implicit ctx: Context ) =
+  def inductionAxiom[T <: LambdaExpression]( inductionVariable: Var, formula: T, constructors: Seq[Con] )( implicit ctx: Context ) =
     And( constructors map { inductionCase( inductionVariable, formula, _ ) } ) -->
       All( inductionVariable, formula )
 
@@ -57,7 +57,7 @@ package object axioms {
    * @return A formula representing the inductive case for the given constructor for an induction on the specified
    *         formula and variable.
    */
-  def inductionCase( inductionVariable: Var, formula: HOLFormula, constructor: Con ): HOLFormula = {
+  def inductionCase[T <: LambdaExpression]( inductionVariable: Var, formula: T, constructor: Con ): HOLFormula = {
     val ( primaryVariables, secondaryVariables, caseConclusion ) =
       inductionCaseConclusion( inductionVariable, constructor, formula )
     val caseHypotheses = primaryVariables.map { pv => Substitution( inductionVariable -> pv )( formula ) }
@@ -79,6 +79,26 @@ package object axioms {
   def inductionCaseConclusion(
     freeVariable: Var, constructor: Con, formula: HOLFormula
   ): ( List[Var], List[Var], HOLFormula ) = {
+    val FunctionType( _, argumentTypes ) = constructor.exptype
+    val nameGenerator = rename.awayFrom( freeVariables( formula ) )
+    val newVariables = argumentTypes map {
+      argumentType =>
+        nameGenerator.fresh(
+          if ( argumentType == freeVariable.exptype )
+            freeVariable
+          else
+            Var( "x", argumentType )
+        )
+    }
+    val ( primaryVariables, secondaryVariables ) = newVariables partition {
+      _.exptype == freeVariable.exptype
+    }
+    ( primaryVariables, secondaryVariables, Substitution( freeVariable -> constructor( newVariables: _* ) )( formula ) )
+  }
+
+  def inductionCaseConclusion(
+    freeVariable: Var, constructor: Con, formula: LambdaExpression
+  ): ( List[Var], List[Var], LambdaExpression ) = {
     val FunctionType( _, argumentTypes ) = constructor.exptype
     val nameGenerator = rename.awayFrom( freeVariables( formula ) )
     val newVariables = argumentTypes map {
