@@ -238,7 +238,8 @@ class ReductiveCutElimination {
     },
       cleanStructRules )
   }
-  
+
+
   // TODO: Implement this properly, i.e. with SequentIndices.
   /**
    * Recursively traverses a proof until it finds a cut to reduce.
