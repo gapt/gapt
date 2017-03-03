@@ -276,14 +276,16 @@ functionality of these systems will not be available.
 
 \subsection{Expressions and formulas}
 
-Formulas, terms, and other expressions are are represented as lambda terms in a
-simple type theory with many base sorts.  The standard base sorts are $o$ for
-Boolean values, and $\iota$ for individuals.  Terms and formulas of first-order
-logic and higher-order logic are hence encoded as lambda terms, these
-form regular subsets of the lambda expression.
+Formulas, terms, and all other expressions are represented as terms in a
+polymorphic simply-typed lambda calculus.  For example, the formula $\forall
+x\: P(x, y)$ is encoded as the term \cli{'$\forall$' ($\lambda$x (P x) y)}.
+This term has the type $o$, which is the type of Boolean values.  The variable
+$x$ in this term has the type $i$, which is the default type for first-order
+variables.
 
 There are two ways of entering expressions: you can parse them or construct them
 manually.
+
 \subsubsection{Formula parsing}
 Here is an example of parsing a first-order formula:
 \begin{clilisting}
@@ -296,6 +298,7 @@ Every kind of expression that GAPT supports can be parsed by writing \verb!<pref
 The prefix indicates the Scala type of the expression. The following prefixes are available:
 
 \begin{tabular}{r l}
+\cli{ty} & type \\
 \cli{le} & lambda expression \\
 \cli{hof} & higher-order formula \\
 \cli{hoa} & higher-order atom \\
@@ -1947,6 +1950,27 @@ P(nil:list)- ∧
 \vfill
 \pagebreak
 \begin{appendix}
+
+\section{Lambda calculus}
+
+GAPT uses a polymorphic simply-typed lambda calculus to represent formulas and
+terms.  The syntax of types and terms is as follows.  A type is either a type
+function, an arrow (function) type or a type variable.
+\[ \mathrm{Type} ::= f(\mathrm{Type},\dots,\mathrm{Type}) \mid \mathrm{Type} \to \mathrm{Type} \mid {?}\alpha \]
+
+There are 4 kinds of expressions: constants, variables, applications, and
+abstractions:
+\[ \mathrm{Expr} ::= v: Type \mid c: Type \mid \mathrm{Expr}\: \mathrm{Expr}
+  \mid \lambda (v : Type)\: \mathrm{Expr} \]
+
+This lambda calculus is simply typed in the sense that we do not have
+\emph{quantification} over types.  Instead, we allow inductive data types and
+definitions to be polymorphic.  That is, data types and the types of
+definitions can have type variables.  In this manner, we can define a function
+\cli{concat} of type \cli{list ?a > list ?a > list ?a}.  With this definition
+we can use all instances, where we substitute \cli{?a} for any other type.  For
+example when we use this function for lists of numbers, we would use the instance
+\cli{concat: list nat > list nat > list nat}.
 
 \section{Proof systems}
 
