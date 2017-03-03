@@ -186,9 +186,7 @@ object Eigenvariable {
   }
 }
 
-case class ProofLink( referencedProof: LambdaExpression, linkquent: Sequent[HOLFormula] ) extends InitialSequent {
-  override def conclusion = linkquent
-}
+
 
 /**
  * An LKProof consisting of a single sequent:
