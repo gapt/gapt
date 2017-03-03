@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, HOLFormula, Var, freeVariables }
+import at.logic.gapt.expr.{ All, Formula, Var, freeVariables }
 import at.logic.gapt.proofs.gaptic.{ ProofState, allR, insert, repeat }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip.{ ThrowsError, findFormula }
@@ -26,7 +26,7 @@ case class SequentialInductionAxioms(
 
   def forLabel( label: String ) = copy( fsel = findFormula( _, label ) )
 
-  def forFormula( formula: HOLFormula ) = copy( fsel = _ => Right( formula ) )
+  def forFormula( formula: Formula ) = copy( fsel = _ => Right( formula ) )
 
   /**
    * Computes sequential induction axioms for a sequent.
@@ -43,7 +43,7 @@ case class SequentialInductionAxioms(
    *         x in X
    *         {X < x} and {X > x} are subsets of X containing all variables with index smaller/greater than the index of x.
    */
-  override def apply( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
@@ -61,7 +61,7 @@ case class SequentialInductionAxioms(
    * @return A sequential induction axiom.
    */
   private def inductionAxiom(
-    variables: List[Var], variable: Var, formula: HOLFormula
+    variables: List[Var], variable: Var, formula: Formula
   )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }
     val inductionFormula = All.Block( innerVariables, inductionQuantifierForm( variables, formula ) )
@@ -83,7 +83,7 @@ case class SequentialInductionAxioms(
    * @param formula A formula of the form `∀Xφ`.
    * @return A formula of the form `∀Yφ` where Y does not contain any of x_1,...,x_n.
    */
-  private def inductionQuantifierForm( inductionVariables: List[Var], formula: HOLFormula ): HOLFormula = {
+  private def inductionQuantifierForm( inductionVariables: List[Var], formula: Formula ): Formula = {
     val All.Block( _, matrix ) = formula
     val quantifierPrefix = freeVariables( matrix ).diff( freeVariables( formula ) ).diff( inductionVariables.toSet ).toSeq
 

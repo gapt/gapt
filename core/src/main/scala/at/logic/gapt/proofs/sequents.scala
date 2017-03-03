@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr.Polarity.{ Negative, Positive }
-import at.logic.gapt.expr.{ HOLFormula, Polarity }
+import at.logic.gapt.expr.{ Formula, Polarity }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 import cats.Functor
 import cats.kernel.Monoid
@@ -94,7 +94,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
   override def toString = toSigRelativeString
 
   def toSigRelativeString( implicit sig: BabelSignature ): String =
-    if ( forall { _.isInstanceOf[HOLFormula] } ) {
+    if ( forall { _.isInstanceOf[Formula] } ) {
       new BabelExporter( unicode = true, sig = sig ).export( this.asInstanceOf[HOLSequent] )
     } else {
       val stringified = this map { _.toString }

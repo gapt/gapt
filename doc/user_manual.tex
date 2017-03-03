@@ -328,7 +328,7 @@ prefixes make sure that the expression is of type $o$ (Boolean).  If no
 particular type is required, we default to $\iota$:
 \begin{clilisting}
 gapt> hof"!x?y!z x(z) = y(y(z))"
-res2: at.logic.gapt.expr.HOLFormula = ∀x ∃y ∀z x(z) = y(y(z))
+res2: at.logic.gapt.expr.Formula = ∀x ∃y ∀z x(z) = y(y(z))
 
 \end{clilisting}
 
@@ -337,7 +337,7 @@ input is of course supported as well---you can paste any of the output right
 back in:
 \begin{clilisting}
 gapt> hof"∀x ∃y ∀z x(z) = y(y(z))"
-res3: at.logic.gapt.expr.HOLFormula = ∀x ∃y ∀z x(z) = y(y(z))
+res3: at.logic.gapt.expr.Formula = ∀x ∃y ∀z x(z) = y(y(z))
 
 \end{clilisting}
 
@@ -1056,7 +1056,7 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res15: at.logic.gapt.expr.HOLAtom = R(p_3, h_1): o
+res15: at.logic.gapt.expr.Atom = R(p_3, h_1): o
 
 \end{clilisting}
 
@@ -1168,7 +1168,7 @@ formulas.  For example we can check whether a quantifier-free formula is a
 quasi-tautology using veriT:
 \begin{clilisting}
 gapt> val f = hof"(a=b | a=c) & P(c) & P(b) -> P(a)"
-f: at.logic.gapt.expr.HOLFormula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
+f: at.logic.gapt.expr.Formula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \end{clilisting}
 
@@ -1556,7 +1556,7 @@ In order to apply interpolation, we need to specify a partition of the end-seque
 Then we can call \texttt{ExtractInterpolant( pr, npart, ppart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
 \begin{clilisting}
 gapt> val I = ExtractInterpolant( pr, Seq( Suc( 0 ) ), Seq( Ant( 0 ), Ant( 1 ) ) )
-I: at.logic.gapt.expr.HOLFormula = a = b ⊃ ¬P(a)
+I: at.logic.gapt.expr.Formula = a = b ⊃ ¬P(a)
 
 \end{clilisting}
 
@@ -1603,10 +1603,10 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res38: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res38: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.HOLFormula] =
+res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] =
 ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
 P(x, a) ⊃ Q(x, a)
 ⊢
@@ -1874,13 +1874,13 @@ entering a many-sorted formula you need to provide enough type annotations to
 infer the types:
 \begin{clilisting}
 gapt> val formula = hof"P(cons(0:nat, cons(s(0), nil)): list)"
-formula: at.logic.gapt.expr.HOLFormula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
+formula: at.logic.gapt.expr.Formula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
 
 gapt> val axiom = hof"P(nil) & !x!y!z (P(x) -> P(cons(y: nat, cons(z, x)): list))"
-axiom: at.logic.gapt.expr.HOLFormula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+axiom: at.logic.gapt.expr.Formula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
 
 gapt> val problem = hof"$axiom -> $formula"
-problem: at.logic.gapt.expr.HOLFormula =
+problem: at.logic.gapt.expr.Formula =
 P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) ⊃
   P(cons(0, cons(s(0), nil)))
 

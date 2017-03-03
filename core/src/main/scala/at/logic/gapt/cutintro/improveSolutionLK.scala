@@ -57,7 +57,7 @@ object improveSolutionLK {
     val names = containedNames( instances ) ++ containedNames( start ) ++ containedNames( context.elements )
     val nameGen = rename.awayFrom( names )
     val grounding = Substitution( for ( v <- freeVariables( start +: context.elements ) ++ instances.flatMap( _.range ) )
-      yield v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+      yield v -> Const( nameGen.fresh( v.name ), v.ty ) )
     val groundInstances = instances.map( grounding.compose )
     val isSolution = mutable.Map[Set[FOLClause], Boolean]()
 

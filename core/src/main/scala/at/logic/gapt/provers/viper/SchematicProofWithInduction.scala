@@ -11,11 +11,11 @@ import at.logic.gapt.utils.linearizeStrictPartialOrder
 
 trait SchematicProofWithInduction {
   def endSequent: HOLSequent
-  def solutionCondition: HOLFormula
-  def lkProof( solution: Seq[LambdaExpression], prover: Prover ): LKProof
+  def solutionCondition: Formula
+  def lkProof( solution: Seq[Expr], prover: Prover ): LKProof
 
   def paramVars: Seq[Var]
-  def generatedLanguage( inst: Seq[LambdaExpression] ): Set[HOLFormula]
+  def generatedLanguage( inst: Seq[Expr] ): Set[Formula]
 }
 
 case class ProofByRecursionScheme(
@@ -68,16 +68,16 @@ case class ProofByRecursionScheme(
 
   //  val solutionCondition @ Ex.Block( hoVars, _ ) = qbupForRecSchem( recSchem, conj )
 
-  def lemma( solution: Seq[LambdaExpression], nonTerminal: Const ) = {
-    val FunctionType( _, argTypes ) = nonTerminal.exptype
+  def lemma( solution: Seq[Expr], nonTerminal: Const ) = {
+    val FunctionType( _, argTypes ) = nonTerminal.ty
     val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x_$i", t )
     All.Block(
       args,
       BetaReduction.betaNormalize( solution( hoVars.indexOf( hoVarMap( nonTerminal ) ) )( args ) )
-    ).asInstanceOf[HOLFormula]
+    ).asInstanceOf[Formula]
   }
 
-  def mkInsts( state0: ProofState, solution: Seq[LambdaExpression], lhsPattern: LambdaExpression ) = {
+  def mkInsts( state0: ProofState, solution: Seq[Expr], lhsPattern: Expr ) = {
     var state = state0
     val instanceTerms = for {
       Rule( lhs, rhs ) <- recSchem.rules
@@ -86,8 +86,8 @@ case class ProofByRecursionScheme(
     instanceTerms.foreach {
       case Apps( nt: Const, args ) if recSchem.nonTerminals.contains( nt ) =>
         state += haveInstance( instantiate( lemma( solution, nt ), args ), Polarity.InAntecedent )
-      case Neg( form )      => state += haveInstance( form, Polarity.InSuccedent ).orElse( haveInstance( -form, Polarity.InAntecedent ) )
-      case form: HOLFormula => state += haveInstance( form, Polarity.InAntecedent )
+      case Neg( form )   => state += haveInstance( form, Polarity.InSuccedent ).orElse( haveInstance( -form, Polarity.InAntecedent ) )
+      case form: Formula => state += haveInstance( form, Polarity.InAntecedent )
     }
     for {
       ( label, form ) <- state.currentSubGoalOption.get.labelledSequent
@@ -96,7 +96,7 @@ case class ProofByRecursionScheme(
     state
   }
 
-  def mkLemma( solution: Seq[LambdaExpression], nonTerminal: Const, prover: Prover ) = {
+  def mkLemma( solution: Seq[Expr], nonTerminal: Const, prover: Prover ) = {
     val lem @ All.Block( vs, matrix ) = lemma( solution, nonTerminal )
 
     val prevLems = for ( prevNT <- dependencyOrder.takeWhile( _ != nonTerminal ) )
@@ -126,7 +126,7 @@ case class ProofByRecursionScheme(
     state.result
   }
 
-  def lkProof( solution: Seq[LambdaExpression], prover: Prover ): LKProof = {
+  def lkProof( solution: Seq[Expr], prover: Prover ): LKProof = {
     var state = ProofState( theory :+ ( "goal" -> conj ) )
     for ( nt <- dependencyOrder if nt != recSchem.startSymbol ) {
       val lem = lemma( solution, nt )
@@ -143,6 +143,6 @@ case class ProofByRecursionScheme(
     cleanStructuralRules( state.result )
   }
 
-  def generatedLanguage( inst: Seq[LambdaExpression] ) =
-    recSchem.parametricLanguage( inst: _* ).map( _.asInstanceOf[HOLFormula] )
+  def generatedLanguage( inst: Seq[Expr] ) =
+    recSchem.parametricLanguage( inst: _* ).map( _.asInstanceOf[Formula] )
 }

@@ -22,7 +22,7 @@ class SubstitutionTest extends Specification with SequentMatchers {
       val x = FOLVar( "x" )
       val y = FOLVar( "y" )
       val P = FOLAtomConst( "P", 2 )
-      val pxy = HOLAtom( P, List( x, y ) )
+      val pxy = Atom( P, List( x, y ) )
       val allxpx = All( x, P( x, y ) )
       val ax1 = LogicalAxiom( P( x, y ) )
       val r1 = ForallLeftRule( ax1, allxpx, x )

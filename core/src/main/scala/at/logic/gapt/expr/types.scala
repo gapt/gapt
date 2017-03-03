@@ -35,7 +35,7 @@ object arity {
     case _        => 0
   }
 
-  def apply( e: LambdaExpression ): Int = arity( e.exptype )
+  def apply( e: Expr ): Int = arity( e.ty )
 }
 
 /**

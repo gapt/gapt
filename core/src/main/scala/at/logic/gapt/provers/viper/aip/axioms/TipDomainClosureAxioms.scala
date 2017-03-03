@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, Eq, HOLFormula, Or, Var, freeVariables }
+import at.logic.gapt.expr.{ All, Eq, Formula, Or, Var, freeVariables }
 import at.logic.gapt.formats.tip.{ TipConstructor, TipDatatype }
 import at.logic.gapt.proofs.gaptic.{ ProofState, allR, escargot, forget, induction, orR, repeat }
 import at.logic.gapt.proofs.lk.LKProof
@@ -29,7 +29,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
     /**
      * @return The formula representing the axiom.
      */
-    override def formula: HOLFormula = {
+    override def formula: Formula = {
       val caseVariable = Var( "x", datatype.t )
       All(
         caseVariable,
@@ -58,7 +58,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
       proofState.result
     }
 
-    private def caseDistinction( caseVariable: Var, constructor: TipConstructor ): HOLFormula = {
+    private def caseDistinction( caseVariable: Var, constructor: TipConstructor ): Formula = {
       val projectedValues = constructor.projectors.map( projector => projector( caseVariable ) )
       Eq( caseVariable, constructor.constr( projectedValues ) )
     }

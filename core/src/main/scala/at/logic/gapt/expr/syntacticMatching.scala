@@ -2,7 +2,7 @@ package at.logic.gapt.expr
 
 trait MatchingAlgorithm {
   def apply(
-    pairs:             List[( LambdaExpression, LambdaExpression )],
+    pairs:             List[( Expr, Expr )],
     alreadyFixedSubst: PreSubstitution
   ): Traversable[Substitution]
 }
@@ -19,14 +19,14 @@ object syntacticMatching extends syntacticMatching {
     alreadyFixedSubst: Map[FOLVar, FOLTerm]
   )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
     apply(
-      pairs: List[( LambdaExpression, LambdaExpression )],
+      pairs: List[( Expr, Expr )],
       Substitution( alreadyFixedSubst )
     ) map { _.asFOLSubstitution } headOption
 
-  def apply( from: LambdaExpression, to: LambdaExpression ): Option[Substitution] =
+  def apply( from: Expr, to: Expr ): Option[Substitution] =
     apply( List( from -> to ) )
 
-  def apply( pairs: List[( LambdaExpression, LambdaExpression )] ): Option[Substitution] =
+  def apply( pairs: List[( Expr, Expr )] ): Option[Substitution] =
     apply( pairs, PreSubstitution() ).headOption
 
   def apply( a: Ty, b: Ty ): Option[Substitution] =
@@ -34,7 +34,7 @@ object syntacticMatching extends syntacticMatching {
 }
 class syntacticMatching extends MatchingAlgorithm {
   def apply(
-    pairs:             List[( LambdaExpression, LambdaExpression )],
+    pairs:             List[( Expr, Expr )],
     alreadyFixedSubst: PreSubstitution
   ): Traversable[Substitution] = apply( pairs, Nil, alreadyFixedSubst )
 
@@ -48,7 +48,7 @@ class syntacticMatching extends MatchingAlgorithm {
    * @return
    */
   def apply(
-    pairs:             List[( LambdaExpression, LambdaExpression )],
+    pairs:             List[( Expr, Expr )],
     tyPairs:           List[( Ty, Ty )],
     alreadyFixedSubst: PreSubstitution
   ): Traversable[Substitution] = ( pairs, tyPairs ) match {
@@ -68,7 +68,7 @@ class syntacticMatching extends MatchingAlgorithm {
     case ( first :: rest, _ ) =>
       first match {
         case ( App( a1, b1 ), App( a2, b2 ) ) =>
-          apply( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, ( b1.exptype, b2.exptype ) :: tyPairs, alreadyFixedSubst )
+          apply( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, ( b1.ty, b2.ty ) :: tyPairs, alreadyFixedSubst )
 
         case ( Const( n1, t1 ), Const( n2, t2 ) ) if n1 == n2 =>
           apply( rest, ( t1, t2 ) :: tyPairs, alreadyFixedSubst )
@@ -79,7 +79,7 @@ class syntacticMatching extends MatchingAlgorithm {
             alreadyFixedSubst.domain ++
               pairs.flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } toList
           )
-          val v2_ = Var( v1_.name, v2.exptype )
+          val v2_ = Var( v1_.name, v2.ty )
           apply(
             ( v1_ -> v2_ ) :: ( Substitution( v1 -> v1_ )( e1 ) -> Substitution( v2 -> v2_ )( e2 ) ) :: rest,
             tyPairs, alreadyFixedSubst
@@ -89,7 +89,7 @@ class syntacticMatching extends MatchingAlgorithm {
           apply( rest, tyPairs, alreadyFixedSubst )
 
         case ( v: Var, exp ) if !alreadyFixedSubst.map.contains( v ) =>
-          apply( rest, ( v.exptype, exp.exptype ) :: tyPairs, alreadyFixedSubst + ( v, exp ) )
+          apply( rest, ( v.ty, exp.ty ) :: tyPairs, alreadyFixedSubst + ( v, exp ) )
 
         case _ => Nil
       }

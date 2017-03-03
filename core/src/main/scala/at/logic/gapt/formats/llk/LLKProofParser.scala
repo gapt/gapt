@@ -16,14 +16,14 @@ import scala.util.parsing.input.PagedSeqReader
  * additionally to the list of pairs.
  */
 case class ExtendedProofDatabase(
-    eproofs:      Map[HOLFormula, LKProof],
-    eaxioms:      Map[HOLFormula, HOLFormula],
-    edefinitions: Map[Const, LambdaExpression]
+    eproofs:      Map[Formula, LKProof],
+    eaxioms:      Map[Formula, Formula],
+    edefinitions: Map[Const, Expr]
 ) {
   val proofs = eproofs.map( x =>
     x._1 match {
-      case HOLAtom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
-      case HOLAtom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
+      case Atom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
+      case Atom( Var( sym, _ ), _ )   => ( sym.toString, x._2 )
     } ).toList
   val Definitions = edefinitions
   val axioms = eaxioms.values.toList map ( x => HOLSequent( Nil, x :: Nil ) )

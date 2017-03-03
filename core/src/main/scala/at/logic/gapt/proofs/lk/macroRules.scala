@@ -335,7 +335,7 @@ object ForallLeftBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withSequentConnector( subProof, main, terms )._1
+  def apply( subProof: LKProof, main: Formula, terms: Seq[Expr] ): LKProof = withSequentConnector( subProof, main, terms )._1
 
   /**
    * Applies the ForallLeft-rule n times.
@@ -361,7 +361,7 @@ object ForallLeftBlock {
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
    * @return A pair consisting of an LKProof and an SequentConnector.
    */
-  def withSequentConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( subProof: LKProof, main: Formula, terms: Seq[Expr] ): ( LKProof, SequentConnector ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
     val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, SequentConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -399,7 +399,7 @@ object ForallRightBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withSequentConnector( subProof, main, eigenvariables )._1
+  def apply( subProof: LKProof, main: Formula, eigenvariables: Seq[Var] ): LKProof = withSequentConnector( subProof, main, eigenvariables )._1
 
   /**
    * Applies the ForallRight-rule n times.
@@ -425,7 +425,7 @@ object ForallRightBlock {
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    * @return A pair consisting of an LKProof and an SequentConnector.
    */
-  def withSequentConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( subProof: LKProof, main: Formula, eigenvariables: Seq[Var] ): ( LKProof, SequentConnector ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
     val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, SequentConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -462,7 +462,7 @@ object ExistsLeftBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): LKProof = withSequentConnector( subProof, main, eigenvariables )._1
+  def apply( subProof: LKProof, main: Formula, eigenvariables: Seq[Var] ): LKProof = withSequentConnector( subProof, main, eigenvariables )._1
 
   /**
    * Applies the ExistsLeft-rule n times.
@@ -488,7 +488,7 @@ object ExistsLeftBlock {
    * A[x1\y1,...,xN\yN] indeed occurs at the bottom of the proof π.
    * @return A pair consisting of an LKProof and an SequentConnector.
    */
-  def withSequentConnector( subProof: LKProof, main: HOLFormula, eigenvariables: Seq[Var] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( subProof: LKProof, main: Formula, eigenvariables: Seq[Var] ): ( LKProof, SequentConnector ) = {
     val partiallyInstantiatedMains = ( 0 to eigenvariables.length ).toList.reverse.map( n => instantiate( main, eigenvariables.take( n ) ) )
 
     val series = eigenvariables.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, SequentConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -523,7 +523,7 @@ object ExistsRightBlock {
    * method has to ensure the correctness of these terms, and, specifically, that
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
    */
-  def apply( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): LKProof = withSequentConnector( subProof, main, terms )._1
+  def apply( subProof: LKProof, main: Formula, terms: Seq[Expr] ): LKProof = withSequentConnector( subProof, main, terms )._1
 
   /**
    * Applies the ExistsRight-rule n times.
@@ -547,7 +547,7 @@ object ExistsRightBlock {
    * A[x1\term1,...,xN\termN] indeed occurs at the bottom of the proof π.
    * @return A pair consisting of an LKProof and an SequentConnector.
    */
-  def withSequentConnector( subProof: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( subProof: LKProof, main: Formula, terms: Seq[Expr] ): ( LKProof, SequentConnector ) = {
     val partiallyInstantiatedMains = ( 0 to terms.length ).toList.reverse.map( n => instantiate( main, terms.take( n ) ) )
 
     val series = terms.reverse.foldLeft( ( subProof, partiallyInstantiatedMains, SequentConnector( subProof.endSequent ) ) ) { ( acc, ai ) =>
@@ -561,7 +561,7 @@ object ExistsRightBlock {
 }
 
 object WeakQuantifierBlock {
-  def apply( p: LKProof, main: HOLFormula, terms: Seq[LambdaExpression] ) =
+  def apply( p: LKProof, main: Formula, terms: Seq[Expr] ) =
     main match {
       case _ if terms.isEmpty => p
       case All( _, _ )        => ForallLeftBlock( p, main, terms )
@@ -606,7 +606,7 @@ object ContractionLeftMacroRule {
    * @param n Maximum number of occurrences of form in the antecedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
    * @return
    */
-  def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = withSequentConnector( p, form, n )._1
+  def apply( p: LKProof, form: Formula, n: Int = 1 ): LKProof = withSequentConnector( p, form, n )._1
 
   /**
    * Contracts one formula in the antecedent down to n occurrences. Use with care!
@@ -616,7 +616,7 @@ object ContractionLeftMacroRule {
    * @param n Maximum number of occurrences of form in the antecedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
    * @return A proof and an SequentConnector connecting its end sequent with the end sequent of p.
    */
-  def withSequentConnector( p: LKProof, form: HOLFormula, n: Int = 1 ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, form: Formula, n: Int = 1 ): ( LKProof, SequentConnector ) = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
     val list = p.endSequent.indicesWhere( _ == form ).filter( _.isAnt ).drop( n - 1 )
 
@@ -661,7 +661,7 @@ object ContractionRightMacroRule {
    * @param n Maximum number of occurrences of form in the succedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
    * @return
    */
-  def apply( p: LKProof, form: HOLFormula, n: Int = 1 ): LKProof = withSequentConnector( p, form, n )._1
+  def apply( p: LKProof, form: Formula, n: Int = 1 ): LKProof = withSequentConnector( p, form, n )._1
 
   /**
    * Contracts one formula in the succedent down to n occurrences. Use with care!
@@ -671,7 +671,7 @@ object ContractionRightMacroRule {
    * @param n Maximum number of occurrences of form in the succedent of the end sequent. Defaults to 1, i.e. all occurrences are contracted.
    * @return A proof and an SequentConnector connecting its end sequent with the end sequent of p.
    */
-  def withSequentConnector( p: LKProof, form: HOLFormula, n: Int = 1 ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, form: Formula, n: Int = 1 ): ( LKProof, SequentConnector ) = {
     if ( n < 1 ) throw new IllegalArgumentException( "n must be >= 1." )
     val list = p.endSequent.indicesWhere( _ == form ).filter( _.isSuc ).drop( n - 1 )
 
@@ -767,7 +767,7 @@ object WeakeningLeftMacroRule {
    * @param formulas A list of formulas.
    * @return A new proof whose antecedent contains new occurrences of the formulas in formulas.
    */
-  def apply( p: LKProof, formulas: Seq[HOLFormula] ): LKProof = withSequentConnector( p, formulas )._1
+  def apply( p: LKProof, formulas: Seq[Formula] ): LKProof = withSequentConnector( p, formulas )._1
 
   /**
    *
@@ -775,7 +775,7 @@ object WeakeningLeftMacroRule {
    * @param formulas A list of formulas.
    * @return A new proof whose antecedent contains new occurrences of the formulas in formulas and an SequentConnector.
    */
-  def withSequentConnector( p: LKProof, formulas: Seq[HOLFormula] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, formulas: Seq[Formula] ): ( LKProof, SequentConnector ) = {
     formulas.foldLeft( ( p, SequentConnector( p.endSequent ) ) ) { ( acc, f ) =>
       val subProof = WeakeningLeftRule( acc._1, f )
       ( subProof, subProof.getSequentConnector * acc._2 )
@@ -789,7 +789,7 @@ object WeakeningLeftMacroRule {
    * @param n A natural number.
    * @return p extended with weakenings such that formula occurs at least n times in the antecedent of the end sequent.
    */
-  def apply( p: LKProof, formula: HOLFormula, n: Int ): LKProof = withSequentConnector( p, formula, n )._1
+  def apply( p: LKProof, formula: Formula, n: Int ): LKProof = withSequentConnector( p, formula, n )._1
 
   /**
    *
@@ -798,7 +798,7 @@ object WeakeningLeftMacroRule {
    * @param n A natural number.
    * @return p extended with weakenings such that formula occurs at least n times in the antecedent of the end sequent and an SequentConnector.
    */
-  def withSequentConnector( p: LKProof, formula: HOLFormula, n: Int ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, formula: Formula, n: Int ): ( LKProof, SequentConnector ) = {
     val nCurrent = p.endSequent.antecedent.count( _ == formula )
 
     WeakeningLeftMacroRule.withSequentConnector( p, Seq.fill( n - nCurrent )( formula ) )
@@ -817,7 +817,7 @@ object WeakeningRightMacroRule {
    * @param formulas A list of formulas.
    * @return A new proof whose succedent contains new occurrences of the formulas in formulas.
    */
-  def apply( p: LKProof, formulas: Seq[HOLFormula] ): LKProof = withSequentConnector( p, formulas )._1
+  def apply( p: LKProof, formulas: Seq[Formula] ): LKProof = withSequentConnector( p, formulas )._1
 
   /**
    *
@@ -825,7 +825,7 @@ object WeakeningRightMacroRule {
    * @param formulas A list of formulas.
    * @return A new proof whose succedent contains new occurrences of the formulas in formulas and an SequentConnector.
    */
-  def withSequentConnector( p: LKProof, formulas: Seq[HOLFormula] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, formulas: Seq[Formula] ): ( LKProof, SequentConnector ) = {
     formulas.foldLeft( ( p, SequentConnector( p.endSequent ) ) ) { ( acc, f ) =>
       val subProof = WeakeningRightRule( acc._1, f )
       ( subProof, subProof.getSequentConnector * acc._2 )
@@ -839,7 +839,7 @@ object WeakeningRightMacroRule {
    * @param n A natural number.
    * @return p extended with weakenings such that formula occurs at least n times in the succedent of the end sequent.
    */
-  def apply( p: LKProof, formula: HOLFormula, n: Int ): LKProof = withSequentConnector( p, formula, n )._1
+  def apply( p: LKProof, formula: Formula, n: Int ): LKProof = withSequentConnector( p, formula, n )._1
 
   /**
    *
@@ -848,7 +848,7 @@ object WeakeningRightMacroRule {
    * @param n A natural number.
    * @return p extended with weakenings such that formula occurs at least n times in the succedent of the end sequent and an SequentConnector.
    */
-  def withSequentConnector( p: LKProof, formula: HOLFormula, n: Int ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, formula: Formula, n: Int ): ( LKProof, SequentConnector ) = {
     val nCurrent = p.endSequent.succedent.count( _ == formula )
 
     WeakeningRightMacroRule.withSequentConnector( p, Seq.fill( n - nCurrent )( formula ) )
@@ -868,7 +868,7 @@ object WeakeningMacroRule extends ConvenienceConstructor( "WeakeningMacroRule" )
    * @param sucList A list of formulas.
    * @return A new proof whose antecedent and succedent contain new occurrences of the formulas in antList and sucList, respectively.
    */
-  def apply( p: LKProof, antList: Seq[HOLFormula], sucList: Seq[HOLFormula] ): LKProof = withSequentConnector( p, antList, sucList )._1
+  def apply( p: LKProof, antList: Seq[Formula], sucList: Seq[Formula] ): LKProof = withSequentConnector( p, antList, sucList )._1
 
   /**
    *
@@ -877,7 +877,7 @@ object WeakeningMacroRule extends ConvenienceConstructor( "WeakeningMacroRule" )
    * @param sucList A list of formulas.
    * @return A new proof whose antecedent and succedent contain new occurrences of the formulas in antList and sucList, respectively, and an SequentConnector.
    */
-  def withSequentConnector( p: LKProof, antList: Seq[HOLFormula], sucList: Seq[HOLFormula] ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, antList: Seq[Formula], sucList: Seq[Formula] ): ( LKProof, SequentConnector ) = {
     val ( subProof, upperConnector ) = WeakeningLeftMacroRule.withSequentConnector( p, antList )
     val ( proof, lowerConnector ) = WeakeningRightMacroRule.withSequentConnector( subProof, sucList )
     ( proof, lowerConnector * upperConnector )
@@ -920,12 +920,12 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
   /**
    *
    * @param p An LKProof.
-   * @param antMap Map of type HOLFormula => Int that expresses “f should occur n times in the antecedent”.
-   * @param sucMap Map of type HOLFormula => Int that expresses “f should occur n times in the succedent”.
+   * @param antMap Map of type Formula => Int that expresses “f should occur n times in the antecedent”.
+   * @param sucMap Map of type Formula => Int that expresses “f should occur n times in the succedent”.
    * @param strict If true: requires that for f -> n in antMap or sucMap, if f occurs in the root of s1, then n > 0.
    * @return
    */
-  def apply( p: LKProof, antMap: Map[HOLFormula, Int], sucMap: Map[HOLFormula, Int], strict: Boolean ): LKProof = {
+  def apply( p: LKProof, antMap: Map[Formula, Int], sucMap: Map[Formula, Int], strict: Boolean ): LKProof = {
     val currentAnt = p.endSequent.antecedent
     val currentSuc = p.endSequent.succedent
 
@@ -961,12 +961,12 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
   /**
    *
    * @param p An LKProof.
-   * @param antMap Map of type HOLFormula => Int that expresses “f should occur n times in the antecedent”.
-   * @param sucMap Map of type HOLFormula => Int that expresses “f should occur n times in the succedent”.
+   * @param antMap Map of type Formula => Int that expresses “f should occur n times in the antecedent”.
+   * @param sucMap Map of type Formula => Int that expresses “f should occur n times in the succedent”.
    * @param strict If true: requires that for f -> n in antMap or sucMap, if f occurs in the root of s1, then n > 0.
    * @return A proof and an SequentConnector connecting its end sequent to the end sequent of p.
    */
-  def withSequentConnector( p: LKProof, antMap: Map[HOLFormula, Int], sucMap: Map[HOLFormula, Int], strict: Boolean ): ( LKProof, SequentConnector ) = {
+  def withSequentConnector( p: LKProof, antMap: Map[Formula, Int], sucMap: Map[Formula, Int], strict: Boolean ): ( LKProof, SequentConnector ) = {
     val currentAnt = p.endSequent.antecedent
     val currentSuc = p.endSequent.succedent
 
@@ -1139,7 +1139,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    mainFormula:   HOLFormula
+    mainFormula:   Formula
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1252,7 +1252,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    mainFormula:   HOLFormula
+    mainFormula:   Formula
   ): LKProof = {
 
     val eqFormula = eq match {
@@ -1276,11 +1276,11 @@ object FOTheoryMacroRule {
     import at.logic.gapt.proofs.resolution._
     val axioms = ctx.axioms.toSet
     val nameGen = rename.awayFrom( containedNames( axioms + sequent ) )
-    val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.exptype ) )
+    val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.ty ) )
     val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
     prover.getResolutionProof( cnf.map( Input ) ) map { p =>
       var lk = ResolutionToLKProof( p, {
-        case Input( seq ) if axioms.contains( seq ) => TheoryAxiom( seq.map( _.asInstanceOf[HOLAtom] ) )
+        case Input( seq ) if axioms.contains( seq ) => TheoryAxiom( seq.map( _.asInstanceOf[Atom] ) )
         case Input( unit ) if unit.size == 1        => LogicalAxiom( unit.elements.head )
       } )
       lk = TermReplacement.hygienic( lk, grounding.map( _.swap ).toMap )

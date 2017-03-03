@@ -80,12 +80,12 @@ class LeanExporter {
     case a -> b                => s"(${export( a )} -> ${export( b )})"
   }
 
-  def exportBinder( sym: String, x: Var, sub: LambdaExpression ): String = {
+  def exportBinder( sym: String, x: Var, sub: Expr ): String = {
     val x_ = nameMap.getLeanName( x.name, VAR )
-    s"($sym $x_ : ${export( x.exptype )}, ${export( sub )})"
+    s"($sym $x_ : ${export( x.ty )}, ${export( sub )})"
   }
 
-  def export( expr: LambdaExpression ): String = expr match {
+  def export( expr: Expr ): String = expr match {
     case All( x, sub ) => exportBinder( "∀", x, sub )
     case Ex( x, sub )  => exportBinder( "∃", x, sub )
     case Eq( x, y )    => s"(${export( x )} = ${export( y )})"
@@ -97,7 +97,7 @@ class LeanExporter {
     case Var( n, _ )   => nameMap.getLeanName( n, VAR )
   }
 
-  def mkSequentFormula( sequent: HOLSequent ): HOLFormula = sequent match {
+  def mkSequentFormula( sequent: HOLSequent ): Formula = sequent match {
     case Sequent( Seq(), Seq() )    => Bottom()
     case Sequent( Seq(), Seq( y ) ) => y
     case Sequent( Seq(), y +: ys ) =>
@@ -151,7 +151,7 @@ class LeanExporter {
     val out = new StringBuilder
 
     val fvParams = freeVariablesLK( p ).toSeq.sortBy( _.name )
-      .map( v => s" (${nameMap.getLeanName( v.name, VAR )} : ${export( v.exptype )})" ).mkString
+      .map( v => s" (${nameMap.getLeanName( v.name, VAR )} : ${export( v.ty )})" ).mkString
 
     out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )}$fvParams : ${export( p.endSequent )} :=\n"
     out ++= "begin\n"

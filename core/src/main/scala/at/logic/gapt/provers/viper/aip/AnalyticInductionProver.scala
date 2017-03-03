@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip
 
-import at.logic.gapt.expr.{ HOLFormula, Var }
+import at.logic.gapt.expr.{ Formula, Var }
 import at.logic.gapt.formats.tip.TipProblem
 import at.logic.gapt.proofs.gaptic.{ escargot => escargotTactic, _ }
 import at.logic.gapt.proofs.lk.{ CutRule, LKProof }
@@ -26,7 +26,7 @@ object AnalyticInductionProver {
    *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
    *         throws an exception.
    */
-  def singleInduction( sequent: Sequent[( String, HOLFormula )], variable: Var )( implicit ctx: Context ): LKProof = {
+  def singleInduction( sequent: Sequent[( String, Formula )], variable: Var )( implicit ctx: Context ): LKProof = {
     var state = ProofState( sequent )
     state += allR( variable );
     state += induction( on = variable )
@@ -49,7 +49,7 @@ object AnalyticInductionProver {
 
 class AnalyticInductionProver( options: ProverOptions ) {
 
-  private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, HOLFormula )] ) =
+  private implicit def labeledSequentToHOLSequent( sequent: Sequent[( String, Formula )] ) =
     sequent map { case ( _, f ) => f }
 
   /**
@@ -60,7 +60,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return true if the sequent is provable with analytic induction, otherwise either false or the method does
    *         not terminate.
    */
-  def isValid( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ) =
+  def isValid( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
     options.prover.isValid( inductiveSequent( sequent ) )
 
   /**
@@ -72,7 +72,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         not terminate.
    */
   def lkProof(
-    sequent: Sequent[( String, HOLFormula )]
+    sequent: Sequent[( String, Formula )]
   )( implicit ctx: Context ) = options.prover.lkProof( inductiveSequent( sequent ) )
 
   /**
@@ -93,7 +93,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return An inductive proof the sequent is provable with the prover's induction schemes, otherwise None or
    *         the method does not terminate.
    */
-  def inductiveLKProof( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): Option[LKProof] = {
+  def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): Option[LKProof] = {
     val axioms = validate( options.axiomFactory( sequent ) )
     val prover = options.prover
     for {
@@ -122,7 +122,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A resolution proof if the sequent is provable with analytic induction, otherwise either None or the
    *         method does not terminate.
    */
-  def resolutionProof( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ) =
+  def resolutionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
     options.prover.resolutionProof( inductiveSequent( sequent ) )
 
   /**
@@ -133,7 +133,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return An expansion proof if the sequent is provable with analytic induction, otherwise either None or the
    *         method does not terminate.
    */
-  def expansionProof( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ) =
+  def expansionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
     options.prover.expansionProof( inductiveSequent( sequent ) )
 
   /**
@@ -156,7 +156,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         quantified variables.
    */
   private def inductiveSequent(
-    sequent: Sequent[( String, HOLFormula )]
+    sequent: Sequent[( String, Formula )]
   )( implicit ctx: Context ): HOLSequent =
     validate( prepareSequent( sequent ) )
 
@@ -170,7 +170,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         Otherwise a string describing the error is returned.
    */
   private def prepareSequent(
-    sequent: Sequent[( String, HOLFormula )]
+    sequent: Sequent[( String, Formula )]
   )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       axioms <- options.axiomFactory( sequent )

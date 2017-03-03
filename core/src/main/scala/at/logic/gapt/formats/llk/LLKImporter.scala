@@ -22,19 +22,19 @@ object LLKFormatter {
     s.map.map( x => f( x._1 ) + " -> " + f( x._2 ) ).mkString( "{", ",", "}" )
   }
 
-  def f( e: LambdaExpression ): String = " " + toLLKString( e ) + " "
+  def f( e: Expr ): String = " " + toLLKString( e ) + " "
 }
 
 /**
  * This implements the second parsing pass, converting hlk Tokens to an LK Proof. HybridLatexParser inherits from
  * TokenToLKConverter to have a common interface, but the code here is only dependent on the AST. It uses the ASTtoHOL
- * object to create LambdaExpressions from hol ASTs.
+ * object to create Exprs from hol ASTs.
  */
 trait TokenToLKConverter extends Logger {
   import LLKFormatter._
 
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */
-  def createNaming( r: List[Token] ): ( String => LambdaExpression ) = {
+  def createNaming( r: List[Token] ): ( String => Expr ) = {
     val ctypes: List[( String, Ty )] = r.flatMap( _ match {
       case TToken( "CONST", names, t ) => names map ( ( _, t ) )
       case _                           => Nil
@@ -102,7 +102,7 @@ trait TokenToLKConverter extends Logger {
 
     //println(definitions)
     //seperate inferences for the different (sub)proofs
-    val ( last, rm ) = rtokens.foldLeft( List[RToken](), Map[HOLFormula, List[RToken]]() )( ( current, token ) => {
+    val ( last, rm ) = rtokens.foldLeft( List[RToken](), Map[Formula, List[RToken]]() )( ( current, token ) => {
       token match {
         case RToken( "CONTINUEWITH", Some( name ), a, s, _ ) =>
           //put proof under name into map, continue with empty rulelist
@@ -127,10 +127,10 @@ trait TokenToLKConverter extends Logger {
 
     //dependncy analysis
     val dependecies = getDependecyMap( naming, rm )
-    val ordering: List[HOLFormula] = getOrdering( dependecies )
+    val ordering: List[Formula] = getOrdering( dependecies )
 
     //proof completion in dependency order
-    val proofs = ordering.foldLeft( Map[HOLFormula, LKProof]() )( ( proofs_done, f ) => {
+    val proofs = ordering.foldLeft( Map[Formula, LKProof]() )( ( proofs_done, f ) => {
       //println("Processing (sub)proof "+this.f(f))
       val f_proof: LKProof = completeProof( f, proofs_done, naming, rm( f ), axioms, llk_definitions )
       proofs_done + ( ( f, f_proof ) )
@@ -142,12 +142,12 @@ trait TokenToLKConverter extends Logger {
   *  uses the proofs map to look up subproofs referenced by CONTINUEWITH and INSTLEMMA. This means, the calls
   *  to completeProof have to be ordered s.t. dependent proofs are already contained in the map.*/
   def completeProof(
-    proofname:   HOLFormula,
-    proofs:      Map[HOLFormula, LKProof],
-    naming:      String => LambdaExpression,
+    proofname:   Formula,
+    proofs:      Map[Formula, LKProof],
+    naming:      String => Expr,
     rules:       List[RToken],
-    axioms:      Map[HOLFormula, HOLFormula],
-    definitions: Map[LambdaExpression, LambdaExpression]
+    axioms:      Map[Formula, Formula],
+    definitions: Map[Expr, Expr]
   ): LKProof = {
     var proofstack: List[LKProof] = List[LKProof]()
     for ( rt @ RToken( name, auxterm, antecedent, succedent, sub ) <- rules ) {
@@ -355,7 +355,7 @@ trait TokenToLKConverter extends Logger {
   }
 
   /* Takes care of weak quantifiers. */
-  def handleWeakQuantifier( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleWeakQuantifier( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof :: rest = current_proof
 
@@ -367,13 +367,13 @@ trait TokenToLKConverter extends Logger {
       case "EXR"  => ( mainsequent.succedent.head, auxsequent.succedent.head )
     }
 
-    def inferTerm( x: Var, holf: HOLFormula ): LambdaExpression = {
+    def inferTerm( x: Var, holf: Formula ): Expr = {
       syntacticMatching( holf, aux ) match {
         case Some( sub ) =>
-          val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
+          val s: Expr = sub.map.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
           if ( auxterm.nonEmpty ) {
             //try to use user provided term
-            val t: LambdaExpression = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
+            val t: Expr = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
             if ( s == t ) {
               //              println("Remark: automatically inferred the auxiliaray term " + f(t) + " in formula "+f(f))
               t
@@ -408,7 +408,7 @@ trait TokenToLKConverter extends Logger {
     }
   }
 
-  def handleStrongQuantifier( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleStrongQuantifier( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof = current_proof.head
     val ( mainsequent, auxsequent, _ ) = filterContext( oldproof.endSequent, fs )
@@ -418,13 +418,13 @@ trait TokenToLKConverter extends Logger {
       case "ALLR" => ( mainsequent.succedent.head, auxsequent.succedent.head )
     }
 
-    def inferTerm( x: Var, f: HOLFormula ): LambdaExpression = {
+    def inferTerm( x: Var, f: Formula ): Expr = {
       syntacticMatching( f, aux ) match {
         case Some( sub ) =>
-          val s: LambdaExpression = sub.map.getOrElse( x, x ) //in case the term was projected away we try the identity function
+          val s: Expr = sub.map.getOrElse( x, x ) //in case the term was projected away we try the identity function
           if ( auxterm.nonEmpty ) {
             //try to use user provided term
-            val t: LambdaExpression = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
+            val t: Expr = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
             if ( s == t ) {
               //              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
               require( t.isInstanceOf[Var], "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
@@ -464,7 +464,7 @@ trait TokenToLKConverter extends Logger {
     }
   }
 
-  def handleBinaryLogicalOperator( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleBinaryLogicalOperator( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
@@ -516,7 +516,7 @@ trait TokenToLKConverter extends Logger {
     }
   }
 
-  def handleUnaryLogicalOperator( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleUnaryLogicalOperator( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val top :: stack = current_proof
 
@@ -576,7 +576,7 @@ trait TokenToLKConverter extends Logger {
     }
   }
 
-  def handleNegation( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleNegation( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val top :: stack = current_proof
     val ( main, aux, context ) = filterContext( top.endSequent, fs )
@@ -605,14 +605,14 @@ trait TokenToLKConverter extends Logger {
   }
 
   //TODO: refactor, a lot of code is already done in the rule constructors now
-  def handleEquality( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleEquality( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
     //In the case the main formula is the same as an auxiliariy formula, filterContext cannot infer the main formula
     //we doe this now by hand
-    def eqfilter( x: HOLFormula ): Boolean = x match { case Eq( s, t ) => true; case _ => false }
-    def canReplace( s: LambdaExpression, t: LambdaExpression, exp1: LambdaExpression, exp2: LambdaExpression ): Boolean = {
+    def eqfilter( x: Formula ): Boolean = x match { case Eq( s, t ) => true; case _ => false }
+    def canReplace( s: Expr, t: Expr, exp1: Expr, exp2: Expr ): Boolean = {
       ( checkReplacement( s, t, exp1, exp2 ), checkReplacement( t, s, exp1, exp2 ) ) match {
         case ( EqualModuloEquality( _ ), _ ) => true
         case ( _, EqualModuloEquality( _ ) ) => true
@@ -749,7 +749,7 @@ trait TokenToLKConverter extends Logger {
 
   //TODO: integrate which definitions were used into the proof
   def handleDefinitions( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST],
-                         naming: ( String ) => LambdaExpression, rt: RToken, llk_definitions: Map[LambdaExpression, LambdaExpression] ): List[LKProof] = {
+                         naming: ( String ) => Expr, rt: RToken, llk_definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parent :: stack = current_proof
     val ( mainsequent, auxsequent, context ) = filterContext( parent.endSequent, fs )
@@ -788,14 +788,14 @@ trait TokenToLKConverter extends Logger {
   }
 
   /*   =================== STRUCTURAL RULES =============================    */
-  def handleContraction( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleContraction( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parentproof :: stack = current_proof
     val inf = ContractionMacroRule( parentproof, fs, strict = false )
     inf :: stack
   }
 
-  def handleWeakening( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleWeakening( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parentproof :: stack = current_proof
     //val inf = weaken(parentproof, fs)
@@ -803,7 +803,7 @@ trait TokenToLKConverter extends Logger {
     inf :: stack
   }
 
-  def handleCut( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+  def handleCut( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
@@ -818,9 +818,9 @@ trait TokenToLKConverter extends Logger {
     inf :: stack
   }
 
-  def handleLink( proofs: Map[HOLFormula, LKProof], current_proof: List[LKProof],
+  def handleLink( proofs: Map[Formula, LKProof], current_proof: List[LKProof],
                   ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST],
-                  naming: ( String ) => LambdaExpression, rt: RToken ): List[LKProof] = {
+                  naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( auxterm.isDefined, "Can not refer to a subproof(CONTINUEFROM): Need a proof name to link to!" )
     val link = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
     val ps: List[LKProof] = proofs.toList.flatMap( x => {
@@ -838,10 +838,10 @@ trait TokenToLKConverter extends Logger {
 
   }
 
-  val axformula = HOLAtom( Const( "AX", To ), Nil )
+  val axformula = Atom( Const( "AX", To ), Nil )
 
-  def createSubstitution( naming: String => LambdaExpression, astlist: List[( ast.Var, LambdaAST )] ): Substitution = {
-    val terms: List[( Var, LambdaExpression )] = astlist.foldLeft( List[( Var, LambdaExpression )]() )( ( list, p ) => {
+  def createSubstitution( naming: String => Expr, astlist: List[( ast.Var, LambdaAST )] ): Substitution = {
+    val terms: List[( Var, Expr )] = astlist.foldLeft( List[( Var, Expr )]() )( ( list, p ) => {
       ( LLKFormulaParser.ASTtoHOL( naming, p._1 ).asInstanceOf[Var], LLKFormulaParser.ASTtoHOL( naming, p._2 ) ) :: list
     } )
     Substitution( terms.reverse )
@@ -849,12 +849,12 @@ trait TokenToLKConverter extends Logger {
 
   /* =============== Macro Rules ============================ */
 
-  val axioms_prove_sequent = HOLSequent( List( HOLAtom( Const( "AX", To ), Nil ) ), Nil )
-  def normalize( exp: LambdaExpression ) = betaNormalize( exp )
+  val axioms_prove_sequent = HOLSequent( List( Atom( Const( "AX", To ), Nil ) ), Nil )
+  def normalize( exp: Expr ) = betaNormalize( exp )
 
   def handleEQAxiom( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST],
-                     subterm: List[( ast.Var, LambdaAST )], naming: ( String ) => LambdaExpression,
-                     rt: RToken, axioms: Map[HOLFormula, HOLFormula], definitions: Map[LambdaExpression, LambdaExpression] ): List[LKProof] = {
+                     subterm: List[( ast.Var, LambdaAST )], naming: ( String ) => Expr,
+                     rt: RToken, axioms: Map[Formula, Formula], definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof :: rest = current_proof
     require( auxterm.isDefined, "Error creating an equational axiom rule: Need instantiation annotation!" )
@@ -928,7 +928,7 @@ trait TokenToLKConverter extends Logger {
   }
 
   def handleInstAxiom( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], subterm: List[( ast.Var, LambdaAST )],
-                       naming: ( String ) => LambdaExpression, rt: RToken, axioms: Map[HOLFormula, HOLFormula], definitions: Map[LambdaExpression, LambdaExpression] ): List[LKProof] = {
+                       naming: ( String ) => Expr, rt: RToken, axioms: Map[Formula, Formula], definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof :: rest = current_proof
     //require(auxterm.isDefined, "Error creating an stantiate axiom rule: Need instantiation annotation!")
@@ -1011,7 +1011,7 @@ trait TokenToLKConverter extends Logger {
   }
 
   /* Extracts a map of dependencies between subproofs from a mapping of proof names to the token lists representing them. */
-  def getDependecyMap( naming: String => LambdaExpression, pm: Map[HOLFormula, List[RToken]] ): Map[HOLFormula, List[HOLFormula]] = {
+  def getDependecyMap( naming: String => Expr, pm: Map[Formula, List[RToken]] ): Map[Formula, List[Formula]] = {
     val proofnames = pm.keySet.toList
     // only keep continuefrom tokens in the lists, map to the formulas in
     // the proofnames against which the dependencies matches
@@ -1076,11 +1076,11 @@ trait TokenToLKConverter extends Logger {
 
   /* creates a map from axiom names to the corresponding fsequents from a list of axiom tokens,
    * supposed to be passed on to EQAXIOM and INSTAXIOM rules */
-  def createAxioms( naming: String => LambdaExpression, l: List[AToken] ): Map[HOLFormula, HOLFormula] = {
-    l.filter( _.rule == "AXIOMDEC" ).foldLeft( Map[HOLFormula, HOLFormula]() )( ( map, token ) => {
+  def createAxioms( naming: String => Expr, l: List[AToken] ): Map[Formula, Formula] = {
+    l.filter( _.rule == "AXIOMDEC" ).foldLeft( Map[Formula, Formula]() )( ( map, token ) => {
       val AToken( rulename, aname, antecedent, succedent ) = token
       require( aname.nonEmpty, "Axiom declaration " + token + " needs a name!" )
-      val aformula: HOLFormula = c( LLKFormulaParser.ASTtoHOL( naming, aname.get ) )
+      val aformula: Formula = c( LLKFormulaParser.ASTtoHOL( naming, aname.get ) )
       val ant = antecedent.map( x => c( LLKFormulaParser.ASTtoHOL( naming, x ) ) )
       val suc = succedent.map( x => c( LLKFormulaParser.ASTtoHOL( naming, x ) ) )
       val fs = HOLSequent( ant, suc )
@@ -1090,20 +1090,20 @@ trait TokenToLKConverter extends Logger {
   }
 
   /* creates a binary conjunction tree from a list of formulas */
-  def createConjunctions( l: List[HOLFormula] ): HOLFormula = createConjunctions_( l ) match {
+  def createConjunctions( l: List[Formula] ): Formula = createConjunctions_( l ) match {
     case List( conj )   => conj
     case l @ ( _ :: _ ) => createConjunctions( l )
     case Nil            => throw new HybridLatexParserException( "Could not create conjunction of empty list!" )
   }
   /* for a list of formulas of length n return a list of formulas And(i_1.i_2), etc of size n/2 */
-  def createConjunctions_( l: List[HOLFormula] ): List[HOLFormula] = l match {
+  def createConjunctions_( l: List[Formula] ): List[Formula] = l match {
     case x :: y :: rest => And( x, y ) :: createConjunctions_( rest )
     case _              => l
   }
 
   /* Checks if what is contained as formula inside a nesting of neg, and, or, imp. Used for a lookup in an
     axiom conjunction */
-  private def formula_contains_atom( f: HOLFormula, what: HOLFormula ): Boolean = f match {
+  private def formula_contains_atom( f: Formula, what: Formula ): Boolean = f match {
     case Neg( x )    => formula_contains_atom( x, what )
     case And( x, y ) => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
     case Imp( x, y ) => formula_contains_atom( x, what ) || formula_contains_atom( y, what )
@@ -1111,7 +1111,7 @@ trait TokenToLKConverter extends Logger {
     case _           => f == what
   }
 
-  def llkDefinitionToLKDefinition( exp: LambdaExpression, to: LambdaExpression ) = exp match {
+  def llkDefinitionToLKDefinition( exp: Expr, to: Expr ) = exp match {
     case Apps( c @ Const( _, _ ), args ) if args.forall( { case Var( _, _ ) => true; case _ => false } ) =>
       val vs = args.map( { case v @ Var( _, _ ) => v } )
       Definition( c, Abs.Block( vs, to ) )
@@ -1120,8 +1120,8 @@ trait TokenToLKConverter extends Logger {
   }
 
   /* Creates the definition map from a list of ATokens. Also adds a defintion for all the axioms. */
-  def createDefinitions( naming: String => LambdaExpression, l: List[AToken], axioms: Map[HOLFormula, HOLFormula] ): Map[LambdaExpression, LambdaExpression] = {
-    val preddefs = l.filter( _.rule == "PREDDEF" ).foldLeft( Map[LambdaExpression, LambdaExpression]() )( ( map, token ) => {
+  def createDefinitions( naming: String => Expr, l: List[AToken], axioms: Map[Formula, Formula] ): Map[Expr, Expr] = {
+    val preddefs = l.filter( _.rule == "PREDDEF" ).foldLeft( Map[Expr, Expr]() )( ( map, token ) => {
       val ( left, right ) = token match {
         case AToken( _, _, List( left ), List( right ) ) => ( left, right )
         case _ => throw new HybridLatexParserException(
@@ -1133,7 +1133,7 @@ trait TokenToLKConverter extends Logger {
       val rformula = c( LLKFormulaParser.ASTtoHOL( naming, right ) )
 
       lformula match {
-        case HOLAtom( _, _ ) =>
+        case Atom( _, _ ) =>
           require(
             freeVariables( lformula ) == freeVariables( rformula ),
             "Definition formulas " + lformula + " and " + rformula + " do not have the same set of free variables!" +
@@ -1159,8 +1159,8 @@ trait TokenToLKConverter extends Logger {
       ( lexpression, rexpression ) match {
         case ( f1 @ HOLFunction( _, _ ), f2 @ HOLFunction( _, _ ) ) =>
           require(
-            f1.exptype == f2.exptype,
-            "The types of defined formulas and definition must match, but are: " + f1.exptype + " and " + f2.exptype
+            f1.ty == f2.ty,
+            "The types of defined formulas and definition must match, but are: " + f1.ty + " and " + f2.ty
           )
           require(
             freeVariables( lexpression ) == freeVariables( rexpression ),
@@ -1192,24 +1192,24 @@ trait TokenToLKConverter extends Logger {
 
   /* removes univarsal quantifiers from f and returns the list of quantified variables together
    * with the stripped formula */
-  def stripUniversalQuantifiers( f: HOLFormula ): ( List[Var], HOLFormula ) = stripUniversalQuantifiers( f, Nil )
+  def stripUniversalQuantifiers( f: Formula ): ( List[Var], Formula ) = stripUniversalQuantifiers( f, Nil )
   @tailrec
-  private def stripUniversalQuantifiers( f: HOLFormula, acc: List[Var] ): ( List[Var], HOLFormula ) = f match {
+  private def stripUniversalQuantifiers( f: Formula, acc: List[Var] ): ( List[Var], Formula ) = f match {
     case All( x, f_ ) => stripUniversalQuantifiers( f_, x.asInstanceOf[Var] :: acc )
     case _            => ( acc.reverse, f )
   }
 
-  /* Checked cast of LambdaExpression to Formula which gives a nicer error message */
-  private def c( e: LambdaExpression ): HOLFormula =
+  /* Checked cast of Expr to Formula which gives a nicer error message */
+  private def c( e: Expr ): Formula =
     e match {
-      case formula: HOLFormula => formula
-      case _                   => throw new Exception( "Could not convert " + e + " to a HOL Formula!" )
+      case formula: Formula => formula
+      case _                => throw new Exception( "Could not convert " + e + " to a HOL Formula!" )
     }
 
-  def getAxiomLookupProof( name: HOLFormula, axiom: HOLFormula, instance: HOLFormula,
-                           axiomconj: HOLFormula, axiomproof: LKProof, sub: Substitution, definitions: List[Definition] ): ( HOLFormula, LKProof ) = {
+  def getAxiomLookupProof( name: Formula, axiom: Formula, instance: Formula,
+                           axiomconj: Formula, axiomproof: LKProof, sub: Substitution, definitions: List[Definition] ): ( Formula, LKProof ) = {
     axiomconj match {
-      case HOLAtom( c @ Const( n, To ), List() ) =>
+      case Atom( c @ Const( n, To ), List() ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
         val d = definitions.find( _.what == c ).getOrElse(
           throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" )
@@ -1231,16 +1231,16 @@ trait TokenToLKConverter extends Logger {
   }
 
   //TODO:move this code to an appropriate place
-  def proveInstance( axiom: HOLFormula, instance: HOLFormula, sub: Substitution ): LKProof = {
+  def proveInstance( axiom: Formula, instance: Formula, sub: Substitution ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, Axiom( List( instance ), List( instance ) ) )._2
   }
 
-  def proveInstanceFrom( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, uproof: LKProof ): LKProof = {
+  def proveInstanceFrom( axiom: Formula, instance: Formula, sub: Substitution, uproof: LKProof ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, uproof )._2
   }
-  def proveInstance_( axiom: HOLFormula, instance: HOLFormula, sub: Substitution, axiomproof: LKProof ): ( HOLFormula, LKProof ) = {
+  def proveInstance_( axiom: Formula, instance: Formula, sub: Substitution, axiomproof: LKProof ): ( Formula, LKProof ) = {
     //    println("Prove instance with sub "+f(sub))
     axiom match {
       case All( v, s ) =>

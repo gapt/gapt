@@ -42,9 +42,9 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     val p = Const( "P", Ti -> ( Ti -> To ) )
     val y0 = Var( "Y", Ti -> To )
 
-    val s = c2.antecedent( 0 ) match { case HOLAtom( _, List( s, _ ) ) => s }
+    val s = c2.antecedent( 0 ) match { case Atom( _, List( s, _ ) ) => s }
 
-    val sub1 = Substitution( y0, Abs( y, HOLAtom( p, List( s, y ) ) ) )
+    val sub1 = Substitution( y0, Abs( y, Atom( p, List( s, y ) ) ) )
     val sub2 = Substitution( x0, s )
 
     val r1 = Input( c1 )
@@ -150,7 +150,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
     "a simple intuitionistic proof" in {
       if ( !Prover9.isInstalled ) skipped( "No Prover9 installed!" )
       object CE extends AnalysisWithCeresOmega {
-        override def proofdb() = ExtendedProofDatabase( Map[HOLFormula, LKProof]( hof"THEPROOF" -> fol2.proof ), Map(), Map() )
+        override def proofdb() = ExtendedProofDatabase( Map[Formula, LKProof]( hof"THEPROOF" -> fol2.proof ), Map(), Map() )
         override def root_proof = "THEPROOF";
         override def skip_strategy() = CERES.skipNothing
       }

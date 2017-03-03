@@ -40,9 +40,9 @@ trait Struct[Data] {
    */
   def getData(): List[Data]
 
-  def toFormula: HOLFormula
+  def toFormula: Formula
 
-  def label: LambdaExpression
+  def label: Expr
 
   def children: Seq[Struct[Data]]
 }
@@ -134,7 +134,7 @@ case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
   def label = Const( "~", To -> To )
   def children = Seq( sub )
 }
-case class A[Data]( fo: HOLFormula, data: List[Data] ) extends Struct[Data] { // Atomic Struct
+case class A[Data]( fo: Formula, data: List[Data] ) extends Struct[Data] { // Atomic Struct
   override def toString(): String = fo.toString
   override def formula_equal( s: Struct[Data] ) = s match {
     case A( x, _ ) => fo syntaxEquals ( x )
@@ -152,7 +152,7 @@ case class A[Data]( fo: HOLFormula, data: List[Data] ) extends Struct[Data] { //
 }
 
 object A {
-  def apply[Data]( fo: HOLFormula ): Struct[Data] = A[Data]( fo, Nil )
+  def apply[Data]( fo: Formula ): Struct[Data] = A[Data]( fo, Nil )
 }
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {

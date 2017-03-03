@@ -17,7 +17,7 @@ import scala.util.{ Failure, Success }
 object SPASS extends SPASS
 class SPASS extends ResolutionProver with ExternalProgram {
 
-  def expr2dfg( e: LambdaExpression ): String = e match {
+  def expr2dfg( e: Expr ): String = e match {
     case Bottom()             => "false"
     case Or( a, b )           => s"or(${expr2dfg( a )}, ${expr2dfg( b )})"
     case Neg( a )             => s"not(${expr2dfg( a )})"

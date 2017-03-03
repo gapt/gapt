@@ -5,7 +5,7 @@ package at.logic.gapt.expr
  *
  * The logical constans are the propositional connectives, the quantifiers, bottom, top, and the equality constant.
  * A logical constant is different from an expression consisting of only this logical constant, as the expression
- * is an object of type LambdaExpression and needs to have a definite type.
+ * is an object of type Expr and needs to have a definite type.
  *
  * A logical constant consists of a name (e.g. "∀"), and a set of possible types, (e.g. (Ti->To)->To,
  * ((Ti->Ti)->To)->To, ...).  Subclasses need to implement the function matchType, which matches these possible types.
@@ -18,7 +18,7 @@ abstract class LogicalC( val name: String ) {
   protected def matchType( exptype: Ty ): MatchResult
   protected def noMatch: MatchResult
 
-  def unapply( exp: LambdaExpression ): MatchResult = exp match {
+  def unapply( exp: Expr ): MatchResult = exp match {
     case Const( `name`, exptype ) => matchType( exptype )
     case _                        => noMatch
   }

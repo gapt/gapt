@@ -10,8 +10,8 @@ case class Pi2SeHs(
     val reducedRepresentation:         Sequent[FOLFormula], // F[x\U_1] |- G[y\U_2]
     val universalEigenvariable:        FOLVar, // alpha
     val existentialEigenvariables:     List[FOLVar], // beta_1,...,beta_m
-    val substitutionsForAlpha:         List[LambdaExpression], // r_1,...,r_m
-    val substitutionsForBetaWithAlpha: List[LambdaExpression] // t_1(alpha),...,t_p(alpha)
+    val substitutionsForAlpha:         List[Expr], // r_1,...,r_m
+    val substitutionsForBetaWithAlpha: List[Expr] // t_1(alpha),...,t_p(alpha)
 ) {
 
   require( existentialEigenvariables.length == substitutionsForAlpha.length )
@@ -23,14 +23,14 @@ case class Pi2SeHs(
 
   // (alpha,r_1),...,(alpha,r_m)
   //////////////////////////////
-  val substitutionPairsAlpha: List[( LambdaExpression, LambdaExpression )] = {
+  val substitutionPairsAlpha: List[( Expr, Expr )] = {
 
     /*
     substitutionsForAlpha().map( instance => ( universalEigenvariable.asInstanceOf, instance ) )
     */
-    val substitutionPairsAlpha = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
+    val substitutionPairsAlpha = scala.collection.mutable.Set[( Expr, Expr )]()
     substitutionsForAlpha.foreach( instance => {
-      val buffer: ( LambdaExpression, LambdaExpression ) = ( universalEigenvariable, instance )
+      val buffer: ( Expr, Expr ) = ( universalEigenvariable, instance )
       substitutionPairsAlpha += buffer
     } )
     substitutionPairsAlpha.toList
@@ -38,14 +38,14 @@ case class Pi2SeHs(
 
   // (beta_i,t_1(alpha)),...,(beta_i,t_p(alpha))
   //////////////////////////////////////////////
-  def substitutionPairsBetaI( index: Int ): List[( LambdaExpression, LambdaExpression )] = {
+  def substitutionPairsBetaI( index: Int ): List[( Expr, Expr )] = {
 
     /*
     substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1).asInstanceOf, instanceB ) )
     */
-    val substitutionPairsBetaI = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
+    val substitutionPairsBetaI = scala.collection.mutable.Set[( Expr, Expr )]()
     substitutionsForBetaWithAlpha.foreach( instanceB => {
-      val buffer: ( LambdaExpression, LambdaExpression ) = ( existentialEigenvariables( index - 1 ), instanceB )
+      val buffer: ( Expr, Expr ) = ( existentialEigenvariables( index - 1 ), instanceB )
       substitutionPairsBetaI += buffer
     } )
     substitutionPairsBetaI.toList
@@ -55,14 +55,14 @@ case class Pi2SeHs(
   //                     ...                    ,
   // (beta_m,t_1(alpha)),...,(beta_m,t_p(alpha))
   ///////////////////////////////////////////////
-  val substitutionPairsBeta: List[( LambdaExpression, LambdaExpression )] = {
+  val substitutionPairsBeta: List[( Expr, Expr )] = {
 
     (
       for ( index <- 1 to multiplicityOfAlpha )
         yield substitutionPairsBetaI( multiplicityOfAlpha - index + 1 )
     ).toList.flatten
     /*
-    val substitutionPairsBeta = scala.collection.mutable.Set[( LambdaExpression, LambdaExpression )]()
+    val substitutionPairsBeta = scala.collection.mutable.Set[( Expr, Expr )]()
     for ( index <- 1 to multiplicityOfAlpha ) {
       substitutionPairsBeta ++= substitutionPairsBetaI( multiplicityOfAlpha - index + 1 )
     }
@@ -70,9 +70,9 @@ case class Pi2SeHs(
     */
   }
 
-  val productionRulesXS: List[( LambdaExpression, LambdaExpression )] = substitutionPairsAlpha ++ substitutionPairsAlpha.map( _.swap )
+  val productionRulesXS: List[( Expr, Expr )] = substitutionPairsAlpha ++ substitutionPairsAlpha.map( _.swap )
 
-  val productionRulesYS: List[( LambdaExpression, LambdaExpression )] = substitutionPairsBeta ++ substitutionPairsBeta.map( _.swap )
+  val productionRulesYS: List[( Expr, Expr )] = substitutionPairsBeta ++ substitutionPairsBeta.map( _.swap )
 
   // (alpha->r_1),...,(alpha->r_m)
   ////////////////////////////////
@@ -97,9 +97,9 @@ case class Pi2SeHs(
     substitutionsBeta.toList
   }
 
-  private def substituteRightSideOnce( sequent: Sequent[HOLFormula], index: Int ): Sequent[HOLFormula] = {
+  private def substituteRightSideOnce( sequent: Sequent[Formula], index: Int ): Sequent[Formula] = {
 
-    var resultingSequent: Sequent[HOLFormula] = Sequent()
+    var resultingSequent: Sequent[Formula] = Sequent()
 
     sequent.succedent.foreach( formula => {
       formula.find( existentialEigenvariables( index - 1 ) ) match {
@@ -113,9 +113,9 @@ case class Pi2SeHs(
     resultingSequent
   }
 
-  private def substituteLeftSideOnce( sequent: Sequent[HOLFormula], index: Int ): Sequent[HOLFormula] = {
+  private def substituteLeftSideOnce( sequent: Sequent[Formula], index: Int ): Sequent[Formula] = {
 
-    var resultingSequent: Sequent[HOLFormula] = Sequent()
+    var resultingSequent: Sequent[Formula] = Sequent()
 
     sequent.antecedent.foreach( formula => {
       formula.find( existentialEigenvariables( index - 1 ) ) match {
@@ -131,9 +131,9 @@ case class Pi2SeHs(
 
   // F[x\T_1] |- G[y\T_2]
   ///////////////////////
-  def herbrandSequent(): Sequent[HOLFormula] = {
+  def herbrandSequent(): Sequent[Formula] = {
 
-    var herbrandSequent: Sequent[HOLFormula] = Sequent() :++ reducedRepresentation.succedent
+    var herbrandSequent: Sequent[Formula] = Sequent() :++ reducedRepresentation.succedent
 
     for ( indexM <- 0 until multiplicityOfAlpha ) {
       herbrandSequent = substituteRightSideOnce( herbrandSequent, multiplicityOfAlpha - indexM )
@@ -146,7 +146,7 @@ case class Pi2SeHs(
       } )
     } )
 
-    val sequent: Sequent[HOLFormula] = herbrandSequent
+    val sequent: Sequent[Formula] = herbrandSequent
 
     for ( indexM <- 0 until multiplicityOfAlpha ) {
       herbrandSequent = substituteLeftSideOnce( herbrandSequent.antecedent ++: Sequent(), multiplicityOfAlpha - indexM ) :++ sequent.succedent
@@ -193,7 +193,7 @@ case class Pi2SeHs(
     ( literals.toSet, DNTAList )
   }
 
-  def language: ( Set[LambdaExpression] ) = {
+  def language: ( Set[Expr] ) = {
 
     val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
     literals.map( literal => {

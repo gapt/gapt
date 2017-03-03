@@ -23,15 +23,15 @@ object LKToExpansionProof {
   private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
 
     // Axioms
-    case LogicalAxiom( atom: HOLAtom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
+    case LogicalAxiom( atom: Atom ) => Seq() -> Sequent( Seq( ETAtom( atom, Polarity.InAntecedent ) ), Seq( ETAtom( atom, Polarity.InSuccedent ) ) )
 
-    case ReflexivityAxiom( s )         => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), Polarity.InSuccedent ) ) )
+    case ReflexivityAxiom( s )      => Seq() -> Sequent( Seq(), Seq( ETAtom( Eq( s, s ), Polarity.InSuccedent ) ) )
 
-    case TopAxiom                      => Seq() -> Sequent( Seq(), Seq( ETTop( Polarity.InSuccedent ) ) )
+    case TopAxiom                   => Seq() -> Sequent( Seq(), Seq( ETTop( Polarity.InSuccedent ) ) )
 
-    case BottomAxiom                   => Seq() -> Sequent( Seq( ETBottom( Polarity.InAntecedent ) ), Seq() )
+    case BottomAxiom                => Seq() -> Sequent( Seq( ETBottom( Polarity.InAntecedent ) ), Seq() )
 
-    case TheoryAxiom( sequent )        => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.polarity ) )
+    case TheoryAxiom( sequent )     => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.polarity ) )
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>
@@ -135,7 +135,7 @@ object LKToExpansionProof {
       val auxTree = sequent( p.aux )
 
       val newAuxTree = replaceWithContext( auxTree, p.replacementContext, p.by )
-      val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[HOLAtom], Polarity.InAntecedent ), sequent( p.eq ) )
+      val newEqTree = ETMerge( ETAtom( p.subProof.conclusion( p.eq ).asInstanceOf[Atom], Polarity.InAntecedent ), sequent( p.eq ) )
       val context = sequent.updated( p.eq, newEqTree ).delete( p.aux )
       ( subCuts, if ( p.aux.isAnt ) newAuxTree +: context else context :+ newAuxTree )
 

@@ -6,25 +6,25 @@ import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 
 import scala.annotation.tailrec
 
-abstract class LambdaExpression {
+abstract class Expr {
 
   /**
    * Type of this expression (e.g. i>i>o).
    */
-  def exptype: Ty
+  def ty: Ty
 
   def hashCode: Int
   override def equals( a: Any ) = a match {
-    case a: AnyRef if this eq a => true
-    case e: LambdaExpression if e.hashCode != hashCode => false
-    case e: LambdaExpression => this alphaEquals e
-    case _ => false
+    case a: AnyRef if this eq a            => true
+    case e: Expr if e.hashCode != hashCode => false
+    case e: Expr                           => this alphaEquals e
+    case _                                 => false
   }
 
   /**
    * Syntactic equality (takes names of variables in binders into account).
    */
-  def syntaxEquals( e: LambdaExpression ): Boolean
+  def syntaxEquals( e: Expr ): Boolean
 
   /**
    * Alpha-equality.
@@ -32,7 +32,7 @@ abstract class LambdaExpression {
    * @param that  Lambda expression to compare against.
    * @return whether this lambda expression is equal to that lambda expression modulo alpha-conversion.
    */
-  def alphaEquals( that: LambdaExpression ): Boolean = this alphaEquals ( that, List(), List() )
+  def alphaEquals( that: Expr ): Boolean = this alphaEquals ( that, List(), List() )
 
   /**
    * Alpha-equality in a bound variable context.
@@ -47,7 +47,7 @@ abstract class LambdaExpression {
    * @param thatCtx Bound variables in that lambda expression.
    * @return whether thisCtx^{-1}(this) is alpha-equal to thatCtx^{-1}(that)
    */
-  private[expr] def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ): Boolean
+  private[expr] def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ): Boolean
 
   /**
    * Tests whether this Expression has a subexpression at the given position.
@@ -57,9 +57,9 @@ abstract class LambdaExpression {
   /**
    * Returns the subexpression at the given position, if it exists.
    */
-  def get( p: LambdaPosition ): Option[LambdaExpression] = p.get( this )
+  def get( p: LambdaPosition ): Option[Expr] = p.get( this )
 
-  def apply( p: LambdaPosition ): LambdaExpression = get( p ) match {
+  def apply( p: LambdaPosition ): Expr = get( p ) match {
     case Some( e ) => e
     case None      => throw new IllegalArgumentException( "Expression " + this + "is not defined at position " + p + "." )
   }
@@ -69,7 +69,7 @@ abstract class LambdaExpression {
    * @param pos The position to be retrieved.
    * @return The subexpression at pos.
    */
-  def apply( pos: HOLPosition ): LambdaExpression = get( pos ) match {
+  def apply( pos: HOLPosition ): Expr = get( pos ) match {
     case Some( f ) => f
     case None      => throw new Exception( "Position " + pos + " does not exist in expression " + this + "." )
   }
@@ -80,13 +80,13 @@ abstract class LambdaExpression {
    * @param pos The position to be retrieved.
    * @return If there is a subexpression at that position, return Some(that expression). Otherwise None.
    */
-  def get( pos: HOLPosition ): Option[LambdaExpression] =
+  def get( pos: HOLPosition ): Option[Expr] =
     HOLPosition.toLambdaPositionOption( this )( pos ).flatMap( get )
 
-  def replace( pos: LambdaPosition, replacement: LambdaExpression ): LambdaExpression =
+  def replace( pos: LambdaPosition, replacement: Expr ): Expr =
     LambdaPosition.replace( this, pos, replacement )
 
-  def replace( pos: HOLPosition, replacement: LambdaExpression ): LambdaExpression =
+  def replace( pos: HOLPosition, replacement: Expr ): Expr =
     HOLPosition.replace( this, pos, replacement )
 
   /**
@@ -103,7 +103,7 @@ abstract class LambdaExpression {
    * @param exp The subexpression to be found.
    * @return A list containing all positions where exp occurs.
    */
-  def find( exp: LambdaExpression ): List[HOLPosition] = getPositions( this, _ == exp )
+  def find( exp: Expr ): List[HOLPosition] = getPositions( this, _ == exp )
 
   /**
    * Converts this expression into a string.
@@ -134,65 +134,65 @@ abstract class LambdaExpression {
   def toUntypedAsciiString( implicit sig: BabelSignature ) =
     new BabelExporter( unicode = false, sig = implicitly, omitTypes = true ).export( this )
 
-  def &( that: LambdaExpression ): HOLFormula = And( this, that )
-  def |( that: LambdaExpression ): HOLFormula = Or( this, that )
-  def unary_- : HOLFormula = Neg( this )
-  def -->( that: LambdaExpression ) = Imp( this, that )
-  def <->( that: LambdaExpression ) = And( Imp( this, that ), Imp( that, this ) )
-  def ===( that: LambdaExpression ) = Eq( this, that )
-  def !==( that: LambdaExpression ) = Neg( Eq( this, that ) )
-  def apply( that: LambdaExpression* ): LambdaExpression = App( this, that )
-  def apply( that: Iterable[LambdaExpression] ): LambdaExpression = App( this, that.toSeq )
+  def &( that: Expr ): Formula = And( this, that )
+  def |( that: Expr ): Formula = Or( this, that )
+  def unary_- : Formula = Neg( this )
+  def -->( that: Expr ) = Imp( this, that )
+  def <->( that: Expr ) = And( Imp( this, that ), Imp( that, this ) )
+  def ===( that: Expr ) = Eq( this, that )
+  def !==( that: Expr ) = Neg( Eq( this, that ) )
+  def apply( that: Expr* ): Expr = App( this, that )
+  def apply( that: Iterable[Expr] ): Expr = App( this, that.toSeq )
 
-  def ^( n: Int )( that: LambdaExpression ): LambdaExpression =
+  def ^( n: Int )( that: Expr ): Expr =
     if ( n == 0 ) that else ( this ^ ( n - 1 ) )( this( that ) )
 }
 
-class Var private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
-  def syntaxEquals( e: LambdaExpression ) = e match {
-    case Var( n, t ) => n == name && t == exptype
+class Var private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
+  def syntaxEquals( e: Expr ) = e match {
+    case Var( n, t ) => n == name && t == ty
     case _           => false
   }
 
-  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ): Boolean =
+  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ): Boolean =
     ( thisCtx indexOf this, thatCtx indexOf that ) match {
       case ( -1, -1 )         => this syntaxEquals that // not bound
       case ( i, j ) if i == j => true // both bound to the same DeBruijn index
       case _                  => false
     }
 
-  override val hashCode = 42 + exptype.hashCode
+  override val hashCode = 42 + ty.hashCode
 }
 
-class Const private[expr] ( val name: String, val exptype: Ty ) extends VarOrConst {
+class Const private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
 
-  def syntaxEquals( e: LambdaExpression ) = e match {
-    case Const( n, t ) => n == name && t == exptype
+  def syntaxEquals( e: Expr ) = e match {
+    case Const( n, t ) => n == name && t == ty
     case _             => false
   }
 
-  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) =
+  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ) =
     this syntaxEquals that
 
-  override val hashCode = ( 41 * name.hashCode ) + exptype.hashCode
+  override val hashCode = ( 41 * name.hashCode ) + ty.hashCode
 }
 
-class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpression ) extends LambdaExpression {
-  val exptype: Ty =
-    function.exptype match {
-      case ( in -> out ) if in == arg.exptype => out
+class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
+  val ty: Ty =
+    function.ty match {
+      case ( in -> out ) if in == arg.ty => out
       case _ => throw new IllegalArgumentException(
-        s"Types don't fit while constructing application ($function : ${function.exptype}) ($arg : ${arg.exptype})"
+        s"Types don't fit while constructing application ($function : ${function.ty}) ($arg : ${arg.ty})"
       )
     }
 
-  def syntaxEquals( e: LambdaExpression ) = e match {
-    case App( a, b ) => e.exptype == exptype &&
+  def syntaxEquals( e: Expr ) = e match {
+    case App( a, b ) => e.ty == ty &&
       a.syntaxEquals( function ) && b.syntaxEquals( arg )
     case _ => false
   }
 
-  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
+  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
     case App( that_function, that_arg ) =>
       this.function.alphaEquals( that_function, thisCtx, thatCtx ) &&
         this.arg.alphaEquals( that_arg, thisCtx, thatCtx )
@@ -202,16 +202,16 @@ class App private[expr] ( val function: LambdaExpression, val arg: LambdaExpress
   override val hashCode = ( 41 * function.hashCode ) + arg.hashCode
 }
 
-class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extends LambdaExpression {
-  val exptype: Ty = variable.exptype -> term.exptype
+class Abs private[expr] ( val variable: Var, val term: Expr ) extends Expr {
+  val ty: Ty = variable.ty -> term.ty
 
-  def syntaxEquals( e: LambdaExpression ) = e match {
-    case Abs( v, exp ) => v.syntaxEquals( variable ) && exp.syntaxEquals( term ) && e.exptype == exptype
+  def syntaxEquals( e: Expr ) = e match {
+    case Abs( v, exp ) => v.syntaxEquals( variable ) && exp.syntaxEquals( term ) && e.ty == ty
     case _             => false
   }
 
-  private[expr] override def alphaEquals( that: LambdaExpression, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
-    case Abs( that_variable, that_term ) if this.variable.exptype == that_variable.exptype =>
+  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
+    case Abs( that_variable, that_term ) if this.variable.ty == that_variable.ty =>
       this.term alphaEquals ( that_term, this.variable :: thisCtx, that_variable :: thatCtx )
     case _ => false
   }
@@ -222,48 +222,48 @@ class Abs private[expr] ( val variable: Var, val term: LambdaExpression ) extend
 object Var {
   def apply( name: String, exptype: Ty ): Var = determineTraits.forVar( name, exptype )
 
-  def unapply( v: Var ) = Some( v.name, v.exptype )
+  def unapply( v: Var ) = Some( v.name, v.ty )
 }
 object Const {
   def apply( name: String, exptype: Ty ): Const = determineTraits.forConst( name, exptype )
 
-  def unapply( c: Const ) = Some( c.name, c.exptype )
+  def unapply( c: Const ) = Some( c.name, c.ty )
 }
 object App {
-  def apply( f: LambdaExpression, a: LambdaExpression ) = determineTraits.forApp( f, a )
+  def apply( f: Expr, a: Expr ) = determineTraits.forApp( f, a )
 
-  def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression = Apps( function, arguments )
+  def apply( function: Expr, arguments: Seq[Expr] ): Expr = Apps( function, arguments )
 
   def unapply( a: App ) = Some( a.function, a.arg )
 }
 object Apps {
-  def apply( function: LambdaExpression, arguments: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression =
+  def apply( function: Expr, arguments: Expr* )( implicit dummyImplicit: DummyImplicit ): Expr =
     apply( function, arguments )
 
   /** Create an n-ary application with left-associative parentheses. */
-  def apply( function: LambdaExpression, arguments: Seq[LambdaExpression] ): LambdaExpression =
+  def apply( function: Expr, arguments: Seq[Expr] ): Expr =
     arguments.foldLeft( function )( App( _, _ ) )
 
-  def unapply( e: LambdaExpression ): Some[( LambdaExpression, List[LambdaExpression] )] =
+  def unapply( e: Expr ): Some[( Expr, List[Expr] )] =
     Some( decompose( e, Nil ) )
 
   @tailrec
-  private def decompose( e: LambdaExpression, restArgs: List[LambdaExpression] ): ( LambdaExpression, List[LambdaExpression] ) =
+  private def decompose( e: Expr, restArgs: List[Expr] ): ( Expr, List[Expr] ) =
     e match {
       case App( head, arg ) => decompose( head, arg :: restArgs )
       case head             => ( head, restArgs )
     }
 }
 object Abs {
-  def apply( v: Var, t: LambdaExpression ) = determineTraits.forAbs( v, t )
-  def apply( variables: Seq[Var], expression: LambdaExpression ): LambdaExpression =
+  def apply( v: Var, t: Expr ) = determineTraits.forAbs( v, t )
+  def apply( variables: Seq[Var], expression: Expr ): Expr =
     variables.foldRight( expression )( Abs( _, _ ) )
 
   def unapply( a: Abs ) = Some( a.variable, a.term )
 
   object Block {
-    def apply( vars: Seq[Var], expr: LambdaExpression ) = Abs( vars, expr )
-    def unapply( e: LambdaExpression ): Some[( List[Var], LambdaExpression )] = e match {
+    def apply( vars: Seq[Var], expr: Expr ) = Abs( vars, expr )
+    def unapply( e: Expr ): Some[( List[Var], Expr )] = e match {
       case Abs( v, e_ ) => e_ match { case Block( vs, e__ ) => Some( ( v :: vs, e__ ) ) }
       case e_           => Some( ( Nil, e_ ) )
     }

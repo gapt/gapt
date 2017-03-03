@@ -7,10 +7,10 @@ import scala.collection.GenTraversable
 /**
  * An unvalidated substitution, you should use [[Substitution]] instead.
  */
-class PreSubstitution( val map: Map[Var, LambdaExpression], val typeMap: Map[TVar, Ty] ) {
+class PreSubstitution( val map: Map[Var, Expr], val typeMap: Map[TVar, Ty] ) {
 
   def domain: Set[Var] = map.keySet
-  def range: Set[Var] = map.values.toSet[LambdaExpression].flatMap( freeVariables( _ ) )
+  def range: Set[Var] = map.values.toSet[Expr].flatMap( freeVariables( _ ) )
 
   override def hashCode: Int = map.hashCode ^ typeMap.hashCode
 
@@ -38,7 +38,7 @@ class PreSubstitution( val map: Map[Var, LambdaExpression], val typeMap: Map[TVa
     FOLSubstitution( map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
   }
 
-  def +( v: Var, t: LambdaExpression ): PreSubstitution = new PreSubstitution( map + ( ( v, t ) ), typeMap )
+  def +( v: Var, t: Expr ): PreSubstitution = new PreSubstitution( map + ( ( v, t ) ), typeMap )
   def +( v: TVar, t: Ty ): PreSubstitution = new PreSubstitution( map, typeMap + ( ( v, t ) ) )
 
   def toSubstitution: Substitution = Substitution( map, typeMap )
@@ -47,7 +47,7 @@ class PreSubstitution( val map: Map[Var, LambdaExpression], val typeMap: Map[TVa
 
 object PreSubstitution {
   def apply(): PreSubstitution = new PreSubstitution( Map(), Map() )
-  def apply( map: Traversable[( Var, LambdaExpression )] ): PreSubstitution = new PreSubstitution( map.toMap, Map() )
+  def apply( map: Traversable[( Var, Expr )] ): PreSubstitution = new PreSubstitution( map.toMap, Map() )
 }
 
 /**
@@ -60,12 +60,12 @@ object PreSubstitution {
  * As the lambda calculus contains variable binders, substitution can only be defined up to alpha-equivalence.
  * When applying a substitution, bound variables are renamed if needed.
  */
-class Substitution( map: Map[Var, LambdaExpression], typeMap: Map[TVar, Ty] = Map() ) extends PreSubstitution( map, typeMap ) {
+class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extends PreSubstitution( map, typeMap ) {
 
   for ( ( v, t ) <- map )
     require(
-      SubstitutableTy.applySubstitution( this, v.exptype ) == t.exptype,
-      s"Error creating substitution: variable $v has type ${v.exptype} but subterm $t has type ${t.exptype}"
+      SubstitutableTy.applySubstitution( this, v.ty ) == t.ty,
+      s"Error creating substitution: variable $v has type ${v.ty} but subterm $t has type ${t.ty}"
     )
 
   /**
@@ -93,7 +93,7 @@ class Substitution( map: Map[Var, LambdaExpression], typeMap: Map[TVar, Ty] = Ma
   def isInjective( dom: Set[Var] ): Boolean =
     dom.forall { x =>
       val images = ( dom - x ).map( apply( _ ) )
-      def solve( term: LambdaExpression ): Boolean =
+      def solve( term: Expr ): Boolean =
         images( term ) || ( term match {
           case Const( _, _ ) => true
           case App( a, b )   => solve( a ) && solve( b )
@@ -105,15 +105,15 @@ class Substitution( map: Map[Var, LambdaExpression], typeMap: Map[TVar, Ty] = Ma
 }
 
 object Substitution {
-  def apply( subs: Traversable[( Var, LambdaExpression )], tySubs: Traversable[( TVar, Ty )] = Nil ): Substitution =
+  def apply( subs: Traversable[( Var, Expr )], tySubs: Traversable[( TVar, Ty )] = Nil ): Substitution =
     new Substitution( Map() ++ subs, Map() ++ tySubs )
-  def apply( subs: ( Var, LambdaExpression )* ): Substitution = new Substitution( Map() ++ subs )
-  def apply( variable: Var, expression: LambdaExpression ): Substitution = new Substitution( Map( variable -> expression ) )
-  def apply( map: Map[Var, LambdaExpression] ): Substitution = new Substitution( map )
+  def apply( subs: ( Var, Expr )* ): Substitution = new Substitution( Map() ++ subs )
+  def apply( variable: Var, expression: Expr ): Substitution = new Substitution( Map( variable -> expression ) )
+  def apply( map: Map[Var, Expr] ): Substitution = new Substitution( map )
   def apply() = new Substitution( Map() )
 }
 
-class FOLSubstitution( val folmap: Map[FOLVar, FOLTerm] ) extends Substitution( folmap.asInstanceOf[Map[Var, LambdaExpression]] ) {
+class FOLSubstitution( val folmap: Map[FOLVar, FOLTerm] ) extends Substitution( folmap.asInstanceOf[Map[Var, Expr]] ) {
   /**
    * Applies this substitution to an object.
    *

@@ -24,7 +24,7 @@ case class MaxSatRecSchemFinder(
   val A = Const( "A", FunctionType( instanceType, paramTys ) )
   val template = simplePi1RecSchemTempl( A( vs ), pi1QTys )
 
-  def findRS( taggedLanguage: Set[( Seq[LambdaExpression], LambdaExpression )] ): RecursionScheme = {
+  def findRS( taggedLanguage: Set[( Seq[Expr], Expr )] ): RecursionScheme = {
     val targets = for ( ( ts, r ) <- taggedLanguage ) yield A( ts ) -> r
     if ( viaInst )
       template.findMinimalCoverViaInst( targets, weight = grammarWeighting )
@@ -34,11 +34,11 @@ case class MaxSatRecSchemFinder(
 }
 
 object simplePi1RecSchemTempl {
-  def apply( startSymbol: LambdaExpression, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
+  def apply( startSymbol: Expr, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
     val nameGen = rename.awayFrom( ctx.constants )
 
     val Apps( startSymbolNT: Const, startSymbolArgs ) = startSymbol
-    val FunctionType( instTT, startSymbolArgTys ) = startSymbolNT.exptype
+    val FunctionType( instTT, startSymbolArgTys ) = startSymbolNT.ty
     // TODO: handle strong quantifiers in conclusion correctly
     val startSymbolArgs2 = for ( ( t, i ) <- startSymbolArgTys.zipWithIndex ) yield Var( s"x_$i", t )
 
@@ -54,7 +54,7 @@ object simplePi1RecSchemTempl {
           case None => Seq()
           case Some( ctrs ) =>
             ctrs flatMap { ctr =>
-              val FunctionType( _, ctrArgTys ) = ctr.exptype
+              val FunctionType( _, ctrArgTys ) = ctr.ty
               val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
               val lhs = indLemmaNT( startSymbolArgs )( startSymbolArgs2.take( indLemmaArgIdx ) )( ctr( ctrArgs: _* ) )( startSymbolArgs2.drop( indLemmaArgIdx + 1 ) )( lhsPi1QArgs )
               val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
@@ -77,9 +77,9 @@ object simplePi1RecSchemTempl {
 }
 
 object canonicalRsLHS {
-  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): Set[LambdaExpression] =
+  def apply( recSchem: RecursionScheme )( implicit ctx: Context ): Set[Expr] =
     recSchem.nonTerminals flatMap { nt =>
-      val FunctionType( To, argTypes ) = nt.exptype
+      val FunctionType( To, argTypes ) = nt.ty
       val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x$i", t )
       recSchem.rulesFrom( nt ).flatMap {
         case Rule( Apps( _, as ), _ ) => as.zipWithIndex.filterNot { _._1.isInstanceOf[Var] }.map { _._2 }
@@ -92,7 +92,7 @@ object canonicalRsLHS {
             val Some( ctrs ) = ctx.getConstructors( indTy )
             for {
               ctr <- ctrs.toList
-              FunctionType( _, ctrArgTys ) = ctr.exptype
+              FunctionType( _, ctrArgTys ) = ctr.ty
             } yield ctr(
               ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _*
             )
@@ -119,12 +119,12 @@ object homogenizeRS {
 }
 
 object qbupForRecSchem {
-  def apply( recSchem: RecursionScheme, conj: HOLFormula )( implicit ctx: Context ): HOLFormula = {
-    def convert( term: LambdaExpression ): HOLFormula = term match {
+  def apply( recSchem: RecursionScheme, conj: Formula )( implicit ctx: Context ): Formula = {
+    def convert( term: Expr ): Formula = term match {
       case Apps( ax, args ) if ax == recSchem.startSymbol => instantiate( conj, args )
       case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
-        HOLAtom( Var( s"X_$name", ty )( args: _* ) )
-      case formula: HOLFormula => formula
+        Atom( Var( s"X_$name", ty )( args: _* ) )
+      case formula: Formula => formula
     }
 
     val lhss = canonicalRsLHS( recSchem )
@@ -141,8 +141,8 @@ object qbupForRecSchem {
 }
 
 object hSolveQBUP {
-  def findConseq( start: HOLFormula, conds: Seq[( Set[Substitution], HOLFormula )],
-                  prover: Prover ): Set[HOLFormula] = {
+  def findConseq( start: Formula, conds: Seq[( Set[Substitution], Formula )],
+                  prover: Prover ): Set[Formula] = {
     val isSolution = mutable.Map[Set[HOLClause], Boolean]()
     def checkSol( cnf: Set[HOLClause] ) = isSolution.getOrElseUpdate( cnf, {
       val cnfForm = And( cnf.map( _.toDisjunction ) )
@@ -172,7 +172,7 @@ object hSolveQBUP {
     isSolution collect { case ( sol, true ) => simplify( And( sol map { _.toImplication } ) ) } toSet
   }
 
-  def getSequents( qbupMatrix: HOLFormula, x: Var ): Seq[HOLSequent] = {
+  def getSequents( qbupMatrix: Formula, x: Var ): Seq[HOLSequent] = {
     val qbupSequents = And.nAry.unapply( qbupMatrix ).get.
       map { case All.Block( _, matrix ) => formulaToSequent.pos( matrix ) }
     for ( seq <- qbupSequents; formula <- seq )
@@ -185,7 +185,7 @@ object hSolveQBUP {
     qbupSequents
   }
 
-  def canonicalSolution( qbupMatrix: HOLFormula, xInst: HOLFormula ): HOLFormula = {
+  def canonicalSolution( qbupMatrix: Formula, xInst: Formula ): Formula = {
     val Apps( x: Var, xInstArgs ) = xInst
     val qbupSequents = getSequents( qbupMatrix, x )
 
@@ -193,7 +193,7 @@ object hSolveQBUP {
       seq <- qbupSequents
       ( occ @ Apps( `x`, _ ), idx ) <- seq.zipWithIndex.succedent
     } yield occ -> seq.delete( idx )
-    def mkCanSol( xInst: HOLFormula ): HOLFormula =
+    def mkCanSol( xInst: Formula ): Formula =
       ( for {
         ( occ, seq ) <- posOccurs.view
         subst <- syntacticMatching( occ, xInst )
@@ -207,13 +207,13 @@ object hSolveQBUP {
     mkCanSol( xInst )
   }
 
-  def apply( qbupMatrix: HOLFormula, xInst: HOLFormula, prover: Prover ): Option[LambdaExpression] = {
+  def apply( qbupMatrix: Formula, xInst: Formula, prover: Prover ): Option[Expr] = {
     val Apps( x: Var, xInstArgs ) = xInst
     val qbupSequents = getSequents( qbupMatrix, x )
 
     val start = canonicalSolution( qbupMatrix, xInst )
 
-    def mkSearchCond( substs0: Set[Substitution], seq0: HOLSequent ): Option[( Set[Substitution], HOLFormula )] = {
+    def mkSearchCond( substs0: Set[Substitution], seq0: HOLSequent ): Option[( Set[Substitution], Formula )] = {
       val renaming = Substitution( rename( freeVariables( seq0 ) - x, freeVariables( xInst ) ) )
       val seq = renaming( seq0 )
       val substs = substs0.map( renaming.compose )
@@ -231,10 +231,10 @@ object hSolveQBUP {
 
     val conseqs = findConseq( start, searchConds, prover )
 
-    val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.exptype )
+    val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.ty )
     val xGen = x( xGenArgs: _* )
     val Some( matching ) = syntacticMatching( xGen, xInst )
-    def checkSolutionMatrix( matrix: HOLFormula ) = {
+    def checkSolutionMatrix( matrix: Formula ) = {
       val sol = Abs( xGenArgs, matrix )
       if ( prover.isValid( skolemize( BetaReduction.betaNormalize( Substitution( x -> sol )( qbupMatrix ) ) ) ) )
         Some( sol )
@@ -247,9 +247,9 @@ object hSolveQBUP {
     }.headOption.
       // now try replacing each occurrence
       orElse( conseqs.toSeq.sortBy( c => matching.map.values.flatMap( c.find ).size ).view.flatMap { conseq =>
-        def generalize( genConseq: LambdaExpression, poss: List[HOLPosition] ): Option[LambdaExpression] = poss match {
+        def generalize( genConseq: Expr, poss: List[HOLPosition] ): Option[Expr] = poss match {
           case Nil =>
-            checkSolutionMatrix( genConseq.asInstanceOf[HOLFormula] )
+            checkSolutionMatrix( genConseq.asInstanceOf[Formula] )
           case pos :: poss_ =>
             genConseq.get( pos ) match {
               case None =>

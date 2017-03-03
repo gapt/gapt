@@ -11,7 +11,7 @@ import scala.annotation.tailrec
  */
 trait ReductionRule {
   /** Performs a one-step reduction of head(args: _*). */
-  def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )]
+  def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )]
 }
 object ReductionRule {
   def apply( rules: ReductionRule* ): ReductionRule = apply( rules )
@@ -22,7 +22,7 @@ object ReductionRule {
 }
 
 class Normalizer( rule: ReductionRule ) {
-  def normalize( expr: LambdaExpression ): LambdaExpression = {
+  def normalize( expr: Expr ): Expr = {
     val Apps( hd, as ) = expr
     val ( hd_, as_ ) = appWHNF( hd, as )
     Apps( hd_ match {
@@ -32,23 +32,23 @@ class Normalizer( rule: ReductionRule ) {
     }, as_.map( normalize ) )
   }
 
-  def whnf( expr: LambdaExpression ): LambdaExpression = {
+  def whnf( expr: Expr ): Expr = {
     val Apps( hd, as ) = expr
     val ( hd_, as_ ) = appWHNF( hd, as )
     Apps( hd_, as_ )
   }
 
-  def reduce1( expr: LambdaExpression ): Option[LambdaExpression] = {
+  def reduce1( expr: Expr ): Option[Expr] = {
     val Apps( hd, as ) = expr
     for ( ( hd_, as_ ) <- rule.reduce( this, hd, as ) )
       yield Apps( hd_, as_ )
   }
 
-  def isDefEq( a: LambdaExpression, b: LambdaExpression ): Boolean =
+  def isDefEq( a: Expr, b: Expr ): Boolean =
     normalize( a ) == normalize( b )
 
   @tailrec
-  final def appWHNF( hd: LambdaExpression, as: List[LambdaExpression] ): ( LambdaExpression, List[LambdaExpression] ) =
+  final def appWHNF( hd: Expr, as: List[Expr] ): ( Expr, List[Expr] ) =
     rule.reduce( this, hd, as ) match {
       case Some( ( Apps( hd_, as__ ), as_ ) ) =>
         if ( as__.isEmpty )
@@ -61,10 +61,10 @@ class Normalizer( rule: ReductionRule ) {
 }
 
 object normalize {
-  def apply( rule: ReductionRule, expr: LambdaExpression ): LambdaExpression =
+  def apply( rule: ReductionRule, expr: Expr ): Expr =
     new Normalizer( rule ).normalize( expr )
 
-  def apply( expr: LambdaExpression )( implicit ctx: Context = Context.empty ): LambdaExpression = {
+  def apply( expr: Expr )( implicit ctx: Context = Context.empty ): Expr = {
     val redRules = ctx.reductionRules.toVector
     apply( if ( redRules.isEmpty ) BetaReduction else ReductionRule( BetaReduction +: redRules ), expr )
   }
@@ -72,7 +72,7 @@ object normalize {
 
 object BetaReduction extends ReductionRule {
   @tailrec
-  def reduce( head: LambdaExpression, args: List[LambdaExpression], subst: Map[Var, LambdaExpression] = Map() ): Option[( LambdaExpression, List[LambdaExpression] )] =
+  def reduce( head: Expr, args: List[Expr], subst: Map[Var, Expr] = Map() ): Option[( Expr, List[Expr] )] =
     ( head, args ) match {
       case ( Abs( x, e ), a :: as ) =>
         reduce( e, as, subst + ( x -> a ) )
@@ -81,15 +81,15 @@ object BetaReduction extends ReductionRule {
       case _ => None
     }
 
-  override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
+  override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
     if ( args.isEmpty )
       None
     else
       reduce( head, args )
 
-  def betaNormalize( expression: LambdaExpression ): LambdaExpression =
+  def betaNormalize( expression: Expr ): Expr =
     normalize( expression )
 
-  def betaNormalize( f: HOLFormula ): HOLFormula =
-    betaNormalize( f: LambdaExpression ).asInstanceOf[HOLFormula]
+  def betaNormalize( f: Formula ): Formula =
+    betaNormalize( f: Expr ).asInstanceOf[Formula]
 }

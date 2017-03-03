@@ -78,12 +78,12 @@ case class AvatarComponent( component: AvatarDefinition ) extends InitialClause 
 trait AvatarDefinition {
   def clause: HOLSequent
   def assertion: HOLClause
-  def inducedDefinitions: Map[HOLAtomConst, LambdaExpression]
+  def inducedDefinitions: Map[HOLAtomConst, Expr]
   def introOnly = false
 }
 abstract class AvatarGeneralNonGroundComp extends AvatarDefinition {
-  def atom: HOLAtom
-  def definition: HOLFormula
+  def atom: Atom
+  def definition: Formula
   def vars: Seq[Var]
 
   require( atom.isInstanceOf[HOLAtomConst] )
@@ -105,11 +105,11 @@ abstract class AvatarGeneralNonGroundComp extends AvatarDefinition {
 
   val componentClause = subst( canonicalClause )
 }
-case class AvatarNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var] ) extends AvatarGeneralNonGroundComp {
+case class AvatarNonGroundComp( atom: Atom, definition: Formula, vars: Seq[Var] ) extends AvatarGeneralNonGroundComp {
   def assertion = Sequent() :+ atom
   def clause = componentClause
 }
-case class AvatarNegNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: Seq[Var], idx: SequentIndex ) extends AvatarGeneralNonGroundComp {
+case class AvatarNegNonGroundComp( atom: Atom, definition: Formula, vars: Seq[Var], idx: SequentIndex ) extends AvatarGeneralNonGroundComp {
   require( freeVariables( componentClause( idx ) ).isEmpty )
   def assertion = atom +: Sequent()
   val propAtom = componentClause( idx )
@@ -117,19 +117,19 @@ case class AvatarNegNonGroundComp( atom: HOLAtom, definition: HOLFormula, vars: 
   override def introOnly = true
 }
 object AvatarNonGroundComp {
-  def apply( atom: HOLAtom, definition: HOLFormula ): AvatarNonGroundComp = {
+  def apply( atom: Atom, definition: Formula ): AvatarNonGroundComp = {
     val All.Block( vs, _ ) = definition
     AvatarNonGroundComp( atom, definition, vs )
   }
 
   object DefinitionFormula {
-    def apply( clause: HOLSequent ): HOLFormula =
+    def apply( clause: HOLSequent ): Formula =
       apply( freeVariables( clause ).toSeq, clause )
     def apply( vars: Seq[Var], clause: HOLSequent ) = {
       require( vars.toSet subsetOf freeVariables( clause ) )
       All.Block( vars, clause.toDisjunction )
     }
-    def unapply( f: HOLFormula ): Some[( Seq[Var], HOLSequent )] = f match {
+    def unapply( f: Formula ): Some[( Seq[Var], HOLSequent )] = f match {
       case All.Block( vars, litDisj ) =>
         val Or.nAry( lits ) = litDisj
         Some( ( vars, lits.flatMapS {
@@ -138,12 +138,12 @@ object AvatarNonGroundComp {
         } ) )
     }
 
-    def canonize( definition: HOLFormula ): HOLFormula = definition match {
+    def canonize( definition: Formula ): Formula = definition match {
       case DefinitionFormula( vars, disj ) => DefinitionFormula( vars, disj )
     }
   }
 }
-case class AvatarGroundComp( atom: HOLAtom, polarity: Polarity ) extends AvatarDefinition {
+case class AvatarGroundComp( atom: Atom, polarity: Polarity ) extends AvatarDefinition {
   require( freeVariables( atom ).isEmpty )
   def assertion = Sequent( Seq( atom -> polarity ) )
   def clause = assertion

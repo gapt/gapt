@@ -27,11 +27,11 @@ object PCNF {
   /**
    * assuming a in CNFn(f) we give a proof of a :+ f
    */
-  private def PCNFn( f: HOLFormula, a: HOLClause ): LKProof = f match {
-    case Top()                  => TopAxiom
-    case atom @ HOLAtom( _, _ ) => LogicalAxiom( atom )
-    case Neg( f2 )              => NegRightRule( PCNFp( f2, a ), f2 )
-    case And( f1, f2 )          => AndRightRule( PCNFn( f1, a ), f1, PCNFn( f2, a ), f2 )
+  private def PCNFn( f: Formula, a: HOLClause ): LKProof = f match {
+    case Top()               => TopAxiom
+    case atom @ Atom( _, _ ) => LogicalAxiom( atom )
+    case Neg( f2 )           => NegRightRule( PCNFp( f2, a ), f2 )
+    case And( f1, f2 )       => AndRightRule( PCNFn( f1, a ), f1, PCNFn( f2, a ), f2 )
     case Or( f1, f2 ) if containsClauseN( f1, a ) =>
       OrRightRule( WeakeningRightRule( PCNFn( f1, a ), f2 ), f1, f2 )
     case Or( f1, f2 ) if containsClauseN( f2, a ) =>
@@ -47,10 +47,10 @@ object PCNF {
   /**
    * assuming a in CNFp(f) we give a proof of f +: a
    */
-  private def PCNFp( f: HOLFormula, a: HOLClause ): LKProof = f match {
-    case Bottom()               => BottomAxiom
-    case atom @ HOLAtom( _, _ ) => LogicalAxiom( atom )
-    case Neg( f2 )              => NegLeftRule( PCNFn( f2, a ), f2 )
+  private def PCNFp( f: Formula, a: HOLClause ): LKProof = f match {
+    case Bottom()            => BottomAxiom
+    case atom @ Atom( _, _ ) => LogicalAxiom( atom )
+    case Neg( f2 )           => NegLeftRule( PCNFn( f2, a ), f2 )
     case And( f1, f2 ) if containsClauseP( f1, a ) =>
       AndLeftRule( WeakeningLeftRule( PCNFp( f1, a ), f2 ), f1, f2 )
     case And( f1, f2 ) if containsClauseP( f2, a ) =>
@@ -63,9 +63,9 @@ object PCNF {
     case _            => throw new IllegalArgumentException( s"Cannot construct PCNFp of $a from $f" )
   }
 
-  def containsClauseN( formula: HOLFormula, clause: HOLSequent ): Boolean =
+  def containsClauseN( formula: Formula, clause: HOLSequent ): Boolean =
     CNFn( formula ) exists { _ isSubMultisetOf clause }
-  def containsClauseP( formula: HOLFormula, clause: HOLSequent ): Boolean =
+  def containsClauseP( formula: Formula, clause: HOLSequent ): Boolean =
     CNFp( formula ) exists { _ isSubMultisetOf clause }
 }
 

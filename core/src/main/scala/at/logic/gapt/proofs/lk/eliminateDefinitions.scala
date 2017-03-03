@@ -12,7 +12,7 @@ object eliminateDefinitions {
    * Creates a new `eliminateDefinitions` object.
    * @param dmap The definitions to be eliminated.
    */
-  def apply( dmap: Map[_ <: Const, _ <: LambdaExpression] ): eliminateDefinitions =
+  def apply( dmap: Map[_ <: Const, _ <: Expr] ): eliminateDefinitions =
     new eliminateDefinitions( Context.Definitions( dmap.map( x => x._1.name -> x._2 ) ) )
 
   /**
@@ -29,11 +29,11 @@ object eliminateDefinitions {
  * Implements definition elimination.
  * @param dmap A map containing the definitions to be eliminated.
  */
-class eliminateDefinitions private ( dmap: Context.Definitions ) extends Function[LambdaExpression, LambdaExpression] {
+class eliminateDefinitions private ( dmap: Context.Definitions ) extends Function[Expr, Expr] {
   private val betaDeltaReduction = ReductionRule( BetaReduction, dmap )
 
-  def apply( e: LambdaExpression ): LambdaExpression = normalize( betaDeltaReduction, e )
-  def apply( f: HOLFormula ): HOLFormula = apply( f: LambdaExpression ).asInstanceOf[HOLFormula]
+  def apply( e: Expr ): Expr = normalize( betaDeltaReduction, e )
+  def apply( f: Formula ): Formula = apply( f: Expr ).asInstanceOf[Formula]
 
   def apply( proof: LKProof ): LKProof = proof match {
     // introductory rules
@@ -44,7 +44,7 @@ class eliminateDefinitions private ( dmap: Context.Definitions ) extends Functio
 
     case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term ) )
 
-    case TheoryAxiom( axiom )     => TheoryAxiom( axiom map apply map { _.asInstanceOf[HOLAtom] } )
+    case TheoryAxiom( axiom )     => TheoryAxiom( axiom map apply map { _.asInstanceOf[Atom] } )
 
     //structural rules
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>

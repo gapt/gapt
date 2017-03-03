@@ -1,5 +1,5 @@
 /**
- * This file contains code for positions and replacements in LambdaExpressions.
+ * This file contains code for positions and replacements in Exprs.
  *
  */
 
@@ -17,7 +17,7 @@ object LambdaPosition {
    * @param pred The predicate to be evaluated. Defaults to "always true", i.e. if called without this argument, the function will return all positions.
    * @return Positions of subexpressions satisfying pred.
    */
-  def getPositions( exp: LambdaExpression, pred: LambdaExpression => Boolean = _ => true ): List[LambdaPosition] = exp match {
+  def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[LambdaPosition] = exp match {
     case Var( _, _ ) | Const( _, _ ) => if ( pred( exp ) ) List( LambdaPosition() ) else Nil
     case App( f, arg ) =>
       val fPositions = getPositions( f, pred ) map { p => 1 :: p }
@@ -34,13 +34,13 @@ object LambdaPosition {
   }
 
   /**
-   * Compares to LambdaExpressions and returns the list of outermost positions where they differ.
+   * Compares to Exprs and returns the list of outermost positions where they differ.
    *
    * @param exp1 The first expression.
    * @param exp2 The second expression.
    * @return The list of outermost positions at which exp1 and exp2 differ.
    */
-  def differingPositions( exp1: LambdaExpression, exp2: LambdaExpression ): List[LambdaPosition] = ( exp1, exp2 ) match {
+  def differingPositions( exp1: Expr, exp2: Expr ): List[LambdaPosition] = ( exp1, exp2 ) match {
     case ( Var( n1, t1 ), Var( n2, t2 ) ) if n1 == n2 && t1 == t2     => Nil
     case ( Const( n1, t1 ), Const( n2, t2 ) ) if n1 == n2 && t1 == t2 => Nil
     case ( App( f1, arg1 ), App( f2, arg2 ) ) =>
@@ -53,14 +53,14 @@ object LambdaPosition {
   }
 
   /**
-   * Replaces a a subexpression in a LambdaExpression.
+   * Replaces a a subexpression in a Expr.
    *
    * @param exp The expression in which to perform the replacement.
    * @param pos The position at which to replace.
    * @param repTerm The expression that exp(pos) should be replaced with.
    * @return
    */
-  def replace( exp: LambdaExpression, pos: LambdaPosition, repTerm: LambdaExpression ): LambdaExpression =
+  def replace( exp: Expr, pos: LambdaPosition, repTerm: Expr ): Expr =
     if ( pos.isEmpty )
       repTerm
     else {
@@ -76,7 +76,7 @@ object LambdaPosition {
 }
 
 /**
- * Represents a position in a [[at.logic.gapt.expr.LambdaExpression]].
+ * Represents a position in a [[at.logic.gapt.expr.Expr]].
  *
  * Positions are represented by lists of Integers. The empty list denotes the expression itself.
  * A nonempty list denotes a position in the left or right subexpression according to whether it starts with 1 or 2.
@@ -102,9 +102,9 @@ class LambdaPosition( val list: List[Int] ) {
 
   override def hashCode() = list.hashCode()
 
-  def isDefined( exp: LambdaExpression ): Boolean = get( exp ).isDefined
+  def isDefined( exp: Expr ): Boolean = get( exp ).isDefined
 
-  def get( exp: LambdaExpression ): Option[LambdaExpression] = exp match {
+  def get( exp: Expr ): Option[Expr] = exp match {
     case _ if isEmpty             => Some( exp )
     case App( f, a ) if head == 1 => tail.get( f )
     case App( f, a ) if head == 2 => tail.get( a )

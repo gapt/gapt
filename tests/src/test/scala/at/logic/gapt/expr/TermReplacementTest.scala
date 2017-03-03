@@ -95,7 +95,7 @@ class TermReplacementTest extends Specification {
       val t1 = FOLFunction( "replacement", FOLVar( "x0" ) :: FOLVar( "y0" ) :: Nil )
       val t2 = FOLFunction( "really", FOLVar( "x1" ) :: Nil )
 
-      val map = Map[LambdaExpression, LambdaExpression]( a -> t1, hc -> t2 )
+      val map = Map[Expr, Expr]( a -> t1, hc -> t2 )
 
       val initial = TermReplacement( proof4.q0, map )
 

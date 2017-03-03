@@ -96,7 +96,7 @@ object gStarUnify {
 
   private def unify(
     seHs:                      Pi2SeHs,
-    zippedArgs:                List[( LambdaExpression, LambdaExpression )],
+    zippedArgs:                List[( Expr, Expr )],
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
   ): Option[Seq[FOLTerm]] = {

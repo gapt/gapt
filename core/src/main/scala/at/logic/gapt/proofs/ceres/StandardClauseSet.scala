@@ -17,14 +17,14 @@ import scala.util.control.TailCalls._
  */
 class CharacteristicClauseSet[Data] {
   def apply( struct: Struct[Data] ): Set[HOLClause] = struct match {
-    case A( fo: HOLAtom, _ ) => Set( HOLClause( Nil, List( fo ) ) )
-    case A( Top(), _ )       => Set()
-    case A( Bottom(), _ )    => Set( HOLClause( Nil, Nil ) )
+    case A( fo: Atom, _ ) => Set( HOLClause( Nil, List( fo ) ) )
+    case A( Top(), _ )    => Set()
+    case A( Bottom(), _ ) => Set( HOLClause( Nil, Nil ) )
     case A( f, _ ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
-    case Dual( A( fo: HOLAtom, _ ) ) => Set( HOLClause( List( fo ), Nil ) )
-    case Dual( A( Top(), _ ) )       => Set( HOLClause( Nil, Nil ) )
-    case Dual( A( Bottom(), _ ) )    => Set()
+    case Dual( A( fo: Atom, _ ) ) => Set( HOLClause( List( fo ), Nil ) )
+    case Dual( A( Top(), _ ) )    => Set( HOLClause( Nil, Nil ) )
+    case Dual( A( Bottom(), _ ) ) => Set()
     case Dual( A( f, _ ) ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
     case EmptyPlusJunction()                 => Set()

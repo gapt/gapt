@@ -190,7 +190,7 @@ abstract class AnalysisWithCeresOmega {
    * The ral version of the first-order refutation ([[fol_refutation]]), with all necessary simplifications undone
    */
   lazy val ral_refutation = {
-    val signature = undoHol2Fol.getSignature( lksk_proof, identity[HOLFormula] )
+    val signature = undoHol2Fol.getSignature( lksk_proof, identity[Formula] )
 
     val converter = Resolution2RalWithAbstractions( signature, abstracted_constants_map )
 

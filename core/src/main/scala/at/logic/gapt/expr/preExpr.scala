@@ -50,7 +50,7 @@ object preExpr {
   case class Ident( name: String, ty: Type ) extends Expr
   case class Abs( v: Ident, sub: Expr ) extends Expr
   case class App( a: Expr, b: Expr ) extends Expr
-  case class Quoted( e: real.LambdaExpression, ty: Type, fvs: Map[String, Type] ) extends Expr
+  case class Quoted( e: real.Expr, ty: Type, fvs: Map[String, Type] ) extends Expr
 
   class ReadablePrinter( assg: Map[MetaTypeIdx, Type], sig: BabelSignature ) {
     private val printMetaTypeIdx: MetaTypeIdx => String = {
@@ -118,11 +118,11 @@ object preExpr {
     case real.`->`( in, out )       => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
-  def QuoteBlackbox( e: real.LambdaExpression ) =
-    Quoted( e, liftTypeMono( e.exptype ), Map() )
+  def QuoteBlackbox( e: real.Expr ) =
+    Quoted( e, liftTypeMono( e.ty ), Map() )
 
-  def QuoteWhitebox( e: real.LambdaExpression ) =
-    Quoted( e, liftTypeMono( e.exptype ),
+  def QuoteWhitebox( e: real.Expr ) =
+    Quoted( e, liftTypeMono( e.ty ),
       real.freeVariables( e ).
       map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
       toMap )
@@ -250,7 +250,7 @@ object preExpr {
     case MetaType( idx )          => toRealType( assg( idx ), assg )
   }
 
-  def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.LambdaExpression = expr match {
+  def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.Expr = expr match {
     case LocAnnotation( e, _ )   => toRealExpr( e, assg, bound )
     case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
     case Ident( name, ty ) =>
@@ -263,7 +263,7 @@ object preExpr {
       real.App( toRealExpr( a, assg, bound ), toRealExpr( b, assg, bound ) )
     case Quoted( e, _, _ ) => e
   }
-  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[ElabError, Seq[real.LambdaExpression]] = {
+  def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[ElabError, Seq[real.Expr]] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet
     val freeVars = fi.filter( sig.signatureLookup( _ ).isVar )
     val startingEnv = fi.map { i =>
@@ -280,6 +280,6 @@ object preExpr {
         expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i", Nil ) ), freeVars ) )
     }
   }
-  def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.LambdaExpression] =
+  def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.Expr] =
     toRealExprs( Seq( expr ), sig ).map( _.head )
 }

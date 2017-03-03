@@ -71,8 +71,8 @@ object IvyToResolution {
         }
     }.unzip
 
-    val proofWithoutNewSymbols = TermReplacement( proof, newSymbols.toMap[LambdaExpression, LambdaExpression] )
-    val justificationsWithoutNewSymbols = justifications map { TermReplacement( _, newSymbols.toMap[LambdaExpression, LambdaExpression] ) }
+    val proofWithoutNewSymbols = TermReplacement( proof, newSymbols.toMap[Expr, Expr] )
+    val justificationsWithoutNewSymbols = justifications map { TermReplacement( _, newSymbols.toMap[Expr, Expr] ) }
 
     mapInputClauses( proofWithoutNewSymbols ) { cls =>
       justificationsWithoutNewSymbols.find { _.conclusion == cls } getOrElse { Input( cls ) }

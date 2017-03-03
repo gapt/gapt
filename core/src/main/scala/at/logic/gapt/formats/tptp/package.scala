@@ -6,7 +6,7 @@ import at.logic.gapt.proofs._
 
 package object tptp {
 
-  type GeneralTerm = LambdaExpression
+  type GeneralTerm = Expr
   type FormulaRole = String
   type InfoItem = GeneralTerm
 
@@ -24,38 +24,38 @@ package object tptp {
   sealed trait TptpInput {
     override def toString = tptpToString.tptpInput( this )
   }
-  case class AnnotatedFormula( language: String, name: String, role: FormulaRole, formula: HOLFormula, annotations: Seq[GeneralTerm] ) extends TptpInput
+  case class AnnotatedFormula( language: String, name: String, role: FormulaRole, formula: Formula, annotations: Seq[GeneralTerm] ) extends TptpInput
   case class IncludeDirective( fileName: String, formulaSelection: Option[Seq[String]] ) extends TptpInput
 
   object TptpTerm {
-    def apply( sym: String, args: Seq[LambdaExpression] ): LambdaExpression =
-      Apps( Const( sym, FunctionType( Ti, args.map( _.exptype ) ) ), args )
-    def apply( sym: String, args: LambdaExpression* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression =
+    def apply( sym: String, args: Seq[Expr] ): Expr =
+      Apps( Const( sym, FunctionType( Ti, args.map( _.ty ) ) ), args )
+    def apply( sym: String, args: Expr* )( implicit dummyImplicit: DummyImplicit ): Expr =
       TptpTerm( sym, args )
-    def unapplySeq( expr: LambdaExpression ): Option[( String, Seq[LambdaExpression] )] = expr match {
+    def unapplySeq( expr: Expr ): Option[( String, Seq[Expr] )] = expr match {
       case Apps( Const( sym, _ ), args ) => Some( ( sym, args ) )
       case _                             => None
     }
   }
-  def TptpAtom( sym: String, args: Seq[LambdaExpression] ): HOLAtom =
+  def TptpAtom( sym: String, args: Seq[Expr] ): Atom =
     ( sym, args ) match {
       case ( "equal", Seq( a, b ) ) => Eq( a, b ) // old tptp syntax
-      case _                        => Apps( Const( sym, FunctionType( To, args.map( _.exptype ) ) ), args ).asInstanceOf[HOLAtom]
+      case _                        => Apps( Const( sym, FunctionType( To, args.map( _.ty ) ) ), args ).asInstanceOf[Atom]
     }
 
   object GeneralList {
     val name = "$general_list"
-    def apply( elems: Seq[GeneralTerm] ): LambdaExpression = TptpTerm( name, elems )
-    def apply( elems: GeneralTerm* )( implicit dummyImplicit: DummyImplicit ): LambdaExpression = TptpTerm( name, elems )
-    def unapplySeq( expr: LambdaExpression ): Option[Seq[LambdaExpression]] = expr match {
+    def apply( elems: Seq[GeneralTerm] ): Expr = TptpTerm( name, elems )
+    def apply( elems: GeneralTerm* )( implicit dummyImplicit: DummyImplicit ): Expr = TptpTerm( name, elems )
+    def unapplySeq( expr: Expr ): Option[Seq[Expr]] = expr match {
       case Apps( Const( `name`, _ ), elems ) => Some( elems )
       case _                                 => None
     }
   }
   object GeneralColon {
     val name = "$general_colon"
-    def apply( a: GeneralTerm, b: GeneralTerm ): LambdaExpression = TptpTerm( name, a, b )
-    def unapplySeq( expr: LambdaExpression ): Option[Seq[LambdaExpression]] = expr match {
+    def apply( a: GeneralTerm, b: GeneralTerm ): Expr = TptpTerm( name, a, b )
+    def unapplySeq( expr: Expr ): Option[Seq[Expr]] = expr match {
       case Apps( Const( `name`, _ ), elems ) => Some( elems )
       case _                                 => None
     }

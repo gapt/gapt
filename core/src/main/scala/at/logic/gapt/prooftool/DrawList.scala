@@ -31,11 +31,11 @@ class DrawList(
   def drawMember[T]( x: Any ): Component = x match {
     case s: Sequent[t] if s.nonEmpty =>
       s.elements.head match {
-        case _: HOLFormula =>
-          DrawSequent( main, s.asInstanceOf[HOLSequent], ( x: HOLFormula ) => LatexExporter( x ) )
+        case _: Formula =>
+          DrawSequent( main, s.asInstanceOf[HOLSequent], ( x: Formula ) => LatexExporter( x ) )
       }
 
-    case ( f1: LambdaExpression, f2: LambdaExpression ) => drawDefinition( f1, f2 )
+    case ( f1: Expr, f2: Expr ) => drawDefinition( f1, f2 )
     case _ => new Label( x.toString ) {
       background = new Color( 255, 255, 255 )
       opaque = true
@@ -43,7 +43,7 @@ class DrawList(
     }
   }
 
-  def drawDefinition( f1: LambdaExpression, f2: LambdaExpression ) = new FlowPanel {
+  def drawDefinition( f1: Expr, f2: Expr ) = new FlowPanel {
     background = new Color( 255, 255, 255 )
     opaque = false
 
@@ -54,6 +54,6 @@ class DrawList(
     contents += new Label( " := " ) { font = main.font }
     contents += label2
 
-    def expressionToLabel( e: LambdaExpression ): LatexLabel = LatexLabel( main, LatexExporter( e ) )
+    def expressionToLabel( e: Expr ): LatexLabel = LatexLabel( main, LatexExporter( e ) )
   }
 }

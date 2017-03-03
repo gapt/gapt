@@ -40,7 +40,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def get[T: Facet]: T = state.get[T]
 
   def constants: Iterable[Const] = get[Constants].constants.values
-  def definitions: Map[Const, LambdaExpression] =
+  def definitions: Map[Const, Expr] =
     for {
       ( what, by ) <- get[Definitions].definitions
       whatC <- constant( what )
@@ -67,7 +67,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   ).isDefined
 
   /** Returns Some(expandedDefinition) if c is a defined constant. */
-  def definition( c: Const ): Option[LambdaExpression] =
+  def definition( c: Const ): Option[Expr] =
     for {
       defC <- get[Constants].constants.get( c.name )
       subst <- syntacticMatching( defC, c )
@@ -82,7 +82,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
     definition( defn.what ).contains( defn.by )
 
   /** Returns the Skolem definition of skSym.  See [[at.logic.gapt.expr.hol.SkolemFunctions]]. */
-  def skolemDef( skSym: Const ): Option[LambdaExpression] =
+  def skolemDef( skSym: Const ): Option[Expr] =
     get[SkolemFunctions].skolemDefs.get( skSym )
 
   /**
@@ -99,15 +99,15 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   }
 
   /** Normalizes an expression with the reduction rules stored in this context. */
-  def normalize( expression: LambdaExpression ): LambdaExpression =
+  def normalize( expression: Expr ): Expr =
     normalizer.normalize( expression )
 
-  def isDefEq( a: LambdaExpression, b: LambdaExpression ): Boolean =
+  def isDefEq( a: Expr, b: Expr ): Boolean =
     normalizer.isDefEq( a, b )
 
   def signatureLookup( s: String ): BabelSignature.VarConst =
     constant( s ) match {
-      case Some( c ) => BabelSignature.IsConst( c.exptype )
+      case Some( c ) => BabelSignature.IsConst( c.ty )
       case None      => BabelSignature.IsVar
     }
 
@@ -204,22 +204,22 @@ object Context {
     def ++( consts: Traversable[Const] ): Constants =
       consts.foldLeft( this )( _ + _ )
 
-    override def toString = constants.values.map( c => s"${c.name}: ${c.exptype}" ).mkString( "\n" )
+    override def toString = constants.values.map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
   /** Definitions that define a constant by an expression of the same type. */
-  case class Definitions( definitions: Map[String, LambdaExpression] ) extends ReductionRule {
+  case class Definitions( definitions: Map[String, Expr] ) extends ReductionRule {
     def +( defn: EDefinition ) = {
       require( !definitions.contains( defn.what.name ) )
       copy( definitions + ( defn.what.name -> defn.by ) )
     }
 
-    override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
+    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
       head match {
         case Const( n, t ) if definitions.contains( n ) =>
           val by = definitions( n )
-          val Some( subst ) = syntacticMatching( by.exptype, t )
+          val Some( subst ) = syntacticMatching( by.ty, t )
           Some( subst( by ) -> args )
         case _ => None
       }
@@ -227,7 +227,7 @@ object Context {
     override def toString = definitions.toSeq.sortBy( _._1 ).
       map { case ( w, b ) => s"$w -> $b" }.mkString( "\n" )
 
-    def filter( p: ( ( String, LambdaExpression ) ) => Boolean ): Definitions =
+    def filter( p: ( ( String, Expr ) ) => Boolean ): Definitions =
       copy( definitions.filter( p ) )
   }
   implicit val defsFacet: Facet[Definitions] = Facet( Definitions( Map() ) )
@@ -278,9 +278,9 @@ object Context {
   object Update {
     implicit def fromSort( ty: TBase ): Update = Sort( ty )
     implicit def fromConst( const: Const ): Update = ConstDecl( const )
-    implicit def fromDefn( defn: ( String, LambdaExpression ) ): Update =
-      Definition( EDefinition( Const( defn._1, defn._2.exptype ), defn._2 ) )
-    implicit def fromDefnEq( eq: HOLFormula ): Update = eq match {
+    implicit def fromDefn( defn: ( String, Expr ) ): Update =
+      Definition( EDefinition( Const( defn._1, defn._2.ty ), defn._2 ) )
+    implicit def fromDefnEq( eq: Formula ): Update = eq match {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
         Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
     }
@@ -299,7 +299,7 @@ object Context {
   /** Inductive base type with constructors. */
   case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {
     for ( constr <- constructors ) {
-      val FunctionType( ty_, _ ) = constr.exptype
+      val FunctionType( ty_, _ ) = constr.ty
       require(
         ty == ty_,
         s"Base type $ty and type constructor $constr don't agree."
@@ -341,14 +341,14 @@ object Context {
 
   case class ConstDecl( const: Const ) extends Update {
     override def apply( ctx: Context ): State = {
-      ctx.check( const.exptype )
+      ctx.check( const.ty )
       ctx.state.update[Constants]( _ + const )
     }
   }
 
   case class Definition( definition: EDefinition ) extends Update {
     override def apply( ctx: Context ): State = {
-      ctx.check( definition.what.exptype )
+      ctx.check( definition.what.ty )
       ctx.check( definition.by )
       ctx.state.update[Constants]( _ + definition.what )
         .update[Definitions]( _ + definition )
@@ -364,13 +364,13 @@ object Context {
 
   implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
-  case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Update {
+  case class SkolemFun( sym: Const, defn: Expr ) extends Update {
     val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix, isForall ) ) = defn
-    require( sym.exptype == FunctionType( boundVariable.exptype, argumentVariables.map( _.exptype ) ) )
+    require( sym.ty == FunctionType( boundVariable.ty, argumentVariables.map( _.ty ) ) )
     require( freeVariables( defn ).isEmpty )
 
     override def apply( ctx: Context ): State = {
-      ctx.check( sym.exptype )
+      ctx.check( sym.ty )
       ctx.check( defn )
       ctx.state.update[Constants]( _ + sym )
         .update[SkolemFunctions]( _ + ( sym, defn ) )

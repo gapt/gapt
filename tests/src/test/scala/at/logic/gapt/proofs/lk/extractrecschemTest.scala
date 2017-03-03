@@ -51,7 +51,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val proof = eliminateDefinitions( tapeUrban.defs )( tapeUrban.sigma )
 
     val recSchem = extractRecSchem( proof )
-    val lang = recSchem.language.map( _.asInstanceOf[HOLFormula] )
+    val lang = recSchem.language.map( _.asInstanceOf[Formula] )
     And( recSchem.language ) must beEUnsat
   }
 
@@ -128,7 +128,7 @@ class Pi2FactorialPOC extends Specification with SatMatchers {
     le"B 0 y X" -> le"X (s 0): o"
   )
 
-  def lang( i: Int ) = hors.parametricLanguage( Numeral( i ) ).map( _.asInstanceOf[HOLFormula] )
+  def lang( i: Int ) = hors.parametricLanguage( Numeral( i ) ).map( _.asInstanceOf[Formula] )
 
   // println( hors )
   // println()

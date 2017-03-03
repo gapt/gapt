@@ -7,7 +7,7 @@ object LatexExporter {
 
   // Expressions
 
-  def apply( e: LambdaExpression ): String = expr( e, prio.max )
+  def apply( e: Expr ): String = expr( e, prio.max )
 
   def apply( sequent: HOLSequent ): String =
     sequent.antecedent.map( apply ).mkString( ", " ) + " \\vdash " + sequent.succedent.map( apply ).mkString( ", " )
@@ -30,19 +30,19 @@ object LatexExporter {
   }
   private def parenIf( enclosingPrio: Int, currentPrio: Int, inside: String ) =
     if ( enclosingPrio <= currentPrio ) s"($inside)" else inside
-  private def binExpr( a: LambdaExpression, b: LambdaExpression, p: Int, newPrio: Int, op: String ) =
+  private def binExpr( a: Expr, b: Expr, p: Int, newPrio: Int, op: String ) =
     parenIf( p, newPrio, s"${expr( a, newPrio )} $op ${expr( b, newPrio )}" )
-  private def quant( f: LambdaExpression, v: Var, p: Int, op: String ) =
+  private def quant( f: Expr, v: Var, p: Int, op: String ) =
     parenIf( p, prio.quantOrNeg, s"$op ${escapeName( v.name )}\\: ${expr( f, prio.quantOrNeg + 1 )}" )
   private val relOps = Map( "=" -> "=", "<" -> "<", ">" -> ">", "<=" -> "\\leq", ">=" -> "\\geq" )
-  private def expr( e: LambdaExpression, p: Int ): String = e match {
+  private def expr( e: Expr, p: Int ): String = e match {
     case Apps( Const( "+", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "+" )
     case Apps( Const( "-", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "-" )
     case Apps( Const( "*", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.timesDiv, "*" )
 
-    case Neg( HOLAtom( Const( n, _ ), Seq( a, b ) ) ) if relOps contains n =>
+    case Neg( Atom( Const( n, _ ), Seq( a, b ) ) ) if relOps contains n =>
       binExpr( a, b, p - 3, prio.infixRel, "\\not " + relOps( n ) )
-    case HOLAtom( Const( n, _ ), Seq( a, b ) ) if relOps contains n =>
+    case Atom( Const( n, _ ), Seq( a, b ) ) if relOps contains n =>
       binExpr( a, b, p - 3, prio.infixRel, relOps( n ) )
 
     case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
@@ -68,12 +68,12 @@ object LatexExporter {
   }
 
   private object IteratedUnaryFunction {
-    private def decompose( expr: LambdaExpression, hd: VarOrConst, n: Int ): ( VarOrConst, Int, LambdaExpression ) =
+    private def decompose( expr: Expr, hd: VarOrConst, n: Int ): ( VarOrConst, Int, Expr ) =
       expr match {
         case App( `hd`, arg ) => decompose( arg, hd, n + 1 )
         case _                => ( hd, n, expr )
       }
-    def unapply( expr: LambdaExpression ): Option[( VarOrConst, Int, LambdaExpression )] =
+    def unapply( expr: Expr ): Option[( VarOrConst, Int, Expr )] =
       expr match {
         case App( hd: VarOrConst, arg ) => Some( decompose( arg, hd, 1 ) )
         case _                          => None
@@ -146,7 +146,7 @@ object LatexExporter {
 
   // Proofs
 
-  private def inferences[P <: SequentProof[HOLFormula, P]]( p: P ): String = {
+  private def inferences[P <: SequentProof[Formula, P]]( p: P ): String = {
     val commandName = p.immediateSubProofs.size match {
       case 0 => "UnaryInfC"
       case 1 => "UnaryInfC"
@@ -163,7 +163,7 @@ object LatexExporter {
        |\\RightLabel{$$${escapeName( p.name )}$$}
        |\\$commandName{$$${apply( p.conclusion )}$$}""".stripMargin
   }
-  def apply[P <: SequentProof[HOLFormula, P]]( p: P ): String =
+  def apply[P <: SequentProof[Formula, P]]( p: P ): String =
     documentWrapper(
       s"""\\begin{prooftree}
        |${inferences( p )}

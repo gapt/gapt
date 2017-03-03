@@ -58,7 +58,7 @@ import scala.collection.mutable
  *
  * [Vor14] Andrei Voronkov, AVATAR: The Architecture for First-Order Theorem Provers. CAV 2014: pp. 696-710
  */
-trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with DagProof[ResolutionProof] {
+trait ResolutionProof extends SequentProof[Formula, ResolutionProof] with DagProof[ResolutionProof] {
   /**
    * Assertions of the proof.
    *
@@ -69,14 +69,14 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
   val assertions: HOLClause = immediateSubProofs.flatMapS( _.assertions ).distinct
 
   /** Definitions introduced by the bottom-most inference rule. */
-  def introducedDefinitions: Map[HOLAtomConst, LambdaExpression] = Map()
+  def introducedDefinitions: Map[HOLAtomConst, Expr] = Map()
   /**
    * All definitions introduced by any subproof.
    *
    * @throws Exception if inconsistent definitions are used
    */
   def definitions = {
-    val builder = mutable.Map[HOLAtomConst, LambdaExpression]()
+    val builder = mutable.Map[HOLAtomConst, Expr]()
     for {
       p <- subProofs
       ( defConst, definition ) <- p.introducedDefinitions
@@ -110,7 +110,7 @@ trait ResolutionProof extends SequentProof[HOLFormula, ResolutionProof] with Dag
     require( a == b, s"\n$a ==\n$b" )
 }
 
-abstract class LocalResolutionRule extends ResolutionProof with ContextRule[HOLFormula, ResolutionProof]
+abstract class LocalResolutionRule extends ResolutionProof with ContextRule[Formula, ResolutionProof]
 
 abstract class InitialClause extends LocalResolutionRule {
   override def auxIndices = Seq()
@@ -133,7 +133,7 @@ case class Input( sequent: HOLSequent ) extends InitialClause {
  *   formula :- formula
  * }}}
  */
-case class Taut( formula: HOLFormula ) extends InitialClause {
+case class Taut( formula: Formula ) extends InitialClause {
   override def mainFormulaSequent = formula +: Sequent() :+ formula
 }
 /**
@@ -143,7 +143,7 @@ case class Taut( formula: HOLFormula ) extends InitialClause {
  *   :- term = term
  * }}}
  */
-case class Refl( term: LambdaExpression ) extends InitialClause {
+case class Refl( term: Expr ) extends InitialClause {
   override def mainFormulaSequent = Sequent() :+ ( term === term )
 }
 /**
@@ -153,8 +153,8 @@ case class Refl( term: LambdaExpression ) extends InitialClause {
  *   :- ∀x (D(x) <-> φ(x))
  * }}}
  */
-case class Defn( defConst: HOLAtomConst, definition: LambdaExpression ) extends InitialClause {
-  val vars = defConst.exptype match {
+case class Defn( defConst: HOLAtomConst, definition: Expr ) extends InitialClause {
+  val vars = defConst.ty match {
     case FunctionType( To, argTypes ) =>
       definition match {
         case Abs.Block( vs, _ ) if vs.size == argTypes.size && vs == vs.distinct =>
@@ -238,7 +238,7 @@ object MguFactor {
  * }}}
  */
 case class Subst( subProof: ResolutionProof, substitution: Substitution ) extends ResolutionProof {
-  override val conclusion: Sequent[HOLFormula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
+  override val conclusion: Sequent[Formula] = subProof.conclusion.map( substitution( _ ) ).map( BetaReduction.betaNormalize )
   override def mainIndices: Seq[SequentIndex] = subProof.conclusion.indices
   override def auxIndices: Seq[Seq[SequentIndex]] = Seq( subProof.conclusion.indices )
   override def occConnectors: Seq[SequentConnector] =
@@ -272,11 +272,11 @@ case class Resolution( subProof1: ResolutionProof, idx1: SequentIndex,
   def auxIndices = Seq( Seq( idx1 ), Seq( idx2 ) )
 }
 object Resolution {
-  def apply( subProof1: ResolutionProof, subProof2: ResolutionProof, atom: HOLFormula ): ResolutionProof =
+  def apply( subProof1: ResolutionProof, subProof2: ResolutionProof, atom: Formula ): ResolutionProof =
     Resolution( subProof1, subProof1.conclusion.indexOfInSuc( atom ),
       subProof2, subProof2.conclusion.indexOfInAnt( atom ) )
 
-  def maybe( subProof1: ResolutionProof, subProof2: ResolutionProof, atom: HOLFormula ): ResolutionProof =
+  def maybe( subProof1: ResolutionProof, subProof2: ResolutionProof, atom: Formula ): ResolutionProof =
     if ( !subProof1.conclusion.succedent.contains( atom ) )
       subProof1
     else if ( !subProof2.conclusion.antecedent.contains( atom ) )
@@ -303,7 +303,7 @@ object MguResolution {
  */
 case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight: Boolean,
                     subProof2: ResolutionProof, auxIdx: SequentIndex,
-                    context: LambdaExpression ) extends LocalResolutionRule {
+                    context: Expr ) extends LocalResolutionRule {
   require( eqIdx isSuc )
   val ( t, s ) = subProof1.conclusion( eqIdx ) match { case Eq( t_, s_ ) => if ( leftToRight ) ( t_, s_ ) else ( s_, t_ ) }
 
@@ -312,7 +312,7 @@ case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight
     auxFormula == BetaReduction.betaNormalize( context( t ) ),
     s"$auxFormula == ${BetaReduction.betaNormalize( context( t ) )}"
   )
-  val rewrittenAuxFormula = BetaReduction.betaNormalize( context( s ) ).asInstanceOf[HOLFormula]
+  val rewrittenAuxFormula = BetaReduction.betaNormalize( context( s ) ).asInstanceOf[Formula]
   def mainFormulaSequent =
     if ( auxIdx isAnt ) rewrittenAuxFormula +: Sequent()
     else Sequent() :+ rewrittenAuxFormula
@@ -323,12 +323,12 @@ case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight
 object Paramod {
   def withMain( subProof1: ResolutionProof, eqIdx: SequentIndex,
                 subProof2: ResolutionProof, auxIdx: SequentIndex,
-                main: HOLFormula ): ResolutionProof = {
+                main: Formula ): ResolutionProof = {
     val Eq( t, s ) = subProof1.conclusion( eqIdx )
 
-    val ctxLTR = replacementContext( t.exptype, main,
+    val ctxLTR = replacementContext( t.ty, main,
       subProof2.conclusion( auxIdx ).find( t ).filter( main get _ contains s ) )
-    val ctxRTL = replacementContext( t.exptype, main,
+    val ctxRTL = replacementContext( t.ty, main,
       subProof2.conclusion( auxIdx ).find( s ).filter( main get _ contains t ) )
 
     if ( BetaReduction.betaNormalize( ctxLTR( t ) ) == subProof2.conclusion( auxIdx )
@@ -358,12 +358,12 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
  *
  * This inference should only be used on descendants of Input inferences.
  */
-case class DefIntro( subProof: ResolutionProof, idx: SequentIndex, definition: Definition, args: Seq[LambdaExpression] ) extends PropositionalResolutionRule {
+case class DefIntro( subProof: ResolutionProof, idx: SequentIndex, definition: Definition, args: Seq[Expr] ) extends PropositionalResolutionRule {
   val Definition( defConst: HOLAtomConst, by ) = definition
-  val defAtom = defConst( args ).asInstanceOf[HOLAtom]
+  val defAtom = defConst( args ).asInstanceOf[Atom]
   val expandedFormula = BetaReduction.betaNormalize( Apps( by, args ) )
   requireEq( subProof.conclusion( idx ), expandedFormula )
-  def auxFormula = expandedFormula.asInstanceOf[HOLFormula]
+  def auxFormula = expandedFormula.asInstanceOf[Formula]
   override def introducedDefinitions = Map( defConst -> by )
   override def mainFormulaSequent =
     if ( idx isAnt ) defAtom +: Sequent()
@@ -439,7 +439,7 @@ case class ImpL2( subProof: ResolutionProof, idx: SequentIndex ) extends Proposi
 abstract class WeakQuantResolutionRule extends PropositionalResolutionRule {
   def variable: Var
   def bound: Var
-  def sub: HOLFormula
+  def sub: Formula
   def instFormula = Substitution( bound -> variable )( sub )
 
   // FIXME: is eigenvariable condition a good idea?
@@ -470,22 +470,22 @@ case class ExL( subProof: ResolutionProof, idx: SequentIndex, variable: Var ) ex
 }
 
 abstract class SkolemQuantResolutionRule extends PropositionalResolutionRule {
-  def skolemTerm: LambdaExpression
-  def skolemDef: LambdaExpression
+  def skolemTerm: Expr
+  def skolemDef: Expr
   def bound: Var
-  def sub: HOLFormula
+  def sub: Formula
 
   val Apps( skolemConst: Const, skolemArgs ) = skolemTerm
   requireEq( BetaReduction.betaNormalize( skolemDef( skolemArgs: _* ) ), subProof.conclusion( idx ) )
 
   def instFormula = Substitution( bound -> skolemTerm )( sub )
 }
-case class AllL( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: LambdaExpression, skolemDef: LambdaExpression ) extends SkolemQuantResolutionRule {
+case class AllL( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
   require( idx isAnt )
   val All( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = instFormula +: Sequent()
 }
-case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: LambdaExpression, skolemDef: LambdaExpression ) extends SkolemQuantResolutionRule {
+case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
   require( idx isSuc )
   val Ex( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = Sequent() :+ instFormula
@@ -498,7 +498,7 @@ case class Flip( subProof: ResolutionProof, idx: SequentIndex ) extends Proposit
 object Flip {
   def simulate( subProof: ResolutionProof, equation: SequentIndex ): ResolutionProof = {
     val Eq( s, t ) = subProof.conclusion( equation )
-    val x = rename( Var( "x", s.exptype ), freeVariables( subProof.conclusion ) )
+    val x = rename( Var( "x", s.ty ), freeVariables( subProof.conclusion ) )
     if ( equation isSuc ) {
       Paramod( subProof, equation, true,
         Refl( s ), Suc( 0 ), Abs( x, Eq( x, s ) ) )

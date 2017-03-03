@@ -4,11 +4,11 @@ import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 
 object clauseSubsumption {
   def apply(
-    from:                Sequent[LambdaExpression],
-    to:                  Sequent[LambdaExpression],
-    alreadyFixed:        PreSubstitution           = PreSubstitution(),
-    multisetSubsumption: Boolean                   = false,
-    matchingAlgorithm:   MatchingAlgorithm         = syntacticMatching
+    from:                Sequent[Expr],
+    to:                  Sequent[Expr],
+    alreadyFixed:        PreSubstitution   = PreSubstitution(),
+    multisetSubsumption: Boolean           = false,
+    matchingAlgorithm:   MatchingAlgorithm = syntacticMatching
   ): Option[Substitution] = {
     if ( multisetSubsumption )
       if ( from.antecedent.size > to.antecedent.size || from.succedent.size > to.succedent.size )

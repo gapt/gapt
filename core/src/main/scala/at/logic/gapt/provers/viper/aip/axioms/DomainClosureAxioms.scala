@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, Eq, Ex, FunctionType, HOLFormula, Or, TBase, Var, rename, Const => Con }
+import at.logic.gapt.expr.{ All, Eq, Ex, FunctionType, Formula, Or, TBase, Var, rename, Const => Con }
 import at.logic.gapt.proofs.gaptic.{ ProofState, allR, escargot, induction }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip.{ LabelledSequent, ThrowsError, getConstructors }
@@ -55,7 +55,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @return A first-order formula that asserts that the values of the given type are completely represented
    *         by its constructors.
    */
-  private def domainClosureAxiom( caseType: TBase, constructors: Seq[Con] ): HOLFormula = {
+  private def domainClosureAxiom( caseType: TBase, constructors: Seq[Con] ): Formula = {
     val caseVariable = Var( "x", caseType )
     All(
       caseVariable,
@@ -71,9 +71,9 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    *                    a constructor of the case variable's base type.
    * @return A first-order formula that asserts that x can be represented by the specified constructor.
    */
-  private def caseDistinction( caseVariable: Var, constructor: Con ): HOLFormula = {
+  private def caseDistinction( caseVariable: Var, constructor: Con ): Formula = {
     val nameGenerator = rename.awayFrom( caseVariable :: Nil )
-    val FunctionType( _, argumentTypes ) = constructor.exptype
+    val FunctionType( _, argumentTypes ) = constructor.ty
     val newVariables = argumentTypes map {
       argumentType => nameGenerator.fresh( Var( "x", argumentType ) )
     }

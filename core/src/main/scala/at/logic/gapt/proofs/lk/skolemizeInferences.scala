@@ -14,7 +14,7 @@ private class skolemizeInferences(
 ) {
   type PosInEndSequent = Seq[Int]
 
-  val skolemDefs = mutable.Map[( LambdaExpression, PosInEndSequent ), Const]()
+  val skolemDefs = mutable.Map[( Expr, PosInEndSequent ), Const]()
 
   // The general idea is that as we proceed upwards through the proof, we maintain
   // certain information about each formula in the current sequent.
@@ -28,7 +28,7 @@ private class skolemizeInferences(
   // for the whole sequent, so it is not included in the per-formula Info).  This substitution maps each of the
   // generalizations to the current formula.
   case class Info(
-      generalizedFormulas:         Seq[HOLFormula],
+      generalizedFormulas:         Seq[Formula],
       isCutAnc:                    Boolean,
       lowerWeakQuantifierTermVars: Seq[Var],
       position:                    PosInEndSequent
@@ -37,9 +37,9 @@ private class skolemizeInferences(
 
     def atPosition( pos: Int* ): Info = atPosition( HOLPosition( pos: _* ) )
     def atPosition( pos: HOLPosition ): Info =
-      copy( generalizedFormulas.filter( !_.isInstanceOf[HOLAtom] ).flatMap( _.get( pos ) ).map( _.asInstanceOf[HOLFormula] ) )
+      copy( generalizedFormulas.filter( !_.isInstanceOf[Atom] ).flatMap( _.get( pos ) ).map( _.asInstanceOf[Formula] ) )
 
-    def instantiateQuantifier( term: LambdaExpression ) =
+    def instantiateQuantifier( term: Expr ) =
       copy(
         generalizedFormulas = generalizedFormulas.
           collect { case quant @ Quant( _, _, _ ) => BetaReduction.betaNormalize( instantiate( quant, term ) ) },
@@ -49,14 +49,14 @@ private class skolemizeInferences(
     def instantiateWeakQuantifier( freshVar: Var ) =
       instantiateQuantifier( freshVar ).copy( lowerWeakQuantifierTermVars = lowerWeakQuantifierTermVars :+ freshVar )
 
-    def addGeneralization( formula: HOLFormula ) =
+    def addGeneralization( formula: Formula ) =
       copy( generalizedFormulas = generalizedFormulas :+ formula )
   }
   // We maintain the invariant that subst(info.map(_.generalizedFormula)) is beta-delta-equal to the end-sequent of the resulting proof.
   def apply( p: LKProof, info: Sequent[Info], subst: Substitution ): LKProof = {
-    def sub( e: LambdaExpression ): LambdaExpression = BetaReduction.betaNormalize( subst( e ) )
-    def suba( f: HOLAtom ): HOLAtom = sub( f ).asInstanceOf[HOLAtom]
-    def subf( f: HOLFormula ): HOLFormula = sub( f ).asInstanceOf[HOLFormula]
+    def sub( e: Expr ): Expr = BetaReduction.betaNormalize( subst( e ) )
+    def suba( f: Atom ): Atom = sub( f ).asInstanceOf[Atom]
+    def subf( f: Formula ): Formula = sub( f ).asInstanceOf[Formula]
 
     p match {
       case LogicalAxiom( atom )     => LogicalAxiom( subf( atom ) )
@@ -177,13 +177,13 @@ private class skolemizeInferences(
 
       // Eigenvariable inferences that are Skolemized
       case p @ StrongQuantifierRule( q, a, eigen, quant, pol ) =>
-        val Some( genFormula ) = info( p.mainIndices.head ).generalizedFormulas.find( !_.isInstanceOf[HOLAtom] )
+        val Some( genFormula ) = info( p.mainIndices.head ).generalizedFormulas.find( !_.isInstanceOf[Atom] )
         val argVars_ = info( p.mainIndices.head ).lowerWeakQuantifierTermVars ++ freeVariables( genFormula )
         val argVars = if ( proofTheoretic ) argVars_.distinct else argVars_.filter( freeVariables( genFormula ) ).distinct
         val skolemDef = Abs( argVars, genFormula )
         val skolemConst = skolemDefs.getOrElseUpdate(
           ( skolemDef, if ( proofTheoretic ) info( p.mainIndices.head ).position else Seq() ),
-          Const( nameGen freshWithIndex "s", FunctionType( eigen.exptype, argVars.map( _.exptype ) ) )
+          Const( nameGen freshWithIndex "s", FunctionType( eigen.ty, argVars.map( _.ty ) ) )
         )
         val skolemTerm = skolemConst( argVars: _* )
         val q_ = apply( q, p.occConnectors.head.parent( info ).

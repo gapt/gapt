@@ -439,7 +439,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       case _ =>
         Lemma( endSequent ) {
           unfold( s"Q[$n]" ) in "Qn"
-          cut( "Rn1", R( n - 1 ).asInstanceOf[HOLFormula] )
+          cut( "Rn1", R( n - 1 ).asInstanceOf[Formula] )
 
           //forget( "Suc" )
           unfold( s"R[${n - 1}]" ) in "Rn1"
@@ -469,7 +469,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val FQ: LKProof = Lemma( hols"${F( k )} :- ${Q( k )}" ) {
-    cut( s"Rk", R( k ).asInstanceOf[HOLFormula] )
+    cut( s"Rk", R( k ).asInstanceOf[Formula] )
     insert( FR )
     insert( RQ( k ) )
   }
@@ -528,7 +528,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val psi2: LKProof = Lemma( hols"${F( k )}, REM, EXT, PRE :- C ${S( k )}" ) {
-    cut( s"Q[$k]", Q( k ).asInstanceOf[HOLFormula] )
+    cut( s"Q[$k]", Q( k ).asInstanceOf[Formula] )
 
     insert( FQ )
     insert( psi2Right( k ) )

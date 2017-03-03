@@ -30,8 +30,8 @@ object Checkable {
       }
   }
 
-  implicit object expressionIsCheckable extends Checkable[LambdaExpression] {
-    def check( context: Context, expr: LambdaExpression ): Unit =
+  implicit object expressionIsCheckable extends Checkable[Expr] {
+    def check( context: Context, expr: Expr ): Unit =
       expr match {
         case c @ Const( name, _ ) =>
           require(

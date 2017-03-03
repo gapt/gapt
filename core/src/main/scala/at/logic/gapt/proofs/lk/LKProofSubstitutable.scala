@@ -156,7 +156,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     }
 }
 
-class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression] ) extends LKVisitor[Unit] {
+class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Unit] {
   override protected def visitOpenAssumption( proof: OpenAssumption, otherArg: Unit ): ( LKProof, SequentConnector ) = {
     val proofNew = OpenAssumption( for ( ( l, f ) <- proof.labelledSequent ) yield l -> TermReplacement( f, repl ), proof.index )
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )

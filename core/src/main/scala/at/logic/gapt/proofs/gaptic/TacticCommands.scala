@@ -309,7 +309,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∃x,,1,,...∃x,,n,,.A`.
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( applyToLabel: String, terms: LambdaExpression* ) = ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
+  def exR( applyToLabel: String, terms: Expr* ) = ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -323,7 +323,7 @@ trait TacticCommands {
    * This will only work if there is exactly one existential formula in the succedent!
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( terms: LambdaExpression* ) = ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
+  def exR( terms: Expr* ) = ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -336,7 +336,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∀x,,1,,,...,∀x,,n,,.A`.
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( applyToLabel: String, terms: LambdaExpression* ) = ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
+  def allL( applyToLabel: String, terms: Expr* ) = ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -350,7 +350,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the antecedent!
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( terms: LambdaExpression* ) = ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
+  def allL( terms: Expr* ) = ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -415,7 +415,7 @@ trait TacticCommands {
    * @param label The label of `C`.
    * @param cutFormula The formula `C`.
    */
-  def cut( label: String, cutFormula: HOLFormula ) = CutTactic( label, cutFormula )
+  def cut( label: String, cutFormula: Formula ) = CutTactic( label, cutFormula )
 
   /**
    * Applies the `Equality` tactic to the current subgoal: Given an equation `s = t` and a formula `A`,
@@ -496,7 +496,7 @@ trait TacticCommands {
   def foTheory( implicit ctx: Context ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
-      theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: HOLAtom => a } ).
+      theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: Atom => a } ).
         toTactical( "does not follow from theory" )
       _ <- insert( theoryAxiom )
     } yield ()
@@ -512,7 +512,7 @@ trait TacticCommands {
       goal <- currentGoal
       theoryAxiom <- ctx.axioms.find( clauseSubsumption( _, goal.conclusion ).isDefined ).
         toTactical( "does not follow from theory" )
-      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[HOLAtom] ) ) )
+      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[Atom] ) ) )
     } yield ()
   }
 
@@ -656,8 +656,8 @@ trait TacticCommands {
   }
 
   /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
-  def haveInstance( formula: HOLFormula, polarity: Polarity ): Tactical[String] = Tactical {
-    def findInstances( labelledSequent: Sequent[( String, HOLFormula )] ): Seq[( String, Seq[LambdaExpression] )] = {
+  def haveInstance( formula: Formula, polarity: Polarity ): Tactical[String] = Tactical {
+    def findInstances( labelledSequent: Sequent[( String, Formula )] ): Seq[( String, Seq[Expr] )] = {
       val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
         case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity.inSuc  => ( l, vs, m )
         case ( ( l, All.Block( vs, m ) ), i ) if i.isAnt && polarity.inAnt => ( l, vs, m )

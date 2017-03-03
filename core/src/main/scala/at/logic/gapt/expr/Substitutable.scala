@@ -38,7 +38,7 @@ object Substitutable {
   }
 
   private def substVar( sub: Substitution, v: Var ): Var =
-    if ( sub.typeMap.isEmpty ) v else Var( v.name, SubstitutableTy.applySubstitution( sub, v.exptype ) )
+    if ( sub.typeMap.isEmpty ) v else Var( v.name, SubstitutableTy.applySubstitution( sub, v.ty ) )
 
   /**
    * The general method for applying substitutions to lambda expressions.
@@ -47,7 +47,7 @@ object Substitutable {
    * @param t A lambda expression.
    * @return The substituted lambda expression.
    */
-  private def applySub( sub: Substitution, t: LambdaExpression ): LambdaExpression = t match {
+  private def applySub( sub: Substitution, t: Expr ): Expr = t match {
     case _ if sub.isEmpty => t
     case v: Var           => sub.map.getOrElse( v, substVar( sub, v ) )
     case c @ Const( x, ty ) =>
@@ -132,15 +132,15 @@ object Substitutable {
     ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLExpression]
 
   /**
-   * Testifies that applying a FOLSubstitution to a HOLFormula that is not a FOLFormula will result in a HOLFormula.
+   * Testifies that applying a FOLSubstitution to a Formula that is not a FOLFormula will result in a Formula.
    *
    * @param notAFOLFormula Testifies that T is not a subtype of FOLFormula.
    */
-  implicit def HOLFormulaClosedUnderFOLSub[T <: HOLFormula](
+  implicit def FormulaClosedUnderFOLSub[T <: Formula](
     implicit
     notAFOLFormula: Not[T <:< FOLFormula]
-  ): Substitutable[FOLSubstitution, T, HOLFormula] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[HOLFormula]
+  ): Substitutable[FOLSubstitution, T, Formula] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[Formula]
 
   /**
    * Testifies that applying a non-FOL substitution to a FOLAtom results in a HOLAtom.
@@ -149,23 +149,23 @@ object Substitutable {
   implicit def FOLAtomSubstitutable[S <: Substitution](
     implicit
     notAFOLSub: Not[S <:< FOLSubstitution]
-  ): Substitutable[S, FOLAtom, HOLAtom] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[HOLAtom]
+  ): Substitutable[S, FOLAtom, Atom] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[Atom]
 
   /**
-   * Testifies that applying a Substitution that is not a FOLSubstitution to a HOLFormula will result in a HOLFormula.
+   * Testifies that applying a Substitution that is not a FOLSubstitution to a Formula will result in a Formula.
    *
    * @param notAFOLSub Testifies that S is not a subtype of FOLSubstitution.
    */
-  implicit def HOLFormulaClosedUnderSub[S <: Substitution, T <: HOLFormula](
+  implicit def FormulaClosedUnderSub[S <: Substitution, T <: Formula](
     implicit
     notAFOLSub:  Not[S <:< FOLSubstitution],
     notAFOLAtom: Not[T <:< FOLAtom]
-  ): Substitutable[S, T, HOLFormula] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[HOLFormula]
+  ): Substitutable[S, T, Formula] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[Formula]
 
   /**
-   * Testifies that applying a Substitution that is not a FOLSubstitution to a FOLExpression will result in a LambdaExpression.
+   * Testifies that applying a Substitution that is not a FOLSubstitution to a FOLExpression will result in a Expr.
    *
    * @param notAFOLSub Testifies that S is not a subtype of FOLSubstitution.
    */
@@ -173,21 +173,21 @@ object Substitutable {
     implicit
     notAFOLSub:  Not[S <:< FOLSubstitution],
     notAFOLAtom: Not[T <:< FOLAtom]
-  ): Substitutable[S, T, LambdaExpression] =
+  ): Substitutable[S, T, Expr] =
     ( sub, t ) => applySub( sub, t )
 
   /**
-   * Testifies that applying a Substitution to a LambdaExpression that is not a FOLExpression or a HOLFormula will result in a LambdaExpression.
+   * Testifies that applying a Substitution to a Expr that is not a FOLExpression or a Formula will result in a Expr.
    *
    * @param notAFOLExpression Testifies that T is not a subtype of FOLExpression.
-   * @param notAHOLFormula Testifies that T is not a subtype of HOLFormula.
+   * @param notAFormula Testifies that T is not a subtype of Formula.
    * @tparam T
    * @return
    */
-  implicit def LambdaExpressionClosedUnderSub[T <: LambdaExpression](
+  implicit def ExprClosedUnderSub[T <: Expr](
     implicit
     notAFOLExpression: Not[T <:< FOLExpression],
-    notAHOLFormula:    Not[T <:< HOLFormula]
-  ): Substitutable[Substitution, T, LambdaExpression] =
+    notAFormula:       Not[T <:< Formula]
+  ): Substitutable[Substitution, T, Expr] =
     ( sub, t ) => applySub( sub, t )
 }

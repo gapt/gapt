@@ -47,11 +47,11 @@ class PrimeProofTest extends Specification {
     //      val sectionsPre = ("Types", getTypeInformation(holcs).toList.sortWith((x,y) => x.toString < y.toString))::Nil
     //
     //      // convert to fol and obtain map of definitons
-    //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.LambdaExpression, at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
+    //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.Expr, at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
     //      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     //      val cs = holcs.map(x => Sequent(
-    //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula]),
-    //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula])
+    //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[Expr],imap,iid).asInstanceOf[FOLFormula]),
+    //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[Expr],imap,iid).asInstanceOf[FOLFormula])
     //      ))
     //      val sections = ("Definitions", imap.toList.map(x => (x._1, FOLConst(x._2))))::sectionsPre
     //

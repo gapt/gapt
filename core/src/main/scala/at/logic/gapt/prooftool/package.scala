@@ -1,6 +1,6 @@
 package at.logic.gapt
 
-import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
+import at.logic.gapt.expr.{ Formula, Expr }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
@@ -34,8 +34,8 @@ package object prooftool {
     notLK: Not[T <:< LKProof]
   ): ProoftoolViewable[SequentProof[F, T]] = {
     def renderer( x: F ): String = x match {
-      case e: LambdaExpression => LatexExporter( e )
-      case _                   => x.toString
+      case e: Expr => LatexExporter( e )
+      case _       => x.toString
     }
 
     ( p, name ) => new SequentProofViewer( name, p, renderer ).showFrame()

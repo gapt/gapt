@@ -15,9 +15,9 @@ package object expr {
   type ClosedUnderFOLSub[T] = Substitutable[FOLSubstitution, T, T]
 
   implicit class ExprNameGenerator( private val nameGen: NameGenerator ) extends AnyVal {
-    def fresh( v: Var ): Var = Var( nameGen.fresh( v.name ), v.exptype )
+    def fresh( v: Var ): Var = Var( nameGen.fresh( v.name ), v.ty )
     def fresh( v: FOLVar ): FOLVar = FOLVar( nameGen.fresh( v.name ) )
-    def fresh( c: Const ): Const = Const( nameGen.fresh( c.name ), c.exptype )
+    def fresh( c: Const ): Const = Const( nameGen.fresh( c.name ), c.ty )
     def fresh( c: FOLConst ): FOLConst = FOLConst( nameGen.fresh( c.name ) )
     def fresh( n: VarOrConst ): VarOrConst = n match {
       case v: Var   => fresh( v )

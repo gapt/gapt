@@ -7,8 +7,8 @@ import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
 
 /**
  * Exports lambda expressions in the Babel format.
- * You probably do not want to use this class, use one of [[at.logic.gapt.expr.LambdaExpression#toString expression.toString]],
- * [[at.logic.gapt.expr.LambdaExpression#toSigRelativeString .toSigRelativeString]], or [[at.logic.gapt.expr.LambdaExpression#toAsciiString .toAsciiString]] instead.
+ * You probably do not want to use this class, use one of [[at.logic.gapt.expr.Expr#toString expression.toString]],
+ * [[at.logic.gapt.expr.Expr#toSigRelativeString .toSigRelativeString]], or [[at.logic.gapt.expr.Expr#toAsciiString .toAsciiString]] instead.
  * These are all implemented using this class.
  *
  * This exporter is implemented using the [[https://bitbucket.org/inkytonik/kiama/src/default/wiki/PrettyPrinting.md pretty-printing library included in Kiama]].
@@ -29,13 +29,13 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def knownConstantTypesFromSig( consts: Iterable[Const] ) =
     consts flatMap { c =>
       sig.signatureLookup( c.name ) match {
-        case BabelSignature.IsConst( ty ) if ty == c.exptype =>
+        case BabelSignature.IsConst( ty ) if ty == c.ty =>
           Some( c.name -> c )
         case _ => None
       }
     }
 
-  def export( expr: LambdaExpression ): String = {
+  def export( expr: Expr ): String = {
     val knownTypesFromSig = knownConstantTypesFromSig( constants.all( expr ) )
     pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) ).layout
   }
@@ -94,7 +94,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
    * @return  Pretty-printed document and the free identifiers.
    */
   def show(
-    expr:      LambdaExpression,
+    expr:      Expr,
     knownType: Boolean,
     bound:     Set[String],
     t0:        Map[String, VarOrConst],
@@ -104,7 +104,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )
 
-      case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.exptype == To =>
+      case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.ty == To =>
         showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
       case Apps( c @ Const( "+", _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.plusMinus, 1, 0, a, b, knownType, bound, t0, p )
@@ -160,7 +160,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     }
 
   def showApps(
-    expr:      LambdaExpression,
+    expr:      Expr,
     knownType: Boolean,
     bound:     Set[String],
     t0:        Map[String, VarOrConst],
@@ -187,12 +187,12 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       ) ) )
 
     val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
-    if ( omitTypes || knownType || expr.exptype == Ti || hdKnown1 ) {
+    if ( omitTypes || knownType || expr.ty == Ti || hdKnown1 ) {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.app )
       ( showFunCall( hd_, args_, p ), t2 )
     } else {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.typeAnnot )
-      ( parenIf( p, prio.typeAnnot, showFunCall( hd_, args_, prio.typeAnnot ) <> ":" <@> show( expr.exptype, false ) ), t2 )
+      ( parenIf( p, prio.typeAnnot, showFunCall( hd_, args_, prio.typeAnnot ) <> ":" <@> show( expr.ty, false ) ), t2 )
     }
   }
 
@@ -201,8 +201,8 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     prio:          Int,
     leftPrioBias:  Int,
     rightPrioBias: Int,
-    a:             LambdaExpression,
-    b:             LambdaExpression,
+    a:             Expr,
+    b:             Expr,
     knownType:     Boolean,
     bound:         Set[String],
     t0:            Map[String, VarOrConst],
@@ -218,8 +218,8 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     prio:          Int,
     leftPrioBias:  Int,
     rightPrioBias: Int,
-    a:             LambdaExpression,
-    b:             LambdaExpression,
+    a:             Expr,
+    b:             Expr,
     knownType:     Boolean,
     bound:         Set[String],
     t0:            Map[String, VarOrConst],
@@ -242,7 +242,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def showQuant(
     sym:   String,
     v:     Var,
-    e:     LambdaExpression,
+    e:     Expr,
     bound: Set[String],
     t0:    Map[String, VarOrConst],
     p:     Int

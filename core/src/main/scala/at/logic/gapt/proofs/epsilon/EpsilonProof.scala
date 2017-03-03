@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 
-case class CriticalFormula( existential: HOLFormula, term: LambdaExpression ) {
+case class CriticalFormula( existential: Formula, term: Expr ) {
   val Ex( bound, qfFormula ) = existential
   val eps = Epsilon( bound, qfFormula )
 
@@ -21,12 +21,12 @@ case class EpsilonProof(
 }
 
 object epsilonize {
-  def apply( f: HOLFormula ): HOLFormula = f match {
-    case Top() | Bottom() | HOLAtom( _, _ ) => f
-    case Neg( a )                           => Neg( apply( a ) )
-    case And( a, b )                        => And( apply( a ), apply( b ) )
-    case Or( a, b )                         => Or( apply( a ), apply( b ) )
-    case Imp( a, b )                        => Imp( apply( a ), apply( b ) )
+  def apply( f: Formula ): Formula = f match {
+    case Top() | Bottom() | Atom( _, _ ) => f
+    case Neg( a )                        => Neg( apply( a ) )
+    case And( a, b )                     => And( apply( a ), apply( b ) )
+    case Or( a, b )                      => Or( apply( a ), apply( b ) )
+    case Imp( a, b )                     => Imp( apply( a ), apply( b ) )
     case Ex( x, a ) =>
       val a_ = apply( a )
       Substitution( x -> Epsilon( x, a_ ) )( a_ )

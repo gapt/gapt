@@ -1,5 +1,5 @@
 package at.logic.gapt.provers.viper.aip.axioms
-import at.logic.gapt.expr.{ HOLFormula, Substitution, Var, Const => Con }
+import at.logic.gapt.expr.{ Formula, Substitution, Var, Const => Con }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, Sequent }
@@ -8,7 +8,7 @@ import cats.instances.all._
 import cats.syntax.all._
 
 object StandardInductionAxioms {
-  def apply( variable: Var, formula: HOLFormula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+  def apply( variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     apply( ( _, _ ) => variable :: Nil, ( _ ) => Right( formula ) )( Sequent() ).map( _.head )
   }
 }
@@ -24,7 +24,7 @@ case class StandardInductionAxioms(
 
   def forVariables( variables: Var* ) = copy( variableSelector = ( _, _ ) => variables.toList )
 
-  def forFormula( formula: HOLFormula ) = copy( formulaSelector = ( _ ) => Right( formula ) )
+  def forFormula( formula: Formula ) = copy( formulaSelector = ( _ ) => Right( formula ) )
 
   /**
    * Computes induction axioms for a given sequent.
@@ -50,7 +50,7 @@ case class StandardInductionAxioms(
    * @return A standard induction axiom for the specified variable and formula.
    */
   private def createAxiom(
-    inductionVariable: Var, inductionFormula: HOLFormula
+    inductionVariable: Var, inductionFormula: Formula
   )( implicit ctx: Context ): ThrowsError[Axiom] = {
     for {
       constructors <- getConstructors( baseType( inductionVariable ), ctx )

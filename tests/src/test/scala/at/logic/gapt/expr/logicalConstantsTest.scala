@@ -4,8 +4,8 @@ import org.specs2.mutable._
 class LogicalConstantsTest extends Specification {
   "Quantifiers" should {
     "have correct type" in {
-      ForallC( Ti -> To ).exptype must_== ( ( ( Ti -> To ) -> To ) -> To )
-      ExistsC( Ti -> To ).exptype must_== ( ( ( Ti -> To ) -> To ) -> To )
+      ForallC( Ti -> To ).ty must_== ( ( ( Ti -> To ) -> To ) -> To )
+      ExistsC( Ti -> To ).ty must_== ( ( ( Ti -> To ) -> To ) -> To )
     }
 
     "match themselves" in {
@@ -23,14 +23,14 @@ class LogicalConstantsTest extends Specification {
 
   "Propositional connectives" should {
     "have correct type" in {
-      AndC().exptype must_== ( To -> ( To -> To ) )
-      OrC().exptype must_== ( To -> ( To -> To ) )
-      ImpC().exptype must_== ( To -> ( To -> To ) )
+      AndC().ty must_== ( To -> ( To -> To ) )
+      OrC().ty must_== ( To -> ( To -> To ) )
+      ImpC().ty must_== ( To -> ( To -> To ) )
 
-      NegC().exptype must_== ( To -> To )
+      NegC().ty must_== ( To -> To )
 
-      TopC().exptype must_== To
-      BottomC().exptype must_== To
+      TopC().ty must_== To
+      BottomC().ty must_== To
     }
 
     "match themselves" in {
@@ -47,8 +47,8 @@ class LogicalConstantsTest extends Specification {
 
   "Equality" should {
     "have correct type" in {
-      EqC( Ti ).exptype must_== ( Ti -> ( Ti -> To ) )
-      EqC( Ti -> To ).exptype must_== ( ( Ti -> To ) -> ( ( Ti -> To ) -> To ) )
+      EqC( Ti ).ty must_== ( Ti -> ( Ti -> To ) )
+      EqC( Ti -> To ).ty must_== ( ( Ti -> To ) -> ( ( Ti -> To ) -> To ) )
     }
     "match itself" in {
       EqC( Ti ) must beLike { case EqC( Ti ) => ok }

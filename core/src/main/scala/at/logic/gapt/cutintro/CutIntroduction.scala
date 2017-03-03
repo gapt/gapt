@@ -19,12 +19,12 @@ import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.{ Logger, metrics }
 
 trait GrammarFindingMethod {
-  def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG]
+  def findGrammars( lang: Set[Expr] ): Option[VTRATG]
   def name: String
 }
 
 case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG] =
+  override def findGrammars( lang: Set[Expr] ): Option[VTRATG] =
     Some( findMinimalVTRATG( lang, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
@@ -35,7 +35,7 @@ object MaxSATMethod {
 }
 
 case object ReforestMethod extends GrammarFindingMethod {
-  def findGrammars( lang: Set[LambdaExpression] ) = {
+  def findGrammars( lang: Set[Expr] ) = {
     var state = Reforest start lang
     state = Reforest full state
     Some( state.toVTRATG )
@@ -149,7 +149,7 @@ object sehsToVTRATG {
 object CutIntroduction extends Logger {
 
   class CutIntroException( msg: String ) extends Exception( msg )
-  class NonCoveringGrammarException( grammar: VTRATG, term: LambdaExpression )
+  class NonCoveringGrammarException( grammar: VTRATG, term: Expr )
     extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
   /**
    * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.

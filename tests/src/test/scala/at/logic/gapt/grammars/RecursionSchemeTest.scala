@@ -6,10 +6,10 @@ import org.specs2.mutable._
 
 class RecursionSchemeTest extends Specification with SatMatchers {
 
-  def covers( rs: RecursionScheme, ts: LambdaExpression* ) =
+  def covers( rs: RecursionScheme, ts: Expr* ) =
     ( new RecSchemGenLangFormula( rs ) )( ts map { rs.startSymbol -> _ } ) aka s"$rs generates $ts" must beSat
 
-  def doesNotCover( rs: RecursionScheme, t: LambdaExpression ) =
+  def doesNotCover( rs: RecursionScheme, t: Expr ) =
     ( new RecSchemGenLangFormula( rs ) )( Set( rs.startSymbol -> t ) ) aka s"$rs generates $t" must beUnsat
 
   "RecSchemGenLangFormula" should {
@@ -118,7 +118,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val o = FOLConst( "o" )
       val s = FOLFunctionConst( "s", 1 )
       val r = FOLFunctionConst( "r", 1 )
-      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[LambdaExpression]( o )( s( _ ) )( _ ) } map { r( _ ) }
+      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[Expr]( o )( s( _ ) )( _ ) } map { r( _ ) }
 
       val A = FOLConst( "A" )
       val B = FOLFunctionConst( "B", 1 )
@@ -132,7 +132,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       val o = FOLConst( "o" )
       val s = FOLFunctionConst( "s", 1 )
       val r = FOLAtomConst( "r", 1 )
-      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[LambdaExpression]( o )( s( _ ) )( _ ) } map { r( _ ) }
+      val terms = 0 until ( 4 * 4 ) map { Stream.iterate[Expr]( o )( s( _ ) )( _ ) } map { r( _ ) }
 
       val A = FOLAtomConst( "A", 0 )
       val B = FOLAtomConst( "B", 1 )

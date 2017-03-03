@@ -35,10 +35,10 @@ object FOLFunctionArgs {
  * lambda subterms).
  */
 object folSubTerms {
-  def apply( t: LambdaExpression ): Set[LambdaExpression] = apply( Some( t ) )
+  def apply( t: Expr ): Set[Expr] = apply( Some( t ) )
 
-  def apply( language: Traversable[LambdaExpression] ): Set[LambdaExpression] = {
-    val subTerms = mutable.Set[LambdaExpression]()
+  def apply( language: Traversable[Expr] ): Set[Expr] = {
+    val subTerms = mutable.Set[Expr]()
     for ( t <- language ) walk( t, subTerms )
     subTerms.toSet
   }
@@ -46,9 +46,9 @@ object folSubTerms {
   def apply( t: FOLTerm ): Set[FOLTerm] = apply( Some( t ) )
 
   def apply( language: Traversable[FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Set[FOLTerm] =
-    apply( language: Traversable[LambdaExpression] ).asInstanceOf[Set[FOLTerm]]
+    apply( language: Traversable[Expr] ).asInstanceOf[Set[FOLTerm]]
 
-  private def walk( term: LambdaExpression, subterms: mutable.Set[LambdaExpression] ): Unit =
+  private def walk( term: Expr, subterms: mutable.Set[Expr] ): Unit =
     // if the term is not in the set of subterms yet, add it and add all its subterms
     // this check avoids duplicate addition of all subterms of a subterm
     if ( !subterms.contains( term ) ) {
@@ -60,10 +60,10 @@ object folSubTerms {
 }
 
 object folTermSize {
-  def apply( t: LambdaExpression ): Int =
+  def apply( t: Expr ): Int =
     t match { case Apps( hd, as ) => 1 + apply( as ) }
 
-  def apply( ts: Traversable[LambdaExpression] ): Int =
+  def apply( ts: Traversable[Expr] ): Int =
     ts.view.map( apply ).sum
 }
 
@@ -81,7 +81,7 @@ object Numeral {
 }
 
 object isFOLPrenexSigma1 {
-  def apply( f: LambdaExpression ): Boolean = f match {
+  def apply( f: Expr ): Boolean = f match {
     case Ex.Block( _, matrix: FOLFormula ) if !containsQuantifier( matrix ) => true
     case _ => false
   }
@@ -91,7 +91,7 @@ object isFOLPrenexSigma1 {
 }
 
 object isFOLPrenexPi1 {
-  def apply( f: LambdaExpression ): Boolean = f match {
+  def apply( f: Expr ): Boolean = f match {
     case All.Block( _, matrix: FOLFormula ) if !containsQuantifier( matrix ) => true
     case _ => false
   }
@@ -179,11 +179,11 @@ object Delta {
 
 trait CountingFormulas {
   def exactly: {
-    def noneOf( fs: Seq[HOLFormula] ): HOLFormula
-    def oneOf( fs: Seq[HOLFormula] ): HOLFormula
+    def noneOf( fs: Seq[Formula] ): Formula
+    def oneOf( fs: Seq[Formula] ): Formula
   }
   def atMost: {
-    def oneOf( fs: Seq[HOLFormula] ): HOLFormula
+    def oneOf( fs: Seq[Formula] ): Formula
   }
 }
 
@@ -191,9 +191,9 @@ object thresholds extends CountingFormulas {
 
   object exactly {
 
-    def noneOf( fs: Seq[HOLFormula] ): HOLFormula = -Or( fs )
+    def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
 
-    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = fs match {
+    def oneOf( fs: Seq[Formula] ): Formula = fs match {
       case Seq()    => Bottom()
       case Seq( f ) => f
       case _ =>
@@ -205,7 +205,7 @@ object thresholds extends CountingFormulas {
 
   object atMost {
 
-    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = fs match {
+    def oneOf( fs: Seq[Formula] ): Formula = fs match {
       case Seq() | Seq( _ ) => Top()
       case _ =>
         val ( a, b ) = fs.splitAt( fs.size / 2 )
@@ -220,15 +220,15 @@ object naive extends CountingFormulas {
 
   object exactly {
 
-    def noneOf( fs: Seq[HOLFormula] ): HOLFormula = -Or( fs )
+    def noneOf( fs: Seq[Formula] ): Formula = -Or( fs )
 
-    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = Or( fs ) & atMost.oneOf( fs )
+    def oneOf( fs: Seq[Formula] ): Formula = Or( fs ) & atMost.oneOf( fs )
 
   }
 
   object atMost {
 
-    def oneOf( fs: Seq[HOLFormula] ): HOLFormula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
+    def oneOf( fs: Seq[Formula] ): Formula = And( for ( a <- fs; b <- fs if a != b ) yield -a | -b )
 
   }
 
