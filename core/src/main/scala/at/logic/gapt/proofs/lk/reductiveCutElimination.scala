@@ -4,56 +4,55 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ SequentIndex }
 import ReductiveCutElimination._
 import at.logic.gapt.expr.hol.isAtom
-
 import scala.collection.mutable
 
 /**
- * This object implements a version of Gentzen's cut-elimination
- * proof for our sequent calculus LK. For details, please
- * refer to the documentation of the apply methods.
- */
+  * This object implements a version of Gentzen's cut-elimination
+  * proof for our sequent calculus LK. For details, please
+  * refer to the documentation of the apply methods.
+  */
 object ReductiveCutElimination {
   /**
-   * This methods implements a version of Gentzen's cut-elimination
-   * proof using the (known to be terminating) strategy of reducing
-   * a left-uppermost cut. The algorithm terminates when all cuts
-   * have been eliminated.
-   *
-   * @param proof The proof to subject to cut-elimination or restructuring.
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   * @return A proof.
-   */
+    * This methods implements a version of Gentzen's cut-elimination
+    * proof using the (known to be terminating) strategy of reducing
+    * a left-uppermost cut. The algorithm terminates when all cuts
+    * have been eliminated.
+    *
+    * @param proof The proof to subject to cut-elimination or restructuring.
+    *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+    * default value is on, i.e. clean the structural rules
+    * @return A proof.
+    */
   def apply( proof: LKProof, cleanStructRules: Boolean = true ) =
     new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
 
   /**
-   * Reduces proof to ACNF using reductive cut elimination
-   *
-   * @param proof The proof to subject to cut-elimination or restructuring.
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   * @return A proof.
-   */
+    * Reduces proof to ACNF using reductive cut elimination
+    *
+    * @param proof The proof to subject to cut-elimination or restructuring.
+    *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+    * default value is on, i.e. clean the structural rules
+    * @return A proof.
+    */
   def reduceToACNF( proof: LKProof, cleanStructRules: Boolean = true ) =
     new ReductiveCutElimination().elimToACNFByUppermostNonAtomicCut( proof, cleanStructRules )
 
   /**
-   * Reduces proof to ACNF top using reductive cut elimination
-   *
-   * @param proof The proof to subject to cut-elimination or restructuring.
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   * @return A proof.
-   */
+    * Reduces proof to ACNF top using reductive cut elimination
+    *
+    * @param proof The proof to subject to cut-elimination or restructuring.
+    *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+    * default value is on, i.e. clean the structural rules
+    * @return A proof.
+    */
   def reduceToACNFTop( proof: LKProof, cleanStructRules: Boolean = true ) =
     new ReductiveCutElimination().elimToACNFTopByUppermostRankReducibleCut( proof, cleanStructRules )
 
   /**
-   * This method checks whether a proof is cut-free.
-   * @param proof The proof to check for cut-freeness.
-   * @return True if proof does not contain the cut rule, False otherwise.
-   */
+    * This method checks whether a proof is cut-free.
+    * @param proof The proof to check for cut-freeness.
+    * @return True if proof does not contain the cut rule, False otherwise.
+    */
   def isCutFree( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
     case p: CutRule          => false
@@ -61,11 +60,11 @@ object ReductiveCutElimination {
   }
 
   /**
-   * This method checks whether a proof is ACNF
-   *
-   * @param proof The proof to check for ACNF.
-   * @return True if proof is ACNF  False otherwise.
-   */
+    * This method checks whether a proof is ACNF
+    *
+    * @param proof The proof to check for ACNF.
+    * @return True if proof is ACNF  False otherwise.
+    */
   def isACNF( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
     case CutRule( lsb, l, rsb, r ) =>
@@ -74,11 +73,11 @@ object ReductiveCutElimination {
     case _ => proof.immediateSubProofs.forall( isACNF )
   }
   /**
-   * This method checks whether a proof is ACNF top
-   *
-   * @param proof The proof to check for ACNF top.
-   * @return True if proof is ACNF  False otherwise.
-   */
+    * This method checks whether a proof is ACNF top
+    *
+    * @param proof The proof to check for ACNF top.
+    * @return True if proof is ACNF  False otherwise.
+    */
   def isACNFTop( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
     case CutRule( lsb, l, rsb, r ) =>
@@ -91,28 +90,16 @@ object ReductiveCutElimination {
 
   }
   /**
-   * Checks if the first rule in  proof is a leave, a cut rule or a weakening rule on an
-   * ancestor of the give cut
-   *
-   * @param proof The proof we are checking.
-   * @param cut The cut we are checking.
-   * @return True is structure is correct or false if not.
-   */
+    * Checks if the first rule in  proof is a leave, a cut rule or a weakening rule on an
+    * ancestor of the give cut
+    *
+    * @param proof The proof we are checking.
+    * @param cut The cut we are checking.
+    * @return True is structure is correct or false if not.
+    */
   def introOrCut( proof: LKProof, cut: HOLFormula ): Boolean = proof match {
     case LogicalAxiom( _ )             => true
     case CutRule( lsb, l, rsb, r )     => true
-    /*if ( isACNFTop( proof ) &&
-        ( lsb match {
-          case WeakeningRightRule( _, main ) => if ( main == lsb.endSequent( l ) ) false else true
-          case WeakeningLeftRule( _, main )  => if ( main == lsb.endSequent( l ) ) false else true
-          case _                             => true
-        } ) &&
-        ( rsb match {
-          case WeakeningRightRule( _, main ) => if ( main == rsb.endSequent( r ) ) false else true
-          case WeakeningLeftRule( _, main )  => if ( main == rsb.endSequent( r ) ) false else true
-          case _                             => true
-        } ) ) true
-      else false*/
     case WeakeningRightRule( _, main ) => if ( main == cut ) true else false
     case WeakeningLeftRule( _, main )  => if ( main == cut ) true else false
     case _                             => false
@@ -120,48 +107,48 @@ object ReductiveCutElimination {
 }
 
 /**
- * -   * This methods implements a version of Gentzen's cut-elimination
- * -   * proof parameterized by a strategy given by pred_cut and
- * -   * pred_done.
- * -   *
- * -   * The method traverses an LKProof recursively from the bottom
- * -   * up. When it reaches a cut, the method calls pred_cut(global, sub),
- * -   * where global is complete proof under consideration, while sub
- * -   * is the subproof of global ending in the cut. If this call returns
- * -   * true, the cut is reduced using the usual Gentzen cut-elimination
- * -   * rules. If the call returns false, the traversion continues.
- * -   *
- * -   * After every application of a reduction, pred_done(global) is called.
- * -   * If it returns true, the algorithm terminates, returning the current proof.
- * -   * If it returns false, the algorithm continues to traverse the proof.
- * -   *
- * -   * This means that pred_cut and pred_done allow the definition of a (not necessarily
- * -   * terminating!) cut-elimination strategy. A standard implementation (reducing
- * -   * left-uppermost cuts until the proof is cut-free) is provided by another
- * -   * apply method in this class.
- */
+  * This methods implements a version of Gentzen's cut-elimination
+  * proof parameterized by a strategy given by pred_cut and
+  * pred_done.
+  *
+  * The method traverses an LKProof recursively from the bottom
+  * up. When it reaches a cut, the method calls pred_cut(global, sub),
+  * where global is complete proof under consideration, while sub
+  * is the subproof of global ending in the cut. If this call returns
+  * true, the cut is reduced using the usual Gentzen cut-elimination
+  * rules. If the call returns false, the traversion continues.
+  *
+  * After every application of a reduction, pred_done(global) is called.
+  * If it returns true, the algorithm terminates, returning the current proof.
+  * If it returns false, the algorithm continues to traverse the proof.
+  *
+  * This means that pred_cut and pred_done allow the definition of a (not necessarily
+  * terminating!) cut-elimination strategy. A standard implementation (reducing
+  * left-uppermost cuts until the proof is cut-free) is provided by another
+  * apply method in this class.
+  */
 
 class ReductiveCutElimination {
   val steps = mutable.Buffer[LKProof]()
   var recordSteps: Boolean = false
 
   /**
-   * This apply method is used to either implement the
-   * standard gentzen method or to run the gentzen method without
-   * atomic cut elimination
-   * it is also possible to turn off cleaning of structural rules
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param pred_done A predicate deciding when to terminate the algorithm.
-   * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
-   * when traversing the proof.
-   * @param reduce  A function define how cut should be reduced
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   *
-   *
-   * @return The proof as it is after pred_done returns true.
-   */
+    * This apply method is used to either implement the
+    * standard gentzen method or to run the gentzen method without
+    * atomic cut elimination
+    * it is also possible to turn off cleaning of structural rules
+    *
+    * @param proof The proof to subject to cut-elimination.
+    * @param pred_done A predicate deciding when to terminate the algorithm.
+    * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
+    * when traversing the proof.
+    * @param reduce  A function define how cut should be reduced
+    *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+    * default value is on, i.e. clean the structural rules
+    *
+    *
+    * @return The proof as it is after pred_done returns true.
+    */
   def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean,
              reduce: LKProof => LKProof, cleanStructRules: Boolean = true ): LKProof = {
     steps += proof
@@ -180,16 +167,15 @@ class ReductiveCutElimination {
     pr
   }
   /**
-   * This algorithm implements a generalization of the Gentzen method which
-   * reduces all cuts to atomic cuts and pushes these cuts to the leaves of the proof.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-   *
-   * @return The cut-free proof.
-   */
+    * This algorithm implements a generalization of the Gentzen method which
+    * reduces all cuts to atomic cuts and pushes these cuts to the leaves of the proof.
+    *
+    * @param proof The proof to subject to cut-elimination.
+    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
+    * @return The cut-free proof.
+    */
   def elimToACNFTopByUppermostRankReducibleCut( proof: LKProof, cleanStructRules: Boolean = true ): LKProof = {
-    val proof2 = pushWeakeningToLeaves( proof )
+    val proof2 = PushWeakeningToLeaves( proof )
     apply( proof2, { pr => isACNFTop( pr ) }, { ( p, cut ) =>
       cut match {
         case CutRule( lsb, l, rsb, r ) =>
@@ -209,14 +195,13 @@ class ReductiveCutElimination {
       cleanStructRules )
   }
   /**
-   * This algorithm implements a generalization of the Gentzen method which
-   * reduces all cuts to atomic cuts.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-   *
-   * @return The cut-free proof.
-   */
+    * This algorithm implements a generalization of the Gentzen method which
+    * reduces all cuts to atomic cuts.
+    *
+    * @param proof The proof to subject to cut-elimination.
+    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
+    * @return The cut-free proof.
+    */
   def elimToACNFByUppermostNonAtomicCut( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isACNF( pr ) },
       { ( _, cut ) =>
@@ -234,16 +219,16 @@ class ReductiveCutElimination {
       },
       cleanStructRules )
   /**
-   * This methods implements a version of Gentzen's cut-elimination
-   * proof using the (known to be terminating) strategy of reducing
-   * a left-uppermost cut. The algorithm terminates when all cuts
-   * have been eliminated.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-   *
-   * @return The cut-free proof.
-   */
+    * This methods implements a version of Gentzen's cut-elimination
+    * proof using the (known to be terminating) strategy of reducing
+    * a left-uppermost cut. The algorithm terminates when all cuts
+    * have been eliminated.
+    *
+    * @param proof The proof to subject to cut-elimination.
+    * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
+    *
+    * @return The cut-free proof.
+    */
   def eliminateAllByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
     apply( proof, { pr => isCutFree( pr ) },
       { ( _, cut ) =>
@@ -254,193 +239,14 @@ class ReductiveCutElimination {
       { pr => pr match { case CutRule( lsb, l, rsb, r ) => reduceGrade( lsb, l, rsb, r ) } },
       cleanStructRules )
 
-  /**
-   * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
-   *
-   * @param proof An LKProof.
-   * @return A proof weakening rules at the leaves only.
-   */
-  def pushWeakeningToLeaves( proof: LKProof ): LKProof = proof match {
-    case InitialSequent( _ ) => proof
-
-    case WeakeningLeftRule( subProof, formula ) =>
-      pushWeakeningToLeaves( subProof, false, formula )
-
-    case WeakeningRightRule( subProof, formula ) =>
-      pushWeakeningToLeaves( subProof, true, formula )
-
-    case ContractionLeftRule( sb, _, _ ) =>
-      ContractionLeftRule( pushWeakeningToLeaves( sb ), proof.mainFormulas.head )
-
-    case ContractionRightRule( sb, _, _ ) =>
-      ContractionRightRule( pushWeakeningToLeaves( sb ), proof.mainFormulas.head )
-
-    case AndRightRule( leftSubProof, _, rightSubProof, _ ) =>
-      AndRightRule( pushWeakeningToLeaves( leftSubProof ), pushWeakeningToLeaves( rightSubProof ), proof.mainFormulas.head )
-
-    case AndLeftRule( subProof, _, _ ) =>
-      AndLeftRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head )
-
-    case OrLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      OrLeftRule( pushWeakeningToLeaves( leftSubProof ), pushWeakeningToLeaves( rightSubProof ), proof.mainFormulas.head )
-
-    case OrRightRule( subProof, _, _ ) =>
-      OrRightRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head )
-
-    case ImpLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      ImpLeftRule( pushWeakeningToLeaves( leftSubProof ), pushWeakeningToLeaves( rightSubProof ), proof.mainFormulas.head )
-
-    case ImpRightRule( subProof, _, _ ) =>
-      ImpRightRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head )
-
-    case NegLeftRule( subProof, _ ) =>
-      NegLeftRule( pushWeakeningToLeaves( subProof ), proof.auxFormulas.head.head )
-
-    case NegRightRule( subProof, _ ) =>
-      NegRightRule( pushWeakeningToLeaves( subProof ), proof.auxFormulas.head.head )
-
-    case ForallLeftRule( subProof, _, _, term, _ ) =>
-      ForallLeftRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head, term )
-
-    case ForallRightRule( subProof, _, eigen, _ ) =>
-      ForallRightRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head, eigen )
-
-    case ExistsLeftRule( subProof, _, eigen, _ ) =>
-      ExistsLeftRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head, eigen )
-
-    case ExistsRightRule( subProof, _, _, term, _ ) =>
-      ExistsRightRule( pushWeakeningToLeaves( subProof ), proof.mainFormulas.head, term )
-
-    case ForallSkRightRule( subProof, _, _, skTerm, skDef ) =>
-      ForallSkRightRule( pushWeakeningToLeaves( subProof ), skTerm, skDef )
-
-    case ExistsSkLeftRule( subProof, _, _, skTerm, skDef ) =>
-      ExistsSkLeftRule( pushWeakeningToLeaves( subProof ), skTerm, skDef )
-
-    case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( pushWeakeningToLeaves( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
-
-    case EqualityRightRule( subProof, _, _, _ ) =>
-      EqualityRightRule( pushWeakeningToLeaves( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
-
-    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      CutRule( pushWeakeningToLeaves( leftSubProof ), leftSubProof.endSequent( aux1 ), pushWeakeningToLeaves( rightSubProof ), rightSubProof.endSequent( aux2 ) )
-
-  }
-
-  /**
-   * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
-   *
-   * @param proof An LKProof.
-   * @param side  False means weakening left true means weakening right
-   * @param formula the formula to be weakened
-   *
-   * @return A proof weakening rules at the leaves only.
-   */
-  private def pushWeakeningToLeaves( proof: LKProof, side: Boolean, formula: HOLFormula ): LKProof = proof match {
-    case InitialSequent( _ ) =>
-      if ( side ) WeakeningRightRule( proof, formula )
-      else WeakeningLeftRule( proof, formula )
-
-    case WeakeningLeftRule( subProof, formulaPrime ) =>
-      if ( weakeningOnlySubTree( subProof ) )
-        if ( side ) WeakeningRightRule( proof, formula )
-        else WeakeningLeftRule( proof, formula )
-      else pushWeakeningToLeaves( pushWeakeningToLeaves( subProof, false, formulaPrime ), side, formula )
-
-    case WeakeningRightRule( subProof, formulaPrime ) =>
-      pushWeakeningToLeaves( pushWeakeningToLeaves( subProof, true, formulaPrime ), side, formula )
-
-    case ContractionLeftRule( sb, _, _ ) =>
-      ContractionLeftRule( pushWeakeningToLeaves( sb, side, formula ), proof.mainFormulas.head )
-
-    case ContractionRightRule( sb, _, _ ) =>
-      ContractionRightRule( pushWeakeningToLeaves( sb, side, formula ), proof.mainFormulas.head )
-
-    case AndRightRule( leftSubProof, _, rightSubProof, _ ) => {
-      val part = AndRightRule( pushWeakeningToLeaves( leftSubProof, side, formula ), pushWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
-      if ( side ) ContractionRightRule( part, formula )
-      else ContractionLeftRule( part, formula )
-    }
-
-    case AndLeftRule( subProof, _, _ ) =>
-      AndLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head )
-
-    case OrLeftRule( leftSubProof, _, rightSubProof, _ ) => {
-      val part = OrLeftRule( pushWeakeningToLeaves( leftSubProof, side, formula ), pushWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
-      if ( side ) ContractionRightRule( part, formula )
-      else ContractionLeftRule( part, formula )
-    }
-
-    case OrRightRule( subProof, _, _ ) =>
-      OrRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head )
-
-    case ImpLeftRule( leftSubProof, _, rightSubProof, _ ) => {
-      val part = ImpLeftRule( pushWeakeningToLeaves( leftSubProof, side, formula ), pushWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
-      if ( side ) ContractionRightRule( part, formula )
-      else ContractionLeftRule( part, formula )
-    }
-    case ImpRightRule( subProof, _, _ ) =>
-      ImpRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head )
-
-    case NegLeftRule( subProof, _ ) =>
-      NegLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head.head )
-
-    case NegRightRule( subProof, _ ) =>
-      NegRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head.head )
-
-    case ForallLeftRule( subProof, _, _, term, _ ) =>
-      ForallLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head, term )
-
-    case ForallRightRule( subProof, _, eigen, _ ) =>
-      ForallRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head, eigen )
-
-    case ExistsLeftRule( subProof, _, eigen, _ ) =>
-      ExistsLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head, eigen )
-
-    case ExistsRightRule( subProof, _, _, term, _ ) =>
-      ExistsRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head, term )
-
-    case ForallSkRightRule( subProof, _, _, skTerm, skDef ) =>
-      ForallSkRightRule( pushWeakeningToLeaves( subProof, side, formula ), skTerm, skDef )
-
-    case ExistsSkLeftRule( subProof, _, _, skTerm, skDef ) =>
-      ExistsSkLeftRule( pushWeakeningToLeaves( subProof, side, formula ), skTerm, skDef )
-
-    case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
-
-    case EqualityRightRule( subProof, _, _, _ ) =>
-      EqualityRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
-
-    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val part = CutRule( pushWeakeningToLeaves( leftSubProof, side, formula ), leftSubProof.endSequent( aux1 ), pushWeakeningToLeaves( rightSubProof, side, formula ), rightSubProof.endSequent( aux2 ) )
-      if ( side ) ContractionRightRule( part, formula )
-      else ContractionLeftRule( part, formula )
-  }
-
-  /**
-   * Checks if only weakening rules occur.
-   *
-   * @param proof An LKProof.
-   *
-   *
-   * @return Boolean.
-   */
-  private def weakeningOnlySubTree( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ )               => true
-    case WeakeningLeftRule( subProof, _ )  => weakeningOnlySubTree( subProof )
-    case WeakeningRightRule( subProof, _ ) => weakeningOnlySubTree( subProof )
-    case _                                 => false
-  }
   // TODO: Implement this properly, i.e. with SequentIndices.
   /**
-   * Recursively traverses a proof until it finds a cut to reduce.
-   *
-   * @param proof An LKProof.
-   * @param pred If true on a cut, reduce this cut.
-   * @return A proof with one less cut.
-   */
+    * Recursively traverses a proof until it finds a cut to reduce.
+    *
+    * @param proof An LKProof.
+    * @param pred If true on a cut, reduce this cut.
+    * @return A proof with one less cut.
+    */
   private def cutElim( proof: LKProof, reduce: LKProof => LKProof )( implicit pred: LKProof => Boolean ): LKProof = proof match {
     case InitialSequent( _ ) => proof
 
@@ -510,14 +316,14 @@ class ReductiveCutElimination {
 
   }
   /**
-   * Grade reduction rules, i.e. rules that reduce the complexity of a cut formula or remove a cut altogether.
-   *
-   * @param left The left subproof of the cut inference.
-   * @param aux1 The index of the cut formula in the left subproof.
-   * @param right The right subproof of the cut inference.
-   * @param aux2 The index of the cut formula in the right subproof.
-   * @return
-   */
+    * Grade reduction rules, i.e. rules that reduce the complexity of a cut formula or remove a cut altogether.
+    *
+    * @param left The left subproof of the cut inference.
+    * @param aux1 The index of the cut formula in the left subproof.
+    * @param right The right subproof of the cut inference.
+    * @param aux2 The index of the cut formula in the right subproof.
+    * @return
+    */
   private def reduceGrade( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof =
     ( left, right ) match {
 
@@ -581,14 +387,14 @@ class ReductiveCutElimination {
     }
 
   /**
-   * Reduces the rank of the cut by permuting it upwards on the left-hand side.
-   *
-   * @param left The left subproof of the cut inference.
-   * @param aux1 The index of the cut formula in the left subproof.
-   * @param right The right subproof of the cut inference.
-   * @param aux2 The index of the cut formula in the right subproof.
-   * @return
-   */
+    * Reduces the rank of the cut by permuting it upwards on the left-hand side.
+    *
+    * @param left The left subproof of the cut inference.
+    * @param aux1 The index of the cut formula in the left subproof.
+    * @param right The right subproof of the cut inference.
+    * @param aux2 The index of the cut formula in the right subproof.
+    * @return
+    */
   private def reduceRankLeft( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof = {
 
     left match {
@@ -774,14 +580,14 @@ class ReductiveCutElimination {
   }
 
   /**
-   * Reduces the rank of the cut by permuting it upwards on the right-hand side.
-   *
-   * @param left The left subproof of the cut inference.
-   * @param aux1 The index of the cut formula in the left subproof.
-   * @param right The right subproof of the cut inference.
-   * @param aux2 The index of the cut formula in the right subproof.
-   * @return
-   */
+    * Reduces the rank of the cut by permuting it upwards on the right-hand side.
+    *
+    * @param left The left subproof of the cut inference.
+    * @param aux1 The index of the cut formula in the left subproof.
+    * @param right The right subproof of the cut inference.
+    * @param aux2 The index of the cut formula in the right subproof.
+    * @return
+    */
   private def reduceRankRight( left: LKProof, aux1: SequentIndex, right: LKProof, aux2: SequentIndex ): LKProof = {
 
     right match {
