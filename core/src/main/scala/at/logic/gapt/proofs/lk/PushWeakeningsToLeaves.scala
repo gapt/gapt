@@ -1,17 +1,17 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{HOLFormula, Polarity}
+import at.logic.gapt.expr.{ HOLFormula, Polarity }
 
 /**
-  * Created by cernadavid1 on 01.03.17.
-  */
-object PushWeakeningsToLeaves {
+ * Created by cernadavid1 on 01.03.17.
+ */
+object PushWeakeningToLeaves {
   /**
-    * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
-    *
-    * @param proof An LKProof.
-    * @return A proof weakening rules at the leaves only.
-    */
+   * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
+   *
+   * @param proof An LKProof.
+   * @return A proof weakening rules at the leaves only.
+   */
   def apply( proof: LKProof ): LKProof = proof match {
     case InitialSequent( _ ) => proof
 
@@ -81,14 +81,14 @@ object PushWeakeningsToLeaves {
   }
 
   /**
-    * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
-    *
-    * @param proof An LKProof.
-    * @param side  The polarity of the weakening rule.
-    * @param formula the formula to be weakened.
-    *
-    * @return A proof weakening rules at the leaves only.
-    */
+   * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
+   *
+   * @param proof An LKProof.
+   * @param side  The polarity of the weakening rule.
+   * @param formula the formula to be weakened.
+   *
+   * @return A proof weakening rules at the leaves only.
+   */
   private def pushWeakeningToLeaves( proof: LKProof, side: Polarity, formula: HOLFormula ): LKProof = proof match {
     case InitialSequent( _ ) =>
       if ( side.inSuc ) WeakeningRightRule( proof, formula )
@@ -170,11 +170,11 @@ object PushWeakeningsToLeaves {
   }
 
   /**
-    * Checks if only weakening rules occur.
-    *
-    * @param proof An LKProof.
-    * @return Boolean.
-    */
+   * Checks if only weakening rules occur.
+   *
+   * @param proof An LKProof.
+   * @return Boolean.
+   */
   private def weakeningOnlySubTree( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ )               => true
     case WeakeningLeftRule( subProof, _ )  => weakeningOnlySubTree( subProof )

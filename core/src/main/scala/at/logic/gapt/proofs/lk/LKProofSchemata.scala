@@ -49,3 +49,39 @@ object LKProofSchemata {
   }
 
 }
+
+class CarriageReturnList {
+  private var front: List[Int] = List()
+  private var middle: List[Int] = List()
+  private var back: List[Int] = List()
+  def head: Int = middle.head
+  def length: Int = front.length + middle.length + back.length
+  def apply( size: Int ) = {
+    middle = List( size )
+    back = ( size - 1 to 0 ).toList
+  }
+  def shift(): CarriageReturnList = {
+    if ( back.length > 0 ) {
+      front :+ middle.head
+      middle = List( back.head )
+      back = back.tail
+    }
+    this
+  }
+  def carriageReturn(): CarriageReturnList = {
+    if ( front.length > 0 ) {
+      middle = List( front.head )
+      back = front.tail ::: back.tail
+      front = List()
+    } else if ( back.length > 0 ) {
+      front = List()
+      middle = List( back.head )
+      back = back.tail
+    } else if ( middle.length > 0 ) {
+      front = List()
+      middle = List()
+      back = List()
+    }
+    this
+  }
+}
