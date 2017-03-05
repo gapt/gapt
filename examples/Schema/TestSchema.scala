@@ -48,7 +48,7 @@ object tautSchema extends TacticsProof {
     andR
     trivial
     forget( "Ant_2_0" )
-    pLink( "taut" )
+    ref( "taut" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"taut (s n)", sc )
 

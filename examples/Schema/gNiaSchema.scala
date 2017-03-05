@@ -154,7 +154,7 @@ object gniaSchema extends TacticsProof {
     andL
     andR
     andR
-    pLink( "nu" )
+    ref( "nu" )
     foTheory
     foTheory
   }
@@ -210,7 +210,7 @@ object gniaSchema extends TacticsProof {
     rewrite ltr "Ant_5_0" in "Ant_3_0_1"
     andR
     andR
-    pLink( "nuPrime" )
+    ref( "nuPrime" )
     foTheory
     foTheory
 
@@ -265,7 +265,7 @@ object gniaSchema extends TacticsProof {
     andL
     andR
     andR
-    pLink( "nu" )
+    ref( "nu" )
     foTheory
     foTheory
 
@@ -307,7 +307,7 @@ object gniaSchema extends TacticsProof {
     orR
     orL
     trivial
-    pLink( "chi" )
+    ref( "chi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
 
@@ -331,7 +331,7 @@ object gniaSchema extends TacticsProof {
     andL( "Ant_2_1" )
     allL( "Ant_1", fov"A" )
     rewrite ltr "Ant_1_0" in "Ant_2_1_1"
-    pLink( "nuPrime" )
+    ref( "nuPrime" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi 0 m", phiBc )
 
@@ -376,10 +376,10 @@ object gniaSchema extends TacticsProof {
     forget( "cut_0" )
     allL( "Ant_0", fov"C" )
     allL( "Ant_1", fov"C" )
-    pLink( "chi" )
+    ref( "chi" )
     focus( 1 )
-    pLink( "mu" )
-    pLink( "phi" )
+    ref( "mu" )
+    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n) m", phiSc )
 
@@ -404,7 +404,7 @@ object gniaSchema extends TacticsProof {
     andR
     foTheory
     trivial
-    pLink( "mu" )
+    ref( "mu" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
 
@@ -429,8 +429,8 @@ object gniaSchema extends TacticsProof {
     foTheory
     allL( "Ant_1", fov"A" )
     allL( "Ant_0", fov"A" )
-    pLink( "chi" )
-    pLink( "phi" )
+    ref( "chi" )
+    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
 }

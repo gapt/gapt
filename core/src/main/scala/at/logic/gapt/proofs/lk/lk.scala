@@ -176,8 +176,8 @@ object Eigenvariable {
   }
 }
 
-case class ProofLink( referencedProof: LambdaExpression, linkquent: Sequent[HOLFormula] ) extends InitialSequent {
-  override def conclusion = linkquent
+case class ProofLink( referencedProof: LambdaExpression, referencedSequent: Sequent[HOLFormula] ) extends InitialSequent {
+  override def conclusion = referencedSequent
 }
 
 /**

@@ -125,7 +125,7 @@ object niaSchema extends TacticsProof {
     andR
     foTheory
     trivial
-    pLink( "mu" )
+    ref( "mu" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
@@ -148,8 +148,8 @@ object niaSchema extends TacticsProof {
     foTheory
     allL( "Ant_1", fov"A" )
     allL( "Ant_0", fov"A" )
-    pLink( "chi" )
-    pLink( "phi" )
+    ref( "chi" )
+    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
@@ -188,7 +188,7 @@ object niaSchema extends TacticsProof {
     orR
     orL
     trivial
-    pLink( "chi" )
+    ref( "chi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
 
@@ -261,10 +261,10 @@ object niaSchema extends TacticsProof {
     forget( "cut_0" )
     allL( "Ant_0", fov"C" )
     allL( "Ant_1", fov"C" )
-    pLink( "chi" )
+    ref( "chi" )
     focus( 1 )
-    pLink( "mu" )
-    pLink( "phi" )
+    ref( "mu" )
+    ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )
 }
