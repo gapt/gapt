@@ -322,7 +322,6 @@ object ContractionRule extends ConvenienceConstructor( "ContractionRule" ) {
  *    --------ax
  *     A :- A
  * </pre>
- * with A atomic.
  *
  * @param A The atom A.
  */
@@ -1036,6 +1035,19 @@ object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
       case _                   => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
     }
   }
+}
+
+/**
+ * An NDProof consisting of an axiom from a theory:
+ * <pre>
+ *    --------th
+ *      :- A
+ * </pre>
+ * @param mainFormula The axiom A.
+ */
+case class TheoryAxiom( mainFormula: HOLFormula ) extends InitialSequent {
+  def conclusion = NDSequent( Seq(), mainFormula )
+  override def name = "th"
 }
 
 /**

@@ -163,3 +163,8 @@ object lemExample extends Script {
   val a5 = ExcludedMiddleRule( a3, Ant( 0 ), a4, Ant( 0 ) )
   println( a5 )
 }
+
+object theoryAxiom extends Script {
+  val a1 = TheoryAxiom( fof"!x x = x" )
+  println( a1 )
+}
