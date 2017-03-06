@@ -2,25 +2,10 @@ package at.logic.gapt.proofs.gaptic.tactics
 
 import at.logic.gapt.expr.{ Apps, _ }
 import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
-import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
 
-/**
- * Closes a goal with a proof link
- *
- * @param proofName The name of the proof proving the goal.
- */
-case class ProofLinkTactic( proofName: String )( implicit ctx: Context ) extends Tactic[Unit] {
-  def apply( goal: OpenAssumption ) = ctx.get[ProofNames].names.get( proofName ) match {
-    case Some( ( Apps( c, args ), linkEs ) ) => clauseSubsumption( linkEs, goal.conclusion ) match {
-      case Some( sub ) => Right( (), ProofLink( sub( Apps( c, args ) ), sub( linkEs ) ) )
-      case None        => Left( TacticalFailure( this, "Mismatch between  goal " + goal.toString + " and  Linkquent " + linkEs.toString ) )
-    }
-    case None => Left( TacticalFailure( this, "Proof " + proofName + " not defined in context" ) )
-  }
-}
 /**
  * Closes a goal of the form A, Γ :- Δ, Δ
  */
