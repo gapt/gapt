@@ -379,7 +379,7 @@ class ReductiveCutElimination {
         val rSubProofNew = Substitution( eigen, term )( rSubProof )
         CutRule( lSubProof, rSubProofNew, left.auxFormulas.head.head )
 
-      case ( DefinitionRightRule( lSubProof, a1, definition1), DefinitionLeftRule( rSubProof, a2, definition2) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         CutRule( lSubProof, a1, rSubProof, a2 )
 
       // If no grade reduction rule can be applied -- in particular, if one of the cut formulas is not introduced directly above the cut
