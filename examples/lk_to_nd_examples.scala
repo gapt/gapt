@@ -20,7 +20,7 @@ object ex0_1_6 extends Script {
   println( s10 )
 
   val nd = LKToND( s10 )
-  println(nd)
+  println( nd )
 }
 
 // Example 0.1.6 short
@@ -45,9 +45,13 @@ object demorgan1 extends Script {
   val s1 = LogicalAxiom( hof"A" )
   val s2 = WeakeningRightRule( s1, hof"B" )
   val s3 = OrRightRule( s2, hof"A | B" )
-  val s4 = NegLeftRule( s3, hof"A | B")
+  val s4 = NegLeftRule( s3, hof"A | B" )
   val s5 = NegRightRule( s4, hof"A" )
+  println( s5 )
+  val nd2 = LKToND( s5 )
+  println( nd2 )
 
+  /*
   val r1 = LogicalAxiom( hof"B" )
   val r2 = WeakeningRightRule( r1, hof"A" )
   val r3 = OrRightRule( r2, hof"A | B" )
@@ -60,6 +64,7 @@ object demorgan1 extends Script {
 
   val nd = LKToND( p2 )
   println(nd)
+  */
 }
 
 object demorgan2 extends Script {
@@ -81,7 +86,7 @@ object demorgan2 extends Script {
   println( p5 )
 
   val nd = LKToND( p5 )
-  println(nd)
+  println( nd )
 }
 
 object orLeft1 extends Script {
@@ -138,7 +143,7 @@ object orLeft5 extends Script {
   val p = OrLeftRule( l3, r2, hof"A | B" )
   println( p )
 
-  val nd = LKToND( p, Suc(2) )
+  val nd = LKToND( p, Suc( 2 ) )
   println( nd )
 }
 
@@ -148,7 +153,17 @@ object impRight1 extends Script {
   val p3 = ImpRightRule( p2, hof"A -> B" )
   println( p3 )
 
-  val nd = LKToND( p3 )
+  val nd = LKToND( p3, Suc( 1 ) )
+  println( nd )
+}
+
+object impRight2 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = WeakeningRightRule( p1, hof"B" )
+  val p3 = ImpRightRule( p2, hof"A -> B" )
+  println( p3 )
+
+  val nd = LKToND( p3, Suc( 0 ) )
   println( nd )
 }
 
@@ -156,6 +171,28 @@ object orRight1 extends Script {
   val r1 = LogicalAxiom( hof"A" )
   val r2 = WeakeningRightRule( r1, hof"B" )
   val p = OrRightRule( r2, hof"A | B" )
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object orRight2 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = WeakeningLeftRule( p1, hof"B" )
+  val p3 = NegRightRule( p2, hof"B" )
+  val p = OrRightRule( p3, hof"A | -B" )
+  println( p )
+
+  val nd = LKToND( p )
+  println( nd )
+}
+
+object negLeftRight1 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = NegLeftRule( p1, hof"A" )
+  val p = NegRightRule( p2, hof"-A" )
+
   println( p )
 
   val nd = LKToND( p )
@@ -214,7 +251,7 @@ object impLeft1 extends Script {
   val l2 = WeakeningRightRule( l1, hof"C" )
   val r1 = LogicalAxiom( hof"B" )
   val r2 = WeakeningLeftRule( r1, hof"D" )
-  val p = ImpLeftRule(l2, r2, hof"A -> B")
+  val p = ImpLeftRule( l2, r2, hof"A -> B" )
 
   println( p )
 

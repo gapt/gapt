@@ -49,12 +49,12 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
   }
 
   /**
-    * Given a SequentIndex for the lower sequent, this returns the parent of that occurrence in the upper sequent
-    * (if there is exactly one), and None otherwise.
-    *
-    * @param idx An index of lowerSequent.
-    * @return The unique parent of idx.
-    */
+   * Given a SequentIndex for the lower sequent, this returns the parent of that occurrence in the upper sequent
+   * (if there is exactly one), and None otherwise.
+   *
+   * @param idx An index of lowerSequent.
+   * @return The unique parent of idx.
+   */
   def parentOption( idx: SequentIndex ): Option[SequentIndex] = parents( idx ) match {
     case Seq()    => None
     case Seq( p ) => Some( p )
