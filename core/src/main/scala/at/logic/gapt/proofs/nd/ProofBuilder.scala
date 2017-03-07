@@ -52,15 +52,15 @@ class ProofBuilder[Proof] private[nd] ( private val proofStack: Seq[Proof] ) {
   }
 
   /**
-    * Applies a ternary inference to the top three elements of the proof stack.
-    *
-    * @param inference A function (NDProof, NDProof, NDProof) => NDProof
-    * @return
-    */
+   * Applies a ternary inference to the top three elements of the proof stack.
+   *
+   * @param inference A function (NDProof, NDProof, NDProof) => NDProof
+   * @return
+   */
   def t( inference: ( Proof, Proof, Proof ) => Proof ) = proofStack match {
-    case Seq()            => throw new Exception( "Cannot apply ternary inference to empty stack." )
-    case p +: Seq()       => throw new Exception( "Cannot apply ternary inference to stack with only one element." )
-    case p2 +: p1 +: Seq()       => throw new Exception( "Cannot apply ternary inference to stack with only two elements." )
+    case Seq()                  => throw new Exception( "Cannot apply ternary inference to empty stack." )
+    case p +: Seq()             => throw new Exception( "Cannot apply ternary inference to stack with only one element." )
+    case p2 +: p1 +: Seq()      => throw new Exception( "Cannot apply ternary inference to stack with only two elements." )
     case p3 +: p2 +: p1 +: rest => new ProofBuilder( inference( p1, p2, p3 ) +: rest )
   }
 
