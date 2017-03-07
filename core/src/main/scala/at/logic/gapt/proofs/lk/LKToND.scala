@@ -27,26 +27,40 @@ object LKToND {
       subProof
     } else {
       val negMain = hof"-$mainFormula"
-      val p = if ( subProof.endSequent.antecedent.contains( negMain ) ) subProof else WeakeningRule( subProof, negMain )
-      //val p = WeakeningRule( subProof, negMain )
-      //val p = subProof
+      if ( subProof.endSequent.antecedent.contains( negMain ) ) {
+        // Negated main formula in antecedent:
+        // Move it using LEM
+        val r = subProof.endSequent( Suc( 0 ) )
 
-      val r = p.endSequent( Suc( 0 ) )
+        val ax1 = nd.LogicalAxiom( mainFormula )
 
-      val ax1 = nd.LogicalAxiom( mainFormula )
+        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+          BottomElimRule( subProof, mainFormula )
+        } else {
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( hof"-$r" ) ).
+            u( NegElimRule( _, subProof ) ).
+            u( BottomElimRule( _, mainFormula ) ).
+            qed
+        }
 
-      val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
-        BottomElimRule( p, mainFormula )
+        val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
+        ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
       } else {
-        nd.ProofBuilder.
-          c( nd.LogicalAxiom( hof"-$r" ) ).
-          u( NegElimRule( _, p ) ).
-          u( BottomElimRule( _, mainFormula ) ).
-          qed
-      }
+        // Negated main formula not in antecedent
+        // Use BottomElimRule to add main formula to succedent
+        val r = subProof.endSequent( Suc( 0 ) )
 
-      val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
-      ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
+        if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+          BottomElimRule( subProof, mainFormula )
+        } else {
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( hof"-$r" ) ).
+            u( NegElimRule( _, subProof ) ).
+            u( BottomElimRule( _, mainFormula ) ).
+            qed
+        }
+      }
     }
   }
 
@@ -71,11 +85,12 @@ object LKToND {
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>
       //translate( subProof, focus )
-      WeakeningRule( translate( subProof, focus ), formula )
+      val ret = WeakeningRule( translate( subProof, focus ), formula )
+      ret
 
     case p @ WeakeningRightRule( subProof, formula ) =>
       //translate( subProof, focus )
-      p.getSequentConnector.parentOption( focus ) match {
+      val ret = p.getSequentConnector.parentOption( focus ) match {
         case Some( i ) =>
           WeakeningRule( translate( subProof, i ), hof"-$formula" )
         case None =>
@@ -89,6 +104,7 @@ object LKToND {
         //without weakening weakenright/contractright example breaks
         //exchange( translate( subProof, Suc( 0 ) ), p.endSequent( focus ) )
       }
+      ret
 
     case ContractionLeftRule( subProof, aux1, aux2 ) =>
       val l = subProof.endSequent( aux1 )
@@ -115,15 +131,19 @@ object LKToND {
     case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val l = leftSubProof.endSequent( aux1 )
 
+      /*
       val tl = p.getLeftSequentConnector.parentOption( aux1 ) match {
         case Some( i ) =>
           translate( leftSubProof, i )
         case None =>
           exchange( translate( leftSubProof, Suc( 0 ) ), l )
       }
+      */
+      val tl = translate( leftSubProof, aux1 )
 
       val tr = p.getRightSequentConnector.parentOption( focus ) match {
         case Some( i ) =>
+          // why exchange here?
           exchange( translate( rightSubProof, i ), p.endSequent( focus ) )
         case None =>
           exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
@@ -257,7 +277,35 @@ object LKToND {
       val i = lp.endSequent.indexOfPolOption( Neg( l ), Polarity.InAntecedent )
       ExcludedMiddleRule( rp2, Ant( 0 ), lp, i.get )
 
-    case ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+    case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      val l = leftSubProof.endSequent( aux1 )
+      val r = rightSubProof.endSequent( aux2 )
+
+      val tl = p.getLeftSequentConnector.parentOption( focus ) match {
+        case Some( i ) =>
+          exchange( translate( leftSubProof, i ), l )
+        case None =>
+          exchange( translate( leftSubProof, Suc( 0 ) ), l )
+      }
+      //val tl = translate( leftSubProof, aux1 )
+
+      val tr = p.getRightSequentConnector.parentOption( focus ) match {
+        case Some( i ) =>
+          // why exchange here?
+          //exchange( translate( rightSubProof, i ), p.endSequent( focus ) )
+          translate( rightSubProof, i )
+        case None =>
+          //exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
+          translate( rightSubProof, Suc( 0 ) )
+      }
+
+      val p1 = ImpElimRule( nd.LogicalAxiom( hof"$l -> $r" ), tl )
+
+      val i = tr.endSequent.indexOfPolOption( r, Polarity.InAntecedent )
+      //val ret = ImpElimRule( ImpIntroRule( tr, i.get ), p1 )
+      val ret = exchange( ImpElimRule( ImpIntroRule( tr, i.get ), p1 ), p.endSequent( focus ) )
+      ret
+    /*
       val l = leftSubProof.endSequent( aux1 )
       val r = rightSubProof.endSequent( aux2 )
 
@@ -279,6 +327,7 @@ object LKToND {
       val tr2 = ImpIntroRule( er, ir2.get )
 
       ImpElimRule( tr2, tl2 )
+      */
 
     case p @ ImpRightRule( subProof, aux1, aux2 ) =>
       val Imp( l, r ) = p.mainFormula

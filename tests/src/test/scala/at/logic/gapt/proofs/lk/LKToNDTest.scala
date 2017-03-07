@@ -215,8 +215,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus ) mustEqual true
     }
 
-    "translate ImpLeft" in {
-      // TODO too many weakenings
+    "translate ImpLeft with focus 0" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
         u( WeakeningRightRule( _, hof"C" ) ).
@@ -226,6 +225,21 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus ) mustEqual true
+    }
+
+    "translate ImpLeft with focus 1" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningLeftRule( _, hof"D" ) ).
+        b( ImpLeftRule( _, _, hof"A -> B" ) ).
+        qed
+
+      val focus = Suc( 1 )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus ) mustEqual true

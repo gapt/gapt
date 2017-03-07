@@ -241,7 +241,6 @@ object cut2 extends Script {
 }
 
 object impLeft1 extends Script {
-  // TODO too many weakenings
   val l1 = LogicalAxiom( hof"A" )
   val l2 = WeakeningRightRule( l1, hof"C" )
   val r1 = LogicalAxiom( hof"B" )
@@ -251,6 +250,7 @@ object impLeft1 extends Script {
   println( p )
 
   val nd = LKToND( p )
+  //val nd = LKToND( p, Suc( 1 ) )
   println( nd )
 }
 
