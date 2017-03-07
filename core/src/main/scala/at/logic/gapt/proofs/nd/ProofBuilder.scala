@@ -9,8 +9,8 @@ import at.logic.gapt.proofs.resolution.ResolutionProof
  * (ProofBuilder
  * c LogicalAxiom(A)
  * c LogicalAxiom(B)
- * u (WeakeningLeftRule(_, C))
- * b (AndRightRule(_,_, And(A, B))
+ * u (WeakeningRule(_, C))
+ * b (AndIntroRule(_,_, And(A, B))
  * qed)
  * </pre>
  * The constructor is private, so the only way to instantiate this class is by using the ProofBuilder object.
@@ -23,7 +23,7 @@ class ProofBuilder[Proof] private[nd] ( private val proofStack: Seq[Proof] ) {
   /**
    * Pushes a proof onto the stack.
    *
-   * @param proof An LKProof.
+   * @param proof An NDProof.
    * @return
    */
   def c( proof: Proof ) = new ProofBuilder( proof +: proofStack )
@@ -31,7 +31,7 @@ class ProofBuilder[Proof] private[nd] ( private val proofStack: Seq[Proof] ) {
   /**
    * Applies a unary inference to the top element of the proof stack.
    *
-   * @param inference A function LKProof => LKProof.
+   * @param inference A function NDProof => NDProof.
    * @return
    */
   def u( inference: Proof => Proof ) = proofStack match {
@@ -42,13 +42,26 @@ class ProofBuilder[Proof] private[nd] ( private val proofStack: Seq[Proof] ) {
   /**
    * Applies a binary inference to the top two elements of the proof stack.
    *
-   * @param inference A function (LKProof, LKProof) => LKProof
+   * @param inference A function (NDProof, NDProof) => NDProof
    * @return
    */
   def b( inference: ( Proof, Proof ) => Proof ) = proofStack match {
     case Seq()            => throw new Exception( "Cannot apply binary inference to empty stack." )
     case p +: Seq()       => throw new Exception( "Cannot apply binary inference to stack with only one element." )
     case p2 +: p1 +: rest => new ProofBuilder( inference( p1, p2 ) +: rest )
+  }
+
+  /**
+    * Applies a ternary inference to the top three elements of the proof stack.
+    *
+    * @param inference A function (NDProof, NDProof, NDProof) => NDProof
+    * @return
+    */
+  def t( inference: ( Proof, Proof, Proof ) => Proof ) = proofStack match {
+    case Seq()            => throw new Exception( "Cannot apply ternary inference to empty stack." )
+    case p +: Seq()       => throw new Exception( "Cannot apply ternary inference to stack with only one element." )
+    case p2 +: p1 +: Seq()       => throw new Exception( "Cannot apply ternary inference to stack with only two elements." )
+    case p3 +: p2 +: p1 +: rest => new ProofBuilder( inference( p1, p2, p3 ) +: rest )
   }
 
   /**
