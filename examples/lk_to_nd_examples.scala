@@ -47,24 +47,19 @@ object demorgan1 extends Script {
   val s3 = OrRightRule( s2, hof"A | B" )
   val s4 = NegLeftRule( s3, hof"A | B" )
   val s5 = NegRightRule( s4, hof"A" )
-  println( s5 )
-  val nd2 = LKToND( s5 )
-  println( nd2 )
 
-  /*
   val r1 = LogicalAxiom( hof"B" )
   val r2 = WeakeningRightRule( r1, hof"A" )
   val r3 = OrRightRule( r2, hof"A | B" )
-  val r4 = NegLeftRule( r3, hof"A | B")
+  val r4 = NegLeftRule( r3, hof"A | B" )
   val r5 = NegRightRule( r4, hof"B" )
 
-  val p1 = AndRightRule( s5, r5, hof"-A & -B")
-  val p2 = ContractionLeftRule( p1, hof"-(A | B)")
+  val p1 = AndRightRule( s5, r5, hof"-A & -B" )
+  val p2 = ContractionLeftRule( p1, hof"-(A | B)" )
   println( p2 )
 
   val nd = LKToND( p2 )
-  println(nd)
-  */
+  println( nd )
 }
 
 object demorgan2 extends Script {
@@ -277,5 +272,22 @@ object weakeningRight1 extends Script {
   println( p3 )
 
   val nd = LKToND( p3, Suc( 1 ) )
+  println( nd )
+}
+
+object example1 extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( WeakeningRightRule( _, hof"B" ) ).
+    u( WeakeningRightRule( _, hof"C" ) ).
+    u( WeakeningRightRule( _, hof"D" ) ).
+    u( OrRightRule( _, hof"A | B" ) ).
+    u( NegLeftRule( _, hof"A | B" ) ).
+    u( OrRightRule( _, hof"C | D" ) ).
+    qed
+  println( lk )
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, focus )
   println( nd )
 }

@@ -35,9 +35,15 @@ object LKToND {
 
       val ax1 = nd.LogicalAxiom( mainFormula )
 
-      val ax2 = nd.LogicalAxiom( hof"-$r" )
-      val pr1 = NegElimRule( ax2, p )
-      val pr2 = BottomElimRule( pr1, mainFormula )
+      val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+        BottomElimRule( p, mainFormula )
+      } else {
+        nd.ProofBuilder.
+          c( nd.LogicalAxiom( hof"-$r" ) ).
+          u( NegElimRule( _, p ) ).
+          u( BottomElimRule( _, mainFormula ) ).
+          qed
+      }
 
       val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
       ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
@@ -216,7 +222,7 @@ object LKToND {
 
       OrElimRule( tl, tr, nd.LogicalAxiom( p.mainFormula ) )
 
-    case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) =>
+    case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
       val l = subProof1.endSequent( aux1 )
       val r = subProof1.endSequent( aux2 )
 

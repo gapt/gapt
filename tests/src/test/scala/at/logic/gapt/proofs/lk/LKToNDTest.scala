@@ -186,6 +186,21 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
       checkEquality( nd, lk, focus ) mustEqual true
     }
+
+    "translate example 1" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        u( WeakeningRightRule( _, hof"D" ) ).
+        u( OrRightRule( _, hof"A | B" ) ).
+        u( NegLeftRule( _, hof"A | B" ) ).
+        u( OrRightRule( _, hof"C | D" ) ).
+        qed
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+      checkEquality( nd, lk, focus ) mustEqual true
+    }
   }
 }
 
