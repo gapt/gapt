@@ -22,6 +22,19 @@ object LKToND {
     translate( proof, focus )
   }
 
+  def check( nd: NDProof, lk: LKProof, focus: SequentIndex ) = {
+    if ( lk.endSequent.succedent.isEmpty ) {
+      assert( ( lk.endSequent.size + 1 ) == nd.endSequent.size )
+      assert( nd.endSequent( Suc( 0 ) ) == Bottom() )
+    } else {
+      assert( lk.endSequent.size == nd.endSequent.size )
+      assert( lk.endSequent.succedent.contains( nd.endSequent( Suc( 0 ) ) ) )
+      assert( lk.endSequent( focus ) == nd.endSequent( Suc( 0 ) ) )
+    }
+    assert( lk.endSequent.antecedent.forall( nd.endSequent.antecedent.contains( _ ) ) )
+    assert( lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x => nd.endSequent.antecedent.contains( Neg( x ) ) ) )
+  }
+
   private def exchange( subProof: NDProof, mainFormula: HOLFormula ): NDProof = {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
@@ -64,307 +77,296 @@ object LKToND {
     }
   }
 
-  private def translate( proof: LKProof, focus: SequentIndex ): NDProof = proof match {
+  private def translate( proof: LKProof, focus: SequentIndex ): NDProof = {
 
-    // Axioms
-    case lk.LogicalAxiom( atom: HOLAtom ) =>
-      nd.LogicalAxiom( atom )
+    assert( focus.isSuc )
 
-    case ReflexivityAxiom( s ) =>
-      ???
+    val ndProof = proof match {
 
-    case TopAxiom =>
-      ???
+      // Axioms
+      case lk.LogicalAxiom( atom: HOLAtom ) =>
+        nd.LogicalAxiom( atom )
 
-    case BottomAxiom =>
-      ???
+      case ReflexivityAxiom( s ) =>
+        ???
 
-    case TheoryAxiom( sequent ) =>
-      ???
+      case TopAxiom =>
+        ???
 
-    // Structural rules
-    case WeakeningLeftRule( subProof, formula ) =>
-      //translate( subProof, focus )
-      val ret = WeakeningRule( translate( subProof, focus ), formula )
-      ret
+      case BottomAxiom =>
+        ???
 
-    case p @ WeakeningRightRule( subProof, formula ) =>
-      //translate( subProof, focus )
-      val ret = p.getSequentConnector.parentOption( focus ) match {
-        case Some( i ) =>
-          WeakeningRule( translate( subProof, i ), hof"-$formula" )
-        case None =>
+      case TheoryAxiom( sequent ) =>
+        ???
+
+      // Structural rules
+      case WeakeningLeftRule( subProof, formula ) =>
+        //translate( subProof, focus )
+        val ret = WeakeningRule( translate( subProof, focus ), formula )
+        ret
+
+      case p @ WeakeningRightRule( subProof, formula ) =>
+        //translate( subProof, focus )
+        val ret = p.getSequentConnector.parentOption( focus ) match {
+          case Some( i ) =>
+            WeakeningRule( translate( subProof, i ), hof"-$formula" )
+          case None =>
+            //exchange( translate( subProof, Suc( 0 ) ), p.endSequent( focus ) )
+            // different order as in other rules
+            // explicit weakening here? would (exchange o translate) be enough?
+            val t = translate( subProof, Suc( 0 ) )
+            val ret = exchange( WeakeningRule( t, hof"-$formula" ), p.endSequent( focus ) )
+            ret
+
+          //without weakening weakenright/contractright example breaks
           //exchange( translate( subProof, Suc( 0 ) ), p.endSequent( focus ) )
-          // different order as in other rules
-          // explicit weakening here? would (exchange o translate) be enough?
-          val t = translate( subProof, Suc( 0 ) )
-          val ret = exchange( WeakeningRule( t, hof"-$formula" ), p.endSequent( focus ) )
-          ret
+        }
+        ret
 
-        //without weakening weakenright/contractright example breaks
-        //exchange( translate( subProof, Suc( 0 ) ), p.endSequent( focus ) )
-      }
-      ret
+      case ContractionLeftRule( subProof, aux1, aux2 ) =>
+        val l = subProof.endSequent( aux1 )
+        val r = subProof.endSequent( aux2 )
 
-    case ContractionLeftRule( subProof, aux1, aux2 ) =>
-      val l = subProof.endSequent( aux1 )
-      val r = subProof.endSequent( aux2 )
+        val t = translate( subProof, focus )
 
-      val t = translate( subProof, aux2 )
+        assert( l == r )
 
-      assert( l == r )
+        ContractionRule( t, l )
 
-      ContractionRule( t, l )
+      case ContractionRightRule( subProof, aux1, aux2 ) =>
+        val l = subProof.endSequent( aux1 )
+        val r = subProof.endSequent( aux2 )
 
-    case ContractionRightRule( subProof, aux1, aux2 ) =>
-      val l = subProof.endSequent( aux1 )
-      val r = subProof.endSequent( aux2 )
+        val t = translate( subProof, aux2 )
 
-      val t = translate( subProof, aux2 )
+        assert( l == r )
 
-      assert( l == r )
+        val il = t.endSequent.find { case s if s == hof"-$l" => true; case _ => false }
+        ExcludedMiddleRule( nd.LogicalAxiom( l ), Ant( 0 ), t, il.get )
 
-      val p1 = exchange( t, l )
-      val il = p1.endSequent.find { case s if s == hof"-$l" => true; case _ => false }
-      ExcludedMiddleRule( nd.LogicalAxiom( l ), Ant( 0 ), p1, il.get )
+      case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        val l = leftSubProof.endSequent( aux1 )
 
-    case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val l = leftSubProof.endSequent( aux1 )
+        /*
+        val tl = p.getLeftSequentConnector.parentOption( aux1 ) match {
+          case Some( i ) =>
+            translate( leftSubProof, i )
+          case None =>
+            exchange( translate( leftSubProof, Suc( 0 ) ), l )
+        }
+        */
+        val tl = translate( leftSubProof, aux1 )
 
-      /*
-      val tl = p.getLeftSequentConnector.parentOption( aux1 ) match {
-        case Some( i ) =>
-          translate( leftSubProof, i )
-        case None =>
-          exchange( translate( leftSubProof, Suc( 0 ) ), l )
-      }
-      */
-      val tl = translate( leftSubProof, aux1 )
+        val tr = p.getRightSequentConnector.parentOption( focus ) match {
+          case Some( i ) =>
+            translate( rightSubProof, i )
+          case None =>
+            translate( rightSubProof, Suc( 0 ) )
+        }
 
-      val tr = p.getRightSequentConnector.parentOption( focus ) match {
-        case Some( i ) =>
-          // why exchange here?
-          exchange( translate( rightSubProof, i ), p.endSequent( focus ) )
-        case None =>
-          exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
-      }
+        ImpElimRule( ImpIntroRule( tl, hof"$l" ), tr )
 
-      ImpElimRule( ImpIntroRule( tl, hof"$l" ), tr )
+      // Propositional rules
+      case NegLeftRule( subProof, aux ) =>
+        val r = subProof.endSequent( aux )
 
-    /*
-      val tl = translate( leftSubProof, aux1 )
-      val pl = exchange( tl, l )
+        NegElimRule( nd.LogicalAxiom( hof"-$r" ), translate( subProof, aux ) )
 
-      val ff = proof.endSequent( focus )
-      val ir = rightSubProof.endSequent.find { case `ff` => true; case _ => false }
-      val tr = ir match {
-        case Some( ir ) if ir.isAnt => translate( rightSubProof, ir )
-        case _                      => translate( rightSubProof, Ant( 0 ) )
-      }
-      val pr = exchange( tr, ff )
+      case p @ NegRightRule( subProof, aux ) =>
+        val l = subProof.endSequent( aux )
+        /*
+        val t = exchange( translate( subProof, Ant( 0 ) ), Bottom() )
+        */
 
-      val p1 = ImpIntroRule( pl, hof"$l" )
-      ImpElimRule( p1, pr )
-      */
+        // exchanging with bottom in both cases
+        val t = p.getSequentConnector.parentOption( focus ) match {
+          case Some( i ) =>
+            exchange( translate( subProof, Suc( 0 ) ), Bottom() )
+          case None =>
+            ???
+          //exchange( translate( subProof, Suc( 0 ) ), Bottom() )
+        }
 
-    // Propositional rules
-    case NegLeftRule( subProof, aux ) =>
-      val r = subProof.endSequent( aux )
-      val tr = translate( subProof, aux )
+        NegIntroRule( t, l )
 
-      val s = nd.LogicalAxiom( hof"-$r" )
-      NegElimRule( s, tr )
+      case p @ AndLeftRule( subProof, aux1, aux2 ) =>
 
-    case p @ NegRightRule( subProof, aux ) =>
-      val l = subProof.endSequent( aux )
-      /*
-      val t = exchange( translate( subProof, Ant( 0 ) ), Bottom() )
-      */
+        val t = p.getSequentConnector.parentOption( focus ) match {
+          case Some( i ) =>
+            translate( subProof, i )
+          case None =>
+            translate( subProof, Suc( 0 ) )
+        }
 
-      // exchanging with bottom in both cases
-      val t = p.getSequentConnector.parentOption( focus ) match {
-        case Some( i ) =>
-          exchange( translate( subProof, i ), Bottom() )
-        case None =>
-          exchange( translate( subProof, Suc( 0 ) ), Bottom() )
-      }
+        val And( a, b ) = p.mainFormula
 
-      NegIntroRule( t, l )
+        val ax = nd.LogicalAxiom( p.mainFormula )
+        val p1 = AndElim1Rule( ax )
+        val p2 = AndElim2Rule( ax )
 
-    case AndLeftRule( subProof, aux1, aux2 ) =>
-      /*
-      val l = subProof.endSequent( aux1 )
-      val r = subProof.endSequent( aux2 )
+        val q1 = ImpIntroRule( t, a )
+        val q2 = ImpElimRule( q1, p1 )
+        val q3 = ImpIntroRule( q2, b )
+        val q4 = ImpElimRule( q3, p2 )
+        ContractionRule( q4, p.mainFormula )
 
-      val ff = proof.endSequent( focus )
+        /*
+        val l = subProof.endSequent( aux1 )
+        val r = subProof.endSequent( aux2 )
 
-      val il = subProof.endSequent.find{ case `ff` => true; case _ => false }
-      val t = translate( subProof, il.get )
+        val ff = proof.endSequent( focus )
 
-      val l1 = exchange( t, ff )
+        val il = subProof.endSequent.find{ case `ff` => true; case _ => false }
+        val t = translate( subProof, il.get )
 
-      val r1 = LogicalAxiom( hof"$l & $r" )
-      // TODO Elim1/Elim2 based on weakening in sub proof
-      val r2 = AndElim1Rule
-      */
-      ???
+        val l1 = exchange( t, ff )
 
-    case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val l = leftSubProof.endSequent( aux1 )
-      val r = rightSubProof.endSequent( aux2 )
+        val r1 = LogicalAxiom( hof"$l & $r" )
+        // TODO Elim1/Elim2 based on weakening in sub proof
+        val r2 = AndElim1Rule
+        */
+        ???
 
-      val tl = translate( leftSubProof, aux1 )
-      val tr = translate( rightSubProof, aux2 )
+      case AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        val tl = translate( leftSubProof, aux1 )
+        val tr = translate( rightSubProof, aux2 )
 
-      AndIntroRule( exchange( tl, l ), exchange( tr, r ) )
+        AndIntroRule( tl, tr )
 
-    case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+      case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
 
-      val tl = p.getLeftSequentConnector.parentOption( focus ) match {
-        case Some( il ) =>
-          translate( leftSubProof, il )
-        case None =>
-          // TODO pick new focus heuristically
-          //exchange( translate( leftSubProof, Suc( 0 ) ), p.endSequent( focus ) )
-          val t = WeakeningRule( translate( leftSubProof, Suc( 0 ) ), Neg( p.endSequent( focus ) ) )
-          exchange( t, p.endSequent( focus ) )
-      }
+        val tl = p.getLeftSequentConnector.parentOption( focus ) match {
+          case Some( il ) =>
+            translate( leftSubProof, il )
+          case None =>
+            // TODO pick new focus heuristically
+            //exchange( translate( leftSubProof, Suc( 0 ) ), p.endSequent( focus ) )
+            val t = WeakeningRule( translate( leftSubProof, Suc( 0 ) ), Neg( p.endSequent( focus ) ) )
+            exchange( t, p.endSequent( focus ) )
+        }
 
-      val tr = p.getRightSequentConnector.parentOption( focus ) match {
-        case Some( ir ) =>
-          translate( rightSubProof, ir )
-        case None =>
-          // TODO pick new focus heuristically
-          //exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
-          val t = WeakeningRule( translate( rightSubProof, Suc( 0 ) ), Neg( p.endSequent( focus ) ) )
-          exchange( t, p.endSequent( focus ) )
-      }
+        val tr = p.getRightSequentConnector.parentOption( focus ) match {
+          case Some( ir ) =>
+            translate( rightSubProof, ir )
+          case None =>
+            // TODO pick new focus heuristically
+            //exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
+            val t = WeakeningRule( translate( rightSubProof, Suc( 0 ) ), Neg( p.endSequent( focus ) ) )
+            exchange( t, p.endSequent( focus ) )
+        }
 
-      OrElimRule( tl, tr, nd.LogicalAxiom( p.mainFormula ) )
+        OrElimRule( tl, tr, nd.LogicalAxiom( p.mainFormula ) )
 
-    case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
-      val l = subProof1.endSequent( aux1 )
-      val r = subProof1.endSequent( aux2 )
+      case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
+        val l = subProof1.endSequent( aux1 )
+        val r = subProof1.endSequent( aux2 )
 
-      val ret = f match {
-        case `r` =>
-          val t = subProof1.getSequentConnector.parentOption( aux1 ) match {
-            case Some( i ) =>
-              translate( subProof2, i )
-            case None =>
-              exchange( translate( subProof2, Suc( 0 ) ), subProof2.endSequent( aux1 ) )
-          }
-          OrIntro1Rule( t, f )
-        case `l` =>
-          val t = subProof1.getSequentConnector.parentOption( aux2 ) match {
-            case Some( i ) =>
-              translate( subProof2, i )
-            case None =>
-              exchange( translate( subProof2, Suc( 0 ) ), subProof2.endSequent( aux2 ) )
-          }
-          OrIntro2Rule( t, f )
-      }
-      ret
+        val ret = f match {
+          case `r` =>
+            val t = subProof1.getSequentConnector.parentOption( aux1 ) match {
+              case Some( i ) =>
+                translate( subProof2, i )
+              case None =>
+                ???
+              //exchange( translate( subProof2, Suc( 0 ) ), subProof2.endSequent( aux1 ) )
+            }
+            OrIntro1Rule( t, f )
+          case `l` =>
+            val t = subProof1.getSequentConnector.parentOption( aux2 ) match {
+              case Some( i ) =>
+                translate( subProof2, i )
+              case None =>
+                ???
+              //exchange( translate( subProof2, Suc( 0 ) ), subProof2.endSequent( aux2 ) )
+            }
+            OrIntro2Rule( t, f )
+        }
+        ret
 
-    case p @ OrRightRule( subProof, aux1, aux2 ) =>
-      val Or( l, r ) = p.mainFormula
+      case p @ OrRightRule( subProof, aux1, aux2 ) =>
+        val Or( l, r ) = p.mainFormula
 
-      val t = translate( subProof, aux2 )
-      val lp = OrIntro2Rule( exchange( t, r ), l )
-      val rp1 = nd.LogicalAxiom( l )
-      val rp2 = OrIntro1Rule( rp1, r )
+        val t = translate( subProof, aux2 )
+        val lp = OrIntro2Rule( exchange( t, r ), l )
+        val rp1 = nd.LogicalAxiom( l )
+        val rp2 = OrIntro1Rule( rp1, r )
 
-      val i = lp.endSequent.indexOfPolOption( Neg( l ), Polarity.InAntecedent )
-      ExcludedMiddleRule( rp2, Ant( 0 ), lp, i.get )
+        val i = lp.endSequent.indexOfPolOption( Neg( l ), Polarity.InAntecedent )
+        ExcludedMiddleRule( rp2, Ant( 0 ), lp, i.get )
 
-    case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val l = leftSubProof.endSequent( aux1 )
-      val r = rightSubProof.endSequent( aux2 )
+      case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        val l = leftSubProof.endSequent( aux1 )
+        val r = rightSubProof.endSequent( aux2 )
 
-      val tl = p.getLeftSequentConnector.parentOption( focus ) match {
-        case Some( i ) =>
-          exchange( translate( leftSubProof, i ), l )
-        case None =>
-          exchange( translate( leftSubProof, Suc( 0 ) ), l )
-      }
-      //val tl = translate( leftSubProof, aux1 )
+        val tl = p.getLeftSequentConnector.parentOption( focus ) match {
+          case Some( i ) =>
+            exchange( translate( leftSubProof, i ), l )
+          case None =>
+            exchange( translate( leftSubProof, Suc( 0 ) ), l )
+        }
+        //val tl = translate( leftSubProof, aux1 )
 
-      val tr = p.getRightSequentConnector.parentOption( focus ) match {
-        case Some( i ) =>
-          // why exchange here?
-          //exchange( translate( rightSubProof, i ), p.endSequent( focus ) )
-          translate( rightSubProof, i )
-        case None =>
-          //exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
-          translate( rightSubProof, Suc( 0 ) )
-      }
+        val tr = p.getRightSequentConnector.parentOption( focus ) match {
+          case Some( i ) =>
+            // why exchange here?
+            //exchange( translate( rightSubProof, i ), p.endSequent( focus ) )
+            translate( rightSubProof, i )
+          case None =>
+            //exchange( translate( rightSubProof, Suc( 0 ) ), p.endSequent( focus ) )
+            translate( rightSubProof, Suc( 0 ) )
+        }
 
-      val p1 = ImpElimRule( nd.LogicalAxiom( hof"$l -> $r" ), tl )
+        val p1 = ImpElimRule( nd.LogicalAxiom( hof"$l -> $r" ), tl )
 
-      val i = tr.endSequent.indexOfPolOption( r, Polarity.InAntecedent )
-      //val ret = ImpElimRule( ImpIntroRule( tr, i.get ), p1 )
-      val ret = exchange( ImpElimRule( ImpIntroRule( tr, i.get ), p1 ), p.endSequent( focus ) )
-      ret
-    /*
-      val l = leftSubProof.endSequent( aux1 )
-      val r = rightSubProof.endSequent( aux2 )
+        val i = tr.endSequent.indexOfPolOption( r, Polarity.InAntecedent )
+        val ret = ImpElimRule( ImpIntroRule( tr, i.get ), p1 )
+        ret
 
-      val ff = proof.endSequent( focus )
+      case p @ ImpRightRule( subProof, aux1, aux2 ) =>
+        val Imp( l, r ) = p.mainFormula
 
-      val tl = translate( leftSubProof, aux1 )
+        val t = translate( subProof, aux2 )
 
-      val ir = rightSubProof.endSequent.find { case `ff` => true; case _ => false }
-      val tr = ir match {
-        case Some( ir ) if ir.isAnt => translate( rightSubProof, ir )
-        case _                      => translate( rightSubProof, Ant( 0 ) )
-      }
+        val i = t.endSequent.indexOfPolOption( l, Polarity.InAntecedent )
+        val ret = ImpIntroRule( t, i.get )
+        ret
 
-      val ax = nd.LogicalAxiom( hof"$l -> $r" )
-      val tl2 = ImpElimRule( ax, exchange( tl, l ) )
+      // Quantifier rules
+      case ForallLeftRule( subProof, aux, _, t, _ ) =>
+        ???
 
-      val er = exchange( tr, ff )
-      val ir2 = er.endSequent.find { case `r` => true; case _ => false }
-      val tr2 = ImpIntroRule( er, ir2.get )
+      case ForallRightRule( subProof, aux, eigen, _ ) =>
+        ???
 
-      ImpElimRule( tr2, tl2 )
-      */
+      case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+        ???
 
-    case p @ ImpRightRule( subProof, aux1, aux2 ) =>
-      val Imp( l, r ) = p.mainFormula
+      case ExistsLeftRule( subProof, aux, eigen, _ ) =>
+        ???
 
-      val t = exchange( translate( subProof, aux2 ), r )
+      case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+        ???
 
-      val i = t.endSequent.indexOfPolOption( l, Polarity.InAntecedent )
-      val ret = ImpIntroRule( t, i.get )
-      ret
+      case ExistsRightRule( subProof, aux, _, t, _ ) =>
+        ???
 
-    // Quantifier rules
-    case ForallLeftRule( subProof, aux, _, t, _ ) =>
-      ???
+      // Equality rules
+      case p: EqualityRule =>
+        ???
 
-    case ForallRightRule( subProof, aux, eigen, _ ) =>
-      ???
+      case DefinitionLeftRule( subProof, aux, main ) =>
+        ???
 
-    case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
-      ???
-
-    case ExistsLeftRule( subProof, aux, eigen, _ ) =>
-      ???
-
-    case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
-      ???
-
-    case ExistsRightRule( subProof, aux, _, t, _ ) =>
-      ???
-
-    // Equality rules
-    case p: EqualityRule =>
-      ???
-
-    case DefinitionLeftRule( subProof, aux, main ) =>
-      ???
-
-    case DefinitionRightRule( subProof, aux, main ) =>
-      ???
+      case DefinitionRightRule( subProof, aux, main ) =>
+        ???
+    }
+    // Check needed for NegLeft with potentially empty succedent
+    val ret = if ( proof.endSequent.succedent.nonEmpty ) {
+      exchange( ndProof, proof.endSequent( focus ) )
+    } else {
+      ndProof
+    }
+    check( ret, proof, focus )
+    ret
   }
 }

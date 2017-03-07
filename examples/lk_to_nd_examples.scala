@@ -66,12 +66,10 @@ object demorgan2 extends Script {
   val s1 = LogicalAxiom( hof"A" )
   val s2 = NegLeftRule( s1, hof"A" )
   val s3 = WeakeningLeftRule( s2, hof"B" )
-  println( s3 )
 
   val r1 = LogicalAxiom( hof"B" )
   val r2 = NegLeftRule( r1, hof"B" )
   val r3 = WeakeningLeftRule( r2, hof"A" )
-  println( r3 )
 
   val p1 = OrLeftRule( s3, r3, hof"-A | -B" )
   val p2 = ContractionLeftRule( p1, hof"A" )
@@ -289,5 +287,19 @@ object example1 extends Script {
 
   val focus = Suc( 0 )
   val nd = LKToND( lk, focus )
+  println( nd )
+}
+
+object negLeftFollowedByNegRight extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( NegLeftRule( _, hof"A" ) ).
+    u( NegRightRule( _, hof"-A" ) ).
+    qed
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
   println( nd )
 }
