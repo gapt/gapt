@@ -23,9 +23,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     */
 
     "translate OrLeft 1" in {
-      val l1 = LogicalAxiom( hof"A" )
-      val r1 = LogicalAxiom( hof"B" )
-      val lk = OrLeftRule( l1, r1, hof"A | B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        b( OrLeftRule( _, _, hof"A | B" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -34,9 +36,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate OrLeft 2" in {
-      val l1 = LogicalAxiom( hof"A" )
-      val r1 = LogicalAxiom( hof"A" )
-      val lk = OrLeftRule( l1, r1, hof"A | A" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"A" ) ).
+        b( OrLeftRule( _, _, hof"A | A" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -45,11 +49,13 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate OrLeft 3" in {
-      val l1 = LogicalAxiom( hof"A" )
-      val r1 = LogicalAxiom( hof"B" )
-      val r2 = WeakeningRightRule( r1, hof"C" )
-      val r3 = WeakeningLeftRule( r2, hof"D" )
-      val lk = OrLeftRule( l1, r3, hof"A | D" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        u( WeakeningLeftRule( _, hof"D" ) ).
+        b( OrLeftRule( _, _, hof"A | D" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -58,12 +64,14 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate OrLeft 4 with focus 3" in {
-      val l1 = LogicalAxiom( hof"A" )
-      val l2 = WeakeningRightRule( l1, hof"C" )
-      val r1 = LogicalAxiom( hof"B" )
-      val r2 = WeakeningRightRule( r1, hof"C" )
-      val r3 = WeakeningLeftRule( r2, hof"D" )
-      val lk = OrLeftRule( l2, r3, hof"A | D" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        u( WeakeningLeftRule( _, hof"D" ) ).
+        b( OrLeftRule( _, _, hof"A | D" ) ).
+        qed
 
       val focus = Suc( 3 )
       val nd = LKToND( lk, focus )
@@ -72,12 +80,14 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate OrLeft 5 with focus 2" in {
-      val l1 = LogicalAxiom( hof"A" )
-      val l2 = WeakeningLeftRule( l1, hof"A" )
-      val l3 = NegRightRule( l2, hof"A" )
-      val r1 = LogicalAxiom( hof"B" )
-      val r2 = WeakeningRightRule( r1, hof"B" )
-      val lk = OrLeftRule( l3, r2, hof"A | B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"A" ) ).
+        u( NegRightRule( _, hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        b( OrLeftRule( _, _, hof"A | B" ) ).
+        qed
 
       val focus = Suc( 2 )
       val nd = LKToND( lk, focus )
@@ -86,9 +96,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate ImpRight 1 with focus 1" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = WeakeningRightRule( p1, hof"B" )
-      val lk = ImpRightRule( p2, hof"A -> B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( ImpRightRule( _, hof"A -> B" ) ).
+        qed
 
       val focus = Suc( 1 )
       val nd = LKToND( lk, focus )
@@ -97,9 +109,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate ImpRight 2" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = WeakeningRightRule( p1, hof"B" )
-      val lk = ImpRightRule( p2, hof"A -> B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( ImpRightRule( _, hof"A -> B" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -108,9 +122,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate OrRight 1" in {
-      val r1 = LogicalAxiom( hof"A" )
-      val r2 = WeakeningRightRule( r1, hof"B" )
-      val lk = OrRightRule( r2, hof"A | B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( OrRightRule( _, hof"A | B" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -119,10 +135,12 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate OrRight 2" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = WeakeningLeftRule( p1, hof"B" )
-      val p3 = NegRightRule( p2, hof"B" )
-      val lk = OrRightRule( p3, hof"A | -B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"B" ) ).
+        u( NegRightRule( _, hof"B" ) ).
+        u( OrRightRule( _, hof"A | -B" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -131,9 +149,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate NegLeft followed by NegRight" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = NegLeftRule( p1, hof"A" )
-      val lk = NegRightRule( p2, hof"-A" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegLeftRule( _, hof"A" ) ).
+        u( NegRightRule( _, hof"-A" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -142,9 +162,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate NegRight" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = WeakeningLeftRule( p1, hof"B" )
-      val lk = NegRightRule( p2, hof"B" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"B" ) ).
+        u( NegRightRule( _, hof"B" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk )
@@ -153,9 +175,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate WeakeningRight followed by ContractRight" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = WeakeningRightRule( p1, hof"A" )
-      val lk = ContractionRightRule( p2, hof"A" )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"A" ) ).
+        u( ContractionRightRule( _, hof"A" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -164,9 +188,11 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate Cut 1" in {
-      val p1 = LogicalAxiom( hof"A" )
-      val p2 = LogicalAxiom( hof"A" )
-      val lk = CutRule( p1, Suc( 0 ), p2, Ant( 0 ) )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"A" ) ).
+        b( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
@@ -175,11 +201,55 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
     }
 
     "translate Cut 2" in {
-      val l1 = LogicalAxiom( hof"A" )
-      val l2 = WeakeningLeftRule( l1, hof"B" )
-      val r1 = LogicalAxiom( hof"A" )
-      val r2 = WeakeningRightRule( r1, hof"C" )
-      val lk = CutRule( l2, Suc( 0 ), r2, Ant( 0 ) )
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"B" ) ).
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        b( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus ) mustEqual true
+    }
+
+    "translate ImpLeft" in {
+      // TODO too many weakenings
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningLeftRule( _, hof"D" ) ).
+        b( ImpLeftRule( _, _, hof"A -> B" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus ) mustEqual true
+    }
+
+    "translate LEM" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegRightRule( _, hof"A" ) ).
+        u( OrRightRule( _, hof"A | -A" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus ) mustEqual true
+    }
+
+    "translate WeakeningRight" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        qed
 
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
