@@ -9,10 +9,18 @@ import org.specs2.mutable._
 class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
   def checkEquality( nd: NDProof, lk: LKProof, focus: SequentIndex ) = {
+    lk.endSequent.size mustEqual nd.endSequent.size
+    lk.endSequent.succedent.contains( nd.endSequent( Suc( 0 ) ) ) mustEqual true
+    lk.endSequent( focus ) mustEqual nd.endSequent( Suc( 0 ) )
+    lk.endSequent.antecedent.forall( nd.endSequent.antecedent.contains( _ ) ) mustEqual true
+    lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x => nd.endSequent.antecedent.contains( Neg( x ) ) ) mustEqual true
+    /*
     lk.endSequent.size == nd.endSequent.size &&
       lk.endSequent.succedent.contains( nd.endSequent( Suc( 0 ) ) ) &&
+      lk.endSequent( focus ) == nd.endSequent( Suc( 0 ) ) &&
       lk.endSequent.antecedent.forall( nd.endSequent.antecedent.contains( _ ) ) &&
       lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x => nd.endSequent.antecedent.contains( Neg( x ) ) )
+      */
   }
 
   "The LK to ND translation" should {
@@ -32,7 +40,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate OrLeft 2" in {
@@ -45,7 +53,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate OrLeft 3" in {
@@ -60,7 +68,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate OrLeft 4 with focus 3" in {
@@ -76,7 +84,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 3 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate OrLeft 5 with focus 2" in {
@@ -92,7 +100,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 2 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate ImpRight 1 with focus 1" in {
@@ -105,7 +113,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 1 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate ImpRight 2" in {
@@ -118,7 +126,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate OrRight 1" in {
@@ -131,7 +139,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate OrRight 2" in {
@@ -145,7 +153,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate NegLeft followed by NegRight" in {
@@ -158,7 +166,35 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate OrLeft followed by NegRight with focus 1" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        b( OrLeftRule( _, _, hof"A | B" ) ).
+        u( NegRightRule( _, hof"A | B" ) ).
+        qed
+
+      val focus = Suc( 1 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate OrLeft followed by NegRight with focus 2" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        b( OrLeftRule( _, _, hof"A | B" ) ).
+        u( NegRightRule( _, hof"A | B" ) ).
+        qed
+
+      val focus = Suc( 2 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
     }
 
     "translate NegRight" in {
@@ -171,7 +207,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate WeakeningRight followed by ContractRight" in {
@@ -184,7 +220,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate Cut 1" in {
@@ -197,7 +233,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate Cut 2" in {
@@ -212,7 +248,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate ImpLeft with focus 0" in {
@@ -227,7 +263,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate ImpLeft with focus 1" in {
@@ -242,7 +278,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 1 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate LEM" in {
@@ -255,7 +291,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate WeakeningRight" in {
@@ -268,7 +304,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
 
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
 
     "translate example 1" in {
@@ -283,7 +319,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
-      checkEquality( nd, lk, focus ) mustEqual true
+      checkEquality( nd, lk, focus )
     }
   }
 }
