@@ -164,7 +164,27 @@ object LKToND {
         ???
 
       case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
-        ???
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          val Or( a, b ) = p.mainFormula
+          f match {
+            case `b` =>
+              val i = subProof1.getSequentConnector.parent( aux1 )
+              nd.ProofBuilder.
+                c( translate( subProof2, i ) ).
+                u( OrIntro1Rule( _, f ) ).
+                qed
+            case `a` =>
+              val i = subProof1.getSequentConnector.parent( aux2 )
+              nd.ProofBuilder.
+                c( translate( subProof2, i ) ).
+                u( OrIntro2Rule( _, f ) ).
+                qed
+          }
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
 
       case p @ OrRightRule( subProof, aux1, aux2 ) =>
         ???

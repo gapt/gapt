@@ -193,14 +193,29 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
-    "translate OrRight 1" in {
+    "translate OrRight 1 with focus 0" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
         u( WeakeningRightRule( _, hof"B" ) ).
         u( OrRightRule( _, hof"A | B" ) ).
         qed
 
       val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate OrRight 1 with focus 1" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( OrRightRule( _, hof"A | B" ) ).
+        qed
+
+      val focus = Suc( 1 )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
