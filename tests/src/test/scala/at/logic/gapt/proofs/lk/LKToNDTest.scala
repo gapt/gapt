@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.nd.NDProof
-import at.logic.gapt.proofs.{ Ant, SequentIndex, SequentMatchers, Suc }
+import at.logic.gapt.proofs.{ Ant, Context, SequentIndex, SequentMatchers, Suc }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -436,8 +436,56 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( NegLeftRule( _, hof"A | B" ) ).
         u( OrRightRule( _, hof"C | D" ) ).
         qed
+
       val focus = Suc( 0 )
       val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ForAll left and right" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"A: i > o"
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A t" ) ).
+        u( ForallLeftRule( _, hof"!x A x", fov"t" ) ).
+        u( ForallRightRule( _, hof"!x A x", fov"t" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ExistsRight" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"A: i > o"
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A t" ) ).
+        u( ExistsRightRule( _, hof"?x A x", fov"t" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate WeakeningLeft followed by ContractLeft" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"A" ) ).
+        u( ContractionLeftRule( _, hof"A" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
       checkEquality( nd, lk, focus )
     }
   }

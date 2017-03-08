@@ -101,7 +101,8 @@ object LKToND {
 
       // Structural rules
       case WeakeningLeftRule( subProof, formula ) =>
-        ???
+        val heuristicIndex = focus
+        WeakeningRule( translate( subProof, heuristicIndex ), formula )
 
       case p @ WeakeningRightRule( subProof, formula ) =>
 
@@ -116,8 +117,9 @@ object LKToND {
           exchange( translate( proof, focusMain ), p.endSequent( focus ) )
         }
 
-      case ContractionLeftRule( subProof, aux1, aux2 ) =>
-        ???
+      case p @ ContractionLeftRule( subProof, aux1, aux2 ) =>
+        val heuristicIndex = focus
+        ContractionRule( translate( subProof, heuristicIndex ), p.mainFormula )
 
       case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
 
@@ -139,11 +141,30 @@ object LKToND {
         ???
 
       // Propositional rules
-      case NegLeftRule( subProof, aux ) =>
-        ???
+      case p @ NegLeftRule( subProof, aux ) =>
+        val Neg( a ) = p.mainFormula
+        val focusMain = subProof.endSequent.indexOfPol( a, Polarity.InSuccedent )
+        val t = nd.ProofBuilder.
+          c( nd.LogicalAxiom( p.mainFormula ) ).
+          c( translate( subProof, focusMain ) ).
+          b( NegElimRule( _, _ ) ).
+          qed
+        if ( p.endSequent.succedent.nonEmpty )
+          exchange( t, p.endSequent( focus ) )
+        else
+          t
 
       case p @ NegRightRule( subProof, aux ) =>
-        ???
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          val heuristicIndex = Suc( 0 )
+          val Neg( a ) = p.mainFormula
+          val t = translate( subProof, heuristicIndex )
+          NegIntroRule( exchange( t, Bottom() ), a )
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
 
       case p @ AndLeftRule( subProof, aux1, aux2 ) =>
         ???
@@ -211,14 +232,33 @@ object LKToND {
         ???
 
       case p @ ImpRightRule( subProof, aux1, aux2 ) =>
-        ???
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          val Imp( a, _ ) = p.mainFormula
+          nd.ProofBuilder.
+            c( translate( subProof, aux2 ) ).
+            u( ImpIntroRule( _, a ) ).
+            qed
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
 
       // Quantifier rules
       case ForallLeftRule( subProof, aux, _, t, _ ) =>
         ???
 
-      case ForallRightRule( subProof, aux, eigen, _ ) =>
-        ???
+      case p @ ForallRightRule( subProof, aux, eigen, _ ) =>
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          nd.ProofBuilder.
+            c( translate( subProof, aux ) ).
+            u( ForallIntroRule( _, p.mainFormula, eigen ) ).
+            qed
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
 
       case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
         ???
@@ -229,8 +269,17 @@ object LKToND {
       case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
         ???
 
-      case ExistsRightRule( subProof, aux, _, t, _ ) =>
-        ???
+      case p @ ExistsRightRule( subProof, aux, _, t, _ ) =>
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          nd.ProofBuilder.
+            c( translate( subProof, aux ) ).
+            u( ExistsIntroRule( _, p.mainFormula, t ) ).
+            qed
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
 
       // Equality rules
       case p: EqualityRule =>
