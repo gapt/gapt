@@ -187,7 +187,25 @@ object LKToND {
         }
 
       case p @ OrRightRule( subProof, aux1, aux2 ) =>
-        ???
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          val Or( a, b ) = p.mainFormula
+          val rp = nd.ProofBuilder.
+            c( translate( subProof, aux2 ) ).
+            u( OrIntro2Rule( _, a ) ).
+            qed
+
+          val lp = nd.ProofBuilder.
+            c( nd.LogicalAxiom( a ) ).
+            u( OrIntro1Rule( _, b ) ).
+            qed
+
+          val i = rp.endSequent.indexOfPol( Neg( a ), Polarity.InAntecedent )
+          ExcludedMiddleRule( lp, Ant( 0 ), rp, i )
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
 
       case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
         ???
