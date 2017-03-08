@@ -167,7 +167,19 @@ object LKToND {
         }
 
       case p @ AndLeftRule( subProof, aux1, aux2 ) =>
-        ???
+        val t = translate( subProof, focus )
+
+        val And( a, b ) = p.mainFormula
+
+        val ax = nd.LogicalAxiom( p.mainFormula )
+        val p1 = AndElim1Rule( ax )
+        val p2 = AndElim2Rule( ax )
+
+        val q1 = ImpIntroRule( t, a )
+        val q2 = ImpElimRule( q1, p1 )
+        val q3 = ImpIntroRule( q2, b )
+        val q4 = ImpElimRule( q3, p2 )
+        ContractionRule( q4, p.mainFormula )
 
       case p @ AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
 
@@ -182,7 +194,38 @@ object LKToND {
         }
 
       case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-        ???
+
+        val tl =
+          if ( p.endSequent.succedent.nonEmpty ) {
+            p.getLeftSequentConnector.parentOption( focus ) match {
+              case Some( il ) =>
+                translate( leftSubProof, il )
+              case None =>
+                val heuristicFocus = Suc( 0 )
+                val t = WeakeningRule( translate( leftSubProof, heuristicFocus ), Neg( p.endSequent( focus ) ) )
+                exchange( t, p.endSequent( focus ) )
+            }
+          } else {
+            val heuristicFocus = Suc( 0 )
+            translate( leftSubProof, heuristicFocus )
+          }
+
+        val tr =
+          if ( p.endSequent.succedent.nonEmpty ) {
+            p.getRightSequentConnector.parentOption( focus ) match {
+              case Some( ir ) =>
+                translate( rightSubProof, ir )
+              case None =>
+                val heuristicFocus = Suc( 0 )
+                val t = WeakeningRule( translate( rightSubProof, heuristicFocus ), Neg( p.endSequent( focus ) ) )
+                exchange( t, p.endSequent( focus ) )
+            }
+          } else {
+            val heuristicFocus = Suc( 0 )
+            translate( rightSubProof, heuristicFocus )
+          }
+
+        OrElimRule( tl, tr, nd.LogicalAxiom( p.mainFormula ) )
 
       case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
 
