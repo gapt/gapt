@@ -16,13 +16,13 @@ object unifyInstancesET {
     else apply( eliminateMerges( subst( ep ) ) )
   }
 
-  private def unifyInstances( instances: Seq[Set[LambdaExpression]], forbiddenVariables: Set[Var] ): Substitution = {
+  private def unifyInstances( instances: Seq[Set[Expr]], forbiddenVariables: Set[Var] ): Substitution = {
     val nameGen = rename.awayFrom( containedNames( instances ) )
-    val grounding = forbiddenVariables.map( ev => ev -> Const( nameGen.fresh( ev.name ), ev.exptype ) )
+    val grounding = forbiddenVariables.map( ev => ev -> Const( nameGen.fresh( ev.name ), ev.ty ) )
     TermReplacement( unifyInstances( TermReplacement( instances, grounding.toMap ) ), grounding.map( _.swap ).toMap )
   }
 
-  private def unifyInstances( instances: Seq[Set[LambdaExpression]] ): Substitution = {
+  private def unifyInstances( instances: Seq[Set[Expr]] ): Substitution = {
     for {
       group <- instances
       ( a, i ) <- group.zipWithIndex

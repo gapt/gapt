@@ -19,7 +19,7 @@ object MonoidCancellation extends TacticsProof {
   ctx += hcl":- 1*x = x"
 
   val setup: Tactical[Unit] = {
-    def mkAux( formula: HOLFormula ) =
+    def mkAux( formula: Formula ) =
       Lemma( Sequent() :+ ( "goal" -> universalClosure( formula ) ) ) {
         decompose
         foTheory
@@ -76,12 +76,12 @@ object MonoidCancellation extends TacticsProof {
 
   Lemma( hols":- a*(b*c) = (b*a)*c" ) { solve }
 
-  def benchmarkFormula( n: Int ): HOLFormula = {
-    def buildL( n: Int ): LambdaExpression = {
+  def benchmarkFormula( n: Int ): Formula = {
+    def buildL( n: Int ): Expr = {
       val x = Var( s"x$n", TBase( "m" ) )
       if ( n == 0 ) x else le"$x * ${buildL( n - 1 )}"
     }
-    def buildR( n: Int ): LambdaExpression = {
+    def buildR( n: Int ): Expr = {
       val x = Var( s"x$n", TBase( "m" ) )
       if ( n == 0 ) x else le"${buildL( n - 1 )} * $x"
     }

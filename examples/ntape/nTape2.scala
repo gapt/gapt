@@ -1,7 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr.fol.{ Counter, replaceAbstractions }
-import at.logic.gapt.expr.{ Abs, Const, HOLAtom, LambdaExpression, To }
+import at.logic.gapt.expr.{ Abs, Const, Atom, Expr, To }
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import at.logic.gapt.formats.llk.loadLLK
@@ -26,12 +26,12 @@ object nTape2 extends nTape2
 
 object nTapeInstances {
   //prints the interesting terms from the expansion sequent
-  def printInstances( expansion_proof: ExpansionProofWithCut, definitions: Map[Const, LambdaExpression] ) = {
+  def printInstances( expansion_proof: ExpansionProofWithCut, definitions: Map[Const, Expr] ) = {
     println( "------------ Witness Terms from Expansion Proof --------------" )
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect
     val conjuncts = decompose( expansion_proof.expansionSequent.antecedent( 1 ) )
-    val ind_atom = HOLAtom( Const( "IND", To ), List() )
+    val ind_atom = Atom( Const( "IND", To ), List() )
     val ind_axiom = definitions.find( _._1 == ind_atom ).get._2
     val indet = conjuncts.find( _.shallow == ind_axiom ).get
 
@@ -66,7 +66,7 @@ object nTapeInstances {
 
     ( ind1base, ind1step, ind2base, ind2step ) match {
       case ( Abs( xb, sb ), Abs( xs, ss ), Abs( yb, tb ), Abs( ys, ts ) ) =>
-        val map = Map[LambdaExpression, String]()
+        val map = Map[Expr, String]()
         val counter = new Counter
 
         val ( map1, sb1 ) = replaceAbstractions( sb, map, counter )

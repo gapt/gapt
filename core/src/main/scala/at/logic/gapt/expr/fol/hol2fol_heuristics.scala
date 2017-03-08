@@ -27,29 +27,29 @@ object undoHol2Fol extends Logger {
    * @return the changed formula
    */
   def backtranslate(
-    e:             LambdaExpression,
+    e:             Expr,
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
-    abssymbol_map: Map[String, LambdaExpression]
-  ): HOLFormula =
-    backtranslate( e.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[HOLFormula]
+    abssymbol_map: Map[String, Expr]
+  ): Formula =
+    backtranslate( e.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[Formula]
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
    * replace abstractions at the same time.
    */
   def backtranslate(
-    e:             LambdaExpression,
+    e:             Expr,
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
-    abssymbol_map: Map[String, LambdaExpression],
+    abssymbol_map: Map[String, Expr],
     expected_type: Option[Ty]
-  ): LambdaExpression = {
+  ): Expr = {
     e match {
       // --------------- logical structure ------------------------
-      case HOLAtom( Const( name, _ ), args ) if sig_consts contains name.toString =>
+      case Atom( Const( name, _ ), args ) if sig_consts contains name.toString =>
         val args_ = args.map( backtranslate( _, sig_vars, sig_consts, abssymbol_map, None ) )
         val head = sig_consts( name.toString )( 0 )
-        HOLAtom( head, args_ )
+        Atom( head, args_ )
       /* case Equation(s, t) =>
       Equation(backtranslate( s, sig_vars, sig_consts, abssymbol_map, None ) ,
       backtranslate( t, sig_vars, sig_consts, abssymbol_map, None ) )
@@ -62,7 +62,7 @@ object undoHol2Fol extends Logger {
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
         val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
-          case Nil        => All( Var( x.name, x.exptype ).asInstanceOf[Var], f_ )
+          case Nil        => All( Var( x.name, x.ty ).asInstanceOf[Var], f_ )
           case List( x_ ) => All( x_, f_ )
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
@@ -70,7 +70,7 @@ object undoHol2Fol extends Logger {
         val f_ = backtranslate( f, sig_vars, sig_consts, abssymbol_map )
         val xcandidates = freeVariables( f_ ).toList.filter( _.name == x.name )
         xcandidates match {
-          case Nil        => Ex( Var( x.name, x.exptype ).asInstanceOf[Var], f_ )
+          case Nil        => Ex( Var( x.name, x.ty ).asInstanceOf[Var], f_ )
           case List( x_ ) => Ex( x_, f_ )
           case _          => throw new Exception( "We have not more than one free variable with name " + x.name + xcandidates.mkString( ": (", ", ", ")" ) )
         }
@@ -78,10 +78,10 @@ object undoHol2Fol extends Logger {
       //cases for term replacement
       case Const( name, _ ) if abssymbol_map.contains( name ) =>
         val qterm_ = abssymbol_map( name )
-        val qterm: LambdaExpression = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
+        val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         expected_type match {
           case Some( expt ) =>
-            require( qterm.exptype == expt, "We did a replacement of the symbol " + name + " by " + qterm + " but the type " + qterm.exptype + " is not the expected type " + expected_type )
+            require( qterm.ty == expt, "We did a replacement of the symbol " + name + " by " + qterm + " but the type " + qterm.ty + " is not the expected type " + expected_type )
             qterm
           case None =>
             qterm
@@ -89,19 +89,19 @@ object undoHol2Fol extends Logger {
 
       case HOLFunction( Const( name, _ ), args ) if abssymbol_map.contains( name ) =>
         val qterm_ = abssymbol_map( name )
-        val qterm: LambdaExpression = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
-        val btargs = args.map( x => backtranslate( x.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, None ) )
+        val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
+        val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
         val r = btargs.foldLeft( qterm )( ( term, nextarg ) => App( term, nextarg ) )
         expected_type match {
           case Some( expt ) =>
-            require( qterm.exptype == expt, "We did a replacement of the symbol " + name + " by " + qterm + " but the type " + qterm.exptype + " is not the expected type " + expected_type )
+            require( qterm.ty == expt, "We did a replacement of the symbol " + name + " by " + qterm + " but the type " + qterm.ty + " is not the expected type " + expected_type )
             r
           case None =>
             r
         }
       //normal ones
       case HOLFunction( Const( name, _ ), args ) if sig_consts contains name =>
-        val btargs = args.map( x => backtranslate( x.asInstanceOf[LambdaExpression], sig_vars, sig_consts, abssymbol_map, None ) )
+        val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         HOLFunction( head, btargs )
       case Var( name, Ti ) if sig_vars contains name =>
@@ -124,17 +124,17 @@ object undoHol2Fol extends Logger {
 
   val ivy_varname = """(v[0-9]+)""".r
 
-  def getSignature[F, T <: SequentProof[F, T]]( proof: SequentProof[F, T], extract: F => LambdaExpression ): Signature = {
+  def getSignature[F, T <: SequentProof[F, T]]( proof: SequentProof[F, T], extract: F => Expr ): Signature = {
     val exprs = for ( p <- proof.subProofs; f <- p.conclusion.elements map extract ) yield f
     getSignature( exprs.toList )
   }
 
-  def getSignature( fs: List[LambdaExpression] ): Signature =
+  def getSignature( fs: List[Expr] ): Signature =
     fs.foldLeft( ( Map[String, Set[Const]](), Map[String, Set[Var]]() ) )( ( maps, e ) => {
       //println("next "+maps._1.size+":"+maps._2.size)
       getSignature( e, maps._1, maps._2 )
     } )
-  def getSignature( e: LambdaExpression, csig: Map[String, Set[Const]], vsig: Map[String, Set[Var]] ): ( Map[String, Set[Const]], Map[String, Set[Var]] ) = e match {
+  def getSignature( e: Expr, csig: Map[String, Set[Const]], vsig: Map[String, Set[Var]] ): ( Map[String, Set[Const]], Map[String, Set[Var]] ) = e match {
     case v: Var =>
       val name = v.name
       vsig.get( name ) match {

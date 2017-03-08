@@ -4,16 +4,16 @@ import at.logic.gapt.proofs.{ Sequent, HOLSequent }
 
 object clauseSubsumption {
   def apply(
-    from:                Sequent[LambdaExpression],
-    to:                  Sequent[LambdaExpression],
-    alreadyFixed:        Map[Var, LambdaExpression] = Map(),
-    multisetSubsumption: Boolean                    = false,
-    matchingAlgorithm:   MatchingAlgorithm          = syntacticMatching
+    from:                Sequent[Expr],
+    to:                  Sequent[Expr],
+    alreadyFixed:        PreSubstitution   = PreSubstitution(),
+    multisetSubsumption: Boolean           = false,
+    matchingAlgorithm:   MatchingAlgorithm = syntacticMatching
   ): Option[Substitution] = {
     if ( multisetSubsumption )
       if ( from.antecedent.size > to.antecedent.size || from.succedent.size > to.succedent.size )
         return None
-    if ( from isEmpty ) return Some( Substitution( alreadyFixed ) )
+    if ( from isEmpty ) return Some( alreadyFixed.toSubstitution )
     val chosenFrom = from.indices.head
     for {
       chosenTo <- to.indices if chosenTo sameSideAs chosenFrom
@@ -21,7 +21,7 @@ object clauseSubsumption {
       subsumption <- apply(
         from delete chosenFrom,
         if ( multisetSubsumption ) to delete chosenTo else to,
-        newSubst.map,
+        newSubst,
         multisetSubsumption,
         matchingAlgorithm
       )

@@ -23,12 +23,12 @@ object ResolutionToLKProof {
   }
 
   def asDerivation( proof: ResolutionProof ): LKProof =
-    apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[HOLAtom] ) ) )
+    apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[Atom] ) ) )
 
   def apply( proof: ResolutionProof, input: Input => LKProof ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
 
-    def reducef( p: PropositionalResolutionRule )( func: HOLFormula => LKProof ) = {
+    def reducef( p: PropositionalResolutionRule )( func: Formula => LKProof ) = {
       val q = f( p.subProof )
       reduceAxiom( q, q.conclusion.indexOfPol( p.subProof.conclusion( p.idx ), p.idx.polarity ) )( func )
     }
@@ -42,8 +42,8 @@ object ResolutionToLKProof {
       case Refl( term )    => ReflexivityAxiom( term )
 
       case p @ Defn( defConst, defExpr ) =>
-        val phi = BetaReduction.betaNormalize( defExpr( p.vars ) ).asInstanceOf[HOLFormula]
-        val defAtom = p.defConst( p.vars ).asInstanceOf[HOLFormula]
+        val phi = BetaReduction.betaNormalize( defExpr( p.vars ) ).asInstanceOf[Formula]
+        val defAtom = p.defConst( p.vars ).asInstanceOf[Formula]
 
         ProofBuilder.
           c( LogicalAxiom( phi ) ).
@@ -91,7 +91,7 @@ object ResolutionToLKProof {
           a <- comp.clause.antecedent
           if p_.conclusion.antecedent contains a
         } p_ = NegRightRule( p_, a )
-        def mkOr( lits: HOLFormula ): Unit =
+        def mkOr( lits: Formula ): Unit =
           lits match {
             case Or( lits_, lit ) =>
               mkOr( lits_ )
@@ -146,7 +146,7 @@ object ResolutionToLKProof {
    * Assumes that only contractions and logical axioms operate on (ancestors
    * of) the formula, and that func(φ ∧ ψ) is a proof of φ ∧ ψ :- φ.
    */
-  def reduceAxiom( proof: LKProof, idx: SequentIndex )( func: HOLFormula => LKProof ): LKProof =
+  def reduceAxiom( proof: LKProof, idx: SequentIndex )( func: Formula => LKProof ): LKProof =
     new LKVisitor[Sequent[Boolean]] {
       val formula = proof.conclusion( idx )
       val proofToInsert = func( formula )
@@ -219,7 +219,7 @@ object ResolutionToLKProof {
     }.apply( proof, proof.conclusion.indicesSequent.map( _ == idx ) )
 
   /** Proof of t=s :- s=t */
-  def mkSymmProof( t: LambdaExpression, s: LambdaExpression ): LKProof =
+  def mkSymmProof( t: Expr, s: Expr ): LKProof =
     ProofBuilder.
       c( ReflexivityAxiom( t ) ).
       u( WeakeningLeftRule( _, Eq( t, s ) ) ).

@@ -56,12 +56,12 @@ object Session {
     /**
      * Asserts a formula.
      */
-    case class Assert( formula: HOLFormula ) extends SessionCommand[Unit]
+    case class Assert( formula: Formula ) extends SessionCommand[Unit]
 
     /**
      * Asserts a formula with a label.
      */
-    case class AssertLabelled( formula: HOLFormula, label: String ) extends SessionCommand[Unit]
+    case class AssertLabelled( formula: Formula, label: String ) extends SessionCommand[Unit]
 
     /**
      * Checks whether the current set of declarations and assertions is satisfiable.
@@ -110,12 +110,12 @@ object Session {
   /**
    * Asserts a formula.
    */
-  def assert( f: HOLFormula ) = liftF( Assert( f ) )
+  def assert( f: Formula ) = liftF( Assert( f ) )
 
   /**
    * Asserts a formula with a label.
    */
-  def assert( f: HOLFormula, label: String ) = liftF( AssertLabelled( f, label ) )
+  def assert( f: Formula, label: String ) = liftF( AssertLabelled( f, label ) )
 
   /**
    * Checks whether the current set of declarations and assertions is satisfiable.
@@ -162,7 +162,7 @@ object Session {
   /**
    * Asserts a list of formulas.
    */
-  def assert( formulas: List[HOLFormula] ): Session[Unit] = formulas.traverse_( assert )
+  def assert( formulas: List[Formula] ): Session[Unit] = formulas.traverse_( assert )
 
   /**
    * Pushes the stack, then runs f, then pops the stack.
@@ -179,15 +179,15 @@ object Session {
   } yield x
 
   /**
-   * Declares all symbols (sorts and functions) in a list of LambdaExpressions.
+   * Declares all symbols (sorts and functions) in a list of Exprs.
    */
-  def declareSymbolsIn( expressions: TraversableOnce[LambdaExpression] ): Session[Unit] = {
-    val cs = expressions.toSet[LambdaExpression] flatMap { constants( _ ) } filter {
+  def declareSymbolsIn( expressions: TraversableOnce[Expr] ): Session[Unit] = {
+    val cs = expressions.toSet[Expr] flatMap { constants( _ ) } filter {
       case EqC( _ )           => false
       case _: LogicalConstant => false
       case _                  => true
     }
-    val ts = cs flatMap { c => baseTypes( c.exptype ) } filter {
+    val ts = cs flatMap { c => baseTypes( c.ty ) } filter {
       case To => false
       case _  => true
     }
@@ -199,9 +199,9 @@ object Session {
   }
 
   /**
-   * Declares all symbols (sorts and functions) in a list of LambdaExpressions.
+   * Declares all symbols (sorts and functions) in a list of Exprs.
    */
-  def declareSymbolsIn( expressions: LambdaExpression* )( implicit d: DummyImplicit ): Session[Unit] = declareSymbolsIn( expressions.toList )
+  def declareSymbolsIn( expressions: Expr* )( implicit d: DummyImplicit ): Session[Unit] = declareSymbolsIn( expressions.toList )
 
   def when( p: Boolean )( s: Session[Unit] ) = if ( p ) s else skip
 
@@ -252,9 +252,9 @@ object Session {
         case Pop                 => tell( LFun( "pop", LAtom( "1" ) ) )
         case DeclareSort( sort ) => tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
-          case Const( name, FunctionType( TBase( retType ), argTypes ) ) =>
+          case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
             tell( LFun( "declare-fun", LAtom( name ),
-              LList( argTypes map { case TBase( argType ) => LAtom( argType ) }: _* ),
+              LList( argTypes map { case TBase( argType, Nil ) => LAtom( argType ) }: _* ),
               LAtom( retType ) ) )
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
@@ -275,8 +275,8 @@ object Session {
 
         private var i = 0
         def apply( t: TBase ): TBase = map.getOrElseUpdate( t, t match {
-          case To => TBase( "Bool" )
-          case _  => i += 1; TBase( s"t$i" )
+          case To => TBase( "Bool", Nil )
+          case _  => i += 1; TBase( s"t$i", Nil )
         } )
 
         def apply( t: Ty ): Ty = t match {
@@ -291,11 +291,11 @@ object Session {
         private var i = 0
         def apply( c: Const ): Const = map.getOrElseUpdate( c, {
           i += 1
-          Const( s"f$i", typeRenaming( c.exptype ) )
+          Const( s"f$i", typeRenaming( c.ty ) )
         } )
       }
 
-      def convert( expr: LambdaExpression, boundVars: Map[Var, String] = Map() ): SExpression = expr match {
+      def convert( expr: Expr, boundVars: Map[Var, String] = Map() ): SExpression = expr match {
         case Top()       => LAtom( "true" )
         case Bottom()    => LAtom( "false" )
         case Neg( a )    => LFun( "not", convert( a, boundVars ) )
@@ -370,8 +370,8 @@ object Session {
      * @param checkValidity The function the runner uses to test validity of sequents.
      */
     class StackSessionRunner( checkValidity: HOLSequent => Boolean ) extends SessionRunner {
-      val formulaStack = mutable.Stack[Set[HOLFormula]]()
-      var assertedFormulas = Set[HOLFormula]()
+      val formulaStack = mutable.Stack[Set[Formula]]()
+      var assertedFormulas = Set[Formula]()
 
       protected def interpretCommand[A]( command: SessionCommand[A] ): Id[A] = command match {
         case Push =>

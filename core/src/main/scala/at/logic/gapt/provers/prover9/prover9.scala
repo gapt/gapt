@@ -58,13 +58,13 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     commands.map( _ + "." + sys.props( "line.separator" ) ).mkString
   }
 
-  private def renameVars( formula: LambdaExpression ): LambdaExpression =
+  private def renameVars( formula: Expr ): Expr =
     Substitution( freeVariables( formula ).
       toSeq.zipWithIndex.map {
         case ( v, i ) => v -> FOLVar( s"x$i" )
       } )( formula )
   private def toP9Input( clause: HOLClause ): String = toP9Input( renameVars( clause.toDisjunction ) )
-  private def toP9Input( expr: LambdaExpression ): String = expr match {
+  private def toP9Input( expr: Expr ): String = expr match {
     case Top()                => "$T"
     case Bottom()             => "$F"
     case Neg( a )             => s"-${toP9Input( a )}"
@@ -73,7 +73,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     case FOLFunction( f, as ) => toP9Input( f, as )
     case FOLVar( v )          => v
   }
-  private def toP9Input( function: String, args: Seq[LambdaExpression] ): String =
+  private def toP9Input( function: String, args: Seq[Expr] ): String =
     if ( args.isEmpty ) function else s"$function(${args.map( toP9Input ).mkString( "," )})"
 
   override val isInstalled: Boolean =

@@ -13,7 +13,7 @@ case class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFacto
    * @return Either a list of induction axioms or a non empty list of strings describing why induction axioms
    *         could not be generated.
    */
-  override def apply( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
     try {
       Right(
         axioms map { s =>

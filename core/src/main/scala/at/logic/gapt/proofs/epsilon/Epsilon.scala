@@ -14,11 +14,11 @@ object EpsilonC extends LogicalC( "ε" ) {
 }
 
 object Epsilon {
-  def apply( x: Var, spec: HOLFormula ): LambdaExpression =
-    App( EpsilonC( x.exptype ), Abs( x, spec ) )
+  def apply( x: Var, spec: Formula ): Expr =
+    App( EpsilonC( x.ty ), Abs( x, spec ) )
 
-  def unapply( e: LambdaExpression ): Option[( Var, HOLFormula )] = e match {
-    case App( EpsilonC( _ ), Abs( x, spec: HOLFormula ) ) => Some( ( x, spec ) )
+  def unapply( e: Expr ): Option[( Var, Formula )] = e match {
+    case App( EpsilonC( _ ), Abs( x, spec: Formula ) ) => Some( ( x, spec ) )
     case _ => None
   }
 }

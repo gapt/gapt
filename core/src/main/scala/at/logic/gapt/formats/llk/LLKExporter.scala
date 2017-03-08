@@ -90,7 +90,7 @@ class LLKExporter( val expandTex: Boolean ) {
     p.formulas.foldLeft( ( vacc, cacc ) )( ( m, f ) => getTypes( f, m._1, m._2 ) )
   }
 
-  def getTypes( exp: LambdaExpression, vmap: Map[String, Ty], cmap: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = exp match {
+  def getTypes( exp: Expr, vmap: Map[String, Ty], cmap: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = exp match {
     case Var( name, exptype ) =>
       if ( vmap.contains( name ) ) {
         if ( vmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + vmap( name ) + " != " + exptype )
@@ -208,16 +208,16 @@ class LLKExporter( val expandTex: Boolean ) {
  * This is a prover9 style formatting which can be parsed by LLK.
  */
 object toLLKString {
-  def apply( e: LambdaExpression ) = toLatexString.getFormulaString( e, true, false )
+  def apply( e: Expr ) = toLatexString.getFormulaString( e, true, false )
 }
 
 /**
  * This is a Latex formatting which can be parsed by LLK.
  */
 object toLatexString {
-  def apply( e: LambdaExpression ) = getFormulaString( e, true, true )
+  def apply( e: Expr ) = getFormulaString( e, true, true )
 
-  def getFormulaString( f: LambdaExpression, outermost: Boolean = true, escape_latex: Boolean ): String = f match {
+  def getFormulaString( f: Expr, outermost: Boolean = true, escape_latex: Boolean ): String = f match {
     case All( x, t ) =>
       val op = if ( escape_latex ) "\\forall" else "all"
       "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
@@ -243,7 +243,7 @@ object toLatexString {
 
     case Var( v, _ )   => v.toString
     case Const( c, _ ) => c.toString
-    case HOLAtom( f, args ) =>
+    case Atom( f, args ) =>
       val sym = f match {
         case Const( x, _ ) => x
         case Var( x, _ )   => x

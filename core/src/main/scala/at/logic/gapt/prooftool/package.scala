@@ -1,6 +1,6 @@
 package at.logic.gapt
 
-import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
+import at.logic.gapt.expr.{ Formula, Expr }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
@@ -19,7 +19,7 @@ package object prooftool {
    */
   @implicitNotFound( "Prooftool cannot show objects of type ${T}.\n(To support the type ${T}, add an implicit instance of ProoftoolViewable[${T}].)" )
   trait ProoftoolViewable[-T] {
-    def display( x: T, name: String ): Unit
+    def display( x: T, name: String ): List[ProofToolViewer[_]]
   }
 
   object ProoftoolViewable {
@@ -27,47 +27,39 @@ package object prooftool {
   }
 
   implicit val LKProofViewable: ProoftoolViewable[LKProof] =
-    ( x, name ) => new LKProofViewer( name, x ).showFrame()
+    ( x, name ) => List( new LKProofViewer( name, x ) )
 
   implicit def SequentProofViewable[F, T <: SequentProof[F, T]](
     implicit
     notLK: Not[T <:< LKProof]
   ): ProoftoolViewable[SequentProof[F, T]] = {
     def renderer( x: F ): String = x match {
-      case e: LambdaExpression => LatexExporter( e )
-      case _                   => x.toString
+      case e: Expr => LatexExporter( e )
+      case _       => x.toString
     }
 
-    ( p, name ) => new SequentProofViewer( name, p, renderer ).showFrame()
+    ( p, name ) => List( new SequentProofViewer( name, p, renderer ) )
   }
 
   implicit val ExpansionProofViewable: ProoftoolViewable[ExpansionProof] =
-    ( ep, name ) => new ExpansionSequentViewer( name, ep.expansionSequent ).showFrame()
+    ( ep, name ) => List( new ExpansionSequentViewer( name, ep.expansionSequent ) )
 
   implicit val ExpansionProofWithCutViewable: ProoftoolViewable[ExpansionProofWithCut] =
     ( ep, name ) => ProoftoolViewable[ExpansionProof].display( ep.expansionWithCutAxiom, name )
 
   implicit def StructViewable[D]: ProoftoolViewable[Struct[D]] =
-    ( s, name ) => new StructViewer[D]( name, s ).showFrame()
+    ( s, name ) => List( new StructViewer[D]( name, s ) )
 
   implicit val ListViewable: ProoftoolViewable[Iterable[HOLSequent]] =
-    ( list, name ) => new ListViewer( name, list.toList ).showFrame()
+    ( list, name ) => List( new ListViewer( name, list.toList ) )
 
   implicit val SequentViewable: ProoftoolViewable[HOLSequent] =
-    ( seq, name ) => new ListViewer( name, List( seq ) ).showFrame()
+    ( seq, name ) => List( new ListViewer( name, List( seq ) ) )
 
   implicit val ProofDatabaseViewable: ProoftoolViewable[ExtendedProofDatabase] =
-    ( db, _ ) =>
-      for ( ( pName, p ) <- db.proofs )
-        ProoftoolViewable[LKProof].display( p, pName )
+    ( db, _ ) => db.proofs.flatMap( ( t ) => ProoftoolViewable[LKProof].display( t._2, t._1 ) )
 
-  implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] = {
-    case ( Some( y ), name ) => ProoftoolViewable[T].display( y, name )
-    case _                   => throw new IllegalArgumentException
-  }
+  implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] = ( oT: Option[T], name: String ) => oT.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
 
-  implicit def EitherViewable[T: ProoftoolViewable, S]: ProoftoolViewable[Either[S, T]] = {
-    case ( Right( y ), name ) => ProoftoolViewable[T].display( y, name )
-    case ( Left( y ), _ )     => throw new IllegalArgumentException( y.toString )
-  }
+  implicit def EitherViewable[T: ProoftoolViewable, S]: ProoftoolViewable[Either[S, T]] = ( oT: Either[S, T], name: String ) => oT.toOption.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
 }

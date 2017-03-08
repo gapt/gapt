@@ -41,13 +41,13 @@ object primediv extends TacticsProof {
     cut( "yprime", hof"PRIME y" )
 
     // case b
-    repeat( unfold( "PRIME", "D" ) in "yprime" )
+    unfold( "PRIME", "D" ) in "yprime"
     destruct( "yprime" ); prop; decompose
     allL( "g_0", le"z:nat" ).forget
     destruct( "g_0" ); chain( "mulleq" ).at( "g_0" ).subst( hov"y:nat" -> le"z_0:nat" ); prop; prop
     destruct( "g_0" ); unfold( ">" ) in "g_0"; chain( "oneleqeq" ).at( "g_0" ); prop
     decompose; exR( le"w:nat" ).forget
-    repeat( unfold( "PD", "D" ) in ( "g_0", "g_1_1" ) )
+    unfold( "PD", "D" ) in ( "g_0", "g_1_1" )
     destruct( "g_1_1" ); prop; decompose
     exR( le"z_1*z_0" ).forget
     rewrite.many ltr ( "assoc", "g_0_1" ) in "g_1_1"; trivial

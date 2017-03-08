@@ -132,7 +132,7 @@ object lattice extends TacticsProof {
     andR
     unfold( "POSET" ) in "L3"
     andR
-    repeat( unfold( "R", "<=" ) in "L3" )
+    unfold( "R", "<=" ) in "L3"
     decompose
     foTheory
     insert( p_1 )

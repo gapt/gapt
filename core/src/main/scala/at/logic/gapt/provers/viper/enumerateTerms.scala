@@ -9,9 +9,9 @@ import scala.collection.mutable
 import cats.syntax.traverse._, cats.instances.list._
 
 object enumerateTerms {
-  private def normalizeFreeVars( expr: LambdaExpression ): LambdaExpression = {
+  private def normalizeFreeVars( expr: Expr ): Expr = {
     val nameGen = new NameGenerator( Set() )
-    def norm( e: LambdaExpression ): LambdaExpression = e match {
+    def norm( e: Expr ): Expr = e match {
       case App( a, b ) => App( norm( a ), norm( b ) )
       case Var( _, t ) => Var( nameGen.freshWithIndex( "x" ), t )
       case c: Const    => c
@@ -19,15 +19,15 @@ object enumerateTerms {
     norm( expr )
   }
   def asStream( implicit ctx: Context ) = {
-    val terms = mutable.Set[LambdaExpression]()
+    val terms = mutable.Set[Expr]()
 
-    terms ++= ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filter { _.exptype.isInstanceOf[TBase] }
-    terms ++= ( ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].types ).map( Var( "x", _ ) )
+    terms ++= ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filter { _.ty.isInstanceOf[TBase] }
+    terms ++= ( ctx.get[BaseTypes].baseTypes -- ctx.get[StructurallyInductiveTypes].constructors.keySet ).values.map( Var( "x", _ ) )
 
-    val nonConstantCtrs = ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filterNot { _.exptype.isInstanceOf[TBase] }
+    val nonConstantCtrs = ctx.get[StructurallyInductiveTypes].constructors.values.flatten.filterNot { _.ty.isInstanceOf[TBase] }
 
-    def take( tys: Seq[Ty] ): Seq[Seq[LambdaExpression]] =
-      tys.toList.traverse( t => terms.filter( _.exptype == t ).toList )
+    def take( tys: Seq[Ty] ): Seq[Seq[Expr]] =
+      tys.toList.traverse( t => terms.filter( _.ty == t ).toList )
     def iterate() =
       nonConstantCtrs.flatMap {
         case ctr @ Const( _, FunctionType( _, argTypes ) ) =>

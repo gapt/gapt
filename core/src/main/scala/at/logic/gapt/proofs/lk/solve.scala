@@ -14,8 +14,8 @@ object EquationalLKProver extends OneShotProver {
 
 object AtomicExpansion {
 
-  def apply( f: HOLFormula ): LKProof = f match {
-    case a: HOLAtom  => LogicalAxiom( a )
+  def apply( f: Formula ): LKProof = f match {
+    case a: Atom     => LogicalAxiom( a )
 
     case Bottom()    => WeakeningRightRule( BottomAxiom, Bottom() )
     case Top()       => WeakeningLeftRule( TopAxiom, Top() )

@@ -30,7 +30,7 @@ trait Prover {
    * @param formula The formula whose validity should be checked.
    * @return True if the formula is valid.
    */
-  def isValid( formula: HOLFormula ): Boolean = isValid( HOLSequent( Nil, formula :: Nil ) )
+  def isValid( formula: Formula ): Boolean = isValid( HOLSequent( Nil, formula :: Nil ) )
 
   /**
    * @param seq The sequent whose validity should be checked.
@@ -44,7 +44,7 @@ trait Prover {
   /**
    * Checks whether a formula is unsatisfiable.
    */
-  def isUnsat( formula: HOLFormula ): Boolean = isValid( -formula )
+  def isUnsat( formula: Formula ): Boolean = isValid( -formula )
 
   /**
    * Checks whether a set of clauses is unsatisfiable.
@@ -55,7 +55,7 @@ trait Prover {
    * @param formula The formula that should be proved.
    * @return An LK-Proof of  :- formula, or None if not successful.
    */
-  def getLKProof( formula: HOLFormula ): Option[LKProof] = getLKProof( HOLSequent( Nil, formula :: Nil ) )
+  def getLKProof( formula: Formula ): Option[LKProof] = getLKProof( HOLSequent( Nil, formula :: Nil ) )
 
   /**
    * @param seq The sequent that should be proved.
@@ -63,7 +63,7 @@ trait Prover {
    */
   def getLKProof( seq: HOLSequent ): Option[LKProof]
 
-  def getExpansionProof( formula: HOLFormula ): Option[ExpansionProof] =
+  def getExpansionProof( formula: Formula ): Option[ExpansionProof] =
     getExpansionProof( Sequent() :+ formula )
 
   def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
@@ -71,7 +71,7 @@ trait Prover {
 
   def getEpsilonProof( seq: HOLSequent ): Option[EpsilonProof] =
     getExpansionProof( seq ) map { ExpansionProofToEpsilon( _ ) }
-  def getEpsilonProof( formula: HOLFormula ): Option[EpsilonProof] =
+  def getEpsilonProof( formula: Formula ): Option[EpsilonProof] =
     getEpsilonProof( Sequent() :+ formula )
 
   /**

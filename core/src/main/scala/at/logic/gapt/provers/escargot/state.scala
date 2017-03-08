@@ -60,7 +60,7 @@ class EscargotState extends Logger {
   def trySetAssertion( assertion: HOLClause, value: Boolean ) =
     for ( ( atom, i ) <- assertion.zipWithIndex )
       trySetAvatarAtom( atom, if ( value ) i.isSuc else i.isAnt )
-  def trySetAvatarAtom( atom: HOLAtom, value: Boolean ) =
+  def trySetAvatarAtom( atom: Atom, value: Boolean ) =
     if ( !avatarModel.model.isDefinedAt( atom ) )
       avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> value ) )
 

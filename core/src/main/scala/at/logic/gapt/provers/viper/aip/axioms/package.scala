@@ -1,12 +1,12 @@
 package at.logic.gapt.provers.viper.aip
 
-import at.logic.gapt.expr.{ All, And, Const => Con, FunctionType, HOLFormula, Substitution, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ All, And, Const => Con, FunctionType, Formula, Substitution, Var, freeVariables, rename }
 import at.logic.gapt.proofs.{ Context, Sequent }
 
 package object axioms {
 
-  type VariableSelector = ( HOLFormula, Context ) => List[Var]
-  type FormulaSelector = Sequent[( String, HOLFormula )] => ThrowsError[HOLFormula]
+  type VariableSelector = ( Formula, Context ) => List[Var]
+  type FormulaSelector = Sequent[( String, Formula )] => ThrowsError[Formula]
 
   /**
    * Selects variables of inductive types.
@@ -16,7 +16,7 @@ package object axioms {
    * @return A list of all free inductive variables and all universally quantified inductive variables
    *         that are bound in the universal quantifier prefix of the given formula.
    */
-  def allVariablesSelector( formula: HOLFormula )( implicit ctx: Context ): List[Var] = {
+  def allVariablesSelector( formula: Formula )( implicit ctx: Context ): List[Var] = {
     val All.Block( _, f ) = formula
     freeVariables( f ).filter( {
       hasInductiveType( _ )
@@ -28,7 +28,7 @@ package object axioms {
    * @param sequent The sequent from which the formula is selected.
    * @return The formula at the first position of the sequent's succedent.
    */
-  def firstFormulaSelector( sequent: Sequent[( String, HOLFormula )] ): ThrowsError[HOLFormula] =
+  def firstFormulaSelector( sequent: Sequent[( String, Formula )] ): ThrowsError[Formula] =
     sequent.succedent match {
       case ( _, f ) +: _ => Right( f )
       case _             => Left( "Succedent is empty" )
@@ -44,7 +44,7 @@ package object axioms {
    * @return An induction axiom representing an induction on the specified variable and formula with one induction
    *         case for each of the constructors.
    */
-  def inductionAxiom( inductionVariable: Var, formula: HOLFormula, constructors: Seq[Con] )( implicit ctx: Context ) =
+  def inductionAxiom( inductionVariable: Var, formula: Formula, constructors: Seq[Con] )( implicit ctx: Context ) =
     And( constructors map { inductionCase( inductionVariable, formula, _ ) } ) -->
       All( inductionVariable, formula )
 
@@ -57,7 +57,7 @@ package object axioms {
    * @return A formula representing the inductive case for the given constructor for an induction on the specified
    *         formula and variable.
    */
-  def inductionCase( inductionVariable: Var, formula: HOLFormula, constructor: Con ): HOLFormula = {
+  def inductionCase( inductionVariable: Var, formula: Formula, constructor: Con ): Formula = {
     val ( primaryVariables, secondaryVariables, caseConclusion ) =
       inductionCaseConclusion( inductionVariable, constructor, formula )
     val caseHypotheses = primaryVariables.map { pv => Substitution( inductionVariable -> pv )( formula ) }
@@ -77,21 +77,21 @@ package object axioms {
    *         the third component contains the result of the substitution.
    */
   def inductionCaseConclusion(
-    freeVariable: Var, constructor: Con, formula: HOLFormula
-  ): ( List[Var], List[Var], HOLFormula ) = {
-    val FunctionType( _, argumentTypes ) = constructor.exptype
+    freeVariable: Var, constructor: Con, formula: Formula
+  ): ( List[Var], List[Var], Formula ) = {
+    val FunctionType( _, argumentTypes ) = constructor.ty
     val nameGenerator = rename.awayFrom( freeVariables( formula ) )
     val newVariables = argumentTypes map {
       argumentType =>
         nameGenerator.fresh(
-          if ( argumentType == freeVariable.exptype )
+          if ( argumentType == freeVariable.ty )
             freeVariable
           else
             Var( "x", argumentType )
         )
     }
     val ( primaryVariables, secondaryVariables ) = newVariables partition {
-      _.exptype == freeVariable.exptype
+      _.ty == freeVariable.ty
     }
     ( primaryVariables, secondaryVariables, Substitution( freeVariable -> constructor( newVariables: _* ) )( formula ) )
   }

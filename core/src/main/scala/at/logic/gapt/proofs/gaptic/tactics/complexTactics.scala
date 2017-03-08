@@ -23,17 +23,17 @@ import cats.syntax.all._
  * @param target
  * @param substitution
  */
-case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, substitution: Map[Var, LambdaExpression] = Map() ) extends Tactic[Unit] {
+case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, substitution: Map[Var, Expr] = Map() ) extends Tactic[Unit] {
 
-  def subst( map: ( Var, LambdaExpression )* ) = copy( substitution = substitution ++ map )
+  def subst( map: ( Var, Expr )* ) = copy( substitution = substitution ++ map )
   def at( target: String ) = copy( target = OnLabel( target ) )
 
   override def apply( goal: OpenAssumption ) = {
     findFormula( goal, OnLabel( hyp ) ).flatMap {
       case ( _, quantifiedFormula @ All.Block( hypVar, hypInner @ Imp.Block( _, hypTargetMatch ) ), _ ) =>
 
-        def getSubst( f: HOLFormula ): Option[Substitution] =
-          syntacticMatching( List( hypTargetMatch -> f ), substitution ++ freeVariables( quantifiedFormula ).map( v => v -> v ) ).headOption
+        def getSubst( f: Formula ): Option[Substitution] =
+          syntacticMatching( List( hypTargetMatch -> f ), PreSubstitution( substitution ++ freeVariables( quantifiedFormula ).map( v => v -> v ) ) ).headOption
 
         // Find target index and substitution
         findFormula( goal, target ).withFilter { case ( _, f, idx ) => idx.isSuc && getSubst( f ).isDefined }.map {
@@ -44,7 +44,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
             // where the sequent is an axiom (following some contractions).
             // The right premises of the implication left rules become new sub goals,
             // but where the initial target formula is then "forgotten".
-            def handleAnds( curGoal: Sequent[( String, HOLFormula )], hypCond: Suc ): LKProof = curGoal( hypCond ) match {
+            def handleAnds( curGoal: Sequent[( String, Formula )], hypCond: Suc ): LKProof = curGoal( hypCond ) match {
               case ( existingLabel, And( lhs, rhs ) ) =>
                 AndRightRule(
                   handleAnds( curGoal.updated( hypCond, existingLabel -> lhs ), hypCond ),
@@ -55,7 +55,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
                 OpenAssumption( curGoal )
             }
 
-            def handleImps( curGoal: Sequent[( String, HOLFormula )], hyp: Ant ): LKProof = {
+            def handleImps( curGoal: Sequent[( String, Formula )], hyp: Ant ): LKProof = {
               curGoal( hyp ) match {
                 case ( hypLabel, Imp( lhs, rhs ) ) =>
                   // Different methods must be applied depending on how the chain is defined.
@@ -89,7 +89,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
 case class RewriteTactic(
     equations:  Traversable[( String, Boolean )],
     target:     Option[String],
-    fixedSubst: Map[Var, LambdaExpression],
+    fixedSubst: Map[Var, Expr],
     once:       Boolean
 ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = target match {
@@ -107,7 +107,7 @@ case class RewriteTactic(
       ( `eqLabel`, quantEq @ All.Block( vs, eq @ Eq( t, s ) ) ) <- goal.labelledSequent.antecedent
       ( t_, s_ ) = if ( leftToRight ) ( t, s ) else ( s, t )
       pos <- HOLPosition getPositions tgt
-      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), fixedSubst ++ freeVariables( quantEq ).map { v => v -> v }.toMap )
+      subst <- syntacticMatching( List( t_ -> tgt( pos ) ), PreSubstitution( fixedSubst ++ freeVariables( quantEq ).map { v => v -> v } ) )
     } return {
       val newTgt = tgt.replace( pos, subst( s_ ) )
       val newGoal = OpenAssumption( goal.labelledSequent.updated( tgtIdx, target -> newTgt ) )
@@ -128,7 +128,7 @@ case class RewriteTactic(
   def rtl( eqs: String* ) = copy( equations = equations ++ eqs.map { _ -> false } )
   def in( tgt: String ) = copy( target = Some( tgt ) )
   def many = copy( once = false )
-  def subst( s: ( Var, LambdaExpression )* ) = copy( fixedSubst = fixedSubst ++ s )
+  def subst( s: ( Var, Expr )* ) = copy( fixedSubst = fixedSubst ++ s )
 }
 
 /**
@@ -157,13 +157,13 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
     for {
       ( label, main, idx: Suc ) <- findFormula( goal, mode )
       formula = main
-      constrs <- getConstructors( v.exptype.asInstanceOf[TBase] )
+      constrs <- getConstructors( v.ty.asInstanceOf[TBase] )
     } yield {
       val cases = constrs map { constr =>
-        val FunctionType( _, argTypes ) = constr.exptype
+        val FunctionType( _, argTypes ) = constr.ty
         var nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
-        val evs = argTypes map { at => nameGen.fresh( if ( at == v.exptype ) v else Var( "x", at ) ) }
-        val hyps = NewLabels( goal.labelledSequent, s"IH${v.name}" ) zip ( evs filter { _.exptype == v.exptype } map { ev => Substitution( v -> ev )( formula ) } )
+        val evs = argTypes map { at => nameGen.fresh( if ( at == v.ty ) v else Var( "x", at ) ) }
+        val hyps = NewLabels( goal.labelledSequent, s"IH${v.name}" ) zip ( evs filter { _.ty == v.ty } map { ev => Substitution( v -> ev )( formula ) } )
         val subGoal = hyps ++: goal.labelledSequent.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
         InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
       }
@@ -171,40 +171,23 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
     }
 }
 
-case class UnfoldTacticHelper( definition: String, definitions: Seq[String] )( implicit ctx: Context ) {
-  def in( label: String, labels: String* ) = labels.foldLeft[Tactical[Unit]]( UnfoldTactic( label, definition, definitions ) ) {
-    ( acc, l ) => acc andThen UnfoldTactic( l, definition, definitions )
+case class UnfoldTacticHelper( definitions: Seq[String] )( implicit ctx: Context ) {
+  def in( labels: String* ) = labels.foldLeft[Tactical[Unit]]( skip ) {
+    ( acc, l ) => acc andThen UnfoldTactic( l, definitions )
   }
 }
 
-case class UnfoldTactic( target: String, definition: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
-  def getDef: Either[TacticalFailure, Definition] =
-    ctx.definition( definition ) match {
-      case Some( by ) =>
-        Right( Definition( Const( definition, by.exptype ), by ) )
-      case None =>
-        Left( TacticalFailure( this, s"Definition $definition not present in context: $ctx" ) )
-    }
+case class UnfoldTactic( target: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
+  def unfold( main: Formula ): Formula = {
+    val defsToUnfold = ctx.get[Context.Definitions].filter( definitions contains _._1 )
+    normalize( ReductionRule( defsToUnfold, BetaReduction ), main ).asInstanceOf[Formula]
+  }
 
   def apply( goal: OpenAssumption ) =
     for {
-      ( label, main: HOLFormula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
-      defn <- getDef; Definition( what, by ) = defn
-      defPositions = main.find( what )
-      unfolded = defPositions.foldLeft( main )( ( f, p ) => f.replace( p, by ) )
-      normalized = BetaReduction.betaNormalize( unfolded )
-      repContext = replacementContext.abstractTerm( main )( what )
-      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> normalized ) )
-      proof_ : Either[TacticalFailure, LKProof] = ( defPositions, definitions ) match {
-        case ( p :: ps, _ ) =>
-          Right( DefinitionRule( newGoal, normalized, main, idx.polarity ) )
-        case ( Nil, hd +: tl ) =>
-          UnfoldTactic( target, hd, tl )( ctx )( newGoal ) map { _._2 }
-        case _ =>
-          Left( TacticalFailure( this, None, s"Definition $definition not found in formula $main." ) )
-      }
-      proof <- proof_
-    } yield () -> proof
+      ( label: String, main: Formula, idx: SequentIndex ) <- findFormula( goal, OnLabel( target ) )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( idx, label -> unfold( main ) ) )
+    } yield () -> DefinitionRule( newGoal, idx, main )
 }
 
 /**
@@ -265,5 +248,8 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: InternalProver
 
   def withAxioms( axiom: AxiomFactory ): AnalyticInductionTactic =
     copy( axioms = axiom )
+
+  def withProver( prover: InternalProver ): AnalyticInductionTactic =
+    copy( prover = prover )
 }
 

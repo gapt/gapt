@@ -6,8 +6,8 @@ import at.logic.gapt.expr._
  * Ordering for HOL Formulas (also for FOL)
  */
 object HOLOrdering extends HOLOrdering
-class HOLOrdering extends Ordering[LambdaExpression] {
-  override def compare( x: LambdaExpression, y: LambdaExpression ): Int = ( x, y ) match {
+class HOLOrdering extends Ordering[Expr] {
+  override def compare( x: Expr, y: Expr ): Int = ( x, y ) match {
     case ( x, y ) if x syntaxEquals y => 0
     case ( Var( s1, t1 ), Var( s2, t2 ) ) =>
       s1.toString() compare s2.toString() match {
@@ -61,9 +61,9 @@ class TAOrdering extends Ordering[Ty] {
     case ( t1 -> t2, t3 -> t4 ) =>
       val r = compare( t1, t3 )
       if ( r == 0 ) compare( t2, t4 ) else r
-    case ( _, _ -> _ )                => -1
-    case ( _ -> _, _ )                => 1
+    case ( _, _ -> _ )                      => -1
+    case ( _ -> _, _ )                      => 1
 
-    case ( TBase( x_ ), TBase( y_ ) ) => x_ compare y_
+    case ( TBase( x_, _ ), TBase( y_, _ ) ) => x_ compare y_
   }
 }

@@ -15,11 +15,11 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     val consts = constants( cnf flatMap { _.elements } )
 
     val boolOnTermLevel = consts exists { case Const( _, FunctionType( _, from ) ) => from contains To }
-    val types = consts flatMap { c => baseTypes( c.exptype ) }
+    val types = consts flatMap { c => baseTypes( c.ty ) }
 
-    val atoms = for ( c <- consts; FunctionType( to, _ ) = c.exptype if to == To ) yield c
+    val atoms = for ( c <- consts; FunctionType( to, _ ) = c.ty if to == To ) yield c
     val eqs = atoms collect { case c @ EqC( _ ) => c }
-    val functions = for ( c <- consts; FunctionType( to, _ ) = c.exptype if to != To ) yield c
+    val functions = for ( c <- consts; FunctionType( to, _ ) = c.ty if to != To ) yield c
 
     val precedence = functions.toSeq.sortBy { arity( _ ) } ++ eqs ++ ( atoms diff eqs ).toSeq.sortBy { arity( _ ) }
 
@@ -108,7 +108,7 @@ class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) 
 
   def getAtomicLKProof( sequent: HOLClause ): Option[LKProof] =
     groundFreeVariables.wrap( sequent ) { sequent =>
-      getResolutionProof( sequent.map( _.asInstanceOf[HOLAtom] ).
+      getResolutionProof( sequent.map( _.asInstanceOf[Atom] ).
         map( Sequent() :+ _, _ +: Sequent() ).elements ) map { resolution =>
         UnitResolutionToLKProof( resolution )
       }

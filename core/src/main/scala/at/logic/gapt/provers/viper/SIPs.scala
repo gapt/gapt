@@ -31,7 +31,7 @@ abstract class SimpleInductionProof(
     val ExpSeq2:          ExpansionSequent,
     val t:                List[FOLTerm],
     val u:                List[FOLTerm],
-    val inductionFormula: HOLFormula       = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
+    val inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
 ) {
   import SimpleInductionProof._
 
@@ -53,7 +53,7 @@ abstract class SimpleInductionProof(
     require( inductionFormula.isInstanceOf[FOLFormula], "F is neither X(α, ν, γ) nor first order" )
   }
 
-  protected def F( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): HOLFormula = {
+  protected def F( x1: FOLTerm, x2: FOLTerm, x3: FOLTerm ): Formula = {
     val sub = FOLSubstitution( List( alpha -> x1, nu -> x2, gamma -> x3 ) )
     sub( inductionFormula )
   }
@@ -193,7 +193,7 @@ object SimpleInductionProof {
   val gamma = FOLVar( "γ" )
   val nu = FOLVar( "ν" )
   val snu = FOLFunction( "s", List( nu ) )
-  val X = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), alpha, nu, gamma )
+  val X = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), alpha, nu, gamma )
 
 }
 
@@ -203,7 +203,7 @@ class SimpleInductionProofU(
     ExpSeq2:          ExpansionSequent,
     t:                List[FOLTerm],
     u:                List[FOLTerm],
-    inductionFormula: HOLFormula       = HOLAtom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
+    inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
 ) extends SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, inductionFormula ) {
   import SimpleInductionProof._
 

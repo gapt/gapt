@@ -46,6 +46,7 @@ lazy val commonSettings = Seq(
 val specs2Version = "3.8.8"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
+  javaOptions in Test += "-Xmx2g",
   libraryDependencies ++= Seq(
     "org.specs2" %% "specs2-core" % specs2Version,
     "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output

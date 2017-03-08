@@ -10,7 +10,7 @@ object renameConstantsToFi {
   private def getRenaming( constants: Set[Const] ): Map[Const, Const] =
     constants.toSeq.zipWithIndex.map {
       case ( c @ EqC( _ ), _ ) => c -> c
-      case ( c, i )            => c -> Const( mkName( i ), c.exptype )
+      case ( c, i )            => c -> Const( mkName( i ), c.ty )
     }.toMap
   private def invertRenaming( map: Map[Const, Const] ) = map.map( _.swap )
 
@@ -25,7 +25,7 @@ object renameConstantsToFi {
 object groundFreeVariables {
   def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
     val nameGen = rename.awayFrom( consts )
-    vars.toSeq map { v => v -> Const( nameGen fresh v.name, v.exptype ) }
+    vars.toSeq map { v => v -> Const( nameGen fresh v.name, v.ty ) }
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =

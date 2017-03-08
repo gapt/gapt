@@ -13,11 +13,11 @@ object prenexifyET {
     }
 
   private def handleBinary(
-    f1: HOLFormula, f2: HOLFormula,
+    f1: Formula, f2: Formula,
     p1: Polarity, p2: Polarity,
     newPol: Polarity,
-    shConn: ( HOLFormula, HOLFormula ) => HOLFormula
-  ): HOLFormula = {
+    shConn: ( Formula, Formula ) => Formula
+  ): Formula = {
     val f1_ = apply( f1, p1 )
     val f2_ = apply( f2, p2 )
 
@@ -30,7 +30,7 @@ object prenexifyET {
     weakQuantifier( newPol ).Block( vs1 ++ vs2, shConn( matrix1, matrix2 ) )
   }
 
-  private def apply( formula: HOLFormula, pol: Polarity ): HOLFormula = formula match {
+  private def apply( formula: Formula, pol: Polarity ): Formula = formula match {
     case _ if !containsQuantifierOnLogicalLevel( formula ) => formula
     case Neg( a ) => Neg( apply( a, !pol ) )
     case And( a, b ) => handleBinary( a, b, pol, pol, pol, And( _, _ ) )
@@ -43,7 +43,7 @@ object prenexifyET {
   private def handleBinary(
     et1: ExpansionTree, et2: ExpansionTree,
     newPol:           Polarity,
-    shConn:           ( HOLFormula, HOLFormula ) => HOLFormula,
+    shConn:           ( Formula, Formula ) => Formula,
     etConn:           ( ExpansionTree, ExpansionTree ) => ExpansionTree,
     binaryInPolarity: Polarity
   ): ExpansionTree = {

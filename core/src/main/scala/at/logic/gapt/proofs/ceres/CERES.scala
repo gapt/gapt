@@ -14,14 +14,14 @@ import at.logic.gapt.provers.escargot.Escargot
  * This implementation of the CERES method does the proof reconstruction via ResolutionToLKProof.
  */
 object CERES extends CERES {
-  def skipNothing: HOLFormula => Boolean = _ => true
+  def skipNothing: Formula => Boolean = _ => true
 
   /**
    * True if the formula is not an equation. Intended use: predicate argument of CERES.
    * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
    * this should provide the same clause sets and projections as the binary rules.
    */
-  def skipEquations: HOLFormula => Boolean = { case Eq( _, _ ) => false; case _ => true }
+  def skipEquations: Formula => Boolean = { case Eq( _, _ ) => false; case _ => true }
 
   /**
    * True if the formula is propositional and does not contain free variables other than type i.
@@ -29,11 +29,11 @@ object CERES extends CERES {
    * In case the only cuts on equations come from a translation of binary equation rules to unary ones,
    * this should provide the same clause sets and projections as the binary rules.
    */
-  def skipPropositional: HOLFormula => Boolean = {
+  def skipPropositional: Formula => Boolean = {
     case Top()    => false
     case Bottom() => false
-    case HOLAtom( HOLAtomConst( _, _ ), args ) =>
-      args.flatMap( freeVariables( _ ) ).exists( _.exptype != Ti )
+    case Atom( HOLAtomConst( _, _ ), args ) =>
+      args.flatMap( freeVariables( _ ) ).exists( _.ty != Ti )
     case Neg( f )    => skipPropositional( f )
     case And( l, r ) => skipPropositional( l ) || skipPropositional( r )
     case Or( l, r )  => skipPropositional( l ) || skipPropositional( r )
@@ -64,8 +64,8 @@ class CERES {
    *             (e.g. x => containsQuantifiers(x) to keep propositional cuts intact)
    * @return an LK Proof where all cuts are quantifier-free
    */
-  def apply( p: LKProof, pred: HOLFormula => Boolean ): LKProof = apply( p, pred, Escargot )
-  def apply( p: LKProof, pred: HOLFormula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
+  def apply( p: LKProof, pred: Formula => Boolean ): LKProof = apply( p, pred, Escargot )
+  def apply( p: LKProof, pred: Formula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
     val es = p.endSequent
     val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )

@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.sketch
 
-import at.logic.gapt.expr.{ FOLAtom, HOLAtom, clauseSubsumption }
+import at.logic.gapt.expr.{ FOLAtom, Atom, clauseSubsumption }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, SequentConnector, SequentProof }
 import at.logic.gapt.provers.ResolutionProver

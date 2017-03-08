@@ -39,7 +39,7 @@ abstract class MaxSATSolver extends Logger {
    * @return None if hard is unsatisfiable, otherwise Some(model), where model is a model
    * of hard maximizing the sum of the weights of soft.
    */
-  def solve( hard: HOLFormula, soft: TraversableOnce[( HOLFormula, Int )] ): Option[Interpretation] = {
+  def solve( hard: Formula, soft: TraversableOnce[( Formula, Int )] ): Option[Interpretation] = {
     solve(
       metrics.time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
       soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten

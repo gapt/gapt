@@ -24,7 +24,7 @@ trait ResolutionProver extends OneShotProver {
 
   def getResolutionProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
-    getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
+    getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) ) map { resolution =>
       mapInputClauses( resolution )( cnfMap )
     }
   }
@@ -36,7 +36,7 @@ trait ResolutionProver extends OneShotProver {
     getResolutionProof( clausifier.cnf )
   }
 
-  def getResolutionProof( formula: HOLFormula ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
+  def getResolutionProof( formula: Formula ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
   def getResolutionProof( seq: HOLSequent ): Option[ResolutionProof] = {
     val cnf = structuralCNF( groundFreeVariables( seq )._1, propositional = false )
     getResolutionProof( cnf )

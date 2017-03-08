@@ -8,7 +8,7 @@ import at.logic.gapt.expr._
 import org.specs2.mutable._
 
 class hol2folTest extends Specification {
-  def imap = Map[LambdaExpression, String]() // the scope for most tests is just the term itself
+  def imap = Map[Expr, String]() // the scope for most tests is just the term itself
   def iid = new Counter
 
   "HOL terms" should {
@@ -21,7 +21,7 @@ class hol2folTest extends Specification {
     //TODO: fix the tests
     "be correctly reduced into FOL terms for" in {
       "Atom - A(x:(i->i), a:o->i)" in {
-        val hol = HOLAtom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
+        val hol = Atom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
         val fol = FOLAtom( "A", fx :: fa :: Nil )
         reduceHolToFol( hol ) must beEqualTo( fol )
       }
@@ -31,8 +31,8 @@ class hol2folTest extends Specification {
         reduceHolToFol( hol ) must beEqualTo( fol )
       }
       "Connective - And A(x:(i->i), a:(o->i)) B(x:(i->i), b:(o->i))" in {
-        val hA = HOLAtom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
-        val hB = HOLAtom( Const( "B", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: hb :: Nil )
+        val hA = Atom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
+        val hB = Atom( Const( "B", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: hb :: Nil )
         val hol = And( hA, hB )
         val fA = FOLAtom( "A", fx :: fa :: Nil )
         val fB = FOLAtom( "B", fx :: fb :: Nil )
@@ -63,8 +63,8 @@ class hol2folTest extends Specification {
 
       "Correctly convert from type o to i on the termlevel" in {
         val List( sp, sq ) = List( "P", "Q" )
-        val List( x, y ) = List( "x", "y" ).map( x => HOLAtom( Var( x, To ), List() ) )
-        val f1 = HOLAtom( Const( sp, To -> To ), List( Imp( x, y ) ) )
+        val List( x, y ) = List( "x", "y" ).map( x => Atom( Var( x, To ), List() ) )
+        val f1 = Atom( Const( sp, To -> To ), List( Imp( x, y ) ) )
         val f2 = FOLAtom( sp, List( FOLFunction(
           ImpC.name,
           List(

@@ -41,7 +41,11 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def get[T: Facet]: T = state.get[T]
 
   def constants: Iterable[Const] = get[Constants].constants.values
-  def definitions: Map[Const, LambdaExpression] = get[Definitions].definitions
+  def definitions: Map[Const, Expr] =
+    for {
+      ( what, by ) <- get[Definitions].definitions
+      whatC <- constant( what )
+    } yield whatC -> by
   def axioms: Set[HOLSequent] = get[Axioms].axioms
 
   /** Returns Some(const) if name is a constant. */
@@ -49,28 +53,37 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
 
   /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
   def getConstructors( ty: TBase ): Option[Vector[Const]] =
-    get[StructurallyInductiveTypes].constructors.get( ty )
+    for {
+      declT <- get[BaseTypes].baseTypes.get( ty.name )
+      ctrs <- get[StructurallyInductiveTypes].constructors.get( ty.name )
+      subst <- syntacticMatching( declT, ty )
+    } yield ctrs.map( subst( _ ).asInstanceOf[Const] )
 
   /** Returns true iff ty is a defined base type. */
-  def isType( ty: TBase ): Boolean = get[BaseTypes].baseTypes.contains( ty )
+  def isType( ty: TBase ): Boolean = (
+    for {
+      declT <- get[BaseTypes].baseTypes.get( ty.name )
+      _ <- syntacticMatching( declT, ty )
+    } yield ()
+  ).isDefined
 
   /** Returns Some(expandedDefinition) if c is a defined constant. */
-  def definition( c: Const ): Option[LambdaExpression] =
-    get[Definitions].definitions.get( c )
-
-  /** Returns Some(expandedDefinition) if name is a defined constant. */
-  def definition( name: String ): Option[LambdaExpression] =
-    get[Definitions].definitions.find( _._1.name == name ).map( _._2 )
+  def definition( c: Const ): Option[Expr] =
+    for {
+      defC <- get[Constants].constants.get( c.name )
+      subst <- syntacticMatching( defC, c )
+      defn <- get[Definitions].definitions.get( c.name )
+    } yield subst( defn )
 
   /** Returns a collection of all (expression-level) reduction rules of this context. */
   def reductionRules: Iterable[ReductionRule] = state.getAll[ReductionRule]
 
   /** Returns true iff the context contains the definition defn (the definitional expansion has to match as well). */
   def contains( defn: EDefinition ): Boolean =
-    get[Definitions].definitions.get( defn.what ).contains( defn.by )
+    definition( defn.what ).contains( defn.by )
 
   /** Returns the Skolem definition of skSym.  See [[at.logic.gapt.expr.hol.SkolemFunctions]]. */
-  def skolemDef( skSym: Const ): Option[LambdaExpression] =
+  def skolemDef( skSym: Const ): Option[Expr] =
     get[SkolemFunctions].skolemDefs.get( skSym )
 
   /**
@@ -87,15 +100,15 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   }
 
   /** Normalizes an expression with the reduction rules stored in this context. */
-  def normalize( expression: LambdaExpression ): LambdaExpression =
+  def normalize( expression: Expr ): Expr =
     normalizer.normalize( expression )
 
-  def isDefEq( a: LambdaExpression, b: LambdaExpression ): Boolean =
+  def isDefEq( a: Expr, b: Expr ): Boolean =
     normalizer.isDefEq( a, b )
 
   def signatureLookup( s: String ): BabelSignature.VarConst =
     constant( s ) match {
-      case Some( c ) => BabelSignature.IsConst( c.exptype )
+      case Some( c ) => BabelSignature.IsConst( c.ty )
       case None      => BabelSignature.IsVar
     }
 
@@ -166,17 +179,18 @@ object Context {
   }
 
   /** Base types, including inductive types. */
-  case class BaseTypes( baseTypes: Set[TBase] ) {
+  case class BaseTypes( baseTypes: Map[String, TBase] ) {
     def +( ty: TBase ): BaseTypes = {
+      require( ty.params.forall( _.isInstanceOf[TVar] ) && ty.params == ty.params.distinct )
       require(
-        !baseTypes.contains( ty ),
+        !baseTypes.contains( ty.name ),
         s"Base type $ty already defined."
       )
-      copy( baseTypes + ty )
+      copy( baseTypes + ( ty.name -> ty ) )
     }
-    override def toString = baseTypes.toSeq.sortBy( _.name ).mkString( ", " )
+    override def toString = baseTypes.toSeq.sortBy( _._1 ).map( _._2 ).mkString( ", " )
   }
-  implicit val baseTypesFacet: Facet[BaseTypes] = Facet( BaseTypes( Set[TBase]() ) )
+  implicit val baseTypesFacet: Facet[BaseTypes] = Facet( BaseTypes( Map() ) )
 
   /** Constant symbols, including defined constants, constructors, etc. */
   case class Constants( constants: Map[String, Const] ) {
@@ -191,22 +205,31 @@ object Context {
     def ++( consts: Traversable[Const] ): Constants =
       consts.foldLeft( this )( _ + _ )
 
-    override def toString = constants.values.map( c => s"${c.name}: ${c.exptype}" ).mkString( "\n" )
+    override def toString = constants.values.map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
   /** Definitions that define a constant by an expression of the same type. */
-  case class Definitions( definitions: Map[Const, LambdaExpression] ) extends ReductionRule {
+  case class Definitions( definitions: Map[String, Expr] ) extends ReductionRule {
     def +( defn: EDefinition ) = {
-      require( !definitions.contains( defn.what ) )
-      copy( definitions + ( defn.what -> defn.by ) )
+      require( !definitions.contains( defn.what.name ) )
+      copy( definitions + ( defn.what.name -> defn.by ) )
     }
 
-    override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
-      definitions.toMap[LambdaExpression, LambdaExpression].get( head ).map( by => ( by, args ) )
+    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
+      head match {
+        case Const( n, t ) if definitions.contains( n ) =>
+          val by = definitions( n )
+          val Some( subst ) = syntacticMatching( by.ty, t )
+          Some( subst( by ) -> args )
+        case _ => None
+      }
 
-    override def toString = definitions.toSeq.sortBy( _._1.name ).
+    override def toString = definitions.toSeq.sortBy( _._1 ).
       map { case ( w, b ) => s"$w -> $b" }.mkString( "\n" )
+
+    def filter( p: ( ( String, Expr ) ) => Boolean ): Definitions =
+      copy( definitions.filter( p ) )
   }
   implicit val defsFacet: Facet[Definitions] = Facet( Definitions( Map() ) )
 
@@ -218,13 +241,11 @@ object Context {
   implicit val axiomsFacet: Facet[Axioms] = Facet( Axioms( Set[HOLSequent]() ) )
 
   /** Inductive types, for each type we store its list of constructors. */
-  case class StructurallyInductiveTypes( constructors: Map[TBase, Vector[Const]] ) {
-    def +( ty: TBase, ctrs: Vector[Const] ) =
+  case class StructurallyInductiveTypes( constructors: Map[String, Vector[Const]] ) {
+    def +( ty: String, ctrs: Vector[Const] ) =
       copy( constructors + ( ty -> ctrs ) )
 
-    def types: Set[TBase] = constructors.keySet
-
-    override def toString: String = constructors.toSeq.sortBy( _._1.name ).
+    override def toString: String = constructors.toSeq.sortBy( _._1 ).
       map { case ( t, cs ) => s"$t: ${cs.mkString( ", " )}" }.mkString( "\n" )
   }
   implicit val structIndTysFacet: Facet[StructurallyInductiveTypes] = Facet( StructurallyInductiveTypes( Map() ) )
@@ -258,9 +279,9 @@ object Context {
   object Update {
     implicit def fromSort( ty: TBase ): Update = Sort( ty )
     implicit def fromConst( const: Const ): Update = ConstDecl( const )
-    implicit def fromDefn( defn: ( String, LambdaExpression ) ): Update =
-      Definition( EDefinition( Const( defn._1, defn._2.exptype ), defn._2 ) )
-    implicit def fromDefnEq( eq: HOLFormula ): Update = eq match {
+    implicit def fromDefn( defn: ( String, Expr ) ): Update =
+      Definition( EDefinition( Const( defn._1, defn._2.ty ), defn._2 ) )
+    implicit def fromDefnEq( eq: Formula ): Update = eq match {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
         Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
     }
@@ -279,11 +300,12 @@ object Context {
   /** Inductive base type with constructors. */
   case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {
     for ( constr <- constructors ) {
-      val FunctionType( ty_, _ ) = constr.exptype
+      val FunctionType( ty_, _ ) = constr.ty
       require(
         ty == ty_,
         s"Base type $ty and type constructor $constr don't agree."
       )
+      require( typeVariables( constr ) subsetOf typeVariables( ty ) )
     }
     require(
       constructors.map( _.name ) == constructors.map( _.name ).distinct,
@@ -304,7 +326,7 @@ object Context {
       }
       ctx.state.update[BaseTypes]( _ + ty )
         .update[Constants]( _ ++ constructors )
-        .update[StructurallyInductiveTypes]( _ + ( ty, constructors ) )
+        .update[StructurallyInductiveTypes]( _ + ( ty.name, constructors ) )
     }
   }
 
@@ -312,22 +334,22 @@ object Context {
     def apply( tyName: String ): Sort = Sort( TBase( tyName ) )
   }
   object InductiveType {
-    def apply( ty: TBase, constructors: Seq[Const] ): InductiveType =
-      InductiveType( ty, constructors.toVector )
+    def apply( ty: Ty, constructors: Const* ): InductiveType =
+      InductiveType( ty.asInstanceOf[TBase], constructors.toVector )
     def apply( tyName: String, constructors: Const* ): InductiveType =
-      InductiveType( TBase( tyName ), constructors )
+      InductiveType( TBase( tyName ), constructors: _* )
   }
 
   case class ConstDecl( const: Const ) extends Update {
     override def apply( ctx: Context ): State = {
-      ctx.check( const.exptype )
+      ctx.check( const.ty )
       ctx.state.update[Constants]( _ + const )
     }
   }
 
   case class Definition( definition: EDefinition ) extends Update {
     override def apply( ctx: Context ): State = {
-      ctx.check( definition.what.exptype )
+      ctx.check( definition.what.ty )
       ctx.check( definition.by )
       ctx.state.update[Constants]( _ + definition.what )
         .update[Definitions]( _ + definition )
@@ -343,13 +365,13 @@ object Context {
 
   implicit val skolemFunsFacet: Facet[SkolemFunctions] = Facet[SkolemFunctions]( SkolemFunctions( None ) )
 
-  case class SkolemFun( sym: Const, defn: LambdaExpression ) extends Update {
+  case class SkolemFun( sym: Const, defn: Expr ) extends Update {
     val Abs.Block( argumentVariables, strongQuantifier @ Quant( boundVariable, matrix, isForall ) ) = defn
-    require( sym.exptype == FunctionType( boundVariable.exptype, argumentVariables.map( _.exptype ) ) )
+    require( sym.ty == FunctionType( boundVariable.ty, argumentVariables.map( _.ty ) ) )
     require( freeVariables( defn ).isEmpty )
 
     override def apply( ctx: Context ): State = {
-      ctx.check( sym.exptype )
+      ctx.check( sym.ty )
       ctx.check( defn )
       ctx.state.update[Constants]( _ + sym )
         .update[SkolemFunctions]( _ + ( sym, defn ) )

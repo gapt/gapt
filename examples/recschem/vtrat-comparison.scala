@@ -18,7 +18,7 @@ object vtrat_comparison extends Script {
   val B = FOLFunctionConst( "B", 2 )
   val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
   val rst = RecSchemTemplate( A, A -> B( x, y ), A -> z, B( x, y ) -> z )
-  val targets = terms.map( A -> _ ).toSet[( LambdaExpression, LambdaExpression )]
+  val targets = terms.map( A -> _ ).toSet[( Expr, Expr )]
   val nfRecSchem = rst.stableRecSchem( targets )
 
   println( lcomp( simplify( toNNF( ( new RecSchemGenLangFormula( nfRecSchem ) )( targets ) ) ) ) )

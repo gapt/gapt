@@ -9,38 +9,38 @@ import at.logic.gapt.proofs.{ Clause, FOLClause, HOLClause, Sequent }
  * implications into disjunctions)
  */
 object toNNF {
-  def apply( f: HOLFormula ): HOLFormula = f match {
+  def apply( f: Formula ): Formula = f match {
     case Top() | Bottom() => f
-    case HOLAtom( _, _ )  => f
+    case Atom( _, _ )     => f
     case Imp( f1, f2 )    => Or( toNNF( Neg( f1 ) ), toNNF( f2 ) )
     case And( f1, f2 )    => And( toNNF( f1 ), toNNF( f2 ) )
     case Or( f1, f2 )     => Or( toNNF( f1 ), toNNF( f2 ) )
     case Ex( x, f )       => Ex( x, toNNF( f ) )
     case All( x, f )      => All( x, toNNF( f ) )
     case Neg( f ) => f match {
-      case Top()           => Bottom()
-      case Bottom()        => Top()
-      case HOLAtom( _, _ ) => Neg( f )
-      case Neg( f1 )       => toNNF( f1 )
-      case Imp( f1, f2 )   => And( toNNF( f1 ), toNNF( Neg( f2 ) ) )
-      case And( f1, f2 )   => Or( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
-      case Or( f1, f2 )    => And( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
-      case Ex( x, f )      => All( x, toNNF( Neg( f ) ) )
-      case All( x, f )     => Ex( x, toNNF( Neg( f ) ) )
-      case _               => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
+      case Top()         => Bottom()
+      case Bottom()      => Top()
+      case Atom( _, _ )  => Neg( f )
+      case Neg( f1 )     => toNNF( f1 )
+      case Imp( f1, f2 ) => And( toNNF( f1 ), toNNF( Neg( f2 ) ) )
+      case And( f1, f2 ) => Or( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
+      case Or( f1, f2 )  => And( toNNF( Neg( f1 ) ), toNNF( Neg( f2 ) ) )
+      case Ex( x, f )    => All( x, toNNF( Neg( f ) ) )
+      case All( x, f )   => Ex( x, toNNF( Neg( f ) ) )
+      case _             => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
     }
     case _ => throw new Exception( "ERROR: Unexpected case while transforming to negation normal form." )
   }
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
 }
 
 /**
- * Simplify a HOLFormula using the equations for bottom and top as
+ * Simplify a Formula using the equations for bottom and top as
  * well as idempotence of conjunction and disjunction.
  */
 object simplify {
-  def apply( f: HOLFormula ): HOLFormula = f match {
+  def apply( f: Formula ): Formula = f match {
     case And( l, r ) => ( simplify( l ), simplify( r ) ) match {
       case ( Top(), r )       => r
       case ( r, Top() )       => r
@@ -73,7 +73,7 @@ object simplify {
     case _ => f
   }
 
-  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula ): FOLFormula = apply( f.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
 }
 
 /**
@@ -83,11 +83,11 @@ object simplify {
  * The computation is done by expanding the input formula using distributivity.
  */
 object CNFp {
-  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
-  def apply( f: HOLFormula ): Set[HOLClause] = {
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: Formula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: Formula ): Set[HOLClause] = {
     require( !containsStrongQuantifier( f, Polarity.Negative ), s"Formula contains strong quantifiers: $f" )
     structuralCNF.onProofs( Seq( Input( Sequent() :+ f ) ), propositional = false, structural = false ).
-      map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) )
+      map( _.conclusion.map( _.asInstanceOf[Atom] ) )
   }
 }
 
@@ -98,8 +98,8 @@ object CNFp {
  * The computation is done by expanding the input formula using distributivity.
  */
 object CNFn {
-  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
-  def apply( f: HOLFormula ): Set[HOLClause] = CNFp( -f )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: Formula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: Formula ): Set[HOLClause] = CNFp( -f )
 }
 
 /**
@@ -109,8 +109,8 @@ object CNFn {
  * The computation is done by expanding the input formula using distributivity.
  */
 object DNFp {
-  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
-  def apply( f: HOLFormula ): Set[HOLClause] = CNFn( f ).map( _.swapped )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: Formula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: Formula ): Set[HOLClause] = CNFn( f ).map( _.swapped )
 }
 
 /**
@@ -120,7 +120,7 @@ object DNFp {
  * The computation is done by expanding the input formula using distributivity.
  */
 object DNFn {
-  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: HOLFormula ).asInstanceOf[Set[FOLClause]]
-  def apply( f: HOLFormula ): Set[HOLClause] = CNFp( f ).map( _.swapped )
+  def apply( f: FOLFormula ): Set[FOLClause] = apply( f: Formula ).asInstanceOf[Set[FOLClause]]
+  def apply( f: Formula ): Set[HOLClause] = CNFp( f ).map( _.swapped )
 }
 

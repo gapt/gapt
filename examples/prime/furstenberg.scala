@@ -24,7 +24,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   val deMorgan1 = Lemma( hols"EXT :- compN(union X Y) = intersection(compN X)(compN Y)" ) {
     unfold( "EXT" ) in "EXT"; chain( "EXT" ); forget( "EXT" )
     allR
-    repeat( unfold( "compN", "intersection", "union" ) in "g" )
+    unfold( "compN", "intersection", "union" ) in "g"
     prop
   }
 
@@ -48,7 +48,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     eql( "CF", "g_1" )
     forget( "CF" )
-    repeat( unfold( "subset", "intersection" ) in "g_1" )
+    unfold( "subset", "intersection" ) in "g_1"
     decompose
     andR
 
@@ -96,7 +96,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     andR
 
     forget( "REM" )
-    repeat( unfold( "compN", "U" ) in "CF" )
+    unfold( "compN", "U" ) in "CF"
     decompose
     unfold( "ν" ) in ( "CF_0_1", "CF_1" )
     exL( "CF_0_1" )
@@ -184,13 +184,13 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     forget( "EXT" )
     eql( "CF", "C" ).fromLeftToRight
     forget( "CF" )
-    repeat( unfold( "O", "ν", "subset" ) in ( "O", "C" ) )
+    unfold( "O", "ν", "subset" ) in ( "O", "C" )
     trivial
   }
 
   // Proof that {1} is nonempty
   val singletonNonempty = Lemma( hols":- nonempty: ¬empty(set_1(1))" ) {
-    repeat( unfold( "empty", "set_1" ) in "nonempty" )
+    unfold( "empty", "set_1" ) in "nonempty"
     decompose
     exR( "nonempty", hoc" 1:i" )
     trivial
@@ -198,7 +198,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
   // Proof that {1} is finite
   val singletonFinite = Lemma( hols"infinite: INF (set_1 1) :-" ) {
-    repeat( unfold( "INF", "set_1" ) in "infinite" )
+    unfold( "INF", "set_1" ) in "infinite"
     allL( "infinite", hoc"1: i" ).forget
     exL( "infinite" )
     theory
@@ -255,7 +255,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           exR( p( 0 ) ).forget
           andR
 
-          repeat( unfold( "P[0]", "set_1" ) in "g" )
+          unfold( "P[0]", "set_1" ) in "g"
           trivial
 
           unfold( "ν" ) in ( "h_0", "g" )
@@ -266,7 +266,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
       case _ =>
         Lemma( endSequent ) {
-          repeat( unfold( s"S[$n]", "union" ) in "h_0" )
+          unfold( s"S[$n]", "union" ) in "h_0"
           orL
 
           cut( "CF", hof"∃y (${P( n - 1 )}(y) ∧ ν 0 y x)" )
@@ -279,7 +279,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           exR( fov"y" ).forget
           andR
 
-          repeat( unfold( s"P[$n]", "union", "set_1" ) in "g" )
+          unfold( s"P[$n]", "union", "set_1" ) in "g"
           prop
 
           andL
@@ -292,11 +292,11 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           andR
 
           forget( "h_0" )
-          repeat( unfold( s"P[$n]", "union", "set_1" ) in "g" )
+          unfold( s"P[$n]", "union", "set_1" ) in "g"
           orR
           trivial
 
-          repeat( unfold( "ν" ) in ( "h_0", "g" ) )
+          unfold( "ν" ) in ( "h_0", "g" )
           exL
           exR( "g", fov"n" ).forget
           trivial
@@ -326,7 +326,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
       forget( "h_0_0", "h" )
       impL
 
-      unfold( s"P[$k]", ( k to 0 by -1 ) map { j => s"P[$j]" }: _* ) in ( "CF2_0", "h_0_1" )
+      unfold( s"P[$k]" +: ( k to 0 by -1 ) map { j => s"P[$j]" }: _* ) in ( "CF2_0", "h_0_1" )
       unfold( "union", "set_1" ) in ( "CF2_0", "h_0_1" )
       prop
 
@@ -369,7 +369,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
     n match {
       case 0 =>
         Lemma( endSequent ) {
-          repeat( unfold( s"P[0]", "set_1" ) in "h_0" )
+          unfold( s"P[0]", "set_1" ) in "h_0"
           unfold( s"S[0]" ) in "g"
           eql( "h_0", "g" )
           trivial
@@ -377,7 +377,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
       case _ =>
         Lemma( endSequent ) {
-          repeat( unfold( s"P[$n]", s"S[$n]", "union" ) in ( "h_0", "g" ) )
+          unfold( s"P[$n]", s"S[$n]", "union" ) in ( "h_0", "g" )
           orR
           orL left insert( lambda( n - 1 ) )
 
@@ -391,7 +391,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   val psi1Right: LKProof =
     Lemma( hols"Fk: ${F( k )}, 'Prime-Div': 'PRIME-DIV' :- compN(set_1(1))(x) -> ${S( k )}(x)" ) {
       decompose
-      repeat( unfold( "compN", "set_1" ) in "g_0" )
+      unfold( "compN", "set_1" ) in "g_0"
       cut( "CF", hof"∃y (${P( k )}(y) ∧ ν 0 y x)" )
 
       unfold( s"F[$k]" ) in "Fk"
@@ -432,14 +432,14 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           allL( p( 0 ) ).forget
           impL right trivial
 
-          repeat( unfold( "P[0]", "set_1" ) in "Rn" )
+          unfold( "P[0]", "set_1" ) in "Rn"
           trivial
         }
 
       case _ =>
         Lemma( endSequent ) {
           unfold( s"Q[$n]" ) in "Qn"
-          cut( "Rn1", R( n - 1 ).asInstanceOf[HOLFormula] )
+          cut( "Rn1", R( n - 1 ).asInstanceOf[Formula] )
 
           //forget( "Suc" )
           unfold( s"R[${n - 1}]" ) in "Rn1"
@@ -449,7 +449,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           allL( fov"y" ).forget
           impL right trivial
 
-          repeat( unfold( s"P[$n]", "union" ) in "Rn" )
+          unfold( s"P[$n]", "union" ) in "Rn"
           prop
 
           andR
@@ -461,7 +461,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
           allL( p( n ) ).forget
           impL right trivial
 
-          repeat( unfold( s"P[$n]", "union", "set_1" ) in "Rn" )
+          unfold( s"P[$n]", "union", "set_1" ) in "Rn"
           orR
           trivial
         }
@@ -469,7 +469,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val FQ: LKProof = Lemma( hols"${F( k )} :- ${Q( k )}" ) {
-    cut( s"Rk", R( k ).asInstanceOf[HOLFormula] )
+    cut( s"Rk", R( k ).asInstanceOf[Formula] )
     insert( FR )
     insert( RQ( k ) )
   }
@@ -528,7 +528,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
   }
 
   val psi2: LKProof = Lemma( hols"${F( k )}, REM, EXT, PRE :- C ${S( k )}" ) {
-    cut( s"Q[$k]", Q( k ).asInstanceOf[HOLFormula] )
+    cut( s"Q[$k]", Q( k ).asInstanceOf[Formula] )
 
     insert( FQ )
     insert( psi2Right( k ) )

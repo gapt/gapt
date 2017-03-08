@@ -1,13 +1,13 @@
 package at.logic.gapt.provers.viper
 
-import at.logic.gapt.expr.{ Const => Con, HOLFormula, TBase, Var }
+import at.logic.gapt.expr.{ Const => Con, Formula, TBase, Var }
 import at.logic.gapt.formats.tip.TipProblem
 import at.logic.gapt.proofs.{ Ant, Context, Sequent }
 
 package object aip {
 
   type ThrowsError[T] = Either[String, T]
-  type LabelledSequent = Sequent[( String, HOLFormula )]
+  type LabelledSequent = Sequent[( String, Formula )]
 
   /**
    * Checks whether the given variable has is of inductive type in the given context.
@@ -27,7 +27,7 @@ package object aip {
    *         unique formula in the succedent is labelled "goal". Moreover a context specifying the constants and
    *         types, etc. is returned.
    */
-  def tipProblemToSequent( problem: TipProblem ): ( Sequent[( String, HOLFormula )], Context ) =
+  def tipProblemToSequent( problem: TipProblem ): ( Sequent[( String, Formula )], Context ) =
     (
       problem.toSequent.zipWithIndex.map {
         case ( f, Ant( i ) ) => s"h$i" -> f
@@ -57,7 +57,7 @@ package object aip {
    * @param variable A variable.
    * @return The variable's base type.
    */
-  def baseType( variable: Var ): TBase = variable.exptype.asInstanceOf[TBase]
+  def baseType( variable: Var ): TBase = variable.ty.asInstanceOf[TBase]
 
   /**
    * Finds a formula by label in a labelled sequent.
@@ -67,7 +67,7 @@ package object aip {
    * @return The formula designated by the given label or an error message if the formula
    *         is not be uniquely determined by the label.
    */
-  def findFormula( sequent: Sequent[( String, HOLFormula )], label: String ): ThrowsError[HOLFormula] = {
+  def findFormula( sequent: Sequent[( String, Formula )], label: String ): ThrowsError[Formula] = {
     sequent.succedent filter { case ( l, f ) => l == label } match {
       case Vector( lf ) => Right( lf._2 )
       case lf +: _      => Left( "Formula could not be uniquely determined" )

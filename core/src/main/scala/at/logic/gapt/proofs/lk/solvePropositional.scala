@@ -11,7 +11,7 @@ trait SolveUtils {
   /**
    * Applies the function f, if maybeProof is Right(proof) and formula is present in polarity pol in proof.
    */
-  protected def mapIf( maybeProof: UnprovableOrLKProof, formula: HOLFormula, pol: Polarity )( f: LKProof => LKProof ) =
+  protected def mapIf( maybeProof: UnprovableOrLKProof, formula: Formula, pol: Polarity )( f: LKProof => LKProof ) =
     maybeProof map { p => if ( p.conclusion.contains( formula, pol ) ) f( p ) else p }
 
   /**
@@ -19,8 +19,8 @@ trait SolveUtils {
    */
   protected def mapIf(
     maybeProof: UnprovableOrLKProof,
-    formula1:   HOLFormula, pol1: Polarity,
-    formula2: HOLFormula, pol2: Polarity
+    formula1:   Formula, pol1: Polarity,
+    formula2: Formula, pol2: Polarity
   )( f: LKProof => LKProof ) =
     maybeProof map { p =>
       if ( p.conclusion.contains( formula1, pol1 ) || p.conclusion.contains( formula2, pol2 ) ) f( p )
@@ -36,7 +36,7 @@ class solvePropositional(
 ) extends SolveUtils {
   type Error = HOLSequent
 
-  def apply( formula: HOLFormula ): UnprovableOrLKProof =
+  def apply( formula: Formula ): UnprovableOrLKProof =
     apply( Sequent() :+ formula )
 
   def apply( seq: HOLSequent ): UnprovableOrLKProof =
@@ -90,8 +90,8 @@ class solvePropositional(
     }
 
   private def tryBinary( seq: HOLSequent ): Option[UnprovableOrLKProof] = {
-    def handle( i: SequentIndex, e: HOLFormula, f: HOLFormula, fPol: Polarity, g: HOLFormula, gPol: Polarity,
-                rule: ( LKProof, LKProof, HOLFormula ) => LKProof ) =
+    def handle( i: SequentIndex, e: Formula, f: Formula, fPol: Polarity, g: Formula, gPol: Polarity,
+                rule: ( LKProof, LKProof, Formula ) => LKProof ) =
       solve( if ( fPol.inSuc ) seq.delete( i ) :+ f else f +: seq.delete( i ) ) flatMap { p1 =>
         if ( !p1.conclusion.contains( f, fPol ) ) Right( p1 )
         else solve( if ( gPol.inSuc ) seq.delete( i ) :+ g else g +: seq.delete( i ) ) map { p2 =>
@@ -108,6 +108,6 @@ class solvePropositional(
   }
 
   private def tryTheory( seq: HOLSequent ): Option[UnprovableOrLKProof] =
-    theorySolver( seq collect { case atom: HOLAtom => atom } ).map( Right( _ ) )
+    theorySolver( seq collect { case atom: Atom => atom } ).map( Right( _ ) )
 
 }

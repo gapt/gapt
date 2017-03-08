@@ -64,7 +64,7 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val p = Const( "p", Ti -> Ti )
       val x = Var( "x", Ti )
       val px = HOLFunction( p, x :: Nil )
-      val at = HOLAtom( lt, a :: px :: Nil )
+      val at = Atom( lt, a :: px :: Nil )
       val subst = syntacticMatching( at, at )
       subst must beEqualTo( Some( Substitution( x -> x ) ) )
     }
@@ -75,8 +75,8 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
       val p = Const( "p", Ti -> Ti )
       val x = Var( "x", Ti )
       val px = HOLFunction( p, x :: Nil )
-      val at = HOLAtom( lt, a :: px :: Nil )
-      val at2 = HOLAtom( lt, a :: px :: Nil ) // Is this a copy?
+      val at = Atom( lt, a :: px :: Nil )
+      val at2 = Atom( lt, a :: px :: Nil ) // Is this a copy?
       val subst = syntacticMatching( at, at2 )
       subst must beEqualTo( Some( Substitution( x -> x ) ) )
     }

@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.lk._
@@ -13,7 +13,7 @@ import at.logic.gapt.proofs.lk._
  */
 //TODO: generalize the definition of fitting (add a predicate which decides if a candidate fits)
 object Pickrule {
-  type zipIndex = ( HOLFormula, SequentIndex )
+  type zipIndex = ( Formula, SequentIndex )
 
   /**
    * picks one occurrences from the candidates s.t. formulas (if it exists) are identical
@@ -189,7 +189,7 @@ object Pickrule {
 }
 
 object DeleteTautology {
-  def apply( l: List[HOLSequent] ): List[HOLSequent] = apply( l, ( x: HOLFormula, y: HOLFormula ) => x == y )
+  def apply( l: List[HOLSequent] ): List[HOLSequent] = apply( l, ( x: Formula, y: Formula ) => x == y )
   //def apply( l : List[OccSequent]) = apply(l, (x : FormulaOccurrence,y:FormulaOccurrence) => x.formula == y.formula )
 
   def apply[A]( l: List[Sequent[A]], eqpred: ( A, A ) => Boolean ): List[Sequent[A]] = {
@@ -203,8 +203,8 @@ object DeleteTautology {
 //TODO: change to new lk
 //object DeleteReduntantFOfromSequent {
 //  def apply( s: OccSequent ): OccSequent = {
-//    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
-//    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[HOLFormula] )( ( seq, t ) => t +: seq )
+//    val setant = s.antecedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[Formula] )( ( seq, t ) => t +: seq )
+//    val setsucc = s.succedent.map( fo => fo.formula ).toSet.foldLeft( Seq.empty[Formula] )( ( seq, t ) => t +: seq )
 //    OccSequent( setant.map( f => factory.createFormulaOccurrence( f, Nil ) ), setsucc.map( f => factory.createFormulaOccurrence( f, Nil ) ) )
 //  }
 //}

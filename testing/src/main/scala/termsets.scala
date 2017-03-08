@@ -13,9 +13,9 @@ object dumpTermset extends App {
   val outputPath = Path( outputFileName, pwd )
 
   def simplifyNames( termset: Set[FOLTerm] ): Set[FOLTerm] = {
-    val renaming: Map[LambdaExpression, LambdaExpression] =
+    val renaming: Map[Expr, Expr] =
       ( constants( termset ).toSeq ++ freeVariables( termset ).toSeq ).sortBy( _.toString ).
-        zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.exptype ) }.
+        zipWithIndex.map { case ( c, i ) => c -> Const( s"f$i", c.ty ) }.
         toMap
     termset.map( TermReplacement( _, renaming ).asInstanceOf[FOLTerm] )
   }

@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, HOLFormula, Var, freeVariables }
+import at.logic.gapt.expr.{ All, Formula, Var, freeVariables }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip._
@@ -26,7 +26,7 @@ case class IndependentInductionAxioms(
 
   def forLabel( label: String ) = copy( fsel = findFormula( _, label ) )
 
-  def forFormula( formula: HOLFormula ) = copy( fsel = _ => Right( formula ) )
+  def forFormula( formula: Formula ) = copy( fsel = _ => Right( formula ) )
 
   /**
    * Generates independent induction axioms for the given sequent.
@@ -34,7 +34,7 @@ case class IndependentInductionAxioms(
    * @param sequent The sequent for which the induction axioms are generated.
    * @return Either a list of induction axioms, or a list of error-messages if the axioms could not be created
    */
-  override def apply( sequent: Sequent[( String, HOLFormula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
@@ -51,7 +51,7 @@ case class IndependentInductionAxioms(
    * @param formula A formula of the form `∀Xφ`.
    * @return A formula of the form `∀Yφ` where Y does not contain any of x_1,...,x_n.
    */
-  private def inductionQuantifierForm( inductionVariables: List[Var], formula: HOLFormula ) = {
+  private def inductionQuantifierForm( inductionVariables: List[Var], formula: Formula ) = {
     val All.Block( _, matrix ) = formula
     val quantifierPrefix = freeVariables( matrix ).diff( freeVariables( formula ) ).diff( inductionVariables toSet ) toSeq
 
@@ -69,7 +69,7 @@ case class IndependentInductionAxioms(
    * @return An independent induction axiom.
    */
   private def inductionAxiom(
-    inductionVariables: List[Var], variable: Var, formula: HOLFormula
+    inductionVariables: List[Var], variable: Var, formula: Formula
   )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val auxiliaryVariables = inductionVariables filter { _ != variable }
     val inductionFormula = inductionQuantifierForm( inductionVariables, formula )

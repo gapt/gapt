@@ -9,25 +9,25 @@ import at.logic.gapt.proofs.{ Context, HOLClause, SequentConnector, Sequent }
  *
  * It replaces theory axioms on sequents S that are subsumed by Π with propositional proofs of Π, S.
  */
-object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
+object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
   /**
    * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
-   * @param formulas A list of HOLFormulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+   * @param formulas A list of Formulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
    * @param proof An LKProof.
    * @return A pair `(proof', conn)` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
    *         is removed in `proof'` and elements of `formulas` may occur in the antecedent of the end sequent of `proof'`;
    *        `conn` is an SequentConnector relating `proof` and `proof'`.
    */
-  def withSequentConnector( formulas: HOLFormula* )( proof: LKProof ) = recurse( proof, formulas )
+  def withSequentConnector( formulas: Formula* )( proof: LKProof ) = recurse( proof, formulas )
 
   /**
    * Eliminates some theory axioms from `proof`, namely those subsumed by `formulas`.
-   * @param formulas A list of HOLFormulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
+   * @param formulas A list of Formulas. Each must be of the form ∀x,,1,, ... ∀x,,n,, F' with F' quantifier-free.
    * @param proof An LKProof.
    * @return An LKProof `proof'` with the following properties: Every theory axiom in `proof` that is subsumed by `formulas`
    *         is removed in `proof'` and elements of `formula` may occur in the antecedent of the end sequent of `proof'`.
    */
-  def apply( formulas: HOLFormula* )( proof: LKProof ): LKProof = withSequentConnector( formulas: _* )( proof )._1
+  def apply( formulas: Formula* )( proof: LKProof ): LKProof = withSequentConnector( formulas: _* )( proof )._1
 
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.axioms.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
 
@@ -37,7 +37,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
    * @return If A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,, is subsumed by some F in formulas, returns a proof of
    *         F, A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,,. Otherwise the input axiom.
    */
-  protected override def visitTheoryAxiom( proof: TheoryAxiom, formulas: Seq[HOLFormula] ) = {
+  protected override def visitTheoryAxiom( proof: TheoryAxiom, formulas: Seq[Formula] ) = {
 
     val TheoryAxiom( sequent ) = proof
     formulas match {
@@ -76,5 +76,5 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[HOLFormula]] {
         }
     }
   }
-  protected override def recurse( proof: LKProof, formulas: Seq[HOLFormula] ) = contractAfter( super.recurse )( proof, formulas )
+  protected override def recurse( proof: LKProof, formulas: Seq[Formula] ) = contractAfter( super.recurse )( proof, formulas )
 }

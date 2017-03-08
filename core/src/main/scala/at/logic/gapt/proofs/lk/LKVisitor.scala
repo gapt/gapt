@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.proofs.SequentConnector
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 
