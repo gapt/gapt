@@ -101,6 +101,138 @@ object LKToND {
 
       // Structural rules
       case WeakeningLeftRule( subProof, formula ) =>
+        ???
+
+      case p @ WeakeningRightRule( subProof, formula ) =>
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          // Pick arbitrary focus
+          val heuristicIndex = Suc( 0 )
+          exchange( WeakeningRule( translate( subProof, heuristicIndex ), hof"-$formula" ), p.mainFormula )
+        } else {
+          // TODO OPTIMIZATION: exchanging twice should not be required
+          // simply weaken with negated formula on the left
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
+
+      case ContractionLeftRule( subProof, aux1, aux2 ) =>
+        ???
+
+      case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          val l = subProof.endSequent( aux1 )
+          val t = translate( subProof, aux1 )
+          val il = t.endSequent.indexOfPolOption( hof"-$l", Polarity.InAntecedent )
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( l ) ).
+            c( t ).
+            b( ExcludedMiddleRule( _, Ant( 0 ), _, il.get ) ).
+            qed
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
+
+      case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        ???
+
+      // Propositional rules
+      case NegLeftRule( subProof, aux ) =>
+        ???
+
+      case p @ NegRightRule( subProof, aux ) =>
+        ???
+
+      case p @ AndLeftRule( subProof, aux1, aux2 ) =>
+        ???
+
+      case p @ AndRightRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          val tl = translate( leftSubProof, aux1 )
+          val tr = translate( rightSubProof, aux2 )
+
+          AndIntroRule( tl, tr )
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
+
+      case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        ???
+
+      case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
+        ???
+
+      case p @ OrRightRule( subProof, aux1, aux2 ) =>
+        ???
+
+      case p @ ImpLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
+        ???
+
+      case p @ ImpRightRule( subProof, aux1, aux2 ) =>
+        ???
+
+      // Quantifier rules
+      case ForallLeftRule( subProof, aux, _, t, _ ) =>
+        ???
+
+      case ForallRightRule( subProof, aux, eigen, _ ) =>
+        ???
+
+      case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
+        ???
+
+      case ExistsLeftRule( subProof, aux, eigen, _ ) =>
+        ???
+
+      case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
+        ???
+
+      case ExistsRightRule( subProof, aux, _, t, _ ) =>
+        ???
+
+      // Equality rules
+      case p: EqualityRule =>
+        ???
+
+      case DefinitionLeftRule( subProof, aux, main ) =>
+        ???
+
+      case DefinitionRightRule( subProof, aux, main ) =>
+        ???
+    }
+    check( ndProof, proof, focus )
+    ndProof
+  }
+
+  /*
+  private def translate( proof: LKProof, focus: SequentIndex ): NDProof = {
+
+    assert( focus.isSuc )
+
+    val ndProof = proof match {
+
+      // Axioms
+      case lk.LogicalAxiom( atom: HOLAtom ) =>
+        nd.LogicalAxiom( atom )
+
+      case ReflexivityAxiom( s ) =>
+        ???
+
+      case TopAxiom =>
+        ???
+
+      case BottomAxiom =>
+        ???
+
+      case TheoryAxiom( sequent ) =>
+        ???
+
+      // Structural rules
+      case WeakeningLeftRule( subProof, formula ) =>
         //translate( subProof, focus )
         val ret = WeakeningRule( translate( subProof, focus ), formula )
         ret
@@ -369,4 +501,5 @@ object LKToND {
     check( ret, proof, focus )
     ret
   }
+  */
 }

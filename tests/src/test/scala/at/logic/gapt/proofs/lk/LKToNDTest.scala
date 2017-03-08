@@ -66,6 +66,34 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
+    "translate AndRight with focus 0" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate AndRight with focus 1" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
+        qed
+
+      val focus = Suc( 1 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
     "translate OrLeft 1" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
@@ -330,7 +358,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
-    "translate WeakeningRight" in {
+    "translate WeakeningRight with focus 0" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
         u( WeakeningRightRule( _, hof"A" ) ).
@@ -338,6 +366,32 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate WeakeningRight with focus 1" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        qed
+
+      val focus = Suc( 1 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate WeakeningRight with focus 2" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        qed
+
+      val focus = Suc( 2 )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )

@@ -269,7 +269,18 @@ object weakeningRight1 extends Script {
 
   println( p3 )
 
-  val nd = LKToND( p3, Suc( 1 ) )
+  val nd = LKToND( p3, Suc( 0 ) )
+  println( nd )
+}
+
+object weakeningRight2 extends Script {
+  val p1 = LogicalAxiom( hof"A" )
+  val p2 = WeakeningRightRule( p1, hof"A" )
+  val p3 = WeakeningRightRule( p2, hof"B" )
+
+  println( p3 )
+
+  val nd = LKToND( p3, Suc( 2 ) )
   println( nd )
 }
 
