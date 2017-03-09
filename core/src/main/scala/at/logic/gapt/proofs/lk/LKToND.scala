@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, Sequent, SequentIndex, Suc, lk, nd }
+import at.logic.gapt.proofs.{ Ant, SequentIndex, Suc, lk, nd }
 import at.logic.gapt.proofs.nd._
 
 object LKToND {
@@ -144,8 +144,8 @@ object LKToND {
         val tr =
           if ( p.endSequent.succedent.nonEmpty ) {
             p.getRightSequentConnector.parentOption( focus ) match {
-              case Some( i ) =>
-                translate( rightSubProof, i )
+              case Some( ir ) =>
+                translate( rightSubProof, ir )
               case None =>
                 val heuristicFocus = Suc( 0 )
                 translate( rightSubProof, heuristicFocus )
