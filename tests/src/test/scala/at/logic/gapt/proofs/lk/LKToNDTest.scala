@@ -566,7 +566,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         c( LogicalAxiom( hof"A" ) ).
         c( LogicalAxiom( hof"B" ) ).
         u( NegLeftRule( _, hof"B" ) ).
-        b( ImpLeftRule( _, Suc( 0 ), _, Ant( 1 ) ) ).
+        b( ImpLeftRule( _, _, hof"A -> B" ) ).
         qed
 
       val focus = Suc( 0 )

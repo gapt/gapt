@@ -156,14 +156,19 @@ object LKToND {
           }
 
         val i = tr.endSequent.indexOfPol( rightSubProof.endSequent( aux2 ), Polarity.InAntecedent )
-        exchange(
-          nd.ProofBuilder.
+
+        val partialProof = nd.ProofBuilder.
           c( tr ).
           u( ImpIntroRule( _, i ) ).
           c( tl ).
           b( ImpElimRule( _, _ ) ).
-          qed, p.endSequent( focus )
-        )
+          qed
+
+        if ( p.endSequent.succedent.nonEmpty ) {
+          exchange( partialProof, p.endSequent( focus ) )
+        } else {
+          partialProof
+        }
 
       // Propositional rules
       case p @ NegLeftRule( subProof, aux ) =>
@@ -192,7 +197,11 @@ object LKToND {
         }
 
       case p @ AndLeftRule( subProof, aux1, aux2 ) =>
-        val t = translate( subProof, p.getSequentConnector.parent( focus ) )
+        val t = if ( p.endSequent.succedent.nonEmpty ) {
+          translate( subProof, p.getSequentConnector.parent( focus ) )
+        } else {
+          translate( subProof, Suc( 0 ) )
+        }
 
         val And( a, b ) = p.mainFormula
 
@@ -317,16 +326,20 @@ object LKToND {
         val Imp( _, b ) = p.mainFormula
         val i = tr.endSequent.indexOfPol( b, Polarity.InAntecedent )
 
-        exchange(
-          nd.ProofBuilder.
+        val partialProof = nd.ProofBuilder.
           c( tr ).
           u( ImpIntroRule( _, i ) ).
           c( nd.LogicalAxiom( p.mainFormula ) ).
           c( tl ).
           b( ImpElimRule( _, _ ) ).
           b( ImpElimRule( _, _ ) ).
-          qed, p.endSequent( focus )
-        )
+          qed
+
+        if ( p.endSequent.succedent.nonEmpty ) {
+          exchange( partialProof, p.endSequent( focus ) )
+        } else {
+          partialProof
+        }
 
       case p @ ImpRightRule( subProof, aux1, aux2 ) =>
 
@@ -344,7 +357,11 @@ object LKToND {
       // Quantifier rules
       case p @ ForallLeftRule( subProof, aux, a: HOLFormula, term: LambdaExpression, v: Var ) =>
 
-        val t = translate( subProof, p.getSequentConnector.parent( focus ) )
+        val t = if ( p.endSequent.succedent.nonEmpty ) {
+          translate( subProof, p.getSequentConnector.parent( focus ) )
+        } else {
+          translate( subProof, Suc( 0 ) )
+        }
 
         val i = t.endSequent.indexOfPol( Substitution( v, term )( a ), Polarity.InAntecedent )
         nd.ProofBuilder.
@@ -372,7 +389,11 @@ object LKToND {
 
       case p @ ExistsLeftRule( subProof, aux, eigen, v ) =>
 
-        val t = translate( subProof, p.getSequentConnector.parent( focus ) )
+        val t = if ( p.endSequent.succedent.nonEmpty ) {
+          translate( subProof, p.getSequentConnector.parent( focus ) )
+        } else {
+          translate( subProof, Suc( 0 ) )
+        }
 
         val Ex( _, a ) = p.mainFormula
         val i = t.endSequent.indexOfPol( Substitution( v, eigen )( a ), Polarity.InAntecedent )
