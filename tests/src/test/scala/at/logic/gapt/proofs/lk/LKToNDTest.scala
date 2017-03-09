@@ -476,6 +476,23 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
+    "translate Exists right and left" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"A: i > o"
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A t" ) ).
+        u( ExistsRightRule( _, hof"?x A x", fov"t" ) ).
+        u( ExistsLeftRule( _, hof"?x A x", fov"t" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
     "translate WeakeningLeft followed by ContractLeft" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).
