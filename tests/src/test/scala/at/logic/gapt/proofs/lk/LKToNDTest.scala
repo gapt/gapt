@@ -466,8 +466,8 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       ctx += hoc"A: i > o"
 
       val lk = ProofBuilder.
-        c( LogicalAxiom( hof"A t" ) ).
-        u( ExistsRightRule( _, hof"?x A x", fov"t" ) ).
+        c( LogicalAxiom( hof"A v" ) ).
+        u( ExistsRightRule( _, hof"?x A x", fov"v" ) ).
         qed
 
       val focus = Suc( 0 )
@@ -482,9 +482,9 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       ctx += hoc"A: i > o"
 
       val lk = ProofBuilder.
-        c( LogicalAxiom( hof"A t" ) ).
-        u( ExistsRightRule( _, hof"?x A x", fov"t" ) ).
-        u( ExistsLeftRule( _, hof"?x A x", fov"t" ) ).
+        c( LogicalAxiom( hof"A v" ) ).
+        u( ExistsRightRule( _, hof"?x A x", fov"v" ) ).
+        u( ExistsLeftRule( _, hof"?x A x", fov"v" ) ).
         qed
 
       val focus = Suc( 0 )
@@ -498,6 +498,124 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         c( LogicalAxiom( hof"A" ) ).
         u( WeakeningLeftRule( _, hof"A" ) ).
         u( ContractionLeftRule( _, hof"A" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate WeakeningLeft with empty succedent" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegLeftRule( _, hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"B" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ContractionLeft with empty succedent" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegLeftRule( _, hof"A" ) ).
+        u( WeakeningLeftRule( _, hof"A" ) ).
+        u( ContractionLeftRule( _, hof"A" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate AndLeft with empty succedent" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegLeftRule( _, hof"A" ) ).
+        u( AndLeftRule( _, hof"A & -A" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate OrLeft with empty succedent" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegLeftRule( _, hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( NegLeftRule( _, hof"B" ) ).
+        b( OrLeftRule( _, _, hof"A | B" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ImpLeft with empty succedent" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"B" ) ).
+        u( NegLeftRule( _, hof"B" ) ).
+        b( ImpLeftRule( _, Suc( 0 ), _, Ant( 1 ) ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate Cut with empty succedent" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        c( LogicalAxiom( hof"A" ) ).
+        u( NegLeftRule( _, hof"A" ) ).
+        b( CutRule( _, Suc( 0 ), _, Ant( 1 ) ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ForallLeft with empty succedent" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"A: i > o"
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A t" ) ).
+        u( NegLeftRule( _, hof"A t" ) ).
+        u( ForallLeftRule( _, hof"!x A x", fov"t" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ExistsLeft with empty succedent" in {
+      implicit var ctx = Context()
+      ctx += TBase( "i" )
+      ctx += hoc"A: i > o"
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A v" ) ).
+        u( ExistsRightRule( _, hof"?x A x", fov"v" ) ).
+        u( NegLeftRule( _, hof"?x A x" ) ).
+        u( ExistsLeftRule( _, hof"?x A x", fov"v" ) ).
         qed
 
       val focus = Suc( 0 )
