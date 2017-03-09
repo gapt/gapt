@@ -7,9 +7,7 @@ import at.logic.gapt.proofs.nd._
 object LKToND {
 
   /**
-   * Extracts an expansion sequent Ex(π) from an LKProof π.
-   *
-   * The induction rule is not supported!
+   * Converts a deskolemized LKProof π into a natural deduction proof.
    *
    * @param proof The proof π.
    * @return The natural deduction proof translate(π).
