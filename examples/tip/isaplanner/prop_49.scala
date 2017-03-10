@@ -36,4 +36,20 @@ object prop_49 extends TacticsProof {
     //-
     escargot
   }
+
+  // simplified proof
+  val proof2 = Lemma( sequent ) {
+    allR; allR
+    induction( hov"ys:list" )
+    // IB
+    rewrite ltr "h7" in "goal"
+    analyticInduction withAxioms sequentialAxioms.forVariables( hov"xs:list" ).forFormula( hof"!xs append(xs,nil) = xs" )
+    // IS
+    rewrite ltr "h8" in "goal"
+    induction( hov"xs:list" )
+    // IS - IB
+    escargot
+    // IS - IS
+    analyticInduction withAxioms tipDomainClosure.forTypes( listType )
+  }
 }
