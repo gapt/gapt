@@ -25,30 +25,30 @@ case class Pi2SeHs(
   //////////////////////////////
   val substitutionPairsAlpha: List[( Expr, Expr )] = {
 
+    substitutionsForAlpha.map( instance => ( universalEigenvariable, instance ) )
     /*
-    substitutionsForAlpha().map( instance => ( universalEigenvariable.asInstanceOf, instance ) )
-    */
     val substitutionPairsAlpha = scala.collection.mutable.Set[( Expr, Expr )]()
     substitutionsForAlpha.foreach( instance => {
       val buffer: ( Expr, Expr ) = ( universalEigenvariable, instance )
       substitutionPairsAlpha += buffer
     } )
     substitutionPairsAlpha.toList
+    */
   }
 
   // (beta_i,t_1(alpha)),...,(beta_i,t_p(alpha))
   //////////////////////////////////////////////
   def substitutionPairsBetaI( index: Int ): List[( Expr, Expr )] = {
 
+    substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1), instanceB ) )
     /*
-    substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1).asInstanceOf, instanceB ) )
-    */
     val substitutionPairsBetaI = scala.collection.mutable.Set[( Expr, Expr )]()
     substitutionsForBetaWithAlpha.foreach( instanceB => {
       val buffer: ( Expr, Expr ) = ( existentialEigenvariables( index - 1 ), instanceB )
       substitutionPairsBetaI += buffer
     } )
     substitutionPairsBetaI.toList
+    */
   }
 
   // (beta_1,t_1(alpha)),...,(beta_1,t_p(alpha)),
@@ -78,23 +78,32 @@ case class Pi2SeHs(
   ////////////////////////////////
   val substitutionsAlpha: List[Substitution] = {
 
+    substitutionsForAlpha.map( instanceA => Substitution( universalEigenvariable, instanceA ) )
+
+    /*
     val substitutionsAlpha = scala.collection.mutable.ListBuffer[Substitution]()
     substitutionsForAlpha.foreach( instanceA => {
       substitutionsAlpha += Substitution( universalEigenvariable, instanceA )
     } )
     substitutionsAlpha.toList
+    */
   }
 
   // (beta_i->t_1(r_i)),...,(beta_i->t_p(r_i))
   ////////////////////////////////////////////
   def substitutionsBetaI( index: Int ): List[Substitution] = {
 
+    val subs: Substitution = Substitution( universalEigenvariable, substitutionsForAlpha( index - 1 ) )
+    substitutionsForBetaWithAlpha.map( instanceB => Substitution( existentialEigenvariables( index - 1 ), subs( instanceB ) ) )
+
+    /*
     val substitutionsBeta = scala.collection.mutable.ListBuffer[Substitution]()
     val subs: Substitution = Substitution( universalEigenvariable, substitutionsForAlpha( index - 1 ) ) // (alpha->r_i)
     substitutionsForBetaWithAlpha.foreach( instanceB => {
       substitutionsBeta += Substitution( existentialEigenvariables( index - 1 ), subs( instanceB ) )
     } )
     substitutionsBeta.toList
+    */
   }
 
   private def substituteRightSideOnce( sequent: Sequent[Formula], index: Int ): Sequent[Formula] = {
@@ -165,11 +174,7 @@ case class Pi2SeHs(
     val DNTA = scala.collection.mutable.Set[Sequent[FOLFormula]]()
 
     CNFp( this.reducedRepresentationToFormula ).foreach( clause => if ( !clause.isTaut ) {
-      var NTAClause: Sequent[FOLFormula] = clause
-      for ( literal <- clause.succedent ) {
-        NTAClause = Neg( literal ) +: NTAClause
-      }
-      NTAClause = NTAClause.antecedent.toSet ++: Sequent()
+      val NTAClause: Sequent[FOLFormula] = clause.succedent.map( literal => Neg( literal ) ) ++: clause.antecedent ++: Sequent()
       val DNTABuffer = DNTA.toList
       var dontAdd: Boolean = false
       DNTABuffer.foreach( DNTAClause => {
