@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{Apps, Substitution, Var}
-import at.logic.gapt.proofs.{Sequent, SequentConnector}
+import at.logic.gapt.expr.{ Apps, Expr, Formula, Substitution, Var }
+import at.logic.gapt.proofs.{ Sequent, SequentConnector }
 
 object eliminateInduction extends LKVisitor[Unit] {
 
@@ -22,6 +22,17 @@ object eliminateInduction extends LKVisitor[Unit] {
   }
 
   /**
+   * Eliminates induction and cuts.
+   *
+   * @param proof A regular free-cut free proof of a Σ_1 sequent with ground inductive end-piece. The lowest
+   *              induction inferences in the proof must be applied to ground terms in constructor form.
+   * @return An induction free cut free proof with the same end-sequent as the given proof.
+   */
+  def cutFree( proof: LKProof ): LKProof = {
+    ReductiveCutElimination( this( proof ) )
+  }
+
+  /**
    * Unfolds an induction induction inference.
    *
    * @param proof A regular proof with an induction inference as its last inference.
@@ -31,11 +42,11 @@ object eliminateInduction extends LKVisitor[Unit] {
    */
   private def unfoldInductionProof( proof: InductionRule ): LKProof = {
     val InductionRule( inductionCases, inductionFormula, inductionTerm ) = proof
-    val inductionType = inductionTerm.exptype
+    val inductionType = inductionTerm.ty
     val Apps( constructor, arguments ) = inductionTerm
-    val ( primaryArguments, secondaryArguments ) = arguments.partition(
+    val ( primaryArguments, _ ) = arguments.partition(
       argument => {
-        argument.exptype == inductionType
+        argument.ty == inductionType
       }
     )
     val argumentProofs = primaryArguments map (
@@ -63,7 +74,7 @@ object eliminateInduction extends LKVisitor[Unit] {
    * @return A proof of the given sequent that is obtained from proof by applying left and right
    *         contractions.
    */
-  private def eliminateRedundantFormulas( proof: LKProof, sequent: Sequent[HOLFormula] ): LKProof = {
+  private def eliminateRedundantFormulas( proof: LKProof, sequent: Sequent[Formula] ): LKProof = {
     val contractedAntecedentProof = sequent.antecedent.foldRight( proof ) { ( formula, contractedProof ) =>
       ContractionLeftMacroRule( contractedProof, formula, sequent.antecedent.filter( _ == formula ).size )
     }
@@ -81,10 +92,10 @@ object eliminateInduction extends LKVisitor[Unit] {
    *         of the eigenvariables and the terms, i.e. the first eigenvariable is substituted by the first term, and
    *         so on.
    */
-  private def inductionStepProof( arguments: Seq[LambdaExpression], inductionCase: InductionCase ): LKProof = {
+  private def inductionStepProof( arguments: Seq[Expr], inductionCase: InductionCase ): LKProof = {
     val InductionCase( proof, _, _, eigenVariables, _ ) = inductionCase
     val substitution = new Substitution(
-      Map[Var, LambdaExpression]( eigenVariables.zip( arguments ): _* )
+      Map[Var, Expr]( eigenVariables.zip( arguments ): _* )
     )
     LKProofSubstitutableDefault.applySubstitution( substitution, proof )
   }
