@@ -1,8 +1,7 @@
-package at.logic.gapt.indelim
+package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{ Apps, HOLFormula, LambdaExpression, Substitution, Var }
-import at.logic.gapt.proofs.lk.{ ContractionLeftMacroRule, ContractionRightMacroRule, CutRule, InductionCase, InductionRule, LKProof, LKProofSubstitutableDefault, LKVisitor }
-import at.logic.gapt.proofs.{ Sequent, SequentConnector }
+import at.logic.gapt.expr.{Apps, Substitution, Var}
+import at.logic.gapt.proofs.{Sequent, SequentConnector}
 
 object eliminateInduction extends LKVisitor[Unit] {
 
