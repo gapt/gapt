@@ -1,9 +1,9 @@
-package at.logic.gapt.provers.viper
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr.Expr
 import at.logic.gapt.grammars.RecursionScheme
-import at.logic.gapt.proofs.{ Context, HOLSequent }
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
+import at.logic.gapt.proofs.{ Context, HOLSequent }
 
 trait SchematicInductiveProofFindingMethod {
   def find( endSequent: HOLSequent, encoding: InstanceTermEncoding, context: Context,

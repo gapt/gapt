@@ -2,14 +2,12 @@ package at.logic.gapt.provers.viper
 
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.provers.spass.SPASS
-import at.logic.gapt.provers.verit.VeriT
+import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
 
-class ViperTest extends Specification {
+class ViperTest extends Specification with SequentMatchers {
 
   "known to be working problems" in {
     Fragments.foreach( Seq(
@@ -34,8 +32,9 @@ class ViperTest extends Specification {
           ClasspathInputFile( s"induction/$prob.smt2" ),
           extraOptions
         )
-        val lk = new Viper( problem.ctx, problem.toSequent, options ).solve()
-        ok
+        val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options ).solve()
+        problem.ctx check lk
+        lk.conclusion.distinct.diff( problem.toSequent ) must_== Sequent()
       }
     }
   }

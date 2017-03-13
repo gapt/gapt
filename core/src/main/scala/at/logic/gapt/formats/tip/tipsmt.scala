@@ -94,7 +94,10 @@ class TipSmtParser {
             handleCase( LFun( "case", LFun( ctr.name, vs: _* ), body ) )
           }
         case LFun( "case", LFunOrAtom( constrName, argNames @ _* ), body ) =>
-          require( freeVars( varName ).isInstanceOf[Var] )
+          require(
+            freeVars( varName ).isInstanceOf[Var],
+            s"${freeVars( varName )} is not a variable"
+          )
           val constr = funDecls( constrName )
           val FunctionType( _, constrArgTypes ) = constr.ty
           require( constrArgTypes.size == argNames.size )
