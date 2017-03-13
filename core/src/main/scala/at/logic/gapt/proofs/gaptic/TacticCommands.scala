@@ -4,6 +4,7 @@ import tactics._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.ViperTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 
@@ -683,6 +684,6 @@ trait TacticCommands {
   def viper( implicit ctx: Context ): ViperTactic = new ViperTactic
 
   def analyticInduction( implicit ctx: Context ) = AnalyticInductionTactic(
-    StandardInductionAxioms(), at.logic.gapt.provers.viper.aip.provers.escargot
+    StandardInductionAxioms(), Escargot
   )
 }

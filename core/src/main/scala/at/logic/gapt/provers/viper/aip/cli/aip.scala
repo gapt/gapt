@@ -1,8 +1,8 @@
 package at.logic.gapt.provers.viper.aip.cli
 
 import ammonite.ops.FilePath
-
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.viper.aip.axioms.{ AxiomFactory, IndependentInductionAxioms, SequentialInductionAxioms, UserDefinedInductionAxioms }
 import at.logic.gapt.provers.viper.aip.provers._
 import at.logic.gapt.provers.viper.aip.{ ProverOptions, _ }
@@ -44,7 +44,7 @@ object aip {
     "independent" -> ( IndependentInductionAxioms().forAllVariables forLabel "goal" )
   )
 
-  val provers = Map[String, InternalProver](
+  val provers = Map[String, ResolutionProver](
     "prover9" -> prover9,
     "eprover" -> eprover,
     "escargot" -> escargot,

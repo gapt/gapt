@@ -1,18 +1,16 @@
 package at.logic.gapt.provers.viper.grammars
 
-import ammonite.ops._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
-import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
 import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, InstanceTermEncoding }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 import at.logic.gapt.prooftool.prooftool
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.verit.VeriT
@@ -20,12 +18,37 @@ import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
 import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
-import scala.io.StdIn
+
+object SpassPred extends OneShotProver {
+  override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] = {
+    val reduction = GroundingReductionET |> CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
+    val ( erasedCNF, back ) = reduction forward seq
+    SPASS.getResolutionProof( erasedCNF ).map { erasedProof =>
+      back( erasedProof )
+    }
+  }
+
+  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
+    getExpansionProof( seq ).flatMap( ExpansionProofToLK( _ ).toOption )
+}
+
+object SpassNoPred extends OneShotProver {
+  override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] = {
+    val reduction = GroundingReductionET |> ErasureReductionET
+    val ( erasedCNF, back ) = reduction forward seq
+    SPASS.getExpansionProof( erasedCNF ).map { erasedProof =>
+      back( erasedProof )
+    }
+  }
+
+  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
+    getExpansionProof( seq ).flatMap( ExpansionProofToLK( _ ).toOption )
+}
 
 case class TreeGrammarProverOptions(
   instanceNumber:   Int                 = 10,
   instanceSize:     FloatRange          = ( 0, 2 ),
-  instanceProver:   String              = "escargot",
+  instanceProver:   Prover              = Escargot,
   findingMethod:    String              = "maxsat",
   quantTys:         Option[Seq[String]] = None,
   grammarWeighting: Rule => Int         = _ => 1,
@@ -46,11 +69,16 @@ object TreeGrammarProverOptions {
   }
 
   private def parseAndApply( k: String, v: String, opts: TreeGrammarProverOptions ): TreeGrammarProverOptions = k match {
-    case "instnum"    => opts.copy( instanceNumber = v.toInt )
-    case "instsize"   => opts.copy( instanceSize = parseRange( v ) )
-    case "instprover" => opts.copy( instanceProver = v )
-    case "findmth"    => opts.copy( findingMethod = v )
-    case "qtys"       => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ) ) )
+    case "instnum"  => opts.copy( instanceNumber = v.toInt )
+    case "instsize" => opts.copy( instanceSize = parseRange( v ) )
+    case "instprover" =>
+      opts.copy( instanceProver = v match {
+        case "escargot"     => Escargot
+        case "spass_pred"   => SpassPred
+        case "spass_nopred" => SpassNoPred
+      } )
+    case "findmth" => opts.copy( findingMethod = v )
+    case "qtys"    => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ) ) )
     case "gramw" => v match {
       case "scomp"  => opts.copy( grammarWeighting = r => folTermSize( r.lhs ) + folTermSize( r.rhs ) )
       case "nprods" => opts.copy( grammarWeighting = _ => 1 )
@@ -207,23 +235,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   def getInstanceProof( inst: Seq[Expr] ) = {
     info( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
-    val instProof = options.instanceProver match {
-      case "spass_pred" =>
-        val reduction = GroundingReductionET |> CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
-        val ( erasedCNF, back ) = reduction forward instanceSequent
-        val Some( erasedProof ) = SPASS getResolutionProof erasedCNF
-        val reifiedExpansion = back( erasedProof )
-        reifiedExpansion
-      case "spass_nopred" =>
-        val reduction = GroundingReductionET |> ErasureReductionET
-        val ( erasedInstanceSequent, back ) = reduction forward instanceSequent
-        val erasedExpansion = SPASS getExpansionProof erasedInstanceSequent getOrElse {
-          throw new IllegalArgumentException( s"Cannot prove:\n$erasedInstanceSequent" )
-        }
-        val reifiedExpansion = back( erasedExpansion )
-        reifiedExpansion
-      case "escargot" =>
-        Escargot.getExpansionProof( instanceSequent ).get
+    val instProof = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {
+      throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
     }
     require( smtSolver.isValid( instProof.deep ) )
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )

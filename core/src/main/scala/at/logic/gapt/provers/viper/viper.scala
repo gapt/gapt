@@ -6,6 +6,7 @@ import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.Logger
 
@@ -18,7 +19,7 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
 
   def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
-  def instanceProver( prover: String ) = copy( options.copy( instanceProver = prover ) )
+  def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
   def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
