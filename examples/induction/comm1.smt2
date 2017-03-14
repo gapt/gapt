@@ -1,6 +1,5 @@
-; viper qtys
 ; FIXME: interestingly, this problem always with fails with smaller canonical solutions
-; viper cansolsize 3,3
+; viper --treegrammar --cansolsize 3 3 --qtys ""
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 

@@ -203,7 +203,7 @@ object aip {
         |  --print-proof      print the proof if one was found.
       """.stripMargin
 
-  private def compileProverOptions( options: AipOptions ): ProverOptions = {
+  def compileProverOptions( options: AipOptions ): ProverOptions = {
     val inductionType = axioms.get( options.axioms ) match {
       case Some( it ) => it
       case _          => new UserDefinedInductionAxioms( options.axioms.split( ";" )toList )

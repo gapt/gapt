@@ -648,6 +648,13 @@ trait TacticCommands {
    */
   def skip: Tactical[Unit] = Tactical { proofState => Right( ( (), proofState ) ) }
 
+  def now: Tactical[Unit] = new Tactical[Unit] {
+    override def apply( proofState: ProofState ) =
+      if ( proofState.isFinished ) Right( () -> proofState )
+      else Left( TacticalFailure( this, Some( proofState ), "not finished" ) )
+    override def toString: String = "now"
+  }
+
   /**
    * Retrieves the current subgoal.
    */
