@@ -3,6 +3,7 @@ import at.logic.gapt.expr.{ Formula, Substitution, Var, Const => Con }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
@@ -100,12 +101,12 @@ case class StandardInductionAxioms(
             )
           )
           proofState += allL( "icf", primaryVariables: _* ) orElse skip
-          proofState += impL
+          proofState += impL( "icf" ) orElse impL( "icf_0" )
           if ( primaryVariables.isEmpty )
             proofState += trivial
           else
             primaryVariables foreach {
-              _ => proofState += andR andThen trivial orElse trivial
+              _ => proofState += andR( "icf_0" ) andThen trivial orElse trivial
             }
           proofState += allL( "icf_0", secondaryVariables: _* ) orElse skip
           proofState += trivial
