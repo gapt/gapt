@@ -15,7 +15,7 @@ import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, Sequ
 import at.logic.gapt.provers.viper.aip.cli.AipOptions
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
-import at.logic.gapt.utils.{ Logger, withTimeout }
+import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.duration.Duration
@@ -208,6 +208,7 @@ object Viper {
             println( s"$strategy failed after $time" )
             if ( opts0.verbosity >= 1 )
               ( failure: @unchecked ) match {
+                case Failure( _: TimeOutException )     => println( "(due to timeout)" )
                 case Failure( ex )                      => ex.printStackTrace()
                 case Success( Left( tacticalFailure ) ) => println( tacticalFailure )
               }
