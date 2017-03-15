@@ -11,8 +11,7 @@ import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UserDefinedInductionAxioms }
-import at.logic.gapt.provers.viper.aip.cli.AipOptions
+import at.logic.gapt.provers.viper.aip.axioms.{ AxiomFactory, IndependentInductionAxioms, SequentialInductionAxioms, UserDefinedInductionAxioms }
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
@@ -50,6 +49,8 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
 
   override def toString = options.toString
 }
+
+case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
 case class ViperOptions(
   verbosity:                Int                      = 0,
@@ -97,8 +98,12 @@ object ViperOptions {
 
   def parseAnalytic( args: List[String], opts: AipOptions ): ( List[String], AipOptions ) =
     args match {
-      case "--axioms" :: axioms :: rest => parseAnalytic( rest, opts.copy( axioms = axioms ) )
-      case "--prover" :: prover :: rest => parseAnalytic( rest, opts.copy( prover = prover ) )
+      case "--axioms" :: axioms :: rest => parseAnalytic( rest, opts.copy( axioms = axioms match {
+        case "sequential"  => SequentialInductionAxioms()
+        case "independent" => IndependentInductionAxioms()
+        case userDefined   => UserDefinedInductionAxioms( userDefined.split( ";" ).toList )
+      } ) )
+      case "--prover" :: prover :: rest => parseAnalytic( rest, opts.copy( prover = provers( prover ) ) )
       case _                            => ( args, opts )
     }
 
@@ -160,13 +165,7 @@ object Viper {
         )
       case "treegrammar" => List( Duration.Inf -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
-        val prover = ViperOptions.provers( opts.aipOptions.prover )
-        val axioms = opts.aipOptions.axioms match {
-          case "sequential"  => SequentialInductionAxioms()
-          case "independent" => IndependentInductionAxioms()
-          case userDefined   => UserDefinedInductionAxioms( userDefined.split( ";" ).toList )
-        }
-        List( Duration.Inf -> AnalyticInductionTactic( axioms, prover ).
+        List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
           aka( s"analytic ${opts.aipOptions.axioms}" ) )
     }
 
