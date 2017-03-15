@@ -62,7 +62,9 @@ case class ViperOptions(
 )
 object ViperOptions {
   val usage =
-    """Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]] problem.smt2
+    """Vienna Inductive Prover
+      |
+      |Usage: viper [common options] [--portfolio|--treegrammar|--analytic [options]] problem.smt2
       |
       |common options:
       |  -v --verbose
