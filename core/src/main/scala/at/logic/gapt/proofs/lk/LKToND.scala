@@ -58,6 +58,8 @@ object LKToND {
         val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
         ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
       } else {
+        // TODO this case seems to be only hit by NegRight, so it should be handled there.
+
         // Negated main formula not in antecedent
         // Use BottomElimRule to add main formula to succedent
         val r = subProof.endSequent( Suc( 0 ) )
