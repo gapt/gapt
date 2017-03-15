@@ -165,8 +165,14 @@ object Viper {
         )
       case "treegrammar" => List( Duration.Inf -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
+        val axiomsName =
+          opts.aipOptions.axioms match {
+            case SequentialInductionAxioms( _, _ )  => "sequential"
+            case IndependentInductionAxioms( _, _ ) => "independent"
+            case UserDefinedInductionAxioms( axs )  => axs.mkString( ";" )
+          }
         List( Duration.Inf -> AnalyticInductionTactic( opts.aipOptions.axioms, opts.aipOptions.prover ).
-          aka( s"analytic ${opts.aipOptions.axioms}" ) )
+          aka( s"analytic $axiomsName" ) )
     }
 
   def timeit[T]( f: => T ): ( T, Duration ) = {
