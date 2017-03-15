@@ -1,6 +1,7 @@
 package at.logic.gapt.testing
 
 import java.io._
+import java.nio.channels.ClosedByInterruptException
 
 import at.logic.gapt.utils.{ TimeOutException, runProcess, withTempFile, withTimeout }
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -69,8 +70,10 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
       val runtime = ( endTime - beginTime ) nanos
 
       val ( exception, isTimeout ) = result match {
-        case Left( t @ ( _: TimeOutException | _: ThreadDeath | _: OutOfMemoryError | _: InterruptedException | _: StackOverflowError | _: BootstrapMethodError ) ) => ( Some( t ), true )
-        case Left( t ) => ( Some( t ), false )
+        case Left( t @ ( _: TimeOutException | _: ThreadDeath | _: OutOfMemoryError |
+          _: InterruptedException | _: StackOverflowError | _: BootstrapMethodError |
+          _: ClosedByInterruptException ) ) => ( Some( t ), true )
+        case Left( t )  => ( Some( t ), false )
         case Right( _ ) => ( None, false )
       }
       steps += Step( name, exception, runtime, isTimeout )
