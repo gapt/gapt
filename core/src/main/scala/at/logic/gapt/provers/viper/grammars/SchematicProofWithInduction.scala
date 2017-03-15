@@ -25,6 +25,8 @@ case class ProofByRecursionScheme(
 ) extends SchematicProofWithInduction {
   private implicit def ctx = context
 
+  override def toString = recSchem.toString
+
   val theory = for {
     ( f, i ) <- endSequent.zipWithIndex
     if !containsStrongQuantifier( f, i.polarity )

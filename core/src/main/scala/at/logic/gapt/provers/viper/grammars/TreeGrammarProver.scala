@@ -55,44 +55,11 @@ case class TreeGrammarProverOptions(
   tautCheckNumber:  Int                 = 10,
   tautCheckSize:    FloatRange          = ( 2, 3 ),
   canSolSize:       FloatRange          = ( 2, 4 ),
-  forgetOne:        Boolean             = false,
-  prooftool:        Boolean             = false,
-  fixup:            Boolean             = false
+  forgetOne:        Boolean             = false
 )
 
 object TreeGrammarProverOptions {
   type FloatRange = ( Float, Float )
-
-  private def parseRange( ran: String ): FloatRange = {
-    val Seq( from, to ) = ran.split( "," ).toSeq
-    from.toFloat -> to.toFloat
-  }
-
-  private def parseAndApply( k: String, v: String, opts: TreeGrammarProverOptions ): TreeGrammarProverOptions = k match {
-    case "instnum"  => opts.copy( instanceNumber = v.toInt )
-    case "instsize" => opts.copy( instanceSize = parseRange( v ) )
-    case "instprover" =>
-      opts.copy( instanceProver = v match {
-        case "escargot"     => Escargot
-        case "spass_pred"   => SpassPred
-        case "spass_nopred" => SpassNoPred
-      } )
-    case "findmth" => opts.copy( findingMethod = v )
-    case "qtys"    => opts.copy( quantTys = Some( v.split( "," ).toSeq.filter( _.nonEmpty ) ) )
-    case "gramw" => v match {
-      case "scomp"  => opts.copy( grammarWeighting = r => folTermSize( r.lhs ) + folTermSize( r.rhs ) )
-      case "nprods" => opts.copy( grammarWeighting = _ => 1 )
-    }
-    case "tchknum"    => opts.copy( tautCheckNumber = v.toInt )
-    case "tchksize"   => opts.copy( tautCheckSize = parseRange( v ) )
-    case "cansolsize" => opts.copy( canSolSize = parseRange( v ) )
-    case "forgetone"  => opts.copy( forgetOne = v.toBoolean )
-    case "prooftool"  => opts.copy( prooftool = v.toBoolean )
-    case "fixup"      => opts.copy( fixup = v.toBoolean )
-  }
-
-  def parse( opts: Map[String, String] ) =
-    opts.foldLeft( TreeGrammarProverOptions() )( ( opts_, opt ) => parseAndApply( opt._1, opt._2, opts_ ) )
 }
 
 class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) extends Logger {
@@ -215,7 +182,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
 
-    val Some( solution ) = hSolveQBUP( qbupMatrix, xInst, smtSolver )
+    val solution = hSolveQBUP( qbupMatrix, xInst, smtSolver ).
+      getOrElse( throw new IllegalArgumentException( s"Could not solve ${qbupMatrix.toSigRelativeString}" ) )
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
@@ -224,8 +192,6 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
     val proof = spwi.lkProof( Seq( solution ), EquationalLKProver )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
-
-    if ( options.prooftool ) prooftool( proof )
 
     ctx.check( proof )
 
