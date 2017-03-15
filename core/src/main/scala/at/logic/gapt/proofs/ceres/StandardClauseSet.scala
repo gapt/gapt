@@ -5,7 +5,7 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, SetSequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.Logger
 
@@ -28,7 +28,7 @@ class CharacteristicClauseSet[Data] {
     case Dual( A( f, _ ) ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
     case EmptyPlusJunction()                 => Set()
-    case EmptyTimesJunction()                => Set( SetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
+    case EmptyTimesJunction()                => Set( HOLClause( Nil, Nil ) )
     case Plus( EmptyPlusJunction(), x )      => apply( x )
     case Plus( x, EmptyPlusJunction() )      => apply( x )
     case Plus( x, y )                        => apply( x ) ++ apply( y )
@@ -41,30 +41,21 @@ class CharacteristicClauseSet[Data] {
     case Times( x, y, _ ) =>
       val xs = apply( x )
       val ys = apply( y )
-      xs.flatMap( ( x1: SetSequent[HOLAtom] ) => ys.flatMap( ( y1: SetSequent[HOLAtom] ) => {
-        delta_compose( x1, y1 ) match {
-          case Some( m ) => Set( m ).toTraversable
-          case None      => Set().toTraversable
-        }
-      } ) )
+      xs.flatMap( x1 => ys.flatMap( y1 => Set( delta_compose( x1, y1 ) ) ) )
     case _ => throw new Exception( "Unhandled case: " + struct )
   }
 
   private def compose[T]( fs1: Sequent[T], fs2: Sequent[T] ) = fs1 ++ fs2
 
   /* Like compose, but does not duplicate common terms */
-  private def delta_compose[T]( fs1: SetSequent[T], fs2: SetSequent[T] ): Option[SetSequent[T]] = {
-    val ante1 = fs1.sequent.antecedent.distinct.toSet ++ fs2.sequent.antecedent.distinct.toSet.diff( fs1.sequent.antecedent.distinct.toSet )
-    val suc1 = fs1.sequent.succedent.distinct.toSet ++ fs2.sequent.succedent.distinct.toSet.diff( fs1.sequent.succedent.distinct.toSet )
-    val anteSucInter = ante1 & suc1
-    if ( anteSucInter.isEmpty ) Some( SetSequent[T]( Sequent[T]( ante1.toSeq, suc1.toSeq ) ) )
-    else None
-
-  }
+  private def delta_compose[T]( fs1: Sequent[T], fs2: Sequent[T] ) = Sequent[T](
+    fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
+    fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
+  )
 }
 
 object CharacteristicClauseSet {
-  def apply[Data]( struct: Struct[Data] ): Set[HOLClause] = ( new CharacteristicClauseSet[Data] )( struct ).map( y => y.sequent )
+  def apply[Data]( struct: Struct[Data] ) = ( new CharacteristicClauseSet[Data] )( struct )
 }
 
 object SimplifyStruct {

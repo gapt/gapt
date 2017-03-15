@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ LambdaExpression, Definition => EDefinition, _ }
+import at.logic.gapt.expr.{ Expr, Definition => EDefinition, _ }
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr.hol.SkolemFunctions
@@ -262,18 +262,18 @@ object Context {
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
-  case class ProofNames( names: Map[String, ( LambdaExpression, HOLSequent )] ) {
-    def +( name: String, linkpression: LambdaExpression, linkquent: HOLSequent ) = copy( names + ( ( name, ( linkpression, linkquent ) ) ) )
+  case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
+    def +( name: String, linkpression: Expr, linkquent: HOLSequent ) = copy( names + ( ( name, ( linkpression, linkquent ) ) ) )
   }
 
-  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( LambdaExpression, HOLSequent )]() ) )
+  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
 
-  case class ProofDefinitions( components: Map[String, Set[( LambdaExpression, LKProof )]] ) {
-    def +( name: String, linkpression: LambdaExpression, linkproof: LKProof ) =
+  case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
+    def +( name: String, linkpression: Expr, linkproof: LKProof ) =
       copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( linkpression, linkproof ) ) ) ) ) )
 
   }
-  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( LambdaExpression, LKProof )]]() ) )
+  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
 
   /**
    * Update of a context.
@@ -391,7 +391,7 @@ object Context {
     }
   }
 
-  case class ProofNameDeclaration( lhs: LambdaExpression, endSequent: HOLSequent ) extends Update {
+  case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {
     override def apply( ctx: Context ): State = {
       endSequent.foreach( ctx.check( _ ) )
       val Apps( Const( c, _ ), vs ) = lhs
@@ -403,7 +403,7 @@ object Context {
     }
   }
 
-  case class ProofDefinitionDeclaration( lhs: LambdaExpression, linkProof: LKProof ) extends Update {
+  case class ProofDefinitionDeclaration( lhs: Expr, linkProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
       linkProof.endSequent.foreach( ctx.check( _ ) )
       val Apps( at.logic.gapt.expr.Const( c, t ), vs ) = lhs

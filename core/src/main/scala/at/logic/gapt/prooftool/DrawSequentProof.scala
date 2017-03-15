@@ -4,7 +4,7 @@ import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }
 import java.awt.{ BasicStroke, Color, RenderingHints, Stroke }
 
-import at.logic.gapt.expr.LambdaExpression
+import at.logic.gapt.expr.Expr
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ SequentIndex, SequentProof }
@@ -238,7 +238,7 @@ abstract class AboveLinePanel[F, T <: SequentProof[F, T]]( val parent: DrawSeque
  * Class that puts the name of a proof link above the proof line.
  * @param referencedProof The name of the link.
  */
-class ProoflinkLabelPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentProof[F, T], referencedProof: LambdaExpression ) extends AboveLinePanel[F, T]( parent ) {
+class ProoflinkLabelPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentProof[F, T], referencedProof: Expr ) extends AboveLinePanel[F, T]( parent ) {
   println( s"creating Latex label with text ${LatexExporter( referencedProof )}" )
   private val proofLinkLabel = new LatexLabel( parent.main, LatexExporter( referencedProof ) )
 

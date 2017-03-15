@@ -1,5 +1,5 @@
 package at.logic.gapt.proofs.lk
-import at.logic.gapt.expr.{ Apps, LambdaExpression, syntacticMatching, _ }
+import at.logic.gapt.expr.{ Apps, Expr, syntacticMatching, _ }
 import at.logic.gapt.proofs._
 
 /**
@@ -21,7 +21,7 @@ object LKProofSchemata {
    * @param proofName The name of the linkProof
    * @param args The arguments for the free parameters of the linkProof.
    */
-  def Instantiate( proofName: String, args: Seq[LambdaExpression] )( implicit ctx: Context ): LKProof = {
+  def Instantiate( proofName: String, args: Seq[Expr] )( implicit ctx: Context ): LKProof = {
 
     val ( Some( ( Apps( _, cargs ), _ ) ), Some( invar ) ) = ( ctx.get[Context.ProofNames].names.get( proofName ), ctx.get[Context.ProofDefinitions].components.get( proofName ) )
     require( cargs.size == args.size )

@@ -1,9 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ SequentIndex }
+import at.logic.gapt.proofs.{ Sequent, SequentIndex }
 import ReductiveCutElimination._
-import at.logic.gapt.expr.hol.isAtom
 
 import scala.collection.mutable
 
@@ -19,91 +18,23 @@ object ReductiveCutElimination {
    * a left-uppermost cut. The algorithm terminates when all cuts
    * have been eliminated.
    *
-   * @param proof The proof to subject to cut-elimination or restructuring.
-   * @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   * @return A proof.
+   * @param proof The proof to subject to cut-elimination.
+   * @return The cut-free proof.
    */
-  def apply( proof: LKProof, cleanStructRules: Boolean = true ) =
-    new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
-
-  /**
-   * Reduces proof to ACNF using reductive cut elimination
-   *
-   * @param proof The proof to subject to cut-elimination or restructuring.
-   * @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   * @return A proof.
-   */
-  def reduceToACNF( proof: LKProof, cleanStructRules: Boolean = true ) =
-    new ReductiveCutElimination().eliminateToACNFByUppermost( proof, cleanStructRules )
-
-  /**
-   * Reduces proof to ACNF top using reductive cut elimination
-   *
-   * @param proof The proof to subject to cut-elimination or restructuring.
-   * @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   * @return A proof.
-   */
-  def reduceToACNFTop( proof: LKProof, cleanStructRules: Boolean = true ) =
-    new ReductiveCutElimination().eliminateToACNFTopByUppermost( proof, cleanStructRules )
+  def apply( proof: LKProof ) = new ReductiveCutElimination().eliminateAllByUppermost( proof )
 
   /**
    * This method checks whether a proof is cut-free.
+   *
    * @param proof The proof to check for cut-freeness.
    * @return True if proof does not contain the cut rule, False otherwise.
    */
   def isCutFree( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ ) => true
-    case p: CutRule          => false
-    case _                   => proof.immediateSubProofs.forall( isCutFree )
-  }
-
-  /**
-   * This method checks whether a proof is in ACNF
-   *
-   * @param proof The proof to check for in ACNF.
-   * @return True if proof is in ACNF, False otherwise.
-   */
-  def isACNF( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ ) => true
-    case CutRule( lsb, l, rsb, r ) =>
-      if ( isAtom( lsb.endSequent( l ) ) ) isACNF( lsb ) && isACNF( rsb )
-      else false
-    case _ => proof.immediateSubProofs.forall( isACNF )
-  }
-  /**
-   * This method checks whether a proof is in ACNF top
-   *
-   * @param proof The proof to check for in ACNF top.
-   * @return True if proof is in ACNF,  False otherwise.
-   */
-  def isACNFTop( proof: LKProof ): Boolean = proof match {
-    case InitialSequent( _ ) => true
-    case CutRule( lsb, l, rsb, r ) =>
-      if ( isAtom( lsb.endSequent( l ) ) )
-        if ( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) )
-          isACNFTop( lsb ) && isACNFTop( rsb )
-        else false
-      else false
-    case _ => proof.immediateSubProofs.forall( isACNFTop )
-
-  }
-  /**
-   * Checks if the last rule in proof is a leaf, a cut rule, or a weakening rule on
-   * the given formula.
-   *
-   * @param proof The proof we are checking.
-   * @param formula The formula we are checking.
-   * @return True is structure is correct or false if not.
-   */
-  def introOrCut( proof: LKProof, formula: HOLFormula ): Boolean = proof match {
-    case LogicalAxiom( _ )             => true
-    case CutRule( lsb, l, rsb, r )     => true
-    case WeakeningRightRule( _, main ) => if ( main == formula ) true else false
-    case WeakeningLeftRule( _, main )  => if ( main == formula ) true else false
-    case _                             => false
+    case InitialSequent( _ )         => true
+    case UnaryLKProof( _, subProof ) => isCutFree( subProof )
+    case p: CutRule                  => false
+    case BinaryLKProof( _, leftSubProof, rightSubProof ) =>
+      isCutFree( leftSubProof ) && isCutFree( rightSubProof )
   }
 }
 
@@ -136,27 +67,25 @@ class ReductiveCutElimination {
    * @param pred_done A predicate deciding when to terminate the algorithm.
    * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
    * when traversing the proof.
-   * @param reduce  A function defining how cut should be reduced
-   * @param cleanStructRules Tells the algorithm whether or not to clean
-   * the structural rules. The default value is on, i.e., clean the structural
-   * rules
    *
    * @return The proof as it is after pred_done returns true.
    */
-  def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean,
-             reduce: LKProof => LKProof, cleanStructRules: Boolean = true ): LKProof = {
+  def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean ): LKProof = {
+
     steps += proof
+
     // For rank-reduction of strong quantifier inferences, we need to either:
     // 1) rename eigenvariables during rank-reduction, or
     // 2) maintain the invariant that the proof is regular
     // Here, we choose 2).
     var pr = regularize( proof )
+
     do {
       def pred( local: LKProof ) = pred_cut( pr, local )
-      val p = cutElim( pr, reduce )( pred )
-      pr = if ( cleanStructRules ) cleanStructuralRules( p ) else p
+      val p = cutElim( pr )( pred )
+      pr = cleanStructuralRules( p )
       if ( recordSteps ) steps += pr
-    } while ( !pred_done( pr ) )
+    } while ( !pred_done( pr ) && !isCutFree( pr ) )
     if ( !recordSteps ) steps += pr
     pr
   }
@@ -168,74 +97,16 @@ class ReductiveCutElimination {
    * have been eliminated.
    *
    * @param proof The proof to subject to cut-elimination.
-   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-   *
    * @return The cut-free proof.
    */
-  def eliminateAllByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
-    apply( proof, { pr => isCutFree( pr ) },
+  def eliminateAllByUppermost( proof: LKProof ): LKProof =
+    apply( proof, { x => false },
       { ( _, cut ) =>
         cut match {
-          case CutRule( lsb, _, rsb, _ ) => isCutFree( lsb ) && isCutFree( rsb )
+          case CutRule( leftSubProof, _, rightSubProof, _ ) =>
+            isCutFree( leftSubProof ) && isCutFree( rightSubProof )
         }
-      },
-      { pr => pr match { case CutRule( lsb, l, rsb, r ) => reduceGrade( lsb, l, rsb, r ) } },
-      cleanStructRules )
-
-  /**
-   * This algorithm implements a generalization of the Gentzen method which
-   * reduces all cuts to atomic cuts.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-   *
-   * @return The cut-free proof.
-   */
-  def eliminateToACNFByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof =
-    apply( proof, { pr => isACNF( pr ) },
-      { ( _, cut ) =>
-        cut match {
-          case CutRule( lsb, l, rsb, _ ) =>
-            !isAtom( lsb.endSequent( l ) ) && isACNF( lsb ) && isACNF( rsb )
-        }
-      },
-      { pr =>
-        pr match {
-          case CutRule( lsb, l, rsb, r ) =>
-            if ( isAtom( lsb.endSequent( l ) ) ) reduceRankLeft( lsb, l, rsb, r )
-            else reduceGrade( lsb, l, rsb, r )
-        }
-      },
-      cleanStructRules )
-  /**
-   * This algorithm implements a generalization of the Gentzen method which
-   * reduces all cuts to atomic cuts and pushes these cuts to the leaves of the proof.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param cleanStructRules Tells algorithm to clean struct rules or not. Default is on
-   *
-   * @return The cut-free proof.
-   */
-  def eliminateToACNFTopByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof = {
-    val proof2 = PushWeakeningToLeaves( proof )
-    apply( proof2, { pr => isACNFTop( pr ) }, { ( p, cut ) =>
-      cut match {
-        case CutRule( lsb, l, rsb, r ) =>
-          if ( isAtom( lsb.endSequent( l ) ) )
-            !( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) )
-          else isACNFTop( lsb ) && isACNFTop( rsb )
-      }
-    }, { pr =>
-      pr match {
-        case CutRule( lsb, l, rsb, r ) =>
-          if ( isAtom( lsb.endSequent( l ) ) )
-            if ( introOrCut( lsb, lsb.endSequent( l ) ) ) reduceRankRight( lsb, l, rsb, r )
-            else reduceRankLeft( lsb, l, rsb, r )
-          else reduceGrade( lsb, l, rsb, r )
-      }
-    },
-      cleanStructRules )
-  }
+      } )
 
   // TODO: Implement this properly, i.e. with SequentIndices.
   /**
@@ -245,74 +116,77 @@ class ReductiveCutElimination {
    * @param pred If true on a cut, reduce this cut.
    * @return A proof with one less cut.
    */
-  private def cutElim( proof: LKProof, reduce: LKProof => LKProof )( implicit pred: LKProof => Boolean ): LKProof = proof match {
-    case InitialSequent( _ ) => proof
+  private def cutElim( proof: LKProof )( implicit pred: LKProof => Boolean ): LKProof = proof match {
+    case InitialSequent( _ ) =>
+      proof
 
     case WeakeningLeftRule( subProof, formula ) =>
-      WeakeningLeftRule( cutElim( subProof, reduce ), formula )
+      WeakeningLeftRule( cutElim( subProof ), formula )
 
     case WeakeningRightRule( subProof, formula ) =>
-      WeakeningRightRule( cutElim( subProof, reduce ), formula )
+      WeakeningRightRule( cutElim( subProof ), formula )
 
     case ContractionLeftRule( subProof, _, _ ) =>
-      ContractionLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
+      ContractionLeftRule( cutElim( subProof ), proof.mainFormulas.head )
 
     case ContractionRightRule( subProof, _, _ ) =>
-      ContractionRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
+      ContractionRightRule( cutElim( subProof ), proof.mainFormulas.head )
 
     case AndRightRule( leftSubProof, _, rightSubProof, _ ) =>
-      AndRightRule( cutElim( leftSubProof, reduce ), cutElim( rightSubProof, reduce ), proof.mainFormulas.head )
+      AndRightRule( cutElim( leftSubProof ), cutElim( rightSubProof ), proof.mainFormulas.head )
 
     case AndLeftRule( subProof, _, _ ) =>
-      AndLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
+      AndLeftRule( cutElim( subProof ), proof.mainFormulas.head )
 
     case OrLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      OrLeftRule( cutElim( leftSubProof, reduce ), cutElim( rightSubProof, reduce ), proof.mainFormulas.head )
+      OrLeftRule( cutElim( leftSubProof ), cutElim( rightSubProof ), proof.mainFormulas.head )
 
     case OrRightRule( subProof, _, _ ) =>
-      OrRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
+      OrRightRule( cutElim( subProof ), proof.mainFormulas.head )
 
     case ImpLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      ImpLeftRule( cutElim( leftSubProof, reduce ), cutElim( rightSubProof, reduce ), proof.mainFormulas.head )
+      ImpLeftRule( cutElim( leftSubProof ), cutElim( rightSubProof ), proof.mainFormulas.head )
 
     case ImpRightRule( subProof, _, _ ) =>
-      ImpRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
+      ImpRightRule( cutElim( subProof ), proof.mainFormulas.head )
 
     case NegLeftRule( subProof, _ ) =>
-      NegLeftRule( cutElim( subProof, reduce ), proof.auxFormulas.head.head )
+      NegLeftRule( cutElim( subProof ), proof.auxFormulas.head.head )
 
     case NegRightRule( subProof, _ ) =>
-      NegRightRule( cutElim( subProof, reduce ), proof.auxFormulas.head.head )
+      NegRightRule( cutElim( subProof ), proof.auxFormulas.head.head )
 
     case ForallLeftRule( subProof, _, _, term, _ ) =>
-      ForallLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head, term )
+      ForallLeftRule( cutElim( subProof ), proof.mainFormulas.head, term )
 
     case ForallRightRule( subProof, _, eigen, _ ) =>
-      ForallRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head, eigen )
+      ForallRightRule( cutElim( subProof ), proof.mainFormulas.head, eigen )
 
     case ExistsLeftRule( subProof, _, eigen, _ ) =>
-      ExistsLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head, eigen )
+      ExistsLeftRule( cutElim( subProof ), proof.mainFormulas.head, eigen )
 
     case ExistsRightRule( subProof, _, _, term, _ ) =>
-      ExistsRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head, term )
+      ExistsRightRule( cutElim( subProof ), proof.mainFormulas.head, term )
 
     case ForallSkRightRule( subProof, _, _, skTerm, skDef ) =>
-      ForallSkRightRule( cutElim( subProof, reduce ), skTerm, skDef )
+      ForallSkRightRule( cutElim( subProof ), skTerm, skDef )
 
     case ExistsSkLeftRule( subProof, _, _, skTerm, skDef ) =>
-      ExistsSkLeftRule( cutElim( subProof, reduce ), skTerm, skDef )
+      ExistsSkLeftRule( cutElim( subProof ), skTerm, skDef )
 
     case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( cutElim( subProof, reduce ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityLeftRule( cutElim( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case EqualityRightRule( subProof, _, _, _ ) =>
-      EqualityRightRule( cutElim( subProof, reduce ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityRightRule( cutElim( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      if ( pred( proof ) ) reduce( proof )
-      else CutRule( cutElim( leftSubProof, reduce ), leftSubProof.endSequent( aux1 ), cutElim( rightSubProof, reduce ), rightSubProof.endSequent( aux2 ) )
-
+      if ( pred( proof ) )
+        reduceGrade( leftSubProof, aux1, rightSubProof, aux2 )
+      else
+        CutRule( cutElim( leftSubProof ), cutElim( rightSubProof ), proof.auxFormulas.head.head )
   }
+
   /**
    * Grade reduction rules, i.e. rules that reduce the complexity of a cut formula or remove a cut altogether.
    *
@@ -379,6 +253,9 @@ class ReductiveCutElimination {
         val rSubProofNew = Substitution( eigen, term )( rSubProof )
         CutRule( lSubProof, rSubProofNew, left.auxFormulas.head.head )
 
+      case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+        CutRule( lSubProof, a1, rSubProof, a2 )
+
       // If no grade reduction rule can be applied -- in particular, if one of the cut formulas is not introduced directly above the cut
       // -- we attempt to reduce the rank, starting on the left.
       case _ => reduceRankLeft( left, aux1, right, aux2 )
@@ -399,6 +276,7 @@ class ReductiveCutElimination {
       case l @ WeakeningLeftRule( subProof, main ) =>
         val aux1Sub = l.getSequentConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
+
         WeakeningLeftRule( cutSub, main )
 
       case l @ WeakeningRightRule( subProof, main ) =>

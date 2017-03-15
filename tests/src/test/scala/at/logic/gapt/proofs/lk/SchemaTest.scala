@@ -13,7 +13,7 @@ import org.specs2.mutable.Specification
  * Created by David M. Cerna on 11.02.17.
  */
 class SchemaTest extends Specification {
-  def nat( i: Int )( implicit ctx: Context ): LambdaExpression = {
+  def nat( i: Int )( implicit ctx: Context ): Expr = {
     val suc = ctx.get[Context.Constants].constants.getOrElse( "s", Const( "0", Ti ) )
     val base = ctx.get[Context.Constants].constants.getOrElse( "0", Const( "0", Ti ) )
 
