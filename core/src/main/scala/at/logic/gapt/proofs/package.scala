@@ -6,7 +6,7 @@ package object proofs {
 
   type FOLSequent = Sequent[FOLFormula]
   val HOLSequent = Sequent
-  type HOLSequent = Sequent[HOLFormula]
+  type HOLSequent = Sequent[Formula]
 
   implicit class RichFormulaSequent( val sequent: HOLSequent ) extends AnyVal {
     def formulas = sequent.elements
@@ -15,7 +15,7 @@ package object proofs {
     def toConjunction = And( sequent.map( -_, identity ).elements )
     def toNegConjunction = And( sequent.map( identity, -_ ).elements )
     def toImplication = And( sequent.antecedent ) --> Or( sequent.succedent )
-    def toFormula: HOLFormula = sequent match {
+    def toFormula: Formula = sequent match {
       case Sequent( Seq(), Seq() ) => Bottom()
       case Sequent( ant, Seq() )   => Neg( And( ant ) )
       case Sequent( Seq(), suc )   => Or( suc )
@@ -35,7 +35,7 @@ package object proofs {
   type Clause[+A] = Sequent[A]
 
   val HOLClause = Sequent
-  type HOLClause = Clause[HOLAtom]
+  type HOLClause = Clause[Atom]
   val FOLClause = Sequent
   type FOLClause = Clause[FOLAtom]
 

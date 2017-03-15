@@ -9,6 +9,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning }
+import at.logic.gapt.provers.Session.Session
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
@@ -18,12 +19,12 @@ import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.utils.{ Logger, metrics }
 
 trait GrammarFindingMethod {
-  def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG]
+  def findGrammars( lang: Set[Expr] ): Option[VTRATG]
   def name: String
 }
 
 case class MaxSATMethod( solver: MaxSATSolver, nonTerminalLengths: Int* ) extends GrammarFindingMethod {
-  override def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG] =
+  override def findGrammars( lang: Set[Expr] ): Option[VTRATG] =
     Some( findMinimalVTRATG( lang, nonTerminalLengths, solver ) )
 
   override def name: String = s"${nonTerminalLengths.mkString( "_" )}_maxsat"
@@ -34,7 +35,7 @@ object MaxSATMethod {
 }
 
 case object ReforestMethod extends GrammarFindingMethod {
-  def findGrammars( lang: Set[LambdaExpression] ) = {
+  def findGrammars( lang: Set[Expr] ) = {
     var state = Reforest start lang
     state = Reforest full state
     Some( state.toVTRATG )
@@ -148,7 +149,7 @@ object sehsToVTRATG {
 object CutIntroduction extends Logger {
 
   class CutIntroException( msg: String ) extends Exception( msg )
-  class NonCoveringGrammarException( grammar: VTRATG, term: LambdaExpression )
+  class NonCoveringGrammarException( grammar: VTRATG, term: Expr )
     extends CutIntroException( s"Grammar does not cover the following term in the Herbrand set:\n$term\n\n$grammar" )
   /**
    * Thrown if Extended Herbrand Sequent is unprovable. In theory this does not happen.
@@ -170,7 +171,7 @@ object CutIntroduction extends Logger {
           else if ( VeriT isInstalled ) VeriT
           else new Escargot( splitting = true, equality = true, propositional = true )
 
-        override def startIncrementalSession() = smtSolver.startIncrementalSession()
+        override def runSession[A]( program: Session[A] ) = smtSolver.runSession( program )
         override def isValid( s: HOLSequent ): Boolean = smtSolver isValid s
         override def getLKProof( s: HOLSequent ) = EquationalLKProver getLKProof s
       }

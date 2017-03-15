@@ -25,7 +25,7 @@ object prooftool {
    * @param obj The object to be displayed.
    * @param name The title to be displayed.
    */
-  def apply[T: ProoftoolViewable]( obj: T, name: String = "prooftool" ): Unit = ProoftoolViewable[T].display( obj, name )
+  def apply[T: ProoftoolViewable]( obj: T, name: String = "prooftool" ): Unit = ProoftoolViewable[T].display( obj, name ).foreach( _.showFrame() )
 }
 
 /**

@@ -1,6 +1,6 @@
 package at.logic.gapt.formats.llk
 
-import at.logic.gapt.expr.{ HOLFormula, LambdaExpression }
+import at.logic.gapt.expr.{ Formula, Expr }
 import at.logic.gapt.proofs.lk.LKProof
 
 import ammonite.ops._
@@ -37,25 +37,25 @@ object exportLLK {
 
 object parseLLKExp {
   def apply() =
-    """parseLLKExp(s:String) : LambdaExpression
+    """parseLLKExp(s:String) : Expr
     |
     |Parse a higher-order expression in the LLK format.
   """.stripMargin
 
-  def apply( s: String ): LambdaExpression = { LLKFormulaParser.parse( s ) }
+  def apply( s: String ): Expr = { LLKFormulaParser.parse( s ) }
 }
 
 object parseLLKFormula {
   def apply() =
-    """parseLLKExp(s:String) : HOLFormula
+    """parseLLKExp(s:String) : Formula
     |
     |Parse a higher-order formula in the LLK format.
   """.stripMargin
 
   def apply( s: String ) = {
     val exp = LLKFormulaParser.parse( s )
-    require( exp.isInstanceOf[HOLFormula], "Expression is no HOL Formula!" )
-    exp.asInstanceOf[HOLFormula]
+    require( exp.isInstanceOf[Formula], "Expression is no HOL Formula!" )
+    exp.asInstanceOf[Formula]
   }
 }
 
@@ -80,8 +80,8 @@ package short {
 
   object hof {
     def apply( s: String )( implicit signature: LLKSignature ) = hot( s )( signature ) match {
-      case f: HOLFormula       => f
-      case e: LambdaExpression => throw new Exception( s"ef is an expression of type ${e.exptype} but not a formula!" )
+      case f: Formula => f
+      case e: Expr    => throw new Exception( s"ef is an expression of type ${e.ty} but not a formula!" )
     }
   }
 

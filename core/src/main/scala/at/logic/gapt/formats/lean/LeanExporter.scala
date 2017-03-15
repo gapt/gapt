@@ -5,7 +5,7 @@ import java.io.IOException
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, freeVariablesLK }
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess, withTempFile }
 import at.logic.gapt.proofs._
 
@@ -75,17 +75,17 @@ class LeanExporter {
   val axiomNames = mutable.Map[HOLSequent, String]()
 
   def export( ty: Ty ): String = ty match {
-    case TBase( name ) => nameMap.getLeanName( name, TY )
-    case TVar( _ )     => "_"
-    case a -> b        => s"(${export( a )} -> ${export( b )})"
+    case TBase( name, params ) => ( nameMap.getLeanName( name, TY ) :: params.map( export ) ).mkString( " " )
+    case TVar( _ )             => "_"
+    case a -> b                => s"(${export( a )} -> ${export( b )})"
   }
 
-  def exportBinder( sym: String, x: Var, sub: LambdaExpression ): String = {
+  def exportBinder( sym: String, x: Var, sub: Expr ): String = {
     val x_ = nameMap.getLeanName( x.name, VAR )
-    s"($sym $x_ : ${export( x.exptype )}, ${export( sub )})"
+    s"($sym $x_ : ${export( x.ty )}, ${export( sub )})"
   }
 
-  def export( expr: LambdaExpression ): String = expr match {
+  def export( expr: Expr ): String = expr match {
     case All( x, sub ) => exportBinder( "∀", x, sub )
     case Ex( x, sub )  => exportBinder( "∃", x, sub )
     case Eq( x, y )    => s"(${export( x )} = ${export( y )})"
@@ -97,7 +97,7 @@ class LeanExporter {
     case Var( n, _ )   => nameMap.getLeanName( n, VAR )
   }
 
-  def mkSequentFormula( sequent: HOLSequent ): HOLFormula = sequent match {
+  def mkSequentFormula( sequent: HOLSequent ): Formula = sequent match {
     case Sequent( Seq(), Seq() )    => Bottom()
     case Sequent( Seq(), Seq( y ) ) => y
     case Sequent( Seq(), y +: ys ) =>
@@ -109,7 +109,7 @@ class LeanExporter {
   def export( sequent: HOLSequent ): String = export( mkSequentFormula( sequent ) )
 
   def export( upd: Context.Update ): String = upd match {
-    case Context.InductiveType( TBase( "o" ), _ ) =>
+    case Context.InductiveType( To, _ ) =>
       nameMap.register( "o", TY, "Prop" )
       nameMap.register( TopC.name, CONST, "true" )
       nameMap.register( BottomC.name, CONST, "false" )
@@ -150,7 +150,10 @@ class LeanExporter {
   def export( p: LKProof ): String = {
     val out = new StringBuilder
 
-    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )} : ${export( p.endSequent )} :=\n"
+    val fvParams = freeVariablesLK( p ).toSeq.sortBy( _.name )
+      .map( v => s" (${nameMap.getLeanName( v.name, VAR )} : ${export( v.ty )})" ).mkString
+
+    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )}$fvParams : ${export( p.endSequent )} :=\n"
     out ++= "begin\n"
 
     val hs = p.endSequent.indicesSequent.map {

@@ -11,7 +11,7 @@ trait ResolutionProver extends OneShotProver {
   override def getLKProof( seq: HOLSequent ): Option[LKProof] = getLKProof( seq, addWeakenings = true )
 
   def getLKProof( seq: HOLSequent, addWeakenings: Boolean ): Option[LKProof] =
-    groundFreeVariables.wrap( seq ) { seq =>
+    groundFreeVariables.wrapAndPadSkolemFunctionsLK( seq ) { seq =>
       getResolutionProof( seq ) map { resolution =>
         val lk = ResolutionToLKProof( resolution )
         if ( addWeakenings ) WeakeningContractionMacroRule( lk, seq )
@@ -24,7 +24,7 @@ trait ResolutionProver extends OneShotProver {
 
   def getResolutionProof( cnf: Iterable[ResolutionProof] ): Option[ResolutionProof] = {
     val cnfMap = cnf.view.map( p => p.conclusion -> p ).toMap
-    getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) map { resolution =>
+    getResolutionProof( cnfMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) ) map { resolution =>
       mapInputClauses( resolution )( cnfMap )
     }
   }
@@ -36,7 +36,7 @@ trait ResolutionProver extends OneShotProver {
     getResolutionProof( clausifier.cnf )
   }
 
-  def getResolutionProof( formula: HOLFormula ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
+  def getResolutionProof( formula: Formula ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
   def getResolutionProof( seq: HOLSequent ): Option[ResolutionProof] = {
     val cnf = structuralCNF( groundFreeVariables( seq )._1, propositional = false )
     getResolutionProof( cnf )
@@ -45,7 +45,7 @@ trait ResolutionProver extends OneShotProver {
   def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
-    groundFreeVariables.wrap( seq ) { seq =>
+    groundFreeVariables.wrapAndPadSkolemFunctionsET( seq ) { seq =>
       getResolutionProof( seq ) map { ResolutionToExpansionProof( _ ) }
     }
 

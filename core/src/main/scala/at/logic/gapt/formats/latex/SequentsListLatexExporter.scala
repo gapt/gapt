@@ -67,7 +67,7 @@ trait SequentsListLatexExporter {
   }
 
   private def getFSVars( fs: HOLSequent ): Set[Var] = fs.formulas.toSet.flatMap( getVars )
-  private def getVars( l: LambdaExpression ): Set[Var] = l match {
+  private def getVars( l: Expr ): Set[Var] = l match {
     case v: Var      => Set( v )
     case c: Const    => Set()
     case Abs( x, t ) => getVars( t ) ++ getVars( x )
@@ -75,7 +75,7 @@ trait SequentsListLatexExporter {
   }
 
   private def getFSConsts( fs: HOLSequent ): Set[Const] = fs.formulas.toSet.flatMap( getConsts )
-  private def getConsts( l: LambdaExpression ): Set[Const] = l match {
+  private def getConsts( l: Expr ): Set[Const] = l match {
     case v: Var      => Set()
     case c: Const    => Set( c )
     case Abs( x, t ) => getConsts( t ) ++ getConsts( x )
@@ -113,7 +113,7 @@ trait SequentsListLatexExporter {
   }
 
   def typeToString( t: Ty, outermost: Boolean = true ): String = t match {
-    case TBase( name ) => name
+    case TBase( name, _ ) => name
     case t1 -> t2 =>
       typeToString_( t1 ) +
         " > " +
@@ -121,7 +121,7 @@ trait SequentsListLatexExporter {
   }
 
   def typeToString_( t: Ty ): String = t match {
-    case TBase( name ) => name
+    case TBase( name, _ ) => name
     case t1 -> t2 =>
       ( "(" ) +
         typeToString_( t1 ) +
@@ -139,19 +139,19 @@ trait SequentsListLatexExporter {
       println( "WARNING: exported const and varset are not disjunct!" )
 
     val varmap = vars.foldLeft( Map[Ty, Set[String]]() )( ( map, v ) => {
-      if ( map contains v.exptype ) {
-        val nset = map( v.exptype ) + v.name.toString()
-        map + ( ( v.exptype, nset ) )
+      if ( map contains v.ty ) {
+        val nset = map( v.ty ) + v.name.toString()
+        map + ( ( v.ty, nset ) )
       } else {
-        map + ( ( v.exptype, Set( v.name.toString() ) ) )
+        map + ( ( v.ty, Set( v.name.toString() ) ) )
       }
     } )
     val constmap = consts.foldLeft( Map[Ty, Set[String]]() )( ( map, v ) => {
-      if ( map contains v.exptype ) {
-        val nset = map( v.exptype ) + v.name.toString()
-        map + ( ( v.exptype, nset ) )
+      if ( map contains v.ty ) {
+        val nset = map( v.ty ) + v.name.toString()
+        map + ( ( v.ty, nset ) )
       } else {
-        map + ( ( v.exptype, Set( v.name.toString() ) ) )
+        map + ( ( v.ty, Set( v.name.toString() ) ) )
       }
     } )
 
@@ -159,17 +159,17 @@ trait SequentsListLatexExporter {
   }
 
   private def printOnMatch( a: Any ) = a match {
-    case le: LambdaExpression => exportTerm1( le )
-    case ta: Ty               => getOutput.write( "$" + LatexExporter( ta ) + "$" )
-    case _                    => getOutput.write( a.toString )
+    case le: Expr => exportTerm1( le )
+    case ta: Ty   => getOutput.write( "$" + LatexExporter( ta ) + "$" )
+    case _        => getOutput.write( a.toString )
   }
 
-  private def exportTerm1( f: LambdaExpression ) = {
+  private def exportTerm1( f: Expr ) = {
     getOutput.write( "$" )
     LatexExporter( f )
     getOutput.write( "$" )
   }
-  /*private def replaceTerm(f: LambdaExpression, defs: Map[Int, Tuple2[Abs,Var]]): LambdaExpression = f match {
+  /*private def replaceTerm(f: Expr, defs: Map[Int, Tuple2[Abs,Var]]): Expr = f match {
     case v: Var => v
     case App(a,b) => App(replaceTerm(a, defs), replaceTerm(b, defs))
     case a @ Abs(x,b) => defs.get(extractAbs(a.asInstanceOf[Abs])) match {

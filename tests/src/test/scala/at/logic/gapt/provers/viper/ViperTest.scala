@@ -2,14 +2,12 @@ package at.logic.gapt.provers.viper
 
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.provers.maxsat.OpenWBO
-import at.logic.gapt.provers.smtlib.Z3
-import at.logic.gapt.provers.spass.SPASS
-import at.logic.gapt.provers.verit.VeriT
+import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
 
-class ViperTest extends Specification {
+class ViperTest extends Specification with SequentMatchers {
 
   "known to be working problems" in {
     Fragments.foreach( Seq(
@@ -22,20 +20,20 @@ class ViperTest extends Specification {
       "prod_prop_31", "prod_prop_31_monomorphic"
     ) ) { prob =>
       prob in {
-        var extraOptions = Map( "fixup" -> "false" )
+        var opts0 = ViperOptions( fixup = false )
         if ( prob == "linear2par" )
           skipped( "needs careful choice of instance for canonical substitution" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )
-          extraOptions += "fixup" -> "true"
+          opts0 = opts0.copy( fixup = true )
         }
-        val ( problem, options ) = Viper.parseCode(
-          ClasspathInputFile( s"induction/$prob.smt2" ),
-          extraOptions
-        )
-        val lk = new Viper( problem.ctx, problem.toSequent, options ).solve()
-        ok
+        val file = ClasspathInputFile( s"induction/$prob.smt2" )
+        val ( Nil, options ) = ViperOptions.parse( Viper.extractOptions( file ), opts0 )
+        val problem = if ( options.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
+        val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options.treeGrammarProverOptions ).solve()
+        problem.ctx check lk
+        lk.conclusion.distinct.diff( problem.toSequent ) must_== Sequent()
       }
     }
   }

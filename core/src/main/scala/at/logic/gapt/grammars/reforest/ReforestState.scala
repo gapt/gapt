@@ -11,14 +11,14 @@ case class RigidTrigram( c: Const, i: Int, j: Int ) extends Feature
 
 case class ReforestState(
     startSymbol:    Const,
-    rules:          Map[LambdaExpression, Set[LambdaExpression]],
+    rules:          Map[Expr, Set[Expr]],
     highestNTIndex: Int
 ) {
 
   def stats: Map[Feature, Int] = {
     val s = mutable.Map[Feature, Int]().withDefaultValue( 0 )
 
-    def visit( f: Const, as: Seq[LambdaExpression] ): Unit = {
+    def visit( f: Const, as: Seq[Expr] ): Unit = {
       for ( ( a, i ) <- as.zipWithIndex; ( b, j ) <- as.zipWithIndex if i < j if a == b ) {
         s( RigidTrigram( f, i, j ) ) += 1
       }
@@ -39,13 +39,13 @@ case class ReforestState(
   }
 
   def abbreviate( digram: Digram ): ReforestState = {
-    val FunctionType( rettype, ts1 ) = digram.c1.exptype
-    val FunctionType( _, ts2 ) = digram.c2.exptype
+    val FunctionType( rettype, ts1 ) = digram.c1.ty
+    val FunctionType( _, ts2 ) = digram.c2.ty
     val argtypes = ts1.take( digram.i ) ++ ts2 ++ ts1.drop( digram.i + 1 )
     val newNT = Const( s"B$highestNTIndex", FunctionType( rettype, argtypes ) )
     val newNTArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
-    def abbr( t: LambdaExpression ): LambdaExpression = t match {
+    def abbr( t: Expr ): Expr = t match {
       case Apps( digram.c1, as1_ ) =>
         // Innermost-first rewriting is really important here!
         val as1 = as1_ map abbr
@@ -67,12 +67,12 @@ case class ReforestState(
   }
 
   def abbreviate( rigidTrigram: RigidTrigram ): ReforestState = {
-    val FunctionType( rettype, ts ) = rigidTrigram.c.exptype
+    val FunctionType( rettype, ts ) = rigidTrigram.c.ty
     val argtypes = ts.take( rigidTrigram.j ) ++ ts.drop( rigidTrigram.j + 1 )
     val newNT = Const( s"B$highestNTIndex", FunctionType( rettype, argtypes ) )
     val newNTArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
-    def abbr( t: LambdaExpression ): LambdaExpression = t match {
+    def abbr( t: Expr ): Expr = t match {
       case Apps( rigidTrigram.c, as ) if as( rigidTrigram.i ) == as( rigidTrigram.j ) =>
         newNT( as.take( rigidTrigram.j ) ++ as.drop( rigidTrigram.j + 1 ) map abbr: _* )
       case Apps( f, as ) => f( as map abbr: _* )
@@ -89,19 +89,19 @@ case class ReforestState(
     )
   }
 
-  def decompose( nonTerminal: LambdaExpression ): ReforestState = {
+  def decompose( nonTerminal: Expr ): ReforestState = {
     val rhss = rules( nonTerminal ).to[mutable.Set]
 
     require( freeVariables( nonTerminal ).isEmpty ) // TODO
 
     val maxArity = rhss.map { case Apps( c: Const, as ) => as.size }.max
     val argtypes = ( 0 until maxArity ) map { _ => Ti } // TODO
-    val newNT = Const( s"B$highestNTIndex", FunctionType( startSymbol.exptype, argtypes ) )
+    val newNT = Const( s"B$highestNTIndex", FunctionType( startSymbol.ty, argtypes ) )
     val newArgs = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", t )
 
-    val args1 = mutable.Set[Seq[LambdaExpression]]()
-    val newRHS1s = mutable.Set[LambdaExpression]()
-    val newRHS2s = mutable.Set[LambdaExpression]()
+    val args1 = mutable.Set[Seq[Expr]]()
+    val newRHS1s = mutable.Set[Expr]()
+    val newRHS2s = mutable.Set[Expr]()
 
     for ( Apps( f, Seq() ) <- rhss ) {
       rhss -= f
@@ -113,7 +113,7 @@ case class ReforestState(
       rhss -= rhs
     }
 
-    def subsume( as: Seq[LambdaExpression], bs: Seq[LambdaExpression] ): Option[Seq[Int]] =
+    def subsume( as: Seq[Expr], bs: Seq[Expr] ): Option[Seq[Int]] =
       if ( as diff bs isEmpty ) Some {
         for ( a <- as ) yield bs indexOf a
       }
@@ -139,7 +139,7 @@ case class ReforestState(
     )
   }
 
-  def decomposeUsingDeltaTable( nonTerminal: LambdaExpression ): ReforestState = {
+  def decomposeUsingDeltaTable( nonTerminal: Expr ): ReforestState = {
     require( freeVariables( nonTerminal ).isEmpty ) // TODO
 
     var dtable = deltaTableAlgorithm.createTable( rules( nonTerminal ) )
@@ -150,7 +150,7 @@ case class ReforestState(
     if ( ss isEmpty ) return this
 
     val newArgs = ss.head.domain.toSeq.sortBy { _.toString }
-    val newNT = Const( s"B$highestNTIndex", FunctionType( nonTerminal.exptype, newArgs map { _.exptype } ) )
+    val newNT = Const( s"B$highestNTIndex", FunctionType( nonTerminal.ty, newArgs map { _.ty } ) )
 
     copy(
       rules = rules + ( nonTerminal -> ss.map { s => newNT( s( newArgs ): _* ) } ) + ( newNT( newArgs: _* ) -> us ),
@@ -158,13 +158,13 @@ case class ReforestState(
     )
   }
 
-  def expand( nts: Traversable[LambdaExpression] ): ReforestState = {
+  def expand( nts: Traversable[Expr] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
 
     object reduceUnambiguousNonTerminals extends ReductionRule {
       val headMap = nts.collect { case nt @ Apps( f: Const, xs ) => f -> ( xs.map( _.asInstanceOf[Var] ), rules( nt ).head ) }.toMap
-      override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
-        headMap.toMap[LambdaExpression, ( List[Var], LambdaExpression )].get( head ).map {
+      override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
+        headMap.toMap[Expr, ( List[Var], Expr )].get( head ).map {
           case ( xs, repl ) =>
             require( xs.size == args.size )
             Substitution( xs zip args )( repl ) -> Nil
@@ -176,7 +176,7 @@ case class ReforestState(
 
   def expandUseless: ReforestState = {
     val constFreq = mutable.Map[Const, Int]().withDefaultValue( 0 )
-    def visit( t: LambdaExpression ): Unit = t match {
+    def visit( t: Expr ): Unit = t match {
       case Apps( f: Const, as ) =>
         constFreq( f ) += 1
         as foreach visit
@@ -205,8 +205,8 @@ case class ReforestState(
 }
 
 object Reforest {
-  def start( lang: Traversable[LambdaExpression] ): ReforestState = {
-    val termType = lang.headOption.map( _.exptype ).getOrElse( Ti )
+  def start( lang: Traversable[Expr] ): ReforestState = {
+    val termType = lang.headOption.map( _.ty ).getOrElse( Ti )
     val startSymbol = Const( "A", termType )
     ReforestState( startSymbol, rules = Map( startSymbol -> lang.toSet ), highestNTIndex = 0 )
   }

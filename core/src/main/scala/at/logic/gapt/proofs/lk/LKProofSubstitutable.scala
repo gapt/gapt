@@ -159,7 +159,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     }
 }
 
-class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression] ) extends LKVisitor[Unit] {
+class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Unit] {
   override protected def visitOpenAssumption( proof: OpenAssumption, otherArg: Unit ): ( LKProof, SequentConnector ) = {
     val proofNew = OpenAssumption( for ( ( l, f ) <- proof.labelledSequent ) yield l -> TermReplacement( f, repl ), proof.index )
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
@@ -212,10 +212,11 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
   override protected def visitForallSkRight( proof: ForallSkRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
+        val Apps( _, newArgs ) = TermReplacement( proof.skolemConst, repl )
         ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( proof.skolemDef, repl ) )
+          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
     }
 
   override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -234,10 +235,11 @@ class LKProofReplacer( repl: PartialFunction[LambdaExpression, LambdaExpression]
   override protected def visitExistsSkLeft( proof: ExistsSkLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
+        val Apps( _, newArgs ) = TermReplacement( proof.skolemConst, repl )
         ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( proof.skolemDef, repl ) )
+          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
     }
 
   override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =

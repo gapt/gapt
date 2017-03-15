@@ -41,18 +41,18 @@ class Clausifier(
     nameGen:           NameGenerator
 ) {
   val cnf = mutable.Set[ResolutionProof]()
-  val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
-  val skConsts = mutable.Map[LambdaExpression, Const]()
+  val defs = mutable.Map[Expr, HOLAtomConst]()
+  val skConsts = mutable.Map[Expr, Const]()
 
   def mkSkolemSym() = nameGen.freshWithIndex( "s" )
   def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 
-  def getSkolemInfo( f: HOLFormula, x: Var ): ( LambdaExpression, LambdaExpression ) = {
+  def getSkolemInfo( f: Formula, x: Var ): ( Expr, Expr ) = {
     val fvs = freeVariables( f ).toSeq
     val skolemizedFormula = Abs( fvs, f )
     val skolemConst = skConsts.getOrElseUpdate(
       skolemizedFormula,
-      Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
+      Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) )
     )
     ( skolemConst( fvs: _* ), skolemizedFormula )
   }
@@ -144,7 +144,7 @@ class Clausifier(
     val alreadyDefined = defs isDefinedAt definedFormula
     val const = defs.getOrElseUpdate(
       definedFormula,
-      HOLAtomConst( mkAbbrevSym(), fvs map { _.exptype }: _* )
+      HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* )
     )
     if ( !alreadyDefined ) {
       val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definedFormula ) )( AllR( _, Suc( 0 ), _ ) )

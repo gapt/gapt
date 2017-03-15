@@ -6,7 +6,7 @@ import org.specs2.mutable._
 
 class AtomicExpansionTest extends Specification {
 
-  def test( f: HOLFormula ) = AtomicExpansion( f ).endSequent must_== ( f +: Sequent() :+ f )
+  def test( f: Formula ) = AtomicExpansion( f ).endSequent must_== ( f +: Sequent() :+ f )
 
   "atomic expansion" should {
     val Seq( p, q ) = Seq( "p", "q" ) map { FOLAtom( _ ) }

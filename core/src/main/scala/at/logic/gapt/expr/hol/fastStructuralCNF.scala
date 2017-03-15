@@ -9,32 +9,32 @@ import scala.collection.mutable
 
 case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: Boolean = false ) {
 
-  def apply( formula: HOLFormula ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) =
+  def apply( formula: Formula ): ( Set[HOLClause], Map[HOLAtomConst, Expr] ) =
     apply( formula +: Sequent() )
 
-  def apply( endSequent: FOLSequent )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: FOLSequent )( implicit dummyImplicit: DummyImplicit ): ( Set[FOLClause], Map[HOLAtomConst, Expr] ) = {
     val ( cnf, definitions ) = apply( endSequent.asInstanceOf[HOLSequent] )
     ( cnf.map { _.asInstanceOf[FOLClause] }, definitions )
   }
 
-  def apply( endSequent: HOLSequent ): ( Set[HOLClause], Map[HOLAtomConst, LambdaExpression] ) = {
+  def apply( endSequent: HOLSequent ): ( Set[HOLClause], Map[HOLAtomConst, Expr] ) = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     val cnf = mutable.Set[HOLClause]()
-    val defs = mutable.Map[LambdaExpression, HOLAtomConst]()
-    val skConsts = mutable.Map[LambdaExpression, Const]()
+    val defs = mutable.Map[Expr, HOLAtomConst]()
+    val skConsts = mutable.Map[Expr, Const]()
 
     val nameGen = new NameGenerator( constants( endSequent ) map { _.name } )
     def mkSkolemSym() = nameGen.freshWithIndex( "s" )
     def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 
-    def getSkolemInfo( f: HOLFormula, x: Var ): ( LambdaExpression, LambdaExpression ) = {
+    def getSkolemInfo( f: Formula, x: Var ): ( Expr, Expr ) = {
       val fvs = freeVariables( f ).toSeq
       val skolemizedFormula = Abs( fvs, f )
       val skolemConst = skConsts.getOrElseUpdate(
         skolemizedFormula,
-        Const( mkSkolemSym(), FunctionType( x.exptype, fvs map { _.exptype } ) )
+        Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) )
       )
       ( skolemConst( fvs: _* ), skolemizedFormula )
     }
@@ -53,12 +53,12 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
 
     // First we expand the connectives which correspond to nested disjunctions, e.g. (:- a|b) turns into (:- a, b).
     def expand( seq: HOLSequent ): Unit = {
-      val ant = mutable.Set[HOLFormula]()
-      val suc = mutable.Set[HOLFormula]()
+      val ant = mutable.Set[Formula]()
+      val suc = mutable.Set[Formula]()
       lazy val freeVars = mutable.Set[Var]( freeVariables( seq ).toSeq: _* )
       var trivial = false
 
-      def left( f: HOLFormula ): Unit = f match {
+      def left( f: Formula ): Unit = f match {
         case Ex( x, a ) if !propositional =>
           val eigen = rename( x, freeVars )
           freeVars += eigen
@@ -79,7 +79,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
         case _ => ant += f
       }
 
-      def right( f: HOLFormula ): Unit = f match {
+      def right( f: Formula ): Unit = f match {
         case All( x, a ) if !propositional =>
           val eigen = rename( x, freeVars )
           freeVars += eigen
@@ -118,7 +118,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
         case splits if splits.size > 1 || ( splits.size == 1 && seq.size > 3 ) =>
           abbrev( seq, splits.head )
         case Seq( i ) => splitAt( seq, i )
-        case Seq()    => cnf += seq.map { _.asInstanceOf[HOLAtom] }
+        case Seq()    => cnf += seq.map { _.asInstanceOf[Atom] }
       }
     }
 
@@ -145,7 +145,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
       val alreadyDefined = defs isDefinedAt Abs( fvs, f )
       val const = defs.getOrElseUpdate(
         Abs( fvs, f ),
-        HOLAtomConst( mkAbbrevSym(), fvs map { _.exptype }: _* )
+        HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* )
       )
       val repl = const( fvs: _* )
       if ( !alreadyDefined ) {

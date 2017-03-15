@@ -5,7 +5,9 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.viper.{ AnalyticInductionProver, ProverOptions, escargot, independentInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms.IndependentInductionAxioms
+import at.logic.gapt.provers.viper.aip.provers.escargot
+import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 /* This proof is not a s.i.p because of the subinduction,
  * in the base case of the primary induction.
@@ -48,6 +50,6 @@ object prop_07 extends TacticsProof {
 
   }
 
-  val aipOptions = new ProverOptions( escargot, independentInductionAxioms )
-  val proof2 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent, "goal", List( hov"n:Nat", hov"m:Nat" ) )
+  val aipOptions = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"n:Nat", hov"m:Nat" ) ).forLabel( "goal" ) )
+  val proof2 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent ) get
 }

@@ -16,10 +16,10 @@ object Projections {
   def apply( proof: LKProof ): Set[LKProof] =
     apply( proof, proof.endSequent.map( _ => false ), x => true )
 
-  def apply( proof: LKProof, pred: HOLFormula => Boolean ): Set[LKProof] =
+  def apply( proof: LKProof, pred: Formula => Boolean ): Set[LKProof] =
     apply( proof, proof.endSequent.map( _ => false ), pred )
 
-  def apply( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
+  def apply( proof: LKProof, cut_ancs: Sequent[Boolean], pred: Formula => Boolean ): Set[LKProof] = {
     val rec = apply_( proof, cut_ancs, pred )
     /*
     val esanc = proof.endSequent.zipWithIndex.filterNot( x => cut_ancs( x._2 ) ).map( _._1 )
@@ -42,7 +42,7 @@ object Projections {
     rec
   }
 
-  def apply_( proof: LKProof, cut_ancs: Sequent[Boolean], pred: HOLFormula => Boolean ): Set[LKProof] = {
+  def apply_( proof: LKProof, cut_ancs: Sequent[Boolean], pred: Formula => Boolean ): Set[LKProof] = {
     implicit val c_ancs = cut_ancs
     //proof.occConnectors
 
@@ -148,7 +148,7 @@ object Projections {
   def handleContractionRule( proof: LKProof, p: LKProof,
                              a1: SequentIndex, a2: SequentIndex,
                              constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
-                             pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+                             pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
@@ -160,7 +160,7 @@ object Projections {
   //implication does not weaken the second argument, we need two occs
   def handleUnaryRule[T]( proof: LKProof, p: LKProof, a1: SequentIndex, a2: SequentIndex,
                           constructor: ( LKProof, SequentIndex, SequentIndex ) => LKProof,
-                          pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+                          pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
@@ -169,17 +169,17 @@ object Projections {
     } )
   }
 
-  def handleWeakeningRule( proof: LKProof, p: LKProof, m: HOLFormula,
-                           constructor: ( LKProof, HOLFormula ) => LKProof,
-                           pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+  def handleWeakeningRule( proof: LKProof, p: LKProof, m: Formula,
+                           constructor: ( LKProof, Formula ) => LKProof,
+                           pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => constructor( pm, m ) )
   }
 
-  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, m: HOLFormula,
-                     constructor: ( LKProof, SequentIndex, HOLFormula ) => LKProof,
-                     pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+  def handleDefRule( proof: LKProof, p: LKProof, a: SequentIndex, m: Formula,
+                     constructor: ( LKProof, SequentIndex, Formula ) => LKProof,
+                     pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
@@ -190,7 +190,7 @@ object Projections {
 
   def handleNegRule( proof: LKProof, p: LKProof, a: SequentIndex,
                      constructor: ( LKProof, SequentIndex ) => LKProof,
-                     pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+                     pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
@@ -199,9 +199,9 @@ object Projections {
     } )
   }
 
-  def handleWeakQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, f: HOLFormula, t: LambdaExpression, qvar: Var,
-                           constructor: ( LKProof, SequentIndex, HOLFormula, LambdaExpression, Var ) => LKProof,
-                           pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+  def handleWeakQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, f: Formula, t: Expr, qvar: Var,
+                           constructor: ( LKProof, SequentIndex, Formula, Expr, Var ) => LKProof,
+                           pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
@@ -210,9 +210,9 @@ object Projections {
     } )
   }
 
-  def handleSkQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, m: HOLFormula, t: LambdaExpression, d: LambdaExpression,
-                         constructor: ( LKProof, SequentIndex, HOLFormula, LambdaExpression, LambdaExpression ) => LKProof,
-                         pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+  def handleSkQuantRule( proof: LKProof, p: LKProof, a: SequentIndex, m: Formula, t: Expr, d: Expr,
+                         constructor: ( LKProof, SequentIndex, Formula, Expr, Expr ) => LKProof,
+                         pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else s.map( pm => {
@@ -223,7 +223,7 @@ object Projections {
 
   def handleBinaryRule( proof: LKProof, p1: LKProof, p2: LKProof, a1: SequentIndex, a2: SequentIndex,
                         constructor: ( LKProof, SequentIndex, LKProof, SequentIndex ) => LKProof,
-                        pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ) = {
+                        pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ) = {
     val new_cut_ancs1 = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
     val new_cut_ancs2 = copySetToAncestor( proof.occConnectors( 1 ), cut_ancs )
     val s1 = apply( p1, new_cut_ancs1, pred )
@@ -238,7 +238,7 @@ object Projections {
 
   def handleEqRule( proof: LKProof, p: LKProof, e: SequentIndex, a: SequentIndex,
                     con: Abs, constructor: ( LKProof, SequentIndex, SequentIndex, Abs ) => LKProof,
-                    pred: HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+                    pred: Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val new_cut_ancs = copySetToAncestor( proof.occConnectors( 0 ), cut_ancs )
     val s1 = apply( p, new_cut_ancs, pred )
     /* distinguish on the cut-ancestorship of the equation (left component) and of the auxiliary formula (right component)
@@ -300,7 +300,7 @@ object Projections {
 
   def handleStrongQuantRule( proof: LKProof, p: LKProof,
                              constructor: ( LKProof, SequentIndex, Var, Var ) => LKProof,
-                             pred:        HOLFormula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
+                             pred:        Formula => Boolean )( implicit cut_ancs: Sequent[Boolean] ): Set[LKProof] = {
     val s = apply( p, copySetToAncestor( proof.occConnectors( 0 ), cut_ancs ), pred )
     if ( cut_ancs( proof.mainIndices( 0 ) ) ) s
     else throw new Exception( "The proof is not skolemized!" )

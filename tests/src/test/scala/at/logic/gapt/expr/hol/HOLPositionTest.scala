@@ -13,8 +13,8 @@ class HOLPositionTest extends Specification {
       val f = Const( "f", Ti -> Ti )
       val c = Const( "c", Ti )
       val P = Const( "P", Ti -> To )
-      val Px = HOLAtom( P, List( x ) )
-      val Pfc = HOLAtom( P, List( App( f, c ) ) )
+      val Px = Atom( P, List( x ) )
+      val Pfc = Atom( P, List( App( f, c ) ) )
 
       getPositions( Px ) must beEqualTo( List( HOLPosition( Nil ), HOLPosition( 1 ), HOLPosition( 2 ) ) )
       replace( Px, HOLPosition( 2 ), App( f, c ) ) must beEqualTo( Pfc )

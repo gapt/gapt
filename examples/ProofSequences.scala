@@ -225,7 +225,7 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
   ctx += hoc"a: i"
 
   // f^k(a)
-  private def fk( k: Int ): LambdaExpression =
+  private def fk( k: Int ): Expr =
     Stream.iterate( le"a" )( x => le"f $x" )( k )
 
   def apply( n: Int ) =

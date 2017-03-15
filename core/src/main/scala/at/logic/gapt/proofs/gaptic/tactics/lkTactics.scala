@@ -58,7 +58,7 @@ case object BottomAxiomTactic extends Tactic[Unit] {
  */
 case object ReflexivityAxiomTactic extends Tactic[Unit] {
   object Refl {
-    def unapply( f: HOLFormula ): Option[LambdaExpression] = f match {
+    def unapply( f: Formula ): Option[Expr] = f match {
       case Eq( t, t_ ) if t == t_ => Some( t )
       case _                      => None
     }
@@ -235,7 +235,7 @@ case class ExistsLeftTactic( mode: TacticApplyMode = UniqueFormula, eigenVariabl
  * @param terms Instantiations for the quantifiers in the block.
  * @param instantiateOnce Whether the quantified formula should be forgotten after instantiating.
  */
-case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression], instantiateOnce: Boolean ) extends Tactic[String] {
+case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[Expr], instantiateOnce: Boolean ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
       ( label: String, f @ Ex( _, _ ), idx: Suc ) <- findFormula( goal, mode )
@@ -259,7 +259,7 @@ case class ExistsRightTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[
  * @param terms Instantiations for the quantifiers in the block.
  * @param instantiateOnce Whether the quantified formula should be forgotten after instantiating.
  */
-case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[LambdaExpression], instantiateOnce: Boolean ) extends Tactic[String] {
+case class ForallLeftTactic( mode: TacticApplyMode = UniqueFormula, terms: Seq[Expr], instantiateOnce: Boolean ) extends Tactic[String] {
   def apply( goal: OpenAssumption ) =
     for {
       ( label: String, f @ All( _, _ ), idx: Ant ) <- findFormula( goal, mode )
@@ -296,7 +296,7 @@ case class ForallRightTactic( mode: TacticApplyMode = UniqueFormula, eigenVariab
  * @param cutFormula The cut formula.
  * @param cutLabel The label for the cut formula.
  */
-case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends BinaryTactic[Unit] {
+case class CutTactic( cutLabel: String, cutFormula: Formula ) extends BinaryTactic[Unit] {
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.labelledSequent
 
@@ -318,7 +318,7 @@ case class CutTactic( cutLabel: String, cutFormula: HOLFormula ) extends BinaryT
  * @param targetFormula If `Some(f)`, the tactic will attempt to produce `f` through application of the equality. Otherwise
  *                      it will replace as many occurrences as possible according to `leftToRight`.
  */
-case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[HOLFormula] = None ) extends Tactic[Unit] {
+case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRight: Option[Boolean] = None, targetFormula: Option[Formula] = None ) extends Tactic[Unit] {
 
   override def apply( goal: OpenAssumption ) = {
     val goalSequent = goal.labelledSequent
@@ -334,12 +334,12 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRi
         val ( _, Eq( s, t ) ) = goalSequent( equalityIndex )
         val ( _, auxFormula ) = goalSequent( formulaIndex )
 
-        def f( l: List[HOLPosition], h: HOLFormula, r: LambdaExpression ): HOLFormula = l match {
+        def f( l: List[HOLPosition], h: Formula, r: Expr ): Formula = l match {
           case x :: xs => f( xs, h.replace( x, r ), r )
           case Nil     => h
         }
 
-        def testValidity( mainFormula: HOLFormula ): Boolean = {
+        def testValidity( mainFormula: Formula ): Boolean = {
           if ( s == t && auxFormula == mainFormula ) {
             val sAux = auxFormula.find( s )
 
@@ -423,5 +423,5 @@ case class EqualityTactic( equationLabel: String, formulaLabel: String, leftToRi
 
   def fromRightToLeft = new EqualityTactic( equationLabel, formulaLabel, leftToRight = Some( false ) )
 
-  def yielding( targetFormula: HOLFormula ) = new EqualityTactic( equationLabel, formulaLabel, targetFormula = Some( targetFormula ) )
+  def yielding( targetFormula: Formula ) = new EqualityTactic( equationLabel, formulaLabel, targetFormula = Some( targetFormula ) )
 }

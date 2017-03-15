@@ -35,13 +35,13 @@ private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
 
 object VTRATG {
   type NonTerminalVect = List[Var]
-  type Production = ( NonTerminalVect, List[LambdaExpression] )
+  type Production = ( NonTerminalVect, List[Expr] )
 }
 
 case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], productions: Set[VTRATG.Production] ) {
   import VTRATG._
 
-  def termType = startSymbol.exptype
+  def termType = startSymbol.ty
 
   def startSymbolNT: NonTerminalVect = List( startSymbol )
 
@@ -62,7 +62,7 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
       }
       require( a.size == t.size, s"vector production $p has sides of different length" )
       for ( ( ai, ti ) <- a zip t )
-        require( ai.exptype == ti.exptype, s"vector production $p has mismatching types" )
+        require( ai.ty == ti.ty, s"vector production $p has mismatching types" )
   }
   require( nonTerminals contains startSymbolNT, s"start symbol is unknown non-terminal vector $startSymbol" )
 
@@ -70,8 +70,8 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
 
   def weightedSize = productions.toSeq.map( _._1.size ).sum
 
-  def language: Set[LambdaExpression] = {
-    var lang = Set[LambdaExpression]( startSymbol )
+  def language: Set[Expr] = {
+    var lang = Set[Expr]( startSymbol )
     nonTerminals.foreach { a =>
       val P_a = productions( a )
       if ( P_a.nonEmpty )

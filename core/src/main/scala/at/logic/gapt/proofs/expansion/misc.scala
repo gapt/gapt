@@ -4,15 +4,15 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 
 object formulaToExpansionTree {
-  def apply( formula: HOLFormula, pol: Polarity ): ExpansionTree =
+  def apply( formula: Formula, pol: Polarity ): ExpansionTree =
     conv( formula, formula, Set(), pol )
 
-  def apply( formula: HOLFormula, substitutions: Traversable[_ <: Substitution], pol: Polarity ): ExpansionTree =
+  def apply( formula: Formula, substitutions: Traversable[_ <: Substitution], pol: Polarity ): ExpansionTree =
     conv( formula, formula, substitutions.toSet, pol )
 
-  private def conv( formula: HOLFormula, origFormula: HOLFormula, substitutions: Set[Substitution], pol: Polarity ): ExpansionTree =
+  private def conv( formula: Formula, origFormula: Formula, substitutions: Set[Substitution], pol: Polarity ): ExpansionTree =
     ( formula, origFormula ) match {
-      case ( a: HOLAtom, _ )              => ETAtom( a, pol )
+      case ( a: Atom, _ )                 => ETAtom( a, pol )
       case ( Top(), _ )                   => ETTop( pol )
       case ( Bottom(), _ )                => ETBottom( pol )
       case ( Neg( f ), Neg( of ) )        => ETNeg( conv( f, of, substitutions, !pol ) )

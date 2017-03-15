@@ -30,11 +30,11 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def annotations = rule { ( Comma ~ general_term ).* }
 
   def formula = rule { logic_formula }
-  def logic_formula: Rule1[HOLFormula] = rule { unitary_formula ~ ( binary_nonassoc_part | or_formula_part | and_formula_part ).? }
-  def binary_nonassoc_part = rule { binary_connective ~ unitary_formula ~> ( ( a: HOLFormula, c: ( LambdaExpression, LambdaExpression ) => HOLFormula, b: HOLFormula ) => c( a, b ) ) }
-  def or_formula_part = rule { ( "|" ~ Ws ~ unitary_formula ).+ ~> ( ( a: HOLFormula, as: Seq[HOLFormula] ) => Or.leftAssociative( a +: as: _* ) ) }
-  def and_formula_part = rule { ( "&" ~ Ws ~ unitary_formula ).+ ~> ( ( a: HOLFormula, as: Seq[HOLFormula] ) => And.leftAssociative( a +: as: _* ) ) }
-  def unitary_formula: Rule1[HOLFormula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ logic_formula ~ ")" ~ Ws }
+  def logic_formula: Rule1[Formula] = rule { unitary_formula ~ ( binary_nonassoc_part | or_formula_part | and_formula_part ).? }
+  def binary_nonassoc_part = rule { binary_connective ~ unitary_formula ~> ( ( a: Formula, c: ( Expr, Expr ) => Formula, b: Formula ) => c( a, b ) ) }
+  def or_formula_part = rule { ( "|" ~ Ws ~ unitary_formula ).+ ~> ( ( a: Formula, as: Seq[Formula] ) => Or.leftAssociative( a +: as: _* ) ) }
+  def and_formula_part = rule { ( "&" ~ Ws ~ unitary_formula ).+ ~> ( ( a: Formula, as: Seq[Formula] ) => And.leftAssociative( a +: as: _* ) ) }
+  def unitary_formula: Rule1[Formula] = rule { quantified_formula | unary_formula | atomic_formula | "(" ~ Ws ~ logic_formula ~ ")" ~ Ws }
   def quantified_formula = rule { fol_quantifier ~ "[" ~ Ws ~ variable_list ~ "]" ~ Ws ~ ":" ~ Ws ~ unitary_formula ~> ( ( q: QuantifierHelper, vs, m ) => q.Block( vs, m ) ) }
   def variable_list = rule { ( variable ~ ( ":" ~ Ws ~ name ).? ~> ( ( a, b ) => a ) ).+.separatedBy( Comma ) }
   def unary_formula = rule { "~" ~ Ws ~ unitary_formula ~> ( Neg( _ ) ) }
@@ -42,19 +42,19 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def atomic_formula = rule { defined_prop | infix_formula | plain_atomic_formula | ( distinct_object ~> ( FOLAtom( _ ) ) ) }
   def plain_atomic_formula = rule { atomic_word ~ ( "(" ~ Ws ~ arguments ~ ")" ~ Ws ).? ~> ( ( p, as ) => TptpAtom( p, as.getOrElse( Seq() ) ) ) }
   def defined_prop = rule { "$" ~ Ws ~ ( "true" ~ push( Top() ) | "false" ~ push( Bottom() ) ) ~ Ws }
-  def infix_formula = rule { term ~ ( "=" ~ Ws ~ term ~> ( Eq( _: LambdaExpression, _ ) ) | "!=" ~ Ws ~ term ~> ( ( _: LambdaExpression ) !== _ ) ) }
+  def infix_formula = rule { term ~ ( "=" ~ Ws ~ term ~> ( Eq( _: Expr, _ ) ) | "!=" ~ Ws ~ term ~> ( ( _: Expr ) !== _ ) ) }
 
   def fol_quantifier = rule { ( "!" ~ push( at.logic.gapt.expr.All ) | "?" ~ push( Ex ) ) ~ Ws }
   def binary_connective = rule {
-    ( ( "<=>" ~ push( ( a: LambdaExpression, b: LambdaExpression ) => a <-> b ) ) |
-      ( "=>" ~ push( Imp( _: LambdaExpression, _: LambdaExpression ) ) ) |
-      ( "<=" ~ push( ( a: LambdaExpression, b: LambdaExpression ) => Imp( b, a ) ) ) |
-      ( "<~>" ~ push( ( a: LambdaExpression, b: LambdaExpression ) => -( a <-> b ) ) ) |
-      ( "~|" ~ push( ( a: LambdaExpression, b: LambdaExpression ) => -( a | b ) ) ) |
-      ( "~&" ~ push( ( a: LambdaExpression, b: LambdaExpression ) => -( a & b ) ) ) ) ~ Ws
+    ( ( "<=>" ~ push( ( a: Expr, b: Expr ) => a <-> b ) ) |
+      ( "=>" ~ push( Imp( _: Expr, _: Expr ) ) ) |
+      ( "<=" ~ push( ( a: Expr, b: Expr ) => Imp( b, a ) ) ) |
+      ( "<~>" ~ push( ( a: Expr, b: Expr ) => -( a <-> b ) ) ) |
+      ( "~|" ~ push( ( a: Expr, b: Expr ) => -( a | b ) ) ) |
+      ( "~&" ~ push( ( a: Expr, b: Expr ) => -( a & b ) ) ) ) ~ Ws
   }
 
-  def term: Rule1[LambdaExpression] = rule { variable | ( distinct_object ~> ( FOLConst( _ ) ) ) | ( number ~> ( FOLConst( _ ) ) ) | function_term }
+  def term: Rule1[Expr] = rule { variable | ( distinct_object ~> ( FOLConst( _ ) ) ) | ( number ~> ( FOLConst( _ ) ) ) | function_term }
   def function_term = rule { name ~ ( "(" ~ Ws ~ term.+.separatedBy( Comma ) ~ ")" ~ Ws ).? ~> ( ( hd, as ) => TptpTerm( hd, as.getOrElse( Seq() ) ) ) }
   def variable = rule { capture( upper_word ) ~ Ws ~> ( FOLVar( _: String ) ) }
   def arguments = rule { term.+.separatedBy( Comma ) }
@@ -62,19 +62,19 @@ class TptpParser( val input: ParserInput ) extends Parser {
   def include = rule { "include(" ~ Ws ~ file_name ~ formula_selection ~ ")." ~ Ws ~> ( IncludeDirective( _, _ ) ) }
   def formula_selection = rule { ( "," ~ Ws ~ "[" ~ name.*.separatedBy( Comma ) ~ "]" ~ Ws ).? }
 
-  def general_list: Rule1[Seq[LambdaExpression]] = rule { "[" ~ Ws ~ general_term.*.separatedBy( Comma ) ~ "]" ~ Ws }
+  def general_list: Rule1[Seq[Expr]] = rule { "[" ~ Ws ~ general_term.*.separatedBy( Comma ) ~ "]" ~ Ws }
   def general_terms = rule { general_term.+.separatedBy( Comma ) }
-  def general_term: Rule1[LambdaExpression] = rule {
+  def general_term: Rule1[Expr] = rule {
     general_data ~ ( ":" ~ Ws ~ general_term ).? ~> ( ( d, to ) => to.fold( d )( t => GeneralColon( d, t ) ) ) |
-      general_list ~> ( GeneralList( _: Seq[LambdaExpression] ) )
+      general_list ~> ( GeneralList( _: Seq[Expr] ) )
   }
-  def general_data: Rule1[LambdaExpression] = rule {
+  def general_data: Rule1[Expr] = rule {
     formula_data | general_function | atomic_word ~> ( FOLConst( _ ) ) |
       variable | ( number ~> ( FOLConst( _ ) ) ) | ( distinct_object ~> ( FOLConst( _ ) ) )
   }
-  def formula_data: Rule1[LambdaExpression] = rule {
+  def formula_data: Rule1[Expr] = rule {
     ( ( capture( "$" ~ ( "thf" | "tff" | "fof" | "cnf" ) ) ~ "(" ~ Ws ~ formula ~ ")" ~ Ws ) |
-      ( capture( "$fot" ) ~ "(" ~ Ws ~ term ~ ")" ~ Ws ) ) ~> ( TptpTerm( _: String, _: LambdaExpression ) )
+      ( capture( "$fot" ) ~ "(" ~ Ws ~ term ~ ")" ~ Ws ) ) ~> ( TptpTerm( _: String, _: Expr ) )
   }
   def general_function = rule { atomic_word ~ "(" ~ Ws ~ general_terms ~ ")" ~ Ws ~> ( TptpTerm( _, _ ) ) }
 

@@ -86,12 +86,12 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   def productionIsIncluded( p: SipGrammar.Production ) = FOLAtom( s"sp,$p" )
 
   def coversLanguageFamily( langs: Seq[stableSipGrammar.InstanceLanguage] ) = {
-    val cs = Seq.newBuilder[HOLFormula]
+    val cs = Seq.newBuilder[Formula]
     langs foreach {
       case ( n, lang ) =>
         val tratMinForm = new VectGrammarMinimizationFormula( g.instanceGrammar( n ) ) {
           override def productionIsIncluded( p: VTRATG.Production ) = FOLAtom( s"p,$n,$p" )
-          override def valueOfNonTerminal( t: LambdaExpression, a: Var, rest: LambdaExpression ) = FOLAtom( s"v,$n,$t,$a=$rest" )
+          override def valueOfNonTerminal( t: Expr, a: Var, rest: Expr ) = FOLAtom( s"v,$n,$t,$a=$rest" )
         }
         val instanceCovForm = tratMinForm.coversLanguage( lang )
         cs += instanceCovForm

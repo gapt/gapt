@@ -93,7 +93,7 @@ class InductionProverTest extends Specification {
 
     "find the induction formula" in {
       val sip = new SimpleInductionProofU( ExpSeq0, ExpSeq1, ExpSeq2, t, u )
-      FindFormulaH( sip, 0, prover = Escargot ) must_== Some( g( gamma, nu ) === m( gamma, f( nu ) ) )
+      FindFormulaH( sip, 0, prover = Escargot ) must_== Some( m( gamma, f( nu ) ) === g( gamma, nu ) )
     }
   }
 

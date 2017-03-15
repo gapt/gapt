@@ -111,8 +111,8 @@ object PopupMenu {
     popupMenu.show( ced.titleLabel, x, y )
   }
 
-  def firstQuantifiers( f: HOLFormula ): List[HOLFormula] = f match {
-    case HOLAtom( _, _ )          => Nil
+  def firstQuantifiers( f: Formula ): List[Formula] = f match {
+    case Atom( _, _ )             => Nil
     case And( l, r )              => firstQuantifiers( l ) ++ firstQuantifiers( r )
     case Imp( l, r )              => firstQuantifiers( l ) ++ firstQuantifiers( r )
     case Or( l, r )               => firstQuantifiers( l ) ++ firstQuantifiers( r )

@@ -6,27 +6,27 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 object deltaTableAlgorithm {
-  type Row = Set[( LambdaExpression, Set[LambdaExpression] )]
+  type Row = Set[( Expr, Set[Expr] )]
 
   def createTable(
-    termSet:        Set[LambdaExpression],
-    maxArity:       Option[Int]           = None,
-    singleVariable: Boolean               = false
+    termSet:        Set[Expr],
+    maxArity:       Option[Int] = None,
+    singleVariable: Boolean     = false
   ): Map[Set[Substitution], Row] = {
     // invariant:  deltatable(S) contains (u,T)  ==>  u S = T  &&  |S| = |T|
-    val deltatable = mutable.Map[Set[Substitution], List[( LambdaExpression, Set[LambdaExpression] )]]().
+    val deltatable = mutable.Map[Set[Substitution], List[( Expr, Set[Expr] )]]().
       withDefaultValue( Nil )
 
     def populate(
-      remainingTerms: List[LambdaExpression],
-      currentLGG:     LambdaExpression,
-      currentCover:   Set[LambdaExpression],
+      remainingTerms: List[Expr],
+      currentLGG:     Expr,
+      currentCover:   Set[Expr],
       currentSubst:   Set[Substitution]
     ): Unit = if ( remainingTerms.nonEmpty ) {
       val ( newTerm :: rest ) = remainingTerms
 
       val ( newLGG, substCurLGG, substNewTerm ) =
-        if ( currentLGG == null ) ( newTerm, Map[Var, LambdaExpression](), Map[Var, LambdaExpression]() )
+        if ( currentLGG == null ) ( newTerm, Map[Var, Expr](), Map[Var, Expr]() )
         else if ( singleVariable ) leastGeneralGeneralization1.fast( currentLGG, newTerm )
         else leastGeneralGeneralization.fast( currentLGG, newTerm )
 
@@ -88,17 +88,17 @@ object deltaTableAlgorithm {
     }
 
   def findGrammarFromDeltaTable(
-    termSet:                Set[LambdaExpression],
+    termSet:                Set[Expr],
     deltatable:             Map[Set[Substitution], Row],
     subsumeMinimalGrammars: Boolean
-  ): ( Set[LambdaExpression], Set[Substitution] ) = {
+  ): ( Set[Expr], Set[Substitution] ) = {
     var minSize = termSet.size + 1
-    val minGrammars = mutable.Buffer[( Set[LambdaExpression], Set[Substitution] )]()
+    val minGrammars = mutable.Buffer[( Set[Expr], Set[Substitution] )]()
 
     def minimizeRow(
-      termSet:         Set[LambdaExpression],
+      termSet:         Set[Expr],
       row:             Row,
-      alreadyIncluded: Set[LambdaExpression],
+      alreadyIncluded: Set[Expr],
       s:               Set[Substitution]
     ): Unit =
       if ( termSet isEmpty ) {
@@ -148,9 +148,9 @@ object deltaTableAlgorithm {
     else minGrammars minBy { g => g._1.size + g._2.size }
   }
 
-  def grammarToVTRATG( us: Set[LambdaExpression], s: Set[Substitution] ): VTRATG = {
+  def grammarToVTRATG( us: Set[Expr], s: Set[Substitution] ): VTRATG = {
     val alpha = freeVariables( us ).toList.sortBy { _.toString }
-    val tau = rename( Var( "x_0", us.headOption.map( _.exptype ).getOrElse( Ti ) ), alpha )
+    val tau = rename( Var( "x_0", us.headOption.map( _.ty ).getOrElse( Ti ) ), alpha )
     VTRATG( tau, Seq( List( tau ), alpha ),
       ( for ( subst <- s ) yield alpha -> alpha.map { subst( _ ) } )
         union ( for ( u <- us ) yield List( tau ) -> List( u ) ) )
@@ -165,7 +165,7 @@ case class DeltaTableMethod(
 ) extends GrammarFindingMethod {
   import deltaTableAlgorithm._
 
-  override def findGrammars( lang: Set[LambdaExpression] ): Option[VTRATG] = {
+  override def findGrammars( lang: Set[Expr] ): Option[VTRATG] = {
     var dtable = createTable( lang, keyLimit, singleQuantifier )
 
     if ( subsumedRowMerging ) dtable = mergeSubsumedRows( dtable )

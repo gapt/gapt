@@ -68,12 +68,12 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       if ( a isSubMultisetOf b ) Some( Substitution() )
       else None
     } else clauseSubsumption( a, b, multisetSubsumption = true )
-  def unify( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
+  def unify( a: Expr, b: Expr ): Option[Substitution] =
     if ( propositional ) {
       if ( a == b ) Some( Substitution() )
       else None
     } else syntacticMGU( a, b )
-  def matching( a: LambdaExpression, b: LambdaExpression ): Option[Substitution] =
+  def matching( a: Expr, b: Expr ): Option[Substitution] =
     if ( propositional ) {
       if ( a == b ) Some( Substitution() )
       else None
@@ -81,13 +81,13 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   def Subst( proof: ResolutionProof, subst: Substitution ) = at.logic.gapt.proofs.resolution.Subst.ifNecessary( proof, subst )
 
-  def getFOPositions( exp: LambdaExpression ): Map[LambdaExpression, Seq[LambdaPosition]] = {
-    val poss = mutable.Map[LambdaExpression, Seq[LambdaPosition]]().withDefaultValue( Seq() )
-    def walk( exp: LambdaExpression, pos: List[Int] ): Unit = {
+  def getFOPositions( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
+    val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
+    def walk( exp: Expr, pos: List[Int] ): Unit = {
       poss( exp ) :+= LambdaPosition( pos.reverse )
       walkApp( exp, pos )
     }
-    def walkApp( exp: LambdaExpression, pos: List[Int] ): Unit = exp match {
+    def walkApp( exp: Expr, pos: List[Int] ): Unit = exp match {
       case App( f, arg ) =>
         walk( arg, 2 :: pos )
         walkApp( f, 1 :: pos )
@@ -104,7 +104,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     nameGen = state.nameGen
   ) with InferenceRule {
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] ) =
-      if ( given.clause.forall( _.isInstanceOf[HOLAtom] ) ) ( Set(), Set() )
+      if ( given.clause.forall( _.isInstanceOf[Atom] ) ) ( Set(), Set() )
       else {
         expand( given.proof )
 
@@ -172,7 +172,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object ReflModEqDeletion extends RedundancyRule {
 
-    def canonize( expr: LambdaExpression, assertion: HOLClause, existing: Set[Cls] ): LambdaExpression = {
+    def canonize( expr: Expr, assertion: HOLClause, existing: Set[Cls] ): Expr = {
       val eqs = for {
         c <- existing
         if c.assertion isSubMultisetOf assertion
@@ -248,7 +248,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
       var p = given.proof
       var didRewrite = true
-      var reason = Clause[HOLAtom]()
+      var reason = Clause[Atom]()
       while ( didRewrite ) {
         didRewrite = false
         for {
@@ -260,7 +260,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramod( Subst( c1.proof, subst ), Suc( 0 ), leftToRight,
-            p, i, replacementContext( t_.exptype, p.conclusion( i ), pos ) )
+            p, i, replacementContext( t_.ty, p.conclusion( i ), pos ) )
           reason = ( reason ++ c1.assertion ).distinct
           didRewrite = true
         }
@@ -309,7 +309,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
   }
 
   object Superposition extends BinaryInferenceRule {
-    def isReductive( atom: HOLFormula, i: SequentIndex, pos: LambdaPosition ): Boolean =
+    def isReductive( atom: Formula, i: SequentIndex, pos: LambdaPosition ): Boolean =
       ( atom, i, pos.toList ) match {
         case ( Eq( t, s ), _: Suc, 2 :: _ )      => !termOrdering.lt( s, t )
         case ( Eq( t, s ), _: Suc, 1 :: 2 :: _ ) => !termOrdering.lt( t, s )
@@ -334,7 +334,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
         p1__ = Subst( c1.proof, mgu )
         p2__ = Subst( p2_, mgu )
         ( equation, atom ) = ( p1__.conclusion( i1 ), p2__.conclusion( i2 ) )
-        context = replacementContext( s.exptype, atom, pos2_ )
+        context = replacementContext( s.ty, atom, pos2_ )
       } yield DerivedCls( c1, c2, Paramod( p1__, i1, leftToRight, p2__, i2, context ) )
 
       inferred.toSet
@@ -367,7 +367,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object AvatarSplitting extends InferenceRule {
 
-    var componentCache = mutable.Map[HOLFormula, FOLAtom]()
+    var componentCache = mutable.Map[Formula, FOLAtom]()
     def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
       val definition @ All.Block( vs, _ ) = universalClosure( comp.toDisjunction )
       AvatarNonGroundComp( componentCache.getOrElseUpdate(
@@ -376,14 +376,14 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
       ), definition, vs )
     }
 
-    val componentAlreadyDefined = mutable.Set[HOLAtom]()
+    val componentAlreadyDefined = mutable.Set[Atom]()
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] ) = {
       val comps = AvatarSplit.getComponents( given.clause )
 
       if ( comps.size >= 2 ) {
         val propComps = comps.filter( freeVariables( _ ).isEmpty ).map {
-          case Sequent( Seq( a: HOLAtom ), Seq() ) => AvatarGroundComp( a, Polarity.InAntecedent )
-          case Sequent( Seq(), Seq( a: HOLAtom ) ) => AvatarGroundComp( a, Polarity.InSuccedent )
+          case Sequent( Seq( a: Atom ), Seq() ) => AvatarGroundComp( a, Polarity.InAntecedent )
+          case Sequent( Seq(), Seq( a: Atom ) ) => AvatarGroundComp( a, Polarity.InSuccedent )
         }
         val nonPropComps =
           for ( c <- comps if freeVariables( c ).nonEmpty )

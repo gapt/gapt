@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.sat
 
 import at.logic.gapt.expr.hol.fastStructuralCNF
-import at.logic.gapt.expr.{ HOLAtomConst, HOLFormula }
+import at.logic.gapt.expr.{ HOLAtomConst, Formula }
 import at.logic.gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
 import at.logic.gapt.proofs.drup.{ DrupProof, DrupToResolutionProof }
@@ -21,7 +21,7 @@ trait SATSolver extends OneShotProver {
     }
   }
 
-  def solve( formula: HOLFormula ): Option[Interpretation] = {
+  def solve( formula: Formula ): Option[Interpretation] = {
     val ( cnf, definitions ) = fastStructuralCNF()( formula )
     solve( cnf ) map {
       case i: MapBasedInterpretation =>
@@ -47,7 +47,7 @@ trait DrupSolver extends SATSolver with ResolutionProver {
 
   def getDrupProof( cnf: DIMACS.CNF ): Option[DIMACS.DRUP]
 
-  def getDrupProof( formula: HOLFormula ): Option[DrupProof] = getDrupProof( Sequent() :+ formula )
+  def getDrupProof( formula: Formula ): Option[DrupProof] = getDrupProof( Sequent() :+ formula )
   def getDrupProof( sequent: HOLSequent ): Option[DrupProof] =
     getDrupProof( fastStructuralCNF()( sequent )._1 )
   def getDrupProof( cnf: Traversable[HOLClause] ): Option[DrupProof] = {

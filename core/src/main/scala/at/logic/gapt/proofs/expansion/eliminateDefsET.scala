@@ -4,7 +4,7 @@ import at.logic.gapt.expr.hol.HOLPosition
 
 object eliminateDefsET {
   object DefinitionFormula {
-    def unapply( f: HOLFormula ): Option[( List[Var], HOLAtomConst, HOLFormula )] = f match {
+    def unapply( f: Formula ): Option[( List[Var], HOLAtomConst, Formula )] = f match {
       case All.Block( vs, And( Imp( Apps( d1: HOLAtomConst, vs1 ), r1 ),
         Imp( r2, Apps( d2, vs2 ) ) ) ) if d1 == d2 && r1 == r2 && vs == vs1 && vs == vs2 =>
         Some( ( vs, d1, r2 ) )
@@ -58,10 +58,10 @@ object eliminateDefsET {
       insts = insts map { case ( as, _ ) => as -> Substitution( vs zip as )( newPosRepl -> newNegRepl ) }
     }
 
-    def replm: PartialFunction[LambdaExpression, LambdaExpression] = {
+    def replm: PartialFunction[Expr, Expr] = {
       case Apps( `definitionConst`, as ) => Substitution( vs zip as )( definedFormula )
     }
-    def replf( f: HOLFormula ): HOLFormula = TermReplacement( f, replm )
+    def replf( f: Formula ): Formula = TermReplacement( f, replm )
     def repl( et: ExpansionTree ): ExpansionTree = et match {
       case ETMerge( a, b )                      => ETMerge( repl( a ), repl( b ) )
       case ETWeakening( sh, pol )               => ETWeakening( replf( sh ), pol )

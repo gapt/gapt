@@ -23,8 +23,8 @@ import scala.collection.immutable.HashMap
 object fixDerivation extends Logger {
   object matchingModEq extends syntacticMatching {
     override def apply(
-      pairs:             List[( LambdaExpression, LambdaExpression )],
-      alreadyFixedSubst: Map[Var, LambdaExpression]
+      pairs:             List[( Expr, Expr )],
+      alreadyFixedSubst: PreSubstitution
     ): Traversable[Substitution] =
       pairs match {
         case ( ( Eq( t1, s1 ), Eq( t2, s2 ) ) :: rest ) =>
@@ -66,13 +66,13 @@ object fixDerivation extends Logger {
 
   def apply( p: ResolutionProof, cs: Iterable[ResolutionProof] ): ResolutionProof = {
     val csMap = cs.view.map( c => c.conclusion -> c ).toMap
-    mapInputClauses( apply( p, csMap.keySet.map( _.map( _.asInstanceOf[HOLAtom] ) ) ) )( csMap )
+    mapInputClauses( apply( p, csMap.keySet.map( _.map( _.asInstanceOf[Atom] ) ) ) )( csMap )
   }
   def apply( p: ResolutionProof, cs: Traversable[HOLClause] ): ResolutionProof =
     apply( p, cs.toSeq )
   def apply( p: ResolutionProof, cs: Seq[HOLClause] ): ResolutionProof =
     mapInputClauses( p ) { seq =>
-      val cls = seq.map( _.asInstanceOf[HOLAtom] )
+      val cls = seq.map( _.asInstanceOf[Atom] )
       tryDeriveTrivial( cls, cs ).
         orElse( findFirstSome( cs )( tryDeriveBySubsumptionModEq( cls, _ ) ) ).
         orElse( tryDeriveViaResolution( cls, cs ) ).
@@ -83,7 +83,7 @@ object fixDerivation extends Logger {
 
   def apply( p: ResolutionProof, endSequent: HOLSequent ): ResolutionProof = {
     val cnf = structuralCNF( endSequent, structural = false )
-    mapInputClauses( fixDerivation( p, cnf.map( _.conclusion.map( _.asInstanceOf[HOLAtom] ) ) ) )( cls => cnf.find( _.conclusion == cls ).get )
+    mapInputClauses( fixDerivation( p, cnf.map( _.conclusion.map( _.asInstanceOf[Atom] ) ) ) )( cls => cnf.find( _.conclusion == cls ).get )
   }
 }
 
@@ -125,7 +125,7 @@ object findDerivationViaResolution {
     val groundingSubst = Substitution( grounding )
     val negatedClausesA = a.
       map( groundingSubst( _ ) ).
-      map( _.asInstanceOf[HOLAtom] ).
+      map( _.asInstanceOf[Atom] ).
       map( Clause() :+ _, _ +: Clause() ).
       elements
 
@@ -134,7 +134,7 @@ object findDerivationViaResolution {
 
       val toUnusedVars = rename( grounding.map( _._1 ), containedNames( tautologified ) )
       val nonOverbindingUnground = grounding.map { case ( v, c ) => c -> toUnusedVars( v ) }
-      val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[LambdaExpression, LambdaExpression] )
+      val derivation = TermReplacement( tautologified, nonOverbindingUnground.toMap[Expr, Expr] )
       val derivationInOrigVars = Subst( derivation, Substitution( toUnusedVars.map( _.swap ) ) )
 
       simplifyResolutionProof( derivationInOrigVars )

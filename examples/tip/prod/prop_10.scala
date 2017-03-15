@@ -5,7 +5,7 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.{ Ant, Sequent }
-import at.logic.gapt.provers.viper.AnalyticInductionProver
+import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 
 object prop_10 extends TacticsProof {
 

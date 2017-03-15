@@ -14,14 +14,14 @@ class minimalExpansionSequentTest extends Specification {
 
   val et1: ExpansionTree =
     ETWeakQuantifier(
-      All( x, HOLAtom( P, x :: Nil ) ),
-      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InAntecedent ), d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InAntecedent ) )
+      All( x, Atom( P, x :: Nil ) ),
+      Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InAntecedent ), d -> ETAtom( Atom( P, d :: Nil ), Polarity.InAntecedent ) )
     )
 
   val et2: ExpansionTree =
     ETWeakQuantifier(
-      Ex( x, HOLAtom( P, x :: Nil ) ),
-      Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InSuccedent ), d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InSuccedent ) )
+      Ex( x, Atom( P, x :: Nil ) ),
+      Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InSuccedent ), d -> ETAtom( Atom( P, d :: Nil ), Polarity.InSuccedent ) )
     )
 
   val eSeq = ExpansionSequent( List( et1 ), List( et2 ) )
@@ -29,22 +29,22 @@ class minimalExpansionSequentTest extends Specification {
   val minESeq = List(
     ExpansionSequent( List(
       ETWeakQuantifier(
-        All( x, HOLAtom( P, x :: Nil ) ),
-        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InAntecedent ) )
+        All( x, Atom( P, x :: Nil ) ),
+        Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InAntecedent ) )
       )
     ), List(
       ETWeakQuantifier(
-        Ex( x, HOLAtom( P, x :: Nil ) ),
-        Map( c -> ETAtom( HOLAtom( P, c :: Nil ), Polarity.InSuccedent ) )
+        Ex( x, Atom( P, x :: Nil ) ),
+        Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InSuccedent ) )
       )
     ) ),
     ExpansionSequent( List( ETWeakQuantifier(
-      All( x, HOLAtom( P, x :: Nil ) ),
-      Map( d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InAntecedent ) )
+      All( x, Atom( P, x :: Nil ) ),
+      Map( d -> ETAtom( Atom( P, d :: Nil ), Polarity.InAntecedent ) )
     ) ), List(
       ETWeakQuantifier(
-        Ex( x, HOLAtom( P, x :: Nil ) ),
-        Map( d -> ETAtom( HOLAtom( P, d :: Nil ), Polarity.InSuccedent ) )
+        Ex( x, Atom( P, x :: Nil ) ),
+        Map( d -> ETAtom( Atom( P, d :: Nil ), Polarity.InSuccedent ) )
       )
     ) )
   )
