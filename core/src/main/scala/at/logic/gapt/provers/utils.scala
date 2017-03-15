@@ -67,7 +67,7 @@ object groundFreeVariables {
 object padSkolemFunctions {
   private def apply[T]( p: T, skConsts: Set[Const], extraConsts: Seq[Const],
                         nameGen: NameGenerator )( implicit r: Replaceable[T, T], s: ClosedUnderSub[T] ): T = {
-    if ( skConsts.isEmpty ) return p
+    if ( skConsts.isEmpty || extraConsts.isEmpty ) return p
     val tmpVars = extraConsts.map { case Const( n, t ) => Var( nameGen.fresh( n ), t ) }
     val repl = skConsts.map {
       case c @ Const( n, t ) =>
