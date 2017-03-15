@@ -9,7 +9,6 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, Inst
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
-import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.spass.SPASS
@@ -18,19 +17,6 @@ import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
 import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
-
-object SpassPred extends OneShotProver {
-  override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] = {
-    val reduction = GroundingReductionET |> CNFReductionExpRes |> PredicateReductionCNF |> ErasureReductionCNF
-    val ( erasedCNF, back ) = reduction forward seq
-    SPASS.getResolutionProof( erasedCNF ).map { erasedProof =>
-      back( erasedProof )
-    }
-  }
-
-  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
-    getExpansionProof( seq ).flatMap( ExpansionProofToLK( _ ).toOption )
-}
 
 object SpassNoPred extends OneShotProver {
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] = {
