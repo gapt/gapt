@@ -79,10 +79,7 @@ object ndForallExample extends Script {
 }
 
 object ndInductionExample extends Script {
-  val a1 = LogicalAxiom( hof"A 0" )
-  val a2 = LogicalAxiom( hof"!x (A x -> A (s x))" )
-  val a3 = InductionRule( a1, a2, hoc"t:i" )
-  println( a3 )
+  // TODO when equality and similar rules are implemented
 }
 
 object ndImpElimExample extends Script {

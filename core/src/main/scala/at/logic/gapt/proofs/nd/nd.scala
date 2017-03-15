@@ -1051,37 +1051,76 @@ case class TheoryAxiom( mainFormula: HOLFormula ) extends InitialSequent {
 }
 
 /**
- * An NDProof ending with induction:
+ * Proof that a given data type constructor c preserves a formula F:
+ *
  * <pre>
- *    (π1)         (π2)
- *   Γ :- A(0)    Π :- ∀α.A(α) → A(s(α))
- * ---------------------------------------ind
- *               Γ, Π :- A(t)
+ *                                  (π)
+ * F(x,,1,,), F(x,,2,,), ..., F(x,,n,,), Γ :- F(c(x,,1,,,...,x,,n,,,y,,1,,,...,y,,n,,))
  * </pre>
  *
- * @param leftSubProof The proof π,,1,,.
- * @param rightSubProof The proof π,,2,,
+ * The variables x,,i,, and y,,i,, are eigenvariables; x,,i,, are the eigenvariables of the same type as the inductive data
+ * type, y,,i,, are the other arguments of the constructor c.  They can come in any order in the constructor.
+ *
+ * @param proof  The NDProof ending in the sequent of this case.
+ * @param constructor  The constructor c of the inductive data type that we're considering.
+ * @param hypotheses  Indices of F(x,,1,,), ..., F(x,,n,,)
+ * @param eigenVars  The eigenvariables of this case: x,,1,,, ..., x,,n,,, y,,1,,, ..., y,,n,,  (these need to correspond to the order in c)
  */
-case class InductionRule( leftSubProof: NDProof, rightSubProof: NDProof, term: LambdaExpression )
-    extends BinaryNDProof with CommonRule {
+case class InductionCase( proof: NDProof, constructor: Const,
+                          hypotheses: Seq[SequentIndex], eigenVars: Seq[Var] ) {
+  val FunctionType( indTy, fieldTypes ) = constructor.exptype
+  require( fieldTypes == eigenVars.map( _.exptype ) )
 
-  val baseCase = leftPremise( Suc( 0 ) )
-  val stepCase = rightPremise( Suc( 0 ) )
+  val hypVars = eigenVars filter { _.exptype == indTy }
+  require( hypotheses.size == hypVars.size )
 
-  val ( v, a ) = stepCase match {
-    case All( v, Imp( a1, a2 ) ) if Substitution( v, le"s $v" )( a1 ) == a2 => ( v, a1 )
-    case _ => throw NDRuleCreationException( s"Formula $stepCase is not of the form ∀α.A(α) → A(s(α))." )
+  hypotheses foreach { hyp =>
+    require( hyp.isAnt && proof.endSequent.isDefinedAt( hyp ) )
   }
 
-  require( Substitution( v, le"0" )( a ) == baseCase, throw NDRuleCreationException( s"Formula $baseCase is not of the form A(0)." ) )
+  val term = constructor( eigenVars: _* )
 
-  val mainFormula = Substitution( v, term )( a )
+  require( proof.endSequent.isDefinedAt( Suc( 0 ) ) )
+}
 
-  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
+/**
+ * An NDProof ending with an induction rule:
+ * <pre>
+ *   (π,,1,,)   (π,,2,,)           (π,,n,,)
+ * case 1      case 2     ...     case n
+ * -------------------------------------(ind)
+ * Γ :- F(t: indTy)
+ * </pre>
+ *
+ * This induction rule can handle inductive data types.
+ * The cases are proofs that the various type constructors preserve the formula we want to prove. They are provided via the
+ * [[InductionCase]] class.
+ *
+ * @param cases A sequence of proofs showing that each type constructor preserves the validity of the main formula.
+ * @param formula The formula we want to prove via induction.
+ */
+case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaExpression ) extends CommonRule {
+  val Abs( quant @ Var( _, indTy ), qfFormula ) = formula
+  require( term.exptype == indTy )
+  cases foreach { c =>
+    require( c.indTy == indTy )
+    ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
+      require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
+    }
+    require( c.proof.endSequent( Suc( 0 ) ) == Substitution( quant -> c.term )( qfFormula ) )
+  }
+  require( freeVariables( contexts.flatMap( _.elements ) :+ formula ) intersect cases.flatMap( _.eigenVars ).toSet isEmpty )
+
+  val mainFormula = BetaReduction.betaNormalize( formula( term ).asInstanceOf[HOLFormula] )
+  override protected def mainFormulaSequent = Sequent() :+ mainFormula
+  override def auxIndices: Seq[Seq[SequentIndex]] = cases map { c => c.hypotheses :+ Suc( 0 ) }
+  override def immediateSubProofs: Seq[NDProof] = cases map { _.proof }
+
+  private lazy val product = cases.flatMap { _.productIterator } :+ formula :+ term
+  override def productArity = product.size
+  override def productElement( n: Int ) = product( n )
 
   override def name = "ind"
-
-  override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
 /**
