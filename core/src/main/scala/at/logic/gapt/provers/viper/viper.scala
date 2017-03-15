@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UserDefinedInductionAxioms }
 import at.logic.gapt.provers.viper.aip.cli.AipOptions
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
@@ -158,8 +158,13 @@ object Viper {
         )
       case "treegrammar" => List( Duration.Inf -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
-        val compiled = at.logic.gapt.provers.viper.aip.cli.aip.compileProverOptions( opts.aipOptions )
-        List( Duration.Inf -> AnalyticInductionTactic( compiled.axiomFactory, compiled.prover ).
+        val prover = ViperOptions.provers( opts.aipOptions.prover )
+        val axioms = opts.aipOptions.axioms match {
+          case "sequential"  => SequentialInductionAxioms()
+          case "independent" => IndependentInductionAxioms()
+          case userDefined   => UserDefinedInductionAxioms( userDefined.split( ";" ).toList )
+        }
+        List( Duration.Inf -> AnalyticInductionTactic( axioms, prover ).
           aka( s"analytic ${opts.aipOptions.axioms}" ) )
     }
 
