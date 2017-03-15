@@ -98,7 +98,7 @@ object ReductiveCutElimination {
    * @param formula The formula we are checking.
    * @return True is structure is correct or false if not.
    */
-  def introOrCut( proof: LKProof, formula: HOLFormula ): Boolean = proof match {
+  def introOrCut( proof: LKProof, formula: Formula ): Boolean = proof match {
     case LogicalAxiom( _ )             => true
     case CutRule( lsb, l, rsb, r )     => true
     case WeakeningRightRule( _, main ) => if ( main == formula ) true else false

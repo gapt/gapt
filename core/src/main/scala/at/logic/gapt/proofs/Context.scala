@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ LambdaExpression, Definition => EDefinition, _ }
+import at.logic.gapt.expr.{ Expr, Definition => EDefinition, _ }
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr.hol.SkolemFunctions

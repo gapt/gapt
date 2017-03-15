@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{ HOLFormula, Polarity }
+import at.logic.gapt.expr.{ Formula, Polarity }
 
 /**
  * Created by cernadavid1 on 01.03.17.
@@ -89,7 +89,7 @@ object PushWeakeningToLeaves {
    *
    * @return A proof weakening rules at the leaves only.
    */
-  private def pushWeakeningToLeaves( proof: LKProof, side: Polarity, formula: HOLFormula ): LKProof = proof match {
+  private def pushWeakeningToLeaves( proof: LKProof, side: Polarity, formula: Formula ): LKProof = proof match {
     case InitialSequent( _ ) =>
       if ( side.inSuc ) WeakeningRightRule( proof, formula )
       else WeakeningLeftRule( proof, formula )

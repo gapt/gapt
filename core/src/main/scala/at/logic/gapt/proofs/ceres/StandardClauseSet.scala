@@ -16,19 +16,19 @@ import scala.util.control.TailCalls._
  * Calculates the characteristic clause set
  */
 class CharacteristicClauseSet[Data] {
-  def apply( struct: Struct[Data] ): Set[SetSequent[HOLAtom]] = struct match {
-    case A( fo: HOLAtom, _ ) => Set( SetSequent[HOLAtom]( Sequent( Nil, List( fo ) ) ) )
-    case A( Top(), _ )       => Set()
-    case A( Bottom(), _ )    => Set( SetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
+  def apply( struct: Struct[Data] ): Set[SetSequent[Atom]] = struct match {
+    case A( fo: Atom, _ ) => Set( SetSequent[Atom]( Sequent( Nil, List( fo ) ) ) )
+    case A( Top(), _ )    => Set()
+    case A( Bottom(), _ ) => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
     case A( f, _ ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
-    case Dual( A( fo: HOLAtom, _ ) ) => Set( SetSequent[HOLAtom]( Sequent( List( fo ), Nil ) ) )
-    case Dual( A( Top(), _ ) )       => Set( SetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
-    case Dual( A( Bottom(), _ ) )    => Set()
+    case Dual( A( fo: Atom, _ ) ) => Set( SetSequent[Atom]( Sequent( List( fo ), Nil ) ) )
+    case Dual( A( Top(), _ ) )    => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
+    case Dual( A( Bottom(), _ ) ) => Set()
     case Dual( A( f, _ ) ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
     case EmptyPlusJunction()                 => Set()
-    case EmptyTimesJunction()                => Set( SetSequent[HOLAtom]( Sequent( Nil, Nil ) ) )
+    case EmptyTimesJunction()                => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
     case Plus( EmptyPlusJunction(), x )      => apply( x )
     case Plus( x, EmptyPlusJunction() )      => apply( x )
     case Plus( x, y )                        => apply( x ) ++ apply( y )
@@ -41,7 +41,7 @@ class CharacteristicClauseSet[Data] {
     case Times( x, y, _ ) =>
       val xs = apply( x )
       val ys = apply( y )
-      xs.flatMap( ( x1: SetSequent[HOLAtom] ) => ys.flatMap( ( y1: SetSequent[HOLAtom] ) => {
+      xs.flatMap( ( x1: SetSequent[Atom] ) => ys.flatMap( ( y1: SetSequent[Atom] ) => {
         delta_compose( x1, y1 ) match {
           case Some( m ) => Set( m ).toTraversable
           case None      => Set().toTraversable
