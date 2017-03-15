@@ -25,7 +25,7 @@ object withTimeout extends Logger {
   @deprecated( "Use Durations as argument", "2015-05-15" )
   def apply[T]( to: Long )( f: => T ): T = apply( to millis )( f )
 
-  def apply[T]( duration: Duration )( f: => T ): T = {
+  def apply[T]( duration: Duration )( f: => T ): T = if ( !duration.isFinite ) f else {
     var result: Either[Throwable, T] = Left( new TimeOutException( null, duration ) )
 
     val t = new Thread {

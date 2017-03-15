@@ -1,6 +1,4 @@
-; viper qtys witness
-; viper tchksize 0.5,1
-; viper cansolsize 2,2
+; viper --treegrammar --qtys witness --tchksize 0.5 1 --cansolsize 2 2
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (declare-sort witness 0)

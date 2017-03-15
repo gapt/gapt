@@ -1,12 +1,13 @@
-package at.logic.gapt.provers.viper
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
 import at.logic.gapt.utils.NameGenerator
+import cats.instances.list._
+import cats.syntax.traverse._
 
 import scala.collection.mutable
-import cats.syntax.traverse._, cats.instances.list._
 
 object enumerateTerms {
   private def normalizeFreeVars( expr: Expr ): Expr = {

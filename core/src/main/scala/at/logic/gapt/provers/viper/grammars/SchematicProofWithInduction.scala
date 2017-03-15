@@ -1,4 +1,4 @@
-package at.logic.gapt.provers.viper
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, containsStrongQuantifier, instantiate }
@@ -24,6 +24,8 @@ case class ProofByRecursionScheme(
     context:    Context
 ) extends SchematicProofWithInduction {
   private implicit def ctx = context
+
+  override def toString = recSchem.toString
 
   val theory = for {
     ( f, i ) <- endSequent.zipWithIndex
