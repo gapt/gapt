@@ -414,5 +414,4 @@ object Context {
       ctx.state.update[ProofDefinitions]( _ + ( c, lhs, linkProof ) )
     }
   }
-
 }

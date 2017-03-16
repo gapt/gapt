@@ -19,6 +19,7 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" )
   ) ),
+  bintrayOrganization := Some( "gapt" ),
 
   scalaVersion := "2.12.1",
   scalacOptions in Compile ++= Seq(
@@ -36,14 +37,14 @@ lazy val commonSettings = Seq(
 
   sourcesInBase := false // people like to keep scripts lying around
 
-) ++ publishSettings ++ defaultScalariformSettings :+
+) ++ defaultScalariformSettings :+
   ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.8.8"
+val specs2Version = "3.8.9"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -53,23 +54,6 @@ lazy val testSettings = Seq(
     "org.specs2" %% "specs2-matcher" % specs2Version
   ) map ( _ % Test )
 )
-
-lazy val publishSettings =
-  if ( Version endsWith "-SNAPSHOT" ) {
-    Seq(
-      bintrayReleaseOnPublish := false,
-      publishTo := Some( "Artifactory Realm" at "http://oss.jfrog.org/artifactory/oss-snapshot-local/" ),
-      credentials := {
-        Credentials.loadCredentials( bintrayCredentialsFile.value ) match {
-          case Right( bintrayCreds ) =>
-            Seq( Credentials( "Artifactory Realm", "oss.jfrog.org", bintrayCreds.userName, bintrayCreds.passwd ) )
-          case Left( error ) => Seq()
-        }
-      }
-    )
-  } else {
-    Seq( bintrayOrganization := Some( "gapt" ) )
-  }
 
 lazy val BuildSbtConfig = config( "buildsbt" ) extend Compile
 
