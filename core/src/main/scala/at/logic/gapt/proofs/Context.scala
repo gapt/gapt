@@ -387,19 +387,14 @@ object Context {
     def filter( p: String => Boolean ): PrimitiveRecursiveFunctions = copy( equations = equations.filter( x => p( x._1 ) ) )
 
     override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-      head match {
-        case Const( n, _ ) =>
-          equations.get( n ) match {
-            case Some( ( nArgs, idx, eqns ) ) if args.size >= nArgs =>
-              val app = head( args.view.take( nArgs ).zipWithIndex.map { case ( a, i ) => if ( i == idx ) normalizer.whnf( a ) else a } )
-              ( for {
-                ( lhs, rhs ) <- eqns.view
-                subst <- syntacticMatching( lhs, app )
-              } yield subst( rhs ) -> args.drop( nArgs ) ).headOption
-            case None => None
-          }
-        case _ => None
-      }
+      ( for {
+        Const( n, _ ) <- Seq( head )
+        ( nArgs, idx, eqns ) <- equations.get( n ).toSeq
+        if args.size >= nArgs
+        app = head( args.view.take( nArgs ).zipWithIndex.map { case ( a, i ) => if ( i == idx ) normalizer.whnf( a ) else a } )
+        ( lhs, rhs ) <- eqns.view
+        subst <- syntacticMatching( lhs, app ).toSeq
+      } yield subst( rhs ) -> args.drop( nArgs ) ).headOption
   }
   implicit val primitiveRecursiveFunctionsFacet: Facet[PrimitiveRecursiveFunctions] = Facet( PrimitiveRecursiveFunctions( Map() ) )
 
