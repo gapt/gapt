@@ -1279,7 +1279,7 @@ object FOTheoryMacroRule {
     val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.ty ) )
     val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
     prover.getResolutionProof( cnf.map( Input ) ) map { p =>
-      var lk = ResolutionToLKProof( p, {
+      var lk = ResolutionToLKProof( eliminateSplitting( p ), {
         case Input( seq ) if axioms.contains( seq ) => TheoryAxiom( seq.map( _.asInstanceOf[Atom] ) )
         case Input( unit ) if unit.size == 1        => LogicalAxiom( unit.elements.head )
       } )
