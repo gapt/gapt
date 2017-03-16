@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context.Definitions
-import at.logic.gapt.proofs.{ Ant, Context }
+import at.logic.gapt.proofs.{ Ant, Context, SequentConnector, Suc }
 
 /**
  * Eliminates definitions from a lambda expression, HOL formula, or LK proof.

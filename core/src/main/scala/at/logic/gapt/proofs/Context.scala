@@ -384,6 +384,8 @@ object Context {
   case class PrimitiveRecursiveFunctions( equations: Map[String, ( Int, Int, Vector[( Expr, Expr )] )] ) extends ReductionRule {
     def +( c: String, nArgs: Int, recIdx: Int, eqns: Vector[( Expr, Expr )] ) = copy( equations = equations + ( ( c, ( nArgs, recIdx, eqns ) ) ) )
 
+    def filter( p: String => Boolean ): PrimitiveRecursiveFunctions = copy( equations = equations.filter( x => p( x._1 ) ) )
+
     override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
       head match {
         case Const( n, _ ) =>
