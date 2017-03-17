@@ -13,7 +13,7 @@ object eliminateDefinitions {
    * @param dmap The definitions to be eliminated.
    */
   def apply( dmap: Map[_ <: Const, _ <: Expr] ): eliminateDefinitions =
-    new eliminateDefinitions( Context.Definitions( dmap.map( x => x._1.name -> x._2 ) ) )
+    new eliminateDefinitions( ReductionRule( BetaReduction, Context.Definitions( dmap.map( x => x._1.name -> x._2 ) ) ) )
 
   /**
    * Given an implicit [[at.logic.gapt.proofs.Context]] in scope, this removes all definitions in that context from a
@@ -22,17 +22,14 @@ object eliminateDefinitions {
    * @param ctx An implicit context. Definitions in this will be removed from proof.
    */
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
-    new eliminateDefinitions( ctx.get[Definitions] ).apply( proof )
+    new eliminateDefinitions( ctx.normalizer.rule ).apply( proof )
 }
 
 /**
  * Implements definition elimination.
- * @param dmap A map containing the definitions to be eliminated.
  */
-class eliminateDefinitions private ( dmap: Context.Definitions ) extends Function[Expr, Expr] {
-  private val betaDeltaReduction = ReductionRule( BetaReduction, dmap )
-
-  def apply( e: Expr ): Expr = normalize( betaDeltaReduction, e )
+class eliminateDefinitions private ( rule: ReductionRule ) extends Function[Expr, Expr] {
+  def apply( e: Expr ): Expr = normalize( rule, e )
   def apply( f: Formula ): Formula = apply( f: Expr ).asInstanceOf[Formula]
 
   def apply( proof: LKProof ): LKProof = proof match {

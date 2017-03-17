@@ -147,13 +147,12 @@ class PrimeProofTest extends Specification {
     }
 
     def euclid( n: Int ) = {
-      skipped( "maybe extend definition-elimination to cover recursive definitions?" )
       if ( n >= 2 ) skipped( "LK proof construction runs out of memory" )
 
       val euclidN = prime.euclid( n )
       import euclidN._
 
-      CERES( proof )
+      CERES( eliminateDefinitions( proof ) )
       ok
     }
 
