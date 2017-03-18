@@ -11,7 +11,7 @@ trait ResolutionProver extends OneShotProver {
   override def getLKProof( seq: HOLSequent ): Option[LKProof] = getLKProof( seq, addWeakenings = true )
 
   def getLKProof( seq: HOLSequent, addWeakenings: Boolean ): Option[LKProof] =
-    groundFreeVariables.wrap( seq ) { seq =>
+    groundFreeVariables.wrapAndPadSkolemFunctionsLK( seq ) { seq =>
       getResolutionProof( seq ) map { resolution =>
         val lk = ResolutionToLKProof( resolution )
         if ( addWeakenings ) WeakeningContractionMacroRule( lk, seq )
@@ -45,7 +45,7 @@ trait ResolutionProver extends OneShotProver {
   def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof]
 
   override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
-    groundFreeVariables.wrap( seq ) { seq =>
+    groundFreeVariables.wrapAndPadSkolemFunctionsET( seq ) { seq =>
       getResolutionProof( seq ) map { ResolutionToExpansionProof( _ ) }
     }
 

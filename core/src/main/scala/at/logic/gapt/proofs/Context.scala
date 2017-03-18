@@ -1,9 +1,10 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ Definition => EDefinition, _ }
+import at.logic.gapt.expr.{ Expr, Definition => EDefinition, _ }
 import at.logic.gapt.formats.babel.BabelSignature
 import Context._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.lk.LKProof
 
 import scala.reflect.ClassTag
 
@@ -376,4 +377,5 @@ object Context {
         .update[SkolemFunctions]( _ + ( sym, defn ) )
     }
   }
+
 }

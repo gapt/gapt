@@ -1,12 +1,13 @@
-package at.logic.gapt.provers.viper
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.expr.{ Expr, TBase }
 import at.logic.gapt.proofs.Context
+import cats.instances.list._
+import cats.syntax.traverse._
 
 import scala.collection.mutable
 import scala.util.Random
-import cats.instances.list._, cats.syntax.traverse._
 
 trait InstanceTermGenerator {
   def generate( lower: Float, upper: Float, num: Int ): Set[Seq[Expr]]

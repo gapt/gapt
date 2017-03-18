@@ -8,11 +8,11 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, eliminateSplitting }
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 import at.logic.gapt.provers.viper.aip.axioms._
-import at.logic.gapt.provers.viper.aip.provers.InternalProver
 import cats.syntax.all._
 
 /**
@@ -239,7 +239,7 @@ object AnalyticInductionTactic {
 /**
  * Calls the analytic induction prover on the subgoal
  */
-case class AnalyticInductionTactic( axioms: AxiomFactory, prover: InternalProver )( implicit ctx: Context ) extends Tactic[Unit] {
+case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProver )( implicit ctx: Context ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     AnalyticInductionProver( axioms, prover ) inductiveLKProof ( goal.labelledSequent ) match {
       case None       => Left( TacticalFailure( this, "search failed" ) )
@@ -249,7 +249,7 @@ case class AnalyticInductionTactic( axioms: AxiomFactory, prover: InternalProver
   def withAxioms( axiom: AxiomFactory ): AnalyticInductionTactic =
     copy( axioms = axiom )
 
-  def withProver( prover: InternalProver ): AnalyticInductionTactic =
+  def withProver( prover: ResolutionProver ): AnalyticInductionTactic =
     copy( prover = prover )
 }
 

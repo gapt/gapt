@@ -250,8 +250,13 @@ object LeanExporter {
 object LeanChecker extends ExternalProgram {
   val executable = "lean"
 
-  override val isInstalled =
-    try { runProcess( Seq( "lean", "--version" ) ); true } catch { case _: IOException => false }
+  private val versionRegex = """Lean \(version ([0-9.]+),""".r.unanchored
+  val version: String =
+    try runProcess( Seq( "lean", "--version" ) ) match {
+      case versionRegex( v ) => v
+      case _                 => "parse error"
+    } catch { case _: IOException => "error" }
+  override val isInstalled: Boolean = version == "3.0.0"
 
   def apply( code: String ): Either[String, Unit] =
     withTempFile.fromString( code ) { inputFile =>

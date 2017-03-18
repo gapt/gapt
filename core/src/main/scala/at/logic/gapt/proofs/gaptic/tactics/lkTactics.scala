@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.gaptic.tactics
 
-import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ instantiate, HOLPosition }
+import at.logic.gapt.expr.{ Apps, _ }
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
