@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import BetaReduction._
+import BetaReduction.{ betaNormalize, _ }
 import at.logic.gapt.proofs.SequentConnector
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 
@@ -21,6 +21,9 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
    */
   override def applySubstitution( substitution: Substitution, proof: LKProof ): LKProof = proof match {
     case _ if substitution isIdentity => proof
+
+    case ProofLink( referencedProof, linkquent ) =>
+      ProofLink( betaNormalize( substitution( referencedProof ) ), linkquent.map { f => betaNormalize( substitution( f ) ) } )
 
     case InitialSequent( sequent ) =>
       Axiom( sequent.map { f => betaNormalize( substitution( f ) ) } )
@@ -174,6 +177,10 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
 
   override protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
     val proofNew = TheoryAxiom( TermReplacement( proof.conclusion, repl ) )
+    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
+  }
+  override protected def visitProofLink( proof: ProofLink, otherArg: Unit ): ( LKProof, SequentConnector ) = {
+    val proofNew = ProofLink( proof.referencedProof, TermReplacement( proof.conclusion, repl ) )
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
   }
 

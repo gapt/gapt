@@ -2,8 +2,10 @@ package at.logic.gapt.prooftool
 
 import java.awt.Font._
 import java.awt.event.{ MouseEvent, MouseMotionListener }
-import java.awt.{ Color, RenderingHints }
+import java.awt.{ BasicStroke, Color, RenderingHints, Stroke }
 
+import at.logic.gapt.expr.Expr
+import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs.{ SequentIndex, SequentProof }
 
@@ -72,13 +74,19 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   }
 
   val subProofsPanel = new SubproofsPanel( this, subProofs )
+  var aboveLinePanel: AboveLinePanel[F, T] = proof match {
+    case p: ProofLink =>
+      println( "proof is a proof link" )
+      new ProoflinkLabelPanel( this, p.referencedProof )
+    case _ => subProofsPanel
+  }
 
   val linePanel = new ProofLinePanel( this, proof.name )
 
-  val subProofsPanelIndex = if ( pos.isEmpty ) 1 else 0
+  val aboveLinePanelIndex = if ( pos.isEmpty ) 1 else 0
 
   if ( pos.isEmpty ) contents += Swing.VGlue
-  contents += subProofsPanel
+  contents += aboveLinePanel
   contents += linePanel
   contents += endSequentPanel
   if ( pos.isEmpty ) contents += Swing.VGlue
@@ -162,9 +170,17 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 
     case ShowSequentProof( p ) if p == pos =>
       showLine()
+      contents( aboveLinePanelIndex ) = subProofsPanel
+
+      revalidate()
+      repaint()
 
     case HideSequentProof( p ) if p == pos =>
       hideLine()
+      contents( aboveLinePanelIndex ) = new CollapsedSubproofsPanel( this )
+
+      revalidate()
+      repaint()
 
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.BLUE ) // DEBUG
@@ -191,36 +207,20 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
 }
 
 /**
- * A panel containing the subproofs of a proof arranged side by side.
- * @param parent The [[at.logic.gapt.prooftool.DrawSequentProof]] instance that this belongs to.
- * @param subProofs The The [[at.logic.gapt.prooftool.DrawSequentProof]] instances containing the subproofs.
+ * Abstract class for things that can be placed above a proof line (subproofs, labels).
  */
-class SubproofsPanel[F, T <: SequentProof[F, T]](
-    val parent:    DrawSequentProof[F, T],
-    val subProofs: Seq[DrawSequentProof[F, T]]
-) extends BoxPanel( Orientation.Horizontal ) {
-  var collapsed = false
-  private val subProofsHiddenLabel = new LatexLabel( parent.main, "(...)" )
-  subProofsHiddenLabel.listenTo( mouse.clicks )
-  subProofsHiddenLabel.reactions += {
-    case e: MouseClicked =>
-      parent.main.publisher.publish( ShowSequentProof( parent.pos ) )
-  }
-
-  subProofs.foreach( contents += )
-  subProofs.foreach( listenTo( _ ) )
-  subProofs.foreach( _.yLayoutAlignment = 1 ) // Forces the subproof panels to align along their bottom edges
-
-  def width() = size.width
-  def endSequentLeftMarginWidth() = if ( subProofs.isEmpty || collapsed ) 0 else subProofs.head.endSequentLeftMarginWidth()
-  def endSequentRightMarginWidth() = if ( subProofs.isEmpty || collapsed ) 0 else subProofs.last.endSequentRightMarginWidth()
-  def endSequentWidth() = width() - endSequentLeftMarginWidth() - endSequentRightMarginWidth()
+abstract class AboveLinePanel[F, T <: SequentProof[F, T]]( val parent: DrawSequentProof[F, T] ) extends BoxPanel( Orientation.Horizontal ) {
+  final def width() = size.width
+  def endSequentLeftMarginWidth(): Int
+  def endSequentRightMarginWidth(): Int
+  final def endSequentWidth() = width() - endSequentLeftMarginWidth() - endSequentRightMarginWidth()
 
   border = Swing.EmptyBorder
   opaque = false
 
   listenTo( parent.main.publisher )
   deafTo( this )
+
   reactions += {
     case ShowDebugBorders =>
       border = Swing.LineBorder( Color.GREEN ) // DEBUG
@@ -228,23 +228,59 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
     case HideDebugBorders =>
       border = Swing.EmptyBorder
 
-    case ShowSequentProof( p ) if p == parent.pos =>
-      collapsed = false
-      contents.clear()
-      subProofs.foreach( contents += )
-      revalidate()
-      repaint()
-
-    case HideSequentProof( p ) if p == parent.pos =>
-      collapsed = true
-      contents.clear()
-      contents += subProofsHiddenLabel
-      revalidate()
-      repaint()
-
     case AlignmentChanged =>
       publish( AlignmentChanged )
+
   }
+}
+
+/**
+ * Class that puts the name of a proof link above the proof line.
+ * @param referencedProof The name of the link.
+ */
+class ProoflinkLabelPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentProof[F, T], referencedProof: Expr ) extends AboveLinePanel[F, T]( parent ) {
+  println( s"creating Latex label with text ${LatexExporter( referencedProof )}" )
+  private val proofLinkLabel = new LatexLabel( parent.main, LatexExporter( referencedProof ) )
+
+  override def endSequentLeftMarginWidth() = 0
+  override def endSequentRightMarginWidth() = 0
+
+  contents += proofLinkLabel
+}
+
+/**
+ * Class that puts "(...)" above the proof line for a collapsed proof.
+ */
+class CollapsedSubproofsPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentProof[F, T] ) extends AboveLinePanel[F, T]( parent ) {
+  private val subProofsHiddenLabel = new LatexLabel( parent.main, "(...)" )
+  subProofsHiddenLabel.listenTo( mouse.clicks )
+  subProofsHiddenLabel.reactions += {
+    case e: MouseClicked =>
+      parent.main.publisher.publish( ShowSequentProof( parent.pos ) )
+  }
+
+  override def endSequentLeftMarginWidth() = 0
+  override def endSequentRightMarginWidth() = 0
+
+  contents += subProofsHiddenLabel
+}
+
+/**
+ * A panel containing the subproofs of a proof arranged side by side.
+ * @param parent The [[at.logic.gapt.prooftool.DrawSequentProof]] instance that this belongs to.
+ * @param subProofs The The [[at.logic.gapt.prooftool.DrawSequentProof]] instances containing the subproofs.
+ */
+class SubproofsPanel[F, T <: SequentProof[F, T]](
+    parent:        DrawSequentProof[F, T],
+    val subProofs: Seq[DrawSequentProof[F, T]]
+) extends AboveLinePanel[F, T]( parent ) {
+
+  subProofs.foreach( contents += )
+  subProofs.foreach( listenTo( _ ) )
+  subProofs.foreach( _.yLayoutAlignment = 1 ) // Forces the subproof panels to align along their bottom edges
+
+  override def endSequentLeftMarginWidth() = if ( subProofs.isEmpty ) 0 else subProofs.head.endSequentLeftMarginWidth()
+  override def endSequentRightMarginWidth() = if ( subProofs.isEmpty ) 0 else subProofs.last.endSequentRightMarginWidth()
 }
 
 /**

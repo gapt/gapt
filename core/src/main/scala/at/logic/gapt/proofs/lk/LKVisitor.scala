@@ -42,6 +42,9 @@ trait LKVisitor[T] {
     case p: TheoryAxiom =>
       visitTheoryAxiom( p, otherArg )
 
+    case p: ProofLink =>
+      visitProofLink( p, otherArg )
+
     case TopAxiom =>
       visitTopAxiom( otherArg )
 
@@ -147,6 +150,8 @@ trait LKVisitor[T] {
   protected def visitReflexivityAxiom( proof: ReflexivityAxiom, otherArg: T ): ( LKProof, SequentConnector ) = withIdentitySequentConnector( proof )
 
   protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: T ): ( LKProof, SequentConnector ) = withIdentitySequentConnector( proof )
+
+  protected def visitProofLink( proof: ProofLink, otherArg: T ): ( LKProof, SequentConnector ) = withIdentitySequentConnector( proof )
 
   protected def visitTopAxiom( otherArg: T ): ( LKProof, SequentConnector ) = withIdentitySequentConnector( TopAxiom )
 
