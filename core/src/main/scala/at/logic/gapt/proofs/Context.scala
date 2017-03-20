@@ -262,6 +262,19 @@ object Context {
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
+  case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
+    def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
+  }
+
+  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
+
+  case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
+    def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
+      copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( referencedExpression, referencedProof ) ) ) ) ) )
+
+  }
+  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
+
   /**
    * Update of a context.
    *
@@ -378,4 +391,27 @@ object Context {
     }
   }
 
+  case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {
+    override def apply( ctx: Context ): State = {
+      endSequent.foreach( ctx.check( _ ) )
+      val Apps( Const( c, _ ), vs ) = lhs
+      require( !ctx.get[ProofNames].names.keySet.contains( c ) )
+      require( vs == vs.distinct )
+      require( vs.forall( _.isInstanceOf[Var] ) )
+      require( freeVariables( endSequent ) == vs.toSet )
+      ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
+    }
+  }
+
+  case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
+    override def apply( ctx: Context ): State = {
+      referencedProof.endSequent.foreach( ctx.check( _ ) )
+      val Apps( at.logic.gapt.expr.Const( c, t ), vs ) = lhs
+      vs.foreach( ctx.check( _ ) )
+      require( ctx.get[ProofNames].names.values.exists {
+        case ( name, _ ) => syntacticMatching( name, lhs ).isDefined
+      } )
+      ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
+    }
+  }
 }
