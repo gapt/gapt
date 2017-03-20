@@ -14,7 +14,7 @@ class IntroducePiCutTest extends Specification {
   // Number of non-tautological leaves
   //   2
   // Number of unified literals
-  //   4
+  //   2
   // Number of allowed clauses (without unnecessary clauses)
   //   2
   // Number of checked Formulas
@@ -44,10 +44,10 @@ class IntroducePiCutTest extends Specification {
   // Number of non-tautological leaves
   //   96
   // Number of unified literals
-  //   10
+  //   1
   // No 'allowed clauses' were computed
   // Number of checked Formulas
-  //   5
+  //   1
   "This" should {
     "be computed correctly" in {
       val A4 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))|P(x,f4(x))"
@@ -69,10 +69,10 @@ class IntroducePiCutTest extends Specification {
   // Number of non-tautological leaves
   //   24
   // Number of unified literals
-  //   8
+  //   1
   // No 'allowed clauses' were computed
   // Number of checked Formulas
-  //   5
+  //   1
   "This" should {
     "be computed correctly" in {
       val A3 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))"
@@ -93,11 +93,11 @@ class IntroducePiCutTest extends Specification {
   // Number of non-tautological leaves
   //   86
   // Number of unified literals
-  //   22
+  //   3
   // Number of allowed clauses (without unnecessary clauses)
-  //   5
+  //   1
   // Number of checked Formulas
-  //   5
+  //   1
   "This" should {
     "be computed correctly" in {
       val T1 = fof"Pkl(0,y1)&Pg(f(0),f(y1))"
@@ -130,15 +130,15 @@ class IntroducePiCutTest extends Specification {
   }
 
   /*
-  // Don't test this if you don't have enough time (7h)
+  */
   // Number of non-tautological leaves
   //   1386
   // Number of unified literals
-  //   20
+  //   6
   // Number of allowed clauses (without unnecessary clauses)
-  //   13
+  //   7
   // Number of checked Formulas
-  //   21
+  //   8
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -177,11 +177,11 @@ class IntroducePiCutTest extends Specification {
   // Number of non-tautological leaves
   //   308
   // Number of unified literals
-  //   16
+  //   6
   // Number of allowed clauses (without unnecessary clauses)
-  //   11
+  //   7
   // Number of checked Formulas
-  //   62
+  //   14
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
@@ -212,13 +212,12 @@ class IntroducePiCutTest extends Specification {
       )
     }
   }
-  */
 
   // 661 ms
   // Number of non-tautological leaves
   //   44
   // Number of unified literals
-  //   8
+  //   4
   // Number of allowed clauses (without unnecessary clauses)
   //   7
   // Number of checked Formulas
@@ -255,7 +254,7 @@ class IntroducePiCutTest extends Specification {
   // Number of non-tautological leaves
   //   16
   // Number of unified literals
-  //   8
+  //   4
   // Number of allowed clauses (without unnecessary clauses)
   //   5
   // Number of checked Formulas

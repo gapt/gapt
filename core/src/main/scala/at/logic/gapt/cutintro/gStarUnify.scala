@@ -12,8 +12,10 @@ object gStarUnify {
     nameOfUniversalVariable:   FOLVar
   ): Set[FOLFormula] = {
 
-    val literals = seHs.sortAndAtomize
-    val ( posAtoms, negAtoms ) = literals
+    val (alpha, beta, neutral) = seHs.literalsInTheDNTAs
+    val (alphaPos,alphaNeg) = seHs.sortAndAtomize(alpha)
+    val (betaPos,betaNeg) = seHs.sortAndAtomize(beta)
+    val (neutralPos,neutralNeg) = seHs.sortAndAtomize(neutral)
 
     val unifiedLiterals = scala.collection.mutable.Set[FOLFormula]()
 
@@ -30,10 +32,13 @@ object gStarUnify {
       )
       litPosNeg <- Seq( lit, Neg( lit ) )
     } yield litPosNeg
+
     */
 
-    posAtoms.foreach( posAt =>
-      negAtoms.foreach( negAt =>
+
+
+    alphaPos.foreach( posAt =>
+      betaNeg.union(neutralNeg).foreach( negAt =>
         unifyLiterals(
           seHs,
           posAt,
@@ -41,11 +46,52 @@ object gStarUnify {
           nameOfExistentialVariable,
           nameOfUniversalVariable
         ) match {
-          /*
-          The next line is a compromise since we do not consider negation during the unification procedure (Future work). This way we add some unnecessary literals.
-           */
           case Some( t ) => {
             unifiedLiterals += t
+          }
+          case None =>
+        } ) )
+
+    alphaNeg.foreach( posAt =>
+      betaPos.union(neutralNeg).foreach( negAt =>
+        unifyLiterals(
+          seHs,
+          posAt,
+          negAt,
+          nameOfExistentialVariable,
+          nameOfUniversalVariable
+        ) match {
+          case Some( t ) => {
+            unifiedLiterals += Neg( t )
+          }
+          case None =>
+        } ) )
+
+    betaPos.foreach( posAt =>
+      neutralNeg.foreach( negAt =>
+        unifyLiterals(
+          seHs,
+          posAt,
+          negAt,
+          nameOfExistentialVariable,
+          nameOfUniversalVariable
+        ) match {
+          case Some( t ) => {
+            unifiedLiterals += t
+          }
+          case None =>
+        } ) )
+
+    betaNeg.foreach( posAt =>
+      neutralPos.foreach( negAt =>
+        unifyLiterals(
+          seHs,
+          posAt,
+          negAt,
+          nameOfExistentialVariable,
+          nameOfUniversalVariable
+        ) match {
+          case Some( t ) => {
             unifiedLiterals += Neg( t )
           }
           case None =>

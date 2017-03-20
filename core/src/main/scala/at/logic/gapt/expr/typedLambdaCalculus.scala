@@ -105,10 +105,13 @@ abstract class Expr {
    */
   def find( exp: Expr ): List[HOLPosition] = getPositions( this, _ == exp )
 
-  /*
-  Tests whether an expression is a subexpression.
-  def contains( exp: Expr ): Boolean = {}
-   */
+  /**
+    * Tests whether an expression is a subexpression.
+    *
+    * @param exp The subexpression to be found.
+    * @return A boolean that is true if exp is a subexpression
+    */
+  def contains( exp: Expr ): Boolean = find( exp ).nonEmpty
 
   /**
    * Converts this expression into a string.

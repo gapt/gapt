@@ -198,6 +198,35 @@ case class Pi2SeHs(
     ( literals.toSet, DNTAList )
   }
 
+  val dualNonTautologicalAxioms: List[Sequent[FOLFormula]] = {
+
+    val ( _, dNTAs) = this.literalsInTheDNTAsAndTheDNTAs
+    dNTAs
+
+  }
+
+  val literalsInTheDNTAs: (Set[FOLFormula],Set[FOLFormula],Set[FOLFormula]) = {
+
+    val (literals,_) = this.literalsInTheDNTAsAndTheDNTAs
+    val alpha = scala.collection.mutable.Set[FOLFormula]()
+    val beta = scala.collection.mutable.Set[FOLFormula]()
+    val gamma = scala.collection.mutable.Set[FOLFormula]()
+
+    literals.foreach(literal=>{
+      if (literal.contains(this.universalEigenvariable)) {
+        if (!this.existentialEigenvariables.exists(exEi=>literal.contains(exEi))){
+          alpha += literal
+        }
+      } else if (this.existentialEigenvariables.exists(exEi=>literal.contains(exEi))){
+        beta += literal
+      } else {
+        gamma += literal
+      }
+    })
+
+    (alpha.toSet,beta.toSet,gamma.toSet)
+  }
+
   def language: ( Set[Expr] ) = {
 
     val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
@@ -217,8 +246,7 @@ case class Pi2SeHs(
 
   def theDNTAsInTheLanguage( unifiedLiterals: Set[FOLFormula] ): ( List[Sequent[FOLFormula]] ) = {
 
-    val ( _, oldDNTAs ) = this.literalsInTheDNTAsAndTheDNTAs
-    val newDNTAs = oldDNTAs.map( leaf => {
+    val newDNTAs = this.dualNonTautologicalAxioms.map( leaf => {
       leaf.antecedent.filter( literal => {
         literal match {
           case Neg( t ) => {
@@ -263,9 +291,8 @@ case class Pi2SeHs(
 
   }
 
-  val sortAndAtomize: ( Set[FOLFormula], Set[FOLFormula] ) = {
+  def sortAndAtomize( literals: Set[FOLFormula] ): ( Set[FOLFormula], Set[FOLFormula] ) = {
 
-    val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
     val posLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
     val negLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
 
@@ -514,19 +541,19 @@ object introducePi2Cut {
       }
     }
 
-    // println( "Number of non-tautological leaves" )
-    // println( dNTAList.length )
-    // println( "Number of unified literals" )
-    // println( unifiedLiterals.size )
-    // numberOfAllowedClauses match {
-    //   case Some( t ) => {
-    //     println( "Number of allowed clauses" )
-    //     println( t )
-    //   }
-    //   case None => println( "No 'allowed clauses' were computed" )
-    // }
-    // println( "Number of checked Formulas" )
-    // println( numberOfCheckedFormulas )
+     println( "Number of non-tautological leaves" )
+     println( dNTAList.length )
+     println( "Number of unified literals" )
+     println( unifiedLiterals.size )
+     numberOfAllowedClauses match {
+       case Some( t ) => {
+         println( "Number of allowed clauses" )
+         println( t )
+       }
+       case None => println( "No 'allowed clauses' were computed" )
+     }
+     println( "Number of checked Formulas" )
+     println( numberOfCheckedFormulas )
 
     if ( !seHs.noSolutionHasBeenFound ) {
       ( seHs.balancedSolution, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
