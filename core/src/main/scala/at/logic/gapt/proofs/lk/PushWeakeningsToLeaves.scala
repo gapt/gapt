@@ -2,7 +2,6 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.{ Formula, Polarity }
 
-
 /**
  * Created by David Cerna on 01.03.17.
  * Used for the implementation of ACNF top transformation
