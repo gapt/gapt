@@ -2,10 +2,13 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.{ Formula, Polarity }
 
+
 /**
- * Created by cernadavid1 on 01.03.17.
+ * Created by David Cerna on 01.03.17.
+ * Used for the implementation of ACNF top transformation
+ *
  */
-object PushWeakeningToLeaves {
+object PushWeakeningsToLeaves {
   /**
    * pushes all weakening rules to the leaves of the proof tree and adds contractions to duplications
    *
@@ -70,10 +73,10 @@ object PushWeakeningToLeaves {
       ExistsSkLeftRule( apply( subProof ), skTerm, skDef )
 
     case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( apply( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityLeftRule( apply( subProof ), proof.auxFormulas.head.head, proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case EqualityRightRule( subProof, _, _, _ ) =>
-      EqualityRightRule( apply( subProof ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityRightRule( apply( subProof ), proof.auxFormulas.head.head, proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       CutRule( apply( leftSubProof ), leftSubProof.endSequent( aux1 ), apply( rightSubProof ), rightSubProof.endSequent( aux2 ) )
@@ -158,10 +161,10 @@ object PushWeakeningToLeaves {
       ExistsSkLeftRule( pushWeakeningToLeaves( subProof, side, formula ), skTerm, skDef )
 
     case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityLeftRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head.head, proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case EqualityRightRule( subProof, _, _, _ ) =>
-      EqualityRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityRightRule( pushWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head.head, proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val part = CutRule( pushWeakeningToLeaves( leftSubProof, side, formula ), leftSubProof.endSequent( aux1 ), pushWeakeningToLeaves( rightSubProof, side, formula ), rightSubProof.endSequent( aux2 ) )
