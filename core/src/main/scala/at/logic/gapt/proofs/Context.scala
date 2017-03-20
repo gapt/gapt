@@ -263,14 +263,14 @@ object Context {
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
   case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
-    def +( name: String, linkpression: Expr, linkquent: HOLSequent ) = copy( names + ( ( name, ( linkpression, linkquent ) ) ) )
+    def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
   }
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
 
   case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
-    def +( name: String, linkpression: Expr, linkproof: LKProof ) =
-      copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( linkpression, linkproof ) ) ) ) ) )
+    def +( name: String, referencedExpression: Expr,  referencedProof: LKProof ) =
+      copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( referencedExpression, referencedProof ) ) ) ) ) )
 
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
@@ -403,15 +403,15 @@ object Context {
     }
   }
 
-  case class ProofDefinitionDeclaration( lhs: Expr, linkProof: LKProof ) extends Update {
+  case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
-      linkProof.endSequent.foreach( ctx.check( _ ) )
+      referencedProof.endSequent.foreach( ctx.check( _ ) )
       val Apps( at.logic.gapt.expr.Const( c, t ), vs ) = lhs
       vs.foreach( ctx.check( _ ) )
       require( ctx.get[ProofNames].names.values.exists {
-        case ( name, linkq ) => syntacticMatching( name, lhs ).isDefined
+        case ( name, _ ) => syntacticMatching( name, lhs ).isDefined
       } )
-      ctx.state.update[ProofDefinitions]( _ + ( c, lhs, linkProof ) )
+      ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
     }
   }
 }

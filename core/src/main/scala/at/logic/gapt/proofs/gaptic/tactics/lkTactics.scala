@@ -14,9 +14,9 @@ import at.logic.gapt.proofs.lk._
  */
 case class ProofLinkTactic( proofName: String )( implicit ctx: Context ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = ctx.get[ProofNames].names.get( proofName ) match {
-    case Some( ( term, linkEs ) ) => clauseSubsumption( linkEs, goal.conclusion ) match {
-      case Some( sub ) => Right( (), ProofLink( sub( term ), sub( linkEs ) ) )
-      case None        => Left( TacticalFailure( this, "Mismatch between  goal " + goal.toString + " and  Linkquent " + linkEs.toString ) )
+    case Some( ( term, refSeq ) ) => clauseSubsumption( refSeq, goal.conclusion ) match {
+      case Some( sub ) => Right( (), ProofLink( sub( term ), sub( refSeq ) ) )
+      case None        => Left( TacticalFailure( this, "Mismatch between  goal " + goal.toString + " and  Referenced Sequent " + refSeq.toString ) )
     }
     case None => Left( TacticalFailure( this, "Proof " + proofName + " not defined in context" ) )
   }
