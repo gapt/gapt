@@ -176,6 +176,10 @@ object Eigenvariable {
   }
 }
 
+case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula] ) extends InitialSequent {
+  override def conclusion = referencedSequent
+}
+
 /**
  * An LKProof consisting of a single sequent:
  * <pre>
