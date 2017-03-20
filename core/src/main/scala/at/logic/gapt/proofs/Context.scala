@@ -5,6 +5,7 @@ import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
 import Context._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.lk.LKProof
 
 import scala.reflect.ClassTag
 
