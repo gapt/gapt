@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ SequentIndex }
 import ReductiveCutElimination._
 import at.logic.gapt.expr.hol.isAtom
+
 import scala.collection.mutable
 
 /**
@@ -19,7 +20,7 @@ object ReductiveCutElimination {
    * have been eliminated.
    *
    * @param proof The proof to subject to cut-elimination or restructuring.
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+   * @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
    * default value is on, i.e. clean the structural rules
    * @return A proof.
    */
@@ -30,7 +31,7 @@ object ReductiveCutElimination {
    * Reduces proof to ACNF using reductive cut elimination
    *
    * @param proof The proof to subject to cut-elimination or restructuring.
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+   * @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
    * default value is on, i.e. clean the structural rules
    * @return A proof.
    */
@@ -41,7 +42,7 @@ object ReductiveCutElimination {
    * Reduces proof to ACNF top using reductive cut elimination
    *
    * @param proof The proof to subject to cut-elimination or restructuring.
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
+   * @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
    * default value is on, i.e. clean the structural rules
    * @return A proof.
    */
@@ -60,10 +61,10 @@ object ReductiveCutElimination {
   }
 
   /**
-   * This method checks whether a proof is ACNF
+   * This method checks whether a proof is in ACNF
    *
-   * @param proof The proof to check for ACNF.
-   * @return True if proof is ACNF  False otherwise.
+   * @param proof The proof to check for in ACNF.
+   * @return True if proof is in ACNF, False otherwise.
    */
   def isACNF( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
@@ -76,7 +77,7 @@ object ReductiveCutElimination {
    * This method checks whether a proof is in ACNF top
    *
    * @param proof The proof to check for in ACNF top.
-   * @return True if proof is in ACNF top,  False otherwise.
+   * @return True if proof is in ACNF,  False otherwise.
    */
   def isACNFTop( proof: LKProof ): Boolean = proof match {
     case InitialSequent( _ ) => true
@@ -106,45 +107,39 @@ object ReductiveCutElimination {
   }
 }
 
-/**
- * This methods implements a version of Gentzen's cut-elimination
- * proof parameterized by a strategy given by pred_cut and
- * pred_done.
- *
- * The method traverses an LKProof recursively from the bottom
- * up. When it reaches a cut, the method calls pred_cut(global, sub),
- * where global is complete proof under consideration, while sub
- * is the subproof of global ending in the cut. If this call returns
- * true, the cut is reduced using the usual Gentzen cut-elimination
- * rules. If the call returns false, the traversion continues.
- *
- * After every application of a reduction, pred_done(global) is called.
- * If it returns true, the algorithm terminates, returning the current proof.
- * If it returns false, the algorithm continues to traverse the proof.
- *
- * This means that pred_cut and pred_done allow the definition of a (not necessarily
- * terminating!) cut-elimination strategy. A standard implementation (reducing
- * left-uppermost cuts until the proof is cut-free) is provided by another
- * apply method in this class.
- */
 class ReductiveCutElimination {
   val steps = mutable.Buffer[LKProof]()
   var recordSteps: Boolean = false
 
   /**
-   * This apply method is used to either implement the
-   * standard gentzen method or to run the gentzen method without
-   * atomic cut elimination
-   * it is also possible to turn off cleaning of structural rules
+   * This methods implements a version of Gentzen's cut-elimination
+   * proof parameterized by a strategy given by pred_cut and
+   * pred_done.
+   *
+   * The method traverses an LKProof recursively from the bottom
+   * up. When it reaches a cut, the method calls pred_cut(global, sub),
+   * where global is complete proof under consideration, while sub
+   * is the subproof of global ending in the cut. If this call returns
+   * true, the cut is reduced using the usual Gentzen cut-elimination
+   * rules. If the call returns false, the traversion continues.
+   *
+   * After every application of a reduction, pred_done(global) is called.
+   * If it returns true, the algorithm terminates, returning the current proof.
+   * If it returns false, the algorithm continues to traverse the proof.
+   *
+   * This means that pred_cut and pred_done allow the definition of a (not necessarily
+   * terminating!) cut-elimination strategy. A standard implementation (reducing
+   * left-uppermost cuts until the proof is cut-free) is provided by another
+   * apply method in this class.
    *
    * @param proof The proof to subject to cut-elimination.
    * @param pred_done A predicate deciding when to terminate the algorithm.
    * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
    * when traversing the proof.
-   * @param reduce  A function define how cut should be reduced
-   *  @param cleanStructRules Tells the algorithm whether or not to clean the structural rules
-   * default value is on, i.e. clean the structural rules
-   *
+   * @param reduce  A function defining how cut should be reduced
+   * @param cleanStructRules Tells the algorithm whether or not to clean
+   * the structural rules. The default value is on, i.e., clean the structural
+   * rules
    *
    * @return The proof as it is after pred_done returns true.
    */
@@ -222,7 +217,7 @@ class ReductiveCutElimination {
    * @return The cut-free proof.
    */
   def eliminateToACNFTopByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof = {
-    val proof2 = PushWeakeningsToLeaves( proof )
+    val proof2 = PushWeakeningToLeaves( proof )
     apply( proof2, { pr => isACNFTop( pr ) }, { ( p, cut ) =>
       cut match {
         case CutRule( lsb, l, rsb, r ) =>
