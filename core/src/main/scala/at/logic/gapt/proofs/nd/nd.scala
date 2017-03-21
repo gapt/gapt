@@ -323,7 +323,7 @@ object ContractionRule extends ConvenienceConstructor( "ContractionRule" ) {
  *     A :- A
  * </pre>
  *
- * @param A The atom A.
+ * @param A The formula A.
  */
 case class LogicalAxiom( A: HOLFormula ) extends InitialSequent {
   override def name = "ax"
@@ -1043,11 +1043,97 @@ object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
  *    --------th
  *      :- A
  * </pre>
+ *
  * @param mainFormula The axiom A.
  */
 case class TheoryAxiom( mainFormula: HOLFormula ) extends InitialSequent {
   def conclusion = NDSequent( Seq(), mainFormula )
   override def name = "th"
+}
+
+/**
+ * An NDProof ending with elimination of equality.
+ * <pre>
+ *       (π1)         (π2)
+ *    Γ :- s = t    Π :- A[x := s]
+ *   ------------------------------ eq:e
+ *          Γ,Π :- A[x := t]
+ *
+ * </pre>
+ *
+ * @param leftSubProof The subproof π1.
+ * @param rightSubProof The subproof π2.
+ * @param formulaA The formula A
+ * @param variablex The variable x
+ */
+case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, formulaA: HOLFormula, variablex: FOLVar )
+    extends BinaryNDProof with CommonRule {
+
+  val eqFormula = leftPremise( Suc( 0 ) )
+  val ( s, t ) = eqFormula match {
+    case Eq( s, t ) => ( s, t )
+    case _          => throw NDRuleCreationException( s"Formula $eqFormula is not an equation." )
+  }
+
+  val substitution1 = Substitution( variablex, s )
+  val substitution2 = Substitution( variablex, t )
+
+  val auxFormula = rightPremise( Suc( 0 ) )
+
+  val mainFormula = if ( auxFormula == substitution1.apply( formulaA ) ) substitution2.apply( formulaA )
+  else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
+
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
+
+  override def name = "eq:e"
+
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+object EqualityElimRule extends ConvenienceConstructor( "EqualityElimRule" ) {
+
+  /**
+   * Convenience constructor for eq:e.
+   * Given only the subproofs, it will attempt to create an inference with this.
+   *
+   * @param leftSubProof The left subproof.
+   * @param rightSubProof The right subproof.
+   * @return
+   */
+  def apply( leftSubProof: NDProof, rightSubProof: NDProof ): EqualityElimRule = {
+
+    val eqFormula = leftSubProof.conclusion( Suc( 0 ) )
+    val auxFormula = rightSubProof.conclusion( Suc( 0 ) )
+
+    val ( s, _ ) = eqFormula match {
+      case Eq( s, t ) => ( s, t )
+      case _          => throw NDRuleCreationException( s"Formula $eqFormula is not an equation." )
+    }
+
+    val repContext = replacementContext.abstractTerm( auxFormula )( s )
+
+    val formulaA = repContext.term.asInstanceOf[HOLFormula]
+    val variablex = repContext.variable.asInstanceOf[FOLVar]
+
+    new EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex )
+  }
+}
+
+/**
+ * An NDProof that consist of the introduction of an equality.
+ * <pre>
+ *   ---------- eq:i
+ *    :- t = t
+ *
+ * </pre>
+ *
+ * @param t The term t.
+ */
+case class EqualityIntroRule( t: FOLTerm ) extends InitialSequent {
+
+  override def name = "eq:i"
+  override def conclusion = NDSequent( Seq(), Eq( t, t ) )
+  def mainFormula = Eq( t, t )
 }
 
 /**

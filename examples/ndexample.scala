@@ -165,3 +165,35 @@ object theoryAxiom extends Script {
   val a1 = TheoryAxiom( fof"!x x = x" )
   println( a1 )
 }
+
+object equalityElim extends Script {
+  val a1 = LogicalAxiom( fof"!x0!x1 P(x2)" )
+  val a2 = LogicalAxiom( fof"x2=x3" )
+  val a3 = EqualityElimRule( a2, a1 )
+  println( a3 )
+  val a4 = EqualityElimRule( a2, a1, fof"!x0!x1 P(x2)", fov"x2" )
+  println( a4 )
+
+  val b1 = LogicalAxiom( fof"!x0!x1 P(x1)" )
+  val b2 = LogicalAxiom( fof"x1=x2" )
+  val b4 = EqualityElimRule( b2, b1, fof"!x0!x1 P(x1)", fov"x1" )
+  println( b4 )
+  // val b5 = EqualityElimRule( b2, b1, fof"!x0!x1 P(x3)", fov"x3" )
+  // println(b5)
+  // val b6 = EqualityElimRule( b2, b1 )
+  // println(b6)
+
+  val c1 = LogicalAxiom( fof"!x0!x1 P(x2)" )
+  val c2 = LogicalAxiom( fof"x2=x1" )
+  val c3 = EqualityElimRule( c2, c1 )
+  println( c3 )
+  val c4 = EqualityElimRule( c2, c1, fof"!x0!x1 P(x2)", fov"x2" )
+  println( c4 )
+}
+
+object equalityIntro extends Script {
+  val a1 = EqualityIntroRule( fov"x" )
+  println( a1 )
+  val a2 = EqualityIntroRule( foc"c" )
+  println( a2 )
+}
