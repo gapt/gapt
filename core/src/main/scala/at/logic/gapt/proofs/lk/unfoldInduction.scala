@@ -34,25 +34,7 @@ object unfoldInduction {
         CutRule( argumentProof, mainProof, argumentProof.endSequent.succedent.last )
       }
     )
-
-    eliminateRedundantFormulas( proofWithRedundancy, proof.endSequent )
-  }
-
-  /**
-   * Eliminates redundant formulas by applying contractions.
-   *
-   * @param proof The proof from which the redundant formulas are to be eliminated.
-   * @param sequent The proof's end-sequent should contain exactly the formulas of this sequent.
-   * @return A proof of the given sequent that is obtained from proof by applying left and right
-   *         contractions.
-   */
-  private def eliminateRedundantFormulas( proof: LKProof, sequent: Sequent[Formula] ): LKProof = {
-    val contractedAntecedentProof = sequent.antecedent.foldRight( proof ) { ( formula, contractedProof ) =>
-      ContractionLeftMacroRule( contractedProof, formula, sequent.antecedent.filter( _ == formula ).size )
-    }
-    sequent.succedent.foldRight( contractedAntecedentProof ) { ( formula, contractedProof ) =>
-      ContractionRightMacroRule( contractedProof, formula, sequent.succedent.filter( _ == formula ).size )
-    }
+    ContractionMacroRule(proofWithRedundancy, proof.endSequent, false)
   }
 
   /**
