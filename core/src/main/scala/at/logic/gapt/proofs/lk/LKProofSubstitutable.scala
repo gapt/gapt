@@ -212,7 +212,7 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
         ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
+          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
     }
 
   override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -235,7 +235,7 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
         ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
+          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
     }
 
   override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =

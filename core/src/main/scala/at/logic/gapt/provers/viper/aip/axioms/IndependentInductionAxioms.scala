@@ -2,7 +2,7 @@ package at.logic.gapt.provers.viper.aip.axioms
 
 import at.logic.gapt.expr.{ All, Formula, Var, freeVariables }
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
@@ -33,7 +33,7 @@ case class IndependentInductionAxioms(
    * @param sequent The sequent for which the induction axioms are generated.
    * @return Either a list of induction axioms, or a list of error-messages if the axioms could not be created
    */
-  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
     for {
       formula <- fsel( sequent )
       variables = vsel( formula, ctx )
@@ -68,7 +68,7 @@ case class IndependentInductionAxioms(
    * @return An independent induction axiom.
    */
   private def inductionAxiom(
-    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
     val auxiliaryVariables = inductionVariables filter { _ != variable }
     val inductionFormula = inductionQuantifierForm( inductionVariables, formula )
     StandardInductionAxioms( variable, inductionFormula ) map { axiom =>

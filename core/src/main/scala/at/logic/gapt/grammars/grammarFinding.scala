@@ -70,7 +70,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
   def valueOfNonTerminal( n: Var, value: Expr ) = Atom( "ntval", n, value )
 
   def formula: Formula = {
-    val notASubTerm = rename( FOLConst( "⊥" ), constants( t ) )
+    val notASubTerm = rename( FOLConst( "∞" ), constants( t ) )
 
     // we try not generate the formulas for all subterms, but only for those which are needed
     val possibleAssignments = mutable.Set[( Int, List[Expr] )]()

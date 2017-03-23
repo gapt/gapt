@@ -118,6 +118,11 @@ object Replaceable {
       def names( obj: Map[I1, I2] ) = containedNames( obj.toSeq )
     }
 
+  implicit object unitReplaceable extends ClosedUnderReplacement[Unit] {
+    override def replace( obj: Unit, p: PartialFunction[Expr, Expr] ): Unit = ()
+    override def names( obj: Unit ): Set[VarOrConst] = Set()
+  }
+
 }
 
 /**

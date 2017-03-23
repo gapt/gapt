@@ -99,13 +99,18 @@ object evalCodeSnippetsInLatex {
   def processTacticsListing( listing: Seq[String], optionString: String, interp: ILoop ): Unit = {
     val options = if ( optionString == null ) Seq() else optionString.split( "," ).toSeq
 
+    val bare = options.contains( "bare" )
+    val nosig = bare || options.contains( "nosig" )
+
     val code = new StringBuilder
-    code ++= "val () = { new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
+    code ++= "val () = {\n"
+    if ( !bare ) code ++= "new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
     code ++= "import at.logic.gapt.proofs.gaptic._\n"
-    if ( !options.contains( "nosig" ) )
+    if ( !nosig )
       code ++= "implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature\n"
     for ( line <- listing ) { code ++= line; code += '\n' }
-    code ++= "}; () }"
+    if ( !bare ) code ++= "}; "
+    code ++= "() }"
 
     println( """\begin{tacticslisting}""" +
       ( if ( options.isEmpty ) "" else s"[${options.mkString( "," )}]" ) )

@@ -4,7 +4,7 @@ import at.logic.gapt.expr.{ Formula, Var }
 import at.logic.gapt.formats.tip.TipProblem
 import at.logic.gapt.proofs.gaptic.{ escargot => escargotTactic, _ }
 import at.logic.gapt.proofs.lk.{ CutRule, LKProof }
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.aip.axioms.{ Axiom, AxiomFactory, SequentialInductionAxioms }
@@ -26,7 +26,7 @@ object AnalyticInductionProver {
    *         on the formula `A[x/α]` and variable `α` is returned, otherwise the method does either not terminate or
    *         throws an exception.
    */
-  def singleInduction( sequent: Sequent[( String, Formula )], variable: Var )( implicit ctx: Context ): LKProof = {
+  def singleInduction( sequent: Sequent[( String, Formula )], variable: Var )( implicit ctx: MutableContext ): LKProof = {
     var state = ProofState( sequent )
     state += allR( variable );
     state += induction( on = variable )
@@ -59,7 +59,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return true if the sequent is provable with analytic induction, otherwise either false or the method does
    *         not terminate.
    */
-  def isValid( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
+  def isValid( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) =
     options.prover.isValid( inductiveSequent( sequent ) )
 
   /**
@@ -71,7 +71,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         not terminate.
    */
   def lkProof(
-    sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) = options.prover.getLKProof( inductiveSequent( sequent ) )
+    sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) = options.prover.getLKProof( inductiveSequent( sequent ) )
 
   /**
    * Proves a TIP problem by using induction.
@@ -81,7 +81,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         method does not terminate.
    */
   def proveTipProblem( problem: TipProblem ): Option[LKProof] =
-    inductiveLKProof( tipProblemToSequent( problem )._1 )( problem.ctx )
+    inductiveLKProof( tipProblemToSequent( problem )._1 )( problem.ctx.newMutable )
 
   /**
    * Proves the given sequent by using induction.
@@ -91,7 +91,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return An inductive proof the sequent is provable with the prover's induction schemes, otherwise None or
    *         the method does not terminate.
    */
-  def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): Option[LKProof] = {
+  def inductiveLKProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): Option[LKProof] = {
     val axioms = validate( options.axiomFactory( sequent ) )
     val prover = options.prover
     for {
@@ -120,7 +120,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A resolution proof if the sequent is provable with analytic induction, otherwise either None or the
    *         method does not terminate.
    */
-  def resolutionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
+  def resolutionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) =
     options.prover.getResolutionProof( inductiveSequent( sequent ) )
 
   /**
@@ -131,7 +131,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return An expansion proof if the sequent is provable with analytic induction, otherwise either None or the
    *         method does not terminate.
    */
-  def expansionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
+  def expansionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ) =
     options.prover.getExpansionProof( inductiveSequent( sequent ) )
 
   /**
@@ -154,7 +154,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         quantified variables.
    */
   private def inductiveSequent(
-    sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): HOLSequent =
+    sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): HOLSequent =
     validate( prepareSequent( sequent ) )
 
   /**
@@ -167,7 +167,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         Otherwise a string describing the error is returned.
    */
   private def prepareSequent(
-    sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
+    sequent: Sequent[( String, Formula )] )( implicit ctx: MutableContext ): ThrowsError[HOLSequent] = {
     for {
       axioms <- options.axiomFactory( sequent )
     } yield {

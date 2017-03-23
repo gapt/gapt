@@ -2,18 +2,19 @@ package at.logic.gapt.provers.verit
 
 import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.formats.verit._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.utils.{ ExternalProgram, runProcess }
+import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess }
 import java.io._
 
 import at.logic.gapt.provers._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.lk.LKProof
 
 object VeriT extends VeriT
 class VeriT extends OneShotProver with ExternalProgram {
 
-  override def isValid( s: HOLSequent ): Boolean = {
+  override def isValid( s: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = {
 
     // Generate the input file for veriT
     val veritInput = SmtLibExporter( groundFreeVariables( s )._1 )._1
@@ -40,7 +41,7 @@ class VeriT extends OneShotProver with ExternalProgram {
    * taking the quantified equality axioms from the proof returned by veriT and
    * merging them with the original end-sequent.
    */
-  override def getExpansionProof( s: HOLSequent ): Option[ExpansionProof] = withGroundVariables2( s ) { s =>
+  override def getExpansionProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = withGroundVariables2( s ) { s =>
     val ( smtBenchmark, _, renaming ) = SmtLibExporter( s )
     val output = runProcess( Seq( "veriT", "--proof=-", "--proof-version=1" ), smtBenchmark )
 
@@ -62,7 +63,7 @@ class VeriT extends OneShotProver with ExternalProgram {
     }
   }
 
-  override def getLKProof( s: HOLSequent ) = getExpansionProof( s ) map { ep =>
+  override def getLKProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = getExpansionProof( s ) map { ep =>
     val Right( p ) = PropositionalExpansionProofToLK( ep )
     p
   }

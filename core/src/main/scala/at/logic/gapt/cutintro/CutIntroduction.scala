@@ -16,7 +16,7 @@ import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.{ Logger, metrics }
+import at.logic.gapt.utils.{ Logger, Maybe, metrics }
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[Expr] ): Option[VTRATG]
@@ -172,15 +172,15 @@ object CutIntroduction extends Logger {
           else new Escargot( splitting = true, equality = true, propositional = true )
 
         override def runSession[A]( program: Session[A] ) = smtSolver.runSession( program )
-        override def isValid( s: HOLSequent ): Boolean = smtSolver isValid s
-        override def getLKProof( s: HOLSequent ) = EquationalLKProver getLKProof s
+        override def isValid( s: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = smtSolver isValid s
+        override def getLKProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ) = EquationalLKProver getLKProof s
       }
     }
     case object PureFOL extends BackgroundTheory {
       val hasEquality = false
       object prover extends OneShotProver {
-        def getLKProof( seq: HOLSequent ) = LKProver getLKProof seq
-        override def isValid( seq: HOLSequent ) = Sat4j isValid seq
+        override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ) = LKProver getLKProof seq
+        override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ) = Sat4j isValid seq
       }
     }
 

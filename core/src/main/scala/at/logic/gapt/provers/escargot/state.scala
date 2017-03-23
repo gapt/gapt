@@ -3,7 +3,7 @@ package at.logic.gapt.provers.escargot.impl
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.{ LPO, TermOrdering }
 import at.logic.gapt.provers.sat.Sat4j
@@ -26,13 +26,13 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
 
-  override def toString = s"[$index] ${proof.stringifiedConclusion}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
+  override def toString = s"[$index] ${proof.stringifiedConclusion( state.ctx )}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
 }
 
-class EscargotState extends Logger {
+class EscargotState( val ctx: MutableContext ) extends Logger {
   var termOrdering: TermOrdering = LPO()
-  var nameGen = new NameGenerator( Seq() )
+  var nameGen = ctx.newNameGenerator
   var preprocessingRules = Seq[PreprocessingRule]()
   var inferences = Seq[InferenceRule]()
 

@@ -4,14 +4,21 @@ import at.logic.gapt.examples.{ Pi2Pigeonhole, tape, tapeUrban }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.grammars.RecursionScheme
+import at.logic.gapt.proofs.Context.Sort
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
 class ExtractRecSchemTest extends Specification with SatMatchers {
   "simple" in {
+    implicit val ctx = MutableContext.default()
+    ctx += Sort( "i" )
+    ctx += hoc"P: i>o"
+    ctx += hoc"c: i"
+    ctx += hoc"f: i>i"
+
     val p = Lemma(
       ( "base" -> hof"P c" ) +:
         ( "step" -> hof"!x (P x -> P (f x))" ) +:
@@ -70,7 +77,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "numeral induction" in {
-    implicit var ctx = Context()
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "Nat", hoc"Zero: Nat", hoc"Suc: Nat>Nat" )
     ctx += Context.Sort( "Witness" )
     ctx += hoc"p: Nat>Witness>o"

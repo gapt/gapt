@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
-import at.logic.gapt.proofs.{ Context, HOLSequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
@@ -147,7 +147,7 @@ object ViperOptions {
 
 object Viper {
 
-  def getStrategies( opts: ViperOptions )( implicit ctx: Context ): List[( Duration, Tactical[_] )] =
+  def getStrategies( opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactical[_] )] =
     opts.mode match {
       case "untrusted_funind" =>
         List( Duration.Inf -> AnalyticInductionTactic( UntrustedFunctionalInductionAxioms, Escargot )
@@ -180,22 +180,22 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent )( problem.ctx )
+    apply( problem.toSequent )( problem.ctx.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
     apply( problem, ViperOptions( verbosity = verbosity ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options )( problem.ctx )
+    apply( problem.toSequent, options )( problem.ctx.newMutable )
 
-  def apply( sequent: HOLSequent )( implicit ctx: Context ): Option[LKProof] =
+  def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
 
-  def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: Context ): Option[LKProof] =
+  def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, opts.verbosity, getStrategies( opts ) )
 
   def apply( sequent: HOLSequent, verbosity: Int,
-             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: Context ): Option[LKProof] = {
+             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: MutableContext ): Option[LKProof] = {
     if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
     if ( verbosity >= 4 ) Escargot.makeVerbose()
 
@@ -239,14 +239,12 @@ object Viper {
     Logger.setConsolePattern( "%message%n" )
 
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
-    implicit val ctx = problem.ctx
+    implicit val ctx: MutableContext = problem.ctx.newMutable
 
-    apply( problem.toSequent, opts )( problem.ctx ) match {
+    apply( problem.toSequent, opts ) match {
       case Some( proof ) =>
-        if ( false ) { // this doesn't work with Skolem inferences atm
-          ctx check proof
-          require( proof.conclusion isSubsetOf problem.toSequent )
-        }
+        ctx check proof
+        require( proof.conclusion isSubsetOf problem.toSequent )
         println( "proof found" )
         if ( opts.prooftool ) prooftool( proof )
       case None =>

@@ -58,17 +58,7 @@ object Checkable {
       // make sure the end-sequent does not contain Skolem functions
       context.check( p.endSequent )
 
-      var ctx = context
-
-      val skolemFunctions = SkolemFunctions( p.subProofs.collect {
-        case sk: SkolemQuantifierRule =>
-          sk.skolemConst -> sk.skolemDef
-      } )
-      skolemFunctions.orderedDefinitions.reverse.
-        map( Context.SkolemFun.tupled ).foreach( ctx += _ )
-
-      for ( q <- p.subProofs )
-        ctx.check( q.endSequent )
+      val ctx = context
 
       // TODO: definition rules need to be improved to support checking
 
@@ -111,8 +101,7 @@ object Checkable {
     def check( context: Context, ep: ExpansionProof ): Unit = {
       context.check( ep.shallow )
 
-      var ctx = context
-      ep.skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
+      val ctx = context
 
       ep.subProofs.foreach {
         case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
@@ -142,11 +131,6 @@ object Checkable {
     def check( context0: Context, p: ResolutionProof ) = {
       var ctx = context0
 
-      p.skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
-
-      for ( Defn( defConst, defn ) <- p.subProofs )
-        ctx += ( defConst.name, defn )
-
       p.subProofs.collect {
         case AvatarComponent( defn )   => defn
         case AvatarSplit( _, _, defn ) => defn
@@ -155,7 +139,9 @@ object Checkable {
         case AvatarNegNonGroundComp( Const( name, _ ), defn, _, _ ) => Some( name -> defn )
         case AvatarGroundComp( _, _ )                               => None
       }.foreach {
-        case ( name, defn ) => ctx += ( name, defn )
+        case ( name, defn ) =>
+          if ( ctx.constant( name ).isEmpty )
+            ctx += ( name, defn )
       }
 
       p.subProofs.foreach {

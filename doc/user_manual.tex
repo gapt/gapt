@@ -741,18 +741,15 @@ or have it automatically eliminate all definitions in the current context. Some 
 The typical way to declare a context is by starting with a default value and adding elements to it.
 The \cli{Context.default} object contains only the sort \cli{o} (truth values) and the fundamental logical
 symbols:
-\begin{tacticslisting}[nosig]
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-
- object ContextExample {
-   implicit var ctx = Context.default
-   ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
-   ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
-   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
-   ctx += "1" -> le" s 0" //Adding a definition
-   ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
- }
+\begin{tacticslisting}[bare]
+object ContextExample {
+  implicit val ctx = MutableContext.default()
+  ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
+  ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
+  ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
+  ctx += "1" -> le" s 0" //Adding a definition
+  ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
+}
 \end{tacticslisting}
 \begin{tacticsoutput}
 \end{tacticsoutput}
@@ -1570,13 +1567,13 @@ gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
 res38: at.logic.gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
-[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
-[p6] a = b, f(a) = a ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx a = f(f(x))))
-[p5] a = b, f(a) = a ⊢ a = f(f(a))    (WeakeningLeftRule(p4, a = b))
-[p4] f(a) = a ⊢ a = f(f(a))    (EqualityRightRule(p3, Ant(0), Suc(0), λx a = f(x)))
-[p3] f(a) = a ⊢ a = f(a)    (EqualityRightRule(p2, Ant(0), Suc(0), λx a = x))
-[p2] f(a) = a ⊢ a = a    (WeakeningLeftRule(p1, f(a) = a))
-[p1]  ⊢ a = a    (ReflexivityAxiom(a))
+[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(x) = b))
+[p6] a = b, f(b) = b ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx x = f(f(b))))
+[p5] a = b, f(b) = b ⊢ b = f(f(b))    (WeakeningLeftRule(p4, a = b))
+[p4] f(b) = b ⊢ b = f(f(b))    (EqualityRightRule(p3, Ant(0), Suc(0), λx b = f(x)))
+[p3] f(b) = b ⊢ b = f(b)    (EqualityRightRule(p2, Ant(0), Suc(0), λx b = x))
+[p2] f(b) = b ⊢ b = b    (WeakeningLeftRule(p1, f(b) = b))
+[p1]  ⊢ b = b    (ReflexivityAxiom(b))
 
 \end{clilisting}
 
@@ -2027,21 +2024,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(x_1))
-
-x_0 → s(x_1)
+x_0 → s(s(s(x_1)))
 
 x_0 → x_1
 
-x_1 → s(s(s(x_2)))
+x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
 
-x_1 → x_2
+x_1 → s(s(s(s(s(s(s(x_2)))))))
+
+x_1 → s(x_2)
+
+x_2 → 0
 
 x_2 → s(0)
 
-x_2 → s(s(s(s(s(s(s(0)))))))
-
-x_2 → s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))
+x_2 → s(s(0))
 
 gapt> lang.toSet subsetOf grammar.language
 res51: Boolean = true
@@ -2055,17 +2052,17 @@ res52: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(x_1))
-
-x_0 → s(x_1)
+x_0 → s(s(s(x_1)))
 
 x_0 → x_1
 
-x_1 → s(s(s(x_2)))
+x_1 → s(x_2)
 
-x_1 → x_2
+x_2 → 0
 
 x_2 → s(0)
+
+x_2 → s(s(0))
 
 \end{clilisting}
 

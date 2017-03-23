@@ -101,6 +101,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     propositional,
     structural = true,
     bidirectionalDefs = false,
+    ctx = state.ctx,
     nameGen = state.nameGen ) with InferenceRule {
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] ) =
       if ( given.clause.forall( _.isInstanceOf[Atom] ) ) ( Set(), Set() )

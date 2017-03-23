@@ -1,14 +1,15 @@
 package at.logic.gapt.provers.sat
 
 import at.logic.gapt.expr.hol.fastStructuralCNF
-import at.logic.gapt.expr.{ HOLAtomConst, Formula }
+import at.logic.gapt.expr.{ Formula, HOLAtomConst }
 import at.logic.gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
 import at.logic.gapt.proofs.drup.{ DrupProof, DrupToResolutionProof }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.provers.{ OneShotProver, ResolutionProver }
+import at.logic.gapt.utils.Maybe
 
 trait SATSolver extends OneShotProver {
 
@@ -34,13 +35,13 @@ trait SATSolver extends OneShotProver {
     }
   }
 
-  def getLKProof( seq: HOLSequent ): Option[LKProof] = throw new UnsupportedOperationException
-  override def isValid( seq: HOLSequent ): Boolean = solve( seq.toNegConjunction ).isEmpty
+  def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = throw new UnsupportedOperationException
+  override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = solve( seq.toNegConjunction ).isEmpty
 
   /**
    * Checks whether a set of clauses is propositionally unsatisfiable.
    */
-  override def isUnsat( cnf: Iterable[HOLClause] ): Boolean = isValid( cnf ++: Sequent() map { _.toDisjunction } )
+  override def isUnsat( cnf: Iterable[HOLClause] )( implicit ctx: Maybe[Context] ): Boolean = isValid( cnf ++: Sequent() map { _.toDisjunction } )
 }
 
 trait DrupSolver extends SATSolver with ResolutionProver {
@@ -58,9 +59,9 @@ trait DrupSolver extends SATSolver with ResolutionProver {
     }
   }
 
-  override def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
+  override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     getDrupProof( cnf ) map { DrupToResolutionProof( _ ) }
 
-  override def isValid( seq: HOLSequent ): Boolean = super[SATSolver].isValid( seq )
-  override def getLKProof( sequent: HOLSequent ): Option[LKProof] = super[ResolutionProver].getLKProof( sequent )
+  override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = super[SATSolver].isValid( seq )
+  override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = super[ResolutionProver].getLKProof( sequent )
 }

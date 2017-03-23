@@ -3,13 +3,14 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.OneShotProver
+import at.logic.gapt.utils.Maybe
 
 object LKProver extends OneShotProver {
-  def getLKProof( seq: HOLSequent ): Option[LKProof] = solvePropositional( seq ).toOption
+  def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = solvePropositional( seq ).toOption
 }
 
 object EquationalLKProver extends OneShotProver {
-  def getLKProof( seq: HOLSequent ): Option[LKProof] = solveQuasiPropositional( seq ).toOption
+  def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = solveQuasiPropositional( seq ).toOption
 }
 
 object AtomicExpansion {

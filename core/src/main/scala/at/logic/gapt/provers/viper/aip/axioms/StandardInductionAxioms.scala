@@ -2,14 +2,14 @@ package at.logic.gapt.provers.viper.aip.axioms
 import at.logic.gapt.expr.{ Formula, Substitution, Var, Const => Con }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
 
 object StandardInductionAxioms {
-  def apply( variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+  def apply( variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
     apply( ( _, _ ) => variable :: Nil, ( _ ) => Right( formula ) )( Sequent() ).map( _.head )
   }
 }
@@ -34,7 +34,7 @@ case class StandardInductionAxioms(
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
     for {
       formula <- formulaSelector( sequent )
       variables = variableSelector( formula, ctx )
