@@ -1,11 +1,11 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic.{ ProofState, _ }
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.gaptic.{ProofState, _}
+import at.logic.gapt.proofs.{Context, Sequent}
 import org.specs2.mutable._
 
-class InductionEliminationOnTreesTest extends Specification {
+class InductionUnfoldingOnTreesTest extends Specification {
 
   def containsInduction( proof: LKProof ): Boolean = proof match {
     case InductionRule( _, _, _ ) => true
@@ -45,11 +45,12 @@ class InductionEliminationOnTreesTest extends Specification {
   )
 
   "resulting proof should not contain induction and prove the same end-sequent" in {
-    val inductionFreeProof = eliminateInduction( inductiveGroundProof )
+    val inductivePart = inductiveGroundProof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]
+    val inductionFreeProof = unfoldInduction( inductivePart )
     if ( containsInduction( inductionFreeProof ) ) {
       failure( "induction was not eliminated" )
     }
-    if ( !inductionFreeProof.endSequent.multiSetEquals( inductiveGroundProof.endSequent ) ) {
+    if ( !inductionFreeProof.endSequent.multiSetEquals( inductivePart.endSequent ) ) {
       failure( "the induction free proof does not prove the same end-sequent" )
     }
     success

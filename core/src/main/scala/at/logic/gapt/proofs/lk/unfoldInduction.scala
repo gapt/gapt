@@ -3,44 +3,16 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr.{ Apps, Expr, Formula, Substitution, Var }
 import at.logic.gapt.proofs.{ Sequent, SequentConnector }
 
-object eliminateInduction extends LKVisitor[Unit] {
-
-  override protected def visitInduction( proof: InductionRule, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val ( indFreeProof, connector ) = recurse( unfoldInductionProof( proof ), () )
-    ( indFreeProof, connector * SequentConnector.guessInjection( indFreeProof.conclusion, proof.conclusion ).inv )
-  }
-
-  /**
-   * Eliminates all occurrences of the induction rule.
-   *
-   * @param proof A regular free-cut free proof of a Σ_1 sequent with ground inductive end-piece. The lowest
-   *              induction inferences in the proof must be applied to ground terms that are in constructor form.
-   * @return A proof of the same end-sequent without any induction inferences.
-   */
-  def apply( proof: LKProof ): LKProof = {
-    apply( proof, () )
-  }
-
-  /**
-   * Eliminates induction and cuts.
-   *
-   * @param proof A regular free-cut free proof of a Σ_1 sequent with ground inductive end-piece. The lowest
-   *              induction inferences in the proof must be applied to ground terms in constructor form.
-   * @return An induction free cut free proof with the same end-sequent as the given proof.
-   */
-  def cutFree( proof: LKProof ): LKProof = {
-    ReductiveCutElimination( this( proof ) )
-  }
+object unfoldInduction {
 
   /**
    * Unfolds an induction induction inference.
    *
    * @param proof A regular proof with an induction inference as its last inference.
-   *              The induction inference must used to derive a formula instantiated by a ground term
-   *              in constructor form.
+   *              The induction must be a ground term in constructor form.
    * @return
    */
-  private def unfoldInductionProof( proof: InductionRule ): LKProof = {
+  def apply( proof: InductionRule ): LKProof = {
     val InductionRule( inductionCases, inductionFormula, inductionTerm ) = proof
     val inductionType = inductionTerm.ty
     val Apps( constructor, arguments ) = inductionTerm
@@ -51,7 +23,7 @@ object eliminateInduction extends LKVisitor[Unit] {
     )
     val argumentProofs = primaryArguments map (
       argument => {
-        unfoldInductionProof( InductionRule( inductionCases, inductionFormula, argument ) )
+        unfoldInduction( InductionRule( inductionCases, inductionFormula, argument ) )
       }
     )
 
