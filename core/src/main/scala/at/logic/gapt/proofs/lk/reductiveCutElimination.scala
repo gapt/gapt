@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.lk.ReductiveCutElimination._
-import at.logic.gapt.proofs.{Context, SequentConnector}
+import at.logic.gapt.proofs.{ Context, SequentConnector }
 
 import scala.collection.mutable
 
@@ -28,13 +28,13 @@ object ReductiveCutElimination {
     new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
 
   /**
-    * Eliminates free cuts.
-    *
-    * @param proof The proof subject to free-cut elimination
-    * @param cleanStructRules If true the structural rules are cleaned
-    * @param ctx Defines constants, inductive types, etc.
-    * @return A free-cut free proof.
-    */
+   * Eliminates free cuts.
+   *
+   * @param proof The proof subject to free-cut elimination
+   * @param cleanStructRules If true the structural rules are cleaned
+   * @param ctx Defines constants, inductive types, etc.
+   * @return A free-cut free proof.
+   */
   def freeCutFree( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
     new ReductiveCutElimination().eliminateInduction( proof, cleanStructRules )
 
@@ -403,16 +403,16 @@ class ReductiveCutElimination {
         CutRule( newLeftProof, leftSubProof.endSequent( aux1 ), newRightProof, rightSubProof.endSequent( aux2 ) )
       }
     case ind @ InductionRule( _, _, _ ) =>
-        ind.copy(
-          cases = ind.cases.map {
-            ic =>
-              val newProof = cutElim( ic.proof, reduce )
-              val connector = SequentConnector.guessInjection( newProof.endSequent, ic.proof.endSequent ).inv
-              val hypIndices = ic.hypotheses.map( connector.child( _ ) )
-              val conclIndex = connector.child( ic.conclusion )
-              ic.copy( hypotheses = hypIndices, conclusion = conclIndex, proof = newProof )
-          }
-        )
+      ind.copy(
+        cases = ind.cases.map {
+          ic =>
+            val newProof = cutElim( ic.proof, reduce )
+            val connector = SequentConnector.guessInjection( newProof.endSequent, ic.proof.endSequent ).inv
+            val hypIndices = ic.hypotheses.map( connector.child( _ ) )
+            val conclIndex = connector.child( ic.conclusion )
+            ic.copy( hypotheses = hypIndices, conclusion = conclIndex, proof = newProof )
+        }
+      )
   }
 }
 
@@ -847,12 +847,12 @@ object rightRankReduction {
 
 object inductionReduction {
   /**
-    * Reduces the complexity with respect to induction rules.
-    * @param cut The cut that is to be reduced.
-    * @param ctx The context of the proof.
-    * @return If the given cut can be reduced w.r.t. some induciton rule, then
-    *         a proof with a lower complexity is returned. Otherwise None is returned.
-    */
+   * Reduces the complexity with respect to induction rules.
+   * @param cut The cut that is to be reduced.
+   * @param ctx The context of the proof.
+   * @return If the given cut can be reduced w.r.t. some induciton rule, then
+   *         a proof with a lower complexity is returned. Otherwise None is returned.
+   */
   def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
     inductionRightReduction( cut ) orElse inductionLeftReduction( cut )
   }
@@ -860,11 +860,11 @@ object inductionReduction {
 
 object inductionRightReduction {
   /**
-    * Reduces the complexity of a cut w.r.t. to an induction inference by
-    * moving the cut over the induction inference.
-    * @param cut The cut that is to be reduced.
-    * @return A reduced proof if the cut is reducible, otherwise None.
-    */
+   * Reduces the complexity of a cut w.r.t. to an induction inference by
+   * moving the cut over the induction inference.
+   * @param cut The cut that is to be reduced.
+   * @return A reduced proof if the cut is reducible, otherwise None.
+   */
   def apply( cut: CutRule ): Option[LKProof] = {
     val CutRule( leftProof, leftCutFormula, rightProof, rightCutFormula ) = cut
     rightProof match {
@@ -889,13 +889,13 @@ object inductionRightReduction {
 
 object inductionLeftReduction {
   /**
-    * Reduces a cut by unfolding an induction inference or by moving
-    * the cut towards the proof's leaves.
-    * @param cut The cut to be reduced.
-    * @param ctx The proof's context.
-    * @return A reduced proof if the given cut is reducible w.r.t to some induction inference,
-    *         otherwise None.
-    */
+   * Reduces a cut by unfolding an induction inference or by moving
+   * the cut towards the proof's leaves.
+   * @param cut The cut to be reduced.
+   * @param ctx The proof's context.
+   * @return A reduced proof if the given cut is reducible w.r.t to some induction inference,
+   *         otherwise None.
+   */
   def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
     val CutRule( leftProof, leftCutFormula, rightProof, _ ) = cut
     leftProof match {
@@ -925,11 +925,11 @@ object inductionLeftReduction {
 
 object isConstructorForm {
   /**
-    * Checks whether a term is in constructor form.
-    * @param term The term that is to be checked.
-    * @param ctx The context which defines inductive types, etc.
-    * @return true if the term is in constructor form, false otherwise.
-    */
+   * Checks whether a term is in constructor form.
+   * @param term The term that is to be checked.
+   * @param ctx The context which defines inductive types, etc.
+   * @return true if the term is in constructor form, false otherwise.
+   */
   def apply( term: Expr )( implicit ctx: Context ): Boolean = {
     val constructors = ctx.getConstructors( term.ty.asInstanceOf[TBase] ).get
     val Apps( head, arguments ) = term
@@ -939,9 +939,9 @@ object isConstructorForm {
 
 object isGround {
   /**
-    * Checks whether an expression is ground.
-    * @param expr The expression that is to be checked.
-    * @return true if the given expression does not contain any free variables, false otherwise.
-    */
+   * Checks whether an expression is ground.
+   * @param expr The expression that is to be checked.
+   * @return true if the given expression does not contain any free variables, false otherwise.
+   */
   def apply( expr: Expr ): Boolean = freeVariables( expr ).isEmpty
 }

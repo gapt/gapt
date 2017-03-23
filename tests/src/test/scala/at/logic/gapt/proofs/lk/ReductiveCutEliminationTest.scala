@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic.{Lemma, allL, andL, axiomLog, cut, impL, insert}
-import at.logic.gapt.proofs.{Ant, Context, Sequent, SequentMatchers, Suc}
+import at.logic.gapt.proofs.gaptic.{ Lemma, allL, andL, axiomLog, cut, impL, insert }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
 import org.specs2.mutable._
 
 class ReductiveCutEliminationTest extends Specification with SequentMatchers {
