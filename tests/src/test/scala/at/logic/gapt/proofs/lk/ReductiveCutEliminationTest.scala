@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ SequentMatchers, Suc, Ant }
+import at.logic.gapt.proofs.gaptic.{Lemma, allL, andL, axiomLog, cut, impL, insert}
+import at.logic.gapt.proofs.{Ant, Context, Sequent, SequentMatchers, Suc}
 import org.specs2.mutable._
 
 class ReductiveCutEliminationTest extends Specification with SequentMatchers {
@@ -216,4 +217,175 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     ReductiveCutElimination.isACNFTop( ACNFTopProof ) mustEqual true
     ReductiveCutElimination.isACNF( ACNFTopProof ) mustEqual true
   }
+
+  "induction left unfolding reduction should unfold induction" in {
+    implicit var context: Context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"equal: nat>nat>o"
+
+    val axioms = Seq(
+      "ae1" -> hof"equal(0, 0)",
+      "ae4" -> hof"∀x2 ∀y2 ((equal(s(x2), s(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(s(x2), s(y2))))"
+    )
+
+    val baseCase = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(0,0)" ) ) { axiomLog }
+    val indCase = Lemma( axioms ++: ( "ih" -> hof"equal(x_0,x_0)" ) +: Sequent() :+ ( "goal" -> hof"equal(s(x_0),s(x_0))" ) ) {
+      allL( "ae4", le"x_0:nat", le"x_0:nat" )
+      andL
+      impL( "ae4_0_1" )
+      axiomLog
+      axiomLog
+    }
+
+    val inductivePart = InductionRule(
+      InductionCase( baseCase, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
+        InductionCase( indCase, hoc"s:nat>nat", Ant( 2 ) :: Nil, hov"x_0:nat" :: Nil, Suc( 0 ) ) :: Nil,
+      Abs( hov"x:nat", le"equal(x,x)" ), le"s(s(s(0)))"
+    )
+
+    val proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(s(s(s(s(0)))), s(s(s(s(0)))))" ) ) {
+      cut( "cf", hof"equal(s(s(s(0))), s(s(s(0))))" ); insert( inductivePart )
+      allL( "ae4", le"s(s(s(0)))", le"s(s(s(0)))" )
+      andL
+      impL( "ae4_0_1" )
+      axiomLog
+      axiomLog
+    }
+    val reduction = inductionLeftReduction( proof.subProofAt( 0 :: Nil ).asInstanceOf[CutRule] ).get
+
+    if ( !isInductionFree( reduction ) ) {
+      failure( "the induction inference was not unrolled" )
+    }
+    if ( !reduction.endSequent.multiSetEquals( proof.subProofAt( 0 :: Nil ).endSequent ) ) {
+      failure( "the generated proof does not prove the same end-sequent" )
+    }
+    success
+  }
+  "induction left rank reduction should lift cut over induction" in {
+    implicit var context: Context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"equal: nat>nat>o"
+    context += hoc"le: nat>nat>o"
+    context += hoc"A:o"
+    context += hoc"F:nat>o"
+
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"A" )
+      u ( WeakeningRightRule( _, hof"F(0)" ) )
+      c LogicalAxiom( hof"A" )
+      u ( WeakeningLeftRule( _, hof"F(x)" ) )
+      u ( WeakeningRightRule( _, hof"F(s(x))" ) )
+      b ( ( ib, ic ) => InductionRule(
+        InductionCase( ib, hoc"0:nat", Nil, Nil, Suc( 1 ) ) ::
+          InductionCase( ic, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 1 ) ) :: Nil,
+        Abs( hov"x:nat", le"F(x)" ),
+        hov"x:nat"
+      ) )
+      c LogicalAxiom( hof"A" )
+      b ( CutRule( _, _, hof"A" ) ) qed )
+    val reduced = inductionLeftReduction( proof.asInstanceOf[CutRule] ).get
+
+    if ( !reduced.endSequent.multiSetEquals( proof.endSequent ) ) {
+      failure( "the reduced proof does not prove the same end-sequent" )
+    }
+    reduced match {
+      case InductionRule( InductionCase( CutRule( _, _, _, _ ), _, _, _, _ ) :: _ :: Nil, _, _ ) => success
+      case _ => failure( "the proof has not been reduced as expected" )
+    }
+  }
+  "induction right rank reduction should lift cut over induction" in {
+    implicit var context: Context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"equal: nat>nat>o"
+    context += hoc"le: nat>nat>o"
+    context += hoc"A:o"
+    context += hoc"F:nat>o"
+
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"A" )
+      c LogicalAxiom( hof"A" )
+      u ( WeakeningRightRule( _, hof"F(0)" ) )
+      c LogicalAxiom( hof"A" )
+      u ( WeakeningLeftRule( _, hof"F(x)" ) )
+      u ( WeakeningRightRule( _, hof"F(s(x))" ) )
+      b ( ( ib, ic ) => InductionRule(
+        InductionCase( ib, hoc"0:nat", Nil, Nil, Suc( 1 ) ) ::
+          InductionCase( ic, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 1 ) ) :: Nil,
+        Abs( hov"x:nat", le"F(x)" ),
+        hov"x:nat"
+      ) )
+      b ( CutRule( _, _, hof"A" ) ) qed )
+    val reduced = inductionRightReduction( proof.asInstanceOf[CutRule] ).get
+
+    if ( !reduced.endSequent.multiSetEquals( proof.endSequent ) ) {
+      failure( "the reduced proof does not prove the same end-sequent" )
+    }
+    reduced match {
+      case InductionRule( InductionCase( CutRule( _, _, _, _ ), _, _, _, _ ) :: _ :: Nil, _, _ ) => success
+      case _ => failure( "the proof has not been reduced as expected" )
+    }
+  }
+
+  "(1) free cut elimination should eliminate free cuts" in {
+    implicit var context: Context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"equal: nat>nat>o"
+    context += hoc"le: nat>nat>o"
+
+    val axioms = Seq(
+      "ae1" -> hof"equal(0, 0)",
+      "ae4" -> hof"∀x2 ∀y2 ((equal(s(x2), s(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(s(x2), s(y2))))",
+      "al1" -> hof"∀y le(0, y)",
+      "al3" -> hof"∀z ∀x2 ((le(s(z), s(x2)) ⊃ le(z, x2)) ∧ (le(z, x2) ⊃ le(s(z), s(x2))))",
+      "ael" -> hof"!x !y (equal(x,y) ⊃ le(x,y))"
+    )
+
+    val baseCase = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(0,0)" ) ) {
+      axiomLog
+    }
+    val indCase = Lemma( ( "ih" -> hof"equal(x_0,x_0)" ) +: axioms ++: Sequent() :+ ( "goal" -> hof"equal(s(x_0),s(x_0))" ) ) {
+      allL( "ae4", le"x_0:nat", le"x_0:nat" )
+      andL
+      impL( "ae4_0_1" )
+      axiomLog
+      axiomLog
+    }
+
+    val inductivePart = InductionRule(
+      InductionCase( baseCase, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
+        InductionCase( indCase, hoc"s:nat>nat", Ant( 5 ) :: Nil, hov"x_0:nat" :: Nil, Suc( 0 ) ) :: Nil,
+      Abs( hov"x:nat", le"equal(x,x)" ), le"s(s(s(0)))"
+    )
+
+    val proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"le(s(s(s(0))), s(s(s(0))))" ) ) {
+      cut( "ip", hof"equal(s(s(s(0))), s(s(s(0))) )" )
+      insert( inductivePart )
+      allL( "ael", le"s(s(s(0)))", le"s(s(s(0)))" )
+      impL( "ael_0" )
+      axiomLog
+      axiomLog
+    }
+
+    val cutFree = ReductiveCutElimination.freeCutFree( proof, true )
+
+    if ( !isCutFree( cutFree ) ) {
+      failure( "the generated proof is not cut free" )
+    }
+    if ( !cutFree.endSequent.multiSetEquals( proof.endSequent ) ) {
+      failure( "the generated proof does not prove the same end-sequent" )
+    }
+    success
+  }
+
+  def isCutFree( proof: LKProof ): Boolean =
+    !proof.subProofs.exists( subProof => subProof match {
+      case CutRule( _, _, _, _ ) => true
+      case _                     => false
+    } )
+
+  def isInductionFree( proof: LKProof ): Boolean =
+    !proof.subProofs.exists( subProof => subProof match {
+      case InductionRule( _, _, _ ) => true
+      case _                        => false
+    } )
 }
