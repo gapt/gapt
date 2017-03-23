@@ -218,6 +218,31 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     ReductiveCutElimination.isACNF( ACNFTopProof ) mustEqual true
   }
 
+  "right cut formula introduced by weakening" in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"D" )
+      u ( WeakeningRightRule( _, hof"A" ) )
+      c LogicalAxiom( hof"B" )
+      u ( WeakeningRightRule( _, hof"C" ) )
+      u ( WeakeningLeftRule( _, hof"A" ) )
+      b ( CutRule( _, _, hof"A" ) ) qed )
+    val cut = proof.asInstanceOf[CutRule]
+
+    rightRankReduction( cut ).get.endSequent must beMultiSetEqual( cut.endSequent )
+  }
+
+  "left cut formula introduced by weakening" in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"B" )
+      u ( WeakeningRightRule( _, hof"A" ) )
+      c LogicalAxiom( hof"C" )
+      u ( WeakeningLeftRule( _, hof"A" ) )
+      b ( CutRule( _, _, hof"A" ) ) qed )
+    val cut = proof.asInstanceOf[CutRule]
+
+    gradeReduction( cut ).get.endSequent must beMultiSetEqual( cut.endSequent )
+  }
+
   "induction left unfolding reduction should unfold induction" in {
     implicit var context: Context = Context()
     context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )

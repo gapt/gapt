@@ -447,10 +447,10 @@ object gradeReduction {
 
       // If either cut rule is introduced by weakening, delete one subproof and perform lots of weakenings instead.
       case ( l @ WeakeningRightRule( subProof, main ), r ) if l.mainIndices.head == aux1 => // The left cut formula is introduced by weakening
-        Some( WeakeningMacroRule( subProof, subProof.endSequent ++ r.endSequent ) )
+        Some( WeakeningMacroRule( subProof, cut.endSequent ) )
 
       case ( l, r @ WeakeningLeftRule( subProof, main ) ) if aux2 == right.mainIndices.head => // The right cut formula is introduced by weakening
-        Some( WeakeningMacroRule( subProof, l.endSequent.antecedent, l.endSequent.succedent ) )
+        Some( WeakeningMacroRule( subProof, cut.endSequent ) )
 
       // The propositional rules replace the cut with simpler cuts.
       case ( AndRightRule( llSubProof, a1, lrSubProof, a2 ), AndLeftRule( rSubProof, a3, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
@@ -678,7 +678,7 @@ object rightRankReduction {
     right match {
       case r @ WeakeningLeftRule( subProof, main ) =>
         if ( aux2 == right.mainIndices.head ) {
-          Some( WeakeningMacroRule( subProof, left.endSequent.antecedent, left.endSequent.succedent ) )
+          Some( WeakeningMacroRule( subProof, cut.endSequent ) )
         } else {
           Some( WeakeningLeftRule( CutRule( left, aux1, subProof, r.getSequentConnector.parent( aux2 ) ), main ) )
         }
