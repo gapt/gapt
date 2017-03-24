@@ -144,32 +144,38 @@ class ReductiveCutElimination {
    * apply method in this class.
    *
    * @param proof The proof to subject to cut-elimination.
-   * @param pred_done A predicate deciding when to terminate the algorithm.
-   * @param pred_cut A predicate deciding whether or not to reduce a cut encountered
-   * when traversing the proof.
-   * @param reduce  A function defining how cut should be reduced
+   * @param terminateReduction A predicate deciding when to terminate the algorithm.
+   * @param reduction  A function defining how cut should be reduced
    * @param cleanStructRules Tells the algorithm whether or not to clean
    * the structural rules. The default value is on, i.e., clean the structural
    * rules
    *
    * @return The proof as it is after pred_done returns true.
    */
-  def apply( proof: LKProof, pred_done: LKProof => Boolean, pred_cut: ( LKProof, LKProof ) => Boolean,
-             reduce: LKProof => LKProof, cleanStructRules: Boolean = true ): LKProof = {
+  def apply(
+    proof:              LKProof,
+    terminateReduction: LKProof => Boolean,
+    reduction:          LKProof => Option[( LKProof, SequentConnector )],
+    cleanStructRules:   Boolean                                          = true
+  ): LKProof = {
     steps += proof
-    // For rank-reduction of strong quantifier inferences, we need to either:
-    // 1) rename eigenvariables during rank-reduction, or
-    // 2) maintain the invariant that the proof is regular
-    // Here, we choose 2).
     var pr = regularize( proof )
     do {
-      def pred( local: LKProof ) = pred_cut( pr, local )
-      val p = cutElim( pr, reduce )( pred )
+      val p = recursor( pr, reduction )
       pr = if ( cleanStructRules ) cleanStructuralRules( p ) else p
       if ( recordSteps ) steps += pr
-    } while ( !pred_done( pr ) )
+    } while ( !terminateReduction( pr ) )
     if ( !recordSteps ) steps += pr
     pr
+  }
+
+  /**
+   * Applies a reduction function simultaneously to every lowermost redex in the given proof.
+   */
+  private object recursor extends LKVisitor[LKProof => Option[( LKProof, SequentConnector )]] {
+    override protected def recurse( proof: LKProof, reduction: LKProof => Option[( LKProof, SequentConnector )] ) = {
+      reduction( proof ) getOrElse super.recurse( proof, reduction )
+    }
   }
 
   /**
@@ -186,19 +192,16 @@ class ReductiveCutElimination {
   def eliminateAllByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof = {
 
     def reduction( proof: LKProof ) = proof match {
-      case cut @ CutRule( _, _, _, _ ) =>
-        gradeReduction( cut )
-          .orElse( leftRankReduction( cut ) )
-          .orElse( rightRankReduction( cut ) ).get
-    }
-
-    def reduceCut( proof: LKProof, cut: LKProof ): Boolean = cut match {
-      case CutRule( lsb, _, rsb, _ ) => isCutFree( lsb ) && isCutFree( rsb )
+      case cut @ CutRule( lsb, _, rsb, _ ) if isCutFree( lsb ) && isCutFree( rsb ) =>
+        gradeReduction.applyWithSequentConnector( cut )
+          .orElse( leftRankReduction.applyWithSequentConnector( cut ) )
+          .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
+      case _ => None
     }
 
     def terminateReduction( proof: LKProof ): Boolean = isCutFree( proof )
 
-    apply( proof, terminateReduction, reduceCut, reduction, cleanStructRules )
+    this( proof, terminateReduction, reduction, cleanStructRules )
   }
 
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
@@ -210,42 +213,31 @@ class ReductiveCutElimination {
      *         is not applicable to the given proof, then a proof obtained by applying
      *         the induction reduction.
      */
-    def reduction( proof: LKProof ) = proof match {
-      case cut @ CutRule( _, _, _, _ ) =>
-        gradeReduction( cut )
-          .orElse( leftRankReduction( cut ) )
-          .orElse( rightRankReduction( cut ) )
-          .orElse( inductionReduction( cut ) ).get
+    def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
+      case cut @ CutRule( ind @ InductionRule( _, _, _ ), leftCutFormula, CutRule( _, _, _, _ ), _ ) if ind.mainIndices.head == leftCutFormula && !isGround( ind.term ) => None
+      case cut @ CutRule( _, _, _, _ ) if !hasUpperRedex( cut ) =>
+        gradeReduction.applyWithSequentConnector( cut )
+          .orElse( leftRankReduction.applyWithSequentConnector( cut ) )
+          .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
+          .orElse( inductionReduction.applyWithSequentConnector( cut ) )
+      case _ => None
     }
 
     /**
-     * Checks whether the cut is reducible.
-     * @param global The current global reduced proof
-     * @param cut The cut which is checked for reducibility.
-     * @return Returns true if and only if the given cut can be reduced
-     *         by Gentzen's method or by induction reduction.
+     * The subproofs of the given proof not including the proof itself.
      */
-    def reduceCut( global: LKProof, cut: LKProof ): Boolean = isTopMostReducible( cut )
-
-    def isReducible( cut: LKProof ): Boolean = cut match {
-      case c @ CutRule( ind @ InductionRule( _, _, _ ), leftCutFormula, rightSubProof @ CutRule( _, _, _, _ ), _ ) if ind.mainIndices.head == leftCutFormula && !isGround( ind.term ) => {
-        false
-      }
-      case c @ CutRule( _, _, _, _ ) =>
-        gradeReduction( c )
-          .orElse( leftRankReduction( c ) )
-          .orElse( rightRankReduction( c ) )
-          .orElse( inductionReduction( c ) ) match {
-            case None => false
-            case _    => true
-          }
-      case _ => false
-    }
-
     def properSubProofs( proof: LKProof ) = proof.immediateSubProofs.flatMap( _.subProofs )
 
-    def isTopMostReducible( proof: LKProof ): Boolean =
-      isReducible( proof ) && !properSubProofs( proof ).exists( isReducible( _ ) )
+    /**
+     * Returns true if the last inference of the given proof is a redex for the reduction, and false otherwise.
+     */
+    def isRedex( proof: LKProof ) = reduction( proof ).nonEmpty
+
+    /**
+     * Returns true if some inference of this proof which is not the last inference is a redex for the
+     * reduction, and false otherwise.
+     */
+    def hasUpperRedex( proof: LKProof ): Boolean = properSubProofs( proof ).exists( isRedex( _ ) )
 
     /**
      * @return Returns true if and only if the given proof contains no cut
@@ -256,10 +248,10 @@ class ReductiveCutElimination {
       !global.subProofs.filter( {
         case CutRule( _, _, _, _ ) => true
         case _: LKProof            => false
-      } ).exists( reduceCut( global, _ ) )
+      } ).exists( isRedex( _ ) )
     }
 
-    apply( proof, terminateReduction, reduceCut, reduction, cleanStructRules )
+    this( proof, terminateReduction, reduction, cleanStructRules )
   }
 
   /**
@@ -275,20 +267,18 @@ class ReductiveCutElimination {
 
     def terminateReduction( proof: LKProof ): Boolean = isACNF( proof )
 
-    def reduceCut( proof: LKProof, cut: LKProof ): Boolean = cut match {
-      case CutRule( lsb, l, rsb, _ ) =>
-        !isAtom( lsb.endSequent( l ) ) && isACNF( lsb ) && isACNF( rsb )
-    }
-
-    def reduction( proof: LKProof ): LKProof = proof match {
-      case cut @ CutRule( lsb, l, _, _ ) =>
+    def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
+      case cut @ CutRule( lsb, l, rsb, _ ) if !isAtom( lsb.endSequent( l ) ) && isACNF( lsb ) && isACNF( rsb ) =>
         if ( isAtom( lsb.endSequent( l ) ) )
-          leftRankReduction( cut ).orElse( rightRankReduction( cut ) ).get
+          leftRankReduction.applyWithSequentConnector( cut )
+            .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
         else
-          gradeReduction( cut ).orElse( leftRankReduction( cut ) ).orElse( rightRankReduction( cut ) ).get
+          gradeReduction.applyWithSequentConnector( cut )
+            .orElse( leftRankReduction.applyWithSequentConnector( cut ) )
+            .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
+      case _ => None
     }
-
-    apply( proof, terminateReduction, reduceCut, reduction, cleanStructRules )
+    this( proof, terminateReduction, reduction, cleanStructRules )
   }
   /**
    * This algorithm implements a generalization of the Gentzen method which
@@ -301,122 +291,39 @@ class ReductiveCutElimination {
    */
   def eliminateToACNFTopByUppermost( proof: LKProof, cleanStructRules: Boolean = true ): LKProof = {
 
-    def reduction( proof: LKProof ): LKProof = proof match {
-      case cut @ CutRule( lsb, l, _, _ ) =>
-        if ( isAtom( lsb.endSequent( l ) ) ) {
+    def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
+      case cut @ CutRule( lsb, l, rsb, r ) if isAtom( lsb.endSequent( l ) ) =>
+        if ( !( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) ) ) {
           if ( introOrCut( lsb, lsb.endSequent( l ) ) )
-            rightRankReduction( cut ).get
+            rightRankReduction.applyWithSequentConnector( cut )
           else
-            leftRankReduction( cut ).orElse( rightRankReduction( cut ) ).get
-        } else
-          gradeReduction( cut ).orElse( leftRankReduction( cut ) ).orElse( rightRankReduction( cut ) ).get
+            leftRankReduction.applyWithSequentConnector( cut )
+              .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
+        } else {
+          None
+        }
+      case cut @ CutRule( lsb, _, rsb, _ ) if isACNFTop( lsb ) && isACNFTop( rsb ) =>
+        gradeReduction.applyWithSequentConnector( cut )
+          .orElse( leftRankReduction.applyWithSequentConnector( cut ) )
+          .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
+      case _ => None
     }
 
     def terminateReduction( proof: LKProof ): Boolean = isACNFTop( proof )
 
-    def reduceCut( proof: LKProof, cut: LKProof ): Boolean = cut match {
-      case CutRule( lsb, l, rsb, r ) =>
-        if ( isAtom( lsb.endSequent( l ) ) )
-          !( introOrCut( lsb, lsb.endSequent( l ) ) && introOrCut( rsb, rsb.endSequent( r ) ) )
-        else isACNFTop( lsb ) && isACNFTop( rsb )
-    }
-
-    apply( PushWeakeningToLeaves( proof ), terminateReduction, reduceCut, reduction, cleanStructRules )
-  }
-
-  // TODO: Implement this properly, i.e. with SequentIndices.
-  /**
-   * Recursively traverses a proof until it finds a cut to reduce.
-   *
-   * @param proof An LKProof.
-   * @param pred If true on a cut, reduce this cut.
-   * @return A proof with one less cut.
-   */
-  private def cutElim( proof: LKProof, reduce: LKProof => LKProof )( implicit pred: LKProof => Boolean ): LKProof = proof match {
-    case InitialSequent( _ ) => proof
-
-    case WeakeningLeftRule( subProof, formula ) =>
-      WeakeningLeftRule( cutElim( subProof, reduce ), formula )
-
-    case WeakeningRightRule( subProof, formula ) =>
-      WeakeningRightRule( cutElim( subProof, reduce ), formula )
-
-    case ContractionLeftRule( subProof, _, _ ) =>
-      ContractionLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
-
-    case ContractionRightRule( subProof, _, _ ) =>
-      ContractionRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
-
-    case AndRightRule( leftSubProof, _, rightSubProof, _ ) =>
-      AndRightRule( cutElim( leftSubProof, reduce ), cutElim( rightSubProof, reduce ), proof.mainFormulas.head )
-
-    case AndLeftRule( subProof, _, _ ) =>
-      AndLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
-
-    case OrLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      OrLeftRule( cutElim( leftSubProof, reduce ), cutElim( rightSubProof, reduce ), proof.mainFormulas.head )
-
-    case OrRightRule( subProof, _, _ ) =>
-      OrRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
-
-    case ImpLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      ImpLeftRule( cutElim( leftSubProof, reduce ), cutElim( rightSubProof, reduce ), proof.mainFormulas.head )
-
-    case ImpRightRule( subProof, _, _ ) =>
-      ImpRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head )
-
-    case NegLeftRule( subProof, _ ) =>
-      NegLeftRule( cutElim( subProof, reduce ), proof.auxFormulas.head.head )
-
-    case NegRightRule( subProof, _ ) =>
-      NegRightRule( cutElim( subProof, reduce ), proof.auxFormulas.head.head )
-
-    case ForallLeftRule( subProof, _, _, term, _ ) =>
-      ForallLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head, term )
-
-    case ForallRightRule( subProof, _, eigen, _ ) =>
-      ForallRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head, eigen )
-
-    case ExistsLeftRule( subProof, _, eigen, _ ) =>
-      ExistsLeftRule( cutElim( subProof, reduce ), proof.mainFormulas.head, eigen )
-
-    case ExistsRightRule( subProof, _, _, term, _ ) =>
-      ExistsRightRule( cutElim( subProof, reduce ), proof.mainFormulas.head, term )
-
-    case ForallSkRightRule( subProof, _, _, skTerm, skDef ) =>
-      ForallSkRightRule( cutElim( subProof, reduce ), skTerm, skDef )
-
-    case ExistsSkLeftRule( subProof, _, _, skTerm, skDef ) =>
-      ExistsSkLeftRule( cutElim( subProof, reduce ), skTerm, skDef )
-
-    case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( cutElim( subProof, reduce ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
-
-    case EqualityRightRule( subProof, _, _, _ ) =>
-      EqualityRightRule( cutElim( subProof, reduce ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
-
-    case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      if ( pred( proof ) ) reduce( proof )
-      else {
-        val newLeftProof = cutElim( leftSubProof, reduce )
-        val newRightProof = cutElim( rightSubProof, reduce )
-        CutRule( newLeftProof, leftSubProof.endSequent( aux1 ), newRightProof, rightSubProof.endSequent( aux2 ) )
-      }
-    case ind @ InductionRule( _, _, _ ) =>
-      ind.copy(
-        cases = ind.cases.map {
-          ic =>
-            val newProof = cutElim( ic.proof, reduce )
-            val connector = SequentConnector.guessInjection( newProof.endSequent, ic.proof.endSequent ).inv
-            val hypIndices = ic.hypotheses.map( connector.child( _ ) )
-            val conclIndex = connector.child( ic.conclusion )
-            ic.copy( hypotheses = hypIndices, conclusion = conclIndex, proof = newProof )
-        }
-      )
+    this( PushWeakeningToLeaves( proof ), terminateReduction, reduction, cleanStructRules )
   }
 }
 
+object guessPermutation {
+  def apply( oldProof: LKProof, newProof: LKProof ): ( LKProof, SequentConnector ) =
+    ( newProof, SequentConnector.guessInjection( newProof.conclusion, oldProof.conclusion ).inv )
+}
+
 object gradeReduction {
+
+  def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+    this( cut ) map { guessPermutation( cut, _ ) }
 
   /**
    * Reduces the logical complexity of the cut formula or removes the cut.
@@ -488,6 +395,9 @@ object gradeReduction {
 }
 
 object leftRankReduction {
+
+  def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+    this( cut ) map { guessPermutation( cut, _ ) }
 
   /**
    * Reduces the rank of the cut by permuting it upwards on the left-hand side.
@@ -666,6 +576,9 @@ object leftRankReduction {
 }
 
 object rightRankReduction {
+
+  def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+    this( cut ) map { guessPermutation( cut, _ ) }
 
   /**
    * Reduces the rank of the cut by permuting it upwards on the right-hand side.
@@ -846,6 +759,10 @@ object rightRankReduction {
 }
 
 object inductionReduction {
+
+  def applyWithSequentConnector( cut: CutRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
+    this( cut ) map { guessPermutation( cut, _ ) }
+
   /**
    * Reduces the complexity with respect to induction rules.
    * @param cut The cut that is to be reduced.
@@ -859,6 +776,10 @@ object inductionReduction {
 }
 
 object inductionRightReduction {
+
+  def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+    this( cut ) map { guessPermutation( cut, _ ) }
+
   /**
    * Reduces the complexity of a cut w.r.t. to an induction inference by
    * moving the cut over the induction inference.
@@ -888,6 +809,10 @@ object inductionRightReduction {
 }
 
 object inductionLeftReduction {
+
+  def applyWithSequentConnector( cut: CutRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
+    this( cut ) map { guessPermutation( cut, _ ) }
+
   /**
    * Reduces a cut by unfolding an induction inference or by moving
    * the cut towards the proof's leaves.
