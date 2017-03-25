@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.gaptic.{ Lemma, allL, andL, axiomLog, cut, impL, insert }
+import at.logic.gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
 import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
 import org.specs2.mutable._
 
@@ -400,6 +400,49 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       failure( "the generated proof does not prove the same end-sequent" )
     }
     success
+  }
+
+  "reduce cut with left-equality as left upper sequent " in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"P(b)" )
+      u ( WeakeningLeftRule( _, hof"a = b" ) )
+      u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x", le"P(x):o" ) ) )
+      c OpenAssumption( Sequent( ( "" -> hof"P(b)" ) :: Nil, ( "" -> hof"F" ) :: Nil ) )
+      b ( CutRule( _, _, hof"P(b)" ) ) qed )
+    val reduction = leftRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beSetEqual( reduction.conclusion )
+  }
+
+  "reduce cut with right-equality as left upper sequent" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent( Nil, "" -> hof"P(b)" :: Nil ) )
+      u ( WeakeningLeftRule( _, hof"a = b" ) )
+      u ( WeakeningRightRule( _, hof"B" ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"P(x):o" ) ) )
+      c OpenAssumption( Sequent( ( "" -> hof"B" ) :: Nil, ( "" -> hof"F" ) :: Nil ) )
+      b ( CutRule( _, _, hof"B" ) ) qed )
+    val reduction = leftRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beSetEqual( reduction.conclusion )
+  }
+
+  "reduce cut with left-equality as right upper sequent" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent( Nil, ( "" -> hof"A" ) :: Nil ) )
+      c OpenAssumption( Sequent( "" -> hof"A" :: "" -> hof"a = b" :: "" -> hof"P(b)" :: Nil, Nil ) )
+      u ( EqualityLeftRule( _, Ant( 1 ), Ant( 2 ), Abs( hov"x", le"P(x):o" ) ) )
+      b ( CutRule( _, _, hof"A" ) ) qed )
+    val reduction = rightRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beSetEqual( reduction.conclusion )
+  }
+
+  "reduce cut with right-equality as right upper sequent" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( Sequent( Nil, ( "" -> hof"A" ) :: Nil ) )
+      c OpenAssumption( Sequent( "" -> hof"A" :: "" -> hof"a = b" :: Nil, "" -> hof"P(b)" :: Nil ) )
+      u ( EqualityRightRule( _, Ant( 1 ), Suc( 0 ), Abs( hov"x", le"P(x):o" ) ) )
+      b ( CutRule( _, _, hof"A" ) ) qed )
+    val reduction = rightRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beSetEqual( reduction.conclusion )
   }
 
   def isCutFree( proof: LKProof ): Boolean =

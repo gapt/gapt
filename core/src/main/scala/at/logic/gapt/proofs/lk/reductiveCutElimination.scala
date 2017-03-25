@@ -569,6 +569,18 @@ object leftRankReduction {
         val aNew = cutSub.getLeftSequentConnector.child( a )
         Some( ExistsRightRule( cutSub, aNew, f, term, quant ) )
 
+      case l @ EqualityLeftRule( subProof, eq, aux, indicator ) =>
+        val conn1 = l.getSequentConnector
+        val cutSub = CutRule( subProof, conn1.parent( aux1 ), right, aux2 )
+        val conn2 = cutSub.getLeftSequentConnector
+        Some( EqualityLeftRule( cutSub, conn2.child( eq ), conn2.child( aux ), indicator ) )
+
+      case l @ EqualityRightRule( subProof, eq, eaux, indicator ) if l.mainIndices.head != aux1 =>
+        val conn1 = l.getSequentConnector
+        val cutSub = CutRule( subProof, conn1.parent( aux1 ), right, aux2 )
+        val conn2 = cutSub.getLeftSequentConnector
+        Some( EqualityRightRule( cutSub, conn2.child( eq ), conn2.child( eaux ), indicator ) )
+
       // If no rank reduction is possible on the left.
       case _ => None
     }
@@ -753,6 +765,19 @@ object rightRankReduction {
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ExistsRightRule( cutSub, aNew, f, term, quant ) )
+
+      case r @ EqualityLeftRule( subProof, eq, eaux, indicator ) if r.mainIndices.head != aux2 && r.eqInConclusion != aux2 =>
+        val conn1 = r.getSequentConnector
+        val cutSub = CutRule( left, aux1, subProof, conn1.parent( aux2 ) )
+        val conn2 = cutSub.getRightSequentConnector
+        Some( EqualityLeftRule( cutSub, conn2.child( eq ), conn2.child( eaux ), indicator ) )
+
+      case r @ EqualityRightRule( subProof, eq, eaux, indicator ) if r.eqInConclusion != aux2 =>
+        val conn1 = r.getSequentConnector
+        val cutSub = CutRule( left, aux1, subProof, conn1.parent( aux2 ) )
+        val conn2 = cutSub.getRightSequentConnector
+        Some( EqualityRightRule( cutSub, conn2 child eq, conn2 child eaux, indicator ) )
+
       case _ => None
     }
   }
