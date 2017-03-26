@@ -39,7 +39,7 @@ object eliminateSplitting {
    * eliminate [[AvatarSplit]] inferences that move C into the assertion,
    * and return a proof that ends with C in the conclusion.
    */
-  private def project( p: ResolutionProof, splAtom: HOLAtom ): ( ResolutionProof, Seq[Var], HOLSequent ) = {
+  private def project( p: ResolutionProof, splAtom: Atom ): ( ResolutionProof, Seq[Var], HOLSequent ) = {
     val ngc = p.subProofs.collect { case AvatarSplit( _, _, comp @ AvatarNonGroundComp( `splAtom`, _, _ ) ) => comp }.head
     val newVs = ngc.vars map rename( ngc.vars, containedNames( p ) )
     val newClause = Substitution( ngc.vars zip newVs )( ngc.clause )
@@ -60,7 +60,7 @@ object eliminateSplitting {
    * Given a non-ground splitting component C with atom A as well as a projection that ends with C in the conclusion,
    * replace all [[AvatarComponent]] inferences for that component with the projection.
    */
-  private def replace( p: ResolutionProof, splAtom: HOLAtom, proj: ResolutionProof, projVars: Seq[Var] ) =
+  private def replace( p: ResolutionProof, splAtom: Atom, proj: ResolutionProof, projVars: Seq[Var] ) =
     new ResolutionProofVisitor {
       override def visitAvatarComponent( p: AvatarComponent ): ResolutionProof =
         p.component match {
@@ -82,7 +82,7 @@ object eliminateSplitting {
     def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {
       case AvatarContradiction( p1 ) => AvatarContradiction( Factor( p1 ) )
       case Resolution( p1, i1, p2, i2 ) =>
-        val splAtom = p1.conclusion( i1 ).asInstanceOf[HOLAtom]
+        val splAtom = p1.conclusion( i1 ).asInstanceOf[Atom]
         ( f( p1 ), f( p2 ) ) match {
           case ( Factor.Block( AvatarContradiction( q1 ) ), Factor.Block( AvatarContradiction( q2 ) ) ) =>
             if ( q1.assertions.succedent.contains( splAtom ) ) {

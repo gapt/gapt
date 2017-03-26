@@ -13,8 +13,8 @@
 package at.logic.gapt.expr
 
 object longNormalForm {
-  def apply( term: LambdaExpression ): LambdaExpression = apply( term, List() )
-  def apply( term: LambdaExpression, disallowedVars: List[Var] ): LambdaExpression = term match {
+  def apply( term: Expr ): Expr = apply( term, List() )
+  def apply( term: Expr, disallowedVars: List[Var] ): Expr = term match {
     case Var( _, exptype ) => exptype match {
       case Ti => term
       case To => term
@@ -28,7 +28,7 @@ object longNormalForm {
       }
     }
 
-    case App( m, n ) => term.exptype match {
+    case App( m, n ) => term.ty match {
       case Ti => term
       case To => term
       case FunctionType( _, args ) => {

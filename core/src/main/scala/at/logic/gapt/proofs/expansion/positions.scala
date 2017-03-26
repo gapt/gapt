@@ -29,8 +29,8 @@ private object getAtHOLPosition {
 }
 
 object replaceAtHOLPosition {
-  def apply( et: ExpansionTree, pos: HOLPosition, exp: LambdaExpression ): ExpansionTree =
-    replaceWithContext( et, replacementContext( et.shallow( pos ).exptype, et.shallow, Some( pos ) ), exp )
+  def apply( et: ExpansionTree, pos: HOLPosition, exp: Expr ): ExpansionTree =
+    replaceWithContext( et, replacementContext( et.shallow( pos ).ty, et.shallow, Some( pos ) ), exp )
 }
 
 /**
@@ -44,9 +44,9 @@ object replaceWithContext {
    * @param exp The term to insert for x.
    * @return A new expansion tree where x has been replaced with exp in every node.
    */
-  def apply( et: ExpansionTree, replacementContext: Abs, exp: LambdaExpression )( implicit ctx: Context = Context() ): ExpansionTree = {
-    def newFormula = BetaReduction.betaNormalize( App( replacementContext, exp ) ).asInstanceOf[HOLFormula]
-    def newAtom = newFormula.asInstanceOf[HOLAtom]
+  def apply( et: ExpansionTree, replacementContext: Abs, exp: Expr )( implicit ctx: Context = Context() ): ExpansionTree = {
+    def newFormula = BetaReduction.betaNormalize( App( replacementContext, exp ) ).asInstanceOf[Formula]
+    def newAtom = newFormula.asInstanceOf[Atom]
 
     ( et, replacementContext ) match {
       case ( ETDefinition( sh, sub ), _ ) =>
@@ -69,7 +69,7 @@ object replaceWithContext {
         val boundVars = freeVariables( formula ) ++ freeVariables( skTerm ) ++ freeVariables( exp )
         val nameGen = rename.awayFrom( boundVars )
 
-        val newSkArgs = skArgs.map( a => nameGen.fresh( Var( "x", a.exptype ) ) )
+        val newSkArgs = skArgs.map( a => nameGen.fresh( Var( "x", a.ty ) ) )
         val lhs = newFormula
         val rhs = BetaReduction.betaNormalize( skDef( newSkArgs ) )
         val subst = syntacticMGU( lhs, rhs, boundVars ).
@@ -95,14 +95,14 @@ object commuteReplacementCtxWithDefEq {
    *
    * Right now this only works if c[x\t] ~> a, and may fail even then.
    */
-  def apply( x: Var, c: LambdaExpression, t: LambdaExpression, a: LambdaExpression )( implicit ctx: Context ): LambdaExpression =
+  def apply( x: Var, c: Expr, t: Expr, a: Expr )( implicit ctx: Context ): Expr =
     ( c, a ) match {
       case _ if Substitution( x -> t )( c ) == a => c
       case ( Apps( fn1, as1 ), Apps( fn2, as2 ) ) if fn1 == fn2 && !freeVariables( fn1 ).contains( x ) =>
         fn1( for ( ( a1, a2 ) <- as1 zip as2 ) yield apply( x, a1, t, a2 ) )
-      case ( c @ Quant( y1, _, pol1 ), a @ Quant( y2, _, pol2 ) ) if y1.exptype == y2.exptype && pol1 == pol2 =>
+      case ( c @ Quant( y1, _, pol1 ), a @ Quant( y2, _, pol2 ) ) if y1.ty == y2.ty && pol1 == pol2 =>
         val y = rename( y1, freeVariables( c ) ++ freeVariables( a ) ++ freeVariables( t ) + x )
-        Quant( y, apply( x, instantiate( c, y ), t, instantiate( a, y ) ).asInstanceOf[HOLFormula], pol1 )
+        Quant( y, apply( x, instantiate( c, y ), t, instantiate( a, y ) ).asInstanceOf[Formula], pol1 )
       case _ =>
         ctx.normalizer.reduce1( c ) match {
           case Some( c_ ) => apply( x, BetaReduction.betaNormalize( c_ ), t, a )
@@ -111,7 +111,7 @@ object commuteReplacementCtxWithDefEq {
         }
     }
 
-  def apply( replCtx: Abs, t: LambdaExpression, a: LambdaExpression )( implicit ctx: Context ): Abs =
+  def apply( replCtx: Abs, t: Expr, a: Expr )( implicit ctx: Context ): Abs =
     Abs( replCtx.variable, apply( replCtx.variable, replCtx.term, t, a ) )
 }
 
@@ -123,7 +123,7 @@ object insertDefinition {
   def apply( et: ExpansionTree, defn: Definition, replacementContext: Abs ): ExpansionTree = {
     val Abs( v, expr ) = replacementContext
 
-    def definitionApplied = BetaReduction.betaNormalize( App( replacementContext, defn.what ) ).asInstanceOf[HOLFormula]
+    def definitionApplied = BetaReduction.betaNormalize( App( replacementContext, defn.what ) ).asInstanceOf[Formula]
 
     ( et, expr ) match {
       case ( _, Apps( `v`, _ ) ) => // ctx = λ v. v […]
@@ -145,15 +145,15 @@ object insertDefinition {
         ETImp( insertDefinition( l, defn, Abs( v, f ) ), insertDefinition( r, defn, Abs( v, g ) ) )
 
       case ( ETStrongQuantifier( shallow, eigen, child ), Quant( _, _, _ ) ) =>
-        val shallowNew = definitionApplied.asInstanceOf[HOLFormula]
+        val shallowNew = definitionApplied.asInstanceOf[Formula]
         ETStrongQuantifier( shallowNew, eigen, insertDefinition( child, defn, instReplCtx( replacementContext, eigen ) ) )
 
       case ( ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ), Quant( x, f, _ ) ) =>
         throw new IllegalArgumentException( "Skolem nodes are not handled at this time." )
 
       case ( ETWeakQuantifier( shallow, instances ), Quant( _, _, _ ) ) =>
-        val shallowNew = definitionApplied.asInstanceOf[HOLFormula]
-        val instancesNew: Map[LambdaExpression, ExpansionTree] = ( for {
+        val shallowNew = definitionApplied.asInstanceOf[Formula]
+        val instancesNew: Map[Expr, ExpansionTree] = ( for {
           ( t, e ) <- instances
           ctxNew = instReplCtx( replacementContext, t )
           treeNew = insertDefinition( e, defn, ctxNew )
@@ -165,7 +165,7 @@ object insertDefinition {
         ETMerge( insertDefinition( l, defn, replacementContext ), insertDefinition( r, defn, replacementContext ) )
 
       case ( ETWeakening( formula, pol ), _ ) =>
-        ETWeakening( definitionApplied.asInstanceOf[HOLFormula], pol )
+        ETWeakening( definitionApplied.asInstanceOf[Formula], pol )
 
       case _ =>
         replaceWithContext( et, replacementContext, defn.what )
@@ -174,7 +174,7 @@ object insertDefinition {
 }
 
 object moveDefsUpward {
-  private def apply( tree: ExpansionTree, expectedSh: HOLFormula )( implicit ctx: Context ): ExpansionTree =
+  private def apply( tree: ExpansionTree, expectedSh: Formula )( implicit ctx: Context ): ExpansionTree =
     ( tree, expectedSh ) match {
       case ( ETDefinition( _, t ), _ )                        => apply( t, expectedSh )
       case ( ETWeakening( _, pol ), _ )                       => ETWeakening( expectedSh, pol )
@@ -195,7 +195,7 @@ object moveDefsUpward {
             yield term -> apply( ch, BetaReduction.betaNormalize( instantiate( expectedSh, term ) ) )
         )
       case ( _, _ ) =>
-        val expectedShWhnf = ctx.normalizer.whnf( expectedSh ).asInstanceOf[HOLFormula]
+        val expectedShWhnf = ctx.normalizer.whnf( expectedSh ).asInstanceOf[Formula]
         if ( expectedShWhnf == expectedSh ) {
           // We encountered a definition rule that was not valid in this context.
           ETDefinition( expectedSh, apply( tree, tree.shallow ) )
@@ -217,23 +217,23 @@ object moveDefsUpward {
  * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
  */
 private[expansion] object instReplCtx {
-  def apply( ctx: Abs, term: LambdaExpression ): Abs =
+  def apply( ctx: Abs, term: Expr ): Abs =
     ctx match {
       case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
         val newX = rename( x, freeVariables( term ) )
         instReplCtx( Abs( newX, Substitution( x -> newX )( quantFormula ) ), term )
-      case Abs( x, quantFormula: HOLFormula ) =>
+      case Abs( x, quantFormula: Formula ) =>
         Abs( x, instantiate( quantFormula, term ) )
     }
 }
 
 object generalizeET {
-  def apply( et: ExpansionTree, newShallow: HOLFormula ): ExpansionTree =
+  def apply( et: ExpansionTree, newShallow: Formula ): ExpansionTree =
     HOLPosition.differingPositions( et.shallow, newShallow ).
       groupBy( pos => ( et.shallow( pos ), newShallow( pos ) ) ).
       foldLeft( et ) {
         case ( et_, ( ( what, by ), poss ) ) =>
-          replaceWithContext( et_, replacementContext( what.exptype, et_.shallow, poss ), by )
+          replaceWithContext( et_, replacementContext( what.ty, et_.shallow, poss ), by )
       }
 }
 

@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.drup
 
-import at.logic.gapt.expr.{ HOLFormula, Polarity }
+import at.logic.gapt.expr.{ Formula, Polarity }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution._
 import cats.{ Eval, Later, Now }
@@ -54,7 +54,7 @@ object DrupToResolutionProof {
 
   private def unitPropagationProver( cnf: Iterable[ResProofThunk] ): ResolutionProof = {
     // An atom together with a polarity
-    type Literal = ( HOLFormula, Polarity )
+    type Literal = ( Formula, Polarity )
 
     var emptyClause: Option[ResProofThunk] = None
     // All unit clauses that we have found so far, indexed by their one literal

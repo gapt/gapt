@@ -7,8 +7,8 @@ import at.logic.gapt.utils.StreamUtils
 import StreamUtils._
 
 object skolemize {
-  def apply( formula: HOLFormula, pol: Polarity, context: Seq[LambdaExpression], skolemSymbols: Stream[String] ): HOLFormula = formula match {
-    case Bottom() | Top() | HOLAtom( _, _ ) =>
+  def apply( formula: Formula, pol: Polarity, context: Seq[Expr], skolemSymbols: Stream[String] ): Formula = formula match {
+    case Bottom() | Top() | Atom( _, _ ) =>
       formula
     case Neg( f )                => Neg( skolemize( f, !pol, context, skolemSymbols ) )
     case And( l, r )             => And( skolemize( l, pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
@@ -16,17 +16,17 @@ object skolemize {
     case Imp( l, r )             => Imp( skolemize( l, !pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
     case Ex( x, f ) if pol.inSuc => Ex( x, skolemize( f, pol, context :+ x, skolemSymbols ) )
     case Ex( x, f ) if pol.inAnt =>
-      val sym = Const( skolemSymbols.head, FunctionType( x.exptype, context.map( _.exptype ) ) )
+      val sym = Const( skolemSymbols.head, FunctionType( x.ty, context.map( _.ty ) ) )
       val skolemFunction = sym( context: _* )
       skolemize( Substitution( x -> skolemFunction )( f ), pol, context, skolemSymbols.tail )
     case All( x, f ) if pol.inAnt => All( x, skolemize( f, pol, context :+ x, skolemSymbols ) )
     case All( x, f ) if pol.inSuc => skolemize( Ex( x, -f ), !pol, context, skolemSymbols ) match { case Neg( f_ ) => f_ }
   }
 
-  def apply( formula: HOLFormula, pol: Polarity ): HOLFormula =
+  def apply( formula: Formula, pol: Polarity ): Formula =
     apply( formula, pol, Seq(), new SkolemSymbolFactory( constants( formula ) ).getSkolemSymbols )
 
-  def apply( formula: HOLFormula ): HOLFormula =
+  def apply( formula: Formula ): Formula =
     apply( formula, Polarity.InSuccedent )
 
   def apply( sequent: HOLSequent ): HOLSequent = {
@@ -35,7 +35,7 @@ object skolemize {
       yield apply( f, i.polarity, Seq(), factory.freshStream( "s" ) )
   }
 
-  private def maybeSkolemize( formula: HOLFormula, pol: Polarity, contextAndSymbols: Option[( Seq[LambdaExpression], Stream[String] )] ): HOLFormula =
+  private def maybeSkolemize( formula: Formula, pol: Polarity, contextAndSymbols: Option[( Seq[Expr], Stream[String] )] ): Formula =
     contextAndSymbols match {
       case Some( ( context, skolemSymbols ) ) => skolemize( formula, pol, context, skolemSymbols )
       case None                               => formula
@@ -47,7 +47,7 @@ object skolemize {
     cleanStructuralRules( apply( proof, contextAndSymbols ) )
   }
 
-  def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[LambdaExpression], Stream[String] )]] ): LKProof = proof match {
+  def apply( proof: LKProof, contextAndSymbols: Sequent[Option[( Seq[Expr], Stream[String] )]] ): LKProof = proof match {
     // Initial sequents are already skolemized
     case InitialSequent( _ ) => proof
 
@@ -145,7 +145,7 @@ object skolemize {
     case proof @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
       contextAndSymbols( proof.mainIndices.head ) match {
         case Some( ( context, skolemSymbols ) ) =>
-          val sym = Const( skolemSymbols.head, FunctionType( eigen.exptype, context.map( _.exptype ) ) )
+          val sym = Const( skolemSymbols.head, FunctionType( eigen.ty, context.map( _.ty ) ) )
           val skolemFunction = sym( context: _* )
           val subProof_ = apply( subProof, proof.getSequentConnector.parents( contextAndSymbols ).map( _.head )
             .updated( aux, Some( context -> skolemSymbols.tail ) ) )
@@ -157,7 +157,7 @@ object skolemize {
     case proof @ ForallRightRule( subProof, aux, eigen, quant ) =>
       contextAndSymbols( proof.mainIndices.head ) match {
         case Some( ( context, skolemSymbols ) ) =>
-          val sym = Const( skolemSymbols.head, FunctionType( eigen.exptype, context.map( _.exptype ) ) )
+          val sym = Const( skolemSymbols.head, FunctionType( eigen.ty, context.map( _.ty ) ) )
           val skolemFunction = sym( context: _* )
           val subProof_ = apply( subProof, proof.getSequentConnector.parents( contextAndSymbols ).map( _.head )
             .updated( aux, Some( context -> skolemSymbols.tail ) ) )

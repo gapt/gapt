@@ -1,15 +1,17 @@
 package at.logic.gapt.provers.smtlib
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.lisp.{ LAtom, LFun, LList, SExpression }
 import org.specs2.mutable._
+import at.logic.gapt.provers.Session._
+import cats.implicits._
 
 class Z3SessionTest extends Specification {
 
   if ( !Z3.isInstalled ) skipAll
 
   "check sat of empty theory" in {
-    for ( session <- Z3.startIncrementalSession() )
-      yield session.checkSat() must_== true
+    Z3.runSession( checkSat ) must_== true
   }
 
   "validity of linear example" in {
@@ -18,22 +20,33 @@ class Z3SessionTest extends Specification {
     val s = Const( "s", nat -> nat )
     val p = Const( "p", nat -> To )
 
-    val numeral = Stream.iterate[LambdaExpression]( o )( s( _ ) )
+    val numeral = Stream.iterate[Expr]( o )( s( _ ) )
 
-    for ( session <- Z3.startIncrementalSession() ) yield {
-      session.produceUnsatCores()
-      session declareSymbolsIn ( o, s, p )
+    val n = 10
 
-      val n = 10
-      session assert HOLAtom( p( o ) )
-      for ( i <- 0 until ( 2 * n ) )
-        session assert ( p( numeral( i ) ) --> p( numeral( i + 1 ) ), s"hyp$i" )
-      session withScope {
-        session assert -p( numeral( n ) )
-        session.checkSat() must_== false
-        session.getUnsatCore() must contain( exactly( 0 until n map { i => s"hyp$i" }: _* ) )
-      }
-      session.checkSat() must_== true
+    val getUnsatCore = ask( LFun( "get-unsat-core" ) ) map {
+      case LList( labels @ _* ) => labels map { case LAtom( l ) => l }
     }
+
+    val session: Session[( Boolean, Boolean, Seq[String] )] = for {
+      _ <- setOption( ":produce-unsat-cores", "true" )
+      _ <- declareSymbolsIn( o, s, p )
+      _ <- assert( Atom( p( o ) ) )
+      _ <- ( 0 until ( 2 * n ) ).toList.map( i => ( p( numeral( i ) ) --> p( numeral( i + 1 ) ), s"hyp$i" ) ).traverse_( p => assert( p._1, p._2 ) )
+      p <- withScope {
+        for {
+          _ <- assert( -p( numeral( n ) ) )
+          sat <- checkSat
+          labels <- getUnsatCore
+        } yield ( sat, labels )
+      }
+      satOuter <- checkSat
+    } yield ( p._1, satOuter, p._2 )
+
+    val ( satInner, satOuter, labels ) = Z3.runSession( session )
+
+    satInner must_== false
+    satOuter must_== true
+    labels must contain( exactly( 0 until n map { i => s"hyp$i" }: _* ) )
   }
 }

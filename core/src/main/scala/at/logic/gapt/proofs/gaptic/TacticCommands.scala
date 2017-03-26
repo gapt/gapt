@@ -4,7 +4,9 @@ import tactics._
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.ViperTactic
+import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 
 /**
  * Predefined tactics in gaptic.
@@ -13,6 +15,11 @@ object TacticCommands extends TacticCommands
 
 trait TacticCommands {
   // LK Tactics
+
+  /**
+   * Applies the `LogicalAxiom` tactic to the current subgoal: A subgoal of the form `A, Γ :- Δ, A` will be closed.
+   */
+  def ref( proofName: String )( implicit ctx: Context ) = ProofLinkTactic( proofName )( ctx )
 
   /**
    * Applies the `LogicalAxiom` tactic to the current subgoal: A subgoal of the form `A, Γ :- Δ, A` will be closed.
@@ -308,7 +315,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∃x,,1,,...∃x,,n,,.A`.
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( applyToLabel: String, terms: LambdaExpression* ) = ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
+  def exR( applyToLabel: String, terms: Expr* ) = ExistsRightTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ExistsRight` tactic to the current subgoal: The goal
@@ -322,7 +329,7 @@ trait TacticCommands {
    * This will only work if there is exactly one existential formula in the succedent!
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def exR( terms: LambdaExpression* ) = ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
+  def exR( terms: Expr* ) = ExistsRightTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -335,7 +342,7 @@ trait TacticCommands {
    * @param applyToLabel The label of the formula `∀x,,1,,,...,∀x,,n,,.A`.
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( applyToLabel: String, terms: LambdaExpression* ) = ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
+  def allL( applyToLabel: String, terms: Expr* ) = ForallLeftTactic( OnLabel( applyToLabel ), terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallLeft` tactic to the current subgoal: The goal
@@ -349,7 +356,7 @@ trait TacticCommands {
    * This will only work if there is exactly one universal formula in the antecedent!
    * @param terms The terms `t,,1,,,...,t,,n,,`.
    */
-  def allL( terms: LambdaExpression* ) = ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
+  def allL( terms: Expr* ) = ForallLeftTactic( UniqueFormula, terms, instantiateOnce = false )
 
   /**
    * Applies the `ForallRight` tactic to the current subgoal: The goal
@@ -414,7 +421,7 @@ trait TacticCommands {
    * @param label The label of `C`.
    * @param cutFormula The formula `C`.
    */
-  def cut( label: String, cutFormula: HOLFormula ) = CutTactic( label, cutFormula )
+  def cut( label: String, cutFormula: Formula ) = CutTactic( label, cutFormula )
 
   /**
    * Applies the `Equality` tactic to the current subgoal: Given an equation `s = t` and a formula `A`,
@@ -495,7 +502,7 @@ trait TacticCommands {
   def foTheory( implicit ctx: Context ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
-      theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: HOLAtom => a } ).
+      theoryAxiom <- FOTheoryMacroRule.option( goal.conclusion collect { case a: Atom => a } ).
         toTactical( "does not follow from theory" )
       _ <- insert( theoryAxiom )
     } yield ()
@@ -511,7 +518,7 @@ trait TacticCommands {
       goal <- currentGoal
       theoryAxiom <- ctx.axioms.find( clauseSubsumption( _, goal.conclusion ).isDefined ).
         toTactical( "does not follow from theory" )
-      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[HOLAtom] ) ) )
+      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[Atom] ) ) )
     } yield ()
   }
 
@@ -635,17 +642,23 @@ trait TacticCommands {
    *
    * NB: This will only replace the first definition it finds in each supplied formula. If you want to unfold all definitions,
    * use `repeat`.
-   * @param definition The definition `def1`.
-   * @param definitions The definitions `def2`,...,`defn`.
+   * @param definitions The definitions `def1`,...,`defn`.
    * @param ctx A [[at.logic.gapt.proofs.Context]]. The definitions you want to unfold need to be present in `ctx`.
    */
-  def unfold( definition: String, definitions: String* )( implicit ctx: Context ) =
-    UnfoldTacticHelper( definition, definitions )
+  def unfold( definitions: String* )( implicit ctx: Context ) =
+    UnfoldTacticHelper( definitions )
 
   /**
    * Does nothing.
    */
   def skip: Tactical[Unit] = Tactical { proofState => Right( ( (), proofState ) ) }
+
+  def now: Tactical[Unit] = new Tactical[Unit] {
+    override def apply( proofState: ProofState ) =
+      if ( proofState.isFinished ) Right( () -> proofState )
+      else Left( TacticalFailure( this, Some( proofState ), "not finished" ) )
+    override def toString: String = "now"
+  }
 
   /**
    * Retrieves the current subgoal.
@@ -656,15 +669,15 @@ trait TacticCommands {
   }
 
   /** Instantiates prenex quantifiers to obtain a formula in a given polarity. */
-  def haveInstance( formula: HOLFormula, polarity: Polarity ): Tactical[String] = Tactical {
-    def findInstances( labelledSequent: Sequent[( String, HOLFormula )] ): Seq[( String, Seq[LambdaExpression] )] = {
+  def haveInstance( formula: Formula, polarity: Polarity ): Tactical[String] = Tactical {
+    def findInstances( labelledSequent: Sequent[( String, Formula )] ): Seq[( String, Seq[Expr] )] = {
       val quantifiedFormulas = labelledSequent.zipWithIndex.collect {
         case ( ( l, Ex.Block( vs, m ) ), i ) if i.isSuc && polarity.inSuc  => ( l, vs, m )
         case ( ( l, All.Block( vs, m ) ), i ) if i.isAnt && polarity.inAnt => ( l, vs, m )
       }
       for {
         ( l, vs, m ) <- quantifiedFormulas.elements
-        subst <- syntacticMatching( List( m -> formula ), freeVariables( m ).diff( vs.toSet ).map( v => v -> v ).toMap )
+        subst <- syntacticMatching( List( m -> formula ), PreSubstitution( freeVariables( m ).diff( vs.toSet ).map( v => v -> v ) ) )
       } yield l -> subst( vs )
     }
 
@@ -681,4 +694,8 @@ trait TacticCommands {
     Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
 
   def viper( implicit ctx: Context ): ViperTactic = new ViperTactic
+
+  def analyticInduction( implicit ctx: Context ) = AnalyticInductionTactic(
+    StandardInductionAxioms(), Escargot
+  )
 }

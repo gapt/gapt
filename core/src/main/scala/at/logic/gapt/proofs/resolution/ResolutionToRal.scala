@@ -9,9 +9,9 @@ object ResolutionToRal extends ResolutionToRal {
   /* One of our heuristics maps higher-order types into first-order ones. When the proof is converted to Ral,
    * convert_formula and convert_substitution map the types back, if possible. The reason it is part of the
    * Ral transformation is that before the layer cleanup we also needed to convert all formulas to the same layer type
-   * (i.e. not mix FOLFormulas with HOLFormulas).
+   * (i.e. not mix FOLFormulas with Formulas).
    */
-  override def convert_formula( e: HOLFormula ): HOLFormula = e
+  override def convert_formula( e: Formula ): Formula = e
   override def convert_substitution( s: Substitution ): Substitution = s
   override def convert_context( con: Abs ) = con
 
@@ -19,7 +19,7 @@ object ResolutionToRal extends ResolutionToRal {
 
 abstract class ResolutionToRal {
   /* convert formula will be called on any formula before translation */
-  def convert_formula( e: HOLFormula ): HOLFormula
+  def convert_formula( e: Formula ): Formula
 
   /* convert substitution will be called on any substitution before translation */
   def convert_substitution( s: Substitution ): Substitution
@@ -61,13 +61,13 @@ class Resolution2RalWithAbstractions(
     cmap:       replaceAbstractions.ConstantsMap
 ) extends ResolutionToRal {
   //we know that the cmap is a bijection and define absmap as the inverse of cmap
-  val absmap = Map[String, LambdaExpression]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
+  val absmap = Map[String, Expr]() ++ ( cmap.toList.map( x => ( x._2.toString, x._1 ) ) )
 
-  private def bt( e: LambdaExpression, t_expected: Option[Ty] ) = BetaReduction.betaNormalize(
+  private def bt( e: Expr, t_expected: Option[Ty] ) = BetaReduction.betaNormalize(
     undoHol2Fol.backtranslate( e, sig_vars, sig_consts, absmap, t_expected )
   )
 
-  override def convert_formula( e: HOLFormula ): HOLFormula = bt( e, Some( To ) ).asInstanceOf[HOLFormula]
+  override def convert_formula( e: Formula ): Formula = bt( e, Some( To ) ).asInstanceOf[Formula]
 
   override def convert_context( con: Abs ) = {
     val Abs( v, rest ) = con

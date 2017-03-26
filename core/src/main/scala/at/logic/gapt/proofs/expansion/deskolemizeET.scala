@@ -18,22 +18,22 @@ class deskolemizeET {
     val nameGenerator = rename.awayFrom( containedNames( expansionProof ) )
     val skolemTerms = expansionProof.subProofs.collect { case e: ETSkolemQuantifier => e.skolemTerm }
     val repl = skolemTerms.map {
-      t => ( t, Var( nameGenerator.fresh( "v" ), t.exptype ) )
+      t => ( t, Var( nameGenerator.fresh( "v" ), t.ty ) )
     }.toMap
 
     ExpansionProof( apply( expansionProof.expansionSequent, repl ) )
   }
 
-  def apply( es: ExpansionSequent, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionSequent = {
+  def apply( es: ExpansionSequent, repl: PartialFunction[Expr, Expr] ): ExpansionSequent = {
     for { e <- es } yield apply( e, repl )
   }
 
-  def apply( e: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree = {
+  def apply( e: ExpansionTree, repl: PartialFunction[Expr, Expr] ): ExpansionTree = {
     rm( e, repl )
   }
 
   // TODO unify with replaceET? code is very similar
-  def rm( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree = et match {
+  def rm( et: ExpansionTree, repl: PartialFunction[Expr, Expr] ): ExpansionTree = et match {
     case ETMerge( child1, child2 ) => ETMerge( rm( child1, repl ), rm( child2, repl ) )
 
     case et @ ETWeakening( formula, _ ) =>

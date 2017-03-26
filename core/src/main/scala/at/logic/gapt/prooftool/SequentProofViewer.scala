@@ -1,7 +1,7 @@
 package at.logic.gapt.prooftool
 
 import ammonite.ops._
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
@@ -131,7 +131,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
  * @param name The name to be displayed at the top.
  * @param proof The proof to be displayed.
  */
-class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[HOLFormula, LKProof]( name, proof, LatexExporter( _ ) ) with Savable[LKProof] with ContainsLKProof {
+class LKProofViewer( name: String, proof: LKProof ) extends SequentProofViewer[Formula, LKProof]( name, proof, LatexExporter( _ ) ) with Savable[LKProof] with ContainsLKProof {
   override val content: LKProof = proof
   override def fileMenuContents = Seq( openButton, saveAsButton, new Separator, exportToPDFButton, exportToPNGButton )
   override def viewMenuContents = super.viewMenuContents ++ Seq( hideStructuralRulesButton, markCutAncestorsButton, new Separator(), viewExpansionProofButton )

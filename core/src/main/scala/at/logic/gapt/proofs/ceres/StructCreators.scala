@@ -42,18 +42,18 @@ object StructCreators extends Logger {
 
   private val nLine = sys.props( "line.separator" )
 
-  def toFormula[Data]( s: Struct[Data] ): HOLFormula =
+  def toFormula[Data]( s: Struct[Data] ): Formula =
     And( CharacteristicClauseSet( s ).toSeq map ( _.toDisjunction ) )
 
   def extract[Data]( p: LKProof ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ) )( x => true )
-  def extract[Data]( p: LKProof, predicate: HOLFormula => Boolean ): Struct[Data] =
+  def extract[Data]( p: LKProof, predicate: Formula => Boolean ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ) )( predicate )
 
   private def mapToUpperProof[Formula]( conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
-  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean] )( implicit pred: HOLFormula => Boolean ): Struct[Data] = {
+  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean] )( implicit pred: Formula => Boolean ): Struct[Data] = {
     val cutanc_es = p.endSequent.zip( cut_occs ).filter( _._2 ).map( _._1 )
     val es = p.endSequent
     /*println( s"es: $es" )

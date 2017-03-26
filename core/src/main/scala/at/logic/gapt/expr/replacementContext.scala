@@ -15,7 +15,7 @@ object replacementContext {
    * @param positions The list of positions in φ to be replaced with x.
    * @return
    */
-  def apply( ty: Ty, exp: LambdaExpression, positions: Iterable[LambdaPosition] ): Abs = {
+  def apply( ty: Ty, exp: Expr, positions: Iterable[LambdaPosition] ): Abs = {
     val x = rename( Var( "x", ty ), freeVariables( exp ) )
     Abs( x, positions.foldLeft( exp ) { ( acc, p ) => acc.replace( p, x ) } )
   }
@@ -28,7 +28,7 @@ object replacementContext {
    * @param positions The list of positions in φ to be replaced with x.
    * @return
    */
-  def apply( ty: Ty, exp: LambdaExpression, positions: Iterable[HOLPosition] )( implicit d: DummyImplicit ): Abs =
+  def apply( ty: Ty, exp: Expr, positions: Iterable[HOLPosition] )( implicit d: DummyImplicit ): Abs =
     apply( ty, exp, positions map { HOLPosition.toLambdaPosition( exp ) } )
 
   /**
@@ -37,6 +37,6 @@ object replacementContext {
    * @param t The term t.
    * @return
    */
-  def abstractTerm( exp: LambdaExpression )( t: LambdaExpression ): Abs =
-    apply( t.exptype, exp, exp.find( t ) )
+  def abstractTerm( exp: Expr )( t: Expr ): Abs =
+    apply( t.ty, exp, exp.find( t ) )
 }

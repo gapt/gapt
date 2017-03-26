@@ -95,7 +95,7 @@ object TptpProofParser {
     val splDefs = mutable.Map[( FOLAtom, Boolean ), AvatarDefinition]()
     val splAtoms = mutable.Set[FOLAtom]()
     def filterVampireSplits( clause: FOLClause ): FOLClause = clause.filterNot( splAtoms )
-    def convertAvatarDefinition( defn: HOLFormula, splAtom: FOLAtom ): Seq[RefutationSketch] = {
+    def convertAvatarDefinition( defn: Formula, splAtom: FOLAtom ): Seq[RefutationSketch] = {
       splAtoms += splAtom
       val comps = defn match {
         case splAtom @ FOLAtom( _, _ ) if freeVariables( splAtom ).isEmpty =>

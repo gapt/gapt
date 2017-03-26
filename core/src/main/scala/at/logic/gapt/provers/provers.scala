@@ -7,6 +7,10 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, E
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
+import Session._
+import Runners._
+import cats.{ Id, ~> }
+import cats.implicits._
 
 import scala.collection.mutable
 
@@ -26,7 +30,7 @@ trait Prover {
    * @param formula The formula whose validity should be checked.
    * @return True if the formula is valid.
    */
-  def isValid( formula: HOLFormula ): Boolean = isValid( HOLSequent( Nil, formula :: Nil ) )
+  def isValid( formula: Formula ): Boolean = isValid( HOLSequent( Nil, formula :: Nil ) )
 
   /**
    * @param seq The sequent whose validity should be checked.
@@ -40,7 +44,7 @@ trait Prover {
   /**
    * Checks whether a formula is unsatisfiable.
    */
-  def isUnsat( formula: HOLFormula ): Boolean = isValid( -formula )
+  def isUnsat( formula: Formula ): Boolean = isValid( -formula )
 
   /**
    * Checks whether a set of clauses is unsatisfiable.
@@ -51,7 +55,7 @@ trait Prover {
    * @param formula The formula that should be proved.
    * @return An LK-Proof of  :- formula, or None if not successful.
    */
-  def getLKProof( formula: HOLFormula ): Option[LKProof] = getLKProof( HOLSequent( Nil, formula :: Nil ) )
+  def getLKProof( formula: Formula ): Option[LKProof] = getLKProof( HOLSequent( Nil, formula :: Nil ) )
 
   /**
    * @param seq The sequent that should be proved.
@@ -59,7 +63,7 @@ trait Prover {
    */
   def getLKProof( seq: HOLSequent ): Option[LKProof]
 
-  def getExpansionProof( formula: HOLFormula ): Option[ExpansionProof] =
+  def getExpansionProof( formula: Formula ): Option[ExpansionProof] =
     getExpansionProof( Sequent() :+ formula )
 
   def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] =
@@ -67,87 +71,42 @@ trait Prover {
 
   def getEpsilonProof( seq: HOLSequent ): Option[EpsilonProof] =
     getExpansionProof( seq ) map { ExpansionProofToEpsilon( _ ) }
-  def getEpsilonProof( formula: HOLFormula ): Option[EpsilonProof] =
+  def getEpsilonProof( formula: Formula ): Option[EpsilonProof] =
     getEpsilonProof( Sequent() :+ formula )
 
   /**
-   * Starts an incremental proving session.
+   * Method for running a session.
+   * @param program A proof session.
+   * @tparam A The return type of the session.
+   * @return The result of running the session.
    */
-  def startIncrementalSession(): IncrementalProvingSession
-}
-
-trait OneShotProver extends Prover { self: Prover =>
-  class FakeIncrementalSession extends IncrementalProvingSession {
-    val formulaStack = mutable.Stack[Set[HOLFormula]]()
-    var assertedFormulas = Set[HOLFormula]()
-
-    def push() = formulaStack push assertedFormulas
-    def pop() = { assertedFormulas = formulaStack.pop }
-
-    def declareSymbolsIn( expressions: TraversableOnce[LambdaExpression] ) = ()
-    def assert( formula: HOLFormula ) = assertedFormulas += formula
-    def checkSat() = !self.isValid( assertedFormulas ++: Sequent() )
-
-    def close() = ()
-  }
-
-  def startIncrementalSession() = new FakeIncrementalSession
-}
-
-trait IncrementalProver extends Prover {
-  override def getLKProof( seq: HOLSequent ): Option[LKProof] = ???
-  override def isValid( seq: HOLSequent ) = for ( session <- startIncrementalSession() ) yield {
-    val ( groundSeq, _ ) = groundFreeVariables( seq )
-    session declareSymbolsIn groundSeq.elements
-    groundSeq.map( identity, -_ ) foreach session.assert
-    !session.checkSat()
-  }
+  def runSession[A]( program: Session[A] ): A
 }
 
 /**
- * Interactive interface to an interactive prover like an SMT solver.
- *
- * The methods on this trait are chosen for similarity to the SMT-LIB
- * standard.  You can imagine that an instance of this trait is a single
- * SMT solver processing commands interactively.
+ * A prover that interprets Sessions as stack operations.
  */
-trait IncrementalProvingSession {
-  /**
-   * Starts a new scope.  All commands that are issued will be reverted after the corresponding call to pop().
-   */
-  def push()
+trait OneShotProver extends Prover {
+  override def runSession[A]( program: Session[A] ): A = new StackSessionRunner( this.isValid ).run( program )
+}
+
+/**
+ * A prover that determines validity via an incremental proof session.
+ */
+trait IncrementalProver extends Prover {
 
   /**
-   * Undos the commands since the corresponding push().
+   * Tests the validity of a sequent.
    */
-  def pop()
+  def isValidProgram( seq: HOLSequent ): Session[Boolean] = {
+    val ( groundSeq, _ ) = groundFreeVariables( seq )
+    for {
+      _ <- declareSymbolsIn( groundSeq.elements )
+      _ <- assert( groundSeq.map( identity, -_ ).elements.toList )
+      sat <- checkSat
+    } yield !sat
+  }
 
-  /**
-   * Declares function symbols and base types from expressions.
-   */
-  def declareSymbolsIn( expressions: LambdaExpression* ): Unit = declareSymbolsIn( expressions )
-  /**
-   * Declares function symbols and base types from expressions.
-   */
-  def declareSymbolsIn( expressions: TraversableOnce[LambdaExpression] ): Unit
-
-  /**
-   * Adds an assertion.
-   */
-  def assert( formula: HOLFormula )
-
-  /**
-   * Checks whether the currently asserted formulas are satisfiable.
-   */
-  def checkSat(): Boolean
-
-  /** Closes the process. */
-  def close()
-
-  /** Run f in its own scope, i.e. push(); f; pop() */
-  def withScope[A]( f: => A ): A = { push(); try f finally pop() }
-
-  def foreach( f: this.type => Unit ): Unit = flatMap( f )
-  def map[A]( f: this.type => A ): A = flatMap( f )
-  def flatMap[A]( f: this.type => A ): A = try f( this ) finally close()
+  override def getLKProof( seq: HOLSequent ): Option[LKProof] = ???
+  override def isValid( seq: HOLSequent ): Boolean = runSession( isValidProgram( seq ) )
 }

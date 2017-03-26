@@ -54,13 +54,11 @@ object tape extends TacticsProof {
     foTheory
   }
 
-  val p = Lemma( ( "A" -> fof"A" ) +: Sequent()
+  val proof = Lemma( ( "A" -> fof"A" ) +: Sequent()
     :+ ( "C" -> fof"?x?y (x != y & f x = f y)" ) ) {
     cut( "I1", fof"I(1)" )
     cut( "I0", fof"I(0)" )
     insert( lhs )
     repeat( insert( rhs ) )
   }
-
-  val defs = ctx.definitions.toMap
 }

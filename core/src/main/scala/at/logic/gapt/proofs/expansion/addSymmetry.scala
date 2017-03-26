@@ -16,7 +16,7 @@ object addSymmetry {
     val positivePairs = for ( et <- s.elements.view; ETAtom( Eq( l, r ), Polarity.Positive ) <- et.subProofs ) yield l -> r
 
     positivePairs.map( _.swap ).toSet.intersect( negativePairs.toSet ).
-      groupBy( _._1.exptype ).map {
+      groupBy( _._1.ty ).map {
         case ( ty, pairs ) =>
           val Seq( x, y ) = Seq( "x", "y" ).map( Var( _, ty ) )
           val symmAx = hof"!$x !$y ($x=$y -> $y=$x)"

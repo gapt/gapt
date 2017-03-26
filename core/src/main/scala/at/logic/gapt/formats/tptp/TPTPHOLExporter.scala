@@ -83,7 +83,7 @@ class TPTPHOLExporter {
 
     var index = 0
 
-    val types = for ( seq <- ls; f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.exptype ) ) yield t
+    val types = for ( seq <- ls; f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.ty ) ) yield t
     val tdecls = for ( t <- types.distinct if t != Ti && t != To ) yield { index += 1; s"thf($index, type, $t: $$tType).$nLine" }
 
     val cdecs_ = for ( c <- cs if c.name != "=" ) yield {
@@ -117,7 +117,7 @@ class TPTPHOLExporter {
 
     var index = 0
 
-    val types = for ( f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.exptype ) ) yield t
+    val types = for ( f <- seq.elements; st <- subTerms( f ); t <- baseTypes( st.ty ) ) yield t
     val tdecls = for ( t <- types.distinct if t != Ti && t != To ) yield {
       index += 1; s"thf($index, type, $t: $$tType).$nLine"
     }
@@ -198,7 +198,7 @@ class TPTPHOLExporter {
   type CNameMap = Map[Const, String]
   val emptyCNameMap = Map[Const, String]()
 
-  def createFormula( f: LambdaExpression, map: Map[Var, String] ) = f match {
+  def createFormula( f: Expr, map: Map[Var, String] ) = f match {
     case Var( _, _ ) => map( f.asInstanceOf[Var] )
   }
 
@@ -217,7 +217,7 @@ class TPTPHOLExporter {
     }
   } )
 
-  def closedFormula( fs: HOLSequent ): HOLFormula = universalClosure( fs.toDisjunction )
+  def closedFormula( fs: HOLSequent ): Formula = universalClosure( fs.toDisjunction )
 
   def createNamesFromConst( l: List[Const] ): CNameMap = l.foldLeft( emptyCNameMap )( ( map, v ) => {
     if ( map contains v )
@@ -228,14 +228,14 @@ class TPTPHOLExporter {
     }
   } )
 
-  def thf_formula_dec( i: Int, f: HOLFormula, role: TPTPFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
+  def thf_formula_dec( i: Int, f: Formula, role: TPTPFormulaRole, vmap: NameMap, cmap: CNameMap ): String = {
     val f_str = thf_formula( f, vmap, cmap, true )
     val internal_str = f.toString.flatMap( { case '\n' => "\n% "; case x => x :: Nil } ) //add comment after newline
     s"${nLine}% formula: $internal_str ${nLine}thf(${i}, ${role}, ${f_str} )."
   }
 
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
-  def thf_formula( f: LambdaExpression, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
+  def thf_formula( f: Expr, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
       case Top()                      => "$true"
       case Bottom()                   => "$false"
@@ -243,10 +243,10 @@ class TPTPHOLExporter {
       case And( x, y )                => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
       case Or( x, y )                 => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
       case Imp( x, y )                => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
-      case All( x, t )                => addparens( "![" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case Ex( x, t )                 => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case All( x, t )                => addparens( "![" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Ex( x, t )                 => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
       case Eq( x, y )                 => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
-      case Abs( x, t )                => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.exptype ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Abs( x, t )                => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
       case App( s, t )                => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
       case Var( _, _ )                => vmap( f.asInstanceOf[Var] )
       case NonLogicalConstant( _, _ ) => cmap( f.asInstanceOf[Const] )
@@ -256,22 +256,22 @@ class TPTPHOLExporter {
 
   def thf_type_dec( i: Int, v: Var, vmap: NameMap ): String = {
     require( vmap.contains( v ), "Did not generate an export name for " + v + "!" )
-    "thf(" + i + ", type, " + vmap( v ) + ": " + getTypeString( v.exptype ) + " )."
+    "thf(" + i + ", type, " + vmap( v ) + ": " + getTypeString( v.ty ) + " )."
   }
 
   def thf_type_dec( i: Int, c: Const, cmap: CNameMap ): String = {
     require( cmap.contains( c ), "Did not generate an export name for " + c + "!" )
-    "thf(" + i + ", type, " + cmap( c ) + ": " + getTypeString( c.exptype ) + " )."
+    "thf(" + i + ", type, " + cmap( c ) + ": " + getTypeString( c.ty ) + " )."
   }
 
   def getTypeString( t: Ty ): String = getTypeString( t, true )
   def getTypeString( t: Ty, outer: Boolean ): String = t match {
-    case Ti                => "$i"
-    case To                => "$o"
-    case TBase( name )     => name
-    case t1 -> t2 if outer => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
-    case t1 -> t2          => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
-    case _                 => throw new Exception( "TPTP type export for " + t + " not implemented!" )
+    case Ti                 => "$i"
+    case To                 => "$o"
+    case TBase( name, Nil ) => name
+    case t1 -> t2 if outer  => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
+    case t1 -> t2           => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
+    case _                  => throw new Exception( "TPTP type export for " + t + " not implemented!" )
   }
 
   def mkVarName( str: String, map: Map[Var, String] ) = {
@@ -322,14 +322,14 @@ class TPTPHOLExporter {
   }
 
   /** extract all variables, bound and free */
-  def getVars( t: LambdaExpression, set: Set[Var] ): Set[Var] = t match {
+  def getVars( t: Expr, set: Set[Var] ): Set[Var] = t match {
     case Const( _, _ ) => set
     case Var( _, _ )   => set + t.asInstanceOf[Var]
     case App( s, t )   => getVars( s, getVars( t, set ) )
     case Abs( x, t )   => getVars( t, set + x )
   }
 
-  def getConsts( t: LambdaExpression, set: Set[Const] ): Set[Const] = t match {
+  def getConsts( t: Expr, set: Set[Const] ): Set[Const] = t match {
     case EqC( _ )                   => set
     case _: LogicalConstant         => set
     case NonLogicalConstant( _, _ ) => set + t.asInstanceOf[Const]
@@ -364,7 +364,7 @@ class TPTPHOLExporter {
     }
   }
 
-  def strip_lambdas( e: LambdaExpression, context: List[Var] ): ( LambdaExpression, List[Var] ) =
+  def strip_lambdas( e: Expr, context: List[Var] ): ( Expr, List[Var] ) =
     e match {
       case Abs( v, t ) => strip_lambdas( t, v :: context )
       case t           => ( t, context.reverse )
@@ -372,18 +372,18 @@ class TPTPHOLExporter {
 
   def lambda_lift_and_add_definitions( seq: HOLSequent ): HOLSequent = {
     val ( cmap, seq0 :: Nil ) = replaceAbstractions( seq :: Nil )
-    val qaxioms: Seq[HOLFormula] = cmap.toSeq.map {
+    val qaxioms: Seq[Formula] = cmap.toSeq.map {
       case ( term_, name ) => {
         //term_ should be closed, but to be sure we add the free variables the variables stripped from the outer-most
         //lambda-block in term_
         val fv = freeVariables( term_ ).toList
         val ( term, all_vars ) = strip_lambdas( term_, fv )
         //create the type of q
-        val qtype = all_vars.foldRight( term.exptype )( { case ( v, t ) => v.exptype -> t } )
+        val qtype = all_vars.foldRight( term.ty )( { case ( v, t ) => v.ty -> t } )
         // apply it to the arguments
         val q_function = Apps( Const( name, qtype ), all_vars )
         // build the formula equating it to the stripped term
-        val eq: HOLFormula = Eq( q_function, term )
+        val eq: Formula = Eq( q_function, term )
         // and close the formula universally
         val axiom = all_vars.foldRight( eq ) { case ( v, f ) => All( v, f ) }
         axiom

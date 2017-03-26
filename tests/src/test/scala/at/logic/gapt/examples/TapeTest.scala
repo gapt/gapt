@@ -4,27 +4,30 @@ import at.logic.gapt.proofs.lk.eliminateDefinitions
 import org.specs2.mutable.Specification
 
 class TapeTest extends Specification {
+  import tape._
 
   "tape" in {
-    tape.ctx.check( tape.p )
+    ctx.check( proof )
     ok
   }
 
   "definition elimination" in {
-    eliminateDefinitions( tape.defs.toMap )( tape.p )
+    eliminateDefinitions( proof )
     ok
   }
 
 }
 
 class TapeUrbanTest extends Specification {
+  import tapeUrban._
+
   "urban tape" in {
-    tapeUrban.ctx.check( tapeUrban.sigma )
+    ctx.check( sigma )
     ok
   }
 
   "definition elimination" in {
-    eliminateDefinitions( tapeUrban.defs.toMap )( tapeUrban.sigma )
+    eliminateDefinitions( sigma )
     ok
   }
 }

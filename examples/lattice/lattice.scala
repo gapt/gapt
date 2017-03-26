@@ -30,8 +30,6 @@ object lattice extends TacticsProof {
   ctx += hof"LUB = (∀x∀y (x <= cup x y ∧ y <= cup x y ∧ ∀z (x<=z ∧ y<=z ⊃ cup x y <= z)))"
   ctx += hof"L3 = (POSET ∧ (GLB ∧ LUB))"
 
-  val defs = ctx.definitions.toMap
-
   //
   // Left sub proof
   //
@@ -132,7 +130,7 @@ object lattice extends TacticsProof {
     andR
     unfold( "POSET" ) in "L3"
     andR
-    repeat( unfold( "R", "<=" ) in "L3" )
+    unfold( "R", "<=" ) in "L3"
     decompose
     foTheory
     insert( p_1 )
@@ -232,4 +230,5 @@ object lattice extends TacticsProof {
     insert( p1_3 )
     insert( p3_2 )
   }
+  val proof = p
 }

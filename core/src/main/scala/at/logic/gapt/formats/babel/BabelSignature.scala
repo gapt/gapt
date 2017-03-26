@@ -32,7 +32,7 @@ object BabelSignature {
 
     def signatureLookup( s: String ): VarConst =
       Context.default.constant( s ) match {
-        case Some( c ) => IsConst( c.exptype )
+        case Some( c ) => IsConst( c.ty )
         case None =>
           s match {
             case varPattern() => IsVar
@@ -64,5 +64,5 @@ case class MapBabelSignature( map: Map[String, Ty] ) extends BabelSignature {
 }
 object MapBabelSignature {
   def apply( consts: Iterable[real.Const] ): MapBabelSignature =
-    MapBabelSignature( consts.view map { c => c.name -> c.exptype } toMap )
+    MapBabelSignature( consts.view map { c => c.name -> c.ty } toMap )
 }

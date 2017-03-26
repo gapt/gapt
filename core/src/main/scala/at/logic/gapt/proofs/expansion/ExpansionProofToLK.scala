@@ -100,7 +100,7 @@ class ExpansionProofToLK(
 
   private def tryBinary( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     def handle( i: SequentIndex, e: ExpansionTree, f: ExpansionTree, g: ExpansionTree,
-                rule: ( LKProof, LKProof, HOLFormula ) => LKProof ) =
+                rule: ( LKProof, LKProof, Formula ) => LKProof ) =
       solve( cuts, if ( f.polarity.inSuc ) expSeq.delete( i ) :+ f else f +: expSeq.delete( i ) ) flatMap { p1 =>
         if ( !p1.conclusion.contains( f.shallow, f.polarity ) ) Right( p1 )
         else solve( cuts, if ( g.polarity.inSuc ) expSeq.delete( i ) :+ g else g +: expSeq.delete( i ) ) map { p2 =>
@@ -133,7 +133,7 @@ class ExpansionProofToLK(
       et <- cuts ++ expSeq.elements
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
-    def possibleInsts( insts: Map[LambdaExpression, ExpansionTree] ) =
+    def possibleInsts( insts: Map[Expr, ExpansionTree] ) =
       Map() ++ insts.filterKeys( t => freeVariables( t ) intersect upcomingEVs isEmpty )
 
     for ( ( ETWeakQuantifier( sh, insts ), i ) <- expSeq.zipWithIndex.elements ) {

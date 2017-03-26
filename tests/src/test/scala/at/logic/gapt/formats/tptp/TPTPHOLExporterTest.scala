@@ -10,8 +10,8 @@ class TPTPHOLExporterTest extends Specification {
       val y = Var( "y", To )
       val c = Const( "c", Ti )
 
-      val ax = HOLAtom( x, List( c ) )
-      val ay = HOLAtom( y )
+      val ax = Atom( x, List( c ) )
+      val ay = Atom( y )
 
       //println( TPTPHOLExporter( List( HOLSequent( Nil, List( ax, ay ) ) ), true ) )
 

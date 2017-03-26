@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent }
 
 object TPTPFOLExporter {
-  def apply( formula: HOLFormula ): TptpFile =
+  def apply( formula: Formula ): TptpFile =
     TptpFile( Seq( AnnotatedFormula( "fof", "formula", "conjecture", formula, Seq() ) ) )
 
   def apply( sequent: HOLSequent ): TptpFile = {
@@ -44,7 +44,7 @@ object TPTPFOLExporter {
     exportLabelledCNF( for ( ( c, i ) <- cnf.zipWithIndex ) yield s"clause_$i" -> c )
 
   def exportClause( clause: HOLClause, name: String ): TptpInput = {
-    val ( _, disj: HOLFormula ) = tptpToString.renameVars( freeVariables( clause ).toSeq, clause.toDisjunction )
+    val ( _, disj: Formula ) = tptpToString.renameVars( freeVariables( clause ).toSeq, clause.toDisjunction )
     AnnotatedFormula( "cnf", name, "axiom", disj, Seq() )
   }
 

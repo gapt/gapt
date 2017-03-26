@@ -1,10 +1,13 @@
 # Release notes for GAPT
 
-## Version 2.5 (unreleased)
+## Version 2.6 (unreleased)
+
+## Version 2.5 (released on 2017-02-22)
 
 * Support veriT stable2016
 * CERES version that directly produces expansion proofs
 * Deskolemization
+* First prototype of Pi2 cut-introduction
 * Better error messages in Babel, the formula parser
 
 ## Version 2.4 (released on 2017-01-13)

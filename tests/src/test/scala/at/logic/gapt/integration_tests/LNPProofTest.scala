@@ -12,7 +12,7 @@ import org.specs2.mutable._
 import BetaReduction._
 
 object PDAnalysis extends AnalysisWithCeresOmega {
-  val pdb = ExtendedProofDatabase( Map( hoa"THEPROOF" -> primediv.proof ), Map(), primediv.defs )
+  val pdb = ExtendedProofDatabase( Map( hoa"THEPROOF" -> primediv.proof ), Map(), primediv.ctx.definitions )
 
   override def proofdb() = pdb;
 
@@ -22,14 +22,14 @@ object PDAnalysis extends AnalysisWithCeresOmega {
   val sub = Substitution( hov"X:nat>o" -> le"^(x:nat) ?(z:nat) (D z (s_1 : nat) & x < (s_1 : nat) & z > (1:nat))" )
 
   lazy val css_ : Set[HOLSequent] = {
-    def subf( t: HOLFormula ) =
+    def subf( t: Formula ) =
       betaNormalize( sub( t ) )
     css.map( _.map( subf ) )
   }
 
   lazy val fol_css_ = css_ map ( _.map( _ match {
-    case x: HOLAtom => x
-    case x: Any     => throw new Exception( s"$x is not an atom!" )
+    case x: Atom => x
+    case x: Any  => throw new Exception( s"$x is not an atom!" )
   } ) )
 
   lazy val ref = Prover9.getResolutionProof( fol_css_ )

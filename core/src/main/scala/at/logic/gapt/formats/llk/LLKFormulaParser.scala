@@ -144,8 +144,8 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
 
 object DeclarationParser extends DeclarationParser
 object LLKTypes {
-  type LLKSignature = Map[String, LambdaExpression]
-  val emptyLLKSignature = Map[String, LambdaExpression]()
+  type LLKSignature = Map[String, Expr]
+  val emptyLLKSignature = Map[String, Expr]()
 }
 
 class DeclarationParser extends LLKASTParser {
@@ -168,7 +168,7 @@ class DeclarationParser extends LLKASTParser {
     case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )
   }
 
-  lazy val vardecl: PackratParser[Map[String, LambdaExpression]] = "var" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
+  lazy val vardecl: PackratParser[Map[String, Expr]] = "var" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ ( varnames map ( x => ( x, Var( x, exptype ) ) ) )
   }
 
@@ -193,21 +193,21 @@ class DeclarationParser extends LLKASTParser {
 object LLKFormulaParser extends LLKFormulaParser
 class LLKFormulaParser {
   //automated casting, a bit dirty
-  private def f( e: LambdaExpression ): HOLFormula = {
-    require( e.isInstanceOf[HOLFormula], "The expression " + e + " is supposed to be a formula!" )
-    e.asInstanceOf[HOLFormula]
+  private def f( e: Expr ): Formula = {
+    require( e.isInstanceOf[Formula], "The expression " + e + " is supposed to be a formula!" )
+    e.asInstanceOf[Formula]
   }
-  private def v( e: LambdaExpression ): Var = {
+  private def v( e: Expr ): Var = {
     require( e.isInstanceOf[Var], "The expression " + e + " is supposed to be a variable!" )
     e.asInstanceOf[Var]
   }
 
-  def ASTtoHOLnormalized( create: String => LambdaExpression, exp: ast.LambdaAST ): LambdaExpression =
+  def ASTtoHOLnormalized( create: String => Expr, exp: ast.LambdaAST ): Expr =
     BetaReduction.betaNormalize( ASTtoHOL( create, exp ) )
 
   //converts an ast to a holformula. create decides if the string represents a constant or variable of appropriate type
   // and returns the matching hol expression
-  def ASTtoHOL( create: String => LambdaExpression, exp: ast.LambdaAST ): LambdaExpression = exp match {
+  def ASTtoHOL( create: String => Expr, exp: ast.LambdaAST ): Expr = exp match {
     case ast.Abs( ast.Var( x ), t )    => Abs( v( create( x ) ), ASTtoHOL( create, t ) )
     case ast.All( ast.Var( x ), t )    => All( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
     case ast.Exists( ast.Var( x ), t ) => Ex( v( create( x ) ), f( ASTtoHOL( create, t ) ) )
@@ -227,11 +227,11 @@ class LLKFormulaParser {
     case ast.Eq( l, r )  => Eq( ASTtoHOL( create, l ), ASTtoHOL( create, r ) )
 
     case ast.Var( x )    => create( x )
-    case ast.Top()       => HOLAtom( Top(), Nil )
-    case ast.Bottom()    => HOLAtom( Bottom(), Nil )
+    case ast.Top()       => Atom( Top(), Nil )
+    case ast.Bottom()    => Atom( Bottom(), Nil )
   }
 
-  def parse( create: String => LambdaExpression, s: CharSequence ): LambdaExpression = {
+  def parse( create: String => Expr, s: CharSequence ): Expr = {
     DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
       case DeclarationParser.Success( result, _ ) => ASTtoHOL( create, result )
       case DeclarationParser.NoSuccess( msg, input ) =>
@@ -240,7 +240,7 @@ class LLKFormulaParser {
 
   }
 
-  def parse( s: CharSequence ): LambdaExpression = {
+  def parse( s: CharSequence ): Expr = {
     DeclarationParser.parseAll( DeclarationParser.declaredformula, s ) match {
       case DeclarationParser.Success( ( declarations, tree ), _ ) =>
         ASTtoHOL( x => declarations( x ), tree )
@@ -250,7 +250,7 @@ class LLKFormulaParser {
 
   }
 
-  def parseFormula( s: String ): HOLFormula = f( parse( s ) )
+  def parseFormula( s: String ): Formula = f( parse( s ) )
 
 }
 

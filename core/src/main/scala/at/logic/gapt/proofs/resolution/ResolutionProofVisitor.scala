@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.expr.{ HOLFormula, Polarity }
+import at.logic.gapt.expr.{ Formula, Polarity }
 import at.logic.gapt.proofs.SequentIndex
 
 import scala.collection.mutable
@@ -38,7 +38,7 @@ class ResolutionProofVisitor {
 
   def recurse( proof: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( proof, apply( proof ) )
 
-  def copyUnary( old: ResolutionProof, newSub: ResolutionProof, aux: HOLFormula, pol: Polarity ): ResolutionProof =
+  def copyUnary( old: ResolutionProof, newSub: ResolutionProof, aux: Formula, pol: Polarity ): ResolutionProof =
     newSub.conclusion.indexOfPolOption( aux, pol ) match {
       case Some( idx ) => copyUnary( old, newSub, idx )
       case None        => newSub

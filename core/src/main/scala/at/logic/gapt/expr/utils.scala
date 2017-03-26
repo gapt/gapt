@@ -15,11 +15,11 @@ import scala.collection.mutable
  * different variables, and bound variables are disjoint from the free ones.
  */
 object isInVNF {
-  def apply( e: LambdaExpression ): Boolean = {
+  def apply( e: Expr ): Boolean = {
     val seen = mutable.Set[Var]()
     seen ++= freeVariables( e )
 
-    def check( e: LambdaExpression ): Boolean = e match {
+    def check( e: Expr ): Boolean = e match {
       case _: Var | _: Const              => true
       case App( a, b )                    => check( a ) && check( b )
       case Abs( v, a ) if seen contains v => false
@@ -36,7 +36,7 @@ object isInVNF {
  * and the bound variables are disjoint from the free ones.
  */
 object toVNF {
-  def apply( e: LambdaExpression, nameGen: NameGenerator ): LambdaExpression = e match {
+  def apply( e: Expr, nameGen: NameGenerator ): Expr = e match {
     case v: VarOrConst => v
     case App( a, b )   => App( apply( a, nameGen ), apply( b, nameGen ) )
     case Abs( v, a ) =>
@@ -45,12 +45,12 @@ object toVNF {
       else Abs( v_, apply( Substitution( v -> v_ )( a ), nameGen ) )
   }
 
-  def apply( e: LambdaExpression ): LambdaExpression = apply( e, rename.awayFrom( freeVariables( e ) ) )
-  def apply( f: HOLFormula ): HOLFormula = apply( f.asInstanceOf[LambdaExpression] ).asInstanceOf[HOLFormula]
+  def apply( e: Expr ): Expr = apply( e, rename.awayFrom( freeVariables( e ) ) )
+  def apply( f: Formula ): Formula = apply( f.asInstanceOf[Expr] ).asInstanceOf[Formula]
 
   def apply( sequent: HOLSequent ): HOLSequent = {
     val nameGen = rename.awayFrom( freeVariables( sequent ) )
-    sequent.map( apply( _, nameGen ).asInstanceOf[HOLFormula] )
+    sequent.map( apply( _, nameGen ).asInstanceOf[Formula] )
   }
 }
 
@@ -59,17 +59,17 @@ object toVNF {
  * vacuously bound variables).
  */
 object variables {
-  def apply( e: LambdaExpression ): Set[Var] = e match {
+  def apply( e: Expr ): Set[Var] = e match {
     case v: Var      => Set( v )
     case c: Const    => Set()
     case App( s, t ) => apply( s ) ++ apply( t )
     case Abs( v, t ) => apply( v ) ++ apply( t )
   }
 
-  def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[LambdaExpression] ).asInstanceOf[Set[FOLVar]]
+  def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[Expr] ).asInstanceOf[Set[FOLVar]]
   def apply( s: HOLSequent ): Set[Var] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Var]() )( ( x, y ) => x ++ apply( y ) )
   def apply( s: Sequent[FOLFormula] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Set[FOLVar] = s.elements flatMap apply toSet
-  def apply[Expr <: LambdaExpression, Proof <: SequentProof[Expr, Proof]]( p: SequentProof[Expr, Proof] ): Set[Var] =
+  def apply[Fml <: Expr, Proof <: SequentProof[Fml, Proof]]( p: SequentProof[Fml, Proof] ): Set[Var] =
     p.subProofs flatMap { _.conclusion.elements } flatMap { variables( _ ) }
 }
 
@@ -77,11 +77,11 @@ object variables {
  * Returns the set of free variables in the given argument.
  */
 object freeVariables {
-  def apply( e: LambdaExpression ): Set[Var] = freeVariables( Some( e ) )
+  def apply( e: Expr ): Set[Var] = freeVariables( Some( e ) )
 
-  def apply( es: TraversableOnce[LambdaExpression] ): Set[Var] = {
+  def apply( es: TraversableOnce[Expr] ): Set[Var] = {
     val fvs = Set.newBuilder[Var]
-    def f( e: LambdaExpression ): Unit = e match {
+    def f( e: Expr ): Unit = e match {
       case v: Var => fvs += v
       case App( a, b ) =>
         f( a )
@@ -97,17 +97,32 @@ object freeVariables {
 
   def apply( e: FOLExpression ): Set[FOLVar] = apply( Some( e ) )
   def apply( es: TraversableOnce[FOLExpression] )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] =
-    freeVariables( es.asInstanceOf[TraversableOnce[LambdaExpression]] ).asInstanceOf[Set[FOLVar]]
+    freeVariables( es.asInstanceOf[TraversableOnce[Expr]] ).asInstanceOf[Set[FOLVar]]
   def apply( seq: FOLSequent )( implicit dummyImplicit: DummyImplicit ): Set[FOLVar] = apply( seq.elements )
+}
+
+object typeVariables {
+  def apply( t: Ty ): Set[TVar] = t match {
+    case a -> b         => apply( a ) ++ apply( b )
+    case TBase( _, ps ) => ps.view.flatMap( apply ).toSet
+    case t: TVar        => Set( t )
+  }
+
+  def apply( e: Expr ): Set[TVar] = e match {
+    case Const( _, t ) => apply( t )
+    case Var( _, t )   => apply( t )
+    case App( a, b )   => apply( a ) ++ apply( b )
+    case Abs( v, s )   => apply( s ) ++ apply( v )
+  }
 }
 
 /**
  * Returns the set of non-logical constants occuring in the given argument.
  */
 object constants {
-  def all( expression: LambdaExpression ): Set[Const] = {
+  def all( expression: Expr ): Set[Const] = {
     val cs = mutable.Set[Const]()
-    def f( e: LambdaExpression ): Unit = e match {
+    def f( e: Expr ): Unit = e match {
       case _: Var   =>
       case c: Const => cs += c
       case App( exp, arg ) =>
@@ -117,10 +132,10 @@ object constants {
     f( expression )
     cs.toSet
   }
-  def apply( expression: LambdaExpression ): Set[Const] =
+  def apply( expression: Expr ): Set[Const] =
     all( expression ).filter { !_.isInstanceOf[LogicalConstant] }
 
-  def apply( es: GenTraversable[LambdaExpression] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
+  def apply( es: GenTraversable[Expr] ): Set[Const] = ( Set.empty[Const] /: es ) { ( acc, e ) => acc union apply( e ) }
 
   def apply( s: HOLSequent ): Set[Const] = ( s.antecedent ++ s.succedent ).foldLeft( Set[Const]() )( ( x, y ) => x ++ apply( y ) )
 }
@@ -129,7 +144,7 @@ object constants {
  * Returns the set of all subterms of the given lambda term.
  */
 object subTerms {
-  def apply( e: LambdaExpression ): Set[LambdaExpression] = e match {
+  def apply( e: Expr ): Set[Expr] = e match {
     case Var( _, _ ) | Const( _, _ ) => Set( e )
     case Abs( _, e0 )                => apply( e0 ) + e
     case App( e1, e2 )               => ( apply( e1 ) ++ apply( e2 ) ) + e
@@ -137,7 +152,7 @@ object subTerms {
 }
 
 object expressionSize {
-  def apply( e: LambdaExpression ): Int = e match {
+  def apply( e: Expr ): Int = e match {
     case Var( _, _ ) | Const( _, _ ) => 1
     case Abs( _, f )                 => 1 + expressionSize( f )
     case App( a, b )                 => 1 + expressionSize( a ) + expressionSize( b )
@@ -178,7 +193,7 @@ object toImplications {
    * @param formula
    * @return
    */
-  def apply( formula: HOLFormula ): HOLFormula = formula match {
+  def apply( formula: Formula ): Formula = formula match {
     case Or( Neg( f ), g ) =>
       Imp( apply( f ), apply( g ) )
     case Or( f, Neg( g ) ) =>
@@ -193,5 +208,5 @@ object toImplications {
     case _           => formula
   }
 
-  def apply( formula: FOLFormula ): FOLFormula = apply( formula.asInstanceOf[HOLFormula] ).asInstanceOf[FOLFormula]
+  def apply( formula: FOLFormula ): FOLFormula = apply( formula.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
 }

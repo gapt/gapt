@@ -83,7 +83,7 @@ object eliminateCutsET {
     // that are not above the eigenvariables in the cut.  But these will get merged as they do not dominate
     // weak quantifier instances that have been changed through the substitution.
     def quantifiedCut(
-      instances:      Map[Seq[LambdaExpression], ExpansionTree],
+      instances:      Map[Seq[Expr], ExpansionTree],
       eigenVariables: Seq[Var], child: ExpansionTree
     ): ( Seq[ETImp], ExpansionSequent ) = {
       if ( instances isEmpty ) return ( rest, expansionSequent )

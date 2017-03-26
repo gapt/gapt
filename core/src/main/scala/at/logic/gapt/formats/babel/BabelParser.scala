@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.babel
 
 import at.logic.gapt.{ expr => real }
-import at.logic.gapt.expr.{ HOLFormula, LambdaExpression, preExpr }
+import at.logic.gapt.expr.{ Formula, Expr, preExpr }
 import at.logic.gapt.proofs.gaptic.guessLabels
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.utils.NameGenerator
@@ -127,9 +127,11 @@ object BabelParserCombinators {
   val Ident: P[preExpr.Ident] = P( Name.map( preExpr.Ident( _, preExpr.freshMetaType() ) ) )
 
   val TypeParens: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
-  val TypeBase: P[preExpr.Type] = P( Name ).map( preExpr.BaseType )
+  val TypeBase: P[preExpr.Type] = P( Name ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }
   val TypeVar: P[preExpr.Type] = P( "?" ~/ Name ).map( preExpr.VarType )
-  val Type: P[preExpr.Type] = P( ( TypeParens | TypeVar | TypeBase ).rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  val TypeAtom: P[preExpr.Type] = P( TypeParens | TypeVar | TypeBase )
+  val Type: P[preExpr.Type] = P( TypeAtom.rep( min = 1, sep = ">" ) ).map { _.reduceRight( preExpr.ArrType ) }
+  val TypeAndNothingElse = P( "" ~ Type ~ End )
 
   val Sequent = P( Expr.rep( sep = "," ) ~ ( ":-" | "⊢" ) ~ Expr.rep( sep = "," ) ).
     map { case ( ant, suc ) => HOLSequent( ant, suc ) }
@@ -182,7 +184,7 @@ object BabelParser {
    * @param astTransformer  Function to apply to the Babel AST before type inference.
    * @param sig  Babel signature that specifies which free variables are constants.
    */
-  def tryParse( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, LambdaExpression] = {
+  def tryParse( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Expr] = {
     ExprAndNothingElse.parse( text ) match {
       case Parsed.Success( expr, _ ) =>
         val transformedExpr = astTransformer( expr )
@@ -193,13 +195,22 @@ object BabelParser {
   }
 
   /** Parses text as a lambda expression, or throws an exception. */
-  def parse( text: String )( implicit sig: BabelSignature ): LambdaExpression =
+  def parse( text: String )( implicit sig: BabelSignature ): Expr =
     tryParse( text ).fold( throw _, identity )
   /** Parses text as a formula, or throws an exception. */
-  def parseFormula( text: String )( implicit sig: BabelSignature ): HOLFormula =
-    tryParse( text, preExpr.TypeAnnotation( _, preExpr.Bool ) ).fold( throw _, _.asInstanceOf[HOLFormula] )
+  def parseFormula( text: String )( implicit sig: BabelSignature ): Formula =
+    tryParse( text, preExpr.TypeAnnotation( _, preExpr.Bool ) ).fold( throw _, _.asInstanceOf[Formula] )
 
-  def tryParseSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[LambdaExpression]] = {
+  def tryParseType( text: String ): Either[BabelParseError, real.Ty] = {
+    TypeAndNothingElse.parse( text ) match {
+      case Parsed.Success( expr, _ ) =>
+        Right( preExpr.toRealType( expr, Map() ) )
+      case parseError @ Parsed.Failure( _, _, _ ) =>
+        Left( BabelParsingError( parseError ) )
+    }
+  }
+
+  def tryParseSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[Expr]] = {
     SequentAndNothingElse.parse( text ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = exprSequent.map( astTransformer )
@@ -213,13 +224,13 @@ object BabelParser {
     }
   }
 
-  def tryParseLabelledSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[( String, HOLFormula )]] = {
+  def tryParseLabelledSequent( text: String, astTransformer: preExpr.Expr => preExpr.Expr = identity )( implicit sig: BabelSignature ): Either[BabelParseError, Sequent[( String, Formula )]] = {
     LabelledSequentAndNothingElse.parse( text ) match {
       case Parsed.Success( exprSequent, _ ) =>
         val transformed = for ( ( l, f ) <- exprSequent ) yield l -> preExpr.TypeAnnotation( astTransformer( f ), preExpr.Bool )
         preExpr.toRealExprs( transformed.elements.map( _._2 ), sig ).leftMap( ppElabError( text, _ ) ).map { sequentElements =>
           val ( ant, suc ) = exprSequent.map( _._1 ).elements.
-            zip( sequentElements.map( _.asInstanceOf[HOLFormula] ) ).
+            zip( sequentElements.map( _.asInstanceOf[Formula] ) ).
             splitAt( exprSequent.antecedent.size )
           val nameGen = new NameGenerator( exprSequent.elements.view.flatMap( _._1 ).toSet )
           HOLSequent( ant, suc ).zipWithIndex.map {

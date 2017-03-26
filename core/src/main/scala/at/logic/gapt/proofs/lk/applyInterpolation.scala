@@ -21,7 +21,7 @@ object ExtractInterpolant {
    * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
    * are valid.
    */
-  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): HOLFormula = {
+  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): Formula = {
     val seq = negative ++ positive
     val part = negative.map( _ => false ) ++ positive.map( _ => true )
     val p = prover.getLKProof( seq ).get
@@ -45,7 +45,7 @@ object Interpolate {
    * @return      a triple consisting of ( a proof of \Gamma |- \Delta, I,
    *              a proof of I, \Pi |- \Lambda, the FOLFormula I )
    */
-  def apply( p: LKProof, color: Sequent[Boolean] ): ( LKProof, LKProof, HOLFormula ) = p match {
+  def apply( p: LKProof, color: Sequent[Boolean] ): ( LKProof, LKProof, Formula ) = p match {
     case _ if p.conclusion.sizes != color.sizes =>
       throw new IllegalArgumentException( s"Partition $color has different size than end-sequent:\n${p.conclusion}" )
 
