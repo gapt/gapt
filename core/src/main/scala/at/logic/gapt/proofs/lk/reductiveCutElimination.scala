@@ -36,6 +36,9 @@ object ReductiveCutElimination {
    * @return A free-cut free proof.
    */
   def freeCutFree( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
+    new ReductiveCutElimination().eliminateFreeCuts( proof, cleanStructRules )
+
+  def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
     new ReductiveCutElimination().eliminateInduction( proof, cleanStructRules )
 
   /**
@@ -204,7 +207,58 @@ class ReductiveCutElimination {
     this( proof, terminateReduction, reduction, cleanStructRules )
   }
 
+  private def hasRedex[T]( reduction: LKProof => Option[T], proof: LKProof ) =
+    proof.subProofs.exists( reduction( _ ).nonEmpty )
+
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
+    var newProof = proof
+    do {
+      newProof = unfoldGroundInductions( newProof, cleanStructRules )
+      newProof = freeCutFree( newProof, cleanStructRules )
+    } while ( inductionUnfoldingReduction( newProof ).nonEmpty )
+    newProof
+  }
+
+  /**
+   * Unfolds all induction inference with ground induction term in constructor form.
+   * @param proof The proof to which this transformation is applied.
+   * @param cleanStructRules Indicates whether the structural rules are cleaned during the reduction.
+   * @param ctx Defines constants, inductive types, etc.
+   * @return A proof of the same end-sequent which contains no induction inference with ground induction term
+   *         in constructor form.
+   */
+  def unfoldGroundInductions( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
+
+    /**
+     * Reduces a given induction inference.
+     * @param proof The induction to be reduced
+     * @return A proof and a sequent connector obtained by applying an induction unfolding, or None
+     *         if the inference rule is not an induction inference with ground induction term in constructor form.
+     */
+    def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
+      case ind @ InductionRule( _, _, _ ) =>
+        inductionUnfoldingReduction.applyWithSequentConnector( ind )
+      case _ => None
+    }
+
+    /**
+     * @return Returns true if and only if there is no more induction inference to be unfolded.
+     */
+    def terminateReduction( global: LKProof ): Boolean = {
+      !global.subProofs.exists( reduction( _ ).nonEmpty )
+    }
+
+    this( proof, terminateReduction, reduction, cleanStructRules )
+  }
+
+  /**
+   * Eliminates free-cuts with respect to induction inferences and equality rules.
+   * @param proof The proof to which the transformation is applied.
+   * @param cleanStructRules If true structural rules are cleaned during the transformation.
+   * @param ctx Defines constants, types, etc.
+   * @return A proof which does not contain any free-cuts.
+   */
+  def eliminateFreeCuts( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
 
     /**
      * Reduces a given cut.
@@ -789,10 +843,10 @@ object inductionReduction {
     this( cut ) map { guessPermutation( cut, _ ) }
 
   /**
-   * Reduces the complexity with respect to induction rules.
+   * Reduces the complexity with respect to cut inferences and induction inferences.
    * @param cut The cut that is to be reduced.
    * @param ctx The context of the proof.
-   * @return If the given cut can be reduced w.r.t. some induciton rule, then
+   * @return If the given cut can be reduced w.r.t. some induction rule, then
    *         a proof with a lower complexity is returned. Otherwise None is returned.
    */
   def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
@@ -812,11 +866,11 @@ object inductionRightReduction {
    * @return A reduced proof if the cut is reducible, otherwise None.
    */
   def apply( cut: CutRule ): Option[LKProof] = {
-    val CutRule( leftProof, leftCutFormula, rightProof, rightCutFormula ) = cut
+    val CutRule( leftProof, _, rightProof, _ ) = cut
     rightProof match {
-      case ind @ InductionRule( indCases, indFormula, indTerm ) =>
-        val targetCase = indCases.filter( _.proof.endSequent.antecedent.contains( cut.cutFormula ) ).head
-        val newIndCases = indCases map {
+      case ind @ InductionRule( _, indFormula, indTerm ) =>
+        val targetCase = ind.cases.filter( _.proof.endSequent.antecedent.contains( cut.cutFormula ) ).head
+        val newIndCases = ind.cases map {
           indCase =>
             if ( indCase == targetCase ) {
               val subProof = CutRule( leftProof, indCase.proof, cut.cutFormula )
@@ -833,14 +887,54 @@ object inductionRightReduction {
   }
 }
 
+object inductionUnfoldingReduction {
+
+  /**
+   * Tries to apply the reduction.
+   *
+   * @param induction See [[inductionUnfoldingReduction.apply(induction: InductionRule)]]
+   * @param ctx Defines constants, types, etc.
+   * @return If the induction rule could be unfolded a proof of the same end-sequent and a sequent connector
+   *         is returned, otherwise None is returned.
+   */
+  def applyWithSequentConnector( induction: InductionRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
+    this( induction ) map { guessPermutation( induction, _ ) }
+
+  /**
+   * Tries to apply the induction unfolding reduction to a given inference.
+   * @param proof The induction unfolding reduction is tried to applied to the last inference of this proof.
+   * @param ctx Defines constants, types, etc.
+   * @return None if the proof does not end with an induction inference, otherwise see
+   *         [[inductionUnfoldingReduction.apply(induction: InductionRule)]].
+   */
+  def apply( proof: LKProof )( implicit ctx: Context ): Option[LKProof] = proof match {
+    case ind @ InductionRule( _, _, _ ) => apply( ind )
+    case _: LKProof                     => None
+  }
+
+  /**
+   * Tries to unfold an induction inference.
+   *
+   * @param induction The induction inference to be unfolded.
+   * @param ctx Defines constants, types, etc.
+   * @return If the given induction's term is ground an in constructor form a proof of the same end-sequent for
+   *         which the induction inference has been unfolded is returned, otherwise None.
+   */
+  def apply( induction: InductionRule )( implicit ctx: Context ): Option[LKProof] =
+    if ( isGround( induction.term ) && isConstructorForm( induction.term ) ) {
+      Some( unfoldInduction( induction ) )
+    } else {
+      None
+    }
+}
+
 object inductionLeftReduction {
 
   def applyWithSequentConnector( cut: CutRule )( implicit ctx: Context ): Option[( LKProof, SequentConnector )] =
     this( cut ) map { guessPermutation( cut, _ ) }
 
   /**
-   * Reduces a cut by unfolding an induction inference or by moving
-   * the cut towards the proof's leaves.
+   * Reduces a cut by moving the cut towards the proof's leaves.
    * @param cut The cut to be reduced.
    * @param ctx The proof's context.
    * @return A reduced proof if the given cut is reducible w.r.t to some induction inference,
@@ -863,10 +957,6 @@ object inductionLeftReduction {
             }
         }
         Some( InductionRule( newInductionCases, inductionFormula, inductionTerm ) )
-      }
-      case ind @ InductionRule( _, _, indTerm ) if ind.mainIndices.head == leftCutFormula &&
-        isGround( indTerm ) && isConstructorForm( indTerm ) => {
-        Some( CutRule( unfoldInduction( ind ), rightProof, cut.cutFormula ) )
       }
       case _ => None
     }

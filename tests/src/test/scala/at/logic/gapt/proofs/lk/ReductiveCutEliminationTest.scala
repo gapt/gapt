@@ -243,49 +243,6 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     gradeReduction( cut ).get.endSequent must beMultiSetEqual( cut.endSequent )
   }
 
-  "induction left unfolding reduction should unfold induction" in {
-    implicit var context: Context = Context()
-    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
-    context += hoc"equal: nat>nat>o"
-
-    val axioms = Seq(
-      "ae1" -> hof"equal(0, 0)",
-      "ae4" -> hof"∀x2 ∀y2 ((equal(s(x2), s(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(s(x2), s(y2))))"
-    )
-
-    val baseCase = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(0,0)" ) ) { axiomLog }
-    val indCase = Lemma( axioms ++: ( "ih" -> hof"equal(x_0,x_0)" ) +: Sequent() :+ ( "goal" -> hof"equal(s(x_0),s(x_0))" ) ) {
-      allL( "ae4", le"x_0:nat", le"x_0:nat" )
-      andL
-      impL( "ae4_0_1" )
-      axiomLog
-      axiomLog
-    }
-
-    val inductivePart = InductionRule(
-      InductionCase( baseCase, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
-        InductionCase( indCase, hoc"s:nat>nat", Ant( 2 ) :: Nil, hov"x_0:nat" :: Nil, Suc( 0 ) ) :: Nil,
-      Abs( hov"x:nat", le"equal(x,x)" ), le"s(s(s(0)))"
-    )
-
-    val proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(s(s(s(s(0)))), s(s(s(s(0)))))" ) ) {
-      cut( "cf", hof"equal(s(s(s(0))), s(s(s(0))))" ); insert( inductivePart )
-      allL( "ae4", le"s(s(s(0)))", le"s(s(s(0)))" )
-      andL
-      impL( "ae4_0_1" )
-      axiomLog
-      axiomLog
-    }
-    val reduction = inductionLeftReduction( proof.subProofAt( 0 :: Nil ).asInstanceOf[CutRule] ).get
-
-    if ( !isInductionFree( reduction ) ) {
-      failure( "the induction inference was not unrolled" )
-    }
-    if ( !reduction.endSequent.multiSetEquals( proof.subProofAt( 0 :: Nil ).endSequent ) ) {
-      failure( "the generated proof does not prove the same end-sequent" )
-    }
-    success
-  }
   "induction left rank reduction should lift cut over induction" in {
     implicit var context: Context = Context()
     context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
