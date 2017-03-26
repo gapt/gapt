@@ -1080,9 +1080,8 @@ case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, form
 
   val auxFormula = rightPremise( Suc( 0 ) )
 
-  val mainFormula = TermReplacement(formulaA, s, t)
-  //val mainFormula = if ( auxFormula == substitution1.apply( formulaA ) ) substitution2.apply( formulaA )
-  //else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
+  val mainFormula = if ( auxFormula == substitution1.apply( formulaA ) ) substitution2.apply( formulaA )
+  else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 
@@ -1188,40 +1187,12 @@ case class InductionCase( proof: NDProof, constructor: Const,
  */
 case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaExpression ) extends CommonRule {
   val Abs( quant @ Var( _, indTy ), qfFormula ) = formula
-  println("formula: " + formula)
-  println("quant: " + quant)
-  println("qfFormula: " + qfFormula)
-  println("term: " + term)
   require( term.exptype == indTy )
-  /*
-  B1: ((0:nat) + 0: nat) = 0
-  B2: ((0:nat) + 0: nat) = 0
-  A1: ((x_0:nat) + (0:nat): nat) = x_0
-  A2: ((x_0:nat) + (0:nat): nat) = x_0
-  B1: ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0)
-  B2: ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0)
-  B1: ((0:nat) + 0: nat) = 0
-  B2: ((0:nat) + 0: nat) = 0
-  A1: ((x_0:nat) + (0:nat): nat) = x_0
-  A2: ((x_0:nat) + (0:nat): nat) = x_0
-  B1: ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0)
-  B2: ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0)
-  B1: ((0:nat) + 0: nat) = 0
-  B2: ((0:nat) + 0: nat) = 0
-  A1: ((x_0:nat) + (0:nat): nat) = x_0
-  A2: ((x_0:nat) + (0:nat): nat) = x_0
-  B1: ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0)
-  B2: ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0)
-  */
   cases foreach { c =>
     require( c.indTy == indTy )
     ( c.hypotheses, c.hypVars ).zipped foreach { ( hyp, eigen ) =>
-      println("A1: " + c.proof.endSequent(hyp))
-      println("A2: " + Substitution( quant -> eigen )( qfFormula ) )
       require( c.proof.endSequent( hyp ) == Substitution( quant -> eigen )( qfFormula ) )
     }
-    println("B1: " +  c.proof.endSequent( Suc( 0 ) ) )
-    println("B2: " + Substitution( quant -> c.term )( qfFormula ) )
     require( c.proof.endSequent( Suc( 0 ) ) == Substitution( quant -> c.term )( qfFormula ) )
   }
   require( freeVariables( contexts.flatMap( _.elements ) :+ formula ) intersect cases.flatMap( _.eigenVars ).toSet isEmpty )

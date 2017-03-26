@@ -78,35 +78,6 @@ object ndForallExample extends Script {
   println( res )
 }
 
-/*
-inductionCase([p4] ∀x ((0:nat) + (x:nat): nat) = x ⊢ 0 + 0 = 0    (ForallLeftRule(p3, Ant(0), ((0:nat) + (x:nat): nat) = x, 0:nat, x:nat))
-[p3] ((0:nat) + 0: nat) = 0 ⊢ 0 + 0 = 0    (EqualityRightRule(p2, Ant(0), Suc(0), λx (x:nat) = 0))
-[p2] ((0:nat) + 0: nat) = 0 ⊢ 0 = 0    (WeakeningLeftRule(p1, ((0:nat) + 0: nat) = 0))
-[p1]  ⊢ (0:nat) = 0    (ReflexivityAxiom(0:nat))
-,0:nat,Vector(),List(),Suc(0))
- */
-/*
-InductionCase([p7] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
-x_0 + 0 = x_0
-⊢
-s(x_0) + 0 = s(x_0)    (ForallLeftRule(p6, Ant(0), ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y), x_0:nat, x:nat))
-[p6] ∀y ((s(x_0:nat): nat) + (y:nat): nat) = s(x_0 + y),
-x_0 + 0 = x_0
-⊢
-s(x_0) + 0 = s(x_0)    (ForallLeftRule(p5, Ant(0), ((s(x_0:nat): nat) + (y:nat): nat) = s(x_0 + y), 0:nat, y:nat))
-[p5] ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0 + 0),
-x_0 + 0 = x_0
-⊢
-s(x_0) + 0 = s(x_0)    (EqualityRightRule(p4, Ant(0), Suc(0), λx (x:nat) = s(x_0:nat)))
-[p4] ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0 + 0),
-x_0 + 0 = x_0
-⊢
-s(x_0 + 0) = s(x_0)    (WeakeningLeftRule(p3, ((s(x_0:nat): nat) + (0:nat): nat) = s(x_0 + 0)))
-[p3] ((x_0:nat) + (0:nat): nat) = x_0 ⊢ (s(x_0 + 0): nat) = s(x_0)    (EqualityRightRule(p2, Ant(0), Suc(0), λx (s(x:nat): nat) = s(x_0)))
-[p2] ((x_0:nat) + (0:nat): nat) = x_0 ⊢ (s(x_0): nat) = s(x_0)    (WeakeningLeftRule(p1, ((x_0:nat) + (0:nat): nat) = x_0))
-[p1]  ⊢ (s(x_0:nat): nat) = s(x_0)    (ReflexivityAxiom(s(x_0:nat): nat))
-,s:nat>nat,Vector(Ant(1)),List(x_0:nat),Suc(0))
- */
 object ndInductionExample extends Script {
   val b1 = LogicalAxiom(hof"!(x: nat) (((x + (0: nat)): nat) = x)")
   val b2 = ForallElimRule(b1, hof"((((x:nat) + (0: nat)): nat) = x)", le"0: nat", hov"x: nat")
@@ -115,10 +86,8 @@ object ndInductionExample extends Script {
   val s2 = ForallElimRule(s1, hof"!(y: nat) (((s(x0): nat) + y: nat) = s(x0 + y))", le"x0: nat", hov"x: nat")
   val s3 = ForallElimRule(s2, hof"((((s(x0): nat) + (0: nat)): nat) = s(x0 + 0))", le"0: nat", hov"y: nat")
   val s4 = LogicalAxiom(hof"(((x0: nat) + (0: nat)): nat) = x0")
-  val s5 = EqualityElimRule(s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(x0 + 0))", hov"x0: nat")
+  val s5 = EqualityElimRule(s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(z: nat))", hov"z: nat")
 
-  // is assert(s5.conclusion(Suc(0)) == hof"(((s(x0:nat): nat) + (0:nat)): nat) = s(x0 + 0)")
-  // should be
   assert(s5.conclusion(Suc(0)) == hof"(((s(x0:nat): nat) + (0:nat)): nat) = s(x0)")
 
   val cases = Seq(
