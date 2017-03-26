@@ -1080,7 +1080,7 @@ case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, form
 
   val auxFormula = rightPremise( Suc( 0 ) )
 
-  val mainFormula = substitution2.apply( formulaA )
+  val mainFormula = TermReplacement(formulaA, s, t)
   //val mainFormula = if ( auxFormula == substitution1.apply( formulaA ) ) substitution2.apply( formulaA )
   //else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
 
@@ -1188,8 +1188,10 @@ case class InductionCase( proof: NDProof, constructor: Const,
  */
 case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: LambdaExpression ) extends CommonRule {
   val Abs( quant @ Var( _, indTy ), qfFormula ) = formula
+  println("formula: " + formula)
   println("quant: " + quant)
   println("qfFormula: " + qfFormula)
+  println("term: " + term)
   require( term.exptype == indTy )
   /*
   B1: ((0:nat) + 0: nat) = 0
