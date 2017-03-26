@@ -38,14 +38,33 @@ class InductionUnfoldingOnTreesTest extends Specification {
     regularize( proofState.result )
   }
 
-  val testTerm: Expr = le"node(node(node(leaf, leaf, 0), node(leaf, leaf, s(0)), 0), node(leaf, leaf, s(s(0))), 0)"
-  val inductiveGroundProof = LKProofSubstitutableDefault.applySubstitution(
-    new Substitution( Map( hov"t:tree" -> testTerm ) ),
+  val testTerm1: Expr = le"node(node(node(leaf, leaf, 0), node(leaf, leaf, s(0)), 0), node(leaf, leaf, s(s(0))), 0)"
+  val testTerm2: Expr = le"leaf"
+
+  val inductiveGroundProof1 = LKProofSubstitutableDefault.applySubstitution(
+    new Substitution( Map( hov"t:tree" -> testTerm1 ) ),
     general_proof_goal
   )
 
-  "resulting proof should not contain induction and prove the same end-sequent" in {
-    val inductivePart = inductiveGroundProof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]
+  val inductiveGroundProof2 = LKProofSubstitutableDefault.applySubstitution(
+    new Substitution( Map( hov"t:tree" -> testTerm2 ) ),
+    general_proof_goal
+  )
+
+  "unfolding induction for base term" in {
+    val inductivePart = inductiveGroundProof2.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]
+    val inductionFreeProof = unfoldInduction( inductivePart )
+    if ( containsInduction( inductionFreeProof ) ) {
+      failure( "induction was not eliminated" )
+    }
+    if ( !inductionFreeProof.endSequent.multiSetEquals( inductivePart.endSequent ) ) {
+      failure( "the induction free proof does not prove the same end-sequent" )
+    }
+    success
+  }
+
+  "unfolding induction for complex term" in {
+    val inductivePart = inductiveGroundProof1.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]
     val inductionFreeProof = unfoldInduction( inductivePart )
     if ( containsInduction( inductionFreeProof ) ) {
       failure( "induction was not eliminated" )

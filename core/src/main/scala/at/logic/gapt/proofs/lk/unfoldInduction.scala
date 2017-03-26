@@ -34,7 +34,10 @@ object unfoldInduction {
         CutRule( argumentProof, mainProof, argumentProof.endSequent.succedent.last )
       }
     )
-    ContractionMacroRule( proofWithRedundancy, proof.endSequent, false )
+    WeakeningMacroRule(
+      ContractionMacroRule( proofWithRedundancy, proof.endSequent, false ),
+      proof.endSequent, false
+    )
   }
 
   /**
