@@ -79,25 +79,25 @@ object ndForallExample extends Script {
 }
 
 object ndInductionExample extends Script {
-  val b1 = LogicalAxiom(hof"!(x: nat) (((x + (0: nat)): nat) = x)")
-  val b2 = ForallElimRule(b1, hof"((((x:nat) + (0: nat)): nat) = x)", le"0: nat", hov"x: nat")
+  val b1 = LogicalAxiom( hof"!(x: nat) (((x + (0: nat)): nat) = x)" )
+  val b2 = ForallElimRule( b1, hof"((((x:nat) + (0: nat)): nat) = x)", le"0: nat", hov"x: nat" )
 
-  val s1 = LogicalAxiom(hof"!(x: nat) !(y: nat) (((s(x): nat) + y: nat) = s(x + y))")
-  val s2 = ForallElimRule(s1, hof"!(y: nat) (((s(x0): nat) + y: nat) = s(x0 + y))", le"x0: nat", hov"x: nat")
-  val s3 = ForallElimRule(s2, hof"((((s(x0): nat) + (0: nat)): nat) = s(x0 + 0))", le"0: nat", hov"y: nat")
-  val s4 = LogicalAxiom(hof"(((x0: nat) + (0: nat)): nat) = x0")
-  val s5 = EqualityElimRule(s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(z: nat))", hov"z: nat")
+  val s1 = LogicalAxiom( hof"!(x: nat) !(y: nat) (((s(x): nat) + y: nat) = s(x + y))" )
+  val s2 = ForallElimRule( s1, hof"!(y: nat) (((s(x0): nat) + y: nat) = s(x0 + y))", le"x0: nat", hov"x: nat" )
+  val s3 = ForallElimRule( s2, hof"((((s(x0): nat) + (0: nat)): nat) = s(x0 + 0))", le"0: nat", hov"y: nat" )
+  val s4 = LogicalAxiom( hof"(((x0: nat) + (0: nat)): nat) = x0" )
+  val s5 = EqualityElimRule( s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(z: nat))", hov"z: nat" )
 
-  assert(s5.conclusion(Suc(0)) == hof"(((s(x0:nat): nat) + (0:nat)): nat) = s(x0)")
+  assert( s5.conclusion( Suc( 0 ) ) == hof"(((s(x0:nat): nat) + (0:nat)): nat) = s(x0)" )
 
   val cases = Seq(
-    InductionCase(b2, hoc"0: nat", Seq.empty, Seq.empty),
-    InductionCase(s5, hoc"s: nat>nat", Seq(Ant(0)), Seq(hov"x0: nat"))
+    InductionCase( b2, hoc"0: nat", Seq.empty, Seq.empty ),
+    InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) )
 
   )
-  val p = InductionRule(cases, Abs(Var("x", TBase("nat")), hof"(((x: nat) + (0:nat)): nat) = x"), le"x: nat")
+  val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 
-  println(p)
+  println( p )
 }
 
 object ndImpElimExample extends Script {
