@@ -3,12 +3,12 @@ package at.logic.gapt.proofs.epsilon
 import at.logic.gapt.expr._
 
 object EpsilonC extends LogicalC( "ε" ) {
-  def apply( qtype: Ty ) = Const( name, ( qtype -> To ) -> Ti )
+  def apply( qtype: Ty ) = Const( name, ( qtype -> To ) -> qtype )
 
   protected type MatchResult = Option[Ty]
   protected override def matchType( exptype: Ty ) = exptype match {
-    case ( qtype -> To ) -> Ti => Some( qtype )
-    case _                     => None
+    case ( qtype -> To ) -> qtype_ if qtype == qtype_ => Some( qtype )
+    case _ => None
   }
   protected override def noMatch = None
 }
