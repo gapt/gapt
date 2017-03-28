@@ -245,6 +245,22 @@ class NDTest extends Specification with SatMatchers {
     c4.conclusion mustEqual Seq( fof"x2 = x1", fof"!x0 !x1 P x2" ) ++: Sequent() :+ fof"!x0 !x1_0 P x1"
   }
 
+  "EqualityElim 6" in {
+    val a1 = LogicalAxiom( hof"s=t" )
+    val a2 = LogicalAxiom( hof"!t P(t,s)" )
+    val a3 = EqualityElimRule( a1, a2 )
+    val a4 = LogicalAxiom( hof"t=u" )
+    val a5 = EqualityElimRule( a4, a3 )
+    a5.conclusion mustEqual Seq( hof"t=u", hof"s=t", hof"!t P(t,s)" ) ++: Sequent() :+ hof"!t P(t,u)"
+  }
+
+  "EqualityElim 7" in {
+    val a1 = LogicalAxiom( hof"s=t" )
+    val a2 = LogicalAxiom( hof"!s P(s) & Q(s)" )
+    val a3 = EqualityElimRule( a1, a2 )
+    a3.conclusion mustEqual Seq( hof"s=t", hof"!s P(s) & Q(s)" ) ++: Sequent() :+ hof"!s P(s) & Q(t)"
+  }
+
   "EqualityIntro fov" in {
     val a1 = EqualityIntroRule( fov"x" )
     a1.conclusion must beEValidSequent
