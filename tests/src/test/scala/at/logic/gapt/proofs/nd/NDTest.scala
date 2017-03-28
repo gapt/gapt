@@ -104,6 +104,34 @@ class NDTest extends Specification with SatMatchers {
     p.conclusion mustEqual Seq( hof"!(x: nat) ((x + (0:nat)): nat) = x", hof"!(x: nat) !(y: nat) (((s(x): nat) + y): nat) = s(x + y)" ) ++: Sequent() :+ hof"(((x: nat) + (0: nat)): nat) = x"
   }
 
+  "Induction2" in {
+    val int = TBase( "int" )
+    val c0 = Const( "0", int )
+    val cs = Const( "s", int -> int )
+    val x = Var( "x", int )
+
+    val p0 = Atom( "P", c0 )
+    val px = Atom( "P", x )
+    val psx = Atom( "P", cs( x ) )
+
+    val a1 = LogicalAxiom( p0 )
+
+    val b1 = LogicalAxiom( All( x, Imp( px, psx ) ) )
+    val b2 = ForallElimRule( b1, x )
+    val b3 = LogicalAxiom( px )
+    val b4 = ImpElimRule( b2, b3 )
+
+    val c1 = InductionCase( a1, c0, Seq(), Seq() )
+    val c2 = InductionCase( b4, cs, Seq( Ant( 1 ) ), Seq( x ) )
+    val c3 = InductionRule( Seq( c1, c2 ), Abs( x, px ), x )
+
+    val d1 = ForallIntroRule( c3, x, x )
+    val d2 = ImpIntroRule( d1, Ant( 0 ) )
+    val d3 = ImpIntroRule( d2 )
+
+    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:int) ⊃ P(s(x))) ⊃ P(0) ⊃ ∀x P(x)"
+  }
+
   "ImpElim" in {
     val a1 = LogicalAxiom( hof"a" )
     val a2 = LogicalAxiom( hof"a -> b" )
