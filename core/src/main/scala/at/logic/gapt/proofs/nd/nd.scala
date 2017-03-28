@@ -179,7 +179,7 @@ abstract class TernaryNDProof extends NDProof {
    *
    * @return
    */
-  def getmiddleSequentConnector: SequentConnector = occConnectors( 1 )
+  def getMiddleSequentConnector: SequentConnector = occConnectors( 1 )
 
   /**
    * The object connecting the lower and right upper sequents.
@@ -1113,7 +1113,7 @@ object EqualityElimRule extends ConvenienceConstructor( "EqualityElimRule" ) {
     val repContext = replacementContext.abstractTerm( auxFormula )( s )
 
     val formulaA = repContext.term.asInstanceOf[Formula]
-    val variablex = repContext.variable.asInstanceOf[FOLVar]
+    val variablex = repContext.variable.asInstanceOf[Var]
 
     new EqualityElimRule( leftSubProof, rightSubProof, formulaA, variablex )
   }
@@ -1129,7 +1129,7 @@ object EqualityElimRule extends ConvenienceConstructor( "EqualityElimRule" ) {
  *
  * @param t The term t.
  */
-case class EqualityIntroRule( t: FOLTerm ) extends InitialSequent {
+case class EqualityIntroRule( t: Expr ) extends InitialSequent {
 
   override def name = "eq:i"
   override def conclusion = NDSequent( Seq(), Eq( t, t ) )
