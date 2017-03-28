@@ -43,9 +43,9 @@ abstract class NDProof extends SequentProof[Formula, NDProof] {
  * An NDProof deriving a sequent from another sequent:
  * <pre>
  *        (π)
- *      Γ :- Δ
+ *      Γ :- A
  *    ----------
- *     Γ' :- Δ'
+ *     Γ' :- A'
  * </pre>
  */
 abstract class UnaryNDProof extends NDProof {
@@ -57,7 +57,7 @@ abstract class UnaryNDProof extends NDProof {
   def subProof: NDProof
 
   /**
-   * The object connecting the lower and upper sequents.auxFormulas
+   * The object connecting the lower and upper sequents.auxFormulas.
    *
    * @return
    */
@@ -81,9 +81,9 @@ object UnaryNDProof {
  * An NDProof deriving a sequent from two other sequents:
  * <pre>
  *     (π1)     (π2)
- *    Γ :- Δ   Γ' :- Δ'
+ *    Γ :- A   Γ' :- A'
  *   ------------------
- *        Π :- Λ
+ *        Π :- B
  * </pre>
  */
 abstract class BinaryNDProof extends NDProof {
@@ -140,9 +140,9 @@ object BinaryNDProof {
  * An NDProof deriving a sequent from three other sequents:
  * <pre>
  *     (π1)        (π2)        (π3)
- *    Γ1 :- Δ1   Γ2 :- Δ2   Γ3 :- Δ3
+ *    Γ1 :- A1   Γ2 :- A2   Γ3 :- A3
  *   --------------------------------
- *               Π :- Λ
+ *               Π :- B
  * </pre>
  */
 abstract class TernaryNDProof extends NDProof {
@@ -230,7 +230,7 @@ trait Eigenvariable {
  * An NDProof consisting of a single sequent:
  * <pre>
  *     --------ax
- *      Γ :- Δ
+ *      Γ :- A
  * </pre>
  */
 abstract class InitialSequent extends NDProof {
@@ -252,9 +252,9 @@ object InitialSequent {
  * An NDProof ending with weakening:
  * <pre>
  *        (π)
- *       Γ :- Δ
+ *       Γ :- B
  *     ---------wkn
- *     A, Γ :- Δ
+ *     A, Γ :- B
  * </pre>
  *
  * @param subProof The subproof π.
@@ -273,9 +273,9 @@ case class WeakeningRule( subProof: NDProof, formula: Formula )
  * An NDProof ending with a contraction:
  * <pre>
  *         (π)
- *     A, A, Γ :- Δ
+ *     A, A, Γ :- B
  *    --------------ctr
- *      A, Γ :- Δ
+ *      A, Γ :- B
  * </pre>
  *
  * @param subProof The subproof π.
@@ -356,7 +356,7 @@ object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
 }
 
 /**
- * An NDProof ending with elimination of the right conjunct
+ * An NDProof ending with elimination of the right conjunct:
  * <pre>
  *         (π)
  *      Γ :- A ∧ B
@@ -384,7 +384,7 @@ case class AndElim1Rule( subProof: NDProof )
 }
 
 /**
- * An NDProof ending with elimination of the left conjunct
+ * An NDProof ending with elimination of the left conjunct:
  * <pre>
  *         (π)
  *      Γ :- A ∧ B
@@ -421,7 +421,7 @@ case class AndElim2Rule( subProof: NDProof )
  * </pre>
  *
  * @param leftSubProof The proof π,,1,,.
- * @param rightSubProof The proof π,,2,,
+ * @param rightSubProof The proof π,,2,,.
  */
 case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
     extends BinaryNDProof with CommonRule {
@@ -510,13 +510,13 @@ object OrElimRule extends ConvenienceConstructor( "OrElimRule" ) {
  * An NDProof ending with introduction of a disjunction, with a new formula as the right disjunct:
  * <pre>
  *       (π)
- *     Γ :- A
+ *      Γ :- A
  *    ------------∨:i1
  *     Γ :- A ∨ B
  * </pre>
  *
  * @param subProof The subproof π.
- * @param rightDisjunct The formula B
+ * @param rightDisjunct The formula B.
  */
 case class OrIntro1Rule( subProof: NDProof, rightDisjunct: Formula )
     extends UnaryNDProof with CommonRule {
@@ -535,13 +535,13 @@ case class OrIntro1Rule( subProof: NDProof, rightDisjunct: Formula )
  * An NDProof ending with introduction of a disjunction, with a new formula as the left disjunct:
  * <pre>
  *       (π)
- *     Γ :- A
+ *      Γ :- A
  *    ------------∨:i2
  *     Γ :- B ∨ A
  * </pre>
  *
  * @param subProof The subproof π.
- * @param leftDisjunct The formula B
+ * @param leftDisjunct The formula B.
  */
 case class OrIntro2Rule( subProof: NDProof, leftDisjunct: Formula )
     extends UnaryNDProof with CommonRule {
@@ -561,12 +561,12 @@ case class OrIntro2Rule( subProof: NDProof, leftDisjunct: Formula )
  * <pre>
  *   (π1)        (π2)
  *  Γ :- A→B    Π :- A
- * -------------------- →:e
+ * --------------------→:e
  *     Γ, Π :- B
  * </pre>
  *
  * @param leftSubProof The proof π,,1,,.
- * @param rightSubProof The proof π,,2,,
+ * @param rightSubProof The proof π,,2,,.
  */
 case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
     extends BinaryNDProof with CommonRule {
@@ -591,8 +591,8 @@ case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * An NDProof ending with introduction of an implication:
  * <pre>
  *         (π)
- *     A, Γ :- B
- *    ------------ →:i
+ *      A, Γ :- B
+ *    ------------→:i
  *     Γ :- A → B
  * </pre>
  *
@@ -646,8 +646,11 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
     val premise = subProof.endSequent
 
     if ( premise.antecedent.size == 1 ) apply( subProof, Ant( 0 ) )
-    else throw NDRuleCreationException( s"Antecedent of $premise doesn't have precisely one element." )
+    else if ( premise.antecedent.size == 0 ) throw NDRuleCreationException( s"Antecedent of $premise doesn't contain any elements." )
+    else throw NDRuleCreationException( s"Antecedent of $premise has more than one element, " +
+      s"the formula serving as antecedent of the implication should be specified." )
   }
+
 }
 
 /**
@@ -655,12 +658,12 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
  * <pre>
  *   (π1)      (π2)
  *  Γ :- ¬A    Π :- A
- * ------------------- ¬:e
+ * -------------------¬:e
  *     Γ, Π :- ⊥
  * </pre>
  *
  * @param leftSubProof The proof π,,1,,.
- * @param rightSubProof The proof π,,2,,
+ * @param rightSubProof The proof π,,2,,.
  */
 case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
     extends BinaryNDProof with CommonRule {
@@ -682,7 +685,7 @@ case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * <pre>
  *         (π)
  *     A, Γ :- ⊥
- *    ----------- ¬:i
+ *    -----------¬:i
  *     Γ :- ¬A
  * </pre>
  *
@@ -728,7 +731,7 @@ object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
   }
 
   /**
-   * Convenience constructor for ¬:i
+   * Convenience constructor for ¬:i.
    * If the subproof has precisely one element in the antecedent of its premise, this element will be the aux index.
    *
    * @param subProof The subproof.
@@ -738,16 +741,18 @@ object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
     val premise = subProof.endSequent
 
     if ( premise.antecedent.size == 1 ) apply( subProof, Ant( 0 ) )
-    else throw NDRuleCreationException( s"Antecedent of $premise doesn't have precisely one element." )
+    else if ( premise.antecedent.size == 0 ) throw NDRuleCreationException( s"Antecedent of $premise doesn't contain any elements." )
+    else throw NDRuleCreationException( s"Antecedent of $premise has more than one element, the formula to be negated should be specified." )
+
   }
 }
 
 /**
- * An NDProof eliminating ⊥ :
+ * An NDProof eliminating ⊥:
  * <pre>
  *       (π)
  *     Γ :- ⊥
- *    -------- ⊥:e
+ *    --------⊥:e
  *     Γ :- A
  * </pre>
  *
@@ -947,11 +952,11 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
  * An NDProof ending with an existential quantifier elimination:
  * <pre>
  *         (π1)         (π2)
- *     Γ :- ∃x.A   Δ, A[x\α] :- B
+ *     Γ :- ∃x.A   Π, A[x\α] :- B
  *    ----------------------------∃:e
- *        Γ, Δ :- B
+ *        Γ, Π :- B
  * </pre>
- * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ, Δ. and B
+ * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ, Π, and B
  *
  * @param leftSubProof The proof π1.
  * @param rightSubProof The proof π2.
@@ -1052,19 +1057,19 @@ case class TheoryAxiom( mainFormula: Formula ) extends InitialSequent {
 }
 
 /**
- * An NDProof ending with elimination of equality.
+ * An NDProof ending with elimination of equality:
  * <pre>
  *       (π1)         (π2)
- *    Γ :- s = t    Π :- A[x := s]
- *   ------------------------------ eq:e
- *          Γ,Π :- A[x := t]
+ *    Γ :- s = t    Π :- A[x\s]
+ *   ------------------------------eq:e
+ *          Γ,Π :- A[x\t]
  *
  * </pre>
  *
  * @param leftSubProof The subproof π1.
  * @param rightSubProof The subproof π2.
- * @param formulaA The formula A
- * @param variablex The variable x
+ * @param formulaA The formula A.
+ * @param variablex The variable x.
  */
 case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, formulaA: Formula, variablex: Var )
     extends BinaryNDProof with CommonRule {
@@ -1080,7 +1085,8 @@ case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, form
 
   val auxFormula = rightPremise( Suc( 0 ) )
 
-  val mainFormula = if ( auxFormula == substitution1.apply( formulaA ) ) substitution2.apply( formulaA )
+  val mainFormula = if ( auxFormula == BetaReduction.betaNormalize( substitution1( formulaA ) ) )
+    BetaReduction.betaNormalize( substitution2( formulaA ) )
   else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
@@ -1122,7 +1128,7 @@ object EqualityElimRule extends ConvenienceConstructor( "EqualityElimRule" ) {
 /**
  * An NDProof that consist of the introduction of an equality.
  * <pre>
- *   ---------- eq:i
+ *    ----------eq:i
  *    :- t = t
  *
  * </pre>
@@ -1218,10 +1224,10 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
  *          Γ, Π :- B
  * </pre>
  *
- * @param leftSubProof The proof π1
- * @param aux1 The index of A
- * @param rightSubProof The proof π2
- * @param aux2 The index of ¬A
+ * @param leftSubProof The proof π1.
+ * @param aux1 The index of A.
+ * @param rightSubProof The proof π2.
+ * @param aux2 The index of ¬A.
  */
 case class ExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
     extends BinaryNDProof with CommonRule {
