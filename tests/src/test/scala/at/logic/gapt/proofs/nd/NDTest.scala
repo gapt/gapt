@@ -105,10 +105,10 @@ class NDTest extends Specification with SatMatchers {
   }
 
   "Induction2" in {
-    val int = TBase( "int" )
-    val c0 = Const( "0", int )
-    val cs = Const( "s", int -> int )
-    val x = Var( "x", int )
+    val nat = TBase( "nat" )
+    val c0 = Const( "0", nat )
+    val cs = Const( "s", nat -> nat )
+    val x = Var( "x", nat )
 
     val p0 = Atom( "P", c0 )
     val px = Atom( "P", x )
@@ -129,7 +129,7 @@ class NDTest extends Specification with SatMatchers {
     val d2 = ImpIntroRule( d1, Ant( 0 ) )
     val d3 = ImpIntroRule( d2 )
 
-    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:int) ⊃ P(s(x))) ⊃ P(0) ⊃ ∀x P(x)"
+    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:nat) ⊃ P(s(x))) ⊃ P(0) ⊃ ∀x P(x)"
   }
 
   "ImpElim" in {
