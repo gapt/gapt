@@ -21,7 +21,7 @@ class NDTest extends Specification with SatMatchers {
     val c4 = OrIntro2Rule( c2, hof"A" )
     val c5 = ExcludedMiddleRule( c3, Ant( 0 ), c4, Ant( 0 ) )
 
-    val a5 = OrElimRule( b1, a4, c5 )
+    val a5 = OrElimRule( c5, b1, a4 )
     val a6 = ImpIntroRule( a5 )
 
     a6.conclusion must beValidSequent
@@ -127,7 +127,7 @@ class NDTest extends Specification with SatMatchers {
     val a4 = AndElim1Rule( a3 )
     val a5 = LogicalAxiom( hof"(a & b) | (a & c)" )
 
-    val a6 = OrElimRule( a2, a4, a5 )
+    val a6 = OrElimRule( a5, a2, a4 )
     a6.conclusion must beValidSequent
   }
 

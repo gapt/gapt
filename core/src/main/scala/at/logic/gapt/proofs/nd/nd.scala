@@ -442,36 +442,36 @@ case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * An NDProof ending with elimination of a disjunction:
  * <pre>
  *     (π1)         (π2)         (π3)
- *   Γ, A :- C    Δ, B :- C    Π :- A∨B
- * -------------------------------------∨:e
- *           Γ, Δ, Π :- C
+ *   Γ :- A∨B   Π, A :- C    Δ, B :- C
+ *  ------------------------------------∨:e
+ *           Γ, Π, Δ  :- C
  * </pre>
  *
  * @param leftSubProof The proof π,,1,,.
+ * @param middleSubProof The proof π,,2,,.
  * @param aux1 The index of A.
- * @param middleSubProof The proof π,,2,,
+ * @param rightSubProof The proof π,,3,,.
  * @param aux2 The index of B.
- * @param rightSubProof The proof π,,3,,
  */
-case class OrElimRule( leftSubProof: NDProof, aux1: SequentIndex, middleSubProof: NDProof, aux2: SequentIndex, rightSubProof: NDProof )
+case class OrElimRule( leftSubProof: NDProof, middleSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
     extends TernaryNDProof with CommonRule {
 
-  validateIndices( leftPremise, Seq( aux1 ) )
-  validateIndices( middlePremise, Seq( aux2 ) )
+  validateIndices( middlePremise, Seq( aux1 ) )
+  validateIndices( rightPremise, Seq( aux2 ) )
 
-  val leftDisjunct = leftPremise( aux1 )
-  val rightDisjunct = middlePremise( aux2 )
+  val leftDisjunct = middlePremise( aux1 )
+  val rightDisjunct = rightPremise( aux2 )
 
-  val disjunction = rightPremise( Suc( 0 ) )
+  val disjunction = leftPremise( Suc( 0 ) )
 
   require( disjunction == Or( leftDisjunct, rightDisjunct ), throw NDRuleCreationException( s"Formula $disjunction is not a disjunction of $leftDisjunct and $rightDisjunct." ) )
 
-  val leftC = leftPremise( Suc( 0 ) )
   val middleC = middlePremise( Suc( 0 ) )
+  val rightC = rightPremise( Suc( 0 ) )
 
-  val mainFormula = if ( leftC == middleC ) leftC else throw NDRuleCreationException( s"Formulas $leftC an $middleC are not the same." )
+  val mainFormula = if ( middleC == rightC ) middleC else throw NDRuleCreationException( s"Formulas $middleC an $rightC are not the same." )
 
-  def auxIndices = Seq( Seq( aux1, Suc( 0 ) ), Seq( aux2, Suc( 0 ) ), Seq( Suc( 0 ) ) )
+  def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( aux1, Suc( 0 ) ), Seq( aux2, Suc( 0 ) ) )
 
   override def name = "∨:e"
 
@@ -490,19 +490,19 @@ object OrElimRule extends ConvenienceConstructor( "OrElimRule" ) {
    * @return
    */
   def apply( leftSubProof: NDProof, middleSubProof: NDProof, rightSubProof: NDProof ): OrElimRule = {
-    val disjunction = rightSubProof.endSequent( Suc( 0 ) )
+    val disjunction = leftSubProof.endSequent( Suc( 0 ) )
 
     val ( leftDisjunct, rightDisjunct ) = disjunction match {
       case Or( f, g ) => ( f, g )
       case _          => throw NDRuleCreationException( s"Formula $disjunction is not a disjunction." )
     }
 
-    val ( leftPremise, middlePremise ) = ( leftSubProof.endSequent, middleSubProof.endSequent )
+    val ( middlePremise, rightPremise ) = ( middleSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( leftIndices, _ ) = findAndValidate( leftPremise )( Seq( Right( leftDisjunct ) ), Left( Suc( 0 ) ) )
-    val ( middleIndices, _ ) = findAndValidate( middlePremise )( Seq( Right( rightDisjunct ) ), Left( Suc( 0 ) ) )
+    val ( middleIndices, _ ) = findAndValidate( middlePremise )( Seq( Right( leftDisjunct ) ), Left( Suc( 0 ) ) )
+    val ( rightIndices, _ ) = findAndValidate( rightPremise )( Seq( Right( rightDisjunct ) ), Left( Suc( 0 ) ) )
 
-    new OrElimRule( leftSubProof, Ant( leftIndices( 0 ) ), middleSubProof, Ant( middleIndices( 0 ) ), rightSubProof )
+    new OrElimRule( leftSubProof, middleSubProof, Ant( middleIndices( 0 ) ), rightSubProof, Ant( rightIndices( 0 ) ) )
   }
 }
 
