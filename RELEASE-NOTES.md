@@ -2,6 +2,13 @@
 
 ## Version 2.6 (unreleased)
 
+* Free monad for the SMT solver interface
+* Portfolio mode in new viper command-line interface
+* Skolemization with free variables support in ResolutionProver.getLKProof
+* Primitive recursive definitions
+* Proof schemata
+* ACNF support in reductive cut-elimination
+
 ## Version 2.5 (released on 2017-02-22)
 
 * Support veriT stable2016
