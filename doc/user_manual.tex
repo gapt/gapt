@@ -1408,7 +1408,8 @@ scripts tries several different strategies to solve the given problem,
 including analytic induction and tree-grammar-based methods.  The
 \texttt{--help} argument shows the available options.
 \begin{lstlisting}
-./viper.sh examples/induction/prod_prop_31.smt2
+./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp \
+    examples/induction/prod_prop_31.smt2
 \end{lstlisting}
 
 \subsection{Built-in tableaux prover}
