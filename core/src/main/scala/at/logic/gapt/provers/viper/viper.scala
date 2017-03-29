@@ -147,14 +147,6 @@ object ViperOptions {
 
 object Viper {
 
-  val optionRegex = """;\s*viper\s+(.*)""".r
-  def extractOptions( tipSmtCode: InputFile ): List[String] =
-    tipSmtCode.read.split( "\n" ).view.flatMap {
-      case optionRegex( args ) => args.split( """\s+""" ).
-        map { a => if ( a.startsWith( "\"" ) ) a.substring( 1, a.length - 1 ) else a }
-      case _ => Seq()
-    }.toList
-
   def getStrategies( opts: ViperOptions )( implicit ctx: Context ): List[( Duration, Tactical[_] )] =
     opts.mode match {
       case "portfolio" =>
@@ -186,29 +178,27 @@ object Viper {
   }
 
   def main( args: Array[String] ): Unit = {
-    val ( fileNames, opts0 ) = ViperOptions.parse( args.toList, ViperOptions( fixup = TipSmtParser.isInstalled ) )
-    val hasCmdLineOpts = fileNames.size != args.length
+    val ( fileNames, opts ) = ViperOptions.parse( args.toList, ViperOptions( fixup = TipSmtParser.isInstalled ) )
     val files = fileNames.map {
       case "-" => StringInputFile( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString )
       case fn  => InputFile.fromPath( FilePath( fn ) )
     }
 
-    if ( opts0.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
+    if ( opts.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
     val file = files.head
 
     Logger.setConsolePattern( "%message%n" )
-    if ( opts0.verbosity >= 2 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
+    if ( opts.verbosity >= 2 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
 
-    val opts = if ( hasCmdLineOpts ) opts0 else ViperOptions.parse( extractOptions( file ), opts0 )._2
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
     implicit val ctx = problem.ctx
 
-    if ( opts0.verbosity >= 1 ) println( problem.toSequent.toSigRelativeString )
+    if ( opts.verbosity >= 1 ) println( problem.toSequent.toSigRelativeString )
 
     val state0 = ProofState( problem.toSequent )
     getStrategies( opts ).view.flatMap {
       case ( duration, strategy ) =>
-        if ( opts0.verbosity >= 1 ) println( s"trying $strategy" )
+        if ( opts.verbosity >= 1 ) println( s"trying $strategy" )
         timeit( Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) ) match {
           case ( Success( Right( ( _, state_ ) ) ), time ) =>
             println( s"$strategy successful after $time" )
@@ -218,7 +208,7 @@ object Viper {
             None
           case ( failure, time ) =>
             println( s"$strategy failed after $time" )
-            if ( opts0.verbosity >= 1 )
+            if ( opts.verbosity >= 1 )
               ( failure: @unchecked ) match {
                 case Failure( ex )                      => ex.printStackTrace()
                 case Success( Left( tacticalFailure ) ) => println( tacticalFailure )
@@ -232,7 +222,7 @@ object Viper {
           require( proof.conclusion isSubsetOf problem.toSequent )
         }
         println( "proof found" )
-        if ( opts0.prooftool ) prooftool( proof )
+        if ( opts.prooftool ) prooftool( proof )
       case None =>
         println( "could not solve problem" )
         sys.exit( 1 )

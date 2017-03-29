@@ -9,6 +9,14 @@ import org.specs2.specification.core.Fragments
 
 class ViperTest extends Specification with SequentMatchers {
 
+  val optionsRegex = """;.*viper\s+(.*)""".r.unanchored
+  def extractOptions( contents: String ): List[String] =
+    contents match {
+      case optionsRegex( opts ) =>
+        opts.split( " " ).toList.map { case "\"\"" => "" case a => a }
+      case _ => Nil
+    }
+
   "known to be working problems" in {
     Fragments.foreach( Seq(
       "appnil",
@@ -29,7 +37,7 @@ class ViperTest extends Specification with SequentMatchers {
           opts0 = opts0.copy( fixup = true )
         }
         val file = ClasspathInputFile( s"induction/$prob.smt2" )
-        val ( Nil, options ) = ViperOptions.parse( Viper.extractOptions( file ), opts0 )
+        val ( Nil, options ) = ViperOptions.parse( extractOptions( file.read ), opts0 )
         val problem = if ( options.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
         val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options.treeGrammarProverOptions ).solve()
         problem.ctx check lk

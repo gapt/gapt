@@ -1,6 +1,5 @@
 ; Example from [Eri08] that requires introduction of addition.
 
-; viper qtys nat
 (declare-datatypes () ((nat (o) (s (p nat)))))
 (declare-sort i 0)
 (declare-datatypes () ((list (nil) (cons (head i) (tail list)))))
