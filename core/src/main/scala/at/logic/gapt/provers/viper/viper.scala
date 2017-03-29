@@ -42,12 +42,14 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
     try {
       Right( () -> viper.solve() )
     } catch {
+      case t: TimeOutException => throw t
+      case t: ThreadDeath      => throw t
       case t: Throwable =>
         Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
     }
   }
 
-  override def toString = options.toString
+  override def toString = "treeGrammarProver"
 }
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
@@ -211,11 +213,13 @@ object Viper {
           case ( Success( Right( ( _, state_ ) ) ), time ) =>
             println( s"$strategy successful after $time" )
             Some( state_.result )
+          case ( Failure( _: TimeOutException ), time ) =>
+            println( s"$strategy timed out after $time" )
+            None
           case ( failure, time ) =>
             println( s"$strategy failed after $time" )
             if ( opts0.verbosity >= 1 )
               ( failure: @unchecked ) match {
-                case Failure( _: TimeOutException )     => println( "(due to timeout)" )
                 case Failure( ex )                      => ex.printStackTrace()
                 case Success( Left( tacticalFailure ) ) => println( tacticalFailure )
               }
