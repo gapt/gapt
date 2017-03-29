@@ -2,6 +2,7 @@
 
 ## Version 2.6 (unreleased)
 
+* Natural deduction
 * Free monad for the SMT solver interface
 * Portfolio mode in new viper command-line interface
 * Skolemization with free variables support in ResolutionProver.getLKProof
