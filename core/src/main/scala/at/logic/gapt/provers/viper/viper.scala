@@ -177,10 +177,10 @@ object Viper {
 
   def timeit[T]( f: => T ): ( T, Duration ) = {
     val a = System.currentTimeMillis()
-    f
+    val res = f
     val b = System.currentTimeMillis()
     import scala.concurrent.duration._
-    ( f, ( b - a ).milliseconds )
+    ( res, ( b - a ).milliseconds )
   }
 
   def main( args: Array[String] ): Unit = {
