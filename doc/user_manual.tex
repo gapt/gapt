@@ -31,6 +31,7 @@
 %Commands for constructing proof trees with bussproofs. See the chapter on the LK system for examples.
 \newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
 \newcommand{\BinaryInfCm}[1]{\BinaryInfC{$#1$}}
+\newcommand{\TrinaryInfCm}[1]{\TrinaryInfC{$#1$}}
 \newcommand{\RightLabelm}[1]{\RightLabel{$#1$}}
 \newcommand{\AxiomCm}[1]{\AxiomC{$#1$}}
 
@@ -2255,6 +2256,239 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
     \UnaryInfCm{F[x], \Gamma_2 \seq \Delta_2, F[sx]}
     \RightLabelm{(\mt{ind})}
     \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, F[t]}
+  \end{prooftree}
+
+\subsection{ND}\label{app:natural_deduction}
+
+The rules of ND are listed below. Classical logic is supported by providing the
+excluded middle rule. We use ND rules in sequent form.
+
+As in LK, proof trees are constructed top-down, starting with axioms and with
+each rule introducing new inferences. With exception of the theory axioms and
+the induction rules, the constructors of the rules only allow inferences that
+are actually valid. Note that the rules are presented here as if they always act
+upon the outermost formulas in the upper sequent, but this is only for
+convenience of presentation. The basic constructors actually require the user to
+specify on which concrete formulas the inference should be performed.
+
+Apart from those basic constructors, there is also a multitude of convenience
+constructors that facilitate easier proof construction. See the API
+documentation of the individual rules for details.
+
+\newpage
+
+\subsubsection*{Axioms}
+
+\begin{multicols}{2}
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\mt{Logical axiom})}
+  \UnaryInfCm{A \seq A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\mt{Theory axiom})}
+  \UnaryInfCm{\seq A}
+  \end{prooftree}
+\end{multicols}
+
+Theory axioms may only contain atomic formulas.
+
+\subsubsection*{Structural rules}
+
+\begin{multicols}{2}
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq B}
+  \RightLabelm{(\mt{w})}
+  \UnaryInfCm{A, \Gamma \seq B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{A,A,\Gamma \seq B}
+  \RightLabelm{(\mt{c})}
+  \UnaryInfCm{A,\Gamma\seq B}
+  \end{prooftree}
+\end{multicols}
+
+\subsubsection*{Propositional rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Elimination rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \land B}
+  \RightLabelm{(\land\mt{:e1})}
+  \UnaryInfCm{\Gamma \seq A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \land B}
+  \RightLabelm{(\land\mt{:e2})}
+  \UnaryInfCm{\Gamma \seq B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \lor B}
+  \AxiomCm{\Pi, A \seq C}
+  \AxiomCm{\Delta, B \seq C}
+  \RightLabelm{(\lor\mt{:e})}
+  \TrinaryInfCm{\Gamma, \Pi, \Delta \seq C}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \lnot A}
+  \AxiomCm{\Pi \seq A}
+  \RightLabelm{(\lnot\mt{:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq \bot}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \impl B}
+  \AxiomCm{\Pi \seq A}
+  \RightLabelm{(\impl\mt{:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq B}
+  \end{prooftree}
+
+  \subsubsection*{Introduction rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A}
+  \AxiomCm{\Pi \seq B}
+  \RightLabelm{(\land\mt{:i})}
+  \BinaryInfCm{\Gamma, \Pi \seq A \land B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A}
+  \RightLabelm{(\lor\mt{:i1})}
+  \UnaryInfCm{\Gamma \seq A \lor B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A}
+  \RightLabelm{(\lor\mt{:i2})}
+  \UnaryInfCm{\Gamma \seq B \lor A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{A, \Gamma \seq \bot}
+  \RightLabelm{(\lnot\mt{:i})}
+  \UnaryInfCm{\Gamma \seq \lnot A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{A, \Gamma \seq B}
+  \RightLabelm{(\impl\mt{:i})}
+  \UnaryInfCm{\Gamma \seq A \impl B}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Quantifier rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Elimination rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \forall x A}
+  \RightLabelm{(\forall\mt{:e})}
+  \UnaryInfCm{\Gamma \seq A[t/x]}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \exists x A}
+  \AxiomCm{\Pi, A[y/x] \seq B}
+  \RightLabelm{(\exists\mt{:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq B}
+  \end{prooftree}
+
+  \subsubsection*{Introduction rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A[y/x]}
+  \RightLabelm{(\forall\mt{:i})}
+  \UnaryInfCm{\Gamma \seq \forall x A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A[t/x]}
+  \RightLabelm{(\exists\mt{:i})}
+  \UnaryInfCm{\Gamma \seq \exists x A}
+  \end{prooftree}
+
+\end{multicols}
+
+The variable $y$ must not occur free in $\Gamma$, $\Pi$ or $B$. The term $t$
+must avoid variable capture, i.e.\ it must not contain free occurrences of
+variables bound in $A$.
+
+% FIXME: If this newpage is missing, Latex breaks after 
+% \subsubsection*{Equality rules}
+\newpage 
+
+\subsubsection*{Equality rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Elimination rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq s = t}
+  \AxiomCm{\Pi \seq A[s/x]}
+  \RightLabelm{(\mt{=:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq A[t/x]}
+  \end{prooftree}
+
+  \subsubsection*{Introduction rules}
+
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\mt{=:i})}
+  \UnaryInfCm{\seq t = t}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Induction}
+The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],\dots,F[x_{k_i}], \Gamma_i \seq F[c_i(x_1,\dots,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_1}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_2}
+    \AxiomCm{\dots}
+    \AxiomCm{(\pi_n)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_n}
+    \RightLabelm{(\mt{ind})}
+    \QuaternaryInfC{$\Gamma \seq F[t]$}
+  \end{prooftree}
+
+  In the case of the natural numbers, there are two constructors: $0$ of arity 0 and $s$ of arity 1. Consequently, the induction rule reduces to
+
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\Gamma_1 \seq F[0]}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{F[x], \Gamma_2 \seq F[sx]}
+    \RightLabelm{(\mt{ind})}
+    \BinaryInfCm{\Gamma_1, \Gamma_2 \seq F[t]}
+  \end{prooftree}
+
+\subsubsection*{Excluded Middle}
+
+  \begin{prooftree}
+    \AxiomCm{\Gamma, A \seq B}
+    \AxiomCm{\Pi, \lnot A \seq B}
+    \RightLabelm{(\mt{em})}
+    \BinaryInfCm{\Gamma, \Pi \seq B}
   \end{prooftree}
 
 \subsection{Resolution}
