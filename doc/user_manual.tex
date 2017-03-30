@@ -27,6 +27,7 @@
 \renewcommand{\lor}{\vee}
 \newcommand{\sklabel}[2]{\langle#1\rangle^{#2}}
 \newcommand{\LK}{\textbf{LK}}
+\newcommand{\ND}{\textbf{ND}}
 
 %Commands for constructing proof trees with bussproofs. See the chapter on the LK system for examples.
 \newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
@@ -523,6 +524,8 @@ d: at.logic.gapt.expr.FOLAtom = D:o
 
 
 \subsection{Proofs}\label{sec:entering_proofs}
+
+\subsubsection{LK}
 GAPT contains an implementation of Gentzen's sequent calculus \LK .
 The inference rules are defined in appendix \ref{app:sequent_calculus}.
 
@@ -626,6 +629,82 @@ P(s(s(s(s(s(0))))), 0)
 P(0, s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
 [p21] P(0, s(s(s(s(s(0)))))) ⊢ P(0, s(s(s(s(s(0))))))    (LogicalA...
 \end{clilisting}
+
+\subsubsection{ND}
+
+GAPT furthermore contains an implementation of Gentzen's natural deduction
+calculus \ND .
+The inference rules are defined in appendix \ref{app:natural_deduction}. To use
+the natural deduction inference rules you need to qualify the rule names with
+``\begin{cli}nd.\end{cli}''. For convenience you can also import the ND package
+via
+\begin{clilisting}
+gapt> import at.logic.gapt.proofs.nd._
+\end{clilisting}
+However, if you choose to import the rules, be aware of name conflicts with the
+LK rules.
+
+We show that from $P \land Q \impl R$ and $P$ follows $Q \impl R$. We start with
+the axioms:
+
+\begin{clilisting}
+gapt> val p1 = nd.LogicalAxiom( fof"P" )
+p1: at.logic.gapt.proofs.nd.LogicalAxiom =
+[p1] P ⊢ P    (LogicalAxiom(P:o))
+
+gapt> val p2 = nd.LogicalAxiom( fof"Q" )
+p2: at.logic.gapt.proofs.nd.LogicalAxiom =
+[p1] Q ⊢ Q    (LogicalAxiom(Q:o))
+
+gapt> val p3 = nd.LogicalAxiom( fof"P & Q -> R" )
+p3: at.logic.gapt.proofs.nd.LogicalAxiom =
+[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+\end{clilisting}
+
+$P$ and $Q$ are joined by an $\land:\mathrm{introduction}$-inference.
+
+\begin{clilisting}
+gapt> val p4 = nd.AndIntroRule( p1, p2 )
+p4: at.logic.gapt.proofs.nd.AndIntroRule =
+[p3] P, Q ⊢ P ∧ Q    (AndIntroRule(p1, p2))
+[p2] Q ⊢ Q    (LogicalAxiom(Q:o))
+[p1] P ⊢ P    (LogicalAxiom(P:o))
+\end{clilisting}
+
+Next, we apply an $\impl:\mathrm{elimination}$-inference on $P \land Q \impl R$
+and $P \land Q$ to arrive at $R$.
+
+\begin{clilisting}
+gapt> val p5 = nd.ImpElimRule( p3, p4 )
+p5: at.logic.gapt.proofs.nd.ImpElimRule =
+[p5] P ∧ Q ⊃ R, P, Q ⊢ R    (ImpElimRule(p1, p4))
+[p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
+[p3] Q ⊢ Q    (LogicalAxiom(Q:o))
+[p2] P ⊢ P    (LogicalAxiom(P:o))
+[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+\end{clilisting}
+
+Finally, by using an $\impl:\mathrm{introduction}$-inference on $Q$, we arrive
+at the desired sequent.
+
+\begin{clilisting}
+gapt> val p6 = nd.ImpIntroRule( p5, Ant( 2 ) )
+p6: at.logic.gapt.proofs.nd.ImpIntroRule =
+[p6] P ∧ Q ⊃ R, P ⊢ Q ⊃ R    (ImpIntroRule(p5, Ant(2)))
+[p5] P ∧ Q ⊃ R, P, Q ⊢ R    (ImpElimRule(p1, p4))
+[p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
+[p3] Q ⊢ Q    (LogicalAxiom(Q:o))
+[p2] P ⊢ P    (LogicalAxiom(P:o))
+[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+\end{clilisting}
+
+You can now view this proof by typing:
+\begin{clilisting}
+gapt> prooftool( p6 )
+\end{clilisting}
+
+GAPT provides several convenience constructors which simplify proof
+construction, which can be found in the API documentation.
 
 \subsection{Proof contexts}\label{sec:context}
 The \cli{Context} class captures the notion of a logical signature and background
