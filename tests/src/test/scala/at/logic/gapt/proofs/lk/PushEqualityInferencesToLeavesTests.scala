@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.Abs
-import at.logic.gapt.proofs.{ Ant, Sequent, SequentMatchers, Suc }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
 import at.logic.gapt.proofs.gaptic.OpenAssumption
 import org.specs2.mutable.Specification
 
@@ -651,4 +651,58 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     reduction.subProofAt( 0 :: Nil ) must beAnInstanceOf[EqualityLeftRule]
   }
 
+  "equality left; upper sequent intro. by induction" in {
+    implicit var context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"F:nat>o"
+    val proof = ( ProofBuilder
+      c OpenAssumption( ( "" -> hof"r=t" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
+      c OpenAssumption( ( "" -> hof"A(r)" ) +: ( "" -> hof"F(x)" ) +: Sequent() :+ ( "" -> hof"F(s(x))" ) )
+      b ( ( left, right ) => InductionRule(
+        InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
+          InductionCase( right, hoc"s:nat>nat", Ant( 1 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
+        Abs( hov"x:nat", le"F(x)" ), hov"z:nat"
+      ) )
+      u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x:i", le"A(x):o" ) ) ) qed )
+    val reduction = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
+    reduction.conclusion must beMultiSetEqual( proof.conclusion )
+    reduction must beAnInstanceOf[ContractionLeftRule]
+  }
+
+  "equality right; upper sequent intro. by induction; aux is not principal" in {
+    implicit var context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"F:nat>o"
+    val proof = ( ProofBuilder
+      c OpenAssumption( ( "" -> hof"r=t" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
+      c OpenAssumption( ( "" -> hof"F(x)" ) +: Sequent() :+ ( "" -> hof"F(s(x))" ) :+ ( "" -> hof"A(r)" ) )
+      b ( ( left, right ) => InductionRule(
+        InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
+          InductionCase( right, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
+        Abs( hov"x:nat", le"F(x)" ), hov"z:nat"
+      ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x:i", le"A(x):o" ) ) ) qed )
+    val reduction = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] ).get
+    reduction.conclusion must beMultiSetEqual( proof.conclusion )
+    reduction must beAnInstanceOf[ContractionLeftRule]
+  }
+
+  "equality right; upper sequent intro. by induction; aux is principal" in {
+    implicit var context = Context()
+    context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    context += hoc"F:nat>o"
+    context += hoc"r:nat"
+    context += hoc"t:nat"
+    val proof = ( ProofBuilder
+      c OpenAssumption( ( "" -> hof"r=t" ) +: Sequent() :+ ( "" -> hof"F(0)" ) )
+      c OpenAssumption( ( "" -> hof"F(x)" ) +: Sequent() :+ ( "" -> hof"F(s(x))" ) )
+      b ( ( left, right ) => InductionRule(
+        InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
+          InductionCase( right, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
+        Abs( hov"x:nat", le"F(x)" ), le"r"
+      ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x:nat", le"F(x):o" ) ) ) qed )
+    val reduction = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] )
+    reduction must beEmpty
+  }
 }

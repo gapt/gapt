@@ -1,23 +1,80 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.{ Abs, All, And, Ex, Imp, Neg, Or, Substitution, Var, freeVariables, rename }
-import at.logic.gapt.proofs.{ Ant, SequentConnector, SequentIndex, Suc }
+import at.logic.gapt.proofs.{ Ant, Context, SequentConnector, SequentIndex, Suc }
 
 class pushEqualityInferencesToLeaves {
+
+  /**
+   * Moves equality inferences to the leaves.
+   *
+   * @param proof The proof to which the transformation is to be applied.
+   * @param ctx Defines constants, types, etc.
+   * @return A proof with equality inferences moved towards the leaves as far as possible.
+   */
+  def pushEqualitiesToLeaves( proof: LKProof )( implicit ctx: Context ): LKProof = {
+    var newProof = PushWeakeningToLeaves( proof )
+    var previousNewProof = proof
+    do {
+      previousNewProof = newProof
+      newProof = moveEqualitiesToLeaves( newProof, false )
+      newProof = PushWeakeningToLeaves( newProof )
+    } while ( previousNewProof != newProof && newProof.subProofs.exists( equalityReduction( _ ).isDefined ) )
+    newProof
+  }
+
+  /**
+   * Applies an equality reduction to the last inference rule of the given proof.
+   * @param proof The proof to which this reduction is applied.
+   * @return A reduced proof and a sequent connector if last inference of the given proof
+   *         is a topmost reducible equality inference. Otherwise, None is returned.
+   */
+  def equalityReduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
+    case eq @ EqualityLeftRule( _, _, _, _ ) if isUpperMostRedex( eq ) =>
+      equalityLeftReduction( eq ).map { guessPermutation( proof, _ ) }
+    case eq @ EqualityRightRule( _, _, _, _ ) if isUpperMostRedex( eq ) =>
+      equalityRightReduction( eq ).map { guessPermutation( proof, _ ) }
+    case _ => None
+  }
+
+  /**
+   * Returns the proper subproofs of the given proof.
+   * @param proof The proof whose subproofs are to be computed.
+   * @return The proof's proper subproofs.
+   */
+  private def properSubProofs( proof: LKProof ) = proof.immediateSubProofs.flatMap( _.subProofs )
+
+  /**
+   * Checks whether the given proof's last inference is an uppermost redex for the equality reduction.
+   * @param proof The proof that is to be checked.
+   * @return true if the last inference is an uppermost redex for the equality reduction, false otherwise.
+   */
+  private def isUpperMostRedex( proof: LKProof ): Boolean = !properSubProofs( proof ).exists( equalityReduction( _ ).isDefined )
+
+  /**
+   * Exhaustively applies the equality reduction.
+   * @param proof The proof to which the reduction is applied.
+   * @param cleanStructRules If true the structural rules are cleaned after each step.
+   * @param ctx Defines constants, types, etc.
+   * @return A proof which does not contain any redex for the equality reduction. The reduction may have
+   *         introduced new weakening inferences.
+   */
+  def moveEqualitiesToLeaves( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
+    def terminateReduction( proof: LKProof ) = proof.subProofs.forall( equalityReduction( _ ).isEmpty )
+    ( new ReductiveCutElimination() )( proof, terminateReduction, equalityReduction, cleanStructRules )
+  }
+
 }
 
 object equalityRightReduction {
 
+  /**
+   * Tries to move the given equality inference upwards.
+   * @param equality The equality inference to which the reduction is applied.
+   * @return Either a reduced proof if the reduction could be applied, or None.
+   */
   def apply( equality: EqualityRightRule ): Option[LKProof] = {
     equality.subProof match {
-
-      case TopAxiom              => ???
-
-      case BottomAxiom           => ???
-
-      case LogicalAxiom( _ )     => ???
-
-      case ReflexivityAxiom( _ ) => ???
 
       case weakening @ WeakeningLeftRule( subProof, _ ) if weakening.mainIndices.head != equality.eq =>
         val connector = weakening.getSequentConnector
@@ -350,19 +407,42 @@ object equalityRightReduction {
           ) )
         }
 
-      case eq @ EqualityLeftRule( _, _, _, _ )  => ???
+      case eq @ EqualityLeftRule( _, _, _, _ ) =>
+        // Fixme: Reduce depending on whether this inference is blocked by the same inference as eq
+        None
 
-      case eq @ EqualityRightRule( _, _, _, _ ) => ???
+      case eq @ EqualityRightRule( _, _, _, _ ) =>
+        // Fixme: Reduce depending on whether this inference is blocked by the same inference as eq
+        None
 
-      case ind @ InductionRule( _, _, _ )       => ???
+      case ind @ InductionRule( _, _, _ ) if ind.mainIndices.head != equality.aux =>
+        val newSubProofs = splitEquality( equality, ind.cases.zip( ind.occConnectors ).map {
+          case ( indCase, connector ) => ( indCase.proof, connector, equality.replacementContext )
+        } ).zip( ind.cases )
+        val newIndCases = newSubProofs.map {
+          case ( ( subProof, connector ), indCase ) =>
+            InductionCase(
+              subProof,
+              indCase.constructor,
+              indCase.hypotheses.map( connector.child( _ ) ),
+              indCase.eigenVars, connector.child( indCase.conclusion )
+            )
+        }
+        val newProof = InductionRule( newIndCases, ind.formula, ind.term )
+        Some( ContractionMacroRule( newProof, equality.conclusion, false ) )
 
-      case _                                    => None
+      case _ => None
     }
   }
 }
 
 object equalityLeftReduction {
 
+  /**
+   * Tries to move the given equality inference upwards.
+   * @param equality The equality inference to which the reduction is applied.
+   * @return Either a reduced proof if the reduction could be applied, or None.
+   */
   def apply( equality: EqualityLeftRule ): Option[LKProof] = {
     equality.subProof match {
       case weakening @ WeakeningLeftRule( _, _ ) if ( weakening.mainIndices.head == equality.eq ) =>
@@ -616,11 +696,29 @@ object equalityLeftReduction {
         Some( ForallRightRule( newSubProof, newConnector.child( all.aux ), all.eigenVariable, all.quantifiedVariable ) )
 
       case eq @ EqualityLeftRule( _, _, _, _ ) =>
-        ???
+        // Fixme: Reduce depending on whether this inference is blocked by the same inference as eq
+        None
+
       case eq @ EqualityRightRule( _, _, _, _ ) =>
-        ???
+        // Fixme: Reduce depending on whether this inference is blocked by the same inference as eq
+        None
+
       case ind @ InductionRule( _, _, _ ) =>
-        ???
+        val newSubProofs = splitEqualityLeft( equality, ind.cases.zip( ind.occConnectors ).map {
+          case ( indCase, connector ) => ( indCase.proof, connector, equality.replacementContext )
+        } ).zip( ind.cases )
+        val newIndCases = newSubProofs.map {
+          case ( ( subProof, connector ), indCase ) =>
+            InductionCase(
+              subProof,
+              indCase.constructor,
+              indCase.hypotheses.map( connector.child( _ ) ),
+              indCase.eigenVars, connector.child( indCase.conclusion )
+            )
+        }
+        val newProof = InductionRule( newIndCases, ind.formula, ind.term )
+        Some( ContractionMacroRule( newProof, equality.conclusion, false ) )
+
       case cut @ CutRule( _, _, _, _ ) =>
         val context = equality.replacementContext
         val Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ) =
@@ -637,7 +735,6 @@ object equalityLeftReduction {
       case _ => None
     }
   }
-
 }
 
 object splitEquality {
