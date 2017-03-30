@@ -215,7 +215,7 @@ class ReductiveCutElimination {
     do {
       newProof = unfoldGroundInductions( newProof, cleanStructRules )
       newProof = freeCutFree( newProof, cleanStructRules )
-    } while ( inductionUnfoldingReduction( newProof ).nonEmpty )
+    } while ( newProof.subProofs.exists( inductionUnfoldingReduction( _ ).nonEmpty ) )
     newProof
   }
 
