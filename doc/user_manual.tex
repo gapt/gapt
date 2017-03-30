@@ -636,13 +636,7 @@ GAPT furthermore contains an implementation of Gentzen's natural deduction
 calculus \ND .
 The inference rules are defined in appendix \ref{app:natural_deduction}. To use
 the natural deduction inference rules you need to qualify the rule names with
-``\begin{cli}nd.\end{cli}''. For convenience you can also import the ND package
-via
-\begin{clilisting}
-gapt> import at.logic.gapt.proofs.nd._
-\end{clilisting}
-However, if you choose to import the rules, be aware of name conflicts with the
-LK rules.
+``\cli{nd.}''.
 
 We show that from $P \land Q \impl R$ and $P$ follows $Q \impl R$. We start with
 the axioms:
@@ -661,7 +655,7 @@ p3: at.logic.gapt.proofs.nd.LogicalAxiom =
 [p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
 \end{clilisting}
 
-$P$ and $Q$ are joined by an $\land:\mathrm{introduction}$-inference.
+$P$ and $Q$ are joined by an $\land$-introduction inference.
 
 \begin{clilisting}
 gapt> val p4 = nd.AndIntroRule( p1, p2 )
@@ -671,7 +665,7 @@ p4: at.logic.gapt.proofs.nd.AndIntroRule =
 [p1] P ⊢ P    (LogicalAxiom(P:o))
 \end{clilisting}
 
-Next, we apply an $\impl:\mathrm{elimination}$-inference on $P \land Q \impl R$
+Next, we apply an $\impl$-elimination inference on $P \land Q \impl R$
 and $P \land Q$ to arrive at $R$.
 
 \begin{clilisting}
@@ -684,7 +678,7 @@ p5: at.logic.gapt.proofs.nd.ImpElimRule =
 [p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
 \end{clilisting}
 
-Finally, by using an $\impl:\mathrm{introduction}$-inference on $Q$, we arrive
+Finally, by using an $\impl$-introduction inference on $Q$, we arrive
 at the desired sequent.
 
 \begin{clilisting}
