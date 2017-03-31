@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{ Abs, All, And, Ex, Imp, Neg, Or, Substitution, Var, freeVariables, rename }
+import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.expr.{ Abs, All, And, Ex, Expr, Formula, Imp, Neg, Or, Substitution, Var, freeVariables, rename }
 import at.logic.gapt.proofs.{ Ant, Context, SequentConnector, SequentIndex, Suc }
 
 class pushEqualityInferencesToLeaves {
@@ -147,38 +148,16 @@ object equalityRightReduction {
           ) )
         }
 
-      case cut @ CutRule( left, _, right, _ ) =>
-        def insertEquality( cut: CutRule, subProof: LKProof, connector: SequentConnector ): ( LKProof, SequentConnector ) = {
-          if ( connector.parents( equality.eq ) == Seq() ) {
-            val newSubProof = WeakeningLeftRule( subProof, equality.equation )
-            val newProof = EqualityRightRule(
-              newSubProof,
-              newSubProof.mainIndices.head,
-              newSubProof.getSequentConnector.child( connector.parent( equality.aux ) ),
-              equality.replacementContext
-            )
-            ( newProof, newProof.getSequentConnector * newSubProof.getSequentConnector )
-          } else {
-            val newProof = EqualityRightRule(
-              subProof,
-              connector.parent( equality.eq ),
-              connector.parent( equality.aux ),
-              equality.replacementContext
-            )
-            ( newProof, newProof.getSequentConnector )
-          }
-        }
-        val auxParentsLeft = cut.getLeftSequentConnector.parents( equality.aux )
-        val auxParentsRight = cut.getRightSequentConnector.parents( equality.aux )
-        val newProof = ( auxParentsLeft, auxParentsRight ) match {
-          case ( Seq( _ ), Seq() ) =>
-            val ( newLeftSubProof, connector ) = insertEquality( cut, left, cut.getLeftSequentConnector )
-            CutRule( newLeftSubProof, connector.child( cut.aux1 ), right, cut.aux2 )
-          case ( Seq(), Seq( _ ) ) =>
-            val ( newRightSubProof, connector ) = insertEquality( cut, right, cut.getRightSequentConnector )
-            CutRule( left, cut.aux1, newRightSubProof, connector.child( cut.aux2 ) )
-        }
-        Some( ContractionMacroRule( newProof, equality.conclusion, false ) )
+      case cut @ CutRule( _, _, _, _ ) =>
+        val Seq( ( newLeftSubProof, leftConnector ), ( newRightSubProof, rightConnector ) ) = splitEquality(
+          equality,
+          ( cut.leftSubProof, cut.getLeftSequentConnector, equality.replacementContext ) ::
+            ( cut.rightSubProof, cut.getRightSequentConnector, equality.replacementContext ) :: Nil
+        )
+        val newSubProof = CutRule(
+          newLeftSubProof, leftConnector.child( cut.aux1 ), newRightSubProof, rightConnector.child( cut.aux2 )
+        )
+        Some( ContractionMacroRule( newSubProof, equality.conclusion, false ) )
 
       case neg @ NegLeftRule( _, _ ) =>
         val negConnector = neg.getSequentConnector
@@ -190,22 +169,18 @@ object equalityRightReduction {
         )
         Some( NegLeftRule( newEquality, newEquality.getSequentConnector.child( neg.aux ) ) )
 
-      case neg @ NegRightRule( subProof, _ ) =>
-        val connector = neg.getSequentConnector
-        if ( neg.mainIndices.head != equality.aux ) {
-          val newEquality = EqualityRightRule(
-            subProof,
-            connector.parent( equality.eq ),
-            connector.parent( equality.aux ),
+      case neg @ NegRightRule( _, _ ) =>
+        val context =
+          if ( neg.mainIndices.head != equality.aux ) {
             equality.replacementContext
-          )
-          Some( NegRightRule( newEquality, newEquality.getSequentConnector.child( neg.aux ) ) )
-        } else {
-          val Abs( variable, Neg( formula ) ) = equality.replacementContext
-          val connector = neg.getSequentConnector
-          val newEquality = EqualityLeftRule( subProof, connector.parent( equality.eq ), neg.aux, Abs( variable, formula ) )
-          Some( NegRightRule( newEquality, newEquality.getSequentConnector.child( neg.aux ) ) )
-        }
+          } else {
+            val Abs( variable, Neg( formula ) ) = equality.replacementContext
+            Abs( variable, formula )
+          }
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
+          equality, ( neg.subProof, neg.getSequentConnector, context ) :: Nil
+        )
+        Some( NegRightRule( newSubProof, subConnector.child( neg.aux ) ) )
 
       case and @ AndLeftRule( _, _, _ ) =>
         val andConnector = and.getSequentConnector
@@ -222,30 +197,22 @@ object equalityRightReduction {
         ) )
 
       case and @ AndRightRule( left, aux1, right, aux2 ) =>
-        if ( and.mainIndices.head != equality.aux ) {
-          val context = equality.replacementContext
-          val Seq( ( newLeft, leftConnector ), ( newRight, rightConnector ) ) =
-            splitEquality( equality, ( left, and.getLeftSequentConnector, context ) :: ( right, and.getRightSequentConnector, context ) :: Nil )
-          Some(
-            ContractionMacroRule(
-              AndRightRule( newLeft, leftConnector.child( aux1 ), newRight, rightConnector.child( aux2 ) ),
-              equality.conclusion,
-              false
-            )
-          )
-        } else {
-          val Abs( variable, And( leftFormula, rightFormula ) ) = equality.replacementContext
-          val Seq( ( newLeft, leftConnector ), ( newRight, rightConnector ) ) =
-            splitEquality( equality, ( left, and.getLeftSequentConnector, Abs( variable, leftFormula ) ) ::
-              ( right, and.getRightSequentConnector, Abs( variable, rightFormula ) ) :: Nil )
-          val newProof = AndRightRule(
-            newLeft,
-            leftConnector.child( and.aux1 ),
-            newRight,
-            rightConnector.child( and.aux2 )
-          )
-          Some( ContractionMacroRule( newProof, equality.conclusion, false ) )
-        }
+        val ( leftContext, rightContext ) =
+          if ( and.mainIndices.head != equality.aux ) {
+            ( equality.replacementContext, equality.replacementContext )
+          } else {
+            val Abs( variable, And( leftFormula, rightFormula ) ) = equality.replacementContext
+            ( Abs( variable, leftFormula ), Abs( variable, rightFormula ) )
+          }
+        val Seq( ( newLeftSubProof, leftConnector ), ( newRightSubProof, rightConnector ) ) = splitEquality(
+          equality,
+          ( left, and.getLeftSequentConnector, leftContext ) ::
+            ( right, and.getRightSequentConnector, rightContext ) :: Nil
+        )
+        val newProof = AndRightRule(
+          newLeftSubProof, leftConnector.child( aux1 ), newRightSubProof, rightConnector.child( aux2 )
+        )
+        Some( ContractionMacroRule( newProof, equality.conclusion, false ) )
 
       case or @ OrLeftRule( left, aux1, right, aux2 ) =>
         val context = equality.replacementContext
@@ -334,29 +301,19 @@ object equalityRightReduction {
         ) )
 
       case exists @ ExistsRightRule( _, _, _, _, _ ) =>
-        if ( exists.mainIndices.head != equality.aux ) {
-          val existsConnector = exists.getSequentConnector
-          val newEquality = EqualityRightRule(
-            exists.subProof,
-            existsConnector.parent( equality.eq ),
-            existsConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
-          val newConnector = newEquality.getSequentConnector
-          Some( ExistsRightRule( newEquality, newConnector.child( exists.aux ), exists.A, exists.term, exists.v ) )
-        } else {
-          val Abs( variable, Ex( exVar, formula ) ) = equality.replacementContext
-          val existsConnector = exists.getSequentConnector
-          val newEquality = EqualityRightRule(
-            exists.subProof,
-            existsConnector.parent( equality.eq ),
-            existsConnector.parent( equality.aux ),
-            Abs( variable, Substitution( exVar, exists.term )( formula ) )
-          )
-          val newConnector = newEquality.getSequentConnector
-          val Ex( _, newAFormula ) = Substitution( variable, equality.by )( Ex( exVar, formula ) )
-          Some( ExistsRightRule( newEquality, newConnector.child( exists.aux ), newAFormula, exists.term, exists.v ) )
-        }
+        val ( context, aFormula ) =
+          if ( exists.mainIndices.head != equality.aux ) {
+            ( equality.replacementContext, exists.A )
+          } else {
+            val Abs( variable, Ex( exVar, formula ) ) = equality.replacementContext
+            val Ex( _, newAFormula ) = Substitution( variable, equality.by )( Ex( exVar, formula ) )
+            ( instReplCtx( equality.replacementContext, exists.term ), newAFormula )
+          }
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
+          equality,
+          ( exists.subProof, exists.getSequentConnector, context ) :: Nil
+        )
+        Some( ExistsRightRule( newSubProof, subConnector.child( exists.aux ), aFormula, exists.term, exists.v ) )
 
       case forall @ ForallLeftRule( _, _, formula, term, variable ) =>
         val forallConnector = forall.getSequentConnector
@@ -371,41 +328,22 @@ object equalityRightReduction {
         ) )
 
       case forall @ ForallRightRule( _, _, _, _ ) =>
-        val forallConnector = forall.getSequentConnector
-        if ( forall.mainIndices.head != equality.aux ) {
-          val newEquality = EqualityRightRule(
-            forall.subProof,
-            forallConnector.parent( equality.eq ),
-            forallConnector.parent( equality.aux ),
+        val context =
+          if ( forall.mainIndices.head != equality.aux ) {
             equality.replacementContext
-          )
-          Some( ForallRightRule(
-            newEquality,
-            newEquality.getSequentConnector.child( forall.aux ),
-            forall.eigenVariable,
-            forall.quantifiedVariable
-          ) )
-        } else {
-          val Abs( oldVariable, all @ All( _, _ ) ) = equality.replacementContext
-          val newReplVariable = Var(
-            rename.awayFrom( freeVariables( all ) + forall.eigenVariable ).fresh( oldVariable.toString ),
-            oldVariable.ty
-          )
-          val All( _, formula ) = Substitution( oldVariable, newReplVariable )( all )
-          val newReplacementContext = Abs( newReplVariable, formula )
-          val newEquality = EqualityRightRule(
-            forall.subProof,
-            forallConnector.parent( equality.eq ),
-            forallConnector.parent( equality.aux ),
-            newReplacementContext
-          )
-          Some( ForallRightRule(
-            newEquality,
-            newEquality.getSequentConnector.child( forall.aux ),
-            forall.eigenVariable,
-            forall.quantifiedVariable
-          ) )
-        }
+          } else {
+            val Abs( oldVariable, all @ All( _, _ ) ) = equality.replacementContext
+            val newReplVariable = rename( oldVariable, freeVariables( all ) + forall.eigenVariable )
+            val All( _, formula ) = Substitution( oldVariable, newReplVariable )( all )
+            Abs( newReplVariable, formula )
+          }
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
+          equality,
+          ( forall.subProof, forall.getSequentConnector, context ) :: Nil
+        )
+        Some( ForallRightRule(
+          newSubProof, subConnector.child( forall.aux ), forall.eigenVariable, forall.quantifiedVariable
+        ) )
 
       case eq @ EqualityLeftRule( _, _, _, _ ) =>
         // Fixme: Reduce depending on whether this inference is blocked by the same inference as eq
@@ -445,8 +383,9 @@ object equalityLeftReduction {
    */
   def apply( equality: EqualityLeftRule ): Option[LKProof] = {
     equality.subProof match {
-      case weakening @ WeakeningLeftRule( _, _ ) if ( weakening.mainIndices.head == equality.eq ) =>
+      case weakening @ WeakeningLeftRule( _, _ ) if weakening.mainIndices.head == equality.eq =>
         None
+
       case weakening @ WeakeningLeftRule( _, _ ) =>
         val weakeningConnector = weakening.getSequentConnector
         if ( weakening.mainIndices.head == equality.aux ) {
@@ -516,24 +455,17 @@ object equalityLeftReduction {
         ) )
 
       case negation @ NegLeftRule( _, _ ) =>
-        if ( negation.mainIndices.head == equality.aux ) {
+        val context = if ( negation.mainIndices.head == equality.aux ) {
           val Abs( variable, Neg( formula ) ) = equality.replacementContext
-          val newEqInf = EqualityRightRule(
-            negation.subProof,
-            negation.getSequentConnector.parent( equality.eq ),
-            negation.getSequentConnector.parent( equality.aux ),
-            Abs( variable, formula )
-          )
-          Some( NegLeftRule( newEqInf, newEqInf.getSequentConnector.child( negation.aux ) ) )
+          Abs( variable, formula )
         } else {
-          val newEqInf = EqualityLeftRule(
-            negation.subProof,
-            negation.getSequentConnector.parent( equality.eq ),
-            negation.getSequentConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
-          Some( NegLeftRule( newEqInf, newEqInf.getSequentConnector.child( negation.aux ) ) )
+          equality.replacementContext
         }
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
+          equality,
+          ( negation.subProof, negation.getSequentConnector, context ) :: Nil
+        )
+        Some( NegLeftRule( newSubProof, subConnector.child( negation.aux ) ) )
 
       case negation @ NegRightRule( _, _ ) =>
         val newEqInf = EqualityLeftRule(
@@ -552,7 +484,7 @@ object equalityLeftReduction {
           } else {
             ( equality.replacementContext, equality.replacementContext )
           }
-        val Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ) = splitEqualityLeft(
+        val Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ) = splitEquality(
           equality,
           ( or.leftSubProof, or.getLeftSequentConnector, leftContext ) ::
             ( or.rightSubProof, or.getRightSequentConnector, rightContext ) :: Nil
@@ -607,7 +539,7 @@ object equalityLeftReduction {
       case and @ AndRightRule( _, _, _, _ ) =>
         val context = equality.replacementContext
         val Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ) =
-          splitEqualityLeft(
+          splitEquality(
             equality,
             ( and.leftSubProof, and.getLeftSequentConnector, context ) ::
               ( and.rightSubProof, and.getRightSequentConnector, context ) :: Nil
@@ -628,7 +560,7 @@ object equalityLeftReduction {
             ( equality.replacementContext, equality.replacementContext )
           }
         val Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ) =
-          splitEqualityLeft(
+          splitEquality(
             equality,
             ( imp.leftSubProof, impLeftConnector, leftContext ) ::
               ( imp.rightSubProof, impRightConnector, rightContext ) :: Nil
@@ -653,16 +585,13 @@ object equalityLeftReduction {
         val context =
           if ( exists.mainIndices.head == equality.aux ) {
             val Abs( oldVariable, ex @ Ex( _, _ ) ) = equality.replacementContext
-            val newReplVariable = Var(
-              rename.awayFrom( freeVariables( ex ) + exists.eigenVariable ).fresh( oldVariable.toString ),
-              oldVariable.ty
-            )
+            val newReplVariable = rename( oldVariable, freeVariables( ex ) + exists.eigenVariable )
             val Ex( _, formula ) = Substitution( oldVariable, newReplVariable )( ex )
             Abs( newReplVariable, formula )
           } else {
             equality.replacementContext
           }
-        val Seq( ( newSubProof, subConnector ) ) = splitEqualityLeft(
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
           equality, ( exists.subProof, exists.getSequentConnector, context ) :: Nil
         )
         Some( ExistsLeftRule(
@@ -670,7 +599,7 @@ object equalityLeftReduction {
         ) )
 
       case exists @ ExistsRightRule( _, _, _, _, _ ) =>
-        val Seq( ( newSubProof, subConnector ) ) = splitEqualityLeft(
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
           equality, ( exists.subProof, exists.getSequentConnector, equality.replacementContext ) :: Nil
         )
         Some( ExistsRightRule( newSubProof, subConnector.child( exists.aux ), exists.A, exists.term, exists.v ) )
@@ -678,19 +607,19 @@ object equalityLeftReduction {
       case all @ ForallLeftRule( _, _, _, _, _ ) =>
         val ( context, aFormula ) = if ( all.mainIndices.head == equality.aux ) {
           val Abs( variable, All( allVar, formula ) ) = equality.replacementContext
-          val newContext = Abs( variable, Substitution( allVar, all.term )( formula ) )
+          val newContext = instReplCtx( equality.replacementContext, all.term )
           val All( _, newAFormula ) = Substitution( variable, equality.by )( All( allVar, formula ) )
           ( newContext, newAFormula )
         } else {
           ( equality.replacementContext, all.A )
         }
-        val Seq( ( newSubProof, subConnector ) ) = splitEqualityLeft(
+        val Seq( ( newSubProof, subConnector ) ) = splitEquality(
           equality, ( all.subProof, all.getSequentConnector, context ) :: Nil
         )
         Some( ForallLeftRule( newSubProof, subConnector.child( all.aux ), aFormula, all.term, all.v ) )
 
       case all @ ForallRightRule( _, _, _, _ ) =>
-        val Seq( ( newSubProof, newConnector ) ) = splitEqualityLeft(
+        val Seq( ( newSubProof, newConnector ) ) = splitEquality(
           equality, ( all.subProof, all.getSequentConnector, equality.replacementContext ) :: Nil
         )
         Some( ForallRightRule( newSubProof, newConnector.child( all.aux ), all.eigenVariable, all.quantifiedVariable ) )
@@ -704,7 +633,7 @@ object equalityLeftReduction {
         None
 
       case ind @ InductionRule( _, _, _ ) =>
-        val newSubProofs = splitEqualityLeft( equality, ind.cases.zip( ind.occConnectors ).map {
+        val newSubProofs = splitEquality( equality, ind.cases.zip( ind.occConnectors ).map {
           case ( indCase, connector ) => ( indCase.proof, connector, equality.replacementContext )
         } ).zip( ind.cases )
         val newIndCases = newSubProofs.map {
@@ -722,7 +651,7 @@ object equalityLeftReduction {
       case cut @ CutRule( _, _, _, _ ) =>
         val context = equality.replacementContext
         val Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ) =
-          splitEqualityLeft(
+          splitEquality(
             equality,
             ( cut.leftSubProof, cut.getLeftSequentConnector, context ) ::
               ( cut.rightSubProof, cut.getRightSequentConnector, context ) :: Nil
@@ -739,7 +668,7 @@ object equalityLeftReduction {
 
 object splitEquality {
 
-  def apply( equality: EqualityRightRule, subProofs: Seq[( LKProof, SequentConnector, Abs )] ): Seq[( LKProof, SequentConnector )] = {
+  def apply( equality: EqualityRule, subProofs: Seq[( LKProof, SequentConnector, Abs )] ): Seq[( LKProof, SequentConnector )] = {
     for {
       ( subProof, connector, replacementContext ) <- subProofs
     } yield {
@@ -748,40 +677,7 @@ object splitEquality {
     }
   }
 
-  private def insertEquality( equality: EqualityRightRule, subProof: LKProof, connector: SequentConnector, replacementContext: Abs ): ( LKProof, SequentConnector ) = {
-    if ( connector.parents( equality.eq ) == Seq() ) {
-      val newSubProof = WeakeningLeftRule( subProof, equality.equation )
-      val newProof = EqualityRightRule(
-        newSubProof,
-        newSubProof.mainIndices.head,
-        newSubProof.getSequentConnector.child( connector.parent( equality.aux ) ),
-        replacementContext
-      )
-      ( newProof, newProof.getSequentConnector * newSubProof.getSequentConnector )
-    } else {
-      val newProof = EqualityRightRule(
-        subProof,
-        connector.parent( equality.eq ),
-        connector.parent( equality.aux ),
-        replacementContext
-      )
-      ( newProof, newProof.getSequentConnector )
-    }
-  }
-}
-
-object splitEqualityLeft {
-
-  def apply( equality: EqualityLeftRule, subProofs: Seq[( LKProof, SequentConnector, Abs )] ): Seq[( LKProof, SequentConnector )] = {
-    for {
-      ( subProof, connector, replacementContext ) <- subProofs
-    } yield {
-      if ( connector.parents( equality.aux ).nonEmpty ) insertEquality( equality, subProof, connector, replacementContext )
-      else ( subProof, SequentConnector( subProof.conclusion ) )
-    }
-  }
-
-  def insertEquality( equality: EqualityLeftRule, subProof: LKProof, connector: SequentConnector, replacementContext: Abs ): ( LKProof, SequentConnector ) = {
+  def insertEquality( equality: EqualityRule, subProof: LKProof, connector: SequentConnector, replacementContext: Abs ): ( LKProof, SequentConnector ) = {
     if ( connector.parents( equality.eq ) == Seq() ) {
       val newSubProof = WeakeningLeftRule( subProof, equality.equation )
       val ( newProof, newProofConnector ) = createEquality(
@@ -811,5 +707,21 @@ object splitEqualityLeft {
       case Ant( _ ) =>
         val equalityInference = EqualityLeftRule( subProof, equation, auxiliary, replacementContext )
         ( equalityInference, equalityInference.getSequentConnector )
+    }
+}
+
+/**
+ * Instantiates the quantifier inside a replacement context.
+ *
+ * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
+ */
+private object instReplCtx {
+  def apply( ctx: Abs, term: Expr ): Abs =
+    ctx match {
+      case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
+        val newX = rename( x, freeVariables( term ) )
+        instReplCtx( Abs( newX, Substitution( x -> newX )( quantFormula ) ), term )
+      case Abs( x, quantFormula: Formula ) =>
+        Abs( x, instantiate( quantFormula, term ) )
     }
 }
