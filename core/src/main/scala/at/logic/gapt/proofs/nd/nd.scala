@@ -748,6 +748,22 @@ object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
 }
 
 /**
+ * An NDProof that is the introduction of ⊤:
+ * <pre>
+ *    ------⊤:i
+ *     :- ⊤
+ * </pre>
+ */
+case class TopIntroRule() extends InitialSequent {
+
+  def mainFormula = Top()
+
+  def conclusion = NDSequent( Seq(), mainFormula )
+
+  override def name = "⊤:i"
+}
+
+/**
  * An NDProof eliminating ⊥:
  * <pre>
  *       (π)

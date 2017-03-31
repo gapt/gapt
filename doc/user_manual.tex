@@ -2368,8 +2368,6 @@ documentation of the individual rules for details.
   \end{prooftree}
 \end{multicols}
 
-Theory axioms may only contain atomic formulas.
-
 \subsubsection*{Structural rules}
 
 \begin{multicols}{2}
@@ -2426,6 +2424,12 @@ Theory axioms may only contain atomic formulas.
   \BinaryInfCm{\Gamma, \Pi \seq B}
   \end{prooftree}
 
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \bot}
+  \RightLabelm{(\bot\mt{:e})}
+  \UnaryInfCm{\Gamma \seq A}
+  \end{prooftree}
+
   \subsubsection*{Introduction rules}
 
   \begin{prooftree}
@@ -2459,13 +2463,13 @@ Theory axioms may only contain atomic formulas.
   \UnaryInfCm{\Gamma \seq A \impl B}
   \end{prooftree}
 
-\end{multicols}
-
   \begin{prooftree}
-  \AxiomCm{\Gamma \seq \bot}
-  \RightLabelm{(\bot\mt{:e})}
-  \UnaryInfCm{\Gamma \seq A}
+  \AxiomCm{}
+  \RightLabelm{(\top\mt{:i})}	
+  \UnaryInfCm{\seq \top}
   \end{prooftree}
+
+\end{multicols}
 
 \subsubsection*{Quantifier rules}
 

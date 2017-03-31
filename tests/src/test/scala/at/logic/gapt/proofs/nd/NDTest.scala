@@ -299,4 +299,9 @@ class NDTest extends Specification with SatMatchers {
     a2.conclusion must beEValidSequent
   }
 
+  "TopIntro" in {
+    val a1 = TopIntroRule()
+    a1.conclusion must beValidSequent
+  }
+
 }
