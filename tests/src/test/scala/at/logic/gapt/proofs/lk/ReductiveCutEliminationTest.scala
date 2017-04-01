@@ -348,7 +348,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       axiomLog
     }
 
-    val cutFree = ReductiveCutElimination.freeCutFree( proof, true )
+    val cutFree = freeCutElimination( proof )
 
     if ( !isCutFree( cutFree ) ) {
       failure( "the generated proof is not cut free" )

@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.lk.ReductiveCutElimination._
 import at.logic.gapt.proofs.{ Context, SequentConnector }
+import at.logic.gapt.prooftool.prooftool
 
 import scala.collection.mutable
 
@@ -26,17 +27,6 @@ object ReductiveCutElimination {
    */
   def apply( proof: LKProof, cleanStructRules: Boolean = true ) =
     new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
-
-  /**
-   * Eliminates free cuts.
-   *
-   * @param proof The proof subject to free-cut elimination
-   * @param cleanStructRules If true the structural rules are cleaned
-   * @param ctx Defines constants, inductive types, etc.
-   * @return A free-cut free proof.
-   */
-  def freeCutFree( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
-    new ReductiveCutElimination().eliminateFreeCuts( proof, cleanStructRules )
 
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
     new ReductiveCutElimination().eliminateInduction( proof, cleanStructRules )
@@ -214,7 +204,8 @@ class ReductiveCutElimination {
     var newProof = proof
     do {
       newProof = unfoldGroundInductions( newProof, cleanStructRules )
-      newProof = freeCutFree( newProof, cleanStructRules )
+      newProof = pushEqualityInferencesToLeaves( newProof )
+      newProof = freeCutElimination( newProof )
     } while ( newProof.subProofs.exists( inductionUnfoldingReduction( _ ).nonEmpty ) )
     newProof
   }
@@ -246,63 +237,6 @@ class ReductiveCutElimination {
      */
     def terminateReduction( global: LKProof ): Boolean = {
       !global.subProofs.exists( reduction( _ ).nonEmpty )
-    }
-
-    this( proof, terminateReduction, reduction, cleanStructRules )
-  }
-
-  /**
-   * Eliminates free-cuts with respect to induction inferences and equality rules.
-   * @param proof The proof to which the transformation is applied.
-   * @param cleanStructRules If true structural rules are cleaned during the transformation.
-   * @param ctx Defines constants, types, etc.
-   * @return A proof which does not contain any free-cuts.
-   */
-  def eliminateFreeCuts( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
-
-    /**
-     * Reduces a given cut.
-     * @param proof The cut be reduced
-     * @return A proof obtained by Gentzen's reduction or if the Gentzen reduction
-     *         is not applicable to the given proof, then a proof obtained by applying
-     *         the induction reduction.
-     */
-    def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
-      case cut @ CutRule( ind @ InductionRule( _, _, _ ), leftCutFormula, CutRule( _, _, _, _ ), _ ) if ind.mainIndices.head == leftCutFormula && !isGround( ind.term ) => None
-      case cut @ CutRule( _, _, _, _ ) if !hasUpperRedex( cut ) =>
-        gradeReduction.applyWithSequentConnector( cut )
-          .orElse( leftRankReduction.applyWithSequentConnector( cut ) )
-          .orElse( rightRankReduction.applyWithSequentConnector( cut ) )
-          .orElse( inductionReduction.applyWithSequentConnector( cut ) )
-      case _ => None
-    }
-
-    /**
-     * The subproofs of the given proof not including the proof itself.
-     */
-    def properSubProofs( proof: LKProof ) = proof.immediateSubProofs.flatMap( _.subProofs )
-
-    /**
-     * Returns true if the last inference of the given proof is a redex for the reduction, and false otherwise.
-     */
-    def isRedex( proof: LKProof ) = reduction( proof ).nonEmpty
-
-    /**
-     * Returns true if some inference of this proof which is not the last inference is a redex for the
-     * reduction, and false otherwise.
-     */
-    def hasUpperRedex( proof: LKProof ): Boolean = properSubProofs( proof ).exists( isRedex( _ ) )
-
-    /**
-     * @return Returns true if and only if the given proof contains no cut
-     *         that is either reducible by Gentzen's method or by induction
-     *         reduction.
-     */
-    def terminateReduction( global: LKProof ): Boolean = {
-      !global.subProofs.filter( {
-        case CutRule( _, _, _, _ ) => true
-        case _: LKProof            => false
-      } ).exists( isRedex( _ ) )
     }
 
     this( proof, terminateReduction, reduction, cleanStructRules )
