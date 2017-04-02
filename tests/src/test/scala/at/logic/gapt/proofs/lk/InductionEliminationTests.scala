@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15 }
 import at.logic.gapt.expr.Substitution
 import at.logic.gapt.proofs.{ Context, Sequent, SequentMatchers }
-import at.logic.gapt.proofs.gaptic.{ Lemma, allR, cut, escargot, induction, refl, rewrite }
+import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
 
 class InductionEliminationTests extends Specification with SequentMatchers {
@@ -106,5 +106,76 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       failure
     }
     sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
+  }
+
+  "several unfolding steps are required" in {
+    implicit var ctx = Context()
+    ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
+    ctx += hoc"'+': nat>nat>nat"
+
+    val axioms = Seq(
+      "ap1" -> hof"∀y 0+y = y",
+      "ap2" -> hof"∀x∀y s(x)+y = s(x+y)"
+    )
+
+    val lemma_2 = hof"!x !y x + s(y) = s(x) + y"
+    val lemma_2_proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> lemma_2 ) ) {
+      allR
+      induction( hov"x:nat" )
+      allR
+      rewrite ltr "ap2" in "goal"
+      rewrite.many ltr "ap1" in "goal"
+      refl
+      allR
+      rewrite ltr "ap2" in "goal"
+      rewrite ltr "IHx_0" in "goal"
+      rewrite rtl "ap2" in "goal"
+      refl
+    }
+
+    val lemma_1 = hof"!x x + 0 = x"
+    var lemma_1_state = ProofState( axioms ++: Sequent() :+ ( "goal" -> lemma_1 ) )
+    lemma_1_state += allR
+    lemma_1_state += cut( "1", lemma_2 ) andThen insert( lemma_2_proof )
+    lemma_1_state += cut( "2", lemma_2 ) andThen insert( lemma_2_proof )
+    lemma_1_state += cut( "3", lemma_2 ) andThen insert( lemma_2_proof )
+    lemma_1_state += induction( hov"x:nat", "goal" )
+    lemma_1_state += rewrite ltr "ap1" in "goal"
+    lemma_1_state += refl
+    lemma_1_state += rewrite ltr "ap2" in "goal"
+    lemma_1_state += rewrite ltr "IHx_0" in "goal"
+    lemma_1_state += refl
+    val lemma_1_proof = lemma_1_state.partialProof
+
+    var proof_state = ProofState( axioms ++: Sequent() :+ ( "goal" -> hof"!x !y x + y = y + x" ) )
+    proof_state += allR
+    proof_state += allR
+    proof_state += induction( hov"x:nat" )
+    proof_state += rewrite ltr "ap1" in "goal"
+    proof_state += cut( "l1", lemma_1 ) andThen insert( lemma_1_proof )
+    proof_state += rewrite ltr "l1" in "goal"
+    proof_state += refl
+    proof_state += cut( "l1", lemma_1 ) andThen insert( lemma_1_proof )
+    proof_state += cut( "l2", lemma_2 ) andThen insert( lemma_2_proof )
+    proof_state += rewrite ltr "l2" in "goal"
+    proof_state += rewrite.many ltr "ap2" in "goal"
+    proof_state += rewrite ltr "IHx_0" in "goal"
+    proof_state += refl
+
+    val proof = proof_state.partialProof
+
+    val term_x = le"s(s(s(s(0))))"
+    val term_y = le"s(s(s(0)))"
+
+    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
+      new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
+      proof.subProofAt( 0 :: 0 :: Nil )
+    )
+    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
+
+    if ( !isInductionFree( inductionFree ) ) {
+      failure
+    }
+    success
   }
 }
