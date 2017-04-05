@@ -6,34 +6,33 @@ import at.logic.gapt.expr._
  */
 object gStarUnify {
 
+  /**
+    * Computes the unified literals, i.e. the set of literals that are used to contruct the cut formula
+    * @param seHs The given schematic Pi2-grammar
+    * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
+    * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
+    * @return Set of unified literals
+    */
   def apply(
     seHs:                      Pi2SeHs,
     nameOfExistentialVariable: FOLVar,
     nameOfUniversalVariable:   FOLVar
   ): Set[FOLFormula] = {
 
+    // To compute the unified literals, we have to consider all unification pairs.
+    // These are pairs of literals (P,Q) occurring in the reduced representation such that:
+    // The universal eigenvariable alpha may occurs in P but none of the existential eigenvariables beta_1,...,beta_m.
+    // Some of the existential eigenvariables beta_1,...,beta_m may occur in Q but not the universal eigenvariable alpha.
+    // Unification pairs are unifiable if there are terms s,t such that a replacement of terms in P by s and a replacement
+    // of terms in Q by s turn the result into dual literals. Therefore, we can assume that exactly one literal is negated.
+    // Note that the set itself indicates whether the literal is negated or not. The negation has already been dropped.
     val ( alpha, beta, neutral ) = seHs.literalsInTheDNTAs
     val ( alphaPos, alphaNeg ) = seHs.sortAndAtomize( alpha )
     val ( betaPos, betaNeg ) = seHs.sortAndAtomize( beta )
     val ( neutralPos, neutralNeg ) = seHs.sortAndAtomize( neutral )
 
+    // Set that eventually becomes the return value, i.e. the set of unified literals
     val unifiedLiterals = scala.collection.mutable.Set[FOLFormula]()
-
-    /*
-    val unifiedLiteralsB: Set[FOLFormula] = for {
-      posAt <- posAtoms
-      negAt <- negAtoms
-      lit <- unifyLiterals(
-        seHs,
-        posAt,
-        negAt,
-        nameOfExistentialVariable,
-        nameOfUniversalVariable
-      )
-      litPosNeg <- Seq( lit, Neg( lit ) )
-    } yield litPosNeg
-
-    */
 
     alphaPos.foreach( posAt =>
       betaNeg.union( neutralNeg ).foreach( negAt =>
@@ -99,6 +98,17 @@ object gStarUnify {
 
   }
 
+  /**
+    * Checks whether the literals (only the names without the arguments) are dual to each other and calls
+    * the unify function
+    * @param seHs The given schematic Pi2-grammar
+    * @param posAt First element of the unification pair
+    * @param negAt Second element of the unification pair
+    * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
+    * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
+    * @return Option type that might contain an unified literal, i.e. a literal in which neither the universal
+    *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
+    */
   private def unifyLiterals(
     seHs:                      Pi2SeHs,
     posAt:                     FOLFormula,
@@ -107,6 +117,8 @@ object gStarUnify {
     nameOfUniversalVariable:   FOLVar
   ): Option[FOLFormula] = {
 
+    // nameOfPos and nameOfNeg are the names of the corresponding atoms that have to be equal. Otherwise, there is no unified literal.
+    // In the case that the names are equal, we call the unify function with the arguments argsP and argsN of the corresponding literals.
     val Apps( nameOfPos, argsP ): FOLFormula = posAt
     val Apps( nameOfNeg, argsN ): FOLFormula = negAt
 
@@ -138,6 +150,17 @@ object gStarUnify {
 
   }
 
+  /**
+    * Compares a zipped list of arguments and decides whether a pair of this list is unifiable corresponding to a
+    * grammar seHs (see productionRules), whether we have to call the unify function on the subterms of the pair, or whether
+    * the pair is not unifiable, i.e. whether to stop the whole function and return None
+    * @param seHs The given schematic Pi2-grammar
+    * @param zippedArgs Two lists of terms (Expr) that will be compared pairwise
+    * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
+    * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
+    * @return An option type that might contain a list of terms (Expr) of the same length of zippedArgs in which neither the universal
+    *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
+    */
   private def unify(
     seHs:                      Pi2SeHs,
     zippedArgs:                List[( Expr, Expr )],
@@ -146,15 +169,22 @@ object gStarUnify {
   ): Option[Seq[FOLTerm]] = {
 
     var unifiedTerms: Option[Seq[FOLTerm]] = None
+    // A boolean that is used to break the local loop
     var stopIt: Boolean = false
+    // A boolean that is used to break the global loop
     var stopItAll: Boolean = false
 
+    // A run through all pairs
     zippedArgs.foreach( t => {
       stopIt = false
       stopItAll = false
 
+      // The current pair of terms (Expr) that is under consideration
       val ( tL, tR ) = t
 
+      // If there are substitutions tL and tR for the universal variable of the cut formula then we can
+      // replace tL or tR with nameOfUniversalVariable, i.e. we extend the current list of arguments with
+      // nameOfUniversalVariable and stop the loop for the current pair of terms
       seHs.productionRulesXS.foreach( productionRuleX => if ( !stopIt ) {
 
         val ( productionRuleXL, productionRuleXR ) = productionRuleX
@@ -172,6 +202,9 @@ object gStarUnify {
 
       stopIt = false
 
+      // If there are substitutions tL and tR for the existential variable of the cut formula then we can
+      // replace tL or tR with nameOfExistentialVariable, i.e. we extend the current list of arguments with
+      // nameOfExistentialVariable and stop the loop for the current pair of terms
       seHs.productionRulesYS.foreach( productionRuleY => if ( ( !stopIt ) && ( !stopItAll ) ) {
 
         val ( productionRuleYL, productionRuleYR ) = productionRuleY
@@ -189,9 +222,13 @@ object gStarUnify {
 
       if ( !stopItAll ) {
 
+        // Since we could not unify the pair so far, we have to check whether the outermost function of the terms
+        // is equal, whether the terms are equal, whether the terms are eigenvariables, or whether the pair is
+        // not unifiable
         val Apps( nameOfArgL, argsOfArgL ) = tL
         val Apps( nameOfArgR, argsOfArgR ) = tR
 
+        // If the terms are equal, we have to check whether the terms contain eigenvariables and replace them
         if ( tL.syntaxEquals( tR ) ) {
 
           var tLWasAEigenvariable: Boolean = false
@@ -246,6 +283,7 @@ object gStarUnify {
 
           }
 
+        // If only the names of the outermost functions are equal we call the unify function on the arguments
         } else if ( ( nameOfArgL == nameOfArgR ) && ( argsOfArgL.length == argsOfArgR.length ) ) {
 
           unify(
@@ -262,6 +300,7 @@ object gStarUnify {
             }
 
         }
+        // If the pair was not unified the list of arguments will be too short. Hence, the literals will not be unified.
 
       }
 
