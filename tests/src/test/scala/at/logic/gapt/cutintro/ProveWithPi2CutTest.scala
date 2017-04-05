@@ -9,7 +9,6 @@ import org.specs2.mutable.Specification
 class ProveWithPi2CutTest extends Specification {
 
   /*
-  */
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)|Q(f1(x)))"
@@ -63,7 +62,6 @@ class ProveWithPi2CutTest extends Specification {
     }
   }
 
-  /*
   "This" should {
     "be computed correctly" in {
       val A3 = fof"P(x,f1(x))|P(x,f2(x))|P(x,f3(x))"
@@ -161,7 +159,6 @@ class ProveWithPi2CutTest extends Specification {
       }) must_== true
     }
   }
-  */
 
   "This" should {
     "be computed correctly" in {
@@ -217,5 +214,42 @@ class ProveWithPi2CutTest extends Specification {
       } ) must_== true
     }
   }
+  */
+
+  "This" should {
+    "be computed correctly" in {
+      val Pxf1x = fof"(P(x)&Q(f1(x)))|(P(f1(x))&Q(x))"
+      val Pxf2x = fof"(P(x)&Q(f2(x)))|(P(f2(x))&Q(x))"
+      val Pxf3x = fof"(P(x)&Q(f3(x)))|(P(f3(x))&Q(x))"
+      val Pxff1x = fof"(P(x)&Q(f(f1(x))))|(P(f(f1(x)))&Q(x))"
+      val Pxff2x = fof"(P(x)&Q(f(f2(x))))|(P(f(f2(x)))&Q(x))"
+      val Pxff3x = fof"(P(x)&Q(f(f3(x))))|(P(f(f3(x)))&Q(x))"
+      val Pcfy1 = fof"(P(c)&Q(f(y1)))|(P(f(y1))&Q(c))"
+      val Pfy1fy2 = fof"(P(f(y1))&Q(f(y2)))|(P(f(y2))&Q(f(y1)))"
+      val Pcgy2 = fof"(P(c)&Q(g(y2)))|(P(g(y2))&Q(c))"
+      val A3 = fof"$Pxf1x|$Pxf2x|$Pxf3x"
+      val B1 = fof"$Pxf1x->$Pxff1x"
+      val B2 = fof"$Pxf2x->$Pxff2x"
+      val B3 = fof"$Pxf3x->$Pxff3x"
+      val C3 = fof"$Pcfy1&$Pfy1fy2->$Pcgy2"
+      val D = fof"$Pcgy2"
+      val Rere = A3 +: B1 +: B2 +: B3 +: C3 +: Sequent() :+ D
+      val seHs = new Pi2SeHs( Rere, fov"x", List( fov"y1", fov"y2" ), List( fot"c", fot"f(y1)" ), List( fot"f1(x)", fot"f2(x)", fot"f3(x)" ) )
+      val xName = fov"xName"
+      val yName = fov"yName"
+      val fP = fof"!xx (((P(xx)&Q(f1(xx)))|(P(f1(xx))&Q(xx)))|((P(xx)&Q(f2(xx)))|(P(f2(xx))&Q(xx)))|((P(xx)&Q(f3(xx)))|(P(f3(xx))&Q(xx))))"
+      val fPf = fof"!xx!yy (((P(xx)&Q(yy))|(P(yy)&Q(xx)))->((P(xx)&Q(f(yy)))|(P(f(yy))&Q(xx))))"
+      val fPfg = fof"!x1!x2!x3 ((((P(x1)&Q(f(x2)))|(P(f(x2))&Q(x1)))&((P(f(x2))&Q(f(x3)))|(P(f(x3))&Q(f(x2)))))->((P(x1)&Q(g(x3)))|(P(g(x3))&Q(x1))))"
+      val ePg = fof"?uu?vv (((P(uu)&Q(g(vv)))|(P(g(vv))&Q(uu))))"
+      val endSequent = fP +: fPf +: fPfg +: Sequent() :+ ePg
+      val proof: Option[LKProof] = proveWithPi2Cut( endSequent, seHs, yName, xName )
+      ( proof match {
+        case Some( t ) => true
+        case _ => false
+      }) must_== true
+    }
+  }
+  /*
+  */
 
 }

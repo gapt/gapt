@@ -40,7 +40,7 @@ case class Pi2SeHs(
   //////////////////////////////////////////////
   def substitutionPairsBetaI( index: Int ): List[( Expr, Expr )] = {
 
-    substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1), instanceB ) )
+    substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1 ), instanceB ) )
     /*
     val substitutionPairsBetaI = scala.collection.mutable.Set[( Expr, Expr )]()
     substitutionsForBetaWithAlpha.foreach( instanceB => {
@@ -200,31 +200,31 @@ case class Pi2SeHs(
 
   val dualNonTautologicalAxioms: List[Sequent[FOLFormula]] = {
 
-    val ( _, dNTAs) = this.literalsInTheDNTAsAndTheDNTAs
+    val ( _, dNTAs ) = this.literalsInTheDNTAsAndTheDNTAs
     dNTAs
 
   }
 
-  val literalsInTheDNTAs: (Set[FOLFormula],Set[FOLFormula],Set[FOLFormula]) = {
+  val literalsInTheDNTAs: ( Set[FOLFormula], Set[FOLFormula], Set[FOLFormula] ) = {
 
-    val (literals,_) = this.literalsInTheDNTAsAndTheDNTAs
+    val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
     val alpha = scala.collection.mutable.Set[FOLFormula]()
     val beta = scala.collection.mutable.Set[FOLFormula]()
     val gamma = scala.collection.mutable.Set[FOLFormula]()
 
-    literals.foreach(literal=>{
-      if (literal.contains(this.universalEigenvariable)) {
-        if (!this.existentialEigenvariables.exists(exEi=>literal.contains(exEi))){
+    literals.foreach( literal => {
+      if ( literal.contains( this.universalEigenvariable ) ) {
+        if ( !this.existentialEigenvariables.exists( exEi => literal.contains( exEi ) ) ) {
           alpha += literal
         }
-      } else if (this.existentialEigenvariables.exists(exEi=>literal.contains(exEi))){
+      } else if ( this.existentialEigenvariables.exists( exEi => literal.contains( exEi ) ) ) {
         beta += literal
       } else {
         gamma += literal
       }
-    })
+    } )
 
-    (alpha.toSet,beta.toSet,gamma.toSet)
+    ( alpha.toSet, beta.toSet, gamma.toSet )
   }
 
   def language: ( Set[Expr] ) = {
@@ -541,19 +541,24 @@ object introducePi2Cut {
       }
     }
 
-     println( "Number of non-tautological leaves" )
-     println( dNTAList.length )
-     println( "Number of unified literals" )
-     println( unifiedLiterals.size )
-     numberOfAllowedClauses match {
-       case Some( t ) => {
-         println( "Number of allowed clauses" )
-         println( t )
-       }
-       case None => println( "No 'allowed clauses' were computed" )
-     }
-     println( "Number of checked Formulas" )
-     println( numberOfCheckedFormulas )
+    /*
+    /// Prints the most interesting data ///
+    ////////////////////////////////////////
+
+    println( "Number of non-tautological leaves" )
+    println( dNTAList.length )
+    println( "Number of unified literals" )
+    println( unifiedLiterals.size )
+    numberOfAllowedClauses match {
+      case Some( t ) => {
+        println( "Number of allowed clauses" )
+        println( t )
+      }
+      case None => println( "No 'allowed clauses' were computed" )
+    }
+    println( "Number of checked Formulas" )
+    println( numberOfCheckedFormulas )
+    */
 
     if ( !seHs.noSolutionHasBeenFound ) {
       ( seHs.balancedSolution, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )

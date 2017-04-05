@@ -12,10 +12,10 @@ object gStarUnify {
     nameOfUniversalVariable:   FOLVar
   ): Set[FOLFormula] = {
 
-    val (alpha, beta, neutral) = seHs.literalsInTheDNTAs
-    val (alphaPos,alphaNeg) = seHs.sortAndAtomize(alpha)
-    val (betaPos,betaNeg) = seHs.sortAndAtomize(beta)
-    val (neutralPos,neutralNeg) = seHs.sortAndAtomize(neutral)
+    val ( alpha, beta, neutral ) = seHs.literalsInTheDNTAs
+    val ( alphaPos, alphaNeg ) = seHs.sortAndAtomize( alpha )
+    val ( betaPos, betaNeg ) = seHs.sortAndAtomize( beta )
+    val ( neutralPos, neutralNeg ) = seHs.sortAndAtomize( neutral )
 
     val unifiedLiterals = scala.collection.mutable.Set[FOLFormula]()
 
@@ -35,10 +35,8 @@ object gStarUnify {
 
     */
 
-
-
     alphaPos.foreach( posAt =>
-      betaNeg.union(neutralNeg).foreach( negAt =>
+      betaNeg.union( neutralNeg ).foreach( negAt =>
         unifyLiterals(
           seHs,
           posAt,
@@ -53,7 +51,7 @@ object gStarUnify {
         } ) )
 
     alphaNeg.foreach( posAt =>
-      betaPos.union(neutralNeg).foreach( negAt =>
+      betaPos.union( neutralNeg ).foreach( negAt =>
         unifyLiterals(
           seHs,
           posAt,

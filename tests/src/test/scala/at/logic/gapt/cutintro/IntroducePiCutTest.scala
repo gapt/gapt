@@ -10,7 +10,7 @@ class IntroducePiCutTest extends Specification {
 
   /*
   */
-  // 459 ms
+  //
   // Number of non-tautological leaves
   //   2
   // Number of unified literals
@@ -40,7 +40,7 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  // 566 ms
+  //
   // Number of non-tautological leaves
   //   96
   // Number of unified literals
@@ -65,7 +65,7 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  // 512 ms
+  //
   // Number of non-tautological leaves
   //   24
   // Number of unified literals
@@ -89,7 +89,7 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  // 1 sec
+  //
   // Number of non-tautological leaves
   //   86
   // Number of unified literals
@@ -131,6 +131,7 @@ class IntroducePiCutTest extends Specification {
 
   /*
   */
+  //
   // Number of non-tautological leaves
   //   1386
   // Number of unified literals
@@ -173,7 +174,7 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  // 52 sec
+  //
   // Number of non-tautological leaves
   //   308
   // Number of unified literals
@@ -213,7 +214,7 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  // 661 ms
+  //
   // Number of non-tautological leaves
   //   44
   // Number of unified literals
@@ -250,7 +251,7 @@ class IntroducePiCutTest extends Specification {
     }
   }
 
-  // 563 ms
+  //
   // Number of non-tautological leaves
   //   16
   // Number of unified literals
