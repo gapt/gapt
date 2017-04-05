@@ -10,11 +10,11 @@ class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
 
   "tape" in {
     val ax = tape.ctx.axioms.toSeq.map( a => universalClosure( a.toDisjunction ) )
-    val withoutThAx = makeTheoryAxiomsExplicit( ax: _* )( tape.p )
+    val withoutThAx = makeTheoryAxiomsExplicit( ax: _* )( tape.proof )
     withoutThAx.subProofs.filter { _.isInstanceOf[TheoryAxiom] } must_== Set()
     tape.ctx.check( withoutThAx )
     // TODO: multiset equality
-    withoutThAx.conclusion must beSetEqual( ax ++: tape.p.conclusion )
+    withoutThAx.conclusion must beSetEqual( ax ++: tape.proof.conclusion )
   }
 
 }

@@ -21,7 +21,7 @@ object ReductionRule {
   }
 }
 
-class Normalizer( rule: ReductionRule ) {
+class Normalizer( val rule: ReductionRule ) {
   def normalize( expr: Expr ): Expr = {
     val Apps( hd, as ) = expr
     val ( hd_, as_ ) = appWHNF( hd, as )

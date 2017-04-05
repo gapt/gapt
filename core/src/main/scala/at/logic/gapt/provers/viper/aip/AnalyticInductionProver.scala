@@ -5,13 +5,14 @@ import at.logic.gapt.formats.tip.TipProblem
 import at.logic.gapt.proofs.gaptic.{ escargot => escargotTactic, _ }
 import at.logic.gapt.proofs.lk.{ CutRule, LKProof }
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.aip.axioms.{ Axiom, AxiomFactory, SequentialInductionAxioms }
-import at.logic.gapt.provers.viper.aip.provers.{ InternalProver, escargot }
 import cats.syntax.all._
 
 case class ProverOptions(
-  prover:       InternalProver = escargot,
-  axiomFactory: AxiomFactory   = SequentialInductionAxioms()
+  prover:       ResolutionProver = Escargot,
+  axiomFactory: AxiomFactory     = SequentialInductionAxioms()
 )
 
 object AnalyticInductionProver {
@@ -42,7 +43,7 @@ object AnalyticInductionProver {
    * @param prover The internal prover that is to be used for proof search.
    * @return A new analytic induction prover that uses the provided objects for proof search.
    */
-  def apply( axioms: AxiomFactory, prover: InternalProver ) = new AnalyticInductionProver(
+  def apply( axioms: AxiomFactory, prover: ResolutionProver ) = new AnalyticInductionProver(
     new ProverOptions( prover, axioms )
   )
 }
@@ -73,7 +74,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    */
   def lkProof(
     sequent: Sequent[( String, Formula )]
-  )( implicit ctx: Context ) = options.prover.lkProof( inductiveSequent( sequent ) )
+  )( implicit ctx: Context ) = options.prover.getLKProof( inductiveSequent( sequent ) )
 
   /**
    * Proves a TIP problem by using induction.
@@ -97,7 +98,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
     val axioms = validate( options.axiomFactory( sequent ) )
     val prover = options.prover
     for {
-      mainProof <- prover.lkProof( axioms.map( _.formula ) ++: sequent.map( _._2 ) )
+      mainProof <- prover.getLKProof( axioms.map( _.formula ) ++: sequent.map( _._2 ) )
     } yield {
       cutAxioms( mainProof, axioms )
     }
@@ -123,7 +124,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         method does not terminate.
    */
   def resolutionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
-    options.prover.resolutionProof( inductiveSequent( sequent ) )
+    options.prover.getResolutionProof( inductiveSequent( sequent ) )
 
   /**
    * Tries to compute an expansion proof for a sequent by using analytic induction.
@@ -134,7 +135,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         method does not terminate.
    */
   def expansionProof( sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) =
-    options.prover.expansionProof( inductiveSequent( sequent ) )
+    options.prover.getExpansionProof( inductiveSequent( sequent ) )
 
   /**
    * Extracts the inductive sequent from a validation value.

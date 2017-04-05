@@ -1,9 +1,11 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr.{ Definition => EDefinition, _ }
-import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
 import Context._
+import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.proofs.lk.LKProof
 
 import scala.reflect.ClassTag
 
@@ -101,6 +103,9 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   /** Normalizes an expression with the reduction rules stored in this context. */
   def normalize( expression: Expr ): Expr =
     normalizer.normalize( expression )
+
+  def whnf( expression: Expr ): Expr =
+    normalizer.whnf( expression )
 
   def isDefEq( a: Expr, b: Expr ): Boolean =
     normalizer.isDefEq( a, b )
@@ -261,6 +266,19 @@ object Context {
   )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
+  case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
+    def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
+  }
+
+  implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
+
+  case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
+    def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
+      copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( referencedExpression, referencedProof ) ) ) ) ) )
+
+  }
+  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
+
   /**
    * Update of a context.
    *
@@ -374,6 +392,120 @@ object Context {
       ctx.check( defn )
       ctx.state.update[Constants]( _ + sym )
         .update[SkolemFunctions]( _ + ( sym, defn ) )
+    }
+  }
+
+  case class PrimitiveRecursiveFunctions( equations: Map[String, ( Int, Int, Vector[( Expr, Expr )] )] ) extends ReductionRule {
+    def +( c: String, nArgs: Int, recIdx: Int, eqns: Vector[( Expr, Expr )] ) = copy( equations = equations + ( ( c, ( nArgs, recIdx, eqns ) ) ) )
+
+    def filter( p: String => Boolean ): PrimitiveRecursiveFunctions = copy( equations = equations.filter( x => p( x._1 ) ) )
+
+    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
+      ( for {
+        Const( n, _ ) <- Seq( head )
+        ( nArgs, idx, eqns ) <- equations.get( n ).toSeq
+        if args.size >= nArgs
+        app = head( args.view.take( nArgs ).zipWithIndex.map { case ( a, i ) => if ( i == idx ) normalizer.whnf( a ) else a } )
+        ( lhs, rhs ) <- eqns.view
+        subst <- syntacticMatching( lhs, app ).toSeq
+      } yield subst( rhs ) -> args.drop( nArgs ) ).headOption
+  }
+  implicit val primitiveRecursiveFunctionsFacet: Facet[PrimitiveRecursiveFunctions] = Facet( PrimitiveRecursiveFunctions( Map() ) )
+
+  case class PrimRecFun( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ) extends Update {
+    val Const( name, FunctionType( retType, argTypes ) ) = c
+    val typeVars: Set[TVar] = typeVariables( c.ty )
+    require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
+    val recTy: TBase = argTypes( recIdx ).asInstanceOf[TBase]
+
+    for ( ( lhs, rhs ) <- equations ) {
+      require( lhs.ty == rhs.ty )
+      require( typeVariables( lhs.ty ) subsetOf typeVars )
+      require( typeVariables( rhs.ty ) subsetOf typeVars )
+
+      val Apps( `c`, lhsArgs ) = lhs
+      require( lhsArgs.size == nArgs )
+
+      val nonRecLhsArgs = lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
+      val Apps( Const( _, _ ), ctrArgs ) = lhsArgs( recIdx )
+
+      val matchVars = nonRecLhsArgs ++ ctrArgs
+      matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
+      require( matchVars == matchVars.distinct )
+
+      folSubTerms( rhs ).foreach {
+        case Apps( fn @ Const( `name`, _ ), args ) =>
+          require( fn == c )
+          require( ctrArgs.contains( args( recIdx ) ) )
+        case _ =>
+      }
+    }
+
+    def apply( ctx: Context ): State = {
+      val ctx_ = ctx + c
+      val ctrs = ctx.get[StructurallyInductiveTypes].constructors( recTy.name )
+      require( equations.size == ctrs.size )
+      for ( ( ( lhs @ Apps( _, lhsArgs ), rhs ), ctr ) <- equations.zip( ctrs ) ) {
+        ctx_.check( lhs )
+        ctx_.check( rhs )
+        val Apps( Const( ctr_, _ ), _ ) = lhsArgs( recIdx )
+        require( ctr_ == ctr.name )
+      }
+      ctx.state.update[Constants]( _ + c )
+        .update[PrimitiveRecursiveFunctions]( _ + ( name, nArgs, recIdx, equations ) )
+    }
+  }
+
+  object PrimRecFun {
+    private def useLiteralConst( p: preExpr.Expr, c: Const ): preExpr.Expr = {
+      import preExpr._
+      p match {
+        case LocAnnotation( expr, loc )          => LocAnnotation( useLiteralConst( expr, c ), loc )
+        case TypeAnnotation( expr, ty )          => TypeAnnotation( useLiteralConst( expr, c ), ty )
+        case Ident( name, ty ) if name == c.name => Quoted( c, liftTypeMono( c.ty ), Map() )
+        case Abs( v, sub )                       => Abs( v, useLiteralConst( sub, c ) )
+        case App( a, b )                         => App( useLiteralConst( a, c ), useLiteralConst( b, c ) )
+        case _: Quoted | _: Ident                => p
+      }
+    }
+
+    private def parseEqn( c: Const, eqn: String )( implicit ctx: Context ): ( Expr, Expr ) =
+      BabelParser.tryParse( eqn, p => preExpr.TypeAnnotation( useLiteralConst( p, c ), preExpr.Bool ) ).
+        fold( throw _, identity ) match {
+          case Eq( lhs, rhs ) => lhs -> rhs
+        }
+
+    def apply( c: Const, equations: String* )( implicit ctx: Context ): PrimRecFun = {
+      val ctx_ = ctx + c
+      val eqns = equations.map( parseEqn( c, _ )( ctx_ ) )
+      val ( nArgs, recIdx ) = eqns.head._1 match {
+        case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )
+      }
+      PrimRecFun( c, nArgs, recIdx, eqns.toVector )
+    }
+  }
+
+  case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {
+    override def apply( ctx: Context ): State = {
+      endSequent.foreach( ctx.check( _ ) )
+      val Apps( Const( c, _ ), vs ) = lhs
+      require( !ctx.get[ProofNames].names.keySet.contains( c ) )
+      require( vs == vs.distinct )
+      require( vs.forall( _.isInstanceOf[Var] ) )
+      require( freeVariables( endSequent ) == vs.toSet )
+      ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
+    }
+  }
+
+  case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
+    override def apply( ctx: Context ): State = {
+      referencedProof.endSequent.foreach( ctx.check( _ ) )
+      val Apps( at.logic.gapt.expr.Const( c, t ), vs ) = lhs
+      vs.foreach( ctx.check( _ ) )
+      require( ctx.get[ProofNames].names.values.exists {
+        case ( name, _ ) => syntacticMatching( name, lhs ).isDefined
+      } )
+      ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
     }
   }
 }

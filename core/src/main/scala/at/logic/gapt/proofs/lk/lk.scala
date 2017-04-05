@@ -176,6 +176,10 @@ object Eigenvariable {
   }
 }
 
+case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula] ) extends InitialSequent {
+  override def conclusion = referencedSequent
+}
+
 /**
  * An LKProof consisting of a single sequent:
  * <pre>
@@ -1851,8 +1855,6 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
  *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
- * @param definition The definition c := φ.
- * @param replacementContext A term λx.A[x] that designates the positions for the definition.
  */
 case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula ) extends DefinitionRule {
   override def name = "d:r"
@@ -1868,7 +1870,6 @@ object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule"
    *
    * @param subProof The subproof.
    * @param aux The aux formula or its index.
-   * @param definition The definition to be introduced.
    * @param mainFormula The main formula. Must contain definition exactly once.
    * @return
    */

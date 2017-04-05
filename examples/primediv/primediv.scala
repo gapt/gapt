@@ -60,6 +60,4 @@ object primediv extends TacticsProof {
     rewrite ltr "neutral" in "g_1_1"
     refl
   }
-
-  val defs = ctx.definitions.toMap
 }

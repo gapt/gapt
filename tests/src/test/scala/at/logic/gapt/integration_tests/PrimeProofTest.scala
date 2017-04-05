@@ -1,9 +1,9 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.expr.Top
+import at.logic.gapt.expr.{ Atom, Formula, Top }
 import at.logic.gapt.expr.hol.containsStrongQuantifier
-import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.{ Ant, HOLClause, SequentConnector, Suc }
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
@@ -150,12 +150,9 @@ class PrimeProofTest extends Specification {
       if ( n >= 2 ) skipped( "LK proof construction runs out of memory" )
 
       val euclidN = prime.euclid( n )
-      val proof = euclidN.proof
-      val deproof = eliminateDefinitions( euclidN.ctx.definitions.toMap )( proof )
+      import euclidN._
 
-      val proof_sk = skolemize( regularize( AtomicExpansion( deproof ) ) )
-
-      CERES( proof_sk )
+      CERES( eliminateDefinitions( proof ) )
       ok
     }
 

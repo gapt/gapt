@@ -27,10 +27,12 @@
 \renewcommand{\lor}{\vee}
 \newcommand{\sklabel}[2]{\langle#1\rangle^{#2}}
 \newcommand{\LK}{\textbf{LK}}
+\newcommand{\ND}{\textbf{ND}}
 
 %Commands for constructing proof trees with bussproofs. See the chapter on the LK system for examples.
 \newcommand{\UnaryInfCm}[1]{\UnaryInfC{$#1$}}
 \newcommand{\BinaryInfCm}[1]{\BinaryInfC{$#1$}}
+\newcommand{\TrinaryInfCm}[1]{\TrinaryInfC{$#1$}}
 \newcommand{\RightLabelm}[1]{\RightLabel{$#1$}}
 \newcommand{\AxiomCm}[1]{\AxiomC{$#1$}}
 
@@ -150,7 +152,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.6-SNAPSHOT}
+{\Large Version 2.7-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -215,7 +217,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.5"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.6"
 \end{lstlisting}
 
 \end{enumerate}
@@ -522,6 +524,8 @@ d: at.logic.gapt.expr.FOLAtom = D:o
 
 
 \subsection{Proofs}\label{sec:entering_proofs}
+
+\subsubsection{LK}
 GAPT contains an implementation of Gentzen's sequent calculus \LK .
 The inference rules are defined in appendix \ref{app:sequent_calculus}.
 
@@ -625,6 +629,81 @@ P(s(s(s(s(s(0))))), 0)
 P(0, s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
 [p21] P(0, s(s(s(s(s(0)))))) ⊢ P(0, s(s(s(s(s(0))))))    (LogicalA...
 \end{clilisting}
+
+\subsubsection{ND}
+
+GAPT furthermore contains an implementation of Gentzen's natural deduction
+calculus \ND .
+The inference rules are defined in appendix \ref{app:natural_deduction}. To use
+the natural deduction inference rules you need to qualify the rule names with
+``\cli{nd.}''.
+
+We show that from $P \land Q \impl R$ and $P$ follows $Q \impl R$. We start with
+the axioms:
+
+\begin{clilisting}
+gapt> val p1 = nd.LogicalAxiom( fof"P" )
+p1: at.logic.gapt.proofs.nd.LogicalAxiom =
+[p1] P ⊢ P    (LogicalAxiom(P:o))
+
+gapt> val p2 = nd.LogicalAxiom( fof"Q" )
+p2: at.logic.gapt.proofs.nd.LogicalAxiom =
+[p1] Q ⊢ Q    (LogicalAxiom(Q:o))
+
+gapt> val p3 = nd.LogicalAxiom( fof"P & Q -> R" )
+p3: at.logic.gapt.proofs.nd.LogicalAxiom =
+[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+
+\end{clilisting}
+
+$P$ and $Q$ are joined by an $\land$-introduction inference.
+
+\begin{clilisting}
+gapt> val p4 = nd.AndIntroRule( p1, p2 )
+p4: at.logic.gapt.proofs.nd.AndIntroRule =
+[p3] P, Q ⊢ P ∧ Q    (AndIntroRule(p1, p2))
+[p2] Q ⊢ Q    (LogicalAxiom(Q:o))
+[p1] P ⊢ P    (LogicalAxiom(P:o))
+
+\end{clilisting}
+
+Next, we apply an $\impl$-elimination inference on $P \land Q \impl R$
+and $P \land Q$ to arrive at $R$.
+
+\begin{clilisting}
+gapt> val p5 = nd.ImpElimRule( p3, p4 )
+p5: at.logic.gapt.proofs.nd.ImpElimRule =
+[p5] P ∧ Q ⊃ R, P, Q ⊢ R    (ImpElimRule(p1, p4))
+[p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
+[p3] Q ⊢ Q    (LogicalAxiom(Q:o))
+[p2] P ⊢ P    (LogicalAxiom(P:o))
+[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+
+\end{clilisting}
+
+Finally, by using an $\impl$-introduction inference on $Q$, we arrive
+at the desired sequent.
+
+\begin{clilisting}
+gapt> val p6 = nd.ImpIntroRule( p5, Ant( 2 ) )
+p6: at.logic.gapt.proofs.nd.ImpIntroRule =
+[p6] P ∧ Q ⊃ R, P ⊢ Q ⊃ R    (ImpIntroRule(p5, Ant(2)))
+[p5] P ∧ Q ⊃ R, P, Q ⊢ R    (ImpElimRule(p1, p4))
+[p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
+[p3] Q ⊢ Q    (LogicalAxiom(Q:o))
+[p2] P ⊢ P    (LogicalAxiom(P:o))
+[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+
+\end{clilisting}
+
+You can now view this proof by typing:
+\begin{clilisting}
+gapt> prooftool( p6 )
+
+\end{clilisting}
+
+GAPT provides several convenience constructors which simplify proof
+construction, which can be found in the API documentation.
 
 \subsection{Proof contexts}\label{sec:context}
 The \cli{Context} class captures the notion of a logical signature and background
@@ -978,13 +1057,13 @@ iff $m>n$. $\neg\mathrm{PHP}_{m,n}$ states that when putting $m$ pigeons into $n
 is no hole containing two pigeons. This is satisfiable iff $m\leq n$.
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 2)
-res9: Boolean = true
+res10: Boolean = true
 
 \end{clilisting}
 shows\footnote{In Scala, \cli{Sat4j isValid formula} is syntactic sugar for \cli{Sat4j.isValid(formula)}.} that $\mathrm{PHP}_{3,2}$ is valid, and
 \begin{clilisting}
 gapt> Sat4j isValid PigeonHolePrinciple(3, 3)
-res10: Boolean = false
+res11: Boolean = false
 
 \end{clilisting}
 shows that $\mathrm{PHP}_{3,3}$ is not valid.
@@ -1012,16 +1091,16 @@ gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
 gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
-res11: Boolean = true
+res12: Boolean = true
 
 gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
-res12: Boolean = false
+res13: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
 gapt> m.interpret( And(p1, p2) )
-res13: Boolean = false
+res14: Boolean = false
 
 \end{clilisting}
 
@@ -1034,7 +1113,7 @@ gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 
 gapt> writeDIMACS(encoding encodeCNF cnf)
-res14: String =
+res15: String =
 "p cnf 9 12
 -1 -2 0
 3 2 4 0
@@ -1056,19 +1135,19 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res15: at.logic.gapt.expr.Atom = R(p_3, h_1): o
+res16: at.logic.gapt.expr.Atom = R(p_3, h_1): o
 
 \end{clilisting}
 
 GAPT also supports other SAT solvers such as MiniSAT or Glucose out of the box:
 \begin{clilisting}[MiniSAT.isInstalled]
 gapt> MiniSAT isValid PigeonHolePrinciple(3,2)
-res16: Boolean = true
+res17: Boolean = true
 
 \end{clilisting}
 \begin{clilisting}[Glucose.isInstalled]
 gapt> Glucose isValid PigeonHolePrinciple(3,2)
-res17: Boolean = true
+res18: Boolean = true
 
 \end{clilisting}
 
@@ -1079,14 +1158,14 @@ gapt> val solver = new ExternalSATSolver("minisat", "-mem-lim=1024")
 solver: at.logic.gapt.provers.sat.ExternalSATSolver = ExternalSATSolver("minisat", "-mem-lim=1024")
 
 gapt> solver isValid PigeonHolePrinciple(3,2)
-res18: Boolean = true
+res19: Boolean = true
 
 \end{clilisting}
 
 GAPT can import DRUP proofs from Sat4j, Glucose, and PicoSAT:
 \begin{clilisting}
 gapt> Sat4j getDrupProof PigeonHolePrinciple(4,3)
-res19: Option[at.logic.gapt.proofs.drup.DrupProof] =
+res20: Option[at.logic.gapt.proofs.drup.DrupProof] =
 Some([derive]  ⊢
 [derive] R(p_3, h_2) ⊢
 [derive]  ⊢ R(p_4, h_3)
@@ -1116,7 +1195,7 @@ Just as in the first-order prover interface, you can call
 format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
-res20: Option[at.logic.gapt.proofs.lk.LKProof] =
+res21: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p402]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
@@ -1151,7 +1230,7 @@ Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
 gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
-res21: Option[at.logic.gapt.models.Interpretation] =
+res22: Option[at.logic.gapt.models.Interpretation] =
 Some(a:o -> false
 b:o -> false
 c:o -> true)
@@ -1174,17 +1253,17 @@ f: at.logic.gapt.expr.Formula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
 
 \begin{clilisting}[VeriT.isInstalled]
 gapt> VeriT isValid f
-res22: Boolean = true
+res23: Boolean = true
 
 \end{clilisting}
 
 GAPT also supports Z3 and CVC4 out of the box (if they are installed):
 \begin{clilisting}[Z3.isInstalled && CVC4.isInstalled]
 gapt> Z3 isValid f
-res23: Boolean = true
+res24: Boolean = true
 
 gapt> CVC4 isValid f
-res24: Boolean = true
+res25: Boolean = true
 
 \end{clilisting}
 
@@ -1249,10 +1328,10 @@ sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s
 
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 isValid sequent
-res26: Boolean = true
+res27: Boolean = true
 
 gapt> Prover9 getResolutionProof sequent
-res27: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res28: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 [p12] p(s(0)) ⊢    (Resolution(p9, Suc(0), p11, Ant(0)))
 [p11] p(s(s(0))) ⊢    (Subst(p10, Substitution()))
@@ -1269,7 +1348,7 @@ Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 )
 
 gapt> Prover9 getLKProof sequent
-res28: Option[at.logic.gapt.proofs.lk.LKProof] =
+res29: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
 [p10] p(0), ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
 [p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
@@ -1280,7 +1359,7 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
 [p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
 gapt> Prover9 getExpansionProof sequent
-res29: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) ⊃ p(s(x)))
   +^{0} (p(0)+ ⊃ p(s(0))-)
   +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
@@ -1295,7 +1374,7 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \cli{EProver.getLKProof} as an example:
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
-res30: Option[at.logic.gapt.proofs.lk.LKProof] =
+res31: Option[at.logic.gapt.proofs.lk.LKProof] =
 Some([p11] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p1, Suc(0), p10, Ant(1)))
 [p10] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p9, Ant(2), Ant(0)))
 [p9] ∀x (p(x) ⊃ p(s(x))), p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p4, Suc(0), p8, Ant(1)))
@@ -1312,7 +1391,7 @@ Note that \cli{getLKProof} only works for sequents without strong quantifiers
 will happily return expansion proofs with Skolem quantifiers in that case:
 \begin{clilisting}[Prover9.isInstalled]
 gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
-res31: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res32: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 ∃x ∀y p(x, y) +sk^{s_0} (∀y p(s_0, y) +^{s_1} p(s_0, s_1)-) ⊃
@@ -1323,7 +1402,7 @@ Some(
 The LeanCoP interface supports the \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
-res32: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res33: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(p(0)-,
 ∀x (p(x) ⊃ p(s(x)))
   +^{0} (p(0)+ ⊃ p(s(0))-)
@@ -1337,7 +1416,7 @@ You can also export sequents as TPTP problems if you want to pass them to other
 provers manually:
 \begin{clilisting}
 gapt> TPTPFOLExporter(sequent)
-res33: at.logic.gapt.formats.tptp.TptpFile =
+res34: at.logic.gapt.formats.tptp.TptpFile =
 fof(ant_0, axiom, p('0')).
 fof(ant_1, axiom, ![X]: (p(X) => p(s(X)))).
 fof(suc_0, conjecture, p(s(s('0')))).
@@ -1356,7 +1435,7 @@ fof(e, axiom, ![X]: exp(X, two) = times(X, X)).
 fof(f, conjecture, ?[X,Y]: (~ i(exp(X, Y)) & i(X) & i(Y))).
 
 gapt> tptp.toSequent
-res34: at.logic.gapt.proofs.HOLSequent =
+res35: at.logic.gapt.proofs.HOLSequent =
 i(sr2),
 ¬i(two),
 times(sr2, sr2) = two,
@@ -1381,7 +1460,7 @@ formula: at.logic.gapt.expr.FOLFormula =
   d + a + c + b = a + b + c + d
 
 gapt> Escargot getResolutionProof formula
-res35: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
+res36: Option[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Some([p34]  ⊢    (Resolution(p1, Suc(0), p33, Ant(0)))
 [p33] d + (b + (c + a)) = d + (b + (c + a)) ⊢    (Paramod(p17, Suc(0), true, p32, Ant(0), λx d + (b + (c + a)) = d + x))
 [p32] d + (b + (c + a)) = d + (c + (b + a)) ⊢    (Paramod(p18, Suc(0), true, p31, Ant(0), λx x = d + (c + (b + a))))
@@ -1391,21 +1470,26 @@ Some([p34]  ⊢    (Resolution(p1, Suc(0), p33, Ant(0)))
 [p28] b + (c + (d + a)) = d + (a + b + c) ⊢    (Paramod(p22, Suc(0), tru...
 \end{clilisting}
 
+Escargot can also be used from the command-line using the \texttt{escargot.sh}
+script.  This script expects a problem in TPTP format:
+\begin{lstlisting}
+./escargot.sh examples/tptp/SET001-1.p
+\end{lstlisting}
+
 \subsection{Built-in inductive theorem prover}
 
 GAPT contains a built-in inductive theorem prover: viper (Vienna inductive theorem prover). It
 can be started from the command line using the \texttt{viper.sh} script. It takes input in the
 TIP format~\cite{Claessen15TIP}. Viper has a mode for analytic induction and a mode for 
-the tree grammar-based method described in~\cite{Eberhard15Inductive}. As of version 2.4 of GAPT,
-viper is in an early stage of development. The tree grammar-based method is invoked as in:
+the tree grammar-based method described in~\cite{Eberhard15Inductive}. As of version 2.6 of GAPT,
+viper is in an early stage of development.  By default, the \texttt{viper.sh}
+scripts tries several different strategies to solve the given problem,
+including analytic induction and tree-grammar-based methods.  The
+\texttt{--help} argument shows the available options.
 \begin{lstlisting}
-./viper.sh examples/induction/prod_prop_31.smt2
+./viper.sh --treegrammar --cansolsize 2 3 --gramw scomp \
+    examples/induction/prod_prop_31.smt2
 \end{lstlisting}
-The analytic mode is invoked as in:
-\begin{lstlisting}
-./viper.sh aip examples/tip/isaplanner/prop_06.smt2
-\end{lstlisting}
-
 
 \subsection{Built-in tableaux prover}
 
@@ -1413,7 +1497,7 @@ GAPT contains a built-in tableaux prover for propositional logic
 which can be called with the command \texttt{solvePropositional}, for example as in:
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
-res36: at.logic.gapt.proofs.lk.LKProof =
+res37: at.logic.gapt.proofs.lk.LKProof =
 [p5]  ⊢ a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
 [p4] a ⊢ b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b ⊢ a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
@@ -1425,7 +1509,7 @@ res36: at.logic.gapt.proofs.lk.LKProof =
 The tableaux prover can also prove quasi-tautologies if you call it as \texttt{solveQuasiPropositional}:
 \begin{clilisting}
 gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
-res37: at.logic.gapt.proofs.lk.LKProof =
+res38: at.logic.gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
 [p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
@@ -1603,17 +1687,17 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res38: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] =
+res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] =
 ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
 P(x, a) ⊃ Q(x, a)
 ⊢
 ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
-res40: Boolean = true
+res41: Boolean = true
 
 \end{clilisting}
 
@@ -1623,7 +1707,7 @@ a procedure to eliminate such cuts in expansion proofs as described
 in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
-res41: at.logic.gapt.proofs.expansion.ExpansionProof =
+res42: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
   +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
 :-
@@ -1636,7 +1720,7 @@ We can also convert expansion proofs to LK; this works even in the presence of
 cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
-res42: at.logic.gapt.proofs.lk.LKProof =
+res43: at.logic.gapt.proofs.lk.LKProof =
 [p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
 [p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
@@ -1842,14 +1926,14 @@ x_2 → 0
 x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
 
 gapt> lang.toSet subsetOf grammar.language
-res49: Boolean = true
+res50: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeVTRATG(grammar, (1 to 5).map(Numeral(_)).toSet)
-res50: at.logic.gapt.grammars.VTRATG =
+res51: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
@@ -1889,7 +1973,7 @@ P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) �
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
 gapt> Escargot.getExpansionProof(problem)
-res51: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -1929,7 +2013,7 @@ P_P(f_nil) ∧
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
-res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res53: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -2062,8 +2146,6 @@ Theory axioms may only contain atomic formulas.
 
 \end{multicols}
 
-\newpage
-
 \subsubsection*{Propositional rules}
 
 \begin{multicols}{2}
@@ -2171,7 +2253,7 @@ Theory axioms may only contain atomic formulas.
 
 \end{multicols}
 
-The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$. The term $t$ must avoid variable capture, i.e.\ it must not contain free occurrences of variables bound in $A$.
+The variable $y$ must not occur free in $\Gamma$, $\Delta$ or $A$.
 
 \subsubsection*{Equality rules}
 
@@ -2251,6 +2333,241 @@ The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n
     \UnaryInfCm{F[x], \Gamma_2 \seq \Delta_2, F[sx]}
     \RightLabelm{(\mt{ind})}
     \BinaryInfCm{\Gamma_1, \Gamma_2 \seq \Delta_1, \Delta_2, F[t]}
+  \end{prooftree}
+
+\subsection{ND}\label{app:natural_deduction}
+
+The rules of ND are listed below. Classical logic is supported by providing the
+excluded middle rule. We use ND rules in sequent form.
+
+As in LK, proof trees are constructed top-down, starting with axioms and with
+each rule introducing new inferences. With exception of the theory axioms and
+the induction rules, the constructors of the rules only allow inferences that
+are actually valid. Note that the rules are presented here as if they always act
+upon the outermost formulas in the upper sequent, but this is only for
+convenience of presentation. The basic constructors actually require the user to
+specify on which concrete formulas the inference should be performed.
+
+Apart from those basic constructors, there is also a multitude of convenience
+constructors that facilitate easier proof construction. See the API
+documentation of the individual rules for details.
+
+\subsubsection*{Axioms}
+
+\begin{multicols}{2}
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\mt{Logical axiom})}
+  \UnaryInfCm{A \seq A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\mt{Theory axiom})}
+  \UnaryInfCm{\seq A}
+  \end{prooftree}
+\end{multicols}
+
+\subsubsection*{Structural rules}
+
+\begin{multicols}{2}
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq B}
+  \RightLabelm{(\mt{w})}
+  \UnaryInfCm{A, \Gamma \seq B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{A,A,\Gamma \seq B}
+  \RightLabelm{(\mt{c})}
+  \UnaryInfCm{A,\Gamma\seq B}
+  \end{prooftree}
+\end{multicols}
+
+\subsubsection*{Propositional rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Elimination rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \land B}
+  \RightLabelm{(\land\mt{:e1})}
+  \UnaryInfCm{\Gamma \seq A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \land B}
+  \RightLabelm{(\land\mt{:e2})}
+  \UnaryInfCm{\Gamma \seq B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \lor B}
+  \AxiomCm{\Pi, A \seq C}
+  \AxiomCm{\Delta, B \seq C}
+  \RightLabelm{(\lor\mt{:e})}
+  \TrinaryInfCm{\Gamma, \Pi, \Delta \seq C}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \lnot A}
+  \AxiomCm{\Pi \seq A}
+  \RightLabelm{(\lnot\mt{:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq \bot}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A \impl B}
+  \AxiomCm{\Pi \seq A}
+  \RightLabelm{(\impl\mt{:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \bot}
+  \RightLabelm{(\bot\mt{:e})}
+  \UnaryInfCm{\Gamma \seq A}
+  \end{prooftree}
+
+  \subsubsection*{Introduction rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A}
+  \AxiomCm{\Pi \seq B}
+  \RightLabelm{(\land\mt{:i})}
+  \BinaryInfCm{\Gamma, \Pi \seq A \land B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A}
+  \RightLabelm{(\lor\mt{:i1})}
+  \UnaryInfCm{\Gamma \seq A \lor B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A}
+  \RightLabelm{(\lor\mt{:i2})}
+  \UnaryInfCm{\Gamma \seq B \lor A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{A, \Gamma \seq \bot}
+  \RightLabelm{(\lnot\mt{:i})}
+  \UnaryInfCm{\Gamma \seq \lnot A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{A, \Gamma \seq B}
+  \RightLabelm{(\impl\mt{:i})}
+  \UnaryInfCm{\Gamma \seq A \impl B}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\top\mt{:i})}	
+  \UnaryInfCm{\seq \top}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Quantifier rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Elimination rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \forall x A}
+  \RightLabelm{(\forall\mt{:e})}
+  \UnaryInfCm{\Gamma \seq A[t/x]}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq \exists x A}
+  \AxiomCm{\Pi, A[y/x] \seq B}
+  \RightLabelm{(\exists\mt{:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq B}
+  \end{prooftree}
+
+  \subsubsection*{Introduction rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A[y/x]}
+  \RightLabelm{(\forall\mt{:i})}
+  \UnaryInfCm{\Gamma \seq \forall x A}
+  \end{prooftree}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq A[t/x]}
+  \RightLabelm{(\exists\mt{:i})}
+  \UnaryInfCm{\Gamma \seq \exists x A}
+  \end{prooftree}
+
+\end{multicols}
+
+The variable $y$ must not occur free in $\Gamma$, $\Pi$ or $B$.
+
+\subsubsection*{Equality rules}
+
+\begin{multicols}{2}
+
+  \subsubsection*{Elimination rules}
+
+  \begin{prooftree}
+  \AxiomCm{\Gamma \seq s = t}
+  \AxiomCm{\Pi \seq A[s/x]}
+  \RightLabelm{(\mt{=:e})}
+  \BinaryInfCm{\Gamma, \Pi \seq A[t/x]}
+  \end{prooftree}
+
+  \subsubsection*{Introduction rules}
+
+  \begin{prooftree}
+  \AxiomCm{}
+  \RightLabelm{(\mt{=:i})}
+  \UnaryInfCm{\seq t = t}
+  \end{prooftree}
+
+\end{multicols}
+
+\subsubsection*{Induction}
+The induction rule applies to arbitrary algebraic data types. Let $c_1,\dots,c_n$ be the constructors of a type and let $k_i$ be the arity of $c_i$. Let $F[x]$ be a formula with $x$ a free variable of the appropriate type. Then we call the sequent $\mathcal{S}_i := F[x_1],\dots,F[x_{k_i}], \Gamma_i \seq F[c_i(x_1,\dots,x_{k_i})]$ the $i$-th induction step. In this case, the induction rule has the form
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_1}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_2}
+    \AxiomCm{\dots}
+    \AxiomCm{(\pi_n)}
+    \noLine
+    \UnaryInfCm{\mathcal{S}_n}
+    \RightLabelm{(\mt{ind})}
+    \QuaternaryInfC{$\Gamma \seq F[t]$}
+  \end{prooftree}
+
+  In the case of the natural numbers, there are two constructors: $0$ of arity 0 and $s$ of arity 1. Consequently, the induction rule reduces to
+
+  \begin{prooftree}
+    \AxiomCm{(\pi_1)}
+    \noLine
+    \UnaryInfCm{\Gamma_1 \seq F[0]}
+    \AxiomCm{(\pi_2)}
+    \noLine
+    \UnaryInfCm{F[x], \Gamma_2 \seq F[sx]}
+    \RightLabelm{(\mt{ind})}
+    \BinaryInfCm{\Gamma_1, \Gamma_2 \seq F[t]}
+  \end{prooftree}
+
+\subsubsection*{Excluded Middle}
+
+  \begin{prooftree}
+    \AxiomCm{\Gamma, A \seq B}
+    \AxiomCm{\Pi, \lnot A \seq B}
+    \RightLabelm{(\mt{em})}
+    \BinaryInfCm{\Gamma, \Pi \seq B}
   \end{prooftree}
 
 \subsection{Resolution}

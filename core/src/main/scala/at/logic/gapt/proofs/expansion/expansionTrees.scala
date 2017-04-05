@@ -377,11 +377,12 @@ private[expansion] object replaceET {
         TermReplacement( shallow, repl ),
         TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl )
       )
-    case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
+    case et @ ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
+      val Apps( _, newArgs ) = TermReplacement( et.skolemConst, repl )
       ETSkolemQuantifier(
         TermReplacement( shallow, repl ),
         TermReplacement( skolemTerm, repl ),
-        TermReplacement( skolemDef, repl ),
+        Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( skolemDef, repl ) ),
         replaceET( child, repl )
       )
   }

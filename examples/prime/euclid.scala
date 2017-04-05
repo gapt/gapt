@@ -7,31 +7,32 @@ import at.logic.gapt.proofs.lk.LKProof
 
 case class euclid( k: Int ) extends PrimeDefinitions {
   def ldivprod( i: Int ): LKProof = {
-    val sequent = hols"linp: ${P( i )} l  :-  div: DIV l ${prod( i )}"
-
+    val sequent = hols"linp: P $i l  :-  div: DIV l (prod $i)"
     if ( i == 0 )
       Lemma( sequent ) {
-        unfold( P( i ).name, "set_1" ) in "linp"
-        unfold( "DIV", prod( i ).name ) in "div"
+        unfold( "P", "set_1" ) in "linp"
+        unfold( "DIV", "prod" ) in "div"
         exR( le"1" ).forget
         rewrite ltr "linp" in "div"
         theory
       }
     else
       Lemma( sequent ) {
-        unfold( P( i ).name, "union" ) in "linp"
-        unfold( "DIV", prod( i ).name ) in "div"
+        unfold( "P" ).atMost( 1 ) in "linp"
+        unfold( "union" ) in "linp"
+        unfold( "DIV" ) in "div"
+        unfold( "prod" ).atMost( 1 ) in "div"
         destruct( "linp" )
 
         include( "IH", ldivprod( i - 1 ) )
         unfold( "DIV" ) in "IH"
         decompose
-        exR( le"m * ${p( i )}" ).forget
+        exR( le"m * p $i" ).forget
         rewrite rtl "IH"
         theory
 
         unfold( "set_1" ) in "linp"
-        exR( prod( i - 1 ) ).forget
+        exR( le"prod ${i - 1}" ).forget
         rewrite ltr "linp" in "div"
         theory
       }
@@ -50,14 +51,14 @@ case class euclid( k: Int ) extends PrimeDefinitions {
     } yield ()
   }
 
-  def prodgt0( i: Int ): LKProof = Lemma( hols"gt0: ${prod( i )} + 1 = 1, fk: ${F( k )} :-" ) {
-    unfold( prod( i ).name ) in "gt0"
+  def prodgt0( i: Int ): LKProof = Lemma( hols"gt0: prod $i + 1 = 1, fk: F $k :-" ) {
+    unfold( "prod" ) atMost 1 in "gt0"
 
     if ( i > 0 ) splitgt0( "gt0" ) andThen insert( prodgt0( i - 1 ) ) else skip
 
-    unfold( F( k ).name ) in "fk"
-    allL( "fk", p( i ) ).forget; decompose; destruct( "fk_1" )
-    Tactical.sequence( for ( j <- i to k reverse ) yield unfold( P( j ).name, "union", "set_1" ) in "fk_1" )
+    unfold( "F" ) in "fk"
+    allL( "fk", le"p $i" ).forget; decompose; destruct( "fk_1" )
+    Tactical.sequence( for ( j <- i to k reverse ) yield unfold( "P", "union", "set_1" ) in "fk_1" )
     decompose; trivial
     unfold( "PRIME" ) in "fk_1"; decompose
 
@@ -65,15 +66,15 @@ case class euclid( k: Int ) extends PrimeDefinitions {
   }
 
   val proof =
-    Lemma( hols"fk: ${F( k )}, primediv: 'PRIME-DIV' :-" ) {
+    Lemma( hols"fk: F $k, primediv: 'PRIME-DIV' :-" ) {
       unfold( "PRIME-DIV" ) in "primediv"
-      allL( "primediv", le"${prod( k )} + 1" ).forget
+      allL( "primediv", le"prod $k + 1" ).forget
       destruct( "primediv" ) onAll decompose
 
       insert( prodgt0( k ) )
 
-      unfold( s"F[$k]" ) in "fk"
-      allL( "fk", le"l" ).forget; decompose
+      unfold( "F" ) in "fk"
+      allL( "fk", le"l: nat" ).forget; decompose
       destruct( "fk_0" ); trivial
       include( "ldivprod", ldivprod( k ) )
       unfold( "PRIME" ) in "primediv_0"
