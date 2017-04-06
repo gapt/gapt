@@ -8,8 +8,6 @@ import org.specs2.mutable.Specification
  */
 class IntroducePiCutTest extends Specification {
 
-  /*
-  */
   //
   // Number of non-tautological leaves
   //   2
@@ -130,7 +128,6 @@ class IntroducePiCutTest extends Specification {
   }
 
   /*
-  */
   //
   // Number of non-tautological leaves
   //   1386
@@ -286,5 +283,6 @@ class IntroducePiCutTest extends Specification {
       )
     }
   }
+  */
 
 }

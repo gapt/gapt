@@ -18,22 +18,12 @@ case class Pi2SeHs(
 
   val multiplicityOfAlpha: Int = substitutionsForAlpha.length // m
   val multiplicityOfBeta: Int = substitutionsForBetaWithAlpha.length // p
-  var balancedSolution: Option[FOLFormula] = None
-  var noSolutionHasBeenFound: Boolean = true
 
   // (alpha,r_1),...,(alpha,r_m)
   //////////////////////////////
   val substitutionPairsAlpha: List[( Expr, Expr )] = {
 
     substitutionsForAlpha.map( instance => ( universalEigenvariable, instance ) )
-    /*
-    val substitutionPairsAlpha = scala.collection.mutable.Set[( Expr, Expr )]()
-    substitutionsForAlpha.foreach( instance => {
-      val buffer: ( Expr, Expr ) = ( universalEigenvariable, instance )
-      substitutionPairsAlpha += buffer
-    } )
-    substitutionPairsAlpha.toList
-    */
   }
 
   // (beta_i,t_1(alpha)),...,(beta_i,t_p(alpha))
@@ -41,14 +31,6 @@ case class Pi2SeHs(
   def substitutionPairsBetaI( index: Int ): List[( Expr, Expr )] = {
 
     substitutionsForBetaWithAlpha.map( instanceB => ( existentialEigenvariables( index - 1 ), instanceB ) )
-    /*
-    val substitutionPairsBetaI = scala.collection.mutable.Set[( Expr, Expr )]()
-    substitutionsForBetaWithAlpha.foreach( instanceB => {
-      val buffer: ( Expr, Expr ) = ( existentialEigenvariables( index - 1 ), instanceB )
-      substitutionPairsBetaI += buffer
-    } )
-    substitutionPairsBetaI.toList
-    */
   }
 
   // (beta_1,t_1(alpha)),...,(beta_1,t_p(alpha)),
@@ -61,13 +43,6 @@ case class Pi2SeHs(
       for ( index <- 1 to multiplicityOfAlpha )
         yield substitutionPairsBetaI( multiplicityOfAlpha - index + 1 )
     ).toList.flatten
-    /*
-    val substitutionPairsBeta = scala.collection.mutable.Set[( Expr, Expr )]()
-    for ( index <- 1 to multiplicityOfAlpha ) {
-      substitutionPairsBeta ++= substitutionPairsBetaI( multiplicityOfAlpha - index + 1 )
-    }
-    substitutionPairsBeta.toSet
-    */
   }
 
   val productionRulesXS: List[( Expr, Expr )] = substitutionPairsAlpha ++ substitutionPairsAlpha.map( _.swap )
@@ -79,14 +54,6 @@ case class Pi2SeHs(
   val substitutionsAlpha: List[Substitution] = {
 
     substitutionsForAlpha.map( instanceA => Substitution( universalEigenvariable, instanceA ) )
-
-    /*
-    val substitutionsAlpha = scala.collection.mutable.ListBuffer[Substitution]()
-    substitutionsForAlpha.foreach( instanceA => {
-      substitutionsAlpha += Substitution( universalEigenvariable, instanceA )
-    } )
-    substitutionsAlpha.toList
-    */
   }
 
   // (beta_i->t_1(r_i)),...,(beta_i->t_p(r_i))
@@ -95,15 +62,6 @@ case class Pi2SeHs(
 
     val subs: Substitution = Substitution( universalEigenvariable, substitutionsForAlpha( index - 1 ) )
     substitutionsForBetaWithAlpha.map( instanceB => Substitution( existentialEigenvariables( index - 1 ), subs( instanceB ) ) )
-
-    /*
-    val substitutionsBeta = scala.collection.mutable.ListBuffer[Substitution]()
-    val subs: Substitution = Substitution( universalEigenvariable, substitutionsForAlpha( index - 1 ) ) // (alpha->r_i)
-    substitutionsForBetaWithAlpha.foreach( instanceB => {
-      substitutionsBeta += Substitution( existentialEigenvariables( index - 1 ), subs( instanceB ) )
-    } )
-    substitutionsBeta.toList
-    */
   }
 
   private def substituteRightSideOnce( sequent: Sequent[Formula], index: Int ): Sequent[Formula] = {
@@ -187,7 +145,7 @@ case class Pi2SeHs(
         }
       } )
       if ( !dontAdd ) {
-        DNTA += NTAClause // define for fol and hol sequents
+        DNTA += NTAClause
       }
       clause.antecedent.foreach( atom => literals += atom )
       clause.succedent.foreach( atom => literals += Neg( atom ) )
@@ -225,23 +183,6 @@ case class Pi2SeHs(
     } )
 
     ( alpha.toSet, beta.toSet, gamma.toSet )
-  }
-
-  def language: ( Set[Expr] ) = {
-
-    val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
-    literals.map( literal => {
-      literal match {
-        case Neg( t ) => {
-          val Apps( name, _ ) = t
-          name
-        }
-        case t => {
-          val Apps( name, _ ) = t
-          name
-        }
-      }
-    } )
   }
 
   def theDNTAsInTheLanguage( unifiedLiterals: Set[FOLFormula] ): ( List[Sequent[FOLFormula]] ) = {
@@ -323,14 +264,14 @@ class LiteralWithIndexLists(
     val foundNonEmptyPList: Boolean,
     val foundEmptyMList:    Boolean
 ) {
-  // require( numberOfDNTAs == leafIndexList.length )
+  require( numberOfDNTAs == leafIndexList.length )
 }
 
 class ClauseWithIndexLists(
     val literals: List[LiteralWithIndexLists]
 ) {
 
-  // require( literals.tail.forall( _.numberOfDNTAs == literals.head.numberOfDNTAs ) )
+  require( literals.tail.forall( _.numberOfDNTAs == literals.head.numberOfDNTAs ) )
 
   def numberOfDNTAs: Int = this.literals.head.numberOfDNTAs
 
@@ -479,32 +420,9 @@ object introducePi2Cut {
       nameOfUniversalVariableChecked
     )
 
-    /*
-    // There is no need in the given examples (see IntroducePiCutTest.scala). In case of examples with a large theory,
-    // the following code decreases the number of DNTAs we have to look at.
-    val ( literals, _ ) = seHs.literalsInTheDNTAsAndTheDNTAs
-    val languageSize = literals.map(literal=>{
-      literal match {
-        case Neg( t ) => {
-          val Apps(name,_) = t
-          name
-        }
-        case t => {
-          val Apps(name,_) = t
-          name
-        }
-      }
-    }).size
-    if (languageSize<seHs.language.size) {
-      val dNTAList = seHs.theDNTAsInTheLanguage( unifiedLiterals )
-    } else {
-      val ( _, dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
-    }
-    */
-
     val ( _, dNTAList ) = seHs.literalsInTheDNTAsAndTheDNTAs
 
-    val literalsWithIndexLists: Set[LiteralWithIndexLists] = computeTheIndexListsForTheLiterals(
+    val literalsWithIndexListsOrAndSolution: ( Set[LiteralWithIndexLists], Option[FOLFormula] ) = computeTheIndexListsForTheLiterals(
       unifiedLiterals,
       dNTAList,
       seHs,
@@ -512,31 +430,40 @@ object introducePi2Cut {
       nameOfUniversalVariableChecked
     )
 
+    val ( literalsWithIndexLists, optionSolution1 ) = literalsWithIndexListsOrAndSolution
+
+    optionSolution1 match {
+      case Some( t ) => return ( Some( t ), nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
+      case None      =>
+    }
+
     var numberOfAllowedClauses: Option[Int] = None
     var numberOfCheckedFormulas: Int = literalsWithIndexLists.size
 
     if ( literalsWithIndexLists.size > 1 ) {
-      if ( seHs.noSolutionHasBeenFound ) {
 
-        val allowedClausesWithIndexLists: Set[ClauseWithIndexLists] = checkAndBuildAllowedClausesHead(
-          literalsWithIndexLists,
-          seHs
-        )
+      val allowedClausesWithIndexListsOrAndSolution: ( Set[ClauseWithIndexLists], Option[FOLFormula] ) = checkAndBuildAllowedClausesHead(
+        literalsWithIndexLists,
+        seHs
+      )
 
-        numberOfAllowedClauses = Option( allowedClausesWithIndexLists.size )
-        numberOfCheckedFormulas = allowedClausesWithIndexLists.size
+      val ( allowedClausesWithIndexLists, optionSolution2 ) = allowedClausesWithIndexListsOrAndSolution
 
-        if ( seHs.noSolutionHasBeenFound ) {
-          for ( numberOfClauses <- 2 to allowedClausesWithIndexLists.size; if seHs.noSolutionHasBeenFound ) {
-            for ( subset <- allowedClausesWithIndexLists.subsets( 2 ); if seHs.noSolutionHasBeenFound ) { // !!!!!!!!!!!!!!!!!!!!! for testing set to two
-              val clausesWithIndexLists = new ClausesWithIndexLists( subset.toList )
-              if ( clausesWithIndexLists.isSolution ) {
-                seHs.noSolutionHasBeenFound = false
-                seHs.balancedSolution = Option( clausesWithIndexLists.formula )
-              }
-              numberOfCheckedFormulas += 1
-            }
+      optionSolution2 match {
+        case Some( t ) => return ( Some( t ), nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
+        case None      =>
+      }
+
+      numberOfAllowedClauses = Option( allowedClausesWithIndexLists.size )
+      numberOfCheckedFormulas = allowedClausesWithIndexLists.size
+
+      for ( numberOfClauses <- 2 to allowedClausesWithIndexLists.size ) {
+        for ( subset <- allowedClausesWithIndexLists.subsets( numberOfClauses ) ) {
+          val clausesWithIndexLists = new ClausesWithIndexLists( subset.toList )
+          if ( clausesWithIndexLists.isSolution ) {
+            return ( Option( clausesWithIndexLists.formula ), nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
           }
+          numberOfCheckedFormulas += 1
         }
       }
     }
@@ -560,18 +487,14 @@ object introducePi2Cut {
     println( numberOfCheckedFormulas )
     */
 
-    if ( !seHs.noSolutionHasBeenFound ) {
-      ( seHs.balancedSolution, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
-    } else {
-      ( None, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
-    }
+    ( None, nameOfExistentialVariableChecked, nameOfUniversalVariableChecked )
 
   }
 
   private def checkAndBuildAllowedClausesHead(
     literalsWithIndexLists: Set[LiteralWithIndexLists],
     seHs:                   Pi2SeHs
-  ): ( Set[ClauseWithIndexLists] ) = {
+  ): ( ( Set[ClauseWithIndexLists], Option[FOLFormula] ) ) = {
 
     var allowedClausesWithIndexListsMutable = scala.collection.mutable.Set[ClauseWithIndexLists]()
     val literalsWithIndexListsMutable = scala.collection.mutable.Set( literalsWithIndexLists.toList: _* )
@@ -590,12 +513,14 @@ object introducePi2Cut {
       }
     }
 
-    checkAndBuildAllowedClauses(
+    val ( mutable, optionSolution ) = checkAndBuildAllowedClauses(
       literalsWithIndexListsMutable,
       allowedClausesWithIndexListsMutable,
       seHs,
       2
-    ).toSet
+    )
+
+    ( mutable.toSet, optionSolution )
 
   }
 
@@ -604,9 +529,9 @@ object introducePi2Cut {
     allowedClausesWithIndexLists: scala.collection.mutable.Set[ClauseWithIndexLists],
     seHs:                         Pi2SeHs,
     subsetSize:                   Int
-  ): ( scala.collection.mutable.Set[ClauseWithIndexLists] ) = {
+  ): ( ( scala.collection.mutable.Set[ClauseWithIndexLists], Option[FOLFormula] ) ) = {
 
-    for ( subset <- literalsWithIndexLists.subsets( subsetSize ); if seHs.noSolutionHasBeenFound ) {
+    for ( subset <- literalsWithIndexLists.subsets( subsetSize ) ) {
       val clauseWithIndexLists = new ClauseWithIndexLists( subset.toList )
       if ( clauseWithIndexLists.isAllowed ) {
         val ( clauseIsUnnecessary, listOfUnnecessaryClauses ) = checkNecessityOfNewAndOldClause( clauseWithIndexLists, allowedClausesWithIndexLists.toList )
@@ -614,8 +539,7 @@ object introducePi2Cut {
           allowedClausesWithIndexLists += clauseWithIndexLists
           val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
           if ( clausesWithIndexLists.isSolution ) {
-            seHs.noSolutionHasBeenFound = false
-            seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+            return ( allowedClausesWithIndexLists, Option( clausesWithIndexLists.formula ) )
           }
           for ( unnecessaryClause <- listOfUnnecessaryClauses ) {
             allowedClausesWithIndexLists -= unnecessaryClause
@@ -628,7 +552,7 @@ object introducePi2Cut {
       }
     }
 
-    if ( seHs.noSolutionHasBeenFound && ( literalsWithIndexLists.size > subsetSize ) ) {
+    if ( literalsWithIndexLists.size > subsetSize ) {
       checkAndBuildAllowedClauses(
         literalsWithIndexLists,
         allowedClausesWithIndexLists,
@@ -636,7 +560,7 @@ object introducePi2Cut {
         subsetSize + 1
       )
     } else {
-      allowedClausesWithIndexLists
+      ( allowedClausesWithIndexLists, None )
     }
 
   }
@@ -647,11 +571,11 @@ object introducePi2Cut {
     seHs:                  Pi2SeHs,
     y:                     FOLVar,
     x:                     FOLVar
-  ): ( Set[LiteralWithIndexLists] ) = {
+  ): ( ( Set[LiteralWithIndexLists], Option[FOLFormula] ) ) = {
 
     val literalWithIndexListsSet = scala.collection.mutable.Set[LiteralWithIndexLists]()
 
-    for ( literal <- unifiedLiterals; if seHs.noSolutionHasBeenFound ) {
+    for ( literal <- unifiedLiterals ) {
 
       var foundEmptyMOrPList: Boolean = false
       var foundNonEmptyPList: Boolean = false
@@ -712,15 +636,14 @@ object introducePi2Cut {
           val clauseWithIndexLists = new ClauseWithIndexLists( List( literalWithIndexLists ) )
           val clausesWithIndexLists = new ClausesWithIndexLists( List( clauseWithIndexLists ) )
           if ( clausesWithIndexLists.isSolution ) {
-            seHs.noSolutionHasBeenFound = false
-            seHs.balancedSolution = Option( clausesWithIndexLists.formula )
+            return ( literalWithIndexListsSet.toSet, Option( clausesWithIndexLists.formula ) )
           }
         }
       }
 
     }
 
-    literalWithIndexListsSet.toSet
+    ( literalWithIndexListsSet.toSet, None )
 
   }
 

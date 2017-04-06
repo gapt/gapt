@@ -9,6 +9,7 @@ import org.specs2.mutable.Specification
 class ProveWithPi2CutTest extends Specification {
 
   /*
+  */
   "This" should {
     "be computed correctly" in {
       val Pxf1x = fof"(P(x)|Q(f1(x)))"
@@ -88,6 +89,7 @@ class ProveWithPi2CutTest extends Specification {
   }
 
 
+  /*
   "This" should {
     "be computed correctly" in {
       val T1 = fof"Pkl(0,y1)&Pg(f(0),f(y1))"
@@ -214,7 +216,6 @@ class ProveWithPi2CutTest extends Specification {
       } ) must_== true
     }
   }
-  */
 
   "This" should {
     "be computed correctly" in {
@@ -249,7 +250,6 @@ class ProveWithPi2CutTest extends Specification {
       }) must_== true
     }
   }
-  /*
   */
 
 }

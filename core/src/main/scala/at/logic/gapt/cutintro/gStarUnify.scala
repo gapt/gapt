@@ -7,12 +7,12 @@ import at.logic.gapt.expr._
 object gStarUnify {
 
   /**
-    * Computes the unified literals, i.e. the set of literals that are used to contruct the cut formula
-    * @param seHs The given schematic Pi2-grammar
-    * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
-    * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
-    * @return Set of unified literals
-    */
+   * Computes the unified literals, i.e. the set of literals that are used to contruct the cut formula
+   * @param seHs The given schematic Pi2-grammar
+   * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
+   * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
+   * @return Set of unified literals
+   */
   def apply(
     seHs:                      Pi2SeHs,
     nameOfExistentialVariable: FOLVar,
@@ -99,16 +99,16 @@ object gStarUnify {
   }
 
   /**
-    * Checks whether the literals (only the names without the arguments) are dual to each other and calls
-    * the unify function
-    * @param seHs The given schematic Pi2-grammar
-    * @param posAt First element of the unification pair
-    * @param negAt Second element of the unification pair
-    * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
-    * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
-    * @return Option type that might contain an unified literal, i.e. a literal in which neither the universal
-    *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
-    */
+   * Checks whether the literals (only the names without the arguments) are dual to each other and calls
+   * the unify function
+   * @param seHs The given schematic Pi2-grammar
+   * @param posAt First element of the unification pair
+   * @param negAt Second element of the unification pair
+   * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
+   * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
+   * @return Option type that might contain an unified literal, i.e. a literal in which neither the universal
+   *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
+   */
   private def unifyLiterals(
     seHs:                      Pi2SeHs,
     posAt:                     FOLFormula,
@@ -151,16 +151,16 @@ object gStarUnify {
   }
 
   /**
-    * Compares a zipped list of arguments and decides whether a pair of this list is unifiable corresponding to a
-    * grammar seHs (see productionRules), whether we have to call the unify function on the subterms of the pair, or whether
-    * the pair is not unifiable, i.e. whether to stop the whole function and return None
-    * @param seHs The given schematic Pi2-grammar
-    * @param zippedArgs Two lists of terms (Expr) that will be compared pairwise
-    * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
-    * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
-    * @return An option type that might contain a list of terms (Expr) of the same length of zippedArgs in which neither the universal
-    *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
-    */
+   * Compares a zipped list of arguments and decides whether a pair of this list is unifiable corresponding to a
+   * grammar seHs (see productionRules), whether we have to call the unify function on the subterms of the pair, or whether
+   * the pair is not unifiable, i.e. whether to stop the whole function and return None
+   * @param seHs The given schematic Pi2-grammar
+   * @param zippedArgs Two lists of terms (Expr) that will be compared pairwise
+   * @param nameOfExistentialVariable Name of the existential variable of the cut-formula
+   * @param nameOfUniversalVariable Name of the universal variable of the cut-formula
+   * @return An option type that might contain a list of terms (Expr) of the same length of zippedArgs in which neither the universal
+   *         nor one of the existential eigenvariables occurs, but maybe nameOfExistentialVariable or nameOfUniversalVariable
+   */
   private def unify(
     seHs:                      Pi2SeHs,
     zippedArgs:                List[( Expr, Expr )],
@@ -283,7 +283,7 @@ object gStarUnify {
 
           }
 
-        // If only the names of the outermost functions are equal we call the unify function on the arguments
+          // If only the names of the outermost functions are equal we call the unify function on the arguments
         } else if ( ( nameOfArgL == nameOfArgR ) && ( argsOfArgL.length == argsOfArgR.length ) ) {
 
           unify(
