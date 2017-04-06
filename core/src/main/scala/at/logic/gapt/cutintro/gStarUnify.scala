@@ -169,145 +169,101 @@ object gStarUnify {
   ): Option[Seq[FOLTerm]] = {
 
     var unifiedTerms: Option[Seq[FOLTerm]] = None
-    // A boolean that is used to break the local loop
-    var stopIt: Boolean = false
-    // A boolean that is used to break the global loop
-    var stopItAll: Boolean = false
 
     // A run through all pairs
     zippedArgs.foreach( t => {
-      stopIt = false
-      stopItAll = false
 
-      // The current pair of terms (Expr) that is under consideration
-      val ( tL, tR ) = t
-
-      // If there are substitutions tL and tR for the universal variable of the cut formula then we can
-      // replace tL or tR with nameOfUniversalVariable, i.e. we extend the current list of arguments with
-      // nameOfUniversalVariable and stop the loop for the current pair of terms
-      seHs.productionRulesXS.foreach( productionRuleX => if ( !stopIt ) {
-
-        val ( productionRuleXL, productionRuleXR ) = productionRuleX
-
-        if ( productionRuleXL.syntaxEquals( tL ) && productionRuleXR.syntaxEquals( tR ) ) {
-          unifiedTerms = unifiedTerms match {
-            case Some( update ) => Option( update :+ nameOfUniversalVariable )
-            case None           => Option( Seq( nameOfUniversalVariable ) )
-          }
-          stopIt = true
-          stopItAll = true
+      unifiedTerms = unifiedTerms match {
+        case Some( old ) => unifyPair( seHs, t, nameOfExistentialVariable, nameOfUniversalVariable ) match {
+          case Some( update ) => Option( old :+ update )
+          case None           => return None
         }
-
-      } )
-
-      stopIt = false
-
-      // If there are substitutions tL and tR for the existential variable of the cut formula then we can
-      // replace tL or tR with nameOfExistentialVariable, i.e. we extend the current list of arguments with
-      // nameOfExistentialVariable and stop the loop for the current pair of terms
-      seHs.productionRulesYS.foreach( productionRuleY => if ( ( !stopIt ) && ( !stopItAll ) ) {
-
-        val ( productionRuleYL, productionRuleYR ) = productionRuleY
-
-        if ( productionRuleYL.syntaxEquals( tL ) && productionRuleYR.syntaxEquals( tR ) ) {
-          unifiedTerms = unifiedTerms match {
-            case Some( update ) => Option( update :+ nameOfExistentialVariable )
-            case None           => Option( Seq( nameOfExistentialVariable ) )
-          }
-          stopIt = true
-          stopItAll = true
+        case None => unifyPair( seHs, t, nameOfExistentialVariable, nameOfUniversalVariable ) match {
+          case Some( update ) => Option( Seq( update ) )
+          case None           => return None
         }
-
-      } )
-
-      if ( !stopItAll ) {
-
-        // Since we could not unify the pair so far, we have to check whether the outermost function of the terms
-        // is equal, whether the terms are equal, whether the terms are eigenvariables, or whether the pair is
-        // not unifiable
-        val Apps( nameOfArgL, argsOfArgL ) = tL
-        val Apps( nameOfArgR, argsOfArgR ) = tR
-
-        // If the terms are equal, we have to check whether the terms contain eigenvariables and replace them
-        if ( tL.syntaxEquals( tR ) ) {
-
-          var tLWasAEigenvariable: Boolean = false
-
-          if ( tL.syntaxEquals( seHs.universalEigenvariable ) ) {
-
-            tLWasAEigenvariable = true
-
-            unifiedTerms = unifiedTerms match {
-              case Some( update ) => Option( update :+ nameOfUniversalVariable )
-              case None           => Option( Seq( nameOfUniversalVariable ) )
-            }
-
-          }
-
-          seHs.existentialEigenvariables.foreach( existentialEigenvariable => if ( tL.syntaxEquals( existentialEigenvariable ) && !tLWasAEigenvariable ) {
-
-            tLWasAEigenvariable = true
-
-            unifiedTerms = unifiedTerms match {
-              case Some( update ) => Option( update :+ nameOfExistentialVariable )
-              case None           => Option( Seq( nameOfExistentialVariable ) )
-            }
-
-          } )
-
-          if ( !tLWasAEigenvariable && ( argsOfArgL.length == 0 ) ) {
-
-            tLWasAEigenvariable = true
-
-            unifiedTerms = unifiedTerms match {
-              case Some( update ) => Option( update :+ tL.asInstanceOf[FOLTerm] )
-              case None           => Option( Seq( tR.asInstanceOf[FOLTerm] ) )
-            }
-
-          }
-
-          if ( ( !tLWasAEigenvariable ) ) {
-
-            unify(
-              seHs,
-              argsOfArgL.zip( argsOfArgR ),
-              nameOfExistentialVariable,
-              nameOfUniversalVariable
-            ) match {
-                case Some( r ) => unifiedTerms = unifiedTerms match {
-                  case Some( update ) => Option( update :+ Apps( nameOfArgL, r ).asInstanceOf[FOLTerm] )
-                  case None           => Option( Seq( Apps( nameOfArgL, r ).asInstanceOf[FOLTerm] ) )
-                }
-                case _ => unifiedTerms = None
-              }
-
-          }
-
-          // If only the names of the outermost functions are equal we call the unify function on the arguments
-        } else if ( ( nameOfArgL == nameOfArgR ) && ( argsOfArgL.length == argsOfArgR.length ) ) {
-
-          unify(
-            seHs,
-            argsOfArgL.zip( argsOfArgR ),
-            nameOfExistentialVariable,
-            nameOfUniversalVariable
-          ) match {
-              case Some( r ) => unifiedTerms = unifiedTerms match {
-                case Some( update ) => Option( update :+ Apps( nameOfArgL, r ).asInstanceOf[FOLTerm] )
-                case None           => Option( Seq( Apps( nameOfArgL, r ).asInstanceOf[FOLTerm] ) )
-              }
-              case _ => unifiedTerms = None
-            }
-
-        }
-        // If the pair was not unified the list of arguments will be too short. Hence, the literals will not be unified.
-
       }
 
     } )
 
     unifiedTerms
 
+  }
+
+  private def unifyPair(
+    seHs:                      Pi2SeHs,
+    termPair:                  ( Expr, Expr ),
+    nameOfExistentialVariable: FOLVar,
+    nameOfUniversalVariable:   FOLVar
+  ): Option[FOLTerm] = {
+
+    // If there are substitutions tL and tR for the universal variable of the cut formula then we can
+    // replace tL or tR with nameOfUniversalVariable, i.e. we extend the current list of arguments with
+    // nameOfUniversalVariable and stop the loop for the current pair of terms
+    unifyPairAccordingTo( seHs.productionRulesXS, termPair, nameOfUniversalVariable ) match {
+      case Some( update ) => return Option( update )
+      case None           =>
+    }
+
+    // If there are substitutions tL and tR for the existential variable of the cut formula then we can
+    // replace tL or tR with nameOfExistentialVariable, i.e. we extend the current list of arguments with
+    // nameOfExistentialVariable and stop the loop for the current pair of terms
+    unifyPairAccordingTo( seHs.productionRulesYS, termPair, nameOfExistentialVariable ) match {
+      case Some( update ) => return Option( update )
+      case None           =>
+    }
+
+    // Since we could not unify the pair so far, we have to check whether the outermost function of the terms
+    // is equal, whether the terms are equal, whether the terms are eigenvariables, or whether the pair is
+    // not unifiable
+    val ( tL, tR ) = termPair
+    val Apps( nameOfArgL, argsOfArgL ) = tL
+    val Apps( nameOfArgR, argsOfArgR ) = tR
+
+    // If the terms are equal, we have to check whether the terms contain eigenvariables and replace them
+    if ( ( nameOfArgL == nameOfArgR ) && ( argsOfArgL.length == argsOfArgR.length ) ) {
+
+      if ( tL.syntaxEquals( seHs.universalEigenvariable ) ) return Option( nameOfUniversalVariable )
+
+      seHs.existentialEigenvariables.foreach( existentialEigenvariable => if ( tL.syntaxEquals( existentialEigenvariable ) ) {
+        return Option( nameOfExistentialVariable )
+      } )
+
+      if ( argsOfArgL.length == 0 ) return Option( tL.asInstanceOf[FOLTerm] )
+
+      unify(
+        seHs,
+        argsOfArgL.zip( argsOfArgR ),
+        nameOfExistentialVariable,
+        nameOfUniversalVariable
+      ) match {
+          case Some( r ) => {
+            if ( argsOfArgL.length == r.length ) return Option( Apps( nameOfArgL, r ).asInstanceOf[FOLTerm] )
+          }
+          case None =>
+        }
+
+    }
+
+    None
+  }
+
+  private def unifyPairAccordingTo(
+    productionRules: List[( Expr, Expr )],
+    termPair:        ( Expr, Expr ),
+    name:            FOLVar
+  ): Option[FOLTerm] = {
+
+    val ( tL, tR ) = termPair
+
+    productionRules.foreach( productionRuleX => {
+
+      val ( productionRuleXL, productionRuleXR ) = productionRuleX
+
+      if ( productionRuleXL.syntaxEquals( tL ) && productionRuleXR.syntaxEquals( tR ) ) return Option( name )
+    } )
+
+    None
   }
 
 }
