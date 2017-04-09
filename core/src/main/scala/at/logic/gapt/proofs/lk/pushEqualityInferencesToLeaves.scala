@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr.{ Abs, All, And, Ex, Expr, Formula, Imp, Neg, Or, Substitution, freeVariables, rename }
+import at.logic.gapt.proofs.expansion.instReplCtx
 import at.logic.gapt.proofs.{ Ant, SequentConnector, SequentIndex, Suc }
 
 object pushEqualityInferencesToLeaves {
@@ -739,21 +740,5 @@ object splitEquality {
       case Ant( _ ) =>
         val equalityInference = EqualityLeftRule( subProof, equation, auxiliary, replacementContext )
         ( equalityInference, equalityInference.getSequentConnector )
-    }
-}
-
-/**
- * Instantiates the quantifier inside a replacement context.
- *
- * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
- */
-private object instReplCtx {
-  def apply( ctx: Abs, term: Expr ): Abs =
-    ctx match {
-      case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
-        val newX = rename( x, freeVariables( term ) )
-        instReplCtx( Abs( newX, Substitution( x -> newX )( quantFormula ) ), term )
-      case Abs( x, quantFormula: Formula ) =>
-        Abs( x, instantiate( quantFormula, term ) )
     }
 }
