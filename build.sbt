@@ -185,7 +185,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
       "com.lihaoyi" %% "ammonite-ops" % "0.8.2",
-      "ch.qos.logback" % "logback-classic" % "1.2.2",
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
