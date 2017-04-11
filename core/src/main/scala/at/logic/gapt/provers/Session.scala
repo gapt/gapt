@@ -380,9 +380,11 @@ object Session {
           assertedFormulas = formulaStack.pop; ()
         case Assert( formula ) =>
           assertedFormulas += formula; ()
-        case CheckSat                => !checkValidity( assertedFormulas ++: Sequent() )
-        case Ask( input )            => input
-        case _: SessionCommand[Unit] => ()
+        case AssertLabelled( formula, _ ) =>
+          assertedFormulas += formula; ()
+        case CheckSat => !checkValidity( assertedFormulas ++: Sequent() )
+        case Ask( input ) => input
+        case DeclareFun( _ ) | DeclareSort( _ ) | SetLogic( _ ) | SetOption( _, _ ) | Tell( _ ) => ()
       }
     }
   }

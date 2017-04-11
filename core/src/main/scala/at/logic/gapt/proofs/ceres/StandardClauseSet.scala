@@ -77,10 +77,10 @@ object SimplifyStruct {
     case Dual( x )                           => Dual( SimplifyStruct( x ) )
     case Times( x, EmptyTimesJunction(), _ ) => SimplifyStruct( x )
     case Times( EmptyTimesJunction(), x, _ ) => SimplifyStruct( x )
-    case Times( x, Dual( y: Struct[Data] ), aux ) if x.formula_equal( y ) =>
+    case Times( x, Dual( y ), aux ) if x.formula_equal( y ) =>
       //println("tautology deleted")
       EmptyPlusJunction()
-    case Times( Dual( x: Struct[Data] ), y, aux ) if x.formula_equal( y ) =>
+    case Times( Dual( x ), y, aux ) if x.formula_equal( y ) =>
       //println("tautology deleted")
       EmptyPlusJunction()
     case Times( x, y, aux ) =>
