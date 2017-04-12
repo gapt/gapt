@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.expr.{ Abs, All, And, Ex, Expr, Formula, Imp, Neg, Or, Substitution, freeVariables, rename }
+import at.logic.gapt.expr.{ Abs, All, And, Ex, Imp, Neg, Or, Substitution, freeVariables, rename }
 import at.logic.gapt.proofs.expansion.instReplCtx
 import at.logic.gapt.proofs.{ Ant, SequentConnector, SequentIndex, Suc }
 
@@ -21,6 +20,28 @@ object pushEqualityInferencesToLeaves {
 
     override protected def recurse( proof: LKProof, arg: Unit ) = {
       proof match {
+        case EqualityLeftRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakeningOnlySubTree( weakening ) =>
+          ( proof, SequentConnector( proof.conclusion ) )
+
+        case EqualityLeftRule( weakening @ WeakeningRightRule( _, _ ), _, _, _ ) if weakeningOnlySubTree( weakening ) =>
+          ( proof, SequentConnector( proof.conclusion ) )
+
+        case EqualityRightRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakeningOnlySubTree( weakening ) =>
+          ( proof, SequentConnector( proof.conclusion ) )
+
+        case EqualityRightRule( weakening @ WeakeningRightRule( _, _ ), _, _, _ ) if weakeningOnlySubTree( weakening ) =>
+          ( proof, SequentConnector( proof.conclusion ) )
+
+        case equality @ EqualityLeftRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq && !weakeningOnlySubTree( weakening ) =>
+          val ( newSubProof, connector ) = pushSingleWeakeningToLeaves.withConnector( weakening )
+          val ( newProof, _ ) = recurse( EqualityLeftRule( newSubProof, connector.child( equality.eq ), connector.child( equality.aux ), equality.replacementContext ), () )
+          ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+
+        case equality @ EqualityRightRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq && !weakeningOnlySubTree( weakening ) =>
+          val ( newSubProof, connector ) = pushSingleWeakeningToLeaves.withConnector( weakening )
+          val ( newProof, _ ) = recurse( EqualityRightRule( newSubProof, connector.child( equality.eq ), connector.child( equality.aux ), equality.replacementContext ), () )
+          ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+
         case EqualityLeftRule( _, _, _, _ ) | EqualityRightRule( _, _, _, _ ) =>
           val ( reducedProof, connector ) = super.recurse( proof, () )
           equalityReduction( reducedProof ) match {

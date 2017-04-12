@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.lk.ReductiveCutElimination._
 import at.logic.gapt.proofs.{ Context, SequentConnector }
-import at.logic.gapt.prooftool.prooftool
 
 import scala.collection.mutable
 
@@ -299,7 +298,7 @@ class ReductiveCutElimination {
 
     def terminateReduction( proof: LKProof ): Boolean = isACNFTop( proof )
 
-    this( PushWeakeningToLeaves( proof ), terminateReduction, reduction, cleanStructRules )
+    this( pushAllWeakeningsToLeaves( proof ), terminateReduction, reduction, cleanStructRules )
   }
 }
 

@@ -805,6 +805,18 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     val reduction = pushEqualityInferencesToLeaves( proof )
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[EqualityRightRule]
-    reduction.subProofAt( 0 :: 0 :: Nil ) must beAnInstanceOf[EqualityLeftRule]
+    reduction.subProofAt( 0 :: Nil ) must beAnInstanceOf[EqualityLeftRule]
+  }
+
+  "reduction procedure should not push equality inferences into weakening-only subtree" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( ( "" -> hof"s = t" ) +: ( "" -> hof"A(s)" ) +: Sequent() :+ ( "" -> hof"B(t)" ) )
+      u ( WeakeningLeftRule( _, hof"r = u" ) )
+      u ( EqualityRightRule( _, Ant( 1 ), Suc( 0 ), Abs( hov"x", le"B(x):o" ) ) )
+      u ( EqualityLeftRule( _, Ant( 1 ), Ant( 2 ), Abs( hov"x", le"A(x):o" ) ) ) qed )
+    val reduction = pushEqualityInferencesToLeaves( proof )
+    println( proof )
+    proof.conclusion must beMultiSetEqual( reduction.conclusion )
+    reduction.subProofAt( 0 :: 0 :: Nil ) must beAnInstanceOf[WeakeningLeftRule]
   }
 }

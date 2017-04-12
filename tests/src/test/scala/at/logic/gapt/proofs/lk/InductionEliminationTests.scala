@@ -94,8 +94,8 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       escargot
     }
 
-    val term_x = le"s(s(s(0)))"
-    val term_y = le"s(s(s(0)))"
+    val term_x = le"s(s(0))"
+    val term_y = le"s(s(0))"
 
     val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
       new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
@@ -164,8 +164,8 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val proof = proof_state.partialProof
 
-    val term_x = le"s(s(s(s(0))))"
-    val term_y = le"s(s(s(0)))"
+    val term_x = le"s(s(s(0)))"
+    val term_y = le"s(s(0))"
 
     val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
       new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
