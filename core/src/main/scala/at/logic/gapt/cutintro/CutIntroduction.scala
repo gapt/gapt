@@ -116,8 +116,8 @@ case class SchematicExtendedHerbrandSequent( us: Sequent[( FOLFormula, Seq[Seq[F
 object vtratgToSEHS {
   def apply( encoding: InstanceTermEncoding, g: VTRATG ): SchematicExtendedHerbrandSequent = {
     val us = encoding.endSequent zip encoding.symbols map {
-      case ( u: FOLFormula, sym ) =>
-        u -> g.rightHandSides( g.startSymbolNT ).map( _.head ).toList.
+      case ( u, sym ) =>
+        u.asInstanceOf[FOLFormula] -> g.rightHandSides( g.startSymbolNT ).map( _.head ).toList.
           collect { case Apps( `sym`, args ) => args map { _.asInstanceOf[FOLTerm] } }
     }
     val slist = g.nonTerminals.filter( _ != g.startSymbolNT ).

@@ -48,12 +48,6 @@ trait Struct[Data] {
 }
 
 object Times {
-  def apply[Data]( left: Struct[Data], right: Struct[Data], data: List[Data] ): Times[Data] =
-    new Times( left, right, data )
-
-  def apply[Data]( left: Struct[Data], right: Struct[Data] ): Times[Data] =
-    new Times( left, right, Nil )
-
   //create a series of of times applications and add the same data to each
   def apply[Data]( structs: Vector[Struct[Data]], aux: List[Data] ): Struct[Data] = structs match {
     case Vector()                  => EmptyTimesJunction()
@@ -61,11 +55,9 @@ object Times {
     case Vector( s1 )              => s1
     case s1 +: tail                => apply( s1, apply( tail, aux ), aux )
   }
-
-  def unapply[Data]( t: Times[Data] ) = Some( ( t.left, t.right, t.data ) )
 }
 
-class Times[Data]( val left: Struct[Data], val right: Struct[Data], val data: List[Data] ) extends Struct[Data] {
+case class Times[Data]( left: Struct[Data], right: Struct[Data], data: List[Data] = Nil ) extends Struct[Data] {
   override def toString(): String = "(" + left + " ⊗ " + right + ")"
   override def formula_equal( s: Struct[Data] ) = s match {
     case Times( x, y, aux ) => left.formula_equal( x ) && right.formula_equal( y ) &&

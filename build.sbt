@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
-val Version = "2.6-SNAPSHOT"
+val Version = "2.7-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -185,7 +185,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
       "com.lihaoyi" %% "ammonite-ops" % "0.8.2",
-      "ch.qos.logback" % "logback-classic" % "1.2.1",
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
@@ -193,7 +193,7 @@ lazy val core = project.in( file( "core" ) ).
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
-      "com.itextpdf" % "itextpdf" % "5.5.10",
+      "com.itextpdf" % "itextpdf" % "5.5.11",
       "org.scilab.forge" % "jlatexmath" % "1.0.4"
     )
   )
@@ -259,7 +259,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.0"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.1"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )

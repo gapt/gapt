@@ -107,13 +107,15 @@ class LKToLKskTest extends Specification {
   }
 
   "lattice proof" in {
-    val lk = regularize( eliminateDefinitions( lattice.defs )( lattice.p ) )
+    import lattice._
+    val lk = regularize( eliminateDefinitions( proof ) )
     val lksk = skolemizeInferences( lk )
     lksk.conclusion must_== lk.conclusion
   }
 
   "tape proof" in {
-    val lk = eliminateDefinitions( tape.defs )( tape.p )
+    import tape._
+    val lk = eliminateDefinitions( proof )
     val lksk = skolemizeInferences( lk )
     lksk.conclusion must_== lk.conclusion
   }

@@ -12,7 +12,7 @@ import org.specs2.mutable._
 import BetaReduction._
 
 object PDAnalysis extends AnalysisWithCeresOmega {
-  val pdb = ExtendedProofDatabase( Map( hoa"THEPROOF" -> primediv.proof ), Map(), primediv.defs )
+  val pdb = ExtendedProofDatabase( Map( hoa"THEPROOF" -> primediv.proof ), Map(), primediv.ctx.definitions )
 
   override def proofdb() = pdb;
 

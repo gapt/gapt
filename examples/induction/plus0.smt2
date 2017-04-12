@@ -1,5 +1,4 @@
-; FIXME: qmaxsat likes to produce weird grammars
-; viper --treegrammar --qtys ""
+; solve with: viper --treegrammar --qtys ""
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 (define-fun-rec plus ((x nat) (y nat)) nat

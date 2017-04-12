@@ -35,7 +35,10 @@ class PreSubstitution( val map: Map[Var, Expr], val typeMap: Map[TVar, Ty] ) {
 
   def asFOLSubstitution: FOLSubstitution = {
     require( typeMap.isEmpty )
-    FOLSubstitution( map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
+    FOLSubstitution( map map {
+      case ( l: FOLVar, r: FOLTerm ) => l -> r
+      case ( l, r )                  => throw new MatchError( l -> r )
+    } )
   }
 
   def +( v: Var, t: Expr ): PreSubstitution = new PreSubstitution( map + ( ( v, t ) ), typeMap )

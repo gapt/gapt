@@ -3,13 +3,11 @@ package at.logic.gapt.proofs.gaptic.tactics
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
+import at.logic.gapt.proofs.expansion.ExpansionProofToLK
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.reduction._
-import at.logic.gapt.proofs.resolution.{ ResolutionToLKProof, eliminateSplitting }
 import at.logic.gapt.provers.ResolutionProver
-import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 import at.logic.gapt.provers.viper.aip.axioms._
@@ -171,16 +169,53 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
     }
 }
 
-case class UnfoldTacticHelper( definitions: Seq[String] )( implicit ctx: Context ) {
+case class UnfoldTacticHelper( definitions: Seq[String], maxSteps: Option[Int] = None )( implicit ctx: Context ) {
+  def atMost( steps: Int ): UnfoldTacticHelper = copy( maxSteps = Some( steps ) )
+
   def in( labels: String* ) = labels.foldLeft[Tactical[Unit]]( skip ) {
-    ( acc, l ) => acc andThen UnfoldTactic( l, definitions )
+    ( acc, l ) => acc andThen UnfoldTactic( l, definitions, maxSteps )
   }
 }
 
-case class UnfoldTactic( target: String, definitions: Seq[String] )( implicit ctx: Context ) extends Tactic[Unit] {
+case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Option[Int] )( implicit ctx: Context ) extends Tactic[Unit] {
   def unfold( main: Formula ): Formula = {
-    val defsToUnfold = ctx.get[Context.Definitions].filter( definitions contains _._1 )
-    normalize( ReductionRule( defsToUnfold, BetaReduction ), main ).asInstanceOf[Formula]
+    val base = ctx.normalizer
+    def normalizeArgs( as: List[Expr], remainingSteps: Int ): ( List[Expr], Int ) =
+      as match {
+        case Nil => ( Nil, remainingSteps )
+        case a :: as_ =>
+          val ( a_, remainingSteps_ ) = normalize( a, remainingSteps )
+          val ( as__, remainingSteps__ ) = normalizeArgs( as_, remainingSteps_ )
+          ( a_ :: as__, remainingSteps__ )
+      }
+    def normalize( expr: Expr, remainingSteps: Int ): ( Expr, Int ) = {
+      val Apps( hd, as ) = expr
+      ( hd match {
+        case Const( n, _ ) =>
+          if ( !definitions.contains( n ) )
+            ( None, remainingSteps )
+          else if ( remainingSteps == 0 )
+            ( None, remainingSteps )
+          else
+            ( base.reduce1( expr ), remainingSteps - 1 )
+        case _ =>
+          ( base.reduce1( expr ), remainingSteps )
+      } ) match {
+        case ( Some( expr_ ), remainingSteps_ ) =>
+          normalize( expr_, remainingSteps_ )
+        case ( None, _ ) =>
+          hd match {
+            case Abs.Block( vs, sub ) if vs.nonEmpty =>
+              val ( sub_, remainingSteps_ ) = normalize( sub, remainingSteps )
+              Abs.Block( vs, sub_ ) -> remainingSteps_
+            case _ =>
+              val ( as_, remainingSteps_ ) = normalizeArgs( as, remainingSteps )
+              ( hd( as_ ), remainingSteps_ )
+          }
+      }
+    }
+
+    normalize( main, maxSteps.getOrElse( -1 ) )._1.asInstanceOf[Formula]
   }
 
   def apply( goal: OpenAssumption ) =
