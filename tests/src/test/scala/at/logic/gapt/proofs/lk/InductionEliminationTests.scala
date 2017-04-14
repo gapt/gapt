@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15 }
 import at.logic.gapt.expr.Substitution
+import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Context, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
@@ -21,37 +22,49 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       case _                        => false
     } )
 
-  "induction should be unfolded and cuts should be eliminated" in {
-    implicit val ctx = prop_08.ctx
-    val proof = regularize( prop_08.proof1 )
-    val term_n = le"S(S(S(Z)))"
-    val term_m = le"S(S(S(S(S(Z)))))"
-    val term_k = le"S(S(S(S(S(S(S(Z)))))))"
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"n:Nat" -> term_n, hov"m:Nat" -> term_m, hov"k:Nat" -> term_k ) ),
-      proof
-    )
-    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-    if ( !isInductionFree( inductionFree ) || !isCutFree( inductionFree ) ) {
-      failure
+  private def requireTip( test: => Any ) = {
+    if ( TipSmtParser.isInstalled ) {
+      test
+    } else {
+      "tip not installed" in skipped( "tip tool is not installed" )
     }
-    sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
   }
 
-  "induction should be eliminated" in {
-    implicit val ctx = prop_15.ctx
-    val proof = regularize( prop_15.proof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ) )
-    val term_x = le"S(S(S(S(S(S(S(Z)))))))"
-    val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs ) ),
-      proof
-    )
-    val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-    if ( !isInductionFree( inductionFree ) ) {
-      failure
+  requireTip {
+    "induction should be unfolded and cuts should be eliminated" in {
+      implicit val ctx = prop_08.ctx
+      val proof = regularize( prop_08.proof1 )
+      val term_n = le"S(S(S(Z)))"
+      val term_m = le"S(S(S(S(S(Z)))))"
+      val term_k = le"S(S(S(S(S(S(S(Z)))))))"
+      val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
+        new Substitution( Map( hov"n:Nat" -> term_n, hov"m:Nat" -> term_m, hov"k:Nat" -> term_k ) ),
+        proof
+      )
+      val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
+      if ( !isInductionFree( inductionFree ) || !isCutFree( inductionFree ) ) {
+        failure
+      }
+      sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
     }
-    sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
+  }
+
+  requireTip {
+    "induction should be eliminated" in {
+      implicit val ctx = prop_15.ctx
+      val proof = regularize( prop_15.proof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ) )
+      val term_x = le"S(S(S(S(S(S(S(Z)))))))"
+      val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
+      val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
+        new Substitution( Map( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs ) ),
+        proof
+      )
+      val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
+      if ( !isInductionFree( inductionFree ) ) {
+        failure
+      }
+      sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
+    }
   }
 
   "all inductions should be eliminated" in {
