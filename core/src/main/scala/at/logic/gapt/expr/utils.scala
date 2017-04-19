@@ -210,3 +210,26 @@ object toImplications {
 
   def apply( formula: FOLFormula ): FOLFormula = apply( formula.asInstanceOf[Formula] ).asInstanceOf[FOLFormula]
 }
+
+object isConstructorForm {
+  /**
+   * Checks whether a term is in constructor form.
+   * @param term The term that is to be checked.
+   * @param ctx The context which defines inductive types, etc.
+   * @return true if the term is in constructor form, false otherwise.
+   */
+  def apply( term: Expr )( implicit ctx: Context ): Boolean = {
+    val constructors = ctx.getConstructors( term.ty.asInstanceOf[TBase] ).get
+    val Apps( head, arguments ) = term
+    constructors.contains( head ) && arguments.filter( _.ty == term.ty ).forall( apply _ )
+  }
+}
+
+object isGround {
+  /**
+   * Checks whether an expression is ground.
+   * @param expr The expression that is to be checked.
+   * @return true if the given expression does not contain any free variables, false otherwise.
+   */
+  def apply( expr: Expr ): Boolean = freeVariables( expr ).isEmpty
+}

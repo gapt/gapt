@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr.{ Abs, All, And, Ex, Imp, Neg, Or, Substitution, freeVariables, rename }
 import at.logic.gapt.proofs.expansion.instReplCtx
-import at.logic.gapt.proofs.{ Ant, SequentConnector, SequentIndex, Suc }
+import at.logic.gapt.proofs.{ Ant, SequentConnector, SequentIndex, Suc, guessPermutation }
 
 object pushEqualityInferencesToLeaves {
 
@@ -10,7 +10,10 @@ object pushEqualityInferencesToLeaves {
    * Pushes equality inferences to the leaves.
    *
    * @param proof The proof to which this transformation is applied
-   * @return A proof of the same end-sequent.
+   * @return A proof of the same end-sequent which is obtained from the given proof
+   *        by moving all equality inferences and the weakening inferences that introduce equality inferences towards
+   *        the leaves. Every branch of the resulting proof ends with a sequence of zero or more equality inferences
+   *        followed by zero or more weakening inferences followed by an axiom.
    */
   def apply( proof: LKProof ): LKProof = {
     visitor( proof, () )
@@ -714,8 +717,24 @@ object equalityLeftReduction {
   }
 }
 
-object splitEquality {
+private object splitEquality {
 
+  /**
+   * Splits an equality inference according to the given subproofs.
+   *
+   * @param equality The equality inference to be split.
+   * @param subProofs A list of 3-tuples whose first components are the subproofs for which the equality inference is
+   *                  split; the second component are sequent connectors relating the equality's upper sequent with the
+   *                  conclusion of the respective subproofs; the third component are the replacement contexts which
+   *                  are used if the equality inference is split for the corresponding subproof.
+   * @return A pair whose first component is list of proofs which are obtained from the given subproofs by inserting an
+   *         equality inference as last inference if the conclusion of the subproof contains a parent of the auxiliary
+   *         formula of the given equality inference. If an equality is inserted to a subproof but the equality formula
+   *         has no parent in the subproof's conclusion, then a weakening inference introducing the equality formula is
+   *         added right above the equality inference. Each resulting proof has a sequent connector which relates the
+   *         given proof's conclusion with the conclusion of the new proof. The second component of the returned tuple
+   *         is a boolean indicating whether a weakening inference was added to some resulting proof.
+   */
   def apply( equality: EqualityRule, subProofs: Seq[( LKProof, SequentConnector, Abs )] ): ( Seq[( LKProof, SequentConnector )], Boolean ) = {
     val results: Seq[( LKProof, SequentConnector, Boolean )] =
       for {
@@ -730,7 +749,21 @@ object splitEquality {
     )
   }
 
-  def insertEquality( equality: EqualityRule, subProof: LKProof, connector: SequentConnector, replacementContext: Abs ): ( LKProof, SequentConnector, Boolean ) = {
+  /**
+   * Inserts an equality inference as last inference of the given subproof.
+   *
+   * @param equality Describes the formulas on which inserted equality inference operates.
+   * @param subProof The subproof to which the equality inference is added.
+   * @param connector Defines the parents of formulas in the equality's upper sequent in the subproof's conclusion.
+   * @param replacementContext The replacement context which is used for the new equality inference.
+   * @return A 3-tuple consisting of: A proof obtained by adding an equality inference to the specified subproof for
+   *         the parents of the formulas described by the given equality inference and the sequent connector. A
+   *         weakening weakening inference is added immediately above the new equality inference if the equality
+   *         formula has no parent in the given subproof; A sequent connector which describes the parent formulas with
+   *         respect to the given subproof's conclusion and the newly introduced inferences; A boolean indicating
+   *         whether a weakening inference was added.
+   */
+  private def insertEquality( equality: EqualityRule, subProof: LKProof, connector: SequentConnector, replacementContext: Abs ): ( LKProof, SequentConnector, Boolean ) = {
     if ( connector.parents( equality.eq ) == Seq() ) {
       val newSubProof = WeakeningLeftRule( subProof, equality.equation )
       val ( newProof, newProofConnector ) = createEquality(
@@ -751,6 +784,16 @@ object splitEquality {
     }
   }
 
+  /**
+   * Inserts an equality inference as the last inference of the given proof.
+   *
+   * @param subProof The proof to which the equality inference is added.
+   * @param equation The index of the equality formula in the proof's conclusion.
+   * @param auxiliary The index of the auxiliary formula in the proof's conclusion.
+   * @param replacementContext The replacement context which is to be used for the equality inference.
+   * @return A proof obtained from the given proof by adding an equality inference with the given parameters
+   *         as the last inference.
+   */
   private def createEquality(
     subProof: LKProof, equation: SequentIndex, auxiliary: SequentIndex, replacementContext: Abs
   ): ( LKProof, SequentConnector ) =

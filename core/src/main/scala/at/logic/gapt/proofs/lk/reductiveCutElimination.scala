@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.lk.ReductiveCutElimination._
-import at.logic.gapt.proofs.{ Context, SequentConnector }
+import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
 
 import scala.collection.mutable
 
@@ -115,34 +115,16 @@ class ReductiveCutElimination {
   var recordSteps: Boolean = false
 
   /**
-   * This methods implements a version of Gentzen's cut-elimination
-   * proof parameterized by a strategy given by pred_cut and
-   * pred_done.
+   * Transforms a proof by applying a reduction until some specified criterion is satisfied.
    *
-   * The method traverses an LKProof recursively from the bottom
-   * up. When it reaches a cut, the method calls pred_cut(global, sub),
-   * where global is complete proof under consideration, while sub
-   * is the subproof of global ending in the cut. If this call returns
-   * true, the cut is reduced using the usual Gentzen cut-elimination
-   * rules. If the call returns false, the traversion continues.
-   *
-   * After every application of a reduction, pred_done(global) is called.
-   * If it returns true, the algorithm terminates, returning the current proof.
-   * If it returns false, the algorithm continues to traverse the proof.
-   *
-   * This means that pred_cut and pred_done allow the definition of a (not necessarily
-   * terminating!) cut-elimination strategy. A standard implementation (reducing
-   * left-uppermost cuts until the proof is cut-free) is provided by another
-   * apply method in this class.
-   *
-   * @param proof The proof to subject to cut-elimination.
-   * @param terminateReduction A predicate deciding when to terminate the algorithm.
-   * @param reduction  A function defining how cut should be reduced
-   * @param cleanStructRules Tells the algorithm whether or not to clean
-   * the structural rules. The default value is on, i.e., clean the structural
-   * rules
-   *
-   * @return The proof as it is after pred_done returns true.
+   * @param proof The proof to which the transformation is applied.
+   * @param terminateReduction A predicate which decides on the current global proof whether the transformation
+   *                           has reached its final state.
+   * @param reduction A local reduction function.
+   * @param cleanStructRules Indicates whether structural rules are cleaned after each step.
+   * @return A proof that is obtained from the given proof by applying the reduction function iteratively and
+   *         simultaneously to all lowermost redexes of the current proof until the specified criterion is
+   *         satisfied.
    */
   def apply(
     proof:              LKProof,
@@ -196,9 +178,16 @@ class ReductiveCutElimination {
     this( proof, terminateReduction, reduction, cleanStructRules )
   }
 
-  private def hasRedex[T]( reduction: LKProof => Option[T], proof: LKProof ) =
-    proof.subProofs.exists( reduction( _ ).nonEmpty )
-
+  /**
+   * Eliminates inductions from a proof.
+   *
+   * @param proof The proof to which the transformation is applied.
+   * @param cleanStructRules Indicates whether structural rules are cleaned during the reduction.
+   * @param ctx Defines constants, types, etc.
+   * @return A proof obtained by repeated application of induction unfolding; equality reduction and free-cut
+   *         elimination. The reduction ends if there is no more unfoldable induction i.e. there is no induction
+   *         inference with ground constructor form induction term.
+   */
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
     var newProof = proof
     do {
@@ -300,11 +289,6 @@ class ReductiveCutElimination {
 
     this( pushAllWeakeningsToLeaves( proof ), terminateReduction, reduction, cleanStructRules )
   }
-}
-
-object guessPermutation {
-  def apply( oldProof: LKProof, newProof: LKProof ): ( LKProof, SequentConnector ) =
-    ( newProof, SequentConnector.guessInjection( newProof.conclusion, oldProof.conclusion ).inv )
 }
 
 object gradeReduction {
@@ -896,25 +880,49 @@ object inductionLeftReduction {
   }
 }
 
-object isConstructorForm {
+object freeCutElimination {
   /**
-   * Checks whether a term is in constructor form.
-   * @param term The term that is to be checked.
-   * @param ctx The context which defines inductive types, etc.
-   * @return true if the term is in constructor form, false otherwise.
+   * See [[FreeCutElimination.apply()]]
    */
-  def apply( term: Expr )( implicit ctx: Context ): Boolean = {
-    val constructors = ctx.getConstructors( term.ty.asInstanceOf[TBase] ).get
-    val Apps( head, arguments ) = term
-    constructors.contains( head ) && arguments.filter( _.ty == term.ty ).forall( apply _ )
+  def apply( proof: LKProof )( implicit ctx: Context ) = {
+    ( new FreeCutElimination ).apply( proof )
   }
 }
 
-object isGround {
+/**
+ * Free-cut elimination for proofs with equality and induction.
+ * @param ctx Defines constants, types, etc.
+ */
+class FreeCutElimination( implicit val ctx: Context ) {
+
   /**
-   * Checks whether an expression is ground.
-   * @param expr The expression that is to be checked.
-   * @return true if the given expression does not contain any free variables, false otherwise.
+   * Eliminates free-cuts with respect to induction inferences and equality rules.
+   * @param proof The proof to which the transformation is applied.
+   * @return A proof which does not contain any free-cuts.
    */
-  def apply( expr: Expr ): Boolean = freeVariables( expr ).isEmpty
+  def apply( proof: LKProof ): LKProof = visitor.apply( proof, () )
+
+  private object visitor extends LKVisitor[Unit] {
+    override protected def recurse( proof: LKProof, arg: Unit ): ( LKProof, SequentConnector ) =
+      proof match {
+        case CutRule( _, _, _, _ ) =>
+          val ( tempProof, tempConnector ) = super.recurse( proof, () )
+          cutReduction( tempProof ) match {
+            case Some( newProof ) =>
+              val ( finalProof, _ ) = super.recurse( newProof, () )
+              ( finalProof, SequentConnector.guessInjection( finalProof.conclusion, proof.conclusion ).inv )
+            case None => ( tempProof, tempConnector )
+          }
+        case _ => super.recurse( proof, () )
+      }
+  }
+
+  private def cutReduction( proof: LKProof ): Option[LKProof] = proof match {
+    case cut @ CutRule( _, _, _, _ ) =>
+      gradeReduction( cut )
+        .orElse( leftRankReduction( cut ) )
+        .orElse( rightRankReduction( cut ) )
+        .orElse( inductionReduction( cut ) )
+    case _ => None
+  }
 }
