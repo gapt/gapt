@@ -1548,7 +1548,7 @@ q: at.logic.gapt.proofs.lk.LKProof =
 [p13] ∀y (P(b, y) ⊃ Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p12, Ant(0), P(b, y) ⊃ Q(b, y), a, y))
 [p12] P(b, a) ⊃ Q(b, a) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p11, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p11] P(b, a) ⊃ Q(b, a) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p10, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), a, y))
-[p10] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a)    (ContractionRightRule(p9, Suc(0), Suc(1)))
+[p10] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a)    (ContractionRightRule(p9, Suc(1), Suc(0)))
 [p9] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬Q(b, a) ⊃ ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
 [p8] ¬Q(b, a), P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7,...
 \end{clilisting}
