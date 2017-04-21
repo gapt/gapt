@@ -216,7 +216,7 @@ object moveDefsUpward {
  *
  * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
  */
-private[expansion] object instReplCtx {
+object instReplCtx {
   def apply( ctx: Abs, term: Expr ): Abs =
     ctx match {
       case Abs( x, quantFormula ) if freeVariables( term ) contains x =>
