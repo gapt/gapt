@@ -71,18 +71,14 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( recSchem.languageWithDummyParameters ) ) !-- "extractRecSchem language validity"
       }
 
-    // FIXME: extend to equality
-    if ( !containsEqualityReasoning( p ) ) {
-      ReductiveCutElimination( p ) --? "cut-elim (input)"
-    }
+    ReductiveCutElimination( p ) --? "cut-elim (input)"
 
     cleanStructuralRules( p ) --? "cleanStructuralRules"
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       ( CutIntroduction( p ) --? "cut-introduction" flatten ) foreach { q =>
 
-        if ( !containsEqualityReasoning( q ) )
-          ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
+        ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
         CERES.CERESExpansionProof( q ) --? "CERESExpansionProof"
 
