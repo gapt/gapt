@@ -76,7 +76,6 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
   val subProofsPanel = new SubproofsPanel( this, subProofs )
   var aboveLinePanel: AboveLinePanel[F, T] = proof match {
     case p: ProofLink =>
-      println( "proof is a proof link" )
       new ProoflinkLabelPanel( this, p.referencedProof )
     case _ => subProofsPanel
   }
@@ -239,7 +238,6 @@ abstract class AboveLinePanel[F, T <: SequentProof[F, T]]( val parent: DrawSeque
  * @param referencedProof The name of the link.
  */
 class ProoflinkLabelPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentProof[F, T], referencedProof: Expr ) extends AboveLinePanel[F, T]( parent ) {
-  println( s"creating Latex label with text ${LatexExporter( referencedProof )}" )
   private val proofLinkLabel = new LatexLabel( parent.main, LatexExporter( referencedProof ) )
 
   override def endSequentLeftMarginWidth() = 0
