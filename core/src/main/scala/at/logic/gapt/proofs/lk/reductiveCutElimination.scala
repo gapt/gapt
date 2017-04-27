@@ -309,19 +309,11 @@ object gradeReduction {
       case ( LogicalAxiom( _ ), _ ) => Some( right )
       case ( _, LogicalAxiom( _ ) ) => Some( left )
 
-      //FIXME: What do we actually do in case of reflexivity axioms?
-      case ( ReflexivityAxiom( s ), TheoryAxiom( sequent ) ) =>
-        Some( TheoryAxiom( sequent.delete( aux2 ) ) )
-
       case ( TopAxiom, WeakeningLeftRule( subProof, Top() ) ) if right.mainIndices.head == aux2 =>
         Some( subProof )
 
       case ( WeakeningRightRule( subProof, Bottom() ), BottomAxiom ) if left.mainIndices.head == aux1 =>
         Some( subProof )
-
-      // If both cut rules are introduced in theory axiom, replace them by one theory axiom.
-      case ( TheoryAxiom( leftSequent ), TheoryAxiom( rightSequent ) ) =>
-        Some( TheoryAxiom( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) ) )
 
       // If either cut rule is introduced by weakening, delete one subproof and perform lots of weakenings instead.
       case ( l @ WeakeningRightRule( subProof, main ), r ) if l.mainIndices.head == aux1 => // The left cut formula is introduced by weakening

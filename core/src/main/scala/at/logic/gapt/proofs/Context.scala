@@ -7,6 +7,7 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
 import at.logic.gapt.proofs.lk.LKProof
 
+import scala.collection.immutable
 import scala.reflect.ClassTag
 
 /**
@@ -47,7 +48,6 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
       ( what, by ) <- get[Definitions].definitions
       whatC <- constant( what )
     } yield whatC -> by
-  def axioms: Set[HOLSequent] = get[Axioms].axioms
 
   /** Returns Some(const) if name is a constant. */
   def constant( name: String ): Option[Const] = get[Constants].constants.get( name )
@@ -237,13 +237,6 @@ object Context {
   }
   implicit val defsFacet: Facet[Definitions] = Facet( Definitions( Map() ) )
 
-  /** Theory axioms for LK proofs. */
-  case class Axioms( axioms: Set[HOLSequent] ) {
-    def +( ax: HOLSequent ) = copy( axioms + ax )
-    override def toString = axioms.mkString( "\n" )
-  }
-  implicit val axiomsFacet: Facet[Axioms] = Facet( Axioms( Set[HOLSequent]() ) )
-
   /** Inductive types, for each type we store its list of constructors. */
   case class StructurallyInductiveTypes( constructors: Map[String, Vector[Const]] ) {
     def +( ty: String, ctrs: Vector[Const] ) =
@@ -268,6 +261,21 @@ object Context {
 
   case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
     def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
+
+    def sequents: Iterable[HOLSequent] =
+      for ( ( _, ( _, seq ) ) <- names ) yield seq
+
+    def lookup( name: Expr ): Option[HOLSequent] =
+      ( for {
+        ( declName, declSeq ) <- names.values
+        subst <- syntacticMatching( declName, name )
+      } yield subst( declSeq ) ).headOption
+
+    def find( seq: HOLSequent ): Option[Expr] =
+      ( for {
+        ( declName, declSeq ) <- names.values
+        subst <- clauseSubsumption( declSeq, seq )
+      } yield subst( declName ) ).headOption
   }
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
@@ -276,6 +284,12 @@ object Context {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
       copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( referencedExpression, referencedProof ) ) ) ) ) )
 
+    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
+      for {
+        defs <- components.values
+        ( declName, defPrf ) <- defs
+        subst <- syntacticMatching( declName, name )
+      } yield ( defPrf, subst )
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
 
@@ -302,7 +316,11 @@ object Context {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
         Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
     }
-    implicit def fromAxiom( axiom: HOLSequent ): Update = Axiom( axiom )
+    implicit def fromAxiom( axiom: ( String, HOLSequent ) ): Update = {
+      val fvs = freeVariables( axiom._2 ).toVector.sortBy( _.toString )
+      val name = Const( axiom._1, FunctionType( Ti, fvs.map( _.ty ) ) )( fvs )
+      ProofNameDeclaration( name, axiom._2 )
+    }
   }
 
   /** Definition of a base type.  Either [[Sort]] or [[InductiveType]]. */
@@ -370,13 +388,6 @@ object Context {
       ctx.check( definition.by )
       ctx.state.update[Constants]( _ + definition.what )
         .update[Definitions]( _ + definition )
-    }
-  }
-
-  case class Axiom( sequent: HOLSequent ) extends Update {
-    override def apply( ctx: Context ): State = {
-      sequent.foreach( ctx.check( _ ) )
-      ctx.state.update[Axioms]( _ + sequent )
     }
   }
 

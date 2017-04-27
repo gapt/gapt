@@ -24,27 +24,24 @@ trait PrimeDefinitions extends TacticsProof {
   ctx += hoc"'*': nat>nat>nat"
   ctx += hoc"'<': nat>nat>o"
 
-  Seq(
-    hof" ∀x ∀y (x + 1) * y + x + 1 = (x + 1) * (y + 1)",
-    hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * u  * v)",
-    hof" ∀x ∀y ∀z ∀u ∀v (x = y + z * (u * v ) -> x = y + z * v  * u)",
-    hof" ∀(x:nat) ∀y (x = y -> y = x)",
-    hof" ∀k ∀l ∀r ∀m (k < m -> k + l*m = 0 + r*m -> 0 = k)",
-    hof" ∀x ∀y ∀z (1 < x ⊃ x*y != x*z + 1)",
-    hof" ∀x ¬1 + (x + 1) = 1",
-    hof" ∀k ∀n ∀l k + (n * (l + (1 + 1)) + l * (k + 1) + 1) = n + (n + (k + 1)) * (l + 1)",
-    hof" ∀x ∀y (1 < x -> ¬ 1 = y * x)",
-    hof" ∀x 0+x = x",
-    hof" ∀x x*1 = x",
-    hof" ∀x∀y (x*y+1=1 ⊃ x+1=1 ∨ y+1=1)",
-    hof" ∀x (1<x ⊃ x+1 != 1)",
-    hof" ∀x∀y∀z x*(y*z)=(x*y)*z",
-    hof" ∀x∀y x*y=y*x",
-    hof" ∀x ∀y (x < y -> 0 < y)",
-    hof" ∀x ∀y ∀z (1<y ∧ x=0+z*y ⊃ x!=1)",
-    hof" ∀x ∀y ∀z (y*z=x ⊃ x=0+z*y)",
-    hof" ∀x ∀y1 ∀y2 ∀z x + y1*z + y2*z = x + (y1+y2)*z"
-  ).flatMap( CNFp( _ ) ).foreach( ctx += _ )
+  ctx += "distrib1" -> hcl":- (x + 1) * y + x + 1 = (x + 1) * (y + 1)"
+  ctx += "mul_ac1" -> hcl"x = y + z * (u * v) :- x = y + z * u * v"
+  ctx += "mul_ac2" -> hcl"x = y + z * (u * v) :- x = y + z * v * u"
+  ctx += "divrem" -> hcl"k < m, k + l*m = 0 + r*m :- 0 = k"
+  ctx += "mul_smon" -> hcl"1 < x, x*y = x*z + 1 :-"
+  ctx += "add_two" -> hcl"1 + (x + 1) = 1 :-"
+  ctx += "add_mul1" -> hcl":- k + (n * (l + (1 + 1)) + l * (k + 1) + 1) = n + (n + (k + 1)) * (l + 1)"
+  ctx += "one_neq_mul" -> hcl"1 < x, 1 = y * x :-"
+  ctx += "zero_add" -> hcl":- 0+x = x"
+  ctx += "mul_one" -> hcl":- x*1 = x"
+  ctx += "mul_add_one" -> hcl"x*y+1=1 :- x+1=1, y+1=1"
+  ctx += "add_one_neq_one" -> hcl"1<x, x+1 = 1 :-"
+  ctx += "mul_assoc" -> hcl":- x*(y*z)=(x*y)*z"
+  ctx += "mul_comm" -> hcl":- x*y = y*x"
+  ctx += "zero_lt" -> hcl"x < y :- 0 < y"
+  ctx += "neq_one" -> hcl"1<y, x=0+z*y, x=1 :-"
+  ctx += "add_comm_zero" -> hcl"y*z=x :- x=0+z*y"
+  ctx += "distrib2" -> hcl":- x + y1*z + y2*z = x + (y1+y2)*z"
 
   //Definitions
   ctx += hof" set_1(k : ?a) = ( λl l = k )"

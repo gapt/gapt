@@ -1188,7 +1188,7 @@ class LKTest extends Specification {
 
   "EqualityLeftRule" should {
     "correctly construct a proof" in {
-      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] )
       EqualityLeftRule( ax, Ant( 0 ), Ant( 2 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1199,7 +1199,7 @@ class LKTest extends Specification {
     }
 
     "refuse to construct a proof" in {
-      val ax = Axiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
+      val ax = TheoryAxiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
       EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
       EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
@@ -1211,7 +1211,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pd, Ant( 2 ) -> Pc ) ) yield ( EqualityLeftRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1226,7 +1226,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pc, Ant( 2 ) -> Pd ) ) yield ( EqualityLeftRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1245,7 +1245,7 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax = Axiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
+      val ax = TheoryAxiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
 
       // end sequent of p1: P(d), A, c = d, B, C :- D, P(d), E
       val p = EqualityLeftRule( ax, Ant( 1 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1282,7 +1282,7 @@ class LKTest extends Specification {
 
   "EqualityRightRule" should {
     "correctly construct a proof" in {
-      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       EqualityRightRule( ax, Ant( 0 ), Suc( 0 ), le"λx P(x): o".asInstanceOf[Abs] )
       EqualityRightRule( ax, Ant( 0 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1293,7 +1293,7 @@ class LKTest extends Specification {
     }
 
     "refuse to construct a proof" in {
-      val ax = Axiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
+      val ax = TheoryAxiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
       EqualityRightRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
       EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
@@ -1305,7 +1305,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Suc( 0 ) -> Pd, Suc( 1 ) -> Pc ) ) yield ( EqualityRightRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1320,7 +1320,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val ax = Axiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Suc( 0 ) -> Pc, Suc( 1 ) -> Pd ) ) yield ( EqualityRightRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1339,7 +1339,7 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax = Axiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
+      val ax = TheoryAxiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
 
       // end sequent of p2: A, c = d, B, C :- D, E, P(c)
       val p = EqualityRightRule( ax, Ant( 1 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] )

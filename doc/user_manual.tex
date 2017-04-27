@@ -628,6 +628,7 @@ P(s(s(s(s(s(0))))), 0)
 ⊢
 P(0, s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
 [p21] P(0, s(s(s(s(s(0)))))) ⊢ P(0, s(s(s(s(s(0))))))    (LogicalA...
+
 \end{clilisting}
 
 \subsubsection{ND}
@@ -715,7 +716,7 @@ A context may contain declarations of:
   \item constants with previously declared types
   \item definitions
   \item Skolem functions
-  \item theory axioms
+  \item Proof links
 \end{itemize}
 
 Various data structures and algorithms in GAPT require the presence of an implicit value
@@ -731,12 +732,12 @@ symbols:
 \begin{tacticslisting}[nosig]
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
- 
+
  object ContextExample {
    implicit var ctx = Context.default
    ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
    ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
-   ctx += hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
+   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
    ctx += "1" -> le" s 0" //Adding a definition
    ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
  }
@@ -1188,6 +1189,7 @@ Some([derive]  ⊢
 [input] R(p_2, h_2), R(p_3, h_2) ⊢
 [input] R(p_1, h_2), R(p_3, h_2) ⊢
 [input] R...
+
 \end{clilisting}
 
 Just as in the first-order prover interface, you can call
@@ -1216,6 +1218,7 @@ Some([p402]
       (R(p_3, h_3) ∧ R(p_1, h_3) ∨ R(p_3, h_3) ∧ R(p_2, h_3)) ∨
       (R(p_4, h_3) ∧ R(p_1, h_3) ∨
         R(p_4,...
+
 \end{clilisting}
 
 \subsection{MaxSAT solver interface}
@@ -1358,6 +1361,7 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
 [p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
+
 gapt> Prover9 getExpansionProof sequent
 res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) ⊃ p(s(x)))
@@ -1384,6 +1388,7 @@ Some([p11] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p1, Suc(0), 
 [p5] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
 [p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0)...
+
 \end{clilisting}
 
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
@@ -1468,6 +1473,7 @@ Some([p34]  ⊢    (Resolution(p1, Suc(0), p33, Ant(0)))
 [p30] b + (c + (d + a)) = d + (c + (b + a)) ⊢    (Paramod(p20, Suc(0), true, p29, Ant(0), λx b + (c + (d + a)) = d + x))
 [p29] b + (c + (d + a)) = d + (b + a + c) ⊢    (Paramod(p21, Suc(0), true, p28, Ant(0), λx b + (c + (d + a)) = d + (x + c)))
 [p28] b + (c + (d + a)) = d + (a + b + c) ⊢    (Paramod(p22, Suc(0), tru...
+
 \end{clilisting}
 
 Escargot can also be used from the command-line using the \texttt{escargot.sh}
@@ -1538,6 +1544,7 @@ p: at.logic.gapt.proofs.lk.LKProof =
 [p21] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
 [p20] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)    (ContractionRightRule(p19, Suc(1), Suc(0)))
 [p19] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y), ¬Q(b, y) ⊃ ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18, Ant(0...
+
 \end{clilisting}
 %
 and then call the cut-elimination procedure:
@@ -1551,6 +1558,7 @@ q: at.logic.gapt.proofs.lk.LKProof =
 [p10] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a)    (ContractionRightRule(p9, Suc(1), Suc(0)))
 [p9] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬Q(b, a) ⊃ ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
 [p8] ¬Q(b, a), P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7,...
+
 \end{clilisting}
 
 
@@ -1729,6 +1737,7 @@ res43: at.logic.gapt.proofs.lk.LKProof =
 [p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
 [p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegLeftRule(p14, Suc(0)))
 [p14] ¬P(b, y) ∨ Q(b, y) ⊢ Q(b, y), ...
+
 \end{clilisting}
 
 You can also view this expansion proof in the graphical user interface by
@@ -1797,6 +1806,7 @@ acnf: at.logic.gapt.proofs.lk.LKProof =
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p283, Ant(2), Ant(0)))
 [p283] ∀x_2 (f(x_2) = 0 ∨ f(x_2) = s(0)),
 ∀x_1 ∀y_0 ...
+
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
@@ -1817,6 +1827,7 @@ et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
     (∀y_0 (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
             M(s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))), y_0) ∧
           y_0 <= M(s(M(x_1, s(M(s(M(...
+
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1852,6 +1863,7 @@ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(0...
+
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
@@ -1876,6 +1888,7 @@ P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
 [p22] ∀x1...
+
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
@@ -2058,7 +2071,7 @@ example when we use this function for lists of numbers, we would use the instanc
 
 The rules of LK are listed below. Proof trees are constructed top-down,
 starting with axioms and with each rule introducing new inferences. With the
-exception of the definition rules, theory axioms, and induction rules, the
+exception of the definition rules, proof links, and induction rules, the
 constructors of the rules only allow inferences that are actually valid. Note
 that the rules are presented here as if they always act upon the outermost
 formulas in the upper sequent, but this is only for convenience of
@@ -2096,12 +2109,10 @@ Apart from those basic constructors, there is also a multitude of convenience co
 \end{multicols}
 
 \begin{prooftree}
-\AxiomCm{}
-\RightLabelm{\mt{Theory axiom}}
+\AxiomCm{(t)}
+\RightLabelm{\mt{Proof link}}
 \UnaryInfCm{\Gamma \seq \Delta}
 \end{prooftree}
-
-Theory axioms may only contain atomic formulas.
 
 \subsubsection*{Cut}
 
@@ -2341,7 +2352,7 @@ The rules of ND are listed below. Classical logic is supported by providing the
 excluded middle rule. We use ND rules in sequent form.
 
 As in LK, proof trees are constructed top-down, starting with axioms and with
-each rule introducing new inferences. With exception of the theory axioms and
+each rule introducing new inferences. With exception of the proof links and
 the induction rules, the constructors of the rules only allow inferences that
 are actually valid. Note that the rules are presented here as if they always act
 upon the outermost formulas in the upper sequent, but this is only for

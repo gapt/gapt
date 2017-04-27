@@ -13,12 +13,10 @@ object tape extends TacticsProof {
   ctx += hof"A = (∀x (f(x) = 0 ∨ f(x) = 1))"
   ctx += hof"I(v) = (∀x ∃y f(x+y) = v)"
 
-  Seq(
-    hof"∀x∀y x+y = y+x",
-    hof"∀x∀y∀z (x+y)+z = x+(y+z)",
-    hof"∀x 0+x = x",
-    hof"∀x∀y x+y+1 != x"
-  ).flatMap( CNFp( _ ) ).foreach( ctx += _ )
+  ctx += "add_comm" -> hcl":- x+y = y+x"
+  ctx += "add_assoc" -> hcl":- (x+y)+z = x+(y+z)"
+  ctx += "zero_add" -> hcl":- 0+x = x"
+  ctx += "add_one_neq" -> hcl"x+y+1 = x :-"
 
   val lhs = Lemma( ( "A" -> fof"A" ) +: Sequent()
     :+ ( "I0" -> fof"I(0)" ) :+ ( "I1" -> fof"I(1)" ) ) {

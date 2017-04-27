@@ -29,7 +29,8 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
    */
   def apply( formulas: Formula* )( proof: LKProof ): LKProof = withSequentConnector( formulas: _* )( proof )._1
 
-  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.axioms.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
+    apply( ctx.get[Context.ProofNames].sequents.toSeq map { s => universalClosure( s.toFormula ) }: _* )( proof )
 
   /**
    *
@@ -37,9 +38,9 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
    * @return If A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,, is subsumed by some F in formulas, returns a proof of
    *         F, A,,1,,,...,A,,k,, :- B,,1,,,...,:B,,n,,. Otherwise the input axiom.
    */
-  protected override def visitTheoryAxiom( proof: TheoryAxiom, formulas: Seq[Formula] ) = {
+  protected override def visitProofLink( proof: ProofLink, formulas: Seq[Formula] ) = {
 
-    val TheoryAxiom( sequent ) = proof
+    val ProofLink( _, sequent ) = proof
     formulas match {
       case Seq() => ( proof, SequentConnector( sequent ) )
 
@@ -72,7 +73,7 @@ object makeTheoryAxiomsExplicit extends LKVisitor[Seq[Formula]] {
             }
             ( subProof, SequentConnector.findEquals( subProof.endSequent, sequent ) )
 
-          case _ => visitTheoryAxiom( proof, rest )
+          case _ => visitProofLink( proof, rest )
         }
     }
   }
