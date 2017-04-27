@@ -608,10 +608,7 @@ You can generate instances of these proof sequences by entering, e.g.,
 \begin{clilisting}
 gapt> val p = SumExampleProof( 5 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
-P(s(s(s(s(s(0))))), 0)
-⊢
-P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
+[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0) ⊢ P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
 [p24] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
 ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
 P(s(s(s(s(s(0))))), 0)
@@ -1297,9 +1294,7 @@ gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x = y ⊃ y = x)
   +^{a}
-    (∀y (a = y ⊃ y = a)
-      +^{b} ((a = b)+ ⊃ (b = a)-)
-      +^{c} ((a = c)+ ⊃ (c = a)-)),
+    (∀y (a = y ⊃ y = a) +^{b} ((a = b)+ ⊃ (b = a)-) +^{c} ((a = c)+ ⊃ (c = a)-)),
 ∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1))
   +^{b} (∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-))
   +^{c} (∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-))
@@ -1364,9 +1359,7 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 
 gapt> Prover9 getExpansionProof sequent
 res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(∀x (p(x) ⊃ p(s(x)))
-  +^{0} (p(0)+ ⊃ p(s(0))-)
-  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
 p(0)-
 :-
 p(s(s(0)))+)
@@ -1409,9 +1402,7 @@ The LeanCoP interface supports the \cli{getExpansionProof} as well:
 gapt> LeanCoP getExpansionProof sequent
 res33: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(p(0)-,
-∀x (p(x) ⊃ p(s(x)))
-  +^{0} (p(0)+ ⊃ p(s(0))-)
-  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
 :-
 p(s(s(0)))+)
 
@@ -1698,11 +1689,7 @@ gapt> expansion.shallow
 res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] =
-¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
-P(x, a) ⊃ Q(x, a)
-⊢
-¬Q(b, y) ⊃ ¬P(b, y)
+res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
 res41: Boolean = true
@@ -1818,15 +1805,15 @@ et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
         ((s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0))))- ∧
           wk-{s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0)))}))
   +^{s(M(x, x_0))}
-    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧
-          y_0 <= M(s(M(x, x_0)), y_0))
+    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧ y_0 <= M(s(M(x, x_0)), y_0))
       +^{s(M(x, x_0))}
         ((s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0))))- ∧
           wk-{s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0)))}))
   +^{s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0))))))}
-    (∀y_0 (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
+    (∀y_0
+        (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
             M(s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))), y_0) ∧
-          y_0 <= M(s(M(x_1, s(M(s(M(...
+          y_0 <= M(s(M(x_1, s(M(s(M(x,...
 
 gapt> prooftool(et)
 
@@ -1846,11 +1833,7 @@ Take an example proof:
 gapt> val p = LinearExampleProof(9)
 p: at.logic.gapt.proofs.lk.LKProof =
 [p36] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p35, Ant(0), Ant(1)))
-[p35] ∀x (P(x) ⊃ P(s(x))),
-∀x (P(x) ⊃ P(s(x))),
-P(0)
-⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
+[p35] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
 [p34] P(s(s(s(s(s(s(s(s(0))))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
 ∀x (P(x) ⊃ P(s(x))),
 P(0)
@@ -1858,11 +1841,7 @@ P(0)
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 [p33] P(s(s(s(s(s(s(s(s(s(0)))))))))) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (LogicalAxiom(P(s(s(s(s(s(s(s(s(s(0)))))))))): o))
 [p32] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))))))    (ContractionLeftRule(p31, Ant(0), Ant(1)))
-[p31] ∀x (P(x) ⊃ P(s(x))),
-∀x (P(x) ⊃ P(s(x))),
-P(0)
-⊢
-P(s(s(s(s(s(s(s(s(0...
+[p31] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0...
 
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
@@ -1995,7 +1974,7 @@ P(nil:list)- ∧
         (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
           +^{0}
             (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
-            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+              +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
@@ -2019,8 +1998,10 @@ P_is_nat(f_nonempty_nat),
 P_is_list(f_nonempty_list)
 ⊢
 P_P(f_nil) ∧
-    ∀x (P_is_list(x) ⊃
-        ∀y (P_is_nat(y) ⊃
+    ∀x
+      (P_is_list(x) ⊃
+        ∀y
+          (P_is_nat(y) ⊃
             ∀z (P_is_nat(z) ⊃ P_P(x) ⊃ P_P(f_cons(y, f_cons(z, x)))))) ⊃
   P_P(f_cons(f_0, f_cons(f_s(f_0), f_nil)))
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
@@ -2035,7 +2016,7 @@ P(nil:list)- ∧
         (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
           +^{0}
             (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
-            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+              +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
