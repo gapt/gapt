@@ -177,6 +177,7 @@ object Eigenvariable {
 }
 
 case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula] ) extends InitialSequent {
+  override def name = "link"
   override def conclusion = referencedSequent
 }
 
