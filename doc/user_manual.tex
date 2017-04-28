@@ -535,6 +535,19 @@ of the inference rules. We discuss this possibility in this section. For
 entering bigger proofs, it is more convenient to use the ``gaptic'' tactics
 language which is discussed in section \ref{sec:gaptic}.
 
+\textbf{Note}: Many correctness properties of \LK{} proofs are purely syntactic 
+and can be checked at construction time. For instance, it is not
+possible to construct a proof that violates the eigenvariable condition
+of strong quantifier rules. However, some rules require additional
+assumptions to be correct. For example, the induction rule is only
+correct under the assumption that the cases used in the rule
+correspond precisely to the inductive type's constructors. Assumptions
+of this kind are collected in a \cli{Context}, see section \ref{sec:context}.
+Since top-down proof construction does not take contexts into account,
+it can result in proofs violating these assumptions. You can ensure that
+a proof you have constructed conforms to a context \cli{ctx} by using the
+\cli{check} method on \cli{ctx}.
+
 We start with the axioms:
 %
 \begin{clilisting}
@@ -745,6 +758,8 @@ import at.logic.gapt.proofs.Context
 It is important that you declare the context as \cli{implicit}, so that it can be found automatically
 by the functions requiring it.
 
+Once you have constructed a context \cli{ctx}, you can check whether an expression, formula, sequent, or proof conforms to it by using the \cli{check} method.
+
 
 \section{Feature walkthrough}
 \subsection{Gaptic}\label{sec:gaptic}
@@ -782,6 +797,10 @@ object example extends TacticsProof {
 
 Gaptic proofs start with a context declaration. For more information on
 contexts, see section \ref{sec:context}.
+
+\textbf{Note}: Unlike top-down proof construction, proofs constructed with Gaptic
+are automatically correct with respect to the current context.
+
 Each proof is then assigned to a Scala variable.  The function
 \verb,Lemma(labelledSequent) { tactics... }, constructs a proof using the
 gaptic language.  The first argument of \cli{Lemma} is the labelled end

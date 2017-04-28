@@ -24,6 +24,7 @@ trait PrimeDefinitions extends TacticsProof {
   ctx += hoc"'*': nat>nat>nat"
   ctx += hoc"'<': nat>nat>o"
 
+  // Theory axioms
   ctx += "distrib1" -> hcl":- (x + 1) * y + x + 1 = (x + 1) * (y + 1)"
   ctx += "mul_ac1" -> hcl"x = y + z * (u * v) :- x = y + z * u * v"
   ctx += "mul_ac2" -> hcl"x = y + z * (u * v) :- x = y + z * v * u"
