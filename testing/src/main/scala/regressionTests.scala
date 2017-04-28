@@ -2,29 +2,107 @@ package at.logic.gapt.testing
 
 import java.io.{ FileWriter, PrintWriter }
 
-import at.logic.gapt.expr.{ And, Formula }
+import ammonite.ops._
+import at.logic.gapt.cutintro._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
+import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.expr.{ All, And, Expr, Formula, TBase }
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leancop.LeanCoPParser
+import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import at.logic.gapt.formats.verit.VeriTParser
-import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
-import at.logic.gapt.cutintro._
+import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
+import at.logic.gapt.proofs.gaptic.{ ProofState, Tactical, now }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ Sequent, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
+import at.logic.gapt.proofs.{ Ant, Context, loadExpansionProof }
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
-import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.prover9.Prover9Importer
+import at.logic.gapt.provers.sat.{ MiniSAT, Sat4j }
 import at.logic.gapt.provers.smtlib.Z3
+import at.logic.gapt.provers.verit.VeriT
+import at.logic.gapt.provers.viper.ViperTactic
+import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
+import at.logic.gapt.provers.viper.grammars.{ EnumeratingInstanceGenerator, TreeGrammarProverOptions }
+import at.logic.gapt.utils._
 
 import scala.concurrent.duration._
-import scala.util.Random
+import scala.util.{ Failure, Random, Success, Try }
 import scala.xml.XML
-import ammonite.ops._
-import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
+
+class InductionEliminationTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName + "/" + f.getName ) {
+
+  private val instanceTermSize = 1
+  private val bench = TipSmtParser.fixupAndParse( f )
+  private implicit val ctx = bench.ctx
+  private val sequent = bench.toSequent.zipWithIndex.map {
+    case ( f, Ant( i ) ) => s"h$i" -> f
+    case ( f, _ )        => "goal" -> f
+  }
+  private val termGenerator = ( new EnumeratingInstanceGenerator( ctx.get[Context.BaseTypes].baseTypes.values.toList, ctx ) ).terms
+  private val strategies: List[( Duration, Tactical[_] )] = List(
+    10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
+    10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
+    20.seconds -> new ViperTactic( TreeGrammarProverOptions().copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
+    60.seconds -> new ViperTactic( TreeGrammarProverOptions() ).aka( "treegrammar" )
+  )
+  private val state0 = ProofState( sequent )
+
+  override def timeout = Some( 10 minutes )
+
+  override protected def test( implicit testRun: TestRun ): Unit = {
+    strategies.view.flatMap {
+      case ( duration, strategy ) =>
+        Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) match {
+          case Success( Right( ( _, state_ ) ) ) =>
+            Some( state_.result )
+          case Failure( _: TimeOutException ) =>
+            None
+          case _ =>
+            None
+        }
+    }.headOption match {
+      case Some( proof ) =>
+        val All.Block( variables, _ ) = sequent.succedent.head._2
+        val instanceTerms = variables.map {
+          variable =>
+            findTerm( termGenerator, variable.ty.asInstanceOf[TBase], instanceTermSize )
+        }
+        val instProof = instanceProof( proof, instanceTerms )
+        val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof ) --- "eliminate inductions in instance proof"
+        indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "end-sequent must not be modified"
+        isInductionFree( indFreeProof ) !-- "proof must be induction free"
+      case None =>
+    }
+  }
+
+  private def isInductionFree( proof: LKProof ) =
+    proof.subProofs.forall( _ match {
+      case InductionRule( _, _, _ ) => false
+      case _                        => true
+    } )
+
+  private object instanceProof {
+    def apply( proof: LKProof, terms: List[Expr] ): LKProof = {
+      val instantiationFormula = proof.endSequent.succedent.head
+      CutRule( proof, instantiationProof( instantiationFormula, terms ), instantiationFormula )
+    }
+
+    private def instantiationProof( formula: Formula, terms: List[Expr] ): LKProof = {
+      val instanceFormula = instantiate( formula, terms )
+      ForallLeftBlock( LogicalAxiom( instanceFormula ), formula, terms )
+    }
+  }
+
+  private def findTerm( instanceTerms: Stream[( Expr, Int )], baseType: TBase, termSize: Int ): Expr = {
+    instanceTerms.find( {
+      case ( term: Expr, size: Int ) => termSize <= size && term.ty.asInstanceOf[TBase] == baseType
+    } ).get._1
+  }
+}
 
 class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName ) {
   override def timeout = Some( 3 minutes )
@@ -144,13 +222,15 @@ object RegressionTests extends App {
   def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
   def veritProofs = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "proof_flat" )
   def tptpProblems = ls.rec( pwd / "testing" / "TPTP" / "Problems" ).filter( _.ext == "p" )
+  def tipProblems = ls.rec( pwd / "testing" / "TIP" ).filter( _.ext == "smt2" )
 
   def prover9TestCases = prover9Proofs map { fn => new Prover9TestCase( fn.toIO ) }
   def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }
   def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
   def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
+  def indElimTestCases = tipProblems.map { fn => new InductionEliminationTestCase( fn.toIO ) }
 
-  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases
+  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases ++ indElimTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 
