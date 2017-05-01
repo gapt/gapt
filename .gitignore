@@ -43,16 +43,6 @@ doc/*.tex.backup
 *-proposal/*.fls
 *-proposal/*.out
 *-proposal/*.synctex.gz
-ceres_unary_eq/*.aux
-ceres_unary_eq/*.bbl
-ceres_unary_eq/*.blg
-ceres_unary_eq/*.log
-ceres_unary_eq/*.pdf
-ceres_unary_eq/*.toc
-ceres_unary_eq/*.fdb_latexmk
-ceres_unary_eq/*.fls
-ceres_unary_eq/*.out
-ceres_unary_eq/*.synctex.gz
 
 # vim
 .*.sw?
@@ -68,7 +58,6 @@ ceres_unary_eq/*.synctex.gz
 .cache-test
 .cache-tests
 *.settings
-
 
 # emacs
 /.ensime*
