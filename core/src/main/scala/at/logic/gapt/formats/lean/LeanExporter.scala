@@ -135,10 +135,10 @@ class LeanExporter {
     case Context.Definition( Definition( Const( n, ty ), by ) ) =>
       val what = nameMap.getLeanName( n, CONST )
       s"def $what : ${export( ty )} := ${export( by )}\n\n"
-    case Context.Axiom( ax ) =>
-      val axName = nameMap.nameGenerator.fresh( "ax" )
-      axiomNames( ax ) = axName
-      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
+    //    case Context.Axiom( ax ) =>
+    //      val axName = nameMap.nameGenerator.fresh( "ax" )
+    //      axiomNames( ax ) = axName
+    //      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
     case Context.ConstDecl( Const( n, t ) ) =>
       s"constant ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n\n"
     case Context.InductiveType( ty, ctrs ) =>
@@ -171,7 +171,7 @@ class LeanExporter {
       case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
       case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
       case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
-      case _: TheoryAxiom          => out ++= "exact sorry,\n"
+      case _: ProofLink            => out ++= "exact sorry,\n"
       case _ =>
         var rule = s"gapt.lk.${p.longName}"
         p match {

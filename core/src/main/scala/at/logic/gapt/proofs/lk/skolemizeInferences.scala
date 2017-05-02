@@ -61,7 +61,8 @@ private class skolemizeInferences(
     p match {
       case LogicalAxiom( atom )     => LogicalAxiom( subf( atom ) )
       case ReflexivityAxiom( term ) => ReflexivityAxiom( sub( term ) )
-      case TheoryAxiom( axiom )     => TheoryAxiom( axiom map suba )
+
+      case ProofLink( name, seq )   => ProofLink( subst( name ), seq map subf )
 
       case TopAxiom                 => TopAxiom
       case BottomAxiom              => BottomAxiom

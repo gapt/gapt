@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
   ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.1",
+  scalaVersion := "2.12.2",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -179,12 +179,11 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "0.4.2",
-      "org.bitbucket.inkytonik.kiama" %% "kiama" % "2.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.3",
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
-      "com.lihaoyi" %% "ammonite-ops" % "0.8.2",
+      "com.lihaoyi" %% "ammonite-ops" % "0.8.3",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"

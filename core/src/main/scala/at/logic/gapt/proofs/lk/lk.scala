@@ -177,6 +177,7 @@ object Eigenvariable {
 }
 
 case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula] ) extends InitialSequent {
+  override def name = "link"
   override def conclusion = referencedSequent
 }
 
@@ -202,8 +203,10 @@ object InitialSequent {
   def unapply( proof: InitialSequent ) = Some( proof.endSequent )
 }
 
-case class TheoryAxiom( conclusion: Sequent[Atom] ) extends InitialSequent {
-  override def name = "th"
+@deprecated( "Use ProofLink instead", since = "2.7" )
+object TheoryAxiom {
+  @deprecated( "Use ProofLink instead", since = "2.7" )
+  def apply( conclusion: HOLSequent ) = ProofLink( foc"th", conclusion )
 }
 
 /**
@@ -262,37 +265,6 @@ case class ReflexivityAxiom( s: Expr ) extends InitialSequent {
   override def name = "refl"
   override def conclusion = HOLSequent( Seq(), Seq( Eq( s, s ) ) )
   def mainFormula = Eq( s, s )
-}
-
-/**
- * Convenience object for constructing Axioms.
- *
- */
-object Axiom {
-  /**
-   * Convenience constructor for axioms.
-   *
-   * @param sequent A HOLSequent.
-   * @return An axiom of the appropriate type, depending on sequent.
-   */
-  def apply( sequent: HOLSequent ): InitialSequent = sequent match {
-    case Sequent( Seq( f ), Seq( g ) ) if f == g => LogicalAxiom( f )
-    case Sequent( Seq(), Seq( Top() ) ) => TopAxiom
-    case Sequent( Seq( Bottom() ), Seq() ) => BottomAxiom
-    case Sequent( Seq(), Seq( Eq( s: Expr, t: Expr ) ) ) if s == t => ReflexivityAxiom( s )
-    case _ if sequent.forall( _.isInstanceOf[Atom] ) => TheoryAxiom( sequent.asInstanceOf[Sequent[Atom]] )
-
-    case _ => throw new IllegalArgumentException( s"Cannot create axiom from sequent $sequent." )
-  }
-
-  /**
-   * Convenience constructor for axioms.
-   *
-   * @param ant A list of Formulas.
-   * @param suc A list of Formulas.
-   * @return An axiom of the appropriate type, depending on ant and suc.
-   */
-  def apply( ant: Seq[Formula], suc: Seq[Formula] ): InitialSequent = apply( Sequent( ant, suc ) )
 }
 
 abstract class ContractionRule extends UnaryLKProof with CommonRule {

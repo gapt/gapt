@@ -25,8 +25,11 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     case ProofLink( referencedProof, linkquent ) =>
       ProofLink( betaNormalize( substitution( referencedProof ) ), linkquent.map { f => betaNormalize( substitution( f ) ) } )
 
-    case InitialSequent( sequent ) =>
-      Axiom( sequent.map { f => betaNormalize( substitution( f ) ) } )
+    case TopAxiom              => TopAxiom
+    case BottomAxiom           => BottomAxiom
+
+    case LogicalAxiom( f )     => LogicalAxiom( betaNormalize( substitution( f ) ) )
+    case ReflexivityAxiom( t ) => ReflexivityAxiom( betaNormalize( substitution( t ) ) )
 
     case WeakeningLeftRule( subProof, f ) =>
       val subProofNew = applySubstitution( substitution, subProof )
@@ -175,12 +178,8 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
   }
 
-  override protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = TheoryAxiom( TermReplacement( proof.conclusion, repl ) )
-    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
-  }
   override protected def visitProofLink( proof: ProofLink, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = ProofLink( proof.referencedProof, TermReplacement( proof.conclusion, repl ) )
+    val proofNew = ProofLink( TermReplacement( proof.referencedProof, repl ), TermReplacement( proof.conclusion, repl ) )
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
   }
 

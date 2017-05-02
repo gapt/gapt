@@ -107,7 +107,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     forget( "CF_0_0_0", "CF_1", "0<l" )
     decompose
-    theory
+    quasiprop
 
     forget( "CF_0_0_1" )
     decompose

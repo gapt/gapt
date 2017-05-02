@@ -48,7 +48,7 @@ object Projections {
 
     proof match {
       /* Structural rules except cut */
-      case InitialSequent( s )                    => Set( Axiom( s ) )
+      case InitialSequent( _ )                    => Set( proof )
 
       case ContractionLeftRule( p, a1, a2 )       => handleContractionRule( proof, p, a1, a2, ContractionLeftRule.apply, pred )
       case ContractionRightRule( p, a1, a2 )      => handleContractionRule( proof, p, a1, a2, ContractionRightRule.apply, pred )
@@ -258,7 +258,7 @@ object Projections {
       case ( true, false ) =>
         //println( "eq t f" )
         val ef = p.endSequent( e )
-        val ax = Axiom( List( ef ), List( ef ) )
+        val ax = LogicalAxiom( ef )
         val main_e = proof.mainIndices( 0 )
         val es = proof.endSequent.zipWithIndex.filter( x => x._2 != main_e &&
           x._2 != e_idx_conclusion &&

@@ -82,7 +82,7 @@ class MiscTest extends Specification {
       val AllxPx = All( x, Px )
 
       // test with 1 weak & 1 strong
-      val p1 = Axiom( Py :: Nil, Py :: Nil )
+      val p1 = LogicalAxiom( Py )
       val p2 = ForallLeftRule( p1, AllxPx, y )
       val p3 = ForallRightRule( p2, AllxPx, y )
 

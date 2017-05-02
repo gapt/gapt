@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.gaptic
 
 import tactics._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
@@ -516,9 +517,9 @@ trait TacticCommands {
   def theory( implicit ctx: Context ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
-      theoryAxiom <- ctx.axioms.find( clauseSubsumption( _, goal.conclusion ).isDefined ).
+      proofLinkName <- ctx.get[Context.ProofNames].find( goal.conclusion ).
         toTactical( "does not follow from theory" )
-      _ <- insert( TheoryAxiom( theoryAxiom.map( _.asInstanceOf[Atom] ) ) )
+      _ <- insert( ProofLink( proofLinkName, ctx.get[ProofNames].lookup( proofLinkName ).get ) )
     } yield ()
   }
 

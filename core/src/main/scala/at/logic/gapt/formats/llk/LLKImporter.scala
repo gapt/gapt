@@ -162,7 +162,7 @@ trait TokenToLKConverter extends Logger {
             case _ if ant == suc => //this is a workaround for the more restricted lk introduction rules
               AtomicExpansion( ant.head ) //TODO: remove atomic expansion when it's not necessary anymore
             case _ =>
-              Axiom( HOLSequent( ant, suc ) )
+              TheoryAxiom( HOLSequent( ant, suc ) )
           }
           proofstack = expaxiom :: proofstack
           require(
@@ -892,7 +892,7 @@ trait TokenToLKConverter extends Logger {
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
     val defs = definitions.toList.map( x => llkDefinitionToLKDefinition( x._1, x._2 ) )
-    val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, Axiom( auxf :: Nil, auxf :: Nil ), sub2, defs )
+    val ( _, axproof ) = getAxiomLookupProof( name, axiom, auxf, axiomconjunction, LogicalAxiom( auxf ), sub2, defs )
     val Some( axdef ) = defs.find( _.what == Const( "AX", To ) )
     val axrule = DefinitionLeftRule( axproof, axiomconjunction, axformula )
 
@@ -1233,7 +1233,7 @@ trait TokenToLKConverter extends Logger {
   //TODO:move this code to an appropriate place
   def proveInstance( axiom: Formula, instance: Formula, sub: Substitution ): LKProof = {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
-    proveInstance_( axiom, instance, sub, Axiom( List( instance ), List( instance ) ) )._2
+    proveInstance_( axiom, instance, sub, LogicalAxiom( instance ) )._2
   }
 
   def proveInstanceFrom( axiom: Formula, instance: Formula, sub: Substitution, uproof: LKProof ): LKProof = {

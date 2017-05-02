@@ -10,14 +10,12 @@ object lattice extends TacticsProof {
   ctx += hoc"cap: i>i>i"
   ctx += hoc"cup: i>i>i"
 
-  Seq(
-    hof"∀x∀y cap x y = cap y x",
-    hof"∀x∀y∀z cap (cap x y) z = cap x (cap y z)",
-    hof"∀x cap x x = x",
-    hof"∀x∀y cup x y = cup y x",
-    hof"∀x∀y∀z cup (cup x y) z = cup x (cup y z)",
-    hof"∀x cup x x = x"
-  ).flatMap( CNFp( _ ) ).foreach( ctx += _ )
+  ctx += "cap_comm" -> hcl":- cap x y = cap y x"
+  ctx += "cap_assoc" -> hcl":- cap (cap x y) z = cap x (cap y z)"
+  ctx += "cap_idem" -> hcl" :- cap x x = x"
+  ctx += "cup_comm" -> hcl":- cup x y = cup y x"
+  ctx += "cup_assoc" -> hcl":- cup (cup x y) z = cup x (cup y z)"
+  ctx += "cup_idem" -> hcl":- cup x x = x"
 
   ctx += hof"(x <= y) = (cap x y = x)"
   ctx += hof"L1 = (∀x∀y (cap x y = x <-> cup x y = y))"

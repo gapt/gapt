@@ -535,6 +535,19 @@ of the inference rules. We discuss this possibility in this section. For
 entering bigger proofs, it is more convenient to use the ``gaptic'' tactics
 language which is discussed in section \ref{sec:gaptic}.
 
+\textbf{Note}: Many correctness properties of \LK{} proofs are purely syntactic 
+and can be checked at construction time. For instance, it is not
+possible to construct a proof that violates the eigenvariable condition
+of strong quantifier rules. However, some rules require additional
+assumptions to be correct. For example, the induction rule is only
+correct under the assumption that the cases used in the rule
+correspond precisely to the inductive type's constructors. Assumptions
+of this kind are collected in a \cli{Context}, see section \ref{sec:context}.
+Since top-down proof construction does not take contexts into account,
+it can result in proofs violating these assumptions. You can ensure that
+a proof you have constructed conforms to a context \cli{ctx} by using the
+\cli{check} method on \cli{ctx}.
+
 We start with the axioms:
 %
 \begin{clilisting}
@@ -608,10 +621,7 @@ You can generate instances of these proof sequences by entering, e.g.,
 \begin{clilisting}
 gapt> val p = SumExampleProof( 5 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
-P(s(s(s(s(s(0))))), 0)
-⊢
-P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
+[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0) ⊢ P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
 [p24] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
 ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
 P(s(s(s(s(s(0))))), 0)
@@ -628,6 +638,7 @@ P(s(s(s(s(s(0))))), 0)
 ⊢
 P(0, s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
 [p21] P(0, s(s(s(s(s(0)))))) ⊢ P(0, s(s(s(s(s(0))))))    (LogicalA...
+
 \end{clilisting}
 
 \subsubsection{ND}
@@ -715,7 +726,7 @@ A context may contain declarations of:
   \item constants with previously declared types
   \item definitions
   \item Skolem functions
-  \item theory axioms
+  \item Proof links
 \end{itemize}
 
 Various data structures and algorithms in GAPT require the presence of an implicit value
@@ -731,12 +742,12 @@ symbols:
 \begin{tacticslisting}[nosig]
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
- 
+
  object ContextExample {
    implicit var ctx = Context.default
    ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
    ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
-   ctx += hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
+   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
    ctx += "1" -> le" s 0" //Adding a definition
    ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
  }
@@ -746,6 +757,8 @@ import at.logic.gapt.proofs.Context
 
 It is important that you declare the context as \cli{implicit}, so that it can be found automatically
 by the functions requiring it.
+
+Once you have constructed a context \cli{ctx}, you can check whether an expression, formula, sequent, or proof conforms to it by using the \cli{check} method.
 
 
 \section{Feature walkthrough}
@@ -784,6 +797,10 @@ object example extends TacticsProof {
 
 Gaptic proofs start with a context declaration. For more information on
 contexts, see section \ref{sec:context}.
+
+\textbf{Note}: Unlike top-down proof construction, proofs constructed with Gaptic
+are automatically correct with respect to the current context.
+
 Each proof is then assigned to a Scala variable.  The function
 \verb,Lemma(labelledSequent) { tactics... }, constructs a proof using the
 gaptic language.  The first argument of \cli{Lemma} is the labelled end
@@ -1188,6 +1205,7 @@ Some([derive]  ⊢
 [input] R(p_2, h_2), R(p_3, h_2) ⊢
 [input] R(p_1, h_2), R(p_3, h_2) ⊢
 [input] R...
+
 \end{clilisting}
 
 Just as in the first-order prover interface, you can call
@@ -1216,6 +1234,7 @@ Some([p402]
       (R(p_3, h_3) ∧ R(p_1, h_3) ∨ R(p_3, h_3) ∧ R(p_2, h_3)) ∨
       (R(p_4, h_3) ∧ R(p_1, h_3) ∨
         R(p_4,...
+
 \end{clilisting}
 
 \subsection{MaxSAT solver interface}
@@ -1294,9 +1313,7 @@ gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (x = y ⊃ y = x)
   +^{a}
-    (∀y (a = y ⊃ y = a)
-      +^{b} ((a = b)+ ⊃ (b = a)-)
-      +^{c} ((a = c)+ ⊃ (c = a)-)),
+    (∀y (a = y ⊃ y = a) +^{b} ((a = b)+ ⊃ (b = a)-) +^{c} ((a = c)+ ⊃ (c = a)-)),
 ∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1))
   +^{b} (∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-))
   +^{c} (∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-))
@@ -1358,11 +1375,10 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 [p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
 [p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
+
 gapt> Prover9 getExpansionProof sequent
 res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(∀x (p(x) ⊃ p(s(x)))
-  +^{0} (p(0)+ ⊃ p(s(0))-)
-  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
 p(0)-
 :-
 p(s(s(0)))+)
@@ -1384,6 +1400,7 @@ Some([p11] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p1, Suc(0), 
 [p5] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
 [p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0)...
+
 \end{clilisting}
 
 Note that \cli{getLKProof} only works for sequents without strong quantifiers
@@ -1404,9 +1421,7 @@ The LeanCoP interface supports the \cli{getExpansionProof} as well:
 gapt> LeanCoP getExpansionProof sequent
 res33: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(p(0)-,
-∀x (p(x) ⊃ p(s(x)))
-  +^{0} (p(0)+ ⊃ p(s(0))-)
-  +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
 :-
 p(s(s(0)))+)
 
@@ -1468,6 +1483,7 @@ Some([p34]  ⊢    (Resolution(p1, Suc(0), p33, Ant(0)))
 [p30] b + (c + (d + a)) = d + (c + (b + a)) ⊢    (Paramod(p20, Suc(0), true, p29, Ant(0), λx b + (c + (d + a)) = d + x))
 [p29] b + (c + (d + a)) = d + (b + a + c) ⊢    (Paramod(p21, Suc(0), true, p28, Ant(0), λx b + (c + (d + a)) = d + (x + c)))
 [p28] b + (c + (d + a)) = d + (a + b + c) ⊢    (Paramod(p22, Suc(0), tru...
+
 \end{clilisting}
 
 Escargot can also be used from the command-line using the \texttt{escargot.sh}
@@ -1538,6 +1554,7 @@ p: at.logic.gapt.proofs.lk.LKProof =
 [p21] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
 [p20] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)    (ContractionRightRule(p19, Suc(1), Suc(0)))
 [p19] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y), ¬Q(b, y) ⊃ ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18, Ant(0...
+
 \end{clilisting}
 %
 and then call the cut-elimination procedure:
@@ -1551,6 +1568,7 @@ q: at.logic.gapt.proofs.lk.LKProof =
 [p10] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a)    (ContractionRightRule(p9, Suc(1), Suc(0)))
 [p9] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬Q(b, a) ⊃ ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
 [p8] ¬Q(b, a), P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7,...
+
 \end{clilisting}
 
 
@@ -1690,11 +1708,7 @@ gapt> expansion.shallow
 res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] =
-¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y),
-P(x, a) ⊃ Q(x, a)
-⊢
-¬Q(b, y) ⊃ ¬P(b, y)
+res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
 res41: Boolean = true
@@ -1729,6 +1743,7 @@ res43: at.logic.gapt.proofs.lk.LKProof =
 [p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
 [p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegLeftRule(p14, Suc(0)))
 [p14] ¬P(b, y) ∨ Q(b, y) ⊢ Q(b, y), ...
+
 \end{clilisting}
 
 You can also view this expansion proof in the graphical user interface by
@@ -1797,6 +1812,7 @@ acnf: at.logic.gapt.proofs.lk.LKProof =
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p283, Ant(2), Ant(0)))
 [p283] ∀x_2 (f(x_2) = 0 ∨ f(x_2) = s(0)),
 ∀x_1 ∀y_0 ...
+
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
@@ -1808,15 +1824,16 @@ et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
         ((s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0))))- ∧
           wk-{s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0)))}))
   +^{s(M(x, x_0))}
-    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧
-          y_0 <= M(s(M(x, x_0)), y_0))
+    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧ y_0 <= M(s(M(x, x_0)), y_0))
       +^{s(M(x, x_0))}
         ((s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0))))- ∧
           wk-{s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0)))}))
   +^{s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0))))))}
-    (∀y_0 (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
+    (∀y_0
+        (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
             M(s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))), y_0) ∧
-          y_0 <= M(s(M(x_1, s(M(s(M(...
+          y_0 <= M(s(M(x_1, s(M(s(M(x,...
+
 gapt> prooftool(et)
 
 \end{clilisting}
@@ -1835,11 +1852,7 @@ Take an example proof:
 gapt> val p = LinearExampleProof(9)
 p: at.logic.gapt.proofs.lk.LKProof =
 [p36] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p35, Ant(0), Ant(1)))
-[p35] ∀x (P(x) ⊃ P(s(x))),
-∀x (P(x) ⊃ P(s(x))),
-P(0)
-⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
+[p35] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
 [p34] P(s(s(s(s(s(s(s(s(0))))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
 ∀x (P(x) ⊃ P(s(x))),
 P(0)
@@ -1847,11 +1860,8 @@ P(0)
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 [p33] P(s(s(s(s(s(s(s(s(s(0)))))))))) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (LogicalAxiom(P(s(s(s(s(s(s(s(s(s(0)))))))))): o))
 [p32] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))))))    (ContractionLeftRule(p31, Ant(0), Ant(1)))
-[p31] ∀x (P(x) ⊃ P(s(x))),
-∀x (P(x) ⊃ P(s(x))),
-P(0)
-⊢
-P(s(s(s(s(s(s(s(s(0...
+[p31] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0...
+
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
@@ -1876,6 +1886,7 @@ P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
 [p22] ∀x1...
+
 \end{clilisting}
 
 You can also try \texttt{MaxSATMethod(1,2)}, this uses a reduction to a MaxSAT
@@ -1982,7 +1993,7 @@ P(nil:list)- ∧
         (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
           +^{0}
             (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
-            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+              +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
@@ -2006,8 +2017,10 @@ P_is_nat(f_nonempty_nat),
 P_is_list(f_nonempty_list)
 ⊢
 P_P(f_nil) ∧
-    ∀x (P_is_list(x) ⊃
-        ∀y (P_is_nat(y) ⊃
+    ∀x
+      (P_is_list(x) ⊃
+        ∀y
+          (P_is_nat(y) ⊃
             ∀z (P_is_nat(z) ⊃ P_P(x) ⊃ P_P(f_cons(y, f_cons(z, x)))))) ⊃
   P_P(f_cons(f_0, f_cons(f_s(f_0), f_nil)))
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
@@ -2022,7 +2035,7 @@ P(nil:list)- ∧
         (∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
           +^{0}
             (∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
-            +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
+              +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)))) ⊃
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
@@ -2058,7 +2071,7 @@ example when we use this function for lists of numbers, we would use the instanc
 
 The rules of LK are listed below. Proof trees are constructed top-down,
 starting with axioms and with each rule introducing new inferences. With the
-exception of the definition rules, theory axioms, and induction rules, the
+exception of the definition rules, proof links, and induction rules, the
 constructors of the rules only allow inferences that are actually valid. Note
 that the rules are presented here as if they always act upon the outermost
 formulas in the upper sequent, but this is only for convenience of
@@ -2096,12 +2109,10 @@ Apart from those basic constructors, there is also a multitude of convenience co
 \end{multicols}
 
 \begin{prooftree}
-\AxiomCm{}
-\RightLabelm{\mt{Theory axiom}}
+\AxiomCm{(t)}
+\RightLabelm{\mt{Proof link}}
 \UnaryInfCm{\Gamma \seq \Delta}
 \end{prooftree}
-
-Theory axioms may only contain atomic formulas.
 
 \subsubsection*{Cut}
 
@@ -2341,7 +2352,7 @@ The rules of ND are listed below. Classical logic is supported by providing the
 excluded middle rule. We use ND rules in sequent form.
 
 As in LK, proof trees are constructed top-down, starting with axioms and with
-each rule introducing new inferences. With exception of the theory axioms and
+each rule introducing new inferences. With exception of the proof links and
 the induction rules, the constructors of the rules only allow inferences that
 are actually valid. Note that the rules are presented here as if they always act
 upon the outermost formulas in the upper sequent, but this is only for
