@@ -2,7 +2,7 @@ package at.logic.gapt.cutintro
 import at.logic.gapt.expr._
 
 /**
- * Created by root on 26.01.17.
+ * Computes the unified literals, i.e. the set of literals that are used to contruct the cut formula
  */
 object gStarUnify {
 

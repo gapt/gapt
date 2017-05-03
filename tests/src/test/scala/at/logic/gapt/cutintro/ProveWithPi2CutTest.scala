@@ -12,6 +12,24 @@ class ProveWithPi2CutTest extends Specification {
   */
   "This" should {
     "be computed correctly" in {
+      val Ga = fof"!x!y!z ((P(x,f1(x))|P(x,f2(x)))&(P(y,z)->P(y,f(z))))"
+      val De = fof"?u?v?w (-((P(u,f(v))&P(f(v),f(w)))->P(u,g(w))) | P(u,g(w)))"
+      val endSequent = Ga +: Sequent() :+ De
+      val Ga1 = fof"(P(xa,f1(xa))|P(xa,f2(xa)))&(P(xa,f1(xa)) -> P(xa,f(f1(xa))))"
+      val Ga2 = fof"(P(xa,f1(xa))|P(xa,f2(xa)))&(P(xa,f2(xa)) ->P(xa,f(f2(xa))))"
+      val De1 = fof"-((P(c,f(xb1))&P(f(xb1),f(xb2)))->P(c,g(xb2))) | P(c,g(xb2))"
+      val Rere = Ga1 +: Ga2 +: Sequent() :+ De1
+      val seHs = new Pi2SeHs( Rere, fov"xa", List( fov"xb1", fov"xb2" ), List( fot"c", fot"f(xb1)" ), List( fot"f1(xa)", fot"f2(xa)" ) )
+      val proof: Option[LKProof] = proveWithPi2Cut( endSequent, seHs )
+      ( proof match {
+        case Some( t ) => true
+        case _         => false
+      } ) must_== true
+    }
+  }
+
+  "This" should {
+    "be computed correctly" in {
       val Pxf1x = fof"(P(x)|Q(f1(x)))"
       val Pxff1x = fof"(P(x)|Q(f(f1(x))))"
       val Pcfy1 = fof"(P(c)|Q(f(y1)))"

@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.gaptic.tactics._
 import at.logic.gapt.proofs.lk.LKProof
 
 /**
- * Created by root on 08.02.17.
+ * Constructs a proof for a given schematic Pi2-grammar if a cut formula exists
  */
 object proveWithPi2Cut {
 
