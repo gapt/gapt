@@ -32,70 +32,16 @@ object gStarUnify {
     val ( neutralPos, neutralNeg ) = seHs.sortAndAtomize( neutral )
 
     // Set that eventually becomes the return value, i.e. the set of unified literals
-    val unifiedLiterals = scala.collection.mutable.Set[FOLFormula]()
-
-    alphaPos.foreach( posAt =>
-      betaNeg.union( neutralNeg ).foreach( negAt =>
-        unifyLiterals(
-          seHs,
-          posAt,
-          negAt,
-          nameOfExistentialVariable,
-          nameOfUniversalVariable
-        ) match {
-          case Some( t ) => {
-            unifiedLiterals += t
-          }
-          case None =>
-        } ) )
-
-    alphaNeg.foreach( posAt =>
-      betaPos.union( neutralNeg ).foreach( negAt =>
-        unifyLiterals(
-          seHs,
-          posAt,
-          negAt,
-          nameOfExistentialVariable,
-          nameOfUniversalVariable
-        ) match {
-          case Some( t ) => {
-            unifiedLiterals += Neg( t )
-          }
-          case None =>
-        } ) )
-
-    betaPos.foreach( posAt =>
-      neutralNeg.foreach( negAt =>
-        unifyLiterals(
-          seHs,
-          posAt,
-          negAt,
-          nameOfExistentialVariable,
-          nameOfUniversalVariable
-        ) match {
-          case Some( t ) => {
-            unifiedLiterals += t
-          }
-          case None =>
-        } ) )
-
-    betaNeg.foreach( posAt =>
-      neutralPos.foreach( negAt =>
-        unifyLiterals(
-          seHs,
-          posAt,
-          negAt,
-          nameOfExistentialVariable,
-          nameOfUniversalVariable
-        ) match {
-          case Some( t ) => {
-            unifiedLiterals += Neg( t )
-          }
-          case None =>
-        } ) )
-
-    unifiedLiterals.toSet
-
+    ( for {
+      ( alphas, betas ) <- Seq(
+        alphaPos -> betaNeg, alphaPos -> neutralNeg,
+        alphaNeg -> betaPos, alphaNeg -> neutralPos,
+        neutralNeg -> betaPos, neutralPos -> betaNeg
+      )
+      posAt <- alphas
+      negAt <- betas
+      lit <- unifyLiterals( seHs, posAt, negAt, nameOfExistentialVariable, nameOfUniversalVariable )
+    } yield lit ).toSet
   }
 
   /**
@@ -252,18 +198,7 @@ object gStarUnify {
     productionRules: List[( Expr, Expr )],
     termPair:        ( Expr, Expr ),
     name:            FOLVar
-  ): Option[FOLTerm] = {
-
-    val ( tL, tR ) = termPair
-
-    productionRules.foreach( productionRuleX => {
-
-      val ( productionRuleXL, productionRuleXR ) = productionRuleX
-
-      if ( productionRuleXL.syntaxEquals( tL ) && productionRuleXR.syntaxEquals( tR ) ) return Option( name )
-    } )
-
-    None
-  }
+  ): Option[FOLTerm] =
+    if ( productionRules contains termPair ) Some( name ) else None
 
 }

@@ -106,7 +106,6 @@ class ProveWithPi2CutTest extends Specification {
     }
   }
 
-
   /*
   "This" should {
     "be computed correctly" in {
