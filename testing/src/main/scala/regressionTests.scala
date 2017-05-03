@@ -33,27 +33,23 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Random, Success, Try }
 import scala.xml.XML
 
-class InductionEliminationTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName + "/" + f.getName ) {
-
-  private val instanceTermSize = 1
-  private val bench = TipSmtParser.fixupAndParse( f )
-  private implicit val ctx = bench.ctx
-  private val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
-  private val termGenerator = ( new EnumeratingInstanceGenerator( ctx.get[Context.BaseTypes].baseTypes.values.toList, ctx ) ).terms
-  private val strategies: List[( Duration, Tactical[_] )] = List(
-    10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
-    10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
-    20.seconds -> new ViperTactic( TreeGrammarProverOptions().copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
-    60.seconds -> new ViperTactic( TreeGrammarProverOptions() ).aka( "treegrammar" )
-  )
-  private val state0 = ProofState( sequent )
-
+class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile.getName + "/" + f.getName ) {
   override def timeout = Some( 10 minutes )
 
   override protected def test( implicit testRun: TestRun ): Unit = {
+    val instanceTermSize = 1
+    val bench = TipSmtParser.fixupAndParse( f )
+    implicit val ctx = bench.ctx
+    val termGenerator = new EnumeratingInstanceGenerator( ctx.get[Context.BaseTypes].baseTypes.values.toList, ctx ).terms
+    val strategies: List[( Duration, Tactical[_] )] = List(
+      10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
+      10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
+      20.seconds -> new ViperTactic( TreeGrammarProverOptions().copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
+      60.seconds -> new ViperTactic( TreeGrammarProverOptions() ).aka( "treegrammar" )
+    )
+    val sequent = bench.toSequent
+    val state0 = ProofState( sequent )
+
     strategies.view.flatMap {
       case ( duration, strategy ) =>
         Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) match {
@@ -64,26 +60,25 @@ class InductionEliminationTestCase( f: java.io.File ) extends RegressionTestCase
           case _ =>
             None
         }
-    }.headOption match {
-      case Some( proof ) =>
-        val All.Block( variables, _ ) = sequent.succedent.head._2
-        val instanceTerms = variables.map {
-          variable =>
-            findTerm( termGenerator, variable.ty.asInstanceOf[TBase], instanceTermSize )
-        }
-        val instProof = instanceProof( proof, instanceTerms )
-        val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof ) --- "eliminate inductions in instance proof"
-        indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "end-sequent must not be modified"
-        isInductionFree( indFreeProof ) !-- "proof must be induction free"
-      case None =>
+    }.headOption foreach { proof =>
+      val All.Block( variables, _ ) = sequent.succedent.head
+      val instanceTerms = variables.map {
+        variable =>
+          findTerm( termGenerator, variable.ty.asInstanceOf[TBase], instanceTermSize )
+      }
+      val instProof = instanceProof( proof, instanceTerms )
+
+      val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof ) --- "eliminate inductions in instance proof"
+      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "end-sequent must not be modified"
+      isInductionFree( indFreeProof ) !-- "proof must be induction free"
     }
   }
 
   private def isInductionFree( proof: LKProof ) =
-    proof.subProofs.forall( _ match {
+    proof.subProofs.forall {
       case InductionRule( _, _, _ ) => false
       case _                        => true
-    } )
+    }
 
   private object instanceProof {
     def apply( proof: LKProof, terms: List[Expr] ): LKProof = {
@@ -98,9 +93,9 @@ class InductionEliminationTestCase( f: java.io.File ) extends RegressionTestCase
   }
 
   private def findTerm( instanceTerms: Stream[( Expr, Int )], baseType: TBase, termSize: Int ): Expr = {
-    instanceTerms.find( {
+    instanceTerms.find {
       case ( term: Expr, size: Int ) => termSize <= size && term.ty.asInstanceOf[TBase] == baseType
-    } ).get._1
+    }.get._1
   }
 }
 
@@ -228,9 +223,9 @@ object RegressionTests extends App {
   def leancopTestCases = leancopProofs map { fn => new LeanCoPTestCase( fn.toIO ) }
   def veritTestCases = veritProofs map { fn => new VeriTTestCase( fn.toIO ) }
   def tptpTestCases = tptpProblems.map { fn => new TptpTestCase( fn.toIO ) }
-  def indElimTestCases = tipProblems.map { fn => new InductionEliminationTestCase( fn.toIO ) }
+  def tipTestCases = tipProblems.map { fn => new TipTestCase( fn.toIO ) }
 
-  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases ++ indElimTestCases
+  def allTestCases = prover9TestCases ++ leancopTestCases ++ veritTestCases ++ tptpTestCases ++ tipTestCases
 
   def findTestCase( pat: String ) = allTestCases.find( _.toString.contains( pat ) ).get
 
