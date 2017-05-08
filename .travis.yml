@@ -16,3 +16,10 @@ script:
 after_success:
   - bash <(curl -s https://codecov.io/bash)
 
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/8cdcfcf154f562f5bfc8
+    on_success: change
+    on_failure: always
+    on_start: never
