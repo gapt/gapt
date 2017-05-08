@@ -1229,6 +1229,8 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
   override def productElement( n: Int ) = product( n )
 
   override def name = "ind"
+
+  def eigenVariables = cases.flatMap( _.eigenVars ).toSet
 }
 
 /**

@@ -53,6 +53,13 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def constant( name: String ): Option[Const] = get[Constants].constants.get( name )
 
   /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
+  def getConstructors( ty: Ty ): Option[Vector[Const]] =
+    ty match {
+      case ty @ TBase( _, _ ) => getConstructors( ty )
+      case _                  => None
+    }
+
+  /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
   def getConstructors( ty: TBase ): Option[Vector[Const]] =
     for {
       declT <- get[BaseTypes].baseTypes.get( ty.name )
