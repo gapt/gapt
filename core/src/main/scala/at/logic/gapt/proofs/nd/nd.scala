@@ -867,7 +867,12 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
 case class ForallElimRule( subProof: NDProof, A: Formula, term: Expr, v: Var )
     extends UnaryNDProof with CommonRule {
 
-  val mainFormula = Substitution( v, term )( A )
+  val universal = premise( Suc( 0 ) )
+
+  val mainFormula = universal match {
+    case All( _, _ ) => Substitution( v, term )( A )
+    case _           => throw NDRuleCreationException( s"Proposed main formula $universal is not universally quantified." )
+  }
 
   override def name = "∀:e"
 

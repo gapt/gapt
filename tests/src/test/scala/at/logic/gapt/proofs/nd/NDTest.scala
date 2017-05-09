@@ -304,4 +304,18 @@ class NDTest extends Specification with SatMatchers {
     a1.conclusion must beValidSequent
   }
 
+  "ForallElim soundness 1" in {
+    ForallElimRule(
+      ImpIntroRule( LogicalAxiom( hof"a" ), Right( hof"a" ) ),
+      hof"false", le"x", hov"x"
+    ) must throwA( new NDRuleCreationException( "ForallElimRule", "Proposed main formula a ⊃ a is not universally quantified." ) )
+  }
+
+  "ForallElim soundness 2" in {
+    ForallElimRule(
+      TopIntroRule(),
+      hof"false", le"x", hov"x"
+    ) must throwA( new NDRuleCreationException( "ForallElimRule", "Proposed main formula ⊤ is not universally quantified." ) )
+  }
+
 }
