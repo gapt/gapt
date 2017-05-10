@@ -85,11 +85,11 @@ class NDTest extends Specification with SatMatchers {
 
   "Induction" in {
     val b1 = LogicalAxiom( hof"!(x: nat) (((x + (0: nat)): nat) = x)" )
-    val b2 = ForallElimRule( b1, hof"((((x:nat) + (0: nat)): nat) = x)", le"0: nat", hov"x: nat" )
+    val b2 = ForallElimRule( b1, le"0: nat" )
 
     val s1 = LogicalAxiom( hof"!(x: nat) !(y: nat) (((s(x): nat) + y: nat) = s(x + y))" )
-    val s2 = ForallElimRule( s1, hof"!(y: nat) (((s(x0): nat) + y: nat) = s(x0 + y))", le"x0: nat", hov"x: nat" )
-    val s3 = ForallElimRule( s2, hof"((((s(x0): nat) + (0: nat)): nat) = s(x0 + 0))", le"0: nat", hov"y: nat" )
+    val s2 = ForallElimRule( s1, le"x0: nat" )
+    val s3 = ForallElimRule( s2, le"0: nat" )
     val s4 = LogicalAxiom( hof"(((x0: nat) + (0: nat)): nat) = x0" )
     val s5 = EqualityElimRule( s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(z: nat))", hov"z: nat" )
 

@@ -39,7 +39,7 @@ package object nd {
       s( ForallIntroRule( Substitution( ev -> ev_ )( q ), ev_, qv ) )
     case p @ ForallIntroRule( q, ev, _ ) if !s.range.contains( ev ) =>
       ForallIntroRule( Substitution( s.map - ev )( q ), s( p.mainFormula ), ev )
-    case ForallElimRule( q, _, t, _ )      => ForallElimRule( s( q ), s( t ) )
+    case ForallElimRule( q, t )            => ForallElimRule( s( q ), s( t ) )
 
     case p @ ExistsIntroRule( q, _, t, _ ) => ExistsIntroRule( s( q ), s( p.mainFormula ), s( t ) )
     case ExistsElimRule( maj, min, a, ev ) if s.range.contains( ev ) =>

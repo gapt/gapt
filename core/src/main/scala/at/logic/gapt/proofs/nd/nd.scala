@@ -860,40 +860,23 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
  * </pre>
  *
  * @param subProof The proof π.
- * @param A The formula A.
  * @param term The term t.
- * @param v The variable x.
  */
-case class ForallElimRule( subProof: NDProof, A: Formula, term: Expr, v: Var )
+case class ForallElimRule( subProof: NDProof, term: Expr )
     extends UnaryNDProof with CommonRule {
 
-  val mainFormula = Substitution( v, term )( A )
+  val universal = premise( Suc( 0 ) )
+
+  val mainFormula = universal match {
+    case All( v, subFormula ) => Substitution( v, term )( subFormula )
+    case _                    => throw NDRuleCreationException( s"Proposed main formula $universal is not universally quantified." )
+  }
 
   override def name = "∀:e"
 
   def auxIndices = Seq( Seq( Suc( 0 ) ) )
 
   override def mainFormulaSequent = Sequent() :+ mainFormula
-}
-
-object ForallElimRule extends ConvenienceConstructor( "ForallElimRule" ) {
-  /**
-   * Convenience constructor for ∀:e that, given a term, will try to construct an inference with that instantiation.
-   *
-   * @param subProof    The subproof.
-   * @param term        A term t such that A[t] occurs in the premise.
-   * @return
-   */
-  def apply( subProof: NDProof, term: Expr ): ForallElimRule = {
-    val premise = subProof.endSequent
-
-    val universal = premise( Suc( 0 ) )
-
-    universal match {
-      case All( v, subFormula ) => ForallElimRule( subProof, subFormula, term, v )
-      case _                    => throw NDRuleCreationException( s"Proposed main formula $universal is not universally quantified." )
-    }
-  }
 }
 
 /**
