@@ -899,22 +899,20 @@ class FreeCutElimination( implicit val ctx: Context ) {
       proof match {
         case CutRule( _, _, _, _ ) =>
           val ( tempProof, tempConnector ) = super.recurse( proof, () )
-          cutReduction( tempProof ) match {
-            case Some( newProof ) =>
-              val ( finalProof, _ ) = super.recurse( newProof, () )
-              ( finalProof, SequentConnector.guessInjection( finalProof.conclusion, proof.conclusion ).inv )
+          reduction( tempProof ) match {
+            case Some( ( newProof, _ ) ) =>
+              ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
             case None => ( tempProof, tempConnector )
           }
         case _ => super.recurse( proof, () )
       }
-  }
 
-  private def cutReduction( proof: LKProof ): Option[LKProof] = proof match {
-    case cut @ CutRule( _, _, _, _ ) =>
-      gradeReduction( cut )
-        .orElse( leftRankReduction( cut ) )
-        .orElse( rightRankReduction( cut ) )
-        .orElse( inductionReduction( cut ) )
-    case _ => None
+    private def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
+      case cut @ CutRule( _, _, _, _ ) =>
+        gradeReduction( cut ).map( recurse( _, () ) )
+          .orElse( leftRankReduction( cut ) map { super.recurse( _, () ) } )
+          .orElse( rightRankReduction( cut ) map { super.recurse( _, () ) } )
+          .orElse( inductionReduction( cut ) map { super.recurse( _, () ) } )
+    }
   }
 }

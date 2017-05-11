@@ -4,6 +4,7 @@ import java.io.{ FileWriter, PrintWriter }
 
 import ammonite.ops._
 import at.logic.gapt.cutintro._
+import at.logic.gapt.examples.instanceProof
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.expr.{ All, And, Expr, Formula, TBase }
@@ -86,18 +87,6 @@ class InductionEliminationTestCase( f: java.io.File ) extends RegressionTestCase
       case InductionRule( _, _, _ ) => false
       case _                        => true
     } )
-
-  private object instanceProof {
-    def apply( proof: LKProof, terms: List[Expr] ): LKProof = {
-      val instantiationFormula = proof.endSequent.succedent.head
-      CutRule( proof, instantiationProof( instantiationFormula, terms ), instantiationFormula )
-    }
-
-    private def instantiationProof( formula: Formula, terms: List[Expr] ): LKProof = {
-      val instanceFormula = instantiate( formula, terms )
-      ForallLeftBlock( LogicalAxiom( instanceFormula ), formula, terms )
-    }
-  }
 
   private def findTerm( instanceTerms: Stream[( Expr, Int )], baseType: TBase, termSize: Int ): Expr = {
     instanceTerms.find( {
