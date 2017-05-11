@@ -100,7 +100,7 @@ class LLKTest extends Specification {
       checkReplacement( fa, ga, t1, t1 ) match {
         case Equal                       => ok
         case Different                   => ko( "Terms " + t1 + " and t2 considered as (completely) different, but they are equal!" )
-        case EqualModuloEquality( path ) => ko( "Found an equality modulo " + Eq( fa.asInstanceOf[LambdaExpression], ga.asInstanceOf[LambdaExpression] ) + " but should be equal!" )
+        case EqualModuloEquality( path ) => ko( "Found an equality modulo " + Eq( fa.asInstanceOf[Expr], ga.asInstanceOf[Expr] ) + " but should be equal!" )
       }
       ok
     }
@@ -140,7 +140,7 @@ class LLKTest extends Specification {
     "correctly prove the instance of an axiom" in {
       val vmap = Map[String, Ty]( "x" -> Ti, "y" -> Ti, "z" -> Ti )
       val cmap = Map[String, Ty]( "a" -> Ti, "1" -> Ti, "+" -> ( Ti -> ( Ti -> Ti ) ) )
-      val naming: String => LambdaExpression = x => {
+      val naming: String => Expr = x => {
         if ( vmap contains x ) Var( x, vmap( x ) ) else
           Const( x, cmap( x ) )
       }
@@ -155,7 +155,7 @@ class LLKTest extends Specification {
       val y = Var( "y", Ti )
       val z = Var( "z", Ti )
       val sub = Substitution( List( ( x, t2 ), ( y, t1 ), ( z, y ) ) )
-      val p = LLKProofParser.proveInstance( axiom.asInstanceOf[HOLFormula], instance.asInstanceOf[HOLFormula], sub )
+      val p = LLKProofParser.proveInstance( axiom.asInstanceOf[Formula], instance.asInstanceOf[Formula], sub )
       p.endSequent.formulas must haveSize( 2 )
       p.endSequent.antecedent must haveSize( 1 )
       p.endSequent.succedent must haveSize( 1 )

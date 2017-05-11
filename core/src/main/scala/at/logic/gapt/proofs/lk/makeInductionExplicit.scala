@@ -7,10 +7,10 @@ object makeInductionExplicit extends LKVisitor[Unit] {
     val pred = Var( "X", indty -> To )
 
     val hyps = constrs.map { constr =>
-      val FunctionType( `indty`, argtypes ) = constr.exptype
+      val FunctionType( `indty`, argtypes ) = constr.ty
       val vars = for ( ( at, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", at )
 
-      All.Block( vars, vars.filter { _.exptype == indty }.foldRight( pred( constr( vars: _* ) ) )( ( v, f ) => pred( v ) --> f ) )
+      All.Block( vars, vars.filter { _.ty == indty }.foldRight( pred( constr( vars: _* ) ) )( ( v, f ) => pred( v ) --> f ) )
     }
 
     hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
@@ -27,7 +27,7 @@ object makeInductionExplicit extends LKVisitor[Unit] {
 
     val hyps = proof.cases.map { indCase =>
       val constr = indCase.constructor
-      val FunctionType( `indty`, argtypes ) = constr.exptype
+      val FunctionType( `indty`, argtypes ) = constr.ty
       val vars = indCase.eigenVars
 
       var p: LKProof = ExchangeRightMacroRule( indCase.proof, indCase.conclusion )

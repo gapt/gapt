@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.expr.{ HOLAtom, LambdaPosition, Eq }
+import at.logic.gapt.expr.{ Atom, LambdaPosition, Eq }
 import at.logic.gapt.proofs.{ HOLClause, FOLClause }
 
 object forgetfulPropResolve {
@@ -22,7 +22,7 @@ object forgetfulPropParam {
       pos2 <- LambdaPosition.getPositions( atom2 ) if atom2( pos2 ) == s || atom2( pos2 ) == t
     ) yield cnf - clause1 - clause2 + ( clause1.removeFromSuccedent( atom1 ) ++ clause2.updated(
       atom2Idx,
-      atom2.replace( pos2, if ( atom2( pos2 ) == s ) t else s ).asInstanceOf[HOLAtom]
+      atom2.replace( pos2, if ( atom2( pos2 ) == s ) t else s ).asInstanceOf[Atom]
     ) ).distinct.sortBy { _.hashCode }
 
   def apply( cnf: Set[FOLClause] )( implicit dummyImplicit: DummyImplicit ): Set[Set[FOLClause]] =

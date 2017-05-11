@@ -2,7 +2,7 @@ package at.logic.gapt.testing
 
 import java.io.{ FileWriter, PrintWriter }
 
-import at.logic.gapt.expr.{ And, HOLFormula }
+import at.logic.gapt.expr.{ And, Formula }
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leancop.LeanCoPParser

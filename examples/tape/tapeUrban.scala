@@ -95,7 +95,6 @@ object tapeUrban extends TacticsProof {
       insert( epsilon_i )
     }
 
-  val defs = ctx.definitions.toMap
   val proof = sigma
 }
 

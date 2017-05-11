@@ -33,7 +33,7 @@ object LKToND {
     assert( lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x => nd.endSequent.antecedent.contains( Neg( x ) ) ) )
   }
 
-  private def exchange( subProof: NDProof, mainFormula: HOLFormula ): NDProof = {
+  private def exchange( subProof: NDProof, mainFormula: Formula ): NDProof = {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
     } else {
@@ -84,7 +84,7 @@ object LKToND {
     val ndProof = proof match {
 
       // Axioms
-      case lk.LogicalAxiom( atom: HOLAtom ) =>
+      case lk.LogicalAxiom( atom: Atom ) =>
         nd.LogicalAxiom( atom )
 
       case ReflexivityAxiom( s ) =>
@@ -259,7 +259,7 @@ object LKToND {
             translate( rightSubProof, heuristicFocus )
           }
 
-        OrElimRule( tl, tr, nd.LogicalAxiom( p.mainFormula ) )
+        OrElimRule( nd.LogicalAxiom( p.mainFormula ), tl, tr )
 
       case p @ OrRightRule( subProof1 @ WeakeningRightRule( subProof2, f ), aux1, aux2 ) if f == subProof1.endSequent( aux1 ) || f == subProof1.endSequent( aux2 ) =>
 
@@ -355,7 +355,7 @@ object LKToND {
         }
 
       // Quantifier rules
-      case p @ ForallLeftRule( subProof, aux, a: HOLFormula, term: LambdaExpression, v: Var ) =>
+      case p @ ForallLeftRule( subProof, aux, a: Formula, term: Expr, v: Var ) =>
 
         val t = if ( p.endSequent.succedent.nonEmpty ) {
           translate( subProof, p.getSequentConnector.parent( focus ) )
@@ -368,7 +368,7 @@ object LKToND {
           c( t ).
           u( ImpIntroRule( _, i ) ).
           c( nd.LogicalAxiom( p.mainFormula ) ).
-          u( ForallElimRule( _, a, term, v ) ).
+          u( ForallElimRule( _, term ) ).
           b( ImpElimRule( _, _ ) ).
           qed
 

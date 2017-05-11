@@ -11,12 +11,12 @@ class TraitsTest extends Specification {
   }
 
   "And, Or, Imp" should {
-    "preserve HOLFormula" in {
+    "preserve Formula" in {
       val f = App( Abs( FOLVar( "x" ), Bottom() ), FOLConst( "c" ) )
-      f must beAnInstanceOf[HOLFormula]
-      And( f, f ) must beAnInstanceOf[HOLFormula]
-      Or( f, f ) must beAnInstanceOf[HOLFormula]
-      Imp( f, f ) must beAnInstanceOf[HOLFormula]
+      f must beAnInstanceOf[Formula]
+      And( f, f ) must beAnInstanceOf[Formula]
+      Or( f, f ) must beAnInstanceOf[Formula]
+      Imp( f, f ) must beAnInstanceOf[Formula]
     }
 
     "preserve FOLFormula" in {

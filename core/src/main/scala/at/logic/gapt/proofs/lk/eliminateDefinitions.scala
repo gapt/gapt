@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, Context }
+import at.logic.gapt.proofs.Context.Definitions
+import at.logic.gapt.proofs.{ Ant, Context, SequentConnector, Suc }
 
 /**
  * Eliminates definitions from a lambda expression, HOL formula, or LK proof.
@@ -11,8 +12,8 @@ object eliminateDefinitions {
    * Creates a new `eliminateDefinitions` object.
    * @param dmap The definitions to be eliminated.
    */
-  def apply( dmap: Map[_ <: Const, _ <: LambdaExpression] ): eliminateDefinitions =
-    new eliminateDefinitions( dmap.toMap )
+  def apply( dmap: Map[_ <: Const, _ <: Expr] ): eliminateDefinitions =
+    new eliminateDefinitions( ReductionRule( BetaReduction, Context.Definitions( dmap.map( x => x._1.name -> x._2 ) ) ) )
 
   /**
    * Given an implicit [[at.logic.gapt.proofs.Context]] in scope, this removes all definitions in that context from a
@@ -20,23 +21,16 @@ object eliminateDefinitions {
    * @param proof The proof to be transformed.
    * @param ctx An implicit context. Definitions in this will be removed from proof.
    */
-  def apply( proof: LKProof )( implicit ctx: Context ): LKProof = apply( ctx.definitions.toMap )( proof )
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
+    new eliminateDefinitions( ctx.normalizer.rule ).apply( proof )
 }
 
 /**
  * Implements definition elimination.
- * @param dmap A map containing the definitions to be eliminated.
  */
-class eliminateDefinitions private ( dmap: Map[Const, LambdaExpression] ) extends Function[LambdaExpression, LambdaExpression] {
-  private object betaDeltaReduction extends ReductionRule {
-    override def reduce( normalizer: Normalizer, head: LambdaExpression, args: List[LambdaExpression] ): Option[( LambdaExpression, List[LambdaExpression] )] =
-      dmap.toMap[LambdaExpression, LambdaExpression].
-        get( head ).map( by => ( by, args ) ).
-        orElse( BetaReduction.reduce( normalizer, head, args ) )
-  }
-
-  def apply( e: LambdaExpression ): LambdaExpression = normalize( betaDeltaReduction, e )
-  def apply( f: HOLFormula ): HOLFormula = apply( f: LambdaExpression ).asInstanceOf[HOLFormula]
+class eliminateDefinitions private ( rule: ReductionRule ) extends Function[Expr, Expr] {
+  def apply( e: Expr ): Expr = normalize( rule, e )
+  def apply( f: Formula ): Formula = apply( f: Expr ).asInstanceOf[Formula]
 
   def apply( proof: LKProof ): LKProof = proof match {
     // introductory rules
@@ -47,7 +41,7 @@ class eliminateDefinitions private ( dmap: Map[Const, LambdaExpression] ) extend
 
     case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term ) )
 
-    case TheoryAxiom( axiom )     => TheoryAxiom( axiom map apply map { _.asInstanceOf[HOLAtom] } )
+    case TheoryAxiom( axiom )     => TheoryAxiom( axiom map apply map { _.asInstanceOf[Atom] } )
 
     //structural rules
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>

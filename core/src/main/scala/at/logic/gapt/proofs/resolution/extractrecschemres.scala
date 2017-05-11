@@ -9,5 +9,5 @@ import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 object extractRecSchemFromResProof {
   def apply( p: ResolutionProof ): ( RecursionScheme, InstanceTermEncoding ) = ???
 
-  def apply( root: ResolutionProof, clauseTerm: HOLClause => Option[LambdaExpression] ): RecursionScheme = ???
+  def apply( root: ResolutionProof, clauseTerm: HOLClause => Option[Expr] ): RecursionScheme = ???
 }

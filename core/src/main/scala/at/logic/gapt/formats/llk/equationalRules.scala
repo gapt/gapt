@@ -15,9 +15,9 @@ object EquationVerifier {
   case object Different extends ReplacementResult
   case class EqualModuloEquality( path: List[Int] ) extends ReplacementResult
 
-  def apply( s: LambdaExpression, t: LambdaExpression, e1: LambdaExpression, e2: LambdaExpression ) = checkReplacement( s, t, e1, e2 )
+  def apply( s: Expr, t: Expr, e1: Expr, e2: Expr ) = checkReplacement( s, t, e1, e2 )
   //this is a convenience method, apart from that everything is general
-  def apply( eq: HOLFormula, e1: HOLFormula, e2: HOLFormula ): Option[List[Int]] = {
+  def apply( eq: Formula, e1: Formula, e2: Formula ): Option[List[Int]] = {
     //println("try "+eq+" "+e1+" "+e2)
     eq match {
       case Eq( s, t ) => apply( s, t, e1, e2 ) match {
@@ -32,7 +32,7 @@ object EquationVerifier {
     }
   }
 
-  def checkReplacement( s: LambdaExpression, t: LambdaExpression, e1: LambdaExpression, e2: LambdaExpression ): ReplacementResult = {
+  def checkReplacement( s: Expr, t: Expr, e1: Expr, e2: Expr ): ReplacementResult = {
     //trace("matching "+e1+" against "+e2+" for "+s+" -> "+t)
     ( e1, e2 ) match {
       case _ if e1 == e2                    => Equal

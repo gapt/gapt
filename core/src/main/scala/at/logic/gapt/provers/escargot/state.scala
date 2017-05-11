@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.escargot.impl
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.resolution._
@@ -47,6 +48,13 @@ class EscargotState extends Logger {
   var workedOff = Set[Cls]()
   val locked = mutable.Set[( Cls, Option[HOLClause] )]()
 
+  // This formula should always be unsatisfiable.
+  def stateAsFormula: Formula = And {
+    ( newlyDerived.view ++ usable ++ workedOff ++ locked.map( _._1 ) ++ emptyClauses.values ).map { c =>
+      c.proof.assertions.toNegConjunction --> universalClosure( c.proof.conclusion.toFormula )
+    }
+  } | And { ( newlyDerived.view ++ usable ++ workedOff ).map { c => universalClosure( c.proof.conclusion.toFormula ) } }
+
   var avatarModel = MapBasedInterpretation( Map() )
   var emptyClauses = mutable.Map[HOLClause, Cls]()
   def isActive( cls: Cls ): Boolean = isActive( cls.assertion )
@@ -60,7 +68,7 @@ class EscargotState extends Logger {
   def trySetAssertion( assertion: HOLClause, value: Boolean ) =
     for ( ( atom, i ) <- assertion.zipWithIndex )
       trySetAvatarAtom( atom, if ( value ) i.isSuc else i.isAnt )
-  def trySetAvatarAtom( atom: HOLAtom, value: Boolean ) =
+  def trySetAvatarAtom( atom: Atom, value: Boolean ) =
     if ( !avatarModel.model.isDefinedAt( atom ) )
       avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> value ) )
 
@@ -131,12 +139,12 @@ class EscargotState extends Logger {
       locked -= ( cls -> reason )
       usable += cls
     }
-    for ( cls <- usable if cls.clause.isEmpty ) usable -= cls
-    for ( cls <- workedOff if !isActive( cls ) ) {
+    for ( cls <- usable.toSeq if cls.clause.isEmpty ) usable -= cls
+    for ( cls <- workedOff.toSeq if !isActive( cls ) ) {
       workedOff -= cls
       locked += ( cls -> None )
     }
-    for ( cls <- usable if !isActive( cls ) ) {
+    for ( cls <- usable.toSeq if !isActive( cls ) ) {
       usable -= cls
       locked += ( cls -> None )
     }

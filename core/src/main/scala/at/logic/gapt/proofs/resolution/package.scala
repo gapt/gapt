@@ -6,7 +6,7 @@ import scala.collection.mutable
 
 package object resolution {
   implicit object avatarComponentsAreReplaceable extends ClosedUnderReplacement[AvatarDefinition] {
-    def replace( component: AvatarDefinition, repl: PartialFunction[LambdaExpression, LambdaExpression] ): AvatarDefinition = component match {
+    def replace( component: AvatarDefinition, repl: PartialFunction[Expr, Expr] ): AvatarDefinition = component match {
       case AvatarGroundComp( atom, pol )           => AvatarGroundComp( TermReplacement( atom, repl ), pol )
       case AvatarNonGroundComp( atom, defn, vars ) => AvatarNonGroundComp( TermReplacement( atom, repl ), TermReplacement( defn, repl ), vars )
       case AvatarNegNonGroundComp( atom, defn, vars, idx ) =>
@@ -22,7 +22,7 @@ package object resolution {
   }
 
   implicit object resolutionProofsAreReplaceable extends ClosedUnderReplacement[ResolutionProof] {
-    def replace( proof: ResolutionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ResolutionProof = {
+    def replace( proof: ResolutionProof, repl: PartialFunction[Expr, Expr] ): ResolutionProof = {
       val memo = mutable.Map[ResolutionProof, ResolutionProof]()
 
       def f( p: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( p, p match {

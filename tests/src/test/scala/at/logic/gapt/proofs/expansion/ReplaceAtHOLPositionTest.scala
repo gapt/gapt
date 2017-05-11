@@ -12,10 +12,10 @@ class ReplaceAtHOLPositionTest extends Specification {
     val a = Const( "a", Ti )
     val b = Const( "b", Ti )
 
-    val Pxy = HOLAtom( P, x, y )
-    val Pay = HOLAtom( P, a, y )
-    val Fxy = HOLAtom( F, x, y )
-    val Fay = HOLAtom( F, a, y )
+    val Pxy = Atom( P, x, y )
+    val Pay = Atom( P, a, y )
+    val Fxy = Atom( F, x, y )
+    val Fay = Atom( F, a, y )
 
     "correctly replace an argument in an atom" in {
       val xpos = Pxy.find( x ).head
@@ -98,9 +98,9 @@ class ReplaceAtHOLPositionTest extends Specification {
       val xPos = ExyFxy.find( x ).head
       //println( xPos )
       replaceAtHOLPosition(
-        ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( HOLAtom( F, x, a ), Polarity.InSuccedent ), b -> ETAtom( HOLAtom( F, x, b ), Polarity.InSuccedent ) ) ), xPos, b
+        ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( Atom( F, x, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, x, b ), Polarity.InSuccedent ) ) ), xPos, b
       ) should beEqualTo(
-          ETWeakQuantifier( Ex( y, HOLAtom( F, b, y ) ), Map( a -> ETAtom( HOLAtom( F, b, a ), Polarity.InSuccedent ), b -> ETAtom( HOLAtom( F, b, b ), Polarity.InSuccedent ) ) )
+          ETWeakQuantifier( Ex( y, Atom( F, b, y ) ), Map( a -> ETAtom( Atom( F, b, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, b, b ), Polarity.InSuccedent ) ) )
         )
     }
   }

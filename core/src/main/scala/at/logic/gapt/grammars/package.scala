@@ -1,6 +1,6 @@
 package at.logic.gapt
 
-import at.logic.gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, Const, LambdaExpression, Substitution, TermReplacement, containedNames }
+import at.logic.gapt.expr.{ ClosedUnderReplacement, ClosedUnderSub, Const, Expr, Substitution, TermReplacement, containedNames }
 
 package object grammars {
 
@@ -9,14 +9,14 @@ package object grammars {
   }
 
   implicit object ruleIsReplaceable extends ClosedUnderReplacement[Rule] {
-    def replace( rule: Rule, p: PartialFunction[LambdaExpression, LambdaExpression] ) =
+    def replace( rule: Rule, p: PartialFunction[Expr, Expr] ) =
       Rule( TermReplacement( rule.lhs, p ), TermReplacement( rule.rhs, p ) )
 
     def names( rule: Rule ) = containedNames( rule.lhs ) ++ containedNames( rule.rhs )
   }
 
   implicit object recSchemIsReplaceable extends ClosedUnderReplacement[RecursionScheme] {
-    def replace( rs: RecursionScheme, p: PartialFunction[LambdaExpression, LambdaExpression] ) =
+    def replace( rs: RecursionScheme, p: PartialFunction[Expr, Expr] ) =
       RecursionScheme(
         TermReplacement( rs.startSymbol, p ).asInstanceOf[Const],
         rs.nonTerminals.map( TermReplacement( _, p ).asInstanceOf[Const] ),

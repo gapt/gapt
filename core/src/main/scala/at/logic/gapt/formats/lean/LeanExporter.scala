@@ -5,7 +5,7 @@ import java.io.IOException
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, freeVariablesLK }
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess, withTempFile }
 import at.logic.gapt.proofs._
 
@@ -75,17 +75,17 @@ class LeanExporter {
   val axiomNames = mutable.Map[HOLSequent, String]()
 
   def export( ty: Ty ): String = ty match {
-    case TBase( name ) => nameMap.getLeanName( name, TY )
-    case TVar( _ )     => "_"
-    case a -> b        => s"(${export( a )} -> ${export( b )})"
+    case TBase( name, params ) => ( nameMap.getLeanName( name, TY ) :: params.map( export ) ).mkString( " " )
+    case TVar( _ )             => "_"
+    case a -> b                => s"(${export( a )} -> ${export( b )})"
   }
 
-  def exportBinder( sym: String, x: Var, sub: LambdaExpression ): String = {
+  def exportBinder( sym: String, x: Var, sub: Expr ): String = {
     val x_ = nameMap.getLeanName( x.name, VAR )
-    s"($sym $x_ : ${export( x.exptype )}, ${export( sub )})"
+    s"($sym $x_ : ${export( x.ty )}, ${export( sub )})"
   }
 
-  def export( expr: LambdaExpression ): String = expr match {
+  def export( expr: Expr ): String = expr match {
     case All( x, sub ) => exportBinder( "∀", x, sub )
     case Ex( x, sub )  => exportBinder( "∃", x, sub )
     case Eq( x, y )    => s"(${export( x )} = ${export( y )})"
@@ -97,7 +97,7 @@ class LeanExporter {
     case Var( n, _ )   => nameMap.getLeanName( n, VAR )
   }
 
-  def mkSequentFormula( sequent: HOLSequent ): HOLFormula = sequent match {
+  def mkSequentFormula( sequent: HOLSequent ): Formula = sequent match {
     case Sequent( Seq(), Seq() )    => Bottom()
     case Sequent( Seq(), Seq( y ) ) => y
     case Sequent( Seq(), y +: ys ) =>
@@ -109,7 +109,7 @@ class LeanExporter {
   def export( sequent: HOLSequent ): String = export( mkSequentFormula( sequent ) )
 
   def export( upd: Context.Update ): String = upd match {
-    case Context.InductiveType( TBase( "o" ), _ ) =>
+    case Context.InductiveType( To, _ ) =>
       nameMap.register( "o", TY, "Prop" )
       nameMap.register( TopC.name, CONST, "true" )
       nameMap.register( BottomC.name, CONST, "false" )
@@ -150,7 +150,10 @@ class LeanExporter {
   def export( p: LKProof ): String = {
     val out = new StringBuilder
 
-    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )} : ${export( p.endSequent )} :=\n"
+    val fvParams = freeVariablesLK( p ).toSeq.sortBy( _.name )
+      .map( v => s" (${nameMap.getLeanName( v.name, VAR )} : ${export( v.ty )})" ).mkString
+
+    out ++= s"lemma ${nameMap.nameGenerator.fresh( "lk_proof" )}$fvParams : ${export( p.endSequent )} :=\n"
     out ++= "begin\n"
 
     val hs = p.endSequent.indicesSequent.map {
@@ -162,12 +165,12 @@ class LeanExporter {
     out ++= s"gapt.lk.sequent_formula_to_hyps ${mkHypNameList( hs.antecedent )} ${mkHypNameList( hs.succedent )},\n"
 
     import at.logic.gapt.proofs.lk._
-    def f( p: LKProof, hs: Sequent[Int] ): Unit = p match {
-      case p: ContractionLeftRule  => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: ContractionRightRule => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ) )
-      case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ) )
+    def f( p: LKProof, hs: Sequent[Int], hi: Int ): Unit = p match {
+      case p: ContractionLeftRule  => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: ContractionRightRule => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
+      case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
       case _: TheoryAxiom          => out ++= "exact sorry,\n"
       case _ =>
         var rule = s"gapt.lk.${p.longName}"
@@ -195,7 +198,7 @@ class LeanExporter {
               )
             case _ => ( occConn_, auxs_ )
           }
-          val hs_ = auxs.zip( Stream.from( ( 0 +: hs.elements ).max + 1 ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )
+          val hs_ = auxs.zip( Stream.from( hi ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )
           out ++= "intros"
           p match {
             case p: Eigenvariable =>
@@ -205,10 +208,10 @@ class LeanExporter {
           for ( a <- auxs )
             out ++= s" $hypName${hs_( a )}"
           out ++= ",\n"
-          f( q, hs_ )
+          f( q, hs_, math.max( ( hs_.elements :+ 0 ).max + 1, hi ) )
         }
     }
-    f( p, hs )
+    f( p, hs, ( hs.elements :+ 0 ).max + 1 )
 
     out ++= "end\n"
     out.result()
@@ -247,8 +250,13 @@ object LeanExporter {
 object LeanChecker extends ExternalProgram {
   val executable = "lean"
 
-  override val isInstalled =
-    try { runProcess( Seq( "lean", "--version" ) ); true } catch { case _: IOException => false }
+  private val versionRegex = """Lean \(version ([0-9.]+),""".r.unanchored
+  val version: String =
+    try runProcess( Seq( "lean", "--version" ) ) match {
+      case versionRegex( v ) => v
+      case _                 => "parse error"
+    } catch { case _: IOException => "error" }
+  override val isInstalled: Boolean = version == "3.0.0"
 
   def apply( code: String ): Either[String, Unit] =
     withTempFile.fromString( code ) { inputFile =>

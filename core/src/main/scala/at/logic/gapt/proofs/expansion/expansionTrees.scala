@@ -17,12 +17,12 @@ trait ExpansionTree extends DagProof[ExpansionTree] {
   /**
    * The formula represented by this tree.
    */
-  def shallow: HOLFormula
+  def shallow: Formula
 
   /**
    * The formula represented by this tree, fully instantiated.
    */
-  def deep: HOLFormula
+  def deep: Formula
 
   def polarity: Polarity
 
@@ -70,7 +70,7 @@ object ETMerge {
   def apply( nonEmptyChildren: Iterable[ExpansionTree] ): ExpansionTree =
     nonEmptyChildren reduce { ETMerge( _, _ ) }
 
-  def apply( shallow: HOLFormula, polarity: Polarity, children: Iterable[ExpansionTree] ): ExpansionTree = {
+  def apply( shallow: Formula, polarity: Polarity, children: Iterable[ExpansionTree] ): ExpansionTree = {
     for ( ch <- children ) {
       require( ch.polarity == polarity )
       require( ch.shallow == shallow )
@@ -83,7 +83,7 @@ object ETMerge {
  * A tree representing a formula that originates from a weakening.
  * @param formula The represented formula.
  */
-case class ETWeakening( formula: HOLFormula, polarity: Polarity ) extends ExpansionTree {
+case class ETWeakening( formula: Formula, polarity: Polarity ) extends ExpansionTree {
   def shallow = formula
   def deep = if ( polarity.inSuc ) Bottom() else Top()
   def immediateSubProofs = Seq()
@@ -93,7 +93,7 @@ case class ETWeakening( formula: HOLFormula, polarity: Polarity ) extends Expans
  * A tree representing an atomic formula.
  * @param atom The represented atom.
  */
-case class ETAtom( atom: HOLAtom, polarity: Polarity ) extends ExpansionTree {
+case class ETAtom( atom: Atom, polarity: Polarity ) extends ExpansionTree {
   def shallow = atom
   def deep = atom
   def immediateSubProofs = Seq()
@@ -167,11 +167,11 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
  * A general trait for trees representing quantified formulas.
  */
 trait ETQuantifier extends ExpansionTree {
-  def instances: Traversable[( LambdaExpression, ExpansionTree )]
+  def instances: Traversable[( Expr, ExpansionTree )]
 }
 
 object ETQuantifier {
-  def unapply( et: ETQuantifier ): Some[( HOLFormula, Traversable[( LambdaExpression, ExpansionTree )] )] =
+  def unapply( et: ETQuantifier ): Some[( Formula, Traversable[( Expr, ExpansionTree )] )] =
     Some( et.shallow -> et.instances )
 }
 
@@ -186,7 +186,7 @@ object ETQuantifier {
  * @param shallow The formula Qx.A.
  * @param instances A map containing the pairs t,,1,, → E,,1,,,…,t,,n,, → E,,n,,.
  */
-case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpression, ExpansionTree] ) extends ETQuantifier {
+case class ETWeakQuantifier( shallow: Formula, instances: Map[Expr, ExpansionTree] ) extends ETQuantifier {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( Polarity.InSuccedent, x, t )
     case All( x, t ) => ( Polarity.InAntecedent, x, t )
@@ -208,7 +208,7 @@ case class ETWeakQuantifier( shallow: HOLFormula, instances: Map[LambdaExpressio
   override def productElement( n: Int ) = product( n )
 }
 object ETWeakQuantifier {
-  def withMerge( shallow: HOLFormula, instances: Iterable[( LambdaExpression, ExpansionTree )] ): ExpansionTree = {
+  def withMerge( shallow: Formula, instances: Iterable[( Expr, ExpansionTree )] ): ExpansionTree = {
     ETWeakQuantifier( shallow, Map() ++ instances.groupBy( _._1 ).mapValues( children => ETMerge( children.map { _._2 } ) ) )
   }
 }
@@ -217,7 +217,7 @@ object ETWeakQuantifier {
  * Creates or matches a block of weak quantifiers.
  */
 object ETWeakQuantifierBlock {
-  def apply( shallow: HOLFormula, blockSize: Int, instances: Iterable[( Seq[LambdaExpression], ExpansionTree )] ): ExpansionTree =
+  def apply( shallow: Formula, blockSize: Int, instances: Iterable[( Seq[Expr], ExpansionTree )] ): ExpansionTree =
     if ( blockSize == 0 ) {
       ETMerge( instances map { _._2 } )
     } else {
@@ -227,10 +227,10 @@ object ETWeakQuantifierBlock {
       } )
     }
 
-  def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = {
-    val instances = mutable.Map[Seq[LambdaExpression], Set[ExpansionTree]]().withDefaultValue( Set() )
+  def unapply( et: ExpansionTree ): Some[( Formula, Int, Map[Seq[Expr], ExpansionTree] )] = {
+    val instances = mutable.Map[Seq[Expr], Set[ExpansionTree]]().withDefaultValue( Set() )
 
-    def walk( et: ExpansionTree, terms: Seq[LambdaExpression], n: Int ): Unit =
+    def walk( et: ExpansionTree, terms: Seq[Expr], n: Int ): Unit =
       if ( n == 0 ) instances( terms ) += et else et match {
         case ETWeakQuantifier( _, insts ) =>
           for ( ( term, child ) <- insts )
@@ -262,7 +262,7 @@ object ETWeakQuantifierBlock {
  * @param eigenVariable The variable α.
  * @param child The subtree E.
  */
-case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: ExpansionTree ) extends ETQuantifier with UnaryExpansionTree {
+case class ETStrongQuantifier( shallow: Formula, eigenVariable: Var, child: ExpansionTree ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( Polarity.InAntecedent, x, t )
     case All( x, t ) => ( Polarity.InSuccedent, x, t )
@@ -276,14 +276,14 @@ case class ETStrongQuantifier( shallow: HOLFormula, eigenVariable: Var, child: E
   def deep = child.deep
 }
 object ETStrongQuantifierBlock {
-  def apply( shallow: HOLFormula, eigenVariables: Seq[Var], child: ExpansionTree ): ExpansionTree = eigenVariables match {
+  def apply( shallow: Formula, eigenVariables: Seq[Var], child: ExpansionTree ): ExpansionTree = eigenVariables match {
     case ev +: evs =>
       ETStrongQuantifier( shallow, ev,
         ETStrongQuantifierBlock( instantiate( shallow, ev ), evs, child ) )
     case Seq() => child
   }
 
-  def unapply( et: ExpansionTree ): Some[( HOLFormula, Seq[Var], ExpansionTree )] = et match {
+  def unapply( et: ExpansionTree ): Some[( Formula, Seq[Var], ExpansionTree )] = et match {
     case ETStrongQuantifier( sh, ev, ETStrongQuantifierBlock( _, evs, child ) ) => Some( ( sh, ev +: evs, child ) )
     case _ => Some( ( et.shallow, Seq(), et ) )
   }
@@ -305,9 +305,9 @@ object ETStrongQuantifierBlock {
  * @param child  Expansion tree of the instantiated formula.
  */
 case class ETSkolemQuantifier(
-    shallow:    HOLFormula,
-    skolemTerm: LambdaExpression,
-    skolemDef:  LambdaExpression,
+    shallow:    Formula,
+    skolemTerm: Expr,
+    skolemDef:  Expr,
     child:      ExpansionTree
 ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
@@ -332,13 +332,13 @@ case class ETSkolemQuantifier(
  * @param shallow An atom P(x,,1,,,..., x,,n,,) where P stands for a more complex formula.
  * @param child An expansion tree of ψ(x,,1,,,...,x,,n,,).
  */
-case class ETDefinition( shallow: HOLFormula, child: ExpansionTree ) extends UnaryExpansionTree {
+case class ETDefinition( shallow: Formula, child: ExpansionTree ) extends UnaryExpansionTree {
   val polarity = child.polarity
   def deep = child.deep
 }
 
 object ETDefinition {
-  def ifNecessary( shallow: HOLFormula, child: ExpansionTree ): ExpansionTree =
+  def ifNecessary( shallow: Formula, child: ExpansionTree ): ExpansionTree =
     if ( child.shallow == shallow )
       child
     else
@@ -346,10 +346,10 @@ object ETDefinition {
 }
 
 private[expansion] object replaceET {
-  def apply( ep: ExpansionProof, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionProof =
+  def apply( ep: ExpansionProof, repl: PartialFunction[Expr, Expr] ): ExpansionProof =
     ExpansionProof( ep.expansionSequent map { replaceET( _, repl ) } )
 
-  def apply( et: ExpansionTree, repl: PartialFunction[LambdaExpression, LambdaExpression] ): ExpansionTree = et match {
+  def apply( et: ExpansionTree, repl: PartialFunction[Expr, Expr] ): ExpansionTree = et match {
     case ETMerge( child1, child2 ) => ETMerge( replaceET( child1, repl ), replaceET( child2, repl ) )
 
     case et @ ETWeakening( formula, _ ) =>
@@ -377,11 +377,12 @@ private[expansion] object replaceET {
         TermReplacement( shallow, repl ),
         TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl )
       )
-    case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
+    case et @ ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
+      val Apps( _, newArgs ) = TermReplacement( et.skolemConst, repl )
       ETSkolemQuantifier(
         TermReplacement( shallow, repl ),
         TermReplacement( skolemTerm, repl ),
-        TermReplacement( skolemDef, repl ),
+        Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( skolemDef, repl ) ),
         replaceET( child, repl )
       )
   }
@@ -394,7 +395,7 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
     case et @ ETWeakening( formula, _ ) =>
       et.copy( formula = subst( formula ) )
     case et @ ETAtom( atom, _ ) =>
-      et.copy( atom = subst( atom ).asInstanceOf[HOLAtom] )
+      et.copy( atom = subst( atom ).asInstanceOf[Atom] )
     case ETDefinition( sh, ch ) =>
       ETDefinition( subst( sh ), applySubstitution( subst, ch ) )
 

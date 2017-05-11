@@ -1,10 +1,21 @@
 # Release notes for GAPT
 
-## Version 2.5 (unreleased)
+## Version 2.6 (unreleased)
+
+* Natural deduction
+* Free monad for the SMT solver interface
+* Portfolio mode in new viper command-line interface
+* Skolemization with free variables support in ResolutionProver.getLKProof
+* Primitive recursive definitions
+* Proof schemata
+* ACNF support in reductive cut-elimination
+
+## Version 2.5 (released on 2017-02-22)
 
 * Support veriT stable2016
 * CERES version that directly produces expansion proofs
 * Deskolemization
+* First prototype of Pi2 cut-introduction
 * Better error messages in Babel, the formula parser
 
 ## Version 2.4 (released on 2017-01-13)

@@ -4,7 +4,7 @@ import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOu
 import com.typesafe.sbt.SbtScalariform._
 import scalariform.formatter.preferences._
 
-val Version = "2.5-SNAPSHOT"
+val Version = "2.6-SNAPSHOT"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
@@ -19,9 +19,11 @@ lazy val commonSettings = Seq(
     connection = "scm:git:https://github.com/gapt/gapt.git",
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" )
   ) ),
+  bintrayOrganization := Some( "gapt" ),
 
   scalaVersion := "2.12.1",
   scalacOptions in Compile ++= Seq(
+    "-Ypartial-unification",
     "-deprecation",
     "-language:postfixOps",
     "-language:implicitConversions",
@@ -35,39 +37,23 @@ lazy val commonSettings = Seq(
 
   sourcesInBase := false // people like to keep scripts lying around
 
-) ++ publishSettings ++ defaultScalariformSettings :+
+) ++ defaultScalariformSettings :+
   ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.8.7"
+val specs2Version = "3.8.9"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
+  javaOptions in Test += "-Xmx2g",
   libraryDependencies ++= Seq(
     "org.specs2" %% "specs2-core" % specs2Version,
     "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output
     "org.specs2" %% "specs2-matcher" % specs2Version
   ) map ( _ % Test )
 )
-
-lazy val publishSettings =
-  if ( Version endsWith "-SNAPSHOT" ) {
-    Seq(
-      bintrayReleaseOnPublish := false,
-      publishTo := Some( "Artifactory Realm" at "http://oss.jfrog.org/artifactory/oss-snapshot-local/" ),
-      credentials := {
-        Credentials.loadCredentials( bintrayCredentialsFile.value ) match {
-          case Right( bintrayCreds ) =>
-            Seq( Credentials( "Artifactory Realm", "oss.jfrog.org", bintrayCreds.userName, bintrayCreds.passwd ) )
-          case Left( error ) => Seq()
-        }
-      }
-    )
-  } else {
-    Seq( bintrayOrganization := Some( "gapt" ) )
-  }
 
 lazy val BuildSbtConfig = config( "buildsbt" ) extend Compile
 
@@ -199,7 +185,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
       "com.lihaoyi" %% "ammonite-ops" % "0.8.2",
-      "ch.qos.logback" % "logback-classic" % "1.1.9",
+      "ch.qos.logback" % "logback-classic" % "1.2.2",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
     ),
@@ -207,7 +193,7 @@ lazy val core = project.in( file( "core" ) ).
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
-      "com.itextpdf" % "itextpdf" % "5.5.10",
+      "com.itextpdf" % "itextpdf" % "5.5.11",
       "org.scilab.forge" % "jlatexmath" % "1.0.4"
     )
   )
@@ -273,7 +259,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.0"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.1"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )

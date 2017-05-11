@@ -2,7 +2,7 @@ package at.logic.gapt.prooftool
 
 import javax.swing.WindowConstants
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.proofs.{ SequentProof, DagProof }
 
 import scala.swing._

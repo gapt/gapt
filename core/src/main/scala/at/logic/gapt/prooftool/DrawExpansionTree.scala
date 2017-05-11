@@ -38,7 +38,7 @@ abstract class DrawExpansionTree(
   val ft = main.font
   def subTrees: Vector[DrawExpansionTree]
 
-  def drawFormula( formula: HOLFormula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
+  def drawFormula( formula: Formula ): BoxPanel = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
     opaque = false
@@ -369,26 +369,26 @@ class DrawETQuantifierBlock(
    * @param f
    * @return A string containing the quantifier block represented by this quantifier node.
    */
-  def quantifierBlockString( vars: List[Var], f: HOLFormula ): String = f match {
+  def quantifierBlockString( vars: List[Var], f: Formula ): String = f match {
     case All( _, _ ) => vars.map( v => "\\forall " + LatexExporter( v ) + "\\:" ).mkString
     case Ex( _, _ )  => vars.map( v => "\\exists " + LatexExporter( v ) + "\\:" ).mkString
   }
 
-  def dropQuants( formula: HOLFormula, howMany: Int ): HOLFormula =
+  def dropQuants( formula: Formula, howMany: Int ): Formula =
     if ( howMany == 0 ) formula
     else formula match {
       case All( _, f ) => dropQuants( f, howMany - 1 )
       case Ex( _, f )  => dropQuants( f, howMany - 1 )
     }
 
-  def takeQuants( formula: HOLFormula, howMany: Int ): List[Var] =
+  def takeQuants( formula: Formula, howMany: Int ): List[Var] =
     if ( howMany == 0 ) Nil
     else formula match {
       case All( x, f ) => x +: takeQuants( f, howMany - 1 )
       case Ex( x, f )  => x +: takeQuants( f, howMany - 1 )
     }
 
-  def drawTerms( list: Seq[Seq[LambdaExpression]] ) = new BoxPanel( Orientation.Vertical ) {
+  def drawTerms( list: Seq[Seq[Expr]] ) = new BoxPanel( Orientation.Vertical ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
 
@@ -396,7 +396,7 @@ class DrawETQuantifierBlock(
       contents += drawTermVector( v )
   }
 
-  def drawTermVector( list: Seq[LambdaExpression] ) = new BoxPanel( Orientation.Horizontal ) {
+  def drawTermVector( list: Seq[Expr] ) = new BoxPanel( Orientation.Horizontal ) {
     background = new Color( 255, 255, 255 )
     yLayoutAlignment = 0.5
 
@@ -530,17 +530,17 @@ class DrawETNonQuantifier(
 }
 
 object ETStrongQuantifierBlock {
-  def unapply( et: ExpansionTree ): Some[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = et match {
+  def unapply( et: ExpansionTree ): Some[( Formula, Int, Map[Seq[Expr], ExpansionTree] )] = et match {
     case ETStrongQuantifier( _, eigen, ETStrongQuantifierBlock( _, depth, children ) ) =>
       Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( eigen +: t, child ) ) )
     case ETSkolemQuantifier( _, st, _, ETStrongQuantifierBlock( _, depth, children ) ) =>
       Some( ( et.shallow, depth + 1, for ( ( t, child ) <- children ) yield ( st +: t, child ) ) )
-    case _ => Some( ( et.shallow, 0, Map( Seq[LambdaExpression]() -> et ) ) )
+    case _ => Some( ( et.shallow, 0, Map( Seq[Expr]() -> et ) ) )
   }
 }
 
 object ETQuantifierBlock {
-  def unapply( et: ExpansionTree ): Option[( HOLFormula, Int, Map[Seq[LambdaExpression], ExpansionTree] )] = et match {
+  def unapply( et: ExpansionTree ): Option[( Formula, Int, Map[Seq[Expr], ExpansionTree] )] = et match {
     case ETStrongQuantifierBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
     case ETWeakQuantifierBlock( shallow, depth, children ) if depth > 0 => Some( ( shallow, depth, children ) )
     case _ => None

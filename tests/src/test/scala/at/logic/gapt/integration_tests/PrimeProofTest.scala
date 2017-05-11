@@ -1,9 +1,9 @@
 
 package at.logic.gapt.integration_tests
 
-import at.logic.gapt.expr.Top
+import at.logic.gapt.expr.{ Atom, Formula, Top }
 import at.logic.gapt.expr.hol.containsStrongQuantifier
-import at.logic.gapt.proofs.HOLClause
+import at.logic.gapt.proofs.{ Ant, HOLClause, SequentConnector, Suc }
 import at.logic.gapt.proofs.expansion.ExpansionSequent
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.lk._
@@ -47,11 +47,11 @@ class PrimeProofTest extends Specification {
     //      val sectionsPre = ("Types", getTypeInformation(holcs).toList.sortWith((x,y) => x.toString < y.toString))::Nil
     //
     //      // convert to fol and obtain map of definitons
-    //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.LambdaExpression, at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
+    //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.Expr, at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
     //      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     //      val cs = holcs.map(x => Sequent(
-    //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula]),
-    //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[LambdaExpression],imap,iid).asInstanceOf[FOLFormula])
+    //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[Expr],imap,iid).asInstanceOf[FOLFormula]),
+    //          x.succedent.map(y => reduceHolToFol(y.asInstanceOf[Expr],imap,iid).asInstanceOf[FOLFormula])
     //      ))
     //      val sections = ("Definitions", imap.toList.map(x => (x._1, FOLConst(x._2))))::sectionsPre
     //
@@ -150,12 +150,9 @@ class PrimeProofTest extends Specification {
       if ( n >= 2 ) skipped( "LK proof construction runs out of memory" )
 
       val euclidN = prime.euclid( n )
-      val proof = euclidN.proof
-      val deproof = eliminateDefinitions( euclidN.ctx.definitions.toMap )( proof )
+      import euclidN._
 
-      val proof_sk = skolemize( regularize( AtomicExpansion( deproof ) ) )
-
-      CERES( proof_sk )
+      CERES( eliminateDefinitions( proof ) )
       ok
     }
 

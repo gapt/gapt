@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.gaptic
 
-import at.logic.gapt.expr.HOLFormula
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk._
@@ -8,11 +8,11 @@ import at.logic.gapt.proofs.lk._
 import language.experimental.macros
 
 object Lemma {
-  def apply[T]( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.applyImpl
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.applyImpl
 }
 
 object IncompleteLemma {
-  def apply[T]( labelledSequent: Sequent[( String, HOLFormula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.incompleteImpl
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.incompleteImpl
 }
 
 object LemmaMacros {

@@ -48,7 +48,7 @@ class LKToLKskTest extends Specification {
      */
     val x = Var( "X", Ti -> To )
     val y = Var( "y", Ti )
-    val p = HOLAtom( Const( "P", To ), Nil )
+    val p = Atom( Const( "P", To ), Nil )
     val f = Ex( y, All( x, App( x, y ) ) )
     val p0 = AtomicExpansion( f )
     val p1 = WeakeningRightRule( p0, p )
@@ -68,7 +68,7 @@ class LKToLKskTest extends Specification {
      */
     val x = Var( "X", Ti -> To )
     val y = Var( "y", Ti )
-    val p = HOLAtom( Const( "P", To ), Nil )
+    val p = Atom( Const( "P", To ), Nil )
     val f = Ex( y, All( x, App( x, y ) ) )
     val p0 = AtomicExpansion( f )
     val p0a = AtomicExpansion( f )
@@ -88,7 +88,7 @@ class LKToLKskTest extends Specification {
      */
     val x = Var( "X", Ti -> To )
     val y = Var( "y", Ti )
-    val p = HOLAtom( Const( "P", To ), Nil )
+    val p = Atom( Const( "P", To ), Nil )
     val f = Ex( y, All( x, App( x, y ) ) )
     val p0 = AtomicExpansion( f )
     val p0a = AtomicExpansion( f )
@@ -107,13 +107,15 @@ class LKToLKskTest extends Specification {
   }
 
   "lattice proof" in {
-    val lk = regularize( eliminateDefinitions( lattice.defs )( lattice.p ) )
+    import lattice._
+    val lk = regularize( eliminateDefinitions( proof ) )
     val lksk = skolemizeInferences( lk )
     lksk.conclusion must_== lk.conclusion
   }
 
   "tape proof" in {
-    val lk = eliminateDefinitions( tape.defs )( tape.p )
+    import tape._
+    val lk = eliminateDefinitions( proof )
     val lksk = skolemizeInferences( lk )
     lksk.conclusion must_== lk.conclusion
   }

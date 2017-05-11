@@ -225,7 +225,7 @@ object IvyParser extends Logger {
   }
 
   //TODO: merge code with parse_clause_
-  def parse_clause_frompos( exp: SExpression, pos: List[Int] ): ( HOLFormula, List[Int] ) = exp match {
+  def parse_clause_frompos( exp: SExpression, pos: List[Int] ): ( Formula, List[Int] ) = exp match {
     case LFun( "or", left, right ) =>
       pos match {
         case 1 :: rest =>
@@ -257,7 +257,7 @@ object IvyParser extends Logger {
   }
 
   //directly converts a clause as nested or expression into a list with the literals in the same order
-  def parse_clause_( exp: SExpression ): List[HOLFormula] = exp match {
+  def parse_clause_( exp: SExpression ): List[Formula] = exp match {
     case LFun( "or", left, right ) =>
       val rightclause = parse_clause_( right )
 

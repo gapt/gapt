@@ -31,11 +31,11 @@ object DIMACS {
 }
 
 class DIMACSEncoding {
-  private val atomMap = mutable.Map[HOLAtom, DIMACS.Atom]()
-  private val reverseAtomMap = mutable.Map[DIMACS.Atom, HOLAtom]()
+  private val atomMap = mutable.Map[Atom, DIMACS.Atom]()
+  private val reverseAtomMap = mutable.Map[DIMACS.Atom, Atom]()
   private var atomIndex = 1
 
-  def encodeAtom( atom: HOLAtom ): DIMACS.Atom =
+  def encodeAtom( atom: Atom ): DIMACS.Atom =
     atomMap.getOrElse( atom, {
       val idx = atomIndex
       atomIndex += 1

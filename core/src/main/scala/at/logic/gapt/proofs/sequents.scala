@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr.Polarity.{ Negative, Positive }
-import at.logic.gapt.expr.{ HOLFormula, Polarity }
+import at.logic.gapt.expr.{ Formula, Polarity }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 import cats.Functor
 import cats.kernel.Monoid
@@ -83,6 +83,18 @@ case class Suc( k: Int ) extends SequentIndex {
 }
 
 /**
+ * Used for clause set extraction
+ * @param sequent A sequent.
+ */
+case class SetSequent[+A]( sequent: Sequent[A] ) {
+  override def equals( that: Any ): Boolean = that match {
+    case SetSequent( Sequent( ante, suc ) ) => this.sequent.antecedent.toSet == ante.toSet && this.sequent.succedent.toSet == suc.toSet
+    case _                                  => false
+  }
+  override def hashCode = this.sequent.antecedent.distinct.toSet.hashCode() + this.sequent.succedent.distinct.toSet.hashCode() // permutation-invariant hashcode
+}
+
+/**
  * A sequent is a pair of sequences of elements of type A, typically written as a,,1,,,…,a,,m,, :- b,,1,,,…,b,,n,,.
  *
  * @param antecedent The first list.
@@ -94,7 +106,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
   override def toString = toSigRelativeString
 
   def toSigRelativeString( implicit sig: BabelSignature ): String =
-    if ( forall { _.isInstanceOf[HOLFormula] } ) {
+    if ( forall { _.isInstanceOf[Formula] } ) {
       new BabelExporter( unicode = true, sig = sig ).export( this.asInstanceOf[HOLSequent] )
     } else {
       val stringified = this map { _.toString }

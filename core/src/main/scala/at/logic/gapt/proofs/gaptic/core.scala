@@ -11,14 +11,14 @@ import cats.syntax.all._
 import cats.instances.all._
 
 object guessLabels {
-  def suggestLabel( formula: HOLFormula, idx: SequentIndex, nameGen: NameGenerator ): String =
+  def suggestLabel( formula: Formula, idx: SequentIndex, nameGen: NameGenerator ): String =
     formula match {
       case Const( name, _ ) => nameGen.fresh( name )
       case _ if idx.isSuc   => nameGen.fresh( "g" )
       case _ if idx.isAnt   => nameGen.freshWithIndex( "h" )
     }
 
-  def apply( sequent: HOLSequent ): Sequent[( String, HOLFormula )] = {
+  def apply( sequent: HOLSequent ): Sequent[( String, Formula )] = {
     val nameGen = new NameGenerator( Set() )
     for ( ( f, i ) <- sequent.zipWithIndex )
       yield suggestLabel( f, i, nameGen ) -> f
@@ -28,11 +28,11 @@ object guessLabels {
 object ProofState {
   def apply( initialGoal: OpenAssumption ): ProofState =
     ProofState( initialGoal, List( initialGoal ), Map() )
-  def apply( initialGoal: Sequent[( String, HOLFormula )] ): ProofState =
+  def apply( initialGoal: Sequent[( String, Formula )] ): ProofState =
     ProofState( OpenAssumption( initialGoal ) )
   def apply( initialGoal: HOLSequent )( implicit dummyImplicit: DummyImplicit ): ProofState =
     apply( guessLabels( initialGoal ) )
-  def apply( initialGoal: HOLFormula ): ProofState =
+  def apply( initialGoal: Formula ): ProofState =
     apply( Sequent() :+ initialGoal )
 }
 case class ProofState private (
@@ -128,15 +128,15 @@ class OpenAssumptionIndex {
  * Defines the case class open assumption which considers an arbitrary labelled sequence an axiom.
  */
 case class OpenAssumption(
-    labelledSequent: Sequent[( String, HOLFormula )],
-    index:           OpenAssumptionIndex             = new OpenAssumptionIndex
+    labelledSequent: Sequent[( String, Formula )],
+    index:           OpenAssumptionIndex          = new OpenAssumptionIndex
 ) extends InitialSequent {
   override def name = "ass"
 
   def labels = labelledSequent.map( _._1 )
   override def conclusion = labelledSequent map { labelledFormula => labelledFormula._2 }
 
-  def apply( label: String ): HOLFormula = labelledSequent.elements.find( _._1 == label ).get._2
+  def apply( label: String ): Formula = labelledSequent.elements.find( _._1 == label ).get._2
 
   def toPrettyString( implicit sig: BabelSignature ) = {
     val builder = new StringBuilder
@@ -205,7 +205,7 @@ trait Tactical[+T] { self =>
    * @param t2
    * @return
    */
-  def orElse[S >: T]( t2: Tactical[S] ): Tactical[S] = {
+  def orElse[S >: T]( t2: => Tactical[S] ): Tactical[S] = {
     val t1 = this
 
     new Tactical[S] {
@@ -216,7 +216,7 @@ trait Tactical[+T] { self =>
     }
   }
 
-  def andThen[S]( t2: Tactical[S] ): Tactical[S] = new Tactical[S] {
+  def andThen[S]( t2: => Tactical[S] ): Tactical[S] = new Tactical[S] {
     def apply( proofState: ProofState ) = self( proofState ) flatMap { x => t2( x._2 ) }
     override def toString = s"$self andThen $t2"
   }
@@ -310,7 +310,7 @@ trait Tactic[+T] extends Tactical[T] { self =>
   protected def findFormula( goal: OpenAssumption, mode: TacticApplyMode ): FindFormula =
     new FindFormula( goal, mode )
   protected class FindFormula( goal: OpenAssumption, mode: TacticApplyMode ) {
-    type Val = ( String, HOLFormula, SequentIndex )
+    type Val = ( String, Formula, SequentIndex )
 
     def withFilter( pred: Val => Boolean ): Either[TacticalFailure, Val] =
       goal.labelledSequent.zipWithIndex.elements.collect {
@@ -370,7 +370,7 @@ object NewLabels {
    * @param fromLabel
    * @return
    */
-  def apply( sequent: Sequent[( String, HOLFormula )], fromLabel: String ): Stream[String] = {
+  def apply( sequent: Sequent[( String, Formula )], fromLabel: String ): Stream[String] = {
     val regex = f"$fromLabel%s_([0-9]+)".r
 
     // Get integer subscripts (i.e 1, 2, 3 for x_1, x_2, x_3)
@@ -384,6 +384,6 @@ object NewLabels {
 }
 
 object NewLabel {
-  def apply( sequent: Sequent[( String, HOLFormula )], fromLabel: String ): String =
+  def apply( sequent: Sequent[( String, Formula )], fromLabel: String ): String =
     NewLabels( sequent, fromLabel ).head
 }

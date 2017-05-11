@@ -3,7 +3,7 @@ package at.logic.gapt.proofs
 import at.logic.gapt.expr.Polarity
 
 /**
- * Sequents for the intuitionistic calculus NJ, i.e. natural deduction with sequents.
+ * Sequents for natural deduction.
  *
  * They have the form A,,1,,,...,A,,m,, :- B (there is always exactly one element in the succedent).
  *

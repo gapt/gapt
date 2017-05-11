@@ -10,9 +10,9 @@ object resolutionToTptp {
   private def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
     val disj = if ( inf.assertions.isEmpty ) inf.conclusion.toDisjunction
     else inf.conclusion.toDisjunction | inf.assertions.toDisjunction
-    if ( inf.conclusion.forall( _.isInstanceOf[HOLAtom] ) ) {
+    if ( inf.conclusion.forall( _.isInstanceOf[Atom] ) ) {
       val ( _, disj_ ) = tptpToString.renameVars( freeVariables( disj ).toSeq, disj )
-      AnnotatedFormula( "cnf", label, role, disj_.asInstanceOf[HOLFormula], annotations )
+      AnnotatedFormula( "cnf", label, role, disj_.asInstanceOf[Formula], annotations )
     } else {
       AnnotatedFormula( "fof", label, role, universalClosure( disj ), annotations )
     }
@@ -21,9 +21,9 @@ object resolutionToTptp {
   private def convertDefinition(
     label:    String,
     defConst: HOLAtomConst,
-    defn:     LambdaExpression
+    defn:     Expr
   ): TptpInput = {
-    val FunctionType( _, argtypes ) = defConst.exptype
+    val FunctionType( _, argtypes ) = defConst.ty
     val vars = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"X$i", t )
 
     AnnotatedFormula( "fof", label, "definition",
@@ -34,9 +34,9 @@ object resolutionToTptp {
   private def convertSkolemDefinition(
     label:   String,
     skConst: Const,
-    defn:    LambdaExpression
+    defn:    Expr
   ): AnnotatedFormula = {
-    val Abs.Block( vars, quantf: HOLFormula ) = defn
+    val Abs.Block( vars, quantf: Formula ) = defn
     val instf = instantiate( quantf, skConst( vars ) )
 
     AnnotatedFormula( "fof", label, "definition",

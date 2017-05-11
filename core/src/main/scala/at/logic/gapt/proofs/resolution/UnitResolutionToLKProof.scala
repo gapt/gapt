@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.resolution
 
-import at.logic.gapt.expr.{ Eq, HOLFormula }
+import at.logic.gapt.expr.{ Eq, Formula }
 import at.logic.gapt.proofs.{ Ant, Suc }
 import at.logic.gapt.proofs.lk._
 
@@ -13,7 +13,7 @@ object UnitResolutionToLKProof {
       case Flip( q, _ )                => !shouldFlip( q )
       case Input( _ )                  => false
     }
-    def maybeFlip( atom: HOLFormula, flip: Boolean ): HOLFormula =
+    def maybeFlip( atom: Formula, flip: Boolean ): Formula =
       if ( flip ) {
         val Eq( t, s ) = atom
         Eq( s, t )

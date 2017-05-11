@@ -94,10 +94,10 @@ object ResolutionToExpansionProof {
     val cuts = mutable.Buffer[ETImp]()
     var expansionSequent: ExpansionSequent =
       if ( !addConclusion ) Sequent()
-      else proof.conclusion.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[HOLAtom], !i.polarity ) }
-    val splitDefn = mutable.Map[HOLAtom, HOLFormula]()
-    val splitCutL = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
-    val splitCutR = mutable.Map[HOLAtom, List[ExpansionTree]]().withDefaultValue( Nil )
+      else proof.conclusion.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[Atom], !i.polarity ) }
+    val splitDefn = mutable.Map[Atom, Formula]()
+    val splitCutL = mutable.Map[Atom, List[ExpansionTree]]().withDefaultValue( Nil )
+    val splitCutR = mutable.Map[Atom, List[ExpansionTree]]().withDefaultValue( Nil )
 
     def propg_( p: ResolutionProof, q: ResolutionProof, f: Set[( Substitution, ExpansionSequent )] => Set[( Substitution, ExpansionSequent )] ) = {
       val fvsQ = freeVariables( q.conclusion )
@@ -141,7 +141,7 @@ object ResolutionToExpansionProof {
     }
 
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
-      Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[HOLAtom], !i.polarity ) } )
+      Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[Atom], !i.polarity ) } )
 
     def perfMerges( expansionSequent: ExpansionSequent ): ExpansionSequent = {
       expansionSequent.groupBy( _.shallow ).map( ets => ETMerge( ets._2 ) )
@@ -170,24 +170,24 @@ object ResolutionToExpansionProof {
       case p @ Subst( q, subst ) =>
         val subFVs = freeVariables( q.conclusion )
         propg( p, q, _.map( _.map1( _ compose subst restrict subFVs ) ) )
-      case p @ Resolution( q1, i1, q2, i2 ) if p.resolvedLiteral.isInstanceOf[HOLAtom] =>
-        val atom = p.resolvedLiteral.asInstanceOf[HOLAtom]
+      case p @ Resolution( q1, i1, q2, i2 ) if p.resolvedLiteral.isInstanceOf[Atom] =>
+        val atom = p.resolvedLiteral.asInstanceOf[Atom]
         val Seq( oc1, oc2 ) = p.occConnectors
-        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InAntecedent ) ) ) )
-        propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[HOLAtom], Polarity.InSuccedent ) ) ) )
+        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[Atom], Polarity.InAntecedent ) ) ) )
+        propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2, ETAtom( es._1( atom ).asInstanceOf[Atom], Polarity.InSuccedent ) ) ) )
       case p @ DefIntro( q, i, definition, repContext ) =>
         val Seq( oc ) = p.occConnectors
         propg( p, q, _.map( es => es._1 -> oc.parent( es._2 ).updated(
           i,
           ETDefinition(
             es._1( p.auxFormula ),
-            ETAtom( es._1( p.defAtom ).asInstanceOf[HOLAtom], !i.polarity )
+            ETAtom( es._1( p.defAtom ).asInstanceOf[Atom], !i.polarity )
           )
         ) ) )
 
       case p @ Paramod( q1, i1, ltr, q2, i2, ctx ) =>
         val Seq( oc1, oc2 ) = p.occConnectors
-        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[HOLAtom], Polarity.InAntecedent ) ) ) )
+        propg_( p, q1, _.map( es => es._1 -> oc1.parent( es._2 ).updated( i1, ETAtom( es._1( q1.conclusion( i1 ) ).asInstanceOf[Atom], Polarity.InAntecedent ) ) ) )
         propg( p, q2, _.map( es => es._1 -> oc2.parent( es._2 ).updated( i2, replaceWithContext( es._2( p.mainIndices.head ), es._1( ctx ).asInstanceOf[Abs], es._1( p.t ) ) ) ) )
 
       case p @ AvatarSplit( q, indices, AvatarGroundComp( atom, pol ) ) =>
@@ -204,7 +204,7 @@ object ResolutionToExpansionProof {
         val Seq( oc ) = p.occConnectors
         propg( p, q, _.map( es => renaming.compose( es._1 ) -> oc.parents( es._2 ).zipWithIndex.map {
           case ( Seq( et ), _ ) => et
-          case ( Seq(), idx )   => ETAtom( renaming( q.conclusion( idx ) ).asInstanceOf[HOLAtom], !idx.polarity )
+          case ( Seq(), idx )   => ETAtom( renaming( q.conclusion( idx ) ).asInstanceOf[Atom], !idx.polarity )
         } ) )
       case p @ AvatarComponent( AvatarGroundComp( _, _ ) ) =>
         clear( p )

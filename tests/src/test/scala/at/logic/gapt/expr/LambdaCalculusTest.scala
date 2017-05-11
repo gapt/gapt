@@ -166,13 +166,13 @@ class LambdaCalculusTest extends Specification {
       val t5 = Abs( Var( "x", Ti ), t1 )
       val t6 = Abs( Var( "y", Ti ), t2 )
 
-      val map = HashMap[LambdaExpression, Int]()
-      val set = HashSet[LambdaExpression]()
+      val map = HashMap[Expr, Int]()
+      val set = HashSet[Expr]()
 
       val nmap = map + ( ( t3, 1 ) ) + ( ( t4, 2 ) )
       nmap( t3 ) must_== ( 2 ) //the entry for the alpha equal formula must have been overwritten
       nmap.size must_== ( 1 ) //t3 and t4 are considered equal, so the keyset must not contain both
-      nmap must beEqualTo( Map[LambdaExpression, Int]() + ( ( t3, 1 ) ) + ( ( t4, 2 ) ) ) //map and hashmap must agree
+      nmap must beEqualTo( Map[Expr, Int]() + ( ( t3, 1 ) ) + ( ( t4, 2 ) ) ) //map and hashmap must agree
 
       val nset = set + t3 + t4
       nset.size must_== ( 1 ) //t3 and t4 are considered equal, so the set must not contain both

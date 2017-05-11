@@ -5,15 +5,15 @@ import at.logic.gapt.expr._
 import scala.collection.mutable
 
 abstract class GeneralLeastGeneralGeneralization {
-  def fast( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] )
+  def fast( a: Expr, b: Expr ): ( Expr, collection.Map[Var, Expr], collection.Map[Var, Expr] )
 
-  def apply( as: LambdaExpression* ): ( LambdaExpression, Map[LambdaExpression, Substitution] ) =
+  def apply( as: Expr* ): ( Expr, Map[Expr, Substitution] ) =
     apply( as )
 
-  def apply( as: Traversable[LambdaExpression] ): ( LambdaExpression, Map[LambdaExpression, Substitution] ) =
+  def apply( as: Traversable[Expr] ): ( Expr, Map[Expr, Substitution] ) =
     apply( as.toList )
 
-  def apply( as: List[LambdaExpression] ): ( LambdaExpression, Map[LambdaExpression, Substitution] ) =
+  def apply( as: List[Expr] ): ( Expr, Map[Expr, Substitution] ) =
     as match {
       case Nil      => throw new IllegalArgumentException( "Cannot compute lgg of empty list" )
       case a :: Nil => ( a, Map( a -> Substitution() ) )
@@ -31,18 +31,18 @@ abstract class GeneralLeastGeneralGeneralization {
  * together with the substitutions witnessing the subsumption.
  */
 object leastGeneralGeneralization extends GeneralLeastGeneralGeneralization {
-  def fast( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
+  def fast( a: Expr, b: Expr ): ( Expr, collection.Map[Var, Expr], collection.Map[Var, Expr] ) = {
     val lgg = new leastGeneralGeneralization
     ( lgg( a, b ), lgg.subst1, lgg.subst2 )
   }
 }
 class leastGeneralGeneralization {
-  val vars = mutable.Map[( LambdaExpression, LambdaExpression ), Var]()
-  val subst1 = mutable.Map[Var, LambdaExpression]()
-  val subst2 = mutable.Map[Var, LambdaExpression]()
+  val vars = mutable.Map[( Expr, Expr ), Var]()
+  val subst1 = mutable.Map[Var, Expr]()
+  val subst2 = mutable.Map[Var, Expr]()
 
   var i = 0
-  def apply( a: LambdaExpression, b: LambdaExpression ): LambdaExpression = {
+  def apply( a: Expr, b: Expr ): Expr = {
     val Apps( fa, as ) = a
     val Apps( fb, bs ) = b
     if ( fa.isInstanceOf[Const] && fa == fb ) {
@@ -50,7 +50,7 @@ class leastGeneralGeneralization {
     } else {
       vars.getOrElseUpdate( a -> b, {
         i = i + 1
-        val v = Var( s"x$i", a.exptype )
+        val v = Var( s"x$i", a.ty )
         subst1( v ) = a
         subst2( v ) = b
         v
@@ -65,8 +65,8 @@ class leastGeneralGeneralization {
  * witnessing the subsumption.
  */
 object leastGeneralGeneralization1 extends GeneralLeastGeneralGeneralization {
-  def fast( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, collection.Map[Var, LambdaExpression], collection.Map[Var, LambdaExpression] ) = {
-    def lgg( a: LambdaExpression, b: LambdaExpression ): ( LambdaExpression, Option[( LambdaExpression, LambdaExpression )] ) = {
+  def fast( a: Expr, b: Expr ): ( Expr, collection.Map[Var, Expr], collection.Map[Var, Expr] ) = {
+    def lgg( a: Expr, b: Expr ): ( Expr, Option[( Expr, Expr )] ) = {
       val Apps( fa, as ) = a
       val Apps( fb, bs ) = b
       if ( fa.isInstanceOf[Const] && fa == fb ) {
@@ -74,10 +74,10 @@ object leastGeneralGeneralization1 extends GeneralLeastGeneralGeneralization {
         if ( s_.flatten.distinct.size <= 1 ) {
           ( fa( as_ : _* ), s_.flatten.headOption )
         } else {
-          ( Var( "x", a.exptype ), Some( ( a, b ) ) )
+          ( Var( "x", a.ty ), Some( ( a, b ) ) )
         }
       } else {
-        ( Var( "x", a.exptype ), Some( ( a, b ) ) )
+        ( Var( "x", a.ty ), Some( ( a, b ) ) )
       }
     }
 
