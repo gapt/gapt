@@ -3,11 +3,6 @@ import at.logic.gapt.expr.{ Apps, Expr, syntacticMatching, _ }
 import at.logic.gapt.proofs._
 
 /**
- * The plan is to put all future functions, classes, etc. dealing with Proof schemata into this file.
- * Created by David M. Cerna on 02.02.17.
- */
-
-/**
  * The Point of this class is to allow the instantiation of Proof schemata.
  */
 object LKProofSchemata {
@@ -19,31 +14,16 @@ object LKProofSchemata {
    * the chosen proof
    *
    * @param proofName The name of the linkProof
-   * @param args The arguments for the free parameters of the linkProof.
    */
-  def Instantiate( proofName: String, args: Seq[Expr] )( implicit ctx: Context ): LKProof = {
+  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof =
+    ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
+      case Some( ( defPrf, subst ) ) => buildProof( subst( defPrf ), ctx )
+      case None                      => ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
+    }
 
-    val ( Some( ( Apps( _, cargs ), _ ) ), Some( invar ) ) = ( ctx.get[Context.ProofNames].names.get( proofName ), ctx.get[Context.ProofDefinitions].components.get( proofName ) )
-    require( cargs.size == args.size )
-    val Some( ( subs: Substitution, lkp: LKProof ) ) = invar.fold( None )( ( found, search ) => {
-      if ( found == None ) {
-        val ( Apps( _, vs ), lkp ) = search
-        val subs = syntacticMatching( vs.zip( args ) )
-        if ( subs.isDefined ) Some( ( subs.getOrElse( Substitution() ), lkp ) )
-        else None
-
-      } else found
-    } )
-    buildProof( subs( lkp ), ( ctx ) )
-  }
-  /**
-   * buildProof uses the  LKVisitor trait to unroll proof links
-   *
-   */
   object buildProof extends LKVisitor[Context] {
     override def visitProofLink( proof: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
-      val Apps( Const( c, _ ), vs ) = proof.referencedProof
-      val upProof = Instantiate( c, vs )( otherArg )
+      val upProof = Instantiate( proof.referencedProof )( otherArg )
       ( upProof, SequentConnector.guessInjection( upProof.endSequent, proof.conclusion ).inv )
     }
   }

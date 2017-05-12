@@ -28,11 +28,11 @@ object gniaSchema extends TacticsProof {
   ctx += hoc"omega: w>w>w"
   ctx += hoc"phi: w>w>w"
   ctx += hoc"chi: w>i>w"
-  ctx += hos"E(f(p),n),E(f(q),n) :- E(f(p),f(q))"
-  ctx += hos" :- LEQ(p,p)"
-  ctx += hos"LEQ(g(p),q):- LE(p,q)"
-  ctx += hos"LEQ(max(a, b), c) :- LEQ(a, c)"
-  ctx += hos"LEQ(max(a, b), c) :- LEQ(b, c)"
+  ctx += "efef" -> hcl"E(f(p),n),E(f(q),n) :- E(f(p),f(q))"
+  ctx += "leq_refl" -> hos" :- LEQ(p,p)"
+  ctx += "leq_g" -> hos"LEQ(g(p),q):- LE(p,q)"
+  ctx += "leq_max1" -> hos"LEQ(max(a, b), c) :- LEQ(a, c)"
+  ctx += "leq_max2" -> hos"LEQ(max(a, b), c) :- LEQ(b, c)"
 
   //Schematic Definitions
 

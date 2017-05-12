@@ -24,7 +24,10 @@ object formulaToExpansionTree {
           map { case ( term, insts ) => term -> conv( instantiate( formula, term ), f, insts, pol ) } )
       case ( _, Quant( v, f, isAll ) ) if isAll == pol.inSuc =>
         ETMerge( formula, pol, substitutions.groupBy( _( v ) ).
-          map { case ( ev: Var, insts ) => ETStrongQuantifier( formula, ev, conv( instantiate( formula, ev ), f, insts, pol ) ) } )
+          map {
+            case ( ev: Var, insts ) => ETStrongQuantifier( formula, ev, conv( instantiate( formula, ev ), f, insts, pol ) )
+            case ( res, insts )     => throw new IllegalArgumentException( s"Substitution maps variable ${insts.head( v )} to non-variable $res" )
+          } )
     }
 }
 

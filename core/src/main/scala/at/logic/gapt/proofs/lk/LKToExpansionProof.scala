@@ -31,7 +31,9 @@ object LKToExpansionProof {
 
     case BottomAxiom                => Seq() -> Sequent( Seq( ETBottom( Polarity.InAntecedent ) ), Seq() )
 
-    case TheoryAxiom( sequent )     => Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex ) yield ETAtom( a, i.polarity ) )
+    case ProofLink( _, sequent ) =>
+      Seq() -> ( for ( ( a, i ) <- sequent.zipWithIndex )
+        yield ETAtom( a.asInstanceOf[Atom], i.polarity ) )
 
     // Structural rules
     case WeakeningLeftRule( subProof, formula ) =>

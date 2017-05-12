@@ -558,7 +558,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
       if ( i + 1 >= n ) {
         val final_expression = Eq( a1, a2 )
 
-        val top = Axiom( final_expression :: Nil, final_expression :: Nil )
+        val top = LogicalAxiom( final_expression )
         addAllAxioms( top )
       } else {
         gen_proof_step( i + 1, n )
@@ -648,11 +648,11 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     equalities match {
       case Nil => p
       case head :: Nil => {
-        val ax = Axiom( head :: Nil, head :: Nil )
+        val ax = LogicalAxiom( head )
         ImpLeftRule( ax, head, p, result )
       }
       case head :: tail => {
-        val ax = Axiom( head :: Nil, head :: Nil )
+        val ax = LogicalAxiom( head )
         var impl_chain = result
         for ( elem <- tail.reverse ) {
           impl_chain = Imp( elem, impl_chain )
@@ -722,14 +722,13 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
   }
 
   def induction_steps( n: Int ): LKProof = {
-    val axiom_formulae = Eq( f1( f, Utils.numeral( n ) ), f2( g, Utils.numeral( n ), Utils.numeral( 1 ) ) ) :: Nil
-    val axiom: LKProof = Axiom( axiom_formulae, axiom_formulae )
+    val axiom = LogicalAxiom( Eq( f1( f, Utils.numeral( n ) ), f2( g, Utils.numeral( n ), Utils.numeral( 1 ) ) ) )
 
     // add axioms
     val all_axioms = List[FOLFormula]( f_ax_1, f_ax_2, g_ax_1.getAxiom, g_ax_2, symm_axiom, refl_axiom.getAxiom,
       trans_axiom.getAxiom, compat_mul_axiom.getAxiom, assoc_mul_axiom.getAxiom, g_compat_2.getAxiom,
       mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom )
-    val p1 = all_axioms.foldLeft( axiom )( ( proof, elem ) => WeakeningLeftRule( proof, elem ) )
+    val p1 = all_axioms.foldLeft[LKProof]( axiom )( ( proof, elem ) => WeakeningLeftRule( proof, elem ) )
 
     val n_num = Utils.numeral( n )
 

@@ -1,5 +1,7 @@
 package at.logic.gapt.proofs
 
+import at.logic.gapt.proofs.lk.LKProof
+
 import scala.collection.mutable
 
 /**
@@ -207,4 +209,16 @@ object SequentConnector {
         Seq( oldIdx )
     } )
   }
+}
+
+object guessPermutation {
+  /**
+   * Guesses a permutation of formulas in the conclusions of two proofs.
+   * @param oldProof The original proof.
+   * @param newProof A transformed proof which proves the same end-sequent as `oldProof`.
+   * @return A pair consisting of `newProof` and a sequent connector which describes the new
+   *         positions of the formulas in `oldProof.conclusion` with respect to `newProof`.
+   */
+  def apply( oldProof: LKProof, newProof: LKProof ): ( LKProof, SequentConnector ) =
+    ( newProof, SequentConnector.guessInjection( newProof.conclusion, oldProof.conclusion ).inv )
 }

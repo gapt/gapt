@@ -87,8 +87,10 @@ object Checkable {
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>
-        case TheoryAxiom( sequent ) =>
-          require( ctx.axioms.exists { ax => clauseSubsumption( ax, sequent ).isDefined } )
+        case ProofLink( name, sequent ) =>
+          val declSeq = ctx.get[Context.ProofNames].lookup( name )
+          require( declSeq.nonEmpty, s"Proof name $name does not exist in context" )
+          require( declSeq.get isSubsetOf sequent, s"$declSeq\nis not a subsequent of\n$sequent" )
         case TopAxiom | BottomAxiom
           | _: NegLeftRule | _: NegRightRule
           | _: AndLeftRule | _: AndRightRule

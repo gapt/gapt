@@ -39,9 +39,7 @@ object syntacticMGU {
   def apply( a: Expr, b: Expr ): Option[Substitution] = apply( List( a -> b ) )
 
   def apply( eqs: TraversableOnce[( FOLExpression, FOLExpression )] )( implicit dummyImplicit: DummyImplicit, dummyImplicit2: DummyImplicit ): Option[FOLSubstitution] =
-    unify( eqs toList, Map(), Set() ) map { subst =>
-      FOLSubstitution( subst.map map { case ( l: FOLVar, r: FOLTerm ) => l -> r } )
-    }
+    unify( eqs toList, Map(), Set() ).map( _.asFOLSubstitution )
   def apply( a: FOLExpression, b: FOLExpression ): Option[FOLSubstitution] = apply( List( a -> b ) )
 
   def apply( a: Expr, b: Expr, treatAsConstant: Set[Var] ): Option[Substitution] = {

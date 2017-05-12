@@ -2,8 +2,8 @@ package at.logic.gapt.formats.babel
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
-import org.bitbucket.inkytonik.kiama.output.PrettyPrinter
-import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
+import at.logic.gapt.utils.Doc
+import Doc._
 
 /**
  * Exports lambda expressions in the Babel format.
@@ -11,22 +11,22 @@ import org.bitbucket.inkytonik.kiama.output.PrettyPrinterTypes.Indent
  * [[at.logic.gapt.expr.Expr#toSigRelativeString .toSigRelativeString]], or [[at.logic.gapt.expr.Expr#toAsciiString .toAsciiString]] instead.
  * These are all implemented using this class.
  *
- * This exporter is implemented using the [[https://bitbucket.org/inkytonik/kiama/src/default/wiki/PrettyPrinting.md pretty-printing library included in Kiama]].
- *
  * @param unicode  Whether to output logical connectives using Unicode symbols.
  * @param sig  The Babel signature, to decide whether we need to escape constants because they do not fit the naming convention.
  */
-class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = false ) extends PrettyPrinter {
+class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = false ) {
 
-  override val defaultIndent = 2
+  val defaultIndent = 2
+  val lineWidth = 80
 
-  override def nest( doc: Doc, j: Indent = defaultIndent ): Doc =
-    nesting { i =>
-      if ( i > 10 ) doc
-      else super.nest( doc, j )
-    }
+  def nest( doc: Doc, j: Int = defaultIndent ): Doc =
+    doc.group.nest( j )
 
-  def knownConstantTypesFromSig( consts: Iterable[Const] ) =
+  protected def group( doc: Doc ): Doc = doc.group
+
+  protected def parens( doc: Doc ): Doc = "(" <> doc <> ")"
+
+  def knownConstantTypesFromSig( consts: Iterable[Const] ): Iterable[( String, Const )] =
     consts flatMap { c =>
       sig.signatureLookup( c.name ) match {
         case BabelSignature.IsConst( ty ) if ty == c.ty =>
@@ -37,13 +37,13 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   def export( expr: Expr ): String = {
     val knownTypesFromSig = knownConstantTypesFromSig( constants.all( expr ) )
-    pretty( group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ) ).layout
+    group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ).render( lineWidth )
   }
   def export( sequent: HOLSequent ): String = {
     val knownTypesFromSig = knownConstantTypesFromSig( sequent.elements.view.flatMap( constants.all ).toSet )
-    pretty( group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ) ).layout
+    group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ).render( lineWidth )
   }
-  def export( ty: Ty ): String = pretty( group( show( ty, needParens = false ) ) ).layout
+  def export( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
 
   object prio {
     val ident = 0
@@ -71,9 +71,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       t1 = t1_
       formulaDoc
     }
-    ( vsep( docSequent.antecedent.toList, comma ) <@>
-      ( if ( unicode ) "⊢" else ":-" ) <@>
-      vsep( docSequent.succedent.toList, comma ),
+    ( sep( docSequent.antecedent.toList, "," <> line ) </>
+      ( if ( unicode ) "⊢" else ":-" ) </>
+      sep( docSequent.succedent.toList, "," <> line ),
       t1 )
   }
 
@@ -101,8 +101,8 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     p:         Int
   ): ( Doc, Map[String, VarOrConst] ) =
     expr match {
-      case Top() if !bound( TopC.name )       => ( value( if ( unicode ) "⊤" else "true" ), t0 )
-      case Bottom() if !bound( BottomC.name ) => ( value( if ( unicode ) "⊥" else "false" ), t0 )
+      case Top() if !bound( TopC.name )       => ( ( if ( unicode ) "⊤" else "true" ), t0 )
+      case Bottom() if !bound( BottomC.name ) => ( ( if ( unicode ) "⊥" else "false" ), t0 )
 
       case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.ty == To =>
         showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
@@ -118,7 +118,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Eq( a, b ) if !bound( EqC.name ) =>
         val ( a_, t1 ) = show( a, false, bound, t0, prio.infixRel )
         val ( b_, t2 ) = show( b, true, bound, t1, prio.infixRel )
-        ( parenIf( p, prio.infixRel, a_ <+> "=" <@> b_ ), t2 )
+        ( parenIf( p, prio.infixRel, a_ <+> "=" </> b_ ), t2 )
 
       case Neg( e ) if !bound( NegC.name ) =>
         val ( e_, t1 ) = show( e, true, bound, t0, prio.quantOrNeg + 1 )
@@ -183,7 +183,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
     def showFunCall( hd_ :Doc, args_ : List[Doc], p: Int ) =
       parenIf( p, prio.app, hd_ ) <> nest( group( parens(
-        if ( args_.size == 1 ) args_.head else lsep( args_, comma )
+        if ( args_.size == 1 ) args_.head else wordwrap( args_, "," )
       ) ) )
 
     val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
@@ -192,7 +192,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       ( showFunCall( hd_, args_, p ), t2 )
     } else {
       val ( hd_, t2 ) = show( hd, true, bound, t1, prio.typeAnnot )
-      ( parenIf( p, prio.typeAnnot, showFunCall( hd_, args_, prio.typeAnnot ) <> ":" <@> show( expr.ty, false ) ), t2 )
+      ( parenIf( p, prio.typeAnnot, showFunCall( hd_, args_, prio.typeAnnot ) <> ":" </> show( expr.ty, false ) ), t2 )
     }
   }
 
@@ -210,7 +210,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   ): ( Doc, Map[String, VarOrConst] ) = {
     val ( a_, t1 ) = show( a, knownType, bound, t0, prio + leftPrioBias )
     val ( b_, t2 ) = show( b, knownType, bound, t1, prio + rightPrioBias )
-    ( parenIf( p, prio, a_ <+> sym <@> b_ ), t2 )
+    ( parenIf( p, prio, a_ <+> sym </> b_ ), t2 )
   }
 
   def showBinOp(
@@ -235,7 +235,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       val ( expr_, t1 ) = showBinOp( c, prio, leftPrioBias, rightPrioBias, a, b,
         true, bound, t0, BabelExporter.this.prio.typeAnnot )
       ( parenIf( p, BabelExporter.this.prio.typeAnnot,
-        expr_ <> ":" <@> show( rett, false ) ), t1 )
+        expr_ <> ":" </> show( rett, false ) ), t1 )
     }
   }
 
@@ -276,14 +276,14 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   }
 
   def show( ty: Ty, needParens: Boolean ): Doc = ty match {
-    case TBase( name, params ) => hsep( showName( name ) :: params.map( show( _, needParens = true ) ) )
+    case TBase( name, params ) => wordwrap( showName( name ) :: params.map( show( _, needParens = true ) ) )
     case TVar( name )          => "?" <> showName( name )
     case a -> b if !needParens =>
-      group( show( a, true ) <> ">" <@@> show( b, false ) )
+      group( show( a, true ) <> ">" <> zeroWidthLine <> show( b, false ) )
     case _ => parens( nest( show( ty, false ) ) )
   }
 
-  def parenIf( enclosingPrio: Int, currentPrio: Int, doc: Doc ) =
+  def parenIf( enclosingPrio: Int, currentPrio: Int, doc: Doc ): Doc =
     if ( enclosingPrio <= currentPrio ) {
       parens( group( nest( doc ) ) )
     } else if ( enclosingPrio / 2 > currentPrio / 2 ) {

@@ -1,6 +1,8 @@
 # Release notes for GAPT
 
-## Version 2.6 (unreleased)
+## Version 2.7 (unreleased)
+
+## Version 2.6 (released on 2017-04-03)
 
 * Natural deduction
 * Free monad for the SMT solver interface

@@ -41,7 +41,7 @@ class eliminateDefinitions private ( rule: ReductionRule ) extends Function[Expr
 
     case ReflexivityAxiom( term ) => ReflexivityAxiom( apply( term ) )
 
-    case TheoryAxiom( axiom )     => TheoryAxiom( axiom map apply map { _.asInstanceOf[Atom] } )
+    case ProofLink( name, seq )   => ProofLink( apply( name ), seq map apply )
 
     //structural rules
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>

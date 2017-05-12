@@ -5,7 +5,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.{ Logger, metrics }
+import at.logic.gapt.utils.{ Doc, Logger, metrics }
 
 import scala.collection.mutable
 
@@ -26,7 +26,9 @@ case class Rule( lhs: Expr, rhs: Expr ) {
 private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
     extends BabelExporter( unicode, rs.babelSignature ) {
 
-  def csep( docs: List[Doc] ): Doc = ssep( docs, line( ", " ) )
+  import Doc._
+
+  def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
   def export(): String = {
     val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
@@ -40,13 +42,13 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
 
     val knownTypes = ( rs.nonTerminals union rs.terminals ).map { c => c.name -> c }.toMap
 
-    val rules = group( vsep( rs.rules.toList sortBy { _.toString } map {
+    val rules = group( stack( rs.rules.toList sortBy { _.toString } map {
       case Rule( lhs, rhs ) =>
-        group( show( lhs, false, Set(), knownTypes, prio.impl )._1 </> nest( "→" <@>
+        group( show( lhs, false, Set(), knownTypes, prio.impl )._1 </> nest( "→" </>
           show( rhs, true, Set(), knownTypes, prio.impl )._1 ) )
     } ) )
 
-    pretty( group( ntDecl <> line <> tDecl <> line <> line <> rules <> line ) ).layout
+    group( ntDecl </> tDecl <> line </> rules <> line ).render( lineWidth )
   }
 
 }
