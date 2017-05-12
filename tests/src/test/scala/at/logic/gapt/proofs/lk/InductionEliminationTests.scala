@@ -12,16 +12,16 @@ import tip.isaplanner.prop_59
 class InductionEliminationTests extends Specification with SequentMatchers {
 
   private def isCutFree( proof: LKProof ): Boolean =
-    !proof.subProofs.exists( subProof => subProof match {
+    !proof.subProofs.exists {
       case CutRule( _, _, _, _ ) => true
       case _                     => false
-    } )
+    }
 
   private def isInductionFree( proof: LKProof ): Boolean =
-    !proof.subProofs.exists( subProof => subProof match {
+    !proof.subProofs.exists {
       case InductionRule( _, _, _ ) => true
       case _                        => false
-    } )
+    }
 
   private def requireTip( test: => Any ) = {
     if ( TipSmtParser.isInstalled ) {
@@ -43,9 +43,8 @@ class InductionEliminationTests extends Specification with SequentMatchers {
         proof
       )
       val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-      if ( !isInductionFree( inductionFree ) || !isCutFree( inductionFree ) ) {
-        failure
-      }
+      isInductionFree( inductionFree ) must_== true
+      isCutFree( inductionFree ) must_== true
       sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
     }
   }
@@ -61,9 +60,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
         proof
       )
       val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-      if ( !isInductionFree( inductionFree ) ) {
-        failure
-      }
+      isInductionFree( inductionFree ) must_== true
       sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
     }
   }
@@ -116,9 +113,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       proof.subProofAt( 0 :: 0 :: Nil )
     )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
-    if ( !isInductionFree( inductionFree ) ) {
-      failure
-    }
+    isInductionFree( inductionFree ) must_== true
     sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
   }
 
@@ -187,10 +182,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
 
-    if ( !isInductionFree( inductionFree ) ) {
-      failure
-    }
-    success
+    isInductionFree( inductionFree ) must_== true
   }
 
   "regression test: isaplanner/prop_59" in {
@@ -199,9 +191,6 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
     val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof )
     indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
-    if ( !isInductionFree( indFreeProof ) ) {
-      failure
-    }
-    success
+    isInductionFree( indFreeProof ) must_== true
   }
 }
