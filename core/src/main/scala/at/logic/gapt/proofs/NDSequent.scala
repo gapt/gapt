@@ -11,7 +11,16 @@ import at.logic.gapt.expr.Polarity
  * @param conclusion The element B.
  * @tparam A The type of elements in the sequent.
  */
-case class NDSequent[+A]( assumptions: Seq[A], conclusion: A )
+case class NDSequent[+A]( assumptions: Seq[A], conclusion: A ) {
+  def :-[B >: A]( newConclusion: B ): NDSequent[B] =
+    copy( conclusion = newConclusion )
+
+  def +:[B >: A]( additionalAssumption: B ): NDSequent[B] =
+    copy( assumptions = additionalAssumption +: assumptions )
+
+  def ++:[B >: A]( additionalAssumptions: Iterable[B] ): NDSequent[B] =
+    copy( assumptions = additionalAssumptions ++: assumptions )
+}
 
 object NDSequent {
 
