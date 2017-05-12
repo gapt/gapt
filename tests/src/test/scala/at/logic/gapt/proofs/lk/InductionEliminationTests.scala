@@ -1,12 +1,12 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.instanceProof
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15 }
 import at.logic.gapt.expr.Substitution
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Context, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
+import at.logic.gapt.utils.instanceProof
 import org.specs2.mutable.Specification
 import tip.isaplanner.prop_59
 

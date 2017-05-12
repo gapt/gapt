@@ -1,3 +1,5 @@
+package at.logic.gapt.utils
+
 import at.logic.gapt.expr.{ Expr, Formula }
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.lk.{ CutRule, ForallLeftBlock, LKProof, LogicalAxiom }
