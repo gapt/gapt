@@ -1,6 +1,5 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.examples.instanceProof
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15 }
 import at.logic.gapt.expr.Substitution
