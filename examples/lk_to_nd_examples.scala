@@ -314,3 +314,33 @@ object negLeftFollowedByNegRight extends Script {
   println( lk )
   println( nd )
 }
+
+object contractRightWithWrongFocus extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"B" ) ).
+    u( WeakeningRightRule( _, hof"B" ) ).
+    u( WeakeningRightRule( _, hof"C" ) ).
+    u( ContractionRightRule( _, hof"B" ) ).
+    qed
+
+  val focus = Suc( 0 )
+  println( s"focus: $focus" )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
+
+object weakeningRightWithWrongFocus extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"B" ) ).
+    u( WeakeningRightRule( _, hof"A" ) ).
+    qed
+
+  val focus = Suc( 0 )
+  println( s"focus: ${lk.endSequent( focus )}" )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}

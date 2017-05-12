@@ -561,6 +561,22 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
+    "translate AndLeft and OrLeft with focus on 'wrong' formula" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( WeakeningRightRule( _, hof"C" ) ).
+        u( OrRightRule( _, hof"A | B" ) ).
+        c( LogicalAxiom( hof"D" ) ).
+        b( AndRightRule( _, _, hof"C & D" ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
     "translate ImpLeft with empty succedent" in {
       val lk = ProofBuilder.
         c( LogicalAxiom( hof"A" ) ).

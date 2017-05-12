@@ -96,7 +96,7 @@ object LKToND {
       case BottomAxiom =>
         ???
 
-      case TheoryAxiom( sequent ) =>
+      case ProofLink( proof, sequent ) =>
         ???
 
       // Structural rules
@@ -111,10 +111,9 @@ object LKToND {
           val heuristicIndex = Suc( 0 )
           exchange( WeakeningRule( translate( subProof, heuristicIndex ), hof"-$formula" ), p.mainFormula )
         } else {
-          // TODO OPTIMIZATION: exchanging twice should not be required
           // simply weaken with negated formula on the left
-          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
-          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+          val focusMain = p.endSequent.indexOfPol( p.endSequent( focus ), Polarity.InSuccedent )
+          WeakeningRule( translate( subProof, focusMain ), hof"-$formula" )
         }
 
       case p @ ContractionLeftRule( subProof, aux1, aux2 ) =>
