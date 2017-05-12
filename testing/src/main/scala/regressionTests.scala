@@ -80,18 +80,6 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       case _                        => true
     }
 
-  private object instanceProof {
-    def apply( proof: LKProof, terms: List[Expr] ): LKProof = {
-      val instantiationFormula = proof.endSequent.succedent.head
-      CutRule( proof, instantiationProof( instantiationFormula, terms ), instantiationFormula )
-    }
-
-    private def instantiationProof( formula: Formula, terms: List[Expr] ): LKProof = {
-      val instanceFormula = instantiate( formula, terms )
-      ForallLeftBlock( LogicalAxiom( instanceFormula ), formula, terms )
-    }
-  }
-
   private def findTerm( instanceTerms: Stream[( Expr, Int )], baseType: TBase, termSize: Int ): Expr = {
     instanceTerms.find {
       case ( term: Expr, size: Int ) => termSize <= size && term.ty.asInstanceOf[TBase] == baseType

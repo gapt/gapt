@@ -8,6 +8,7 @@ target
 testing/TSTP/prover9
 testing/TSTP/leanCoP
 testing/veriT-SMT-LIB/QF_UF
+testing/TIP/benchmarks
 
 # cut-intro experiments
 /*.json

@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ SequentConnector, Sequent, SequentIndex }
+import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.{ Sequent, SequentConnector, SequentIndex }
 import at.logic.gapt.utils.NameGenerator
 
 object containsEqualityReasoning {
@@ -128,3 +129,16 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
   }
 
 }
+
+object instanceProof {
+  def apply( proof: LKProof, terms: Seq[Expr] ): LKProof = {
+    val instantiationFormula = proof.endSequent.succedent.head
+    CutRule( proof, instantiationProof( instantiationFormula, terms ), instantiationFormula )
+  }
+
+  private def instantiationProof( formula: Formula, terms: Seq[Expr] ): LKProof = {
+    val instanceFormula = instantiate( formula, terms )
+    ForallLeftBlock( LogicalAxiom( instanceFormula ), formula, terms )
+  }
+}
+
