@@ -955,7 +955,7 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
  *    ----------------------------∃:e
  *        Γ, Π :- B
  * </pre>
- * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ, Π, and B
+ * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Π, and B
  *
  * @param leftSubProof The proof π1.
  * @param rightSubProof The proof π2.
@@ -974,8 +974,6 @@ case class ExistsElimRule( leftSubProof: NDProof, rightSubProof: NDProof, aux: S
   //eigenvariable condition
   if ( freeVariables( rightContext ) contains eigenVariable )
     throw NDRuleCreationException( s"Eigenvariable condition is violated: $rightContext contains $eigenVariable" )
-  if ( freeVariables( leftContext ) contains eigenVariable )
-    throw NDRuleCreationException( s"Eigenvariable condition is violated: $leftContext contains $eigenVariable" )
 
   val ( quantifiedVariable, subFormula ) = existentialFormula match {
     case Ex( variable, sub ) => ( variable, sub )
