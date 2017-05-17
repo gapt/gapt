@@ -220,6 +220,20 @@ class NDTest extends Specification with SatMatchers {
     a6.conclusion mustEqual Seq( hof"?x P x", hof"!x (P x -> Q)" ) ++: Sequent() :+ hof"Q"
   }
 
+  "ExistsElim2" in {
+    val b1 = LogicalAxiom( hof"R y" )
+    val b2 = LogicalAxiom( hof"?x R x -> ?x P x" )
+    val b3 = ExistsIntroRule( b1, hof"? x R x", hov"y:i" )
+    val b4 = ImpElimRule( b2, b3 )
+    val a2 = LogicalAxiom( hof"!x (P x -> Q)" )
+    val a3 = ForallElimRule( a2, hov"y" )
+    val a4 = LogicalAxiom( hof"P y" )
+    val a5 = ImpElimRule( a3, a4 )
+    val a6 = ExistsElimRule( b4, a5, hov"y" )
+
+    a6.conclusion mustEqual Seq( hof"?x R x -> ?x P x", hof"R y", hof"!x (P x -> Q)" ) ++: Sequent() :+ hof"Q"
+  }
+
   "ExcludedMiddle" in {
     val a1 = LogicalAxiom( hof"P" )
     val a2 = LogicalAxiom( hof"¬P" )
