@@ -54,6 +54,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
         }
     }.headOption.getOrElse( throw new TimeOutException( null, Duration.Inf ) ) --- "viper"
 
+    ctx.check( proof ) --? "checking proof against context"
+
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
