@@ -52,7 +52,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
           case _: OutOfMemoryError | _: StackOverflowError =>
             None
         }
-    }.head --- "viper"
+    }.headOption.getOrElse( throw new TimeOutException( null, Duration.Inf ) ) --- "viper"
 
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
