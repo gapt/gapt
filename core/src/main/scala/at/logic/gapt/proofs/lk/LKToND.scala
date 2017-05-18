@@ -77,6 +77,94 @@ object LKToND {
     }
   }
 
+  private def exchange2( subProof: NDProof, mainFormula: Formula ): NDProof = {
+    val negMain = hof"-$mainFormula"
+    if ( negMain == subProof.endSequent( Suc( 0 ) ) ) {
+      subProof
+    } else {
+      if ( subProof.endSequent.antecedent.contains( mainFormula ) ) {
+        // Negated main formula in antecedent:
+        // Move it using LEM
+        val r = subProof.endSequent( Suc( 0 ) )
+
+        val ax1 = nd.LogicalAxiom( negMain )
+
+        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+          BottomElimRule( subProof, negMain )
+        } else {
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( hof"-$r" ) ).
+            u( NegElimRule( _, subProof ) ).
+            u( BottomElimRule( _, negMain ) ).
+            qed
+        }
+
+        val i = pr2.endSequent.indexOfPolOption( mainFormula, Polarity.InAntecedent )
+        ExcludedMiddleRule( pr2, i.get, ax1, Ant( 0 ) )
+      } else {
+        // TODO this case seems to be only hit by NegRight, so it should be handled there.
+
+        // Negated main formula not in antecedent
+        // Use BottomElimRule to add main formula to succedent
+        val r = subProof.endSequent( Suc( 0 ) )
+
+        if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+          BottomElimRule( subProof, mainFormula )
+        } else {
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( hof"-$r" ) ).
+            u( NegElimRule( _, subProof ) ).
+            u( BottomElimRule( _, mainFormula ) ).
+            qed
+        }
+      }
+    }
+  }
+
+  private def exchange3( subProof: NDProof, mainFormula: Formula ): NDProof = {
+    if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
+      subProof
+    } else {
+      val negMain = hof"-$mainFormula"
+      if ( subProof.endSequent.antecedent.contains( negMain ) ) {
+        // Negated main formula in antecedent:
+        // Move it using LEM
+        val Neg( r ) = subProof.endSequent( Suc( 0 ) )
+
+        val ax1 = nd.LogicalAxiom( mainFormula )
+
+        val pr2 = if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+          BottomElimRule( subProof, mainFormula )
+        } else {
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( hof"$r" ) ).
+            u( NegElimRule( subProof, _ ) ).
+            u( BottomElimRule( _, mainFormula ) ).
+            qed
+        }
+
+        val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
+        ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
+      } else {
+        // TODO this case seems to be only hit by NegRight, so it should be handled there.
+
+        // Negated main formula not in antecedent
+        // Use BottomElimRule to add main formula to succedent
+        val r = subProof.endSequent( Suc( 0 ) )
+
+        if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
+          BottomElimRule( subProof, mainFormula )
+        } else {
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( hof"-$r" ) ).
+            u( NegElimRule( _, subProof ) ).
+            u( BottomElimRule( _, mainFormula ) ).
+            qed
+        }
+      }
+    }
+  }
+
   private def translate( proof: LKProof, focus: SequentIndex ): NDProof = {
 
     assert( focus.isSuc )
@@ -186,10 +274,13 @@ object LKToND {
       case p @ NegRightRule( subProof, aux ) =>
 
         if ( p.mainFormula == p.endSequent( focus ) ) {
+          // TODO: Can this be done better?
           val heuristicIndex = Suc( 0 )
           val Neg( a ) = p.mainFormula
           val t = translate( subProof, heuristicIndex )
           NegIntroRule( exchange( t, Bottom() ), a )
+          //val t2 = NegElimRule( nd.LogicalAxiom( Neg( t.endSequent( Suc( 0 ) ) ) ), t )
+          //NegIntroRule( t2, a )
         } else {
           val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
           exchange( translate( proof, focusMain ), p.endSequent( focus ) )
@@ -418,8 +509,26 @@ object LKToND {
         }
 
       // Equality rules
-      case p: EqualityRule =>
-        ???
+      case p @ EqualityLeftRule( subProof, eq, aux, replacementContext ) =>
+
+        val t = if ( p.endSequent.succedent.nonEmpty ) {
+          translate( subProof, p.getSequentConnector.parent( focus ) )
+        } else {
+          translate( subProof, Suc( 0 ) )
+        }
+
+        // TODO what if multiple replacements
+        val intm = nd.ProofBuilder.
+          c( t ).
+          u( exchange2( _, subProof.endSequent( aux ) ) ).qed
+        val res = nd.ProofBuilder.
+          c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
+          c( intm ).
+          b( EqualityElimRule( _, _ ) ).
+          u( ContractionRule( _, subProof.endSequent( eq ) ) ).
+          u( exchange3( _, subProof.endSequent( focus ) ) ).
+          qed
+        res
 
       case DefinitionLeftRule( subProof, aux, main ) =>
         ???

@@ -252,6 +252,19 @@ object impLeft1 extends Script {
   println( nd )
 }
 
+object impLeft2 extends Script {
+  val l1 = LogicalAxiom( hof"A" )
+  val r1 = LogicalAxiom( hof"B" )
+  val r2 = NegLeftRule( r1, hof"B" )
+  val p = ImpLeftRule( l1, r2, hof"A -> B" )
+
+  println( p )
+
+  val nd = LKToND( p )
+  //val nd = LKToND( p, Suc( 1 ) )
+  println( nd )
+}
+
 object lem extends Script {
   val s1 = LogicalAxiom( hof"A" )
   val s2 = NegRightRule( s1, hof"A" )
@@ -324,7 +337,6 @@ object contractRightWithWrongFocus extends Script {
     qed
 
   val focus = Suc( 0 )
-  println( s"focus: $focus" )
   val nd = LKToND( lk, focus )
 
   println( lk )
@@ -342,5 +354,25 @@ object weakeningRightWithWrongFocus extends Script {
   val nd = LKToND( lk, focus )
 
   println( lk )
+  println( nd )
+}
+
+object equalityLeft extends Script {
+  val c = FOLConst( "c" )
+  val d = FOLConst( "d" )
+  val Pc = FOLAtom( "P", c )
+  val Pd = FOLAtom( "P", d )
+
+  val lk = ProofBuilder.
+    c( LogicalAxiom( Pc ) ).
+    u( WeakeningLeftRule( _, Pd ) ).
+    u( WeakeningRightRule( _, Pd ) ).
+    u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+    u( EqualityLeftRule( _, Eq( c, d ), Pc, Pd ) ).
+    qed
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, focus )
+
   println( nd )
 }
