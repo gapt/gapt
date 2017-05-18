@@ -56,6 +56,14 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     ctx.check( proof ) --? "checking proof against context"
 
+    makeInductionExplicit( proof ) --? "makeInductionExplicit" foreach { proofWithExplicitInduction =>
+      LKToExpansionProof( proofWithExplicitInduction ) --? "expansion proof of explicit induction proof" foreach { exp =>
+        Z3.isValid( exp.deep ) !-- "validity of deep formula of expansion proof of explicit induction proof"
+      }
+    }
+
+    extractRecSchem( proof ) --? "extract recursion scheme"
+
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
