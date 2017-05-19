@@ -530,6 +530,23 @@ object LKToND {
           qed
         res
 
+      case p @ EqualityRightRule( subProof, eq, aux, replacementContext ) =>
+        if ( p.mainFormula == p.endSequent( focus ) ) {
+          // TODO what if multiple replacements
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
+            c( translate( subProof, aux ) ).
+            b( EqualityElimRule( _, _ ) ).
+            u( ContractionRule( _, subProof.endSequent( eq ) ) ).
+            qed
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, focusMain ), p.endSequent( focus ) )
+        }
+
+      case InductionRule( cases, formula, term ) =>
+        ???
+
       case DefinitionLeftRule( subProof, aux, main ) =>
         ???
 

@@ -374,5 +374,27 @@ object equalityLeft extends Script {
   val focus = Suc( 0 )
   val nd = LKToND( lk, focus )
 
+  println( lk )
+  println( nd )
+}
+
+object equalityRight extends Script {
+  val c = FOLConst( "c" )
+  val d = FOLConst( "d" )
+  val Pc = FOLAtom( "P", c )
+  val Pd = FOLAtom( "P", d )
+
+  val lk = ProofBuilder.
+    c( LogicalAxiom( Pc ) ).
+    u( WeakeningLeftRule( _, Pd ) ).
+    u( WeakeningRightRule( _, Pd ) ).
+    u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+    u( EqualityRightRule( _, Eq( c, d ), Pc, Pd ) ).
+    qed
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
   println( nd )
 }
