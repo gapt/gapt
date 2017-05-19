@@ -398,3 +398,32 @@ object equalityRight extends Script {
   println( lk )
   println( nd )
 }
+
+object induction extends Script {
+  val x = FOLVar( "x" )
+  val y = FOLVar( "y" )
+  val zero = FOLConst( "0" )
+  val Sx = FOLFunction( "s", List( x ) )
+
+  val P0y = FOLAtom( "P", List( zero, y ) )
+  val Pxy = FOLAtom( "P", List( x, y ) )
+  val PSxy = FOLAtom( "P", List( Sx, y ) )
+
+  val ax1 = LogicalAxiom( P0y )
+
+  val ax2 = TheoryAxiom( Pxy +: Sequent() :+ PSxy )
+
+  val lk = InductionRule(
+    Seq(
+      InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
+      InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+    ),
+    Abs( x, Pxy ), x
+  )
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
