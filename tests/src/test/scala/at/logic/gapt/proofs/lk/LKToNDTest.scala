@@ -639,6 +639,75 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
       checkEquality( nd, lk, focus )
     }
+
+    "translate EqualityLeft 1" in {
+      val c = FOLConst( "c" )
+      val d = FOLConst( "d" )
+      val Pc = FOLAtom( "P", c )
+      val Pd = FOLAtom( "P", d )
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( Pc ) ).
+        u( WeakeningLeftRule( _, Pd ) ).
+        u( WeakeningRightRule( _, Pd ) ).
+        u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+        u( EqualityLeftRule( _, Eq( c, d ), Pc, Pd ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate EqualityRight 1" in {
+      val c = FOLConst( "c" )
+      val d = FOLConst( "d" )
+      val Pc = FOLAtom( "P", c )
+      val Pd = FOLAtom( "P", d )
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( Pc ) ).
+        u( WeakeningLeftRule( _, Pd ) ).
+        u( WeakeningRightRule( _, Pd ) ).
+        u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+        u( EqualityRightRule( _, Eq( c, d ), Pc, Pd ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate InductionRule" in {
+      val x = FOLVar( "x" )
+      val y = FOLVar( "y" )
+      val zero = FOLConst( "0" )
+      val Sx = FOLFunction( "s", List( x ) )
+
+      val P0y = FOLAtom( "P", List( zero, y ) )
+      val Pxy = FOLAtom( "P", List( x, y ) )
+      val PSxy = FOLAtom( "P", List( Sx, y ) )
+
+      val ax1 = LogicalAxiom( P0y )
+
+      val ax2 = ProofLink( foc"th", hos"$Pxy :- $PSxy" )
+
+      val lk = InductionRule(
+        Seq(
+          InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
+          InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+        ),
+        Abs( x, Pxy ), x
+      )
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
   }
 }
 

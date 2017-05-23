@@ -411,7 +411,7 @@ object induction extends Script {
 
   val ax1 = LogicalAxiom( P0y )
 
-  val ax2 = TheoryAxiom( Pxy +: Sequent() :+ PSxy )
+  val ax2 = ProofLink( foc"th", hos"$Pxy :- $PSxy" )
 
   val lk = InductionRule(
     Seq(
