@@ -640,7 +640,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
-    "translate EqualityLeft 1" in {
+    "translate EqualityLeft" in {
       val c = FOLConst( "c" )
       val d = FOLConst( "d" )
       val Pc = FOLAtom( "P", c )
@@ -660,7 +660,30 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
-    "translate EqualityRight 1" in {
+    "translate EqualityLeft, multiple replacements" in {
+      val c = FOLConst( "c" )
+      val d = FOLConst( "d" )
+      val Pc = FOLAtom( "P", c )
+      val Pd = FOLAtom( "P", d )
+      val Pccc = FOLAtom( "P", c, c, c )
+      val Pccd = FOLAtom( "P", c, c, d )
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( Pc ) ).
+        u( WeakeningLeftRule( _, Pccc ) ).
+        u( WeakeningLeftRule( _, Pd ) ).
+        u( WeakeningRightRule( _, Pd ) ).
+        u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+        u( EqualityLeftRule( _, Eq( c, d ), Pccc, Pccd ) ).
+        qed
+
+      val focus = Suc( 0 )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate EqualityRight" in {
       val c = FOLConst( "c" )
       val d = FOLConst( "d" )
       val Pc = FOLAtom( "P", c )
