@@ -351,6 +351,9 @@ object gradeReduction {
       case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         Some( CutRule( lSubProof, a1, rSubProof, a2 ) )
 
+      case (eqL @ EqualityRightRule(_,_,_,_), eqR @ EqualityLeftRule(_,_,_,_)) if eqL.mainIndices.head == aux1 && eqR.mainIndices.head == aux2 && eqL.auxFormula == eqR.auxFormula =>
+        Some( CutRule(eqL.subProof, eqL.aux, eqR.subProof, eqR.aux) )
+
       // If no grade reduction rule can be applied
       case _ => None
     }
@@ -935,7 +938,7 @@ class FreeCutElimination( implicit val ctx: Context ) {
           | ( EqualityLeftRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) )
           | ( EqualityRightRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
           | ( EqualityRightRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) ) if weakeningEqualityOnlyTree( cut.leftSubProof ) && weakeningEqualityOnlyTree( cut.rightSubProof ) =>
-          None
+          recurseGradeReduction(cut)
         case ( EqualityLeftRule( _, _, _, _ ), _ )
           | ( EqualityRightRule( _, _, _, _ ), _ ) if weakeningEqualityOnlyTree( cut.leftSubProof ) =>
           recurseGradeReduction( cut ) orElse recurseRightRankReduction( cut ) orElse recurseInductionReduction( cut )
