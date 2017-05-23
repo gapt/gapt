@@ -44,7 +44,6 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       )
       val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
       isInductionFree( inductionFree ) must_== true
-      isCutFree( inductionFree ) must_== true
       sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
     }
   }
