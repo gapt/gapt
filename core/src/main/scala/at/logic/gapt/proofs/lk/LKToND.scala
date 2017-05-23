@@ -25,7 +25,7 @@ object LKToND {
       assert( ( lk.endSequent.size + 1 ) == nd.endSequent.size )
       assert( nd.endSequent( Suc( 0 ) ) == Bottom() )
     } else {
-      //assert( lk.endSequent.size == nd.endSequent.size )
+      assert( lk.endSequent.size == nd.endSequent.size )
       assert( lk.endSequent.succedent.contains( nd.endSequent( Suc( 0 ) ) ) )
       assert( lk.endSequent( focus ) == nd.endSequent( Suc( 0 ) ) )
     }
@@ -176,7 +176,7 @@ object LKToND {
         nd.LogicalAxiom( atom )
 
       case lk.ProofLink( _, seq ) =>
-        nd.LogicalAxiom( seq(Suc(0)), seq.antecedent.filter( x => x != (seq(Suc(0)))) )
+        nd.TheoryAxiom( seq( Suc( 0 ) ), seq.antecedent )
 
       case ReflexivityAxiom( s ) =>
         ???
@@ -545,9 +545,11 @@ object LKToND {
         }
 
       case InductionRule( cases, formula, term ) =>
-        val ndCases = cases.map{
-          case lk.InductionCase(x1, x2, x3, x4, x5) => nd.InductionCase(translate(x1, x5 ), x2, x3, x4) }
-        nd.InductionRule( ndCases, formula, term)
+        val ndCases = cases.map {
+          case lk.InductionCase( proof, constructor, hypotheses, eigenVars, conclusion ) =>
+            nd.InductionCase( translate( proof, conclusion ), constructor, hypotheses, eigenVars )
+        }
+        nd.InductionRule( ndCases, formula, term )
 
       case DefinitionLeftRule( subProof, aux, main ) =>
         ???
