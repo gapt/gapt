@@ -181,10 +181,10 @@ object LKToND {
         nd.TheoryAxiom( seq( Suc( 0 ) ), seq.antecedent )
 
       case ReflexivityAxiom( s ) =>
-        ???
+        nd.EqualityIntroRule( s )
 
       case TopAxiom =>
-        ???
+        nd.TopIntroRule()
 
       case BottomAxiom =>
         ???
