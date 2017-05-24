@@ -64,6 +64,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     extractRecSchem( proof ) --? "extract recursion scheme"
 
+    LKToND( proof ) --? "LKToND"
+
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
