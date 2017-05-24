@@ -77,6 +77,7 @@ object LKToND {
     }
   }
 
+  // TODO clean up, only using if-else-if branch
   private def exchange2( subProof: NDProof, mainFormula: Formula ): NDProof = {
     val negMain = hof"-$mainFormula"
     if ( negMain == subProof.endSequent( Suc( 0 ) ) ) {
@@ -121,6 +122,7 @@ object LKToND {
     }
   }
 
+  // TODO clean up, only using if-else-if branch
   private def exchange3( subProof: NDProof, mainFormula: Formula ): NDProof = {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
@@ -517,26 +519,27 @@ object LKToND {
           translate( subProof, Suc( 0 ) )
         }
 
-        // TODO what if multiple replacements
-        val intm = nd.ProofBuilder.
-          c( t ).
-          u( exchange2( _, subProof.endSequent( aux ) ) ).qed
-        val res = nd.ProofBuilder.
-          c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
-          c( intm ).
-          b( EqualityElimRule( _, _ ) ).
-          u( ContractionRule( _, subProof.endSequent( eq ) ) ).
-          u( exchange3( _, subProof.endSequent( focus ) ) ).
-          qed
+        val Abs( x, term ) = replacementContext
+
+        val res =
+          nd.ProofBuilder.
+            c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
+            c( t ).
+            u( exchange2( _, subProof.endSequent( aux ) ) ).
+            b( EqualityElimRule( _, _, Neg( term.asInstanceOf[Formula] ), x ) ).
+            u( ContractionRule( _, subProof.endSequent( eq ) ) ).
+            u( exchange3( _, subProof.endSequent( focus ) ) ).
+            qed
         res
 
       case p @ EqualityRightRule( subProof, eq, aux, replacementContext ) =>
         if ( p.mainFormula == p.endSequent( focus ) ) {
-          // TODO what if multiple replacements
+          val Abs( x, term ) = replacementContext
+
           nd.ProofBuilder.
             c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
             c( translate( subProof, aux ) ).
-            b( EqualityElimRule( _, _ ) ).
+            b( EqualityElimRule( _, _, term.asInstanceOf[Formula], x ) ).
             u( ContractionRule( _, subProof.endSequent( eq ) ) ).
             qed
         } else {
