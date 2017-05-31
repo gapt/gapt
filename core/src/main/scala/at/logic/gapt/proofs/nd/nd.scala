@@ -269,6 +269,30 @@ case class WeakeningRule( subProof: NDProof, formula: Formula )
   override def mainFormulaSequent = mainFormula +: Sequent()
 }
 
+object WeakeningRule extends ConvenienceConstructor( "WeakeningRule" ) {
+
+  /**
+   * Convenience constructor for ax, taking a context.
+   * Applies the axiom rule followed by 0 or more weakenings.
+   * <pre>
+   *      (π)
+   *     Γ :- B
+   *    ---------------------wkn*
+   *     A1, ..., An, Γ :- B
+   * </pre>
+   *
+   * @param subProof The subproof π.
+   * @param formulas The formulas A1, ..., An
+   * @return
+   */
+  def apply( subProof: NDProof, formulas: Seq[Formula] ): NDProof = {
+
+    formulas.foldLeft[NDProof]( subProof ) { ( ant, c ) =>
+      WeakeningRule( ant, c )
+    }
+  }
+}
+
 /**
  * An NDProof ending with a contraction:
  * <pre>
@@ -955,7 +979,7 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
  *    ----------------------------∃:e
  *        Γ, Π :- B
  * </pre>
- * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Γ, Π, and B
+ * This rule is only applicable if the eigenvariable condition is satisfied: α must not occur freely in Π, and B
  *
  * @param leftSubProof The proof π1.
  * @param rightSubProof The proof π2.
@@ -974,8 +998,6 @@ case class ExistsElimRule( leftSubProof: NDProof, rightSubProof: NDProof, aux: S
   //eigenvariable condition
   if ( freeVariables( rightContext ) contains eigenVariable )
     throw NDRuleCreationException( s"Eigenvariable condition is violated: $rightContext contains $eigenVariable" )
-  if ( freeVariables( leftContext ) contains eigenVariable )
-    throw NDRuleCreationException( s"Eigenvariable condition is violated: $leftContext contains $eigenVariable" )
 
   val ( quantifiedVariable, subFormula ) = existentialFormula match {
     case Ex( variable, sub ) => ( variable, sub )
@@ -1053,6 +1075,30 @@ object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
 case class TheoryAxiom( mainFormula: Formula ) extends InitialSequent {
   def conclusion = NDSequent( Seq(), mainFormula )
   override def name = "th"
+}
+
+object TheoryAxiom extends ConvenienceConstructor( "TheoryAxiom" ) {
+
+  /**
+   * Convenience constructor for ax, taking a context.
+   * Applies the axiom rule followed by 0 or more weakenings.
+   * <pre>
+   *    ------ax
+   *     :- A
+   *    ---------wkn*
+   *     Γ :- A
+   * </pre>
+   *
+   * @param A The atom a.
+   * @param context The context Γ.
+   * @return
+   */
+  def apply( A: Formula, context: Seq[Formula] ): NDProof = {
+
+    context.foldLeft[NDProof]( TheoryAxiom( A ) ) { ( ant, c ) =>
+      WeakeningRule( ant, c )
+    }
+  }
 }
 
 /**
