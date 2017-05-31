@@ -40,7 +40,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -61,7 +61,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -75,7 +75,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -89,7 +89,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 1 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -102,7 +102,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -115,7 +115,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -130,7 +130,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -146,7 +146,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 3 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -162,7 +162,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 2 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -175,7 +175,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 1 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -188,7 +188,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -202,7 +202,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -216,7 +216,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 1 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -230,7 +230,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -244,7 +244,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -257,7 +257,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -271,7 +271,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 1 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -285,7 +285,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 2 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -298,7 +298,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -311,7 +311,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -324,7 +324,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -339,7 +339,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -354,7 +354,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -369,7 +369,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 1 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -382,7 +382,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -395,7 +395,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -408,7 +408,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 1 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -421,7 +421,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 2 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -438,7 +438,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -455,7 +455,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -471,7 +471,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -488,7 +488,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -501,7 +501,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -514,7 +514,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -528,7 +528,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -541,7 +541,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -556,7 +556,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -572,7 +572,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -586,7 +586,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -600,7 +600,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -617,7 +617,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -635,7 +635,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -655,7 +655,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -678,7 +678,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -698,7 +698,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -720,7 +720,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
@@ -748,7 +748,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       )
 
       val focus = Suc( 0 )
-      val nd = LKToND( lk, focus )
+      val nd = LKToND( lk, Some( focus ) )
 
       checkEquality( nd, lk, focus )
     }
