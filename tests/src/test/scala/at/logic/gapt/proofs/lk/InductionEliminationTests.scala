@@ -1,13 +1,12 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15 }
+import at.logic.gapt.examples.tip.isaplanner.{prop_08, prop_15, prop_59}
 import at.logic.gapt.expr.Substitution
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.{ Context, Sequent, SequentMatchers }
-import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
+import at.logic.gapt.proofs.{Context, Sequent, SequentMatchers}
+import at.logic.gapt.proofs.gaptic.{Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite}
 import org.specs2.mutable.Specification
-import tip.isaplanner.prop_59
 
 class InductionEliminationTests extends Specification with SequentMatchers {
 
@@ -185,7 +184,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
   }
 
   requireTip {
-    "regression test: isaplanner/prop_59" in {
+    "induction elimination isaplanner/prop_59" in {
       implicit val ctx = prop_59.ctx
       val inductiveProof = prop_59.proof_1
       val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
