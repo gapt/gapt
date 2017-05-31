@@ -1,7 +1,6 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.utils.Not
 
 import scala.annotation.implicitNotFound
 
@@ -25,8 +24,7 @@ trait Substitutable[-S <: Substitution, -T, +U] {
   def applySubstitution( sub: S, arg: T ): U
 }
 
-object Substitutable {
-
+trait ExprSubstitutable1 {
   implicit object SubstitutableTy extends ClosedUnderSub[Ty] {
     override def applySubstitution( sub: Substitution, ty: Ty ): Ty = ty match {
       case _ if sub.typeMap.isEmpty => ty
@@ -47,7 +45,7 @@ object Substitutable {
    * @param t A lambda expression.
    * @return The substituted lambda expression.
    */
-  private def applySub( sub: Substitution, t: Expr ): Expr = t match {
+  protected def applySub( sub: Substitution, t: Expr ): Expr = t match {
     case _ if sub.isEmpty => t
     case v: Var           => sub.map.getOrElse( v, substVar( sub, v ) )
     case c @ Const( x, ty ) =>
@@ -61,6 +59,39 @@ object Substitutable {
     case Abs( v, s ) => Abs( substVar( sub, v ), applySub( sub, s ) )
   }
 
+  implicit val ExprClosedUnderSub: ClosedUnderSub[Expr] =
+    ( sub, t ) => applySub( sub, t )
+}
+
+trait ExprSubstitutable2 extends ExprSubstitutable1 {
+  implicit val FormulaClosedUnderSub: ClosedUnderSub[Formula] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[Formula]
+}
+
+trait ExprSubstitutable3 extends ExprSubstitutable2 {
+  implicit val FOLExpressionClosedUnderFOLSub: ClosedUnderFOLSub[FOLExpression] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLExpression]
+}
+
+trait ExprSubstitutable4 extends ExprSubstitutable3 {
+  implicit val FOLAtomSubstitutable: Substitutable[Substitution, FOLAtom, Atom] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[Atom]
+}
+
+trait ExprSubstitutable5 extends ExprSubstitutable4 {
+  implicit val FOLTermClosedUnderFOLSub: ClosedUnderFOLSub[FOLTerm] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLTerm]
+
+  implicit val FOLFormulaClosedUnderFOLSub: ClosedUnderFOLSub[FOLFormula] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLFormula]
+}
+
+trait ExprSubstitutable6 extends ExprSubstitutable5 {
+  implicit val FOLAtomClosedUnderFOLSub: ClosedUnderFOLSub[FOLAtom] =
+    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLAtom]
+}
+
+object Substitutable extends ExprSubstitutable6 {
   /**
    * Testifies that a Set of substitutable objects is itself substitutable (by mapping over it).
    */
@@ -95,99 +126,4 @@ object Substitutable {
   ): Substitutable[S, ( T1, T2 ), ( U1, U2 )] =
     ( sub, pair ) => ( ev1.applySubstitution( sub, pair._1 ), ev2.applySubstitution( sub, pair._2 ) )
 
-  /**
-   * Testifies that type `FOLTerm` is closed under `FOLSub`.
-   */
-  implicit val FOLTermClosedUnderFOLSub: ClosedUnderFOLSub[FOLTerm] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLTerm]
-
-  /**
-   * Testifies that type `FOLAtom` is closed under `FOLSub`.
-   */
-  implicit val FOLAtomClosedUnderFOLSub: ClosedUnderFOLSub[FOLAtom] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLAtom]
-
-  /**
-   * Testifies that applying a FOLSubstitution to a FOLFormula that is not an atom will result in a FOLFormula.
-   *
-   * @param notAnAtom Testifies that T is not a subtype of FOLAtom.
-   */
-  implicit def FOLFormulaClosedUnderFOLSub[T <: FOLFormula](
-    implicit
-    notAnAtom: Not[T <:< FOLAtom]
-  ): Substitutable[FOLSubstitution, T, FOLFormula] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLFormula]
-
-  /**
-   * Testifies that applying a FOLSubstitution to a FOLExpression that is not a formula or a term will result in a FOLExpression.
-   *
-   * @param notATerm Testifies that T is not a subtype of FOLTerm.
-   * @param notAFormula Testifies that T is not a subtype of FOLFormula.
-   */
-  implicit def FOLExpressionClosedUnderFOLSub[T <: FOLExpression](
-    implicit
-    notATerm:    Not[T <:< FOLTerm],
-    notAFormula: Not[T <:< FOLFormula]
-  ): Substitutable[FOLSubstitution, T, FOLExpression] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLExpression]
-
-  /**
-   * Testifies that applying a FOLSubstitution to a Formula that is not a FOLFormula will result in a Formula.
-   *
-   * @param notAFOLFormula Testifies that T is not a subtype of FOLFormula.
-   */
-  implicit def FormulaClosedUnderFOLSub[T <: Formula](
-    implicit
-    notAFOLFormula: Not[T <:< FOLFormula]
-  ): Substitutable[FOLSubstitution, T, Formula] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[Formula]
-
-  /**
-   * Testifies that applying a non-FOL substitution to a FOLAtom results in a HOLAtom.
-   * @param notAFOLSub Testifies that S is not a FOLSubstitution.
-   */
-  implicit def FOLAtomSubstitutable[S <: Substitution](
-    implicit
-    notAFOLSub: Not[S <:< FOLSubstitution]
-  ): Substitutable[S, FOLAtom, Atom] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[Atom]
-
-  /**
-   * Testifies that applying a Substitution that is not a FOLSubstitution to a Formula will result in a Formula.
-   *
-   * @param notAFOLSub Testifies that S is not a subtype of FOLSubstitution.
-   */
-  implicit def FormulaClosedUnderSub[S <: Substitution, T <: Formula](
-    implicit
-    notAFOLSub:  Not[S <:< FOLSubstitution],
-    notAFOLAtom: Not[T <:< FOLAtom]
-  ): Substitutable[S, T, Formula] =
-    ( sub, x ) => applySub( sub, x ).asInstanceOf[Formula]
-
-  /**
-   * Testifies that applying a Substitution that is not a FOLSubstitution to a FOLExpression will result in a Expr.
-   *
-   * @param notAFOLSub Testifies that S is not a subtype of FOLSubstitution.
-   */
-  implicit def FOLExpressionSubstitutable[S <: Substitution, T <: FOLExpression](
-    implicit
-    notAFOLSub:  Not[S <:< FOLSubstitution],
-    notAFOLAtom: Not[T <:< FOLAtom]
-  ): Substitutable[S, T, Expr] =
-    ( sub, t ) => applySub( sub, t )
-
-  /**
-   * Testifies that applying a Substitution to a Expr that is not a FOLExpression or a Formula will result in a Expr.
-   *
-   * @param notAFOLExpression Testifies that T is not a subtype of FOLExpression.
-   * @param notAFormula Testifies that T is not a subtype of Formula.
-   * @tparam T
-   * @return
-   */
-  implicit def ExprClosedUnderSub[T <: Expr](
-    implicit
-    notAFOLExpression: Not[T <:< FOLExpression],
-    notAFormula:       Not[T <:< Formula]
-  ): Substitutable[Substitution, T, Expr] =
-    ( sub, t ) => applySub( sub, t )
 }
