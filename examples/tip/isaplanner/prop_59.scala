@@ -1,4 +1,4 @@
-package tip.isaplanner
+package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser

@@ -19,9 +19,10 @@ object prop_08 extends TacticsProof {
   }
 
   val baseCaseSequent = sequent.antecedent ++: Sequent() :+
-    ( "goal" -> hof"minus(plus(Z, m), plus(Z, n)) = minus(m, n)" )
+    ( "goal" -> hof"!m !n minus(plus(Z, m), plus(Z, n)) = minus(m, n)" )
 
   val baseCase = Lemma( baseCaseSequent ) {
+    allR; allR
     allL( "h1", le"m:Nat" )
     allL( "h1", le"n:Nat" )
     forget( "h0", "h1", "h2", "h3", "h4", "h5", "h6" );
@@ -31,10 +32,12 @@ object prop_08 extends TacticsProof {
   }
 
   val inductiveCaseSequent = sequent.antecedent ++:
-    ( "IHk_0" -> hof"minus(plus(k_0, m), plus(k_0, n)) = minus(m, n)" ) +: Sequent() :+
-    ( "goal" -> hof"minus(plus(S(k_0), m), plus(S(k_0), n)) = minus(m, n)" )
+    ( "IHk_0" -> hof"!m !n minus(plus(k_0, m), plus(k_0, n)) = minus(m, n)" ) +: Sequent() :+
+    ( "goal" -> hof"!m !n minus(plus(S(k_0), m), plus(S(k_0), n)) = minus(m, n)" )
 
   val inductiveCase = Lemma( inductiveCaseSequent ) {
+    allR; allR
+    allL( "IHk_0", hov"m:Nat", hov"n:Nat" )
     allL( "h2", le"k_0:Nat", le"m:Nat" )
     allL( "h2", le"k_0:Nat", le"n:Nat" )
     allL( "h5", le"plus(k_0:Nat,m:Nat):Nat", le"plus(k_0:Nat,n:Nat):Nat" )
@@ -46,7 +49,8 @@ object prop_08 extends TacticsProof {
   }
 
   val proof1 = Lemma( sequent.antecedent ++: Sequent() :+
-    ( "goal" -> hof"minus(plus(k, m), plus(k, n)) = minus(m, n)" ) ) {
+    ( "goal" -> hof"!k !m !n minus(plus(k, m), plus(k, n)) = minus(m, n)" ) ) {
+    allR
     induction( hov"k:Nat" )
     insert( baseCase )
     insert( inductiveCase )
