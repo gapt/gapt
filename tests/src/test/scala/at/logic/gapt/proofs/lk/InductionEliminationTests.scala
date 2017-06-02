@@ -180,16 +180,16 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     isInductionFree( inductionFree ) must_== true
   }
-  
+
   requireTip {
     "induction elimination isaplanner/prop_59" in {
-      skipped("takes too long")
+      skipped( "takes too long" )
       implicit val ctx = prop_59.ctx
       val inductiveProof = prop_59.proof_1
-      val instProof = instanceProof(inductiveProof, le"nil" :: le"nil" :: Nil)
-      val indFreeProof = ReductiveCutElimination.eliminateInduction(instProof)
-      indFreeProof.conclusion must beMultiSetEqual(instProof.conclusion)
-      isInductionFree(indFreeProof) must_== true
+      val instProof = instanceProof( inductiveProof, le"nil" :: le"nil" :: Nil )
+      val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof )
+      indFreeProof.conclusion must beMultiSetEqual( instProof.conclusion )
+      isInductionFree( indFreeProof ) must_== true
     }
   }
 }
