@@ -466,7 +466,7 @@ object LKToND {
 
         val Abs( x, term ) = replacementContext
 
-        val tmp = nd.ProofBuilder.
+        nd.ProofBuilder.
           c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
           c( t ).
           u( exchange2( _, subProof.endSequent( aux ) ) ).
@@ -474,7 +474,6 @@ object LKToND {
           u( ContractionRule( _, subProof.endSequent( eq ) ) ).
           u( exchange3( _, t.endSequent( focus.get ) ) ).
           qed
-        tmp
 
       case p @ EqualityRightRule( subProof, eq, aux, replacementContext ) =>
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
