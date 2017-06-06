@@ -430,3 +430,24 @@ object induction extends Script {
   println( lk )
   println( nd )
 }
+
+object equalityLeftEmptySuc extends Script {
+  val c = FOLConst( "c" )
+  val d = FOLConst( "d" )
+  val Pc = FOLAtom( "P", c )
+  val Pd = FOLAtom( "P", d )
+
+  val lk = ProofBuilder.
+    c( LogicalAxiom( Pc ) ).
+    u( NegLeftRule( _, Suc( 0 ) ) ).
+    u( WeakeningLeftRule( _, Pd ) ).
+    u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+    u( EqualityLeftRule( _, Eq( c, d ), Pc, Pd ) ).
+    qed
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}

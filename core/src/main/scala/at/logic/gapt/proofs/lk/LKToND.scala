@@ -175,8 +175,8 @@ object LKToND {
     val ndProof = proof match {
 
       // Axioms
-      case lk.LogicalAxiom( atom: Atom ) =>
-        nd.LogicalAxiom( atom )
+      case lk.LogicalAxiom( f ) =>
+        nd.LogicalAxiom( f )
 
       case lk.ProofLink( _, seq ) =>
         nd.TheoryAxiom( seq( Suc( 0 ) ), seq.antecedent )
@@ -466,14 +466,15 @@ object LKToND {
 
         val Abs( x, term ) = replacementContext
 
-        nd.ProofBuilder.
+        val tmp = nd.ProofBuilder.
           c( nd.LogicalAxiom( subProof.endSequent( eq ) ) ).
           c( t ).
           u( exchange2( _, subProof.endSequent( aux ) ) ).
           b( EqualityElimRule( _, _, Neg( term.asInstanceOf[Formula] ), x ) ).
           u( ContractionRule( _, subProof.endSequent( eq ) ) ).
-          u( exchange3( _, subProof.endSequent( focus.get ) ) ).
+          u( exchange3( _, t.endSequent( focus.get ) ) ).
           qed
+        tmp
 
       case p @ EqualityRightRule( subProof, eq, aux, replacementContext ) =>
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
