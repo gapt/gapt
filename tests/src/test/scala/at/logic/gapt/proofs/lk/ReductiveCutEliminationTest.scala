@@ -402,6 +402,18 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     proof.conclusion must beSetEqual( reduction.conclusion )
   }
 
+  "grade reduction with equality inferences having the same auxiliary formula" in {
+    val proof = ( ProofBuilder
+      c OpenAssumption( ( "" -> hof"s = t" ) +: Sequent() :+ ( "" -> hof"A(s)" ) )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"A(x):o" ) ) )
+      c OpenAssumption( ( "" -> hof"s = t" ) +: ( "" -> hof"A(s)" ) +: Sequent() )
+      u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x", le"A(x):o" ) ) )
+      b ( CutRule( _, _, hof"A(t)" ) ) qed )
+    val reduction = gradeReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beMultiSetEqual( reduction.conclusion )
+    reduction.subProofAt( 0 :: Nil ) must beAnInstanceOf[OpenAssumption]
+  }
+
   def isCutFree( proof: LKProof ): Boolean =
     !proof.subProofs.exists( subProof => subProof match {
       case CutRule( _, _, _, _ ) => true

@@ -7,32 +7,12 @@ import at.logic.gapt.proofs.ceres.Struct
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
-import at.logic.gapt.utils.Not
+import at.logic.gapt.prooftool._
 
 import scala.annotation.implicitNotFound
 
-package object prooftool {
-
-  /**
-   * A typeclass for things that can be displayed in Prooftool.
-   * @tparam T The type of the displayed object.
-   */
-  @implicitNotFound( "Prooftool cannot show objects of type ${T}.\n(To support the type ${T}, add an implicit instance of ProoftoolViewable[${T}].)" )
-  trait ProoftoolViewable[-T] {
-    def display( x: T, name: String ): List[ProofToolViewer[_]]
-  }
-
-  object ProoftoolViewable {
-    def apply[T: ProoftoolViewable] = implicitly[ProoftoolViewable[T]]
-  }
-
-  implicit val LKProofViewable: ProoftoolViewable[LKProof] =
-    ( x, name ) => List( new LKProofViewer( name, x ) )
-
-  implicit def SequentProofViewable[F, T <: SequentProof[F, T]](
-    implicit
-    notLK: Not[T <:< LKProof]
-  ): ProoftoolViewable[SequentProof[F, T]] = {
+private[gapt] trait ProoftoolInstances1 {
+  implicit def SequentProofViewable[F, T <: SequentProof[F, T]]: ProoftoolViewable[SequentProof[F, T]] = {
     def renderer( x: F ): String = x match {
       case e: Expr => LatexExporter( e )
       case _       => x.toString
@@ -59,7 +39,31 @@ package object prooftool {
   implicit val ProofDatabaseViewable: ProoftoolViewable[ExtendedProofDatabase] =
     ( db, _ ) => db.proofs.flatMap( ( t ) => ProoftoolViewable[LKProof].display( t._2, t._1 ) )
 
-  implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] = ( oT: Option[T], name: String ) => oT.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
+  implicit def OptionViewable[T: ProoftoolViewable]: ProoftoolViewable[Option[T]] =
+    ( oT, name ) => oT.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
 
-  implicit def EitherViewable[T: ProoftoolViewable, S]: ProoftoolViewable[Either[S, T]] = ( oT: Either[S, T], name: String ) => oT.toOption.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
+  implicit def EitherViewable[T: ProoftoolViewable, S]: ProoftoolViewable[Either[S, T]] =
+    ( oT, name ) => oT.toOption.toList.flatMap( ProoftoolViewable[T].display( _, name ) )
+
+}
+
+private[gapt] trait ProoftoolInstances2 extends ProoftoolInstances1 {
+  implicit val LKProofViewable: ProoftoolViewable[LKProof] =
+    ( x, name ) => List( new LKProofViewer( name, x ) )
+}
+
+package object prooftool extends ProoftoolInstances2 {
+
+  /**
+   * A typeclass for things that can be displayed in Prooftool.
+   * @tparam T The type of the displayed object.
+   */
+  @implicitNotFound( "Prooftool cannot show objects of type ${T}.\n(To support the type ${T}, add an implicit instance of ProoftoolViewable[${T}].)" )
+  trait ProoftoolViewable[-T] {
+    def display( x: T, name: String ): List[ProofToolViewer[_]]
+  }
+
+  object ProoftoolViewable {
+    def apply[T: ProoftoolViewable] = implicitly[ProoftoolViewable[T]]
+  }
 }

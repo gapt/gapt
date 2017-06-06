@@ -44,7 +44,7 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.8.9"
+val specs2Version = "3.9.0"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -175,15 +175,15 @@ lazy val core = project.in( file( "core" ) ).
     description := "General Architecture for Proof Theory",
 
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.5",
+      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
-      "com.lihaoyi" %% "fastparse" % "0.4.2",
+      "com.lihaoyi" %% "fastparse" % "0.4.3",
       "com.lihaoyi" %% "sourcecode" % "0.1.3",
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.5",
-      "com.lihaoyi" %% "ammonite-ops" % "0.8.3",
+      "com.lihaoyi" %% "ammonite-ops" % "0.9.9",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
@@ -193,7 +193,7 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
       "com.itextpdf" % "itextpdf" % "5.5.11",
-      "org.scilab.forge" % "jlatexmath" % "1.0.4"
+      "org.scilab.forge" % "jlatexmath" % "1.0.5"
     )
   )
 
@@ -258,7 +258,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.1"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.2"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )

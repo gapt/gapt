@@ -11,12 +11,11 @@ object pushEqualityInferencesToLeaves {
    *
    * @param proof The proof to which this transformation is applied
    * @return A proof of the same end-sequent which is obtained from the given proof
-   *        by moving all equality inferences and the weakening inferences that introduce equality inferences towards
-   *        the leaves. Every branch of the resulting proof ends with a sequence of zero or more equality inferences
-   *        followed by zero or more weakening inferences followed by an axiom.
+   *        by moving all equality inferences towards the leaves as far as possible. Weakening inferences are moved
+   *        as close to the root as possible.
    */
   def apply( proof: LKProof ): LKProof = {
-    visitor( proof, () )
+    cleanStructuralRules( visitor( proof, () ), false )
   }
 
   private object visitor extends LKVisitor[Unit] {
@@ -35,12 +34,12 @@ object pushEqualityInferencesToLeaves {
         case EqualityRightRule( weakening @ WeakeningRightRule( _, _ ), _, _, _ ) if weakeningOnlySubTree( weakening ) =>
           ( proof, SequentConnector( proof.conclusion ) )
 
-        case equality @ EqualityLeftRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq && !weakeningOnlySubTree( weakening ) =>
+        case equality @ EqualityLeftRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq =>
           val ( newSubProof, connector ) = pushSingleWeakeningToLeaves.withConnector( weakening )
           val ( newProof, _ ) = recurse( EqualityLeftRule( newSubProof, connector.child( equality.eq ), connector.child( equality.aux ), equality.replacementContext ), () )
           ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
 
-        case equality @ EqualityRightRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq && !weakeningOnlySubTree( weakening ) =>
+        case equality @ EqualityRightRule( weakening @ WeakeningLeftRule( _, _ ), _, _, _ ) if weakening.mainIndices.head == equality.eq =>
           val ( newSubProof, connector ) = pushSingleWeakeningToLeaves.withConnector( weakening )
           val ( newProof, _ ) = recurse( EqualityRightRule( newSubProof, connector.child( equality.eq ), connector.child( equality.aux ), equality.replacementContext ), () )
           ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )

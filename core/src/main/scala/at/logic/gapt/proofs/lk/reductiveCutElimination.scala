@@ -351,6 +351,9 @@ object gradeReduction {
       case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         Some( CutRule( lSubProof, a1, rSubProof, a2 ) )
 
+      case ( eqL @ EqualityRightRule( _, _, _, _ ), eqR @ EqualityLeftRule( _, _, _, _ ) ) if eqL.mainIndices.head == aux1 && eqR.mainIndices.head == aux2 && eqL.auxFormula == eqR.auxFormula =>
+        Some( CutRule( eqL.subProof, eqL.aux, eqR.subProof, eqR.aux ) )
+
       // If no grade reduction rule can be applied
       case _ => None
     }
@@ -907,12 +910,47 @@ class FreeCutElimination( implicit val ctx: Context ) {
         case _ => super.recurse( proof, () )
       }
 
-    private def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
-      case cut @ CutRule( _, _, _, _ ) =>
-        gradeReduction( cut ).map( recurse( _, () ) )
-          .orElse( leftRankReduction( cut ) map { super.recurse( _, () ) } )
-          .orElse( rightRankReduction( cut ) map { super.recurse( _, () ) } )
-          .orElse( inductionReduction( cut ) map { super.recurse( _, () ) } )
+    private def weakeningEqualityOnlyTree( proof: LKProof ) = proof.subProofs.forall {
+      case EqualityRightRule( _, _, _, _ ) => true
+      case EqualityLeftRule( _, _, _, _ )  => true
+      case WeakeningRightRule( _, _ )      => true
+      case WeakeningLeftRule( _, _ )       => true
+      case InitialSequent( _ )             => true
+      case _                               => false
+    }
+
+    private def recurseGradeReduction( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+      gradeReduction( cut ) map { recurse( _, () ) }
+
+    private def recurseLeftRankReduction( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+      leftRankReduction( cut ) map { super.recurse( _, () ) }
+
+    private def recurseRightRankReduction( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+      rightRankReduction( cut ) map { super.recurse( _, () ) }
+
+    private def recurseInductionReduction( cut: CutRule ): Option[( LKProof, SequentConnector )] =
+      inductionReduction( cut ) map { super.recurse( _, () ) }
+
+    private def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = {
+      val cut @ CutRule( _, _, _, _ ) = proof
+      ( cut.leftSubProof, cut.rightSubProof ) match {
+        case ( EqualityLeftRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
+          | ( EqualityLeftRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) )
+          | ( EqualityRightRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
+          | ( EqualityRightRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) ) if weakeningEqualityOnlyTree( cut.leftSubProof ) && weakeningEqualityOnlyTree( cut.rightSubProof ) =>
+          recurseGradeReduction( cut )
+        case ( EqualityLeftRule( _, _, _, _ ), _ )
+          | ( EqualityRightRule( _, _, _, _ ), _ ) if weakeningEqualityOnlyTree( cut.leftSubProof ) =>
+          recurseGradeReduction( cut ) orElse recurseRightRankReduction( cut ) orElse recurseInductionReduction( cut )
+        case ( _, EqualityLeftRule( _, _, _, _ ) )
+          | ( _, EqualityRightRule( _, _, _, _ ) ) if weakeningEqualityOnlyTree( cut.rightSubProof ) =>
+          recurseGradeReduction( cut ) orElse recurseLeftRankReduction( cut ) orElse recurseInductionReduction( cut )
+        case ( _, _ ) =>
+          recurseGradeReduction( cut )
+            .orElse( recurseRightRankReduction( cut ) )
+            .orElse( recurseLeftRankReduction( cut ) )
+            .orElse( recurseInductionReduction( cut ) )
+      }
     }
   }
 }

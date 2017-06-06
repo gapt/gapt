@@ -64,6 +64,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     extractRecSchem( proof ) --? "extract recursion scheme"
 
+    LKToND( proof ) --? "LKToND"
+
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
@@ -105,6 +107,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     ( E.shallow == p.endSequent ) !-- "shallow sequent of expansion proof"
 
+    LKToND( p ) --? "LKToND"
+
     Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
       ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
@@ -132,6 +136,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       ( CutIntroduction( p ) --? "cut-introduction" flatten ) foreach { q =>
+        LKToND( q ) --? "LKToND (cut-intro)"
 
         ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
