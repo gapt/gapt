@@ -186,12 +186,12 @@ class ReductiveCutElimination {
    * @param ctx Defines constants, types, etc.
    * @return A proof obtained by repeated application of induction unfolding; equality reduction and free-cut
    *         elimination. The reduction ends if there is no more unfoldable induction i.e. there is no induction
-   *         inference with ground constructor form induction term.
+   *         inference with constructor form induction term.
    */
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
     var newProof = proof
     do {
-      newProof = unfoldGroundInductions( newProof, cleanStructRules )
+      newProof = unfoldInductions( newProof, cleanStructRules )
       newProof = pushEqualityInferencesToLeaves( newProof )
       newProof = freeCutElimination( newProof )
     } while ( newProof.subProofs.exists( inductionUnfoldingReduction( _ ).nonEmpty ) )
@@ -199,20 +199,20 @@ class ReductiveCutElimination {
   }
 
   /**
-   * Unfolds all induction inference with ground induction term in constructor form.
+   * Unfolds all induction inference with induction term in constructor form.
    * @param proof The proof to which this transformation is applied.
    * @param cleanStructRules Indicates whether the structural rules are cleaned during the reduction.
    * @param ctx Defines constants, inductive types, etc.
-   * @return A proof of the same end-sequent which contains no induction inference with ground induction term
-   *         in constructor form.
+   * @return A proof of the same end-sequent which contains no induction inference with induction term
+   *        in constructor form.
    */
-  def unfoldGroundInductions( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
+  def unfoldInductions( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ): LKProof = {
 
     /**
      * Reduces a given induction inference.
      * @param proof The induction to be reduced
      * @return A proof and a sequent connector obtained by applying an induction unfolding, or None
-     *         if the inference rule is not an induction inference with ground induction term in constructor form.
+     *         if the inference rule is not an induction inference with induction term in constructor form.
      */
     def reduction( proof: LKProof ): Option[( LKProof, SequentConnector )] = proof match {
       case ind @ InductionRule( _, _, _ ) =>
@@ -829,11 +829,11 @@ object inductionUnfoldingReduction {
    *
    * @param induction The induction inference to be unfolded.
    * @param ctx Defines constants, types, etc.
-   * @return If the given induction's term is ground an in constructor form a proof of the same end-sequent for
+   * @return If the given induction's term is in constructor form a proof of the same end-sequent for
    *         which the induction inference has been unfolded is returned, otherwise None.
    */
   def apply( induction: InductionRule )( implicit ctx: Context ): Option[LKProof] =
-    if ( isGround( induction.term ) && isConstructorForm( induction.term ) ) {
+    if ( isConstructorForm( induction.term ) ) {
       Some( unfoldInduction( induction ) )
     } else {
       None
