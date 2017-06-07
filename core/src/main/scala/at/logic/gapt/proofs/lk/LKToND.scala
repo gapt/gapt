@@ -58,8 +58,6 @@ object LKToND {
         val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
         ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
       } else {
-        // TODO this case seems to be only hit by NegRight, so it should be handled there.
-
         // Negated main formula not in antecedent
         // Use BottomElimRule to add main formula to succedent
         val r = subProof.endSequent( Suc( 0 ) )
@@ -77,7 +75,6 @@ object LKToND {
     }
   }
 
-  // TODO clean up, only using if-else-if branch
   private def exchange2( subProof: NDProof, mainFormula: Formula ): NDProof = {
     val negMain = hof"-$mainFormula"
     if ( negMain == subProof.endSequent( Suc( 0 ) ) ) {
@@ -103,26 +100,23 @@ object LKToND {
         val i = pr2.endSequent.indexOfPolOption( mainFormula, Polarity.InAntecedent )
         ExcludedMiddleRule( pr2, i.get, ax1, Ant( 0 ) )
       } else {
-        // TODO this case seems to be only hit by NegRight, so it should be handled there.
-
-        // Negated main formula not in antecedent
-        // Use BottomElimRule to add main formula to succedent
+        // Main formula not in antecedent
+        // Use BottomElimRule to add negated main formula to succedent
         val r = subProof.endSequent( Suc( 0 ) )
 
         if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
-          BottomElimRule( subProof, mainFormula )
+          BottomElimRule( subProof, negMain )
         } else {
           nd.ProofBuilder.
             c( nd.LogicalAxiom( hof"-$r" ) ).
             u( NegElimRule( _, subProof ) ).
-            u( BottomElimRule( _, mainFormula ) ).
+            u( BottomElimRule( _, negMain ) ).
             qed
         }
       }
     }
   }
 
-  // TODO clean up, only using if-else-if branch
   private def exchange3( subProof: NDProof, mainFormula: Formula ): NDProof = {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
@@ -148,18 +142,16 @@ object LKToND {
         val i = pr2.endSequent.indexOfPolOption( negMain, Polarity.InAntecedent )
         ExcludedMiddleRule( ax1, Ant( 0 ), pr2, i.get )
       } else {
-        // TODO this case seems to be only hit by NegRight, so it should be handled there.
-
         // Negated main formula not in antecedent
         // Use BottomElimRule to add main formula to succedent
-        val r = subProof.endSequent( Suc( 0 ) )
+        val Neg( r ) = subProof.endSequent( Suc( 0 ) )
 
         if ( subProof.endSequent( Suc( 0 ) ) == hof"⊥" ) {
           BottomElimRule( subProof, mainFormula )
         } else {
           nd.ProofBuilder.
-            c( nd.LogicalAxiom( hof"-$r" ) ).
-            u( NegElimRule( _, subProof ) ).
+            c( nd.LogicalAxiom( hof"$r" ) ).
+            u( NegElimRule( subProof, _ ) ).
             u( BottomElimRule( _, mainFormula ) ).
             qed
         }
@@ -472,7 +464,7 @@ object LKToND {
           u( exchange2( _, subProof.endSequent( aux ) ) ).
           b( EqualityElimRule( _, _, Neg( term.asInstanceOf[Formula] ), x ) ).
           u( ContractionRule( _, subProof.endSequent( eq ) ) ).
-          u( exchange3( _, t.endSequent( focus.get ) ) ).
+          u( exchange3( _, t.endSequent( Suc( 0 ) ) ) ).
           qed
 
       case p @ EqualityRightRule( subProof, eq, aux, replacementContext ) =>
