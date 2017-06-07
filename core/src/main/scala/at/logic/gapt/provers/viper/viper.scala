@@ -2,10 +2,10 @@ package at.logic.gapt.provers.viper
 
 import ammonite.ops._
 import at.logic.gapt.expr.fol.folTermSize
-import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
-import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.{ Context, HOLSequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
@@ -55,7 +55,7 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
 case class ViperOptions(
-  verbosity:                Int                      = 0,
+  verbosity:                Int                      = 1,
   mode:                     String                   = "portfolio",
   fixup:                    Boolean                  = true,
   prooftool:                Boolean                  = false,
@@ -169,12 +169,52 @@ object Viper {
           aka( s"analytic $axiomsName" ) )
     }
 
-  def timeit[T]( f: => T ): ( T, Duration ) = {
+  private def timeit[T]( f: => T ): ( T, Duration ) = {
     val a = System.currentTimeMillis()
     val res = f
     val b = System.currentTimeMillis()
     import scala.concurrent.duration._
     ( res, ( b - a ).milliseconds )
+  }
+
+  def apply( problem: TipProblem ): Option[LKProof] =
+    apply( problem.toSequent )( problem.ctx )
+
+  def apply( sequent: HOLSequent )( implicit ctx: Context ): Option[LKProof] =
+    apply( sequent, ViperOptions( verbosity = 2 ) )
+
+  def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: Context ): Option[LKProof] =
+    apply( sequent, opts.verbosity + 1, getStrategies( opts ) )
+
+  def apply( sequent: HOLSequent, verbosity: Int,
+             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: Context ): Option[LKProof] = {
+    if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
+
+    if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
+
+    val state0 = ProofState( sequent )
+    strategies.view.flatMap {
+      case ( duration, strategy ) =>
+        if ( verbosity >= 2 ) println( s"trying $strategy" )
+        timeit( Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) ) match {
+          case ( Success( Right( ( _, state_ ) ) ), time ) =>
+            if ( verbosity >= 1 ) println( s"$strategy successful after $time" )
+            Some( state_.result )
+          case ( Failure( _: TimeOutException ), time ) =>
+            if ( verbosity >= 1 ) println( s"$strategy timed out after $time" )
+            None
+          case ( failure, time ) =>
+            if ( verbosity >= 1 ) println( s"$strategy failed after $time" )
+            if ( verbosity >= 2 )
+              ( failure: @unchecked ) match {
+                case Failure( ex ) =>
+                  ex.printStackTrace()
+                case Success( Left( tacticalFailure ) ) =>
+                  println( tacticalFailure )
+              }
+            None
+        }
+    }.headOption
   }
 
   def main( args: Array[String] ): Unit = {
@@ -188,34 +228,11 @@ object Viper {
     val file = files.head
 
     Logger.setConsolePattern( "%message%n" )
-    if ( opts.verbosity >= 2 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
 
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
     implicit val ctx = problem.ctx
 
-    if ( opts.verbosity >= 1 ) println( problem.toSequent.toSigRelativeString )
-
-    val state0 = ProofState( problem.toSequent )
-    getStrategies( opts ).view.flatMap {
-      case ( duration, strategy ) =>
-        if ( opts.verbosity >= 1 ) println( s"trying $strategy" )
-        timeit( Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) ) match {
-          case ( Success( Right( ( _, state_ ) ) ), time ) =>
-            println( s"$strategy successful after $time" )
-            Some( state_.result )
-          case ( Failure( _: TimeOutException ), time ) =>
-            println( s"$strategy timed out after $time" )
-            None
-          case ( failure, time ) =>
-            println( s"$strategy failed after $time" )
-            if ( opts.verbosity >= 1 )
-              ( failure: @unchecked ) match {
-                case Failure( ex )                      => ex.printStackTrace()
-                case Success( Left( tacticalFailure ) ) => println( tacticalFailure )
-              }
-            None
-        }
-    }.headOption match {
+    apply( problem ) match {
       case Some( proof ) =>
         if ( false ) { // this doesn't work with Skolem inferences atm
           ctx check proof
