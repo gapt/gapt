@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.nd._
 object LKToND {
 
   /**
-   * Converts a deskolemized LKProof π into a natural deduction proof.
+   * Converts an LKProof π into a natural deduction proof.
    *
    * @param proof The proof π.
    * @return The natural deduction proof translate(π).

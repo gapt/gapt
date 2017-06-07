@@ -66,7 +66,8 @@ object Checkable {
         case sk: SkolemQuantifierRule =>
           sk.skolemConst -> sk.skolemDef
       } )
-      skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
+      skolemFunctions.orderedDefinitions.reverse.
+        map( Context.SkolemFun.tupled ).foreach( ctx += _ )
 
       for ( q <- p.subProofs )
         ctx.check( q.endSequent )
