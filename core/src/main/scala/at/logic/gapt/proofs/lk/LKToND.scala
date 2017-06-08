@@ -180,7 +180,7 @@ object LKToND {
         nd.TopIntroRule()
 
       case BottomAxiom =>
-        nd.TheoryAxiom( hof"⊥" )
+        nd.LogicalAxiom( hof"⊥" )
 
       // Structural rules
       case WeakeningLeftRule( subProof, formula ) =>
