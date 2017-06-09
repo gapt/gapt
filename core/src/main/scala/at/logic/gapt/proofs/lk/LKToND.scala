@@ -206,7 +206,6 @@ object LKToND {
 
       case p @ ContractionRightRule( subProof, aux1, aux2 ) =>
 
-        val tmp: Option[Formula] = focus.map( p.endSequent.apply )
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           val l = subProof.endSequent( aux1 )
           val t = translate( subProof, Some( aux1 ) )
