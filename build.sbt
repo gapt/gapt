@@ -193,7 +193,7 @@ lazy val core = project.in( file( "core" ) ).
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
       "com.itextpdf" % "itextpdf" % "5.5.11",
-      "org.scilab.forge" % "jlatexmath" % "1.0.5"
+      "org.scilab.forge" % "jlatexmath" % "1.0.6"
     )
   )
 
