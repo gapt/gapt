@@ -1132,7 +1132,10 @@ case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, form
 
   val mainFormula = if ( auxFormula == BetaReduction.betaNormalize( substitution1( formulaA ) ) )
     BetaReduction.betaNormalize( substitution2( formulaA ) )
-  else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
+  else if ( auxFormula == BetaReduction.betaNormalize( substitution2( formulaA ) ) )
+    BetaReduction.betaNormalize( substitution1( formulaA ) )
+  else
+    throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with either substitution $substitution1 or $substitution2 applied to it." )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 

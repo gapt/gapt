@@ -123,7 +123,7 @@ object orLeft4 extends Script {
   val p = OrLeftRule( l2, r3, hof"A | D" )
   println( p )
 
-  val nd = LKToND( p, Suc( 3 ) )
+  val nd = LKToND( p, Some( Suc( 3 ) ) )
   println( nd )
 }
 
@@ -136,7 +136,7 @@ object orLeft5 extends Script {
   val p = OrLeftRule( l3, r2, hof"A | B" )
   println( p )
 
-  val nd = LKToND( p, Suc( 2 ) )
+  val nd = LKToND( p, Some( Suc( 2 ) ) )
   println( nd )
 }
 
@@ -146,7 +146,7 @@ object impRight1 extends Script {
   val p3 = ImpRightRule( p2, hof"A -> B" )
   println( p3 )
 
-  val nd = LKToND( p3, Suc( 1 ) )
+  val nd = LKToND( p3, Some( Suc( 1 ) ) )
   println( nd )
 }
 
@@ -156,7 +156,7 @@ object impRight2 extends Script {
   val p3 = ImpRightRule( p2, hof"A -> B" )
   println( p3 )
 
-  val nd = LKToND( p3, Suc( 0 ) )
+  val nd = LKToND( p3, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -282,7 +282,7 @@ object weakeningRight1 extends Script {
 
   println( p3 )
 
-  val nd = LKToND( p3, Suc( 0 ) )
+  val nd = LKToND( p3, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -293,7 +293,7 @@ object weakeningRight2 extends Script {
 
   println( p3 )
 
-  val nd = LKToND( p3, Suc( 2 ) )
+  val nd = LKToND( p3, Some( Suc( 2 ) ) )
   println( nd )
 }
 
@@ -310,7 +310,7 @@ object example1 extends Script {
   println( lk )
 
   val focus = Suc( 0 )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
   println( nd )
 }
 
@@ -322,7 +322,7 @@ object negLeftFollowedByNegRight extends Script {
     qed
 
   val focus = Suc( 0 )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
   println( nd )
@@ -337,7 +337,7 @@ object contractRightWithWrongFocus extends Script {
     qed
 
   val focus = Suc( 0 )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
   println( nd )
@@ -351,7 +351,7 @@ object weakeningRightWithWrongFocus extends Script {
 
   val focus = Suc( 0 )
   println( s"focus: ${lk.endSequent( focus )}" )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
   println( nd )
@@ -375,7 +375,7 @@ object equalityLeft extends Script {
     qed
 
   val focus = Suc( 0 )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
   println( nd )
@@ -396,7 +396,7 @@ object equalityRight extends Script {
     qed
 
   val focus = Suc( 0 )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
   println( nd )
@@ -425,7 +425,48 @@ object induction extends Script {
   )
 
   val focus = Suc( 0 )
-  val nd = LKToND( lk, focus )
+  val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}
+
+object equalityLeftEmptySuc extends Script {
+  val c = FOLConst( "c" )
+  val d = FOLConst( "d" )
+  val Pc = FOLAtom( "P", c )
+  val Pd = FOLAtom( "P", d )
+
+  val lk = ProofBuilder.
+    c( LogicalAxiom( Pc ) ).
+    u( NegLeftRule( _, Suc( 0 ) ) ).
+    u( WeakeningLeftRule( _, Pd ) ).
+    u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+    u( EqualityLeftRule( _, Eq( c, d ), Pc, Pd ) ).
+    qed
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}
+
+object weakeningRight extends Script {
+  val lk = WeakeningRightRule( BottomAxiom, hof"p" )
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}
+
+object negLeft extends Script {
+  val lk = WeakeningRightRule( NegLeftRule( LogicalAxiom( hof"q" ), Suc( 0 ) ), hof"p" )
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
   println( nd )
