@@ -451,3 +451,23 @@ object equalityLeftEmptySuc extends Script {
   println( lk )
   println( nd )
 }
+
+object weakeningRight extends Script {
+  val lk = WeakeningRightRule( BottomAxiom, hof"p" )
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}
+
+object negLeft extends Script {
+  val lk = WeakeningRightRule( NegLeftRule( LogicalAxiom( hof"q" ), Suc( 0 ) ), hof"p" )
+
+  val focus = Suc( 0 )
+  val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}
