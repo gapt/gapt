@@ -27,7 +27,9 @@ class TipSmtParser {
   typeDecls( "Bool" ) = To
   datatypes += TipDatatype( To, Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
 
-  def parse( sexp: SExpression ) = sexp match {
+  def parse( sexp: SExpression ): Unit = sexp match {
+    case LFun( "declare-sort", LAtom( name ), LAtom( ":skolem" | ":lambda" ), ar ) =>
+      parse( LFun( "declare-sort", LAtom( name ), ar ) )
     case LFun( "declare-sort", LAtom( name ), LAtom( "0" ) ) =>
       val t = TBase( name )
       declare( t )
@@ -45,10 +47,14 @@ class TipSmtParser {
           ctx += proj
         }
       }
+    case LFun( "declare-const", LAtom( name ), LAtom( ":lambda" ), ty ) =>
+      parse( LFun( "declare-const", LAtom( name ), ty ) )
     case LFun( "declare-const", LAtom( name ), LAtom( typeName ) ) =>
       val c = Const( name, typeDecls( typeName ) )
       declare( c )
       ctx += c
+    case LFun( "declare-fun", LAtom( name ), LAtom( ":lambda" ), rest @ _* ) =>
+      parse( LFun( "declare-fun", LAtom( name ) +: rest: _* ) )
     case LFun( "declare-fun", LAtom( name ), LList( argTypes @ _* ), LAtom( retType ) ) =>
       val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) )
       declare( f )
@@ -59,6 +65,8 @@ class TipSmtParser {
       declare( funConst )
       ctx += funConst
       functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
+    case LFun( "assert", LAtom( ":definition" ), LAtom( ":lambda" ), formula ) =>
+      parse( LFun( "assert", formula ) )
     case LFun( "assert", formula ) =>
       assumptions += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "assert-not", formula ) =>
