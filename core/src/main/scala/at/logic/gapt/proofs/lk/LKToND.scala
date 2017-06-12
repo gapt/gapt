@@ -1,25 +1,20 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, SequentIndex, Suc, lk, nd }
+import at.logic.gapt.proofs.{ Ant, Context, SequentIndex, Suc, lk, nd }
 import at.logic.gapt.proofs.nd._
 
 object LKToND {
-
-  private def heuristicIndex( proof: LKProof ) =
-    if ( proof.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
 
   /**
    * Converts an LKProof π into a natural deduction proof.
    *
    * @param proof The proof π.
+   * @param focus The index in the LK succedent of the formula to be proved in the ND proof, or None if the succedent is empty.
    * @return The natural deduction proof translate(π).
    */
-  def apply( proof: LKProof ): NDProof = {
-    translate( proof, heuristicIndex( proof ) )
-  }
 
-  def apply( proof: LKProof, focus: Option[SequentIndex] ): NDProof = {
+  def apply( proof: LKProof, focus: Option[SequentIndex] )( implicit ctx: Context = Context() ): NDProof = {
     translate( proof, focus )
   }
 
@@ -165,8 +160,12 @@ object LKToND {
     }
   }
 
-  private def translate( proof: LKProof, focus: Option[SequentIndex] ): NDProof = {
+  private def heuristicIndex( proof: LKProof ) =
+    if ( proof.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
 
+  private def translate( proof: LKProof, focus: Option[SequentIndex] )( implicit ctx: Context ): NDProof = {
+
+    assert( focus.forall( _ => proof.endSequent.succedent.nonEmpty ) )
     assert( focus.forall( _.isSuc ) )
 
     val ndProof = proof match {

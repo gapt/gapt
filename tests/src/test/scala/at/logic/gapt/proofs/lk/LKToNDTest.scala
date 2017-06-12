@@ -540,7 +540,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( AndLeftRule( _, hof"A & -A" ) ).
         qed
 
-      val focus = Some( Suc( 0 ) )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -555,7 +555,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | B" ) ).
         qed
 
-      val focus = Some( Suc( 0 ) )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )

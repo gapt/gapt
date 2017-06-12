@@ -1,5 +1,6 @@
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Update
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.prooftool.prooftool
@@ -19,7 +20,7 @@ object ex0_1_6 extends Script {
 
   println( s10 )
 
-  val nd = LKToND( s10 )
+  val nd = LKToND( s10, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -34,7 +35,7 @@ object ex0_1_6_short extends Script {
 
   println( s6 )
 
-  val nd = LKToND( s6 )
+  val nd = LKToND( s6, Some( Suc( 0 ) ) )
   println( "ex0_1_6_short" )
   println( nd )
 
@@ -58,7 +59,7 @@ object demorgan1 extends Script {
   val p2 = ContractionLeftRule( p1, hof"-(A | B)" )
   println( p2 )
 
-  val nd = LKToND( p2 )
+  val nd = LKToND( p2, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -78,7 +79,7 @@ object demorgan2 extends Script {
   val p5 = NegRightRule( p4, hof"A & B" )
   println( p5 )
 
-  val nd = LKToND( p5 )
+  val nd = LKToND( p5, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -88,7 +89,7 @@ object orLeft1 extends Script {
   val p = OrLeftRule( l1, r1, hof"A | B" )
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -98,7 +99,7 @@ object orLeft2 extends Script {
   val p = OrLeftRule( l1, r1, hof"A | A" )
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -110,7 +111,7 @@ object orLeft3 extends Script {
   val p = OrLeftRule( l1, r3, hof"A | D" )
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -166,7 +167,7 @@ object orRight1 extends Script {
   val p = OrRightRule( r2, hof"A | B" )
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -177,7 +178,7 @@ object orRight2 extends Script {
   val p = OrRightRule( p3, hof"A | -B" )
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -188,7 +189,7 @@ object negLeftRight1 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -199,7 +200,7 @@ object negRight1 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -210,7 +211,7 @@ object weakenContractRight1 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -221,7 +222,7 @@ object cut1 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -234,7 +235,7 @@ object cut2 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -247,8 +248,8 @@ object impLeft1 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
-  //val nd = LKToND( p, Suc( 1 ) )
+  val nd = LKToND( p, Some( Suc( 0 ) ) )
+  //val nd = LKToND( p, Some( Suc( 1 ) )
   println( nd )
 }
 
@@ -260,8 +261,8 @@ object impLeft2 extends Script {
 
   println( p )
 
-  val nd = LKToND( p )
-  //val nd = LKToND( p, Suc( 1 ) )
+  val nd = LKToND( p, None )
+  //val nd = LKToND( p, Some( Suc( 1 ) ) )
   println( nd )
 }
 
@@ -271,7 +272,7 @@ object lem extends Script {
   val s3 = OrRightRule( s2, hof"A | -A" )
 
   println( s3 )
-  val nd = LKToND( s3 )
+  val nd = LKToND( s3, Some( Suc( 0 ) ) )
   println( nd )
 }
 
@@ -467,6 +468,52 @@ object negLeft extends Script {
 
   val focus = Suc( 0 )
   val nd = LKToND( lk, Some( focus ) )
+
+  println( lk )
+  println( nd )
+}
+
+object proofLink extends Script {
+  var ctx = Context()
+  ctx += Context.Sort( "i" )
+  ctx += hoc"'<': i>i>o"
+  ctx += hoc"'+': i>i>i"
+  ctx += hoc"'1': i"
+  ctx += ( "ax", hos"x + 1 < y :- x < y" )
+  val lk = ProofLink( foc"th", hos"1 + 1 < 3 :- 1 < 3" )
+
+  val focus = Some( Suc( 0 ) )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
+
+object AndLeftWithEmptySuccedent extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( NegLeftRule( _, hof"A" ) ).
+    u( AndLeftRule( _, hof"A & -A" ) ).
+    qed
+
+  val focus = None
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
+
+object OrLeftWithEmptySuccedent extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( NegLeftRule( _, hof"A" ) ).
+    c( LogicalAxiom( hof"B" ) ).
+    u( NegLeftRule( _, hof"B" ) ).
+    b( OrLeftRule( _, _, hof"A | B" ) ).
+    qed
+
+  val focus = None
+  val nd = LKToND( lk, focus )
 
   println( lk )
   println( nd )

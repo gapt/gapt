@@ -4,6 +4,7 @@ import java.io.{ FileWriter, PrintWriter }
 
 import ammonite.ops._
 import at.logic.gapt.cutintro._
+import at.logic.gapt.examples.Script
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.{ All, And, TBase }
 import at.logic.gapt.formats.babel.BabelParser
@@ -15,7 +16,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.loadExpansionProof
+import at.logic.gapt.proofs.{ Suc, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9Importer
@@ -64,7 +65,8 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     extractRecSchem( proof ) --? "extract recursion scheme"
 
-    LKToND( proof ) --? "LKToND"
+    val focus = if ( proof.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
+    LKToND( proof, focus ) --? "LKToND"
 
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
@@ -107,7 +109,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     ( E.shallow == p.endSequent ) !-- "shallow sequent of expansion proof"
 
-    LKToND( p ) --? "LKToND"
+    val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
+    LKToND( p, focus ) --? "LKToND"
 
     Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
@@ -136,7 +139,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       ( CutIntroduction( p ) --? "cut-introduction" flatten ) foreach { q =>
-        LKToND( q ) --? "LKToND (cut-intro)"
+        val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
+        LKToND( q, focus ) --? "LKToND (cut-intro)"
 
         ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
@@ -242,4 +246,36 @@ object RegressionTests extends App {
     }
     out write "</testsuite>\n"
   } finally out.close()
+}
+
+object runSET067Plus1 extends Script {
+  println( RegressionTests.findTestCase( "SET067+1" ).run().toJUnitXml )
+}
+
+object runNUM565Plus3 extends Script {
+  println( RegressionTests.findTestCase( "NUM565+3" ).run().toJUnitXml )
+}
+
+object runSWV226Plus1 extends Script {
+  println( RegressionTests.findTestCase( "SWV226+1" ).run().toJUnitXml )
+}
+
+object runHEN003Minus3 extends Script {
+  println( RegressionTests.findTestCase( "HEN003-3" ).run().toJUnitXml )
+}
+
+object runprop_11 extends Script {
+  println( RegressionTests.findTestCase( "prop_11" ).run().toJUnitXml )
+}
+
+object runSWV235Plus1 extends Script {
+  println( RegressionTests.findTestCase( "SWV235+1" ).run().toJUnitXml )
+}
+
+object runLCL644Plus1Dot010 extends Script {
+  println( RegressionTests.findTestCase( "LCL644+1.010" ).run().toJUnitXml )
+}
+
+object runALG198Plus1 extends Script {
+  println( RegressionTests.findTestCase( "ALG198+1" ).run().toJUnitXml )
 }
