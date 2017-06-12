@@ -4,7 +4,6 @@ import java.io.{ FileWriter, PrintWriter }
 
 import ammonite.ops._
 import at.logic.gapt.cutintro._
-import at.logic.gapt.examples.Script
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.{ All, And, TBase }
 import at.logic.gapt.formats.babel.BabelParser
