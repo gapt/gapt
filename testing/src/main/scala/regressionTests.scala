@@ -247,35 +247,3 @@ object RegressionTests extends App {
     out write "</testsuite>\n"
   } finally out.close()
 }
-
-object runSET067Plus1 extends Script {
-  println( RegressionTests.findTestCase( "SET067+1" ).run().toJUnitXml )
-}
-
-object runNUM565Plus3 extends Script {
-  println( RegressionTests.findTestCase( "NUM565+3" ).run().toJUnitXml )
-}
-
-object runSWV226Plus1 extends Script {
-  println( RegressionTests.findTestCase( "SWV226+1" ).run().toJUnitXml )
-}
-
-object runHEN003Minus3 extends Script {
-  println( RegressionTests.findTestCase( "HEN003-3" ).run().toJUnitXml )
-}
-
-object runprop_11 extends Script {
-  println( RegressionTests.findTestCase( "prop_11" ).run().toJUnitXml )
-}
-
-object runSWV235Plus1 extends Script {
-  println( RegressionTests.findTestCase( "SWV235+1" ).run().toJUnitXml )
-}
-
-object runLCL644Plus1Dot010 extends Script {
-  println( RegressionTests.findTestCase( "LCL644+1.010" ).run().toJUnitXml )
-}
-
-object runALG198Plus1 extends Script {
-  println( RegressionTests.findTestCase( "ALG198+1" ).run().toJUnitXml )
-}
