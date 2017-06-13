@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, Context, SequentIndex, Suc, lk, nd }
+import at.logic.gapt.proofs.Context.ProofNames
+import at.logic.gapt.proofs.{ Ant, Context, HOLSequent, SequentIndex, Suc, lk, nd }
 import at.logic.gapt.proofs.nd._
 
 object LKToND {
@@ -174,8 +175,29 @@ object LKToND {
       case lk.LogicalAxiom( f ) =>
         nd.LogicalAxiom( f )
 
-      case lk.ProofLink( _, seq ) =>
-        nd.TheoryAxiom( seq( Suc( 0 ) ), seq.antecedent )
+      case lk.ProofLink( prf, seq ) =>
+        def nm( e: Expr ): ( Expr, HOLSequent ) = e match {
+          case App( f, _ )    => nm( f )
+          case Const( nm, _ ) => ctx.get[ProofNames].names( nm )
+        }
+        def vars( e: Expr, acc: List[Var] ): List[Var] = e match {
+          case App( f, v: Var ) => vars( f, v :: acc )
+          case _                => acc
+        }
+        val ( genexp, genseq ) = nm( prf )
+        val vs = vars( genexp, Nil )
+
+        val ax: NDProof = nd.TheoryAxiom( vs.foldRight( genseq.toImplication )( ( a, b ) => All( a, b ) ) )
+
+        def consts( e: Expr, acc: List[Const] ): List[Const] = e match {
+          case App( f, c: Const ) => consts( f, c :: acc )
+          case _                  => acc
+        }
+        val cs = consts( prf, Nil )
+        val p = cs.foldLeft( ax )( ( a, b ) => nd.ForallElimRule( a, b ) )
+        val ax2 = nd.LogicalAxiom( seq( Ant( 0 ) ) )
+        val p2 = ImpElimRule( p, ax2 )
+        p2
 
       case ReflexivityAxiom( s ) =>
         nd.EqualityIntroRule( s )

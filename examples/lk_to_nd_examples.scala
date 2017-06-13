@@ -1,9 +1,7 @@
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.Update
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.prooftool.prooftool
 
 // Example 0.1.6
 object ex0_1_6 extends Script {
@@ -474,16 +472,16 @@ object negLeft extends Script {
 }
 
 object proofLink extends Script {
-  var ctx = Context()
+  implicit var ctx = Context.default
   ctx += Context.Sort( "i" )
   ctx += hoc"'<': i>i>o"
   ctx += hoc"'+': i>i>i"
   ctx += hoc"'1': i"
   ctx += hoc"'3': i"
+  ctx += hoc"'ax': i>i>i"
   ctx += ( "ax", hos"x + 1 < y :- x < y" )
   val lk = ProofLink( le"ax 1 3", hos"1 + 1 < 3 :- 1 < 3" )
   ctx.check( lk )
-  println( ctx )
 
   val focus = Some( Suc( 0 ) )
   val nd = LKToND( lk, focus )

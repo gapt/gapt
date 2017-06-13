@@ -1077,30 +1077,6 @@ case class TheoryAxiom( mainFormula: Formula ) extends InitialSequent {
   override def name = "th"
 }
 
-object TheoryAxiom extends ConvenienceConstructor( "TheoryAxiom" ) {
-
-  /**
-   * Convenience constructor for ax, taking a context.
-   * Applies the axiom rule followed by 0 or more weakenings.
-   * <pre>
-   *    ------ax
-   *     :- A
-   *    ---------wkn*
-   *     Γ :- A
-   * </pre>
-   *
-   * @param A The atom a.
-   * @param context The context Γ.
-   * @return
-   */
-  def apply( A: Formula, context: Seq[Formula] ): NDProof = {
-
-    context.foldLeft[NDProof]( TheoryAxiom( A ) ) { ( ant, c ) =>
-      WeakeningRule( ant, c )
-    }
-  }
-}
-
 /**
  * An NDProof ending with elimination of equality:
  * <pre>
