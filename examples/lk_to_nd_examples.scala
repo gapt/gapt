@@ -490,6 +490,25 @@ object proofLink extends Script {
   println( nd )
 }
 
+object proofLink2 extends Script {
+  implicit var ctx = Context.default
+  ctx += Context.Sort( "i" )
+  ctx += hoc"'<': i>i>o"
+  ctx += hoc"'1': i"
+  ctx += hoc"'2': i"
+  ctx += hoc"'3': i"
+  ctx += hoc"'ax': i>i>i>i"
+  ctx += ( "ax", hos"x < y, y < z :- x < z" )
+  val lk = ProofLink( le"ax 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3" )
+  ctx.check( lk )
+
+  val focus = Some( Suc( 0 ) )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
+
 object AndLeftWithEmptySuccedent extends Script {
   val lk = ProofBuilder.
     c( LogicalAxiom( hof"A" ) ).

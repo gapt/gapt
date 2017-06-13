@@ -195,8 +195,9 @@ object LKToND {
         }
         val cs = consts( prf, Nil )
         val p = cs.foldLeft( ax )( ( a, b ) => nd.ForallElimRule( a, b ) )
-        val ax2 = nd.LogicalAxiom( seq( Ant( 0 ) ) )
-        val p2 = ImpElimRule( p, ax2 )
+        val ax2: NDProof = nd.LogicalAxiom( seq( Ant( 0 ) ) )
+        val conj = seq.antecedent.tail.foldLeft( ax2 )( ( a, b ) => AndIntroRule( a, nd.LogicalAxiom( b ) ) )
+        val p2 = ImpElimRule( p, conj )
         p2
 
       case ReflexivityAxiom( s ) =>
