@@ -538,3 +538,38 @@ object OrLeftWithEmptySuccedent extends Script {
   println( lk )
   println( nd )
 }
+
+object inductionRule extends Script {
+  val x = FOLVar( "x" )
+  val zero = FOLConst( "0" )
+  val Sx = FOLFunction( "s", List( x ) )
+
+  val P0 = FOLAtom( "P", List( zero ) )
+  val Px = FOLAtom( "P", List( x ) )
+  val PSx = FOLAtom( "P", List( Sx ) )
+
+  val ax1 = LogicalAxiom( P0 )
+
+  implicit var ctx = Context.default
+  ctx += Context.InductiveType( "i", hoc"0: i", hoc"s: i>i" )
+  ctx += hoc"'th': i>i"
+  ctx += hoc"'P': i>o"
+  ctx += ( "th", hos"$Px :- $PSx" )
+
+  val ax2 = ProofLink( le"th x", hos"$Px :- $PSx" )
+
+  val lk = InductionRule(
+    Seq(
+      InductionCase( ax1, hoc"0: i", Seq(), Seq(), Suc( 0 ) ),
+      InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+    ),
+    Abs( x, Px ), x
+  )
+  ctx.check( lk )
+
+  val focus = Some( Suc( 0 ) )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}

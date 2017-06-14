@@ -747,25 +747,31 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
     "translate InductionRule" in {
       val x = FOLVar( "x" )
-      val y = FOLVar( "y" )
       val zero = FOLConst( "0" )
       val Sx = FOLFunction( "s", List( x ) )
 
-      val P0y = FOLAtom( "P", List( zero, y ) )
-      val Pxy = FOLAtom( "P", List( x, y ) )
-      val PSxy = FOLAtom( "P", List( Sx, y ) )
+      val P0 = FOLAtom( "P", List( zero ) )
+      val Px = FOLAtom( "P", List( x ) )
+      val PSx = FOLAtom( "P", List( Sx ) )
 
-      val ax1 = LogicalAxiom( P0y )
+      val ax1 = LogicalAxiom( P0 )
 
-      val ax2 = ProofLink( foc"th", hos"$Pxy :- $PSxy" )
+      implicit var ctx = Context.default
+      ctx += Context.InductiveType( "i", hoc"0: i", hoc"s: i>i" )
+      ctx += hoc"'th': i>i"
+      ctx += hoc"'P': i>o"
+      ctx += ( "th", hos"$Px :- $PSx" )
+
+      val ax2 = ProofLink( le"th x", hos"$Px :- $PSx" )
 
       val lk = InductionRule(
         Seq(
-          InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
-          InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+          InductionCase( ax1, hoc"0: i", Seq(), Seq(), Suc( 0 ) ),
+          InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
         ),
-        Abs( x, Pxy ), x
+        Abs( x, Px ), x
       )
+      ctx.check( lk )
 
       val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )

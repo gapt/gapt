@@ -184,16 +184,17 @@ object LKToND {
           case App( f, v: Var ) => vars( f, v :: acc )
           case _                => acc
         }
-        val ( genexp, genseq ) = nm( prf )
-        val vs = vars( genexp, Nil )
-
-        val ax: NDProof = nd.TheoryAxiom( vs.foldRight( genseq.toImplication )( ( a, b ) => All( a, b ) ) )
-
         def consts( e: Expr, acc: List[Const] ): List[Const] = e match {
           case App( f, c: Const ) => consts( f, c :: acc )
           case _                  => acc
         }
         val cs = consts( prf, Nil )
+
+        val ( genexp, genseq ) = nm( prf )
+        val vs = vars( genexp, Nil )
+
+        val ax: NDProof = if ( cs.nonEmpty ) nd.TheoryAxiom( vs.foldRight( genseq.toImplication )( ( a, b ) => All( a, b ) ) ) else nd.TheoryAxiom( genseq.toImplication )
+
         val p = cs.foldLeft( ax )( ( a, b ) => nd.ForallElimRule( a, b ) )
         val ax2: NDProof = nd.LogicalAxiom( seq( Ant( 0 ) ) )
         val conj = seq.antecedent.tail.foldLeft( ax2 )( ( a, b ) => AndIntroRule( a, nd.LogicalAxiom( b ) ) )
