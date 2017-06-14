@@ -176,30 +176,18 @@ object LKToND {
         nd.LogicalAxiom( f )
 
       case lk.ProofLink( prf, seq ) =>
-        def nm( e: Expr ): ( Expr, HOLSequent ) = e match {
-          case App( f, _ )    => nm( f )
-          case Const( nm, _ ) => ctx.get[ProofNames].names( nm )
-        }
-        def vars( e: Expr, acc: List[Var] ): List[Var] = e match {
-          case App( f, v: Var ) => vars( f, v :: acc )
-          case _                => acc
-        }
-        def consts( e: Expr, acc: List[Const] ): List[Const] = e match {
-          case App( f, c: Const ) => consts( f, c :: acc )
-          case _                  => acc
-        }
-        val cs = consts( prf, Nil )
+        val Apps( Const( proofName, _ ), _ ) = prf
+        val ( genprf, genseq ) = ctx.get[ProofNames].names( proofName )
+        val Apps( _, vs ) = genprf
+        val Apps( _, args ) = prf
 
-        val ( genexp, genseq ) = nm( prf )
-        val vs = vars( genexp, Nil )
-
-        val ax: NDProof = if ( cs.nonEmpty ) nd.TheoryAxiom( vs.foldRight( genseq.toImplication )( ( a, b ) => All( a, b ) ) ) else nd.TheoryAxiom( genseq.toImplication )
-
-        val p = cs.foldLeft( ax )( ( a, b ) => nd.ForallElimRule( a, b ) )
-        val ax2: NDProof = nd.LogicalAxiom( seq( Ant( 0 ) ) )
-        val conj = seq.antecedent.tail.foldLeft( ax2 )( ( a, b ) => AndIntroRule( a, nd.LogicalAxiom( b ) ) )
-        val p2 = ImpElimRule( p, conj )
-        p2
+        nd.ProofBuilder.
+          c( nd.TheoryAxiom( All.Block( vs.asInstanceOf[List[Var]], genseq.toImplication ) ) ).
+          u( nd.ForallElimBlock( _, args ) ).
+          c( nd.LogicalAxiom( seq( Ant( 0 ) ) ) ).
+          u( seq.antecedent.tail.foldLeft( _ )( ( a, b ) => AndIntroRule( a, nd.LogicalAxiom( b ) ) ) ).
+          b( ImpElimRule( _, _ ) ).
+          qed
 
       case ReflexivityAxiom( s ) =>
         nd.EqualityIntroRule( s )

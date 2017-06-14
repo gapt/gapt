@@ -903,6 +903,31 @@ case class ForallElimRule( subProof: NDProof, term: Expr )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
+object ForallElimBlock {
+
+  /**
+   * Applies the ForallElim-rule n times.
+   *
+   * The rule:
+   * <pre>
+   *              (π)
+   *    Γ :- ∀x1,..,xN.A
+   * ---------------------------------- (∀_e x n)
+   *     Γ :- A[x1\t1,...,xN\tN]
+   *
+   * where t1,...,tN are terms.
+   * </pre>
+   *
+   * @param subProof The proof π with (Γ :- ∀x1,..,xN.A) as the bottommost sequent.
+   * @param terms The list of terms with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * ∀x1,..,xN.A indeed occurs at the bottom of the proof π.
+   */
+  def apply( subProof: NDProof, terms: Seq[Expr] ): NDProof =
+    terms.foldLeft( subProof )( ( acc, t ) => nd.ForallElimRule( acc, t ) )
+
+}
+
 /**
  * An NDProof ending with an existential quantifier introduction:
  * <pre>
