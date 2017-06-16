@@ -517,8 +517,8 @@ object proofLink3 extends Script {
   ctx += hoc"'2': i"
   ctx += hoc"'3': i"
   ctx += hoc"'ax': i>i>i>i>i"
-  ctx += ( "ax", hos"x < y, y < z :- x < z, x < a" )
-  val lk = ProofLink( le"ax 1 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3, 1 < 1" )
+  ctx += ( "ax", hos"x < y, y < z :- x < z, x < a, a < a" )
+  val lk = ProofLink( le"ax 1 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3, 1 < 1, 1 < 1" )
   ctx.check( lk )
 
   val focus = Some( Suc( 0 ) )

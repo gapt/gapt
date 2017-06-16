@@ -815,7 +815,6 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
-    /* TODO
     "translate ProofLink multiple antecedents and succedents" in {
       implicit var ctx = Context.default
       ctx += Context.Sort( "i" )
@@ -824,15 +823,14 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       ctx += hoc"'2': i"
       ctx += hoc"'3': i"
       ctx += hoc"'ax': i>i>i>i>i"
-      ctx += ( "ax", hos"x < y, y < z :- x < z, x < a" )
-      val lk = ProofLink( le"ax 1 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3, 1 < 1" )
+      ctx += ( "ax", hos"x < y, y < z :- x < z, x < a, a < a" )
+      val lk = ProofLink( le"ax 1 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3, 1 < 1, 1 < 1" )
       ctx.check( lk )
 
       val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
       checkEquality( nd, lk, focus )
     }
-    */
 
   }
 }

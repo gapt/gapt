@@ -181,13 +181,44 @@ object LKToND {
         val Apps( _, vs ) = genprf
         val Apps( _, args ) = prf
 
-        nd.ProofBuilder.
+        def handleSuccedent( seq: Vector[Formula], toProve: Formula ): NDProof = {
+          if ( seq.size == 1 ) {
+            nd.ProofBuilder.
+              c( nd.LogicalAxiom( hof"-${seq.last}" ) ).
+              c( nd.LogicalAxiom( seq.last ) ).
+              b( NegElimRule( _, _ ) ).
+              u( BottomElimRule( _, toProve ) ).
+              qed
+          } else {
+            nd.ProofBuilder.
+              c( nd.LogicalAxiom( hof"-${seq.last}" ) ).
+              c( nd.LogicalAxiom( Or( seq ) ) ).
+              c( handleSuccedent( seq.reverse.tail.reverse, seq.last ) ).
+              c( nd.LogicalAxiom( seq.last ) ).
+              t( OrElimRule( _, _, _ ) ).
+              b( NegElimRule( _, _ ) ).
+              u( BottomElimRule( _, toProve ) ).
+              qed
+          }
+        }
+
+        val t = nd.ProofBuilder.
           c( nd.TheoryAxiom( All.Block( vs.asInstanceOf[List[Var]], genseq.toImplication ) ) ).
           u( nd.ForallElimBlock( _, args ) ).
           c( nd.LogicalAxiom( seq( Ant( 0 ) ) ) ).
           u( seq.antecedent.tail.foldLeft( _ )( ( a, b ) => AndIntroRule( a, nd.LogicalAxiom( b ) ) ) ).
           b( ImpElimRule( _, _ ) ).
           qed
+        val tsuc = if ( seq.succedent.size > 1 ) {
+          nd.ProofBuilder.
+            c( t ).
+            c( handleSuccedent( seq.succedent.reverse.tail.reverse, seq.succedent.last ) ).
+            c( nd.LogicalAxiom( seq.succedent.last ) ).
+            t( OrElimRule( _, _, _ ) ).
+            qed
+        } else t
+
+        exchange( tsuc, focus.map( seq.apply ) )
 
       case ReflexivityAxiom( s ) =>
         nd.EqualityIntroRule( s )
