@@ -258,7 +258,8 @@ object LKToND {
             b( ExcludedMiddleRule( _, Ant( 0 ), _, il ) ).
             qed
         } else {
-          exchange( translate( proof, focus.map( p.getSequentConnector.parent ) ), focus.map( p.endSequent.apply ) )
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
         }
 
       case p @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
