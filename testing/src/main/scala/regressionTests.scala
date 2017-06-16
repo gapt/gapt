@@ -25,6 +25,7 @@ import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.EnumeratingInstanceGenerator
 import at.logic.gapt.provers.viper.{ Viper, ViperOptions }
 import at.logic.gapt.utils._
+import EitherHelpers._
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -64,8 +65,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     extractRecSchem( proof ) --? "extract recursion scheme"
 
-    val focus = if ( proof.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
-    LKToND( proof, focus ) --? "LKToND"
+    LKToND( proof ) --? "LKToND"
 
     val All.Block( variables, _ ) = sequent.succedent.head
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
@@ -108,8 +108,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     ( E.shallow == p.endSequent ) !-- "shallow sequent of expansion proof"
 
-    val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
-    LKToND( p, focus ) --? "LKToND"
+    LKToND( p ) --? "LKToND"
 
     Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
@@ -196,7 +195,9 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
     deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
       Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
-      ExpansionProofToLK( desk ) --- "ExpansionProofToLK on deskolemization"
+      ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+        LKToND( deskLK ) --? "LKToND (deskolemization)"
+      }
     }
   }
 }

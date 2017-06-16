@@ -15,8 +15,9 @@ object LKToND {
    * @return The natural deduction proof translate(π).
    */
 
-  def apply( proof: LKProof, focus: Option[SequentIndex] )( implicit ctx: Context = Context() ): NDProof = {
-    translate( proof, focus )
+  def apply( proof: LKProof, focus: Option[SequentIndex] = null )( implicit ctx: Context = Context() ): NDProof = {
+    translate( proof, focus =
+      if ( focus != null ) focus else if ( proof.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) ) )
   }
 
   private def check( nd: NDProof, lk: LKProof, focus: Option[SequentIndex] ) = {
