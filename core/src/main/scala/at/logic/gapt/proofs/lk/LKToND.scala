@@ -267,7 +267,7 @@ object LKToND {
 
         val tl = translate( leftSubProof, Some( aux1 ) )
 
-        val tr = translate( rightSubProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
+        val tr = translate( rightSubProof, if ( rightSubProof.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
 
         val i = tr.endSequent.indexOfPol( rightSubProof.endSequent( aux2 ), Polarity.InAntecedent )
 
@@ -337,12 +337,12 @@ object LKToND {
 
       case p @ OrLeftRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
 
-        val tl = translate( leftSubProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getLeftSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
+        val tl = translate( leftSubProof, if ( leftSubProof.endSequent.succedent.nonEmpty ) Some( p.getLeftSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
         val wtl = if ( p.endSequent.succedent.nonEmpty && p.getLeftSequentConnector.parentOption( focus.get ) == None ) {
           exchange( WeakeningRule( tl, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
         } else tl
 
-        val tr = translate( rightSubProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
+        val tr = translate( rightSubProof, if ( rightSubProof.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
         val wtr = if ( p.endSequent.succedent.nonEmpty && p.getRightSequentConnector.parentOption( focus.get ) == None ) {
           exchange( WeakeningRule( tr, Neg( p.endSequent( focus.get ) ) ), focus.map( p.endSequent.apply ) )
         } else tr
@@ -397,7 +397,7 @@ object LKToND {
 
         val tl = translate( leftSubProof, Some( aux1 ) )
 
-        val tr = translate( rightSubProof, if ( p.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
+        val tr = translate( rightSubProof, if ( rightSubProof.endSequent.succedent.nonEmpty ) Some( p.getRightSequentConnector.parentOption( focus.get ).getOrElse( Suc( 0 ) ) ) else None )
 
         val Imp( _, b ) = p.mainFormula
         val i = tr.endSequent.indexOfPol( b, Polarity.InAntecedent )
