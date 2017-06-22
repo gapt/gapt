@@ -1,3 +1,4 @@
+import at.logic.gapt.cutintro.{ introducePi2Cut, pi2GrammarToSEHS }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.expr._
 import at.logic.gapt.grammars._
@@ -31,7 +32,7 @@ object pi2GrammarFinding extends TacticsProof {
     prop
   }
 
-  val ( lang, _ ) = InstanceTermEncoding( p )
+  val ( lang, enc ) = InstanceTermEncoding( p )
 
   println( s"Language:\n${lang.mkString( "\n" )}\n" )
 
@@ -39,6 +40,12 @@ object pi2GrammarFinding extends TacticsProof {
 
   val Some( minG ) = minimizePi2Grammar( stabG, lang, OpenWBO )
 
-  println( s"Grammar:\n${minG}" )
+  println( s"Grammar:\n$minG\n" )
+
+  val sehs = pi2GrammarToSEHS( minG, enc )
+  println( s"SEHS:\n$sehs\n" )
+
+  val ( Some( cutFormula ), _, _ ) = introducePi2Cut( sehs )
+  println( s"Cut-formula:\n$cutFormula\n" )
 
 }
