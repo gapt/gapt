@@ -15,9 +15,9 @@ object gStarUnify {
    */
   def apply(
     seHs:                      Pi2SeHs,
-    nameOfExistentialVariable: FOLVar,
-    nameOfUniversalVariable:   FOLVar
-  ): Set[FOLFormula] = {
+    nameOfExistentialVariable: Var,
+    nameOfUniversalVariable:   Var
+  ): Set[Formula] = {
 
     // To compute the unified literals, we have to consider all unification pairs.
     // These are pairs of literals (P,Q) occurring in the reduced representation such that:
@@ -57,18 +57,18 @@ object gStarUnify {
    */
   private def unifyLiterals(
     seHs:                      Pi2SeHs,
-    posAt:                     FOLFormula,
-    negAt:                     FOLFormula,
-    nameOfExistentialVariable: FOLVar,
-    nameOfUniversalVariable:   FOLVar
-  ): Option[FOLFormula] = {
+    posAt:                     Formula,
+    negAt:                     Formula,
+    nameOfExistentialVariable: Var,
+    nameOfUniversalVariable:   Var
+  ): Option[Formula] = {
 
     // nameOfPos and nameOfNeg are the names of the corresponding atoms that have to be equal. Otherwise, there is no unified literal.
     // In the case that the names are equal, we call the unify function with the arguments argsP and argsN of the corresponding literals.
-    val Apps( nameOfPos, argsP ): FOLFormula = posAt
-    val Apps( nameOfNeg, argsN ): FOLFormula = negAt
+    val Apps( nameOfPos, argsP ): Formula = posAt
+    val Apps( nameOfNeg, argsN ): Formula = negAt
 
-    val unifiedLiteral: Option[FOLFormula] = nameOfPos match {
+    val unifiedLiteral: Option[Formula] = nameOfPos match {
       case t if ( ( nameOfNeg == t ) && ( argsP.length == argsN.length ) ) => {
         val unifiedArgs = unify(
           seHs,
@@ -80,7 +80,7 @@ object gStarUnify {
         val theUnifiedLiteral = unifiedArgs match {
           case Some( s ) => {
             if ( s.length == argsP.length ) {
-              Some( Apps( nameOfPos, s ).asInstanceOf[FOLFormula] )
+              Some( Apps( nameOfPos, s ).asInstanceOf[Formula] )
             } else {
               None
             }
@@ -110,11 +110,11 @@ object gStarUnify {
   private def unify(
     seHs:                      Pi2SeHs,
     zippedArgs:                List[( Expr, Expr )],
-    nameOfExistentialVariable: FOLVar,
-    nameOfUniversalVariable:   FOLVar
-  ): Option[Seq[FOLTerm]] = {
+    nameOfExistentialVariable: Var,
+    nameOfUniversalVariable:   Var
+  ): Option[Seq[Expr]] = {
 
-    var unifiedTerms: Option[Seq[FOLTerm]] = None
+    var unifiedTerms: Option[Seq[Expr]] = None
 
     // A run through all pairs
     zippedArgs.foreach( t => {
@@ -139,9 +139,9 @@ object gStarUnify {
   private def unifyPair(
     seHs:                      Pi2SeHs,
     termPair:                  ( Expr, Expr ),
-    nameOfExistentialVariable: FOLVar,
-    nameOfUniversalVariable:   FOLVar
-  ): Option[FOLTerm] = {
+    nameOfExistentialVariable: Var,
+    nameOfUniversalVariable:   Var
+  ): Option[Expr] = {
 
     // If there are substitutions tL and tR for the universal variable of the cut formula then we can
     // replace tL or tR with nameOfUniversalVariable, i.e. we extend the current list of arguments with
@@ -175,7 +175,7 @@ object gStarUnify {
         return Option( nameOfExistentialVariable )
       } )
 
-      if ( argsOfArgL.length == 0 ) return Option( tL.asInstanceOf[FOLTerm] )
+      if ( argsOfArgL.length == 0 ) return Some( tL )
 
       unify(
         seHs,
@@ -184,7 +184,7 @@ object gStarUnify {
         nameOfUniversalVariable
       ) match {
           case Some( r ) => {
-            if ( argsOfArgL.length == r.length ) return Option( Apps( nameOfArgL, r ).asInstanceOf[FOLTerm] )
+            if ( argsOfArgL.length == r.length ) return Some( Apps( nameOfArgL, r ) )
           }
           case None =>
         }
@@ -197,8 +197,8 @@ object gStarUnify {
   private def unifyPairAccordingTo(
     productionRules: List[( Expr, Expr )],
     termPair:        ( Expr, Expr ),
-    name:            FOLVar
-  ): Option[FOLTerm] =
+    name:            Var
+  ): Option[Expr] =
     if ( productionRules contains termPair ) Some( name ) else None
 
 }

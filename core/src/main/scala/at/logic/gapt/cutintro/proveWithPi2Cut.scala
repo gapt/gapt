@@ -20,13 +20,13 @@ object proveWithPi2Cut {
    * @return Optiontype that contains a proof with Pi2-cut if a Pi2-cut formula exists
    */
   def apply(
-    endSequent:                Sequent[FOLFormula],
+    endSequent:                Sequent[Formula],
     seHs:                      Pi2SeHs,
-    nameOfExistentialVariable: FOLVar              = fov"yCut",
-    nameOfUniversalVariable:   FOLVar              = fov"xCut"
+    nameOfExistentialVariable: Var              = fov"yCut",
+    nameOfUniversalVariable:   Var              = fov"xCut"
   ): ( Option[LKProof] ) = {
 
-    val ( cutFormulaWithoutQuantifiers: Option[FOLFormula], nameOfExVa: FOLVar, nameOfUnVa: FOLVar ) = introducePi2Cut( seHs, nameOfExistentialVariable, nameOfUniversalVariable )
+    val ( cutFormulaWithoutQuantifiers: Option[Formula], nameOfExVa: Var, nameOfUnVa: Var ) = introducePi2Cut( seHs, nameOfExistentialVariable, nameOfUniversalVariable )
 
     cutFormulaWithoutQuantifiers match {
       case Some( t ) => giveProof( t, seHs, endSequent, nameOfExVa, nameOfUnVa )
@@ -47,11 +47,11 @@ object proveWithPi2Cut {
    * @return Optiontype that contains a proof with Pi2-cut
    */
   private def giveProof(
-    cutFormulaWithoutQuantifiers: FOLFormula,
+    cutFormulaWithoutQuantifiers: Formula,
     seHs:                         Pi2SeHs,
-    endSequent:                   Sequent[FOLFormula],
-    nameOfExVa:                   FOLVar,
-    nameOfUnVa:                   FOLVar
+    endSequent:                   Sequent[Formula],
+    nameOfExVa:                   Var,
+    nameOfUnVa:                   Var
   ): ( Option[LKProof] ) = {
 
     var ctx = Context.default
@@ -63,7 +63,7 @@ object proveWithPi2Cut {
     for ( c <- constants( seHs.universalEigenvariable ); if !ctx.constants.exists( t => t == c ) ) ctx += c
 
     var state = ProofState( guessLabels( endSequent ) )
-    state += cut( "Cut", fof"!$nameOfUnVa ?$nameOfExVa ($cutFormulaWithoutQuantifiers )" )
+    state += cut( "Cut", hof"!$nameOfUnVa ?$nameOfExVa $cutFormulaWithoutQuantifiers" )
     state += allR( "Cut", seHs.universalEigenvariable )
     for ( t <- seHs.substitutionsForBetaWithAlpha ) { state += exR( "Cut", t ) }
     state += haveInstances( seHs.reducedRepresentation )

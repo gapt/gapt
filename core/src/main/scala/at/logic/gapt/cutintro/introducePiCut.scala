@@ -15,11 +15,11 @@ import at.logic.gapt.proofs.{ FOLClause, Sequent }
  *                                      of the cut formula independent from the existential eigenvariables (t_1(alpha),...,t_p(alpha))
  */
 case class Pi2SeHs(
-    val reducedRepresentation:         Sequent[FOLFormula], // F[x\U_1] |- G[y\U_2]
-    val universalEigenvariable:        FOLVar, // alpha
-    val existentialEigenvariables:     List[FOLVar], // beta_1,...,beta_m
-    val substitutionsForAlpha:         List[Expr], // r_1,...,r_m
-    val substitutionsForBetaWithAlpha: List[Expr] // t_1(alpha),...,t_p(alpha)
+    reducedRepresentation:         Sequent[Formula], // F[x\U_1] |- G[y\U_2]
+    universalEigenvariable:        Var, // alpha
+    existentialEigenvariables:     List[Var], // beta_1,...,beta_m
+    substitutionsForAlpha:         List[Expr], // r_1,...,r_m
+    substitutionsForBetaWithAlpha: List[Expr] // t_1(alpha),...,t_p(alpha)
 ) {
 
   require( existentialEigenvariables.length == substitutionsForAlpha.length )
@@ -159,20 +159,20 @@ case class Pi2SeHs(
   /**
    * Transforms the reduced representation from a sequent to a formula
    */
-  val reducedRepresentationToFormula: FOLFormula = reducedRepresentation.toImplication
+  val reducedRepresentationToFormula: Formula = reducedRepresentation.toImplication
 
   /**
    * Computes simultaneously a set of all atoms occurring in the leaves of the reduced representation (the atoms are negated if they
    * occur on the right side of the sequent) and a list of all relevant normalized (everything is shifted to the left side) leaves
    * of the reduced representation
    */
-  val literalsInTheDNTAsAndTheDNTAs: ( Set[FOLFormula], List[Sequent[FOLFormula]] ) = {
+  val literalsInTheDNTAsAndTheDNTAs: ( Set[Formula], List[Sequent[Formula]] ) = {
 
-    val literals = scala.collection.mutable.Set[FOLFormula]()
-    val DNTA = scala.collection.mutable.Set[Sequent[FOLFormula]]()
+    val literals = scala.collection.mutable.Set[Formula]()
+    val DNTA = scala.collection.mutable.Set[Sequent[Formula]]()
 
     CNFp( this.reducedRepresentationToFormula ).foreach( clause => if ( !clause.isTaut ) {
-      val NTAClause: Sequent[FOLFormula] = clause.succedent.map( literal => Neg( literal ) ) ++: clause.antecedent ++: Sequent()
+      val NTAClause: Sequent[Formula] = clause.succedent.map( literal => Neg( literal ) ) ++: clause.antecedent ++: Sequent()
       val DNTABuffer = DNTA.toList
       var dontAdd: Boolean = false
       DNTABuffer.foreach( DNTAClause => {
@@ -199,7 +199,7 @@ case class Pi2SeHs(
   /**
    * The set of all relevant normalized (everything is shifted to the left side) leaves
    */
-  val dualNonTautologicalAxioms: List[Sequent[FOLFormula]] = {
+  val dualNonTautologicalAxioms: List[Sequent[Formula]] = {
 
     val ( _, dNTAs ) = this.literalsInTheDNTAsAndTheDNTAs
     dNTAs
@@ -211,12 +211,12 @@ case class Pi2SeHs(
    * the right side of the sequent) such that in all atoms (literals) of N no eigenvariables occur, in all atoms (literals) of A only the
    * universal eigenvariable occur, and in all atoms (literals) of B only the existential eigenvariables occur
    */
-  val literalsInTheDNTAs: ( Set[FOLFormula], Set[FOLFormula], Set[FOLFormula] ) = {
+  val literalsInTheDNTAs: ( Set[Formula], Set[Formula], Set[Formula] ) = {
 
     val ( literals, _ ) = this.literalsInTheDNTAsAndTheDNTAs
-    val alpha = scala.collection.mutable.Set[FOLFormula]()
-    val beta = scala.collection.mutable.Set[FOLFormula]()
-    val gamma = scala.collection.mutable.Set[FOLFormula]()
+    val alpha = scala.collection.mutable.Set[Formula]()
+    val beta = scala.collection.mutable.Set[Formula]()
+    val gamma = scala.collection.mutable.Set[Formula]()
 
     literals.foreach( literal => {
       if ( literal.contains( this.universalEigenvariable ) ) {
@@ -239,7 +239,7 @@ case class Pi2SeHs(
    * @param unifiedLiterals A set of formulas (unified literals) that define the reduced signature/language
    * @return
    */
-  def theDNTAsInTheLanguage( unifiedLiterals: Set[FOLFormula] ): ( List[Sequent[FOLFormula]] ) = {
+  def theDNTAsInTheLanguage( unifiedLiterals: Set[Formula] ): ( List[Sequent[Formula]] ) = {
 
     val newDNTAs = this.dualNonTautologicalAxioms.map( leaf => {
       leaf.antecedent.filter( literal => {
@@ -291,10 +291,10 @@ case class Pi2SeHs(
    * @param literals
    * @return
    */
-  def sortAndAtomize( literals: Set[FOLFormula] ): ( Set[FOLFormula], Set[FOLFormula] ) = {
+  def sortAndAtomize( literals: Set[Formula] ): ( Set[Formula], Set[Formula] ) = {
 
-    val posLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
-    val negLiterals: scala.collection.mutable.Set[FOLFormula] = scala.collection.mutable.Set()
+    val posLiterals: scala.collection.mutable.Set[Formula] = scala.collection.mutable.Set()
+    val negLiterals: scala.collection.mutable.Set[Formula] = scala.collection.mutable.Set()
 
     for ( literal <- literals ) {
 
@@ -332,7 +332,7 @@ class LeafIndex(
  *                        form (xCut->r_j,yCut->beta_j) such that the leaf becomes true
  */
 class LiteralWithIndexLists(
-    val literal:            FOLFormula,
+    val literal:            Formula,
     val leafIndexList:      List[LeafIndex],
     val numberOfDNTAs:      Int,
     val foundNonEmptyPList: Boolean,
@@ -420,9 +420,9 @@ class ClauseWithIndexLists(
    * Computes the formula that corresponds to the clause
    * @return
    */
-  def formula: FOLFormula = {
+  def formula: Formula = {
 
-    var formulaBuffer: FOLFormula = literals.head.literal
+    var formulaBuffer: Formula = literals.head.literal
     literals.tail.foreach( literal => formulaBuffer = And( formulaBuffer, literal.literal ) )
     formulaBuffer
   }
@@ -506,9 +506,9 @@ class ClausesWithIndexLists(
    * Computes the formula that corresponds to the clauses
    * @return
    */
-  def formula: FOLFormula = {
+  def formula: Formula = {
 
-    var formulaBuffer: FOLFormula = this.clauses.head.formula
+    var formulaBuffer: Formula = this.clauses.head.formula
     this.clauses.tail.foreach( clause => formulaBuffer = Or( formulaBuffer, clause.formula ) )
     formulaBuffer
   }
@@ -522,20 +522,20 @@ object introducePi2Cut {
 
   def apply(
     seHs:                      Pi2SeHs,
-    nameOfExistentialVariable: FOLVar  = fov"yCut",
-    nameOfUniversalVariable:   FOLVar  = fov"xCut"
-  ): ( Option[FOLFormula], FOLVar, FOLVar ) = {
+    nameOfExistentialVariable: Var     = fov"yCut",
+    nameOfUniversalVariable:   Var     = fov"xCut"
+  ): ( Option[Formula], Var, Var ) = {
 
     val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
     val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
 
-    val unifiedLiterals: Set[FOLFormula] = gStarUnify(
+    val unifiedLiterals: Set[Formula] = gStarUnify(
       seHs,
       nameOfExistentialVariableChecked,
       nameOfUniversalVariableChecked
     )
 
-    val literalsWithIndexListsOrAndSolution: ( Set[LiteralWithIndexLists], Option[FOLFormula] ) = computeTheIndexListsForTheLiterals(
+    val literalsWithIndexListsOrAndSolution: ( Set[LiteralWithIndexLists], Option[Formula] ) = computeTheIndexListsForTheLiterals(
       unifiedLiterals,
       seHs.dualNonTautologicalAxioms,
       seHs,
@@ -558,7 +558,7 @@ object introducePi2Cut {
 
     if ( literalsWithIndexLists.size > 1 ) {
 
-      val allowedClausesWithIndexListsOrAndSolution: ( Set[ClauseWithIndexLists], Option[FOLFormula] ) = checkAndBuildAllowedClausesHead(
+      val allowedClausesWithIndexListsOrAndSolution: ( Set[ClauseWithIndexLists], Option[Formula] ) = checkAndBuildAllowedClausesHead(
         literalsWithIndexLists,
         seHs
       )
@@ -617,7 +617,7 @@ object introducePi2Cut {
   private def checkAndBuildAllowedClausesHead(
     literalsWithIndexLists: Set[LiteralWithIndexLists],
     seHs:                   Pi2SeHs
-  ): ( ( Set[ClauseWithIndexLists], Option[FOLFormula] ) ) = {
+  ): ( ( Set[ClauseWithIndexLists], Option[Formula] ) ) = {
 
     var allowedClausesWithIndexListsMutable = scala.collection.mutable.Set[ClauseWithIndexLists]()
     val literalsWithIndexListsMutable = scala.collection.mutable.Set( literalsWithIndexLists.toList: _* )
@@ -652,7 +652,7 @@ object introducePi2Cut {
     allowedClausesWithIndexLists: scala.collection.mutable.Set[ClauseWithIndexLists],
     seHs:                         Pi2SeHs,
     subsetSize:                   Int
-  ): ( ( scala.collection.mutable.Set[ClauseWithIndexLists], Option[FOLFormula] ) ) = {
+  ): ( ( scala.collection.mutable.Set[ClauseWithIndexLists], Option[Formula] ) ) = {
 
     for ( subset <- literalsWithIndexLists.subsets( subsetSize ) ) {
       val clauseWithIndexLists = new ClauseWithIndexLists( subset.toList )
@@ -689,12 +689,12 @@ object introducePi2Cut {
   }
 
   private def computeTheIndexListsForTheLiterals(
-    unifiedLiterals:       Set[FOLFormula],
-    nonTautologicalLeaves: List[Sequent[FOLFormula]],
+    unifiedLiterals:       Set[Formula],
+    nonTautologicalLeaves: List[Sequent[Formula]],
     seHs:                  Pi2SeHs,
-    y:                     FOLVar,
-    x:                     FOLVar
-  ): ( ( Set[LiteralWithIndexLists], Option[FOLFormula] ) ) = {
+    y:                     Var,
+    x:                     Var
+  ): ( ( Set[LiteralWithIndexLists], Option[Formula] ) ) = {
 
     val literalWithIndexListsSet = scala.collection.mutable.Set[LiteralWithIndexLists]()
 
@@ -706,9 +706,9 @@ object introducePi2Cut {
       var leafOfIndexList: List[LeafIndex] = Nil
 
       val substitutedLiteralAsSequentListAlpha = for ( existsIndex <- 0 until seHs.multiplicityOfBeta )
-        yield existsIndex -> ( Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )( literal ).asInstanceOf[FOLFormula] +: Sequent() )
+        yield existsIndex -> ( Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )( literal ) +: Sequent() )
       val substitutedLiteralAsSequentListBeta = for ( forallIndex <- 0 until seHs.multiplicityOfAlpha )
-        yield forallIndex -> ( Neg( Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )( literal ).asInstanceOf[FOLFormula] ) +: Sequent() )
+        yield forallIndex -> ( Neg( Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )( literal ) ) +: Sequent() )
 
       for ( leaf <- nonTautologicalLeaves ) {
 
@@ -719,7 +719,7 @@ object introducePi2Cut {
         for ( existsIndex <- 0 until seHs.multiplicityOfBeta ) {
 
           val subs = Substitution( ( x, seHs.universalEigenvariable ), ( y, seHs.substitutionsForBetaWithAlpha( existsIndex ) ) )
-          val subsetSequent: Sequent[FOLFormula] = subs( literal ).asInstanceOf[FOLFormula] +: Sequent()
+          val subsetSequent: Sequent[Formula] = subs( literal ).asInstanceOf[Formula] +: Sequent()
           if ( subsetSequent.isSubsetOf( leaf ) ) {
             leafIndexP += existsIndex
           }
@@ -738,7 +738,7 @@ object introducePi2Cut {
         for ( forallIndex <- 0 until seHs.multiplicityOfAlpha ) {
 
           val subs: Substitution = Substitution( ( x, seHs.substitutionsForAlpha( forallIndex ) ), ( y, seHs.existentialEigenvariables( forallIndex ) ) )
-          val subsetSequent: Sequent[FOLFormula] = Neg( subs( literal ).asInstanceOf[FOLFormula] ) +: Sequent()
+          val subsetSequent: Sequent[Formula] = Neg( subs( literal ) ) +: Sequent()
           if ( !leaf.intersect( subsetSequent ).isEmpty ) {
             leafIndexM += forallIndex
           }
