@@ -7,7 +7,6 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
 import at.logic.gapt.proofs.lk.LKProof
 
-import scala.collection.immutable
 import scala.reflect.ClassTag
 
 /**
@@ -287,7 +286,7 @@ object Context {
 
   case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
-      copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( referencedExpression, referencedProof ) ) ) ) ) )
+      copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
 
     def find( name: Expr ): Iterable[( LKProof, Substitution )] =
       for {
