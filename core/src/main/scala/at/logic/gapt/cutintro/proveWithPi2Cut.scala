@@ -46,7 +46,7 @@ object proveWithPi2Cut {
    * @param nameOfUnVa Name of the universal variable of the cut-formula
    * @return Optiontype that contains a proof with Pi2-cut
    */
-  private def giveProof(
+  def giveProof(
     cutFormulaWithoutQuantifiers: Formula,
     seHs:                         Pi2SeHs,
     endSequent:                   Sequent[Formula],
