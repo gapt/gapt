@@ -102,10 +102,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def +( update: Update ): Context =
     new Context( update( this ), update :: updates )
 
-  def normalizer = {
-    val redRules = reductionRules.toVector
-    new Normalizer( if ( redRules.isEmpty ) BetaReduction else ReductionRule( BetaReduction +: redRules ) )
-  }
+  def normalizer = get[Reductions].normalizer
 
   /** Normalizes an expression with the reduction rules stored in this context. */
   def normalize( expression: Expr ): Expr =
@@ -220,21 +217,22 @@ object Context {
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
+  /** Definitional reductions. */
+  case class Reductions( normalizer: Normalizer ) {
+    def ++( rules: Vector[ReductionRule] ): Reductions =
+      copy( Normalizer( normalizer.rules ++ rules ) )
+
+    def +( reductionRule: ReductionRule ): Reductions =
+      copy( normalizer + reductionRule )
+  }
+  implicit val reductionsFacet: Facet[Reductions] = Facet( Reductions( Normalizer( Set() ) ) )
+
   /** Definitions that define a constant by an expression of the same type. */
-  case class Definitions( definitions: Map[String, Expr] ) extends ReductionRule {
+  case class Definitions( definitions: Map[String, Expr] ) {
     def +( defn: EDefinition ) = {
       require( !definitions.contains( defn.what.name ) )
       copy( definitions + ( defn.what.name -> defn.by ) )
     }
-
-    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-      head match {
-        case Const( n, t ) if definitions.contains( n ) =>
-          val by = definitions( n )
-          val Some( subst ) = syntacticMatching( by.ty, t )
-          Some( subst( by ) -> args )
-        case _ => None
-      }
 
     override def toString = definitions.toSeq.sortBy( _._1 ).
       map { case ( w, b ) => s"$w -> $b" }.mkString( "\n" )
@@ -395,6 +393,7 @@ object Context {
       ctx.check( definition.by )
       ctx.state.update[Constants]( _ + definition.what )
         .update[Definitions]( _ + definition )
+        .update[Reductions]( _ + ( definition.what -> definition.by ) )
     }
   }
 
@@ -412,23 +411,6 @@ object Context {
         .update[SkolemFunctions]( _ + ( sym, defn ) )
     }
   }
-
-  case class PrimitiveRecursiveFunctions( equations: Map[String, ( Int, Int, Vector[( Expr, Expr )] )] ) extends ReductionRule {
-    def +( c: String, nArgs: Int, recIdx: Int, eqns: Vector[( Expr, Expr )] ) = copy( equations = equations + ( ( c, ( nArgs, recIdx, eqns ) ) ) )
-
-    def filter( p: String => Boolean ): PrimitiveRecursiveFunctions = copy( equations = equations.filter( x => p( x._1 ) ) )
-
-    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-      ( for {
-        Const( n, _ ) <- Seq( head )
-        ( nArgs, idx, eqns ) <- equations.get( n ).toSeq
-        if args.size >= nArgs
-        app = head( args.view.take( nArgs ).zipWithIndex.map { case ( a, i ) => if ( i == idx ) normalizer.whnf( a ) else a } )
-        ( lhs, rhs ) <- eqns.view
-        subst <- syntacticMatching( lhs, app ).toSeq
-      } yield subst( rhs ) -> args.drop( nArgs ) ).headOption
-  }
-  implicit val primitiveRecursiveFunctionsFacet: Facet[PrimitiveRecursiveFunctions] = Facet( PrimitiveRecursiveFunctions( Map() ) )
 
   case class PrimRecFun( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ) extends Update {
     val Const( name, FunctionType( retType, argTypes ) ) = c
@@ -470,7 +452,7 @@ object Context {
         require( ctr_ == ctr.name )
       }
       ctx.state.update[Constants]( _ + c )
-        .update[PrimitiveRecursiveFunctions]( _ + ( name, nArgs, recIdx, equations ) )
+        .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
     }
   }
 
