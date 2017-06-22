@@ -4,11 +4,14 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.lk.CutRule
+import at.logic.gapt.provers.maxsat.OpenWBO
 import org.specs2.mutable.Specification
 
 class Pi2CutIntroTest extends Specification {
 
   "totality example" in {
+    if ( !OpenWBO.isInstalled ) skipped
+
     var ctx = Context.default
     ctx += Ti
     ctx += hoc"P:i>i>o"
