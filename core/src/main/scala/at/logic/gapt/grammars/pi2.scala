@@ -119,3 +119,12 @@ object minimizePi2Grammar {
     }
   }
 }
+
+object findMinimalPi2Grammar {
+  def apply( lang: Traversable[Expr], alpha: Var, betas: Vector[Var], solver: MaxSATSolver ): Option[Pi2Grammar] = {
+    require( freeVariables( lang ).isEmpty )
+    val startSymbol = rename( Var( "x0", lang.head.ty ), alpha +: betas )
+    val stableG = stablePi2Grammar( startSymbol, alpha, betas, lang )
+    minimizePi2Grammar( stableG, lang, solver )
+  }
+}

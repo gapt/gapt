@@ -54,16 +54,8 @@ object proveWithPi2Cut {
     nameOfUnVa:                   Var
   ): ( Option[LKProof] ) = {
 
-    var ctx = Context.default
-    ctx += Context.Sort( "i" )
-    for ( c <- constants( seHs.reducedRepresentation.antecedent ++: endSequent :++ seHs.reducedRepresentation.succedent ) ) ctx += c
-    for ( c <- constants( seHs.substitutionsForBetaWithAlpha ); if !ctx.constants.exists( t => t == c ) ) ctx += c
-    for ( c <- constants( seHs.substitutionsForAlpha ); if !ctx.constants.exists( t => t == c ) ) ctx += c
-    for ( c <- constants( seHs.existentialEigenvariables ); if !ctx.constants.exists( t => t == c ) ) ctx += c
-    for ( c <- constants( seHs.universalEigenvariable ); if !ctx.constants.exists( t => t == c ) ) ctx += c
-
-    var state = ProofState( guessLabels( endSequent ) )
-    state += cut( "Cut", hof"!$nameOfUnVa ?$nameOfExVa $cutFormulaWithoutQuantifiers" )
+    var state = ProofState( endSequent )
+    state += cut( "Cut", All( nameOfUnVa, Ex( nameOfExVa, cutFormulaWithoutQuantifiers ) ) )
     state += allR( "Cut", seHs.universalEigenvariable )
     for ( t <- seHs.substitutionsForBetaWithAlpha ) { state += exR( "Cut", t ) }
     state += haveInstances( seHs.reducedRepresentation )
