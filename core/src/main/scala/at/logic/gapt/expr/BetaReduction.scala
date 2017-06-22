@@ -1,5 +1,6 @@
 package at.logic.gapt.expr
 
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.Context
 
 import scala.annotation.tailrec
@@ -43,6 +44,11 @@ case class ReductionRule( lhs: Expr, rhs: Expr ) {
 object ReductionRule {
   implicit def apply( rule: ( Expr, Expr ) ): ReductionRule =
     ReductionRule( rule._1, rule._2 )
+
+  implicit def apply( atom: Atom ): ReductionRule = {
+    val Eq( lhs, rhs ) = atom
+    ReductionRule( lhs, rhs )
+  }
 }
 
 case class Normalizer( rules: Set[ReductionRule] ) {
@@ -54,6 +60,8 @@ case class Normalizer( rules: Set[ReductionRule] ) {
 
   def +( rule: ReductionRule ): Normalizer =
     Normalizer( rules + rule )
+
+  def toFormula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
 
   def normalize( expr: Expr ): Expr = {
     val Apps( hd_, as_ ) = whnf( expr )
@@ -103,6 +111,9 @@ case class Normalizer( rules: Set[ReductionRule] ) {
 object Normalizer {
   def apply( rules: Traversable[ReductionRule] ): Normalizer =
     Normalizer( rules.toSet )
+
+  def apply( rules: ReductionRule* ): Normalizer =
+    Normalizer( rules )
 }
 
 object normalize {
