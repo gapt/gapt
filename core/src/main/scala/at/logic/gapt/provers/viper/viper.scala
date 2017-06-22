@@ -29,6 +29,7 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
   def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
+  def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )

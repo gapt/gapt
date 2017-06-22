@@ -32,9 +32,11 @@ object SpassNoPred extends OneShotProver {
 }
 
 case class TreeGrammarProverOptions(
-  instanceNumber:   Int                 = 10,
-  instanceSize:     FloatRange          = ( 0, 2 ),
-  instanceProver:   Prover              = Escargot,
+  instanceNumber: Int        = 10,
+  instanceSize:   FloatRange = ( 0, 2 ),
+  instanceProver: Prover     = Escargot,
+  smtSolver: Prover = if ( VeriT.isInstalled ) VeriT
+  else new Escargot( splitting = true, propositional = true, equality = true ),
   findingMethod:    String              = "maxsat",
   quantTys:         Option[Seq[String]] = None,
   grammarWeighting: Rule => Int         = _ => 1,
@@ -74,9 +76,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       msrsf
   }
 
-  val smtSolver =
-    if ( VeriT.isInstalled ) VeriT
-    else new Escargot( splitting = true, propositional = true, equality = true )
+  val smtSolver = options.smtSolver
 
   def solve(): LKProof = {
     info( sequent )
@@ -190,7 +190,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val instProof = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {
       throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
     }
-    require( smtSolver.isValid( instProof.deep ) )
+    require(
+      smtSolver.isValid( instProof.deep ),
+      s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}"
+    )
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )
