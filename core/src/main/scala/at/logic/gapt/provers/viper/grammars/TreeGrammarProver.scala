@@ -18,19 +18,6 @@ import at.logic.gapt.utils.Logger
 
 import scala.collection.mutable
 
-object SpassNoPred extends OneShotProver {
-  override def getExpansionProof( seq: HOLSequent ): Option[ExpansionProof] = {
-    val reduction = GroundingReductionET |> ErasureReductionET
-    val ( erasedCNF, back ) = reduction forward seq
-    SPASS.getExpansionProof( erasedCNF ).map { erasedProof =>
-      back( erasedProof )
-    }
-  }
-
-  override def getLKProof( seq: HOLSequent ): Option[LKProof] =
-    getExpansionProof( seq ).flatMap( ExpansionProofToLK( _ ).toOption )
-}
-
 case class TreeGrammarProverOptions(
   instanceNumber: Int        = 10,
   instanceSize:   FloatRange = ( 0, 2 ),
