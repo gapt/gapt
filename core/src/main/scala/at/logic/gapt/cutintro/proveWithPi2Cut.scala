@@ -7,10 +7,18 @@ import at.logic.gapt.proofs.gaptic.tactics._
 import at.logic.gapt.proofs.lk.LKProof
 
 /**
- * Created by root on 08.02.17.
+ * Constructs a proof for a given schematic Pi2-grammar if a cut formula exists
  */
 object proveWithPi2Cut {
 
+  /**
+   * Constructs a proof for a given schematic Pi2-grammar if a cut formula exists
+   * @param endSequent A provable Sequent for which the method builds a proof with Pi2-cut
+   * @param seHs The given schematic Pi2-grammar
+   * @param nameOfExistentialVariable The user can name the existential variable of the cut formula. (Default = xCut; In case the name is already taken the method looks for a similar name)
+   * @param nameOfUniversalVariable The user can name the universal variable of the cut formula. (Default = yCut; In case the name is already taken the method looks for a similar name)
+   * @return Optiontype that contains a proof with Pi2-cut if a Pi2-cut formula exists
+   */
   def apply(
     endSequent:                Sequent[FOLFormula],
     seHs:                      Pi2SeHs,
@@ -29,6 +37,15 @@ object proveWithPi2Cut {
     }
   }
 
+  /**
+   * The construction of the proof itself
+   * @param cutFormulaWithoutQuantifiers The quantifier-free cut formula that corresponds to the schematic Pi2-grammar
+   * @param seHs The given schematic Pi2-grammar
+   * @param endSequent A provable Sequent for which the method builds a proof with Pi2-cut
+   * @param nameOfExVa Name of the existential variable of the cut-formula
+   * @param nameOfUnVa Name of the universal variable of the cut-formula
+   * @return Optiontype that contains a proof with Pi2-cut
+   */
   private def giveProof(
     cutFormulaWithoutQuantifiers: FOLFormula,
     seHs:                         Pi2SeHs,
