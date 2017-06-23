@@ -86,3 +86,8 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
 
   override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).export()
 }
+
+object TRATG {
+  def apply( startSymbol: Var, nonTerminals: Seq[Var], productions: Traversable[( Var, Expr )] ): VTRATG =
+    VTRATG( startSymbol, nonTerminals.map( List( _ ) ), productions.view.map { case ( lhs, rhs ) => List( lhs ) -> List( rhs ) }.toSet )
+}
