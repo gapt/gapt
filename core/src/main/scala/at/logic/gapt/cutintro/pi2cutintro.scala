@@ -23,7 +23,8 @@ object Pi2CutIntroduction {
   def apply( p: CutIntroduction.InputProof, alpha: Var, betas: Vector[Var],
              solver: MaxSATSolver = bestAvailableMaxSatSolver ): Option[LKProof] = {
     val exp = p.expansionProof
-    val ( lang, enc ) = InstanceTermEncoding( exp )
+    val grounding = Substitution( freeVariables( exp.deep ).map( v => v -> Const( v.name, v.ty ) ) )
+    val ( lang, enc ) = InstanceTermEncoding( grounding( exp ) )
     findMinimalPi2Grammar( lang, alpha, betas, solver ).flatMap { grammar =>
       val sehs = pi2GrammarToSEHS( grammar, enc )
       val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
