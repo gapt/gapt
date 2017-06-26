@@ -2,6 +2,9 @@
 
 ## Version 2.7 (unreleased)
 
+* Conversion from LK to natural deduction
+* Grammar generation for Π₂-cut introduction
+
 ## Version 2.6 (released on 2017-04-03)
 
 * Natural deduction
