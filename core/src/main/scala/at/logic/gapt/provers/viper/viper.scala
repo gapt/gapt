@@ -56,7 +56,7 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
 case class ViperOptions(
-  verbosity:                Int                      = 1,
+  verbosity:                Int                      = 2,
   mode:                     String                   = "portfolio",
   fixup:                    Boolean                  = true,
   prooftool:                Boolean                  = false,
@@ -181,11 +181,14 @@ object Viper {
   def apply( problem: TipProblem ): Option[LKProof] =
     apply( problem.toSequent )( problem.ctx )
 
+  def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
+    apply( problem.toSequent, ViperOptions( verbosity = verbosity ) )( problem.ctx )
+
   def apply( sequent: HOLSequent )( implicit ctx: Context ): Option[LKProof] =
-    apply( sequent, ViperOptions( verbosity = 2 ) )
+    apply( sequent, ViperOptions( verbosity = 3 ) )
 
   def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: Context ): Option[LKProof] =
-    apply( sequent, opts.verbosity + 1, getStrategies( opts ) )
+    apply( sequent, opts.verbosity, getStrategies( opts ) )
 
   def apply( sequent: HOLSequent, verbosity: Int,
              strategies: List[( Duration, Tactical[_] )] )( implicit ctx: Context ): Option[LKProof] = {

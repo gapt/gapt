@@ -52,4 +52,6 @@ case class TipProblem(
   )
 
   def context: Context = ctx
+
+  override def toString: String = toSequent.toSigRelativeString( context )
 }

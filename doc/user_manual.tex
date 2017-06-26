@@ -1507,6 +1507,46 @@ including analytic induction and tree-grammar-based methods.  The
     examples/induction/prod_prop_31.smt2
 \end{lstlisting}
 
+You can also use Viper from within GAPT:
+\begin{clilisting}
+gapt> val problem = TipSmtParser.parse(FilePath("examples/tip/isaplanner/prop_06.smt2"))
+problem: at.logic.gapt.formats.tip.TipProblem =
+∀x0 p(S(x0)) = x0,
+∀y plus(Z, y) = y,
+∀z ∀y plus(S(z), y) = S(plus(z, y)),
+∀y minus(Z, y) = Z,
+∀z minus(S(z), Z) = S(z),
+∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
+∀y0 ¬Z = S(y0)
+⊢
+∀n ∀m minus(n, plus(n, m)) = Z
+
+gapt> val Some(proof) = Viper(problem, verbosity=0)
+proof: at.logic.gapt.proofs.lk.LKProof =
+[p144] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+∀x0 (p(S(x0)): Nat) = x0,
+∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
+∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
+∀z ∀y plus(S(z), y) = S(plus(z, y))
+⊢
+∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p26, Suc(0), p143, Ant(4)))
+[p143] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+∀x0 (p(S(x0)): Nat) = x0,
+∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
+∀m
+  ((⊤ ⊃ minus(#c(Z: Nat), plus(#c(Z: Nat), m)) = #c(Z: Nat)) ∧
+      ∀n_0
+        (minus(n_0, plus(n_0, m)) = #c(Z: Nat) ⊃
+          minus(S(n_0), plus(S(n_0), m)) = #c(Z: Nat)) ⊃
+    ∀n minus(n, plus(n, m)) = #c(Z: Nat)),
+∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ∀x2 m...
+
+\end{clilisting}
+
 \subsection{Built-in tableaux prover}
 
 GAPT contains a built-in tableaux prover for propositional logic
