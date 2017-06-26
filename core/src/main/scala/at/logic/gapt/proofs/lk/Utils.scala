@@ -131,6 +131,9 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
 }
 
 object instanceProof {
+  def apply( proof: LKProof, terms: Expr* )( implicit dummyImplicit: DummyImplicit ): LKProof =
+    apply( proof, terms )
+
   def apply( proof: LKProof, terms: Seq[Expr] ): LKProof = {
     val instantiationFormula = proof.endSequent.succedent.head
     CutRule( proof, instantiationProof( instantiationFormula, terms ), instantiationFormula )
