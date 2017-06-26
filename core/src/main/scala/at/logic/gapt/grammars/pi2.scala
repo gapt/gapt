@@ -50,6 +50,8 @@ case class Pi2PreGrammar(
 
   def language = tratg.language
 
+  def size = productions.size
+
   override def toString =
     productions.map { case ( lhs, rhs ) => s"${lhs.toUntypedString} -> ${rhs.toUntypedString}" }.mkString( "\n" )
 }
