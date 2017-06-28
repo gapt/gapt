@@ -71,8 +71,14 @@ object isRegular {
    * @return true iff proof is regular.
    */
   def apply( proof: LKProof ): Boolean = {
-    val eigenVars = for ( Eigenvariable( v ) <- proof.treeLike.postOrder ) yield v
-    eigenVars == eigenVars.distinct
+    val eigenvariables: Seq[Var] = proof.subProofs.toSeq flatMap {
+      case ExistsLeftRule( _, _, eigenvariable, _ )  => Seq( eigenvariable )
+      case ForallRightRule( _, _, eigenvariable, _ ) => Seq( eigenvariable )
+      case InductionRule( inductionCases, _, _ ) =>
+        inductionCases flatMap { _.eigenVars }
+      case _ => Seq()
+    }
+    eigenvariables == eigenvariables.distinct
   }
 }
 
