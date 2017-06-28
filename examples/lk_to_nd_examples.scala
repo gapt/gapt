@@ -592,3 +592,45 @@ object inductionRule extends Script {
   println( lk )
   println( nd )
 }
+
+object definitionLeftRule extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( WeakeningLeftRule( _, hof"B" ) ).
+    u( DefinitionLeftRule( _, Ant( 0 ), hof"C" ) ).
+    qed
+
+  val focus = Some( Suc( 0 ) )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
+
+object definitionRightRule extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( WeakeningRightRule( _, hof"B" ) ).
+    u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+    qed
+
+  val focus = Some( Suc( 0 ) )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}
+
+object definitionRightRule2 extends Script {
+  val lk = ProofBuilder.
+    c( LogicalAxiom( hof"A" ) ).
+    u( WeakeningRightRule( _, hof"B" ) ).
+    u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+    qed
+
+  val focus = Some( Suc( 1 ) )
+  val nd = LKToND( lk, focus )
+
+  println( lk )
+  println( nd )
+}

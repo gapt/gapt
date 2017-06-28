@@ -1304,6 +1304,25 @@ case class ExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightS
 }
 
 /**
+ * An NDProof ending with a definition
+ *
+ * <pre>
+ *       (π)
+ *    Γ :- A[φ]
+ *   -----------d
+ *    Γ :- A[c]
+ * </pre>
+ *
+ * @param subProof The proof π.
+ * @param mainFormula The formula A[c].
+ */
+case class DefinitionRule( subProof: NDProof, mainFormula: Formula ) extends UnaryNDProof with CommonRule {
+  override def name = "d"
+  override def auxIndices = Seq( Seq( Suc( 0 ) ) )
+  override def mainFormulaSequent = Sequent() :+ mainFormula
+}
+
+/**
  * Class for reducing boilerplate code in ND companion objects.
  *
  * @param longName The long name of the rule.
