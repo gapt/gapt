@@ -903,6 +903,31 @@ case class ForallElimRule( subProof: NDProof, term: Expr )
   override def mainFormulaSequent = Sequent() :+ mainFormula
 }
 
+object ForallElimBlock {
+
+  /**
+   * Applies the ForallElim-rule n times.
+   *
+   * The rule:
+   * <pre>
+   *              (π)
+   *    Γ :- ∀x1,..,xN.A
+   * ---------------------------------- (∀_e x n)
+   *     Γ :- A[x1\t1,...,xN\tN]
+   *
+   * where t1,...,tN are terms.
+   * </pre>
+   *
+   * @param subProof The proof π with (Γ :- ∀x1,..,xN.A) as the bottommost sequent.
+   * @param terms The list of terms with which to instantiate main. The caller of this
+   * method has to ensure the correctness of these terms, and, specifically, that
+   * ∀x1,..,xN.A indeed occurs at the bottom of the proof π.
+   */
+  def apply( subProof: NDProof, terms: Seq[Expr] ): NDProof =
+    terms.foldLeft( subProof )( ( acc, t ) => nd.ForallElimRule( acc, t ) )
+
+}
+
 /**
  * An NDProof ending with an existential quantifier introduction:
  * <pre>
@@ -1077,30 +1102,6 @@ case class TheoryAxiom( mainFormula: Formula ) extends InitialSequent {
   override def name = "th"
 }
 
-object TheoryAxiom extends ConvenienceConstructor( "TheoryAxiom" ) {
-
-  /**
-   * Convenience constructor for ax, taking a context.
-   * Applies the axiom rule followed by 0 or more weakenings.
-   * <pre>
-   *    ------ax
-   *     :- A
-   *    ---------wkn*
-   *     Γ :- A
-   * </pre>
-   *
-   * @param A The atom a.
-   * @param context The context Γ.
-   * @return
-   */
-  def apply( A: Formula, context: Seq[Formula] ): NDProof = {
-
-    context.foldLeft[NDProof]( TheoryAxiom( A ) ) { ( ant, c ) =>
-      WeakeningRule( ant, c )
-    }
-  }
-}
-
 /**
  * An NDProof ending with elimination of equality:
  * <pre>
@@ -1132,7 +1133,10 @@ case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, form
 
   val mainFormula = if ( auxFormula == BetaReduction.betaNormalize( substitution1( formulaA ) ) )
     BetaReduction.betaNormalize( substitution2( formulaA ) )
-  else throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with substitution $substitution1 applied to it." )
+  else if ( auxFormula == BetaReduction.betaNormalize( substitution2( formulaA ) ) )
+    BetaReduction.betaNormalize( substitution1( formulaA ) )
+  else
+    throw NDRuleCreationException( s"Formula $auxFormula is not equal to $formulaA with either substitution $substitution1 or $substitution2 applied to it." )
 
   def auxIndices = Seq( Seq( Suc( 0 ) ), Seq( Suc( 0 ) ) )
 

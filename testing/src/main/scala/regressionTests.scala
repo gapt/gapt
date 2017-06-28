@@ -15,7 +15,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.loadExpansionProof
+import at.logic.gapt.proofs.{ Suc, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9Importer
@@ -25,6 +25,7 @@ import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.EnumeratingInstanceGenerator
 import at.logic.gapt.provers.viper.{ Viper, ViperOptions }
 import at.logic.gapt.utils._
+import EitherHelpers._
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -136,7 +137,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     if ( isFOLPrenexSigma1( p.endSequent ) )
       ( CutIntroduction( p ) --? "cut-introduction" flatten ) foreach { q =>
-        LKToND( q ) --? "LKToND (cut-intro)"
+        val focus = if ( p.endSequent.succedent.isEmpty ) None else Some( Suc( 0 ) )
+        LKToND( q, focus ) --? "LKToND (cut-intro)"
 
         ReductiveCutElimination( q ) --? "cut-elim (cut-intro)"
         CERES( q ) --? "CERES (cut-intro)"
@@ -193,7 +195,9 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
     deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
       desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
       Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
-      ExpansionProofToLK( desk ) --- "ExpansionProofToLK on deskolemization"
+      ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+        LKToND( deskLK ) --? "LKToND (deskolemization)"
+      }
     }
   }
 }

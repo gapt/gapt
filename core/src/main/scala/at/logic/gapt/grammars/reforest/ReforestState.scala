@@ -161,17 +161,9 @@ case class ReforestState(
   def expand( nts: Traversable[Expr] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
 
-    object reduceUnambiguousNonTerminals extends ReductionRule {
-      val headMap = nts.collect { case nt @ Apps( f: Const, xs ) => f -> ( xs.map( _.asInstanceOf[Var] ), rules( nt ).head ) }.toMap
-      override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-        headMap.toMap[Expr, ( List[Var], Expr )].get( head ).map {
-          case ( xs, repl ) =>
-            require( xs.size == args.size )
-            Substitution( xs zip args )( repl ) -> Nil
-        }
-    }
+    val reduceUnambiguousNonTerminals = Normalizer( nts.map( nt => ReductionRule( nt -> rules( nt ).head ) ) )
 
-    copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { normalize( reduceUnambiguousNonTerminals, _ ) } } )
+    copy( rules = Map() ++ ( rules -- nts ).mapValues( _.map( reduceUnambiguousNonTerminals.normalize ) ) )
   }
 
   def expandUseless: ReforestState = {

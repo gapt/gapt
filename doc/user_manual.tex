@@ -1507,6 +1507,46 @@ including analytic induction and tree-grammar-based methods.  The
     examples/induction/prod_prop_31.smt2
 \end{lstlisting}
 
+You can also use Viper from within GAPT:
+\begin{clilisting}
+gapt> val problem = TipSmtParser.parse(FilePath("examples/tip/isaplanner/prop_06.smt2"))
+problem: at.logic.gapt.formats.tip.TipProblem =
+∀x0 p(S(x0)) = x0,
+∀y plus(Z, y) = y,
+∀z ∀y plus(S(z), y) = S(plus(z, y)),
+∀y minus(Z, y) = Z,
+∀z minus(S(z), Z) = S(z),
+∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
+∀y0 ¬Z = S(y0)
+⊢
+∀n ∀m minus(n, plus(n, m)) = Z
+
+gapt> val Some(proof) = Viper(problem, verbosity=0)
+proof: at.logic.gapt.proofs.lk.LKProof =
+[p144] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+∀x0 (p(S(x0)): Nat) = x0,
+∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
+∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
+∀z ∀y plus(S(z), y) = S(plus(z, y))
+⊢
+∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p26, Suc(0), p143, Ant(4)))
+[p143] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+∀x0 (p(S(x0)): Nat) = x0,
+∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
+∀m
+  ((⊤ ⊃ minus(#c(Z: Nat), plus(#c(Z: Nat), m)) = #c(Z: Nat)) ∧
+      ∀n_0
+        (minus(n_0, plus(n_0, m)) = #c(Z: Nat) ⊃
+          minus(S(n_0), plus(S(n_0), m)) = #c(Z: Nat)) ⊃
+    ∀n minus(n, plus(n, m)) = #c(Z: Nat)),
+∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ∀x2 m...
+
+\end{clilisting}
+
 \subsection{Built-in tableaux prover}
 
 GAPT contains a built-in tableaux prover for propositional logic
@@ -1571,6 +1611,71 @@ q: at.logic.gapt.proofs.lk.LKProof =
 
 \end{clilisting}
 
+\subsection{Induction-elimination}
+
+As an extension of Gentzen cut-elimination, GAPT can also eliminate induction
+inferences in a restricted class of proofs with quantifier-free conclusions.
+
+\begin{clilisting}
+gapt> val p = instanceProof(examples.induction.numbers.pluscomm,                                     Seq(le"s (s 0 : nat)", le"0 : nat"))
+p: at.logic.gapt.proofs.lk.LKProof =
+[p67] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
+∀x 0 + x = x
+⊢
+s(s(0)) + 0 = 0 + s(s(0))    (CutRule(p63, Suc(0), p66, Ant(0)))
+[p66] ∀x ∀y ((x:nat) + (y:nat): nat) = y + x ⊢ s(s(0:nat): nat) + 0 = 0 + s(s(0))    (ForallLeftRule(p65, Ant(0), ∀y ((x:nat) + (y:nat): nat) = y + x, s(s(0:nat): nat), x:nat))
+[p65] ∀y (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p64, Ant(0), (s(s(0:nat): nat) + (y:nat): nat) = y + s(s(0)), 0:nat, y:nat))
+[p64] (s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)) ⊢ s(s(0)) + 0 = 0 + s(s(0))    (LogicalAxiom((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0))))
+[p63] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
+∀x 0 + x = x
+⊢
+∀x ∀y x + y = y + x    (ContractionLeftRule(p62, Ant(2),...
+
+gapt> val q = ReductiveCutElimination.eliminateInduction(p)(                                         examples.induction.numbers.ctx)
+q: at.logic.gapt.proofs.lk.LKProof =
+[p48] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
+∀x 0 + x = x
+⊢
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p47, Ant(2), Ant(1)))
+[p47] ∀x ((0:nat) + (x:nat): nat) = x,
+∀x ∀y s(x:nat) + y = s(x + y),
+∀x ∀y s(x) + y = s(x + y)
+⊢
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p46, Ant(0), Ant(2)))
+[p46] ∀x ((0:nat) + (x:nat): nat) = x,
+∀x ∀y s(x:nat) + y = s(x + y),
+∀x 0 + x = x,
+∀x ∀y s(x) + y = s(x + y)
+⊢
+s(s(0)) + 0 = 0 + s(s(0))    (ContractionLeftRule(p45, Ant(3), Ant(2)))
+[p45] ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y),
+∀x 0 + x = x,
+∀x 0 + x = x,
+∀x 0 + x = x,
+∀x ∀y s(x) + y = s(x + y)
+⊢
+s(s(0)) + 0 = 0 + s(s(0))    (ForallLeftRule(p44, Ant(0), ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y), s(0:nat): nat, x:nat))
+[p44] ...
+
+\end{clilisting}
+
+The resulting proof \texttt{q} contains only atomic cuts, and we can view its Herbrand
+sequent by converting to an expansion proof:
+
+\begin{clilisting}
+gapt> LKToExpansionProof(q)
+res39: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y)
+  +^{0} (∀y s(0) + y = s(0 + y) +^{0} (s(0) + 0 = s(0 + 0))-)
+  +^{s(0)} (∀y s(s(0)) + y = s(s(0) + y) +^{0} (s(s(0)) + 0 = s(s(0) + 0))-),
+∀x ((0:nat) + (x:nat): nat) = x
+  +^{0} (0 + 0 = 0)-
+  +^{s(0)} (0 + s(0) = s(0))-
+  +^{s(s(0))} (0 + s(s(0)) = s(s(0)))-
+:-
+((s(s(0:nat): nat) + 0: nat) = 0 + s(s(0)))+
+
+\end{clilisting}
 
 \subsection{Skolemization}
 
@@ -1705,13 +1810,13 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res39: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
-res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
+res41: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
-res41: Boolean = true
+res42: Boolean = true
 
 \end{clilisting}
 
@@ -1721,7 +1826,7 @@ a procedure to eliminate such cuts in expansion proofs as described
 in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
-res42: at.logic.gapt.proofs.expansion.ExpansionProof =
+res43: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y (P(x, y) ⊃ Q(x, y))
   +^{b} (∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-))
 :-
@@ -1734,7 +1839,7 @@ We can also convert expansion proofs to LK; this works even in the presence of
 cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
-res43: at.logic.gapt.proofs.lk.LKProof =
+res44: at.logic.gapt.proofs.lk.LKProof =
 [p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
 [p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
 [p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
@@ -1937,14 +2042,14 @@ x_2 → 0
 x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
 
 gapt> lang.toSet subsetOf grammar.language
-res50: Boolean = true
+res51: Boolean = true
 
 \end{clilisting}
 
 You can also find minimal sub-grammars that still generate certain terms:
 \begin{clilisting}[OpenWBO.isInstalled]
 gapt> minimizeVTRATG(grammar, (1 to 5).map(Numeral(_)).toSet)
-res51: at.logic.gapt.grammars.VTRATG =
+res52: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
@@ -1984,7 +2089,7 @@ P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) �
 The built-in prover Escargot can natively solve many-sorted problems:
 \begin{clilisting}
 gapt> Escargot.getExpansionProof(problem)
-res52: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res53: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
@@ -2026,7 +2131,7 @@ P_P(f_nil) ∧
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
 
 gapt> Prover9 getExpansionProof firstOrderProblem map back
-res53: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res54: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧

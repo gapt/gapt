@@ -1,30 +1,70 @@
 package at.logic.gapt.expr
 
+import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.Context
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
-/**
- * Expression-level reduction rule.
- *
- * Examples are beta-reduction in [[BetaReduction]], and delta-reduction in [[Context.Definitions]].
- */
-trait ReductionRule {
-  /** Performs a one-step reduction of head(args: _*). */
-  def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )]
+case class ReductionRule( lhs: Expr, rhs: Expr ) {
+  require( lhs.ty == rhs.ty )
+  require( freeVariables( rhs ).subsetOf( freeVariables( lhs ) ) )
+
+  val Apps( lhsHead @ Const( lhsHeadName, _ ), lhsArgs ) = lhs
+  val lhsArgsSize = lhsArgs.size
+
+  val isNonLinear: Boolean = {
+    val seen = mutable.Set[Var]()
+    def go( e: Expr ): Boolean =
+      e match {
+        case App( a, b )   => go( a ) || go( b )
+        case Abs( _, _ )   => true
+        case Const( _, _ ) => false
+        case v: Var =>
+          seen( v ) || { seen += v; false }
+      }
+    go( lhs )
+  }
+
+  val nonVarArgs: Set[Int] =
+    lhsArgs.zipWithIndex.filterNot( _._1.isInstanceOf[Var] ).map( _._2 ).toSet
+
+  val structuralRecArgs: Set[Int] =
+    lhsArgs.zipWithIndex.collect {
+      case ( Apps( _: Const, vs ), i ) if vs.forall( _.isInstanceOf[Var] ) =>
+        i
+    }.toSet
+
+  val normalizeArgs: Set[Int] =
+    if ( isNonLinear ) lhsArgs.indices.toSet else nonVarArgs -- structuralRecArgs
+
+  val whnfArgs: Set[Int] =
+    structuralRecArgs -- normalizeArgs
 }
 object ReductionRule {
-  def apply( rules: ReductionRule* ): ReductionRule = apply( rules )
-  def apply( rules: Traversable[ReductionRule] ): ReductionRule = {
-    val rules_ = rules.toList
-    ( normalizer, head, args ) => rules_.view.flatMap( r => r.reduce( normalizer, head, args ) ).headOption
+  implicit def apply( rule: ( Expr, Expr ) ): ReductionRule =
+    ReductionRule( rule._1, rule._2 )
+
+  implicit def apply( atom: Atom ): ReductionRule = {
+    val Eq( lhs, rhs ) = atom
+    ReductionRule( lhs, rhs )
   }
 }
 
-class Normalizer( val rule: ReductionRule ) {
+case class Normalizer( rules: Set[ReductionRule] ) {
+  val headMap = Map() ++ rules.groupBy( _.lhsHeadName ).mapValues { rs =>
+    val normalizeArgs = rs.flatMap( _.normalizeArgs )
+    val whnfArgs = rs.flatMap( _.whnfArgs ) -- normalizeArgs
+    ( rs, whnfArgs, normalizeArgs )
+  }
+
+  def +( rule: ReductionRule ): Normalizer =
+    Normalizer( rules + rule )
+
+  def toFormula = And( rules.map { case ReductionRule( lhs, rhs ) => universalClosure( lhs === rhs ) } )
+
   def normalize( expr: Expr ): Expr = {
-    val Apps( hd, as ) = expr
-    val ( hd_, as_ ) = appWHNF( hd, as )
+    val Apps( hd_, as_ ) = whnf( expr )
     Apps( hd_ match {
       case Abs.Block( xs, e ) if xs.nonEmpty =>
         Abs.Block( xs, normalize( e ) )
@@ -32,61 +72,57 @@ class Normalizer( val rule: ReductionRule ) {
     }, as_.map( normalize ) )
   }
 
-  def whnf( expr: Expr ): Expr = {
-    val Apps( hd, as ) = expr
-    val ( hd_, as_ ) = appWHNF( hd, as )
-    Apps( hd_, as_ )
-  }
+  @tailrec
+  final def whnf( expr: Expr ): Expr =
+    reduce1( expr ) match {
+      case Some( expr_ ) => whnf( expr_ )
+      case None          => expr
+    }
 
   def reduce1( expr: Expr ): Option[Expr] = {
     val Apps( hd, as ) = expr
-    for ( ( hd_, as_ ) <- rule.reduce( this, hd, as ) )
-      yield Apps( hd_, as_ )
+    hd match {
+      case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
+        val n = math.min( as.size, vs.size )
+        Some( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ) )
+      case hd @ Const( c, _ ) =>
+        headMap.get( c ).flatMap {
+          case ( rs, whnfArgs, normalizeArgs ) =>
+            val as_ = as.zipWithIndex.map {
+              case ( a, i ) if whnfArgs( i )      => whnf( a )
+              case ( a, i ) if normalizeArgs( i ) => normalize( a )
+              case ( a, _ )                       => a
+            }
+            rs.view.flatMap { r =>
+              syntacticMatching( r.lhs, Apps( hd, as_.take( r.lhsArgsSize ) ) ).map { subst =>
+                Apps( subst( r.rhs ), as_.drop( r.lhsArgsSize ) )
+              }
+            }.headOption
+        }
+      case _ =>
+        None
+    }
   }
 
   def isDefEq( a: Expr, b: Expr ): Boolean =
     normalize( a ) == normalize( b )
+}
 
-  @tailrec
-  final def appWHNF( hd: Expr, as: List[Expr] ): ( Expr, List[Expr] ) =
-    rule.reduce( this, hd, as ) match {
-      case Some( ( Apps( hd_, as__ ), as_ ) ) =>
-        if ( as__.isEmpty )
-          appWHNF( hd_, as_ )
-        else
-          appWHNF( hd_, as__ ++: as_ )
-      case None =>
-        ( hd, as )
-    }
+object Normalizer {
+  def apply( rules: Traversable[ReductionRule] ): Normalizer =
+    Normalizer( rules.toSet )
+
+  def apply( rules: ReductionRule* ): Normalizer =
+    Normalizer( rules )
 }
 
 object normalize {
-  def apply( rule: ReductionRule, expr: Expr ): Expr =
-    new Normalizer( rule ).normalize( expr )
-
-  def apply( expr: Expr )( implicit ctx: Context = Context.empty ): Expr = {
-    val redRules = ctx.reductionRules.toVector
-    apply( if ( redRules.isEmpty ) BetaReduction else ReductionRule( BetaReduction +: redRules ), expr )
-  }
+  def apply( expr: Expr )( implicit ctx: Context = null ): Expr =
+    if ( ctx == null ) BetaReduction.normalize( expr )
+    else ctx.normalizer.normalize( expr )
 }
 
-object BetaReduction extends ReductionRule {
-  @tailrec
-  def reduce( head: Expr, args: List[Expr], subst: Map[Var, Expr] = Map() ): Option[( Expr, List[Expr] )] =
-    ( head, args ) match {
-      case ( Abs( x, e ), a :: as ) =>
-        reduce( e, as, subst + ( x -> a ) )
-      case _ if subst.nonEmpty =>
-        Some( Substitution( subst )( head ) -> args )
-      case _ => None
-    }
-
-  override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-    if ( args.isEmpty )
-      None
-    else
-      reduce( head, args )
-
+object BetaReduction extends Normalizer( Set() ) {
   def betaNormalize( expression: Expr ): Expr =
     normalize( expression )
 

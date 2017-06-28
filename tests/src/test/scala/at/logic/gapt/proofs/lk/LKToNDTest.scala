@@ -8,14 +8,14 @@ import org.specs2.mutable._
 
 class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
-  def checkEquality( nd: NDProof, lk: LKProof, focus: SequentIndex ) = {
+  def checkEquality( nd: NDProof, lk: LKProof, focus: Option[SequentIndex] ) = {
     if ( lk.endSequent.succedent.isEmpty ) {
       ( lk.endSequent.size + 1 ) mustEqual nd.endSequent.size
       nd.endSequent( Suc( 0 ) ) mustEqual Bottom()
     } else {
       lk.endSequent.size mustEqual nd.endSequent.size
       lk.endSequent.succedent.contains( nd.endSequent( Suc( 0 ) ) ) mustEqual true
-      lk.endSequent( focus ) mustEqual nd.endSequent( Suc( 0 ) )
+      lk.endSequent( focus.get ) mustEqual nd.endSequent( Suc( 0 ) )
     }
     lk.endSequent.antecedent.forall( nd.endSequent.antecedent.contains( _ ) ) mustEqual true
     lk.endSequent.succedent.filter( _ != nd.endSequent( Suc( 0 ) ) ).forall( x => nd.endSequent.antecedent.contains( Neg( x ) ) ) mustEqual true
@@ -39,7 +39,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ContractionLeftRule( _, hof"-(A | B)" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -60,7 +60,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( NegRightRule( _, hof"A & B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -74,7 +74,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -88,7 +88,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( AndRightRule( _, Suc( 0 ), _, Suc( 0 ) ) ).
         qed
 
-      val focus = Suc( 1 )
+      val focus = Some( Suc( 1 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -101,7 +101,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -114,7 +114,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -129,7 +129,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | D" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -145,7 +145,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | D" ) ).
         qed
 
-      val focus = Suc( 3 )
+      val focus = Some( Suc( 3 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -161,7 +161,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 2 )
+      val focus = Some( Suc( 2 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -174,7 +174,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ImpRightRule( _, hof"A -> B" ) ).
         qed
 
-      val focus = Suc( 1 )
+      val focus = Some( Suc( 1 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -187,7 +187,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ImpRightRule( _, hof"A -> B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -201,7 +201,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( OrRightRule( _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -215,7 +215,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( OrRightRule( _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 1 )
+      val focus = Some( Suc( 1 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -229,7 +229,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( OrRightRule( _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -243,7 +243,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( OrRightRule( _, hof"A | -B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -256,7 +256,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( NegRightRule( _, hof"-A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -270,7 +270,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( NegRightRule( _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 1 )
+      val focus = Some( Suc( 1 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -284,7 +284,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( NegRightRule( _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 2 )
+      val focus = Some( Suc( 2 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -297,8 +297,8 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( NegRightRule( _, hof"B" ) ).
         qed
 
-      val focus = Suc( 0 )
-      val nd = LKToND( lk )
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
     }
@@ -310,7 +310,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ContractionRightRule( _, hof"A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -323,7 +323,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -338,7 +338,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( CutRule( _, Suc( 0 ), _, Ant( 0 ) ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -353,7 +353,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( ImpLeftRule( _, _, hof"A -> B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -368,7 +368,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( ImpLeftRule( _, _, hof"A -> B" ) ).
         qed
 
-      val focus = Suc( 1 )
+      val focus = Some( Suc( 1 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -381,7 +381,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( OrRightRule( _, hof"A | -A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -394,7 +394,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( WeakeningRightRule( _, hof"B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -407,7 +407,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( WeakeningRightRule( _, hof"B" ) ).
         qed
 
-      val focus = Suc( 1 )
+      val focus = Some( Suc( 1 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -420,7 +420,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( WeakeningRightRule( _, hof"B" ) ).
         qed
 
-      val focus = Suc( 2 )
+      val focus = Some( Suc( 2 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -437,7 +437,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( OrRightRule( _, hof"C | D" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -454,7 +454,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ForallRightRule( _, hof"!x A x", fov"t" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -470,7 +470,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ExistsRightRule( _, hof"?x A x", fov"v" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -487,7 +487,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ExistsLeftRule( _, hof"?x A x", fov"v" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -500,7 +500,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ContractionLeftRule( _, hof"A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -513,7 +513,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( WeakeningLeftRule( _, hof"B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -527,7 +527,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ContractionLeftRule( _, hof"A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -540,7 +540,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( AndLeftRule( _, hof"A & -A" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -555,7 +555,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( OrLeftRule( _, _, hof"A | B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -571,7 +571,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( AndRightRule( _, _, hof"C & D" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -585,7 +585,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( ImpLeftRule( _, _, hof"A -> B" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -599,7 +599,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         b( CutRule( _, Suc( 0 ), _, Ant( 1 ) ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -616,7 +616,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ForallLeftRule( _, hof"!x A x", fov"t" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -634,7 +634,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( ExistsLeftRule( _, hof"?x A x", fov"v" ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -654,7 +654,27 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( EqualityLeftRule( _, Eq( c, d ), Pc, Pd ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate EqualityLeft, empty succedent" in {
+      val c = FOLConst( "c" )
+      val d = FOLConst( "d" )
+      val Pc = FOLAtom( "P", c )
+      val Pd = FOLAtom( "P", d )
+
+      val lk = ProofBuilder.
+        c( LogicalAxiom( Pc ) ).
+        u( NegLeftRule( _, Suc( 0 ) ) ).
+        u( WeakeningLeftRule( _, Pd ) ).
+        u( WeakeningLeftRule( _, hof"$c = $d" ) ).
+        u( EqualityLeftRule( _, Eq( c, d ), Pc, Pd ) ).
+        qed
+
+      val focus = None
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -677,7 +697,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( EqualityLeftRule( _, Eq( c, d ), Pccc, Pccd ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -697,7 +717,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( EqualityRightRule( _, Eq( c, d ), Pc, Pd ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -719,7 +739,7 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         u( EqualityRightRule( _, Eq( c, d ), Pccc, Pccd ) ).
         qed
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
@@ -727,29 +747,88 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
 
     "translate InductionRule" in {
       val x = FOLVar( "x" )
-      val y = FOLVar( "y" )
       val zero = FOLConst( "0" )
       val Sx = FOLFunction( "s", List( x ) )
 
-      val P0y = FOLAtom( "P", List( zero, y ) )
-      val Pxy = FOLAtom( "P", List( x, y ) )
-      val PSxy = FOLAtom( "P", List( Sx, y ) )
+      val P0 = FOLAtom( "P", List( zero ) )
+      val Px = FOLAtom( "P", List( x ) )
+      val PSx = FOLAtom( "P", List( Sx ) )
 
-      val ax1 = LogicalAxiom( P0y )
+      val ax1 = LogicalAxiom( P0 )
 
-      val ax2 = ProofLink( foc"th", hos"$Pxy :- $PSxy" )
+      implicit var ctx = Context.default
+      ctx += Context.InductiveType( "i", hoc"0: i", hoc"s: i>i" )
+      ctx += hoc"'th': i>i"
+      ctx += hoc"'P': i>o"
+      ctx += ( "th", hos"$Px :- $PSx" )
+
+      val ax2 = ProofLink( le"th x", hos"$Px :- $PSx" )
 
       val lk = InductionRule(
         Seq(
-          InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
-          InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
+          InductionCase( ax1, hoc"0: i", Seq(), Seq(), Suc( 0 ) ),
+          InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
         ),
-        Abs( x, Pxy ), x
+        Abs( x, Px ), x
       )
+      ctx.check( lk )
 
-      val focus = Suc( 0 )
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ProofLink" in {
+      implicit var ctx = Context.default
+      ctx += Context.Sort( "i" )
+      ctx += hoc"'<': i>i>o"
+      ctx += hoc"'+': i>i>i"
+      ctx += hoc"'1': i"
+      ctx += hoc"'3': i"
+      ctx += hoc"'ax': i>i>i"
+      ctx += ( "ax", hos"x + 1 < y :- x < y" )
+      val lk = ProofLink( le"ax 1 3", hos"1 + 1 < 3 :- 1 < 3" )
+      ctx.check( lk )
+
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ProofLink multiple antecedents" in {
+      implicit var ctx = Context.default
+      ctx += Context.Sort( "i" )
+      ctx += hoc"'<': i>i>o"
+      ctx += hoc"'1': i"
+      ctx += hoc"'2': i"
+      ctx += hoc"'3': i"
+      ctx += hoc"'ax': i>i>i>i"
+      ctx += ( "ax", hos"x < y, y < z :- x < z" )
+      val lk = ProofLink( le"ax 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3" )
+      ctx.check( lk )
+
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate ProofLink multiple antecedents and succedents" in {
+      implicit var ctx = Context.default
+      ctx += Context.Sort( "i" )
+      ctx += hoc"'<': i>i>o"
+      ctx += hoc"'1': i"
+      ctx += hoc"'2': i"
+      ctx += hoc"'3': i"
+      ctx += hoc"'ax': i>i>i>i>i"
+      ctx += ( "ax", hos"x < y, y < z :- x < z, x < a, a < a" )
+      val lk = ProofLink( le"ax 1 1 2 3", hos"1 < 2, 2 < 3 :- 1 < 3, 1 < 1, 1 < 1" )
+      ctx.check( lk )
+
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
       checkEquality( nd, lk, focus )
     }
 
