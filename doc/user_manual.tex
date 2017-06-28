@@ -2040,6 +2040,51 @@ P(nil:list)- ∧
 
 \end{clilisting}
 
+\subsection{LK to ND translation}
+
+GAPT supports translation of a sequent calculus
+(Appendix~\ref{app:sequent_calculus}) proof without skolem functions,
+to a natural deduction proof (Appendix~\ref{app:natural_deduction}).
+
+Consider the following example:
+\begin{clilisting}
+gapt> examples.gapticExamples.lemma
+res0: at.logic.gapt.proofs.lk.LKProof =
+[p7] A ⊃ B ⊢ A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
+[p6] A ⊃ B ⊢ A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
+[p5] A, A ⊃ B ⊢ A ∧ B    (ContractionLeftRule(p4, Ant(2), Ant(0)))
+[p4] A, A ⊃ B, A ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p3, Suc(0)))
+[p3] A ⊃ B, A ⊢ B    (ImpLeftRule(p1, Suc(0), p2, Ant(0)))
+[p2] B ⊢ B    (LogicalAxiom(B:o))
+[p1] A ⊢ A    (LogicalAxiom(A:o))
+
+gapt> LKToND( examples.gapticExamples.lemma, Some( Suc( 0 ) ) )
+res1: at.logic.gapt.proofs.nd.NDProof =
+[p16] A ⊃ B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p15, Ant(0)))
+[p15] ¬(A ∧ B), A ⊃ B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p14, A ∧ B))
+[p14] ¬(A ∧ B), A ⊃ B ⊢ ¬A    (NegIntroRule(p13, Ant(1)))
+[p13] ¬(A ∧ B), A, A ⊃ B ⊢ ⊥    (BottomElimRule(p12, ⊥))
+[p12] ¬(A ∧ B), A, A ⊃ B ⊢ ⊥    (NegElimRule(p3, p11))
+[p11] A, A ⊃ B ⊢ A ∧ B    (ContractionRule(p10, Ant(0), Ant(2)))
+[p10] A, A ⊃ B, A ⊢ A ∧ B    (AndIntroRule(p4, p9))
+[p9] A ⊃ B, A ⊢ B    (ImpElimRule(p6, p8))
+[p8] A ⊃ B, A ⊢ B    (ImpElimRule(p7, p4))
+[p7] A ⊃ B ⊢ A ⊃ B    (LogicalAxiom(A ⊃ B))
+[p6]  ⊢ B ⊃ B    (ImpIntroRule(p5, Ant(0)))
+[p5] B ⊢ B    (LogicalAxiom(B:o))
+[p4] A ⊢ A    (LogicalAxiom(A:o))
+[p3] ¬(A ∧ B) ⊢ ¬(A ∧ B)    (LogicalAxiom(¬(A ∧ B)))
+[p2] A ∧ B...
+\end{clilisting}
+The \cli{LKToND} function takes an LK proof, and optionally an
+\cli{Option[SequentIndex]}, as parameters.  Because ND proofs can only
+contain a single formula in the succedent, the translation must focus on one
+of the formulas in the succedent of the LK proof that is to be proved in the ND
+proof.
+Thus, sometimes formulas need to be exchanged between the antecedents and
+succedents in the ND proof. This exchange is inherently classical and introduces
+the excluded middle rule into the proof.
+
 \vfill
 \pagebreak
 \begin{appendix}
