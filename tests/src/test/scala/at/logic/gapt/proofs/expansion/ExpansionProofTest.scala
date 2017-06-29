@@ -78,6 +78,23 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     ep.deep must beValidSequent
   }
 
+  "merge skolem and strong quantifiers" in {
+    val ep = ExpansionProof(
+      ETWeakQuantifier( hof"∀x P x", Map(
+        le"y" -> ETAtom( hoa"P y", Polarity.InAntecedent ),
+        le"sk" -> ETAtom( hoa"P sk", Polarity.InAntecedent )
+      ) ) +: Sequent()
+        :+ ETMerge(
+          ETStrongQuantifier( hof"∀x P x", hov"y", ETAtom( hoa"P y", Polarity.InSuccedent ) ),
+          ETSkolemQuantifier( hof"∀x P x", le"sk", le"∀x P x", ETAtom( hoa"P sk", Polarity.InSuccedent ) )
+        )
+    )
+    ep.deep must beValidSequent
+    val merged = eliminateMerges( ep )
+    merged.deep must beValidSequent
+    merged must beLike { case e if !e.subProofs.exists( _.isInstanceOf[ETMerge] ) => ok }
+  }
+
 }
 
 class ExpansionProofDefinitionEliminationTest extends Specification with SatMatchers {
