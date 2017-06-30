@@ -402,6 +402,57 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     proof.conclusion must beSetEqual( reduction.conclusion )
   }
 
+  "right rank reduction: forall right" in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"C(x)" )
+      u ( WeakeningRightRule( _, hof"B" ) )
+      c ( LogicalAxiom( hof"D" ) )
+      u ( WeakeningRightRule( _, hof"A(x)" ) )
+      u ( WeakeningLeftRule( _, hof"B" ) )
+      u ( ForallRightRule( _, hof"!x A(x)" ) )
+      b ( CutRule( _, _, hof"B" ) ) qed )
+    val reducedProof = rightRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beMultiSetEqual( reducedProof.conclusion )
+  }
+
+  "right rank reduction: exists left" in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"C(x)" )
+      u ( WeakeningRightRule( _, hof"B" ) )
+      c ( LogicalAxiom( hof"D" ) )
+      u ( WeakeningLeftRule( _, hof"A(x)" ) )
+      u ( WeakeningLeftRule( _, hof"B" ) )
+      u ( ExistsLeftRule( _, hof"?x A(x)" ) )
+      b ( CutRule( _, _, hof"B" ) ) qed )
+    val reducedProof = rightRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beMultiSetEqual( reducedProof.conclusion )
+  }
+
+  "left rank reduction: forall right" in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"B" )
+      u ( WeakeningRightRule( _, hof"F" ) )
+      u ( WeakeningRightRule( _, hof"A(x)" ) )
+      u ( ForallRightRule( _, hof"!x A(x)" ) )
+      c ( LogicalAxiom( hof"C(x)" ) )
+      u ( WeakeningLeftRule( _, hof"F" ) )
+      b ( CutRule( _, _, hof"F" ) ) qed )
+    val reducedProof = leftRankReduction( proof.asInstanceOf[CutRule] ).get
+    proof.conclusion must beMultiSetEqual( reducedProof.conclusion )
+  }
+
+  "left rank reduction: exists left" in {
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"B" )
+      u ( WeakeningLeftRule( _, hof"A(x)" ) )
+      u ( ExistsLeftRule( _, hof"?x A(x)" ) )
+      c ( LogicalAxiom( hof"C(x)" ) )
+      u ( WeakeningLeftRule( _, hof"B" ) )
+      b ( CutRule( _, _, hof"B" ) ) qed )
+    val reducedProof = leftRankReduction( proof.asInstanceOf[CutRule] ).get
+    reducedProof.conclusion must beMultiSetEqual( proof.conclusion )
+  }
+
   "grade reduction with equality inferences having the same auxiliary formula" in {
     val proof = ( ProofBuilder
       c OpenAssumption( ( "" -> hof"s = t" ) +: Sequent() :+ ( "" -> hof"A(s)" ) )
