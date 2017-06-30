@@ -2154,7 +2154,7 @@ to a natural deduction proof (Appendix~\ref{app:natural_deduction}).
 Consider the following example:
 \begin{clilisting}
 gapt> examples.gapticExamples.lemma
-res0: at.logic.gapt.proofs.lk.LKProof =
+res55: at.logic.gapt.proofs.lk.LKProof =
 [p7] A ⊃ B ⊢ A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
 [p6] A ⊃ B ⊢ A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
 [p5] A, A ⊃ B ⊢ A ∧ B    (ContractionLeftRule(p4, Ant(2), Ant(0)))
@@ -2164,7 +2164,7 @@ res0: at.logic.gapt.proofs.lk.LKProof =
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> LKToND( examples.gapticExamples.lemma, Some( Suc( 0 ) ) )
-res1: at.logic.gapt.proofs.nd.NDProof =
+res56: at.logic.gapt.proofs.nd.NDProof =
 [p16] A ⊃ B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p15, Ant(0)))
 [p15] ¬(A ∧ B), A ⊃ B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p14, A ∧ B))
 [p14] ¬(A ∧ B), A ⊃ B ⊢ ¬A    (NegIntroRule(p13, Ant(1)))
@@ -2179,7 +2179,8 @@ res1: at.logic.gapt.proofs.nd.NDProof =
 [p5] B ⊢ B    (LogicalAxiom(B:o))
 [p4] A ⊢ A    (LogicalAxiom(A:o))
 [p3] ¬(A ∧ B) ⊢ ¬(A ∧ B)    (LogicalAxiom(¬(A ∧ B)))
-[p2] A ∧ B...
+[p2] A ∧ B ⊢ A ∧ B ∨ ¬A    (OrIntro...
+
 \end{clilisting}
 The \cli{LKToND} function takes an LK proof, and optionally an
 \cli{Option[SequentIndex]}, as parameters.  Because ND proofs can only
