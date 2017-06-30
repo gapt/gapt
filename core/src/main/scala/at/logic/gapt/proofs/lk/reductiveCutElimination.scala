@@ -502,18 +502,22 @@ object leftRankReduction {
         val aNew = cutSub.getLeftSequentConnector.child( a )
         Some( ForallLeftRule( cutSub, aNew, f, term, quant ) )
 
-      case l @ ForallRightRule( subProof, a, eigen, quant ) if left.mainIndices.head != aux1 =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularAll @ ForallRightRule( _, _, _, _ ) = regularCut.leftSubProof
+      case l @ ForallRightRule( _, _, _, _ ) if left.mainIndices.head != aux1 && freeVariables( cut.endSequent ).contains( l.eigenVariable ) =>
+        val newEigenvariable = rename( l.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( l.eigenVariable -> newEigenvariable )
+        val newLeftSubProof = l.copy( subProof = renaming( l.subProof ), eigenVariable = newEigenvariable )
+        apply( cut.copy( leftSubProof = newLeftSubProof ) )
+
+      case left @ ForallRightRule( _, _, _, _ ) if left.mainIndices.head != aux1 =>
         val newSubProof = CutRule(
-          regularAll.subProof,
-          regularAll.getSequentConnector.parent( regularCut.aux1 ),
-          regularCut.rightSubProof,
-          regularCut.aux2
+          left.subProof,
+          left.getSequentConnector.parent( cut.aux1 ),
+          cut.rightSubProof,
+          cut.aux2
         )
-        Some( regularAll.copy(
+        Some( left.copy(
           subProof = newSubProof,
-          aux = newSubProof.getLeftSequentConnector.child( regularAll.aux )
+          aux = newSubProof.getLeftSequentConnector.child( left.aux )
         ) )
 
       case l @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) if left.mainIndices.head != aux1 =>
@@ -522,18 +526,22 @@ object leftRankReduction {
         val aNew = cutSub.getLeftSequentConnector.child( a )
         Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
 
-      case l @ ExistsLeftRule( subProof, a, eigen, quant ) =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularExists @ ExistsLeftRule( _, _, _, _ ) = regularCut.leftSubProof
+      case left @ ExistsLeftRule( _, _, _, _ ) if freeVariables( cut.endSequent ).contains( left.eigenVariable ) =>
+        val newEigenvariable = rename( left.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( left.eigenVariable -> newEigenvariable )
+        val newLeftSubProof = left.copy( subProof = renaming( left.subProof ), eigenVariable = newEigenvariable )
+        apply( cut.copy( leftSubProof = newLeftSubProof ) )
+
+      case left @ ExistsLeftRule( _, _, _, _ ) =>
         val newSubProof = CutRule(
-          regularExists.subProof,
-          regularExists.getSequentConnector.parent( regularCut.aux1 ),
-          regularCut.rightSubProof,
-          regularCut.aux2
+          left.subProof,
+          left.getSequentConnector.parent( cut.aux1 ),
+          cut.rightSubProof,
+          cut.aux2
         )
-        Some( regularExists.copy(
+        Some( left.copy(
           subProof = newSubProof,
-          aux = newSubProof.getLeftSequentConnector.child( regularExists.aux )
+          aux = newSubProof.getLeftSequentConnector.child( left.aux )
         ) )
 
       case l @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) =>
@@ -716,18 +724,24 @@ object rightRankReduction {
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ForallLeftRule( cutSub, aNew, f, term, quant ) )
 
-      case r @ ForallRightRule( subProof, a, eigen, quant ) =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularAll @ ForallRightRule( _, _, _, _ ) = regularCut.rightSubProof
-        val newSubProof = CutRule(
-          regularCut.leftSubProof,
-          regularCut.aux1,
-          regularAll.subProof,
-          regularAll.getSequentConnector.parent( regularCut.aux2 )
+      case right @ ForallRightRule( _, _, _, _ ) if freeVariables( cut.endSequent ).contains( right.eigenVariable ) =>
+        val newEigenvariable = rename( right.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( right.eigenVariable -> newEigenvariable )
+        val newRightSubProof = right.copy(
+          subProof = renaming( right.subProof ), eigenVariable = newEigenvariable
         )
-        Some( regularAll.copy(
+        apply( cut.copy( rightSubProof = newRightSubProof ) )
+
+      case right @ ForallRightRule( _, _, _, _ ) =>
+        val newSubProof = CutRule(
+          cut.leftSubProof,
+          cut.aux1,
+          right.subProof,
+          right.getSequentConnector.parent( cut.aux2 )
+        )
+        Some( right.copy(
           subProof = newSubProof,
-          aux = newSubProof.getRightSequentConnector.child( regularAll.aux )
+          aux = newSubProof.getRightSequentConnector.child( right.aux )
         ) )
 
       case r @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) =>
@@ -736,18 +750,22 @@ object rightRankReduction {
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
 
-      case r @ ExistsLeftRule( subProof, a, eigen, quant ) if right.mainIndices.head != aux2 =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularExists @ ExistsLeftRule( _, _, _, _ ) = regularCut.rightSubProof
+      case right @ ExistsLeftRule( _, _, _, _ ) if right.mainIndices.head != aux2 && freeVariables( cut.endSequent ).contains( right.eigenVariable ) =>
+        val newEigenvariable = rename( right.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( right.eigenVariable -> newEigenvariable )
+        val newRightSubProof = right.copy( subProof = renaming( right.subProof ), eigenVariable = newEigenvariable )
+        apply( cut.copy( rightSubProof = newRightSubProof ) )
+
+      case right @ ExistsLeftRule( _, _, _, _ ) if right.mainIndices.head != aux2 =>
         val newSubProof = CutRule(
-          regularCut.leftSubProof,
-          regularCut.aux1,
-          regularExists.subProof,
-          regularExists.getSequentConnector.parent( regularCut.aux2 )
+          cut.leftSubProof,
+          cut.aux1,
+          right.subProof,
+          right.getSequentConnector.parent( cut.aux2 )
         )
-        Some( regularExists.copy(
+        Some( right.copy(
           subProof = newSubProof,
-          aux = newSubProof.getRightSequentConnector.child( regularExists.aux )
+          aux = newSubProof.getRightSequentConnector.child( right.aux )
         ) )
 
       case r @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) if right.mainIndices.head != aux2 =>
