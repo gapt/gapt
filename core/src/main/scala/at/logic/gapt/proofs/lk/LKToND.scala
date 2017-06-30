@@ -36,6 +36,20 @@ object LKToND {
   private def exchange( subProof: NDProof, mainFormula: Option[Formula] ): NDProof =
     mainFormula.map( exchange( subProof, _ ) ).getOrElse( subProof )
 
+  /**
+   * Macro rule to exchange a mainFormula (A) with the formula in the succedent (B) in subProof (π).
+   *
+   * <pre>
+   *      (π)
+   *  Γ, ¬A :- B
+   * ------------- ex ¬A
+   *  Γ, ¬B :- A
+   * </pre>
+   *
+   * @param subProof The proof π.
+   * @param mainFormula The formula ¬A.
+   * @return The natural deduction proof after exchanging ¬A and B.
+   */
   private def exchange( subProof: NDProof, mainFormula: Formula ): NDProof = {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
@@ -78,6 +92,20 @@ object LKToND {
     }
   }
 
+  /**
+   * Macro rule to exchange mainFormula (A) with the formula in the succedent (B) in subProof (π).
+   *
+   * <pre>
+   *      (π)
+   *  Γ,  A :-  B
+   * -------------- ex2 A
+   *  Γ, ¬B :- ¬A
+   * </pre>
+   *
+   * @param subProof The proof π.
+   * @param mainFormula The formula A.
+   * @return The natural deduction proof after exchanging A and B.
+   */
   private def exchange2( subProof: NDProof, mainFormula: Formula ): NDProof = {
     val negMain = hof"-$mainFormula"
     if ( negMain == subProof.endSequent( Suc( 0 ) ) ) {
@@ -120,6 +148,20 @@ object LKToND {
     }
   }
 
+  /**
+   * Macro rule to exchange mainFormula (A) with the formula in the succedent (¬B) in subProof (π).
+   *
+   * <pre>
+   *      (π)
+   *  Γ, ¬A :- ¬B
+   * -------------- ex3 ¬A
+   *  Γ,  B :-  A
+   *  </pre>
+   *
+   * @param subProof The proof π.
+   * @param mainFormula The formula A.
+   * @return The natural deduction proof after exchanging ¬A and ¬B.
+   */
   private def exchange3( subProof: NDProof, mainFormula: Formula ): NDProof = {
     if ( mainFormula == subProof.endSequent( Suc( 0 ) ) ) {
       subProof
@@ -453,7 +495,7 @@ object LKToND {
         }
 
       case ForallSkRightRule( subProof, aux, main, skT, skD ) =>
-        ???
+        throw new LKToNDTranslationException( "ForallSkRightRule", "LK proofs containing skolem functions are not supported." )
 
       case p @ ExistsLeftRule( subProof, aux, eigen, v ) =>
 
@@ -468,7 +510,7 @@ object LKToND {
           qed
 
       case ExistsSkLeftRule( subProof, aux, main, skT, skD ) =>
-        ???
+        throw new LKToNDTranslationException( "ExistsSkLeftRule", "LK proofs containing skolem functions are not supported." )
 
       case p @ ExistsRightRule( subProof, aux, _, t, _ ) =>
 
@@ -520,13 +562,29 @@ object LKToND {
         }
         nd.InductionRule( ndCases, formula, term )
 
-      case DefinitionLeftRule( subProof, aux, main ) =>
-        ???
+      case p @ DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, main: Formula ) =>
+        val t = translate( subProof, focus )
+        val partialProof = nd.ProofBuilder.
+          c( exchange2( t, subProof.endSequent( aux ) ) ).
+          u( nd.DefinitionRule( _, hof"-$main" ) ).
+          qed
+        exchange3( partialProof, t.endSequent( Suc( 0 ) ) )
 
-      case DefinitionRightRule( subProof, aux, main ) =>
-        ???
+      case p @ DefinitionRightRule( subProof, aux, main ) =>
+        if ( p.mainFormula == p.endSequent( focus.get ) ) {
+          val t = translate( subProof, focus )
+          nd.ProofBuilder.
+            c( t ).
+            u( nd.DefinitionRule( _, main ) ).
+            qed
+        } else {
+          val focusMain = p.endSequent.indexOfPol( p.mainFormula, Polarity.InSuccedent )
+          exchange( translate( proof, Some( focusMain ) ), focus.map( p.endSequent.apply ) )
+        }
     }
     check( ndProof, proof, focus )
     ndProof
   }
 }
+
+class LKToNDTranslationException( name: String, message: String ) extends Exception( s"Cannot translate $name: " + message )

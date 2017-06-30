@@ -832,6 +832,44 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       checkEquality( nd, lk, focus )
     }
 
+    "translate DefinitionLeftRule" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( DefinitionLeftRule( _, Ant( 0 ), hof"B" ) ).
+        qed
+
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate DefinitionRightRule with main formula not focused" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+        qed
+
+      val focus = Some( Suc( 0 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate DefinitionRightRule with main formula focused" in {
+      val lk = ProofBuilder.
+        c( LogicalAxiom( hof"A" ) ).
+        u( WeakeningRightRule( _, hof"B" ) ).
+        u( DefinitionRightRule( _, Suc( 1 ), hof"C" ) ).
+        qed
+
+      val focus = Some( Suc( 1 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
   }
 }
 
