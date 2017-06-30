@@ -132,7 +132,7 @@ class ReductiveCutElimination {
     cleanStructRules:   Boolean                                          = true
   ): LKProof = {
     steps += proof
-    var pr = regularize( proof )
+    var pr = proof
     do {
       val p = recursor( pr, reduction )
       pr = if ( cleanStructRules ) cleanStructuralRules( p ) else p
