@@ -23,8 +23,13 @@ object ReductiveCutElimination {
    * default value is on, i.e. clean the structural rules
    * @return A proof.
    */
-  def apply( proof: LKProof, cleanStructRules: Boolean = true ) =
+  def apply( proof: LKProof, cleanStructRules: Boolean = true ) = {
+    require( proof.subProofs.forall {
+      case InductionRule( _, _, _ ) => false
+      case _                        => true
+    }, "Proof contains induction" )
     new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
+  }
 
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
     new ReductiveCutElimination().eliminateInduction( proof, cleanStructRules )
