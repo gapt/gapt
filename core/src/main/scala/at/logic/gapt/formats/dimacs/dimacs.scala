@@ -135,6 +135,7 @@ object readWDIMACS {
         map { _ substring 2 trim }
         flatMap { _ split " " }
         map { _ replace ( "x", "" ) } // toysat :-(
+        filter { _ nonEmpty }
         map { _ toInt } )
     } else {
       None
