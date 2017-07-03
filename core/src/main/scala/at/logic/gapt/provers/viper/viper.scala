@@ -182,7 +182,10 @@ object Viper {
     apply( problem.toSequent )( problem.ctx )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
-    apply( problem.toSequent, ViperOptions( verbosity = verbosity ) )( problem.ctx )
+    apply( problem, ViperOptions( verbosity = verbosity ) )
+
+  def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
+    apply( problem.toSequent, options )( problem.ctx )
 
   def apply( sequent: HOLSequent )( implicit ctx: Context ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
@@ -236,7 +239,7 @@ object Viper {
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
     implicit val ctx = problem.ctx
 
-    apply( problem ) match {
+    apply( problem.toSequent, opts )( problem.ctx ) match {
       case Some( proof ) =>
         if ( false ) { // this doesn't work with Skolem inferences atm
           ctx check proof
