@@ -202,6 +202,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
         formulaToExpansionTree( endSequent( idx ), instances map { _._2 } toList, idx.polarity ) -> idx.polarity
     } toSeq )
 
+  def decodeToExpansionProof( terms: Iterable[Expr] ): ExpansionProof =
+    ExpansionProof( decodeToExpansionSequent( terms ) )
+
   def encode( recursionScheme: RecursionScheme ): RecursionScheme = {
     val encodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( To, argTypes ) ) => c -> Const( name, FunctionType( instanceTermType, argTypes ) ) }.toMap
     RecursionScheme( encodedNTs( recursionScheme.startSymbol ), encodedNTs.values.toSet,
