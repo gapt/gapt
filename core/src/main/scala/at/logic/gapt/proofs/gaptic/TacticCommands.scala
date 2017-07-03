@@ -533,7 +533,12 @@ trait TacticCommands {
    * Leaves a hole in the current proof by inserting a dummy proof of the empty sequent.
    */
   @deprecated( "Proof not finished!", since = "the dawn of time" )
-  def sorry: Tactic[Unit] = Tactic { insert( TheoryAxiom( Clause() ) ) }
+  def sorry: Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- insert( ProofLink( foc"sorry", goal.conclusion ) )
+    } yield ()
+  }
 
   /**
    * Tactic that immediately fails.
