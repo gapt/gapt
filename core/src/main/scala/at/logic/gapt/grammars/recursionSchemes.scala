@@ -454,6 +454,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
 
     // Filter out rules that only used variables that are passed unchanged from the startSymbol.
     targets.map { case ( Apps( nt: Const, _ ), _ ) => nt }.toSeq match {
+      case Seq() => // empty language
       case Seq( startSymbol ) =>
         ( nonTerminals - startSymbol ) foreach { nt =>
           constraints( startSymbol -> nt ) match {
