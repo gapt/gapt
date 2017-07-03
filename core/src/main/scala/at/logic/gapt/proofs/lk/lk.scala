@@ -1744,7 +1744,8 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
     }
     require( c.proof.endSequent( c.conclusion ) == Substitution( quant -> c.term )( qfFormula ) )
   }
-  require( freeVariables( contexts.flatMap( _.elements ) :+ formula ) intersect cases.flatMap( _.eigenVars ).toSet isEmpty )
+  for ( ( cas, ctx ) <- cases zip contexts )
+    require( freeVariables( ctx.elements :+ formula ) intersect cas.eigenVars.toSet isEmpty )
 
   val mainFormula = BetaReduction.betaNormalize( formula( term ).asInstanceOf[Formula] )
   override protected def mainFormulaSequent = Sequent() :+ mainFormula
