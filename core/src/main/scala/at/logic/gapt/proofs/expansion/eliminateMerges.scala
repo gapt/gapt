@@ -68,11 +68,13 @@ object eliminateMerges {
           ETMerge( merge( tree1 ), merge( tree2 ) )
         }
       case ( ETStrongQuantifier( _, v1, t1 ), ETSkolemQuantifier( shallow, st2, sf2, t2 ) ) =>
+        val localSubst = Substitution( v1 -> st2 )
+
         needToMergeAgain = true
         if ( !eigenVarSubst.map.isDefinedAt( v1 ) )
-          eigenVarSubst = eigenVarSubst compose Substitution( v1 -> st2 )
+          eigenVarSubst = eigenVarSubst compose localSubst
 
-        ETMerge( merge( tree1 ), merge( tree2 ) )
+        ETSkolemQuantifier( shallow, st2, sf2, merge2( localSubst( t1 ), t2 ) )
       case ( t: ETSkolemQuantifier, s: ETStrongQuantifier ) => merge2( s, t )
       case ( ETSkolemQuantifier( shallow, st1, sf1, t1 ), ETSkolemQuantifier( _, st2, sf2, t2 ) ) if st1 == st2 =>
         ETSkolemQuantifier( shallow, st1, sf1, merge2( t1, t2 ) )
