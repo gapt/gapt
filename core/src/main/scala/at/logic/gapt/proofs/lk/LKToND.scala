@@ -558,7 +558,9 @@ object LKToND {
       case InductionRule( cases, formula, term ) =>
         val ndCases = cases.map {
           case lk.InductionCase( proof, constructor, hypotheses, eigenVars, conclusion ) =>
-            nd.InductionCase( translate( proof, Some( conclusion ) ), constructor, hypotheses, eigenVars )
+            val prfNd = translate( proof, Some( conclusion ) )
+            val hypNd = hypotheses.map { case i: SequentIndex => prfNd.endSequent.indexOf( proof.endSequent( i ) ) }
+            nd.InductionCase( prfNd, constructor, hypNd, eigenVars )
         }
         nd.InductionRule( ndCases, formula, term )
 
