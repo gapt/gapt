@@ -44,7 +44,7 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.9.1"
+val specs2Version = "3.9.2"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -183,7 +183,7 @@ lazy val core = project.in( file( "core" ) ).
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.6",
-      "com.lihaoyi" %% "ammonite-ops" % "0.9.9",
+      "com.lihaoyi" %% "ammonite-ops" % "1.0.0",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
