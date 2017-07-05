@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.nd.NDProof
 import at.logic.gapt.proofs.{ Ant, Context, SequentIndex, SequentMatchers, Suc }
@@ -865,6 +866,15 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
         qed
 
       val focus = Some( Suc( 1 ) )
+      val nd = LKToND( lk, focus )
+
+      checkEquality( nd, lk, focus )
+    }
+
+    "translate InductionRule with changing hypothesis index" in {
+      val lk = examples.induction.numbers.pluscomm
+
+      val focus = Some( Suc( 0 ) )
       val nd = LKToND( lk, focus )
 
       checkEquality( nd, lk, focus )
