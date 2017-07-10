@@ -18,7 +18,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
 
     val premises = eqns.map {
       case ( c, conds, lhs @ Apps( _, lhsArgs ), rhs ) =>
-        val fvs = freeVariables( conds :+ rhs )
+        val fvs = freeVariables( lhs +: conds :+ rhs )
         val indHyps = folSubTerms( rhs ).collect {
           case recOcc @ Apps( `c`, recOccArgs ) => motive( recOcc +: recOccArgs )
         }
