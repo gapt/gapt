@@ -253,9 +253,12 @@ object Session {
         case DeclareSort( sort ) => tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
           case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
+
             tell( LFun( "declare-fun", LAtom( name ),
-              LList( argTypes map { case TBase( argType, Nil ) => LAtom( argType ) }: _* ),
+              LList( argTypes map sexp_of_tp: _* ),
               LAtom( retType ) ) )
+          case _ => () // do not declare applications or abstractions. TODO: check if we need to recurse into the term
+
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
 
@@ -268,6 +271,13 @@ object Session {
         case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) )
         case Ask( input )              => ask( input )
         case Tell( input )             => tell( input )
+      }
+
+      def sexp_of_tp( ty: Ty ): SExpression = ty match {
+        case TBase( argType, Nil ) => LAtom( argType )
+        case FunctionType( to, from ) =>
+          val ts = ( from :+ to ) map sexp_of_tp
+          LFun( "->", ts: _* )
       }
 
       object typeRenaming {
@@ -304,15 +314,20 @@ object Session {
         case Imp( a, b ) => LFun( "=>", convert( a, boundVars ), convert( b, boundVars ) )
         case Eq( a, b )  => LFun( "=", convert( a, boundVars ), convert( b, boundVars ) )
         case c: Const    => LAtom( termRenaming( c ).name )
-        case All( x @ Var( _, ty: TBase ), a ) =>
+        case All( x @ Var( _, ty ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "forall", LList( LFun( smtVar, LAtom( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
-        case Ex( x @ Var( _, ty: TBase ), a ) =>
+          LFun( "forall", LList( LFun( smtVar, sexp_of_tp( typeRenaming( ty ) ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+        case Ex( x @ Var( _, ty ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "exists", LList( LFun( smtVar, LAtom( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+          LFun( "exists", LList( LFun( smtVar, sexp_of_tp( typeRenaming( ty ) ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
         case v: Var => LAtom( boundVars( v ) )
-        case Apps( c: Const, args ) =>
+        case Apps( c @ Const( _, _ ), args ) =>
           LFun( termRenaming( c ).name, args map { convert( _, boundVars ) }: _* )
+        case Apps( c, a :: args ) =>
+          LList( ( ( c :: args ) map { convert( _, boundVars ) } ): _* )
+        case Abs( x @ Var( _, ty ), a ) =>
+          val smtVar = s"x${boundVars.size}"
+          LFun( "lambda", LList( LFun( smtVar, sexp_of_tp( typeRenaming( ty ) ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
       }
 
     }
