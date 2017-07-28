@@ -1,6 +1,8 @@
 # Release notes for GAPT
 
-## Version 2.7 (unreleased)
+## Version 2.8 (unreleased)
+
+## Version 2.7 (released on 2017-07-05)
 
 * Conversion from LK to natural deduction
 * Induction elimination

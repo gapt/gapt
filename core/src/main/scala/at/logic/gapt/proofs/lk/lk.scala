@@ -163,19 +163,6 @@ trait Eigenvariable {
   def eigenVariable: Var
 }
 
-object Eigenvariable {
-  /**
-   * A proof matches Eigenvariable(v) if its bottommost inference uses the eigenvariable v.
-   *
-   * @param proof An LKProof
-   * @return
-   */
-  def unapply( proof: LKProof ) = proof match {
-    case p: Eigenvariable => Some( p.eigenVariable )
-    case _                => None
-  }
-}
-
 case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula] ) extends InitialSequent {
   override def name = "link"
   override def conclusion = referencedSequent

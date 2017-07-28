@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.proofs.lk.ReductiveCutElimination._
 import at.logic.gapt.proofs.{ Context, SequentConnector, guessPermutation }
+
 import scala.collection.mutable
 
 /**
@@ -23,8 +24,13 @@ object ReductiveCutElimination {
    * default value is on, i.e. clean the structural rules
    * @return A proof.
    */
-  def apply( proof: LKProof, cleanStructRules: Boolean = true ) =
+  def apply( proof: LKProof, cleanStructRules: Boolean = true ) = {
+    require( proof.subProofs.forall {
+      case InductionRule( _, _, _ ) => false
+      case _                        => true
+    }, "Proof contains induction" )
     new ReductiveCutElimination().eliminateAllByUppermost( proof, cleanStructRules )
+  }
 
   def eliminateInduction( proof: LKProof, cleanStructRules: Boolean = true )( implicit ctx: Context ) =
     new ReductiveCutElimination().eliminateInduction( proof, cleanStructRules )
@@ -132,7 +138,7 @@ class ReductiveCutElimination {
     cleanStructRules:   Boolean                                          = true
   ): LKProof = {
     steps += proof
-    var pr = regularize( proof )
+    var pr = proof
     do {
       val p = recursor( pr, reduction )
       pr = if ( cleanStructRules ) cleanStructuralRules( p ) else p
@@ -502,18 +508,22 @@ object leftRankReduction {
         val aNew = cutSub.getLeftSequentConnector.child( a )
         Some( ForallLeftRule( cutSub, aNew, f, term, quant ) )
 
-      case l @ ForallRightRule( subProof, a, eigen, quant ) if left.mainIndices.head != aux1 =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularAll @ ForallRightRule( _, _, _, _ ) = regularCut.leftSubProof
+      case l @ ForallRightRule( _, _, _, _ ) if left.mainIndices.head != aux1 && freeVariables( cut.endSequent ).contains( l.eigenVariable ) =>
+        val newEigenvariable = rename( l.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( l.eigenVariable -> newEigenvariable )
+        val newLeftSubProof = l.copy( subProof = renaming( l.subProof ), eigenVariable = newEigenvariable )
+        apply( cut.copy( leftSubProof = newLeftSubProof ) )
+
+      case left @ ForallRightRule( _, _, _, _ ) if left.mainIndices.head != aux1 =>
         val newSubProof = CutRule(
-          regularAll.subProof,
-          regularAll.getSequentConnector.parent( regularCut.aux1 ),
-          regularCut.rightSubProof,
-          regularCut.aux2
+          left.subProof,
+          left.getSequentConnector.parent( cut.aux1 ),
+          cut.rightSubProof,
+          cut.aux2
         )
-        Some( regularAll.copy(
+        Some( left.copy(
           subProof = newSubProof,
-          aux = newSubProof.getLeftSequentConnector.child( regularAll.aux )
+          aux = newSubProof.getLeftSequentConnector.child( left.aux )
         ) )
 
       case l @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) if left.mainIndices.head != aux1 =>
@@ -522,18 +532,22 @@ object leftRankReduction {
         val aNew = cutSub.getLeftSequentConnector.child( a )
         Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
 
-      case l @ ExistsLeftRule( subProof, a, eigen, quant ) =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularExists @ ExistsLeftRule( _, _, _, _ ) = regularCut.leftSubProof
+      case left @ ExistsLeftRule( _, _, _, _ ) if freeVariables( cut.endSequent ).contains( left.eigenVariable ) =>
+        val newEigenvariable = rename( left.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( left.eigenVariable -> newEigenvariable )
+        val newLeftSubProof = left.copy( subProof = renaming( left.subProof ), eigenVariable = newEigenvariable )
+        apply( cut.copy( leftSubProof = newLeftSubProof ) )
+
+      case left @ ExistsLeftRule( _, _, _, _ ) =>
         val newSubProof = CutRule(
-          regularExists.subProof,
-          regularExists.getSequentConnector.parent( regularCut.aux1 ),
-          regularCut.rightSubProof,
-          regularCut.aux2
+          left.subProof,
+          left.getSequentConnector.parent( cut.aux1 ),
+          cut.rightSubProof,
+          cut.aux2
         )
-        Some( regularExists.copy(
+        Some( left.copy(
           subProof = newSubProof,
-          aux = newSubProof.getLeftSequentConnector.child( regularExists.aux )
+          aux = newSubProof.getLeftSequentConnector.child( left.aux )
         ) )
 
       case l @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) =>
@@ -716,18 +730,24 @@ object rightRankReduction {
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ForallLeftRule( cutSub, aNew, f, term, quant ) )
 
-      case r @ ForallRightRule( subProof, a, eigen, quant ) =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularAll @ ForallRightRule( _, _, _, _ ) = regularCut.rightSubProof
-        val newSubProof = CutRule(
-          regularCut.leftSubProof,
-          regularCut.aux1,
-          regularAll.subProof,
-          regularAll.getSequentConnector.parent( regularCut.aux2 )
+      case right @ ForallRightRule( _, _, _, _ ) if freeVariables( cut.endSequent ).contains( right.eigenVariable ) =>
+        val newEigenvariable = rename( right.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( right.eigenVariable -> newEigenvariable )
+        val newRightSubProof = right.copy(
+          subProof = renaming( right.subProof ), eigenVariable = newEigenvariable
         )
-        Some( regularAll.copy(
+        apply( cut.copy( rightSubProof = newRightSubProof ) )
+
+      case right @ ForallRightRule( _, _, _, _ ) =>
+        val newSubProof = CutRule(
+          cut.leftSubProof,
+          cut.aux1,
+          right.subProof,
+          right.getSequentConnector.parent( cut.aux2 )
+        )
+        Some( right.copy(
           subProof = newSubProof,
-          aux = newSubProof.getRightSequentConnector.child( regularAll.aux )
+          aux = newSubProof.getRightSequentConnector.child( right.aux )
         ) )
 
       case r @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) =>
@@ -736,18 +756,22 @@ object rightRankReduction {
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
 
-      case r @ ExistsLeftRule( subProof, a, eigen, quant ) if right.mainIndices.head != aux2 =>
-        val regularCut @ CutRule( _, _, _, _ ) = regularize( cut )
-        val regularExists @ ExistsLeftRule( _, _, _, _ ) = regularCut.rightSubProof
+      case right @ ExistsLeftRule( _, _, _, _ ) if right.mainIndices.head != aux2 && freeVariables( cut.endSequent ).contains( right.eigenVariable ) =>
+        val newEigenvariable = rename( right.eigenVariable, freeVariables( cut.endSequent ) )
+        val renaming = Substitution( right.eigenVariable -> newEigenvariable )
+        val newRightSubProof = right.copy( subProof = renaming( right.subProof ), eigenVariable = newEigenvariable )
+        apply( cut.copy( rightSubProof = newRightSubProof ) )
+
+      case right @ ExistsLeftRule( _, _, _, _ ) if right.mainIndices.head != aux2 =>
         val newSubProof = CutRule(
-          regularCut.leftSubProof,
-          regularCut.aux1,
-          regularExists.subProof,
-          regularExists.getSequentConnector.parent( regularCut.aux2 )
+          cut.leftSubProof,
+          cut.aux1,
+          right.subProof,
+          right.getSequentConnector.parent( cut.aux2 )
         )
-        Some( regularExists.copy(
+        Some( right.copy(
           subProof = newSubProof,
-          aux = newSubProof.getRightSequentConnector.child( regularExists.aux )
+          aux = newSubProof.getRightSequentConnector.child( right.aux )
         ) )
 
       case r @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) if right.mainIndices.head != aux2 =>
@@ -796,6 +820,16 @@ object inductionReduction {
   }
 }
 
+private object inductionEigenvariables {
+  /**
+   * Retrieves all of the eigenvariables of a given induction rule.
+   * @param induction The induction rule.
+   * @return All the eigenvariables of the induction rule.
+   */
+  def apply( induction: InductionRule ) =
+    induction.cases.flatMap( _.eigenVars ).toSet
+}
+
 object inductionRightReduction {
 
   def applyWithSequentConnector( cut: CutRule ): Option[( LKProof, SequentConnector )] =
@@ -809,15 +843,24 @@ object inductionRightReduction {
    */
   def apply( cut: CutRule ): Option[LKProof] = {
 
-    val regularCut = regularize( cut ).asInstanceOf[CutRule]
+    cut.rightSubProof match {
 
-    regularCut.rightSubProof match {
+      case ind @ InductionRule( _, _, _ ) if contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty =>
+        val newEigenvariables = rename( inductionEigenvariables( ind ), contextVariables( cut ) )
+        val newInductionCases = ind.cases map { inductionCase =>
+          val newCaseEigenvariables = inductionCase.eigenVars.map( newEigenvariables )
+          val renaming = Substitution( inductionCase.eigenVars.map { ev => ( ev, newEigenvariables( ev ) ) } )
+          inductionCase.copy( proof = renaming( inductionCase.proof ), eigenVars = newCaseEigenvariables )
+        }
+        val newRightSubProof = ind.copy( cases = newInductionCases )
+        apply( cut.copy( rightSubProof = newRightSubProof ) )
+
       case ind @ InductionRule( _, indFormula, indTerm ) =>
-        val targetCase = ind.cases.filter( _.proof.endSequent.antecedent.contains( regularCut.cutFormula ) ).head
+        val targetCase = ind.cases.filter( _.proof.endSequent.antecedent.contains( cut.cutFormula ) ).head
         val newIndCases = ind.cases map {
           indCase =>
             if ( indCase == targetCase ) {
-              val subProof = CutRule( regularCut.leftSubProof, indCase.proof, regularCut.cutFormula )
+              val subProof = CutRule( cut.leftSubProof, indCase.proof, cut.cutFormula )
               val hypIndices = indCase.hypotheses.map( subProof.getRightSequentConnector.child( _ ) )
               val conclIndex = subProof.getRightSequentConnector.child( indCase.conclusion )
               InductionCase( subProof, indCase.constructor, hypIndices, indCase.eigenVars, conclIndex )
@@ -829,6 +872,9 @@ object inductionRightReduction {
       case _ => None
     }
   }
+
+  private def contextVariables( cut: CutRule ) =
+    freeVariables( cut.rightSubProof.endSequent ) ++ freeVariables( cut.leftSubProof.endSequent )
 }
 
 object inductionUnfoldingReduction {
@@ -887,15 +933,23 @@ object inductionLeftReduction {
    */
   def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
 
-    val regularCut = regularize( cut ).asInstanceOf[CutRule]
+    cut.leftSubProof match {
+      case ind @ InductionRule( _, _, _ ) if ind.mainIndices.head != cut.aux1 && ( contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty ) =>
+        val newEigenvariables = rename( inductionEigenvariables( ind ), contextVariables( cut ) )
+        val newInductionCases = ind.cases map { inductionCase =>
+          val newCaseEigenvariables = inductionCase.eigenVars.map( newEigenvariables )
+          val renaming = Substitution( inductionCase.eigenVars.map { ev => ( ev, newEigenvariables( ev ) ) } )
+          inductionCase.copy( proof = renaming( inductionCase.proof ), eigenVars = newCaseEigenvariables )
+        }
+        val newLeftSubProof = ind.copy( cases = newInductionCases )
+        apply( cut.copy( leftSubProof = newLeftSubProof ) )
 
-    regularCut.leftSubProof match {
-      case ind @ InductionRule( inductionCases, inductionFormula, inductionTerm ) if ind.mainIndices.head != regularCut.aux1 => {
+      case ind @ InductionRule( inductionCases, inductionFormula, inductionTerm ) if ind.mainIndices.head != cut.aux1 => {
         val newInductionCases = inductionCases zip ind.occConnectors map {
           case ( inductionCase, connector ) =>
-            if ( connector.parentOption( regularCut.aux1 ).nonEmpty ) {
+            if ( connector.parentOption( cut.aux1 ).nonEmpty ) {
               val subProof = CutRule(
-                inductionCase.proof, connector.parent( regularCut.aux1 ), regularCut.rightSubProof, regularCut.aux2
+                inductionCase.proof, connector.parent( cut.aux1 ), cut.rightSubProof, cut.aux2
               )
               val hypotheses = inductionCase.hypotheses map { subProof.getLeftSequentConnector.child( _ ) }
               val conclusion = subProof.getLeftSequentConnector.child( inductionCase.conclusion )
@@ -909,6 +963,9 @@ object inductionLeftReduction {
       case _ => None
     }
   }
+
+  private def contextVariables( cut: CutRule ) =
+    freeVariables( cut.rightSubProof.endSequent ) ++ freeVariables( cut.leftSubProof.endSequent )
 }
 
 object freeCutElimination {

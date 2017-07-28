@@ -277,7 +277,7 @@ object AnalyticInductionTactic {
 case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProver )( implicit ctx: Context ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     AnalyticInductionProver( axioms, prover ) inductiveLKProof ( goal.labelledSequent ) match {
-      case None       => Left( TacticalFailure( this, "search failed" ) )
+      case None       => Left( TacticalFailure( this, "analytic induction prover failed" ) )
       case Some( lk ) => Right( () -> lk )
     }
 

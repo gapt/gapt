@@ -11,7 +11,7 @@ import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.aip.axioms.{ AxiomFactory, IndependentInductionAxioms, SequentialInductionAxioms, UserDefinedInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms._
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
@@ -85,11 +85,12 @@ object ViperOptions {
     args match {
       case ( "-v" | "--verbose" ) :: rest =>
         parse( rest, opts.copy( verbosity = opts.verbosity + 1 ) )
-      case ( "-h" | "--help" ) :: _ => ( Nil, opts.copy( mode = "help" ) )
-      case "--prooftool" :: rest    => parse( rest, opts.copy( prooftool = true ) )
-      case "--fixup" :: rest        => parse( rest, opts.copy( fixup = true ) )
-      case "--no-fixup" :: rest     => parse( rest, opts.copy( fixup = false ) )
-      case "--portfolio" :: rest    => parse( rest, opts.copy( mode = "portfolio" ) )
+      case ( "-h" | "--help" ) :: _     => ( Nil, opts.copy( mode = "help" ) )
+      case "--prooftool" :: rest        => parse( rest, opts.copy( prooftool = true ) )
+      case "--fixup" :: rest            => parse( rest, opts.copy( fixup = true ) )
+      case "--no-fixup" :: rest         => parse( rest, opts.copy( fixup = false ) )
+      case "--portfolio" :: rest        => parse( rest, opts.copy( mode = "portfolio" ) )
+      case "--untrusted_funind" :: rest => parse( rest, opts.copy( mode = "untrusted_funind" ) )
       case "--treegrammar" :: rest =>
         val ( rest_, opts_ ) = parseTreeGrammar( rest, opts.treeGrammarProverOptions )
         parse( rest_, opts.copy( treeGrammarProverOptions = opts_, mode = "treegrammar" ) )
@@ -150,6 +151,9 @@ object Viper {
 
   def getStrategies( opts: ViperOptions )( implicit ctx: Context ): List[( Duration, Tactical[_] )] =
     opts.mode match {
+      case "untrusted_funind" =>
+        List( Duration.Inf -> AnalyticInductionTactic( UntrustedFunctionalInductionAxioms, Escargot )
+          .aka( "functional induction" ) )
       case "portfolio" =>
         import scala.concurrent.duration._
         List(
@@ -196,6 +200,7 @@ object Viper {
   def apply( sequent: HOLSequent, verbosity: Int,
              strategies: List[( Duration, Tactical[_] )] )( implicit ctx: Context ): Option[LKProof] = {
     if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
+    if ( verbosity >= 4 ) Escargot.makeVerbose()
 
     if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
 

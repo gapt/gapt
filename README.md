@@ -40,9 +40,9 @@ into the [API documentation](http://logic.at/gapt/api/) for reference as well.
 There are [binary distributions](https://logic.at/gapt) available, you only
 need to have Java installed to run them:
 ```
-wget https://logic.at/gapt/downloads/gapt-2.6.tar.gz
-tar xf gapt-2.6.tar.gz
-cd gapt-2.6
+wget https://logic.at/gapt/downloads/gapt-2.7.tar.gz
+tar xf gapt-2.7.tar.gz
+cd gapt-2.7
 ./gapt.sh
 ```
 This will drop you into a scala REPL with GAPT pre-loaded.
@@ -51,7 +51,7 @@ If you want to use GAPT in your project, all you have to do is add two lines to
 your SBT build file:
 ```scala
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.6"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.7"
 ```
 
 If you want to use the unstable git version of GAPT, you can use `sbt

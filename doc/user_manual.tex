@@ -152,7 +152,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.7-SNAPSHOT}
+{\Large Version 2.8-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -217,7 +217,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.6"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.7"
 \end{lstlisting}
 
 \end{enumerate}
@@ -1497,7 +1497,7 @@ script.  This script expects a problem in TPTP format:
 GAPT contains a built-in inductive theorem prover: viper (Vienna inductive theorem prover). It
 can be started from the command line using the \texttt{viper.sh} script. It takes input in the
 TIP format~\cite{Claessen15TIP}. Viper has a mode for analytic induction and a mode for 
-the tree grammar-based method described in~\cite{Eberhard15Inductive}. As of version 2.6 of GAPT,
+the tree grammar-based method described in~\cite{Eberhard15Inductive}. As of version 2.7 of GAPT,
 viper is in an early stage of development.  By default, the \texttt{viper.sh}
 scripts tries several different strategies to solve the given problem,
 including analytic induction and tree-grammar-based methods.  The
