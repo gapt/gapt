@@ -635,3 +635,23 @@ object definitionRightRule2 extends Script {
   println( lk )
   println( nd )
 }
+
+object classicalPairing extends Script {
+  val p1 = LogicalAxiom( hof"x" )
+  val p2 = LogicalAxiom( hof"y" )
+  val p3 = BottomAxiom
+  val p4 = ImpLeftRule( p2, Suc( 0 ), p3, Ant( 0 ) )
+  val p5 = ImpLeftRule( p1, Suc( 0 ), p4, Ant( 0 ) )
+  val p6 = WeakeningRightRule( p5, hof"⊥" )
+  val p7 = ImpRightRule( p6, Ant( 0 ), Suc( 0 ) )
+  val p8 = ImpRightRule( p7, Ant( 1 ), Suc( 0 ) )
+  val p9 = ImpRightRule( p8, Ant( 0 ), Suc( 0 ) )
+  val lk = p9
+
+  println( lk )
+
+  val focus = Some( Suc( 0 ) )
+  val nd = LKToND( lk, focus )
+
+  println( nd )
+}
