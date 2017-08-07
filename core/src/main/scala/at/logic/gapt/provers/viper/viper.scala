@@ -116,6 +116,7 @@ object ViperOptions {
       "prover9" -> prover9,
       "eprover" -> eprover,
       "escargot" -> Escargot,
+      "iprover" -> iprover,
       "spass" -> spass,
       "vampire" -> vampire )
   }

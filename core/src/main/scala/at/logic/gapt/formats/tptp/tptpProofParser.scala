@@ -92,6 +92,7 @@ object TptpProofParser {
     val steps = ( for ( input @ AnnotatedFormula( _, name, _, _, _ ) <- stepList.inputs ) yield name -> input ).toMap
 
     val memo = mutable.Map[String, Seq[RefutationSketch]]()
+    val alreadyVisited = mutable.Set[String]()
     val splDefs = mutable.Map[( FOLAtom, Boolean ), AvatarDefinition]()
     val splAtoms = mutable.Set[FOLAtom]()
     def filterVampireSplits( clause: FOLClause ): FOLClause = clause.filterNot( splAtoms )
@@ -110,7 +111,14 @@ object TptpProofParser {
         SketchComponentIntro( comp )
       }
     }
+    def haveAlreadyVisited( stepName: String ): Boolean = {
+      val res = alreadyVisited( stepName )
+      alreadyVisited += stepName
+      res
+    }
     def convert( stepName: String ): Seq[RefutationSketch] = memo.getOrElseUpdate( stepName, steps( stepName ) match {
+      case _ if haveAlreadyVisited( stepName ) =>
+        throw new IllegalArgumentException( s"Cyclic inference: ${steps( stepName )}" )
       case AnnotatedFormula( "fof", _, "plain", And( Imp( defn, Neg( splAtom: FOLAtom ) ), _ ), TptpTerm( "introduced", TptpTerm( "sat_splitting_component" ), _ ) +: _ ) =>
         convertAvatarDefinition( defn, splAtom )
       case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", TptpTerm( "sat_splitting_refutation" ), _, _ ) ) +: _ ) =>
