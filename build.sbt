@@ -21,7 +21,7 @@ lazy val commonSettings = Seq(
   ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.2",
+  scalaVersion := "2.12.3",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -44,7 +44,7 @@ lazy val commonSettings = Seq(
     .setPreference( DoubleIndentClassDeclaration, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.9.2"
+val specs2Version = "3.9.4"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -179,11 +179,11 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
       "com.lihaoyi" %% "fastparse" % "0.4.3",
-      "com.lihaoyi" %% "sourcecode" % "0.1.3",
+      "com.lihaoyi" %% "sourcecode" % "0.1.4",
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.6",
-      "com.lihaoyi" %% "ammonite-ops" % "1.0.0",
+      "com.lihaoyi" %% "ammonite-ops" % "1.0.1",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
@@ -258,7 +258,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.2"
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.3"
   )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
