@@ -268,7 +268,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     case _ => "'" + name.map {
       case c @ safeChars() =>
         c
-      case '''          => "\\'"
+      case '\''         => "\\'"
       case '\\'         => "\\\\"
       case c if unicode => c
       case c            => "\\u%04x".format( c.toChar.toInt )
