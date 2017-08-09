@@ -1,7 +1,9 @@
 package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, thresholds }
+import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.MaxSATSolver
+import at.logic.gapt.utils.metrics
 
 /*
   This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
@@ -113,6 +115,7 @@ object minimizePi2Grammar {
       ) )
 
     val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality
+    metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
 
@@ -126,7 +129,8 @@ object findMinimalPi2Grammar {
   def apply( lang: Traversable[Expr], alpha: Var, betas: Vector[Var], solver: MaxSATSolver ): Option[Pi2Grammar] = {
     require( freeVariables( lang ).isEmpty )
     val startSymbol = rename( Var( "x0", lang.head.ty ), alpha +: betas )
-    val stableG = stablePi2Grammar( startSymbol, alpha, betas, lang )
-    minimizePi2Grammar( stableG, lang, solver )
+    val stableG = metrics.time( "stabgrammar" ) { stablePi2Grammar( startSymbol, alpha, betas, lang ) }
+    metrics.value( "stabgrammar", stableG.size )
+    metrics.time( "mingrammar" ) { minimizePi2Grammar( stableG, lang, solver ) }
   }
 }

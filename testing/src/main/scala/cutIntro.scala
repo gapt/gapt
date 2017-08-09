@@ -4,7 +4,7 @@ import java.io.PrintWriter
 
 import at.logic.gapt.cutintro._
 import at.logic.gapt.examples._
-import at.logic.gapt.expr.Apps
+import at.logic.gapt.expr.{ Apps, FOLVar }
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
@@ -127,6 +127,73 @@ object testCutIntro extends App {
         } )
         metrics.value( "exception", e.toString )
         throw e
+    }
+  }
+}
+
+object testPi2CutIntro extends App {
+
+  val Array( fileName: String, numBetas: String ) = args
+
+  val metricsPrinter = new MetricsPrinter
+  metrics.current.value = metricsPrinter
+  metrics.value( "file", fileName )
+  metrics.value( "num_betas", numBetas )
+
+  val proofSeqRegex = """(\w+)\((\d+)\)""".r
+  def loadProofForCutIntro( fileName: String ) = fileName match {
+    case proofSeqRegex( name, n ) =>
+      val p = proofSequences.find( _.name == name ).get( n.toInt )
+      metrics.value( "lkinf_input", rulesNumber( p ) )
+      CutIntroduction.InputProof.fromLK( p )
+    case _ =>
+      val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( FilePath( fileName ) )
+      CutIntroduction.InputProof( exp, bgTh )
+  }
+
+  metrics.time( "total" ) {
+    val inputProof = try metrics.time( "parse" ) {
+      loadProofForCutIntro( fileName )
+    } catch {
+      case e: Throwable =>
+        metrics.value( "status", e match {
+          case _: OutOfMemoryError   => "parsing_out_of_memory"
+          case _: StackOverflowError => "parsing_stack_overflow"
+          case _: Throwable          => "parsing_other_exception"
+        } )
+        metrics.value( "exception", e.toString )
+        throw e
+    }
+
+    if ( inputProof.backgroundTheory.hasEquality ) {
+      metrics.value( "status", "has_equality" )
+    } else {
+      try metrics.time( "cutintro" ) {
+        val alpha = FOLVar( "x" )
+        val betas = for ( i <- 1 to numBetas.toInt ) yield FOLVar( s"y$i" )
+        Pi2CutIntroduction( inputProof, alpha, betas.toVector, OpenWBO ) match {
+          case Some( _ ) => metrics.value( "status", "ok" )
+          case None =>
+            if ( metricsPrinter.data( "lang_trivial" ) == true )
+              metrics.value( "status", "cutintro_lang_trivial" )
+            else
+              metrics.value( "status", "cutintro_uncompressible" )
+        }
+      }
+      catch {
+        case e: Throwable =>
+          metrics.value( "status", e match {
+            case _: OutOfMemoryError => "cutintro_out_of_memory"
+            case _: StackOverflowError => "cutintro_stack_overflow"
+            case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
+            case _: CutIntroduction.NonCoveringGrammarException => "cutintro_noncovering_grammar"
+            case _: LKRuleCreationException => "lk_rule_creation_exception"
+            case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
+            case _: Throwable => "cutintro_other_exception"
+          } )
+          metrics.value( "exception", e.toString )
+          throw e
+      }
     }
   }
 }

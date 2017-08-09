@@ -99,6 +99,7 @@ lazy val root = project.in( file( "." ) ).
       (
         mkScript( target.value / "run" ),
         mkScript( target.value / "test-cut-intro", "at.logic.gapt.testing.testCutIntro" ),
+        mkScript( target.value / "test-pi2-cut-intro", "at.logic.gapt.testing.testPi2CutIntro" ),
         mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
         mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
         mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" )

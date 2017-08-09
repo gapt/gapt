@@ -1,11 +1,12 @@
 package at.logic.gapt.cutintro
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.grammars.{ Pi2Grammar, findMinimalPi2Grammar }
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.{ Logger, metrics }
 
 object pi2GrammarToSEHS {
   def apply( g: Pi2Grammar, encoding: InstanceTermEncoding ): Pi2SeHs = {
@@ -27,11 +28,16 @@ object Pi2CutIntroduction extends Logger {
     val grounding = Substitution( freeVariables( exp.deep ).map( v => v -> Const( v.name, v.ty ) ) )
     val ( lang, enc ) = InstanceTermEncoding( grounding( exp ) )
     info( s"Language size: ${lang.size}" )
+    metrics.value( "lang_trivial", lang.size == lang.map { case Apps( r, _ ) => r }.size )
+    metrics.value( "langsize", lang.size )
     findMinimalPi2Grammar( lang, alpha, betas, solver ).flatMap { grammar =>
       info( s"Found grammar of size: ${grammar.size}\n$grammar" )
+      metrics.value( "grammarsize", grammar.size )
       val sehs = pi2GrammarToSEHS( grammar, enc )
       val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
       cutFormulaOpt.flatMap { cutFormula =>
+        metrics.value( "cutformula", cutFormula.toString )
+        metrics.value( "cutformula_lcomp", lcomp( cutFormula ) )
         info( s"Cut formula: $cutFormula" )
         proveWithPi2Cut.giveProof( cutFormula, sehs, exp.shallow, x, y )
       }.orElse {
