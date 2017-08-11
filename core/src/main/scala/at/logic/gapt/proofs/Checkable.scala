@@ -2,7 +2,7 @@ package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 
@@ -133,11 +133,6 @@ object Checkable {
           )
       }
     }
-  }
-
-  implicit object expansionProofWithCutIsCheckable extends Checkable[ExpansionProofWithCut] {
-    def check( context: Context, epwc: ExpansionProofWithCut ): Unit =
-      context.check( epwc.expansionWithCutAxiom )
   }
 
   implicit object resolutionIsCheckable extends Checkable[ResolutionProof] {

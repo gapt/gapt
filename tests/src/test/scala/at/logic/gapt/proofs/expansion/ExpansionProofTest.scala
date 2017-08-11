@@ -64,12 +64,12 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "weird cuts" in {
-    val epwc = ExpansionProofWithCut(
+    val epwc = ExpansionProof(
       Seq( ETImp(
         ETStrongQuantifier( hof"∀x P x", hov"x", ETAtom( hoa"P x", Polarity.InSuccedent ) ),
         ETWeakQuantifier( hof"∀x P x", Map( le"f x" -> ETAtom( hoa"P (f x)", Polarity.InAntecedent ) ) )
-      ) ),
-      ETWeakQuantifier( hof"∀x P x", Map( le"x" -> ETAtom( hoa"P x", Polarity.InAntecedent ) ) ) +:
+      ) ) ++:
+        ETWeakQuantifier( hof"∀x P x", Map( le"x" -> ETAtom( hoa"P x", Polarity.InAntecedent ) ) ) +:
         Sequent()
         :+ ETWeakQuantifier( hof"∃x P (f x)", Map( le"x" -> ETAtom( hoa"P (f x)", Polarity.InSuccedent ) ) )
     )

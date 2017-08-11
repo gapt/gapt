@@ -14,15 +14,16 @@ object eliminateDefsET {
   private val negReplPos = HOLPosition( 1, 2 )
   private val posReplPos = HOLPosition( 2, 1 )
 
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean ): ExpansionProofWithCut = {
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean ): ExpansionProof = {
     val definitions = ep.expansionSequent.antecedent.collect {
       case DefinitionFormula( _, c, _ ) => c
     }
-    apply( ep, pureFolWithoutEq, definitions.toSet )
+    definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) )
   }
 
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProofWithCut =
-    ExpansionProofWithCut( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ) )
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProof =
+    definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) )
+
   private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProof = {
     val definitionFormula @ DefinitionFormula( vs, _, definedFormula ) =
       ep.expansionSequent.antecedent.map( _.shallow ).find {
@@ -87,7 +88,7 @@ object eliminateDefsET {
     }
 
     val newCuts = ETWeakQuantifier.withMerge(
-      ExpansionProofWithCut.cutAxiom,
+      ETCut.cutAxiom,
       insts.values.map { case ( pos, neg ) => pos.shallow -> ETImp( pos, neg ) }
     )
 

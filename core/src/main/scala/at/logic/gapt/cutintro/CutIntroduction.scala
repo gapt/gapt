@@ -211,8 +211,6 @@ object CutIntroduction extends Logger {
     implicit def fromLK( p: LKProof ): InputProof =
       apply( eliminateCutsET( LKToExpansionProof( p ) ), BackgroundTheory.guess( p ) )
 
-    implicit def fromExpansionProofWithCut( p: ExpansionProofWithCut ): InputProof =
-      fromExpansionProof( eliminateCutsET( p ) )
     implicit def fromExpansionProof( p: ExpansionProof ): InputProof =
       apply( p, BackgroundTheory.guess( p.shallow ) )
 

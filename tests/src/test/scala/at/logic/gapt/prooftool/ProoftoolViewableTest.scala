@@ -3,7 +3,7 @@ package at.logic.gapt.prooftool
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.ceres.Struct
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
+import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.{ ImpRightRule, LKProof }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.sketch.RefutationSketch
@@ -23,7 +23,6 @@ class ProoftoolViewableTest extends Specification {
     }
 
     implicitly[ProoftoolViewable[ExpansionProof]]
-    implicitly[ProoftoolViewable[ExpansionProofWithCut]]
 
     implicitly[ProoftoolViewable[Iterable[HOLSequent]]]
     implicitly[ProoftoolViewable[Seq[HOLSequent]]]

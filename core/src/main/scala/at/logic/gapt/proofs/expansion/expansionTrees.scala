@@ -163,6 +163,27 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   def deep = child1.deep --> child2.deep
 }
 
+// TODO
+object ETCut {
+  val cutAxiom = hof"∀X (X ⊃ X)"
+  def apply( child1: ExpansionTree, child2: ExpansionTree ) =
+    ETWeakQuantifier.withMerge(
+      cutAxiom,
+      List( child1.shallow -> ETImp( child1, child2 ) )
+    )
+  def apply( cuts: Seq[ETImp] ): ExpansionTree =
+    ETWeakQuantifier.withMerge(
+      cutAxiom,
+      for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut
+    )
+
+  def unapply( et: ExpansionTree ): Some[( ExpansionTree, ExpansionTree )] = et match {
+    case ETWeakQuantifier( _, m ) => m.head match {
+      case ( k, ETImp( c1, c2 ) ) => Some( c1, c2 )
+    }
+  }
+}
+
 /**
  * A general trait for trees representing quantified formulas.
  */

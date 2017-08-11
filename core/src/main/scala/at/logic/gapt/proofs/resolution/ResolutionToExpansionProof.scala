@@ -86,7 +86,7 @@ object ResolutionToExpansionProof {
    * Performs the conversion without eliminating the definitions
    * introduced by structural clausification.
    */
-  def withDefs( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent, addConclusion: Boolean = true ): ExpansionProofWithCut = {
+  def withDefs( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent, addConclusion: Boolean = true ): ExpansionProof = {
     val nameGen = rename.awayFrom( containedNames( proof ) )
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
@@ -261,6 +261,6 @@ object ResolutionToExpansionProof {
         ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) )
       )
 
-    eliminateMerges( ExpansionProofWithCut( cuts, perfMerges( expansionSequent ) ) )
+    eliminateMerges( ExpansionProof( ETCut( cuts ) +: perfMerges( expansionSequent ) ) )
   }
 }

@@ -4,9 +4,6 @@ import at.logic.gapt.expr._
 
 /** Decreases the number of instances in an expansion proof by unifying the instance terms. */
 object unifyInstancesET {
-  def apply( epwc: ExpansionProofWithCut ): ExpansionProofWithCut =
-    ExpansionProofWithCut( apply( epwc.expansionWithCutAxiom ) )
-
   def apply( ep: ExpansionProof ): ExpansionProof = {
     val instances = for ( ETWeakQuantifier( _, insts ) <- ep.subProofs.toSeq ) yield insts.keySet
 

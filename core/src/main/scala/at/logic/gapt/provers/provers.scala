@@ -3,7 +3,7 @@ package at.logic.gapt.provers
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existentialClosure
 import at.logic.gapt.proofs.epsilon.{ EpsilonProof, ExpansionProofToEpsilon }
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut, ExpansionSequent, eliminateCutsET }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionSequent, eliminateCutsET }
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.lk.LKProof

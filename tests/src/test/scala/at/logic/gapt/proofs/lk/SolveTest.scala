@@ -80,7 +80,7 @@ class SolveTest extends Specification with SequentMatchers {
           le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", Polarity.InSuccedent ), ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InAntecedent ) )
         ) )
       )
-      val epwc = ExpansionProofWithCut( Seq( cut ), es )
+      val epwc = ExpansionProof( cut +: es )
       ExpansionProofToLK( epwc ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
       }

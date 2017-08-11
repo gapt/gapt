@@ -207,8 +207,6 @@ object moveDefsUpward {
   def apply( et: ExpansionTree )( implicit ctx: Context ): ExpansionTree = apply( et, et.shallow )
   def apply( es: ExpansionSequent )( implicit ctx: Context ): ExpansionSequent = es.map( apply )
   def apply( ep: ExpansionProof )( implicit ctx: Context ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
-  def apply( ep: ExpansionProofWithCut )( implicit ctx: Context ): ExpansionProofWithCut =
-    ExpansionProofWithCut( apply( ep.expansionWithCutAxiom.expansionSequent ) )
 }
 
 /**

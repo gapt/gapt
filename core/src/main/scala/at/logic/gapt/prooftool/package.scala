@@ -4,7 +4,7 @@ import at.logic.gapt.expr.{ Formula, Expr }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.formats.llk.ExtendedProofDatabase
 import at.logic.gapt.proofs.ceres.Struct
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
+import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ HOLSequent, SequentProof }
 import at.logic.gapt.prooftool._
@@ -23,9 +23,6 @@ private[gapt] trait ProoftoolInstances1 {
 
   implicit val ExpansionProofViewable: ProoftoolViewable[ExpansionProof] =
     ( ep, name ) => List( new ExpansionSequentViewer( name, ep.expansionSequent ) )
-
-  implicit val ExpansionProofWithCutViewable: ProoftoolViewable[ExpansionProofWithCut] =
-    ( ep, name ) => ProoftoolViewable[ExpansionProof].display( ep.expansionWithCutAxiom, name )
 
   implicit def StructViewable[D]: ProoftoolViewable[Struct[D]] =
     ( s, name ) => List( new StructViewer[D]( name, s ) )
