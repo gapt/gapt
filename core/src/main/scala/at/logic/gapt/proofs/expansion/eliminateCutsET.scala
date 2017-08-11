@@ -16,7 +16,7 @@ object eliminateCutsET {
     if ( cuts( expansionProof ).isEmpty ) return ExpansionProof( expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
-      ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) )
+      ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) filter { _.shallow != ETCut.cutAxiom } )
 
     var epwc = simplifiedEPWC( cuts( expansionProof ), expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
 

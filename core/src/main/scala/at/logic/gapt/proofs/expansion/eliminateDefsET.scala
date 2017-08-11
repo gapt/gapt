@@ -22,7 +22,7 @@ object eliminateDefsET {
   }
 
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProof =
-    definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) )
+    ExpansionProof( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ).expansionSequent filter { _.shallow != ETCut.cutAxiom } )
 
   private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProof = {
     val definitionFormula @ DefinitionFormula( vs, _, definedFormula ) =
