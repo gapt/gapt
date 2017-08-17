@@ -17,13 +17,7 @@ object LKToExpansionProof {
   def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProof = {
     val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
     val theory_ = theory.groupBy { _.shallow }.values.toSeq.map { ETMerge( _ ) }
-    val ret = eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
-    println( "ret" )
-    println( ret )
-    println( "ret with filter" )
-    println( ExpansionProof( ret.expansionSequent filter { _.shallow != ETCut.cutAxiom } ) )
-    ret
-    //ExpansionProof( ret.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+    eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
   }
 
   private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {

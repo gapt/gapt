@@ -82,7 +82,7 @@ class SolveTest extends Specification with SequentMatchers {
       )
       val epwc = ExpansionProof( cut +: es )
       ExpansionProofToLK( epwc ) must beLike {
-        case Right( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
+        case Right( p ) => p.conclusion must beMultiSetEqual( epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom } map { _.shallow } )
       }
     }
 

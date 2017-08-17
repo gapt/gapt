@@ -23,16 +23,17 @@ object eliminateCutsET {
     while ( true )
       cuts( epwc ).view.flatMap {
         case cut @ ETImp( cut1, cut2 ) =>
-          singleStep( cut1, cut2, cuts( epwc ).filterNot( _ == cut ), epwc.expansionSequent filter {
-            _.shallow != ETCut.cutAxiom
-          },
+          singleStep( cut1, cut2, cuts( epwc ).filterNot( _ == cut ), epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom },
             epwc.eigenVariables union freeVariables( epwc.deep ),
             epwc.dependencyRelation )
       }.headOption match {
         case Some( ( newCuts, newES ) ) =>
           epwc = simplifiedEPWC( newCuts, newES )
         case None =>
-          return ExpansionProof( epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+          return {
+            if ( cuts( epwc ).isEmpty ) return ExpansionProof( epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+            else epwc
+          }
       }
     throw new IllegalStateException
   }

@@ -234,14 +234,10 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
     "lattice with definitions" in {
       import lattice._
       val exp = LKToExpansionProof( lattice.p )
-      println( "exp.shallow" )
-      println( exp.shallow )
       val Right( lk ) = ExpansionProofToLK.withTheory( implicitly )( exp )
       ctx.check( exp )
       ctx.check( lk )
-      println( "lk.conclusion" )
-      println( lk.conclusion )
-      exp.shallow must beMultiSetEqual( lk.conclusion )
+      exp.expansionSequent filter { _.shallow != ETCut.cutAxiom } map { _.shallow } must beMultiSetEqual( lk.conclusion )
     }
   }
 }
