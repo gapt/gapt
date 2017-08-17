@@ -46,11 +46,7 @@ class ExpansionProofToLK(
       getOrElse( Left( cuts -> expSeq ) ).
       map {
         ContractionMacroRule( _ ).
-          ensuring {
-            _.conclusion isSubsetOf expSeq.map {
-              _.shallow
-            }
-          }
+          ensuring { _.conclusion isSubsetOf expSeq.map { _.shallow } }
       }
   }
 
@@ -63,9 +59,7 @@ class ExpansionProofToLK(
   }
 
   private def tryTheory( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
-    theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ).map {
-      Right( _ )
-    }
+    theorySolver( expSeq collect { case ETAtom( atom, _ ) => atom } ).map { Right( _ ) }
 
   private def tryDef( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
@@ -96,12 +90,8 @@ class ExpansionProofToLK(
 
   private def tryUnary( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
-      case ( ETNeg( f ), i: Ant ) => mapIf( solve( cuts, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) {
-        NegLeftRule( _, f.shallow )
-      }
-      case ( ETNeg( f ), i: Suc ) => mapIf( solve( cuts, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) {
-        NegRightRule( _, f.shallow )
-      }
+      case ( ETNeg( f ), i: Ant ) => mapIf( solve( cuts, expSeq.delete( i ) :+ f ), f.shallow, !i.polarity ) { NegLeftRule( _, f.shallow ) }
+      case ( ETNeg( f ), i: Suc ) => mapIf( solve( cuts, f +: expSeq.delete( i ) ), f.shallow, !i.polarity ) { NegRightRule( _, f.shallow ) }
 
       case ( e @ ETAnd( f, g ), i: Ant ) =>
         mapIf( solve( cuts, f +: g +: expSeq.delete( i ) ), f.shallow, i.polarity, g.shallow, i.polarity ) {
@@ -138,21 +128,13 @@ class ExpansionProofToLK(
   private def tryStrongQ( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] =
     expSeq.zipWithIndex.elements collectFirst {
       case ( ETStrongQuantifier( sh, ev, f ), i: Ant ) =>
-        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
-          ExistsLeftRule( _, sh, ev )
-        }
+        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) { ExistsLeftRule( _, sh, ev ) }
       case ( ETStrongQuantifier( sh, ev, f ), i: Suc ) =>
-        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
-          ForallRightRule( _, sh, ev )
-        }
+        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) { ForallRightRule( _, sh, ev ) }
       case ( ETSkolemQuantifier( sh, skT, skD, f ), i: Ant ) =>
-        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
-          ExistsSkLeftRule( _, skT, skD )
-        }
+        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) { ExistsSkLeftRule( _, skT, skD ) }
       case ( ETSkolemQuantifier( sh, skT, skD, f ), i: Suc ) =>
-        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) {
-          ForallSkRightRule( _, skT, skD )
-        }
+        mapIf( solve( cuts, expSeq.updated( i, f ) ), f.shallow, i.polarity ) { ForallSkRightRule( _, skT, skD ) }
     }
 
   private def tryWeakQ( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
