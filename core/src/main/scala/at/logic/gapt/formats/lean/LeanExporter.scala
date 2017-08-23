@@ -22,8 +22,7 @@ object LeanNames {
 import LeanNames._
 class LeanNames(
     val nameGenerator: NameGenerator                                       = new NameGenerator( Set() ),
-    gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map()
-) {
+    gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map() ) {
   def markUsed( leanName: String ): Unit = nameGenerator.fresh( leanName )
   def register( gaptName: String, kind: NameKind, leanName: String ): Unit = {
     require( !gapt2lean.contains( gaptName -> kind ) )
@@ -68,8 +67,7 @@ class LeanExporter {
     "apply", "intros",
     "begin", "end", "def", "definition", "lemma", "theorem", // TODO: ...
     "implies",
-    "list", "nil", "cons"
-  ).foreach( nameMap.markUsed )
+    "list", "nil", "cons" ).foreach( nameMap.markUsed )
 
   val hypName = nameMap.nameGenerator.fresh( "hyp" ) + ".h_"
   val axiomNames = mutable.Map[HOLSequent, String]()
@@ -194,8 +192,7 @@ class LeanExporter {
                 occConn_.copy( parentsSequent = occConn_.parentsSequent.
                   updated( p.eqInConclusion, Seq( p.eq ) ).
                   updated( p.auxInConclusion, Seq( p.aux ) ) ),
-                Seq( p.aux )
-              )
+                Seq( p.aux ) )
             case _ => ( occConn_, auxs_ )
           }
           val hs_ = auxs.zip( Stream.from( hi ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )

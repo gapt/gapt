@@ -104,8 +104,7 @@ object StructCreators extends Logger {
       case UnaryLKProof( _, upperProof ) =>
         require(
           p.mainIndices.size == 1,
-          "Error: Struct extraction only works for rules which have exactly one primary formula!"
-        )
+          "Error: Struct extraction only works for rules which have exactly one primary formula!" )
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
         extract[Data]( upperProof, new_occs )
 
@@ -115,22 +114,19 @@ object StructCreators extends Logger {
           val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, true )
           Plus[Data](
             extract[Data]( p1, new_occs1 ),
-            extract[Data]( p2, new_occs2 )
-          )
+            extract[Data]( p2, new_occs2 ) )
         } else {
           val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, false )
           val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, false )
           Times[Data](
             extract[Data]( p1, new_occs1 ),
-            extract[Data]( p2, new_occs2 ), List()
-          )
+            extract[Data]( p2, new_occs2 ), List() )
         }
 
       case BinaryLKProof( _, upperProofLeft, upperProofRight ) =>
         require(
           p.mainIndices.size == 1,
-          "Error: Struct extraction only works for rules which have exactly one primary formula! " + p
-        )
+          "Error: Struct extraction only works for rules which have exactly one primary formula! " + p )
         val new_occs1 = p.occConnectors( 0 ).parents( cut_occs ).map( _.head )
         val new_occs2 = p.occConnectors( 1 ).parents( cut_occs ).map( _.head )
         if ( cut_occs( p.mainIndices( 0 ) ) )

@@ -47,16 +47,11 @@ class InductionProverTest extends Specification {
     val et4 = ETWeakQuantifier( All( x, fST( x ) ), Map( nu -> ETAtom( fST( nu ), Polarity.InAntecedent ) ) )
     val et5 = ETWeakQuantifier( All( x, All( z, gST( x, z ) ) ), Map(
       gamma -> ETWeakQuantifier( All( z, gST( gamma, z ) ), Map(
-        nu -> ETAtom( gST( gamma, nu ), Polarity.InAntecedent )
-      ) )
-    ) )
+        nu -> ETAtom( gST( gamma, nu ), Polarity.InAntecedent ) ) ) ) )
     val et6 = ETWeakQuantifier( All( x, All( z, All( w, ASSO( x, z, w ) ) ) ), Map(
       gamma -> ETWeakQuantifier( All( z, All( w, ASSO( gamma, z, w ) ) ), Map(
         s( nu ) -> ETWeakQuantifier( All( w, ASSO( gamma, s( nu ), w ) ), Map(
-          f( nu ) -> ETAtom( ASSO( gamma, s( nu ), f( nu ) ), Polarity.InAntecedent )
-        ) )
-      ) )
-    ) )
+          f( nu ) -> ETAtom( ASSO( gamma, s( nu ), f( nu ) ), Polarity.InAntecedent ) ) ) ) ) ) )
 
     val t = List( m( gamma, s( nu ) ) )
 
@@ -115,8 +110,7 @@ class InductionProverTest extends Specification {
     def addS( u: FOLTerm, v: FOLTerm ) =
       Eq(
         plus( u, s( v ) ),
-        s( plus( u, v ) )
-      )
+        s( plus( u, v ) ) )
 
     // Instances of associativity and reflexivity
     def assoc( x: FOLTerm, y: FOLTerm, z: FOLTerm ) = Eq( plus( plus( x, y ), z ), plus( x, plus( y, z ) ) )
@@ -129,8 +123,7 @@ class InductionProverTest extends Specification {
 
     val et1 = ETWeakQuantifier( ForAllAdd0, Map(
       beta -> ETAtom( add0( beta ), Polarity.InAntecedent ),
-      plus( alpha, beta ) -> ETAtom( add0( plus( alpha, beta ) ), Polarity.InAntecedent )
-    ) )
+      plus( alpha, beta ) -> ETAtom( add0( plus( alpha, beta ) ), Polarity.InAntecedent ) ) )
 
     val ExpSeq0 = ExpansionSequent( List( et1 ), Nil )
 
@@ -140,22 +133,17 @@ class InductionProverTest extends Specification {
         gamma ->
           ETWeakQuantifier(
             All( y, addS( gamma, y ) ),
-            Map( nu -> ETAtom( addS( gamma, nu ), Polarity.InAntecedent ) )
-          ),
+            Map( nu -> ETAtom( addS( gamma, nu ), Polarity.InAntecedent ) ) ),
 
         alpha ->
           ETWeakQuantifier(
             All( y, addS( alpha, y ) ),
-            Map( plus( gamma, nu ) -> ETAtom( addS( alpha, plus( gamma, nu ) ), Polarity.InAntecedent ) )
-          ),
+            Map( plus( gamma, nu ) -> ETAtom( addS( alpha, plus( gamma, nu ) ), Polarity.InAntecedent ) ) ),
 
         plus( alpha, gamma ) ->
           ETWeakQuantifier(
             All( y, addS( plus( alpha, gamma ), y ) ),
-            Map( nu -> ETAtom( addS( plus( alpha, gamma ), nu ), Polarity.InAntecedent ) )
-          )
-      )
-    )
+            Map( nu -> ETAtom( addS( plus( alpha, gamma ), nu ), Polarity.InAntecedent ) ) ) ) )
 
     val t = List( gamma )
 

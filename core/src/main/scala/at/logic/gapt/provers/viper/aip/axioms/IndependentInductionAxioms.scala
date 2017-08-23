@@ -15,8 +15,7 @@ import cats.syntax.all._
  */
 case class IndependentInductionAxioms(
     vsel: VariableSelector = allVariablesSelector( _ )( _ ),
-    fsel: FormulaSelector  = firstFormulaSelector( _ )
-) extends AxiomFactory {
+    fsel: FormulaSelector  = firstFormulaSelector( _ ) ) extends AxiomFactory {
 
   def forAllVariables = copy( vsel = allVariablesSelector( _ )( _ ) )
 
@@ -69,8 +68,7 @@ case class IndependentInductionAxioms(
    * @return An independent induction axiom.
    */
   private def inductionAxiom(
-    inductionVariables: List[Var], variable: Var, formula: Formula
-  )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    inductionVariables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val auxiliaryVariables = inductionVariables filter { _ != variable }
     val inductionFormula = inductionQuantifierForm( inductionVariables, formula )
     StandardInductionAxioms( variable, inductionFormula ) map { axiom =>

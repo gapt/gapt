@@ -23,8 +23,7 @@ object addSymmetry {
           formulaToExpansionTree(
             symmAx,
             pairs.map { case ( l, r ) => Substitution( x -> l, y -> r ) },
-            Polarity.InAntecedent
-          )
+            Polarity.InAntecedent )
       } ++: s
   }
 

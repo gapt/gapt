@@ -13,8 +13,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
       Seq( le"c", le"f c", le"f (f c)", le"f (f (f c))" ) map {
         CriticalFormula( hof"∃x ¬(P x ⊃ P (f x))", _ )
       },
-      hof"P c" +: hof"∀x (P x ⊃ P (f x))" +: Sequent() :+ hof"P (f (f (f (f c))))"
-    )
+      hof"P c" +: hof"∀x (P x ⊃ P (f x))" +: Sequent() :+ hof"P (f (f (f (f c))))" )
     p.deep must beValidSequent
   }
 

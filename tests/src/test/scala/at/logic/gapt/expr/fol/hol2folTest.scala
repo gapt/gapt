@@ -57,8 +57,7 @@ class hol2folTest extends Specification {
         val ( f2, scope2 ) = reduceHolToFol( le"g(λ(x:i>i) A(x, z:o>i)):o>o", scope1, id )
 
         List( f1, f2 ) must beEqualTo(
-          List( fot"f('q_{1}'(y))", fot"g('q_{1}'(z))" )
-        )
+          List( fot"f('q_{1}'(y))", fot"g('q_{1}'(z))" ) )
       }
 
       "Correctly convert from type o to i on the termlevel" in {
@@ -69,9 +68,7 @@ class hol2folTest extends Specification {
           ImpC.name,
           List(
             FOLVar( "x" ),
-            FOLVar( "y" )
-          )
-        ) ) )
+            FOLVar( "y" ) ) ) ) )
 
         val red = reduceHolToFol( f1 )
         red must beEqualTo( f2 )
@@ -84,8 +81,7 @@ class hol2folTest extends Specification {
       skipped( "TODO: fix this!" )
       val fterm1 = FOLFunction( "f", List(
         FOLConst( "q_1" ),
-        FOLConst( "c" )
-      ) )
+        FOLConst( "c" ) ) )
 
       val fterm2 = All(
         FOLVar( "x" ),
@@ -93,10 +89,7 @@ class hol2folTest extends Specification {
           "P",
           List(
             FOLVar( "q_1" ),
-            FOLConst( "q_1" )
-          )
-        )
-      )
+            FOLConst( "q_1" ) ) ) )
 
       val hterm1 = changeTypeIn( fterm1, Map[String, Ty]( ( "q_1", Ti -> Ti ) ) )
       val hterm2 = changeTypeIn( fterm2, Map[String, Ty]( ( "q_1", Ti -> Ti ) ) )

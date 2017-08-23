@@ -16,8 +16,7 @@ case class MaxSatRecSchemFinder(
     instanceType:     Ty,
     grammarWeighting: Rule => Int,
     viaInst:          Boolean,
-    context:          Context
-) extends InductiveGrammarFindingMethod {
+    context:          Context ) extends InductiveGrammarFindingMethod {
   implicit def ctx = context
 
   val vs = for ( ( t, i ) <- paramTys.zipWithIndex ) yield Var( s"z$i", t )
@@ -94,8 +93,7 @@ object canonicalRsLHS {
               ctr <- ctrs.toList
               FunctionType( _, ctrArgTys ) = ctr.ty
             } yield ctr(
-              ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _*
-            )
+              ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _* )
           }
           import cats.instances.list._
           import cats.syntax.traverse._
@@ -136,8 +134,7 @@ object qbupForRecSchem {
         Rule( lhs_, rhs ) <- recSchem.rules
         subst <- syntacticMatching( lhs_, lhs )
       } yield convert( subst( rhs ) ) )
-        --> convert( lhs ) ).toImplication
-    ) ) )
+        --> convert( lhs ) ).toImplication ) ) )
   }
 }
 
@@ -202,8 +199,7 @@ object hSolveQBUP {
         case nextOcc @ Apps( `x`, _ ) => mkCanSol( nextOcc )
         case notX                     => notX
       }.toNegConjunction ).headOption.getOrElse(
-        throw new IllegalArgumentException( s"Cannot backchain $xInst in:\n\n${qbupSequents.mkString( "\n\n" )}" )
-      )
+        throw new IllegalArgumentException( s"Cannot backchain $xInst in:\n\n${qbupSequents.mkString( "\n\n" )}" ) )
 
     mkCanSol( xInst )
   }

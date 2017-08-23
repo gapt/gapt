@@ -19,25 +19,21 @@ object unfoldInduction {
     val ( primaryArguments, _ ) = arguments.partition(
       argument => {
         argument.ty == inductionType
-      }
-    )
+      } )
     val argumentProofs = primaryArguments map (
       argument => {
         unfoldInduction( InductionRule( inductionCases, inductionFormula, argument ) )
-      }
-    )
+      } )
 
     val Seq( inductionCase ) = inductionCases filter { _.constructor == constructor }
 
     val proofWithRedundancy = argumentProofs.foldRight( inductionStepProof( arguments, inductionCase ) )(
       ( argumentProof, mainProof ) => {
         CutRule( argumentProof, mainProof, argumentProof.endSequent.succedent.last )
-      }
-    )
+      } )
     WeakeningMacroRule(
       ContractionMacroRule( proofWithRedundancy, proof.endSequent, false ),
-      proof.endSequent, false
-    )
+      proof.endSequent, false )
   }
 
   /**
@@ -52,8 +48,7 @@ object unfoldInduction {
   private def inductionStepProof( arguments: Seq[Expr], inductionCase: InductionCase ): LKProof = {
     val InductionCase( proof, _, _, eigenVariables, _ ) = inductionCase
     val substitution = new Substitution(
-      Map[Var, Expr]( eigenVariables.zip( arguments ): _* )
-    )
+      Map[Var, Expr]( eigenVariables.zip( arguments ): _* ) )
     LKProofSubstitutableDefault.applySubstitution( substitution, proof )
   }
 

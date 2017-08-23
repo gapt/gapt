@@ -72,8 +72,7 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
   def Parens = rule {
     '(' ~ WhiteSpace ~ optional( SExpr ~ (
       ( '.' ~ WhiteSpace ~ SExpr ~> LCons ) |
-      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => LList( ( car +: cdr ): _* ) ) )
-    ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList() ) }
+      ( zeroOrMore( SExpr ) ~> ( ( car: lisp.SExpression, cdr: Seq[lisp.SExpression] ) => LList( ( car +: cdr ): _* ) ) ) ) ) ~ ')' ~ WhiteSpace ~> { _.getOrElse( LList() ) }
   }
 
   def File: Rule1[Seq[lisp.SExpression]] = rule { WhiteSpace ~ zeroOrMore( SExpr ) ~ EOI }

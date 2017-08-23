@@ -28,15 +28,13 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "correctly compute the language" in {
       val g = vtg(
         Seq( "x", "y1,y2" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
-      )
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
     "compute the language if a non-terminal has no productions" in {
       val g = vtg(
         Seq( "x", "y1,y2", "z1,z2,z3" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
-      )
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
       g.language must_== Set( "r(c,d)", "r(d,c)" ).map( parseTerm )
     }
   }
@@ -93,24 +91,21 @@ class GrammarFindingTest extends Specification with SatMatchers {
     "work for production vectors" in {
       val g = vtg(
         Seq( "x", "y1,y2" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" )
-      )
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d" ), Seq( "y1->d", "y2->c" ) )
       covers( g, "r(c,d)", "r(d,c)" )
       doesNotCover( g, "r(c,c)", "r(d,d)" )
     }
     "undefined values" in {
       val g = vtg(
         Seq( "x", "y1,y2,y3" ),
-        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" )
-      )
+        Seq( "x->r(y1,y2)" ), Seq( "y1->c", "y2->d", "y3->d" ), Seq( "y1->d", "y2->c", "y3->e" ) )
       covers( g, "r(c,d)", "r(d,c)" )
       doesNotCover( g, "r(c,c)", "r(d,d)" )
     }
     "not require unnecessary productions" in {
       val g = vtg(
         Seq( "x", "y", "z" ),
-        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" )
-      )
+        Seq( "x->r(y)" ), Seq( "x->r(z)" ), Seq( "y->c" ), Seq( "z->d" ) )
       val p = List( "z->d" ) map parseProduction unzip
 
       val f = new VtratgTermGenerationFormula( g, parseTerm( "r(c)" ) )
@@ -126,8 +121,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
       val formula = new VectGrammarMinimizationFormula( g )
       And(
         formula.generatesTerm( parseTerm( "c" ) ),
-        Neg( formula.productionIsIncluded( p ) )
-      ) must beUnsat
+        Neg( formula.productionIsIncluded( p ) ) ) must beUnsat
     }
     "Lang((x, {x -> c, y -> d})) = {c}" in {
       val g = tg( "x->c", "y->d" )
@@ -150,8 +144,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq( "x", "y1,y2" ),
         Seq( "x->f(y1,y2)" ),
         Seq( "x->f(y2,y1)" ),
-        Seq( "x->f(c,y2)" )
-      )
+        Seq( "x->f(c,y2)" ) )
       doesNotCover( g, "f(c,d)" )
     }
     "should not require impossible values" in {
@@ -159,8 +152,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq( "x", "y", "z" ),
         Seq( "x->f(y,z)" ),
         Seq( "y->z" ),
-        Seq( "z->a" )
-      )
+        Seq( "z->a" ) )
       doesNotCover( g, "f(b,a)" )
     }
     "unique vector assignments" in {
@@ -169,8 +161,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq( "x->f(y1,y2)" ),
         Seq( "x->f(y2,y1)" ),
         Seq( "x->f(y2,y3)" ),
-        Seq( "y1->c", "y2->d", "y3->d" )
-      )
+        Seq( "y1->c", "y2->d", "y3->d" ) )
       val formula = new VtratgTermGenerationFormula( g, parseTerm( "f(c,d)" ) )
       formula.formula & -formula.vectProductionIsIncluded( List( parseProduction( "x->f(y1,y2)" ) ).unzip ) must beUnsat
     }
@@ -190,15 +181,13 @@ class GrammarFindingTest extends Specification with SatMatchers {
         Seq( "x", "y" ),
         Seq( "x->f(c)" ),
         Seq( "x->f(y)" ),
-        Seq( "y->c" )
-      )
+        Seq( "y->c" ) )
       val minG = minimizeVTRATG( g, Set( "f(c)" ) map parseTerm,
         weight = prod => if ( prod == List( parseProduction( "x->f(c)" ) ).unzip ) 3 else 1 )
       minG must_== vtg(
         Seq( "x", "y" ),
         Seq( "x->f(y)" ),
-        Seq( "y->c" )
-      )
+        Seq( "y->c" ) )
     }
   }
 
@@ -221,9 +210,7 @@ class GrammarFindingTest extends Specification with SatMatchers {
           "f(e,c,c)", "f(e,d,c)", "f(e,e,c)",
           "f(c,c,d)", "f(c,d,d)", "f(c,e,d)",
           "f(d,c,d)", "f(d,d,d)", "f(d,e,d)",
-          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)"
-        ) -> 8
-      ) ) {
+          "f(e,c,d)", "f(e,d,d)", "f(e,e,d)" ) -> 8 ) ) {
         case ( ( n, l_str ), sizeOfMinG ) =>
           val l = l_str map parseTerm
           s"for $l with $n non-terminals" in {

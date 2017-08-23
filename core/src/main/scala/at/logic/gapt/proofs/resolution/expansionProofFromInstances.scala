@@ -8,8 +8,7 @@ object expansionProofFromInstances {
   def apply[S <: Substitution](
     substitutions:          Map[HOLClause, Set[S]],
     justifications:         Set[ResolutionProof],
-    pureFOLwithoutEquality: Boolean                = false
-  ): ExpansionProof = {
+    pureFOLwithoutEquality: Boolean                = false ): ExpansionProof = {
     require( substitutions.keySet.toSet[HOLSequent] subsetOf justifications.map( _.conclusion ) )
 
     val proofs = for {

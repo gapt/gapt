@@ -25,8 +25,7 @@ class InductionUnfoldingOnTreesTest extends Specification {
     "as1" -> hof"size(leaf) = 0",
     "as2" -> hof"∀t1 ∀t2 ∀x size(node(t1,t2,x)) = size(t1) + size(t2)",
     "am1" -> hof"mirror(leaf) = leaf",
-    "am2" -> hof"∀t1 ∀t2 ∀x mirror(node(t1,t2,x)) = node(mirror(t1),mirror(t2),x)"
-  )
+    "am2" -> hof"∀t1 ∀t2 ∀x mirror(node(t1,t2,x)) = node(mirror(t1),mirror(t2),x)" )
 
   val goal = hof"size(t) = size(mirror(t))"
 
@@ -43,13 +42,11 @@ class InductionUnfoldingOnTreesTest extends Specification {
 
   val inductiveGroundProof1 = LKProofSubstitutableDefault.applySubstitution(
     new Substitution( Map( hov"t:tree" -> testTerm1 ) ),
-    general_proof_goal
-  )
+    general_proof_goal )
 
   val inductiveGroundProof2 = LKProofSubstitutableDefault.applySubstitution(
     new Substitution( Map( hov"t:tree" -> testTerm2 ) ),
-    general_proof_goal
-  )
+    general_proof_goal )
 
   "unfolding induction for base term" in {
     val inductivePart = inductiveGroundProof2.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ).asInstanceOf[InductionRule]

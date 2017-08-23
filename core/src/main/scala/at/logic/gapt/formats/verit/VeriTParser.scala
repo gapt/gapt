@@ -123,7 +123,7 @@ object VeriTParser extends RegexParsers {
 
   // Assuming all the antecedents of the implication are ordered:
   // ( =(x0, y0)  ^  =(x1, y1)  ^ ... ^  =(xn, yn) ^ p(x0...xn)  ->  p(y0...yn) )
-  // in veriT is *always* 
+  // in veriT is *always*
   // ( not =(x0, y0) , not =(x1, y1) , ... , not =(xn, yn), not p(x0...xn), p(y0...yn) )
   // or
   // ( not =(x0, y0) , not =(x1, y1) , ... , not =(xn, yn), p(x0...xn), not p(y0...yn) )
@@ -337,7 +337,7 @@ object VeriTParser extends RegexParsers {
   // (let (v1 t1) ... (vn tn) exp)
   // which is equivalent to the lambda-expression:
   // (\lambda v1 ... vn exp) t1 ... tn
-  // But we are not constructing the terms for now, first because we don't need 
+  // But we are not constructing the terms for now, first because we don't need
   // it and second because the garbage collector goes crazy and crashes while
   // constructing this huge lambda-term
   def let: Parser[FOLFormula] = "(" ~> "let" ~> "(" ~> rep( binding ) ~ ")" ~ expression <~ ")" ^^ {

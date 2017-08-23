@@ -25,8 +25,7 @@ class ViperTest extends Specification with SequentMatchers {
       "linear2par",
       "square",
       "minus", "plus0",
-      "prod_prop_31", "prod_prop_31_monomorphic"
-    ) ) { prob =>
+      "prod_prop_31", "prod_prop_31_monomorphic" ) ) { prob =>
       prob in {
         var opts0 = ViperOptions( fixup = false )
         if ( prob == "linear2par" )

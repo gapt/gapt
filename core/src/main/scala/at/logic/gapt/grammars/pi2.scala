@@ -23,8 +23,7 @@ import at.logic.gapt.utils.metrics
 case class Pi2PreGrammar(
     startSymbol: Var,
     alpha:       Var, betas: Vector[Var],
-    productions: Vector[( Var, Expr )]
-) {
+    productions: Vector[( Var, Expr )] ) {
   val nonTerminals = startSymbol +: betas :+ alpha
   require( nonTerminals == nonTerminals.distinct )
 
@@ -59,7 +58,7 @@ case class Pi2PreGrammar(
 }
 
 class Pi2Grammar( preGrammar: Pi2PreGrammar )
-    extends Pi2PreGrammar( preGrammar.startSymbol, preGrammar.alpha, preGrammar.betas, preGrammar.productions ) {
+  extends Pi2PreGrammar( preGrammar.startSymbol, preGrammar.alpha, preGrammar.betas, preGrammar.productions ) {
   for ( beta <- preGrammar.betas )
     require( productions.count( _._1 == beta ) == 1 )
 }
@@ -111,8 +110,7 @@ object minimizePi2Grammar {
 
     val betaCardinality =
       And( for ( beta <- g.betas ) yield thresholds.exactly.oneOf(
-        for ( p <- g.productions if p._1 == beta ) yield prodinc( p )
-      ) )
+        for ( p <- g.productions if p._1 == beta ) yield prodinc( p ) ) )
 
     val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )

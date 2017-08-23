@@ -118,8 +118,7 @@ object Pickrule {
         require( old_aux.size >= 2, p.name + " rule needs at least two old_aux formulas for lookup!" )
         List(
           pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ),
-          pick( old_parents( 0 ), old_aux( 1 ), s( 0 ).succedent )
-        )
+          pick( old_parents( 0 ), old_aux( 1 ), s( 0 ).succedent ) )
       case _: DefinitionLeftRule =>
         require( s.nonEmpty, "Unary rule needs at least one sequent for lookup!" )
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
@@ -162,8 +161,7 @@ object Pickrule {
         require( old_aux.nonEmpty, p.name + " rule needs at least one old_aux formula for lookup!" )
         List(
           pick( old_parents( 0 ), old_aux( 0 ), s( 0 ).antecedent ),
-          pick( old_parents( 0 ), old_aux( 1 ), s( 0 ).succedent )
-        )
+          pick( old_parents( 0 ), old_aux( 1 ), s( 0 ).succedent ) )
 
       //Binary rules
       case _: CutRule =>

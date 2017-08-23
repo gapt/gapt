@@ -3,10 +3,10 @@
  *
  * Transforms a function f: i0 -> ... -> in -> o into
  * \lambda x0:i0. ... \lambda xn:in f x0 ... xn
- * i.e. adds the lambda abstraction and new variables. 
+ * i.e. adds the lambda abstraction and new variables.
  * Note that etaExpantion is applied only to expressions in beta-normal form.
  *
- * Implemented according to Definition 2.25 of Higher-Order Unification and 
+ * Implemented according to Definition 2.25 of Higher-Order Unification and
  * Matching by Gilles Dowek (http://who.rocq.inria.fr/Gilles.Dowek/Publi/unification.ps)
  */
 

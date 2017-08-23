@@ -98,10 +98,8 @@ class ReplaceAtHOLPositionTest extends Specification {
       val xPos = ExyFxy.find( x ).head
       //println( xPos )
       replaceAtHOLPosition(
-        ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( Atom( F, x, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, x, b ), Polarity.InSuccedent ) ) ), xPos, b
-      ) should beEqualTo(
-          ETWeakQuantifier( Ex( y, Atom( F, b, y ) ), Map( a -> ETAtom( Atom( F, b, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, b, b ), Polarity.InSuccedent ) ) )
-        )
+        ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( Atom( F, x, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, x, b ), Polarity.InSuccedent ) ) ), xPos, b ) should beEqualTo(
+          ETWeakQuantifier( Ex( y, Atom( F, b, y ) ), Map( a -> ETAtom( Atom( F, b, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, b, b ), Polarity.InSuccedent ) ) ) )
     }
   }
 }

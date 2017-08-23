@@ -12,23 +12,20 @@ object structuralCNF {
     endSequent:        HOLSequent,
     propositional:     Boolean    = false,
     structural:        Boolean    = true,
-    bidirectionalDefs: Boolean    = false
-  ): Set[ResolutionProof] = {
+    bidirectionalDefs: Boolean    = false ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     onProofs(
       endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input ).elements,
-      propositional, structural, bidirectionalDefs
-    )
+      propositional, structural, bidirectionalDefs )
   }
 
   def onProofs(
     proofs:            Iterable[ResolutionProof],
     propositional:     Boolean                   = false,
     structural:        Boolean                   = true,
-    bidirectionalDefs: Boolean                   = false
-  ): Set[ResolutionProof] = {
+    bidirectionalDefs: Boolean                   = false ): Set[ResolutionProof] = {
     val clausifier = new Clausifier( propositional, structural, bidirectionalDefs, rename.awayFrom( proofs.flatMap( containedNames( _ ) ) ) )
     proofs foreach clausifier.expand
     clausifier.cnf.toSet
@@ -38,8 +35,7 @@ object structuralCNF {
 class Clausifier(
     propositional: Boolean, structural: Boolean,
     bidirectionalDefs: Boolean,
-    nameGen:           NameGenerator
-) {
+    nameGen:           NameGenerator ) {
   val cnf = mutable.Set[ResolutionProof]()
   val defs = mutable.Map[Expr, HOLAtomConst]()
   val skConsts = mutable.Map[Expr, Const]()
@@ -52,8 +48,7 @@ class Clausifier(
     val skolemizedFormula = Abs( fvs, f )
     val skolemConst = skConsts.getOrElseUpdate(
       skolemizedFormula,
-      Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) )
-    )
+      Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) ) )
     ( skolemConst( fvs: _* ), skolemizedFormula )
   }
 
@@ -144,8 +139,7 @@ class Clausifier(
     val alreadyDefined = defs isDefinedAt definedFormula
     val const = defs.getOrElseUpdate(
       definedFormula,
-      HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* )
-    )
+      HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* ) )
     if ( !alreadyDefined ) {
       val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definedFormula ) )( AllR( _, Suc( 0 ), _ ) )
       if ( i.isAnt || bidirectionalDefs ) expand( AndR2( defn, Suc( 0 ) ) )

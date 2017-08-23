@@ -38,4 +38,4 @@ import at.logic.gapt.provers.spass._
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.utils._
 import cats.syntax.all._, cats.instances.all._, EitherHelpers._
-import at.logic.gapt.cli.GPL.{apply => copying, printLicense => license}
+import at.logic.gapt.cli.GPL.{ apply => copying, printLicense => license }

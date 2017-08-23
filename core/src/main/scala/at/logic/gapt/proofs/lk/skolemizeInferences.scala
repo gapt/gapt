@@ -10,8 +10,7 @@ import scala.collection.mutable
 private class skolemizeInferences(
     nameGen:            NameGenerator,
     proofTheoretic:     Boolean,
-    skolemizeAboveCuts: Boolean
-) {
+    skolemizeAboveCuts: Boolean ) {
   type PosInEndSequent = Seq[Int]
 
   val skolemDefs = mutable.Map[( Expr, PosInEndSequent ), Const]()
@@ -31,8 +30,7 @@ private class skolemizeInferences(
       generalizedFormulas:         Seq[Formula],
       isCutAnc:                    Boolean,
       lowerWeakQuantifierTermVars: Seq[Var],
-      position:                    PosInEndSequent
-  ) {
+      position:                    PosInEndSequent ) {
     val generalizedFormula = generalizedFormulas.head
 
     def atPosition( pos: Int* ): Info = atPosition( HOLPosition( pos: _* ) )
@@ -43,8 +41,7 @@ private class skolemizeInferences(
       copy(
         generalizedFormulas = generalizedFormulas.
           collect { case quant @ Quant( _, _, _ ) => BetaReduction.betaNormalize( instantiate( quant, term ) ) },
-        position = position :+ 1
-      )
+        position = position :+ 1 )
 
     def instantiateWeakQuantifier( freshVar: Var ) =
       instantiateQuantifier( freshVar ).copy( lowerWeakQuantifierTermVars = lowerWeakQuantifierTermVars :+ freshVar )
@@ -88,40 +85,34 @@ private class skolemizeInferences(
           p.getSequentConnector.parent( info ).
             updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ).
             updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ),
-          subst
-        ), a1, a2 )
+          subst ), a1, a2 )
       case p @ OrRightRule( q, a1, a2 ) =>
         OrRightRule( apply(
           q,
           p.getSequentConnector.parent( info ).
             updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ).
             updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ),
-          subst
-        ), a1, a2 )
+          subst ), a1, a2 )
       case p @ ImpRightRule( q, a1, a2 ) =>
         ImpRightRule( apply(
           q,
           p.getSequentConnector.parent( info ).
             updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ).
             updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ),
-          subst
-        ), a1, a2 )
+          subst ), a1, a2 )
 
       case p @ AndRightRule( q1, a1, q2, a2 ) =>
         AndRightRule(
           apply( q1, p.getLeftSequentConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
-          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
-        )
+          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2 )
       case p @ OrLeftRule( q1, a1, q2, a2 ) =>
         OrLeftRule(
           apply( q1, p.getLeftSequentConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
-          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
-        )
+          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2 )
       case p @ ImpLeftRule( q1, a1, q2, a2 ) =>
         ImpLeftRule(
           apply( q1, p.getLeftSequentConnector.parent( info ).updated( a1, info( p.mainIndices.head ).atPosition( 1 ) ), subst ), a1,
-          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2
-        )
+          apply( q2, p.getRightSequentConnector.parent( info ).updated( a2, info( p.mainIndices.head ).atPosition( 2 ) ), subst ), a2 )
 
       case p: EqualityRule =>
         val subProofNew =
@@ -137,8 +128,7 @@ private class skolemizeInferences(
       case p @ CutRule( q1, a1, q2, a2 ) =>
         CutRule(
           apply( q1, p.getLeftSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a1,
-          apply( q2, p.getRightSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2
-        )
+          apply( q2, p.getRightSequentConnector.parent( info, Info( Seq( p.cutFormula ), isCutAnc = true, Seq(), Seq( -1 ) ) ), subst ), a2 )
 
       case p @ DefinitionLeftRule( q, a, m ) =>
         val qNew = apply( q, p.getSequentConnector.parent( info ).
@@ -184,8 +174,7 @@ private class skolemizeInferences(
         val skolemDef = Abs( argVars, genFormula )
         val skolemConst = skolemDefs.getOrElseUpdate(
           ( skolemDef, if ( proofTheoretic ) info( p.mainIndices.head ).position else Seq() ),
-          Const( nameGen freshWithIndex "s", FunctionType( eigen.ty, argVars.map( _.ty ) ) )
-        )
+          Const( nameGen freshWithIndex "s", FunctionType( eigen.ty, argVars.map( _.ty ) ) ) )
         val skolemTerm = skolemConst( argVars: _* )
         val q_ = apply( q, p.occConnectors.head.parent( info ).
           updated( a, info( p.mainIndices.head ).instantiateQuantifier( skolemTerm ) ),
@@ -212,7 +201,6 @@ object skolemizeInferences {
       p_,
       for ( ( f, i ) <- p_.endSequent.zipWithIndex )
         yield conv.Info( Seq( f ), isCutAnc = false, Seq(), Seq( i.toInt ) ),
-      Substitution()
-    )
+      Substitution() )
   }
 }

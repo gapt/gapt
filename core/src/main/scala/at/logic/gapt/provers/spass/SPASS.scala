@@ -159,8 +159,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
       } else {
         None
       }
-    }
-  )
+    } )
 
   class InferenceParser( val input: ParserInput ) extends Parser {
     def Num = rule { capture( oneOrMore( CharPredicate.Digit ) ) ~> { _.toInt } }

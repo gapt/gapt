@@ -27,8 +27,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }
-      }
-    ) map {
+      } ) map {
         mapInputClauses( _ ) { clause =>
           cnf.view flatMap { ourClause =>
             syntacticMatching( ourClause.toDisjunction, clause.toDisjunction ) map { Subst( Input( ourClause ), _ ) }
@@ -89,8 +88,7 @@ object Prover9Importer extends ExternalProgram {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
     val fixedP9Output = runProcess(
       Seq( "prooftrans" ),
-      loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ).read
-    )
+      loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ).read )
 
     Prover9 parseProof fixedP9Output
   }

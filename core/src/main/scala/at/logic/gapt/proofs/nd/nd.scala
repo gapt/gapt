@@ -261,7 +261,7 @@ object InitialSequent {
  * @param formula The formula A.
  */
 case class WeakeningRule( subProof: NDProof, formula: Formula )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
   override def auxIndices = Seq( Seq() )
   override def name = "wkn"
   def mainFormula = formula
@@ -391,7 +391,7 @@ object LogicalAxiom extends ConvenienceConstructor( "LogicalAxiom" ) {
  * @param subProof The subproof π.
  */
 case class AndElim1Rule( subProof: NDProof )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   val conjunction = premise( Suc( 0 ) )
 
@@ -419,7 +419,7 @@ case class AndElim1Rule( subProof: NDProof )
  * @param subProof The subproof π.
  */
 case class AndElim2Rule( subProof: NDProof )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   val conjunction = premise( Suc( 0 ) )
 
@@ -448,7 +448,7 @@ case class AndElim2Rule( subProof: NDProof )
  * @param rightSubProof The proof π,,2,,.
  */
 case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
-    extends BinaryNDProof with CommonRule {
+  extends BinaryNDProof with CommonRule {
 
   val leftConjunct = leftPremise( Suc( 0 ) )
   val rightConjunct = rightPremise( Suc( 0 ) )
@@ -478,7 +478,7 @@ case class AndIntroRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * @param aux2 The index of B.
  */
 case class OrElimRule( leftSubProof: NDProof, middleSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
-    extends TernaryNDProof with CommonRule {
+  extends TernaryNDProof with CommonRule {
 
   validateIndices( middlePremise, Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ) )
@@ -543,7 +543,7 @@ object OrElimRule extends ConvenienceConstructor( "OrElimRule" ) {
  * @param rightDisjunct The formula B.
  */
 case class OrIntro1Rule( subProof: NDProof, rightDisjunct: Formula )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   val leftDisjunct = premise( Suc( 0 ) )
   val mainFormula = Or( leftDisjunct, rightDisjunct )
@@ -568,7 +568,7 @@ case class OrIntro1Rule( subProof: NDProof, rightDisjunct: Formula )
  * @param leftDisjunct The formula B.
  */
 case class OrIntro2Rule( subProof: NDProof, leftDisjunct: Formula )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   val rightDisjunct = premise( Suc( 0 ) )
   val mainFormula = Or( leftDisjunct, rightDisjunct )
@@ -593,7 +593,7 @@ case class OrIntro2Rule( subProof: NDProof, leftDisjunct: Formula )
  * @param rightSubProof The proof π,,2,,.
  */
 case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
-    extends BinaryNDProof with CommonRule {
+  extends BinaryNDProof with CommonRule {
 
   val implication = leftPremise( Suc( 0 ) )
   val antecedent = rightPremise( Suc( 0 ) )
@@ -624,7 +624,7 @@ case class ImpElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * @param aux The index of A.
  */
 case class ImpIntroRule( subProof: NDProof, aux: SequentIndex )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   validateIndices( premise, Seq( aux ) )
 
@@ -690,7 +690,7 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
  * @param rightSubProof The proof π,,2,,.
  */
 case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
-    extends BinaryNDProof with CommonRule {
+  extends BinaryNDProof with CommonRule {
 
   val negatedFormula = leftPremise( Suc( 0 ) )
   val formula = rightPremise( Suc( 0 ) )
@@ -717,7 +717,7 @@ case class NegElimRule( leftSubProof: NDProof, rightSubProof: NDProof )
  * @param aux The index of A.
  */
 case class NegIntroRule( subProof: NDProof, aux: SequentIndex )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   validateIndices( premise, Seq( aux ) )
 
@@ -800,7 +800,7 @@ case class TopIntroRule() extends InitialSequent {
  * @param mainFormula The formula A.
  */
 case class BottomElimRule( subProof: NDProof, mainFormula: Formula )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   val bottom = premise( Suc( 0 ) )
 
@@ -828,7 +828,7 @@ case class BottomElimRule( subProof: NDProof, mainFormula: Formula )
  * @param quantifiedVariable The variable x.
  */
 case class ForallIntroRule( subProof: NDProof, eigenVariable: Var, quantifiedVariable: Var )
-    extends UnaryNDProof with CommonRule with Eigenvariable {
+  extends UnaryNDProof with CommonRule with Eigenvariable {
 
   val ( auxFormula, context ) = premise focus Suc( 0 )
 
@@ -887,7 +887,7 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
  * @param term The term t.
  */
 case class ForallElimRule( subProof: NDProof, term: Expr )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   val universal = premise( Suc( 0 ) )
 
@@ -943,7 +943,7 @@ object ForallElimBlock {
  * @param v The variable x.
  */
 case class ExistsIntroRule( subProof: NDProof, A: Formula, term: Expr, v: Var )
-    extends UnaryNDProof with CommonRule {
+  extends UnaryNDProof with CommonRule {
 
   if ( premise( Suc( 0 ) ) != BetaReduction.betaNormalize( Substitution( v, term )( A ) ) )
     throw NDRuleCreationException( s"Substituting $term for $v in $A does not result in ${premise( Suc( 0 ) )}." )
@@ -1012,7 +1012,7 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
  * @param eigenVariable The variable α.
  */
 case class ExistsElimRule( leftSubProof: NDProof, rightSubProof: NDProof, aux: SequentIndex, eigenVariable: Var )
-    extends BinaryNDProof with CommonRule with Eigenvariable {
+  extends BinaryNDProof with CommonRule with Eigenvariable {
 
   validateIndices( rightPremise, Seq( aux ) )
 
@@ -1118,7 +1118,7 @@ case class TheoryAxiom( mainFormula: Formula ) extends InitialSequent {
  * @param variablex The variable x.
  */
 case class EqualityElimRule( leftSubProof: NDProof, rightSubProof: NDProof, formulaA: Formula, variablex: Var )
-    extends BinaryNDProof with CommonRule {
+  extends BinaryNDProof with CommonRule {
 
   val eqFormula = leftPremise( Suc( 0 ) )
   val ( s, t ) = eqFormula match {
@@ -1281,7 +1281,7 @@ case class InductionRule( cases: Seq[InductionCase], formula: Abs, term: Expr ) 
  * @param aux2 The index of ¬A.
  */
 case class ExcludedMiddleRule( leftSubProof: NDProof, aux1: SequentIndex, rightSubProof: NDProof, aux2: SequentIndex )
-    extends BinaryNDProof with CommonRule {
+  extends BinaryNDProof with CommonRule {
 
   validateIndices( leftPremise, Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ) )

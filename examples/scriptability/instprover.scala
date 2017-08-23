@@ -26,8 +26,7 @@ object instprover extends Script {
     if ( !done.contains( next ) ) for {
       clause2 <- done
       clause1 = FOLSubstitution(
-        rename( freeVariables( next ), freeVariables( clause2 ) )
-      )( next )
+        rename( freeVariables( next ), freeVariables( clause2 ) ) )( next )
       ( atom1, index1 ) <- clause1.zipWithIndex.elements
       ( atom2, index2 ) <- clause2.zipWithIndex.elements
       if !index2.sameSideAs( index1 )

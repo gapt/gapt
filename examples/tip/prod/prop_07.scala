@@ -20,8 +20,7 @@ object prop_07 extends TacticsProof {
   val lem_1 = (
     ( "ap1" -> hof"∀y plus(Z, y) = y" ) +:
     ( "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))" ) +:
-    Sequent() :+ ( "lem_1" -> hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))" )
-  )
+    Sequent() :+ ( "lem_1" -> hof"∀x ∀y plus(x,S(y)) = S(plus(x,y))" ) )
 
   val lem_1_proof = AnalyticInductionProver.singleInduction( lem_1, hov"x:Nat" )
 

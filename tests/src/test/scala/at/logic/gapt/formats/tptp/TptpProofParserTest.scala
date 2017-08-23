@@ -17,8 +17,7 @@ class TptpProofParserTest extends Specification {
     "LCL101-1_Vampire---4.0.UNS-REF.s",
     "SYN728-1_VampireZ3---1.0.UNS-Ref.s",
     "HEN005-6_SPASS-3.7.UNS-Ref.s",
-    "counting-cnf.vampire.tptp"
-  ) ) { fn =>
+    "counting-cnf.vampire.tptp" ) ) { fn =>
     fn in {
       val ( endSequent, sketch ) = TptpProofParser.parse( ClasspathInputFile( fn ) )
       sketch.conclusion must_== Clause()

@@ -98,8 +98,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     knownType: Boolean,
     bound:     Set[String],
     t0:        Map[String, VarOrConst],
-    p:         Int
-  ): ( Doc, Map[String, VarOrConst] ) =
+    p:         Int ): ( Doc, Map[String, VarOrConst] ) =
     expr match {
       case Top() if !bound( TopC.name )       => ( ( if ( unicode ) "⊤" else "true" ), t0 )
       case Bottom() if !bound( BottomC.name ) => ( ( if ( unicode ) "⊥" else "false" ), t0 )
@@ -164,8 +163,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     knownType: Boolean,
     bound:     Set[String],
     t0:        Map[String, VarOrConst],
-    p:         Int
-  ): ( Doc, Map[String, VarOrConst] ) = {
+    p:         Int ): ( Doc, Map[String, VarOrConst] ) = {
     val Apps( hd, args ) = expr
     val hdSym = hd match {
       case Const( n, _ ) => Some( n )
@@ -183,8 +181,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
     def showFunCall( hd_ :Doc, args_ : List[Doc], p: Int ) =
       parenIf( p, prio.app, hd_ ) <> nest( group( parens(
-        if ( args_.size == 1 ) args_.head else wordwrap( args_, "," )
-      ) ) )
+        if ( args_.size == 1 ) args_.head else wordwrap( args_, "," ) ) ) )
 
     val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
     if ( omitTypes || knownType || expr.ty == Ti || hdKnown1 ) {
@@ -206,8 +203,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     knownType:     Boolean,
     bound:         Set[String],
     t0:            Map[String, VarOrConst],
-    p:             Int
-  ): ( Doc, Map[String, VarOrConst] ) = {
+    p:             Int ): ( Doc, Map[String, VarOrConst] ) = {
     val ( a_, t1 ) = show( a, knownType, bound, t0, prio + leftPrioBias )
     val ( b_, t2 ) = show( b, knownType, bound, t1, prio + rightPrioBias )
     ( parenIf( p, prio, a_ <+> sym </> b_ ), t2 )
@@ -223,8 +219,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     knownType:     Boolean,
     bound:         Set[String],
     t0:            Map[String, VarOrConst],
-    p:             Int
-  ): ( Doc, Map[String, VarOrConst] ) = {
+    p:             Int ): ( Doc, Map[String, VarOrConst] ) = {
     val Const( cn, argt1 -> ( argt2 -> rett ) ) = c
     val cKnown = t0.get( cn ).contains( c )
     if ( t0.get( cn ).exists { _ != c } ) {
@@ -245,8 +240,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     e:     Expr,
     bound: Set[String],
     t0:    Map[String, VarOrConst],
-    p:     Int
-  ): ( Doc, Map[String, VarOrConst] ) = {
+    p:     Int ): ( Doc, Map[String, VarOrConst] ) = {
     val Var( vn, vt ) = v
     val ( e_, t1 ) = show( e, true, bound + vn, t0 - vn, prio.quantOrNeg + 1 )
     val v_ =

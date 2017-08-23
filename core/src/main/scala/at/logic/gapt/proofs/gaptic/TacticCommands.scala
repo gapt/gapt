@@ -702,6 +702,5 @@ trait TacticCommands {
   def viper( implicit ctx: Context ): ViperTactic = new ViperTactic
 
   def analyticInduction( implicit ctx: Context ) = AnalyticInductionTactic(
-    StandardInductionAxioms(), Escargot
-  )
+    StandardInductionAxioms(), Escargot )
 }

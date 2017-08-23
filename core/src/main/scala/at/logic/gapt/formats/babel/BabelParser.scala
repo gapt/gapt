@@ -28,8 +28,7 @@ object BabelLexical {
       ( "\\" ~ ( "'" | "\\" ).! ) |
       ( "\\u" ~ CharIn( ( 'a' to 'f' ) ++ ( '0' to '9' ) ).
         rep( min = 4, max = 4 ).!.
-        map( Integer.parseInt( _, 16 ).toChar.toString ) )
-  )
+        map( Integer.parseInt( _, 16 ).toChar.toString ) ) )
 
   val keywords = Set( "true", "false", "all", "exists" )
 

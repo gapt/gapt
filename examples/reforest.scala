@@ -6,8 +6,7 @@ import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 
 object ReforestDemo extends Script {
   val ( lang, _ ) = InstanceTermEncoding(
-    LinearExampleProof( 32 )
-  )
+    LinearExampleProof( 32 ) )
 
   val grammar = Reforest full Reforest.start( lang )
   println( grammar.toRecursionScheme )
@@ -16,6 +15,5 @@ object ReforestDemo extends Script {
   CutIntroduction.makeVerbose()
   CutIntroduction(
     SumExampleProof( 16 ),
-    method = ReforestMethod
-  )
+    method = ReforestMethod )
 }

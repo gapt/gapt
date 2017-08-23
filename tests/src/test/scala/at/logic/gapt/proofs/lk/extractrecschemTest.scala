@@ -16,8 +16,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       ( "base" -> hof"P c" ) +:
         ( "step" -> hof"!x (P x -> P (f x))" ) +:
         Sequent()
-        :+ ( "goal" -> hof"P (f (f (f (f c))))" )
-    ) {
+        :+ ( "goal" -> hof"P (f (f (f (f c))))" ) ) {
         cut( "step2", hof"!x (P x -> P (f (f x)))" )
         forget( "goal" ); decompose; escargot
         escargot
@@ -60,8 +59,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
     val p = Lemma(
       ( "hyp" -> hof"∀x ∀y P(x, x, y)" ) +:
         Sequent()
-        :+ ( "conj" -> hof"∃x P(c, x, d)" )
-    ) {
+        :+ ( "conj" -> hof"∃x P(c, x, d)" ) ) {
         cut( "cut", hof"∀x ∃y ∀z P(x, y, z)" )
         forget( "conj" ); decompose; exR( le"x" ).forget; decompose; chain( "hyp" )
         forget( "hyp" ); allL( le"c" ).forget; decompose; exR( le"y" ).forget; chain( "cut" )
@@ -83,8 +81,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       ( "base" -> hof"∀y p(Zero, y)" ) +:
         ( "step" -> hof"∀x ∀y (p(x, g y) ⊃ p(Suc x, y))" ) +:
         Sequent()
-        :+ ( "conj" -> hof"p(x, c)" )
-    ) {
+        :+ ( "conj" -> hof"p(x, c)" ) ) {
         cut( "cut", hof"∀x ∀y p(x, y)" ); forget( "conj" )
         allR; induction( hov"x:Nat" ).onAll( decompose )
         chain( "base" )
@@ -126,8 +123,7 @@ class Pi2FactorialPOC extends Specification with SatMatchers {
     le"B 0 y X" -> le"g y 0 = y",
     le"B 0 y X" -> le"f 0 = s 0",
     le"B 0 y X" -> le"s 0 * s 0 = s 0",
-    le"B 0 y X" -> le"X (s 0): o"
-  )
+    le"B 0 y X" -> le"X (s 0): o" )
 
   def lang( i: Int ) = hors.parametricLanguage( Numeral( i ) ).map( _.asInstanceOf[Formula] )
 

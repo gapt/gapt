@@ -16,7 +16,6 @@ object cutintro extends Script {
   CutIntroduction.makeVerbose()
   CutIntroduction(
     constructedProof,
-    method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) )
-  )
+    method = DeltaTableMethod( singleQuantifier = false, subsumedRowMerging = true, keyLimit = Some( 3 ) ) )
 
 }

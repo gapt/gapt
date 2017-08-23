@@ -18,8 +18,7 @@ object prop_35 extends TacticsProof {
   val domainClosureAxiom = hof"xs = nil ∨ xs = cons(head(xs),tail(xs))"
 
   val proofDca = Lemma(
-    sequent.antecedent ++: Sequent() :+ ( "dca" -> domainClosureAxiom )
-  ) {
+    sequent.antecedent ++: Sequent() :+ ( "dca" -> domainClosureAxiom ) ) {
       induction( hov"xs:list" )
       orR
       refl

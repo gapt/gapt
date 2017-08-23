@@ -59,8 +59,7 @@ object cutFormulas {
     {
       case CutRule( p, o, _, _ ) => List( p.conclusion( o ) )
       case _                     => List()
-    }
-  ).toSet
+    } ).toSet
 }
 
 object isRegular {

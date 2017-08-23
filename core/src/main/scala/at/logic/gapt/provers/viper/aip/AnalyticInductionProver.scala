@@ -11,9 +11,8 @@ import at.logic.gapt.provers.viper.aip.axioms.{ Axiom, AxiomFactory, SequentialI
 import cats.syntax.all._
 
 case class ProverOptions(
-  prover:       ResolutionProver = Escargot,
-  axiomFactory: AxiomFactory     = SequentialInductionAxioms()
-)
+    prover:       ResolutionProver = Escargot,
+    axiomFactory: AxiomFactory     = SequentialInductionAxioms() )
 
 object AnalyticInductionProver {
 
@@ -44,8 +43,7 @@ object AnalyticInductionProver {
    * @return A new analytic induction prover that uses the provided objects for proof search.
    */
   def apply( axioms: AxiomFactory, prover: ResolutionProver ) = new AnalyticInductionProver(
-    new ProverOptions( prover, axioms )
-  )
+    new ProverOptions( prover, axioms ) )
 }
 
 class AnalyticInductionProver( options: ProverOptions ) {
@@ -73,8 +71,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         not terminate.
    */
   def lkProof(
-    sequent: Sequent[( String, Formula )]
-  )( implicit ctx: Context ) = options.prover.getLKProof( inductiveSequent( sequent ) )
+    sequent: Sequent[( String, Formula )] )( implicit ctx: Context ) = options.prover.getLKProof( inductiveSequent( sequent ) )
 
   /**
    * Proves a TIP problem by using induction.
@@ -157,8 +154,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         quantified variables.
    */
   private def inductiveSequent(
-    sequent: Sequent[( String, Formula )]
-  )( implicit ctx: Context ): HOLSequent =
+    sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): HOLSequent =
     validate( prepareSequent( sequent ) )
 
   /**
@@ -171,8 +167,7 @@ class AnalyticInductionProver( options: ProverOptions ) {
    *         Otherwise a string describing the error is returned.
    */
   private def prepareSequent(
-    sequent: Sequent[( String, Formula )]
-  )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
+    sequent: Sequent[( String, Formula )] )( implicit ctx: Context ): ThrowsError[HOLSequent] = {
     for {
       axioms <- options.axiomFactory( sequent )
     } yield {

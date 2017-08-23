@@ -37,8 +37,7 @@ class SequentProofViewer[F, T <: SequentProof[F, T]]( name: String, proof: Seque
     Set(),
     Set(),
     sequent_element_renderer,
-    Nil
-  )
+    Nil )
 
   scrollPane.border = Swing.EmptyBorder( 0, 0, 10, 0 )
 

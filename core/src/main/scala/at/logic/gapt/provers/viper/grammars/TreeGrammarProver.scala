@@ -19,19 +19,18 @@ import at.logic.gapt.utils.Logger
 import scala.collection.mutable
 
 case class TreeGrammarProverOptions(
-  instanceNumber: Int        = 10,
-  instanceSize:   FloatRange = ( 0, 2 ),
-  instanceProver: Prover     = Escargot,
-  smtSolver: Prover = if ( VeriT.isInstalled ) VeriT
-  else new Escargot( splitting = true, propositional = true, equality = true ),
-  findingMethod:    String              = "maxsat",
-  quantTys:         Option[Seq[String]] = None,
-  grammarWeighting: Rule => Int         = _ => 1,
-  tautCheckNumber:  Int                 = 10,
-  tautCheckSize:    FloatRange          = ( 2, 3 ),
-  canSolSize:       FloatRange          = ( 2, 4 ),
-  forgetOne:        Boolean             = false
-)
+    instanceNumber: Int        = 10,
+    instanceSize:   FloatRange = ( 0, 2 ),
+    instanceProver: Prover     = Escargot,
+    smtSolver: Prover = if ( VeriT.isInstalled ) VeriT
+    else new Escargot( splitting = true, propositional = true, equality = true ),
+    findingMethod:    String              = "maxsat",
+    quantTys:         Option[Seq[String]] = None,
+    grammarWeighting: Rule => Int         = _ => 1,
+    tautCheckNumber:  Int                 = 10,
+    tautCheckSize:    FloatRange          = ( 2, 3 ),
+    canSolSize:       FloatRange          = ( 2, 4 ),
+    forgetOne:        Boolean             = false )
 
 object TreeGrammarProverOptions {
   type FloatRange = ( Float, Float )
@@ -79,8 +78,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
         val genLang = spwi.generatedLanguage( inst )
         require(
           smtSolver.isValid( And( genLang ) --> instantiate( conj, inst ) ),
-          s"Generated instance language for $inst not tautological:\n${genLang.map( _.toSigRelativeString ).mkString( "\n" )}"
-        )
+          s"Generated instance language for $inst not tautological:\n${genLang.map( _.toSigRelativeString ).mkString( "\n" )}" )
       }
 
       findMinimalCounterexample( instanceProofs.keys, spwi ) match {
@@ -108,8 +106,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       val genLang = spwi.generatedLanguage( inst ).map( encoding.encode )
       require(
         terms.map { _._2 }.toSet subsetOf genLang,
-        s"Terms not covered by recursion scheme in $inst:\n${terms.map { _._2.toSigRelativeString }.mkString( "\n" )}"
-      )
+        s"Terms not covered by recursion scheme in $inst:\n${terms.map { _._2.toSigRelativeString }.mkString( "\n" )}" )
     }
 
     spwi
@@ -179,8 +176,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     }
     require(
       smtSolver.isValid( instProof.deep ),
-      s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}"
-    )
+      s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}" )
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )

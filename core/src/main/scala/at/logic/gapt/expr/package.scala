@@ -6,8 +6,7 @@ import at.logic.gapt.utils.NameGenerator
 package object expr {
 
   implicit def stringInterpolationForExpressions(
-    sc: StringContext
-  )( implicit file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) =
+    sc: StringContext )( implicit file: sourcecode.File, line: sourcecode.Line, sig: BabelSignature ) =
     new ExpressionParseHelper( sc, file, line, sig )
 
   // Type aliases that assert that a type `T` is closed under Substitution and FOLSubstitution, respectively.

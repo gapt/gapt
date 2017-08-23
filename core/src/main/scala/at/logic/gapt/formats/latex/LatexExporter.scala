@@ -128,8 +128,7 @@ object LatexExporter {
     'ω' -> "\\omega",
 
     '-' -> "\\text{-}",
-    '_' -> "\\_"
-  )
+    '_' -> "\\_" )
   private val indexedName = """(.*)_(\d+)""".r
   def escapeName( s: String ): String = s match {
     case indexedName( prefix, index ) => s"{${escapeName( prefix )}}_{$index}"
@@ -168,8 +167,7 @@ object LatexExporter {
       s"""\\begin{prooftree}
        |${inferences( p )}
        |\\end{prooftree}""".stripMargin,
-      "\\usepackage{bussproofs}"
-    )
+      "\\usepackage{bussproofs}" )
 
   // LaTeX documents
 

@@ -8,8 +8,7 @@ object clauseSubsumption {
     to:                  Sequent[Expr],
     alreadyFixed:        PreSubstitution   = PreSubstitution(),
     multisetSubsumption: Boolean           = false,
-    matchingAlgorithm:   MatchingAlgorithm = syntacticMatching
-  ): Option[Substitution] = {
+    matchingAlgorithm:   MatchingAlgorithm = syntacticMatching ): Option[Substitution] = {
     if ( multisetSubsumption )
       if ( from.antecedent.size > to.antecedent.size || from.succedent.size > to.succedent.size )
         return None
@@ -23,8 +22,7 @@ object clauseSubsumption {
         if ( multisetSubsumption ) to delete chosenTo else to,
         newSubst,
         multisetSubsumption,
-        matchingAlgorithm
-      )
+        matchingAlgorithm )
     } return Some( subsumption )
     None
   }

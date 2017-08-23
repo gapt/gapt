@@ -144,9 +144,7 @@ class ResolutionToLKTest extends Specification with SequentMatchers with SatMatc
         Paramod(
           Input( Clause() :+ hoa"a = b" ), Suc( 0 ), true,
           Input( Clause() :+ hoa"p a a" ), Suc( 0 ),
-          le"^x p x x: o"
-        )
-      )
+          le"^x p x x: o" ) )
       proof.endSequent must beMultiSetEqual( Sequent() :+ hoa"p b b" )
     }
 

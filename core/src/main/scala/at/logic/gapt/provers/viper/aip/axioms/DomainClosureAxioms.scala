@@ -59,8 +59,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
     val caseVariable = Var( "x", caseType )
     All(
       caseVariable,
-      Or( constructors map { constructor => caseDistinction( caseVariable, constructor ) } )
-    )
+      Or( constructors map { constructor => caseDistinction( caseVariable, constructor ) } ) )
   }
 
   /**

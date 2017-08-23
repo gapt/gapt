@@ -55,6 +55,5 @@ object printProofStats {
          |Strong quantifier inferences: ${strongQuantRulesNumber( p )}
          |Weak quantifier inferences: ${weakQuantRulesNumber( p )}
          |Equality inferences: ${p.treeLike.postOrder.count { _.isInstanceOf[EqualityRule] }}
-       """.stripMargin
-    )
+       """.stripMargin )
 }

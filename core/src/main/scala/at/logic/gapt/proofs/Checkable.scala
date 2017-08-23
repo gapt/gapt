@@ -20,8 +20,7 @@ object Checkable {
         case ty @ TBase( name, params ) =>
           require(
             context.isType( ty ),
-            s"Unknown base type: $name"
-          )
+            s"Unknown base type: $name" )
           params.foreach( check( context, _ ) )
         case TVar( _ ) =>
         case in -> out =>
@@ -36,8 +35,7 @@ object Checkable {
         case c @ Const( name, _ ) =>
           require(
             context.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
-            s"Unknown constant: $c"
-          )
+            s"Unknown constant: $c" )
         case Var( _, t ) => context.check( t )
         case Abs( v, e ) =>
           check( context, v )
@@ -102,8 +100,7 @@ object Checkable {
         case d: DefinitionRule =>
           require(
             ctx.isDefEq( d.mainFormula, d.auxFormula ),
-            s"${ctx.normalize( d.mainFormula )} != ${ctx.normalize( d.auxFormula )}"
-          )
+            s"${ctx.normalize( d.mainFormula )} != ${ctx.normalize( d.auxFormula )}" )
       }
     }
   }
@@ -129,8 +126,7 @@ object Checkable {
         case ETDefinition( sh, child ) =>
           require(
             ctx.isDefEq( sh, child.shallow ),
-            s"${ctx.normalize( sh )} != ${ctx.normalize( child.shallow )}"
-          )
+            s"${ctx.normalize( sh )} != ${ctx.normalize( child.shallow )}" )
       }
     }
   }

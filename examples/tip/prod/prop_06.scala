@@ -22,8 +22,7 @@ object prop_06 extends TacticsProof {
     ( "al2" -> hof"∀y ∀xs length(cons(y, xs)) = S(length(xs))" ) +:
     ( "aa1" -> hof"∀y append(nil, y) = y" ) +:
     ( "aa2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "append_left_cons" -> hof"∀xs∀y∀zs length(append(xs,cons(y,zs))) = S(length(append(xs,zs)))" )
-  )
+    Sequent() :+ ( "append_left_cons" -> hof"∀xs∀y∀zs length(append(xs,cons(y,zs))) = S(length(append(xs,zs)))" ) )
 
   val lem_2_proof = Lemma( lem_2 ) {
     allR; induction( hov"xs:list" )
@@ -45,8 +44,7 @@ object prop_06 extends TacticsProof {
     ( "al1" -> hof"length(nil) = Z" ) +:
     ( "aa1" -> hof"∀y append(nil, y) = y" ) +:
     ( "aa2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "append_one" -> hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" )
-  )
+    Sequent() :+ ( "append_one" -> hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" ) )
 
   val lem_3_proof = Lemma( lem_3 ) {
     cut( "lem_2", hof"∀xs∀y∀zs length(append(xs,cons(y,zs))) = S(length(append(xs,zs)))" )
@@ -72,8 +70,7 @@ object prop_06 extends TacticsProof {
     ( "aa2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
     ( "ar1" -> hof"rev(nil) = nil" ) +:
     ( "ar2" -> hof"∀y ∀xs rev(cons(y, xs)) = append(rev(xs), cons(y, nil))" ) +:
-    Sequent() :+ ( "length_rev_inv" -> hof"∀x length(rev(x)) = length(x)" )
-  )
+    Sequent() :+ ( "length_rev_inv" -> hof"∀x length(rev(x)) = length(x)" ) )
 
   val prop_05_proof = Lemma( prop_05 ) {
     cut( "lem_3", hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" )

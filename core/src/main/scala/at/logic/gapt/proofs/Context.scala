@@ -71,8 +71,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
     for {
       declT <- get[BaseTypes].baseTypes.get( ty.name )
       _ <- syntacticMatching( declT, ty )
-    } yield ()
-  ).isDefined
+    } yield () ).isDefined
 
   /** Returns Some(expandedDefinition) if c is a defined constant. */
   def definition( c: Const ): Option[Expr] =
@@ -191,8 +190,7 @@ object Context {
       require( ty.params.forall( _.isInstanceOf[TVar] ) && ty.params == ty.params.distinct )
       require(
         !baseTypes.contains( ty.name ),
-        s"Base type $ty already defined."
-      )
+        s"Base type $ty already defined." )
       copy( baseTypes + ( ty.name -> ty ) )
     }
     override def toString = baseTypes.toSeq.sortBy( _._1 ).map( _._2 ).mkString( ", " )
@@ -204,8 +202,7 @@ object Context {
     def +( const: Const ): Constants = {
       require(
         !constants.contains( const.name ),
-        s"Constant $const is already defined as ${constants( const.name )}."
-      )
+        s"Constant $const is already defined as ${constants( const.name )}." )
       copy( constants + ( const.name -> const ) )
     }
 
@@ -259,8 +256,7 @@ object Context {
   val withoutEquality = empty ++ Seq(
     InductiveType( "o", Top(), Bottom() ),
     ConstDecl( NegC() ), ConstDecl( AndC() ), ConstDecl( OrC() ), ConstDecl( ImpC() ),
-    ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) )
-  )
+    ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) ) )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
   case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
@@ -342,14 +338,12 @@ object Context {
       val FunctionType( ty_, _ ) = constr.ty
       require(
         ty == ty_,
-        s"Base type $ty and type constructor $constr don't agree."
-      )
+        s"Base type $ty and type constructor $constr don't agree." )
       require( typeVariables( constr ) subsetOf typeVariables( ty ) )
     }
     require(
       constructors.map( _.name ) == constructors.map( _.name ).distinct,
-      s"Names of type constructors are not distinct."
-    )
+      s"Names of type constructors are not distinct." )
 
     override def apply( ctx: Context ): State = {
       require( !ctx.isType( ty ), s"Type $ty already defined" )

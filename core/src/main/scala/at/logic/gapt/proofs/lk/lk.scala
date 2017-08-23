@@ -362,7 +362,7 @@ object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRul
  * @param formula The formula A.
  */
 case class WeakeningLeftRule( subProof: LKProof, formula: Formula )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
   override def auxIndices = Seq( Seq() )
   override def name = "w:l"
   def mainFormula = formula
@@ -383,7 +383,7 @@ case class WeakeningLeftRule( subProof: LKProof, formula: Formula )
  * @param formula The formula A.
  */
 case class WeakeningRightRule( subProof: LKProof, formula: Formula )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
   override def auxIndices = Seq( Seq() )
   override def name = "w:r"
   def mainFormula = formula
@@ -406,7 +406,7 @@ case class WeakeningRightRule( subProof: LKProof, formula: Formula )
  * @param aux2 The index of A in π,,2,,.
  */
 case class CutRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex )
-    extends BinaryLKProof with CommonRule {
+  extends BinaryLKProof with CommonRule {
 
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
@@ -479,7 +479,7 @@ object CutRule extends ConvenienceConstructor( "CutRule" ) {
  * @param aux The index of A in the succedent.
  */
 case class NegLeftRule( subProof: LKProof, aux: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
@@ -521,7 +521,7 @@ object NegLeftRule extends ConvenienceConstructor( "NegLeftRule" ) {
  * @param aux The index of A in the antecedent.
  */
 case class NegRightRule( subProof: LKProof, aux: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
 
@@ -564,7 +564,7 @@ object NegRightRule extends ConvenienceConstructor( "NegRightRule" ) {
  * @param aux2 The index of B.
  */
 case class AndLeftRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq( aux1, aux2 ), Seq() )
 
@@ -628,7 +628,7 @@ object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
  * @param aux2 The index of B.
  */
 case class AndRightRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex )
-    extends BinaryLKProof with CommonRule {
+  extends BinaryLKProof with CommonRule {
 
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq(), Seq( aux2 ) )
@@ -697,7 +697,7 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
  * @param aux2 The index of B.
  */
 case class OrLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex )
-    extends BinaryLKProof with CommonRule {
+  extends BinaryLKProof with CommonRule {
 
   validateIndices( leftPremise, Seq( aux1 ), Seq() )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
@@ -765,7 +765,7 @@ object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
  * @param aux2 The index of B.
  */
 case class OrRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq(), Seq( aux1, aux2 ) )
 
@@ -828,7 +828,7 @@ object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
  * @param aux2 The index of B.
  */
 case class ImpLeftRule( leftSubProof: LKProof, aux1: SequentIndex, rightSubProof: LKProof, aux2: SequentIndex )
-    extends BinaryLKProof with CommonRule {
+  extends BinaryLKProof with CommonRule {
 
   validateIndices( leftPremise, Seq(), Seq( aux1 ) )
   validateIndices( rightPremise, Seq( aux2 ), Seq() )
@@ -896,7 +896,7 @@ object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
  * @param aux2 The index of B.
  */
 case class ImpRightRule( subProof: LKProof, aux1: SequentIndex, aux2: SequentIndex )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq( aux1 ), Seq( aux2 ) )
 
@@ -988,7 +988,7 @@ trait SkolemQuantifierRule extends UnaryLKProof with CommonRule {
  * @param v The variable x.
  */
 case class ForallLeftRule( subProof: LKProof, aux: SequentIndex, A: Formula, term: Expr, v: Var )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
 
@@ -1066,7 +1066,7 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
  * @param quantifiedVariable The variable x.
  */
 case class ForallRightRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var )
-    extends UnaryLKProof with CommonRule with Eigenvariable {
+  extends UnaryLKProof with CommonRule with Eigenvariable {
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
@@ -1149,7 +1149,7 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
  * @param skolemDef The Skolem definition, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
  */
 case class ForallSkRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, skolemTerm: Expr, skolemDef: Expr )
-    extends SkolemQuantifierRule {
+  extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
@@ -1199,7 +1199,7 @@ object ForallSkRightRule extends ConvenienceConstructor( "ForallSkRightRule" ) {
  * @param quantifiedVariable The variable x.
  */
 case class ExistsLeftRule( subProof: LKProof, aux: SequentIndex, eigenVariable: Var, quantifiedVariable: Var )
-    extends UnaryLKProof with CommonRule with Eigenvariable {
+  extends UnaryLKProof with CommonRule with Eigenvariable {
 
   validateIndices( premise, Seq( aux ), Seq() )
 
@@ -1281,7 +1281,7 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
  * @param skolemDef The Skolem definition, see [[at.logic.gapt.expr.hol.SkolemFunctions]]
  */
 case class ExistsSkLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, skolemTerm: Expr, skolemDef: Expr )
-    extends SkolemQuantifierRule {
+  extends SkolemQuantifierRule {
 
   validateIndices( premise, Seq( aux ), Seq() )
 
@@ -1331,7 +1331,7 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
  * @param v The variable x.
  */
 case class ExistsRightRule( subProof: LKProof, aux: SequentIndex, A: Formula, term: Expr, v: Var )
-    extends UnaryLKProof with CommonRule {
+  extends UnaryLKProof with CommonRule {
 
   validateIndices( premise, Seq(), Seq( aux ) )
 
@@ -1479,7 +1479,7 @@ abstract class EqualityRule extends UnaryLKProof with CommonRule {
  * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
 case class EqualityLeftRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
-    extends EqualityRule {
+  extends EqualityRule {
 
   validateIndices( premise, Seq( eq, aux ), Seq() )
 
@@ -1584,7 +1584,7 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
  * @param replacementContext A term λx.A[x] that designates the positions to be replaced.
  */
 case class EqualityRightRule( subProof: LKProof, eq: SequentIndex, aux: SequentIndex, replacementContext: Abs )
-    extends EqualityRule {
+  extends EqualityRule {
 
   validateIndices( premise, Seq( eq ), Seq( aux ) )
 

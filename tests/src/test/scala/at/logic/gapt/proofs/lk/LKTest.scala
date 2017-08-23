@@ -111,15 +111,13 @@ class LKTest extends Specification {
         p.premise,
         Seq( Ant( 1 ) ),
 
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
 
       testParents( o, "w_l" )(
         p.endSequent,
         Seq(),
         Seq( Ant( 0 ) ),
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
     }
   }
 
@@ -150,15 +148,13 @@ class LKTest extends Specification {
       testChildren( o, "w_r" )(
         p.endSequent,
         Seq( Ant( 0 ) ),
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
 
       testParents( o, "w_r" )(
         p.endSequent,
         Seq( Ant( 0 ) ),
         Seq( Suc( 0 ) ),
-        Seq()
-      )
+        Seq() )
     }
   }
 
@@ -216,8 +212,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 2 ) ),
         Seq( Suc( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testChildren( o, "c_l" )(
         p.premise,
@@ -227,8 +222,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
 
         Seq( Suc( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -287,8 +281,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 1 ) ),
         Seq( Suc( 3 ) ),
-        Seq( Suc( 0 ), Suc( 2 ) )
-      )
+        Seq( Suc( 0 ), Suc( 2 ) ) )
 
       testChildren( o, "c_r" )(
         p.premise,
@@ -298,8 +291,7 @@ class LKTest extends Specification {
         Seq( Suc( 2 ) ),
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -354,8 +346,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq(),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( oL, "cut" )(
         p.endSequent,
@@ -368,8 +359,7 @@ class LKTest extends Specification {
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
         Seq(),
-        Seq()
-      )
+        Seq() )
 
       testChildren( oR, "cut" )(
         p.rightPremise,
@@ -379,8 +369,7 @@ class LKTest extends Specification {
         Seq( Ant( 4 ) ),
 
         Seq( Suc( 2 ) ),
-        Seq( Suc( 3 ) )
-      )
+        Seq( Suc( 3 ) ) )
 
       testParents( oR, "cut" )(
         p.endSequent,
@@ -393,8 +382,7 @@ class LKTest extends Specification {
         Seq(),
         Seq(),
         Seq( Suc( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -451,8 +439,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Ant( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( o, "¬:l" )(
         p.endSequent,
@@ -461,8 +448,7 @@ class LKTest extends Specification {
         Seq( Ant( 1 ) ),
 
         Seq( Suc( 0 ) ),
-        Seq( Suc( 2 ) )
-      )
+        Seq( Suc( 2 ) ) )
     }
   }
 
@@ -519,8 +505,7 @@ class LKTest extends Specification {
         Seq( Ant( 1 ) ),
 
         Seq( Suc( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( o, "¬:r" )(
         p.endSequent,
@@ -529,8 +514,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 1 ) ),
-        Seq( Ant( 1 ) )
-      )
+        Seq( Ant( 1 ) ) )
     }
   }
 
@@ -586,8 +570,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 2 ) ),
         Seq( Suc( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testChildren( o, "∧_l" )(
         p.premise,
@@ -597,8 +580,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
 
         Seq( Suc( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -663,8 +645,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 4 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( oL, "∧:r" )(
         p.endSequent,
@@ -675,8 +656,7 @@ class LKTest extends Specification {
         Seq( Suc( 2 ) ),
         Seq(),
         Seq(),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testChildren( oR, "∧:r" )(
         p.rightPremise,
@@ -684,8 +664,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 2 ) ),
         Seq( Suc( 4 ) ),
-        Seq( Suc( 3 ) )
-      )
+        Seq( Suc( 3 ) ) )
 
       testParents( oR, "∧:r" )(
         p.endSequent,
@@ -696,8 +675,7 @@ class LKTest extends Specification {
         Seq(),
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -762,8 +740,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 2 ) ),
 
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
 
       testParents( oL, "∨:l" )(
         p.endSequent,
@@ -774,8 +751,7 @@ class LKTest extends Specification {
         Seq(),
 
         Seq( Suc( 0 ) ),
-        Seq()
-      )
+        Seq() )
 
       testChildren( oR, "∨:l" )(
         p.rightPremise,
@@ -783,8 +759,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 4 ) ),
 
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( oR, "∨:l" )(
         p.endSequent,
@@ -795,8 +770,7 @@ class LKTest extends Specification {
         Seq( Ant( 2 ) ),
 
         Seq(),
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
     }
   }
 
@@ -853,8 +827,7 @@ class LKTest extends Specification {
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
         Seq( Suc( 4 ) ),
-        Seq( Suc( 1 ), Suc( 3 ) )
-      )
+        Seq( Suc( 1 ), Suc( 3 ) ) )
 
       testChildren( o, "∨:r" )(
         p.premise,
@@ -864,8 +837,7 @@ class LKTest extends Specification {
         Seq( Suc( 3 ) ),
         Seq( Suc( 1 ) ),
         Seq( Suc( 3 ) ),
-        Seq( Suc( 2 ) )
-      )
+        Seq( Suc( 2 ) ) )
     }
   }
 
@@ -930,8 +902,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Ant( 0 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( oL, "→:l" )(
         p.endSequent,
@@ -942,8 +913,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq()
-      )
+        Seq() )
 
       testChildren( oR, "→:l" )(
         p.rightPremise,
@@ -951,8 +921,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 3 ) ),
 
-        Seq( Suc( 2 ) )
-      )
+        Seq( Suc( 2 ) ) )
 
       testParents( oR, "→:l" )(
         p.endSequent,
@@ -963,8 +932,7 @@ class LKTest extends Specification {
 
         Seq(),
         Seq(),
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
     }
   }
 
@@ -1022,8 +990,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Ant( 1 ), Suc( 1 ) )
-      )
+        Seq( Ant( 1 ), Suc( 1 ) ) )
 
       testChildren( o, "→:r" )(
         p.premise,
@@ -1033,8 +1000,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -1098,8 +1064,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( o, "∀:r" )(
         p.endSequent,
@@ -1107,8 +1072,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -1172,8 +1136,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 2 ) ),
 
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
 
       testParents( o, "∃:l" )(
         p.endSequent,
@@ -1181,8 +1144,7 @@ class LKTest extends Specification {
         Seq( Ant( 0 ) ),
         Seq( Ant( 2 ) ),
 
-        Seq( Suc( 0 ) )
-      )
+        Seq( Suc( 0 ) ) )
     }
   }
 
@@ -1262,8 +1224,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 1 ) ),
-        Seq( Suc( 2 ) )
-      )
+        Seq( Suc( 2 ) ) )
 
       testParents( o, "eq" )(
         p.endSequent,
@@ -1275,8 +1236,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 1 ) ),
-        Seq( Suc( 2 ) )
-      )
+        Seq( Suc( 2 ) ) )
     }
   }
 
@@ -1356,8 +1316,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
 
       testParents( o, "eq" )(
         p.endSequent,
@@ -1369,8 +1328,7 @@ class LKTest extends Specification {
 
         Seq( Suc( 0 ) ),
         Seq( Suc( 2 ) ),
-        Seq( Suc( 1 ) )
-      )
+        Seq( Suc( 1 ) ) )
     }
   }
 
@@ -1390,10 +1348,8 @@ class LKTest extends Specification {
       InductionRule(
         Seq(
           InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
-          InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
-        ),
-        Abs( x, Pxy ), x
-      )
+          InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) ) ),
+        Abs( x, Pxy ), x )
 
       success
     }

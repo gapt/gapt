@@ -18,15 +18,14 @@ trait SolutionFinder {
 }
 
 class SipProver(
-  solutionFinder:            SolutionFinder = new HeuristicSolutionFinder( 1 ),
-  instanceProver:            Prover         = Prover9,
-  instances:                 Seq[Int]       = 0 until 3,
-  testInstances:             Seq[Int]       = 0 until 15,
-  minimizeInstanceLanguages: Boolean        = false,
-  quasiTautProver:           Prover         = VeriT,
-  maxSATSolver:              MaxSATSolver   = bestAvailableMaxSatSolver
-)
-    extends OneShotProver with Logger {
+    solutionFinder:            SolutionFinder = new HeuristicSolutionFinder( 1 ),
+    instanceProver:            Prover         = Prover9,
+    instances:                 Seq[Int]       = 0 until 3,
+    testInstances:             Seq[Int]       = 0 until 15,
+    minimizeInstanceLanguages: Boolean        = false,
+    quasiTautProver:           Prover         = VeriT,
+    maxSATSolver:              MaxSATSolver   = bestAvailableMaxSatSolver )
+  extends OneShotProver with Logger {
 
   private val nLine = sys.props( "line.separator" )
 
@@ -72,8 +71,7 @@ class SipProver(
 
     if ( testInstances.forall { n =>
       val generatedInstanceSequent = FOLSubstitution( inductionVariable -> Utils.numeral( n ) )(
-        termEncoding.decodeToInstanceSequent( grammar.instanceGrammar( n ).language )
-      )
+        termEncoding.decodeToInstanceSequent( grammar.instanceGrammar( n ).language ) )
       val isQuasiTaut = quasiTautProver.isValid( generatedInstanceSequent )
       debug( s"[n=$n] Instance language is quasi-tautological: $isQuasiTaut" )
       isQuasiTaut

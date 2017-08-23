@@ -11,8 +11,7 @@ object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof 
 object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 
 class ExpansionProofToLK(
-    theorySolver: HOLClause => Option[LKProof]
-) extends SolveUtils {
+    theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
   def apply( expansionProof: ExpansionProof ): UnprovableOrLKProof =

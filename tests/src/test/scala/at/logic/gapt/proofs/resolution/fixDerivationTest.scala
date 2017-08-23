@@ -97,10 +97,8 @@ class FixDerivationTest extends Specification with SequentMatchers {
         Suc( 0 ),
         Factor(
           Input( q +: Clause() :+ p :+ p ),
-          Suc( 0 ), Suc( 1 )
-        ),
-        Ant( 0 )
-      )
+          Suc( 0 ), Suc( 1 ) ),
+        Ant( 0 ) )
       val cq = HOLClause( Nil, q :: Nil )
       val cqp = HOLClause( q :: Nil, p :: Nil )
 
@@ -151,8 +149,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
       val a = Clause() :+ hoa"f(a,z)=z"
       val bs = Set(
         hoa"p(x)" +: Clause() :+ hoa"f(x,y)=y",
-        Clause() :+ hoa"p(a)"
-      )
+        Clause() :+ hoa"p(a)" )
       check( a, bs )
     }
 
@@ -173,8 +170,7 @@ class FixDerivationTest extends Specification with SequentMatchers {
       val bs = Set(
         HOLClause( Seq( FOLAtom( "p" ), FOLAtom( "q" ) ), Seq( FOLAtom( "r" ) ) ),
         HOLClause( Seq( FOLAtom( "p" ) ), Seq( FOLAtom( "q" ), FOLAtom( "r" ) ) ),
-        HOLClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() )
-      )
+        HOLClause( Seq( FOLAtom( "p" ), FOLAtom( "r" ) ), Seq() ) )
       check( a, bs )
     }
   }

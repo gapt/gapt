@@ -1,8 +1,9 @@
 import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOutputStream }
-import com.typesafe.sbt.SbtScalariform._
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
+import sys.process._
 
 val Version = "2.8-SNAPSHOT"
 
@@ -17,8 +18,7 @@ lazy val commonSettings = Seq(
   scmInfo := Some( ScmInfo(
     browseUrl = url( "https://github.com/gapt/gapt" ),
     connection = "scm:git:https://github.com/gapt/gapt.git",
-    devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" )
-  ) ),
+    devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
   scalaVersion := "2.12.3",
@@ -28,20 +28,21 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-language:implicitConversions",
     "-feature",
-    "-unchecked"
-  ),
+    "-unchecked" ),
 
   javaOptions ++= Seq( "-Xss40m", "-Xmx1g" ),
   fork := true,
   baseDirectory in run := file( "." ),
 
+  resolvers += Resolver.sonatypeRepo( "snapshots" ), // for scoverage
+
   sourcesInBase := false // people like to keep scripts lying around
 
-) ++ defaultScalariformSettings :+
+) ++ scalariformSettings( true ) :+
   ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
-    .setPreference( DoubleIndentClassDeclaration, true )
+    .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
 val specs2Version = "3.9.4"
@@ -51,9 +52,7 @@ lazy val testSettings = Seq(
   libraryDependencies ++= Seq(
     "org.specs2" %% "specs2-core" % specs2Version,
     "org.specs2" %% "specs2-junit" % specs2Version, // needed for junitxml output
-    "org.specs2" %% "specs2-matcher" % specs2Version
-  ) map ( _ % Test )
-)
+    "org.specs2" %% "specs2-matcher" % specs2Version ) map ( _ % Test ) )
 
 lazy val BuildSbtConfig = config( "buildsbt" ) extend Compile
 
@@ -61,7 +60,7 @@ lazy val root = project.in( file( "." ) ).
   aggregate( core, examples, tests, userManual, cli, testing ).
   dependsOn( core, examples, cli ).
   settings( commonSettings: _* ).
-  settings( unidocSettings: _* ).
+  enablePlugins( ScalaUnidocPlugin ).
   settings(
     fork in console := true,
     initialCommands in console := IO.read( resourceDirectory.in( cli, Compile ).value / "gapt-cli-prelude.scala" ),
@@ -69,31 +68,28 @@ lazy val root = project.in( file( "." ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    inConfig( BuildSbtConfig )( configScalariformSettings ++ commonSettings ),
+    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ commonSettings ),
     sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
     apiURL := Some( url( "https://logic.at/gapt/api/" ) ),
     autoAPIMappings := true,
-    scalacOptions in ( ScalaUnidoc, UnidocKeys.unidoc ) ++= Seq(
+    scalacOptions in ( ScalaUnidoc, unidoc ) ++= Seq(
       "-doc-title", "gapt",
       "-doc-version", version.value,
       "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
       "-sourcepath", baseDirectory.value.getAbsolutePath,
       "-diagrams",
       "-implicits", "-implicits-show-all",
-      "-skip-packages", "scala"
-    ),
+      "-skip-packages", "scala" ),
 
     scripts := {
       val runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
-        Attributed.data( fullClasspath.in( cli, Compile ).value ++ fullClasspath.in( testing, Compile ).value distinct )
-      ) )
+        Attributed.data( fullClasspath.in( cli, Compile ).value ++ fullClasspath.in( testing, Compile ).value distinct ) ) )
       def mkScript( file: File, extraArgs: String* ) = {
         IO.write(
           file,
-          s"#!/bin/sh\njava ${( runJVMOptions ++ extraArgs ).mkString( " " )} ${"\"$@\""}\n"
-        )
+          s"#!/bin/sh\njava ${( runJVMOptions ++ extraArgs ).mkString( " " )} ${"\"$@\""}\n" )
         file.setExecutable( true )
       }
       (
@@ -102,8 +98,7 @@ lazy val root = project.in( file( "." ) ).
         mkScript( target.value / "test-pi2-cut-intro", "at.logic.gapt.testing.testPi2CutIntro" ),
         mkScript( target.value / "viper", "at.logic.gapt.provers.viper.Viper" ),
         mkScript( target.value / "escargot", "at.logic.gapt.provers.escargot.Escargot" ),
-        mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" )
-      )
+        mkScript( target.value / "cli", "at.logic.gapt.cli.CLIMain" ) )
     },
 
     // Release stuff
@@ -111,22 +106,20 @@ lazy val root = project.in( file( "." ) ).
     releaseDist := {
       val baseDir = file( "." )
       val version = Keys.version.value
-      val apidocs = doc.in( ScalaUnidoc, UnidocKeys.unidoc ).value
+      val apidocs = doc.in( ScalaUnidoc, unidoc ).value
 
       val archiveFile = file( "." ) / "target" / s"gapt-$version.tar.gz"
 
       Process( List( "latexmk", "-pdf", "user_manual.tex" ), baseDir / "doc" ) !
 
       val filesToIncludeAsIs = List(
-        "COPYING", "gapt.sh", "escargot.sh", "viper.sh", "include.sh", "examples"
-      )
+        "COPYING", "gapt.sh", "escargot.sh", "viper.sh", "include.sh", "examples" )
       val entries = List( ( assembly.value, s"gapt-$version.jar" ) ) ++
         filesToIncludeAsIs.flatMap { fn => recursiveListFiles( baseDir / fn ) }
         .map { f => ( f, baseDir.toPath.relativize( f.toPath ) ) } ++
         List(
           ( baseDir / "doc/README.dist", "README" ),
-          ( baseDir / "doc/user_manual.pdf", "user_manual.pdf" )
-        ) ++
+          ( baseDir / "doc/user_manual.pdf", "user_manual.pdf" ) ) ++
           recursiveListFiles( apidocs ).map { f => f -> s"apidocs/${apidocs.toPath.relativize( f.toPath )}" }
 
       val archiveStem = s"gapt-$version"
@@ -155,19 +148,17 @@ lazy val root = project.in( file( "." ) ).
       val out = new ByteArrayOutputStream
       val exitVal = new Fork( "java", Some( "at.logic.gapt.testing.evalCodeSnippetsInLatex" ) ).fork(
         ForkOptions(
-          outputStrategy = Some( CustomOutput( out ) ),
-          workingDirectory = Some( file( "." ) ),
           javaHome = javaHome.value,
-          runJVMOptions = javaOptions.value ++ Seq( "-cp", Path.makeString(
-            Attributed.data( fullClasspath.in( userManual, Compile ).value )
-          ) ),
-          connectInput = false
-        ),
-        Seq( userManFn )
-      ).exitValue()
+          outputStrategy = Some( CustomOutput( out ) ),
+          bootJars = Vector(),
+          workingDirectory = Some( new java.io.File( "." ) ),
+          runJVMOptions = Vector() ++ javaOptions.value ++ Seq( "-cp", Path.makeString(
+            Attributed.data( fullClasspath.in( userManual, Compile ).value ) ) ),
+          connectInput = false,
+          envVars = envVars.value ),
+        Seq( userManFn ) ).exitValue()
       if ( exitVal == 0 ) IO.write( file( userManFn ), out.toByteArray )
-    }
-  )
+    } )
 
 lazy val core = project.in( file( "core" ) ).
   settings( commonSettings: _* ).
@@ -187,16 +178,13 @@ lazy val core = project.in( file( "core" ) ).
       "com.lihaoyi" %% "ammonite-ops" % "1.0.1",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
-      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5"
-    ),
+      "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
     // UI
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
       "com.itextpdf" % "itextpdf" % "5.5.11",
-      "org.scilab.forge" % "jlatexmath" % "1.0.6"
-    )
-  )
+      "org.scilab.forge" % "jlatexmath" % "1.0.6" ) )
 
 lazy val examples = project.in( file( "examples" ) ).
   dependsOn( core ).
@@ -209,8 +197,7 @@ lazy val examples = project.in( file( "examples" ) ).
       val target = ( baseDirectory.value / "target" ).getCanonicalPath
       new SimpleFileFilter( _.getCanonicalPath startsWith target )
     } || "*.scala",
-    sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value
-  )
+    sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value )
 
 lazy val tests = project.in( file( "tests" ) ).
   dependsOn( core, examples ).
@@ -220,8 +207,7 @@ lazy val tests = project.in( file( "tests" ) ).
   settings(
     testForkedParallel := true,
     bintrayReleaseOnPublish := false,
-    packagedArtifacts := Map()
-  )
+    packagedArtifacts := Map() )
 
 lazy val userManual = project.in( file( "doc" ) ).
   dependsOn( cli ).
@@ -230,8 +216,7 @@ lazy val userManual = project.in( file( "doc" ) ).
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
     sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value,
     bintrayReleaseOnPublish := false,
-    packagedArtifacts := Map()
-  )
+    packagedArtifacts := Map() )
 
 lazy val cli = project.in( file( "cli" ) ).
   dependsOn( core, examples ).
@@ -240,12 +225,10 @@ lazy val cli = project.in( file( "cli" ) ).
     mainClass := Some( "at.logic.cli.CLIMain" ),
 
     libraryDependencies ++= Seq(
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value
-    ),
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value ),
 
     bintrayReleaseOnPublish := false,
-    packagedArtifacts := Map()
-  )
+    packagedArtifacts := Map() )
 
 addCommandAlias( "format", "; scalariformFormat ; test:scalariformFormat ; buildsbt:scalariformFormat" )
 
@@ -259,8 +242,7 @@ lazy val testing = project.in( file( "testing" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.3"
-  )
+    libraryDependencies += "org.json4s" %% "json4s-native" % "3.5.3" )
 
 lazy val releaseDist = TaskKey[File]( "release-dist", "Creates the release tar ball." )
 

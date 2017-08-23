@@ -51,8 +51,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
                 val matrix = TermReplacement( goal, repl.toMap )
                 Abs.Block(
                   repl.map( _._2 ),
-                  All.Block( freeVariables( matrix ) -- repl.map( _._2 ) toSeq, matrix )
-                )
+                  All.Block( freeVariables( matrix ) -- repl.map( _._2 ) toSeq, matrix ) )
             }
 
           motives.map( instantiate( indScheme, _ ) )
@@ -68,7 +67,6 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
           override def formula: Formula = inst
           override def proof: LKProof = ProofLink( FOLConst( "functional_induction" ), Sequent() :+ inst )
         }
-      }
-    )
+      } )
   }
 }

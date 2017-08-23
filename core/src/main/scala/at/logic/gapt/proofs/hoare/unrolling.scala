@@ -8,8 +8,7 @@ object unrollLoop {
   def apply( p: Program, actualN: Int ): Program = p match {
     case ForLoop( i, n, b ) => Sequence(
       ( 0 until actualN ).map( actualI =>
-        substVariables( b, Map( i -> numeral( actualI ), n -> numeral( actualN ) ) ) )
-    )
+        substVariables( b, Map( i -> numeral( actualI ), n -> numeral( actualN ) ) ) ) )
   }
 }
 
@@ -36,9 +35,7 @@ case class SimpleLoopProblem( loop: ForLoop, gamma: Seq[FOLFormula], preconditio
         loop.body,
         And( varsAtTime( FOLFunction( "s", List( loop.indexVar ) ) ) map {
           case ( v, s ) => Eq( s, v )
-        } )
-      )
-    )
+        } ) ) )
 
   def Pi: FOLFormula = All( loop.indexVar, pi )
 

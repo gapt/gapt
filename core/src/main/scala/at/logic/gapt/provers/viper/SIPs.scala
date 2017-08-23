@@ -31,8 +31,7 @@ abstract class SimpleInductionProof(
     val ExpSeq2:          ExpansionSequent,
     val t:                List[FOLTerm],
     val u:                List[FOLTerm],
-    val inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
-) {
+    val inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) {
   import SimpleInductionProof._
 
   val Gamma0 = extractInstances( ExpSeq0 )
@@ -122,8 +121,7 @@ abstract class SimpleInductionProof(
       stepProof( pi1 ),
       Fprime( alpha, nu ),
       Fprime( alpha, snu ),
-      All( x, Fprime( alpha, x ) )
-    ) )
+      All( x, Fprime( alpha, x ) ) ) )
 
     cleanStructuralRules( ContractionMacroRule( CutRule( inductionProof, conclusionProof( pi2 ), All( x, Fprime( alpha, x ) ) ) ) )
   }
@@ -203,8 +201,7 @@ class SimpleInductionProofU(
     ExpSeq2:          ExpansionSequent,
     t:                List[FOLTerm],
     u:                List[FOLTerm],
-    inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) )
-) extends SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, inductionFormula ) {
+    inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) extends SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, inductionFormula ) {
   import SimpleInductionProof._
 
   protected override def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =
@@ -235,8 +232,7 @@ class SimpleInductionProofU(
       if ( indFormIsQuantified )
         ForallRightRule( inductionBase1, Fprime( alpha, zero ), beta )
       else
-        inductionBase1
-    )
+        inductionBase1 )
   }
 
   override def stepProof( pi1: LKProof ) = {
@@ -253,8 +249,7 @@ class SimpleInductionProofU(
       if ( indFormIsQuantified )
         ForallRightRule( inductionStep2, All( y, F( alpha, snu, y ) ), gamma )
       else
-        inductionStep2
-    )
+        inductionStep2 )
   }
 
   override def conclusionProof( pi2: LKProof ) = {
@@ -265,8 +260,7 @@ class SimpleInductionProofU(
           ( acc: LKProof, ui ) => ForallLeftRule( acc, All( y, F( alpha, alpha, y ) ), ui )
         }
       } else
-        conclusion1
-    )
+        conclusion1 )
     val x = FOLVar( "x" )
     ForallLeftRule( conclusion2, All( x, Fprime( alpha, x ) ), alpha )
   }
@@ -285,8 +279,7 @@ class SimpleInductionProofU(
       if ( indFormIsQuantified )
         ForallRightRule( inductionBase1, baseSub( Fprime( alpha, zero ) ), baseSub( beta ).asInstanceOf[FOLVar] )
       else
-        inductionBase1
-    )
+        inductionBase1 )
 
     def inductionStep( k: Int ) = {
       val sub =
@@ -308,8 +301,7 @@ class SimpleInductionProofU(
         if ( indFormIsQuantified )
           ForallRightRule( inductionStep2, sub( All( y, F( alpha, snu, y ) ) ), sub( gamma ).asInstanceOf[FOLVar] )
         else
-          inductionStep2
-      )
+          inductionStep2 )
     }
 
     val stepsProof = ( inductionBase /: ( 0 until n ) ) { ( acc, i ) =>
@@ -325,8 +317,7 @@ class SimpleInductionProofU(
           ( acc: LKProof, ui ) => ForallLeftRule( acc, All( y, F( alpha, alpha, y ) ), ui )
         }
       } else
-        conclusion1
-    )
+        conclusion1 )
 
     val conclusion = conclusionSub( conclusion2 )
 
@@ -380,8 +371,7 @@ object decodeSipGrammar {
       encoding.decodeToExpansionSequent( seq0 ),
       encoding.decodeToExpansionSequent( seq1 ),
       encoding.decodeToExpansionSequent( seq2 ),
-      ts.toList, us.toList
-    )
+      ts.toList, us.toList )
   }
 }
 
@@ -398,8 +388,7 @@ object canonicalSolution {
         if ( sip.t.isEmpty )
           C_
         else
-          And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } )
-      )
+          And( sip.t map { t => FOLSubstitution( gamma -> nuSubst( t ) )( C_ ) } ) )
   }
 }
 

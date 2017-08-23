@@ -24,8 +24,7 @@ sealed trait IvyResolutionProof extends SequentProof[FOLAtom, IvyResolutionProof
 case class InitialClause(
     id:         String,
     clause_exp: SExpression,
-    conclusion: FOLClause
-) extends IvyResolutionProof {
+    conclusion: FOLClause ) extends IvyResolutionProof {
   override def immediateSubProofs = Seq()
 }
 
@@ -33,55 +32,50 @@ case class Instantiate(
     id:           String,
     clause_exp:   SExpression,
     substitution: FOLSubstitution,
-    conclusion:   FOLClause, t: IvyResolutionProof
-) extends IvyResolutionProof {
+    conclusion:   FOLClause, t: IvyResolutionProof ) extends IvyResolutionProof {
   override def immediateSubProofs = Seq( t )
 }
 
 case class Flip(
     id:         String,
     clause_exp: SExpression, flipped: SequentIndex,
-    conclusion: FOLClause, t: IvyResolutionProof
-) extends IvyResolutionProof {
+    conclusion: FOLClause, t: IvyResolutionProof ) extends IvyResolutionProof {
   override def immediateSubProofs = Seq( t )
 }
 
 case class Propositional(
-  id:         String,
-  clause_exp: SExpression,
-  conclusion: FOLClause,
-  t:          IvyResolutionProof
-)
-    extends IvyResolutionProof {
+    id:         String,
+    clause_exp: SExpression,
+    conclusion: FOLClause,
+    t:          IvyResolutionProof )
+  extends IvyResolutionProof {
   override def immediateSubProofs = Seq( t )
 }
 
 case class Paramodulation(
-  id:              String,
-  clause_exp:      SExpression,
-  position:        List[Int],
-  eq:              SequentIndex,
-  lit:             SequentIndex,
-  newLit:          FOLAtom,
-  is_demodulation: Boolean, // if the formula should be left to right or right to left
-  conclusion:      FOLClause,
-  t1:              IvyResolutionProof,
-  t2:              IvyResolutionProof
-)
-    extends IvyResolutionProof {
+    id:              String,
+    clause_exp:      SExpression,
+    position:        List[Int],
+    eq:              SequentIndex,
+    lit:             SequentIndex,
+    newLit:          FOLAtom,
+    is_demodulation: Boolean, // if the formula should be left to right or right to left
+    conclusion:      FOLClause,
+    t1:              IvyResolutionProof,
+    t2:              IvyResolutionProof )
+  extends IvyResolutionProof {
   override def immediateSubProofs = Seq( t1, t2 )
 }
 
 case class Resolution(
-  id:         String,
-  clause_exp: SExpression,
-  lit1:       SequentIndex, //resolved literal in t1
-  lit2:       SequentIndex, //resolved literal in t2
-  conclusion: FOLClause,
-  t1:         IvyResolutionProof,
-  t2:         IvyResolutionProof
-)
-    extends IvyResolutionProof {
+    id:         String,
+    clause_exp: SExpression,
+    lit1:       SequentIndex, //resolved literal in t1
+    lit2:       SequentIndex, //resolved literal in t2
+    conclusion: FOLClause,
+    t1:         IvyResolutionProof,
+    t2:         IvyResolutionProof )
+  extends IvyResolutionProof {
   require( t1.conclusion( lit1 ) == t2.conclusion( lit2 ) )
   require( !( lit1 sameSideAs lit2 ) )
   override def immediateSubProofs = Seq( t1, t2 )
@@ -94,7 +88,6 @@ case class NewSymbol(
     new_symbol:       FOLConst,
     replacement_term: FOLTerm,
     conclusion:       FOLClause,
-    t:                IvyResolutionProof
-) extends IvyResolutionProof {
+    t:                IvyResolutionProof ) extends IvyResolutionProof {
   override def immediateSubProofs = Seq( t )
 }

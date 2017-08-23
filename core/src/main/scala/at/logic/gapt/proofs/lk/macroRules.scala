@@ -716,8 +716,7 @@ object ContractionMacroRule extends ConvenienceConstructor( "ContractionMacroRul
         s"""Sequent $targetSequent cannot be reached from $currentSequent by contractions.
            |It is missing the following formulas:
            |${( targetSequent diff currentSequent ) ++ ( currentSequent.distinct diff targetSequent.distinct )}
-         """.stripMargin
-      )
+         """.stripMargin )
     }
 
     val ( subProof, subConnector ) = targetAnt.distinct.foldLeft( ( p, SequentConnector( p.endSequent ) ) ) { ( acc, f ) =>
@@ -1029,8 +1028,7 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
         s"""Sequent $targetSequent cannot be reached from $currentSequent by weakenings and contractions:
            |It is missing the following formulas:
            |${currentSequent.distinct diff targetSequent.distinct}
-         """.stripMargin
-      )
+         """.stripMargin )
 
     val antList = targetAnt.distinct map ( f => ( f, targetAnt.count( _ == f ) ) )
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
@@ -1078,8 +1076,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    con:           Abs
-  ): LKProof = {
+    con:           Abs ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1136,8 +1133,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    mainFormula:   Formula
-  ): LKProof = {
+    mainFormula:   Formula ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1197,8 +1193,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    con:           Abs
-  ): LKProof = {
+    con:           Abs ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1249,8 +1244,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    mainFormula:   Formula
-  ): LKProof = {
+    mainFormula:   Formula ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )

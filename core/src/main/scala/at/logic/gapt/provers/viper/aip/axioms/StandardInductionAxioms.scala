@@ -16,8 +16,7 @@ object StandardInductionAxioms {
 
 case class StandardInductionAxioms(
     variableSelector: VariableSelector = allVariablesSelector( _ )( _ ),
-    formulaSelector:  FormulaSelector  = firstFormulaSelector( _ )
-) extends AxiomFactory {
+    formulaSelector:  FormulaSelector  = firstFormulaSelector( _ ) ) extends AxiomFactory {
 
   def forAllVariables = copy( variableSelector = allVariablesSelector( _ )( _ ) )
 
@@ -51,8 +50,7 @@ case class StandardInductionAxioms(
    * @return A standard induction axiom for the specified variable and formula.
    */
   private def createAxiom(
-    inductionVariable: Var, inductionFormula: Formula
-  )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    inductionVariable: Var, inductionFormula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     for {
       constructors <- getConstructors( baseType( inductionVariable ), ctx )
     } yield {
@@ -67,8 +65,7 @@ case class StandardInductionAxioms(
         def proof = {
           val inductiveCaseProofs = constructors map { inductiveCaseProof( _ ) }
           var proofState = ProofState(
-            Sequent( Nil, formula :: Nil )
-          )
+            Sequent( Nil, formula :: Nil ) )
           proofState += repeat( allR )
           proofState += impR
           proofState += allR( inductionVariable )
@@ -97,9 +94,7 @@ case class StandardInductionAxioms(
             Sequent(
               "icf" -> inductiveCaseFormula ::
                 inductionHypotheses.zipWithIndex.map( { case ( hyp, index ) => s"ih$index" -> hyp } ),
-              "goal" -> caseConclusion :: Nil
-            )
-          )
+              "goal" -> caseConclusion :: Nil ) )
           proofState += allL( "icf", primaryVariables: _* ) orElse skip
           proofState += impL( "icf" ) orElse impL( "icf_0" )
           if ( primaryVariables.isEmpty )

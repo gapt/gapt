@@ -36,37 +36,30 @@ object niaSchema extends TacticsProof {
     Seq(
       hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))",
       hof"!x POR(0,x) = E(f(x),0)",
-      hof"!x POR(n,x)"
-    ),
-    Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" )
-  )
+      hof"!x POR(n,x)" ),
+    Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   ctx += Context.ProofNameDeclaration( le"omega n", esOmega )
   //The Name declaration of proof phi
   val esphi = Sequent(
     Seq(
       hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))",
       hof"!x POR(0,x) = E(f(x),0)",
-      hof"!x?y (LEQ(x,y) & POR(n,y) )   "
-    ),
-    Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" )
-  )
+      hof"!x?y (LEQ(x,y) & POR(n,y) )   " ),
+    Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
   ctx += Context.ProofNameDeclaration( le"phi n", esphi )
   //The Name declaration of proof chi
   val eschi = Sequent(
     Seq(
       hof"!y POR(s(y),a) = (E(f(a),s(y)) |  POR(y,a))",
       hof" POR(0,a) = E(f(a),0)",
-      hof" POR(n,a) "
-    ),
-    Seq( hof"POR(n,a)" )
-  )
+      hof" POR(n,a) " ),
+    Seq( hof"POR(n,a)" ) )
   ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
 
   //The base case of  mu
   val esMuBc = Sequent(
     Seq( ( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),0))   " ) ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  )
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
   val muBc = Lemma( esMuBc ) {
     allL( hoc"z:i" )
     exL( fov"B" )
@@ -87,8 +80,7 @@ object niaSchema extends TacticsProof {
   //The step case of mu
   val esMuSc = Sequent(
     Seq( ( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),s(n)))   " ) ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  )
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
   val muSc = Lemma( esMuSc ) {
     allL( hoc"z:i" )
     exL( fov"B" )
@@ -111,10 +103,8 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x POR(0,x)" )
-    ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  )
+      ( "Ant_2" -> hof"!x POR(0,x)" ) ),
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
   val omegaBc = Lemma( esOmegaBc ) {
     cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),0))" )
     allR( fov"A" )
@@ -135,10 +125,8 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x POR(s(n),x)" )
-    ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  )
+      ( "Ant_2" -> hof"!x POR(s(n),x)" ) ),
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
   val omegaSc = Lemma( esOmegaSc ) {
     cut( "cut", hof"!x?y (LEQ(x,y) & POR(s(n),y))" )
     allR( fov"A" )
@@ -158,12 +146,9 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!y POR(s(y),a) = (E(f(a),s(y)) | POR(y,a))" ),
       ( "Ant_1" -> hof"POR(0,a) = E(f(a),0)" ),
-      ( "Ant_2" -> hof" POR(0,a)" )
-    ),
+      ( "Ant_2" -> hof" POR(0,a)" ) ),
     Seq(
-      ( "Suc_0" -> hof"POR(0,a)" )
-    )
-  )
+      ( "Suc_0" -> hof"POR(0,a)" ) ) )
   val chiBc = Lemma( esChiBc ) {
     rewrite ltr "Ant_1" in "Suc_0"
     rewrite ltr "Ant_1" in "Ant_2"
@@ -176,12 +161,9 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!y POR(s(y),a) = (E(f(a),s(y)) |  POR(y,a))" ),
       ( "Ant_1" -> hof"POR(0,a) = E(f(a),0)" ),
-      ( "Ant_2" -> hof" POR(s(n),a)" )
-    ),
+      ( "Ant_2" -> hof" POR(s(n),a)" ) ),
     Seq(
-      ( "Suc_0" -> hof"POR(s(n),a)" )
-    )
-  )
+      ( "Suc_0" -> hof"POR(s(n),a)" ) ) )
   val chiSc = Lemma( esChiSc ) {
     rewrite ltr "Ant_0" in "Suc_0"
     rewrite ltr "Ant_0" in "Ant_2"
@@ -197,10 +179,8 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))" )
-    ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  )
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))" ) ),
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
   val phiBc = Lemma( esphiBc ) {
     allL( "Ant_2", hoc"z:i" )
     exL( fov"B" )
@@ -228,10 +208,8 @@ object niaSchema extends TacticsProof {
     Seq(
       ( "Ant_0" -> hof"!x!y POR(s(y),x) = (E(f(x),s(y)) |  POR(y,x))" ),
       ( "Ant_1" -> hof"!x POR(0,x) = E(f(x),0)" ),
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" )
-    ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
-  )
+      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" ) ),
+    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) ) )
   val phiSc = Lemma( esphiSc ) {
     cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))" )
     cut( "cut1", hof"!x?y (LEQ(x,y) & POR(n,y))" )

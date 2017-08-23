@@ -57,10 +57,8 @@ class SkolemizationTest extends Specification {
       val proof = ForallRightRule(
         ForallLeftRule(
           ax,
-          allxPx, alpha
-        ),
-        allxPx, alpha
-      )
+          allxPx, alpha ),
+        allxPx, alpha )
 
       val ax_sk = LogicalAxiom( Ps0 )
       val proof_sk = ForallLeftRule( ax_sk, allxPx, cs5 )

@@ -104,8 +104,7 @@ class TipSmtParser {
         case LFun( "case", LFunOrAtom( constrName, argNames @ _* ), body ) =>
           require(
             freeVars( varName ).isInstanceOf[Var],
-            s"${freeVars( varName )} is not a variable"
-          )
+            s"${freeVars( varName )} is not a variable" )
           val constr = funDecls( constrName )
           val FunctionType( _, constrArgTypes ) = constr.ty
           require( constrArgTypes.size == argNames.size )
@@ -114,8 +113,7 @@ class TipSmtParser {
           parseFunctionBody(
             body,
             subst( lhs ),
-            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v }
-          )
+            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v } )
       }
       cases flatMap handleCase
     case LFun( "ite", cond, ifTrue, ifFalse ) =>
@@ -157,8 +155,7 @@ class TipSmtParser {
       typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions,
-      assumptions, And( goals )
-    )
+      assumptions, And( goals ) )
 }
 
 object TipSmtParser extends ExternalProgram {
@@ -179,11 +176,9 @@ object TipSmtParser extends ExternalProgram {
         "--if-to-bool-op",
         "--int-to-nat",
         "--uncurry-theory",
-        "--let-lift"
-      ),
+        "--let-lift" ),
       tipBench.read,
-      catchStderr = true
-    ) ) )
+      catchStderr = true ) ) )
 
   val isInstalled =
     try { runProcess( Seq( "tip", "--help" ), "" ); true }

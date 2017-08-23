@@ -276,8 +276,7 @@ abstract class ProofToolViewer[+T]( val name: String, val content: T ) extends R
           else false
         }
         def getDescription = fe
-      }
-    ) )
+      } ) )
 
     fileFilter = acceptAllFileFilter
   }

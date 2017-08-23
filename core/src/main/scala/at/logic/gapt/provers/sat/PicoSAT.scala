@@ -30,8 +30,7 @@ class PicoSAT( command: String* ) extends DrupSolver with ExternalProgram {
           runProcess.withExitValue( command ++ Seq(
             "-r", drupOutputFile.toString,
             "-o", modelOutputFile.toString,
-            dimacsInputFile.toString
-          ) ) match {
+            dimacsInputFile.toString ) ) match {
             case ( 10, _ ) => /* SAT */ Right( read ! modelOutputFile )
             case ( 20, _ ) => /* UNSAT */ Left( read ! drupOutputFile )
             case ( 1, str ) =>

@@ -34,8 +34,7 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val skolemFunctions = SkolemFunctions(
     subProofs collect {
       case sk: ETSkolemQuantifier => sk.skolemConst -> sk.skolemDef
-    }
-  )
+    } )
 
   /**
    * Contains the pair (x, y) iff x occurs as a selected term in any sort of quantifier node
@@ -87,8 +86,7 @@ object ExpansionProofWithCut {
   def mkCutAxiom( cuts: Seq[ETImp] ): ExpansionTree =
     ETWeakQuantifier.withMerge(
       ExpansionProofWithCut.cutAxiom,
-      for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut
-    )
+      for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut )
 }
 
 object freeVariablesET {
@@ -103,8 +101,7 @@ private[expansion] object expansionProofSubstitution extends ClosedUnderSub[Expa
       applySubstitution( Substitution( subst.map -- expansionProof.eigenVariables ), expansionProof )
     } else {
       val substWithRenaming = subst compose Substitution(
-        rename( expansionProof.eigenVariables intersect subst.range, expansionProof.eigenVariables union subst.range )
-      )
+        rename( expansionProof.eigenVariables intersect subst.range, expansionProof.eigenVariables union subst.range ) )
       ExpansionProof( substWithRenaming( expansionProof.expansionSequent ) )
     }
 }

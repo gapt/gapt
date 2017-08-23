@@ -20,16 +20,14 @@ object prop_28 extends TacticsProof {
   val lemma = (
     ( "" -> hof"∀y append(nil2, y) = y" ) +:
     ( "" -> hof"∀z ∀xs ∀y append(cons2(z, xs), y) = cons2(z, append(xs, y))" ) +:
-    Sequent() :+ ( "" -> hof"!xs append(xs,nil2) = xs" )
-  )
+    Sequent() :+ ( "" -> hof"!xs append(xs,nil2) = xs" ) )
 
   val lemma_proof = AnalyticInductionProver.singleInduction( lemma, hov"xs:list2" )
 
   val lemma_22 = (
     ( "" -> hof"∀y append(nil2, y) = y" ) +:
     ( "" -> hof"∀z ∀xs ∀y append(cons2(z, xs), y) = cons2(z, append(xs, y))" ) +:
-    Sequent() :+ ( "" -> hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)" )
-  )
+    Sequent() :+ ( "" -> hof"!xs !ys !zs append(xs, append(ys, zs)) = append(append(xs,ys),zs)" ) )
 
   val lemma_22_proof = AnalyticInductionProver.singleInduction( lemma_22, hov"xs:list2" )
 
@@ -41,8 +39,7 @@ object prop_28 extends TacticsProof {
     ( "" -> hof"∀xs ∀xss ∀y qrevflat(cons(xs, xss), y) = qrevflat(xss, append(rev(xs), y))" ) +:
     ( "" -> hof"∀y append(nil2, y) = y" ) +:
     ( "" -> hof"∀z ∀xs ∀y append(cons2(z, xs), y) = cons2(z, append(xs, y))" ) +:
-    Sequent() :+ ( "" -> hof"!xs !ys append(revflat(xs),ys) = qrevflat(xs, ys)" )
-  )
+    Sequent() :+ ( "" -> hof"!xs !ys append(revflat(xs),ys) = qrevflat(xs, ys)" ) )
 
   val cong_2_proof = AnalyticInductionProver.singleInduction( cong_2, hov"xs:list" )
 

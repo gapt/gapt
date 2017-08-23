@@ -21,8 +21,7 @@ case class UserDefinedInductionAxioms( axioms: List[String] ) extends AxiomFacto
             val formula = StringContext( s ).hof( s )
             val proof = new OpenAssumption( Sequent() :+ ( "" -> formula ) )
           }
-        }
-      )
+        } )
     } catch {
       case e: IllegalArgumentException => Left( e.getMessage() )
     }

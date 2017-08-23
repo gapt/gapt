@@ -3,12 +3,12 @@ package at.logic.gapt.expr
 import at.logic.gapt.formats.babel.BabelExporter
 
 sealed abstract class Ty {
-  def -> ( that: Ty ) = new -> ( this, that )
+  def ->( that: Ty ) = new ->( this, that )
 
   override def toString = new BabelExporter( unicode = true, sig = implicitly ).export( this )
 }
 case class TBase( name: String, params: List[Ty] ) extends Ty
-case class -> ( in: Ty, out: Ty ) extends Ty
+case class ->( in: Ty, out: Ty ) extends Ty
 case class TVar( name: String ) extends Ty
 
 object TBase {

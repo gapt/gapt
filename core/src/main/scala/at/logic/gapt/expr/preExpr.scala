@@ -124,8 +124,8 @@ object preExpr {
   def QuoteWhitebox( e: real.Expr ) =
     Quoted( e, liftTypeMono( e.ty ),
       real.freeVariables( e ).
-      map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
-      toMap )
+        map { case real.Var( name, ty ) => name -> liftTypeMono( ty ) }.
+        toMap )
 
   def freeMetas( t: Type ): Set[MetaTypeIdx] = t match {
     case BaseType( _, params ) => params.view.flatMap( freeMetas ).toSet

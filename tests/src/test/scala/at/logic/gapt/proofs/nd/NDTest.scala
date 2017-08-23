@@ -97,8 +97,7 @@ class NDTest extends Specification with SatMatchers {
 
     val cases = Seq(
       InductionCase( b2, hoc"0: nat", Seq.empty, Seq.empty ),
-      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) )
-    )
+      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
     val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 
     p.conclusion mustEqual Seq( hof"!(x: nat) ((x + (0:nat)): nat) = x", hof"!(x: nat) !(y: nat) (((s(x): nat) + y): nat) = s(x + y)" ) ++: Sequent() :+ hof"(((x: nat) + (0: nat)): nat) = x"

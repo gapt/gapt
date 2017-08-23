@@ -8,8 +8,7 @@ object gapticExamples {
   val decomposeLemma = Lemma(
     ( "label1" -> hof"!x (p x & q x)" ) +:
       Sequent()
-      :+ ( "label2" -> hof"!y (p y -> q y | r y)" )
-  ) {
+      :+ ( "label2" -> hof"!y (p y -> q y | r y)" ) ) {
       decompose
       allL( fov"y" )
       decompose
@@ -19,8 +18,7 @@ object gapticExamples {
   val destructLemma = Lemma(
     ( "label1" -> hof"a & (b & c)" ) +:
       Sequent()
-      :+ ( "label2" -> hof"a | (b | c)" )
-  ) {
+      :+ ( "label2" -> hof"a | (b | c)" ) ) {
       destruct( "label1" )
       destruct( "label2" )
       trivial
@@ -32,8 +30,7 @@ object gapticExamples {
       :+ ( "noise2" -> hof"P(y)" )
       :+ ( "label1" -> hof"a | (b | c)" )
       :+ ( "noise3" -> hof"P(z)" )
-      :+ ( "label2" -> hof"a & (b & c)" )
-  ) {
+      :+ ( "label2" -> hof"a & (b & c)" ) ) {
       destruct( "label1" )
       destruct( "label2" )
       trivial
@@ -44,8 +41,7 @@ object gapticExamples {
     ( "a" -> hof"q(f(c))" ) +:
       ( "hyp" -> hof"!x (q x -> p (f x))" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" ).at( "target" )
       trivial
     }
@@ -53,8 +49,7 @@ object gapticExamples {
   val chainLemma2 = Lemma(
     ( "hyp" -> hof"!x p (f x)" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" )
     }
 
@@ -63,8 +58,7 @@ object gapticExamples {
       ( "b" -> hof"q(f(c))" ) +:
       ( "hyp" -> hof"!x (r x -> q x -> p (f x))" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" )
       trivial
       trivial
@@ -76,8 +70,7 @@ object gapticExamples {
       ( "c" -> hof"w(f(c))" ) +:
       ( "hyp" -> hof"!x (r x & q x & w x -> p (f x))" ) +:
       Sequent()
-      :+ ( "target" -> hof"p(f(f(c)))" )
-  ) {
+      :+ ( "target" -> hof"p(f(f(c)))" ) ) {
       chain( "hyp" )
       trivial
       trivial
@@ -90,8 +83,7 @@ object gapticExamples {
       ( "eq2" -> hof"y = x" ) +:
       ( "a" -> hof"P(u) -> Q(u)" ) +:
       Sequent()
-      :+ ( "b" -> hof"P(x) & Q(x)" )
-  ) {
+      :+ ( "b" -> hof"P(x) & Q(x)" ) ) {
       eql( "eq1", "a" ) yielding hof"P(v) -> Q(v)"
       eql( "eq1", "a" ) yielding hof"P(v) -> Q(u)"
       eql( "eq2", "b" ).fromRightToLeft
@@ -101,8 +93,7 @@ object gapticExamples {
   val lemma = Lemma(
     ( "A" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "S" -> hof"A & B | -A" )
-  ) {
+      :+ ( "S" -> hof"A & B | -A" ) ) {
       orR
       negR
       andR
@@ -114,8 +105,7 @@ object gapticExamples {
   val lemma2 = Lemma(
     ( "A" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "S" -> hof"A & B | -A" )
-  ) {
+      :+ ( "S" -> hof"A & B | -A" ) ) {
       repeat( orR orElse negR orElse andR orElse impL orElse trivial )
     }
 
@@ -136,8 +126,7 @@ object gapticExamples {
     ( "F" -> hof"A -> B" ) +:
       Sequent()
       :+ ( "E" -> hof"B" )
-      :+ ( "D" -> hof"?y (P y -> !z P z)" )
-  ) {
+      :+ ( "D" -> hof"?y (P y -> !z P z)" ) ) {
       impL
       insert( drinker3 )
       trivial
@@ -146,8 +135,7 @@ object gapticExamples {
   val lemma_ = Lemma(
     ( "initAnt" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "initSuc" -> hof"A & B | -A" )
-  ) {
+      :+ ( "initSuc" -> hof"A & B | -A" ) ) {
       orR( "initSuc" )
       negR( "initSuc_1" )
       andR( "initSuc_0" )
@@ -160,8 +148,7 @@ object gapticExamples {
   val lemma2_ = Lemma(
     ( "initAnt" -> hof"A -> B" ) +:
       Sequent()
-      :+ ( "initSuc" -> hof"A & B | -A" )
-  ) {
+      :+ ( "initSuc" -> hof"A & B | -A" ) ) {
       orR( "initSuc" )
       negR( "initSuc_1" )
       andR( "initSuc_0" )
@@ -172,14 +159,12 @@ object gapticExamples {
     }
 
   val direct = Lemma(
-    ( "A" -> hof"A" ) +: ( "B" -> hof"B" ) +: Sequent() :+ ( "B_" -> hof"B" )
-  ) {
+    ( "A" -> hof"A" ) +: ( "B" -> hof"B" ) +: Sequent() :+ ( "B_" -> hof"B" ) ) {
       trivial
     }
 
   val lemmaProp = Lemma(
-    ( "a" -> hof"A -> B" ) +: Sequent() :+ ( "s" -> hof"A&B | -A" )
-  ) {
+    ( "a" -> hof"A -> B" ) +: Sequent() :+ ( "s" -> hof"A&B | -A" ) ) {
       impL
       prop
       prop

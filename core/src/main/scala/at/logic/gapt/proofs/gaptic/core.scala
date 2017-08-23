@@ -38,8 +38,7 @@ object ProofState {
 case class ProofState private (
     initialGoal:      OpenAssumption,
     subGoals:         List[OpenAssumption],
-    finishedSubGoals: Map[OpenAssumptionIndex, LKProof]
-) {
+    finishedSubGoals: Map[OpenAssumptionIndex, LKProof] ) {
 
   def isFinished: Boolean = subGoals.isEmpty
 
@@ -55,12 +54,10 @@ case class ProofState private (
 
   def replace( index: OpenAssumptionIndex, proofSegment: LKProof ): ProofState = {
     val subGoal = subGoals.find( _.index == index ).getOrElse(
-      throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" )
-    )
+      throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" ) )
     require(
       proofSegment.conclusion isSubsetOf subGoal.conclusion,
-      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}"
-    )
+      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}" )
 
     if ( subGoal == proofSegment ) return this
 
@@ -72,17 +69,14 @@ case class ProofState private (
       require( oas.size == 1, s"Different new open assumptions with same index:\n${oas.mkString( "\n" )}" )
     require(
       newOpenAssumptions intersect subGoals_ isEmpty,
-      s"New open assumption contains already open subgoal"
-    )
+      s"New open assumption contains already open subgoal" )
     require(
       newOpenAssumptions.map( _.index ).toSet intersect finishedSubGoals.keySet isEmpty,
-      s"New open assumption contains already finished subgoal"
-    )
+      s"New open assumption contains already finished subgoal" )
 
     copy(
       subGoals = newOpenAssumptions.toList ++ subGoals_,
-      finishedSubGoals = finishedSubGoals + ( index -> proofSegment )
-    )
+      finishedSubGoals = finishedSubGoals + ( index -> proofSegment ) )
   }
 
   def replace( proofSegment: LKProof ): ProofState = replace( subGoals.head.index, proofSegment )
@@ -129,8 +123,7 @@ class OpenAssumptionIndex {
  */
 case class OpenAssumption(
     labelledSequent: Sequent[( String, Formula )],
-    index:           OpenAssumptionIndex          = new OpenAssumptionIndex
-) extends InitialSequent {
+    index:           OpenAssumptionIndex          = new OpenAssumptionIndex ) extends InitialSequent {
   override def name = "ass"
 
   def labels = labelledSequent.map( _._1 )
@@ -291,8 +284,7 @@ object Tactical {
     sequence( tacticals.elements ).map( resultElements =>
       Sequent(
         resultElements.take( tacticals.antecedent.size ),
-        resultElements.drop( tacticals.antecedent.size )
-      ) ).aka( s"sequence($tacticals)" )
+        resultElements.drop( tacticals.antecedent.size ) ) ).aka( s"sequence($tacticals)" )
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>

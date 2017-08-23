@@ -38,54 +38,45 @@ class ResolutionTest extends Specification with SatMatchers {
   "Resolution" in {
     Resolution(
       Input( Clause() :+ hoa"f(x)" ), Suc( 0 ),
-      Input( hoa"f(x)" +: Clause() ), Ant( 0 )
-    ).conclusion must_== Clause()
+      Input( hoa"f(x)" +: Clause() ), Ant( 0 ) ).conclusion must_== Clause()
 
     Resolution(
       Input( Clause() :+ hoa"f(x)" ), Suc( 0 ),
-      Input( hoa"f(y)" +: Clause() ), Ant( 0 )
-    ) must throwAn[IllegalArgumentException]
+      Input( hoa"f(y)" +: Clause() ), Ant( 0 ) ) must throwAn[IllegalArgumentException]
 
     Resolution(
       Input( hoa"f(x)" +: Clause() ), Ant( 0 ),
-      Input( Clause() :+ hoa"f(x)" ), Suc( 0 )
-    ) must throwAn[IllegalArgumentException]
+      Input( Clause() :+ hoa"f(x)" ), Suc( 0 ) ) must throwAn[IllegalArgumentException]
 
     Resolution(
       Input( hoa"a" +: Clause() :+ hoa"f(x)" :+ hoa"b" ), Suc( 0 ),
-      Input( hoa"c" +: hoa"f(x)" +: Clause() :+ hoa"d" ), Ant( 1 )
-    ).conclusion must_== ( hoa"a" +: hoa"c" +: Clause() :+ hoa"b" :+ hoa"d" )
+      Input( hoa"c" +: hoa"f(x)" +: Clause() :+ hoa"d" ), Ant( 1 ) ).conclusion must_== ( hoa"a" +: hoa"c" +: Clause() :+ hoa"b" :+ hoa"d" )
   }
 
   "Paramod" in {
     Paramod(
       Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
       Input( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"λx p(f(c),x): o".asInstanceOf[Abs]
-    ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
+      le"λx p(f(c),x): o".asInstanceOf[Abs] ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
     Paramod(
       Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
       Input( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"λx p(x,x): o".asInstanceOf[Abs]
-    ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(g(d), g(d))" )
+      le"λx p(x,x): o".asInstanceOf[Abs] ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(g(d), g(d))" )
     Paramod(
       Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
       Input( hoa"p(f(c), f(c))" +: Clause() ), Ant( 0 ),
-      le"λx p(f(c),x): o".asInstanceOf[Abs]
-    ).conclusion must_== ( hoa"p(f(c), g(d))" +: Clause() )
+      le"λx p(f(c),x): o".asInstanceOf[Abs] ).conclusion must_== ( hoa"p(f(c), g(d))" +: Clause() )
     Paramod(
       Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), false,
       Input( hoa"p(g(d), f(c))" +: Clause() ), Ant( 0 ),
-      le"λx p(x,f(c)): o".asInstanceOf[Abs]
-    ).conclusion must_== ( hoa"p(f(c), f(c))" +: Clause() )
+      le"λx p(x,f(c)): o".asInstanceOf[Abs] ).conclusion must_== ( hoa"p(f(c), f(c))" +: Clause() )
   }
 
   "Paramod companion" in {
     Paramod(
       Input( Clause() :+ hoa"f(c) = g(d)" ), Suc( 0 ), true,
       Input( hoa"a" +: Clause() :+ hoa"p(f(c), f(c))" ), Suc( 0 ),
-      le"^x p(f(c), x):o"
-    ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
+      le"^x p(f(c), x):o" ).conclusion must_== ( hoa"a" +: Clause() :+ hoa"p(f(c), g(d))" )
   }
 
   "Splitting" in {

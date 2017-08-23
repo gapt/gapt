@@ -93,8 +93,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renamedEigen = rename( eigen, substitution.range union freeVariables( subProof.conclusion ) )
       applySubstitution( substitution, ForallRightRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
-        aux, renamedEigen, quant
-      ) )
+        aux, renamedEigen, quant ) )
 
     case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
       val All( newQuant, _ ) = substitution( p.mainFormula )
@@ -105,8 +104,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renamedEigen = rename( eigen, substitution.range union freeVariables( subProof.conclusion ) )
       applySubstitution( substitution, ExistsLeftRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
-        aux, renamedEigen, quant
-      ) )
+        aux, renamedEigen, quant ) )
 
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val Ex( newQuant, _ ) = substitution( p.mainFormula )
@@ -155,8 +153,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renaming = rename( c.eigenVars, freeVariables( c.proof.endSequent ) -- c.eigenVars ++ subst.range )
       indCase( subst, c.copy(
         applySubstitution( Substitution( renaming ), c.proof ),
-        eigenVars = c.eigenVars map renaming
-      ) )
+        eigenVars = c.eigenVars map renaming ) )
     } else {
       c.copy( applySubstitution( subst, c.proof ) )
     }

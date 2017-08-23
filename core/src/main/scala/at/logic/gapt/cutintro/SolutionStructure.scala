@@ -36,8 +36,7 @@ case class SolutionStructure( sehs: SchematicExtendedHerbrandSequent, formulas: 
       yield ETImp(
       ETStrongQuantifierBlock( All.Block( eigenVar, formula ), eigenVar, formulaToExpansionTree( formula, Polarity.Positive ) ),
       ETWeakQuantifierBlock( All.Block( eigenVar, formula ), eigenVar.size,
-        for ( inst <- cutImplInst ) yield inst -> formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) )
-    )
+        for ( inst <- cutImplInst ) yield inst -> formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) ) )
 
     eliminateMerges( ExpansionProofWithCut( cuts, nonCutPart ) )
   }

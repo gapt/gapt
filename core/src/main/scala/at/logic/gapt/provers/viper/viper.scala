@@ -56,14 +56,13 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
 case class ViperOptions(
-  verbosity:                Int                      = 2,
-  mode:                     String                   = "portfolio",
-  fixup:                    Boolean                  = true,
-  prooftool:                Boolean                  = false,
-  firstOrderProver:         ResolutionProver         = Escargot,
-  treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
-  aipOptions:               AipOptions               = AipOptions()
-)
+    verbosity:                Int                      = 2,
+    mode:                     String                   = "portfolio",
+    fixup:                    Boolean                  = true,
+    prooftool:                Boolean                  = false,
+    firstOrderProver:         ResolutionProver         = Escargot,
+    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
+    aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {
   val usage =
     """Vienna Inductive Prover
@@ -118,16 +117,14 @@ object ViperOptions {
       "eprover" -> eprover,
       "escargot" -> Escargot,
       "spass" -> spass,
-      "vampire" -> vampire
-    )
+      "vampire" -> vampire )
   }
 
   def parseTreeGrammar( args: List[String], opts: TreeGrammarProverOptions ): ( List[String], TreeGrammarProverOptions ) =
     args match {
       case "--prover" :: prover :: rest => parseTreeGrammar(
         rest,
-        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) )
-      )
+        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
       case "--instnum" :: instNum :: rest => parseTreeGrammar( rest, opts.copy( instanceNumber = instNum.toInt ) )
       case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
       case "--findmth" :: mth :: rest     => parseTreeGrammar( rest, opts.copy( findingMethod = mth ) )
@@ -160,8 +157,7 @@ object Viper {
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
           20.seconds -> new ViperTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
-          60.seconds -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" )
-        )
+          60.seconds -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "treegrammar" => List( Duration.Inf -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =

@@ -191,12 +191,10 @@ object Factor {
   def apply( p: ResolutionProof, newConclusion: HOLSequent ): ResolutionProof = {
     require(
       newConclusion setEquals p.conclusion,
-      s"Proposed conclusion $newConclusion has fewer formulas than ${p.conclusion}"
-    )
+      s"Proposed conclusion $newConclusion has fewer formulas than ${p.conclusion}" )
     require(
       newConclusion isSubMultisetOf p.conclusion,
-      s"Proposed conclusion $newConclusion is not a submultiset of ${p.conclusion}"
-    )
+      s"Proposed conclusion $newConclusion is not a submultiset of ${p.conclusion}" )
     var p_ = p
     for ( ( a, i ) <- p.conclusion.diff( newConclusion ).zipWithIndex ) {
       val Seq( j1, j2, _* ) = p_.conclusion.zipWithIndex.elements.filter( _._2 sameSideAs i ).filter( _._1 == a ).map( _._2 )
@@ -310,8 +308,7 @@ case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight
   def auxFormula = subProof2.conclusion( auxIdx )
   require(
     auxFormula == BetaReduction.betaNormalize( context( t ) ),
-    s"$auxFormula == ${BetaReduction.betaNormalize( context( t ) )}"
-  )
+    s"$auxFormula == ${BetaReduction.betaNormalize( context( t ) )}" )
   val rewrittenAuxFormula = BetaReduction.betaNormalize( context( s ) ).asInstanceOf[Formula]
   def mainFormulaSequent =
     if ( auxIdx isAnt ) rewrittenAuxFormula +: Sequent()
@@ -506,8 +503,7 @@ object Flip {
       Resolution(
         Paramod( Taut( Eq( t, s ) ), Suc( 0 ), false,
           Refl( s ), Suc( 0 ), Abs( x, Eq( s, x ) ) ), Suc( 0 ),
-        subProof, equation
-      )
+        subProof, equation )
     }
   }
 }

@@ -22,8 +22,7 @@ object prop_30 extends TacticsProof {
   val dca = (
     ( "" -> hof"∀x0 ∀x1 head(cons(x0, x1)) = x0" ) +:
     ( "" -> hof"∀x0 ∀x1 tail(cons(x0, x1)) = x1" ) +:
-    Sequent() :+ ( "" -> dca_goal )
-  )
+    Sequent() :+ ( "" -> dca_goal ) )
 
   val dca_proof = AnalyticInductionProver.singleInduction( dca, hov"xs:list" )
 
@@ -34,8 +33,7 @@ object prop_30 extends TacticsProof {
     ( "" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
     ( "" -> hof"rev(nil) = nil" ) +:
     ( "" -> hof"∀y ∀xs rev(cons(y, xs)) = append(rev(xs), cons(y, nil))" ) +:
-    Sequent() :+ ( "" -> lemma_11_goal )
-  )
+    Sequent() :+ ( "" -> lemma_11_goal ) )
 
   val lemma_11_proof = AnalyticInductionProver.singleInduction( lemma_11, hov"xs:list" )
 
@@ -48,8 +46,7 @@ object prop_30 extends TacticsProof {
     ( "" -> hof"∀y ∀xs rev(cons(y, xs)) = append(rev(xs), cons(y, nil))" ) +:
     ( "" -> dca_goal ) +:
     ( "" -> lemma_11_goal ) +:
-    Sequent() :+ ( "" -> cong_5_goal )
-  )
+    Sequent() :+ ( "" -> cong_5_goal ) )
 
   val cong_5_proof = AnalyticInductionProver.singleInduction( cong_5, hov"xs:list" )
 

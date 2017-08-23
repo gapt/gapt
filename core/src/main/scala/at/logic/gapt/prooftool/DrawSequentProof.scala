@@ -26,8 +26,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val auxIndices:         Set[SequentIndex],
     val cutAncestorIndices: Set[SequentIndex],
     sequentElementRenderer: F => String,
-    val pos:                List[Int]
-) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
+    val pos:                List[Int] ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   val defaultBorder = Swing.LineBorder( Color.WHITE )
 
   private var lineHideLevel = 0
@@ -51,8 +50,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof.conclusion,
       mainAuxIndices,
       cutAncestorIndices,
-      sequentElementRenderer
-    )
+      sequentElementRenderer )
   }
 
   val cutAncestorIndicesNew = proof match {
@@ -69,8 +67,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof.auxIndices( i ).toSet,
       cutAncestorIndicesNew( i ),
       sequentElementRenderer,
-      i :: pos
-    )
+      i :: pos )
   }
 
   val subProofsPanel = new SubproofsPanel( this, subProofs )
@@ -270,8 +267,7 @@ class CollapsedSubproofsPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentPr
  */
 class SubproofsPanel[F, T <: SequentProof[F, T]](
     parent:        DrawSequentProof[F, T],
-    val subProofs: Seq[DrawSequentProof[F, T]]
-) extends AboveLinePanel[F, T]( parent ) {
+    val subProofs: Seq[DrawSequentProof[F, T]] ) extends AboveLinePanel[F, T]( parent ) {
 
   subProofs.foreach( contents += )
   subProofs.foreach( listenTo( _ ) )
@@ -288,8 +284,7 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
  */
 class ProofLinePanel[F, T <: SequentProof[F, T]](
     val parent:    DrawSequentProof[F, T],
-    val proofName: String
-) extends BoxPanel( Orientation.Horizontal ) {
+    val proofName: String ) extends BoxPanel( Orientation.Horizontal ) {
   private var fSize_ = parent.main.currentFontSize
   def fSize = fSize_
   def fSize_=( sz: Int ) = {

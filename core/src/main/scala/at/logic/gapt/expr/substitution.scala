@@ -68,8 +68,7 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
   for ( ( v, t ) <- map )
     require(
       SubstitutableTy.applySubstitution( this, v.ty ) == t.ty,
-      s"Error creating substitution: variable $v has type ${v.ty} but subterm $t has type ${t.ty}"
-    )
+      s"Error creating substitution: variable $v has type ${v.ty} but subterm $t has type ${t.ty}" )
 
   /**
    * Applies this substitution to an object.
@@ -86,8 +85,7 @@ class Substitution( map: Map[Var, Expr], typeMap: Map[TVar, Ty] = Map() ) extend
   def compose( that: Substitution ): Substitution =
     Substitution(
       ( domain ++ that.domain ).map( v => v -> this( that( v ) ) ),
-      ( this.typeMap.keySet ++ that.typeMap.keySet ).map( v => ( v, this( that( v ) ) ) )
-    )
+      ( this.typeMap.keySet ++ that.typeMap.keySet ).map( v => ( v, this( that( v ) ) ) ) )
 
   def restrict( newDomain: Iterable[Var] ): Substitution =
     Substitution( newDomain.view.map( v => v -> this( v ) ) )

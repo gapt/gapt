@@ -16,8 +16,7 @@ object gStarUnify {
   def apply(
     seHs:                      Pi2SeHs,
     nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var
-  ): Set[Formula] = {
+    nameOfUniversalVariable:   Var ): Set[Formula] = {
 
     // To compute the unified literals, we have to consider all unification pairs.
     // These are pairs of literals (P,Q) occurring in the reduced representation such that:
@@ -36,8 +35,7 @@ object gStarUnify {
       ( alphas, betas ) <- Seq(
         alphaPos -> betaNeg, alphaPos -> neutralNeg,
         alphaNeg -> betaPos, alphaNeg -> neutralPos,
-        neutralNeg -> betaPos, neutralPos -> betaNeg
-      )
+        neutralNeg -> betaPos, neutralPos -> betaNeg )
       posAt <- alphas
       negAt <- betas
       lit <- unifyLiterals( seHs, posAt, negAt, nameOfExistentialVariable, nameOfUniversalVariable )
@@ -60,8 +58,7 @@ object gStarUnify {
     posAt:                     Formula,
     negAt:                     Formula,
     nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var
-  ): Option[Formula] = {
+    nameOfUniversalVariable:   Var ): Option[Formula] = {
 
     // nameOfPos and nameOfNeg are the names of the corresponding atoms that have to be equal. Otherwise, there is no unified literal.
     // In the case that the names are equal, we call the unify function with the arguments argsP and argsN of the corresponding literals.
@@ -74,8 +71,7 @@ object gStarUnify {
           seHs,
           argsP.zip( argsN ),
           nameOfExistentialVariable,
-          nameOfUniversalVariable
-        )
+          nameOfUniversalVariable )
 
         val theUnifiedLiteral = unifiedArgs match {
           case Some( s ) => {
@@ -111,8 +107,7 @@ object gStarUnify {
     seHs:                      Pi2SeHs,
     zippedArgs:                List[( Expr, Expr )],
     nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var
-  ): Option[Seq[Expr]] = {
+    nameOfUniversalVariable:   Var ): Option[Seq[Expr]] = {
 
     var unifiedTerms: Option[Seq[Expr]] = None
 
@@ -140,8 +135,7 @@ object gStarUnify {
     seHs:                      Pi2SeHs,
     termPair:                  ( Expr, Expr ),
     nameOfExistentialVariable: Var,
-    nameOfUniversalVariable:   Var
-  ): Option[Expr] = {
+    nameOfUniversalVariable:   Var ): Option[Expr] = {
 
     // If there are substitutions tL and tR for the universal variable of the cut formula then we can
     // replace tL or tR with nameOfUniversalVariable, i.e. we extend the current list of arguments with
@@ -181,8 +175,7 @@ object gStarUnify {
         seHs,
         argsOfArgL.zip( argsOfArgR ),
         nameOfExistentialVariable,
-        nameOfUniversalVariable
-      ) match {
+        nameOfUniversalVariable ) match {
           case Some( r ) => {
             if ( argsOfArgL.length == r.length ) return Some( Apps( nameOfArgL, r ) )
           }
@@ -197,8 +190,7 @@ object gStarUnify {
   private def unifyPairAccordingTo(
     productionRules: List[( Expr, Expr )],
     termPair:        ( Expr, Expr ),
-    name:            Var
-  ): Option[Expr] =
+    name:            Var ): Option[Expr] =
     if ( productionRules contains termPair ) Some( name ) else None
 
 }

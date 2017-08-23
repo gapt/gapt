@@ -16,8 +16,7 @@ object pi2GrammarToSEHS {
       universalEigenvariable = g.alpha,
       existentialEigenvariables = g.betas.reverse.toList,
       substitutionsForAlpha = g.betas.reverse.map( beta => g.productions.find( _._1 == beta ).get._2 ).toList,
-      substitutionsForBetaWithAlpha = g.productions.filter( _._1 == g.alpha ).map( _._2 ).toList
-    )
+      substitutionsForBetaWithAlpha = g.productions.filter( _._1 == g.alpha ).map( _._2 ).toList )
   }
 }
 

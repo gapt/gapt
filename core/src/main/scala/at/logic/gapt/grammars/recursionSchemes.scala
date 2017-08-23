@@ -24,7 +24,7 @@ case class Rule( lhs: Expr, rhs: Expr ) {
 }
 
 private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
-    extends BabelExporter( unicode, rs.babelSignature ) {
+  extends BabelExporter( unicode, rs.babelSignature ) {
 
   import Doc._
 
@@ -33,12 +33,10 @@ private class RecursionSchemeExporter( unicode: Boolean, rs: RecursionScheme )
   def export(): String = {
     val nonTerminals = rs.startSymbol +: ( rs.nonTerminals - rs.startSymbol ).toList.sortBy { _.name }
     val ntDecl = group( "Non-terminals:" <> nest( line <> csep(
-      nonTerminals map { show( _, false, Set(), Map(), prio.max )._1 }
-    ) ) )
+      nonTerminals map { show( _, false, Set(), Map(), prio.max )._1 } ) ) )
 
     val tDecl = group( "Terminals:" <> nest( line <> csep(
-      rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 }
-    ) ) )
+      rs.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 } ) ) )
 
     val knownTypes = ( rs.nonTerminals union rs.terminals ).map { c => c.name -> c }.toMap
 
@@ -137,8 +135,7 @@ object TargetFilter {
 
 class RecSchemGenLangFormula(
     val recursionScheme: RecursionScheme,
-    val targetFilter:    TargetFilter.Type = TargetFilter.default
-) {
+    val targetFilter:    TargetFilter.Type = TargetFilter.default ) {
 
   def ruleIncluded( rule: Rule ) = FOLAtom( s"${rule.lhs}->${rule.rhs}" )
   def derivable( from: Expr, to: Expr ) = FOLAtom( s"$from=>$to" )
@@ -206,8 +203,7 @@ class RecSchemGenLangFormula(
           edgesPerFrom( t ) collect {
             case ( _, r, b ) if goals contains b                      => ruleIncluded( r )
             case ( _, r, b @ ( from_, to_ ) ) if reachable contains b => And( ruleIncluded( r ), derivable( from_, to_ ) )
-          }
-        ) )
+          } ) )
     } ) ++ ( for (
       ( from1, to1 ) <- reachable;
       ( from2, to2 ) <- reachable if from1 == from2 && to1 != to2 if syntacticMatching( to2, to1 ).isDefined
@@ -250,8 +246,7 @@ object minimizeRecursionScheme extends Logger {
       for {
         r <- recSchem.rules.toSeq
         _ <- syntacticMatching( List( r.lhs -> ir.lhs, r.rhs -> ir.rhs ) )
-      } yield formula.ruleIncluded( r )
-    )
+      } yield formula.ruleIncluded( r ) )
     val hard = formula( targets_ ) & And( ruleCorrespondence )
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
@@ -269,9 +264,7 @@ object SipRecSchem extends RecSchemTemplate(
     FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) ->
       FOLFunction( "G", FOLVar( "x" ), FOLVar( "y" ), FOLVar( "t3" ) ),
     FOLFunction( "G", FOLFunction( "0" ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t4" ),
-    FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t5" )
-  )
-) {
+    FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t5" ) ) ) {
 
   val A = "A"
   val G = "G"
@@ -477,15 +470,13 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
   def findMinimalCover(
     targets: Set[( Expr, Expr )],
     solver:  MaxSATSolver        = bestAvailableMaxSatSolver,
-    weight:  Rule => Int         = _ => 1
-  ): RecursionScheme = {
+    weight:  Rule => Int         = _ => 1 ): RecursionScheme = {
     minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
   }
   def findMinimalCoverViaInst(
     targets: Set[( Expr, Expr )],
     solver:  MaxSATSolver        = bestAvailableMaxSatSolver,
-    weight:  Rule => Int         = _ => 1
-  ): RecursionScheme = {
+    weight:  Rule => Int         = _ => 1 ): RecursionScheme = {
     minimizeRecursionScheme.viaInst( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
   }
 }

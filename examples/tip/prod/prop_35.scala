@@ -19,36 +19,30 @@ object prop_35 extends TacticsProof {
 
   val plus_axioms = List(
     "ap1" -> hof"∀y plus(Z, y) = y",
-    "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))"
-  )
+    "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))" )
 
   val mult_axioms = List(
     "am1" -> hof"∀y mult(Z, y) = Z",
-    "am2" -> hof"∀z ∀y mult(S(z), y) = plus(y, mult(z, y))"
-  )
+    "am2" -> hof"∀z ∀y mult(S(z), y) = plus(y, mult(z, y))" )
 
   val exp_axioms = List(
     "ae1" -> hof"∀x exp(x, Z) = S(Z)",
-    "ae2" -> hof"∀x ∀n exp(x, S(n)) = mult(x, exp(x, n))"
-  )
+    "ae2" -> hof"∀x ∀n exp(x, S(n)) = mult(x, exp(x, n))" )
 
   val qexp_axioms = List(
     "aq1" -> hof"∀x ∀z qexp(x, Z, z) = z",
-    "aq2" -> hof"∀x ∀n ∀z qexp(x, S(n), z) = qexp(x, n, mult(x, z))"
-  )
+    "aq2" -> hof"∀x ∀n ∀z qexp(x, S(n), z) = qexp(x, n, mult(x, z))" )
 
   val plus_z_right_goal = hof"!x plus(x,Z) = x"
   val plus_z_right = (
     plus_axioms ++:
-    Sequent() :+ ( "" -> plus_z_right_goal )
-  )
+    Sequent() :+ ( "" -> plus_z_right_goal ) )
   val plus_z_right_proof = AnalyticInductionProver.singleInduction( plus_z_right, hov"x:Nat" )
 
   val plus_right_s_goal = hof"!x !y plus(x,S(y)) = S(plus(x,y))"
   val plus_right_s = (
     plus_axioms ++:
-    Sequent() :+ ( "" -> plus_right_s_goal )
-  )
+    Sequent() :+ ( "" -> plus_right_s_goal ) )
   val plus_right_s_proof = AnalyticInductionProver.singleInduction( plus_right_s, hov"x:Nat" )
 
   val lemma_24_goal = hof"!x !y !z plus(x,plus(y,z)) = plus(plus(x,y),z)"
@@ -59,8 +53,7 @@ object prop_35 extends TacticsProof {
   val plus_comm = (
     plus_axioms ++:
     ( "prs" -> plus_right_s_goal ) +:
-    ( "pzn" -> plus_z_right_goal ) +: Sequent() :+ ( "goal" -> plus_comm_goal )
-  )
+    ( "pzn" -> plus_z_right_goal ) +: Sequent() :+ ( "goal" -> plus_comm_goal ) )
   val plus_comm_proof = Lemma( plus_comm ) {
     allR; induction( hov"x:Nat" )
     //- IB
@@ -120,8 +113,7 @@ object prop_35 extends TacticsProof {
 
   val mult_one_right_id_goal = hof"!x mult(x, S(Z)) = x"
   val mult_one_right_id = (
-    plus_axioms ++: mult_axioms ++: Sequent() :+ ( "" -> mult_one_right_id_goal )
-  )
+    plus_axioms ++: mult_axioms ++: Sequent() :+ ( "" -> mult_one_right_id_goal ) )
   val mult_one_right_id_proof = AnalyticInductionProver.singleInduction( mult_one_right_id, hov"x:Nat" )
 
   val mult_dist_law_1_goal = hof"!x !y !z mult(x, plus(y,z)) = plus(mult(x,y),mult(x,z))"

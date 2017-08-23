@@ -300,8 +300,7 @@ object IvyParser extends Logger {
     ( "quote_for_ivy", "'" ),
     ( "backslash_for_ivy", "\\\\" ),
     ( "at_for_ivy", "@" ),
-    ( "meet_for_ivy", "^" )
-  )
+    ( "meet_for_ivy", "^" ) )
   def rewrite_name( s: String ): String = if ( ivy_escape_table contains s ) ivy_escape_table( s ) else s
 
   def parse_term( ts: SExpression ): FOLTerm = ts match {

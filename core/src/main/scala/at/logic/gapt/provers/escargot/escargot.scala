@@ -28,8 +28,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
   def setupDefaults(
     state:     EscargotState,
-    splitting: Boolean, equality: Boolean, propositional: Boolean
-  ) = {
+    splitting: Boolean, equality: Boolean, propositional: Boolean ) = {
     val standardInferences = new StandardInferences( state, propositional )
     import standardInferences._
 

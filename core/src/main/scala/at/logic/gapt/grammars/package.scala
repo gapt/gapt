@@ -20,8 +20,7 @@ package object grammars {
       RecursionScheme(
         TermReplacement( rs.startSymbol, p ).asInstanceOf[Const],
         rs.nonTerminals.map( TermReplacement( _, p ).asInstanceOf[Const] ),
-        TermReplacement( rs.rules, p )
-      )
+        TermReplacement( rs.rules, p ) )
 
     def names( rs: RecursionScheme ) =
       containedNames( rs.rules ) ++ containedNames( rs.nonTerminals ) + rs.startSymbol

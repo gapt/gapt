@@ -90,8 +90,7 @@ object equalityRightReduction {
           subProof,
           connector.parent( equality.eq ),
           connector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( WeakeningLeftRule( newEquality, weakening.formula ), false )
 
       case weakening @ WeakeningRightRule( subProof, _ ) =>
@@ -103,8 +102,7 @@ object equalityRightReduction {
             subProof,
             connector.parent( equality.eq ),
             connector.parent( equality.aux ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           Some( WeakeningRightRule( newEquality, weakening.formula ), false )
         }
 
@@ -114,8 +112,7 @@ object equalityRightReduction {
           subProof,
           connector.parents( equality.eq ).head,
           connector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         val connector2 = newEquality.getSequentConnector
         Some( ContractionLeftRule( newEquality, connector2.child( contraction.aux1 ), connector2.child( contraction.aux2 ) ), false )
 
@@ -126,33 +123,28 @@ object equalityRightReduction {
             contraction.subProof,
             contractionConnector.parent( equality.eq ),
             contractionConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           Some( ContractionRightRule(
             newEquality,
             newEquality.getSequentConnector.child( contraction.aux1 ),
-            newEquality.getSequentConnector.child( contraction.aux2 )
-          ), false )
+            newEquality.getSequentConnector.child( contraction.aux2 ) ), false )
         } else {
           val newEquality1 = EqualityRightRule(
             contraction.subProof,
             contractionConnector.parent( equality.eq ),
             contractionConnector.parents( equality.aux )( 0 ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           val equalityConnector = newEquality1.getSequentConnector
           val newEquality2 = EqualityRightRule(
             newEquality1,
             equalityConnector.child( contractionConnector.parent( equality.eq ) ),
             equalityConnector.child( contractionConnector.parents( equality.aux )( 1 ) ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           val endConnector = newEquality2.getSequentConnector * equalityConnector
           Some( ContractionRightRule(
             newEquality2,
             endConnector.child( contraction.aux1 ),
-            endConnector.child( contraction.aux2 )
-          ), false )
+            endConnector.child( contraction.aux2 ) ), false )
         }
 
       case cut @ CutRule( _, _, _, _ ) =>
@@ -160,11 +152,9 @@ object equalityRightReduction {
           splitEquality(
             equality,
             ( cut.leftSubProof, cut.getLeftSequentConnector, equality.replacementContext ) ::
-              ( cut.rightSubProof, cut.getRightSequentConnector, equality.replacementContext ) :: Nil
-          )
+              ( cut.rightSubProof, cut.getRightSequentConnector, equality.replacementContext ) :: Nil )
         val newSubProof = CutRule(
-          newLeftSubProof, leftConnector.child( cut.aux1 ), newRightSubProof, rightConnector.child( cut.aux2 )
-        )
+          newLeftSubProof, leftConnector.child( cut.aux1 ), newRightSubProof, rightConnector.child( cut.aux2 ) )
         Some( ContractionMacroRule( newSubProof, equality.conclusion, false ), weakeningIntro )
 
       case neg @ NegLeftRule( _, _ ) =>
@@ -173,8 +163,7 @@ object equalityRightReduction {
           neg.subProof,
           negConnector.parent( equality.eq ),
           negConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( NegLeftRule( newEquality, newEquality.getSequentConnector.child( neg.aux ) ), false )
 
       case neg @ NegRightRule( _, _ ) =>
@@ -186,8 +175,7 @@ object equalityRightReduction {
             Abs( variable, formula )
           }
         val ( Seq( ( newSubProof, subConnector ) ), weakeningIntro ) = splitEquality(
-          equality, ( neg.subProof, neg.getSequentConnector, context ) :: Nil
-        )
+          equality, ( neg.subProof, neg.getSequentConnector, context ) :: Nil )
         Some( NegRightRule( newSubProof, subConnector.child( neg.aux ) ), weakeningIntro )
 
       case and @ AndLeftRule( _, _, _ ) =>
@@ -196,13 +184,11 @@ object equalityRightReduction {
           and.subProof,
           andConnector.parent( equality.eq ),
           andConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( AndLeftRule(
           newEquality,
           newEquality.getSequentConnector.child( and.aux1 ),
-          newEquality.getSequentConnector.child( and.aux2 )
-        ), false )
+          newEquality.getSequentConnector.child( and.aux2 ) ), false )
 
       case and @ AndRightRule( left, aux1, right, aux2 ) =>
         val ( leftContext, rightContext ) =
@@ -216,11 +202,9 @@ object equalityRightReduction {
           splitEquality(
             equality,
             ( left, and.getLeftSequentConnector, leftContext ) ::
-              ( right, and.getRightSequentConnector, rightContext ) :: Nil
-          )
+              ( right, and.getRightSequentConnector, rightContext ) :: Nil )
         val newProof = AndRightRule(
-          newLeftSubProof, leftConnector.child( aux1 ), newRightSubProof, rightConnector.child( aux2 )
-        )
+          newLeftSubProof, leftConnector.child( aux1 ), newRightSubProof, rightConnector.child( aux2 ) )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
 
       case or @ OrLeftRule( left, aux1, right, aux2 ) =>
@@ -228,8 +212,7 @@ object equalityRightReduction {
         val ( Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ), weakeningIntro ) =
           splitEquality(
             equality,
-            ( left, or.getLeftSequentConnector, context ) :: ( right, or.getRightSequentConnector, context ) :: Nil
-          )
+            ( left, or.getLeftSequentConnector, context ) :: ( right, or.getRightSequentConnector, context ) :: Nil )
         val newProof = OrLeftRule( newLeftProof, leftConnector.child( aux1 ), newRightProof, rightConnector.child( aux2 ) )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
 
@@ -240,8 +223,7 @@ object equalityRightReduction {
             subProof,
             orConnector.parent( equality.eq ),
             orConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           val newConnector = newEquality.getSequentConnector
           Some( OrRightRule( newEquality, newConnector.child( or.aux1 ), newConnector.child( or.aux2 ) ), false )
         } else {
@@ -250,14 +232,12 @@ object equalityRightReduction {
             subProof,
             or.getSequentConnector.parent( equality.eq ),
             or.getSequentConnector.parents( equality.aux ).head,
-            Abs( variable, leftFormula )
-          )
+            Abs( variable, leftFormula ) )
           val newEquality2 = EqualityRightRule(
             newEquality1,
             newEquality1.getSequentConnector.child( or.getSequentConnector.parent( equality.eq ) ),
             newEquality1.getSequentConnector.child( or.getSequentConnector.parents( equality.aux )( 1 ) ),
-            Abs( variable, rightFormula )
-          )
+            Abs( variable, rightFormula ) )
           val endConnector = newEquality2.getSequentConnector * newEquality1.getSequentConnector
           Some( OrRightRule( newEquality2, endConnector.child( or.aux1 ), endConnector.child( or.aux2 ) ), false )
         }
@@ -267,8 +247,7 @@ object equalityRightReduction {
         val ( Seq( ( newLeftProof, leftConnector ), ( newRightProof, rightConnector ) ), weakeningIntro ) =
           splitEquality(
             equality,
-            ( left, imp.getLeftSequentConnector, context ) :: ( right, imp.getRightSequentConnector, context ) :: Nil
-          )
+            ( left, imp.getLeftSequentConnector, context ) :: ( right, imp.getRightSequentConnector, context ) :: Nil )
         val newProof = ImpLeftRule( newLeftProof, leftConnector.child( aux1 ), newRightProof, rightConnector.child( aux2 ) )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
 
@@ -276,23 +255,20 @@ object equalityRightReduction {
         if ( imp.mainIndices.head != equality.aux ) {
           val impConnector = imp.getSequentConnector
           val newEquality = EqualityRightRule(
-            subProof, impConnector.parent( equality.eq ), impConnector.parent( equality.aux ), equality.replacementContext
-          )
+            subProof, impConnector.parent( equality.eq ), impConnector.parent( equality.aux ), equality.replacementContext )
           val newConnector = newEquality.getSequentConnector
           Some( ImpRightRule( newEquality, newConnector.child( imp.aux1 ), newConnector.child( imp.aux2 ) ), false )
         } else {
           val Abs( variable, Imp( leftFormula, rightFormula ) ) = equality.replacementContext
           val impConnector = imp.getSequentConnector
           val newEquality1 = EqualityLeftRule(
-            subProof, impConnector.parent( equality.eq ), imp.aux1, Abs( variable, leftFormula )
-          )
+            subProof, impConnector.parent( equality.eq ), imp.aux1, Abs( variable, leftFormula ) )
           val eq1Connector = newEquality1.getSequentConnector
           val newEquality2 = EqualityRightRule(
             newEquality1,
             eq1Connector.child( impConnector.parent( equality.eq ) ),
             eq1Connector.child( imp.aux2 ),
-            Abs( variable, rightFormula )
-          )
+            Abs( variable, rightFormula ) )
           val endConnector = newEquality2.getSequentConnector * eq1Connector
           Some( ImpRightRule( newEquality2, endConnector.child( imp.aux1 ), newEquality2.auxInConclusion ), false )
         }
@@ -303,11 +279,9 @@ object equalityRightReduction {
           subProof,
           existsConnector.parent( equality.eq ),
           existsConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( ExistsLeftRule(
-          newEquality, newEquality.getSequentConnector.child( exists.aux ), eigenVariable, quantifiedVariable
-        ), false )
+          newEquality, newEquality.getSequentConnector.child( exists.aux ), eigenVariable, quantifiedVariable ), false )
 
       case exists @ ExistsRightRule( _, _, _, _, _ ) =>
         val ( context, aFormula ) =
@@ -320,8 +294,7 @@ object equalityRightReduction {
           }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( exists.subProof, exists.getSequentConnector, context ) :: Nil
-        )
+          ( exists.subProof, exists.getSequentConnector, context ) :: Nil )
         Some( ExistsRightRule( newSubProof, subConnector.child( exists.aux ), aFormula, exists.term, exists.v ), false )
 
       case forall @ ForallLeftRule( _, _, formula, term, variable ) =>
@@ -330,11 +303,9 @@ object equalityRightReduction {
           forall.subProof,
           forallConnector.parent( equality.eq ),
           forallConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( ForallLeftRule(
-          newEquality, newEquality.getSequentConnector.child( forall.aux ), formula, term, variable
-        ), false )
+          newEquality, newEquality.getSequentConnector.child( forall.aux ), formula, term, variable ), false )
 
       case forall @ ForallRightRule( _, _, _, _ ) =>
         val context =
@@ -348,36 +319,30 @@ object equalityRightReduction {
           }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( forall.subProof, forall.getSequentConnector, context ) :: Nil
-        )
+          ( forall.subProof, forall.getSequentConnector, context ) :: Nil )
         Some( ForallRightRule(
-          newSubProof, subConnector.child( forall.aux ), forall.eigenVariable, forall.quantifiedVariable
-        ), false )
+          newSubProof, subConnector.child( forall.aux ), forall.eigenVariable, forall.quantifiedVariable ), false )
 
       case eq @ EqualityLeftRule( _, _, _, _ ) if eq.mainIndices.head != equality.eq =>
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil
-        )
+          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil )
         val newProof = EqualityLeftRule(
           newSubProof,
           subConnector.child( eq.eq ),
           subConnector.child( eq.aux ),
-          eq.replacementContext
-        )
+          eq.replacementContext )
         Some( newProof, false )
 
       case eq @ EqualityRightRule( _, _, _, _ ) if eq.mainIndices.head != equality.aux =>
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil
-        )
+          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil )
         val newProof = EqualityRightRule(
           newSubProof,
           subConnector.child( eq.eq ),
           subConnector.child( eq.aux ),
-          eq.replacementContext
-        )
+          eq.replacementContext )
         Some( newProof, false )
 
       case ind @ InductionRule( _, _, _ ) if ind.mainIndices.head != equality.aux =>
@@ -391,8 +356,7 @@ object equalityRightReduction {
               subProof,
               indCase.constructor,
               indCase.hypotheses.map( connector.child ),
-              indCase.eigenVars, connector.child( indCase.conclusion )
-            )
+              indCase.eigenVars, connector.child( indCase.conclusion ) )
         }
         val newProof = InductionRule( newIndCases, ind.formula, ind.term )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
@@ -423,8 +387,7 @@ object equalityLeftReduction {
             weakening.subProof,
             weakeningConnector.parent( equality.eq ),
             weakeningConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           Some( WeakeningLeftRule( newEqInf, weakening.formula ), false )
         }
 
@@ -433,8 +396,7 @@ object equalityLeftReduction {
           weakening.subProof,
           weakening.getSequentConnector.parent( equality.eq ),
           weakening.getSequentConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( WeakeningRightRule( newEqInf, weakening.formula ), false )
 
       case contraction @ ContractionLeftRule( _, _, _ ) =>
@@ -444,43 +406,36 @@ object equalityLeftReduction {
             contraction.subProof,
             contractionConnector.parent( equality.eq ),
             contractionConnector.parents( equality.aux )( 0 ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           val newEqInf2 = EqualityLeftRule(
             newEqInf1,
             newEqInf1.getSequentConnector.child( contractionConnector.parent( equality.eq ) ),
             newEqInf1.getSequentConnector.child( contractionConnector.parents( equality.aux )( 1 ) ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           val endConnector = newEqInf2.getSequentConnector * newEqInf1.getSequentConnector
           Some( ContractionLeftRule(
-            newEqInf2, endConnector.child( contraction.aux1 ), endConnector.child( contraction.aux2 )
-          ), false )
+            newEqInf2, endConnector.child( contraction.aux1 ), endConnector.child( contraction.aux2 ) ), false )
         } else {
           val newEqInf = EqualityLeftRule(
             contraction.subProof,
             contractionConnector.parents( equality.eq ).head,
             contractionConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           Some( ContractionLeftRule(
             newEqInf,
             newEqInf.getSequentConnector.child( contraction.aux1 ),
-            newEqInf.getSequentConnector.child( contraction.aux2 )
-          ), false )
+            newEqInf.getSequentConnector.child( contraction.aux2 ) ), false )
         }
       case contraction @ ContractionRightRule( _, _, _ ) =>
         val newEqInf = EqualityLeftRule(
           contraction.subProof,
           contraction.getSequentConnector.parent( equality.eq ),
           contraction.getSequentConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( ContractionRightRule(
           newEqInf,
           newEqInf.getSequentConnector.child( contraction.aux1 ),
-          newEqInf.getSequentConnector.child( contraction.aux2 )
-        ), false )
+          newEqInf.getSequentConnector.child( contraction.aux2 ) ), false )
 
       case negation @ NegLeftRule( _, _ ) =>
         val context = if ( negation.mainIndices.head == equality.aux ) {
@@ -491,8 +446,7 @@ object equalityLeftReduction {
         }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( negation.subProof, negation.getSequentConnector, context ) :: Nil
-        )
+          ( negation.subProof, negation.getSequentConnector, context ) :: Nil )
         Some( NegLeftRule( newSubProof, subConnector.child( negation.aux ) ), false )
 
       case negation @ NegRightRule( _, _ ) =>
@@ -500,8 +454,7 @@ object equalityLeftReduction {
           negation.subProof,
           negation.getSequentConnector.parent( equality.eq ),
           negation.getSequentConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( NegRightRule( newEqInf, newEqInf.getSequentConnector.child( negation.aux ) ), false )
 
       case or @ OrLeftRule( _, _, _, _ ) =>
@@ -516,11 +469,9 @@ object equalityLeftReduction {
           splitEquality(
             equality,
             ( or.leftSubProof, or.getLeftSequentConnector, leftContext ) ::
-              ( or.rightSubProof, or.getRightSequentConnector, rightContext ) :: Nil
-          )
+              ( or.rightSubProof, or.getRightSequentConnector, rightContext ) :: Nil )
         val newProof = OrLeftRule(
-          newLeftProof, leftConnector.child( or.aux1 ), newRightProof, rightConnector.child( or.aux2 )
-        )
+          newLeftProof, leftConnector.child( or.aux1 ), newRightProof, rightConnector.child( or.aux2 ) )
         Some( ContractionMacroRule( newProof, or.conclusion, false ), weakeningIntro )
 
       case or @ OrRightRule( _, _, _ ) =>
@@ -529,11 +480,9 @@ object equalityLeftReduction {
           or.subProof,
           orConnector.parent( equality.eq ),
           orConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( OrRightRule(
-          newEqInf, newEqInf.getSequentConnector.child( or.aux1 ), newEqInf.getSequentConnector.child( or.aux2 )
-        ), false )
+          newEqInf, newEqInf.getSequentConnector.child( or.aux1 ), newEqInf.getSequentConnector.child( or.aux2 ) ), false )
 
       case and @ AndLeftRule( _, _, _ ) =>
         val andConnector = and.getSequentConnector
@@ -544,14 +493,12 @@ object equalityLeftReduction {
             and.subProof,
             andConnector.parent( equality.eq ),
             parentAuxL,
-            Abs( variable, leftFormula )
-          )
+            Abs( variable, leftFormula ) )
           val newEqInf2 = EqualityLeftRule(
             newEqInf1,
             newEqInf1.getSequentConnector.child( andConnector.parent( equality.eq ) ),
             newEqInf1.getSequentConnector.child( parentAuxR ),
-            Abs( variable, rightFormula )
-          )
+            Abs( variable, rightFormula ) )
           val endConnector = newEqInf2.getSequentConnector * newEqInf1.getSequentConnector
           Some( AndLeftRule( newEqInf2, endConnector.child( and.aux1 ), endConnector.child( and.aux2 ) ), false )
         } else {
@@ -559,11 +506,9 @@ object equalityLeftReduction {
             and.subProof,
             andConnector.parent( equality.eq ),
             andConnector.parent( equality.aux ),
-            equality.replacementContext
-          )
+            equality.replacementContext )
           Some( AndLeftRule(
-            newEqInf, newEqInf.getSequentConnector.child( and.aux1 ), newEqInf.getSequentConnector.child( and.aux2 )
-          ), false )
+            newEqInf, newEqInf.getSequentConnector.child( and.aux1 ), newEqInf.getSequentConnector.child( and.aux2 ) ), false )
         }
       case and @ AndRightRule( _, _, _, _ ) =>
         val context = equality.replacementContext
@@ -571,11 +516,9 @@ object equalityLeftReduction {
           splitEquality(
             equality,
             ( and.leftSubProof, and.getLeftSequentConnector, context ) ::
-              ( and.rightSubProof, and.getRightSequentConnector, context ) :: Nil
-          )
+              ( and.rightSubProof, and.getRightSequentConnector, context ) :: Nil )
         val newProof = AndRightRule(
-          newLeftProof, leftConnector.child( and.aux1 ), newRightProof, rightConnector.child( and.aux2 )
-        )
+          newLeftProof, leftConnector.child( and.aux1 ), newRightProof, rightConnector.child( and.aux2 ) )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
 
       case imp @ ImpLeftRule( _, _, _, _ ) =>
@@ -592,11 +535,9 @@ object equalityLeftReduction {
           splitEquality(
             equality,
             ( imp.leftSubProof, impLeftConnector, leftContext ) ::
-              ( imp.rightSubProof, impRightConnector, rightContext ) :: Nil
-          )
+              ( imp.rightSubProof, impRightConnector, rightContext ) :: Nil )
         val newProof = ImpLeftRule(
-          newLeftProof, leftConnector.child( imp.aux1 ), newRightProof, rightConnector.child( imp.aux2 )
-        )
+          newLeftProof, leftConnector.child( imp.aux1 ), newRightProof, rightConnector.child( imp.aux2 ) )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
 
       case imp @ ImpRightRule( _, _, _ ) =>
@@ -604,11 +545,9 @@ object equalityLeftReduction {
           imp.subProof,
           imp.getSequentConnector.parent( equality.eq ),
           imp.getSequentConnector.parent( equality.aux ),
-          equality.replacementContext
-        )
+          equality.replacementContext )
         Some( ImpRightRule(
-          newEqInf, newEqInf.getSequentConnector.child( imp.aux1 ), newEqInf.getSequentConnector.child( imp.aux2 )
-        ), false )
+          newEqInf, newEqInf.getSequentConnector.child( imp.aux1 ), newEqInf.getSequentConnector.child( imp.aux2 ) ), false )
 
       case exists @ ExistsLeftRule( _, _, _, _ ) =>
         val context =
@@ -621,16 +560,13 @@ object equalityLeftReduction {
             equality.replacementContext
           }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
-          equality, ( exists.subProof, exists.getSequentConnector, context ) :: Nil
-        )
+          equality, ( exists.subProof, exists.getSequentConnector, context ) :: Nil )
         Some( ExistsLeftRule(
-          newSubProof, subConnector.child( exists.aux ), exists.eigenVariable, exists.quantifiedVariable
-        ), false )
+          newSubProof, subConnector.child( exists.aux ), exists.eigenVariable, exists.quantifiedVariable ), false )
 
       case exists @ ExistsRightRule( _, _, _, _, _ ) =>
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
-          equality, ( exists.subProof, exists.getSequentConnector, equality.replacementContext ) :: Nil
-        )
+          equality, ( exists.subProof, exists.getSequentConnector, equality.replacementContext ) :: Nil )
         Some( ExistsRightRule( newSubProof, subConnector.child( exists.aux ), exists.A, exists.term, exists.v ), false )
 
       case all @ ForallLeftRule( _, _, _, _, _ ) =>
@@ -643,42 +579,35 @@ object equalityLeftReduction {
           ( equality.replacementContext, all.A )
         }
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
-          equality, ( all.subProof, all.getSequentConnector, context ) :: Nil
-        )
+          equality, ( all.subProof, all.getSequentConnector, context ) :: Nil )
         Some( ForallLeftRule( newSubProof, subConnector.child( all.aux ), aFormula, all.term, all.v ), false )
 
       case all @ ForallRightRule( _, _, _, _ ) =>
         val ( Seq( ( newSubProof, newConnector ) ), _ ) = splitEquality(
-          equality, ( all.subProof, all.getSequentConnector, equality.replacementContext ) :: Nil
-        )
+          equality, ( all.subProof, all.getSequentConnector, equality.replacementContext ) :: Nil )
         Some( ForallRightRule(
-          newSubProof, newConnector.child( all.aux ), all.eigenVariable, all.quantifiedVariable
-        ), false )
+          newSubProof, newConnector.child( all.aux ), all.eigenVariable, all.quantifiedVariable ), false )
 
       case eq @ EqualityLeftRule( _, _, _, _ ) if eq.mainIndices.head != equality.aux && eq.mainIndices.head != equality.eq && eq.eqInConclusion != equality.aux =>
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil
-        )
+          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil )
         val newProof = EqualityLeftRule(
           newSubProof,
           subConnector.child( eq.eq ),
           subConnector.child( eq.aux ),
-          eq.replacementContext
-        )
+          eq.replacementContext )
         Some( newProof, false )
 
       case eq @ EqualityRightRule( _, _, _, _ ) if equality.aux != eq.eqInConclusion =>
         val ( Seq( ( newSubProof, subConnector ) ), _ ) = splitEquality(
           equality,
-          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil
-        )
+          ( eq.subProof, eq.getSequentConnector, equality.replacementContext ) :: Nil )
         val newProof = EqualityRightRule(
           newSubProof,
           subConnector.child( eq.eq ),
           subConnector.child( eq.aux ),
-          eq.replacementContext
-        )
+          eq.replacementContext )
         Some( newProof, false )
 
       case ind @ InductionRule( _, _, _ ) =>
@@ -692,8 +621,7 @@ object equalityLeftReduction {
               subProof,
               indCase.constructor,
               indCase.hypotheses.map( connector.child ),
-              indCase.eigenVars, connector.child( indCase.conclusion )
-            )
+              indCase.eigenVars, connector.child( indCase.conclusion ) )
         }
         val newProof = InductionRule( newIndCases, ind.formula, ind.term )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
@@ -704,11 +632,9 @@ object equalityLeftReduction {
           splitEquality(
             equality,
             ( cut.leftSubProof, cut.getLeftSequentConnector, context ) ::
-              ( cut.rightSubProof, cut.getRightSequentConnector, context ) :: Nil
-          )
+              ( cut.rightSubProof, cut.getRightSequentConnector, context ) :: Nil )
         val newProof = CutRule(
-          newLeftProof, leftConnector.child( cut.aux1 ), newRightProof, rightConnector.child( cut.aux2 )
-        )
+          newLeftProof, leftConnector.child( cut.aux1 ), newRightProof, rightConnector.child( cut.aux2 ) )
         Some( ContractionMacroRule( newProof, equality.conclusion, false ), weakeningIntro )
 
       case _ => None
@@ -744,8 +670,7 @@ private object splitEquality {
       }
     (
       results map { case ( proof, connector, _ ) => ( proof, connector ) },
-      results exists { _._3 }
-    )
+      results exists { _._3 } )
   }
 
   /**
@@ -769,16 +694,14 @@ private object splitEquality {
         newSubProof,
         newSubProof.mainIndices.head,
         newSubProof.getSequentConnector.child( connector.parent( equality.aux ) ),
-        replacementContext
-      )
+        replacementContext )
       ( newProof, newProofConnector * newSubProof.getSequentConnector, true )
     } else {
       val ( newProof, newProofConnector ) = createEquality(
         subProof,
         connector.parent( equality.eq ),
         connector.parent( equality.aux ),
-        replacementContext
-      )
+        replacementContext )
       ( newProof, newProofConnector, false )
     }
   }
@@ -794,8 +717,7 @@ private object splitEquality {
    *         as the last inference.
    */
   private def createEquality(
-    subProof: LKProof, equation: SequentIndex, auxiliary: SequentIndex, replacementContext: Abs
-  ): ( LKProof, SequentConnector ) =
+    subProof: LKProof, equation: SequentIndex, auxiliary: SequentIndex, replacementContext: Abs ): ( LKProof, SequentConnector ) =
     auxiliary match {
       case Suc( _ ) =>
         val equalityInference = EqualityRightRule( subProof, equation, auxiliary, replacementContext )

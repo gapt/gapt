@@ -30,8 +30,7 @@ object undoHol2Fol extends Logger {
     e:             Expr,
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
-    abssymbol_map: Map[String, Expr]
-  ): Formula =
+    abssymbol_map: Map[String, Expr] ): Formula =
     backtranslate( e.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[Formula]
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
@@ -42,8 +41,7 @@ object undoHol2Fol extends Logger {
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
     abssymbol_map: Map[String, Expr],
-    expected_type: Option[Ty]
-  ): Expr = {
+    expected_type: Option[Ty] ): Expr = {
     e match {
       // --------------- logical structure ------------------------
       case Atom( Const( name, _ ), args ) if sig_consts contains name.toString =>

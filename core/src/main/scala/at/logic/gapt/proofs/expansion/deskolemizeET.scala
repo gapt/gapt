@@ -55,19 +55,16 @@ class deskolemizeET {
         instances.map {
           case ( selectedTerm, child ) =>
             ( TermReplacement( selectedTerm, repl ), rm( child, repl ) )
-        }
-      )
+        } )
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       ETStrongQuantifier(
         TermReplacement( shallow, repl ),
-        TermReplacement( eigenVariable, repl ).asInstanceOf[Var], rm( child, repl )
-      )
+        TermReplacement( eigenVariable, repl ).asInstanceOf[Var], rm( child, repl ) )
     case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
       ETStrongQuantifier(
         TermReplacement( shallow, repl ),
         TermReplacement( skolemTerm, repl ).asInstanceOf[Var],
-        rm( child, repl )
-      )
+        rm( child, repl ) )
   }
 }
 

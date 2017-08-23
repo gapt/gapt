@@ -49,11 +49,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
               hof"∃z Q $f_alpha z",
               Map(
                 le"c" -> ETAtom( hoa"Q $f_alpha c", Polarity.InSuccedent ),
-                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent )
-              )
-            )
-        )
-      ) )
+                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent ) ) ) ) ) )
 
     }
 

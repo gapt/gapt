@@ -54,10 +54,9 @@ object eliminateMerges {
         ETWeakQuantifier(
           shallow,
           ( for ( selected <- inst1.keySet union inst2.keySet ) yield selected ->
-          ( if ( !inst2.contains( selected ) ) merge( inst1( selected ) )
-          else if ( !inst1.contains( selected ) ) merge( inst2( selected ) )
-          else merge2( inst1( selected ), inst2( selected ) ) ) ).toMap
-        )
+            ( if ( !inst2.contains( selected ) ) merge( inst1( selected ) )
+            else if ( !inst1.contains( selected ) ) merge( inst2( selected ) )
+            else merge2( inst1( selected ), inst2( selected ) ) ) ).toMap )
       case ( tree1 @ ETStrongQuantifier( shallow, v1, t1 ), tree2 @ ETStrongQuantifier( _, v2, t2 ) ) =>
         if ( v1 == v2 ) {
           ETStrongQuantifier( shallow, v1, merge2( t1, t2 ) )

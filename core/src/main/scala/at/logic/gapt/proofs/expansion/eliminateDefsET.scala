@@ -88,8 +88,7 @@ object eliminateDefsET {
 
     val newCuts = ETWeakQuantifier.withMerge(
       ExpansionProofWithCut.cutAxiom,
-      insts.values.map { case ( pos, neg ) => pos.shallow -> ETImp( pos, neg ) }
-    )
+      insts.values.map { case ( pos, neg ) => pos.shallow -> ETImp( pos, neg ) } )
 
     val newES = ( newCuts +: rest.map { repl } ).
       groupBy { _.shallow }.map { _._2 }.map { ETMerge( _ ) }

@@ -15,14 +15,12 @@ class minimalExpansionSequentTest extends Specification {
   val et1: ExpansionTree =
     ETWeakQuantifier(
       All( x, Atom( P, x :: Nil ) ),
-      Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InAntecedent ), d -> ETAtom( Atom( P, d :: Nil ), Polarity.InAntecedent ) )
-    )
+      Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InAntecedent ), d -> ETAtom( Atom( P, d :: Nil ), Polarity.InAntecedent ) ) )
 
   val et2: ExpansionTree =
     ETWeakQuantifier(
       Ex( x, Atom( P, x :: Nil ) ),
-      Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InSuccedent ), d -> ETAtom( Atom( P, d :: Nil ), Polarity.InSuccedent ) )
-    )
+      Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InSuccedent ), d -> ETAtom( Atom( P, d :: Nil ), Polarity.InSuccedent ) ) )
 
   val eSeq = ExpansionSequent( List( et1 ), List( et2 ) )
 
@@ -30,24 +28,16 @@ class minimalExpansionSequentTest extends Specification {
     ExpansionSequent( List(
       ETWeakQuantifier(
         All( x, Atom( P, x :: Nil ) ),
-        Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InAntecedent ) )
-      )
-    ), List(
+        Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InAntecedent ) ) ) ), List(
       ETWeakQuantifier(
         Ex( x, Atom( P, x :: Nil ) ),
-        Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InSuccedent ) )
-      )
-    ) ),
+        Map( c -> ETAtom( Atom( P, c :: Nil ), Polarity.InSuccedent ) ) ) ) ),
     ExpansionSequent( List( ETWeakQuantifier(
       All( x, Atom( P, x :: Nil ) ),
-      Map( d -> ETAtom( Atom( P, d :: Nil ), Polarity.InAntecedent ) )
-    ) ), List(
+      Map( d -> ETAtom( Atom( P, d :: Nil ), Polarity.InAntecedent ) ) ) ), List(
       ETWeakQuantifier(
         Ex( x, Atom( P, x :: Nil ) ),
-        Map( d -> ETAtom( Atom( P, d :: Nil ), Polarity.InSuccedent ) )
-      )
-    ) )
-  )
+        Map( d -> ETAtom( Atom( P, d :: Nil ), Polarity.InSuccedent ) ) ) ) ) )
 
   "Minimal expansion trees" should {
     "be computed correctly by the smart algorithm" in {

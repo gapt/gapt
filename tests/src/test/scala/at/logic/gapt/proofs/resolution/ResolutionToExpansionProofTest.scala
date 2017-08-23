@@ -16,8 +16,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
       hof"!x!y!z (P(x,g(z)) -> P(f(x),z) & R(y))" +:
       hof"!x!z (P(x,z) -> Q(x))" +:
       Sequent()
-      :+ hof"?x Q(f(f(x)))"
-    )
+      :+ hof"?x Q(f(f(x)))" )
 
     "extract expansion sequent" in {
       val Some( robinson ) = Escargot getResolutionProof es

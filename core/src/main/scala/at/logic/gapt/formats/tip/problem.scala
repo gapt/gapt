@@ -26,8 +26,7 @@ case class TipProblem(
     ctx:   Context,
     sorts: Seq[TBase], datatypes: Seq[TipDatatype],
     uninterpretedConsts: Seq[Const], functions: Seq[TipFun],
-    assumptions: Seq[Formula], goal: Formula
-) {
+    assumptions: Seq[Formula], goal: Formula ) {
   def constructorInjectivity =
     for {
       TipDatatype( ty, ctrs ) <- datatypes
@@ -39,8 +38,7 @@ case class TipProblem(
       FunctionType( _, args2 ) = ctr2.ty
     } yield universalClosure(
       ctr1( ( for ( ( t, j ) <- args1.zipWithIndex ) yield Var( s"x$j", t ) ): _* ) !==
-        ctr2( ( for ( ( t, j ) <- args2.zipWithIndex ) yield Var( s"y$j", t ) ): _* )
-    )
+        ctr2( ( for ( ( t, j ) <- args2.zipWithIndex ) yield Var( s"y$j", t ) ): _* ) )
 
   def toSequent = existentialClosure(
     datatypes.flatMap( _.constructors ).flatMap( _.projectorDefinitions ) ++:
@@ -48,8 +46,7 @@ case class TipProblem(
       constructorInjectivity ++:
       assumptions ++:
       Sequent()
-      :+ goal
-  )
+      :+ goal )
 
   def context: Context = ctx
 

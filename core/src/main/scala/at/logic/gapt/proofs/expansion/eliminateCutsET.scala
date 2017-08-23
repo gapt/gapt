@@ -84,8 +84,7 @@ object eliminateCutsET {
     // weak quantifier instances that have been changed through the substitution.
     def quantifiedCut(
       instances:      Map[Seq[Expr], ExpansionTree],
-      eigenVariables: Seq[Var], child: ExpansionTree
-    ): ( Seq[ETImp], ExpansionSequent ) = {
+      eigenVariables: Seq[Var], child: ExpansionTree ): ( Seq[ETImp], ExpansionSequent ) = {
       if ( instances isEmpty ) return ( rest, expansionSequent )
 
       val eigenVarsToRename = generatedUpperSetInPO( eigenVariablesET( child ) ++ eigenVariables, dependencyRelation ) -- eigenVariables
@@ -108,8 +107,7 @@ object eliminateCutsET {
       val substs_ = if ( needExtraCopy ) substs :+ Substitution() else substs
       (
         newCuts ++ ( for ( c <- rest; s <- substs_ ) yield s( c ).asInstanceOf[ETImp] ),
-        for ( tree <- expansionSequent ) yield ETMerge( substs_.map { _( tree ) } )
-      )
+        for ( tree <- expansionSequent ) yield ETMerge( substs_.map { _( tree ) } ) )
     }
 
     Some( ( cut1, cut2 ) ) collect {

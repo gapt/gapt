@@ -21,8 +21,7 @@ object resolutionToTptp {
   private def convertDefinition(
     label:    String,
     defConst: HOLAtomConst,
-    defn:     Expr
-  ): TptpInput = {
+    defn:     Expr ): TptpInput = {
     val FunctionType( _, argtypes ) = defConst.ty
     val vars = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"X$i", t )
 
@@ -34,8 +33,7 @@ object resolutionToTptp {
   private def convertSkolemDefinition(
     label:   String,
     skConst: Const,
-    defn:    Expr
-  ): AnnotatedFormula = {
+    defn:    Expr ): AnnotatedFormula = {
     val Abs.Block( vars, quantf: Formula ) = defn
     val instf = instantiate( quantf, skConst( vars ) )
 
@@ -50,8 +48,7 @@ object resolutionToTptp {
   private def convertInference(
     labelMap: collection.Map[ResolutionProof, String],
     defMap:   collection.Map[Const, String],
-    inf:      ResolutionProof
-  ): TptpInput = {
+    inf:      ResolutionProof ): TptpInput = {
     val label = labelMap( inf )
     inf match {
       case Input( sequent ) =>

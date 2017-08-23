@@ -40,8 +40,7 @@ class PTScrollPane extends ScrollPane {
 class PTContentPanel(
     val main:    ProofToolViewer[_],
     val str:     String,
-    val content: Component
-) extends BorderPanel with MouseMotionListener {
+    val content: Component ) extends BorderPanel with MouseMotionListener {
   val niceName: String = str match {
     case s: String if s == "\\psi" || s == "psi" => "ψ"
     case s: String if s == "\\chi" || s == "chi" => "χ"

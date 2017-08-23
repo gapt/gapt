@@ -132,8 +132,7 @@ class EscargotState extends Logger {
 
   def switchToNewModel( model: Interpretation ) = {
     avatarModel = MapBasedInterpretation(
-      avatarModel.model.keys.map( a => a -> model.interpretAtom( a ) ).toMap
-    )
+      avatarModel.model.keys.map( a => a -> model.interpretAtom( a ) ).toMap )
 
     for ( ( cls, reason ) <- locked.toSet if isActive( cls ) && reason.forall { !isActive( _ ) } ) {
       locked -= ( cls -> reason )

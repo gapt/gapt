@@ -11,8 +11,7 @@ object ExpansionProofToEpsilon {
       case ( sk, Abs.Block( vs, q @ Quant( x, _, isForall ) ) ) =>
         val x_ = rename( x, vs )
         ( sk: Expr ) -> Abs.Block( vs, Epsilon( x_, epsilonize(
-          if ( isForall ) -instantiate( q, x_ ) else instantiate( q, x_ )
-        ) ) )
+          if ( isForall ) -instantiate( q, x_ ) else instantiate( q, x_ ) ) ) )
     }
     def replaceSkolemByEpsilon( t: Expr ) =
       BetaReduction.betaNormalize( TermReplacement( t, skolemToEpsilonMap ) )

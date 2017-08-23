@@ -37,8 +37,7 @@ class Metis extends ResolutionProver with ExternalProgram {
         } else {
           throw new IllegalArgumentException
         }
-      }
-    )
+      } )
 
   override val isInstalled: Boolean =
     try {
