@@ -37,8 +37,9 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.sonatypeRepo( "snapshots" ), // for scoverage
 
   sourcesInBase := false // people like to keep scripts lying around
+)
 
-) ++ scalariformSettings( true ) :+
+val scalariformOptions = scalariformSettings( true ) :+
   ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
@@ -60,6 +61,7 @@ lazy val root = project.in( file( "." ) ).
   aggregate( core, examples, tests, userManual, cli, testing ).
   dependsOn( core, examples, cli ).
   settings( commonSettings: _* ).
+  settings( scalariformOptions: _* ).
   enablePlugins( ScalaUnidocPlugin ).
   settings(
     fork in console := true,
@@ -68,7 +70,7 @@ lazy val root = project.in( file( "." ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ commonSettings ),
+    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ scalariformOptions ),
     sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
@@ -196,8 +198,7 @@ lazy val examples = project.in( file( "examples" ) ).
     excludeFilter in ( Compile, unmanagedResources ) := {
       val target = ( baseDirectory.value / "target" ).getCanonicalPath
       new SimpleFileFilter( _.getCanonicalPath startsWith target )
-    } || "*.scala",
-    sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value )
+    } || "*.scala" )
 
 lazy val tests = project.in( file( "tests" ) ).
   dependsOn( core, examples ).
@@ -214,7 +215,6 @@ lazy val userManual = project.in( file( "doc" ) ).
   settings( commonSettings: _* ).
   settings(
     unmanagedSourceDirectories in Compile := Seq( baseDirectory.value ),
-    sourceDirectories in ( Compile, scalariformFormat ) := unmanagedSourceDirectories.in( Compile ).value,
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map() )
 
@@ -230,7 +230,7 @@ lazy val cli = project.in( file( "cli" ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map() )
 
-addCommandAlias( "format", "; scalariformFormat ; test:scalariformFormat ; buildsbt:scalariformFormat" )
+addCommandAlias( "format", "; scalariformFormat ; buildsbt:scalariformFormat" )
 
 lazy val testing = project.in( file( "testing" ) ).
   dependsOn( core, examples ).
