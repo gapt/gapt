@@ -1,15 +1,13 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Ant, Context, Sequent }
 import at.logic.gapt.proofs.expansion._
 
 object LKToExpansionProof {
 
   /**
    * Extracts an expansion sequent Ex(π) from an LKProof π.
-   *
-   * The induction rule is not supported!
    *
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
@@ -151,6 +149,9 @@ object LKToExpansionProof {
 
       ( subCuts, subSequent.delete( aux ) :+ ETDefinition( main, subSequent( aux ) ) )
 
-    case InductionRule( cases, formula, term ) => ???
+    case p @ InductionRule( _, _, _ ) =>
+      // need this? val ( subCuts, subSequent ) = extract( regularize( AtomicExpansion( makeInductionExplicit( p ) ) ) )
+      val ( subCuts, subSequent ) = extract( makeInductionExplicit( p ) )
+      ( subSequent( Ant( 0 ) ) +: subCuts ) -> ( subSequent.delete( Ant( 0 ) ) )
   }
 }
