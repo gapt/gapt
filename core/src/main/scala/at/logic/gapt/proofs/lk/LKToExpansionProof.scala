@@ -150,7 +150,6 @@ object LKToExpansionProof {
       ( subCuts, subSequent.delete( aux ) :+ ETDefinition( main, subSequent( aux ) ) )
 
     case p @ InductionRule( _, _, _ ) =>
-      // need this? val ( subCuts, subSequent ) = extract( regularize( AtomicExpansion( makeInductionExplicit( p ) ) ) )
       val ( subCuts, subSequent ) = extract( makeInductionExplicit( p ) )
       ( subSequent( Ant( 0 ) ) +: subCuts ) -> ( subSequent.delete( Ant( 0 ) ) )
   }
