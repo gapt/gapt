@@ -31,7 +31,7 @@ object makeInductionExplicit extends LKVisitor[Unit] {
       val vars = indCase.eigenVars
 
       var p: LKProof = ExchangeRightMacroRule( indCase.proof, indCase.conclusion )
-      for ( i <- indCase.hypotheses )
+      for ( i <- indCase.hypotheses.reverse )
         p = ImpRightRule( p, indCase.proof.conclusion( i ), p.conclusion.indices.last )
 
       ForallRightBlock( p, All.Block( vars, p.conclusion.elements.last ), vars )

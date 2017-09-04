@@ -230,7 +230,6 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
    * @param subProof The subproof.
    * @param equation Index of the equation or the equation itself.
    * @param auxFormula Index of the aux formula or the formula itself.
-   * @param pos The positions of the term to be replaced within the aux formula.
    * @return
    */
   def apply( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): EqualityRightRule = withSequentConnector( subProof, equation, auxFormula, con )._1
@@ -242,7 +241,6 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
    * @param subProof The subproof.
    * @param equation Index of the equation or the equation itself.
    * @param auxFormula Index of the aux formula or the formula itself.
-   * @param pos The positions of the term to be replaced within the aux formula.
    * @return An LKProof and an SequentConnector connecting its end sequent with the end sequent of subProof.
    */
   def withSequentConnector( subProof: LKProof, equation: IndexOrFormula, auxFormula: IndexOrFormula, con: Abs ): ( EqualityRightRule, SequentConnector ) = {
@@ -718,8 +716,7 @@ object ContractionMacroRule extends ConvenienceConstructor( "ContractionMacroRul
         s"""Sequent $targetSequent cannot be reached from $currentSequent by contractions.
            |It is missing the following formulas:
            |${( targetSequent diff currentSequent ) ++ ( currentSequent.distinct diff targetSequent.distinct )}
-         """.stripMargin
-      )
+         """.stripMargin )
     }
 
     val ( subProof, subConnector ) = targetAnt.distinct.foldLeft( ( p, SequentConnector( p.endSequent ) ) ) { ( acc, f ) =>
@@ -1031,8 +1028,7 @@ object WeakeningContractionMacroRule extends ConvenienceConstructor( "WeakeningC
         s"""Sequent $targetSequent cannot be reached from $currentSequent by weakenings and contractions:
            |It is missing the following formulas:
            |${currentSequent.distinct diff targetSequent.distinct}
-         """.stripMargin
-      )
+         """.stripMargin )
 
     val antList = targetAnt.distinct map ( f => ( f, targetAnt.count( _ == f ) ) )
     val sucList = targetSuc.distinct map ( f => ( f, targetSuc.count( _ == f ) ) )
@@ -1073,7 +1069,6 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
    * @param eq The index of the equation or the equation itself.
    * @param rightSubProof The right subproof π2.
    * @param aux The index of the aux formula or the aux formula itself.
-   * @param pos The positions of the term to be replaced within A.
    * @return
    */
   def apply(
@@ -1081,8 +1076,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    con:           Abs
-  ): LKProof = {
+    con:           Abs ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1139,8 +1133,7 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    mainFormula:   Formula
-  ): LKProof = {
+    mainFormula:   Formula ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1200,8 +1193,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    con:           Abs
-  ): LKProof = {
+    con:           Abs ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1252,8 +1244,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     eq:            IndexOrFormula,
     rightSubProof: LKProof,
     aux:           IndexOrFormula,
-    mainFormula:   Formula
-  ): LKProof = {
+    mainFormula:   Formula ): LKProof = {
 
     val eqFormula = eq match {
       case Left( i )  => leftSubProof.endSequent( i )
@@ -1274,13 +1265,13 @@ object FOTheoryMacroRule {
     }
   def option( sequent: HOLSequent, prover: ResolutionProver = Escargot )( implicit ctx: Context ): Option[LKProof] = {
     import at.logic.gapt.proofs.resolution._
-    val axioms = ctx.axioms.toSet
+    val axioms = ctx.get[Context.ProofNames].sequents.filter( _.forall( _.isInstanceOf[Atom] ) ).toSet // FIXME: this also includes defined proofs
     val nameGen = rename.awayFrom( containedNames( axioms + sequent ) )
     val grounding = freeVariables( sequent ).map( v => v -> Const( nameGen.fresh( v.name ), v.ty ) )
     val cnf = axioms ++ Substitution( grounding )( sequent ).map( Sequent() :+ _, _ +: Sequent() ).elements
     prover.getResolutionProof( cnf.map( Input ) ) map { p =>
       var lk = ResolutionToLKProof( eliminateSplitting( p ), {
-        case Input( seq ) if axioms.contains( seq ) => TheoryAxiom( seq.map( _.asInstanceOf[Atom] ) )
+        case Input( seq ) if axioms.contains( seq ) => ProofLink( ctx.get[Context.ProofNames].find( seq ).get, seq )
         case Input( unit ) if unit.size == 1        => LogicalAxiom( unit.elements.head )
       } )
       lk = TermReplacement.hygienic( lk, grounding.map( _.swap ).toMap )

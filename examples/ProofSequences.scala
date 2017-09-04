@@ -177,8 +177,7 @@ trait ExplicitEqualityTactics {
    */
   def explicitRewriteLeft(
     equation: String, targetEq: String,
-    transitivity: String = "trans"
-  ) =
+    transitivity: String = "trans" ) =
     for {
       goal <- currentGoal
       All.Block( Seq( _, transVar, _ ), _ ) = goal( transitivity )
@@ -196,8 +195,7 @@ trait ExplicitEqualityTactics {
    */
   def explicitRewriteRight(
     equation: String, targetEq: String,
-    transitivity: String = "trans"
-  ) =
+    transitivity: String = "trans" ) =
     for {
       goal <- currentGoal
       All.Block( Seq( _, transVar, _ ), _ ) = goal( transitivity )
@@ -233,8 +231,7 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
       ( "refl" -> hof"∀x x=x" ) +:
         ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
-        :+ ( "goal" -> hof"${fk( n )} = a" )
-    ) {
+        :+ ( "goal" -> hof"${fk( n )} = a" ) ) {
         repeat( explicitRewriteLeft( "id", "goal" ) )
         chain( "refl" )
       }
@@ -255,13 +252,11 @@ object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with Expl
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
         ( "f0" -> hof"f 0 = 0" ) +:
         Sequent()
-        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" )
-    ) {
+        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" ) ) {
         repeat(
           explicitRewriteRight( "plus1", "goal" ) andThen
             explicitRewriteLeft( "fs", "goal" ) andThen
-            chain( "congplusleft" )
-        )
+            chain( "congplusleft" ) )
         chain( "f0" )
       }
 }
@@ -281,13 +276,11 @@ object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with Expli
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
         ( "f0" -> hof"f 0 = 0" ) +:
         Sequent()
-        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" )
-    ) {
+        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" ) ) {
         repeat(
           explicitRewriteLeft( "fs", "goal" ) andThen
             explicitRewriteLeft( "plus1", "goal" ) andThen
-            chain( "congsuc" )
-        )
+            chain( "congsuc" ) )
         chain( "f0" )
       }
 }
@@ -310,11 +303,8 @@ object SumOfOnesExampleProof extends ProofSequence {
         "Trans" -> TransitivityEq,
         "CongSuc" -> CongUnaryEq( "s" ),
         "ABase" -> Peano.AdditionBase,
-        "ASuc" -> Peano.AdditionSucc
-      ), Seq(
-        "Goal" -> goal
-      )
-    )
+        "ASuc" -> Peano.AdditionSucc ), Seq(
+        "Goal" -> goal ) )
 
     n match {
       case 0 | 1 =>
@@ -348,11 +338,8 @@ object SumOfOnesExampleProof extends ProofSequence {
         "Trans" -> TransitivityEq,
         "CongSuc" -> CongUnaryEq( "s" ),
         "ABase" -> Peano.AdditionBase,
-        "ASuc" -> Peano.AdditionSucc
-      ), Seq(
-        "Goal" -> goal
-      )
-    )
+        "ASuc" -> Peano.AdditionSucc ), Seq(
+        "Goal" -> goal ) )
 
     Lemma( endSequent ) {
       allL( "ABase", sum( n ) ) //ABase_0
@@ -525,7 +512,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     val p2 = ForallLeftRule( p1, Ax1, d1 )
     val p3 = ContractionLeftRule( p2, Ax1 )
 
-    // show (n + n) = n + (n + 0) 
+    // show (n + n) = n + (n + 0)
     val p4 = cp( n_num :: n_num :: n_num :: f2( n_num, p, zero ) :: Nil, p3 )
 
     // show n = n and n = n + 0
@@ -558,7 +545,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
       if ( i + 1 >= n ) {
         val final_expression = Eq( a1, a2 )
 
-        val top = Axiom( final_expression :: Nil, final_expression :: Nil )
+        val top = LogicalAxiom( final_expression )
         addAllAxioms( top )
       } else {
         gen_proof_step( i + 1, n )
@@ -602,7 +589,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     val p17 = show_by_cs( f2( f2( n_num, p, n_num ), p, i_num ), f2( n_num, p, f2( n_num, p, i_num ) ), p16 )
 
     // now we have:
-    // (n + n) + s(i) = s( (n + n) + i) 
+    // (n + n) + s(i) = s( (n + n) + i)
     // as well as
     // (n + n) + i = n + (n + i)
     // -> use Ax2
@@ -648,11 +635,11 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     equalities match {
       case Nil => p
       case head :: Nil => {
-        val ax = Axiom( head :: Nil, head :: Nil )
+        val ax = LogicalAxiom( head )
         ImpLeftRule( ax, head, p, result )
       }
       case head :: tail => {
-        val ax = Axiom( head :: Nil, head :: Nil )
+        val ax = LogicalAxiom( head )
         var impl_chain = result
         for ( elem <- tail.reverse ) {
           impl_chain = Imp( elem, impl_chain )
@@ -716,20 +703,18 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
         p4,
         List( f_ax_2, g_ax_2, symm_axiom, refl_axiom.getAxiom,
           compat_mul_axiom.getAxiom, assoc_mul_axiom.getAxiom, g_compat_2.getAxiom,
-          mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom )
-      )
+          mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom ) )
     case _ => induction_steps( n )
   }
 
   def induction_steps( n: Int ): LKProof = {
-    val axiom_formulae = Eq( f1( f, Utils.numeral( n ) ), f2( g, Utils.numeral( n ), Utils.numeral( 1 ) ) ) :: Nil
-    val axiom: LKProof = Axiom( axiom_formulae, axiom_formulae )
+    val axiom = LogicalAxiom( Eq( f1( f, Utils.numeral( n ) ), f2( g, Utils.numeral( n ), Utils.numeral( 1 ) ) ) )
 
     // add axioms
     val all_axioms = List[FOLFormula]( f_ax_1, f_ax_2, g_ax_1.getAxiom, g_ax_2, symm_axiom, refl_axiom.getAxiom,
       trans_axiom.getAxiom, compat_mul_axiom.getAxiom, assoc_mul_axiom.getAxiom, g_compat_2.getAxiom,
       mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom )
-    val p1 = all_axioms.foldLeft( axiom )( ( proof, elem ) => WeakeningLeftRule( proof, elem ) )
+    val p1 = all_axioms.foldLeft[LKProof]( axiom )( ( proof, elem ) => WeakeningLeftRule( proof, elem ) )
 
     val n_num = Utils.numeral( n )
 
@@ -956,11 +941,8 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
       gST( x, y ),
       uR( x ),
       uL( x ),
-      ASSO( x, y, z )
-    ) map universalClosure.apply,
+      ASSO( x, y, z ) ) map universalClosure.apply,
     List(
-      target( num( n ) )
-    )
-  )
+      target( num( n ) ) ) )
 }
 

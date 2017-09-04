@@ -13,12 +13,10 @@ class DeltaTableTest extends Specification {
     "renaming" in {
       val k1 = Set(
         Substitution( x1 -> c1, x2 -> c2, x3 -> c3 ),
-        Substitution( x1 -> c3, x2 -> c1, x3 -> c2 )
-      )
+        Substitution( x1 -> c3, x2 -> c1, x3 -> c2 ) )
       val k2 = Set(
         Substitution( x1 -> c3, x2 -> c2, x3 -> c1 ),
-        Substitution( x1 -> c1, x2 -> c3, x3 -> c2 )
-      )
+        Substitution( x1 -> c1, x2 -> c3, x3 -> c2 ) )
       deltaTableAlgorithm.keySubsumption( k1, k2 ) must_== Set( Map( x1 -> x1, x2 -> x3, x3 -> x2 ) )
     }
   }
@@ -34,8 +32,7 @@ class DeltaTableTest extends Specification {
           h( b, c, a ),
           h( c, a, b ),
           h( c, d, a ),
-          h( d, a, c )
-        )
+          h( d, a, c ) )
       } yield t
 
       val table = deltaTableAlgorithm.createTable( lang.toSet )

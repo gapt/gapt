@@ -32,8 +32,7 @@ class CutIntroTest extends Specification {
     val cutFormulas = q.subProofs collect { case c: CutRule => c.cutFormula } filter { containsQuantifier( _ ) }
     cutFormulas must contain( atMost(
       hof"!x f (s (s (s x))) = f x",
-      hof"!x f x = f (s (s (s x)))"
-    ) )
+      hof"!x f x = f (s (s (s x)))" ) )
   }
 
   "non-prenex proofs" in {
@@ -61,8 +60,7 @@ class CutIntroTest extends Specification {
       Sequent() :+ ( fof"P ${Numeral( 8 )}" -> Seq( Seq() ) )
     val ss = Seq(
       Seq( fov"x_1" ) -> Seq( Seq( fot"x_2" ), Seq( fot"s (s x_2)" ) ),
-      Seq( fov"x_2" ) -> Seq( Seq( fot"0" ), Seq( Numeral( 4 ) ) )
-    )
+      Seq( fov"x_2" ) -> Seq( Seq( fot"0" ), Seq( Numeral( 4 ) ) ) )
     val sehs = SchematicExtendedHerbrandSequent( us, ss )
 
     val solStruct = SolutionStructure( sehs, CutIntroduction.computeCanonicalSolution( sehs ) )
@@ -93,8 +91,7 @@ class CutIntroTest extends Specification {
     val Some( expansion ) = Escargot.getExpansionProof( hos"!x (p x -> p (s x)) :- p 0 -> p ${Numeral( 9 )}" )
     val weirdExpansion = ExpansionProof(
       ETWeakening( hof"!x (p x & -p x)", Polarity.InAntecedent ) +:
-        expansion.expansionSequent
-    )
+        expansion.expansionSequent )
     CutIntroduction.compressToSolutionStructure( weirdExpansion ) must beNone
   }
 }

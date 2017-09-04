@@ -106,6 +106,14 @@ abstract class Expr {
   def find( exp: Expr ): List[HOLPosition] = getPositions( this, _ == exp )
 
   /**
+   * Tests whether an expression is a subexpression.
+   *
+   * @param exp The subexpression to be found.
+   * @return A boolean that is true if exp is a subexpression
+   */
+  def contains( exp: Expr ): Boolean = find( exp ).nonEmpty
+
+  /**
    * Converts this expression into a string.
    *
    * The output can be parsed using e.g. the string interpolators, and we
@@ -182,8 +190,7 @@ class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
     function.ty match {
       case ( in -> out ) if in == arg.ty => out
       case _ => throw new IllegalArgumentException(
-        s"Types don't fit while constructing application ($function : ${function.ty}) ($arg : ${arg.ty})"
-      )
+        s"Types don't fit while constructing application ($function : ${function.ty}) ($arg : ${arg.ty})" )
     }
 
   def syntaxEquals( e: Expr ) = e match {

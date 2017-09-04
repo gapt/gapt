@@ -142,8 +142,7 @@ abstract class AnalysisWithCeresOmega {
       case Sequent( ant, succ ) =>
         HOLClause(
           ant map { case atom @ FOLAtom( _, _ ) => atom },
-          succ map { case atom @ FOLAtom( _, _ ) => atom }
-        )
+          succ map { case atom @ FOLAtom( _, _ ) => atom } )
     }
     ( abs_consts, fol_ccs )
   }

@@ -20,30 +20,25 @@ object prop_49 extends TacticsProof {
 
   val list_projector_axioms = Seq(
     "alp1" -> hof"∀x0 ∀x1 head(cons(x0, x1)) = x0",
-    "alp2" -> hof"∀x0 ∀x1 tail(cons(x0, x1)) = x1"
-  )
+    "alp2" -> hof"∀x0 ∀x1 tail(cons(x0, x1)) = x1" )
 
   val append_axioms = Seq(
     "ap1" -> hof"∀y append(nil, y) = y",
-    "ap2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))"
-  )
+    "ap2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" )
   val butlastconcat_axioms = Seq(
     "ablc1" -> hof"∀x butlastConcat(x, nil) = butlast(x)",
-    "ablc2" -> hof"∀x ∀z ∀x2 butlastConcat(x, cons(z, x2)) = append(x, butlast(cons(z, x2)))"
-  )
+    "ablc2" -> hof"∀x ∀z ∀x2 butlastConcat(x, cons(z, x2)) = append(x, butlast(cons(z, x2)))" )
 
   val butlast_axioms = Seq(
     "abl1" -> hof"∀y butlast(cons(y, nil)) = nil",
-    "abl2" -> hof"∀y ∀x2 ∀x3 butlast(cons(y, cons(x2, x3))) = cons(y, butlast(cons(x2, x3)))"
-  )
+    "abl2" -> hof"∀y ∀x2 ∀x3 butlast(cons(y, cons(x2, x3))) = cons(y, butlast(cons(x2, x3)))" )
 
   val list_dca_goal = hof"!xs (xs = nil ∨ xs = cons(head(xs),tail(xs)))"
   val list_dca = (
     ( "pl0" -> hof"∀x0 ∀x1 head(cons(x0, x1)) = x0" ) +:
     ( "pl1" -> hof"∀x0 ∀x1 tail(cons(x0, x1)) = x1" ) +:
     Sequent() :+
-    "goal" -> list_dca_goal
-  )
+    "goal" -> list_dca_goal )
   val list_dca_proof = Lemma( list_dca ) {
     allR; induction( hov"xs:list" ); escargot; escargot
   }

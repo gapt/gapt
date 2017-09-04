@@ -157,8 +157,7 @@ object TptpProofParser {
           case Seq( axiomClause ) =>
             Seq( SketchInference(
               axiomClause,
-              labelledCNF( label ) map SketchAxiom
-            ) )
+              labelledCNF( label ) map SketchAxiom ) )
           case clauses => labelledCNF( label ) map SketchAxiom
         }
       case AnnotatedFormula( "cnf", _, "axiom", axiom: FOLFormula, Seq() ) =>
@@ -167,8 +166,7 @@ object TptpProofParser {
           case Seq( axiomClause ) =>
             Seq( SketchInference(
               axiomClause,
-              labelledCNF( label ) map SketchAxiom
-            ) )
+              labelledCNF( label ) map SketchAxiom ) )
           case clauses => labelledCNF( label ) map SketchAxiom
         }
       case AnnotatedFormula( _, _, _, conclusion: FOLFormula, justification +: _ ) =>

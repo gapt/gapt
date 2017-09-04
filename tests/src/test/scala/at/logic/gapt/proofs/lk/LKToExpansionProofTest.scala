@@ -22,10 +22,10 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
       ctx += hoc"P: i>o"
       ctx += hoc"Q: i>i>o"
       ctx += hoc"f: i>i"
-      ctx += hcl"P α, P β :- Q (f α) c, Q (f β) d"
+      ctx += "ax" -> hcl"P α, P β :- Q (f α) c, Q (f β) d"
 
       val p = ProofBuilder.
-        c( TheoryAxiom( hcl"P α, P β :- Q (f α) c, Q (f β) d" ) ).
+        c( ProofLink( hoc"ax: i", hcl"P α, P β :- Q (f α) c, Q (f β) d" ) ).
         u( ExistsRightRule( _, hof"∃z Q (f α) z", le"c" ) ).
         u( ExistsRightRule( _, hof"∃z Q (f β) z", le"d" ) ).
         u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f α" ) ).
@@ -49,11 +49,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
               hof"∃z Q $f_alpha z",
               Map(
                 le"c" -> ETAtom( hoa"Q $f_alpha c", Polarity.InSuccedent ),
-                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent )
-              )
-            )
-        )
-      ) )
+                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent ) ) ) ) ) )
 
     }
 

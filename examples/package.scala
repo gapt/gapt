@@ -13,8 +13,7 @@ package object examples {
     SumOfOnesExampleProof,
     UniformAssociativity3ExampleProof,
     FactorialFunctionEqualityExampleProof,
-    FactorialFunctionEqualityExampleProof2
-  )
+    FactorialFunctionEqualityExampleProof2 )
 }
 
 package examples {

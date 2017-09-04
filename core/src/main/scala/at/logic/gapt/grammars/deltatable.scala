@@ -11,8 +11,7 @@ object deltaTableAlgorithm {
   def createTable(
     termSet:        Set[Expr],
     maxArity:       Option[Int] = None,
-    singleVariable: Boolean     = false
-  ): Map[Set[Substitution], Row] = {
+    singleVariable: Boolean     = false ): Map[Set[Substitution], Row] = {
     // invariant:  deltatable(S) contains (u,T)  ==>  u S = T  &&  |S| = |T|
     val deltatable = mutable.Map[Set[Substitution], List[( Expr, Set[Expr] )]]().
       withDefaultValue( Nil )
@@ -21,8 +20,7 @@ object deltaTableAlgorithm {
       remainingTerms: List[Expr],
       currentLGG:     Expr,
       currentCover:   Set[Expr],
-      currentSubst:   Set[Substitution]
-    ): Unit = if ( remainingTerms.nonEmpty ) {
+      currentSubst:   Set[Substitution] ): Unit = if ( remainingTerms.nonEmpty ) {
       val ( newTerm :: rest ) = remainingTerms
 
       val ( newLGG, substCurLGG, substNewTerm ) =
@@ -90,8 +88,7 @@ object deltaTableAlgorithm {
   def findGrammarFromDeltaTable(
     termSet:                Set[Expr],
     deltatable:             Map[Set[Substitution], Row],
-    subsumeMinimalGrammars: Boolean
-  ): ( Set[Expr], Set[Substitution] ) = {
+    subsumeMinimalGrammars: Boolean ): ( Set[Expr], Set[Substitution] ) = {
     var minSize = termSet.size + 1
     val minGrammars = mutable.Buffer[( Set[Expr], Set[Substitution] )]()
 
@@ -99,8 +96,7 @@ object deltaTableAlgorithm {
       termSet:         Set[Expr],
       row:             Row,
       alreadyIncluded: Set[Expr],
-      s:               Set[Substitution]
-    ): Unit =
+      s:               Set[Substitution] ): Unit =
       if ( termSet isEmpty ) {
         val grammarSize = alreadyIncluded.size + s.size
         if ( grammarSize < minSize ) {
@@ -119,8 +115,7 @@ object deltaTableAlgorithm {
           termSet diff pivot._2,
           row map { x => x._1 -> x._2.diff( pivot._2 ) } filter { _._2.nonEmpty },
           alreadyIncluded + pivot._1,
-          s
-        )
+          s )
 
         // Case 2, pivot is not included.
         val restRow = row filterNot { _._2 subsetOf pivot._2 }
@@ -161,8 +156,7 @@ object deltaTableAlgorithm {
 case class DeltaTableMethod(
     singleQuantifier:   Boolean     = false,
     subsumedRowMerging: Boolean     = false,
-    keyLimit:           Option[Int] = None
-) extends GrammarFindingMethod {
+    keyLimit:           Option[Int] = None ) extends GrammarFindingMethod {
   import deltaTableAlgorithm._
 
   override def findGrammars( lang: Set[Expr] ): Option[VTRATG] = {

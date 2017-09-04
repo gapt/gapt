@@ -2,16 +2,16 @@ package at.logic.gapt.provers.viper
 
 import ammonite.ops._
 import at.logic.gapt.expr.fol.folTermSize
-import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
-import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.{ Context, HOLSequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.aip.axioms.{ AxiomFactory, IndependentInductionAxioms, SequentialInductionAxioms, UserDefinedInductionAxioms }
+import at.logic.gapt.provers.viper.aip.axioms._
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
@@ -29,6 +29,7 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
   def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
+  def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
@@ -55,14 +56,13 @@ class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions(
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
 case class ViperOptions(
-  verbosity:                Int                      = 0,
-  mode:                     String                   = "portfolio",
-  fixup:                    Boolean                  = true,
-  prooftool:                Boolean                  = false,
-  firstOrderProver:         ResolutionProver         = Escargot,
-  treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
-  aipOptions:               AipOptions               = AipOptions()
-)
+    verbosity:                Int                      = 2,
+    mode:                     String                   = "portfolio",
+    fixup:                    Boolean                  = true,
+    prooftool:                Boolean                  = false,
+    firstOrderProver:         ResolutionProver         = Escargot,
+    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
+    aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {
   val usage =
     """Vienna Inductive Prover
@@ -84,11 +84,12 @@ object ViperOptions {
     args match {
       case ( "-v" | "--verbose" ) :: rest =>
         parse( rest, opts.copy( verbosity = opts.verbosity + 1 ) )
-      case ( "-h" | "--help" ) :: _ => ( Nil, opts.copy( mode = "help" ) )
-      case "--prooftool" :: rest    => parse( rest, opts.copy( prooftool = true ) )
-      case "--fixup" :: rest        => parse( rest, opts.copy( fixup = true ) )
-      case "--no-fixup" :: rest     => parse( rest, opts.copy( fixup = false ) )
-      case "--portfolio" :: rest    => parse( rest, opts.copy( mode = "portfolio" ) )
+      case ( "-h" | "--help" ) :: _     => ( Nil, opts.copy( mode = "help" ) )
+      case "--prooftool" :: rest        => parse( rest, opts.copy( prooftool = true ) )
+      case "--fixup" :: rest            => parse( rest, opts.copy( fixup = true ) )
+      case "--no-fixup" :: rest         => parse( rest, opts.copy( fixup = false ) )
+      case "--portfolio" :: rest        => parse( rest, opts.copy( mode = "portfolio" ) )
+      case "--untrusted_funind" :: rest => parse( rest, opts.copy( mode = "untrusted_funind" ) )
       case "--treegrammar" :: rest =>
         val ( rest_, opts_ ) = parseTreeGrammar( rest, opts.treeGrammarProverOptions )
         parse( rest_, opts.copy( treeGrammarProverOptions = opts_, mode = "treegrammar" ) )
@@ -116,16 +117,14 @@ object ViperOptions {
       "eprover" -> eprover,
       "escargot" -> Escargot,
       "spass" -> spass,
-      "vampire" -> vampire
-    )
+      "vampire" -> vampire )
   }
 
   def parseTreeGrammar( args: List[String], opts: TreeGrammarProverOptions ): ( List[String], TreeGrammarProverOptions ) =
     args match {
       case "--prover" :: prover :: rest => parseTreeGrammar(
         rest,
-        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) )
-      )
+        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
       case "--instnum" :: instNum :: rest => parseTreeGrammar( rest, opts.copy( instanceNumber = instNum.toInt ) )
       case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
       case "--findmth" :: mth :: rest     => parseTreeGrammar( rest, opts.copy( findingMethod = mth ) )
@@ -149,14 +148,16 @@ object Viper {
 
   def getStrategies( opts: ViperOptions )( implicit ctx: Context ): List[( Duration, Tactical[_] )] =
     opts.mode match {
+      case "untrusted_funind" =>
+        List( Duration.Inf -> AnalyticInductionTactic( UntrustedFunctionalInductionAxioms, Escargot )
+          .aka( "functional induction" ) )
       case "portfolio" =>
         import scala.concurrent.duration._
         List(
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
           20.seconds -> new ViperTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
-          60.seconds -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" )
-        )
+          60.seconds -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "treegrammar" => List( Duration.Inf -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
@@ -169,12 +170,59 @@ object Viper {
           aka( s"analytic $axiomsName" ) )
     }
 
-  def timeit[T]( f: => T ): ( T, Duration ) = {
+  private def timeit[T]( f: => T ): ( T, Duration ) = {
     val a = System.currentTimeMillis()
     val res = f
     val b = System.currentTimeMillis()
     import scala.concurrent.duration._
     ( res, ( b - a ).milliseconds )
+  }
+
+  def apply( problem: TipProblem ): Option[LKProof] =
+    apply( problem.toSequent )( problem.ctx )
+
+  def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
+    apply( problem, ViperOptions( verbosity = verbosity ) )
+
+  def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
+    apply( problem.toSequent, options )( problem.ctx )
+
+  def apply( sequent: HOLSequent )( implicit ctx: Context ): Option[LKProof] =
+    apply( sequent, ViperOptions( verbosity = 3 ) )
+
+  def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: Context ): Option[LKProof] =
+    apply( sequent, opts.verbosity, getStrategies( opts ) )
+
+  def apply( sequent: HOLSequent, verbosity: Int,
+             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: Context ): Option[LKProof] = {
+    if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
+    if ( verbosity >= 4 ) Escargot.makeVerbose()
+
+    if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
+
+    val state0 = ProofState( sequent )
+    strategies.view.flatMap {
+      case ( duration, strategy ) =>
+        if ( verbosity >= 2 ) println( s"trying $strategy" )
+        timeit( Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) ) match {
+          case ( Success( Right( ( _, state_ ) ) ), time ) =>
+            if ( verbosity >= 1 ) println( s"$strategy successful after $time" )
+            Some( state_.result )
+          case ( Failure( _: TimeOutException ), time ) =>
+            if ( verbosity >= 1 ) println( s"$strategy timed out after $time" )
+            None
+          case ( failure, time ) =>
+            if ( verbosity >= 1 ) println( s"$strategy failed after $time" )
+            if ( verbosity >= 2 )
+              ( failure: @unchecked ) match {
+                case Failure( ex ) =>
+                  ex.printStackTrace()
+                case Success( Left( tacticalFailure ) ) =>
+                  println( tacticalFailure )
+              }
+            None
+        }
+    }.headOption
   }
 
   def main( args: Array[String] ): Unit = {
@@ -188,34 +236,11 @@ object Viper {
     val file = files.head
 
     Logger.setConsolePattern( "%message%n" )
-    if ( opts.verbosity >= 2 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
 
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
     implicit val ctx = problem.ctx
 
-    if ( opts.verbosity >= 1 ) println( problem.toSequent.toSigRelativeString )
-
-    val state0 = ProofState( problem.toSequent )
-    getStrategies( opts ).view.flatMap {
-      case ( duration, strategy ) =>
-        if ( opts.verbosity >= 1 ) println( s"trying $strategy" )
-        timeit( Try( withTimeout( duration ) { strategy.andThen( now )( state0 ) } ) ) match {
-          case ( Success( Right( ( _, state_ ) ) ), time ) =>
-            println( s"$strategy successful after $time" )
-            Some( state_.result )
-          case ( Failure( _: TimeOutException ), time ) =>
-            println( s"$strategy timed out after $time" )
-            None
-          case ( failure, time ) =>
-            println( s"$strategy failed after $time" )
-            if ( opts.verbosity >= 1 )
-              ( failure: @unchecked ) match {
-                case Failure( ex )                      => ex.printStackTrace()
-                case Success( Left( tacticalFailure ) ) => println( tacticalFailure )
-              }
-            None
-        }
-    }.headOption match {
+    apply( problem.toSequent, opts )( problem.ctx ) match {
       case Some( proof ) =>
         if ( false ) { // this doesn't work with Skolem inferences atm
           ctx check proof

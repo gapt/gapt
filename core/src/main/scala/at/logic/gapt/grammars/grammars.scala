@@ -1,26 +1,26 @@
 package at.logic.gapt.grammars
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
+import at.logic.gapt.utils.Doc
 
 private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
-    extends BabelExporter( unicode, vtratg.babelSignature ) {
+  extends BabelExporter( unicode, vtratg.babelSignature ) {
+  import Doc._
 
-  def csep( docs: List[Doc] ): Doc = ssep( docs, line( ", " ) )
+  def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
 
   def export(): String = {
     val ntDecl = group( "Non-terminal vectors:" <> nest( line <> csep(
       vtratg.nonTerminals.toList map { nt =>
-        "(" <> hsep( nt map { show( _, false, Set(), Map(), prio.max )._1 }, "," ) <> ")"
-      }
-    ) ) )
+        "(" <> wordwrap( nt map { show( _, false, Set(), Map(), prio.max )._1 }, "," ) <> ")"
+      } ) ) )
 
     val tDecl = group( "Terminals:" <> nest( line <> csep(
-      vtratg.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 }
-    ) ) )
+      vtratg.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 } ) ) )
 
     val knownTypes = vtratg.terminals.map { c => c.name -> c }.toMap
 
-    val prods = sep( vtratg.productions.toList
+    val prods = stack( vtratg.productions.toList
       sortBy { case ( as, ts ) => ( vtratg.nonTerminals.indexOf( as ), ts.toString ) }
       map { p =>
         group( csep( p.zipped map ( ( a, t ) =>
@@ -28,7 +28,7 @@ private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
             show( t, true, Set(), knownTypes, prio.impl )._1 ) ) ) ) ) <> line
       } )
 
-    pretty( group( ntDecl <> line <> tDecl <> line <> line <> prods ) ).layout
+    group( ntDecl <> line <> tDecl <> line <> line <> prods ).render( lineWidth )
   }
 
 }
@@ -83,4 +83,9 @@ case class VTRATG( startSymbol: Var, nonTerminals: Seq[VTRATG.NonTerminalVect], 
   }
 
   override def toString: String = new VtratgExporter( unicode = true, vtratg = this ).export()
+}
+
+object TRATG {
+  def apply( startSymbol: Var, nonTerminals: Seq[Var], productions: Traversable[( Var, Expr )] ): VTRATG =
+    VTRATG( startSymbol, nonTerminals.map( List( _ ) ), productions.view.map { case ( lhs, rhs ) => List( lhs ) -> List( rhs ) }.toSet )
 }

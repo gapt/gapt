@@ -53,16 +53,14 @@ class SkolemizationTest extends Specification {
       val Palpha = Atom( p, alpha :: Nil )
       val Ps0 = Atom( p, cs5 :: Nil )
       val allxPx = All( x, Atom( p, x :: Nil ) )
-      val ax = Axiom( Palpha :: Nil, Palpha :: Nil )
+      val ax = LogicalAxiom( Palpha )
       val proof = ForallRightRule(
         ForallLeftRule(
           ax,
-          allxPx, alpha
-        ),
-        allxPx, alpha
-      )
+          allxPx, alpha ),
+        allxPx, alpha )
 
-      val ax_sk = Axiom( Ps0 :: Nil, Ps0 :: Nil )
+      val ax_sk = LogicalAxiom( Ps0 )
       val proof_sk = ForallLeftRule( ax_sk, allxPx, cs5 )
 
       skolemize( proof ) must_== proof_sk
@@ -93,7 +91,7 @@ class SkolemizationTest extends Specification {
       val Rab = Atom( r, a :: b :: Nil )
       val exyRay = Ex( y, Atom( r, a :: y :: Nil ) )
       val allxexyRxy = All( x, Ex( y, Atom( r, x :: y :: Nil ) ) )
-      val ax = Axiom( Rab :: Nil, Rab :: Nil )
+      val ax = LogicalAxiom( Rab )
       val r1 = ExistsRightRule( ax, exyRay, b )
       val r2 = ExistsLeftRule( r1, exyRay, b )
       val r3 = ForallLeftRule( r2, allxexyRxy, a )
@@ -103,7 +101,7 @@ class SkolemizationTest extends Specification {
       val s1c = Const( "s_1", Ti )
       val s0s1 = App( fs0, s1c )
       val sR = Atom( r, List( s1c, s0s1 ) )
-      val sax = Axiom( List( sR ), List( sR ) )
+      val sax = LogicalAxiom( sR )
 
       val exyRs1y = Ex( y, Atom( r, List( s1c, y ) ) )
       //      val exyRs1s0s1 = Ex( y, Atom( r, List(a,y) ) )

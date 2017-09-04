@@ -22,8 +22,7 @@ object LeanNames {
 import LeanNames._
 class LeanNames(
     val nameGenerator: NameGenerator                                       = new NameGenerator( Set() ),
-    gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map()
-) {
+    gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map() ) {
   def markUsed( leanName: String ): Unit = nameGenerator.fresh( leanName )
   def register( gaptName: String, kind: NameKind, leanName: String ): Unit = {
     require( !gapt2lean.contains( gaptName -> kind ) )
@@ -68,8 +67,7 @@ class LeanExporter {
     "apply", "intros",
     "begin", "end", "def", "definition", "lemma", "theorem", // TODO: ...
     "implies",
-    "list", "nil", "cons"
-  ).foreach( nameMap.markUsed )
+    "list", "nil", "cons" ).foreach( nameMap.markUsed )
 
   val hypName = nameMap.nameGenerator.fresh( "hyp" ) + ".h_"
   val axiomNames = mutable.Map[HOLSequent, String]()
@@ -135,10 +133,10 @@ class LeanExporter {
     case Context.Definition( Definition( Const( n, ty ), by ) ) =>
       val what = nameMap.getLeanName( n, CONST )
       s"def $what : ${export( ty )} := ${export( by )}\n\n"
-    case Context.Axiom( ax ) =>
-      val axName = nameMap.nameGenerator.fresh( "ax" )
-      axiomNames( ax ) = axName
-      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
+    //    case Context.Axiom( ax ) =>
+    //      val axName = nameMap.nameGenerator.fresh( "ax" )
+    //      axiomNames( ax ) = axName
+    //      s"axiom $axName : ${export( universalClosure( mkSequentFormula( ax ) ) )}\n\n"
     case Context.ConstDecl( Const( n, t ) ) =>
       s"constant ${nameMap.getLeanName( n, CONST )} : ${export( t )}\n\n"
     case Context.InductiveType( ty, ctrs ) =>
@@ -171,7 +169,7 @@ class LeanExporter {
       case p: WeakeningLeftRule    => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
       case p: WeakeningRightRule   => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
       case p: DefinitionRule       => f( p.subProof, p.getSequentConnector.parent( hs ), hi )
-      case _: TheoryAxiom          => out ++= "exact sorry,\n"
+      case _: ProofLink            => out ++= "exact sorry,\n"
       case _ =>
         var rule = s"gapt.lk.${p.longName}"
         p match {
@@ -194,8 +192,7 @@ class LeanExporter {
                 occConn_.copy( parentsSequent = occConn_.parentsSequent.
                   updated( p.eqInConclusion, Seq( p.eq ) ).
                   updated( p.auxInConclusion, Seq( p.aux ) ) ),
-                Seq( p.aux )
-              )
+                Seq( p.aux ) )
             case _ => ( occConn_, auxs_ )
           }
           val hs_ = auxs.zip( Stream.from( hi ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )

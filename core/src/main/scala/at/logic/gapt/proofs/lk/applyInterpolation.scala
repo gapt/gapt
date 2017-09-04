@@ -143,14 +143,12 @@ object Interpolate {
         (
           OrRightRule( CutRule( up1_nproof, up2_nproof, p.cutFormula ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( CutRule( up1_pproof, up2_pproof, p.cutFormula ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     // propositional rules
 
@@ -162,14 +160,12 @@ object Interpolate {
         (
           OrRightRule( AndRightRule( up1_nproof, p.leftConjunct, up2_nproof, p.rightConjunct ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( AndRightRule( up1_pproof, p.leftConjunct, up2_pproof, p.rightConjunct ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     case p @ AndLeftRule( subProof, aux1, aux2 ) =>
       val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
@@ -185,14 +181,12 @@ object Interpolate {
         (
           OrRightRule( OrLeftRule( up1_nproof, p.leftDisjunct, up2_nproof, p.rightDisjunct ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( OrLeftRule( up1_pproof, p.leftDisjunct, up2_pproof, p.rightDisjunct ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     case p @ OrRightRule( subProof, aux1, aux2 ) =>
       val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
@@ -222,14 +216,12 @@ object Interpolate {
         (
           OrRightRule( ImpLeftRule( up1_nproof, p.impPremise, up2_nproof, p.impConclusion ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( ImpLeftRule( up1_pproof, p.impPremise, up2_pproof, p.impConclusion ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     case p @ ImpRightRule( subProof, aux1, aux2 ) =>
       val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
@@ -244,8 +236,7 @@ object Interpolate {
         p.subProof,
         p.getSequentConnector.parent( color ).
           updated( eq, color( p.eqInConclusion ) ).
-          updated( aux, color( p.auxInConclusion ) )
-      )
+          updated( aux, color( p.auxInConclusion ) ) )
 
       ( color( p.eqInConclusion ), color( p.mainIndices.head ) ) match {
         case ( false, false ) => ( EqualityRightRule( up_nproof, eq, p.auxFormula, con ), up_pproof, up_I )
@@ -279,8 +270,7 @@ object Interpolate {
         p.subProof,
         p.getSequentConnector.parent( color ).
           updated( eq, color( p.eqInConclusion ) ).
-          updated( aux, color( p.auxInConclusion ) )
-      )
+          updated( aux, color( p.auxInConclusion ) ) )
       var ipl = up_I
 
       ( color( p.eqInConclusion ), color( p.mainIndices.head ) ) match {

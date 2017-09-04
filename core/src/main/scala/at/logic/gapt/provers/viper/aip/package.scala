@@ -33,8 +33,7 @@ package object aip {
         case ( f, Ant( i ) ) => s"h$i" -> f
         case ( f, _ )        => "goal" -> f
       },
-      problem.ctx
-    )
+      problem.ctx )
 
   /**
    * Reads the constructors of type `typ` from the context.
@@ -43,8 +42,7 @@ package object aip {
    * @return Either a list containing the constructors of `typ` or a TacticalFailure.
    */
   def getConstructors(
-    typ: TBase, ctx: Context
-  ): ThrowsError[List[Con]] =
+    typ: TBase, ctx: Context ): ThrowsError[List[Con]] =
     ( ctx.isType( typ ), ctx.getConstructors( typ ) ) match {
       case ( true, Some( constructors ) ) => Right( constructors.toList )
       case ( true, None )                 => Left( s"Type $typ is not inductively defined" )

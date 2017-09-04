@@ -31,8 +31,7 @@ class TseitinCNFTest extends Specification {
         HOLClause( List( p ), List( x ) ),
         HOLClause( List( x2, x0 ), List( x1 ) ),
         HOLClause( List( x, r ), List( x0 ) ),
-        HOLClause( List( x ), List( p, q ) )
-      )
+        HOLClause( List( x ), List( p, q ) ) )
       expected.subsetOf( new TseitinCNF().apply( f ).toSet ) must beTrue
     }
   }

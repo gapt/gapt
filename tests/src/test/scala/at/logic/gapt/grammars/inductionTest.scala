@@ -18,13 +18,11 @@ class SipTests extends Specification {
         tau -> FOLFunction( "r", List( beta ) ),
         tau -> FOLFunction( "r", List( nu ) ),
         gamma -> gamma,
-        gammaEnd -> parseTerm( "0" )
-      ) )
+        gammaEnd -> parseTerm( "0" ) ) )
       g.instanceGrammar( 0 ).productions must beEqualTo( Set(
         List( tau ) -> List( fot"r(0)" ),
         List( tau ) -> List( fot"r ${gamma_i( 0 )}" ),
-        List( gamma_i( 0 ) ) -> List( fot"0" )
-      ) )
+        List( gamma_i( 0 ) ) -> List( fot"0" ) ) )
     }
   }
 

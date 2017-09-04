@@ -14,9 +14,9 @@ object MonoidCancellation extends TacticsProof {
   ctx += hoc"'*': m>m>m"
   ctx += hoc"1: m"
 
-  ctx += hcl":- (x*y)*z = x*(y*z)"
-  ctx += hcl":- x*y = y*x"
-  ctx += hcl":- 1*x = x"
+  ctx += "mul_assoc" -> hcl":- (x*y)*z = x*(y*z)"
+  ctx += "mul_comm" -> hcl":- x*y = y*x"
+  ctx += "one_mul" -> hcl":- 1*x = x"
 
   val setup: Tactical[Unit] = {
     def mkAux( formula: Formula ) =

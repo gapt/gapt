@@ -23,8 +23,7 @@ object LemmaMacros {
         throw new TacticFailureException(
           s"Exception when applying $tactical to proof state with sub goals:\n" +
             proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ),
-          t
-        )
+          t )
     } ) match {
       case Right( ( _, newState ) ) => newState
       case Left( error ) =>
@@ -37,8 +36,7 @@ object LemmaMacros {
     } else {
       throw new QedFailureException(
         s"Proof not completed. There are still ${proofState.subGoals.length} open sub goals:\n" +
-          proofState.subGoals.map { _.toPrettyString }.mkString( "\n" )
-      )
+          proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
     }
 
   def finishIncompleteProof( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =

@@ -14,13 +14,10 @@ class deskolemizeETTest extends Specification with SatMatchers {
       le"x_0" -> ETImp(
         ETWeakening( hof"P x_0", Negative ),
         ETSkolemQuantifier( hof"!y (x_0 = x_0 & P y)", le"s_0 x_0", le"^x !y (x = x & P y)",
-          ETAnd( ETAtom( hoa"x_0 = x_0", Positive ), ETAtom( hoa"P (s_0 x_0)", Positive ) ) )
-      ),
+          ETAnd( ETAtom( hoa"x_0 = x_0", Positive ), ETAtom( hoa"P (s_0 x_0)", Positive ) ) ) ),
       le"s_0 x_0" -> ETImp(
         ETAtom( hoa"P (s_0 x_0)", Negative ),
-        ETWeakening( hof"!y ((s_0 x_0) = (s_0 x_0) & P y)", Positive )
-      )
-    ) ) )
+        ETWeakening( hof"!y ((s_0 x_0) = (s_0 x_0) & P y)", Positive ) ) ) ) )
     val desk = deskolemizeET( ep )
 
     ep.deep must beEValidSequent

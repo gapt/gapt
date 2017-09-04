@@ -18,8 +18,7 @@ class SipProverTest extends Specification {
       val instP0 = formulaToExpansionTree( endSequent( Ant( 0 ) ), Polarity.InAntecedent )
       val instPs = formulaToExpansionTree(
         endSequent( Ant( 1 ) ),
-        ( 0 until n ).toList map { i => FOLSubstitution( fov"x" -> Utils.numeral( i ) ) }, Polarity.InAntecedent
-      )
+        ( 0 until n ).toList map { i => FOLSubstitution( fov"x" -> Utils.numeral( i ) ) }, Polarity.InAntecedent )
       val instPa = formulaToExpansionTree( FOLSubstitution( alpha -> Utils.numeral( n ) )( endSequent( Suc( 0 ) ) ), Polarity.InSuccedent )
       ExpansionProof( instP0 +: instPs +: Sequent() :+ instPa )
     }
@@ -28,8 +27,7 @@ class SipProverTest extends Specification {
 
     val sipProver = new SipProver(
       quasiTautProver = tautP,
-      solutionFinder = new HeuristicSolutionFinder( 1, prover = tautP )
-    )
+      solutionFinder = new HeuristicSolutionFinder( 1, prover = tautP ) )
 
     val Some( sip ) = sipProver.getSimpleInductionProof( endSequent, ( 0 until 5 ).map { n => n -> instanceProof( n ) } )
 

@@ -15,8 +15,7 @@ import cats.syntax.all._
  */
 case class SequentialInductionAxioms(
     vsel: VariableSelector = allVariablesSelector( _ )( _ ),
-    fsel: FormulaSelector  = firstFormulaSelector( _ )
-) extends AxiomFactory {
+    fsel: FormulaSelector  = firstFormulaSelector( _ ) ) extends AxiomFactory {
 
   def forAllVariables = copy( vsel = allVariablesSelector( _ )( _ ) )
 
@@ -61,8 +60,7 @@ case class SequentialInductionAxioms(
    * @return A sequential induction axiom.
    */
   private def inductionAxiom(
-    variables: List[Var], variable: Var, formula: Formula
-  )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    variables: List[Var], variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     val ( outerVariables, _ :: innerVariables ) = variables span { _ != variable }
     val inductionFormula = All.Block( innerVariables, inductionQuantifierForm( variables, formula ) )
 

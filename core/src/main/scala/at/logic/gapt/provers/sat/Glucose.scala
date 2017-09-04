@@ -12,8 +12,7 @@ class Glucose( command: String* ) extends ExternalSATSolver( command: _* ) with 
       withTempFile { dimacsOutputFile =>
         runProcess.withExitValue( command ++ Seq(
           "-certified", s"-certified-output=$dimacsOutputFile",
-          dimacsInputFile.toString
-        ) ) match {
+          dimacsInputFile.toString ) ) match {
           // Glucose segfaults when run with -certified on a satisfiable problem
           case ( 10 | 139, _ ) => /* SAT */ None
           case ( 20 | 134, _ ) => /* UNSAT */ Some( read ! dimacsOutputFile )

@@ -47,10 +47,16 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
       ( what, by ) <- get[Definitions].definitions
       whatC <- constant( what )
     } yield whatC -> by
-  def axioms: Set[HOLSequent] = get[Axioms].axioms
 
   /** Returns Some(const) if name is a constant. */
   def constant( name: String ): Option[Const] = get[Constants].constants.get( name )
+
+  /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
+  def getConstructors( ty: Ty ): Option[Vector[Const]] =
+    ty match {
+      case ty @ TBase( _, _ ) => getConstructors( ty )
+      case _                  => None
+    }
 
   /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
   def getConstructors( ty: TBase ): Option[Vector[Const]] =
@@ -65,8 +71,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
     for {
       declT <- get[BaseTypes].baseTypes.get( ty.name )
       _ <- syntacticMatching( declT, ty )
-    } yield ()
-  ).isDefined
+    } yield () ).isDefined
 
   /** Returns Some(expandedDefinition) if c is a defined constant. */
   def definition( c: Const ): Option[Expr] =
@@ -95,10 +100,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def +( update: Update ): Context =
     new Context( update( this ), update :: updates )
 
-  def normalizer = {
-    val redRules = reductionRules.toVector
-    new Normalizer( if ( redRules.isEmpty ) BetaReduction else ReductionRule( BetaReduction +: redRules ) )
-  }
+  def normalizer = get[Reductions].normalizer
 
   /** Normalizes an expression with the reduction rules stored in this context. */
   def normalize( expression: Expr ): Expr =
@@ -188,8 +190,7 @@ object Context {
       require( ty.params.forall( _.isInstanceOf[TVar] ) && ty.params == ty.params.distinct )
       require(
         !baseTypes.contains( ty.name ),
-        s"Base type $ty already defined."
-      )
+        s"Base type $ty already defined." )
       copy( baseTypes + ( ty.name -> ty ) )
     }
     override def toString = baseTypes.toSeq.sortBy( _._1 ).map( _._2 ).mkString( ", " )
@@ -201,8 +202,7 @@ object Context {
     def +( const: Const ): Constants = {
       require(
         !constants.contains( const.name ),
-        s"Constant $const is already defined as ${constants( const.name )}."
-      )
+        s"Constant $const is already defined as ${constants( const.name )}." )
       copy( constants + ( const.name -> const ) )
     }
 
@@ -213,21 +213,22 @@ object Context {
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
+  /** Definitional reductions. */
+  case class Reductions( normalizer: Normalizer ) {
+    def ++( rules: Vector[ReductionRule] ): Reductions =
+      copy( Normalizer( normalizer.rules ++ rules ) )
+
+    def +( reductionRule: ReductionRule ): Reductions =
+      copy( normalizer + reductionRule )
+  }
+  implicit val reductionsFacet: Facet[Reductions] = Facet( Reductions( Normalizer( Set() ) ) )
+
   /** Definitions that define a constant by an expression of the same type. */
-  case class Definitions( definitions: Map[String, Expr] ) extends ReductionRule {
+  case class Definitions( definitions: Map[String, Expr] ) {
     def +( defn: EDefinition ) = {
       require( !definitions.contains( defn.what.name ) )
       copy( definitions + ( defn.what.name -> defn.by ) )
     }
-
-    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-      head match {
-        case Const( n, t ) if definitions.contains( n ) =>
-          val by = definitions( n )
-          val Some( subst ) = syntacticMatching( by.ty, t )
-          Some( subst( by ) -> args )
-        case _ => None
-      }
 
     override def toString = definitions.toSeq.sortBy( _._1 ).
       map { case ( w, b ) => s"$w -> $b" }.mkString( "\n" )
@@ -236,13 +237,6 @@ object Context {
       copy( definitions.filter( p ) )
   }
   implicit val defsFacet: Facet[Definitions] = Facet( Definitions( Map() ) )
-
-  /** Theory axioms for LK proofs. */
-  case class Axioms( axioms: Set[HOLSequent] ) {
-    def +( ax: HOLSequent ) = copy( axioms + ax )
-    override def toString = axioms.mkString( "\n" )
-  }
-  implicit val axiomsFacet: Facet[Axioms] = Facet( Axioms( Set[HOLSequent]() ) )
 
   /** Inductive types, for each type we store its list of constructors. */
   case class StructurallyInductiveTypes( constructors: Map[String, Vector[Const]] ) {
@@ -262,20 +256,40 @@ object Context {
   val withoutEquality = empty ++ Seq(
     InductiveType( "o", Top(), Bottom() ),
     ConstDecl( NegC() ), ConstDecl( AndC() ), ConstDecl( OrC() ), ConstDecl( ImpC() ),
-    ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) )
-  )
+    ConstDecl( ForallC( TVar( "x" ) ) ), ConstDecl( ExistsC( TVar( "x" ) ) ) )
   val default = withoutEquality + ConstDecl( EqC( TVar( "x" ) ) )
 
   case class ProofNames( names: Map[String, ( Expr, HOLSequent )] ) {
     def +( name: String, referencedExpression: Expr, referencedSequent: HOLSequent ) = copy( names + ( ( name, ( referencedExpression, referencedSequent ) ) ) )
+
+    def sequents: Iterable[HOLSequent] =
+      for ( ( _, ( _, seq ) ) <- names ) yield seq
+
+    def lookup( name: Expr ): Option[HOLSequent] =
+      ( for {
+        ( declName, declSeq ) <- names.values
+        subst <- syntacticMatching( declName, name )
+      } yield subst( declSeq ) ).headOption
+
+    def find( seq: HOLSequent ): Option[Expr] =
+      ( for {
+        ( declName, declSeq ) <- names.values
+        subst <- clauseSubsumption( declSeq, seq )
+      } yield subst( declName ) ).headOption
   }
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
 
   case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
-      copy( components + ( ( name, ( components.getOrElse( name, Set() ) + ( ( referencedExpression, referencedProof ) ) ) ) ) )
+      copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
 
+    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
+      for {
+        defs <- components.values
+        ( declName, defPrf ) <- defs
+        subst <- syntacticMatching( declName, name )
+      } yield ( defPrf, subst )
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
 
@@ -302,7 +316,11 @@ object Context {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
         Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
     }
-    implicit def fromAxiom( axiom: HOLSequent ): Update = Axiom( axiom )
+    implicit def fromAxiom( axiom: ( String, HOLSequent ) ): Update = {
+      val fvs = freeVariables( axiom._2 ).toVector.sortBy( _.toString )
+      val name = Const( axiom._1, FunctionType( Ti, fvs.map( _.ty ) ) )( fvs )
+      ProofNameDeclaration( name, axiom._2 )
+    }
   }
 
   /** Definition of a base type.  Either [[Sort]] or [[InductiveType]]. */
@@ -320,14 +338,12 @@ object Context {
       val FunctionType( ty_, _ ) = constr.ty
       require(
         ty == ty_,
-        s"Base type $ty and type constructor $constr don't agree."
-      )
+        s"Base type $ty and type constructor $constr don't agree." )
       require( typeVariables( constr ) subsetOf typeVariables( ty ) )
     }
     require(
       constructors.map( _.name ) == constructors.map( _.name ).distinct,
-      s"Names of type constructors are not distinct."
-    )
+      s"Names of type constructors are not distinct." )
 
     override def apply( ctx: Context ): State = {
       require( !ctx.isType( ty ), s"Type $ty already defined" )
@@ -370,13 +386,7 @@ object Context {
       ctx.check( definition.by )
       ctx.state.update[Constants]( _ + definition.what )
         .update[Definitions]( _ + definition )
-    }
-  }
-
-  case class Axiom( sequent: HOLSequent ) extends Update {
-    override def apply( ctx: Context ): State = {
-      sequent.foreach( ctx.check( _ ) )
-      ctx.state.update[Axioms]( _ + sequent )
+        .update[Reductions]( _ + ( definition.what -> definition.by ) )
     }
   }
 
@@ -394,23 +404,6 @@ object Context {
         .update[SkolemFunctions]( _ + ( sym, defn ) )
     }
   }
-
-  case class PrimitiveRecursiveFunctions( equations: Map[String, ( Int, Int, Vector[( Expr, Expr )] )] ) extends ReductionRule {
-    def +( c: String, nArgs: Int, recIdx: Int, eqns: Vector[( Expr, Expr )] ) = copy( equations = equations + ( ( c, ( nArgs, recIdx, eqns ) ) ) )
-
-    def filter( p: String => Boolean ): PrimitiveRecursiveFunctions = copy( equations = equations.filter( x => p( x._1 ) ) )
-
-    override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-      ( for {
-        Const( n, _ ) <- Seq( head )
-        ( nArgs, idx, eqns ) <- equations.get( n ).toSeq
-        if args.size >= nArgs
-        app = head( args.view.take( nArgs ).zipWithIndex.map { case ( a, i ) => if ( i == idx ) normalizer.whnf( a ) else a } )
-        ( lhs, rhs ) <- eqns.view
-        subst <- syntacticMatching( lhs, app ).toSeq
-      } yield subst( rhs ) -> args.drop( nArgs ) ).headOption
-  }
-  implicit val primitiveRecursiveFunctionsFacet: Facet[PrimitiveRecursiveFunctions] = Facet( PrimitiveRecursiveFunctions( Map() ) )
 
   case class PrimRecFun( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ) extends Update {
     val Const( name, FunctionType( retType, argTypes ) ) = c
@@ -452,7 +445,7 @@ object Context {
         require( ctr_ == ctr.name )
       }
       ctx.state.update[Constants]( _ + c )
-        .update[PrimitiveRecursiveFunctions]( _ + ( name, nArgs, recIdx, equations ) )
+        .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
     }
   }
 

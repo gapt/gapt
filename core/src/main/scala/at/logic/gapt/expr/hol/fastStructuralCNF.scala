@@ -34,8 +34,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
       val skolemizedFormula = Abs( fvs, f )
       val skolemConst = skConsts.getOrElseUpdate(
         skolemizedFormula,
-        Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) )
-      )
+        Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) ) )
       ( skolemConst( fvs: _* ), skolemizedFormula )
     }
 
@@ -145,8 +144,7 @@ case class fastStructuralCNF( propositional: Boolean = true, bidirectionalDefs: 
       val alreadyDefined = defs isDefinedAt Abs( fvs, f )
       val const = defs.getOrElseUpdate(
         Abs( fvs, f ),
-        HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* )
-      )
+        HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* ) )
       val repl = const( fvs: _* )
       if ( !alreadyDefined ) {
         if ( i.isAnt || bidirectionalDefs ) expand( Sequent( Seq( f ), Seq( repl ) ) )

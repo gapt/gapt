@@ -82,8 +82,7 @@ object replaceWithContext {
         ETWeakQuantifier(
           newFormula,
           for ( ( term, instance ) <- instances )
-            yield term -> apply( instance, instReplCtx( replacementContext, term ), exp )
-        )
+            yield term -> apply( instance, instReplCtx( replacementContext, term ), exp ) )
       case _ => throw new IllegalArgumentException( s"Tree $et and context $replacementContext could not be handled." )
     }
   }
@@ -192,8 +191,7 @@ object moveDefsUpward {
         ETWeakQuantifier(
           expectedSh,
           for ( ( term, ch ) <- insts )
-            yield term -> apply( ch, BetaReduction.betaNormalize( instantiate( expectedSh, term ) ) )
-        )
+            yield term -> apply( ch, BetaReduction.betaNormalize( instantiate( expectedSh, term ) ) ) )
       case ( _, _ ) =>
         val expectedShWhnf = ctx.normalizer.whnf( expectedSh ).asInstanceOf[Formula]
         if ( expectedShWhnf == expectedSh ) {
@@ -216,7 +214,7 @@ object moveDefsUpward {
  *
  * Given λx ∀y P(x,y) and f(c), it will return λx P(x,f(c)).
  */
-private[expansion] object instReplCtx {
+object instReplCtx {
   def apply( ctx: Abs, term: Expr ): Abs =
     ctx match {
       case Abs( x, quantFormula ) if freeVariables( term ) contains x =>

@@ -12,8 +12,7 @@ class ContextTest extends Specification {
         InductiveType(
           "large",
           hoc"emptyset : large",
-          hoc"comprehension : (large > o) > large"
-        ) must throwAn[IllegalArgumentException]
+          hoc"comprehension : (large > o) > large" ) must throwAn[IllegalArgumentException]
     }
 
     "polymorphism" in {
@@ -21,8 +20,7 @@ class ContextTest extends Specification {
       ctx += Context.InductiveType(
         ty"list ?a",
         hoc"nil: list ?a",
-        hoc"cons: ?a > list ?a > list ?a"
-      )
+        hoc"cons: ?a > list ?a > list ?a" )
       ctx += hof"xs + (x : ?a) = cons x xs"
       ctx += Context.Sort( "i" )
       ctx ++= Seq( hoc"0: i", hoc"1: i", hoc"2: i" )

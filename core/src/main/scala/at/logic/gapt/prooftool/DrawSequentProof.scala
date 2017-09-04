@@ -26,8 +26,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
     val auxIndices:         Set[SequentIndex],
     val cutAncestorIndices: Set[SequentIndex],
     sequentElementRenderer: F => String,
-    val pos:                List[Int]
-) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
+    val pos:                List[Int] ) extends BoxPanel( Orientation.Vertical ) with MouseMotionListener {
   val defaultBorder = Swing.LineBorder( Color.WHITE )
 
   private var lineHideLevel = 0
@@ -51,8 +50,7 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof.conclusion,
       mainAuxIndices,
       cutAncestorIndices,
-      sequentElementRenderer
-    )
+      sequentElementRenderer )
   }
 
   val cutAncestorIndicesNew = proof match {
@@ -69,14 +67,12 @@ class DrawSequentProof[F, T <: SequentProof[F, T]](
       proof.auxIndices( i ).toSet,
       cutAncestorIndicesNew( i ),
       sequentElementRenderer,
-      i :: pos
-    )
+      i :: pos )
   }
 
   val subProofsPanel = new SubproofsPanel( this, subProofs )
   var aboveLinePanel: AboveLinePanel[F, T] = proof match {
     case p: ProofLink =>
-      println( "proof is a proof link" )
       new ProoflinkLabelPanel( this, p.referencedProof )
     case _ => subProofsPanel
   }
@@ -239,7 +235,6 @@ abstract class AboveLinePanel[F, T <: SequentProof[F, T]]( val parent: DrawSeque
  * @param referencedProof The name of the link.
  */
 class ProoflinkLabelPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentProof[F, T], referencedProof: Expr ) extends AboveLinePanel[F, T]( parent ) {
-  println( s"creating Latex label with text ${LatexExporter( referencedProof )}" )
   private val proofLinkLabel = new LatexLabel( parent.main, LatexExporter( referencedProof ) )
 
   override def endSequentLeftMarginWidth() = 0
@@ -272,8 +267,7 @@ class CollapsedSubproofsPanel[F, T <: SequentProof[F, T]]( parent: DrawSequentPr
  */
 class SubproofsPanel[F, T <: SequentProof[F, T]](
     parent:        DrawSequentProof[F, T],
-    val subProofs: Seq[DrawSequentProof[F, T]]
-) extends AboveLinePanel[F, T]( parent ) {
+    val subProofs: Seq[DrawSequentProof[F, T]] ) extends AboveLinePanel[F, T]( parent ) {
 
   subProofs.foreach( contents += )
   subProofs.foreach( listenTo( _ ) )
@@ -290,8 +284,7 @@ class SubproofsPanel[F, T <: SequentProof[F, T]](
  */
 class ProofLinePanel[F, T <: SequentProof[F, T]](
     val parent:    DrawSequentProof[F, T],
-    val proofName: String
-) extends BoxPanel( Orientation.Horizontal ) {
+    val proofName: String ) extends BoxPanel( Orientation.Horizontal ) {
   private var fSize_ = parent.main.currentFontSize
   def fSize = fSize_
   def fSize_=( sz: Int ) = {

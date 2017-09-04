@@ -59,8 +59,7 @@ class SolveTest extends Specification with SequentMatchers {
         hof"x+(y+z) = (x+y)+z" +:
           hof"x+y = y+x" +:
           Sequent()
-          :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b"
-      )
+          :+ hof"(a+(b+c))+(d+e) = (c+(d+(a+e)))+b" )
       val Right( lk ) = ExpansionProofToLK( expansion )
       lk.conclusion must beMultiSetEqual( expansion.shallow )
     }
@@ -69,17 +68,14 @@ class SolveTest extends Specification with SequentMatchers {
       val es = ETAtom( hoa"p 0", Polarity.InAntecedent ) +:
         ETWeakQuantifier( hof"∀x (p x ⊃ p (s x))", Map(
           le"z" -> ETImp( ETAtom( hoa"p z", Polarity.InSuccedent ), ETAtom( hoa"p (s z)", Polarity.InAntecedent ) ),
-          le"s z" -> ETImp( ETAtom( hoa"p (s z)", Polarity.InSuccedent ), ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) )
-        ) ) +: Sequent() :+ ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
+          le"s z" -> ETImp( ETAtom( hoa"p (s z)", Polarity.InSuccedent ), ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) ) ) ) +: Sequent() :+ ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
       val cutf = hof"∀x (p x ⊃ p (s (s x)))"
       val cut = ETImp(
         ETStrongQuantifier( cutf, hov"z",
           ETImp( ETAtom( hoa"p z", Polarity.InAntecedent ), ETAtom( hoa"p (s (s z))", Polarity.InSuccedent ) ) ),
         ETWeakQuantifier( cutf, Map(
           le"0" -> ETImp( ETAtom( hoa"p 0", Polarity.InSuccedent ), ETAtom( hoa"p (s (s 0))", Polarity.InAntecedent ) ),
-          le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", Polarity.InSuccedent ), ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InAntecedent ) )
-        ) )
-      )
+          le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", Polarity.InSuccedent ), ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InAntecedent ) ) ) ) )
       val epwc = ExpansionProofWithCut( Seq( cut ), es )
       ExpansionProofToLK( epwc ) must beLike {
         case Right( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
@@ -99,9 +95,7 @@ class SolveTest extends Specification with SequentMatchers {
         hof"∃x true",
         Map(
           le"c" -> ETTop( Polarity.InSuccedent ),
-          le"d" -> ETTop( Polarity.InSuccedent )
-        )
-      )
+          le"d" -> ETTop( Polarity.InSuccedent ) ) )
       ExpansionProofToLK( ExpansionProof( Sequent() :+ et ) ) must beLike {
         case Right( p ) => p.conclusion must_== ( Sequent() :+ et.shallow )
       }

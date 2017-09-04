@@ -27,8 +27,7 @@ class BabelTest extends Specification {
     BabelParser.parse(
       """
         '\u2200' (^'""' ('""' '\'' : o)) : o
-      """
-    ) must beLike {
+      """ ) must beLike {
         case All( v, App( v_, Const( "'", Ti ) ) ) if v == v_ => ok
       }
   }
@@ -66,8 +65,7 @@ class BabelTest extends Specification {
       "^('⊤': i) #c('⊤': o) & p('⊤': i)",
       "''",
       "'\\u0000'",
-      "true", "'true'", "'all' x"
-    )
+      "true", "'true'", "'all' x" )
     Fragments.foreach( strings ) { string =>
       string in {
         val expr = BabelParser.parse( string )
@@ -109,8 +107,7 @@ class BabelTest extends Specification {
       "P(x) <-> P(b)", "A<->B", "X<->Y<->Z", "q(x) <->q(x) <-> p(y)",
       "(P(x) <-> P(b))", "(A<->B)", "(X<->Y<->Z)", "(q(x) <->q(x) <-> p(y))",
       "q(x) &(q(x) & p(y))", "(X&Y)&Z",
-      "a = b", "1+X", "1+(X*2)", "P(1+(X*2))", "f(1+X)= (X*0)+X"
-    )
+      "a = b", "1+X", "1+(X*2)", "P(1+(X*2))", "f(1+X)= (X*0)+X" )
 
     formulas foreach BabelParser.parse
 

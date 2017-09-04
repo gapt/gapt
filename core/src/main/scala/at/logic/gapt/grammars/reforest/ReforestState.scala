@@ -12,8 +12,7 @@ case class RigidTrigram( c: Const, i: Int, j: Int ) extends Feature
 case class ReforestState(
     startSymbol:    Const,
     rules:          Map[Expr, Set[Expr]],
-    highestNTIndex: Int
-) {
+    highestNTIndex: Int ) {
 
   def stats: Map[Feature, Int] = {
     val s = mutable.Map[Feature, Int]().withDefaultValue( 0 )
@@ -59,11 +58,10 @@ case class ReforestState(
 
     copy(
       rules = Map( newNT( newNTArgs: _* ) -> Set( digram.c1( newNTArgs.take( digram.i )
-      ++ Seq( digram.c2( newNTArgs.slice( digram.i, digram.i + ts2.size ): _* ) )
-      ++ newNTArgs.drop( digram.i + ts2.size ): _* ) ) ) ++
-      rules.mapValues { _ map abbr },
-      highestNTIndex = highestNTIndex + 1
-    )
+        ++ Seq( digram.c2( newNTArgs.slice( digram.i, digram.i + ts2.size ): _* ) )
+        ++ newNTArgs.drop( digram.i + ts2.size ): _* ) ) ) ++
+        rules.mapValues { _ map abbr },
+      highestNTIndex = highestNTIndex + 1 )
   }
 
   def abbreviate( rigidTrigram: RigidTrigram ): ReforestState = {
@@ -80,13 +78,11 @@ case class ReforestState(
 
     copy(
       rules = Map( newNT( newNTArgs: _* ) -> Set( rigidTrigram.c(
-      newNTArgs.take( rigidTrigram.j ) ++
-        Seq( newNTArgs( rigidTrigram.i ) ) ++
-        newNTArgs.drop( rigidTrigram.j ): _*
-    ) ) ) ++
-      rules.mapValues { _ map abbr },
-      highestNTIndex = highestNTIndex + 1
-    )
+        newNTArgs.take( rigidTrigram.j ) ++
+          Seq( newNTArgs( rigidTrigram.i ) ) ++
+          newNTArgs.drop( rigidTrigram.j ): _* ) ) ) ++
+        rules.mapValues { _ map abbr },
+      highestNTIndex = highestNTIndex + 1 )
   }
 
   def decompose( nonTerminal: Expr ): ReforestState = {
@@ -135,8 +131,7 @@ case class ReforestState(
 
     copy(
       rules = rules + ( nonTerminal -> newRHS1s.toSet ) + ( newNT( newArgs: _* ) -> newRHS2s.toSet ),
-      highestNTIndex = highestNTIndex + 1
-    )
+      highestNTIndex = highestNTIndex + 1 )
   }
 
   def decomposeUsingDeltaTable( nonTerminal: Expr ): ReforestState = {
@@ -154,24 +149,15 @@ case class ReforestState(
 
     copy(
       rules = rules + ( nonTerminal -> ss.map { s => newNT( s( newArgs ): _* ) } ) + ( newNT( newArgs: _* ) -> us ),
-      highestNTIndex = highestNTIndex + 1
-    )
+      highestNTIndex = highestNTIndex + 1 )
   }
 
   def expand( nts: Traversable[Expr] ): ReforestState = {
     for ( nt <- nts ) require( rules( nt ).size == 1 )
 
-    object reduceUnambiguousNonTerminals extends ReductionRule {
-      val headMap = nts.collect { case nt @ Apps( f: Const, xs ) => f -> ( xs.map( _.asInstanceOf[Var] ), rules( nt ).head ) }.toMap
-      override def reduce( normalizer: Normalizer, head: Expr, args: List[Expr] ): Option[( Expr, List[Expr] )] =
-        headMap.toMap[Expr, ( List[Var], Expr )].get( head ).map {
-          case ( xs, repl ) =>
-            require( xs.size == args.size )
-            Substitution( xs zip args )( repl ) -> Nil
-        }
-    }
+    val reduceUnambiguousNonTerminals = Normalizer( nts.map( nt => ReductionRule( nt -> rules( nt ).head ) ) )
 
-    copy( rules = Map() ++ ( rules -- nts ).mapValues { _ map { normalize( reduceUnambiguousNonTerminals, _ ) } } )
+    copy( rules = Map() ++ ( rules -- nts ).mapValues( _.map( reduceUnambiguousNonTerminals.normalize ) ) )
   }
 
   def expandUseless: ReforestState = {

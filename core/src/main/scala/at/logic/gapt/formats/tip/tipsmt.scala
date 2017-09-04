@@ -27,7 +27,9 @@ class TipSmtParser {
   typeDecls( "Bool" ) = To
   datatypes += TipDatatype( To, Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
 
-  def parse( sexp: SExpression ) = sexp match {
+  def parse( sexp: SExpression ): Unit = sexp match {
+    case LFun( "declare-sort", LAtom( name ), LAtom( ":skolem" | ":lambda" ), ar ) =>
+      parse( LFun( "declare-sort", LAtom( name ), ar ) )
     case LFun( "declare-sort", LAtom( name ), LAtom( "0" ) ) =>
       val t = TBase( name )
       declare( t )
@@ -45,10 +47,14 @@ class TipSmtParser {
           ctx += proj
         }
       }
+    case LFun( "declare-const", LAtom( name ), LAtom( ":lambda" ), ty ) =>
+      parse( LFun( "declare-const", LAtom( name ), ty ) )
     case LFun( "declare-const", LAtom( name ), LAtom( typeName ) ) =>
       val c = Const( name, typeDecls( typeName ) )
       declare( c )
       ctx += c
+    case LFun( "declare-fun", LAtom( name ), LAtom( ":lambda" ), rest @ _* ) =>
+      parse( LFun( "declare-fun", LAtom( name ) +: rest: _* ) )
     case LFun( "declare-fun", LAtom( name ), LList( argTypes @ _* ), LAtom( retType ) ) =>
       val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) )
       declare( f )
@@ -59,6 +65,8 @@ class TipSmtParser {
       declare( funConst )
       ctx += funConst
       functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
+    case LFun( "assert", LAtom( ":definition" ), LAtom( ":lambda" ), formula ) =>
+      parse( LFun( "assert", formula ) )
     case LFun( "assert", formula ) =>
       assumptions += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "assert-not", formula ) =>
@@ -96,8 +104,7 @@ class TipSmtParser {
         case LFun( "case", LFunOrAtom( constrName, argNames @ _* ), body ) =>
           require(
             freeVars( varName ).isInstanceOf[Var],
-            s"${freeVars( varName )} is not a variable"
-          )
+            s"${freeVars( varName )} is not a variable" )
           val constr = funDecls( constrName )
           val FunctionType( _, constrArgTypes ) = constr.ty
           require( constrArgTypes.size == argNames.size )
@@ -106,8 +113,7 @@ class TipSmtParser {
           parseFunctionBody(
             body,
             subst( lhs ),
-            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v }
-          )
+            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v } )
       }
       cases flatMap handleCase
     case LFun( "ite", cond, ifTrue, ifFalse ) =>
@@ -149,8 +155,7 @@ class TipSmtParser {
       typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions,
-      assumptions, And( goals )
-    )
+      assumptions, And( goals ) )
 }
 
 object TipSmtParser extends ExternalProgram {
@@ -171,11 +176,9 @@ object TipSmtParser extends ExternalProgram {
         "--if-to-bool-op",
         "--int-to-nat",
         "--uncurry-theory",
-        "--let-lift"
-      ),
+        "--let-lift" ),
       tipBench.read,
-      catchStderr = true
-    ) ) )
+      catchStderr = true ) ) )
 
   val isInstalled =
     try { runProcess( Seq( "tip", "--help" ), "" ); true }

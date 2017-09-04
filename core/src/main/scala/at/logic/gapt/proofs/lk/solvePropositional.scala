@@ -20,8 +20,7 @@ trait SolveUtils {
   protected def mapIf(
     maybeProof: UnprovableOrLKProof,
     formula1:   Formula, pol1: Polarity,
-    formula2: Formula, pol2: Polarity
-  )( f: LKProof => LKProof ) =
+    formula2: Formula, pol2: Polarity )( f: LKProof => LKProof ) =
     maybeProof map { p =>
       if ( p.conclusion.contains( formula1, pol1 ) || p.conclusion.contains( formula2, pol2 ) ) f( p )
       else p
@@ -32,8 +31,7 @@ object solvePropositional extends solvePropositional( _ => None )
 object solveQuasiPropositional extends solvePropositional( Escargot.getAtomicLKProof )
 
 class solvePropositional(
-    theorySolver: HOLClause => Option[LKProof]
-) extends SolveUtils {
+    theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
   type Error = HOLSequent
 
   def apply( formula: Formula ): UnprovableOrLKProof =

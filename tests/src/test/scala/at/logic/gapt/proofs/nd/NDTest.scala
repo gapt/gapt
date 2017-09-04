@@ -85,11 +85,11 @@ class NDTest extends Specification with SatMatchers {
 
   "Induction" in {
     val b1 = LogicalAxiom( hof"!(x: nat) (((x + (0: nat)): nat) = x)" )
-    val b2 = ForallElimRule( b1, hof"((((x:nat) + (0: nat)): nat) = x)", le"0: nat", hov"x: nat" )
+    val b2 = ForallElimRule( b1, le"0: nat" )
 
     val s1 = LogicalAxiom( hof"!(x: nat) !(y: nat) (((s(x): nat) + y: nat) = s(x + y))" )
-    val s2 = ForallElimRule( s1, hof"!(y: nat) (((s(x0): nat) + y: nat) = s(x0 + y))", le"x0: nat", hov"x: nat" )
-    val s3 = ForallElimRule( s2, hof"((((s(x0): nat) + (0: nat)): nat) = s(x0 + 0))", le"0: nat", hov"y: nat" )
+    val s2 = ForallElimRule( s1, le"x0: nat" )
+    val s3 = ForallElimRule( s2, le"0: nat" )
     val s4 = LogicalAxiom( hof"(((x0: nat) + (0: nat)): nat) = x0" )
     val s5 = EqualityElimRule( s4, s3, hof"((((s(x0): nat) + (0: nat)): nat) = s(z: nat))", hov"z: nat" )
 
@@ -97,8 +97,7 @@ class NDTest extends Specification with SatMatchers {
 
     val cases = Seq(
       InductionCase( b2, hoc"0: nat", Seq.empty, Seq.empty ),
-      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) )
-    )
+      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
     val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 
     p.conclusion mustEqual Seq( hof"!(x: nat) ((x + (0:nat)): nat) = x", hof"!(x: nat) !(y: nat) (((s(x): nat) + y): nat) = s(x + y)" ) ++: Sequent() :+ hof"(((x: nat) + (0: nat)): nat) = x"
@@ -218,6 +217,20 @@ class NDTest extends Specification with SatMatchers {
     val a6 = ExistsElimRule( a1, a5, hov"y" )
 
     a6.conclusion mustEqual Seq( hof"?x P x", hof"!x (P x -> Q)" ) ++: Sequent() :+ hof"Q"
+  }
+
+  "ExistsElim2" in {
+    val b1 = LogicalAxiom( hof"R y" )
+    val b2 = LogicalAxiom( hof"?x R x -> ?x P x" )
+    val b3 = ExistsIntroRule( b1, hof"? x R x", hov"y:i" )
+    val b4 = ImpElimRule( b2, b3 )
+    val a2 = LogicalAxiom( hof"!x (P x -> Q)" )
+    val a3 = ForallElimRule( a2, hov"y" )
+    val a4 = LogicalAxiom( hof"P y" )
+    val a5 = ImpElimRule( a3, a4 )
+    val a6 = ExistsElimRule( b4, a5, hov"y" )
+
+    a6.conclusion mustEqual Seq( hof"?x R x -> ?x P x", hof"R y", hof"!x (P x -> Q)" ) ++: Sequent() :+ hof"Q"
   }
 
   "ExcludedMiddle" in {

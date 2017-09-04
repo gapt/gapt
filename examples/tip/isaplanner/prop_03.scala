@@ -98,8 +98,6 @@ object prop_03 extends TacticsProof {
       manySortedProver,
       StandardInductionAxioms()
         .forVariables( hov"xs:list" )
-        .forFormula( hof"∀ys ∀n le(count(n, xs), count(n, append(xs, ys)))" )
-    )
-  ) lkProof ( sequent ) get
+        .forFormula( hof"∀ys ∀n le(count(n, xs), count(n, append(xs, ys)))" ) ) ) lkProof ( sequent ) get
 
 }

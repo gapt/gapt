@@ -1,5 +1,7 @@
 package at.logic.gapt.proofs
 
+import at.logic.gapt.proofs.lk.LKProof
+
 import scala.collection.mutable
 
 /**
@@ -46,6 +48,19 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
     case Seq()    => throw new NoSuchElementException( s"When calling parent on SequentConnector $this: Index $idx has no parent in $parentsSequent." )
     case Seq( p ) => p
     case _        => throw new Exception( s"When calling parent on SequentConnector $this: Index $idx has more than one parent in $parentsSequent." )
+  }
+
+  /**
+   * Given a SequentIndex for the lower sequent, this returns the parent of that occurrence in the upper sequent
+   * (if there is exactly one), and None otherwise.
+   *
+   * @param idx An index of lowerSequent.
+   * @return The unique parent of idx.
+   */
+  def parentOption( idx: SequentIndex ): Option[SequentIndex] = parents( idx ) match {
+    case Seq()    => None
+    case Seq( p ) => Some( p )
+    case _        => None
   }
 
   /**
@@ -194,4 +209,16 @@ object SequentConnector {
         Seq( oldIdx )
     } )
   }
+}
+
+object guessPermutation {
+  /**
+   * Guesses a permutation of formulas in the conclusions of two proofs.
+   * @param oldProof The original proof.
+   * @param newProof A transformed proof which proves the same end-sequent as `oldProof`.
+   * @return A pair consisting of `newProof` and a sequent connector which describes the new
+   *         positions of the formulas in `oldProof.conclusion` with respect to `newProof`.
+   */
+  def apply( oldProof: LKProof, newProof: LKProof ): ( LKProof, SequentConnector ) =
+    ( newProof, SequentConnector.guessInjection( newProof.conclusion, oldProof.conclusion ).inv )
 }

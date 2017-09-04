@@ -25,8 +25,7 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     val Seq( x, y ) = Seq( "x", "y" ) map { FOLVar( _ ) }
     ExpansionProof( Sequent() :+ ETWeakQuantifier(
       Ex( x, All( y, x === y ) ),
-      Map( x -> ETStrongQuantifier( All( y, x === y ), x, ETAtom( x === x, Polarity.InSuccedent ) ) )
-    ) ) must throwA[MatchError]
+      Map( x -> ETStrongQuantifier( All( y, x === y ), x, ETAtom( x === x, Polarity.InSuccedent ) ) ) ) ) must throwA[MatchError]
   }
 
   "substitute proofs" in {
@@ -35,8 +34,7 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     val r = FOLAtomConst( "r", 2 )
 
     val proof = ExpansionProof( Sequent() :+ ETStrongQuantifier(
-      All( x, r( x, y ) ), x, ETAtom( r( x, y ), Polarity.InSuccedent )
-    ) )
+      All( x, r( x, y ) ), x, ETAtom( r( x, y ), Polarity.InSuccedent ) ) )
     proof.deep must_== ( Sequent() :+ r( x, y ) )
 
     val proof1 = Substitution( x -> y )( proof )
@@ -67,15 +65,27 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
     val epwc = ExpansionProofWithCut(
       Seq( ETImp(
         ETStrongQuantifier( hof"∀x P x", hov"x", ETAtom( hoa"P x", Polarity.InSuccedent ) ),
-        ETWeakQuantifier( hof"∀x P x", Map( le"f x" -> ETAtom( hoa"P (f x)", Polarity.InAntecedent ) ) )
-      ) ),
+        ETWeakQuantifier( hof"∀x P x", Map( le"f x" -> ETAtom( hoa"P (f x)", Polarity.InAntecedent ) ) ) ) ),
       ETWeakQuantifier( hof"∀x P x", Map( le"x" -> ETAtom( hoa"P x", Polarity.InAntecedent ) ) ) +:
         Sequent()
-        :+ ETWeakQuantifier( hof"∃x P (f x)", Map( le"x" -> ETAtom( hoa"P (f x)", Polarity.InSuccedent ) ) )
-    )
+        :+ ETWeakQuantifier( hof"∃x P (f x)", Map( le"x" -> ETAtom( hoa"P (f x)", Polarity.InSuccedent ) ) ) )
     epwc.deep must beValidSequent
     val ep = eliminateCutsET( epwc )
     ep.deep must beValidSequent
+  }
+
+  "merge skolem and strong quantifiers" in {
+    val ep = ExpansionProof(
+      ETWeakQuantifier( hof"∀x P x", Map(
+        le"y" -> ETAtom( hoa"P y", Polarity.InAntecedent ),
+        le"sk" -> ETAtom( hoa"P sk", Polarity.InAntecedent ) ) ) +: Sequent()
+        :+ ETMerge(
+          ETStrongQuantifier( hof"∀x P x", hov"y", ETAtom( hoa"P y", Polarity.InSuccedent ) ),
+          ETSkolemQuantifier( hof"∀x P x", le"sk", le"∀x P x", ETAtom( hoa"P sk", Polarity.InSuccedent ) ) ) )
+    ep.deep must beValidSequent
+    val merged = eliminateMerges( ep )
+    merged.deep must beValidSequent
+    merged must beLike { case e if !e.subProofs.exists( _.isInstanceOf[ETMerge] ) => ok }
   }
 
 }
@@ -95,19 +105,14 @@ class ExpansionProofDefinitionEliminationTest extends Specification with SatMatc
         ETAnd(
           ETImp(
             ETAtom( hoa"D c", Polarity.InSuccedent ),
-            ETAnd( ETWeakening( hof"P c", Polarity.InAntecedent ), ETAtom( hoa"P (f c)", Polarity.InAntecedent ) )
-          ),
-          ETWeakening( hof"P c ∧ P (f c) ⊃ D c", Polarity.InAntecedent )
-        ) )
-    )
+            ETAnd( ETWeakening( hof"P c", Polarity.InAntecedent ), ETAtom( hoa"P (f c)", Polarity.InAntecedent ) ) ),
+          ETWeakening( hof"P c ∧ P (f c) ⊃ D c", Polarity.InAntecedent ) ) ) )
     val f = ETWeakQuantifier(
       hof"∃x (P x ∧ P (f x) ⊃ P (f x))",
       Map( le"c" ->
         ETImp(
           ETDefinition( hof"P c & P (f c)", ETAtom( hoa"D c", Polarity.InAntecedent ) ),
-          ETAtom( hoa"P (f c)", Polarity.InSuccedent )
-        ) )
-    )
+          ETAtom( hoa"P (f c)", Polarity.InSuccedent ) ) ) )
 
     val epwd = ExpansionProof( d +: Sequent() :+ f )
     epwd.deep must beValidSequent

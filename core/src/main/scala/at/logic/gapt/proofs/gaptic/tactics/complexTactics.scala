@@ -47,8 +47,7 @@ case class ChainTactic( hyp: String, target: TacticApplyMode = UniqueFormula, su
                 AndRightRule(
                   handleAnds( curGoal.updated( hypCond, existingLabel -> lhs ), hypCond ),
                   handleAnds( curGoal.updated( hypCond, existingLabel -> rhs ), hypCond ),
-                  And( lhs, rhs )
-                )
+                  And( lhs, rhs ) )
               case _ =>
                 OpenAssumption( curGoal )
             }
@@ -88,8 +87,7 @@ case class RewriteTactic(
     equations:  Traversable[( String, Boolean )],
     target:     Option[String],
     fixedSubst: Map[Var, Expr],
-    once:       Boolean
-) extends Tactic[Unit] {
+    once:       Boolean ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = target match {
     case Some( tgt ) => apply( goal, tgt ) map { () -> _ }
     case _ => goal.labelledSequent match {
@@ -277,7 +275,7 @@ object AnalyticInductionTactic {
 case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProver )( implicit ctx: Context ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     AnalyticInductionProver( axioms, prover ) inductiveLKProof ( goal.labelledSequent ) match {
-      case None       => Left( TacticalFailure( this, "search failed" ) )
+      case None       => Left( TacticalFailure( this, "analytic induction prover failed" ) )
       case Some( lk ) => Right( () -> lk )
     }
 

@@ -39,8 +39,7 @@ class EscargotTest extends Specification {
       "p(x,y) & p(y,z) -> p(x,z)",
       "q(x,y) & q(y,z) -> q(x,z)", "q(x,y) -> q(y,x)",
       "p(x,y) | q(x,y)",
-      "-p(a,b)", "-q(c,d)"
-    ) must beSome
+      "-p(a,b)", "-q(c,d)" ) must beSome
   }
 
   "davis putnam" in { test( "-(?x ?y !z ((f(x,y) -> f(y,z) & f(z,z)) & (f(x,y) & g(x,y) -> g(x,z) & g(z,z))))" ) must beSome }
@@ -65,8 +64,7 @@ class EscargotTest extends Specification {
     test(
       "less_equal(u,v) -> divide(u,v)=Zero",
       "less_equal(u,v) -> divide(divide(u,w),divide(v,w))=Zero",
-      "less_equal(U,V) & less_equal(W,U) & divide(divide(W,V),Zero)!=Zero"
-    ) must beSome
+      "less_equal(U,V) & less_equal(W,U) & divide(divide(W,V),Zero)!=Zero" ) must beSome
   }
 
   "demodulator vs unification" in { test( "f(u) != 0", "0 = f(a)" ) must beSome }
@@ -75,16 +73,14 @@ class EscargotTest extends Specification {
     test(
       "x+(y+z) = (x+y)+z",
       "x+y = y+x",
-      "(a+(b+c))+(d+e) != (c+(d+(a+e)))+b"
-    ) must beSome
+      "(a+(b+c))+(d+e) != (c+(d+(a+e)))+b" ) must beSome
   }
 
   "sat ac" in {
     test(
       "x+(y+z) = (x+y)+z",
       "x+y = y+x",
-      "(a+(b+c))+(d+e) != (b+(d+(a+e)))+b"
-    ) must beNone
+      "(a+(b+c))+(d+e) != (b+(d+(a+e)))+b" ) must beNone
   }
 
   "two factorials" in {
@@ -93,8 +89,7 @@ class EscargotTest extends Specification {
       "x*y = y*x",
       "f1(0) = s(0) & f1(s(x)) = s(x) * f1(x)",
       "f2(0) = s(0) & f2(s(x)) = f2(x) * s(x)",
-      "f1(s(s(s(s(0))))) != f2(s(s(s(s(0)))))"
-    ) must beSome
+      "f1(s(s(s(s(0))))) != f2(s(s(s(s(0)))))" ) must beSome
   }
 
   "group inverses" in {
@@ -102,8 +97,7 @@ class EscargotTest extends Specification {
       "x*(y*z) = (x*y)*z",
       "1*x = x",
       "i(x)*x = 1",
-      "a*i(a) != 1"
-    ) must beSome
+      "a*i(a) != 1" ) must beSome
   }
 
   "primitive support for lambdas" in { test( "!y (^x f(x,y)) = g(y) & r(g(c)) & -r(^x f(x,c))" ) must beSome }

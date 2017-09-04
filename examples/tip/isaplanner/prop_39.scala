@@ -18,8 +18,7 @@ object prop_39 extends TacticsProof {
   val cutFormula = hof"∀xs ∀n ∀x plus(count(n, cons(x, nil)), count(n, xs)) = count(n, cons(x, xs))"
 
   val proofCF = Lemma(
-    sequent.antecedent ++: Sequent() :+ ( "c" -> cutFormula )
-  ) {
+    sequent.antecedent ++: Sequent() :+ ( "c" -> cutFormula ) ) {
       allR
       induction( on = hov"xs:list" )
       allR

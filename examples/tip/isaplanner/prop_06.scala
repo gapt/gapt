@@ -18,8 +18,7 @@ object prop_06 extends TacticsProof {
     +: ( "m0_" -> hof"∀y 0-y = 0" )
     +: ( "ms0" -> hof"∀x s(x)-0 = s(x)" )
     +: ( "mss" -> hof"∀x∀y s(x)-s(y) = x - y" )
-    +: Sequent()
-  )
+    +: Sequent() )
 
   val baseCase = Lemma( theory :+ ( "goal" -> hof"∀y 0-(0+y) = 0" ) ) {
     allR
@@ -62,8 +61,6 @@ object prop_06 extends TacticsProof {
       escargot,
       StandardInductionAxioms()
         .forVariables( hov"x:nat" )
-        .forFormula( hof"∀y x-(x+y) = 0" )
-    )
-  ) lkProof ( target ) get
+        .forFormula( hof"∀y x-(x+y) = 0" ) ) ) lkProof ( target ) get
 }
 

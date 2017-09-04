@@ -308,8 +308,7 @@ case class ETSkolemQuantifier(
     shallow:    Formula,
     skolemTerm: Expr,
     skolemDef:  Expr,
-    child:      ExpansionTree
-) extends ETQuantifier with UnaryExpansionTree {
+    child:      ExpansionTree ) extends ETQuantifier with UnaryExpansionTree {
   val ( polarity, boundVar, qfFormula ) = shallow match {
     case Ex( x, t )  => ( Polarity.InAntecedent, x, t )
     case All( x, t ) => ( Polarity.InSuccedent, x, t )
@@ -369,22 +368,19 @@ private[expansion] object replaceET {
       ETWeakQuantifier.withMerge(
         TermReplacement( shallow, repl ),
         for ( ( selectedTerm, child ) <- instances.toSeq )
-          yield TermReplacement( selectedTerm, repl ) -> replaceET( child, repl )
-      )
+          yield TermReplacement( selectedTerm, repl ) -> replaceET( child, repl ) )
 
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       ETStrongQuantifier(
         TermReplacement( shallow, repl ),
-        TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl )
-      )
+        TermReplacement( eigenVariable, repl ).asInstanceOf[Var], replaceET( child, repl ) )
     case et @ ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
       val Apps( _, newArgs ) = TermReplacement( et.skolemConst, repl )
       ETSkolemQuantifier(
         TermReplacement( shallow, repl ),
         TermReplacement( skolemTerm, repl ),
         Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( skolemDef, repl ) ),
-        replaceET( child, repl )
-      )
+        replaceET( child, repl ) )
   }
 }
 
@@ -409,8 +405,7 @@ private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[Expan
       ETWeakQuantifier.withMerge(
         subst( shallow ),
         for ( ( selectedTerm, child ) <- instances.toSeq )
-          yield subst( selectedTerm ) -> applySubstitution( subst, child )
-      )
+          yield subst( selectedTerm ) -> applySubstitution( subst, child ) )
 
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       subst( eigenVariable ) match {

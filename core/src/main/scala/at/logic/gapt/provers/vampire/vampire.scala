@@ -20,15 +20,13 @@ class Vampire( commandName: String = "vampire", extraArgs: Seq[String] = Seq() )
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
         val output = runProcess.withTempInputFile(
           commandName +: "-p" +: "tptp" +: extraArgs,
-          tptpIn
-        ).split( "\n" )
+          tptpIn ).split( "\n" )
         if ( output.head startsWith "Refutation" ) {
           val sketch = TptpProofParser.parse( StringInputFile( output.drop( 1 ).takeWhile( !_.startsWith( "---" ) ).mkString( "\n" ) ) )._2
           val Right( resolution ) = RefutationSketchToResolution( sketch )
           Some( fixDerivation( resolution, cnf ) )
         } else None
-      }
-    )
+      } )
 
   override val isInstalled: Boolean =
     try {

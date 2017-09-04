@@ -35,8 +35,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
         caseVariable,
         Or( datatype.constructors map {
           caseDistinction( caseVariable, _ )
-        } )
-      )
+        } ) )
     }
 
     /**
@@ -46,8 +45,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
       val All.Block( Seq( variable, _* ), _ ) = formula
       var proofState = ProofState(
         datatype.constructors.flatMap( _.projectorDefinitions ).map( definition => "" -> All.Block( freeVariables( definition ).toSeq, definition ) ) ++:
-          Sequent() :+ ( "goal" -> formula )
-      )
+          Sequent() :+ ( "goal" -> formula ) )
       proofState += allR
       proofState += induction( variable )
       datatype.constructors.foreach { _ =>

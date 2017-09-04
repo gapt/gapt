@@ -12,20 +12,17 @@ object simp_expr_unambig1 extends TacticsProof {
 
   val theory = Sequent(
     bench.toSequent.antecedent.zipWithIndex.map { case ( f, i ) => s"h$i" -> f },
-    Nil
-  )
+    Nil )
 
   val sequent = theory ++ Sequent(
     Nil,
-    bench.toSequent.succedent.map { case f => "goal" -> f }
-  )
+    bench.toSequent.succedent.map { case f => "goal" -> f } )
 
   val cong_pos = (
     ( "h1" -> hof"!x0 !x1 tail(cons(x0, x1)) = x1" ) +:
     ( "ass" -> hof"cons(z,x) = cons(z,y)" ) +:
     Sequent() :+
-    ( "conc" -> hof"(x:list) = y" )
-  )
+    ( "conc" -> hof"(x:list) = y" ) )
   val cong_pos_proof = Lemma( cong_pos ) {
     allL( "h1", hov"z:Tok", hov"x:list" )
     allL( "h1", hov"z:Tok", hov"y:list" )
@@ -36,8 +33,7 @@ object simp_expr_unambig1 extends TacticsProof {
     ( "h0" -> hof"!x0 !x1 head(cons(x0, x1)) = x0" ) +:
     ( "ass" -> hof"- ( ( u:Tok ) = v )" ) +:
     ( "conc" -> hof"cons(u,x) = cons(v,y)" ) +:
-    Sequent()
-  )
+    Sequent() )
   val cong_neg_proof = Lemma( cong_neg ) {
     allL( "h0", hov"u:Tok", hov"x:list" )
     allL( "h0", hov"v:Tok", hov"y:list" )
@@ -49,8 +45,7 @@ object simp_expr_unambig1 extends TacticsProof {
     ( "h0" -> hof"!x0 !x1 head(cons(x0, x1)) = x0" ) +:
     ( "ass" -> hof"- ( ( v:Tok ) = u )" ) +:
     ( "conc" -> hof"cons(u,x) = cons(v,y)" ) +:
-    Sequent()
-  )
+    Sequent() )
   val cong_neg_symm_proof = Lemma( cong_neg_symm ) {
     allL( "h0", hov"u:Tok", hov"x:list" )
     allL( "h0", hov"v:Tok", hov"y:list" )

@@ -20,8 +20,7 @@ object prop_05 extends TacticsProof {
     ( "al1" -> hof"length(nil) = Z" ) +:
     ( "aa1" -> hof"∀y append(nil, y) = y" ) +:
     ( "aa2" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "append_one" -> hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" )
-  )
+    Sequent() :+ ( "append_one" -> hof"!xs!y length(append(xs,cons(y,nil))) = S(length(xs))" ) )
 
   val lem_3_proof = Lemma( lem_3 ) {
     allR; induction( hov"xs:list" )

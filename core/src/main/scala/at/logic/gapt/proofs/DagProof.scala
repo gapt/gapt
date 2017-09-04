@@ -57,8 +57,7 @@ trait DagProof[Proof <: DagProof[Proof]] extends Product { self: Proof =>
     val memo = mutable.Map[Proof, Int]()
     def f( subProof: Proof ): Int = memo.getOrElseUpdate(
       subProof,
-      ( subProof.immediateSubProofs.map( f ) :+ 0 ).max + 1
-    )
+      ( subProof.immediateSubProofs.map( f ) :+ 0 ).max + 1 )
     f( this )
   }
 
@@ -135,8 +134,7 @@ object DagProof {
       def f( subProof: Proof ): BigInt =
         memo.getOrElseUpdate(
           subProof,
-          subProof.immediateSubProofs.map( f ).sum + 1
-        )
+          subProof.immediateSubProofs.map( f ).sum + 1 )
       f( self )
     }
 

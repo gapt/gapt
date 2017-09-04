@@ -29,8 +29,7 @@ object tapeUrban extends TacticsProof {
 
   val tau = Lemma(
     ( "M_1" -> hof"M_1" ) +: ( "M_2" -> hof"M_2" ) +: ( "A" -> hof"A" ) +:
-      Sequent() :+ ( "I0" -> hof"I 0" ) :+ ( "I1" -> hof"I 1" )
-  ) {
+      Sequent() :+ ( "I0" -> hof"I 0" ) :+ ( "I1" -> hof"I 1" ) ) {
       unfold( "I" ) in "I1"
       allR( "I1", hov"n_" )
       unfold( "I" ) in "I0"
@@ -56,8 +55,7 @@ object tapeUrban extends TacticsProof {
 
   val epsilon_i = Lemma(
     ( "Ii" -> hof"I i" ) +: ( "S" -> hof"S" ) +: ( "T" -> hof"T" ) +:
-      Sequent() :+ ( "P" -> hof"P" )
-  ) {
+      Sequent() :+ ( "P" -> hof"P" ) ) {
       unfold( "I" ) in "Ii"
       allL( "Ii", le"0" )
       exL( "Ii_0", hov"n" )
@@ -86,8 +84,7 @@ object tapeUrban extends TacticsProof {
 
   val sigma = Lemma(
     ( "M_1" -> hof"M_1" ) +: ( "M_2" -> hof"M_2" ) +: ( "S" -> hof"S" ) +: ( "T" -> hof"T" ) +: ( "A" -> hof"A" ) +:
-      Sequent() :+ ( "P" -> hof"P" )
-  ) {
+      Sequent() :+ ( "P" -> hof"P" ) ) {
       cut( "I0", hof"I 0" )
       cut( "I1", hof"I 1" )
       insert( tau )

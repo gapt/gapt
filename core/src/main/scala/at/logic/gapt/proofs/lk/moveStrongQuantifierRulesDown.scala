@@ -42,8 +42,7 @@ object moveStrongQuantifierRulesDown {
         val ( q, oc ) = apply(
           Substitution( eigen -> newEigen )( subProof ),
           p.occConnectors( 0 ).parents( eigenVariables ).map( _.head ).
-            updated( aux, eigenVariables( p.mainIndices.head ).tail )
-        )
+            updated( aux, eigenVariables( p.mainIndices.head ).tail ) )
         ( q, oc * p.occConnectors( 0 ).inv )
 
       case _: InitialSequent => ( p, SequentConnector( p.endSequent ) )

@@ -19,39 +19,33 @@ object prop_34 extends TacticsProof {
 
   val plus_axioms = List(
     "ap1" -> hof"∀y plus(Z, y) = y",
-    "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))"
-  )
+    "ap2" -> hof"∀z ∀y plus(S(z), y) = S(plus(z, y))" )
 
   val mult_axioms = List(
     "am1" -> hof"∀y mult(Z, y) = Z",
-    "am2" -> hof"∀z ∀y mult(S(z), y) = plus(y, mult(z, y))"
-  )
+    "am2" -> hof"∀z ∀y mult(S(z), y) = plus(y, mult(z, y))" )
 
   val mult2_axioms = List(
     "am21" -> hof"∀y ∀z mult2(Z, y, z) = z",
-    "am22" -> hof"∀x2 ∀y ∀z mult2(S(x2), y, z) = mult2(x2, y, plus(y, z))"
-  )
+    "am22" -> hof"∀x2 ∀y ∀z mult2(S(x2), y, z) = mult2(x2, y, plus(y, z))" )
 
   val plus_right_s_goal = hof"!x !y plus(x,S(y)) = S(plus(x,y))"
   val plus_right_s = (
     plus_axioms ++:
-    Sequent() :+ ( "" -> plus_right_s_goal )
-  )
+    Sequent() :+ ( "" -> plus_right_s_goal ) )
   val plus_right_s_proof = AnalyticInductionProver.singleInduction( plus_right_s, hov"x:Nat" )
 
   val plus_z_neutral_goal = hof"!x plus(x,Z) = x"
   val plus_z_neutral = (
     plus_axioms ++:
-    Sequent() :+ ( "" -> plus_z_neutral_goal )
-  )
+    Sequent() :+ ( "" -> plus_z_neutral_goal ) )
   val plus_z_neutral_proof = AnalyticInductionProver.singleInduction( plus_z_neutral, hov"x:Nat" )
 
   val plus_comm_goal = hof"!x !y plus(x,y) = plus(y,x)"
   val plus_comm = (
     plus_axioms ++:
     ( "prs" -> plus_right_s_goal ) +:
-    ( "pzn" -> plus_z_neutral_goal ) +: Sequent() :+ ( "goal" -> plus_comm_goal )
-  )
+    ( "pzn" -> plus_z_neutral_goal ) +: Sequent() :+ ( "goal" -> plus_comm_goal ) )
   val plus_comm_proof = Lemma( plus_comm ) {
     allR; induction( hov"x:Nat" )
     //- IB
@@ -76,8 +70,7 @@ object prop_34 extends TacticsProof {
     mult2_axioms ++:
     ( "l24" -> lemma_24_goal ) +:
     ( "pcm" -> plus_comm_goal ) +:
-    Sequent() :+ ( "goal" -> cong_11_goal )
-  )
+    Sequent() :+ ( "goal" -> cong_11_goal ) )
   val cong_11_proof = Lemma( cong_11 ) {
     allR; induction( hov"x:Nat" )
     //- IB

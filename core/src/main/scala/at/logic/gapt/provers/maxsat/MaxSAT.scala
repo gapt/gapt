@@ -27,8 +27,7 @@ abstract class MaxSATSolver extends Logger {
     debug( s"${hard.size} hard clauses with ${hard.toSeq.map( _.size ).sum} literals and ${hard.flatMap( _.elements ).toSet.size} unique variables" )
     solve(
       encoding.encodeCNF( hard ),
-      soft map { case ( clause, weight ) => encoding.encodeClause( clause ) -> weight } toSeq
-    ) map { dimacsModel =>
+      soft map { case ( clause, weight ) => encoding.encodeClause( clause ) -> weight } toSeq ) map { dimacsModel =>
         encoding.decodeModel( dimacsModel )
       }
   }
@@ -42,7 +41,6 @@ abstract class MaxSATSolver extends Logger {
   def solve( hard: Formula, soft: TraversableOnce[( Formula, Int )] ): Option[Interpretation] = {
     solve(
       metrics.time( "tseitin" ) { fastStructuralCNF()( hard )._1 },
-      soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten
-    )
+      soft.map( s => CNFp( s._1 ).map( f => ( f, s._2 ) ) ).flatten )
   }
 }

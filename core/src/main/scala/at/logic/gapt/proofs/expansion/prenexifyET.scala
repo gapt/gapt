@@ -16,8 +16,7 @@ object prenexifyET {
     f1: Formula, f2: Formula,
     p1: Polarity, p2: Polarity,
     newPol: Polarity,
-    shConn: ( Formula, Formula ) => Formula
-  ): Formula = {
+    shConn: ( Formula, Formula ) => Formula ): Formula = {
     val f1_ = apply( f1, p1 )
     val f2_ = apply( f2, p2 )
 
@@ -45,8 +44,7 @@ object prenexifyET {
     newPol:           Polarity,
     shConn:           ( Formula, Formula ) => Formula,
     etConn:           ( ExpansionTree, ExpansionTree ) => ExpansionTree,
-    binaryInPolarity: Polarity
-  ): ExpansionTree = {
+    binaryInPolarity: Polarity ): ExpansionTree = {
     val ETWeakQuantifierBlock( sh1, n1, insts1 ) = apply( et1 )
     val ETWeakQuantifierBlock( sh2, n2, insts2 ) = apply( et2 )
 
@@ -100,6 +98,5 @@ object prenexifyET {
     eliminateMerges( ExpansionProof(
       ep.expansionSequent.elements.
         flatMapS( toSequent ).
-        map( apply )
-    ) )
+        map( apply ) ) )
 }

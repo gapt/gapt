@@ -65,8 +65,7 @@ object UnitResolutionToLKProof {
 
     require(
       lk.conclusion isSubMultisetOf expectedConclusion,
-      s"$expectedConclusion\n$proof\n$lk"
-    )
+      s"$expectedConclusion\n$proof\n$lk" )
 
     lk
   }

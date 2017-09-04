@@ -26,9 +26,7 @@ object RunOnProofSequence {
       map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Eq(
       FOLFunction( "+", FOLFunction( "+", alpha, alpha ), alpha ),
-      FOLFunction( "+", alpha, FOLFunction( "+", alpha, alpha ) )
-    ) )
-  )
+      FOLFunction( "+", alpha, FOLFunction( "+", alpha, alpha ) ) ) ) )
   val factorialES = HOLSequent(
     Seq(
       "f(0) = s(0)",
@@ -37,19 +35,15 @@ object RunOnProofSequence {
       "g(x, s(y)) = g(x * s(y), y)",
       "x*s(0) = x",
       "s(0)*x = x",
-      "(x*y)*z = x*(y*z)"
-    )
+      "(x*y)*z = x*(y*z)" )
       map ( s => universalClosure( parseFormula( s ) ) ),
     Seq( Eq(
       FOLFunction( "f", alpha ),
-      FOLFunction( "g", FOLFunction( "s", FOLConst( "0" ) ), alpha )
-    ) )
-  )
+      FOLFunction( "g", FOLFunction( "s", FOLConst( "0" ) ), alpha ) ) ) )
 
   val ProofMap = HashMap[String, ( HOLSequent, Int => LKProof )](
     "factorial" -> ( factorialES, FactorialFunctionEqualityExampleProof2.apply _ ),
-    "assoc" -> ( assocES, UniformAssociativity3ExampleProof.apply _ )
-  )
+    "assoc" -> ( assocES, UniformAssociativity3ExampleProof.apply _ ) )
 
   def removeEqAxioms( eseq: ExpansionProof ): ExpansionProof =
     ExpansionProof( eseq.expansionSequent.zipWithIndex filter {

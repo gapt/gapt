@@ -20,8 +20,7 @@ object Checkable {
         case ty @ TBase( name, params ) =>
           require(
             context.isType( ty ),
-            s"Unknown base type: $name"
-          )
+            s"Unknown base type: $name" )
           params.foreach( check( context, _ ) )
         case TVar( _ ) =>
         case in -> out =>
@@ -36,8 +35,7 @@ object Checkable {
         case c @ Const( name, _ ) =>
           require(
             context.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
-            s"Unknown constant: $c"
-          )
+            s"Unknown constant: $c" )
         case Var( _, t ) => context.check( t )
         case Abs( v, e ) =>
           check( context, v )
@@ -66,7 +64,8 @@ object Checkable {
         case sk: SkolemQuantifierRule =>
           sk.skolemConst -> sk.skolemDef
       } )
-      skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
+      skolemFunctions.orderedDefinitions.reverse.
+        map( Context.SkolemFun.tupled ).foreach( ctx += _ )
 
       for ( q <- p.subProofs )
         ctx.check( q.endSequent )
@@ -87,8 +86,10 @@ object Checkable {
           ctx.check( sk.skolemTerm )
         case StrongQuantifierRule( _, _, _, _, _ ) =>
         case _: ReflexivityAxiom | _: LogicalAxiom =>
-        case TheoryAxiom( sequent ) =>
-          require( ctx.axioms.exists { ax => clauseSubsumption( ax, sequent ).isDefined } )
+        case ProofLink( name, sequent ) =>
+          val declSeq = ctx.get[Context.ProofNames].lookup( name )
+          require( declSeq.nonEmpty, s"Proof name $name does not exist in context" )
+          require( declSeq.get isSubsetOf sequent, s"$declSeq\nis not a subsequent of\n$sequent" )
         case TopAxiom | BottomAxiom
           | _: NegLeftRule | _: NegRightRule
           | _: AndLeftRule | _: AndRightRule
@@ -99,8 +100,7 @@ object Checkable {
         case d: DefinitionRule =>
           require(
             ctx.isDefEq( d.mainFormula, d.auxFormula ),
-            s"${ctx.normalize( d.mainFormula )} != ${ctx.normalize( d.auxFormula )}"
-          )
+            s"${ctx.normalize( d.mainFormula )} != ${ctx.normalize( d.auxFormula )}" )
       }
     }
   }
@@ -126,8 +126,7 @@ object Checkable {
         case ETDefinition( sh, child ) =>
           require(
             ctx.isDefEq( sh, child.shallow ),
-            s"${ctx.normalize( sh )} != ${ctx.normalize( child.shallow )}"
-          )
+            s"${ctx.normalize( sh )} != ${ctx.normalize( child.shallow )}" )
       }
     }
   }

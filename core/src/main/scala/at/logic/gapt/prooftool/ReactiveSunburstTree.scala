@@ -32,7 +32,7 @@ trait ReactiveSunburstView extends SunburstView with Publisher {
 case class NodeSelectedEvent( node: TreeNode ) extends Event
 
 class ReactiveSunburstModel( val root: TreeNode, info: NodeInfo )
-    extends SunburstModel( root, info ) {
+  extends SunburstModel( root, info ) {
   val sunroot = new SunburstTree( root, info )
   override def getView = new SunburstView( sunroot ) with ReactiveSunburstView
 }

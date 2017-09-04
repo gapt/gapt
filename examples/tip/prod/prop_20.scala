@@ -22,8 +22,7 @@ object prop_20 extends TacticsProof {
     ( "" -> hof"∀y ∀xs length(cons(y, xs)) = S(length(xs))" ) +:
     ( "" -> hof"∀y append(nil, y) = y" ) +:
     ( "" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "lemma" -> hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))" )
-  )
+    Sequent() :+ ( "lemma" -> hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))" ) )
 
   val lemma_proof = AnalyticInductionProver.singleInduction( lemma, hov"xs:list" )
 

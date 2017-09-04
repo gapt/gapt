@@ -268,28 +268,23 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case f1 ~ _ ~ f2 =>
         And( Or( Neg( f1 ), f2 ), Or( f1, Neg( f2 ) ) )
     }
-    | impl
-  )
+    | impl )
 
   lazy val impl: PackratParser[FOLFormula] = (
     and ~ "=>" ~ impl ^^ { case f1 ~ _ ~ f2 => Imp( f1, f2 ) }
-    | and
-  )
+    | and )
 
   lazy val and: PackratParser[FOLFormula] = (
     or ~ "&" ~ and ^^ { case f1 ~ _ ~ f2 => And( f1, f2 ) }
-    | or
-  )
+    | or )
 
   lazy val or: PackratParser[FOLFormula] = (
     neg ~ "|" ~ or ^^ { case f1 ~ _ ~ f2 => Or( f1, f2 ) }
-    | neg
-  )
+    | neg )
 
   lazy val neg: PackratParser[FOLFormula] = (
     ( "-" | "~" ) ~> neg ^^ { case f => Neg( f ) }
-    | quantified
-  )
+    | quantified )
 
   lazy val quantified: PackratParser[FOLFormula] = (
     "!" ~ "[" ~> repsep( variable, "," ) ~ "] : " ~ quantified ^^ {
@@ -300,8 +295,7 @@ object LeanCoPParser extends RegexParsers with PackratParsers {
       case vars ~ _ ~ form =>
         vars.foldLeft( form )( ( f, v ) => Ex( v, f ) )
     }
-    | neg | atom
-  )
+    | neg | atom )
 
   lazy val atom: PackratParser[FOLFormula] = not_eq | eq | lean_atom | real_atom | quantified | "(" ~> formula <~ ")"
   // These are introduced by leanCoP's (restricted) definitional clausal form translation

@@ -1,7 +1,8 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ SequentConnector, Sequent, SequentIndex }
+import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.{ Sequent, SequentConnector, SequentIndex }
 import at.logic.gapt.utils.NameGenerator
 
 object containsEqualityReasoning {
@@ -58,8 +59,7 @@ object cutFormulas {
     {
       case CutRule( p, o, _, _ ) => List( p.conclusion( o ) )
       case _                     => List()
-    }
-  ).toSet
+    } ).toSet
 }
 
 object isRegular {
@@ -70,8 +70,14 @@ object isRegular {
    * @return true iff proof is regular.
    */
   def apply( proof: LKProof ): Boolean = {
-    val eigenVars = for ( Eigenvariable( v ) <- proof.treeLike.postOrder ) yield v
-    eigenVars == eigenVars.distinct
+    val eigenvariables: Seq[Var] = proof.subProofs.toSeq flatMap {
+      case ExistsLeftRule( _, _, eigenvariable, _ )  => Seq( eigenvariable )
+      case ForallRightRule( _, _, eigenvariable, _ ) => Seq( eigenvariable )
+      case InductionRule( inductionCases, _, _ ) =>
+        inductionCases flatMap { _.eigenVars }
+      case _ => Seq()
+    }
+    eigenvariables == eigenvariables.distinct
   }
 }
 
@@ -128,3 +134,19 @@ class regularize( nameGen: NameGenerator ) extends LKVisitor[Unit] {
   }
 
 }
+
+object instanceProof {
+  def apply( proof: LKProof, terms: Expr* )( implicit dummyImplicit: DummyImplicit ): LKProof =
+    apply( proof, terms )
+
+  def apply( proof: LKProof, terms: Seq[Expr] ): LKProof = {
+    val instantiationFormula = proof.endSequent.succedent.head
+    CutRule( proof, instantiationProof( instantiationFormula, terms ), instantiationFormula )
+  }
+
+  private def instantiationProof( formula: Formula, terms: Seq[Expr] ): LKProof = {
+    val instanceFormula = instantiate( formula, terms )
+    ForallLeftBlock( LogicalAxiom( instanceFormula ), formula, terms )
+  }
+}
+

@@ -18,16 +18,10 @@ object primeFactor extends TacticsProof {
   ctx += hof" div l k = (∃m l * m = k)"
   ctx += hof" prime k = (1 < k ∧ ¬∃l(div(l,k) ∧ 1 < l ∧ l < k))"
 
-  val theoryAxioms = Seq(
-    fos" :- 1 < 2",
-    fos" :- n * 1 = n",
-    fos" 1 < l, l < 2 :- ",
-    fos" div(x, y), div(y, z) :- div(x, z)"
-  )
-
-  theoryAxioms foreach { ctx += _ }
-
-  val theoryFormulas = theoryAxioms map { s => universalClosure( s.toImplication ) }
+  ctx += "one_lt_two" -> fos" :- 1 < 2"
+  ctx += "mul_one" -> fos" :- n * 1 = n"
+  ctx += "one_lt_lt_two" -> fos" 1 < l, l < 2 :- "
+  ctx += "div_trans" -> fos" div(x, y), div(y, z) :- div(x, z)"
 
   val ax = hof" ∀n (n = 1 ∨ prime(n) ∨ ∃l (div(l,n) ∧ 1 < l ∧ l < n))"
   def primeDiv( n: FOLTerm ) = hof"∃k ($n < 2 ∨ (div(k,$n) ∧ prime(k)))"

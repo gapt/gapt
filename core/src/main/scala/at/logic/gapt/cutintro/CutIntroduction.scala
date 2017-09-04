@@ -194,12 +194,10 @@ object CutIntroduction extends Logger {
 
   abstract case class InputProof private (
       expansionProof:   ExpansionProof,
-      backgroundTheory: BackgroundTheory
-  ) {
+      backgroundTheory: BackgroundTheory ) {
     require(
       isFOLPrenexSigma1( expansionProof.shallow ),
-      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
-    )
+      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers" )
   }
   object InputProof {
     def apply( expansionProof: ExpansionProof, backgroundTheory: BackgroundTheory ): InputProof =
@@ -231,8 +229,7 @@ object CutIntroduction extends Logger {
 
   def compressToSolutionStructure(
     inputProof: InputProof,
-    method:     GrammarFindingMethod = DeltaTableMethod()
-  ): Option[SolutionStructure] = {
+    method:     GrammarFindingMethod = DeltaTableMethod() ): Option[SolutionStructure] = {
     val InputProof( ep, backgroundTheory ) = inputProof
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
@@ -242,7 +239,7 @@ object CutIntroduction extends Logger {
     val endSequent = ep.shallow
     info( s"End sequent: $endSequent" )
 
-    /********** Term set Extraction **********/
+/********** Term set Extraction **********/
     val encoding = InstanceTermEncoding( endSequent )
     val termset = groundTerms( encoding encode ep )
     val weightedTermsetSize = termset.view.map { case Apps( _, args ) => args.size }.sum
@@ -261,7 +258,7 @@ object CutIntroduction extends Logger {
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
     metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
 
-    /********** Grammar finding **********/
+/********** Grammar finding **********/
     metrics.time( "grammar" ) {
       method.findGrammars( termset )
     }.filter { g =>
@@ -391,8 +388,7 @@ object CutIntroduction extends Logger {
 
     var state = ProofState(
       for ( ( formula, idx ) <- solStruct.endSequent.zipWithIndex )
-        yield idx.toString -> formula
-    )
+        yield idx.toString -> formula )
 
     def addNewInstances( instances: FOLSequent ) =
       currentGoal.flatMap( curGoal => haveInstances( instances.distinct diff curGoal.conclusion ) )

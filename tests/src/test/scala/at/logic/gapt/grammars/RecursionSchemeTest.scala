@@ -29,8 +29,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
           A,
           A -> B( c, d ),
           A -> B( d, c ),
-          B( y1, y2 ) -> r( y1, y2 )
-        )
+          B( y1, y2 ) -> r( y1, y2 ) )
         covers( rs, r( c, d ), r( d, c ) )
         doesNotCover( rs, r( c, c ) )
         doesNotCover( rs, r( d, d ) )
@@ -40,8 +39,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
         val rs = RecursionScheme(
           A,
           A -> B( c, d, d ), A -> B( d, c, e ),
-          B( y1, y2, y3 ) -> r( y1, y2 )
-        )
+          B( y1, y2, y3 ) -> r( y1, y2 ) )
         covers( rs, r( c, d ), r( d, c ) )
         doesNotCover( rs, r( c, c ) )
         doesNotCover( rs, r( d, d ) )
@@ -53,8 +51,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
           A,
           A -> B( c ), A -> C( d ),
           B( x ) -> q( x ),
-          C( x ) -> q( x )
-        )
+          C( x ) -> q( x ) )
 
         val f = new RecSchemGenLangFormula( rs )
         ( f( Set( A -> q( c ) ) ) & -f.ruleIncluded( Rule( A, C( d ) ) ) ) must beSat
@@ -86,8 +83,7 @@ class RecursionSchemeTest extends Specification with SatMatchers {
           A,
           B( y1, y2 ) -> f( y1, y2 ),
           B( y1, y2 ) -> f( y2, y1 ),
-          B( y1, y2 ) -> f( c, y2 )
-        )
+          B( y1, y2 ) -> f( c, y2 ) )
         doesNotCover( rs, f( c, d ) )
       }
     }

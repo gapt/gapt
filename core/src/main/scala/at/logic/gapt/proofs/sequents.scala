@@ -399,8 +399,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
   def zipWithIndex: Sequent[( A, SequentIndex )] =
     Sequent(
       antecedent.zipWithIndex.map { case ( a, i ) => a -> Ant( i ) },
-      succedent.zipWithIndex.map { case ( b, i ) => b -> Suc( i ) }
-    )
+      succedent.zipWithIndex.map { case ( b, i ) => b -> Suc( i ) } )
 
   def find( pred: A => Boolean ): Option[SequentIndex] = indicesWhere( pred ).headOption
 

@@ -55,4 +55,22 @@ class SubstitutionTest extends Specification with SequentMatchers {
     }
 
   }
+
+  "induction" in {
+    var ctx = Context()
+    ctx += Context.InductiveType( "sk" )
+    ctx += Context.InductiveType( "list", hoc"nil: list", hoc"cons:sk>list>list" )
+    ctx += hoc"B:list>o"
+    ctx += hoc"t:list"
+    val proof = ( ProofBuilder
+      c LogicalAxiom( hof"B(nil:list)" )
+      u ( WeakeningLeftRule( _, hof"C(x_0:sk, xs_0:list)" ) )
+      c LogicalAxiom( hof"A" )
+      u ( WeakeningLeftRule( _, hof"B(xs_1:list)" ) )
+      u ( WeakeningRightRule( _, hof"B(cons(x_1:sk, xs_1:list):list)" ) )
+      b ( ( left: LKProof, right: LKProof ) => InductionRule( InductionCase( left, hoc"nil: list", Nil, Nil, Suc( 0 ) ) ::
+        InductionCase( right, hoc"cons:sk>list>list", Ant( 0 ) :: Nil, hov"x_1:sk" :: hov"xs_1:list" :: Nil, Suc( 1 ) ) :: Nil, Abs( hov"zs:list", hof"B(zs:list):o" ), hoc"t:list" ) ) qed )
+    Substitution( hov"x_0:sk" -> hov"x_1:sk", hov"xs_0" -> hov"xs_1" )( proof )
+    ok
+  }
 }

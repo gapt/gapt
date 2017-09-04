@@ -21,8 +21,7 @@ trait SchematicProofWithInduction {
 case class ProofByRecursionScheme(
     endSequent: HOLSequent,
     recSchem:   RecursionScheme,
-    context:    Context
-) extends SchematicProofWithInduction {
+    context:    Context ) extends SchematicProofWithInduction {
   private implicit def ctx = context
 
   override def toString = recSchem.toString
@@ -41,8 +40,7 @@ case class ProofByRecursionScheme(
   } yield nt2 -> nt1
   val Right( dependencyOrder ) = linearizeStrictPartialOrder(
     recSchem.nonTerminals,
-    dependencyRelation ++ recSchem.nonTerminals.filter( _ != recSchem.startSymbol ).map( _ -> recSchem.startSymbol )
-  )
+    dependencyRelation ++ recSchem.nonTerminals.filter( _ != recSchem.startSymbol ).map( _ -> recSchem.startSymbol ) )
 
   val hoVarMapping = for {
     nt @ Const( v, t ) <- dependencyOrder.reverse
@@ -65,8 +63,7 @@ case class ProofByRecursionScheme(
   lazy val solutionCondition = Ex.Block(
     hoVars,
     And( solutionConditions.map( cond =>
-      All.Block( freeVariables( cond ).toSeq.diff( hoVars ), cond.toImplication ) ) )
-  )
+      All.Block( freeVariables( cond ).toSeq.diff( hoVars ), cond.toImplication ) ) ) )
 
   //  val solutionCondition @ Ex.Block( hoVars, _ ) = qbupForRecSchem( recSchem, conj )
 
@@ -75,8 +72,7 @@ case class ProofByRecursionScheme(
     val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x_$i", t )
     All.Block(
       args,
-      BetaReduction.betaNormalize( solution( hoVars.indexOf( hoVarMap( nonTerminal ) ) )( args ) )
-    ).asInstanceOf[Formula]
+      BetaReduction.betaNormalize( solution( hoVars.indexOf( hoVarMap( nonTerminal ) ) )( args ) ) ).asInstanceOf[Formula]
   }
 
   def mkInsts( state0: ProofState, solution: Seq[Expr], lhsPattern: Expr ) = {

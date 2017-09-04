@@ -24,8 +24,7 @@ object fixDerivation extends Logger {
   object matchingModEq extends syntacticMatching {
     override def apply(
       pairs:             List[( Expr, Expr )],
-      alreadyFixedSubst: PreSubstitution
-    ): Traversable[Substitution] =
+      alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] =
       pairs match {
         case ( ( Eq( t1, s1 ), Eq( t2, s2 ) ) :: rest ) =>
           apply( ( t1 -> t2 ) :: ( s1 -> s2 ) :: rest, alreadyFixedSubst ).toSeq ++
@@ -119,8 +118,7 @@ object findDerivationViaResolution {
   def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = NonSplittingEscargot ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
-      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
-    )
+      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet )
 
     val groundingSubst = Substitution( grounding )
     val negatedClausesA = a.

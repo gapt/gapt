@@ -25,8 +25,11 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     case ProofLink( referencedProof, linkquent ) =>
       ProofLink( betaNormalize( substitution( referencedProof ) ), linkquent.map { f => betaNormalize( substitution( f ) ) } )
 
-    case InitialSequent( sequent ) =>
-      Axiom( sequent.map { f => betaNormalize( substitution( f ) ) } )
+    case TopAxiom              => TopAxiom
+    case BottomAxiom           => BottomAxiom
+
+    case LogicalAxiom( f )     => LogicalAxiom( betaNormalize( substitution( f ) ) )
+    case ReflexivityAxiom( t ) => ReflexivityAxiom( betaNormalize( substitution( t ) ) )
 
     case WeakeningLeftRule( subProof, f ) =>
       val subProofNew = applySubstitution( substitution, subProof )
@@ -90,8 +93,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renamedEigen = rename( eigen, substitution.range union freeVariables( subProof.conclusion ) )
       applySubstitution( substitution, ForallRightRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
-        aux, renamedEigen, quant
-      ) )
+        aux, renamedEigen, quant ) )
 
     case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
       val All( newQuant, _ ) = substitution( p.mainFormula )
@@ -102,8 +104,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renamedEigen = rename( eigen, substitution.range union freeVariables( subProof.conclusion ) )
       applySubstitution( substitution, ExistsLeftRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
-        aux, renamedEigen, quant
-      ) )
+        aux, renamedEigen, quant ) )
 
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val Ex( newQuant, _ ) = substitution( p.mainFormula )
@@ -152,8 +153,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renaming = rename( c.eigenVars, freeVariables( c.proof.endSequent ) -- c.eigenVars ++ subst.range )
       indCase( subst, c.copy(
         applySubstitution( Substitution( renaming ), c.proof ),
-        eigenVars = c.eigenVars map renaming
-      ) )
+        eigenVars = c.eigenVars map renaming ) )
     } else {
       c.copy( applySubstitution( subst, c.proof ) )
     }
@@ -175,12 +175,8 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
   }
 
-  override protected def visitTheoryAxiom( proof: TheoryAxiom, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = TheoryAxiom( TermReplacement( proof.conclusion, repl ) )
-    ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
-  }
   override protected def visitProofLink( proof: ProofLink, otherArg: Unit ): ( LKProof, SequentConnector ) = {
-    val proofNew = ProofLink( proof.referencedProof, TermReplacement( proof.conclusion, repl ) )
+    val proofNew = ProofLink( TermReplacement( proof.referencedProof, repl ), TermReplacement( proof.conclusion, repl ) )
     ( proofNew, SequentConnector( proofNew.conclusion, proof.conclusion, proof.conclusion.indicesSequent.map { Seq( _ ) } ) )
   }
 

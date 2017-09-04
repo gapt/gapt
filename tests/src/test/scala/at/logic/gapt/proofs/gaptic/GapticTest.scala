@@ -11,8 +11,7 @@ class GapticTest extends Specification {
       ( "ass" -> hof"P(f(a))" ) +:
         ( "eq" -> hof"!x f(x) = g(x)" ) +:
         Sequent()
-        :+ ( "goal" -> hof"P(g(a))" )
-    ) {
+        :+ ( "goal" -> hof"P(g(a))" ) ) {
         rewrite rtl "eq" in "goal"
         prop
       }
@@ -23,8 +22,7 @@ class GapticTest extends Specification {
       ( "add0" -> hof"!x x+0 = x" ) +:
         ( "adds" -> hof"!x!y x+s(y) = s(x+y)" ) +:
         Sequent()
-        :+ ( "goal" -> hof"s(s(0)) + s(s(0)) = s(s(s(s(0))))" )
-    ) {
+        :+ ( "goal" -> hof"s(s(0)) + s(s(0)) = s(s(s(s(0))))" ) ) {
         rewrite.many ltr ( "add0", "adds" ) in "goal"
         axiomRefl
       }

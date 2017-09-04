@@ -9,8 +9,7 @@ object extractRecSchem {
   def apply(
     p:                   LKProof,
     includeTheoryAxioms: Boolean = true,
-    includeEqTheory:     Boolean = false
-  ): RecursionScheme = {
+    includeEqTheory:     Boolean = false ): RecursionScheme = {
     val symbols = p.endSequent.zipWithIndex map {
       case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, matrix )
       case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, -matrix )
@@ -20,8 +19,7 @@ object extractRecSchem {
     RecursionScheme( startSymbol, new extractRecSchem( includeTheoryAxioms, includeEqTheory ).
       getRules(
         regularize( moveStrongQuantifierRulesDown( AtomicExpansion( p ) ) ),
-        startSymbol( context: _* ), symbols.map( Some( _ ) ), context
-      ) map {
+        startSymbol( context: _* ), symbols.map( Some( _ ) ), context ) map {
           case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
         } )
   }
@@ -83,9 +81,9 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
     symbols.elements.flatten.map( Rule( startSymbol, _ ) ).toSet
 
   def getRules( p: LKProof, startSymbol: Expr, symbols: Sequent[Option[Expr]], context: List[Var] ): Set[Rule] = p match {
-    case ReflexivityAxiom( term ) if includeEqTheory                                     => allRules( symbols, startSymbol ) + Rule( startSymbol, term === term )
-    case TheoryAxiom( sequent ) if includeTheoryAxioms                                   => allRules( symbols, startSymbol ) + Rule( startSymbol, sequent.toImplication )
-    case _: LogicalAxiom | _: ReflexivityAxiom | _: TheoryAxiom | BottomAxiom | TopAxiom => allRules( symbols, startSymbol )
+    case ReflexivityAxiom( term ) if includeEqTheory                                   => allRules( symbols, startSymbol ) + Rule( startSymbol, term === term )
+    case ProofLink( _, sequent ) if includeTheoryAxioms                                => allRules( symbols, startSymbol ) + Rule( startSymbol, sequent.toImplication )
+    case _: LogicalAxiom | _: ReflexivityAxiom | _: ProofLink | BottomAxiom | TopAxiom => allRules( symbols, startSymbol )
     case WeakQuantifierRule( q, aux, _, term, v, pol ) =>
       val main = p.mainIndices.head
       val appSym = App( symbols( main ).get, term )

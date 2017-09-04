@@ -23,11 +23,9 @@ class EProver extends ResolutionProver with ExternalProgram {
         if ( lines.contains( "# SZS status Unsatisfiable" ) )
           RefutationSketchToResolution( TptpProofParser.parse(
             StringInputFile( lines.filterNot( _ startsWith "# " ).mkString( "\n" ) ),
-            labelledCNF mapValues { Seq( _ ) }
-          ) ).toOption
+            labelledCNF mapValues { Seq( _ ) } ) ).toOption
         else None
-      }
-    )
+      } )
 
   override val isInstalled: Boolean =
     try {
