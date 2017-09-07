@@ -2,6 +2,8 @@
 
 ## Version 2.8 (unreleased)
 
+* Support for EProver 2.0
+
 ## Version 2.7 (released on 2017-07-05)
 
 * Conversion from LK to natural deduction
