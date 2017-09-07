@@ -18,18 +18,26 @@ class EProver extends ResolutionProver with ExternalProgram {
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
-        val output = runProcess.withTempInputFile( Seq( "eproof", "--tptp3-format" ), tptpIn )
-        val lines = output.split( "\n" )
-        if ( lines.contains( "# SZS status Unsatisfiable" ) )
-          RefutationSketchToResolution( TptpProofParser.parse(
-            StringInputFile( lines.filterNot( _ startsWith "# " ).mkString( "\n" ) ),
-            labelledCNF mapValues { Seq( _ ) } ) ).toOption
-        else None
+        runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ), tptpIn ) match {
+          case ( 0, output ) =>
+            val lines = output.split( "\n" )
+            require( lines.contains( "# SZS status Unsatisfiable" ) )
+            val sketch = TptpProofParser.parse(
+              StringInputFile( lines.filterNot( _ startsWith "#" ).mkString( "\n" ) ),
+              labelledCNF.mapValues( Seq( _ ) ) )
+            Some( RefutationSketchToResolution( sketch ).getOrElse( throw new Exception( "Could not reconstruct proof" ) ) )
+          case ( 1, output ) =>
+            val lines = output.split( "\n" )
+            require( lines.contains( "# SZS status Satisfiable" ) )
+            None
+          case ( exitVal, output ) =>
+            throw new IOException( s"Unexpected exit value $exitVal\n$output" )
+        }
       } )
 
   override val isInstalled: Boolean =
     try {
-      runProcess( Seq( "eproof", "--version" ) )
+      runProcess( Seq( "eprover", "--version" ) )
       true
     } catch {
       case ex: IOException => false
