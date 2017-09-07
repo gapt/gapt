@@ -39,7 +39,7 @@ lazy val commonSettings = Seq(
   sourcesInBase := false // people like to keep scripts lying around
 )
 
-val scalariformOptions = scalariformSettings( true ) :+
+val scalariformOptions = scalariformSettings( autoformat = true ) :+
   ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
