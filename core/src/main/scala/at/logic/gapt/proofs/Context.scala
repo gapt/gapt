@@ -235,7 +235,8 @@ object Context {
     def ++( consts: Traversable[Const] ): Constants =
       consts.foldLeft( this )( _ + _ )
 
-    override def toString = constants.values.map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
+    override def toString = constants.values.toSeq.sortBy( _.name ).
+      map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
@@ -246,6 +247,9 @@ object Context {
 
     def +( reductionRule: ReductionRule ): Reductions =
       copy( normalizer + reductionRule )
+
+    override def toString: String =
+      normalizer.rules.map { case ReductionRule( lhs, rhs ) => s"$lhs -> $rhs" }.mkString( "\n" )
   }
   implicit val reductionsFacet: Facet[Reductions] = Facet( Reductions( Normalizer( Set() ) ) )
 
@@ -319,6 +323,9 @@ object Context {
         ( declName, defPrf ) <- defs
         subst <- syntacticMatching( declName, name )
       } yield ( defPrf, subst )
+
+    override def toString: String =
+      components.map { case ( n, dfs ) => dfs.map( _._1 ).mkString( ", " ) }.mkString( "\n" )
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
 
@@ -525,6 +532,9 @@ object Context {
   case class ProofDeclaration( lhs: Expr, proof: LKProof ) extends Update {
     override def apply( ctx: Context ): State =
       ctx + ProofNameDeclaration( lhs, proof.endSequent ) + ProofDefinitionDeclaration( lhs, proof ) state
+
+    override def toString: String =
+      s"ProofDeclaration($lhs, ${proof.endSequent})"
   }
 
   def guess( exprs: Traversable[Expr] ): ImmutableContext = {

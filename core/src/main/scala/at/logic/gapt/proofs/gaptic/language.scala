@@ -89,7 +89,7 @@ object LemmaMacros {
     val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
 
     val term = c.internal.enclosingOwner.asTerm
-    val name = term.name.decodedName.toString
+    val name = term.name.decodedName.toString.trim
 
     q"$lemmaMacros.finishLemma($name, $construction, incompleteOk = false)"
   }
