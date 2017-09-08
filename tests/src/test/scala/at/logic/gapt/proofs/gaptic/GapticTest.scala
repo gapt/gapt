@@ -7,7 +7,7 @@ import org.specs2.mutable.Specification
 class GapticTest extends Specification {
 
   "rewrite simple" in {
-    Lemma(
+    Proof(
       ( "ass" -> hof"P(f(a))" ) +:
         ( "eq" -> hof"!x f(x) = g(x)" ) +:
         Sequent()
@@ -18,7 +18,7 @@ class GapticTest extends Specification {
     ok
   }
   "rewrite addition" in {
-    Lemma(
+    Proof(
       ( "add0" -> hof"!x x+0 = x" ) +:
         ( "adds" -> hof"!x!y x+s(y) = s(x+y)" ) +:
         Sequent()

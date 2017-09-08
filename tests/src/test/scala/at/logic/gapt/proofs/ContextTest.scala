@@ -16,7 +16,7 @@ class ContextTest extends Specification {
     }
 
     "polymorphism" in {
-      implicit var ctx = Context()
+      implicit val ctx: MutableContext = MutableContext.default()
       ctx += Context.InductiveType(
         ty"list ?a",
         hoc"nil: list ?a",
@@ -31,7 +31,7 @@ class ContextTest extends Specification {
   }
 
   "polymorphic definitions" in {
-    implicit var ctx = Context()
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += hof"const (f: ?a > ?b) = (!x!y f x = f y)"
 
     ctx += Context.Sort( "i" )
@@ -48,7 +48,7 @@ class ContextTest extends Specification {
   }
 
   "recursive functions" in {
-    implicit var ctx = default
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += PrimRecFun( hoc"'+': nat>nat>nat", "0 + x = x", "s(x) + y = s(x + y)" )
     ctx += hof"1 = s(0)"; ctx += hof"2 = s(1)"; ctx += hof"3 = s(2)"; ctx += hof"4 = s(3)"
@@ -56,7 +56,7 @@ class ContextTest extends Specification {
   }
 
   "ite" in {
-    implicit var ctx = default
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += PrimRecFun( hoc"ite: o > ?a > ?a > ?a", "ite true a b = a", "ite false a b = b" )
 
     ctx += Ti; ctx += hoc"a: i"; ctx += hoc"b: i"
@@ -70,9 +70,9 @@ class ContextTest extends Specification {
   }
 
   "propext" in {
-    implicit var ctx = default
+    implicit val ctx: MutableContext = MutableContext.default()
     import at.logic.gapt.proofs.gaptic._
-    ctx check Lemma( Sequent() :+ ( "goal" -> hof"!p!q ((p <-> q) -> p = q)" ) ) {
+    val propext = Lemma( Sequent() :+ ( "goal" -> hof"!p!q ((p <-> q) -> p = q)" ) ) {
       repeat( allR )
       induction( hov"p: o" ).onAll( induction( hov"q: o" ) )
       quasiprop.onAllSubGoals

@@ -1,6 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.Sort
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
 
@@ -10,7 +11,15 @@ import at.logic.gapt.proofs.gaptic._
  *
  * [1] http://www.illc.uva.nl/Tbilisi/Tbilisi2013/uploaded_files/inlineitem/riener.pdf
  */
-object tbillc {
+object tbillc extends TacticsProof {
+  ctx += Sort( "i" )
+  ctx += hoc"Q: i>i>o"
+  ctx += hoc"P: i>o"
+  ctx += hoc"f: i>i"
+  ctx += hoc"g: i>i"
+  ctx += hoc"a: i"
+  ctx += hoc"b: i"
+
   val proof =
     Lemma( ( "q" -> hof"∀x (Q(x, f(x)) ∨ Q(x, g(x)))" ) +:
       ( "p" -> hof"P(a) ∨ P(b)" ) +:

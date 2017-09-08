@@ -63,6 +63,11 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "simple pi3" in {
+    implicit val ctx = MutableContext.default()
+    ctx += Sort( "i" )
+    ctx += hoc"P: i>i>i>o"
+    ctx += hoc"c: i"
+    ctx += hoc"d: i"
     val p = Lemma(
       ( "hyp" -> hof"∀x ∀y P(x, x, y)" ) +:
         Sequent()

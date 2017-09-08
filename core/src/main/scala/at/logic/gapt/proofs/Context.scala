@@ -302,6 +302,9 @@ object Context {
         ( declName, declSeq ) <- names.values
         subst <- clauseSubsumption( declSeq, seq )
       } yield subst( declName ) ).headOption
+
+    override def toString: String =
+      names.map { case ( _, ( lhs, sequent ) ) => s"$lhs: $sequent" }.mkString( "\n" )
   }
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
@@ -501,21 +504,27 @@ object Context {
       require( !ctx.get[ProofNames].names.keySet.contains( c ) )
       require( vs == vs.distinct )
       require( vs.forall( _.isInstanceOf[Var] ) )
-      require( freeVariables( endSequent ) == vs.toSet )
+      for ( fv <- freeVariables( endSequent ) )
+        require( vs.contains( fv ) )
       ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
     }
   }
 
   case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
-      referencedProof.endSequent.foreach( ctx.check( _ ) )
-      val Apps( at.logic.gapt.expr.Const( c, t ), vs ) = lhs
+      ctx.check( referencedProof )
+      val Apps( Const( c, _ ), vs ) = lhs
       vs.foreach( ctx.check( _ ) )
       require( ctx.get[ProofNames].names.values.exists {
         case ( name, _ ) => syntacticMatching( name, lhs ).isDefined
       } )
       ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
     }
+  }
+
+  case class ProofDeclaration( lhs: Expr, proof: LKProof ) extends Update {
+    override def apply( ctx: Context ): State =
+      ctx + ProofNameDeclaration( lhs, proof.endSequent ) + ProofDefinitionDeclaration( lhs, proof ) state
   }
 
   def guess( exprs: Traversable[Expr] ): ImmutableContext = {
@@ -541,6 +550,7 @@ class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
   def ctx_=( newCtx: ImmutableContext ): Unit = ctx_ = newCtx
 
   def +=( update: Update ): Unit = ctx += update
+  def ++=( updates: Iterable[Update] ): Unit = ctx ++= updates
 }
 object MutableContext {
   def default(): MutableContext = Context.default.newMutable

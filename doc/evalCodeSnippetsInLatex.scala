@@ -106,8 +106,20 @@ object evalCodeSnippetsInLatex {
     code ++= "val () = {\n"
     if ( !bare ) code ++= "new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
     code ++= "import at.logic.gapt.proofs.gaptic._\n"
-    if ( !nosig )
-      code ++= "implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature\n"
+    if ( !nosig ) code ++=
+        """
+          ctx += Context.Sort("i")
+          ctx += hoc"P: i>o"
+          ctx += hoc"Q: i>o"
+          ctx += hoc"I: i>o"
+          ctx += hoc"a: i"
+          ctx += hoc"b: i"
+          ctx += hoc"0: i"
+          ctx += hoc"1: i"
+          ctx += hoc"f: i>i"
+          ctx += hoc"A: o"
+          ctx += hoc"B: o"
+        """
     for ( line <- listing ) { code ++= line; code += '\n' }
     if ( !bare ) code ++= "}; "
     code ++= "() }"

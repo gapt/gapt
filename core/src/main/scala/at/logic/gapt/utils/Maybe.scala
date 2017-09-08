@@ -6,6 +6,8 @@ sealed trait Maybe[+T] {
     this match { case None => default case Some( v ) => v }
   def map[S]( f: T => S ): Maybe[S] =
     this match { case None => None case Some( v ) => Some( f( v ) ) }
+  def foreach( f: T => Unit ): Unit =
+    this match { case None => case Some( v ) => f( v ) }
 }
 
 trait Maybe0 {

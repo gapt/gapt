@@ -9,7 +9,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
   def ldivprod( i: Int ): LKProof = {
     val sequent = hols"linp: P $i l  :-  div: DIV l (prod $i)"
     if ( i == 0 )
-      Lemma( sequent ) {
+      Proof( sequent ) {
         unfold( "P", "set_1" ) in "linp"
         unfold( "DIV", "prod" ) in "div"
         exR( le"1" ).forget
@@ -17,7 +17,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
         theory
       }
     else
-      Lemma( sequent ) {
+      Proof( sequent ) {
         unfold( "P" ).atMost( 1 ) in "linp"
         unfold( "union" ) in "linp"
         unfold( "DIV" ) in "div"
@@ -51,7 +51,7 @@ case class euclid( k: Int ) extends PrimeDefinitions {
     } yield ()
   }
 
-  def prodgt0( i: Int ): LKProof = Lemma( hols"gt0: prod $i + 1 = 1, fk: F $k :-" ) {
+  def prodgt0( i: Int ): LKProof = Proof( hols"gt0: prod $i + 1 = 1, fk: F $k :-" ) {
     unfold( "prod" ) atMost 1 in "gt0"
 
     if ( i > 0 ) splitgt0( "gt0" ) andThen insert( prodgt0( i - 1 ) ) else skip

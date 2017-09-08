@@ -844,12 +844,13 @@ val lemmaEx =
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
 b_0: P(a) ⊃ Q(a)
-a: P(a): o
+a: P(a)
 b: ∀x (P(x) ⊃ Q(x))
 :-
-c: Q(a): o
+c: Q(a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -895,11 +896,12 @@ val lemmaEx =
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
-a: P(a): o
+a: P(a)
 :-
-c: Q(a): o
+c: Q(a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1011,24 +1013,25 @@ val cutEx = Lemma(Sequent(
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 3 open sub goals:
-A: A:o
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
-I1: I(1): o
-I0: I(0): o
+I1: I(1)
+I0: I(0)
 
-I0: I(0): o
-A: A:o
+I0: I(0)
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
-I1: I(1): o
+I1: I(1)
 
-I1: I(1): o
-A: A:o
+I1: I(1)
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 

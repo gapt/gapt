@@ -60,7 +60,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
   }
 
   "all inductions should be eliminated" in {
-    implicit var ctx: MutableContext = MutableContext.default()
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
 
@@ -111,7 +111,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
   "several unfolding steps are required" in {
     skipped( "takes too long" )
-    implicit var ctx = Context()
+    implicit val ctx = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
 
