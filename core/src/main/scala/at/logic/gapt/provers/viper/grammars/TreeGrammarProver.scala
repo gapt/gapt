@@ -14,7 +14,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.{ Logger, Maybe }
 
 import scala.collection.mutable
 
@@ -158,7 +158,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    require( smtSolver isValid skolemize( formula ), s"Solution not valid" )
+    require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), s"Solution not valid" )
 
     val proof = spwi.lkProof( Seq( solution ), EquationalLKProver )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
