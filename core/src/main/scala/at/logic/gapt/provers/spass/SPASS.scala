@@ -7,7 +7,7 @@ import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
-import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
+import at.logic.gapt.provers.{ ResolutionProver, extractIntroducedDefinitions, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess }
 import org.parboiled2._
 
@@ -159,7 +159,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
       } else {
         None
       }
-    } )
+    } ).map { resolution =>
+      extractIntroducedDefinitions( resolution )
+      resolution
+    }
 
   class InferenceParser( val input: ParserInput ) extends Parser {
     def Num = rule { capture( oneOrMore( CharPredicate.Digit ) ) ~> { _.toInt } }

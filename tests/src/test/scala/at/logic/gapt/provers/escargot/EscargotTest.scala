@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.{ naive, thresholds }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existentialClosure
 import at.logic.gapt.formats.babel.BabelParser
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ MutableContext, Sequent }
 import org.specs2.mutable._
 
 class EscargotTest extends Specification {
@@ -101,4 +101,12 @@ class EscargotTest extends Specification {
   }
 
   "primitive support for lambdas" in { test( "!y (^x f(x,y)) = g(y) & r(g(c)) & -r(^x f(x,c))" ) must beSome }
+
+  "splitting definitions" in {
+    val formula = CountingEquivalence( 2 )
+    implicit val ctx: MutableContext = MutableContext.guess( formula )
+    val Some( proof ) = Escargot.getResolutionProof( formula )
+    ctx.check( proof )
+    ok
+  }
 }

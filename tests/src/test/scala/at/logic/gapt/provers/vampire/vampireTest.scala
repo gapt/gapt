@@ -2,7 +2,7 @@ package at.logic.gapt.provers.vampire
 
 import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr.fol.{ naive, thresholds }
-import at.logic.gapt.proofs.{ Clause, HOLSequent, Sequent, SequentMatchers }
+import at.logic.gapt.proofs.{ Clause, HOLSequent, MutableContext, Sequent, SequentMatchers }
 import org.specs2.mutable._
 import at.logic.gapt.expr._
 import at.logic.gapt.utils.SatMatchers
@@ -116,6 +116,14 @@ class VampireTest extends Specification with SequentMatchers with SatMatchers {
         case Some( proof ) => proof.deep must beEValidSequent
       }
     }
+  }
+
+  "splitting definitions" in {
+    val formula = CountingEquivalence( 2 )
+    implicit val ctx: MutableContext = MutableContext.guess( formula )
+    val Some( proof ) = Vampire.getResolutionProof( formula )
+    ctx.check( proof )
+    ok
   }
 
 }

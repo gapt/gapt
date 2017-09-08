@@ -1,7 +1,8 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
+import at.logic.gapt.utils.Maybe
 
 object renameConstantsToFi {
   private def mkName( i: Int ) = s"f$i"
@@ -45,4 +46,15 @@ object groundFreeVariables {
 
   def wrap[I, O]( seq: HOLSequent )( f: HOLSequent => Option[I] )( implicit ev: Replaceable[I, O] ): Option[O] =
     wrapWithConsts( seq )( ( groundSeq, _ ) => f( groundSeq ) )
+}
+
+object extractIntroducedDefinitions {
+  import at.logic.gapt.proofs.resolution._
+  def apply( p: ResolutionProof )( implicit maybeCtx: Maybe[MutableContext] ): Unit =
+    maybeCtx match {
+      case Maybe.None =>
+      case Maybe.Some( ctx ) =>
+        for ( ( df, by ) <- p.definitions if ctx.definition( df ).isEmpty )
+          ctx += Definition( df, by )
+    }
 }
