@@ -95,15 +95,15 @@ case class StandardInductionAxioms(
               "icf" -> inductiveCaseFormula ::
                 inductionHypotheses.zipWithIndex.map( { case ( hyp, index ) => s"ih$index" -> hyp } ),
               "goal" -> caseConclusion :: Nil ) )
-          proofState += allL( "icf", primaryVariables: _* ) orElse skip
-          proofState += impL( "icf" ) orElse impL( "icf_0" )
+          proofState += allL( "icf", primaryVariables: _* ).forget orElse skip
+          proofState += impL( "icf" )
           if ( primaryVariables.isEmpty )
             proofState += trivial
           else
             primaryVariables foreach {
-              _ => proofState += andR( "icf_0" ) andThen trivial orElse trivial
+              _ => proofState += andR( "icf" ) andThen trivial orElse trivial
             }
-          proofState += allL( "icf_0", secondaryVariables: _* ) orElse skip
+          proofState += allL( "icf", secondaryVariables: _* ).forget orElse skip
           proofState += trivial
 
           proofState.result
