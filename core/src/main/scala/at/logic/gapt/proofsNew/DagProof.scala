@@ -19,8 +19,7 @@ trait Inference[+Jdg] {
 final class DagProof[Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val immediateSubProofs: Vector[DagProof[Jdg, Inf]] ) { self =>
   require(
     inference.premises.size == immediateSubProofs.size,
-    s"Inference has ${inference.premises.size} premises, but ${immediateSubProofs.size} sub-proofs were provided."
-  )
+    s"Inference has ${inference.premises.size} premises, but ${immediateSubProofs.size} sub-proofs were provided." )
   for ( ( premise, subProof ) <- ( inference.premises, immediateSubProofs ).zipped )
     require( premise == subProof.conclusion )
 
@@ -49,8 +48,7 @@ final class DagProof[Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val immed
     val cache = mutable.Map[DagProof[Jdg, Inf], DagProof[Jdg_, Inf_]]()
     def go( p: DagProof[Jdg, Inf] ): DagProof[Jdg_, Inf_] = cache.getOrElse(
       p,
-      f( p.inference, p.immediateSubProofs.map( go ) )
-    )
+      f( p.inference, p.immediateSubProofs.map( go ) ) )
     go( this )
   }
 
@@ -86,8 +84,7 @@ final class DagProof[Jdg, +Inf <: Inference[Jdg]]( val inference: Inf, val immed
     val memo = mutable.Map[DagProof[Jdg, Inf], Int]()
     def f( subProof: DagProof[Jdg, Inf] ): Int = memo.getOrElseUpdate(
       subProof,
-      ( subProof.immediateSubProofs.map( f ) :+ 0 ).max + 1
-    )
+      ( subProof.immediateSubProofs.map( f ) :+ 0 ).max + 1 )
     f( this )
   }
 
@@ -171,8 +168,7 @@ object DagProof {
       def f( subProof: DagProof[Jdg, Inf] ): BigInt =
         memo.getOrElseUpdate(
           subProof,
-          subProof.immediateSubProofs.map( f ).sum + 1
-        )
+          subProof.immediateSubProofs.map( f ).sum + 1 )
       f( self )
     }
 

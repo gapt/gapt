@@ -1,7 +1,7 @@
 package at.logic.gapt.proofsNew
 
-import at.logic.gapt.expr.HOLFormula
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.expr.Formula
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofsNew.lk.{ Contraction, LKInference, LKProof }
 import at.logic.gapt.proofsNew.setlike.{ SetSequent, SetlikeInference }
 
@@ -19,14 +19,14 @@ object setlike {
     override def toString = sequent.distinct.toString
   }
 
-  case class SetlikeInference[Inf <: SequentInference]( inf: Inf ) extends Inference[SetSequent[HOLFormula]] {
+  case class SetlikeInference[Inf <: SequentInference]( inf: Inf ) extends Inference[SetSequent[Formula]] {
     def premises = inf.premises.map( SetSequent( _ ) )
     def conclusion = SetSequent( inf.conclusion )
   }
 }
 
 object setlikeLK {
-  type SetlikeLKProof = DagProof[SetSequent[HOLFormula], SetlikeInference[LKInference]]
+  type SetlikeLKProof = DagProof[SetSequent[Formula], SetlikeInference[LKInference]]
 
   def lkToSetlikeLK( lk: LKProof ): SetlikeLKProof =
     lk.flatMap {

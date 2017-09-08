@@ -40,7 +40,7 @@ package lk {
     override def mainIndices = conclusion.indices
   }
 
-  case class LogicalAxiom( formula: HOLFormula ) extends InitialSequent {
+  case class LogicalAxiom( formula: Formula ) extends InitialSequent {
     override def conclusion: HOLSequent = formula +: Sequent() :+ formula
   }
 
