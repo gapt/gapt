@@ -1525,7 +1525,7 @@ problem: at.logic.gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, verbosity=0)
 proof: at.logic.gapt.proofs.lk.LKProof =
-[p144] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+[p136] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
 ∀x0 (p(S(x0)): Nat) = x0,
 ∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
@@ -1533,8 +1533,8 @@ proof: at.logic.gapt.proofs.lk.LKProof =
 ∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
 ∀z ∀y plus(S(z), y) = S(plus(z, y))
 ⊢
-∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p26, Suc(0), p143, Ant(4)))
-[p143] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p135, Ant(4)))
+[p135] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
 ∀x0 (p(S(x0)): Nat) = x0,
 ∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
