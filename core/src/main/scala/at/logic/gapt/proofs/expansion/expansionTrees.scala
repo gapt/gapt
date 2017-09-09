@@ -78,6 +78,13 @@ object ETMerge {
     if ( children.nonEmpty ) apply( children ) else ETWeakening( shallow, polarity )
   }
 }
+object ETMerges {
+  def unapply( tree: ExpansionTree ): Some[Vector[ExpansionTree]] =
+    tree match {
+      case ETMerge( ETMerges( t ), ETMerges( s ) ) => Some( t ++ s )
+      case _                                       => Some( Vector( tree ) )
+    }
+}
 
 /**
  * A tree representing a formula that originates from a weakening.
