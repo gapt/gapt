@@ -1380,8 +1380,8 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 
 gapt> Prover9 getExpansionProof sequent
 res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
-p(0)-
+Some(p(0)-,
+∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
 :-
 p(s(s(0)))+)
 
@@ -1422,8 +1422,8 @@ The LeanCoP interface supports the \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
 res33: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(p(0)-,
-∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+p(0)-
 :-
 p(s(s(0)))+)
 
@@ -1525,27 +1525,27 @@ problem: at.logic.gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, verbosity=0)
 proof: at.logic.gapt.proofs.lk.LKProof =
-[p136] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
-∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+[p149] ∀z (minus(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀y0 ¬#c(Z: Nat) = S(y0),
 ∀x0 (p(S(x0)): Nat) = x0,
-∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
+∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
 ∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
 ∀z ∀y plus(S(z), y) = S(plus(z, y))
 ⊢
-∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p135, Ant(4)))
-[p135] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
-∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p148, Ant(3)))
+[p148] ∀z (minus(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀y0 ¬#c(Z: Nat) = S(y0),
 ∀x0 (p(S(x0)): Nat) = x0,
-∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
 ∀m
-  ((⊤ ⊃ minus(#c(Z: Nat), plus(#c(Z: Nat), m)) = #c(Z: Nat)) ∧
+  ((⊤ ⊃ minus(#c(Z: Nat), plus(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
       ∀n_0
         (minus(n_0, plus(n_0, m)) = #c(Z: Nat) ⊃
           minus(S(n_0), plus(S(n_0), m)) = #c(Z: Nat)) ⊃
     ∀n minus(n, plus(n, m)) = #c(Z: Nat)),
+∀y plus(#c(Z: Nat), y) = y,
 ∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
-∀z ∀x2 m...
+∀z ∀x...
 
 \end{clilisting}
 
@@ -1902,44 +1902,47 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p286] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-⊢
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p285, Suc(1), Suc(0)))
-[p285] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p284, Ant(2), Ant(1)))
-[p284] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+[p220] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
 ⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p283, Ant(2), Ant(0)))
-[p283] ∀x_2 (f(x_2) = 0 ∨ f(x_2) = s(0)),
-∀x_1 ∀y_0 ...
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p219, Ant(2)))
+[p219] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+0 = 0
+⊢
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p218, Suc(1), Suc(0)))
+[p218] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+0 = 0
+⊢
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p217, Ant(3), Ant(1)))
+[p217] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+0 = 0,
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+⊢
+∃x_0 ∃y_1 (s(x_0) <= y_1...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
-  +^{s(M(x, 0))}
-    (∀y_0 (s(M(x, 0)) <= M(s(M(x, 0)), y_0) ∧ y_0 <= M(s(M(x, 0)), y_0))
-      +^{s(M(x, 0))}
-        ((s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0))))- ∧
-          wk-{s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0)))}))
-  +^{s(M(x, x_0))}
-    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧ y_0 <= M(s(M(x, x_0)), y_0))
-      +^{s(M(x, x_0))}
-        ((s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0))))- ∧
-          wk-{s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0)))}))
-  +^{s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0))))))}
-    (∀y_0
-        (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
-            M(s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))), y_0) ∧
-          y_0 <= M(s(M(x_1, s(M(s(M(x,...
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
+      s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))}
+    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
+            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+        0)- ∨
+      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
+            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+        s(0))-)
+  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)}
+    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = 0)- ∨
+      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = s(0))-)
+  +^{M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))}
+    ((f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = 0)- ∨
+      (f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = ...
 
 gapt> prooftool(et)
 
@@ -2027,21 +2030,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(s(x_1)))
+x_0 → s(s(s(s(x_1))))
 
-x_0 → x_1
+x_0 → s(x_1)
 
-x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
-
-x_1 → s(s(s(s(s(s(s(x_2)))))))
+x_1 → s(s(x_2))
 
 x_1 → s(x_2)
 
+x_1 → x_2
+
 x_2 → 0
 
-x_2 → s(0)
+x_2 → s(s(s(s(s(s(0))))))
 
-x_2 → s(s(0))
+x_2 → s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res51: Boolean = true
@@ -2055,17 +2058,17 @@ res52: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(s(x_1)))
+x_0 → s(s(s(s(x_1))))
 
-x_0 → x_1
+x_0 → s(x_1)
+
+x_1 → s(s(x_2))
 
 x_1 → s(x_2)
 
+x_1 → x_2
+
 x_2 → 0
-
-x_2 → s(0)
-
-x_2 → s(s(0))
 
 \end{clilisting}
 
@@ -2114,9 +2117,9 @@ reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequ
 
 gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
 firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
+∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ⊤ ⊃ P_is_list(f_nil),
 ∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
-∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
 ⊤ ⊃ P_is_nat(f_0),
 P_is_o(f_nonempty_o),
