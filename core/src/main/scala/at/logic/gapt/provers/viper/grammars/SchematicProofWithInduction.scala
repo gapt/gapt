@@ -5,9 +5,9 @@ import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, containsStrong
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom, WeakeningMacroRule, cleanStructuralRules }
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.provers.{ OneShotProver, Prover }
-import at.logic.gapt.utils.linearizeStrictPartialOrder
+import at.logic.gapt.utils.{ Maybe, linearizeStrictPartialOrder }
 
 trait SchematicProofWithInduction {
   def endSequent: HOLSequent
@@ -52,7 +52,7 @@ case class ProofByRecursionScheme(
   lazy val solutionConditions = {
     val conds = Seq.newBuilder[HOLSequent]
     lkProof( hoVars, new OneShotProver {
-      def getLKProof( seq: HOLSequent ) = {
+      def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ) = {
         conds += seq
         Some( WeakeningMacroRule( TheoryAxiom( Sequent() ), seq ) )
       }

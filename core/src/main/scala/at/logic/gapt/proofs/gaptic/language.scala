@@ -1,18 +1,22 @@
 package at.logic.gapt.proofs.gaptic
 
-import at.logic.gapt.expr.Formula
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.utils.Maybe
 
 import language.experimental.macros
 
 object Lemma {
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.applyImpl
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.lemmaImpl
 }
 
-object IncompleteLemma {
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.incompleteImpl
+object Proof {
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.proofImpl
+}
+object IncompleteProof {
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.incompleteProofImpl
 }
 
 object LemmaMacros {
@@ -30,8 +34,10 @@ object LemmaMacros {
         throw new TacticFailureException( error.toSigRelativeString )
     }
 
-  def finishProof( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =
-    if ( proofState.subGoals.isEmpty ) {
+  private def finish( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature ): LKProof =
+    if ( incompleteOk ) {
+      cleanStructuralRules( proofState.partialProof )
+    } else if ( proofState.subGoals.isEmpty ) {
       cleanStructuralRules( proofState.result )
     } else {
       throw new QedFailureException(
@@ -39,8 +45,19 @@ object LemmaMacros {
           proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
     }
 
-  def finishIncompleteProof( proofState: ProofState )( implicit sig: BabelSignature ): LKProof =
-    cleanStructuralRules( proofState.partialProof )
+  def finishProof( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof = {
+    val p = finish( proofState, incompleteOk )
+    if ( !incompleteOk ) ctx.foreach( _.check( p ) )
+    p
+  }
+
+  def finishLemma( lemmaName: String, proofState: ProofState, incompleteOk: Boolean )( implicit ctx: MutableContext ): LKProof = {
+    val proof = finish( proofState, incompleteOk )
+    val fvs = freeVariablesLK( proof ).toSeq.sortBy( _.name )
+    val lhs = Const( lemmaName, FunctionType( Ti, fvs.map( _.ty ) ) )( fvs )
+    ctx += Context.ProofDeclaration( lhs, proof )
+    proof
+  }
 
   import reflect.macros._
   def constructProofState( c: blackbox.Context )( labelledSequent: c.Tree, tacticsProof: c.Tree ): c.Tree = {
@@ -66,20 +83,31 @@ object LemmaMacros {
     """
   }
 
-  def applyImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+  def lemmaImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
     import c.universe._
     val construction = constructProofState( c )( labelledSequent, tacticsProof )
     val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
 
-    q"$lemmaMacros.finishProof($construction)"
+    val term = c.internal.enclosingOwner.asTerm
+    val name = term.name.decodedName.toString.trim
+
+    q"$lemmaMacros.finishLemma($name, $construction, incompleteOk = false)"
   }
 
-  def incompleteImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+  def proofImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
     import c.universe._
     val construction = constructProofState( c )( labelledSequent, tacticsProof )
     val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
 
-    q"$lemmaMacros.finishIncompleteProof($construction)"
+    q"$lemmaMacros.finishProof($construction, incompleteOk = false)"
+  }
+
+  def incompleteProofImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
+    import c.universe._
+    val construction = constructProofState( c )( labelledSequent, tacticsProof )
+    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
+
+    q"$lemmaMacros.finishProof($construction, incompleteOk = true)"
   }
 }
 

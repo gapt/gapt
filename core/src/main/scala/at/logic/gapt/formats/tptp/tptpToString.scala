@@ -86,14 +86,10 @@ object tptpToString {
     case definedOrSystemWord() => name
     case _                     => single_quoted( name )
   }
-  def single_quoted( name: String ): String = name match {
-    case singleQuoteAllowedRegex() =>
-      "'" + name.replace( "\\", "\\\\" ).replace( "'", "\\'" ) + "'"
-  }
+  def single_quoted( name: String ): String =
+    "'" + name.replace( "\\", "\\\\" ).replace( "'", "\\'" ) + "'"
 
   private val upperWordRegex = "[A-Z][A-Za-z0-9_]*".r
-  def variable( name: String ): String = name match {
-    case upperWordRegex() => name
-  }
+  def variable( name: String ): String = name
 
 }

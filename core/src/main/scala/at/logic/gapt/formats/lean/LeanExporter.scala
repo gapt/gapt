@@ -130,7 +130,7 @@ class LeanExporter {
       s"def $all {a : Type} (P : a -> Prop) := ∀x, P x\n\n"
     case Context.Sort( sort ) =>
       s"constant ${nameMap.getLeanName( sort.name, TY )} : Type\n\n"
-    case Context.Definition( Definition( Const( n, ty ), by ) ) =>
+    case Definition( Const( n, ty ), by ) =>
       val what = nameMap.getLeanName( n, CONST )
       s"def $what : ${export( ty )} := ${export( by )}\n\n"
     //    case Context.Axiom( ax ) =>

@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
-import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
+import at.logic.gapt.proofs.{ Ant, Context, MutableContext, Sequent, SequentMatchers, Suc }
 import org.specs2.mutable._
 
 class ReductiveCutEliminationTest extends Specification with SequentMatchers {
@@ -307,7 +307,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   }
 
   "(1) free cut elimination should eliminate free cuts" in {
-    implicit var context: Context = Context()
+    implicit val context = MutableContext.default()
     context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"

@@ -1,4 +1,4 @@
-package at.logic.gapt.provers.metis
+package at.logic.gapt.provers.iprover
 
 import java.io.IOException
 
@@ -11,28 +11,31 @@ import at.logic.gapt.proofs.{ FOLClause, HOLClause, MutableContext }
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess }
 
-object Metis extends Metis
+object IProver extends IProver
 
-class Metis extends ResolutionProver with ExternalProgram {
+class IProver extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
-        val output = runProcess.withTempInputFile( Seq( "metis", "--show", "proof" ), tptpIn )
+        val output = runProcess.withTempInputFile( Seq(
+          "iproveropt",
+          "--pure_diseq_elim", "false",
+          "--ground_splitting", "off" ), tptpIn )
         val lines = output.split( "\n" ).toSeq
-        if ( lines.exists( _.startsWith( "SZS status Unsatisfiable" ) ) ) {
+        if ( lines.exists( _.startsWith( "% SZS status Unsatisfiable" ) ) ) {
           val tptpDerivation = lines.
-            dropWhile( !_.startsWith( "SZS output start CNFRefutation " ) ).drop( 1 ).
-            takeWhile( !_.startsWith( "SZS output end CNFRefutation " ) ).
+            dropWhile( !_.startsWith( "% SZS output start CNFRefutation" ) ).drop( 1 ).
+            takeWhile( !_.startsWith( "% SZS output end CNFRefutation" ) ).
             mkString( "\n" )
-          RefutationSketchToResolution( TptpProofParser.parse( StringInputFile( tptpDerivation ), labelledCNF mapValues {
-            Seq( _ )
-          } ) ) match {
+          RefutationSketchToResolution( TptpProofParser.parse(
+            StringInputFile( tptpDerivation ),
+            labelledCNF mapValues { Seq( _ ) } ) ) match {
             case Right( proof ) => Some( proof )
             case Left( error )  => throw new IllegalArgumentException( error.toString )
           }
-        } else if ( lines.exists( _.startsWith( "SZS status Satisfiable" ) ) ) {
+        } else if ( lines.exists( _.startsWith( "% SZS status Satisfiable" ) ) ) {
           None
         } else {
           throw new IllegalArgumentException
@@ -41,7 +44,7 @@ class Metis extends ResolutionProver with ExternalProgram {
 
   override val isInstalled: Boolean =
     try {
-      runProcess( Seq( "metis", "--version" ) )
+      runProcess.withExitValue( Seq( "iproveropt" ) )._1 == 2
       true
     } catch {
       case ex: IOException => false

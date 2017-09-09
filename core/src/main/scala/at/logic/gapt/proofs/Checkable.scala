@@ -10,6 +10,9 @@ trait Checkable[-T] {
   def check( context: Context, obj: T ): Unit
 }
 object Checkable {
+  def requireDefEq( a: Expr, b: Expr )( implicit ctx: Context ): Unit =
+    require( ctx.isDefEq( a, b ), s"${ctx.normalize( a ).toSigRelativeString} != ${ctx.normalize( b ).toSigRelativeString}" )
+
   implicit object contextElementIsCheckable extends Checkable[Context.Update] {
     def check( context: Context, elem: Context.Update ): Unit = elem( context )
   }
@@ -54,24 +57,8 @@ object Checkable {
   implicit object lkIsCheckable extends Checkable[LKProof] {
     import at.logic.gapt.proofs.lk._
 
-    def check( context: Context, p: LKProof ): Unit = {
-      // make sure the end-sequent does not contain Skolem functions
-      context.check( p.endSequent )
-
-      var ctx = context
-
-      val skolemFunctions = SkolemFunctions( p.subProofs.collect {
-        case sk: SkolemQuantifierRule =>
-          sk.skolemConst -> sk.skolemDef
-      } )
-      skolemFunctions.orderedDefinitions.reverse.
-        map( Context.SkolemFun.tupled ).foreach( ctx += _ )
-
-      for ( q <- p.subProofs )
-        ctx.check( q.endSequent )
-
-      // TODO: definition rules need to be improved to support checking
-
+    def check( ctx: Context, p: LKProof ): Unit = {
+      ctx.check( p.endSequent )
       p.subProofs.foreach {
         case ForallLeftRule( _, _, a, t, v )  => ctx.check( t )
         case ExistsRightRule( _, _, a, t, v ) => ctx.check( t )
@@ -98,9 +85,7 @@ object Checkable {
         case _: ContractionRule | _: WeakeningLeftRule | _: WeakeningRightRule =>
         case _: CutRule =>
         case d: DefinitionRule =>
-          require(
-            ctx.isDefEq( d.mainFormula, d.auxFormula ),
-            s"${ctx.normalize( d.mainFormula )} != ${ctx.normalize( d.auxFormula )}" )
+          requireDefEq( d.mainFormula, d.auxFormula )( ctx )
       }
     }
   }
@@ -108,12 +93,8 @@ object Checkable {
   implicit object expansionProofIsCheckable extends Checkable[ExpansionProof] {
     import at.logic.gapt.proofs.expansion._
 
-    def check( context: Context, ep: ExpansionProof ): Unit = {
-      context.check( ep.shallow )
-
-      var ctx = context
-      ep.skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
-
+    def check( ctx: Context, ep: ExpansionProof ): Unit = {
+      ctx.check( ep.shallow )
       ep.subProofs.foreach {
         case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
         case ETWeakening( _, _ ) | ETAtom( _, _ ) =>
@@ -124,9 +105,7 @@ object Checkable {
           require( ctx.skolemDef( sk.skolemConst ).contains( skD ) )
           ctx.check( skT )
         case ETDefinition( sh, child ) =>
-          require(
-            ctx.isDefEq( sh, child.shallow ),
-            s"${ctx.normalize( sh )} != ${ctx.normalize( child.shallow )}" )
+          requireDefEq( sh, child.shallow )( ctx )
       }
     }
   }
@@ -139,37 +118,25 @@ object Checkable {
   implicit object resolutionIsCheckable extends Checkable[ResolutionProof] {
     import at.logic.gapt.proofs.resolution._
 
-    def check( context0: Context, p: ResolutionProof ) = {
-      var ctx = context0
-
-      p.skolemFunctions.orderedDefinitions.map( Context.SkolemFun.tupled ).foreach( ctx += _ )
-
-      for ( Defn( defConst, defn ) <- p.subProofs )
-        ctx += ( defConst.name, defn )
-
-      p.subProofs.collect {
-        case AvatarComponent( defn )   => defn
-        case AvatarSplit( _, _, defn ) => defn
-      }.flatMap {
-        case AvatarNonGroundComp( Const( name, _ ), defn, _ )       => Some( name -> defn )
-        case AvatarNegNonGroundComp( Const( name, _ ), defn, _, _ ) => Some( name -> defn )
-        case AvatarGroundComp( _, _ )                               => None
-      }.foreach {
-        case ( name, defn ) => ctx += ( name, defn )
-      }
+    def check( ctx: Context, p: ResolutionProof ): Unit = {
+      def checkAvatarDef( comp: AvatarDefinition ): Unit =
+        for ( ( df, by ) <- comp.inducedDefinitions )
+          requireDefEq( df, by )( ctx )
 
       p.subProofs.foreach {
-        case Input( sequent )           => context0.check( sequent )
+        case Input( sequent )           => ctx.check( sequent )
         case Refl( term )               => ctx.check( term )
         case Taut( form )               => ctx.check( form )
-        case Defn( _, _ )               => // already checked
+        case Defn( df, by )             => require( ctx.isDefEq( df, by ) )
         case _: WeakQuantResolutionRule =>
         case q: SkolemQuantResolutionRule =>
           require( ctx.skolemDef( q.skolemConst ).contains( q.skolemDef ) )
           ctx.check( q.skolemTerm )
-        case q @ DefIntro( _, _, definition, _ ) =>
-          require( ctx.contains( definition ) )
+        case DefIntro( _, _, definition, _ ) =>
+          requireDefEq( definition.what, definition.by )( ctx )
         case _: PropositionalResolutionRule =>
+        case AvatarComponent( defn ) => checkAvatarDef( defn )
+        case AvatarSplit( _, _, defn ) => checkAvatarDef( defn )
         case _: AvatarComponent | _: AvatarSplit | _: AvatarContradiction =>
         case _: Flip | _: Paramod =>
         case _: Resolution =>

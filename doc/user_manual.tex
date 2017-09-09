@@ -263,6 +263,8 @@ functionality of these systems will not be available.
 \item SPASS (\url{http://www.spass-prover.org/})
 \item LeanCoP (\url{http://leancop.de/})
 \item Metis (\url{http://www.gilith.com/software/metis/})
+% TODO(gabriel): uncomment when the global propositional subsumption bugfix lands
+% \item iProver (\url{http://www.cs.man.ac.uk/~korovink/iprover/})
 \item VeriT (\url{http://www.verit-solver.org/})
 \item Z3 (\url{https://github.com/Z3Prover/z3})
 \item MiniSAT (\url{http://minisat.se/})
@@ -739,18 +741,15 @@ or have it automatically eliminate all definitions in the current context. Some 
 The typical way to declare a context is by starting with a default value and adding elements to it.
 The \cli{Context.default} object contains only the sort \cli{o} (truth values) and the fundamental logical
 symbols:
-\begin{tacticslisting}[nosig]
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-
- object ContextExample {
-   implicit var ctx = Context.default
-   ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
-   ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
-   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
-   ctx += "1" -> le" s 0" //Adding a definition
-   ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
- }
+\begin{tacticslisting}[bare]
+object ContextExample {
+  implicit val ctx = MutableContext.default()
+  ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
+  ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
+  ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
+  ctx += "1" -> le" s 0" //Adding a definition
+  ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
+}
 \end{tacticslisting}
 \begin{tacticsoutput}
 \end{tacticsoutput}
@@ -845,12 +844,13 @@ val lemmaEx =
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
 b_0: P(a) ⊃ Q(a)
-a: P(a): o
+a: P(a)
 b: ∀x (P(x) ⊃ Q(x))
 :-
-c: Q(a): o
+c: Q(a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -896,11 +896,12 @@ val lemmaEx =
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
-a: P(a): o
+a: P(a)
 :-
-c: Q(a): o
+c: Q(a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1012,24 +1013,25 @@ val cutEx = Lemma(Sequent(
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 3 open sub goals:
-A: A:o
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
-I1: I(1): o
-I0: I(0): o
+I1: I(1)
+I0: I(0)
 
-I0: I(0): o
-A: A:o
+I0: I(0)
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
-I1: I(1): o
+I1: I(1)
 
-I1: I(1): o
-A: A:o
+I1: I(1)
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1391,15 +1393,15 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res31: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p11] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p1, Suc(0), p10, Ant(1)))
-[p10] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p9, Ant(2), Ant(0)))
-[p9] ∀x (p(x) ⊃ p(s(x))), p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p4, Suc(0), p8, Ant(1)))
-[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p7, Suc(0), p5, Ant(0)))
-[p7] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p6, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
-[p6] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p5, Ant(0)))
-[p5] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
+Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0), ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
+[p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
+[p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
+[p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
-[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0)...
+[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
 
 \end{clilisting}
 
@@ -1523,7 +1525,7 @@ problem: at.logic.gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, verbosity=0)
 proof: at.logic.gapt.proofs.lk.LKProof =
-[p144] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+[p136] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
 ∀x0 (p(S(x0)): Nat) = x0,
 ∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
@@ -1531,8 +1533,8 @@ proof: at.logic.gapt.proofs.lk.LKProof =
 ∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
 ∀z ∀y plus(S(z), y) = S(plus(z, y))
 ⊢
-∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p26, Suc(0), p143, Ant(4)))
-[p143] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p135, Ant(4)))
+[p135] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
 ∀x0 (p(S(x0)): Nat) = x0,
 ∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
@@ -1568,13 +1570,13 @@ gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
 res38: at.logic.gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
-[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
-[p6] a = b, f(a) = a ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx a = f(f(x))))
-[p5] a = b, f(a) = a ⊢ a = f(f(a))    (WeakeningLeftRule(p4, a = b))
-[p4] f(a) = a ⊢ a = f(f(a))    (EqualityRightRule(p3, Ant(0), Suc(0), λx a = f(x)))
-[p3] f(a) = a ⊢ a = f(a)    (EqualityRightRule(p2, Ant(0), Suc(0), λx a = x))
-[p2] f(a) = a ⊢ a = a    (WeakeningLeftRule(p1, f(a) = a))
-[p1]  ⊢ a = a    (ReflexivityAxiom(a))
+[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(x) = b))
+[p6] a = b, f(b) = b ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx x = f(f(b))))
+[p5] a = b, f(b) = b ⊢ b = f(f(b))    (WeakeningLeftRule(p4, a = b))
+[p4] f(b) = b ⊢ b = f(f(b))    (EqualityRightRule(p3, Ant(0), Suc(0), λx b = f(x)))
+[p3] f(b) = b ⊢ b = f(b)    (EqualityRightRule(p2, Ant(0), Suc(0), λx b = x))
+[p2] f(b) = b ⊢ b = b    (WeakeningLeftRule(p1, f(b) = b))
+[p1]  ⊢ b = b    (ReflexivityAxiom(b))
 
 \end{clilisting}
 
@@ -2025,21 +2027,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(x_1))
-
-x_0 → s(x_1)
+x_0 → s(s(s(x_1)))
 
 x_0 → x_1
 
-x_1 → s(s(s(x_2)))
+x_1 → s(s(s(s(s(s(s(s(s(s(s(s(s(x_2)))))))))))))
 
-x_1 → x_2
+x_1 → s(s(s(s(s(s(s(x_2)))))))
+
+x_1 → s(x_2)
+
+x_2 → 0
 
 x_2 → s(0)
 
-x_2 → s(s(s(s(s(s(s(0)))))))
-
-x_2 → s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))
+x_2 → s(s(0))
 
 gapt> lang.toSet subsetOf grammar.language
 res51: Boolean = true
@@ -2053,17 +2055,17 @@ res52: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(x_1))
-
-x_0 → s(x_1)
+x_0 → s(s(s(x_1)))
 
 x_0 → x_1
 
-x_1 → s(s(s(x_2)))
+x_1 → s(x_2)
 
-x_1 → x_2
+x_2 → 0
 
 x_2 → s(0)
+
+x_2 → s(s(0))
 
 \end{clilisting}
 

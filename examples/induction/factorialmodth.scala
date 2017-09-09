@@ -4,13 +4,13 @@ import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.formats.prover9.Prover9TermParserLadrStyle.parseFormula
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.viper._
 import SimpleInductionProof._
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.{ Logger, Maybe }
 
 object factorialmodth extends Script {
 
@@ -22,10 +22,10 @@ object factorialmodth extends Script {
   val theory = ( "x*s(0) = x" +: "s(0)*x = x" +: "(x*y)*z = x*(y*z)" +: Sequent() ) map parseFormula map universalClosure.apply
 
   val modThProver = new OneShotProver {
-    override def getLKProof( seq: HOLSequent ): Option[LKProof] =
+    override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
       Prover9.getLKProof( theory ++ seq )
 
-    override def isValid( seq: HOLSequent ): Boolean =
+    override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
       Prover9.isValid( theory ++ seq )
   }
 

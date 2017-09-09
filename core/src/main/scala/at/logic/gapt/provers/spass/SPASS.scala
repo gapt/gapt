@@ -7,8 +7,8 @@ import at.logic.gapt.expr.hol.universalClosure
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ AvatarNegNonGroundComp, AvatarNonGroundComp, ResolutionProof, fixDerivation }
 import at.logic.gapt.proofs.sketch._
-import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
-import at.logic.gapt.utils.{ ExternalProgram, runProcess }
+import at.logic.gapt.provers.{ ResolutionProver, extractIntroducedDefinitions, renameConstantsToFi }
+import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess }
 import org.parboiled2._
 
 import scala.collection.mutable
@@ -36,7 +36,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
     s"formula(${expr2dfg( universalClosure( cls_.toDisjunction ) )})."
   }
 
-  override def getResolutionProof( clauses: Traversable[HOLClause] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
+  override def getResolutionProof( clauses: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = renameConstantsToFi.wrap( clauses.toSeq )(
     ( renaming, cnf: Seq[HOLClause] ) => {
       if ( cnf isEmpty ) return None // SPASS doesn't like empty input
 
@@ -159,7 +159,10 @@ class SPASS extends ResolutionProver with ExternalProgram {
       } else {
         None
       }
-    } )
+    } ).map { resolution =>
+      extractIntroducedDefinitions( resolution )
+      resolution
+    }
 
   class InferenceParser( val input: ParserInput ) extends Parser {
     def Num = rule { capture( oneOrMore( CharPredicate.Digit ) ) ~> { _.toInt } }

@@ -101,6 +101,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     propositional,
     structural = true,
     bidirectionalDefs = false,
+    ctx = state.ctx,
     nameGen = state.nameGen ) with InferenceRule {
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] ) =
       if ( given.clause.forall( _.isInstanceOf[Atom] ) ) ( Set(), Set() )
@@ -369,9 +370,12 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     var componentCache = mutable.Map[Formula, FOLAtom]()
     def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
       val definition @ All.Block( vs, _ ) = universalClosure( comp.toDisjunction )
-      AvatarNonGroundComp( componentCache.getOrElseUpdate(
-        definition,
-        FOLAtom( nameGen.freshWithIndex( "split" ) ) ), definition, vs )
+      AvatarNonGroundComp(
+        componentCache.getOrElseUpdate( definition, {
+          val c = PropAtom( nameGen.freshWithIndex( "split" ) )
+          state.ctx += Definition( c, definition )
+          c
+        } ), definition, vs )
     }
 
     val componentAlreadyDefined = mutable.Set[Atom]()

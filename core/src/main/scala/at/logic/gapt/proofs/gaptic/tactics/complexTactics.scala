@@ -243,7 +243,7 @@ case object QuasiPropTactic extends Tactic[Unit] {
 /**
  * Calls prover9 on the subgoal.
  */
-case object Prover9Tactic extends Tactic[Unit] {
+case class Prover9Tactic()( implicit ctx: MutableContext ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     Prover9.getLKProof( goal.conclusion ) match {
       case None       => Left( TacticalFailure( this, "search failed" ) )
@@ -254,7 +254,7 @@ case object Prover9Tactic extends Tactic[Unit] {
 /**
  * Calls Escargot on the subgoal.
  */
-case object EscargotTactic extends Tactic[Unit] {
+case class EscargotTactic()( implicit ctx: MutableContext ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     Escargot.getExpansionProof( goal.conclusion ) match {
       case None              => Left( TacticalFailure( this, "search failed" ) )
@@ -272,7 +272,7 @@ object AnalyticInductionTactic {
 /**
  * Calls the analytic induction prover on the subgoal
  */
-case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProver )( implicit ctx: Context ) extends Tactic[Unit] {
+case class AnalyticInductionTactic( axioms: AxiomFactory, prover: ResolutionProver )( implicit ctx: MutableContext ) extends Tactic[Unit] {
   override def apply( goal: OpenAssumption ) =
     AnalyticInductionProver( axioms, prover ) inductiveLKProof ( goal.labelledSequent ) match {
       case None       => Left( TacticalFailure( this, "analytic induction prover failed" ) )

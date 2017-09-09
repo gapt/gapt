@@ -15,7 +15,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ Suc, loadExpansionProof }
+import at.logic.gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9Importer
@@ -37,7 +37,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override protected def test( implicit testRun: TestRun ): Unit = {
     val bench = TipSmtParser.fixupAndParse( f ) --- "tip parser"
 
-    implicit val ctx = bench.ctx
+    implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
     val proof = Viper.getStrategies( ViperOptions() ).view.flatMap {
       case ( duration, strategy ) =>
@@ -189,6 +189,11 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
     val sequent = tptpProblem.toSequent
 
     val resolution = Escargot.getResolutionProof( sequent ).get --- "Escargot"
+
+    val lk = ResolutionToLKProof( resolution ) --- "ResolutionToLKProof"
+    deskolemizeLK( lk ) --? "deskolemizeLK" foreach { desk =>
+      desk.endSequent.isSubsetOf( lk.endSequent ) !-- "end-sequent of deskolemizeLK"
+    }
 
     val expansion = ResolutionToExpansionProof( resolution ) --- "ResolutionToExpansionProof"
 

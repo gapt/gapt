@@ -250,6 +250,10 @@ object FOLAtom {
   }
 }
 
+object PropAtom {
+  def apply( sym: String ): PropAtom = Const( sym, To ).asInstanceOf[PropAtom]
+}
+
 object HOLAtomConst {
   def apply( name: String, argTypes: Ty* ): HOLAtomConst =
     Const( name, FunctionType( To, argTypes ) ).asInstanceOf[HOLAtomConst]
