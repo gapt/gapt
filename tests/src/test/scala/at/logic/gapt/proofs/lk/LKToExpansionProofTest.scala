@@ -233,7 +233,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
       val Right( lk ) = ExpansionProofToLK.withTheory( implicitly )( exp )
       ctx.check( exp )
       ctx.check( lk )
-      exp.expansionSequent filter { _.shallow != ETCut.cutAxiom } map { _.shallow } must beMultiSetEqual( lk.conclusion )
+      exp.nonCutPart.shallow must beMultiSetEqual( lk.conclusion )
     }
   }
 }

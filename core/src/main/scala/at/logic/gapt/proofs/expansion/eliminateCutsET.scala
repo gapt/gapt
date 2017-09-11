@@ -5,25 +5,18 @@ import at.logic.gapt.utils.generatedUpperSetInPO
 
 object eliminateCutsET {
   def apply( expansionProof: ExpansionProof ): ExpansionProof = {
-    def cuts( epwc: ExpansionProof ) = for {
-      cutAxiomExpansion <- epwc.expansionSequent.antecedent
-      if cutAxiomExpansion.shallow == ETCut.cutAxiom
-      cut <- cutAxiomExpansion( HOLPosition( 1 ) )
-      cut1 <- cut( HOLPosition( 1 ) )
-      cut2 <- cut( HOLPosition( 2 ) )
-    } yield ETImp( cut1, cut2 )
-
-    if ( cuts( expansionProof ).isEmpty ) return ExpansionProof( expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+    if ( expansionProof.cuts.isEmpty ) return ExpansionProof( expansionProof.nonCutPart )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
       ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) )
 
-    var epwc = simplifiedEPWC( cuts( expansionProof ), expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+    var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.nonCutPart )
 
-    while ( true )
-      cuts( epwc ).view.flatMap {
+    while ( true ) {
+      val cuts = epwc.cuts
+      cuts.view.flatMap {
         case cut @ ETImp( cut1, cut2 ) =>
-          singleStep( cut1, cut2, cuts( epwc ).filterNot( _ == cut ), epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom },
+          singleStep( cut1, cut2, cuts.filterNot( _ == cut ), epwc.nonCutPart,
             epwc.eigenVariables union freeVariables( epwc.deep ),
             epwc.dependencyRelation )
       }.headOption match {
@@ -31,10 +24,11 @@ object eliminateCutsET {
           epwc = simplifiedEPWC( newCuts, newES )
         case None =>
           return {
-            if ( cuts( epwc ).isEmpty ) return ExpansionProof( epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+            if ( cuts.isEmpty ) return ExpansionProof( epwc.nonCutPart )
             else epwc
           }
       }
+    }
     throw new IllegalStateException
   }
 

@@ -15,18 +15,9 @@ class ExpansionProofToLK(
     theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
-  def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context() ): UnprovableOrLKProof = {
-    val cuts = for {
-      cutAxiomExpansion <- expansionProof.expansionSequent.antecedent
-      if cutAxiomExpansion.shallow == ETCut.cutAxiom
-      cut <- cutAxiomExpansion( HOLPosition( 1 ) )
-      cut1 <- cut( HOLPosition( 1 ) )
-      cut2 <- cut( HOLPosition( 2 ) )
-    } yield ETImp( cut1, cut2 )
-
-    solve( cuts, expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } ).
-      map { WeakeningMacroRule( _, expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } map { _.shallow } ) }
-  }
+  def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context() ): UnprovableOrLKProof =
+    solve( expansionProof.cuts, expansionProof.nonCutPart ).
+      map( WeakeningMacroRule( _, expansionProof.nonCutPart.shallow ) )
 
   private def solve( cuts: Seq[ETImp], expSeq: ExpansionSequent ): UnprovableOrLKProof = {
     None.
@@ -49,7 +40,7 @@ class ExpansionProofToLK(
   }
 
   private def tryAxiom( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
-    val shallowSequent = expSeq map { _.shallow }
+    val shallowSequent = expSeq.shallow
     if ( shallowSequent.isTaut )
       Some( Right( LogicalAxiom( shallowSequent.antecedent intersect shallowSequent.succedent head ) ) )
     else

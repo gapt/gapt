@@ -18,7 +18,7 @@ object eliminateDefsET {
     val definitions = ep.expansionSequent.antecedent.collect {
       case DefinitionFormula( _, c, _ ) => c
     }
-    definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) )
+    apply( ep, pureFolWithoutEq, definitions.toSet[Const] )
   }
 
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProof =

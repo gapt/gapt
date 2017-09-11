@@ -143,9 +143,6 @@ object ResolutionToExpansionProof {
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
       Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[Atom], !i.polarity ) } )
 
-    def perfMerges( expansionSequent: ExpansionSequent ): ExpansionSequent = {
-      expansionSequent.groupBy( _.shallow ).map( ets => ETMerge( ets._2 ) )
-    }
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
     proof.dagLike.postOrder.reverse.foreach {
@@ -255,6 +252,6 @@ object ResolutionToExpansionProof {
         ETMerge( defn, Polarity.InSuccedent, splitCutL( splAtom ) ),
         ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) ) )
 
-    eliminateMerges( ExpansionProof( ETCut( cuts ) +: perfMerges( expansionSequent ) ) )
+    eliminateMerges( ExpansionProof( ETMerge( ETCut( cuts ) +: expansionSequent ) ) )
   }
 }

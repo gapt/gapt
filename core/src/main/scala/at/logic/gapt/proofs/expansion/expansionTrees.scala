@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
-import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ HOLPosition, containsQuantifierOnLogicalLevel, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs._
 
@@ -77,6 +76,15 @@ object ETMerge {
     }
     if ( children.nonEmpty ) apply( children ) else ETWeakening( shallow, polarity )
   }
+
+  def byShallowFormula( trees: Iterable[ExpansionTree] ): Vector[ExpansionTree] =
+    trees.groupBy( t => t.shallow -> t.polarity ).valuesIterator.map( ETMerge( _ ) ).toVector
+
+  def apply( expansionSequent: ExpansionSequent ): ExpansionSequent =
+    Sequent( byShallowFormula( expansionSequent.antecedent ), byShallowFormula( expansionSequent.succedent ) )
+
+  def apply( expansionProof: ExpansionProof ): ExpansionProof =
+    ExpansionProof( apply( expansionProof.expansionSequent ) )
 }
 object ETMerges {
   def unapply( tree: ExpansionTree ): Some[Vector[ExpansionTree]] =
@@ -170,23 +178,28 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   def deep = child1.deep --> child2.deep
 }
 
-// TODO
 object ETCut {
   val cutAxiom = hof"∀X (X ⊃ X)"
-  def apply( child1: ExpansionTree, child2: ExpansionTree ) =
-    ETWeakQuantifier.withMerge(
-      cutAxiom,
-      List( child1.shallow -> ETImp( child1, child2 ) ) )
+  def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree =
+    ETWeakQuantifier.withMerge( cutAxiom, List( child1.shallow -> ETImp( child1, child2 ) ) )
   def apply( cuts: Seq[ETImp] ): ExpansionTree =
-    ETWeakQuantifier.withMerge(
-      cutAxiom,
-      for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut )
+    ETWeakQuantifier.withMerge( cutAxiom, for ( cut <- cuts ) yield cut.child1.shallow -> cut )
+  def apply( cuts: Seq[( ExpansionTree, ExpansionTree )] )( implicit dummyImplicit: DummyImplicit ): ExpansionTree =
+    ETWeakQuantifier.withMerge( cutAxiom, for ( ( cut1, cut2 ) <- cuts ) yield cut1.shallow -> ETImp( cut1, cut2 ) )
 
-  def unapply( et: ExpansionTree ): Some[( ExpansionTree, ExpansionTree )] = et match {
-    case ETWeakQuantifier( _, m ) => m.head match {
-      case ( k, ETImp( c1, c2 ) ) => Some( c1, c2 )
-    }
-  }
+  def isCutExpansion( tree: ExpansionTree ): Boolean =
+    tree.polarity.inAnt && tree.shallow == cutAxiom
+
+  def unapply( et: ExpansionTree ): Option[Set[ETImp]] =
+    if ( isCutExpansion( et ) )
+      Some {
+        for {
+          cut <- et( HOLPosition( 1 ) )
+          cut1 <- cut( HOLPosition( 1 ) )
+          cut2 <- cut( HOLPosition( 2 ) )
+        } yield ETImp( cut1, cut2 )
+      }
+    else None
 }
 
 /**

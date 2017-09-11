@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
 import at.logic.gapt.expr.hol.containsQuantifier
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
-import at.logic.gapt.proofs.expansion.{ ETCut, ETStrongQuantifierBlock, ETWeakQuantifierBlock, ExpansionProof, ExpansionTree, eliminateMerges, formulaToExpansionTree }
+import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.Prover
 
 case class SolutionStructure( sehs: SchematicExtendedHerbrandSequent, formulas: Seq[FOLFormula] ) {
@@ -32,13 +32,17 @@ case class SolutionStructure( sehs: SchematicExtendedHerbrandSequent, formulas: 
           for ( inst <- insts ) yield inst -> formulaToExpansionTree( Substitution( vs zip inst )( f ), idx.polarity ) )
     }
 
-    val cuts = for ( ( ( eigenVar, cutImplInst ), formula ) <- sehs.ss zip formulas )
-      yield ETCut(
-      ETStrongQuantifierBlock( All.Block( eigenVar, formula ), eigenVar, formulaToExpansionTree( formula, Polarity.Positive ) ),
-      ETWeakQuantifierBlock( All.Block( eigenVar, formula ), eigenVar.size,
-        for ( inst <- cutImplInst ) yield inst -> formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) ) )
+    val cuts = ETCut {
+      for ( ( ( eigenVar, cutImplInst ), formula ) <- sehs.ss zip formulas )
+        yield ETImp(
+        ETStrongQuantifierBlock( All.Block( eigenVar, formula ), eigenVar,
+          formulaToExpansionTree( formula, Polarity.Positive ) ),
+        ETWeakQuantifierBlock( All.Block( eigenVar, formula ), eigenVar.size,
+          for ( inst <- cutImplInst ) yield inst ->
+            formulaToExpansionTree( Substitution( eigenVar zip inst )( formula ), Polarity.Negative ) ) )
+    }
 
-    eliminateMerges( ExpansionProof( cuts ++: nonCutPart ) )
+    eliminateMerges( ExpansionProof( cuts +: nonCutPart ) )
   }
 
   def instantiatedSolutionCondition( i: Int ) = {

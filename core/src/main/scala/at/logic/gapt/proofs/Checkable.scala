@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.expansion.{ ExpansionProof }
+import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 
