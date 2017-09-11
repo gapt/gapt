@@ -48,17 +48,18 @@ object prop_08 extends TacticsProof {
     axiomLog
   }
 
-  val proof1 = Lemma( sequent.antecedent ++: Sequent() :+
-    ( "goal" -> hof"!k !m !n minus(plus(k, m), plus(k, n)) = minus(m, n)" ) ) {
+  val proof1 = Lemma( sequent ) {
     allR
     induction( hov"k:Nat" )
     insert( baseCase )
     insert( inductiveCase )
   }
 
-  val aipOptions1 = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"k:Nat" ) ).forLabel( "goal" ) )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent ) get
+  val proof2 = Lemma( sequent ) {
+    analyticInduction.withAxioms( IndependentInductionAxioms().forVariables( List( hov"k:Nat" ) ).forLabel( "goal" ) )
+  }
 
-  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"k:Nat" ) ).forLabel( "goal" ) )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
+  val proof3 = Lemma( sequent ) {
+    analyticInduction.withAxioms( SequentialInductionAxioms().forVariables( List( hov"k:Nat" ) ).forLabel( "goal" ) )
+  }
 }

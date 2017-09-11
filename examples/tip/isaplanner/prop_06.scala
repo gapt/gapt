@@ -56,11 +56,11 @@ object prop_06 extends TacticsProof {
 
   val proof4 = AnalyticInductionProver.singleInduction( target, hov"m:nat" )
 
-  val proof5 = new AnalyticInductionProver(
-    new ProverOptions(
-      escargot,
+  val proof5 = Lemma( target ) {
+    analyticInduction.withAxioms(
       StandardInductionAxioms()
         .forVariables( hov"x:nat" )
-        .forFormula( hof"∀y x-(x+y) = 0" ) ) ) lkProof ( target ) get
+        .forFormula( hof"∀y x-(x+y) = 0" ) )
+  }
 }
 

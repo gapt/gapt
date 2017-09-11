@@ -52,11 +52,14 @@ object prop_09 extends TacticsProof {
     axiomLog
   }
 
-  val aipOptions1 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"i:Nat", hov"j:Nat" ) ).forLabel( "goal" ) )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent ) get
+  val proof2 = Lemma( sequent ) {
+    analyticInduction.withAxioms(
+      SequentialInductionAxioms().forVariables( List( hov"i:Nat", hov"j:Nat" ) ).forLabel( "goal" ) )
+  }
 
-  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
+  val proof3 = Lemma( sequent ) {
+    analyticInduction.withAxioms( SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
+  }
 
   import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic.{ independentAxioms, sequentialAxioms }
 
