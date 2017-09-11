@@ -1380,8 +1380,8 @@ Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(
 
 gapt> Prover9 getExpansionProof sequent
 res30: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(p(0)-,
-∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+p(0)-
 :-
 p(s(s(0)))+)
 
@@ -1666,7 +1666,7 @@ sequent by converting to an expansion proof:
 
 \begin{clilisting}
 gapt> LKToExpansionProof(q)
-res39: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+res39: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y)
   +^{0} (∀y s(0) + y = s(0 + y) +^{0} (s(0) + 0 = s(0 + 0))-)
   +^{s(0)} (∀y s(s(0)) + y = s(s(0) + y) +^{0} (s(s(0)) + 0 = s(s(0) + 0))-),
@@ -1785,7 +1785,7 @@ strong quantifiers do not form cycles.
 For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val expansion = LKToExpansionProof(examples.fol1.proof)
-expansion: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+expansion: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀X (X ⊃ X)
   +^{∀x ∃y (¬P(x, y) ∨ Q(x, y))}
     (∀x ∃y (¬P(x, y) ∨ Q(x, y)) +ev^{x}
@@ -1812,7 +1812,7 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀X (X ⊃ X), ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
 res41: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
@@ -1927,7 +1927,7 @@ acnf: at.logic.gapt.proofs.lk.LKProof =
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
-et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+et: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
   +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
       s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))}
@@ -1942,7 +1942,7 @@ et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
       (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = s(0))-)
   +^{M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))}
     ((f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = 0)- ∨
-      (f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = ...
+      (f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = s(0))-)...
 
 gapt> prooftool(et)
 
