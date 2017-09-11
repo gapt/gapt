@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions, instantiate }
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.NameGenerator
 
@@ -10,7 +10,7 @@ import scala.collection.mutable
 private class skolemizeInferences(
     nameGen:            NameGenerator,
     proofTheoretic:     Boolean,
-    skolemizeAboveCuts: Boolean ) {
+    skolemizeAboveCuts: Boolean )( implicit ctx: MutableContext ) {
   type PosInEndSequent = Seq[Int]
 
   val skolemDefs = mutable.Map[( Expr, PosInEndSequent ), Const]()
@@ -174,7 +174,7 @@ private class skolemizeInferences(
         val skolemDef = Abs( argVars, genFormula )
         val skolemConst = skolemDefs.getOrElseUpdate(
           ( skolemDef, if ( proofTheoretic ) info( p.mainIndices.head ).position else Seq() ),
-          Const( nameGen freshWithIndex "s", FunctionType( eigen.ty, argVars.map( _.ty ) ) ) )
+          ctx.addSkolemSym( skolemDef, nameGen freshWithIndex "s", !proofTheoretic ) )
         val skolemTerm = skolemConst( argVars: _* )
         val q_ = apply( q, p.occConnectors.head.parent( info ).
           updated( a, info( p.mainIndices.head ).instantiateQuantifier( skolemTerm ) ),
@@ -194,9 +194,11 @@ object skolemizeInferences {
    *                        that the expansion proof of the Skolemized proof can be deskolemized using the naive
    *                        linear-time algorithm.
    */
-  def apply( p: LKProof, proofTheoretic: Boolean = true, skolemizeAboveCuts: Boolean = false ): LKProof = {
+  def apply( p: LKProof, proofTheoretic: Boolean = true, skolemizeAboveCuts: Boolean = false )( implicit ctx: MutableContext = MutableContext.guess( p ) ): LKProof = {
     val p_ = regularize( p )
-    val conv = new skolemizeInferences( rename.awayFrom( containedNames( p_ ) ), proofTheoretic, skolemizeAboveCuts )
+    val conv = new skolemizeInferences(
+      new NameGenerator( containedNames( p_ ).map( _.name ) ++ ctx.names ),
+      proofTheoretic, skolemizeAboveCuts )
     conv(
       p_,
       for ( ( f, i ) <- p_.endSequent.zipWithIndex )

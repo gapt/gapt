@@ -41,23 +41,13 @@ class Clausifier(
   val defs = mutable.Map[Expr, HOLAtomConst]()
   val skConsts = mutable.Map[Expr, Const]()
 
-  for ( ( skC, skD ) <- ctx.get[SkolemFunctions].skolemDefs )
-    skConsts( skD ) = skC
-  for ( ( df: HOLAtomConst, by ) <- ctx.definitions )
-    defs( by ) = df
-
   def mkSkolemSym() = nameGen.freshWithIndex( "s" )
   def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
 
   def getSkolemInfo( f: Formula, x: Var ): ( Expr, Expr ) = {
     val fvs = freeVariables( f ).toSeq
     val skolemizedFormula = Abs( fvs, f )
-    val skolemConst = skConsts.getOrElseUpdate(
-      skolemizedFormula, {
-      val c = Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) )
-      ctx += Context.SkolemFun( c, skolemizedFormula )
-      c
-    } )
+    val skolemConst = skConsts.getOrElseUpdate( skolemizedFormula, ctx.addSkolemSym( skolemizedFormula, mkSkolemSym() ) )
     ( skolemConst( fvs: _* ), skolemizedFormula )
   }
 
@@ -146,12 +136,7 @@ class Clausifier(
     val fvs = if ( propositional ) Nil else freeVariables( f ).toList
     val definedFormula = Abs( fvs, f )
     val alreadyDefined = defs isDefinedAt definedFormula
-    val const = defs.getOrElseUpdate(
-      definedFormula, {
-      val c = HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* )
-      ctx += Definition( c, definedFormula )
-      c
-    } )
+    val const = defs.getOrElseUpdate( definedFormula, ctx.addDefinition( definedFormula, mkAbbrevSym() ).asInstanceOf[HOLAtomConst] )
     if ( !alreadyDefined ) {
       val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definedFormula ) )( AllR( _, Suc( 0 ), _ ) )
       if ( i.isAnt || bidirectionalDefs ) expand( AndR2( defn, Suc( 0 ) ) )

@@ -538,11 +538,12 @@ object Context {
   }
 
   def guess( exprs: Traversable[Expr] ): ImmutableContext = {
-    val consts = constants( exprs )
-    val tys = consts.flatMap( c => baseTypes( c.ty ) )
+    val names = exprs.view.flatMap( containedNames( _ ) ).toSet
+    val tys = names.flatMap( c => baseTypes( c.ty ) )
     var ctx = default
     for ( ty <- tys if !ctx.isType( ty ) )
       ctx += Sort( ty )
+    val consts = names.collect { case c: Const => c }
     for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty )
       ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ) ) )
     ctx
@@ -561,6 +562,29 @@ class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
 
   def +=( update: Update ): Unit = ctx += update
   def ++=( updates: Iterable[Update] ): Unit = ctx ++= updates
+
+  def addDefinition( by: Expr, name: => String = newNameGenerator.freshWithIndex( "D" ), reuse: Boolean = true ): Const = {
+    if ( reuse ) {
+      for ( ( d, _ ) <- get[Definitions].definitions.find( _._2 == by ) ) {
+        return Const( d, by.ty )
+      }
+    }
+    val what = Const( name, by.ty )
+    this += Definition( what, by )
+    what
+  }
+
+  def addSkolemSym( defn: Expr, name: => String = newNameGenerator.freshWithIndex( "s" ), reuse: Boolean = true ): Const = {
+    if ( reuse ) {
+      for ( ( d, _ ) <- get[SkolemFunctions].skolemDefs.find( _._2 == defn ) ) {
+        return d
+      }
+    }
+    val Abs.Block( vs, Quant( v, _, _ ) ) = defn
+    val sym = Const( name, FunctionType( v.ty, vs.map( _.ty ) ) )
+    this += SkolemFun( sym, defn )
+    sym
+  }
 }
 object MutableContext {
   def default(): MutableContext = Context.default.newMutable
@@ -570,6 +594,8 @@ object MutableContext {
   def guess( cnf: Traversable[Sequent[Expr]] )( implicit dummyImplicit: DummyImplicit ): MutableContext = guess( cnf.view.flatMap( _.elements ) )
   def guess[R, S]( rs: Traversable[R] )( implicit ev: Replaceable[R, S] ): MutableContext =
     guess( rs.view.flatMap( ev.names ) )
+  def guess( p: LKProof ): MutableContext =
+    guess( containedNames( p ) ) // TODO: add (Skolem) definitions
 }
 
 class ReadonlyMutableContext( ctx: ImmutableContext ) extends MutableContext( ctx ) {
