@@ -190,11 +190,6 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 
     val resolution = Escargot.getResolutionProof( sequent ).get --- "Escargot"
 
-    val lk = ResolutionToLKProof( resolution ) --- "ResolutionToLKProof"
-    deskolemizeLK( lk ) --? "deskolemizeLK" foreach { desk =>
-      desk.endSequent.isSubsetOf( lk.endSequent ) !-- "end-sequent of deskolemizeLK"
-    }
-
     val expansion = ResolutionToExpansionProof( resolution ) --- "ResolutionToExpansionProof"
 
     deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
