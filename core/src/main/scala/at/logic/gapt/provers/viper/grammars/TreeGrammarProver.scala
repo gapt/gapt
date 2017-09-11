@@ -5,25 +5,29 @@ import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
 import at.logic.gapt.grammars.Rule
 import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofToLK, InstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
-import at.logic.gapt.proofs.reduction._
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
-import at.logic.gapt.provers.{ OneShotProver, Prover }
+import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
 import at.logic.gapt.utils.{ Logger, Maybe }
 
 import scala.collection.mutable
 
+object DefaultProvers {
+  val firstOrder: Prover = Escargot
+  val smt: Prover =
+    if ( VeriT.isInstalled ) VeriT
+    else new Escargot( splitting = true, propositional = true, equality = true )
+}
+
 case class TreeGrammarProverOptions(
-    instanceNumber: Int        = 10,
-    instanceSize:   FloatRange = ( 0, 2 ),
-    instanceProver: Prover     = Escargot,
-    smtSolver: Prover = if ( VeriT.isInstalled ) VeriT
-    else new Escargot( splitting = true, propositional = true, equality = true ),
+    instanceNumber:   Int                 = 10,
+    instanceSize:     FloatRange          = ( 0, 2 ),
+    instanceProver:   Prover              = DefaultProvers.firstOrder,
+    smtSolver:        Prover              = DefaultProvers.smt,
     findingMethod:    String              = "maxsat",
     quantTys:         Option[Seq[String]] = None,
     grammarWeighting: Rule => Int         = _ => 1,
@@ -37,10 +41,10 @@ object TreeGrammarProverOptions {
 }
 
 class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) extends Logger {
-  implicit def ctx_ = ctx
+  implicit def ctx_ : Context = ctx
 
   val Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = sequent
-  val paramTypes = vs.map( _.ty ).map( _.asInstanceOf[TBase] )
+  val paramTypes: List[TBase] = vs.map( _.ty ).map( _.asInstanceOf[TBase] )
 
   val instanceGen = new EnumeratingInstanceGenerator( paramTypes, implicitly )
 
@@ -48,7 +52,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
   type Instance = Seq[Expr]
 
-  val grammarFinder = options.findingMethod match {
+  val grammarFinder: MaxSatRecSchemFinder = options.findingMethod match {
     case "maxsat" | "maxsatinst" =>
       val pi1QTys = options.quantTys getOrElse ( ctx.get[StructurallyInductiveTypes].constructors.keySet - "o" ).toSeq
       val msrsf = MaxSatRecSchemFinder( vs.map( _.ty ), pi1QTys.flatMap( ctx.get[BaseTypes].baseTypes.get ), encoding.instanceTermType,
@@ -62,7 +66,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       msrsf
   }
 
-  val smtSolver = options.smtSolver
+  def smtSolver: Prover = options.smtSolver
 
   def solve(): LKProof = {
     info( sequent )
@@ -137,7 +141,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     }
   }
 
-  def solveSPWI( spwi: SchematicProofWithInduction ) = {
+  def solveSPWI( spwi: SchematicProofWithInduction ): LKProof = {
     val qbup @ Ex( x_B, qbupMatrix ) = spwi.solutionCondition
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
@@ -168,7 +172,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
-  def getInstanceProof( inst: Seq[Expr] ) = {
+  def getInstanceProof( inst: Seq[Expr] ): ExpansionProof = {
     info( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     val instProof = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {
