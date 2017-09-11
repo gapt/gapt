@@ -22,7 +22,7 @@ class IProver extends ResolutionProver with ExternalProgram {
         val output = runProcess.withTempInputFile( Seq(
           "iproveropt",
           "--pure_diseq_elim", "false",
-          "--ground_splitting", "off" ), tptpIn )
+          "--splitting_mode", "none" ), tptpIn )
         val lines = output.split( "\n" ).toSeq
         if ( lines.exists( _.startsWith( "% SZS status Unsatisfiable" ) ) ) {
           val tptpDerivation = lines.
