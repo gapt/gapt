@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.provers.escargot.Escargot
 
 object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
@@ -14,14 +15,20 @@ class ExpansionProofToLK(
     theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
-  def apply( expansionProof: ExpansionProof ): UnprovableOrLKProof =
-    apply( ExpansionProofWithCut( expansionProof ) )
+  def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context() ): UnprovableOrLKProof = {
+    val cuts = for {
+      cutAxiomExpansion <- expansionProof.expansionSequent.antecedent
+      if cutAxiomExpansion.shallow == ETCut.cutAxiom
+      cut <- cutAxiomExpansion( HOLPosition( 1 ) )
+      cut1 <- cut( HOLPosition( 1 ) )
+      cut2 <- cut( HOLPosition( 2 ) )
+    } yield ETImp( cut1, cut2 )
 
-  def apply( expansionProofWithCut: ExpansionProofWithCut ): UnprovableOrLKProof =
-    solve( expansionProofWithCut.cuts, expansionProofWithCut.expansionSequent ).
-      map { WeakeningMacroRule( _, expansionProofWithCut.shallow ) }
+    solve( cuts, expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } ).
+      map { WeakeningMacroRule( _, expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } map { _.shallow } ) }
+  }
 
-  private def solve( cuts: Seq[ETImp], expSeq: ExpansionSequent ): UnprovableOrLKProof =
+  private def solve( cuts: Seq[ETImp], expSeq: ExpansionSequent ): UnprovableOrLKProof = {
     None.
       orElse( tryAxiom( cuts, expSeq ) ).
       orElse( tryDef( cuts, expSeq ) ).
@@ -39,6 +46,7 @@ class ExpansionProofToLK(
         ContractionMacroRule( _ ).
           ensuring { _.conclusion isSubsetOf expSeq.map { _.shallow } }
       }
+  }
 
   private def tryAxiom( cuts: Seq[ETImp], expSeq: ExpansionSequent ): Option[UnprovableOrLKProof] = {
     val shallowSequent = expSeq map { _.shallow }

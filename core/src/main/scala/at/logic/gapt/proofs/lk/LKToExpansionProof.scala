@@ -14,10 +14,10 @@ object LKToExpansionProof {
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
    */
-  def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProofWithCut = {
+  def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProof = {
     val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
     val theory_ = theory.groupBy { _.shallow }.values.toSeq.map { ETMerge( _ ) }
-    eliminateMerges( moveDefsUpward( ExpansionProofWithCut( theory_ ++: expansionSequent ) ) )
+    eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
   }
 
   private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
@@ -56,7 +56,7 @@ object LKToExpansionProof {
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val cutImp = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
-      val newCut = ETWeakQuantifier( ExpansionProofWithCut.cutAxiom, Map( c.cutFormula -> cutImp ) )
+      val newCut = ETWeakQuantifier( hof"∀X (X ⊃ X)", Map( c.cutFormula -> cutImp ) )
       val cuts =
         if ( !isPropositionalET( cutImp ) )
           newCut +: ( leftCuts ++ rightCuts )

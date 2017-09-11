@@ -11,8 +11,8 @@ import at.logic.gapt.expr._
 object deskolemizeET {
   def apply( expansionProof: ExpansionProof ): ExpansionProof = {
     val skolemsAboveCuts = eliminateMerges( moveSkolemNodesToCuts( expansionProof ) )
-    val deskolemized = replaceByEigenvariables( skolemsAboveCuts.expansionWithCutAxiom )
-    eliminateCutsET( ExpansionProofWithCut( deskolemized ) )
+    val deskolemized = replaceByEigenvariables( skolemsAboveCuts )
+    eliminateCutsET( deskolemized )
   }
 
   def replaceByEigenvariables( expansionProof: ExpansionProof ): ExpansionProof = {

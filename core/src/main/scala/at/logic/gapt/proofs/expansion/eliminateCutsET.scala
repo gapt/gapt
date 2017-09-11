@@ -1,32 +1,40 @@
 package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.utils.generatedUpperSetInPO
 
 object eliminateCutsET {
-  def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = {
-    if ( expansionProof.cuts.isEmpty ) return expansionProof.toExpansionProof
+  def apply( expansionProof: ExpansionProof ): ExpansionProof = {
+    def cuts( epwc: ExpansionProof ) = for {
+      cutAxiomExpansion <- epwc.expansionSequent.antecedent
+      if cutAxiomExpansion.shallow == ETCut.cutAxiom
+      cut <- cutAxiomExpansion( HOLPosition( 1 ) )
+      cut1 <- cut( HOLPosition( 1 ) )
+      cut2 <- cut( HOLPosition( 2 ) )
+    } yield ETImp( cut1, cut2 )
+
+    if ( cuts( expansionProof ).isEmpty ) return ExpansionProof( expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
-      ExpansionProofWithCut( eliminateMerges.unsafe( ExpansionProofWithCut.mkCutAxiom( simpPropCuts( cuts ) ) +: es ) )
+      ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) )
 
-    var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.expansionSequent )
+    var epwc = simplifiedEPWC( cuts( expansionProof ), expansionProof.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
 
     while ( true )
-      epwc.cuts.view.flatMap {
+      cuts( epwc ).view.flatMap {
         case cut @ ETImp( cut1, cut2 ) =>
-          singleStep( cut1, cut2, epwc.cuts.filterNot( _ == cut ), epwc.expansionSequent,
+          singleStep( cut1, cut2, cuts( epwc ).filterNot( _ == cut ), epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom },
             epwc.eigenVariables union freeVariables( epwc.deep ),
-            epwc.expansionWithCutAxiom.dependencyRelation )
+            epwc.dependencyRelation )
       }.headOption match {
         case Some( ( newCuts, newES ) ) =>
           epwc = simplifiedEPWC( newCuts, newES )
         case None =>
           return {
-            if ( epwc.cuts.isEmpty ) epwc.toExpansionProof
-            else epwc.expansionWithCutAxiom
+            if ( cuts( epwc ).isEmpty ) return ExpansionProof( epwc.expansionSequent filter { _.shallow != ETCut.cutAxiom } )
+            else epwc
           }
       }
-
     throw new IllegalStateException
   }
 

@@ -280,7 +280,12 @@ object LKToND {
 
         if ( p.mainFormula == p.endSequent( focus.get ) ) {
           // Pick arbitrary focus
-          exchange( WeakeningRule( translate( subProof, heuristicIndex( subProof ) ), hof"-$formula" ), p.mainFormula )
+          val ndProof = translate( subProof, heuristicIndex( subProof ) )
+          // This check solves a bug that occured when WeakeningRightRule was applied after BottomAxiom (cf. classical pairing test case)
+          if ( proof.endSequent.forall( f => proof.endSequent.filter( _ == f ).size == ndProof.endSequent.filter( _ == f ).size ) )
+            ndProof
+          else
+            exchange( WeakeningRule( ndProof, hof"-$formula" ), p.mainFormula )
         } else {
           // simply weaken with negated formula on the left
           WeakeningRule( translate( subProof, focus.map( p.getSequentConnector.parent ) ), hof"-$formula" )

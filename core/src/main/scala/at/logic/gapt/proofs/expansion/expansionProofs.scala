@@ -53,6 +53,7 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
     expansionSequent.map( _.toSigRelativeString ).toString
 }
 
+/*
 case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
   import ExpansionProofWithCut._
   def expansionSequent = expansionWithCutAxiom.expansionSequent filter { _.shallow != cutAxiom }
@@ -69,6 +70,9 @@ case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
     cut1 <- cut( HOLPosition( 1 ) )
     cut2 <- cut( HOLPosition( 2 ) )
   } yield ETImp( cut1, cut2 )
+
+
+  //println("STRS:\n" + expansionWithCutAxiom.expansionSequent.antecedent.map(_.shallow).map(_.toString))
 
   def toExpansionProof = {
     require( cuts.isEmpty )
@@ -88,12 +92,11 @@ object ExpansionProofWithCut {
       ExpansionProofWithCut.cutAxiom,
       for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut )
 }
+*/
 
 object freeVariablesET {
   def apply( expansionProof: ExpansionProof ): Set[Var] =
     freeVariables( expansionProof.deep ) diff expansionProof.eigenVariables
-  def apply( expansionProofWithCut: ExpansionProofWithCut ): Set[Var] =
-    apply( expansionProofWithCut.expansionWithCutAxiom )
 }
 private[expansion] object expansionProofSubstitution extends ClosedUnderSub[ExpansionProof] {
   override def applySubstitution( subst: Substitution, expansionProof: ExpansionProof ): ExpansionProof =
@@ -105,8 +108,3 @@ private[expansion] object expansionProofSubstitution extends ClosedUnderSub[Expa
       ExpansionProof( substWithRenaming( expansionProof.expansionSequent ) )
     }
 }
-private[expansion] object expansionProofWithCutSubstitution extends ClosedUnderSub[ExpansionProofWithCut] {
-  override def applySubstitution( subst: Substitution, expansionProofWithCut: ExpansionProofWithCut ): ExpansionProofWithCut =
-    ExpansionProofWithCut( subst( expansionProofWithCut.expansionWithCutAxiom ) )
-}
-

@@ -18,8 +18,8 @@ object expansionProofFromInstances {
       subst <- substs
     } yield Subst( just, subst )
 
-    val expansionWithDefs = ExpansionProofWithCut( Sequent( proofs.
-      flatMapS( ResolutionToExpansionProof.withDefs( _, ResolutionToExpansionProof.inputsAsExpansionSequent, addConclusion = false ).expansionWithCutAxiom.expansionSequent ).
+    val expansionWithDefs = ExpansionProof( Sequent( proofs.
+      flatMapS( ResolutionToExpansionProof.withDefs( _, ResolutionToExpansionProof.inputsAsExpansionSequent, addConclusion = false ).expansionSequent ).
       polarizedElements.groupBy( pe => pe._1.shallow -> pe._2 ).
       values.map( g => ETMerge( g.map( _._1 ) ) -> g.head._2 ).toSeq ) )
 

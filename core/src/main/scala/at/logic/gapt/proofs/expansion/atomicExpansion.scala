@@ -40,11 +40,11 @@ object atomicExpansionET {
 
 object moveSkolemNodesToCuts {
 
-  def apply( ep: ExpansionProof ): ExpansionProofWithCut = {
+  def apply( ep: ExpansionProof ): ExpansionProof = {
     implicit val nameGen: NameGenerator = rename.awayFrom( ep.eigenVariables ++ freeVariablesET( ep ) )
     val cuts = mutable.Buffer[ETImp]()
     val es = ep.expansionSequent.map( apply( _, cuts ) )
-    ExpansionProofWithCut( cuts, es )
+    ExpansionProof( ETCut( cuts ) +: es )
   }
 
   def apply( et: ExpansionTree, cuts: mutable.Buffer[ETImp] )( implicit nameGen: NameGenerator ): ExpansionTree =

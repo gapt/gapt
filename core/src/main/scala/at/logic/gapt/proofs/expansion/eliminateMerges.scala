@@ -3,9 +3,6 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr.Substitution
 
 object eliminateMerges {
-  def apply( expansionProof: ExpansionProofWithCut ): ExpansionProofWithCut =
-    ExpansionProofWithCut( elim( expansionProof.expansionWithCutAxiom.expansionSequent ) )
-
   def apply( expansionProof: ExpansionProof ): ExpansionProof =
     ExpansionProof( elim( expansionProof.expansionSequent ) )
 
