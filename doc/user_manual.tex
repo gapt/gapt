@@ -1760,11 +1760,11 @@ pr: at.logic.gapt.proofs.lk.EqualityRightRule =
 [p1] P(a) ⊢ P(a)    (LogicalAxiom(P(a): o))
 
 \end{clilisting}
-In order to apply interpolation, we need to specify a partition of the end-sequent into $\Gamma_1 \seq \Delta_1$ and $\Gamma_2 \seq \Delta_2$, i.e. into the negative (npart) and positive (ppart) part, respectively. In this case, we set $\Delta_1 = \{ P(b) \}$, $\Gamma_2 = \{ a=b, P(a) \}$ and $\Gamma_1 = \Delta_2 = \emptyset$.
+In order to apply interpolation, we need to specify a partition of the end-sequent into $\Gamma_1 \seq \Delta_1$ and $\Gamma_2 \seq \Delta_2$, i.e. into the negative and positive part, respectively. In this case, we set $\Delta_1 = \{ P(b) \}$, $\Gamma_2 = \{ a=b, P(a) \}$ and $\Gamma_1 = \Delta_2 = \emptyset$.
 
-Then we can call \texttt{ExtractInterpolant( pr, npart, ppart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
+Then we can call \texttt{ExtractInterpolant( pr, positivePart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
 \begin{clilisting}
-gapt> val I = ExtractInterpolant( pr, Seq( Suc( 0 ) ), Seq( Ant( 0 ), Ant( 1 ) ) )
+gapt> val I = ExtractInterpolant(pr, Seq(Ant(0), Ant(1)))
 I: at.logic.gapt.expr.Formula = a = b ⊃ ¬P(a)
 
 \end{clilisting}

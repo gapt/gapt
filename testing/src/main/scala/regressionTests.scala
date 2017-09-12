@@ -112,8 +112,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-      ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
-      ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+      ExtractInterpolant( ip, indices1 ) --? "extractInterpolant"
+      ExtractInterpolant( ip, indices2 ) --? "extractInterpolant diff partition"
     }
 
     if ( !containsEqualityReasoning( p ) ) {

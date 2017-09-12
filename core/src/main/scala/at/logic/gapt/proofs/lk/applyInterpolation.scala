@@ -4,16 +4,16 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.expr.To
+import at.logic.gapt.provers.escargot.Escargot
 
 class InterpolationException( msg: String ) extends Exception( msg )
 
 object ExtractInterpolant {
-  def apply( p: LKProof, isPositive: Sequent[Boolean] ) =
+  def apply( p: LKProof, isPositive: Sequent[Boolean] ): Formula =
     Interpolate( p, isPositive )._3
 
-  def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) =
-    Interpolate( p, p.conclusion.indicesSequent.map( ppart.contains ) )._3
+  def apply( p: LKProof, positivePart: Seq[SequentIndex] ): Formula =
+    Interpolate( p, p.conclusion.indicesSequent.map( positivePart.contains ) )._3
 
   /**
    * Given sequents negative: \Gamma |- \Delta and positive: \Pi |- \Lambda,
@@ -21,13 +21,9 @@ object ExtractInterpolant {
    * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
    * are valid.
    */
-  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): Formula = {
-    val seq = negative ++ positive
-    val part = negative.map( _ => false ) ++ positive.map( _ => true )
-    val p = prover.getLKProof( seq ).get
-
-    apply( p, part )
-  }
+  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover = Escargot ): Option[Formula] =
+    prover.getLKProof( negative ++ positive ).map( p =>
+      apply( p, for ( ( f, i ) <- p.endSequent.zipWithIndex ) yield positive.contains( f, i.polarity ) ) )
 }
 
 object Interpolate {
