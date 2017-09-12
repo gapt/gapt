@@ -5,6 +5,8 @@
 * Support for EProver 2.0
 * Experimental support for iProver (requires current development version)
 * MutableContext now keeps track of automatically generated Skolem functions
+* Cut-elimination no longer regularizes
+* deskolemizeET now supports inner Skolemization
 
 ## Version 2.7 (released on 2017-07-05)
 
