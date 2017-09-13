@@ -6,6 +6,9 @@ import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, StructCreators }
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.spass.SPASS
 import org.specs2.mutable.Specification
 
 /**
@@ -69,6 +72,23 @@ class SchemaTest extends Specification {
       ctx.check( proof )
       ok
     }
+
+    " Nia-schema Clause Set Extraction  Instance 3" in {
+      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
+      ctx.check( proof )
+      val thestruct = StructCreators.extract( proof )
+      val cs = CharacteristicClauseSet( thestruct )
+      ok
+    }
+    " Nia-schema Clause Set Refutation  Instance 3" in {
+      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 1 )}" )
+      ctx.check( proof )
+      val thestruct = StructCreators.extract( proof )
+      val cs = CharacteristicClauseSet( thestruct )
+      val refutation = Escargot.getResolutionProof( cs )
+      refutation must beSome
+    }
+
   }
 
   {
@@ -101,7 +121,7 @@ class SchemaTest extends Specification {
     }
 
     "Test if PlusComm induction proof is K-simple" in {
-       IsKSimple(pluscomm) must_== false
+      IsKSimple( pluscomm ) must_== false
     }
 
     "Test if K-simple PlusComm induction proof is K-simple" in {
@@ -132,7 +152,7 @@ class SchemaTest extends Specification {
           } else proofs.head
         } else pluscomm
       }
-      IsKSimple(result) must_== true
+      IsKSimple( result ) must_== true
     }
   }
 
