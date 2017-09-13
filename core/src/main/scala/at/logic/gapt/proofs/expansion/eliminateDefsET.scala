@@ -91,8 +91,7 @@ object eliminateDefsET {
       ETCut.cutAxiom,
       insts.values.map { case ( pos, neg ) => pos.shallow -> ETImp( pos, neg ) } )
 
-    val newES = ( newCuts +: rest.map { repl } ).
-      groupBy { _.shallow }.map { _._2 }.map { ETMerge( _ ) }
+    val newES = ETMerge( newCuts +: rest.map( repl ) )
 
     eliminateMerges( ExpansionProof( newES ) )
   }
