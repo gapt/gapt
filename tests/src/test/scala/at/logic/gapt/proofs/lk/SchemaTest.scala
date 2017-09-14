@@ -6,6 +6,7 @@ import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.Context.{ ProofDefinitions }
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, StructCreators }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
@@ -88,7 +89,7 @@ class SchemaTest extends Specification {
     }
 
     " Nia-schema Clause set Extraction Individual Proof" in {
-      val ts = StructCreators.extract( niaSchema.phiSc, Set( "omega", "chi", "phi", "mu" ) )
+      val ts = StructCreators.extract( niaSchema.phiSc, ctx.get[ProofDefinitions].components.keySet )
       val cs = CharacteristicClauseSet( ts )
       ok
     }
