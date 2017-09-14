@@ -6,6 +6,8 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.HOLSequent
+
 import scala.math.max
 
 /**
@@ -145,6 +147,26 @@ case class A[Data]( fo: Formula, data: List[Data] ) extends Struct[Data] { // At
 
 object A {
   def apply[Data]( fo: Formula ): Struct[Data] = A[Data]( fo, Nil )
+}
+
+case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[FOLTerm], data: List[Data] ) extends Struct[Data] { // Clause Set Symbol Struct
+  override def toString(): String = "CLS(" + proof + " , " + config.toString + " , " + fv.toString() + ")"
+  override def formula_equal( s: Struct[Data] ) = s match {
+    case CLS( n, c, f, _ ) => n.matches( proof ) && c.equals( config ) && f.equals( fv )
+    case _                 => false
+  }
+  override def size() = 1
+  override def alternations() = 0
+  override def getData = Nil
+
+  def toFormula = FOLAtom( "CL" + "[" + proof + "," + config.toString + "]", fv )
+
+  def label = FOLAtom( "CL" + "[" + proof + "," + config.toString + "]", fv )
+  def children = Seq()
+}
+object CLS {
+  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[FOLTerm] ): Struct[Data] =
+    CLS[Data]( Proof, config, fv )
 }
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {

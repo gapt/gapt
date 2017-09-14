@@ -5,12 +5,8 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, SetSequent }
+import at.logic.gapt.proofs.{ HOLClause, Sequent, SetSequent }
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.Logger
-
-import scala.annotation.tailrec
-import scala.util.control.TailCalls._
 
 /**
  * Calculates the characteristic clause set
@@ -47,6 +43,9 @@ class CharacteristicClauseSet[Data] {
           case None      => Set().toTraversable
         }
       } ) )
+    case CLS( proof, config, fv, _ ) =>
+      val clauseSymbol: Atom = Atom( "CL", Seq( Const( proof, To ) ) ++ Seq( Const( "|", To ) ) ++ config.antecedent ++ Seq( Const( "⊢", To ) ) ++ config.succedent ++ Seq( Const( "|", To ) ) ++ fv )
+      Set( SetSequent[Atom]( Sequent( Nil, List( clauseSymbol ) ) ) )
     case _ => throw new Exception( "Unhandled case: " + struct )
   }
 

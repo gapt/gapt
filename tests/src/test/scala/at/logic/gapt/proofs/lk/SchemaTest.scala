@@ -8,7 +8,6 @@ import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, StructCreators }
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.spass.SPASS
 import org.specs2.mutable.Specification
 
 /**
@@ -26,7 +25,6 @@ class SchemaTest extends Specification {
 
   {
     import tautSchema.ctx
-
     "simple schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"taut ${nat( 0 )}" )
       ctx.check( proof )
@@ -87,6 +85,12 @@ class SchemaTest extends Specification {
       val cs = CharacteristicClauseSet( thestruct )
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
+    }
+
+    " Nia-schema Clause set Extraction Individual Proof" in {
+      val ts = StructCreators.extract( niaSchema.phiSc, Set( "omega", "chi", "phi", "mu" ) )
+      val cs = CharacteristicClauseSet( ts )
+      ok
     }
 
   }
