@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr.{ Expr, _ }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lk.eliminateDefinitions
 
 /**
  * The Point of this class is to allow the instantiation of Proof schemata.

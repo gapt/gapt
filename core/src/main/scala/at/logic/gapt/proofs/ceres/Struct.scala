@@ -152,7 +152,7 @@ object A {
 case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[FOLTerm], data: List[Data] ) extends Struct[Data] { // Clause Set Symbol Struct
   override def toString(): String = "CLS(" + proof + " , " + config.toString + " , " + fv.toString() + ")"
   override def formula_equal( s: Struct[Data] ) = s match {
-    case CLS( n, c, f, _ ) => n.matches( proof ) && c.equals( config ) && f.equals( fv )
+    case CLS( n, c, f, w ) => n.matches( proof ) && c.equals( config ) && f.equals( fv ) && w.equals(data)
     case _                 => false
   }
   override def size() = 1
@@ -165,8 +165,7 @@ case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[FOLTerm], data:
   def children = Seq()
 }
 object CLS {
-  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[FOLTerm] ): Struct[Data] =
-    CLS[Data]( Proof, config, fv )
+  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[FOLTerm], data: List[Data]= List[Data]() ): Struct[Data] = CLS[Data]( Proof, config, fv, data )
 }
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {
@@ -214,6 +213,17 @@ object PlusN {
   private def unapply_[Data]( s: Struct[Data] ): List[Struct[Data]] = s match {
     case Plus( l, r ) => unapply_( l ) ++ unapply_( r )
     case _            => s :: Nil
+  }
+}
+
+//Returns all Schematic Leaves
+object SchematicLeafs {
+  def apply( l: Struct[Nothing]): Set[Struct[Nothing]] = l match {
+    case Times(le,r,_)      => SchematicLeafs(le) ++ SchematicLeafs(r)
+    case Plus(le,r)         => SchematicLeafs(le) ++ SchematicLeafs(r)
+    case CLS(x,y,z,w)       => Set[Struct[Nothing]](l)
+    case _                  => Set[Struct[Nothing]]()
+
   }
 }
 

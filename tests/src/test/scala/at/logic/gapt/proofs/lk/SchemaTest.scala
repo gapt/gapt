@@ -7,7 +7,7 @@ import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.{ ProofDefinitions }
-import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, StructCreators }
+import at.logic.gapt.proofs.ceres.{SchematicClauseSet, CharacteristicClauseSet, StructCreators }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -48,7 +48,7 @@ class SchemaTest extends Specification {
   {
     import niaSchema.ctx
 
-    "Nia-schema basecase" in {
+   /* "Nia-schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -75,14 +75,14 @@ class SchemaTest extends Specification {
     " Nia-schema Clause Set Extraction  Instance 3" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof, Set[String]() )
+      val thestruct = StructCreators.extract( proof,  ctx.get[ProofDefinitions].components.keySet  )
       val cs = CharacteristicClauseSet( thestruct )
       ok
     }
     " Nia-schema Clause Set Refutation  Instance 3" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 1 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof, Set[String]() )
+      val thestruct = StructCreators.extract( proof, ctx.get[ProofDefinitions].components.keySet )
       val cs = CharacteristicClauseSet( thestruct )
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
@@ -93,10 +93,14 @@ class SchemaTest extends Specification {
       val cs = CharacteristicClauseSet( ts )
       ok
     }
-
+*/
+    " baaaaaaaaaaaaaahh" in {
+      println(SchematicClauseSet("phi",ctx))
+      ok
+    }
   }
 
-  {
+  /*{
     import gniaSchema.ctx
 
     "gNia-schema both parameters zero" in {
@@ -159,7 +163,7 @@ class SchemaTest extends Specification {
       }
       IsKSimple( result ) must_== true
     }
-  }
+  }*/
 
 }
 
