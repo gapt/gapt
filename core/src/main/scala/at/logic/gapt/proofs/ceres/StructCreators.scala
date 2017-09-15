@@ -46,11 +46,11 @@ object StructCreators extends Logger {
   def toFormula[Data]( s: Struct[Data] ): Formula =
     And( CharacteristicClauseSet( s ).toSeq map ( _.toDisjunction ) )
 
-  def extract[Data]( p: LKProof, proofs: Set[String] = Set[String]() ): Struct[Data] =
+  def extract[Data]( p: LKProof, proofs: Set[String] ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ), proofs )( x => true )
 
-  def extract[Data]( p: LKProof, predicate: Formula => Boolean ): Struct[Data] =
-    extract[Data]( p, p.endSequent.map( _ => false ), Set[String]() )( predicate )
+  def extract[Data]( p: LKProof, predicate: Formula => Boolean, proofs: Set[String] ): Struct[Data] =
+    extract[Data]( p, p.endSequent.map( _ => false ), proofs )( predicate )
 
   private def mapToUpperProof[Formula]( conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )

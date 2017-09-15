@@ -21,7 +21,7 @@ class TapeTest extends Specification with SequentMatchers {
       //println( LatexLLKExporter( proof_sk, true ) )
 
       //      println( proof_sk )
-      val s = StructCreators.extract( proof_sk )
+      val s = StructCreators.extract( proof_sk, Set[String]() )
 
       //      println( s"struct: $s" )
       val cs_ = CharacteristicClauseSet( s )

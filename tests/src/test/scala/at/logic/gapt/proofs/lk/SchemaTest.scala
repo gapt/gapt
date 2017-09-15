@@ -75,14 +75,14 @@ class SchemaTest extends Specification {
     " Nia-schema Clause Set Extraction  Instance 3" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof )
+      val thestruct = StructCreators.extract( proof, Set[String]() )
       val cs = CharacteristicClauseSet( thestruct )
       ok
     }
     " Nia-schema Clause Set Refutation  Instance 3" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 1 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof )
+      val thestruct = StructCreators.extract( proof, Set[String]() )
       val cs = CharacteristicClauseSet( thestruct )
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
