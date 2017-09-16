@@ -5,9 +5,9 @@ import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.proofs.Context.{ ProofDefinitions }
-import at.logic.gapt.proofs.ceres.{SchematicClauseSet, CharacteristicClauseSet, StructCreators }
+import at.logic.gapt.proofs.{ Context, HOLSequent, SetSequent }
+import at.logic.gapt.proofs.Context.ProofDefinitions
+import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -48,7 +48,7 @@ class SchemaTest extends Specification {
   {
     import niaSchema.ctx
 
-   /* "Nia-schema basecase" in {
+    "Nia-schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -75,7 +75,7 @@ class SchemaTest extends Specification {
     " Nia-schema Clause Set Extraction  Instance 3" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof,  ctx.get[ProofDefinitions].components.keySet  )
+      val thestruct = StructCreators.extract( proof, ctx.get[ProofDefinitions].components.keySet )
       val cs = CharacteristicClauseSet( thestruct )
       ok
     }
@@ -93,14 +93,71 @@ class SchemaTest extends Specification {
       val cs = CharacteristicClauseSet( ts )
       ok
     }
-*/
-    " baaaaaaaaaaaaaahh" in {
-      println(SchematicClauseSet("phi",ctx))
-      ok
+
+    " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
+      SchematicClauseSet( "omega", ctx ) must beSome
     }
+    " Extracting the Schematic Characteristic Clause Set Checking number of symbols" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      SCS.keySet.size must beEqualTo( 4 )
+    }
+    " Extracting the Schematic Characteristic Clause Set Checking number configurations" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      SCS.keySet.fold( 0 )( ( vale, x ) => {
+        SCS.get( x.asInstanceOf[String] ) match {
+          case Some( x ) =>
+            ( x.size + vale.asInstanceOf[Int] )
+          case None => vale
+        }
+      } ) must beEqualTo( 4 )
+    }
+    " Extracting the Schematic Characteristic Clause Set Checking number of clause sets per configuration" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      SCS.keySet.fold( 0 )( ( vale, x ) => {
+        SCS.get( x.asInstanceOf[String] ) match {
+          case Some( x ) => x.keySet.fold( 0 )( ( mail, xx ) => {
+            x.get( xx.asInstanceOf[HOLSequent] ) match {
+              case Some( y ) => y.size + mail.asInstanceOf[Int]
+              case None      => mail
+            }
+          } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
+          case None => vale
+        }
+      } ) must beEqualTo( 8 )
+    }
+    " Extracting the Schematic Characteristic Clause Set Checking that all clauses are there" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      SCS.keySet.fold( 0 )( ( vale, x ) => {
+        SCS.get( x.asInstanceOf[String] ) match {
+          case Some( x ) => x.keySet.fold( 0 )( ( mail, xx ) => {
+            x.get( xx.asInstanceOf[HOLSequent] ) match {
+              case Some( y ) => y.fold( 0 )( ( whale, zz ) => {
+                val ( one, two: Set[SetSequent[Atom]] ) = zz
+                two.size + whale.asInstanceOf[Int]
+              } ).asInstanceOf[Int] + mail.asInstanceOf[Int]
+              case None => mail
+            }
+          } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
+          case None => vale
+        }
+      } ) must beEqualTo( 16 )
+    }
+
   }
 
-  /*{
+  {
     import gniaSchema.ctx
 
     "gNia-schema both parameters zero" in {
@@ -163,7 +220,7 @@ class SchemaTest extends Specification {
       }
       IsKSimple( result ) must_== true
     }
-  }*/
+  }
 
 }
 

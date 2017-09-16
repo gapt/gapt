@@ -11,7 +11,7 @@ import at.logic.gapt.expr._
 /**
  * Calculates the characteristic clause set
  */
-    class CharacteristicClauseSet[Data] {
+class CharacteristicClauseSet[Data] {
   def apply( struct: Struct[Data] ): Set[SetSequent[Atom]] = struct match {
     case A( fo: Atom, _ ) => Set( SetSequent[Atom]( Sequent( Nil, List( fo ) ) ) )
     case A( Top(), _ )    => Set()
