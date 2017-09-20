@@ -58,6 +58,24 @@ trait SimplificationRule extends InferenceRule {
     }
 }
 
+object getFOPositions {
+  def apply( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
+    val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
+    def walk( exp: Expr, pos: List[Int] ): Unit = {
+      poss( exp ) :+= LambdaPosition( pos.reverse )
+      walkApp( exp, pos )
+    }
+    def walkApp( exp: Expr, pos: List[Int] ): Unit = exp match {
+      case App( f, arg ) =>
+        walk( arg, 2 :: pos )
+        walkApp( f, 1 :: pos )
+      case _ =>
+    }
+    walk( exp, Nil )
+    poss.toMap
+  }
+}
+
 class StandardInferences( state: EscargotState, propositional: Boolean ) {
   import state.{ DerivedCls, SimpCls, termOrdering, nameGen }
 
@@ -80,22 +98,6 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     } else syntacticMatching( a, b )
 
   def Subst( proof: ResolutionProof, subst: Substitution ) = at.logic.gapt.proofs.resolution.Subst.ifNecessary( proof, subst )
-
-  def getFOPositions( exp: Expr ): Map[Expr, Seq[LambdaPosition]] = {
-    val poss = mutable.Map[Expr, Seq[LambdaPosition]]().withDefaultValue( Seq() )
-    def walk( exp: Expr, pos: List[Int] ): Unit = {
-      poss( exp ) :+= LambdaPosition( pos.reverse )
-      walkApp( exp, pos )
-    }
-    def walkApp( exp: Expr, pos: List[Int] ): Unit = exp match {
-      case App( f, arg ) =>
-        walk( arg, 2 :: pos )
-        walkApp( f, 1 :: pos )
-      case _ =>
-    }
-    walk( exp, Nil )
-    poss.toMap
-  }
 
   object Clausification extends Clausifier(
     propositional,

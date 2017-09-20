@@ -7,6 +7,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk.skolemize
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.Prover
+import at.logic.gapt.provers.escargot.impl.getFOPositions
 
 import scala.collection.mutable
 
@@ -140,7 +141,7 @@ object qbupForRecSchem {
 
 object hSolveQBUP {
   def findConseq( start: Formula, conds: Seq[( Set[Substitution], Formula )],
-                  prover: Prover ): Set[Formula] = {
+                  prover: Prover, equations: Seq[Formula] ): Set[Formula] = {
     val isSolution = mutable.Map[Set[HOLClause], Boolean]()
     def checkSol( cnf: Set[HOLClause] ) = isSolution.getOrElseUpdate( cnf, {
       val cnfForm = And( cnf.map( _.toDisjunction ) )
@@ -148,16 +149,34 @@ object hSolveQBUP {
       prover.isValid( cond )
     } )
 
-    val didInferences = mutable.Set[Set[HOLClause]]()
-    def forgetfulInferences( cnf: Set[HOLClause] ): Unit =
-      if ( !didInferences( cnf ) ) {
+    def normalize( clause: HOLClause ): HOLClause =
+      clause.distinct.sortBy( _.hashCode )
+
+    type Node = ( Set[HOLClause], Seq[Formula] )
+    val didInferences = mutable.Set[Node]()
+    def forgetfulInferences( node: Node ): Unit = {
+      if ( !didInferences( node ) ) {
+        val ( cnf, equations ) = node
         if ( checkSol( cnf ) ) {
-          forgetfulPropResolve( cnf ) foreach forgetfulInferences
-          forgetfulPropParam( cnf ) foreach forgetfulInferences
+          for ( cnf_ <- forgetfulPropResolve( cnf ) ) forgetfulInferences( ( cnf_, equations ) )
+          for ( cnf_ <- forgetfulPropParam( cnf ) ) forgetfulInferences( ( cnf_, equations ) )
+          for {
+            ( Eq( lhs0, rhs0 ), i ) <- equations.zipWithIndex
+            ltr <- Seq( true, false )
+            ( lhs, rhs ) = if ( ltr ) ( lhs0, rhs0 ) else ( rhs0, lhs0 )
+            cls <- cnf
+            ( a, j ) <- cls.zipWithIndex
+            ( e, ps ) <- getFOPositions( a )
+            subst <- syntacticMatching( lhs, e )
+            rhs_ = subst( rhs )
+            a_ = ps.foldLeft( a: Expr )( ( b, p ) => b.replace( p, rhs_ ) ).asInstanceOf[Atom]
+          } forgetfulInferences( ( cnf - cls + normalize( cls.replaceAt( j, a_ ) ),
+            for ( ( e, i_ ) <- equations.zipWithIndex if i_ != i ) yield e ) )
         }
-        didInferences += cnf
+        didInferences += node
       }
-    forgetfulInferences( CNFp( start ).map { _.distinct.sortBy { _.hashCode } } )
+    }
+    forgetfulInferences( CNFp( start ).map( normalize ) -> equations )
 
     val didForget = mutable.Set[Set[HOLClause]]()
     def forgetClauses( cnf: Set[HOLClause] ): Unit =
@@ -204,7 +223,7 @@ object hSolveQBUP {
     mkCanSol( xInst )
   }
 
-  def apply( qbupMatrix: Formula, xInst: Formula, prover: Prover ): Option[Expr] = {
+  def apply( qbupMatrix: Formula, xInst: Formula, prover: Prover, equations: Seq[Formula] = Seq() ): Option[Expr] = {
     val Apps( x: Var, xInstArgs ) = xInst
     val qbupSequents = getSequents( qbupMatrix, x )
 
@@ -226,7 +245,7 @@ object hSolveQBUP {
 
     val searchConds = qbupSequents.flatMap( mkSearchCond( Set(), _ ) )
 
-    val conseqs = findConseq( start, searchConds, prover )
+    val conseqs = findConseq( start, searchConds, prover, equations )
 
     val xGenArgs = for ( ( a, i ) <- xInstArgs.zipWithIndex ) yield Var( s"x$i", a.ty )
     val xGen = x( xGenArgs: _* )

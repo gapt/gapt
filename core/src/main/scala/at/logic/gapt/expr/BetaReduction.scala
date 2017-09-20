@@ -45,7 +45,7 @@ object ReductionRule {
   implicit def apply( rule: ( Expr, Expr ) ): ReductionRule =
     ReductionRule( rule._1, rule._2 )
 
-  implicit def apply( atom: Atom ): ReductionRule = {
+  implicit def apply( atom: Formula ): ReductionRule = {
     val Eq( lhs, rhs ) = atom
     ReductionRule( lhs, rhs )
   }
