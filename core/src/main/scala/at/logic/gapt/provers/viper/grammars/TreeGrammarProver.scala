@@ -74,7 +74,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
         throw new NotImplementedError
       override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
-        options.smtSolver.isValid( seq.map( eqTh.normalize( _ ).asInstanceOf[Formula] ) )
+        options.smtSolver.isValid( seq ++ seq.map( eqTh.normalize( _ ).asInstanceOf[Formula] ) )
     }
 
   def solve(): LKProof = {
