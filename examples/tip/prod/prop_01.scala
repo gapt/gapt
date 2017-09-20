@@ -51,7 +51,6 @@ object prop_01 extends TacticsProof {
     treeGrammarInduction
       .canSolSize( 1, 1 )
       .quantTys()
-      .smtSolver( new Escargot( propositional = true, equality = true, splitting = true ) ) // veriT crashes?!?
       .equationalTheory( hof"0+x = x", hof"x+0 = x", hof"S(x)+y = S(x+y)", hof"x+S(y) = S(x+y)" )
   }
 }
