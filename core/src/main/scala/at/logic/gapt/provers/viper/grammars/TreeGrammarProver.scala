@@ -171,7 +171,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    require( smtSolver.isValid( skolemize( formula ) ), "Solution not valid" )
+    require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), "Solution not valid" )
 
     val proof = spwi.lkProof(
       Seq( solution ),
