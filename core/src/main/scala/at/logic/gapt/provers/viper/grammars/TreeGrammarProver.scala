@@ -5,10 +5,10 @@ import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, instantiate }
 import at.logic.gapt.grammars.Rule
 import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding }
+import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
-import at.logic.gapt.provers.Prover
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
@@ -34,7 +34,8 @@ case class TreeGrammarProverOptions(
     tautCheckNumber:  Int                 = 10,
     tautCheckSize:    FloatRange          = ( 2, 3 ),
     canSolSize:       FloatRange          = ( 2, 4 ),
-    forgetOne:        Boolean             = false )
+    forgetOne:        Boolean             = false,
+    equationalTheory: Seq[Formula]        = Seq() )
 
 object TreeGrammarProverOptions {
   type FloatRange = ( Float, Float )
@@ -49,6 +50,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   val instanceGen = new EnumeratingInstanceGenerator( paramTypes, implicitly )
 
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
+
+  val eqTh = Normalizer( options.equationalTheory.map( ReductionRule( _ ) ) )
 
   type Instance = Seq[Expr]
 
@@ -66,7 +69,13 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       msrsf
   }
 
-  def smtSolver: Prover = options.smtSolver
+  val smtSolver: Prover =
+    new OneShotProver {
+      override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
+        throw new NotImplementedError
+      override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
+        options.smtSolver.isValid( seq.map( eqTh.normalize( _ ).asInstanceOf[Formula] ) )
+    }
 
   def solve(): LKProof = {
     info( sequent )
@@ -156,15 +165,18 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     for ( cls <- CNFp( canSol ) )
       info( cls map { _.toSigRelativeString } )
 
-    val solution = hSolveQBUP( qbupMatrix, xInst, smtSolver ).
-      getOrElse( throw new IllegalArgumentException( s"Could not solve ${qbupMatrix.toSigRelativeString}" ) )
+    val solution = hSolveQBUP( qbupMatrix, xInst, smtSolver, options.equationalTheory ).
+      getOrElse( throw new IllegalArgumentException( s"Could not solve:\n${qbupMatrix.toSigRelativeString}" ) )
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), s"Solution not valid" )
+    require( smtSolver.isValid( formula ), "Solution not valid" )
 
-    val proof = spwi.lkProof( Seq( solution ), EquationalLKProver )
+    val proof = spwi.lkProof(
+      Seq( solution ),
+      if ( options.equationalTheory.isEmpty ) EquationalLKProver else Escargot,
+      options.equationalTheory )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
 
     ctx.check( proof )
@@ -175,9 +187,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   def getInstanceProof( inst: Seq[Expr] ): ExpansionProof = {
     info( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
-    val instProof = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {
+    val instProof0 = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {
       throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
     }
+    val Some( instProof ) = minimalExpansionSequent( instProof0, smtSolver )
     require(
       smtSolver.isValid( instProof.deep ),
       s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}" )

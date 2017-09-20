@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, containsStrongQuantifier, instantiate }
+import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, containsStrongQuantifier, instantiate, universalClosure }
 import at.logic.gapt.grammars.{ RecursionScheme, Rule }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.{ LKProof, TheoryAxiom, WeakeningMacroRule, cleanStructuralRules }
@@ -12,7 +12,7 @@ import at.logic.gapt.utils.{ Maybe, linearizeStrictPartialOrder }
 trait SchematicProofWithInduction {
   def endSequent: HOLSequent
   def solutionCondition: Formula
-  def lkProof( solution: Seq[Expr], prover: Prover ): LKProof
+  def lkProof( solution: Seq[Expr], prover: Prover, equationalTheory: Seq[Formula] ): LKProof
 
   def paramVars: Seq[Var]
   def generatedLanguage( inst: Seq[Expr] ): Set[Formula]
@@ -56,7 +56,7 @@ case class ProofByRecursionScheme(
         conds += seq
         Some( WeakeningMacroRule( TheoryAxiom( Sequent() ), seq ) )
       }
-    } )
+    }, Seq() )
     conds.result()
   }
 
@@ -89,18 +89,20 @@ case class ProofByRecursionScheme(
     }
     for {
       ( label, form ) <- state.currentSubGoalOption.get.labelledSequent
-      if containsQuantifierOnLogicalLevel( form )
+      if containsQuantifierOnLogicalLevel( form ) && !label.startsWith( "eq_" )
     } state += forget( label )
     state
   }
 
-  def mkLemma( solution: Seq[Expr], nonTerminal: Const, prover: Prover ) = {
+  def mkLemma( state0: ProofState, solution: Seq[Expr], nonTerminal: Const, prover: Prover ) = {
     val lem @ All.Block( vs, matrix ) = lemma( solution, nonTerminal )
 
     val prevLems = for ( prevNT <- dependencyOrder.takeWhile( _ != nonTerminal ) )
       yield s"lem_${prevNT.name}" -> lemma( solution, prevNT )
 
-    var state = ProofState( prevLems ++: theory :+ ( "goal" -> lem ) )
+    var state = ProofState( state0.currentSubGoalOption.get )
+    state += forget( "goal" )
+    state += renameLabel( s"lem_${nonTerminal.name}" ).to( "goal" )
 
     val indArgs = for {
       Rule( Apps( `nonTerminal`, args ), _ ) <- recSchem.rules
@@ -124,12 +126,23 @@ case class ProofByRecursionScheme(
     state.result
   }
 
-  def lkProof( solution: Seq[Expr], prover: Prover ): LKProof = {
+  def lkProof( solution: Seq[Expr], prover: Prover, equationalTheory: Seq[Formula] ): LKProof = {
     var state = ProofState( theory :+ ( "goal" -> conj ) )
+
+    for ( ( eq, i ) <- equationalTheory.zipWithIndex ) {
+      val lem = universalClosure( eq )
+      state += cut( s"eq_$i", lem )
+      state += forget( "goal" )
+      state += decompose
+      val proof = prover.getLKProof( state.currentSubGoalOption.get.conclusion ).
+        getOrElse( throw new Exception( s"Theory equation $eq is unprovable:\n${state.currentSubGoalOption.get}" ) )
+      state += insert( proof )
+    }
+
     for ( nt <- dependencyOrder if nt != recSchem.startSymbol ) {
       val lem = lemma( solution, nt )
       state += cut( s"lem_${nt.name}", lem )
-      state += insert( mkLemma( solution, nt, prover ) )
+      state += insert( mkLemma( state, solution, nt, prover ) )
     }
 
     for ( v <- paramVars ) state += allR( v )

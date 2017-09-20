@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.viper
 
 import ammonite.ops._
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
@@ -37,6 +38,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
   def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
+  def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
 
   override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
     val viper = new TreeGrammarProver( ctx, goal.conclusion, options )

@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, skolemize }
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.escargot.Escargot
