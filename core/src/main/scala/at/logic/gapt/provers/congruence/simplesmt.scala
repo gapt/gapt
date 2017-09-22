@@ -1,0 +1,66 @@
+package at.logic.gapt.provers.congruence
+
+import at.logic.gapt.expr._
+import at.logic.gapt.models.MapBasedInterpretation
+import at.logic.gapt.proofs.resolution.structuralCNF
+import at.logic.gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
+import at.logic.gapt.provers.OneShotProver
+import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.utils.Maybe
+
+import scala.collection.mutable
+
+object checkSmtConflict {
+  import at.logic.gapt.proofs.congruence._
+  def apply( sequent: HOLSequent, theory: CongruenceClosure => CongruenceClosure ): Option[HOLSequent] = {
+    var cc = CongruenceClosure()
+    for ( f <- sequent ) cc = cc.internalize( f )
+    for ( eq @ Eq( _, _ ) <- sequent.antecedent ) cc = cc.merge( Input( eq ) )
+    cc = cc.saturate( theory )
+
+    def coreFromProof( p: CongruenceProof ): HOLSequent =
+      p.subProofs.collect { case Input( f ) => f } ++: Sequent()
+
+    // Tautology
+    for {
+      a <- sequent.antecedent
+      b <- sequent.succedent
+      p <- cc.getEqvProof( a, b )
+    } return Some( ( a +: coreFromProof( p ) :+ b ).distinct )
+
+    // Inequality
+    for {
+      eq @ Eq( a, b ) <- sequent.succedent
+      p <- cc.getEqvProof( a, b )
+    } return Some( coreFromProof( p ) :+ eq )
+
+    None
+  }
+}
+
+class SimpleSmtSolver( theory: CongruenceClosure => CongruenceClosure ) extends OneShotProver {
+  override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ) =
+    throw new NotImplementedError()
+
+  override def isValid( seq: HOLSequent )( implicit ctx0: Maybe[Context] ): Boolean = {
+    val cnf = structuralCNF( seq, propositional = true )
+      .map( _.conclusion.asInstanceOf[HOLClause] )
+      .to[mutable.Buffer]
+    while ( true ) {
+      Sat4j.solve( cnf ) match {
+        case Some( model: MapBasedInterpretation ) =>
+          val modelCube = Sequent( for ( ( a, v ) <- model.model )
+            yield ( a, if ( v ) Polarity.InAntecedent else Polarity.InSuccedent ) )
+          checkSmtConflict( modelCube, theory ) match {
+            case Some( core ) =>
+              cnf += core.asInstanceOf[HOLClause]
+            case None => return false
+          }
+        case None => return true
+      }
+    }
+    throw new IllegalStateException
+  }
+}
+
+object SimpleSmtSolver extends SimpleSmtSolver( identity )
