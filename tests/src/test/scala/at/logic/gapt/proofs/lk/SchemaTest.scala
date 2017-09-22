@@ -26,7 +26,7 @@ class SchemaTest extends Specification {
 
   {
     import tautSchema.ctx
-  /*  "simple schema basecase" in {
+    "simple schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"taut ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -42,13 +42,13 @@ class SchemaTest extends Specification {
       val proof = LKProofSchemata.Instantiate( le"taut ${nat( 6 )}" )
       ctx.check( proof )
       ok
-    }*/
+    }
   }
 
   {
     import niaSchema.ctx
 
-/*    "Nia-schema basecase" in {
+    "Nia-schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -155,7 +155,7 @@ class SchemaTest extends Specification {
           case None => vale
         }
       } ) must beEqualTo( 16 )
-    }*/
+    }
 
     "Shit" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
@@ -169,7 +169,7 @@ class SchemaTest extends Specification {
         case None => Var("",TBase("nat"))
       }
       val it = SchematicClauseSet.InstantiateClauseSetSchema("omega",HOLSequent(Vector[Formula](),Vector[Formula]()),SCS,Substitution(varforsch,nat(1)))
-
+      println(it)
       ok
     }
 
@@ -178,7 +178,7 @@ class SchemaTest extends Specification {
   {
     import gniaSchema.ctx
 
-   /* "gNia-schema both parameters zero" in {
+    "gNia-schema both parameters zero" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )} ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -237,7 +237,7 @@ class SchemaTest extends Specification {
         } else pluscomm
       }
       IsKSimple( result ) must_== true
-    }*/
+    }
   }
 
 }

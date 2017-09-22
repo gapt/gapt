@@ -68,14 +68,13 @@ object SchematicClauseSet {
         val instantiatedClauses = optionClauseSets.head._2.map( x => SetSequent[Atom]( sigma( x ).asInstanceOf[Sequent[Atom]] ) )
         //This code goes through the clause set and checks if the any of the clause contain clause set terms
         //if they do, the code then calls this method recursively on the those parts and attaches them
-        val finalClaseSet: Set[SetSequent[Atom]] = instantiatedClauses.fold( Set[SetSequent[Atom]]() )( ( vale, x ) => {
+         instantiatedClauses.fold( Set[SetSequent[Atom]]() )( ( vale, x ) => {
           val ( newSuccSeq, cLSSyms ) = SequentSplitter( x.asInstanceOf[SetSequent[Atom]] )
           val newSetSequent = SetSequent( Sequent( x.asInstanceOf[SetSequent[Atom]].sequent.antecedent, newSuccSeq ) )
           if ( cLSSyms.isEmpty ) vale.asInstanceOf[Set[SetSequent[Atom]]] ++ Set[SetSequent[Atom]]( x.asInstanceOf[SetSequent[Atom]] )
           else {
-
             val baseofFold = if ( newSetSequent.sequent.antecedent.isEmpty && newSetSequent.sequent.succedent.isEmpty ) Set[SetSequent[Atom]]() else Set[SetSequent[Atom]]( newSetSequent )
-            cLSSyms.fold( baseofFold )( ( mixedClauseSet, y ) => {
+            val finalcs = cLSSyms.fold( baseofFold )( ( mixedClauseSet, y ) => {
               val Apps( _, info ) = y
               val Const( newTopSym, _ ) = info.head
               val seperator = ClauseTermReader( info.tail )
@@ -97,15 +96,13 @@ object SchematicClauseSet {
                 val ( one: Set[Var], two: Expr ) = pair
                 sub.asInstanceOf[Substitution].compose( Substitution( one.head, two ) )
               } ).asInstanceOf[Substitution]
-              println( bestMatchClauses.toString() )
-              //Anela Please look at this, I am going Crazy line 103!!!
-              //println(bestMatchClauses.head.sequent)
-              mixedClauseSet
-            } )
-            vale
+              val thelowerclauses = InstantiateClauseSetSchema(newTopSym,newCutConfig,css,newsigma)
+              println(thelowerclauses+"  "+newCutConfig+"   "+newTopSym)
+              ComposeClauseSets(mixedClauseSet.asInstanceOf[Set[SetSequent[Atom]]],thelowerclauses)
+            } ).asInstanceOf[Set[SetSequent[Atom]]]
+            finalcs ++  vale.asInstanceOf[Set[SetSequent[Atom]]]
           }
         } ).asInstanceOf[Set[SetSequent[Atom]]]
-        finalClaseSet
       }
     }
   }
@@ -205,7 +202,7 @@ object SchematicClauseSet {
       } ).asInstanceOf[Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]
     } )
   }
-
+//Something Wrong here????
   object FormulaSetGeneralization {
     def apply( theSetOfFormula: Set[Formula], args: Set[Expr] ): Set[Formula] = theSetOfFormula.map( ancestor => {
       args.fold( ( 0, ancestor ) )( ( ancestorVarUpdate, curTerm ) => {
@@ -275,5 +272,16 @@ object SchematicClauseSet {
         if ( totalcount > oldcount ) ( totalcount, current._1, clauses )
         else theCorrect
       } )
+  }
+
+  object ComposeClauseSets{
+    def apply(C1:Set[SetSequent[Atom]], C2:Set[SetSequent[Atom]]):Set[SetSequent[Atom]] =
+    C1.foldLeft(Set[SetSequent[Atom]]())((compose,x)=>
+      C2.map(y => setSequentCompose(x,y)) ++ compose
+    )
+
+    def setSequentCompose(S1:SetSequent[Atom], S2:SetSequent[Atom]):SetSequent[Atom] =
+      SetSequent[Atom](Sequent[Atom](S1.sequent.antecedent++S2.sequent.antecedent,
+        S1.sequent.succedent++S2.sequent.succedent))
   }
 }
