@@ -16,7 +16,7 @@ class SimpleSmtSolverTest extends Specification {
   }
 
   "ac" in {
-    val solver = new SimpleSmtSolver( acTheory( FOLFunctionConst( "*", 2 ), commutative = true ).step )
+    val solver = new SimpleSmtSolver( acTheory( FOLFunctionConst( "*", 2 ) ).step )
 
     "ac 1" in {
       solver.isValid( hof"a * b = c & c * c = 1 -> b*c*a = 1" ) must_== true
@@ -41,7 +41,7 @@ class SimpleSmtSolverTest extends Specification {
          """
     val Some( expansion ) = Escargot.getExpansionProof( seq )
 
-    val acTh = acTheory( FOLFunctionConst( "*", 2 ), commutative = true )
+    val acTh = acTheory( FOLFunctionConst( "*", 2 ) )
     val uTh = unitTheory( FOLFunctionConst( "*", 2 ), le"s(0)" )
     val solver = new SimpleSmtSolver( cc => acTh.step( uTh.step( cc ) ) )
     val Some( minimized ) = minimalExpansionSequent( expansion, solver )

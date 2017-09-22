@@ -137,7 +137,7 @@ object CongruenceClosure {
   type Equation = ( Expr, Expr )
 }
 
-case class acTheory( op: Const, commutative: Boolean = true ) {
+case class acTheory( op: Const ) {
   object Op {
     def apply( a: Expr, b: Expr ): Expr = op( a, b )
     def unapply( e: Expr ): Option[( Expr, Expr )] =
@@ -166,7 +166,7 @@ case class acTheory( op: Const, commutative: Boolean = true ) {
   }
 
   def normalize( es: Seq[Expr] ): Seq[Expr] =
-    if ( commutative ) es.sortBy( _.hashCode ) else es
+    es.sortBy( _.hashCode )
 
   def multisetLt( as: Seq[Expr], bs: Seq[Expr] ): Boolean = {
     val cas = Map().withDefaultValue( 0 ) ++ as.view.groupBy( identity ).mapValues( _.size )

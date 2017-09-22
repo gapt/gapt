@@ -24,7 +24,7 @@ class CongruenceClosureTest extends Specification {
     val cc1 = CongruenceClosure().merges(
       hof"a * b = c",
       hof"c * c = 1" ).internalize( hof"(c*a)*b = 1" )
-    val cc2 = cc1.saturate( acTheory( FOLFunctionConst( "*", 2 ), commutative = false ).step )
+    val cc2 = cc1.saturate( acTheory( FOLFunctionConst( "*", 2 ) ).step )
     cc2.isEquivalent( le"(c*a)*b", le"1" ) must_== true
   }
 }
