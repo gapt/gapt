@@ -2,7 +2,8 @@ package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
-import at.logic.gapt.expr.hol.{ CNFp, instantiate }
+import at.logic.gapt.expr.hol.{ CNFp, instantiate, universalClosure }
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.grammars.Rule
 import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
@@ -197,7 +198,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )
-    encoding.encode( instProof ).toSeq.map( _.toString ).sorted.foreach( info( _ ) )
+    encoding.encode( instProof ).toSeq.map( _.toUntypedString( BabelSignature.defaultSignature ) ).sorted.foreach( info( _ ) )
 
     instProof
   }
