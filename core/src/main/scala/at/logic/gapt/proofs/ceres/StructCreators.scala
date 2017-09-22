@@ -165,11 +165,8 @@ object StructCreators extends Logger {
         val cutAncInSuccedent = cutanc_seq.succedent.map( x => A[Data]( x ) )
         val structs: Vector[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
         if ( !proofLink.matches( "" ) ) {
-          var variables: Seq[FOLVar] = freeVariables( so ).map( x => {
-            val Var( n, _ ) = x
-            FOLVar( n )
-          } ).toSeq
-          CLS[Data]( proofLink, cutanc_seq, variables, List[Data]() )
+
+          CLS[Data]( proofLink, cutanc_seq, freeVariables( so ).toSeq, List[Data]() )
         } else
           Times[Data]( structs, List[Data]() )
 

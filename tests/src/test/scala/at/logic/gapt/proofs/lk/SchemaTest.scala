@@ -5,9 +5,9 @@ import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
-import at.logic.gapt.proofs.{ Context, HOLSequent, SetSequent }
-import at.logic.gapt.proofs.Context.ProofDefinitions
-import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
+import at.logic.gapt.proofs.{Context, HOLSequent, SetSequent}
+import at.logic.gapt.proofs.Context.{ProofDefinitions, ProofNames, StructurallyInductiveTypes}
+import at.logic.gapt.proofs.ceres.{CharacteristicClauseSet, SchematicClauseSet, StructCreators}
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -26,7 +26,7 @@ class SchemaTest extends Specification {
 
   {
     import tautSchema.ctx
-    "simple schema basecase" in {
+  /*  "simple schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"taut ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -42,13 +42,13 @@ class SchemaTest extends Specification {
       val proof = LKProofSchemata.Instantiate( le"taut ${nat( 6 )}" )
       ctx.check( proof )
       ok
-    }
+    }*/
   }
 
   {
     import niaSchema.ctx
 
-    "Nia-schema basecase" in {
+/*    "Nia-schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -118,6 +118,7 @@ class SchemaTest extends Specification {
         }
       } ) must beEqualTo( 4 )
     }
+
     " Extracting the Schematic Characteristic Clause Set Checking number of clause sets per configuration" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
         case Some( x ) => x
@@ -154,6 +155,22 @@ class SchemaTest extends Specification {
           case None => vale
         }
       } ) must beEqualTo( 16 )
+    }*/
+
+    "Shit" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      val varforsch = ctx.get[ProofNames].names.get("omega") match{
+        case Some( x ) => {
+          freeVariables(x._2).head
+        }
+        case None => Var("",TBase("nat"))
+      }
+      val it = SchematicClauseSet.InstantiateClauseSetSchema("omega",HOLSequent(Vector[Formula](),Vector[Formula]()),SCS,Substitution(varforsch,nat(1)))
+
+      ok
     }
 
   }
@@ -161,7 +178,7 @@ class SchemaTest extends Specification {
   {
     import gniaSchema.ctx
 
-    "gNia-schema both parameters zero" in {
+   /* "gNia-schema both parameters zero" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )} ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -220,7 +237,7 @@ class SchemaTest extends Specification {
         } else pluscomm
       }
       IsKSimple( result ) must_== true
-    }
+    }*/
   }
 
 }

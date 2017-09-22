@@ -149,7 +149,7 @@ object A {
   def apply[Data]( fo: Formula ): Struct[Data] = A[Data]( fo, Nil )
 }
 
-case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[FOLTerm], data: List[Data] ) extends Struct[Data] { // Clause Set Symbol Struct
+case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[Expr], data: List[Data] ) extends Struct[Data] { // Clause Set Symbol Struct
   override def toString(): String = "CLS(" + proof + " , " + config.toString + " , " + fv.toString() + ")"
   override def formula_equal( s: Struct[Data] ) = s match {
     case CLS( n, c, f, w ) => n.matches( proof ) && c.equals( config ) && f.equals( fv ) && w.equals( data )
@@ -159,13 +159,13 @@ case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[FOLTerm], data:
   override def alternations() = 0
   override def getData = Nil
 
-  def toFormula = FOLAtom( "CL" + "[" + proof + "," + config.toString + "]", fv )
+  def toFormula = Atom( "CL" + "[" + proof + "," + config.toString + "]", fv )
 
-  def label = FOLAtom( "CL" + "[" + proof + "," + config.toString + "]", fv )
+  def label = Atom( "CL" + "[" + proof + "," + config.toString + "]", fv )
   def children = Seq()
 }
 object CLS {
-  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[FOLTerm] ): Struct[Data] = CLS[Data]( Proof, config, fv )
+  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[Expr] ): Struct[Data] = CLS[Data]( Proof, config, fv )
 }
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {

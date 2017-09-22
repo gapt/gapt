@@ -45,7 +45,7 @@ class CharacteristicClauseSet[Data] {
       } ) )
     case CLS( proof, config, fv, _ ) =>
       val clauseSymbol: Atom = Atom( "CL", Seq( Const( proof, To ) ) ++ Seq( Const( "|", To ) ) ++ config.antecedent ++ Seq( Const( "⊢", To ) ) ++ config.succedent ++ Seq( Const( "|", To ) ) ++ fv )
-      Set( SetSequent[Atom]( Sequent( Nil, List( clauseSymbol ) ) ) )
+      Set( SetSequent[Atom]( Sequent[Atom]( Nil, List( clauseSymbol ) ) ) )
     case _ => throw new Exception( "Unhandled case: " + struct )
   }
 
