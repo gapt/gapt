@@ -30,6 +30,8 @@ class ViperTest extends Specification with SequentMatchers {
         var opts0 = ViperOptions( fixup = false )
         if ( prob == "linear2par" )
           skipped( "needs careful choice of instance for canonical substitution" )
+        if ( prob == "comm1" )
+          skipped( "canonical solution is huge and takes a long time" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )
