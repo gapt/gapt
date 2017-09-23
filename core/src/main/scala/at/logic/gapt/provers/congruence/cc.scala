@@ -137,7 +137,7 @@ object CongruenceClosure {
   type Equation = ( Expr, Expr )
 }
 
-case class acTheory( op: Const ) {
+class Bigops( op: Const ) {
   object Op {
     def apply( a: Expr, b: Expr ): Expr = op( a, b )
     def unapply( e: Expr ): Option[( Expr, Expr )] =
@@ -164,112 +164,87 @@ case class acTheory( op: Const ) {
       Some( buf )
     }
   }
+}
 
+case class acTheory( op: Const ) extends Bigops( op ) {
   def normalize( es: Seq[Expr] ): Seq[Expr] =
     es.sortBy( _.hashCode )
 
-  def multisetLt( as: Seq[Expr], bs: Seq[Expr] ): Boolean = {
-    val cas = Map().withDefaultValue( 0 ) ++ as.view.groupBy( identity ).mapValues( _.size )
-    val cbs = Map().withDefaultValue( 0 ) ++ bs.view.groupBy( identity ).mapValues( _.size )
-    as != bs && cas.forall {
-      case ( x, n ) =>
-        n <= cbs( x ) || cbs.exists {
-          case ( y, m ) =>
-            y.hashCode > x.hashCode && m > cas( y )
-        }
-    }
-  }
+  def lexdeg( as: Seq[Expr], bs: Seq[Expr] ): Boolean =
+    as.size < bs.size || ( as.size == bs.size &&
+      as.view.zip( bs ).dropWhile( p => p._1 == p._2 )
+      .headOption.exists( p => p._1.hashCode < p._2.hashCode ) )
 
   def step( cc0: CongruenceClosure ): CongruenceClosure = {
     var cc = cc0
 
-    val E = ( for {
+    val E = mutable.Map[( Seq[Expr], Seq[Expr] ), CongruenceProof]()
+    for {
       a <- cc0.representatives
       e @ Op( b, c ) <- cc0.equivalenceClass( a )
-    } yield {
-      val lhs = Seq( a )
-      val rhs = normalize( Seq( b, c ) )
-      cc = cc.merge( ACTheory( op, e, Ops( rhs ) ) )
-      ( lhs, rhs )
-    } ).to[mutable.Queue]
-    val R = mutable.Set[( Seq[Expr], Seq[Expr] )]()
+      pe <- cc0.getEqvProof( e, a )
+      lhs = Seq( a )
+      rhs = normalize( Seq( b, c ) )
+    } E( rhs -> lhs ) = ACTheory( op, Ops( rhs ), e ) * pe
+    val R = mutable.Map[( Seq[Expr], Seq[Expr] ), CongruenceProof]()
 
-    def simplify( a: Seq[Expr] ): Seq[Expr] = {
-      R.find( r => r._1.diff( a ).isEmpty ) match {
-        case Some( ( lhs, rhs ) ) =>
+    def simplify( a: Seq[Expr], p: CongruenceProof ): ( Seq[Expr], CongruenceProof ) = {
+      R.find( r => r._1._1.diff( a ).isEmpty ) match {
+        case Some( ( ( lhs, rhs ), q ) ) =>
           val a_ = normalize( a.diff( lhs ) ++ rhs )
-          cc = cc.merge( ACRw( op, Ops( a ), Ops( a_ ),
-            cc.getEqvProof( Ops( lhs ), Ops( rhs ) ).get ) )
-          simplify( a_ )
-        case None => a
+          simplify( a_, p * ACRw( op, Ops( a ), Ops( a_ ), q ) )
+        case None => ( a, p )
       }
     }
 
     while ( E.nonEmpty ) {
-      val ( lhs, rhs ) = {
-        val ( l0, r0 ) = E.dequeue()
-        val ( l1, r1 ) = ( simplify( l0 ), simplify( r0 ) )
-        if ( multisetLt( l1, r1 ) ) ( r1, l1 ) else ( l1, r1 )
+      val ( lhs, rhs, p ) = {
+        val ( eq0 @ ( l0, r0 ), p0 ) = E.head
+        E -= eq0
+        val ( ( l1, pl1 ), ( r1, pr1 ) ) = ( simplify( l0, Refl( Ops( l0 ) ) ), simplify( r0, Refl( Ops( r0 ) ) ) )
+        if ( lexdeg( l1, r1 ) ) ( r1, l1, pr1.inv * p0.inv * pl1 ) else ( l1, r1, pl1.inv * p0 * pr1 )
       }
       if ( lhs != rhs ) {
+        // Propagate
+        if ( lhs.size == 1 && rhs.size == 1 )
+          cc = cc.merge( p )
+
         // Compose
         for {
-          r @ ( lhs1, rhs1 ) <- R.toSet
+          ( r @ ( lhs1, rhs1 ), p1 ) <- R.toVector
           if lhs.diff( rhs1 ).isEmpty
-        } {
-          R -= r
-          val rhs1_ = normalize( rhs1.diff( lhs ) ++ rhs )
-          cc = cc.merge( ACRw( op, Ops( lhs1 ), Ops( rhs1_ ),
-            cc.getEqvProof( Ops( lhs1 ), Ops( rhs1 ) ).get ) )
-          R += ( lhs1 -> rhs1_ )
-        }
+          rhs1_ = normalize( rhs1.diff( lhs ) ++ rhs )
+          p1_ = p1 * ACRw( op, Ops( rhs1 ), Ops( rhs1_ ), p )
+        } { R -= r; R( lhs1 -> rhs1_ ) = p1_ }
 
         // Collapse
         for {
-          r @ ( lhs1, rhs1 ) <- R.toSet
+          ( r @ ( lhs1, rhs1 ), p1 ) <- R.toVector
           if lhs.diff( lhs1 ).isEmpty
-        } {
-          R -= r
-          val lhs1_ = normalize( lhs1.diff( lhs ) ++ rhs )
-          cc = cc.merge( ACRw( op, Ops( lhs1 ), Ops( lhs1_ ),
-            cc.getEqvProof( Ops( lhs1 ), Ops( rhs1 ) ).get ) )
-          E += ( lhs1_ -> rhs1 )
-        }
+          lhs1_ = normalize( lhs1.diff( lhs ) ++ rhs )
+          p1_ = ACRw( op, Ops( lhs1 ), Ops( lhs1_ ), p ).inv * p1
+        } { R -= r; E( lhs1_ -> rhs1 ) = p1_ }
 
         // Superpose
         for {
-          r1 @ ( lhs1, rhs1 ) <- R.toSet
-          r2 @ ( lhs2, rhs2 ) <- R.toSet
-          if r1.hashCode < r2.hashCode
-          commonLhs = lhs1.intersect( lhs2 )
+          ( ( lhs2, rhs2 ), p2 ) <- R
+          commonLhs = lhs.intersect( lhs2 )
           if commonLhs.nonEmpty
-        } {
-          val onlyLhs1 = lhs1.diff( lhs2 )
-          val onlyLhs2 = lhs2.diff( lhs1 )
-          val lhs3 = normalize( rhs1 ++ onlyLhs2 )
-          val middle = lhs1 ++ onlyLhs2
-          val rhs3 = normalize( onlyLhs1 ++ rhs2 )
-          cc = cc.merge(
-            ACRw( op, Ops( middle ), Ops( lhs3 ),
-              cc.getEqvProof( Ops( lhs1 ), Ops( rhs1 ) ).get ).inv *
-              ACRw( op, Ops( middle ), Ops( rhs3 ),
-                cc.getEqvProof( Ops( lhs2 ), Ops( rhs2 ) ).get ) )
-          E += ( lhs3 -> rhs3 )
-        }
+          onlyLhs1 = lhs.diff( lhs2 )
+          onlyLhs2 = lhs2.diff( lhs )
+          lhs3 = normalize( rhs ++ onlyLhs2 )
+          middle = lhs ++ onlyLhs2
+          rhs3 = normalize( onlyLhs1 ++ rhs2 )
+          p3 = ACRw( op, Ops( middle ), Ops( lhs3 ), p ).inv *
+            ACRw( op, Ops( middle ), Ops( rhs3 ), p2 )
+        } E( lhs3 -> rhs3 ) = p3
 
         // Insert
-        R += ( lhs -> rhs )
+        R( lhs -> rhs ) = p
       }
     }
 
-    // only return equivalences of terms in original set
-    var res = cc0
-    for {
-      a <- cc0.representatives
-      b <- cc0.representatives
-      p <- cc.getEqvProof( a, b )
-    } res = res.merge( p )
-    res
+    cc
   }
 }
 
