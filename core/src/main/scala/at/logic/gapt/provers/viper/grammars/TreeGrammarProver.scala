@@ -141,9 +141,9 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     failedInstOption map { failedInst =>
       import cats.instances.list._
       import cats.syntax.traverse._
-      val minimalCounterExample = failedInst.toList.
+      val minimalCounterExample = ( failedInst.toList.
         traverse( i => folSubTerms( i ).filter( _.ty == i.ty ).toList ).
-        filterNot( checkInst ).
+        filterNot( checkInst ) :+ failedInst.toList ).
         minBy { _ map { expressionSize( _ ) } sum }
       info( s"Minimal counterexample: ${minimalCounterExample.map { _.toSigRelativeString }}" )
       minimalCounterExample
