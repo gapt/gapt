@@ -168,7 +168,8 @@ object hSolveQBUP {
             ( e, ps ) <- getFOPositions( a )
             subst <- syntacticMatching( lhs, e )
             rhs_ = subst( rhs )
-            a_ = ps.foldLeft( a: Expr )( ( b, p ) => b.replace( p, rhs_ ) ).asInstanceOf[Atom]
+            p <- ps
+            a_ = a.replace( p, rhs_ ).asInstanceOf[Atom]
           } forgetfulInferences( ( cnf - cls + normalize( cls.replaceAt( j, a_ ) ),
             for ( ( e, i_ ) <- equations.zipWithIndex if i_ != i ) yield e ) )
         }
