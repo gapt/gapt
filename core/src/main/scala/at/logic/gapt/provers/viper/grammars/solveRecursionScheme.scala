@@ -71,8 +71,7 @@ object simplePi1RecSchemTempl {
       indLemmaRules.toSet
         + ( startSymbolNT( startSymbolArgs: _* ) -> indLemmaNT( startSymbolArgs: _* )( startSymbolArgs: _* )( rhsPi1QArgs: _* ) )
         + ( startSymbolNT( startSymbolArgs: _* ) -> Var( "u", instTT ) )
-    //        + ( indLemmaNT( startSymbolArgs: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) )
-    )
+        + ( indLemmaNT( startSymbolArgs: _* )( startSymbolArgs2: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) ) )
   }
 }
 
