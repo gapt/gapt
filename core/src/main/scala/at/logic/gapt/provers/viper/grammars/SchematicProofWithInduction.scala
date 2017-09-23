@@ -20,11 +20,13 @@ trait SchematicProofWithInduction {
 
 case class ProofByRecursionScheme(
     endSequent: HOLSequent,
-    recSchem:   RecursionScheme,
+    recSchem0:  RecursionScheme,
     context:    Context ) extends SchematicProofWithInduction {
-  private implicit def ctx = context
+  private implicit def ctx: Context = context
 
-  override def toString = recSchem.toString
+  override def toString = recSchem0.toString
+
+  val recSchem = homogenizeRS( recSchem0 )
 
   val theory = for {
     ( f, i ) <- endSequent.zipWithIndex
