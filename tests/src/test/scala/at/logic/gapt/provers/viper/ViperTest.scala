@@ -1,9 +1,11 @@
 package at.logic.gapt.provers.viper
 
+import at.logic.gapt.examples.induction.associativitySpecialCase
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.provers.maxsat.OpenWBO
+import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
@@ -49,6 +51,11 @@ class ViperTest extends Specification with SequentMatchers {
         lk.conclusion.distinct.diff( problem.toSequent ) must_== Sequent()
       }
     }
+  }
+
+  "associativity" in {
+    if ( !SPASS.isInstalled ) skipped( "required instance proofs from spass" )
+    associativitySpecialCase; ok
   }
 
 }
