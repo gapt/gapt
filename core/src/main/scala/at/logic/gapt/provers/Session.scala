@@ -66,7 +66,7 @@ object Session {
     /**
      * Checks whether the current set of declarations and assertions is satisfiable.
      */
-    case object CheckSat extends SessionCommand[Boolean]
+    case object CheckSat extends SessionCommand[Either[SExpression, Boolean]]
 
     /**
      * Sets the logic to be used for the session.
@@ -120,12 +120,12 @@ object Session {
   /**
    * Checks whether the current set of declarations and assertions is satisfiable.
    */
-  def checkSat: Session[Boolean] = liftF( CheckSat )
+  def checkSat: Session[Either[SExpression, Boolean]] = liftF( CheckSat )
 
   /**
    * Checks whether the current set of declarations and assertions is not satisfiable.
    */
-  def checkUnsat: Session[Boolean] = checkSat.map( !_ )
+  def checkUnsat: Session[Either[SExpression, Boolean]] = checkSat.map( _.map( !_ ) )
 
   /**
    * Sets the logic to be used for the session.
@@ -261,8 +261,9 @@ object Session {
 
         case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LAtom( ":named" ), LAtom( label ) ) ) )
         case CheckSat => ask( LFun( "check-sat" ) ) match {
-          case LAtom( "sat" )   => true
-          case LAtom( "unsat" ) => false
+          case LAtom( "sat" )   => Right( true )
+          case LAtom( "unsat" ) => Right( false )
+          case unknown          => Left( unknown )
         }
         case SetLogic( logic )         => tell( LFun( "set-logic", LAtom( logic ) ) )
         case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) )
@@ -382,7 +383,7 @@ object Session {
           assertedFormulas += formula; ()
         case AssertLabelled( formula, _ ) =>
           assertedFormulas += formula; ()
-        case CheckSat => !checkValidity( assertedFormulas ++: Sequent() )
+        case CheckSat => Right( !checkValidity( assertedFormulas ++: Sequent() ) )
         case Ask( input ) => input
         case DeclareFun( _ ) | DeclareSort( _ ) | SetLogic( _ ) | SetOption( _, _ ) | Tell( _ ) => ()
       }

@@ -13,7 +13,7 @@ class CVC4SessionTest extends Specification {
   if ( !CVC4.isInstalled ) skipAll
 
   "check sat of empty theory" in {
-    CVC4.runSession( checkSat ) must_== true
+    CVC4.runSession( checkSat ) must_== Right( true )
   }
 
   "push and pop" in {
@@ -29,6 +29,6 @@ class CVC4SessionTest extends Specification {
         sat2 <- checkSat
         sat3 <- withScope { assert( hof"p 0 & 0 = s 0" ) >> checkSat }
       } yield ( sat1, sat2, sat3 )
-    } must_== ( false, true, false )
+    } must_== ( Right( false ), Right( true ), Right( false ) )
   }
 }

@@ -20,6 +20,6 @@ object associativitySpecialCase extends TacticsProof {
     hols"""p0: !x x+0 = x, ps: !x!y x+s(y) = s(x+y),
            0p: !x 0+x = x, sp: !x!y s(x)+y = s(x+y)
            :- !x (x+x)+x = x+(x+x) """ ) {
-    tac
+      tac
     }
 }

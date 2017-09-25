@@ -8,8 +8,9 @@ import at.logic.gapt.provers.Session._
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 import cats.implicits._
 
-object CVC4 extends CVC4( "QF_UF", Seq() )
-class CVC4( val logic: String, val extraArgs: Seq[String] = Seq() ) extends IncrementalProver with ExternalProgram {
+object CVC4 extends CVC4( "QF_UF", Seq(), treatUnknownAsSat = false )
+class CVC4( val logic: String, val extraArgs: Seq[String] = Seq(),
+            override val treatUnknownAsSat: Boolean = false ) extends IncrementalProver with ExternalProgram {
 
   override val isInstalled: Boolean =
     try {

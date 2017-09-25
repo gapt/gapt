@@ -93,6 +93,8 @@ trait OneShotProver extends Prover {
  */
 trait IncrementalProver extends Prover {
 
+  def treatUnknownAsSat = false
+
   /**
    * Tests the validity of a sequent.
    */
@@ -101,8 +103,11 @@ trait IncrementalProver extends Prover {
     for {
       _ <- declareSymbolsIn( groundSeq.elements )
       _ <- assert( groundSeq.map( identity, -_ ).elements.toList )
-      sat <- checkSat
-    } yield !sat
+      unsat <- checkUnsat
+    } yield unsat.getOrElse {
+      if ( treatUnknownAsSat ) false
+      else throw new IllegalArgumentException
+    }
   }
 
   override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = ???
