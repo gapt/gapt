@@ -224,7 +224,7 @@ object instReplCtx {
 }
 
 object generalizeET {
-  def apply( et: ExpansionTree, newShallow: Formula ): ExpansionTree =
+  def apply( et: ExpansionTree, newShallow: Formula )( implicit ctx: Context ): ExpansionTree =
     HOLPosition.differingPositions( et.shallow, newShallow ).
       groupBy( pos => ( et.shallow( pos ), newShallow( pos ) ) ).
       foldLeft( et ) {

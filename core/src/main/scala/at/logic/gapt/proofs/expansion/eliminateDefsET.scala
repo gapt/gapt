@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
+import at.logic.gapt.proofs.Context
 
 object eliminateDefsET {
   object DefinitionFormula {
@@ -14,17 +15,17 @@ object eliminateDefsET {
   private val negReplPos = HOLPosition( 1, 2 )
   private val posReplPos = HOLPosition( 2, 1 )
 
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean ): ExpansionProof = {
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean )( implicit ctx: Context ): ExpansionProof = {
     val definitions = ep.expansionSequent.antecedent.collect {
       case DefinitionFormula( _, c, _ ) => c
     }
     apply( ep, pureFolWithoutEq, definitions.toSet[Const] )
   }
 
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] ): ExpansionProof =
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] )( implicit ctx: Context ): ExpansionProof =
     ExpansionProof( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ).expansionSequent )
 
-  private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean ): ExpansionProof = {
+  private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean )( implicit ctx: Context ): ExpansionProof = {
     val definitionFormula @ DefinitionFormula( vs, _, definedFormula ) =
       ep.expansionSequent.antecedent.map( _.shallow ).find {
         case DefinitionFormula( _, `definitionConst`, _ ) => true
