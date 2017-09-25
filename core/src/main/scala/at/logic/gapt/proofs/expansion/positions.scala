@@ -144,14 +144,14 @@ object insertDefinition {
         ETImp( insertDefinition( l, defn, Abs( v, f ) ), insertDefinition( r, defn, Abs( v, g ) ) )
 
       case ( ETStrongQuantifier( shallow, eigen, child ), Quant( _, _, _ ) ) =>
-        val shallowNew = definitionApplied.asInstanceOf[Formula]
+        val shallowNew = definitionApplied
         ETStrongQuantifier( shallowNew, eigen, insertDefinition( child, defn, instReplCtx( replacementContext, eigen ) ) )
 
       case ( ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ), Quant( x, f, _ ) ) =>
         throw new IllegalArgumentException( "Skolem nodes are not handled at this time." )
 
       case ( ETWeakQuantifier( shallow, instances ), Quant( _, _, _ ) ) =>
-        val shallowNew = definitionApplied.asInstanceOf[Formula]
+        val shallowNew = definitionApplied
         val instancesNew: Map[Expr, ExpansionTree] = ( for {
           ( t, e ) <- instances
           ctxNew = instReplCtx( replacementContext, t )
@@ -164,7 +164,7 @@ object insertDefinition {
         ETMerge( insertDefinition( l, defn, replacementContext ), insertDefinition( r, defn, replacementContext ) )
 
       case ( ETWeakening( formula, pol ), _ ) =>
-        ETWeakening( definitionApplied.asInstanceOf[Formula], pol )
+        ETWeakening( definitionApplied, pol )
 
       case _ =>
         replaceWithContext( et, replacementContext, defn.what )
