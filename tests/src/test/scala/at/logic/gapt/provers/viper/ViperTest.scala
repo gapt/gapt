@@ -3,6 +3,7 @@ package at.logic.gapt.provers.viper
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
@@ -32,6 +33,9 @@ class ViperTest extends Specification with SequentMatchers {
           skipped( "needs careful choice of instance for canonical substitution" )
         if ( prob == "comm1" )
           skipped( "canonical solution is huge and takes a long time" )
+        if ( prob == "comms0" && !OpenWBO.isInstalled ) {
+          skipped( "doesn't work with maxsat4j" )
+        }
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )
