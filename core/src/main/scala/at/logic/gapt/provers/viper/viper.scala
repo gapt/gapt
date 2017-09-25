@@ -13,6 +13,7 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms._
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.SmtEquationMode
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
@@ -36,6 +37,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
+  def smtEquationMode( mode: SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
   def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )

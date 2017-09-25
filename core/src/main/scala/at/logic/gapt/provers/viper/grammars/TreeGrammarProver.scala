@@ -24,11 +24,13 @@ object DefaultProvers {
     else new Escargot( splitting = true, propositional = true, equality = true )
 }
 
+import TreeGrammarProverOptions._
 case class TreeGrammarProverOptions(
     instanceNumber:   Int                 = 10,
     instanceSize:     FloatRange          = ( 0, 2 ),
     instanceProver:   Prover              = DefaultProvers.firstOrder,
     smtSolver:        Prover              = DefaultProvers.smt,
+    smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
     findingMethod:    String              = "maxsat",
     quantTys:         Option[Seq[String]] = None,
     grammarWeighting: Rule => Int         = _ => 1,
@@ -40,6 +42,30 @@ case class TreeGrammarProverOptions(
 
 object TreeGrammarProverOptions {
   type FloatRange = ( Float, Float )
+
+  trait SmtEquationMode { def adapt( th: Seq[Formula], p: Prover ): Prover }
+  case object AddNormalizedFormula extends SmtEquationMode {
+    override def adapt( th: Seq[Formula], p: Prover ): Prover =
+      new OneShotProver {
+        override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
+          throw new NotImplementedError
+
+        val eqTh = Normalizer( th.map( ReductionRule( _ ) ) )
+        override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
+          p.isValid( seq ++ seq.map( eqTh.normalize( _ ).asInstanceOf[Formula] ) )
+      }
+  }
+  case object Passthru extends SmtEquationMode {
+    override def adapt( th: Seq[Formula], p: Prover ): Prover =
+      new OneShotProver {
+        override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
+          throw new NotImplementedError
+
+        val eqTh: Seq[Formula] = th.map( universalClosure( _ ) )
+        override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
+          p.isValid( eqTh ++: seq )
+      }
+  }
 }
 
 class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) extends Logger {
@@ -51,8 +77,6 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   val instanceGen = new EnumeratingInstanceGenerator( paramTypes, implicitly )
 
   val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
-
-  val eqTh = Normalizer( options.equationalTheory.map( ReductionRule( _ ) ) )
 
   type Instance = Seq[Expr]
 
@@ -71,12 +95,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   }
 
   val smtSolver: Prover =
-    new OneShotProver {
-      override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
-        throw new NotImplementedError
-      override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean =
-        options.smtSolver.isValid( seq ++ seq.map( eqTh.normalize( _ ).asInstanceOf[Formula] ) )
-    }
+    if ( options.equationalTheory.isEmpty ) options.smtSolver
+    else options.smtEquationMode.adapt( options.equationalTheory, options.smtSolver )
 
   def solve(): LKProof = {
     info( sequent )
