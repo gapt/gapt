@@ -18,6 +18,5 @@ object associativitySpecialCase extends TacticsProof {
         .quantTys()
         .canSolSize( 2, 2 )
         .doForgetOne()
-        .verbose
     }
 }
