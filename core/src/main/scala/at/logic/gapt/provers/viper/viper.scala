@@ -27,6 +27,11 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
 
   def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
 
+  def verbose: TreeGrammarInductionTactic = {
+    Logger.makeVerbose( classOf[TreeGrammarProver] )
+    this
+  }
+
   def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )

@@ -3,6 +3,7 @@ package at.logic.gapt.examples
 import at.logic.gapt.examples.tip.grammars._
 import at.logic.gapt.examples.tip.isaplanner._
 import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.provers.maxsat.OpenWBO
 import org.specs2.mutable.Specification
 
 class TipProofsTests extends Specification {
@@ -82,6 +83,7 @@ class TipProofsTests extends Specification {
   requireTip { "prod/prop_28" in { at.logic.gapt.examples.tip.prod.prop_28; ok } }
   requireTip { "prod/prop_29" in { at.logic.gapt.examples.tip.prod.prop_29; ok } }
   requireTip { "prod/prop_30" in { at.logic.gapt.examples.tip.prod.prop_30; ok } }
+  "prod/prop_31" in { if ( !OpenWBO.isInstalled ) skipped( "no openwbo" ); at.logic.gapt.examples.tip.prod.prop_31; ok }
   requireTip { "prod/prop_32" in { at.logic.gapt.examples.tip.prod.prop_32; ok } }
   requireTip { "prod/prop_33" in { at.logic.gapt.examples.tip.prod.prop_33; ok } }
   requireTip { "prod/prop_34" in { at.logic.gapt.examples.tip.prod.prop_34; ok } }
