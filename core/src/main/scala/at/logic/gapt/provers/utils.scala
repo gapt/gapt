@@ -2,18 +2,43 @@ package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
-import at.logic.gapt.utils.Maybe
+import at.logic.gapt.utils.{ Maybe, NameGenerator }
+
+import scala.collection.mutable
+
+object mangleName {
+  def apply( name: String, prefix: String = "f_" ): String = {
+    var n = name
+    n = prefix + n
+    n = n.flatMap {
+      case '*' => "m"
+      case '+' => "p"
+      case '-' => "s"
+      case '/' => "d"
+      case c   => c.toString
+    }
+    n = n.filter {
+      case c if 'a' <= c && c <= 'z' => true
+      case c if 'A' <= c && c <= 'Z' => true
+      case c if '0' <= c && c <= '9' => true
+      case '_'                       => true
+      case _                         => false
+    }
+    n = n.take( 10 )
+    n
+  }
+}
 
 object renameConstantsToFi {
-  private def mkName( i: Int ) = s"f$i"
   private def getRenaming[I, O]( obj: I )( implicit ev: Replaceable[I, O] ): Map[Const, Const] =
     getRenaming( containedNames( obj ).collect { case c: Const => c } )
-  private def getRenaming( constants: Set[Const] ): Map[Const, Const] =
-    constants.toSeq.zipWithIndex.map {
-      case ( c @ EqC( _ ), _ ) => c -> c
-      case ( c, i )            => c -> Const( mkName( i ), c.ty )
+  private def getRenaming( constants: Set[Const] ): Map[Const, Const] = {
+    val nameGen = new NameGenerator( Set() )
+    Map() ++ constants.view.map {
+      case c @ EqC( _ ) => c -> c
+      case c            => c -> Const( nameGen.fresh( mangleName( c.name ) ), c.ty )
     }.toMap
-  private def invertRenaming( map: Map[Const, Const] ) = map.map( _.swap )
+  }
 
   def wrap[I1, O1, I2, O2]( input: I1 )( func: ( Map[Const, Const], O1 ) => I2 )( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): O2 = {
     val renaming = getRenaming( input )

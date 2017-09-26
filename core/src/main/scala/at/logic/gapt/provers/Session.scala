@@ -9,6 +9,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.provers.Session.{ Session, SessionCommand }
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
+import at.logic.gapt.utils.NameGenerator
 import cats.free.Free.liftF
 import cats.free._
 import cats.implicits._
@@ -271,13 +272,15 @@ object Session {
         case Tell( input )             => tell( input )
       }
 
+      protected val nameGen = new NameGenerator( Set() ) // TODO: add reserved keywords?
+
       object typeRenaming {
         val map = mutable.Map[TBase, TBase]()
 
-        private var i = 0
         def apply( t: TBase ): TBase = map.getOrElseUpdate( t, t match {
           case To => TBase( "Bool", Nil )
-          case _  => i += 1; TBase( s"t$i", Nil )
+          case TBase( n, _ ) => // TODO: polymorphic types
+            TBase( nameGen.fresh( mangleName( n, "t_" ) ), Nil )
         } )
 
         def apply( t: Ty ): Ty = t match {
@@ -288,12 +291,9 @@ object Session {
 
       object termRenaming {
         val map = mutable.Map[Const, Const]()
-
-        private var i = 0
-        def apply( c: Const ): Const = map.getOrElseUpdate( c, {
-          i += 1
-          Const( s"f$i", typeRenaming( c.ty ) )
-        } )
+        def apply( c: Const ): Const = map.getOrElseUpdate(
+          c,
+          Const( nameGen.fresh( mangleName( c.name ) ), typeRenaming( c.ty ) ) )
       }
 
       def convert( expr: Expr, boundVars: Map[Var, String] = Map() ): SExpression = expr match {

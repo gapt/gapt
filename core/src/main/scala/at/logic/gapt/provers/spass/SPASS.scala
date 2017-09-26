@@ -167,7 +167,7 @@ class SPASS extends ResolutionProver with ExternalProgram {
   class InferenceParser( val input: ParserInput ) extends Parser {
     def Num = rule { capture( oneOrMore( CharPredicate.Digit ) ) ~> { _.toInt } }
 
-    def Name = rule { capture( oneOrMore( CharPredicate.AlphaNum ) ) }
+    def Name = rule { capture( oneOrMore( CharPredicate.AlphaNum ++ '_' ) ) }
 
     def Backreference = rule { Num ~ "." ~ Num ~> ( ( inference, literal ) => inference ) }
 

@@ -1295,16 +1295,16 @@ support arbitrary (even Unicode) names in GAPT:
 gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
 benchmark: String =
 "(set-logic QF_UF)
-(declare-sort t1 0)
-(declare-fun f1 () t1)
-(declare-fun f2 (t1) Bool)
-(declare-fun f3 () t1)
-(declare-fun f4 () t1)
-(assert (not (=> (and (and (or (= f4 f1) (= f4 f3)) (f2 f3)) (f2 f1)) (f2 f4))))
+(declare-sort t_i 0)
+(declare-fun f_b () t_i)
+(declare-fun f_P (t_i) Bool)
+(declare-fun f_c () t_i)
+(declare-fun f_a () t_i)
+(assert (not (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b)) (f_P f_a))))
 (check-sat)
 "
-typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
-constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f1:t1, P:i>o -> f2:t1>Bool, c -> f3:t1, a -> f4:t1)
+typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t_i)
+constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f_b:t_i, P:i>o -> f_P:t_i>Bool, c -> f_c:t_i, a -> f_a:t_i)
 
 \end{clilisting}
 
