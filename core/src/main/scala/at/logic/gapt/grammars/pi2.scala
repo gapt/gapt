@@ -118,7 +118,7 @@ object minimizePi2Grammar {
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
 
     solver.solve( hard, soft ).map { assg =>
-      Pi2Grammar( g.copy( productions = g.productions.filter( p => assg.interpret( prodinc( p ) ) ) ) )
+      Pi2Grammar( g.copy( productions = g.productions.filter( p => assg( prodinc( p ) ) ) ) )
     }
   }
 }

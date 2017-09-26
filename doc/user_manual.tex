@@ -1089,7 +1089,7 @@ shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{clilisting}
 gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
-m: at.logic.gapt.models.Interpretation =
+m: at.logic.gapt.models.PropositionalModel =
 R(p_1, h_1): o -> true
 R(p_1, h_2): o -> false
 R(p_1, h_3): o -> false
@@ -1109,16 +1109,16 @@ p1: at.logic.gapt.expr.FOLAtom = R(p_1, h_1): o
 gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
-gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
+gapt> m(p1) // Is pigeon 1 in hole 1?
 res12: Boolean = true
 
-gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
+gapt> m(p2) // Is pigeon 2 in hole 1?
 res13: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
-gapt> m.interpret( And(p1, p2) )
+gapt> m(p1 & p2)
 res14: Boolean = false
 
 \end{clilisting}
@@ -1251,7 +1251,7 @@ Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
 gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
-res22: Option[at.logic.gapt.models.Interpretation] =
+res22: Option[at.logic.gapt.models.PropositionalModel] =
 Some(a:o -> false
 b:o -> false
 c:o -> true)

@@ -117,7 +117,7 @@ object minimizeSipGrammar extends Logger {
     val soft = g.productions map formula.productionIsIncluded filter atomsInHard.contains map ( Neg( _ ) -> 1 )
     maxSATSolver.solve( hard, soft ) match {
       case Some( interp ) => SipGrammar(
-        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
+        g.productions filter { p => interp( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }
   }
