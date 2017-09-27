@@ -268,9 +268,9 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
     one2one( proof, otherArg ) { newSubProofs =>
       InductionRule(
         for ( ( ( newSubProof, subConn ), oldCase ) <- newSubProofs.zip( proof.cases ) )
-        yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
-        oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
-        subConn.child( oldCase.conclusion ) ),
+          yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
+          oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
+          subConn.child( oldCase.conclusion ) ),
         TermReplacement( proof.formula, repl ).asInstanceOf[Abs], TermReplacement( proof.term, repl ) )
     }
 }
