@@ -24,6 +24,7 @@ object SchematicClauseSet {
         val ( one: Expr, two: LKProof ) = x
         ( one, StructCreators.extract( two, ProofNames ) )
       } )
+
       val TopDependents = StructDependences( topSym, cutConfig, topStructs, foundCases )
       val DependentMaps = TopDependents.map( x => {
         val inducSet = foundCases ++ ( TopDependents - x ) ++ Set[( String, HOLSequent )]( ( topSym, cutConfig ) )
@@ -32,9 +33,9 @@ object SchematicClauseSet {
           case None       => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
         }
       } )
-      val DM = DependentMaps.fold( Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]() )( ( x, y ) => { x ++ y } )
+      val DM = MapMerger( DependentMaps )
       val TopClauses: Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]] = CutConfigProofClauseSetMaps( cutConfig, topStructs )
-      Some( DM ++ Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]( ( topSym, TopClauses ) ) )
+      Some( MapMerger( Set( DM ) ++ Set( Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]( ( topSym, TopClauses ) ) ) ) )
     } else None
   }
   def InstantiateClauseSetSchema(
@@ -55,10 +56,11 @@ object SchematicClauseSet {
     } ) )
       Set[SetSequent[Atom]]()
     else {
+      // println(topSym+" is now the symbol")
       val optionClauseSets = starterClauseSet.fold( Set[( Expr, Set[Sequent[Atom]] )]() )( ( vale, x ) => {
         val ( ex: Expr, _ ) = x
         if ( sigma.domain.equals( freeVariables( ex ) ) ) {
-          val Apps( at.logic.gapt.expr.Const( _, _ ), listofterms ) = ex
+          val Apps( at.logic.gapt.expr.Const( _, _ ), _ ) = ex
           vale.asInstanceOf[Set[( Expr, Set[Sequent[Atom]] )]] ++
             Set[( Expr, Set[Sequent[Atom]] )]( x.asInstanceOf[( Expr, Set[Sequent[Atom]] )] )
         } else vale
@@ -68,7 +70,7 @@ object SchematicClauseSet {
         val instantiatedClauses = optionClauseSets.head._2.map( x => SetSequent[Atom]( sigma( x ).asInstanceOf[Sequent[Atom]] ) )
         //This code goes through the clause set and checks if the any of the clause contain clause set terms
         //if they do, the code then calls this method recursively on the those parts and attaches them
-         instantiatedClauses.fold( Set[SetSequent[Atom]]() )( ( vale, x ) => {
+        val finalres = instantiatedClauses.fold( Set[SetSequent[Atom]]() )( ( vale, x ) => {
           val ( newSuccSeq, cLSSyms ) = SequentSplitter( x.asInstanceOf[SetSequent[Atom]] )
           val newSetSequent = SetSequent( Sequent( x.asInstanceOf[SetSequent[Atom]].sequent.antecedent, newSuccSeq ) )
           if ( cLSSyms.isEmpty ) vale.asInstanceOf[Set[SetSequent[Atom]]] ++ Set[SetSequent[Atom]]( x.asInstanceOf[SetSequent[Atom]] )
@@ -84,25 +86,68 @@ object SchematicClauseSet {
               val newCutConfig = HOLSequent( alphaRenamedAnte, alphaRenamedSuc )
               val mapOnConfigs = css.get( newTopSym ) match { case Some( holseq ) => holseq case None => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]() }
               val theconfigneeded = mapOnConfigs.keySet.foldLeft( newCutConfig )( ( thekey, cutconfigctk ) => if ( SequentInstanceOf( newCutConfig, cutconfigctk ) ) cutconfigctk else thekey )
-              val theNewClauseSetPair = mapOnConfigs.get( theconfigneeded ) match { case Some( holseq ) => holseq case None => Set[( Expr, Set[SetSequent[Atom]] )]() }
-              val ( valuenum, exprformatch, bestMatchClauses ) = PickCorrectInductiveCase( theNewClauseSetPair, args )
+              val theNewClauseSetPair = mapOnConfigs.get( theconfigneeded ) match {
+                case Some( holseq ) => holseq
+                case None           => Set[( Expr, Set[SetSequent[Atom]] )]()
+              }
+
+              val ( _, exprForMatch, bestMatchClauses ) = PickCorrectInductiveCase( theNewClauseSetPair, args )
+
               val subargs = args.map( x => sigma( x ) )
-              val Apps( _, vs: Seq[Expr] ) = exprformatch
+              val Apps( _, vs: Seq[Expr] ) = exprForMatch
+
               val zippedTogether = vs.zip( subargs ).map( x => {
                 val ( one, two ) = x
-                ( freeVariables( one ), two )
+                val thevars = freeVariables( one )
+                if ( thevars.nonEmpty ) {
+                  val clean: List[HOLPosition] = thevars.map( x => one.find( x ) ).fold( List[HOLPosition]() )( ( fin, ll ) =>
+                    fin ++ ll )
+                  val left: Expr = one.get( clean.head ) match {
+                    case Some( w ) => w
+                    case None      => one
+                  }
+                  val right: Expr = two.get( clean.head ) match {
+                    case Some( w ) => w
+                    case None      => two
+                  }
+                  ( left, right )
+                } else x
               } )
               val newsigma: Substitution = zippedTogether.fold( Substitution() )( ( sub, pair ) => {
-                val ( one: Set[Var], two: Expr ) = pair
-                sub.asInstanceOf[Substitution].compose( Substitution( one.head, two ) )
+                val ( one: Expr, two: Expr ) = pair
+                if ( freeVariables( one ).isEmpty ) sub
+                else sub.asInstanceOf[Substitution].compose( Substitution( one.asInstanceOf[Var], two ) )
               } ).asInstanceOf[Substitution]
-              val thelowerclauses = InstantiateClauseSetSchema(newTopSym,newCutConfig,css,newsigma)
-              println(thelowerclauses+"  "+newCutConfig+"   "+newTopSym)
-              ComposeClauseSets(mixedClauseSet.asInstanceOf[Set[SetSequent[Atom]]],thelowerclauses)
+
+              val thelowerclauses = InstantiateClauseSetSchema( newTopSym, theconfigneeded, css, newsigma )
+              val ender = ComposeClauseSets( mixedClauseSet.asInstanceOf[Set[SetSequent[Atom]]], thelowerclauses )
+              println()
+              println()
+              println( "THis is the clause term" )
+              println( info.tail )
+              println( "This is the new config " )
+              println( newCutConfig )
+              println( "This is the config " )
+              println( theconfigneeded )
+              println( "This is the substitution" )
+              println( newsigma )
+              println( "This is the match" )
+              println( exprForMatch )
+              println( "This is the almost final clauseset" )
+              println( thelowerclauses )
+              println( "This is the almost final clauseset2" )
+              println( mixedClauseSet )
+              println( "This is the final clauseset" )
+              println( ender )
+              println()
+              println()
+              ender
             } ).asInstanceOf[Set[SetSequent[Atom]]]
-            finalcs ++  vale.asInstanceOf[Set[SetSequent[Atom]]]
+
+            vale.asInstanceOf[Set[SetSequent[Atom]]] ++ finalcs
           }
         } ).asInstanceOf[Set[SetSequent[Atom]]]
+        finalres
       }
     }
   }
@@ -173,7 +218,7 @@ object SchematicClauseSet {
     def apply(
       cutConfig:     HOLSequent,
       currentStruct: Set[( Expr, Struct[Nothing] )] ): Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]] = currentStruct.map( x => {
-      val theClauseSet = CharacteristicClauseSet( x._2 ).asInstanceOf[Set[SetSequent[Atom]]]
+      val theClauseSet = CharacteristicClauseSet( x._2, cutConfig ).asInstanceOf[Set[SetSequent[Atom]]]
       val clauseSetNameVarsMatch = Set[( Expr, Set[SetSequent[Atom]] )]( ( x._1, theClauseSet ) )
 
       Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]( ( cutConfig, clauseSetNameVarsMatch ) )
@@ -202,14 +247,19 @@ object SchematicClauseSet {
       } ).asInstanceOf[Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]
     } )
   }
-//Something Wrong here????
   object FormulaSetGeneralization {
     def apply( theSetOfFormula: Set[Formula], args: Set[Expr] ): Set[Formula] = theSetOfFormula.map( ancestor => {
       args.fold( ( 0, ancestor ) )( ( ancestorVarUpdate, curTerm ) => {
         val ( varNum: Int, ancestorAtom: Formula ) = ancestorVarUpdate
         val posList = ancestorAtom.find( curTerm.asInstanceOf[Expr] )
         val newForm: Formula = posList.fold( ancestorAtom )( ( curForm, upTerm ) => {
-          val withChange: Formula = curForm.asInstanceOf[Formula].replace( upTerm.asInstanceOf[HOLPosition], Var( "_schVar" + "1", curTerm.asInstanceOf[Expr].ty ) )
+          val isVar = curForm.asInstanceOf[Formula].get( upTerm.asInstanceOf[HOLPosition] ) match {
+            case Some( Var( _, _ ) ) => true
+            case _                   => false
+          }
+          val withChange: Formula = if ( isVar ) curForm.asInstanceOf[Formula].replace( upTerm.asInstanceOf[HOLPosition], Var( "_schVar" + "1", curTerm.asInstanceOf[Expr].ty ) )
+          else curForm.asInstanceOf[Formula]
+
           withChange
         } ).asInstanceOf[Formula]
         ( varNum + 1, newForm )
@@ -251,9 +301,10 @@ object SchematicClauseSet {
         val F1Pos = F1.get( pos ) match { case Some( x ) => x case None => F1 }
         val F2Pos = F2.get( pos ) match { case Some( x ) => x case None => F2 }
         ( F1Pos, F2Pos ) match {
-          case ( Var( _, t ), Var( _, r ) ) => isOK && t.equals( r )
-          case ( App( _, s ), Var( w, r ) ) => isOK && !s.contains( Var( w, r ) )
-          case ( t, r )                     => isOK && t.equals( r )
+          case ( Var( _, t ), Var( _, r ) )   => isOK && t.equals( r )
+          case ( App( _, s ), Var( w, r ) )   => isOK && !s.contains( Var( w, r ) )
+          case ( Const( _, t ), Var( w, r ) ) => isOK && t.equals( r )
+          case ( t, r )                       => isOK && t.equals( r )
         }
       } )
     }
@@ -274,14 +325,68 @@ object SchematicClauseSet {
       } )
   }
 
-  object ComposeClauseSets{
-    def apply(C1:Set[SetSequent[Atom]], C2:Set[SetSequent[Atom]]):Set[SetSequent[Atom]] =
-    C1.foldLeft(Set[SetSequent[Atom]]())((compose,x)=>
-      C2.map(y => setSequentCompose(x,y)) ++ compose
-    )
+  object ComposeClauseSets {
+    def apply( C1: Set[SetSequent[Atom]], C2: Set[SetSequent[Atom]] ): Set[SetSequent[Atom]] = {
+      val Cout: ( Set[SetSequent[Atom]], Set[SetSequent[Atom]] ) = if ( C1.size > C2.size ) ( C1, C2 ) else ( C2, C1 )
+      val newclauses = Cout._1.map( x =>
+        if ( Cout._2.nonEmpty ) Cout._2.map( y => setSequentCompose( x, y ) )
+        else Cout._1 )
+      if ( newclauses.nonEmpty )
+        newclauses.tail.fold( newclauses.head )( ( x, y ) => x ++ y )
+      else Set()
+    }
 
-    def setSequentCompose(S1:SetSequent[Atom], S2:SetSequent[Atom]):SetSequent[Atom] =
-      SetSequent[Atom](Sequent[Atom](S1.sequent.antecedent++S2.sequent.antecedent,
-        S1.sequent.succedent++S2.sequent.succedent))
+    def setSequentCompose( S1: SetSequent[Atom], S2: SetSequent[Atom] ): SetSequent[Atom] =
+      SetSequent[Atom]( Sequent[Atom](
+        S1.sequent.antecedent ++ S2.sequent.antecedent,
+        S1.sequent.succedent ++ S2.sequent.succedent ) )
   }
+
+  object MapMerger {
+    def apply( M1: Set[Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]] ): Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]] = M1.fold( Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]() )( ( x, y ) => {
+      val themerge = mergeList( x, y )
+      if ( themerge.keySet.nonEmpty )
+        themerge.keySet.map( w => {
+          val thing = themerge.get( w ) match {
+            case Some( mapp ) => mapp
+            case None         => List[Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+          }
+          ( w, thing.foldLeft( Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]() )( ( str, end ) => {
+            mergeSet( str, end )
+          } ) )
+        } ) toMap
+      else x
+    } )
+    def mergeList[K, V]( m1: Map[K, V], m2: Map[K, V] ): Map[K, List[V]] =
+      if ( m1.keySet.nonEmpty && m2.keySet.nonEmpty )
+        ( m1.keySet ++ m2.keySet ) map { i => i -> ( m1.get( i ).toList ::: m2.get( i ).toList ) } toMap
+      else if ( m1.keySet.isEmpty && m2.keySet.nonEmpty )
+        ( m2.keySet ) map { i => i -> ( m2.get( i ).toList ) } toMap
+
+      else if ( m1.keySet.nonEmpty && m2.keySet.isEmpty )
+        ( m1.keySet ) map { i => i -> ( m1.get( i ).toList ) } toMap
+      else Map[K, List[V]]()
+
+    def mergeSet[K, V]( m1: Map[K, Set[V]], m2: Map[K, Set[V]] ): Map[K, Set[V]] =
+      if ( m1.keySet.nonEmpty && m2.keySet.nonEmpty )
+        ( m1.keySet ++ m2.keySet ) map { i =>
+          i -> ( {
+            val one = m1.get( i ) match {
+              case Some( www ) => www
+              case None        => Set[V]()
+            }
+            val two = m2.get( i ) match {
+              case Some( www ) => www
+              case None        => Set[V]()
+            }
+            one ++ two
+          } )
+        } toMap
+      else if ( m1.keySet.isEmpty && m2.keySet.nonEmpty )
+        m2
+      else if ( m1.keySet.nonEmpty && m2.keySet.isEmpty )
+        m1
+      else Map[K, Set[V]]()
+  }
+
 }

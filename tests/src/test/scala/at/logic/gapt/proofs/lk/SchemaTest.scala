@@ -5,9 +5,10 @@ import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
-import at.logic.gapt.proofs.{Context, HOLSequent, SetSequent}
-import at.logic.gapt.proofs.Context.{ProofDefinitions, ProofNames, StructurallyInductiveTypes}
-import at.logic.gapt.proofs.ceres.{CharacteristicClauseSet, SchematicClauseSet, StructCreators}
+import at.logic.gapt.proofs.{ Context, HOLSequent, SetSequent }
+import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames, StructurallyInductiveTypes }
+import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
+import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -23,7 +24,7 @@ class SchemaTest extends Specification {
     if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ) ) )
     else base
   }
-
+  /*
   {
     import tautSchema.ctx
     "simple schema basecase" in {
@@ -44,11 +45,11 @@ class SchemaTest extends Specification {
       ok
     }
   }
-
+*/
   {
     import niaSchema.ctx
 
-    "Nia-schema basecase" in {
+    /* "Nia-schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -156,25 +157,36 @@ class SchemaTest extends Specification {
         }
       } ) must beEqualTo( 16 )
     }
-
+*/
     "Shit" in {
+
       val SCS = SchematicClauseSet( "omega", ctx ) match {
         case Some( x ) => x
         case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
       }
-      val varforsch = ctx.get[ProofNames].names.get("omega") match{
-        case Some( x ) => {
-          freeVariables(x._2).head
-        }
-        case None => Var("",TBase("nat"))
+      val chip = SCS.get( "chi" ) match {
+        case Some( x ) => x
+        case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
       }
-      val it = SchematicClauseSet.InstantiateClauseSetSchema("omega",HOLSequent(Vector[Formula](),Vector[Formula]()),SCS,Substitution(varforsch,nat(1)))
-      println(it)
+      val chipper = chip.get( chip.keySet.head ) match {
+        case Some( x ) => x
+        case None      => Set[( Expr, Set[SetSequent[Atom]] )]()
+      }
+      val varforsch = ctx.get[Context.ProofNames].names.get( "omega" ) match {
+        case Some( x ) => {
+          freeVariables( x._2 ).head
+        }
+        case None => Var( "", TBase( "nat" ) )
+      }
+      //The stupid addition of symbols in the clause set construction cause problems
+      val one = Nil
+      val it = SchematicClauseSet.InstantiateClauseSetSchema( "omega", HOLSequent( Vector[Formula](), Vector[Formula]() ), SCS, Substitution( varforsch, nat( 1 ) ) )
+      prooftool( it.map( x => x.sequent ) )
       ok
     }
 
   }
-
+  /*
   {
     import gniaSchema.ctx
 
@@ -238,7 +250,7 @@ class SchemaTest extends Specification {
       }
       IsKSimple( result ) must_== true
     }
-  }
+  }*/
 
 }
 

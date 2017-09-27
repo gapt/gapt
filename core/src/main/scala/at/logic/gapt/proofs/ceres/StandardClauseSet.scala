@@ -5,14 +5,16 @@
 
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.proofs.{ HOLClause, Sequent, SetSequent }
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, SetSequent }
 import at.logic.gapt.expr._
 
 /**
  * Calculates the characteristic clause set
  */
 class CharacteristicClauseSet[Data] {
-  def apply( struct: Struct[Data] ): Set[SetSequent[Atom]] = struct match {
+  def apply(
+    struct:           Struct[Data],
+    cutConfiguration: HOLSequent ): Set[SetSequent[Atom]] = struct match {
     case A( fo: Atom, _ ) => Set( SetSequent[Atom]( Sequent( Nil, List( fo ) ) ) )
     case A( Top(), _ )    => Set()
     case A( Bottom(), _ ) => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
@@ -25,25 +27,26 @@ class CharacteristicClauseSet[Data] {
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
     case EmptyPlusJunction()                 => Set()
     case EmptyTimesJunction()                => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
-    case Plus( EmptyPlusJunction(), x )      => apply( x )
-    case Plus( x, EmptyPlusJunction() )      => apply( x )
-    case Plus( x, y )                        => apply( x ) ++ apply( y )
-    case Times( EmptyTimesJunction(), x, _ ) => apply( x )
-    case Times( x, EmptyTimesJunction(), _ ) => apply( x )
+    case Plus( EmptyPlusJunction(), x )      => apply( x, cutConfiguration )
+    case Plus( x, EmptyPlusJunction() )      => apply( x, cutConfiguration )
+    case Plus( x, y )                        => apply( x, cutConfiguration ) ++ apply( y, cutConfiguration )
+    case Times( EmptyTimesJunction(), x, _ ) => apply( x, cutConfiguration )
+    case Times( x, EmptyTimesJunction(), _ ) => apply( x, cutConfiguration )
     case Times( A( f1, _ ), Dual( A( f2, _ ) ), _ ) if f1 == f2 => //would result in a tautology f :- f
       Set()
     case Times( Dual( A( f2, _ ) ), A( f1, _ ), _ ) if f1 == f2 => //would result in a tautology f :- f
       Set()
     case Times( x, y, _ ) =>
-      val xs = apply( x )
-      val ys = apply( y )
+      val xs = apply( x, cutConfiguration )
+      val ys = apply( y, cutConfiguration )
       xs.flatMap( ( x1: SetSequent[Atom] ) => ys.flatMap( ( y1: SetSequent[Atom] ) => {
         delta_compose( x1, y1 ) match {
           case Some( m ) => Set( m ).toTraversable
           case None      => Set().toTraversable
         }
       } ) )
-    case CLS( proof, config, fv, _ ) =>
+    case CLS( proof, cconfig, fv, _ ) =>
+      val config = HOLSequent( cconfig.antecedent /*++ cutConfiguration.antecedent*/ , cconfig.succedent /*++ cutConfiguration.succedent*/ )
       val clauseSymbol: Atom = Atom( "CL", Seq( Const( proof, To ) ) ++ Seq( Const( "|", To ) ) ++ config.antecedent ++ Seq( Const( "⊢", To ) ) ++ config.succedent ++ Seq( Const( "|", To ) ) ++ fv )
       Set( SetSequent[Atom]( Sequent[Atom]( Nil, List( clauseSymbol ) ) ) )
     case _ => throw new Exception( "Unhandled case: " + struct )
@@ -63,7 +66,7 @@ class CharacteristicClauseSet[Data] {
 }
 
 object CharacteristicClauseSet {
-  def apply[Data]( struct: Struct[Data] ): Set[HOLClause] = ( new CharacteristicClauseSet[Data] )( struct ).map( y => y.sequent )
+  def apply[Data]( struct: Struct[Data], cutConfiguration: HOLSequent = HOLSequent( List(), List() ) ): Set[HOLClause] = ( new CharacteristicClauseSet[Data] )( struct, cutConfiguration ).map( y => y.sequent )
 }
 
 object SimplifyStruct {

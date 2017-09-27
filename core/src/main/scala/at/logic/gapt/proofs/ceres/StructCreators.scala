@@ -151,6 +151,8 @@ object StructCreators extends Logger {
     //printf( cut_occs.toString )
 
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter( x => cut_occs( x._2 ) ).map( _._1 )
+    /* println("this is important")
+    println(cutanc_seq+"  "+ proofLink)*/
     val tautology_projection = cutanc_seq.antecedent.exists( x => cutanc_seq.succedent.contains( x ) )
     //if ( tautology_projection ) println( s"Could optimize $so ($cut_occs)" )
     //println( cutanc_seq )
