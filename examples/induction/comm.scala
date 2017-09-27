@@ -16,6 +16,6 @@ object comm extends TacticsProof {
     allR
     treeGrammarInduction
       .quantTys()
-      .canSolSize( 1, 1 )
+      .canSolSize( 1 )
   }
 }

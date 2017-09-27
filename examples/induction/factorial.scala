@@ -36,7 +36,7 @@ object factorial extends TacticsProof {
       treeGrammarInduction
         .quantTys( "nat" )
         .equationalTheory( hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x" )
-        .canSolSize( 1, 1 )
+        .canSolSize( 1 )
         .instanceProver( new OneShotProver {
           override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = ???
           override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {

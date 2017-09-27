@@ -44,6 +44,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
+  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
   def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
 
