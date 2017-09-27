@@ -484,6 +484,11 @@ object isPropositionalET {
  */
 object cleanStructureET {
   def apply( t: ExpansionTree ): ExpansionTree = t match {
+    case ETMerge( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
+      case ( ETWeakening( _, _ ), r2 ) => r2
+      case ( r1, ETWeakening( _, _ ) ) => r1
+      case ( r1, r2 )                  => ETMerge( r1, r2 )
+    }
     case ETNeg( s ) => apply( s ) match {
       case ETWeakening( f, p ) => ETWeakening( -f, !p )
       case r                   => ETNeg( r )
