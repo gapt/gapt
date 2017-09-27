@@ -103,6 +103,18 @@ object commuteReplacementCtxWithDefEq {
         val y = rename( y1, freeVariables( c ) ++ freeVariables( a ) ++ freeVariables( t ) + x )
         Quant( y, apply( x, instantiate( c, y ), t, instantiate( a, y ) ).asInstanceOf[Formula], pol1 )
       case _ =>
+        // imitate
+        a match {
+          case Apps( fn2 @ Const( _, _ ), as2 ) =>
+            val pat = fn2( for ( ( a, i ) <- as2.zipWithIndex ) yield Var( s"x$i", a.ty ) )
+            syntacticMatching( ctx.normalize( pat ), ctx.normalize( c ) ) match {
+              case Some( subst ) =>
+                return apply( x, subst( pat ), t, a )
+              case _ =>
+            }
+          case _ =>
+        }
+        // reduce
         ctx.normalizer.reduce1( c ) match {
           case Some( c_ ) => apply( x, BetaReduction.betaNormalize( c_ ), t, a )
           case None =>
