@@ -24,7 +24,7 @@ private object getAtHOLPosition {
       case ( ETSkolemQuantifier( _, _, _, ch ), 1 ) => apply( ch, pos.tail )
       case ( ETWeakQuantifier( _, insts ), 1 )      => insts.values flatMap { apply( _, pos.tail ) } toSet
 
-      case ( _, _ )                                 => Set()
+      case ( ETWeakening( _, _ ), _ )               => Set()
     }
 }
 
