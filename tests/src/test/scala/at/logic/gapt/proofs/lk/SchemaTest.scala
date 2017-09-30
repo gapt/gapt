@@ -5,7 +5,7 @@ import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
-import at.logic.gapt.proofs.{ Context, HOLSequent, SetSequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent, SetSequent }
 import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames, StructurallyInductiveTypes }
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
 import at.logic.gapt.prooftool.prooftool
@@ -159,29 +159,71 @@ class SchemaTest extends Specification {
     }
 */
     "Shit" in {
-
+      val namer = "omega"
       val SCS = SchematicClauseSet( "omega", ctx ) match {
         case Some( x ) => x
         case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
       }
-      val chip = SCS.get( "chi" ) match {
+      SCS.keySet.map( x => {
+
+        if ( x.matches( namer ) ) {
+          println()
+          println()
+          println()
+          println( "Proof:  " + x )
+          SCS.get( x ) match {
+            case Some( y ) => {
+              y.keySet.map( z => {
+                println()
+                println()
+                println( "Configuration:  " + z )
+                y.get( z ) match {
+                  case Some( w ) => {
+                    w.map( r => {
+                      println()
+                      println()
+                      println( "Expression:  " + r._1 )
+                      println()
+                      println( "ClauseSet:  " + r._2 )
+                      r
+                    } )
+                  }
+                  case None => Set[( Expr, Set[SetSequent[Atom]] )]()
+                }
+                z
+              } )
+              y
+            }
+            case None => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
+          }
+        }
+        x
+      } )
+      val chip = SCS.get( namer ) match {
         case Some( x ) => x
         case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
       }
-      val chipper = chip.get( chip.keySet.head ) match {
-        case Some( x ) => x
-        case None      => Set[( Expr, Set[SetSequent[Atom]] )]()
-      }
-      val varforsch = ctx.get[Context.ProofNames].names.get( "omega" ) match {
-        case Some( x ) => {
-          freeVariables( x._2 ).head
-        }
-        case None => Var( "", TBase( "nat" ) )
-      }
+
       //The stupid addition of symbols in the clause set construction cause problems
-      val one = Nil
-      val it = SchematicClauseSet.InstantiateClauseSetSchema( "omega", HOLSequent( Vector[Formula](), Vector[Formula]() ), SCS, Substitution( varforsch, nat( 1 ) ) )
-      prooftool( it.map( x => x.sequent ) )
+      chip.keySet.map( x => {
+        val chiper = chip.get( x ) match {
+          case Some( rr ) => rr
+          case None       => Set[( Expr, Set[SetSequent[Atom]] )]()
+        }
+        val varforsch = ctx.get[Context.ProofNames].names.get( namer ) match {
+          case Some( x ) => freeVariables( x._2 )
+          case None      => Set()
+        }
+        val thesub = varforsch.tail.foldLeft( Substitution( varforsch.head, nat( 3 ) ) )( ( ww, ee ) =>
+          ww.compose( Substitution( ee, ee ) ) )
+
+        val it = SchematicClauseSet.InstantiateClauseSetSchema( "omega", HOLSequent( Vector[Formula](), Vector[Formula]() ), SCS, thesub )
+        println()
+        println( thesub + "             " + x + "   ????????????    " + it )
+        println()
+        x
+      } )
+
       ok
     }
 
