@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.expr.{Apps, Expr, _}
-import at.logic.gapt.proofs.Context.{ProofDefinitions, ProofNames}
+import at.logic.gapt.expr.{ Apps, Expr, _ }
+import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames }
 import at.logic.gapt.utils.Logger
 
 /**
@@ -48,16 +48,16 @@ object StructCreators extends Logger {
   def toFormula[Data]( s: Struct[Data] ): Formula =
     And( CharacteristicClauseSet( s ).toSeq map ( _.toDisjunction ) )
 
-  def extract[Data]( p: LKProof, ctx:Context  ): Struct[Data] =
+  def extract[Data]( p: LKProof, ctx: Context ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ), ctx )( x => true )
 
-  def extract[Data]( p: LKProof, predicate: Formula => Boolean, ctx:Context ): Struct[Data] =
+  def extract[Data]( p: LKProof, predicate: Formula => Boolean, ctx: Context ): Struct[Data] =
     extract[Data]( p, p.endSequent.map( _ => false ), ctx )( predicate )
 
   private def mapToUpperProof[Formula]( conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
-  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean],ctx:Context )( implicit pred: Formula => Boolean ): Struct[Data] = {
+  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean], ctx: Context )( implicit pred: Formula => Boolean ): Struct[Data] = {
     val cutanc_es = p.endSequent.zip( cut_occs ).filter( _._2 ).map( _._1 )
     val es = p.endSequent
     /*println( s"es: $es" )
@@ -71,13 +71,13 @@ object StructCreators extends Logger {
           EmptyTimesJunction()
       case ProofLink( rp, rs ) =>
         val Apps( Const( c, _ ), _ ) = rp
-        if (  ctx.get[ProofDefinitions].components.keySet.contains( c ) ) {
-          handleAxiom( rs, cut_occs,ctx,c )
+        if ( ctx.get[ProofDefinitions].components.keySet.contains( c ) ) {
+          handleAxiom( rs, cut_occs, ctx, c )
         } else {
-          handleAxiom( rs, cut_occs,ctx )
+          handleAxiom( rs, cut_occs, ctx )
         }
       case InitialSequent( so ) =>
-        handleAxiom( so, cut_occs,ctx )
+        handleAxiom( so, cut_occs, ctx )
 
       case EqualityLeftRule( upperProof, eq, aux, con ) =>
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
@@ -148,10 +148,11 @@ object StructCreators extends Logger {
     }
   }
 
-  def handleAxiom[Data]( so: HOLSequent,
-                         cut_occs: Sequent[Boolean],
-                         ctx:Context,
-                         proofLink: String = ""  ): Struct[Data] = {
+  def handleAxiom[Data](
+    so:        HOLSequent,
+    cut_occs:  Sequent[Boolean],
+    ctx:       Context,
+    proofLink: String           = "" ): Struct[Data] = {
     //printf( "Axiom!" )
     //printf( cut_occs.toString )
 
@@ -173,39 +174,39 @@ object StructCreators extends Logger {
         val structs: Vector[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
         if ( !proofLink.matches( "" ) ) {
           //This code matches positiions for terms passed through the proof links
-          val (Apps(_,vs), hs:HOLSequent) =  ctx.get[ProofNames].names.get(proofLink) match {
-            case Some((ex,hs)) => (ex,hs)
-            case None => (Const("",Ti),HOLSequent())
+          val ( Apps( _, vs ), hs: HOLSequent ) = ctx.get[ProofNames].names.get( proofLink ) match {
+            case Some( ( ex, hs ) ) => ( ex, hs )
+            case None               => ( Const( "", Ti ), HOLSequent() )
           }
           val termLocations = vs.map( arg => {
-           hs.antecedent.map(formA => {
-              val listplaces = formA.find(arg)
-              if(listplaces.nonEmpty) Some((hs.find(ff => formA.equals(ff)) match {
-                case Some(f) => f
-                case None => -1
-              } ,listplaces.head))
+            hs.antecedent.map( formA => {
+              val listplaces = formA.find( arg )
+              if ( listplaces.nonEmpty ) Some( ( hs.find( ff => formA.equals( ff ) ) match {
+                case Some( f ) => f
+                case None      => -1
+              }, listplaces.head ) )
               else None
-           }).find(x=> !x.isEmpty) match {
-             case Some(Some(pos)) => pos
-             case _ => hs.succedent.map(formA => {
-               val listplaces = formA.find(arg)
-               if(listplaces.nonEmpty) Some((hs.find(ff => formA.equals(ff)) match {
-                 case Some(f) => f
-                 case None => -1
-               } ,listplaces.head))
-               else None
-             }).find(x=> !x.isEmpty) match {
-               case Some(Some(pos)) => pos
-               case _ => (-1,HOLPosition())
-             }
-           }
-          })
-          val subvals = termLocations.map(pairs => {
-            so(pairs._1.asInstanceOf[SequentIndex]).get(pairs._2) match{
-              case Some(termn) => termn
-              case None => Const("",Ti)
+            } ).find( x => !x.isEmpty ) match {
+              case Some( Some( pos ) ) => pos
+              case _ => hs.succedent.map( formA => {
+                val listplaces = formA.find( arg )
+                if ( listplaces.nonEmpty ) Some( ( hs.find( ff => formA.equals( ff ) ) match {
+                  case Some( f ) => f
+                  case None      => -1
+                }, listplaces.head ) )
+                else None
+              } ).find( x => !x.isEmpty ) match {
+                case Some( Some( pos ) ) => pos
+                case _                   => ( -1, HOLPosition() )
+              }
             }
-          })
+          } )
+          val subvals = termLocations.map( pairs => {
+            so( pairs._1.asInstanceOf[SequentIndex] ).get( pairs._2 ) match {
+              case Some( termn ) => termn
+              case None          => Const( "", Ti )
+            }
+          } )
           CLS[Data]( proofLink, cutanc_seq, subvals, List[Data]() )
         } else
           Times[Data]( structs, List[Data]() )

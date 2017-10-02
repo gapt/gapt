@@ -47,8 +47,8 @@ object NiaSchema extends TacticsProof {
 
   //The base case of  mu
   val esMuBc = Sequent(
-    Seq(  "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),0))   "  ),
-    Seq(  "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) "  ) )
+    Seq( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),0))   " ),
+    Seq( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
   val muBc = Lemma( esMuBc ) {
     allL( hoc"z:i" )
     exL( fov"B" )

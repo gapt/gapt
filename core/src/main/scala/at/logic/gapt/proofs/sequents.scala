@@ -14,8 +14,7 @@ import scala.collection.GenTraversable
  * In a sequent, the elements have the following indices:
  * Ant(0), Ant(1), ..., Ant(m) :- Suc(0), Suc(1), ..., Suc(n)
  */
-sealed abstract class
-SequentIndex extends Ordered[SequentIndex] {
+sealed abstract class SequentIndex extends Ordered[SequentIndex] {
   def compare( that: SequentIndex ) = ( this, that ) match {
     case ( Ant( _ ), Suc( _ ) ) => -1
     case ( Suc( _ ), Ant( _ ) ) => 1
