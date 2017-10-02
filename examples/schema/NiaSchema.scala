@@ -5,7 +5,7 @@ import at.logic.gapt.proofs.Context.PrimRecFun
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 
-object niaSchema extends TacticsProof {
+object NiaSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += Context.Sort( "i" )
   ctx += hoc"f:i>nat"
@@ -47,8 +47,8 @@ object niaSchema extends TacticsProof {
 
   //The base case of  mu
   val esMuBc = Sequent(
-    Seq( ( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),0))   " ) ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
+    Seq(  "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),0))   "  ),
+    Seq(  "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) "  ) )
   val muBc = Lemma( esMuBc ) {
     allL( hoc"z:i" )
     exL( fov"B" )
@@ -68,8 +68,8 @@ object niaSchema extends TacticsProof {
 
   //The step case of mu
   val esMuSc = Sequent(
-    Seq( ( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),s(n)))   " ) ),
-    Seq( ( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) ) )
+    Seq( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),s(n)))   " ),
+    Seq( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
   val muSc = Lemma( esMuSc ) {
     allL( hoc"z:i" )
     exL( fov"B" )

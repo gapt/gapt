@@ -2,13 +2,11 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tautSchema
-import at.logic.gapt.examples.niaSchema
+import at.logic.gapt.examples.NiaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent, SetSequent }
-import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames, StructurallyInductiveTypes }
+import at.logic.gapt.proofs.{ Context, HOLSequent, SetSequent }
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
-import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -24,7 +22,7 @@ class SchemaTest extends Specification {
     if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ) ) )
     else base
   }
-  /*
+
   {
     import tautSchema.ctx
     "simple schema basecase" in {
@@ -45,11 +43,11 @@ class SchemaTest extends Specification {
       ok
     }
   }
-*/
-  {
-    import niaSchema.ctx
 
-    /* "Nia-schema basecase" in {
+  {
+    import at.logic.gapt.examples.NiaSchema.ctx
+
+     "Nia-schema basecase" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
@@ -76,23 +74,23 @@ class SchemaTest extends Specification {
     " Nia-schema Clause Set Extraction  Instance 3" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof, Set[String]() )
-      val cs = CharacteristicClauseSet( thestruct )
+      val thestruct = StructCreators.extract( proof, ctx )
+      CharacteristicClauseSet( thestruct )
       ok
     }
 
     " Nia-schema Clause Set Refutation  Instance 1" in {
       val proof = LKProofSchemata.Instantiate( le"omega ${nat( 1 )}" )
       ctx.check( proof )
-      val thestruct = StructCreators.extract( proof, ctx.get[ProofDefinitions].components.keySet )
+      val thestruct = StructCreators.extract( proof, ctx )
       val cs = CharacteristicClauseSet( thestruct )
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
     }
 
     " Nia-schema Clause set Extraction Individual Proof" in {
-      val ts = StructCreators.extract( niaSchema.phiSc, ctx.get[ProofDefinitions].components.keySet )
-      val cs = CharacteristicClauseSet( ts )
+      val ts = StructCreators.extract( NiaSchema.phiSc, ctx )
+      CharacteristicClauseSet( ts )
       ok
     }
 
@@ -111,13 +109,13 @@ class SchemaTest extends Specification {
         case Some( x ) => x
         case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
       }
+
       SCS.keySet.fold( 0 )( ( vale, x ) => {
         SCS.get( x.asInstanceOf[String] ) match {
-          case Some( x ) =>
-            ( x.size + vale.asInstanceOf[Int] )
+          case Some( w ) => w.size + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 4 )
+      } ) must beEqualTo( 7 )
     }
 
     " Extracting the Schematic Characteristic Clause Set Checking number of clause sets per configuration" in {
@@ -127,15 +125,15 @@ class SchemaTest extends Specification {
       }
       SCS.keySet.fold( 0 )( ( vale, x ) => {
         SCS.get( x.asInstanceOf[String] ) match {
-          case Some( x ) => x.keySet.fold( 0 )( ( mail, xx ) => {
-            x.get( xx.asInstanceOf[HOLSequent] ) match {
+          case Some( w ) => w.keySet.fold( 0 )( ( mail, xx ) => {
+            w.get( xx.asInstanceOf[HOLSequent] ) match {
               case Some( y ) => y.size + mail.asInstanceOf[Int]
               case None      => mail
             }
           } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 8 )
+      } ) must beEqualTo( 14 )
     }
     " Extracting the Schematic Characteristic Clause Set Checking that all clauses are there" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
@@ -144,10 +142,10 @@ class SchemaTest extends Specification {
       }
       SCS.keySet.fold( 0 )( ( vale, x ) => {
         SCS.get( x.asInstanceOf[String] ) match {
-          case Some( x ) => x.keySet.fold( 0 )( ( mail, xx ) => {
-            x.get( xx.asInstanceOf[HOLSequent] ) match {
+          case Some( w ) => w.keySet.fold( 0 )( ( mail, xx ) => {
+            w.get( xx.asInstanceOf[HOLSequent] ) match {
               case Some( y ) => y.fold( 0 )( ( whale, zz ) => {
-                val ( one, two: Set[SetSequent[Atom]] ) = zz
+                val ( _, two: Set[SetSequent[Atom]] ) = zz
                 two.size + whale.asInstanceOf[Int]
               } ).asInstanceOf[Int] + mail.asInstanceOf[Int]
               case None => mail
@@ -155,80 +153,61 @@ class SchemaTest extends Specification {
           } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 16 )
+      } ) must beEqualTo( 24 )
     }
-*/
-    "Shit" in {
-      val namer = "omega"
+
+    "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
         case Some( x ) => x
         case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
       }
-      SCS.keySet.map( x => {
-
-        if ( x.matches( namer ) ) {
-          println()
-          println()
-          println()
-          println( "Proof:  " + x )
-          SCS.get( x ) match {
-            case Some( y ) => {
-              y.keySet.map( z => {
-                println()
-                println()
-                println( "Configuration:  " + z )
-                y.get( z ) match {
-                  case Some( w ) => {
-                    w.map( r => {
-                      println()
-                      println()
-                      println( "Expression:  " + r._1 )
-                      println()
-                      println( "ClauseSet:  " + r._2 )
-                      r
-                    } )
-                  }
-                  case None => Set[( Expr, Set[SetSequent[Atom]] )]()
-                }
-                z
-              } )
-              y
-            }
-            case None => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
-          }
-        }
-        x
-      } )
-      val chip = SCS.get( namer ) match {
+      val oclauses = SCS.get( "omega" ) match {
         case Some( x ) => x
         case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
       }
-
-      //The stupid addition of symbols in the clause set construction cause problems
-      chip.keySet.map( x => {
-        val chiper = chip.get( x ) match {
-          case Some( rr ) => rr
-          case None       => Set[( Expr, Set[SetSequent[Atom]] )]()
-        }
-        val varforsch = ctx.get[Context.ProofNames].names.get( namer ) match {
-          case Some( x ) => freeVariables( x._2 )
-          case None      => Set()
-        }
-        val thesub = varforsch.tail.foldLeft( Substitution( varforsch.head, nat( 3 ) ) )( ( ww, ee ) =>
-          ww.compose( Substitution( ee, ee ) ) )
-
-        val it = SchematicClauseSet.InstantiateClauseSetSchema( "omega", HOLSequent( Vector[Formula](), Vector[Formula]() ), SCS, thesub )
-        println()
-        println( thesub + "             " + x + "   ????????????    " + it )
-        println()
-        x
-      } )
-
+      val oExprCl = oclauses.get(oclauses.keySet.head) match {
+        case Some( x ) => x
+        case None      =>  Set[( Expr, Set[SetSequent[Atom]] )]()
+      }
+      val oExpr = oExprCl.fold(oExprCl.head._1)((x,y)=>{
+        val (one,_) = y.asInstanceOf[( Expr, Set[SetSequent[Atom]] )]
+        if(freeVariables(x.asInstanceOf[Expr]).nonEmpty) x
+        else one
+      }).asInstanceOf[Expr]
+      SchematicClauseSet.InstantiateClauseSetSchema( "omega",oclauses.keySet.head, SCS, Substitution( freeVariables(oExpr).head, nat( 7  ) ) )(ctx)
       ok
     }
-
+    "Schematic Clause set equivalent to non schematic" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      val oclauses = SCS.get( "omega" ) match {
+        case Some( x ) => x
+        case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
+      }
+      val oExprCl = oclauses.get(oclauses.keySet.head) match {
+        case Some( x ) => x
+        case None      =>  Set[( Expr, Set[SetSequent[Atom]] )]()
+      }
+      val oExpr = oExprCl.fold(oExprCl.head._1)((x,y)=>{
+        val (one,_) = y.asInstanceOf[( Expr, Set[SetSequent[Atom]] )]
+        if(freeVariables(x.asInstanceOf[Expr]).nonEmpty) x
+        else one
+      }).asInstanceOf[Expr]
+      val Sclauseset = SchematicClauseSet.InstantiateClauseSetSchema( "omega",oclauses.keySet.head, SCS, Substitution( freeVariables(oExpr).head, nat( 3  ) ) )(ctx)
+      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
+      val thestruct = StructCreators.extract( proof, ctx )
+      val nonclauseset = CharacteristicClauseSet( thestruct )
+      val fin = nonclauseset.forall(x=>{
+        val fin = Sclauseset.contains(x)
+        if(!fin) println(x)
+        fin
+      })
+      //fin must beEqualTo(true )
+      ok
+    }
   }
-  /*
   {
     import gniaSchema.ctx
 
@@ -292,7 +271,8 @@ class SchemaTest extends Specification {
       }
       IsKSimple( result ) must_== true
     }
-  }*/
+  }
 
 }
+
 

@@ -1,10 +1,11 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.expr.{ Apps, Expr, Formula, _ }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context.ProofDefinitions
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent, SetSequent }
+import at.logic.gapt.proofs.{Context, HOLSequent, Sequent, SetSequent}
+
 
 //Idea behind the type is for each proof symbol we have a  Map,  which maps configurations to a set of sequents over atoms
 //representing the clauses and the expression of the case of the inductive definition.
@@ -31,7 +32,7 @@ object SchematicClauseSet {
         CurrentProofsCases.map( x => {
           val ( placeHolder: Expr, assocProof: LKProof ) = x
           val ancestorPositions = FindAncestors( assocProof.endSequent, cutConfig )
-          ( placeHolder, StructCreators.extract( assocProof, ancestorPositions, proofNames )( x => true ) )
+          ( placeHolder, StructCreators.extract( assocProof, ancestorPositions, ctx)( _ => true ) )
         } )
       //After constructing the struct we need to find the dependencies associated
       // with the struct modulo the provided configuration.
@@ -68,7 +69,7 @@ object SchematicClauseSet {
 
     //Checks if, for every formula in S1 there is a formula in S2 which is similar to
     //it modulo terms.
-    def convert( S1: Vector[Formula], S2: Vector[Formula] ) =
+    def convert( S1: Vector[Formula], S2: Vector[Formula] ):Vector[Boolean] =
       S1.map( f1 => S2.foldLeft( false )( ( same, f2 ) => ancestorInstanceOf( f2, f1 ) || same ) )
     //Checks if Formula F1 is similar to formula
     def ancestorInstanceOf( F1: Formula, F2: Formula ): Boolean = {
@@ -81,9 +82,9 @@ object SchematicClauseSet {
           case ( App( Const( _, t ), _ ), Var( _, r ) ) => isOK && t.equals( r )
           case ( App( _, s ), Const( _, _ ) )           => isOK && freeVariables( s ).nonEmpty
           case ( App( t, _ ), App( r, _ ) )             => isOK && t.equals( r )
-          case ( Const( _, t ), Var( w, r ) )           => isOK && t.equals( r )
+          case ( Const( _, t ), Var( _ , r ) )           => isOK && t.equals( r )
           case ( Var( _, t ), Const( _, r ) )           => isOK && t.equals( r )
-          case ( t, r )                                 => isOK
+          case ( _ , _ )                                 => isOK
         }
       } )
       finality
@@ -131,16 +132,16 @@ object SchematicClauseSet {
       if ( m1.keySet.nonEmpty && m2.keySet.nonEmpty )
         ( m1.keySet ++ m2.keySet ) map { i => i -> ( m1.get( i ).toList ::: m2.get( i ).toList ) } toMap
       else if ( m1.keySet.isEmpty && m2.keySet.nonEmpty )
-        ( m2.keySet ) map { i => i -> ( m2.get( i ).toList ) } toMap
+        m2.keySet map { i => i ->  m2.get( i ).toList } toMap
 
       else if ( m1.keySet.nonEmpty && m2.keySet.isEmpty )
-        ( m1.keySet ) map { i => i -> ( m1.get( i ).toList ) } toMap
+         m1.keySet  map { i => i ->  m1.get( i ).toList  } toMap
       else Map[K, List[V]]()
 
     def mergeSet[K, V]( m1: Map[K, Set[V]], m2: Map[K, Set[V]] ): Map[K, Set[V]] =
       if ( m1.keySet.nonEmpty && m2.keySet.nonEmpty )
         ( m1.keySet ++ m2.keySet ) map { i =>
-          i -> ( {
+          i ->  {
             val one = m1.get( i ) match {
               case Some( www ) => www
               case None        => Set[V]()
@@ -150,7 +151,7 @@ object SchematicClauseSet {
               case None        => Set[V]()
             }
             one ++ two
-          } )
+          }
         } toMap
       else if ( m1.keySet.isEmpty && m2.keySet.nonEmpty )
         m2
@@ -194,130 +195,192 @@ object SchematicClauseSet {
     } )
   }
 
-  def InstantiateClauseSetSchema(
-    topSym:    String,
-    cutConfig: HOLSequent,
-    css:       Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]],
-    sigma:     Substitution ): Set[SetSequent[Atom]] = {
-    val starterClauseSet = ( css.get( topSym ) match {
-      case Some( x ) => x
-      case None      => Map[HOLSequent, Set[( Expr, Set[Sequent[Atom]] )]]()
-    } ).get( cutConfig ) match {
-      case Some( x ) => x
-      case None      => Set[( Expr, Set[Sequent[Atom]] )]()
-    }
-    if ( starterClauseSet.isEmpty || !starterClauseSet.exists( x => {
-      val ( ex, _ ) = x
-      sigma.domain.equals( freeVariables( ex ) )
-    } ) ) {
-      starterClauseSet.exists( x => {
-        val ( ex, _ ) = x
-        println( freeVariables( ex ) + "   " + ex + "    " + sigma.domain.equals( freeVariables( ex ) ) )
-        sigma.domain.equals( freeVariables( ex ) )
-      } )
+  def nat( i: Int, thevar:Var )( implicit ctx: Context ): Expr = {
+    val suc = ctx.get[Context.Constants].constants.getOrElse( "s", Const( "0", Ti ) )
+    if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ,thevar) ) )
+    else thevar
+  }
 
-      Set[SetSequent[Atom]]()
-    } else {
-      println( topSym + " is now the symbol   " + cutConfig + "    " + sigma )
-      val optionClauseSets = starterClauseSet.fold( Set[( Expr, Set[Sequent[Atom]] )]() )( ( vale, x ) => {
-        val ( ex: Expr, _ ) = x
-        if ( sigma.domain.equals( freeVariables( ex ) ) ) {
-          val Apps( at.logic.gapt.expr.Const( _, _ ), _ ) = ex
-          vale.asInstanceOf[Set[( Expr, Set[Sequent[Atom]] )]] ++
-            Set[( Expr, Set[Sequent[Atom]] )]( x.asInstanceOf[( Expr, Set[Sequent[Atom]] )] )
-        } else vale
-      } ).asInstanceOf[Set[( Expr, Set[Sequent[Atom]] )]]
-      if ( optionClauseSets.size != 1 ) Set[SetSequent[Atom]]()
+  object InstantiateClauseSetSchema {
+    def apply(topSym: String,
+              cutConfig: HOLSequent,
+              css: Map[String, Map[HOLSequent, Set[(Expr, Set[SetSequent[Atom]])]]],
+              sigma: Substitution)(implicit ctx: Context): Set[Sequent[Atom]] = {
+      //First we extract the clause set associated with the given proof name
+      val starterClauseSet = (css.get(topSym) match {
+        case Some(x) => x
+        case None => Map[HOLSequent, Set[(Expr, Set[Sequent[Atom]])]]()
+      }).get(cutConfig) match {
+        case Some(x) => x
+        case None => Set[(Expr, Set[Sequent[Atom]])]()
+      }
+      //we check if the starter clause set is empty or does not have
+      //any free variables in common with the domain of sigma.
+      //When this occurs we return an empty clause set.
+      if (starterClauseSet.isEmpty ||
+        !starterClauseSet.exists(x => {
+          sigma.domain.equals(freeVariables(x._1))
+        }))
+        Set[Sequent[Atom]]()
       else {
-        val instantiatedClauses = optionClauseSets.head._2.map( x => SetSequent[Atom]( sigma( x ).asInstanceOf[Sequent[Atom]] ) )
-        //This code goes through the clause set and checks if the any of the clause contain clause set terms
-        //if they do, the code then calls this method recursively on the those parts and attaches them
-        val finalres = instantiatedClauses.fold( Set[SetSequent[Atom]]() )( ( vale, x ) => {
-          val ( newSuccSeq, cLSSyms ) = SequentSplitter( x.asInstanceOf[SetSequent[Atom]] )
-          val newSetSequent = SetSequent( Sequent( x.asInstanceOf[SetSequent[Atom]].sequent.antecedent, newSuccSeq ) )
-          if ( cLSSyms.isEmpty ) vale.asInstanceOf[Set[SetSequent[Atom]]] ++ Set( x )
-          else {
-            val baseofFold = if ( newSetSequent.sequent.antecedent.isEmpty && newSetSequent.sequent.succedent.isEmpty ) Set[SetSequent[Atom]]() else Set[SetSequent[Atom]]( newSetSequent )
-            val finalcs = cLSSyms.fold( baseofFold )( ( mixedClauseSet, y ) => {
-              val Apps( _, info ) = y
-              val Const( newTopSym, _ ) = info.head
-              val seperator = ClauseTermReader( info.tail )
-              val ( _, ante, _, suc, _, args ) = seperator
-              val alphaRenamedAnte = FormulaSetGeneralization( ante, args )
-              val alphaRenamedSuc = FormulaSetGeneralization( suc, args )
-              val newCutConfig = HOLSequent( alphaRenamedAnte, alphaRenamedSuc )
-              val mapOnConfigs = css.get( newTopSym ) match { case Some( holseq ) => holseq case None => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]() }
-              //Something going wrong here
-              val theconfigneeded = mapOnConfigs.keySet.foldLeft( newCutConfig )( ( thekey, cutconfigctk ) => if ( SequentInstanceOf( newCutConfig, cutconfigctk ) ) cutconfigctk else thekey )
-              val theNewClauseSetPair = mapOnConfigs.get( theconfigneeded ) match {
-                case Some( holseq ) => holseq
-                case None           => Set[( Expr, Set[SetSequent[Atom]] )]()
-              }
-              println()
-              println()
-              println( "THis is the name" )
-              println( newTopSym + "   " + topSym )
-              println( "THis is the clause term" )
-              println( info.tail )
-              println( "This is the new config " )
-              println( newCutConfig )
-              println( "This is the config " )
-              println( theconfigneeded )
-              println( "Clauses from the config" )
-              println( mapOnConfigs.keySet )
-              val ( _, exprForMatch, bestMatchClauses ) = PickCorrectInductiveCase( theNewClauseSetPair, args )
+        //Here we are looked for the clause set specifically
+        //associated with the domain of sigma.
+        val optionClauseSets = starterClauseSet.fold(Set[(Expr, Set[Sequent[Atom]])]())((rightClauses, possibleclauses) => {
+          val (ex: Expr, _) = possibleclauses
+          if (sigma.domain.equals(freeVariables(ex))) {
+            val Apps(at.logic.gapt.expr.Const(_, _), _) = ex // we are assuming natural numbers here
+            rightClauses.asInstanceOf[Set[(Expr, Set[Sequent[Atom]])]] ++
+              Set[(Expr, Set[Sequent[Atom]])](possibleclauses.asInstanceOf[(Expr, Set[Sequent[Atom]])])
+          } else rightClauses
+        }).asInstanceOf[Set[(Expr, Set[Sequent[Atom]])]]
+        //This is a weird case when we have more than one stepcase or
+        // no stepcase Not True when dealing with natural numbers.
+        if (optionClauseSets.size != 1) Set[Sequent[Atom]]()
+        else {
+          //Here we select the clause set associated with the provided
+          //substitution. We decide which clause set is associated
+          //by selecting the clause set with the greatest difference
+          //after substitution
+          val clauseSetToInstantiate = optionClauseSets.fold(Set[(Int, Set[Sequent[Atom]])]())((reEx, excl) => {
+            val (ex: Expr, cl: Set[Sequent[Atom]]) = excl
+            val listdiff = LambdaPosition.differingPositions(ex, sigma(ex))
+            reEx.asInstanceOf[Set[(Int, Set[Sequent[Atom]])]] ++ Set[(Int, Set[Sequent[Atom]])]((listdiff.size, cl))
+          }).asInstanceOf[Set[(Int, Set[Sequent[Atom]])]].fold((0, Set[Sequent[Atom]]()))((cl, excl) => {
+            val (size: Int, _) = excl
+            val (curSize: Int, _) = cl
+            if (curSize < size) excl
+            else cl
+          })
 
-              val subargs = args.map( x => sigma( x ) )
-              val Apps( _, vs: Seq[Expr] ) = exprForMatch
+          //Here we instatiate the clause set we selected
+          val instantiatedClauses: Set[Sequent[Atom]] = clauseSetToInstantiate._2.map(x => {
+            val HOLSequent(ante, suc) = x
+            val newAnte = ante.map(form => {
+              sigma.domain.fold(form)((subform, varsig) => {
+                val positions: List[HOLPosition] = subform.find(nat(1, varsig.asInstanceOf[Var])(ctx))
+                positions.fold(subform)((nrepl, curpos) => {
+                  nrepl.asInstanceOf[Formula].replace(curpos.asInstanceOf[HOLPosition], varsig)
+                }).asInstanceOf[Formula]
+              })
+            })
+            val newSuc = suc.map(form => {
+              sigma.domain.fold(form)((subform, varsig) => {
+                if (varsig.ty.equals(TBase("nat"))) {
+                  val positions: List[HOLPosition] = subform.find(nat(1, varsig.asInstanceOf[Var])(ctx))
+                  positions.fold(subform)((nrepl, curpos) => {
+                    if(subform.contains(Const( "⊢", To ))) nrepl
+                    else nrepl.asInstanceOf[Formula].replace(curpos.asInstanceOf[HOLPosition], varsig)
+                  }).asInstanceOf[Formula]
+                } else subform
+              })
+            })
+            sigma(HOLSequent(newAnte, newSuc)).asInstanceOf[Sequent[Atom]]
+          })
+          //This code traverses the clause set and checks if the any of
+          // the clause contain clause set terms if they do, then we call
+          //this method recursively on the those parts and attach the
+          // resulting clause sets
+          val finalres = instantiatedClauses.fold(Set[SetSequent[Atom]]())((vale, x) => {
+            //We can attept to split each clause into the clause set symbols
+            //and the none clause set symbols
+            val (newSuccSeq, cLSSyms) = SequentSplitter(x.asInstanceOf[Sequent[Atom]])
+            //After splitting we can construct a new clause without clause set symbols
+            val newSequent = Sequent(x.asInstanceOf[Sequent[Atom]].antecedent, newSuccSeq)
+            //If there are no clause set symbols we are done.
+            //otherwise we have to construct the clause sets for
+            //each symbol
+            if (cLSSyms.isEmpty) vale.asInstanceOf[Set[Sequent[Atom]]] ++ Set(x)
+            else {
+              //We construct this new clause set by folding the newly constructed clause
+              //and the resulting clause sets by sequent concatination
+              val baseOfFold = if (newSequent.antecedent.isEmpty && newSequent.isEmpty)
+                Set[Sequent[Atom]]()
+              else Set[Sequent[Atom]](newSequent)
+              val finalCS = cLSSyms.fold(baseOfFold)((mixedClauseSet, y) => {
+                val Apps(_, info) = y
+                val Const(newTopSym, _) = info.head
 
-              val zippedTogether = vs.zip( subargs ).map( x => {
-                val ( one, two ) = x
-                val thevars = freeVariables( one )
-                if ( thevars.nonEmpty ) {
-                  val clean: List[HOLPosition] = thevars.map( x => one.find( x ) ).fold( List[HOLPosition]() )( ( fin, ll ) =>
-                    fin ++ ll )
-                  val left: Expr = one.get( clean.head ) match {
-                    case Some( w ) => w
-                    case None      => one
-                  }
-                  val right: Expr = two.get( clean.head ) match {
-                    case Some( w ) => w
-                    case None      => two
-                  }
-                  ( left, right )
-                } else x
-              } )
-              val newsigma: Substitution = zippedTogether.fold( Substitution() )( ( sub, pair ) => {
-                val ( one: Expr, two: Expr ) = pair
-                if ( freeVariables( one ).isEmpty ) sub
-                else sub.asInstanceOf[Substitution].compose( Substitution( one.asInstanceOf[Var], two ) )
-              } ).asInstanceOf[Substitution]
+                //Clause terms are constructed by adding auxillary information
+                //to an atomic formula. We extract this information using the following
+                //method
+                val (_, ante, _, suc, _, args) = ClauseTermReader(info.tail)
+                //Saved within this clause set term is a cut configuration
+                //which we must abstract and generalize in order to find the
+                //proper clause set in the schematic clause set map.
+                val newCutConfig = HOLSequent(ante, suc)
+                val mapOnConfigs = css.get(newTopSym) match {
+                  case Some(holseq) => holseq
+                  case None => Map[HOLSequent, Set[(Expr, Set[SetSequent[Atom]])]]()
+                }
+                val theConfigNeeded = mapOnConfigs.keySet.foldLeft(newCutConfig)((thekey, cutconfigctk) => if (SequentInstanceOf(newCutConfig, cutconfigctk)) cutconfigctk else thekey)
+                val theNewClauseSetPair = mapOnConfigs.get(theConfigNeeded) match {
+                  case Some(holseq) => holseq
+                  case None => Set[(Expr, Set[SetSequent[Atom]])]()
+                }
+                //After finding the configuration we need to put the correct inductive
+                //step in order to properly construct the clause set.
+                val (_, exprForMatch, _) = PickCorrectInductiveCase(theNewClauseSetPair, args)
 
-              val thelowerclauses = InstantiateClauseSetSchema( newTopSym, theconfigneeded, css, newsigma )
-              val ender = ComposeClauseSets( mixedClauseSet.asInstanceOf[Set[SetSequent[Atom]]], thelowerclauses )
+                //The final step towards building the clause set is constructing the necessary
+                //substitution
+                val subArgs = args.map(x => sigma(x))
+                val Apps(_, vs: Seq[Expr]) = exprForMatch
 
-              println( "This is the substitution" )
-              println( newsigma )
-              println( "This is the match" )
-              println( exprForMatch )
-              println( "This is the almost final clauseset" )
-              println( thelowerclauses )
-              println( "This is the almost final clauseset2" )
-              println( mixedClauseSet )
-              println( "This is the final clauseset" )
-              println( ender )
-              println()
-              println()
-              ender
-            } ).asInstanceOf[Set[SetSequent[Atom]]]
+                //Here we construct the new substitution
+                val zippedTogether = vs.zip(subArgs).map(x => {
+                  val (one, two) = x
+                  val thevars = freeVariables(one) //We know this is at most size one for nat
+                  if (thevars.nonEmpty) {
+                    val clean: List[HOLPosition] = thevars.map(x => one.find(x)).fold(List[HOLPosition]())((fin, ll) =>
+                      fin ++ ll)
+                    //We are removing the outer most sucessor symbol here.
+                    val left: Expr = one.get(clean.head) match {
+                      case Some(w) => w
+                      case None => one
+                    }
+                    val right: Expr = two.get(clean.head) match {
+                      case Some(w) => w
+                      case None => two
+                    }
+                    (left, right)
+                  } else x
+                })
+                //Here we join all of the variable term pairs and construct a subtitution
+                val newsigma: Substitution = zippedTogether.fold(Substitution())((sub, pair) => {
+                  val (one: Expr, two: Expr) = pair
+                  if (freeVariables(one).isEmpty) sub
+                  else sub.asInstanceOf[Substitution].compose(Substitution(one.asInstanceOf[Var], two))
+                }).asInstanceOf[Substitution]
+                //Now that we have the config and the substitution we can recursively call the lower
+                //clause set
+                val thelowerclauses = InstantiateClauseSetSchema(newTopSym, theConfigNeeded, css, newsigma)
+                //after we construct the recursive clause sets we can attach them to the final clause set
+                val ender = ComposeClauseSets(mixedClauseSet.asInstanceOf[Set[Sequent[Atom]]], thelowerclauses)
+                ender
+              }).asInstanceOf[Set[Sequent[Atom]]]
 
-            vale.asInstanceOf[Set[SetSequent[Atom]]] ++ finalcs
-          }
-        } ).asInstanceOf[Set[SetSequent[Atom]]]
-        finalres
+              vale.asInstanceOf[Set[Sequent[Atom]]] ++ finalCS
+            }
+          }).asInstanceOf[Set[Sequent[Atom]]]
+          finalres
+        }
       }
     }
   }
+  //This object seperates the clause set symbols from the atoms of the given sequent
+  object SequentSplitter {
+    def apply[V]( theSequent: Sequent[V] ): ( Set[V], Set[V] ) = theSequent.succedent.fold( ( Set[Atom](), Set[Atom]() ) )( ( clset, y ) => {
+      val ( seqNotCL, seqInCL ) = clset
+      y match {
+        case Apps( Const( "CL", _ ), _ ) => ( seqNotCL.asInstanceOf[Set[V]],
+          seqInCL.asInstanceOf[Set[V]] ++ Set[V]( y.asInstanceOf[V] ) )
+        case _ => ( seqNotCL.asInstanceOf[Set[V]] ++ Set[V]( y.asInstanceOf[V] ),
+          seqInCL.asInstanceOf[Set[V]] )
+      }
+    } ).asInstanceOf[( Set[V], Set[V] )]
+  }
+  //This object is specifically designed to read clause set terms
+  //which are constructed from proofs during struct construction
   object ClauseTermReader {
     def apply( input: Seq[Expr] ): ( Set[Const], Set[Formula], Set[Const], Set[Formula], Set[Const], Set[Expr] ) = input.foldLeft( ( Set[Const](), Set[Formula](), Set[Const](),
       Set[Formula](), Set[Const](), Set[Expr]() ) )( ( bigCollect, w ) => {
@@ -346,38 +409,7 @@ object SchematicClauseSet {
       } else bigCollect
     } )
   }
-  //This code seperates the clause set symbols from the atoms of the given sequent
-  object SequentSplitter {
-    def apply[V]( theSequent: SetSequent[V] ): ( Set[V], Set[V] ) = theSequent.sequent.succedent.fold( ( Set[Atom](), Set[Atom]() ) )( ( clset, y ) => {
-      val ( seqNotCL, seqInCL ) = clset
-      y match {
-        case Apps( Const( "CL", _ ), _ ) => ( seqNotCL.asInstanceOf[Set[V]],
-          seqInCL.asInstanceOf[Set[V]] ++ Set[V]( y.asInstanceOf[V] ) )
-        case _ => ( seqNotCL.asInstanceOf[Set[V]] ++ Set[V]( y.asInstanceOf[V] ),
-          seqInCL.asInstanceOf[Set[V]] )
-      }
-    } ).asInstanceOf[( Set[V], Set[V] )]
-  }
 
-  object FormulaSetGeneralization {
-    def apply( theSetOfFormula: Set[Formula], args: Set[Expr] ): Set[Formula] = theSetOfFormula.map( ancestor => {
-      args.fold( ( 0, ancestor ) )( ( ancestorVarUpdate, curTerm ) => {
-        val ( varNum: Int, ancestorAtom: Formula ) = ancestorVarUpdate
-        val posList = ancestorAtom.find( curTerm.asInstanceOf[Expr] )
-        val newForm: Formula = posList.fold( ancestorAtom )( ( curForm, upTerm ) => {
-          val isVar = curForm.asInstanceOf[Formula].get( upTerm.asInstanceOf[HOLPosition] ) match {
-            case Some( Var( _, _ ) ) => true
-            case _                   => false
-          }
-          val withChange: Formula = if ( false /*isVar*/ ) curForm.asInstanceOf[Formula].replace( upTerm.asInstanceOf[HOLPosition], Var( "_schVar" + "1", curTerm.asInstanceOf[Expr].ty ) )
-          else curForm.asInstanceOf[Formula]
-
-          withChange
-        } ).asInstanceOf[Formula]
-        ( varNum + 1, newForm )
-      } ).asInstanceOf[( Int, Formula )]._2
-    } )
-  }
 
   //checks if S1 is an instance of S2
   object SequentInstanceOf {
@@ -417,19 +449,19 @@ object SchematicClauseSet {
           case ( Var( _, t ), Var( _, r ) )   => isOK && t.equals( r )
           case ( App( _, s ), Var( w, r ) )   => isOK && !s.contains( Var( w, r ) )
           case ( Const( _, t ), Var( _, r ) ) => isOK && t.equals( r )
-          case ( t, r )                       => isOK
+          case ( _, _ )                       => isOK
         }
       } )
     }
   }
-
+//Picks which part of an inductive definition is needed at the moment
   object PickCorrectInductiveCase {
     def apply( CSP: Set[( Expr, Set[SetSequent[Atom]] )], args: Set[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) =
       CSP.foldLeft( ( 0, CSP.head._1, CSP.head._2 ) )( ( theCorrect, current ) => {
         val ( Apps( _, argslink ), clauses ) = current
-        val ( oldcount, oldex, clauses2 ) = theCorrect
-        val totalcount = args.zip( argslink ).fold( 0 )( ( count, curpair ) => {
-          val ( one, two ) = curpair
+        val ( oldcount, _ , _ ) = theCorrect
+        val totalcount = args.zip( argslink ).fold( 0 )( ( count, curPair ) => {
+          val ( one, two ) = curPair
           if ( one.equals( two ) ) count.asInstanceOf[Int] + 1
           else count
         } ).asInstanceOf[Int]
@@ -437,10 +469,10 @@ object SchematicClauseSet {
         else theCorrect
       } )
   }
-
+  //Takes two clause set and composes them clause by clause
   object ComposeClauseSets {
-    def apply( C1: Set[SetSequent[Atom]], C2: Set[SetSequent[Atom]] ): Set[SetSequent[Atom]] = {
-      val Cout: ( Set[SetSequent[Atom]], Set[SetSequent[Atom]] ) = if ( C1.size > C2.size ) ( C1, C2 ) else ( C2, C1 )
+    def apply( C1: Set[Sequent[Atom]], C2: Set[Sequent[Atom]] ): Set[Sequent[Atom]] = {
+      val Cout: ( Set[Sequent[Atom]], Set[Sequent[Atom]] ) = if ( C1.size > C2.size ) ( C1, C2 ) else ( C2, C1 )
       val newclauses = Cout._1.map( x =>
         if ( Cout._2.nonEmpty ) Cout._2.map( y => setSequentCompose( x, y ) )
         else Cout._1 )
@@ -449,10 +481,8 @@ object SchematicClauseSet {
       else Set()
     }
 
-    def setSequentCompose( S1: SetSequent[Atom], S2: SetSequent[Atom] ): SetSequent[Atom] =
-      SetSequent[Atom]( Sequent[Atom](
-        S1.sequent.antecedent ++ S2.sequent.antecedent,
-        S1.sequent.succedent ++ S2.sequent.succedent ) )
+    def setSequentCompose( S1: Sequent[Atom], S2: Sequent[Atom] ): Sequent[Atom] =
+     Sequent[Atom](S1.antecedent.distinct ++ S2.antecedent.distinct, S1.succedent.distinct ++ S2.succedent.distinct )
   }
 
 }
