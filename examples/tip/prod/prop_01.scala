@@ -3,6 +3,8 @@ package at.logic.gapt.examples.tip.prod
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 
 object prop_01 extends TacticsProof {
   ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"S: nat>nat" )
@@ -40,5 +42,15 @@ object prop_01 extends TacticsProof {
     rewrite.many ltr "ps"; allL( "IHx_0", le"y:nat" ); quasiprop
     rewrite.many ltr ( "ps", "ds" ); allL( "IHx_0", le"x_0:nat" ); quasiprop
     allR; allL( "lem", le"x:nat", le"x:nat" ); quasiprop
+  }
+
+  val treeGrammar = Lemma( sequent ) {
+    cut( "p0r", hof"!x x+0=x" ); forget( "g" ); decompose; induction( hov"x: nat" ).onAll( escargot )
+    cut( "psr", hof"!x!y x+S(y)=S(x+y)" ); forget( "g" ); allR; induction( hov"x: nat" ).onAll( decompose andThen escargot )
+
+    treeGrammarInduction
+      .canSolSize( 1 )
+      .quantTys()
+      .equationalTheory( hof"0+x = x", hof"x+0 = x", hof"S(x)+y = S(x+y)", hof"x+S(y) = S(x+y)" )
   }
 }

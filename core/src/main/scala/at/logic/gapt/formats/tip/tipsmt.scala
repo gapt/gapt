@@ -59,6 +59,8 @@ class TipSmtParser {
       val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) )
       declare( f )
       ctx += f
+    case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LAtom( _ ), LAtom( ":source" ), _, rest @ _* ) =>
+      parse( LFun( cmd, name +: rest: _* ) )
     case LFun( "define-fun" | "define-fun-rec", LAtom( name ), LList( args @ _* ), LAtom( retType ), body ) =>
       val argVars = for ( LFun( argName, LAtom( argType ) ) <- args ) yield Var( argName, typeDecls( argType ) )
       val funConst = Const( name, FunctionType( typeDecls( retType ), argVars.map( _.ty ) ) )
@@ -70,6 +72,8 @@ class TipSmtParser {
     case LFun( "assert", formula ) =>
       assumptions += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "assert-not", formula ) =>
+      goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
+    case LFun( "prove", LAtom( ":source" ), _, formula ) =>
       goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "check-sat" ) => ()
   }

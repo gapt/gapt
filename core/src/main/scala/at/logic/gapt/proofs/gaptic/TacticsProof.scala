@@ -1,11 +1,15 @@
 package at.logic.gapt.proofs.gaptic
 
-import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.{ Context, ImmutableContext, MutableContext }
 
-class TacticsProof( initialContext: Context = Context.default ) {
-  private var _ctx = initialContext
-  protected def ctx_=( newContext: Context ) = { _ctx = newContext }
-  implicit def ctx = _ctx
+class TacticsProof0( initialContext: ImmutableContext ) {
+  protected val mutableContext: MutableContext = initialContext.newMutable
+  implicit def ctx: ImmutableContext = mutableContext.ctx
+  protected def ctx_=( newContext: ImmutableContext ) = { mutableContext.ctx = newContext }
+}
+
+class TacticsProof( initialContext: ImmutableContext = Context.default ) extends TacticsProof0( initialContext ) {
+  protected implicit def mutableCtxImplicit: MutableContext = mutableContext
 
   def main( args: Array[String] ): Unit = ()
 }

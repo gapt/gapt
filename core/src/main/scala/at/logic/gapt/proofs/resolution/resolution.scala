@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -90,11 +91,11 @@ trait ResolutionProof extends SequentProof[Formula, ResolutionProof] with DagPro
   def skolemFunctions =
     SkolemFunctions( subProofs.collect { case p: SkolemQuantResolutionRule => p.skolemConst -> p.skolemDef } )
 
-  def stringifiedConclusion = {
+  def stringifiedConclusion( implicit sig: BabelSignature ): String = {
     val assertionString =
       if ( assertions.isEmpty ) ""
-      else s"   <- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
-    conclusion.toString + assertionString
+      else s"   <- ${assertions.map( identity, -_ ).map( _.toSigRelativeString ).elements.mkString( "," )} "
+    conclusion.toSigRelativeString + assertionString
   }
   override protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$stringifiedConclusion   (${super[DagProof].stepString( subProofLabels )})"

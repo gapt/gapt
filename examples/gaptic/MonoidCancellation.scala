@@ -20,7 +20,7 @@ object MonoidCancellation extends TacticsProof {
 
   val setup: Tactical[Unit] = {
     def mkAux( formula: Formula ) =
-      Lemma( Sequent() :+ ( "goal" -> universalClosure( formula ) ) ) {
+      Proof( Sequent() :+ ( "goal" -> universalClosure( formula ) ) ) {
         decompose
         foTheory
       }
@@ -74,7 +74,7 @@ object MonoidCancellation extends TacticsProof {
       repeat( refl orElse cancel )
   }
 
-  Lemma( hols":- a*(b*c) = (b*a)*c" ) { solve }
+  Proof( hols":- a*(b*c) = (b*a)*c" ) { solve }
 
   def benchmarkFormula( n: Int ): Formula = {
     def buildL( n: Int ): Expr = {
@@ -89,7 +89,7 @@ object MonoidCancellation extends TacticsProof {
   }
 
   def proveBenchmark( n: Int ): LKProof =
-    Lemma( hols":- ${benchmarkFormula( n )}" ) { solve }
+    Proof( hols":- ${benchmarkFormula( n )}" ) { solve }
 
   def runBenchmark( n: Int ): Unit =
     ctx.check( proveBenchmark( n ) )

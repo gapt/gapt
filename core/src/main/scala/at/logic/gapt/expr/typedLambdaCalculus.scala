@@ -14,6 +14,8 @@ abstract class Expr {
   def ty: Ty
 
   def hashCode: Int
+  def alphaEquivalentHashCode: Int
+
   override def equals( a: Any ) = a match {
     case a: AnyRef if this eq a            => true
     case e: Expr if e.hashCode != hashCode => false
@@ -169,7 +171,8 @@ class Var private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
       case _                  => false
     }
 
-  override val hashCode = 42 + ty.hashCode
+  override val hashCode = 42 * name.hashCode + ty.hashCode
+  override val alphaEquivalentHashCode = 42 + ty.hashCode
 }
 
 class Const private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
@@ -183,6 +186,7 @@ class Const private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
     this syntaxEquals that
 
   override val hashCode = ( 41 * name.hashCode ) + ty.hashCode
+  override def alphaEquivalentHashCode = hashCode
 }
 
 class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
@@ -207,6 +211,7 @@ class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
   }
 
   override val hashCode = ( 41 * function.hashCode ) + arg.hashCode
+  override val alphaEquivalentHashCode = ( 41 * function.alphaEquivalentHashCode ) + arg.alphaEquivalentHashCode
 }
 
 class Abs private[expr] ( val variable: Var, val term: Expr ) extends Expr {
@@ -223,7 +228,8 @@ class Abs private[expr] ( val variable: Var, val term: Expr ) extends Expr {
     case _ => false
   }
 
-  override val hashCode = 41 * term.hashCode
+  override val hashCode = 41 * term.alphaEquivalentHashCode + variable.ty.hashCode
+  override def alphaEquivalentHashCode = hashCode
 }
 
 object Var {

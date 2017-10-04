@@ -4,14 +4,14 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Utils
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.grammars.findMinimalSipGrammar
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.{ Logger, Maybe }
 
 trait SolutionFinder {
   def findSolution( schematicSIP: SimpleInductionProofU ): Option[FOLFormula]
@@ -29,7 +29,7 @@ class SipProver(
 
   private val nLine = sys.props( "line.separator" )
 
-  override def getLKProof( endSequent: HOLSequent ): Option[LKProof] =
+  override def getLKProof( endSequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] =
     getSimpleInductionProof( endSequent ).map( _.toLKProof )
 
   def getSimpleInductionProof( endSequent: HOLSequent ): Option[SimpleInductionProofU] = {

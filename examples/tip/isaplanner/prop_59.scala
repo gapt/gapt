@@ -5,7 +5,7 @@ import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic.{ Lemma, TacticsProof }
 import at.logic.gapt.prooftool.prooftool
-import at.logic.gapt.provers.viper.ViperTactic
+import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions
 
 object prop_59 extends TacticsProof {
@@ -18,6 +18,6 @@ object prop_59 extends TacticsProof {
   }
 
   val proof_1 = Lemma( sequent ) {
-    new ViperTactic( TreeGrammarProverOptions().copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" )
+    new TreeGrammarInductionTactic( TreeGrammarProverOptions().copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" )
   }
 }

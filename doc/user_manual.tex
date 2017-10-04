@@ -263,6 +263,8 @@ functionality of these systems will not be available.
 \item SPASS (\url{http://www.spass-prover.org/})
 \item LeanCoP (\url{http://leancop.de/})
 \item Metis (\url{http://www.gilith.com/software/metis/})
+\item iProver (\url{http://www.cs.man.ac.uk/~korovink/iprover/}, requires
+  a development version as of September 11, 2017)
 \item VeriT (\url{http://www.verit-solver.org/})
 \item Z3 (\url{https://github.com/Z3Prover/z3})
 \item MiniSAT (\url{http://minisat.se/})
@@ -739,18 +741,15 @@ or have it automatically eliminate all definitions in the current context. Some 
 The typical way to declare a context is by starting with a default value and adding elements to it.
 The \cli{Context.default} object contains only the sort \cli{o} (truth values) and the fundamental logical
 symbols:
-\begin{tacticslisting}[nosig]
-import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context
-
- object ContextExample {
-   implicit var ctx = Context.default
-   ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
-   ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
-   ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
-   ctx += "1" -> le" s 0" //Adding a definition
-   ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
- }
+\begin{tacticslisting}[bare]
+object ContextExample {
+  implicit val ctx = MutableContext.default()
+  ctx += Context.InductiveType("Nat", hoc" 0: Nat", hoc" s: Nat > Nat") //Adding a type declaration
+  ctx += hoc" '+' : Nat>Nat>Nat" //Adding a constant declaration
+  ctx += "plus_zero" -> hos" :- ∀n (n + 0 = n)" //Adding a theory axiom
+  ctx += "1" -> le" s 0" //Adding a definition
+  ctx += hof" leq x y = (∃z x + z = y)" //Adding a definition as an equation
+}
 \end{tacticslisting}
 \begin{tacticsoutput}
 \end{tacticsoutput}
@@ -845,12 +844,13 @@ val lemmaEx =
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
 b_0: P(a) ⊃ Q(a)
-a: P(a): o
+a: P(a)
 b: ∀x (P(x) ⊃ Q(x))
 :-
-c: Q(a): o
+c: Q(a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -896,11 +896,12 @@ val lemmaEx =
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
-a: P(a): o
+a: P(a)
 :-
-c: Q(a): o
+c: Q(a)
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1012,24 +1013,25 @@ val cutEx = Lemma(Sequent(
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 3 open sub goals:
-A: A:o
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
-I1: I(1): o
-I0: I(0): o
+I1: I(1)
+I0: I(0)
 
-I0: I(0): o
-A: A:o
+I0: I(0)
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
-I1: I(1): o
+I1: I(1)
 
-I1: I(1): o
-A: A:o
+I1: I(1)
+A: A
 :-
 C: ∃x ∃y (¬x = y ∧ f(x) = f(y))
 
-  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishProof(language.scala:39)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finish(language.scala:45)
+  at at.logic.gapt.proofs.gaptic.LemmaMacros$.finishLemma(language.scala:55)
   ... 25 elided
 \end{tacticsoutput}
 
@@ -1087,7 +1089,7 @@ shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{clilisting}
 gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
-m: at.logic.gapt.models.Interpretation =
+m: at.logic.gapt.models.PropositionalModel =
 R(p_1, h_1): o -> true
 R(p_1, h_2): o -> false
 R(p_1, h_3): o -> false
@@ -1107,16 +1109,16 @@ p1: at.logic.gapt.expr.FOLAtom = R(p_1, h_1): o
 gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
-gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
+gapt> m(p1) // Is pigeon 1 in hole 1?
 res12: Boolean = true
 
-gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
+gapt> m(p2) // Is pigeon 2 in hole 1?
 res13: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
-gapt> m.interpret( And(p1, p2) )
+gapt> m(p1 & p2)
 res14: Boolean = false
 
 \end{clilisting}
@@ -1249,7 +1251,7 @@ Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
 gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
-res22: Option[at.logic.gapt.models.Interpretation] =
+res22: Option[at.logic.gapt.models.PropositionalModel] =
 Some(a:o -> false
 b:o -> false
 c:o -> true)
@@ -1293,16 +1295,16 @@ support arbitrary (even Unicode) names in GAPT:
 gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
 benchmark: String =
 "(set-logic QF_UF)
-(declare-sort t1 0)
-(declare-fun f1 () t1)
-(declare-fun f2 (t1) Bool)
-(declare-fun f3 () t1)
-(declare-fun f4 () t1)
-(assert (not (=> (and (and (or (= f4 f1) (= f4 f3)) (f2 f3)) (f2 f1)) (f2 f4))))
+(declare-sort t_i 0)
+(declare-fun f_b () t_i)
+(declare-fun f_P (t_i) Bool)
+(declare-fun f_c () t_i)
+(declare-fun f_a () t_i)
+(assert (not (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b)) (f_P f_a))))
 (check-sat)
 "
-typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
-constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f1:t1, P:i>o -> f2:t1>Bool, c -> f3:t1, a -> f4:t1)
+typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t_i)
+constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f_b:t_i, P:i>o -> f_P:t_i>Bool, c -> f_c:t_i, a -> f_a:t_i)
 
 \end{clilisting}
 
@@ -1391,15 +1393,15 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res31: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p11] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p1, Suc(0), p10, Ant(1)))
-[p10] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p9, Ant(2), Ant(0)))
-[p9] ∀x (p(x) ⊃ p(s(x))), p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p4, Suc(0), p8, Ant(1)))
-[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p7, Suc(0), p5, Ant(0)))
-[p7] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p6, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
-[p6] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p5, Ant(0)))
-[p5] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
+Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0), ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
+[p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
+[p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
+[p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
 [p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
-[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0)...
+[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
 
 \end{clilisting}
 
@@ -1420,8 +1422,8 @@ The LeanCoP interface supports the \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
 res33: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(p(0)-,
-∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-)
+Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+p(0)-
 :-
 p(s(s(0)))+)
 
@@ -1523,27 +1525,27 @@ problem: at.logic.gapt.formats.tip.TipProblem =
 
 gapt> val Some(proof) = Viper(problem, verbosity=0)
 proof: at.logic.gapt.proofs.lk.LKProof =
-[p144] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
-∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+[p149] ∀z (minus(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀y0 ¬#c(Z: Nat) = S(y0),
 ∀x0 (p(S(x0)): Nat) = x0,
-∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
+∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
 ∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
 ∀z ∀x2 minus(S(z), S(x2)) = minus(z, x2),
 ∀z ∀y plus(S(z), y) = S(plus(z, y))
 ⊢
-∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p26, Suc(0), p143, Ant(4)))
-[p143] ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
-∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+∀n ∀m minus(n, plus(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p148, Ant(3)))
+[p148] ∀z (minus(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀y0 ¬#c(Z: Nat) = S(y0),
 ∀x0 (p(S(x0)): Nat) = x0,
-∀z (minus(S(z), #c(Z: Nat)): Nat) = S(z),
 ∀m
-  ((⊤ ⊃ minus(#c(Z: Nat), plus(#c(Z: Nat), m)) = #c(Z: Nat)) ∧
+  ((⊤ ⊃ minus(#c(Z: Nat), plus(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
       ∀n_0
         (minus(n_0, plus(n_0, m)) = #c(Z: Nat) ⊃
           minus(S(n_0), plus(S(n_0), m)) = #c(Z: Nat)) ⊃
     ∀n minus(n, plus(n, m)) = #c(Z: Nat)),
+∀y plus(#c(Z: Nat), y) = y,
 ∀y minus(#c(Z: Nat), y) = #c(Z: Nat),
-∀z ∀x2 m...
+∀z ∀x...
 
 \end{clilisting}
 
@@ -1568,13 +1570,13 @@ gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
 res38: at.logic.gapt.proofs.lk.LKProof =
 [p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
-[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(a) = x))
-[p6] a = b, f(a) = a ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx a = f(f(x))))
-[p5] a = b, f(a) = a ⊢ a = f(f(a))    (WeakeningLeftRule(p4, a = b))
-[p4] f(a) = a ⊢ a = f(f(a))    (EqualityRightRule(p3, Ant(0), Suc(0), λx a = f(x)))
-[p3] f(a) = a ⊢ a = f(a)    (EqualityRightRule(p2, Ant(0), Suc(0), λx a = x))
-[p2] f(a) = a ⊢ a = a    (WeakeningLeftRule(p1, f(a) = a))
-[p1]  ⊢ a = a    (ReflexivityAxiom(a))
+[p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(x) = b))
+[p6] a = b, f(b) = b ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx x = f(f(b))))
+[p5] a = b, f(b) = b ⊢ b = f(f(b))    (WeakeningLeftRule(p4, a = b))
+[p4] f(b) = b ⊢ b = f(f(b))    (EqualityRightRule(p3, Ant(0), Suc(0), λx b = f(x)))
+[p3] f(b) = b ⊢ b = f(b)    (EqualityRightRule(p2, Ant(0), Suc(0), λx b = x))
+[p2] f(b) = b ⊢ b = b    (WeakeningLeftRule(p1, f(b) = b))
+[p1]  ⊢ b = b    (ReflexivityAxiom(b))
 
 \end{clilisting}
 
@@ -1664,7 +1666,7 @@ sequent by converting to an expansion proof:
 
 \begin{clilisting}
 gapt> LKToExpansionProof(q)
-res39: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+res39: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x ∀y ((s(x:nat): nat) + (y:nat): nat) = s(x + y)
   +^{0} (∀y s(0) + y = s(0 + y) +^{0} (s(0) + 0 = s(0 + 0))-)
   +^{s(0)} (∀y s(s(0)) + y = s(s(0) + y) +^{0} (s(s(0)) + 0 = s(s(0) + 0))-),
@@ -1758,11 +1760,11 @@ pr: at.logic.gapt.proofs.lk.EqualityRightRule =
 [p1] P(a) ⊢ P(a)    (LogicalAxiom(P(a): o))
 
 \end{clilisting}
-In order to apply interpolation, we need to specify a partition of the end-sequent into $\Gamma_1 \seq \Delta_1$ and $\Gamma_2 \seq \Delta_2$, i.e. into the negative (npart) and positive (ppart) part, respectively. In this case, we set $\Delta_1 = \{ P(b) \}$, $\Gamma_2 = \{ a=b, P(a) \}$ and $\Gamma_1 = \Delta_2 = \emptyset$.
+In order to apply interpolation, we need to specify a partition of the end-sequent into $\Gamma_1 \seq \Delta_1$ and $\Gamma_2 \seq \Delta_2$, i.e. into the negative and positive part, respectively. In this case, we set $\Delta_1 = \{ P(b) \}$, $\Gamma_2 = \{ a=b, P(a) \}$ and $\Gamma_1 = \Delta_2 = \emptyset$.
 
-Then we can call \texttt{ExtractInterpolant( pr, npart, ppart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
+Then we can call \texttt{ExtractInterpolant( pr, positivePart )}, which returns the interpolant $I = (a=b \impl \lnot P(a))$ of pr:
 \begin{clilisting}
-gapt> val I = ExtractInterpolant( pr, Seq( Suc( 0 ) ), Seq( Ant( 0 ), Ant( 1 ) ) )
+gapt> val I = ExtractInterpolant(pr, Seq(Ant(0), Ant(1)))
 I: at.logic.gapt.expr.Formula = a = b ⊃ ¬P(a)
 
 \end{clilisting}
@@ -1783,7 +1785,7 @@ strong quantifiers do not form cycles.
 For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val expansion = LKToExpansionProof(examples.fol1.proof)
-expansion: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
+expansion: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀X (X ⊃ X)
   +^{∀x ∃y (¬P(x, y) ∨ Q(x, y))}
     (∀x ∃y (¬P(x, y) ∨ Q(x, y)) +ev^{x}
@@ -1810,7 +1812,7 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res40: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀X (X ⊃ X), ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
 
 gapt> expansion.deep
 res41: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
@@ -1900,44 +1902,47 @@ gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach pr
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p286] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-⊢
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionRightRule(p285, Suc(1), Suc(0)))
-[p285] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
-∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p284, Ant(2), Ant(1)))
-[p284] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+[p220] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
 ⊢
-∃x_1 ∃y_1 (s(x_1) <= y_1 ∧ f(x_1) = f(y_1)),
-∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1))    (ContractionLeftRule(p283, Ant(2), Ant(0)))
-[p283] ∀x_2 (f(x_2) = 0 ∨ f(x_2) = s(0)),
-∀x_1 ∀y_0 ...
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p219, Ant(2)))
+[p219] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+0 = 0
+⊢
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p218, Suc(1), Suc(0)))
+[p218] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+0 = 0
+⊢
+∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p217, Ant(3), Ant(1)))
+[p217] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+0 = 0,
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+⊢
+∃x_0 ∃y_1 (s(x_0) <= y_1...
 
 gapt> prooftool(acnf)
 
 gapt> val et = LKToExpansionProof(acnf)
-et: at.logic.gapt.proofs.expansion.ExpansionProofWithCut =
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
-  +^{s(M(x, 0))}
-    (∀y_0 (s(M(x, 0)) <= M(s(M(x, 0)), y_0) ∧ y_0 <= M(s(M(x, 0)), y_0))
-      +^{s(M(x, 0))}
-        ((s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0))))- ∧
-          wk-{s(M(x, 0)) <= M(s(M(x, 0)), s(M(x, 0)))}))
-  +^{s(M(x, x_0))}
-    (∀y_0 (s(M(x, x_0)) <= M(s(M(x, x_0)), y_0) ∧ y_0 <= M(s(M(x, x_0)), y_0))
-      +^{s(M(x, x_0))}
-        ((s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0))))- ∧
-          wk-{s(M(x, x_0)) <= M(s(M(x, x_0)), s(M(x, x_0)))}))
-  +^{s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0))))))}
-    (∀y_0
-        (s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))) <=
-            M(s(M(x_1, s(M(s(M(x, x_0)), s(M(x, x_0)))))), y_0) ∧
-          y_0 <= M(s(M(x_1, s(M(s(M(x,...
+et: at.logic.gapt.proofs.expansion.ExpansionProof =
+∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
+  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
+      s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))}
+    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
+            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+        0)- ∨
+      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
+            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+        s(0))-)
+  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)}
+    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = 0)- ∨
+      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = s(0))-)
+  +^{M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))}
+    ((f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = 0)- ∨
+      (f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = s(0))-)...
 
 gapt> prooftool(et)
 
@@ -2025,21 +2030,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(x_1))
+x_0 → s(s(s(s(x_1))))
 
 x_0 → s(x_1)
 
-x_0 → x_1
+x_1 → s(s(x_2))
 
-x_1 → s(s(s(x_2)))
+x_1 → s(x_2)
 
 x_1 → x_2
 
-x_2 → s(0)
+x_2 → 0
 
-x_2 → s(s(s(s(s(s(s(0)))))))
+x_2 → s(s(s(s(s(s(0))))))
 
-x_2 → s(s(s(s(s(s(s(s(s(s(s(s(s(0)))))))))))))
+x_2 → s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res51: Boolean = true
@@ -2053,17 +2058,17 @@ res52: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(x_1))
+x_0 → s(s(s(s(x_1))))
 
 x_0 → s(x_1)
 
-x_0 → x_1
+x_1 → s(s(x_2))
 
-x_1 → s(s(s(x_2)))
+x_1 → s(x_2)
 
 x_1 → x_2
 
-x_2 → s(0)
+x_2 → 0
 
 \end{clilisting}
 
@@ -2112,9 +2117,9 @@ reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequ
 
 gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
 firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
+∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ⊤ ⊃ P_is_list(f_nil),
 ∀x0 (P_is_list(x0) ⊃ P_is_o(f_P(x0))),
-∀x0 (P_is_nat(x0) ⊃ P_is_nat(f_s(x0))),
 ∀x0 ∀x1 (P_is_nat(x0) ∧ P_is_list(x1) ⊃ P_is_list(f_cons(x0, x1))),
 ⊤ ⊃ P_is_nat(f_0),
 P_is_o(f_nonempty_o),

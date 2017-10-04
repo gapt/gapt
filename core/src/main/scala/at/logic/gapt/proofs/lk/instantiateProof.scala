@@ -1,11 +1,8 @@
 package at.logic.gapt.proofs.lk
-import at.logic.gapt.expr.{ Expr, _ }
+import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
 
-/**
- * The Point of this class is to allow the instantiation of Proof schemata.
- */
-object LKProofSchemata {
+object instantiateProof {
   /**
    * Given a proof name found in the context and a set of arguments matching
    * the argument list of the chosen proof name this function constructs an
@@ -15,16 +12,19 @@ object LKProofSchemata {
    *
    * @param proofName The name of the linkProof
    */
-  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof = eliminateDefinitions( InternalInstantiate( proofName )( ctx ) )
-  private def InternalInstantiate( proofName: Expr )( implicit ctx: Context ): LKProof =
+  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof = eliminateDefinitions( instantiateProof( proofName )( ctx ) )
+  def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
     ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
-      case Some( ( defPrf, subst ) ) => buildProof( subst( defPrf ), ctx )
+      case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
       case None                      => ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
     }
 
-  object buildProof extends LKVisitor[Context] {
+  def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
+    buildProof( proof, ctx )
+
+  private object buildProof extends LKVisitor[Context] {
     override def visitProofLink( proof: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
-      val upProof = InternalInstantiate( proof.referencedProof )( otherArg )
+      val upProof = instantiateProof( proof.referencedProof )( otherArg )
       ( upProof, SequentConnector.guessInjection( upProof.endSequent, proof.conclusion ).inv )
     }
   }

@@ -3,35 +3,33 @@ package at.logic.gapt.utils
 import scala.collection.mutable
 
 object linearizeStrictPartialOrder {
-  def apply[T]( set: Iterable[T], relation: Iterable[( T, T )] ): Either[Seq[T], Seq[T]] =
-    build( set.toSet, relation.toSet, Seq() )
+  def apply[T]( set: Iterable[T], relation: Iterable[( T, T )] ): Either[Vector[T], Vector[T]] =
+    build( set.toSet, Map().withDefaultValue( Nil ) ++ relation.groupBy( _._1 ).mapValues( Nil ++ _.map( _._2 ) ) )
 
-  private def build[T]( set: Set[T], relation: Set[( T, T )], prefix: Seq[T] ): Either[Seq[T], Seq[T]] =
-    if ( set isEmpty ) {
-      Right( prefix )
-    } else {
-      set find { n => relation forall { _._2 != n } } match {
-        case Some( next ) =>
-          build( set - next, relation filterNot { _._1 == next }, prefix :+ next )
-        case None =>
-          Left( findCycle( set.head, relation ) )
+  private def build[T]( set: Set[T], relation: Map[T, List[T]] ): Either[Vector[T], Vector[T]] = {
+    val out = mutable.Buffer[T]()
+    val printed = mutable.Set[T]()
+
+    case class CycleException( cycle: Vector[T] ) extends Throwable
+
+    def go( t: T, stacktrace: List[T], stacktraceSet: Set[T] ): Unit =
+      if ( printed( t ) ) {
+      } else if ( stacktraceSet( t ) ) {
+        throw CycleException( Vector( t ) ++ stacktrace.takeWhile( _ != t ).reverseIterator :+ t )
+      } else {
+        val stacktrace_ = t :: stacktrace
+        val stacktraceSet_ = stacktraceSet + t
+        relation( t ).foreach( go( _, stacktrace_, stacktraceSet_ ) )
+        out.prepend( t )
+        printed += t
       }
-    }
 
-  private def findCycle[T]( start: T, relation: Set[( T, T )] ): Seq[T] = {
-    def walkDown( start: T, alreadyVisited: List[T] ): Seq[T] = {
-      val Some( ( _, next ) ) = relation find { _._2 == start }
-      if ( alreadyVisited contains next )
-        next :: ( alreadyVisited.takeWhile( _ != next ) :+ next )
-      else
-        walkDown( next, next :: alreadyVisited )
+    try {
+      for ( s <- set ) go( s, List(), Set() )
+      Right( out.toVector )
+    } catch {
+      case CycleException( cycle ) => Left( cycle )
     }
-    walkDown( start, start :: Nil )
-  }
-
-  private def walkDown[T]( start: T, relation: Set[( T, T )] ): Stream[T] = {
-    val Some( ( _, next ) ) = relation find { _._2 == start }
-    start #:: walkDown( next, relation )
   }
 }
 

@@ -39,14 +39,14 @@ lazy val commonSettings = Seq(
   sourcesInBase := false // people like to keep scripts lying around
 )
 
-val scalariformOptions = scalariformSettings( true ) :+
+val scalariformOptions = scalariformSettings( autoformat = true ) :+
   ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.9.4"
+val specs2Version = "3.9.5"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",

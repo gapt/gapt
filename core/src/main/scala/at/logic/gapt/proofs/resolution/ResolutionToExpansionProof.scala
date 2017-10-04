@@ -1,9 +1,10 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.utils.Maybe
 
 import scala.collection.mutable
 
@@ -51,7 +52,7 @@ import scala.collection.mutable
  */
 object ResolutionToExpansionProof {
 
-  def apply( proof: ResolutionProof ): ExpansionProof = {
+  def apply( proof: ResolutionProof )( implicit ctx: Maybe[Context] ): ExpansionProof = {
     apply( proof, inputsAsExpansionSequent )
   }
 
@@ -71,8 +72,9 @@ object ResolutionToExpansionProof {
     }
   }
 
-  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent ): ExpansionProof = {
+  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent )( implicit ctx: Maybe[Context] ): ExpansionProof = {
     val expansionWithDefs = withDefs( proof, input )
+    implicit val ctx1: Context = ctx.getOrElse( MutableContext.guess( Some( expansionWithDefs ) ) )
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
   }
@@ -86,7 +88,7 @@ object ResolutionToExpansionProof {
    * Performs the conversion without eliminating the definitions
    * introduced by structural clausification.
    */
-  def withDefs( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent, addConclusion: Boolean = true ): ExpansionProofWithCut = {
+  def withDefs( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent, addConclusion: Boolean = true ): ExpansionProof = {
     val nameGen = rename.awayFrom( containedNames( proof ) )
 
     val expansions = mutable.Map[ResolutionProof, Set[( Substitution, ExpansionSequent )]]().withDefaultValue( Set() )
@@ -143,9 +145,6 @@ object ResolutionToExpansionProof {
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
       Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[Atom], !i.polarity ) } )
 
-    def perfMerges( expansionSequent: ExpansionSequent ): ExpansionSequent = {
-      expansionSequent.groupBy( _.shallow ).map( ets => ETMerge( ets._2 ) )
-    }
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
     proof.dagLike.postOrder.reverse.foreach {
@@ -255,6 +254,6 @@ object ResolutionToExpansionProof {
         ETMerge( defn, Polarity.InSuccedent, splitCutL( splAtom ) ),
         ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) ) )
 
-    eliminateMerges( ExpansionProofWithCut( cuts, perfMerges( expansionSequent ) ) )
+    eliminateMerges( ExpansionProof( ETMerge( ETCut( cuts ) +: expansionSequent ) ) )
   }
 }

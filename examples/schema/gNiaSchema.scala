@@ -253,8 +253,8 @@ object gniaSchema extends TacticsProof {
 
   val esphiSc = Sequent(
     Seq(
-      ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" ) ),
-    Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
+      "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(s(n),y))" ),
+    Seq( "Suc_0" -> hof"?p Ech(m,p)" ) )
   val phiSc = Lemma( esphiSc ) {
     cut( "cut", hof"!x?y (LEQ(x,y) & E(f(y),s(n)))" )
     cut( "cut1", hof"!x?y (LEQ(x,y) & POR(n,y))" )

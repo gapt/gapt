@@ -7,8 +7,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.isAtom
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.proofs.SequentMatchers
-import at.logic.gapt.proofs.{ Context, Sequent, gaptic }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent, SequentMatchers, gaptic }
 import at.logic.gapt.proofs.lk.{ CutRule, LKToExpansionProof, ReductiveCutElimination }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.SatMatchers
@@ -51,7 +50,7 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
 
   "many-sorted proofs" in {
     import gaptic._
-    val p = Lemma( Sequent() :+ ( "goal" ->
+    val p = Proof( Sequent() :+ ( "goal" ->
       hof"P(0:nat) & !x (P x -> P (s x)) -> P(s(s(s(s(0)))))" ) ) {
 
       cut( "lem", hof"!x (P(x:nat) -> P (s (s x)))" ) onAll decompose
@@ -63,7 +62,7 @@ class CeresTest extends Specification with SequentMatchers with SatMatchers {
   }
 
   "second-order definitions" in {
-    implicit var ctx = Context()
+    implicit val ctx = MutableContext.default()
     ctx += Context.Sort( "i" )
     ctx += hof"in x X = (X x: o)"
     ctx ++= Seq( hoc"P:i>i>o", hoc"c:i", hoc"f:i>i", hoc"g:i>i" )

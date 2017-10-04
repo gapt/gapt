@@ -242,9 +242,6 @@ object InstanceTermEncoding {
   def apply( expansionProof: ExpansionProof ): ( Set[Expr], InstanceTermEncoding ) =
     apply( expansionProof.expansionSequent )
 
-  def apply( expansionProof: ExpansionProofWithCut ): ( Set[Expr], InstanceTermEncoding ) =
-    apply( eliminateCutsET( expansionProof ).expansionSequent )
-
   def apply( lkProof: LKProof ): ( Set[Expr], InstanceTermEncoding ) = {
     val encoding = InstanceTermEncoding( lkProof.endSequent )
     encoding.encode( eliminateCutsET( LKToExpansionProof( lkProof ) ) ) -> encoding

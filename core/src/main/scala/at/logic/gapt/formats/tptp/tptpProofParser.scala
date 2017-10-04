@@ -19,6 +19,8 @@ object TptpProofParser {
         false
       case AnnotatedFormula( _, _, _, _, TptpTerm( "introduced", FOLVar( avatar ), _ ) +: _ ) if avatar.startsWith( "AVATAR" ) =>
         false
+      case AnnotatedFormula( _, _, _, _, TptpTerm( "introduced", FOLConst( avatar ), _ ) +: _ ) if avatar.startsWith( "avatar" ) =>
+        false
       case AnnotatedFormula( _, label, "conjecture", formula, _ ) =>
         containsStrongQuantifier( formula, Polarity.InSuccedent )
       case AnnotatedFormula( _, label, _, formula, _ ) =>
@@ -92,6 +94,7 @@ object TptpProofParser {
     val steps = ( for ( input @ AnnotatedFormula( _, name, _, _, _ ) <- stepList.inputs ) yield name -> input ).toMap
 
     val memo = mutable.Map[String, Seq[RefutationSketch]]()
+    val alreadyVisited = mutable.Set[String]()
     val splDefs = mutable.Map[( FOLAtom, Boolean ), AvatarDefinition]()
     val splAtoms = mutable.Set[FOLAtom]()
     def filterVampireSplits( clause: FOLClause ): FOLClause = clause.filterNot( splAtoms )
@@ -110,7 +113,14 @@ object TptpProofParser {
         SketchComponentIntro( comp )
       }
     }
+    def haveAlreadyVisited( stepName: String ): Boolean = {
+      val res = alreadyVisited( stepName )
+      alreadyVisited += stepName
+      res
+    }
     def convert( stepName: String ): Seq[RefutationSketch] = memo.getOrElseUpdate( stepName, steps( stepName ) match {
+      case _ if haveAlreadyVisited( stepName ) =>
+        throw new IllegalArgumentException( s"Cyclic inference: ${steps( stepName )}" )
       case AnnotatedFormula( "fof", _, "plain", And( Imp( defn, Neg( splAtom: FOLAtom ) ), _ ), TptpTerm( "introduced", TptpTerm( "sat_splitting_component" ), _ ) +: _ ) =>
         convertAvatarDefinition( defn, splAtom )
       case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", TptpTerm( "sat_splitting_refutation" ), _, _ ) ) +: _ ) =>
@@ -129,9 +139,9 @@ object TptpProofParser {
           parent
         }
         Seq( SketchSplitCombine( splitParents ) )
-      case AnnotatedFormula( "fof", _, "plain", And( Imp( splAtom: FOLAtom, defn ), _ ), TptpTerm( "introduced", FOLVar( "AVATAR_definition" ), _ ) +: _ ) =>
+      case AnnotatedFormula( "fof", _, "plain", And( Imp( splAtom: FOLAtom, defn ), _ ), TptpTerm( "introduced", FOLVar( "AVATAR_definition" ) | FOLConst( "avatar_definition" ), _ ) +: _ ) =>
         convertAvatarDefinition( defn, splAtom )
-      case AnnotatedFormula( "fof", _, "plain", disj, ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ), _, _ ) ) +: _ ) =>
+      case AnnotatedFormula( "fof", _, "plain", disj, ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ) | FOLConst( "avatar_split_clause" ), _, _ ) ) +: _ ) =>
         val Seq( assertion ) = CNFp( disj ).toSeq
         val Seq( splittedClause, _* ) = getParents( justification ) flatMap convert
 
@@ -148,7 +158,7 @@ object TptpProofParser {
 
         require( p.conclusion.isEmpty, s"$assertion\n$splittedClause\n$splDefs" )
         Seq( p )
-      case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ), _, _ ) ) +: _ ) =>
+      case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ) | FOLConst( "avatar_sat_refutation" ), _, _ ) ) +: _ ) =>
         Seq( SketchSplitCombine( getParents( justification ).flatMap( convert ) ) )
       case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
         labelledCNF( label ) map SketchAxiom

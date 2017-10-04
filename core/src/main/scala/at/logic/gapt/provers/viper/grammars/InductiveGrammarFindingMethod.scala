@@ -16,7 +16,6 @@ trait InductiveGrammarFindingMethod extends SchematicInductiveProofFindingMethod
   override def find( endSequent: HOLSequent, encoding: InstanceTermEncoding, context: Context,
                      taggedLanguage: Set[( Seq[Expr], Expr )] ): SchematicProofWithInduction = {
     val rs = encoding.decode( findRS( taggedLanguage ) )
-    val homogenized = homogenizeRS( rs )( context )
-    ProofByRecursionScheme( endSequent, homogenized, context )
+    ProofByRecursionScheme( endSequent, rs, context )
   }
 }

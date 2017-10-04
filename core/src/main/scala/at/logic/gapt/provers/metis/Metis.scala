@@ -7,14 +7,14 @@ import at.logic.gapt.formats.StringInputFile
 import at.logic.gapt.formats.tptp.{ TPTPFOLExporter, TptpProofParser }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
-import at.logic.gapt.proofs.{ FOLClause, HOLClause }
+import at.logic.gapt.proofs.{ FOLClause, HOLClause, MutableContext }
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
-import at.logic.gapt.utils.{ ExternalProgram, runProcess }
+import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess }
 
 object Metis extends Metis
 
 class Metis extends ResolutionProver with ExternalProgram {
-  override def getResolutionProof( seq: Traversable[HOLClause] ): Option[ResolutionProof] =
+  override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap

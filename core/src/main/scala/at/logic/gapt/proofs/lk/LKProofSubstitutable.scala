@@ -212,7 +212,7 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
         ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
+          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
     }
 
   override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -235,7 +235,7 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
         ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
+          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
     }
 
   override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -262,5 +262,15 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
         DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    }
+
+  override protected def visitInduction( proof: InductionRule, otherArg: Unit ) =
+    one2one( proof, otherArg ) { newSubProofs =>
+      InductionRule(
+        for ( ( ( newSubProof, subConn ), oldCase ) <- newSubProofs.zip( proof.cases ) )
+          yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
+          oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
+          subConn.child( oldCase.conclusion ) ),
+        TermReplacement( proof.formula, repl ).asInstanceOf[Abs], TermReplacement( proof.term, repl ) )
     }
 }

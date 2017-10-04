@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.proofs.Context
-import at.logic.gapt.provers.viper.aip.{ ThrowsError, LabelledSequent }
+import at.logic.gapt.proofs.{ Context, MutableContext }
+import at.logic.gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 
 trait AxiomFactory {
   /**
@@ -12,10 +12,10 @@ trait AxiomFactory {
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]]
+  def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]]
 
   final def :/\:( otherFactory: AxiomFactory ): AxiomFactory = new AxiomFactory {
-    override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+    override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
       for {
         axiomsLeft <- AxiomFactory.this( sequent )
         axiomsRight <- otherFactory( sequent )

@@ -15,7 +15,7 @@ import at.logic.gapt.proofs.ceres.CERES
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.proofs.{ Suc, loadExpansionProof }
+import at.logic.gapt.proofs.{ MutableContext, Suc, loadExpansionProof }
 import at.logic.gapt.proofs.resolution.{ ResolutionToExpansionProof, ResolutionToLKProof, simplifyResolutionProof }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9Importer
@@ -37,7 +37,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
   override protected def test( implicit testRun: TestRun ): Unit = {
     val bench = TipSmtParser.fixupAndParse( f ) --- "tip parser"
 
-    implicit val ctx = bench.ctx
+    implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
     val proof = Viper.getStrategies( ViperOptions() ).view.flatMap {
       case ( duration, strategy ) =>
@@ -112,8 +112,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-      ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
-      ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+      ExtractInterpolant( ip, indices1 ) --? "extractInterpolant"
+      ExtractInterpolant( ip, indices2 ) --? "extractInterpolant diff partition"
     }
 
     if ( !containsEqualityReasoning( p ) ) {

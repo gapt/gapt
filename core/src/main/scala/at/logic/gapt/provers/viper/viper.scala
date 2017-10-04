@@ -1,17 +1,19 @@
 package at.logic.gapt.provers.viper
 
 import ammonite.ops._
+import at.logic.gapt.expr.Formula
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
-import at.logic.gapt.proofs.{ Context, HOLSequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, withSection }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms._
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.SmtEquationMode
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
@@ -21,32 +23,44 @@ import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
 
-class ViperTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
+class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
   import at.logic.gapt.proofs.gaptic._
 
-  def copy( options: TreeGrammarProverOptions ) = new ViperTactic( options )
+  def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
+
+  def verbose: TreeGrammarInductionTactic = {
+    Logger.makeVerbose( classOf[TreeGrammarProver] )
+    this
+  }
 
   def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
+  def smtEquationMode( mode: SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
   def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
+  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
   def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
+  def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
 
   override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
-    val viper = new TreeGrammarProver( ctx, goal.conclusion, options )
-    try {
-      Right( () -> viper.solve() )
-    } catch {
-      case t: TimeOutException => throw t
-      case t: ThreadDeath      => throw t
-      case t: Throwable =>
-        Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
+    implicit val ctx2: MutableContext = ctx.newMutable
+    withSection { section =>
+      val groundGoal = section.groundSequent( goal.conclusion )
+      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
+      try {
+        Right( () -> viper.solve() )
+      } catch {
+        case t: TimeOutException => throw t
+        case t: ThreadDeath      => throw t
+        case t: Throwable =>
+          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
+      }
     }
   }
 
@@ -116,6 +130,7 @@ object ViperOptions {
       "prover9" -> prover9,
       "eprover" -> eprover,
       "escargot" -> Escargot,
+      "iprover" -> iprover,
       "spass" -> spass,
       "vampire" -> vampire )
   }
@@ -146,7 +161,7 @@ object ViperOptions {
 
 object Viper {
 
-  def getStrategies( opts: ViperOptions )( implicit ctx: Context ): List[( Duration, Tactical[_] )] =
+  def getStrategies( opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactical[_] )] =
     opts.mode match {
       case "untrusted_funind" =>
         List( Duration.Inf -> AnalyticInductionTactic( UntrustedFunctionalInductionAxioms, Escargot )
@@ -156,9 +171,9 @@ object Viper {
         List(
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
-          20.seconds -> new ViperTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
-          60.seconds -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
-      case "treegrammar" => List( Duration.Inf -> new ViperTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
+          20.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
+          60.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
+      case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
           opts.aipOptions.axioms match {
@@ -179,22 +194,22 @@ object Viper {
   }
 
   def apply( problem: TipProblem ): Option[LKProof] =
-    apply( problem.toSequent )( problem.ctx )
+    apply( problem.toSequent )( problem.ctx.newMutable )
 
   def apply( problem: TipProblem, verbosity: Int ): Option[LKProof] =
     apply( problem, ViperOptions( verbosity = verbosity ) )
 
   def apply( problem: TipProblem, options: ViperOptions ): Option[LKProof] =
-    apply( problem.toSequent, options )( problem.ctx )
+    apply( problem.toSequent, options )( problem.ctx.newMutable )
 
-  def apply( sequent: HOLSequent )( implicit ctx: Context ): Option[LKProof] =
+  def apply( sequent: HOLSequent )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, ViperOptions( verbosity = 3 ) )
 
-  def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: Context ): Option[LKProof] =
+  def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): Option[LKProof] =
     apply( sequent, opts.verbosity, getStrategies( opts ) )
 
   def apply( sequent: HOLSequent, verbosity: Int,
-             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: Context ): Option[LKProof] = {
+             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: MutableContext ): Option[LKProof] = {
     if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
     if ( verbosity >= 4 ) Escargot.makeVerbose()
 
@@ -238,14 +253,12 @@ object Viper {
     Logger.setConsolePattern( "%message%n" )
 
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
-    implicit val ctx = problem.ctx
+    implicit val ctx: MutableContext = problem.ctx.newMutable
 
-    apply( problem.toSequent, opts )( problem.ctx ) match {
+    apply( problem.toSequent, opts ) match {
       case Some( proof ) =>
-        if ( false ) { // this doesn't work with Skolem inferences atm
-          ctx check proof
-          require( proof.conclusion isSubsetOf problem.toSequent )
-        }
+        ctx check proof
+        require( proof.conclusion isSubsetOf problem.toSequent )
         println( "proof found" )
         if ( opts.prooftool ) prooftool( proof )
       case None =>

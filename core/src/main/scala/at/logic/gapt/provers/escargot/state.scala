@@ -2,8 +2,8 @@ package at.logic.gapt.provers.escargot.impl
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
-import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
-import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
+import at.logic.gapt.models.PropositionalModel
+import at.logic.gapt.proofs.{ HOLClause, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.{ LPO, TermOrdering }
 import at.logic.gapt.provers.sat.Sat4j
@@ -26,13 +26,13 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
 
   val weight = clause.elements.map { expressionSize( _ ) }.sum
 
-  override def toString = s"[$index] ${proof.stringifiedConclusion}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
+  override def toString = s"[$index] ${proof.stringifiedConclusion( state.ctx )}   (max = ${maximal mkString ", "}) (sel = ${selected mkString ", "}) (w = $weight)"
   override def hashCode = index
 }
 
-class EscargotState extends Logger {
+class EscargotState( val ctx: MutableContext ) extends Logger {
   var termOrdering: TermOrdering = LPO()
-  var nameGen = new NameGenerator( Seq() )
+  var nameGen = ctx.newNameGenerator
   var preprocessingRules = Seq[PreprocessingRule]()
   var inferences = Seq[InferenceRule]()
 
@@ -55,11 +55,11 @@ class EscargotState extends Logger {
     }
   } | And { ( newlyDerived.view ++ usable ++ workedOff ).map { c => universalClosure( c.proof.conclusion.toFormula ) } }
 
-  var avatarModel = MapBasedInterpretation( Map() )
+  var avatarModel = PropositionalModel( Map() )
   var emptyClauses = mutable.Map[HOLClause, Cls]()
   def isActive( cls: Cls ): Boolean = isActive( cls.assertion )
   def isActive( assertion: HOLClause ): Boolean =
-    avatarModel.interpret( assertion.toNegConjunction )
+    avatarModel( assertion.toNegConjunction )
 
   def preprocessing() =
     for ( r <- preprocessingRules )
@@ -69,8 +69,8 @@ class EscargotState extends Logger {
     for ( ( atom, i ) <- assertion.zipWithIndex )
       trySetAvatarAtom( atom, if ( value ) i.isSuc else i.isAnt )
   def trySetAvatarAtom( atom: Atom, value: Boolean ) =
-    if ( !avatarModel.model.isDefinedAt( atom ) )
-      avatarModel = MapBasedInterpretation( avatarModel.model + ( atom -> value ) )
+    if ( !avatarModel.assignment.isDefinedAt( atom ) )
+      avatarModel = PropositionalModel( avatarModel.assignment + ( atom -> value ) )
 
   def clauseProcessing() = {
     // extend avatar model
@@ -80,7 +80,7 @@ class EscargotState extends Logger {
     for ( c <- newlyDerived ) {
       if ( c.clause.isEmpty ) {
         emptyClauses( c.assertion ) = c
-        if ( !avatarModel.interpret( c.assertion.toDisjunction ) )
+        if ( !avatarModel( c.assertion.toDisjunction ) )
           usable += c // trigger model recomputation
       }
       if ( isActive( c ) ) {
@@ -130,9 +130,10 @@ class EscargotState extends Logger {
     }
   }
 
-  def switchToNewModel( model: Interpretation ) = {
-    avatarModel = MapBasedInterpretation(
-      avatarModel.model.keys.map( a => a -> model.interpretAtom( a ) ).toMap )
+  def switchToNewModel( model: PropositionalModel ) = {
+    avatarModel = PropositionalModel(
+      for ( ( a, p ) <- avatarModel.assignment )
+        yield a -> model.assignment.getOrElse( a, p ) )
 
     for ( ( cls, reason ) <- locked.toSet if isActive( cls ) && reason.forall { !isActive( _ ) } ) {
       locked -= ( cls -> reason )
@@ -159,7 +160,7 @@ class EscargotState extends Logger {
           return Some( cls.proof )
         Sat4j.solve( emptyClauses.keys ) match {
           case Some( newModel ) =>
-            debug( s"sat splitting model: ${avatarModel.model.keys.filter( newModel.interpretAtom ).toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
+            debug( s"sat splitting model: ${avatarModel.trueAtoms.toSeq.sortBy( _.toString ).mkString( ", " )}".replace( '\n', ' ' ) )
             switchToNewModel( newModel )
           case None =>
             return Some( emptyClauses.get( Sequent() ).map( _.proof ).getOrElse {

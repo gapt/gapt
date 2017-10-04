@@ -207,7 +207,6 @@ object SchematicClauseSet {
       css:       Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]],
       sigma:     Substitution )( implicit ctx: Context ): Set[Sequent[Atom]] = {
       //First we extract the clause set associated with the given proof name
-      println( topSym )
       val starterClauseSet = ( css.get( topSym ) match {
         case Some( x ) => x
         case None      => Map[HOLSequent, Set[( Expr, Set[Sequent[Atom]] )]]()

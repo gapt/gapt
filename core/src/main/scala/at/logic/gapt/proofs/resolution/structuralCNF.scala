@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.SkolemFunctions
 import at.logic.gapt.proofs._
 import at.logic.gapt.utils.NameGenerator
 
@@ -8,11 +9,10 @@ import scala.collection.mutable
 
 object structuralCNF {
   def apply(
-
     endSequent:        HOLSequent,
     propositional:     Boolean    = false,
     structural:        Boolean    = true,
-    bidirectionalDefs: Boolean    = false ): Set[ResolutionProof] = {
+    bidirectionalDefs: Boolean    = false )( implicit ctx: MutableContext = MutableContext.guess( endSequent ) ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
@@ -25,8 +25,8 @@ object structuralCNF {
     proofs:            Iterable[ResolutionProof],
     propositional:     Boolean                   = false,
     structural:        Boolean                   = true,
-    bidirectionalDefs: Boolean                   = false ): Set[ResolutionProof] = {
-    val clausifier = new Clausifier( propositional, structural, bidirectionalDefs, rename.awayFrom( proofs.flatMap( containedNames( _ ) ) ) )
+    bidirectionalDefs: Boolean                   = false )( implicit ctx: MutableContext = MutableContext.guess( proofs ) ): Set[ResolutionProof] = {
+    val clausifier = new Clausifier( propositional, structural, bidirectionalDefs, ctx, ctx.newNameGenerator )
     proofs foreach clausifier.expand
     clausifier.cnf.toSet
   }
@@ -35,6 +35,7 @@ object structuralCNF {
 class Clausifier(
     propositional: Boolean, structural: Boolean,
     bidirectionalDefs: Boolean,
+    ctx:               MutableContext,
     nameGen:           NameGenerator ) {
   val cnf = mutable.Set[ResolutionProof]()
   val defs = mutable.Map[Expr, HOLAtomConst]()
@@ -46,9 +47,7 @@ class Clausifier(
   def getSkolemInfo( f: Formula, x: Var ): ( Expr, Expr ) = {
     val fvs = freeVariables( f ).toSeq
     val skolemizedFormula = Abs( fvs, f )
-    val skolemConst = skConsts.getOrElseUpdate(
-      skolemizedFormula,
-      Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) ) )
+    val skolemConst = skConsts.getOrElseUpdate( skolemizedFormula, ctx.addSkolemSym( skolemizedFormula, mkSkolemSym() ) )
     ( skolemConst( fvs: _* ), skolemizedFormula )
   }
 
@@ -137,9 +136,7 @@ class Clausifier(
     val fvs = if ( propositional ) Nil else freeVariables( f ).toList
     val definedFormula = Abs( fvs, f )
     val alreadyDefined = defs isDefinedAt definedFormula
-    val const = defs.getOrElseUpdate(
-      definedFormula,
-      HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* ) )
+    val const = defs.getOrElseUpdate( definedFormula, ctx.addDefinition( definedFormula, mkAbbrevSym() ).asInstanceOf[HOLAtomConst] )
     if ( !alreadyDefined ) {
       val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definedFormula ) )( AllR( _, Suc( 0 ), _ ) )
       if ( i.isAnt || bidirectionalDefs ) expand( AndR2( defn, Suc( 0 ) ) )

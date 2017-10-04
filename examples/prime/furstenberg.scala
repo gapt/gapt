@@ -250,7 +250,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     n match {
       case 0 =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "S" ) in "h_0"
           exR( le"p 0" ).forget
           andR
@@ -265,7 +265,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         }
 
       case _ =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "S", "union" ).atMost( 2 ) in "h_0"
           orL
 
@@ -369,7 +369,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     n match {
       case 0 =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "P", "set_1" ) in "h_0"
           unfold( "S" ) in "g"
           eql( "h_0", "g" )
@@ -377,7 +377,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         }
 
       case _ =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "P", "union" ).atMost( 2 ) in "h_0"
           unfold( "S", "union" ).atMost( 2 ) in "g"
           orR
@@ -428,7 +428,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     n match {
       case 0 =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "Q" ) in "Qn"
           unfold( "R" ) in "Rn"
           allL( le"p 0" ).forget
@@ -439,7 +439,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         }
 
       case _ =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "Q" ).atMost( 1 ) in "Qn"
           cut( "Rn1", hof"R ${n - 1}" )
 
@@ -501,7 +501,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
 
     n match {
       case 0 =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "Q" ) in "Qn"
           cut( "zero_lt_p0", hof" 0 < p 0" )
 
@@ -512,7 +512,7 @@ case class furstenberg( k: Int ) extends PrimeDefinitions {
         }
 
       case _ =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           unfold( "Q" ) atMost 1 in "Qn"
           andL
           cut( s"zero_lt_pn", hof" 0 < p $n" )

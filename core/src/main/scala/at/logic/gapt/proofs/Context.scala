@@ -1,11 +1,12 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ Definition => EDefinition, _ }
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
 import Context._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
 import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.utils.NameGenerator
 
 import scala.reflect.ClassTag
 
@@ -37,7 +38,14 @@ import scala.reflect.ClassTag
  *  - [[at.logic.gapt.proofs.expansion.ExpansionProofToLK]] uses the information about the background theory
  *    to produce LK proofs modulo the background theory.
  */
-class Context private ( val state: State, val updates: List[Update] ) extends BabelSignature {
+sealed trait Context extends BabelSignature {
+  def state: State
+  def updates: List[Update]
+  def toImmutable: ImmutableContext
+
+  def newMutable: MutableContext = new MutableContext( toImmutable )
+  def toReadonly: ReadonlyMutableContext = new ReadonlyMutableContext( toImmutable )
+
   /** Gets a facet of this context, initializing it if it is not present yet. */
   def get[T: Facet]: T = state.get[T]
 
@@ -85,7 +93,7 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def reductionRules: Iterable[ReductionRule] = state.getAll[ReductionRule]
 
   /** Returns true iff the context contains the definition defn (the definitional expansion has to match as well). */
-  def contains( defn: EDefinition ): Boolean =
+  def contains( defn: Definition ): Boolean =
     definition( defn.what ).contains( defn.by )
 
   /** Returns the Skolem definition of skSym.  See [[at.logic.gapt.expr.hol.SkolemFunctions]]. */
@@ -97,8 +105,8 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
    *
    * If this is not a valid addition, then an exception is thrown.
    */
-  def +( update: Update ): Context =
-    new Context( update( this ), update :: updates )
+  def +( update: Update ): ImmutableContext =
+    toImmutable + update
 
   def normalizer = get[Reductions].normalizer
 
@@ -121,11 +129,29 @@ class Context private ( val state: State, val updates: List[Update] ) extends Ba
   def check[T: Checkable]( t: T ): Unit =
     implicitly[Checkable[T]].check( this, t )
 
-  def ++( updates: Traversable[Update] ): Context =
-    updates.foldLeft( this )( _ + _ )
+  def ++( updates: Traversable[Update] ): ImmutableContext =
+    updates.foldLeft( toImmutable )( _ + _ )
+
+  def names: Iterable[String] = constants.map( _.name ) ++ get[BaseTypes].baseTypes.keySet
+  def newNameGenerator: NameGenerator = new NameGenerator( names )
 
   override def toString =
     s"${state}Updates:\n${updates.view.reverse.map( x => s"  $x\n" ).mkString}"
+}
+
+class ImmutableContext private ( val state: State, val updates: List[Update] ) extends Context {
+  def toImmutable: ImmutableContext = this
+
+  /**
+   * Adds an element to the context.
+   *
+   * If this is not a valid addition, then an exception is thrown.
+   */
+  override def +( update: Update ): ImmutableContext =
+    new ImmutableContext( update( this ), update :: updates )
+}
+object ImmutableContext {
+  val empty = new ImmutableContext( State(), Nil )
 }
 
 object Context {
@@ -209,7 +235,8 @@ object Context {
     def ++( consts: Traversable[Const] ): Constants =
       consts.foldLeft( this )( _ + _ )
 
-    override def toString = constants.values.map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
+    override def toString = constants.values.toSeq.sortBy( _.name ).
+      map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
@@ -220,12 +247,15 @@ object Context {
 
     def +( reductionRule: ReductionRule ): Reductions =
       copy( normalizer + reductionRule )
+
+    override def toString: String =
+      normalizer.rules.map { case ReductionRule( lhs, rhs ) => s"$lhs -> $rhs" }.mkString( "\n" )
   }
   implicit val reductionsFacet: Facet[Reductions] = Facet( Reductions( Normalizer( Set() ) ) )
 
   /** Definitions that define a constant by an expression of the same type. */
   case class Definitions( definitions: Map[String, Expr] ) {
-    def +( defn: EDefinition ) = {
+    def +( defn: Definition ) = {
       require( !definitions.contains( defn.what.name ) )
       copy( definitions + ( defn.what.name -> defn.by ) )
     }
@@ -248,9 +278,9 @@ object Context {
   }
   implicit val structIndTysFacet: Facet[StructurallyInductiveTypes] = Facet( StructurallyInductiveTypes( Map() ) )
 
-  val empty: Context = new Context( State(), List() )
-  def apply(): Context = default
-  def apply( updates: Traversable[Update] ): Context =
+  val empty: ImmutableContext = ImmutableContext.empty
+  def apply(): ImmutableContext = default
+  def apply( updates: Traversable[Update] ): ImmutableContext =
     empty ++ updates
 
   val withoutEquality = empty ++ Seq(
@@ -276,6 +306,9 @@ object Context {
         ( declName, declSeq ) <- names.values
         subst <- clauseSubsumption( declSeq, seq )
       } yield subst( declName ) ).headOption
+
+    override def toString: String =
+      names.map { case ( _, ( lhs, sequent ) ) => s"$lhs: $sequent" }.mkString( "\n" )
   }
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
@@ -290,6 +323,9 @@ object Context {
         ( declName, defPrf ) <- defs
         subst <- syntacticMatching( declName, name )
       } yield ( defPrf, subst )
+
+    override def toString: String =
+      components.map { case ( n, dfs ) => dfs.map( _._1 ).mkString( ", " ) }.mkString( "\n" )
   }
   implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
 
@@ -311,10 +347,10 @@ object Context {
     implicit def fromSort( ty: TBase ): Update = Sort( ty )
     implicit def fromConst( const: Const ): Update = ConstDecl( const )
     implicit def fromDefn( defn: ( String, Expr ) ): Update =
-      Definition( EDefinition( Const( defn._1, defn._2.ty ), defn._2 ) )
+      Definition( Const( defn._1, defn._2.ty ), defn._2 )
     implicit def fromDefnEq( eq: Formula ): Update = eq match {
       case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
-        Definition( EDefinition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) ) )
+        Definition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) )
     }
     implicit def fromAxiom( axiom: ( String, HOLSequent ) ): Update = {
       val fvs = freeVariables( axiom._2 ).toVector.sortBy( _.toString )
@@ -377,16 +413,6 @@ object Context {
     override def apply( ctx: Context ): State = {
       ctx.check( const.ty )
       ctx.state.update[Constants]( _ + const )
-    }
-  }
-
-  case class Definition( definition: EDefinition ) extends Update {
-    override def apply( ctx: Context ): State = {
-      ctx.check( definition.what.ty )
-      ctx.check( definition.by )
-      ctx.state.update[Constants]( _ + definition.what )
-        .update[Definitions]( _ + definition )
-        .update[Reductions]( _ + ( definition.what -> definition.by ) )
     }
   }
 
@@ -485,15 +511,16 @@ object Context {
       require( !ctx.get[ProofNames].names.keySet.contains( c ) )
       require( vs == vs.distinct )
       require( vs.forall( _.isInstanceOf[Var] ) )
-      require( freeVariables( endSequent ) == vs.toSet )
+      for ( fv <- freeVariables( endSequent ) )
+        require( vs.contains( fv ) )
       ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
     }
   }
 
   case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
-      referencedProof.endSequent.foreach( ctx.check( _ ) )
-      val Apps( at.logic.gapt.expr.Const( c, t ), vs ) = lhs
+      ctx.check( referencedProof )
+      val Apps( Const( c, _ ), vs ) = lhs
       vs.foreach( ctx.check( _ ) )
       require( ctx.get[ProofNames].names.values.exists {
         case ( name, _ ) => syntacticMatching( name, lhs ).isDefined
@@ -501,4 +528,77 @@ object Context {
       ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
     }
   }
+
+  case class ProofDeclaration( lhs: Expr, proof: LKProof ) extends Update {
+    override def apply( ctx: Context ): State =
+      ctx + ProofNameDeclaration( lhs, proof.endSequent ) + ProofDefinitionDeclaration( lhs, proof ) state
+
+    override def toString: String =
+      s"ProofDeclaration($lhs, ${proof.endSequent})"
+  }
+
+  def guess( exprs: Traversable[Expr] ): ImmutableContext = {
+    val names = exprs.view.flatMap( containedNames( _ ) ).toSet
+    val tys = names.flatMap( c => baseTypes( c.ty ) )
+    var ctx = default
+    for ( ty <- tys if !ctx.isType( ty ) )
+      ctx += Sort( ty )
+    val consts = names.collect { case c: Const => c }
+    for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty )
+      ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ) ) )
+    ctx
+  }
 }
+
+class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
+  override def state: State = ctx.state
+  override def updates: List[Update] = ctx.updates
+  override def toImmutable: ImmutableContext = ctx
+
+  override def toString: String = ctx.toString
+
+  def ctx: ImmutableContext = ctx_
+  def ctx_=( newCtx: ImmutableContext ): Unit = ctx_ = newCtx
+
+  def +=( update: Update ): Unit = ctx += update
+  def ++=( updates: Iterable[Update] ): Unit = ctx ++= updates
+
+  def addDefinition( by: Expr, name: => String = newNameGenerator.freshWithIndex( "D" ), reuse: Boolean = true ): Const = {
+    if ( reuse ) {
+      for ( ( d, _ ) <- get[Definitions].definitions.find( _._2 == by ) ) {
+        return Const( d, by.ty )
+      }
+    }
+    val what = Const( name, by.ty )
+    this += Definition( what, by )
+    what
+  }
+
+  def addSkolemSym( defn: Expr, name: => String = newNameGenerator.freshWithIndex( "s" ), reuse: Boolean = true ): Const = {
+    if ( reuse ) {
+      for ( ( d, _ ) <- get[SkolemFunctions].skolemDefs.find( _._2 == defn ) ) {
+        return d
+      }
+    }
+    val Abs.Block( vs, Quant( v, _, _ ) ) = defn
+    val sym = Const( name, FunctionType( v.ty, vs.map( _.ty ) ) )
+    this += SkolemFun( sym, defn )
+    sym
+  }
+}
+object MutableContext {
+  def default(): MutableContext = Context.default.newMutable
+  def guess( exprs: Traversable[Expr] ): MutableContext = Context.guess( exprs ).newMutable
+  def guess( exprs: Expr* ): MutableContext = guess( exprs )
+  def guess( seq: Sequent[Expr] ): MutableContext = guess( seq.elements )
+  def guess( cnf: Traversable[Sequent[Expr]] )( implicit dummyImplicit: DummyImplicit ): MutableContext = guess( cnf.view.flatMap( _.elements ) )
+  def guess[R, S]( rs: Traversable[R] )( implicit ev: Replaceable[R, S] ): MutableContext =
+    guess( rs.view.flatMap( ev.names ) )
+  def guess( p: LKProof ): MutableContext =
+    guess( containedNames( p ) ) // TODO: add (Skolem) definitions
+}
+
+class ReadonlyMutableContext( ctx: ImmutableContext ) extends MutableContext( ctx ) {
+  override def ctx_=( newCtx: ImmutableContext ): Unit = throw new UnsupportedOperationException
+}
+

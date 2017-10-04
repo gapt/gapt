@@ -1,32 +1,34 @@
 package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
+import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.utils.generatedUpperSetInPO
 
 object eliminateCutsET {
-  def apply( expansionProof: ExpansionProofWithCut ): ExpansionProof = {
-    if ( expansionProof.cuts.isEmpty ) return expansionProof.toExpansionProof
+  def apply( expansionProof: ExpansionProof ): ExpansionProof = {
+    if ( expansionProof.cuts.isEmpty ) return ExpansionProof( expansionProof.nonCutPart )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
-      ExpansionProofWithCut( eliminateMerges.unsafe( ExpansionProofWithCut.mkCutAxiom( simpPropCuts( cuts ) ) +: es ) )
+      ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) )
 
-    var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.expansionSequent )
+    var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.nonCutPart )
 
-    while ( true )
-      epwc.cuts.view.flatMap {
+    while ( true ) {
+      val cuts = epwc.cuts
+      cuts.view.flatMap {
         case cut @ ETImp( cut1, cut2 ) =>
-          singleStep( cut1, cut2, epwc.cuts.filterNot( _ == cut ), epwc.expansionSequent,
+          singleStep( cut1, cut2, cuts.filterNot( _ == cut ), epwc.nonCutPart,
             epwc.eigenVariables union freeVariables( epwc.deep ),
-            epwc.expansionWithCutAxiom.dependencyRelation )
+            epwc.dependencyRelation )
       }.headOption match {
         case Some( ( newCuts, newES ) ) =>
           epwc = simplifiedEPWC( newCuts, newES )
         case None =>
           return {
-            if ( epwc.cuts.isEmpty ) epwc.toExpansionProof
-            else epwc.expansionWithCutAxiom
+            if ( cuts.isEmpty ) return ExpansionProof( epwc.nonCutPart )
+            else epwc
           }
       }
-
+    }
     throw new IllegalStateException
   }
 
@@ -111,11 +113,9 @@ object eliminateCutsET {
     }
 
     Some( ( cut1, cut2 ) ) collect {
-      case ( ETWeakQuantifierBlock( _, n, instances ), ETStrongQuantifierBlock( _, eigenVariables, child ) ) if n > 0 =>
-        require( eigenVariables.size == n )
+      case ( ETWeakQuantifierBlock( _, n, instances ), ETStrongQuantifierBlock( _, eigenVariables, child ) ) if n > 0 && eigenVariables.size == n =>
         quantifiedCut( instances, eigenVariables, child )
-      case ( ETStrongQuantifierBlock( _, eigenVariables, child ), ETWeakQuantifierBlock( _, n, instances ) ) if n > 0 =>
-        require( eigenVariables.size == n )
+      case ( ETStrongQuantifierBlock( _, eigenVariables, child ), ETWeakQuantifierBlock( _, n, instances ) ) if n > 0 && eigenVariables.size == n =>
         quantifiedCut( instances, eigenVariables, child )
     }
 

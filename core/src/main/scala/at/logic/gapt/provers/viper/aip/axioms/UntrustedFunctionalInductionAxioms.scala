@@ -3,7 +3,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
 import at.logic.gapt.proofs.lk.{ LKProof, ProofLink }
-import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 
 case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
@@ -34,7 +34,7 @@ case object UntrustedFunctionalInductionAxioms extends AxiomFactory {
         ( c, conds, lhs, rhs )
     }.groupBy( _._1 ).mapValues( generateScheme )
 
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] = {
+  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] = {
     val schemes = guessSchemes( sequent.map( _._2 ) )
 
     val All.Block( _, goal ) = sequent.succedent.headOption.map( _._2 ).getOrElse( Top() )

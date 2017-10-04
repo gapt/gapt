@@ -5,13 +5,14 @@ import at.logic.gapt.formats.lisp.{ LAtom, LFun, LList, SExpression }
 import org.specs2.mutable._
 import at.logic.gapt.provers.Session._
 import cats.implicits._
+import at.logic.gapt.utils.EitherHelpers._
 
 class Z3SessionTest extends Specification {
 
   if ( !Z3.isInstalled ) skipAll
 
   "check sat of empty theory" in {
-    Z3.runSession( checkSat ) must_== true
+    Z3.runSession( checkSat ) must_== Right( true )
   }
 
   "validity of linear example" in {
@@ -38,10 +39,10 @@ class Z3SessionTest extends Specification {
           _ <- assert( -p( numeral( n ) ) )
           sat <- checkSat
           labels <- getUnsatCore
-        } yield ( sat, labels )
+        } yield ( sat.get, labels )
       }
       satOuter <- checkSat
-    } yield ( p._1, satOuter, p._2 )
+    } yield ( p._1, satOuter.get, p._2 )
 
     val ( satInner, satOuter, labels ) = Z3.runSession( session )
 

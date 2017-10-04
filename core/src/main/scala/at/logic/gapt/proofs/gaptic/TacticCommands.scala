@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.ViperTactic
+import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 
 /**
@@ -581,18 +581,18 @@ trait TacticCommands {
    * Calls the builtin tableau prover on the current subgoal. If the goal is a tautology, a proof will automatically be
    * found and inserted.
    */
-  def prop = PropTactic
-  def quasiprop = QuasiPropTactic
+  def prop: Tactic[Unit] = PropTactic
+  def quasiprop: Tactic[Unit] = QuasiPropTactic
 
   /**
    * Calls `prover9` on the current subgoal.
    */
-  def prover9 = Prover9Tactic
+  def prover9( implicit ctx: MutableContext ): Prover9Tactic = Prover9Tactic()
 
   /**
    * Calls `escargot` on the current subgoal.
    */
-  def escargot = EscargotTactic
+  def escargot( implicit ctx: MutableContext ): Tactic[Unit] = EscargotTactic()
 
   /**
    * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.
@@ -699,8 +699,8 @@ trait TacticCommands {
   def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
     Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
 
-  def viper( implicit ctx: Context ): ViperTactic = new ViperTactic
+  def treeGrammarInduction( implicit ctx: Context ): TreeGrammarInductionTactic = new TreeGrammarInductionTactic
 
-  def analyticInduction( implicit ctx: Context ) = AnalyticInductionTactic(
+  def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )
 }

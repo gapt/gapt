@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar --qtys ""
+; solve with: viper --treegrammar --qtys "" --cansolsize 3 3
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 (define-fun-rec plus ((x nat) (y nat)) nat

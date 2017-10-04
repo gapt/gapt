@@ -25,19 +25,19 @@ class SchemaTest extends Specification {
   {
     import tautSchema.ctx
     "simple schema basecase" in {
-      val proof = LKProofSchemata.Instantiate( le"taut ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"taut ${nat( 0 )}" )
       ctx.check( proof )
       ok
     }
 
     "simple schema stepcase" in {
-      val proof = LKProofSchemata.Instantiate( le"taut ${nat( 1 )}" )
+      val proof = instantiateProof.Instantiate( le"taut ${nat( 1 )}" )
       ctx.check( proof )
       ok
     }
 
     "simple schema Large" in {
-      val proof = LKProofSchemata.Instantiate( le"taut ${nat( 6 )}" )
+      val proof = instantiateProof.Instantiate( le"taut ${nat( 6 )}" )
       ctx.check( proof )
       ok
     }
@@ -47,31 +47,31 @@ class SchemaTest extends Specification {
     import at.logic.gapt.examples.NiaSchema.ctx
 
     "Nia-schema basecase" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )}" )
       ctx.check( proof )
       ok
     }
 
     "Nia-schema stepcase" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 1 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 1 )}" )
       ctx.check( proof )
       ok
     }
 
     " Nia-schema Large" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 4 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 4 )}" )
       ctx.check( proof )
       ok
     }
 
     "Nia-schema Super Large" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 12 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 12 )}" )
       ctx.check( proof )
       ok
     }
 
     " Nia-schema Clause Set Extraction  Instance 3" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof, ctx )
       CharacteristicClauseSet( thestruct )
@@ -79,7 +79,7 @@ class SchemaTest extends Specification {
     }
 
     " Nia-schema Clause Set Refutation  Instance 1" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 1 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 1 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof, ctx )
       val cs = CharacteristicClauseSet( thestruct )
@@ -195,7 +195,7 @@ class SchemaTest extends Specification {
         else one
       } ).asInstanceOf[Expr]
       val Sclauseset = SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 3 ) ) )( ctx )
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = CharacteristicClauseSet( thestruct )
       val fin = Sclauseset.forall( x => {
@@ -210,27 +210,27 @@ class SchemaTest extends Specification {
     import gniaSchema.ctx
 
     "gNia-schema both parameters zero" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )} ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )} ${nat( 0 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema first parameter zero" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 0 )} ${nat( 5 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )} ${nat( 5 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema second parameter zero" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 5 )} ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 5 )} ${nat( 0 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema both parameters non-zero" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 5 )} ${nat( 5 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 5 )} ${nat( 5 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema both parameters non-zero large" in {
-      val proof = LKProofSchemata.Instantiate( le"omega ${nat( 12 )} ${nat( 12 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 12 )} ${nat( 12 )}" )
       ctx.check( proof )
       ok
     }

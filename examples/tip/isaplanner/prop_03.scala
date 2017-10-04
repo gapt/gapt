@@ -93,11 +93,11 @@ object prop_03 extends TacticsProof {
     escargot
   }
 
-  val proof3 = new AnalyticInductionProver(
-    new ProverOptions(
-      manySortedProver,
+  val proof3 = Lemma( sequent ) {
+    analyticInduction.withAxioms {
       StandardInductionAxioms()
         .forVariables( hov"xs:list" )
-        .forFormula( hof"∀ys ∀n le(count(n, xs), count(n, append(xs, ys)))" ) ) ) lkProof ( sequent ) get
-
+        .forFormula( hof"∀ys ∀n le(count(n, xs), count(n, append(xs, ys)))" )
+    }
+  }
 }

@@ -3,9 +3,6 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr.Substitution
 
 object eliminateMerges {
-  def apply( expansionProof: ExpansionProofWithCut ): ExpansionProofWithCut =
-    ExpansionProofWithCut( elim( expansionProof.expansionWithCutAxiom.expansionSequent ) )
-
   def apply( expansionProof: ExpansionProof ): ExpansionProof =
     ExpansionProof( elim( expansionProof.expansionSequent ) )
 
@@ -34,7 +31,7 @@ object eliminateMerges {
     def merge2( tree1: ExpansionTree, tree2: ExpansionTree ): ExpansionTree = ( tree1, tree2 ) match {
       case ( _: ETWeakening, s ) => merge( s )
       case ( t, _: ETWeakening ) => merge( t )
-      case ( ETMerge( t1, t2 ), s ) =>
+      case ( ETMerge( t1, t2 ), s ) if !s.isInstanceOf[ETSkolemQuantifier] =>
         merge2( t1, t2 ) match {
           case t: ETMerge => ETMerge( t, merge( s ) )
           case t          => merge2( t, s )
@@ -77,6 +74,14 @@ object eliminateMerges {
       case ( t: ETSkolemQuantifier, s: ETStrongQuantifier ) => merge2( s, t )
       case ( ETSkolemQuantifier( shallow, st1, sf1, t1 ), ETSkolemQuantifier( _, st2, sf2, t2 ) ) if st1 == st2 =>
         ETSkolemQuantifier( shallow, st1, sf1, merge2( t1, t2 ) )
+      case ( ETMerges( ts0 ), s: ETSkolemQuantifier ) =>
+        val ts = ts0 :+ s
+        ( ts.filterNot( _.isInstanceOf[ETSkolemQuantifier] ).map( merge ) ++
+          ts.collect { case t: ETSkolemQuantifier => t }.
+          groupBy( _.skolemTerm ).map {
+            case ( _, Vector( tree ) ) => merge( tree )
+            case ( _, trees )          => trees.reduce( merge2 )
+          } ).reduce( ETMerge( _, _ ) )
       case ( t, s ) => ETMerge( merge( t ), merge( s ) )
     }
 

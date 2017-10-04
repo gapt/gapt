@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
-import at.logic.gapt.expr.hol.{ HOLPosition, SkolemFunctions }
+import at.logic.gapt.expr.hol.SkolemFunctions
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.utils.linearizeStrictPartialOrder
 
@@ -48,52 +48,17 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   } yield evInTerm -> ev
   val Right( linearizedDependencyRelation ) = linearizeStrictPartialOrder( eigenVariables, dependencyRelation )
 
+  def cuts: Vector[ETImp] = expansionSequent.antecedent.flatMap { case ETCut( cuts ) => cuts case _ => Seq() }
+  def nonCutPart: ExpansionSequent = expansionSequent.filterNot( ETCut.isCutExpansion )
+
   override def toString = toSigRelativeString
   def toSigRelativeString( implicit sig: BabelSignature ) =
     expansionSequent.map( _.toSigRelativeString ).toString
 }
 
-case class ExpansionProofWithCut( expansionWithCutAxiom: ExpansionProof ) {
-  import ExpansionProofWithCut._
-  def expansionSequent = expansionWithCutAxiom.expansionSequent filter { _.shallow != cutAxiom }
-  def eigenVariables = expansionWithCutAxiom.eigenVariables
-  def deep = expansionWithCutAxiom.deep
-  def shallow = expansionSequent map { _.shallow }
-  def subProofs = expansionWithCutAxiom.subProofs
-  def skolemFunctions = expansionWithCutAxiom.skolemFunctions
-
-  val cuts = for {
-    cutAxiomExpansion <- expansionWithCutAxiom.expansionSequent.antecedent
-    if cutAxiomExpansion.shallow == cutAxiom
-    cut <- cutAxiomExpansion( HOLPosition( 1 ) )
-    cut1 <- cut( HOLPosition( 1 ) )
-    cut2 <- cut( HOLPosition( 2 ) )
-  } yield ETImp( cut1, cut2 )
-
-  def toExpansionProof = {
-    require( cuts.isEmpty )
-    ExpansionProof( expansionSequent )
-  }
-
-  override def toString = expansionWithCutAxiom.toString
-}
-object ExpansionProofWithCut {
-  val cutAxiom = hof"∀X (X ⊃ X)"
-  def apply( expansionSequentWithCutAxiom: ExpansionSequent ): ExpansionProofWithCut =
-    ExpansionProofWithCut( ExpansionProof( expansionSequentWithCutAxiom ) )
-  def apply( cuts: Seq[ETImp], expansionSequent: Sequent[ExpansionTree] ): ExpansionProofWithCut =
-    apply( mkCutAxiom( cuts ) +: expansionSequent )
-  def mkCutAxiom( cuts: Seq[ETImp] ): ExpansionTree =
-    ETWeakQuantifier.withMerge(
-      ExpansionProofWithCut.cutAxiom,
-      for ( cut @ ETImp( cut1, cut2 ) <- cuts ) yield cut1.shallow -> cut )
-}
-
 object freeVariablesET {
   def apply( expansionProof: ExpansionProof ): Set[Var] =
     freeVariables( expansionProof.deep ) diff expansionProof.eigenVariables
-  def apply( expansionProofWithCut: ExpansionProofWithCut ): Set[Var] =
-    apply( expansionProofWithCut.expansionWithCutAxiom )
 }
 private[expansion] object expansionProofSubstitution extends ClosedUnderSub[ExpansionProof] {
   override def applySubstitution( subst: Substitution, expansionProof: ExpansionProof ): ExpansionProof =
@@ -105,8 +70,3 @@ private[expansion] object expansionProofSubstitution extends ClosedUnderSub[Expa
       ExpansionProof( substWithRenaming( expansionProof.expansionSequent ) )
     }
 }
-private[expansion] object expansionProofWithCutSubstitution extends ClosedUnderSub[ExpansionProofWithCut] {
-  override def applySubstitution( subst: Substitution, expansionProofWithCut: ExpansionProofWithCut ): ExpansionProofWithCut =
-    ExpansionProofWithCut( subst( expansionProofWithCut.expansionWithCutAxiom ) )
-}
-

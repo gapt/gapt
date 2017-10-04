@@ -226,7 +226,7 @@ object minimizeRecursionScheme extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = metrics.time( "maxsat" ) { solver.solve( hard, soft ).get }
-    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp( formula ruleIncluded rule ) } )
   }
 
   def viaInst( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
@@ -251,7 +251,7 @@ object minimizeRecursionScheme extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = solver.solve( hard, soft ).get
-    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp( formula ruleIncluded rule ) } )
   }
 }
 
