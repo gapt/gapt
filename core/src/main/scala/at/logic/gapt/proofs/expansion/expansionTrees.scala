@@ -182,7 +182,7 @@ object ETCut {
   val cutAxiom = hof"∀X (X ⊃ X)"
   def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree =
     ETWeakQuantifier.withMerge( cutAxiom, List( child1.shallow -> ETImp( child1, child2 ) ) )
-  def apply( cuts: Seq[ETImp] ): ExpansionTree =
+  def apply( cuts: Iterable[ETImp] ): ExpansionTree =
     ETWeakQuantifier.withMerge( cutAxiom, for ( cut <- cuts ) yield cut.child1.shallow -> cut )
   def apply( cuts: Seq[( ExpansionTree, ExpansionTree )] )( implicit dummyImplicit: DummyImplicit ): ExpansionTree =
     ETWeakQuantifier.withMerge( cutAxiom, for ( ( cut1, cut2 ) <- cuts ) yield cut1.shallow -> ETImp( cut1, cut2 ) )
