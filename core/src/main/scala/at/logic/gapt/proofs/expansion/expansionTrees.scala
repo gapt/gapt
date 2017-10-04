@@ -486,6 +486,9 @@ object isPropositionalET {
  * Cleans up an expansion tree by introducing weakenings as late as possible.
  */
 object cleanStructureET {
+  def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
+  def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
+
   def apply( t: ExpansionTree ): ExpansionTree = t match {
     case ETMerge( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
       case ( ETWeakening( _, _ ), r2 ) => r2
