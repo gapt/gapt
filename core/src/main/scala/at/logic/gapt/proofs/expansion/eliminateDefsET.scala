@@ -15,15 +15,11 @@ object eliminateDefsET {
   private val negReplPos = HOLPosition( 1, 2 )
   private val posReplPos = HOLPosition( 2, 1 )
 
-  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean )( implicit ctx: Context ): ExpansionProof = {
-    val definitions = ep.expansionSequent.antecedent.collect {
-      case DefinitionFormula( _, c, _ ) => c
-    }
-    apply( ep, pureFolWithoutEq, definitions.toSet[Const] )
-  }
+  def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean )( implicit ctx: Context ): ExpansionProof =
+    apply( ep, pureFolWithoutEq, atomicExpansionET.getDefinedAtoms( ep ) )
 
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] )( implicit ctx: Context ): ExpansionProof =
-    ExpansionProof( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ).expansionSequent )
+    atomicExpansionET( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ), definitions )
 
   private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean )( implicit ctx: Context ): ExpansionProof = {
     val definitionFormula @ DefinitionFormula( vs, _, definedFormula ) =
