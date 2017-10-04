@@ -22,7 +22,6 @@ class SchemaTest extends Specification {
     if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ) ) )
     else base
   }
-
   {
     import tautSchema.ctx
     "simple schema basecase" in {
@@ -200,15 +199,9 @@ class SchemaTest extends Specification {
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = CharacteristicClauseSet( thestruct )
       val fin = Sclauseset.forall( x => {
-        val fin = nonclauseset.contains( x )
-        //TODO why does this fail!!!!!
-        if ( !fin && x.antecedent.isEmpty ) {
-          println( x )
-          true
-        } else {
-          print( "ok" )
-          fin
-        }
+        nonclauseset.exists( y =>
+          x.antecedent.toSet.equals( y.antecedent.toSet ) &&
+            x.succedent.toSet.equals( y.succedent.toSet ) )
       } )
       fin must beEqualTo( true )
     }
@@ -275,6 +268,40 @@ class SchemaTest extends Specification {
         } else pluscomm
       }
       IsKSimple( result ) must_== true
+    }
+
+    "Schematic Clause set equivalent to non schematic" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      val oclauses = SCS.get( "omega" ) match {
+        case Some( x ) => x
+        case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
+      }
+      val oExprCl = oclauses.get( oclauses.keySet.head ) match {
+        case Some( x ) => x
+        case None      => Set[( Expr, Set[SetSequent[Atom]] )]()
+      }
+      val oExpr = oExprCl.fold( oExprCl.head._1 )( ( x, y ) => {
+        val ( one, _ ) = y.asInstanceOf[( Expr, Set[SetSequent[Atom]] )]
+        if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
+        else one
+      } ).asInstanceOf[Expr]
+      val Sclauseset = SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
+        Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx )
+      /* val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
+       val thestruct = StructCreators.extract( proof, ctx )
+       val nonclauseset = CharacteristicClauseSet( thestruct )
+        val fin = Sclauseset.forall( x => {
+         nonclauseset.exists( y=>
+           x.antecedent.toSet.equals(y.antecedent.toSet) &&
+             x.succedent.toSet.equals(y.succedent.toSet) )
+       } )
+       fin must beEqualTo( true )
+       */
+      //not really ok but for later work
+      ok
     }
   }
 

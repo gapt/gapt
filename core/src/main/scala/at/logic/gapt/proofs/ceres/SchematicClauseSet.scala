@@ -207,6 +207,7 @@ object SchematicClauseSet {
       css:       Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]],
       sigma:     Substitution )( implicit ctx: Context ): Set[Sequent[Atom]] = {
       //First we extract the clause set associated with the given proof name
+      println( topSym )
       val starterClauseSet = ( css.get( topSym ) match {
         case Some( x ) => x
         case None      => Map[HOLSequent, Set[( Expr, Set[Sequent[Atom]] )]]()
@@ -292,7 +293,7 @@ object SchematicClauseSet {
             if ( cLSSyms.isEmpty ) vale.asInstanceOf[Set[Sequent[Atom]]] ++ Set( x )
             else {
               //We construct this new clause set by folding the newly constructed clause
-              //and the resulting clause sets by sequent concatination
+              //and the resulting clause sets by sequent concatenation
               val baseOfFold = if ( newSequent.antecedent.isEmpty && newSequent.isEmpty )
                 Set[Sequent[Atom]]()
               else Set[Sequent[Atom]]( newSequent )
@@ -300,7 +301,7 @@ object SchematicClauseSet {
                 val Apps( _, info ) = y
                 val Const( newTopSym, _ ) = info.head
 
-                //Clause terms are constructed by adding auxillary information
+                //Clause terms are constructed by adding auxiliary information
                 //to an atomic formula. We extract this information using the following
                 //method
                 val ( _, ante, _, suc, _, args ) = ClauseTermReader( info.tail )
@@ -382,62 +383,44 @@ object SchematicClauseSet {
   //This object is specifically designed to read clause set terms
   //which are constructed from proofs during struct construction
   object ClauseTermReader {
-    def apply( input: Seq[Expr] ): ( Set[Const], Set[Formula], Set[Const], Set[Formula], Set[Const], Set[Expr] ) = input.foldLeft( ( Set[Const](), Set[Formula](), Set[Const](),
-      Set[Formula](), Set[Const](), Set[Expr]() ) )( ( bigCollect, w ) => {
-      val ( one, two, three, four, five, six ) = bigCollect
-      if ( one.isEmpty && ( w match {
-        case Const( "|", _ ) => true
-        case _               => false
-      } ) ) {
-        ( Set[Const]( w.asInstanceOf[Const] ), two, three, four, five, six )
-      } else if ( one.nonEmpty && three.isEmpty && ( w match {
-        case Const( "⊢", _ ) => true
-        case _               => false
-      } ) ) {
-        ( one, two, Set[Const]( w.asInstanceOf[Const] ), four, five, six )
-      } else if ( one.nonEmpty && three.isEmpty ) {
-        ( one, two.asInstanceOf[Set[Formula]] ++ Set[Formula]( w.asInstanceOf[Formula] ), three, four, five, six )
-      } else if ( one.nonEmpty && three.nonEmpty && five.isEmpty && ( w match {
-        case Const( "|", _ ) => true
-        case _               => false
-      } ) ) {
-        ( one, two, three, four, Set[Const]( w.asInstanceOf[Const] ), six )
-      } else if ( one.nonEmpty && three.nonEmpty && five.isEmpty ) {
-        ( one, two, three, four.asInstanceOf[Set[Formula]] ++ Set[Formula]( w.asInstanceOf[Formula] ), five, six )
-      } else if ( one.nonEmpty && three.nonEmpty && five.nonEmpty ) {
-        ( one, two, three, four, five, six.asInstanceOf[Set[Expr]] ++ Set[Expr]( w ) )
-      } else bigCollect
-    } )
+    def apply( input: Seq[Expr] ): ( Set[Const], Set[Formula], Set[Const], Set[Formula], Set[Const], Set[Expr] ) =
+      input.foldLeft( ( Set[Const](), Set[Formula](), Set[Const](), Set[Formula](), Set[Const](), Set[Expr]() ) )( ( bigCollect, w ) => {
+        val ( one, two, three, four, five, six ) = bigCollect
+        if ( one.isEmpty && ( w match { case Const( "|", _ ) => true case _ => false } ) )
+          ( Set[Const]( w.asInstanceOf[Const] ), two, three, four, five, six )
+        else if ( one.nonEmpty && three.isEmpty && ( w match { case Const( "⊢", _ ) => true case _ => false } ) )
+          ( one, two, Set[Const]( w.asInstanceOf[Const] ), four, five, six )
+        else if ( one.nonEmpty && three.isEmpty )
+          ( one, two.asInstanceOf[Set[Formula]] ++ Set[Formula]( w.asInstanceOf[Formula] ), three, four, five, six )
+        else if ( one.nonEmpty && three.nonEmpty && five.isEmpty && ( w match { case Const( "|", _ ) => true case _ => false } ) )
+          ( one, two, three, four, Set[Const]( w.asInstanceOf[Const] ), six )
+        else if ( one.nonEmpty && three.nonEmpty && five.isEmpty )
+          ( one, two, three, four.asInstanceOf[Set[Formula]] ++ Set[Formula]( w.asInstanceOf[Formula] ), five, six )
+        else if ( one.nonEmpty && three.nonEmpty && five.nonEmpty )
+          ( one, two, three, four, five, six.asInstanceOf[Set[Expr]] ++ Set[Expr]( w ) )
+        else bigCollect
+      } )
   }
 
   //checks if S1 is an instance of S2
   object SequentInstanceOf {
-    def apply( S1: HOLSequent, S2: HOLSequent ): Boolean = {
+    def apply( S1: HOLSequent, S2: HOLSequent ): Boolean =
       FormulaSetInstanceOf( S1.antecedent, S2.antecedent ) &&
         FormulaSetInstanceOf( S1.succedent, S2.succedent )
-    }
-    def FormulaSetInstanceOf( SF1: Seq[Formula], SF2: Seq[Formula] ): Boolean = {
-      if ( SF1.size == SF2.size ) {
-        SF1.foldLeft( true, SF2.toList.toSet )( ( isInstanceof, F ) => {
-          if ( !isInstanceof._1 ) {
-            isInstanceof
-          } else {
-            val ( result, matchFormula ) = isInstanceof._2.foldLeft( ( false, isInstanceof._2.head ) )( ( isthere, SF ) => {
-              if ( isthere._1 ) {
-                isthere
-              } else {
-                val result = FormulaSetInstanceOf( F, SF )
-                if ( result ) ( true, SF )
-                else isthere
 
-              }
-            } )
-            val newSetofFormula = if ( result ) isInstanceof._2 - matchFormula else isInstanceof._2
-            ( result && isInstanceof._1, newSetofFormula )
-          }
-        } )._1
-      } else false
-    }
+    def FormulaSetInstanceOf( SF1: Seq[Formula], SF2: Seq[Formula] ): Boolean =
+      if ( SF1.size == SF2.size )
+        SF1.foldLeft( true, SF2.toList.toSet )( ( isInstanceOf, F ) =>
+          if ( !isInstanceOf._1 ) isInstanceOf
+          else {
+            val ( result, matchFormula ) = isInstanceOf._2.foldLeft( ( false, isInstanceOf._2.head ) )( ( isthere, SF ) =>
+              if ( isthere._1 ) isthere
+              else if ( FormulaSetInstanceOf( F, SF ) ) ( true, SF )
+              else isthere )
+            val newSetofFormula = if ( result ) isInstanceOf._2 - matchFormula else isInstanceOf._2
+            ( result && isInstanceOf._1, newSetofFormula )
+          } )._1
+      else false
 
     def FormulaSetInstanceOf( F1: Formula, F2: Formula ): Boolean = {
       val listOfDiff = LambdaPosition.differingPositions( F1, F2 )
@@ -454,12 +437,15 @@ object SchematicClauseSet {
     }
   }
   //Picks which part of an inductive definition is needed at the moment
+  //based on the set of arguments provided
   object PickCorrectInductiveCase {
-    def apply( CSP: Set[( Expr, Set[SetSequent[Atom]] )], args: Set[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) =
+    def apply(
+      CSP:  Set[( Expr, Set[SetSequent[Atom]] )],
+      args: Set[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) =
       CSP.foldLeft( ( 0, CSP.head._1, CSP.head._2 ) )( ( theCorrect, current ) => {
-        val ( Apps( _, argslink ), clauses ) = current
+        val ( Apps( _, argsLink ), clauses ) = current
         val ( oldcount, _, _ ) = theCorrect
-        val totalcount = args.zip( argslink ).fold( 0 )( ( count, curPair ) => {
+        val totalcount = args.zip( argsLink ).fold( 0 )( ( count, curPair ) => {
           val ( one, two ) = curPair
           if ( one.equals( two ) ) count.asInstanceOf[Int] + 1
           else count
@@ -468,19 +454,21 @@ object SchematicClauseSet {
         else theCorrect
       } )
   }
-  //Takes two clause set and composes them clause by clause
+  //Takes two clause sets and composes them clause by clause without duplication
   object ComposeClauseSets {
-    def apply( C1: Set[Sequent[Atom]], C2: Set[Sequent[Atom]] ): Set[Sequent[Atom]] = {
+    def apply(
+      C1: Set[Sequent[Atom]],
+      C2: Set[Sequent[Atom]] ): Set[Sequent[Atom]] = {
       val Cout: ( Set[Sequent[Atom]], Set[Sequent[Atom]] ) = if ( C1.size > C2.size ) ( C1, C2 ) else ( C2, C1 )
       val newclauses = Cout._1.map( x =>
-        if ( Cout._2.nonEmpty ) Cout._2.map( y => setSequentCompose( x, y ) )
+        if ( Cout._2.nonEmpty ) Cout._2.map( y => sequentCompose( x, y ) )
         else Cout._1 )
       if ( newclauses.nonEmpty )
         newclauses.tail.fold( newclauses.head )( ( x, y ) => x ++ y )
       else Set()
     }
-
-    def setSequentCompose( S1: Sequent[Atom], S2: Sequent[Atom] ): Sequent[Atom] =
+    //This is a compose function made specifically for composing schematic clauses during clause set construction
+    def sequentCompose( S1: Sequent[Atom], S2: Sequent[Atom] ): Sequent[Atom] =
       Sequent[Atom]( S1.antecedent.distinct ++ S2.antecedent.distinct, S1.succedent.distinct ++ S2.succedent.distinct )
   }
 
