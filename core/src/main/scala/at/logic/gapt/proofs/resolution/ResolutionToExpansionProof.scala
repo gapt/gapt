@@ -73,8 +73,8 @@ object ResolutionToExpansionProof {
   }
 
   def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent )( implicit ctx: Maybe[Context] ): ExpansionProof = {
+    implicit val ctx1: Context = ctx.getOrElse( MutableContext.guess( proof ) )
     val expansionWithDefs = withDefs( proof, input )
-    implicit val ctx1: Context = ctx.getOrElse( MutableContext.guess( Some( expansionWithDefs ) ) )
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
   }
