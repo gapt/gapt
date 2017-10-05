@@ -8,7 +8,12 @@ import scala.collection.mutable
 
 case class ReductionRule( lhs: Expr, rhs: Expr ) {
   require( lhs.ty == rhs.ty )
-  require( freeVariables( rhs ).subsetOf( freeVariables( lhs ) ) )
+  require(
+    freeVariables( rhs ).subsetOf( freeVariables( lhs ) ),
+    s"Right-hand side of rule contains variables ${
+      freeVariables( rhs ) -- freeVariables( lhs ) mkString ", "
+    } which are not in the left hand side:\n"
+      + ( lhs === rhs ) )
 
   val Apps( lhsHead @ Const( lhsHeadName, _ ), lhsArgs ) = lhs
   val lhsArgsSize = lhsArgs.size
