@@ -8,10 +8,10 @@ import at.logic.gapt.proofs.{ Context, MutableContext }
 import scala.collection.mutable
 
 object atomicExpansionET {
-  def mapDefinedAtom( et: ExpansionTree )( f: PartialFunction[( Formula, Polarity ), ExpansionTree] ): ExpansionTree =
+  def mapDefinedAtom( et: ExpansionTree )( f: PartialFunction[( Formula, Formula, Polarity ), ExpansionTree] ): ExpansionTree =
     et match {
       case ETDefinition( sh, ETAtom( at, pol ) ) =>
-        f.lift( ( at, pol ) ).getOrElse( et )
+        f.lift( ( sh, at, pol ) ).getOrElse( et )
 
       case ETDefinition( sh, ETWeakening( _, pol ) ) => ETWeakening( sh, pol )
       case ETAtom( _, _ ) | ETWeakening( _, _ ) | ETTop( _ ) | ETBottom( _ ) => et
@@ -28,7 +28,7 @@ object atomicExpansionET {
         ETSkolemQuantifier( sh, skT, skD, mapDefinedAtom( ch )( f ) )
     }
 
-  def mapDefinedAtom( ep: ExpansionProof )( f: PartialFunction[( Formula, Polarity ), ExpansionTree] ): ExpansionProof =
+  def mapDefinedAtom( ep: ExpansionProof )( f: PartialFunction[( Formula, Formula, Polarity ), ExpansionTree] ): ExpansionProof =
     ExpansionProof( ep.expansionSequent.map( mapDefinedAtom( _ )( f ) ) )
 
   def getDefinedAtoms( ep: ExpansionProof ): Set[Const] =
@@ -86,8 +86,8 @@ object atomicExpansionET {
           val ( neg, pos ) = mkNew( fml )
 
           val ep_ = mapDefinedAtom( ep ) {
-            case ( Apps( `d`, as ), Negative ) => Substitution( xs zip as )( neg )
-            case ( Apps( `d`, as ), Positive ) => Substitution( xs zip as )( pos )
+            case ( _, Apps( `d`, as ), Negative ) => Substitution( xs zip as )( neg )
+            case ( _, Apps( `d`, as ), Positive ) => Substitution( xs zip as )( pos )
           }
 
           loop( ep_, definedAtoms - d ++ newDefs, purelyPropositional )
@@ -103,10 +103,9 @@ object atomicExpansionET {
           val newEigens = mutable.Buffer[( Var, Expr )]()
           val nameGen = rename.awayFrom( ep.eigenVariables )
           val ep1 = mapDefinedAtom( ep ) {
-            case ( at @ Apps( `d`, as ), `strongPol` ) =>
+            case ( sh, at @ Apps( `d`, as ), `strongPol` ) =>
               val newEigen = nameGen.fresh( x )
               newEigens += ( ( newEigen, at ) )
-              val sh = Substitution( xs zip as )( fml )
               ETStrongQuantifier( sh, newEigen,
                 ETDefinition(
                   instantiate( sh, newEigen ),
@@ -114,8 +113,7 @@ object atomicExpansionET {
           }
 
           val ep2 = mapDefinedAtom( ep1 ) {
-            case ( at2 @ Apps( `d`, as ), `weakPol` ) =>
-              val sh = Substitution( xs zip as )( fml )
+            case ( sh, at2 @ Apps( `d`, as ), `weakPol` ) =>
               ETWeakQuantifier.withMerge(
                 sh,
                 for {
