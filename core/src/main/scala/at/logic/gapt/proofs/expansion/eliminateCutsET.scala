@@ -9,7 +9,7 @@ object eliminateCutsET {
     if ( expansionProof.cuts.isEmpty ) return ExpansionProof( expansionProof.nonCutPart )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
-      ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) )
+      ExpansionProof( eliminateMerges.unsafe( simpPropCuts( cuts ) +: es ) )
 
     var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.nonCutPart )
 
