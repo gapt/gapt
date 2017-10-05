@@ -4,7 +4,6 @@ import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
 import at.logic.gapt.proofs.{ Context, MutableContext }
-import at.logic.gapt.provers.sat.Sat4j
 
 import scala.collection.mutable
 
@@ -46,8 +45,6 @@ object atomicExpansionET {
 
   private def loop( ep: ExpansionProof, definedAtoms: Set[Const], purelyPropositional: Boolean )( implicit ctx: MutableContext ): ExpansionProof =
     if ( definedAtoms.isEmpty ) ep else {
-      require( Sat4j.isValid( ep.deep ) )
-
       val d = definedAtoms.head
       val Some( Abs.Block( xs, fml: Formula ) ) = ctx.definition( d )
       fml match {
@@ -93,8 +90,6 @@ object atomicExpansionET {
             case ( Apps( `d`, as ), Positive ) => Substitution( xs zip as )( pos )
           }
 
-          require( Sat4j.isValid( ep_.deep ) )
-
           loop( ep_, definedAtoms - d ++ newDefs, purelyPropositional )
 
         case Quant( x_, _, isAll ) =>
@@ -131,7 +126,6 @@ object atomicExpansionET {
                   ETAtom( df( as :+ ev ).asInstanceOf[Atom], weakPol ) ) )
           }
 
-          require( Sat4j.isValid( ep2.deep ) )
           loop( ep2, definedAtoms - d + df, purelyPropositional )
       }
     }
