@@ -12,13 +12,16 @@ object instantiateProof {
    *
    * @param proofName The name of the linkProof
    */
-  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof = eliminateDefinitions( instantiateProof( proofName )( ctx ) )
-  def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
-    ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
-      case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
-      case None                      => ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
-    }
+  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof =
+    eliminateDefinitions( instantiateProof( proofName )( ctx ) )
 
+  def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
+    ctx.get[Context.ProofDefinitions].find( proofName ) match {
+      case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
+      case None                      =>{
+        ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
+    }
+  }
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
     buildProof( proof, ctx )
 

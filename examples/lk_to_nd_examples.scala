@@ -467,6 +467,7 @@ object negLeft extends Script {
   val nd = LKToND( lk, Some( focus ) )
 
   println( lk )
+
   println( nd )
 }
 

@@ -8,13 +8,13 @@ import at.logic.gapt.proofs.gaptic._
 
 object NiaSchema extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
-
   ctx += Context.Sort( "i" )
   ctx += hoc"f:i>nat"
   ctx += hoc"E: nat>nat>o"
-  ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E (f x) 0", "POR (s y) x = (E (f x) (s y) ∨ POR y x)" )
   ctx += hoc"LEQ: i>i>o"
   ctx += hoc"LE: i>i>o"
+  ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E (f x) 0", "POR (s y) x = (E (f x) (s y) ∨ POR y x)" )
+
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
   ctx += hoc"max:i>i>i"

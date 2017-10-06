@@ -402,6 +402,7 @@ object SchematicClauseSet {
   }
 
   //checks if S1 is an instance of S2
+  //TODO subsumption?
   object SequentInstanceOf {
     def apply( S1: HOLSequent, S2: HOLSequent ): Boolean =
       FormulaSetInstanceOf( S1.antecedent, S2.antecedent ) &&
@@ -440,7 +441,7 @@ object SchematicClauseSet {
   object PickCorrectInductiveCase {
     def apply(
       CSP:  Set[( Expr, Set[SetSequent[Atom]] )],
-      args: Set[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) =
+      args: Set[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) = //TODO why a set
       CSP.foldLeft( ( 0, CSP.head._1, CSP.head._2 ) )( ( theCorrect, current ) => {
         val ( Apps( _, argsLink ), clauses ) = current
         val ( oldcount, _, _ ) = theCorrect

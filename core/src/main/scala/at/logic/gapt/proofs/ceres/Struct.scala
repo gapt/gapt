@@ -165,7 +165,7 @@ case class CLS[Data]( proof: String, config: HOLSequent, fv: Seq[Expr], data: Li
   def children = Seq()
 }
 object CLS {
-  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[Expr] ): Struct[Data] = CLS[Data]( Proof, config, fv )
+  def apply[Data]( Proof: String, config: HOLSequent, fv: Seq[Expr] ): Struct[Data] = CLS[Data]( Proof, config, fv, List() )
 }
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {

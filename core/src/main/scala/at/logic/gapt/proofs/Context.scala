@@ -295,12 +295,13 @@ object Context {
     def sequents: Iterable[HOLSequent] =
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
-    def lookup( name: Expr ): Option[HOLSequent] =
-      ( for {
-        ( declName, declSeq ) <- names.values
-        subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq ) ).headOption
+    def lookup( name: Expr ): Option[HOLSequent] = {
+     (for {
+        (declName, declSeq) <- names.values
+        subst <- syntacticMatching(declName, name)
+      } yield subst(declSeq)).headOption
 
+    }
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {
         ( declName, declSeq ) <- names.values
@@ -317,12 +318,16 @@ object Context {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
       copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
 
-    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
-      for {
+    def find( name: Expr ): Option[( LKProof, Substitution )] = {
+      val result:Iterable[( LKProof, Substitution )] = for {
         defs <- components.values
-        ( declName, defPrf ) <- defs
-        subst <- syntacticMatching( declName, name )
-      } yield ( defPrf, subst )
+        (declName, defPrf) <- defs
+        subst <- syntacticMatching(declName, name)
+      } yield (defPrf, subst)
+      if(result.nonEmpty) Some(result.fold(result.head)((res, x) => {
+         if (res._2.domain.size < x._2.domain.size) res else x }))
+      else None
+    }
 
     override def toString: String =
       components.map { case ( n, dfs ) => dfs.map( _._1 ).mkString( ", " ) }.mkString( "\n" )

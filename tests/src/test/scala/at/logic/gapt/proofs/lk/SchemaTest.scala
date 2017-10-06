@@ -4,6 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.NiaSchema
 import at.logic.gapt.examples.gniaSchema
+import at.logic.gapt.examples.NdiffSchema
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.proofs.{ Context, HOLSequent, SetSequent }
 import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
@@ -23,6 +24,14 @@ class SchemaTest extends Specification {
     else base
   }
   {
+    import NdiffSchema.ctx
+    "simple " in {
+      val proof = instantiateProof.Instantiate(le"omega ${nat(3)}")
+      ctx.check(proof)
+      ok
+    }
+  }
+  /*{
     import tautSchema.ctx
     "simple schema basecase" in {
       val proof = instantiateProof.Instantiate( le"taut ${nat( 0 )}" )
@@ -304,6 +313,6 @@ class SchemaTest extends Specification {
       ok
     }
   }
-
+*/
 }
 
