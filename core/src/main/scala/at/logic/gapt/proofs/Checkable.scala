@@ -75,7 +75,7 @@ object Checkable {
         case ProofLink( name, sequent ) =>
           val declSeq = ctx.get[Context.ProofNames].lookup( name )
           require( declSeq.nonEmpty, s"Proof name $name does not exist in context" )
-          require( declSeq.get isSubsetOf sequent, s"$declSeq\nis not a subsequent of\n$sequent" )
+          require( declSeq.get isSubMultisetOf sequent, s"$declSeq\nis not a subsequent of\n$sequent" )
         case TopAxiom | BottomAxiom
           | _: NegLeftRule | _: NegRightRule
           | _: AndLeftRule | _: AndRightRule

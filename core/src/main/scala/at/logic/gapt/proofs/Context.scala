@@ -296,16 +296,16 @@ object Context {
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
     def lookup( name: Expr ): Option[HOLSequent] = {
-     (for {
-        (declName, declSeq) <- names.values
-        subst <- syntacticMatching(declName, name)
-      } yield subst(declSeq)).headOption
+      ( for {
+        ( declName, declSeq ) <- names.values
+        subst <- syntacticMatching( declName, name )
+      } yield subst( declSeq ) ).headOption
 
     }
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {
         ( declName, declSeq ) <- names.values
-        subst <- clauseSubsumption( declSeq, seq )
+        subst <- clauseSubsumption( declSeq, seq, multisetSubsumption = true )
       } yield subst( declName ) ).headOption
 
     override def toString: String =
@@ -319,13 +319,14 @@ object Context {
       copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
 
     def find( name: Expr ): Option[( LKProof, Substitution )] = {
-      val result:Iterable[( LKProof, Substitution )] = for {
+      val result: Iterable[( LKProof, Substitution )] = for {
         defs <- components.values
-        (declName, defPrf) <- defs
-        subst <- syntacticMatching(declName, name)
-      } yield (defPrf, subst)
-      if(result.nonEmpty) Some(result.fold(result.head)((res, x) => {
-         if (res._2.domain.size < x._2.domain.size) res else x }))
+        ( declName, defPrf ) <- defs
+        subst <- syntacticMatching( declName, name )
+      } yield ( defPrf, subst )
+      if ( result.nonEmpty ) Some( result.fold( result.head )( ( res, x ) => {
+        if ( res._2.domain.size < x._2.domain.size ) res else x
+      } ) )
       else None
     }
 
@@ -527,9 +528,15 @@ object Context {
       ctx.check( referencedProof )
       val Apps( Const( c, _ ), vs ) = lhs
       vs.foreach( ctx.check( _ ) )
-      require( ctx.get[ProofNames].names.values.exists {
-        case ( name, _ ) => syntacticMatching( name, lhs ).isDefined
-      } )
+      val declSeq = ctx.get[ProofNames].lookup( lhs )
+        .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
+      require(
+        referencedProof.endSequent isSubMultisetOf declSeq,
+        "End-sequent of proof definition does not match declaration.\n" +
+          "Given sequent: " + referencedProof.endSequent.toSigRelativeString( ctx ) + "\n" +
+          "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
+          "Extraneous formulas: " +
+          referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
       ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
     }
   }

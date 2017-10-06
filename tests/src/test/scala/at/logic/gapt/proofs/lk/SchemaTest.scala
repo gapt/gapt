@@ -26,8 +26,8 @@ class SchemaTest extends Specification {
   {
     import NdiffSchema.ctx
     "simple " in {
-      val proof = instantiateProof.Instantiate(le"omega ${nat(3)}")
-      ctx.check(proof)
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
+      ctx.check( proof )
       ok
     }
   }
