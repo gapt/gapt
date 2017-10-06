@@ -519,7 +519,7 @@ trait TacticCommands {
       goal <- currentGoal
       proofLinkName <- ctx.get[Context.ProofNames].find( goal.conclusion ).
         toTactical( "does not follow from theory" )
-      _ <- insert( ProofLink( proofLinkName, ctx.get[ProofNames].lookup( proofLinkName ).get ) )
+      _ <- insert( ProofLink( proofLinkName ) )
     } yield ()
   }
 

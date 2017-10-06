@@ -297,11 +297,10 @@ object Context {
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
     def lookup( name: Expr ): Option[HOLSequent] =
-      for {
-        Apps( Const( n, _ ), _ ) <- Some( name )
-        ( declName, declSeq ) <- names.get( n )
+      ( for {
+        ( declName, declSeq ) <- names.values
         subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq )
+      } yield subst( declSeq ) ).headOption
 
     def link( name: Expr ): Option[ProofLink] =
       for ( sequent <- lookup( name ) ) yield ProofLink( name, sequent )
@@ -309,7 +308,7 @@ object Context {
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {
         ( declName, declSeq ) <- names.values
-        subst <- clauseSubsumption( declSeq, seq )
+        subst <- clauseSubsumption( declSeq, seq, multisetSubsumption = true )
       } yield subst( declName ) ).headOption
 
     override def toString: String =
@@ -536,10 +535,16 @@ object Context {
       ctx.check( referencedProof )
       val Apps( Const( _, _ ), vs ) = lhs
       vs.foreach( ctx.check( _ ) )
-      val declSeq = ctx.get[ProofNames].lookup( lhs ).getOrElse(
-        throw new IllegalArgumentException( s"Proof name $lhs not defined" ) )
+      val declSeq = ctx.get[ProofNames].lookup( lhs )
+        .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
       val conn = SequentConnector.guessInjection( referencedProof.conclusion, declSeq )
-      require( conn.child( referencedProof.conclusion ).isSubMultisetOf( declSeq ) )
+      require(
+        conn.child( referencedProof.conclusion ).isSubMultisetOf( declSeq ),
+        "End-sequent of proof definition does not match declaration.\n" +
+          "Given sequent: " + referencedProof.endSequent.toSigRelativeString( ctx ) + "\n" +
+          "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
+          "Extraneous formulas: " +
+          referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
       val defn = ProofDefinition( lhs, conn, referencedProof )
       ctx.state.update[ProofDefinitions]( _ + defn )
     }

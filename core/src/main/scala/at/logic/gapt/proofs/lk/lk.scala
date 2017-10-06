@@ -168,6 +168,10 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
   override def name = "link"
   override def conclusion = referencedSequent
 }
+object ProofLink {
+  def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
+    ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+}
 
 /**
  * An LKProof consisting of a single sequent:
