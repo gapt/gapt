@@ -75,7 +75,6 @@ class ExpansionProofTest extends Specification with SatMatchers with SequentMatc
   }
 
   "merge skolem and strong quantifiers" in {
-    skipped( "implementation was buggy" )
     val ep = ExpansionProof(
       ETWeakQuantifier( hof"∀x P x", Map(
         le"y" -> ETAtom( hoa"P y", Polarity.InAntecedent ),
