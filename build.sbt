@@ -5,7 +5,7 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 import sys.process._
 
-val Version = "2.8-SNAPSHOT"
+val Version = "2.8"
 
 lazy val commonSettings = Seq(
   organization := "at.logic.gapt",
