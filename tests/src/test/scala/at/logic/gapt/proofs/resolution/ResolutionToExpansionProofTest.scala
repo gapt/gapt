@@ -7,6 +7,7 @@ import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs.lk.ResolutionProofBuilder
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.proofs._
+import at.logic.gapt.proofs.expansion.deskolemizeET
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -87,5 +88,16 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     ctx.check( exp )
     exp.shallow must_== hos"!x (P x | Q x) :- !x (P x | Q x)"
     exp.deep must beValidSequent
+  }
+
+  "bipolar definitions from common subexpression elimination" in {
+    val f = Sequent() :+ CountingEquivalence( 1 )
+    implicit val ctx: MutableContext = MutableContext.guess( f )
+    val cnf = structuralCNF( f, cse = true )
+    val Some( res) = Escargot.getResolutionProof( cnf )
+    val exp = ResolutionToExpansionProof(res)
+    val desk = deskolemizeET( exp )
+    desk.shallow must_== f
+    desk.deep must beValidSequent
   }
 }

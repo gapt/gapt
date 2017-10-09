@@ -19,7 +19,7 @@ object eliminateDefsET {
     apply( ep, pureFolWithoutEq, atomicExpansionET.getDefinedAtoms( ep ) )
 
   def apply( ep: ExpansionProof, pureFolWithoutEq: Boolean, definitions: Set[Const] )( implicit ctx: Context ): ExpansionProof =
-    atomicExpansionET( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ), definitions )
+    atomicExpansionET( definitions.foldLeft( ep )( apply( _, _, pureFolWithoutEq ) ), definitions, pureFolWithoutEq )
 
   private def apply( ep: ExpansionProof, definitionConst: Const, pureFolWithoutEq: Boolean )( implicit ctx: Context ): ExpansionProof = {
     val definitionFormula @ DefinitionFormula( vs, _, definedFormula ) =
@@ -36,7 +36,11 @@ object eliminateDefsET {
     val insts0 = for {
       ETWeakQuantifierBlock( `definitionFormula`, n, insts ) <- ep.expansionSequent.antecedent
       ( as, inst ) <- insts
-      repl <- inst( negReplPos ) ++ inst( posReplPos )
+      // DO NOT INLINE THIS!  (otherwise the value of repls changes?!?!?)
+      negRepls = inst( negReplPos )
+      posRepls = inst( posReplPos )
+      repls = negRepls ++ posRepls
+      repl <- repls
     } yield as -> repl
 
     var insts = Map() ++ insts0.groupBy( _._1 ).mapValues( _.map( _._2 ) )
