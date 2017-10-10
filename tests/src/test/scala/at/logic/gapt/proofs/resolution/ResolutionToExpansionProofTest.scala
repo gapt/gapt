@@ -94,8 +94,8 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val f = Sequent() :+ CountingEquivalence( 1 )
     implicit val ctx: MutableContext = MutableContext.guess( f )
     val cnf = structuralCNF( f, cse = true )
-    val Some( res) = Escargot.getResolutionProof( cnf )
-    val exp = ResolutionToExpansionProof(res)
+    val Some( res ) = Escargot.getResolutionProof( cnf )
+    val exp = ResolutionToExpansionProof( res )
     val desk = deskolemizeET( exp )
     desk.shallow must_== f
     desk.deep must beValidSequent
