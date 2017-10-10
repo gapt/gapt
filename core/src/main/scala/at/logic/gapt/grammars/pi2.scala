@@ -112,7 +112,24 @@ object minimizePi2Grammar {
       And( for ( beta <- g.betas ) yield thresholds.exactly.oneOf(
         for ( p <- g.productions if p._1 == beta ) yield prodinc( p ) ) )
 
-    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality
+    // Whenever we have a production τ → t[β₃, ‥] then we require that it is actually of the
+    // form τ → t[β₃, r₃], where t does not contain any β and β₃ → r₃
+    val expressibilityCondition = And( for {
+      ( lhs, rhs ) <- g.productions
+      if lhs == g.startSymbol
+      fvs = freeVariables( rhs )
+      if fvs.size > 1
+      if fvs.intersect( g.betas.toSet ).nonEmpty
+    } yield prodinc( lhs -> rhs ) --> Or {
+      for {
+        ( lhs2, rhs2 ) <- g.productions
+        if g.betas.contains( lhs2 )
+        rhs_ = TermReplacement( rhs, rhs2, lhs2 )
+        if freeVariables( rhs_ ) == Set( lhs2 )
+      } yield prodinc( lhs2 -> rhs2 )
+    } )
+
+    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality & expressibilityCondition
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
