@@ -1,9 +1,10 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.utils.Maybe
 
 import scala.collection.mutable
 
@@ -51,7 +52,7 @@ import scala.collection.mutable
  */
 object ResolutionToExpansionProof {
 
-  def apply( proof: ResolutionProof ): ExpansionProof = {
+  def apply( proof: ResolutionProof )( implicit ctx: Maybe[Context] ): ExpansionProof = {
     apply( proof, inputsAsExpansionSequent )
   }
 
@@ -71,7 +72,8 @@ object ResolutionToExpansionProof {
     }
   }
 
-  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent ): ExpansionProof = {
+  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent )( implicit ctx: Maybe[Context] ): ExpansionProof = {
+    implicit val ctx1: Context = ctx.getOrElse( MutableContext.guess( proof ) )
     val expansionWithDefs = withDefs( proof, input )
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )

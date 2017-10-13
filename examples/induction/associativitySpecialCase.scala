@@ -13,7 +13,7 @@ object associativitySpecialCase extends TacticsProof {
       .equationalTheory( hof"0+x=x", hof"x+0=x" )
       .instanceProver( spass )
       .quantTys()
-      .canSolSize( 2, 2 )
+      .canSolSize( 2 )
       .doForgetOne()
 
   val proof = Lemma(

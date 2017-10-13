@@ -24,7 +24,7 @@ private object getAtHOLPosition {
       case ( ETSkolemQuantifier( _, _, _, ch ), 1 ) => apply( ch, pos.tail )
       case ( ETWeakQuantifier( _, insts ), 1 )      => insts.values flatMap { apply( _, pos.tail ) } toSet
 
-      case ( _, _ )                                 => Set()
+      case ( ETWeakening( _, _ ), _ )               => Set()
     }
 }
 
@@ -103,6 +103,18 @@ object commuteReplacementCtxWithDefEq {
         val y = rename( y1, freeVariables( c ) ++ freeVariables( a ) ++ freeVariables( t ) + x )
         Quant( y, apply( x, instantiate( c, y ), t, instantiate( a, y ) ).asInstanceOf[Formula], pol1 )
       case _ =>
+        // imitate
+        a match {
+          case Apps( fn2 @ Const( _, _ ), as2 ) =>
+            val pat = fn2( for ( ( a, i ) <- as2.zipWithIndex ) yield Var( s"x$i", a.ty ) )
+            syntacticMatching( ctx.normalize( pat ), ctx.normalize( c ) ) match {
+              case Some( subst ) =>
+                return apply( x, subst( pat ), t, a )
+              case _ =>
+            }
+          case _ =>
+        }
+        // reduce
         ctx.normalizer.reduce1( c ) match {
           case Some( c_ ) => apply( x, BetaReduction.betaNormalize( c_ ), t, a )
           case None =>
@@ -144,14 +156,14 @@ object insertDefinition {
         ETImp( insertDefinition( l, defn, Abs( v, f ) ), insertDefinition( r, defn, Abs( v, g ) ) )
 
       case ( ETStrongQuantifier( shallow, eigen, child ), Quant( _, _, _ ) ) =>
-        val shallowNew = definitionApplied.asInstanceOf[Formula]
+        val shallowNew = definitionApplied
         ETStrongQuantifier( shallowNew, eigen, insertDefinition( child, defn, instReplCtx( replacementContext, eigen ) ) )
 
       case ( ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ), Quant( x, f, _ ) ) =>
         throw new IllegalArgumentException( "Skolem nodes are not handled at this time." )
 
       case ( ETWeakQuantifier( shallow, instances ), Quant( _, _, _ ) ) =>
-        val shallowNew = definitionApplied.asInstanceOf[Formula]
+        val shallowNew = definitionApplied
         val instancesNew: Map[Expr, ExpansionTree] = ( for {
           ( t, e ) <- instances
           ctxNew = instReplCtx( replacementContext, t )
@@ -164,7 +176,7 @@ object insertDefinition {
         ETMerge( insertDefinition( l, defn, replacementContext ), insertDefinition( r, defn, replacementContext ) )
 
       case ( ETWeakening( formula, pol ), _ ) =>
-        ETWeakening( definitionApplied.asInstanceOf[Formula], pol )
+        ETWeakening( definitionApplied, pol )
 
       case _ =>
         replaceWithContext( et, replacementContext, defn.what )
@@ -224,7 +236,7 @@ object instReplCtx {
 }
 
 object generalizeET {
-  def apply( et: ExpansionTree, newShallow: Formula ): ExpansionTree =
+  def apply( et: ExpansionTree, newShallow: Formula )( implicit ctx: Context ): ExpansionTree =
     HOLPosition.differingPositions( et.shallow, newShallow ).
       groupBy( pos => ( et.shallow( pos ), newShallow( pos ) ) ).
       foldLeft( et ) {

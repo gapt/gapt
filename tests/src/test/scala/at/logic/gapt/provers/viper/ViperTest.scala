@@ -1,6 +1,6 @@
 package at.logic.gapt.provers.viper
 
-import at.logic.gapt.examples.induction.associativitySpecialCase
+import at.logic.gapt.examples.induction._
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
@@ -53,9 +53,12 @@ class ViperTest extends Specification with SequentMatchers {
     }
   }
 
-  "associativity" in {
+  "associativity special case" in {
     if ( !SPASS.isInstalled ) skipped( "required instance proofs from spass" )
     associativitySpecialCase; ok
   }
+
+  "associativity" in { associativity; ok }
+  "comm" in { comm; ok }
 
 }

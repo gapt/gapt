@@ -191,7 +191,7 @@ object minimizeVTRATG {
     } yield -atom -> weight( p )
     metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
       case Some( interp ) => VTRATG( g.startSymbol, g.nonTerminals,
-        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
+        g.productions.filter { p => interp( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }
   }

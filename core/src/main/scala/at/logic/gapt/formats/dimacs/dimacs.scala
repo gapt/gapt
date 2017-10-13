@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.dimacs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.models.MapBasedInterpretation
+import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.drup.{ DrupDerive, DrupForget, DrupProof, DrupProofLine }
 import at.logic.gapt.proofs.{ Clause, HOLClause }
 
@@ -59,10 +59,10 @@ class DIMACSEncoding {
     Clause( clause.filter( _ < 0 ), clause.filter( _ > 0 ) ).map( l => decodeAtom( math.abs( l ) ) )
 
   def decodeModel( model: DIMACS.Model ) =
-    new MapBasedInterpretation( model flatMap {
+    PropositionalModel( model.flatMap {
       case l if l > 0 => decodeAtomOption( l ) map { _ -> true }
       case l if l < 0 => decodeAtomOption( -l ) map { _ -> false }
-    } toMap )
+    } )
 
   def decodeProof( drupProof: DIMACS.DRUP ): Seq[DrupProofLine] =
     drupProof map {

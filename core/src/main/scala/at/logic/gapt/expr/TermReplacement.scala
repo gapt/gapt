@@ -118,6 +118,12 @@ object Replaceable {
       def names( obj: Map[I1, I2] ) = containedNames( obj.toSeq )
     }
 
+  implicit def eitherReplaceable[E, I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Either[E, I], Either[E, O]] =
+    new Replaceable[Either[E, I], Either[E, O]] {
+      override def replace( obj: Either[E, I], p: PartialFunction[Expr, Expr] ) = obj.map( TermReplacement( _, p ) )
+      override def names( obj: Either[E, I] ) = containedNames( obj.toSeq )
+    }
+
   implicit object unitReplaceable extends ClosedUnderReplacement[Unit] {
     override def replace( obj: Unit, p: PartialFunction[Expr, Expr] ): Unit = ()
     override def names( obj: Unit ): Set[VarOrConst] = Set()

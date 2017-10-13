@@ -5,7 +5,7 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
-object atomicExpansionET {
+object tautAtomicExpansionET {
   import Polarity._
   def apply( formula: Formula )( implicit nameGen: NameGenerator ): ( ExpansionTree, ExpansionTree ) =
     formula match {
@@ -61,11 +61,11 @@ object moveSkolemNodesToCuts {
       case ETStrongQuantifier( sh, ev, f ) =>
         ETStrongQuantifier( sh, ev, apply( f, cuts ) )
       case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inSuc =>
-        val ( a, b ) = atomicExpansionET( sh )
+        val ( a, b ) = tautAtomicExpansionET( sh )
         cuts += ETImp( ETSkolemQuantifier( sh, t, d, apply( f, cuts ) ), a )
         b
       case ETSkolemQuantifier( sh, t, d, f ) if et.polarity.inAnt =>
-        val ( a, b ) = atomicExpansionET( sh )
+        val ( a, b ) = tautAtomicExpansionET( sh )
         cuts += ETImp( b, ETSkolemQuantifier( sh, t, d, apply( f, cuts ) ) )
         a
     }

@@ -6,7 +6,7 @@ import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
-import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, withSection }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
@@ -44,18 +44,23 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
+  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
   def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
 
   override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
-    val viper = new TreeGrammarProver( ctx, goal.conclusion, options )
-    try {
-      Right( () -> viper.solve() )
-    } catch {
-      case t: TimeOutException => throw t
-      case t: ThreadDeath      => throw t
-      case t: Throwable =>
-        Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
+    implicit val ctx2: MutableContext = ctx.newMutable
+    withSection { section =>
+      val groundGoal = section.groundSequent( goal.conclusion )
+      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
+      try {
+        Right( () -> viper.solve() )
+      } catch {
+        case t: TimeOutException => throw t
+        case t: ThreadDeath      => throw t
+        case t: Throwable =>
+          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
+      }
     }
   }
 

@@ -155,7 +155,7 @@
 {\Huge User manual}
 
 \vspace*{10mm}
-{\Large Version 2.8-SNAPSHOT}
+{\Large Version 2.9-SNAPSHOT}
 \vspace*{10mm}
 
 {\Large \today}
@@ -224,7 +224,7 @@ sbt console
   two lines to your \verb,build.sbt,:
 \begin{lstlisting}
 resolvers += Resolver.jcenterRepo
-libraryDependencies += "at.logic.gapt" %% "gapt" % "2.7"
+libraryDependencies += "at.logic.gapt" %% "gapt" % "2.8"
 \end{lstlisting}
 
 \end{enumerate}
@@ -1504,7 +1504,7 @@ Some(
 The LeanCoP interface supports \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
-res33: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+res25: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
 p(0)-
 :-
@@ -1603,16 +1603,16 @@ support arbitrary (even Unicode) names in GAPT:
 gapt> val (benchmark, typeRenaming, constantRenaming) = SmtLibExporter(Sequent() :+ f)
 benchmark: String =
 "(set-logic QF_UF)
-(declare-sort t1 0)
-(declare-fun f1 () t1)
-(declare-fun f2 (t1) Bool)
-(declare-fun f3 () t1)
-(declare-fun f4 () t1)
-(assert (not (=> (and (and (or (= f4 f1) (= f4 f3)) (f2 f3)) (f2 f1)) (f2 f4))))
+(declare-sort t_i 0)
+(declare-fun f_b () t_i)
+(declare-fun f_P (t_i) Bool)
+(declare-fun f_c () t_i)
+(declare-fun f_a () t_i)
+(assert (not (=> (and (and (or (= f_a f_b) (= f_a f_c)) (f_P f_c)) (f_P f_b)) (f_P f_a))))
 (check-sat)
 "
-typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t1)
-constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f1:t1, P:i>o -> f2:t1>Bool, c -> f3:t1, a -> f4:t1)
+typeRenaming: Map[at.logic.gapt.expr.TBase,at.logic.gapt.expr.TBase] = Map(o -> Bool, i -> t_i)
+constantRenaming: Map[at.logic.gapt.expr.Const,at.logic.gapt.expr.Const] = Map(b -> f_b:t_i, P:i>o -> f_P:t_i>Bool, c -> f_c:t_i, a -> f_a:t_i)
 
 \end{clilisting}
 
@@ -1662,7 +1662,7 @@ shows that $\mathrm{PHP}_{3,3}$ is not valid.
 Furthermore,
 \begin{clilisting}
 gapt> val Some(m) = Sat4j solve -PigeonHolePrinciple(3, 3)
-m: at.logic.gapt.models.Interpretation =
+m: at.logic.gapt.models.PropositionalModel =
 R(p_1, h_1): o -> true
 R(p_1, h_2): o -> false
 R(p_1, h_3): o -> false
@@ -1682,16 +1682,16 @@ p1: at.logic.gapt.expr.FOLAtom = R(p_1, h_1): o
 gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
-gapt> m.interpret(p1) // Is pigeon 1 in hole 1?
+gapt> m(p1) // Is pigeon 1 in hole 1?
 res35: Boolean = true
 
-gapt> m.interpret(p2) // Is pigeon 2 in hole 1?
+gapt> m(p2) // Is pigeon 2 in hole 1?
 res36: Boolean = false
 
 \end{clilisting}
 We can also interpret quantifier-free formulas:
 \begin{clilisting}
-gapt> m.interpret( And(p1, p2) )
+gapt> m( And(p1, p2) )
 res37: Boolean = false
 
 \end{clilisting}
@@ -1824,7 +1824,7 @@ Let us solve a simple example using the MaxSAT solver from SAT4J:
 
 \begin{clilisting}
 gapt> MaxSat4j.solve(hard = hof"a|b|c", soft = Seq(hof"-a" -> 4, hof"-b" -> 3))
-res45: Option[at.logic.gapt.models.Interpretation] =
+res45: Option[at.logic.gapt.models.PropositionalModel] =
 Some(a:o -> false
 b:o -> false
 c:o -> true)

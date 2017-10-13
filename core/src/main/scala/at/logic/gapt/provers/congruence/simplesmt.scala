@@ -1,7 +1,6 @@
 package at.logic.gapt.provers.congruence
 
 import at.logic.gapt.expr._
-import at.logic.gapt.models.MapBasedInterpretation
 import at.logic.gapt.proofs.resolution.structuralCNF
 import at.logic.gapt.proofs.{ Context, HOLClause, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.provers.OneShotProver
@@ -48,10 +47,8 @@ class SimpleSmtSolver( theory: CongruenceClosure => CongruenceClosure ) extends 
       .to[mutable.Buffer]
     while ( true ) {
       Sat4j.solve( cnf ) match {
-        case Some( model: MapBasedInterpretation ) =>
-          val modelCube = Sequent( for ( ( a, v ) <- model.model )
-            yield ( a, if ( v ) Polarity.InAntecedent else Polarity.InSuccedent ) )
-          checkSmtConflict( modelCube, theory ) match {
+        case Some( model ) =>
+          checkSmtConflict( model.toCube, theory ) match {
             case Some( core ) =>
               cnf += core.asInstanceOf[HOLClause]
             case None => return false

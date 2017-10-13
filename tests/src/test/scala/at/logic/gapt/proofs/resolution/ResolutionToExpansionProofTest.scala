@@ -2,10 +2,12 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.{ naive, thresholds }
+import at.logic.gapt.expr.fol.thresholds
 import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.proofs.lk.ResolutionProofBuilder
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.proofs._
+import at.logic.gapt.proofs.expansion.deskolemizeET
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 
@@ -67,5 +69,35 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val expansion = ResolutionToExpansionProof( ref )
     expansion.shallow must_== endSequent
     expansion.deep must beValidSequent
+  }
+
+  "bipolar definitions" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"P: i>o"; ctx += hoc"Q: i>o"
+    ctx += hof"D = (!x (P x | Q x))"
+    val Some( d ) = ctx.updates.collectFirst { case d: Definition => d }
+    val p = ResolutionProofBuilder
+      .c( Input( hos":- !x (P x | Q x)" ) )
+      .u( DefIntro( _, Suc( 0 ), d, Seq() ) )
+      .c( Input( hos"!x (P x | Q x) :-" ) )
+      .u( DefIntro( _, Ant( 0 ), d, Seq() ) )
+      .b( Resolution( _, Suc( 0 ), _, Ant( 0 ) ) )
+      .qed
+    ctx.check( p )
+    val exp = ResolutionToExpansionProof( p )
+    ctx.check( exp )
+    exp.shallow must_== hos"!x (P x | Q x) :- !x (P x | Q x)"
+    exp.deep must beValidSequent
+  }
+
+  "bipolar definitions from common subexpression elimination" in {
+    val f = Sequent() :+ CountingEquivalence( 1 )
+    implicit val ctx: MutableContext = MutableContext.guess( f )
+    val cnf = structuralCNF( f, cse = true )
+    val Some( res ) = Escargot.getResolutionProof( cnf )
+    val exp = ResolutionToExpansionProof( res )
+    val desk = deskolemizeET( exp )
+    desk.shallow must_== f
+    desk.deep must beValidSequent
   }
 }
