@@ -2148,11 +2148,9 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(s(s(s(s(x_1))))))
+x_0 → s(s(s(s(x_1))))
 
-x_0 → s(s(s(x_1)))
-
-x_0 → x_1
+x_0 → s(x_1)
 
 x_1 → s(s(x_2))
 
@@ -2160,9 +2158,11 @@ x_1 → s(x_2)
 
 x_1 → x_2
 
-x_2 → s(0)
+x_2 → 0
 
-x_2 → s(s(s(s(s(s(s(s(s(s(0))))))))))
+x_2 → s(s(s(s(s(s(0))))))
+
+x_2 → s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res55: Boolean = true
@@ -2176,9 +2176,9 @@ res56: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s:i>i
 
-x_0 → s(s(s(x_1)))
+x_0 → s(s(s(s(x_1))))
 
-x_0 → x_1
+x_0 → s(x_1)
 
 x_1 → s(s(x_2))
 
@@ -2186,7 +2186,7 @@ x_1 → s(x_2)
 
 x_1 → x_2
 
-x_2 → s(0)
+x_2 → 0
 
 \end{clilisting}
 
