@@ -11,10 +11,10 @@ import BetaReduction._
 class HigherOrderLogicTest extends Specification {
 
   "HigherOrderLogic" should {
-    val c1 = Const( "a", Ti -> To )
+    val c1 = Const( "a", Ti ->: To )
     val v1 = Var( "x", Ti )
     val a1 = App( c1, v1 )
-    val c2 = Var( "a", Ti -> ( Ti -> To ) )
+    val c2 = Var( "a", Ti ->: Ti ->: To )
     val v21 = Var( "x", Ti )
     val v22 = Var( "y", Ti )
     val a21 = App( c2, v21 )
@@ -35,7 +35,7 @@ class HigherOrderLogicTest extends Specification {
       result must beTrue
     }
     "mix correctly the formula trait (3)" in {
-      val at1 = Atom( Var( "P", ( c2.ty -> ( a22.ty -> To ) ) ), c2 :: a22 :: Nil )
+      val at1 = Atom( Var( "P", c2.ty ->: a22.ty ->: To ), c2 :: a22 :: Nil )
       // Another way to construct P's type is: FunctionType(To, args.map(a => a.exptype) )
       val result = at1 match {
         case x: Formula => true
@@ -80,7 +80,7 @@ class HigherOrderLogicTest extends Specification {
         result must beTrue
       }
       "be extracted correctly" in {
-        val e = App( Const( "g", Ti -> Ti ), Const( "c", Ti ) :: Nil )
+        val e = App( Const( "g", Ti ->: Ti ), Const( "c", Ti ) :: Nil )
         val result = e match {
           case Neg( _ ) => false
           case _        => true
@@ -90,12 +90,12 @@ class HigherOrderLogicTest extends Specification {
     }
 
     "substitute and normalize correctly when Substitution is applied" in {
-      val x = Var( "X", Ti -> To )
-      val f = Var( "f", ( Ti -> To ) -> Ti )
+      val x = Var( "X", Ti ->: To )
+      val f = Var( "f", ( Ti ->: To ) ->: Ti )
       val xfx = App( x, App( f, x ) )
 
       val z = Var( "z", Ti )
-      val p = Var( "P", Ti -> To )
+      val p = Var( "P", Ti ->: To )
       val Pz = App( p, z )
       val t = Abs( z, Pz )
       val pft = App( p, App( f, t ) )
@@ -106,12 +106,12 @@ class HigherOrderLogicTest extends Specification {
     }
 
     "substitute and normalize correctly when Substitution is applied on the formula level" in {
-      val x = Var( "X", Ti -> To )
-      val f = Var( "f", ( Ti -> To ) -> Ti )
+      val x = Var( "X", Ti ->: To )
+      val f = Var( "f", ( Ti ->: To ) ->: Ti )
       val xfx = Atom( x, HOLFunction( f, x :: Nil ) :: Nil )
 
       val z = Var( "z", Ti )
-      val p = Var( "P", Ti -> To )
+      val p = Var( "P", Ti ->: To )
       val Pz = App( p, z )
       val t = Abs( z, Pz )
       val pft = Atom( p, HOLFunction( f, t :: Nil ) :: Nil )
@@ -124,7 +124,7 @@ class HigherOrderLogicTest extends Specification {
   }
 
   "Exists quantifier" should {
-    val c1 = Const( "a", Ti -> To )
+    val c1 = Const( "a", Ti ->: To )
     val v1 = Var( "x", Ti )
     val f1 = Atom( c1, v1 :: Nil )
     "create a term of the right type" in {
@@ -133,7 +133,7 @@ class HigherOrderLogicTest extends Specification {
   }
 
   "Forall quantifier" should {
-    val c1 = Const( "a", Ti -> To )
+    val c1 = Const( "a", Ti ->: To )
     val v1 = Var( "x", Ti )
     val f1 = Atom( c1, v1 :: Nil )
     "create a term of the right type" in {
@@ -154,31 +154,31 @@ class HigherOrderLogicTest extends Specification {
 
   "Equation" should {
     "be of the right type" in {
-      val c1 = Const( "f1", Ti -> Ti )
-      val c2 = Const( "f2", Ti -> Ti )
+      val c1 = Const( "f1", Ti ->: Ti )
+      val c2 = Const( "f2", Ti ->: Ti )
       val eq = Eq( c1, c2 )
       val App( App( t, _ ), _ ) = eq
-      t.ty must beEqualTo( ( Ti -> Ti ) -> ( ( Ti -> Ti ) -> To ) )
+      t.ty must beEqualTo( ( Ti ->: Ti ) ->: ( Ti ->: Ti ) ->: To )
     }
   }
 
   "Substitution" should {
     "work correctly on some testcase involving free/bound vars" in {
-      val s0 = Const( "s_{0}", Ti -> Ti )
-      val C = Const( "C", Ti -> Ti )
-      val T = Const( "T", Ti -> Ti )
+      val s0 = Const( "s_{0}", Ti ->: Ti )
+      val C = Const( "C", Ti ->: Ti )
+      val T = Const( "T", Ti ->: Ti )
       val sCTn = HOLFunction( s0, HOLFunction( C, HOLFunction( T, Const( "n", Ti ) :: Nil ) :: Nil ) :: Nil )
       val u = Var( "u", Ti )
       val v = Var( "v", Ti )
-      val P1 = Atom( Var( "P", sCTn.ty -> ( Ti -> To ) ), sCTn :: u :: Nil )
-      val P2 = Atom( Var( "P", sCTn.ty -> ( Ti -> To ) ), sCTn :: v :: Nil )
+      val P1 = Atom( Var( "P", sCTn.ty ->: Ti ->: To ), sCTn :: u :: Nil )
+      val P2 = Atom( Var( "P", sCTn.ty ->: Ti ->: To ), sCTn :: v :: Nil )
       val q_form = All( u, Ex( v, Imp( P1, P2 ) ) )
 
       q_form match {
         case All( x, f ) => {
           val a = Const( "a", x.ty )
           val sub = Substitution( x, a )
-          val P3 = Atom( Var( "P", sCTn.ty -> ( a.ty -> To ) ), sCTn :: a :: Nil )
+          val P3 = Atom( Var( "P", sCTn.ty ->: a.ty ->: To ), sCTn :: a :: Nil )
           val s = sub( f )
           val result = s match {
             case Ex( v, Imp( P3, P2 ) ) => true
@@ -213,7 +213,7 @@ class HigherOrderLogicTest extends Specification {
     val y = Var( "y", Ti )
     val z = Var( "z", Ti )
 
-    val Pxyz = Atom( Const( "P", Ti -> ( Ti -> ( Ti -> To ) ) ), List( x, y, z ) )
+    val Pxyz = Atom( Const( "P", Ti ->: Ti ->: Ti ->: To ), List( x, y, z ) )
     val allP = All( x, All( y, All( z, Pxyz ) ) )
     val exP = Ex( x, Ex( y, Ex( z, Pxyz ) ) )
 

@@ -9,9 +9,9 @@ class SkolemizationTest extends Specification {
   "Skolemization" should {
     val x = Var( "x", Ti )
     val y = Var( "y", Ti )
-    val f = All( x, Atom( Const( "P", Ti -> To ), x :: Nil ) )
-    val p = Const( "P", Ti -> To )
-    val r = Const( "R", Ti -> ( Ti -> To ) )
+    val f = All( x, Atom( Const( "P", Ti ->: To ), x :: Nil ) )
+    val p = Const( "P", Ti ->: To )
+    val r = Const( "R", Ti ->: Ti ->: To )
 
     "leave a formula with only weak quantifiers untouched" in {
       skolemize( f, Polarity.InAntecedent ) must_== f
@@ -31,7 +31,7 @@ class SkolemizationTest extends Specification {
       val f2 = Imp( f, All( x, Ex( y, rxy ) ) )
 
       val skfun0 = Const( stream.head, Ti )
-      val skfun1 = HOLFunction( Const( stream.tail.head, Ti -> Ti ), x :: Nil )
+      val skfun1 = HOLFunction( Const( stream.tail.head, Ti ->: Ti ), x :: Nil )
       val skf1 = Atom( p, skfun0 :: Nil )
       val skf2 = Atom( r, x :: skfun1 :: Nil )
 
@@ -40,7 +40,7 @@ class SkolemizationTest extends Specification {
 
       // now we skolemize the skolemize formula, with opposite polarity
       val skfun2 = Const( stream.tail.tail.head, Ti )
-      val skfun3 = HOLFunction( Const( stream.tail.head, Ti -> Ti ), skfun2 :: Nil )
+      val skfun3 = HOLFunction( Const( stream.tail.head, Ti ->: Ti ), skfun2 :: Nil )
       val skf3 = Atom( r, skfun2 :: skfun3 :: Nil )
       val skf4 = Imp( skf1, skf3 )
       skolemize( skolemize( f2, Polarity.InAntecedent, Seq(), stream ), Polarity.InSuccedent, Seq(), stream.tail ) must beEqualTo( skf4 )
@@ -97,7 +97,7 @@ class SkolemizationTest extends Specification {
       val r3 = ForallLeftRule( r2, allxexyRxy, a )
       val proof: LKProof = ForallRightRule( r3, allxexyRxy, a )
 
-      val fs0 = Const( "s_0", Ti -> Ti )
+      val fs0 = Const( "s_0", Ti ->: Ti )
       val s1c = Const( "s_1", Ti )
       val s0s1 = App( fs0, s1c )
       val sR = Atom( r, List( s1c, s0s1 ) )

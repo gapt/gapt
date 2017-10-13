@@ -541,7 +541,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
 
   val applyFunctions = partialAppTypes.map {
     case ( partialAppType, ty @ FunctionType( ret, args ) ) =>
-      partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType -> ty )
+      partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType ->: ty )
   }
 
   val partialApplicationFuns =

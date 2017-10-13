@@ -5,7 +5,7 @@ import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
 import Context._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, ProofLink }
 import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.utils.NameGenerator
 
@@ -297,10 +297,14 @@ object Context {
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
     def lookup( name: Expr ): Option[HOLSequent] =
-      ( for {
-        ( declName, declSeq ) <- names.values
+      for {
+        Apps( Const( n, _ ), _ ) <- Some( name )
+        ( declName, declSeq ) <- names.get( n )
         subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq ) ).headOption
+      } yield subst( declSeq )
+
+    def link( name: Expr ): Option[ProofLink] =
+      for ( sequent <- lookup( name ) ) yield ProofLink( name, sequent )
 
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {

@@ -87,7 +87,7 @@ class TipSmtParser {
 
   def parseField( sexp: SExpression, ofType: Ty ) = sexp match {
     case LFun( projector, LAtom( typename ) ) =>
-      Const( projector, ofType -> typeDecls( typename ) )
+      Const( projector, ofType ->: typeDecls( typename ) )
   }
 
   def parseFunctionBody( sexp: SExpression, lhs: Expr, freeVars: Map[String, Expr] ): Seq[Formula] = sexp match {

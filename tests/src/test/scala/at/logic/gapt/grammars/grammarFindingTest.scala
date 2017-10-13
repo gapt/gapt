@@ -73,8 +73,8 @@ class GrammarFindingTest extends Specification with SatMatchers {
     }
     "many-sorted stable terms" in {
       val Seq( a, b, c, d ) = Seq( "A", "B", "C", "D" ) map { TBase( _ ) }
-      val r = Const( "r", a -> ( b -> c ) )
-      val f = Const( "f", a -> b )
+      val r = Const( "r", a ->: b ->: c )
+      val f = Const( "f", a ->: b )
       val x = Var( "x", a )
 
       val ya1 = Var( "ya1", a )

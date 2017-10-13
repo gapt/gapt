@@ -75,7 +75,7 @@ class LeanExporter {
   def export( ty: Ty ): String = ty match {
     case TBase( name, params ) => ( nameMap.getLeanName( name, TY ) :: params.map( export ) ).mkString( " " )
     case TVar( _ )             => "_"
-    case a -> b                => s"(${export( a )} -> ${export( b )})"
+    case a ->: b               => s"(${export( a )} -> ${export( b )})"
   }
 
   def exportBinder( sym: String, x: Var, sub: Expr ): String = {
