@@ -13,21 +13,24 @@ object NdiffSchema extends TacticsProof {
   ctx += hoc"E: nat>nat>o"
   ctx += hoc"LE: i>i>o"
   ctx += hoc"LEQ: i>i>o"
-  ctx += hoc"ADD: i>i>i"
+  ctx += hoc"AP:nat>i>i"
   ctx += hoc"omega: nat>nat"
   ctx += hoc"phi: nat>nat>i>i>nat"
   ctx += hoc"chi: nat>nat>nat>i>nat"
-  ctx += "nEqual" -> hos" E(f(B), f(A)), E(f(A), n),E(f(B), m) :-"
+
   ctx += PrimRecFun( hoc"DIFF:nat>i>o", "DIFF 0 x = (∃y (¬ (E (f x) (f y))))", "DIFF (s x) y = ( ∃z ( (¬ (E (f y) (f z))) ∧  (DIFF x z) ) )" )
-  ctx += PrimRecFun( hoc"AP:nat>i>i", "AP 0 x = x", "AP (s x) y = (ADD y (AP x y))" )
   ctx += PrimRecFun(
     hoc"bloc:nat>nat>i>o",
-    "bloc 0 x y = (∀z ( (LEQ (AP x y) z) ∧ (E (f z) x) ) )",
+    "bloc 0 x y = (∀z ( (LEQ (AP x y) z) ∧ (LE z (AP (s x) y)) ∧ (E (f z) x) ) )",
     "bloc (s x) y z = (∀w ( (LEQ (AP y z) w) ∧ (LE w (AP (s y) z)) ∧  (E (f w) y) ∧ (bloc x (s y) z) ))" )
-
+  ctx += "nEqual" -> hos" E(f(B), f(A)), E(f(A), n),E(f(B), m) :-"
   ctx += "SucNotEq" -> hcl"E(f(p),n),E(f(q),s(n)), E(f(p),f(q)) :- "
-  ctx += "leq_refl" -> hos" :- LEQ(p,p)"
   ctx += "leq_g" -> hos"LEQ(AP(s(x),y),q):- LE(AP(x,y),q)"
+  ctx += "leq_refl" -> hos" :- LEQ(P,P)"
+  ctx += "le_Non_refl" -> hos"LE(P,P) :-"
+
+  ctx += "le_func_def" -> hos"LE(AP(N,K),AP(s(N),K)), E(f(AP(N,K)),N) :- E(f(AP(s(N),K)),s(N))"
+
   val esOmega = Sequent(
     Seq( hof"!x bloc(n,0,x)" ),
     Seq( hof"?p DIFF(n,p)" ) )
@@ -46,7 +49,8 @@ object NdiffSchema extends TacticsProof {
   val omegaSc = Lemma( esOmegaSc ) {
     cut( "cut", hof"?x ?y (LEQ(AP(s(n),x),y) &  E(f(y),s(n)))" )
     allL( "Ant_0", fov"K" )
-    exR( "cut", fov"K" )
+    forget( "Ant_0" )
+    forget( "Suc_0" )
     ref( "chi" )
     exL( "cut", fov"A" )
     exL( "cut", fov"B" )
@@ -58,23 +62,33 @@ object NdiffSchema extends TacticsProof {
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n)", omegaSc )
 
   val esOmegaBc = Sequent(
-    Seq( "Ant_0" -> hof"!x bloc(s(0),0,x)" ),
+    Seq( "Ant_0" -> hof"!x bloc(0,0,x)" ),
     Seq( "Suc_0" -> hof"?p DIFF(0,p)" ) )
   val omegaBc = Lemma( esOmegaBc ) {
     cut( "cut", hof"?x ?y (LEQ(AP(s(0),x),y) &  E(f(y),s(0)))" )
-    allL( "Ant_0", fov"K" )
-    ref( "chi" )
-    exL( "cut", fov"K" )
-    exL( "cut", fov"B" )
-    allL( "Ant_0", fov"K" )
-    exR( "Suc_0", fov"B" )
-    andL( "cut" )
+    allL( "Ant_0", le"K" )
+    exR( "cut", le"K" )
     unfold( "bloc" ) atMost 1 in "Ant_0_0"
-    allL( "Ant_0_0", fov"B" )
+    exR( "cut_0", le"AP(s(0), K)" )
+    andR
+    foTheory
+    focus( 1 )
+    exL( fov"K" )
+    exL( fov"B" )
+    allL( fov"K" )
+    unfold( "bloc" ) atMost 1 in "Ant_0_0"
+    exR( fov"B" )
+    unfold( "DIFF" ) atMost 1 in "Suc_0_0"
+    exR( "Suc_0_0", fov"A" )
+    negR
+    andL
+    allL( "Ant_0_0", fov"A" )
+    andL
+    foTheory
+    allL( "Ant_0_0", le"AP(0, K)" )
     andL( "Ant_0_0_0" )
     andL( "Ant_0_0_0_0" )
-    andL( "Ant_0_0_0_0_0" )
-    ref( "phi" )
+    foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
@@ -88,6 +102,12 @@ object NdiffSchema extends TacticsProof {
     andL( "Ant_1_0" )
     andL( "Ant_1_0_0" )
     andL( "Ant_1_0_0_0" )
+    forget( "Ant_1" )
+    forget( "Ant_0" )
+    forget( "Ant_1_0_0_1" )
+    forget( "Ant_1_0_0_0_1" )
+    forget( "Ant_1_0_0_0_0" )
+    forget( "Suc_0" )
     ref( "chi" )
     unfold( "DIFF" ) atMost 1 in "Suc_0"
     unfold( "bloc" ) atMost 1 in "Ant_1"
@@ -109,7 +129,7 @@ object NdiffSchema extends TacticsProof {
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n) m B K", phiSc )
 
   val esphiBc = Sequent(
-    Seq( "Ant_0" -> hof"E(f(B), s(0))", "Ant_1" -> hof"bloc(0, m, K)" ),
+    Seq( "Ant_0" -> hof"E(f(B), 0)", "Ant_1" -> hof"bloc(0, m, K)" ),
     Seq( "Suc_0" -> hof"DIFF(0, B)" ) )
   val phiBc = Lemma( esphiBc ) {
     unfold( "DIFF" ) atMost 1 in "Suc_0"
@@ -160,10 +180,29 @@ object NdiffSchema extends TacticsProof {
     unfold( "bloc" ) atMost 1 in "Ant_0"
     allL( "Ant_0", fov"B" )
     andL( "Ant_0_0" )
+    andL( "Ant_0_0_0" )
     andR
     trivial
     trivial
+
   }
   ctx += Context.ProofDefinitionDeclaration( le"chi 0 k k K", chiBc2 )
+
+  val eschiBc3 = Sequent(
+    Seq( "Ant_0" -> hof"bloc(0, m, K)" ),
+    Seq( "Suc_0" -> hof"∃x ∃y ( LEQ(AP(k,x), y) & E(f(y), k))" ) )
+  val chiBc3 = Lemma( eschiBc3 ) {
+
+    exR( "Suc_0", fov"K" )
+    exR( "Suc_0_0", le"AP(k, K)" )
+    andR
+    foTheory
+    unfold( "bloc" ) atMost 1 in "Ant_0"
+    allL( "Ant_0", le"AP(s(m), K)" )
+    andL( "Ant_0_0" )
+    andL( "Ant_0_0_0" )
+    foTheory
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"chi 0 m k K", chiBc3 )
 }
 

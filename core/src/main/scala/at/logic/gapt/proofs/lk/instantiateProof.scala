@@ -18,9 +18,8 @@ object instantiateProof {
   def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
     ctx.get[Context.ProofDefinitions].find( proofName ) match {
       case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
-      case None => {
+      case None =>
         ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
-      }
     }
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
     buildProof( proof, ctx )

@@ -317,17 +317,22 @@ object Context {
   case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
       copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
-
+    //error here
     def find( name: Expr ): Option[( LKProof, Substitution )] = {
-      val result: Iterable[( LKProof, Substitution )] = for {
-        defs <- components.values
-        ( declName, defPrf ) <- defs
-        subst <- syntacticMatching( declName, name )
-      } yield ( defPrf, subst )
-      if ( result.nonEmpty ) Some( result.fold( result.head )( ( res, x ) => {
-        if ( res._2.domain.size < x._2.domain.size ) res else x
-      } ) )
-      else None
+      val Apps( Const( c, _ ), _ ) = name
+      components.get( c ) match {
+        case Some( corCom: Set[( Expr, LKProof )] ) => {
+          val result: Iterable[( LKProof, Substitution )] = for {
+            ( declName, defPrf ) <- corCom
+            subst <- syntacticMatching( declName, name )
+          } yield ( defPrf, subst )
+          if ( result.nonEmpty ) Some( result.fold( result.head )( ( res, x ) => {
+            if ( res._2.domain.size < x._2.domain.size ) res else x
+          } ) )
+          else None
+        }
+        case None => None
+      }
     }
 
     override def toString: String =

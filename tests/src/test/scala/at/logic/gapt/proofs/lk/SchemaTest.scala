@@ -25,13 +25,13 @@ class SchemaTest extends Specification {
   }
   {
     import NdiffSchema.ctx
-    "simple " in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
+    "NdiffSchema Instantiate " in {
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 15 )}" )
       ctx.check( proof )
       ok
     }
   }
-  /*{
+  {
     import tautSchema.ctx
     "simple schema basecase" in {
       val proof = instantiateProof.Instantiate( le"taut ${nat( 0 )}" )
@@ -278,7 +278,7 @@ class SchemaTest extends Specification {
       }
       IsKSimple( result ) must_== true
     }
-
+    /*
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
         case Some( x ) => x
@@ -299,7 +299,7 @@ class SchemaTest extends Specification {
       } ).asInstanceOf[Expr]
       val Sclauseset = SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
         Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx )
-      /* val proof = LKProofSchemata.Instantiate( le"omega ${nat( 3 )}" )
+       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
        val thestruct = StructCreators.extract( proof, ctx )
        val nonclauseset = CharacteristicClauseSet( thestruct )
         val fin = Sclauseset.forall( x => {
@@ -308,11 +308,11 @@ class SchemaTest extends Specification {
              x.succedent.toSet.equals(y.succedent.toSet) )
        } )
        fin must beEqualTo( true )
-       */
+
       //not really ok but for later work
       ok
-    }
+    }*/
   }
-*/
+
 }
 
