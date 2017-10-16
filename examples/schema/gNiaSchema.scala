@@ -41,7 +41,7 @@ object gniaSchema extends TacticsProof {
       hof"!x?y(LEQ(x,y) & E(f(y),n))" ),
     Seq( hof"Ech(m,A)" ) )
 
-  ctx += Context.ProofNameDeclaration( le"nu n m A", esnu )
+  ctx += Context.ProofNameDeclaration( le"nu m n A", esnu )
 
   //The Name declaration of proof mu
   val esmu = Sequent(
@@ -49,7 +49,7 @@ object gniaSchema extends TacticsProof {
       hof"!x?y(LEQ(x,y) & E(f(y),n))" ),
     Seq( hof"?p Ech(m,p)" ) )
 
-  ctx += Context.ProofNameDeclaration( le"mu n m", esmu )
+  ctx += Context.ProofNameDeclaration( le"mu m n", esmu )
 
   //The Name declaration of proof mubase
   val esmubase = Sequent(
@@ -104,7 +104,7 @@ object gniaSchema extends TacticsProof {
     foTheory
     foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu n 0 A", NuBc )
+  ctx += Context.ProofDefinitionDeclaration( le"nu 0 n A", NuBc )
 
   //The step case of  nu
   val esNuSc = Sequent(
@@ -124,7 +124,7 @@ object gniaSchema extends TacticsProof {
     foTheory
     foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"nu n (s m) A", NuSc )
+  ctx += Context.ProofDefinitionDeclaration( le"nu (s m) n  A", NuSc )
 
   //The base case of  nuPrime
   val esNuPrimeBc = Sequent(
@@ -186,7 +186,7 @@ object gniaSchema extends TacticsProof {
     foTheory
     foTheory
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu n 0", muBc )
+  ctx += Context.ProofDefinitionDeclaration( le"mu 0 n", muBc )
 
   //The step case of  mu
   val esMuSc = Sequent(
@@ -210,7 +210,7 @@ object gniaSchema extends TacticsProof {
     foTheory
 
   }
-  ctx += Context.ProofDefinitionDeclaration( le"mu n (s m)", muSc )
+  ctx += Context.ProofDefinitionDeclaration( le"mu (s m) n ", muSc )
 
   //The base case of  mubase
   val esMubaseBc = Sequent(

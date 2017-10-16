@@ -79,11 +79,11 @@ object SchematicClauseSet {
         val F1Pos = F1.get( pos ) match { case Some( x ) => x case None => F1 }
         val F2Pos = F2.get( pos ) match { case Some( x ) => x case None => F2 }
         ( F1Pos, F2Pos ) match {
-          case ( Var( _, _ ), _ ) => isOK && F1Pos.ty.equals( F2Pos.ty )
-          case ( App( c, s: List[Expr] ), App( d, t: List[Expr] ) ) => isOK && c.equals( d ) && s.zip( t ).forall( th => ancestorInstanceOf( th._1, th._2 ) )
-          case ( App( _, _ ), Var( _, _ ) ) => isOK && F1Pos.ty.equals( F2Pos.ty )
+          case ( Var( _, _ ), _ )             => isOK && F1Pos.ty.equals( F2Pos.ty )
           case ( Const( _, _ ), Var( _, _ ) ) => isOK && F1Pos.ty.equals( F2Pos.ty )
-          case _ => false
+          case ( Apps( _, _ ), Var( _, _ ) )  => isOK && F1Pos.ty.equals( F2Pos.ty )
+          case ( Apps( c, s ), Apps( d, t ) ) => isOK && c.equals( d ) && s.zip( t ).forall( th => ancestorInstanceOf( th._1, th._2 ) )
+          case _                              => false
         }
       } )
       finality
@@ -241,9 +241,9 @@ object SchematicClauseSet {
           //by selecting the clause set with the greatest difference
           //after substitution
           val clauseSetToInstantiate = optionClauseSets.fold( Set[( Int, Set[Sequent[Atom]] )]() )( ( reEx, excl ) => {
-            val ( ex: Expr, cl ) = excl
+            val ( ex: Expr, cl: Set[Sequent[Atom]] ) = excl
             val listdiff = LambdaPosition.differingPositions( ex, sigma( ex ) )
-            reEx.asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]] ++ Set[( Int, Set[Sequent[Atom]] )]( ( listdiff.size, cl.asInstanceOf[Set[Sequent[Atom]]] ) )
+            reEx.asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]] ++ Set[( Int, Set[Sequent[Atom]] )]( ( listdiff.size, cl ) )
           } ).asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]].fold( ( 0, Set[Sequent[Atom]]() ) )( ( cll, excl ) => {
             val ( size: Int, _ ) = excl
             val ( curSize: Int, _ ) = cll
@@ -301,7 +301,6 @@ object SchematicClauseSet {
               val finalCS = cLSSyms.fold( baseOfFold )( ( mixedClauseSet, y ) => {
                 val Apps( _, info ) = y
                 val Const( newTopSym, _ ) = info.head
-
                 //Clause terms are constructed by adding auxiliary information
                 //to an atomic formula. We extract this information using the following
                 //method
@@ -326,11 +325,10 @@ object SchematicClauseSet {
 
                 //The final step towards building the clause set is constructing the necessary
                 //substitution
-                val subArgs = args.map( x => sigma( x ) )
                 val Apps( _, vs: Seq[Expr] ) = exprForMatch
 
                 //Here we construct the new substitution
-                val zippedTogether = vs.zip( subArgs ).map( x => {
+                val zippedTogether = vs.zip( args ).map( x => {
                   val ( one, two ) = x
                   val thevars = freeVariables( one ) //We know this is at most size one for nat
                   if ( thevars.nonEmpty ) {
@@ -356,6 +354,8 @@ object SchematicClauseSet {
                 } ).asInstanceOf[Substitution]
                 //Now that we have the config and the substitution we can recursively call the lower
                 //clause set
+                //TODO something wrong with multiparameter Substitution
+                //if(topSym.matches("phi")&& newTopSym.matches("mu")) println(newsigma)
 
                 val thelowerclauses = InstantiateClauseSetSchema( newTopSym, theConfigNeeded, css, newsigma )
                 //after we construct the recursive clause sets we can attach them to the final clause set
@@ -386,21 +386,21 @@ object SchematicClauseSet {
   //This object is specifically designed to read clause set terms
   //which are constructed from proofs during struct construction
   object ClauseTermReader {
-    def apply( input: Seq[Expr] ): ( Set[Const], Set[Formula], Set[Const], Set[Formula], Set[Const], Set[Expr] ) =
-      input.foldLeft( ( Set[Const](), Set[Formula](), Set[Const](), Set[Formula](), Set[Const](), Set[Expr]() ) )( ( bigCollect, w ) => {
+    def apply( input: Seq[Expr] ): ( Set[Const], Seq[Formula], Set[Const], Seq[Formula], Set[Const], Seq[Expr] ) =
+      input.foldLeft( ( Set[Const](), Seq[Formula](), Set[Const](), Seq[Formula](), Set[Const](), Seq[Expr]() ) )( ( bigCollect, w ) => {
         val ( one, two, three, four, five, six ) = bigCollect
         if ( one.isEmpty && ( w match { case Const( "|", _ ) => true case _ => false } ) )
           ( Set[Const]( w.asInstanceOf[Const] ), two, three, four, five, six )
         else if ( one.nonEmpty && three.isEmpty && ( w match { case Const( "⊢", _ ) => true case _ => false } ) )
           ( one, two, Set[Const]( w.asInstanceOf[Const] ), four, five, six )
         else if ( one.nonEmpty && three.isEmpty )
-          ( one, two.asInstanceOf[Set[Formula]] ++ Set[Formula]( w.asInstanceOf[Formula] ), three, four, five, six )
+          ( one, two.asInstanceOf[Seq[Formula]] ++ Seq[Formula]( w.asInstanceOf[Formula] ), three, four, five, six )
         else if ( one.nonEmpty && three.nonEmpty && five.isEmpty && ( w match { case Const( "|", _ ) => true case _ => false } ) )
           ( one, two, three, four, Set[Const]( w.asInstanceOf[Const] ), six )
         else if ( one.nonEmpty && three.nonEmpty && five.isEmpty )
-          ( one, two, three, four.asInstanceOf[Set[Formula]] ++ Set[Formula]( w.asInstanceOf[Formula] ), five, six )
+          ( one, two, three, four.asInstanceOf[Seq[Formula]] ++ Seq[Formula]( w.asInstanceOf[Formula] ), five, six )
         else if ( one.nonEmpty && three.nonEmpty && five.nonEmpty )
-          ( one, two, three, four, five, six.asInstanceOf[Set[Expr]] ++ Set[Expr]( w ) )
+          ( one, two, three, four, five, six.asInstanceOf[Seq[Expr]] ++ Seq[Expr]( w ) )
         else bigCollect
       } )
   }
@@ -445,7 +445,7 @@ object SchematicClauseSet {
   object PickCorrectInductiveCase {
     def apply(
       CSP:  Set[( Expr, Set[SetSequent[Atom]] )],
-      args: Set[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) = //TODO why a set
+      args: Seq[Expr] ): ( Int, Expr, Set[SetSequent[Atom]] ) = //TODO why a set
       CSP.foldLeft( ( 0, CSP.head._1, CSP.head._2 ) )( ( theCorrect, current ) => {
         val ( Apps( _, argsLink ), clauses ) = current
         val ( oldcount, _, _ ) = theCorrect
