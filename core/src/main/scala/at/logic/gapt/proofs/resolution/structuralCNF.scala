@@ -137,10 +137,13 @@ class Clausifier(
       case ( Or( Bottom(), _ ), i: Ant )  => OrL2( p, i )
       case ( Imp( _, Bottom() ), i: Ant ) => ImpL1( p, i )
       case ( Imp( Top(), _ ), i: Ant )    => ImpL2( p, i )
-      case ( And( Bottom(), _ ) | And( _, Bottom() ), i: Suc ) =>
-        return
-      case ( Or( Top(), _ ) | Or( _, Top() ) | Imp( Bottom(), _ ) | Imp( _, Top() ), i: Ant ) =>
-        return
+
+      case ( And( Bottom(), _ ), i: Suc ) => AndR1( p, i )
+      case ( And( _, Bottom() ), i: Suc ) => AndR2( p, i )
+      case ( Or( Top(), _ ), i: Ant )     => OrL1( p, i )
+      case ( Or( _, Top() ), i: Ant )     => OrL2( p, i )
+      case ( Imp( Bottom(), _ ), i: Ant ) => ImpL1( p, i )
+      case ( Imp( _, Top() ), i: Ant )    => ImpL2( p, i )
     }
     p_Option match {
       case Some( p_ ) => expand( p_ )

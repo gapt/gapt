@@ -36,6 +36,8 @@ class Sat4jTest extends Specification {
   "empty CNF is sat" in { Sat4j.solve( Seq() ) must beSome }
   "empty clause is unsat" in { Sat4j.solve( Seq( Seq() ) ) must beNone }
 
+  "bug 652" in { Sat4j.getDrupProof( fos":- a <-> (a <-> true)" ) must beSome }
+
   "proof import" in {
     "pigeonhole 4 3" in { Sat4j getResolutionProof PigeonHolePrinciple( 4, 3 ) must beSome }
     "buss 5" in { Sat4j getResolutionProof BussTautology( 5 ) must beSome }
