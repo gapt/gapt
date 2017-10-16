@@ -15,7 +15,7 @@ object SchematicClauseSet {
     cutConfig:  HOLSequent                  = HOLSequent(),
     foundCases: Set[( String, HOLSequent )] = Set[( String, HOLSequent )]() ): Option[Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]] = {
     val proofNames = ctx.get[ProofDefinitions].components.keySet
-    //If the set of proof names in the context does not contain tomSym
+    //If the set of proof names in the context does not contain topSym
     //then we cannot construct the clause set and return None.
     if ( proofNames.contains( topSym ) ) {
       //Otherwise we find the definition of the proof symbol
@@ -25,17 +25,19 @@ object SchematicClauseSet {
           case None                  => Set[( Expr, LKProof )]()
         }
       //Once we find the definition of the proof we construct the
-      //Structs for the given proof modulo the provide cut
+      //Structs for the given proof modulo the provided cut
       //configuration
       val currentProofsStructs: Set[( Expr, Struct[Nothing] )] =
         CurrentProofsCases.map( x => {
           val ( placeHolder: Expr, assocProof: LKProof ) = x
+
           val ancestorPositions = FindAncestors( assocProof.endSequent, cutConfig )
           ( placeHolder, StructCreators.extract( assocProof, ancestorPositions, ctx )( _ => true ) )
         } )
+
       //After constructing the struct we need to find the dependencies associated
       // with the struct modulo the provided configuration.
-      // The dependencies are the links to other proof and self links
+      // The dependencies are the links to other proofs and self links
       val clauseSetDependencies = StructDependences( topSym, cutConfig, currentProofsStructs, foundCases )
       // For each dependency we need to compute the clause set of that dependency by
       //recursively calling the SchematicClauseSet function.
@@ -69,26 +71,23 @@ object SchematicClauseSet {
     //Checks if, for every formula in S1 there is a formula in S2 which is similar to
     //it modulo terms.
     def convert( S1: Vector[Formula], S2: Vector[Formula] ): Vector[Boolean] =
-      S1.map( f1 => S2.foldLeft( false )( ( same, f2 ) => ancestorInstanceOf( f2, f1 ) || same ) )
-    //Checks if Formula F1 is similar to formula
-    def ancestorInstanceOf( F1: Formula, F2: Formula ): Boolean = {
+      S1.map( f1 => S2.foldLeft( false )( ( same, f2 ) => ancestorInstanceOf( f1, f2 ) || same ) )
+
+    def ancestorInstanceOf( F1: Expr, F2: Expr ): Boolean = {
       val listOfDiff = LambdaPosition.differingPositions( F1, F2 )
       val finality = listOfDiff.foldLeft( true )( ( isOK, pos ) => {
         val F1Pos = F1.get( pos ) match { case Some( x ) => x case None => F1 }
         val F2Pos = F2.get( pos ) match { case Some( x ) => x case None => F2 }
         ( F1Pos, F2Pos ) match {
-          case ( Var( _, t ), Var( _, r ) )             => isOK && t.equals( r )
-          case ( App( Const( _, t ), _ ), Var( _, r ) ) => isOK && t.equals( r )
-          case ( App( _, s ), Const( _, _ ) )           => isOK && freeVariables( s ).nonEmpty
-          case ( App( t, _ ), App( r, _ ) )             => isOK && t.equals( r )
-          case ( Const( _, t ), Var( _, r ) )           => isOK && t.equals( r )
-          case ( Var( _, t ), Const( _, r ) )           => isOK && t.equals( r )
-          case ( _, _ )                                 => isOK
+          case ( Var( _, _ ), _ ) => isOK && F1Pos.ty.equals( F2Pos.ty )
+          case ( App( c, s: List[Expr] ), App( d, t: List[Expr] ) ) => isOK && c.equals( d ) && s.zip( t ).forall( th => ancestorInstanceOf( th._1, th._2 ) )
+          case ( App( _, _ ), Var( _, _ ) ) => isOK && F1Pos.ty.equals( F2Pos.ty )
+          case ( Const( _, _ ), Var( _, _ ) ) => isOK && F1Pos.ty.equals( F2Pos.ty )
+          case _ => false
         }
       } )
       finality
     }
-
   }
   //Finds the proof links within the given struct
   object StructDependences {
@@ -242,14 +241,14 @@ object SchematicClauseSet {
           //by selecting the clause set with the greatest difference
           //after substitution
           val clauseSetToInstantiate = optionClauseSets.fold( Set[( Int, Set[Sequent[Atom]] )]() )( ( reEx, excl ) => {
-            val ( ex: Expr, cl: Set[Sequent[Atom]] ) = excl
+            val ( ex: Expr, cl ) = excl
             val listdiff = LambdaPosition.differingPositions( ex, sigma( ex ) )
-            reEx.asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]] ++ Set[( Int, Set[Sequent[Atom]] )]( ( listdiff.size, cl ) )
-          } ).asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]].fold( ( 0, Set[Sequent[Atom]]() ) )( ( cl, excl ) => {
+            reEx.asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]] ++ Set[( Int, Set[Sequent[Atom]] )]( ( listdiff.size, cl.asInstanceOf[Set[Sequent[Atom]]] ) )
+          } ).asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]].fold( ( 0, Set[Sequent[Atom]]() ) )( ( cll, excl ) => {
             val ( size: Int, _ ) = excl
-            val ( curSize: Int, _ ) = cl
+            val ( curSize: Int, _ ) = cll
             if ( curSize < size ) excl
-            else cl
+            else cll
           } )
 
           //Here we instatiate the clause set we selected
@@ -257,7 +256,10 @@ object SchematicClauseSet {
             val HOLSequent( ante, suc ) = x
             val newAnte = ante.map( form => {
               sigma.domain.fold( form )( ( subform, varsig ) => {
-                val positions: List[HOLPosition] = subform.find( nat( 1, varsig.asInstanceOf[Var] )( ctx ) )
+                val positions: List[HOLPosition] =
+                  if ( varsig.ty.equals( TBase( "nat" ) ) )
+                    subform.find( nat( 1, varsig.asInstanceOf[Var] )( ctx ) )
+                  else subform.find( varsig.asInstanceOf[Var] )
                 positions.fold( subform )( ( nrepl, curpos ) => {
                   nrepl.asInstanceOf[Formula].replace( curpos.asInstanceOf[HOLPosition], varsig )
                 } ).asInstanceOf[Formula]
@@ -313,6 +315,7 @@ object SchematicClauseSet {
                   case None           => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
                 }
                 val theConfigNeeded = mapOnConfigs.keySet.foldLeft( newCutConfig )( ( thekey, cutconfigctk ) => if ( SequentInstanceOf( newCutConfig, cutconfigctk ) ) cutconfigctk else thekey )
+
                 val theNewClauseSetPair = mapOnConfigs.get( theConfigNeeded ) match {
                   case Some( holseq ) => holseq
                   case None           => Set[( Expr, Set[SetSequent[Atom]] )]()
@@ -353,6 +356,7 @@ object SchematicClauseSet {
                 } ).asInstanceOf[Substitution]
                 //Now that we have the config and the substitution we can recursively call the lower
                 //clause set
+
                 val thelowerclauses = InstantiateClauseSetSchema( newTopSym, theConfigNeeded, css, newsigma )
                 //after we construct the recursive clause sets we can attach them to the final clause set
                 val ender = ComposeClauseSets( mixedClauseSet.asInstanceOf[Set[Sequent[Atom]]], thelowerclauses )

@@ -153,8 +153,8 @@ class SchemaTest extends Specification {
           case Some( w ) => w.keySet.fold( 0 )( ( mail, xx ) => {
             w.get( xx.asInstanceOf[HOLSequent] ) match {
               case Some( y ) => y.fold( 0 )( ( whale, zz ) => {
-                val ( _, two: Set[SetSequent[Atom]] ) = zz
-                two.size + whale.asInstanceOf[Int]
+                val ( _, two ) = zz
+                two.asInstanceOf[Set[SetSequent[Atom]]].size + whale.asInstanceOf[Int]
               } ).asInstanceOf[Int] + mail.asInstanceOf[Int]
               case None => mail
             }
@@ -244,6 +244,39 @@ class SchemaTest extends Specification {
       ok
     }
 
+    /*    "Schematic Clause set equivalent to non schematic" in {
+      val SCS = SchematicClauseSet( "omega", ctx ) match {
+        case Some( x ) => x
+        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
+      }
+      val oclauses = SCS.get( "omega" ) match {
+        case Some( x ) => x
+        case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
+      }
+      val oExprCl = oclauses.get( oclauses.keySet.head ) match {
+        case Some( x ) => x
+        case None      => Set[( Expr, Set[SetSequent[Atom]] )]()
+      }
+      val oExpr = oExprCl.fold( oExprCl.head._1 )( ( x, y ) => {
+        val ( one, _ ) = y.asInstanceOf[( Expr, Set[SetSequent[Atom]] )]
+        if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
+        else one
+      } ).asInstanceOf[Expr]
+      val Sclauseset = SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
+        Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx )
+      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
+      val thestruct = StructCreators.extract( proof, ctx )
+      val nonclauseset = CharacteristicClauseSet( thestruct )
+
+      val fin = Sclauseset.forall( x => {
+        nonclauseset.exists( y=>
+          x.antecedent.toSet.equals(y.antecedent.toSet) &&
+            x.succedent.toSet.equals(y.succedent.toSet) )
+      } )
+      fin must beEqualTo( true )
+      ok
+    }*/
+
     "Test if PlusComm induction proof is K-simple" in {
       IsKSimple( pluscomm ) must_== false
     }
@@ -278,40 +311,7 @@ class SchemaTest extends Specification {
       }
       IsKSimple( result ) must_== true
     }
-    /*
-    "Schematic Clause set equivalent to non schematic" in {
-      val SCS = SchematicClauseSet( "omega", ctx ) match {
-        case Some( x ) => x
-        case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
-      }
-      val oclauses = SCS.get( "omega" ) match {
-        case Some( x ) => x
-        case None      => Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]()
-      }
-      val oExprCl = oclauses.get( oclauses.keySet.head ) match {
-        case Some( x ) => x
-        case None      => Set[( Expr, Set[SetSequent[Atom]] )]()
-      }
-      val oExpr = oExprCl.fold( oExprCl.head._1 )( ( x, y ) => {
-        val ( one, _ ) = y.asInstanceOf[( Expr, Set[SetSequent[Atom]] )]
-        if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
-        else one
-      } ).asInstanceOf[Expr]
-      val Sclauseset = SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
-        Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx )
-       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
-       val thestruct = StructCreators.extract( proof, ctx )
-       val nonclauseset = CharacteristicClauseSet( thestruct )
-        val fin = Sclauseset.forall( x => {
-         nonclauseset.exists( y=>
-           x.antecedent.toSet.equals(y.antecedent.toSet) &&
-             x.succedent.toSet.equals(y.succedent.toSet) )
-       } )
-       fin must beEqualTo( true )
 
-      //not really ok but for later work
-      ok
-    }*/
   }
 
 }
