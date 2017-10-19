@@ -10,7 +10,8 @@ import at.logic.gapt.proofs.gaptic._
  * to prove equal(n,n).
  */
 object prop_38 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_38.smt2", getClass ) )
+
+  val bench = def_prop_38.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

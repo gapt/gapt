@@ -9,7 +9,8 @@ import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions
 
 object prop_59 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_59.smt2", getClass ) )
+
+  val bench = def_prop_59.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

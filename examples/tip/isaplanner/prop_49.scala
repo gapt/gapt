@@ -8,7 +8,8 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic._
 
 object prop_49 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_49.smt2", getClass ) )
+
+  val bench = def_prop_49.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

@@ -6,7 +6,8 @@ import at.logic.gapt.proofs.Ant
 import at.logic.gapt.proofs.gaptic._
 
 object prop_45 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_45.smt2", getClass ) )
+
+  val bench = def_prop_45.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

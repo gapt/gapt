@@ -7,7 +7,8 @@ import at.logic.gapt.proofs.gaptic._
 
 /* Trivial proof. */
 object prop_11 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_11.smt2", getClass ) )
+
+  val bench = def_prop_11.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

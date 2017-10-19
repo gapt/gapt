@@ -9,7 +9,7 @@ import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 
 object prop_16 extends TacticsProof {
 
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/prod/prop_16.smt2", getClass ) )
+  val bench = def_prop_16.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

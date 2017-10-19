@@ -10,7 +10,8 @@ import at.logic.gapt.provers.viper.aip.provers.escargot
 import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_44 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_44.smt2", getClass ) )
+
+  val bench = def_prop_44.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

@@ -8,7 +8,8 @@ import at.logic.gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. because of the subinductions. */
 object prop_34 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_34.smt2", getClass ) )
+
+  val bench = def_prop_34.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {

@@ -10,7 +10,8 @@ import at.logic.gapt.proofs.gaptic._
  * required to prove equal(x,x).
  */
 object prop_29 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_29.smt2", getClass ) )
+
+  val bench = def_prop_29.loadProblem
   ctx = bench.ctx
 
   val sequent = bench.toSequent.zipWithIndex.map {
