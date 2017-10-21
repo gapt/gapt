@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.ProofDefinitions
+import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent, SetSequent }
 
@@ -227,7 +227,6 @@ object SchematicClauseSet {
         val optionClauseSets = starterClauseSet.fold( Set[( Expr, Set[Sequent[Atom]] )]() )( ( rightClauses, possibleclauses ) => {
           val ( ex: Expr, _ ) = possibleclauses
           if ( sigma.domain.equals( freeVariables( ex ) ) ) {
-            val Apps( at.logic.gapt.expr.Const( _, _ ), _ ) = ex // we are assuming natural numbers here
             rightClauses.asInstanceOf[Set[( Expr, Set[Sequent[Atom]] )]] ++
               Set[( Expr, Set[Sequent[Atom]] )]( possibleclauses.asInstanceOf[( Expr, Set[Sequent[Atom]] )] )
           } else rightClauses
@@ -240,17 +239,19 @@ object SchematicClauseSet {
           //substitution. We decide which clause set is associated
           //by selecting the clause set with the greatest difference
           //after substitution
-          val clauseSetToInstantiate = optionClauseSets.fold( Set[( Int, Set[Sequent[Atom]] )]() )( ( reEx, excl ) => {
+          val preClauseSetToInstantiate = optionClauseSets.fold( Set[( ( Int, Var ), Set[Sequent[Atom]] )]() )( ( reEx, excl ) => {
             val ( ex: Expr, cl: Set[Sequent[Atom]] ) = excl
+            val Apps( _, lSym ) = ex
+            val headVar = if ( freeVariables( lSym.head ).size == 1 ) freeVariables( lSym.head ).head else Var( "", TBase( "nat" ) )
             val listdiff = LambdaPosition.differingPositions( ex, sigma( ex ) )
-            reEx.asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]] ++ Set[( Int, Set[Sequent[Atom]] )]( ( listdiff.size, cl ) )
-          } ).asInstanceOf[Set[( Int, Set[Sequent[Atom]] )]].fold( ( 0, Set[Sequent[Atom]]() ) )( ( cll, excl ) => {
-            val ( size: Int, _ ) = excl
-            val ( curSize: Int, _ ) = cll
+            reEx.asInstanceOf[Set[( ( Int, Var ), Set[Sequent[Atom]] )]] ++ Set[( ( Int, Var ), Set[Sequent[Atom]] )]( ( ( listdiff.size, headVar ), cl ) )
+          } ).asInstanceOf[Set[( ( Int, Var ), Set[Sequent[Atom]] )]]
+          val clauseSetToInstantiate = preClauseSetToInstantiate.fold( ( ( 0, Var( "", TBase( "nat" ) ) ), Set[Sequent[Atom]]() ) )( ( cll, excl ) => {
+            val ( ( size: Int, _ ), _ ) = excl
+            val ( ( curSize: Int, _ ), _ ) = cll
             if ( curSize < size ) excl
             else cll
           } )
-
           //Here we instatiate the clause set we selected
           val instantiatedClauses: Set[Sequent[Atom]] = clauseSetToInstantiate._2.map( x => {
             val HOLSequent( ante, suc ) = x
@@ -270,8 +271,20 @@ object SchematicClauseSet {
                 if ( varsig.ty.equals( TBase( "nat" ) ) ) {
                   val positions: List[HOLPosition] = subform.find( nat( 1, varsig.asInstanceOf[Var] )( ctx ) )
                   positions.fold( subform )( ( nrepl, curpos ) => {
-                    if ( subform.contains( Const( "⊢", To ) ) ) nrepl
-                    else nrepl.asInstanceOf[Formula].replace( curpos.asInstanceOf[HOLPosition], varsig )
+                    if ( subform.contains( Const( "⊢", To ) ) ) {
+                      val Atom( _, lArgs ) = subform
+                      val Const( pName, _ ) = lArgs.head
+                      ctx.get[ProofNames].names.get( pName ) match {
+                        case Some( proofName ) => {
+                          val Apps( _, lsymPN ) = proofName._1
+                          val clsvar = lsymPN.head
+                          if ( clauseSetToInstantiate._1._2.equals( clsvar ) ) nrepl
+                          else if ( varsig.equals( clauseSetToInstantiate._1._2 ) ) nrepl.asInstanceOf[Formula].replace( curpos.asInstanceOf[HOLPosition], varsig )
+                          else nrepl
+                        }
+                        case None => nrepl
+                      }
+                    } else nrepl.asInstanceOf[Formula].replace( curpos.asInstanceOf[HOLPosition], varsig )
                   } ).asInstanceOf[Formula]
                 } else subform
               } )
@@ -300,7 +313,9 @@ object SchematicClauseSet {
               else Set[Sequent[Atom]]( newSequent )
               val finalCS = cLSSyms.fold( baseOfFold )( ( mixedClauseSet, y ) => {
                 val Apps( _, info ) = y
+
                 val Const( newTopSym, _ ) = info.head
+
                 //Clause terms are constructed by adding auxiliary information
                 //to an atomic formula. We extract this information using the following
                 //method
@@ -354,9 +369,6 @@ object SchematicClauseSet {
                 } ).asInstanceOf[Substitution]
                 //Now that we have the config and the substitution we can recursively call the lower
                 //clause set
-                //TODO something wrong with multiparameter Substitution
-                //if(topSym.matches("phi")&& newTopSym.matches("mu")) println(newsigma)
-
                 val thelowerclauses = InstantiateClauseSetSchema( newTopSym, theConfigNeeded, css, newsigma )
                 //after we construct the recursive clause sets we can attach them to the final clause set
                 val ender = ComposeClauseSets( mixedClauseSet.asInstanceOf[Set[Sequent[Atom]]], thelowerclauses )

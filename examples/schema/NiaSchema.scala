@@ -18,7 +18,6 @@ object NiaSchema extends TacticsProof {
   ctx += hoc"z:i"
   ctx += hoc"g:i>i"
   ctx += hoc"max:i>i>i"
-  ctx += hoc"mu: nat>nat"
   ctx += hoc"omega: nat>nat"
   ctx += hoc"phi: nat>nat"
   ctx += hoc"chi: nat>i>nat"
@@ -28,9 +27,6 @@ object NiaSchema extends TacticsProof {
   ctx += "leq_max1" -> hos"LEQ(max(a, b), c) :- LEQ(a, c)"
   ctx += "leq_max2" -> hos"LEQ(max(a, b), c) :- LEQ(b, c)"
 
-  //The Name declaration of proof mu
-  val esMu = Sequent( Seq( hof"!x?y(LEQ(x,y) & E(f(y),n))" ), Seq( hof"?p?q (LE(p,q) & E(f(p),f(q)))" ) )
-  ctx += Context.ProofNameDeclaration( le"mu n", esMu )
   //The Name declaration of proof omega
   val esOmega = Sequent(
     Seq( hof"!x POR(n,x)" ),
@@ -47,48 +43,6 @@ object NiaSchema extends TacticsProof {
     Seq( hof"POR(n,a)" ) )
   ctx += Context.ProofNameDeclaration( le"chi n a", eschi )
 
-  //The base case of  mu
-  val esMuBc = Sequent(
-    Seq( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),0))   " ),
-    Seq( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  val muBc = Lemma( esMuBc ) {
-    allL( hoc"z:i" )
-    exL( fov"B" )
-    allL( le"(g B)" )
-    exL( fov"A" )
-    exR( fov"B" )
-    forget( "Suc_0" )
-    exR( fov"A" )
-    forget( "Suc_0_0" )
-    andL( "Ant_0_1" )
-    andL
-    andR
-    foTheory
-    foTheory
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"mu 0", muBc )
-
-  //The step case of mu
-  val esMuSc = Sequent(
-    Seq( "Ant_0" -> hof"!x?y (LEQ(x,y) & E(f(y),s(n)))   " ),
-    Seq( "Suc_0" -> hof"?p?q (LE(p,q) & E(f(p),f(q))) " ) )
-  val muSc = Lemma( esMuSc ) {
-    allL( hoc"z:i" )
-    exL( fov"B" )
-    allL( le"(g B)" )
-    exL( fov"A" )
-    exR( fov"B" )
-    forget( "Suc_0" )
-    exR( fov"A" )
-    forget( "Suc_0_0" )
-    andL( "Ant_0_1" )
-    andL
-    andR
-    foTheory
-    foTheory
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"mu (s n)", muSc )
-
   //The base case of  omega
   val esOmegaBc = Sequent(
     Seq( "Ant_2" -> hof"!x POR(0,x)" ),
@@ -102,7 +56,20 @@ object NiaSchema extends TacticsProof {
     andR
     foTheory
     trivial
-    ref( "mu" )
+    forget( "Ant_2" )
+    allL( hoc"z:i" )
+    exL( fov"B" )
+    allL( le"(g B)" )
+    exL( fov"A" )
+    exR( fov"B" )
+    forget( "Suc_0" )
+    exR( fov"A" )
+    forget( "Suc_0_0" )
+    andL( "cut_1" )
+    andL
+    andR
+    foTheory
+    foTheory
   }
   ctx += Context.ProofDefinitionDeclaration( le"omega 0", omegaBc )
 
@@ -209,7 +176,20 @@ object NiaSchema extends TacticsProof {
     forget( "cut_0" )
     ref( "chi" )
     focus( 1 )
-    ref( "mu" )
+    forget( "Ant_2" )
+    allL( hoc"z:i" )
+    exL( fov"B" )
+    allL( le"(g B)" )
+    exL( fov"A" )
+    exR( fov"B" )
+    forget( "Suc_0" )
+    exR( fov"A" )
+    forget( "Suc_0_0" )
+    andL( "cut_1" )
+    andL
+    andR
+    foTheory
+    foTheory
     ref( "phi" )
   }
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n)", phiSc )

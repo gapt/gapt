@@ -110,7 +110,7 @@ class SchemaTest extends Specification {
         case Some( x ) => x
         case None      => Map[String, Map[HOLSequent, Set[( Expr, Set[SetSequent[Atom]] )]]]()
       }
-      SCS.keySet.size must beEqualTo( 4 )
+      SCS.keySet.size must beEqualTo( 3 )
     }
     " Extracting the Schematic Characteristic Clause Set Checking number configurations" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
@@ -123,7 +123,7 @@ class SchemaTest extends Specification {
           case Some( w ) => w.size + vale.asInstanceOf[Int]
           case None      => vale
         }
-      } ) must beEqualTo( 7 )
+      } ) must beEqualTo( 5 )
     }
 
     " Extracting the Schematic Characteristic Clause Set Checking number of clause sets per configuration" in {
@@ -141,7 +141,7 @@ class SchemaTest extends Specification {
           } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 14 )
+      } ) must beEqualTo( 10 )
     }
     " Extracting the Schematic Characteristic Clause Set Checking that all clauses are there" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
@@ -161,7 +161,7 @@ class SchemaTest extends Specification {
           } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 24 )
+      } ) must beEqualTo( 20 )
     }
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
@@ -307,8 +307,7 @@ class SchemaTest extends Specification {
           x.antecedent.toSet.equals( y.antecedent.toSet ) &&
             x.succedent.toSet.equals( y.succedent.toSet ) )
       } )
-      //println(Sclauseset)
-      //fin must beEqualTo( true )
+      //      fin must beEqualTo( true )
       ok
     }
   }
