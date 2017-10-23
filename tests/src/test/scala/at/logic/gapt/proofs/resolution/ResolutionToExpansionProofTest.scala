@@ -105,7 +105,7 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
   "higher-order without equality" in {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += Ti; ctx += hoc"a: i"; ctx += hoc"b: i"
-    // Leibnitz equality is symmetric
+    // Leibniz equality is symmetric
     val sequent = hos"!X (X a -> X b) :- !X (X b -> X a)"
     val p1 = Input( hos":- ${sequent( Ant( 0 ) )}" )
     val p2 = Input( hos"${sequent( Suc( 0 ) )} :-" )
