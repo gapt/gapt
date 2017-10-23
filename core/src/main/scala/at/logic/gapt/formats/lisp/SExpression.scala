@@ -66,8 +66,9 @@ class SExpressionParser( val input: ParserInput ) extends Parser {
 
   def Str = rule { '"' ~ capture( zeroOrMore( noneOf( "\"" ) ) ) ~ '"' ~ WhiteSpace ~> lisp.LAtom }
   def Atom = rule { capture( oneOrMore( noneOf( "() \n\r\t\f;\"" ) ) ) ~ WhiteSpace ~> lisp.LAtom }
+  def QuotedAtom = rule { "|" ~ capture( oneOrMore( noneOf( "\\|" ) ) ) ~ "|" ~ WhiteSpace ~> lisp.LAtom }
 
-  def SExpr: Rule1[lisp.SExpression] = rule { Str | Atom | Parens }
+  def SExpr: Rule1[lisp.SExpression] = rule { Str | QuotedAtom | Atom | Parens }
 
   def Parens = rule {
     '(' ~ WhiteSpace ~ optional( SExpr ~ (
