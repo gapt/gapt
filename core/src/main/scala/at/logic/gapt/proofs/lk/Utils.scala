@@ -27,6 +27,15 @@ object containsDefinitionRules {
     }
 }
 
+object EigenVariablesLK {
+  def apply( p: LKProof ): Set[Var] = p match {
+    case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>
+      apply( subProof ) ++ Set( eigen )
+    case _ =>
+      p.immediateSubProofs.flatMap( apply ).toSet
+  }
+}
+
 object freeVariablesLK {
   def apply( p: LKProof ): Set[Var] = p match {
     case StrongQuantifierRule( subProof, aux, eigen, quant, isSuc ) =>

@@ -13,7 +13,7 @@ object instantiateProof {
    * @param proofName The name of the linkProof
    */
   def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof =
-    eliminateDefinitions( instantiateProof( proofName )( ctx ) )
+    regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
 
   def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
     ctx.get[Context.ProofDefinitions].find( proofName ) match {

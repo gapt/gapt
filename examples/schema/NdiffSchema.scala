@@ -30,7 +30,12 @@ object NdiffSchema extends TacticsProof {
   ctx += "le_Non_refl" -> hos"LE(P,P) :-"
 
   ctx += "le_func_def" -> hos"LE(AP(N,K),AP(s(N),K)), E(f(AP(N,K)),N) :- E(f(AP(s(N),K)),s(N))"
-
+  //This is berneys,schonfinkel, ramsey isn't it.
+  //We can make it explicitly BSR by adding a existential to the left side
+  //i.e. variable lower bound of the progress
+  //and by adding a range over which the n difference occurs.
+  //Thus, this would give us an example of a significant proof
+  //schema analyzable by the method of andrea et al.
   val esOmega = Sequent(
     Seq( hof"!x bloc(n,0,x)" ),
     Seq( hof"?p DIFF(n,p)" ) )
