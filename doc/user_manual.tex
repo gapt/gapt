@@ -1591,22 +1591,33 @@ For treating problems in many-sorted first-order logic with a prover that suppor
 standard (one-sorted) first-order logic, GAPT provides appropriate reductions.
 For example, we can obtain a many-sorted expansion proof from Prover9
 (which only supports a single sort) in the following way:
-\begin{clilisting}[Prover9.isInstalled]
+\begin{clilisting}
 gapt> val reduction = PredicateReductionET |> ErasureReductionET
 reduction: at.logic.gapt.proofs.reduction.Reduction[at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.HOLSequent,at.logic.gapt.proofs.expansion.ExpansionProof,at.logic.gapt.proofs.expansion.ExpansionProof] = PredicateReductionET |> ErasureReductionET
 
-gapt> val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
-<console>:138: error: not found: value problem
-      val (firstOrderProblem, back) = reduction forward (Sequent() :+ problem)
-                                                                      ^
+gapt> val problem = hos"!(x:a)!y x=y, !x f(f(x:b))=x :- ?y c=f(y)"
+problem: at.logic.gapt.proofs.HOLSequent = ∀x ∀y (x:a) = y, ∀x f(f(x:b): b) = x ⊢ ∃y (c:b) = f(y)
 
-gapt> Prover9 getExpansionProof firstOrderProblem map back
-<console>:138: error: not found: value firstOrderProblem
-      Prover9 getExpansionProof firstOrderProblem map back
-                                ^
-<console>:138: error: not found: value back
-      Prover9 getExpansionProof firstOrderProblem map back
-                                                      ^
+gapt> val (firstOrderProblem, back) = reduction forward problem
+firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
+∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) ⊃ P_is_o('f_='(x0, x1))),
+∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) ⊃ P_is_o('f_='(x0, x1))),
+∀x0 (P_is_b(x0) ⊃ P_is_b(f_f(x0))),
+⊤ ⊃ P_is_b(f_c),
+P_is_o(f_nonempty_o),
+P_is_a(f_nonempty_a),
+P_is_b(f_nonempty_b),
+∀x (P_is_a(x) ⊃ ∀y (P_is_a(y) ⊃ x = y)),
+∀x (P_is_b(x) ⊃ f_f(f_f(x)) = x)
+⊢
+∃y (P_is_b(y) ∧ f_c = f_f(y))
+back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
+
+gapt> Escargot getExpansionProof firstOrderProblem map back
+res32: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
+Some(∀x f(f(x:b): b) = x +^{c} (f(f(c)) = c)-
+:-
+∃y (c:b) = f(y:b) +^{f(c)} (c = f(f(c)))+)
 
 \end{clilisting}
 
