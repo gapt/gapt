@@ -80,7 +80,6 @@ object CLIMain extends Logger {
           override def createInterpreter() = {
             in = InteractiveReader()
             intp = new ILoopInterpreter()
-            intp.setContextClassLoader()
             intp.beQuietDuring( intp.interpret( imports ) )
           }
           override def printWelcome() = print( welcomeMessage )

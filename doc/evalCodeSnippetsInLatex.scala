@@ -35,7 +35,6 @@ object evalCodeSnippetsInLatex {
     repl.in = SimpleReader()
     repl.intp.initializeSynchronous()
     repl.intp.quietBind( NamedParam[IMain]( "$intp", repl.intp )( StdReplTags.tagOfIMain, reflect.classTag[IMain] ) )
-    repl.intp.setContextClassLoader()
 
     repl.intp.beQuietDuring {
       repl command CLIMain.imports

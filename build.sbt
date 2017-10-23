@@ -1,7 +1,6 @@
 import java.io.ByteArrayOutputStream
 
 import org.apache.commons.compress.archivers.tar.{ TarArchiveEntry, TarArchiveOutputStream }
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import scalariform.formatter.preferences._
 import sys.process._
 
@@ -21,7 +20,7 @@ lazy val commonSettings = Seq(
     devConnection = Some( "scm:git:git@github.com:gapt/gapt.git" ) ) ),
   bintrayOrganization := Some( "gapt" ),
 
-  scalaVersion := "2.12.3",
+  scalaVersion := "2.12.4",
   scalacOptions in Compile ++= Seq(
     "-Ypartial-unification",
     "-deprecation",
@@ -37,16 +36,16 @@ lazy val commonSettings = Seq(
   resolvers += Resolver.sonatypeRepo( "snapshots" ), // for scoverage
 
   sourcesInBase := false // people like to keep scripts lying around
-)
+) ++ scalariformSettings
 
-val scalariformOptions = scalariformSettings( autoformat = true ) :+
-  ( ScalariformKeys.preferences := ScalariformKeys.preferences.value
+lazy val scalariformSettings =
+  Seq( scalariformPreferences := scalariformPreferences.value
     .setPreference( AlignParameters, true )
     .setPreference( AlignSingleLineCaseStatements, true )
     .setPreference( DoubleIndentConstructorArguments, true )
     .setPreference( SpaceInsideParentheses, true ) )
 
-val specs2Version = "3.9.5"
+val specs2Version = "4.0.1"
 lazy val testSettings = Seq(
   testOptions in Test += Tests.Argument( TestFrameworks.Specs2, "junitxml", "console" ),
   javaOptions in Test += "-Xmx2g",
@@ -61,7 +60,6 @@ lazy val root = project.in( file( "." ) ).
   aggregate( core, examples, tests, userManual, cli, testing ).
   dependsOn( core, examples, cli ).
   settings( commonSettings: _* ).
-  settings( scalariformOptions: _* ).
   enablePlugins( ScalaUnidocPlugin ).
   settings(
     fork in console := true,
@@ -70,7 +68,7 @@ lazy val root = project.in( file( "." ) ).
     bintrayReleaseOnPublish := false,
     packagedArtifacts := Map(),
 
-    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ scalariformOptions ),
+    inConfig( BuildSbtConfig )( SbtScalariform.configScalariformSettings ++ scalariformSettings ),
     sourceDirectories in ( BuildSbtConfig, scalariformFormat ) := Seq( baseDirectory.value ),
     includeFilter in ( BuildSbtConfig, scalariformFormat ) := ( "*.sbt": FileFilter ),
 
@@ -172,19 +170,19 @@ lazy val core = project.in( file( "core" ) ).
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "org.parboiled" %% "parboiled" % "2.1.4",
-      "com.lihaoyi" %% "fastparse" % "0.4.4",
+      "com.lihaoyi" %% "fastparse" % "1.0.0",
       "com.lihaoyi" %% "sourcecode" % "0.1.4",
       "org.typelevel" %% "cats" % "0.9.0",
       "org.scala-lang.modules" %% "scala-xml" % "1.0.6",
       "org.apache.commons" % "commons-lang3" % "3.6",
-      "com.lihaoyi" %% "ammonite-ops" % "1.0.2",
+      "com.lihaoyi" %% "ammonite-ops" % "1.0.3",
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "org.ow2.sat4j" % "org.ow2.sat4j.core" % "2.3.5",
       "org.ow2.sat4j" % "org.ow2.sat4j.maxsat" % "2.3.5" ),
 
     // UI
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-swing" % "2.0.0",
+      "org.scala-lang.modules" %% "scala-swing" % "2.0.1",
       "com.itextpdf" % "itextpdf" % "5.5.12",
       "org.scilab.forge" % "jlatexmath" % "1.0.6" ) )
 
