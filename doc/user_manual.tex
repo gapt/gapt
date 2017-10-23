@@ -45,6 +45,11 @@
 \usepackage[draft]{fixme}
 \fxsetup{inline,nomargin,marginclue,theme=color,index}
 
+\makeatletter
+\@ifpackagelater{fixme}{2017/03/05}{
+}{ \PackageWarning{fixme}{This version of fixme may produce an empty list of corrections.}}
+\makeatother
+
 \lstset{
   basicstyle=\small\ttfamily,
   breaklines=true,
