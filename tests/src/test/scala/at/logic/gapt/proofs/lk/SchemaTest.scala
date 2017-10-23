@@ -305,12 +305,14 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
+      println( Sclauseset )
+
       val fin = Sclauseset.forall( x => {
         nonclauseset.exists( y =>
           x.antecedent.toSet.equals( y.antecedent.toSet ) &&
             x.succedent.toSet.equals( y.succedent.toSet ) )
       } )
-      //  fin must beEqualTo( true ) TODO BUG SHOULD WORK
+      //  fin must beEqualTo( true )
       ok
     }
   }
