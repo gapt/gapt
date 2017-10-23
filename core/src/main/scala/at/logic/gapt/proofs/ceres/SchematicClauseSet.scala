@@ -207,7 +207,6 @@ object SchematicClauseSet {
       css:       Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]],
       sigma:     Substitution,
       usedNames: Set[Var]                                                                         = Set[Var]() )( implicit ctx: Context ): Set[Sequent[Atom]] = {
-
       //First we extract the clause set associated with the given proof name
       val starterClauseSet = ( css.get( topSym ) match {
         case Some( x ) => x
@@ -257,6 +256,12 @@ object SchematicClauseSet {
             if ( curSize < size ) excl
             else cll
           } )
+
+          //The following code regularizes the clause set with respect to
+          //the already used eigenvariables. Regularization of schematic
+          //clause sets is an issue because variables which occur once in the
+          // proof schema might occur at different levels in the instantiated
+          //proof
           val regularClauseSetToInstantiate =
             if ( usedNames.nonEmpty ) {
               val renamer = rename.awayFrom( usedNames )
@@ -287,7 +292,8 @@ object SchematicClauseSet {
                 ( varsUsedUpdate, regclause )
               } ).asInstanceOf[( Set[Var], Set[Sequent[Atom]] )]
             } else clauseSetToInstantiate._2
-          //Here we instatiate the clause set we selected
+          //Here we instantiate the clause set we selected
+          //based on the regularization
           val instantiatedClauses: Set[Sequent[Atom]] = regularClauseSetToInstantiate._2.map( x => {
             val HOLSequent( ante, suc ) = x
             val newAnte = ante.map( form => {

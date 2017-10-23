@@ -208,15 +208,8 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
-
-      val fin = Sclauseset.toSet.forall( x => {
-        nonclauseset.toSet.exists( y =>
-          x.antecedent.toSet.equals( y.antecedent.toSet ) &&
-            x.succedent.toSet.equals( y.succedent.toSet ) )
-      } )
-
-      //  fin must beEqualTo( true ) TODO BUG SHOULD WORK
-      ok
+      val fin = Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) && nonclauseset.size == Sclauseset.size
+      fin must beEqualTo( true )
     }
   }
   {
@@ -300,19 +293,43 @@ class SchemaTest extends Specification {
         if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
         else one._1
       } ).asInstanceOf[Expr]
+      /*
+      //There is an extra configuration for Phi causing all
+      //the problems
+      SCS.keySet.forall(x=>{
+       println("           "+x)
+       println()
+       SCS.get(x) match {
+         case Some( y ) =>{
+           y.keySet.forall(z =>{
+             println("     "+z)
+             println()
+             y.get(z) match{
+               case Some(w) => {
+                  w.forall(r => {
+                    println("  "+r._1._1)
+                    println()
+                    println(r._2)
+                    println()
+                    true
+                  })
+               }
+               case None =>   Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]()
+             }
+             true
+           })
+         }
+         case None      => Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]()
+       }
+       true
+     })*/
       val Sclauseset = subsumedClausesRemoval( SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
         Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
-      println( Sclauseset )
-
-      val fin = Sclauseset.forall( x => {
-        nonclauseset.exists( y =>
-          x.antecedent.toSet.equals( y.antecedent.toSet ) &&
-            x.succedent.toSet.equals( y.succedent.toSet ) )
-      } )
-      //  fin must beEqualTo( true )
+      val fin = Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) && nonclauseset.size == Sclauseset.size
+      //fin must beEqualTo( true )
       ok
     }
   }
