@@ -1178,7 +1178,7 @@ res10: at.logic.gapt.proofs.expansion.ExpansionProof =
 
 \end{clilisting}
 
-\section{Skolemization}
+\section{Skolemization}\label{secskolem}
 
 Skolemization is the process of introducing Skolem functions for strong
 quantifiers, and is usually performed during clausification of formulas into
@@ -1235,7 +1235,7 @@ p: at.logic.gapt.proofs.lk.ForallRightRule =
 [p1]  ⊢ x = x    (ReflexivityAxiom(x))
 
 gapt> skolemizeInferences(p)
-res13: at.logic.gapt.proofs.lk.LKProof =
+res12: at.logic.gapt.proofs.lk.LKProof =
 [p2]  ⊢ ∀x x = x    (ForallSkRightRule(p1, Suc(0), ∀x x = x, s_0, ∀x x = x))
 [p1]  ⊢ s_0 = s_0    (ReflexivityAxiom(s_0))
 
@@ -1244,6 +1244,39 @@ res13: at.logic.gapt.proofs.lk.LKProof =
 In the first-order case it is also possible to Skolemize proofs without
 introducing Skolem inferences, by modifying the end-sequent instead.  This
 functionality is provided by the \texttt{skolemize} function.
+
+\section{Deskolemization}
+
+All automated provers integrated in GAPT introduce Skolem functions for strong
+quantifiers and return proofs with Skolem inferences as described in
+Section~\ref{secskolem}.  The function \texttt{deskolemizeET} implements a
+variant of the expansion proof-based method for proof deskolemization
+described in~\cite{Baaz2012Complexity} with an extension to support all forms
+of Skolemization allowed by Skolem definitions.
+\begin{clilisting}
+gapt> val Some(p) = Escargot.getExpansionProof(hof"?x (drinks x -> !y drinks y)")
+p: at.logic.gapt.proofs.expansion.ExpansionProof =
+
+:-
+∃x (drinks(x) ⊃ ∀y drinks(y))
+  +^{s_0} (drinks(s_0)- ⊃ wk+{∀y drinks(y)})
+  +^{x} (wk-{drinks(x)} ⊃ ∀y drinks(y) +sk^{s_0} drinks(s_0)+)
+
+gapt> deskolemizeET(p)
+res13: at.logic.gapt.proofs.expansion.ExpansionProof =
+
+:-
+∃x (drinks(x) ⊃ ∀y_0 drinks(y_0))
+  +^{x} (wk-{drinks(x)} ⊃ ∀y_0 drinks(y_0) +ev^{y} drinks(y)+)
+  +^{y} (drinks(y)- ⊃ wk+{∀y_0 drinks(y_0)})
+
+\end{clilisting}
+
+In the worst case, deskolemization results in non-elementarily larger
+proofs~\cite{Aguilera2016Unsound}.  Additionally, if the deep formula of the
+expansion proof is only quasi-tautological and not tautological,
+\texttt{deskolemizeET} may fail and produce an expansion proof where the deep
+formula is not quasi-tautological.
 
 \section{Interpolation}
 
