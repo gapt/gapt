@@ -208,7 +208,8 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
-      val fin = Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) && nonclauseset.size == Sclauseset.size
+      val fin = ( Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ||
+        nonclauseset.forall( s => Sclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonclauseset.size == Sclauseset.size
       fin must beEqualTo( true )
     }
   }
@@ -298,10 +299,9 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
-      val fin = Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) && nonclauseset.size == Sclauseset.size
-      println( Sclauseset )
+      val fin = ( Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ||
+        nonclauseset.forall( s => Sclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonclauseset.size == Sclauseset.size
       fin must beEqualTo( true )
-      // ok
     }
   }
 
