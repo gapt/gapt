@@ -124,7 +124,7 @@ class SchemaTest extends Specification {
           case Some( w ) => w.size + vale.asInstanceOf[Int]
           case None      => vale
         }
-      } ) must beEqualTo( 5 )
+      } ) must beEqualTo( 3 )
     }
 
     " Extracting the Schematic Characteristic Clause Set Checking number of clause sets per configuration" in {
@@ -142,7 +142,7 @@ class SchemaTest extends Specification {
           } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 10 )
+      } ) must beEqualTo( 6 )
     }
     " Extracting the Schematic Characteristic Clause Set Checking that all clauses are there" in {
       val SCS = SchematicClauseSet( "omega", ctx ) match {
@@ -162,7 +162,7 @@ class SchemaTest extends Specification {
           } ).asInstanceOf[Int] + vale.asInstanceOf[Int]
           case None => vale
         }
-      } ) must beEqualTo( 20 )
+      } ) must beEqualTo( 13 )
     }
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
@@ -293,44 +293,15 @@ class SchemaTest extends Specification {
         if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
         else one._1
       } ).asInstanceOf[Expr]
-      /*
-      //There is an extra configuration for Phi causing all
-      //the problems
-      SCS.keySet.forall(x=>{
-       println("           "+x)
-       println()
-       SCS.get(x) match {
-         case Some( y ) =>{
-           y.keySet.forall(z =>{
-             println("     "+z)
-             println()
-             y.get(z) match{
-               case Some(w) => {
-                  w.forall(r => {
-                    println("  "+r._1._1)
-                    println()
-                    println(r._2)
-                    println()
-                    true
-                  })
-               }
-               case None =>   Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]()
-             }
-             true
-           })
-         }
-         case None      => Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]()
-       }
-       true
-     })*/
       val Sclauseset = subsumedClausesRemoval( SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
         Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof, ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
       val fin = Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) && nonclauseset.size == Sclauseset.size
-      //fin must beEqualTo( true )
-      ok
+      println( Sclauseset )
+      fin must beEqualTo( true )
+      // ok
     }
   }
 

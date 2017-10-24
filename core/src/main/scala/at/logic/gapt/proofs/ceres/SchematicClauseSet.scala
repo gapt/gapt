@@ -58,7 +58,9 @@ object SchematicClauseSet {
       val TopClauses: Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]] =
         CutConfigProofClauseSetMaps( cutConfig, currentProofsStructs )
       //we merge the constructed map with all the dependencies
-      Some( MapMerger( Set( dependencyClauseSetsMerged ) ++ Set( Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]( ( topSym, TopClauses ) ) ) ) )
+      val preCleanedClauseSet = MapMerger( Set( dependencyClauseSetsMerged ) ++ Set( Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]( ( topSym, TopClauses ) ) ) )
+      Some( CleanClauseSet( preCleanedClauseSet ) )
+      //  Some(preCleanedClauseSet)
     } else None
   }
 
@@ -199,7 +201,103 @@ object SchematicClauseSet {
     if ( i > 0 ) Apps( suc, Seq( nat( i - 1, thevar ) ) )
     else thevar
   }
+  object CleanClauseSet {
+    def apply( precleaned: Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]] ): Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]] = {
+      val result = precleaned.keySet.map( sym => {
+        val ccb = precleaned.get( sym ) match {
+          case Some( cutCB ) => {
+            val changestoCutCB = cutCB.keySet.fold( Set[HOLSequent]() )( ( goodOnes, posGood ) => {
+              if ( goodOnes.asInstanceOf[Set[HOLSequent]].isEmpty ) Set( posGood )
+              else {
+                val newGood = goodOnes.asInstanceOf[Set[HOLSequent]].map( x => {
+                  if ( SequentInstanceOf( posGood.asInstanceOf[HOLSequent], x ) ||
+                    SequentInstanceOf( x, posGood.asInstanceOf[HOLSequent] ) )
+                    SimplierOfSequents( x, posGood.asInstanceOf[HOLSequent] )
+                  else x
+                } )
+                if ( !newGood.contains( posGood.asInstanceOf[HOLSequent] ) &&
+                  goodOnes.asInstanceOf[Set[HOLSequent]].forall( x => {
+                    !( SequentInstanceOf( posGood.asInstanceOf[HOLSequent], x ) ||
+                      SequentInstanceOf( x, posGood.asInstanceOf[HOLSequent] ) )
+                  } ) ) newGood ++ Set[HOLSequent]( posGood.asInstanceOf[HOLSequent] )
+                else newGood
 
+              }
+            } ).asInstanceOf[Set[HOLSequent]]
+
+            changestoCutCB.map( x => {
+              cutCB.get( x ) match {
+                case Some( y ) => ( x, y )
+                case None      => ( HOLSequent(), Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]() )
+              }
+            } ).fold( Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]() )( ( finmap, pairmap ) => {
+              val ( one: HOLSequent, two: Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )] ) = pairmap
+              finmap.asInstanceOf[Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]] ++
+                Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]( ( one, two ) )
+            } ).asInstanceOf[Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]
+          }
+          case None => Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]()
+        }
+        ( sym, ccb )
+      } ).asInstanceOf[Set[( String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]] )]]
+
+      result.fold( Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]() )( ( finmap, pairmap ) => {
+        val ( one: String, two: Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]] ) = pairmap
+        finmap.asInstanceOf[Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]] ++
+          Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]( ( one, two ) )
+      } ).asInstanceOf[Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]]]]
+    }
+    object SimplierOfSequents {
+      def apply( S1: HOLSequent, S2: HOLSequent ): HOLSequent = {
+        val one = SimplierOfFormulaSets( S1.antecedent.toSet, S2.antecedent.toSet )
+        val two = SimplierOfFormulaSets( S1.succedent.toSet, S2.succedent.toSet )
+        S1
+      }
+
+      private def SimplierOfFormulaSets( SF1: Set[Formula], SF2: Set[Formula] ): Set[Formula] = {
+        val pairsOfMatches: Set[( Formula, Option[Formula] )] = SF1.map( x => {
+          val theone = SF2.find( y => SequentInstanceOf.FormulaInstanceOf( x, y ) )
+          ( x, theone )
+        } ).asInstanceOf[Set[( Formula, Option[Formula] )]]
+        val ( one, two ): ( Int, Int ) = pairsOfMatches.fold( ( 0, 0 ) )( ( soFar, cur ) => {
+          val ( one, two ) = soFar
+          val ( three, four: Option[Formula] ) = cur
+          four match {
+            case Some( form ) => {
+              val ( one1: Int, two1: Int ) = simplierOfFormula( cur._1.asInstanceOf[Formula], form.asInstanceOf[Formula] )
+              ( one.asInstanceOf[Int] + one1, two.asInstanceOf[Int] + two1 )
+            }
+            case None => soFar.asInstanceOf[( Int, Int )]
+          }
+        } ).asInstanceOf[( Int, Int )]
+        if ( two <= one ) SF1
+        else SF2
+      }
+
+      def simplierOfFormula( F1: Formula, F2: Formula ): ( Int, Int ) = {
+        val differences = LambdaPosition.differingPositions( F1, F2 )
+        differences.fold( ( 0, 0 ) )( ( cur, next ) => {
+          val ( one: Int, two: Int ) = cur
+          val ex1 = F1.get( next.asInstanceOf[LambdaPosition] ) match {
+            case Some( x ) => x
+            case None      => Var( "", TBase( "nat" ) )
+          }
+          val ex2 = F2.get( next.asInstanceOf[LambdaPosition] ) match {
+            case Some( x ) => x
+            case None      => Var( "", TBase( "nat" ) )
+          }
+          if ( ex1.ty.eq( TBase( "nat" ) ) ) {
+            if ( ex1.contains( ex2 ) && !ex2.contains( ex1 ) && ( one == 0 ) ) ( 0, 1 )
+            else if ( ex1.contains( ex2 ) && !ex2.contains( ex1 ) && ( one == 1 ) ) ( 0, 0 )
+            else if ( ex2.contains( ex1 ) && !ex1.contains( ex2 ) && ( two == 0 ) ) ( 1, 0 )
+            else if ( ex2.contains( ex1 ) && !ex1.contains( ex2 ) && ( two == 1 ) ) ( 0, 0 )
+            else ( one, two )
+          } else ( one, two )
+        } ).asInstanceOf[( Int, Int )]
+      }
+
+    }
+  }
   object InstantiateClauseSetSchema {
     def apply(
       topSym:    String,
@@ -471,14 +569,14 @@ object SchematicClauseSet {
           else {
             val ( result, matchFormula ) = isInstanceOf._2.foldLeft( ( false, isInstanceOf._2.head ) )( ( isthere, SF ) =>
               if ( isthere._1 ) isthere
-              else if ( FormulaSetInstanceOf( F, SF ) ) ( true, SF )
+              else if ( FormulaInstanceOf( F, SF ) ) ( true, SF )
               else isthere )
             val newSetofFormula = if ( result ) isInstanceOf._2 - matchFormula else isInstanceOf._2
             ( result && isInstanceOf._1, newSetofFormula )
           } )._1
       else false
 
-    def FormulaSetInstanceOf( F1: Formula, F2: Formula ): Boolean = {
+    def FormulaInstanceOf( F1: Formula, F2: Formula ): Boolean = {
       val listOfDiff = LambdaPosition.differingPositions( F1, F2 )
       listOfDiff.foldLeft( true )( ( isOK, pos ) => {
         val F1Pos = F1.get( pos ) match { case Some( x ) => x case None => F1 }
@@ -497,7 +595,7 @@ object SchematicClauseSet {
   object PickCorrectInductiveCase {
     def apply(
       CSP:  Set[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )],
-      args: Seq[Expr] ): ( Int, ( Expr, Set[Var] ), Set[SetSequent[Atom]] ) = //TODO why a set
+      args: Seq[Expr] ): ( Int, ( Expr, Set[Var] ), Set[SetSequent[Atom]] ) = { //TODO why a set
       CSP.foldLeft( ( 0, CSP.head._1, CSP.head._2 ) )( ( theCorrect, current ) => {
         val ( exVar, clauses ) = current
         val ( Apps( _, argsLink ), _ ) = exVar
@@ -510,6 +608,7 @@ object SchematicClauseSet {
         if ( totalcount > oldcount ) ( totalcount, current._1, clauses )
         else theCorrect
       } )
+    }
   }
   //Takes two clause sets and composes them clause by clause without duplication
   object ComposeClauseSets {
