@@ -3,8 +3,8 @@ package at.logic.gapt.formats.tip
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.lisp._
+import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
@@ -34,8 +34,11 @@ class TipSmtParser {
       val t = TBase( name )
       declare( t )
       ctx += t
-    case LFun( "declare-datatypes", LList(), LList( LFun( name, constructors @ _* ) ) ) =>
-      val t = TBase( name )
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, LAtom( ":source" ), _, constructors @ _* ) ) ) =>
+      parse( LFun( "declare-datatypes", LList(), LList( LFun( typename, constructors: _* ) ) ) )
+
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, constructors @ _* ) ) ) =>
+      val t = TBase( typename )
       declare( t )
       val dt = TipDatatype( t, constructors map { parseConstructor( _, t ) } )
       ctx += Context.InductiveType( t, dt.constructors.map( _.constr ): _* )
@@ -47,6 +50,7 @@ class TipSmtParser {
           ctx += proj
         }
       }
+
     case LFun( "declare-const", LAtom( name ), LAtom( ":lambda" ), ty ) =>
       parse( LFun( "declare-const", LAtom( name ), ty ) )
     case LFun( "declare-const", LAtom( name ), LAtom( typeName ) ) =>
@@ -59,6 +63,8 @@ class TipSmtParser {
       val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) )
       declare( f )
       ctx += f
+    case LFun( "define-fun", name @ LAtom( _ ), LAtom( ":lambda" ), rest @ _* ) =>
+      parse( LFun( "define-fun", name +: rest: _* ) )
     case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LAtom( _ ), LAtom( ":source" ), _, rest @ _* ) =>
       parse( LFun( cmd, name +: rest: _* ) )
     case LFun( "define-fun" | "define-fun-rec", LAtom( name ), LList( args @ _* ), LAtom( retType ), body ) =>
@@ -78,7 +84,9 @@ class TipSmtParser {
     case LFun( "check-sat" ) => ()
   }
 
-  def parseConstructor( sexp: SExpression, ofType: Ty ) = sexp match {
+  def parseConstructor( sexp: SExpression, ofType: Ty ): TipConstructor = sexp match {
+    case LFun( constructorName, LAtom( ":source" ), _, fields @ _* ) =>
+      parseConstructor( LFun( constructorName, fields: _* ), ofType )
     case LFun( name, fields @ _* ) =>
       val projectors = fields map { parseField( _, ofType ) }
       val fieldTypes = projectors map { _.ty } map { case FunctionType( to, _ ) => to }

@@ -1,21 +1,41 @@
 package at.logic.gapt.examples.tip.prod
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.proofs.Context.InductiveType
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 
 object prop_07 extends TacticsProof {
 
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/prod/prop_07.smt2", getClass ) )
-  ctx = bench.ctx
+  // Sorts
+  ctx += TBase( "sk" )
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  // Inductive types
+  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
+  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+
+  //Function constants
+  ctx += hoc"'qrev' :list>list>list"
+  ctx += hoc"'plus' :Nat>Nat>Nat"
+  ctx += hoc"'length' :list>Nat"
+
+  val sequent =
+    hols"""
+        def_head: ∀x0 ∀x1 (head(cons(x0:sk, x1:list): list): sk) = x0,
+        def_tail: ∀x0 ∀x1 (tail(cons(x0:sk, x1:list): list): list) = x1,
+        def_p: ∀x0 (p(S(x0:Nat): Nat): Nat) = x0,
+        def_qrev_0: ∀y (qrev(nil:list, y:list): list) = y,
+        def_qrev_1: ∀z ∀xs ∀y (qrev(cons(z:sk, xs:list): list, y:list): list) = qrev(xs, cons(z, y)),
+        def_plus_0: ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+        def_plus_1: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
+        def_length_0: (length(nil:list): Nat) = #c(Z: Nat),
+        def_length_1: ∀y ∀xs (length(cons(y:sk, xs:list): list): Nat) = S(length(xs)),
+        constr_inj_0: ∀y0 ∀y1 ¬(nil:list) = cons(y0:sk, y1:list),
+        constr_inj_1: ∀y0 ¬#c(Z: Nat) = S(y0:Nat)
+        :-
+        goal: ∀x ∀y (length(qrev(x:list, y:list): list): Nat) = plus(length(x), length(y))
+  """
 
   val lem_1 = (
     ( "ap1" -> hof"∀y plus(Z, y) = y" ) +:
