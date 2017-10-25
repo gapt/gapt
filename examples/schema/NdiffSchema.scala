@@ -17,7 +17,6 @@ object NdiffSchema extends TacticsProof {
   ctx += hoc"omega: nat>nat"
   ctx += hoc"phi: nat>nat>i>i>nat"
   ctx += hoc"chi: nat>nat>nat>i>nat"
-
   ctx += PrimRecFun( hoc"DIFF:nat>i>o", "DIFF 0 x = (∃y (¬ (E (f x) (f y))))", "DIFF (s x) y = ( ∃z ( (¬ (E (f y) (f z))) ∧  (DIFF x z) ) )" )
   ctx += PrimRecFun(
     hoc"bloc:nat>nat>i>o",

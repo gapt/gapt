@@ -295,13 +295,12 @@ object Context {
     def sequents: Iterable[HOLSequent] =
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
-    def lookup( name: Expr ): Option[HOLSequent] = {
+    def lookup( name: Expr ): Option[HOLSequent] =
       ( for {
         ( declName, declSeq ) <- names.values
         subst <- syntacticMatching( declName, name )
       } yield subst( declSeq ) ).headOption
 
-    }
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {
         ( declName, declSeq ) <- names.values
@@ -317,11 +316,11 @@ object Context {
   case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
       copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
-    //error here
+
     def find( name: Expr ): Option[( LKProof, Substitution )] = {
       val Apps( Const( c, _ ), _ ) = name
       components.get( c ) match {
-        case Some( corCom: Set[( Expr, LKProof )] ) => {
+        case Some( corCom: Set[( Expr, LKProof )] ) =>
           val result: Iterable[( LKProof, Substitution )] = for {
             ( declName, defPrf ) <- corCom
             subst <- syntacticMatching( declName, name )
@@ -330,7 +329,7 @@ object Context {
             if ( res._2.domain.size < x._2.domain.size ) res else x
           } ) )
           else None
-        }
+
         case None => None
       }
     }

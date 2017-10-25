@@ -48,21 +48,18 @@ object StructCreators extends Logger {
   def toFormula[Data]( s: Struct[Data] ): Formula =
     And( CharacteristicClauseSet( s ).toSeq map ( _.toDisjunction ) )
 
-  def extract[Data]( p: LKProof, ctx: Context ): Struct[Data] =
-    extract[Data]( p, p.endSequent.map( _ => false ), ctx )( x => true )
+  def extract[Data]( p: LKProof )(implicit ctx: Context) : Struct[Data] =
+    extract[Data]( p, p.endSequent.map( _ => false ) )( x => true, ctx )
 
-  def extract[Data]( p: LKProof, predicate: Formula => Boolean, ctx: Context ): Struct[Data] =
-    extract[Data]( p, p.endSequent.map( _ => false ), ctx )( predicate )
+  def extract[Data]( p: LKProof, predicate: Formula => Boolean)(implicit ctx: Context): Struct[Data] =
+    extract[Data]( p, p.endSequent.map( _ => false ))( predicate ,ctx)
 
   private def mapToUpperProof[Formula]( conn: SequentConnector, cut_occs: Sequent[Boolean], default: Boolean ) =
     conn.parents( cut_occs ).map( _.headOption getOrElse default )
 
-  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean], ctx: Context )( implicit pred: Formula => Boolean ): Struct[Data] = {
+  def extract[Data]( p: LKProof, cut_occs: Sequent[Boolean])( implicit pred: Formula => Boolean,  ctx: Context ): Struct[Data] = {
     val cutanc_es = p.endSequent.zip( cut_occs ).filter( _._2 ).map( _._1 )
     val es = p.endSequent
-    /*println( s"es: $es" )
-    println( s"ca: $cutanc_es" )
-    println()*/
     p match {
       case ReflexivityAxiom( e ) =>
         if ( cut_occs( Suc( 0 ) ) )
@@ -81,10 +78,9 @@ object StructCreators extends Logger {
 
       case EqualityLeftRule( upperProof, eq, aux, con ) =>
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
-        val struct = extract[Data]( upperProof, new_occs, ctx )
+        val struct = extract[Data]( upperProof, new_occs)
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
         val eqformula = upperProof.endSequent( eq )
-        //println( "eql: " + p.endSequent( eq ) )
         ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
@@ -98,9 +94,8 @@ object StructCreators extends Logger {
 
       case EqualityRightRule( upperProof, eq, aux, con ) =>
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
-        val struct = extract[Data]( upperProof, new_occs, ctx )
+        val struct = extract[Data]( upperProof, new_occs)
         val e_idx_conclusion = p.occConnectors( 0 ).child( eq )
-        //println( "eqr: " + p.endSequent( eq ) )
         ( cut_occs( p.mainIndices( 0 ) ), cut_occs( e_idx_conclusion ) ) match {
           case ( true, true ) =>
             struct
@@ -117,21 +112,21 @@ object StructCreators extends Logger {
           p.mainIndices.size == 1,
           "Error: Struct extraction only works for rules which have exactly one primary formula!" )
         val new_occs = p.occConnectors( 0 ).parents( cut_occs ).flatMap { case Seq() => Seq(); case x => Seq( x.head ) }
-        extract[Data]( upperProof, new_occs, ctx )
+        extract[Data]( upperProof, new_occs )
 
       case rule @ CutRule( p1, aux1, p2, aux2 ) =>
         if ( pred( rule.cutFormula ) ) {
           val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, true )
           val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, true )
           Plus[Data](
-            extract[Data]( p1, new_occs1, ctx ),
-            extract[Data]( p2, new_occs2, ctx ) )
+            extract[Data]( p1, new_occs1),
+            extract[Data]( p2, new_occs2 ) )
         } else {
           val new_occs1 = mapToUpperProof( p.occConnectors( 0 ), cut_occs, false )
           val new_occs2 = mapToUpperProof( p.occConnectors( 1 ), cut_occs, false )
           Times[Data](
-            extract[Data]( p1, new_occs1, ctx ),
-            extract[Data]( p2, new_occs2, ctx ), List() )
+            extract[Data]( p1, new_occs1),
+            extract[Data]( p2, new_occs2), List() )
         }
 
       case BinaryLKProof( _, upperProofLeft, upperProofRight ) =>
@@ -141,9 +136,9 @@ object StructCreators extends Logger {
         val new_occs1 = p.occConnectors( 0 ).parents( cut_occs ).map( _.head )
         val new_occs2 = p.occConnectors( 1 ).parents( cut_occs ).map( _.head )
         if ( cut_occs( p.mainIndices( 0 ) ) )
-          Plus[Data]( extract[Data]( upperProofLeft, new_occs1, ctx ), extract[Data]( upperProofRight, new_occs2, ctx ) )
+          Plus[Data]( extract[Data]( upperProofLeft, new_occs1), extract[Data]( upperProofRight, new_occs2) )
         else
-          Times[Data]( extract[Data]( upperProofLeft, new_occs1, ctx ), extract[Data]( upperProofRight, new_occs2, ctx ), List() )
+          Times[Data]( extract[Data]( upperProofLeft, new_occs1), extract[Data]( upperProofRight, new_occs2), List() )
       case _ => throw new Exception( "Missing rule in StructCreators.extract: " + p.name )
     }
   }
@@ -153,18 +148,11 @@ object StructCreators extends Logger {
     cut_occs:  Sequent[Boolean],
     ctx:       Context,
     proofLink: String           = "" ): Struct[Data] = {
-    //printf( "Axiom!" )
-    //printf( cut_occs.toString )
 
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter( x => cut_occs( x._2 ) ).map( _._1 )
-    /* println("this is important")
-    println(cutanc_seq+"  "+ proofLink)*/
     val tautology_projection = cutanc_seq.antecedent.exists( x => cutanc_seq.succedent.contains( x ) )
-    //if ( tautology_projection ) println( s"Could optimize $so ($cut_occs)" )
-    //println( cutanc_seq )
     tautology_projection match {
       case true =>
-        //println( "tautology " + cutanc_seq )
         /* in the case of an axiom A :- A, if both occurrences of A are cut-ancestors, we need to return plus not times.
          * treat an axiom of the form \Gamma, A :- A, \Delta as if \Gamma and \Delta were added by weakening */
         EmptyPlusJunction()
@@ -204,7 +192,7 @@ object StructCreators extends Logger {
           val subvals = termLocations.map( pairs => {
             so( pairs._1.asInstanceOf[SequentIndex] ).get( pairs._2 ) match {
               case Some( termn ) => termn
-              case None          => Const( "", Ti )
+              case None          =>  sys.error("Should not be here")
             }
           } )
           CLS[Data]( proofLink, cutanc_seq, subvals, List[Data]() )
