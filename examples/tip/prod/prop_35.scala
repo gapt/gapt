@@ -1,21 +1,42 @@
 package at.logic.gapt.examples.tip.prod
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.proofs.Context.InductiveType
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 
 object prop_35 extends TacticsProof {
 
-  val bench = def_prop_35.loadProblem
-  ctx = bench.ctx
+  // Sorts
+  ctx += TBase( "sk" )
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  // Inductive types
+  ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
+
+  //Function constants
+  ctx += hoc"'plus' :Nat>Nat>Nat"
+  ctx += hoc"'one' :Nat"
+  ctx += hoc"'mult' :Nat>Nat>Nat"
+  ctx += hoc"'qexp' :Nat>Nat>Nat>Nat"
+  ctx += hoc"'exp' :Nat>Nat>Nat"
+
+  val sequent =
+    hols"""
+        def_p: ∀x0 (p(S(x0:Nat): Nat): Nat) = x0,
+        def_plus_0: ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+        def_plus_1: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
+        def_one_0: (one:Nat) = S(#c(Z: Nat)),
+        def_mult_0: ∀y (mult(#c(Z: Nat), y:Nat): Nat) = #c(Z: Nat),
+        def_mult_1: ∀z ∀y (mult(S(z:Nat): Nat, y:Nat): Nat) = plus(y, mult(z, y)),
+        def_qexp_0: ∀x ∀z (qexp(x:Nat, #c(Z: Nat), z:Nat): Nat) = z,
+        def_qexp_1: ∀x ∀n ∀z (qexp(x:Nat, S(n:Nat): Nat, z:Nat): Nat) = qexp(x, n, mult(x, z)),
+        def_exp_0: ∀x (exp(x:Nat, #c(Z: Nat)): Nat) = S(#c(Z: Nat)),
+        def_exp_1: ∀x ∀n (exp(x:Nat, S(n:Nat): Nat): Nat) = mult(x, exp(x, n)),
+        constr_inj_0: ∀y0 ¬#c(Z: Nat) = S(y0:Nat)
+        :-
+        goal: ∀x ∀y (exp(x:Nat, y:Nat): Nat) = qexp(x, y, one:Nat)
+  """
 
   val plus_axioms = List(
     "ap1" -> hof"∀y plus(Z, y) = y",

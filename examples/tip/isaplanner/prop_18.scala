@@ -1,36 +1,45 @@
 package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
 
 object prop_18 extends TacticsProof {
 
-  val bench = def_prop_18.loadProblem
-  ctx = bench.ctx
+  ctx += TBase( "sk" )
+  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += hoc"p:Nat>Nat"
+  ctx += hoc"'plus' :Nat>Nat>Nat"
+  ctx += hoc"'lt' :Nat>Nat>o"
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  val sequent =
+    hols"""
+          def_p: ∀x p(S(x)) = x,
+          def_plus_1: ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+          def_plus_2: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
+          def_lt_1: ∀x ¬lt(x:Nat, #c(Z: Nat)),
+          def_lt_2: ∀z lt(#c(Z: Nat), S(z:Nat): Nat),
+          def_lt_3: ∀x2 ∀z ((lt(S(x2:Nat): Nat, S(z)) ⊃ lt(x2, z)) ∧ (lt(x2, z) ⊃ lt(S(x2), S(z)))),
+          ax_nat: ∀x ¬Z = S(x)
+          :-
+          goal: ∀i ∀m lt(i:Nat, S(plus(i, m:Nat): Nat): Nat)
+        """
 
   val proof = Lemma( sequent ) {
     allR
     induction( hov"i:Nat" )
     // Base case
     allR
-    allL( "h4", le"plus(Z:Nat, m:Nat):Nat" )
+    allL( "def_lt_2", le"plus(Z:Nat, m:Nat):Nat" )
     axiomLog
     // Inductive case
     allR
     allL( "IHi_0", le"m:Nat" )
-    allL( "h5", le"i_0:Nat", le"plus(S(i_0:Nat):Nat, m:Nat)" )
+    allL( "def_lt_3", le"i_0:Nat", le"plus(S(i_0:Nat):Nat, m:Nat)" )
     andL
-    impL( "h5_0_1" )
-    allL( "h2", le"i_0:Nat", le"m:Nat" )
-    eql( "h2_0", "h5_0_1" )
+    impL( "def_lt_3_0_1" )
+    allL( "def_plus_2", le"i_0:Nat", le"m:Nat" )
+    eql( "def_plus_2_0", "def_lt_3_0_1" )
     axiomLog
 
     axiomLog
