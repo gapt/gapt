@@ -117,4 +117,7 @@ class BetaReductionTest extends Specification {
       result must_== eight
     }
   }
+  "issue 659" in {
+    normalize( le"(^y y) y x" ) must_== le"y x"
+  }
 }
