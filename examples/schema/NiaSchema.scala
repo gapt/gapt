@@ -15,7 +15,7 @@ object NiaSchema extends TacticsProof {
   ctx += hoc"LE: i>i>o"
   ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E (f x) 0", "POR (s y) x = (E (f x) (s y) ∨ POR y x)" )
 
-  ctx += hoc"z:i"   //This is the Zero for the Iota sort
+  ctx += hoc"z:i" //This is the Zero for the Iota sort
   ctx += hoc"g:i>i" //This is the Successor for the Iota sort
   ctx += hoc"max:i>i>i"
   ctx += hoc"omega: nat>nat"

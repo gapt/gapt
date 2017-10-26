@@ -6,8 +6,8 @@ import at.logic.gapt.proofs.lk.LKProof
 
 object extractStruct {
   def apply( p: LKProof ): Struct[Formula] =
-    StructCreators.extract[Formula]( p )(Context())
+    StructCreators.extract[Formula]( p )( Context() )
   def apply[Data]( p: LKProof, predicate: Formula => Boolean ): Struct[Formula] =
-    StructCreators.extract[Formula]( p, predicate )( Context())
+    StructCreators.extract[Formula]( p, predicate )( Context() )
 
 }
