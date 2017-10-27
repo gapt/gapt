@@ -4,6 +4,7 @@ import at.logic.gapt.examples.CountingEquivalence
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.thresholds
 import at.logic.gapt.expr.hol.CNFn
+import at.logic.gapt.proofs.Context.SkolemFun
 import at.logic.gapt.proofs.lk.ResolutionProofBuilder
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.proofs._
@@ -99,5 +100,28 @@ class ResolutionToExpansionProofTest extends Specification with SatMatchers with
     val desk = deskolemizeET( exp )
     desk.shallow must_== f
     desk.deep must beValidSequent
+  }
+
+  "higher-order without equality" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"a: i"; ctx += hoc"b: i"
+    // Leibniz equality is symmetric
+    val sequent = hos"!X (X a -> X b) :- !X (X b -> X a)"
+    val p1 = Input( hos":- ${sequent( Ant( 0 ) )}" )
+    val p2 = Input( hos"${sequent( Suc( 0 ) )} :-" )
+    val p3 = AllR( p1, Suc( 0 ), hov"X: i>o" )
+    val p4 = ImpR( p3, Suc( 0 ) )
+    ctx += SkolemFun( hoc"Sk: i>o", p2.conclusion( Ant( 0 ) ) )
+    val p5 = AllL( p2, Ant( 0 ), le"Sk" )
+    val p6 = ImpL1( p5, Ant( 0 ) )
+    val p7 = ImpL2( p5, Ant( 0 ) )
+    val p8 = Subst( p4, Substitution( hov"X: i>o", le"^x (-Sk x)" ) )
+    val p9 = NegL( p8, Ant( 0 ) )
+    val p10 = NegR( p9, Suc( 0 ) )
+    val p11 = Resolution( p10, Suc( 0 ), p7, Ant( 0 ) )
+    val p12 = Resolution( p6, Suc( 0 ), p11, Ant( 0 ) )
+    val exp = ResolutionToExpansionProof( p12 )
+    exp.shallow must_== sequent
+    exp.deep must beValidSequent
   }
 }
