@@ -1,8 +1,9 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.Polarity.{ Negative, Positive }
-import at.logic.gapt.expr.{ Formula, Polarity }
-import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
+import at.logic.gapt.expr.Polarity.{Negative, Positive}
+import at.logic.gapt.expr.{Formula, Polarity}
+import at.logic.gapt.formats.babel.{BabelExporter, BabelSignature}
+import at.logic.gapt.proofs.lk.SequentTerm
 import cats.Functor
 import cats.kernel.Monoid
 
@@ -101,7 +102,7 @@ case class SetSequent[+A]( sequent: Sequent[A] ) {
  * @param succedent The second list.
  * @tparam A The type of the elements of the sequent.
  */
-case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
+case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) extends SequentTerm {
 
   override def toString = toSigRelativeString
 

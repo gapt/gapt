@@ -243,12 +243,12 @@ object SchematicClauseSet {
           // proof schema might occur at different levels in the instantiated
           //proof
           val regularClauseSetToInstantiate =
-            Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), clauseSetToInstantiate._2._2 ) )( ( reClause, nameVar ) =>
-              Set[Var]( Var( reClause._1._1.fresh( nameVar.name ), nameVar.ty ) ).map( newVar =>
-                ( ( reClause._1._1, reClause._1._2 + newVar ), reClause._2.map( x =>
-                  Sequent(
-                    x.antecedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) ),
-                    x.succedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) ) ) ) ) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
+            Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), clauseSetToInstantiate._2._2 ) )(
+              ( reClause, nameVar ) => Set[Var]( Var( reClause._1._1.fresh( nameVar.name ), nameVar.ty ) ).map( newVar =>
+                ( ( reClause._1._1, reClause._1._2 + newVar ), reClause._2.map( x => Sequent(x.antecedent.map( f =>
+                  f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) ),
+                  x.succedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) =>
+                  ff.replace( pos, newVar ).asInstanceOf[Atom] ) ) ) ) ) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
           //Here we instantiate the clause set we selected
           //based on the regularization
           val instantiatedClauses = regularClauseSetToInstantiate._2.map( x =>
