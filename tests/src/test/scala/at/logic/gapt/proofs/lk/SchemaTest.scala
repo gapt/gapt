@@ -177,7 +177,6 @@ class SchemaTest extends Specification {
         println()
       } }}
       println()*/
-      println(Sclauseset)
       fin must beEqualTo( true )
     }
   }
