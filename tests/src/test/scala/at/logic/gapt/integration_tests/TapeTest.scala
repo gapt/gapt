@@ -24,7 +24,7 @@ class TapeTest extends Specification with SequentMatchers {
       val s = StructCreators.extract( proof_sk )( Context() )
 
       //      println( s"struct: $s" )
-      val cs_ = CharacteristicClauseSet( s )
+      val cs_ = CharacteristicClauseSet( s ).getOrElse(Set())
       //      println( cs_.size )
       val cs = deleteTautologies( cs_ )
       //      cs.map( x => println( s"Clause: $x" ) )

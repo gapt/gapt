@@ -47,7 +47,7 @@ object StructCreators extends Logger {
   private val nLine = sys.props("line.separator")
 
   def toFormula[Data](s: Struct[Data]): Formula =
-    And(CharacteristicClauseSet(s).toSeq map (_.toDisjunction))
+    And(CharacteristicClauseSet(s).getOrElse(Set()).toSeq map (_.toDisjunction))
 
   def extract[Data](p: LKProof)(implicit ctx: Context): Struct[Data] =
     extract[Data](p, p.endSequent.map(_ => false))(x => true, ctx)

@@ -128,7 +128,7 @@ class PrimeProofTest extends Specification {
       println( "es: " + proof_sk.endSequent + " " + containsStrongQuantifier( proof_sk.endSequent ) )
       val s = extractStruct( proof_sk, CERES.skipEquations )
 
-      val cs = deleteTautologies( CharacteristicClauseSet( s ) )
+      val cs = deleteTautologies( CharacteristicClauseSet( s ).getOrElse(Set()) )
       val tptp = TPTPFOLExporter.tptp_problem( cs.toList )
       //      val writer = new java.io.FileWriter( "target" + separator + "prime1-" + n + "-cs.tptp" )
       //      writer.write( tptp.toString )

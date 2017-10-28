@@ -70,7 +70,7 @@ class CERES {
     val p_ = regularize( skolemizeInferences( AtomicExpansion( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred )( Context() ) )
     val proj = Projections( p_, pred )
-    val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
+    val tapecl = subsumedClausesRemoval( deleteTautologies( cs.getOrElse(Set()) ).toList )
 
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception(
@@ -107,7 +107,7 @@ class CERES {
     val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, CERES.skipNothing )( Context() ) )
     val proj = Projections( p_, CERES.skipNothing )
-    val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
+    val tapecl = subsumedClausesRemoval( deleteTautologies( cs.getOrElse(Set()) ).toList )
 
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception(

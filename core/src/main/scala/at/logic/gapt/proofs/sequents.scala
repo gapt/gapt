@@ -87,7 +87,7 @@ case class Suc( k: Int ) extends SequentIndex {
  * Used for clause set extraction
  * @param sequent A sequent.
  */
-case class SetSequent[+A]( sequent: Sequent[A] ) {
+case class SetSequent[+A]( sequent: Sequent[A] ) extends SequentTerm{
   override def equals( that: Any ): Boolean = that match {
     case SetSequent( Sequent( ante, suc ) ) => this.sequent.antecedent.toSet == ante.toSet && this.sequent.succedent.toSet == suc.toSet
     case _                                  => false
@@ -452,7 +452,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) extends Se
     Sequent( antecedent groupBy f toVector, succedent groupBy f toVector )
 }
 
-object Sequent {
+object Sequent extends SequentTerm {
   def apply[A](): Sequent[A] = Sequent( Vector(), Vector() )
 
   def apply[A]( ant: Traversable[A], suc: Traversable[A] ): Sequent[A] = Sequent( ant.toVector, suc.toVector )
