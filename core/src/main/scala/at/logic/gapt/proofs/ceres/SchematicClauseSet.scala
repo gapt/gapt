@@ -2,9 +2,9 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.{ProofDefinitions, ProofNames}
-import at.logic.gapt.proofs.lk.{CLSTerm, EigenVariablesLK, LKProof, SequentComposition, SequentTerm}
-import at.logic.gapt.proofs.{Context, HOLClause, HOLSequent, Sequent}
+import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames }
+import at.logic.gapt.proofs.lk.{ CLSTerm, EigenVariablesLK, LKProof, SequentComposition, SequentTerm }
+import at.logic.gapt.proofs.{ Context, HOLSequent, Sequent }
 
 //Idea behind the type is for each proof symbol we have a  Map,  which maps configurations to a set of sequents over atoms
 //representing the clauses and the expression of the case of the inductive definition.
@@ -164,7 +164,7 @@ object SchematicClauseSet {
           } ).map( x => ( x, precleaned.getOrElse( sym, Map() ).getOrElse( x, Set() ) ) ).
           foldLeft( Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SequentComposition] )]]() )( ( finMap, pairMap ) =>
             finMap + ( pairMap._1 -> pairMap._2 ) ) ) ).foldLeft( Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SequentComposition] )]]]() )( ( finMap, pairMap ) =>
-            finMap + ( pairMap._1 -> pairMap._2 ) )
+        finMap + ( pairMap._1 -> pairMap._2 ) )
   }
 
   object SimplierOfSequents {
@@ -202,9 +202,9 @@ object SchematicClauseSet {
       cutConfig: HOLSequent,
       css:       Map[String, Map[HOLSequent, Set[( ( Expr, Set[Var] ), Set[SequentComposition] )]]],
       sigma:     Substitution,
-      usedNames: Set[Var]                                                                  = Set[Var]() )( implicit ctx: Context ): Set[Sequent[Atom]] = {
+      usedNames: Set[Var]                                                                           = Set[Var]() )( implicit ctx: Context ): Set[Sequent[Atom]] = {
       //First we extract the clause set associated with the given proof name
-      val starterClauseSet =css.getOrElse(topSym,Map()).getOrElse(cutConfig,Set())
+      val starterClauseSet = css.getOrElse( topSym, Map() ).getOrElse( cutConfig, Set() )
       //we check if the starter clause set is empty or does not have
       //any free variables in common with the domain of sigma.
       //When this occurs we return an empty clause set.
@@ -231,86 +231,51 @@ object SchematicClauseSet {
             val Apps( _, lSym ) = excl._1._1
             val headVar = if ( freeVariables( lSym.head ).size == 1 ) freeVariables( lSym.head ).head else Var( "", TBase( "nat" ) )
             reEx + ( ( ( LambdaPosition.differingPositions( excl._1._1, sigma( excl._1._1 ) ).size, headVar ), ( excl._1._2, excl._2 ) ) )
-          } ).foldLeft( ( ( 0, Var( "", TBase( "nat" ) ) ), ( Set[Var](), Set[SequentComposition]() ) ) )( ( cll, excl ) => if ( cll._1._1 < excl._1._1 ) {excl} else{ cll} )
+          } ).foldLeft( ( ( 0, Var( "", TBase( "nat" ) ) ), ( Set[Var](), Set[SequentComposition]() ) ) )( ( cll, excl ) => if ( cll._1._1 < excl._1._1 ) { excl } else { cll } )
           //The following code regularizes the clause set with respect to
           //the already used eigenvariables. Regularization of schematic
           //clause sets is an issue because variables which occur once in the
           // proof schema might occur at different levels in the instantiated
           //proof
           val regularClauseSetToInstantiate =
-          Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), clauseSetToInstantiate._2._2 ) )(
-            ( reClause, nameVar ) => Set[Var]( Var( reClause._1._1.fresh( nameVar.name ), nameVar.ty ) ).map( newVar =>
-              ( ( reClause._1._1, reClause._1._2 + newVar ), reClause._2.map( x => SequentComposition(x.composedSequents.map(parts =>
-                parts match{
-                  case Sequent(ante,suc) => Sequent(
-                    ante.map( f => f.asInstanceOf[Atom].find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.asInstanceOf[Atom].replace( pos, newVar ).asInstanceOf[Atom] ) ),
-                    suc.map( f => f.asInstanceOf[Atom].find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.asInstanceOf[Atom].replace( pos, newVar ).asInstanceOf[Atom] ) ) )
-                  case CLSTerm(pn,cc,args) =>CLSTerm(pn,
-                    Sequent(cc.antecedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) ),
-                      cc.succedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) )),
-                    args.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ) ) ))
-                  case _ => sys.error("Should not be here")
-                }).asInstanceOf[Set[SequentTerm]]
-
-              )) ) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
+            Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), clauseSetToInstantiate._2._2 ) )(
+              ( reClause, nameVar ) => Set[Var]( Var( reClause._1._1.fresh( nameVar.name ), nameVar.ty ) ).map( newVar =>
+                ( ( reClause._1._1, reClause._1._2 + newVar ), reClause._2.map( x => SequentComposition( x.composedSequents.map( parts =>
+                  parts match {
+                    case Sequent( ante, suc ) => Sequent(
+                      ante.map( f => f.asInstanceOf[Atom].find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.asInstanceOf[Atom].replace( pos, newVar ).asInstanceOf[Atom] ) ),
+                      suc.map( f => f.asInstanceOf[Atom].find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.asInstanceOf[Atom].replace( pos, newVar ).asInstanceOf[Atom] ) ) )
+                    case CLSTerm( pn, cc, args ) => CLSTerm(
+                      pn,
+                      Sequent(
+                        cc.antecedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) ),
+                        cc.succedent.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ).asInstanceOf[Atom] ) ) ),
+                      args.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ) ) ) )
+                    case _ => sys.error( "Should not be here" )
+                  } ).asInstanceOf[Set[SequentTerm]] ) ) ) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
 
           val instantiatedClauses = regularClauseSetToInstantiate._2.map( comp =>
-            SequentComposition(comp.composedSequents.map( x => x match {
-                case Sequent(ante,suc) =>
-                  sigma( Sequent(
-               ante.map( form =>
-                sigma.domain.foldLeft( form.asInstanceOf[Formula] )( ( subForm, varSig ) =>
-                  ( if ( varSig.ty.equals(TBase("nat")))
-                       subForm.find( nat( 1, varSig ) )
-                    else subForm.find( varSig )
-                  ).foldLeft( subForm )( ( nRepl, curPos ) =>
-                    nRepl.replace( curPos, varSig ) ) )
-               ),
-               suc.map( form =>
-                 sigma.domain.foldLeft( form.asInstanceOf[Formula] )( ( subForm, varSig ) =>
-                   ( if ( varSig.ty.equals(TBase("nat")))
-                     subForm.find( nat( 1, varSig ) )
-                   else subForm.find( varSig )
-                     ).foldLeft( subForm )( ( nRepl, curPos ) =>
-                     nRepl.replace( curPos, varSig ) ) )
-               ) ) ).asInstanceOf[SequentTerm]
-              case CLSTerm(pn,cc,args) =>
-                CLSTerm(pn,sigma(HOLSequent(
-                cc.antecedent.map(form =>
-                sigma.domain.foldLeft(form)( ( subform, varsig ) =>
-                  if ( varsig.ty.equals( TBase( "nat" ) ) )
-                    subform.find( nat( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
-                        ctx.get[ProofNames].names.get( pn ) match {
-                          case Some( proofName ) =>
-                            val Apps( _, lsymPN ) = proofName._1
-                            val clsvar = lsymPN.head
-                            if ( clauseSetToInstantiate._1._2.equals( clsvar ) ) nrepl
-                            else if ( varsig.equals( clauseSetToInstantiate._1._2 ) ) nrepl.replace( curpos, varsig )
-                            else nrepl
-                          case None => nrepl
-                        }
-                    } )
-                  else subform )),
-                cc.succedent.map(form =>
-                  sigma.domain.foldLeft(form)( ( subform, varsig ) =>
-                    if ( varsig.ty.equals( TBase( "nat" ) ) )
-                      subform.find( nat( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
-                          ctx.get[ProofNames].names.get( pn ) match {
-                            case Some( proofName ) =>
-                              val Apps( _, lsymPN ) = proofName._1
-                              val clsvar = lsymPN.head
-                              if ( clauseSetToInstantiate._1._2.equals( clsvar ) ) nrepl
-                              else if ( varsig.equals( clauseSetToInstantiate._1._2 ) ) nrepl.replace( curpos, varsig )
-                              else nrepl
-                            case None => nrepl
-                          }
-                      } )
-                    else subform ))
-                )),
-                args.map(form =>
-                  sigma(sigma.domain.foldLeft(form)( ( subform, varsig ) =>
-                    if ( varsig.ty.equals( TBase( "nat" ) ) )
-                      subform.find( nat( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
+            SequentComposition( comp.composedSequents.map( x => x match {
+              case Sequent( ante, suc ) =>
+                sigma( Sequent(
+                  ante.map( form =>
+                    sigma.domain.foldLeft( form.asInstanceOf[Formula] )( ( subForm, varSig ) =>
+                      ( if ( varSig.ty.equals( TBase( "nat" ) ) )
+                        subForm.find( nat( 1, varSig ) )
+                      else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) =>
+                        nRepl.replace( curPos, varSig ) ) ) ),
+                  suc.map( form =>
+                    sigma.domain.foldLeft( form.asInstanceOf[Formula] )( ( subForm, varSig ) =>
+                      ( if ( varSig.ty.equals( TBase( "nat" ) ) )
+                        subForm.find( nat( 1, varSig ) )
+                      else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) =>
+                        nRepl.replace( curPos, varSig ) ) ) ) ) ).asInstanceOf[SequentTerm]
+              case CLSTerm( pn, cc, args ) =>
+                CLSTerm( pn, sigma( HOLSequent(
+                  cc.antecedent.map( form =>
+                    sigma.domain.foldLeft( form )( ( subform, varsig ) =>
+                      if ( varsig.ty.equals( TBase( "nat" ) ) )
+                        subform.find( nat( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
                         ctx.get[ProofNames].names.get( pn ) match {
                           case Some( proofName ) =>
                             val Apps( _, lsymPN ) = proofName._1
@@ -321,17 +286,48 @@ object SchematicClauseSet {
                           case None => nrepl
                         }
                       } )
-                    else subform ))))} )))
+                      else subform ) ),
+                  cc.succedent.map( form =>
+                    sigma.domain.foldLeft( form )( ( subform, varsig ) =>
+                      if ( varsig.ty.equals( TBase( "nat" ) ) )
+                        subform.find( nat( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
+                        ctx.get[ProofNames].names.get( pn ) match {
+                          case Some( proofName ) =>
+                            val Apps( _, lsymPN ) = proofName._1
+                            val clsvar = lsymPN.head
+                            if ( clauseSetToInstantiate._1._2.equals( clsvar ) ) nrepl
+                            else if ( varsig.equals( clauseSetToInstantiate._1._2 ) ) nrepl.replace( curpos, varsig )
+                            else nrepl
+                          case None => nrepl
+                        }
+                      } )
+                      else subform ) ) ) ),
+                  args.map( form =>
+                    sigma( sigma.domain.foldLeft( form )( ( subform, varsig ) =>
+                      if ( varsig.ty.equals( TBase( "nat" ) ) )
+                        subform.find( nat( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
+                        ctx.get[ProofNames].names.get( pn ) match {
+                          case Some( proofName ) =>
+                            val Apps( _, lsymPN ) = proofName._1
+                            val clsvar = lsymPN.head
+                            if ( clauseSetToInstantiate._1._2.equals( clsvar ) ) nrepl
+                            else if ( varsig.equals( clauseSetToInstantiate._1._2 ) ) nrepl.replace( curpos, varsig )
+                            else nrepl
+                          case None => nrepl
+                        }
+                      } )
+                      else subform ) ) ) )
+            } ) ) )
           //This code traverses the clause set and checks if the any of
           // the clauses contain clause set terms if they do, then we call
           //this method recursively on the those parts and attach the
           // resulting clause sets
           instantiatedClauses.foldLeft( Set[Sequent[Atom]]() )( ( vale, x ) => {
-              //We construct this new clause set by folding the newly constructed clause
-              //and the resulting clause sets by sequent concatenation
-                vale ++ x.awayFrom[Atom]().composedSequents.foldLeft(
-                  if (x.isUniformawayFrom[Atom]()) Set[Sequent[Atom]]() else Set[Sequent[Atom]]( x.towards[Atom]() ) )( ( mixedClauseSet, y ) => {
-                val CLSTerm(newTopSym,newCutConfig,args) = y
+            //We construct this new clause set by folding the newly constructed clause
+            //and the resulting clause sets by sequent concatenation
+            vale ++ x.awayFrom[Atom]().composedSequents.foldLeft(
+              if ( x.isUniformawayFrom[Atom]() ) Set[Sequent[Atom]]() else Set[Sequent[Atom]]( x.towards[Atom]() ) )( ( mixedClauseSet, y ) => {
+                val CLSTerm( newTopSym, newCutConfig, args ) = y
                 val mapOnConfigs = css.getOrElse( newTopSym, Map() )
                 val theConfigNeeded = mapOnConfigs.keySet.foldLeft( newCutConfig )( ( thekey, cutconfigctk ) => if ( SequentInstanceOf( newCutConfig, cutconfigctk ) ) cutconfigctk else thekey )
                 //After finding the configuration we need to put the correct inductive
@@ -353,10 +349,14 @@ object SchematicClauseSet {
                 //clause set
                 val thelowerclauses = InstantiateClauseSetSchema( newTopSym, theConfigNeeded, css, newsigma, usedNames ++ regularClauseSetToInstantiate._1 )
                 //after we construct the recursive clause sets we can attach them to the final clause set
-                  if (mixedClauseSet.isEmpty ) thelowerclauses else if ( thelowerclauses.isEmpty ) mixedClauseSet
-                  else for ( c1 <- mixedClauseSet; c2 <- thelowerclauses ) yield ( c1 ++ c2 ).distinct
-              })})}}}}
-
+                if ( mixedClauseSet.isEmpty ) thelowerclauses else if ( thelowerclauses.isEmpty ) mixedClauseSet
+                else for ( c1 <- mixedClauseSet; c2 <- thelowerclauses ) yield ( c1 ++ c2 ).distinct
+              } )
+          } )
+        }
+      }
+    }
+  }
 
   //checks if S1 is an instance of S2
   object SequentInstanceOf {

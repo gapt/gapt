@@ -1,7 +1,7 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.PrimRecFun
+import at.logic.gapt.proofs.Context._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
@@ -21,7 +21,7 @@ object NiaSchema extends TacticsProof {
   ctx += hoc"omega: nat>nat"
   ctx += hoc"phi: nat>nat"
   ctx += hoc"chi: nat>i>nat"
-  ctx += "efef" -> hcl"E(f(p),n),E(f(q),n) :- E(f(p),f(q))"
+  ctx += "efef" -> hos"E(f(p),n),E(f(q),n) :- E(f(p),f(q))"
   ctx += "leq_refl" -> hos" :- LEQ(p,p)"
   ctx += "leq_g" -> hos"LEQ(g(p),q):- LE(p,q)"
   ctx += "leq_max1" -> hos"LEQ(max(a, b), c) :- LEQ(a, c)"

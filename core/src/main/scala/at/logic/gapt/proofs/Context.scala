@@ -317,7 +317,17 @@ object Context {
     def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
       copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
 
-    def find( name: Expr ): Option[( LKProof, Substitution )] = {
+    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
+      for {
+        defs <- components.values
+        ( declName, defPrf ) <- defs
+        subst <- syntacticMatching( declName, name )
+      } yield ( defPrf, subst )
+    def findMax( name: Expr ) = {
+      val defs = find( name )
+      if ( defs.isEmpty ) None else Some( defs.maxBy( _._2.domain.size ) )
+    }
+    /* def find( name: Expr ): Option[( LKProof, Substitution )] = {
       val Apps( Const( c, _ ), _ ) = name
       components.get( c ) match {
         case Some( corCom: Set[( Expr, LKProof )] ) =>
@@ -332,7 +342,7 @@ object Context {
 
         case None => None
       }
-    }
+    }*/
 
     override def toString: String =
       components.map { case ( n, dfs ) => dfs.map( _._1 ).mkString( ", " ) }.mkString( "\n" )

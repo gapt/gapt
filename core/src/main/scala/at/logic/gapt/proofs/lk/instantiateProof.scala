@@ -16,7 +16,7 @@ object instantiateProof {
     regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
 
   def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
-    ctx.get[Context.ProofDefinitions].find( proofName ) match {
+    ctx.get[Context.ProofDefinitions].findMax( proofName ) match {
       case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
       case None =>
         ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )

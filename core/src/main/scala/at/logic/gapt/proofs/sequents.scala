@@ -1,8 +1,8 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.Polarity.{Negative, Positive}
-import at.logic.gapt.expr.{Formula, Polarity}
-import at.logic.gapt.formats.babel.{BabelExporter, BabelSignature}
+import at.logic.gapt.expr.Polarity.{ Negative, Positive }
+import at.logic.gapt.expr.{ Formula, Polarity }
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 import at.logic.gapt.proofs.lk.SequentTerm
 import cats.Functor
 import cats.kernel.Monoid
@@ -87,7 +87,7 @@ case class Suc( k: Int ) extends SequentIndex {
  * Used for clause set extraction
  * @param sequent A sequent.
  */
-case class SetSequent[+A]( sequent: Sequent[A] ) extends SequentTerm{
+case class SetSequent[+A]( sequent: Sequent[A] ) extends SequentTerm {
   override def equals( that: Any ): Boolean = that match {
     case SetSequent( Sequent( ante, suc ) ) => this.sequent.antecedent.toSet == ante.toSet && this.sequent.succedent.toSet == suc.toSet
     case _                                  => false
