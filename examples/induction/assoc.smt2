@@ -3,6 +3,5 @@
   (match y
     (case o x)
     (case (s y1) (s (plus x y1)))))
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (plus (plus x x) x) (plus x (plus x x)))))
-(check-sat)

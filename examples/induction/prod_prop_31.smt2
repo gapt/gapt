@@ -13,8 +13,7 @@
        (match x
          (case nil y)
          (case (cons z xs) (qrev xs (cons z y)))))))
-(assert-not
+(prove
   (par (a)
     (forall ((x (list a)))
-      (= (qrev (qrev x (as nil (list a))) (as nil (list a))) x))))
-(check-sat)
+      (= (qrev (qrev x (_ nil a)) (_ nil a)) x))))

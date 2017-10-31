@@ -10,5 +10,4 @@
     (case (s y) (pred (minus x y)))
     (case o x)))
 
-(assert-not (forall ((x nat)) (= (minus o x) o)))
-(check-sat)
+(prove (forall ((x nat)) (= (minus o x) o)))

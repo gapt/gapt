@@ -81,6 +81,8 @@ class TipSmtParser {
       goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "prove", LAtom( ":source" ), _, formula ) =>
       goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
+    case LFun( "prove", formula ) =>
+      goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "check-sat" ) => ()
   }
 
