@@ -13,5 +13,4 @@
     (case (s y) (s (plus x y)))
     (case o x)))
 
-(assert-not (forall ((x nat)) (even (plus x x))))
-(check-sat)
+(prove (forall ((x nat)) (even (plus x x))))

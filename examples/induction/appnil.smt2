@@ -8,6 +8,5 @@
     (case (cons x xs) (cons x (append xs ys)))
     (case nil ys)))
 
-(assert-not (forall ((x list))
+(prove (forall ((x list))
   (= (append x nil) x)))
-(check-sat)

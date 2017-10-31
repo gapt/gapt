@@ -9,6 +9,5 @@
     (case (s x) (not (odd x)))
     (case o false)))
 
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (even x) (odd (s x)))))
-(check-sat)

@@ -7,6 +7,7 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent, SetSequent }
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.utils.Logger
 
 import scala.annotation.tailrec
@@ -65,6 +66,12 @@ class CharacteristicClauseSet[Data] {
 
 object CharacteristicClauseSet {
   def apply[Data]( struct: Struct[Data] ): Set[HOLClause] = ( new CharacteristicClauseSet[Data] )( struct ).map( y => y.sequent )
+
+  def apply( p: LKProof ): Set[HOLClause] =
+    apply( p, CERES.skipNothing )
+
+  def apply( p: LKProof, pred: Formula => Boolean ): Set[HOLClause] =
+    apply( StructCreators.extract( p, pred ) )
 }
 
 object SimplifyStruct {

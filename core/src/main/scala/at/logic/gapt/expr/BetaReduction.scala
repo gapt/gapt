@@ -89,7 +89,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     hd match {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
-        Some( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ) )
+        Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
       case hd @ Const( c, _ ) =>
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>
