@@ -106,7 +106,7 @@ class NDTest extends Specification with SatMatchers {
   "Induction2" in {
     val nat = TBase( "nat" )
     val c0 = Const( "0", nat )
-    val cs = Const( "s", nat -> nat )
+    val cs = Const( "s", nat ->: nat )
     val x = Var( "x", nat )
 
     val p0 = Atom( "P", c0 )

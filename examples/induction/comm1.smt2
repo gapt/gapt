@@ -8,6 +8,5 @@
     (case (s y) (s (plus x y)))
     (case o x)))
 
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (plus x (s o)) (plus (s o) x))))
-(check-sat)

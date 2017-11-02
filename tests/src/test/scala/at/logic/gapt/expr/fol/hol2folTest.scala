@@ -12,27 +12,27 @@ class hol2folTest extends Specification {
   def iid = new Counter
 
   "HOL terms" should {
-    val hx = Var( "x", Ti -> Ti )
-    val ha = Const( "a", To -> Ti )
-    val hb = Const( "b", To -> Ti )
+    val hx = Var( "x", Ti ->: Ti )
+    val ha = Const( "a", To ->: Ti )
+    val hb = Const( "b", To ->: Ti )
     val fx = FOLVar( "x" )
     val fa = FOLConst( "a" )
     val fb = FOLConst( "b" )
     //TODO: fix the tests
     "be correctly reduced into FOL terms for" in {
       "Atom - A(x:(i->i), a:o->i)" in {
-        val hol = Atom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
+        val hol = Atom( Const( "A", ( Ti ->: Ti ) ->: ( To ->: Ti ) ->: To ), hx :: ha :: Nil )
         val fol = FOLAtom( "A", fx :: fa :: Nil )
         reduceHolToFol( hol ) must beEqualTo( fol )
       }
       "Function - f(x:(i->i), a:(o->i)):(o->o)" in {
-        val hol = HOLFunction( Const( "f", ( Ti -> Ti ) -> ( ( To -> Ti ) -> ( To -> To ) ) ), hx :: ha :: Nil )
+        val hol = HOLFunction( Const( "f", ( Ti ->: Ti ) ->: ( ( To ->: Ti ) ->: ( To ->: To ) ) ), hx :: ha :: Nil )
         val fol = FOLFunction( "f", fx :: fa :: Nil )
         reduceHolToFol( hol ) must beEqualTo( fol )
       }
       "Connective - And A(x:(i->i), a:(o->i)) B(x:(i->i), b:(o->i))" in {
-        val hA = Atom( Const( "A", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: ha :: Nil )
-        val hB = Atom( Const( "B", ( Ti -> Ti ) -> ( ( To -> Ti ) -> To ) ), hx :: hb :: Nil )
+        val hA = Atom( Const( "A", ( Ti ->: Ti ) ->: ( ( To ->: Ti ) ->: To ) ), hx :: ha :: Nil )
+        val hB = Atom( Const( "B", ( Ti ->: Ti ) ->: ( ( To ->: Ti ) ->: To ) ), hx :: hb :: Nil )
         val hol = And( hA, hB )
         val fA = FOLAtom( "A", fx :: fa :: Nil )
         val fB = FOLAtom( "B", fx :: fb :: Nil )
@@ -63,7 +63,7 @@ class hol2folTest extends Specification {
       "Correctly convert from type o to i on the termlevel" in {
         val List( sp, sq ) = List( "P", "Q" )
         val List( x, y ) = List( "x", "y" ).map( x => Atom( Var( x, To ), List() ) )
-        val f1 = Atom( Const( sp, To -> To ), List( Imp( x, y ) ) )
+        val f1 = Atom( Const( sp, To ->: To ), List( Imp( x, y ) ) )
         val f2 = FOLAtom( sp, List( FOLFunction(
           ImpC.name,
           List(
@@ -91,8 +91,8 @@ class hol2folTest extends Specification {
             FOLVar( "q_1" ),
             FOLConst( "q_1" ) ) ) )
 
-      val hterm1 = changeTypeIn( fterm1, Map[String, Ty]( ( "q_1", Ti -> Ti ) ) )
-      val hterm2 = changeTypeIn( fterm2, Map[String, Ty]( ( "q_1", Ti -> Ti ) ) )
+      val hterm1 = changeTypeIn( fterm1, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
+      val hterm2 = changeTypeIn( fterm2, Map[String, Ty]( ( "q_1", Ti ->: Ti ) ) )
       ok
     }
   }

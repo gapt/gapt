@@ -16,5 +16,4 @@
 (assert (forall ((x nat))
   (=> (P x c) (Q x))))
 
-(assert-not (forall ((x nat)) (Q x)))
-(check-sat)
+(prove (forall ((x nat)) (Q x)))

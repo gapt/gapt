@@ -220,7 +220,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     bound:         Set[String],
     t0:            Map[String, VarOrConst],
     p:             Int ): ( Doc, Map[String, VarOrConst] ) = {
-    val Const( cn, argt1 -> ( argt2 -> rett ) ) = c
+    val Const( cn, argt1 ->: argt2 ->: rett ) = c
     val cKnown = t0.get( cn ).contains( c )
     if ( t0.get( cn ).exists { _ != c } ) {
       showApps( c( a, b ), knownType, bound, t0, p )
@@ -272,7 +272,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def show( ty: Ty, needParens: Boolean ): Doc = ty match {
     case TBase( name, params ) => wordwrap( showName( name ) :: params.map( show( _, needParens = true ) ) )
     case TVar( name )          => "?" <> showName( name )
-    case a -> b if !needParens =>
+    case a ->: b if !needParens =>
       group( show( a, true ) <> ">" <> zeroWidthLine <> show( b, false ) )
     case _ => parens( nest( show( ty, false ) ) )
   }

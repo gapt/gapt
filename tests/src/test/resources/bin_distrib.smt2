@@ -29,7 +29,6 @@
       (case One y)
       (case (ZeroAnd xs) (ZeroAnd (times xs y)))
       (case (OneAnd ys) (plus (ZeroAnd (times ys y)) y))))
-(assert-not
+(prove
   (forall ((x Bin) (y Bin) (z Bin))
     (= (times x (plus y z)) (plus (times x y) (times x z)))))
-(check-sat)

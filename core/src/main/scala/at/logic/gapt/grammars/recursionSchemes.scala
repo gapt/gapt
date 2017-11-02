@@ -298,7 +298,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
 
   val isSubtermC = "is_subterm"
   def isSubterm( v: Expr, t: Expr ): Formula =
-    Const( isSubtermC, v.ty -> ( t.ty -> To ) )( v, t ).asInstanceOf[Formula]
+    Const( isSubtermC, v.ty ->: t.ty ->: To )( v, t ).asInstanceOf[Formula]
 
   val canonicalArgs = nonTerminals map { case nt @ Const( _, FunctionType( _, argTypes ) ) => nt -> argTypes.zipWithIndex.map { case ( t, i ) => Var( s"${nt}_$i", t ) } } toMap
   val states = canonicalArgs map { case ( nt, args ) => nt( args: _* ) }

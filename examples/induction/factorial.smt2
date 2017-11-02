@@ -16,6 +16,5 @@
     (case o x)
     (case (s y1) (g (times x y) y1))))
 
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (g (s o) x) (f x))))
-(check-sat)

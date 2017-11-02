@@ -26,7 +26,7 @@ class LKToLKskTest extends Specification {
        Ex quantifier occurrences, their instantiation in the succedent creates 4 different paths.
      */
 
-    val x = Var( "X", Ti -> To )
+    val x = Var( "X", Ti ->: To )
     val y = Var( "y", Ti )
     val f = Ex( y, All( x, App( x, y ) ) )
     val p0 = AtomicExpansion( f )
@@ -46,7 +46,7 @@ class LKToLKskTest extends Specification {
     /* This proof has 2 skolem constants, since the pseudo cut on P allows us to contract both sides. Then we need to
        share both skolem constants in the two parent branches p1 and p2.
      */
-    val x = Var( "X", Ti -> To )
+    val x = Var( "X", Ti ->: To )
     val y = Var( "y", Ti )
     val p = Atom( Const( "P", To ), Nil )
     val f = Ex( y, All( x, App( x, y ) ) )
@@ -66,7 +66,7 @@ class LKToLKskTest extends Specification {
     /* This proof has 3 skolem constants. Since we skip the contraction on the right hand side, we share the skolem
        constant for the All quantifier, but not for the Ex quantifier.
      */
-    val x = Var( "X", Ti -> To )
+    val x = Var( "X", Ti ->: To )
     val y = Var( "y", Ti )
     val p = Atom( Const( "P", To ), Nil )
     val f = Ex( y, All( x, App( x, y ) ) )
@@ -86,7 +86,7 @@ class LKToLKskTest extends Specification {
        skolem constants for the All quantifiers. Similar to the non-cut version, this breaks the homomorphy property and
        we also need to create fresh constants for the Ex quantifiers.
      */
-    val x = Var( "X", Ti -> To )
+    val x = Var( "X", Ti ->: To )
     val y = Var( "y", Ti )
     val p = Atom( Const( "P", To ), Nil )
     val f = Ex( y, All( x, App( x, y ) ) )

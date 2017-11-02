@@ -7,6 +7,5 @@
 ;-   (= (plus o x) x)))
 ;- (assert (forall ((x nat) (y nat))
 ;-   (= (plus (s x) y) (s (plus x y)))))
-(assert-not (forall ((x nat) (y nat))
+(prove (forall ((x nat) (y nat))
   (= (plus x y) (plus y x))))
-(check-sat)

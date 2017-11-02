@@ -11,6 +11,5 @@
     (case (cons x2 xs) (or (= x x2) (elem x xs)))
     (case nil false)))
 
-(assert-not (forall ((x i) (y list) (z list))
+(prove (forall ((x i) (y list) (z list))
   (=> (elem x z) (elem x (append y z)))))
-(check-sat)

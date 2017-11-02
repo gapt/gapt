@@ -31,7 +31,7 @@ abstract class SimpleInductionProof(
     val ExpSeq2:          ExpansionSequent,
     val t:                List[FOLTerm],
     val u:                List[FOLTerm],
-    val inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) {
+    val inductionFormula: Formula          = Atom( Var( "X", Ti ->: Ti ->: Ti ->: To ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) {
   import SimpleInductionProof._
 
   val Gamma0 = extractInstances( ExpSeq0 )
@@ -191,7 +191,7 @@ object SimpleInductionProof {
   val gamma = FOLVar( "γ" )
   val nu = FOLVar( "ν" )
   val snu = FOLFunction( "s", List( nu ) )
-  val X = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), alpha, nu, gamma )
+  val X = Atom( Var( "X", Ti ->: Ti ->: Ti ->: To ), alpha, nu, gamma )
 
 }
 
@@ -201,7 +201,7 @@ class SimpleInductionProofU(
     ExpSeq2:          ExpansionSequent,
     t:                List[FOLTerm],
     u:                List[FOLTerm],
-    inductionFormula: Formula          = Atom( Var( "X", Ti -> ( Ti -> ( Ti -> To ) ) ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) extends SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, inductionFormula ) {
+    inductionFormula: Formula          = Atom( Var( "X", Ti ->: Ti ->: Ti ->: To ), FOLVar( "α" ), FOLVar( "ν" ), FOLVar( "γ" ) ) ) extends SimpleInductionProof( ExpSeq0, ExpSeq1, ExpSeq2, t, u, inductionFormula ) {
   import SimpleInductionProof._
 
   protected override def Fprime( x1: FOLTerm, x2: FOLTerm ): FOLFormula =

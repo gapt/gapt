@@ -7,7 +7,10 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.{ HOLClause, HOLSequent, Sequent }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.lk.{ CLSTerm, SequentComposition }
+import at.logic.gapt.proofs.lk.{ CLSTerm, SequentComposition,LKProof }
+import at.logic.gapt.utils.Logger
+import scala.annotation.tailrec
+import scala.util.control.TailCalls._
 
 /**
  * Calculates the characteristic clause set
@@ -124,6 +127,12 @@ object CharacteristicClauseSet {
 
   def apply[Data]( struct: Struct[Data], cutConfiguration: HOLSequent ): Set[SequentComposition] =
     ( new CharacteristicClauseSet[Data] )( struct, cutConfiguration )
+
+  def apply( p: LKProof ): Set[HOLClause] =
+    apply( p, CERES.skipNothing ).getOrElse(Set())
+
+  def apply( p: LKProof, pred: Formula => Boolean ): Set[HOLClause] =
+    apply( StructCreators.extract( p, pred ) ).getOrElse(Set())
 }
 
 object SimplifyStruct {

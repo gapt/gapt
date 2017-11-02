@@ -7,14 +7,14 @@ class EtaExpansionTest extends Specification {
   val x = Var( "x", Ti );
   val y = Var( "y", Ti );
   val z = Var( "z", Ti );
-  val f = Var( "f", Ti -> Ti );
-  val g = Var( "g", Ti -> Ti )
-  val f2 = Var( "f2", Ti -> Ti );
-  val g2 = Var( "g2", Ti -> Ti )
-  val g3 = Var( "g3", ( Ti -> ( Ti -> Ti ) ) )
+  val f = Var( "f", Ti ->: Ti );
+  val g = Var( "g", Ti ->: Ti )
+  val f2 = Var( "f2", Ti ->: Ti );
+  val g2 = Var( "g2", Ti ->: Ti )
+  val g3 = Var( "g3", Ti ->: Ti ->: Ti )
   val g4 = Abs( x, g3 )
   val g5 = Abs( x, App( g3, x ) )
-  val g6 = Var( "g6", ( ( Ti -> Ti ) -> ( Ti -> Ti ) ) )
+  val g6 = Var( "g6", ( Ti ->: Ti ) ->: Ti ->: Ti )
 
   "EtaExpansion" should {
     "expand correctly the lambda expressions f : (i->i) to lambda x. f(x)" in {

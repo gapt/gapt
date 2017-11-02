@@ -11,5 +11,4 @@
   (=> (and (P x (f y)) (P x (g y))) (P (s x) y))))
 
 (declare-const c witness)
-(assert-not (forall ((x nat)) (P x c)))
-(check-sat)
+(prove (forall ((x nat)) (P x c)))

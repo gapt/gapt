@@ -284,8 +284,8 @@ object Session {
         } )
 
         def apply( t: Ty ): Ty = t match {
-          case base: TBase  => apply( base )
-          case `->`( a, b ) => apply( a ) -> apply( b )
+          case base: TBase => apply( base )
+          case a ->: b     => apply( a ) ->: apply( b )
         }
       }
 

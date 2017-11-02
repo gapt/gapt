@@ -32,6 +32,9 @@ object Pi2CutIntroduction extends Logger {
     findMinimalPi2Grammar( lang, alpha, betas, solver ).flatMap { grammar =>
       info( s"Found grammar of size: ${grammar.size}\n$grammar" )
       metrics.value( "grammarsize", grammar.size )
+      metrics.value( "alpha_prods", grammar.productions.count( _._1 == grammar.alpha ) )
+      metrics.value( "pi1_grammarsize", grammar.tratg.size )
+      metrics.value( "genlangsize", grammar.language.size )
       val sehs = pi2GrammarToSEHS( grammar, enc )
       val ( cutFormulaOpt, x, y ) = introducePi2Cut( sehs )
       cutFormulaOpt.flatMap { cutFormula =>

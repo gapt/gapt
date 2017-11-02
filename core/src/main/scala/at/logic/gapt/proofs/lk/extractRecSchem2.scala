@@ -8,10 +8,10 @@ class extractRecSchem2( var ctx: Context ) {
 
   def ty( f: Formula, p: Polarity ): Ty =
     ( f, p ) match {
-      case ( All( v, g ), Polarity.InAntecedent ) => v.ty -> ty( g, p )
-      case ( Ex( v, g ), Polarity.InSuccedent )   => v.ty -> ty( g, p )
-      case ( All( v, g ), Polarity.InSuccedent )  => ( v.ty -> ty( g, p ) -> To ) -> To
-      case ( Ex( v, g ), Polarity.InAntecedent )  => ( v.ty -> ty( g, p ) -> To ) -> To
+      case ( All( v, g ), Polarity.InAntecedent ) => v.ty ->: ty( g, p )
+      case ( Ex( v, g ), Polarity.InSuccedent )   => v.ty ->: ty( g, p )
+      case ( All( v, g ), Polarity.InSuccedent )  => ( v.ty ->: ty( g, p ) ->: To ) ->: To
+      case ( Ex( v, g ), Polarity.InAntecedent )  => ( v.ty ->: ty( g, p ) ->: To ) ->: To
       case ( _, _ ) if !containsQuantifier( f )   => To
     }
 

@@ -18,8 +18,8 @@ class Z3SessionTest extends Specification {
   "validity of linear example" in {
     val nat = TBase( "nat" )
     val o = Const( "0", nat )
-    val s = Const( "s", nat -> nat )
-    val p = Const( "p", nat -> To )
+    val s = Const( "s", nat ->: nat )
+    val p = Const( "p", nat ->: To )
 
     val numeral = Stream.iterate[Expr]( o )( s( _ ) )
 

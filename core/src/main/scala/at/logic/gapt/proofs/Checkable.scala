@@ -25,7 +25,7 @@ object Checkable {
             s"Unknown base type: $name" )
           params.foreach( check( context, _ ) )
         case TVar( _ ) =>
-        case in -> out =>
+        case in ->: out =>
           check( context, in )
           check( context, out )
       }

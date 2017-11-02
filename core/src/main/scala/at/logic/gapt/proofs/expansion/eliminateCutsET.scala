@@ -1,14 +1,15 @@
 package at.logic.gapt.proofs.expansion
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.utils.generatedUpperSetInPO
+
+import scala.collection.mutable
 
 object eliminateCutsET {
   def apply( expansionProof: ExpansionProof ): ExpansionProof = {
     if ( expansionProof.cuts.isEmpty ) return ExpansionProof( expansionProof.nonCutPart )
 
     def simplifiedEPWC( cuts: Seq[ETImp], es: ExpansionSequent ) =
-      ExpansionProof( eliminateMerges.unsafe( ETCut( simpPropCuts( cuts ) ) +: es ) )
+      ExpansionProof( eliminateMerges.unsafe( simpPropCuts( cuts ) +: es ) )
 
     var epwc = simplifiedEPWC( expansionProof.cuts, expansionProof.nonCutPart )
 
@@ -23,17 +24,20 @@ object eliminateCutsET {
         case Some( ( newCuts, newES ) ) =>
           epwc = simplifiedEPWC( newCuts, newES )
         case None =>
-          return {
-            if ( cuts.isEmpty ) return ExpansionProof( epwc.nonCutPart )
-            else epwc
-          }
+          return if ( epwc.cuts.isEmpty ) ExpansionProof( epwc.nonCutPart ) else epwc
       }
     }
     throw new IllegalStateException
   }
 
-  private def simpPropCuts( cuts: Seq[ETImp] ): Seq[ETImp] = {
-    val newCuts = Seq.newBuilder[ETImp]
+  private def safeMerge( ets: Seq[ExpansionTree] ): ExpansionTree =
+    ets.sortBy {
+      case ETStrongQuantifier( _, _, _ ) => 0
+      case _                             => 1
+    }.reduceLeft( ETMerge( _, _ ) )
+
+  private def simpPropCuts( cuts: Seq[ETImp] ): ExpansionTree = {
+    val newCuts = mutable.Buffer[( ExpansionTree, ExpansionTree )]()
     def simp( left: ExpansionTree, right: ExpansionTree ): Unit = ( left, right ) match {
       case ( _: ETWeakening, _ )        =>
       case ( _, _: ETWeakening )        =>
@@ -51,10 +55,11 @@ object eliminateCutsET {
         simp( t1, t2 ); simp( s1, s2 )
       case ( ETImp( t1, s1 ), ETImp( t2, s2 ) ) =>
         simp( t2, t1 ); simp( s1, s2 )
-      case _ => newCuts += ETImp( left, right )
+      case _ => newCuts += ( ( left, right ) )
     }
     for ( ETImp( l, r ) <- cuts ) simp( l, r )
-    newCuts.result()
+    ETCut( newCuts.groupBy( _._1.shallow ).values.map( cs =>
+      ETImp( safeMerge( cs.map( _._1 ) ), safeMerge( cs.map( _._2 ) ) ) ) )
   }
 
   private def singleStep( cut1: ExpansionTree, cut2: ExpansionTree, rest: Seq[ETImp],

@@ -5,7 +5,8 @@ import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
 import Context._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, ProofLink }
+import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.utils.NameGenerator
 
 import scala.reflect.ClassTag
@@ -296,10 +297,14 @@ object Context {
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
     def lookup( name: Expr ): Option[HOLSequent] =
-      ( for {
-        ( declName, declSeq ) <- names.values
+      for {
+        Apps( Const( n, _ ), _ ) <- Some( name )
+        ( declName, declSeq ) <- names.get( n )
         subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq ) ).headOption
+      } yield subst( declSeq )
+
+    def link( name: Expr ): Option[ProofLink] =
+      for ( sequent <- lookup( name ) ) yield ProofLink( name, sequent )
 
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {
@@ -622,6 +627,29 @@ object MutableContext {
     guess( rs.view.flatMap( ev.names ) )
   def guess( p: LKProof ): MutableContext =
     guess( containedNames( p ) ) // TODO: add (Skolem) definitions
+
+  def guess( p: ResolutionProof ): MutableContext = {
+    val ctx = default()
+
+    val cs = containedNames( p )
+
+    val tys = cs.flatMap( c => baseTypes( c.ty ) )
+    for ( ty <- tys if !ctx.isType( ty ) )
+      ctx += Sort( ty )
+
+    val defs: Map[Const, Expr] = p.definitions.toMap
+    def add( c: Const ): Unit =
+      if ( ctx.constant( c.name ).isEmpty ) defs.get( c ) match {
+        case Some( d ) =>
+          constants( d ).foreach( add )
+          ctx += Definition( c, d )
+        case None =>
+          ctx += c
+      }
+    cs.foreach { case c: Const => add( c ) case _ => }
+
+    ctx
+  }
 }
 
 class ReadonlyMutableContext( ctx: ImmutableContext ) extends MutableContext( ctx ) {

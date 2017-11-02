@@ -103,6 +103,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
     propositional,
     structural = true,
     bidirectionalDefs = false,
+    cse = false,
     ctx = state.ctx,
     nameGen = state.nameGen ) with InferenceRule {
     def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] ) =

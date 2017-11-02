@@ -49,8 +49,8 @@ class TraitsTest extends Specification {
   "LogicalConstant" should {
     "be on quantifiers" in {
       ForallC( Ti ) must beAnInstanceOf[LogicalConstant]
-      ForallC( Ti -> Ti ) must beAnInstanceOf[LogicalConstant]
-      ExistsC( Ti -> Ti ) must beAnInstanceOf[LogicalConstant]
+      ForallC( Ti ->: Ti ) must beAnInstanceOf[LogicalConstant]
+      ExistsC( Ti ->: Ti ) must beAnInstanceOf[LogicalConstant]
     }
   }
 }
