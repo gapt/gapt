@@ -703,4 +703,15 @@ trait TacticCommands {
 
   def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )
+
+  def introUnivsExcept( i: Int ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q @ All.Block( xs, f ) = goal.conclusion.succedent.head
+      _ <- Tactical.guard( i < xs.size, s"less than $i quantifiers" )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent( Suc( 0 ) )._1 -> All( xs( i ), f ) ) )
+      _ <- insert( ForallRightBlock( CutRule( newGoal, ForallLeftRule( LogicalAxiom( f ), All( xs( i ), f ) ), All( xs( i ), f ) ), q, xs ) )
+    } yield ()
+  }
 }

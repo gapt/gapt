@@ -285,6 +285,14 @@ object Tactical {
       Sequent(
         resultElements.take( tacticals.antecedent.size ),
         resultElements.drop( tacticals.antecedent.size ) ) ).aka( s"sequence($tacticals)" )
+
+  def guard( cond: => Boolean, message: => String )( implicit args: sourcecode.Args ): Tactical[Unit] =
+    new Tactical[Unit] {
+      def apply( proofState: ProofState ): Either[TacticalFailure, ( Unit, ProofState )] =
+        if ( cond ) Right( (), proofState )
+        else Left( TacticalFailure( this, proofState, message ) )
+      override def toString = s"guard(${args.value.head.head})"
+    }
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>

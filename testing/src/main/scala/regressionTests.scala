@@ -39,7 +39,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
-    val proof = Viper.getStrategies( ViperOptions() ).view.flatMap {
+    val proof = Viper.getStrategies( sequent, ViperOptions() ).view.flatMap {
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {

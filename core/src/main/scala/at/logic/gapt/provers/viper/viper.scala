@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.viper
 
 import ammonite.ops._
-import at.logic.gapt.expr.Formula
+import at.logic.gapt.expr.{ All, Formula }
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
@@ -161,18 +161,20 @@ object ViperOptions {
 
 object Viper {
 
-  def getStrategies( opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactical[_] )] =
+  def getStrategies( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): List[( Duration, Tactical[_] )] =
     opts.mode match {
       case "untrusted_funind" =>
         List( Duration.Inf -> AnalyticInductionTactic( UntrustedFunctionalInductionAxioms, Escargot )
           .aka( "functional induction" ) )
       case "portfolio" =>
         import scala.concurrent.duration._
-        List(
+        val numVars = sequent.succedent match { case Seq( All.Block( xs, _ ) ) => xs.size }
+        ( List(
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
           20.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
-          60.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
+          60.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) ) ++
+          ( for ( i <- 0 until numVars ) yield 20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar " ) ) ) ).reverse
       case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
@@ -206,7 +208,7 @@ object Viper {
     apply( sequent, ViperOptions( verbosity = 3 ) )
 
   def apply( sequent: HOLSequent, opts: ViperOptions )( implicit ctx: MutableContext ): Option[LKProof] =
-    apply( sequent, opts.verbosity, getStrategies( opts ) )
+    apply( sequent, opts.verbosity, getStrategies( sequent, opts ) )
 
   def apply( sequent: HOLSequent, verbosity: Int,
              strategies: List[( Duration, Tactical[_] )] )( implicit ctx: MutableContext ): Option[LKProof] = {
