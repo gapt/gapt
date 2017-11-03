@@ -1985,9 +1985,9 @@ problem: at.logic.gapt.formats.tip.TipProblem =
 ⊢
 ∀n ∀m '-2'(n, '+2'(n, m)) = Z
 
-gapt> val Some(proof) = Viper(problem, verbosity=0)
+gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 proof: at.logic.gapt.proofs.lk.LKProof =
-[p136] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+[p169] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 ¬#c(Z: Nat) = S(y0),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
@@ -1995,18 +1995,18 @@ proof: at.logic.gapt.proofs.lk.LKProof =
 ∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀z ∀y '+2'(S(z), y) = S('+2'(z, y))
 ⊢
-∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p135, Ant(4)))
-[p135] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p168, Ant(3)))
+[p168] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 ¬#c(Z: Nat) = S(y0),
-∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
-∀m
-  ((⊤ ⊃ '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m)) = #c(Z: Nat)) ∧
-      ∀n_0
-        ('-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
-          '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
-    ∀n '-2'(n, '+2'(n, m)) = #c(Z: Nat)),
-∀y '-2'(#c(Z: Nat), y) = #c(Z:...
+(⊤ ⊃ ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
+    ∀n_0
+      (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
+        ∀m '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
+  ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat),
+∀y '+2'(#c(Z: Nat), y) = y,
+∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ...
 
 \end{clilisting}
 
