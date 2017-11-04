@@ -90,8 +90,7 @@ object InductionGrammar {
   }
 
   implicit object checkable extends Checkable[InductionGrammar] {
-    override def check( context: Context, g: InductionGrammar ): Unit = {
-      implicit val ctx: Context = context
+    override def check( g: InductionGrammar )( implicit ctx: Context ): Unit = {
       for ( nt <- g.nonTerminals; x <- nt ) ctx.check( x )
       val Some( ctrs ) = ctx.getConstructors( g.indTy )
       require( g.nu.keySet == ctrs.toSet )

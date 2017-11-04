@@ -128,7 +128,7 @@ sealed trait Context extends BabelSignature {
     }
 
   def check[T: Checkable]( t: T ): Unit =
-    implicitly[Checkable[T]].check( this, t )
+    implicitly[Checkable[T]].check( t )( this )
 
   def ++( updates: Traversable[Update] ): ImmutableContext =
     updates.foldLeft( toImmutable )( _ + _ )
