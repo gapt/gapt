@@ -190,12 +190,12 @@ object findMinimalInductionGrammar {
   def apply( indexedTermset: Map[Expr, Set[Expr]], gamma: NonTerminalVect,
              solver: MaxSATSolver )( implicit ctx: Context ): Option[InductionGrammar] = {
     val nameGen = rename.awayFrom( containedNames( indexedTermset ) ++ gamma )
-    val tau = nameGen.fresh( Var( "xTau", indexedTermset.values.view.flatten.head.ty ) )
+    val tau = nameGen.fresh( Var( "τ", indexedTermset.values.view.flatten.head.ty ) )
     val indTy = indexedTermset.keys.head.ty
-    val alpha = nameGen.fresh( Var( "xAlpha", indTy ) )
+    val alpha = nameGen.fresh( Var( "α", indTy ) )
     val nus = Map() ++ ctx.getConstructors( indTy ).get.map {
       case ctr @ Const( _, FunctionType( _, argTypes ) ) =>
-        ctr -> argTypes.map( argTy => nameGen.fresh( Var( "xNu", argTy ) ) )
+        ctr -> argTypes.map( argTy => nameGen.fresh( Var( "ν", argTy ) ) )
     }
     apply( indexedTermset, tau, alpha, nus, gamma, solver )
   }
