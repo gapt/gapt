@@ -8,7 +8,6 @@ import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.skolemize
-import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.viper.grammars2.{ InductionBUP, constructSIP }
 import at.logic.gapt.utils.SatMatchers

@@ -14,7 +14,7 @@ object constructSIP {
    */
   def apply( endSequent: HOLSequent, equationalTheory: Vector[Formula],
              bup: InductionBUP, solution: Expr, prover: Prover )( implicit ctx: MutableContext ): LKProof = {
-    val g = bup.g
+    val g = bup.grammar
     val subst = Substitution( bup.X -> solution )
     def substF( formula: Formula ): Formula = normalize( subst( formula ) ).asInstanceOf[Formula]
 
