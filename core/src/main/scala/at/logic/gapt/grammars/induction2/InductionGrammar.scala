@@ -58,8 +58,14 @@ case class InductionGrammar(
   def instanceGrammar( term: Expr ): VTRATG =
     inst( term ).instanceGrammar
 
-  def instanceLanguage( term: Expr ): Set[Expr] =
-    inst( term ).instanceGrammar.language
+  def instanceLanguage( term: Expr ): Set[Expr] = {
+    val fvs = freeVariables( term )
+    if ( fvs.isEmpty ) inst( term ).instanceGrammar.language else {
+      val nameGen = rename.awayFrom( InductionGrammar.isReplaceable.names( this ) ++ containedNames( term ) )
+      val grounding = for ( fv <- fvs ) yield fv -> nameGen.fresh( Const( fv.name, fv.ty ) )
+      TermReplacement( instanceLanguage( Substitution( grounding )( term ) ), grounding.map( _.swap ).toMap )
+    }
+  }
 
   def filterProductions( pred: Production => Boolean ): InductionGrammar =
     copy( productions = productions.filter( pred ) )
