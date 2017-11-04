@@ -17,7 +17,7 @@ class SExpressionParserTest extends Specification {
     "with unescaped \\ should fail" in {
       new SExpressionParser( "|\\|" ).SExpr.run() match {
         case Failure( _ ) => success
-        case x            => println( x ); failure
+        case _            => failure
       }
     }
     "unescaped | should not be part of matched atom" in {
