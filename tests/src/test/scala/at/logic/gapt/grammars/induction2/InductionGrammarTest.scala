@@ -71,4 +71,46 @@ class InductionGrammarTest extends Specification with SatMatchers {
     And( g.instanceLanguage( x ) ) must beUnsat
   }
 
+  "find linear" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += hoc"p: nat>o"
+    def numeral( i: Int ): Expr = if ( i > 0 ) le"s ${numeral( i - 1 )}" else le"0"
+    val indexedTermset = ( 0 to 3 ).map( n => numeral( n ) -> ( 0 until n ).map( i => le"p ${numeral( i )}" ).toSet ).toMap
+    val stableGrammar = stableInductionGrammar(
+      indexedTermset,
+      tau = hov"xTau: o", alpha = hov"xAlpha: nat",
+      nus = Map( hoc"0" -> List(), hoc"s" -> List( hov"xNu: nat" ) ),
+      gamma = List( hov"xGamma: nat" ) )
+    for ( ( n, ts ) <- indexedTermset )
+      ts diff stableGrammar.instanceLanguage( n ) must beEmpty
+    val Some( minimal ) = minimizeInductionGrammar( stableGrammar, indexedTermset )
+    minimal.size must_== 1
+  }
+
+  "find linear 2" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += hoc"p: nat>o"
+    def numeral( i: Int ): Expr = if ( i > 0 ) le"s ${numeral( i - 1 )}" else le"0"
+    val indexedTermset = ( 0 to 3 ).map( n => numeral( n ) -> ( 0 until n ).map( i => le"p ${numeral( i )}" ).toSet ).toMap
+    val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"xGamma: nat" ) )
+    minimal.size must_== 1
+  }
+
+  "find list" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
+    ctx += Ti
+    ctx += InductiveType( "list", hoc"nil: list", hoc"cons: i>list>list" )
+    ctx += hoc"p: list>o"
+    def list( as: List[Expr] ): Expr =
+      as match { case a :: as_ => le"cons $a ${list( as_ )}" case Nil => le"nil" }
+    val as = Stream.from( 0 ).map( i => Var( s"a$i", Ti ) )
+    val indexedTermset = ( 0 to 3 ).map( n => list( as.take( n ).toList ) ->
+      ( 1 to n ).map( i => le"p ${list( as.slice( i, n ).toList )}" ).toSet ).toMap
+    val Some( minimal ) = findMinimalInductionGrammar( indexedTermset, List( hov"xGamma: i" ) )
+    minimal.size must_== 1
+  }
+
 }
