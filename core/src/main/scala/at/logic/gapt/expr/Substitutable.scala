@@ -91,18 +91,23 @@ trait ExprSubstitutable6 extends ExprSubstitutable5 {
     ( sub, x ) => applySub( sub, x ).asInstanceOf[FOLAtom]
 }
 
-object Substitutable extends ExprSubstitutable6 {
+trait SeqSubstitutable {
+  implicit def SubstitutableSeq[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Seq[T], Seq[U]] =
+    ( sub, seq ) => seq.map( ev.applySubstitution( sub, _ ) )
+}
+
+object Substitutable extends ExprSubstitutable6 with SeqSubstitutable {
   /**
    * Testifies that a Set of substitutable objects is itself substitutable (by mapping over it).
    */
   implicit def SubstitutableSet[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Set[T], Set[U]] =
     ( sub, set ) => set.map( ev.applySubstitution( sub, _ ) )
 
-  /**
-   * Testifies that a Seq of substitutable objects is itself substitutable (by mapping over it).
-   */
-  implicit def SubstitutableSeq[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Seq[T], Seq[U]] =
-    ( sub, seq ) => seq.map( ev.applySubstitution( sub, _ ) )
+  implicit def vectorSubstitutable[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, Vector[T], Vector[U]] =
+    ( sub, vec ) => vec.map( ev.applySubstitution( sub, _ ) )
+
+  implicit def listSubstitutable[S <: Substitution, T, U]( implicit ev: Substitutable[S, T, U] ): Substitutable[S, List[T], List[U]] =
+    ( sub, vec ) => vec.map( ev.applySubstitution( sub, _ ) )
 
   /**
    * Testifies that an Option of substitutable objects is itself substitutable (by mapping over it).

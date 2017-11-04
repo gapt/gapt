@@ -23,7 +23,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
         Production( hov"xTau:o", hof"p xNu -> p (s xNu)" ),
         Production( hov"xTau:o", hof"-p xAlpha" ) ) )
     ctx.check( g )
-    And( g.instantiate( le"s (s (s 0))" ).language ) must beUnsat
+    And( g.instanceLanguage( le"s (s (s 0))" ) ) must beUnsat
   }
 
   "nat general" in {
@@ -44,7 +44,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
         Production( hov"xGamma:w", le"c" ),
         Production( hov"xTau:o", hof"-p c xAlpha" ) ) )
     ctx.check( g )
-    And( g.instantiate( le"s (s (s 0))" ).language ) must beUnsat
+    And( g.instanceLanguage( le"s (s (s 0))" ) ) must beUnsat
   }
 
   "lists" in {
@@ -68,7 +68,7 @@ class InductionGrammarTest extends Specification with SatMatchers {
     ctx.check( g )
     ctx += hoc"a0: i"; ctx += hoc"a1: i"
     val x = le"cons a0 (cons a1 nil)"
-    And( g.instantiate( x ).language ) must beUnsat
+    And( g.instanceLanguage( x ) ) must beUnsat
   }
 
 }
