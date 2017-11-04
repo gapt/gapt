@@ -8,7 +8,9 @@ import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.skolemize
-import at.logic.gapt.provers.viper.grammars2.InductionBUP
+import at.logic.gapt.prooftool.prooftool
+import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.provers.viper.grammars2.{ InductionBUP, constructSIP }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
@@ -38,6 +40,9 @@ class InductionBupTest extends Specification with SatMatchers {
     val solution = le"^(α:list)^ν^γ p γ ν"
     val instBup = normalize( instantiate( bup.formula, solution ) ).asInstanceOf[Formula]
     skolemize( instBup ) must beValid
+    val lk = constructSIP( sequent, Vector(), bup, solution, Sat4j )( ctx.newMutable )
+    ctx.check( lk )
+    ok
   }
 
 }

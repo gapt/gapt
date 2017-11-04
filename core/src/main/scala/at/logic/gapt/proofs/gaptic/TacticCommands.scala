@@ -603,6 +603,13 @@ trait TacticCommands {
   def forget( ls: String* ): Tactical[Unit] =
     Tactical( Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () ) )
 
+  def forget( pred: ( String, Formula ) => Boolean ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- insert( OpenAssumption( goal.labelledSequent.filterNot( lf => pred( lf._1, lf._2 ) ) ) )
+    } yield ()
+  }
+
   /**
    * Moves the specified goal to the front of the goal list.
    * @param indexOfSubGoal The index of the goal.

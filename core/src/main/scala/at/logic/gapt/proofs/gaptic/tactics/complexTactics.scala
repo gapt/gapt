@@ -133,7 +133,7 @@ case class RewriteTactic(
  * @param mode How to apply the tactic: To a specific label, to the only fitting formula, or to any fitting formula.
  * @param ctx A [[at.logic.gapt.proofs.Context]]. Used to find the constructors of inductive types.
  */
-case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Context ) extends Tactic[Unit] {
+case class InductionTactic( mode: TacticApplyMode, v: Var, eigenVariables: Map[Const, Vector[Var]] = Map() )( implicit ctx: Context ) extends Tactic[Unit] {
 
   /**
    * Reads the constructors of type `t` from the context.
@@ -149,6 +149,9 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
     }
   }
 
+  def withEigenVariables( evs: Map[Const, Vector[Var]] ): InductionTactic =
+    copy( eigenVariables = evs )
+
   def apply( goal: OpenAssumption ) =
     for {
       ( label, main, idx: Suc ) <- findFormula( goal, mode )
@@ -157,8 +160,8 @@ case class InductionTactic( mode: TacticApplyMode, v: Var )( implicit ctx: Conte
     } yield {
       val cases = constrs map { constr =>
         val FunctionType( _, argTypes ) = constr.ty
-        var nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
-        val evs = argTypes map { at => nameGen.fresh( if ( at == v.ty ) v else Var( "x", at ) ) }
+        val nameGen = rename.awayFrom( freeVariables( goal.conclusion ) )
+        val evs = eigenVariables.getOrElse( constr, argTypes map { at => nameGen.fresh( if ( at == v.ty ) v else Var( "x", at ) ) } )
         val hyps = NewLabels( goal.labelledSequent, s"IH${v.name}" ) zip ( evs filter { _.ty == v.ty } map { ev => Substitution( v -> ev )( formula ) } )
         val subGoal = hyps ++: goal.labelledSequent.delete( idx ) :+ ( label -> Substitution( v -> constr( evs: _* ) )( formula ) )
         InductionCase( OpenAssumption( subGoal ), constr, subGoal.indices.take( hyps.size ), evs, subGoal.indices.last )
