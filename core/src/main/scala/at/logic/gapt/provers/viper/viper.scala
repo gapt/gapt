@@ -247,8 +247,8 @@ object Viper {
           60.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) ) ++
           ( for ( i <- 0 until numVars ) yield 20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar " ) ) ) ++
           ( 0 until numVars ).flatMap( i => List(
-            20.seconds -> new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2.copy( quantTys = Some( Seq() ) ) ).aka( s"treegrammar2 without quantifiers $i" ),
-            60.seconds -> new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ).aka( s"treegrammar2 $i" ) ) ) ).reverse
+            20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar2 without quantifiers $i" ),
+            60.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ) ).aka( s"treegrammar2 $i" ) ) ) ).reverse
       case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
