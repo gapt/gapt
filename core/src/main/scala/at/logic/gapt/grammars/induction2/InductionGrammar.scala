@@ -4,9 +4,11 @@ import at.logic.gapt.expr._
 import InductionGrammar._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.atoms
+import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
 import at.logic.gapt.grammars.{ VTRATG, VectGrammarMinimizationFormula, stableTerms }
 import at.logic.gapt.proofs.{ Checkable, Context }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
+import at.logic.gapt.utils.Doc
 import cats.syntax.traverse._
 import cats.instances.list._
 
@@ -25,6 +27,9 @@ case class InductionGrammar(
 
   def nonTerminals: Vector[NonTerminalVect] =
     Vector( List( tau ), List( alpha ), gamma ) ++ nus.values
+
+  def terminals: Set[Const] =
+    nus.keySet ++ constants( productions.flatMap( _.rhs ) )
 
   def indTy: Ty =
     alpha.ty
@@ -59,6 +64,9 @@ case class InductionGrammar(
   def filterProductions( pred: Production => Boolean ): InductionGrammar =
     copy( productions = productions.filter( pred ) )
 
+  override def toString: String =
+    new IndGExporter( unicode = true, this ).export
+
 }
 
 object InductionGrammar {
@@ -67,6 +75,8 @@ object InductionGrammar {
   case class Production( lhs: NonTerminalVect, rhs: List[Expr] ) {
     require( lhs.size == rhs.size )
     for ( ( l, r ) <- lhs zip rhs ) require( l.ty == r.ty )
+
+    def zipped: List[( Var, Expr )] = lhs zip rhs
   }
 
   object Production {
@@ -114,6 +124,41 @@ object InductionGrammar {
         productions.view.flatMap( instanceProductions ).toSet )
     }
   }
+}
+
+private class IndGExporter( unicode: Boolean, g: InductionGrammar )
+  extends BabelExporter( unicode, MapBabelSignature( g.terminals ) ) {
+  import Doc._
+
+  def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
+
+  def showNt( nt: Var ): Doc = show( nt, false, Set(), Map(), prio.max )._1
+  def showNt( nt: List[Var] ): Doc = csep( nt.map( showNt ) )
+
+  def export: String = {
+    val knownTypes = g.terminals.map { c => c.name -> c }.toMap ++ g.nonTerminals.flatten.map( nt => nt.name -> nt )
+
+    val ntDecl =
+      "Start symbol: " <> showNt( g.tau ) <> line <>
+        "Parameter: " <> showNt( g.alpha ) <> line <>
+        "Quantifiers: " <> showNt( g.gamma ) <> line <>
+        "Constructors: " <> csep( g.nus.toList.map {
+          case ( c, nu ) => show( c( nu ), true, Set(), knownTypes, prio.max )._1
+        } )
+
+    val prods = stack( g.productions.toList
+      sortBy { case Production( as, ts ) => ( g.nonTerminals.indexOf( as ), ts.toString ) }
+      map { p =>
+        group( csep( p.zipped.map {
+          case ( a, t ) =>
+            group( group( show( a, false, Set(), knownTypes, prio.impl )._1 </> "→" ) </> nest(
+              show( t, true, Set(), knownTypes, prio.impl )._1 ) )
+        } ) ) <> line
+      } )
+
+    group( ntDecl <> line <> line <> prods ).render( lineWidth )
+  }
+
 }
 
 object stableInductionGrammar {
