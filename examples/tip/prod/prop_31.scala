@@ -14,7 +14,7 @@ object prop_31 extends TacticsProof {
       qrevcons: !x!xs!y qrev (cons x xs) y = qrev xs (cons x y)
       :- !x qrev (qrev x nil) nil = x
   """ ) {
-    treeGrammarInduction
+    treeGrammarInduction2
       .canSolSize( 2, 3 )
       .grammarWeighting( r => folTermSize( r.rhs ) )
   }

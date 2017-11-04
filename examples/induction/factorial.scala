@@ -9,9 +9,8 @@ import at.logic.gapt.proofs.reduction.ErasureReductionET
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.smtlib.CVC4
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
-import at.logic.gapt.utils.{ Logger, Maybe }
+import at.logic.gapt.provers.viper.grammars2.TreeGrammarProverOptions.Passthru
+import at.logic.gapt.utils.Maybe
 
 object factorial extends TacticsProof {
   ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
@@ -19,7 +18,6 @@ object factorial extends TacticsProof {
   ctx += hoc"fact: nat>nat"
   ctx += hoc"qfact: nat>nat>nat"
 
-  Logger.makeVerbose( classOf[TreeGrammarProver] )
   // Problem: escargot uses fact(0) instead of s(0)...
   val qfact_correct = Lemma(
     hols"""
@@ -33,10 +31,12 @@ object factorial extends TacticsProof {
           qfs: !x!y qfact y (s x) = qfact (y * s x) x
           :- !x qfact (s 0) x = fact x
         """ ) {
-      treeGrammarInduction
+      treeGrammarInduction2
+        .verbose
         .quantTys( "nat" )
         .equationalTheory( hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x" )
         .canSolSize( 1 )
+        .tautCheckSize( 0.5f, 1 ) // exponential blowup of canonical solution...
         .instanceProver( new OneShotProver {
           override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = ???
           override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {

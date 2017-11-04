@@ -9,7 +9,7 @@ object associativitySpecialCase extends TacticsProof {
   ctx += hoc"'+': nat>nat>nat"
 
   def tac = // FIXME(gabriel): WTF, this causes a syntax error when inlined??!?!
-    treeGrammarInduction
+    treeGrammarInduction2
       .equationalTheory( hof"0+x=x", hof"x+0=x" )
       .instanceProver( spass )
       .quantTys()

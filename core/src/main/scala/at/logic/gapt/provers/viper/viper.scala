@@ -73,7 +73,7 @@ class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions =
   def copy( options: grammars2.TreeGrammarProverOptions ) = new TreeGrammarInductionTactic2( options )
 
   def verbose: TreeGrammarInductionTactic2 = {
-    Logger.makeVerbose( classOf[TreeGrammarProver] )
+    Logger.makeVerbose( classOf[grammars2.TreeGrammarProver] )
     this
   }
 

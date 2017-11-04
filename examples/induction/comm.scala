@@ -14,7 +14,7 @@ object comm extends TacticsProof {
       :- !x!y x+y = y+x
   """ ) {
     allR
-    treeGrammarInduction
+    treeGrammarInduction2
       .quantTys()
       .canSolSize( 1 )
   }

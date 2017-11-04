@@ -141,8 +141,6 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     case DefinitionRightRule( subProof, aux, main ) =>
       val subProofNew = applySubstitution( substitution, subProof )
       DefinitionRightRule( subProofNew, aux, substitution( main ) )
-
-    case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
 
   private def indCase( subst: Substitution, c: InductionCase ): InductionCase =

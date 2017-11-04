@@ -25,7 +25,7 @@ object constructSIP {
     for ( ( eq, i ) <- equationalTheory.zipWithIndex ) {
       val lem = universalClosure( eq )
       state += cut( s"eq_$i", lem )
-      state += forget( "goal" )
+      state += forget( "g" )
       state += decompose
       val proof = prover.getLKProof( state.currentSubGoalOption.get.conclusion ).
         getOrElse( throw new Exception( s"Theory equation $eq is unprovable:\n${state.currentSubGoalOption.get.toPrettyString}" ) )
