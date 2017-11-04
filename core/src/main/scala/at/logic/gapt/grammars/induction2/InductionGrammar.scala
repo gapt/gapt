@@ -16,7 +16,7 @@ case class InductionGrammar(
     tau:         Var,
     alpha:       Var,
     nus:         Map[Const, NonTerminalVect],
-    gamma:       NonTerminalVect,
+    gamma:       List[Var],
     productions: Vector[Production] ) {
 
   for ( Production( lhs, rhs ) <- productions ) {
@@ -81,6 +81,30 @@ object InductionGrammar {
 
   object Production {
     def apply( lhs: Var, rhs: Expr ): Production = Production( List( lhs ), List( rhs ) )
+  }
+
+  implicit object productionReplaceable extends ClosedUnderReplacement[Production] {
+    override def replace( prod: Production, p: PartialFunction[Expr, Expr] ): Production =
+      Production( TermReplacement( prod.lhs, p ).map( _.asInstanceOf[Var] ), TermReplacement( prod.rhs, p ) )
+
+    override def names( prod: Production ): Set[VarOrConst] =
+      containedNames( prod.lhs ++ prod.rhs )
+  }
+
+  implicit object isReplaceable extends ClosedUnderReplacement[InductionGrammar] {
+    override def replace( g: InductionGrammar, p: PartialFunction[Expr, Expr] ): InductionGrammar =
+      InductionGrammar(
+        tau = TermReplacement( g.tau, p ).asInstanceOf[Var],
+        alpha = TermReplacement( g.alpha, p ).asInstanceOf[Var],
+        nus = TermReplacement( g.nus, p ).map {
+          case ( c, nu ) =>
+            c.asInstanceOf[Const] -> nu.map( _.asInstanceOf[Var] )
+        },
+        gamma = TermReplacement( g.gamma, p ).map( _.asInstanceOf[Var] ),
+        productions = TermReplacement( g.productions, p ) )
+
+    override def names( g: InductionGrammar ): Set[VarOrConst] =
+      containedNames( g.nonTerminals ) ++ containedNames( g.productions )
   }
 
   implicit object checkable extends Checkable[InductionGrammar] {
