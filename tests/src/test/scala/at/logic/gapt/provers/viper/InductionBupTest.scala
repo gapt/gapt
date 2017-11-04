@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.skolemize
-import at.logic.gapt.provers.viper.grammars2.inductionBUP
+import at.logic.gapt.provers.viper.grammars2.InductionBUP
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 
@@ -34,10 +34,9 @@ class InductionBupTest extends Specification with SatMatchers {
         Production( hov"γ:w", le"g γ" ),
         Production( hov"γ:w", le"c" ) ) )
     ctx += hoc"a0: i"; ctx += hoc"a1: i"
-    val x = le"cons a0 (cons a1 nil)"
-    val bup = inductionBUP( g, enc, hof"p c α" )
+    val bup = InductionBUP( g, enc, hof"p c α" )
     val solution = le"^(α:list)^ν^γ p γ ν"
-    val instBup = normalize( instantiate( bup, solution ) ).asInstanceOf[Formula]
+    val instBup = normalize( instantiate( bup.formula, solution ) ).asInstanceOf[Formula]
     skolemize( instBup ) must beValid
   }
 
