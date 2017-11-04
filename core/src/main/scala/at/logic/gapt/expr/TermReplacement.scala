@@ -2,7 +2,6 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.utils.Not
 
 trait Replaceable[-I, +O] {
   def replace( obj: I, p: PartialFunction[Expr, Expr] ): O
