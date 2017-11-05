@@ -14,7 +14,6 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms._
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.SmtEquationMode
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
@@ -23,50 +22,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
-
-class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
-  import at.logic.gapt.proofs.gaptic._
-
-  def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
-
-  def verbose: TreeGrammarInductionTactic = {
-    Logger.makeVerbose( classOf[TreeGrammarProver] )
-    this
-  }
-
-  def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
-  def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
-  def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
-  def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
-  def smtEquationMode( mode: SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
-  def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
-  def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
-  def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
-  def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
-  def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
-  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
-  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
-  def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
-  def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
-
-  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
-    implicit val ctx2: MutableContext = ctx.newMutable
-    withSection { section =>
-      val groundGoal = section.groundSequent( goal.conclusion )
-      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
-      try {
-        Right( () -> viper.solve() )
-      } catch {
-        case t: TimeOutException => throw t
-        case t: ThreadDeath      => throw t
-        case t: Throwable =>
-          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
-      }
-    }
-  }
-
-  override def toString = "treeGrammarProver"
-}
 
 class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions = grammars2.TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
   import at.logic.gapt.proofs.gaptic._
@@ -238,14 +193,10 @@ object Viper {
         val numVars = sequent.succedent match { case Seq( All.Block( xs, _ ) ) => xs.size }
         ( List(
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
-          10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
-          20.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" ),
-          60.seconds -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) ) ++
-          ( for ( i <- 0 until numVars ) yield 20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar " ) ) ) ++
+          10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ) ) ++
           ( 0 until numVars ).flatMap( i => List(
             20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar2 without quantifiers $i" ),
             60.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ) ).aka( s"treegrammar2 $i" ) ) ) ).reverse
-      case "treegrammar"  => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "treegrammar2" => List( Duration.Inf -> new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ).aka( "treegrammar2" ) )
       case "analytic" =>
         val axiomsName =
@@ -283,7 +234,6 @@ object Viper {
 
   def apply( sequent: HOLSequent, verbosity: Int,
              strategies: List[( Duration, Tactical[_] )] )( implicit ctx: MutableContext ): Option[LKProof] = {
-    if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
     if ( verbosity >= 3 ) Logger.makeVerbose( classOf[grammars2.TreeGrammarProver] )
     if ( verbosity >= 4 ) Escargot.makeVerbose()
 

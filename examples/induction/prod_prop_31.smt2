@@ -2,7 +2,7 @@
 ; Andrew Ireland and Alan Bundy, JAR 1996
 
 ; for performance:
-; solve with: viper --treegrammar --cansolsize 2 3 --gramw scomp
+; solve with: viper --treegrammar2 --cansolsize 2 3 --gramw scomp
 
 (declare-datatypes (a)
   ((list (nil) (cons (head a) (tail (list a))))))

@@ -1,5 +1,3 @@
-; solve with: viper --treegrammar --qtys ""
-
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (define-fun-rec P ((x nat) (y nat) (z nat)) Bool

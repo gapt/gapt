@@ -2,9 +2,7 @@ package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context.InductiveType
-import at.logic.gapt.proofs.gaptic.{ Lemma, TacticsProof }
-import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions
+import at.logic.gapt.proofs.gaptic._
 
 object prop_59 extends TacticsProof {
 
@@ -33,6 +31,7 @@ object prop_59 extends TacticsProof {
   """
 
   val proof_1 = Lemma( sequent ) {
-    new TreeGrammarInductionTactic( TreeGrammarProverOptions().copy( quantTys = Some( Seq() ) ) ).aka( "treegrammar without quantifiers" )
+    introUnivsExcept( 0 )
+    treeGrammarInduction2
   }
 }

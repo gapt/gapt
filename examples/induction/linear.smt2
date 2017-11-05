@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar --qtys ""
+; solve with: viper --treegrammar2
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
