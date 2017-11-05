@@ -257,44 +257,6 @@ object minimizeRecursionScheme {
   }
 }
 
-object SipRecSchem extends RecSchemTemplate(
-  FOLFunctionConst( "A", 1 ),
-  Set(
-    FOLFunction( "A", FOLVar( "x" ) ) -> FOLVar( "t1" ),
-    FOLFunction( "A", FOLVar( "x" ) ) ->
-      FOLFunction( "G", FOLVar( "x" ), FOLVar( "x" ), FOLVar( "t2" ) ),
-    FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) ->
-      FOLFunction( "G", FOLVar( "x" ), FOLVar( "y" ), FOLVar( "t3" ) ),
-    FOLFunction( "G", FOLFunction( "0" ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t4" ),
-    FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t5" ) ) ) {
-
-  val A = "A"
-  val G = "G"
-
-  def toSipGrammar( recSchem: RecursionScheme ) =
-    SipGrammar( recSchem.rules map {
-      case Rule( FOLFunction( A, List( x: FOLVar ) ), FOLFunction( G, List( x_, u, x__ ) ) ) if x == x_ && x == x__ =>
-        SipGrammar.gammaEnd -> FOLSubstitution( x -> SipGrammar.alpha )( u )
-      case Rule( FOLFunction( A, List( x: FOLVar ) ), r ) =>
-        SipGrammar.tau -> FOLSubstitution( x -> SipGrammar.alpha )( r )
-      case Rule( FOLFunction( G, List( FOLFunction( "s", List( x: FOLVar ) ), y: FOLVar, z: FOLVar ) ), FOLFunction( G, List( x_, t, z_ ) ) ) if x == x_ && z == z_ =>
-        SipGrammar.gamma -> FOLSubstitution( x -> SipGrammar.nu, y -> SipGrammar.gamma, z -> SipGrammar.alpha )( t )
-      case Rule( FOLFunction( G, List( FOLFunction( "s", List( x: FOLVar ) ), y: FOLVar, z: FOLVar ) ), r ) =>
-        SipGrammar.tau -> FOLSubstitution( x -> SipGrammar.nu, y -> SipGrammar.gamma, z -> SipGrammar.alpha )( r )
-      case Rule( FOLFunction( G, List( FOLFunction( "0", List() ), y: FOLVar, z: FOLVar ) ), r ) =>
-        SipGrammar.tau -> FOLSubstitution( y -> SipGrammar.beta, z -> SipGrammar.alpha )( r )
-    } map { p => p._1 -> p._2.asInstanceOf[FOLTerm] } )
-
-  def toTargets( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ): Seq[( Expr, Expr )] =
-    instanceLanguages flatMap {
-      case ( n, l ) =>
-        l map ( FOLFunction( A, Numeral( n ) ) -> _ )
-    }
-
-  def stableRecSchem( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ): RecursionScheme =
-    stableRecSchem( toTargets( instanceLanguages ) toSet )
-}
-
 case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] ) {
   val nonTerminals: Set[Const] = template map { case ( Apps( nt: Const, _ ), _ ) => nt }
 
