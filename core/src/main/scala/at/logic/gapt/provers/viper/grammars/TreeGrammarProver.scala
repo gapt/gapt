@@ -134,7 +134,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       tau, alpha, nus, gamma,
       options.maxSATSolver, options.grammarWeighting )
 
-    info( s"Found schematic proof with induction:\n$grammar\n" )
+    info( s"Found grammar:\n$grammar\n" )
     for ( ( inst, terms ) <- indexedTermset ) {
       val genLang = grammar.instanceLanguage( inst )
       require(
