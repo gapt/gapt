@@ -5,20 +5,20 @@ import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.MaxSATSolver
 import at.logic.gapt.utils.metrics
 
-/*
-  This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
-  (Should be isomorphic to the usual versions though.)
-
-  Say `∀x ∃y φ(x,y)` is the cut-formula.
-
-  Then the left side of the cut has one strong quantifier inference (with eigenvariable α),
-  and many weak quantifier inferences (with terms `t`).  Each weak quantifier inference is stored as the
-  production `α → t` (yes, yes, and also, `t` may contain `α`).
-
-  The right side of the cut has alternating weak and strong quantifier inferences.  Say `r` is the term of
-  the weak quantifier inference, then `β` is the eigenvariable such that `φ(r,β)`.
-  We store this as the production `β → r`.
-  Additionally, we require that there is *exactly one* production for each `β` (this condition is missing from pre-grammars)
+/**
+ * This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
+ * (Should be isomorphic to the usual versions though.)
+ *
+ * Say `∀x ∃y φ(x,y)` is the cut-formula.
+ *
+ * Then the left side of the cut has one strong quantifier inference (with eigenvariable α),
+ * and many weak quantifier inferences (with terms `t`).  Each weak quantifier inference is stored as the
+ * production `α → t` (yes, yes, and also, `t` may contain `α`).
+ *
+ * The right side of the cut has alternating weak and strong quantifier inferences.  Say `r` is the term of
+ * the weak quantifier inference, then `β` is the eigenvariable such that `φ(r,β)`.
+ * We store this as the production `β → r`.
+ * Additionally, we require that there is *exactly one* production for each `β` (this condition is missing from pre-grammars)
  */
 case class Pi2PreGrammar(
     startSymbol: Var,
