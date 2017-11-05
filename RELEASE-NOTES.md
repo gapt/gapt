@@ -2,6 +2,8 @@
 
 ## Version 2.9 (unreleased)
 
+* Rewrite of the tree grammar-based induction prover
+
 ## Version 2.8 (released on 2017-10-09)
 
 * Support for EProver 2.0
