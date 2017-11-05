@@ -3,8 +3,8 @@ package at.logic.gapt.examples.tip.isaplanner
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms.SequentialInductionAxioms
-import at.logic.gapt.provers.viper.aip.provers.escargot
 import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 /* This proof is not a s.i.p. */
@@ -137,6 +137,6 @@ object prop_24 extends TacticsProof {
     axiomLog
   }
 
-  val options = new ProverOptions( escargot, SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
+  val options = new ProverOptions( Escargot, SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
   val proof2 = new AnalyticInductionProver( options ) lkProof ( ( "refl" -> hof"!x equal(x,x)" ) +: sequent ) get
 }

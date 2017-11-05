@@ -11,7 +11,12 @@ import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.prooftool.prooftool
+import at.logic.gapt.provers.eprover.EProver
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.iprover.IProver
+import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.spass.SPASS
+import at.logic.gapt.provers.vampire.Vampire
 import at.logic.gapt.provers.viper.aip.axioms._
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
@@ -116,16 +121,13 @@ object ViperOptions {
       case _                            => ( args, opts )
     }
 
-  val provers = {
-    import at.logic.gapt.provers.viper.aip.provers._
-    Map[String, ResolutionProver](
-      "prover9" -> prover9,
-      "eprover" -> eprover,
-      "escargot" -> Escargot,
-      "iprover" -> iprover,
-      "spass" -> spass,
-      "vampire" -> vampire )
-  }
+  val provers = Map[String, ResolutionProver](
+    "prover9" -> Prover9.extendToManySortedViaPredicates,
+    "eprover" -> EProver.extendToManySortedViaPredicates,
+    "escargot" -> Escargot,
+    "iprover" -> IProver.extendToManySortedViaErasure,
+    "spass" -> SPASS.extendToManySortedViaPredicates,
+    "vampire" -> Vampire.extendToManySortedViaPredicates )
 
   def parseTreeGrammar( args: List[String], opts: TreeGrammarProverOptions ): ( List[String], TreeGrammarProverOptions ) =
     args match {

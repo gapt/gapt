@@ -3,8 +3,8 @@ package at.logic.gapt.examples.tip.isaplanner
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms.IndependentInductionAxioms
-import at.logic.gapt.provers.viper.aip.provers.escargot
 import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_43 extends TacticsProof {
@@ -38,6 +38,6 @@ object prop_43 extends TacticsProof {
            goal: ∀p ∀xs (append(takeWhile(p:fun1, xs:list): list, dropWhile(p, xs): list): list) = xs
       """
 
-  val aipOptions = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"xs:list" ) ).forLabel( "goal" ) )
+  val aipOptions = new ProverOptions( Escargot, IndependentInductionAxioms().forVariables( List( hov"xs:list" ) ).forLabel( "goal" ) )
   val proof1 = new AnalyticInductionProver( aipOptions ) lkProof ( sequent ) get
 }
