@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar2 --cansolsize 2 3
+; solve with: viper --treegrammar --cansolsize 2 3
 
 (declare-sort i 0)
 (declare-datatypes () ((list (nil) (cons (head i) (tail list)))))

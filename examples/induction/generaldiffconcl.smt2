@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar2 --qtys witness --tchksize 0 1 --cansolsize 2 2
+; solve with: viper --treegrammar --qtys witness --tchksize 0 1 --cansolsize 2 2
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 

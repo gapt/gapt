@@ -2,14 +2,14 @@ package at.logic.gapt.provers.viper
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
-import at.logic.gapt.grammars.induction2.InductionGrammar
-import at.logic.gapt.grammars.induction2.InductionGrammar.Production
+import at.logic.gapt.grammars.InductionGrammar
+import at.logic.gapt.grammars.InductionGrammar.Production
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.skolemize
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.provers.viper.grammars2.{ InductionBUP, constructSIP }
+import at.logic.gapt.provers.viper.grammars.{ InductionBUP, constructSIP }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
 

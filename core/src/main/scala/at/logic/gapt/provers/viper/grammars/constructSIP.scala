@@ -1,4 +1,4 @@
-package at.logic.gapt.provers.viper.grammars2
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ containsQuantifierOnLogicalLevel, universalClosure }

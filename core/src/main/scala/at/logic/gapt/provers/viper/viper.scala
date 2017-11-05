@@ -5,8 +5,7 @@ import at.logic.gapt.expr.{ All, Formula }
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
-import at.logic.gapt.grammars.Rule
-import at.logic.gapt.grammars.induction2.InductionGrammar
+import at.logic.gapt.grammars.InductionGrammar
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, withSection }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
@@ -23,13 +22,13 @@ import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
 
-class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions = grammars2.TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
+class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = grammars.TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
   import at.logic.gapt.proofs.gaptic._
 
-  def copy( options: grammars2.TreeGrammarProverOptions ) = new TreeGrammarInductionTactic2( options )
+  def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
 
-  def verbose: TreeGrammarInductionTactic2 = {
-    Logger.makeVerbose( classOf[grammars2.TreeGrammarProver] )
+  def verbose: TreeGrammarInductionTactic = {
+    Logger.makeVerbose( classOf[TreeGrammarProver] )
     this
   }
 
@@ -37,7 +36,7 @@ class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions =
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
-  def smtEquationMode( mode: grammars2.TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
+  def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
@@ -50,7 +49,7 @@ class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions =
     implicit val ctx2: MutableContext = ctx.newMutable
     withSection { section =>
       val groundGoal = section.groundSequent( goal.conclusion )
-      val viper = new grammars2.TreeGrammarProver( ctx2, groundGoal, options )
+      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
       try {
         Right( () -> viper.solve() )
       } catch {
@@ -68,13 +67,13 @@ class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions =
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
 case class ViperOptions(
-    verbosity:                 Int                                = 2,
-    mode:                      String                             = "portfolio",
-    fixup:                     Boolean                            = true,
-    prooftool:                 Boolean                            = false,
-    firstOrderProver:          ResolutionProver                   = Escargot,
-    treeGrammarProverOptions2: grammars2.TreeGrammarProverOptions = grammars2.TreeGrammarProverOptions(),
-    aipOptions:                AipOptions                         = AipOptions() )
+    verbosity:                Int                      = 2,
+    mode:                     String                   = "portfolio",
+    fixup:                    Boolean                  = true,
+    prooftool:                Boolean                  = false,
+    firstOrderProver:         ResolutionProver         = Escargot,
+    treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
+    aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {
   val usage =
     """Vienna Inductive Prover
@@ -102,9 +101,9 @@ object ViperOptions {
       case "--no-fixup" :: rest         => parse( rest, opts.copy( fixup = false ) )
       case "--portfolio" :: rest        => parse( rest, opts.copy( mode = "portfolio" ) )
       case "--untrusted_funind" :: rest => parse( rest, opts.copy( mode = "untrusted_funind" ) )
-      case "--treegrammar2" :: rest =>
-        val ( rest_, opts_ ) = parseTreeGrammar2( rest, opts.treeGrammarProverOptions2 )
-        parse( rest_, opts.copy( treeGrammarProverOptions2 = opts_, mode = "treegrammar2" ) )
+      case "--treegrammar" :: rest =>
+        val ( rest_, opts_ ) = parseTreeGrammar( rest, opts.treeGrammarProverOptions )
+        parse( rest_, opts.copy( treeGrammarProverOptions = opts_, mode = "treegrammar" ) )
       case "--analytic" :: rest =>
         val ( rest_, opts_ ) = parseAnalytic( rest, opts.aipOptions )
         parse( rest_, opts.copy( aipOptions = opts_, mode = "analytic" ) )
@@ -133,23 +132,23 @@ object ViperOptions {
       "vampire" -> vampire )
   }
 
-  def parseTreeGrammar2( args: List[String], opts: grammars2.TreeGrammarProverOptions ): ( List[String], grammars2.TreeGrammarProverOptions ) =
+  def parseTreeGrammar( args: List[String], opts: TreeGrammarProverOptions ): ( List[String], TreeGrammarProverOptions ) =
     args match {
-      case "--prover" :: prover :: rest => parseTreeGrammar2(
+      case "--prover" :: prover :: rest => parseTreeGrammar(
         rest,
         opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
-      case "--instnum" :: instNum :: rest => parseTreeGrammar2( rest, opts.copy( instanceNumber = instNum.toInt ) )
-      case "--instsize" :: a :: b :: rest => parseTreeGrammar2( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
-      case "--qtys" :: qtys :: rest       => parseTreeGrammar2( rest, opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
+      case "--instnum" :: instNum :: rest => parseTreeGrammar( rest, opts.copy( instanceNumber = instNum.toInt ) )
+      case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
+      case "--qtys" :: qtys :: rest       => parseTreeGrammar( rest, opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
       case "--gramw" :: w :: rest =>
         val f: InductionGrammar.Production => Int = w match {
           case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
           case "nprods" => _ => 1
         }
-        parseTreeGrammar2( rest, opts.copy( grammarWeighting = f ) )
-      case "--tchknum" :: num :: rest       => parseTreeGrammar2( rest, opts.copy( tautCheckNumber = num.toInt ) )
-      case "--tchksize" :: a :: b :: rest   => parseTreeGrammar2( rest, opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
-      case "--cansolsize" :: a :: b :: rest => parseTreeGrammar2( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
+        parseTreeGrammar( rest, opts.copy( grammarWeighting = f ) )
+      case "--tchknum" :: num :: rest       => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
+      case "--tchksize" :: a :: b :: rest   => parseTreeGrammar( rest, opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
+      case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
       case _                                => ( args, opts )
     }
 }
@@ -168,9 +167,9 @@ object Viper {
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ) ) ++
           ( 0 until numVars ).flatMap( i => List(
-            20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar2 without quantifiers $i" ),
-            60.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ) ).aka( s"treegrammar2 $i" ) ) ) ).reverse
-      case "treegrammar2" => List( Duration.Inf -> new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ).aka( "treegrammar2" ) )
+            20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar without quantifiers $i" ),
+            60.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).aka( s"treegrammar $i" ) ) ) ).reverse
+      case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
           opts.aipOptions.axioms match {
@@ -207,7 +206,7 @@ object Viper {
 
   def apply( sequent: HOLSequent, verbosity: Int,
              strategies: List[( Duration, Tactical[_] )] )( implicit ctx: MutableContext ): Option[LKProof] = {
-    if ( verbosity >= 3 ) Logger.makeVerbose( classOf[grammars2.TreeGrammarProver] )
+    if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
     if ( verbosity >= 4 ) Escargot.makeVerbose()
 
     if ( verbosity >= 2 ) println( sequent.toSigRelativeString )

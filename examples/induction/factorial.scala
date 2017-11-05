@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.reduction.ErasureReductionET
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.smtlib.CVC4
-import at.logic.gapt.provers.viper.grammars2.TreeGrammarProverOptions.Passthru
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
 import at.logic.gapt.utils.Maybe
 
 object factorial extends TacticsProof {
@@ -31,7 +31,7 @@ object factorial extends TacticsProof {
           qfs: !x!y qfact y (s x) = qfact (y * s x) x
           :- !x qfact (s 0) x = fact x
         """ ) {
-      treeGrammarInduction2
+      treeGrammarInduction
         .verbose
         .quantTys( "nat" )
         .equationalTheory( hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x" )

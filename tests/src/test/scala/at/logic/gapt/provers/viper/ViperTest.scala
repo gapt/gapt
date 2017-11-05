@@ -5,7 +5,7 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
 import at.logic.gapt.provers.spass.SPASS
-import at.logic.gapt.provers.viper.grammars2.TreeGrammarProver
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
 
@@ -39,7 +39,7 @@ class ViperTest extends Specification with SequentMatchers {
         val file = ClasspathInputFile( s"induction/$prob.smt2" )
         val ( Nil, options ) = ViperOptions.parse( extractOptions( file.read ), opts0 )
         val problem = if ( options.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
-        val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options.treeGrammarProverOptions2 ).solve()
+        val lk = new TreeGrammarProver( problem.ctx, problem.toSequent, options.treeGrammarProverOptions ).solve()
         problem.ctx check lk
         lk.conclusion.distinct.diff( problem.toSequent ) must_== Sequent()
       }

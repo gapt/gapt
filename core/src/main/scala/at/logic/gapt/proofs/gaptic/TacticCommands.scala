@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.TreeGrammarInductionTactic2
+import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 
 /**
@@ -706,7 +706,7 @@ trait TacticCommands {
   def haveInstances( sequent: HOLSequent ): Tactical[Sequent[String]] =
     Tactical.sequence( for ( ( f, i ) <- sequent.zipWithIndex ) yield haveInstance( f, i.polarity ) )
 
-  def treeGrammarInduction2( implicit ctx: Context ): TreeGrammarInductionTactic2 = new TreeGrammarInductionTactic2
+  def treeGrammarInduction( implicit ctx: Context ): TreeGrammarInductionTactic = new TreeGrammarInductionTactic
 
   def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )

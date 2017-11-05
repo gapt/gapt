@@ -4,8 +4,8 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.{ MutableContext, SequentMatchers }
 import at.logic.gapt.provers.maxsat.MaxSat4j
+import at.logic.gapt.provers.viper.grammars.{ DefaultProvers, TreeGrammarProver, TreeGrammarProverOptions }
 import org.specs2.mutable.Specification
-import grammars2._
 
 class TreeGrammarProverTest extends Specification with SequentMatchers {
 

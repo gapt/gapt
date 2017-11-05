@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar2
+; solve with: viper --treegrammar
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 

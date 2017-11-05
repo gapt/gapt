@@ -1,21 +1,19 @@
-package at.logic.gapt.provers.viper.grammars2
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, containsQuantifierOnLogicalLevel, instantiate, universalClosure }
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.grammars.induction2.InductionGrammar.Production
-import at.logic.gapt.grammars.induction2.{ InductionGrammar, findMinimalInductionGrammar }
+import at.logic.gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
+import at.logic.gapt.grammars.InductionGrammar.Production
 import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
-import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.provers.viper.grammars.{ EnumeratingInstanceGenerator, hSolveQBUP }
-import TreeGrammarProverOptions.FloatRange
+import at.logic.gapt.provers.{ OneShotProver, Prover }
 import at.logic.gapt.utils.{ Logger, Maybe }
 
 import scala.collection.mutable

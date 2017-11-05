@@ -46,7 +46,7 @@ object prop_01 extends TacticsProof {
     cut( "p0r", hof"!x x+0=x" ); forget( "g" ); decompose; induction( hov"x: nat" ).onAll( escargot )
     cut( "psr", hof"!x!y x+S(y)=S(x+y)" ); forget( "g" ); allR; induction( hov"x: nat" ).onAll( decompose andThen escargot )
 
-    treeGrammarInduction2
+    treeGrammarInduction
       .canSolSize( 1 )
       .quantTys()
       .equationalTheory( hof"0+x = x", hof"x+0 = x", hof"S(x)+y = S(x+y)", hof"x+S(y) = S(x+y)" )

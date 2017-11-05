@@ -1,16 +1,15 @@
-package at.logic.gapt.grammars.induction2
+package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import InductionGrammar._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.atoms
 import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
-import at.logic.gapt.grammars.{ VTRATG, VectGrammarMinimizationFormula, stableTerms }
+import at.logic.gapt.grammars.InductionGrammar._
 import at.logic.gapt.proofs.{ Checkable, Context }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.utils.{ Doc, NameGenerator }
-import cats.syntax.traverse._
 import cats.instances.list._
+import cats.syntax.traverse._
 
 case class InductionGrammar(
     tau:         Var,

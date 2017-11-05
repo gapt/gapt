@@ -1,8 +1,8 @@
-package at.logic.gapt.provers.viper.grammars2
+package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.induction2.InductionGrammar
-import at.logic.gapt.grammars.induction2.InductionGrammar.Production
+import at.logic.gapt.grammars.InductionGrammar
+import at.logic.gapt.grammars.InductionGrammar.Production
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 

@@ -14,7 +14,7 @@ object associativity extends TacticsProof {
       :- !x!y!z (x+y)+z = x+(y+z)
   """ ) {
     introUnivsExcept( 2 )
-    treeGrammarInduction2
+    treeGrammarInduction
       .quantTys()
       .canSolSize( 1 )
   }
