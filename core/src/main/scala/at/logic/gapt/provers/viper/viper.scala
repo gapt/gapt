@@ -73,7 +73,6 @@ case class ViperOptions(
     fixup:                     Boolean                            = true,
     prooftool:                 Boolean                            = false,
     firstOrderProver:          ResolutionProver                   = Escargot,
-    treeGrammarProverOptions:  TreeGrammarProverOptions           = TreeGrammarProverOptions(),
     treeGrammarProverOptions2: grammars2.TreeGrammarProverOptions = grammars2.TreeGrammarProverOptions(),
     aipOptions:                AipOptions                         = AipOptions() )
 object ViperOptions {
@@ -103,9 +102,6 @@ object ViperOptions {
       case "--no-fixup" :: rest         => parse( rest, opts.copy( fixup = false ) )
       case "--portfolio" :: rest        => parse( rest, opts.copy( mode = "portfolio" ) )
       case "--untrusted_funind" :: rest => parse( rest, opts.copy( mode = "untrusted_funind" ) )
-      case "--treegrammar" :: rest =>
-        val ( rest_, opts_ ) = parseTreeGrammar( rest, opts.treeGrammarProverOptions )
-        parse( rest_, opts.copy( treeGrammarProverOptions = opts_, mode = "treegrammar" ) )
       case "--treegrammar2" :: rest =>
         val ( rest_, opts_ ) = parseTreeGrammar2( rest, opts.treeGrammarProverOptions2 )
         parse( rest_, opts.copy( treeGrammarProverOptions2 = opts_, mode = "treegrammar2" ) )
@@ -136,29 +132,6 @@ object ViperOptions {
       "spass" -> spass,
       "vampire" -> vampire )
   }
-
-  def parseTreeGrammar( args: List[String], opts: TreeGrammarProverOptions ): ( List[String], TreeGrammarProverOptions ) =
-    args match {
-      case "--prover" :: prover :: rest => parseTreeGrammar(
-        rest,
-        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
-      case "--instnum" :: instNum :: rest => parseTreeGrammar( rest, opts.copy( instanceNumber = instNum.toInt ) )
-      case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
-      case "--findmth" :: mth :: rest     => parseTreeGrammar( rest, opts.copy( findingMethod = mth ) )
-      case "--qtys" :: qtys :: rest       => parseTreeGrammar( rest, opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
-      case "--gramw" :: w :: rest =>
-        val f: Rule => Int = w match {
-          case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
-          case "nprods" => _ => 1
-        }
-        parseTreeGrammar( rest, opts.copy( grammarWeighting = f ) )
-      case "--tchknum" :: num :: rest       => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
-      case "--tchksize" :: a :: b :: rest   => parseTreeGrammar( rest, opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
-      case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
-      case "--forgetone" :: rest            => parseTreeGrammar( rest, opts.copy( forgetOne = true ) )
-      case "--no-forgetone" :: rest         => parseTreeGrammar( rest, opts.copy( forgetOne = false ) )
-      case _                                => ( args, opts )
-    }
 
   def parseTreeGrammar2( args: List[String], opts: grammars2.TreeGrammarProverOptions ): ( List[String], grammars2.TreeGrammarProverOptions ) =
     args match {
