@@ -22,10 +22,8 @@ import scala.collection.mutable
 
 object DefaultProvers {
   val firstOrder: Prover = Escargot
-  val smt: Prover =
-    if ( VeriT.isInstalled ) VeriT
-    else smtEscargot
   val smtEscargot = new Escargot( splitting = true, propositional = true, equality = true )
+  val smt: Prover = if ( VeriT.isInstalled ) VeriT else smtEscargot
 }
 
 import TreeGrammarProverOptions._
@@ -35,13 +33,11 @@ case class TreeGrammarProverOptions(
     instanceProver:   Prover              = DefaultProvers.firstOrder,
     smtSolver:        Prover              = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
-    findingMethod:    String              = "maxsat",
     quantTys:         Option[Seq[String]] = None,
     grammarWeighting: Rule => Int         = _ => 1,
     tautCheckNumber:  Int                 = 10,
     tautCheckSize:    FloatRange          = ( 2, 3 ),
     canSolSize:       FloatRange          = ( 2, 4 ),
-    forgetOne:        Boolean             = false,
     maxSATSolver:     MaxSATSolver        = bestAvailableMaxSatSolver,
     equationalTheory: Seq[Formula]        = Seq() )
 

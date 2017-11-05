@@ -82,14 +82,12 @@ class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions =
   def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def smtEquationMode( mode: grammars2.TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
-  def findingMethod( method: String ) = copy( options.copy( findingMethod = "maxsat" ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
   def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
   def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
-  def doForgetOne( enable: Boolean = true ) = copy( options.copy( forgetOne = enable ) )
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
 
   override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
