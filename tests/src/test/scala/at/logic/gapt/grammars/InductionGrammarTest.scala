@@ -1,7 +1,6 @@
-package at.logic.gapt.grammars.induction2
+package at.logic.gapt.grammars
 
 import at.logic.gapt.expr._
-import at.logic.gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar, minimizeInductionGrammar, stableInductionGrammar }
 import at.logic.gapt.grammars.InductionGrammar.Production
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.MutableContext
