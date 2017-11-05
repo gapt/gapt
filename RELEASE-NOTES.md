@@ -2,7 +2,11 @@
 
 ## Version 2.9 (unreleased)
 
+* Support for the current (yet unreleased) TIP format
 * Rewrite of the tree grammar-based induction prover
+* Atomic expansion for expansion proofs
+* Restructured user manual
+* The Scala operator for function types is now `->:` instead of `->`
 
 ## Version 2.8 (released on 2017-10-09)
 
