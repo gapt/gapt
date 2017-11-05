@@ -1,15 +1,15 @@
 package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ instantiate, universalClosure }
-import at.logic.gapt.proofs.lk.{ LKProof, skolemize }
+import at.logic.gapt.expr.hol.{ instantiate, skolemize, universalClosure }
+import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.provers.OneShotProver
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.grammars.hSolveQBUP
-import at.logic.gapt.utils.Maybe
+import at.logic.gapt.utils.{ Maybe, SatMatchers }
 import org.specs2.mutable.Specification
 
-class HSolveQbupTest extends Specification {
+class HSolveQbupTest extends Specification with SatMatchers {
 
   def escargotSmtModNormalize( equations: Seq[Formula] ): OneShotProver =
     new OneShotProver {
@@ -40,7 +40,7 @@ class HSolveQbupTest extends Specification {
            )
          """
     val Some( sol ) = hSolveQBUP( qbupMatrix, hof"$x(n, s(0))", escargotSmt )
-    Escargot.isValid( BetaReduction.betaNormalize( instantiate( qbup, sol ) ) ) must_== true
+    skolemize( BetaReduction.betaNormalize( instantiate( qbup, sol ) ) ) must beEValid
   }
 
   "double mod th" in {

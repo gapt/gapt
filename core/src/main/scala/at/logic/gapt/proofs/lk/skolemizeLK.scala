@@ -7,7 +7,7 @@ import at.logic.gapt.utils.NameGenerator
 
 import scala.collection.mutable
 
-private class skolemizeInferences(
+private class skolemizeLK(
     nameGen:            NameGenerator,
     proofTheoretic:     Boolean,
     skolemizeAboveCuts: Boolean )( implicit ctx: MutableContext ) {
@@ -185,7 +185,7 @@ private class skolemizeInferences(
   }
 }
 
-object skolemizeInferences {
+object skolemizeLK {
   /**
    * Skolemize a proof in LK by introducing the Skolem inferences [[ExistsSkLeftRule]] and [[ForallSkRightRule]].
    * This transformation does not increase the number of inferences (with tree-like counting).
@@ -196,7 +196,7 @@ object skolemizeInferences {
    */
   def apply( p: LKProof, proofTheoretic: Boolean = true, skolemizeAboveCuts: Boolean = false )( implicit ctx: MutableContext = MutableContext.guess( p ) ): LKProof = {
     val p_ = regularize( p )
-    val conv = new skolemizeInferences(
+    val conv = new skolemizeLK(
       new NameGenerator( containedNames( p_ ).map( _.name ) ++ ctx.names ),
       proofTheoretic, skolemizeAboveCuts )
     conv(

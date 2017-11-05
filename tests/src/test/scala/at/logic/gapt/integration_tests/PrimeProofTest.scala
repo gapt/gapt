@@ -124,7 +124,7 @@ class PrimeProofTest extends Specification {
       }
 
       //      val deproof = DefinitionElimination( proofdb.Definitions )( proof )
-      val proof_sk = skolemize( regularize( AtomicExpansion( proof ) ) )
+      val proof_sk = folSkolemize( regularize( AtomicExpansion( proof ) ) )
       println( "es: " + proof_sk.endSequent + " " + containsStrongQuantifier( proof_sk.endSequent ) )
       val s = extractStruct( proof_sk, CERES.skipEquations )
 

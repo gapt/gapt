@@ -155,7 +155,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( extractRecSchem( q ).languageWithDummyParameters ) ) !-- "extractRecSchem validity (cut-intro)"
       }
 
-    skolemize( p ) --? "skolemize"
+    folSkolemize( p ) --? "skolemize"
   }
 }
 

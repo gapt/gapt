@@ -6,21 +6,21 @@ import at.logic.gapt.proofs.{ Ant, HOLSequent, Sequent }
 import at.logic.gapt.utils.StreamUtils
 import StreamUtils._
 
-object skolemize {
+object folSkolemize {
   def apply( formula: Formula, pol: Polarity, context: Seq[Expr], skolemSymbols: Stream[String] ): Formula = formula match {
     case Bottom() | Top() | Atom( _, _ ) =>
       formula
-    case Neg( f )                => Neg( skolemize( f, !pol, context, skolemSymbols ) )
-    case And( l, r )             => And( skolemize( l, pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
-    case Or( l, r )              => Or( skolemize( l, pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
-    case Imp( l, r )             => Imp( skolemize( l, !pol, context, even( skolemSymbols ) ), skolemize( r, pol, context, odd( skolemSymbols ) ) )
-    case Ex( x, f ) if pol.inSuc => Ex( x, skolemize( f, pol, context :+ x, skolemSymbols ) )
+    case Neg( f )                => Neg( folSkolemize( f, !pol, context, skolemSymbols ) )
+    case And( l, r )             => And( folSkolemize( l, pol, context, even( skolemSymbols ) ), folSkolemize( r, pol, context, odd( skolemSymbols ) ) )
+    case Or( l, r )              => Or( folSkolemize( l, pol, context, even( skolemSymbols ) ), folSkolemize( r, pol, context, odd( skolemSymbols ) ) )
+    case Imp( l, r )             => Imp( folSkolemize( l, !pol, context, even( skolemSymbols ) ), folSkolemize( r, pol, context, odd( skolemSymbols ) ) )
+    case Ex( x, f ) if pol.inSuc => Ex( x, folSkolemize( f, pol, context :+ x, skolemSymbols ) )
     case Ex( x, f ) if pol.inAnt =>
       val sym = Const( skolemSymbols.head, FunctionType( x.ty, context.map( _.ty ) ) )
       val skolemFunction = sym( context: _* )
-      skolemize( Substitution( x -> skolemFunction )( f ), pol, context, skolemSymbols.tail )
-    case All( x, f ) if pol.inAnt => All( x, skolemize( f, pol, context :+ x, skolemSymbols ) )
-    case All( x, f ) if pol.inSuc => skolemize( Ex( x, -f ), !pol, context, skolemSymbols ) match { case Neg( f_ ) => f_ }
+      folSkolemize( Substitution( x -> skolemFunction )( f ), pol, context, skolemSymbols.tail )
+    case All( x, f ) if pol.inAnt => All( x, folSkolemize( f, pol, context :+ x, skolemSymbols ) )
+    case All( x, f ) if pol.inSuc => folSkolemize( Ex( x, -f ), !pol, context, skolemSymbols ) match { case Neg( f_ ) => f_ }
   }
 
   def apply( formula: Formula, pol: Polarity ): Formula =
@@ -37,7 +37,7 @@ object skolemize {
 
   private def maybeSkolemize( formula: Formula, pol: Polarity, contextAndSymbols: Option[( Seq[Expr], Stream[String] )] ): Formula =
     contextAndSymbols match {
-      case Some( ( context, skolemSymbols ) ) => skolemize( formula, pol, context, skolemSymbols )
+      case Some( ( context, skolemSymbols ) ) => folSkolemize( formula, pol, context, skolemSymbols )
       case None                               => formula
     }
 

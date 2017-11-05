@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.grammars.{ RecSchemTemplate, RecursionScheme, Rule }
 import at.logic.gapt.proofs._
-import at.logic.gapt.proofs.lk.skolemize
 import at.logic.gapt.proofs.resolution.{ forgetfulPropParam, forgetfulPropResolve }
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.impl.getFOPositions

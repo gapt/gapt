@@ -1232,24 +1232,25 @@ corresponding rules also exist in resolution and expansion proofs.
 
 Given a proof that uses eigenvariables for strong quantifiers, we can replace
 the eigenvariable inferences by Skolem inference using
-\texttt{skolemizeInferences}---this is called \emph{proof Skolemization}:
+\texttt{skolemizeLK}---this is called \emph{proof Skolemization}:
 \begin{clilisting}
 gapt> val p = ForallRightRule(ReflexivityAxiom(le"x"), hof"!x x=x")
 p: at.logic.gapt.proofs.lk.ForallRightRule =
 [p2]  ⊢ ∀x x = x    (ForallRightRule(p1, Suc(0), x, x))
 [p1]  ⊢ x = x    (ReflexivityAxiom(x))
 
-gapt> skolemizeInferences(p)
+gapt> skolemizeLK(p)
 res12: at.logic.gapt.proofs.lk.LKProof =
 [p2]  ⊢ ∀x x = x    (ForallSkRightRule(p1, Suc(0), ∀x x = x, s_0, ∀x x = x))
 [p1]  ⊢ s_0 = s_0    (ReflexivityAxiom(s_0))
 
 \end{clilisting}
 
-By default, \texttt{skolemizeInference} will keep eigenvariable inferences above cuts.
+By default, \texttt{skolemizeLK} will keep eigenvariable inferences above cuts.
+The function \texttt{skolemize} performs Skolemization on formulas.
 In the first-order case it is also possible to Skolemize proofs without
 introducing Skolem inferences, by modifying the end-sequent instead.  This
-functionality is provided by the \texttt{skolemize} function.
+functionality is provided by the \texttt{folSkolemize} function.
 
 \section{Deskolemization}
 
