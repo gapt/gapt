@@ -32,7 +32,6 @@ object factorial extends TacticsProof {
           :- !x qfact (s 0) x = fact x
         """ ) {
       treeGrammarInduction
-        .verbose
         .quantTys( "nat" )
         .equationalTheory( hof"x*(y*z) = (x*y)*z", hof"x*s(0) = x", hof"s(0)*x = x" )
         .canSolSize( 1 )

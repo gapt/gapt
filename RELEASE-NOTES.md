@@ -7,6 +7,7 @@
 * Atomic expansion for expansion proofs
 * Restructured user manual
 * The Scala operator for function types is now `->:` instead of `->`
+* Logback logging library was removed, use `verbose{...}` or `tactic.verbose` to enable logging
 
 ## Version 2.8 (released on 2017-10-09)
 

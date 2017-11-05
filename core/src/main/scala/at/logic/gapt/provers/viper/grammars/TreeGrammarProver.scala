@@ -14,7 +14,8 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.{ OneShotProver, Prover }
-import at.logic.gapt.utils.{ Logger, Maybe }
+import at.logic.gapt.utils.Maybe
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable
 
@@ -67,7 +68,7 @@ object TreeGrammarProverOptions {
   }
 }
 
-class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) extends Logger {
+class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) {
   implicit def ctx_ : Context = ctx
 
   val Sequent( theory, Seq( quantGoal @ All( v0, _ ) ) ) = sequent

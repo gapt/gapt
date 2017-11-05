@@ -10,8 +10,6 @@ import scala.swing.event.{ Event, MouseClicked, MouseEntered, MouseExited, UIEle
 import at.logic.gapt.proofs.expansion._
 import java.awt.event.MouseEvent
 
-import at.logic.gapt.utils.Logger
-
 /**
  * These events are used to tell a CedentPanel that two expansion trees should be switched, necessitating a redraw.
  * @param from Number of the first tree to be switched

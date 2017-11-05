@@ -5,12 +5,13 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.dimacs._
 import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.HOLClause
-import at.logic.gapt.utils.{ Logger, metrics }
+import at.logic.gapt.utils.metrics
+import at.logic.gapt.utils.logger._
 
 /**
  * Solver for Weighted Partial MaxSAT problems.
  */
-abstract class MaxSATSolver extends Logger {
+abstract class MaxSATSolver {
 
   /**
    * Solves a weighted partial MaxSAT problem.

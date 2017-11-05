@@ -266,6 +266,13 @@ trait Tactical[+T] { self =>
       self( proofState ).leftMap( _ => TacticalFailure( self, proofState, errorMessage ) )
     override def toString = self.toString
   }
+
+  def verbose: Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) =
+      at.logic.gapt.utils.verbose { self( proofState ) }
+
+    override def toString: String = s"${self.toString}.verbose"
+  }
 }
 object Tactical {
   def apply[T]( tactical: Tactical[T] )( implicit name: sourcecode.Name, args: sourcecode.Args ): Tactical[T] =

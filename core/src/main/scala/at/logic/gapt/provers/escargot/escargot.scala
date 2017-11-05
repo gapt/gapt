@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
-import at.logic.gapt.utils.{ Logger, Maybe }
+import at.logic.gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
@@ -63,17 +63,15 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     }
   }
 
-  def makeVerbose() = Logger.makeVerbose( classOf[EscargotState] )
-
   def main( args: Array[String] ): Unit = {
-    Logger.useTptpComments()
+    LogHandler.current.value = LogHandler.silent
 
     val tptpInputFile = args.toSeq match {
       case Seq() =>
         println( "Usage: escargot [-v] tptp-problem.p" )
         sys.exit( 1 )
       case Seq( "-v", file ) =>
-        makeVerbose()
+        LogHandler.current.value = LogHandler.tstpVerbose
         file
       case Seq( file ) => file
     }

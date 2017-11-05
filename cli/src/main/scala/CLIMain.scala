@@ -2,13 +2,12 @@ package at.logic.gapt.cli
 
 import at.logic.gapt.examples.Script
 import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.utils.Logger
 
 import scala.tools.nsc.interpreter._
 import scala.tools.nsc.Settings
 import ammonite.ops._
 
-object CLIMain extends Logger {
+object CLIMain {
 
   val welcomeMessage = """
     *************************************
@@ -43,8 +42,6 @@ object CLIMain extends Logger {
       // If invoked as ./gapt.sh script.scala,
       // then load script.scala and exit.
       case Array( scriptFile, scriptArgs @ _* ) =>
-        debug( "Initializing logging framework" )
-
         // Strip package declaration, the script compiler doesn't like it.
         val packageRegex = """(?s)package [A-Za-z.]+\n(.*)""".r
         val scriptSrc = read( Path( scriptFile, pwd ) ) match {

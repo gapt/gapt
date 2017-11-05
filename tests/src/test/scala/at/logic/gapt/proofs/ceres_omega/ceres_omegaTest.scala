@@ -12,12 +12,12 @@ import at.logic.gapt.proofs.lk.{ AtomicExpansion, CutRule, eliminateDefinitions,
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ Input, Resolution, Subst }
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 import org.specs2.mutable._
 
 //TODO: Fix the test!
 
-class ceres_omegaTest extends Specification with SequentMatchers with Logger {
+class ceres_omegaTest extends Specification with SequentMatchers {
 
   def load( file: String, pname: String ) =
     LLKProofParser( ClasspathInputFile( file ) ).proof( pname )

@@ -6,7 +6,8 @@ import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.{ Doc, Logger, metrics }
+import at.logic.gapt.utils.{ Doc, metrics }
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable
 
@@ -212,7 +213,7 @@ class RecSchemGenLangFormula(
   }
 }
 
-object minimizeRecursionScheme extends Logger {
+object minimizeRecursionScheme {
   def apply( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,

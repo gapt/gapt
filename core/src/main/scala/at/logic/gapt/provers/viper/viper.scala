@@ -15,7 +15,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms._
 import at.logic.gapt.provers.{ Prover, ResolutionProver }
 import at.logic.gapt.provers.viper.grammars._
-import at.logic.gapt.utils.{ Logger, TimeOutException, withTimeout }
+import at.logic.gapt.utils.{ LogHandler, TimeOutException, withTimeout }
 import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.duration.Duration
@@ -26,11 +26,6 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = grammars.T
   import at.logic.gapt.proofs.gaptic._
 
   def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
-
-  def verbose: TreeGrammarInductionTactic = {
-    Logger.makeVerbose( classOf[TreeGrammarProver] )
-    this
-  }
 
   def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
   def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
@@ -206,9 +201,10 @@ object Viper {
     apply( sequent, opts.verbosity, getStrategies( sequent, opts ) )
 
   def apply( sequent: HOLSequent, verbosity: Int,
-             strategies: List[( Duration, Tactical[_] )] )( implicit ctx: MutableContext ): Option[LKProof] = {
-    if ( verbosity >= 3 ) Logger.makeVerbose( classOf[TreeGrammarProver] )
-    if ( verbosity >= 4 ) Escargot.makeVerbose()
+             strategies: List[( Duration, Tactical[_] )] )(
+    implicit
+    ctx: MutableContext ): Option[LKProof] = LogHandler.scope {
+    if ( verbosity >= 3 ) LogHandler.current.value = LogHandler.verbose
 
     if ( verbosity >= 2 ) println( sequent.toSigRelativeString )
 
@@ -246,8 +242,6 @@ object Viper {
 
     if ( opts.mode == "help" || files.size != 1 ) return print( ViperOptions.usage )
     val file = files.head
-
-    Logger.setConsolePattern( "%message%n" )
 
     val problem = if ( opts.fixup ) TipSmtParser.fixupAndParse( file ) else TipSmtParser.parse( file )
     implicit val ctx: MutableContext = problem.ctx.newMutable

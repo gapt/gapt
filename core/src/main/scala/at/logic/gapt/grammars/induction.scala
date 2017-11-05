@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.Utils.numeral
 import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 object SipGrammar {
   type Production = ( FOLVar, FOLTerm )
@@ -108,7 +108,7 @@ case class SipGrammarMinimizationFormula( g: SipGrammar ) {
   }
 }
 
-object minimizeSipGrammar extends Logger {
+object minimizeSipGrammar {
   def apply( g: SipGrammar, langs: Seq[stableSipGrammar.InstanceLanguage], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver ): SipGrammar = {
     val formula = SipGrammarMinimizationFormula( g )
     val hard = formula.coversLanguageFamily( langs )
