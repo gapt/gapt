@@ -257,10 +257,12 @@ case class InductionGrammarMinimizationFormula( g: InductionGrammar ) {
 }
 
 object minimizeInductionGrammar {
-  def apply( g: InductionGrammar, indexedTermset: Map[Expr, Set[Expr]], solver: MaxSATSolver = bestAvailableMaxSatSolver ): Option[InductionGrammar] = {
+  def apply( g: InductionGrammar, indexedTermset: Map[Expr, Set[Expr]],
+             solver:    MaxSATSolver      = bestAvailableMaxSatSolver,
+             weighting: Production => Int = _ => 1 ): Option[InductionGrammar] = {
     val formula = InductionGrammarMinimizationFormula( g )
     val hard = formula.coversIndexedTermset( indexedTermset )
-    val soft = for ( p <- g.productions ) yield -formula.productionIsIncluded( p ) -> 1
+    val soft = for ( p <- g.productions ) yield -formula.productionIsIncluded( p ) -> weighting( p )
     solver.solve( hard, soft ).map( model =>
       g.filterProductions( p => model( formula.productionIsIncluded( p ) ) ) )
   }
@@ -282,12 +284,17 @@ object findMinimalInductionGrammar {
       nameGen, indexedTermset.keys.head.ty, indexedTermset.values.view.flatten.head.ty, gamma )
     apply( indexedTermset, defaultNames.tau, defaultNames.alpha, defaultNames.nus, gamma, solver )
   }
+  def apply(
+    indexedTermset: Map[Expr, Set[Expr]],
+    tau:            Var, alpha: Var, nus: Map[Const, NonTerminalVect], gamma: NonTerminalVect,
+    solver: MaxSATSolver ): Option[InductionGrammar] =
+    apply( indexedTermset, tau, alpha, nus, gamma, solver, _ => 1 )
 
   def apply(
     indexedTermset: Map[Expr, Set[Expr]],
     tau:            Var, alpha: Var, nus: Map[Const, NonTerminalVect], gamma: NonTerminalVect,
-    solver: MaxSATSolver ): Option[InductionGrammar] = {
+    solver: MaxSATSolver, weighting: Production => Int ): Option[InductionGrammar] = {
     val stable = stableInductionGrammar( indexedTermset, tau, alpha, nus, gamma )
-    minimizeInductionGrammar( stable, indexedTermset, solver )
+    minimizeInductionGrammar( stable, indexedTermset, solver, weighting )
   }
 }

@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
 import at.logic.gapt.expr.hol.{ CNFp, containsQuantifierOnLogicalLevel, instantiate, universalClosure }
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.grammars.Rule
+import at.logic.gapt.grammars.induction2.InductionGrammar.Production
 import at.logic.gapt.grammars.induction2.{ InductionGrammar, findMinimalInductionGrammar }
 import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
@@ -15,7 +15,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.viper.grammars.{ EnumeratingInstanceGenerator, hSolveQBUP }
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
+import TreeGrammarProverOptions.FloatRange
 import at.logic.gapt.utils.{ Logger, Maybe }
 
 import scala.collection.mutable
@@ -34,7 +34,7 @@ case class TreeGrammarProverOptions(
     smtSolver:        Prover              = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
     quantTys:         Option[Seq[String]] = None,
-    grammarWeighting: Rule => Int         = _ => 1,
+    grammarWeighting: Production => Int   = _ => 1,
     tautCheckNumber:  Int                 = 10,
     tautCheckSize:    FloatRange          = ( 2, 3 ),
     canSolSize:       FloatRange          = ( 2, 4 ),
@@ -131,7 +131,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val indexedTermset = Map() ++
       instanceProofs.map { case ( inst, es ) => inst -> encoding.encode( es.expansionSequent.copy( succedent = Vector() ) ) }
 
-    val Some( grammar ) = findMinimalInductionGrammar( indexedTermset, tau, alpha, nus, gamma, options.maxSATSolver )
+    val Some( grammar ) = findMinimalInductionGrammar(
+      indexedTermset,
+      tau, alpha, nus, gamma,
+      options.maxSATSolver, options.grammarWeighting )
 
     info( s"Found schematic proof with induction:\n$grammar\n" )
     for ( ( inst, terms ) <- indexedTermset ) {

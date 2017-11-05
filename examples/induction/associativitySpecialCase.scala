@@ -14,7 +14,6 @@ object associativitySpecialCase extends TacticsProof {
       .instanceProver( spass )
       .quantTys()
       .canSolSize( 2 )
-      .doForgetOne()
 
   val proof = Lemma(
     hols"""p0: !x x+0 = x, ps: !x!y x+s(y) = s(x+y),

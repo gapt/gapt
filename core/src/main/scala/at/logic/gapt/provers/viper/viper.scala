@@ -6,6 +6,7 @@ import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.Rule
+import at.logic.gapt.grammars.induction2.InductionGrammar
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, withSection }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
@@ -83,7 +84,7 @@ class TreeGrammarInductionTactic2( options: grammars2.TreeGrammarProverOptions =
   def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
   def smtEquationMode( mode: grammars2.TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
   def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
-  def grammarWeighting( w: Rule => Int ) = copy( options.copy( grammarWeighting = w ) )
+  def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
   def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
   def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
@@ -211,10 +212,9 @@ object ViperOptions {
         opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
       case "--instnum" :: instNum :: rest => parseTreeGrammar2( rest, opts.copy( instanceNumber = instNum.toInt ) )
       case "--instsize" :: a :: b :: rest => parseTreeGrammar2( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
-      case "--findmth" :: mth :: rest     => parseTreeGrammar2( rest, opts.copy( findingMethod = mth ) )
       case "--qtys" :: qtys :: rest       => parseTreeGrammar2( rest, opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
       case "--gramw" :: w :: rest =>
-        val f: Rule => Int = w match {
+        val f: InductionGrammar.Production => Int = w match {
           case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
           case "nprods" => _ => 1
         }
@@ -222,8 +222,6 @@ object ViperOptions {
       case "--tchknum" :: num :: rest       => parseTreeGrammar2( rest, opts.copy( tautCheckNumber = num.toInt ) )
       case "--tchksize" :: a :: b :: rest   => parseTreeGrammar2( rest, opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar2( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
-      case "--forgetone" :: rest            => parseTreeGrammar2( rest, opts.copy( forgetOne = true ) )
-      case "--no-forgetone" :: rest         => parseTreeGrammar2( rest, opts.copy( forgetOne = false ) )
       case _                                => ( args, opts )
     }
 }
@@ -247,7 +245,8 @@ object Viper {
           ( 0 until numVars ).flatMap( i => List(
             20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar2 without quantifiers $i" ),
             60.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ) ).aka( s"treegrammar2 $i" ) ) ) ).reverse
-      case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
+      case "treegrammar"  => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
+      case "treegrammar2" => List( Duration.Inf -> new TreeGrammarInductionTactic2( opts.treeGrammarProverOptions2 ).aka( "treegrammar2" ) )
       case "analytic" =>
         val axiomsName =
           opts.aipOptions.axioms match {
