@@ -328,14 +328,15 @@ object ContractionRule extends ConvenienceConstructor( "ContractionRule" ) {
    *
    * @param subProof The subproof π.
    * @param f The formula to contract.
-   * @return
    */
   def apply( subProof: NDProof, f: Formula ): ContractionRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( Right( f ), Right( f ) ), Left( Suc( 0 ) ) )
 
-    new ContractionRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    val p = ContractionRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    assert( p.mainFormula == f )
+    p
   }
 
 }
@@ -860,17 +861,23 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
    * @param eigenVariable A variable α such that A[α] occurs in the premise.
    * @return
    */
-  def apply( subProof: NDProof, mainFormula: Formula, eigenVariable: Var ): ForallIntroRule = mainFormula match {
-    case All( v, subFormula ) =>
-      val auxFormula = Substitution( v, eigenVariable )( subFormula )
+  def apply( subProof: NDProof, mainFormula: Formula, eigenVariable: Var ): ForallIntroRule = {
+    if ( freeVariables( mainFormula ) contains eigenVariable ) {
+      throw NDRuleCreationException( s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula." )
+    } else mainFormula match {
+      case All( v, subFormula ) =>
+        val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
-      val premise = subProof.endSequent
+        val premise = subProof.endSequent
 
-      val ( _, indices ) = findAndValidate( premise )( Seq(), Right( auxFormula ) )
+        val ( _, indices ) = findAndValidate( premise )( Seq(), Right( auxFormula ) )
 
-      ForallIntroRule( subProof, eigenVariable, v )
+        val p = ForallIntroRule( subProof, eigenVariable, v )
+        assert( p.mainFormula == mainFormula )
+        p
 
-    case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+      case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    }
   }
 }
 
@@ -975,8 +982,11 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
 
         val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
 
-        if ( premise( Suc( 0 ) ) == auxFormula ) ExistsIntroRule( subProof, subFormula, term, v )
-        else throw NDRuleCreationException( s"Formula $auxFormula is not the succedent of $premise." )
+        if ( premise( Suc( 0 ) ) == auxFormula ) {
+          val p = ExistsIntroRule( subProof, subFormula, term, v )
+          assert( p.mainFormula == mainFormula )
+          p
+        } else throw NDRuleCreationException( s"Formula $auxFormula is not the succedent of $premise." )
 
       case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
     }
@@ -990,9 +1000,12 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
    * @return
    */
   def apply( subProof: NDProof, mainFormula: Formula ): ExistsIntroRule = mainFormula match {
-    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+    case Ex( v, subFormula ) =>
+      val p = apply( subProof, mainFormula, v )
+      assert( p.mainFormula == mainFormula )
+      p
 
-    case _                   => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 }
 

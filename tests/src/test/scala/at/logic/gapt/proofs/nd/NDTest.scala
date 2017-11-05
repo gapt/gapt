@@ -317,4 +317,11 @@ class NDTest extends Specification with SatMatchers {
     a1.conclusion must beValidSequent
   }
 
+  "Issue #650" should {
+    "be fixed for ∀" {
+      val p1 = nd.TheoryAxiom( fof"P(y,y)" )
+      nd.ForallIntroRule( p1, fof"!x P(x,y)", fov"y" ) must throwAn[NDRuleCreationException]
+    }
+  }
+
 }

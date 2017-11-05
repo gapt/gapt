@@ -301,7 +301,9 @@ object ContractionLeftRule extends ConvenienceConstructor( "ContractionLeftRule"
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( f, f ), Seq() )
 
-    new ContractionLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    val p = ContractionLeftRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    assert( p.mainFormula == f )
+    p
   }
 
 }
@@ -344,7 +346,9 @@ object ContractionRightRule extends ConvenienceConstructor( "ContractionRightRul
     val premise = subProof.endSequent
 
     val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( f, f ) )
-    new ContractionRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
+    val p = ContractionRightRule( subProof, Suc( indices( 0 ) ), Suc( indices( 1 ) ) )
+    assert( p.mainFormula == f )
+    p
   }
 
 }
@@ -608,8 +612,11 @@ object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): AndLeftRule = mainFormula match {
-    case And( f, g ) => apply( subProof, f, g )
-    case _           => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
+    case And( f, g ) =>
+      val p = apply( subProof, f, g )
+      assert( p.mainFormula == mainFormula )
+      p
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
   }
 }
 
@@ -677,8 +684,11 @@ object AndRightRule extends ConvenienceConstructor( "AndRightRule" ) {
    * @return
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, mainFormula: Formula ): AndRightRule = mainFormula match {
-    case And( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _           => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
+    case And( f, g ) =>
+      val p = apply( leftSubProof, f, rightSubProof, g )
+      assert( p.mainFormula == mainFormula )
+      p
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a conjunction." )
   }
 }
 
@@ -746,8 +756,11 @@ object OrLeftRule extends ConvenienceConstructor( "OrLeftRule" ) {
    * @return
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, mainFormula: Formula ): OrLeftRule = mainFormula match {
-    case Or( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _          => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a disjunction." )
+    case Or( f, g ) =>
+      val p = apply( leftSubProof, f, rightSubProof, g )
+      assert( p.mainFormula == mainFormula )
+      p
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a disjunction." )
   }
 }
 
@@ -808,8 +821,11 @@ object OrRightRule extends ConvenienceConstructor( "OrRightRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): OrRightRule = mainFormula match {
-    case Or( f, g ) => apply( subProof, f, g )
-    case _          => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a disjunction." )
+    case Or( f, g ) =>
+      val p = apply( subProof, f, g )
+      assert( p.mainFormula == mainFormula )
+      p
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a disjunction." )
   }
 }
 
@@ -877,8 +893,11 @@ object ImpLeftRule extends ConvenienceConstructor( "ImpLeftRule" ) {
    * @return
    */
   def apply( leftSubProof: LKProof, rightSubProof: LKProof, mainFormula: Formula ): ImpLeftRule = mainFormula match {
-    case Imp( f, g ) => apply( leftSubProof, f, rightSubProof, g )
-    case _           => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a implication." )
+    case Imp( f, g ) =>
+      val p = apply( leftSubProof, f, rightSubProof, g )
+      assert( p.mainFormula == mainFormula )
+      p
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not a implication." )
   }
 }
 
@@ -939,8 +958,11 @@ object ImpRightRule extends ConvenienceConstructor( "ImpRightRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ImpRightRule = mainFormula match {
-    case Imp( f, g ) => apply( subProof, f, g )
-    case _           => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not an implication." )
+    case Imp( f, g ) =>
+      val p = apply( subProof, f, g )
+      assert( p.mainFormula == mainFormula )
+      p
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not an implication." )
   }
 }
 
@@ -1024,7 +1046,9 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
         if ( i == -1 )
           throw LKRuleCreationException( s"Formula $auxFormula not found in antecedent of $premise." )
 
-        ForallLeftRule( subProof, Ant( i ), subFormula, term, v )
+        val p = ForallLeftRule( subProof, Ant( i ), subFormula, term, v )
+        assert( p.mainFormula == mainFormula )
+        p
 
       case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
     }
@@ -1038,15 +1062,20 @@ object ForallLeftRule extends ConvenienceConstructor( "ForallLeftRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ForallLeftRule = mainFormula match {
-    case All( v, subFormula ) => apply( subProof, mainFormula, v )
+    case All( v, subFormula ) =>
+      val p = apply( subProof, mainFormula, v )
+      assert( p.mainFormula == mainFormula )
+      p
 
-    case _                    => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 
   def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, term: Expr ): ForallLeftRule =
     mainFormula match {
       case All( v, subFormula ) =>
-        ForallLeftRule( subProof, aux, subFormula, term, v )
+        val p = ForallLeftRule( subProof, aux, subFormula, term, v )
+        assert( p.mainFormula == mainFormula )
+        p
     }
 }
 
@@ -1100,17 +1129,23 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
    * @param eigenVariable A variable α such that A[α] occurs in the premise.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula, eigenVariable: Var ): ForallRightRule = mainFormula match {
-    case All( v, subFormula ) =>
-      val auxFormula = Substitution( v, eigenVariable )( subFormula )
+  def apply( subProof: LKProof, mainFormula: Formula, eigenVariable: Var ): ForallRightRule = {
+    if ( freeVariables( mainFormula ) contains eigenVariable ) {
+      throw LKRuleCreationException( s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula." )
+    } else mainFormula match {
+      case All( v, subFormula ) =>
+        val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
-      val premise = subProof.endSequent
+        val premise = subProof.endSequent
 
-      val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
+        val ( _, indices ) = findAndValidate( premise )( Seq(), Seq( auxFormula ) )
 
-      ForallRightRule( subProof, Suc( indices( 0 ) ), eigenVariable, v )
+        val p = ForallRightRule( subProof, Suc( indices( 0 ) ), eigenVariable, v )
+        assert( p.mainFormula == mainFormula )
+        p
 
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    }
   }
 
   /**
@@ -1121,14 +1156,20 @@ object ForallRightRule extends ConvenienceConstructor( "ForallRightRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ForallRightRule = mainFormula match {
-    case All( v, subFormula ) => apply( subProof, mainFormula, v )
+    case All( v, subFormula ) =>
+      val p = apply( subProof, mainFormula, v )
+      assert( p.mainFormula == mainFormula )
+      p
 
-    case _                    => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
   }
 
   def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, eigenVariable: Var ): ForallRightRule =
     mainFormula match {
-      case All( v, _ ) => ForallRightRule( subProof, aux, eigenVariable, v )
+      case All( v, _ ) =>
+        val p = ForallRightRule( subProof, aux, eigenVariable, v )
+        assert( p.mainFormula == mainFormula )
+        p
     }
 }
 
@@ -1233,16 +1274,22 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
    * @param eigenVariable A variable α such that A[α] occurs in the premise.
    * @return
    */
-  def apply( subProof: LKProof, mainFormula: Formula, eigenVariable: Var ): ExistsLeftRule = mainFormula match {
-    case Ex( v, subFormula ) =>
-      val auxFormula = Substitution( v, eigenVariable )( subFormula )
+  def apply( subProof: LKProof, mainFormula: Formula, eigenVariable: Var ): ExistsLeftRule = {
+    if ( freeVariables( mainFormula ) contains eigenVariable ) {
+      throw LKRuleCreationException( s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula." )
+    } else mainFormula match {
+      case Ex( v, subFormula ) =>
+        val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
-      val premise = subProof.endSequent
+        val premise = subProof.endSequent
 
-      val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
-      ExistsLeftRule( subProof, Ant( indices( 0 ) ), eigenVariable, v )
+        val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Seq() )
+        val p = ExistsLeftRule( subProof, Ant( indices( 0 ) ), eigenVariable, v )
+        assert( p.mainFormula == mainFormula )
+        p
 
-    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+      case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    }
   }
 
   /**
@@ -1253,9 +1300,12 @@ object ExistsLeftRule extends ConvenienceConstructor( "ExistsLeftRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ExistsLeftRule = mainFormula match {
-    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+    case Ex( v, subFormula ) =>
+      val p = apply( subProof, mainFormula, v )
+      assert( p.mainFormula == mainFormula )
+      p
 
-    case _                   => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 
   def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, eigenVariable: Var ): ExistsLeftRule =
@@ -1368,7 +1418,9 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
         if ( i == -1 )
           throw LKRuleCreationException( s"Formula $auxFormula not found in succedent of $premise." )
 
-        ExistsRightRule( subProof, Suc( i ), subFormula, term, v )
+        val p = ExistsRightRule( subProof, Suc( i ), subFormula, term, v )
+        assert( p.mainFormula == mainFormula )
+        p
 
       case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
     }
@@ -1382,15 +1434,20 @@ object ExistsRightRule extends ConvenienceConstructor( "ExistsRightRule" ) {
    * @return
    */
   def apply( subProof: LKProof, mainFormula: Formula ): ExistsRightRule = mainFormula match {
-    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+    case Ex( v, subFormula ) =>
+      val p = apply( subProof, mainFormula, v )
+      assert( p.mainFormula == mainFormula )
+      p
 
-    case _                   => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw LKRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 
   def apply( subProof: LKProof, aux: SequentIndex, mainFormula: Formula, term: Expr ): ExistsRightRule =
     mainFormula match {
       case Ex( v, subFormula ) =>
-        ExistsRightRule( subProof, aux, subFormula, term, v )
+        val p = ExistsRightRule( subProof, aux, subFormula, term, v )
+        assert( p.mainFormula == mainFormula )
+        p
     }
 }
 
@@ -1533,12 +1590,12 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
 
           val Abs( v, rest ) = repContext
           if ( auxFormula.find( s ).isEmpty )
-            throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
+            throw LKRuleCreationException( s"Eq is trivial, but term $s does not occur in $auxFormula." )
 
           EqualityLeftRule( subProof, eq, aux, repContext )
 
         } else if ( s == t && auxFormula != mainFormula ) {
-          throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + mainFormula + "differ." )
+          throw LKRuleCreationException( s"Eq is trivial, but aux formula $auxFormula and main formula $mainFormula differ." )
 
         } else if ( s != t && auxFormula == mainFormula ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
@@ -1551,13 +1608,16 @@ object EqualityLeftRule extends ConvenienceConstructor( "EqualityLeftRule" ) {
           val Abs( vT, restT ) = contextT
 
           if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
-            throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
+            throw LKRuleCreationException( s"Neither $s nor $t found in formula $auxFormula." )
 
-          if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityLeftRule( subProof, eq, aux, contextS )
           } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityLeftRule( subProof, eq, aux, contextT )
           } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
+
+          assert( p.mainFormula == mainFormula )
+          p
         }
 
       case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
@@ -1638,12 +1698,12 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
 
           val Abs( v, rest ) = repContext
           if ( auxFormula.find( s ).isEmpty )
-            throw LKRuleCreationException( "Eq is trivial, but term " + s + " does not occur in " + auxFormula + "." )
+            throw LKRuleCreationException( s"Eq is trivial, but term $s does not occur in $auxFormula." )
 
           EqualityRightRule( subProof, eq, aux, repContext )
 
         } else if ( s == t && auxFormula != mainFormula ) {
-          throw LKRuleCreationException( "Eq is trivial, but aux formula " + auxFormula + " and main formula " + mainFormula + "differ." )
+          throw LKRuleCreationException( s"Eq is trivial, but aux formula $auxFormula and main formula $mainFormula." )
 
         } else if ( s != t && auxFormula == mainFormula ) {
           throw LKRuleCreationException( "Nontrivial equation, but aux and main formula are equal." )
@@ -1656,13 +1716,16 @@ object EqualityRightRule extends ConvenienceConstructor( "EqualityRightRule" ) {
           val Abs( vT, restT ) = contextT
 
           if ( restS.find( vS ).isEmpty && restT.find( vT ).isEmpty )
-            throw LKRuleCreationException( "Neither " + s + " nor " + t + " found in formula " + auxFormula + "." )
+            throw LKRuleCreationException( s"Neither $s nor $t found in formula $auxFormula." )
 
-          if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
+          val p = if ( BetaReduction.betaNormalize( App( contextS, t ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityRightRule( subProof, eq, aux, contextS )
           } else if ( BetaReduction.betaNormalize( App( contextT, s ) ) == BetaReduction.betaNormalize( mainFormula ) ) {
             EqualityRightRule( subProof, eq, aux, contextT )
           } else throw LKRuleCreationException( "Replacement in neither direction leads to proposed main formula." )
+
+          assert( p.mainFormula == mainFormula )
+          p
         }
 
       case _ => throw LKRuleCreationException( s"Formula $eqFormula is not an equation." )
@@ -1763,7 +1826,10 @@ object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
 }
 
 /**
- * An LKProof ending with a definition on the left:
+ * An LKProof ending with a definition on the left.
+ *
+ * Introducing the definition c := φ on the left means replacing some occurrences of the expression φ by c in a
+ * formula in the antecedent:
  *
  * <pre>
  *       (π)
@@ -1772,10 +1838,13 @@ object DefinitionRule extends ConvenienceConstructor( "DefinitionRule" ) {
  *    A[c], Γ :- Δ
  * </pre>
  *
+ * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
+ * by any other formula. The soundness of such proofs can only be established with respect to a Context.
+ * Use the `check` method on [[at.logic.gapt.proofs.Context]] to check whether the constructed proof is sound.
+ *
  * @param subProof The proof π.
  * @param aux The index of A in the antecedent.
- * @param definition The definition c := φ.
- * @param replacementContext A term λx.A[x] that designates the positions for the definition.
+ * @param mainFormula The formula
  */
 case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula ) extends DefinitionRule {
   override def name = "d:l"
@@ -1786,14 +1855,11 @@ case class DefinitionLeftRule( subProof: LKProof, aux: SequentIndex, mainFormula
 object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" ) {
 
   /**
-   * Convenience constructor for d:l that, given an aux and main formula, will attempt to infer the replacement context.
-   * The defined term must occur exactly once in mainFormula.
+   * Convenience constructor for d:l.
    *
    * @param subProof The subproof.
    * @param aux The aux formula or its index.
-   * @param definition The definition to be introduced.
-   * @param mainFormula The main formula. Must contain definition exactly once.
-   * @return
+   * @param mainFormula The main formula.
    */
   def apply( subProof: LKProof, aux: IndexOrFormula, mainFormula: Formula ): DefinitionLeftRule = {
     val premise = subProof.endSequent
@@ -1804,17 +1870,25 @@ object DefinitionLeftRule extends ConvenienceConstructor( "DefinitionLeftRule" )
 }
 
 /**
- * An LKProof ending with a definition on the right:
+ * An LKProof ending with a definition on the right.
+ *
+ * Introducing the definition c := φ on the right means replacing some occurrences of the expression φ by c in a
+ * formula in the succedent:
  *
  * <pre>
  *       (π)
  *    Γ :- Δ, A[φ]
- *   -----------d:l
+ *   -----------d:r
  *    Γ :- Δ, A[c]
  * </pre>
  *
+ * NB: LK proofs that contain this rule are not sound by construction, since it allows you to replace any formula
+ * by any other formula. The soundness of such proofs can only be established with respect to a Context.
+ * Use the `check` method on [[at.logic.gapt.proofs.Context]] to check whether the constructed proof is sound.
+ *
  * @param subProof The proof π.
  * @param aux The index of A in the succedent.
+ * @param mainFormula The formula
  */
 case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, mainFormula: Formula ) extends DefinitionRule {
   override def name = "d:r"
@@ -1825,13 +1899,11 @@ case class DefinitionRightRule( subProof: LKProof, aux: SequentIndex, mainFormul
 object DefinitionRightRule extends ConvenienceConstructor( "DefinitionRightRule" ) {
 
   /**
-   * Convenience constructor for d:r that, given an aux and main formula, will attempt to infer the replacement context.
-   * The defined term must occur exactly once in mainFormula.
+   * Convenience constructor for d:r.
    *
    * @param subProof The subproof.
    * @param aux The aux formula or its index.
-   * @param mainFormula The main formula. Must contain definition exactly once.
-   * @return
+   * @param mainFormula The main formula.
    */
   def apply( subProof: LKProof, aux: IndexOrFormula, mainFormula: Formula ): DefinitionRightRule = {
     val premise = subProof.endSequent
