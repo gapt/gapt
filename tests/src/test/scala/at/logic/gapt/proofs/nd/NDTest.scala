@@ -318,7 +318,7 @@ class NDTest extends Specification with SatMatchers {
   }
 
   "Issue #650" should {
-    "be fixed for ∀" {
+    "be fixed for ∀" in {
       val p1 = nd.TheoryAxiom( fof"P(y,y)" )
       nd.ForallIntroRule( p1, fof"!x P(x,y)", fov"y" ) must throwAn[NDRuleCreationException]
     }
