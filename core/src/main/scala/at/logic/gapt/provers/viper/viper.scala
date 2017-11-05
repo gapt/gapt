@@ -163,12 +163,13 @@ object Viper {
       case "portfolio" =>
         import scala.concurrent.duration._
         val numVars = sequent.succedent match { case Seq( All.Block( xs, _ ) ) => xs.size }
-        ( List(
-          10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ),
-          10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ) ) ++
-          ( 0 until numVars ).flatMap( i => List(
-            20.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar without quantifiers $i" ),
-            60.seconds -> introUnivsExcept( i ).andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).aka( s"treegrammar $i" ) ) ) ).reverse
+        List(
+          10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
+          10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ) ) ++
+          ( 0 until numVars ).toList.map( i => 20.seconds -> introUnivsExcept( i ).andThen(
+            new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar without quantifiers $i" ) ) ++
+          ( 0 until numVars ).toList.map( i => 60.seconds -> introUnivsExcept( i ).andThen(
+            new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).aka( s"treegrammar $i" ) )
       case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
