@@ -28,6 +28,7 @@ object DefaultProvers {
 
 import TreeGrammarProverOptions._
 case class TreeGrammarProverOptions(
+    goalQuantifier:   Int                 = 0,
     instanceNumber:   Int                 = 10,
     instanceSize:     FloatRange          = ( 0, 2 ),
     instanceProver:   Prover              = DefaultProvers.firstOrder,

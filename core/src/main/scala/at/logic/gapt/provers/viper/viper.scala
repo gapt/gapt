@@ -92,6 +92,7 @@ object ViperOptions {
 
   def parseTreeGrammar( args: List[String], opts: TreeGrammarProverOptions ): ( List[String], TreeGrammarProverOptions ) =
     args match {
+      case "--onquant" :: i :: rest => parseTreeGrammar( rest, opts.copy( goalQuantifier = i.toInt ) )
       case "--prover" :: prover :: rest => parseTreeGrammar(
         rest,
         opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
@@ -128,7 +129,11 @@ object Viper {
             new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar without quantifiers $i" ) ) ++
           ( 0 until numVars ).toList.map( i => 60.seconds -> introUnivsExcept( i ).andThen(
             new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).aka( s"treegrammar $i" ) )
-      case "treegrammar" => List( Duration.Inf -> new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ).aka( "treegrammar" ) )
+      case "treegrammar" =>
+        List( Duration.Inf ->
+          introUnivsExcept( opts.treeGrammarProverOptions.goalQuantifier ).
+          andThen( new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).
+          aka( "treegrammar" ) )
       case "analytic" =>
         val axiomsName =
           opts.aipOptions.axioms match {
