@@ -1,12 +1,12 @@
 package at.logic.gapt.provers.viper
 
 import ammonite.ops._
-import at.logic.gapt.expr.{ All, Formula }
+import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
 import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.grammars.InductionGrammar
-import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, withSection }
+import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.lk.LKProof
@@ -18,51 +18,13 @@ import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.vampire.Vampire
 import at.logic.gapt.provers.viper.aip.axioms._
-import at.logic.gapt.provers.{ Prover, ResolutionProver }
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ LogHandler, TimeOutException, withTimeout }
-import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.concurrent.duration.Duration
 import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
-
-class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = grammars.TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
-  import at.logic.gapt.proofs.gaptic._
-
-  def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
-
-  def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
-  def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
-  def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
-  def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
-  def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
-  def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
-  def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
-  def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
-  def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
-  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
-  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
-  def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
-
-  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
-    implicit val ctx2: MutableContext = ctx.newMutable
-    withSection { section =>
-      val groundGoal = section.groundSequent( goal.conclusion )
-      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
-      try {
-        Right( () -> viper.solve() )
-      } catch {
-        case t: TimeOutException => throw t
-        case t: ThreadDeath      => throw t
-        case t: Throwable =>
-          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
-      }
-    }
-  }
-
-  override def toString = "treeGrammarProver"
-}
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
 
@@ -71,7 +33,6 @@ case class ViperOptions(
     mode:                     String                   = "portfolio",
     fixup:                    Boolean                  = true,
     prooftool:                Boolean                  = false,
-    firstOrderProver:         ResolutionProver         = Escargot,
     treeGrammarProverOptions: TreeGrammarProverOptions = TreeGrammarProverOptions(),
     aipOptions:               AipOptions               = AipOptions() )
 object ViperOptions {

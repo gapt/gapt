@@ -6,8 +6,8 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
+import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
 /**
  * Predefined tactics in gaptic.

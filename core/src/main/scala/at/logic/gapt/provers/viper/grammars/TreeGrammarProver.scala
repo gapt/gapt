@@ -9,13 +9,14 @@ import at.logic.gapt.grammars.InductionGrammar.Production
 import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
 import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof }
-import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.{ OneShotProver, Prover }
-import at.logic.gapt.utils.Maybe
+import at.logic.gapt.utils.{ Maybe, TimeOutException }
 import at.logic.gapt.utils.logger._
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable
 
@@ -220,4 +221,41 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     instProof
   }
 
+}
+
+class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
+  import at.logic.gapt.proofs.gaptic._
+
+  def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
+
+  def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
+  def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
+  def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
+  def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
+  def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
+  def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
+  def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
+  def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
+  def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
+  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
+  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
+  def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
+
+  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
+    implicit val ctx2: MutableContext = ctx.newMutable
+    withSection { section =>
+      val groundGoal = section.groundSequent( goal.conclusion )
+      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
+      try {
+        Right( () -> viper.solve() )
+      } catch {
+        case t: TimeOutException => throw t
+        case t: ThreadDeath      => throw t
+        case t: Throwable =>
+          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
+      }
+    }
+  }
+
+  override def toString = "treeGrammarInduction"
 }
