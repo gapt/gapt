@@ -28,15 +28,22 @@ class TipSmtParser {
   datatypes += TipDatatype( To, Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
 
   def parse( sexp: SExpression ): Unit = sexp match {
-    case LFun( "declare-sort", LSymbol( name ), LSymbol( ":skolem" | ":lambda" ), ar ) =>
-      parse( LFun( "declare-sort", LSymbol( name ), ar ) )
+
+    case LFun( "declare-sort", sort @ LSymbol( _ ), LKeyword( _ ), key @ LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( "declare-sort", sort +: key +: rest: _* ) )
+    case LFun( "declare-sort", sort @ LSymbol( _ ), LKeyword( _ ), symbol @ LSymbol( _ ) ) =>
+      parse( LFun( "declare-sort", sort, symbol ) )
+    case LFun( "declare-sort", sort @ LSymbol( _ ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( "declare-sort", sort +: rest: _* ) )
     case LFun( "declare-sort", LSymbol( name ), LSymbol( "0" ) ) =>
       val t = TBase( name )
       declare( t )
       ctx += t
-    case LFun( "declare-datatypes", LList(), LList( LFun( typename, LSymbol( ":source" ), _, constructors @ _* ) ) ) =>
-      parse( LFun( "declare-datatypes", LList(), LList( LFun( typename, constructors: _* ) ) ) )
 
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, LKeyword( _ ), LSymbol( _ ), rest @ _* ) ) ) =>
+      parse( LFun( "declare-datatypes", LList(), LList( LFun( typename, rest: _* ) ) ) )
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, LKeyword( _ ), rest @ _* ) ) ) =>
+      parse( LFun( "declare-datatypes", LList(), LList( LFun( typename, rest: _* ) ) ) )
     case LFun( "declare-datatypes", LList(), LList( LFun( typename, constructors @ _* ) ) ) =>
       val t = TBase( typename )
       declare( t )
@@ -51,21 +58,29 @@ class TipSmtParser {
         }
       }
 
-    case LFun( "declare-const", LSymbol( name ), LSymbol( ":lambda" ), ty ) =>
-      parse( LFun( "declare-const", LSymbol( name ), ty ) )
+    case LFun( "declare-const", LSymbol( constantName ), LKeyword( _ ), keyword @ LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( "declare-const", LSymbol( constantName ) +: keyword +: rest: _* ) )
+    case LFun( "declare-const", LSymbol( constantName ), LKeyword( _ ), symbol @ LSymbol( _ ) ) =>
+      parse( LFun( "declare-const", LSymbol( constantName ), symbol ) )
+    case LFun( "declare-const", LSymbol( constantName ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( "declare-const", LSymbol( constantName ) +: rest: _* ) )
     case LFun( "declare-const", LSymbol( name ), LSymbol( typeName ) ) =>
       val c = Const( name, typeDecls( typeName ) )
       declare( c )
       ctx += c
-    case LFun( "declare-fun", LSymbol( name ), LSymbol( ":lambda" ), rest @ _* ) =>
-      parse( LFun( "declare-fun", LSymbol( name ) +: rest: _* ) )
+
+    case LFun( "declare-fun", name @ LSymbol( _ ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( "declare-fun", name +: rest: _* ) )
+    case LFun( "declare-fun", name @ LSymbol( _ ), LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( "declare-fun", name +: rest: _* ) )
     case LFun( "declare-fun", LSymbol( name ), LList( argTypes @ _* ), LSymbol( retType ) ) =>
       val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LSymbol( argType ) => typeDecls( argType ) } ) )
       declare( f )
       ctx += f
-    case LFun( "define-fun", name @ LSymbol( _ ), LSymbol( ":lambda" ), rest @ _* ) =>
-      parse( LFun( "define-fun", name +: rest: _* ) )
-    case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LSymbol( _ ), LSymbol( ":source" ), _, rest @ _* ) =>
+
+    case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LSymbol( _ ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( cmd, name +: rest: _* ) )
+    case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LSymbol( _ ), LKeyword( _ ), rest @ _* ) =>
       parse( LFun( cmd, name +: rest: _* ) )
     case LFun( "define-fun" | "define-fun-rec", LSymbol( name ), LList( args @ _* ), LSymbol( retType ), body ) =>
       val argVars = for ( LFun( argName, LSymbol( argType ) ) <- args ) yield Var( argName, typeDecls( argType ) )
@@ -73,13 +88,19 @@ class TipSmtParser {
       declare( funConst )
       ctx += funConst
       functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
-    case LFun( "assert", LSymbol( ":definition" ), LSymbol( ":lambda" ), formula ) =>
-      parse( LFun( "assert", formula ) )
+
+    case LFun( assertion @ ( "assert" | "prove" | "assert-not" ), LKeyword( _ ), keyword @ LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( assertion, keyword +: rest: _* ) )
+
+    case LFun( assertion @ ( "assert" | "prove" | "assert-not" ), LKeyword( _ ), formula ) =>
+      parse( LFun( assertion, formula ) )
+
+    case LFun( assertion @ ( "assert" | "prove" | "assert-not" ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( assertion, rest: _* ) )
+
     case LFun( "assert", formula ) =>
       assumptions += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "assert-not", formula ) =>
-      goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
-    case LFun( "prove", LSymbol( ":source" ), _, formula ) =>
       goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "prove", formula ) =>
       goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
@@ -87,8 +108,11 @@ class TipSmtParser {
   }
 
   def parseConstructor( sexp: SExpression, ofType: Ty ): TipConstructor = sexp match {
-    case LFun( constructorName, LSymbol( ":source" ), _, fields @ _* ) =>
-      parseConstructor( LFun( constructorName, fields: _* ), ofType )
+    case LFun( constructorName, LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parseConstructor( LFun( constructorName, rest: _* ), ofType )
+    case LFun( constructorName, LKeyword( _ ), rest @ _* ) =>
+      parseConstructor( LFun( constructorName, rest: _* ), ofType )
+
     case LFun( name, fields @ _* ) =>
       val projectors = fields map { parseField( _, ofType ) }
       val fieldTypes = projectors map { _.ty } map { case FunctionType( to, _ ) => to }
