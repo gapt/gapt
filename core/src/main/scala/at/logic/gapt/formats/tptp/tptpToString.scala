@@ -77,6 +77,8 @@ object tptpToString {
     val newVars = for ( fv <- vars ) yield nameGen.fresh( renameVar( fv ) )
     ( newVars, Substitution( vars zip newVars )( body ) )
   }
+  def renameVars( f: Formula ): Formula =
+    renameVars( freeVariables( f ).toSeq, f )._2.asInstanceOf[Formula]
 
   private val lowerWordRegex = "[a-z][A-Za-z0-9_]*".r
   private val definedOrSystemWord = "[$][$]?[A-Za-z0-9_]*".r

@@ -4,7 +4,7 @@ import ammonite.ops._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
-import at.logic.gapt.formats.{ InputFile, StringInputFile }
+import at.logic.gapt.formats.{ InputFile, StdinInputFile }
 import at.logic.gapt.grammars.InductionGrammar
 import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
 import at.logic.gapt.proofs.gaptic._
@@ -23,7 +23,6 @@ import at.logic.gapt.provers.viper.grammars._
 import at.logic.gapt.utils.{ LogHandler, TimeOutException, withTimeout }
 
 import scala.concurrent.duration.Duration
-import scala.io.StdIn
 import scala.util.{ Failure, Success, Try }
 
 case class AipOptions( axioms: AxiomFactory = SequentialInductionAxioms(), prover: ResolutionProver = Escargot )
@@ -204,7 +203,7 @@ object Viper {
   def main( args: Array[String] ): Unit = {
     val ( fileNames, opts ) = ViperOptions.parse( args.toList, ViperOptions( fixup = TipSmtParser.isInstalled ) )
     val files = fileNames.map {
-      case "-" => StringInputFile( Stream.continually( StdIn.readLine() ).takeWhile( _ != null ).mkString )
+      case "-" => StdinInputFile()
       case fn  => InputFile.fromPath( FilePath( fn ) )
     }
 

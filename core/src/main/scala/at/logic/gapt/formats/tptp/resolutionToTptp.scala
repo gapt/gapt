@@ -7,12 +7,11 @@ import at.logic.gapt.proofs.resolution._
 import scala.collection.mutable
 
 object resolutionToTptp {
-  private def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
+  def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
     val disj = if ( inf.assertions.isEmpty ) inf.conclusion.toDisjunction
     else inf.conclusion.toDisjunction | inf.assertions.toDisjunction
     if ( inf.conclusion.forall( _.isInstanceOf[Atom] ) ) {
-      val ( _, disj_ ) = tptpToString.renameVars( freeVariables( disj ).toSeq, disj )
-      AnnotatedFormula( "cnf", label, role, disj_.asInstanceOf[Formula], annotations )
+      AnnotatedFormula( "cnf", label, role, tptpToString.renameVars( disj ), annotations )
     } else {
       AnnotatedFormula( "fof", label, role, universalClosure( disj ), annotations )
     }
