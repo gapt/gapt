@@ -1,11 +1,11 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.fol.FOLPosition
-import at.logic.gapt.expr.hol.{ HOLPosition, instantiate, isPrenex }
+import at.logic.gapt.expr.hol.{ instantiate, isPrenex }
+import at.logic.gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs._
-import at.logic.gapt.provers.{ Prover, ResolutionProver }
+import at.logic.gapt.provers.ResolutionProver
 import at.logic.gapt.provers.escargot.Escargot
 
 object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
@@ -44,14 +44,14 @@ object AndLeftMacroRule extends ConvenienceConstructor( "AndLeftMacroRule" ) {
         throw LKRuleCreationException( s"Neither $leftConjunct nor $rightConjunct has been found in antecedent of ${subProof.endSequent}." )
 
       case -1 +: i +: _ => // The right conjunct has been found at index Ant(i).
-        val lc = ( leftConjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of leftConjunct is -1, it cannot have been passed as an index.
+        val IsFormula( lc ) = leftConjunct // This match cannot fail: if the index of leftConjunct is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, lc )
         val oc = subProof_.getSequentConnector
         val proof = AndLeftRule( subProof_, Ant( 0 ), oc.child( Ant( i ) ) )
         ( proof, proof.getSequentConnector * oc )
 
       case i +: -1 +: _ => // The left conjunct has been found at index Ant(i).
-        val rc = ( rightConjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of rightConjunct is -1, it cannot have been passed as an index.
+        val IsFormula( rc ) = rightConjunct // This match cannot fail: if the index of rightConjunct is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, rc )
         val oc = subProof_.getSequentConnector
         val proof = AndLeftRule( subProof_, oc.child( Ant( i ) ), Ant( 0 ) )
@@ -100,14 +100,14 @@ object OrRightMacroRule extends ConvenienceConstructor( "OrRightMacroRule" ) {
         throw LKRuleCreationException( s"Neither $leftDisjunct nor $rightDisjunct has been found in succedent of ${subProof.endSequent}." )
 
       case -1 +: i +: _ => // The right disjunct has been found at index Suc(i).
-        val ld = ( leftDisjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of leftDisjunct is -1, it cannot have been passed as an index.
+        val IsFormula( ld ) = leftDisjunct // This match cannot fail: if the index of leftDisjunct is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningRightRule( subProof, ld )
         val oc = subProof_.getSequentConnector
         val proof = OrRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ) )
         ( proof, proof.getSequentConnector * oc )
 
       case i +: -1 +: _ => // The left conjunct has been found at indext Suc(i).
-        val rd = ( rightDisjunct: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of rightDisjunct is -1, it cannot have been passed as an index.
+        val IsFormula( rd ) = rightDisjunct // This match cannot fail: if the index of rightDisjunct is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningRightRule( subProof, rd )
         val oc = subProof_.getSequentConnector
         val proof = OrRightRule( subProof_, oc.child( Suc( i ) ), subProof_.mainIndices( 0 ) )
@@ -156,14 +156,14 @@ object ImpRightMacroRule extends ConvenienceConstructor( "ImpRightMacroRule" ) {
         throw LKRuleCreationException( s"Neither $impPremise nor $impConclusion has been found in succedent of ${subProof.endSequent}." )
 
       case ( -1, i ) => // The conclusion has been found at index Suc(i).
-        val ip = ( impPremise: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of the premise is -1, it cannot have been passed as an index.
+        val IsFormula( ip ) = impPremise // This match cannot fail: if the index of the premise is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, ip )
         val oc = subProof_.getSequentConnector
         val proof = ImpRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ) )
         ( proof, proof.getSequentConnector * oc )
 
       case ( i, -1 ) => // The premise has been found at indext Ant(i).
-        val ic = ( impConclusion: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of the conclusion is -1, it cannot have been passed as an index.
+        val IsFormula( ic ) = impConclusion // This match cannot fail: if the index of the conclusion is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningRightRule( subProof, ic )
         val oc = subProof_.getSequentConnector
         val proof = ImpRightRule( subProof_, oc.child( Ant( i ) ), subProof_.mainIndices( 0 ) )
@@ -208,7 +208,7 @@ object EqualityLeftMacroRule extends ConvenienceConstructor( "EqualityLeftMacroR
         throw LKRuleCreationException( s"Aux formula has not been found in succedent of ${subProof.endSequent}." )
 
       case ( -1, i ) => // Aux formula has been found at index Ant(i).
-        val e = ( equation: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
+        val IsFormula( e ) = equation // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, e )
         val oc = subProof_.getSequentConnector
         val proof = EqualityLeftRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Ant( i ) ), con )
@@ -251,7 +251,7 @@ object EqualityRightMacroRule extends ConvenienceConstructor( "EqualityRightMacr
         throw LKRuleCreationException( s"Aux formula has not been found in succedent of ${subProof.endSequent}." )
 
       case ( -1, i ) => // Aux formula has been found at index Suc(i).
-        val e = ( equation: @unchecked ) match { case Right( f ) => f } // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
+        val IsFormula( e ) = equation // This match cannot fail: if the index of the equation is -1, it cannot have been passed as an index.
         val subProof_ = WeakeningLeftRule( subProof, e )
         val oc = subProof_.getSequentConnector
         val proof = EqualityRightRule( subProof_, subProof_.mainIndices( 0 ), oc.child( Suc( i ) ), con )
@@ -1078,17 +1078,14 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     aux:           IndexOrFormula,
     con:           Abs ): LKProof = {
 
-    val eqFormula = eq match {
-      case Left( i )  => leftSubProof.endSequent( i )
-      case Right( f ) => f
-    }
+    val eqFormula = eq.getFormula( leftSubProof.endSequent )
 
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = aux match {
-      case Left( i ) =>
+      case IsIndex( i ) =>
         EqualityLeftRule( p1, Ant( 0 ), i + 1, con )
 
-      case Right( f ) =>
+      case IsFormula( f ) =>
         EqualityLeftRule( p1, Ant( 0 ), f, con )
     }
 
@@ -1135,17 +1132,14 @@ object ParamodulationLeftRule extends ConvenienceConstructor( "ParamodulationLef
     aux:           IndexOrFormula,
     mainFormula:   Formula ): LKProof = {
 
-    val eqFormula = eq match {
-      case Left( i )  => leftSubProof.endSequent( i )
-      case Right( f ) => f
-    }
+    val eqFormula = eq.getFormula( leftSubProof.endSequent )
 
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = aux match {
-      case Left( i ) =>
+      case IsIndex( i ) =>
         EqualityLeftRule( p1, Ant( 0 ), i + 1, mainFormula )
 
-      case Right( f ) =>
+      case IsFormula( f ) =>
         EqualityLeftRule( p1, Ant( 0 ), f, mainFormula )
     }
 
@@ -1195,10 +1189,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     aux:           IndexOrFormula,
     con:           Abs ): LKProof = {
 
-    val eqFormula = eq match {
-      case Left( i )  => leftSubProof.endSequent( i )
-      case Right( f ) => f
-    }
+    val eqFormula = eq.getFormula( leftSubProof.endSequent )
 
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = EqualityRightRule( p1, Ant( 0 ), aux, con )
@@ -1246,10 +1237,7 @@ object ParamodulationRightRule extends ConvenienceConstructor( "ParamodulationLe
     aux:           IndexOrFormula,
     mainFormula:   Formula ): LKProof = {
 
-    val eqFormula = eq match {
-      case Left( i )  => leftSubProof.endSequent( i )
-      case Right( f ) => f
-    }
+    val eqFormula = eq.getFormula( leftSubProof.endSequent )
 
     val p1 = WeakeningLeftRule( rightSubProof, eqFormula )
     val p2 = EqualityRightRule( p1, Ant( 0 ), aux, mainFormula )

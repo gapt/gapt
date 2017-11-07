@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.instantiate
+import at.logic.gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -595,7 +596,7 @@ object AndLeftRule extends ConvenienceConstructor( "AndLeftRule" ) {
    * @param rightConjunct Index of the right conjunct or the conjunct itself.
    * @return
    */
-  def apply( subProof: LKProof, leftConjunct: Either[SequentIndex, Formula], rightConjunct: Either[SequentIndex, Formula] ): AndLeftRule = {
+  def apply( subProof: LKProof, leftConjunct: IndexOrFormula, rightConjunct: IndexOrFormula ): AndLeftRule = {
     val premise = subProof.endSequent
 
     val ( indices, _ ) = findAndValidate( premise )( Seq( leftConjunct, rightConjunct ), Seq() )
@@ -1969,8 +1970,6 @@ object consoleString {
  * @param longName The long name of the rule.
  */
 class ConvenienceConstructor( val longName: String ) {
-  type IndexOrFormula = Either[SequentIndex, Formula]
-
   /**
    * Create an LKRuleCreationException with a message starting with "Cannot create $longName: ..."
    *
@@ -1982,21 +1981,21 @@ class ConvenienceConstructor( val longName: String ) {
   def findIndicesOrFormulasInPremise( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndicesFormulas: Seq[IndexOrFormula] ): ( Seq[Formula], Seq[Int], Seq[Formula], Seq[Int] ) = {
     val antReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: antIndicesFormulas ) { ( acc, e ) =>
       e match {
-        case Left( Ant( i ) ) => acc + i
-        case Left( i: Suc )   => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
-        case Right( _ )       => acc
+        case IsIndex( Ant( i ) ) => acc + i
+        case IsIndex( i: Suc )   => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+        case IsFormula( _ )      => acc
       }
     }
 
     val ant = for ( e <- antIndicesFormulas ) yield {
       e match {
-        case Left( idx @ Ant( i ) ) =>
+        case IsIndex( idx @ Ant( i ) ) =>
           antReservedIndices += i
           val f = premise( idx )
 
           ( f, i )
 
-        case Right( f: Formula ) =>
+        case IsFormula( f ) =>
           var i = premise.antecedent.indexOf( f )
 
           while ( antReservedIndices contains i )
@@ -2007,26 +2006,26 @@ class ConvenienceConstructor( val longName: String ) {
 
           ( f, i )
 
-        case Left( i: Suc ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
+        case IsIndex( i: Suc ) => throw LKRuleCreationException( s"Index $i should be in the antecedent." )
       }
     }
 
     val sucReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: sucIndicesFormulas ) { ( acc, e ) =>
       e match {
-        case Left( Suc( i ) ) => acc + i
-        case Left( i: Ant )   => throw LKRuleCreationException( s"Index $i should be in the succedent." )
-        case Right( _ )       => acc
+        case IsIndex( Suc( i ) ) => acc + i
+        case IsIndex( i: Ant )   => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+        case IsFormula( _ )      => acc
       }
     }
 
     val suc = for ( e <- sucIndicesFormulas ) yield {
       e match {
-        case Left( Suc( i: Int ) ) =>
+        case IsIndex( Suc( i: Int ) ) =>
           sucReservedIndices += i
 
           ( premise( Suc( i ) ), i )
 
-        case Right( f: Formula ) =>
+        case IsFormula( f ) =>
           var i = premise.succedent.indexOf( f )
 
           while ( sucReservedIndices contains i )
@@ -2037,7 +2036,7 @@ class ConvenienceConstructor( val longName: String ) {
 
           ( f, i )
 
-        case Left( i: Ant ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
+        case IsIndex( i: Ant ) => throw LKRuleCreationException( s"Index $i should be in the succedent." )
       }
     }
 
