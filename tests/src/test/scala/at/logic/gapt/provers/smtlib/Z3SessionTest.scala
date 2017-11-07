@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.smtlib
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.lisp.{ LAtom, LFun, LList, SExpression }
+import at.logic.gapt.formats.lisp.{ LSymbol, LFun, LList, SExpression }
 import org.specs2.mutable._
 import at.logic.gapt.provers.Session._
 import cats.implicits._
@@ -26,7 +26,7 @@ class Z3SessionTest extends Specification {
     val n = 10
 
     val getUnsatCore = ask( LFun( "get-unsat-core" ) ) map {
-      case LList( labels @ _* ) => labels map { case LAtom( l ) => l }
+      case LList( labels @ _* ) => labels map { case LSymbol( l ) => l }
     }
 
     val session: Session[( Boolean, Boolean, Seq[String] )] = for {

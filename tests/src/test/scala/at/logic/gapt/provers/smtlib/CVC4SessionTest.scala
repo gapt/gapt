@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.smtlib
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.lisp.{ LAtom, LFun, LList }
+import at.logic.gapt.formats.lisp.{ LSymbol, LFun, LList }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.provers.Session._
