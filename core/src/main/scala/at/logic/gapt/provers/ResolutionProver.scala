@@ -1,13 +1,13 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.resolution.{ Clausifier, Input, ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, mapInputClauses, structuralCNF }
+import at.logic.gapt.proofs.resolution.{ Clausifier, Input, ResolutionProof, ResolutionToExpansionProof, ResolutionToLKProof, eliminateSplitting, mapInputClauses, structuralCNF }
 import at.logic.gapt.proofs.{ Context, ContextSection, HOLClause, HOLSequent, MutableContext, Sequent, withSection }
 import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.{ LKProof, WeakeningContractionMacroRule }
 import at.logic.gapt.utils.{ Maybe, NameGenerator }
 
-trait ResolutionProver extends OneShotProver {
+trait ResolutionProver extends OneShotProver { self =>
 
   override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = getLKProof( seq, addWeakenings = true )
 
@@ -35,9 +35,13 @@ trait ResolutionProver extends OneShotProver {
 
   def getResolutionProof( sequentSet: Traversable[HOLSequent] )( implicit ctx0: Maybe[MutableContext], dummyImplicit: DummyImplicit ): Option[ResolutionProof] = {
     implicit val ctx = ctx0.getOrElse( MutableContext.guess( sequentSet ) )
-    val clausifier = new Clausifier( propositional = false, structural = true, bidirectionalDefs = false, ctx, ctx.newNameGenerator )
-    for ( sequent <- sequentSet ) clausifier.expand( Input( sequent ) )
-    getResolutionProof( clausifier.cnf )( ctx )
+    val cnf = structuralCNF.onProofs(
+      sequentSet.map( Input ).toSet,
+      propositional = false,
+      structural = true,
+      bidirectionalDefs = false,
+      cse = false )
+    getResolutionProof( cnf )( ctx )
   }
 
   def getResolutionProof( formula: Formula )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )
@@ -58,6 +62,64 @@ trait ResolutionProver extends OneShotProver {
     withSection { section =>
       getResolutionProof( section.groundSequent( seq ) )( ctx ).map( ResolutionToExpansionProof( _ ) )
     }
+  }
+
+  def extendToManySortedViaPredicates = new ResolutionProver {
+    import at.logic.gapt.proofs.reduction._
+    override def isValid( sequent: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = {
+      val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
+      val ( folProblem, _ ) = reduction forward sequent
+      self.getResolutionProof( folProblem )( ctx.map( _.newMutable ) ).isDefined
+    }
+
+    override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val reduction = PredicateReductionET |> ErasureReductionET
+      val ( folProblem, back ) = reduction forward sequent
+      self.getExpansionProof( folProblem ).map( back )
+    }
+
+    override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
+      val reduction = CNFReductionLKRes |> PredicateReductionCNF |> ErasureReductionCNF
+      val ( folProblem, back ) = reduction forward sequent
+      self.getResolutionProof( folProblem ).map( proof => back( eliminateSplitting( proof ) ) )
+    }
+
+    override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+      val reduction = PredicateReductionCNF |> ErasureReductionCNF
+      val ( folProblem, back ) = reduction forward seq.toSet
+      self.getResolutionProof( folProblem ).map( back )
+    }
+
+    override def toString = s"$self.extendToManySortedViaPredicates"
+  }
+
+  def extendToManySortedViaErasure = new ResolutionProver {
+    import at.logic.gapt.proofs.reduction._
+    override def isValid( sequent: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = {
+      val reduction = CNFReductionLKRes |> ErasureReductionCNF
+      val ( folProblem, _ ) = reduction forward sequent
+      self.getResolutionProof( folProblem )( ctx.map( _.newMutable ) ).isDefined
+    }
+
+    override def getExpansionProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[ExpansionProof] = {
+      val reduction = ErasureReductionET
+      val ( folProblem, back ) = reduction forward sequent
+      self.getExpansionProof( folProblem ).map( back )
+    }
+
+    override def getLKProof( sequent: HOLSequent )( implicit ctx: Maybe[MutableContext] ): Option[LKProof] = {
+      val reduction = CNFReductionLKRes |> ErasureReductionCNF
+      val ( folProblem, back ) = reduction forward sequent
+      self.getResolutionProof( folProblem ).map( proof => back( eliminateSplitting( proof ) ) )
+    }
+
+    override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = {
+      val reduction = ErasureReductionCNF
+      val ( folProblem, back ) = reduction forward seq.toSet
+      self.getResolutionProof( folProblem ).map( back )
+    }
+
+    override def toString = s"$self.extendToManySortedViaErasure"
   }
 
 }

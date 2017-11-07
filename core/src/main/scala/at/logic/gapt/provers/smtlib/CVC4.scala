@@ -8,8 +8,9 @@ import at.logic.gapt.provers.Session._
 import at.logic.gapt.utils.{ ExternalProgram, runProcess }
 import cats.implicits._
 
-object CVC4 extends CVC4( "QF_UF" )
-class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
+object CVC4 extends CVC4( "QF_UF", Seq(), treatUnknownAsSat = false )
+class CVC4( val logic: String, val extraArgs: Seq[String] = Seq(),
+            override val treatUnknownAsSat: Boolean = false ) extends IncrementalProver with ExternalProgram {
 
   override val isInstalled: Boolean =
     try {
@@ -20,7 +21,7 @@ class CVC4( val logic: String ) extends IncrementalProver with ExternalProgram {
     }
 
   override def runSession[A]( program: Session[A] ) = {
-    val runner = new ExternalSMTLibSessionRunner( "cvc4", "--lang", "smt", "--incremental" )
+    val runner = new ExternalSMTLibSessionRunner( Seq( "cvc4", "--lang", "smt", "--incremental" ) ++ extraArgs: _* )
     val result = runner.run( setLogic( logic ) followedBy program )
     runner.process.destroy()
 

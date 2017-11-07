@@ -141,8 +141,6 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     case DefinitionRightRule( subProof, aux, main ) =>
       val subProofNew = applySubstitution( substitution, subProof )
       DefinitionRightRule( subProofNew, aux, substitution( main ) )
-
-    case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
 
   private def indCase( subst: Substitution, c: InductionCase ): InductionCase =
@@ -262,5 +260,15 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
         DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    }
+
+  override protected def visitInduction( proof: InductionRule, otherArg: Unit ) =
+    one2one( proof, otherArg ) { newSubProofs =>
+      InductionRule(
+        for ( ( ( newSubProof, subConn ), oldCase ) <- newSubProofs.zip( proof.cases ) )
+          yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
+          oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
+          subConn.child( oldCase.conclusion ) ),
+        TermReplacement( proof.formula, repl ).asInstanceOf[Abs], TermReplacement( proof.term, repl ) )
     }
 }

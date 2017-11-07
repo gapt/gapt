@@ -1,10 +1,8 @@
 package at.logic.gapt.examples
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.lk.LKProofSchemata
 object tautSchema extends TacticsProof {
   ctx += Context.Sort( "i" )
   ctx += hoc"P: i>o"

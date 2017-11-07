@@ -266,6 +266,13 @@ trait Tactical[+T] { self =>
       self( proofState ).leftMap( _ => TacticalFailure( self, proofState, errorMessage ) )
     override def toString = self.toString
   }
+
+  def verbose: Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) =
+      at.logic.gapt.utils.verbose { self( proofState ) }
+
+    override def toString: String = s"${self.toString}.verbose"
+  }
 }
 object Tactical {
   def apply[T]( tactical: Tactical[T] )( implicit name: sourcecode.Name, args: sourcecode.Args ): Tactical[T] =
@@ -285,6 +292,14 @@ object Tactical {
       Sequent(
         resultElements.take( tacticals.antecedent.size ),
         resultElements.drop( tacticals.antecedent.size ) ) ).aka( s"sequence($tacticals)" )
+
+  def guard( cond: => Boolean, message: => String )( implicit args: sourcecode.Args ): Tactical[Unit] =
+    new Tactical[Unit] {
+      def apply( proofState: ProofState ): Either[TacticalFailure, ( Unit, ProofState )] =
+        if ( cond ) Right( (), proofState )
+        else Left( TacticalFailure( this, proofState, message ) )
+      override def toString = s"guard(${args.value.head.head})"
+    }
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>

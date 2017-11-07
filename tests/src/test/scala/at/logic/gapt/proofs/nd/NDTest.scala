@@ -106,7 +106,7 @@ class NDTest extends Specification with SatMatchers {
   "Induction2" in {
     val nat = TBase( "nat" )
     val c0 = Const( "0", nat )
-    val cs = Const( "s", nat -> nat )
+    val cs = Const( "s", nat ->: nat )
     val x = Var( "x", nat )
 
     val p0 = Atom( "P", c0 )
@@ -315,6 +315,13 @@ class NDTest extends Specification with SatMatchers {
   "TopIntro" in {
     val a1 = TopIntroRule()
     a1.conclusion must beValidSequent
+  }
+
+  "Issue #650" should {
+    "be fixed for ∀" in {
+      val p1 = nd.TheoryAxiom( fof"P(y,y)" )
+      nd.ForallIntroRule( p1, fof"!x P(x,y)", fov"y" ) must throwAn[NDRuleCreationException]
+    }
   }
 
 }

@@ -5,7 +5,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs._
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable
 
@@ -14,7 +14,7 @@ import scala.collection.mutable
  */
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
-object IvyParser extends Logger {
+object IvyParser {
   //calls the sexpression parser on the given file and parses it, needs a naming convention
   def apply( fn: InputFile ): IvyResolutionProof =
     parse( SExpressionParser( fn ) )

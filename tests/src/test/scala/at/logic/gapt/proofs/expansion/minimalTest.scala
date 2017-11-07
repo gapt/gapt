@@ -10,7 +10,7 @@ class minimalExpansionSequentTest extends Specification {
   val x = Var( "x", Ti )
   val c = Const( "c", Ti )
   val d = Const( "d", Ti )
-  val P = Const( "P", Ti -> To )
+  val P = Const( "P", Ti ->: To )
 
   val et1: ExpansionTree =
     ETWeakQuantifier(

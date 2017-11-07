@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar --qtys ""
+; solve with: viper --treegrammar
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
@@ -6,5 +6,4 @@
 (assert (P o))
 (assert (forall ((x nat)) (=> (P x) (P (s x)))))
 
-(assert-not (forall ((x nat)) (P x)))
-(check-sat)
+(prove (forall ((x nat)) (P x)))

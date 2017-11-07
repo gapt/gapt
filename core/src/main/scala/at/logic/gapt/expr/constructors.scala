@@ -23,11 +23,11 @@ object HOLFunction {
 object FOLHeadType {
   def apply( ret: Ty, arity: Int ): Ty = arity match {
     case 0 => ret
-    case n => Ti -> FOLHeadType( ret, n - 1 )
+    case n => Ti ->: FOLHeadType( ret, n - 1 )
   }
   def unapply( t: Ty ): Option[( Ty, Int )] = t match {
-    case Ti -> FOLHeadType( t, n ) => Some( ( t, n + 1 ) )
-    case _                         => Some( ( t, 0 ) )
+    case Ti ->: FOLHeadType( t, n ) => Some( ( t, n + 1 ) )
+    case _                          => Some( ( t, 0 ) )
   }
 }
 

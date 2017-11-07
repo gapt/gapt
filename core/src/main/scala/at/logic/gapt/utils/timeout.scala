@@ -2,6 +2,7 @@ package at.logic.gapt.utils
 
 import scala.concurrent._
 import scala.concurrent.duration._
+import scala.util.DynamicVariable
 
 class TimeOutException( cause: Throwable, val duration: Duration )
   extends Exception( s"Timeout of $duration exceeded.", cause )
@@ -21,15 +22,23 @@ class TimeOutException( cause: Throwable, val duration: Duration )
  *   case ... other exception
  * }
  */
-object withTimeout extends Logger {
+object withTimeout {
   @deprecated( "Use Durations as argument", "2015-05-15" )
   def apply[T]( to: Long )( f: => T ): T = apply( to millis )( f )
 
   def apply[T]( duration: Duration )( f: => T ): T = if ( !duration.isFinite ) f else {
     var result: Either[Throwable, T] = Left( new TimeOutException( null, duration ) )
 
+    case class DynamicVariableCopier[S]( variable: DynamicVariable[S] ) {
+      val currentValue: S = variable.value
+      def copyHere(): Unit = variable.value = currentValue
+    }
+    val dynamicsToCopy: Vector[DynamicVariableCopier[_]] =
+      Vector( DynamicVariableCopier( LogHandler.current ) )
+
     val t = new Thread {
-      override def run() = {
+      override def run(): Unit = {
+        for ( dc <- dynamicsToCopy ) dc.copyHere()
         result = try Right( f ) catch {
           case e: ThreadDeath => Left( new TimeOutException( e, duration ) )
           case t: Throwable   => Left( t )
@@ -47,11 +56,11 @@ object withTimeout extends Logger {
     // wait until variable result has been written
     t.join( 1.second toMillis )
     if ( t.isAlive ) {
-      warn( "Worker thread still alive; stacktrace:" + nLine + t.getStackTrace.mkString( nLine ) )
+      logger.warn( "Worker thread still alive; stacktrace:" + nLine + t.getStackTrace.mkString( nLine ) )
     }
 
     result match {
-      case Left( t )      => throw t
+      case Left( ex )     => throw ex
       case Right( value ) => value
     }
   }

@@ -5,20 +5,20 @@ import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.MaxSATSolver
 import at.logic.gapt.utils.metrics
 
-/*
-  This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
-  (Should be isomorphic to the usual versions though.)
-
-  Say `∀x ∃y φ(x,y)` is the cut-formula.
-
-  Then the left side of the cut has one strong quantifier inference (with eigenvariable α),
-  and many weak quantifier inferences (with terms `t`).  Each weak quantifier inference is stored as the
-  production `α → t` (yes, yes, and also, `t` may contain `α`).
-
-  The right side of the cut has alternating weak and strong quantifier inferences.  Say `r` is the term of
-  the weak quantifier inference, then `β` is the eigenvariable such that `φ(r,β)`.
-  We store this as the production `β → r`.
-  Additionally, we require that there is *exactly one* production for each `β` (this condition is missing from pre-grammars)
+/**
+ * This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
+ * (Should be isomorphic to the usual versions though.)
+ *
+ * Say `∀x ∃y φ(x,y)` is the cut-formula.
+ *
+ * Then the left side of the cut has one strong quantifier inference (with eigenvariable α),
+ * and many weak quantifier inferences (with terms `t`).  Each weak quantifier inference is stored as the
+ * production `α → t` (yes, yes, and also, `t` may contain `α`).
+ *
+ * The right side of the cut has alternating weak and strong quantifier inferences.  Say `r` is the term of
+ * the weak quantifier inference, then `β` is the eigenvariable such that `φ(r,β)`.
+ * We store this as the production `β → r`.
+ * Additionally, we require that there is *exactly one* production for each `β` (this condition is missing from pre-grammars)
  */
 case class Pi2PreGrammar(
     startSymbol: Var,
@@ -112,13 +112,35 @@ object minimizePi2Grammar {
       And( for ( beta <- g.betas ) yield thresholds.exactly.oneOf(
         for ( p <- g.productions if p._1 == beta ) yield prodinc( p ) ) )
 
-    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality
+    // Heuristic 1)
+    // Whenever we have a production τ → t[β₃, ‥] then we require that it is actually of the
+    // form τ → t[β₃, r₃], where t does not contain any β and β₃ → r₃
+    val expressibilityCondition = And( for {
+      ( lhs, rhs ) <- g.productions
+      if lhs == g.startSymbol
+      fvs = freeVariables( rhs )
+      if fvs.size > 1
+      if fvs.intersect( g.betas.toSet ).nonEmpty
+    } yield prodinc( lhs -> rhs ) --> Or {
+      for {
+        ( lhs2, rhs2 ) <- g.productions
+        if g.betas.contains( lhs2 )
+        rhs_ = TermReplacement( rhs, rhs2, lhs2 )
+        if freeVariables( rhs_ ) == Set( lhs2 )
+      } yield prodinc( lhs2 -> rhs2 )
+    } )
+
+    // Heuristic 2)
+    // We require that the set of α-productions is nonempty.
+    val alphaNonempty = Or( for ( p @ ( lhs, _ ) <- g.productions if lhs == g.alpha ) yield prodinc( p ) )
+
+    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality & expressibilityCondition & alphaNonempty
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
 
     solver.solve( hard, soft ).map { assg =>
-      Pi2Grammar( g.copy( productions = g.productions.filter( p => assg.interpret( prodinc( p ) ) ) ) )
+      Pi2Grammar( g.copy( productions = g.productions.filter( p => assg( prodinc( p ) ) ) ) )
     }
   }
 }

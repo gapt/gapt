@@ -14,10 +14,10 @@ object LKToExpansionProof {
    * @param proof The proof π.
    * @return The expansion proof Ex(π).
    */
-  def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProofWithCut = {
+  def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProof = {
     val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
-    val theory_ = theory.groupBy { _.shallow }.values.toSeq.map { ETMerge( _ ) }
-    eliminateMerges( moveDefsUpward( ExpansionProofWithCut( theory_ ++: expansionSequent ) ) )
+    val theory_ = ETMerge.byShallowFormula( theory )
+    eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
   }
 
   private def extract( proof: LKProof )( implicit ctx: Context ): ( Seq[ExpansionTree], Sequent[ExpansionTree] ) = proof match {
@@ -55,13 +55,13 @@ object LKToExpansionProof {
     case c @ CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
-      val cutImp = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
-      val newCut = ETWeakQuantifier( ExpansionProofWithCut.cutAxiom, Map( c.cutFormula -> cutImp ) )
+      val tree1 = leftSequent( aux1 )
+      val tree2 = rightSequent( aux2 )
       val cuts =
-        if ( !isPropositionalET( cutImp ) )
-          newCut +: ( leftCuts ++ rightCuts )
-        else
+        if ( isPropositionalET( tree1 ) && isPropositionalET( tree2 ) )
           leftCuts ++ rightCuts
+        else
+          ETCut( tree1, tree2 ) +: ( leftCuts ++ rightCuts )
       cuts -> ( leftSequent.delete( aux1 ) ++ rightSequent.delete( aux2 ) )
 
     // Propositional rules

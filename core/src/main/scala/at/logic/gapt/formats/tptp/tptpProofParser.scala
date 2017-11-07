@@ -19,6 +19,8 @@ object TptpProofParser {
         false
       case AnnotatedFormula( _, _, _, _, TptpTerm( "introduced", FOLVar( avatar ), _ ) +: _ ) if avatar.startsWith( "AVATAR" ) =>
         false
+      case AnnotatedFormula( _, _, _, _, TptpTerm( "introduced", FOLConst( avatar ), _ ) +: _ ) if avatar.startsWith( "avatar" ) =>
+        false
       case AnnotatedFormula( _, label, "conjecture", formula, _ ) =>
         containsStrongQuantifier( formula, Polarity.InSuccedent )
       case AnnotatedFormula( _, label, _, formula, _ ) =>
@@ -137,9 +139,9 @@ object TptpProofParser {
           parent
         }
         Seq( SketchSplitCombine( splitParents ) )
-      case AnnotatedFormula( "fof", _, "plain", And( Imp( splAtom: FOLAtom, defn ), _ ), TptpTerm( "introduced", FOLVar( "AVATAR_definition" ), _ ) +: _ ) =>
+      case AnnotatedFormula( "fof", _, "plain", And( Imp( splAtom: FOLAtom, defn ), _ ), TptpTerm( "introduced", FOLVar( "AVATAR_definition" ) | FOLConst( "avatar_definition" ), _ ) +: _ ) =>
         convertAvatarDefinition( defn, splAtom )
-      case AnnotatedFormula( "fof", _, "plain", disj, ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ), _, _ ) ) +: _ ) =>
+      case AnnotatedFormula( "fof", _, "plain", disj, ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_split_clause" ) | FOLConst( "avatar_split_clause" ), _, _ ) ) +: _ ) =>
         val Seq( assertion ) = CNFp( disj ).toSeq
         val Seq( splittedClause, _* ) = getParents( justification ) flatMap convert
 
@@ -156,7 +158,7 @@ object TptpProofParser {
 
         require( p.conclusion.isEmpty, s"$assertion\n$splittedClause\n$splDefs" )
         Seq( p )
-      case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ), _, _ ) ) +: _ ) =>
+      case AnnotatedFormula( "fof", _, "plain", Bottom(), ( justification @ TptpTerm( "inference", FOLVar( "AVATAR_sat_refutation" ) | FOLConst( "avatar_sat_refutation" ), _, _ ) ) +: _ ) =>
         Seq( SketchSplitCombine( getParents( justification ).flatMap( convert ) ) )
       case AnnotatedFormula( "fof", _, "conjecture", _, TptpTerm( "file", _, TptpTerm( label ) ) +: _ ) =>
         labelledCNF( label ) map SketchAxiom

@@ -12,10 +12,10 @@ class BetaReductionTest extends Specification {
   val v = Var( "v", Ti );
   val x = Var( "x", Ti );
   val y = Var( "y", Ti );
-  val f = Var( "f", Ti -> Ti );
-  val g = Var( "g", Ti -> Ti )
-  val f2 = Var( "f2", Ti -> Ti );
-  val g2 = Var( "g2", Ti -> Ti )
+  val f = Var( "f", Ti ->: Ti );
+  val g = Var( "g", Ti ->: Ti )
+  val f2 = Var( "f2", Ti ->: Ti );
+  val g2 = Var( "g2", Ti ->: Ti )
 
   "BetaReduction" should {
     "normalize correctly with outermost strategy" in {
@@ -49,7 +49,7 @@ class BetaReductionTest extends Specification {
     "normalize correctly with Abs terms built from variables obtained by the Abs extractor" in {
       val x = Var( "x", Ti )
       val y = Var( "", Ti )
-      val p = Var( "p", Ti -> To )
+      val p = Var( "p", Ti ->: To )
       val px = App( p, x )
       val py = App( p, y )
       val xpx = Abs( x, px )
@@ -61,7 +61,7 @@ class BetaReductionTest extends Specification {
     "normalize correctly including a simple variable renaming" in {
       val x = Var( "x", Ti )
       val z = Var( "z", Ti )
-      val f = Const( "f", Ti -> ( Ti -> Ti ) )
+      val f = Const( "f", Ti ->: Ti ->: Ti )
       val M = App( Abs( x :: z :: Nil, App( f, x :: z :: Nil ) ), z )
       val N = Abs( x, App( f, z :: x :: Nil ) )
       val M_normalized = normalize( M )
@@ -70,10 +70,10 @@ class BetaReductionTest extends Specification {
     }
     "normalize correctly 1+2=3 using Church numerals" in {
       val x = Var( "x", Ti )
-      val f = Var( "f", Ti -> Ti )
+      val f = Var( "f", Ti ->: Ti )
       // a church numeral is of type (Ti->Ti)->(Ti->Ti)
-      val m = Var( "m", ( Ti -> Ti ) -> ( Ti -> Ti ) )
-      val n = Var( "n", ( Ti -> Ti ) -> ( Ti -> Ti ) )
+      val m = Var( "m", ( Ti ->: Ti ) ->: Ti ->: Ti )
+      val n = Var( "n", ( Ti ->: Ti ) ->: Ti ->: Ti )
 
       val one = Abs( f :: x :: Nil, App( f, x ) )
       val two = Abs( f :: x :: Nil, App( f, App( f, x ) ) )
@@ -87,10 +87,10 @@ class BetaReductionTest extends Specification {
     }
     "normalize correctly 8+3=11 using Church numerals" in {
       val x = Var( "x", Ti )
-      val f = Var( "f", Ti -> Ti )
+      val f = Var( "f", Ti ->: Ti )
       // a church numeral is of type (Ti->Ti)->(Ti->Ti)
-      val m = Var( "m", ( Ti -> Ti ) -> ( Ti -> Ti ) )
-      val n = Var( "n", ( Ti -> Ti ) -> ( Ti -> Ti ) )
+      val m = Var( "m", ( Ti ->: Ti ) ->: Ti ->: Ti )
+      val n = Var( "n", ( Ti ->: Ti ) ->: Ti ->: Ti )
 
       val three = Abs( f :: x :: Nil, App( f, App( f, App( f, x ) ) ) )
       val eight = Abs( f :: x :: Nil, App( f, App( f, App( f, App( f, App( f, App( f, App( f, App( f, x ) ) ) ) ) ) ) ) )
@@ -104,17 +104,20 @@ class BetaReductionTest extends Specification {
     }
     "normalize correctly 2^3=8 using Church numerals" in {
       val x = Var( "x", Ti )
-      val f = Var( "f", Ti -> Ti )
+      val f = Var( "f", Ti ->: Ti )
       val two = Abs( f :: x :: Nil, App( f, App( f, x ) ) )
       val eight = Abs( f :: x :: Nil, App( f, App( f, App( f, App( f, App( f, App( f, App( f, App( f, x ) ) ) ) ) ) ) ) )
 
-      val y = Var( "y", Ti -> Ti )
-      val g = Var( "g", ( Ti -> Ti ) -> ( Ti -> Ti ) )
+      val y = Var( "y", Ti ->: Ti )
+      val g = Var( "g", ( Ti ->: Ti ) ->: Ti ->: Ti )
       val to_power_three = Abs( g :: y :: Nil, App( g, App( g, App( g, y ) ) ) )
 
       val result = normalize( App( to_power_three, two ) )
 
       result must_== eight
     }
+  }
+  "issue 659" in {
+    normalize( le"(^y y) y x" ) must_== le"y x"
   }
 }

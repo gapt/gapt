@@ -1,58 +1,80 @@
 package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
 
 /* This is not a s.i.p because of the nested induction which is
  * required to prove equal(x,x).
  */
 object prop_29 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_29.smt2", getClass ) )
-  ctx = bench.ctx
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += hoc"p:Nat>Nat"
+
+  ctx += Context.InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += hoc"head:list>Nat"
+  ctx += hoc"tail:list>list"
+
+  ctx += hoc"'equal' :Nat>Nat>o"
+  ctx += hoc"'elem' :Nat>list>o"
+  ctx += hoc"'ins1' :Nat>list>list"
+
+  val sequent =
+    hols"""
+      def_p: ∀x p(S(x)) = x,
+      def_head: ∀x0 ∀x1 (head(cons(x0:Nat, x1:list): list): Nat) = x0,
+      def_tail: ∀x0 ∀x1 (tail(cons(x0:Nat, x1:list): list): list) = x1,
+      def_equal_1: equal(Z, Z),
+      def_equal_2: ∀x ¬equal(Z, S(x)),
+      def_equal_3: ∀x ¬equal(S(x), Z),
+      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+      def_ins_1: ∀x (ins1(x:Nat, nil:list): list) = cons(x, nil),
+      def_ins_2: ∀x ∀z ∀xs (¬equal(x:Nat, z:Nat) ⊃ (ins1(x, cons(z, xs:list): list): list) = cons(z, ins1(x, xs))),
+      def_ins_3: ∀x ∀z ∀xs (equal(x:Nat, z:Nat) ⊃ (ins1(x, cons(z, xs:list): list): list) = cons(z, xs)),
+      def_elem_1: ∀x ¬elem(x:Nat, nil:list),
+      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) ⊃ equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) ⊃ elem(x, cons(z, xs)))),
+      ax_nat: ∀x ¬Z = S(x),
+      ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
+      :-
+      goal: ∀x ∀xs elem(x:Nat, ins1(x, xs:list): list)
+    """
 
   val proof = Lemma( sequent ) {
     allR
     allR
     induction( hov"xs:list" )
-    allL( "h7", le"x:Nat" )
-    eql( "h7_0", "goal" )
-    allL( "h11", le"x:Nat", le"x:Nat", le"nil:list" )
+    allL( "def_ins_1", le"x:Nat" )
+    eql( "def_ins_1_0", "goal" )
+    allL( "def_elem_2", le"x:Nat", le"x:Nat", le"nil:list" )
     andL
-    impL( "h11_0_1" )
+    impL( "def_elem_2_0_1" )
     orR
-    induction( hov"x:Nat", "h11_0_1_0" )
+    induction( hov"x:Nat", "def_elem_2_0_1_0" )
     axiomLog
-    allL( "h6", le"x_0:Nat", le"x_0:Nat" )
+    allL( "def_equal_4", le"x_0:Nat", le"x_0:Nat" )
     andL
-    impL( "h6_0_1" )
+    impL( "def_equal_4_0_1" )
     axiomLog
     axiomLog
     axiomLog
-    allL( "h8", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
+    allL( "def_ins_2", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
     impL
     negR
-    allL( "h9", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
+    allL( "def_ins_3", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
     impL
     axiomLog
-    eql( "h9_0", "goal" ).fromLeftToRight
-    allL( "h11", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
+    eql( "def_ins_3_0", "goal" ).fromLeftToRight
+    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"xs_0:list" )
     andL
-    impL( "h11_0_1" )
+    impL( "def_elem_2_0_1" )
     orR
     axiomLog
     axiomLog
-    eql( "h8_0", "goal" )
-    allL( "h11", le"x:Nat", le"x_0:Nat", le"ins1(x:Nat, xs_0:list):list" )
+    eql( "def_ins_2_0", "goal" )
+    allL( "def_elem_2", le"x:Nat", le"x_0:Nat", le"ins1(x:Nat, xs_0:list):list" )
     andL
-    impL( "h11_0_1" )
+    impL( "def_elem_2_0_1" )
     orR
     axiomLog
     axiomLog

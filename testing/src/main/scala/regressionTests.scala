@@ -39,7 +39,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
-    val proof = Viper.getStrategies( ViperOptions() ).view.flatMap {
+    val proof = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
@@ -112,8 +112,8 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
 
     Escargot.getLKProof( deep ).get --? "getLKProof( deep )" foreach { ip =>
       val ( indices1, indices2 ) = ip.endSequent.indices.splitAt( ip.endSequent.size / 2 )
-      ExtractInterpolant( ip, indices1, indices2 ) --? "extractInterpolant"
-      ExtractInterpolant( ip, indices2, indices1 ) --? "extractInterpolant diff partition"
+      ExtractInterpolant( ip, indices1 ) --? "extractInterpolant"
+      ExtractInterpolant( ip, indices2 ) --? "extractInterpolant diff partition"
     }
 
     if ( !containsEqualityReasoning( p ) ) {
@@ -155,7 +155,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( extractRecSchem( q ).languageWithDummyParameters ) ) !-- "extractRecSchem validity (cut-intro)"
       }
 
-    skolemize( p ) --? "skolemize"
+    folSkolemize( p ) --? "skolemize"
   }
 }
 
@@ -189,11 +189,6 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
     val sequent = tptpProblem.toSequent
 
     val resolution = Escargot.getResolutionProof( sequent ).get --- "Escargot"
-
-    val lk = ResolutionToLKProof( resolution ) --- "ResolutionToLKProof"
-    deskolemizeLK( lk ) --? "deskolemizeLK" foreach { desk =>
-      desk.endSequent.isSubsetOf( lk.endSequent ) !-- "end-sequent of deskolemizeLK"
-    }
 
     val expansion = ResolutionToExpansionProof( resolution ) --- "ResolutionToExpansionProof"
 

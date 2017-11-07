@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
-import at.logic.gapt.utils.{ MetricsCollector, metrics, withTimeout }
+import at.logic.gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
@@ -21,8 +21,8 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
 
-class MetricsPrinter extends MetricsCollector {
-  val data = mutable.Map[String, Any]()
+class MetricsPrinter extends LogHandler {
+  val data: mutable.Map[String, Any] = mutable.Map[String, Any]()
 
   def jsonify( v: Any ): JValue = v match {
     case l: Long    => JInt( l )
@@ -35,22 +35,20 @@ class MetricsPrinter extends MetricsCollector {
     case s          => JString( s toString )
   }
 
-  override def time[T]( phase: String )( f: => T ): T = {
-    value( "phase", phase )
-
-    val beginTime = System.currentTimeMillis()
-    val result = f
-    val endTime = System.currentTimeMillis()
-
-    value( s"time_$phase", endTime - beginTime )
-
-    result
+  override def time( key: String, desc: String, duration: Duration ): Unit = {
+    value( "phase", key )
+    value( s"time_$key", duration.toMillis )
   }
 
-  override def value( key: String, value: => Any ) = {
+  override def metric( key: String, desc: String, v: => Any ): Unit =
+    value( key, v )
+
+  def value( key: String, value: => Any ) = {
     data( key ) = value
     println( s"METRICS ${compact( render( JObject( key -> jsonify( data( key ) ) ) ) )}" )
   }
+
+  override def message( severity: LogSeverity, msg: => Any ): Unit = ()
 }
 
 object parseMethod {
@@ -74,7 +72,7 @@ object testCutIntro extends App {
   val Array( fileName: String, methodName: String ) = args
 
   val metricsPrinter = new MetricsPrinter
-  metrics.current.value = metricsPrinter
+  LogHandler.current.value = metricsPrinter
   metrics.value( "file", fileName )
   metrics.value( "method", methodName )
 
@@ -136,7 +134,7 @@ object testPi2CutIntro extends App {
   val Array( fileName: String, numBetas: String ) = args
 
   val metricsPrinter = new MetricsPrinter
-  metrics.current.value = metricsPrinter
+  LogHandler.current.value = metricsPrinter
   metrics.value( "file", fileName )
   metrics.value( "num_betas", numBetas )
 

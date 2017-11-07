@@ -92,9 +92,9 @@ class RecursionSchemeTest extends Specification with SatMatchers {
       "simple example" in {
         val Seq( ta, tb, tc ) = Seq( "ta", "tb", "tc" ).map( TBase( _ ) )
         val A = Const( "A", ta )
-        val B = Const( "B", tb -> ta )
-        val r = Const( "r", tb -> ( tc -> ta ) )
-        val f = Const( "f", tb -> tc )
+        val B = Const( "B", tb ->: ta )
+        val r = Const( "r", tb ->: tc ->: ta )
+        val f = Const( "f", tb ->: tc )
         val b1 = Const( "b1", tb )
         val b2 = Const( "b2", tb )
         val c = Const( "c", tc )

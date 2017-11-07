@@ -5,7 +5,7 @@ import at.logic.gapt.expr.{ Abs, Const, Atom, Expr, To }
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.proofs.ceres_omega.AnalysisWithCeresOmega
 import at.logic.gapt.formats.llk.loadLLK
-import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProofWithCut, ExpansionTree }
+import at.logic.gapt.proofs.expansion.{ ETAnd, ETImp, ETSkolemQuantifier, ETWeakQuantifier, ExpansionProof, ExpansionTree }
 
 /**
  * Version 2 of the higher-order n-Tape proof.
@@ -26,7 +26,7 @@ object nTape2 extends nTape2
 
 object nTapeInstances {
   //prints the interesting terms from the expansion sequent
-  def printInstances( expansion_proof: ExpansionProofWithCut, definitions: Map[Const, Expr] ) = {
+  def printInstances( expansion_proof: ExpansionProof, definitions: Map[Const, Expr] ) = {
     println( "------------ Witness Terms from Expansion Proof --------------" )
 
     //FIXME: we are using the induction axiom to find its expansion tree now, but antecedent(1) is still not perfect

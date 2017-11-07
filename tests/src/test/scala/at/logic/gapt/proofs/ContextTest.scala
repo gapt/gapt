@@ -39,11 +39,11 @@ class ContextTest extends Specification {
     ctx += hof"g (x:i) = 0"
 
     import at.logic.gapt.proofs.gaptic._
-    ctx.check( Lemma( hols":- const g" ) {
+    Lemma( hols":- const g" ) {
       unfold( "const", "g" ).in( "g" )
       decompose
       refl
-    } )
+    }
     ok
   }
 

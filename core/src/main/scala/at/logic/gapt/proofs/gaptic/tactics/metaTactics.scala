@@ -29,7 +29,7 @@ case class RepeatTactic[T]( tact: Tactical[T] ) extends Tactical[Unit] {
 case class InsertTactic( insertion: LKProof ) extends Tactic[Unit] {
   def apply( goal: OpenAssumption ) = {
     clauseSubsumption( insertion.endSequent, goal.endSequent ) match {
-      case Some( sub ) if sub.isIdentity =>
+      case Some( _ ) if insertion.endSequent.isSubsetOf( goal.endSequent ) =>
         Right( () -> insertion )
       case Some( sub ) =>
         Right( (), sub( insertion ) )

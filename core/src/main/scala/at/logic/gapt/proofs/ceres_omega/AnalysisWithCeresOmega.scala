@@ -103,7 +103,7 @@ abstract class AnalysisWithCeresOmega {
   /**
    * The processed input proof converted to LKsk.
    */
-  lazy val lksk_proof = skolemizeInferences( preprocessed_input_proof )
+  lazy val lksk_proof = skolemizeLK( preprocessed_input_proof )
 
   /**
    * The struct of the proof. It is an intermediate representation of the characteristic sequent set.

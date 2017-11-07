@@ -162,7 +162,7 @@ class DeclarationParser extends LLKASTParser {
   lazy val ti: PackratParser[Ty] = "i" ^^ { _ => Ti }
   lazy val to: PackratParser[Ty] = "o" ^^ { _ => To }
   lazy val simpleType: PackratParser[Ty] = ti | to
-  lazy val complexType: PackratParser[Ty] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 -> t2 } | simpleType
+  lazy val complexType: PackratParser[Ty] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 ->: t2 } | simpleType
 
   lazy val constdecl: PackratParser[LLKSignature] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )

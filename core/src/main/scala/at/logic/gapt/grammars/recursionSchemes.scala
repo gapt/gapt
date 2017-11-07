@@ -4,8 +4,10 @@ import at.logic.gapt.expr.fol._
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature, MapBabelSignature }
-import at.logic.gapt.provers.maxsat.{ MaxSATSolver, QMaxSAT, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.{ Doc, Logger, metrics }
+import at.logic.gapt.proofs.Context
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
+import at.logic.gapt.utils.{ Doc, metrics }
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable
 
@@ -211,7 +213,7 @@ class RecSchemGenLangFormula(
   }
 }
 
-object minimizeRecursionScheme extends Logger {
+object minimizeRecursionScheme {
   def apply( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
@@ -226,7 +228,7 @@ object minimizeRecursionScheme extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = metrics.time( "maxsat" ) { solver.solve( hard, soft ).get }
-    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp( formula ruleIncluded rule ) } )
   }
 
   def viaInst( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
@@ -251,46 +253,8 @@ object minimizeRecursionScheme extends Logger {
     debug( s"Logical complexity of the minimization formula: ${lcomp( simplify( toNNF( hard ) ) )}" )
     val soft = recSchem.rules map { rule => Neg( formula.ruleIncluded( rule ) ) -> weight( rule ) }
     val interp = solver.solve( hard, soft ).get
-    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules filter { rule => interp.interpret( formula ruleIncluded rule ) } )
+    RecursionScheme( recSchem.startSymbol, recSchem.nonTerminals, recSchem.rules.filter { rule => interp( formula ruleIncluded rule ) } )
   }
-}
-
-object SipRecSchem extends RecSchemTemplate(
-  FOLFunctionConst( "A", 1 ),
-  Set(
-    FOLFunction( "A", FOLVar( "x" ) ) -> FOLVar( "t1" ),
-    FOLFunction( "A", FOLVar( "x" ) ) ->
-      FOLFunction( "G", FOLVar( "x" ), FOLVar( "x" ), FOLVar( "t2" ) ),
-    FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) ->
-      FOLFunction( "G", FOLVar( "x" ), FOLVar( "y" ), FOLVar( "t3" ) ),
-    FOLFunction( "G", FOLFunction( "0" ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t4" ),
-    FOLFunction( "G", FOLFunction( "s", FOLVar( "x" ) ), FOLVar( "y" ), FOLVar( "z" ) ) -> FOLVar( "t5" ) ) ) {
-
-  val A = "A"
-  val G = "G"
-
-  def toSipGrammar( recSchem: RecursionScheme ) =
-    SipGrammar( recSchem.rules map {
-      case Rule( FOLFunction( A, List( x: FOLVar ) ), FOLFunction( G, List( x_, u, x__ ) ) ) if x == x_ && x == x__ =>
-        SipGrammar.gammaEnd -> FOLSubstitution( x -> SipGrammar.alpha )( u )
-      case Rule( FOLFunction( A, List( x: FOLVar ) ), r ) =>
-        SipGrammar.tau -> FOLSubstitution( x -> SipGrammar.alpha )( r )
-      case Rule( FOLFunction( G, List( FOLFunction( "s", List( x: FOLVar ) ), y: FOLVar, z: FOLVar ) ), FOLFunction( G, List( x_, t, z_ ) ) ) if x == x_ && z == z_ =>
-        SipGrammar.gamma -> FOLSubstitution( x -> SipGrammar.nu, y -> SipGrammar.gamma, z -> SipGrammar.alpha )( t )
-      case Rule( FOLFunction( G, List( FOLFunction( "s", List( x: FOLVar ) ), y: FOLVar, z: FOLVar ) ), r ) =>
-        SipGrammar.tau -> FOLSubstitution( x -> SipGrammar.nu, y -> SipGrammar.gamma, z -> SipGrammar.alpha )( r )
-      case Rule( FOLFunction( G, List( FOLFunction( "0", List() ), y: FOLVar, z: FOLVar ) ), r ) =>
-        SipGrammar.tau -> FOLSubstitution( y -> SipGrammar.beta, z -> SipGrammar.alpha )( r )
-    } map { p => p._1 -> p._2.asInstanceOf[FOLTerm] } )
-
-  def toTargets( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ): Seq[( Expr, Expr )] =
-    instanceLanguages flatMap {
-      case ( n, l ) =>
-        l map ( FOLFunction( A, Numeral( n ) ) -> _ )
-    }
-
-  def stableRecSchem( instanceLanguages: Seq[stableSipGrammar.InstanceLanguage] ): RecursionScheme =
-    stableRecSchem( toTargets( instanceLanguages ) toSet )
 }
 
 case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] ) {
@@ -298,7 +262,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
 
   val isSubtermC = "is_subterm"
   def isSubterm( v: Expr, t: Expr ): Formula =
-    Const( isSubtermC, v.ty -> ( t.ty -> To ) )( v, t ).asInstanceOf[Formula]
+    Const( isSubtermC, v.ty ->: t.ty ->: To )( v, t ).asInstanceOf[Formula]
 
   val canonicalArgs = nonTerminals map { case nt @ Const( _, FunctionType( _, argTypes ) ) => nt -> argTypes.zipWithIndex.map { case ( t, i ) => Var( s"${nt}_$i", t ) } } toMap
   val states = canonicalArgs map { case ( nt, args ) => nt( args: _* ) }
@@ -521,5 +485,93 @@ object recSchemToVTRATG {
         List( startSymbol ) -> List( subst( rhs ) )
     }
     VTRATG( startSymbol, nonTerminals, productions )
+  }
+}
+
+object simplePi1RecSchemTempl {
+  def apply( startSymbol: Expr, pi1QTys: Seq[TBase] )( implicit ctx: Context ): RecSchemTemplate = {
+    val nameGen = rename.awayFrom( ctx.constants )
+
+    val Apps( startSymbolNT: Const, startSymbolArgs ) = startSymbol
+    val FunctionType( instTT, startSymbolArgTys ) = startSymbolNT.ty
+    // TODO: handle strong quantifiers in conclusion correctly
+    val startSymbolArgs2 = for ( ( t, i ) <- startSymbolArgTys.zipWithIndex ) yield Var( s"x_$i", t )
+
+    val indLemmaNT = Const( nameGen fresh "B", FunctionType( instTT, startSymbolArgTys ++ startSymbolArgTys ++ pi1QTys ) )
+
+    val lhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
+    val rhsPi1QArgs = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"v_$i", t )
+
+    val indLemmaRules = startSymbolArgTys.zipWithIndex.flatMap {
+      case ( indLemmaArgTy, indLemmaArgIdx ) =>
+        val indTy = indLemmaArgTy.asInstanceOf[TBase]
+        ctx.getConstructors( indTy ) match {
+          case None => Seq()
+          case Some( ctrs ) =>
+            ctrs flatMap { ctr =>
+              val FunctionType( _, ctrArgTys ) = ctr.ty
+              val ctrArgs = for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x_${indLemmaArgIdx}_$i", t )
+              val lhs = indLemmaNT( startSymbolArgs )( startSymbolArgs2.take( indLemmaArgIdx ) )( ctr( ctrArgs: _* ) )( startSymbolArgs2.drop( indLemmaArgIdx + 1 ) )( lhsPi1QArgs )
+              val recRules = ctrArgTys.zipWithIndex.filter { _._1 == indTy } map {
+                case ( ctrArgTy, ctrArgIdx ) =>
+                  lhs -> indLemmaNT( startSymbolArgs )( startSymbolArgs2.take( indLemmaArgIdx ) )( ctrArgs( ctrArgIdx ) )( startSymbolArgs2.drop( indLemmaArgIdx + 1 ) )( rhsPi1QArgs )
+              }
+              recRules :+ ( lhs -> Var( "u", instTT ) )
+            }
+        }
+    }
+
+    RecSchemTemplate(
+      startSymbolNT,
+      indLemmaRules.toSet
+        + ( startSymbolNT( startSymbolArgs: _* ) -> indLemmaNT( startSymbolArgs: _* )( startSymbolArgs: _* )( rhsPi1QArgs: _* ) )
+        + ( startSymbolNT( startSymbolArgs: _* ) -> Var( "u", instTT ) )
+        + ( indLemmaNT( startSymbolArgs: _* )( startSymbolArgs2: _* )( lhsPi1QArgs: _* ) -> Var( "u", instTT ) ) )
+  }
+}
+
+object qbupForRecSchem {
+  def canonicalRsLHS( recSchem: RecursionScheme )( implicit ctx: Context ): Set[Expr] =
+    recSchem.nonTerminals flatMap { nt =>
+      val FunctionType( To, argTypes ) = nt.ty
+      val args = for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( s"x$i", t )
+      recSchem.rulesFrom( nt ).flatMap {
+        case Rule( Apps( _, as ), _ ) => as.zipWithIndex.filterNot { _._1.isInstanceOf[Var] }.map { _._2 }
+      }.toSeq match {
+        case Seq() => Some( nt( args: _* ) )
+        case idcs =>
+          val newArgs = for ( ( _: TBase, idx ) <- argTypes.zipWithIndex ) yield if ( !idcs.contains( idx ) ) List( args( idx ) )
+          else {
+            val indTy = argTypes( idx ).asInstanceOf[TBase]
+            val Some( ctrs ) = ctx.getConstructors( indTy )
+            for {
+              ctr <- ctrs.toList
+              FunctionType( _, ctrArgTys ) = ctr.ty
+            } yield ctr(
+              ( for ( ( t, i ) <- ctrArgTys.zipWithIndex ) yield Var( s"x${idx}_$i", t ) ): _* )
+          }
+          import cats.instances.list._
+          import cats.syntax.traverse._
+          newArgs.traverse( identity ).map( nt( _: _* ) )
+      }
+    }
+
+  def apply( recSchem: RecursionScheme, conj: Formula )( implicit ctx: Context ): Formula = {
+    def convert( term: Expr ): Formula = term match {
+      case Apps( ax, args ) if ax == recSchem.startSymbol => instantiate( conj, args )
+      case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
+        Atom( Var( s"X_$name", ty )( args: _* ) )
+      case formula: Formula => formula
+    }
+
+    val lhss = canonicalRsLHS( recSchem )
+
+    existentialClosure( And( for ( lhs <- lhss ) yield All.Block(
+      freeVariables( lhs ) toSeq,
+      formulaToSequent.pos( And( for {
+        Rule( lhs_, rhs ) <- recSchem.rules
+        subst <- syntacticMatching( lhs_, lhs )
+      } yield convert( subst( rhs ) ) )
+        --> convert( lhs ) ).toImplication ) ) )
   }
 }

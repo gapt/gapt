@@ -18,7 +18,7 @@ class LambdaCalculusTest extends Specification {
     "create N-ary abstractions (AbsN) correctly" in {
       val v1 = Var( "x", Ti )
       val v2 = Var( "y", Ti )
-      val f = Var( "f", Ti -> ( Ti -> To ) )
+      val f = Var( "f", Ti ->: Ti ->: To )
       ( Abs( v1 :: v2 :: Nil, f ) match {
         case Abs( v1, Abs( v2, f ) ) => true
         case _                       => false
@@ -27,7 +27,7 @@ class LambdaCalculusTest extends Specification {
     "create N-ary applications (AppN) correctly" in {
       val v1 = Var( "x", Ti )
       val v2 = Var( "y", Ti )
-      val f = Var( "f", Ti -> ( Ti -> To ) )
+      val f = Var( "f", Ti ->: Ti ->: To )
       ( App( f, List( v1, v2 ) ) match {
         case App( App( f, v1 ), v2 ) => true
         case _                       => false
@@ -38,7 +38,7 @@ class LambdaCalculusTest extends Specification {
   "Equality" should {
     "distinguish variables with same name but different type" in {
       val xi = Var( "x", Ti )
-      val xii = Var( "x", Ti -> Ti )
+      val xii = Var( "x", Ti ->: Ti )
 
       ( xi ) must not be equalTo( xii )
       ( xi.syntaxEquals( xii ) ) must beEqualTo( false )
@@ -62,14 +62,14 @@ class LambdaCalculusTest extends Specification {
     }
 
     "work correctly for alpha conversion" in {
-      val a0 = Abs( Var( "x", Ti -> Ti ), App( Var( "x", Ti -> Ti ), Var( "y", Ti ) ) )
-      val b0 = Abs( Var( "x", Ti -> Ti ), App( Var( "x", Ti -> Ti ), Var( "y", Ti ) ) )
+      val a0 = Abs( Var( "x", Ti ->: Ti ), App( Var( "x", Ti ->: Ti ), Var( "y", Ti ) ) )
+      val b0 = Abs( Var( "x", Ti ->: Ti ), App( Var( "x", Ti ->: Ti ), Var( "y", Ti ) ) )
       "- (\\x.xy) = (\\x.xy)" in {
         ( a0 ) must beEqualTo( b0 )
         ( a0.syntaxEquals( b0 ) ) must beEqualTo( true )
       }
-      val a1 = Abs( Var( "y", Ti ), App( Var( "x", Ti -> Ti ), Var( "y", Ti ) ) )
-      val b1 = Abs( Var( "z", Ti ), App( Var( "x", Ti -> Ti ), Var( "z", Ti ) ) )
+      val a1 = Abs( Var( "y", Ti ), App( Var( "x", Ti ->: Ti ), Var( "y", Ti ) ) )
+      val b1 = Abs( Var( "z", Ti ), App( Var( "x", Ti ->: Ti ), Var( "z", Ti ) ) )
       "- (\\y.xy) = (\\z.xz)" in {
         ( a1 ) must beEqualTo( b1 )
         ( a1.syntaxEquals( b1 ) ) must beEqualTo( false )
@@ -108,7 +108,7 @@ class LambdaCalculusTest extends Specification {
         val x = Var( "x", Ti )
         val y = Var( "y", Ti )
         val z = Var( "z", Ti )
-        val f = Const( "f", Ti -> Ti )
+        val f = Const( "f", Ti ->: Ti )
         val a = Abs( x, Abs( y, Abs( z, App( f, y ) ) ) )
         val b = Abs( z, Abs( x, Abs( y, App( f, z ) ) ) )
         a must_!= b
@@ -140,8 +140,8 @@ class LambdaCalculusTest extends Specification {
 
   "Hash Codes" should {
     "be equal for alpha equal terms" in {
-      val t1 = App( Const( "P", Ti -> To ), Var( "x", Ti ) )
-      val t2 = App( Const( "P", Ti -> To ), Var( "y", Ti ) )
+      val t1 = App( Const( "P", Ti ->: To ), Var( "x", Ti ) )
+      val t2 = App( Const( "P", Ti ->: To ), Var( "y", Ti ) )
       val t3 = Abs( Var( "x", Ti ), t1 )
       val t4 = Abs( Var( "y", Ti ), t2 )
       val t5 = Abs( Var( "x", Ti ), t1 )
@@ -159,8 +159,8 @@ class LambdaCalculusTest extends Specification {
     }
 
     "make maps and sets properly defined" in {
-      val t1 = App( Const( "P", Ti -> To ), Var( "x", Ti ) )
-      val t2 = App( Const( "P", Ti -> To ), Var( "y", Ti ) )
+      val t1 = App( Const( "P", Ti ->: To ), Var( "x", Ti ) )
+      val t2 = App( Const( "P", Ti ->: To ), Var( "y", Ti ) )
       val t3 = Abs( Var( "x", Ti ), t1 )
       val t4 = Abs( Var( "y", Ti ), t2 )
       val t5 = Abs( Var( "x", Ti ), t1 )
@@ -233,10 +233,10 @@ class LambdaCalculusTest extends Specification {
 
   "TypedLambdaCalculus" should {
     "extract free variables correctly" in {
-      val x = Var( "X", Ti -> To )
+      val x = Var( "X", Ti ->: To )
       val y = Var( "y", Ti )
-      val z = Var( "Z", Ti -> To )
-      val r = Var( "R", ( Ti -> To ) -> ( Ti -> ( ( Ti -> To ) -> To ) ) )
+      val z = Var( "Z", Ti ->: To )
+      val r = Var( "R", ( Ti ->: To ) ->: Ti ->: ( Ti ->: To ) ->: To )
       val a = App( r, x :: y :: z :: Nil )
       val qa = Abs( x, a )
       val free = freeVariables( qa )
@@ -247,7 +247,7 @@ class LambdaCalculusTest extends Specification {
     }
 
     "extract free variables correctly" in {
-      val x = Var( "x", Ti -> Ti )
+      val x = Var( "x", Ti ->: Ti )
       val z = Var( "z", Ti )
       val M = App( Abs( x, App( x, z ) ), x )
 
@@ -258,7 +258,7 @@ class LambdaCalculusTest extends Specification {
     }
 
     "extract free variables correctly" in {
-      val x = Var( "x", Ti -> Ti )
+      val x = Var( "x", Ti ->: Ti )
       val z = Var( "z", Ti )
       val M = Abs( x, App( Abs( x, App( x, z ) ), x ) )
 
@@ -270,7 +270,7 @@ class LambdaCalculusTest extends Specification {
 
     "deal correctly with bound variables in the Abs extractor" in {
       val x = Var( "x", Ti )
-      val p = Var( "p", Ti -> To )
+      val p = Var( "p", Ti ->: To )
       val px = App( p, x )
       val xpx = Abs( x, px )
 

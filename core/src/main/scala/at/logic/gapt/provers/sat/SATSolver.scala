@@ -3,7 +3,7 @@ package at.logic.gapt.provers.sat
 import at.logic.gapt.expr.hol.fastStructuralCNF
 import at.logic.gapt.expr.{ Formula, HOLAtomConst }
 import at.logic.gapt.formats.dimacs.{ DIMACS, DIMACSEncoding }
-import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
+import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.drup.{ DrupProof, DrupToResolutionProof }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
@@ -15,23 +15,21 @@ trait SATSolver extends OneShotProver {
 
   def solve( cnf: DIMACS.CNF ): Option[DIMACS.Model]
 
-  def solve( cnf: TraversableOnce[HOLClause] ): Option[Interpretation] = {
+  def solve( cnf: TraversableOnce[HOLClause] ): Option[PropositionalModel] = {
     val encoding = new DIMACSEncoding
     solve( encoding.encodeCNF( cnf ) ) map { dimacsModel =>
       encoding.decodeModel( dimacsModel )
     }
   }
 
-  def solve( formula: Formula ): Option[Interpretation] = {
+  def solve( formula: Formula ): Option[PropositionalModel] = {
     val ( cnf, definitions ) = fastStructuralCNF()( formula )
-    solve( cnf ) map {
-      case i: MapBasedInterpretation =>
-        // remove abbreviations for subformulas
-        MapBasedInterpretation( Map() ++ i.model.filterKeys {
-          case c: HOLAtomConst => !definitions.isDefinedAt( c )
-          case _               => true
-        } )
-      case i => i
+    solve( cnf ) map { i =>
+      // remove abbreviations for subformulas
+      PropositionalModel( Map() ++ i.assignment.filterKeys {
+        case c: HOLAtomConst => !definitions.isDefinedAt( c )
+        case _               => true
+      } )
     }
   }
 

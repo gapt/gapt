@@ -1,8 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
-import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ HOLPosition, containsQuantifierOnLogicalLevel, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs._
 
@@ -77,6 +76,22 @@ object ETMerge {
     }
     if ( children.nonEmpty ) apply( children ) else ETWeakening( shallow, polarity )
   }
+
+  def byShallowFormula( trees: Iterable[ExpansionTree] ): Vector[ExpansionTree] =
+    trees.groupBy( t => t.shallow -> t.polarity ).valuesIterator.map( ETMerge( _ ) ).toVector
+
+  def apply( expansionSequent: ExpansionSequent ): ExpansionSequent =
+    Sequent( byShallowFormula( expansionSequent.antecedent ), byShallowFormula( expansionSequent.succedent ) )
+
+  def apply( expansionProof: ExpansionProof ): ExpansionProof =
+    ExpansionProof( apply( expansionProof.expansionSequent ) )
+}
+object ETMerges {
+  def unapply( tree: ExpansionTree ): Some[Vector[ExpansionTree]] =
+    tree match {
+      case ETMerge( ETMerges( t ), ETMerges( s ) ) => Some( t ++ s )
+      case _                                       => Some( Vector( tree ) )
+    }
 }
 
 /**
@@ -161,6 +176,30 @@ case class ETImp( child1: ExpansionTree, child2: ExpansionTree ) extends BinaryE
   val polarity = child2.polarity
   val shallow = child1.shallow --> child2.shallow
   def deep = child1.deep --> child2.deep
+}
+
+object ETCut {
+  val cutAxiom = hof"∀X (X ⊃ X)"
+  def apply( child1: ExpansionTree, child2: ExpansionTree ): ExpansionTree =
+    ETWeakQuantifier.withMerge( cutAxiom, List( child1.shallow -> ETImp( child1, child2 ) ) )
+  def apply( cuts: Iterable[ETImp] ): ExpansionTree =
+    ETWeakQuantifier.withMerge( cutAxiom, for ( cut <- cuts ) yield cut.child1.shallow -> cut )
+  def apply( cuts: Seq[( ExpansionTree, ExpansionTree )] )( implicit dummyImplicit: DummyImplicit ): ExpansionTree =
+    ETWeakQuantifier.withMerge( cutAxiom, for ( ( cut1, cut2 ) <- cuts ) yield cut1.shallow -> ETImp( cut1, cut2 ) )
+
+  def isCutExpansion( tree: ExpansionTree ): Boolean =
+    tree.polarity.inAnt && tree.shallow == cutAxiom
+
+  def unapply( et: ExpansionTree ): Option[Set[ETImp]] =
+    if ( isCutExpansion( et ) )
+      Some {
+        for {
+          cut <- et( HOLPosition( 1 ) )
+          cut1 <- cut( HOLPosition( 1 ) )
+          cut2 <- cut( HOLPosition( 2 ) )
+        } yield ETImp( cut1, cut2 )
+      }
+    else None
 }
 
 /**
@@ -384,36 +423,39 @@ private[expansion] object replaceET {
   }
 }
 
-private[expansion] object expansionTreeSubstitution extends ClosedUnderSub[ExpansionTree] {
-  def applySubstitution( subst: Substitution, et: ExpansionTree ): ExpansionTree = et match {
-    case ETMerge( child1, child2 ) => ETMerge( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
+object expansionTreeSubstitution extends ClosedUnderSub[ExpansionTree] {
+  def applySubstitution( subst: Substitution, et: ExpansionTree ): ExpansionTree =
+    apply( subst, Map(), et )
+
+  def apply( subst: Substitution, skolemDefinitions: Map[Var, Expr], et: ExpansionTree ): ExpansionTree = et match {
+    case ETMerge( child1, child2 ) => ETMerge( apply( subst, skolemDefinitions, child1 ), apply( subst, skolemDefinitions, child2 ) )
 
     case et @ ETWeakening( formula, _ ) =>
       et.copy( formula = subst( formula ) )
     case et @ ETAtom( atom, _ ) =>
       et.copy( atom = subst( atom ).asInstanceOf[Atom] )
     case ETDefinition( sh, ch ) =>
-      ETDefinition( subst( sh ), applySubstitution( subst, ch ) )
+      ETDefinition( subst( sh ), apply( subst, skolemDefinitions, ch ) )
 
     case _: ETTop | _: ETBottom  => et
-    case ETNeg( child )          => ETNeg( applySubstitution( subst, child ) )
-    case ETAnd( child1, child2 ) => ETAnd( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
-    case ETOr( child1, child2 )  => ETOr( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
-    case ETImp( child1, child2 ) => ETImp( applySubstitution( subst, child1 ), applySubstitution( subst, child2 ) )
+    case ETNeg( child )          => ETNeg( apply( subst, skolemDefinitions, child ) )
+    case ETAnd( child1, child2 ) => ETAnd( apply( subst, skolemDefinitions, child1 ), apply( subst, skolemDefinitions, child2 ) )
+    case ETOr( child1, child2 )  => ETOr( apply( subst, skolemDefinitions, child1 ), apply( subst, skolemDefinitions, child2 ) )
+    case ETImp( child1, child2 ) => ETImp( apply( subst, skolemDefinitions, child1 ), apply( subst, skolemDefinitions, child2 ) )
 
     case ETWeakQuantifier( shallow, instances ) =>
       ETWeakQuantifier.withMerge(
         subst( shallow ),
         for ( ( selectedTerm, child ) <- instances.toSeq )
-          yield subst( selectedTerm ) -> applySubstitution( subst, child ) )
+          yield subst( selectedTerm ) -> apply( subst, skolemDefinitions, child ) )
 
     case ETStrongQuantifier( shallow, eigenVariable, child ) =>
       subst( eigenVariable ) match {
-        case eigenNew: Var => ETStrongQuantifier( subst( shallow ), eigenNew, applySubstitution( subst, child ) )
-        case _             => throw new UnsupportedOperationException
+        case eigenNew: Var => ETStrongQuantifier( subst( shallow ), eigenNew, apply( subst, skolemDefinitions, child ) )
+        case skTerm        => ETSkolemQuantifier( subst( shallow ), skTerm, skolemDefinitions( eigenVariable ), apply( subst, skolemDefinitions, child ) )
       }
     case ETSkolemQuantifier( shallow, skolemTerm, skolemDef, child ) =>
-      ETSkolemQuantifier( subst( shallow ), subst( skolemTerm ), skolemDef, applySubstitution( subst, child ) )
+      ETSkolemQuantifier( subst( shallow ), subst( skolemTerm ), skolemDef, apply( subst, skolemDefinitions, child ) )
   }
 }
 
@@ -444,7 +486,15 @@ object isPropositionalET {
  * Cleans up an expansion tree by introducing weakenings as late as possible.
  */
 object cleanStructureET {
+  def apply( es: ExpansionSequent ): ExpansionSequent = es.map( apply )
+  def apply( ep: ExpansionProof ): ExpansionProof = ExpansionProof( apply( ep.expansionSequent ) )
+
   def apply( t: ExpansionTree ): ExpansionTree = t match {
+    case ETMerge( s1, s2 ) => ( apply( s1 ), apply( s2 ) ) match {
+      case ( ETWeakening( _, _ ), r2 ) => r2
+      case ( r1, ETWeakening( _, _ ) ) => r1
+      case ( r1, r2 )                  => ETMerge( r1, r2 )
+    }
     case ETNeg( s ) => apply( s ) match {
       case ETWeakening( f, p ) => ETWeakening( -f, !p )
       case r                   => ETNeg( r )

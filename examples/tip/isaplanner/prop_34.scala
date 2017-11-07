@@ -1,43 +1,59 @@
 package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
 
 /* This proof is not a s.i.p. because of the subinductions. */
 object prop_34 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_34.smt2", getClass ) )
-  ctx = bench.ctx
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  ctx += TBase( "sk" )
+  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += hoc"p:Nat>Nat"
+  ctx += hoc"'min2' :Nat>Nat>Nat"
+  ctx += hoc"'le' :Nat>Nat>o"
+  ctx += hoc"'equal' :Nat>Nat>o"
+
+  val sequent =
+    hols"""
+      def_p: ∀x p(S(x)) = x,
+      def_min2_1: ∀y (min2(#c(Z: Nat), y:Nat): Nat) = #c(Z: Nat),
+      def_min2_2: ∀z (min2(S(z:Nat): Nat, #c(Z: Nat)): Nat) = #c(Z: Nat),
+      def_min2_3: ∀z ∀y2 (min2(S(z:Nat): Nat, S(y2)): Nat) = S(min2(z, y2)),
+      def_le_1: ∀y le(#c(Z: Nat), y:Nat),
+      def_le_2: ∀z ¬le(S(z:Nat): Nat, #c(Z: Nat)),
+      def_le_3: ∀z ∀x2 ((le(S(z:Nat): Nat, S(x2)) ⊃ le(z, x2)) ∧ (le(z, x2) ⊃ le(S(z), S(x2)))),
+      def_equal_1: equal(Z, Z),
+      def_equal_2: ∀x ¬equal(Z, S(x)),
+      def_equal_3: ∀x ¬equal(S(x), Z),
+      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+      ax_nat: ∀x ¬Z = S(x)
+      :-
+      goal: ∀a ∀b ((equal(min2(a:Nat, b:Nat): Nat, b) ⊃ le(b, a)) ∧ (le(b, a) ⊃ equal(min2(a, b), b)))
+    """
 
   val proof = Lemma( sequent ) {
     allR
     induction( hov"a:Nat" )
     // base case
     allR
-    allL( "h4", le"Z:Nat" )
+    allL( "def_le_1", le"Z:Nat" )
     andR
     induction( hov"b:Nat" )
     impR
     axiomLog
     impR
-    allL( "h1", le"S(b_0:Nat):Nat" )
-    allL( "h8", le"b_0:Nat" )
+    allL( "def_min2_1", le"S(b_0:Nat):Nat" )
+    allL( "def_equal_2", le"b_0:Nat" )
     negL
-    eql( "h1_0", "goal_0" ).fromLeftToRight
+    eql( "def_min2_1_0", "goal_0" ).fromLeftToRight
     axiomLog
     induction( hov"b:Nat" )
     impR
-    allL( "h1", le"Z:Nat" )
-    eql( "h1_0", "goal_1" ).fromLeftToRight
+    allL( "def_min2_1", le"Z:Nat" )
+    eql( "def_min2_1_0", "goal_1" ).fromLeftToRight
     axiomLog
-    allL( "h5", le"b_0:Nat" )
+    allL( "def_le_2", le"b_0:Nat" )
     impR
     negL
     axiomLog
@@ -45,46 +61,46 @@ object prop_34 extends TacticsProof {
     allR
     induction( hov"b:Nat" )
     andR
-    allL( "h4", le"S(a_0:Nat):Nat" )
+    allL( "def_le_1", le"S(a_0:Nat):Nat" )
     impR
     axiomLog
-    allL( "h2", le"a_0:Nat" )
+    allL( "def_min2_2", le"a_0:Nat" )
     impR
-    eql( "h2_0", "goal_1" ).fromLeftToRight
+    eql( "def_min2_2_0", "goal_1" ).fromLeftToRight
     axiomLog
     andR
-    allL( "h3", le"a_0:Nat", le"b_0:Nat" )
-    allL( "h10", le"min2(a_0:Nat,b_0:Nat):Nat", le"b_0:Nat" )
-    allL( "h6", le"b_0:Nat", le"a_0:Nat" )
+    allL( "def_min2_3", le"a_0:Nat", le"b_0:Nat" )
+    allL( "def_equal_4", le"min2(a_0:Nat,b_0:Nat):Nat", le"b_0:Nat" )
+    allL( "def_le_3", le"b_0:Nat", le"a_0:Nat" )
     allL( "IHa_0", le"b_0:Nat" )
-    eql( "h3_0", "goal" )
+    eql( "def_min2_3_0", "goal" )
     impR
-    andL( "h10_0" )
-    andL( "h6_0" )
+    andL( "def_equal_4_0" )
+    andL( "def_le_3_0" )
     andL( "IHa_0_0" )
-    forget( "IHa_0_0_1", "h10_0_1", "h6_0_0" )
-    impL( "h10_0_0" )
+    forget( "IHa_0_0_1", "def_equal_4_0_1", "def_le_3_0_0" )
+    impL( "def_equal_4_0_0" )
     axiomLog
     impL( "IHa_0_0_0" )
     axiomLog
-    impL( "h6_0_1" )
+    impL( "def_le_3_0_1" )
     axiomLog
     axiomLog
-    allL( "h6", le"b_0:Nat", le"a_0:Nat" )
-    allL( "h10", le"min2(a_0:Nat, b_0:Nat):Nat", le"b_0:Nat" )
+    allL( "def_le_3", le"b_0:Nat", le"a_0:Nat" )
+    allL( "def_equal_4", le"min2(a_0:Nat, b_0:Nat):Nat", le"b_0:Nat" )
     allL( "IHa_0", le"b_0:Nat" )
-    allL( "h3", le"a_0:Nat", le"b_0:Nat" )
-    andL( "h6_0" )
-    andL( "h10_0" )
+    allL( "def_min2_3", le"a_0:Nat", le"b_0:Nat" )
+    andL( "def_le_3_0" )
+    andL( "def_equal_4_0" )
     andL( "IHa_0_0" )
-    forget( "h6_0_1", "IHa_0_0_0", "h10_0_0" )
-    eql( "h3_0", "goal" )
+    forget( "def_le_3_0_1", "IHa_0_0_0", "def_equal_4_0_0" )
+    eql( "def_min2_3_0", "goal" )
     impR
-    impL( "h6_0_0" )
+    impL( "def_le_3_0_0" )
     axiomLog
     impL( "IHa_0_0_1" )
     axiomLog
-    impL( "h10_0_1" )
+    impL( "def_equal_4_0_1" )
     axiomLog
     axiomLog
   }

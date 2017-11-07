@@ -36,5 +36,4 @@ object numberOfInstancesET {
     t.treeLike.postOrder collect { case ETWeakQuantifier( _, instances ) => instances.size } sum
   def apply( s: ExpansionSequent ): Int = s.elements map apply sum
   def apply( ep: ExpansionProof ): Int = apply( ep.expansionSequent )
-  def apply( epwc: ExpansionProofWithCut ): Int = apply( epwc.expansionWithCutAxiom )
 }

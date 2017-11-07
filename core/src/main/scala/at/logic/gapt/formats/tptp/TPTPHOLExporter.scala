@@ -269,8 +269,8 @@ class TPTPHOLExporter {
     case Ti                 => "$i"
     case To                 => "$o"
     case TBase( name, Nil ) => name
-    case t1 -> t2 if outer  => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
-    case t1 -> t2           => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
+    case t1 ->: t2 if outer => getTypeString( t1, false ) + " > " + getTypeString( t2, false )
+    case t1 ->: t2          => "(" + getTypeString( t1, false ) + " > " + getTypeString( t2, false ) + ")"
     case _                  => throw new Exception( "TPTP type export for " + t + " not implemented!" )
   }
 
@@ -379,7 +379,7 @@ class TPTPHOLExporter {
         val fv = freeVariables( term_ ).toList
         val ( term, all_vars ) = strip_lambdas( term_, fv )
         //create the type of q
-        val qtype = all_vars.foldRight( term.ty )( { case ( v, t ) => v.ty -> t } )
+        val qtype = all_vars.foldRight( term.ty )( { case ( v, t ) => v.ty ->: t } )
         // apply it to the arguments
         val q_function = Apps( Const( name, qtype ), all_vars )
         // build the formula equating it to the stripped term

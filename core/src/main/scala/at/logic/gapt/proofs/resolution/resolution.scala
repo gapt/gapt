@@ -478,16 +478,26 @@ abstract class SkolemQuantResolutionRule extends PropositionalResolutionRule {
 
   def instFormula = Substitution( bound -> skolemTerm )( sub )
 }
+trait SkolemQuantResolutionRuleCompanion {
+  type R
+  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ): R
+  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr )( implicit ctx: Context ): R = {
+    val Apps( skConst: Const, _ ) = skolemTerm
+    apply( subProof, idx, skolemTerm, ctx.skolemDef( skConst ).get )
+  }
+}
 case class AllL( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
   require( idx isAnt )
   val All( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = instFormula +: Sequent()
 }
+object AllL extends SkolemQuantResolutionRuleCompanion { type R = AllL }
 case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
   require( idx isSuc )
   val Ex( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = Sequent() :+ instFormula
 }
+object ExR extends SkolemQuantResolutionRuleCompanion { type R = ExR }
 
 case class Flip( subProof: ResolutionProof, idx: SequentIndex ) extends PropositionalResolutionRule {
   val Eq( t, s ) = subProof.conclusion( idx )

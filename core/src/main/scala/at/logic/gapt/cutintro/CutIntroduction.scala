@@ -16,7 +16,8 @@ import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.{ Logger, Maybe, metrics }
+import at.logic.gapt.utils.{ logger, Maybe, metrics }
+import logger._
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[Expr] ): Option[VTRATG]
@@ -146,7 +147,7 @@ object sehsToVTRATG {
   }
 }
 
-object CutIntroduction extends Logger {
+object CutIntroduction {
 
   class CutIntroException( msg: String ) extends Exception( msg )
   class NonCoveringGrammarException( grammar: VTRATG, term: Expr )
@@ -209,8 +210,6 @@ object CutIntroduction extends Logger {
     implicit def fromLK( p: LKProof ): InputProof =
       apply( eliminateCutsET( LKToExpansionProof( p ) ), BackgroundTheory.guess( p ) )
 
-    implicit def fromExpansionProofWithCut( p: ExpansionProofWithCut ): InputProof =
-      fromExpansionProof( eliminateCutsET( p ) )
     implicit def fromExpansionProof( p: ExpansionProof ): InputProof =
       apply( p, BackgroundTheory.guess( p.shallow ) )
 

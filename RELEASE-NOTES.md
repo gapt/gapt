@@ -1,9 +1,22 @@
 # Release notes for GAPT
 
-## Version 2.8 (unreleased)
+## Version 2.9 (unreleased)
+
+* Support for the current (yet unreleased) TIP format
+* Rewrite of the tree grammar-based induction prover
+* Atomic expansion for expansion proofs
+* Restructured user manual
+* The Scala operator for function types is now `->:` instead of `->`
+* Logback logging library was removed, use `verbose{...}` or `tactic.verbose` to enable logging
+
+## Version 2.8 (released on 2017-10-09)
 
 * Support for EProver 2.0
+* Support for Vampire 4.2
+* Experimental support for iProver (requires current development version)
 * MutableContext now keeps track of automatically generated Skolem functions
+* Cut-elimination no longer regularizes
+* deskolemizeET now supports inner Skolemization
 
 ## Version 2.7 (released on 2017-07-05)
 

@@ -1390,4 +1390,15 @@ class LKTest extends Specification {
     elr.conclusion( elr.eqInConclusion ) must_== hof"a=b"
   }
 
+  "Issue #650" should {
+    "be fixed for ∀" in {
+      val p1 = ProofLink( foc"th", hos":- P(y,y)" )
+      ForallRightRule( p1, fof"!x P(x,y)", fov"y" ) must throwAn[LKRuleCreationException]
+    }
+
+    "be fixed for ∃" in {
+      val p1 = ProofLink( foc"th", hos"P(y,y) :-" )
+      ExistsLeftRule( p1, fof"?x P(x,y)", fov"y" ) must throwAn[LKRuleCreationException]
+    }
+  }
 }

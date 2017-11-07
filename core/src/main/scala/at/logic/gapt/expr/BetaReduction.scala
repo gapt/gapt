@@ -8,7 +8,12 @@ import scala.collection.mutable
 
 case class ReductionRule( lhs: Expr, rhs: Expr ) {
   require( lhs.ty == rhs.ty )
-  require( freeVariables( rhs ).subsetOf( freeVariables( lhs ) ) )
+  require(
+    freeVariables( rhs ).subsetOf( freeVariables( lhs ) ),
+    s"Right-hand side of rule contains variables ${
+      freeVariables( rhs ) -- freeVariables( lhs ) mkString ", "
+    } which are not in the left hand side:\n"
+      + ( lhs === rhs ) )
 
   val Apps( lhsHead @ Const( lhsHeadName, _ ), lhsArgs ) = lhs
   val lhsArgsSize = lhsArgs.size
@@ -45,7 +50,7 @@ object ReductionRule {
   implicit def apply( rule: ( Expr, Expr ) ): ReductionRule =
     ReductionRule( rule._1, rule._2 )
 
-  implicit def apply( atom: Atom ): ReductionRule = {
+  implicit def apply( atom: Formula ): ReductionRule = {
     val Eq( lhs, rhs ) = atom
     ReductionRule( lhs, rhs )
   }
@@ -84,7 +89,7 @@ case class Normalizer( rules: Set[ReductionRule] ) {
     hd match {
       case Abs.Block( vs, hd_ ) if vs.nonEmpty && as.nonEmpty =>
         val n = math.min( as.size, vs.size )
-        Some( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ) )
+        Some( Apps( Substitution( vs.take( n ) zip as.take( n ) )( Abs.Block( vs.drop( n ), hd_ ) ), as.drop( n ) ) )
       case hd @ Const( c, _ ) =>
         headMap.get( c ).flatMap {
           case ( rs, whnfArgs, normalizeArgs ) =>

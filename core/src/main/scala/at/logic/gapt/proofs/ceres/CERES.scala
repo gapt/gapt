@@ -67,7 +67,7 @@ class CERES {
   def apply( p: LKProof, pred: Formula => Boolean ): LKProof = apply( p, pred, Escargot )
   def apply( p: LKProof, pred: Formula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
     val es = p.endSequent
-    val p_ = regularize( skolemizeInferences( AtomicExpansion( p ) ) )
+    val p_ = regularize( skolemizeLK( AtomicExpansion( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
     val proj = Projections( p_, pred )
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
@@ -104,7 +104,7 @@ class CERES {
    */
   def CERESExpansionProof( p: LKProof, prover: ResolutionProver = Escargot ): ExpansionProof = {
     val es = p.endSequent
-    val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
+    val p_ = regularize( AtomicExpansion( skolemizeLK( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, CERES.skipNothing ) )
     val proj = Projections( p_, CERES.skipNothing )
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )

@@ -12,21 +12,28 @@ object structuralCNF {
     endSequent:        HOLSequent,
     propositional:     Boolean    = false,
     structural:        Boolean    = true,
-    bidirectionalDefs: Boolean    = false )( implicit ctx: MutableContext = MutableContext.guess( endSequent ) ): Set[ResolutionProof] = {
+    bidirectionalDefs: Boolean    = false,
+    cse:               Boolean    = false )(
+    implicit
+    ctx: MutableContext = MutableContext.guess( endSequent ) ): Set[ResolutionProof] = {
     if ( !propositional )
       require( freeVariables( endSequent ).isEmpty, "end-sequent has free variables" )
 
     onProofs(
       endSequent.map( Sequent() :+ _, _ +: Sequent() ).map( Input ).elements,
-      propositional, structural, bidirectionalDefs )
+      propositional, structural, bidirectionalDefs, cse )
   }
 
   def onProofs(
     proofs:            Iterable[ResolutionProof],
     propositional:     Boolean                   = false,
     structural:        Boolean                   = true,
-    bidirectionalDefs: Boolean                   = false )( implicit ctx: MutableContext = MutableContext.guess( proofs ) ): Set[ResolutionProof] = {
-    val clausifier = new Clausifier( propositional, structural, bidirectionalDefs, ctx, ctx.newNameGenerator )
+    bidirectionalDefs: Boolean                   = false,
+    cse:               Boolean                   = false )(
+    implicit
+    ctx: MutableContext = MutableContext.guess( proofs ) ): Set[ResolutionProof] = {
+    val clausifier = new Clausifier( propositional, structural, bidirectionalDefs, cse, ctx, ctx.newNameGenerator )
+    if ( cse ) proofs foreach clausifier.analyze
     proofs foreach clausifier.expand
     clausifier.cnf.toSet
   }
@@ -34,17 +41,12 @@ object structuralCNF {
 
 class Clausifier(
     propositional: Boolean, structural: Boolean,
-    bidirectionalDefs: Boolean,
-    ctx:               MutableContext,
-    nameGen:           NameGenerator ) {
+    bidirectionalDefs: Boolean, cse: Boolean,
+    ctx:     MutableContext,
+    nameGen: NameGenerator ) {
   val cnf = mutable.Set[ResolutionProof]()
   val defs = mutable.Map[Expr, HOLAtomConst]()
   val skConsts = mutable.Map[Expr, Const]()
-
-  for ( ( skC, skD ) <- ctx.get[SkolemFunctions].skolemDefs )
-    skConsts( skD ) = skC
-  for ( ( df: HOLAtomConst, by ) <- ctx.definitions )
-    defs( by ) = df
 
   def mkSkolemSym() = nameGen.freshWithIndex( "s" )
   def mkAbbrevSym() = nameGen.freshWithIndex( "D" )
@@ -52,13 +54,48 @@ class Clausifier(
   def getSkolemInfo( f: Formula, x: Var ): ( Expr, Expr ) = {
     val fvs = freeVariables( f ).toSeq
     val skolemizedFormula = Abs( fvs, f )
-    val skolemConst = skConsts.getOrElseUpdate(
-      skolemizedFormula, {
-      val c = Const( mkSkolemSym(), FunctionType( x.ty, fvs map { _.ty } ) )
-      ctx += Context.SkolemFun( c, skolemizedFormula )
-      c
-    } )
+    val skolemConst = skConsts.getOrElseUpdate( skolemizedFormula, ctx.addSkolemSym( skolemizedFormula, mkSkolemSym() ) )
     ( skolemConst( fvs: _* ), skolemizedFormula )
+  }
+
+  val subExprs: mutable.Map[Expr, Int] = mutable.Map()
+  val commonSubExprs: mutable.Set[Expr] = mutable.Set()
+  def analyze( f: Formula ): Int = {
+    subExprs.get( f ) match {
+      case Some( compl ) =>
+        if ( compl > 1 ) commonSubExprs += f
+        compl
+      case None =>
+        val compl = f match {
+          case _: Atom     => 1
+          case Neg( a )    => analyze( a )
+          case And( a, b ) => analyze( a ) + analyze( b )
+          case Or( a, b )  => analyze( a ) + analyze( b )
+          case Imp( a, b ) => analyze( a ) + analyze( b )
+          case All( _, a ) => 1 + analyze( a )
+          case Ex( _, a )  => 1 + analyze( a )
+          case _           => 0
+        }
+        subExprs( f ) = compl
+        compl
+    }
+  }
+  def analyze( p: ResolutionProof ): Unit =
+    p.conclusion.foreach( analyze )
+
+  def isDefn( p: ResolutionProof ): Boolean = {
+    def isDefnPlusAllR( p: ResolutionProof ): Boolean =
+      p match {
+        case Defn( _, _ )    => true
+        case AllR( q, _, _ ) => isDefnPlusAllR( q )
+        case _               => false
+      }
+
+    p match {
+      case ImpR( AndR1( q, _ ), _ ) => isDefnPlusAllR( q )
+      case ImpR( AndR2( q, _ ), _ ) => isDefnPlusAllR( q )
+      case _                        => false
+    }
   }
 
   // If we interpret the sequents in this set as a disjunction, their conjunction is equivalent to the original formula.
@@ -68,6 +105,9 @@ class Clausifier(
   // First we expand the connectives which correspond to nested disjunctions, e.g. (:- a|b) turns into (:- a, b).
   def expand( p: ResolutionProof ): Unit = {
     val p_Option = p.conclusion.zipWithIndex.elements.collectFirst {
+      case ( f, i ) if cse && commonSubExprs.contains( f ) && !isDefn( p ) =>
+        abbrev( p, i )
+
       case ( Ex( x, a ), i: Ant ) if !propositional =>
         ExL( p, i, rename( x, freeVariables( p.conclusion ) ) )
       case ( All( x, a ), i: Suc ) if !propositional =>
@@ -97,10 +137,13 @@ class Clausifier(
       case ( Or( Bottom(), _ ), i: Ant )  => OrL2( p, i )
       case ( Imp( _, Bottom() ), i: Ant ) => ImpL1( p, i )
       case ( Imp( Top(), _ ), i: Ant )    => ImpL2( p, i )
-      case ( And( Bottom(), _ ) | And( _, Bottom() ), i: Suc ) =>
-        return
-      case ( Or( Top(), _ ) | Or( _, Top() ) | Imp( Bottom(), _ ) | Imp( _, Top() ), i: Ant ) =>
-        return
+
+      case ( And( Bottom(), _ ), i: Suc ) => AndR1( p, i )
+      case ( And( _, Bottom() ), i: Suc ) => AndR2( p, i )
+      case ( Or( Top(), _ ), i: Ant )     => OrL1( p, i )
+      case ( Or( _, Top() ), i: Ant )     => OrL2( p, i )
+      case ( Imp( Bottom(), _ ), i: Ant ) => ImpL1( p, i )
+      case ( Imp( _, Top() ), i: Ant )    => ImpL2( p, i )
     }
     p_Option match {
       case Some( p_ ) => expand( p_ )
@@ -119,7 +162,7 @@ class Clausifier(
       case ( Imp( a, b ), i: Ant ) => i
     } match {
       case splits if structural && ( splits.size > 1 || ( splits.size == 1 && p.conclusion.size > 3 ) ) =>
-        abbrev( p, splits.head )
+        expand( abbrev( p, splits.head ) )
       case Seq( i, _* ) => splitAt( p, i )
       case Seq()        => cnf += p
     }
@@ -127,6 +170,7 @@ class Clausifier(
 
   def splitAt( p: ResolutionProof, i: SequentIndex ): Unit =
     ( p.conclusion( i ), i ) match {
+      case ( f, _ ) if cse && commonSubExprs( f ) && !isDefn( p ) => expand( p )
       case ( And( a, b ), i: Suc ) =>
         splitAt( AndR1( p, i ), p.conclusion.indices.last )
         splitAt( AndR2( p, i ), p.conclusion.indices.last )
@@ -141,24 +185,27 @@ class Clausifier(
 
   // Here, we replace the formula at index i with a definition, and continue with
   // both the abbreviated sequent, and (the necessary part of) the definition.
-  def abbrev( p: ResolutionProof, i: SequentIndex ): Unit = {
+  def abbrev( p: ResolutionProof, i: SequentIndex ): DefIntro = {
     val f = p.conclusion( i )
     val fvs = if ( propositional ) Nil else freeVariables( f ).toList
     val definedFormula = Abs( fvs, f )
-    val alreadyDefined = defs isDefinedAt definedFormula
-    val const = defs.getOrElseUpdate(
-      definedFormula, {
-      val c = HOLAtomConst( mkAbbrevSym(), fvs map { _.ty }: _* )
-      ctx += Definition( c, definedFormula )
-      c
-    } )
-    if ( !alreadyDefined ) {
-      val defn = fvs.foldLeft[ResolutionProof]( Defn( const, definedFormula ) )( AllR( _, Suc( 0 ), _ ) )
-      if ( i.isAnt || bidirectionalDefs ) expand( AndR2( defn, Suc( 0 ) ) )
-      if ( i.isSuc || bidirectionalDefs ) expand( AndR1( defn, Suc( 0 ) ) )
+    val const = defs.getOrElseUpdate( definedFormula, ctx.addDefinition( definedFormula, mkAbbrevSym() ).asInstanceOf[HOLAtomConst] )
+    expandDef( const, fvs, i.polarity )
+    DefIntro( p, i, Definition( const, definedFormula ), fvs )
+  }
+
+  val alreadyDefined: mutable.Set[( Const, Polarity )] = mutable.Set()
+  def expandDef( const: HOLAtomConst, fvs: List[Var], pol: Polarity ): Unit = {
+    if ( alreadyDefined( const -> pol ) && ( !bidirectionalDefs || alreadyDefined( const -> !pol ) ) ) return
+    val defn = fvs.foldLeft[ResolutionProof]( Defn( const, ctx.definition( const ).get ) )( AllR( _, Suc( 0 ), _ ) )
+    if ( pol.inAnt || bidirectionalDefs ) {
+      alreadyDefined += ( const -> Polarity.InAntecedent )
+      expand( AndR2( defn, Suc( 0 ) ) )
     }
-    val definition = Definition( const, definedFormula )
-    expand( DefIntro( p, i, definition, fvs ) )
+    if ( pol.inSuc || bidirectionalDefs ) {
+      alreadyDefined += ( const -> Polarity.InSuccedent )
+      expand( AndR1( defn, Suc( 0 ) ) )
+    }
   }
 
 }

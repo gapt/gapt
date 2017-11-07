@@ -5,8 +5,8 @@ import org.specs2.mutable._
 
 class ReplaceAtHOLPositionTest extends Specification {
   "replaceAtHOLPosition" should {
-    val P = Const( "P", Ti -> ( Ti -> To ) )
-    val F = Var( "F", Ti -> ( Ti -> To ) )
+    val P = Const( "P", Ti ->: Ti ->: To )
+    val F = Var( "F", Ti ->: Ti ->: To )
     val x = Var( "x", Ti )
     val y = Var( "y", Ti )
     val a = Const( "a", Ti )

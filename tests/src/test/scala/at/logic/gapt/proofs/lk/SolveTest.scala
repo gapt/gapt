@@ -70,15 +70,15 @@ class SolveTest extends Specification with SequentMatchers {
           le"z" -> ETImp( ETAtom( hoa"p z", Polarity.InSuccedent ), ETAtom( hoa"p (s z)", Polarity.InAntecedent ) ),
           le"s z" -> ETImp( ETAtom( hoa"p (s z)", Polarity.InSuccedent ), ETAtom( hoa"p (s (s z))", Polarity.InAntecedent ) ) ) ) +: Sequent() :+ ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InSuccedent )
       val cutf = hof"∀x (p x ⊃ p (s (s x)))"
-      val cut = ETImp(
+      val cut = ETCut(
         ETStrongQuantifier( cutf, hov"z",
           ETImp( ETAtom( hoa"p z", Polarity.InAntecedent ), ETAtom( hoa"p (s (s z))", Polarity.InSuccedent ) ) ),
         ETWeakQuantifier( cutf, Map(
           le"0" -> ETImp( ETAtom( hoa"p 0", Polarity.InSuccedent ), ETAtom( hoa"p (s (s 0))", Polarity.InAntecedent ) ),
           le"s (s 0)" -> ETImp( ETAtom( hoa"p (s (s 0))", Polarity.InSuccedent ), ETAtom( hoa"p (s (s (s (s 0))))", Polarity.InAntecedent ) ) ) ) )
-      val epwc = ExpansionProofWithCut( Seq( cut ), es )
+      val epwc = ExpansionProof( cut +: es )
       ExpansionProofToLK( epwc ) must beLike {
-        case Right( p ) => p.conclusion must beMultiSetEqual( epwc.shallow )
+        case Right( p ) => p.conclusion must beMultiSetEqual( epwc.nonCutPart.shallow )
       }
     }
 

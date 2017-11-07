@@ -6,7 +6,6 @@
     (case (cons x xs) (cons x (append xs ys)))
     (case nil ys)))
 
-(assert-not (forall ((x list))
+(prove (forall ((x list))
   (= (append (append x x) x)
      (append x (append x x)))))
-(check-sat)

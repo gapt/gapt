@@ -5,7 +5,8 @@ import at.logic.gapt.formats.babel.{ BabelParser, BabelSignature }
 import Context._
 import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.lk.LKProof
+import at.logic.gapt.proofs.lk.{ LKProof, ProofLink }
+import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.utils.NameGenerator
 
 import scala.reflect.ClassTag
@@ -127,7 +128,7 @@ sealed trait Context extends BabelSignature {
     }
 
   def check[T: Checkable]( t: T ): Unit =
-    implicitly[Checkable[T]].check( this, t )
+    implicitly[Checkable[T]].check( t )( this )
 
   def ++( updates: Traversable[Update] ): ImmutableContext =
     updates.foldLeft( toImmutable )( _ + _ )
@@ -296,10 +297,14 @@ object Context {
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
     def lookup( name: Expr ): Option[HOLSequent] =
-      ( for {
-        ( declName, declSeq ) <- names.values
+      for {
+        Apps( Const( n, _ ), _ ) <- Some( name )
+        ( declName, declSeq ) <- names.get( n )
         subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq ) ).headOption
+      } yield subst( declSeq )
+
+    def link( name: Expr ): Option[ProofLink] =
+      for ( sequent <- lookup( name ) ) yield ProofLink( name, sequent )
 
     def find( seq: HOLSequent ): Option[Expr] =
       ( for {
@@ -538,11 +543,12 @@ object Context {
   }
 
   def guess( exprs: Traversable[Expr] ): ImmutableContext = {
-    val consts = constants( exprs )
-    val tys = consts.flatMap( c => baseTypes( c.ty ) )
+    val names = exprs.view.flatMap( containedNames( _ ) ).toSet
+    val tys = names.flatMap( c => baseTypes( c.ty ) )
     var ctx = default
     for ( ty <- tys if !ctx.isType( ty ) )
       ctx += Sort( ty )
+    val consts = names.collect { case c: Const => c }
     for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty )
       ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ) ) )
     ctx
@@ -561,6 +567,29 @@ class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
 
   def +=( update: Update ): Unit = ctx += update
   def ++=( updates: Iterable[Update] ): Unit = ctx ++= updates
+
+  def addDefinition( by: Expr, name: => String = newNameGenerator.freshWithIndex( "D" ), reuse: Boolean = true ): Const = {
+    if ( reuse ) {
+      for ( ( d, _ ) <- get[Definitions].definitions.find( _._2 == by ) ) {
+        return Const( d, by.ty )
+      }
+    }
+    val what = Const( name, by.ty )
+    this += Definition( what, by )
+    what
+  }
+
+  def addSkolemSym( defn: Expr, name: => String = newNameGenerator.freshWithIndex( "s" ), reuse: Boolean = true ): Const = {
+    if ( reuse ) {
+      for ( ( d, _ ) <- get[SkolemFunctions].skolemDefs.find( _._2 == defn ) ) {
+        return d
+      }
+    }
+    val Abs.Block( vs, Quant( v, _, _ ) ) = defn
+    val sym = Const( name, FunctionType( v.ty, vs.map( _.ty ) ) )
+    this += SkolemFun( sym, defn )
+    sym
+  }
 }
 object MutableContext {
   def default(): MutableContext = Context.default.newMutable
@@ -570,6 +599,31 @@ object MutableContext {
   def guess( cnf: Traversable[Sequent[Expr]] )( implicit dummyImplicit: DummyImplicit ): MutableContext = guess( cnf.view.flatMap( _.elements ) )
   def guess[R, S]( rs: Traversable[R] )( implicit ev: Replaceable[R, S] ): MutableContext =
     guess( rs.view.flatMap( ev.names ) )
+  def guess( p: LKProof ): MutableContext =
+    guess( containedNames( p ) ) // TODO: add (Skolem) definitions
+
+  def guess( p: ResolutionProof ): MutableContext = {
+    val ctx = default()
+
+    val cs = containedNames( p )
+
+    val tys = cs.flatMap( c => baseTypes( c.ty ) )
+    for ( ty <- tys if !ctx.isType( ty ) )
+      ctx += Sort( ty )
+
+    val defs: Map[Const, Expr] = p.definitions.toMap
+    def add( c: Const ): Unit =
+      if ( ctx.constant( c.name ).isEmpty ) defs.get( c ) match {
+        case Some( d ) =>
+          constants( d ).foreach( add )
+          ctx += Definition( c, d )
+        case None =>
+          ctx += c
+      }
+    cs.foreach { case c: Const => add( c ) case _ => }
+
+    ctx
+  }
 }
 
 class ReadonlyMutableContext( ctx: ImmutableContext ) extends MutableContext( ctx ) {

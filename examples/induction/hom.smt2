@@ -12,6 +12,5 @@
 (assert (forall ((x nat) (y nat))
   (= (plus (s x) y) (s (plus x y)))))
 
-(assert-not (forall ((x nat)) (exists ((y nat))
+(prove (forall ((x nat)) (exists ((y nat))
   (= (plus y x) (f x)))))
-(check-sat)

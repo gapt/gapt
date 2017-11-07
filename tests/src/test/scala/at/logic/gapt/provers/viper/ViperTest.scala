@@ -1,8 +1,10 @@
 package at.logic.gapt.provers.viper
 
+import at.logic.gapt.examples.induction._
 import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Sequent, SequentMatchers }
+import at.logic.gapt.provers.spass.SPASS
 import at.logic.gapt.provers.viper.grammars.TreeGrammarProver
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragments
@@ -28,8 +30,7 @@ class ViperTest extends Specification with SequentMatchers {
       "prod_prop_31", "prod_prop_31_monomorphic" ) ) { prob =>
       prob in {
         var opts0 = ViperOptions( fixup = false )
-        if ( prob == "linear2par" )
-          skipped( "needs careful choice of instance for canonical substitution" )
+        if ( prob == "linear2par" ) skipped( "multi-parameter not integrated here" )
         if ( prob == "prod_prop_31" ) {
           if ( !TipSmtParser.isInstalled )
             skipped( "tip tool required for preprocessing" )
@@ -44,5 +45,13 @@ class ViperTest extends Specification with SequentMatchers {
       }
     }
   }
+
+  "associativity special case" in {
+    if ( !SPASS.isInstalled ) skipped( "required instance proofs from spass" )
+    associativitySpecialCase; ok
+  }
+
+  "associativity" in { associativity; ok }
+  "comm" in { comm; ok }
 
 }

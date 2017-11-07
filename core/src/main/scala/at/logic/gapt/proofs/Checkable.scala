@@ -1,39 +1,38 @@
 package at.logic.gapt.proofs
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.SkolemFunctions
-import at.logic.gapt.proofs.expansion.{ ExpansionProof, ExpansionProofWithCut }
+import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 
 trait Checkable[-T] {
-  def check( context: Context, obj: T ): Unit
+  def check( obj: T )( implicit ctx: Context ): Unit
 }
 object Checkable {
   def requireDefEq( a: Expr, b: Expr )( implicit ctx: Context ): Unit =
     require( ctx.isDefEq( a, b ), s"${ctx.normalize( a ).toSigRelativeString} != ${ctx.normalize( b ).toSigRelativeString}" )
 
   implicit object contextElementIsCheckable extends Checkable[Context.Update] {
-    def check( context: Context, elem: Context.Update ): Unit = elem( context )
+    def check( elem: Context.Update )( implicit context: Context ): Unit = elem( context )
   }
 
   implicit object typeIsCheckable extends Checkable[Ty] {
-    override def check( context: Context, ty: Ty ): Unit =
+    override def check( ty: Ty )( implicit context: Context ): Unit =
       ty match {
         case ty @ TBase( name, params ) =>
           require(
             context.isType( ty ),
             s"Unknown base type: $name" )
-          params.foreach( check( context, _ ) )
+          params.foreach( check )
         case TVar( _ ) =>
-        case in -> out =>
-          check( context, in )
-          check( context, out )
+        case in ->: out =>
+          check( in )
+          check( out )
       }
   }
 
   implicit object expressionIsCheckable extends Checkable[Expr] {
-    def check( context: Context, expr: Expr ): Unit =
+    def check( expr: Expr )( implicit context: Context ): Unit =
       expr match {
         case c @ Const( name, _ ) =>
           require(
@@ -41,23 +40,23 @@ object Checkable {
             s"Unknown constant: $c" )
         case Var( _, t ) => context.check( t )
         case Abs( v, e ) =>
-          check( context, v )
-          check( context, e )
+          check( v )
+          check( e )
         case App( a, b ) =>
-          check( context, a )
-          check( context, b )
+          check( a )
+          check( b )
       }
   }
 
   implicit def sequentIsCheckable[T: Checkable] = new Checkable[Sequent[T]] {
-    def check( context: Context, sequent: Sequent[T] ) =
+    def check( sequent: Sequent[T] )( implicit context: Context ) =
       sequent.foreach( context.check( _ ) )
   }
 
   implicit object lkIsCheckable extends Checkable[LKProof] {
     import at.logic.gapt.proofs.lk._
 
-    def check( ctx: Context, p: LKProof ): Unit = {
+    def check( p: LKProof )( implicit ctx: Context ): Unit = {
       ctx.check( p.endSequent )
       p.subProofs.foreach {
         case ForallLeftRule( _, _, a, t, v )  => ctx.check( t )
@@ -93,7 +92,7 @@ object Checkable {
   implicit object expansionProofIsCheckable extends Checkable[ExpansionProof] {
     import at.logic.gapt.proofs.expansion._
 
-    def check( ctx: Context, ep: ExpansionProof ): Unit = {
+    def check( ep: ExpansionProof )( implicit ctx: Context ): Unit = {
       ctx.check( ep.shallow )
       ep.subProofs.foreach {
         case ETTop( _ ) | ETBottom( _ ) | ETNeg( _ ) | ETAnd( _, _ ) | ETOr( _, _ ) | ETImp( _, _ ) =>
@@ -110,15 +109,10 @@ object Checkable {
     }
   }
 
-  implicit object expansionProofWithCutIsCheckable extends Checkable[ExpansionProofWithCut] {
-    def check( context: Context, epwc: ExpansionProofWithCut ): Unit =
-      context.check( epwc.expansionWithCutAxiom )
-  }
-
   implicit object resolutionIsCheckable extends Checkable[ResolutionProof] {
     import at.logic.gapt.proofs.resolution._
 
-    def check( ctx: Context, p: ResolutionProof ): Unit = {
+    def check( p: ResolutionProof )( implicit ctx: Context ): Unit = {
       def checkAvatarDef( comp: AvatarDefinition ): Unit =
         for ( ( df, by ) <- comp.inducedDefinitions )
           requireDefEq( df, by )( ctx )

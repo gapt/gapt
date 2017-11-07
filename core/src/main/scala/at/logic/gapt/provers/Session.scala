@@ -9,6 +9,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.provers.Session.{ Session, SessionCommand }
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
+import at.logic.gapt.utils.NameGenerator
 import cats.free.Free.liftF
 import cats.free._
 import cats.implicits._
@@ -66,7 +67,7 @@ object Session {
     /**
      * Checks whether the current set of declarations and assertions is satisfiable.
      */
-    case object CheckSat extends SessionCommand[Boolean]
+    case object CheckSat extends SessionCommand[Either[SExpression, Boolean]]
 
     /**
      * Sets the logic to be used for the session.
@@ -120,12 +121,12 @@ object Session {
   /**
    * Checks whether the current set of declarations and assertions is satisfiable.
    */
-  def checkSat: Session[Boolean] = liftF( CheckSat )
+  def checkSat: Session[Either[SExpression, Boolean]] = liftF( CheckSat )
 
   /**
    * Checks whether the current set of declarations and assertions is not satisfiable.
    */
-  def checkUnsat: Session[Boolean] = checkSat.map( !_ )
+  def checkUnsat: Session[Either[SExpression, Boolean]] = checkSat.map( _.map( !_ ) )
 
   /**
    * Sets the logic to be used for the session.
@@ -261,8 +262,9 @@ object Session {
 
         case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LAtom( ":named" ), LAtom( label ) ) ) )
         case CheckSat => ask( LFun( "check-sat" ) ) match {
-          case LAtom( "sat" )   => true
-          case LAtom( "unsat" ) => false
+          case LAtom( "sat" )   => Right( true )
+          case LAtom( "unsat" ) => Right( false )
+          case unknown          => Left( unknown )
         }
         case SetLogic( logic )         => tell( LFun( "set-logic", LAtom( logic ) ) )
         case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) )
@@ -270,29 +272,28 @@ object Session {
         case Tell( input )             => tell( input )
       }
 
+      protected val nameGen = new NameGenerator( Set() ) // TODO: add reserved keywords?
+
       object typeRenaming {
         val map = mutable.Map[TBase, TBase]()
 
-        private var i = 0
         def apply( t: TBase ): TBase = map.getOrElseUpdate( t, t match {
           case To => TBase( "Bool", Nil )
-          case _  => i += 1; TBase( s"t$i", Nil )
+          case TBase( n, _ ) => // TODO: polymorphic types
+            TBase( nameGen.fresh( mangleName( n, "t_" ) ), Nil )
         } )
 
         def apply( t: Ty ): Ty = t match {
-          case base: TBase  => apply( base )
-          case `->`( a, b ) => apply( a ) -> apply( b )
+          case base: TBase => apply( base )
+          case a ->: b     => apply( a ) ->: apply( b )
         }
       }
 
       object termRenaming {
         val map = mutable.Map[Const, Const]()
-
-        private var i = 0
-        def apply( c: Const ): Const = map.getOrElseUpdate( c, {
-          i += 1
-          Const( s"f$i", typeRenaming( c.ty ) )
-        } )
+        def apply( c: Const ): Const = map.getOrElseUpdate(
+          c,
+          Const( nameGen.fresh( mangleName( c.name ) ), typeRenaming( c.ty ) ) )
       }
 
       def convert( expr: Expr, boundVars: Map[Var, String] = Map() ): SExpression = expr match {
@@ -382,7 +383,7 @@ object Session {
           assertedFormulas += formula; ()
         case AssertLabelled( formula, _ ) =>
           assertedFormulas += formula; ()
-        case CheckSat => !checkValidity( assertedFormulas ++: Sequent() )
+        case CheckSat => Right( !checkValidity( assertedFormulas ++: Sequent() ) )
         case Ask( input ) => input
         case DeclareFun( _ ) | DeclareSort( _ ) | SetLogic( _ ) | SetOption( _, _ ) | Tell( _ ) => ()
       }

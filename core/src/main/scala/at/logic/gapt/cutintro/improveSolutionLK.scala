@@ -64,7 +64,8 @@ object improveSolutionLK {
     def checkSolution( cnf: Set[FOLClause] ): Session[Unit] = when( !isSolution.contains( cnf ) ) {
       val clauses = for ( inst <- groundInstances; clause <- cnf ) yield inst( clause.toDisjunction )
 
-      withScope( assert( clauses.toList ) >> checkUnsat ).flatMap { isSol =>
+      withScope( assert( clauses.toList ) >> checkUnsat ).flatMap { isSolOrUnknown =>
+        val isSol = isSolOrUnknown.getOrElse( false )
         isSolution( cnf ) = isSol
 
         when( isSol ) {
