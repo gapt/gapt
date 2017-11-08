@@ -13,10 +13,7 @@ object instantiateProof {
    * @param proofName The name of the linkProof
    */
   def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
-    ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
-      case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
-      case None                      => ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
-    }
+    withConnector( proofName )._2
 
   /**
    * Given a proof name, returns a maximally instantiated proof.
