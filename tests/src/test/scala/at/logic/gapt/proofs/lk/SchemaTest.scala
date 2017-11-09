@@ -5,7 +5,7 @@ import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.niaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.proofs.Context
-
+import at.logic.gapt.examples.NdiffSchema
 import org.specs2.mutable.Specification
 
 /**
@@ -20,7 +20,15 @@ class SchemaTest extends Specification {
     if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ) ) )
     else base
   }
+  {
 
+   import NdiffSchema.ctx
+    "NdiffSchema Instantiate " in {
+      val proof = instantiateProof( le"omega ${nat( 15 )}" )
+      ctx.check( proof )
+      ok
+    }
+  }
   {
     import tautSchema.ctx
 
