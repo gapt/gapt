@@ -30,7 +30,7 @@ class Z3SessionTest extends Specification {
     }
 
     val session: Session[( Boolean, Boolean, Seq[String] )] = for {
-      _ <- setOption( ":produce-unsat-cores", "true" )
+      _ <- setOption( "produce-unsat-cores", "true" )
       _ <- declareSymbolsIn( o, s, p )
       _ <- assert( Atom( p( o ) ) )
       _ <- ( 0 until ( 2 * n ) ).toList.map( i => ( p( numeral( i ) ) --> p( numeral( i + 1 ) ), s"hyp$i" ) ).traverse_( p => assert( p._1, p._2 ) )

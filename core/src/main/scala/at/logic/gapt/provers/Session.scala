@@ -260,14 +260,14 @@ object Session {
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
 
-        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LSymbol( ":named" ), LSymbol( label ) ) ) )
+        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LKeyword( "named" ), LSymbol( label ) ) ) )
         case CheckSat => ask( LFun( "check-sat" ) ) match {
           case LSymbol( "sat" )   => Right( true )
           case LSymbol( "unsat" ) => Right( false )
           case unknown            => Left( unknown )
         }
         case SetLogic( logic )         => tell( LFun( "set-logic", LSymbol( logic ) ) )
-        case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LSymbol: _* ) )
+        case SetOption( option, args ) => tell( LFun( "set-option", LKeyword( option ) +: args.map( LSymbol ): _* ) )
         case Ask( input )              => ask( input )
         case Tell( input )             => tell( input )
       }
