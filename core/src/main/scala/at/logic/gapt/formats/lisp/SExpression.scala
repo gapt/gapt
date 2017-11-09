@@ -21,7 +21,14 @@ case class LKeyword( name: String ) extends LAtom {
 }
 
 case class LSymbol( name: String ) extends LAtom {
-  override def toString = name
+  override def toString =
+    if ( name == "" ) {
+      s"|$name|"
+    } else if ( name.matches( ".*[\n\r\t\f \")(;:|\\\\].*" ) ) {
+      "|" + name.replace( "\\", "\\\\" ).replace( "|", "\\|" ) + "|"
+    } else {
+      name
+    }
 }
 
 case class LList( elements: SExpression* ) extends SExpression {
