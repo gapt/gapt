@@ -1,0 +1,14 @@
+BASIC INSTRUCTIONS
+________________________
+
+Once you open gapt
+./gapt.sh 
+
+You can load a scala file using the following scala command
+
+:load PATH_TO_FILE
+
+Please check FirstSchemaFile.scala for the next steps. 
+
+
+
