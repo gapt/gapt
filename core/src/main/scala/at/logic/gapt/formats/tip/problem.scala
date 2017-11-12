@@ -52,3 +52,34 @@ case class TipProblem(
 
   override def toString: String = toSequent.toSigRelativeString( context )
 }
+
+trait TipProblemDefinition {
+  def sorts: Seq[TBase]
+  def datatypes: Seq[TipDatatype]
+  def uninterpretedConsts: Seq[Const]
+  def assumptions: Seq[Formula]
+  def functions: Seq[TipFun]
+  def goal: Formula
+  def loadProblem: TipProblem = {
+    var ctx = Context()
+    sorts foreach { ctx += _ }
+    datatypes foreach {
+      dt =>
+        {
+          if ( !ctx.isType( dt.t ) ) {
+            ctx += Context.InductiveType( dt.t, dt.constructors.map( _.constr ): _* )
+          }
+          dt.constructors.foreach { ctr => ctr.projectors.foreach { ctx += _ } }
+        }
+    }
+    uninterpretedConsts foreach { constant =>
+      if ( ctx.constant( constant.name ).isEmpty ) {
+        ctx += constant
+      }
+    }
+    functions foreach { function =>
+      ctx += function.fun
+    }
+    TipProblem( ctx, sorts, datatypes, uninterpretedConsts, functions, assumptions, goal )
+  }
+}

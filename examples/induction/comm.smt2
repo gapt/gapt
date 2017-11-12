@@ -13,6 +13,5 @@
 (assert (forall ((x nat) (y nat))
   (= (plus (s x) y) (s (plus x y)))))
 (declare-const k nat)
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (plus x k) (plus k x))))
-(check-sat)

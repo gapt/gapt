@@ -107,7 +107,7 @@ object preExpr {
     def lift( t: real.Ty ): Type = t match {
       case t: real.TVar               => vars.getOrElseUpdate( t, freshMetaType() )
       case real.TBase( name, params ) => BaseType( name, params.map( lift ) )
-      case real.`->`( in, out )       => ArrType( lift( in ), lift( out ) )
+      case real.`->:`( in, out )      => ArrType( lift( in ), lift( out ) )
     }
     lift( t )
   }
@@ -115,7 +115,7 @@ object preExpr {
   def liftTypeMono( t: real.Ty ): Type = t match {
     case real.TVar( name )          => VarType( name )
     case real.TBase( name, params ) => BaseType( name, params.map( liftTypeMono ) )
-    case real.`->`( in, out )       => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
+    case real.`->:`( in, out )      => ArrType( liftTypeMono( in ), liftTypeMono( out ) )
   }
 
   def QuoteBlackbox( e: real.Expr ) =
@@ -246,7 +246,7 @@ object preExpr {
   def toRealType( ty: Type, assg: Map[MetaTypeIdx, Type] ): real.Ty = ty match {
     case BaseType( name, params ) => real.TBase( name, params.map( toRealType( _, assg ) ) )
     case VarType( name )          => real.TVar( name )
-    case ArrType( a, b )          => toRealType( a, assg ) -> toRealType( b, assg )
+    case ArrType( a, b )          => toRealType( a, assg ) ->: toRealType( b, assg )
     case MetaType( idx )          => toRealType( assg( idx ), assg )
   }
 

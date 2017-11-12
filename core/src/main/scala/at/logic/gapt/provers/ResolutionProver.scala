@@ -35,9 +35,13 @@ trait ResolutionProver extends OneShotProver {
 
   def getResolutionProof( sequentSet: Traversable[HOLSequent] )( implicit ctx0: Maybe[MutableContext], dummyImplicit: DummyImplicit ): Option[ResolutionProof] = {
     implicit val ctx = ctx0.getOrElse( MutableContext.guess( sequentSet ) )
-    val clausifier = new Clausifier( propositional = false, structural = true, bidirectionalDefs = false, ctx, ctx.newNameGenerator )
-    for ( sequent <- sequentSet ) clausifier.expand( Input( sequent ) )
-    getResolutionProof( clausifier.cnf )( ctx )
+    val cnf = structuralCNF.onProofs(
+      sequentSet.map( Input ).toSet,
+      propositional = false,
+      structural = true,
+      bidirectionalDefs = false,
+      cse = false )
+    getResolutionProof( cnf )( ctx )
   }
 
   def getResolutionProof( formula: Formula )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] = getResolutionProof( Sequent() :+ formula )

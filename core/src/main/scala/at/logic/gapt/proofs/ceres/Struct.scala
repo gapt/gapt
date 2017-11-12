@@ -81,7 +81,7 @@ case class Times[Data]( left: Struct[Data], right: Struct[Data], data: List[Data
 
   def toFormula = left.toFormula | right.toFormula
 
-  def label = Const( "⊗", To -> ( To -> To ) )
+  def label = Const( "⊗", To ->: To ->: To )
   def children = Seq( left, right )
 
 }
@@ -105,7 +105,7 @@ case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[
 
   def toFormula = left.toFormula & right.toFormula
 
-  def label = Const( "⊕", To -> ( To -> To ) )
+  def label = Const( "⊕", To ->: To ->: To )
   def children = Seq( left, right )
 }
 case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
@@ -125,7 +125,7 @@ case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
 
   def toFormula = -sub.toFormula
 
-  def label = Const( "~", To -> To )
+  def label = Const( "~", To ->: To )
   def children = Seq( sub )
 }
 case class A[Data]( fo: Formula, data: List[Data] ) extends Struct[Data] { // Atomic Struct

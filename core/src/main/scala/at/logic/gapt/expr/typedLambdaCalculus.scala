@@ -192,7 +192,7 @@ class Const private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
 class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
   val ty: Ty =
     function.ty match {
-      case ( in -> out ) if in == arg.ty => out
+      case in ->: out if in == arg.ty => out
       case _ => throw new IllegalArgumentException(
         s"Types don't fit while constructing application ($function : ${function.ty}) ($arg : ${arg.ty})" )
     }
@@ -215,7 +215,7 @@ class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
 }
 
 class Abs private[expr] ( val variable: Var, val term: Expr ) extends Expr {
-  val ty: Ty = variable.ty -> term.ty
+  val ty: Ty = variable.ty ->: term.ty
 
   def syntaxEquals( e: Expr ) = e match {
     case Abs( v, exp ) => v.syntaxEquals( variable ) && exp.syntaxEquals( term ) && e.ty == ty

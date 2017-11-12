@@ -46,7 +46,7 @@ class BabelTest extends Specification {
 
   "variable and constant literals" in {
     BabelParser.parse( "#c(x : o > o > o) #v(c : o) x" ) must_==
-      Apps( Const( "x", To -> ( To -> To ) ), Var( "c", To ), Var( "x", To ) )
+      Apps( Const( "x", To ->: To ->: To ), Var( "c", To ), Var( "x", To ) )
   }
 
   "round-trip safety" in {

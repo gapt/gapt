@@ -11,7 +11,7 @@ class FirstOrderLogicTest extends Specification {
   "FirstOrderLogic" should {
     "construct correctly an atom formula P(x,f(y),c)" in {
       val List( p, x, y, f, c ) = List( "P", "x", "y", "f", "c" )
-      val Pc = Const( p, ( Ti -> ( Ti -> ( Ti -> To ) ) ) )
+      val Pc = Const( p, Ti ->: Ti ->: Ti ->: To )
       FOLAtom( p, FOLVar( x ) :: FOLFunction( f, FOLVar( y ) :: Nil ) :: FOLConst( c ) :: Nil ) must beLike {
         case App( App( App( Pc, FOLVar( x ) ), App( fc, FOLVar( y ) ) ), FOLConst( c ) ) => ok
       }

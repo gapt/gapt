@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.expansion
 
-import at.logic.gapt.expr.Substitution
+import at.logic.gapt.expr._
 
 object eliminateMerges {
   def apply( expansionProof: ExpansionProof ): ExpansionProof =
@@ -10,8 +10,8 @@ object eliminateMerges {
     elim( expansionSequent )
 
   private def elim( expansionSequent: ExpansionSequent ): ExpansionSequent = {
-    var needToMergeAgain = false
     var eigenVarSubst = Substitution()
+    var skolemDefs = Map[Expr, Expr]()
 
     def merge( tree: ExpansionTree ): ExpansionTree = tree match {
       case ETMerge( t, s )             => merge2( t, s )
@@ -59,24 +59,21 @@ object eliminateMerges {
           ETStrongQuantifier( shallow, v1, merge2( t1, t2 ) )
         } else {
           eigenVarSubst = eigenVarSubst compose Substitution( v2 -> v1 )
-          needToMergeAgain = true
-
           ETMerge( merge( tree1 ), merge( tree2 ) )
         }
-      case ( ETStrongQuantifier( _, v1, t1 ), ETSkolemQuantifier( shallow, st2, sf2, t2 ) ) =>
-        val localSubst = Substitution( v1 -> st2 )
-
-        needToMergeAgain = true
-        if ( !eigenVarSubst.map.isDefinedAt( v1 ) )
-          eigenVarSubst = eigenVarSubst compose localSubst
-
-        ETSkolemQuantifier( shallow, st2, sf2, merge2( localSubst( t1 ), t2 ) )
-      case ( t: ETSkolemQuantifier, s: ETStrongQuantifier ) => merge2( s, t )
+      case ( tree1 @ ETStrongQuantifier( _, v1, _ ), tree2 @ ETSkolemQuantifier( _, st2, sd2, _ ) ) =>
+        eigenVarSubst = eigenVarSubst compose Substitution( v1 -> st2 )
+        skolemDefs += ( st2 -> sd2 )
+        ETMerge( merge( tree1 ), merge( tree2 ) )
+      case ( tree2 @ ETSkolemQuantifier( _, st2, sd2, _ ), tree1 @ ETStrongQuantifier( _, v1, _ ) ) =>
+        eigenVarSubst = eigenVarSubst compose Substitution( v1 -> st2 )
+        skolemDefs += ( st2 -> sd2 )
+        ETMerge( merge( tree2 ), merge( tree1 ) )
       case ( ETSkolemQuantifier( shallow, st1, sf1, t1 ), ETSkolemQuantifier( _, st2, sf2, t2 ) ) if st1 == st2 =>
         ETSkolemQuantifier( shallow, st1, sf1, merge2( t1, t2 ) )
       case ( ETMerges( ts0 ), s: ETSkolemQuantifier ) =>
         val ts = ts0 :+ s
-        ( ts.filterNot( _.isInstanceOf[ETSkolemQuantifier] ).map( merge ) ++
+        ( ts.filterNot( _.isInstanceOf[ETSkolemQuantifier] ).reduceOption( merge2 ).toSeq ++
           ts.collect { case t: ETSkolemQuantifier => t }.
           groupBy( _.skolemTerm ).map {
             case ( _, Vector( tree ) ) => merge( tree )
@@ -87,10 +84,14 @@ object eliminateMerges {
 
     val mergedSequent = expansionSequent map merge
 
-    if ( !needToMergeAgain ) {
+    if ( eigenVarSubst.map.isEmpty ) {
       mergedSequent
     } else {
-      elim( mergedSequent map { eigenVarSubst( _ ) } )
+      val skDefsPerVar = Map() ++ ( for {
+        ( v, st ) <- eigenVarSubst.map
+        if !st.isInstanceOf[Var]
+      } yield v -> skolemDefs( st ) )
+      elim( mergedSequent map { expansionTreeSubstitution( eigenVarSubst, skDefsPerVar, _ ) } )
     }
   }
 }

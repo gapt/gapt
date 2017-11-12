@@ -20,7 +20,7 @@ class SyntacticMguTest extends Specification {
 
   "handle variables that are both bound and free" in {
     val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val f = Const( "f", Ti -> ( ( Ti -> Ti ) -> Ti ) )
+    val f = Const( "f", Ti ->: ( Ti ->: Ti ) ->: Ti )
     val g = FOLFunctionConst( "g", 1 )
     val c = FOLConst( "c" )
 

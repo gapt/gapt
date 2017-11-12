@@ -56,7 +56,7 @@ class syntacticMatching extends MatchingAlgorithm {
           apply( pairs, rest, alreadyFixedSubst )
         case ( a: TVar, b ) if !alreadyFixedSubst.typeMap.contains( a ) =>
           apply( pairs, rest, alreadyFixedSubst + ( a, b ) )
-        case ( a1 -> a2, b1 -> b2 ) =>
+        case ( a1 ->: a2, b1 ->: b2 ) =>
           apply( pairs, ( a1, b1 ) :: ( a2, b2 ) :: rest, alreadyFixedSubst )
         case _ => Nil
       }

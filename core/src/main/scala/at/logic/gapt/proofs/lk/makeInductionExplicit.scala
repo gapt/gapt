@@ -4,7 +4,7 @@ import at.logic.gapt.proofs.{ Ant, SequentConnector }
 
 object makeInductionExplicit extends LKVisitor[Unit] {
   def inductionPrinciple( indty: Ty, constrs: Seq[Const] ) = {
-    val pred = Var( "X", indty -> To )
+    val pred = Var( "X", indty ->: To )
 
     val hyps = constrs.map { constr =>
       val FunctionType( `indty`, argtypes ) = constr.ty

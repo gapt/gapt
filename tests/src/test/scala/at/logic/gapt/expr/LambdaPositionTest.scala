@@ -8,7 +8,7 @@ class LambdaPositionTest extends Specification {
   "LambdaPositions" should {
     "be computed correctly" in {
       val x = Var( "x", Ti )
-      val f = Const( "f", Ti -> Ti )
+      val f = Const( "f", Ti ->: Ti )
       val fx = App( f, x )
       val exp = Abs( x, fx )
 
@@ -19,7 +19,7 @@ class LambdaPositionTest extends Specification {
     "be replaced correctly" in {
       val x = Var( "x", Ti )
       val y = Var( "y", Ti )
-      val f = Const( "f", Ti -> Ti )
+      val f = Const( "f", Ti ->: Ti )
       val fx = App( f, x )
       val fy = App( f, y )
       val exp = Abs( x, fx )

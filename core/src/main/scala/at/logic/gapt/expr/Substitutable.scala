@@ -30,7 +30,7 @@ trait ExprSubstitutable1 {
       case _ if sub.typeMap.isEmpty => ty
       case ty @ TBase( _, Nil )     => ty
       case TBase( n, ps )           => TBase( n, ps.map( applySubstitution( sub, _ ) ) )
-      case in -> out                => applySubstitution( sub, in ) -> applySubstitution( sub, out )
+      case in ->: out               => applySubstitution( sub, in ) ->: applySubstitution( sub, out )
       case v @ TVar( _ )            => sub.typeMap.getOrElse( v, v )
     }
   }

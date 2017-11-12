@@ -1,19 +1,41 @@
 package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Ant, Sequent }
+import at.logic.gapt.proofs.{ Context, Sequent }
 
 object prop_39 extends TacticsProof {
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_39.smt2", getClass ) )
-  ctx = bench.ctx
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += hoc"p:Nat>Nat"
+
+  ctx += Context.InductiveType( ty"list", hoc"nil:list", hoc"cons:Nat>list>list" )
+  ctx += hoc"head:list>Nat"
+  ctx += hoc"tail:list>list"
+
+  ctx += hoc"'equal' :Nat>Nat>o"
+  ctx += hoc"'count' :Nat>list>Nat"
+  ctx += hoc"'plus' :Nat>Nat>Nat"
+
+  val sequent =
+    hols"""
+          def_p: ∀x0 (p(S(x0:Nat): Nat): Nat) = x0,
+          def_head: ∀x0 ∀x1 (head(cons(x0:Nat, x1:list): list): Nat) = x0,
+          def_tail: ∀x0 ∀x1 (tail(cons(x0:Nat, x1:list): list): list) = x1,
+          def_plus_1: ∀y (plus(#c(Z: Nat), y:Nat): Nat) = y,
+          def_plus_2: ∀z ∀y (plus(S(z:Nat): Nat, y:Nat): Nat) = S(plus(z, y)),
+          def_equal_1: equal(#c(Z: Nat), #c(Z: Nat)): o,
+          def_equal_2: ∀z ¬equal(#c(Z: Nat), S(z:Nat): Nat),
+          def_equal_3: ∀x2 ¬equal(S(x2:Nat): Nat, #c(Z: Nat)),
+          def_equal_4: ∀x2 ∀y2 ((equal(S(x2:Nat): Nat, S(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(S(x2), S(y2)))),
+          def_count_1: ∀x (count(x:Nat, nil:list): Nat) = #c(Z: Nat),
+          def_count_2: ∀x ∀z ∀ys (¬equal(x:Nat, z:Nat) ⊃ (count(x, cons(z, ys:list): list): Nat) = count(x, ys)),
+          def_count_3: ∀x ∀z ∀ys (equal(x:Nat, z:Nat) ⊃ (count(x, cons(z, ys:list): list): Nat) = S(count(x, ys))),
+          ax_nat: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
+          ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
+          :-
+          goal: ∀n ∀x ∀xs (plus(count(n:Nat, cons(x:Nat, nil:list): list): Nat, count(n, xs)): Nat) = count(n, cons(x, xs))
+        """
 
   val cutFormula = hof"∀xs ∀n ∀x plus(count(n, cons(x, nil)), count(n, xs)) = count(n, cons(x, xs))"
 
@@ -24,136 +46,136 @@ object prop_39 extends TacticsProof {
       allR
       allR
       // base case
-      allL( "h9", le"n:Nat" )
-      eql( "h9_0", "c" )
-      allL( "h10", le"n:Nat", le"x:Nat", le"nil:list" )
-      allL( "h11", le"n:Nat", le"x:Nat", le"nil:list" )
-      impL( "h10_0" )
+      allL( "def_count_1", le"n:Nat" )
+      eql( "def_count_1_0", "c" )
+      allL( "def_count_2", le"n:Nat", le"x:Nat", le"nil:list" )
+      allL( "def_count_3", le"n:Nat", le"x:Nat", le"nil:list" )
+      impL( "def_count_2_0" )
       negR
-      impL( "h11_0" )
+      impL( "def_count_3_0" )
       axiomLog
-      eql( "h11_0", "c" )
-      eql( "h9_0", "c" ).fromLeftToRight
-      allL( "h4", le"Z:Nat", le"Z:Nat" )
-      allL( "h3", le"Z:Nat" )
-      eql( "h4_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
+      eql( "def_count_3_0", "c" )
+      eql( "def_count_1_0", "c" ).fromLeftToRight
+      allL( "def_plus_2", le"Z:Nat", le"Z:Nat" )
+      allL( "def_plus_1", le"Z:Nat" )
+      eql( "def_plus_2_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
       refl
-      allL( "h3", le"Z:Nat" )
-      eql( "h10_0", "c" )
-      eql( "h9_0", "c" ).fromLeftToRight
+      allL( "def_plus_1", le"Z:Nat" )
+      eql( "def_count_2_0", "c" )
+      eql( "def_count_1_0", "c" ).fromLeftToRight
       axiomLog
       // inductive case
       allR
       allR
-      allL( "h9", le"n:Nat" )
-      allL( "h10", le"n:Nat", le"x:Nat", le"xs_0:list" )
-      allL( "h11", le"n:Nat", le"x:Nat", le"xs_0:list" )
-      impL( "h10_0" )
+      allL( "def_count_1", le"n:Nat" )
+      allL( "def_count_2", le"n:Nat", le"x:Nat", le"xs_0:list" )
+      allL( "def_count_3", le"n:Nat", le"x:Nat", le"xs_0:list" )
+      impL( "def_count_2_0" )
       negR
-      impL( "h11_0" )
+      impL( "def_count_3_0" )
       axiomLog
-      eql( "h11_0", "c" )
-      allL( "h10", le"n:Nat", le"x_0:Nat", le"nil:list" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"nil:list" )
-      impL( "h10_1" )
+      eql( "def_count_3_0", "c" )
+      allL( "def_count_2", le"n:Nat", le"x_0:Nat", le"nil:list" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"nil:list" )
+      impL( "def_count_2_1" )
       negR
-      impL( "h11_1" )
+      impL( "def_count_3_1" )
       axiomLog
-      eql( "h11_1", "c" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
-      impL( "h11_2" )
+      eql( "def_count_3_1", "c" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
+      impL( "def_count_3_2" )
       axiomLog
-      eql( "h11_2", "c" )
-      allL( "h4", le"Z:Nat", le"S(count(n:Nat,xs_0:list))" )
-      allL( "h3", le"S(count(n:Nat,xs_0:list))" )
-      eql( "h9_0", "c" )
-      eql( "h4_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
-      eql( "h11_0", "c" ).fromLeftToRight
+      eql( "def_count_3_2", "c" )
+      allL( "def_plus_2", le"Z:Nat", le"S(count(n:Nat,xs_0:list))" )
+      allL( "def_plus_1", le"S(count(n:Nat,xs_0:list))" )
+      eql( "def_count_1_0", "c" )
+      eql( "def_plus_2_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
+      eql( "def_count_3_0", "c" ).fromLeftToRight
       refl
-      allL( "h3", le"S(count(n:Nat,xs_0:list))" )
-      allL( "h10", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
-      impL( "h10_2" )
+      allL( "def_plus_1", le"S(count(n:Nat,xs_0:list))" )
+      allL( "def_count_2", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
+      impL( "def_count_2_2" )
       negR
-      impL( "h11_2" )
+      impL( "def_count_3_2" )
       axiomLog
-      eql( "h11_2", "c" )
-      eql( "h11_0", "c" ).fromLeftToRight
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"nil:list" )
-      impL( "h11_3" )
+      eql( "def_count_3_2", "c" )
+      eql( "def_count_3_0", "c" ).fromLeftToRight
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"nil:list" )
+      impL( "def_count_3_3" )
       axiomLog
-      eql( "h11_3", "c" )
-      eql( "h9_0", "c" )
-      allL( "h4", le"Z:Nat", le"S(count(n:Nat,xs_0:list))" )
-      eql( "h4_0", "c" )
-      allL( "h3", le"S(count(n:Nat,xs_0:list))" )
-      eql( "h3_1", "c" ).fromLeftToRight
+      eql( "def_count_3_3", "c" )
+      eql( "def_count_1_0", "c" )
+      allL( "def_plus_2", le"Z:Nat", le"S(count(n:Nat,xs_0:list))" )
+      eql( "def_plus_2_0", "c" )
+      allL( "def_plus_1", le"S(count(n:Nat,xs_0:list))" )
+      eql( "def_plus_1_1", "c" ).fromLeftToRight
       refl
-      eql( "h10_1", "c" )
-      eql( "h9_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
-      eql( "h10_2", "c" )
-      eql( "h11_0", "c" ).fromLeftToRight
+      eql( "def_count_2_1", "c" )
+      eql( "def_count_1_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
+      eql( "def_count_2_2", "c" )
+      eql( "def_count_3_0", "c" ).fromLeftToRight
       refl
-      eql( "h10_0", "c" )
-      allL( "h10", le"n:Nat", le"x_0:Nat", le"nil:list" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"nil:list" )
-      impL( "h10_1" )
+      eql( "def_count_2_0", "c" )
+      allL( "def_count_2", le"n:Nat", le"x_0:Nat", le"nil:list" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"nil:list" )
+      impL( "def_count_2_1" )
       negR
-      impL( "h11_1" )
+      impL( "def_count_3_1" )
       axiomLog
-      eql( "h11_1", "c" )
-      eql( "h9_0", "c" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
-      impL( "h11_2" )
+      eql( "def_count_3_1", "c" )
+      eql( "def_count_1_0", "c" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
+      impL( "def_count_3_2" )
       axiomLog
-      eql( "h11_2", "c" )
-      allL( "h4", le"Z:Nat", le"count(n:Nat,xs_0:list)" )
-      allL( "h3", le"count(n:Nat,xs_0:list)" )
-      eql( "h4_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
-      eql( "h10_0", "c" ).fromLeftToRight
+      eql( "def_count_3_2", "c" )
+      allL( "def_plus_2", le"Z:Nat", le"count(n:Nat,xs_0:list)" )
+      allL( "def_plus_1", le"count(n:Nat,xs_0:list)" )
+      eql( "def_plus_2_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
+      eql( "def_count_2_0", "c" ).fromLeftToRight
       refl
-      allL( "h10", le"n:Nat", le"x_0:Nat", le"cons(x:Nat, xs_0:list)" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"cons(x:Nat, xs_0:list)" )
-      impL( "h11_2" )
-      impL( "h10_2" )
+      allL( "def_count_2", le"n:Nat", le"x_0:Nat", le"cons(x:Nat, xs_0:list)" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"cons(x:Nat, xs_0:list)" )
+      impL( "def_count_3_2" )
+      impL( "def_count_2_2" )
       negR
       axiomLog
-      allL( "h3", le"count(n:Nat,xs_0:list)" )
-      eql( "h10_2", "c" )
-      eql( "h10_1", "c" )
-      eql( "h9_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
-      eql( "h10_0", "c" ).fromLeftToRight
+      allL( "def_plus_1", le"count(n:Nat,xs_0:list)" )
+      eql( "def_count_2_2", "c" )
+      eql( "def_count_2_1", "c" )
+      eql( "def_count_1_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
+      eql( "def_count_2_0", "c" ).fromLeftToRight
       refl
-      allL( "h10", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
-      allL( "h11", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
-      impL( "h10_3" )
+      allL( "def_count_2", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
+      allL( "def_count_3", le"n:Nat", le"x_0:Nat", le"cons(x:Nat,xs_0:list)" )
+      impL( "def_count_2_3" )
       negR
-      impL( "h11_3" )
+      impL( "def_count_3_3" )
       axiomLog
-      allL( "h4", le"Z:Nat", le"count(n:Nat,xs_0:list)" )
-      allL( "h3", le"count(n:Nat,xs_0:list)" )
-      eql( "h11_2", "c" )
-      impL( "h11_1" )
+      allL( "def_plus_2", le"Z:Nat", le"count(n:Nat,xs_0:list)" )
+      allL( "def_plus_1", le"count(n:Nat,xs_0:list)" )
+      eql( "def_count_3_2", "c" )
+      impL( "def_count_3_1" )
       axiomLog
-      allL( "h4", le"Z:Nat", le"count(n:Nat,xs_0:list)" )
-      allL( "h3", le"count(n:Nat,xs_0:list)" )
-      eql( "h11_1", "c" )
-      eql( "h9_0", "c" )
-      eql( "h4_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
-      eql( "h10_0", "c" ).fromLeftToRight
+      allL( "def_plus_2", le"Z:Nat", le"count(n:Nat,xs_0:list)" )
+      allL( "def_plus_1", le"count(n:Nat,xs_0:list)" )
+      eql( "def_count_3_1", "c" )
+      eql( "def_count_1_0", "c" )
+      eql( "def_plus_2_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
+      eql( "def_count_2_0", "c" ).fromLeftToRight
       refl
-      allL( "h3", le"count(n:Nat,xs_0:list)" )
-      eql( "h10_3", "c" )
-      eql( "h10_1", "c" )
-      eql( "h9_0", "c" )
-      eql( "h3_0", "c" ).fromLeftToRight
-      eql( "h10_0", "c" ).fromLeftToRight
+      allL( "def_plus_1", le"count(n:Nat,xs_0:list)" )
+      eql( "def_count_2_3", "c" )
+      eql( "def_count_2_1", "c" )
+      eql( "def_count_1_0", "c" )
+      eql( "def_plus_1_0", "c" ).fromLeftToRight
+      eql( "def_count_2_0", "c" ).fromLeftToRight
       refl
     }
 

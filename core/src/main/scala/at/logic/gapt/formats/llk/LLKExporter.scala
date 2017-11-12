@@ -124,7 +124,7 @@ class LLKExporter( val expandTex: Boolean ) {
   def getTypeString( t: Ty, outermost: Boolean = true ): String = t match {
     case Ti => "i"
     case To => "o"
-    case t1 -> t2 =>
+    case t1 ->: t2 =>
       val s = getTypeString( t1, false ) + ">" + getTypeString( t2, false )
       if ( outermost ) s else "(" + s + ")"
   }

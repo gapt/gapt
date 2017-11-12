@@ -82,8 +82,8 @@ class LLKTest extends Specification {
     "correctly infer replacement terms in equalities" in {
       import EquationVerifier.{ Different, Equal, EqualModuloEquality, checkReplacement }
       val List( a ) = List( "a" ) map ( x => Const( x, Ti ) )
-      val List( f, g ) = List( "f", "g" ) map ( x => Const( x, Ti -> Ti ) )
-      val List( p ) = List( "p" ) map ( x => Const( x, Ti -> ( Ti -> ( Ti -> To ) ) ) )
+      val List( f, g ) = List( "f", "g" ) map ( x => Const( x, Ti ->: Ti ) )
+      val List( p ) = List( "p" ) map ( x => Const( x, Ti ->: Ti ->: Ti ->: To ) )
       val t1 = App( p, List( App( f, a ), App( f, App( g, App( f, a ) ) ), a ) )
       val t2 = App( p, List( App( f, a ), App( f, App( g, App( g, a ) ) ), a ) )
       val fa = App( f, a )
@@ -139,14 +139,14 @@ class LLKTest extends Specification {
   "Tactics" should {
     "correctly prove the instance of an axiom" in {
       val vmap = Map[String, Ty]( "x" -> Ti, "y" -> Ti, "z" -> Ti )
-      val cmap = Map[String, Ty]( "a" -> Ti, "1" -> Ti, "+" -> ( Ti -> ( Ti -> Ti ) ) )
+      val cmap = Map[String, Ty]( "a" -> Ti, "1" -> Ti, "+" -> ( Ti ->: Ti ->: Ti ) )
       val naming: String => Expr = x => {
         if ( vmap contains x ) Var( x, vmap( x ) ) else
           Const( x, cmap( x ) )
       }
       val axiom = LLKFormulaParser.ASTtoHOL( naming, LLKProofParser.parseFormula( "(all x all y all z (x+(y+z)=(x+y)+z))" ) )
       val instance = LLKFormulaParser.ASTtoHOL( naming, LLKProofParser.parseFormula( "a+((1+x)+y)=(a+(1+x))+y" ) )
-      val t1 = HOLFunction( Const( "+", Ti -> ( Ti -> Ti ) ), List(
+      val t1 = HOLFunction( Const( "+", Ti ->: Ti ->: Ti ), List(
         Const( "1", Ti ),
         Var( "x", Ti ) ) )
       val t2 = Const( "a", Ti )

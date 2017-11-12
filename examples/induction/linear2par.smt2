@@ -7,5 +7,4 @@
     (case o true)
     (case (s z) (P x y z))))
 
-(assert-not (forall ((x nat) (y nat)) (P x y y)))
-(check-sat)
+(prove (forall ((x nat) (y nat)) (P x y y)))

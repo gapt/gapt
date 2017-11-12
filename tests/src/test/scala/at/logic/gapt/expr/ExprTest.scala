@@ -49,7 +49,7 @@ class ExprTest extends Specification {
   "Apps" should {
     "match applications in the correct order" in {
       FOLFunction( "f", List( "a", "b", "c" ).map( FOLConst( _ ) ) ) must beLike {
-        case Apps( Const( "f", Ti -> ( Ti -> ( Ti -> Ti ) ) ), List( FOLConst( "a" ), FOLConst( "b" ), FOLConst( "c" ) ) ) => ok
+        case Apps( Const( "f", Ti ->: Ti ->: Ti ->: Ti ), List( FOLConst( "a" ), FOLConst( "b" ), FOLConst( "c" ) ) ) => ok
       }
     }
   }

@@ -103,7 +103,7 @@ object freeVariables {
 
 object typeVariables {
   def apply( t: Ty ): Set[TVar] = t match {
-    case a -> b         => apply( a ) ++ apply( b )
+    case a ->: b        => apply( a ) ++ apply( b )
     case TBase( _, ps ) => ps.view.flatMap( apply ).toSet
     case t: TVar        => Set( t )
   }
