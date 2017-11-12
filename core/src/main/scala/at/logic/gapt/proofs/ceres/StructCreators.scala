@@ -3,8 +3,8 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
-import at.logic.gapt.expr.{ Apps, _ }
-import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames }
+import at.logic.gapt.expr.{Apps, Const, _}
+import at.logic.gapt.proofs.Context.{ProofDefinitions, ProofNames}
 import at.logic.gapt.utils.Logger
 
 /**
@@ -36,7 +36,7 @@ object StructCreators extends Logger {
   //TODO:make tailrecursive
   def size[Data](s: Struct[Data], n: Int): Int = s match {
     case A(_, _) => n
-    case CLS(_, _, _, _) => n
+    case CLS(_, _, _) => n
     case Dual(x) => size(x, n + 1)
     case Plus(l, r) => size(l, size(r, n + 1))
     case Times(l, r, _) => size(l, size(r, n + 1))
@@ -47,7 +47,7 @@ object StructCreators extends Logger {
   private val nLine = sys.props("line.separator")
 
   def toFormula[Data](s: Struct[Data]): Formula =
-    And(CharacteristicClauseSet(s).getOrElse(Set()).toSeq map (_.toDisjunction))
+    And(CharacteristicClauseSet(s).toSeq map (_.toDisjunction))
 
   def extract[Data](p: LKProof)(implicit ctx: Context): Struct[Data] =
     extract[Data](p, p.endSequent.map(_ => false))(x => true, ctx)
@@ -68,8 +68,9 @@ object StructCreators extends Logger {
         else
           EmptyTimesJunction()
       case ProofLink(rp, rs) =>
-        val Apps(Const(c, _), _) = rp
-        if (ctx.get[ProofDefinitions].components.keySet.contains(c)) handleProofLink(rs, cut_occs, c)
+        val Apps(ps, _) = rp
+        val Const(c, _) = ps
+        if (ctx.get[ProofDefinitions].components.keySet.contains(c)) handleProofLink(rs, cut_occs, ps)
         else handleAxiom(rs, cut_occs)
       case InitialSequent(so) => handleAxiom(so, cut_occs)
 
@@ -143,7 +144,7 @@ object StructCreators extends Logger {
   def handleProofLink[Data](
                              so: HOLSequent,
                              cut_occs: Sequent[Boolean],
-                             proofLink: String)(implicit ctx: Context): Struct[Data] = {
+                             proofLink: Expr)(implicit ctx: Context): Struct[Data] = {
     val cutanc_seq: HOLSequent = so.zipWithIndex.filter(x => cut_occs(x._2)).map(_._1)
     val tautology_projection = cutanc_seq.antecedent.exists(x => cutanc_seq.succedent.contains(x))
     tautology_projection match {
@@ -156,7 +157,8 @@ object StructCreators extends Logger {
         val cutAncInSuccedent = cutanc_seq.succedent.map(x => A[Data](x))
         val structs: Vector[Struct[Data]] = cutAncInAntecedent ++ cutAncInSuccedent
         //This code matches positiions for terms passed through the proof links
-        val (Apps(_, vs), hs: HOLSequent) = ctx.get[ProofNames].names.get(proofLink) match {
+        val Const(pn,_) = proofLink
+        val (Apps(_, vs), hs: HOLSequent) = ctx.get[ProofNames].names.get(pn) match {
           case Some((ex, hs)) => (ex, hs)
           case None => (Const("", Ti), HOLSequent())
         }
@@ -189,7 +191,7 @@ object StructCreators extends Logger {
             case None => sys.error("Should not be here")
           }
         })
-        CLS[Data](proofLink, cutanc_seq, subvals, List[Data]())
+        CLS[Data](Apps(proofLink,subvals), cut_occs, List[Data]())
     }
   }
   def handleAxiom[Data](

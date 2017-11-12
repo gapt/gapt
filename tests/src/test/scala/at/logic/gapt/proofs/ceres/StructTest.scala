@@ -15,7 +15,7 @@ class StructTest extends Specification {
     "work for the permutation proof" in {
       val proof: LKProof = LLKProofParser( ClasspathInputFile( "perm.llk" ) ).proof( "TheProof" )
       val struct = extractStruct( proof )
-      val cs = CharacteristicClauseSet( struct ).getOrElse( Set() )
+      val cs = CharacteristicClauseSet( struct )
       //println( coloredStructString( struct ) )
       val typedec = "var x,y,z : i; const f : i>i>i; const a,b,c : i; "
       val strings = List(

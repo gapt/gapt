@@ -6,7 +6,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.Sequent
 
 import scala.math.max
 
@@ -149,23 +149,35 @@ object A {
   def apply[Data]( fo: Formula ): Struct[Data] = A[Data]( fo, Nil )
 }
 
-case class CLS[Data]( proof: String, config: HOLSequent, freeVariables: Seq[Expr], data: List[Data] ) extends Struct[Data] { // Clause Set Symbol Struct
-  override def toString(): String = "CLS(" + proof + " , " + config.toString + " , " + freeVariables.toString() + ")"
+case class CLS[Data]( proof: Expr, config: Sequent[Boolean], data: List[Data] ) extends Struct[Data] { // Clause Set Symbol Struct
+  override def toString(): String = {
+    val Apps( Const( pn, _ ), vs ) = proof
+    "CLS(" + pn + " , " + config.toString + " , " + vs.toString() + ")"
+  }
   override def formula_equal( s: Struct[Data] ) = s match {
-    case CLS( n, c, f, w ) => n.matches( proof ) && c.equals( config ) && f.equals( freeVariables ) && w.equals( data )
-    case _                 => false
+    case CLS( n, c, w ) => {
+      val Apps( Const( pn, _ ), vs ) = proof
+      val Apps( Const( pn2, _ ), vs2 ) = n
+      pn2.matches( pn ) && c.equals( config ) && vs.equals( vs2 ) && w.equals( data )
+    }
+    case _ => false
   }
   override def size() = 1
   override def alternations() = 0
   override def getData = Nil
 
-  def toFormula = Atom( "CL" + "[" + proof + "," + config.toString + "]", freeVariables )
-
-  def label = Atom( "CL" + "[" + proof + "," + config.toString + "]", freeVariables )
+  def toFormula = {
+    val Apps( Const( pn, _ ), vs ) = proof
+    Atom( "CL" + "[" + pn + "," + config.toString + "]", vs )
+  }
+  def label = {
+    val Apps( Const( pn, _ ), vs ) = proof
+    Atom( "CL" + "[" + pn + "," + config.toString + "]", vs )
+  }
   def children = Seq()
 }
 object CLS {
-  def apply[Data]( Proof: String, config: HOLSequent, freeVariables: Seq[Expr] ): Struct[Data] = CLS[Data]( Proof, config, freeVariables, List() )
+  def apply[Data]( Proof: Expr, config: Sequent[Boolean] ): Struct[Data] = CLS[Data]( Proof, config, List() )
 }
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {
@@ -221,7 +233,7 @@ object SchematicLeafs {
   def apply( l: Struct[Nothing] ): Set[Struct[Nothing]] = l match {
     case Times( le, r, _ ) => SchematicLeafs( le ) ++ SchematicLeafs( r )
     case Plus( le, r )     => SchematicLeafs( le ) ++ SchematicLeafs( r )
-    case CLS( x, y, z, w ) => Set[Struct[Nothing]]( l )
+    case CLS( x, y, w )    => Set[Struct[Nothing]]( l )
     case _                 => Set[Struct[Nothing]]()
 
   }

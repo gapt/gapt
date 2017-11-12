@@ -4,11 +4,9 @@ import at.logic.gapt.expr._
 import at.logic.gapt.examples.tautSchema
 import at.logic.gapt.examples.NiaSchema
 import at.logic.gapt.examples.gniaSchema
-import at.logic.gapt.examples.NdiffSchema
-import at.logic.gapt.proofs.ceres.subsumedClausesRemoval
+import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.proofs.{ Context, SetSequent }
-import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, SchematicClauseSet, StructCreators }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -23,14 +21,6 @@ class SchemaTest extends Specification {
 
     if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ) ) )
     else base
-  }
-  {
-    import NdiffSchema.ctx
-    "NdiffSchema Instantiate " in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 15 )}" )
-      ctx.check( proof )
-      ok
-    }
   }
   {
     import tautSchema.ctx
@@ -54,7 +44,7 @@ class SchemaTest extends Specification {
   }
 
   {
-    import at.logic.gapt.examples.NiaSchema.ctx
+    import NiaSchema.ctx
 
     "Nia-schema basecase" in {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )}" )
@@ -84,7 +74,7 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
-      CharacteristicClauseSet( thestruct ).getOrElse( Set() )
+      CharacteristicClauseSet( thestruct )
 
       ok
     }
@@ -93,26 +83,21 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${nat( 1 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
-      val cs = CharacteristicClauseSet( thestruct ).getOrElse( Set() )
+      val cs = CharacteristicClauseSet( thestruct )
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
     }
 
-    " Nia-schema Clause set Extraction Individual Proof" in {
-      val ts = StructCreators.extract( NiaSchema.phiSc )( ctx )
-      CharacteristicClauseSet( ts ).getOrElse( Set() )
+    " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
+      SchematicStruct( "omega" )( ctx ) must beSome
       ok
     }
-
-    " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
-      SchematicClauseSet( "omega" )( ctx ) must beSome
-    }
     " Extracting the Schematic Characteristic Clause Set Checking number of symbols" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       SCS.keySet.size must beEqualTo( 3 )
     }
     " Extracting the Schematic Characteristic Clause Set Checking number configurations" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
 
       SCS.keySet.fold( 0 )( ( vale, x ) => {
         SCS.get( x.asInstanceOf[String] ) match {
@@ -123,7 +108,7 @@ class SchemaTest extends Specification {
     }
 
     " Extracting the Schematic Characteristic Clause Set Checking number of clause sets per configuration" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
 
       SCS.keySet.foldLeft( 0 )( ( vale, x ) => {
         SCS.get( x ) match {
@@ -132,19 +117,9 @@ class SchemaTest extends Specification {
         }
       } ) must beEqualTo( 6 )
     }
-    " Extracting the Schematic Characteristic Clause Set Checking that all clauses are there" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
-
-      SCS.keySet.foldLeft( 0 )( ( vale, x ) =>
-        SCS.get( x ) match {
-          case Some( w ) => w.keySet.foldLeft( 0 )( ( mail, xx ) =>
-            w.getOrElse( xx, Set() ).foldLeft( 0 )( ( whale, zz ) => zz._2.size + whale ) + mail ) + vale
-          case None => vale
-        } ) must beEqualTo( 13 )
-    }
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val oclauses = SCS.getOrElse( "omega", Map() )
       val oExprCl = oclauses.getOrElse( oclauses.keySet.head, Set() )
       val oExpr = oExprCl.fold( oExprCl.head._1._1 )( ( x, y ) => {
@@ -152,25 +127,24 @@ class SchemaTest extends Specification {
         if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
         else one._1
       } ).asInstanceOf[Expr]
-      SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 7 ) ) )( ctx )
+      InstanceOfSchematicStruct( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 7 ) ) )( ctx )
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val oclauses = SCS.getOrElse( "omega", Map() )
       val oExprCl = oclauses.getOrElse( oclauses.keySet.head, Set() )
-      val oExpr = oExprCl.fold( oExprCl.head._1._1 )( ( x, y ) => {
-        val ( one, _ ) = y.asInstanceOf[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]
-        if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
-        else one._1
-      } ).asInstanceOf[Expr]
-      val Sclauseset = subsumedClausesRemoval( SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 3 ) ) )( ctx ).toList )
+      val oExpr = oExprCl.foldLeft( oExprCl.head._1._1 )( ( x, y ) => {
+        if ( freeVariables( x ).nonEmpty ) x else y._1._1
+      } )
+      val thestructWeNeed = InstanceOfSchematicStruct( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 3 ) ) )( ctx )
+      val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
-      val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).getOrElse( Set() ).toList )
+      val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
       val fin = ( Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ||
         nonclauseset.forall( s => Sclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonclauseset.size == Sclauseset.size
-      /* SCS.foreach{ case (x,y) =>
+      /*   SCS.foreach{ case (x,y) =>
            y.foreach{case (z,w) =>
            w.foreach{case (r,e) =>
         println(x+"   "+ z + "    "+ r)
@@ -246,21 +220,18 @@ class SchemaTest extends Specification {
       IsKSimple( result ) must_== true
     }
     "Schematic Clause set equivalent to non schematic" in {
-      val SCS = SchematicClauseSet( "omega" )( ctx ).getOrElse( Map() )
-      val oclauses = SCS.getOrElse( "omega", Map() )
-      val oExprCl = oclauses.getOrElse( oclauses.keySet.head, Set() )
-      val oExpr = oExprCl.fold( oExprCl.head._1._1 )( ( x, y ) => {
-        val ( one, _ ) = y.asInstanceOf[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]
-        if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
-        else one._1
-      } ).asInstanceOf[Expr]
-      val Sclauseset = subsumedClausesRemoval( SchematicClauseSet.InstantiateClauseSetSchema( "omega", oclauses.keySet.head, SCS,
-        Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx ).toList )
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val oClauses = SCS.getOrElse( "omega", Map() )
+      val oExprCl = oClauses.getOrElse( oClauses.keySet.head, Set() )
+      val oExpr = oExprCl.foldLeft( oExprCl.head._1._1 )( ( x, y ) => if ( freeVariables( y._1._1 ).size > freeVariables( x ).size ) y._1._1 else x )
+      val theStructWeNeed = InstanceOfSchematicStruct( "omega", oClauses.keySet.head, SCS,
+        Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx )
+      val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
-      val thestruct = StructCreators.extract( proof )( ctx )
-      val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).getOrElse( Set() ).toList )
-      val fin = ( Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ||
-        nonclauseset.forall( s => Sclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonclauseset.size == Sclauseset.size
+      val theStruct = StructCreators.extract( proof )( ctx )
+      val nonClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStruct ).toList )
+      val fin = ( SClauseSet.forall( s => nonClauseSet.exists( clauseSubsumption( _, s ).isDefined ) ) ||
+        nonClauseSet.forall( s => SClauseSet.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonClauseSet.size == SClauseSet.size
       fin must beEqualTo( true )
     }
   }
