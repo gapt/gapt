@@ -23,20 +23,9 @@ object NdiffSchema extends TacticsProof {
     "bloc 0 x y = (∀z ( (LEQ (AP x y) z) ∧ (LE z (AP (s x) y)) ∧ (E (f z) x) ) )",
     "bloc (s x) y z = (∀w ( (LEQ (AP y z) w) ∧ (LE w (AP (s y) z)) ∧  (E (f w) y) ∧ (bloc x (s y) z) ))" )
   ctx += "nEqual" -> hos" E(f(B), f(A)), E(f(A), n),E(f(B), m) :-"
-  ctx += "SucNotEq" -> hcl"E(f(p),n),E(f(q),s(n)), E(f(p),f(q)) :- "
-  ctx += "leq_g" -> hos"LEQ(AP(s(x),y),q):- LE(AP(x,y),q)"
-  ctx += "leq_refl" -> hos" :- LEQ(P,P)"
-  ctx += "le_Non_refl" -> hos"LE(P,P) :-"
   ctx += "le_leq_comp" -> hos"LE(x,y) :- LEQ(x,y)"
-  ctx += "le_func_def" -> hos"LE(AP(N,K),AP(s(N),K)), E(f(AP(N,K)),N) :- E(f(AP(s(N),K)),s(N))"
-  ctx += "weird" -> hos"LEQ(AP(m, K), AP(k, K)),E(f(AP(k, K)), m) :- E(f(AP(s(m), K)), k)"
+  ctx += "progression_map" -> hos"LEQ(AP(m, K), AP(k, K)),E(f(AP(k, K)), m) :- E(f(AP(s(m), K)), k)"
 
-  //This is berneys,schonfinkel, ramsey isn't it.
-  //We can make it explicitly BSR by adding a existential to the left side
-  //i.e. variable lower bound of the progress
-  //and by adding a range over which the n difference occurs.
-  //Thus, this would give us an example of a significant proof
-  //schema analyzable by the method of andrea et al.
   val esOmega = Sequent(
     Seq( hof"!x bloc(n,0,x)" ),
     Seq( hof"?p DIFF(n,p)" ) )

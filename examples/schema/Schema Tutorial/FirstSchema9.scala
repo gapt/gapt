@@ -1,10 +1,14 @@
-import at.logic.gapt.expr._  
-import at.logic.gapt.proofs.Context._ 
-import at.logic.gapt.proofs.gaptic._ 
-import at.logic.gapt.proofs.Context  
-import at.logic.gapt.proofs.Sequent  
+package at.logic.gapt.examples
 
-object FirstSchema extends TacticsProof {
+import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context._
+import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.Sequent
+import at.logic.gapt.proofs.ceres.{ CharacteristicClauseSet, StructCreators }
+import at.logic.gapt.proofs.lk.instantiateProof
+
+object FirstSchema9 extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0 : nat", hoc"s : nat>nat" )
   ctx += Context.Sort( "i" )
 
@@ -23,7 +27,6 @@ object FirstSchema extends TacticsProof {
   ctx += "leq_max1" -> hos"LEQ(max(a, b), c) :- LEQ(a, c)"
   ctx += "leq_max2" -> hos"LEQ(max(a, b), c) :- LEQ(b, c)"
 
-
   ctx += hoc"mu: nat>nat>nat"
   ctx += hoc"mubase: nat>nat"
   ctx += hoc"nu: nat>nat>i>nat"
@@ -35,46 +38,37 @@ object FirstSchema extends TacticsProof {
   ctx += PrimRecFun( hoc"POR:nat>i>o", "POR 0 x = E (f x) 0", "POR (s y) x = (E (f x) (s y) ∨ POR y x)" )
   ctx += PrimRecFun( hoc"Ech:nat>i>o", "Ech 0 x = (∃p ((LE x p) ∧  (E (f x) (f p))))", "Ech (s y) x = (∃p ((Ech y p) ∧ (LE x p) ∧  (E (f x) (f p))))" )
 
-  
-  
-  
+  val esnu = Sequent( Seq( hof"E(f(A),n)", hof"!x?y(LEQ(x,y) & E(f(y),n))" ), Seq( hof"Ech(m,A)" ) )
+  val esmu = Sequent( Seq( hof"!x?y(LEQ(x,y) & E(f(y),n))" ), Seq( hof"?p Ech(m,p)" ) )
+  val esmubase = Sequent( Seq( hof"!x?y(LEQ(x,y) & E(f(y),0))" ), Seq( hof"?p Ech(m,p)" ) )
+  val eschi = Sequent( Seq( hof" POR(n,a) " ), Seq( hof"POR(n,a)" ) )
+  val esnuPrime = Sequent( Seq( hof"E(f(A),0)", hof"!x?y(LEQ(x,y) & POR(0,y))" ), Seq( hof"Ech(m,A)" ) )
+  val esOmega = Sequent( Seq( hof"!x POR(n,x)" ), Seq( hof"?p Ech(m,p)" ) )
+  val esphi = Sequent( Seq( hof"!x?y (LEQ(x,y) & POR(n,y) )" ), Seq( hof"?p Ech(m,p)" ) )
+  ctx += Context.ProofNameDeclaration( le"nu m n A", esnu ) // notice that here m is first than n
+  ctx += Context.ProofNameDeclaration( le"mu m n", esmu ) // notice that here m is first than n
+  ctx += Context.ProofNameDeclaration( le"mubase m", esmubase ) // notice that here there is only m
+  ctx += Context.ProofNameDeclaration( le"chi n a", eschi ) // notice that here there is only n
+  ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime ) // notice that here there is only m
+  ctx += Context.ProofNameDeclaration( le"omega n m", esOmega ) // notice that here n is first than m
+  ctx += Context.ProofNameDeclaration( le"phi n m", esphi ) // notice that here n is first than m
 
+  val esNuBc = Sequent( Seq( ( "Ant_2" -> hof"E(f(A),n)" ), ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ), Seq( ( "Suc_0" -> hof"Ech(0,A)" ) ) )
+  val esNuSc = Sequent( Seq( ( "Ant_2" -> hof"E(f(A),n)" ), ( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ), Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) ) )
+  val esNuPrimeBc = Sequent( Seq( ( "Ant_2" -> hof"E(f(A),0)" ), ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ) ), Seq( ( "Suc_0" -> hof"Ech(0,A)" ) ) )
+  val esNuPrimeSc = Sequent( Seq( ( "Ant_2" -> hof"E(f(A),0)" ), ( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ) ), Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) ) )
+  val esMuBc = Sequent( Seq( ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ), Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) ) )
+  val esMubaseBc = Sequent( Seq( ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ), Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) ) )
+  val esMubaseSc = Sequent( Seq( ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ), Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) ) )
+  val esMuSc = Sequent( Seq( ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ), Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) ) )
+  val esChiBc = Sequent( Seq( ( "Ant_2" -> hof" POR(0,a)" ) ), Seq( ( "Suc_0" -> hof"POR(0,a)" ) ) )
+  val esChiSc = Sequent( Seq( ( "Ant_2" -> hof" POR(s(n),a)" ) ), Seq( ( "Suc_0" -> hof"POR(s(n),a)" ) ) )
 
+  val esphiBc = Sequent( Seq( ( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))" ) ), Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
+  val esOmegaBc = Sequent( Seq( ( "Ant_2" -> hof"!x POR(0,x)" ) ), Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
+  val esOmegaSc = Sequent( Seq( ( "Ant_2" -> hof"!x POR(s(n),x)" ) ), Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
 
-
- val esnu = Sequent(Seq(hof"E(f(A),n)",hof"!x?y(LEQ(x,y) & E(f(y),n))" ),Seq( hof"Ech(m,A)" ) )
- val esmu = Sequent(Seq(hof"!x?y(LEQ(x,y) & E(f(y),n))" ),Seq( hof"?p Ech(m,p)" ) )
- val esmubase = Sequent(Seq(hof"!x?y(LEQ(x,y) & E(f(y),0))" ),Seq( hof"?p Ech(m,p)" ) )
- val eschi = Sequent(Seq( hof" POR(n,a) " ),Seq( hof"POR(n,a)" ) )
- val esnuPrime = Sequent(Seq(hof"E(f(A),0)",hof"!x?y(LEQ(x,y) & POR(0,y))" ),Seq( hof"Ech(m,A)" ) )
- val esOmega = Sequent(Seq(hof"!x POR(n,x)" ),Seq( hof"?p Ech(m,p)" ) ) 
- val esphi = Sequent(Seq(hof"!x?y (LEQ(x,y) & POR(n,y) )" ),Seq( hof"?p Ech(m,p)" ) )
- ctx += Context.ProofNameDeclaration( le"nu m n A", esnu ) // notice that here m is first than n
- ctx += Context.ProofNameDeclaration( le"mu m n", esmu ) // notice that here m is first than n
- ctx += Context.ProofNameDeclaration( le"mubase m", esmubase ) // notice that here there is only m
- ctx += Context.ProofNameDeclaration( le"chi n a", eschi ) // notice that here there is only n
- ctx += Context.ProofNameDeclaration( le"nuPrime m A", esnuPrime )// notice that here there is only m
- ctx += Context.ProofNameDeclaration( le"omega n m", esOmega )// notice that here n is first than m
- ctx += Context.ProofNameDeclaration( le"phi n m", esphi ) // notice that here n is first than m
-
-
- val esNuBc = Sequent(Seq(( "Ant_2" -> hof"E(f(A),n)" ),( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ),Seq( ( "Suc_0" -> hof"Ech(0,A)" ) ) )
- val esNuSc = Sequent(Seq(( "Ant_2" -> hof"E(f(A),n)" ),( "Ant_3" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ),Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) ) )
- val esNuPrimeBc = Sequent(Seq(( "Ant_2" -> hof"E(f(A),0)" ),( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ) ),Seq( ( "Suc_0" -> hof"Ech(0,A)" ) ) )
- val esNuPrimeSc = Sequent(Seq(( "Ant_2" -> hof"E(f(A),0)" ),( "Ant_3" -> hof"!x?y(LEQ(x,y) & POR(0,y))" ) ),Seq( ( "Suc_0" -> hof"Ech(s(m),A)" ) ) )
- val esMuBc = Sequent(Seq(( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ),Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) ) )
- val esMubaseBc = Sequent(Seq(( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ),Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) ) )
- val esMubaseSc = Sequent(Seq(( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ),Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) ) )
- val esMuSc = Sequent(Seq(( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),n))" ) ),Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) ) )
- val esChiBc = Sequent(Seq( ( "Ant_2" -> hof" POR(0,a)" ) ),Seq(( "Suc_0" -> hof"POR(0,a)" ) ) )
- val esChiSc = Sequent(Seq(( "Ant_2" -> hof" POR(s(n),a)" ) ),Seq(( "Suc_0" -> hof"POR(s(n),a)" ) ) )
-
- val esphiBc = Sequent(Seq(( "Ant_2" -> hof"!x?y (LEQ(x,y) & POR(0,y))" ) ),Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
- val esOmegaBc = Sequent(Seq(( "Ant_2" -> hof"!x POR(0,x)" ) ),Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
- val esOmegaSc = Sequent(Seq(( "Ant_2" -> hof"!x POR(s(n),x)" ) ),Seq( ( "Suc_0" -> hof"?p Ech(m,p)" ) ) )
-
- 
- val NuBc = Lemma( esNuBc ) {
+  val NuBc = Lemma( esNuBc ) {
     allL( "Ant_3", le"g(A)" )
     unfold( "Ech" ) atMost 1 in "Suc_0"
     exL( fov"B" )
@@ -261,11 +255,11 @@ object FirstSchema extends TacticsProof {
     ref( "phi" )
   }
 
-//Notice that the inactive parameter does not have an sucessor function
-//around it but the active one does. Also the active parameter is always 
-//the first one
+  //Notice that the inactive parameter does not have an sucessor function
+  //around it but the active one does. Also the active parameter is always
+  //the first one
   ctx += Context.ProofDefinitionDeclaration( le"nu 0 n A", NuBc )
-//m is active and n is not
+  //m is active and n is not
   ctx += Context.ProofDefinitionDeclaration( le"nu (s m) n  A", NuSc )
   ctx += Context.ProofDefinitionDeclaration( le"nuPrime 0 A", NuPrimeBc )
   ctx += Context.ProofDefinitionDeclaration( le"nuPrime (s m) A", NuPrimeSc )
@@ -276,21 +270,17 @@ object FirstSchema extends TacticsProof {
   ctx += Context.ProofDefinitionDeclaration( le"chi 0 a", chiBc )
   ctx += Context.ProofDefinitionDeclaration( le"chi (s n) a", chiSc )
   ctx += Context.ProofDefinitionDeclaration( le"phi 0 m", phiBc )
-//n is active m is not
+  //n is active m is not
   ctx += Context.ProofDefinitionDeclaration( le"phi (s n) m", phiSc )
   ctx += Context.ProofDefinitionDeclaration( le"omega 0 m", omegaBc )
   ctx += Context.ProofDefinitionDeclaration( le"omega (s n) m", omegaSc )
 
+  //We can now perform the same steps as in the previous file but we two parameters
+  //to substitute
 
-//We can now perform the same steps as in the previous file but we two parameters
-//to substitute
-
-val FullProof = instantiateProof.Instantiate(le"omega (s (s (s (s 0)))) (s (s (s (s (s (s 0))))))") 
-val thestruct = StructCreators.extract( FullProof )
-val cs = CharacteristicClauseSet( thestruct )
-
-
+  val FullProof = instantiateProof( le"omega (s (s (s (s 0)))) (s (s (s (s (s (s 0))))))" )
+  val thestruct = StructCreators.extract( FullProof )
+  val cs = CharacteristicClauseSet( thestruct )
 
 }
-
 
