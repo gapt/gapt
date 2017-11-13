@@ -3,7 +3,6 @@ package at.logic.gapt.proofs
 import at.logic.gapt.expr.Polarity.{ Negative, Positive }
 import at.logic.gapt.expr.{ Formula, Polarity }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
-import at.logic.gapt.proofs.lk.SequentTerm
 import cats.Functor
 import cats.kernel.Monoid
 
@@ -87,7 +86,7 @@ case class Suc( k: Int ) extends SequentIndex {
  * Used for clause set extraction
  * @param sequent A sequent.
  */
-case class SetSequent[+A]( sequent: Sequent[A] ) extends SequentTerm {
+case class SetSequent[+A]( sequent: Sequent[A] ) {
   override def equals( that: Any ): Boolean = that match {
     case SetSequent( Sequent( ante, suc ) ) => this.sequent.antecedent.toSet == ante.toSet && this.sequent.succedent.toSet == suc.toSet
     case _                                  => false
@@ -102,7 +101,7 @@ case class SetSequent[+A]( sequent: Sequent[A] ) extends SequentTerm {
  * @param succedent The second list.
  * @tparam A The type of the elements of the sequent.
  */
-case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) extends SequentTerm {
+case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
 
   override def toString = toSigRelativeString
 
@@ -452,7 +451,7 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) extends Se
     Sequent( antecedent groupBy f toVector, succedent groupBy f toVector )
 }
 
-object Sequent extends SequentTerm {
+object Sequent {
   def apply[A](): Sequent[A] = Sequent( Vector(), Vector() )
 
   def apply[A]( ant: Traversable[A], suc: Traversable[A] ): Sequent[A] = Sequent( ant.toVector, suc.toVector )

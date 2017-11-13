@@ -6,7 +6,7 @@ import at.logic.gapt.examples.NiaSchema
 import at.logic.gapt.examples.gniaSchema
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.induction.numbers.pluscomm
-import at.logic.gapt.proofs.{ Context, SetSequent }
+import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -15,63 +15,54 @@ import org.specs2.mutable.Specification
  * Created by David M. Cerna on 11.02.17.
  */
 class SchemaTest extends Specification {
-  def nat( i: Int )( implicit ctx: Context ): Expr = {
-    val suc = ctx.get[Context.Constants].constants.getOrElse( "s", Const( "0", Ti ) )
-    val base = ctx.get[Context.Constants].constants.getOrElse( "0", Const( "0", Ti ) )
 
-    if ( i > 0 ) Apps( suc, Seq( nat( i - 1 ) ) )
-    else base
-  }
   {
     import tautSchema.ctx
     "simple schema basecase" in {
-      val proof = instantiateProof.Instantiate( le"taut ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"taut ${natMaker( 0 )}" )
       ctx.check( proof )
       ok
     }
 
     "simple schema stepcase" in {
-      val proof = instantiateProof.Instantiate( le"taut ${nat( 1 )}" )
+      val proof = instantiateProof.Instantiate( le"taut ${natMaker( 1 )}" )
       ctx.check( proof )
       ok
     }
-
     "simple schema Large" in {
-      val proof = instantiateProof.Instantiate( le"taut ${nat( 6 )}" )
+      val proof = instantiateProof.Instantiate( le"taut ${natMaker( 6 )}" )
       ctx.check( proof )
       ok
     }
   }
-
   {
     import NiaSchema.ctx
 
     "Nia-schema basecase" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 0 )}" )
       ctx.check( proof )
       ok
     }
-
     "Nia-schema stepcase" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 1 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 1 )}" )
       ctx.check( proof )
       ok
     }
 
     " Nia-schema Large" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 4 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 4 )}" )
       ctx.check( proof )
       ok
     }
 
     "Nia-schema Super Large" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 12 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 12 )}" )
       ctx.check( proof )
       ok
     }
 
     " Nia-schema Clause Set Extraction  Instance 3" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
       CharacteristicClauseSet( thestruct )
@@ -80,7 +71,7 @@ class SchemaTest extends Specification {
     }
 
     " Nia-schema Clause Set Refutation  Instance 1" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 1 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 1 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
       val cs = CharacteristicClauseSet( thestruct )
@@ -122,12 +113,10 @@ class SchemaTest extends Specification {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val oclauses = SCS.getOrElse( "omega", Map() )
       val oExprCl = oclauses.getOrElse( oclauses.keySet.head, Set() )
-      val oExpr = oExprCl.fold( oExprCl.head._1._1 )( ( x, y ) => {
-        val ( one, _ ) = y.asInstanceOf[( ( Expr, Set[Var] ), Set[SetSequent[Atom]] )]
-        if ( freeVariables( x.asInstanceOf[Expr] ).nonEmpty ) x
-        else one._1
-      } ).asInstanceOf[Expr]
-      InstanceOfSchematicStruct( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 7 ) ) )( ctx )
+      val oExpr = oExprCl.foldLeft( oExprCl.head._1._1 )( ( x, y ) => {
+        if ( freeVariables( x ).nonEmpty ) x else y._1._1
+      } )
+      InstanceOfSchematicStruct( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, natMaker( 7 ) ) )( ctx )
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
@@ -137,9 +126,9 @@ class SchemaTest extends Specification {
       val oExpr = oExprCl.foldLeft( oExprCl.head._1._1 )( ( x, y ) => {
         if ( freeVariables( x ).nonEmpty ) x else y._1._1
       } )
-      val thestructWeNeed = InstanceOfSchematicStruct( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, nat( 3 ) ) )( ctx )
+      val thestructWeNeed = InstanceOfSchematicStruct( "omega", oclauses.keySet.head, SCS, Substitution( freeVariables( oExpr ).head, natMaker( 3 ) ) )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestructWeNeed ).toList )
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
       val nonclauseset = subsumedClausesRemoval( CharacteristicClauseSet( thestruct ).toList )
       val fin = ( Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ||
@@ -160,27 +149,27 @@ class SchemaTest extends Specification {
     import gniaSchema.ctx
 
     "gNia-schema both parameters zero" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )} ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 0 )} ${natMaker( 0 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema first parameter zero" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 0 )} ${nat( 5 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 0 )} ${natMaker( 5 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema second parameter zero" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 5 )} ${nat( 0 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 5 )} ${natMaker( 0 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema both parameters non-zero" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 5 )} ${nat( 5 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 5 )} ${natMaker( 5 )}" )
       ctx.check( proof )
       ok
     }
     "gNia-schema both parameters non-zero large" in {
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 12 )} ${nat( 12 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 12 )} ${natMaker( 12 )}" )
       ctx.check( proof )
       ok
     }
@@ -225,9 +214,9 @@ class SchemaTest extends Specification {
       val oExprCl = oClauses.getOrElse( oClauses.keySet.head, Set() )
       val oExpr = oExprCl.foldLeft( oExprCl.head._1._1 )( ( x, y ) => if ( freeVariables( y._1._1 ).size > freeVariables( x ).size ) y._1._1 else x )
       val theStructWeNeed = InstanceOfSchematicStruct( "omega", oClauses.keySet.head, SCS,
-        Substitution( freeVariables( oExpr ).head, nat( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, nat( 3 ) ) ) )( ctx )
+        Substitution( freeVariables( oExpr ).head, natMaker( 3 ) ).compose( Substitution( freeVariables( oExpr ).tail.head, natMaker( 3 ) ) ) )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
-      val proof = instantiateProof.Instantiate( le"omega ${nat( 3 )}  ${nat( 3 )}" )
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
       val nonClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStruct ).toList )
       val fin = ( SClauseSet.forall( s => nonClauseSet.exists( clauseSubsumption( _, s ).isDefined ) ) ||

@@ -6,7 +6,8 @@ package at.logic.gapt.expr.fol
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.containsQuantifier
-import at.logic.gapt.proofs.HOLSequent
+import at.logic.gapt.proofs.{ Context, HOLSequent }
+
 import scala.collection.{ GenTraversable, mutable }
 
 object isFOLFunction {
@@ -232,4 +233,29 @@ object naive extends CountingFormulas {
 
   }
 
+}
+object mergeMapToListValues {
+  def apply[K, V]( m1: Map[K, V], m2: Map[K, V] ): Map[K, List[V]] =
+    if ( m1.keySet.nonEmpty && m2.keySet.nonEmpty )
+      ( m1.keySet ++ m2.keySet ) map { i => i -> ( m1.get( i ).toList ::: m2.get( i ).toList ) } toMap
+    else if ( m1.keySet.isEmpty && m2.keySet.nonEmpty )
+      m2.keySet map { i => i -> m2.get( i ).toList } toMap
+
+    else if ( m1.keySet.nonEmpty && m2.keySet.isEmpty )
+      m1.keySet map { i => i -> m1.get( i ).toList } toMap
+    else Map[K, List[V]]()
+}
+object mergeMapToSetValues {
+  def apply[K, V]( m1: Map[K, Set[V]], m2: Map[K, Set[V]] ): Map[K, Set[V]] =
+    Map() ++ ( for ( k <- m1.keySet ++ m2.keySet )
+      yield k -> ( m1.getOrElse( k, Set() ) ++ m2.getOrElse( k, Set() ) ) )
+}
+
+object natMaker {
+  def apply( i: Int, thevar: Expr = Const( "0", Ti ) )( implicit ctx: Context ): Expr = {
+    val suc = ctx.get[Context.Constants].constants.getOrElse( "s", { throw new Exception( "nat not defined" ) } )
+    if ( i > 0 ) Apps( suc, Seq( natMaker( i - 1, thevar ) ) )
+    else if ( thevar.equals( Const( "0", Ti ) ) ) ctx.get[Context.Constants].constants.getOrElse( "0", { throw new Exception( "nat not defined" ) } )
+    else thevar
+  }
 }
