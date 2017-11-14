@@ -145,7 +145,7 @@ object InstantiateStruct {
         val newVs = vs.map( f =>
           sigma( sigma.domain.foldLeft( f )( ( subform, varsig ) =>
             if ( varsig.ty.equals( TBase( "nat" ) ) )
-              subform.find( natMaker( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) => {
+              subform.find( natMaker( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) =>
               ctx.get[ProofNames].names.get( name ) match {
                 case Some( proofName ) =>
                   val Apps( _, lsymPN ) = proofName._1
@@ -153,19 +153,18 @@ object InstantiateStruct {
                   else if ( varsig.equals( param ) ) nrepl.replace( curpos, varsig )
                   else nrepl
                 case None => nrepl
-              }
-            } )
+              })
             else subform ) ) )
         val setOfStructs = sss.getOrElse( name, Map() ).getOrElse( cc, Set() )
         //picks the correct induction case
-        val ( _, ( Apps( _, vs2: Seq[Expr] ), _ ), _ ) = setOfStructs.foldLeft( ( 0, setOfStructs.head._1, setOfStructs.head._2 ) )( ( theCorrect, current ) => {
+        val ( _, ( Apps( _, vs2 ), _ ), _ ) = setOfStructs.foldLeft( ( 0, setOfStructs.head._1, setOfStructs.head._2 ) )( ( theCorrect, current ) => {
           val ( ( Apps( _, argsLink ), _ ), clauses ) = current
           val totalCount = newVs.zip( argsLink ).foldLeft( 0 )( ( count, curPair ) =>
             if ( sigma( curPair._2 ).contains( curPair._1 ) ) count + 1 else count )
           if ( totalCount > theCorrect._1 ) ( totalCount, current._1, clauses )
           else theCorrect
         } )
-        val newsigma: Substitution = vs2.zip( newVs ).map {
+        val newsigma = vs2.zip( newVs ).map {
           case ( one, two ) =>
             //We know this is at most size one for nat
             freeVariables( one ).map( x => one.find( x ) ).foldLeft( List[HOLPosition]() )( ( fin, ll ) => fin ++ ll ).headOption match {
@@ -173,7 +172,7 @@ object InstantiateStruct {
               case None        => ( one, two )
             }
         }.foldLeft( Substitution() )( ( sub, pair ) => if ( freeVariables( pair._1 ).isEmpty ) sub else sub.compose( Substitution( pair._1.asInstanceOf[Var], pair._2 ) ) )
-        InstanceOfSchematicStruct( name, cc, sss, newsigma, usedNames ).asInstanceOf[Struct[Data]]
+        InstanceOfSchematicStruct( name, cc, sss, newsigma, usedNames )
       case _ => throw new Exception( "Unhandled case: " + theStruct )
     }
   }
