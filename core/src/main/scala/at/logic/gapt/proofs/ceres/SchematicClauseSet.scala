@@ -97,8 +97,8 @@ object InstanceOfSchematicStruct {
 object RegularizeStruct extends  StructVisitor[Struct[Nothing],List[Var]]{
   def apply( theStruct: Struct[Nothing], nameVar: Var, newVar: Var ): Struct[Nothing] ={
     val Transform = StructTransformer[Struct[Nothing],List[Var]](
-      aF, {(x,y,z) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,z) =>  Times[Nothing](x,y)},
-      EmptyTimesJunction(), {(x,y) =>  Dual[Nothing](x)}, cF)
+      aF, {(x,y,_) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,_) =>  Times[Nothing](x,y)},
+      EmptyTimesJunction(), {(x,_) =>  Dual[Nothing](x)}, cF)
     recurse(theStruct,Transform,List[Var](nameVar,newVar))
   }
   def aF[Data](f:Formula, vars:List[Var]):Struct[Data] =  A( f.find( vars.head ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, vars.tail.head ) ), List() )
@@ -115,15 +115,15 @@ object InstantiateStruct extends  StructVisitor[Struct[Nothing],(Substitution,Va
              sss: Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
              usedNames: Set[Var] )( implicit ctx: Context ): Struct[Nothing] ={
     val Transform = StructTransformer[Struct[Nothing],(Substitution,Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],Set[Var])](
-      aF, {(x,y,z) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,z) =>  Times[Nothing](x,y)},
-      EmptyTimesJunction(), {(x,y) =>  Dual[Nothing](x)}, cF)
+      aF, {(x,y,_) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,_) =>  Times[Nothing](x,y)},
+      EmptyTimesJunction(), {(x,_) =>  Dual[Nothing](x)}, cF)
     recurse(theStruct,Transform,(sigma,param,sss,usedNames))
   }
   def aF[Data](f:Formula, info:(Substitution,
                                 Var,
                                 Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
                                 Set[Var]))( implicit ctx: Context ):Struct[Data] ={
-    val (sigma,param,sss,usedNames) = info
+    val (sigma,_,_,_) = info
     A( sigma( sigma.domain.foldLeft( f )( ( subForm, varSig ) =>
       ( if ( varSig.ty.equals( TBase( "nat" ) ) ) subForm.find( natMaker( 1, varSig ) )
       else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) =>
