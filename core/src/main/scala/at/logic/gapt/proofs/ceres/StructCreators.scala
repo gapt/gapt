@@ -36,7 +36,7 @@ object StructCreators extends Logger {
   //TODO:make tailrecursive
   def size[Data](s: Struct[Data], n: Int): Int = s match {
     case A(_, _) => n
-    case CLS(_, _, _) => n
+    case CLS(_, _) => n
     case Dual(x) => size(x, n + 1)
     case Plus(l, r) => size(l, size(r, n + 1))
     case Times(l, r, _) => size(l, size(r, n + 1))
@@ -191,7 +191,7 @@ object StructCreators extends Logger {
             case None => sys.error("Should not be here")
           }
         })
-        CLS[Data](Apps(proofLink,subvals), cut_occs, List[Data]())
+        CLS(Apps(proofLink,subvals), cut_occs)
     }
   }
   def handleAxiom[Data](

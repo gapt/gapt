@@ -28,11 +28,11 @@ object SchematicStruct {
       //After constructing the struct we need to find all CLS terms
       val clauseSetDependencies = currentProofStruct.foldLeft( Set[( String, Sequent[Boolean] )]() )( ( w, e ) => {
         w ++ SchematicLeafs( e._2 ).foldLeft( Set[Struct[Nothing]]() )( ( g, pb ) => {
-          val CLS( Apps( Const( pf, _ ), _ ), ccon, _ ) = pb
+          val CLS( Apps( Const( pf, _ ), _ ), ccon ) = pb
           if ( foundCases.contains( ( pf, ccon ) ) ) g
           else g + pb
         } ).foldLeft( Set[( String, Sequent[Boolean] )]() )( ( y, a ) => {
-          val CLS( Apps( Const( pf, _ ), _ ), ccon, _ ) = a
+          val CLS( Apps( Const( pf, _ ), _ ), ccon) = a
           if ( pf.matches( topSym ) && ccon.equals( theActualConfig ) ) Set( ( pf, ccon ) )
           else y ++ Set( ( pf, ccon ) )
         } )
@@ -60,13 +60,12 @@ object MapMerger {
 
 //Allows the construction of instances of schematic structs
 object InstanceOfSchematicStruct {
-
   def apply[Data](
     topSym:    String,
     cutConfig: Sequent[Boolean],
     sss:       Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
     sigma:     Substitution,
-    usedNames: Set[Var]                                                                         = Set[Var]() )( implicit ctx: Context ): Struct[Data] = {
+    usedNames: Set[Var]                                                                         = Set[Var]() )( implicit ctx: Context ): Struct[Nothing] = {
     val starterStruct = sss.getOrElse( topSym, Map() ).getOrElse( cutConfig, Set() )
     // check if the Structis empty or does not match sigma
     if ( starterStruct.isEmpty || !starterStruct.exists( x => { sigma.domain.equals( freeVariables( x._1._1 ) ) } ) ) EmptyPlusJunction()
@@ -88,93 +87,85 @@ object InstanceOfSchematicStruct {
         //the already used eigenvariables.
         val regularizedStruct = Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), StructToInstantiate._2._2 ) )(
           ( reClause, nameVar ) => Set[Var]( Var( reClause._1._1.fresh( nameVar.name ), nameVar.ty ) ).map( newVar =>
-            ( ( reClause._1._1, reClause._1._2 + newVar ), RegularizeStruct( reClause._2, nameVar, newVar ) ) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
+            ( ( reClause._1._1, reClause._1._2 + newVar ), RegularizeStruct(reClause._2, nameVar, newVar)) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
         //we now unfold the dependences
         InstantiateStruct( regularizedStruct._2, sigma, StructToInstantiate._1._2, sss, usedNames ++ regularizedStruct._1 )
       }
     }
   }
 }
-//Used to regularize the struct
-object RegularizeStruct {
-  def apply[Data]( theStruct: Struct[Nothing], nameVar: Var, newVar: Var ): Struct[Data] = {
-    theStruct match {
-      case A( f, aux )                           => A( f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ) ), aux )
-      case Dual( EmptyPlusJunction() )           => Dual( EmptyPlusJunction() )
-      case Dual( EmptyTimesJunction() )          => Dual( EmptyTimesJunction() )
-      case Dual( x )                             => Dual( RegularizeStruct( x, nameVar, newVar ) )
-      case EmptyPlusJunction()                   => EmptyPlusJunction()
-      case Plus( EmptyPlusJunction(), x )        => Plus( EmptyPlusJunction(), RegularizeStruct( x, nameVar, newVar ) )
-      case Plus( x, EmptyPlusJunction() )        => Plus( RegularizeStruct( x, nameVar, newVar ), EmptyPlusJunction() )
-      case Plus( x, y )                          => Plus( RegularizeStruct( x, nameVar, newVar ), RegularizeStruct( y, nameVar, newVar ) )
-      case EmptyTimesJunction()                  => EmptyTimesJunction()
-      case Times( x, EmptyTimesJunction(), aux ) => Times( RegularizeStruct( x, nameVar, newVar ), EmptyTimesJunction(), aux )
-      case Times( EmptyTimesJunction(), x, aux ) => Times( EmptyTimesJunction(), RegularizeStruct( x, nameVar, newVar ), aux )
-      case Times( x, y, aux )                    => Times( RegularizeStruct( x, nameVar, newVar ), RegularizeStruct( y, nameVar, newVar ), aux )
-      case CLS( pn, cc, l ) =>
-        val Apps( name, vs ) = pn
-        val newVs = vs.map( f => f.find( nameVar ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, newVar ) ) )
-        CLS( Apps( name, newVs ), cc, l )
-      case _ => throw new Exception( "Unhandled case: " + theStruct )
-    }
+object RegularizeStruct extends  StructVisitor[Struct[Nothing],List[Var]]{
+  def apply( theStruct: Struct[Nothing], nameVar: Var, newVar: Var ): Struct[Nothing] ={
+    val Transform = StructTransformer[Struct[Nothing],List[Var]](
+      aF, {(x,y,z) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,z) =>  Times[Nothing](x,y)},
+      EmptyTimesJunction(), {(x,y) =>  Dual[Nothing](x)}, cF)
+    recurse(theStruct,Transform,List[Var](nameVar,newVar))
+  }
+  def aF[Data](f:Formula, vars:List[Var]):Struct[Data] =  A( f.find( vars.head ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, vars.tail.head ) ), List() )
+  def cF[Data](pn:Expr,cc:Sequent[Boolean], vars:List[Var]):Struct[Data] ={
+    val Apps( name, vs ) = pn
+    val newVs = vs.map( f => f.find( vars.head ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, vars.tail.head ) ) )
+    CLS( Apps( name, newVs ), cc)
   }
 }
-//Used to instantiate the struct
-object InstantiateStruct {
-  def apply[Data]( theStruct: Struct[Nothing], sigma: Substitution, param: Var,
-                   sss:       Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
-                   usedNames: Set[Var] )( implicit ctx: Context ): Struct[Data] = {
-    theStruct match {
-      case A( f, aux ) => A( sigma( sigma.domain.foldLeft( f )( ( subForm, varSig ) =>
-        ( if ( varSig.ty.equals( TBase( "nat" ) ) ) subForm.find( natMaker( 1, varSig ) )
-        else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) =>
-          nRepl.replace( curPos, varSig ) ) ) ), aux )
-      case Dual( EmptyPlusJunction() )           => Dual( EmptyPlusJunction() )
-      case Dual( EmptyTimesJunction() )          => Dual( EmptyTimesJunction() )
-      case Dual( x )                             => Dual( InstantiateStruct( x, sigma, param, sss, usedNames ) )
-      case EmptyPlusJunction()                   => EmptyPlusJunction()
-      case Plus( EmptyPlusJunction(), x )        => Plus( EmptyPlusJunction(), InstantiateStruct( x, sigma, param, sss, usedNames ) )
-      case Plus( x, EmptyPlusJunction() )        => Plus( InstantiateStruct( x, sigma, param, sss, usedNames ), EmptyPlusJunction() )
-      case Plus( x, y )                          => Plus( InstantiateStruct( x, sigma, param, sss, usedNames ), InstantiateStruct( y, sigma, param, sss, usedNames ) )
-      case EmptyTimesJunction()                  => EmptyTimesJunction()
-      case Times( x, EmptyTimesJunction(), aux ) => Times( InstantiateStruct( x, sigma, param, sss, usedNames ), EmptyTimesJunction(), aux )
-      case Times( EmptyTimesJunction(), x, aux ) => Times( EmptyTimesJunction(), InstantiateStruct( x, sigma, param, sss, usedNames ), aux )
-      case Times( x, y, aux )                    => Times( InstantiateStruct( x, sigma, param, sss, usedNames ), InstantiateStruct( y, sigma, param, sss, usedNames ), aux )
-      case CLS( pn, cc, _ ) =>
-        val Apps( Const( name, _ ), vs ) = pn
-        val newVs = vs.map( f =>
-          sigma( sigma.domain.foldLeft( f )( ( subform, varsig ) =>
-            if ( varsig.ty.equals( TBase( "nat" ) ) )
-              subform.find( natMaker( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) =>
-              ctx.get[ProofNames].names.get( name ) match {
-                case Some( proofName ) =>
-                  val Apps( _, lsymPN ) = proofName._1
-                  if ( param.equals( lsymPN.head ) ) nrepl
-                  else if ( varsig.equals( param ) ) nrepl.replace( curpos, varsig )
-                  else nrepl
-                case None => nrepl
-              })
-            else subform ) ) )
-        val setOfStructs = sss.getOrElse( name, Map() ).getOrElse( cc, Set() )
-        //picks the correct induction case
-        val ( _, ( Apps( _, vs2 ), _ ), _ ) = setOfStructs.foldLeft( ( 0, setOfStructs.head._1, setOfStructs.head._2 ) )( ( theCorrect, current ) => {
-          val ( ( Apps( _, argsLink ), _ ), clauses ) = current
-          val totalCount = newVs.zip( argsLink ).foldLeft( 0 )( ( count, curPair ) =>
-            if ( sigma( curPair._2 ).contains( curPair._1 ) ) count + 1 else count )
-          if ( totalCount > theCorrect._1 ) ( totalCount, current._1, clauses )
-          else theCorrect
-        } )
-        val newsigma = vs2.zip( newVs ).map {
-          case ( one, two ) =>
-            //We know this is at most size one for nat
-            freeVariables( one ).map( x => one.find( x ) ).foldLeft( List[HOLPosition]() )( ( fin, ll ) => fin ++ ll ).headOption match {
-              case Some( pos ) => ( one.get( pos ).getOrElse( one ), two.get( pos ).getOrElse( two ) )
-              case None        => ( one, two )
-            }
-        }.foldLeft( Substitution() )( ( sub, pair ) => if ( freeVariables( pair._1 ).isEmpty ) sub else sub.compose( Substitution( pair._1.asInstanceOf[Var], pair._2 ) ) )
-        InstanceOfSchematicStruct( name, cc, sss, newsigma, usedNames )
-      case _ => throw new Exception( "Unhandled case: " + theStruct )
-    }
+object InstantiateStruct extends  StructVisitor[Struct[Nothing],(Substitution,Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],Set[Var])]{
+  def apply( theStruct: Struct[Nothing],
+             sigma: Substitution,
+             param: Var,
+             sss: Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
+             usedNames: Set[Var] )( implicit ctx: Context ): Struct[Nothing] ={
+    val Transform = StructTransformer[Struct[Nothing],(Substitution,Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],Set[Var])](
+      aF, {(x,y,z) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,z) =>  Times[Nothing](x,y)},
+      EmptyTimesJunction(), {(x,y) =>  Dual[Nothing](x)}, cF)
+    recurse(theStruct,Transform,(sigma,param,sss,usedNames))
+  }
+  def aF[Data](f:Formula, info:(Substitution,
+                                Var,
+                                Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
+                                Set[Var]))( implicit ctx: Context ):Struct[Data] ={
+    val (sigma,param,sss,usedNames) = info
+    A( sigma( sigma.domain.foldLeft( f )( ( subForm, varSig ) =>
+      ( if ( varSig.ty.equals( TBase( "nat" ) ) ) subForm.find( natMaker( 1, varSig ) )
+      else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) =>
+        nRepl.replace( curPos, varSig ) ) ) ), List() )
+  }
+  def cF[Data](pn:Expr,cc:Sequent[Boolean], info:(Substitution,
+    Var,
+    Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
+    Set[Var]))( implicit ctx: Context ):Struct[Nothing] ={
+    val (sigma,param,sss,usedNames) = info
+    val Apps( Const( name, _ ), vs ) = pn
+    val newVs = vs.map( f =>
+      sigma( sigma.domain.foldLeft( f )( ( subform, varsig ) =>
+        if ( varsig.ty.equals( TBase( "nat" ) ) )
+          subform.find( natMaker( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) =>
+            ctx.get[ProofNames].names.get( name ) match {
+              case Some( proofName ) =>
+                val Apps( _, lsymPN ) = proofName._1
+                if ( param.equals( lsymPN.head ) ) nrepl
+                else if ( varsig.equals( param ) ) nrepl.replace( curpos, varsig )
+                else nrepl
+              case None => nrepl
+            })
+        else subform ) ) )
+    val setOfStructs = sss.getOrElse( name, Map() ).getOrElse( cc, Set() )
+    //picks the correct induction case
+    val ( _, ( Apps( _, vs2 ), _ ), _ ) = setOfStructs.foldLeft( ( 0, setOfStructs.head._1, setOfStructs.head._2 ) )( ( theCorrect, current ) => {
+      val ( ( Apps( _, argsLink ), _ ), clauses ) = current
+      val totalCount = newVs.zip( argsLink ).foldLeft( 0 )( ( count, curPair ) =>
+        if ( sigma( curPair._2 ).contains( curPair._1 ) ) count + 1 else count )
+      if ( totalCount > theCorrect._1 ) ( totalCount, current._1, clauses )
+      else theCorrect
+    } )
+    val newsigma = vs2.zip( newVs ).map {
+      case ( one, two ) =>
+        //We know this is at most size one for nat
+        freeVariables( one ).map( x => one.find( x ) ).foldLeft( List[HOLPosition]() )( ( fin, ll ) => fin ++ ll ).headOption match {
+          case Some( pos ) => ( one.get( pos ).getOrElse( one ), two.get( pos ).getOrElse( two ) )
+          case None        => ( one, two )
+        }
+    }.foldLeft( Substitution() )( ( sub, pair ) => if ( freeVariables( pair._1 ).isEmpty ) sub else sub.compose( Substitution( pair._1.asInstanceOf[Var], pair._2 ) ) )
+    InstanceOfSchematicStruct( name, cc, sss, newsigma, usedNames )
   }
 }
 
