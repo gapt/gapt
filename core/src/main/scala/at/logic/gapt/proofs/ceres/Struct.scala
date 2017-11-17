@@ -149,7 +149,7 @@ object A {
   def apply[Data]( fo: Formula ): Struct[Data] = A[Data]( fo, Nil )
 }
 
-case class CLS[Data]( proof: Expr, config: Sequent[Boolean]) extends Struct[Data] { // Clause Set Symbol Struct
+case class CLS[Data]( proof: Expr, config: Sequent[Boolean] ) extends Struct[Data] { // Clause Set Symbol Struct
   override def toString(): String = {
     val Apps( Const( pn, _ ), vs ) = proof
     "CLS(" + pn + " , " + config.toString + " , " + vs.toString() + ")"
@@ -176,7 +176,6 @@ case class CLS[Data]( proof: Expr, config: Sequent[Boolean]) extends Struct[Data
   }
   def children = Seq()
 }
-
 
 case class EmptyTimesJunction[Data]() extends Struct[Data] {
   override def toString(): String = "ε⊗"
@@ -231,7 +230,7 @@ object SchematicLeafs {
   def apply( l: Struct[Nothing] ): Set[Struct[Nothing]] = l match {
     case Times( le, r, _ ) => SchematicLeafs( le ) ++ SchematicLeafs( r )
     case Plus( le, r )     => SchematicLeafs( le ) ++ SchematicLeafs( r )
-    case CLS(x, y)    => Set[Struct[Nothing]]( l )
+    case CLS( x, y )       => Set[Struct[Nothing]]( l )
     case _                 => Set[Struct[Nothing]]()
 
   }

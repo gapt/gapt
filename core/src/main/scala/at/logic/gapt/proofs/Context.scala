@@ -328,27 +328,6 @@ object Context {
         ( declName, defPrf ) <- defs
         subst <- syntacticMatching( declName, name )
       } yield ( defPrf, subst )
-    def findMax( name: Expr ) = {
-      val defs = find( name )
-      if ( defs.isEmpty ) None else Some( defs.maxBy( _._2.domain.size ) )
-    }
-    /* def find( name: Expr ): Option[( LKProof, Substitution )] = {
-      val Apps( Const( c, _ ), _ ) = name
-      components.get( c ) match {
-        case Some( corCom: Set[( Expr, LKProof )] ) =>
-          val result: Iterable[( LKProof, Substitution )] = for {
-            ( declName, defPrf ) <- corCom
-            subst <- syntacticMatching( declName, name )
-          } yield ( defPrf, subst )
-          if ( result.nonEmpty ) Some( result.fold( result.head )( ( res, x ) => {
-            if ( res._2.domain.size < x._2.domain.size ) res else x
-          } ) )
-          else None
-
-        case None => None
-      }
-    }*/
-
     override def toString: String =
       components.map { case ( n, dfs ) => dfs.map( _._1 ).mkString( ", " ) }.mkString( "\n" )
   }

@@ -32,7 +32,7 @@ object SchematicStruct {
           if ( foundCases.contains( ( pf, ccon ) ) ) g
           else g + pb
         } ).foldLeft( Set[( String, Sequent[Boolean] )]() )( ( y, a ) => {
-          val CLS( Apps( Const( pf, _ ), _ ), ccon) = a
+          val CLS( Apps( Const( pf, _ ), _ ), ccon ) = a
           if ( pf.matches( topSym ) && ccon.equals( theActualConfig ) ) Set( ( pf, ccon ) )
           else y ++ Set( ( pf, ccon ) )
         } )
@@ -87,66 +87,61 @@ object InstanceOfSchematicStruct {
         //the already used eigenvariables.
         val regularizedStruct = Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), StructToInstantiate._2._2 ) )(
           ( reClause, nameVar ) => Set[Var]( Var( reClause._1._1.fresh( nameVar.name ), nameVar.ty ) ).map( newVar =>
-            ( ( reClause._1._1, reClause._1._2 + newVar ), RegularizeStruct(reClause._2, nameVar, newVar)) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
+            ( ( reClause._1._1, reClause._1._2 + newVar ), RegularizeStruct( reClause._2, nameVar, newVar ) ) ).head ) ).map( x => ( x._1._2, x._2 ) ).head
         //we now unfold the dependences
         InstantiateStruct( regularizedStruct._2, sigma, StructToInstantiate._1._2, sss, usedNames ++ regularizedStruct._1 )
       }
     }
   }
 }
-object RegularizeStruct extends  StructVisitor[Struct[Nothing],List[Var]]{
-  def apply( theStruct: Struct[Nothing], nameVar: Var, newVar: Var ): Struct[Nothing] ={
-    val Transform = StructTransformer[Struct[Nothing],List[Var]](
-      aF, {(x,y,_) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,_) =>  Times[Nothing](x,y)},
-      EmptyTimesJunction(), {(x,_) =>  Dual[Nothing](x)}, cF)
-    recurse(theStruct,Transform,List[Var](nameVar,newVar))
+object RegularizeStruct extends StructVisitor[Struct[Nothing], List[Var]] {
+  def apply( theStruct: Struct[Nothing], nameVar: Var, newVar: Var ): Struct[Nothing] = {
+    val Transform = StructTransformer[Struct[Nothing], List[Var]](
+      aF, { ( x, y, _ ) => Plus[Nothing]( x, y ) }, EmptyPlusJunction(), { ( x, y, _ ) => Times[Nothing]( x, y ) },
+      EmptyTimesJunction(), { ( x, _ ) => Dual[Nothing]( x ) }, cF )
+    recurse( theStruct, Transform, List[Var]( nameVar, newVar ) )
   }
-  def aF[Data](f:Formula, vars:List[Var]):Struct[Data] =  A( f.find( vars.head ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, vars.tail.head ) ), List() )
-  def cF[Data](pn:Expr,cc:Sequent[Boolean], vars:List[Var]):Struct[Data] ={
+  def aF[Data]( f: Formula, vars: List[Var] ): Struct[Data] = A( f.find( vars.head ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, vars.tail.head ) ), List() )
+  def cF[Data]( pn: Expr, cc: Sequent[Boolean], vars: List[Var] ): Struct[Data] = {
     val Apps( name, vs ) = pn
     val newVs = vs.map( f => f.find( vars.head ).foldLeft( f )( ( ff, pos ) => ff.replace( pos, vars.tail.head ) ) )
-    CLS( Apps( name, newVs ), cc)
+    CLS( Apps( name, newVs ), cc )
   }
 }
-object InstantiateStruct extends  StructVisitor[Struct[Nothing],(Substitution,Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],Set[Var])]{
-  def apply( theStruct: Struct[Nothing],
-             sigma: Substitution,
-             param: Var,
-             sss: Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
-             usedNames: Set[Var] )( implicit ctx: Context ): Struct[Nothing] ={
-    val Transform = StructTransformer[Struct[Nothing],(Substitution,Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],Set[Var])](
-      aF, {(x,y,_) =>  Plus[Nothing](x,y)}, EmptyPlusJunction(), {(x,y,_) =>  Times[Nothing](x,y)},
-      EmptyTimesJunction(), {(x,_) =>  Dual[Nothing](x)}, cF)
-    recurse(theStruct,Transform,(sigma,param,sss,usedNames))
+object InstantiateStruct extends StructVisitor[Struct[Nothing], ( Substitution, Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]], Set[Var] )] {
+  def apply(
+    theStruct: Struct[Nothing],
+    sigma:     Substitution,
+    param:     Var,
+    sss:       Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
+    usedNames: Set[Var] )( implicit ctx: Context ): Struct[Nothing] = {
+    val Transform = StructTransformer[Struct[Nothing], ( Substitution, Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]], Set[Var] )](
+      aF, { ( x, y, _ ) => Plus[Nothing]( x, y ) }, EmptyPlusJunction(), { ( x, y, _ ) => Times[Nothing]( x, y ) },
+      EmptyTimesJunction(), { ( x, _ ) => Dual[Nothing]( x ) }, cF )
+    recurse( theStruct, Transform, ( sigma, param, sss, usedNames ) )
   }
-  def aF[Data](f:Formula, info:(Substitution,
-                                Var,
-                                Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
-                                Set[Var]))( implicit ctx: Context ):Struct[Data] ={
-    val (sigma,_,_,_) = info
+  def aF[Data]( f: Formula, info: ( Substitution, Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]], Set[Var] ) )( implicit ctx: Context ): Struct[Data] = {
+    val ( sigma, _, _, _ ) = info
     A( sigma( sigma.domain.foldLeft( f )( ( subForm, varSig ) =>
       ( if ( varSig.ty.equals( TBase( "nat" ) ) ) subForm.find( natMaker( 1, varSig ) )
       else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) =>
         nRepl.replace( curPos, varSig ) ) ) ), List() )
   }
-  def cF[Data](pn:Expr,cc:Sequent[Boolean], info:(Substitution,
-    Var,
-    Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]],
-    Set[Var]))( implicit ctx: Context ):Struct[Nothing] ={
-    val (sigma,param,sss,usedNames) = info
+  def cF[Data]( pn: Expr, cc: Sequent[Boolean], info: ( Substitution, Var, Map[String, Map[Sequent[Boolean], Set[( ( Expr, Set[Var] ), Struct[Nothing] )]]], Set[Var] ) )( implicit ctx: Context ): Struct[Nothing] = {
+    val ( sigma, param, sss, usedNames ) = info
     val Apps( Const( name, _ ), vs ) = pn
     val newVs = vs.map( f =>
       sigma( sigma.domain.foldLeft( f )( ( subform, varsig ) =>
         if ( varsig.ty.equals( TBase( "nat" ) ) )
           subform.find( natMaker( 1, varsig ) ).foldLeft( subform )( ( nrepl, curpos ) =>
-            ctx.get[ProofNames].names.get( name ) match {
-              case Some( proofName ) =>
-                val Apps( _, lsymPN ) = proofName._1
-                if ( param.equals( lsymPN.head ) ) nrepl
-                else if ( varsig.equals( param ) ) nrepl.replace( curpos, varsig )
-                else nrepl
-              case None => nrepl
-            })
+          ctx.get[ProofNames].names.get( name ) match {
+            case Some( proofName ) =>
+              val Apps( _, lsymPN ) = proofName._1
+              if ( param.equals( lsymPN.head ) ) nrepl
+              else if ( varsig.equals( param ) ) nrepl.replace( curpos, varsig )
+              else nrepl
+            case None => nrepl
+          } )
         else subform ) ) )
     val setOfStructs = sss.getOrElse( name, Map() ).getOrElse( cc, Set() )
     //picks the correct induction case
