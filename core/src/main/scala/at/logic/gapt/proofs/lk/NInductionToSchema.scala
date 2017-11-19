@@ -19,14 +19,14 @@ object CreateASchemaVersion extends LKVisitor[( List[Expr], Context )] {
 }
 object ArithmeticInductionToSchema {
   def apply( proof: LKProof, pe: Expr )( implicit ctx: MutableContext ): Unit = {
-    val Apps( Const( name, tp ), _ ) = pe
+    val Apps( Const( nameT, tpp ), _ ) = pe
     val newNames: NameGenerator = rename.awayFrom(
       ctx.get[ProofNames].names.keySet.map( x => {
         val Apps( Const( na, t ), _ ) = ctx.get[ProofNames].names.getOrElse( x, {
           throw new Exception( "not defined" )
         } )._1
         Const( na, t )
-      } ) + Const( name, tp ) )
+      } ) + Const( nameT, tpp ) )
     val result = proof.subProofs.foldLeft( List[( Expr, LKProof )]() )( ( x, y ) => y match {
       case InductionRule( _, _, _ ) =>
         val es = y.endSequent
@@ -40,9 +40,8 @@ object ArithmeticInductionToSchema {
       case _ => x
     } )
     val resProof: LKProof = CreateASchemaVersion( proof, ( result.unzip._1, ctx ) )
-
     if ( ctx.get[ProofNames].lookup( pe ).isEmpty ) {
-      ctx += Const( name, tp )
+      ctx += Const( nameT, tpp )
       ctx += Context.ProofNameDeclaration( pe, resProof.endSequent )
     }
     ctx += Context.ProofDefinitionDeclaration( pe, resProof )

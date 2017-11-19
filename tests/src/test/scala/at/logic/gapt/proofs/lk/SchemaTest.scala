@@ -260,18 +260,18 @@ class SchemaTest extends Specification {
 
   {
     import at.logic.gapt.examples.induction.numbers.ctx
-    "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
+    "Constructing schematic pluscomm proof" in {
       val ccon = ctx.newMutable
       ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
       val res = ccon.get[ProofDefinitions].components.keySet.map( x => ccon.get[ProofDefinitions].components.getOrElse( x, Set() ) ).foldLeft( 0 )( ( x, y ) => x + y.size )
       res must_== 10
     }
 
-    "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
+    "Instantiating schematic pluscomm proof" in {
       val ccon = ctx.newMutable
       ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
       val P = hoc"P: nat>nat"
-      val proof = instantiateProof.Instantiate( le"${P} ${natMaker( 10 )}" )( ccon )
+      instantiateProof.Instantiate( le"$P ${natMaker( 10 )}" )( ccon )
       ok
     }
   }
