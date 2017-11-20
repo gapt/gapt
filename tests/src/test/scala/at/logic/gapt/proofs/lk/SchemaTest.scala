@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.proofs.Context.ProofDefinitions
+import at.logic.gapt.proofs.Context.{ProofDefinitions, Reductions}
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -141,8 +141,17 @@ class SchemaTest extends Specification {
     }
     "Schematic Formula Construction" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm = RecursiveCharForm( SCS )
+      val SchemForm = RecursiveCharFormN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
+    }
+    "Schematic Formula Construction PR Form" in {
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val SchemForm = RecursiveCharFormN.MakePRReadyN(RecursiveCharFormN( SCS ))
+      /* println(SchemForm)
+       val muCtx = ctx.newMutable
+       RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
+       println(muCtx.get[Reductions].normalizer.rules)*/
+      SchemForm.size must beEqualTo( 3 )
     }
   }
   {
@@ -243,8 +252,18 @@ class SchemaTest extends Specification {
     }
     "Schematic Formula Construction" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm = RecursiveCharForm( SCS )
+      val SchemForm = RecursiveCharFormN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
+    }
+    "Schematic Formula Construction PR Form" in {
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val SchemForm = RecursiveCharFormN.MakePRReadyN(RecursiveCharFormN( SCS ))
+      /*println(SchemForm)
+      val muCtx = ctx.newMutable
+      RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
+      println(muCtx.get[Reductions].normalizer.rules)*/
+      SchemForm.size must beEqualTo( 7 )
+
     }
   }
 
