@@ -10,6 +10,7 @@ import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context.{ProofDefinitions, Reductions}
 import at.logic.gapt.provers.escargot.Escargot
+import org.scalacheck.Prop.Exception
 import org.specs2.mutable.Specification
 
 /**
@@ -147,16 +148,15 @@ class SchemaTest extends Specification {
     "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val SchemForm = RecursiveCharFormN.MakePRReadyN(RecursiveCharFormN( SCS ))
-      /* println(SchemForm)
        val muCtx = ctx.newMutable
-       RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
-       println(muCtx.get[Reductions].normalizer.rules)*/
-      SchemForm.size must beEqualTo( 3 )
+
+      RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
+
+      muCtx.get[Reductions].normalizer.rules.size must beEqualTo(8)
     }
   }
   {
     import gniaSchema.ctx
-
     "gNia-schema both parameters zero" in {
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 0 )} ${natMaker( 0 )}" )
       ctx.check( proof )
@@ -255,16 +255,14 @@ class SchemaTest extends Specification {
       val SchemForm = RecursiveCharFormN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
     }
-    "Schematic Formula Construction PR Form" in {
+    //I think this is not allowed
+    /*"Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val SchemForm = RecursiveCharFormN.MakePRReadyN(RecursiveCharFormN( SCS ))
-      /*println(SchemForm)
       val muCtx = ctx.newMutable
       RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
-      println(muCtx.get[Reductions].normalizer.rules)*/
-      SchemForm.size must beEqualTo( 7 )
-
-    }
+      muCtx.get[Reductions].normalizer.rules.size  must beEqualTo( 18)
+    }*/
   }
 
   {

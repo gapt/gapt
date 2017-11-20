@@ -40,20 +40,32 @@ object RecursiveCharFormN {
     val names = constructingForm.structToformulaName( SCS )
     SCS.keySet.map( x => {
       val CLS( Apps( Const( name, _ ), vs ), cc ) = x
-      val thefirst = vs.headOption.getOrElse( {
-        throw new Exception( "Should not be empty" )
-      } )
+      val thefirst = vs.headOption.getOrElse( { throw new Exception( "Should not be empty" ) } )
       val result = if ( freeVariables( thefirst ).isEmpty ) None else Some( freeVariables( thefirst ).head )
-      val ( one, two ) = SCS.getOrElse( x, {
-        throw new Exception( "?????" )
-      } )
-      ( Atom( names.getOrElse( ( ( name, result ), cc ), {
-        throw new Exception( "?????" )
-      } ) + "PR", vs ), ( constructingForm( one, names ), two ) )
+      val ( one, two ) = SCS.getOrElse( x, { throw new Exception( "?????" ) } )
+      ( Atom( names.getOrElse( ( ( name, result ), cc ), { throw new Exception( "?????" ) } ) + "PR", vs ), ( constructingForm( one, names ), two ) )
     } ).toMap
   }
 
-  def MakePRReadyN( ChF: Map[Formula, ( Formula, Set[Var] )] ): Map[Expr, Set[( Formula, Formula )]] = {
+  def SwitchToApps( Form: Expr, newEx: Expr, const: String ): Expr = {
+    Form match {
+      case And( x, y )                      => And( SwitchToApps( x, newEx, const ), SwitchToApps( y, newEx, const ) )
+      case Or( x, y )                       => Or( SwitchToApps( x, newEx, const ), SwitchToApps( y, newEx, const ) )
+      case Neg( x )                         => Neg( SwitchToApps( x, newEx, const ) )
+      case App( ForallC( w ), Abs( r, x ) ) => App( ForallC( w ), Abs( r, SwitchToApps( x, newEx, const ) ) )
+      case App( ExistsC( w ), Abs( r, x ) ) => App( ExistsC( w ), Abs( r, SwitchToApps( x, newEx, const ) ) )
+      case Atom( Const( con, typ ), vs ) =>
+        if ( con.matches( const ) ) Apps( newEx, vs: _* )
+
+        else Atom( con, vs )
+      case Top()    => Top()
+      case Bottom() => Bottom()
+      case x        => throw new Exception( "Should't be here " + x )
+
+    }
+  }
+
+  def MakePRReadyN( ChF: Map[Formula, ( Formula, Set[Var] )] ): Map[Expr, Set[( Expr, Expr )]] = {
     val preRes = ChF.keySet.map( x => {
       val ( one, two ) = ChF.getOrElse( x, {
         throw new Exception( "?????" )
@@ -62,21 +74,30 @@ object RecursiveCharFormN {
         Apps( ForallC( y.ty ), Abs( y, x ) ).asInstanceOf[Formula]
       } ) )
     } ).toMap
-    val nextRes = preRes.keySet.map( x => {
+    val ( namecha, nextRes ) = preRes.keySet.map( x => {
       val one = preRes.getOrElse( x, {
         throw new Exception( "?????" )
       } )
-      val Atom( Const( name, _ ), vs ) = x
-      ( Const( name, TArr( vs.tail.foldLeft( vs.head.ty )( ( x, y ) => TArr( x, y.ty ) ), To ) ).asInstanceOf[Expr], ( x, one ) )
-    } )
-    nextRes.foldLeft( Map[Expr, Set[( Formula, Formula )]]() )( ( x, y ) => {
+      val Atom( Const( name, typ ), vs ) = x
+      //Need to reverse types!!!!!
+      val newEx = Const( name, vs.reverse.foldLeft( To.asInstanceOf[Ty] )( ( x, y ) => TArr( y.ty, x ) ) ).asInstanceOf[Expr]
+      ( ( name.substring( 0, name.length - 2 ), newEx ), ( newEx, ( Apps( newEx, vs: _* ), one ) ) )
+    } ).toList.unzip
+    val namesdis = namecha.toSet
+    nextRes.map {
+      case ( x, ( y, z ) ) => {
+        ( x, ( y, namesdis.foldLeft( z: Expr )( ( w, r ) => {
+          SwitchToApps( w, r._2, r._1 )
+        } ) ) )
+      }
+    }.foldLeft( Map[Expr, Set[( Expr, Expr )]]() )( ( x, y ) => {
       val ( one, ( two, three ) ) = y
       val theset = x.getOrElse( one, Set() ) ++ Set( ( two, three ) )
       x ++ Map( ( one, theset ) )
     } )
   }
 
-  def AddToContext( ChF: Map[Expr, Set[( Formula, Formula )]] )( implicit ctx: MutableContext ): Unit = {
+  def AddToContext( ChF: Map[Expr, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit = {
     ChF.keySet.foreach( x => {
       val one = ChF.getOrElse( x, {
         throw new Exception( "?????" )
@@ -96,6 +117,7 @@ object RecursiveCharFormN {
       val sc = ret._2.getOrElse( {
         throw new Exception( "?????" )
       } ).toString
+      println( bc + "    " + sc )
       ctx += PrimRecFun( x.asInstanceOf[Const], bc, sc )
     } )
   }
