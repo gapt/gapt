@@ -260,14 +260,13 @@ class SchemaTest extends Specification {
       val SchemForm = CharFormPRN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
     }
-    //I think this is not allowed TODO figure out ordering problem
-    /*  "Schematic Formula Construction PR Form" in {
+      "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val SchemForm =CharFormPRN( SCS )
       val muCtx = ctx.newMutable
       CharFormPRN.PR(SchemForm)(muCtx)
       muCtx.get[Reductions].normalizer.rules.size  must beEqualTo( 18)
-    }*/
+    }
   }
 
   {

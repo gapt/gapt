@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.PrimRecFun
+import at.logic.gapt.proofs.Context.{ PrimRecFun, PrimRecFunBatch }
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 
 object CharFormN extends StructVisitor[Formula, List[Nothing]] {
@@ -106,7 +106,7 @@ private object Support {
   }
 
   private def addintern( ChF: Map[Expr, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit = {
-    ChF.keySet.foreach( x => {
+    val forCtx = ChF.keySet.map( x => {
       val one = ChF.getOrElse( x, {
         throw new Exception( "?????" )
       } )
@@ -125,9 +125,9 @@ private object Support {
       val sc = ret._2.getOrElse( {
         throw new Exception( "?????" )
       } ).toString
-      val Const( n, _ ) = x
-      ctx += PrimRecFun( x.asInstanceOf[Const], bc, sc )
+      ( x.asInstanceOf[Const], Seq( bc, sc ) )
     } )
+    ctx += PrimRecFun( forCtx )
   }
   private object constructingForm extends StructVisitor[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]] {
     def apply[Data]( struct: Struct[Data], names: Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String],
