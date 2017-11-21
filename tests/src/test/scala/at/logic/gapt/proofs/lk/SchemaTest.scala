@@ -10,7 +10,6 @@ import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context.{ProofDefinitions, Reductions}
 import at.logic.gapt.provers.escargot.Escargot
-import org.scalacheck.Prop.Exception
 import org.specs2.mutable.Specification
 
 /**
@@ -75,7 +74,7 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
-      val Form = CharacteristicFormulaN( thestruct )
+      val Form = CharFormN( thestruct )
       subsumedClausesRemoval( CNFp( Form ).toList )
       ok
     }
@@ -88,7 +87,15 @@ class SchemaTest extends Specification {
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
     }
-
+   /* " Nia-schema proving Positive Characteristic Formula Instance 1" in {
+      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 1 )}" )
+      ctx.check( proof )
+      val thestruct = StructCreators.extract( proof )( ctx )
+      val cs = CharFormN(thestruct)
+      val refutation = Escargot.getLKProof( cs )
+      refutation must beSome
+    }
+*/
     " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
       SchematicStruct( "omega" )( ctx ) must beSome
       ok
@@ -135,23 +142,21 @@ class SchemaTest extends Specification {
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
-      val nonclauseset = subsumedClausesRemoval( CNFp( CharacteristicFormulaN( thestruct ) ).toList )
+      val nonclauseset = subsumedClausesRemoval( CNFp( CharFormN( thestruct ) ).toList )
       val fin = ( Sclauseset.forall( s => nonclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ||
         nonclauseset.forall( s => Sclauseset.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonclauseset.size == Sclauseset.size
       fin must beEqualTo( true )
     }
     "Schematic Formula Construction" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm = RecursiveCharFormN( SCS )
+      val SchemForm = CharFormPRN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
     }
     "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm = RecursiveCharFormN.MakePRReadyN(RecursiveCharFormN( SCS ))
+      val SchemForm = CharFormPRN( SCS )
        val muCtx = ctx.newMutable
-
-      RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
-
+      CharFormPRN.PR(SchemForm)(muCtx)
       muCtx.get[Reductions].normalizer.rules.size must beEqualTo(8)
     }
   }
@@ -245,22 +250,22 @@ class SchemaTest extends Specification {
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
-      val nonClauseSet = subsumedClausesRemoval( CNFp( CharacteristicFormulaN( theStruct ) ).toList )
+      val nonClauseSet = subsumedClausesRemoval( CNFp( CharFormN( theStruct ) ).toList )
       val fin = ( SClauseSet.forall( s => nonClauseSet.exists( clauseSubsumption( _, s ).isDefined ) ) ||
         nonClauseSet.forall( s => SClauseSet.exists( clauseSubsumption( _, s ).isDefined ) ) ) && nonClauseSet.size == SClauseSet.size
       fin must beEqualTo( true )
     }
     "Schematic Formula Construction" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm = RecursiveCharFormN( SCS )
+      val SchemForm = CharFormPRN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
     }
-    //I think this is not allowed
-    /*"Schematic Formula Construction PR Form" in {
+    //I think this is not allowed TODO figure out ordering problem
+    /*  "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm = RecursiveCharFormN.MakePRReadyN(RecursiveCharFormN( SCS ))
+      val SchemForm =CharFormPRN( SCS )
       val muCtx = ctx.newMutable
-      RecursiveCharFormN.AddToContext(SchemForm)(muCtx)
+      CharFormPRN.PR(SchemForm)(muCtx)
       muCtx.get[Reductions].normalizer.rules.size  must beEqualTo( 18)
     }*/
   }

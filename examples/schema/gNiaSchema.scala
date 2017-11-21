@@ -87,7 +87,49 @@ object gniaSchema extends TacticsProof {
       hof"!x?y (LEQ(x,y) & POR(n,y) )" ),
     Seq( hof"?p Ech(m,p)" ) )
   ctx += Context.ProofNameDeclaration( le"phi n m", esphi )
+  //The base case of  mubase
+  val esMubaseBc = Sequent(
+    Seq(
+      ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ),
+    Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) ) )
+  val mubaseBc = Lemma( esMubaseBc ) {
+    allL( "Ant_2", hoc"z:i" )
+    exL( fov"B" )
+    allL( "Ant_2", le"(g B)" )
+    exL( fov"A" )
+    exR( fov"B" )
+    unfold( "Ech" ) atMost 1 in "Suc_0_0"
+    exR( "Suc_0_0", fov"A" )
+    andL( "Ant_2_1" )
+    andL
+    andR
+    foTheory
+    foTheory
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"mubase 0", mubaseBc )
 
+  //The step case of  mu
+  val esMubaseSc = Sequent(
+    Seq(
+      ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ),
+    Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) ) )
+  val mubaseSc = Lemma( esMubaseSc ) {
+    allL( "Ant_2", hoc"z:i" )
+    exL( fov"B" )
+    allL( "Ant_2", le"(g B)" )
+    exL( fov"A" )
+    exR( fov"B" )
+    unfold( "Ech" ) atMost 1 in "Suc_0_0"
+    exR( "Suc_0_0", fov"A" )
+    andL( "Ant_2_1" )
+    andL
+    andR
+    andR
+    ref( "nu" )
+    foTheory
+    foTheory
+  }
+  ctx += Context.ProofDefinitionDeclaration( le"mubase (s m)", mubaseSc )
   //The base case of  nu
   val esNuBc = Sequent(
     Seq(
@@ -212,49 +254,6 @@ object gniaSchema extends TacticsProof {
   }
   ctx += Context.ProofDefinitionDeclaration( le"mu (s m) n ", muSc )
 
-  //The base case of  mubase
-  val esMubaseBc = Sequent(
-    Seq(
-      ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ),
-    Seq( ( "Suc_0" -> hof"?q Ech(0,q)" ) ) )
-  val mubaseBc = Lemma( esMubaseBc ) {
-    allL( "Ant_2", hoc"z:i" )
-    exL( fov"B" )
-    allL( "Ant_2", le"(g B)" )
-    exL( fov"A" )
-    exR( fov"B" )
-    unfold( "Ech" ) atMost 1 in "Suc_0_0"
-    exR( "Suc_0_0", fov"A" )
-    andL( "Ant_2_1" )
-    andL
-    andR
-    foTheory
-    foTheory
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"mubase 0", mubaseBc )
-
-  //The step case of  mu
-  val esMubaseSc = Sequent(
-    Seq(
-      ( "Ant_2" -> hof"!x?y(LEQ(x,y) & E(f(y),0))" ) ),
-    Seq( ( "Suc_0" -> hof"?q Ech(s(m),q)" ) ) )
-  val mubaseSc = Lemma( esMubaseSc ) {
-    allL( "Ant_2", hoc"z:i" )
-    exL( fov"B" )
-    allL( "Ant_2", le"(g B)" )
-    exL( fov"A" )
-    exR( fov"B" )
-    unfold( "Ech" ) atMost 1 in "Suc_0_0"
-    exR( "Suc_0_0", fov"A" )
-    andL( "Ant_2_1" )
-    andL
-    andR
-    andR
-    ref( "nu" )
-    foTheory
-    foTheory
-  }
-  ctx += Context.ProofDefinitionDeclaration( le"mubase (s m)", mubaseSc )
   // The Basecase of chi
   val esChiBc = Sequent(
     Seq(
