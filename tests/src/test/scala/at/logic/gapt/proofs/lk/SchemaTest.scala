@@ -8,7 +8,7 @@ import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.proofs.Context.{ProofDefinitions, Reductions}
+import at.logic.gapt.proofs.Context.{ ProofDefinitions, Reductions }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 
@@ -87,7 +87,7 @@ class SchemaTest extends Specification {
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
     }
-   /* " Nia-schema proving Positive Characteristic Formula Instance 1" in {
+    /* " Nia-schema proving Positive Characteristic Formula Instance 1" in {
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 1 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -155,9 +155,9 @@ class SchemaTest extends Specification {
     "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val SchemForm = CharFormPRN( SCS )
-       val muCtx = ctx.newMutable
-      CharFormPRN.PR(SchemForm)(muCtx)
-      muCtx.get[Reductions].normalizer.rules.size must beEqualTo(8)
+      val muCtx = ctx.newMutable
+      CharFormPRN.PR( SchemForm )( muCtx )
+      muCtx.get[Reductions].normalizer.rules.size must beEqualTo( 8 )
     }
   }
   {
@@ -260,12 +260,12 @@ class SchemaTest extends Specification {
       val SchemForm = CharFormPRN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
     }
-      "Schematic Formula Construction PR Form" in {
+    "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm =CharFormPRN( SCS )
+      val SchemForm = CharFormPRN( SCS )
       val muCtx = ctx.newMutable
-      CharFormPRN.PR(SchemForm)(muCtx)
-      muCtx.get[Reductions].normalizer.rules.size  must beEqualTo( 18)
+      CharFormPRN.PR( SchemForm )( muCtx )
+      muCtx.get[Reductions].normalizer.rules.size must beEqualTo( 18 )
     }
   }
 
