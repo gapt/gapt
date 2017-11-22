@@ -8,15 +8,63 @@ import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
-import at.logic.gapt.proofs.Context.{ProofDefinitions, Reductions}
+import at.logic.gapt.proofs.Context._
+import at.logic.gapt.proofs.{ImmutableContext, Sequent}
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
-
+import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.proofs.gaptic.tactics.EscargotTactic
 /**
  * Test for schema code
  * Created by David M. Cerna on 11.02.17.
  */
+
+class proofes(initialContext: ImmutableContext ) extends TacticsProof(initialContext)  {
+  def prove0(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+    val es = Sequent(Seq("Ant_0" -> hof"omegaPR(0)"), Seq())
+    Lemma(es) {
+      unfold("omegaPR") atMost 1 in "Ant_0"
+      unfold("chiPR") atMost 2 in "Ant_0"
+      unfold("phiPR") atMost 2 in "Ant_0"
+      unfold("chiPR") atMost 2 in "Ant_0"
+      EscargotTactic()
+    }
+  }
+  def prove1(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+    val es = Sequent(Seq("Ant_0" -> hof"omegaPR(s(0))"), Seq())
+    Lemma(es) {
+      unfold("omegaPR") atMost 1 in "Ant_0"
+      unfold("chiPR") atMost 10 in "Ant_0"
+      unfold("phiPR") atMost 10 in "Ant_0"
+      unfold("chiPR") atMost 10 in "Ant_0"
+      EscargotTactic()
+    }
+  }
+
+  def prove0p(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+    val es = Sequent(Seq(),Seq("Suc_0" -> hof"omegaPR(0)"))
+    Lemma(es) {
+      unfold("omegaPR") atMost 1 in "Suc_0"
+      unfold("chiPR") atMost 2 in "Suc_0"
+      unfold("phiPR") atMost 2 in "Suc_0"
+      unfold("chiPR") atMost 2 in "Suc_0"
+      EscargotTactic()
+    }
+  }
+  def prove1p(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+    val es = Sequent(Seq(),Seq("Suc_0" -> hof"omegaPR(s(0))"))
+    Lemma(es) {
+      unfold("omegaPR") atMost 1 in "Suc_0"
+      unfold("chiPR") atMost 10 in "Suc_0"
+      unfold("phiPR") atMost 10 in "Suc_0"
+      unfold("chiPR") atMost 10 in "Suc_0"
+      EscargotTactic()
+    }
+  }
+}
+
 class SchemaTest extends Specification {
+
   {
     import tautSchema.ctx
     "simple schema basecase" in {
@@ -87,15 +135,40 @@ class SchemaTest extends Specification {
       val refutation = Escargot.getResolutionProof( cs )
       refutation must beSome
     }
-   /* " Nia-schema proving Positive Characteristic Formula Instance 1" in {
-      val proof = instantiateProof.Instantiate( le"omega ${natMaker( 1 )}" )
-      ctx.check( proof )
-      val thestruct = StructCreators.extract( proof )( ctx )
-      val cs = CharFormN(thestruct)
-      val refutation = Escargot.getLKProof( cs )
-      refutation must beSome
+    " Proof Nia-schema Characteristic Formula Instance 0" in {
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val ctx2 = ctx.newMutable
+      CharFormPRN.PR(CharFormPRN(SCS))(ctx2)
+      val proof = new proofes(ctx2.toImmutable).prove0(SCS)
+      ctx2.check( proof )
+      ok
     }
-*/
+    " Proof Nia-schema Characteristic Formula Instance 1" in {
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val ctx2 = ctx.newMutable
+      CharFormPRN.PR(CharFormPRN(SCS))(ctx2)
+      val proof = new proofes(ctx2.toImmutable).prove1(SCS)
+      ctx2.check( proof )
+      ok
+    }
+    " Proof Nia-schema Positive Characteristic Formula Instance 0" in {
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val ctx2 = ctx.newMutable
+      CharFormPRP.PR(CharFormPRP(SCS))(ctx2)
+      val proof = new proofes(ctx2.toImmutable).prove0p(SCS)
+      ctx2.check( proof )
+      ok
+    }
+    " Proof Nia-schema Positive Characteristic Formula Instance 1" in {
+      val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
+      val ctx2 = ctx.newMutable
+      CharFormPRP.PR(CharFormPRP(SCS))(ctx2)
+      val proof = new proofes(ctx2.toImmutable).prove1p(SCS)
+      ctx2.check( proof )
+      ok
+    }
+
+
     " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
       SchematicStruct( "omega" )( ctx ) must beSome
       ok

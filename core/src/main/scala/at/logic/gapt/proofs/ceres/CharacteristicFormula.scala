@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr._
+import at.logic.gapt.expr.{ And, _ }
+import at.logic.gapt.expr.hol.{ CNFn, toNNF }
 import at.logic.gapt.proofs.Context.{ PrimRecFun, PrimRecFunBatch }
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 
@@ -10,21 +11,30 @@ object CharFormN extends StructVisitor[Formula, List[Nothing]] {
     { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Nil )
 }
 object CharFormPRN {
-  def apply( SCS: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support( SCS, stTN )
+  def apply( SCS: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support(
+    SCS, stTN ) //.map{ case (x,(y,z)) => (x,(SCSinCNF(y),z)) }
+  private def SCSinCNF( st: Struct[Nothing] ): Struct[Nothing] = st match {
+    case Plus( x, Times( y, z, w ) ) => Times[Nothing]( Plus[Nothing]( SCSinCNF( x ), SCSinCNF( y ) ), Plus[Nothing]( SCSinCNF( x ), SCSinCNF( z ) ), w )
+    case Plus( Times( y, z, w ), x ) => Times[Nothing]( Plus[Nothing]( SCSinCNF( y ), SCSinCNF( x ) ), Plus[Nothing]( SCSinCNF( z ), SCSinCNF( x ) ), w )
+    case Plus( x, y )                => Plus[Nothing]( SCSinCNF( x ), SCSinCNF( y ) )
+    case Times( x, y, w )            => Times[Nothing]( SCSinCNF( x ), SCSinCNF( y ), w )
+    case Dual( x )                   => Dual[Nothing]( SCSinCNF( x ) )
+    case x                           => x
+  }
   private val stTN = StructTransformer[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]](
     { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) }, Support.cF )
   def PR( ChF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( ChF, ForallC )
 }
 object CharFormP extends StructVisitor[Formula, List[Nothing]] {
   def apply[Data]( struct: Struct[Data] ): Formula = recurse( struct, StructTransformer[Formula, List[Nothing]](
-    { ( x, _ ) => x }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) },
+    { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) },
     { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Nil )
 }
 object CharFormPRP {
   def apply( SCS: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support( SCS, stTP )
   private val stTP = StructTransformer[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]](
-    { ( x, _ ) => x }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) }, Support.cF )
-  def PR( ChF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( ChF, ForallC )
+    { ( x, _ ) => Neg( x ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) }, Support.cF )
+  def PR( ChF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( ChF, ExistsC )
 }
 
 private object Support {
@@ -53,14 +63,31 @@ private object Support {
     val result: Option[Expr] = freeVariables( thefirst ).headOption
     Atom( mn.getOrElse( ( ( name, result ), cc ), { throw new Exception( "Should be in map" ) } ), vs )
   }
-  def add( ChF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC = ForallC )( implicit ctx: MutableContext ): Unit = {
+  //assuming NNFCNF
+  private def QuantIntroForAll( f: Formula, qType: QuantifierC, evar: Set[Var] ): Formula = f match {
+    case And( x, y )  => And( QuantIntroForAll( x, qType, evar ), QuantIntroForAll( y, qType, evar ) )
+    case Or( _, _ )   => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Atom( _, _ ) => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Top()        => Top()
+    case Bottom()     => Bottom()
+    case Neg( x )     => Neg( QuantIntroForAll( x, qType, evar ) )
+    case _            => throw new Exception( "???????????????" + f )
+  }
+  private def QuantIntroExists( f: Formula, qType: QuantifierC, evar: Set[Var] ): Formula = f match {
+    case And( x, y )  => And( QuantIntroExists( x, qType, evar ), QuantIntroExists( y, qType, evar ) )
+    case Or( _, _ )   => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Atom( _, _ ) => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Top()        => Top()
+    case Bottom()     => Bottom()
+    case Neg( x )     => Neg( QuantIntroExists( x, qType, evar ) )
+    case _            => throw new Exception( "???????????????" + f )
+  }
+  def add( ChF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
     val preRes = ChF.keySet.map( x => {
       val ( one, two ) = ChF.getOrElse( x, {
         throw new Exception( "?????" )
       } )
-      ( x, two.foldLeft( one )( ( x, y ) => {
-        Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula]
-      } ) )
+      ( x, if ( qType.equals( ForallC ) ) QuantIntroForAll( one, qType, two ) else QuantIntroExists( one, qType, two ) )
     } ).toMap
     val ( namecha, nextRes ) = preRes.keySet.map( x => {
       val one = preRes.getOrElse( x, {
@@ -114,7 +141,7 @@ private object Support {
         val ( y, w ) = z
         val Atom( _, vs ) = y
         val zero = ctx.get[Context.Constants].constants.getOrElse( "0", {
-          throw new Exception( "nat not defined" )
+          throw new Exception( "nat not defined" + ctx.get[Context.Constants].constants.toString() )
         } )
         if ( vs.head.equals( zero ) ) ( Some( Apps( EqC( y.ty ), Seq[Expr]( y, w ) ) ), x._2 )
         else ( x._1, Some( Apps( EqC( y.ty ), Seq[Expr]( y, w ) ) ) )
