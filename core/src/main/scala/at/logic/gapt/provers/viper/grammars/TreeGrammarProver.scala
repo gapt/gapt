@@ -2,42 +2,44 @@ package at.logic.gapt.provers.viper.grammars
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, folTermSize }
-import at.logic.gapt.expr.hol.{ CNFp, instantiate, universalClosure }
+import at.logic.gapt.expr.hol._
 import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.grammars.Rule
-import at.logic.gapt.proofs.Context.{ BaseTypes, StructurallyInductiveTypes }
+import at.logic.gapt.grammars.{ InductionGrammar, findMinimalInductionGrammar }
+import at.logic.gapt.grammars.InductionGrammar.Production
+import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs.expansion.{ ExpansionProof, InstanceTermEncoding, minimalExpansionSequent }
-import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof, skolemize }
-import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
-import at.logic.gapt.provers.{ OneShotProver, Prover }
+import at.logic.gapt.proofs.lk.{ EquationalLKProver, LKProof }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent, withSection }
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.FloatRange
-import at.logic.gapt.utils.{ Logger, Maybe }
+import at.logic.gapt.provers.{ OneShotProver, Prover }
+import at.logic.gapt.utils.{ Maybe, TimeOutException }
+import at.logic.gapt.utils.logger._
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 import scala.collection.mutable
 
 object DefaultProvers {
   val firstOrder: Prover = Escargot
-  val smt: Prover =
-    if ( VeriT.isInstalled ) VeriT
-    else new Escargot( splitting = true, propositional = true, equality = true )
+  val smtEscargot = new Escargot( splitting = true, propositional = true, equality = true )
+  val smt: Prover = if ( VeriT.isInstalled ) VeriT else smtEscargot
 }
 
 import TreeGrammarProverOptions._
 case class TreeGrammarProverOptions(
+    goalQuantifier:   Int                 = 0,
     instanceNumber:   Int                 = 10,
     instanceSize:     FloatRange          = ( 0, 2 ),
     instanceProver:   Prover              = DefaultProvers.firstOrder,
     smtSolver:        Prover              = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
-    findingMethod:    String              = "maxsat",
     quantTys:         Option[Seq[String]] = None,
-    grammarWeighting: Rule => Int         = _ => 1,
+    grammarWeighting: Production => Int   = _ => 1,
     tautCheckNumber:  Int                 = 10,
     tautCheckSize:    FloatRange          = ( 2, 3 ),
     canSolSize:       FloatRange          = ( 2, 4 ),
-    forgetOne:        Boolean             = false,
+    maxSATSolver:     MaxSATSolver        = bestAvailableMaxSatSolver,
     equationalTheory: Seq[Formula]        = Seq() )
 
 object TreeGrammarProverOptions {
@@ -68,31 +70,31 @@ object TreeGrammarProverOptions {
   }
 }
 
-class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) extends Logger {
+class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options: TreeGrammarProverOptions ) {
   implicit def ctx_ : Context = ctx
 
-  val Sequent( theory, Seq( conj @ All.Block( vs, _ ) ) ) = sequent
-  val paramTypes: List[TBase] = vs.map( _.ty ).map( _.asInstanceOf[TBase] )
+  val Sequent( theory, Seq( quantGoal @ All( v0, _ ) ) ) = sequent
+  require( !containsQuantifierOnLogicalLevel( instantiate( quantGoal, v0 ) ) )
 
-  val instanceGen = new EnumeratingInstanceGenerator( paramTypes, implicitly )
+  val indTy = v0.ty.asInstanceOf[TBase]
 
-  val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, vs ) ) )
+  val quantTys = options.quantTys.getOrElse( ctx.get[StructurallyInductiveTypes].constructors.keySet - "o" ).toList.map( TBase( _ ) )
+  val gamma = for ( ( t, i ) <- quantTys.zipWithIndex ) yield Var( s"γ_$i", t )
 
-  type Instance = Seq[Expr]
-
-  val grammarFinder: MaxSatRecSchemFinder = options.findingMethod match {
-    case "maxsat" | "maxsatinst" =>
-      val pi1QTys = options.quantTys getOrElse ( ctx.get[StructurallyInductiveTypes].constructors.keySet - "o" ).toSeq
-      val msrsf = MaxSatRecSchemFinder( vs.map( _.ty ), pi1QTys.flatMap( ctx.get[BaseTypes].baseTypes.get ), encoding.instanceTermType,
-        options.grammarWeighting, options.findingMethod == "maxsatinst",
-        implicitly )
-
-      info( "Recursion scheme template:" )
-      for ( ( lhs, rhs ) <- msrsf.template.template.toSeq.sortBy( _._1.toString ) )
-        info( s"$lhs -> $rhs" )
-
-      msrsf
+  val ( tau, alpha, nus ) = {
+    val defaultNames = InductionGrammar.defaultNonTerminalNames(
+      rename.awayFrom( containedNames( sequent ) ++ gamma ),
+      indTy, InstanceTermEncoding.defaultType, gamma )
+    ( defaultNames.tau, defaultNames.alpha, defaultNames.nus )
   }
+
+  val goal = instantiate( quantGoal, alpha )
+
+  val encoding = InstanceTermEncoding( sequent.map( identity, instantiate( _, alpha ) ) )
+
+  val instanceGen = new EnumeratingInstanceGenerator( Seq( indTy ), implicitly )
+
+  type Instance = Expr
 
   val smtSolver: Prover =
     if ( options.equationalTheory.isEmpty ) options.smtSolver
@@ -102,84 +104,80 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( sequent )
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
-    for ( inst <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
+    for ( Seq( inst ) <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
       instanceProofs( inst ) = getInstanceProof( inst )
 
     while ( true ) {
-      val spwi = findSPWI( instanceProofs )
+      val bup = findBUP( instanceProofs )
 
       for ( ( inst, _ ) <- instanceProofs ) {
-        val genLang = spwi.generatedLanguage( inst )
+        val genLang = bup.grammar.instanceLanguage( inst )
         require(
-          smtSolver.isValid( And( genLang ) --> instantiate( conj, inst ) ),
+          smtSolver.isValid( encoding.decodeToInstanceSequent( genLang ).toNegConjunction --> instantiate( quantGoal, inst ) ),
           s"Generated instance language for $inst not tautological:\n${genLang.map( _.toSigRelativeString ).mkString( "\n" )}" )
       }
 
-      findMinimalCounterexample( instanceProofs.keys, spwi ) match {
+      findMinimalCounterexample( instanceProofs.keys, bup ) match {
         case Some( inst ) =>
           instanceProofs( inst ) = getInstanceProof( inst )
 
         case None =>
-          return solveSPWI( spwi )
+          return solveBUP( bup )
       }
     }
     throw new IllegalArgumentException
   }
 
-  def findSPWI( instanceProofs: Iterable[( Instance, ExpansionProof )] ): SchematicProofWithInduction = {
-    val taggedLanguage =
-      for {
-        ( inst, es ) <- instanceProofs
-        term <- encoding.encode( es.expansionSequent.antecedent ++: Sequent() )
-      } yield inst -> term
+  def findBUP( instanceProofs: Iterable[( Instance, ExpansionProof )] ): InductionBUP = {
+    val indexedTermset = Map() ++
+      instanceProofs.map { case ( inst, es ) => inst -> encoding.encode( es.expansionSequent.copy( succedent = Vector() ) ) }
 
-    val spwi = grammarFinder.find( sequent, encoding, implicitly[Context], taggedLanguage.toSet )
+    val Some( grammar ) = findMinimalInductionGrammar(
+      indexedTermset,
+      tau, alpha, nus, gamma,
+      options.maxSATSolver, options.grammarWeighting )
 
-    info( s"Found schematic proof with induction:\n$spwi\n" )
-    for ( ( Apps( _, inst ), terms ) <- taggedLanguage groupBy { _._1 } ) {
-      val genLang = spwi.generatedLanguage( inst ).map( encoding.encode )
+    info( s"Found grammar:\n$grammar\n" )
+    for ( ( inst, terms ) <- indexedTermset ) {
+      val genLang = grammar.instanceLanguage( inst )
       require(
-        terms.map { _._2 }.toSet subsetOf genLang,
-        s"Terms not covered by recursion scheme in $inst:\n${terms.map { _._2.toSigRelativeString }.mkString( "\n" )}" )
+        terms subsetOf genLang,
+        s"Terms not covered by recursion scheme in $inst:\n${terms.map( _.toSigRelativeString ).mkString( "\n" )}" )
     }
 
-    spwi
+    InductionBUP( grammar, encoding, goal )
   }
 
-  def findMinimalCounterexample( correctInstances: Iterable[Instance], spwi: SchematicProofWithInduction ): Option[Seq[Expr]] = {
-    def checkInst( inst: Seq[Expr] ): Boolean = smtSolver.isValid( And( spwi.generatedLanguage( inst ) ) --> instantiate( conj, inst ) )
+  def findMinimalCounterexample( correctInstances: Iterable[Instance], bup: InductionBUP ): Option[Expr] = {
+    def checkInst( inst: Instance ): Boolean =
+      smtSolver.isValid( encoding.decodeToInstanceSequent( bup.grammar.instanceLanguage( inst ) ).toNegConjunction -->
+        instantiate( quantGoal, inst ) )
     val scale = ( 5 +: correctInstances.toSeq.map( folTermSize( _ ) ) ).max
     val testInstances =
-      instanceGen.generate( 0, 5, 10 ) ++
-        instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber )
+      ( instanceGen.generate( 0, 5, 10 ) ++
+        instanceGen.generate( options.tautCheckSize._1 * scale, options.tautCheckSize._2 * scale, options.tautCheckNumber ) ).map( _.head )
     val failedInstOption = testInstances.toSeq.
       sortBy( folTermSize( _ ) ).view.
       filterNot { inst =>
         val ok = checkInst( inst )
-        info( s"Checking validity for instance ${inst.map( _.toSigRelativeString )}: $ok" )
+        info( s"Checking validity for instance ${inst.toSigRelativeString}: $ok" )
         ok
       }.headOption
     failedInstOption map { failedInst =>
-      import cats.instances.list._
-      import cats.syntax.traverse._
-      val minimalCounterExample = ( failedInst.toList.
-        traverse( i => folSubTerms( i ).filter( _.ty == i.ty ).toList ).
-        filterNot( checkInst ) :+ failedInst.toList ).
-        minBy { _ map { expressionSize( _ ) } sum }
-      info( s"Minimal counterexample: ${minimalCounterExample.map { _.toSigRelativeString }}" )
+      val minimalCounterExample = (
+        folSubTerms( failedInst ).filter( _.ty == indTy ).toList.filterNot( checkInst )
+        :+ failedInst ).minBy( expressionSize( _ ) )
+      info( s"Minimal counterexample: ${minimalCounterExample.toSigRelativeString}" )
       minimalCounterExample
     }
   }
 
-  def solveSPWI( spwi: SchematicProofWithInduction ): LKProof = {
-    val qbup @ Ex( x_B, qbupMatrix ) = spwi.solutionCondition
+  def solveBUP( bup: InductionBUP ): LKProof = {
+    val qbup @ Ex( x_B, qbupMatrix ) = bup.formula
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
-    val axiomArgs = for ( ( t, i ) <- paramTypes.zipWithIndex ) yield Var( s"y_$i", t )
-    val canSolInst = instanceGen.generate( options.canSolSize._1, options.canSolSize._2, 1 ).head
-    val pi1QTys = FunctionType.unapply( x_B.ty ).get._2.drop( axiomArgs.size + canSolInst.size )
-    val ws = for ( ( t, i ) <- pi1QTys.zipWithIndex ) yield Var( s"w_$i", t )
-    val xInst = x_B( axiomArgs: _* )( canSolInst: _* )( ws: _* ).asInstanceOf[Formula]
+    val canSolInst = instanceGen.generate( options.canSolSize._1, options.canSolSize._2, 1 ).head.head
+    val xInst = bup.X( alpha, canSolInst )( gamma ).asInstanceOf[Formula]
 
     info( s"Canonical solution at ${xInst.toSigRelativeString}:" )
     val canSol = hSolveQBUP.canonicalSolution( qbupMatrix, xInst )
@@ -194,10 +192,11 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
     require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), "Solution not valid" )
 
-    val proof = spwi.lkProof(
-      Seq( solution ),
-      if ( options.equationalTheory.isEmpty ) EquationalLKProver else Escargot,
-      options.equationalTheory )
+    val proof = constructSIP(
+      sequent, options.equationalTheory.toVector,
+      bup,
+      solution,
+      if ( options.equationalTheory.isEmpty ) EquationalLKProver else Escargot )( ctx.newMutable )
     info( s"Found proof with ${proof.dagLike.size} inferences" )
 
     ctx.check( proof )
@@ -205,8 +204,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
-  def getInstanceProof( inst: Seq[Expr] ): ExpansionProof = {
-    info( s"Proving instance ${inst.map( _.toSigRelativeString )}" )
+  def getInstanceProof( inst: Instance ): ExpansionProof = {
+    info( s"Proving instance ${inst.toSigRelativeString}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     val instProof0 = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {
       throw new IllegalArgumentException( s"Cannot prove:\n$instanceSequent" )
@@ -215,7 +214,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     require(
       smtSolver.isValid( instProof.deep ),
       s"Instance proof has invalid deep formula:\n${instProof.deep.toSigRelativeString}" )
-    info( s"Instance proof for ${inst.map( _.toSigRelativeString )}:" )
+    info( s"Instance proof for ${inst.toSigRelativeString}:" )
     info( instProof.toSigRelativeString )
     info( "Language:" )
     encoding.encode( instProof ).toSeq.map( _.toUntypedString( BabelSignature.defaultSignature ) ).sorted.foreach( info( _ ) )
@@ -223,4 +222,41 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     instProof
   }
 
+}
+
+class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGrammarProverOptions() )( implicit ctx: Context ) extends at.logic.gapt.proofs.gaptic.Tactic[Unit] {
+  import at.logic.gapt.proofs.gaptic._
+
+  def copy( options: TreeGrammarProverOptions ) = new TreeGrammarInductionTactic( options )
+
+  def instanceNumber( n: Int ) = copy( options.copy( instanceNumber = n ) )
+  def instanceSize( from: Float, to: Float ) = copy( options.copy( instanceSize = ( from, to ) ) )
+  def instanceProver( prover: Prover ) = copy( options.copy( instanceProver = prover ) )
+  def smtSolver( prover: Prover ) = copy( options.copy( smtSolver = prover ) )
+  def smtEquationMode( mode: TreeGrammarProverOptions.SmtEquationMode ) = copy( options.copy( smtEquationMode = mode ) )
+  def quantTys( tys: String* ) = copy( options.copy( quantTys = Some( tys ) ) )
+  def grammarWeighting( w: InductionGrammar.Production => Int ) = copy( options.copy( grammarWeighting = w ) )
+  def tautCheckNumber( n: Int ) = copy( options.copy( tautCheckNumber = n ) )
+  def tautCheckSize( from: Float, to: Float ) = copy( options.copy( tautCheckSize = ( from, to ) ) )
+  def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
+  def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
+  def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
+
+  override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
+    implicit val ctx2: MutableContext = ctx.newMutable
+    withSection { section =>
+      val groundGoal = section.groundSequent( goal.conclusion )
+      val viper = new TreeGrammarProver( ctx2, groundGoal, options )
+      try {
+        Right( () -> viper.solve() )
+      } catch {
+        case t: TimeOutException => throw t
+        case t: ThreadDeath      => throw t
+        case t: Throwable =>
+          Left( TacticalFailure( this, ExceptionUtils.getStackTrace( t ) ) )
+      }
+    }
+  }
+
+  override def toString = "treeGrammarInduction"
 }

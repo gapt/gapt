@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol._
+import at.logic.gapt.proofs.lk.folSkolemize.SkolemSymbolFactory
 import org.specs2.mutable._
 
 class SkolemizationTest extends Specification {
@@ -14,14 +14,14 @@ class SkolemizationTest extends Specification {
     val r = Const( "R", Ti ->: Ti ->: To )
 
     "leave a formula with only weak quantifiers untouched" in {
-      skolemize( f, Polarity.InAntecedent ) must_== f
+      folSkolemize( f, Polarity.InAntecedent ) must_== f
     }
 
     "introduce correctly a Skolem constant" in {
       val stream = new SkolemSymbolFactory( Seq() ).getSkolemSymbols
       val skfun = Const( stream.head, Ti )
       val skf = Atom( p, skfun :: Nil )
-      skolemize( f, Polarity.InSuccedent, Seq(), stream ) must beEqualTo( skf )
+      folSkolemize( f, Polarity.InSuccedent, Seq(), stream ) must beEqualTo( skf )
     }
 
     "handle a binary formula correctly" in {
@@ -36,14 +36,14 @@ class SkolemizationTest extends Specification {
       val skf2 = Atom( r, x :: skfun1 :: Nil )
 
       val skf = Imp( skf1, All( x, skf2 ) )
-      skolemize( f2, Polarity.InAntecedent, Seq(), stream ) must beEqualTo( skf )
+      folSkolemize( f2, Polarity.InAntecedent, Seq(), stream ) must beEqualTo( skf )
 
       // now we skolemize the skolemize formula, with opposite polarity
       val skfun2 = Const( stream.tail.tail.head, Ti )
       val skfun3 = HOLFunction( Const( stream.tail.head, Ti ->: Ti ), skfun2 :: Nil )
       val skf3 = Atom( r, skfun2 :: skfun3 :: Nil )
       val skf4 = Imp( skf1, skf3 )
-      skolemize( skolemize( f2, Polarity.InAntecedent, Seq(), stream ), Polarity.InSuccedent, Seq(), stream.tail ) must beEqualTo( skf4 )
+      folSkolemize( folSkolemize( f2, Polarity.InAntecedent, Seq(), stream ), Polarity.InSuccedent, Seq(), stream.tail ) must beEqualTo( skf4 )
     }
 
     "handle a simple proof correctly" in {
@@ -63,7 +63,7 @@ class SkolemizationTest extends Specification {
       val ax_sk = LogicalAxiom( Ps0 )
       val proof_sk = ForallLeftRule( ax_sk, allxPx, cs5 )
 
-      skolemize( proof ) must_== proof_sk
+      folSkolemize( proof ) must_== proof_sk
     }
 
     "work for a cut-free proof (1)" in {
@@ -111,7 +111,7 @@ class SkolemizationTest extends Specification {
       val sr2 = ForallLeftRule( sr1, allxRxs0x, s1c )
       val proof_sk = sr2
 
-      skolemize( proof ) must_== proof_sk
+      folSkolemize( proof ) must_== proof_sk
     }
 
   }

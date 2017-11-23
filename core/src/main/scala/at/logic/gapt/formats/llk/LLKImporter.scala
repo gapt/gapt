@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lk._
 
 import scala.annotation.tailrec
 import EquationVerifier._
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 object LLKFormatter {
   /* formats a sequent */
@@ -30,7 +30,7 @@ object LLKFormatter {
  * TokenToLKConverter to have a common interface, but the code here is only dependent on the AST. It uses the ASTtoHOL
  * object to create Exprs from hol ASTs.
  */
-trait TokenToLKConverter extends Logger {
+trait TokenToLKConverter {
   import LLKFormatter._
 
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */

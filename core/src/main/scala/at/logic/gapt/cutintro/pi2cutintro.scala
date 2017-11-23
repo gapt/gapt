@@ -6,7 +6,8 @@ import at.logic.gapt.grammars.{ Pi2Grammar, findMinimalPi2Grammar }
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.{ Logger, metrics }
+import at.logic.gapt.utils.logger._
+import at.logic.gapt.utils.metrics
 
 object pi2GrammarToSEHS {
   def apply( g: Pi2Grammar, encoding: InstanceTermEncoding ): Pi2SeHs = {
@@ -20,7 +21,7 @@ object pi2GrammarToSEHS {
   }
 }
 
-object Pi2CutIntroduction extends Logger {
+object Pi2CutIntroduction {
   def apply( p: CutIntroduction.InputProof, alpha: Var, betas: Vector[Var],
              solver: MaxSATSolver = bestAvailableMaxSatSolver ): Option[LKProof] = {
     val exp = p.expansionProof

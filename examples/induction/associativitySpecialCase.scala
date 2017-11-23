@@ -2,7 +2,7 @@ package at.logic.gapt.examples.induction
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.provers.viper.aip.provers.spass
+import at.logic.gapt.provers.spass.SPASS
 
 object associativitySpecialCase extends TacticsProof {
   ctx += Context.InductiveType( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
@@ -11,10 +11,9 @@ object associativitySpecialCase extends TacticsProof {
   def tac = // FIXME(gabriel): WTF, this causes a syntax error when inlined??!?!
     treeGrammarInduction
       .equationalTheory( hof"0+x=x", hof"x+0=x" )
-      .instanceProver( spass )
+      .instanceProver( SPASS.extendToManySortedViaPredicates )
       .quantTys()
       .canSolSize( 2 )
-      .doForgetOne()
 
   val proof = Lemma(
     hols"""p0: !x x+0 = x, ps: !x!y x+s(y) = s(x+y),

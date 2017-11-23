@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.nd
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.IndexOrFormula.{ IsFormula, IsIndex }
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -328,14 +329,15 @@ object ContractionRule extends ConvenienceConstructor( "ContractionRule" ) {
    *
    * @param subProof The subproof π.
    * @param f The formula to contract.
-   * @return
    */
   def apply( subProof: NDProof, f: Formula ): ContractionRule = {
     val premise = subProof.endSequent
 
-    val ( indices, _ ) = findAndValidate( premise )( Seq( Right( f ), Right( f ) ), Left( Suc( 0 ) ) )
+    val ( indices, _ ) = findAndValidate( premise )( Seq( f, f ), Suc( 0 ) )
 
-    new ContractionRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    val p = ContractionRule( subProof, Ant( indices( 0 ) ), Ant( indices( 1 ) ) )
+    assert( p.mainFormula == f )
+    p
   }
 
 }
@@ -523,8 +525,8 @@ object OrElimRule extends ConvenienceConstructor( "OrElimRule" ) {
 
     val ( middlePremise, rightPremise ) = ( middleSubProof.endSequent, rightSubProof.endSequent )
 
-    val ( middleIndices, _ ) = findAndValidate( middlePremise )( Seq( Right( leftDisjunct ) ), Left( Suc( 0 ) ) )
-    val ( rightIndices, _ ) = findAndValidate( rightPremise )( Seq( Right( rightDisjunct ) ), Left( Suc( 0 ) ) )
+    val ( middleIndices, _ ) = findAndValidate( middlePremise )( Seq( leftDisjunct ), Suc( 0 ) )
+    val ( rightIndices, _ ) = findAndValidate( rightPremise )( Seq( rightDisjunct ), Suc( 0 ) )
 
     new OrElimRule( leftSubProof, middleSubProof, Ant( middleIndices( 0 ) ), rightSubProof, Ant( rightIndices( 0 ) ) )
   }
@@ -653,7 +655,7 @@ object ImpIntroRule extends ConvenienceConstructor( "ImpIntroRule" ) {
   def apply( subProof: NDProof, impPremise: IndexOrFormula ): ImpIntroRule = {
     val premise = subProof.endSequent
 
-    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Left( Suc( 0 ) ) )
+    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( impPremise ), Suc( 0 ) )
 
     new ImpIntroRule( subProof, Ant( antIndices( 0 ) ) )
   }
@@ -749,7 +751,7 @@ object NegIntroRule extends ConvenienceConstructor( "NegIntroRule" ) {
   def apply( subProof: NDProof, negation: IndexOrFormula ): NegIntroRule = {
     val premise = subProof.endSequent
 
-    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( negation ), Left( Suc( 0 ) ) )
+    val ( antIndices, sucIndices ) = findAndValidate( premise )( Seq( negation ), Suc( 0 ) )
 
     new NegIntroRule( subProof, Ant( antIndices( 0 ) ) )
   }
@@ -860,17 +862,23 @@ object ForallIntroRule extends ConvenienceConstructor( "ForallIntroRule" ) {
    * @param eigenVariable A variable α such that A[α] occurs in the premise.
    * @return
    */
-  def apply( subProof: NDProof, mainFormula: Formula, eigenVariable: Var ): ForallIntroRule = mainFormula match {
-    case All( v, subFormula ) =>
-      val auxFormula = Substitution( v, eigenVariable )( subFormula )
+  def apply( subProof: NDProof, mainFormula: Formula, eigenVariable: Var ): ForallIntroRule = {
+    if ( freeVariables( mainFormula ) contains eigenVariable ) {
+      throw NDRuleCreationException( s"Illegal main formula: Eigenvariable $eigenVariable is free in $mainFormula." )
+    } else mainFormula match {
+      case All( v, subFormula ) =>
+        val auxFormula = Substitution( v, eigenVariable )( subFormula )
 
-      val premise = subProof.endSequent
+        val premise = subProof.endSequent
 
-      val ( _, indices ) = findAndValidate( premise )( Seq(), Right( auxFormula ) )
+        val ( _, indices ) = findAndValidate( premise )( Seq(), auxFormula )
 
-      ForallIntroRule( subProof, eigenVariable, v )
+        val p = ForallIntroRule( subProof, eigenVariable, v )
+        assert( p.mainFormula == mainFormula )
+        p
 
-    case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+      case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not universally quantified." )
+    }
   }
 }
 
@@ -975,8 +983,11 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
 
         val auxFormula = BetaReduction.betaNormalize( Substitution( v, term )( subFormula ) )
 
-        if ( premise( Suc( 0 ) ) == auxFormula ) ExistsIntroRule( subProof, subFormula, term, v )
-        else throw NDRuleCreationException( s"Formula $auxFormula is not the succedent of $premise." )
+        if ( premise( Suc( 0 ) ) == auxFormula ) {
+          val p = ExistsIntroRule( subProof, subFormula, term, v )
+          assert( p.mainFormula == mainFormula )
+          p
+        } else throw NDRuleCreationException( s"Formula $auxFormula is not the succedent of $premise." )
 
       case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
     }
@@ -990,9 +1001,12 @@ object ExistsIntroRule extends ConvenienceConstructor( "ExistsIntroRule" ) {
    * @return
    */
   def apply( subProof: NDProof, mainFormula: Formula ): ExistsIntroRule = mainFormula match {
-    case Ex( v, subFormula ) => apply( subProof, mainFormula, v )
+    case Ex( v, subFormula ) =>
+      val p = apply( subProof, mainFormula, v )
+      assert( p.mainFormula == mainFormula )
+      p
 
-    case _                   => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
+    case _ => throw NDRuleCreationException( s"Proposed main formula $mainFormula is not existentially quantified." )
   }
 }
 
@@ -1062,7 +1076,7 @@ object ExistsElimRule extends ConvenienceConstructor( "ExistsElimRule" ) {
 
         val premise = rightSubProof.endSequent
 
-        val ( indices, _ ) = findAndValidate( premise )( Seq( Right( auxFormula ) ), Left( Suc( 0 ) ) )
+        val ( indices, _ ) = findAndValidate( premise )( Seq( auxFormula ), Suc( 0 ) )
         ExistsElimRule( leftSubProof, rightSubProof, Ant( indices( 0 ) ), eigenVariable )
 
       case _ => throw NDRuleCreationException( s"Formula $existentialFormula is not existentially quantified." )
@@ -1328,8 +1342,6 @@ case class DefinitionRule( subProof: NDProof, mainFormula: Formula ) extends Una
  * @param longName The long name of the rule.
  */
 class ConvenienceConstructor( val longName: String ) {
-  type IndexOrFormula = Either[SequentIndex, Formula]
-
   /**
    * Create an NDRuleCreationException with a message starting with "Cannot create $longName: ..."
    *
@@ -1341,21 +1353,21 @@ class ConvenienceConstructor( val longName: String ) {
   def findIndicesOrFormulasInPremise( premise: HOLSequent )( antIndicesFormulas: Seq[IndexOrFormula], sucIndexFormula: IndexOrFormula ): ( Seq[Formula], Seq[Int], Formula, Int ) = {
     val antReservedIndices = ( scala.collection.mutable.HashSet.empty[Int] /: antIndicesFormulas ) { ( acc, e ) =>
       e match {
-        case Left( Ant( i ) ) => acc + i
-        case Left( i: Suc )   => throw NDRuleCreationException( s"Index $i should be in the antecedent." )
-        case Right( _ )       => acc
+        case IsIndex( Ant( i ) ) => acc + i
+        case IsIndex( i: Suc )   => throw NDRuleCreationException( s"Index $i should be in the antecedent." )
+        case IsFormula( _ )      => acc
       }
     }
 
     val ant = for ( e <- antIndicesFormulas ) yield {
       e match {
-        case Left( idx @ Ant( i ) ) =>
+        case IsIndex( idx @ Ant( i ) ) =>
           antReservedIndices += i
           val f = premise( idx )
 
           ( f, i )
 
-        case Right( f: Formula ) =>
+        case IsFormula( f ) =>
           var i = premise.antecedent.indexOf( f )
 
           while ( antReservedIndices contains i )
@@ -1366,20 +1378,20 @@ class ConvenienceConstructor( val longName: String ) {
 
           ( f, i )
 
-        case Left( i: Suc ) => throw NDRuleCreationException( s"Index $i should be in the antecedent." )
+        case IsIndex( i: Suc ) => throw NDRuleCreationException( s"Index $i should be in the antecedent." )
       }
     }
 
     val suc = sucIndexFormula match {
-      case Left( Suc( i: Int ) ) =>
+      case IsIndex( Suc( i: Int ) ) =>
         ( premise( Suc( i ) ), i )
 
-      case Right( f: Formula ) =>
+      case IsFormula( f ) =>
         val i = premise.succedent.indexOf( f )
 
         ( f, i )
 
-      case Left( i: Ant ) => throw NDRuleCreationException( s"Index $i should be in the succedent." )
+      case IsIndex( i: Ant ) => throw NDRuleCreationException( s"Index $i should be in the succedent." )
     }
 
     val ( antFormulas, antIndices ) = ant.unzip

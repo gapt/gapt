@@ -7,9 +7,6 @@ package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.proofs.{ HOLClause, Sequent, SetSequent }
 import at.logic.gapt.expr._
-import at.logic.gapt.utils.Logger
-import scala.annotation.tailrec
-import scala.util.control.TailCalls._
 
 /**
  * Calculates the characteristic clause set

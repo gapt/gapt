@@ -128,7 +128,7 @@ sealed trait Context extends BabelSignature {
     }
 
   def check[T: Checkable]( t: T ): Unit =
-    implicitly[Checkable[T]].check( this, t )
+    implicitly[Checkable[T]].check( t )( this )
 
   def ++( updates: Traversable[Update] ): ImmutableContext =
     updates.foldLeft( toImmutable )( _ + _ )
@@ -297,11 +297,10 @@ object Context {
       for ( ( _, ( _, seq ) ) <- names ) yield seq
 
     def lookup( name: Expr ): Option[HOLSequent] =
-      for {
-        Apps( Const( n, _ ), _ ) <- Some( name )
-        ( declName, declSeq ) <- names.get( n )
+      ( for {
+        ( declName, declSeq ) <- names.values
         subst <- syntacticMatching( declName, name )
-      } yield subst( declSeq )
+      } yield subst( declSeq ) ).headOption
 
     def link( name: Expr ): Option[ProofLink] =
       for ( sequent <- lookup( name ) ) yield ProofLink( name, sequent )
@@ -318,20 +317,29 @@ object Context {
 
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
 
-  case class ProofDefinitions( components: Map[String, Set[( Expr, LKProof )]] ) {
-    def +( name: String, referencedExpression: Expr, referencedProof: LKProof ) =
-      copy( components + ( ( name, components.getOrElse( name, Set() ) + ( referencedExpression -> referencedProof ) ) ) )
+  case class ProofDefinition( proofNameTerm: Expr, connector: SequentConnector, proof: LKProof ) {
+    val Apps( Const( proofName, _ ), _ ) = proofNameTerm
+  }
 
-    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
+  case class ProofDefinitions( components: Map[String, Set[ProofDefinition]] ) {
+    def +( defn: ProofDefinition ) =
+      copy( components.updated(
+        defn.proofName,
+        components.getOrElse( defn.proofName, Set() ) + defn ) )
+
+    def findWithConnector( name: Expr ): Iterable[( SequentConnector, Substitution, LKProof )] =
       for {
         defs <- components.values
-        ( declName, defPrf ) <- defs
-        subst <- syntacticMatching( declName, name )
-      } yield ( defPrf, subst )
+        defn <- defs
+        subst <- syntacticMatching( defn.proofNameTerm, name )
+      } yield ( defn.connector, subst, defn.proof )
+
+    def find( name: Expr ): Iterable[( LKProof, Substitution )] =
+      for ( ( _, subst, proof ) <- findWithConnector( name ) ) yield ( proof, subst )
     override def toString: String =
-      components.map { case ( n, dfs ) => dfs.map( _._1 ).mkString( ", " ) }.mkString( "\n" )
+      components.map { case ( n, dfs ) => dfs.map( _.proofNameTerm ).mkString( ", " ) }.mkString( "\n" )
   }
-  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map[String, Set[( Expr, LKProof )]]() ) )
+  implicit val ProofDefinitionsFacet: Facet[ProofDefinitions] = Facet( ProofDefinitions( Map() ) )
 
   /**
    * Update of a context.
@@ -588,18 +596,20 @@ object Context {
   case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
       ctx.check( referencedProof )
-      val Apps( Const( c, _ ), vs ) = lhs
+      val Apps( Const( _, _ ), vs ) = lhs
       vs.foreach( ctx.check( _ ) )
       val declSeq = ctx.get[ProofNames].lookup( lhs )
         .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
+      val conn = SequentConnector.guessInjection( referencedProof.conclusion, declSeq )
       require(
-        referencedProof.endSequent isSubMultisetOf declSeq,
+        conn.child( referencedProof.conclusion ).isSubMultisetOf( declSeq ),
         "End-sequent of proof definition does not match declaration.\n" +
           "Given sequent: " + referencedProof.endSequent.toSigRelativeString( ctx ) + "\n" +
           "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
           "Extraneous formulas: " +
           referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
-      ctx.state.update[ProofDefinitions]( _ + ( c, lhs, referencedProof ) )
+      val defn = ProofDefinition( lhs, conn, referencedProof )
+      ctx.state.update[ProofDefinitions]( _ + defn )
     }
   }
 

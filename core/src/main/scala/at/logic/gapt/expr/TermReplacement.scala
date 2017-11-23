@@ -2,7 +2,6 @@
 package at.logic.gapt.expr
 
 import at.logic.gapt.proofs.Sequent
-import at.logic.gapt.utils.Not
 
 trait Replaceable[-I, +O] {
   def replace( obj: I, p: PartialFunction[Expr, Expr] ): O
@@ -11,9 +10,9 @@ trait Replaceable[-I, +O] {
 }
 trait ClosedUnderReplacement[T] extends Replaceable[T, T]
 
-object Replaceable {
+trait ReplaceableInstances0 {
 
-  private object exprReplacer extends ClosedUnderReplacement[Expr] {
+  implicit object exprReplaceable extends ClosedUnderReplacement[Expr] {
     def replace( term: Expr, map: PartialFunction[Expr, Expr] ): Expr =
       term match {
         case _ if map isDefinedAt term => map( term )
@@ -38,20 +37,34 @@ object Replaceable {
     def names( term: Expr ): Set[VarOrConst] =
       constants( term ).toSet[VarOrConst] union variables( term ).toSet
   }
-  private object formulaReplacer extends ClosedUnderReplacement[Formula] {
+
+}
+trait ReplaceableInstances1 extends ReplaceableInstances0 {
+  implicit object formulaReplaceable extends ClosedUnderReplacement[Formula] {
     override def replace( obj: Formula, p: PartialFunction[Expr, Expr] ): Formula =
-      exprReplacer.replace( obj, p ).asInstanceOf[Formula]
+      exprReplaceable.replace( obj, p ).asInstanceOf[Formula]
 
-    def names( obj: Formula ) = exprReplacer.names( obj )
+    def names( obj: Formula ) = exprReplaceable.names( obj )
   }
+}
 
-  implicit def exprReplaceable[I <: Expr]( implicit notAFormula: Not[I <:< Formula] ): Replaceable[I, Expr] = exprReplacer
-  implicit def formulaReplaceable[I <: Formula]( implicit notAnAtom: Not[I <:< Atom] ): Replaceable[I, Formula] = formulaReplacer
+trait ReplaceableInstances2 extends ReplaceableInstances1 {
+  implicit def seqReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Seq[I], Seq[O]] =
+    new Replaceable[Seq[I], Seq[O]] {
+      override def replace( obj: Seq[I], p: PartialFunction[Expr, Expr] ) =
+        obj.map { TermReplacement( _, p ) }
+
+      def names( obj: Seq[I] ) = obj flatMap { containedNames( _ ) } toSet
+    }
+}
+
+object Replaceable extends ReplaceableInstances2 {
+
   implicit object holAtomReplaceable extends ClosedUnderReplacement[Atom] {
     override def replace( obj: Atom, p: PartialFunction[Expr, Expr] ): Atom =
-      exprReplacer.replace( obj, p ).asInstanceOf[Atom]
+      exprReplaceable.replace( obj, p ).asInstanceOf[Atom]
 
-    def names( obj: Atom ) = exprReplacer.names( obj )
+    def names( obj: Atom ) = exprReplaceable.names( obj )
   }
 
   implicit object substitutionReplaceable extends ClosedUnderReplacement[Substitution] {
@@ -67,8 +80,24 @@ object Replaceable {
       Definition( TermReplacement( definition.what, p ).asInstanceOf[Const], TermReplacement( definition.by, p ) )
 
     def names( obj: Definition ) =
-      Set[VarOrConst]( obj.what ) union exprReplacer.names( obj.by )
+      Set[VarOrConst]( obj.what ) union exprReplaceable.names( obj.by )
   }
+
+  implicit def listReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[List[I], List[O]] =
+    new Replaceable[List[I], List[O]] {
+      override def replace( obj: List[I], p: PartialFunction[Expr, Expr] ) =
+        obj.map { TermReplacement( _, p ) }
+
+      def names( obj: List[I] ) = obj flatMap { containedNames( _ ) } toSet
+    }
+
+  implicit def vectorReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Vector[I], Vector[O]] =
+    new Replaceable[Vector[I], Vector[O]] {
+      override def replace( obj: Vector[I], p: PartialFunction[Expr, Expr] ) =
+        obj.map { TermReplacement( _, p ) }
+
+      def names( obj: Vector[I] ) = obj flatMap { containedNames( _ ) } toSet
+    }
 
   implicit def sequentReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Sequent[I], Sequent[O]] =
     new Replaceable[Sequent[I], Sequent[O]] {
@@ -76,14 +105,6 @@ object Replaceable {
         obj.map { TermReplacement( _, p ) }
 
       def names( obj: Sequent[I] ) = obj.elements flatMap { containedNames( _ ) } toSet
-    }
-
-  implicit def seqReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Seq[I], Seq[O]] =
-    new Replaceable[Seq[I], Seq[O]] {
-      override def replace( obj: Seq[I], p: PartialFunction[Expr, Expr] ) =
-        obj.map { TermReplacement( _, p ) }
-
-      def names( obj: Seq[I] ) = obj flatMap { containedNames( _ ) } toSet
     }
 
   implicit def setReplaceable[I, O]( implicit ev: Replaceable[I, O] ): Replaceable[Set[I], Set[O]] =

@@ -5,7 +5,7 @@ import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.expr.{Apps, Const, _}
 import at.logic.gapt.proofs.Context.{ProofDefinitions, ProofNames}
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 /**
  * Algorithms extracting structs from LK proofs, preparing them for gui code etc.
@@ -30,9 +30,8 @@ object coloredStructString {
   }
 }
 
-object StructCreators extends Logger {
-  def size[Data](s: Struct[Data]): Int = size(s, 0)
-
+object StructCreators {
+  def size[Data]( s: Struct[Data] ): Int = size( s, 0 )
   //TODO:make tailrecursive
   def size[Data](s: Struct[Data], n: Int): Int = s match {
     case A(_, _) => n

@@ -9,15 +9,15 @@ class SkolemizeInferencesTest extends Specification with SequentMatchers {
   "primediv" in {
     val p = primediv.proof
     implicit val ctx: MutableContext = primediv.ctx.newMutable
-    skolemizeInferences( p ).endSequent must beMultiSetEqual( p.endSequent )
-    skolemizeInferences( p, proofTheoretic = false ).endSequent must beMultiSetEqual( p.endSequent )
+    skolemizeLK( p ).endSequent must beMultiSetEqual( p.endSequent )
+    skolemizeLK( p, proofTheoretic = false ).endSequent must beMultiSetEqual( p.endSequent )
   }
 
   "ntape3" in {
     val p = nTape3.input_proof
     implicit val ctx: MutableContext = MutableContext.guess( p )
-    skolemizeInferences( p ).endSequent must beMultiSetEqual( p.endSequent )
-    skolemizeInferences( p, proofTheoretic = false ).endSequent must beMultiSetEqual( p.endSequent )
+    skolemizeLK( p ).endSequent must beMultiSetEqual( p.endSequent )
+    skolemizeLK( p, proofTheoretic = false ).endSequent must beMultiSetEqual( p.endSequent )
   }
 
 }

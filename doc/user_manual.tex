@@ -1232,24 +1232,25 @@ corresponding rules also exist in resolution and expansion proofs.
 
 Given a proof that uses eigenvariables for strong quantifiers, we can replace
 the eigenvariable inferences by Skolem inference using
-\texttt{skolemizeInferences}---this is called \emph{proof Skolemization}:
+\texttt{skolemizeLK}---this is called \emph{proof Skolemization}:
 \begin{clilisting}
 gapt> val p = ForallRightRule(ReflexivityAxiom(le"x"), hof"!x x=x")
 p: at.logic.gapt.proofs.lk.ForallRightRule =
 [p2]  ⊢ ∀x x = x    (ForallRightRule(p1, Suc(0), x, x))
 [p1]  ⊢ x = x    (ReflexivityAxiom(x))
 
-gapt> skolemizeInferences(p)
+gapt> skolemizeLK(p)
 res12: at.logic.gapt.proofs.lk.LKProof =
 [p2]  ⊢ ∀x x = x    (ForallSkRightRule(p1, Suc(0), ∀x x = x, s_0, ∀x x = x))
 [p1]  ⊢ s_0 = s_0    (ReflexivityAxiom(s_0))
 
 \end{clilisting}
 
-By default, \texttt{skolemizeInference} will keep eigenvariable inferences above cuts.
+By default, \texttt{skolemizeLK} will keep eigenvariable inferences above cuts.
+The function \texttt{skolemize} performs Skolemization on formulas.
 In the first-order case it is also possible to Skolemize proofs without
 introducing Skolem inferences, by modifying the end-sequent instead.  This
-functionality is provided by the \texttt{skolemize} function.
+functionality is provided by the \texttt{folSkolemize} function.
 
 \section{Deskolemization}
 
@@ -1976,37 +1977,37 @@ You can also use Viper from within GAPT:
 gapt> val problem = TipSmtParser.parse(FilePath("examples/tip/isaplanner/prop_06.smt2"))
 problem: at.logic.gapt.formats.tip.TipProblem =
 ∀x0 'proj1-S'(S(x0)) = x0,
-∀y '|-2|'(Z, y) = Z,
-∀z '|-2|'(S(z), Z) = S(z),
-∀z ∀x2 '|-2|'(S(z), S(x2)) = '|-2|'(z, x2),
+∀y '-2'(Z, y) = Z,
+∀z '-2'(S(z), Z) = S(z),
+∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀y '+2'(Z, y) = y,
 ∀z ∀y '+2'(S(z), y) = S('+2'(z, y)),
 ∀y0 ¬Z = S(y0)
 ⊢
-∀n ∀m '|-2|'(n, '+2'(n, m)) = Z
+∀n ∀m '-2'(n, '+2'(n, m)) = Z
 
-gapt> val Some(proof) = Viper(problem, verbosity=0)
+gapt> val Some(proof) = Viper(problem, ViperOptions(verbosity=0))
 proof: at.logic.gapt.proofs.lk.LKProof =
-[p136] ∀x0 ('proj1-S'(S(x0:Nat): Nat): Nat) = x0,
-∀z ('|-2|'(S(z), #c(Z: Nat)): Nat) = S(z),
+[p169] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 ¬#c(Z: Nat) = S(y0),
 ∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
-∀y '|-2|'(#c(Z: Nat), y) = #c(Z: Nat),
-∀z ∀x2 '|-2|'(S(z), S(x2)) = '|-2|'(z, x2),
+∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ∀x2 '-2'(S(z), S(x2)) = '-2'(z, x2),
 ∀z ∀y '+2'(S(z), y) = S('+2'(z, y))
 ⊢
-∀n ∀m '|-2|'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p22, Suc(0), p135, Ant(4)))
-[p135] ∀x0 ('proj1-S'(S(x0:Nat): Nat): Nat) = x0,
-∀z ('|-2|'(S(z), #c(Z: Nat)): Nat) = S(z),
+∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat)    (CutRule(p21, Suc(0), p168, Ant(3)))
+[p168] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
+∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 ¬#c(Z: Nat) = S(y0),
-∀y ('+2'(#c(Z: Nat), y:Nat): Nat) = y,
-∀m
-  ((⊤ ⊃ '|-2|'(#c(Z: Nat), '+2'(#c(Z: Nat), m)) = #c(Z: Nat)) ∧
-      ∀n_0
-        ('|-2|'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
-          '|-2|'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
-    ∀n '|-2|'(n, '+2'(n, m)) = #c(Z: Nat)),
-∀y '|-2|'(...
+(⊤ ⊃ ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
+    ∀n_0
+      (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
+        ∀m '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
+  ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat),
+∀y '+2'(#c(Z: Nat), y) = y,
+∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
+∀z ...
 
 \end{clilisting}
 
@@ -2182,7 +2183,7 @@ about what is happening during cut-introduction, you can make the output more
 verbose by running:
 
 \begin{clilisting}
-gapt> CutIntroduction.makeVerbose()
+gapt> verbose { /* CutIntroduction() */ }
 
 \end{clilisting}
 

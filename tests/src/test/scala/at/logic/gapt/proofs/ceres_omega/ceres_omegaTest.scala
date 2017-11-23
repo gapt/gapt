@@ -8,16 +8,16 @@ import at.logic.gapt.formats.ClasspathInputFile
 import at.logic.gapt.formats.llk.{ ExtendedProofDatabase, LLKProofParser }
 import at.logic.gapt.formats.tptp.TPTPFOLExporter
 import at.logic.gapt.proofs.ceres._
-import at.logic.gapt.proofs.lk.{ AtomicExpansion, CutRule, eliminateDefinitions, LKProof, LKToExpansionProof, regularize, skolemizeInferences }
+import at.logic.gapt.proofs.lk.{ AtomicExpansion, CutRule, eliminateDefinitions, LKProof, LKToExpansionProof, regularize, skolemizeLK }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.resolution.{ Input, Resolution, Subst }
 import at.logic.gapt.provers.prover9.Prover9
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 import org.specs2.mutable._
 
 //TODO: Fix the test!
 
-class ceres_omegaTest extends Specification with SequentMatchers with Logger {
+class ceres_omegaTest extends Specification with SequentMatchers {
 
   def load( file: String, pname: String ) =
     LLKProofParser( ClasspathInputFile( file ) ).proof( pname )
@@ -25,7 +25,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
   def prepareProof( file: String, proofname: String ) = {
     val p = LLKProofParser( ClasspathInputFile( file ) )
     val elp = AtomicExpansion( eliminateDefinitions( p.Definitions )( regularize( p.proof( proofname ) ) ) )
-    val selp = skolemizeInferences( elp )
+    val selp = skolemizeLK( elp )
     val struct = extractStruct( selp )
     val ls = StandardClauseSet( struct )
     val proj = Projections( selp )
@@ -74,7 +74,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( eliminateDefinitions( pdb.Definitions )( regularize( pdb proof "INFTAPE" ) ) )
-      val selp = skolemizeInferences( elp )
+      val selp = skolemizeLK( elp )
       val proj = Projections( selp, CERES.skipPropositional )
       val struct = extractStruct( selp, CERES.skipPropositional )
       val css = StandardClauseSet( struct )
@@ -87,7 +87,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
       val filename = "tape3ex.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( eliminateDefinitions( pdb.Definitions )( regularize( pdb proof "TAPEPROOF" ) ) )
-      val selp = skolemizeInferences( elp )
+      val selp = skolemizeLK( elp )
       val proj = Projections( selp, CERES.skipPropositional )
       val struct = extractStruct( selp, CERES.skipPropositional )
       val css = StandardClauseSet( struct, false )
@@ -125,7 +125,7 @@ class ceres_omegaTest extends Specification with SequentMatchers with Logger {
       val filename = "perm.llk"
       val pdb = LLKProofParser( ClasspathInputFile( filename ) )
       val elp = AtomicExpansion( eliminateDefinitions( pdb.Definitions )( regularize( pdb proof "AxProof" ) ) )
-      val selp = skolemizeInferences( elp )
+      val selp = skolemizeLK( elp )
 
       val cutformulas = selp.dagLike.breadthFirst.filter( { case CutRule( _, _, _, _ ) => true; case _ => false } )
       cutformulas.size must_== 5 //4 from binary equation translation, 1 from proof

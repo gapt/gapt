@@ -1,11 +1,8 @@
 package at.logic.gapt.proofs
 
-import at.logic.gapt.expr.{ ClosedUnderReplacement, Formula, Expr, containedNames }
+import at.logic.gapt.expr.{ ClosedUnderReplacement, Expr, containedNames }
 
 package object lk {
-  implicit def LeftSequentIndex( i: SequentIndex ): Either[SequentIndex, Formula] = Left( i )
-  implicit def RightFormula( f: Formula ): Either[SequentIndex, Formula] = Right( f )
-
   implicit object LKProofSubstitutableDefault extends LKProofSubstitutable( false )
 
   implicit object lkProofReplaceable extends ClosedUnderReplacement[LKProof] {

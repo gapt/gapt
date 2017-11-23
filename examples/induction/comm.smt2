@@ -1,7 +1,7 @@
 ; The qtys is needed for qmaxsat, otherwise we get a grammar corresponding to a
 ; quantified lemma:
 
-; solve with: viper --treegrammar --cansolsize 2 2 --qtys ""
+; solve with: viper --treegrammar --cansolsize 2 2
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
 (define-fun-rec plus ((x nat) (y nat)) nat

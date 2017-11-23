@@ -15,7 +15,5 @@ object prop_31 extends TacticsProof {
       :- !x qrev (qrev x nil) nil = x
   """ ) {
     treeGrammarInduction
-      .canSolSize( 2, 3 )
-      .grammarWeighting( r => folTermSize( r.rhs ) )
   }
 }

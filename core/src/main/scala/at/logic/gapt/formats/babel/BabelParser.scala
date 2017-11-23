@@ -52,7 +52,6 @@ object BabelParserCombinators {
     P( MarkPos( p ) )( name )
 
   val ExprAndNothingElse: P[preExpr.Expr] = P( "" ~ Expr ~ End )
-  val ConstAndNothingElse: P[real.Const] = P( "" ~ Const ~ End )
 
   val Expr: P[preExpr.Expr] = P( Lam )
 

@@ -12,8 +12,6 @@ import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 
 import at.logic.gapt.formats.latex.LatexExporter
-import at.logic.gapt.utils.Logger
-import org.slf4j.LoggerFactory
 
 object ExpansionTreeState extends Enumeration {
   val Closed, Open, Expanded = Value

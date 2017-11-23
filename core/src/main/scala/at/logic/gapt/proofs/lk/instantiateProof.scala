@@ -16,18 +16,37 @@ object instantiateProof {
     regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
 
   def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
+<<<<<<< HEAD
     ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
       case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
       case None =>
         ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
+=======
+    withConnector( proofName )._2
+
+  /**
+   * Given a proof name, returns a maximally instantiated proof.
+   *
+   * @return Connector from instantiated proof to the declared sequent of the proof name,
+   *         together with the instantiated proof
+   */
+  def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) =
+    ctx.get[Context.ProofDefinitions].findWithConnector( proofName ).headOption match {
+      case Some( ( connLink2DefPrf, subst, defPrf ) ) =>
+        val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
+        connInstPrf2SubstDefPrf * connLink2DefPrf.inv -> instPrf
+      case None =>
+        val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )
+        SequentConnector( sequent ) -> ProofLink( proofName, sequent )
+>>>>>>> origin
     }
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
     buildProof( proof, ctx )
 
   private object buildProof extends LKVisitor[Context] {
-    override def visitProofLink( proof: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
-      val upProof = instantiateProof( proof.referencedProof )( otherArg )
-      ( upProof, SequentConnector.guessInjection( upProof.endSequent, proof.conclusion ).inv )
+    override def visitProofLink( link: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
+      val ( connInstProof2Link, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
+      ( instProof, connInstProof2Link )
     }
   }
 

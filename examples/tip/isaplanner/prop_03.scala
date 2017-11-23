@@ -4,7 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.provers.viper.aip.axioms.{ SequentialInductionAxioms, StandardInductionAxioms }
-import at.logic.gapt.provers.viper.aip.provers.{ escargot => manySortedProver }
 import cats.syntax.all._
 
 object prop_03 extends TacticsProof {

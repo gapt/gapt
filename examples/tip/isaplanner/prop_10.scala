@@ -3,8 +3,8 @@ package at.logic.gapt.examples.tip.isaplanner
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms }
-import at.logic.gapt.provers.viper.aip.provers.escargot
 import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_10 extends TacticsProof {
@@ -39,10 +39,10 @@ object prop_10 extends TacticsProof {
     axiomLog
   }
 
-  val aipOptions1 = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
+  val aipOptions1 = new ProverOptions( Escargot, IndependentInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
   val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent ) get
 
-  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
+  val aipOptions2 = new ProverOptions( Escargot, SequentialInductionAxioms().forVariables( List( hov"m:Nat" ) ).forLabel( "goal" ) )
   val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
 
   val proof4 = Lemma( sequent ) { treeGrammarInduction }

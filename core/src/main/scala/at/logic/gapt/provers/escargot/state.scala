@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.{ HOLClause, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.escargot.{ LPO, TermOrdering }
 import at.logic.gapt.provers.sat.Sat4j
-import at.logic.gapt.utils.{ Logger, NameGenerator }
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable
 
@@ -30,7 +30,7 @@ class Cls( val state: EscargotState, val proof: ResolutionProof, val index: Int 
   override def hashCode = index
 }
 
-class EscargotState( val ctx: MutableContext ) extends Logger {
+class EscargotState( val ctx: MutableContext ) {
   var termOrdering: TermOrdering = LPO()
   var nameGen = ctx.newNameGenerator
   var preprocessingRules = Seq[PreprocessingRule]()

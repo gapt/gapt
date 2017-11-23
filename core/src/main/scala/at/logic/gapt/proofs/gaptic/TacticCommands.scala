@@ -6,8 +6,8 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers.viper.TreeGrammarInductionTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
+import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
 /**
  * Predefined tactics in gaptic.
@@ -519,7 +519,7 @@ trait TacticCommands {
       goal <- currentGoal
       proofLinkName <- ctx.get[Context.ProofNames].find( goal.conclusion ).
         toTactical( "does not follow from theory" )
-      _ <- insert( ProofLink( proofLinkName, ctx.get[ProofNames].lookup( proofLinkName ).get ) )
+      _ <- insert( ProofLink( proofLinkName ) )
     } yield ()
   }
 
@@ -602,6 +602,13 @@ trait TacticCommands {
    */
   def forget( ls: String* ): Tactical[Unit] =
     Tactical( Tactical.sequence( ls map { label => WeakeningLeftTactic( label ) orElse WeakeningRightTactic( label ) } ).map( _ => () ) )
+
+  def forget( pred: ( String, Formula ) => Boolean ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- insert( OpenAssumption( goal.labelledSequent.filterNot( lf => pred( lf._1, lf._2 ) ) ) )
+    } yield ()
+  }
 
   /**
    * Moves the specified goal to the front of the goal list.
@@ -703,4 +710,15 @@ trait TacticCommands {
 
   def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )
+
+  def introUnivsExcept( i: Int ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q @ All.Block( xs, f ) = goal.conclusion.succedent.head
+      _ <- Tactical.guard( i < xs.size, s"less than $i quantifiers" )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent( Suc( 0 ) )._1 -> All( xs( i ), f ) ) )
+      _ <- insert( ForallRightBlock( CutRule( newGoal, ForallLeftRule( LogicalAxiom( f ), All( xs( i ), f ) ), All( xs( i ), f ) ), q, xs ) )
+    } yield ()
+  }
 }

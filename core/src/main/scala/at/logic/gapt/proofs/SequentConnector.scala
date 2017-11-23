@@ -87,6 +87,9 @@ case class SequentConnector( lowerSizes: ( Int, Int ), upperSizes: ( Int, Int ),
       case _        => default
     }
 
+  def child[T]( upperTs: Sequent[T], default: => T = ??? ): Sequent[T] =
+    inv.parent( upperTs, default )
+
   /**
    * Given a SequentIndex for the upper sequent, this returns the list of children of that occurrence in the lower sequent (if defined).
    *

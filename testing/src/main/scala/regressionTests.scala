@@ -39,7 +39,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     implicit val ctx: MutableContext = bench.ctx.newMutable
     val sequent = bench.toSequent
-    val proof = Viper.getStrategies( ViperOptions() ).view.flatMap {
+    val proof = Viper.getStrategies( sequent, ViperOptions() ).reverse.view.flatMap {
       case ( duration, strategy ) =>
         try {
           ( withTimeout( duration ) { strategy.andThen( now )( ProofState( sequent ) ) } match {
@@ -155,7 +155,7 @@ class Prover9TestCase( f: java.io.File ) extends RegressionTestCase( f.getParent
         Z3.isUnsat( And( extractRecSchem( q ).languageWithDummyParameters ) ) !-- "extractRecSchem validity (cut-intro)"
       }
 
-    skolemize( p ) --? "skolemize"
+    folSkolemize( p ) --? "skolemize"
   }
 }
 

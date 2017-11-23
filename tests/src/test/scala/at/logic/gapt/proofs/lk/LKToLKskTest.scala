@@ -16,7 +16,7 @@ class LKToLKskTest extends Specification {
     val p2 = ForallLeftRule( p1, qf )
     val p3 = ForallRightRule( p2, qf )
 
-    val pSk = skolemizeInferences( p3 )
+    val pSk = skolemizeLK( p3 )
     pSk.conclusion must_== p3.endSequent
   }
 
@@ -37,7 +37,7 @@ class LKToLKskTest extends Specification {
 
     //println( llk.exportLLK( lkOld.LKToLKsk( lkNew2Old( p3 ) ) ) )
 
-    skolemizeInferences( p3 )
+    skolemizeLK( p3 )
     ok
   }
 
@@ -57,7 +57,7 @@ class LKToLKskTest extends Specification {
     val p4 = ContractionLeftRule( p3, Ant( 0 ), Ant( 1 ) )
     val p5 = ContractionRightRule( p4, Suc( 0 ), Suc( 1 ) )
 
-    skolemizeInferences( p5 )
+    skolemizeLK( p5 )
     ok
   }
 
@@ -77,7 +77,7 @@ class LKToLKskTest extends Specification {
     val p3 = CutRule( p1, p2, p )
     val p4 = ContractionLeftRule( p3, Ant( 0 ), Ant( 1 ) )
 
-    skolemizeInferences( p4 )
+    skolemizeLK( p4 )
     ok
   }
 
@@ -97,26 +97,26 @@ class LKToLKskTest extends Specification {
     val p3 = CutRule( p1, p2, p )
     val p4 = ContractionRightRule( p3, Suc( 0 ), Suc( 1 ) )
 
-    skolemizeInferences( p4 )
+    skolemizeLK( p4 )
     ok
   }
 
   "pigeonhole" in {
-    skolemizeInferences( Pi2Pigeonhole.proof )
+    skolemizeLK( Pi2Pigeonhole.proof )
     ok
   }
 
   "lattice proof" in {
     import lattice._
     val lk = regularize( eliminateDefinitions( proof ) )
-    val lksk = skolemizeInferences( lk )
+    val lksk = skolemizeLK( lk )
     lksk.conclusion must_== lk.conclusion
   }
 
   "tape proof" in {
     import tape._
     val lk = eliminateDefinitions( proof )
-    val lksk = skolemizeInferences( lk )
+    val lksk = skolemizeLK( lk )
     lksk.conclusion must_== lk.conclusion
   }
 
@@ -129,13 +129,13 @@ class LKToLKskTest extends Specification {
     "2 copies tape proof" in {
       //skipped( "save time" )
       val lk = load( "tape3.llk" )
-      val lksk = skolemizeInferences( lk )
+      val lksk = skolemizeLK( lk )
       lksk.conclusion must_== lk.conclusion
     }
     "1 copy tape proof" in {
       //skipped( "save time" )
       val lk = load( "tape3ex.llk" )
-      val lksk = skolemizeInferences( lk )
+      val lksk = skolemizeLK( lk )
       lksk.conclusion must_== lk.conclusion
     }
   }
