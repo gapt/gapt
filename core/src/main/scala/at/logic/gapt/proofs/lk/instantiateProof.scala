@@ -15,14 +15,7 @@ object instantiateProof {
   def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof =
     regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
 
-  def apply( proofName: Expr )( implicit ctx: Context ): LKProof =
-<<<<<<< HEAD
-    ctx.get[Context.ProofDefinitions].find( proofName ).headOption match {
-      case Some( ( defPrf, subst ) ) => apply( subst( defPrf ) )
-      case None =>
-        ProofLink( proofName, ctx.get[Context.ProofNames].lookup( proofName ).get )
-=======
-    withConnector( proofName )._2
+  def apply( proofName: Expr )( implicit ctx: Context ): LKProof = withConnector( proofName )._2
 
   /**
    * Given a proof name, returns a maximally instantiated proof.
@@ -38,7 +31,6 @@ object instantiateProof {
       case None =>
         val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )
         SequentConnector( sequent ) -> ProofLink( proofName, sequent )
->>>>>>> origin
     }
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
     buildProof( proof, ctx )

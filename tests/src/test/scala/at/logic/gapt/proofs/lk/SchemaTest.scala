@@ -11,6 +11,8 @@ import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context._
 import at.logic.gapt.proofs.{ImmutableContext, Sequent}
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers._
+
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.EscargotTactic

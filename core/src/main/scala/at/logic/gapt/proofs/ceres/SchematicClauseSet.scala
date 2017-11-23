@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr.hol.HOLPosition
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.natMaker
-import at.logic.gapt.proofs.Context.{ ProofDefinitions, ProofNames }
+import at.logic.gapt.proofs.Context.{ ProofDefinition, ProofDefinitions, ProofNames }
 import at.logic.gapt.proofs.lk.{ EigenVariablesLK, LKProof }
 import at.logic.gapt.proofs.{ Context, Sequent }
 
@@ -22,7 +22,7 @@ object SchematicStruct {
       // We construct the struct for the given proof modulo the cutConfig
       val currentProofStruct: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] =
         ctx.get[ProofDefinitions].components.getOrElse( topSym, Set() ).map {
-          case ( placeHolder: Expr, assocProof: LKProof ) => ( CLS( placeHolder, theActualConfig ),
+          case ProofDefinition( placeHolder: Expr, _, assocProof: LKProof ) => ( CLS( placeHolder, theActualConfig ),
             ( StructCreators.extract( assocProof, theActualConfig )( _ => true, ctx ), EigenVariablesLK( assocProof ) ) )
         }.toMap
       //After constructing the struct we need to find all CLS terms
