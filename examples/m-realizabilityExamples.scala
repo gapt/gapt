@@ -2,6 +2,31 @@ package at.logic.gapt.examples
 
 import at.logic.gapt.proofs.nd._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context
+import at.logic.gapt.proofs.Context.InductiveType
+
+object addRecorsorExamples extends Script {
+
+  implicit var ctx = Context()
+
+  ctx += InductiveType(
+    ty"nat",
+    hoc"0 : nat",
+    hoc"s : nat > nat" )
+  ctx += InductiveType(
+    ty"conj ?c  ?b",
+    hoc"pair: ?c > ?b > conj ?c ?b" )
+  ctx += InductiveType(
+    ty"list ?a",
+    hoc"nil: list ?a",
+    hoc"cons: ?a > list ?a > list ?a" )
+  ctx += InductiveType(
+    ty"bitree ?a",
+    hoc"leaf: ?a > bitree ?a",
+    hoc"node: bitree ?a > bitree ?a > bitree ?a" )
+
+  println( MRealizability.addRecursors )
+}
 
 //  \x^{i}\x^{1}.x^{1}
 object logicalAxiom1 extends Script {
