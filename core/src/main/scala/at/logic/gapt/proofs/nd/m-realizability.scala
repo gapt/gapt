@@ -29,46 +29,41 @@ object MRealizability {
     ty"1",
     hoc"i : 1" )
 
-  def mrealize( proof: NDProof ): Expr = proof match {
+  def mrealize( proof: NDProof ): Expr = normalize( proof match {
     case WeakeningRule( subProof, formula ) =>
-      normalize(
-        Abs(
-          ( freeVariables( proof.conclusion ).toSeq :+ Var( "z", flat( formula ) ) ) ++ variablesAntPremise( proof, 0 ).values,
-          App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) ) )
+      Abs(
+        ( freeVariables( proof.conclusion ).toSeq :+ Var( "z", flat( formula ) ) ) ++ variablesAntPremise( proof, 0 ).values,
+        App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) )
 
     case ContractionRule( subProof, aux1, aux2 ) =>
-      normalize(
-        Abs(
-          ( freeVariables( proof.conclusion ).toSeq :+ Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) ++ variablesAntPremise( proof, 0 ).-( aux1, aux2 ).values,
-          App( mrealize( subProof ), ( ( freeVariables( subProof.conclusion ).toSeq :+
-            Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) :+
-            Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) ++
-            variablesAntPremise( proof, 0 ).-( aux1, aux2 ).values ) ) )
+      Abs(
+        ( freeVariables( proof.conclusion ).toSeq :+ Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) ++ variablesAntPremise( proof, 0 ).-( aux1, aux2 ).values,
+        App( mrealize( subProof ), ( ( freeVariables( subProof.conclusion ).toSeq :+
+          Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) :+
+          Var( "z", flat( subProof.conclusion.apply( aux1 ) ) ) ) ++
+          variablesAntPremise( proof, 0 ).-( aux1, aux2 ).values ) )
 
     case LogicalAxiom( formula ) =>
       Abs( freeVariables( proof.conclusion ).toSeq :+ Var( "x", flat( formula ) ), Var( "x", flat( formula ) ) )
 
     case AndElim1Rule( subProof ) =>
-      normalize(
-        Abs(
-          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
-          le"pi1(${( App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) )})" ) )
+      Abs(
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
+        le"pi1(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )})" )
 
     case AndElim2Rule( subProof ) =>
-      normalize(
-        Abs(
-          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
-          le"pi2(${( App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) )})" ) )
+      Abs(
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
+        le"pi2(${App( mrealize( subProof ), freeVariables( subProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )})" )
 
     case AndIntroRule( leftSubproof, rightSubproof ) =>
-      normalize(
-        Abs(
-          freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
-          le"pair(${
-            App( mrealize( leftSubproof ), freeVariables( leftSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )
-          },${
-            App( mrealize( rightSubproof ), freeVariables( rightSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ).values )
-          })" ) )
+      Abs(
+        freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
+        le"pair(${
+          App( mrealize( leftSubproof ), freeVariables( leftSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values )
+        },${
+          App( mrealize( rightSubproof ), freeVariables( rightSubproof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ).values )
+        })" )
 
     case OrElimRule( leftSubProof, middleSubProof, aux1, rightSubProof, aux2 ) =>
       throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
@@ -79,13 +74,12 @@ object MRealizability {
     case OrIntro2Rule( subProof, leftDisjunct ) =>
       throw new MRealizerCreationException( proof.longName, "Not implemented yet." )
 
-    case ImpElimRule( leftSubProof, rightSubProof ) => {
-      normalize( Abs(
+    case ImpElimRule( leftSubProof, rightSubProof ) =>
+      Abs(
         freeVariables( proof.conclusion ).toSeq ++ variablesAntConclusion( proof ).values,
         App(
           normalize( App( mrealize( leftSubProof ), freeVariables( leftSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 0 ).values ) ),
-          normalize( App( mrealize( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ).values ) ) ) ) )
-    }
+          normalize( App( mrealize( rightSubProof ), freeVariables( rightSubProof.conclusion ).toSeq ++ variablesAntPremise( proof, 1 ).values ) ) ) )
 
     case ImpIntroRule( subProof, aux ) =>
       Abs(
@@ -129,7 +123,7 @@ object MRealizability {
 
     case ExcludedMiddleRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
       throw new MRealizerCreationException( proof.longName, "This rule is not admitted in Heyting Arithmetic." )
-  }
+  } )
 
   def flat( formula: Formula ): Ty = formula match {
     case Bottom() => ty"1"
@@ -140,11 +134,11 @@ object MRealizability {
     case And( leftformula, rightformula ) => TBase( "conj", flat( leftformula ), flat( rightformula ) )
     case Or( _, _ ) =>
       throw new FlattenException( formula.toString, "Not implemented yet." )
-    case Imp( leftformula, rightformula ) => flat( leftformula ) -> flat( rightformula )
+    case Imp( leftformula, rightformula ) => flat( leftformula ) ->: flat( rightformula )
     case Neg( subformula ) =>
       throw new FlattenException( formula.toString, "Not implemented yet." )
     case Ex( variable, subformula )  => TBase( "conj", variable.ty, flat( subformula ) )
-    case All( variable, subformula ) => variable.ty -> flat( subformula )
+    case All( variable, subformula ) => variable.ty ->: flat( subformula )
   }
 
   def variablesAntConclusion( proof: NDProof ): Map[SequentIndex, Var] =
