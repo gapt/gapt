@@ -22,8 +22,10 @@ object SchematicStruct {
       // We construct the struct for the given proof modulo the cutConfig
       val currentProofStruct: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] =
         ctx.get[ProofDefinitions].components.getOrElse( topSym, Set() ).map {
-          case ProofDefinition( placeHolder: Expr, _, assocProof: LKProof ) => ( CLS( placeHolder, theActualConfig ),
-            ( StructCreators.extract( assocProof, theActualConfig )( _ => true, ctx ), EigenVariablesLK( assocProof ) ) )
+          case ProofDefinition( placeHolder: Expr, _, assocProof: LKProof ) =>
+            ( CLS( placeHolder, theActualConfig ),
+              //need to write a predicate for cut ancestry
+              ( StructCreators.extract( assocProof, theActualConfig )( { _ => true }, ctx ), EigenVariablesLK( assocProof ) ) )
         }.toMap
       //After constructing the struct we need to find all CLS terms
       val clauseSetDependencies = currentProofStruct.foldLeft( Set[( String, Sequent[Boolean] )]() )( ( w, e ) => {

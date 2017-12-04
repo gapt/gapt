@@ -1,9 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
-import at.logic.gapt.examples.tautSchema
-import at.logic.gapt.examples.NiaSchema
-import at.logic.gapt.examples.gniaSchema
+import at.logic.gapt.examples._
 import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.expr.fol.natMaker
@@ -11,8 +9,6 @@ import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context._
 import at.logic.gapt.proofs.{ImmutableContext, Sequent}
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.provers._
-
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.gaptic.tactics.EscargotTactic
@@ -358,6 +354,30 @@ class SchemaTest extends Specification {
       ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
       val P = hoc"P: nat>nat"
       instantiateProof.Instantiate( le"$P ${natMaker( 10 )}" )( ccon )
+      ok
+    }
+  }
+  {
+    import FunctionInterationSchema.ctx
+    "Instantiation of function interation schema" in {
+      val proof = instantiateProof.Instantiate(le"phi (s (s (s (s (s (s 0)))))) ")
+      ctx.check(proof)
+      ok
+    }
+  }
+  {
+    import FunctionInterationRefutation.ctx
+    "Instantiation of the negative characteristic formula of the function interation schema" in {
+      val proof = instantiateProof.Instantiate(le"Top (s (s (s (s (s (s 0)))))) ")
+      ctx.check(proof)
+      ok
+    }
+  }
+  {
+    import FunctionInterationRefutationPos.ctx
+    "Instantiation of the postive characteristic formula proof of the function interation schema"  in {
+      val proof = instantiateProof.Instantiate(le"Top (s (s (s (s (s (s 0)))))) ")
+      ctx.check(proof)
       ok
     }
   }

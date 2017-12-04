@@ -12,7 +12,7 @@ object CharFormN extends StructVisitor[Formula, List[Nothing]] {
 }
 object CharFormPRN {
   def apply( SCS: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support(
-    SCS, stTN ) //.map{ case (x,(y,z)) => (x,(SCSinCNF(y),z)) }
+    SCS, stTN )
   private def SCSinCNF( st: Struct[Nothing] ): Struct[Nothing] = st match {
     case Plus( x, Times( y, z, w ) ) => Times[Nothing]( Plus[Nothing]( SCSinCNF( x ), SCSinCNF( y ) ), Plus[Nothing]( SCSinCNF( x ), SCSinCNF( z ) ), w )
     case Plus( Times( y, z, w ), x ) => Times[Nothing]( Plus[Nothing]( SCSinCNF( y ), SCSinCNF( x ) ), Plus[Nothing]( SCSinCNF( z ), SCSinCNF( x ) ), w )
@@ -61,26 +61,50 @@ private object Support {
     val Apps( Const( name, _ ), vs ) = pn
     val thefirst = vs.headOption.getOrElse( { throw new Exception( "Should not be empty" ) } )
     val result: Option[Expr] = freeVariables( thefirst ).headOption
-    Atom( mn.getOrElse( ( ( name, result ), cc ), { throw new Exception( "Should be in map" ) } ), vs )
+    Atom( mn.getOrElse( ( ( name, result ), cc ), { throw new Exception( "Should be in map" ) } ) + "PR", vs )
   }
   //assuming NNFCNF
   private def QuantIntroForAll( f: Formula, qType: QuantifierC, evar: Set[Var] ): Formula = f match {
-    case And( x, y )  => And( QuantIntroForAll( x, qType, evar ), QuantIntroForAll( y, qType, evar ) )
-    case Or( _, _ )   => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
-    case Atom( _, _ ) => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
-    case Top()        => Top()
-    case Bottom()     => Bottom()
-    case Neg( x )     => Neg( QuantIntroForAll( x, qType, evar ) )
-    case _            => throw new Exception( "???????????????" + f )
+    case And( x, And( Top(), Top() ) )          => QuantIntroForAll( x, qType, evar )
+    case And( And( Top(), Top() ), x )          => QuantIntroForAll( x, qType, evar )
+    case And( Top(), x )                        => QuantIntroForAll( x, qType, evar )
+    case And( x, Top() )                        => QuantIntroForAll( x, qType, evar )
+    case And( x, y )                            => And( QuantIntroForAll( x, qType, evar ), QuantIntroForAll( y, qType, evar ) )
+    case Or( x, Or( Bottom(), Bottom() ) )      => QuantIntroForAll( x, qType, evar )
+    case Or( Or( Bottom(), Bottom() ), x )      => QuantIntroForAll( x, qType, evar )
+    case Or( Bottom(), x )                      => QuantIntroForAll( x, qType, evar )
+    case Or( x, Bottom() )                      => QuantIntroForAll( x, qType, evar )
+    case Or( Neg( Neg( x ) ), Neg( Neg( y ) ) ) => evar.intersect( freeVariables( Or( x, y ) ) ).foldLeft( Or( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Or( x, Neg( Neg( y ) ) )               => evar.intersect( freeVariables( Or( x, y ) ) ).foldLeft( Or( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Or( Neg( Neg( x ) ), y )               => evar.intersect( freeVariables( Or( x, y ) ) ).foldLeft( Or( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Or( x, y )                             => evar.intersect( freeVariables( Or( x, y ) ) ).foldLeft( Or( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Atom( _, _ )                           => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] ) case Atom( _, _ ) => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Top()           => Top()
+    case Bottom()        => Bottom()
+    case Neg( Neg( x ) ) => Neg( QuantIntroForAll( x, qType, evar ) )
+    case Neg( x )        => Neg( QuantIntroForAll( x, qType, evar ) )
+    case _               => throw new Exception( "???????????????" + f )
   }
   private def QuantIntroExists( f: Formula, qType: QuantifierC, evar: Set[Var] ): Formula = f match {
-    case And( x, y )  => And( QuantIntroExists( x, qType, evar ), QuantIntroExists( y, qType, evar ) )
-    case Or( _, _ )   => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
-    case Atom( _, _ ) => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
-    case Top()        => Top()
-    case Bottom()     => Bottom()
-    case Neg( x )     => Neg( QuantIntroExists( x, qType, evar ) )
-    case _            => throw new Exception( "???????????????" + f )
+    case Or( x, Or( Bottom(), Bottom() ) )       => QuantIntroExists( x, qType, evar )
+    case Or( Or( Bottom(), Bottom() ), x )       => QuantIntroExists( x, qType, evar )
+    case Or( Bottom(), x )                       => QuantIntroExists( x, qType, evar )
+    case Or( x, Bottom() )                       => QuantIntroExists( x, qType, evar )
+    case Or( x, y )                              => Or( QuantIntroExists( x, qType, evar ), QuantIntroExists( y, qType, evar ) )
+    case And( x, And( Top(), Top() ) )           => QuantIntroExists( x, qType, evar )
+    case And( And( Top(), Top() ), x )           => QuantIntroExists( x, qType, evar )
+    case And( Top(), x )                         => QuantIntroExists( x, qType, evar )
+    case And( x, Top() )                         => QuantIntroExists( x, qType, evar )
+    case And( Neg( Neg( x ) ), Neg( Neg( y ) ) ) => evar.intersect( freeVariables( And( x, y ) ) ).foldLeft( And( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case And( x, Neg( Neg( y ) ) )               => evar.intersect( freeVariables( And( x, y ) ) ).foldLeft( And( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case And( Neg( Neg( x ) ), y )               => evar.intersect( freeVariables( And( x, y ) ) ).foldLeft( And( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case And( x, y )                             => evar.intersect( freeVariables( And( x, y ) ) ).foldLeft( And( x, y ) )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Atom( _, _ )                            => evar.intersect( freeVariables( f ) ).foldLeft( f )( ( x, y ) => Apps( qType( y.ty ), Abs( y, x ) ).asInstanceOf[Formula] )
+    case Top()                                   => Top()
+    case Bottom()                                => Bottom()
+    case Neg( Neg( x ) )                         => QuantIntroExists( x, qType, evar )
+    case Neg( x )                                => Neg( QuantIntroExists( x, qType, evar ) )
+    case _                                       => throw new Exception( "???????????????" + f )
   }
   def add( ChF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
     val preRes = ChF.keySet.map( x => {
@@ -114,7 +138,9 @@ private object Support {
       case CLS( Apps( Const( name, _ ), vs ), cc ) =>
         val thefirst = vs.headOption.getOrElse( { throw new Exception( "Should not be empty" ) } )
         val result: Option[Expr] = freeVariables( thefirst ).headOption
-        ( ( ( name, result ), cc ), name )
+        val ccS = cc.succedent.foldLeft( name + "S" )( ( x, y ) => x + { if ( y ) "T" else "F" } )
+        val newName = cc.antecedent.foldLeft( ccS + "A" )( ( x, y ) => x + { if ( y ) "T" else "F" } )
+        ( ( ( name, result ), cc ), newName )
     }.toMap
   private def SwitchToApps( Form: Expr, newEx: Expr, const: String ): Expr = {
     Form match {
