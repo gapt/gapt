@@ -54,7 +54,7 @@ object LKToExpansionProof {
       val ( leftCuts, leftSequent ) = extract( leftSubProof )
       val ( rightCuts, rightSequent ) = extract( rightSubProof )
       val cutImp = ETImp( leftSequent( aux1 ), rightSequent( aux2 ) )
-      val newCut = ETWeakQuantifier( hof"∀X (X ⊃ X)", Map( c.cutFormula -> cutImp ) )
+      val newCut = ETWeakQuantifier( ETCut.cutAxiom, Map( c.cutFormula -> cutImp ) )
       val cuts =
         if ( !isPropositionalET( cutImp ) )
           newCut +: ( leftCuts ++ rightCuts )
