@@ -30,7 +30,7 @@ object ResolutionToLKProof {
 
     def reducef( p: PropositionalResolutionRule )( func: Formula => LKProof ) = {
       val q = f( p.subProof )
-      reduceAxiom( q, q.conclusion.indexOfPol( p.subProof.conclusion( p.idx ), p.idx.polarity ) )( func )
+      reduceAxiom( q, q.conclusion.indexOf( p.subProof.conclusion( p.idx ), p.idx.polarity ) )( func )
     }
 
     def contract( p: ResolutionProof, q: LKProof ) =
