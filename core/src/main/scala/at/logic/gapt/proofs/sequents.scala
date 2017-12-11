@@ -419,7 +419,11 @@ case class Sequent[+A]( antecedent: Vector[A], succedent: Vector[A] ) {
   def indexOfInAnt[B >: A]( elem: B ): SequentIndex = indexOf( elem, Polarity.InAntecedent )
   def indexOfInSuc[B >: A]( elem: B ): SequentIndex = indexOf( elem, Polarity.InSuccedent )
 
+  @deprecated( "Use indexOfOption instead.", since = "2.9" )
   def indexOfPolOption[B >: A]( elem: B, pol: Polarity ): Option[SequentIndex] =
+    indexOfOption( elem, pol )
+
+  def indexOfOption[B >: A]( elem: B, pol: Polarity ): Option[SequentIndex] =
     cedent( pol ).indexOf( elem ) match {
       case -1  => None
       case idx => Some( SequentIndex( pol, idx ) )
