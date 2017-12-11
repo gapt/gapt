@@ -1,62 +1,70 @@
 package at.logic.gapt.examples.tip.isaplanner
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.Ant
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.provers.viper.aip.axioms.SequentialInductionAxioms
-import at.logic.gapt.provers.viper.aip.provers.escargot
-import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_09 extends TacticsProof {
 
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/isaplanner/prop_09.smt2", getClass ) )
-  ctx = bench.ctx
+  ctx += Context.InductiveType( ty"Nat", hoc"Z:Nat", hoc"S:Nat>Nat" )
+  ctx += hoc"p:Nat>Nat"
+  ctx += hoc"plus:Nat>Nat>Nat"
+  ctx += hoc"minus:Nat>Nat>Nat"
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  val sequent = hols"""
+                          def_p: ∀x p(S(x)) = x,
+                          def_plus_1: ∀x plus(Z, x) = x,
+                          def_plus_2: ∀x ∀y plus(S(x), y) = S(plus(x, y)),
+                          def_minus_1: ∀x minus(Z, x) = Z,
+                          def_minus_2: ∀x minus(S(x), Z) = S(x),
+                          def_minus_3: ∀x ∀y minus(S(x), S(y)) = minus(x, y),
+                          ax_nat_1: ∀x ¬Z = S(x)
+                          :-
+                          goal: ∀i ∀j ∀k minus(minus(i, j), k) = minus(i, plus(j, k))
+    """
 
   val proof1 = Lemma( sequent ) {
     allR
     induction( hov"i:Nat" )
     allR
     allR
-    allL( "h3", le"j:Nat" )
-    allL( "h3", le"plus(j:Nat, k:Nat)" )
-    allL( "h3", le"k:Nat" )
-    eql( "h3_0", "goal" ).fromLeftToRight
-    eql( "h3_1", "goal" ).fromLeftToRight
-    eql( "h3_2", "goal" ).fromLeftToRight
+    allL( "def_minus_1", le"j:Nat" )
+    allL( "def_minus_1", le"plus(j:Nat, k:Nat)" )
+    allL( "def_minus_1", le"k:Nat" )
+    eql( "def_minus_1_0", "goal" ).fromLeftToRight
+    eql( "def_minus_1_1", "goal" ).fromLeftToRight
+    eql( "def_minus_1_2", "goal" ).fromLeftToRight
     refl
 
     allR
     induction( hov"j:Nat" )
     allR
-    allL( "h1", le"k:Nat" )
-    allL( "h4", le"i_0:Nat" )
-    eql( "h1_0", "goal" ).fromLeftToRight
-    eql( "h4_0", "goal" ).fromLeftToRight
+    allL( "def_plus_1", le"k:Nat" )
+    allL( "def_minus_2", le"i_0:Nat" )
+    eql( "def_plus_1_0", "goal" ).fromLeftToRight
+    eql( "def_minus_2_0", "goal" ).fromLeftToRight
     refl
 
     allR
-    allL( "h5", le"i_0:Nat", le"j_0:Nat" )
-    allL( "h2", le"j_0:Nat", le"k:Nat" )
-    allL( "h5", le"i_0:Nat", le"plus(j_0:Nat, k:Nat)" )
+    allL( "def_minus_3", le"i_0:Nat", le"j_0:Nat" )
+    allL( "def_plus_2", le"j_0:Nat", le"k:Nat" )
+    allL( "def_minus_3", le"i_0:Nat", le"plus(j_0:Nat, k:Nat)" )
     allL( "IHi_0", le"j_0:Nat", le"k:Nat" )
-    eql( "h5_0", "goal" )
-    eql( "h2_0", "goal" )
-    eql( "h5_1", "goal" )
+    eql( "def_minus_3_0", "goal" )
+    eql( "def_plus_2_0", "goal" )
+    eql( "def_minus_3_1", "goal" )
     axiomLog
   }
 
-  val aipOptions1 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"i:Nat", hov"j:Nat" ) ).forLabel( "goal" ) )
-  val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( sequent ) get
+  val proof2 = Lemma( sequent ) {
+    analyticInduction.withAxioms(
+      SequentialInductionAxioms().forVariables( List( hov"i:Nat", hov"j:Nat" ) ).forLabel( "goal" ) )
+  }
 
-  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
-  val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( sequent ) get
+  val proof3 = Lemma( sequent ) {
+    analyticInduction.withAxioms( SequentialInductionAxioms().forAllVariables.forLabel( "goal" ) )
+  }
 
   import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic.{ independentAxioms, sequentialAxioms }
 

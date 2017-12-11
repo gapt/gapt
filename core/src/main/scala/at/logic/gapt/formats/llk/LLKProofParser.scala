@@ -18,8 +18,7 @@ import scala.util.parsing.input.PagedSeqReader
 case class ExtendedProofDatabase(
     eproofs:      Map[Formula, LKProof],
     eaxioms:      Map[Formula, Formula],
-    edefinitions: Map[Const, Expr]
-) {
+    edefinitions: Map[Const, Expr] ) {
   val proofs = eproofs.map( x =>
     x._1 match {
       case Atom( Const( sym, _ ), _ ) => ( sym.toString, x._2 )
@@ -140,8 +139,7 @@ trait LatexReplacementParser extends DeclarationParser {
   lazy val reservedset = Set( "\\neg", "\\land", "\\lor", "\\impl", "\\forall", "\\exists" )
   override lazy val atomsymb: Parser[String] = atomsymb2 ^? (
     { case x if !( reservedset contains x ) => x },
-    ( x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names" )
-  )
+    ( x => "error: \\neg,\\land,\\lor,\\impl,\\forall,\\exists are reserved names" ) )
 
   lazy val atomsymb2: Parser[String] = atomregexp
 

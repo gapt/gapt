@@ -24,13 +24,11 @@ object IvyToResolution {
         if ( lit1 isAnt )
           Resolution(
             q2, Suc( q2.conclusion.succedent indexOf parent2.conclusion( lit2 ) ),
-            q1, Ant( q1.conclusion.antecedent indexOf parent1.conclusion( lit1 ) )
-          )
+            q1, Ant( q1.conclusion.antecedent indexOf parent1.conclusion( lit1 ) ) )
         else
           Resolution(
             q1, Suc( q1.conclusion.succedent indexOf parent1.conclusion( lit1 ) ),
-            q2, Ant( q2.conclusion.antecedent indexOf parent2.conclusion( lit2 ) )
-          )
+            q2, Ant( q2.conclusion.antecedent indexOf parent2.conclusion( lit2 ) ) )
       case IPropositional( id, exp, clause, parent ) if clause isSubMultisetOf parent.conclusion =>
         Factor( convert( parent ), clause )
       case IPropositional( id, exp, clause, parent ) =>

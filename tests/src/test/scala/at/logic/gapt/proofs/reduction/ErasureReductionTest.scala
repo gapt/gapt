@@ -55,14 +55,11 @@ class ErasureReductionTest extends Specification with SatMatchers {
       ExpansionProof(
         ETWeakQuantifier(
           red.forward( hof"∀x P x", Map() ),
-          Map( FOLVar( "z" ) -> ETAtom( deepAtom, Polarity.InAntecedent ) )
-        ) +:
+          Map( FOLVar( "z" ) -> ETAtom( deepAtom, Polarity.InAntecedent ) ) ) +:
           Sequent()
           :+ ETWeakQuantifier(
             red.forward( hof"∃x P x", Map() ),
-            Map( FOLVar( "z" ) -> ETAtom( deepAtom, Polarity.InSuccedent ) )
-          )
-      )
+            Map( FOLVar( "z" ) -> ETAtom( deepAtom, Polarity.InSuccedent ) ) ) )
 
     red.back( firstOrderEP, sequent ).deep must beValidSequent
   }

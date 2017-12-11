@@ -15,6 +15,5 @@
     (case (cons h t) (ones1 t (cons I a)))
     (case nil a)))
 
-(assert-not (forall ((x list))
+(prove (forall ((x list))
   (= (ones x) (ones1 x nil))))
-(check-sat)

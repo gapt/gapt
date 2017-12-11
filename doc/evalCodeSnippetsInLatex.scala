@@ -35,7 +35,6 @@ object evalCodeSnippetsInLatex {
     repl.in = SimpleReader()
     repl.intp.initializeSynchronous()
     repl.intp.quietBind( NamedParam[IMain]( "$intp", repl.intp )( StdReplTags.tagOfIMain, reflect.classTag[IMain] ) )
-    repl.intp.setContextClassLoader()
 
     repl.intp.beQuietDuring {
       repl command CLIMain.imports
@@ -99,13 +98,30 @@ object evalCodeSnippetsInLatex {
   def processTacticsListing( listing: Seq[String], optionString: String, interp: ILoop ): Unit = {
     val options = if ( optionString == null ) Seq() else optionString.split( "," ).toSeq
 
+    val bare = options.contains( "bare" )
+    val nosig = bare || options.contains( "nosig" )
+
     val code = new StringBuilder
-    code ++= "val () = { new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
+    code ++= "val () = {\n"
+    if ( !bare ) code ++= "new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
     code ++= "import at.logic.gapt.proofs.gaptic._\n"
-    if ( !options.contains( "nosig" ) )
-      code ++= "implicit def sig = at.logic.gapt.formats.babel.BabelSignature.defaultSignature\n"
+    if ( !nosig ) code ++=
+      """
+          ctx += Context.Sort("i")
+          ctx += hoc"P: i>o"
+          ctx += hoc"Q: i>o"
+          ctx += hoc"I: i>o"
+          ctx += hoc"a: i"
+          ctx += hoc"b: i"
+          ctx += hoc"0: i"
+          ctx += hoc"1: i"
+          ctx += hoc"f: i>i"
+          ctx += hoc"A: o"
+          ctx += hoc"B: o"
+        """
     for ( line <- listing ) { code ++= line; code += '\n' }
-    code ++= "}; () }"
+    if ( !bare ) code ++= "}; "
+    code ++= "() }"
 
     println( """\begin{tacticslisting}""" +
       ( if ( options.isEmpty ) "" else s"[${options.mkString( "," )}]" ) )

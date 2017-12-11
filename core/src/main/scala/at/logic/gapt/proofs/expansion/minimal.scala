@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
 
@@ -44,7 +44,7 @@ object minimalExpansionSequent {
  * @param sequent The ExpansionSequent to be evaluated.
  * @param prover The prover used for the evaluation.
  */
-private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: Prover ) extends Logger {
+private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: Prover ) {
 
   val maxRemovedInstance = new mMap[ExpansionSequent, Int] // This assigns to each ExpansionSequent S the maximum of all numbers n with the following property: S can be obtained from a ExpansionSequent S' by removing the nth instance of S'.
 
@@ -65,17 +65,17 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
     while ( stack.nonEmpty ) {
       debug( "Retrieving sequent from stack" )
       val ( current ) = stack.pop() // Topmost element of stack is retrieved. We already know it is tautological; only need to consider its successors.
-      trace( "Retrieved sequent " + current + "." )
+      debug( "Retrieved sequent " + current + "." )
       val n = maxRemovedInstance( current )
-      trace( "Generating successors" )
+      debug( "Generating successors" )
       val newSequents = generateSuccessors( current ) // All successor expansion sequents are generated.
       val m = newSequents.length
-      trace( m + " successors generated" )
+      debug( m + " successors generated" )
       var minimal = true // We assume that the current sequent is minimal unless we find a counterexample.
 
       for ( i <- 1 to m ) { // Iterate over the generated successors
         val s = newSequents( i - 1 )
-        trace( "Testing validity [" + i + "/" + m + "] ..." )
+        debug( "Testing validity [" + i + "/" + m + "] ..." )
         if ( prover.isValid( s map { _.deep } ) ) {
           if ( i >= n ) // This is the core of the optimization: Avoid pushing sequents on the stack multiple times.
             stack.push( s ) // Push valid sequents on the stack
@@ -135,10 +135,10 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
 
       // Loop over the antecedent.
       var n = ant.length
-      trace( "Generating successor trees for antecedent ..." )
+      debug( "Generating successor trees for antecedent ..." )
       for ( j <- 1 to n ) {
         val ( fst, tree +: snd ) = ant.splitAt( j - 1 ) //We iteratively focus each expansion tree in the antecedent of S.
-        trace( "[" + j + "/" + n + "]" )
+        debug( "[" + j + "/" + n + "]" )
         val newTrees = generateSuccessorTrees( tree ) // We generate all successor trees of the current tree.
 
         if ( newTrees.isEmpty ) { // This can happen for two reasons: the current tree contains no weak quantifiers or all its weak quantifier nodes have only one instance.
@@ -170,10 +170,10 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
 
       // Loop over the succedent, analogous to the one over the antecedent.
       n = suc.length
-      trace( "Generating successor trees for succedent ..." )
+      debug( "Generating successor trees for succedent ..." )
       for ( j <- 1 to n ) {
         val ( fst, tree +: snd ) = suc.splitAt( j - 1 )
-        trace( "[" + j + "/" + n + "]" )
+        debug( "[" + j + "/" + n + "]" )
         val newTrees = generateSuccessorTrees( tree )
 
         if ( newTrees.isEmpty ) {

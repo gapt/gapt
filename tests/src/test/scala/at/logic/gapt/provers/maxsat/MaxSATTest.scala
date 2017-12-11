@@ -4,7 +4,7 @@
 
 package at.logic.gapt.provers.maxsat
 
-import at.logic.gapt.models.{ Interpretation, MapBasedInterpretation }
+import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.HOLClause
 import org.specs2.mutable._
 
@@ -52,11 +52,11 @@ class MaxSATTest extends Specification {
     }
   }
 
-  def check( model: Option[Interpretation] ) = model must beLike {
+  def check( model: Option[PropositionalModel] ) = model must beLike {
     case Some( model ) =>
-      model.interpret( SimpleMaxSATFormula.x2 ) must_== true
-      model.interpret( SimpleMaxSATFormula.x1 ) must_== false
-      model.interpret( SimpleMaxSATFormula.x3 ) must_== false
+      model( SimpleMaxSATFormula.x2 ) must_== true
+      model( SimpleMaxSATFormula.x1 ) must_== false
+      model( SimpleMaxSATFormula.x3 ) must_== false
   }
 
   Fragment.foreach( Seq( QMaxSAT, ToySAT, ToySolver, MiniMaxSAT, MiFuMaX, OpenWBO ) ) { p =>

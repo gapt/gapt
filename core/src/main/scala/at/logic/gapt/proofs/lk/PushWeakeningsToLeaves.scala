@@ -167,8 +167,7 @@ object pushSingleWeakeningToLeaves {
           inductionCase.copy(
             proof = newCaseProof,
             hypotheses = inductionCase.hypotheses.map( connector.child ),
-            conclusion = connector.child( inductionCase.conclusion )
-          )
+            conclusion = connector.child( inductionCase.conclusion ) )
       }
       ContractionMacroRule( ind.copy( cases = newInductionCases ), contractionTarget( formula, side, proof ), false )
   }

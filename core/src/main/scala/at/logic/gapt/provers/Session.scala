@@ -9,6 +9,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.proofs.{ HOLSequent, Sequent }
 import at.logic.gapt.provers.Session.{ Session, SessionCommand }
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
+import at.logic.gapt.utils.NameGenerator
 import cats.free.Free.liftF
 import cats.free._
 import cats.implicits._
@@ -66,7 +67,7 @@ object Session {
     /**
      * Checks whether the current set of declarations and assertions is satisfiable.
      */
-    case object CheckSat extends SessionCommand[Boolean]
+    case object CheckSat extends SessionCommand[Either[SExpression, Boolean]]
 
     /**
      * Sets the logic to be used for the session.
@@ -120,12 +121,12 @@ object Session {
   /**
    * Checks whether the current set of declarations and assertions is satisfiable.
    */
-  def checkSat: Session[Boolean] = liftF( CheckSat )
+  def checkSat: Session[Either[SExpression, Boolean]] = liftF( CheckSat )
 
   /**
    * Checks whether the current set of declarations and assertions is not satisfiable.
    */
-  def checkUnsat: Session[Boolean] = checkSat.map( !_ )
+  def checkUnsat: Session[Either[SExpression, Boolean]] = checkSat.map( _.map( !_ ) )
 
   /**
    * Sets the logic to be used for the session.
@@ -248,69 +249,69 @@ object Session {
       protected def ask( input: SExpression ): SExpression
 
       protected def interpretCommand[A]( command: SessionCommand[A] ): A = command match {
-        case Push                => tell( LFun( "push", LAtom( "1" ) ) )
-        case Pop                 => tell( LFun( "pop", LAtom( "1" ) ) )
-        case DeclareSort( sort ) => tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) )
+        case Push                => tell( LFun( "push", LSymbol( "1" ) ) )
+        case Pop                 => tell( LFun( "pop", LSymbol( "1" ) ) )
+        case DeclareSort( sort ) => tell( LFun( "declare-sort", LSymbol( typeRenaming( sort ).name ), LSymbol( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
           case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
-            tell( LFun( "declare-fun", LAtom( name ),
-              LList( argTypes map { case TBase( argType, Nil ) => LAtom( argType ) }: _* ),
-              LAtom( retType ) ) )
+            tell( LFun( "declare-fun", LSymbol( name ),
+              LList( argTypes map { case TBase( argType, Nil ) => LSymbol( argType ) }: _* ),
+              LSymbol( retType ) ) )
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
 
-        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LAtom( ":named" ), LAtom( label ) ) ) )
+        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LKeyword( "named" ), LSymbol( label ) ) ) )
         case CheckSat => ask( LFun( "check-sat" ) ) match {
-          case LAtom( "sat" )   => true
-          case LAtom( "unsat" ) => false
+          case LSymbol( "sat" )   => Right( true )
+          case LSymbol( "unsat" ) => Right( false )
+          case unknown            => Left( unknown )
         }
-        case SetLogic( logic )         => tell( LFun( "set-logic", LAtom( logic ) ) )
-        case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) )
+        case SetLogic( logic )         => tell( LFun( "set-logic", LSymbol( logic ) ) )
+        case SetOption( option, args ) => tell( LFun( "set-option", LKeyword( option ) +: args.map( LSymbol ): _* ) )
         case Ask( input )              => ask( input )
         case Tell( input )             => tell( input )
       }
 
+      protected val nameGen = new NameGenerator( Set() ) // TODO: add reserved keywords?
+
       object typeRenaming {
         val map = mutable.Map[TBase, TBase]()
 
-        private var i = 0
         def apply( t: TBase ): TBase = map.getOrElseUpdate( t, t match {
           case To => TBase( "Bool", Nil )
-          case _  => i += 1; TBase( s"t$i", Nil )
+          case TBase( n, _ ) => // TODO: polymorphic types
+            TBase( nameGen.fresh( mangleName( n, "t_" ) ), Nil )
         } )
 
         def apply( t: Ty ): Ty = t match {
-          case base: TBase  => apply( base )
-          case `->`( a, b ) => apply( a ) -> apply( b )
+          case base: TBase => apply( base )
+          case a ->: b     => apply( a ) ->: apply( b )
         }
       }
 
       object termRenaming {
         val map = mutable.Map[Const, Const]()
-
-        private var i = 0
-        def apply( c: Const ): Const = map.getOrElseUpdate( c, {
-          i += 1
-          Const( s"f$i", typeRenaming( c.ty ) )
-        } )
+        def apply( c: Const ): Const = map.getOrElseUpdate(
+          c,
+          Const( nameGen.fresh( mangleName( c.name ) ), typeRenaming( c.ty ) ) )
       }
 
       def convert( expr: Expr, boundVars: Map[Var, String] = Map() ): SExpression = expr match {
-        case Top()       => LAtom( "true" )
-        case Bottom()    => LAtom( "false" )
+        case Top()       => LSymbol( "true" )
+        case Bottom()    => LSymbol( "false" )
         case Neg( a )    => LFun( "not", convert( a, boundVars ) )
         case And( a, b ) => LFun( "and", convert( a, boundVars ), convert( b, boundVars ) )
         case Or( a, b )  => LFun( "or", convert( a, boundVars ), convert( b, boundVars ) )
         case Imp( a, b ) => LFun( "=>", convert( a, boundVars ), convert( b, boundVars ) )
         case Eq( a, b )  => LFun( "=", convert( a, boundVars ), convert( b, boundVars ) )
-        case c: Const    => LAtom( termRenaming( c ).name )
+        case c: Const    => LSymbol( termRenaming( c ).name )
         case All( x @ Var( _, ty: TBase ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "forall", LList( LFun( smtVar, LAtom( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+          LFun( "forall", LList( LFun( smtVar, LSymbol( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
         case Ex( x @ Var( _, ty: TBase ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "exists", LList( LFun( smtVar, LAtom( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
-        case v: Var => LAtom( boundVars( v ) )
+          LFun( "exists", LList( LFun( smtVar, LSymbol( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+        case v: Var => LSymbol( boundVars( v ) )
         case Apps( c: Const, args ) =>
           LFun( termRenaming( c ).name, args map { convert( _, boundVars ) }: _* )
       }
@@ -359,7 +360,7 @@ object Session {
       protected def ask( input: SExpression ) = {
         tell( input )
         input match {
-          case LFun( "check-sat" ) => LAtom( "unsat" )
+          case LFun( "check-sat" ) => LSymbol( "unsat" )
           case _                   => LList()
         }
       }
@@ -382,7 +383,7 @@ object Session {
           assertedFormulas += formula; ()
         case AssertLabelled( formula, _ ) =>
           assertedFormulas += formula; ()
-        case CheckSat => !checkValidity( assertedFormulas ++: Sequent() )
+        case CheckSat => Right( !checkValidity( assertedFormulas ++: Sequent() ) )
         case Ask( input ) => input
         case DeclareFun( _ ) | DeclareSort( _ ) | SetLogic( _ ) | SetOption( _, _ ) | Tell( _ ) => ()
       }

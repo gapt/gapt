@@ -4,20 +4,26 @@ import at.logic.gapt.examples.{ Pi2Pigeonhole, tape, tapeUrban }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.grammars.RecursionScheme
+import at.logic.gapt.proofs.Context.Sort
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable._
 import org.specs2.specification.core.Fragment
 
 class ExtractRecSchemTest extends Specification with SatMatchers {
   "simple" in {
+    implicit val ctx = MutableContext.default()
+    ctx += Sort( "i" )
+    ctx += hoc"P: i>o"
+    ctx += hoc"c: i"
+    ctx += hoc"f: i>i"
+
     val p = Lemma(
       ( "base" -> hof"P c" ) +:
         ( "step" -> hof"!x (P x -> P (f x))" ) +:
         Sequent()
-        :+ ( "goal" -> hof"P (f (f (f (f c))))" )
-    ) {
+        :+ ( "goal" -> hof"P (f (f (f (f c))))" ) ) {
         cut( "step2", hof"!x (P x -> P (f (f x)))" )
         forget( "goal" ); decompose; escargot
         escargot
@@ -57,11 +63,15 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "simple pi3" in {
+    implicit val ctx = MutableContext.default()
+    ctx += Sort( "i" )
+    ctx += hoc"P: i>i>i>o"
+    ctx += hoc"c: i"
+    ctx += hoc"d: i"
     val p = Lemma(
       ( "hyp" -> hof"∀x ∀y P(x, x, y)" ) +:
         Sequent()
-        :+ ( "conj" -> hof"∃x P(c, x, d)" )
-    ) {
+        :+ ( "conj" -> hof"∃x P(c, x, d)" ) ) {
         cut( "cut", hof"∀x ∃y ∀z P(x, y, z)" )
         forget( "conj" ); decompose; exR( le"x" ).forget; decompose; chain( "hyp" )
         forget( "hyp" ); allL( le"c" ).forget; decompose; exR( le"y" ).forget; chain( "cut" )
@@ -72,7 +82,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
   }
 
   "numeral induction" in {
-    implicit var ctx = Context()
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "Nat", hoc"Zero: Nat", hoc"Suc: Nat>Nat" )
     ctx += Context.Sort( "Witness" )
     ctx += hoc"p: Nat>Witness>o"
@@ -83,8 +93,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
       ( "base" -> hof"∀y p(Zero, y)" ) +:
         ( "step" -> hof"∀x ∀y (p(x, g y) ⊃ p(Suc x, y))" ) +:
         Sequent()
-        :+ ( "conj" -> hof"p(x, c)" )
-    ) {
+        :+ ( "conj" -> hof"p(x, c)" ) ) {
         cut( "cut", hof"∀x ∀y p(x, y)" ); forget( "conj" )
         allR; induction( hov"x:Nat" ).onAll( decompose )
         chain( "base" )
@@ -126,8 +135,7 @@ class Pi2FactorialPOC extends Specification with SatMatchers {
     le"B 0 y X" -> le"g y 0 = y",
     le"B 0 y X" -> le"f 0 = s 0",
     le"B 0 y X" -> le"s 0 * s 0 = s 0",
-    le"B 0 y X" -> le"X (s 0): o"
-  )
+    le"B 0 y X" -> le"X (s 0): o" )
 
   def lang( i: Int ) = hors.parametricLanguage( Numeral( i ) ).map( _.asInstanceOf[Formula] )
 

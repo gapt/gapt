@@ -39,7 +39,7 @@ class ResolutionProofVisitor {
   def recurse( proof: ResolutionProof ): ResolutionProof = memo.getOrElseUpdate( proof, apply( proof ) )
 
   def copyUnary( old: ResolutionProof, newSub: ResolutionProof, aux: Formula, pol: Polarity ): ResolutionProof =
-    newSub.conclusion.indexOfPolOption( aux, pol ) match {
+    newSub.conclusion.indexOfOption( aux, pol ) match {
       case Some( idx ) => copyUnary( old, newSub, idx )
       case None        => newSub
     }
@@ -79,8 +79,8 @@ class ResolutionProofVisitor {
   def visitResolution( p: Resolution ): ResolutionProof = {
     val q1 = recurse( p.subProof1 )
     val q2 = recurse( p.subProof2 )
-    q1.conclusion.indexOfPolOption( p.resolvedLiteral, Polarity.InSuccedent ).fold( q1 ) { i1 =>
-      q2.conclusion.indexOfPolOption( p.resolvedLiteral, Polarity.InAntecedent ).fold( q2 ) { i2 =>
+    q1.conclusion.indexOfOption( p.resolvedLiteral, Polarity.InSuccedent ).fold( q1 ) { i1 =>
+      q2.conclusion.indexOfOption( p.resolvedLiteral, Polarity.InAntecedent ).fold( q2 ) { i2 =>
         Resolution( q1, i1, q2, i2 )
       }
     }
@@ -88,8 +88,8 @@ class ResolutionProofVisitor {
   def visitParamod( p: Paramod ): ResolutionProof = {
     val q1 = recurse( p.subProof1 )
     val q2 = recurse( p.subProof2 )
-    q1.conclusion.indexOfPolOption( p.subProof1.conclusion( p.eqIdx ), Polarity.InSuccedent ).fold( q1 ) { i1 =>
-      q2.conclusion.indexOfPolOption( p.subProof2.conclusion( p.auxIdx ), p.auxIdx.polarity ).fold( q2 ) { i2 =>
+    q1.conclusion.indexOfOption( p.subProof1.conclusion( p.eqIdx ), Polarity.InSuccedent ).fold( q1 ) { i1 =>
+      q2.conclusion.indexOfOption( p.subProof2.conclusion( p.auxIdx ), p.auxIdx.polarity ).fold( q2 ) { i2 =>
         Paramod( q1, i1, p.leftToRight, q2, i2, p.context )
       }
     }

@@ -1,29 +1,45 @@
 package at.logic.gapt.examples.tip.prod
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.ClasspathInputFile
-import at.logic.gapt.formats.tip.TipSmtParser
+import at.logic.gapt.proofs.Context.InductiveType
+import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.{ Ant, Sequent }
 import at.logic.gapt.provers.viper.aip.AnalyticInductionProver
 
 object prop_29 extends TacticsProof {
 
-  val bench = TipSmtParser.fixupAndParse( ClasspathInputFile( "tip/prod/prop_29.smt2", getClass ) )
-  ctx = bench.ctx
+  // Sorts
+  ctx += TBase( "sk" )
 
-  val sequent = bench.toSequent.zipWithIndex.map {
-    case ( f, Ant( i ) ) => s"h$i" -> f
-    case ( f, _ )        => "goal" -> f
-  }
+  // Inductive types
+  ctx += InductiveType( ty"list", hoc"'nil' :list", hoc"'cons' :sk>list>list" )
+
+  //Function constants
+  ctx += hoc"'qrev' :list>list>list"
+  ctx += hoc"'append' :list>list>list"
+  ctx += hoc"'rev' :list>list"
+
+  val sequent =
+    hols"""
+        def_head: ∀x0 ∀x1 (head(cons(x0:sk, x1:list): list): sk) = x0,
+        def_tail: ∀x0 ∀x1 (tail(cons(x0:sk, x1:list): list): list) = x1,
+        def_qrev_0: ∀y (qrev(nil:list, y:list): list) = y,
+        def_qrev_1: ∀z ∀xs ∀y (qrev(cons(z:sk, xs:list): list, y:list): list) = qrev(xs, cons(z, y)),
+        def_append_0: ∀y (append(nil:list, y:list): list) = y,
+        def_append_1: ∀z   ∀xs   ∀y   (append(cons(z:sk, xs:list): list, y:list): list) = cons(z, append(xs, y)),
+        def_rev_0: (rev(nil:list): list) = nil,
+        def_rev_1: ∀y ∀xs (rev(cons(y:sk, xs:list): list): list) = append(rev(xs), cons(y, nil)),
+        constr_inj_0: ∀y0 ∀y1 ¬(nil:list) = cons(y0:sk, y1:list)
+        :-
+        goal: ∀x (rev(qrev(x:list, nil:list): list): list) = x
+  """
 
   val dca_goal = hof"!xs (xs = nil ∨ xs = cons(head(xs), tail(xs)))"
 
   val dca = (
     ( "" -> hof"∀x0 ∀x1 head(cons(x0, x1)) = x0" ) +:
     ( "" -> hof"∀x0 ∀x1 tail(cons(x0, x1)) = x1" ) +:
-    Sequent() :+ ( "" -> dca_goal )
-  )
+    Sequent() :+ ( "" -> dca_goal ) )
 
   val dca_proof = AnalyticInductionProver.singleInduction( dca, hov"xs:list" )
 
@@ -32,8 +48,7 @@ object prop_29 extends TacticsProof {
   val lemma_11 = (
     ( "" -> hof"∀y append(nil, y) = y" ) +:
     ( "" -> hof"∀z ∀xs ∀y append(cons(z, xs), y) = cons(z, append(xs, y))" ) +:
-    Sequent() :+ ( "" -> lemma_11_goal )
-  )
+    Sequent() :+ ( "" -> lemma_11_goal ) )
 
   val lemma_11_proof = AnalyticInductionProver.singleInduction( lemma_11, hov"xs:list" )
 
@@ -48,8 +63,7 @@ object prop_29 extends TacticsProof {
     ( "" -> hof"∀z ∀xs ∀y qrev(cons(z, xs), y) = qrev(xs, cons(z, y))" ) +:
     ( "lemma_11" -> lemma_11_goal ) +:
     ( "dca" -> dca_goal ) +:
-    Sequent() :+ ( "" -> cong_3_goal )
-  )
+    Sequent() :+ ( "" -> cong_3_goal ) )
 
   val cong_3_proof = AnalyticInductionProver.singleInduction( cong_3, hov"xs:list" )
 

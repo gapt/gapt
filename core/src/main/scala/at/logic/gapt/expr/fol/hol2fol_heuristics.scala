@@ -3,7 +3,7 @@ package at.logic.gapt.expr.fol
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.{ Ti, To, Ty }
 import at.logic.gapt.proofs.SequentProof
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 /**
  * This is implements some heuristics to convert a fol formula obtained by
@@ -14,7 +14,7 @@ import at.logic.gapt.utils.Logger
  * To extract a signature, use the [[undoHol2Fol.getSignature]], to to the back translation use
  * [[undoHol2Fol.backtranslate]].
  */
-object undoHol2Fol extends Logger {
+object undoHol2Fol {
   type Signature = ( Map[String, Set[Const]], Map[String, Set[Var]] )
 
   /**
@@ -30,8 +30,7 @@ object undoHol2Fol extends Logger {
     e:             Expr,
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
-    abssymbol_map: Map[String, Expr]
-  ): Formula =
+    abssymbol_map: Map[String, Expr] ): Formula =
     backtranslate( e.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, Some( To ) ).asInstanceOf[Formula]
   /**
    * We do some dirty stuff in here to translate a prover9 term back to the richer type signature of hol proofs, undoing
@@ -42,8 +41,7 @@ object undoHol2Fol extends Logger {
     sig_vars:      Map[String, List[Var]],
     sig_consts:    Map[String, List[Const]],
     abssymbol_map: Map[String, Expr],
-    expected_type: Option[Ty]
-  ): Expr = {
+    expected_type: Option[Ty] ): Expr = {
     e match {
       // --------------- logical structure ------------------------
       case Atom( Const( name, _ ), args ) if sig_consts contains name.toString =>
@@ -111,7 +109,7 @@ object undoHol2Fol extends Logger {
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         head
       case Var( ivy_varname( name ), Ti ) =>
-        trace( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
+        debug( "Guessing that the variable " + name + " comes from ivy, assigning type i." )
         Var( name, Ti ).asInstanceOf[Var]
       case Var( name, Ti ) =>
         throw new Exception( "No signature information for variable " + e )

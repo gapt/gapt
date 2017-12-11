@@ -24,12 +24,11 @@ object BabelLexical {
   val UnquotedName: P[String] = P( CharsWhile( isUnquotNameChar ).! )
   val QuotedName: P[String] = P( "'" ~ QuotedNameChar.rep ~ "'" ).map( _.mkString )
   val QuotedNameChar: P[String] = P(
-    CharsWhile( c => c != '\\' && c != ''' ).! |
+    CharsWhile( c => c != '\\' && c != '\'' ).! |
       ( "\\" ~ ( "'" | "\\" ).! ) |
       ( "\\u" ~ CharIn( ( 'a' to 'f' ) ++ ( '0' to '9' ) ).
         rep( min = 4, max = 4 ).!.
-        map( Integer.parseInt( _, 16 ).toChar.toString ) )
-  )
+        map( Integer.parseInt( _, 16 ).toChar.toString ) ) )
 
   val keywords = Set( "true", "false", "all", "exists" )
 
@@ -53,7 +52,6 @@ object BabelParserCombinators {
     P( MarkPos( p ) )( name )
 
   val ExprAndNothingElse: P[preExpr.Expr] = P( "" ~ Expr ~ End )
-  val ConstAndNothingElse: P[real.Const] = P( "" ~ Const ~ End )
 
   val Expr: P[preExpr.Expr] = P( Lam )
 

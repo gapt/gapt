@@ -198,8 +198,8 @@ private[expr] object determineTraits {
     }
 
     case _ => f.ty match {
-      case `->`( _, To ) => new App_with_Formula( f, a )
-      case _             => new App( f, a )
+      case _ ->: To => new App_with_Formula( f, a )
+      case _        => new App( f, a )
     }
   }
 
@@ -248,6 +248,10 @@ object FOLAtom {
       Some( ( sym, args.asInstanceOf[List[FOLTerm]] ) )
     case _ => None
   }
+}
+
+object PropAtom {
+  def apply( sym: String ): PropAtom = Const( sym, To ).asInstanceOf[PropAtom]
 }
 
 object HOLAtomConst {

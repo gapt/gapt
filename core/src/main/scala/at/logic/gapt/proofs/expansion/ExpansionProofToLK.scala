@@ -13,18 +13,10 @@ object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof 
 object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 
 class ExpansionProofToLK(
-    theorySolver: HOLClause => Option[LKProof]
-) extends SolveUtils {
+    theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
   def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context() ): UnprovableOrLKProof = {
-    val cuts = for {
-      cutAxiomExpansion <- expansionProof.expansionSequent.antecedent
-      if cutAxiomExpansion.shallow == ETCut.cutAxiom
-      cut <- cutAxiomExpansion( HOLPosition( 1 ) )
-      cut1 <- cut( HOLPosition( 1 ) )
-      cut2 <- cut( HOLPosition( 2 ) )
-    } yield ETImp( cut1, cut2 )
 
     // TODO build induction axioms from ctx
     // constructors: basecase, c1: T -> T, c2: T*T -> T, ...
@@ -37,17 +29,17 @@ class ExpansionProofToLK(
       cut2 <- cut( HOLPosition( 2 ) )
     } yield ETImp( cut1, cut2 )
 
-    println( "cuts" )
-    cuts.foreach { x => println( "cut: " + x ) }
-
+    /*
     println( "inductions" )
     inductions.foreach { x => println( "induction: " + x ) }
 
     println( "ctx: " + ctx )
     println( "ctx constructors:\n" + ctx.get[StructurallyInductiveTypes].constructors )
+    */
 
-    solve( cuts, inductions, expansionProof.expansionSequent filter { x => x.shallow != ETCut.cutAxiom && x.shallow != ETInduction.inductionAxiom } ).
-      map { WeakeningMacroRule( _, expansionProof.expansionSequent filter { x => x.shallow != ETCut.cutAxiom && x.shallow != ETInduction.inductionAxiom } map { _.shallow } ) }
+    solve( expansionProof.cuts, inductions, expansionProof.nonCutPart filter { x => x.shallow != ETInduction.inductionAxiom } ).
+      map( WeakeningMacroRule( _, expansionProof.nonCutPart.shallow filter { x => x != ETInduction.inductionAxiom } ) )
+
   }
 
   private def solve( cuts: Seq[ETImp], inductions: Seq[ETImp], expSeq: ExpansionSequent )( implicit ctx: Context ): UnprovableOrLKProof = {
@@ -72,7 +64,7 @@ class ExpansionProofToLK(
   }
 
   private def tryAxiom( cuts: Seq[ETImp], inductions: Seq[ETImp], expSeq: ExpansionSequent )( implicit ctx: Context ): Option[UnprovableOrLKProof] = {
-    val shallowSequent = expSeq map { _.shallow }
+    val shallowSequent = expSeq.shallow
     if ( shallowSequent.isTaut )
       Some( Right( LogicalAxiom( shallowSequent.antecedent intersect shallowSequent.succedent head ) ) )
     else
@@ -227,13 +219,12 @@ class ExpansionProofToLK(
             if ( !p2.conclusion.contains( ch1.shallow, Polarity.InAntecedent )
               || !p2.conclusion.contains( ch2.shallow, Polarity.InSuccedent ) ) p2
             else {
-              val index1 = p1.conclusion.indexOfPol( ant1.shallow, Polarity.InSuccedent )
-              val index2 = p2.conclusion.indexOfPol( ch1.shallow, Polarity.InAntecedent )
-              val index3 = p2.conclusion.indexOfPol( ch2.shallow, Polarity.InSuccedent )
+              val index1 = p1.conclusion.indexOf( ant1.shallow, Polarity.InSuccedent )
+              val index2 = p2.conclusion.indexOf( ch1.shallow, Polarity.InAntecedent )
+              val index3 = p2.conclusion.indexOf( ch2.shallow, Polarity.InSuccedent )
               val cases = Seq(
                 InductionCase( p1, hoc"0:nat", Seq.empty, Seq.empty, index1 ),
-                InductionCase( p2, hoc"s:nat>nat", Seq( index2 ), Seq( ev ), index3 )
-              )
+                InductionCase( p2, hoc"s:nat>nat", Seq( index2 ), Seq( ev ), index3 ) )
               val App( _, qfFormula @ Abs( v, _ ) ) = suc.shallow
 
               InductionRule( cases, qfFormula, v )

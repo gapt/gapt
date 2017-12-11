@@ -768,10 +768,8 @@ class LKToNDTest extends Specification with SatMatchers with SequentMatchers {
       val lk = InductionRule(
         Seq(
           InductionCase( ax1, hoc"0: i", Seq(), Seq(), Suc( 0 ) ),
-          InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
-        ),
-        Abs( x, Px ), x
-      )
+          InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) ) ),
+        Abs( x, Px ), x )
       ctx.check( lk )
 
       val focus = Some( Suc( 0 ) )

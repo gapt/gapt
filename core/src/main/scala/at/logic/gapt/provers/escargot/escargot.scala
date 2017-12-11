@@ -7,12 +7,12 @@ import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
 import at.logic.gapt.provers.escargot.impl.{ EscargotState, StandardInferences }
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.{ LogHandler, Maybe }
 import ammonite.ops._
 
 object Escargot extends Escargot( splitting = true, equality = true, propositional = false ) {
-  def lpoHeuristic( cnf: Traversable[HOLSequent] ): LPO = {
-    val consts = constants( cnf flatMap { _.elements } )
+  def lpoHeuristic( cnf: Traversable[HOLSequent], extraConsts: Iterable[Const] ): LPO = {
+    val consts = constants( cnf flatMap { _.elements } ) ++ extraConsts
 
     val boolOnTermLevel = consts exists { case Const( _, FunctionType( _, from ) ) => from contains To }
     val types = consts flatMap { c => baseTypes( c.ty ) }
@@ -28,8 +28,7 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 
   def setupDefaults(
     state:     EscargotState,
-    splitting: Boolean, equality: Boolean, propositional: Boolean
-  ) = {
+    splitting: Boolean, equality: Boolean, propositional: Boolean ) = {
     val standardInferences = new StandardInferences( state, propositional )
     import standardInferences._
 
@@ -64,17 +63,15 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
     }
   }
 
-  def makeVerbose() = Logger.makeVerbose( classOf[EscargotState] )
-
   def main( args: Array[String] ): Unit = {
-    Logger.useTptpComments()
+    LogHandler.current.value = LogHandler.silent
 
     val tptpInputFile = args.toSeq match {
       case Seq() =>
         println( "Usage: escargot [-v] tptp-problem.p" )
         sys.exit( 1 )
       case Seq( "-v", file ) =>
-        makeVerbose()
+        LogHandler.current.value = LogHandler.tstpVerbose
         file
       case Seq( file ) => file
     }
@@ -94,14 +91,15 @@ object Escargot extends Escargot( splitting = true, equality = true, proposition
 object NonSplittingEscargot extends Escargot( splitting = false, equality = true, propositional = false )
 
 class Escargot( splitting: Boolean, equality: Boolean, propositional: Boolean ) extends ResolutionProver {
-  override def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] = {
+  override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx0: Maybe[MutableContext] ): Option[ResolutionProof] = {
+    implicit val ctx: MutableContext = ctx0.getOrElse( MutableContext.guess( cnf ) )
     val hasEquality = equality && cnf.flatMap( _.elements ).exists { case Eq( _, _ ) => true; case _ => false }
     val isPropositional = propositional || cnf.flatMap { freeVariables( _ ) }.isEmpty
 
-    val state = new EscargotState
+    val state = new EscargotState( ctx )
     Escargot.setupDefaults( state, splitting, hasEquality, isPropositional )
-    state.nameGen = rename.awayFrom( cnf.view.flatMap( constants( _ ) ).toSet )
-    state.termOrdering = Escargot.lpoHeuristic( cnf )
+    state.nameGen = rename.awayFrom( ctx.constants.toSet ++ cnf.view.flatMap( constants( _ ) ) )
+    state.termOrdering = Escargot.lpoHeuristic( cnf, ctx.constants )
     state.newlyDerived ++= cnf.map { state.InputCls }
     state.loop()
   }

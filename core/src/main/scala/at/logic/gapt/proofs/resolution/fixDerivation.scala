@@ -5,7 +5,7 @@ import at.logic.gapt.expr.hol.CNFn
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.escargot.{ Escargot, NonSplittingEscargot }
 import at.logic.gapt.provers.{ ResolutionProver, groundFreeVariables }
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 import scala.collection.immutable.HashMap
 
@@ -20,12 +20,11 @@ import scala.collection.immutable.HashMap
  *  is a derivation of a subclause of c.
  */
 
-object fixDerivation extends Logger {
+object fixDerivation {
   object matchingModEq extends syntacticMatching {
     override def apply(
       pairs:             List[( Expr, Expr )],
-      alreadyFixedSubst: PreSubstitution
-    ): Traversable[Substitution] =
+      alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] =
       pairs match {
         case ( ( Eq( t1, s1 ), Eq( t2, s2 ) ) :: rest ) =>
           apply( ( t1 -> t2 ) :: ( s1 -> s2 ) :: rest, alreadyFixedSubst ).toSeq ++
@@ -45,7 +44,7 @@ object fixDerivation extends Logger {
       }
 
       for ( ( ( a, true ), i ) <- p.conclusion zip needToFlip zipWithIndex )
-        p = Flip( p, p.conclusion.indexOfPol( a, i.polarity ) )
+        p = Flip( p, p.conclusion.indexOf( a, i.polarity ) )
 
       p = Factor( p )
       p
@@ -119,8 +118,7 @@ object findDerivationViaResolution {
   def apply( a: HOLClause, bs: Set[_ <: HOLClause], prover: ResolutionProver = NonSplittingEscargot ): Option[ResolutionProof] = {
     val grounding = groundFreeVariables.getGroundingMap(
       freeVariables( a ),
-      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet
-    )
+      ( a.formulas ++ bs.flatMap( _.formulas ) ).flatMap( constants( _ ) ).toSet )
 
     val groundingSubst = Substitution( grounding )
     val negatedClausesA = a.

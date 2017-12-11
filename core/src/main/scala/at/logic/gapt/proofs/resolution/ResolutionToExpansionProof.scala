@@ -1,9 +1,10 @@
 package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ HOLSequent, Sequent }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.provers.sat.Sat4j
+import at.logic.gapt.utils.Maybe
 
 import scala.collection.mutable
 
@@ -51,7 +52,7 @@ import scala.collection.mutable
  */
 object ResolutionToExpansionProof {
 
-  def apply( proof: ResolutionProof ): ExpansionProof = {
+  def apply( proof: ResolutionProof )( implicit ctx: Maybe[Context] ): ExpansionProof = {
     apply( proof, inputsAsExpansionSequent )
   }
 
@@ -71,7 +72,8 @@ object ResolutionToExpansionProof {
     }
   }
 
-  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent ): ExpansionProof = {
+  def apply( proof: ResolutionProof, input: ( Input, Set[( Substitution, ExpansionSequent )] ) => ExpansionSequent )( implicit ctx: Maybe[Context] ): ExpansionProof = {
+    implicit val ctx1: Context = ctx.getOrElse( MutableContext.guess( proof ) )
     val expansionWithDefs = withDefs( proof, input )
     val defConsts = proof.subProofs collect { case d: DefIntro => d.defConst: Const }
     eliminateCutsET( eliminateDefsET( eliminateCutsET( expansionWithDefs ), !containsEquationalReasoning( proof ), defConsts ) )
@@ -143,9 +145,6 @@ object ResolutionToExpansionProof {
     def sequent2expansions( sequent: HOLSequent ): Set[( Substitution, ExpansionSequent )] =
       Set( Substitution() -> sequent.zipWithIndex.map { case ( a, i ) => ETAtom( a.asInstanceOf[Atom], !i.polarity ) } )
 
-    def perfMerges( expansionSequent: ExpansionSequent ): ExpansionSequent = {
-      expansionSequent.groupBy( _.shallow ).map( ets => ETMerge( ets._2 ) )
-    }
     expansions( proof ) = sequent2expansions( proof.conclusion )
 
     proof.dagLike.postOrder.reverse.foreach {
@@ -181,9 +180,7 @@ object ResolutionToExpansionProof {
           i,
           ETDefinition(
             es._1( p.auxFormula ),
-            ETAtom( es._1( p.defAtom ).asInstanceOf[Atom], !i.polarity )
-          )
-        ) ) )
+            ETAtom( es._1( p.defAtom ).asInstanceOf[Atom], !i.polarity ) ) ) ) )
 
       case p @ Paramod( q1, i1, ltr, q2, i2, ctx ) =>
         val Seq( oc1, oc2 ) = p.occConnectors
@@ -199,8 +196,7 @@ object ResolutionToExpansionProof {
         splitCutL( splAtom ) ::= ETStrongQuantifierBlock(
           definition,
           renaming( vars ).map( _.asInstanceOf[Var] ),
-          formulaToExpansionTree( renaming( comp.disjunction ), Polarity.InSuccedent )
-        )
+          formulaToExpansionTree( renaming( comp.disjunction ), Polarity.InSuccedent ) )
         val Seq( oc ) = p.occConnectors
         propg( p, q, _.map( es => renaming.compose( es._1 ) -> oc.parents( es._2 ).zipWithIndex.map {
           case ( Seq( et ), _ ) => et
@@ -215,8 +211,7 @@ object ResolutionToExpansionProof {
         splitCutR( splAtom ) ::= ETWeakQuantifierBlock(
           definition, vars.size,
           for ( ( s, es ) <- expansions( p ) )
-            yield s( vars ) -> es.toDisjunction( Polarity.Negative )
-        )
+            yield s( vars ) -> es.toDisjunction( Polarity.Negative ) )
         clear( p )
       case p @ AvatarContradiction( q ) =>
         propg( p, q, _ => sequent2expansions( q.conclusion ) )
@@ -247,8 +242,7 @@ object ResolutionToExpansionProof {
         propg( p, p.subProof, _.groupBy( _._1.restrict( subFVs ) ).mapValues( ess =>
           for ( i <- p.subProof.conclusion.indicesSequent ) yield if ( i == p.idx ) ETWeakQuantifier(
             ess.head._1.restrict( subFVs )( p.subProof.conclusion( p.idx ) ),
-            Map() ++ ess.groupBy( _._1( p.variable ) ).mapValues( _.map( _._2( oc.child( i ) ) ) ).mapValues( ETMerge( _ ) )
-          )
+            Map() ++ ess.groupBy( _._1( p.variable ) ).mapValues( _.map( _._2( oc.child( i ) ) ) ).mapValues( ETMerge( _ ) ) )
           else ETMerge( ess.map( _._2 ).map( _( oc.child( i ) ) ) ) ).toSet )
 
       case p: SkolemQuantResolutionRule =>
@@ -258,9 +252,8 @@ object ResolutionToExpansionProof {
     for ( ( splAtom, defn ) <- splitDefn )
       cuts += ETImp(
         ETMerge( defn, Polarity.InSuccedent, splitCutL( splAtom ) ),
-        ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) )
-      )
+        ETMerge( defn, Polarity.InAntecedent, splitCutR( splAtom ) ) )
 
-    eliminateMerges( ExpansionProof( ETCut( cuts ) +: perfMerges( expansionSequent ) ) )
+    eliminateMerges( ExpansionProof( ETMerge( ETCut( cuts ) +: expansionSequent ) ) )
   }
 }

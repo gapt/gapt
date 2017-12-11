@@ -4,7 +4,7 @@ import at.logic.gapt.formats.babel.{ BabelExporter, MapBabelSignature }
 import at.logic.gapt.utils.Doc
 
 private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
-    extends BabelExporter( unicode, vtratg.babelSignature ) {
+  extends BabelExporter( unicode, vtratg.babelSignature ) {
   import Doc._
 
   def csep( docs: List[Doc] ): Doc = wordwrap( docs, "," )
@@ -13,12 +13,10 @@ private class VtratgExporter( unicode: Boolean, vtratg: VTRATG )
     val ntDecl = group( "Non-terminal vectors:" <> nest( line <> csep(
       vtratg.nonTerminals.toList map { nt =>
         "(" <> wordwrap( nt map { show( _, false, Set(), Map(), prio.max )._1 }, "," ) <> ")"
-      }
-    ) ) )
+      } ) ) )
 
     val tDecl = group( "Terminals:" <> nest( line <> csep(
-      vtratg.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 }
-    ) ) )
+      vtratg.terminals.toList.sortBy { _.name } map { show( _, false, Set(), Map(), prio.max )._1 } ) ) )
 
     val knownTypes = vtratg.terminals.map { c => c.name -> c }.toMap
 

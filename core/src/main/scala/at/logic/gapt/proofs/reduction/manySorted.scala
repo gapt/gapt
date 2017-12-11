@@ -36,8 +36,7 @@ trait OneWayReduction_[P] extends Reduction[P, P, Nothing, Any]
  */
 case class CombinedReduction[-P1, P2, +P3, +S1, S2, -S3](
     red1: Reduction[P1, P2, S1, S2],
-    red2: Reduction[P2, P3, S2, S3]
-) extends Reduction[P1, P3, S1, S3] {
+    red2: Reduction[P2, P3, S2, S3] ) extends Reduction[P1, P3, S1, S3] {
   override def toString = s"$red1 |> $red2"
 
   override def forward( problem: P1 ): ( P3, S3 => S1 ) = {
@@ -214,8 +213,7 @@ private class ErasureReductionHelper( constants: Set[Const] ) {
           val childFreeVars = infer( t, x.ty, freeVars )
           val t_ = back( t, childFreeVars )
           t_ -> back( inst, Substitution( x -> t_ )( sh ), childFreeVars )
-        }
-      )
+        } )
   }
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof = {
@@ -344,8 +342,7 @@ private class PredicateReductionHelper( constants: Set[Const] ) {
         insts map {
           case ( t, ETImp( _, inst ) ) if et.polarity.inAnt => t -> unguard( inst )
           case ( t, ETAnd( _, inst ) ) if et.polarity.inSuc => t -> unguard( inst )
-        }
-      )
+        } )
   }
 
   def back( expansionProof: ExpansionProof, endSequent: HOLSequent ): ExpansionProof =
@@ -477,8 +474,7 @@ private class LambdaEliminationReductionHelper( constants: Set[Const], lambdas: 
   def back( expansion: ExpansionProof ): ExpansionProof =
     ExpansionProof( TermReplacement(
       expansion.expansionSequent.filterNot { e => extraAxioms.contains( e.shallow ) },
-      { case expr => BetaReduction.betaNormalize( TermReplacement( expr, backReplacements.toMap ) ) }
-    ) )
+      { case expr => BetaReduction.betaNormalize( TermReplacement( expr, backReplacements.toMap ) ) } ) )
 
   def back( resolution: ResolutionProof ): ResolutionProof =
     definitionIntroducingBackReplacement( resolution, backReplacements.toMap )
@@ -545,7 +541,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
 
   val applyFunctions = partialAppTypes.map {
     case ( partialAppType, ty @ FunctionType( ret, args ) ) =>
-      partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType -> ty )
+      partialAppType -> Const( nameGen freshWithIndex "apply", partialAppType ->: ty )
   }
 
   val partialApplicationFuns =
@@ -555,8 +551,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
       if gArgTypes endsWith argTypes
     } yield ( Const(
       nameGen freshWithIndex "partial",
-      FunctionType( partialAppType, gArgTypes.dropRight( argTypes.size ) map reduceArgTy )
-    ), g, funType )
+      FunctionType( partialAppType, gArgTypes.dropRight( argTypes.size ) map reduceArgTy ) ), g, funType )
 
   val newConstants = names.collect {
     case c @ Const( n, t ) => c -> Const( n, reduceFunTy( t ) )
@@ -572,8 +567,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
       val fArgVars = argTypes map { Var( varGen freshWithIndex "y", _ ) }
       universalClosure( equalOrEquivalent(
         applyFunctions( partialAppType )( partialApplicationFun( gArgVars: _* ) )( fArgVars: _* ),
-        newConstants( g )( gArgVars: _* )( fArgVars: _* )
-      ) )
+        newConstants( g )( gArgVars: _* )( fArgVars: _* ) ) )
     }
   val extraAxiomClauses = extraAxioms.flatMap { case All.Block( vs, f ) => Seq( Seq() :- Seq( f ) ) }
 
@@ -646,8 +640,7 @@ private class HOFunctionReductionHelper( names: Set[VarOrConst], addExtraAxioms:
     case ETWeakQuantifier( shallow, insts ) =>
       ETWeakQuantifier(
         back( shallow ),
-        for ( ( t, c ) <- insts ) yield back( t ) -> back( c )
-      )
+        for ( ( t, c ) <- insts ) yield back( t ) -> back( c ) )
   }
 
   def back( expansionProof: ExpansionProof ): ExpansionProof =
@@ -730,8 +723,7 @@ case object CNFReductionResRes extends Reduction[HOLSequent, Set[HOLClause], Res
     val cnf = structuralCNF( problem, propositional = false, structural = false /* FIXME */ )
     (
       cnf.map( _.conclusion.map( _.asInstanceOf[Atom] ) ),
-      fixDerivation( _, cnf )
-    )
+      fixDerivation( _, cnf ) )
   }
 }
 
@@ -740,13 +732,13 @@ case object CNFReductionResRes extends Reduction[HOLSequent, Set[HOLClause], Res
  */
 case object CNFReductionSequentsResRes extends Reduction[Set[HOLSequent], Set[HOLClause], ResolutionProof, ResolutionProof] {
   override def forward( problem: Set[HOLSequent] ): ( Set[HOLClause], ( ResolutionProof ) => ResolutionProof ) = {
-    val clausifier = new Clausifier( propositional = false, structural = false, bidirectionalDefs = false,
-      nameGen = rename.awayFrom( containedNames( problem ) ) )
+    implicit val ctx = MutableContext.guess( problem ) // TODO(gabriel)
+    val clausifier = new Clausifier( propositional = false, structural = false, bidirectionalDefs = false, cse = false,
+      ctx = ctx, nameGen = ctx.newNameGenerator )
     problem.map( Input ).foreach( clausifier.expand )
     (
       Set() ++ clausifier.cnf.view.map( _.conclusion.map( _.asInstanceOf[Atom] ) ),
-      fixDerivation( _, clausifier.cnf )
-    )
+      fixDerivation( _, clausifier.cnf ) )
   }
 }
 

@@ -33,8 +33,7 @@ class IntroducePiCutTest extends Specification {
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf(
         ( Option( fof"P($xName)|Q(f($yName))" ), yName, xName ),
-        ( Option( fof"Q(f($yName))|P($xName)" ), yName, xName )
-      )
+        ( Option( fof"Q(f($yName))|P($xName)" ), yName, xName ) )
     }
   }
 
@@ -122,8 +121,7 @@ class IntroducePiCutTest extends Specification {
       val yName = fov"yName"
       introducePi2Cut( seHs, yName, xName ) must beOneOf(
         ( Option( fof"Pklg($xName,$yName)&Pg(f($yName),s(0))" ), yName, xName ),
-        ( Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" ), yName, xName )
-      )
+        ( Option( fof"Pg(f($yName),s(0))&Pklg($xName,$yName)" ), yName, xName ) )
     }
   }
 

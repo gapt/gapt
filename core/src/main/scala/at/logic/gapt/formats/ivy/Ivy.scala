@@ -5,7 +5,7 @@ import at.logic.gapt.formats.lisp._
 import at.logic.gapt.expr._
 import at.logic.gapt.formats.InputFile
 import at.logic.gapt.proofs._
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 import scala.collection.mutable
 
@@ -14,7 +14,7 @@ import scala.collection.mutable
  */
 
 /* Constructor object, takes a filename and tries to parse as a lisp_file  */
-object IvyParser extends Logger {
+object IvyParser {
   //calls the sexpression parser on the given file and parses it, needs a naming convention
   def apply( fn: InputFile ): IvyResolutionProof =
     parse( SExpressionParser( fn ) )
@@ -59,7 +59,7 @@ object IvyParser extends Logger {
         InitialClause( id, clause, parse_clause( clause ) )
 
       /* ================== Instance ========================== */
-      case LFun( id, LFun( "instantiate", LAtom( parent_id ), subst_exp ), clause, _* ) =>
+      case LFun( id, LFun( "instantiate", LSymbol( parent_id ), subst_exp ), clause, _* ) =>
         val parent_proof = found_steps( parent_id )
         val sub: FOLSubstitution = parse_substitution( subst_exp )
 
@@ -67,8 +67,8 @@ object IvyParser extends Logger {
 
       /* ================== Resolution ========================== */
       case LFun( id, LFun( "resolve",
-        LAtom( parent_id1 ), LList( position1 @ _* ),
-        LAtom( parent_id2 ), LList( position2 @ _* ) ), clause, _* ) =>
+        LSymbol( parent_id1 ), LList( position1 @ _* ),
+        LSymbol( parent_id2 ), LList( position2 @ _* ) ), clause, _* ) =>
         val parent_proof1 = found_steps( parent_id1 )
         val parent_proof2 = found_steps( parent_id2 )
         val fclause = parse_clause( clause )
@@ -79,7 +79,7 @@ object IvyParser extends Logger {
         Resolution( id, clause, occ1, occ2, fclause, parent_proof1, parent_proof2 )
 
       /* ================== Flip ========================== */
-      case LFun( id, LFun( "flip", LAtom( parent_id ), LList( position @ _* ) ), clause, _* ) =>
+      case LFun( id, LFun( "flip", LSymbol( parent_id ), LList( position @ _* ) ), clause, _* ) =>
         val parent_proof = found_steps( parent_id )
         val fclause = parse_clause( clause )
         val ( occ, _ ) = get_literal_by_position( parent_proof.conclusion, position, parent_proof.clause_exp )
@@ -91,8 +91,8 @@ object IvyParser extends Logger {
 
       /* ================== Paramodulation ========================== */
       case LFun( id, LFun( "paramod",
-        LAtom( modulant_id ), LList( mposition @ _* ),
-        LAtom( parent_id ), LList( pposition @ _* )
+        LSymbol( modulant_id ), LList( mposition @ _* ),
+        LSymbol( parent_id ), LList( pposition @ _* )
         ), clause, _* ) =>
         val modulant_proof = found_steps( modulant_id )
         val parent_proof = found_steps( parent_id )
@@ -116,7 +116,7 @@ object IvyParser extends Logger {
         }
 
       /* ================== Propositional ========================== */
-      case LFun( id, LFun( "propositional", LAtom( parent_id ) ), clause, _* ) => {
+      case LFun( id, LFun( "propositional", LSymbol( parent_id ) ), clause, _* ) => {
         val parent_proof = found_steps( parent_id )
         val fclause = parse_clause( clause )
 
@@ -124,7 +124,7 @@ object IvyParser extends Logger {
       }
 
       // new symbol
-      case LFun( id, LFun( "new_symbol", LAtom( parent_id ) ), clause, _* ) =>
+      case LFun( id, LFun( "new_symbol", LSymbol( parent_id ) ), clause, _* ) =>
 
         val parent_proof = found_steps( parent_id )
         val fclause = parse_clause( clause )
@@ -178,7 +178,7 @@ object IvyParser extends Logger {
       if ( exp == what ) by else throw new Exception( "Error in parsing replacement: (sub)term " + exp + " is not the expected term " + what )
   }
 
-  def parse_position( l: Seq[SExpression] ): List[Int] = l.toList map { case LAtom( s ) => s.toInt }
+  def parse_position( l: Seq[SExpression] ): List[Int] = l.toList map { case LSymbol( s ) => s.toInt }
 
   def parse_substitution( exp: SExpression ): FOLSubstitution = exp match {
     case LList( list @ _* ) =>
@@ -250,7 +250,7 @@ object IvyParser extends Logger {
       ( parse_atom( name, args ), pos )
 
     //the empty clause is denoted by false
-    case LAtom( "false" ) =>
+    case LSymbol( "false" ) =>
       throw new Exception( "Parsing Error: want to extract literal from empty clause!" )
 
     case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
@@ -276,7 +276,7 @@ object IvyParser extends Logger {
       parse_atom( name, args ) :: Nil
 
     //the empty clause is denoted by false
-    case LAtom( "false" ) =>
+    case LSymbol( "false" ) =>
       List()
 
     case _ => throw new Exception( "Parsing Error: unexpected element " + exp + " in parsing of Ivy proof object." )
@@ -300,12 +300,11 @@ object IvyParser extends Logger {
     ( "quote_for_ivy", "'" ),
     ( "backslash_for_ivy", "\\\\" ),
     ( "at_for_ivy", "@" ),
-    ( "meet_for_ivy", "^" )
-  )
+    ( "meet_for_ivy", "^" ) )
   def rewrite_name( s: String ): String = if ( ivy_escape_table contains s ) ivy_escape_table( s ) else s
 
   def parse_term( ts: SExpression ): FOLTerm = ts match {
-    case LAtom( name ) =>
+    case LSymbol( name ) =>
       val rname = rewrite_name( name )
       FOLVar( rname )
     case LFun( name, args @ _* ) =>

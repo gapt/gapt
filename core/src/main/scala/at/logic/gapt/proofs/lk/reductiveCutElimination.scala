@@ -135,8 +135,7 @@ class ReductiveCutElimination {
     proof:              LKProof,
     terminateReduction: LKProof => Boolean,
     reduction:          LKProof => Option[( LKProof, SequentConnector )],
-    cleanStructRules:   Boolean                                          = true
-  ): LKProof = {
+    cleanStructRules:   Boolean                                          = true ): LKProof = {
     steps += proof
     var pr = proof
     do {
@@ -398,8 +397,7 @@ object leftRankReduction {
           val tmp = CutRule( subProof, a1, right, aux2 )
           val tmp2 = CutRule( tmp, tmp.getLeftSequentConnector.child( a2 ), right, aux2 )
           Some(
-            ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) )
-          )
+            ContractionMacroRule( tmp2, left.endSequent.delete( aux1 ) ++ right.endSequent.delete( aux2 ) ) )
         } else { // The contraction operates on the context: Swap the inferences
           val aux1Sub = l.getSequentConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
@@ -519,12 +517,10 @@ object leftRankReduction {
           left.subProof,
           left.getSequentConnector.parent( cut.aux1 ),
           cut.rightSubProof,
-          cut.aux2
-        )
+          cut.aux2 )
         Some( left.copy(
           subProof = newSubProof,
-          aux = newSubProof.getLeftSequentConnector.child( left.aux )
-        ) )
+          aux = newSubProof.getLeftSequentConnector.child( left.aux ) ) )
 
       case l @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) if left.mainIndices.head != aux1 =>
         val aux1Sub = l.getSequentConnector.parent( aux1 )
@@ -543,12 +539,10 @@ object leftRankReduction {
           left.subProof,
           left.getSequentConnector.parent( cut.aux1 ),
           cut.rightSubProof,
-          cut.aux2
-        )
+          cut.aux2 )
         Some( left.copy(
           subProof = newSubProof,
-          aux = newSubProof.getLeftSequentConnector.child( left.aux )
-        ) )
+          aux = newSubProof.getLeftSequentConnector.child( left.aux ) ) )
 
       case l @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) =>
         val aux1Sub = l.getSequentConnector.parent( aux1 )
@@ -734,8 +728,7 @@ object rightRankReduction {
         val newEigenvariable = rename( right.eigenVariable, freeVariables( cut.endSequent ) )
         val renaming = Substitution( right.eigenVariable -> newEigenvariable )
         val newRightSubProof = right.copy(
-          subProof = renaming( right.subProof ), eigenVariable = newEigenvariable
-        )
+          subProof = renaming( right.subProof ), eigenVariable = newEigenvariable )
         apply( cut.copy( rightSubProof = newRightSubProof ) )
 
       case right @ ForallRightRule( _, _, _, _ ) =>
@@ -743,12 +736,10 @@ object rightRankReduction {
           cut.leftSubProof,
           cut.aux1,
           right.subProof,
-          right.getSequentConnector.parent( cut.aux2 )
-        )
+          right.getSequentConnector.parent( cut.aux2 ) )
         Some( right.copy(
           subProof = newSubProof,
-          aux = newSubProof.getRightSequentConnector.child( right.aux )
-        ) )
+          aux = newSubProof.getRightSequentConnector.child( right.aux ) ) )
 
       case r @ ForallSkRightRule( subProof, a, main, skTerm, skDef ) =>
         val aux2Sub = r.getSequentConnector.parent( aux2 )
@@ -767,12 +758,10 @@ object rightRankReduction {
           cut.leftSubProof,
           cut.aux1,
           right.subProof,
-          right.getSequentConnector.parent( cut.aux2 )
-        )
+          right.getSequentConnector.parent( cut.aux2 ) )
         Some( right.copy(
           subProof = newSubProof,
-          aux = newSubProof.getRightSequentConnector.child( right.aux )
-        ) )
+          aux = newSubProof.getRightSequentConnector.child( right.aux ) ) )
 
       case r @ ExistsSkLeftRule( subProof, a, main, skTerm, skDef ) if right.mainIndices.head != aux2 =>
         val aux2Sub = r.getSequentConnector.parent( aux2 )
@@ -949,8 +938,7 @@ object inductionLeftReduction {
           case ( inductionCase, connector ) =>
             if ( connector.parentOption( cut.aux1 ).nonEmpty ) {
               val subProof = CutRule(
-                inductionCase.proof, connector.parent( cut.aux1 ), cut.rightSubProof, cut.aux2
-              )
+                inductionCase.proof, connector.parent( cut.aux1 ), cut.rightSubProof, cut.aux2 )
               val hypotheses = inductionCase.hypotheses map { subProof.getLeftSequentConnector.child( _ ) }
               val conclusion = subProof.getLeftSequentConnector.child( inductionCase.conclusion )
               inductionCase.copy( proof = subProof, hypotheses = hypotheses, conclusion = conclusion )

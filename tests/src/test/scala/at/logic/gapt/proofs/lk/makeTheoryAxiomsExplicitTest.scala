@@ -9,8 +9,12 @@ import org.specs2.mutable.Specification
 class makeTheoryAxiomsExplicitTest extends Specification with SequentMatchers {
 
   "tape" in {
-    val ax = tape.ctx.get[Context.ProofNames].sequents.toSeq.map( a => universalClosure( a.toDisjunction ) )
-    val withoutThAx = makeTheoryAxiomsExplicit( ax: _* )( tape.proof )
+    val ax =
+      for {
+        ( _, ( lhs, seq ) ) <- tape.ctx.get[Context.ProofNames].names
+        if tape.ctx.get[Context.ProofDefinitions].find( lhs ).isEmpty
+      } yield universalClosure( seq.toDisjunction )
+    val withoutThAx = makeTheoryAxiomsExplicit( ax.toSeq: _* )( tape.proof )
     withoutThAx.subProofs.filter { _.isInstanceOf[ProofLink] } must_== Set()
     tape.ctx.check( withoutThAx )
     // TODO: multiset equality

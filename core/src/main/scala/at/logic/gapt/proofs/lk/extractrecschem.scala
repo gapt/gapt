@@ -9,8 +9,7 @@ object extractRecSchem {
   def apply(
     p:                   LKProof,
     includeTheoryAxioms: Boolean = true,
-    includeEqTheory:     Boolean = false
-  ): RecursionScheme = {
+    includeEqTheory:     Boolean = false ): RecursionScheme = {
     val symbols = p.endSequent.zipWithIndex map {
       case ( All.Block( vars, matrix ), Ant( _ ) ) => Abs( vars, matrix )
       case ( Ex.Block( vars, matrix ), Suc( _ ) )  => Abs( vars, -matrix )
@@ -20,8 +19,7 @@ object extractRecSchem {
     RecursionScheme( startSymbol, new extractRecSchem( includeTheoryAxioms, includeEqTheory ).
       getRules(
         regularize( moveStrongQuantifierRulesDown( AtomicExpansion( p ) ) ),
-        startSymbol( context: _* ), symbols.map( Some( _ ) ), context
-      ) map {
+        startSymbol( context: _* ), symbols.map( Some( _ ) ), context ) map {
           case Rule( lhs, rhs ) => Rule( lhs, BetaReduction.betaNormalize( rhs ) )
         } )
   }
@@ -30,14 +28,14 @@ object extractRecSchem {
 private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory: Boolean ) {
 
   def symbolTypeP( f: Formula ): Ty = f match {
-    case All( v, g )                   => v.ty -> symbolTypeP( g )
-    case Ex( v, g )                    => ( v.ty -> symbolTypeN( g ) ) -> To
+    case All( v, g )                   => v.ty ->: symbolTypeP( g )
+    case Ex( v, g )                    => ( v.ty ->: symbolTypeN( g ) ) ->: To
     case _ if !containsQuantifier( f ) => To
   }
 
   def symbolTypeN( f: Formula ): Ty = f match {
-    case Ex( v, g )                    => v.ty -> symbolTypeN( g )
-    case All( v, g )                   => ( v.ty -> symbolTypeP( g ) ) -> To
+    case Ex( v, g )                    => v.ty ->: symbolTypeN( g )
+    case All( v, g )                   => ( v.ty ->: symbolTypeP( g ) ) ->: To
     case _ if !containsQuantifier( f ) => To
   }
 
@@ -90,7 +88,7 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
       val main = p.mainIndices.head
       val appSym = App( symbols( main ).get, term )
       appSym.ty match {
-        case FunctionType( To, argtypes ) -> To =>
+        case FunctionType( To, argtypes ) ->: To =>
           val eigenvars = findEigenVars( aux, q )
           val cpsSym = Apps( Const( mkFreshSymbol(), FunctionType( To, context.map( _.ty ) ++ argtypes ) ), context )
           val expCpsSym = Apps( cpsSym, eigenvars )
@@ -98,7 +96,7 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
             case To =>
               getRules( q, expCpsSym, p.occConnectors.head.parent( symbols ).updated( aux, None ), eigenvars ++ context ) +
                 Rule( startSymbol, App( appSym, cpsSym ) )
-            case nextCpsType -> To =>
+            case nextCpsType ->: To =>
               val nextCpsSym = Var( mkFreshVar(), nextCpsType )
               getRules( q, App( expCpsSym, nextCpsSym ), p.occConnectors.head.parent( symbols ).updated( aux, Some( nextCpsSym ) ), nextCpsSym :: eigenvars ++ context ) +
                 Rule( startSymbol, App( appSym, cpsSym ) )
@@ -117,7 +115,7 @@ private[lk] class extractRecSchem( includeTheoryAxioms: Boolean, includeEqTheory
       val hypSym = Apps( symbol, eigenvars )
       val rules1 = hypSym.ty match {
         case To => getRules( q1, hypSym, occConn1.parent( symbols, None ), eigenvars ++ context )
-        case introType -> To =>
+        case introType ->: To =>
           val introSym = Var( mkFreshVar(), introType )
           val fullHypSym = App( hypSym, introSym )
           getRules( q1, fullHypSym, occConn1.parent( symbols, Some( introSym ) ), introSym :: eigenvars ++ context )

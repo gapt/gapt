@@ -46,8 +46,7 @@ object nTape6 {
       sig(
         """var X:o; var U,V:i; var H:i>i; var x,y:i;
               const zero:i; const s:i>i;  const h:i>i;
-              const ite : o > (i > (i>i));"""
-      )
+              const ite : o > (i > (i>i));""" )
     val s1 = "(all X all U all V (X -> ite(X,U,V) = U))"
     val s2 = "(all X all U all V (-X -> ite(X,U,V) = V))"
     val s3 = "(all x -(s(x) = zero))"

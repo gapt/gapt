@@ -419,10 +419,8 @@ object induction extends Script {
   val lk = InductionRule(
     Seq(
       InductionCase( ax1, FOLConst( "0" ), Seq(), Seq(), Suc( 0 ) ),
-      InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
-    ),
-    Abs( x, Pxy ), x
-  )
+      InductionCase( ax2, FOLFunctionConst( "s", 1 ), Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) ) ),
+    Abs( x, Pxy ), x )
 
   val focus = Suc( 0 )
   val nd = LKToND( lk, Some( focus ) )
@@ -581,10 +579,8 @@ object inductionRule extends Script {
   val lk = InductionRule(
     Seq(
       InductionCase( ax1, hoc"0: i", Seq(), Seq(), Suc( 0 ) ),
-      InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) )
-    ),
-    Abs( x, Px ), x
-  )
+      InductionCase( ax2, hoc"s: i>i", Seq( Ant( 0 ) ), Seq( x ), Suc( 0 ) ) ),
+    Abs( x, Px ), x )
   ctx.check( lk )
 
   val focus = Some( Suc( 0 ) )

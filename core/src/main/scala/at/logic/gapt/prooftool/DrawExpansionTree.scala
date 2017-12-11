@@ -12,8 +12,6 @@ import org.scilab.forge.jlatexmath.{ TeXConstants, TeXFormula }
 import java.awt.image.BufferedImage
 
 import at.logic.gapt.formats.latex.LatexExporter
-import at.logic.gapt.utils.Logger
-import org.slf4j.LoggerFactory
 
 object ExpansionTreeState extends Enumeration {
   val Closed, Open, Expanded = Value
@@ -28,8 +26,7 @@ object ExpansionTreeState extends Enumeration {
 abstract class DrawExpansionTree(
     val main:            ProofToolViewer[_],
     val expansionTree:   ExpansionTree,
-    val outerQuantifier: Option[DrawETQuantifierBlock] = None
-) extends BoxPanel( Orientation.Horizontal ) {
+    val outerQuantifier: Option[DrawETQuantifierBlock] = None ) extends BoxPanel( Orientation.Horizontal ) {
 
   background = new Color( 255, 255, 255 )
   yLayoutAlignment = 0.5
@@ -201,8 +198,7 @@ object DrawExpansionTree {
   def apply(
     main:            ProofToolViewer[_],
     expansionTree:   ExpansionTree,
-    outerQuantifier: Option[DrawETQuantifierBlock] = None
-  ): DrawExpansionTree = expansionTree match {
+    outerQuantifier: Option[DrawETQuantifierBlock] = None ): DrawExpansionTree = expansionTree match {
     case ETQuantifierBlock( _, _, _ ) =>
       new DrawETQuantifierBlock( main, expansionTree, outerQuantifier )
     case _ =>
@@ -219,8 +215,7 @@ object DrawExpansionTree {
 class DrawETQuantifierBlock(
     main:            ProofToolViewer[_],
     expansionTree:   ExpansionTree,
-    outerQuantifier: Option[DrawETQuantifierBlock] = None
-) extends DrawExpansionTree( main, expansionTree, outerQuantifier ) {
+    outerQuantifier: Option[DrawETQuantifierBlock] = None ) extends DrawExpansionTree( main, expansionTree, outerQuantifier ) {
   import ExpansionTreeState._
 
   val ETQuantifierBlock( formula, depth, instances ) = expansionTree
@@ -434,8 +429,7 @@ class DrawETQuantifierBlock(
 class DrawETNonQuantifier(
     main:            ProofToolViewer[_],
     expansionTree:   ExpansionTree,
-    outerQuantifier: Option[DrawETQuantifierBlock] = None
-) extends DrawExpansionTree( main, expansionTree, outerQuantifier ) {
+    outerQuantifier: Option[DrawETQuantifierBlock] = None ) extends DrawExpansionTree( main, expansionTree, outerQuantifier ) {
 
   override val subTrees = expansionTree match {
     case ETAtom( _, _ ) | ETTop( _ ) | ETBottom( _ ) | ETWeakening( _, _ ) | ETDefinition( _, _ ) =>

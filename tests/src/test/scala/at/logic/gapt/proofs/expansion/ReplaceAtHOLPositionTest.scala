@@ -5,8 +5,8 @@ import org.specs2.mutable._
 
 class ReplaceAtHOLPositionTest extends Specification {
   "replaceAtHOLPosition" should {
-    val P = Const( "P", Ti -> ( Ti -> To ) )
-    val F = Var( "F", Ti -> ( Ti -> To ) )
+    val P = Const( "P", Ti ->: Ti ->: To )
+    val F = Var( "F", Ti ->: Ti ->: To )
     val x = Var( "x", Ti )
     val y = Var( "y", Ti )
     val a = Const( "a", Ti )
@@ -98,10 +98,8 @@ class ReplaceAtHOLPositionTest extends Specification {
       val xPos = ExyFxy.find( x ).head
       //println( xPos )
       replaceAtHOLPosition(
-        ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( Atom( F, x, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, x, b ), Polarity.InSuccedent ) ) ), xPos, b
-      ) should beEqualTo(
-          ETWeakQuantifier( Ex( y, Atom( F, b, y ) ), Map( a -> ETAtom( Atom( F, b, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, b, b ), Polarity.InSuccedent ) ) )
-        )
+        ETWeakQuantifier( ExyFxy, Map( a -> ETAtom( Atom( F, x, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, x, b ), Polarity.InSuccedent ) ) ), xPos, b ) should beEqualTo(
+          ETWeakQuantifier( Ex( y, Atom( F, b, y ) ), Map( a -> ETAtom( Atom( F, b, a ), Polarity.InSuccedent ), b -> ETAtom( Atom( F, b, b ), Polarity.InSuccedent ) ) ) )
     }
   }
 }

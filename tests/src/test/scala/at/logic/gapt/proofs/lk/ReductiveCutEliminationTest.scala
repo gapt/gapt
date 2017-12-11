@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ Lemma, OpenAssumption, allL, andL, axiomLog, cut, impL, insert }
-import at.logic.gapt.proofs.{ Ant, Context, Sequent, SequentMatchers, Suc }
+import at.logic.gapt.proofs.{ Ant, Context, MutableContext, Sequent, SequentMatchers, Suc }
 import org.specs2.mutable._
 
 class ReductiveCutEliminationTest extends Specification with SequentMatchers {
@@ -261,8 +261,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
         InductionCase( ib, hoc"0:nat", Nil, Nil, Suc( 1 ) ) ::
           InductionCase( ic, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 1 ) ) :: Nil,
         Abs( hov"x:nat", le"F(x)" ),
-        hov"x:nat"
-      ) )
+        hov"x:nat" ) )
       c LogicalAxiom( hof"A" )
       b ( CutRule( _, _, hof"A" ) ) qed )
     val reduced = inductionLeftReduction( proof.asInstanceOf[CutRule] ).get
@@ -294,8 +293,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
         InductionCase( ib, hoc"0:nat", Nil, Nil, Suc( 1 ) ) ::
           InductionCase( ic, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 1 ) ) :: Nil,
         Abs( hov"x:nat", le"F(x)" ),
-        hov"x:nat"
-      ) )
+        hov"x:nat" ) )
       b ( CutRule( _, _, hof"A" ) ) qed )
     val reduced = inductionRightReduction( proof.asInstanceOf[CutRule] ).get
 
@@ -309,7 +307,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
   }
 
   "(1) free cut elimination should eliminate free cuts" in {
-    implicit var context: Context = Context()
+    implicit val context = MutableContext.default()
     context += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     context += hoc"equal: nat>nat>o"
     context += hoc"le: nat>nat>o"
@@ -319,8 +317,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
       "ae4" -> hof"∀x2 ∀y2 ((equal(s(x2), s(y2)) ⊃ equal(x2, y2)) ∧ (equal(x2, y2) ⊃ equal(s(x2), s(y2))))",
       "al1" -> hof"∀y le(0, y)",
       "al3" -> hof"∀z ∀x2 ((le(s(z), s(x2)) ⊃ le(z, x2)) ∧ (le(z, x2) ⊃ le(s(z), s(x2))))",
-      "ael" -> hof"!x !y (equal(x,y) ⊃ le(x,y))"
-    )
+      "ael" -> hof"!x !y (equal(x,y) ⊃ le(x,y))" )
 
     val baseCase = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"equal(0,0)" ) ) {
       axiomLog
@@ -336,8 +333,7 @@ class ReductiveCutEliminationTest extends Specification with SequentMatchers {
     val inductivePart = InductionRule(
       InductionCase( baseCase, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
         InductionCase( indCase, hoc"s:nat>nat", Ant( 5 ) :: Nil, hov"x_0:nat" :: Nil, Suc( 0 ) ) :: Nil,
-      Abs( hov"x:nat", le"equal(x,x)" ), le"s(s(s(0)))"
-    )
+      Abs( hov"x:nat", le"equal(x,x)" ), le"s(s(s(0)))" )
 
     val proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"le(s(s(s(0))), s(s(s(0))))" ) ) {
       cut( "ip", hof"equal(s(s(s(0))), s(s(s(0))) )" )

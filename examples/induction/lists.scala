@@ -22,7 +22,7 @@ object lists extends TacticsProof {
     refl
   }
 
-  Lemma( appth :+ ( "example" -> hof"x + nil + nil = x" ) ) {
+  Proof( appth :+ ( "example" -> hof"x + nil + nil = x" ) ) {
     include( "appnil", appnil )
     rewrite.many ltr "appnil"
     refl
@@ -75,7 +75,7 @@ object lists extends TacticsProof {
   }
 
   ctx += hof"(f*g) x = f (g x)"
-  Lemma( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "*" ) in "example"; refl }
+  Proof( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "*" ) in "example"; refl }
 
   val mapfusion = Lemma( mapth :+ ( "goal" -> hof"∀f ∀g ∀xs map (f*g) xs = map f (map g xs)" ) ) {
     decompose; induction( hov"xs:list" )
@@ -86,7 +86,7 @@ object lists extends TacticsProof {
   // Note: we cannot prove constructor injectivity using the induction rule.
 
   if ( false ) {
-    val rs = extractRecSchem( Lemma( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
+    val rs = extractRecSchem( Proof( ( appth ++ revth ) :+ ( "goal" -> hof"rev(rev(x)) = x" ) ) {
       include( "revrev", revrev )
       chain( "revrev" )
     } )

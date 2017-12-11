@@ -10,9 +10,9 @@ class HOLPositionTest extends Specification {
     "be computed correctly" in {
       val x = Var( "x", Ti )
       val y = Var( "y", Ti )
-      val f = Const( "f", Ti -> Ti )
+      val f = Const( "f", Ti ->: Ti )
       val c = Const( "c", Ti )
-      val P = Const( "P", Ti -> To )
+      val P = Const( "P", Ti ->: To )
       val Px = Atom( P, List( x ) )
       val Pfc = Atom( P, List( App( f, c ) ) )
 

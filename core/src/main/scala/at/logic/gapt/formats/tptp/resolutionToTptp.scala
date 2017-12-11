@@ -7,12 +7,11 @@ import at.logic.gapt.proofs.resolution._
 import scala.collection.mutable
 
 object resolutionToTptp {
-  private def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
+  def fofOrCnf( label: String, role: FormulaRole, inf: ResolutionProof, annotations: Seq[GeneralTerm] ): TptpInput = {
     val disj = if ( inf.assertions.isEmpty ) inf.conclusion.toDisjunction
     else inf.conclusion.toDisjunction | inf.assertions.toDisjunction
     if ( inf.conclusion.forall( _.isInstanceOf[Atom] ) ) {
-      val ( _, disj_ ) = tptpToString.renameVars( freeVariables( disj ).toSeq, disj )
-      AnnotatedFormula( "cnf", label, role, disj_.asInstanceOf[Formula], annotations )
+      AnnotatedFormula( "cnf", label, role, tptpToString.renameVars( disj ), annotations )
     } else {
       AnnotatedFormula( "fof", label, role, universalClosure( disj ), annotations )
     }
@@ -21,8 +20,7 @@ object resolutionToTptp {
   private def convertDefinition(
     label:    String,
     defConst: HOLAtomConst,
-    defn:     Expr
-  ): TptpInput = {
+    defn:     Expr ): TptpInput = {
     val FunctionType( _, argtypes ) = defConst.ty
     val vars = for ( ( t, i ) <- argtypes.zipWithIndex ) yield Var( s"X$i", t )
 
@@ -34,8 +32,7 @@ object resolutionToTptp {
   private def convertSkolemDefinition(
     label:   String,
     skConst: Const,
-    defn:    Expr
-  ): AnnotatedFormula = {
+    defn:    Expr ): AnnotatedFormula = {
     val Abs.Block( vars, quantf: Formula ) = defn
     val instf = instantiate( quantf, skConst( vars ) )
 
@@ -50,8 +47,7 @@ object resolutionToTptp {
   private def convertInference(
     labelMap: collection.Map[ResolutionProof, String],
     defMap:   collection.Map[Const, String],
-    inf:      ResolutionProof
-  ): TptpInput = {
+    inf:      ResolutionProof ): TptpInput = {
     val label = labelMap( inf )
     inf match {
       case Input( sequent ) =>

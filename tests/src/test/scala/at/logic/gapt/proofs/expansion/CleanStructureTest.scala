@@ -38,18 +38,13 @@ class CleanStructureTest extends Specification {
         universalClosure( R( x, y ) ),
         Map(
           c -> ETWeakQuantifier( All( y, R( c, y ) ), Map( e -> ETWeakening( R( c, e ), Polarity.InAntecedent ) ) ),
-          d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) )
-        )
-      )
+          d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) ) ) )
 
       cleanStructureET( et ) must beEqualTo(
         ETWeakQuantifier(
           universalClosure( R( x, y ) ),
           Map(
-            d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) )
-          )
-        )
-      )
+            d -> ETWeakQuantifier( All( y, R( d, y ) ), Map( e -> ETAtom( R( d, e ), Polarity.InAntecedent ) ) ) ) ) )
     }
   }
 

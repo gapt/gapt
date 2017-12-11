@@ -4,7 +4,7 @@ import at.logic.gapt.expr.{ All, Eq, Formula, Or, Var, freeVariables }
 import at.logic.gapt.formats.tip.{ TipConstructor, TipDatatype }
 import at.logic.gapt.proofs.gaptic.{ ProofState, allR, escargot, forget, induction, orR, repeat }
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.provers.viper.aip.{ LabelledSequent, ThrowsError }
 import cats.instances.all._
 import cats.syntax.all._
@@ -20,12 +20,12 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
    * @param ctx Defines the constants, types, etc.
    * @return A list of domain closure axioms or an error message if the axioms could not be constructed.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
     types.traverse[ThrowsError, Axiom] { t =>
       Right( new TipDomainClosureAxiom( t ) )
     }
 
-  private class TipDomainClosureAxiom( datatype: TipDatatype )( implicit ctx: Context ) extends Axiom {
+  private class TipDomainClosureAxiom( datatype: TipDatatype )( implicit ctx: MutableContext ) extends Axiom {
     /**
      * @return The formula representing the axiom.
      */
@@ -35,8 +35,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
         caseVariable,
         Or( datatype.constructors map {
           caseDistinction( caseVariable, _ )
-        } )
-      )
+        } ) )
     }
 
     /**
@@ -46,8 +45,7 @@ case class TipDomainClosureAxioms( types: List[TipDatatype] = Nil ) extends Axio
       val All.Block( Seq( variable, _* ), _ ) = formula
       var proofState = ProofState(
         datatype.constructors.flatMap( _.projectorDefinitions ).map( definition => "" -> All.Block( freeVariables( definition ).toSeq, definition ) ) ++:
-          Sequent() :+ ( "goal" -> formula )
-      )
+          Sequent() :+ ( "goal" -> formula ) )
       proofState += allR
       proofState += induction( variable )
       datatype.constructors.foreach { _ =>

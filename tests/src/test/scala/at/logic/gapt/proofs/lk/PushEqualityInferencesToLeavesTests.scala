@@ -661,8 +661,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       b ( ( left, right ) => InductionRule(
         InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
           InductionCase( right, hoc"s:nat>nat", Ant( 1 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
-        Abs( hov"x:nat", le"F(x)" ), hov"z:nat"
-      ) )
+        Abs( hov"x:nat", le"F(x)" ), hov"z:nat" ) )
       u ( EqualityLeftRule( _, Ant( 0 ), Ant( 1 ), Abs( hov"x:i", le"A(x):o" ) ) ) qed )
     val ( reduction, weakeningIntro ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
@@ -679,8 +678,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       b ( ( left, right ) => InductionRule(
         InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
           InductionCase( right, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
-        Abs( hov"x:nat", le"F(x)" ), hov"z:nat"
-      ) )
+        Abs( hov"x:nat", le"F(x)" ), hov"z:nat" ) )
       u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x:i", le"A(x):o" ) ) ) qed )
     val ( reduction, weakeningIntro ) = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
@@ -699,8 +697,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       b ( ( left, right ) => InductionRule(
         InductionCase( left, hoc"0:nat", Nil, Nil, Suc( 0 ) ) ::
           InductionCase( right, hoc"s:nat>nat", Ant( 0 ) :: Nil, hov"x:nat" :: Nil, Suc( 0 ) ) :: Nil,
-        Abs( hov"x:nat", le"F(x)" ), le"r"
-      ) )
+        Abs( hov"x:nat", le"F(x)" ), le"r" ) )
       u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x:nat", le"F(x):o" ) ) ) qed )
     val reduction = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] )
     reduction must beEmpty

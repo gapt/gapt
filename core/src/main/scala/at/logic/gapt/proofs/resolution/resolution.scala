@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.resolution
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.SkolemFunctions
+import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -90,11 +91,11 @@ trait ResolutionProof extends SequentProof[Formula, ResolutionProof] with DagPro
   def skolemFunctions =
     SkolemFunctions( subProofs.collect { case p: SkolemQuantResolutionRule => p.skolemConst -> p.skolemDef } )
 
-  def stringifiedConclusion = {
+  def stringifiedConclusion( implicit sig: BabelSignature ): String = {
     val assertionString =
       if ( assertions.isEmpty ) ""
-      else s"   <- ${assertions.map( identity, -_ ).elements.mkString( "," )} "
-    conclusion.toString + assertionString
+      else s"   <- ${assertions.map( identity, -_ ).map( _.toSigRelativeString ).elements.mkString( "," )} "
+    conclusion.toSigRelativeString + assertionString
   }
   override protected def stepString( subProofLabels: Map[Any, String] ) =
     s"$stringifiedConclusion   (${super[DagProof].stepString( subProofLabels )})"
@@ -191,12 +192,10 @@ object Factor {
   def apply( p: ResolutionProof, newConclusion: HOLSequent ): ResolutionProof = {
     require(
       newConclusion setEquals p.conclusion,
-      s"Proposed conclusion $newConclusion has fewer formulas than ${p.conclusion}"
-    )
+      s"Proposed conclusion $newConclusion has fewer formulas than ${p.conclusion}" )
     require(
       newConclusion isSubMultisetOf p.conclusion,
-      s"Proposed conclusion $newConclusion is not a submultiset of ${p.conclusion}"
-    )
+      s"Proposed conclusion $newConclusion is not a submultiset of ${p.conclusion}" )
     var p_ = p
     for ( ( a, i ) <- p.conclusion.diff( newConclusion ).zipWithIndex ) {
       val Seq( j1, j2, _* ) = p_.conclusion.zipWithIndex.elements.filter( _._2 sameSideAs i ).filter( _._1 == a ).map( _._2 )
@@ -310,8 +309,7 @@ case class Paramod( subProof1: ResolutionProof, eqIdx: SequentIndex, leftToRight
   def auxFormula = subProof2.conclusion( auxIdx )
   require(
     auxFormula == BetaReduction.betaNormalize( context( t ) ),
-    s"$auxFormula == ${BetaReduction.betaNormalize( context( t ) )}"
-  )
+    s"$auxFormula == ${BetaReduction.betaNormalize( context( t ) )}" )
   val rewrittenAuxFormula = BetaReduction.betaNormalize( context( s ) ).asInstanceOf[Formula]
   def mainFormulaSequent =
     if ( auxIdx isAnt ) rewrittenAuxFormula +: Sequent()
@@ -480,16 +478,26 @@ abstract class SkolemQuantResolutionRule extends PropositionalResolutionRule {
 
   def instFormula = Substitution( bound -> skolemTerm )( sub )
 }
+trait SkolemQuantResolutionRuleCompanion {
+  type R
+  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ): R
+  def apply( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr )( implicit ctx: Context ): R = {
+    val Apps( skConst: Const, _ ) = skolemTerm
+    apply( subProof, idx, skolemTerm, ctx.skolemDef( skConst ).get )
+  }
+}
 case class AllL( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
   require( idx isAnt )
   val All( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = instFormula +: Sequent()
 }
+object AllL extends SkolemQuantResolutionRuleCompanion { type R = AllL }
 case class ExR( subProof: ResolutionProof, idx: SequentIndex, skolemTerm: Expr, skolemDef: Expr ) extends SkolemQuantResolutionRule {
   require( idx isSuc )
   val Ex( bound, sub ) = subProof.conclusion( idx )
   def mainFormulaSequent = Sequent() :+ instFormula
 }
+object ExR extends SkolemQuantResolutionRuleCompanion { type R = ExR }
 
 case class Flip( subProof: ResolutionProof, idx: SequentIndex ) extends PropositionalResolutionRule {
   val Eq( t, s ) = subProof.conclusion( idx )
@@ -506,8 +514,7 @@ object Flip {
       Resolution(
         Paramod( Taut( Eq( t, s ) ), Suc( 0 ), false,
           Refl( s ), Suc( 0 ), Abs( x, Eq( s, x ) ) ), Suc( 0 ),
-        subProof, equation
-      )
+        subProof, equation )
     }
   }
 }

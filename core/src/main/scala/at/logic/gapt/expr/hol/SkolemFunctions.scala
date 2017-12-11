@@ -26,8 +26,7 @@ case class SkolemFunctions( skolemDefs: Map[Const, Expr] ) {
 
   val Right( dependencyOrder ) = linearizeStrictPartialOrder(
     skolemDefs.keySet,
-    for ( ( s, d ) <- skolemDefs; s_ <- constants( d ) if skolemDefs contains s_ ) yield s -> s_
-  )
+    for ( ( s, d ) <- skolemDefs; s_ <- constants( d ) if skolemDefs contains s_ ) yield s -> s_ )
 
   def orderedDefinitions = dependencyOrder.map( c => c -> skolemDefs( c ) )
 
@@ -52,8 +51,7 @@ object SkolemFunctions {
       case ( c, ds ) =>
         require(
           ds.size == 1,
-          s"Inconsistent skolem symbol $c:\n${ds.map { _._2 }.mkString( "\n" )}"
-        )
+          s"Inconsistent skolem symbol $c:\n${ds.map { _._2 }.mkString( "\n" )}" )
         c -> ds.head._2
     } )
 }

@@ -3,8 +3,8 @@ package at.logic.gapt.formats.tip
 import java.io.IOException
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.lisp._
+import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.utils.{ ExternalProgram, NameGenerator, runProcess }
 
@@ -28,14 +28,24 @@ class TipSmtParser {
   datatypes += TipDatatype( To, Seq( TipConstructor( TopC(), Seq() ), TipConstructor( BottomC(), Seq() ) ) )
 
   def parse( sexp: SExpression ): Unit = sexp match {
-    case LFun( "declare-sort", LAtom( name ), LAtom( ":skolem" | ":lambda" ), ar ) =>
-      parse( LFun( "declare-sort", LAtom( name ), ar ) )
-    case LFun( "declare-sort", LAtom( name ), LAtom( "0" ) ) =>
+
+    case LFun( "declare-sort", sort @ LSymbol( _ ), LKeyword( _ ), key @ LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( "declare-sort", sort +: key +: rest: _* ) )
+    case LFun( "declare-sort", sort @ LSymbol( _ ), LKeyword( _ ), symbol @ LSymbol( _ ) ) =>
+      parse( LFun( "declare-sort", sort, symbol ) )
+    case LFun( "declare-sort", sort @ LSymbol( _ ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( "declare-sort", sort +: rest: _* ) )
+    case LFun( "declare-sort", LSymbol( name ), LSymbol( "0" ) ) =>
       val t = TBase( name )
       declare( t )
       ctx += t
-    case LFun( "declare-datatypes", LList(), LList( LFun( name, constructors @ _* ) ) ) =>
-      val t = TBase( name )
+
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, LKeyword( _ ), LSymbol( _ ), rest @ _* ) ) ) =>
+      parse( LFun( "declare-datatypes", LList(), LList( LFun( typename, rest: _* ) ) ) )
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, LKeyword( _ ), rest @ _* ) ) ) =>
+      parse( LFun( "declare-datatypes", LList(), LList( LFun( typename, rest: _* ) ) ) )
+    case LFun( "declare-datatypes", LList(), LList( LFun( typename, constructors @ _* ) ) ) =>
+      val t = TBase( typename )
       declare( t )
       val dt = TipDatatype( t, constructors map { parseConstructor( _, t ) } )
       ctx += Context.InductiveType( t, dt.constructors.map( _.constr ): _* )
@@ -47,34 +57,62 @@ class TipSmtParser {
           ctx += proj
         }
       }
-    case LFun( "declare-const", LAtom( name ), LAtom( ":lambda" ), ty ) =>
-      parse( LFun( "declare-const", LAtom( name ), ty ) )
-    case LFun( "declare-const", LAtom( name ), LAtom( typeName ) ) =>
+
+    case LFun( "declare-const", LSymbol( constantName ), LKeyword( _ ), keyword @ LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( "declare-const", LSymbol( constantName ) +: keyword +: rest: _* ) )
+    case LFun( "declare-const", LSymbol( constantName ), LKeyword( _ ), symbol @ LSymbol( _ ) ) =>
+      parse( LFun( "declare-const", LSymbol( constantName ), symbol ) )
+    case LFun( "declare-const", LSymbol( constantName ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( "declare-const", LSymbol( constantName ) +: rest: _* ) )
+    case LFun( "declare-const", LSymbol( name ), LSymbol( typeName ) ) =>
       val c = Const( name, typeDecls( typeName ) )
       declare( c )
       ctx += c
-    case LFun( "declare-fun", LAtom( name ), LAtom( ":lambda" ), rest @ _* ) =>
-      parse( LFun( "declare-fun", LAtom( name ) +: rest: _* ) )
-    case LFun( "declare-fun", LAtom( name ), LList( argTypes @ _* ), LAtom( retType ) ) =>
-      val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LAtom( argType ) => typeDecls( argType ) } ) )
+
+    case LFun( "declare-fun", name @ LSymbol( _ ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( "declare-fun", name +: rest: _* ) )
+    case LFun( "declare-fun", name @ LSymbol( _ ), LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( "declare-fun", name +: rest: _* ) )
+    case LFun( "declare-fun", LSymbol( name ), LList( argTypes @ _* ), LSymbol( retType ) ) =>
+      val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LSymbol( argType ) => typeDecls( argType ) } ) )
       declare( f )
       ctx += f
-    case LFun( "define-fun" | "define-fun-rec", LAtom( name ), LList( args @ _* ), LAtom( retType ), body ) =>
-      val argVars = for ( LFun( argName, LAtom( argType ) ) <- args ) yield Var( argName, typeDecls( argType ) )
+
+    case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LSymbol( _ ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( cmd, name +: rest: _* ) )
+    case LFun( cmd @ ( "define-fun" | "define-fun-rec" ), name @ LSymbol( _ ), LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( cmd, name +: rest: _* ) )
+    case LFun( "define-fun" | "define-fun-rec", LSymbol( name ), LList( args @ _* ), LSymbol( retType ), body ) =>
+      val argVars = for ( LFun( argName, LSymbol( argType ) ) <- args ) yield Var( argName, typeDecls( argType ) )
       val funConst = Const( name, FunctionType( typeDecls( retType ), argVars.map( _.ty ) ) )
       declare( funConst )
       ctx += funConst
       functions += TipFun( funConst, parseFunctionBody( body, funConst( argVars: _* ), argVars.map { v => v.name -> v }.toMap ) )
-    case LFun( "assert", LAtom( ":definition" ), LAtom( ":lambda" ), formula ) =>
-      parse( LFun( "assert", formula ) )
+
+    case LFun( assertion @ ( "assert" | "prove" | "assert-not" ), LKeyword( _ ), keyword @ LKeyword( _ ), rest @ _* ) =>
+      parse( LFun( assertion, keyword +: rest: _* ) )
+
+    case LFun( assertion @ ( "assert" | "prove" | "assert-not" ), LKeyword( _ ), formula ) =>
+      parse( LFun( assertion, formula ) )
+
+    case LFun( assertion @ ( "assert" | "prove" | "assert-not" ), LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parse( LFun( assertion, rest: _* ) )
+
     case LFun( "assert", formula ) =>
       assumptions += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "assert-not", formula ) =>
       goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
+    case LFun( "prove", formula ) =>
+      goals += parseExpression( formula, Map() ).asInstanceOf[Formula]
     case LFun( "check-sat" ) => ()
   }
 
-  def parseConstructor( sexp: SExpression, ofType: Ty ) = sexp match {
+  def parseConstructor( sexp: SExpression, ofType: Ty ): TipConstructor = sexp match {
+    case LFun( constructorName, LKeyword( _ ), LSymbol( _ ), rest @ _* ) =>
+      parseConstructor( LFun( constructorName, rest: _* ), ofType )
+    case LFun( constructorName, LKeyword( _ ), rest @ _* ) =>
+      parseConstructor( LFun( constructorName, rest: _* ), ofType )
+
     case LFun( name, fields @ _* ) =>
       val projectors = fields map { parseField( _, ofType ) }
       val fieldTypes = projectors map { _.ty } map { case FunctionType( to, _ ) => to }
@@ -82,14 +120,14 @@ class TipSmtParser {
   }
 
   def parseField( sexp: SExpression, ofType: Ty ) = sexp match {
-    case LFun( projector, LAtom( typename ) ) =>
-      Const( projector, ofType -> typeDecls( typename ) )
+    case LFun( projector, LSymbol( typename ) ) =>
+      Const( projector, ofType ->: typeDecls( typename ) )
   }
 
   def parseFunctionBody( sexp: SExpression, lhs: Expr, freeVars: Map[String, Expr] ): Seq[Formula] = sexp match {
-    case LFun( "match", LAtom( varName ), cases @ _* ) =>
+    case LFun( "match", LSymbol( varName ), cases @ _* ) =>
       def handleCase( cas: SExpression ): Seq[Formula] = cas match {
-        case LFun( "case", LAtom( "default" ), body ) =>
+        case LFun( "case", LSymbol( "default" ), body ) =>
           val coveredConstructors = cases collect {
             case LFun( "case", LFunOrAtom( constrName, _* ), _ ) if constrName != "default" =>
               funDecls( constrName )
@@ -98,46 +136,44 @@ class TipSmtParser {
           missingConstructors flatMap { ctr =>
             val FunctionType( _, ts ) = ctr.ty
             val nameGen = new NameGenerator( freeVars.keys )
-            val vs = for ( t <- ts ) yield LAtom( nameGen fresh "x" )
+            val vs = for ( t <- ts ) yield LSymbol( nameGen fresh "x" )
             handleCase( LFun( "case", LFun( ctr.name, vs: _* ), body ) )
           }
         case LFun( "case", LFunOrAtom( constrName, argNames @ _* ), body ) =>
           require(
             freeVars( varName ).isInstanceOf[Var],
-            s"${freeVars( varName )} is not a variable"
-          )
+            s"${freeVars( varName )} is not a variable" )
           val constr = funDecls( constrName )
           val FunctionType( _, constrArgTypes ) = constr.ty
           require( constrArgTypes.size == argNames.size )
-          val args = for ( ( LAtom( name ), ty ) <- argNames zip constrArgTypes ) yield Var( name, ty )
+          val args = for ( ( LSymbol( name ), ty ) <- argNames zip constrArgTypes ) yield Var( name, ty )
           val subst = Substitution( freeVars( varName ).asInstanceOf[Var] -> constr( args: _* ) )
           parseFunctionBody(
             body,
             subst( lhs ),
-            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v }
-          )
+            freeVars.mapValues( subst( _ ) ) ++ args.map { v => v.name -> v } )
       }
       cases flatMap handleCase
     case LFun( "ite", cond, ifTrue, ifFalse ) =>
       parseFunctionBody( ifFalse, lhs, freeVars ).map( -parseExpression( cond, freeVars ) --> _ ) ++
         parseFunctionBody( ifTrue, lhs, freeVars ).map( parseExpression( cond, freeVars ) --> _ )
-    case LAtom( "true" )  => Seq( lhs.asInstanceOf[Formula] )
-    case LAtom( "false" ) => Seq( -lhs )
+    case LSymbol( "true" )  => Seq( lhs.asInstanceOf[Formula] )
+    case LSymbol( "false" ) => Seq( -lhs )
     case _ =>
       val expr = parseExpression( sexp, freeVars )
       Seq( if ( lhs.ty == To ) lhs <-> expr else lhs === expr )
   }
 
   def parseExpression( sexp: SExpression, freeVars: Map[String, Expr] ): Expr = sexp match {
-    case LAtom( name ) if freeVars contains name => freeVars( name )
-    case LAtom( "false" )                        => Bottom()
-    case LAtom( "true" )                         => Top()
-    case LAtom( name )                           => funDecls( name )
+    case LSymbol( name ) if freeVars contains name => freeVars( name )
+    case LSymbol( "false" )                        => Bottom()
+    case LSymbol( "true" )                         => Top()
+    case LSymbol( name )                           => funDecls( name )
     case LFun( "forall", LList( varNames @ _* ), formula ) =>
-      val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
+      val vars = for ( LFun( name, LSymbol( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
       All.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "exists", LList( varNames @ _* ), formula ) =>
-      val vars = for ( LFun( name, LAtom( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
+      val vars = for ( LFun( name, LSymbol( typeName ) ) <- varNames ) yield Var( name, typeDecls( typeName ) )
       Ex.Block( vars, parseExpression( formula, freeVars ++ vars.map { v => v.name -> v } ) )
     case LFun( "=", sexps @ _* ) =>
       val exprs = sexps map { parseExpression( _, freeVars ) }
@@ -157,8 +193,7 @@ class TipSmtParser {
       typeDecls.values.toSeq diff datatypes.map { _.t }, datatypes,
       funDecls.values.toSeq diff functions.map { _.fun },
       functions,
-      assumptions, And( goals )
-    )
+      assumptions, And( goals ) )
 }
 
 object TipSmtParser extends ExternalProgram {
@@ -179,11 +214,9 @@ object TipSmtParser extends ExternalProgram {
         "--if-to-bool-op",
         "--int-to-nat",
         "--uncurry-theory",
-        "--let-lift"
-      ),
+        "--let-lift" ),
       tipBench.read,
-      catchStderr = true
-    ) ) )
+      catchStderr = true ) ) )
 
   val isInstalled =
     try { runProcess( Seq( "tip", "--help" ), "" ); true }

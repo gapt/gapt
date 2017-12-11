@@ -305,8 +305,7 @@ class undoReplaceAbstractions {
 
   def apply( fs: HOLSequent, map: ConstantsMap ): HOLSequent = HOLSequent(
     fs.antecedent.map( apply( _, map ) ),
-    fs.succedent.map( apply( _, map ) )
-  )
+    fs.succedent.map( apply( _, map ) ) )
   def apply( f: Formula, map: ConstantsMap ): Formula = apply( f.asInstanceOf[Expr], map ).asInstanceOf[Formula]
   def apply( e: Expr, map: ConstantsMap ): Expr = {
     val stringsmap = map.map( x => ( x._2.toString, x._1 ) ) //inverting the map works because the symbols are unique
@@ -382,14 +381,12 @@ object changeTypeIn {
   def apply( e: FOLFormula, tmap: TypeMap ): FOLFormula = apply( e.asInstanceOf[Expr], tmap ).asInstanceOf[FOLFormula]
   def apply( fs: HOLSequent, tmap: TypeMap ): HOLSequent = HOLSequent(
     fs.antecedent.map( x => apply( x, tmap ) ),
-    fs.succedent.map( x => apply( x, tmap ) )
-  )
+    fs.succedent.map( x => apply( x, tmap ) ) )
 
   //different names bc of type erasure
   private def holsub( s: Substitution, tmap: TypeMap ): Substitution = Substitution(
     s.map.map( x =>
-      ( apply( x._1, tmap ).asInstanceOf[Var], apply( x._2, tmap ) ) )
-  )
+      ( apply( x._1, tmap ).asInstanceOf[Var], apply( x._2, tmap ) ) ) )
 
   private def folsub( s: FOLSubstitution, tmap: TypeMap ): FOLSubstitution = FOLSubstitution( s.folmap.map( x =>
     ( apply( x._1, tmap ).asInstanceOf[FOLVar], apply( x._2, tmap ) ) ) )

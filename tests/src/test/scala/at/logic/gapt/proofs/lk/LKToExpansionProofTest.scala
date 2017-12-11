@@ -49,11 +49,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
               hof"∃z Q $f_alpha z",
               Map(
                 le"c" -> ETAtom( hoa"Q $f_alpha c", Polarity.InSuccedent ),
-                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent )
-              )
-            )
-        )
-      ) )
+                le"d" -> ETAtom( hoa"Q $f_alpha d", Polarity.InSuccedent ) ) ) ) ) )
 
     }
 
@@ -237,7 +233,7 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
       val Right( lk ) = ExpansionProofToLK.withTheory( implicitly )( exp )
       ctx.check( exp )
       ctx.check( lk )
-      exp.expansionSequent filter { _.shallow != ETCut.cutAxiom } map { _.shallow } must beMultiSetEqual( lk.conclusion )
+      exp.nonCutPart.shallow must beMultiSetEqual( lk.conclusion )
     }
   }
 }

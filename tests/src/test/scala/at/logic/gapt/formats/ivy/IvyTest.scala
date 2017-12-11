@@ -27,27 +27,25 @@ class IvyTest extends Specification {
     }
 
     " parse the atom a1" in {
-      tryParseString( "a1" ) must_== Success( List( LAtom( "a1" ) ) )
+      tryParseString( "a1" ) must_== Success( List( LSymbol( "a1" ) ) )
     }
 
     " parse the atom a2(space)" in {
-      tryParseString( "a2    " ) must_== Success( List( LAtom( "a2" ) ) )
+      tryParseString( "a2    " ) must_== Success( List( LSymbol( "a2" ) ) )
     }
 
     """ parse the atom "a b c" """ in {
-      tryParseString( """"a b c"""" ) must_== Success( List( LAtom( "a b c" ) ) )
+      tryParseString( """"a b c"""" ) must_== Success( List( LSymbol( "a b c" ) ) )
     }
 
     " parse the list (c1 (c2 c2) c) " in {
       tryParseString( "(c1 (c2 c2) c)" ) must_== Success(
-        LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) :: Nil
-      )
+        LFun( "c1", LFun( "c2", LSymbol( "c2" ) ), LSymbol( "c" ) ) :: Nil )
     }
 
     " parse the list c4;;comment" in {
       tryParseString( "c4;;comment" ) must_== Success(
-        LAtom( "c4" ) :: Nil
-      )
+        LSymbol( "c4" ) :: Nil )
     }
 
     " parse the comments ;;comment 1<newline>;;comment 2" in {
@@ -55,35 +53,31 @@ class IvyTest extends Specification {
     }
 
     " parse the list ;;comment<newline>c5" in {
-      tryParseString( ";;comment\nc5" ) must_== Success( List( LAtom( "c5" ) ) )
+      tryParseString( ";;comment\nc5" ) must_== Success( List( LSymbol( "c5" ) ) )
     }
 
     " parse the list (c1 (c2 c2) c) ;;comment" in {
       tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
-        LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) :: Nil
-      )
+        LFun( "c1", LFun( "c2", LSymbol( "c2" ) ), LSymbol( "c" ) ) :: Nil )
     }
 
     " parse the list (c1 (c2 c2)  ;;comment<newline>c)" in {
       tryParseString( "(c1 (c2 c2) c);;comment" ) must_== Success(
-        LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) :: Nil
-      )
+        LFun( "c1", LFun( "c2", LSymbol( "c2" ) ), LSymbol( "c" ) ) :: Nil )
     }
 
     " parse the list (c1 \"c2 c2\" c) " in {
       tryParseString( "(c1 \"c2 c2\" c)" ) must_== Success(
-        List( LFun( "c1", LAtom( "c2 c2" ), LAtom( "c" ) ) )
-      )
+        List( LFun( "c1", LSymbol( "c2 c2" ), LSymbol( "c" ) ) ) )
     }
 
     " parse the list_ a1 b " in {
-      tryParseString( "a1 b" ) must_== Success( List( LAtom( "a1" ), LAtom( "b" ) ) )
+      tryParseString( "a1 b" ) must_== Success( List( LSymbol( "a1" ), LSymbol( "b" ) ) )
     }
 
     " parse the list ;;comment 1\n(c1 (c2 c2)  ;;comment 2\nc)" in {
       tryParseString( "(\n;;comment 1\nc1 (c2 c2) c);;comment 2" ) must_== Success(
-        List( LFun( "c1", LFun( "c2", LAtom( "c2" ) ), LAtom( "c" ) ) )
-      )
+        List( LFun( "c1", LFun( "c2", LSymbol( "c2" ) ), LSymbol( "c" ) ) ) )
     }
 
     " parse the test file simple.ivy " in {

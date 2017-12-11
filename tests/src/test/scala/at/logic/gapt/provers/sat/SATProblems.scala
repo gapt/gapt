@@ -2,7 +2,7 @@ package at.logic.gapt.provers.sat
 
 import at.logic.gapt.examples.PigeonHolePrinciple
 import at.logic.gapt.expr._
-import at.logic.gapt.models.Interpretation
+import at.logic.gapt.models.PropositionalModel
 import at.logic.gapt.proofs.{ HOLSequent, HOLClause }
 
 object SATProblems {
@@ -28,7 +28,7 @@ object SATProblems {
     val c3 = HOLClause( pd :: pe :: Nil, Nil )
     c1 :: c2 :: c3 :: Nil
   }
-  def checkSolution5( model: Interpretation ) = model.interpret( pe ) == false
+  def checkSolution5( model: PropositionalModel ) = !model( pe )
 
   private def problem6( pair: ( Int, Int ) ) = PigeonHolePrinciple( pair._1, pair._2 )
 

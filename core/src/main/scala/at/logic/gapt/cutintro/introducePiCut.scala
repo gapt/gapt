@@ -62,8 +62,7 @@ case class Pi2SeHs(
 
     (
       for ( index <- 1 to multiplicityOfAlpha )
-        yield substitutionPairsBetaI( multiplicityOfAlpha - index + 1 )
-    ).toList.flatten
+        yield substitutionPairsBetaI( multiplicityOfAlpha - index + 1 ) ).toList.flatten
   }
 
   /**
@@ -317,9 +316,8 @@ case class Pi2SeHs(
  * @param oneToPList Supposed to be a subset of {1,...,p}
  */
 class LeafIndex(
-  val oneToMList: Set[Int],
-  val oneToPList: Set[Int]
-) {}
+    val oneToMList: Set[Int],
+    val oneToPList: Set[Int] ) {}
 
 /**
  * Supposed to contain the data of a unified literal and whether it makes a non-tautological leaf of the reduced representation true
@@ -336,8 +334,7 @@ class LiteralWithIndexLists(
     val leafIndexList:      List[LeafIndex],
     val numberOfDNTAs:      Int,
     val foundNonEmptyPList: Boolean,
-    val foundEmptyMList:    Boolean
-) {
+    val foundEmptyMList:    Boolean ) {
   require( numberOfDNTAs == leafIndexList.length )
 }
 
@@ -347,8 +344,7 @@ class LiteralWithIndexLists(
  * @param literals
  */
 class ClauseWithIndexLists(
-    val literals: List[LiteralWithIndexLists]
-) {
+    val literals: List[LiteralWithIndexLists] ) {
 
   require( literals.tail.forall( _.numberOfDNTAs == literals.head.numberOfDNTAs ) )
 
@@ -435,8 +431,7 @@ class ClauseWithIndexLists(
  * @param clauses
  */
 class ClausesWithIndexLists(
-    val clauses: List[ClauseWithIndexLists]
-) {
+    val clauses: List[ClauseWithIndexLists] ) {
 
   /**
    * Computes an 'average' LeafIndex for the whole set of clauses, i.e. the new oneToMList is the intersection of all oneToMLists of each clause
@@ -523,8 +518,7 @@ object introducePi2Cut {
   def apply(
     seHs:                      Pi2SeHs,
     nameOfExistentialVariable: Var     = fov"yCut",
-    nameOfUniversalVariable:   Var     = fov"xCut"
-  ): ( Option[Formula], Var, Var ) = {
+    nameOfUniversalVariable:   Var     = fov"xCut" ): ( Option[Formula], Var, Var ) = {
 
     val nameOfExistentialVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfExistentialVariable )
     val nameOfUniversalVariableChecked = rename.awayFrom( freeVariables( seHs.reducedRepresentationToFormula ) ).fresh( nameOfUniversalVariable )
@@ -532,16 +526,14 @@ object introducePi2Cut {
     val unifiedLiterals: Set[Formula] = gStarUnify(
       seHs,
       nameOfExistentialVariableChecked,
-      nameOfUniversalVariableChecked
-    )
+      nameOfUniversalVariableChecked )
 
     val literalsWithIndexListsOrAndSolution: ( Set[LiteralWithIndexLists], Option[Formula] ) = computeTheIndexListsForTheLiterals(
       unifiedLiterals,
       seHs.dualNonTautologicalAxioms,
       seHs,
       nameOfExistentialVariableChecked,
-      nameOfUniversalVariableChecked
-    )
+      nameOfUniversalVariableChecked )
 
     val ( literalsWithIndexLists, optionSolution1 ) = literalsWithIndexListsOrAndSolution
 
@@ -560,8 +552,7 @@ object introducePi2Cut {
 
       val allowedClausesWithIndexListsOrAndSolution: ( Set[ClauseWithIndexLists], Option[Formula] ) = checkAndBuildAllowedClausesHead(
         literalsWithIndexLists,
-        seHs
-      )
+        seHs )
 
       val ( allowedClausesWithIndexLists, optionSolution2 ) = allowedClausesWithIndexListsOrAndSolution
 
@@ -616,8 +607,7 @@ object introducePi2Cut {
 
   private def checkAndBuildAllowedClausesHead(
     literalsWithIndexLists: Set[LiteralWithIndexLists],
-    seHs:                   Pi2SeHs
-  ): ( ( Set[ClauseWithIndexLists], Option[Formula] ) ) = {
+    seHs:                   Pi2SeHs ): ( ( Set[ClauseWithIndexLists], Option[Formula] ) ) = {
 
     var allowedClausesWithIndexListsMutable = scala.collection.mutable.Set[ClauseWithIndexLists]()
     val literalsWithIndexListsMutable = scala.collection.mutable.Set( literalsWithIndexLists.toList: _* )
@@ -640,8 +630,7 @@ object introducePi2Cut {
       literalsWithIndexListsMutable,
       allowedClausesWithIndexListsMutable,
       seHs,
-      2
-    )
+      2 )
 
     ( mutable.toSet, optionSolution )
 
@@ -651,8 +640,7 @@ object introducePi2Cut {
     literalsWithIndexLists:       scala.collection.mutable.Set[LiteralWithIndexLists],
     allowedClausesWithIndexLists: scala.collection.mutable.Set[ClauseWithIndexLists],
     seHs:                         Pi2SeHs,
-    subsetSize:                   Int
-  ): ( ( scala.collection.mutable.Set[ClauseWithIndexLists], Option[Formula] ) ) = {
+    subsetSize:                   Int ): ( ( scala.collection.mutable.Set[ClauseWithIndexLists], Option[Formula] ) ) = {
 
     for ( subset <- literalsWithIndexLists.subsets( subsetSize ) ) {
       val clauseWithIndexLists = new ClauseWithIndexLists( subset.toList )
@@ -680,8 +668,7 @@ object introducePi2Cut {
         literalsWithIndexLists,
         allowedClausesWithIndexLists,
         seHs,
-        subsetSize + 1
-      )
+        subsetSize + 1 )
     } else {
       ( allowedClausesWithIndexLists, None )
     }
@@ -693,8 +680,7 @@ object introducePi2Cut {
     nonTautologicalLeaves: List[Sequent[Formula]],
     seHs:                  Pi2SeHs,
     y:                     Var,
-    x:                     Var
-  ): ( ( Set[LiteralWithIndexLists], Option[Formula] ) ) = {
+    x:                     Var ): ( ( Set[LiteralWithIndexLists], Option[Formula] ) ) = {
 
     val literalWithIndexListsSet = scala.collection.mutable.Set[LiteralWithIndexLists]()
 
@@ -764,8 +750,7 @@ object introducePi2Cut {
         leafOfIndexList,
         nonTautologicalLeaves.length,
         foundNonEmptyPList,
-        foundEmptyMList
-      )
+        foundEmptyMList )
 
       if ( foundNonEmptyPList ) {
 
@@ -788,8 +773,7 @@ object introducePi2Cut {
 
   private def checkNecessityOfNewAndOldClause(
     newClause:  ClauseWithIndexLists,
-    oldClauses: List[ClauseWithIndexLists]
-  ): ( Boolean, List[ClauseWithIndexLists] ) = {
+    oldClauses: List[ClauseWithIndexLists] ): ( Boolean, List[ClauseWithIndexLists] ) = {
 
     if ( oldClauses == Nil ) {
       ( false, Nil )

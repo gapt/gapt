@@ -151,8 +151,7 @@ object lattice extends TacticsProof {
   // absorption law 2 - difficult direction
   val r_2 = Lemma(
     hols"""LUB, R, ∀z (z <= cup x_0 y_0 ∧ z <= x_0 ⊃ z <= cap (cup x_0 y_0) x_0) :-
-      x_0 <= cap (cup x_0 y_0) x_0"""
-  ) {
+      x_0 <= cap (cup x_0 y_0) x_0""" ) {
       allL( "h_0", le"x_0" )
       impL
       andR

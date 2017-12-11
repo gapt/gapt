@@ -48,20 +48,20 @@ class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
  * @param name  The name of this logical constant, e.g. "∀"
  */
 class QuantifierC( name: String ) extends LogicalC( name ) {
-  def apply( qtype: Ty ) = Const( name, ( qtype -> To ) -> To )
+  def apply( qtype: Ty ) = Const( name, ( qtype ->: To ) ->: To )
 
   protected type MatchResult = Option[Ty]
   protected override def matchType( exptype: Ty ) = exptype match {
-    case ( qtype -> To ) -> To => Some( qtype )
-    case _                     => None
+    case ( qtype ->: To ) ->: To => Some( qtype )
+    case _                       => None
   }
   protected override def noMatch = None
 }
 
-object AndC extends MonomorphicLogicalC( "∧", To -> ( To -> To ) )
-object OrC extends MonomorphicLogicalC( "∨", To -> ( To -> To ) )
-object ImpC extends MonomorphicLogicalC( "⊃", To -> ( To -> To ) )
-object NegC extends MonomorphicLogicalC( "¬", To -> To )
+object AndC extends MonomorphicLogicalC( "∧", To ->: To ->: To )
+object OrC extends MonomorphicLogicalC( "∨", To ->: To ->: To )
+object ImpC extends MonomorphicLogicalC( "⊃", To ->: To ->: To )
+object NegC extends MonomorphicLogicalC( "¬", To ->: To )
 object BottomC extends MonomorphicLogicalC( "⊥", To )
 object TopC extends MonomorphicLogicalC( "⊤", To )
 
@@ -69,12 +69,12 @@ object ExistsC extends QuantifierC( "∃" )
 object ForallC extends QuantifierC( "∀" )
 
 object EqC extends LogicalC( "=" ) {
-  def apply( ty: Ty ) = Const( name, ty -> ( ty -> To ) )
+  def apply( ty: Ty ) = Const( name, ty ->: ty ->: To )
 
   protected type MatchResult = Option[Ty]
   protected override def matchType( exptype: Ty ) = exptype match {
-    case ty -> ( ty_ -> To ) if ty == ty_ => Some( ty )
-    case _                                => None
+    case ty ->: ty_ ->: To if ty == ty_ => Some( ty )
+    case _                              => None
   }
   protected override def noMatch = None
 }

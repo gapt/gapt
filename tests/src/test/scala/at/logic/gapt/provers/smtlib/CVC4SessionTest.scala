@@ -1,7 +1,7 @@
 package at.logic.gapt.provers.smtlib
 
 import at.logic.gapt.expr._
-import at.logic.gapt.formats.lisp.{ LAtom, LFun, LList }
+import at.logic.gapt.formats.lisp.{ LSymbol, LFun, LList }
 import at.logic.gapt.proofs.Context
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.provers.Session._
@@ -13,7 +13,7 @@ class CVC4SessionTest extends Specification {
   if ( !CVC4.isInstalled ) skipAll
 
   "check sat of empty theory" in {
-    CVC4.runSession( checkSat ) must_== true
+    CVC4.runSession( checkSat ) must_== Right( true )
   }
 
   "push and pop" in {
@@ -29,6 +29,6 @@ class CVC4SessionTest extends Specification {
         sat2 <- checkSat
         sat3 <- withScope { assert( hof"p 0 & 0 = s 0" ) >> checkSat }
       } yield ( sat1, sat2, sat3 )
-    } must_== ( false, true, false )
+    } must_== ( Right( false ), Right( true ), Right( false ) )
   }
 }

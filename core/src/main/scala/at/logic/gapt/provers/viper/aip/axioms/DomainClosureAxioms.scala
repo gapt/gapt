@@ -1,8 +1,8 @@
 package at.logic.gapt.provers.viper.aip.axioms
 
-import at.logic.gapt.expr.{ All, Eq, Ex, FunctionType, Formula, Or, TBase, Var, rename, Const => Con }
+import at.logic.gapt.expr.{ All, Eq, Ex, Formula, FunctionType, Or, TBase, Var, rename, Const => Con }
 import at.logic.gapt.proofs.gaptic.{ ProofState, allR, escargot, induction }
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.provers.viper.aip.{ LabelledSequent, ThrowsError, getConstructors }
 import cats.instances.all._
 import cats.syntax.all._
@@ -18,7 +18,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @param ctx Defines the constants, types, etc.
    * @return A list of domain closure axioms or an error message if the axioms could not be constructed.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
     types.traverse[ThrowsError, Axiom] { t => domainClosureAxiom( t ) }
 
   /**
@@ -29,7 +29,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
    * @return A domain closure axiom for the specified inductive type or an error message if the given type is
    *         not inductive.
    */
-  private def domainClosureAxiom( caseType: TBase )( implicit ctx: Context ): ThrowsError[Axiom] = {
+  private def domainClosureAxiom( caseType: TBase )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
     for {
       constructors <- getConstructors( caseType, ctx )
     } yield new Axiom {
@@ -59,8 +59,7 @@ case class DomainClosureAxioms( types: List[TBase] = Nil ) extends AxiomFactory 
     val caseVariable = Var( "x", caseType )
     All(
       caseVariable,
-      Or( constructors map { constructor => caseDistinction( caseVariable, constructor ) } )
-    )
+      Or( constructors map { constructor => caseDistinction( caseVariable, constructor ) } ) )
   }
 
   /**

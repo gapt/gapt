@@ -66,8 +66,7 @@ object ExpansionToResolutionProof {
             clausify(
               if ( i.isAnt ) child +: es.delete( i )
               else es.delete( i ) :+ child,
-              Subst( p1, Substitution( ev -> term ) )
-            )
+              Subst( p1, Substitution( ev -> term ) ) )
         }.toSet
     }
 

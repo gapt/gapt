@@ -12,31 +12,27 @@ class SyntacticMguTest extends Specification {
 
     syntacticMGU(
       Abs( x, Abs( y, f( x, y ) ) ),
-      Abs( x, Abs( y, f( y, x ) ) )
-    ) must beNone
+      Abs( x, Abs( y, f( y, x ) ) ) ) must beNone
     syntacticMGU(
       Abs( x, Abs( y, g( x ) ) ),
-      Abs( x, Abs( y, y ) )
-    ) must beNone
+      Abs( x, Abs( y, y ) ) ) must beNone
   }
 
   "handle variables that are both bound and free" in {
     val Seq( x, y, z ) = Seq( "x", "y", "z" ) map { FOLVar( _ ) }
-    val f = Const( "f", Ti -> ( ( Ti -> Ti ) -> Ti ) )
+    val f = Const( "f", Ti ->: ( Ti ->: Ti ) ->: Ti )
     val g = FOLFunctionConst( "g", 1 )
     val c = FOLConst( "c" )
 
     syntacticMGU(
       f( x, Abs( y, x ) ),
-      f( g( y ), Abs( z, g( c ) ) )
-    ) must beSome
+      f( g( y ), Abs( z, g( c ) ) ) ) must beSome
   }
 
   "FOL Unification" should {
     "P(x_1), P(x_2)" in {
       syntacticMGU( foa"P x_1", foa"P x_2" ) must_== Some(
-        FOLSubstitution( fov"x_1" -> fot"x_2" )
-      )
+        FOLSubstitution( fov"x_1" -> fot"x_2" ) )
     }
     "a, b" in { syntacticMGU( fot"a", fot"b" ) must beEmpty }
     "f(a), g(a)" in { syntacticMGU( fot"f a", fot"g a" ) must beEmpty }
@@ -71,8 +67,7 @@ class SyntacticMguTest extends Specification {
       syntacticMGU( t1, t2 ) must_== Some( FOLSubstitution(
         fov"#v(B:i)" -> fot"'x_{3}'",
         fov"#v(A:i)" -> fot"'x_{2}'",
-        fov"#v(C:i)" -> fot"'x_{4}'"
-      ) )
+        fov"#v(C:i)" -> fot"'x_{4}'" ) )
     }
 
   }

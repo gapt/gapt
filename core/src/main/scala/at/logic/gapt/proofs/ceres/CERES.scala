@@ -67,7 +67,7 @@ class CERES {
   def apply( p: LKProof, pred: Formula => Boolean ): LKProof = apply( p, pred, Escargot )
   def apply( p: LKProof, pred: Formula => Boolean, prover: ResolutionProver ): LKProof = groundFreeVarsLK.wrap( p ) { p =>
     val es = p.endSequent
-    val p_ = regularize( skolemizeInferences( AtomicExpansion( p ) ) )
+    val p_ = regularize( skolemizeLK( AtomicExpansion( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, pred ) )
     val proj = Projections( p_, pred )
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
@@ -75,8 +75,7 @@ class CERES {
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception(
         "The characteristic clause set could not be refuted:\n" +
-          TPTPFOLExporter( tapecl )
-      )
+          TPTPFOLExporter( tapecl ) )
       case Some( rp ) =>
         cleanStructuralRules( apply( es, proj, eliminateSplitting( rp ) ) )
     }
@@ -93,8 +92,7 @@ class CERES {
   def apply( endsequent: HOLSequent, projections: Set[LKProof], rp: ResolutionProof ) = {
     WeakeningContractionMacroRule(
       ResolutionToLKProof( rp, findMatchingProjection( endsequent, projections ) ),
-      endsequent
-    )
+      endsequent )
   }
 
   /**
@@ -106,7 +104,7 @@ class CERES {
    */
   def CERESExpansionProof( p: LKProof, prover: ResolutionProver = Escargot ): ExpansionProof = {
     val es = p.endSequent
-    val p_ = regularize( AtomicExpansion( skolemizeInferences( p ) ) )
+    val p_ = regularize( AtomicExpansion( skolemizeLK( p ) ) )
     val cs = CharacteristicClauseSet( StructCreators.extract( p_, CERES.skipNothing ) )
     val proj = Projections( p_, CERES.skipNothing )
     val tapecl = subsumedClausesRemoval( deleteTautologies( cs ).toList )
@@ -114,8 +112,7 @@ class CERES {
     prover.getResolutionProof( tapecl ) match {
       case None => throw new Exception(
         "The characteristic clause set could not be refuted:\n" +
-          TPTPFOLExporter( tapecl )
-      )
+          TPTPFOLExporter( tapecl ) )
       case Some( rp ) =>
         ResolutionToExpansionProof( eliminateSplitting( rp ), findPartialExpansionSequent( es, proj ) )
     }
@@ -156,8 +153,7 @@ class CERES {
     for ( c <- input.sequent.antecedent ) {
       expansionSequent.indicesWhere( _.shallow == c ).find( _.isAnt ) match {
         case None => throw new Exception(
-          "Clause not contained in expansion sequent"
-        )
+          "Clause not contained in expansion sequent" )
         case Some( index ) =>
           expansionSequent = expansionSequent.delete( index )
       }
@@ -166,8 +162,7 @@ class CERES {
     for ( c <- input.sequent.succedent ) {
       expansionSequent.indicesWhere( _.shallow == c ).find( _.isSuc ) match {
         case None => throw new Exception(
-          "Clause not contained in expansion sequent"
-        )
+          "Clause not contained in expansion sequent" )
         case Some( index ) =>
           expansionSequent = expansionSequent.delete( index )
       }

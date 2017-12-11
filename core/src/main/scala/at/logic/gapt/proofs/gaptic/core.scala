@@ -38,8 +38,7 @@ object ProofState {
 case class ProofState private (
     initialGoal:      OpenAssumption,
     subGoals:         List[OpenAssumption],
-    finishedSubGoals: Map[OpenAssumptionIndex, LKProof]
-) {
+    finishedSubGoals: Map[OpenAssumptionIndex, LKProof] ) {
 
   def isFinished: Boolean = subGoals.isEmpty
 
@@ -55,12 +54,10 @@ case class ProofState private (
 
   def replace( index: OpenAssumptionIndex, proofSegment: LKProof ): ProofState = {
     val subGoal = subGoals.find( _.index == index ).getOrElse(
-      throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" )
-    )
+      throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" ) )
     require(
       proofSegment.conclusion isSubsetOf subGoal.conclusion,
-      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}"
-    )
+      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}" )
 
     if ( subGoal == proofSegment ) return this
 
@@ -72,17 +69,14 @@ case class ProofState private (
       require( oas.size == 1, s"Different new open assumptions with same index:\n${oas.mkString( "\n" )}" )
     require(
       newOpenAssumptions intersect subGoals_ isEmpty,
-      s"New open assumption contains already open subgoal"
-    )
+      s"New open assumption contains already open subgoal" )
     require(
       newOpenAssumptions.map( _.index ).toSet intersect finishedSubGoals.keySet isEmpty,
-      s"New open assumption contains already finished subgoal"
-    )
+      s"New open assumption contains already finished subgoal" )
 
     copy(
       subGoals = newOpenAssumptions.toList ++ subGoals_,
-      finishedSubGoals = finishedSubGoals + ( index -> proofSegment )
-    )
+      finishedSubGoals = finishedSubGoals + ( index -> proofSegment ) )
   }
 
   def replace( proofSegment: LKProof ): ProofState = replace( subGoals.head.index, proofSegment )
@@ -109,11 +103,11 @@ case class ProofState private (
   def toSigRelativeString( implicit sig: BabelSignature ) =
     subGoals.map { _.toPrettyString }.mkString( "\n" )
 
-  def +[A]( tactical: Tactical[A] ): ProofState =
+  def +[A]( tactical: Tactical[A] )( implicit sig: BabelSignature ): ProofState =
     tactical( this ) match {
       case Right( ( _, newState ) ) => newState
       case Left( error ) =>
-        throw new TacticFailureException( s"$this\n$error" )
+        throw new TacticFailureException( s"$this\n${error.toSigRelativeString}" )
     }
 }
 
@@ -129,8 +123,7 @@ class OpenAssumptionIndex {
  */
 case class OpenAssumption(
     labelledSequent: Sequent[( String, Formula )],
-    index:           OpenAssumptionIndex          = new OpenAssumptionIndex
-) extends InitialSequent {
+    index:           OpenAssumptionIndex          = new OpenAssumptionIndex ) extends InitialSequent {
   override def name = "ass"
 
   def labels = labelledSequent.map( _._1 )
@@ -273,6 +266,13 @@ trait Tactical[+T] { self =>
       self( proofState ).leftMap( _ => TacticalFailure( self, proofState, errorMessage ) )
     override def toString = self.toString
   }
+
+  def verbose: Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) =
+      at.logic.gapt.utils.verbose { self( proofState ) }
+
+    override def toString: String = s"${self.toString}.verbose"
+  }
 }
 object Tactical {
   def apply[T]( tactical: Tactical[T] )( implicit name: sourcecode.Name, args: sourcecode.Args ): Tactical[T] =
@@ -291,8 +291,15 @@ object Tactical {
     sequence( tacticals.elements ).map( resultElements =>
       Sequent(
         resultElements.take( tacticals.antecedent.size ),
-        resultElements.drop( tacticals.antecedent.size )
-      ) ).aka( s"sequence($tacticals)" )
+        resultElements.drop( tacticals.antecedent.size ) ) ).aka( s"sequence($tacticals)" )
+
+  def guard( cond: => Boolean, message: => String )( implicit args: sourcecode.Args ): Tactical[Unit] =
+    new Tactical[Unit] {
+      def apply( proofState: ProofState ): Either[TacticalFailure, ( Unit, ProofState )] =
+        if ( cond ) Right( (), proofState )
+        else Left( TacticalFailure( this, proofState, message ) )
+      override def toString = s"guard(${args.value.head.head})"
+    }
 }
 
 trait Tactic[+T] extends Tactical[T] { self =>

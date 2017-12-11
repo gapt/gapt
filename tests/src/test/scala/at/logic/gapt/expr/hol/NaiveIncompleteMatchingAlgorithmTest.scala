@@ -11,13 +11,13 @@ import org.specs2.mutable._
 class NaiveIncompleteMatchingAlgorithmTest extends Specification {
   "NaiveIncompleteMatchingAlgorithm " should {
     "match correctly the HOL expressions P(a,x) and P(a,f(b))" in {
-      val P = Const( "P", Ti -> ( Ti -> To ) )
+      val P = Const( "P", Ti ->: Ti ->: To )
       val a = Const( "a", Ti )
       val b = Const( "b", Ti )
       val Pa = App( P, a );
       val x = Var( "x", Ti )
       val Pax = App( Pa, x )
-      val f = Const( "f", Ti -> Ti )
+      val f = Const( "f", Ti ->: Ti )
       val fb = App( f, b )
       val Pafb = App( Pa, fb )
       val subst = syntacticMatching( Pax, Pafb )
@@ -26,14 +26,14 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
     }
 
     "match correctly the HOL expressions P(z,x) and P(f(b),f(b))" in {
-      val P = Const( "P", Ti -> ( Ti -> To ) )
+      val P = Const( "P", Ti ->: Ti ->: To )
       val b = Const( "b", Ti )
       val x = Var( "x", Ti )
       val z = Var( "z", Ti )
       val Pz = App( P, z )
 
       val Pzx = App( Pz, x )
-      val f = Const( "f", Ti -> Ti )
+      val f = Const( "f", Ti ->: Ti )
       val fb = App( f, b )
       val Pfb = App( P, fb )
       val Pfbfb = App( Pfb, fb )
@@ -43,13 +43,13 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
     }
 
     "NOT match correctly the HOL expressions P(z,x) and P(f(b),z)" in {
-      val P = Const( "P", Ti -> ( Ti -> To ) )
+      val P = Const( "P", Ti ->: Ti ->: To )
       val b = Const( "b", Ti )
       val x = Var( "x", Ti )
       val z = Var( "z", Ti )
       val Pz = App( P, z )
       val Pzx = App( Pz, x )
-      val f = Const( "f", Ti -> Ti )
+      val f = Const( "f", Ti ->: Ti )
       val fb = App( f, b )
       val Pfb = App( P, fb )
       val Pfbz = App( Pfb, z )
@@ -59,9 +59,9 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
     }
 
     "match correctly the HOL expression a < p(x) with itself" in {
-      val lt = Const( "<", Ti -> ( Ti -> To ) )
+      val lt = Const( "<", Ti ->: Ti ->: To )
       val a = Const( "a", Ti )
-      val p = Const( "p", Ti -> Ti )
+      val p = Const( "p", Ti ->: Ti )
       val x = Var( "x", Ti )
       val px = HOLFunction( p, x :: Nil )
       val at = Atom( lt, a :: px :: Nil )
@@ -70,9 +70,9 @@ class NaiveIncompleteMatchingAlgorithmTest extends Specification {
     }
 
     "match correctly the HOL expression a < p(x) with another copy of itself" in {
-      val lt = Const( "<", Ti -> ( Ti -> To ) )
+      val lt = Const( "<", Ti ->: Ti ->: To )
       val a = Const( "a", Ti )
-      val p = Const( "p", Ti -> Ti )
+      val p = Const( "p", Ti ->: Ti )
       val x = Var( "x", Ti )
       val px = HOLFunction( p, x :: Nil )
       val at = Atom( lt, a :: px :: Nil )

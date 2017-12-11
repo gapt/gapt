@@ -11,9 +11,9 @@ object primeFactor extends TacticsProof {
   ctx += Const( "0", Ti )
   ctx += Const( "1", Ti )
   ctx += Const( "2", Ti )
-  ctx += Const( "+", Ti -> ( Ti -> Ti ) )
-  ctx += Const( "*", Ti -> ( Ti -> Ti ) )
-  ctx += Const( "<", Ti -> ( Ti -> To ) )
+  ctx += Const( "+", Ti ->: Ti ->: Ti )
+  ctx += Const( "*", Ti ->: Ti ->: Ti )
+  ctx += Const( "<", Ti ->: Ti ->: To )
 
   ctx += hof" div l k = (∃m l * m = k)"
   ctx += hof" prime k = (1 < k ∧ ¬∃l(div(l,k) ∧ 1 < l ∧ l < k))"

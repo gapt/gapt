@@ -77,6 +77,8 @@ object tptpToString {
     val newVars = for ( fv <- vars ) yield nameGen.fresh( renameVar( fv ) )
     ( newVars, Substitution( vars zip newVars )( body ) )
   }
+  def renameVars( f: Formula ): Formula =
+    renameVars( freeVariables( f ).toSeq, f )._2.asInstanceOf[Formula]
 
   private val lowerWordRegex = "[a-z][A-Za-z0-9_]*".r
   private val definedOrSystemWord = "[$][$]?[A-Za-z0-9_]*".r
@@ -86,14 +88,10 @@ object tptpToString {
     case definedOrSystemWord() => name
     case _                     => single_quoted( name )
   }
-  def single_quoted( name: String ): String = name match {
-    case singleQuoteAllowedRegex() =>
-      "'" + name.replace( "\\", "\\\\" ).replace( "'", "\\'" ) + "'"
-  }
+  def single_quoted( name: String ): String =
+    "'" + name.replace( "\\", "\\\\" ).replace( "'", "\\'" ) + "'"
 
   private val upperWordRegex = "[A-Z][A-Za-z0-9_]*".r
-  def variable( name: String ): String = name match {
-    case upperWordRegex() => name
-  }
+  def variable( name: String ): String = name
 
 }

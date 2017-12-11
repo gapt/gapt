@@ -56,8 +56,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
 
     BabelParser.tryParse( combined, astTransformer ) match {
       case Left( error ) => throw new IllegalArgumentException(
-        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
-      )
+        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}" )
       case Right( expr ) => expr
     }
   }
@@ -65,8 +64,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
   def ty( args: Nothing* ): Ty =
     BabelParser.tryParseType( sc.parts.mkString ) match {
       case Left( error ) => throw new IllegalArgumentException(
-        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
-      )
+        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}" )
       case Right( ty ) => ty
     }
 
@@ -116,16 +114,11 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
    * @param args
    * @return
    */
-  def hoc( args: Splice[Expr]* ): Const = {
-    import fastparse.all.Parsed._
-    require( args.isEmpty )
-    BabelParserCombinators.ConstAndNothingElse.parse( sc.parts.head ) match {
-      case Success( c, _ ) => c
-      case f @ Failure( _, _, _ ) =>
-        throw new IllegalArgumentException(
-          s"Cannot parse constant at ${file.value}:${line.value}:\n${ParseError( f ).getMessage}"
-        )
-    }
+  def hoc( args: Splice[Expr]* ): Const = le( args: _* ) match {
+    case c: Const    => c
+    case Var( n, t ) => Const( n, t )
+    case expr =>
+      throw new IllegalArgumentException( s"Expression $expr cannot be read as a constant. Parse it with le." )
   }
 
   // First order parsers
@@ -208,8 +201,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
 
     BabelParser.tryParseSequent( combined, e => preExpr.TypeAnnotation( repl( e ), preExpr.Bool ) ) match {
       case Left( error ) => throw new IllegalArgumentException(
-        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
-      )
+        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}" )
       case Right( sequent ) => sequent.map( _.asInstanceOf[Formula] )
     }
   }
@@ -220,8 +212,7 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
 
     BabelParser.tryParseLabelledSequent( combined, repl ) match {
       case Left( error ) => throw new IllegalArgumentException(
-        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}"
-      )
+        s"Parse error at ${file.value}:${line.value}:\n${error.getMessage}" )
       case Right( sequent ) => sequent
     }
   }

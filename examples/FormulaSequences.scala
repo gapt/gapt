@@ -97,8 +97,7 @@ object PigeonHolePrinciple {
       Or( ( 1 to hs ).map( h =>
         Or( ( 2 to ps ).map( p =>
           Or( ( ( 1 to p - 1 ) ).map( pp =>
-            And( atom( p, h ), atom( pp, h ) ) ).toList ) ).toList ) ).toList )
-    )
+            And( atom( p, h ), atom( pp, h ) ) ).toList ) ).toList ) ).toList ) )
   }
 
   def atom( p: Int, h: Int ) = FOLAtom( rel, pigeon( p ) :: hole( h ) :: Nil )

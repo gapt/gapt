@@ -4,7 +4,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15, prop_59 }
 import at.logic.gapt.expr.Substitution
 import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.{ Context, Sequent, SequentMatchers }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
 
@@ -52,8 +52,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
       val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
       val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
         new Substitution( Map( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs ) ),
-        proof
-      )
+        proof )
       val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
       isInductionFree( inductionFree ) must_== true
       sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
@@ -61,14 +60,13 @@ class InductionEliminationTests extends Specification with SequentMatchers {
   }
 
   "all inductions should be eliminated" in {
-    implicit var ctx = Context()
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
 
     val axioms = Seq(
       "ap1" -> hof"∀y 0+y = y",
-      "ap2" -> hof"∀x∀y s(x)+y = s(x+y)"
-    )
+      "ap2" -> hof"∀x∀y s(x)+y = s(x+y)" )
 
     val proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> hof"!x !y x + y = y + x" ) ) {
       allR; allR;
@@ -105,8 +103,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
       new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
-      proof.subProofAt( 0 :: 0 :: Nil )
-    )
+      proof.subProofAt( 0 :: 0 :: Nil ) )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
     isInductionFree( inductionFree ) must_== true
     sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
@@ -114,14 +111,13 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
   "several unfolding steps are required" in {
     skipped( "takes too long" )
-    implicit var ctx = Context()
+    implicit val ctx = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
 
     val axioms = Seq(
       "ap1" -> hof"∀y 0+y = y",
-      "ap2" -> hof"∀x∀y s(x)+y = s(x+y)"
-    )
+      "ap2" -> hof"∀x∀y s(x)+y = s(x+y)" )
 
     val lemma_2 = hof"!x !y x + s(y) = s(x) + y"
     val lemma_2_proof = Lemma( axioms ++: Sequent() :+ ( "goal" -> lemma_2 ) ) {
@@ -174,8 +170,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
 
     val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
       new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
-      proof.subProofAt( 0 :: 0 :: Nil )
-    )
+      proof.subProofAt( 0 :: 0 :: Nil ) )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
 
     isInductionFree( inductionFree ) must_== true

@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar --qtys "" --cansolsize 2 2
+; solve with: viper --treegrammar --cansolsize 2 2 --qtys ""
 (declare-datatypes () ((nat (o) (s (p nat)))))
 
 (define-fun-rec plus ((x nat) (y nat)) nat
@@ -6,6 +6,5 @@
     (case (s y) (s (plus x y)))
     (case o x)))
 
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (plus x (s x)) (plus (s x) x))))
-(check-sat)

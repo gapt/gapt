@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.lk._
 
 import scala.annotation.tailrec
 import EquationVerifier._
-import at.logic.gapt.utils.Logger
+import at.logic.gapt.utils.logger._
 
 object LLKFormatter {
   /* formats a sequent */
@@ -30,7 +30,7 @@ object LLKFormatter {
  * TokenToLKConverter to have a common interface, but the code here is only dependent on the AST. It uses the ASTtoHOL
  * object to create Exprs from hol ASTs.
  */
-trait TokenToLKConverter extends Logger {
+trait TokenToLKConverter {
   import LLKFormatter._
 
   /* Extracts type declarations from the tokens and creates a function to create atomic terms by name */
@@ -147,8 +147,7 @@ trait TokenToLKConverter extends Logger {
     naming:      String => Expr,
     rules:       List[RToken],
     axioms:      Map[Formula, Formula],
-    definitions: Map[Expr, Expr]
-  ): LKProof = {
+    definitions: Map[Expr, Expr] ): LKProof = {
     var proofstack: List[LKProof] = List[LKProof]()
     for ( rt @ RToken( name, auxterm, antecedent, succedent, sub ) <- rules ) {
       //println("Processing rule: "+name)
@@ -167,8 +166,7 @@ trait TokenToLKConverter extends Logger {
           proofstack = expaxiom :: proofstack
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "TAUTCOMPLETION" =>
           require( ant.size == 1, "Tautological Axiom Completion needs exactly one formula in the antecedent, not " + ant.mkString( "," ) )
           require( suc.size == 1, "Tautological Axiom Completion needs exactly one formula in the succedent, not " + suc.mkString( "," ) )
@@ -177,16 +175,14 @@ trait TokenToLKConverter extends Logger {
           proofstack = rule :: proofstack
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "AUTOPROP" =>
           try {
             val Right( rule ) = solvePropositional( HOLSequent( ant, suc ) )
             proofstack = rule :: proofstack
             require(
               proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-              "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-            )
+              "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
           } catch {
             case e: Exception =>
               throw new HybridLatexParserException( "Autopropositional failed with the message: " + e.getMessage + nLine + "Stack Trace:" + nLine +
@@ -197,152 +193,129 @@ trait TokenToLKConverter extends Logger {
           proofstack = handleWeakQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "EXR" =>
           proofstack = handleWeakQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ALLR" =>
           proofstack = handleStrongQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "EXL" =>
           proofstack = handleStrongQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ANDR" =>
           proofstack = handleBinaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ORL" =>
           proofstack = handleBinaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "IMPL" =>
           proofstack = handleBinaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         // --- unary rules ---
         case "ORR" =>
           proofstack = handleUnaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ANDL" =>
           proofstack = handleUnaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "IMPR" =>
           proofstack = handleUnaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         // --- negation rules ---
         case "NEGL" =>
           proofstack = handleNegation( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "NEGR" =>
           proofstack = handleNegation( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- equational rules ---
         case "EQL" =>
           proofstack = handleEquality( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "EQR" =>
           proofstack = handleEquality( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- definition rules ---
         case "DEF" =>
           proofstack = handleDefinitions( proofstack, name, fs, auxterm, naming, rt, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- structural rules ---
         case "CONTRL" =>
           proofstack = handleContraction( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "CONTRR" =>
           proofstack = handleContraction( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "WEAKL" =>
           proofstack = handleWeakening( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "WEAKR" =>
           proofstack = handleWeakening( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "CUT" =>
           proofstack = handleCut( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- macro rules ---
         case "EQAXIOM" =>
           proofstack = handleEQAxiom( proofstack, name, fs, auxterm, sub, naming, rt, axioms, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         case "INSTAXIOM" =>
           proofstack = handleInstAxiom( proofstack, name, fs, auxterm, sub, naming, rt, axioms, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         case "CONTINUEFROM" =>
           proofstack = handleLink( proofs, proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!"
-          )
+            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "CONTINUEWITH" => ;
         case "COMMENT"      => ;
         case _              => throw new HybridLatexParserException( "Rule type " + name + " not yet implemented!" )
@@ -907,8 +880,7 @@ trait TokenToLKConverter extends Logger {
         require(
           mainsequent.antecedent.isEmpty && mainsequent.succedent.size == 1,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
-            + f( mainsequent ) + " and " + f( auxsequent )
-        )
+            + f( mainsequent ) + " and " + f( auxsequent ) )
         val HOLSequent( Vector(), Vector( main ) ) = mainsequent
         CutRule( axrule, auxf, EqualityRightRule( WeakeningLeftRule( oldproof, auxf ), auxf, formula, main ), auxf )
 
@@ -916,8 +888,7 @@ trait TokenToLKConverter extends Logger {
         require(
           mainsequent.antecedent.size == 1 && mainsequent.succedent.isEmpty,
           "Auxformula and main formula in eqaxiom rule need to be on the same side of the sequent, not "
-            + f( mainsequent ) + " and " + f( auxsequent )
-        )
+            + f( mainsequent ) + " and " + f( auxsequent ) )
         val HOLSequent( Vector( main ), Vector() ) = mainsequent
         CutRule( axrule, auxf, EqualityLeftRule( WeakeningLeftRule( oldproof, auxf ), auxf, formula, main ), auxf )
     }
@@ -938,12 +909,10 @@ trait TokenToLKConverter extends Logger {
 
     require(
       mainsequent.formulas.isEmpty,
-      "The instantiate axiom rule should not have a main formula, we got: " + f( mainsequent )
-    )
+      "The instantiate axiom rule should not have a main formula, we got: " + f( mainsequent ) )
     require(
       auxsequent.antecedent.size == 1 && auxsequent.succedent.isEmpty,
-      "Auxformula formula in inst axiom rule need to be on the lh side of the sequent, not " + f( auxsequent )
-    )
+      "Auxformula formula in inst axiom rule need to be on the lh side of the sequent, not " + f( auxsequent ) )
 
     val HOLSequent( Vector( auxf_ ), Vector() ) = auxsequent
     val auxf = c( normalize( auxf_ ) )
@@ -1125,8 +1094,7 @@ trait TokenToLKConverter extends Logger {
       val ( left, right ) = token match {
         case AToken( _, _, List( left ), List( right ) ) => ( left, right )
         case _ => throw new HybridLatexParserException(
-          "Only one formula allowed as parameters in predicate definition declaration, got " + token
-        )
+          "Only one formula allowed as parameters in predicate definition declaration, got " + token )
       }
 
       val lformula = c( LLKFormulaParser.ASTtoHOL( naming, left ) )
@@ -1137,8 +1105,7 @@ trait TokenToLKConverter extends Logger {
           require(
             freeVariables( lformula ) == freeVariables( rformula ),
             "Definition formulas " + lformula + " and " + rformula + " do not have the same set of free variables!" +
-              sys.props( "line.separator" ) + freeVariables( lformula ) + sys.props( "line.separator" ) + freeVariables( rformula )
-          )
+              sys.props( "line.separator" ) + freeVariables( lformula ) + sys.props( "line.separator" ) + freeVariables( rformula ) )
           map + ( ( lformula, rformula ) )
         case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " + lformula )
       }
@@ -1149,8 +1116,7 @@ trait TokenToLKConverter extends Logger {
       val ( left, right ) = token match {
         case AToken( _, _, List( left ), List( right ) ) => ( left, right )
         case _ => throw new HybridLatexParserException(
-          "Only one formula allowed as parameters in function definition declaration, got " + token
-        )
+          "Only one formula allowed as parameters in function definition declaration, got " + token )
       }
 
       val lexpression = LLKFormulaParser.ASTtoHOL( naming, left )
@@ -1160,12 +1126,10 @@ trait TokenToLKConverter extends Logger {
         case ( f1 @ HOLFunction( _, _ ), f2 @ HOLFunction( _, _ ) ) =>
           require(
             f1.ty == f2.ty,
-            "The types of defined formulas and definition must match, but are: " + f1.ty + " and " + f2.ty
-          )
+            "The types of defined formulas and definition must match, but are: " + f1.ty + " and " + f2.ty )
           require(
             freeVariables( lexpression ) == freeVariables( rexpression ),
-            "Definition function " + lexpression + " and " + rexpression + " do not have the same set of free variables!"
-          )
+            "Definition function " + lexpression + " and " + rexpression + " do not have the same set of free variables!" )
           map + ( ( lexpression, rexpression ) )
         case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " + lexpression )
       }
@@ -1212,8 +1176,7 @@ trait TokenToLKConverter extends Logger {
       case Atom( c @ Const( n, To ), List() ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
         val d = definitions.find( _.what == c ).getOrElse(
-          throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" )
-        )
+          throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" ) )
         ( axiomconj, DefinitionLeftRule( pi, axiom, axiomconj ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>

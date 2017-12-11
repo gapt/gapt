@@ -93,8 +93,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renamedEigen = rename( eigen, substitution.range union freeVariables( subProof.conclusion ) )
       applySubstitution( substitution, ForallRightRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
-        aux, renamedEigen, quant
-      ) )
+        aux, renamedEigen, quant ) )
 
     case p @ ForallRightRule( subProof, aux, eigen, quant ) =>
       val All( newQuant, _ ) = substitution( p.mainFormula )
@@ -105,8 +104,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renamedEigen = rename( eigen, substitution.range union freeVariables( subProof.conclusion ) )
       applySubstitution( substitution, ExistsLeftRule(
         applySubstitution( Substitution( eigen -> renamedEigen ), subProof ),
-        aux, renamedEigen, quant
-      ) )
+        aux, renamedEigen, quant ) )
 
     case p @ ExistsLeftRule( subProof, aux, eigen, quant ) =>
       val Ex( newQuant, _ ) = substitution( p.mainFormula )
@@ -143,8 +141,6 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
     case DefinitionRightRule( subProof, aux, main ) =>
       val subProofNew = applySubstitution( substitution, subProof )
       DefinitionRightRule( subProofNew, aux, substitution( main ) )
-
-    case _ => throw new IllegalArgumentException( s"This rule is not handled at this time." )
   }
 
   private def indCase( subst: Substitution, c: InductionCase ): InductionCase =
@@ -155,8 +151,7 @@ class LKProofSubstitutable( preserveEigenvariables: Boolean ) extends Substituta
       val renaming = rename( c.eigenVars, freeVariables( c.proof.endSequent ) -- c.eigenVars ++ subst.range )
       indCase( subst, c.copy(
         applySubstitution( Substitution( renaming ), c.proof ),
-        eigenVars = c.eigenVars map renaming
-      ) )
+        eigenVars = c.eigenVars map renaming ) )
     } else {
       c.copy( applySubstitution( subst, c.proof ) )
     }
@@ -215,7 +210,7 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
         ForallSkRightRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
+          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
     }
 
   override protected def visitExistsRight( proof: ExistsRightRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -238,7 +233,7 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
         ExistsSkLeftRule( subProofNew, subConnector.child( proof.aux ),
           TermReplacement( proof.mainFormula, repl ),
           TermReplacement( proof.skolemTerm, repl ),
-          TermReplacement( Abs( newArgs.map( _.asInstanceOf[Var] ), proof.skolemDef ), repl ) )
+          Abs( newArgs.map( _.asInstanceOf[Var] ), TermReplacement( proof.skolemDef, repl ) ) )
     }
 
   override protected def visitEqualityLeft( proof: EqualityLeftRule, otherArg: Unit ): ( LKProof, SequentConnector ) =
@@ -265,5 +260,15 @@ class LKProofReplacer( repl: PartialFunction[Expr, Expr] ) extends LKVisitor[Uni
     one2one( proof, otherArg ) {
       case Seq( ( subProofNew, subConnector ) ) =>
         DefinitionRightRule( subProofNew, subConnector.child( proof.aux ), TermReplacement( proof.mainFormula, repl ) )
+    }
+
+  override protected def visitInduction( proof: InductionRule, otherArg: Unit ) =
+    one2one( proof, otherArg ) { newSubProofs =>
+      InductionRule(
+        for ( ( ( newSubProof, subConn ), oldCase ) <- newSubProofs.zip( proof.cases ) )
+          yield InductionCase( newSubProof, TermReplacement( oldCase.constructor, repl ).asInstanceOf[Const],
+          oldCase.hypotheses.map( subConn.child ), oldCase.eigenVars.map( TermReplacement( _, repl ).asInstanceOf[Var] ),
+          subConn.child( oldCase.conclusion ) ),
+        TermReplacement( proof.formula, repl ).asInstanceOf[Abs], TermReplacement( proof.term, repl ) )
     }
 }

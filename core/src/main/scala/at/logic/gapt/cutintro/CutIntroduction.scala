@@ -16,7 +16,8 @@ import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.{ Logger, metrics }
+import at.logic.gapt.utils.{ logger, Maybe, metrics }
+import logger._
 
 trait GrammarFindingMethod {
   def findGrammars( lang: Set[Expr] ): Option[VTRATG]
@@ -146,7 +147,7 @@ object sehsToVTRATG {
   }
 }
 
-object CutIntroduction extends Logger {
+object CutIntroduction {
 
   class CutIntroException( msg: String ) extends Exception( msg )
   class NonCoveringGrammarException( grammar: VTRATG, term: Expr )
@@ -172,15 +173,15 @@ object CutIntroduction extends Logger {
           else new Escargot( splitting = true, equality = true, propositional = true )
 
         override def runSession[A]( program: Session[A] ) = smtSolver.runSession( program )
-        override def isValid( s: HOLSequent ): Boolean = smtSolver isValid s
-        override def getLKProof( s: HOLSequent ) = EquationalLKProver getLKProof s
+        override def isValid( s: HOLSequent )( implicit ctx: Maybe[Context] ): Boolean = smtSolver isValid s
+        override def getLKProof( s: HOLSequent )( implicit ctx: Maybe[MutableContext] ) = EquationalLKProver getLKProof s
       }
     }
     case object PureFOL extends BackgroundTheory {
       val hasEquality = false
       object prover extends OneShotProver {
-        def getLKProof( seq: HOLSequent ) = LKProver getLKProof seq
-        override def isValid( seq: HOLSequent ) = Sat4j isValid seq
+        override def getLKProof( seq: HOLSequent )( implicit ctx: Maybe[MutableContext] ) = LKProver getLKProof seq
+        override def isValid( seq: HOLSequent )( implicit ctx: Maybe[Context] ) = Sat4j isValid seq
       }
     }
 
@@ -194,12 +195,10 @@ object CutIntroduction extends Logger {
 
   abstract case class InputProof private (
       expansionProof:   ExpansionProof,
-      backgroundTheory: BackgroundTheory
-  ) {
+      backgroundTheory: BackgroundTheory ) {
     require(
       isFOLPrenexSigma1( expansionProof.shallow ),
-      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers"
-    )
+      "Cut-introduction requires first-order prenex end-sequents without strong quantifiers" )
   }
   object InputProof {
     def apply( expansionProof: ExpansionProof, backgroundTheory: BackgroundTheory ): InputProof =
@@ -229,8 +228,7 @@ object CutIntroduction extends Logger {
 
   def compressToSolutionStructure(
     inputProof: InputProof,
-    method:     GrammarFindingMethod = DeltaTableMethod()
-  ): Option[SolutionStructure] = {
+    method:     GrammarFindingMethod = DeltaTableMethod() ): Option[SolutionStructure] = {
     val InputProof( ep, backgroundTheory ) = inputProof
 
     metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
@@ -240,7 +238,7 @@ object CutIntroduction extends Logger {
     val endSequent = ep.shallow
     info( s"End sequent: $endSequent" )
 
-    /********** Term set Extraction **********/
+/********** Term set Extraction **********/
     val encoding = InstanceTermEncoding( endSequent )
     val termset = groundTerms( encoding encode ep )
     val weightedTermsetSize = termset.view.map { case Apps( _, args ) => args.size }.sum
@@ -259,7 +257,7 @@ object CutIntroduction extends Logger {
     metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
     metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
 
-    /********** Grammar finding **********/
+/********** Grammar finding **********/
     metrics.time( "grammar" ) {
       method.findGrammars( termset )
     }.filter { g =>
@@ -389,8 +387,7 @@ object CutIntroduction extends Logger {
 
     var state = ProofState(
       for ( ( formula, idx ) <- solStruct.endSequent.zipWithIndex )
-        yield idx.toString -> formula
-    )
+        yield idx.toString -> formula )
 
     def addNewInstances( instances: FOLSequent ) =
       currentGoal.flatMap( curGoal => haveInstances( instances.distinct diff curGoal.conclusion ) )

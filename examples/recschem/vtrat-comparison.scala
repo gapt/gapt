@@ -6,10 +6,10 @@ import at.logic.gapt.expr.fol.Numeral
 import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.grammars._
 import at.logic.gapt.provers.maxsat.bestAvailableMaxSatSolver
-import at.logic.gapt.utils.{ PrintMetrics, metrics, time }
+import at.logic.gapt.utils.{ LogHandler, time }
 
 object vtrat_comparison extends Script {
-  metrics.current.value = PrintMetrics
+  LogHandler.current.value = LogHandler.verbose
 
   val N = 11
   val terms = ( 0 until N ).map { i => FOLFunction( "r", Numeral( i ), Numeral( N - i ) ) }.toSet
@@ -33,4 +33,5 @@ object vtrat_comparison extends Script {
 
   val minG = time { minimizeVTRATG( nfG, terms.toSet, bestAvailableMaxSatSolver ) }
   println( minG )
+
 }

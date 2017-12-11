@@ -11,8 +11,7 @@ import scala.swing.{ Component, FlowPanel, GridPanel, Label }
 
 class DrawList(
     val main: ListViewer,
-    val list: List[Any]
-) extends GridPanel( 0, 1 ) {
+    val list: List[Any] ) extends GridPanel( 0, 1 ) {
   background = new Color( 255, 255, 255 )
 
   var first = true

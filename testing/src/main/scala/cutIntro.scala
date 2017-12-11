@@ -4,7 +4,7 @@ import java.io.PrintWriter
 
 import at.logic.gapt.cutintro._
 import at.logic.gapt.examples._
-import at.logic.gapt.expr.Apps
+import at.logic.gapt.expr.{ Apps, FOLVar }
 import at.logic.gapt.grammars.DeltaTableMethod
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk._
@@ -12,7 +12,7 @@ import at.logic.gapt.proofs.loadExpansionProof
 import at.logic.gapt.provers.maxsat.OpenWBO
 import at.logic.gapt.provers.prover9.Prover9Importer
 import at.logic.gapt.provers.smtlib.ExternalSmtlibProgram
-import at.logic.gapt.utils.{ MetricsCollector, metrics, withTimeout }
+import at.logic.gapt.utils._
 import org.json4s._
 import org.json4s.native.JsonMethods._
 
@@ -21,8 +21,8 @@ import scala.concurrent.duration._
 import scala.util.{ Failure, Success }
 import ammonite.ops._
 
-class MetricsPrinter extends MetricsCollector {
-  val data = mutable.Map[String, Any]()
+class MetricsPrinter extends LogHandler {
+  val data: mutable.Map[String, Any] = mutable.Map[String, Any]()
 
   def jsonify( v: Any ): JValue = v match {
     case l: Long    => JInt( l )
@@ -35,22 +35,26 @@ class MetricsPrinter extends MetricsCollector {
     case s          => JString( s toString )
   }
 
-  override def time[T]( phase: String )( f: => T ): T = {
-    value( "phase", phase )
-
-    val beginTime = System.currentTimeMillis()
-    val result = f
-    val endTime = System.currentTimeMillis()
-
-    value( s"time_$phase", endTime - beginTime )
-
-    result
+  val phaseStack: mutable.Buffer[String] = mutable.Buffer()
+  override def timeBegin( key: String, desc: String ): Unit = {
+    phaseStack += key
+    value( "phase", key )
   }
+  override def time( key: String, desc: String, duration: Duration ): Unit = {
+    phaseStack.trimEnd( 1 )
+    value( s"time_$key", duration.toMillis )
+  }
+  def phase: String = phaseStack.last
 
-  override def value( key: String, value: => Any ) = {
+  override def metric( key: String, desc: String, v: => Any ): Unit =
+    value( key, v )
+
+  def value( key: String, value: => Any ) = {
     data( key ) = value
     println( s"METRICS ${compact( render( JObject( key -> jsonify( data( key ) ) ) ) )}" )
   }
+
+  override def message( severity: LogSeverity, msg: => Any ): Unit = ()
 }
 
 object parseMethod {
@@ -74,7 +78,7 @@ object testCutIntro extends App {
   val Array( fileName: String, methodName: String ) = args
 
   val metricsPrinter = new MetricsPrinter
-  metrics.current.value = metricsPrinter
+  LogHandler.current.value = metricsPrinter
   metrics.value( "file", fileName )
   metrics.value( "method", methodName )
 
@@ -131,15 +135,88 @@ object testCutIntro extends App {
   }
 }
 
+object testPi2CutIntro extends App {
+
+  val Array( fileName: String, numBetas: String ) = args
+
+  val metricsPrinter = new MetricsPrinter
+  LogHandler.current.value = metricsPrinter
+  metrics.value( "file", fileName )
+  metrics.value( "num_betas", numBetas )
+
+  val proofSeqRegex = """(\w+)\((\d+)\)""".r
+  def loadProofForCutIntro( fileName: String ) = fileName match {
+    case proofSeqRegex( name, n ) =>
+      val p = proofSequences.find( _.name == name ).get( n.toInt )
+      metrics.value( "lkinf_input", rulesNumber( p ) )
+      CutIntroduction.InputProof.fromLK( p )
+    case _ =>
+      val ( exp, bgTh ) = loadExpansionProof.withBackgroundTheory( FilePath( fileName ) )
+      CutIntroduction.InputProof( exp, bgTh )
+  }
+
+  metrics.time( "total" ) {
+    val inputProof = try metrics.time( "parse" ) {
+      loadProofForCutIntro( fileName )
+    } catch {
+      case e: Throwable =>
+        metrics.value( "status", e match {
+          case _: OutOfMemoryError   => "parsing_out_of_memory"
+          case _: StackOverflowError => "parsing_stack_overflow"
+          case _: Throwable          => "parsing_other_exception"
+        } )
+        metrics.value( "exception", e.toString )
+        throw e
+    }
+
+    if ( inputProof.backgroundTheory.hasEquality ) {
+      metrics.value( "status", "has_equality" )
+    } else {
+      try metrics.time( "cutintro" ) {
+        val alpha = FOLVar( "x" )
+        val betas = for ( i <- 1 to numBetas.toInt ) yield FOLVar( s"y$i" )
+        Pi2CutIntroduction( inputProof, alpha, betas.toVector, OpenWBO ) match {
+          case Some( _ ) => metrics.value( "status", "ok" )
+          case None =>
+            if ( metricsPrinter.data( "lang_trivial" ) == true )
+              metrics.value( "status", "cutintro_lang_trivial" )
+            else
+              metrics.value( "status", "cutintro_uncompressible" )
+        }
+      }
+      catch {
+        case e: Throwable =>
+          metrics.value( "status", e match {
+            case _: OutOfMemoryError => "cutintro_out_of_memory"
+            case _: StackOverflowError => "cutintro_stack_overflow"
+            case _: CutIntroduction.UnprovableException => "cutintro_ehs_unprovable"
+            case _: CutIntroduction.NonCoveringGrammarException => "cutintro_noncovering_grammar"
+            case _: LKRuleCreationException => "lk_rule_creation_exception"
+            case _: ExternalSmtlibProgram.UnexpectedTerminationException => s"timeout_${metricsPrinter.data( "phase" )}"
+            case _: Throwable => "cutintro_other_exception"
+          } )
+          metrics.value( "exception", e.toString )
+          throw e
+      }
+    }
+  }
+}
+
 object collectExperimentResults extends App {
   val metricsLineRegex = """METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
-    JObject( read.lines( fn ).collect {
-      case metricsLineRegex( json ) => parse( json )
-    }.collect {
-      case JObject( map ) => map
-    }.flatten.toList )
+    JObject(
+      read.lines( fn ).collect {
+        case metricsLineRegex( json ) => parse( json )
+      }.collect {
+        case JObject( map ) => map
+      }.flatten
+        .groupBy( _._1 ).map {
+          case ( k, vs ) if k.startsWith( "time_" ) =>
+            k -> JInt( vs.collect { case ( _, JInt( x ) ) => x }.sum )
+          case ( k, vs ) => k -> vs.last._2
+        }.toList )
 
   val allResults = JArray( ls.rec( pwd ).filter( _.last == "stdout" ).map( parseOut ).toList )
   print( compact( render( allResults ) ) )

@@ -33,7 +33,7 @@ object LinearExampleProof extends ProofSequence {
     val ax = fof"!x (P x -> P (s x))"
     val p0 = foa"P(0)"
     val pn = foa"P($num)"
-    Lemma( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
+    Proof( Sequent( Seq( "P0" -> p0, "Ax" -> ax ), Seq( "Pn" -> pn ) ) ) {
       repeat( chain( "Ax" ) )
       prop
     }
@@ -64,7 +64,7 @@ object SquareDiagonalExampleProof extends ProofSequence {
     val axX = fof"!x!y (P(x,y) -> P(s(x), y))"
     val axY = fof"!x!y (P(x,y) -> P(x, s(y)))"
 
-    Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
+    Proof( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) andThen chain( "AxX" ) )
       prop
     }
@@ -95,7 +95,7 @@ object SquareEdgesExampleProof extends ProofSequence {
     val axX = fof"!x!y (P(x,y) -> P(s(x), y))"
     val axY = fof"!x!y (P(x,y) -> P(x, s(y)))"
 
-    Lemma( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
+    Proof( Sequent( Seq( "P00" -> p00, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) )
       repeat( chain( "AxX" ) )
       prop
@@ -129,7 +129,7 @@ object SquareEdges2DimExampleProof extends ProofSequence {
     val axX = fof"!x!y (P(x,y) -> P(s_x(x), y))"
     val axY = fof"!x!y (P(x,y) -> P(x, s_y(y)))"
 
-    Lemma( Sequent( Seq( "Pab" -> pab, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
+    Proof( Sequent( Seq( "Pab" -> pab, "AxX" -> axX, "AxY" -> axY ), Seq( "Pnn" -> pnn ) ) ) {
       repeat( chain( "AxY" ) )
       repeat( chain( "AxX" ) )
       prop
@@ -162,7 +162,7 @@ object SumExampleProof extends ProofSequence {
     val p0n = foa"P(0,$num)"
     val ax = fof" ∀x ∀y (P(s(x),y) -> P(x, s(y)))"
 
-    Lemma( Sequent( Seq( "Pn0" -> pn0, "Ax" -> ax ), Seq( "P0n" -> p0n ) ) ) {
+    Proof( Sequent( Seq( "Pn0" -> pn0, "Ax" -> ax ), Seq( "P0n" -> p0n ) ) ) {
       repeat( chain( "Ax" ) )
       prop
     }
@@ -177,8 +177,7 @@ trait ExplicitEqualityTactics {
    */
   def explicitRewriteLeft(
     equation: String, targetEq: String,
-    transitivity: String = "trans"
-  ) =
+    transitivity: String = "trans" ) =
     for {
       goal <- currentGoal
       All.Block( Seq( _, transVar, _ ), _ ) = goal( transitivity )
@@ -196,8 +195,7 @@ trait ExplicitEqualityTactics {
    */
   def explicitRewriteRight(
     equation: String, targetEq: String,
-    transitivity: String = "trans"
-  ) =
+    transitivity: String = "trans" ) =
     for {
       goal <- currentGoal
       All.Block( Seq( _, transVar, _ ), _ ) = goal( transitivity )
@@ -229,12 +227,11 @@ object LinearEqExampleProof extends TacticsProof with ProofSequence with Explici
     Stream.iterate( le"a" )( x => le"f $x" )( k )
 
   def apply( n: Int ) =
-    Lemma(
+    Proof(
       ( "refl" -> hof"∀x x=x" ) +:
         ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "id" -> hof"∀x f(x)=x" ) +: Sequent()
-        :+ ( "goal" -> hof"${fk( n )} = a" )
-    ) {
+        :+ ( "goal" -> hof"${fk( n )} = a" ) ) {
         repeat( explicitRewriteLeft( "id", "goal" ) )
         chain( "refl" )
       }
@@ -248,20 +245,18 @@ object SumOfOnesF2ExampleProof extends TacticsProof with ProofSequence with Expl
   ctx += hoc"f: i>i"
 
   def apply( n: Int ) =
-    Lemma(
+    Proof(
       ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "congplusleft" -> hof"∀x∀y∀z (y=z ⊃ y+x = z+x)" ) +:
         ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
         ( "f0" -> hof"f 0 = 0" ) +:
         Sequent()
-        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" )
-    ) {
+        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" ) ) {
         repeat(
           explicitRewriteRight( "plus1", "goal" ) andThen
             explicitRewriteLeft( "fs", "goal" ) andThen
-            chain( "congplusleft" )
-        )
+            chain( "congplusleft" ) )
         chain( "f0" )
       }
 }
@@ -274,20 +269,18 @@ object SumOfOnesFExampleProof extends TacticsProof with ProofSequence with Expli
   ctx += hoc"f: i>i"
 
   def apply( n: Int ) =
-    Lemma(
+    Proof(
       ( "trans" -> hof"∀x∀y∀z (x=y ∧ y=z ⊃ x=z)" ) +:
         ( "congsuc" -> hof"∀x ∀y (x = y ⊃ s(x) = s(y))" ) +:
         ( "plus1" -> hof"∀x x + s(0) = s(x)" ) +:
         ( "fs" -> hof"∀x f(s(x)) = f(x) + s(0)" ) +:
         ( "f0" -> hof"f 0 = 0" ) +:
         Sequent()
-        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" )
-    ) {
+        :+ ( "goal" -> hof"f ${Numeral( n )} = ${Numeral( n )}" ) ) {
         repeat(
           explicitRewriteLeft( "fs", "goal" ) andThen
             explicitRewriteLeft( "plus1", "goal" ) andThen
-            chain( "congsuc" )
-        )
+            chain( "congsuc" ) )
         chain( "f0" )
       }
 }
@@ -310,22 +303,19 @@ object SumOfOnesExampleProof extends ProofSequence {
         "Trans" -> TransitivityEq,
         "CongSuc" -> CongUnaryEq( "s" ),
         "ABase" -> Peano.AdditionBase,
-        "ASuc" -> Peano.AdditionSucc
-      ), Seq(
-        "Goal" -> goal
-      )
-    )
+        "ASuc" -> Peano.AdditionSucc ), Seq(
+        "Goal" -> goal ) )
 
     n match {
       case 0 | 1 =>
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           allL( "Refl", num( n ) )
           prop
         }
 
       case _ =>
         val subProof = apply( n - 1 )
-        Lemma( endSequent ) {
+        Proof( endSequent ) {
           allL( "CongSuc", sum( n - 1 ), num( n - 1 ) )
           impL( "CongSuc_0" )
           insert( subProof )
@@ -348,13 +338,10 @@ object SumOfOnesExampleProof extends ProofSequence {
         "Trans" -> TransitivityEq,
         "CongSuc" -> CongUnaryEq( "s" ),
         "ABase" -> Peano.AdditionBase,
-        "ASuc" -> Peano.AdditionSucc
-      ), Seq(
-        "Goal" -> goal
-      )
-    )
+        "ASuc" -> Peano.AdditionSucc ), Seq(
+        "Goal" -> goal ) )
 
-    Lemma( endSequent ) {
+    Proof( endSequent ) {
       allL( "ABase", sum( n ) ) //ABase_0
       allL( "ASuc", sum( n ), num( 0 ) ) // ASuc_0
       allL( "CongSuc", fot"${sum( n )} + 0", sum( n ) ) // CongSuc_0
@@ -525,7 +512,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     val p2 = ForallLeftRule( p1, Ax1, d1 )
     val p3 = ContractionLeftRule( p2, Ax1 )
 
-    // show (n + n) = n + (n + 0) 
+    // show (n + n) = n + (n + 0)
     val p4 = cp( n_num :: n_num :: n_num :: f2( n_num, p, zero ) :: Nil, p3 )
 
     // show n = n and n = n + 0
@@ -602,7 +589,7 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     val p17 = show_by_cs( f2( f2( n_num, p, n_num ), p, i_num ), f2( n_num, p, f2( n_num, p, i_num ) ), p16 )
 
     // now we have:
-    // (n + n) + s(i) = s( (n + n) + i) 
+    // (n + n) + s(i) = s( (n + n) + i)
     // as well as
     // (n + n) + i = n + (n + i)
     // -> use Ax2
@@ -716,8 +703,7 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
         p4,
         List( f_ax_2, g_ax_2, symm_axiom, refl_axiom.getAxiom,
           compat_mul_axiom.getAxiom, assoc_mul_axiom.getAxiom, g_compat_2.getAxiom,
-          mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom )
-      )
+          mul_neutral_axiom.getAxiom, mul_neutral_axiom_2.getAxiom ) )
     case _ => induction_steps( n )
   }
 
@@ -955,11 +941,8 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
       gST( x, y ),
       uR( x ),
       uL( x ),
-      ASSO( x, y, z )
-    ) map universalClosure.apply,
+      ASSO( x, y, z ) ) map universalClosure.apply,
     List(
-      target( num( n ) )
-    )
-  )
+      target( num( n ) ) ) )
 }
 

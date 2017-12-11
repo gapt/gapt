@@ -4,16 +4,16 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.HOLSequent
 import at.logic.gapt.proofs._
 import at.logic.gapt.provers.Prover
-import at.logic.gapt.expr.To
+import at.logic.gapt.provers.escargot.Escargot
 
 class InterpolationException( msg: String ) extends Exception( msg )
 
 object ExtractInterpolant {
-  def apply( p: LKProof, isPositive: Sequent[Boolean] ) =
+  def apply( p: LKProof, isPositive: Sequent[Boolean] ): Formula =
     Interpolate( p, isPositive )._3
 
-  def apply( p: LKProof, npart: Seq[SequentIndex], ppart: Seq[SequentIndex] ) =
-    Interpolate( p, p.conclusion.indicesSequent.map( ppart.contains ) )._3
+  def apply( p: LKProof, positivePart: Seq[SequentIndex] ): Formula =
+    Interpolate( p, p.conclusion.indicesSequent.map( positivePart.contains ) )._3
 
   /**
    * Given sequents negative: \Gamma |- \Delta and positive: \Pi |- \Lambda,
@@ -21,13 +21,9 @@ object ExtractInterpolant {
    * extract an interpolant I such that \Gamma |- \Delta, I and I, \Pi |- \Lambda
    * are valid.
    */
-  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover ): Formula = {
-    val seq = negative ++ positive
-    val part = negative.map( _ => false ) ++ positive.map( _ => true )
-    val p = prover.getLKProof( seq ).get
-
-    apply( p, part )
-  }
+  def apply( negative: HOLSequent, positive: HOLSequent, prover: Prover = Escargot ): Option[Formula] =
+    prover.getLKProof( negative ++ positive ).map( p =>
+      apply( p, for ( ( f, i ) <- p.endSequent.zipWithIndex ) yield positive.contains( f, i.polarity ) ) )
 }
 
 object Interpolate {
@@ -143,14 +139,12 @@ object Interpolate {
         (
           OrRightRule( CutRule( up1_nproof, up2_nproof, p.cutFormula ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( CutRule( up1_pproof, up2_pproof, p.cutFormula ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     // propositional rules
 
@@ -162,14 +156,12 @@ object Interpolate {
         (
           OrRightRule( AndRightRule( up1_nproof, p.leftConjunct, up2_nproof, p.rightConjunct ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( AndRightRule( up1_pproof, p.leftConjunct, up2_pproof, p.rightConjunct ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     case p @ AndLeftRule( subProof, aux1, aux2 ) =>
       val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
@@ -185,14 +177,12 @@ object Interpolate {
         (
           OrRightRule( OrLeftRule( up1_nproof, p.leftDisjunct, up2_nproof, p.rightDisjunct ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( OrLeftRule( up1_pproof, p.leftDisjunct, up2_pproof, p.rightDisjunct ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     case p @ OrRightRule( subProof, aux1, aux2 ) =>
       val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
@@ -222,14 +212,12 @@ object Interpolate {
         (
           OrRightRule( ImpLeftRule( up1_nproof, p.impPremise, up2_nproof, p.impConclusion ), up1_I, up2_I ),
           OrLeftRule( up1_pproof, up1_I, up2_pproof, up2_I ),
-          Or( up1_I, up2_I )
-        )
+          Or( up1_I, up2_I ) )
       else
         (
           AndRightRule( up1_nproof, up1_I, up2_nproof, up2_I ),
           AndLeftRule( ImpLeftRule( up1_pproof, p.impPremise, up2_pproof, p.impConclusion ), up1_I, up2_I ),
-          And( up1_I, up2_I )
-        )
+          And( up1_I, up2_I ) )
 
     case p @ ImpRightRule( subProof, aux1, aux2 ) =>
       val ( up_nproof, up_pproof, up_I ) = apply( p.subProof, p.getSequentConnector.parent( color ) )
@@ -244,8 +232,7 @@ object Interpolate {
         p.subProof,
         p.getSequentConnector.parent( color ).
           updated( eq, color( p.eqInConclusion ) ).
-          updated( aux, color( p.auxInConclusion ) )
-      )
+          updated( aux, color( p.auxInConclusion ) ) )
 
       ( color( p.eqInConclusion ), color( p.mainIndices.head ) ) match {
         case ( false, false ) => ( EqualityRightRule( up_nproof, eq, p.auxFormula, con ), up_pproof, up_I )
@@ -279,8 +266,7 @@ object Interpolate {
         p.subProof,
         p.getSequentConnector.parent( color ).
           updated( eq, color( p.eqInConclusion ) ).
-          updated( aux, color( p.auxInConclusion ) )
-      )
+          updated( aux, color( p.auxInConclusion ) ) )
       var ipl = up_I
 
       ( color( p.eqInConclusion ), color( p.mainIndices.head ) ) match {

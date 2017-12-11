@@ -77,8 +77,7 @@ package object axioms {
    *         the third component contains the result of the substitution.
    */
   def inductionCaseConclusion(
-    freeVariable: Var, constructor: Con, formula: Formula
-  ): ( List[Var], List[Var], Formula ) = {
+    freeVariable: Var, constructor: Con, formula: Formula ): ( List[Var], List[Var], Formula ) = {
     val FunctionType( _, argumentTypes ) = constructor.ty
     val nameGenerator = rename.awayFrom( freeVariables( formula ) )
     val newVariables = argumentTypes map {
@@ -87,8 +86,7 @@ package object axioms {
           if ( argumentType == freeVariable.ty )
             freeVariable
           else
-            Var( "x", argumentType )
-        )
+            Var( "x", argumentType ) )
     }
     val ( primaryVariables, secondaryVariables ) = newVariables partition {
       _.ty == freeVariable.ty

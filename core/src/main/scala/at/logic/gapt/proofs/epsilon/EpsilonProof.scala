@@ -13,8 +13,7 @@ case class CriticalFormula( existential: Formula, term: Expr ) {
 
 case class EpsilonProof(
     criticalFormula: Seq[CriticalFormula],
-    shallow:         HOLSequent
-) {
+    shallow:         HOLSequent ) {
   val deep = criticalFormula.map( _.formula ) ++: shallow.map( epsilonize( _ ) )
 
   override def toString = deep.toString

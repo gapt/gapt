@@ -25,8 +25,7 @@ object DrawSequent {
     seq:                    Sequent[F],
     mainAuxIndices:         Set[SequentIndex],
     cutAncestorIndices:     Set[SequentIndex],
-    sequentElementRenderer: F => String
-  ): DrawSequentInProof[F, T] = new DrawSequentInProof[F, T]( parent, seq, mainAuxIndices, cutAncestorIndices, sequentElementRenderer )
+    sequentElementRenderer: F => String ): DrawSequentInProof[F, T] = new DrawSequentInProof[F, T]( parent, seq, mainAuxIndices, cutAncestorIndices, sequentElementRenderer )
 
   /**
    * Draws a sequent.
@@ -38,8 +37,7 @@ object DrawSequent {
   def apply[F, M <: ProofToolViewer[_]](
     main:                   M,
     seq:                    Sequent[F],
-    sequentElementRenderer: F => String
-  ): DrawSequent[F, M] = new DrawSequent( main, seq, sequentElementRenderer )
+    sequentElementRenderer: F => String ): DrawSequent[F, M] = new DrawSequent( main, seq, sequentElementRenderer )
 }
 
 /**
@@ -52,8 +50,7 @@ object DrawSequent {
 class DrawSequent[F, M <: ProofToolViewer[_]](
     val main:                   M,
     val sequent:                Sequent[F],
-    val sequentElementRenderer: F => String
-) extends BoxPanel( Orientation.Horizontal ) {
+    val sequentElementRenderer: F => String ) extends BoxPanel( Orientation.Horizontal ) {
   opaque = false // Necessary to draw the proof properly
 
   val turnstileLabel = new LatexTurnstileLabel( main ) // \u22a2
@@ -90,8 +87,7 @@ class DrawSequentInProof[F, T <: SequentProof[F, T]](
     sequent:                Sequent[F],
     val mainAuxIndices:     Set[SequentIndex],
     val cutAncestorIndices: Set[SequentIndex],
-    sequentElementRenderer: F => String
-) extends DrawSequent[F, SequentProofViewer[F, T]]( parent.main, sequent, sequentElementRenderer ) {
+    sequentElementRenderer: F => String ) extends DrawSequent[F, SequentProofViewer[F, T]]( parent.main, sequent, sequentElementRenderer ) {
   require( mainAuxIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos} is undefined for some indices in $mainAuxIndices." )
   require( cutAncestorIndices.forall { sequent.isDefinedAt }, s"End sequent $sequent of proof at ${parent.pos}  is undefined for some indices in $cutAncestorIndices." )
 
@@ -176,8 +172,7 @@ object LatexIcon {
   def apply( latexText: String, font: Font ): TeXIcon = synchronized( cache.getOrElseUpdate(
     ( latexText, font ),
     new TeXFormula( latexText ).
-      createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF )
-  ) )
+      createTeXIcon( TeXConstants.STYLE_DISPLAY, font.getSize, TeXFormula.SANSSERIF ) ) )
 }
 
 object LatexLabel {
@@ -228,10 +223,9 @@ class LatexLabel( val main: ProofToolViewer[_], val latexText: String ) extends 
  * @param latexText The latex code to be displayed.
  */
 class LatexFormulaLabel(
-  main:      ProofToolViewer[_],
-  latexText: String
-)
-    extends LatexLabel( main, latexText ) {
+    main:      ProofToolViewer[_],
+    latexText: String )
+  extends LatexLabel( main, latexText ) {
 
   private var markLevel = 0
 

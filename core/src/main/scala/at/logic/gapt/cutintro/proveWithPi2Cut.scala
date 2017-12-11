@@ -23,8 +23,7 @@ object proveWithPi2Cut {
     endSequent:                Sequent[Formula],
     seHs:                      Pi2SeHs,
     nameOfExistentialVariable: Var              = fov"yCut",
-    nameOfUniversalVariable:   Var              = fov"xCut"
-  ): ( Option[LKProof] ) = {
+    nameOfUniversalVariable:   Var              = fov"xCut" ): ( Option[LKProof] ) = {
 
     val ( cutFormulaWithoutQuantifiers: Option[Formula], nameOfExVa: Var, nameOfUnVa: Var ) = introducePi2Cut( seHs, nameOfExistentialVariable, nameOfUniversalVariable )
 
@@ -51,8 +50,7 @@ object proveWithPi2Cut {
     seHs:                         Pi2SeHs,
     endSequent:                   Sequent[Formula],
     nameOfExVa:                   Var,
-    nameOfUnVa:                   Var
-  ): ( Option[LKProof] ) = {
+    nameOfUnVa:                   Var ): ( Option[LKProof] ) = {
 
     var state = ProofState( endSequent )
     state += cut( "Cut", All( nameOfUnVa, Ex( nameOfExVa, cutFormulaWithoutQuantifiers ) ) )

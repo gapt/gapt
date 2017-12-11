@@ -22,7 +22,7 @@ trait LKVisitor[T] {
    * Applies the proof transformation to an LKProof.
    *
    * @param proof The input proof.
-   * @return A pair consisting of the transformed proof and an SequentConnector relating the two proofs.
+   * @return Transformed proof, and the sequent connector with the new proof as lower sequent and the old proof as upper sequent.
    */
   final def withSequentConnector( proof: LKProof, otherArg: T ): ( LKProof, SequentConnector ) = {
     val result = recurse( proof, otherArg )
@@ -266,8 +266,7 @@ trait LKVisitor[T] {
       InductionRule(
         for ( ( c, ( subProof, subConn ) ) <- proof.cases zip subProofs )
           yield InductionCase( subProof, c.constructor, c.hypotheses map subConn.child, c.eigenVars, subConn.child( c.conclusion ) ),
-        proof.formula, proof.term
-      )
+        proof.formula, proof.term )
     }
 
   protected def visitDefinitionLeft( proof: DefinitionLeftRule, otherArg: T ): ( LKProof, SequentConnector ) =

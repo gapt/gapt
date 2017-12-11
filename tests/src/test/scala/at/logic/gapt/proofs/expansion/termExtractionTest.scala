@@ -13,9 +13,7 @@ class TermExtractionTest extends Specification {
   val expansion = ExpansionProof(
     ETWeakQuantifier( hof"!x P x d", Map(
       le"c" -> ETAtom( hoa"P c d", Polarity.InAntecedent ),
-      le"d" -> ETAtom( hoa"P d d", Polarity.InAntecedent )
-    ) ) +: Sequent()
-  )
+      le"d" -> ETAtom( hoa"P d d", Polarity.InAntecedent ) ) ) +: Sequent() )
 
   "extractInstances" in {
     extractInstances( expansion ).antecedent must contain( exactly( hof"P c d", hof"P d d" ) )

@@ -59,6 +59,5 @@ class StandardClauseSet {
   /* Like compose, but does not duplicate common terms */
   private def delta_compose( fs1: HOLSequent, fs2: HOLSequent ) = Sequent(
     fs1.antecedent ++ fs2.antecedent.diff( fs1.antecedent ),
-    fs1.succedent ++ fs2.succedent.diff( fs1.succedent )
-  )
+    fs1.succedent ++ fs2.succedent.diff( fs1.succedent ) )
 }

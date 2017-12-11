@@ -2,22 +2,21 @@ package at.logic.gapt.provers.viper.aip.axioms
 import at.logic.gapt.expr.{ Formula, Substitution, Var, Const => Con }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
-import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.prooftool.prooftool
 import at.logic.gapt.provers.viper.aip._
 import cats.instances.all._
 import cats.syntax.all._
 
 object StandardInductionAxioms {
-  def apply( variable: Var, formula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
+  def apply( variable: Var, formula: Formula )( implicit ctx: MutableContext ): ThrowsError[Axiom] = {
     apply( ( _, _ ) => variable :: Nil, ( _ ) => Right( formula ) )( Sequent() ).map( _.head )
   }
 }
 
 case class StandardInductionAxioms(
     variableSelector: VariableSelector = allVariablesSelector( _ )( _ ),
-    formulaSelector:  FormulaSelector  = firstFormulaSelector( _ )
-) extends AxiomFactory {
+    formulaSelector:  FormulaSelector  = firstFormulaSelector( _ ) ) extends AxiomFactory {
 
   def forAllVariables = copy( variableSelector = allVariablesSelector( _ )( _ ) )
 
@@ -35,7 +34,7 @@ case class StandardInductionAxioms(
    * @return Either a list of induction axioms or a non empty list of strings describing the why induction axioms
    *         could not be generated.
    */
-  override def apply( sequent: LabelledSequent )( implicit ctx: Context ): ThrowsError[List[Axiom]] =
+  override def apply( sequent: LabelledSequent )( implicit ctx: MutableContext ): ThrowsError[List[Axiom]] =
     for {
       formula <- formulaSelector( sequent )
       variables = variableSelector( formula, ctx )
@@ -51,8 +50,7 @@ case class StandardInductionAxioms(
    * @return A standard induction axiom for the specified variable and formula.
    */
   private def createAxiom(
-    inductionVariable: Var, inductionFormula: Formula
-  )( implicit ctx: Context ): ThrowsError[Axiom] = {
+    inductionVariable: Var, inductionFormula: Formula )( implicit ctx: Context ): ThrowsError[Axiom] = {
     for {
       constructors <- getConstructors( baseType( inductionVariable ), ctx )
     } yield {
@@ -67,8 +65,7 @@ case class StandardInductionAxioms(
         def proof = {
           val inductiveCaseProofs = constructors map { inductiveCaseProof( _ ) }
           var proofState = ProofState(
-            Sequent( Nil, formula :: Nil )
-          )
+            Sequent( Nil, formula :: Nil ) )
           proofState += repeat( allR )
           proofState += impR
           proofState += allR( inductionVariable )
@@ -97,18 +94,16 @@ case class StandardInductionAxioms(
             Sequent(
               "icf" -> inductiveCaseFormula ::
                 inductionHypotheses.zipWithIndex.map( { case ( hyp, index ) => s"ih$index" -> hyp } ),
-              "goal" -> caseConclusion :: Nil
-            )
-          )
-          proofState += allL( "icf", primaryVariables: _* ) orElse skip
-          proofState += impL( "icf" ) orElse impL( "icf_0" )
+              "goal" -> caseConclusion :: Nil ) )
+          proofState += allL( "icf", primaryVariables: _* ).forget orElse skip
+          proofState += impL( "icf" )
           if ( primaryVariables.isEmpty )
             proofState += trivial
           else
             primaryVariables foreach {
-              _ => proofState += andR( "icf_0" ) andThen trivial orElse trivial
+              _ => proofState += andR( "icf" ) andThen trivial orElse trivial
             }
-          proofState += allL( "icf_0", secondaryVariables: _* ) orElse skip
+          proofState += allL( "icf", secondaryVariables: _* ).forget orElse skip
           proofState += trivial
 
           proofState.result

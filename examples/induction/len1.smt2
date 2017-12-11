@@ -14,6 +14,5 @@
     (case (cons h t) (len1 t (s a)))
     (case nil a)))
 
-(assert-not (forall ((x list))
+(prove (forall ((x list))
   (= (len x) (len1 x o))))
-(check-sat)

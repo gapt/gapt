@@ -4,7 +4,7 @@ import java.io.IOException
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol._
-import at.logic.gapt.formats.{ StringInputFile, InputFile }
+import at.logic.gapt.formats.{ InputFile, StringInputFile }
 import at.logic.gapt.formats.ivy.IvyParser
 import at.logic.gapt.formats.ivy.conversion.IvyToResolution
 import at.logic.gapt.formats.prover9.{ Prover9TermParser, Prover9TermParserLadrStyle }
@@ -13,13 +13,13 @@ import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
-import at.logic.gapt.utils.{ ExternalProgram, runProcess }
+import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess }
 
 import scala.collection.mutable.ArrayBuffer
 
 object Prover9 extends Prover9( extraCommands = _ => Seq() )
 class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Seq() ) extends ResolutionProver with ExternalProgram {
-  def getResolutionProof( cnf: Traversable[HOLClause] ): Option[ResolutionProof] =
+  override def getResolutionProof( cnf: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( cnf.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val p9Input = toP9Input( cnf, renaming )
@@ -27,8 +27,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }
-      }
-    ) map {
+      } ) map {
         mapInputClauses( _ ) { clause =>
           cnf.view flatMap { ourClause =>
             syntacticMatching( ourClause.toDisjunction, clause.toDisjunction ) map { Subst( Input( ourClause ), _ ) }
@@ -89,8 +88,7 @@ object Prover9Importer extends ExternalProgram {
     // The TPTP prover9 output files can't be read by prooftrans ivy directly...
     val fixedP9Output = runProcess(
       Seq( "prooftrans" ),
-      loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ).read
-    )
+      loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output ).read )
 
     Prover9 parseProof fixedP9Output
   }

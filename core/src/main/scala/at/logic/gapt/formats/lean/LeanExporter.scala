@@ -22,8 +22,7 @@ object LeanNames {
 import LeanNames._
 class LeanNames(
     val nameGenerator: NameGenerator                                       = new NameGenerator( Set() ),
-    gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map()
-) {
+    gapt2lean:         mutable.Map[( String, LeanNames.NameKind ), String] = mutable.Map() ) {
   def markUsed( leanName: String ): Unit = nameGenerator.fresh( leanName )
   def register( gaptName: String, kind: NameKind, leanName: String ): Unit = {
     require( !gapt2lean.contains( gaptName -> kind ) )
@@ -68,8 +67,7 @@ class LeanExporter {
     "apply", "intros",
     "begin", "end", "def", "definition", "lemma", "theorem", // TODO: ...
     "implies",
-    "list", "nil", "cons"
-  ).foreach( nameMap.markUsed )
+    "list", "nil", "cons" ).foreach( nameMap.markUsed )
 
   val hypName = nameMap.nameGenerator.fresh( "hyp" ) + ".h_"
   val axiomNames = mutable.Map[HOLSequent, String]()
@@ -77,7 +75,7 @@ class LeanExporter {
   def export( ty: Ty ): String = ty match {
     case TBase( name, params ) => ( nameMap.getLeanName( name, TY ) :: params.map( export ) ).mkString( " " )
     case TVar( _ )             => "_"
-    case a -> b                => s"(${export( a )} -> ${export( b )})"
+    case a ->: b               => s"(${export( a )} -> ${export( b )})"
   }
 
   def exportBinder( sym: String, x: Var, sub: Expr ): String = {
@@ -132,7 +130,7 @@ class LeanExporter {
       s"def $all {a : Type} (P : a -> Prop) := ∀x, P x\n\n"
     case Context.Sort( sort ) =>
       s"constant ${nameMap.getLeanName( sort.name, TY )} : Type\n\n"
-    case Context.Definition( Definition( Const( n, ty ), by ) ) =>
+    case Definition( Const( n, ty ), by ) =>
       val what = nameMap.getLeanName( n, CONST )
       s"def $what : ${export( ty )} := ${export( by )}\n\n"
     //    case Context.Axiom( ax ) =>
@@ -194,8 +192,7 @@ class LeanExporter {
                 occConn_.copy( parentsSequent = occConn_.parentsSequent.
                   updated( p.eqInConclusion, Seq( p.eq ) ).
                   updated( p.auxInConclusion, Seq( p.aux ) ) ),
-                Seq( p.aux )
-              )
+                Seq( p.aux ) )
             case _ => ( occConn_, auxs_ )
           }
           val hs_ = auxs.zip( Stream.from( hi ) ).foldLeft( occConn.parent( hs, -1 ) )( ( hs_, ai ) => hs_.updated( ai._1, ai._2 ) )

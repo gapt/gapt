@@ -1,21 +1,44 @@
 package at.logic.gapt.provers
 
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.HOLSequent
-import at.logic.gapt.proofs.expansion.{ ETSkolemQuantifier, ExpansionProof }
-import at.logic.gapt.proofs.lk.{ LKProof, SkolemQuantifierRule }
-import at.logic.gapt.utils.NameGenerator
+import at.logic.gapt.proofs.{ HOLSequent, MutableContext }
+import at.logic.gapt.utils.{ Maybe, NameGenerator }
+
+import scala.collection.mutable
+
+object mangleName {
+  def apply( name: String, prefix: String = "f_" ): String = {
+    var n = name
+    n = prefix + n
+    n = n.flatMap {
+      case '*' => "m"
+      case '+' => "p"
+      case '-' => "s"
+      case '/' => "d"
+      case c   => c.toString
+    }
+    n = n.filter {
+      case c if 'a' <= c && c <= 'z' => true
+      case c if 'A' <= c && c <= 'Z' => true
+      case c if '0' <= c && c <= '9' => true
+      case '_'                       => true
+      case _                         => false
+    }
+    n = n.take( 10 )
+    n
+  }
+}
 
 object renameConstantsToFi {
-  private def mkName( i: Int ) = s"f$i"
   private def getRenaming[I, O]( obj: I )( implicit ev: Replaceable[I, O] ): Map[Const, Const] =
     getRenaming( containedNames( obj ).collect { case c: Const => c } )
-  private def getRenaming( constants: Set[Const] ): Map[Const, Const] =
-    constants.toSeq.zipWithIndex.map {
-      case ( c @ EqC( _ ), _ ) => c -> c
-      case ( c, i )            => c -> Const( mkName( i ), c.ty )
+  private def getRenaming( constants: Set[Const] ): Map[Const, Const] = {
+    val nameGen = new NameGenerator( Set() )
+    Map() ++ constants.view.map {
+      case c @ EqC( _ ) => c -> c
+      case c            => c -> Const( nameGen.fresh( mangleName( c.name ) ), c.ty )
     }.toMap
-  private def invertRenaming( map: Map[Const, Const] ) = map.map( _.swap )
+  }
 
   def wrap[I1, O1, I2, O2]( input: I1 )( func: ( Map[Const, Const], O1 ) => I2 )( implicit ev1: Replaceable[I1, O1], ev2: Replaceable[I2, O2] ): O2 = {
     val renaming = getRenaming( input )
@@ -48,42 +71,15 @@ object groundFreeVariables {
 
   def wrap[I, O]( seq: HOLSequent )( f: HOLSequent => Option[I] )( implicit ev: Replaceable[I, O] ): Option[O] =
     wrapWithConsts( seq )( ( groundSeq, _ ) => f( groundSeq ) )
-
-  def wrapAndPadSkolemFunctionsLK( seq: HOLSequent )( f: HOLSequent => Option[LKProof] ): Option[LKProof] =
-    wrapWithConsts( seq ) { ( groundSeq, extraConsts ) =>
-      f( groundSeq ).map { lk =>
-        padSkolemFunctions( lk, extraConsts.toVector, rename.awayFrom( containedNames( lk ) ) )
-      }
-    }
-
-  def wrapAndPadSkolemFunctionsET( seq: HOLSequent )( f: HOLSequent => Option[ExpansionProof] ): Option[ExpansionProof] =
-    wrapWithConsts( seq ) { ( groundSeq, extraConsts ) =>
-      f( groundSeq ).map { exp =>
-        padSkolemFunctions( exp, extraConsts.toVector, rename.awayFrom( containedNames( exp ) ) )
-      }
-    }
 }
 
-object padSkolemFunctions {
-  private def apply[T]( p: T, skConsts: Set[Const], extraConsts: Seq[Const],
-                        nameGen: NameGenerator )( implicit r: Replaceable[T, T], s: ClosedUnderSub[T] ): T = {
-    if ( skConsts.isEmpty || extraConsts.isEmpty ) return p
-    val tmpVars = extraConsts.map { case Const( n, t ) => Var( nameGen.fresh( n ), t ) }
-    val repl = skConsts.map {
-      case c @ Const( n, t ) =>
-        c -> Const( nameGen.fresh( n ), FunctionType( t, tmpVars.map( _.ty ) ) )( tmpVars ).
-          ensuring( _.ty == t )
-    } ++ extraConsts.zip( tmpVars )
-    Substitution( tmpVars zip extraConsts )( TermReplacement( p, repl.toMap ) )
-  }
-
-  def apply( p: LKProof, extraConsts: Seq[Const], nameGen: NameGenerator ): LKProof = {
-    val skConsts = p.subProofs.collect { case sk: SkolemQuantifierRule => sk.skolemConst }
-    apply( p, skConsts, extraConsts, nameGen )
-  }
-
-  def apply( p: ExpansionProof, extraConsts: Seq[Const], nameGen: NameGenerator ): ExpansionProof = {
-    val skConsts = p.skolemFunctions.skolemDefs.keySet
-    apply( p, skConsts, extraConsts, nameGen )
-  }
+object extractIntroducedDefinitions {
+  import at.logic.gapt.proofs.resolution._
+  def apply( p: ResolutionProof )( implicit maybeCtx: Maybe[MutableContext] ): Unit =
+    maybeCtx match {
+      case Maybe.None =>
+      case Maybe.Some( ctx ) =>
+        for ( ( df, by ) <- p.definitions if ctx.definition( df ).isEmpty )
+          ctx += Definition( df, by )
+    }
 }

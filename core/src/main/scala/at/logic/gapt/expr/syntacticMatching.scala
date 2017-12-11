@@ -3,8 +3,7 @@ package at.logic.gapt.expr
 trait MatchingAlgorithm {
   def apply(
     pairs:             List[( Expr, Expr )],
-    alreadyFixedSubst: PreSubstitution
-  ): Traversable[Substitution]
+    alreadyFixedSubst: PreSubstitution ): Traversable[Substitution]
 }
 
 object syntacticMatching extends syntacticMatching {
@@ -16,12 +15,10 @@ object syntacticMatching extends syntacticMatching {
 
   def apply(
     pairs:             List[( FOLExpression, FOLExpression )],
-    alreadyFixedSubst: Map[FOLVar, FOLTerm]
-  )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
+    alreadyFixedSubst: Map[FOLVar, FOLTerm] )( implicit dummyImplicit: DummyImplicit ): Option[FOLSubstitution] =
     apply(
       pairs: List[( Expr, Expr )],
-      Substitution( alreadyFixedSubst )
-    ) map { _.asFOLSubstitution } headOption
+      Substitution( alreadyFixedSubst ) ) map { _.asFOLSubstitution } headOption
 
   def apply( from: Expr, to: Expr ): Option[Substitution] =
     apply( List( from -> to ) )
@@ -35,8 +32,7 @@ object syntacticMatching extends syntacticMatching {
 class syntacticMatching extends MatchingAlgorithm {
   def apply(
     pairs:             List[( Expr, Expr )],
-    alreadyFixedSubst: PreSubstitution
-  ): Traversable[Substitution] = apply( pairs, Nil, alreadyFixedSubst )
+    alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] = apply( pairs, Nil, alreadyFixedSubst )
 
   // TODO: rewrite using StateT[PreSubstitution, OptionT[X]]
 
@@ -50,8 +46,7 @@ class syntacticMatching extends MatchingAlgorithm {
   def apply(
     pairs:             List[( Expr, Expr )],
     tyPairs:           List[( Ty, Ty )],
-    alreadyFixedSubst: PreSubstitution
-  ): Traversable[Substitution] = ( pairs, tyPairs ) match {
+    alreadyFixedSubst: PreSubstitution ): Traversable[Substitution] = ( pairs, tyPairs ) match {
     case ( Nil, Nil ) => alreadyFixedSubst.toSubstitution :: Nil
     case ( _, first :: rest ) =>
       first match {
@@ -61,7 +56,7 @@ class syntacticMatching extends MatchingAlgorithm {
           apply( pairs, rest, alreadyFixedSubst )
         case ( a: TVar, b ) if !alreadyFixedSubst.typeMap.contains( a ) =>
           apply( pairs, rest, alreadyFixedSubst + ( a, b ) )
-        case ( a1 -> a2, b1 -> b2 ) =>
+        case ( a1 ->: a2, b1 ->: b2 ) =>
           apply( pairs, ( a1, b1 ) :: ( a2, b2 ) :: rest, alreadyFixedSubst )
         case _ => Nil
       }
@@ -77,13 +72,11 @@ class syntacticMatching extends MatchingAlgorithm {
           val v1_ = rename(
             v1,
             alreadyFixedSubst.domain ++
-              pairs.flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } toList
-          )
+              pairs.flatMap { p => freeVariables( p._1 ) ++ freeVariables( p._2 ) } toList )
           val v2_ = Var( v1_.name, v2.ty )
           apply(
             ( v1_ -> v2_ ) :: ( Substitution( v1 -> v1_ )( e1 ) -> Substitution( v2 -> v2_ )( e2 ) ) :: rest,
-            tyPairs, alreadyFixedSubst
-          ).map { subst => Substitution( subst.map - v1_ ) }
+            tyPairs, alreadyFixedSubst ).map { subst => Substitution( subst.map - v1_ ) }
 
         case ( v: Var, exp ) if alreadyFixedSubst.map.get( v ).contains( exp ) =>
           apply( rest, tyPairs, alreadyFixedSubst )

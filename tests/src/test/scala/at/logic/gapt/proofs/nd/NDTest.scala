@@ -97,8 +97,7 @@ class NDTest extends Specification with SatMatchers {
 
     val cases = Seq(
       InductionCase( b2, hoc"0: nat", Seq.empty, Seq.empty ),
-      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) )
-    )
+      InductionCase( s5, hoc"s: nat>nat", Seq( Ant( 0 ) ), Seq( hov"x0: nat" ) ) )
     val p = InductionRule( cases, Abs( Var( "x", TBase( "nat" ) ), hof"(((x: nat) + (0:nat)): nat) = x" ), le"x: nat" )
 
     p.conclusion mustEqual Seq( hof"!(x: nat) ((x + (0:nat)): nat) = x", hof"!(x: nat) !(y: nat) (((s(x): nat) + y): nat) = s(x + y)" ) ++: Sequent() :+ hof"(((x: nat) + (0: nat)): nat) = x"
@@ -107,7 +106,7 @@ class NDTest extends Specification with SatMatchers {
   "Induction2" in {
     val nat = TBase( "nat" )
     val c0 = Const( "0", nat )
-    val cs = Const( "s", nat -> nat )
+    val cs = Const( "s", nat ->: nat )
     val x = Var( "x", nat )
 
     val p0 = Atom( "P", c0 )
@@ -316,6 +315,13 @@ class NDTest extends Specification with SatMatchers {
   "TopIntro" in {
     val a1 = TopIntroRule()
     a1.conclusion must beValidSequent
+  }
+
+  "Issue #650" should {
+    "be fixed for ∀" in {
+      val p1 = nd.TheoryAxiom( fof"P(y,y)" )
+      nd.ForallIntroRule( p1, fof"!x P(x,y)", fov"y" ) must throwAn[NDRuleCreationException]
+    }
   }
 
 }

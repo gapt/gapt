@@ -70,7 +70,7 @@ class VtratgTermGenerationFormula( g: VTRATG, t: Expr ) {
   def valueOfNonTerminal( n: Var, value: Expr ) = Atom( "ntval", n, value )
 
   def formula: Formula = {
-    val notASubTerm = rename( FOLConst( "⊥" ), constants( t ) )
+    val notASubTerm = rename( FOLConst( "∞" ), constants( t ) )
 
     // we try not generate the formulas for all subterms, but only for those which are needed
     val possibleAssignments = mutable.Set[( Int, List[Expr] )]()
@@ -191,7 +191,7 @@ object minimizeVTRATG {
     } yield -atom -> weight( p )
     metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
       case Some( interp ) => VTRATG( g.startSymbol, g.nonTerminals,
-        g.productions filter { p => interp.interpret( formula.productionIsIncluded( p ) ) } )
+        g.productions.filter { p => interp( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
     }
   }

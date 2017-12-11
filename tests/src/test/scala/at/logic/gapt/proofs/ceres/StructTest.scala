@@ -23,15 +23,13 @@ class StructTest extends Specification {
         "f(f(y, z), x) = f(x, f(y, z))",
         "f(x, f(y, z)) = f(x, f(y, z))",
         "f(b, f(c, a)) = f(c, f(a, b))",
-        "f(a, f(b, c)) = f(b, f(c, a))"
-      )
+        "f(a, f(b, c)) = f(b, f(c, a))" )
       val List( f1, f2, f3, f4, f5 ) = strings.map( x => parseLLKFormula( typedec + x ) )
       val cs_check = Set(
         HOLSequent( Nil, f1 :: Nil ),
         HOLSequent( Nil, f2 :: Nil ),
         HOLSequent( Nil, f3 :: Nil ),
-        HOLSequent( f4 :: f5 :: Nil, Nil )
-      )
+        HOLSequent( f4 :: f5 :: Nil, Nil ) )
 
       def compare( c1: Set[HOLSequent], c2: Set[HOLSequent] ): Set[( HOLSequent, Boolean )] = {
         c1.map( x => {

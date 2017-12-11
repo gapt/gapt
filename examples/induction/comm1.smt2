@@ -1,4 +1,4 @@
-; solve with: viper --treegrammar --cansolsize 3 3 --qtys ""
+; solve with: viper --treegrammar --cansolsize 3 3
 ; FIXME: interestingly, this problem always with fails with smaller canonical solutions
 
 (declare-datatypes () ((nat (o) (s (p nat)))))
@@ -8,6 +8,5 @@
     (case (s y) (s (plus x y)))
     (case o x)))
 
-(assert-not (forall ((x nat))
+(prove (forall ((x nat))
   (= (plus x (s o)) (plus (s o) x))))
-(check-sat)

@@ -3,8 +3,8 @@ package at.logic.gapt.examples.tip.isaplanner
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic.{ TacticsProof, _ }
 import at.logic.gapt.proofs.{ Context, Sequent }
+import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, StandardInductionAxioms }
-import at.logic.gapt.provers.viper.aip.provers.escargot
 import at.logic.gapt.provers.viper.aip.{ AnalyticInductionProver, ProverOptions }
 
 object prop_06 extends TacticsProof {
@@ -18,8 +18,7 @@ object prop_06 extends TacticsProof {
     +: ( "m0_" -> hof"∀y 0-y = 0" )
     +: ( "ms0" -> hof"∀x s(x)-0 = s(x)" )
     +: ( "mss" -> hof"∀x∀y s(x)-s(y) = x - y" )
-    +: Sequent()
-  )
+    +: Sequent() )
 
   val baseCase = Lemma( theory :+ ( "goal" -> hof"∀y 0-(0+y) = 0" ) ) {
     allR
@@ -49,21 +48,19 @@ object prop_06 extends TacticsProof {
 
   val target = theory :+ ( "goal" -> hof"∀x ∀y x-(x+y) = 0" )
 
-  val aipOptions1 = new ProverOptions( escargot, IndependentInductionAxioms().forVariables( List( hov"x:nat" ) ).forLabel( "goal" ) )
+  val aipOptions1 = new ProverOptions( Escargot, IndependentInductionAxioms().forVariables( List( hov"x:nat" ) ).forLabel( "goal" ) )
   val proof2 = new AnalyticInductionProver( aipOptions1 ) lkProof ( target ) get
 
-  val aipOptions2 = new ProverOptions( escargot, SequentialInductionAxioms().forVariables( List( hov"x:nat" ) ).forLabel( "goal" ) )
+  val aipOptions2 = new ProverOptions( Escargot, SequentialInductionAxioms().forVariables( List( hov"x:nat" ) ).forLabel( "goal" ) )
   val proof3 = new AnalyticInductionProver( aipOptions2 ) lkProof ( target ) get
 
   val proof4 = AnalyticInductionProver.singleInduction( target, hov"m:nat" )
 
-  val proof5 = new AnalyticInductionProver(
-    new ProverOptions(
-      escargot,
+  val proof5 = Lemma( target ) {
+    analyticInduction.withAxioms(
       StandardInductionAxioms()
         .forVariables( hov"x:nat" )
-        .forFormula( hof"∀y x-(x+y) = 0" )
-    )
-  ) lkProof ( target ) get
+        .forFormula( hof"∀y x-(x+y) = 0" ) )
+  }
 }
 
