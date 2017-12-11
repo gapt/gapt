@@ -35,10 +35,16 @@ class MetricsPrinter extends LogHandler {
     case s          => JString( s toString )
   }
 
-  override def time( key: String, desc: String, duration: Duration ): Unit = {
+  val phaseStack: mutable.Buffer[String] = mutable.Buffer()
+  override def timeBegin( key: String, desc: String ): Unit = {
+    phaseStack += key
     value( "phase", key )
+  }
+  override def time( key: String, desc: String, duration: Duration ): Unit = {
+    phaseStack.trimEnd( 1 )
     value( s"time_$key", duration.toMillis )
   }
+  def phase: String = phaseStack.last
 
   override def metric( key: String, desc: String, v: => Any ): Unit =
     value( key, v )
@@ -200,11 +206,17 @@ object collectExperimentResults extends App {
   val metricsLineRegex = """METRICS (.*)""".r
 
   def parseOut( fn: Path ) =
-    JObject( read.lines( fn ).collect {
-      case metricsLineRegex( json ) => parse( json )
-    }.collect {
-      case JObject( map ) => map
-    }.flatten.toList )
+    JObject(
+      read.lines( fn ).collect {
+        case metricsLineRegex( json ) => parse( json )
+      }.collect {
+        case JObject( map ) => map
+      }.flatten
+        .groupBy( _._1 ).map {
+          case ( k, vs ) if k.startsWith( "time_" ) =>
+            k -> JInt( vs.collect { case ( _, JInt( x ) ) => x }.sum )
+          case ( k, vs ) => k -> vs.last._2
+        }.toList )
 
   val allResults = JArray( ls.rec( pwd ).filter( _.last == "stdout" ).map( parseOut ).toList )
   print( compact( render( allResults ) ) )
