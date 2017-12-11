@@ -1,8 +1,9 @@
 package at.logic.gapt.proofs.ceres
 
-import at.logic.gapt.expr.{ And, _ }
-import at.logic.gapt.expr.hol.{ CNFn, toNNF }
-import at.logic.gapt.proofs.Context.{ PrimRecFun, PrimRecFunBatch }
+import at.logic.gapt.expr._
+
+import at.logic.gapt.expr.hol.toNNF
+import at.logic.gapt.proofs.Context.PrimRecFun
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 
 object CharFormN extends StructVisitor[Formula, List[Nothing]] {
