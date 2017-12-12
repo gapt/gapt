@@ -486,7 +486,7 @@ object Context {
         .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
     }
   }
-  case class PrimRecFunBatch( PRdefs: Seq[( Const, ( Int, ( Int, Vector[( Expr, Expr )] ) ) )] ) extends Update {
+  case class primRecFunBatch( PRdefs: Seq[( Const, ( Int, ( Int, Vector[( Expr, Expr )] ) ) )] ) extends Update {
     val typeVars: Map[Const, Set[TVar]] = PRdefs.unzip._1.map( x => ( x, typeVariables( x.ty ) ) ).toMap
     val recTy: Map[Const, TBase] = PRdefs.map {
       case ( x, ( y, ( z, w ) ) ) => {
@@ -567,10 +567,10 @@ object Context {
       }
       PrimRecFun( c, nArgs, recIdx, eqns.toVector )
     }
-    def apply( PRF: Set[( Const, Seq[String] )] )( implicit ctx: Context ): PrimRecFunBatch = {
+    def apply( PRF: Set[( Const, Seq[String] )] )( implicit ctx: Context ): primRecFunBatch = {
       val ctx_ = PRF.toList.unzip._1.foldLeft( ctx )( ( con, c ) => con + c )
       val eqns = PRF.map { case ( ex, eq ) => ( ex, eq.asInstanceOf[Seq[String]].map( parseEqn( ex, _ )( ctx_ ) ) ) }
-      PrimRecFunBatch( eqns.map {
+      primRecFunBatch( eqns.map {
         case ( ex, eq ) =>
           val ( nArgs, recIdx ) = eq.head._1 match {
             case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )

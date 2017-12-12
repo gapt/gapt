@@ -11,16 +11,16 @@ import at.logic.gapt.proofs.{ Context, Sequent }
 // a Struct  and the expression of the case of the inductive definition.
 object SchematicStruct {
   def apply( topSym: String, cutConfig: Sequent[Boolean] = Sequent[Boolean](),
-             foundCases: Set[( String, Sequent[Boolean] )] = Set[( String, Sequent[Boolean] )]() )( implicit ctx: Context ): Option[Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]] = {
+             foundCases: Set[( String, Sequent[Boolean] )] = Set[( String, Sequent[Boolean] )]() )( implicit ctx: Context ): Option[Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]] = {
     //If the context does not contain topSym then we cannot construct the struct and return None.
     if ( ctx.get[ProofDefinitions].components.keySet.contains( topSym ) ) {
       //If no cut config is provided we construct the default config
       val theActualConfig = if ( cutConfig.isEmpty ) {
         val ( _, theSeq ) = ctx.get[ProofNames].names.getOrElse( topSym, { throw new Exception( "Unhandled case: " + topSym ) } )
-        Sequent[Boolean]( theSeq.antecedent.map { _ => false }, theSeq.succedent.map { _ => false } )
+        theSeq.map(_ => false)
       } else cutConfig
       // We construct the struct for the given proof modulo the cutConfig
-      val currentProofStruct: Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )] =
+      val currentProofStruct: Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )] =
         ctx.get[ProofDefinitions].components.getOrElse( topSym, Set() ).map {
           case ProofDefinition( placeHolder: Expr, _, assocProof: LKProof ) =>
             ( CLS( placeHolder, theActualConfig ),
@@ -28,8 +28,8 @@ object SchematicStruct {
               ( StructCreators.extract( assocProof, theActualConfig )( { _ => true }, ctx ), EigenVariablesLK( assocProof ) ) )
         }.toMap
       //After constructing the struct we need to find all CLS terms
-      val clauseSetDependencies = currentProofStruct.foldLeft( Set[( String, Sequent[Boolean] )]() )( ( w, e ) => {
-        w ++ SchematicLeafs( e._2._1 ).foldLeft( Set[Struct[Nothing]]() )( ( g, pb ) => {
+      val clauseSetDependencies = currentProofStruct.flatMap( e => {
+         SchematicLeafs( e._2._1 ).foldLeft( Set[Struct[Nothing]]() )( ( g, pb ) => {
           val CLS( Apps( Const( pf, _ ), _ ), ccon ) = pb
           if ( foundCases.contains( ( pf, ccon ) ) ) g else g + pb
         } ).foldLeft( Set[( String, Sequent[Boolean] )]() )( ( y, a ) => {
@@ -39,15 +39,15 @@ object SchematicStruct {
       } )
       // For each CLS term we compute the Struct and merge the results
       Some( clauseSetDependencies.map( x => SchematicStruct( x._1, x._2, foundCases ++ clauseSetDependencies - x +
-        ( topSym -> theActualConfig ) ).getOrElse( { throw new Exception( "Struct could not be built " ) } ) ).foldLeft( Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]() )( ( x, y ) => x ++ y ) ++ currentProofStruct )
+        ( topSym -> theActualConfig ) ).getOrElse( { throw new Exception( "Struct could not be built " ) } ) ).foldLeft( Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]() )( ( x, y ) => x ++ y ) ++ currentProofStruct )
     } else None
   }
 }
 //Allows the construction of instances of schematic structs
 object InstanceOfSchematicStruct {
   def apply[Data](
-    topSym:    Struct[Nothing],
-    sss:       Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )],
+    topSym:    CLS[Nothing],
+    sss:       Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )],
     sigma:     Substitution,
     usedNames: Set[Var]                                            = Set[Var]() )( implicit ctx: Context ): Struct[Nothing] = {
     val starterStruct = sss.getOrElse( topSym, { throw new Exception( "Not in Struct: " + topSym ) } )
@@ -79,22 +79,22 @@ object RegularizeStruct extends StructVisitor[Struct[Nothing], List[Var]] {
     CLS( Apps( name, newVs ), cc )
   }
 }
-object InstantiateStruct extends StructVisitor[Struct[Nothing], ( Substitution, Var, Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] )] {
+object InstantiateStruct extends StructVisitor[Struct[Nothing], ( Substitution, Var, Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] )] {
   def apply( theStruct: Struct[Nothing], sigma: Substitution, param: Var,
-             sss:       Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )],
+             sss:       Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )],
              usedNames: Set[Var] )( implicit ctx: Context ): Struct[Nothing] = {
-    val Transform = StructTransformer[Struct[Nothing], ( Substitution, Var, Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] )](
+    val Transform = StructTransformer[Struct[Nothing], ( Substitution, Var, Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] )](
       aF, { ( x, y, _ ) => Plus[Nothing]( x, y ) }, EmptyPlusJunction(), { ( x, y, _ ) => Times[Nothing]( x, y ) },
       EmptyTimesJunction(), { ( x, _ ) => Dual[Nothing]( x ) }, cF )
     recurse( theStruct, Transform, ( sigma, param, sss, usedNames ) )
   }
-  def aF[Data]( f: Formula, info: ( Substitution, Var, Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] ) )( implicit ctx: Context ): Struct[Data] = {
+  def aF[Data]( f: Formula, info: ( Substitution, Var, Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] ) )( implicit ctx: Context ): Struct[Data] = {
     val ( sigma, _, _, _ ) = info
     A( sigma( sigma.domain.foldLeft( f )( ( subForm, varSig ) =>
       ( if ( varSig.ty.equals( TBase( "nat" ) ) ) subForm.find( natMaker( 1, varSig ) )
       else subForm.find( varSig ) ).foldLeft( subForm )( ( nRepl, curPos ) => nRepl.replace( curPos, varSig ) ) ) ), List() )
   }
-  def cF[Data]( pn: Expr, cc: Sequent[Boolean], info: ( Substitution, Var, Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] ) )( implicit ctx: Context ): Struct[Nothing] = {
+  def cF[Data]( pn: Expr, cc: Sequent[Boolean], info: ( Substitution, Var, Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )], Set[Var] ) )( implicit ctx: Context ): Struct[Nothing] = {
     val ( sigma, param, sss, usedNames ) = info
     val Apps( Const( name, _ ), vs ) = pn
     val newVs = vs.map( f => sigma( sigma.domain.foldLeft( f )( ( subform, varsig ) =>

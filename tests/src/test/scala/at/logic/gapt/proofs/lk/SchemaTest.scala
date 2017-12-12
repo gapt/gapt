@@ -18,7 +18,7 @@ import at.logic.gapt.proofs.gaptic.tactics.EscargotTactic
  */
 
 class proofes(initialContext: ImmutableContext ) extends TacticsProof(initialContext)  {
-  def prove0(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+  def prove0(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
     val es = Sequent(Seq("Ant_0" -> hof"omegaPR(0)"), Seq())
     Lemma(es) {
       unfold("omegaPR") atMost 1 in "Ant_0"
@@ -28,7 +28,7 @@ class proofes(initialContext: ImmutableContext ) extends TacticsProof(initialCon
       EscargotTactic()
     }
   }
-  def prove1(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+  def prove1(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
     val es = Sequent(Seq("Ant_0" -> hof"omegaPR(s(0))"), Seq())
     Lemma(es) {
       unfold("omegaPR") atMost 1 in "Ant_0"
@@ -39,7 +39,7 @@ class proofes(initialContext: ImmutableContext ) extends TacticsProof(initialCon
     }
   }
 
-  def prove0p(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+  def prove0p(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
     val es = Sequent(Seq(),Seq("Suc_0" -> hof"omegaPR(0)"))
     Lemma(es) {
       unfold("omegaPR") atMost 1 in "Suc_0"
@@ -49,7 +49,7 @@ class proofes(initialContext: ImmutableContext ) extends TacticsProof(initialCon
       EscargotTactic()
     }
   }
-  def prove1p(SCS:Map[Struct[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
+  def prove1p(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
     val es = Sequent(Seq(),Seq("Suc_0" -> hof"omegaPR(s(0))"))
     Lemma(es) {
       unfold("omegaPR") atMost 1 in "Suc_0"
@@ -183,7 +183,7 @@ class SchemaTest extends Specification {
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
         else x
       } )
-      InstanceOfSchematicStruct( top._2, SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 7 ) ) )( ctx )
+      InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 7 ) ) )( ctx )
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
@@ -193,7 +193,7 @@ class SchemaTest extends Specification {
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
         else x
       } )
-      val st = InstanceOfSchematicStruct( top._2, SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
+      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -209,7 +209,7 @@ class SchemaTest extends Specification {
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
         else x
       } )
-      val st = InstanceOfSchematicStruct( top._2, SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
+      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -300,7 +300,7 @@ class SchemaTest extends Specification {
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( ( freeVariables( vs.head ).head, freeVariables( vs.tail.head ).head ), y )
         else x
       } )
-      val theStructWeNeed = InstanceOfSchematicStruct( top._2, SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
+      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
@@ -317,7 +317,7 @@ class SchemaTest extends Specification {
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( ( freeVariables( vs.head ).head, freeVariables( vs.tail.head ).head ), y )
         else x
       } )
-      val theStructWeNeed = InstanceOfSchematicStruct( top._2, SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
+      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
