@@ -10,7 +10,7 @@ import java.awt.event.{ MouseEvent, MouseMotionListener }
 import at.logic.gapt.formats.latex.LatexExporter
 import at.logic.gapt.proofs.ceres.Struct
 
-class DrawStruct[D]( val main: StructViewer[D], val struct: Struct[D], private var str: String ) extends BorderPanel with MouseMotionListener {
+class DrawStruct( val main: StructViewer, val struct: Struct, private var str: String ) extends BorderPanel with MouseMotionListener {
   background = new Color( 255, 255, 255 )
   opaque = false
 

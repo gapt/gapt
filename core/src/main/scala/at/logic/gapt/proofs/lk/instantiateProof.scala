@@ -12,8 +12,7 @@ object instantiateProof {
    *
    * @param proofName The name of the linkProof
    */
-  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof =
-    regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
+  def Instantiate( proofName: Expr )( implicit ctx: Context ): LKProof = regularize( eliminateDefinitions( instantiateProof( proofName )( ctx ) ) )
 
   def apply( proofName: Expr )( implicit ctx: Context ): LKProof = withConnector( proofName )._2
 

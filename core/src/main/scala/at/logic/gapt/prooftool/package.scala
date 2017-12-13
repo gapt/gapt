@@ -24,8 +24,8 @@ private[gapt] trait ProoftoolInstances1 {
   implicit val ExpansionProofViewable: ProoftoolViewable[ExpansionProof] =
     ( ep, name ) => List( new ExpansionSequentViewer( name, ep.expansionSequent ) )
 
-  implicit def StructViewable[D]: ProoftoolViewable[Struct[D]] =
-    ( s, name ) => List( new StructViewer[D]( name, s ) )
+  implicit def StructViewable: ProoftoolViewable[Struct] =
+    ( s, name ) => List( new StructViewer( name, s ) )
 
   implicit val ListViewable: ProoftoolViewable[Iterable[HOLSequent]] =
     ( list, name ) => List( new ListViewer( name, list.toList ) )

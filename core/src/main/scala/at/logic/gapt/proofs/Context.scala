@@ -486,9 +486,9 @@ object Context {
         .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
     }
   }
-  case class primRecFunBatch( PRdefs: Seq[( Const, ( Int, ( Int, Vector[( Expr, Expr )] ) ) )] ) extends Update {
-    val typeVars: Map[Const, Set[TVar]] = PRdefs.unzip._1.map( x => ( x, typeVariables( x.ty ) ) ).toMap
-    val recTy: Map[Const, TBase] = PRdefs.map {
+  case class PrimRecFunBatch( prDefs: Seq[( Const, ( Int, ( Int, Vector[( Expr, Expr )] ) ) )] ) extends Update {
+    val typeVars: Map[Const, Set[TVar]] = prDefs.unzip._1.map( x => ( x, typeVariables( x.ty ) ) ).toMap
+    val recTy: Map[Const, TBase] = prDefs.map {
       case ( x, ( y, ( z, w ) ) ) => {
         val Const( name, FunctionType( retType, argTypes ) ) = x
         require( 0 <= z && z < y && y <= argTypes.size )
@@ -519,8 +519,8 @@ object Context {
     }.toMap
 
     def apply( ctx: Context ): State = {
-      val ctx_ = PRdefs.toList.unzip._1.foldLeft( ctx )( ( con, c ) => con + c )
-      PRdefs.foreach {
+      val ctx_ = prDefs.toList.unzip._1.foldLeft( ctx )( ( con, c ) => con + c )
+      prDefs.foreach {
         case ( x, ( y, ( z, w ) ) ) => {
           val ctrs = ctx.get[StructurallyInductiveTypes].constructors( recTy.getOrElse( x, throw new Exception( "??????" ) ).name )
           require( w.size == ctrs.size )
@@ -533,8 +533,8 @@ object Context {
         }
       }
 
-      val ret_1 = PRdefs.toList.unzip._1.foldLeft( ctx.state )( ( x, y ) => x.update[Constants]( _ + y ) )
-      PRdefs.toList.unzip._2.unzip._2.unzip._2.foldLeft( ret_1 )( ( x, y ) => x.update[Reductions]( _ ++ y.map( ReductionRule.apply ) ) )
+      val ret_1 = prDefs.toList.unzip._1.foldLeft( ctx.state )( ( x, y ) => x.update[Constants]( _ + y ) )
+      prDefs.toList.unzip._2.unzip._2.unzip._2.foldLeft( ret_1 )( ( x, y ) => x.update[Reductions]( _ ++ y.map( ReductionRule.apply ) ) )
 
     }
   }
@@ -567,10 +567,10 @@ object Context {
       }
       PrimRecFun( c, nArgs, recIdx, eqns.toVector )
     }
-    def apply( PRF: Set[( Const, Seq[String] )] )( implicit ctx: Context ): primRecFunBatch = {
-      val ctx_ = PRF.toList.unzip._1.foldLeft( ctx )( ( con, c ) => con + c )
-      val eqns = PRF.map { case ( ex, eq ) => ( ex, eq.asInstanceOf[Seq[String]].map( parseEqn( ex, _ )( ctx_ ) ) ) }
-      primRecFunBatch( eqns.map {
+    def apply( prF: Set[( Const, Seq[String] )] )( implicit ctx: Context ): PrimRecFunBatch = {
+      val ctx_ = prF.toList.unzip._1.foldLeft( ctx )( ( con, c ) => con + c )
+      val eqns = prF.map { case ( ex, eq ) => ( ex, eq.asInstanceOf[Seq[String]].map( parseEqn( ex, _ )( ctx_ ) ) ) }
+      PrimRecFunBatch( eqns.map {
         case ( ex, eq ) =>
           val ( nArgs, recIdx ) = eq.head._1 match {
             case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )

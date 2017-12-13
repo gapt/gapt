@@ -11,30 +11,30 @@ import at.logic.gapt.expr._
 /**
  * Calculates the characteristic clause set
  */
-class CharacteristicClauseSet[Data] {
-  def apply( struct: Struct[Data] ): Set[SetSequent[Atom]] = struct match {
-    case A( fo: Atom, _ ) => Set( SetSequent[Atom]( Sequent( Nil, List( fo ) ) ) )
-    case A( Top(), _ )    => Set()
-    case A( Bottom(), _ ) => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
-    case A( f, _ ) =>
+class CharacteristicClauseSet {
+  def apply( struct: Struct ): Set[SetSequent[Atom]] = struct match {
+    case A( fo: Atom ) => Set( SetSequent[Atom]( Sequent( Nil, List( fo ) ) ) )
+    case A( Top() )    => Set()
+    case A( Bottom() ) => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
+    case A( f ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
-    case Dual( A( fo: Atom, _ ) ) => Set( SetSequent[Atom]( Sequent( List( fo ), Nil ) ) )
-    case Dual( A( Top(), _ ) )    => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
-    case Dual( A( Bottom(), _ ) ) => Set()
-    case Dual( A( f, _ ) ) =>
+    case Dual( A( fo: Atom ) ) => Set( SetSequent[Atom]( Sequent( List( fo ), Nil ) ) )
+    case Dual( A( Top() ) )    => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
+    case Dual( A( Bottom() ) ) => Set()
+    case Dual( A( f ) ) =>
       throw new Exception( s"Encountered a formula $f as leaf in the struct. Can't convert it to a clause." )
-    case EmptyPlusJunction()                 => Set()
-    case EmptyTimesJunction()                => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
-    case Plus( EmptyPlusJunction(), x )      => apply( x )
-    case Plus( x, EmptyPlusJunction() )      => apply( x )
-    case Plus( x, y )                        => apply( x ) ++ apply( y )
-    case Times( EmptyTimesJunction(), x, _ ) => apply( x )
-    case Times( x, EmptyTimesJunction(), _ ) => apply( x )
-    case Times( A( f1, _ ), Dual( A( f2, _ ) ), _ ) if f1 == f2 => //would result in a tautology f :- f
+    case EmptyPlusJunction()              => Set()
+    case EmptyTimesJunction()             => Set( SetSequent[Atom]( Sequent( Nil, Nil ) ) )
+    case Plus( EmptyPlusJunction(), x )   => apply( x )
+    case Plus( x, EmptyPlusJunction() )   => apply( x )
+    case Plus( x, y )                     => apply( x ) ++ apply( y )
+    case Times( EmptyTimesJunction(), x ) => apply( x )
+    case Times( x, EmptyTimesJunction() ) => apply( x )
+    case Times( A( f1 ), Dual( A( f2 ) ) ) if f1 == f2 => //would result in a tautology f :- f
       Set()
-    case Times( Dual( A( f2, _ ) ), A( f1, _ ), _ ) if f1 == f2 => //would result in a tautology f :- f
+    case Times( Dual( A( f2 ) ), A( f1 ) ) if f1 == f2 => //would result in a tautology f :- f
       Set()
-    case Times( x, y, _ ) =>
+    case Times( x, y ) =>
       val xs = apply( x )
       val ys = apply( y )
       xs.flatMap( ( x1: SetSequent[Atom] ) => ys.flatMap( ( y1: SetSequent[Atom] ) => {
@@ -61,33 +61,33 @@ class CharacteristicClauseSet[Data] {
 
 object CharacteristicClauseSet {
 
-  def apply[Data]( struct: Struct[Data] ): Set[HOLClause] = ( new CharacteristicClauseSet[Data] )( struct ).map( y => y.sequent )
+  def apply( struct: Struct ): Set[HOLClause] = ( new CharacteristicClauseSet )( struct ).map( y => y.sequent )
 }
 
 object SimplifyStruct {
-  def apply[Data]( s: Struct[Data] ): Struct[Data] = s match {
-    case EmptyPlusJunction()                 => s
-    case EmptyTimesJunction()                => s
-    case A( _, _ )                           => s
-    case Dual( EmptyPlusJunction() )         => EmptyTimesJunction()
-    case Dual( EmptyTimesJunction() )        => EmptyPlusJunction()
-    case Dual( x )                           => Dual( SimplifyStruct( x ) )
-    case Times( x, EmptyTimesJunction(), _ ) => SimplifyStruct( x )
-    case Times( EmptyTimesJunction(), x, _ ) => SimplifyStruct( x )
-    case Times( x, Dual( y ), aux ) if x.formula_equal( y ) =>
+  def apply( s: Struct ): Struct = s match {
+    case EmptyPlusJunction()              => s
+    case EmptyTimesJunction()             => s
+    case A( _ )                           => s
+    case Dual( EmptyPlusJunction() )      => EmptyTimesJunction()
+    case Dual( EmptyTimesJunction() )     => EmptyPlusJunction()
+    case Dual( x )                        => Dual( SimplifyStruct( x ) )
+    case Times( x, EmptyTimesJunction() ) => SimplifyStruct( x )
+    case Times( EmptyTimesJunction(), x ) => SimplifyStruct( x )
+    case Times( x, Dual( y ) ) if x.formula_equal( y ) =>
       //println("tautology deleted")
       EmptyPlusJunction()
-    case Times( Dual( x ), y, aux ) if x.formula_equal( y ) =>
+    case Times( Dual( x ), y ) if x.formula_equal( y ) =>
       //println("tautology deleted")
       EmptyPlusJunction()
-    case Times( x, y, aux ) =>
+    case Times( x, y ) =>
       //TODO: adjust aux formulas, they are not needed for the css construction, so we can drop them,
       // but this method should be as general as possible
-      Times( SimplifyStruct( x ), SimplifyStruct( y ), aux )
+      Times( SimplifyStruct( x ), SimplifyStruct( y ) )
     case PlusN( terms ) =>
       //println("Checking pluses of "+terms)
       assert( terms.nonEmpty, "Implementation Error: PlusN always unapplies to at least one struct!" )
-      val nonrendundant_terms = terms.foldLeft[List[Struct[Data]]]( Nil )( ( x, term ) => {
+      val nonrendundant_terms = terms.foldLeft[List[Struct]]( Nil )( ( x, term ) => {
         val simple = SimplifyStruct( term )
         if ( x.filter( _.formula_equal( simple ) ).nonEmpty )
           x

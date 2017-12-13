@@ -1,13 +1,13 @@
 package at.logic.gapt.examples
 
-import at.logic.gapt.proofs.{Context, Sequent}
+import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.ceres.{CLS, CharFormPRN, SchematicStruct, Struct}
+import at.logic.gapt.proofs.ceres.{ CLS, CharFormPRN, SchematicStruct, Struct }
 import at.logic.gapt.proofs.lk.LKProof
 
 object FunctionInterationRefutation extends TacticsProof( FunctionInterationSchema.ctx ) {
-  val SCS: Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
+  val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
   val CFPRN = CharFormPRN( SCS )
   CharFormPRN.PR( CFPRN )
   ctx += hoc"Top:nat>nat"

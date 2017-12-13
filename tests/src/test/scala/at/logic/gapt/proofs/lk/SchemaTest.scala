@@ -7,7 +7,7 @@ import at.logic.gapt.examples.induction.numbers.pluscomm
 import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context._
-import at.logic.gapt.proofs.{ImmutableContext, Sequent}
+import at.logic.gapt.proofs.{ ImmutableContext, Sequent }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
@@ -17,45 +17,45 @@ import at.logic.gapt.proofs.gaptic.tactics.EscargotTactic
  * Created by David M. Cerna on 11.02.17.
  */
 
-class proofes(initialContext: ImmutableContext ) extends TacticsProof(initialContext)  {
-  def prove0(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
-    val es = Sequent(Seq("Ant_0" -> hof"omegaPR(0)"), Seq())
-    Lemma(es) {
-      unfold("omegaPR") atMost 1 in "Ant_0"
-      unfold("chiPR") atMost 2 in "Ant_0"
-      unfold("phiPR") atMost 2 in "Ant_0"
-      unfold("chiPR") atMost 2 in "Ant_0"
+class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialContext ) {
+  def prove0( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
+    val es = Sequent( Seq( "Ant_0" -> hof"omegaPR(0)" ), Seq() )
+    Lemma( es ) {
+      unfold( "omegaPR" ) atMost 1 in "Ant_0"
+      unfold( "chiPR" ) atMost 2 in "Ant_0"
+      unfold( "phiPR" ) atMost 2 in "Ant_0"
+      unfold( "chiPR" ) atMost 2 in "Ant_0"
       EscargotTactic()
     }
   }
-  def prove1(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
-    val es = Sequent(Seq("Ant_0" -> hof"omegaPR(s(0))"), Seq())
-    Lemma(es) {
-      unfold("omegaPR") atMost 1 in "Ant_0"
-      unfold("chiPR") atMost 10 in "Ant_0"
-      unfold("phiPR") atMost 10 in "Ant_0"
-      unfold("chiPR") atMost 10 in "Ant_0"
+  def prove1( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
+    val es = Sequent( Seq( "Ant_0" -> hof"omegaPR(s(0))" ), Seq() )
+    Lemma( es ) {
+      unfold( "omegaPR" ) atMost 1 in "Ant_0"
+      unfold( "chiPR" ) atMost 10 in "Ant_0"
+      unfold( "phiPR" ) atMost 10 in "Ant_0"
+      unfold( "chiPR" ) atMost 10 in "Ant_0"
       EscargotTactic()
     }
   }
 
-  def prove0p(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
-    val es = Sequent(Seq(),Seq("Suc_0" -> hof"omegaPR(0)"))
-    Lemma(es) {
-      unfold("omegaPR") atMost 1 in "Suc_0"
-      unfold("chiPR") atMost 2 in "Suc_0"
-      unfold("phiPR") atMost 2 in "Suc_0"
-      unfold("chiPR") atMost 2 in "Suc_0"
+  def prove0p( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
+    val es = Sequent( Seq(), Seq( "Suc_0" -> hof"omegaPR(0)" ) )
+    Lemma( es ) {
+      unfold( "omegaPR" ) atMost 1 in "Suc_0"
+      unfold( "chiPR" ) atMost 2 in "Suc_0"
+      unfold( "phiPR" ) atMost 2 in "Suc_0"
+      unfold( "chiPR" ) atMost 2 in "Suc_0"
       EscargotTactic()
     }
   }
-  def prove1p(SCS:Map[CLS[Nothing], ( Struct[Nothing], Set[Var] )]):LKProof ={
-    val es = Sequent(Seq(),Seq("Suc_0" -> hof"omegaPR(s(0))"))
-    Lemma(es) {
-      unfold("omegaPR") atMost 1 in "Suc_0"
-      unfold("chiPR") atMost 10 in "Suc_0"
-      unfold("phiPR") atMost 10 in "Suc_0"
-      unfold("chiPR") atMost 10 in "Suc_0"
+  def prove1p( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
+    val es = Sequent( Seq(), Seq( "Suc_0" -> hof"omegaPR(s(0))" ) )
+    Lemma( es ) {
+      unfold( "omegaPR" ) atMost 1 in "Suc_0"
+      unfold( "chiPR" ) atMost 10 in "Suc_0"
+      unfold( "phiPR" ) atMost 10 in "Suc_0"
+      unfold( "chiPR" ) atMost 10 in "Suc_0"
       EscargotTactic()
     }
   }
@@ -108,10 +108,11 @@ class SchemaTest extends Specification {
       ok
     }
 
-    " Nia-schema Clause Set Extraction  Instance 3" in {
+    " Nia-schema Clause Set Extraction Instance 3" in {
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
+      println( "here2" )
       CharacteristicClauseSet( thestruct )
 
       ok
@@ -136,36 +137,35 @@ class SchemaTest extends Specification {
     " Proof Nia-schema Characteristic Formula Instance 0" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val ctx2 = ctx.newMutable
-      CharFormPRN.PR(CharFormPRN(SCS))(ctx2)
-      val proof = new proofes(ctx2.toImmutable).prove0(SCS)
+      CharFormPRN.PR( CharFormPRN( SCS ) )( ctx2 )
+      val proof = new proofes( ctx2.toImmutable ).prove0( SCS )
       ctx2.check( proof )
       ok
     }
     " Proof Nia-schema Characteristic Formula Instance 1" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val ctx2 = ctx.newMutable
-      CharFormPRN.PR(CharFormPRN(SCS))(ctx2)
-      val proof = new proofes(ctx2.toImmutable).prove1(SCS)
+      CharFormPRN.PR( CharFormPRN( SCS ) )( ctx2 )
+      val proof = new proofes( ctx2.toImmutable ).prove1( SCS )
       ctx2.check( proof )
       ok
     }
     " Proof Nia-schema Positive Characteristic Formula Instance 0" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val ctx2 = ctx.newMutable
-      CharFormPRP.PR(CharFormPRP(SCS))(ctx2)
-      val proof = new proofes(ctx2.toImmutable).prove0p(SCS)
+      CharFormPRP.PR( CharFormPRP( SCS ) )( ctx2 )
+      val proof = new proofes( ctx2.toImmutable ).prove0p( SCS )
       ctx2.check( proof )
       ok
     }
     " Proof Nia-schema Positive Characteristic Formula Instance 1" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val ctx2 = ctx.newMutable
-      CharFormPRP.PR(CharFormPRP(SCS))(ctx2)
-      val proof = new proofes(ctx2.toImmutable).prove1p(SCS)
+      CharFormPRP.PR( CharFormPRP( SCS ) )( ctx2 )
+      val proof = new proofes( ctx2.toImmutable ).prove1p( SCS )
       ctx2.check( proof )
       ok
     }
-
 
     " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
       SchematicStruct( "omega" )( ctx ) must beSome
@@ -178,22 +178,22 @@ class SchemaTest extends Specification {
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct[Nothing]] ) )( ( x, y ) => {
+      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
         val CLS( Apps( Const( name, _ ), vs ), _ ) = y
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
         else x
       } )
-      InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 7 ) ) )( ctx )
+      InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 7 ) ) )( ctx )
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct[Nothing]] ) )( ( x, y ) => {
+      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
         val CLS( Apps( Const( name, _ ), vs ), _ ) = y
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
         else x
       } )
-      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
+      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -204,12 +204,12 @@ class SchemaTest extends Specification {
     }
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct[Nothing]] ) )( ( x, y ) => {
+      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
         val CLS( Apps( Const( name, _ ), vs ), _ ) = y
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
         else x
       } )
-      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
+      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -226,9 +226,9 @@ class SchemaTest extends Specification {
     "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val SchemForm = CharFormPRN( SCS )
-       val muCtx = ctx.newMutable
-      CharFormPRN.PR(SchemForm)(muCtx)
-      muCtx.get[Reductions].normalizer.rules.size must beEqualTo(8)
+      val muCtx = ctx.newMutable
+      CharFormPRN.PR( SchemForm )( muCtx )
+      muCtx.get[Reductions].normalizer.rules.size must beEqualTo( 8 )
     }
   }
   {
@@ -295,12 +295,12 @@ class SchemaTest extends Specification {
     }
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( ( Var( "", TBase( "nat" ) ), Var( "", TBase( "nat" ) ) ), EmptyPlusJunction().asInstanceOf[Struct[Nothing]] ) )( ( x, y ) => {
+      val top = SCS.keySet.foldLeft( ( ( Var( "", TBase( "nat" ) ), Var( "", TBase( "nat" ) ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
         val CLS( Apps( Const( name, _ ), vs ), _ ) = y
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( ( freeVariables( vs.head ).head, freeVariables( vs.tail.head ).head ), y )
         else x
       } )
-      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
+      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
@@ -312,12 +312,12 @@ class SchemaTest extends Specification {
 
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( ( Var( "", TBase( "nat" ) ), Var( "", TBase( "nat" ) ) ), EmptyPlusJunction().asInstanceOf[Struct[Nothing]] ) )( ( x, y ) => {
+      val top = SCS.keySet.foldLeft( ( ( Var( "", TBase( "nat" ) ), Var( "", TBase( "nat" ) ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
         val CLS( Apps( Const( name, _ ), vs ), _ ) = y
         if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( ( freeVariables( vs.head ).head, freeVariables( vs.tail.head ).head ), y )
         else x
       } )
-      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS[Nothing]], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
+      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
@@ -331,12 +331,12 @@ class SchemaTest extends Specification {
       val SchemForm = CharFormPRN( SCS )
       SCS.size must beEqualTo( SchemForm.size )
     }
-      "Schematic Formula Construction PR Form" in {
+    "Schematic Formula Construction PR Form" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val SchemForm =CharFormPRN( SCS )
+      val SchemForm = CharFormPRN( SCS )
       val muCtx = ctx.newMutable
-      CharFormPRN.PR(SchemForm)(muCtx)
-      muCtx.get[Reductions].normalizer.rules.size  must beEqualTo( 18)
+      CharFormPRN.PR( SchemForm )( muCtx )
+      muCtx.get[Reductions].normalizer.rules.size must beEqualTo( 18 )
     }
   }
 
@@ -360,24 +360,24 @@ class SchemaTest extends Specification {
   {
     import FunctionInterationSchema.ctx
     "Instantiation of function interation schema" in {
-      val proof = instantiateProof.Instantiate(le"phi (s (s (s (s (s (s 0)))))) ")
-      ctx.check(proof)
+      val proof = instantiateProof.Instantiate( le"phi (s (s (s (s (s (s 0)))))) " )
+      ctx.check( proof )
       ok
     }
   }
   {
     import FunctionInterationRefutation.ctx
     "Instantiation of the negative characteristic formula of the function interation schema" in {
-      val proof = instantiateProof.Instantiate(le"Top (s (s (s (s (s (s 0)))))) ")
-      ctx.check(proof)
+      val proof = instantiateProof.Instantiate( le"Top (s (s (s (s (s (s 0)))))) " )
+      ctx.check( proof )
       ok
     }
   }
   {
     import FunctionInterationRefutationPos.ctx
-    "Instantiation of the postive characteristic formula proof of the function interation schema"  in {
-      val proof = instantiateProof.Instantiate(le"Top (s (s (s (s (s (s 0)))))) ")
-      ctx.check(proof)
+    "Instantiation of the postive characteristic formula proof of the function interation schema" in {
+      val proof = instantiateProof.Instantiate( le"Top (s (s (s (s (s (s 0)))))) " )
+      ctx.check( proof )
       ok
     }
   }
