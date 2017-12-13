@@ -249,25 +249,25 @@ object Session {
       protected def ask( input: SExpression ): SExpression
 
       protected def interpretCommand[A]( command: SessionCommand[A] ): A = command match {
-        case Push                => tell( LFun( "push", LAtom( "1" ) ) )
-        case Pop                 => tell( LFun( "pop", LAtom( "1" ) ) )
-        case DeclareSort( sort ) => tell( LFun( "declare-sort", LAtom( typeRenaming( sort ).name ), LAtom( 0.toString ) ) )
+        case Push                => tell( LFun( "push", LSymbol( "1" ) ) )
+        case Pop                 => tell( LFun( "pop", LSymbol( "1" ) ) )
+        case DeclareSort( sort ) => tell( LFun( "declare-sort", LSymbol( typeRenaming( sort ).name ), LSymbol( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
           case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
-            tell( LFun( "declare-fun", LAtom( name ),
-              LList( argTypes map { case TBase( argType, Nil ) => LAtom( argType ) }: _* ),
-              LAtom( retType ) ) )
+            tell( LFun( "declare-fun", LSymbol( name ),
+              LList( argTypes map { case TBase( argType, Nil ) => LSymbol( argType ) }: _* ),
+              LSymbol( retType ) ) )
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )
 
-        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LAtom( ":named" ), LAtom( label ) ) ) )
+        case AssertLabelled( formula, label ) => tell( LFun( "assert", LFun( "!", convert( formula ), LKeyword( "named" ), LSymbol( label ) ) ) )
         case CheckSat => ask( LFun( "check-sat" ) ) match {
-          case LAtom( "sat" )   => Right( true )
-          case LAtom( "unsat" ) => Right( false )
-          case unknown          => Left( unknown )
+          case LSymbol( "sat" )   => Right( true )
+          case LSymbol( "unsat" ) => Right( false )
+          case unknown            => Left( unknown )
         }
-        case SetLogic( logic )         => tell( LFun( "set-logic", LAtom( logic ) ) )
-        case SetOption( option, args ) => tell( LFun( "set-option", ( option +: args ) map LAtom: _* ) )
+        case SetLogic( logic )         => tell( LFun( "set-logic", LSymbol( logic ) ) )
+        case SetOption( option, args ) => tell( LFun( "set-option", LKeyword( option ) +: args.map( LSymbol ): _* ) )
         case Ask( input )              => ask( input )
         case Tell( input )             => tell( input )
       }
@@ -297,21 +297,21 @@ object Session {
       }
 
       def convert( expr: Expr, boundVars: Map[Var, String] = Map() ): SExpression = expr match {
-        case Top()       => LAtom( "true" )
-        case Bottom()    => LAtom( "false" )
+        case Top()       => LSymbol( "true" )
+        case Bottom()    => LSymbol( "false" )
         case Neg( a )    => LFun( "not", convert( a, boundVars ) )
         case And( a, b ) => LFun( "and", convert( a, boundVars ), convert( b, boundVars ) )
         case Or( a, b )  => LFun( "or", convert( a, boundVars ), convert( b, boundVars ) )
         case Imp( a, b ) => LFun( "=>", convert( a, boundVars ), convert( b, boundVars ) )
         case Eq( a, b )  => LFun( "=", convert( a, boundVars ), convert( b, boundVars ) )
-        case c: Const    => LAtom( termRenaming( c ).name )
+        case c: Const    => LSymbol( termRenaming( c ).name )
         case All( x @ Var( _, ty: TBase ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "forall", LList( LFun( smtVar, LAtom( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+          LFun( "forall", LList( LFun( smtVar, LSymbol( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
         case Ex( x @ Var( _, ty: TBase ), a ) =>
           val smtVar = s"x${boundVars.size}"
-          LFun( "exists", LList( LFun( smtVar, LAtom( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
-        case v: Var => LAtom( boundVars( v ) )
+          LFun( "exists", LList( LFun( smtVar, LSymbol( typeRenaming( ty ).name ) ) ), convert( a, boundVars + ( x -> smtVar ) ) )
+        case v: Var => LSymbol( boundVars( v ) )
         case Apps( c: Const, args ) =>
           LFun( termRenaming( c ).name, args map { convert( _, boundVars ) }: _* )
       }
@@ -360,7 +360,7 @@ object Session {
       protected def ask( input: SExpression ) = {
         tell( input )
         input match {
-          case LFun( "check-sat" ) => LAtom( "unsat" )
+          case LFun( "check-sat" ) => LSymbol( "unsat" )
           case _                   => LList()
         }
       }
