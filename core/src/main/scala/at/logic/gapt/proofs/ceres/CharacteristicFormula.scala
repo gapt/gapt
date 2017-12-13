@@ -1,7 +1,6 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr._
-
 import at.logic.gapt.expr.hol.toNNF
 import at.logic.gapt.proofs.Context.PrimRecFun
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
@@ -123,10 +122,9 @@ private object Support {
           TermReplacement( w, { case Const( n, _ ) if n == r._1 => r._2 } )
         } ) ) )
     }.foldLeft( Map[Expr, Set[( Expr, Expr )]]() ) {
-      case ( x, ( one, ( two, three ) ) ) => {
+      case ( x, ( one, ( two, three ) ) ) =>
         val theset = x.getOrElse( one, Set() ) ++ Set( ( two, three ) )
         x ++ Map( ( one, theset ) )
-      }
     } )
   }
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String] =
@@ -135,19 +133,18 @@ private object Support {
         val thefirst = vs.headOption.getOrElse( { throw new Exception( "Should not be empty" ) } )
         val result: Option[Expr] = freeVariables( thefirst ).headOption
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
-        val newName: String = name + "S" ++ cutConfigChars.succedent + "A" ++ ( cutConfigChars.antecedent )
+        val newName: String = name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent
         ( ( ( name, result ), cc ), newName )
     }.toMap
   private def addToContextAsPRDefs( ChF: Map[Expr, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit = {
     val prDefsForContext = for ( ( pred, _ ) <- ChF ) yield ( pred.asInstanceOf[Const], Seq( ChF( pred ).foldLeft( ( Some[Expr]( Atom( "", List() ) ), Some[Expr]( Atom( "", List() ) ) ) ) {
-      case ( x, ( y, w ) ) => {
+      case ( x, ( y, w ) ) =>
         val zero = ctx.get[Context.Constants].constants.getOrElse( "0", {
           throw new Exception( "nat not defined" + ctx.get[Context.Constants].constants.toString() )
         } )
         val Atom( _, vs ) = y
         if ( vs.head.equals( zero ) ) ( Some( y === w ), x._2 )
         else ( x._1, Some( Apps( EqC( y.ty ), Seq[Expr]( y, w ) ) ) )
-      }
     } ).map {
       case ( optBc, optSc ) => Seq( optBc.getOrElse( {
         throw new Exception( "?????" )

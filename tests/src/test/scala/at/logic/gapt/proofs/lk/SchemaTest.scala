@@ -8,6 +8,7 @@ import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context._
 import at.logic.gapt.proofs.{ ImmutableContext, Sequent }
+import at.logic.gapt.proofs.Context
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
@@ -165,7 +166,6 @@ class SchemaTest extends Specification {
       ctx2.check( proof )
       ok
     }
-
     " Extracting the Schematic Characteristic Clause Set of the Niaschema" in {
       SchematicStruct( "omega" )( ctx ) must beSome
       ok
@@ -177,14 +177,14 @@ class SchemaTest extends Specification {
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = CLS(le"omega ${natMaker( 7 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
-      InstanceOfSchematicStruct(top , SCS )( ctx )
+      val top = CLS( le"omega ${natMaker( 7 )}", SCS.keySet.find( x => x.proof.toString.contains( "omega" ) ).get.config )
+      InstanceOfSchematicStruct( top, SCS )( ctx )
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top =  CLS(le"omega ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
-      val st = InstanceOfSchematicStruct(top, SCS)( ctx )
+      val top = CLS( le"omega ${natMaker( 3 )}", SCS.keySet.find( x => x.proof.toString.contains( "omega" ) ).get.config )
+      val st = InstanceOfSchematicStruct( top, SCS )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -195,7 +195,7 @@ class SchemaTest extends Specification {
     }
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top =  CLS(le"omega ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
+      val top = CLS( le"omega ${natMaker( 3 )}", SCS.keySet.find( x => x.proof.toString.contains( "omega" ) ).get.config )
       val st = InstanceOfSchematicStruct( top, SCS )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
@@ -282,8 +282,8 @@ class SchemaTest extends Specification {
     }
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top =  CLS(le"omega ${natMaker( 3 )} ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
-      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)( ctx )
+      val top = CLS( le"omega ${natMaker( 3 )} ${natMaker( 3 )}", SCS.keySet.find( x => x.proof.toString.contains( "omega" ) ).get.config )
+      val theStructWeNeed = InstanceOfSchematicStruct( top, SCS )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
@@ -295,8 +295,8 @@ class SchemaTest extends Specification {
 
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top =  CLS(le"omega ${natMaker( 3 )} ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
-      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)( ctx )
+      val top = CLS( le"omega ${natMaker( 3 )} ${natMaker( 3 )}", SCS.keySet.find( x => x.proof.toString.contains( "omega" ) ).get.config )
+      val theStructWeNeed = InstanceOfSchematicStruct( top, SCS )( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
