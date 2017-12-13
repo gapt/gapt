@@ -8,11 +8,9 @@ import at.logic.gapt.expr.fol.natMaker
 import at.logic.gapt.expr.hol.CNFp
 import at.logic.gapt.proofs.Context._
 import at.logic.gapt.proofs.{ ImmutableContext, Sequent }
-import at.logic.gapt.proofs.Context
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
-import at.logic.gapt.proofs.gaptic.tactics.EscargotTactic
 /**
  * Test for schema code
  * Created by David M. Cerna on 11.02.17.
@@ -26,7 +24,7 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
       unfold( "chiPR" ) atMost 2 in "Ant_0"
       unfold( "phiPR" ) atMost 2 in "Ant_0"
       unfold( "chiPR" ) atMost 2 in "Ant_0"
-      EscargotTactic()
+      escargot
     }
   }
   def prove1( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
@@ -36,7 +34,7 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
       unfold( "chiPR" ) atMost 10 in "Ant_0"
       unfold( "phiPR" ) atMost 10 in "Ant_0"
       unfold( "chiPR" ) atMost 10 in "Ant_0"
-      EscargotTactic()
+      escargot
     }
   }
 
@@ -47,7 +45,7 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
       unfold( "chiPR" ) atMost 2 in "Suc_0"
       unfold( "phiPR" ) atMost 2 in "Suc_0"
       unfold( "chiPR" ) atMost 2 in "Suc_0"
-      EscargotTactic()
+      escargot
     }
   }
   def prove1p( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
@@ -57,7 +55,7 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
       unfold( "chiPR" ) atMost 10 in "Suc_0"
       unfold( "phiPR" ) atMost 10 in "Suc_0"
       unfold( "chiPR" ) atMost 10 in "Suc_0"
-      EscargotTactic()
+      escargot
     }
   }
 }
