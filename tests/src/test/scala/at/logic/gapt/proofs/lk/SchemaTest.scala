@@ -112,7 +112,6 @@ class SchemaTest extends Specification {
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       ctx.check( proof )
       val thestruct = StructCreators.extract( proof )( ctx )
-      println( "here2" )
       CharacteristicClauseSet( thestruct )
 
       ok
@@ -178,22 +177,14 @@ class SchemaTest extends Specification {
 
     "Extraction of a Schematic Clause set, size 7 from NiaSchema" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
-        val CLS( Apps( Const( name, _ ), vs ), _ ) = y
-        if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
-        else x
-      } )
-      InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 7 ) ) )( ctx )
+      val top = CLS(le"omega ${natMaker( 7 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
+      InstanceOfSchematicStruct(top , SCS )( ctx )
       ok
     }
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
-        val CLS( Apps( Const( name, _ ), vs ), _ ) = y
-        if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
-        else x
-      } )
-      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
+      val top =  CLS(le"omega ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
+      val st = InstanceOfSchematicStruct(top, SCS)( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -204,12 +195,8 @@ class SchemaTest extends Specification {
     }
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( Var( "", TBase( "nat" ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
-        val CLS( Apps( Const( name, _ ), vs ), _ ) = y
-        if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( freeVariables( vs.head ).head, y )
-        else x
-      } )
-      val st = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1.asInstanceOf[Var], natMaker( 3 ) ) )( ctx )
+      val top =  CLS(le"omega ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
+      val st = InstanceOfSchematicStruct( top, SCS )( ctx )
       val Sclauseset = subsumedClausesRemoval( CharacteristicClauseSet( st ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}" )
       val thestruct = StructCreators.extract( proof )( ctx )
@@ -295,12 +282,8 @@ class SchemaTest extends Specification {
     }
     "Schematic Clause set equivalent to non schematic" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( ( Var( "", TBase( "nat" ) ), Var( "", TBase( "nat" ) ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
-        val CLS( Apps( Const( name, _ ), vs ), _ ) = y
-        if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( ( freeVariables( vs.head ).head, freeVariables( vs.tail.head ).head ), y )
-        else x
-      } )
-      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
+      val top =  CLS(le"omega ${natMaker( 3 )} ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
+      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
@@ -312,12 +295,8 @@ class SchemaTest extends Specification {
 
     "Schematic Clause set equivalent to Characteristic formula Clause Set" in {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
-      val top = SCS.keySet.foldLeft( ( ( Var( "", TBase( "nat" ) ), Var( "", TBase( "nat" ) ) ), EmptyPlusJunction().asInstanceOf[Struct] ) )( ( x, y ) => {
-        val CLS( Apps( Const( name, _ ), vs ), _ ) = y
-        if ( name.matches( "omega" ) && !vs.head.equals( natMaker( 0 ) ) ) ( ( freeVariables( vs.head ).head, freeVariables( vs.tail.head ).head ), y )
-        else x
-      } )
-      val theStructWeNeed = InstanceOfSchematicStruct( top._2.asInstanceOf[CLS], SCS, Substitution( top._1._1, natMaker( 3 ) ).compose( Substitution( top._1._2, natMaker( 3 ) ) ) )( ctx )
+      val top =  CLS(le"omega ${natMaker( 3 )} ${natMaker( 3 )}",SCS.keySet.find(x=> x.proof.toString.contains("omega")).get.config )
+      val theStructWeNeed = InstanceOfSchematicStruct(top, SCS)( ctx )
       val SClauseSet = subsumedClausesRemoval( CharacteristicClauseSet( theStructWeNeed ).toList )
       val proof = instantiateProof.Instantiate( le"omega ${natMaker( 3 )}  ${natMaker( 3 )}" )
       val theStruct = StructCreators.extract( proof )( ctx )
