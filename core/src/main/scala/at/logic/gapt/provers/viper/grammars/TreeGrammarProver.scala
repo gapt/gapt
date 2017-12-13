@@ -14,7 +14,7 @@ import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.verit.VeriT
 import at.logic.gapt.provers.{ OneShotProver, Prover }
-import at.logic.gapt.utils.{ Maybe, TimeOutException }
+import at.logic.gapt.utils.{ Maybe, TimeOutException, logger }
 import at.logic.gapt.utils.logger._
 import org.apache.commons.lang3.exception.ExceptionUtils
 
@@ -79,6 +79,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
   val indTy = v0.ty.asInstanceOf[TBase]
 
   val quantTys = options.quantTys.getOrElse( ctx.get[StructurallyInductiveTypes].constructors.keySet - "o" ).toList.map( TBase( _ ) )
+  logger.metric( "quant_tys", quantTys )
   val gamma = for ( ( t, i ) <- quantTys.zipWithIndex ) yield Var( s"γ_$i", t )
 
   val ( tau, alpha, nus ) = {
@@ -107,7 +108,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     for ( Seq( inst ) <- instanceGen.generate( options.instanceSize._1, options.instanceSize._2, options.instanceNumber ) )
       instanceProofs( inst ) = getInstanceProof( inst )
 
-    while ( true ) {
+    for ( iter <- Stream.from( 1 ) ) {
+      logger.metric( "ceggr_iters", iter )
       val bup = findBUP( instanceProofs )
 
       for ( ( inst, _ ) <- instanceProofs ) {
@@ -128,14 +130,18 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     throw new IllegalArgumentException
   }
 
-  def findBUP( instanceProofs: Iterable[( Instance, ExpansionProof )] ): InductionBUP = {
+  def findBUP( instanceProofs: Iterable[( Instance, ExpansionProof )] ): InductionBUP = logger.time( "grammar" ) {
     val indexedTermset = Map() ++
       instanceProofs.map { case ( inst, es ) => inst -> encoding.encode( es.expansionSequent.copy( succedent = Vector() ) ) }
 
-    val Some( grammar ) = findMinimalInductionGrammar(
+    val grammar = findMinimalInductionGrammar(
       indexedTermset,
       tau, alpha, nus, gamma,
       options.maxSATSolver, options.grammarWeighting )
+      .getOrElse {
+        logger.metric( "uncoverable_grammar", true )
+        throw new Exception( "cannot cover termset" )
+      }
 
     info( s"Found grammar:\n$grammar\n" )
     for ( ( inst, terms ) <- indexedTermset ) {
@@ -148,7 +154,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     InductionBUP( grammar, encoding, goal )
   }
 
-  def findMinimalCounterexample( correctInstances: Iterable[Instance], bup: InductionBUP ): Option[Expr] = {
+  def findMinimalCounterexample( correctInstances: Iterable[Instance], bup: InductionBUP ): Option[Expr] = logger.time( "mincex" ) {
     def checkInst( inst: Instance ): Boolean =
       smtSolver.isValid( encoding.decodeToInstanceSequent( bup.grammar.instanceLanguage( inst ) ).toNegConjunction -->
         instantiate( quantGoal, inst ) )
@@ -172,7 +178,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     }
   }
 
-  def solveBUP( bup: InductionBUP ): LKProof = {
+  def solveBUP( bup: InductionBUP ): LKProof = logger.time( "solvebup" ) {
     val qbup @ Ex( x_B, qbupMatrix ) = bup.formula
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
@@ -185,11 +191,15 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       info( cls map { _.toSigRelativeString } )
 
     val solution = hSolveQBUP( qbupMatrix, xInst, smtSolver, options.equationalTheory ).
-      getOrElse( throw new IllegalArgumentException( s"Could not solve:\n${qbupMatrix.toSigRelativeString}" ) )
+      getOrElse {
+        logger.metric( "bup_solve_failed", true )
+        throw new IllegalArgumentException( s"Could not solve:\n${qbupMatrix.toSigRelativeString}" )
+      }
 
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
+    logger.metric( "solution", solution.toSigRelativeString )
     require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), "Solution not valid" )
 
     val proof = constructSIP(
@@ -204,7 +214,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     proof
   }
 
-  def getInstanceProof( inst: Instance ): ExpansionProof = {
+  def getInstanceProof( inst: Instance ): ExpansionProof = logger.time( "instproof" ) {
     info( s"Proving instance ${inst.toSigRelativeString}" )
     val instanceSequent = sequent.map( identity, instantiate( _, inst ) )
     val instProof0 = options.instanceProver.getExpansionProof( instanceSequent ).getOrElse {

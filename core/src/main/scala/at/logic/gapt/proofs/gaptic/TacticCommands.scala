@@ -2,10 +2,11 @@ package at.logic.gapt.proofs.gaptic
 
 import tactics._
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
+import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
+import at.logic.gapt.provers.prover9.Prover9
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
@@ -584,15 +585,18 @@ trait TacticCommands {
   def prop: Tactic[Unit] = PropTactic
   def quasiprop: Tactic[Unit] = QuasiPropTactic
 
+  def resolutionProver( prover: Prover )( implicit ctx: MutableContext ): ResolutionProverTactic =
+    ResolutionProverTactic( prover )
+
   /**
    * Calls `prover9` on the current subgoal.
    */
-  def prover9( implicit ctx: MutableContext ): Prover9Tactic = Prover9Tactic()
+  def prover9( implicit ctx: MutableContext ): ResolutionProverTactic = resolutionProver( Prover9 )
 
   /**
    * Calls `escargot` on the current subgoal.
    */
-  def escargot( implicit ctx: MutableContext ): Tactic[Unit] = EscargotTactic()
+  def escargot( implicit ctx: MutableContext ): ResolutionProverTactic = resolutionProver( Escargot )
 
   /**
    * Lets you "forget" a sequence of formulas, i.e. the tactics version of the weakening rule.

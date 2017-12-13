@@ -17,6 +17,8 @@ trait LogHandler {
   def metric( key: String, desc: String, value: => Any ): Unit =
     message( Info, s"$desc: $value" )
 
+  def timeBegin( key: String, desc: String ): Unit = ()
+
   def time( key: String, desc: String, duration: Duration ): Unit =
     message( Info, s"$desc took ${LogHandler.formatTime( duration )}" )
 }
@@ -60,19 +62,22 @@ object LogHandler {
 }
 
 object logger {
-  def handler = LogHandler.current.value
+  def handler: LogHandler = LogHandler.current.value
 
-  def warn( msg: => Any ) = handler.message( Warn, msg )
-  def info( msg: => Any ) = handler.message( Info, msg )
-  def debug( msg: => Any ) = handler.message( Debug, msg )
+  def warn( msg: => Any ): Unit = handler.message( Warn, msg )
+  def info( msg: => Any ): Unit = handler.message( Info, msg )
+  def debug( msg: => Any ): Unit = handler.message( Debug, msg )
+  def time[T]( key: String )( f: => T ): T = time( key, key )( f )
   def time[T]( key: String, desc: String )( f: => T ): T = {
+    handler.timeBegin( key, desc )
     val a = System.nanoTime
     try f finally {
       val b = System.nanoTime
       handler.time( key, desc, ( b - a ).nanos )
     }
   }
-  def metric( key: String, desc: String, value: => Any ) =
+  def metric( key: String, value: => Any ): Unit = metric( key, key, value )
+  def metric( key: String, desc: String, value: => Any ): Unit =
     handler.metric( key, desc, value )
 }
 
