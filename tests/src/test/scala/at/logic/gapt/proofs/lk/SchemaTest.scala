@@ -22,39 +22,39 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
     Lemma( es ) {
       unfold( "omegaPR" ) atMost 1 in "Ant_0"
       unfold( "chiPR" ) atMost 2 in "Ant_0"
-      unfold( "phiPR" ) atMost 2 in "Ant_0"
+      unfold( "phiSFAT" ) atMost 2 in "Ant_0"
       unfold( "chiPR" ) atMost 2 in "Ant_0"
       escargot
     }
   }
   def prove1( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
-    val es = Sequent( Seq( "Ant_0" -> hof"omegaPR(s(0))" ), Seq() )
+    val es = Sequent( Seq( "Ant_0" -> hof"omegaSFAF(s(0))" ), Seq() )
     Lemma( es ) {
-      unfold( "omegaPR" ) atMost 1 in "Ant_0"
-      unfold( "chiPR" ) atMost 10 in "Ant_0"
-      unfold( "phiPR" ) atMost 10 in "Ant_0"
-      unfold( "chiPR" ) atMost 10 in "Ant_0"
+      unfold( "omegaSFAF" ) atMost 1 in "Ant_0"
+      unfold( "chiSTAF" ) atMost 10 in "Ant_0"
+      unfold( "phiSFAT" ) atMost 10 in "Ant_0"
+      unfold( "chiSTAF" ) atMost 10 in "Ant_0"
       escargot
     }
   }
 
   def prove0p( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
-    val es = Sequent( Seq(), Seq( "Suc_0" -> hof"omegaPR(0)" ) )
+    val es = Sequent( Seq(), Seq( "Suc_0" -> hof"omegaSFAF(0)" ) )
     Lemma( es ) {
-      unfold( "omegaPR" ) atMost 1 in "Suc_0"
-      unfold( "chiPR" ) atMost 2 in "Suc_0"
-      unfold( "phiPR" ) atMost 2 in "Suc_0"
-      unfold( "chiPR" ) atMost 2 in "Suc_0"
+      unfold( "omegaSFAF" ) atMost 1 in "Suc_0"
+      unfold( "chiSTAF" ) atMost 2 in "Suc_0"
+      unfold( "phiSFAT" ) atMost 2 in "Suc_0"
+      unfold( "chiSTAF" ) atMost 2 in "Suc_0"
       escargot
     }
   }
   def prove1p( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
-    val es = Sequent( Seq(), Seq( "Suc_0" -> hof"omegaPR(s(0))" ) )
+    val es = Sequent( Seq(), Seq( "Suc_0" -> hof"omegaSFAF(s(0))" ) )
     Lemma( es ) {
-      unfold( "omegaPR" ) atMost 1 in "Suc_0"
-      unfold( "chiPR" ) atMost 10 in "Suc_0"
-      unfold( "phiPR" ) atMost 10 in "Suc_0"
-      unfold( "chiPR" ) atMost 10 in "Suc_0"
+      unfold( "omegaSFAF" ) atMost 1 in "Suc_0"
+      unfold( "chiSTAF" ) atMost 10 in "Suc_0"
+      unfold( "phiSFAT" ) atMost 10 in "Suc_0"
+      unfold( "chiSTAF" ) atMost 10 in "Suc_0"
       escargot
     }
   }
@@ -136,6 +136,7 @@ class SchemaTest extends Specification {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val ctx2 = ctx.newMutable
       CharFormPRN.PR( CharFormPRN( SCS ) )( ctx2 )
+      println(ctx2.normalizer.rules)
       val proof = new proofes( ctx2.toImmutable ).prove0( SCS )
       ctx2.check( proof )
       ok

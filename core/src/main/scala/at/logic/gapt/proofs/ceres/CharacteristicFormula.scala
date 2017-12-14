@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.toNNF
 import at.logic.gapt.proofs.Context.PrimRecFun
-import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
+import at.logic.gapt.proofs.{MutableContext, Sequent }
 
 object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
@@ -41,13 +41,13 @@ private object Support {
     SCS.keySet.map( x => {
       val CLS( Apps( Const( name, _ ), vs ), cc ) = x
       val ( one, two ) = SCS( x )
-      ( Atom( names( ( name, cc ) ) + "PR", vs ), ( constructingForm( one, names, stT ), two ) )
+      ( Atom( names( ( name, cc ) ), vs ), ( constructingForm( one, names, stT ), two ) )
     } ).toMap
   }
 
   def cF( pn: Expr, cc: Sequent[Boolean], mn: Map[( String, Sequent[Boolean] ), String] ): Formula = {
     val Apps( Const( name, _ ), vs ) = pn
-    Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ) + "PR", vs )
+    Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ) , vs )
   }
   //assuming NNFCNF
   private def QuantIntroForAll( f: Formula, evar: Set[Var] ): Formula = f match {
@@ -95,7 +95,7 @@ private object Support {
     val changeRes = for {
       ( Atom( Const( name, _ ), vs ), form2 ) <- preRes.toList
       newEx = Const( name, FunctionType( To, vs.map { _.ty } ) )
-    } yield ( ( name.substring( 0, name.length - 2 ), newEx ), ( newEx, ( Apps( newEx, vs: _* ), form2 ) ) )
+    } yield ( ( name, newEx ), ( newEx, ( Apps( newEx, vs: _* ), form2 ) ) )
     val ( nameCha, nextRes ) = changeRes.unzip
     val namedis = nameCha.toMap
     addToContextAsPRDefs( nextRes.map {
