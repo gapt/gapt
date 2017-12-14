@@ -67,6 +67,7 @@ class ExpansionProofToLK(
       }
   }
 
+  // TODO: remove
   private def del( expSeq: ExpansionSequent, i: SequentIndex ): ExpansionSequent = {
     //println( "before del: " + expSeq.shallow )
     //println( "deleting " + expSeq( i ).shallow )
@@ -75,9 +76,10 @@ class ExpansionProofToLK(
     ret
   }
 
+  // TODO: remove
   private def rtn( ret: Option[UnprovableOrLKProof], from: String ): Option[UnprovableOrLKProof] = {
     ret match {
-      case Some( Right( lk ) ) => println( "success: " + from + "\n" + lk + "\n" )
+      case Some( Right( lk ) ) => () //println( "success: " + from + "\n" + lk + "\n" )
       case _                   => ()
     }
     ret
@@ -273,97 +275,35 @@ class ExpansionProofToLK(
       ETStrongQuantifier( _, ev, _ ) <- et.subProofs
     } yield ev ).toSet
 
-    //val ret = theory.inductions.zipWithIndex.collectFirst {
     val ret = theory.inductions.zipWithIndex.collectFirst {
       // TODO handle more than 2 conjuncts with more constructors
-      case ( ETImp( ant @ ETAnd( ant1, ETStrongQuantifier( _, ev, ETImp( ch1, ch2 ) ) ), suc ), i ) if {
-        val b1 = freeVariables( ant.shallow ) intersect upcomingEVs isEmpty
-        val App( _, qfFormula @ Abs( v, f ) ) = suc.shallow
-
-        println( "expSeq.shallow: " + expSeq.shallow )
-        println( "f: " + f )
-        println( "expSeq contains: " + expSeq.shallow.succedent.contains( f ) )
-        println( "suc.shallow: " + suc.shallow )
-        println( "suc.deep: " + suc.deep )
-        b1 && expSeq.shallow.succedent.contains( suc.deep )
-      } =>
-        /*
-        println( "freeVariables(ant.shallow)" )
-        println( freeVariables( ant.shallow ) )
-        println( "upcomingEVs" )
-        println( upcomingEVs )
-        */
+      case ( ETImp( ant @ ETAnd( ant1, ETStrongQuantifier( _, ev, ETImp( ch1, ch2 ) ) ), suc: ETWeakQuantifier ), i ) if ( freeVariables( ant.shallow ) intersect upcomingEVs isEmpty ) && ( expSeq.shallow.succedent contains suc.deep ) =>
         val newInductions = theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 }
 
         // TODO: recurse over ant
         val ret = solve( Theory( theory.cuts, newInductions ), expSeq :+ ant1 ) flatMap { p1 =>
-          /*
-          println( "p1:" )
-          println( p1 )
-          println( "ant1.shallow:" )
-          println( ant1.shallow )
-          */
           if ( !p1.conclusion.contains( ant1.shallow, Polarity.InSuccedent ) ) {
-            /*
-            println( "case !p1.contains" )
-            */
             return None
             //Right( p1 )
           } else solve( Theory( theory.cuts, newInductions ), ch1 +: expSeq :+ ch2 ) map { p2 =>
-            /*
-            println( "p2:" )
-            println( p2 )
-            println( "ch1.shallow:" )
-            println( ch1.shallow )
-            println( "ch2.shallow:" )
-            println( ch2.shallow )
-            */
             if ( !p2.conclusion.contains( ch1.shallow, Polarity.InAntecedent )
               || !p2.conclusion.contains( ch2.shallow, Polarity.InSuccedent ) ) {
-              /*
-              println( "case !p2.contains" )
-              */
               //p2
               return None
             } else {
-              println( "case p1.contains && p2.contains" )
-              println( "p1:" )
-              println( p1 )
-              println( "p2:" )
-              println( p2 )
-              /*
-              println( "ant1.shallow:" )
-              println( ant1.shallow )
-              println( "ch1.shallow:" )
-              println( ch1.shallow )
-              println( "ch2.shallow:" )
-              println( ch2.shallow )
-              */
               val index1 = p1.conclusion.indexOf( ant1.shallow, Polarity.InSuccedent )
               val index2 = p2.conclusion.indexOf( ch1.shallow, Polarity.InAntecedent )
               val index3 = p2.conclusion.indexOf( ch2.shallow, Polarity.InSuccedent )
               val cases = Seq(
                 InductionCase( p1, hoc"0:nat", Seq.empty, Seq.empty, index1 ),
                 InductionCase( p2, hoc"s:nat>nat", Seq( index2 ), Seq( ev ), index3 ) )
-              val App( _, qfFormula @ Abs( v, _ ) ) = suc.shallow
-              //val ir = InductionRule( cases, qfFormula, v )
-              val vv = suc.asInstanceOf[ETWeakQuantifier].instances.head._1
-              val ff = suc.asInstanceOf[ETWeakQuantifier].instances.head._2.shallow
 
-              val ir = InductionRule( cases, qfFormula, vv )
+              val App( _, qfFormula: Abs ) = suc.shallow
+              val ( v: Expr, _ ) = suc.instances.head
+              println( "suc: " + suc )
+              println( "suc.deep: " + suc.deep )
 
-              if ( ir.isInstanceOf[InductionRule] ) {
-                val cmr = ContractionMacroRule( ir )
-                println( "cmr.conclusion" )
-                println( cmr.conclusion )
-                println( "expSeq.shallow" )
-                println( expSeq.shallow )
-                if ( !( cmr.conclusion isSubsetOf expSeq.shallow ) ) {
-                  println( "" )
-                }
-              }
-
-              ir.ensuring { _.conclusion isSubsetOf expSeq.shallow }
+              InductionRule( cases, qfFormula, v )
             }
           }
         }
