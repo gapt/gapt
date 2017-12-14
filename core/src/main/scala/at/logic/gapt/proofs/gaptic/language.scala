@@ -111,6 +111,6 @@ object LemmaMacros {
   }
 }
 
-class TacticFailureException( s: String, cause: Throwable = null ) extends Throwable( s, cause )
+class TacticFailureException( s: String, cause: Throwable = null ) extends Exception( s, cause )
 
-class QedFailureException( s: String ) extends Throwable( s )
+class QedFailureException( s: String ) extends Exception( s )
