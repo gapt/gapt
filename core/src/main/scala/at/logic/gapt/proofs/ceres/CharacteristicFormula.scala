@@ -15,14 +15,6 @@ object CharFormN extends StructVisitor[Formula, Unit] {
 object CharFormPRN {
   def apply( SCS: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support(
     SCS, stTN )
-  private def SCSinCNF( st: Struct ): Struct = st match {
-    case Plus( x, Times( y, z ) ) => Times( Plus( SCSinCNF( x ), SCSinCNF( y ) ), Plus( SCSinCNF( x ), SCSinCNF( z ) ) )
-    case Plus( Times( y, z ), x ) => Times( Plus( SCSinCNF( y ), SCSinCNF( x ) ), Plus( SCSinCNF( z ), SCSinCNF( x ) ) )
-    case Plus( x, y )             => Plus( SCSinCNF( x ), SCSinCNF( y ) )
-    case Times( x, y )            => Times( SCSinCNF( x ), SCSinCNF( y ) )
-    case Dual( x )                => Dual( SCSinCNF( x ) )
-    case x                        => x
-  }
   private val stTN = StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]](
     { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) }, Support.cF )
   def PR( chF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( chF, ForallC )
