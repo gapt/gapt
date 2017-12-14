@@ -23,9 +23,9 @@ object CharFormPRN {
     case Dual( x )                => Dual( SCSinCNF( x ) )
     case x                        => x
   }
-  private val stTN = StructTransformer[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]](
+  private val stTN = StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]](
     { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) }, Support.cF )
-  def PR( ChF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( ChF, ForallC )
+  def PR( chF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( chF, ForallC )
 }
 object CharFormP extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
@@ -36,32 +36,26 @@ object CharFormP extends StructVisitor[Formula, Unit] {
 }
 object CharFormPRP {
   def apply( SCS: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support( SCS, stTP )
-  private val stTP = StructTransformer[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]](
+  private val stTP = StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]](
     { ( x, _ ) => Neg( x ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) }, Support.cF )
-  def PR( ChF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( ChF, ExistsC )
+  def PR( chF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( chF, ExistsC )
 }
 
 private object Support {
   def apply(
     SCS: Map[CLS, ( Struct, Set[Var] )],
-    stT: StructTransformer[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]] ): Map[Formula, ( Formula, Set[Var] )] = {
+    stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Map[Formula, ( Formula, Set[Var] )] = {
     val names = structNames( SCS )
     SCS.keySet.map( x => {
       val CLS( Apps( Const( name, _ ), vs ), cc ) = x
-      val thefirst = vs.headOption.getOrElse( {
-        throw new Exception( "Should not be empty" )
-      } )
-      val result = freeVariables( thefirst ).headOption
       val ( one, two ) = SCS( x )
-      ( Atom( names( ( ( name, result ), cc ) ) + "PR", vs ), ( constructingForm( one, names, stT ), two ) )
+      ( Atom( names( ( name, cc ) ) + "PR", vs ), ( constructingForm( one, names, stT ), two ) )
     } ).toMap
   }
 
-  def cF( pn: Expr, cc: Sequent[Boolean], mn: Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String] ): Formula = {
+  def cF( pn: Expr, cc: Sequent[Boolean], mn: Map[( String, Sequent[Boolean] ), String] ): Formula = {
     val Apps( Const( name, _ ), vs ) = pn
-    val thefirst = vs.headOption.getOrElse( { throw new Exception( "Should not be empty" ) } )
-    val result: Option[Expr] = freeVariables( thefirst ).headOption
-    Atom( mn.getOrElse( ( ( name, result ), cc ), { throw new Exception( "Should be in map" ) } ) + "PR", vs )
+    Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ) + "PR", vs )
   }
   //assuming NNFCNF
   private def QuantIntroForAll( f: Formula, evar: Set[Var] ): Formula = f match {
@@ -104,44 +98,27 @@ private object Support {
     case Neg( Neg( x ) )                         => QuantIntroExists( x, evar )
     case Neg( x )                                => Neg( QuantIntroExists( x, evar ) )
   }
-  def add( ChF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
-    val preRes = ChF.keySet.map( x => {
-      val ( one, two ) = ChF.getOrElse( x, {
-        throw new Exception( "?????" )
-      } )
-      ( x, if ( qType.equals( ForallC ) ) QuantIntroForAll( one, two ) else QuantIntroExists( one, two ) )
-    } ).toMap
-    val ( namecha, nextRes ) = preRes.keySet.map( x => {
-      val one = preRes.getOrElse( x, {
-        throw new Exception( "?????" )
-      } )
-      val Atom( Const( name, _ ), vs ) = x
-      val newEx = Const( name, FunctionType( To, vs.map { _.ty } ) ).asInstanceOf[Expr]
-      ( ( name.substring( 0, name.length - 2 ), newEx ), ( newEx, ( Apps( newEx, vs: _* ), one ) ) )
-    } ).toList.unzip
-    val namesdis = namecha.toSet
+  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
+    val preRes = for ( ( x, ( form, vars ) ) <- chF ) yield ( x, if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars ) )
+    val changeRes = for {
+      ( Atom( Const( name, _ ), vs ), form2 ) <- preRes.toList
+      newEx = Const( name, FunctionType( To, vs.map { _.ty } ) )
+    } yield ( ( name.substring( 0, name.length - 2 ), newEx ), ( newEx, ( Apps( newEx, vs: _* ), form2 ) ) )
+    val ( nameCha, nextRes ) = changeRes.unzip
+    val namedis = nameCha.toMap
     addToContextAsPRDefs( nextRes.map {
-      case ( x, ( y, z ) ) =>
-        ( x, ( y, namesdis.foldLeft( z: Expr )( ( w, r ) => {
-          TermReplacement( w, { case Const( n, _ ) if n == r._1 => r._2 } )
-        } ) ) )
-    }.foldLeft( Map[Expr, Set[( Expr, Expr )]]() ) {
-      case ( x, ( one, ( two, three ) ) ) =>
-        val theset = x.getOrElse( one, Set() ) ++ Set( ( two, three ) )
-        x ++ Map( ( one, theset ) )
-    } )
+      case ( x, ( y, z ) ) => ( x, ( y, TermReplacement( z, { case Const( n, _ ) if namedis.contains( n ) => namedis( n ) } ).asInstanceOf[Expr] ) )
+    }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ).toSet ) } )
   }
-  private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String] =
+  private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
-      case CLS( Apps( Const( name, _ ), vs ), cc ) =>
-        val thefirst = vs.headOption.getOrElse( { throw new Exception( "Should not be empty" ) } )
-        val result: Option[Expr] = freeVariables( thefirst ).headOption
+      case CLS( Apps( Const( name, _ ), _ ), cc ) =>
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
         val newName: String = name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent
-        ( ( ( name, result ), cc ), newName )
+        ( ( name, cc ), newName )
     }.toMap
-  private def addToContextAsPRDefs( ChF: Map[Expr, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit = {
-    val prDefsForContext = for ( ( pred, _ ) <- ChF ) yield ( pred.asInstanceOf[Const], Seq( ChF( pred ).foldLeft( ( Some[Expr]( Atom( "", List() ) ), Some[Expr]( Atom( "", List() ) ) ) ) {
+  private def addToContextAsPRDefs( chF: Map[Expr, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit = {
+    val prDefsForContext = for ( ( pred, _ ) <- chF ) yield ( pred.asInstanceOf[Const], Seq( chF( pred ).foldLeft( ( Some[Expr]( Atom( "", List() ) ), Some[Expr]( Atom( "", List() ) ) ) ) {
       case ( x, ( y, w ) ) =>
         val zero = ctx.get[Context.Constants].constants.getOrElse( "0", {
           throw new Exception( "nat not defined" + ctx.get[Context.Constants].constants.toString() )
@@ -157,10 +134,15 @@ private object Support {
       } ).toString )
     }.head )
     ctx += PrimRecFun( prDefsForContext.toSet )
+    /*ctx += PrimRecFun {
+      chF.map { case (pred, eqns) =>
+        (pred.asInstanceOf[Const] , eqns.toSeq.map { case (lhs, rhs) => (lhs === rhs).toString })
+      }.toSet
+    }*/
   }
-  private object constructingForm extends StructVisitor[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]] {
-    def apply( struct: Struct, names: Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String],
-               stT: StructTransformer[Formula, Map[( ( String, Option[Expr] ), Sequent[Boolean] ), String]] ): Formula =
+  private object constructingForm extends StructVisitor[Formula, Map[( String, Sequent[Boolean] ), String]] {
+    def apply( struct: Struct, names: Map[( String, Sequent[Boolean] ), String],
+               stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Formula =
       recurse( struct, stT, names )
   }
 }

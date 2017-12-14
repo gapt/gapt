@@ -40,6 +40,7 @@ object InstanceOfSchematicStruct {
   def apply( topSym: CLS, sss: Map[CLS, ( Struct, Set[Var] )], usedNames: Set[Var] = Set[Var]() )( implicit ctx: Context ): Struct = {
     val ( starterStruct, sigma ) = ( for {
       ( sssCls, sssStruct ) <- sss
+      if sssCls.config == topSym.config
       sigma <- syntacticMatching( sssCls.proof, topSym.proof )
     } yield ( sssStruct, sigma ) ).head
     val renamedStruct = Set( usedNames.foldLeft( ( ( rename.awayFrom( usedNames ), usedNames ), starterStruct._1 ) )(

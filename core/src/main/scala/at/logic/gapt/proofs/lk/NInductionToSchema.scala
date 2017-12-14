@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.expr.{ Apps, Const, Expr, Formula, TArr, TBase, Ty, Var, freeVariables, rename }
+import at.logic.gapt.expr.{ Abs, Apps, Const, Expr, Formula, FunctionType, Var, freeVariables, rename, syntacticMatching }
 import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent, SequentConnector }
 import at.logic.gapt.utils.NameGenerator
@@ -27,16 +27,16 @@ object ArithmeticInductionToSchema {
         } )._1
         Const( na, t )
       } ) + Const( nameT, tpp ) )
-    val result = proof.subProofs.foldLeft( List[( Expr, LKProof )]() )( ( x, y ) => y match {
-      case InductionRule( _, _, _ ) =>
+    val result = proof.subProofs.foldLeft( List[( Expr, ( Abs, LKProof ) )]() )( ( x, y ) => y match {
+      case InductionRule( _, form, typeTerm ) =>
         val es = y.endSequent
-        val fv = freeVariablesLK( y ).toList
-        val ptype = fv.foldLeft( TBase( "nat" ).asInstanceOf[Ty] )( ( x, vc ) => TArr( vc.ty, x ) )
+        val fv = typeTerm :: freeVariables( form ).toList
+        val ptype = FunctionType( typeTerm.ty, fv.map( _.ty ) )
         val name = Const( newNames.fresh( "P" ), ptype )
         val proofname = Apps( name, fv )
         ctx += name
         ctx += Context.ProofNameDeclaration( proofname, es )
-        ( proofname, y ) :: x
+        ( proofname, ( form, y ) ) :: x
       case _ => x
     } )
     val resProof: LKProof = CreateASchemaVersion( proof, ( result.unzip._1, ctx ) )
@@ -46,22 +46,14 @@ object ArithmeticInductionToSchema {
     }
     ctx += Context.ProofDefinitionDeclaration( pe, resProof )
     result.foreach( x => {
-      val Apps( Const( name, tp ), vars ) = x._1
-      val InductionRule( cases, _, term ) = x._2
+      val Abs( _, form ) = x._2._1
+      val InductionRule( cases, _, term ) = x._2._2
       cases.foreach( y => {
-        val InductionCase( p, _, hy, ev, _ ) = y
-        val suc = ctx.get[Context.Constants].constants.getOrElse( "s", {
-          throw new Exception( "nat not defined" )
-        } )
-        val zero = ctx.get[Context.Constants].constants.getOrElse( "0", {
-          throw new Exception( "nat not defined" )
-        } )
-        val newvar = if ( ev.isEmpty ) vars.map( x => if ( x.equals( term ) ) zero else x )
-        else vars.map( x => if ( x.equals( term ) ) Apps( suc, ev.head ) else x )
-        val endSequentLeft = ctx.get[ProofNames].lookup( x._1 ).getOrElse( {
-          throw new Exception( "Proof not defined" )
-        } )
-        val finproof = if ( ev.nonEmpty ) {
+        val InductionCase( p, _, hy, ev, con ) = y
+        val sigma = syntacticMatching( form, p.endSequent( con ) ).get
+        val endSequentLeft = ctx.get[ProofNames].lookup( x._1 ).getOrElse( { throw new Exception( "Proof not defined" ) } )
+        val finProof = if ( ev.nonEmpty ) {
+          //*********************************************************************************************
           val newseq = Sequent(
             endSequentLeft.antecedent.map( e =>
               e.find( term ).foldLeft( e )( ( z, w ) => {
@@ -76,37 +68,17 @@ object ArithmeticInductionToSchema {
                 else z
               } ) ) )
           val newex = x._1.find( term ).foldLeft( x._1 )( ( z, w ) => { z.replace( w, ev.head ) } )
-          val cutproof = CutRule( ProofLink( newex, newseq ), newseq.indexOf( p.endSequent( hy.head ) ), p, hy.head )
-
-          val target = Sequent(
-            endSequentLeft.antecedent.map( e =>
-              e.find( term ).foldLeft( e )( ( z, w ) => {
-                if ( freeVariables( e ).contains( term.asInstanceOf[Var] ) )
-                  z.replace( w, Apps( suc, ev.head ) )
-                else z
-              } ) ),
-            endSequentLeft.succedent.map( e =>
-              e.find( term ).foldLeft( e )( ( z, w ) => {
-                if ( freeVariables( e ).contains( term.asInstanceOf[Var] ) )
-                  z.replace( w, Apps( suc, ev.head ) )
-                else z
-              } ) ) )
-          ContractionMacroRule( cutproof, target )
+          //*********************************************************************************************
+          ContractionMacroRule( CutRule( ProofLink( newex, newseq ), newseq.indexOf( p.endSequent( hy.head ) ), p, hy.head ), sigma( endSequentLeft ) )
         } else {
-          val newante = endSequentLeft.antecedent.foldLeft( Set[Formula]() )( ( r, t ) => {
-            if ( p.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( term ) || !freeVariables( t ).contains( term.asInstanceOf[Var] ) ) ) r + t
-            else if ( t.contains( term ) || !freeVariables( t ).contains( term.asInstanceOf[Var] ) ) r
+          val newante = endSequentLeft.antecedent.foldLeft( List[Formula]() )( ( r, t ) => {
+            if ( p.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( term ) || !freeVariables( t ).contains( term.asInstanceOf[Var] ) ) ) t :: r
             else r
           } )
-          val newsuc = endSequentLeft.succedent.foldLeft( Set[Formula]() )( ( r, t ) => {
-            if ( p.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( term ) || !freeVariables( t ).contains( term.asInstanceOf[Var] ) ) ) r + t
-            else if ( t.contains( term ) || !freeVariables( t ).contains( term.asInstanceOf[Var] ) ) r
-            else r
-          } )
-          val pp = WeakeningLeftMacroRule( p, newante.toSeq )
-          WeakeningRightMacroRule( pp, newsuc.toSeq )
+          val newsuc = endSequentLeft.succedent.filterNot( t => p.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( term ) || !freeVariables( t ).contains( term.asInstanceOf[Var] ) ) )
+          WeakeningRightMacroRule( WeakeningLeftMacroRule( p, newante ), newsuc )
         }
-        ArithmeticInductionToSchema( finproof, Apps( Const( name, tp ), newvar ) )( ctx )
+        ArithmeticInductionToSchema( finProof, sigma( x._1 ) )( ctx )
       } )
     } )
   }
