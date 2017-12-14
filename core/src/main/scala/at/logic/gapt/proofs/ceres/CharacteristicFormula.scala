@@ -6,9 +6,11 @@ import at.logic.gapt.proofs.Context.PrimRecFun
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 
 object CharFormN extends StructVisitor[Formula, Unit] {
-  def apply( struct: Struct ): Formula = recurse( struct, StructTransformer[Formula, Unit](
-    { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) },
-    { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
+  def apply( struct: Struct ): Formula = {
+    val csf = recurse( struct, StructTransformer[Formula, Unit](
+      { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) }, { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
+    new QuantifierHelper( ForallC ).Block( freeVariables( csf ).toSeq, csf )
+  }
 }
 object CharFormPRN {
   def apply( SCS: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support(
@@ -26,9 +28,11 @@ object CharFormPRN {
   def PR( ChF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( ChF, ForallC )
 }
 object CharFormP extends StructVisitor[Formula, Unit] {
-  def apply( struct: Struct ): Formula = recurse( struct, StructTransformer[Formula, Unit](
-    { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) },
-    { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
+  def apply( struct: Struct ): Formula = {
+    val csf = recurse( struct, StructTransformer[Formula, Unit](
+      { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) }, { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
+    new QuantifierHelper( ExistsC ).Block( freeVariables( csf ).toSeq, csf )
+  }
 }
 object CharFormPRP {
   def apply( SCS: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support( SCS, stTP )
