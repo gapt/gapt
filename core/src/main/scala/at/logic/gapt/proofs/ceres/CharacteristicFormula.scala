@@ -117,29 +117,8 @@ private object Support {
         val newName: String = name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent
         ( ( name, cc ), newName )
     }.toMap
-  private def addToContextAsPRDefs( chF: Map[Expr, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit = {
-    val prDefsForContext = for ( ( pred, _ ) <- chF ) yield ( pred.asInstanceOf[Const], Seq( chF( pred ).foldLeft( ( Some[Expr]( Atom( "", List() ) ), Some[Expr]( Atom( "", List() ) ) ) ) {
-      case ( x, ( y, w ) ) =>
-        val zero = ctx.get[Context.Constants].constants.getOrElse( "0", {
-          throw new Exception( "nat not defined" + ctx.get[Context.Constants].constants.toString() )
-        } )
-        val Atom( _, vs ) = y
-        if ( vs.head.equals( zero ) ) ( Some( y === w ), x._2 )
-        else ( x._1, Some( Apps( EqC( y.ty ), Seq[Expr]( y, w ) ) ) )
-    } ).map {
-      case ( optBc, optSc ) => Seq( optBc.getOrElse( {
-        throw new Exception( "?????" )
-      } ).toString, optSc.getOrElse( {
-        throw new Exception( "?????" )
-      } ).toString )
-    }.head )
-    ctx += PrimRecFun( prDefsForContext.toSet )
-    /*ctx += PrimRecFun {
-      chF.map { case (pred, eqns) =>
-        (pred.asInstanceOf[Const] , eqns.toSeq.map { case (lhs, rhs) => (lhs === rhs).toString })
-      }.toSet
-    }*/
-  }
+  private def addToContextAsPRDefs( chF: Map[Const, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit =
+    ctx += PrimRecFun( chF )
   private object constructingForm extends StructVisitor[Formula, Map[( String, Sequent[Boolean] ), String]] {
     def apply( struct: Struct, names: Map[( String, Sequent[Boolean] ), String],
                stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Formula =

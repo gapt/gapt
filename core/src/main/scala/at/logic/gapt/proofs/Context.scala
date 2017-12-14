@@ -530,17 +530,25 @@ object Context {
       apply( ( c, equations ) )
     }
 
-    def toPrimRecFunDefinition( constant: Const, equations: String* )( implicit ctx: Context ) = {
-      val parsedEquations = equations map { parseEqn( constant, _ )( ctx ) }
-      val ( nArgs, recIdx ) = parsedEquations.head._1 match {
+    def toPrimRecFunDefinition( constant: Const, equations: String* )( implicit ctx: Context ): ( Const, Int, Int, Vector[( Expr, Expr )] ) =
+      toPrimRecFunDefinition( constant, equations map { parseEqn( constant, _ )( ctx ) } )
+
+    def toPrimRecFunDefinition( constant: Const, equations: Traversable[( Expr, Expr )] )( implicit ctx: Context ): ( Const, Int, Int, Vector[( Expr, Expr )] ) = {
+      val ( nArgs, recIdx ) = equations.head._1 match {
         case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )
       }
-      ( constant, nArgs, recIdx, parsedEquations.toVector )
+      val Const( _, FunctionType( _, argTys ) ) = constant
+      val equationsByConst = equations.groupBy {
+        case ( ( Apps( _, args ), _ ) ) =>
+          val Apps( ctr, _ ) = args( recIdx )
+          ctr
+      }
+      val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) )
+      ( constant, nArgs, recIdx, recCtrs.map( equationsByConst( _ ).head ) )
     }
 
-    def apply( prfDefinitions: Set[( Const, Seq[String] )] )( implicit ctx: Context ): PrimRecFunBatch = {
-      apply( prfDefinitions.toSeq: _* )
-    }
+    def apply( prfDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )] )( implicit ctx: Context ): PrimRecFunBatch =
+      PrimRecFunBatch( prfDefinitions.view.map { case ( c, eqns ) => toPrimRecFunDefinition( c, eqns ) }.toVector )
 
     def apply( prfDefinitions: ( Const, Seq[String] )* )( implicit ctx: Context ): PrimRecFunBatch = {
       val constants = prfDefinitions map { _._1 }
