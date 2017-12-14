@@ -203,7 +203,7 @@ object ETCut {
 }
 
 object ETInduction {
-  val inductionAxiom = hof"∀X (X(0:nat) ∧ ∀x0 (X(x0) ⊃ X(s(x0))) ⊃ ∀x X(x))"
+  val inductionAxiom = hof"∀X (X(0:nat) ∧ ∀y (X(y) ⊃ X(s(y))) ⊃ ∀z X(z))"
 
 }
 

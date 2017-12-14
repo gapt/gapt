@@ -25,9 +25,23 @@ class ExpansionProofToLK(
     // TODO build induction axioms from ctx
     // constructors: basecase, c1: T -> T, c2: T*T -> T, ...
     // (X(basecase) & forall x0 X(x0) -> X(c1(x0)) & forall x0,x1 (X(x0) & X(x1)) -> X(c2(x0, x1))) -> forall x X(x)
+    /*
+    val indAxioms = ctx.get[StructurallyInductiveTypes].constructors.map {
+      case (s, cs) => (makeInductionExplicit.inductionPrinciple(TBase(s), cs), (s, cs))
+    }
+
     val inductions = for {
       inductionAxiomExpansion <- expansionProof.expansionSequent.antecedent
-      if inductionAxiomExpansion.shallow == ETInduction.inductionAxiom
+      if indAxioms.contains( inductionAxiomExpansion.shallow ) // == ETInduction.inductionAxiom
+      cut <- inductionAxiomExpansion( HOLPosition( 1 ) )
+      cut1 <- cut( HOLPosition( 1 ) )
+      cut2 <- cut( HOLPosition( 2 ) )
+    } yield (ETImp( cut1, cut2 ), indAxioms(inductionAxiomExpansion.shallow))
+    println( "indAxioms: " + indAxioms )
+    */
+    val inductions = for {
+      inductionAxiomExpansion <- expansionProof.expansionSequent.antecedent
+      if ETInduction.inductionAxiom == inductionAxiomExpansion.shallow
       cut <- inductionAxiomExpansion( HOLPosition( 1 ) )
       cut1 <- cut( HOLPosition( 1 ) )
       cut2 <- cut( HOLPosition( 2 ) )
@@ -36,10 +50,10 @@ class ExpansionProofToLK(
     /*
     println( "inductions" )
     inductions.foreach { x => println( "induction: " + x ) }
+    */
 
     println( "ctx: " + ctx )
     println( "ctx constructors:\n" + ctx.get[StructurallyInductiveTypes].constructors )
-    */
 
     solve( Theory( expansionProof.cuts, inductions ), expansionProof.nonCutPart filter { x => x.shallow != ETInduction.inductionAxiom } ).
       map( WeakeningMacroRule( _, expansionProof.nonCutPart.shallow filter { x => x != ETInduction.inductionAxiom } ) )
@@ -277,20 +291,16 @@ class ExpansionProofToLK(
 
     val ret = theory.inductions.zipWithIndex.collectFirst {
       // TODO handle more than 2 conjuncts with more constructors
-      case ( ETImp( ant @ ETAnd( ant1, ETStrongQuantifier( _, ev, ETImp( ch1, ch2 ) ) ), suc: ETWeakQuantifier ), i ) if ( freeVariables( ant.shallow ) intersect upcomingEVs isEmpty ) && ( expSeq.shallow.succedent contains suc.deep ) =>
+      case ( ETImp( ant @ ETAnd( ant1, ETStrongQuantifier( _, ev, ETImp( ch1, ch2 ) ) ), suc: ETWeakQuantifier ), i ) if freeVariables( ant.shallow ) intersect upcomingEVs isEmpty =>
         val newInductions = theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 }
 
         // TODO: recurse over ant
         val ret = solve( Theory( theory.cuts, newInductions ), expSeq :+ ant1 ) flatMap { p1 =>
-          if ( !p1.conclusion.contains( ant1.shallow, Polarity.InSuccedent ) ) {
-            return None
-            //Right( p1 )
-          } else solve( Theory( theory.cuts, newInductions ), ch1 +: expSeq :+ ch2 ) map { p2 =>
+          if ( !p1.conclusion.contains( ant1.shallow, Polarity.InSuccedent ) ) Right( p1 )
+          else solve( Theory( theory.cuts, newInductions ), ch1 +: expSeq :+ ch2 ) flatMap { p2 =>
             if ( !p2.conclusion.contains( ch1.shallow, Polarity.InAntecedent )
-              || !p2.conclusion.contains( ch2.shallow, Polarity.InSuccedent ) ) {
-              //p2
-              return None
-            } else {
+              || !p2.conclusion.contains( ch2.shallow, Polarity.InSuccedent ) ) Right( p2 )
+            else {
               val index1 = p1.conclusion.indexOf( ant1.shallow, Polarity.InSuccedent )
               val index2 = p2.conclusion.indexOf( ch1.shallow, Polarity.InAntecedent )
               val index3 = p2.conclusion.indexOf( ch2.shallow, Polarity.InSuccedent )
@@ -300,10 +310,17 @@ class ExpansionProofToLK(
 
               val App( _, qfFormula: Abs ) = suc.shallow
               val ( v: Expr, _ ) = suc.instances.head
-              println( "suc: " + suc )
-              println( "suc.deep: " + suc.deep )
 
-              InductionRule( cases, qfFormula, v )
+              val ir = InductionRule( cases, qfFormula, v )
+              val phit = ETAtom( Atom( ir.conclusion.succedent.head ), Polarity.InAntecedent )
+              val r = solve( Theory( theory.cuts, newInductions ), phit +: expSeq ) map { p3 =>
+                if ( !p3.conclusion.contains( phit.shallow, Polarity.InAntecedent ) )
+                  p3
+                else
+                  // TODO simplify to ir if p3 is just an axiom?
+                  CutRule( ir, p3, phit.shallow )
+              }
+              r
             }
           }
         }
