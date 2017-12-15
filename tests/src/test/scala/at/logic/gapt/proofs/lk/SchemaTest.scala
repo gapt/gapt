@@ -18,12 +18,12 @@ import at.logic.gapt.proofs.gaptic._
 
 class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialContext ) {
   def prove0( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
-    val es = Sequent( Seq( "Ant_0" -> hof"omegaPR(0)" ), Seq() )
+    val es = Sequent( Seq( "Ant_0" -> hof"omegaSFAF(0)" ), Seq() )
     Lemma( es ) {
-      unfold( "omegaPR" ) atMost 1 in "Ant_0"
-      unfold( "chiPR" ) atMost 2 in "Ant_0"
+      unfold( "omegaSFAF" ) atMost 1 in "Ant_0"
+      unfold( "chiSTAF" ) atMost 2 in "Ant_0"
       unfold( "phiSFAT" ) atMost 2 in "Ant_0"
-      unfold( "chiPR" ) atMost 2 in "Ant_0"
+      unfold( "chiSTAF" ) atMost 2 in "Ant_0"
       escargot
     }
   }
@@ -136,7 +136,6 @@ class SchemaTest extends Specification {
       val SCS = SchematicStruct( "omega" )( ctx ).getOrElse( Map() )
       val ctx2 = ctx.newMutable
       CharFormPRN.PR( CharFormPRN( SCS ) )( ctx2 )
-      println(ctx2.normalizer.rules)
       val proof = new proofes( ctx2.toImmutable ).prove0( SCS )
       ctx2.check( proof )
       ok
@@ -353,7 +352,7 @@ class SchemaTest extends Specification {
   }
   {
     import FunctionInterationRefutationPos.ctx
-    "Instantiation of the postive characteristic formula proof of the function interation schema" in {
+    "Instantiation of the positive characteristic formula proof of the function interation schema" in {
       val proof = instantiateProof.Instantiate( le"Top (s (s (s (s (s (s 0)))))) " )
       ctx.check( proof )
       ok

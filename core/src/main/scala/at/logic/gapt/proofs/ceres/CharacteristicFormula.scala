@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.ceres
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.toNNF
 import at.logic.gapt.proofs.Context.PrimRecFun
-import at.logic.gapt.proofs.{MutableContext, Sequent }
+import at.logic.gapt.proofs.{ MutableContext, Sequent }
 
 object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
@@ -13,8 +13,8 @@ object CharFormN extends StructVisitor[Formula, Unit] {
   }
 }
 object CharFormPRN {
-  def apply( SCS: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support(
-    SCS, stTN )
+  def apply( scs: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support(
+    scs, stTN )
   private val stTN = StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]](
     { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) }, Support.cF )
   def PR( chF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( chF, ForallC )
@@ -27,7 +27,7 @@ object CharFormP extends StructVisitor[Formula, Unit] {
   }
 }
 object CharFormPRP {
-  def apply( SCS: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support( SCS, stTP )
+  def apply( scs: Map[CLS, ( Struct, Set[Var] )] ): Map[Formula, ( Formula, Set[Var] )] = Support( scs, stTP )
   private val stTP = StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]](
     { ( x, _ ) => Neg( x ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) }, Support.cF )
   def PR( chF: Map[Formula, ( Formula, Set[Var] )] )( implicit ctx: MutableContext ): Unit = Support.add( chF, ExistsC )
@@ -35,19 +35,15 @@ object CharFormPRP {
 
 private object Support {
   def apply(
-    SCS: Map[CLS, ( Struct, Set[Var] )],
+    scs: Map[CLS, ( Struct, Set[Var] )],
     stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Map[Formula, ( Formula, Set[Var] )] = {
-    val names = structNames( SCS )
-    SCS.keySet.map( x => {
-      val CLS( Apps( Const( name, _ ), vs ), cc ) = x
-      val ( one, two ) = SCS( x )
-      ( Atom( names( ( name, cc ) ), vs ), ( constructingForm( one, names, stT ), two ) )
-    } ).toMap
+    val names = structNames( scs )
+    scs.map { case ( CLS( Apps( Const( name, _ ), vs ), cc ), ( st, vars ) ) => ( Atom( names( ( name, cc ) ), vs ), ( constructingForm( st, names, stT ), vars ) ) }
   }
 
   def cF( pn: Expr, cc: Sequent[Boolean], mn: Map[( String, Sequent[Boolean] ), String] ): Formula = {
     val Apps( Const( name, _ ), vs ) = pn
-    Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ) , vs )
+    Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ), vs )
   }
   //assuming NNFCNF
   private def QuantIntroForAll( f: Formula, evar: Set[Var] ): Formula = f match {
@@ -67,7 +63,8 @@ private object Support {
     case Atom( _, _ )                           => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Top()                                  => Top()
     case Bottom()                               => Bottom()
-    case Neg( Neg( x ) )                        => Neg( QuantIntroForAll( x, evar ) )
+    case Neg( Neg( x ) )                        => QuantIntroForAll( x, evar )
+    case Neg( Atom( _, _ ) )                    => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )                               => Neg( QuantIntroForAll( x, evar ) )
   }
   private def QuantIntroExists( f: Formula, evar: Set[Var] ): Formula = f match {
@@ -88,26 +85,22 @@ private object Support {
     case Top()                                   => Top()
     case Bottom()                                => Bottom()
     case Neg( Neg( x ) )                         => QuantIntroExists( x, evar )
+    case Neg( Atom( _, _ ) )                     => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )                                => Neg( QuantIntroExists( x, evar ) )
   }
-  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit = {
-    val preRes = for ( ( x, ( form, vars ) ) <- chF ) yield ( x, if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars ) )
-    val changeRes = for {
-      ( Atom( Const( name, _ ), vs ), form2 ) <- preRes.toList
-      newEx = Const( name, FunctionType( To, vs.map { _.ty } ) )
-    } yield ( ( name, newEx ), ( newEx, ( Apps( newEx, vs: _* ), form2 ) ) )
-    val ( nameCha, nextRes ) = changeRes.unzip
-    val namedis = nameCha.toMap
-    addToContextAsPRDefs( nextRes.map {
-      case ( x, ( y, z ) ) => ( x, ( y, TermReplacement( z, { case Const( n, _ ) if namedis.contains( n ) => namedis( n ) } ).asInstanceOf[Expr] ) )
+  def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit =
+    addToContextAsPRDefs( {
+      for {
+        (
+          Atom( Const( name, _ ), vs ), form2 ) <- { for ( ( x, ( form, vars ) ) <- chF ) yield ( x, if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars ) ) }.toList
+        newEx = Const( name, FunctionType( To, vs.map { _.ty } ) )
+      } yield ( newEx, ( Apps( newEx, vs: _* ), form2.asInstanceOf[Expr] ) )
     }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ).toSet ) } )
-  }
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
       case CLS( Apps( Const( name, _ ), _ ), cc ) =>
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
-        val newName: String = name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent
-        ( ( name, cc ), newName )
+        ( ( name, cc ), name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent )
     }.toMap
   private def addToContextAsPRDefs( chF: Map[Const, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit =
     ctx += PrimRecFun( chF )
