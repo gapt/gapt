@@ -8,9 +8,8 @@ object CreateASchemaVersion extends LKVisitor[( List[Expr], Context )] {
   override protected def recurse( proof: LKProof, arg: ( List[Expr], Context ) ): ( LKProof, SequentConnector ) = {
     proof match {
       case InductionRule( _, _, _ ) =>
-        val thepairs = arg._1.map( x => ( x, arg._2.get[ProofNames].lookup( x ).getOrElse( Sequent() ) ) )
-        val result = thepairs.foldLeft( thepairs.head )( ( x, y ) =>if ( proof.endSequent.equals( y._2 ) ) y else x)
-        withIdentitySequentConnector( ProofLink( result._1, proof.endSequent ) )
+        val Some( name ) = arg._1.find( n => arg._2.get[ProofNames].lookup( n ).contains( proof.endSequent ) )
+        withIdentitySequentConnector( ProofLink( name, proof.endSequent ) )
       case _ => super.recurse( proof, arg )
     }
   }
