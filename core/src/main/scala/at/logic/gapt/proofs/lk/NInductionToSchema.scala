@@ -23,7 +23,7 @@ object ArithmeticInductionToSchema {
     val Apps( Const( nameT, tpp ), _ ) = pe
     val newNames = ctx.newNameGenerator
     val subProofNames = proof.subProofs.collect{  case p @ InductionRule( casesI, form, typeTerm ) =>
-        val newVarForDef =  typeTerm.asInstanceOf[Var] //Var(newNames.fresh( "P" ),typeTerm.ty)
+        val newVarForDef =  typeTerm.asInstanceOf[Var] //Var(newNames.fresh( "x" ),typeTerm.ty)
         val es = p.endSequent.map(f=> TermReplacement(f,typeTerm,newVarForDef))
         val newForm = TermReplacement(form,typeTerm,newVarForDef).asInstanceOf[Abs]
         val fv = newVarForDef :: freeVariables( form ).toList
@@ -31,7 +31,7 @@ object ArithmeticInductionToSchema {
         val proofname = Apps( name, fv )
         ctx += name
         ctx += Context.ProofNameDeclaration( proofname,es)
-        ( (proofname,newVarForDef), ( newForm, InductionRule( casesI, form, typeTerm ) ) )
+        ( (proofname,newVarForDef), ( newForm, InductionRule( casesI, newForm, newVarForDef ) ) )
     }.toList
     val resProof: LKProof = CreateASchemaVersion( proof, ( subProofNames.unzip._1, ctx ) )
     if ( ctx.get[ProofNames].lookup( pe ).isEmpty ) {
