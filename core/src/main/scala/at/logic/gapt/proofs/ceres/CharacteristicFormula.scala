@@ -9,7 +9,7 @@ object CharFormN extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
       { ( x, _ ) => x }, { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, _ ) => Neg( x ) }, { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
-    new QuantifierHelper( ForallC ).Block( freeVariables( csf ).toSeq, csf )
+    All.Block( freeVariables( csf ).toSeq, csf )
   }
 }
 object CharFormPRN {
@@ -23,7 +23,7 @@ object CharFormP extends StructVisitor[Formula, Unit] {
   def apply( struct: Struct ): Formula = {
     val csf = recurse( struct, StructTransformer[Formula, Unit](
       { ( x, _ ) => toNNF( Neg( x ) ) }, { ( x, y, _ ) => Or( x, y ) }, Bottom(), { ( x, y, _ ) => And( x, y ) }, Top(), { ( x, _ ) => Neg( x ) }, { ( _, _, _ ) => throw new Exception( "Should not contain CLS terms" ) } ), Unit )
-    new QuantifierHelper( ExistsC ).Block( freeVariables( csf ).toSeq, csf )
+    Ex.Block( freeVariables( csf ).toSeq, csf )
   }
 }
 object CharFormPRP {
@@ -56,15 +56,15 @@ private object Support {
     case Or( Or( Bottom(), Bottom() ), x )      => QuantIntroForAll( x, evar )
     case Or( Bottom(), x )                      => QuantIntroForAll( x, evar )
     case Or( x, Bottom() )                      => QuantIntroForAll( x, evar )
-    case Or( Neg( Neg( x ) ), Neg( Neg( y ) ) ) => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
-    case Or( x, Neg( Neg( y ) ) )               => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
-    case Or( Neg( Neg( x ) ), y )               => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
-    case Or( x, y )                             => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
-    case Atom( _, _ )                           => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
+    case Or( Neg( Neg( x ) ), Neg( Neg( y ) ) ) => All.Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
+    case Or( x, Neg( Neg( y ) ) )               => All.Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
+    case Or( Neg( Neg( x ) ), y )               => All.Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
+    case Or( x, y )                             => All.Block( evar.intersect( freeVariables( Or( x, y ) ) ).toSeq, Or( x, y ) )
+    case Atom( _, _ )                           => All.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Top()                                  => Top()
     case Bottom()                               => Bottom()
     case Neg( Neg( x ) )                        => QuantIntroForAll( x, evar )
-    case Neg( Atom( _, _ ) )                    => new QuantifierHelper( ForallC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
+    case Neg( Atom( _, _ ) )                    => All.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )                               => Neg( QuantIntroForAll( x, evar ) )
   }
   private def QuantIntroExists( f: Formula, evar: Set[Var] ): Formula = f match {
@@ -77,24 +77,20 @@ private object Support {
     case And( And( Top(), Top() ), x )           => QuantIntroExists( x, evar )
     case And( Top(), x )                         => QuantIntroExists( x, evar )
     case And( x, Top() )                         => QuantIntroExists( x, evar )
-    case And( Neg( Neg( x ) ), Neg( Neg( y ) ) ) => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
-    case And( x, Neg( Neg( y ) ) )               => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
-    case And( Neg( Neg( x ) ), y )               => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
-    case And( x, y )                             => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
-    case Atom( _, _ )                            => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
+    case And( Neg( Neg( x ) ), Neg( Neg( y ) ) ) => Ex.Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
+    case And( x, Neg( Neg( y ) ) )               => Ex.Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
+    case And( Neg( Neg( x ) ), y )               => Ex.Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
+    case And( x, y )                             => Ex.Block( evar.intersect( freeVariables( And( x, y ) ) ).toSeq, And( x, y ) )
+    case Atom( _, _ )                            => Ex.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Top()                                   => Top()
     case Bottom()                                => Bottom()
     case Neg( Neg( x ) )                         => QuantIntroExists( x, evar )
-    case Neg( Atom( _, _ ) )                     => new QuantifierHelper( ExistsC ).Block( evar.intersect( freeVariables( f ) ).toSeq, f )
+    case Neg( Atom( _, _ ) )                     => Ex.Block( evar.intersect( freeVariables( f ) ).toSeq, f )
     case Neg( x )                                => Neg( QuantIntroExists( x, evar ) )
   }
   def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit =
-    addToContextAsPRDefs( {
-      for {
-        (
-          Atom( Const( name, _ ), vs ), form2 ) <- { for ( ( x, ( form, vars ) ) <- chF ) yield ( x, if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars ) ) }.toList
-        newEx = Const( name, FunctionType( To, vs.map { _.ty } ) )
-      } yield ( newEx, ( Apps( newEx, vs: _* ), form2.asInstanceOf[Expr] ) )
+    ctx += PrimRecFun( {
+      for((f @Atom( newEx, vs ), ( form, vars ) ) <-  chF.toList)yield (newEx.asInstanceOf[Const], ( f.asInstanceOf[Expr], (if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars )).asInstanceOf[Expr] ) )
     }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ).toSet ) } )
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
@@ -102,8 +98,6 @@ private object Support {
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
         ( ( name, cc ), name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent )
     }.toMap
-  private def addToContextAsPRDefs( chF: Map[Const, Set[( Expr, Expr )]] )( implicit ctx: MutableContext ): Unit =
-    ctx += PrimRecFun( chF )
   private object constructingForm extends StructVisitor[Formula, Map[( String, Sequent[Boolean] ), String]] {
     def apply( struct: Struct, names: Map[( String, Sequent[Boolean] ), String],
                stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Formula =
