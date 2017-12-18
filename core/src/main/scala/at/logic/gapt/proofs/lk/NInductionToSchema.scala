@@ -10,11 +10,8 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
     p match {
       case proof@InductionRule( casesI, form, typeTerm  ) =>
         val formNorm =  BetaReduction.betaNormalize(form( typeTerm ))
-        val newVarForDef = Var( newNames.fresh( "x" ), typeTerm.ty )
-        val es = proof.endSequent.map( f => typeTerm match {
-          case v@ Var(_,_) => if(freeVariables(f).contains(v)) TermReplacement( f, typeTerm, newVarForDef ) else f
-          case _ => TermReplacement( f, typeTerm, newVarForDef )
-        })
+        val newVarForDef =rename(Var("x", typeTerm.ty), freeVariables(proof.conclusion))
+        val es =  proof.endSequent.updated(proof.mainIndices.head, BetaReduction.betaNormalize(form(newVarForDef).asInstanceOf[Formula]))
         val fv = freeVariables( TermReplacement( formNorm, typeTerm, newVarForDef ) ).toList
         val name = Const( newNames.fresh( "Proof" ), FunctionType( typeTerm.ty, fv.map( _.ty ) ) )
         val proofName = Apps( name, fv )
@@ -50,5 +47,4 @@ object ArithmeticInductionToSchema {
     }
     ctx += Context.ProofDefinitionDeclaration( pe, resProof )
   }
-
 }
