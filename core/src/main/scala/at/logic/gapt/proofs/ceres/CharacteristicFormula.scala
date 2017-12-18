@@ -90,7 +90,7 @@ private object Support {
   }
   def add( chF: Map[Formula, ( Formula, Set[Var] )], qType: QuantifierC )( implicit ctx: MutableContext ): Unit =
     ctx += PrimRecFun( {
-      for((f @Atom( newEx, vs ), ( form, vars ) ) <-  chF.toList)yield (newEx.asInstanceOf[Const], ( f.asInstanceOf[Expr], (if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars )).asInstanceOf[Expr] ) )
+      for ( ( f @ Atom( newEx, vs ), ( form, vars ) ) <- chF.toList ) yield ( newEx.asInstanceOf[Const], ( f.asInstanceOf[Expr], ( if ( qType.equals( ForallC ) ) QuantIntroForAll( form, vars ) else QuantIntroExists( form, vars ) ).asInstanceOf[Expr] ) )
     }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ).toSet ) } )
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
