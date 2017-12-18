@@ -8,10 +8,10 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
   override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) = {
     val newNames = ctx.newNameGenerator
     p match {
-      case proof@InductionRule( casesI, form, typeTerm  ) =>
-        val formNorm =  BetaReduction.betaNormalize(form( typeTerm ))
-        val newVarForDef =rename(Var("x", typeTerm.ty), freeVariables(proof.conclusion))
-        val es =  proof.endSequent.updated(proof.mainIndices.head, BetaReduction.betaNormalize(form(newVarForDef).asInstanceOf[Formula]))
+      case proof @ InductionRule( casesI, form, typeTerm ) =>
+        val formNorm = BetaReduction.betaNormalize( form( typeTerm ) )
+        val newVarForDef = rename( Var( "x", typeTerm.ty ), freeVariables( proof.conclusion ) )
+        val es = proof.endSequent.updated( proof.mainIndices.head, BetaReduction.betaNormalize( form( newVarForDef ).asInstanceOf[Formula] ) )
         val fv = freeVariables( TermReplacement( formNorm, typeTerm, newVarForDef ) ).toList
         val name = Const( newNames.fresh( "Proof" ), FunctionType( typeTerm.ty, fv.map( _.ty ) ) )
         val proofName = Apps( name, fv )
@@ -19,7 +19,7 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
         ctx += Context.ProofNameDeclaration( proofName, es )
         casesI.foreach {
           case InductionCase( subproof, _, hy, _, con ) =>
-            val sigma = syntacticMatching(formNorm , subproof.endSequent( con ) ).get
+            val sigma = syntacticMatching( formNorm, subproof.endSequent( con ) ).get
             val endSequentLeft = ctx.get[ProofNames].lookup( proofName ).getOrElse( { throw new Exception( "Proof not defined" ) } )
             val finProof = if ( hy.nonEmpty ) hy.foldLeft( subproof )( ( outputProof, hypoth ) => {
               val outputSeq = sigma( endSequentLeft.replaceAt( con, subproof.endSequent( hypoth ) ) )
@@ -30,9 +30,9 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
               val newsuc = endSequentLeft.succedent.filterNot( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
               WeakeningRightMacroRule( WeakeningLeftMacroRule( subproof, newante ), newsuc )
             }
-            ArithmeticInductionToSchema( finProof, sigma( proofName ) )(ctx)
+            ArithmeticInductionToSchema( finProof, sigma( proofName ) )( ctx )
         }
-        withIdentitySequentConnector(ProofLink( TermReplacement(proofName,newVarForDef,typeTerm), proof.endSequent ))
+        withIdentitySequentConnector( ProofLink( TermReplacement( proofName, newVarForDef, typeTerm ), proof.endSequent ) )
       case _ => super.recurse( p, ctx )
     }
   }

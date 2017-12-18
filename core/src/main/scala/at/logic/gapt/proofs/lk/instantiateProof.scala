@@ -23,13 +23,13 @@ object instantiateProof {
    *         together with the instantiated proof
    */
   def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) = {
-    ctx.get[Context.ProofDefinitions].findWithConnector(proofName).headOption match {
-      case Some((connLink2DefPrf, subst, defPrf)) =>
-        val (instPrf, connInstPrf2SubstDefPrf) = buildProof.withSequentConnector(subst(defPrf), ctx)
+    ctx.get[Context.ProofDefinitions].findWithConnector( proofName ).headOption match {
+      case Some( ( connLink2DefPrf, subst, defPrf ) ) =>
+        val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
         connInstPrf2SubstDefPrf * connLink2DefPrf.inv -> instPrf
       case None =>
-        val Some(sequent) = ctx.get[Context.ProofNames].lookup(proofName)
-        SequentConnector(sequent) -> ProofLink(proofName, sequent)
+        val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )
+        SequentConnector( sequent ) -> ProofLink( proofName, sequent )
     }
   }
   def apply( proof: LKProof )( implicit ctx: Context ): LKProof =
