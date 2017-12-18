@@ -35,7 +35,7 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
             }
             ArithmeticInductionToSchema( finProof, sigma( proofName ) )(ctx)
         }
-        withIdentitySequentConnector(ProofLink( TermReplacement(name,newVarForDef,typeTerm), proof.endSequent ))
+        withIdentitySequentConnector(ProofLink( TermReplacement(proofName,newVarForDef,typeTerm), proof.endSequent ))
       case _ => super.recurse( p, ctx )
     }
   }

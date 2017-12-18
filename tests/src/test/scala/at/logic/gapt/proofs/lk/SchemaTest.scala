@@ -329,7 +329,7 @@ class SchemaTest extends Specification {
     "Instantiating schematic pluscomm proof" in {
       val ccon = ctx.newMutable
       ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
-      val P = hoc"P: nat>nat"
+      val P = hoc"Proof: nat>nat"
       instantiateProof.Instantiate( le"$P ${natMaker( 10 )}" )( ccon )
       ok
     }
