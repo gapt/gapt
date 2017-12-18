@@ -21,15 +21,15 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
           case InductionCase( subproof, _, hy, _, con ) =>
             val sigma = syntacticMatching( formNorm, subproof.endSequent( con ) ).get
             val endSequentLeft = ctx.get[ProofNames].lookup( proofName ).getOrElse( { throw new Exception( "Proof not defined" ) } )
-            val finProof = if ( hy.nonEmpty ) hy.foldLeft( subproof )( ( outputProof, hypoth ) => {
+            val finProof = /*if ( hy.nonEmpty )*/ hy.foldLeft( subproof )( ( outputProof, hypoth ) => {
               val outputSeq = sigma( endSequentLeft.replaceAt( con, subproof.endSequent( hypoth ) ) )
               ContractionMacroRule( CutRule( ProofLink( syntacticMatching( formNorm, subproof.endSequent( hypoth ) ).get( proofName ), outputSeq ), outputSeq.indexOf( outputProof.endSequent( hypoth ) ), outputProof, hypoth ), sigma( endSequentLeft ) )
             } )
-            else {
+/*            else {
               val newante = endSequentLeft.antecedent.filter( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
               val newsuc = endSequentLeft.succedent.filterNot( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
               WeakeningRightMacroRule( WeakeningLeftMacroRule( subproof, newante ), newsuc )
-            }
+            }*/
             ArithmeticInductionToSchema( finProof, sigma( proofName ) )( ctx )
         }
         withIdentitySequentConnector( ProofLink( TermReplacement( proofName, newVarForDef, typeTerm ), proof.endSequent ) )
