@@ -135,10 +135,8 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
 
       // Loop over the antecedent.
       var n = ant.length
-      debug( "Generating successor trees for antecedent ..." )
       for ( j <- 1 to n ) {
         val ( fst, tree +: snd ) = ant.splitAt( j - 1 ) //We iteratively focus each expansion tree in the antecedent of S.
-        debug( "[" + j + "/" + n + "]" )
         val newTrees = generateSuccessorTrees( tree ) // We generate all successor trees of the current tree.
 
         if ( newTrees.isEmpty ) { // This can happen for two reasons: the current tree contains no weak quantifiers or all its weak quantifier nodes have only one instance.
@@ -170,10 +168,8 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
 
       // Loop over the succedent, analogous to the one over the antecedent.
       n = suc.length
-      debug( "Generating successor trees for succedent ..." )
       for ( j <- 1 to n ) {
         val ( fst, tree +: snd ) = suc.splitAt( j - 1 )
-        debug( "[" + j + "/" + n + "]" )
         val newTrees = generateSuccessorTrees( tree )
 
         if ( newTrees.isEmpty ) {
