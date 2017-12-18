@@ -581,14 +581,14 @@ object Context {
       vs.foreach( ctx.check( _ ) )
       val declSeq = ctx.get[ProofNames].lookup( lhs )
         .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
-      val conn = SequentConnector.guessInjection( referencedProof.conclusion, declSeq )
       require(
-        conn.child( referencedProof.conclusion ).isSubMultisetOf( declSeq ),
+        referencedProof.conclusion.isSubMultisetOf( declSeq ),
         "End-sequent of proof definition does not match declaration.\n" +
           "Given sequent: " + referencedProof.endSequent.toSigRelativeString( ctx ) + "\n" +
           "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
           "Extraneous formulas: " +
           referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
+      val conn = SequentConnector.guessInjection( declSeq, referencedProof.conclusion )
       val defn = ProofDefinition( lhs, conn, referencedProof )
       ctx.state.update[ProofDefinitions]( _ + defn )
     }
