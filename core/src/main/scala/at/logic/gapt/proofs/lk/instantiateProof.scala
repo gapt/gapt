@@ -26,6 +26,7 @@ object instantiateProof {
     ctx.get[Context.ProofDefinitions].findWithConnector( proofName ).headOption match {
       case Some( ( connLink2DefPrf, subst, defPrf ) ) =>
         val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
+        println(instPrf.endSequent)
         connInstPrf2SubstDefPrf * connLink2DefPrf.inv -> instPrf
       case None =>
         val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )

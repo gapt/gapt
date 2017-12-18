@@ -5,37 +5,33 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs.{ Context, MutableContext, SequentConnector }
 
 object CreateASchemaVersion extends LKVisitor[MutableContext] {
-  override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) = {
-    val newNames = ctx.newNameGenerator
+  override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) =
     p match {
       case proof @ InductionRule( casesI, form, typeTerm ) =>
         val formNorm = BetaReduction.betaNormalize( form( typeTerm ) )
         val newVarForDef = rename( Var( "x", typeTerm.ty ), freeVariables( proof.conclusion ) )
         val es = proof.endSequent.updated( proof.mainIndices.head, BetaReduction.betaNormalize( form( newVarForDef ).asInstanceOf[Formula] ) )
         val fv = freeVariables( TermReplacement( formNorm, typeTerm, newVarForDef ) ).toList
-        val name = Const( newNames.fresh( "Proof" ), FunctionType( typeTerm.ty, fv.map( _.ty ) ) )
+        val name = Const( ctx.newNameGenerator.fresh( "Proof" ), FunctionType( typeTerm.ty, fv.map( _.ty ) ) )
         val proofName = Apps( name, fv )
         ctx += name
         ctx += Context.ProofNameDeclaration( proofName, es )
         casesI.foreach {
           case InductionCase( subproof, _, hy, _, con ) =>
+            val formNorm2 = BetaReduction.betaNormalize( form( newVarForDef ) )
+            val sigma2 = syntacticMatching( formNorm2, subproof.endSequent( con ) ).get
             val sigma = syntacticMatching( formNorm, subproof.endSequent( con ) ).get
             val endSequentLeft = ctx.get[ProofNames].lookup( proofName ).getOrElse( { throw new Exception( "Proof not defined" ) } )
-            val finProof = /*if ( hy.nonEmpty )*/ hy.foldLeft( subproof )( ( outputProof, hypoth ) => {
+            val finProof =  hy.foldLeft( subproof )( ( outputProof, hypoth ) => {
               val outputSeq = sigma( endSequentLeft.replaceAt( con, subproof.endSequent( hypoth ) ) )
-              ContractionMacroRule( CutRule( ProofLink( syntacticMatching( formNorm, subproof.endSequent( hypoth ) ).get( proofName ), outputSeq ), outputSeq.indexOf( outputProof.endSequent( hypoth ) ), outputProof, hypoth ), sigma( endSequentLeft ) )
+              ContractionMacroRule( CutRule( ProofLink( syntacticMatching( formNorm, subproof.endSequent( hypoth ) ).get( proofName ), outputSeq ), outputSeq.indexOf( outputProof.endSequent( hypoth ) ), outputProof, hypoth ), sigma2( endSequentLeft ) )
             } )
-/*            else {
-              val newante = endSequentLeft.antecedent.filter( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
-              val newsuc = endSequentLeft.succedent.filterNot( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
-              WeakeningRightMacroRule( WeakeningLeftMacroRule( subproof, newante ), newsuc )
-            }*/
-            ArithmeticInductionToSchema( finProof, sigma( proofName ) )( ctx )
+
+            ArithmeticInductionToSchema( finProof, sigma2( proofName ) )( ctx )
         }
         withIdentitySequentConnector( ProofLink( TermReplacement( proofName, newVarForDef, typeTerm ), proof.endSequent ) )
       case _ => super.recurse( p, ctx )
     }
-  }
 }
 object ArithmeticInductionToSchema {
   def apply( proof: LKProof, pe: Expr )( implicit ctx: MutableContext ): Unit = {
