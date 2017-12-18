@@ -199,7 +199,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     info( s"Found solution: ${solution.toSigRelativeString}\n" )
 
     val formula = BetaReduction.betaNormalize( instantiate( qbup, solution ) )
-    logger.metric( "solution", formula )
+    logger.metric( "solution", solution.toSigRelativeString )
     require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), "Solution not valid" )
 
     val proof = constructSIP(
