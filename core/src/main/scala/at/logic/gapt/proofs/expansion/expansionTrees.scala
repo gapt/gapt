@@ -202,11 +202,6 @@ object ETCut {
     else None
 }
 
-object ETInduction {
-  val inductionAxiom = hof"∀X (X(0:nat) ∧ ∀y (X(y) ⊃ X(s(y))) ⊃ ∀z X(z))"
-
-}
-
 /**
  * A general trait for trees representing quantified formulas.
  */

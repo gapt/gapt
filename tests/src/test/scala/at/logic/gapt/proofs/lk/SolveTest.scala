@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 
+import at.logic.gapt.examples
 import at.logic.gapt.examples.{ BussTautology, primediv }
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.existentialClosure
@@ -106,6 +107,22 @@ class SolveTest extends Specification with SequentMatchers {
       val Some( skolemExpansion ) = Escargot getExpansionProof formula
       ExpansionProofToLK( skolemExpansion ) must beLike {
         case Right( p ) => p.conclusion must_== ( Sequent() :+ formula )
+      }
+    }
+
+    "induction in pluscomm" in {
+      val example = examples.induction.numbers.pluscomm
+      val exp = LKToExpansionProof( example )( examples.induction.numbers.ctx )
+      ExpansionProofToLK( exp )( examples.induction.numbers.ctx ) must beLike {
+        case Right( p ) => p.conclusion must beMultiSetEqual( example.conclusion )
+      }
+    }
+
+    "induction in maprev" in {
+      val example = examples.induction.lists.maprev
+      val exp = LKToExpansionProof( example )( examples.induction.lists.ctx )
+      ExpansionProofToLK( exp )( examples.induction.lists.ctx ) must beLike {
+        case Right( p ) => p.conclusion must beMultiSetEqual( example.conclusion )
       }
     }
 
