@@ -200,14 +200,22 @@ object SequentConnector {
   /**
    * Guesses an SequentConnector, such that each element in lowerSequent gets connected to a different element in upperSequent.
    */
-  def guessInjection[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): SequentConnector = {
+  @deprecated( "Use guessInjection instead", since = "2.9" )
+  def guessInjectionOld[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): SequentConnector =
+    guessInjection( toUpper = upperSequent, fromLower = lowerSequent )
+
+  /**
+   * Guesses a SequentConnector, such that each element in lower gets connected to a different element in upper.
+   */
+  def guessInjection[A]( fromLower: Sequent[A], toUpper: Sequent[A] ): SequentConnector = {
     val alreadyUsedOldIndices = mutable.Set[SequentIndex]()
-    SequentConnector( lowerSequent, upperSequent, lowerSequent.zipWithIndex.map {
+    SequentConnector( fromLower, toUpper, fromLower.zipWithIndex.map {
       case ( atom, newIdx ) =>
-        val oldIdx = upperSequent.indicesWhere( _ == atom ).
+        val oldIdx = toUpper.indicesWhere( _ == atom ).
           filterNot( alreadyUsedOldIndices.contains ).
-          filter( newIdx.sameSideAs ).
-          head
+          find( newIdx.sameSideAs ).
+          getOrElse( throw new IllegalArgumentException(
+            s"Cannot find $atom in ${toUpper.zipWithIndex.filterNot( alreadyUsedOldIndices contains _._2 ).map( _._1 )}" ) )
         alreadyUsedOldIndices += oldIdx
         Seq( oldIdx )
     } )
@@ -222,6 +230,7 @@ object guessPermutation {
    * @return A pair consisting of `newProof` and a sequent connector which describes the new
    *         positions of the formulas in `oldProof.conclusion` with respect to `newProof`.
    */
+  // FIXME: this is just broken
   def apply( oldProof: LKProof, newProof: LKProof ): ( LKProof, SequentConnector ) =
-    ( newProof, SequentConnector.guessInjection( newProof.conclusion, oldProof.conclusion ).inv )
+    ( newProof, SequentConnector.guessInjection( toUpper = newProof.conclusion, fromLower = oldProof.conclusion ).inv )
 }

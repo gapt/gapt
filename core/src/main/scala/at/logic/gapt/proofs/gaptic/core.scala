@@ -89,7 +89,7 @@ case class ProofState private (
           require( subProof.conclusion multiSetEquals segment.conclusion )
           val segment_ = WeakeningContractionMacroRule( subProof, p.conclusion )
           require( segment_.conclusion multiSetEquals p.conclusion )
-          ( segment_, SequentConnector.guessInjection( segment_.conclusion, p.conclusion ).inv )
+          ( segment_, SequentConnector.guessInjection( fromLower = p.conclusion, toUpper = segment_.conclusion ).inv )
         case None if failOnMissingSubgoal  => throw new IllegalArgumentException( s"Subgoal still open: $p" )
         case None if !failOnMissingSubgoal => super.visitOpenAssumption( p, dummy )
       }

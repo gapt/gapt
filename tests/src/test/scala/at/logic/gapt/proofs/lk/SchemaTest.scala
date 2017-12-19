@@ -61,9 +61,7 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
 }
 
 class SchemaTest extends Specification {
-/*
-
-  {
+ /* {
     import tautSchema.ctx
     "simple schema basecase" in {
       val proof = instantiateProof.Instantiate( le"taut ${natMaker( 0 )}" )
@@ -317,27 +315,7 @@ class SchemaTest extends Specification {
       muCtx.get[Reductions].normalizer.rules.size must beEqualTo( 18 )
     }
   }
-*/
-
   {
-    import at.logic.gapt.examples.induction.numbers.ctx
-    "Constructing schematic pluscomm proof" in {
-      val ccon = ctx.newMutable
-      ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
-      val res = ccon.get[ProofDefinitions].components.keySet.map( x => ccon.get[ProofDefinitions].components.getOrElse( x, Set() ) ).foldLeft( 0 )( ( x, y ) => x + y.size )
-      res must_== 10
-    }
-
-    "Instantiating schematic pluscomm proof" in {
-      val ccon = ctx.newMutable
-      ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
-      val P = hoc"Proof: nat>nat"
-      val proof = instantiateProof.Instantiate( le"$P ${natMaker( 10 )}" )( ccon )
-      ctx.check( proof )
-      ok
-    }
-  }
- /* {
     import FunctionInterationSchema.ctx
     "Instantiation of function interation schema" in {
       val proof = instantiateProof.Instantiate( le"phi (s (s (s (s (s (s 0)))))) " )
@@ -360,6 +338,27 @@ class SchemaTest extends Specification {
       ctx.check( proof )
       ok
     }
-  }*/
+  }
+  */
+
+  {
+    import at.logic.gapt.examples.induction.numbers.ctx
+    "Constructing schematic pluscomm proof" in {
+      val ccon = ctx.newMutable
+      ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
+      val res = ccon.get[ProofDefinitions].components.keySet.map( x => ccon.get[ProofDefinitions].components.getOrElse( x, Set() ) ).foldLeft( 0 )( ( x, y ) => x + y.size )
+      res must_== 10
+    }
+
+    "Instantiating schematic pluscomm proof" in {
+      val ccon = ctx.newMutable
+      ArithmeticInductionToSchema( pluscomm, Const( "Commutativity", TBase( "nat" ) ) )( ccon )
+      val P = hoc"Proof: nat>nat"
+      val proof = instantiateProof.Instantiate( le"$P ${natMaker( 10 )}" )( ccon )
+      ctx.check( proof )
+      ok
+    }
+  }
+
 }
 

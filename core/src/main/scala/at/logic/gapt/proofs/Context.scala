@@ -588,7 +588,7 @@ object Context {
           "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
           "Extraneous formulas: " +
           referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
-      val conn = SequentConnector.guessInjection( declSeq, referencedProof.conclusion )
+      val conn = SequentConnector.guessInjection( fromLower = referencedProof.conclusion, toUpper = declSeq )
       val defn = ProofDefinition( lhs, conn, referencedProof )
       ctx.state.update[ProofDefinitions]( _ + defn )
     }
