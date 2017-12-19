@@ -25,7 +25,7 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
               val outputSeq = sigma( endSequentLeft.replaceAt( con, subproof.endSequent( hypoth ) ) )
               ContractionMacroRule( CutRule( ProofLink( syntacticMatching( formNorm, subproof.endSequent( hypoth ) ).get( proofName ), outputSeq ), outputSeq.indexOf( outputProof.endSequent( hypoth ) ), outputProof, hypoth ), sigma( endSequentLeft ) )
             } )
-/*            else {
+            /*            else {
               val newante = endSequentLeft.antecedent.filter( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
               val newsuc = endSequentLeft.succedent.filterNot( t => subproof.endSequent.indexOfOption( t ).isEmpty && ( !t.contains( typeTerm ) || !freeVariables( t ).contains( typeTerm.asInstanceOf[Var] ) ) )
               WeakeningRightMacroRule( WeakeningLeftMacroRule( subproof, newante ), newsuc )
