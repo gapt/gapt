@@ -24,10 +24,9 @@ object instantiateProof {
    */
   def withConnector( proofName: Expr )( implicit ctx: Context ): ( SequentConnector, LKProof ) = {
     ctx.get[Context.ProofDefinitions].findWithConnector( proofName ).headOption match {
-      case Some( ( connLink2DefPrf, subst, defPrf ) ) =>
+      case Some( ( connDefPrf2Link, subst, defPrf ) ) =>
         val ( instPrf, connInstPrf2SubstDefPrf ) = buildProof.withSequentConnector( subst( defPrf ), ctx )
-        println( connInstPrf2SubstDefPrf + "   " + connLink2DefPrf )
-        connInstPrf2SubstDefPrf * connLink2DefPrf.inv -> instPrf
+        connInstPrf2SubstDefPrf * connDefPrf2Link -> instPrf
       case None =>
         val Some( sequent ) = ctx.get[Context.ProofNames].lookup( proofName )
         SequentConnector( sequent ) -> ProofLink( proofName, sequent )
@@ -39,6 +38,7 @@ object instantiateProof {
   private object buildProof extends LKVisitor[Context] {
     override def visitProofLink( link: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
       val ( connInstProof2Link, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
+      // TODO: we need to add weakenings here, since LKVisitor expects us not to remove formulas
       ( instProof, connInstProof2Link )
     }
   }
