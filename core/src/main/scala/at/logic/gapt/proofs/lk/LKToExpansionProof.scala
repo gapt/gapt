@@ -13,7 +13,7 @@ object LKToExpansionProof {
    * @return The expansion proof Ex(π).
    */
   def apply( proof: LKProof )( implicit ctx: Context = Context() ): ExpansionProof = {
-    val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( proof ) ) )
+    val ( theory, expansionSequent ) = extract( regularize( AtomicExpansion( makeInductionExplicit( proof ) ) ) )
     val theory_ = ETMerge.byShallowFormula( theory )
     eliminateMerges( moveDefsUpward( ExpansionProof( theory_ ++: expansionSequent ) ) )
   }
@@ -150,7 +150,7 @@ object LKToExpansionProof {
       ( subCuts, subSequent.delete( aux ) :+ ETDefinition( main, subSequent( aux ) ) )
 
     case p @ InductionRule( _, _, _ ) =>
-      val ( subCuts, subSequent ) = extract( makeInductionExplicit( p ) )
-      ( subSequent( Ant( 0 ) ) +: subCuts ) -> ( subSequent.delete( Ant( 0 ) ) )
+      // TODO: remove makeInductionExplicit and construct expansion tree here
+      ???
   }
 }
