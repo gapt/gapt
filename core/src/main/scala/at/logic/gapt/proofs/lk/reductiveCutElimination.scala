@@ -985,7 +985,7 @@ class FreeCutElimination( implicit val ctx: Context ) {
           val ( tempProof, tempConnector ) = super.recurse( proof, () )
           reduction( tempProof ) match {
             case Some( ( newProof, _ ) ) =>
-              ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+              ( newProof, SequentConnector.guessInjection( fromLower = proof.conclusion, toUpper = newProof.conclusion ).inv )
             case None => ( tempProof, tempConnector )
           }
         }

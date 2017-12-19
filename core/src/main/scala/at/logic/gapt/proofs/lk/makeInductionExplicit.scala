@@ -53,6 +53,6 @@ object makeInductionExplicit extends LKVisitor[Unit] {
       ForallLeftRule( explicitFOLp, indprin, Abs( proof.quant, proof.qfFormula ) )
 
     val ( proof_, occConn ) = recurse( explicitHOLp, () )
-    ( proof_, occConn * SequentConnector.guessInjection( explicitHOLp.conclusion, proof.conclusion ).inv )
+    ( proof_, occConn * SequentConnector.guessInjection( fromLower = proof.conclusion, toUpper = explicitHOLp.conclusion ).inv )
   }
 }
