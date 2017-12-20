@@ -35,7 +35,7 @@ class Metis extends ResolutionProver with ExternalProgram {
         } else if ( lines.exists( _.startsWith( "SZS status Satisfiable" ) ) ) {
           None
         } else {
-          throw new IllegalArgumentException
+          throw new IllegalArgumentException( s"Cannot parse metis output:\n$output" )
         }
       } )
 
