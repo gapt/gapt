@@ -21,10 +21,10 @@ class Metis extends ResolutionProver with ExternalProgram {
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
         val output = runProcess.withTempInputFile( Seq( "metis", "--show", "proof" ), tptpIn )
         val lines = output.split( "\n" ).toSeq
-        if ( lines.exists( _.startsWith( "SZS status Unsatisfiable" ) ) ) {
+        if ( lines.exists( _.contains( "SZS status Unsatisfiable" ) ) ) {
           val tptpDerivation = lines.
-            dropWhile( !_.startsWith( "SZS output start CNFRefutation " ) ).drop( 1 ).
-            takeWhile( !_.startsWith( "SZS output end CNFRefutation " ) ).
+            dropWhile( !_.contains( "SZS output start CNFRefutation " ) ).drop( 1 ).
+            takeWhile( !_.contains( "SZS output end CNFRefutation " ) ).
             mkString( "\n" )
           RefutationSketchToResolution( TptpProofParser.parse( StringInputFile( tptpDerivation ), labelledCNF mapValues {
             Seq( _ )
@@ -32,7 +32,7 @@ class Metis extends ResolutionProver with ExternalProgram {
             case Right( proof ) => Some( proof )
             case Left( error )  => throw new IllegalArgumentException( error.toString )
           }
-        } else if ( lines.exists( _.startsWith( "SZS status Satisfiable" ) ) ) {
+        } else if ( lines.exists( _.contains( "SZS status Satisfiable" ) ) ) {
           None
         } else {
           throw new IllegalArgumentException( s"Cannot parse metis output:\n$output" )
