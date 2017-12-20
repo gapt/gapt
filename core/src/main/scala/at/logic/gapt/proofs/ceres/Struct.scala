@@ -6,20 +6,21 @@
 package at.logic.gapt.proofs.ceres
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Sequent
+
 import scala.math.max
 
 /**
  * The superclass for all struct elements: atom, negated atom, junction, times and the neutral elememts for the latter
  * two. For details refer to Bruno Woltzenlogel-Paleo's PhD Thesis.
- * @tparam Data the extraction algorithms for lksk and schema need to pass a list of additional data to the struct
  */
-trait Struct[Data] {
+trait Struct {
   /**
    * Struct equality without taking the additional data into account.
    * @param that the struct to compare with
    * @return true if the structs are equal modulo data, false otherwise
    */
-  def formula_equal( that: Struct[Data] ): Boolean
+  def formula_equal( that: Struct ): Boolean
 
   /**
    * Calculates the size (number of nodes of the tree) of the struct.
@@ -38,44 +39,40 @@ trait Struct[Data] {
    * Allows to access the calculus-specific data of the struct
    * @return the corresponding data element
    */
-  def getData(): List[Data]
 
   def toFormula: Formula
 
   def label: Expr
 
-  def children: Seq[Struct[Data]]
+  def children: Seq[Struct]
 }
 
 object Times {
   //create a series of of times applications and add the same data to each
-  def apply[Data]( structs: Vector[Struct[Data]], aux: List[Data] ): Struct[Data] = structs match {
+  def apply( structs: Vector[Struct] ): Struct = structs match {
     case Vector()                  => EmptyTimesJunction()
-    case EmptyTimesJunction() +: l => apply( l, aux )
+    case EmptyTimesJunction() +: l => apply( l )
     case Vector( s1 )              => s1
-    case s1 +: tail                => apply( s1, apply( tail, aux ), aux )
+    case s1 +: tail                => apply( s1, apply( tail ) )
   }
 }
 
-case class Times[Data]( left: Struct[Data], right: Struct[Data], data: List[Data] = Nil ) extends Struct[Data] {
+case class Times( left: Struct, right: Struct ) extends Struct {
   override def toString(): String = "(" + left + " ⊗ " + right + ")"
-  override def formula_equal( s: Struct[Data] ) = s match {
-    case Times( x, y, aux ) => left.formula_equal( x ) && right.formula_equal( y ) &&
-      aux.diff( data ).isEmpty && data.diff( aux ).isEmpty
-    case _ => false
+  override def formula_equal( s: Struct ) = s match {
+    case Times( x, y ) => left.formula_equal( x ) && right.formula_equal( y )
+    case _             => false
   }
 
   override def size() = 1 + left.size() + right.size()
   override def alternations() = {
     ( left, right ) match {
-      case ( Times( _, _, _ ), Times( _, _, _ ) ) => max( left.alternations(), right.alternations() )
-      case ( Times( _, _, _ ), _ )                => max( left.alternations(), 1 + right.alternations() )
-      case ( _, Times( _, _, _ ) )                => max( 1 + left.alternations(), right.alternations() )
-      case _                                      => 1 + max( left.alternations(), right.alternations() )
+      case ( Times( _, _ ), Times( _, _ ) ) => max( left.alternations(), right.alternations() )
+      case ( Times( _, _ ), _ )             => max( left.alternations(), 1 + right.alternations() )
+      case ( _, Times( _, _ ) )             => max( 1 + left.alternations(), right.alternations() )
+      case _                                => 1 + max( left.alternations(), right.alternations() )
     }
   }
-
-  override def getData = data
 
   def toFormula = left.toFormula | right.toFormula
 
@@ -84,9 +81,9 @@ case class Times[Data]( left: Struct[Data], right: Struct[Data], data: List[Data
 
 }
 
-case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[Data] {
+case class Plus( left: Struct, right: Struct ) extends Struct {
   override def toString(): String = "(" + left + " ⊕ " + right + ")"
-  override def formula_equal( s: Struct[Data] ) = s match {
+  override def formula_equal( s: Struct ) = s match {
     case Plus( x, y ) => left.formula_equal( x ) && right.formula_equal( y )
     case _            => false
   }
@@ -99,16 +96,15 @@ case class Plus[Data]( left: Struct[Data], right: Struct[Data] ) extends Struct[
       case _                              => 1 + max( left.alternations(), right.alternations() )
     }
   }
-  override def getData = Nil
 
   def toFormula = left.toFormula & right.toFormula
 
   def label = Const( "⊕", To ->: To ->: To )
   def children = Seq( left, right )
 }
-case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
+case class Dual( sub: Struct ) extends Struct {
   override def toString(): String = "~(" + sub + ")"
-  override def formula_equal( s: Struct[Data] ) = s match {
+  override def formula_equal( s: Struct ) = s match {
     case Dual( x ) => sub.formula_equal( x )
     case _         => false
   }
@@ -119,23 +115,21 @@ case class Dual[Data]( sub: Struct[Data] ) extends Struct[Data] {
       case _         => 1 + sub.size
     }
   }
-  override def getData = Nil
 
   def toFormula = -sub.toFormula
 
   def label = Const( "~", To ->: To )
   def children = Seq( sub )
 }
-case class A[Data]( fo: Formula, data: List[Data] ) extends Struct[Data] { // Atomic Struct
+case class A( fo: Formula ) extends Struct { // Atomic Struct
   override def toString(): String = fo.toString
-  override def formula_equal( s: Struct[Data] ) = s match {
-    case A( x, _ ) => fo syntaxEquals ( x )
-    case _         => false
+  override def formula_equal( s: Struct ) = s match {
+    case A( x ) => fo syntaxEquals ( x )
+    case _      => false
   }
 
   override def size() = 1
   override def alternations() = 0
-  override def getData = Nil
 
   def toFormula = fo
 
@@ -143,19 +137,41 @@ case class A[Data]( fo: Formula, data: List[Data] ) extends Struct[Data] { // At
   def children = Seq()
 }
 
-object A {
-  def apply[Data]( fo: Formula ): Struct[Data] = A[Data]( fo, Nil )
+case class CLS( proof: Expr, config: Sequent[Boolean] ) extends Struct { // Clause Set Symbol Struct
+  override def toString(): String = {
+    val Apps( Const( pn, _ ), vs ) = proof
+    "CLS(" + pn + " , " + config.toString + " , " + vs.toString() + ")"
+  }
+  override def formula_equal( s: Struct ) = s match {
+    case CLS( n, c ) => {
+      val Apps( Const( pn, _ ), vs ) = proof
+      val Apps( Const( pn2, _ ), vs2 ) = n
+      pn2.matches( pn ) && c.equals( config ) && vs.equals( vs2 )
+    }
+    case _ => false
+  }
+  override def size() = 1
+  override def alternations() = 0
+
+  def toFormula = {
+    val Apps( Const( pn, _ ), vs ) = proof
+    Atom( "CL" + "[" + pn + "," + config.toString + "]", vs )
+  }
+  def label = {
+    val Apps( Const( pn, _ ), vs ) = proof
+    Atom( "CL" + "[" + pn + "," + config.toString + "]", vs )
+  }
+  def children = Seq()
 }
 
-case class EmptyTimesJunction[Data]() extends Struct[Data] {
+case class EmptyTimesJunction() extends Struct {
   override def toString(): String = "ε⊗"
-  override def formula_equal( s: Struct[Data] ) = s match {
+  override def formula_equal( s: Struct ) = s match {
     case EmptyTimesJunction() => true
     case _                    => false
   }
   override def size() = 1
   override def alternations() = 0
-  override def getData = Nil
 
   def toFormula = Bottom()
 
@@ -163,15 +179,14 @@ case class EmptyTimesJunction[Data]() extends Struct[Data] {
   def children = Seq()
 }
 
-case class EmptyPlusJunction[Data]() extends Struct[Data] {
+case class EmptyPlusJunction() extends Struct {
   override def toString(): String = "ε⊕"
-  override def formula_equal( s: Struct[Data] ) = s match {
+  override def formula_equal( s: Struct ) = s match {
     case EmptyPlusJunction() => true
     case _                   => false
   }
   override def size() = 1
   override def alternations() = 0
-  override def getData = Nil
 
   def toFormula = Top()
 
@@ -181,17 +196,28 @@ case class EmptyPlusJunction[Data]() extends Struct[Data] {
 
 /* convenience object allowing to create and match a set of plus nodes */
 object PlusN {
-  def apply[Data]( l: List[Struct[Data]] ): Struct[Data] = l match {
+  def apply( l: List[Struct] ): Struct = l match {
     case Nil      => EmptyPlusJunction()
     case x :: Nil => x
     case x :: xs  => Plus( x, PlusN( xs ) )
   }
 
-  def unapply[Data]( s: Struct[Data] ): Option[List[Struct[Data]]] = Some( unapply_( s ) )
+  def unapply( s: Struct ): Option[List[Struct]] = Some( unapply_( s ) )
 
-  private def unapply_[Data]( s: Struct[Data] ): List[Struct[Data]] = s match {
+  private def unapply_( s: Struct ): List[Struct] = s match {
     case Plus( l, r ) => unapply_( l ) ++ unapply_( r )
     case _            => s :: Nil
+  }
+}
+
+//Returns all Schematic Leaves
+object SchematicLeafs {
+  def apply( l: Struct ): Set[Struct] = l match {
+    case Times( le, r ) => SchematicLeafs( le ) ++ SchematicLeafs( r )
+    case Plus( le, r )  => SchematicLeafs( le ) ++ SchematicLeafs( r )
+    case CLS( x, y )    => Set[Struct]( l )
+    case _              => Set[Struct]()
+
   }
 }
 

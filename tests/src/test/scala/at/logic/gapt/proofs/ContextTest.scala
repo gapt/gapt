@@ -80,4 +80,23 @@ class ContextTest extends Specification {
     ok
   }
 
+  "proof definitions" in {
+    import at.logic.gapt.proofs.lk._
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"c: i"
+    ctx += hoc"a: i>o"; ctx += hoc"b: i>o"
+    ctx += hoc"p: i>o"; ctx += ProofNameDeclaration( le"p x", hos"a x :- b x" )
+
+    ctx += hoc"sorry: o"; ctx += ProofNameDeclaration( le"sorry", hos":-" )
+    def proofOf( sequent: HOLSequent ): LKProof = WeakeningMacroRule( ProofLink( le"sorry" ), sequent )
+
+    ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos"a c :- b c" ) )
+    ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos":- b c" ) )
+
+    ( ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos"a c :- b c, b c" ) ) ) must throwAn[IllegalArgumentException]
+    ( ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos"a c :- b c, a c" ) ) ) must throwAn[IllegalArgumentException]
+    ( ctx += ProofDefinitionDeclaration( le"p c", proofOf( hos":- a c, b c" ) ) ) must throwAn[IllegalArgumentException]
+    ( ctx += ProofDefinitionDeclaration( le"p x", proofOf( hos":- b c" ) ) ) must throwAn[IllegalArgumentException]
+  }
+
 }

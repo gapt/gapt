@@ -187,7 +187,7 @@ object ResolutionToLKProof {
             }
             // FIXME: do this properly
             val proof4 = ReductiveCutElimination( proof3 )
-            ( proof4, SequentConnector.guessInjection( proof3.conclusion, proof4.conclusion ) * conn )
+            ( proof4, SequentConnector.guessInjection( toUpper = proof3.conclusion, fromLower = proof4.conclusion ) * conn )
           } else {
             val ( proofNew, conn ) = super.recurse( proof, isAncestor )
             contract( proofNew, conn )
