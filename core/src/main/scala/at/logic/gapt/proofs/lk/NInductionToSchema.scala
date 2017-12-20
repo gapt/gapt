@@ -27,9 +27,9 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
               val sigma2 = syntacticMatching( formNorm, subproof.endSequent( hypoth ) ).get
               ContractionMacroRule(
                 CutRule(
-                ProofLink( sigma2( proofName ), outputSeq ),
-                outputSeq.indexOf( outputProof.endSequent( hypoth ) ),
-                outputProof, hypoth ),
+                  ProofLink( sigma2( proofName ), outputSeq ),
+                  outputSeq.indexOf( outputProof.endSequent( hypoth ) ),
+                  outputProof, hypoth ),
                 sigma( endSequentLeft ) )
             } )
             ArithmeticInductionToSchema( finProof, sigma( proofName ) )( ctx )

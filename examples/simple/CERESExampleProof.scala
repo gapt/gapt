@@ -25,7 +25,7 @@ object CERESExpansionExampleProof {
 
     val p8 = ContractionLeftRule(
       ForallLeftRule(
-      ForallLeftRule( p5, fof"!x (P(x)->P(g(x)))", c ), fof"!x (P(x)->P(g(x)))", g( c ) ),
+        ForallLeftRule( p5, fof"!x (P(x)->P(g(x)))", c ), fof"!x (P(x)->P(g(x)))", g( c ) ),
       fof"!x (P(x)->P(g(x)))" )
 
     val p11 = ParamodulationRightRule( TheoryAxiom( seq ), ax1, LogicalAxiom( fof"P(f(f(z)))" ),

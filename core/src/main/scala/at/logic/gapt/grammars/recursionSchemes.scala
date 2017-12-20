@@ -399,9 +399,9 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
     val topLevelStableTerms = stableTerms( allTerms, neededVars.toSeq ).filter( !_.isInstanceOf[Var] )
     val argumentStableTerms = stableTerms(
       allTerms
-      flatMap { case Apps( _, as ) => as }
-      flatMap { subTerms( _ ) }
-      filter { _.ty.isInstanceOf[TBase] },
+        flatMap { case Apps( _, as ) => as }
+        flatMap { subTerms( _ ) }
+        filter { _.ty.isInstanceOf[TBase] },
       neededVars.toSeq )
 
     var rules = template.flatMap {
