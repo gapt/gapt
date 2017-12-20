@@ -34,14 +34,14 @@ object pushAllWeakeningsToLeaves {
         case weakening @ WeakeningLeftRule( _, _ ) =>
           if ( !weakeningOnlySubTree( weakening ) ) {
             val ( newProof, _ ) = recurse( pushSingleWeakeningToLeaves( weakening ), () )
-            ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+            ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
           } else {
             ( proof, SequentConnector( proof.conclusion ) )
           }
         case weakening @ WeakeningRightRule( _, _ ) =>
           if ( !weakeningOnlySubTree( weakening ) ) {
             val ( newProof, _ ) = recurse( pushSingleWeakeningToLeaves( weakening ), () )
-            ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+            ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
           } else {
             ( proof, SequentConnector( proof.conclusion ) )
           }
@@ -56,7 +56,7 @@ object pushSingleWeakeningToLeaves {
 
   def withConnector( proof: LKProof ): ( LKProof, SequentConnector ) = {
     val newProof = apply( proof )
-    ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+    ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
   }
 
   /**
@@ -159,7 +159,7 @@ object pushSingleWeakeningToLeaves {
 
     case eq @ EqualityRightRule( subProof, _, _, _ ) =>
       val newSubProof = pushSingleWeakeningToLeaves( subProof, side, formula )
-      val connector = SequentConnector.guessInjection( newSubProof.conclusion, subProof.conclusion ).inv
+      val connector = SequentConnector.guessInjection( subProof.conclusion, newSubProof.conclusion ).inv
       EqualityRightRule( newSubProof, connector.child( eq.eq ), connector.child( eq.aux ), eq.replacementContext )
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
@@ -176,8 +176,8 @@ object pushSingleWeakeningToLeaves {
         inductionCase =>
           val newCaseProof = pushSingleWeakeningToLeaves( inductionCase.proof, side, formula )
           val connector = SequentConnector.guessInjection(
-            newCaseProof.conclusion,
-            inductionCase.proof.conclusion ).inv
+            inductionCase.proof.conclusion,
+            newCaseProof.conclusion ).inv
           inductionCase.copy(
             proof = newCaseProof,
             hypotheses = inductionCase.hypotheses.map( connector.child ),
