@@ -1,5 +1,6 @@
 package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.SequentConnector.guessInjection
 import at.logic.gapt.proofs._
 
 object instantiateProof {
@@ -38,8 +39,9 @@ object instantiateProof {
   private object buildProof extends LKVisitor[Context] {
     override def visitProofLink( link: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
       val ( connInstProof2Link, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
-      // TODO: we need to add weakenings here, since LKVisitor expects us not to remove formulas
-      ( instProof, connInstProof2Link )
+      val weakSeq = link.referencedSequent.filterNot( t => ( instProof.endSequent.find( w => t.equals( w ) ).nonEmpty ) )
+      val finProof = WeakeningRightMacroRule( WeakeningLeftMacroRule( instProof, weakSeq.antecedent ), weakSeq.succedent )
+      ( finProof, guessInjection( finProof.endSequent, link.referencedSequent ) )
     }
   }
 

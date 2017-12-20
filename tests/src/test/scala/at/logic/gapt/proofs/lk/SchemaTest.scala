@@ -61,7 +61,7 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
 }
 
 class SchemaTest extends Specification {
- /* {
+  {
     import tautSchema.ctx
     "simple schema basecase" in {
       val proof = instantiateProof.Instantiate( le"taut ${natMaker( 0 )}" )
@@ -339,7 +339,6 @@ class SchemaTest extends Specification {
       ok
     }
   }
-  */
 
   {
     import at.logic.gapt.examples.induction.numbers.ctx
