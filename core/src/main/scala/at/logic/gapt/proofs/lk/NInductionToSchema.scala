@@ -5,9 +5,6 @@ import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs.{ Context, MutableContext, SequentConnector }
 
 object CreateASchemaVersion extends LKVisitor[MutableContext] {
-  def apply( p: LKProof )( implicit ctx: MutableContext ): LKProof =
-    apply( p, ctx )
-
   override protected def recurse( p: LKProof, ctx: MutableContext ): ( LKProof, SequentConnector ) =
     p match {
       case proof @ InductionRule( casesI, form, typeTerm ) =>
