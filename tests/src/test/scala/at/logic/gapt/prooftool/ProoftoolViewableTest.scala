@@ -29,6 +29,8 @@ class ProoftoolViewableTest extends Specification {
     implicitly[ProoftoolViewable[HOLSequent]]
     implicitly[ProoftoolViewable[ExtendedProofDatabase]]
 
+    implicitly[ProoftoolViewable[Struct]]
+
     ok
   }
 
