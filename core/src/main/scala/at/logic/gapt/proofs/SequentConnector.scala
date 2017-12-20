@@ -214,14 +214,6 @@ object SequentConnector {
   }
 
   /**
-   * Guesses an SequentConnector, such that each element in lowerSequent gets connected to
-   * a different element in upperSequent.
-   */
-  @deprecated( "Use guessInjection instead", since = "2.9" )
-  def guessInjectionOld[A]( upperSequent: Sequent[A], lowerSequent: Sequent[A] ): SequentConnector =
-    guessInjection( toUpper = upperSequent, fromLower = lowerSequent )
-
-  /**
    * Guesses a SequentConnector, such that each element in lower gets connected to a different element in upper.
    */
   def guessInjection[A]( fromLower: Sequent[A], toUpper: Sequent[A] ): SequentConnector = {
