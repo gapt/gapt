@@ -16,7 +16,7 @@ import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
 import at.logic.gapt.provers.sat.Sat4j
 import at.logic.gapt.provers.smtlib.Z3
 import at.logic.gapt.provers.verit.VeriT
-import at.logic.gapt.utils.{ logger, Maybe, metrics }
+import at.logic.gapt.utils.{ logger, Maybe }
 import logger._
 
 trait GrammarFindingMethod {
@@ -218,12 +218,12 @@ object CutIntroduction {
   }
 
   private def solStructMetrics( solStruct: SolutionStructure, name: String ) = {
-    metrics.value( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
-    metrics.value( s"${name}sol_scomp", solStruct.formulas.map( expressionSize( _ ) ).sum )
-    metrics.value( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp( f ).size ).sum )
+    logger.metric( s"${name}sol_lcomp", solStruct.formulas.map( lcomp( _ ) ).sum )
+    logger.metric( s"${name}sol_scomp", solStruct.formulas.map( expressionSize( _ ) ).sum )
+    logger.metric( s"${name}sol_nclauses", solStruct.formulas.map( f => CNFp( f ).size ).sum )
     val clauseSizes = solStruct.formulas.flatMap( CNFp.apply ).map( _.size )
-    metrics.value( s"${name}sol_maxclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.max )
-    metrics.value( s"${name}sol_avgclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.sum.toFloat / clauseSizes.size )
+    logger.metric( s"${name}sol_maxclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.max )
+    logger.metric( s"${name}sol_avgclssize", if ( clauseSizes.isEmpty ) 0 else clauseSizes.sum.toFloat / clauseSizes.size )
   }
 
   def compressToSolutionStructure(
@@ -231,7 +231,7 @@ object CutIntroduction {
     method:     GrammarFindingMethod = DeltaTableMethod() ): Option[SolutionStructure] = {
     val InputProof( ep, backgroundTheory ) = inputProof
 
-    metrics.value( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
+    logger.metric( "quant_input", numberOfInstancesET( ep.expansionSequent ) )
 
     info( s"Quantifier inferences in the input proof: ${numberOfInstancesET( ep.expansionSequent )}" )
 
@@ -243,22 +243,22 @@ object CutIntroduction {
     val termset = groundTerms( encoding encode ep )
     val weightedTermsetSize = termset.view.map { case Apps( _, args ) => args.size }.sum
 
-    metrics.value( "termset", termset.size )
-    metrics.value( "termset_wsize", weightedTermsetSize )
-    metrics.value( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
-    metrics.value( "termset_trivial", termset.size == termset.map { case Apps( r, _ ) => r }.size )
+    logger.metric( "termset", termset.size )
+    logger.metric( "termset_wsize", weightedTermsetSize )
+    logger.metric( "termset_scomp", termset.toSeq map { expressionSize( _ ) } sum )
+    logger.metric( "termset_trivial", termset.size == termset.map { case Apps( r, _ ) => r }.size )
     info( s"Size of term set: ${termset.size} (weighted by root symbol arity = $weightedTermsetSize)" )
 
     val herbrandSequent = extractInstances( ep )
     val herbrandSequentProof = backgroundTheory.prover.getLKProof( herbrandSequent ).getOrElse {
       throw new UnprovableException( "Cannot prove Herbrand sequent.", herbrandSequent )
     }
-    metrics.value( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
-    metrics.value( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
-    metrics.value( "hs_lkinf", herbrandSequentProof.treeLike.size )
+    logger.metric( "hs_lcomp", herbrandSequent.elements.map( lcomp( _ ) ).sum )
+    logger.metric( "hs_scomp", expressionSize( herbrandSequent.toDisjunction ) )
+    logger.metric( "hs_lkinf", herbrandSequentProof.treeLike.size )
 
 /********** Grammar finding **********/
-    metrics.time( "grammar" ) {
+    logger.time( "grammar" ) {
       method.findGrammars( termset )
     }.filter { g =>
       g.productions.exists( _._1 != g.startSymbolNT )
@@ -267,15 +267,15 @@ object CutIntroduction {
       None
     }.flatMap { vtratGrammar =>
       val generatedLanguage = vtratGrammar.language
-      metrics.value( "grammar_lang_size", generatedLanguage.size )
+      logger.metric( "grammar_lang_size", generatedLanguage.size )
       termset foreach { term =>
         if ( !( generatedLanguage contains term ) )
           throw new NonCoveringGrammarException( vtratGrammar, term )
       }
 
-      metrics.value( "grammar_size", vtratGrammar.size )
-      metrics.value( "grammar_wsize", vtratGrammar.weightedSize )
-      metrics.value( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
+      logger.metric( "grammar_size", vtratGrammar.size )
+      logger.metric( "grammar_wsize", vtratGrammar.weightedSize )
+      logger.metric( "grammar_scomp", vtratGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
 
       info( s"Smallest grammar of size ${vtratGrammar.size} (weighted by vector size = ${vtratGrammar.weightedSize}):\n$vtratGrammar" )
 
@@ -285,13 +285,13 @@ object CutIntroduction {
       require( canonicalSS.isValid( backgroundTheory.prover ) )
       solStructMetrics( canonicalSS, "can" )
 
-      val minimizedSS = metrics.time( "minsol" ) { improveSolutionLK( canonicalSS, backgroundTheory.prover, backgroundTheory.hasEquality ) }
+      val minimizedSS = logger.time( "minsol" ) { improveSolutionLK( canonicalSS, backgroundTheory.prover, backgroundTheory.hasEquality ) }
       for ( ( cf, i ) <- minimizedSS.formulas.zipWithIndex )
         info( s"CNF of minimized cut-formula number $i:\n${CNFp( cf ).map( "  " + _ ).mkString( "\n" )}" )
       require( minimizedSS.isValid( backgroundTheory.prover ) )
       solStructMetrics( minimizedSS, "min" )
 
-      val beautifiedSS = metrics.time( "beausol" ) { beautifySolution( minimizedSS ) }
+      val beautifiedSS = logger.time( "beausol" ) { beautifySolution( minimizedSS ) }
       require( beautifiedSS.isValid( backgroundTheory.prover ) )
       solStructMetrics( beautifiedSS, "beau" )
 
@@ -299,10 +299,10 @@ object CutIntroduction {
       val lcompMinSol = minimizedSS.formulas.map( lcomp( _ ) ).sum
       val lcompBeauSol = beautifiedSS.formulas.map( lcomp( _ ) ).sum
       val beauGrammar = sehsToVTRATG( encoding, beautifiedSS.sehs )
-      metrics.value( "beaugrammar_size", beauGrammar.size )
-      metrics.value( "beaugrammar_wsize", beauGrammar.weightedSize )
-      metrics.value( "beaugrammar_scomp", beauGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
-      metrics.value( "beausol", beautifiedSS.formulas.map( _.toString ) )
+      logger.metric( "beaugrammar_size", beauGrammar.size )
+      logger.metric( "beaugrammar_wsize", beauGrammar.weightedSize )
+      logger.metric( "beaugrammar_scomp", beauGrammar.productions.toSeq flatMap { _._2 } map { expressionSize( _ ) } sum )
+      logger.metric( "beausol", beautifiedSS.formulas.map( _.toString ) )
 
       if ( beautifiedSS.formulas.nonEmpty ) {
         if ( beautifiedSS.sehs == minimizedSS.sehs ) {
@@ -324,9 +324,9 @@ object CutIntroduction {
         val ehsResolutionProof = backgroundTheory.prover.getLKProof( ehsSequent ).getOrElse {
           throw new UnprovableException( "Cannot prove extended Herbrand sequent.", ehsSequent )
         }
-        metrics.value( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
-        metrics.value( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
-        metrics.value( "ehs_lkinf", ehsResolutionProof.treeLike.size )
+        logger.metric( "ehs_lcomp", ehsSequent.elements.map( lcomp( _ ) ).sum )
+        logger.metric( "ehs_scomp", expressionSize( ehsSequent.toDisjunction ) )
+        logger.metric( "ehs_lkinf", ehsResolutionProof.treeLike.size )
 
         Some( beautifiedSS )
       } else {
@@ -337,17 +337,17 @@ object CutIntroduction {
   }
 
   def constructLKProof( solStruct: SolutionStructure, backgroundTheory: BackgroundTheory ): LKProof = {
-    val proofWithStructuralRules = metrics.time( "prcons" ) {
+    val proofWithStructuralRules = logger.time( "prcons" ) {
       buildProofWithCut( solStruct, backgroundTheory.prover )
     }
 
-    val proof = metrics.time( "cleanproof" ) {
+    val proof = logger.time( "cleanproof" ) {
       cleanStructuralRules( proofWithStructuralRules )
     }
 
-    metrics.value( "lkcuts_output", cutsNumber( proof ) )
-    metrics.value( "lkinf_output", rulesNumber( proof ) )
-    metrics.value( "lkquant_output", quantRulesNumber( proof ) )
+    logger.metric( "lkcuts_output", cutsNumber( proof ) )
+    logger.metric( "lkinf_output", rulesNumber( proof ) )
+    logger.metric( "lkquant_output", quantRulesNumber( proof ) )
     info( s"Number of cuts introduced: ${cutsNumber( proof )}" )
     info( s"Total inferences in the proof with cut(s): ${rulesNumber( proof )}" )
     info( s"Quantifier inferences in the proof with cut(s): ${quantRulesNumber( proof )}" )

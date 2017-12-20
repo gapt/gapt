@@ -5,7 +5,7 @@ import at.logic.gapt.expr.fol.folSubTerms
 import at.logic.gapt.expr.fol.thresholds._
 import at.logic.gapt.expr.hol.{ atoms, lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.{ MaxSATSolver, bestAvailableMaxSatSolver }
-import at.logic.gapt.utils.metrics
+import at.logic.gapt.utils.logger
 
 import scala.collection.{ GenTraversable, mutable }
 
@@ -181,15 +181,15 @@ object minimizeVTRATG {
   def apply( g: VTRATG, lang: Set[Expr], maxSATSolver: MaxSATSolver = bestAvailableMaxSatSolver,
              weight: VTRATG.Production => Int = _ => 1 ): VTRATG = {
     val formula = new VectGrammarMinimizationFormula( g )
-    val hard = metrics.time( "minform" ) { formula.coversLanguage( lang ) }
-    metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
+    val hard = logger.time( "minform" ) { formula.coversLanguage( lang ) }
+    logger.metric( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
     val atomsInHard = atoms( hard )
     val soft = for {
       p <- g.productions
       atom = formula productionIsIncluded p
       if atomsInHard contains atom
     } yield -atom -> weight( p )
-    metrics.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
+    logger.time( "maxsat" ) { maxSATSolver.solve( hard, soft ) } match {
       case Some( interp ) => VTRATG( g.startSymbol, g.nonTerminals,
         g.productions.filter { p => interp( formula.productionIsIncluded( p ) ) } )
       case None => throw new Exception( "Grammar does not cover language." )
@@ -213,8 +213,8 @@ object findMinimalVTRATG {
   def apply( lang: Set[Expr], aritiesOfNonTerminals: VtratgParameter,
              maxSATSolver: MaxSATSolver             = bestAvailableMaxSatSolver,
              weight:       VTRATG.Production => Int = _ => 1 ) = {
-    val polynomialSizedCoveringGrammar = metrics.time( "stabgrammar" ) { stableVTRATG( lang, aritiesOfNonTerminals ) }
-    metrics.value( "stabgrammar", polynomialSizedCoveringGrammar.size )
+    val polynomialSizedCoveringGrammar = logger.time( "stabgrammar" ) { stableVTRATG( lang, aritiesOfNonTerminals ) }
+    logger.metric( "stabgrammar", polynomialSizedCoveringGrammar.size )
     minimizeVTRATG( polynomialSizedCoveringGrammar, lang, maxSATSolver, weight )
   }
 }
