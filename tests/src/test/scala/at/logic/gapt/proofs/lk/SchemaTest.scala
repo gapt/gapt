@@ -62,6 +62,15 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
 
 class SchemaTest extends Specification {
   {
+
+    import NdiffSchema.ctx
+    "NdiffSchema Instantiate " in {
+      val proof = instantiateProof( le"omega ${natMaker( 15 )}" )
+      ctx.check( proof )
+      ok
+    }
+  }
+  {
     import tautSchema.ctx
     "simple schema basecase" in {
       val proof = instantiateProof.Instantiate( le"taut ${natMaker( 0 )}" )
