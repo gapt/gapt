@@ -15,8 +15,12 @@ object proveWithPi2Cut {
    * Constructs a proof for a given schematic Pi2-grammar if a cut formula exists
    * @param endSequent A provable Sequent for which the method builds a proof with Pi2-cut
    * @param seHs The given schematic Pi2-grammar
-   * @param nameOfExistentialVariable The user can name the existential variable of the cut formula. (Default = xCut; In case the name is already taken the method looks for a similar name)
-   * @param nameOfUniversalVariable The user can name the universal variable of the cut formula. (Default = yCut; In case the name is already taken the method looks for a similar name)
+   * @param nameOfExistentialVariable The user can name the existential variable of the cut formula.
+   *                                  (Default = xCut; In case the name is already taken
+   *                                  the method looks for a similar name)
+   * @param nameOfUniversalVariable The user can name the universal variable of the cut formula.
+   *                                (Default = yCut; In case the name is already taken
+   *                                the method looks for a similar name)
    * @return Optiontype that contains a proof with Pi2-cut if a Pi2-cut formula exists
    */
   def apply(
@@ -25,7 +29,8 @@ object proveWithPi2Cut {
     nameOfExistentialVariable: Var              = fov"yCut",
     nameOfUniversalVariable:   Var              = fov"xCut" ): ( Option[LKProof] ) = {
 
-    val ( cutFormulaWithoutQuantifiers: Option[Formula], nameOfExVa: Var, nameOfUnVa: Var ) = introducePi2Cut( seHs, nameOfExistentialVariable, nameOfUniversalVariable )
+    val ( cutFormulaWithoutQuantifiers: Option[Formula], nameOfExVa: Var, nameOfUnVa: Var ) =
+      introducePi2Cut( seHs, nameOfExistentialVariable, nameOfUniversalVariable )
 
     cutFormulaWithoutQuantifiers match {
       case Some( t ) => giveProof( t, seHs, endSequent, nameOfExVa, nameOfUnVa )
@@ -38,7 +43,8 @@ object proveWithPi2Cut {
 
   /**
    * The construction of the proof itself
-   * @param cutFormulaWithoutQuantifiers The quantifier-free cut formula that corresponds to the schematic Pi2-grammar
+   * @param cutFormulaWithoutQuantifiers The quantifier-free cut formula
+   *                                     that corresponds to the schematic Pi2-grammar
    * @param seHs The given schematic Pi2-grammar
    * @param endSequent A provable Sequent for which the method builds a proof with Pi2-cut
    * @param nameOfExVa Name of the existential variable of the cut-formula

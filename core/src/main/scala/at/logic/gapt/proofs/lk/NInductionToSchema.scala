@@ -19,11 +19,18 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
         casesI.foreach {
           case InductionCase( subproof, _, hy, _, con ) =>
             val sigma = syntacticMatching( formNorm, subproof.endSequent( con ) ).get
-            val endSequentLeft = ctx.get[ProofNames].lookup( proofName ).getOrElse( { throw new Exception( "Proof not defined" ) } )
+            val endSequentLeft = ctx.get[ProofNames].lookup( proofName ).getOrElse {
+              throw new Exception( "Proof not defined" )
+            }
             val finProof = hy.foldLeft( subproof )( ( outputProof, hypoth ) => {
               val outputSeq = endSequentLeft.replaceAt( con, subproof.endSequent( hypoth ) )
               val sigma2 = syntacticMatching( formNorm, subproof.endSequent( hypoth ) ).get
-              ContractionMacroRule( CutRule( ProofLink( sigma2( proofName ), outputSeq ), outputSeq.indexOf( outputProof.endSequent( hypoth ) ), outputProof, hypoth ), sigma( endSequentLeft ) )
+              ContractionMacroRule(
+                CutRule(
+                ProofLink( sigma2( proofName ), outputSeq ),
+                outputSeq.indexOf( outputProof.endSequent( hypoth ) ),
+                outputProof, hypoth ),
+                sigma( endSequentLeft ) )
             } )
             ArithmeticInductionToSchema( finProof, sigma( proofName ) )( ctx )
         }

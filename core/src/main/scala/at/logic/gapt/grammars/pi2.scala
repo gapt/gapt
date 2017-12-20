@@ -18,7 +18,8 @@ import at.logic.gapt.utils.metrics
  * The right side of the cut has alternating weak and strong quantifier inferences.  Say `r` is the term of
  * the weak quantifier inference, then `β` is the eigenvariable such that `φ(r,β)`.
  * We store this as the production `β → r`.
- * Additionally, we require that there is *exactly one* production for each `β` (this condition is missing from pre-grammars)
+ * Additionally, we require that there is *exactly one* production for each `β`
+ * (this condition is missing from pre-grammars)
  */
 case class Pi2PreGrammar(
     startSymbol: Var,
@@ -73,7 +74,8 @@ object stablePi2Grammar {
 
     Pi2PreGrammar( startSymbol, alpha, betas,
       Vector() ++
-        ( for ( rhs <- stableTerms( language, Seq( alpha ) ) ++ stableTerms( language, betas ) ) yield startSymbol -> rhs ) ++
+        ( for ( rhs <- stableTerms( language, Seq( alpha ) ) ++ stableTerms( language, betas ) )
+          yield startSymbol -> rhs ) ++
         ( for ( rhs <- stableTerms( folSubTerms( language ).filter( _.ty == alpha.ty ), Seq( alpha ) ) )
           yield alpha -> rhs ) ++
         ( for {
@@ -134,7 +136,8 @@ object minimizePi2Grammar {
     // We require that the set of α-productions is nonempty.
     val alphaNonempty = Or( for ( p @ ( lhs, _ ) <- g.productions if lhs == g.alpha ) yield prodinc( p ) )
 
-    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality & expressibilityCondition & alphaNonempty
+    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality &
+      expressibilityCondition & alphaNonempty
     metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1

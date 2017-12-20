@@ -11,8 +11,8 @@ import at.logic.gapt.proofs.lk.{ LKToExpansionProof, LKProof }
  *
  * Each expansion tree is transformed into a list of instances of its shallow formula.
  *
- * In contrast to [[ExpansionProof.deep]], this function doesn't produce conjunctions of instances, but instead increases the
- * number of formulas in the antecedent/succedent.
+ * In contrast to [[ExpansionProof.deep]], this function doesn't produce conjunctions of instances,
+ * but instead increases the number of formulas in the antecedent/succedent.
  */
 object extractInstances {
   def apply( expansionTree: ExpansionTree ): Set[Formula] =
@@ -71,13 +71,15 @@ object groundTerms {
  *
  * The end-sequent will be internally transformed into one which is in variable normal form.
  *
- * In the case of cut-introduction, the end-sequent has no free variables and no strong quantifiers and we're encoding a Herbrand sequent as a
+ * In the case of cut-introduction, the end-sequent has no free variables and no strong quantifiers
+ * and we're encoding a Herbrand sequent as a
  * set of terms.  A term r_i(t_1,...,t_n) encodes an instance of the formula "forall x_1 ... x_n, phi(x_1,...,x_n)"
  * using the instances (t_1,...,t_n).
  *
  * In the case of inductive proofs, the end-sequent contains strong quantifiers variable (alpha).  Here, we consider
- * proofs of instance sequents, which are obtained by e.g. substituting a numeral for alpha.  Hence the formulas occurring
- * in the end-sequents of instance proofs are substitution instances of [[endSequent]]; the encoded terms still only
+ * proofs of instance sequents, which are obtained by e.g. substituting a numeral for alpha.
+ * Hence the formulas occurring in the end-sequents of instance proofs are substitution instances of [[endSequent]];
+ * the encoded terms still only
  * capture the instances used in the instance proofs--i.e. not alpha.
  */
 class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTermType: Ty ) {
@@ -112,7 +114,9 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   /**
    * The quantified variables of each formula in the end-sequent.
    */
-  val quantVars = endSequent.map( getWeakQuantVars( _, Polarity.InAntecedent ), getWeakQuantVars( _, Polarity.InSuccedent ) )
+  val quantVars = endSequent.map(
+    getWeakQuantVars( _, Polarity.InAntecedent ),
+    getWeakQuantVars( _, Polarity.InSuccedent ) )
 
   /**
    * Assigns each formula in the end-sequent a fresh function symbol name used to encode its instances.
@@ -206,7 +210,10 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
     ExpansionProof( decodeToExpansionSequent( terms ) )
 
   def encode( recursionScheme: RecursionScheme ): RecursionScheme = {
-    val encodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( To, argTypes ) ) => c -> Const( name, FunctionType( instanceTermType, argTypes ) ) }.toMap
+    val encodedNTs = recursionScheme.nonTerminals.map {
+      case c @ Const( name, FunctionType( To, argTypes ) ) =>
+        c -> Const( name, FunctionType( instanceTermType, argTypes ) )
+    }.toMap
     RecursionScheme( encodedNTs( recursionScheme.startSymbol ), encodedNTs.values.toSet,
       recursionScheme.rules map {
         case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if encodedNTs contains rhsNT =>
@@ -217,7 +224,10 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
   }
 
   def decode( recursionScheme: RecursionScheme ): RecursionScheme = {
-    val decodedNTs = recursionScheme.nonTerminals.map { case c @ Const( name, FunctionType( `instanceTermType`, argTypes ) ) => c -> Const( name, FunctionType( To, argTypes ) ) }.toMap
+    val decodedNTs = recursionScheme.nonTerminals.map {
+      case c @ Const( name, FunctionType( `instanceTermType`, argTypes ) ) =>
+        c -> Const( name, FunctionType( To, argTypes ) )
+    }.toMap
     RecursionScheme( decodedNTs( recursionScheme.startSymbol ), decodedNTs.values.toSet,
       recursionScheme.rules map {
         case Rule( Apps( lhsNT: Const, lhsArgs ), Apps( rhsNT: Const, rhsArgs ) ) if decodedNTs contains rhsNT =>

@@ -8,11 +8,13 @@ import Doc._
 /**
  * Exports lambda expressions in the Babel format.
  * You probably do not want to use this class, use one of [[at.logic.gapt.expr.Expr#toString expression.toString]],
- * [[at.logic.gapt.expr.Expr#toSigRelativeString .toSigRelativeString]], or [[at.logic.gapt.expr.Expr#toAsciiString .toAsciiString]] instead.
+ * [[at.logic.gapt.expr.Expr#toSigRelativeString .toSigRelativeString]], or
+ * [[at.logic.gapt.expr.Expr#toAsciiString .toAsciiString]] instead.
  * These are all implemented using this class.
  *
  * @param unicode  Whether to output logical connectives using Unicode symbols.
- * @param sig  The Babel signature, to decide whether we need to escape constants because they do not fit the naming convention.
+ * @param sig  The Babel signature, to decide whether we need to escape constants because they
+ *             do not fit the naming convention.
  */
 class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean = false ) {
 
@@ -123,9 +125,12 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
         val ( e_, t1 ) = show( e, true, bound, t0, prio.quantOrNeg + 1 )
         ( parenIf( p, prio.quantOrNeg, ( if ( unicode ) "¬" else "-" ) <> e_ ), t1 )
 
-      case And( a, b ) if !bound( AndC.name ) => showBin( if ( unicode ) "∧" else "&", prio.conj, 1, 0, a, b, true, bound, t0, p )
-      case Or( a, b ) if !bound( OrC.name )   => showBin( if ( unicode ) "∨" else "|", prio.disj, 1, 0, a, b, true, bound, t0, p )
-      case Imp( a, b ) if !bound( ImpC.name ) => showBin( if ( unicode ) "⊃" else "->", prio.impl, 0, 1, a, b, true, bound, t0, p )
+      case And( a, b ) if !bound( AndC.name ) =>
+        showBin( if ( unicode ) "∧" else "&", prio.conj, 1, 0, a, b, true, bound, t0, p )
+      case Or( a, b ) if !bound( OrC.name ) =>
+        showBin( if ( unicode ) "∨" else "|", prio.disj, 1, 0, a, b, true, bound, t0, p )
+      case Imp( a, b ) if !bound( ImpC.name ) =>
+        showBin( if ( unicode ) "⊃" else "->", prio.impl, 0, 1, a, b, true, bound, t0, p )
 
       case Abs( v @ Var( vn, vt ), e ) =>
         val ( e_, t1 ) = show( e, knownType, bound + vn, t0 - vn, prio.lam + 1 )

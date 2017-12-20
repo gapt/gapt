@@ -1,7 +1,7 @@
 package at.logic.gapt.formats.llk
 
 import at.logic.gapt.formats.llk.LLKTypes.{ LLKSignature, emptyLLKSignature }
-import util.parsing.combinator.JavaTokenParsers
+import scala.util.parsing.combinator.JavaTokenParsers
 
 import scala.util.parsing.combinator.PackratParsers
 import at.logic.gapt.expr._
@@ -17,7 +17,9 @@ package ast {
   };
 
   case class Var( name: String ) extends LambdaAST { def varnames = List( name ) }
-  case class App( args: List[LambdaAST] ) extends LambdaAST { def varnames = args.foldLeft[List[String]]( Nil )( ( x, e ) => x ++ e.varnames ) }
+  case class App( args: List[LambdaAST] ) extends LambdaAST {
+    def varnames = args.foldLeft[List[String]]( Nil )( ( x, e ) => x ++ e.varnames )
+  }
   case class Abs( v: Var, t: LambdaAST ) extends LambdaAST { def varnames = v.name :: t.varnames }
   case class All( v: Var, t: LambdaAST ) extends LambdaAST { def varnames = v.name :: t.varnames }
   case class Exists( v: Var, t: LambdaAST ) extends LambdaAST { def varnames = v.name :: t.varnames }
@@ -39,7 +41,8 @@ class LLKASTParser extends JavaTokenParsers with PackratParsers {
   def parseFormula( s: String ): LambdaAST = parseAll( formula, s ) match {
     case Success( result, _ ) => result
     case NoSuccess( msg, input ) =>
-      throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
+      throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos +
+        ". Error message: " + msg )
   }
 
   lazy val pformula: PackratParser[LambdaAST] = parens( formula ) | allformula | exformula
@@ -153,7 +156,8 @@ class DeclarationParser extends LLKASTParser {
   def parseDeclaration( s: String ): LLKSignature = parseAll( declaration_list, s ) match {
     case Success( result, _ ) => result
     case NoSuccess( msg, input ) =>
-      throw new Exception( "Error parsing type declaration '" + s + "' at position " + input.pos + ". Error message: " + msg )
+      throw new Exception( "Error parsing type declaration '" + s + "' at position " + input.pos +
+        ". Error message: " + msg )
   }
 
   lazy val symbolnames = atomregexp | """((<|>)=?)|(!?=)|[+\-*]""".r
@@ -162,7 +166,8 @@ class DeclarationParser extends LLKASTParser {
   lazy val ti: PackratParser[Ty] = "i" ^^ { _ => Ti }
   lazy val to: PackratParser[Ty] = "o" ^^ { _ => To }
   lazy val simpleType: PackratParser[Ty] = ti | to
-  lazy val complexType: PackratParser[Ty] = ( ( complexType | parens( complexType ) ) ~ ">" ~ ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 ->: t2 } | simpleType
+  lazy val complexType: PackratParser[Ty] = ( ( complexType | parens( complexType ) ) ~ ">" ~
+    ( complexType | parens( complexType ) ) ) ^^ { case t1 ~ _ ~ t2 => t1 ->: t2 } | simpleType
 
   lazy val constdecl: PackratParser[LLKSignature] = "const" ~ rep1sep( symbolnames, "," ) ~ ":" ~ complexType ^^ {
     case _ ~ varnames ~ _ ~ exptype => emptyLLKSignature ++ ( varnames map ( x => ( x, Const( x, exptype ) ) ) )
@@ -235,7 +240,8 @@ class LLKFormulaParser {
     DeclarationParser.parseAll( DeclarationParser.formula, s ) match {
       case DeclarationParser.Success( result, _ ) => ASTtoHOL( create, result )
       case DeclarationParser.NoSuccess( msg, input ) =>
-        throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
+        throw new Exception( "Error parsing HOL formula '" + s + "' at position " +
+          input.pos + ". Error message: " + msg )
     }
 
   }
@@ -245,7 +251,8 @@ class LLKFormulaParser {
       case DeclarationParser.Success( ( declarations, tree ), _ ) =>
         ASTtoHOL( x => declarations( x ), tree )
       case DeclarationParser.NoSuccess( msg, input ) =>
-        throw new Exception( "Error parsing HOL formula '" + s + "' at position " + input.pos + ". Error message: " + msg )
+        throw new Exception( "Error parsing HOL formula '" + s + "' at position " +
+          input.pos + ". Error message: " + msg )
     }
 
   }

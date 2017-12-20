@@ -35,7 +35,8 @@ case class DrupForget( clause: HOLClause ) extends DrupProofLine
 /**
  * DRUP proof.
  *
- * A DRUP proof consists of a sequence of clauses.  Each clause is either a [[DrupInput]], a [[DrupDerive]], or a [[DrupForget]].
+ * A DRUP proof consists of a sequence of clauses.  Each clause is either a [[DrupInput]], a [[DrupDerive]],
+ * or a [[DrupForget]].
  */
 case class DrupProof( refutation: Seq[DrupProofLine] ) {
   override def toString = refutation.reverse.mkString( "\n" )
@@ -64,8 +65,14 @@ object DrupToResolutionProof {
 
     def negate( lit: Literal ) = ( lit._1, !lit._2 )
     def resolve( p: ResProofThunk, unit: ResProofThunk, lit: Literal ): ResProofThunk =
-      if ( lit._2.inSuc ) ( p._1.removeFromSuccedent( lit._1 ), Later( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
-      else ( p._1.removeFromAntecedent( lit._1 ), Later( Factor( Resolution( unit._2.value, p._2.value, lit._1 ) ) ) )
+      if ( lit._2.inSuc )
+        (
+          p._1.removeFromSuccedent( lit._1 ),
+          Later( Factor( Resolution( p._2.value, unit._2.value, lit._1 ) ) ) )
+      else
+        (
+          p._1.removeFromAntecedent( lit._1 ),
+          Later( Factor( Resolution( unit._2.value, p._2.value, lit._1 ) ) ) )
 
     // Handle a new clause, and fully interreduce it with the clauses we have found so far
     def add( p: ResProofThunk ): Unit =

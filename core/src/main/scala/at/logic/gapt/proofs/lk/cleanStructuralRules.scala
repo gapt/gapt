@@ -9,7 +9,8 @@ object cleanStructuralRules {
    *
    * @param proof The LKProof to be transformed.
    * @param reductive Whether the algorithm is allowed to discard "unnecessary" subproofs. True by default.
-   * @return A proof of the same end sequent (up to a permutation) in which all weakenings are performed as late as possible.
+   * @return A proof of the same end sequent (up to a permutation) in which all weakenings are
+   *         performed as late as possible.
    */
   def apply( proof: LKProof, reductive: Boolean = true ): LKProof = withSequentConnector( proof, reductive )._1
 
@@ -18,7 +19,8 @@ object cleanStructuralRules {
    *
    * @param proof The LKProof to be transformed.
    * @param reductive Whether the algorithm is allowed to discard "unnecessary" subproofs. True by default.
-   * @return A proof of the same end sequent (up to a permutation) in which all weakenings are performed as late as possible;
+   * @return A proof of the same end sequent (up to a permutation) in which all weakenings are
+   *         performed as late as possible;
    *         and an SequentConnector relating the end sequents of the old and new proofs.
    */
   def withSequentConnector( proof: LKProof, reductive: Boolean = true ): ( LKProof, SequentConnector ) = {
@@ -31,9 +33,12 @@ object cleanStructuralRules {
    *
    * @param proof An LKProof.
    * @param reductive Whether the algorithm is allowed to discard "unnecessary" subproofs. True by default.
-   * @return A new LKProof proofNew and an SequentConnector conn relating the end sequent of the old and new proofs in the following
-   *         manner: If i is an index of the end sequent of proof, then conn.child(i) is the index of the corresponding formula
-   *         occurrence in the end sequent of proofNew. If conn.child(i) is empty, then the occurrence was "weak" in the
+   * @return A new LKProof proofNew and an SequentConnector conn relating the end sequent of
+   *         the old and new proofs in the following
+   *         manner: If i is an index of the end sequent of proof, then conn.child(i) is the
+   *         index of the corresponding formula
+   *         occurrence in the end sequent of proofNew. If conn.child(i) is empty,
+   *         then the occurrence was "weak" in the
    *         old proof and its introduction has not happened yet in the new proof.
    */
   private def apply_( proof: LKProof, reductive: Boolean ): ( LKProof, SequentConnector ) = proof match {
@@ -93,10 +98,13 @@ object cleanStructuralRules {
         }
 
       else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val ( leftSubProofNew_, leftSubConnector_ ) = introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
-        val ( rightSubProofNew_, rightSubConnector_ ) = introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
+        val ( leftSubProofNew_, leftSubConnector_ ) =
+          introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
+        val ( rightSubProofNew_, rightSubConnector_ ) =
+          introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
 
-        val proofNew = CutRule( leftSubProofNew_, leftSubConnector_.child( aux1 ), rightSubProofNew_, rightSubConnector_.child( aux2 ) )
+        val proofNew = CutRule( leftSubProofNew_, leftSubConnector_.child( aux1 ),
+          rightSubProofNew_, rightSubConnector_.child( aux2 ) )
 
         ( proofNew, ( proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv )
           + ( proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv ) )
@@ -120,7 +128,8 @@ object cleanStructuralRules {
         // Find the first weak induction case
         val weakIndex = cases.indices.find( isWeak )
 
-        if ( reductive && weakIndex.nonEmpty ) { // We may throw away subproofs and there is a weak case → throw away everything else
+        if ( reductive && weakIndex.nonEmpty ) {
+          // We may throw away subproofs and there is a weak case → throw away everything else
           val i = weakIndex.get
           val ( subProofNew, subConnector ) = ( subProofsNew( i ), subConnectors( i ) )
 
@@ -130,7 +139,8 @@ object cleanStructuralRules {
           val ( casesNew, subConnectorsNew ) = ( for ( i <- cases.indices ) yield {
             val c = cases( i )
             val ( subProofNew, subConnector ) = ( subProofsNew( i ), subConnectors( i ) )
-            val ( subProofNew_, subConnector_ ) = introduceWeakenings( c.proof, subProofNew, subConnector, c.hypotheses :+ c.conclusion )
+            val ( subProofNew_, subConnector_ ) =
+              introduceWeakenings( c.proof, subProofNew, subConnector, c.hypotheses :+ c.conclusion )
             val hypothesesNew = c.hypotheses map { h => subConnector_.child( h ) }
             val conclusionNew = subConnector_.child( c.conclusion )
 
@@ -138,7 +148,8 @@ object cleanStructuralRules {
           } ).unzip
 
           val proofNew = InductionRule( casesNew, main, term )
-          val occConnectorsNew = for ( i <- p.immediateSubProofs.indices ) yield proofNew.occConnectors( i ) * subConnectorsNew( i ) * p.occConnectors( i ).inv
+          val occConnectorsNew = for ( i <- p.immediateSubProofs.indices )
+            yield proofNew.occConnectors( i ) * subConnectorsNew( i ) * p.occConnectors( i ).inv
 
           val occConnectorNew = occConnectorsNew.reduceLeft( _ + _ )
           ( proofNew, occConnectorNew )
@@ -182,7 +193,8 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getSequentConnector.inv )
 
         case _ => // One conjunct is weak → perform the weakening, then the ∧:l inference
-          val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( aux1, aux2 ) )
+          val ( subProofNew_, subConnector_ ) =
+            introduceWeakenings( subProof, subProofNew, subConnector, Seq( aux1, aux2 ) )
           val proofNew = AndLeftRule( subProofNew_, subConnector_.child( aux1 ), subConnector_.child( aux2 ) )
           ( proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv )
       }
@@ -208,10 +220,13 @@ object cleanStructuralRules {
         }
 
       else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val ( leftSubProofNew_, leftSubConnector_ ) = introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
-        val ( rightSubProofNew_, rightSubConnector_ ) = introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
+        val ( leftSubProofNew_, leftSubConnector_ ) =
+          introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
+        val ( rightSubProofNew_, rightSubConnector_ ) =
+          introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
 
-        val proofNew = AndRightRule( leftSubProofNew_, leftSubConnector_.child( aux1 ), rightSubProofNew_, rightSubConnector_.child( aux2 ) )
+        val proofNew = AndRightRule( leftSubProofNew_, leftSubConnector_.child( aux1 ),
+          rightSubProofNew_, rightSubConnector_.child( aux2 ) )
 
         ( proofNew, ( proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv )
           + ( proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv ) )
@@ -238,10 +253,13 @@ object cleanStructuralRules {
         }
 
       else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val ( leftSubProofNew_, leftSubConnector_ ) = introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
-        val ( rightSubProofNew_, rightSubConnector_ ) = introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
+        val ( leftSubProofNew_, leftSubConnector_ ) =
+          introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
+        val ( rightSubProofNew_, rightSubConnector_ ) =
+          introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
 
-        val proofNew = OrLeftRule( leftSubProofNew_, leftSubConnector_.child( aux1 ), rightSubProofNew_, rightSubConnector_.child( aux2 ) )
+        val proofNew = OrLeftRule( leftSubProofNew_, leftSubConnector_.child( aux1 ),
+          rightSubProofNew_, rightSubConnector_.child( aux2 ) )
 
         ( proofNew, ( proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv )
           + ( proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv ) )
@@ -260,7 +278,8 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getSequentConnector.inv )
 
         case _ => // One disjunct is weak → perform the weakening, then the ∨:r inference
-          val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( aux1, aux2 ) )
+          val ( subProofNew_, subConnector_ ) =
+            introduceWeakenings( subProof, subProofNew, subConnector, Seq( aux1, aux2 ) )
           val proofNew = OrRightRule( subProofNew_, subConnector_.child( aux1 ), subConnector_.child( aux2 ) )
           ( proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv )
       }
@@ -286,10 +305,13 @@ object cleanStructuralRules {
         }
 
       else { // Not allowed to throw away subproofs, so we have to perform some weakenings
-        val ( leftSubProofNew_, leftSubConnector_ ) = introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
-        val ( rightSubProofNew_, rightSubConnector_ ) = introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
+        val ( leftSubProofNew_, leftSubConnector_ ) =
+          introduceWeakenings( leftSubProof, leftSubProofNew, leftSubConnector, Seq( aux1 ) )
+        val ( rightSubProofNew_, rightSubConnector_ ) =
+          introduceWeakenings( rightSubProof, rightSubProofNew, rightSubConnector, Seq( aux2 ) )
 
-        val proofNew = ImpLeftRule( leftSubProofNew_, leftSubConnector_.child( aux1 ), rightSubProofNew_, rightSubConnector_.child( aux2 ) )
+        val proofNew = ImpLeftRule( leftSubProofNew_, leftSubConnector_.child( aux1 ),
+          rightSubProofNew_, rightSubConnector_.child( aux2 ) )
 
         ( proofNew, ( proofNew.getLeftSequentConnector * leftSubConnector_ * p.getLeftSequentConnector.inv )
           + ( proofNew.getRightSequentConnector * rightSubConnector_ * p.getRightSequentConnector.inv ) )
@@ -308,7 +330,8 @@ object cleanStructuralRules {
           ( subProofNew, subConnector * p.getSequentConnector.inv )
 
         case _ => // One aux formula is weak → perform the weakening, then the →:r inference
-          val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( aux1, aux2 ) )
+          val ( subProofNew_, subConnector_ ) =
+            introduceWeakenings( subProof, subProofNew, subConnector, Seq( aux1, aux2 ) )
           val proofNew = ImpRightRule( subProofNew_, subConnector_.child( aux1 ), subConnector_.child( aux2 ) )
           ( proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv )
       }
@@ -399,8 +422,11 @@ object cleanStructuralRules {
         case Seq() => // The aux formula is weak → do nothing
           ( subProofNew, subConnector * p.getSequentConnector.inv )
 
-        case _ => // The aux formula is not weak → introduce the equation by weakening, if necessary, then perform the inference
-          val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( eq ) )
+        case _ =>
+          // The aux formula is not weak → introduce the equation by weakening,
+          // if necessary, then perform the inference
+          val ( subProofNew_, subConnector_ ) =
+            introduceWeakenings( subProof, subProofNew, subConnector, Seq( eq ) )
           val proofNew = EqualityLeftRule( subProofNew_, subConnector_.child( eq ), subConnector_.child( aux ), con )
           ( proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv )
       }
@@ -413,7 +439,9 @@ object cleanStructuralRules {
         case Seq() => // The aux formula is weak → do nothing
           ( subProofNew, subConnector * p.getSequentConnector.inv )
 
-        case _ => // The aux formula is not weak → introduce the equation by weakening, if necessary, then perform the inference
+        case _ =>
+          // The aux formula is not weak → introduce the equation by weakening,
+          // if necessary, then perform the inference
           val ( subProofNew_, subConnector_ ) = introduceWeakenings( subProof, subProofNew, subConnector, Seq( eq ) )
           val proofNew = EqualityRightRule( subProofNew_, subConnector_.child( eq ), subConnector_.child( aux ), con )
           ( proofNew, proofNew.getSequentConnector * subConnector_ * p.getSequentConnector.inv )
@@ -457,13 +485,17 @@ object cleanStructuralRules {
    *         2) conn relates subProofOld and proofNew;
    *         3)for each i in toBeIntroduced,conn.child(i) is nonempty.
    */
-  private def introduceWeakenings( subProofOld: LKProof, subProofNew: LKProof, subConnector: SequentConnector, toBeIntroduced: Seq[SequentIndex] ): ( LKProof, SequentConnector ) = {
+  private def introduceWeakenings( subProofOld: LKProof, subProofNew: LKProof,
+                                   subConnector:   SequentConnector,
+                                   toBeIntroduced: Seq[SequentIndex] ): ( LKProof, SequentConnector ) = {
     val premise = subProofOld.endSequent
 
-    ( ( subProofNew, subConnector ) /: toBeIntroduced ) { ( acc, idx ) => // Iterate over toBeIntroduced, generating a new subproof and connector in each step
+    ( ( subProofNew, subConnector ) /: toBeIntroduced ) { ( acc, idx ) =>
+      // Iterate over toBeIntroduced, generating a new subproof and connector in each step
       val ( currentProof, currentOC ) = acc
 
-      if ( currentOC.children( idx ).nonEmpty ) // If the index already has a descendant, we don't need to perform a weakening
+      if ( currentOC.children( idx ).nonEmpty )
+        // If the index already has a descendant, we don't need to perform a weakening
         ( currentProof, currentOC )
 
       else {

@@ -90,36 +90,39 @@ class LLKExporter( val expandTex: Boolean ) {
     p.formulas.foldLeft( ( vacc, cacc ) )( ( m, f ) => getTypes( f, m._1, m._2 ) )
   }
 
-  def getTypes( exp: Expr, vmap: Map[String, Ty], cmap: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) = exp match {
-    case Var( name, exptype ) =>
-      if ( vmap.contains( name ) ) {
-        if ( vmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + vmap( name ) + " != " + exptype )
+  def getTypes( exp: Expr, vmap: Map[String, Ty], cmap: Map[String, Ty] ): ( Map[String, Ty], Map[String, Ty] ) =
+    exp match {
+      case Var( name, exptype ) =>
+        if ( vmap.contains( name ) ) {
+          if ( vmap( name ) != exptype ) throw new Exception(
+            "Symbol clash for " + name + " " + vmap( name ) + " != " + exptype )
+          ( vmap, cmap )
+        } else {
+          ( vmap + ( ( name, exptype ) ), cmap )
+        }
+
+      case EqC( _ ) => ( vmap, cmap )
+
+      case NonLogicalConstant( name, exptype ) =>
+        if ( cmap.contains( name ) ) {
+          if ( cmap( name ) != exptype ) throw new Exception(
+            "Symbol clash for " + name + " " + cmap( name ) + " != " + exptype )
+          ( vmap, cmap )
+        } else {
+          ( vmap, cmap + ( ( name, exptype ) ) )
+        }
+
+      case App( s, t ) =>
+        val ( vm, cm ) = getTypes( t, vmap, cmap )
+        getTypes( s, vm, cm )
+
+      case Abs( x, t ) =>
+        val ( vm, cm ) = getTypes( t, vmap, cmap )
+        getTypes( x, vm, cm )
+
+      case _: LogicalConstant =>
         ( vmap, cmap )
-      } else {
-        ( vmap + ( ( name, exptype ) ), cmap )
-      }
-
-    case EqC( _ ) => ( vmap, cmap )
-
-    case NonLogicalConstant( name, exptype ) =>
-      if ( cmap.contains( name ) ) {
-        if ( cmap( name ) != exptype ) throw new Exception( "Symbol clash for " + name + " " + cmap( name ) + " != " + exptype )
-        ( vmap, cmap )
-      } else {
-        ( vmap, cmap + ( ( name, exptype ) ) )
-      }
-
-    case App( s, t ) =>
-      val ( vm, cm ) = getTypes( t, vmap, cmap )
-      getTypes( s, vm, cm )
-
-    case Abs( x, t ) =>
-      val ( vm, cm ) = getTypes( t, vmap, cmap )
-      getTypes( x, vm, cm )
-
-    case _: LogicalConstant =>
-      ( vmap, cmap )
-  }
+    }
 
   def getTypeString( t: Ty, outermost: Boolean = true ): String = t match {
     case Ti => "i"
@@ -149,14 +152,18 @@ class LLKExporter( val expandTex: Boolean ) {
       generateProof( p1, "\\IMPR" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     //binary rules
     case AndRightRule( p1, _, p2, _ ) =>
-      generateProof( p1, generateProof( p2, "\\ANDR" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\ANDR" + fsequentString( p.endSequent, escape_latex ) + nLine +
+        s, escape_latex ), escape_latex )
     case OrLeftRule( p1, _, p2, _ ) =>
-      generateProof( p1, generateProof( p2, "\\ORL" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\ORL" + fsequentString( p.endSequent, escape_latex ) + nLine +
+        s, escape_latex ), escape_latex )
     case ImpLeftRule( p1, _, p2, _ ) =>
-      generateProof( p1, generateProof( p2, "\\IMPL" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\IMPL" + fsequentString( p.endSequent, escape_latex ) + nLine +
+        s, escape_latex ), escape_latex )
     //structural rules
     case CutRule( p1, _, p2, _ ) =>
-      generateProof( p1, generateProof( p2, "\\CUT" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex ), escape_latex )
+      generateProof( p1, generateProof( p2, "\\CUT" + fsequentString( p.endSequent, escape_latex ) + nLine +
+        s, escape_latex ), escape_latex )
     case WeakeningLeftRule( p1, _ ) =>
       generateProof( p1, "\\WEAKL" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     case WeakeningRightRule( p1, _ ) =>
@@ -167,13 +174,17 @@ class LLKExporter( val expandTex: Boolean ) {
       generateProof( p1, "\\CONTRR" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     //quantifier rules
     case ForallLeftRule( p1, aux, main, term, qv ) =>
-      generateProof( p1, "\\ALLL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
+      generateProof( p1, "\\ALLL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" +
+        fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     case ForallRightRule( p1, main, eigenvar, qv ) =>
-      generateProof( p1, "\\ALLR{" + toLatexString.getFormulaString( eigenvar, true, escape_latex ) + "}" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
+      generateProof( p1, "\\ALLR{" + toLatexString.getFormulaString( eigenvar, true, escape_latex ) + "}" +
+        fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     case ExistsLeftRule( p1, main, eigenvar, qv ) =>
-      generateProof( p1, "\\EXL{" + toLatexString.getFormulaString( eigenvar, true, escape_latex ) + "}" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
+      generateProof( p1, "\\EXL{" + toLatexString.getFormulaString( eigenvar, true, escape_latex ) + "}" +
+        fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     case ExistsRightRule( p1, aux, main, term, qv ) =>
-      generateProof( p1, "\\EXR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
+      generateProof( p1, "\\EXR{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}" +
+        fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
     //equality rules
     case EqualityLeftRule( p1, _, _, _ ) =>
       generateProof( p1, "\\UEQL" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
@@ -185,7 +196,8 @@ class LLKExporter( val expandTex: Boolean ) {
     case DefinitionRightRule( p1, _, _ ) =>
       generateProof( p1, "\\DEF" + fsequentString( p.endSequent, escape_latex ) + nLine + s, escape_latex )
 
-    //TODO: this is only a way to write out the proof, but it cannot be read back in (labels are not handled by llk so far)
+    //TODO: this is only a way to write out the proof, but it cannot be read back in
+    // (labels are not handled by llk so far)
     /*
     case ExistsSkLeftRule( p1,  aux, main, term ) =>
       generateProof( p1, "\\EXSKL{" + toLatexString.getFormulaString( term, true, escape_latex ) + "}"
@@ -220,25 +232,30 @@ object toLatexString {
   def getFormulaString( f: Expr, outermost: Boolean = true, escape_latex: Boolean ): String = f match {
     case All( x, t ) =>
       val op = if ( escape_latex ) "\\forall" else "all"
-      "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
+      "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " +
+        getFormulaString( t, false, escape_latex ) + ")"
     case Ex( x, t ) =>
       val op = if ( escape_latex ) "\\exists" else "exists"
-      "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
+      "(" + op + " " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " +
+        getFormulaString( t, false, escape_latex ) + ")"
     case Neg( t1 ) =>
       val op = if ( escape_latex ) "\\neg" else "-"
       val str = " " + op + " " + getFormulaString( t1, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
     case And( t1, t2 ) =>
       val op = if ( escape_latex ) "\\land" else "&"
-      val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " + getFormulaString( t2, false, escape_latex )
+      val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " +
+        getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
     case Or( t1, t2 ) =>
       val op = if ( escape_latex ) "\\lor" else "|"
-      val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " + getFormulaString( t2, false, escape_latex )
+      val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " +
+        getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
     case Imp( t1, t2 ) =>
       val op = if ( escape_latex ) "\\rightarrow" else "->"
-      val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " + getFormulaString( t2, false, escape_latex )
+      val str = getFormulaString( t1, false, escape_latex ) + " " + op + " " +
+        getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
 
     case Var( v, _ )   => v.toString
@@ -250,12 +267,15 @@ object toLatexString {
       }
       val str: String =
         if ( args.length == 2 && sym.toString.matches( """(<|>|\\leq|\\geq|=|>=|<=)""" ) ) {
-          val str = getFormulaString( args( 0 ), false, escape_latex ) + " " + toLatexString.nameToLatexString( sym.toString ) + " " +
+          val str = getFormulaString( args( 0 ), false, escape_latex ) + " " +
+            toLatexString.nameToLatexString( sym.toString ) + " " +
             getFormulaString( args( 1 ), false, escape_latex )
           if ( outermost ) str else "(" + str + ")"
 
         } else
-          toLatexString.nameToLatexString( sym.toString ) + ( if ( args.isEmpty ) " " else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
+          toLatexString.nameToLatexString( sym.toString ) + (
+            if ( args.isEmpty ) " "
+            else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
       //if (outermost) str else "(" + str + ")"
       str
     case HOLFunction( f, args ) =>
@@ -264,19 +284,24 @@ object toLatexString {
         case Var( x, _ )   => x
       }
       if ( args.length == 2 && sym.toString.matches( """[+\-*/]""" ) )
-        "(" + getFormulaString( args( 0 ), false, escape_latex ) + " " + sym.toString + " " + getFormulaString( args( 1 ), false, escape_latex ) + ")"
+        "(" + getFormulaString( args( 0 ), false, escape_latex ) + " " + sym.toString + " " +
+          getFormulaString( args( 1 ), false, escape_latex ) + ")"
       else {
         if ( args.isEmpty )
           toLatexString.nameToLatexString( sym.toString )
         else
-          toLatexString.nameToLatexString( sym.toString ) + ( if ( args.isEmpty ) " " else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
+          toLatexString.nameToLatexString( sym.toString ) + (
+            if ( args.isEmpty ) " "
+            else args.map( getFormulaString( _, false, escape_latex ) ).mkString( "(", ", ", ")" ) )
       }
     // these cases need to be below the quantifiers and function/atom, since the latter are less general than abs/app
     case Abs( x, t ) =>
-      "(\\lambda " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
+      "(\\lambda " + getFormulaString( x.asInstanceOf[Var], false, escape_latex ) + " " +
+        getFormulaString( t, false, escape_latex ) + ")"
     case App( s, t ) =>
       if ( escape_latex )
-        "\\apply{ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + "}"
+        "\\apply{ " + getFormulaString( s, false, escape_latex ) + " " +
+          getFormulaString( t, false, escape_latex ) + "}"
       else
         "(@ " + getFormulaString( s, false, escape_latex ) + " " + getFormulaString( t, false, escape_latex ) + ")"
 

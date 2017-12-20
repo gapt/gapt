@@ -21,7 +21,8 @@ trait StructVisitor[Ret, T] {
     struct:    Struct,
     tranform:  StructTransformer[Ret, T],
     otherArgs: T ): Ret = {
-    val tranform2 = StructTransformer[Ret, T]( tranform.aF, tranform.tF, tranform.tD, tranform.pF, tranform.pD, tranform.dF, tranform.cF )
+    val tranform2 = StructTransformer[Ret, T]( tranform.aF, tranform.tF, tranform.tD,
+      tranform.pF, tranform.pD, tranform.dF, tranform.cF )
     tranform.dF( recurse( struct, tranform2, otherArgs ), otherArgs )
   }
   def visitAtomLeaf(
