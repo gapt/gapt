@@ -38,9 +38,9 @@ object instantiateProof {
 
   private object buildProof extends LKVisitor[Context] {
     override def visitProofLink( link: ProofLink, otherArg: Context ): ( LKProof, SequentConnector ) = {
-      val ( connInstProof2Link, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
-      val weakSeq = link.referencedSequent.filterNot( t => ( instProof.endSequent.find( w => t.equals( w ) ).nonEmpty ) )
-      val finProof = WeakeningRightMacroRule( WeakeningLeftMacroRule( instProof, weakSeq.antecedent ), weakSeq.succedent )
+      val ( _, instProof ) = instantiateProof.withConnector( link.referencedProof )( otherArg )
+      val weakSeq = link.referencedSequent.filterNot( t => instProof.endSequent.find( w => t.equals( w ) ).nonEmpty )
+      val finProof = WeakeningMacroRule( instProof, weakSeq )
       ( finProof, guessInjection( finProof.endSequent, link.referencedSequent ) )
     }
   }
