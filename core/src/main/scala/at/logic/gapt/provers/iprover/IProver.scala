@@ -21,6 +21,7 @@ class IProver extends ResolutionProver with ExternalProgram {
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
         val output = runProcess.withTempInputFile( Seq(
           "iproveropt",
+          "--schedule", "none",
           "--pure_diseq_elim", "false",
           "--splitting_mode", "none" ), tptpIn )
         val lines = output.split( "\n" ).toSeq
