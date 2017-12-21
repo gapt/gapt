@@ -200,18 +200,18 @@ class ExpansionProofToLK(
     } yield ev ).toSet
 
     theory.inductions.zipWithIndex.collectFirst {
-      case ( ETInduction.Induction( constructorsSteps, hyps, suc ), i ) if freeVariables( hyps.shallow ) intersect upcomingEVs isEmpty =>
+      case ( ETInduction.Induction( etCases, hyps, suc ), i ) if freeVariables( hyps.shallow ) intersect upcomingEVs isEmpty =>
         val newInductions = theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 }
-        def recSteps( constructorsSteps: Seq[( Const, ETInduction.Case )], cases: Seq[InductionCase] ): UnprovableOrLKProof = {
-          constructorsSteps match {
-            case ( c, ETInduction.Case( evs, auxiliary ) ) +: tail =>
+        def recCases( etCases: Seq[ETInduction.Case], lkCases: Seq[InductionCase] ): UnprovableOrLKProof = {
+          etCases match {
+            case ETInduction.Case( c, evs, auxiliary ) +: tail =>
               solve( Theory( theory.cuts, newInductions ), expSeq ++ auxiliary ) flatMap { p =>
                 if ( p.conclusion.intersect( auxiliary.shallow ).isEmpty ) Right( p )
                 else {
                   val pWkn = WeakeningMacroRule( p, auxiliary.shallow, strict = false )
                   val aIdxs = auxiliary.antecedent.map( a => pWkn.conclusion.indexOf( a.shallow, Polarity.InAntecedent ) )
                   val sIdx = pWkn.conclusion.indexOf( auxiliary.succedent.head.shallow, Polarity.InSuccedent )
-                  recSteps( tail, InductionCase( pWkn, c, aIdxs, evs, sIdx ) +: cases )
+                  recCases( tail, InductionCase( pWkn, c, aIdxs, evs, sIdx ) +: lkCases )
                 }
               }
             case Nil =>
@@ -221,7 +221,7 @@ class ExpansionProofToLK(
                   val All( v, f ) = suc.shallow
                   val freshVar = Var( rename.awayFrom( freeVariables( p.conclusion ) ).fresh( v.name ), v.ty )
                   ProofBuilder
-                    .c( InductionRule( cases, Abs( v, f ), freshVar ) )
+                    .c( InductionRule( lkCases, Abs( v, f ), freshVar ) )
                     .u( ForallRightRule( _, suc.shallow, freshVar ) )
                     .u( CutRule( _, p, suc.shallow ) )
                     .qed
@@ -229,7 +229,7 @@ class ExpansionProofToLK(
               }
           }
         }
-        recSteps( constructorsSteps, Seq.empty )
+        recCases( etCases, Seq.empty )
     }
   }
 

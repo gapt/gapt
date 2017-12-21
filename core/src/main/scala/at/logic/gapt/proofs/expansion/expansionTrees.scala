@@ -204,8 +204,8 @@ object ETCut {
 }
 
 object ETInduction {
-  case class Case( evs: Seq[Var], auxiliary: ExpansionSequent )
-  case class Induction( constructorsSteps: Seq[( Const, Case )], hyps: ExpansionTree, suc: ExpansionTree )
+  case class Case( constr: Const, evs: Seq[Var], auxiliary: ExpansionSequent )
+  case class Induction( constructorsSteps: Seq[Case], hyps: ExpansionTree, suc: ExpansionTree )
 
   def indAxioms( implicit ctx: Context ) =
     ctx.get[StructurallyInductiveTypes].constructors.map {
@@ -231,14 +231,14 @@ object ETInduction {
         case ret if sz == 0 => ( ret, Seq.empty )
       }
     }
-    def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[( Const, Case )] = {
+    def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[Case] = {
       constrs.zip( et.immediateSubProofs ).map {
         case ( constr, indCase ) =>
           val FunctionType( indTy, argTypes ) = constr.ty
           val ( ch, evs ) = getEvs( indCase, argTypes.length )
           val ets = getETs( ch, argTypes.filter( _ == indTy ).length )
           val ( hyps, suc ) = ets.splitAt( ets.length - 1 )
-          ( constr, Case( evs, ExpansionSequent( hyps, suc ) ) )
+          Case( constr, evs, ExpansionSequent( hyps, suc ) )
       }
     }
 
