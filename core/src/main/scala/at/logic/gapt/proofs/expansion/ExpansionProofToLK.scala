@@ -201,11 +201,11 @@ class ExpansionProofToLK(
 
     theory.inductions.zipWithIndex.collectFirst {
       case ( ETInduction.Induction( etCases, hyps, suc ), i ) if freeVariables( hyps.shallow ) intersect upcomingEVs isEmpty =>
-        val newInductions = theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 }
+        val newTheory = Theory( theory.cuts, theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 } )
         def recCases( etCases: Seq[ETInduction.Case], lkCases: Seq[InductionCase] ): UnprovableOrLKProof = {
           etCases match {
             case ETInduction.Case( c, evs, auxiliary ) +: tail =>
-              solve( Theory( theory.cuts, newInductions ), expSeq ++ auxiliary ) flatMap { p =>
+              solve( newTheory, expSeq ++ auxiliary ) flatMap { p =>
                 if ( p.conclusion.intersect( auxiliary.shallow ).isEmpty ) Right( p )
                 else {
                   val pWkn = WeakeningMacroRule( p, auxiliary.shallow, strict = false )
@@ -215,7 +215,7 @@ class ExpansionProofToLK(
                 }
               }
             case Nil =>
-              solve( Theory( theory.cuts, newInductions ), suc +: expSeq ) map { p =>
+              solve( newTheory, suc +: expSeq ) map { p =>
                 if ( !p.conclusion.contains( suc.shallow, Polarity.InAntecedent ) ) p
                 else {
                   val All( v, f ) = suc.shallow
