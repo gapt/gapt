@@ -358,14 +358,6 @@ object CutIntroduction {
   def apply( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod() ): Option[LKProof] =
     compressToSolutionStructure( inputProof, method ) map { constructLKProof( _, inputProof.backgroundTheory ) }
 
-  @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
-  def compressToLK( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    apply( inputProof, method )
-
-  @deprecated( "Use CutIntroduction(...) instead.", since = "2.3" )
-  def compressLKProof( inputProof: InputProof, method: GrammarFindingMethod = DeltaTableMethod(), verbose: Boolean = false ): Option[LKProof] =
-    apply( inputProof, method )
-
   /**
    * Computes the modified canonical solution, where instances of
    * formulas in the end-sequent are introduced as late as possible.
