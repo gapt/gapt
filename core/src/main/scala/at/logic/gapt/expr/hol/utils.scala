@@ -442,18 +442,18 @@ object formulaToSequent {
 }
 
 object inductionPrinciple {
-  def apply(indty: Ty, constrs: Seq[Const]) = {
-    val pred = Var("X", indty ->: To)
+  def apply( indty: Ty, constrs: Seq[Const] ) = {
+    val pred = Var( "X", indty ->: To )
 
     val hyps = constrs.map { constr =>
-      val FunctionType(`indty`, argtypes) = constr.ty
-      val vars = for ((at, i) <- argtypes.zipWithIndex) yield Var(s"x$i", at)
+      val FunctionType( `indty`, argtypes ) = constr.ty
+      val vars = for ( ( at, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", at )
 
-      All.Block(vars, vars.filter {
+      All.Block( vars, vars.filter {
         _.ty == indty
-      }.foldRight(pred(constr(vars: _*)))((v, f) => pred(v) --> f))
+      }.foldRight( pred( constr( vars: _* ) ) )( ( v, f ) => pred( v ) --> f ) )
     }
 
-    hof"∀X (${And(hyps)} ⊃ ∀x $pred x)"
+    hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
   }
 }

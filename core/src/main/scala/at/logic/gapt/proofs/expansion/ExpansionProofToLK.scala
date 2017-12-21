@@ -12,14 +12,12 @@ object PropositionalExpansionProofToLK extends ExpansionProofToLK( _ => None )
 
 class ExpansionProofToLK(
     theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
-  type Error = ( Seq[ETImp], ExpansionSequent )
-
   case class Theory( cuts: Seq[ETImp], inductions: Seq[ETInduction.Induction] ) {
     def getExpansionTrees: Seq[ETImp] = cuts ++ inductions.map( i => ETImp( i.hyps, i.suc ) )
   }
+  type Error = ( Theory, ExpansionSequent )
 
   def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context() ): UnprovableOrLKProof = {
-
     solve( Theory( expansionProof.cuts, expansionProof.inductions ), expansionProof.nonTheoryPart ).
       map( WeakeningMacroRule( _, expansionProof.nonTheoryPart.shallow ) )
   }
@@ -38,7 +36,7 @@ class ExpansionProofToLK(
       orElse( tryInduction( theory, expSeq ) ).
       orElse( tryBinary( theory, expSeq ) ).
       orElse( tryTheory( theory, expSeq ) ).
-      getOrElse( Left( ( theory.getExpansionTrees ) -> expSeq ) ).
+      getOrElse( Left( theory -> expSeq ) ).
       map {
         ContractionMacroRule( _ ).
           ensuring { _.conclusion isSubsetOf expSeq.shallow }
@@ -203,20 +201,16 @@ class ExpansionProofToLK(
 
     theory.inductions.zipWithIndex.collectFirst {
       case ( ETInduction.Induction( constructorsSteps, hyps, suc ), i ) if freeVariables( hyps.shallow ) intersect upcomingEVs isEmpty =>
-
         val newInductions = theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 }
-
         def recSteps( constructorsSteps: Seq[( Const, ETInduction.Case )], cases: Seq[InductionCase] ): UnprovableOrLKProof = {
           constructorsSteps match {
-            case ( c, ETInduction.Case( evs, steps ) ) +: tail =>
-              val ( ant, suc ) = steps.splitAt( steps.length - 1 )
-              solve( Theory( theory.cuts, newInductions ), ant ++: expSeq :++ suc ) flatMap { p =>
-                if ( ( ant.forall( a => !p.conclusion.contains( a.shallow, Polarity.InAntecedent ) )
-                  && !p.conclusion.contains( suc.head.shallow, Polarity.InSuccedent ) ) ) Right( p )
+            case ( c, ETInduction.Case( evs, auxiliary ) ) +: tail =>
+              solve( Theory( theory.cuts, newInductions ), expSeq ++ auxiliary ) flatMap { p =>
+                if ( p.conclusion.intersect( auxiliary.shallow ).isEmpty ) Right( p )
                 else {
-                  val pWkn = WeakeningMacroRule( p, Sequent( ant map { _.shallow }, suc map { _.shallow } ), strict = false )
-                  val aIdxs = ant.map( a => pWkn.conclusion.indexOf( a.shallow, Polarity.InAntecedent ) )
-                  val sIdx = pWkn.conclusion.indexOf( suc.head.shallow, Polarity.InSuccedent )
+                  val pWkn = WeakeningMacroRule( p, auxiliary.shallow, strict = false )
+                  val aIdxs = auxiliary.antecedent.map( a => pWkn.conclusion.indexOf( a.shallow, Polarity.InAntecedent ) )
+                  val sIdx = pWkn.conclusion.indexOf( auxiliary.succedent.head.shallow, Polarity.InSuccedent )
                   recSteps( tail, InductionCase( pWkn, c, aIdxs, evs, sIdx ) +: cases )
                 }
               }

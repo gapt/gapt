@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{HOLPosition, inductionPrinciple, instantiate}
+import at.logic.gapt.expr.hol.{ HOLPosition, inductionPrinciple, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
 import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs._
@@ -204,13 +204,11 @@ object ETCut {
 }
 
 object ETInduction {
-
-  case class Case( evs: Seq[Var], step: Seq[ExpansionTree] )
+  case class Case( evs: Seq[Var], auxiliary: ExpansionSequent )
   case class Induction( constructorsSteps: Seq[( Const, Case )], hyps: ExpansionTree, suc: ExpansionTree )
 
   def indAxioms( implicit ctx: Context ) =
     ctx.get[StructurallyInductiveTypes].constructors.map {
-      // TODO I think inductionPrinciple should be moved from makeInductionExplicit, so not to have a dependency on LK here
       case ( s, cs ) => ( inductionPrinciple( TBase( s ), cs ), cs )
     }
 
@@ -219,10 +217,10 @@ object ETInduction {
 
   def unapply( et: ExpansionTree )( implicit ctx: Context ) = {
 
-    def getHyps( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] = {
+    def getETs( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] = {
       et match {
-        case ETImp( ch1, ch2 ) if sz > 0 => ch1 +: getHyps( ch2, sz - 1 )
-        case ret if sz == 0              => List( ret )
+        case ETImp( ch1, ch2 ) if sz > 0 => ch1 +: getETs( ch2, sz - 1 )
+        case ret if sz == 0              => Seq( ret )
       }
     }
     def getEvs( et: ExpansionTree, sz: Int ): ( ExpansionTree, Seq[Var] ) = {
@@ -230,7 +228,7 @@ object ETInduction {
         case ETStrongQuantifier( _, ev, ch ) if sz > 0 =>
           val ( ret, evs ) = getEvs( ch, sz - 1 )
           ( ret, ev +: evs )
-        case ret if sz == 0 => ( ret, List.empty )
+        case ret if sz == 0 => ( ret, Seq.empty )
       }
     }
     def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[( Const, Case )] = {
@@ -238,7 +236,9 @@ object ETInduction {
         case ( constr, indCase ) =>
           val FunctionType( indTy, argTypes ) = constr.ty
           val ( ch, evs ) = getEvs( indCase, argTypes.length )
-          ( constr, Case( evs, getHyps( ch, argTypes.filter( _ == indTy ).length ) ) )
+          val ets = getETs( ch, argTypes.filter( _ == indTy ).length )
+          val ( hyps, suc ) = ets.splitAt( ets.length - 1 )
+          ( constr, Case( evs, ExpansionSequent( hyps, suc ) ) )
       }
     }
 

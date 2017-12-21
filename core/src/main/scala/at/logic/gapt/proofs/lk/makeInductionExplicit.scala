@@ -1,7 +1,7 @@
 package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.inductionPrinciple
-import at.logic.gapt.proofs.{Ant, SequentConnector}
+import at.logic.gapt.proofs.{ Ant, SequentConnector }
 
 object makeInductionExplicit extends LKVisitor[Unit] {
 
