@@ -1,20 +1,9 @@
 package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.{ Ant, SequentConnector }
+import at.logic.gapt.expr.hol.inductionPrinciple
+import at.logic.gapt.proofs.{Ant, SequentConnector}
 
 object makeInductionExplicit extends LKVisitor[Unit] {
-  def inductionPrinciple( indty: Ty, constrs: Seq[Const] ) = {
-    val pred = Var( "X", indty ->: To )
-
-    val hyps = constrs.map { constr =>
-      val FunctionType( `indty`, argtypes ) = constr.ty
-      val vars = for ( ( at, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", at )
-
-      All.Block( vars, vars.filter { _.ty == indty }.foldRight( pred( constr( vars: _* ) ) )( ( v, f ) => pred( v ) --> f ) )
-    }
-
-    hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
-  }
 
   override def recurse( p: LKProof, otherArg: Unit ): ( LKProof, SequentConnector ) =
     contractAfter( super.recurse )( p, otherArg )

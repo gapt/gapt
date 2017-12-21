@@ -3,10 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.proofs._
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.HOLPosition
-import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.provers.escargot.Escargot
-import at.logic.gapt.expr.Const
 
 object ExpansionProofToLK extends ExpansionProofToLK( Escargot.getAtomicLKProof ) {
   def withTheory( implicit ctx: Context ) = new ExpansionProofToLK( FOTheoryMacroRule.option( _ ) )
@@ -17,53 +14,14 @@ class ExpansionProofToLK(
     theorySolver: HOLClause => Option[LKProof] ) extends SolveUtils {
   type Error = ( Seq[ETImp], ExpansionSequent )
 
-  case class Case( evs: Seq[Var], step: Seq[ExpansionTree] )
-  case class Induction( constructorsSteps: Seq[( Const, Case )], hyps: ExpansionTree, suc: ExpansionTree )
-  case class Theory( cuts: Seq[ETImp], inductions: Seq[Induction] ) {
+  case class Theory( cuts: Seq[ETImp], inductions: Seq[ETInduction.Induction] ) {
     def getExpansionTrees: Seq[ETImp] = cuts ++ inductions.map( i => ETImp( i.hyps, i.suc ) )
   }
 
   def apply( expansionProof: ExpansionProof )( implicit ctx: Context = Context() ): UnprovableOrLKProof = {
 
-    val indAxioms = ctx.get[StructurallyInductiveTypes].constructors.map {
-      case ( s, cs ) => ( makeInductionExplicit.inductionPrinciple( TBase( s ), cs ), cs )
-    }
-
-    def getHyps( et: ExpansionTree, sz: Int ): List[ExpansionTree] = {
-      et match {
-        case ETImp( ch1, ch2 ) if sz > 0 => ch1 :: getHyps( ch2, sz - 1 )
-        case ret if sz == 0              => List( ret )
-      }
-    }
-    def getEvs( et: ExpansionTree, sz: Int ): ( ExpansionTree, List[Var] ) = {
-      et match {
-        case ETStrongQuantifier( _, ev, ch ) if sz > 0 =>
-          val ( ret, evs ) = getEvs( ch, sz - 1 )
-          ( ret, ev :: evs )
-        case ret if sz == 0 => ( ret, List.empty )
-      }
-    }
-    def toCase( et: ExpansionTree, cs: Seq[Const] ): Seq[( Const, Case )] = {
-      cs.zip( et.immediateSubProofs ).map {
-        case ( c, conjunct ) =>
-          val FunctionType( indty, argtypes ) = c.ty
-          val ( ch, evs ) = getEvs( conjunct, argtypes.length )
-          ( c, Case( evs, getHyps( ch, argtypes.filter( _ == indty ).length ) ) )
-      }
-    }
-
-    val inductions = for {
-      inductionAxiomExpansion <- expansionProof.expansionSequent.antecedent
-      if indAxioms.contains( inductionAxiomExpansion.shallow )
-      cs = indAxioms( inductionAxiomExpansion.shallow )
-      sequent <- inductionAxiomExpansion( HOLPosition( 1 ) )
-      hyps <- sequent( HOLPosition( 1 ) )
-      suc <- sequent( HOLPosition( 2 ) )
-    } yield Induction( toCase( hyps, cs ), hyps, suc )
-
-    solve( Theory( expansionProof.cuts, inductions ), expansionProof.nonCutPart filter { x => !indAxioms.contains( x.shallow ) } ).
-      map( WeakeningMacroRule( _, expansionProof.nonCutPart.shallow filter { x => !indAxioms.contains( x ) } ) )
-
+    solve( Theory( expansionProof.cuts, expansionProof.inductions ), expansionProof.nonTheoryPart ).
+      map( WeakeningMacroRule( _, expansionProof.nonTheoryPart.shallow ) )
   }
 
   private def solve( theory: Theory, expSeq: ExpansionSequent ): UnprovableOrLKProof = {
@@ -244,48 +202,40 @@ class ExpansionProofToLK(
     } yield ev ).toSet
 
     theory.inductions.zipWithIndex.collectFirst {
-      case ( Induction( constructorsSteps, hyps, suc ), i ) if freeVariables( hyps.shallow ) intersect upcomingEVs isEmpty =>
+      case ( ETInduction.Induction( constructorsSteps, hyps, suc ), i ) if freeVariables( hyps.shallow ) intersect upcomingEVs isEmpty =>
 
         val newInductions = theory.inductions.zipWithIndex.filter { _._2 != i }.map { _._1 }
 
-        def recSteps( constructorsSteps: Seq[( Const, Case )], cases: Seq[InductionCase] ): UnprovableOrLKProof = {
+        def recSteps( constructorsSteps: Seq[( Const, ETInduction.Case )], cases: Seq[InductionCase] ): UnprovableOrLKProof = {
           constructorsSteps match {
-            case ( c, Case( evs, atoms ) ) +: tail =>
-              val ( ant, suc ) = atoms.splitAt( atoms.length - 1 )
+            case ( c, ETInduction.Case( evs, steps ) ) +: tail =>
+              val ( ant, suc ) = steps.splitAt( steps.length - 1 )
               solve( Theory( theory.cuts, newInductions ), ant ++: expSeq :++ suc ) flatMap { p =>
                 if ( ( ant.forall( a => !p.conclusion.contains( a.shallow, Polarity.InAntecedent ) )
                   && !p.conclusion.contains( suc.head.shallow, Polarity.InSuccedent ) ) ) Right( p )
                 else {
-                  val pWkn = WeakeningMacroRule(
-                    p,
-                    ant.collect { case a if !p.conclusion.contains( a.shallow, Polarity.InAntecedent ) => a.shallow },
-                    suc.collect { case s if !p.conclusion.contains( s.shallow, Polarity.InSuccedent ) => s.shallow } )
+                  val pWkn = WeakeningMacroRule( p, Sequent( ant map { _.shallow }, suc map { _.shallow } ), strict = false )
                   val aIdxs = ant.map( a => pWkn.conclusion.indexOf( a.shallow, Polarity.InAntecedent ) )
                   val sIdx = pWkn.conclusion.indexOf( suc.head.shallow, Polarity.InSuccedent )
                   recSteps( tail, InductionCase( pWkn, c, aIdxs, evs, sIdx ) +: cases )
                 }
               }
             case Nil =>
-              val App( _, qfFormula: Abs ) = suc.shallow
-
-              val expr = suc match {
-                case ETWeakQuantifier( _, instances ) => instances.head._1
-                case ETWeakening( f, _ )              => f
-              }
-
-              val ir = InductionRule( cases, qfFormula, expr )
-              val phit = ETAtom( Atom( ir.conclusion.succedent.head ), Polarity.InAntecedent )
-              solve( Theory( theory.cuts, newInductions ), phit +: expSeq ) map { p =>
-                if ( !p.conclusion.contains( phit.shallow, Polarity.InAntecedent ) ) p
+              solve( Theory( theory.cuts, newInductions ), suc +: expSeq ) map { p =>
+                if ( !p.conclusion.contains( suc.shallow, Polarity.InAntecedent ) ) p
                 else {
-                  // TODO simplify to ir if p3 is just an axiom?
-                  CutRule( ir, p, phit.shallow )
+                  val All( v, f ) = suc.shallow
+                  val freshVar = Var( rename.awayFrom( freeVariables( p.conclusion ) ).fresh( v.name ), v.ty )
+                  ProofBuilder
+                    .c( InductionRule( cases, Abs( v, f ), freshVar ) )
+                    .u( ForallRightRule( _, suc.shallow, freshVar ) )
+                    .u( CutRule( _, p, suc.shallow ) )
+                    .qed
                 }
               }
           }
         }
         recSteps( constructorsSteps, Seq.empty )
-
     }
   }
 
