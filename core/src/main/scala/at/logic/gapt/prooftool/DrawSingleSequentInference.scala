@@ -8,7 +8,10 @@ import java.awt.Color
 
 import at.logic.gapt.formats.latex.LatexExporter
 
-class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolViewer[_], var orientation: Orientation.Value, sequent_element_renderer: F => String ) extends ScrollPane {
+class DrawSingleSequentInference[F, T <: SequentProof[F, T]](
+    main:                     ProofToolViewer[_],
+    var orientation:          Orientation.Value,
+    sequent_element_renderer: F => String ) extends ScrollPane {
 
   private var _p: Option[SequentProof[F, T]] = None
   def p(): Option[SequentProof[F, T]] = _p
@@ -70,7 +73,10 @@ class DrawSingleSequentInference[F, T <: SequentProof[F, T]]( main: ProofToolVie
     auxiliaries.contents += Swing.Glue
 
     primaries.contents.clear()
-    val primary = for ( proof <- p() ) yield for ( ( f, i ) <- proof.conclusion.zipWithIndex if proof.mainIndices contains i ) yield f
+    val primary = for ( proof <- p() ) yield for {
+      ( f, i ) <- proof.conclusion.zipWithIndex
+      if proof.mainIndices contains i
+    } yield f
     for ( prim <- primary ) primaries.contents += DrawSequent( main, prim, sequent_element_renderer )
     primaries.contents += Swing.Glue
 

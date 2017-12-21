@@ -23,7 +23,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     renameConstantsToFi.wrap( cnf.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val p9Input = toP9Input( cnf, renaming )
-        runProcess.withExitValue( Seq( "prover9" ), p9Input ) match {
+        ( runProcess.withExitValue( Seq( "prover9" ), p9Input ): @unchecked ) match {
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }

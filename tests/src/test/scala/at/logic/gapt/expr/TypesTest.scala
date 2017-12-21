@@ -23,16 +23,22 @@ class TypesTest extends Specification {
         FunctionType( To, Ti :: To :: Nil ) must beLike { case FunctionType( To, Ti :: To :: Nil ) => ok }
       }
       "(i -> ((o -> o) -> i))" in {
-        FunctionType( Ti, Ti :: ( To ->: To ) :: Nil ) must beLike { case FunctionType( Ti, Ti :: ( To ->: To ) :: Nil ) => ok }
+        FunctionType( Ti, Ti :: ( To ->: To ) :: Nil ) must beLike {
+          case FunctionType( Ti, Ti :: ( To ->: To ) :: Nil ) => ok
+        }
       }
       "(i)" in {
         FunctionType( Ti, Nil ) must beLike { case FunctionType( Ti, Nil ) => ok }
       }
       "(i -> i -> i -> i -> i -> i -> i -> i -> i -> i -> i -> i -> o)" in {
-        FunctionType( To, Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Nil ) must beLike { case FunctionType( To, Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Nil ) => ok }
+        FunctionType( To, Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Nil ) must beLike {
+          case FunctionType( To, Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Ti :: Nil ) => ok
+        }
       }
       "((i -> o) -> ((i -> o) -> (i -> o)))" in {
-        FunctionType( Ti ->: To, ( Ti ->: To ) :: ( Ti ->: To ) :: Nil ) must beLike { case FunctionType( To, ( Ti ->: To ) :: ( Ti ->: To ) :: Ti :: Nil ) => ok }
+        FunctionType( Ti ->: To, ( Ti ->: To ) :: ( Ti ->: To ) :: Nil ) must beLike {
+          case FunctionType( To, ( Ti ->: To ) :: ( Ti ->: To ) :: Ti :: Nil ) => ok
+        }
       }
     }
   }

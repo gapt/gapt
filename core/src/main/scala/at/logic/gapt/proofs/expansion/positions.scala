@@ -6,7 +6,7 @@ import at.logic.gapt.proofs.Context
 
 private object getAtHOLPosition {
   def apply( et: ExpansionTree, pos: HOLPosition ): Set[ExpansionTree] =
-    if ( pos.isEmpty ) Set( et ) else ( et, pos.head ) match {
+    if ( pos.isEmpty ) Set( et ) else ( ( et, pos.head ): @unchecked ) match {
       case ( ETMerge( a, b ), _ )                   => apply( a, pos ) union apply( b, pos )
 
       case ( ETNeg( ch ), 1 )                       => apply( ch, pos.tail )

@@ -13,11 +13,13 @@ object getListOfFOccsInStruct {
   def apply( s: Struct ): List[FormulaOccurrence] = s match {
     case Plus( s1, s2 )     => apply( s1 ) ++ apply( s2 )
     case Times( s1, s2, _ ) => apply( s1 ) ++ apply( s2 )
-    case A( fo )            => fo :: Nil //{ println( sys.props("line.separator") + sys.props("line.separator") + "A(fo) = "+fo);fo::Nil}
+    case A( fo )            => fo :: Nil //{ println( sys.props("line.separator") + sys.props("line.separator")
+     + "A(fo) = "+fo);fo::Nil}
     case Dual( sub )        => apply( sub )
     case EmptyTimesJunction => Nil
     case EmptyPlusJunction  => Nil
-    case _                  => { println( sys.props( "line.separator" ) + sys.props( "line.separator" ) + "ERROR in getListOfFOccsInStruct" ); List() }
+    case _                  => { println( sys.props( "line.separator" ) + sys.props( "line.separator" )
+     + "ERROR in getListOfFOccsInStruct" ); List() }
   }
 }
 
@@ -53,7 +55,8 @@ object proofProfile {
   private def transformProfiledCartesianProductToStruct( cp: List[( Struct, Struct )] ): Struct = cp match {
     case Nil              => throw new Exception( "Pattern matching failed unexpectedly: List is empty." )
     case ( i, j ) :: Nil  => Times( i, j, List[FormulaOccurrence]() )
-    case ( i, j ) :: rest => Plus( Times( i, j, List[FormulaOccurrence]() ), transformProfiledCartesianProductToStruct( rest ) )
+    case ( i, j ) :: rest => Plus( Times( i, j, List[FormulaOccurrence]() ),
+    transformProfiledCartesianProductToStruct( rest ) )
   }
 
   private def transformNotProfiledCartesianProductToStruct( cp: List[Struct] ): Struct = cp match {
@@ -62,9 +65,11 @@ object proofProfile {
     case i :: rest => Plus( i, transformNotProfiledCartesianProductToStruct( rest ) )
   }
 
-  def isRedStruct( s: Struct, anc_OfauxFOccs: List[FormulaOccurrence] ): Boolean = !( getListOfFOccsInStruct( s ).intersect( anc_OfauxFOccs ) ).isEmpty
+  def isRedStruct( s: Struct, anc_OfauxFOccs: List[FormulaOccurrence] ): Boolean =
+   !( getListOfFOccsInStruct( s ).intersect( anc_OfauxFOccs ) ).isEmpty
 
-  private def applyRule( s1: Struct, s2: Struct, auxFOccs: List[FormulaOccurrence] )( implicit proof: LKProof ): Struct = {
+  private def applyRule( s1: Struct, s2: Struct, auxFOccs: List[FormulaOccurrence] )(
+   implicit proof: LKProof ): Struct = {
     val ( list1, list2 ) = ( getTimesJunctions( s1 ), getTimesJunctions( s2 ) )
 
     if ( list1.size == 0 || list2.size == 0 )
@@ -73,7 +78,8 @@ object proofProfile {
     if ( list1.size == 1 && list2.size == 1 )
       return Times( s1, s2, auxFOccs )
 
-    def ancOfAuxFOccs = getAllAxioms.getAllCorrFOccs( auxFOccs.foldLeft( List[FormulaOccurrence]() )( ( x, y ) => x ::: getAncAx( y, proof ) ), proof )
+    def ancOfAuxFOccs = getAllAxioms.getAllCorrFOccs( auxFOccs.foldLeft( List[FormulaOccurrence]() )(
+     ( x, y ) => x ::: getAncAx( y, proof ) ), proof )
 
     val black_list1 = list1.filter( s => !isRedStruct( s, ancOfAuxFOccs ) )
     val red_list1 = list1.filter( s => isRedStruct( s, ancOfAuxFOccs ) )
@@ -132,17 +138,21 @@ object getAllAxioms {
   }
 
   def printCorrespSequent( fo: FormulaOccurrence, from: List[OccSequent] ) = from match {
-    case so :: rest if so.antecedent.contains( fo ) || so.succedent.contains( fo ) => { so.antecedent.toList.map( x => { print( x.formula ) } ); print( "  |-  " ); so.succedent.toList.map( x => { print( x.formula ) } ) }
+    case so :: rest if so.antecedent.contains( fo ) || so.succedent.contains( fo ) => {
+     so.antecedent.toList.map( x => { print( x.formula ) } ); print( "  |-  " );
+      so.succedent.toList.map( x => { print( x.formula ) } ) }
     case so :: rest => getPartnerFOccs( fo, rest )
   }
 
   def getPartnerFOccs( fo: FormulaOccurrence, from: List[OccSequent] ): List[FormulaOccurrence] = from match {
-    case so :: rest if so.antecedent.contains( fo ) || so.succedent.contains( fo ) => so.antecedent.toList ::: so.succedent.toList
+    case so :: rest if so.antecedent.contains( fo ) || so.succedent.contains( fo ) =>
+     so.antecedent.toList ::: so.succedent.toList
     case so :: rest => getPartnerFOccs( fo, rest )
     case _ => List()
   }
 
-  def getAllCorrespondingFOccs( lFOcc: List[FormulaOccurrence], from: List[OccSequent] ): List[FormulaOccurrence] = lFOcc.map( x => getPartnerFOccs( x, from ) ).foldLeft( List[FormulaOccurrence]() )( ( x, y ) => x ::: y )
+  def getAllCorrespondingFOccs( lFOcc: List[FormulaOccurrence], from: List[OccSequent] ): List[FormulaOccurrence] =
+   lFOcc.map( x => getPartnerFOccs( x, from ) ).foldLeft( List[FormulaOccurrence]() )( ( x, y ) => x ::: y )
 
   def getAllCorrFOccs( lFOcc: List[FormulaOccurrence], p: LKProof ) = getAllCorrespondingFOccs( lFOcc, apply( p ) )
 }

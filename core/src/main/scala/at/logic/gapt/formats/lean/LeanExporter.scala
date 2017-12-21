@@ -257,7 +257,7 @@ object LeanChecker extends ExternalProgram {
 
   def apply( code: String ): Either[String, Unit] =
     withTempFile.fromString( code ) { inputFile =>
-      runProcess.withExitValue( Seq( executable, "-j0", inputFile.toString ), catchStderr = true ) match {
+      ( runProcess.withExitValue( Seq( executable, "-j0", inputFile.toString ), catchStderr = true ): @unchecked ) match {
         case ( 0, _ )   => Right( () )
         case ( _, out ) => Left( out )
       }

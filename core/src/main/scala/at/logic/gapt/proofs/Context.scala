@@ -14,9 +14,9 @@ import scala.reflect.ClassTag
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
  *
- * Each of these different kinds of information is stored in a separate [[Facet]]
+ * Each of these different kinds of information is stored in a separate [[Context.Facet]]
  * of the context.  Each modification or addition to the context is recorded as
- * an [[Update]].  Adding information is only possible by adding it as an [[Update]].
+ * an [[Context.Update]].  Adding information is only possible by adding it as an [[Context.Update]].
  * (Basically a Context is an extensible LCF-style kernel.)
  *
  * There are several inferences in our LK proofs for which it is not enough that are
@@ -336,7 +336,6 @@ object Context {
 
     def find( name: Expr ): Iterable[( LKProof, Substitution )] =
       for ( ( _, subst, proof ) <- findWithConnector( name ) ) yield ( proof, subst )
-
     override def toString: String =
       components.map { case ( n, dfs ) => dfs.map( _.proofNameTerm ).mkString( ", " ) }.mkString( "\n" )
   }
@@ -444,38 +443,31 @@ object Context {
     }
   }
 
-  case class PrimRecFun( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ) extends Update {
-    val Const( name, FunctionType( retType, argTypes ) ) = c
-    val typeVars: Set[TVar] = typeVariables( c.ty )
-    require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
-    val recTy: TBase = argTypes( recIdx ).asInstanceOf[TBase]
+  case class PrimRecFunBatch( prfDefinitions: Seq[( Const, Int, Int, Vector[( Expr, Expr )] )] ) extends Update {
 
-    for ( ( lhs, rhs ) <- equations ) {
-      require( lhs.ty == rhs.ty )
-      require( typeVariables( lhs.ty ) subsetOf typeVars )
-      require( typeVariables( rhs.ty ) subsetOf typeVars )
-
-      val Apps( `c`, lhsArgs ) = lhs
-      require( lhsArgs.size == nArgs )
-
-      val nonRecLhsArgs = lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
-      val Apps( Const( _, _ ), ctrArgs ) = lhsArgs( recIdx )
-
-      val matchVars = nonRecLhsArgs ++ ctrArgs
-      matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
-      require( matchVars == matchVars.distinct )
-
-      folSubTerms( rhs ).foreach {
-        case Apps( fn @ Const( `name`, _ ), args ) =>
-          require( fn == c )
-          require( ctrArgs.contains( args( recIdx ) ) )
-        case _ =>
-      }
+    for ( ( const, nArgs, recIdx, eqs ) <- prfDefinitions ) {
+      validatePrimRecFunDef( const, nArgs, recIdx, eqs )
     }
 
+    val recTypes: Map[Const, TBase] = (
+      for ( ( constant, _, recIdx, _ ) <- prfDefinitions ) yield {
+        val Const( _, FunctionType( _, argTypes ) ) = constant
+        ( constant, argTypes( recIdx ).asInstanceOf[TBase] )
+      } ).toMap
+
     def apply( ctx: Context ): State = {
-      val ctx_ = ctx + c
-      val ctrs = ctx.get[StructurallyInductiveTypes].constructors( recTy.name )
+      val constants = prfDefinitions map { _._1 }
+      val ctx_ = ctx ++ constants.map { ConstDecl }
+      for ( ( constant, _, recIdx, equations ) <- prfDefinitions ) {
+        validateEquations( ctx, ctx_, recIdx, constant, equations )
+      }
+      val reductions = prfDefinitions.flatMap { _._4 }.map { ReductionRule.apply }.toVector
+      ctx.state.update[Constants]( _ ++ constants ).update[Reductions]( _ ++ reductions )
+    }
+
+    private def validateEquations(
+      ctx: Context, ctx_ : Context, recIdx: Int, constant: Const, equations: Vector[( Expr, Expr )] ) {
+      val ctrs = ctx.get[StructurallyInductiveTypes].constructors( recTypes( constant ).name )
       require( equations.size == ctrs.size )
       for ( ( ( lhs @ Apps( _, lhsArgs ), rhs ), ctr ) <- equations.zip( ctrs ) ) {
         ctx_.check( lhs )
@@ -483,12 +475,39 @@ object Context {
         val Apps( Const( ctr_, _ ), _ ) = lhsArgs( recIdx )
         require( ctr_ == ctr.name )
       }
-      ctx.state.update[Constants]( _ + c )
-        .update[Reductions]( _ ++ equations.map( ReductionRule.apply ) )
+    }
+
+    private def validatePrimRecFunDef( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ): Unit = {
+      val Const( name, FunctionType( _, argTypes ) ) = c
+      val typeVars: Set[TVar] = typeVariables( c.ty )
+      require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
+
+      for ( ( lhs, rhs ) <- equations ) {
+        require( lhs.ty == rhs.ty )
+        require( typeVariables( lhs.ty ) subsetOf typeVars )
+        require( typeVariables( rhs.ty ) subsetOf typeVars )
+
+        val Apps( `c`, lhsArgs ) = lhs
+        require( lhsArgs.size == nArgs )
+
+        val nonRecLhsArgs = lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
+        val Apps( Const( _, _ ), ctrArgs ) = lhsArgs( recIdx )
+
+        val matchVars = nonRecLhsArgs ++ ctrArgs
+        matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
+        require( matchVars == matchVars.distinct )
+        folSubTerms( rhs ).foreach {
+          case Apps( fn @ Const( `name`, _ ), args ) =>
+            require( fn == c )
+            require( ctrArgs.contains( args( recIdx ) ) )
+          case _ =>
+        }
+      }
     }
   }
 
   object PrimRecFun {
+
     private def useLiteralConst( p: preExpr.Expr, c: Const ): preExpr.Expr = {
       import preExpr._
       p match {
@@ -507,13 +526,38 @@ object Context {
           case Eq( lhs, rhs ) => lhs -> rhs
         }
 
-    def apply( c: Const, equations: String* )( implicit ctx: Context ): PrimRecFun = {
-      val ctx_ = ctx + c
-      val eqns = equations.map( parseEqn( c, _ )( ctx_ ) )
-      val ( nArgs, recIdx ) = eqns.head._1 match {
+    def apply( c: Const, equations: String* )( implicit ctx: Context ): PrimRecFunBatch = {
+      apply( ( c, equations ) )
+    }
+
+    def toPrimRecFunDefinition( constant: Const, equations: String* )( implicit ctx: Context ): ( Const, Int, Int, Vector[( Expr, Expr )] ) =
+      toPrimRecFunDefinition( constant, equations map { parseEqn( constant, _ )( ctx ) } )
+
+    def toPrimRecFunDefinition( constant: Const, equations: Traversable[( Expr, Expr )] )( implicit ctx: Context ): ( Const, Int, Int, Vector[( Expr, Expr )] ) = {
+      val ( nArgs, recIdx ) = equations.head._1 match {
         case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )
       }
-      PrimRecFun( c, nArgs, recIdx, eqns.toVector )
+      val Const( _, FunctionType( _, argTys ) ) = constant
+      val equationsByConst = equations.groupBy {
+        case ( ( Apps( _, args ), _ ) ) =>
+          val Apps( ctr, _ ) = args( recIdx )
+          ctr
+      }
+      val Some( recCtrs ) = ctx.getConstructors( argTys( recIdx ) )
+      ( constant, nArgs, recIdx, recCtrs.map( equationsByConst( _ ).head ) )
+    }
+
+    def apply( prfDefinitions: Iterable[( Const, Iterable[( Expr, Expr )] )] )( implicit ctx: Context ): PrimRecFunBatch =
+      PrimRecFunBatch( prfDefinitions.view.map { case ( c, eqns ) => toPrimRecFunDefinition( c, eqns ) }.toVector )
+
+    def apply( prfDefinitions: ( Const, Seq[String] )* )( implicit ctx: Context ): PrimRecFunBatch = {
+      val constants = prfDefinitions map { _._1 }
+      val ctx_ = ctx ++ constants.map { ConstDecl( _ ) }
+      val batch =
+        for ( ( constant, equations ) <- prfDefinitions ) yield {
+          toPrimRecFunDefinition( constant, equations: _* )( ctx_ )
+        }
+      PrimRecFunBatch( batch )
     }
   }
 
@@ -537,14 +581,14 @@ object Context {
       vs.foreach( ctx.check( _ ) )
       val declSeq = ctx.get[ProofNames].lookup( lhs )
         .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
-      val conn = SequentConnector.guessInjection( referencedProof.conclusion, declSeq )
       require(
-        conn.child( referencedProof.conclusion ).isSubMultisetOf( declSeq ),
+        referencedProof.conclusion.isSubMultisetOf( declSeq ),
         "End-sequent of proof definition does not match declaration.\n" +
           "Given sequent: " + referencedProof.endSequent.toSigRelativeString( ctx ) + "\n" +
           "Expected sequent: " + declSeq.toSigRelativeString( ctx ) + "\n" +
           "Extraneous formulas: " +
           referencedProof.endSequent.diff( declSeq ).toSigRelativeString( ctx ) )
+      val conn = SequentConnector.guessInjection( fromLower = referencedProof.conclusion, toUpper = declSeq )
       val defn = ProofDefinition( lhs, conn, referencedProof )
       ctx.state.update[ProofDefinitions]( _ + defn )
     }

@@ -33,8 +33,8 @@ class PicoSAT( command: String* ) extends DrupSolver with ExternalProgram {
             dimacsInputFile.toString ) ) match {
             case ( 10, _ ) => /* SAT */ Right( read ! modelOutputFile )
             case ( 20, _ ) => /* UNSAT */ Left( read ! drupOutputFile )
-            case ( 1, str ) =>
-              throw new Exception( s"Error executing external sat prover $command: $str" )
+            case ( _, str ) =>
+              throw new Exception( s"Error executing external sat prover $command:\n$str" )
           }
         }
       }

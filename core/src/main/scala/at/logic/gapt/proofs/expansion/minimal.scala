@@ -46,25 +46,32 @@ object minimalExpansionSequent {
  */
 private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: Prover ) {
 
-  val maxRemovedInstance = new mMap[ExpansionSequent, Int] // This assigns to each ExpansionSequent S the maximum of all numbers n with the following property: S can be obtained from a ExpansionSequent S' by removing the nth instance of S'.
+  // This assigns to each ExpansionSequent S the maximum of all numbers n with the following property:
+  // S can be obtained from a ExpansionSequent S' by removing the nth instance of S'.
+  val maxRemovedInstance = new mMap[ExpansionSequent, Int]
 
   /**
    * Compute the list of all minimal expansion sequents below sequent.
    * @return A sequence of minimal expansion sequents.
    */
   def computeAllMinimal(): Seq[ExpansionSequent] = {
-    val result = new ListBuffer[ExpansionSequent] // The list of minimal expansion proofs will be constructed iteratively.
-    val stack = new scala.collection.mutable.Stack[ExpansionSequent] // Invariant: the stack only contains valid expansion sequents.
+    // The list of minimal expansion proofs will be constructed iteratively.
+    val result = new ListBuffer[ExpansionSequent]
+    // Invariant: the stack only contains valid expansion sequents.
+    val stack = new scala.collection.mutable.Stack[ExpansionSequent]
 
     if ( prover.isValid( sequent map { _.deep } ) ) {
       debug( "The starting sequent is tautological." )
       stack.push( sequent ) // The sequent under consideration is placed on the stack if it is valid.
-      maxRemovedInstance += ( ( sequent, 0 ) ) // The input sequent is assigned number 0 to denote that no instances at all have been removed from it.
+      // The input sequent is assigned number 0 to denote that no instances at all have been removed from it.
+      maxRemovedInstance += ( ( sequent, 0 ) )
     }
 
     while ( stack.nonEmpty ) {
       debug( "Retrieving sequent from stack" )
-      val ( current ) = stack.pop() // Topmost element of stack is retrieved. We already know it is tautological; only need to consider its successors.
+      // Topmost element of stack is retrieved. We already know it is
+      // tautological; only need to consider its successors.
+      val ( current ) = stack.pop()
       debug( "Retrieved sequent " + current + "." )
       val n = maxRemovedInstance( current )
       debug( "Generating successors" )
@@ -130,34 +137,49 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
    */
   def generateSuccessors( sequent: ExpansionSequent ): Seq[ExpansionSequent] = sequent match {
     case ExpansionSequent( ant, suc ) =>
-      val newSequents = new ListBuffer[ExpansionSequent] //newSequents will be the list of expansion sequents obtained from S by removing one instance from one tree of S.
+      // newSequents will be the list of expansion sequents obtained
+      // from S by removing one instance from one tree of S.
+      val newSequents = new ListBuffer[ExpansionSequent]
       var instanceCounter = 0 // Counts the instances of all trees in the sequent.
 
       // Loop over the antecedent.
       var n = ant.length
       for ( j <- 1 to n ) {
-        val ( fst, tree +: snd ) = ant.splitAt( j - 1 ) //We iteratively focus each expansion tree in the antecedent of S.
+        // We iteratively focus each expansion tree in the antecedent of S.
+        val ( fst, tree +: snd ) = ant.splitAt( j - 1 )
         val newTrees = generateSuccessorTrees( tree ) // We generate all successor trees of the current tree.
 
-        if ( newTrees.isEmpty ) { // This can happen for two reasons: the current tree contains no weak quantifiers or all its weak quantifier nodes have only one instance.
-          val newS = ExpansionSequent( fst ++ snd, suc ) // Since the current tree only consists of one instance, we form a successor sequent simply by deleting it.
+        if ( newTrees.isEmpty ) {
+          // This can happen for two reasons:
+          // the current tree contains no weak quantifiers or
+          // all its weak quantifier nodes have only one instance.
+          val newS = ExpansionSequent( fst ++ snd, suc )
+          // Since the current tree only consists of one instance,
+          // we form a successor sequent simply by deleting it.
           val k = instanceCounter + 1
 
-          if ( !maxRemovedInstance.contains( newS ) ) // If there is no entry in maxRemovedInstance for newS, we set it to k.
+          if ( !maxRemovedInstance.contains( newS ) )
+            // If there is no entry in maxRemovedInstance for newS, we set it to k.
             maxRemovedInstance += newS -> k
-          else if ( k > maxRemovedInstance( newS ) ) // We also update the entry for newS if the current value is higher.
+          else if ( k > maxRemovedInstance( newS ) )
+            // We also update the entry for newS if the current value is higher.
             maxRemovedInstance += newS -> k
 
           newSequents += newS
         } else {
           val instanceNumbers = ( instanceCounter + 1 ) to ( instanceCounter + newTrees.length )
 
-          for ( ( t, k ) <- newTrees zip instanceNumbers ) { // k denotes the instance that was removed from tree in order to produce t.
-            val newS = ExpansionSequent( fst ++ Seq( t ) ++ snd, suc ) // We combine an expansion tree with the rest of the antecedent and the succedent to produce a new expansion sequent.
+          for ( ( t, k ) <- newTrees zip instanceNumbers ) {
+            // k denotes the instance that was removed from tree in order to produce t.
+            val newS = ExpansionSequent( fst ++ Seq( t ) ++ snd, suc )
+            // We combine an expansion tree with the rest of the antecedent and the succedent
+            // to produce a new expansion sequent.
 
-            if ( !maxRemovedInstance.contains( newS ) ) // If there is no entry in maxRemovedInstance for newS, we set it to k.
+            if ( !maxRemovedInstance.contains( newS ) )
+              // If there is no entry in maxRemovedInstance for newS, we set it to k.
               maxRemovedInstance += newS -> k
-            else if ( k > maxRemovedInstance( newS ) ) // We also update the entry for newS if the current value is higher.
+            else if ( k > maxRemovedInstance( newS ) )
+              // We also update the entry for newS if the current value is higher.
               maxRemovedInstance += newS -> k
 
             newSequents += newS
@@ -228,8 +250,10 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       val sRight = generateSuccessorTrees( right )
       sLeft.map( t => ETImp( t, right ) ) ++ sRight.map( t => ETImp( left, t ) )
 
-    case ETStrongQuantifier( f, vars, sel )   => generateSuccessorTrees( sel ).map( ETStrongQuantifier.apply( f, vars, _ ) )
-    case ETSkolemQuantifier( f, st, sf, sel ) => generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, st, sf, _ ) )
+    case ETStrongQuantifier( f, vars, sel ) =>
+      generateSuccessorTrees( sel ).map( ETStrongQuantifier.apply( f, vars, _ ) )
+    case ETSkolemQuantifier( f, st, sf, sel ) =>
+      generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, st, sf, _ ) )
 
     case tree @ ETWeakQuantifier( f, inst ) =>
       inst.toSeq flatMap {
@@ -241,7 +265,8 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
           if ( containsWeakQ ) {
             generateSuccessorTrees( child ) map { succ => ETWeakQuantifier( f, inst.updated( term, succ ) ) }
           } else {
-            //In this case we are in a bottommost weak quantifier node, which means that we will actually remove instances.
+            // In this case we are in a bottommost weak quantifier node,
+            // which means that we will actually remove instances.
             Seq( ETWeakQuantifier( f, inst - term ) )
           }
       }

@@ -17,8 +17,10 @@ object reduceHolToFol extends reduceHolToFol
  * Creates a FOL formula from a HOL formula, but applies transformations which do _not_ preserve validity!
  * Transformations applied:
  *
- *  - Replace all subterms (\x.t[v]) by a function q_n(v). The scope parameter is needed to pass existing term-constant mappings.
- *  - Change the type of constants and variables s.t. they are first order (i.e. Const("c", To->Ti) is mapped to FOLConst("c",Ti)
+ *  - Replace all subterms (\x.t[v]) by a function q_n(v). The scope parameter is needed to pass existing term-constant
+ *    mappings.
+ *  - Change the type of constants and variables s.t. they are first order (i.e. Const("c", To->Ti) is mapped to
+ *    FOLConst("c",Ti)
  *  - Logical operators inside the term structure are replaced by first order terms
  *
  * @note Make sure you need all of these tricks. To only replace abstraction subterms, use [[replaceAbstractions]].
@@ -80,8 +82,8 @@ class reduceHolToFol {
   /**
    * Apply method for a formula when scope needs to passed on in a recursion.
    * @param formula the formula to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
-   *              sequents or lists of formulas.
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
+   *              chained applications, like sequents or lists of formulas.
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced formula and the updated scope
    */
@@ -93,8 +95,8 @@ class reduceHolToFol {
   /**
    * Apply method for a an expression when scope needs to passed on in a recursion.
    * @param term the expression to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
-   *              sequents or lists of formulas.
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
+   *              chained applications, like sequents or lists of formulas.
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
@@ -106,8 +108,8 @@ class reduceHolToFol {
   /**
    * Apply method for a an FSequent when scope needs to passed on in a recursion.
    * @param s the fsequent to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
-   *              sequents or lists of formulas.
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
+   *              chained applications, like sequents or lists of formulas.
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
@@ -127,8 +129,8 @@ class reduceHolToFol {
   /**
    * Apply method for a an FSequent when scope needs to passed on in a recursion.
    * @param fss the fsequent to convert
-   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for chained applications, like
-   *              sequents or lists of formulas.
+   * @param scope a mapping of replaced subterms to the constant names which replaced them. you need this for
+   *              chained applications, like sequents or lists of formulas.
    * @param id an object with a function which nextId, which provides new numbers.
    * @return a pair of the reduced expression and the updated scope
    */
@@ -165,7 +167,9 @@ class reduceHolToFol {
         FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
       case HOLFunction( Var( n, _ ), ls ) =>
         FOLFunction( n, ls.map( x => folexp2term( apply_( x ) ) ) )
-      case _ => throw new IllegalArgumentException( "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" ) // for cases of higher order atoms and functions
+      case _ => throw new IllegalArgumentException(
+        // for cases of higher order atoms and functions
+        "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" )
     }
   }
 
@@ -191,18 +195,24 @@ class reduceHolToFol {
 
       // This case replaces an abstraction by a function term.
       //
-      // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
+      // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant
+      // use the same symbol
       //
       // TODO: at the moment, syntactic equality is used here... This means that alpha-equivalent terms may be replaced
       // by different constants, which is undesirable.
       /*
       case a @ Abs(v, exp) => {
-        val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantString("q_{" + id.nextId + "}"))
-        val freeVarList = a.getFreeVariables.toList.sortWith((x,y) => x.toString < y.toString).map(x => apply(x.asInstanceOf[Expr],scope,id))
+        val sym = scope.getOrElseUpdate(a.variant(new VariantGenerator(
+         new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName")), ConstantString("q_{" + id.nextId + "}"))
+        val freeVarList = a.getFreeVariables.toList.sortWith((x,y) => x.toString < y.toString)
+        .map(x => apply(x.asInstanceOf[Expr],scope,id))
         if (freeVarList.isEmpty) FOLConst(sym) else Function(sym, freeVarList.asInstanceOf[List[FOLTerm]])
       }
       */
-      case _ => throw new IllegalArgumentException( "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" ) // for cases of higher order atoms and functions
+      case _ =>
+        throw new IllegalArgumentException(
+          // for cases of higher order atoms and functions
+          "Cannot reduce hol term: " + term.toString + " to fol as it is a higher order variable function or atom" )
     }
   }
 
@@ -270,10 +280,12 @@ class replaceAbstractions {
       val ( scope2, t1 ) = replaceAbstractions( t, scope1, id )
       ( scope2, App( s1, t1 ) )
     // This case replaces an abstraction by a function term.
-    // the scope we choose for the variant is the Abs itself as we want all abs identical up to variant use the same symbol
+    // the scope we choose for the variant is the Abs itself as we want all abs
+    // identical up to variant use the same symbol
     case Abs( v, exp ) =>
       //systematically rename free variables for the index
-      //val normalizeda = e.variant(new VariantGenerator(new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName"))
+      //val normalizeda = e.variant(new VariantGenerator(
+      // new {var idd = 0; def nextId = {idd = idd+1; idd}}, "myVariantName"))
       //TODO: check if variable renaming is really what we want
       val ( normalizeda, mapping ) = normalizeFreeVariables( e )
       //println("e: "+e)

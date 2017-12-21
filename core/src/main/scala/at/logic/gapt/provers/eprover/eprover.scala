@@ -18,7 +18,7 @@ class EProver extends ResolutionProver with ExternalProgram {
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
-        runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ), tptpIn ) match {
+        ( runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ), tptpIn ): @unchecked ) match {
           case ( 0, output ) =>
             val lines = output.split( "\n" )
             require( lines.contains( "# SZS status Unsatisfiable" ) )

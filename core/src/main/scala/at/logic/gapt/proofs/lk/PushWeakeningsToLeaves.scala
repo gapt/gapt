@@ -34,14 +34,14 @@ object pushAllWeakeningsToLeaves {
         case weakening @ WeakeningLeftRule( _, _ ) =>
           if ( !weakeningOnlySubTree( weakening ) ) {
             val ( newProof, _ ) = recurse( pushSingleWeakeningToLeaves( weakening ), () )
-            ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+            ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
           } else {
             ( proof, SequentConnector( proof.conclusion ) )
           }
         case weakening @ WeakeningRightRule( _, _ ) =>
           if ( !weakeningOnlySubTree( weakening ) ) {
             val ( newProof, _ ) = recurse( pushSingleWeakeningToLeaves( weakening ), () )
-            ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+            ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
           } else {
             ( proof, SequentConnector( proof.conclusion ) )
           }
@@ -56,7 +56,7 @@ object pushSingleWeakeningToLeaves {
 
   def withConnector( proof: LKProof ): ( LKProof, SequentConnector ) = {
     val newProof = apply( proof )
-    ( newProof, SequentConnector.guessInjection( newProof.conclusion, proof.conclusion ).inv )
+    ( newProof, SequentConnector.guessInjection( proof.conclusion, newProof.conclusion ).inv )
   }
 
   /**
@@ -99,7 +99,9 @@ object pushSingleWeakeningToLeaves {
       ContractionRightRule( pushSingleWeakeningToLeaves( sb, side, formula ), proof.mainFormulas.head )
 
     case AndRightRule( leftSubProof, _, rightSubProof, _ ) =>
-      val part = AndRightRule( pushSingleWeakeningToLeaves( leftSubProof, side, formula ), pushSingleWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
+      val part = AndRightRule(
+        pushSingleWeakeningToLeaves( leftSubProof, side, formula ),
+        pushSingleWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
       if ( side.inSuc ) ContractionRightRule( part, formula )
       else ContractionLeftRule( part, formula )
 
@@ -107,7 +109,9 @@ object pushSingleWeakeningToLeaves {
       AndLeftRule( pushSingleWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head )
 
     case OrLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      val part = OrLeftRule( pushSingleWeakeningToLeaves( leftSubProof, side, formula ), pushSingleWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
+      val part = OrLeftRule(
+        pushSingleWeakeningToLeaves( leftSubProof, side, formula ),
+        pushSingleWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
       if ( side.inSuc ) ContractionRightRule( part, formula )
       else ContractionLeftRule( part, formula )
 
@@ -115,7 +119,9 @@ object pushSingleWeakeningToLeaves {
       OrRightRule( pushSingleWeakeningToLeaves( subProof, side, formula ), proof.mainFormulas.head )
 
     case ImpLeftRule( leftSubProof, _, rightSubProof, _ ) =>
-      val part = ImpLeftRule( pushSingleWeakeningToLeaves( leftSubProof, side, formula ), pushSingleWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
+      val part = ImpLeftRule(
+        pushSingleWeakeningToLeaves( leftSubProof, side, formula ),
+        pushSingleWeakeningToLeaves( rightSubProof, side, formula ), proof.mainFormulas.head )
       if ( side.inSuc ) ContractionRightRule( part, formula )
       else ContractionLeftRule( part, formula )
 
@@ -147,15 +153,21 @@ object pushSingleWeakeningToLeaves {
       ExistsSkLeftRule( pushSingleWeakeningToLeaves( subProof, side, formula ), skTerm, skDef )
 
     case EqualityLeftRule( subProof, _, _, _ ) =>
-      EqualityLeftRule( pushSingleWeakeningToLeaves( subProof, side, formula ), proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
+      EqualityLeftRule(
+        pushSingleWeakeningToLeaves( subProof, side, formula ),
+        proof.auxFormulas.head( 0 ), proof.auxFormulas.head( 1 ), proof.mainFormulas.head )
 
     case eq @ EqualityRightRule( subProof, _, _, _ ) =>
       val newSubProof = pushSingleWeakeningToLeaves( subProof, side, formula )
-      val connector = SequentConnector.guessInjection( newSubProof.conclusion, subProof.conclusion ).inv
+      val connector = SequentConnector.guessInjection( subProof.conclusion, newSubProof.conclusion ).inv
       EqualityRightRule( newSubProof, connector.child( eq.eq ), connector.child( eq.aux ), eq.replacementContext )
 
     case CutRule( leftSubProof, aux1, rightSubProof, aux2 ) =>
-      val part = CutRule( pushSingleWeakeningToLeaves( leftSubProof, side, formula ), leftSubProof.endSequent( aux1 ), pushSingleWeakeningToLeaves( rightSubProof, side, formula ), rightSubProof.endSequent( aux2 ) )
+      val part = CutRule(
+        pushSingleWeakeningToLeaves( leftSubProof, side, formula ),
+        leftSubProof.endSequent( aux1 ),
+        pushSingleWeakeningToLeaves( rightSubProof, side, formula ),
+        rightSubProof.endSequent( aux2 ) )
       if ( side.inSuc ) ContractionRightRule( part, formula )
       else ContractionLeftRule( part, formula )
 
@@ -163,13 +175,17 @@ object pushSingleWeakeningToLeaves {
       val newInductionCases = ind.cases.map {
         inductionCase =>
           val newCaseProof = pushSingleWeakeningToLeaves( inductionCase.proof, side, formula )
-          val connector = SequentConnector.guessInjection( newCaseProof.conclusion, inductionCase.proof.conclusion ).inv
+          val connector = SequentConnector.guessInjection(
+            inductionCase.proof.conclusion,
+            newCaseProof.conclusion ).inv
           inductionCase.copy(
             proof = newCaseProof,
             hypotheses = inductionCase.hypotheses.map( connector.child ),
             conclusion = connector.child( inductionCase.conclusion ) )
       }
-      ContractionMacroRule( ind.copy( cases = newInductionCases ), contractionTarget( formula, side, proof ), false )
+      ContractionMacroRule(
+        ind.copy( cases = newInductionCases ),
+        contractionTarget( formula, side, proof ), false )
   }
 
   private def contractionTarget( formula: Formula, polarity: Polarity, proof: LKProof ) =

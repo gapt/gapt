@@ -29,8 +29,7 @@ class ProoftoolViewableTest extends Specification {
     implicitly[ProoftoolViewable[HOLSequent]]
     implicitly[ProoftoolViewable[ExtendedProofDatabase]]
 
-    def forall_[Data] =
-      implicitly[ProoftoolViewable[Struct[Data]]]
+    implicitly[ProoftoolViewable[Struct]]
 
     ok
   }

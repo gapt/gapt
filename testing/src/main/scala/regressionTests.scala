@@ -5,13 +5,13 @@ import java.io.{ FileWriter, PrintWriter }
 import ammonite.ops._
 import at.logic.gapt.cutintro._
 import at.logic.gapt.expr.fol.isFOLPrenexSigma1
-import at.logic.gapt.expr.{ All, And, TBase }
+import at.logic.gapt.expr._
 import at.logic.gapt.formats.babel.BabelParser
 import at.logic.gapt.formats.leancop.LeanCoPParser
 import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.formats.tptp.{ TptpParser, resolveIncludes }
 import at.logic.gapt.formats.verit.VeriTParser
-import at.logic.gapt.proofs.ceres.CERES
+import at.logic.gapt.proofs.ceres._
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.gaptic.{ ProofState, now }
 import at.logic.gapt.proofs.lk._
@@ -71,6 +71,15 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
     val instanceTerms = new EnumeratingInstanceGenerator( variables.map( _.ty.asInstanceOf[TBase] ), ctx ).
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
+
+    val proofName @ Apps( proofNameC @ Const( proofNameStr, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+    ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
+      ProofLink( proofName ) --- "create schema proof link"
+      instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
+      SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
+        CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --- "characteristic formula"
+      }
+    }
 
     val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof ) --- "eliminate inductions in instance proof"
     indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
@@ -203,7 +212,7 @@ class TptpTestCase( f: java.io.File ) extends RegressionTestCase( f.getName ) {
 }
 
 // Usage: RegressionTests [<test number limit>]
-object RegressionTests extends App {
+object RegressionTests extends scala.App {
   def prover9Proofs = ls.rec( pwd / "testing" / "TSTP" / "prover9" ).filter( _.ext == "s" )
   def leancopProofs = ls.rec( pwd / "testing" / "TSTP" / "leanCoP" ).filter( _.ext == "s" )
   def veritProofs = ls.rec( pwd / "testing" / "veriT-SMT-LIB" ).filter( _.ext == "proof_flat" )

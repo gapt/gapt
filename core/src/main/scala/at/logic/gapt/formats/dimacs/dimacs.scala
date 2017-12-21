@@ -17,7 +17,8 @@ object DIMACS {
   /**
    * Inference in a DRUP proof in DIMACS encoding.
    *
-   * This is the same proof system as in [[DrupProof]], except that we store the atoms in DIMACS encoding here.
+   * This is the same proof system as in [[at.logic.gapt.proofs.drup.DrupProof]],
+   * except that we store the atoms in DIMACS encoding here.
    */
   sealed abstract class DrupInference
   case class DrupDerive( clause: Clause ) extends DrupInference
@@ -136,7 +137,8 @@ object readWDIMACS {
         flatMap { _ split " " }
         map { _ replace ( "x", "" ) } // toysat :-(
         filter { _ nonEmpty }
-        map { _ toInt } )
+        map { _ toInt }
+        filterNot { _ == 0 } )
     } else {
       None
     }

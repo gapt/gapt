@@ -2,7 +2,7 @@ package at.logic.gapt.prooftool
 
 import at.logic.gapt.proofs.ceres.Struct
 
-class StructViewer[D]( name: String, tree: Struct[D] ) extends ScrollableProofToolViewer[Struct[D]]( name, tree ) {
-  override type MainComponentType = DrawStruct[D]
+class StructViewer( name: String, tree: Struct ) extends ScrollableProofToolViewer[Struct]( name, tree ) {
+  override type MainComponentType = DrawStruct
   override def createMainComponent = new DrawStruct( this, tree, "" )
 }
