@@ -36,7 +36,8 @@ object withTimeout {
     val dynamicsToCopy: Vector[DynamicVariableCopier[_]] =
       Vector( DynamicVariableCopier( LogHandler.current ) )
 
-    val t = new Thread {
+    trait StoppableWithoutDeprecationWarning { def stop(): Unit }
+    val t = new Thread with StoppableWithoutDeprecationWarning {
       override def run(): Unit = {
         for ( dc <- dynamicsToCopy ) dc.copyHere()
         result = try Right( f ) catch {
@@ -49,7 +50,7 @@ object withTimeout {
     t.setDaemon( true )
     t.start()
     blocking { t.join( duration toMillis ) }
-    t.stop()
+    ( t: StoppableWithoutDeprecationWarning ).stop()
 
     val nLine = sys.props( "line.separator" )
 
