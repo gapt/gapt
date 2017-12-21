@@ -137,7 +137,8 @@ object readWDIMACS {
         flatMap { _ split " " }
         map { _ replace ( "x", "" ) } // toysat :-(
         filter { _ nonEmpty }
-        map { _ toInt } )
+        map { _ toInt }
+        filterNot { _ == 0 } )
     } else {
       None
     }
