@@ -1,8 +1,9 @@
 package at.logic.gapt.proofs.expansion
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.{ HOLPosition, instantiate }
+import at.logic.gapt.expr.hol.{ HOLPosition, inductionPrinciple, instantiate }
 import at.logic.gapt.formats.babel.BabelSignature
+import at.logic.gapt.proofs.Context.StructurallyInductiveTypes
 import at.logic.gapt.proofs._
 
 import scala.collection.mutable
@@ -200,6 +201,59 @@ object ETCut {
         } yield ETImp( cut1, cut2 )
       }
     else None
+}
+
+object ETInduction {
+  case class Case( evs: Seq[Var], auxiliary: ExpansionSequent )
+  case class Induction( constructorsSteps: Seq[( Const, Case )], hyps: ExpansionTree, suc: ExpansionTree )
+
+  def indAxioms( implicit ctx: Context ) =
+    ctx.get[StructurallyInductiveTypes].constructors.map {
+      case ( s, cs ) => ( inductionPrinciple( TBase( s ), cs ), cs )
+    }
+
+  def isInductionAxiomExpansion( tree: ExpansionTree )( implicit ctx: Context ): Boolean =
+    indAxioms.contains( tree.shallow )
+
+  def unapply( et: ExpansionTree )( implicit ctx: Context ) = {
+
+    def getETs( et: ExpansionTree, sz: Int ): Seq[ExpansionTree] = {
+      et match {
+        case ETImp( ch1, ch2 ) if sz > 0 => ch1 +: getETs( ch2, sz - 1 )
+        case ret if sz == 0              => Seq( ret )
+      }
+    }
+    def getEvs( et: ExpansionTree, sz: Int ): ( ExpansionTree, Seq[Var] ) = {
+      et match {
+        case ETStrongQuantifier( _, ev, ch ) if sz > 0 =>
+          val ( ret, evs ) = getEvs( ch, sz - 1 )
+          ( ret, ev +: evs )
+        case ret if sz == 0 => ( ret, Seq.empty )
+      }
+    }
+    def toCase( et: ExpansionTree, constrs: Seq[Const] ): Seq[( Const, Case )] = {
+      constrs.zip( et.immediateSubProofs ).map {
+        case ( constr, indCase ) =>
+          val FunctionType( indTy, argTypes ) = constr.ty
+          val ( ch, evs ) = getEvs( indCase, argTypes.length )
+          val ets = getETs( ch, argTypes.filter( _ == indTy ).length )
+          val ( hyps, suc ) = ets.splitAt( ets.length - 1 )
+          ( constr, Case( evs, ExpansionSequent( hyps, suc ) ) )
+      }
+    }
+
+    if ( isInductionAxiomExpansion( et ) ) {
+      val constrs = indAxioms.get( et.shallow ).get
+      Some {
+        for {
+          sequent <- et( HOLPosition( 1 ) )
+          hyps <- sequent( HOLPosition( 1 ) )
+          suc <- sequent( HOLPosition( 2 ) )
+        } yield Induction( toCase( hyps, constrs ), hyps, suc )
+      }
+    } else
+      None
+  }
 }
 
 /**
