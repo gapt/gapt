@@ -2008,7 +2008,8 @@ object consoleString {
  */
 class ConvenienceConstructor( val longName: String ) {
   /**
-   * Create an LKRuleCreationException with a message starting with "Cannot create $longName: ..."
+   * Create an LKRuleCreationException with a message starting
+   * with "Cannot create longName: ..."
    *
    * @param text The rest of the message.
    * @return

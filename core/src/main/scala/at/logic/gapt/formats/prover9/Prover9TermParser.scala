@@ -1,15 +1,27 @@
 package at.logic.gapt.formats.prover9
 
-import at.logic.gapt.proofs.HOLSequent
-
-import util.parsing.combinator.JavaTokenParsers
+import scala.util.parsing.combinator.JavaTokenParsers
 import at.logic.gapt.expr._
 import scala.util.parsing.combinator.PackratParsers
-import scala.collection.immutable.HashSet
+
+/** Prolog Style Term Parser */
+object Prover9TermParser extends Prover9TermParserA {
+  override def conssymb: Parser[String] = """([a-z][a-zA-Z0-9_]*)|([0-9]+)""".r
+  override def varsymb: Parser[String] = """[A-Z][a-zA-Z0-9_]*""".r
+
+}
+
+/** LADR Style Term Parser */
+object Prover9TermParserLadrStyle extends Prover9TermParserA {
+  override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)""".r
+  override def varsymb: Parser[String] = """[u-z][a-zA-Z0-9_]*""".r
+
+}
 
 /**
  * Parser for first order formulas in the prover 9 format.
- * ( http://www.cs.unm.edu/~mccune/mace4/manual/2009-11A/syntax.html )
+ *
+ * See [[http://www.cs.unm.edu/~mccune/mace4/manual/2009-11A/syntax.html]]
  * Right associative, infix operators: &, |, all, exists
  * Infix operators: =, !=, <, >, , <=, >=, ->, <-, <->
  * Operator precedence (higher up in the list means binds weaker i.e. operator is closer to the root):
@@ -22,22 +34,7 @@ import scala.collection.immutable.HashSet
  *    (all 1 P(1))
  *
  */
-
-//Prolog Style Term Parser
-object Prover9TermParser extends Prover9TermParserA {
-  override def conssymb: Parser[String] = """([a-z][a-zA-Z0-9_]*)|([0-9]+)""".r
-  override def varsymb: Parser[String] = """[A-Z][a-zA-Z0-9_]*""".r
-
-}
-
-//LADR Style Term Parser
-object Prover9TermParserLadrStyle extends Prover9TermParserA {
-  override def conssymb: Parser[String] = """([a-tA-Z][a-zA-Z0-9_]*)|([0-9]+)""".r
-  override def varsymb: Parser[String] = """[u-z][a-zA-Z0-9_]*""".r
-
-}
-
-abstract trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
+trait Prover9TermParserA extends JavaTokenParsers with PackratParsers {
   /* these two rules are abstract since the variable style decides the regexp for a variable */
   def conssymb: Parser[String]
   def varsymb: Parser[String]

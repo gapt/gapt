@@ -25,7 +25,7 @@ import at.logic.gapt.proofs.HOLSequent
  * P1: f1, f2, f3, f4 :- conclusion1
  * P2: f1, f2, f3, f4 :- conclusion2
  *
- * The generated filenames are "ntape6-${i}-without-witness.tptp" for i = 0 to 2.
+ * The generated filenames are "ntape6-i-without-witness.tptp" for i = 0 to 2.
  *
  * To show that there are actual witnesses for the function h, we provide a witness, where the witness w1 can be used
  * for both W0 and W1:
@@ -34,7 +34,7 @@ import at.logic.gapt.proofs.HOLSequent
  * W1: { w1 :- } x P1
  * W2: { w2 :- } x P2
  *
- * The generated filenames are "ntape6-${i}-with-witness.tptp" for i = 0 to 2.
+ * The generated filenames are "ntape6-i-with-witness.tptp" for i = 0 to 2.
  */
 object nTape6 {
 

@@ -983,7 +983,7 @@ object inductionLeftReduction {
 
 object freeCutElimination {
   /**
-   * See [[FreeCutElimination.apply()]]
+   * See [[FreeCutElimination.apply]]
    */
   def apply( proof: LKProof )( implicit ctx: Context ) = {
     ( new FreeCutElimination ).apply( proof )

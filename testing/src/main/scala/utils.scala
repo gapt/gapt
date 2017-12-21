@@ -15,7 +15,7 @@ import ammonite.ops._
 /**
  * Single regression test case, e.g. Prover9TestCase.ALG-123.
  *
- * Subclasses only need to implement [[test()]].
+ * Subclasses only need to implement test().
  *
  * @param name  Name of this test case, e.g. "ALG-123".
  */
@@ -111,11 +111,11 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
 
   protected implicit class StepBlock[T]( block: => T ) {
     /**
-     * Runs the passed [[block]] as a step in a regression test case.
+     * Runs the passed block as a step in a regression test case.
      *
      * @param name Name of the step.
-     * @return The return value of [[block]].
-     * @throws Throwable If [[block]] raises an exception, it is rethrown.
+     * @return The return value of block.
+     * @throws Throwable If block raises an exception, it is rethrown.
      */
     def ---( name: String )( implicit testRun: TestRun ) =
       testRun.runStep( Some( name ) )( block ) match {
@@ -124,11 +124,11 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
       }
 
     /**
-     * Runs the passed [[block]] as a step in a regression test case, ignoring thrown exceptions (but still recording
+     * Runs the passed block as a step in a regression test case, ignoring thrown exceptions (but still recording
      * them in the test run).
      *
      * @param name Name of the step
-     * @return Some(returnValue), if [[block]] returns returnValue.  None, if [[block]] throws an exception.
+     * @return Some(returnValue), if block returns returnValue.  None, if block throws an exception.
      */
     def --?( name: String )( implicit testRun: TestRun ) =
       testRun.runStep( Some( name ) )( block ) match {
@@ -139,7 +139,7 @@ abstract class RegressionTestCase( val name: String ) extends Serializable {
 
   protected implicit class StepCondition( block: => Boolean ) {
     /**
-     * Verify that [[block]] returns true.  Exceptions thrown in [[block]] are ignored (but still recorded in the test
+     * Verify that block returns true.  Exceptions thrown in block are ignored (but still recorded in the test
      * run).
      *
      * @param name Name of the step

@@ -1375,7 +1375,8 @@ case class DefinitionRule( subProof: NDProof, mainFormula: Formula ) extends Una
  */
 class ConvenienceConstructor( val longName: String ) {
   /**
-   * Create an NDRuleCreationException with a message starting with "Cannot create $longName: ..."
+   * Create an NDRuleCreationException with a message starting
+   * with "Cannot create longName: ..."
    *
    * @param text The rest of the message.
    * @return
