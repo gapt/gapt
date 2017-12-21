@@ -13,15 +13,15 @@ trait ProgramParserA extends Prover9TermParserA {
   def singleStmt: PackratParser[Program] = skip | forLoop | ifElse | assign
 
   def assign: PackratParser[Assign] = variable ~ ":=" ~ term ^^ {
-    case x ~ ":=" ~ ( t: FOLTerm ) => Assign( x, t )
+    case x ~ _ ~ ( t: FOLTerm ) => Assign( x, t )
   }
 
   def forLoop: PackratParser[ForLoop] = "for" ~ variable ~ "<" ~ variable ~ "do" ~ program ~ "od" ^^ {
-    case "for" ~ i ~ "<" ~ n ~ "do" ~ b ~ "od" => ForLoop( i, n, b )
+    case _ ~ i ~ _ ~ n ~ _ ~ b ~ _ => ForLoop( i, n, b )
   }
 
   def ifElse: PackratParser[IfElse] = "if" ~ formula ~ "then" ~ program ~ "else" ~ program ~ "fi" ^^ {
-    case "if" ~ ( c: FOLFormula ) ~ "then" ~ a ~ "else" ~ b ~ "fi" => IfElse( c, a, b )
+    case _ ~ ( c: FOLFormula ) ~ _ ~ a ~ _ ~ b ~ _ => IfElse( c, a, b )
   }
 
   def skip: PackratParser[Skip] = "skip" ^^ { _ => Skip() }

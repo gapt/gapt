@@ -95,7 +95,7 @@ object TptpProofParser {
       subst <- clauseSubsumption( from, to )
       // FIXME: this would only be correct if we considered all subsumptions...
       if subst.isInjectiveRenaming
-    } yield subst.map.map { case ( l: Var, r: Var ) => l -> r }
+    } yield subst.map.map { case ( l, r ) => l -> r.asInstanceOf[Var] }
 
   def parseSteps( stepList: TptpFile, labelledCNF: Map[String, Seq[FOLClause]] ): RefutationSketch = {
     val steps = ( for ( input @ AnnotatedFormula( _, name, _, _, _ ) <- stepList.inputs )

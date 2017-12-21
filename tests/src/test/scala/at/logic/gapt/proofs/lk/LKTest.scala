@@ -25,6 +25,9 @@ class LKTest extends Specification {
   val Pc = FOLAtom( "P", c )
   val Pd = FOLAtom( "P", d )
 
+  def proofOf( sequent: HOLSequent ): LKProof =
+    ProofLink( FOLAtom( "sorry" ), sequent )
+
   private def testParents( o: SequentConnector, ruleName: String )( sequent: HOLSequent, parents: Seq[SequentIndex]* ): Success = {
     val ( m, n ) = sequent.sizes
     for ( ( i, ps ) <- sequent.indices zip parents ) {
@@ -202,7 +205,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: A, B, C :- A, B
-      val p = ContractionLeftRule( TheoryAxiom( B +: A +: C +: A +: Sequent() :+ A :+ B ), A )
+      val p = ContractionLeftRule( proofOf( B +: A +: C +: A +: Sequent() :+ A :+ B ), A )
 
       val o = p.getSequentConnector
 
@@ -270,7 +273,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: A, B :- B, C, A
-      val p = ContractionRightRule( TheoryAxiom( A +: B +: Sequent() :+ A :+ B :+ A :+ C ), Suc( 0 ), Suc( 2 ) )
+      val p = ContractionRightRule( proofOf( A +: B +: Sequent() :+ A :+ B :+ A :+ C ), Suc( 0 ), Suc( 2 ) )
 
       val o = p.getSequentConnector
 
@@ -297,15 +300,15 @@ class LKTest extends Specification {
 
   "CutRule" should {
     "correctly produce a proof" in {
-      CutRule( TheoryAxiom( A +: B +: Sequent() :+ B ), Suc( 0 ), LogicalAxiom( B ), Ant( 0 ) )
-      CutRule( TheoryAxiom( A +: B +: Sequent() :+ B ), LogicalAxiom( B ), B )
+      CutRule( proofOf( A +: B +: Sequent() :+ B ), Suc( 0 ), LogicalAxiom( B ), Ant( 0 ) )
+      CutRule( proofOf( A +: B +: Sequent() :+ B ), LogicalAxiom( B ), B )
 
       success
     }
 
     "refuse to produce a proof" in {
-      val p1 = TheoryAxiom( Sequent() :+ A :+ B )
-      val p2 = TheoryAxiom( C +: B +: Sequent() )
+      val p1 = proofOf( Sequent() :+ A :+ B )
+      val p2 = proofOf( C +: B +: Sequent() )
 
       CutRule( p1, Ant( 0 ), p2, Ant( 0 ) ) must throwAn[LKRuleCreationException]
       CutRule( p1, Suc( 0 ), p2, Suc( 0 ) ) must throwAn[LKRuleCreationException]
@@ -315,8 +318,8 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p1 = TheoryAxiom( Sequent() :+ A :+ B )
-      val p2 = TheoryAxiom( C +: B +: Sequent() )
+      val p1 = proofOf( Sequent() :+ A :+ B )
+      val p2 = proofOf( C +: B +: Sequent() )
 
       val p = CutRule( p1, p2, B )
       if ( p.auxIndices.length != 2 )
@@ -331,8 +334,8 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val p1 = TheoryAxiom( A +: B +: Sequent() :+ A :+ B :+ C )
-      val p2 = TheoryAxiom( D +: B +: E +: F +: Sequent() :+ B :+ E )
+      val p1 = proofOf( A +: B +: Sequent() :+ A :+ B :+ C )
+      val p2 = proofOf( D +: B +: E +: F +: Sequent() :+ B :+ E )
 
       // end sequent of p: A, B, D, E, F :- A, C, B, E
       val p = CutRule( p1, p2, B )
@@ -389,20 +392,20 @@ class LKTest extends Specification {
   "NegLeftRule" should {
 
     "correctly create a proof" in {
-      NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Suc( 0 ) )
-      NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), C )
+      NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Suc( 0 ) )
+      NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D ), C )
 
       success
     }
 
     "refuse to create a proof" in {
-      NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
-      NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Suc( 2 ) ) must throwAn[LKRuleCreationException]
-      NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), A ) must throwAn[LKRuleCreationException]
+      NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Suc( 2 ) ) must throwAn[LKRuleCreationException]
+      NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D ), A ) must throwAn[LKRuleCreationException]
     }
 
     "correctly return its main formula" in {
-      val p = NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), C )
+      val p = NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D ), C )
 
       if ( p.mainIndices.length != 1 )
         failure
@@ -413,7 +416,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p = NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D :+ E ), C )
+      val p = NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D :+ E ), C )
 
       if ( p.auxIndices.length != 1 )
         failure
@@ -428,7 +431,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: ¬D, A, B :- C, E
-      val p = NegLeftRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D :+ E ), D )
+      val p = NegLeftRule( proofOf( A +: B +: Sequent() :+ C :+ D :+ E ), D )
 
       val o = p.getSequentConnector
 
@@ -455,20 +458,20 @@ class LKTest extends Specification {
   "NegRightRule" should {
 
     "correctly create a proof" in {
-      NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ) )
-      NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), A )
+      NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ) )
+      NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), A )
 
       success
     }
 
     "refuse to create a proof" in {
-      NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
-      NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
-      NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), C ) must throwAn[LKRuleCreationException]
+      NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
+      NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), C ) must throwAn[LKRuleCreationException]
     }
 
     "correctly return its main formula" in {
-      val p = NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), A )
+      val p = NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), A )
 
       if ( p.mainIndices.length != 1 )
         failure
@@ -479,7 +482,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p = NegRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D :+ E ), A )
+      val p = NegRightRule( proofOf( A +: B +: Sequent() :+ C :+ D :+ E ), A )
 
       if ( p.auxIndices.length != 1 )
         failure
@@ -494,7 +497,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: A, C :- D, E, ¬B
-      val p = NegRightRule( TheoryAxiom( A +: B +: C +: Sequent() :+ D :+ E ), B )
+      val p = NegRightRule( proofOf( A +: B +: C +: Sequent() :+ D :+ E ), B )
 
       val o = p.getSequentConnector
 
@@ -560,7 +563,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: A∧A, B, C :- A, B
-      val p = AndLeftRule( TheoryAxiom( B +: A +: C +: A +: Sequent() :+ A :+ B ), A, A )
+      val p = AndLeftRule( proofOf( B +: A +: C +: A +: Sequent() :+ A :+ B ), A, A )
 
       val o = p.getSequentConnector
 
@@ -587,24 +590,24 @@ class LKTest extends Specification {
   "AndRightRule" should {
 
     "correctly construct a proof" in {
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) )
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), C, TheoryAxiom( B +: Sequent() :+ D ), D )
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), TheoryAxiom( B +: Sequent() :+ D ), And( C, D ) )
+      AndRightRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) )
+      AndRightRule( proofOf( A +: Sequent() :+ C ), C, proofOf( B +: Sequent() :+ D ), D )
+      AndRightRule( proofOf( A +: Sequent() :+ C ), proofOf( B +: Sequent() :+ D ), And( C, D ) )
       success
     }
 
     "refuse to construct a proof" in {
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 2 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 2 ) ) must throwAn[LKRuleCreationException]
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), B, TheoryAxiom( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), C, TheoryAxiom( B +: Sequent() :+ D ), C ) must throwAn[LKRuleCreationException]
-      AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), TheoryAxiom( B +: Sequent() :+ D ), Or( C, D ) ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), Suc( 2 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 2 ) ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), B, proofOf( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), C, proofOf( B +: Sequent() :+ D ), C ) must throwAn[LKRuleCreationException]
+      AndRightRule( proofOf( A +: Sequent() :+ C ), proofOf( B +: Sequent() :+ D ), Or( C, D ) ) must throwAn[LKRuleCreationException]
     }
 
     "correctly return its main formula" in {
-      val p = AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) )
+      val p = AndRightRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) )
 
       if ( p.mainIndices.length != 1 )
         failure
@@ -613,7 +616,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p = AndRightRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) )
+      val p = AndRightRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) )
 
       if ( p.auxIndices.length != 2 )
         failure
@@ -630,8 +633,8 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax1 = TheoryAxiom( A +: Sequent() :+ B :+ C :+ D )
-      val ax2 = TheoryAxiom( A +: Sequent() :+ B :+ E :+ F )
+      val ax1 = proofOf( A +: Sequent() :+ B :+ C :+ D )
+      val ax2 = proofOf( A +: Sequent() :+ B :+ E :+ F )
 
       // end sequent of p: A, A :- B, D, B, F, C∧E
       val p = AndRightRule( ax1, ax2, And( C, E ) )
@@ -682,24 +685,24 @@ class LKTest extends Specification {
   "OrLeftRule" should {
 
     "correctly construct a proof" in {
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), A, TheoryAxiom( B +: Sequent() :+ D ), B )
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), TheoryAxiom( B +: Sequent() :+ D ), Or( A, B ) )
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) )
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), A, proofOf( B +: Sequent() :+ D ), B )
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), proofOf( B +: Sequent() :+ D ), Or( A, B ) )
       success
     }
 
     "refuse to construct a proof" in {
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 2 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), B, TheoryAxiom( B +: Sequent() :+ D ), B ) must throwAn[LKRuleCreationException]
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), A, TheoryAxiom( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
-      OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), TheoryAxiom( B +: Sequent() :+ D ), And( A, B ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 2 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), B, proofOf( B +: Sequent() :+ D ), B ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), A, proofOf( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
+      OrLeftRule( proofOf( A +: Sequent() :+ C ), proofOf( B +: Sequent() :+ D ), And( A, B ) ) must throwAn[LKRuleCreationException]
     }
 
     "correctly return its main formula" in {
-      val p = OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+      val p = OrLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) )
 
       if ( p.mainIndices.length != 1 )
         failure
@@ -708,7 +711,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p = OrLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+      val p = OrLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) )
 
       if ( p.auxIndices.length != 2 )
         failure
@@ -725,8 +728,8 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax1 = TheoryAxiom( A +: B +: C +: Sequent() :+ D )
-      val ax2 = TheoryAxiom( A +: E +: F +: Sequent() :+ C )
+      val ax1 = proofOf( A +: B +: C +: Sequent() :+ D )
+      val ax2 = proofOf( A +: E +: F +: Sequent() :+ C )
 
       // end sequent of p: B∨E, A, C, A, F :- D, C
       val p = OrLeftRule( ax1, ax2, Or( B, E ) )
@@ -817,7 +820,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: A :- B, D, B, C∨E
-      val p = OrRightRule( TheoryAxiom( A +: Sequent() :+ B :+ C :+ D :+ E :+ B ), Or( C, E ) )
+      val p = OrRightRule( proofOf( A +: Sequent() :+ B :+ C :+ D :+ E :+ B ), Or( C, E ) )
 
       val o = p.getSequentConnector
 
@@ -844,24 +847,24 @@ class LKTest extends Specification {
   "ImpLeftRule" should {
 
     "correctly construct a proof" in {
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), C, TheoryAxiom( B +: Sequent() :+ D ), B )
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), TheoryAxiom( B +: Sequent() :+ D ), Imp( C, B ) )
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) )
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), C, proofOf( B +: Sequent() :+ D ), B )
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), proofOf( B +: Sequent() :+ D ), Imp( C, B ) )
       success
     }
 
     "refuse to construct a proof" in {
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Ant( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 2 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), B, TheoryAxiom( B +: Sequent() :+ D ), B ) must throwAn[LKRuleCreationException]
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), C, TheoryAxiom( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
-      ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), TheoryAxiom( B +: Sequent() :+ D ), And( A, B ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), Ant( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Suc( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 2 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 2 ) ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), B, proofOf( B +: Sequent() :+ D ), B ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), C, proofOf( B +: Sequent() :+ D ), D ) must throwAn[LKRuleCreationException]
+      ImpLeftRule( proofOf( A +: Sequent() :+ C ), proofOf( B +: Sequent() :+ D ), And( A, B ) ) must throwAn[LKRuleCreationException]
     }
 
     "correctly return its main formula" in {
-      val p = ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+      val p = ImpLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) )
 
       if ( p.mainIndices.length != 1 )
         failure
@@ -870,7 +873,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p = ImpLeftRule( TheoryAxiom( A +: Sequent() :+ C ), Suc( 0 ), TheoryAxiom( B +: Sequent() :+ D ), Ant( 0 ) )
+      val p = ImpLeftRule( proofOf( A +: Sequent() :+ C ), Suc( 0 ), proofOf( B +: Sequent() :+ D ), Ant( 0 ) )
 
       if ( p.auxIndices.length != 2 )
         failure
@@ -887,8 +890,8 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax1 = TheoryAxiom( A +: Sequent() :+ B :+ C :+ D )
-      val ax2 = TheoryAxiom( A +: E +: F +: Sequent() :+ C )
+      val ax1 = proofOf( A +: Sequent() :+ B :+ C :+ D )
+      val ax2 = proofOf( A +: E +: F +: Sequent() :+ C )
 
       // end sequent of p: C -> E, A, A, F :- B, D, C
       val p = ImpLeftRule( ax1, ax2, Imp( C, E ) )
@@ -939,9 +942,9 @@ class LKTest extends Specification {
   "ImpRightRule" should {
 
     "correctly create a proof" in {
-      ImpRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ), Suc( 1 ) )
-      ImpRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), B, D )
-      ImpRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), Imp( A, C ) )
+      ImpRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Ant( 0 ), Suc( 1 ) )
+      ImpRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), B, D )
+      ImpRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), Imp( A, C ) )
 
       success
     }
@@ -954,7 +957,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val p = ImpRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), A, D )
+      val p = ImpRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), A, D )
 
       if ( p.mainIndices.length != 1 )
         failure
@@ -965,7 +968,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val p = ImpRightRule( TheoryAxiom( A +: B +: Sequent() :+ C :+ D ), A, D )
+      val p = ImpRightRule( proofOf( A +: B +: Sequent() :+ C :+ D ), A, D )
 
       if ( p.auxIndices.length != 1 )
         failure
@@ -979,7 +982,7 @@ class LKTest extends Specification {
 
     "correctly connect occurrences" in {
       // end sequent of p: A, C :- D, F, B→E
-      val p = ImpRightRule( TheoryAxiom( A +: B +: C +: Sequent() :+ D :+ E :+ F ), Imp( B, E ) )
+      val p = ImpRightRule( proofOf( A +: B +: C +: Sequent() :+ D :+ E :+ F ), Imp( B, E ) )
 
       val o = p.getSequentConnector
 
@@ -1006,7 +1009,7 @@ class LKTest extends Specification {
 
   "ForallRightRule" should {
     "correctly construct a proof" in {
-      val ax = TheoryAxiom( Sequent() :+ P( alpha ) :+ P( x ) )
+      val ax = proofOf( Sequent() :+ P( alpha ) :+ P( x ) )
       ForallRightRule( ax, Suc( 0 ), alpha, x )
       ForallRightRule( ax, All( x, P( x ) ), alpha )
       ForallRightRule( ax, All( x, P( x ) ) )
@@ -1015,7 +1018,7 @@ class LKTest extends Specification {
     }
 
     "refuse to construct a proof" in {
-      val ax = TheoryAxiom( P( alpha ) +: Sequent() :+ P( alpha ) :+ P( x ) )
+      val ax = proofOf( P( alpha ) +: Sequent() :+ P( alpha ) :+ P( x ) )
 
       ForallRightRule( ax, Ant( 0 ), alpha, x ) must throwAn[LKRuleCreationException]
       ForallRightRule( ax, Suc( 2 ), alpha, x ) must throwAn[LKRuleCreationException]
@@ -1026,7 +1029,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val ax = TheoryAxiom( Sequent() :+ P( alpha ) :+ P( x ) )
+      val ax = proofOf( Sequent() :+ P( alpha ) :+ P( x ) )
 
       val p = ForallRightRule( ax, Suc( 0 ), alpha, x )
 
@@ -1037,7 +1040,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formula" in {
-      val ax = TheoryAxiom( Sequent() :+ P( alpha ) :+ P( x ) )
+      val ax = proofOf( Sequent() :+ P( alpha ) :+ P( x ) )
 
       val p = ForallRightRule( ax, Suc( 0 ), alpha, x )
 
@@ -1051,7 +1054,7 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax = TheoryAxiom( A +: Sequent() :+ B :+ P( alpha ) :+ C )
+      val ax = proofOf( A +: Sequent() :+ B :+ P( alpha ) :+ C )
 
       // end sequent of p: A :- B, C, ∀x.P
       val p = ForallRightRule( ax, All( x, P( x ) ), alpha )
@@ -1078,7 +1081,7 @@ class LKTest extends Specification {
 
   "ExistsLeftRule" should {
     "correctly construct a proof" in {
-      val ax = TheoryAxiom( P( alpha ) +: P( x ) +: Sequent() )
+      val ax = proofOf( P( alpha ) +: P( x ) +: Sequent() )
       ExistsLeftRule( ax, Ant( 0 ), alpha, x )
       ExistsLeftRule( ax, Ex( x, P( x ) ), alpha )
       ExistsLeftRule( ax, Ex( x, P( x ) ) )
@@ -1087,7 +1090,7 @@ class LKTest extends Specification {
     }
 
     "refuse to construct a proof" in {
-      val ax = TheoryAxiom( P( alpha ) +: P( x ) +: Sequent() :+ P( alpha ) )
+      val ax = proofOf( P( alpha ) +: P( x ) +: Sequent() :+ P( alpha ) )
 
       ExistsLeftRule( ax, Suc( 0 ), alpha, x ) must throwAn[LKRuleCreationException]
       ExistsLeftRule( ax, Ant( 2 ), alpha, x ) must throwAn[LKRuleCreationException]
@@ -1098,7 +1101,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val ax = TheoryAxiom( P( alpha ) +: P( x ) +: Sequent() )
+      val ax = proofOf( P( alpha ) +: P( x ) +: Sequent() )
 
       val p = ExistsLeftRule( ax, Ant( 0 ), alpha, x )
 
@@ -1109,7 +1112,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formula" in {
-      val ax = TheoryAxiom( P( alpha ) +: P( x ) +: Sequent() )
+      val ax = proofOf( P( alpha ) +: P( x ) +: Sequent() )
 
       val p = ExistsLeftRule( ax, Ant( 0 ), alpha, x )
 
@@ -1123,7 +1126,7 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax = TheoryAxiom( A +: P( alpha ) +: B +: Sequent() :+ C )
+      val ax = proofOf( A +: P( alpha ) +: B +: Sequent() :+ C )
 
       // end sequent of p: ∀x.P, A, B :- C
       val p = ExistsLeftRule( ax, Ex( x, P( x ) ), alpha )
@@ -1150,7 +1153,7 @@ class LKTest extends Specification {
 
   "EqualityLeftRule" should {
     "correctly construct a proof" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = proofOf( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] )
       EqualityLeftRule( ax, Ant( 0 ), Ant( 2 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1161,7 +1164,7 @@ class LKTest extends Specification {
     }
 
     "refuse to construct a proof" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
+      val ax = proofOf( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
       EqualityLeftRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
       EqualityLeftRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
@@ -1173,7 +1176,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = proofOf( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pd, Ant( 2 ) -> Pc ) ) yield ( EqualityLeftRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1188,7 +1191,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = proofOf( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Ant( 1 ) -> Pc, Ant( 2 ) -> Pd ) ) yield ( EqualityLeftRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1207,7 +1210,7 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax = TheoryAxiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
+      val ax = proofOf( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
 
       // end sequent of p1: P(d), A, c = d, B, C :- D, P(d), E
       val p = EqualityLeftRule( ax, Ant( 1 ), Ant( 3 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1242,7 +1245,7 @@ class LKTest extends Specification {
 
   "EqualityRightRule" should {
     "correctly construct a proof" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = proofOf( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       EqualityRightRule( ax, Ant( 0 ), Suc( 0 ), le"λx P(x): o".asInstanceOf[Abs] )
       EqualityRightRule( ax, Ant( 0 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1253,7 +1256,7 @@ class LKTest extends Specification {
     }
 
     "refuse to construct a proof" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
+      val ax = proofOf( Eq( c, d ) +: P( x ) +: A +: Sequent() :+ B :+ P( y ) )
 
       EqualityRightRule( ax, Ant( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
       EqualityRightRule( ax, Suc( 0 ), Ant( 1 ), le"λx P(x): o".asInstanceOf[Abs] ) must throwAn[Exception]
@@ -1265,7 +1268,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its main formula" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = proofOf( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Suc( 0 ) -> Pd, Suc( 1 ) -> Pc ) ) yield ( EqualityRightRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1280,7 +1283,7 @@ class LKTest extends Specification {
     }
 
     "correctly return its aux formulas" in {
-      val ax = TheoryAxiom( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
+      val ax = proofOf( Eq( c, d ) +: Pc +: Pd +: Sequent() :+ Pc :+ Pd )
 
       val proofs = for ( ( i, f ) <- List( Suc( 0 ) -> Pc, Suc( 1 ) -> Pd ) ) yield ( EqualityRightRule( ax, Ant( 0 ), i, le"λx P(x): o".asInstanceOf[Abs] ), f )
 
@@ -1299,7 +1302,7 @@ class LKTest extends Specification {
     }
 
     "correctly connect occurrences" in {
-      val ax = TheoryAxiom( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
+      val ax = proofOf( A +: Eq( c, d ) +: B +: Pc +: C +: Sequent() :+ D :+ Pd :+ E )
 
       // end sequent of p2: A, c = d, B, C :- D, E, P(c)
       val p = EqualityRightRule( ax, Ant( 1 ), Suc( 1 ), le"λx P(x): o".asInstanceOf[Abs] )
@@ -1343,7 +1346,7 @@ class LKTest extends Specification {
     "correctly construct a small induction proof" in {
       val ax1 = LogicalAxiom( P0y )
 
-      val ax2 = TheoryAxiom( Pxy +: Sequent() :+ PSxy )
+      val ax2 = proofOf( Pxy +: Sequent() :+ PSxy )
 
       InductionRule(
         Seq(

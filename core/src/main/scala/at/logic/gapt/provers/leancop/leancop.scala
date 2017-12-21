@@ -28,9 +28,9 @@ class LeanCoP extends OneShotProver with ExternalProgram {
 
     renameConstantsToFi.wrap( cnf.keys ++: Sequent() )( ( renaming, sequent: HOLSequent ) => {
       val tptp = TPTPFOLExporter( sequent ).toString
-      withTempFile.fromString( tptp ) { leanCoPInput =>
+      ( withTempFile.fromString( tptp ) { leanCoPInput =>
         runProcess.withExitValue( Seq( "leancop", leanCoPInput.toString ) )
-      } match {
+      }: @unchecked ) match {
         case ( 1, leanCopOutput ) if leanCopOutput contains "is Satisfiable" =>
           None
         case ( 0, leanCopOutput ) =>
