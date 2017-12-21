@@ -57,12 +57,6 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     ctx.check( proof ) --? "checking proof against context"
 
-    makeInductionExplicit( proof ) --? "makeInductionExplicit" foreach { proofWithExplicitInduction =>
-      LKToExpansionProof( proofWithExplicitInduction ) --? "expansion proof of explicit induction proof" foreach { exp =>
-        Z3.isValid( exp.deep ) !-- "validity of deep formula of expansion proof of explicit induction proof"
-      }
-    }
-
     extractRecSchem( proof ) --? "extract recursion scheme"
 
     LKToND( proof ) --? "LKToND"
@@ -78,6 +72,18 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
       SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
         CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --- "characteristic formula"
+      }
+    }
+
+    LKToExpansionProof( proof ) --? "LKToExpansionProof" foreach { expansion =>
+      deskolemizeET( expansion ) --? "deskolemization" foreach { desk =>
+        desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
+        Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
+        ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
+          deskLK.conclusion.isSubsetOf( proof.conclusion ) --- "conclusion of ExpansionProofToLK"
+          ctx.check( deskLK ) --- "context check of ExpansionProofToLK"
+          LKToND( deskLK ) --? "LKToND (deskolemization)"
+        }
       }
     }
 
