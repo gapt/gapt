@@ -1,4 +1,4 @@
-package at.logic.examples.nd
+package at.logic.gapt.examples.nd
 import at.logic.gapt.examples.Script
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs._
