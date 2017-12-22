@@ -69,6 +69,9 @@ case class InductionGrammar(
   def filterProductions( pred: Production => Boolean ): InductionGrammar =
     copy( productions = productions.filter( pred ) )
 
+  def gammaProductions: Vector[Production] =
+    productions.filter( _.lhs == gamma )
+
   override def toString: String =
     new IndGExporter( unicode = true, this ).export
 

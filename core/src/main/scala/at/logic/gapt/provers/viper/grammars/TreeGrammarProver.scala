@@ -135,6 +135,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     val indexedTermset = Map() ++
       instanceProofs.map { case ( inst, es ) => inst -> encoding.encode( es.expansionSequent.copy( succedent = Vector() ) ) }
 
+    logger.metric( "itermset_size", indexedTermset.view.flatMap( _._2 ).toSet.size )
+
     val grammar = findMinimalInductionGrammar(
       indexedTermset,
       tau, alpha, nus, gamma,
@@ -149,8 +151,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
       val genLang = grammar.instanceLanguage( inst )
       require(
         terms subsetOf genLang,
-        s"Terms not covered by recursion scheme in $inst:\n${terms.map( _.toSigRelativeString ).mkString( "\n" )}" )
+        s"Terms not covered by induction grammar in $inst:\n${terms.map( _.toSigRelativeString ).mkString( "\n" )}" )
     }
+    logger.metric( "grammarsize", grammar.size )
+    logger.metric( "num_gamma_prods", grammar.gammaProductions.size )
 
     InductionBUP( grammar, encoding, goal )
   }
