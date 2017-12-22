@@ -2078,27 +2078,27 @@ if necessary.
 gapt> prooftool(Pi2Pigeonhole.proof)
 
 gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach println
-∀x ∃y (x <= y ∧ f(y) = s(0))
-∀x ∃y (x <= y ∧ f(y) = 0)
+∀x_1 ∃y (x_1 <= y ∧ f(y) = s(0))
+∀x_1 ∃y (x_1 <= y ∧ f(y) = 0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p220] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
+[p208] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p219, Ant(2)))
-[p219] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p207, Ant(2)))
+[p207] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0)),
 0 = 0
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p218, Suc(1), Suc(0)))
-[p218] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p206, Suc(1), Suc(0)))
+[p206] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0)),
 0 = 0
 ⊢
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p217, Ant(3), Ant(1)))
-[p217] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p205, Ant(3), Ant(1)))
+[p205] ∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0)),
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 0 = 0,
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
@@ -2110,20 +2110,20 @@ gapt> prooftool(acnf)
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
-      s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))}
-    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
-            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+  +^{M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
+      s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))}
+    ((f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
+            s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
         0)- ∨
-      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
-            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+      (f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
+            s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
         s(0))-)
-  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)}
-    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = 0)- ∨
-      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = s(0))-)
-  +^{M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))}
-    ((f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = 0)- ∨
-      (f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = s(0))-)...
+  +^{M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)}
+    ((f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)) = 0)- ∨
+      (f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)) = s(0))-)
+  +^{M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))}
+    ((f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))) = 0)- ∨
+      (f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))) = s(0))-)...
 
 gapt> prooftool(et)
 
