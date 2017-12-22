@@ -72,6 +72,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
       SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
         CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --- "characteristic formula"
+        InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --- "struct instance"
       }
     }
 
