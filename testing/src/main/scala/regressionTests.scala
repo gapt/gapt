@@ -68,11 +68,11 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
 
     val proofName @ Apps( proofNameC @ Const( proofNameStr, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
     ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
-      ProofLink( proofName ) --- "create schema proof link"
+      ProofLink( proofName ) --? "create schema proof link"
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"
       SchematicStruct( proofNameStr ).get --? "schematic struct" foreach { schemaStruct =>
-        CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --- "characteristic formula"
-        InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --- "struct instance"
+        CharFormPRP.PR( CharFormPRP( schemaStruct ) ) --? "characteristic formula"
+        InstanceOfSchematicStruct( CLS( proofNameC( instanceTerms ), proof.endSequent.map( _ => false ) ), schemaStruct ) --? "struct instance"
       }
     }
 
@@ -81,16 +81,17 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
         desk.shallow.isSubsetOf( expansion.shallow ) !-- "shallow sequent of deskolemization"
         Z3.isValid( desk.deep ) !-- "deskolemized deep formula validity"
         ExpansionProofToLK( desk ).get --? "ExpansionProofToLK on deskolemization" foreach { deskLK =>
-          deskLK.conclusion.isSubsetOf( proof.conclusion ) --- "conclusion of ExpansionProofToLK"
-          ctx.check( deskLK ) --- "context check of ExpansionProofToLK"
+          deskLK.conclusion.isSubsetOf( proof.conclusion ) !-- "conclusion of ExpansionProofToLK"
+          ctx.check( deskLK ) --? "context check of ExpansionProofToLK"
           LKToND( deskLK ) --? "LKToND (deskolemization)"
         }
       }
     }
 
-    val indFreeProof = ReductiveCutElimination.eliminateInduction( instProof ) --- "eliminate inductions in instance proof"
-    indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
-    isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
+    ReductiveCutElimination.eliminateInduction( instProof ) --? "eliminate inductions in instance proof" foreach { indFreeProof =>
+      indFreeProof.endSequent.multiSetEquals( instProof.endSequent ) !-- "induction elimination does not modify end-sequent"
+      isInductionFree( indFreeProof ) !-- "induction elimination returns induction free proof"
+    }
   }
 
   private def isInductionFree( proof: LKProof ) =
