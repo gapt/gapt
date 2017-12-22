@@ -1,14 +1,16 @@
 package at.logic.gapt.testing
 
 import ammonite.ops.FilePath
-import at.logic.gapt.expr.All
-import at.logic.gapt.formats.tip.TipSmtParser
-import at.logic.gapt.proofs.{ Context, MutableContext }
+import at.logic.gapt.expr.{ All, Eq, Var }
+import at.logic.gapt.formats.tip.{ TipProblem, TipSmtParser }
+import at.logic.gapt.proofs.{ Ant, Context, MutableContext }
 import at.logic.gapt.proofs.gaptic.tactics.AnalyticInductionTactic
 import at.logic.gapt.proofs.gaptic.{ ProofState, Tactical }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.maxsat.OpenWBO
+import at.logic.gapt.provers.smtlib.CVC4
 import at.logic.gapt.provers.viper.aip.axioms.{ IndependentInductionAxioms, SequentialInductionAxioms, UntrustedFunctionalInductionAxioms }
+import at.logic.gapt.provers.viper.grammars.TreeGrammarProverOptions.Passthru
 import at.logic.gapt.provers.viper.grammars.{ TreeGrammarInductionTactic, TreeGrammarProverOptions }
 import at.logic.gapt.utils.{ LogHandler, logger }
 
@@ -36,6 +38,19 @@ object testInduction extends App {
       case s if s.startsWith( "treeg_default" ) =>
         pickQuant( strategyName.substring( "treeg_default".size ).toInt ).andThen(
           new TreeGrammarInductionTactic( TreeGrammarProverOptions( maxSATSolver = OpenWBO ) ) )
+      case s if s.startsWith( "treeg_eq_" ) =>
+        val ( Vector( quant ), eqs ) = s.substring( "treeg_eq_".size ).split( "_" ).map( _.toInt ).toVector.splitAt( 1 )
+        import at.logic.gapt.proofs.gaptic._
+        for {
+          goal <- currentGoal
+          eqTheory = eqs.map( i => goal.conclusion( Ant( i ) ) ).collect { case All.Block( _, eq @ Eq( _, _ ) ) => eq }
+          _ <- pickQuant( quant )
+          _ <- treeGrammarInduction.
+            maxsatSolver( OpenWBO ).
+            equationalTheory( eqTheory: _* ).
+            smtSolver( new CVC4( "UF", Seq( "--tlimit=300" ), treatUnknownAsSat = true ) ).
+            smtEquationMode( Passthru )
+        } yield ()
     }
 
   val Array( fileName: String, strategyName: String ) = args
@@ -46,11 +61,11 @@ object testInduction extends App {
 
   logger.metric( "filename", fileName )
   logger.metric( "strategy", strategyName )
-  try logger.time( "prover" ) {
+  try logger.time( "total" ) {
     val tipProblem = logger.time( "tip" ) { TipSmtParser.fixupAndParse( FilePath( fileName ) ) }
     implicit val ctx: MutableContext = tipProblem.ctx.newMutable
     logger.metric( "goal", tipProblem.goal.toSigRelativeString )
-    val proof = logger.time( "strategy" ) {
+    val proof = logger.time( "prover" ) {
       ( ProofState( tipProblem.toSequent ) + resolveStrategy( strategyName ) ).result
     }
     logger.time( "check" ) { ctx.check( proof ) }
@@ -61,5 +76,30 @@ object testInduction extends App {
     case t: Throwable =>
       logger.metric( "exception", t.toString )
       logger.metric( "status", s"exception" )
+  }
+}
+
+object computeStrategies extends scala.App {
+  def printStrategy( fileName: String, strategy: String ): Unit =
+    println( s"$fileName $strategy" )
+
+  args foreach { fileName =>
+    try {
+      val problem = TipSmtParser.fixupAndParse( FilePath( fileName ) )
+      import problem.ctx
+      val sequent = problem.toSequent
+      val All.Block( goalQuants, _ ) = sequent.succedent.head
+      val inductiveGoalQuantIdcs =
+        for {
+          ( q @ Var( _, t ), i ) <- goalQuants.zipWithIndex
+          if ctx.getConstructors( t ).isDefined
+        } yield i
+      val equationIdcs = for ( ( All.Block( _, Eq( _, _ ) ), i ) <- sequent.antecedent.zipWithIndex ) yield i
+      val equationIdxSubsets = equationIdcs.toSet.subsets( 2 )
+      for ( goalQuant <- inductiveGoalQuantIdcs; eqTh <- equationIdxSubsets )
+        printStrategy( fileName, "treeg_eq_" + ( goalQuant +: eqTh.toVector ).mkString( "_" ) )
+    } catch {
+      case t: Throwable => Console.err.println( s"$fileName: ${t.getMessage}" )
+    }
   }
 }

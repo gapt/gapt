@@ -101,7 +101,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     if ( options.equationalTheory.isEmpty ) options.smtSolver
     else options.smtEquationMode.adapt( options.equationalTheory, options.smtSolver )
 
-  def solve(): LKProof = {
+  def solve(): LKProof = logger.time( "ceggr" ) {
     info( sequent )
 
     val instanceProofs = mutable.Map[Instance, ExpansionProof]()
@@ -124,7 +124,8 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
           instanceProofs( inst ) = getInstanceProof( inst )
 
         case None =>
-          return solveBUP( bup )
+          val solution = solveBUP( bup )
+          constructProof( bup, solution )
       }
     }
     throw new IllegalArgumentException
@@ -178,7 +179,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     }
   }
 
-  def solveBUP( bup: InductionBUP ): LKProof = logger.time( "solvebup" ) {
+  def solveBUP( bup: InductionBUP ): Expr = logger.time( "solvebup" ) {
     val qbup @ Ex( x_B, qbupMatrix ) = bup.formula
     info( s"Solution condition:\n${qbup.toSigRelativeString}\n" )
 
@@ -202,6 +203,10 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
     logger.metric( "solution", solution.toSigRelativeString )
     require( smtSolver.isValid( skolemize( formula ) )( ctx = Maybe.None ), "Solution not valid" )
 
+    solution
+  }
+
+  def constructProof( bup: InductionBUP, solution: Expr ): LKProof = logger.time( "constructproof" ) {
     val proof = constructSIP(
       sequent, options.equationalTheory.toVector,
       bup,
@@ -251,6 +256,7 @@ class TreeGrammarInductionTactic( options: TreeGrammarProverOptions = TreeGramma
   def canSolSize( from: Float, to: Float ) = copy( options.copy( canSolSize = ( from, to ) ) )
   def canSolSize( size: Int ) = copy( options.copy( canSolSize = ( size, size ) ) )
   def equationalTheory( equations: Formula* ) = copy( options.copy( equationalTheory = equations ) )
+  def maxsatSolver( solver: MaxSATSolver ) = copy( options.copy( maxSATSolver = solver ) )
 
   override def apply( goal: OpenAssumption ): Either[TacticalFailure, ( Unit, LKProof )] = {
     implicit val ctx2: MutableContext = ctx.newMutable
