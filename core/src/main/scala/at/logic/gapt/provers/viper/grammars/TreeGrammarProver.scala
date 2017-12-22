@@ -125,7 +125,7 @@ class TreeGrammarProver( val ctx: Context, val sequent: HOLSequent, val options:
 
         case None =>
           val solution = solveBUP( bup )
-          constructProof( bup, solution )
+          return constructProof( bup, solution )
       }
     }
     throw new IllegalArgumentException
