@@ -82,25 +82,19 @@ object BussTautology {
  * Since we want to avoid empty disjunctions, we assume > 1 pigeons.
  */
 object PigeonHolePrinciple {
-  // The binary relation symbol.
+  /** The binary relation symbol. */
   val rel = "R"
 
   /**
    * @param ps the number of pigeons
    * @param hs the number of holes
    */
-  def apply( ps: Int, hs: Int ) = {
-    assert( ps > 1 )
-    Imp(
-      And( ( 1 to ps ).map( p =>
-        Or( ( 1 to hs ).map( h => atom( p, h ) ).toList ) ).toList ),
-      Or( ( 1 to hs ).map( h =>
-        Or( ( 2 to ps ).map( p =>
-          Or( ( ( 1 to p - 1 ) ).map( pp =>
-            And( atom( p, h ), atom( pp, h ) ) ).toList ) ).toList ) ).toList ) )
-  }
+  def apply( ps: Int, hs: Int ): FOLFormula =
+    And( ( 1 to ps ).map( p => Or( ( 1 to hs ).map( h => inHole( p, h ) ) ) ) ) -->
+      Or( for ( h <- 1 to hs; p1 <- 1 to ps; p2 <- 1 to ps if p1 < p2 )
+        yield inHole( p1, h ) & inHole( p2, h ) )
 
-  def atom( p: Int, h: Int ) = FOLAtom( rel, pigeon( p ) :: hole( h ) :: Nil )
+  def inHole( p: Int, h: Int ) = FOLAtom( rel, pigeon( p ), hole( h ) )
 
   def pigeon( i: Int ) = FOLConst( "p_" + i )
 
