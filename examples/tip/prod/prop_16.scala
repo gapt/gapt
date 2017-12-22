@@ -41,6 +41,6 @@ object prop_16 extends TacticsProof {
   val proof = Lemma( sequent ) {
     cut( "lemma_1", hof"∀x ∀y plus(x, S(y)) = S(plus(x,y))" )
     insert( lemma_1_proof )
-    allR; induction( hov"x:Nat" ); decompose.onAllSubGoals; repeat( escargot )
+    allR; induction( hov"x:Nat" ); escargot.withDeskolemization.onAllSubGoals
   }
 }

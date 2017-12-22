@@ -25,7 +25,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
         Sequent()
         :+ ( "goal" -> hof"P (f (f (f (f c))))" ) ) {
         cut( "step2", hof"!x (P x -> P (f (f x)))" )
-        forget( "goal" ); decompose; escargot
+        forget( "goal" ); escargot.withDeskolemization
         escargot
       }
 

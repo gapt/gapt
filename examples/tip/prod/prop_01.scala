@@ -44,7 +44,7 @@ object prop_01 extends TacticsProof {
 
   val treeGrammar = Lemma( sequent ) {
     cut( "p0r", hof"!x x+0=x" ); forget( "g" ); decompose; induction( hov"x: nat" ).onAll( escargot )
-    cut( "psr", hof"!x!y x+S(y)=S(x+y)" ); forget( "g" ); allR; induction( hov"x: nat" ).onAll( decompose andThen escargot )
+    cut( "psr", hof"!x!y x+S(y)=S(x+y)" ); forget( "g" ); allR; induction( hov"x: nat" ).onAll( escargot.withDeskolemization )
 
     treeGrammarInduction
       .canSolSize( 1 )
