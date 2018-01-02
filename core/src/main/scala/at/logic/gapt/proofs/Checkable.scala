@@ -61,12 +61,17 @@ object Checkable {
       p.subProofs.foreach {
         case ForallLeftRule( _, _, a, t, v )  => ctx.check( t )
         case ExistsRightRule( _, _, a, t, v ) => ctx.check( t )
-        case q: EqualityRule                  =>
+        case q: EqualityRule =>
+          ctx.check( q.replacementContext )
         case q @ InductionRule( cases, formula, term ) =>
           ctx.check( formula )
           ctx.check( term )
-          val Some( ctrs ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] )
-          require( q.cases.map( _.constructor ) == ctrs )
+          val Some( ctrsInCtx ) = ctx.getConstructors( q.indTy.asInstanceOf[TBase] )
+          val ctrsInProof = cases.map( _.constructor )
+          require(
+            ctrsInProof == ctrsInCtx,
+            s"Induction rule has incorrect constructors: ${ctrsInProof.mkString( ", " )}\n" +
+              s"Expected: ${ctrsInCtx.mkString( ", " )}" )
         case sk: SkolemQuantifierRule =>
           require( ctx.skolemDef( sk.skolemConst ).contains( sk.skolemDef ) )
           ctx.check( sk.skolemTerm )
