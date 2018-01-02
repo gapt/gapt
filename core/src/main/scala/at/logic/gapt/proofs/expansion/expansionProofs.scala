@@ -49,6 +49,7 @@ case class ExpansionProof( expansionSequent: Sequent[ExpansionTree] ) {
   val Right( linearizedDependencyRelation ) = linearizeStrictPartialOrder( eigenVariables, dependencyRelation )
 
   def cuts: Vector[ETImp] = expansionSequent.antecedent.flatMap { case ETCut( cuts ) => cuts case _ => Seq() }
+  def isCutFree: Boolean = cuts.isEmpty
   def inductions( implicit ctx: Context ): Vector[ETInduction.Induction] = expansionSequent.antecedent.flatMap { case ETInduction( inductions ) => inductions case _ => Seq() }
   def nonCutPart: ExpansionSequent = expansionSequent.filterNot( ETCut.isCutExpansion )
   def nonTheoryPart( implicit ctx: Context ): ExpansionSequent =
