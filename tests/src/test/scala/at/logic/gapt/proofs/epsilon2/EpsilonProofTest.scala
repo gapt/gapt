@@ -89,4 +89,38 @@ class EpsilonProofTest extends Specification with SatMatchers {
     p.deep must beEValidSequent
   }
 
+  "first 1" in {
+    implicit val ctx = MutableContext.default()
+    ctx += Ti; ctx += hoc"P:i>i>o"
+    ctx += hoc"f:i>i"; ctx += hoc"g:i>i"; ctx += hoc"h:i>i"; ctx += hoc"c:i"
+
+    import at.logic.gapt.proofs.gaptic._
+    val lk = Proof( hols"h: !x (P x (f x) | P x (g x) | P x (h x)) :- ?x?y?z?w (P x y & P y z & P z w)" ) {
+      cut( "c", hof"!x?y P x y" )
+      forget( "g" ); escargot.withDeskolemization
+      forget( "h" ); escargot.withDeskolemization
+    }
+
+    val p = ExpansionProofToEpsilon( LKToExpansionProof( lk ) )
+    p.deep must beValidSequent
+    val p2 = reduceEpsilons( p )
+    p2.deep must beValidSequent
+  }
+
+  "first 2" in {
+    implicit val ctx: MutableContext = Pi2Pigeonhole.ctx.newMutable
+    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi2Pigeonhole.proof ) )
+    p.deep must beEValidSequent
+    val p2 = reduceEpsilons( p )
+    p2.deep must beEValidSequent
+  }
+
+  "first 3" in {
+    implicit val ctx: MutableContext = Pi3Pigeonhole.ctx.newMutable
+    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi3Pigeonhole.proof ) )
+    p.deep must beEValidSequent
+    val p2 = reduceEpsilons( p )
+    p2.deep must beEValidSequent
+  }
+
 }

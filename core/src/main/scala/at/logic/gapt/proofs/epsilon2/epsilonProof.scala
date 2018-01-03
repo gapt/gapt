@@ -110,7 +110,7 @@ object ExpansionProofToEpsilon {
 
   /**
    * Compute a replacement for sk1 using only sk2.
-   * Typical result is something like `λx λy sk1(y, x)`.
+   * Typical result is something like `λx λy sk2(y, x)`.
    */
   private def matchSkDefs( sk1: Const, def1: Expr, sk2: Const, def2: Expr )( implicit ctx0: Context ): Expr = {
     implicit val ctx: MutableContext = ctx0.newMutable
