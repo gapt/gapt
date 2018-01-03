@@ -1,7 +1,9 @@
 package at.logic.gapt.proofs.epsilon2
 
+import at.logic.gapt.examples.{ Pi2Pigeonhole, Pi3Pigeonhole }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion.deskolemizeET
+import at.logic.gapt.proofs.lk.LKToExpansionProof
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.SatMatchers
@@ -73,6 +75,18 @@ class EpsilonProofTest extends Specification with SatMatchers {
       case Some( p ) =>
         p.deep must beValidSequent
     }
+  }
+
+  "cuts 2" in {
+    implicit val ctx: MutableContext = Pi2Pigeonhole.ctx.newMutable
+    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi2Pigeonhole.proof ) )
+    p.deep must beEValidSequent
+  }
+
+  "cuts 3" in {
+    implicit val ctx: MutableContext = Pi3Pigeonhole.ctx.newMutable
+    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi3Pigeonhole.proof ) )
+    p.deep must beEValidSequent
   }
 
 }

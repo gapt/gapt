@@ -125,9 +125,7 @@ object ExpansionProofToEpsilon {
   }
 
   def apply( e: ExpansionProof )( implicit ctx: MutableContext ): EpsilonProof = {
-    require( e.isCutFree )
-
-    val shallow = e.shallow
+    val shallow = e.nonCutPart.shallow
     val epsilonized = epsilonize( shallow )
 
     val critFormulas = mutable.Buffer[CriticalFormula]()
@@ -162,7 +160,8 @@ object ExpansionProofToEpsilon {
           gather( ch, sub )
       }
 
-    for ( et <- e.expansionSequent ) gather( et, et.shallow )
+    for ( et <- e.nonCutPart ) gather( et, et.shallow )
+    for ( cut <- e.cuts ) gather( cut, cut.shallow )
 
     val p0 = EpsilonProof( critFormulas.toVector, shallow = shallow, epsilonized = epsilonized )
 
