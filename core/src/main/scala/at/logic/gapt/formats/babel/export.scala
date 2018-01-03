@@ -37,14 +37,16 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       }
     }
 
-  def export( expr: Expr ): String = {
+  def show( expr: Expr ): Doc = {
     val knownTypesFromSig = knownConstantTypesFromSig( constants.all( expr ) )
-    group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ).render( lineWidth )
+    group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 )
   }
-  def export( sequent: HOLSequent ): String = {
+  def show( sequent: HOLSequent ): Doc = {
     val knownTypesFromSig = knownConstantTypesFromSig( sequent.elements.view.flatMap( constants.all ).toSet )
-    group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ).render( lineWidth )
+    group( show( sequent, Set(), knownTypesFromSig.toMap )._1 )
   }
+  def export( expr: Expr ): String = show( expr ).render( lineWidth )
+  def export( sequent: HOLSequent ): String = show( sequent ).render( lineWidth )
   def export( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
 
   object prio {

@@ -19,6 +19,9 @@ class EpsilonProofTest extends Specification with SatMatchers {
   }
 
   "quantifier blocks" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"P:i>i>i>o"
+    ctx += hoc"f:i>i"; ctx += hoc"g:i>i"; ctx += hoc"h:i>i"
     Escargot getEpsilonProof hof"∀x∀y∀z P(x,y,z) ⊃ ∃x∃y∃z P(f x, g y, h z)" must beLike {
       case Some( p ) =>
         p.deep must beValidSequent
@@ -26,6 +29,8 @@ class EpsilonProofTest extends Specification with SatMatchers {
   }
 
   "deskolemization" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"P:i>i>i>o"
     Escargot getEpsilonProof hof"∀x∃y∀z P(x,y,z) ⊃ ∃z∀x∃y P(x,y,z)" must beLike {
       case Some( p ) =>
         p.deep must beValidSequent

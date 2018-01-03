@@ -2,58 +2,61 @@ package at.logic.gapt.proofs.epsilon2
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ SkolemFunctions, instantiate }
-import at.logic.gapt.formats.babel.BabelSignature
-import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext, Sequent }
+import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
+import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.proofs.expansion._
+import at.logic.gapt.utils.Doc
 
 import scala.collection.mutable
 
-case class CriticalFormula( skTerm: Expr, skDef: Expr, term: Expr ) {
-  val Apps( skConst: Const, args ) = skTerm
-  val Abs.Block( vs, formula @ Quant( x, qfFormula, pol ) ) = skDef
-  val formulaWithSk: Formula = Substitution( ( vs zip args ) :+ ( x -> skTerm ) )( qfFormula )
-  val formulaWithTerm: Formula = Substitution( ( vs zip args ) :+ ( x -> term ) )( qfFormula )
-  val deep: Formula = if ( pol ) formulaWithSk --> formulaWithTerm else formulaWithTerm --> formulaWithSk
+case class CriticalFormula( skTerm: Expr, term: Expr ) {
+  val Apps( skSym: Const, skArgs ) = skTerm
+  def deep( implicit ctx: Context ): Formula = {
+    val Some( Abs.Block( vs, Quant( x, qfFormula, pol ) ) ) = ctx.skolemDef( skSym )
+    val formulaWithSk: Formula = Substitution( ( vs zip skArgs ) :+ ( x -> skTerm ) )( qfFormula )
+    val formulaWithTerm: Formula = Substitution( ( vs zip skArgs ) :+ ( x -> term ) )( qfFormula )
+    if ( pol ) formulaWithSk --> formulaWithTerm else formulaWithTerm --> formulaWithSk
+  }
 
-  def toSigRelativeString( implicit sig: BabelSignature ): String = ( skTerm === term ).toSigRelativeString
+  def toSigRelativeString( implicit sig: BabelSignature ): String = {
+    val exporter = new BabelExporter( unicode = true, sig = sig )
+    import exporter._
+    nest( show( skTerm ) <+> "→" </> show( term ) ).render( lineWidth )
+  }
   override def toString: String = toSigRelativeString
 }
 
 object CriticalFormula {
   implicit object closedUnderSubstitution extends ClosedUnderSub[CriticalFormula] {
     override def applySubstitution( sub: Substitution, arg: CriticalFormula ): CriticalFormula =
-      CriticalFormula( sub( arg.skTerm ), arg.skDef, sub( arg.term ) )
+      CriticalFormula( sub( arg.skTerm ), sub( arg.term ) )
   }
   implicit object closedUnderReplacement extends ClosedUnderReplacement[CriticalFormula] {
     override def replace( obj: CriticalFormula, p: PartialFunction[Expr, Expr] ): CriticalFormula =
-      CriticalFormula( TermReplacement( obj.skTerm, p ), TermReplacement( obj.skDef, p ),
-        TermReplacement( obj.term, p ) )
+      CriticalFormula( TermReplacement( obj.skTerm, p ), TermReplacement( obj.term, p ) )
 
     override def names( obj: CriticalFormula ): Set[VarOrConst] =
-      containedNames( obj.skTerm ) ++ containedNames( obj.skDef ) ++ containedNames( obj.term )
+      containedNames( obj.skTerm ) ++ containedNames( obj.term )
   }
 }
 
 case class EpsilonProof( criticalFormulas: Vector[CriticalFormula], shallow: HOLSequent, epsilonized: HOLSequent ) {
-  def toSigRelativeString( implicit sig: BabelSignature ): String =
-    ( criticalFormulas.map( _.toSigRelativeString ) ++:
-      epsilonized.map( _.toSigRelativeString ) ).toString
+  def toSigRelativeString( implicit sig: BabelSignature ): String = {
+    val exporter = new BabelExporter( unicode = true, sig = sig )
+    import exporter._
+    Doc.stack(
+      criticalFormulas.
+        groupBy( _.skTerm ).values.toVector.
+        sortBy( _.head.skSym.name ).
+        map( cfs => nest( show( cfs.head.skTerm ) <+> "→" </>
+          Doc.wordwrap( cfs.map( cf => show( cf.term ) ), " |" ) ) )
+        :+ show( epsilonized )
+        :+ show( shallow ) ).render( lineWidth )
+  }
   override def toString: String = toSigRelativeString
 
-  def deep: HOLSequent =
+  def deep( implicit ctx: Context ): HOLSequent =
     criticalFormulas.map( _.deep ) ++: epsilonized
-
-  def reduceTrivialCriticalFormulas: EpsilonProof =
-    criticalFormulas.collectFirst {
-      case cf @ CriticalFormula( t, _, v: Var ) => ( cf, v, t )
-    } match {
-      case Some( ( cf, v, t ) ) =>
-        Substitution( v -> t )(
-          copy( criticalFormulas = criticalFormulas.filterNot( _ == cf ) ) )(
-            EpsilonProof.closedUnderSubstitution ).
-            reduceTrivialCriticalFormulas
-      case None => this
-    }
 }
 
 object EpsilonProof {
@@ -74,14 +77,14 @@ object EpsilonProof {
 
 object epsilonize {
 
-  def getInst( quantified: Formula )( implicit ctx: MutableContext ): ( Expr, Expr ) = {
+  def getSkTerm( quantified: Formula )( implicit ctx: MutableContext ): Expr = {
     val fvs = freeVariables( quantified ).toSeq.sortBy( _.name )
     val skD = Abs.Block( fvs, quantified )
-    ( skD, ctx.addSkolemSym( skD )( fvs ) )
+    ctx.addSkolemSym( skD )( fvs )
   }
 
   def apply1( quantified: Formula )( implicit ctx: MutableContext ): Formula =
-    instantiate( quantified, getInst( quantified )._2 )
+    instantiate( quantified, getSkTerm( quantified ) )
 
   def apply( f: Formula )( implicit ctx: MutableContext ): Formula =
     f match {
@@ -143,16 +146,16 @@ object ExpansionProofToEpsilon {
           val Some( subst ) = syntacticMatching( f, sh )
           for ( ( inst, ch ) <- insts ) {
             gather( ch, sub )
-            val ( skD, skT ) = epsilonize.getInst( Quant( x, epsilonize( sub ), isAll ) )
-            critFormulas += CriticalFormula( subst( skT ), skD, inst )
+            val skT = epsilonize.getSkTerm( Quant( x, epsilonize( sub ), isAll ) )
+            critFormulas += CriticalFormula( subst( skT ), inst )
           }
         case ( e @ ETSkolemQuantifier( _, _, skD, ch ), Quant( x, sub, isAll ) ) =>
-          val ( newSkD, Apps( newSkC: Const, _ ) ) = epsilonize.getInst( Quant( x, epsilonize( sub ), isAll ) )
-          repl( e.skolemConst ) = matchSkDefs( e.skolemConst, skD, newSkC, newSkD )
+          val Apps( newSkC: Const, _ ) = epsilonize.getSkTerm( Quant( x, epsilonize( sub ), isAll ) )
+          repl( e.skolemConst ) = matchSkDefs( e.skolemConst, skD, newSkC, ctx.skolemDef( newSkC ).get )
           gather( ch, sub )
         case ( ETStrongQuantifier( sh, v, ch ), Quant( x, sub, isAll ) ) =>
           val Some( subst ) = syntacticMatching( f, sh )
-          evSubstMap( v ) = subst( epsilonize.getInst( Quant( x, epsilonize( sub ), isAll ) )._2 )
+          evSubstMap( v ) = subst( epsilonize.getSkTerm( Quant( x, epsilonize( sub ), isAll ) ) )
           gather( ch, sub )
       }
 
