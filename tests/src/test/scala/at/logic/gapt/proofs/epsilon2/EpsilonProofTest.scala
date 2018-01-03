@@ -22,6 +22,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
         le"sk" -> le"f (f (f c))" ),
       epsilonized = hos"P c, P sk -> P (f sk) :- P (f (f (f (f c))))",
       shallow = hos"P c, !x (P x -> P (f x)) :- P (f (f (f (f c))))" )
+    ctx.check( p )
     p.deep must beValidSequent
   }
 
@@ -40,6 +41,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     ctx += Ti; ctx += hoc"P:i>i>i>o"
     Escargot getEpsilonProof hof"∀x∃y∀z P(x,y,z) ⊃ ∃z∀x∃y P(x,y,z)" must beLike {
       case Some( p ) =>
+        ctx.check( p )
         p.deep must beValidSequent
     }
   }
@@ -51,6 +53,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     val Some( expansion ) = Escargot.getExpansionProof( formula )
     val desk = deskolemizeET( expansion )
     val p = ExpansionProofToEpsilon( desk )
+    ctx.check( p )
     p.deep must beValidSequent
   }
 
@@ -60,6 +63,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     ctx += hoc"P: nat > o"
     Escargot.getEpsilonProof( hof"!x (P x -> P (s x)) -> P 0 -> P (s (s 0))" ) must beLike {
       case Some( p ) =>
+        ctx.check( p )
         p.deep must beValidSequent
     }
   }
@@ -72,6 +76,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     val f = hof"!xs!x (P xs -> P (cons x xs)) -> P nil -> !x P (cons x nil : list i)"
     Escargot.getEpsilonProof( f ) must beLike {
       case Some( p ) =>
+        ctx.check( p )
         p.deep must beValidSequent
     }
   }
@@ -79,12 +84,14 @@ class EpsilonProofTest extends Specification with SatMatchers {
   "cuts 2" in {
     implicit val ctx: MutableContext = Pi2Pigeonhole.ctx.newMutable
     val p = LKProofToEpsilon( Pi2Pigeonhole.proof )
+    ctx.check( p )
     p.deep must beEValidSequent
   }
 
   "cuts 3" in {
     implicit val ctx: MutableContext = Pi3Pigeonhole.ctx.newMutable
     val p = LKProofToEpsilon( Pi3Pigeonhole.proof )
+    ctx.check( p )
     p.deep must beEValidSequent
   }
 
@@ -102,7 +109,9 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
     val p = LKProofToEpsilon( lk )
     p.deep must beValidSequent
+    ctx.check( p )
     val p2 = reduceEpsilons( p )
+    ctx.check( p2 )
     p2.deep must beValidSequent
   }
 
@@ -111,6 +120,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     val p = LKProofToEpsilon( Pi2Pigeonhole.proof )
     p.deep must beEValidSequent
     val p2 = reduceEpsilons( p )
+    ctx.check( p2 )
     p2.deep must beEValidSequent
   }
 
@@ -119,6 +129,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     val p = LKProofToEpsilon( Pi3Pigeonhole.proof )
     p.deep must beEValidSequent
     val p2 = reduceEpsilons( p )
+    ctx.check( p2 )
     p2.deep must beEValidSequent
   }
 

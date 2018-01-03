@@ -3,7 +3,8 @@ package at.logic.gapt.proofs.epsilon2
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ SkolemFunctions, instantiate }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
-import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
+import at.logic.gapt.proofs.epsilon.EpsilonC
+import at.logic.gapt.proofs.{ Checkable, Context, HOLSequent, MutableContext }
 import at.logic.gapt.proofs.expansion._
 import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
 import at.logic.gapt.utils.Doc
@@ -42,6 +43,16 @@ object CriticalFormula {
     override def names( obj: CriticalFormula ): Set[VarOrConst] =
       containedNames( obj.skTerm ) ++ containedNames( obj.term )
   }
+
+  implicit object checkable extends Checkable[CriticalFormula] {
+    override def check( cf: CriticalFormula )( implicit ctx: Context ): Unit = {
+      ctx.check( cf.term )
+      ctx.check( cf.skTerm )
+      require(
+        ctx.skolemDef( cf.skSym ).isDefined,
+        s"${cf.skSym} is not a Skolem symbol" )
+    }
+  }
 }
 
 case class EpsilonProof( criticalFormulas: Vector[CriticalFormula], shallow: HOLSequent, epsilonized: HOLSequent ) {
@@ -76,6 +87,20 @@ object EpsilonProof {
 
     override def names( obj: EpsilonProof ): Set[VarOrConst] =
       containedNames( obj.criticalFormulas ) ++ containedNames( obj.shallow ) ++ containedNames( obj.epsilonized )
+  }
+  implicit object checkable extends Checkable[EpsilonProof] {
+    override def check( p: EpsilonProof )( implicit ctx: Context ): Unit = {
+      for ( cf <- p.criticalFormulas ) ctx.check( cf )
+
+      val ctxWithEpsilonDefs = ctx.newMutable
+      val epsilonized2 = epsilonize( p.shallow )( ctxWithEpsilonDefs )
+      ctxWithEpsilonDefs += EpsilonC( TVar( "a" ) )
+      ctxWithEpsilonDefs += ( ctx => ctx.state.update[Context.Reductions]( _ ++
+        ctx.get[SkolemFunctions].epsilonDefinitions.map( ReductionRule( _ ) ) ) )
+      require( p.epsilonized.sizes == epsilonized2.sizes )
+      for ( ( eps, sh ) <- p.epsilonized zip epsilonized2 )
+        Checkable.requireDefEq( eps, sh )( ctxWithEpsilonDefs )
+    }
   }
 }
 
