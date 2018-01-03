@@ -27,6 +27,9 @@ case class CriticalFormula( skTerm: Expr, term: Expr ) {
 }
 
 object CriticalFormula {
+  implicit def ofPair( pair: ( Expr, Expr ) ): CriticalFormula =
+    CriticalFormula( pair._1, pair._2 )
+
   implicit object closedUnderSubstitution extends ClosedUnderSub[CriticalFormula] {
     override def applySubstitution( sub: Substitution, arg: CriticalFormula ): CriticalFormula =
       CriticalFormula( sub( arg.skTerm ), sub( arg.term ) )

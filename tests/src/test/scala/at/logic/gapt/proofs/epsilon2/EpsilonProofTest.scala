@@ -1,4 +1,4 @@
-package at.logic.gapt.proofs.epsilon
+package at.logic.gapt.proofs.epsilon2
 
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion.deskolemizeET
@@ -10,11 +10,17 @@ import org.specs2.mutable.Specification
 class EpsilonProofTest extends Specification with SatMatchers {
 
   "linear example" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"c:i"; ctx += hoc"f:i>i"; ctx += hoc"P:i>o"
+    ctx += Context.SkolemFun( hoc"sk:i", le"!x (P x -> P (f x))" )
     val p = EpsilonProof(
-      Seq( le"c", le"f c", le"f (f c)", le"f (f (f c))" ) map {
-        CriticalFormula( hof"∃x ¬(P x ⊃ P (f x))", _ )
-      },
-      hof"P c" +: hof"∀x (P x ⊃ P (f x))" +: Sequent() :+ hof"P (f (f (f (f c))))" )
+      Vector(
+        le"sk" -> le"c",
+        le"sk" -> le"f c",
+        le"sk" -> le"f (f c)",
+        le"sk" -> le"f (f (f c))" ),
+      epsilonized = hos"P c, P sk -> P (f sk) :- P (f (f (f (f c))))",
+      shallow = hos"P c, !x (P x -> P (f x)) :- P (f (f (f (f c))))" )
     p.deep must beValidSequent
   }
 
