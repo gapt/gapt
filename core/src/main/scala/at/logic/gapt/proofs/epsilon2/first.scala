@@ -6,8 +6,10 @@ import at.logic.gapt.proofs.Context
 
 object reduceEpsilons {
 
-  def replace( cfs: Vector[CriticalFormula], what: Expr, bys: Iterable[Expr] ): Vector[CriticalFormula] =
-    ( cfs.toSet ++ bys.view.flatMap( by => TermReplacement( cfs, Map( what -> by ) ) ) ).toVector
+  def replace( cfs: Vector[CriticalFormula], what: Expr, bys: Iterable[Expr],
+               needExtraCopy: Boolean ): Vector[CriticalFormula] =
+    ( ( if ( needExtraCopy ) cfs.toSet else Set() ) ++
+      bys.view.flatMap( by => TermReplacement( cfs, Map( what -> by ) ) ) ).toVector
 
   def reduce1( cfs: Vector[CriticalFormula], skSym: Const ): Option[Vector[CriticalFormula]] = {
     val cfsForSkSym = cfs.filter( _.skSym == skSym )
@@ -16,7 +18,8 @@ object reduceEpsilons {
       val argSubTerms = skTerms.flatMap { case Apps( _, args ) => args }
       val maximal = skTerms.diff( argSubTerms ).head
       val ( maximalCFs, rest ) = cfs.partition( _.skTerm == maximal )
-      replace( rest, maximal, maximalCFs.map( _.term ) )
+      replace( rest, maximal, maximalCFs.map( _.term ),
+        needExtraCopy = argSubTerms( maximal ) )
     }
   }
 
