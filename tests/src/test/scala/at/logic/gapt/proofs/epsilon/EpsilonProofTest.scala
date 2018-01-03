@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.epsilon
 
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.expansion.deskolemizeET
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.SatMatchers
@@ -29,6 +30,16 @@ class EpsilonProofTest extends Specification with SatMatchers {
       case Some( p ) =>
         p.deep must beValidSequent
     }
+  }
+
+  "eigenvariables" in {
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"P:i>i>i>o"
+    val formula = hof"∀x∃y∀z P(x,y,z) ⊃ ∃z∀x∃y P(x,y,z)"
+    val Some( expansion ) = Escargot.getExpansionProof( formula )
+    val desk = deskolemizeET( expansion )
+    val p = at.logic.gapt.proofs.epsilon2.ExpansionProofToEpsilon( desk )
+    p.deep must beValidSequent
   }
 
   "many sorted 1" in {
