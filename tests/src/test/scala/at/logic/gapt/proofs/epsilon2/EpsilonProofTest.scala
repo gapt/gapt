@@ -3,8 +3,7 @@ package at.logic.gapt.proofs.epsilon2
 import at.logic.gapt.examples.{ Pi2Pigeonhole, Pi3Pigeonhole }
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.expansion.deskolemizeET
-import at.logic.gapt.proofs.lk.LKToExpansionProof
-import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
+import at.logic.gapt.proofs.{ Context, MutableContext }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.SatMatchers
 import org.specs2.mutable.Specification
@@ -51,7 +50,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     val formula = hof"∀x∃y∀z P(x,y,z) ⊃ ∃z∀x∃y P(x,y,z)"
     val Some( expansion ) = Escargot.getExpansionProof( formula )
     val desk = deskolemizeET( expansion )
-    val p = at.logic.gapt.proofs.epsilon2.ExpansionProofToEpsilon( desk )
+    val p = ExpansionProofToEpsilon( desk )
     p.deep must beValidSequent
   }
 
@@ -79,18 +78,18 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
   "cuts 2" in {
     implicit val ctx: MutableContext = Pi2Pigeonhole.ctx.newMutable
-    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi2Pigeonhole.proof ) )
+    val p = LKProofToEpsilon( Pi2Pigeonhole.proof )
     p.deep must beEValidSequent
   }
 
   "cuts 3" in {
     implicit val ctx: MutableContext = Pi3Pigeonhole.ctx.newMutable
-    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi3Pigeonhole.proof ) )
+    val p = LKProofToEpsilon( Pi3Pigeonhole.proof )
     p.deep must beEValidSequent
   }
 
   "first 1" in {
-    implicit val ctx = MutableContext.default()
+    implicit val ctx: MutableContext = MutableContext.default()
     ctx += Ti; ctx += hoc"P:i>i>o"
     ctx += hoc"f:i>i"; ctx += hoc"g:i>i"; ctx += hoc"h:i>i"; ctx += hoc"c:i"
 
@@ -101,7 +100,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
       forget( "h" ); escargot.withDeskolemization
     }
 
-    val p = ExpansionProofToEpsilon( LKToExpansionProof( lk ) )
+    val p = LKProofToEpsilon( lk )
     p.deep must beValidSequent
     val p2 = reduceEpsilons( p )
     p2.deep must beValidSequent
@@ -109,7 +108,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
   "first 2" in {
     implicit val ctx: MutableContext = Pi2Pigeonhole.ctx.newMutable
-    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi2Pigeonhole.proof ) )
+    val p = LKProofToEpsilon( Pi2Pigeonhole.proof )
     p.deep must beEValidSequent
     val p2 = reduceEpsilons( p )
     p2.deep must beEValidSequent
@@ -117,7 +116,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
 
   "first 3" in {
     implicit val ctx: MutableContext = Pi3Pigeonhole.ctx.newMutable
-    val p = ExpansionProofToEpsilon( LKToExpansionProof( Pi3Pigeonhole.proof ) )
+    val p = LKProofToEpsilon( Pi3Pigeonhole.proof )
     p.deep must beEValidSequent
     val p2 = reduceEpsilons( p )
     p2.deep must beEValidSequent

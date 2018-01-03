@@ -5,6 +5,7 @@ import at.logic.gapt.expr.hol.{ SkolemFunctions, instantiate }
 import at.logic.gapt.formats.babel.{ BabelExporter, BabelSignature }
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.proofs.expansion._
+import at.logic.gapt.proofs.lk.{ LKProof, LKToExpansionProof }
 import at.logic.gapt.utils.Doc
 
 import scala.collection.mutable
@@ -173,4 +174,9 @@ object ExpansionProofToEpsilon {
       TermReplacement( p1, { case t => BetaReduction.betaNormalize( TermReplacement( t, repl ) ) } )
   }
 
+}
+
+object LKProofToEpsilon {
+  def apply( p: LKProof )( implicit ctx: MutableContext ): EpsilonProof =
+    ExpansionProofToEpsilon( LKToExpansionProof( p ) )
 }
