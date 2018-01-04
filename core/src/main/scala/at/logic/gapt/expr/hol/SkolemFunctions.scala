@@ -18,15 +18,17 @@ import at.logic.gapt.utils.linearizeStrictPartialOrder
  * for example both ∃x ∀y φ and ∃x ¬∃y¬ φ would define their Skolem functions using the same epsilon terms.
  */
 case class SkolemFunctions( skolemDefs: Map[Const, Expr] ) {
-  skolemDefs foreach {
-    case ( s, d @ Abs.Block( vs, Quant( v, f, isForall ) ) ) =>
-      require( s.ty == FunctionType( v.ty, vs map { _.ty } ) )
-      require( freeVariables( d ).isEmpty )
-  }
-
-  val Right( dependencyOrder ) = linearizeStrictPartialOrder(
-    skolemDefs.keySet,
-    for ( ( s, d ) <- skolemDefs; s_ <- constants( d ) if skolemDefs contains s_ ) yield s -> s_ )
+  def dependencyOrder: Vector[Const] =
+    linearizeStrictPartialOrder(
+      skolemDefs.keySet,
+      for {
+        ( s, d ) <- skolemDefs
+        s_ <- constants( d )
+        if skolemDefs contains s_
+      } yield s -> s_ ) match {
+        case Right( depOrder ) => depOrder
+        case Left( cycle )     => throw new IllegalArgumentException( s"Cyclic Skolem definitions: $cycle" )
+      }
 
   def orderedDefinitions = dependencyOrder.map( c => c -> skolemDefs( c ) )
 
