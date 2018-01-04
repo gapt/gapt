@@ -3,8 +3,6 @@ package at.logic.gapt.expr.hol
 import at.logic.gapt.expr._
 
 object HOLPosition {
-  def apply( list: List[Int] ) = new HOLPosition( list )
-
   def apply( is: Int* ) = new HOLPosition( is.toList )
 
   def toList( pos: HOLPosition ) = pos.list
@@ -256,7 +254,7 @@ object HOLPosition {
  *
  * @param list The list of integers describing the position.
  */
-class HOLPosition( val list: List[Int] ) {
+case class HOLPosition( list: List[Int] ) {
   require( list.forall( i => i == 1 || i == 2 ) )
 
   def toList = list
@@ -267,13 +265,6 @@ class HOLPosition( val list: List[Int] ) {
   override def toString = s"[${list.mkString( "," )}]"
 
   def ::( x: Int ): HOLPosition = HOLPosition( x :: list )
-
-  override def equals( that: Any ) = that match {
-    case p: HOLPosition => p.list == list
-    case _              => false
-  }
-
-  override def hashCode() = list.hashCode()
 
   def isPrefixOf( that: HOLPosition ): Boolean = list match {
     case Nil => true
