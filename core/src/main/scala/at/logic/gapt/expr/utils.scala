@@ -80,17 +80,19 @@ object freeVariables {
   def apply( e: Expr ): Set[Var] = freeVariables( Some( e ) )
 
   def apply( es: TraversableOnce[Expr] ): Set[Var] = {
-    val fvs = Set.newBuilder[Var]
-    def f( e: Expr ): Unit = e match {
-      case v: Var => fvs += v
+    val free = Set.newBuilder[Var]
+    def visit( e: Expr, bound: Set[Var] ): Unit = e match {
+      case v: Var =>
+        if ( !bound( v ) ) free += v
       case App( a, b ) =>
-        f( a )
-        f( b )
-      case Abs( x, a ) => fvs ++= freeVariables( a ) - x
-      case _           =>
+        visit( a, bound )
+        visit( b, bound )
+      case Abs( x, a ) =>
+        visit( a, bound + x )
+      case _: Const =>
     }
-    es foreach f
-    fvs.result()
+    es.foreach( visit( _, Set() ) )
+    free.result()
   }
 
   def apply( seq: HOLSequent ): Set[Var] = apply( seq.elements )
