@@ -5,6 +5,8 @@ import at.logic.gapt.proofs.expansion.ExpansionProof
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.resolution.ResolutionProof
 
+import scala.collection.mutable
+
 trait Checkable[-T] {
   def check( obj: T )( implicit ctx: Context ): Unit
 }
@@ -16,12 +18,14 @@ object Checkable {
     def check( elem: Context.Update )( implicit context: Context ): Unit = elem( context )
   }
 
-  implicit object typeIsCheckable extends Checkable[Ty] {
-    override def check( ty: Ty )( implicit context: Context ): Unit =
+  class ExpressionChecker( implicit ctx: Context ) {
+    private val validTy = mutable.Set[Ty]()
+    def check( ty: Ty ): Unit = {
+      if ( validTy.contains( ty ) ) return
       ty match {
         case ty @ TBase( name, params ) =>
           require(
-            context.isType( ty ),
+            ctx.isType( ty ),
             s"Unknown base type: $name" )
           params.foreach( check )
         case TVar( _ ) =>
@@ -29,16 +33,19 @@ object Checkable {
           check( in )
           check( out )
       }
-  }
+      validTy += ty
+    }
 
-  implicit object expressionIsCheckable extends Checkable[Expr] {
-    def check( expr: Expr )( implicit context: Context ): Unit =
+    private val validExpr = mutable.Set[Expr]()
+    def check( expr: Expr ): Unit = {
+      if ( validExpr( expr ) ) return
       expr match {
         case c @ Const( name, _ ) =>
           require(
-            context.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
+            ctx.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
             s"Unknown constant: $c" )
-        case Var( _, t ) => context.check( t )
+        case Var( _, t ) =>
+          check( t )
         case Abs( v, e ) =>
           check( v )
           check( e )
@@ -46,6 +53,18 @@ object Checkable {
           check( a )
           check( b )
       }
+      validExpr += expr
+    }
+  }
+
+  implicit object typeIsCheckable extends Checkable[Ty] {
+    override def check( ty: Ty )( implicit context: Context ): Unit =
+      new ExpressionChecker().check( ty )
+  }
+
+  implicit object expressionIsCheckable extends Checkable[Expr] {
+    def check( expr: Expr )( implicit context: Context ): Unit =
+      new ExpressionChecker().check( expr )
   }
 
   implicit def sequentIsCheckable[T: Checkable] = new Checkable[Sequent[T]] {
