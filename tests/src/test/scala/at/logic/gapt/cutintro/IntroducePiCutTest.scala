@@ -3,9 +3,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import org.specs2.mutable.Specification
 
-/**
- * Created by root on 02.02.17.
- */
 class IntroducePiCutTest extends Specification {
 
   //

@@ -3,9 +3,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.proofs.Sequent
 import at.logic.gapt.proofs.lk.LKProof
 import org.specs2.mutable.Specification
-/**
- * Created by root on 08.02.17.
- */
+
 class ProveWithPi2CutTest extends Specification {
 
   /*

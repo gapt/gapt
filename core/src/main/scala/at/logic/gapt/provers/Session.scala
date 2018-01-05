@@ -18,10 +18,6 @@ import cats.{ Id, ~> }
 import scala.collection.mutable
 
 /**
- * Created by sebastian on 24.11.16.
- */
-
-/**
  * Implementation of proof sessions via the cats free monad. See [[http://typelevel.org/cats/datatypes/freemonad.html]].
  */
 object Session {

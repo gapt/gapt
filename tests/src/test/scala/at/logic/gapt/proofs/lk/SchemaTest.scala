@@ -11,10 +11,6 @@ import at.logic.gapt.proofs.{ ImmutableContext, Sequent }
 import at.logic.gapt.provers.escargot.Escargot
 import org.specs2.mutable.Specification
 import at.logic.gapt.proofs.gaptic._
-/**
- * Test for schema code
- * Created by David M. Cerna on 11.02.17.
- */
 
 class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialContext ) {
   def prove0( SCS: Map[CLS, ( Struct, Set[Var] )] ): LKProof = {
