@@ -3,7 +3,6 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15, prop_59 }
 import at.logic.gapt.expr.Substitution
-import at.logic.gapt.formats.tip.TipSmtParser
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
@@ -39,9 +38,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val proof = regularize( prop_15.proof.subProofAt( 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: 0 :: Nil ) )
     val term_x = le"S(S(S(S(S(S(S(Z)))))))"
     val term_xs = le"cons(S(S(S(Z))), cons(S(S(S(S(S(Z))))),nil))"
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs ) ),
-      proof )
+    val sigma1Proof = Substitution( hov"x:Nat" -> term_x, hov"xs:list" -> term_xs )( proof )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
     isInductionFree( inductionFree ) must_== true
     sigma1Proof.conclusion must beSetEqual( inductionFree.conclusion )
@@ -89,8 +86,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_x = le"s(0)"
     val term_y = le"s(0)"
 
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
+    val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
     isInductionFree( inductionFree ) must_== true
@@ -155,8 +151,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     val term_x = le"s(0)"
     val term_y = le"s(0)"
 
-    val sigma1Proof = LKProofSubstitutableDefault.applySubstitution(
-      new Substitution( Map( hov"x:nat" -> term_x, hov"y:nat" -> term_y ) ),
+    val sigma1Proof = Substitution( hov"x:nat" -> term_x, hov"y:nat" -> term_y )(
       proof.subProofAt( 0 :: 0 :: Nil ) )
     val inductionFree = ReductiveCutElimination.eliminateInduction( sigma1Proof )
 
