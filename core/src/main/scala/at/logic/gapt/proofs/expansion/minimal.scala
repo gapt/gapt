@@ -3,7 +3,7 @@ package at.logic.gapt.proofs.expansion
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.utils.logger._
 
-import scala.collection.mutable.{ ListBuffer, HashMap => mMap }
+import scala.collection.mutable
 
 /**
  * Given an expansion sequent S, this algorithm computes the list of expansion
@@ -36,7 +36,7 @@ object minimalExpansionSequent {
     new Minimizer( sequent, prover ).computeAMinimal()
 
   def apply( proof: ExpansionProof, prover: Prover ): Option[ExpansionProof] =
-    apply( proof.expansionSequent, prover ) map { ExpansionProof( _ ) }
+    apply( proof.expansionSequent, prover ) map { ExpansionProof }
 }
 
 /**
@@ -48,7 +48,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
 
   // This assigns to each ExpansionSequent S the maximum of all numbers n with the following property:
   // S can be obtained from a ExpansionSequent S' by removing the nth instance of S'.
-  val maxRemovedInstance = new mMap[ExpansionSequent, Int]
+  val maxRemovedInstance: mutable.Map[ExpansionSequent, Int] = mutable.HashMap()
 
   /**
    * Compute the list of all minimal expansion sequents below sequent.
@@ -56,9 +56,9 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
    */
   def computeAllMinimal(): Seq[ExpansionSequent] = {
     // The list of minimal expansion proofs will be constructed iteratively.
-    val result = new ListBuffer[ExpansionSequent]
+    val result = mutable.Buffer[ExpansionSequent]()
     // Invariant: the stack only contains valid expansion sequents.
-    val stack = new scala.collection.mutable.Stack[ExpansionSequent]
+    val stack = mutable.ArrayStack[ExpansionSequent]()
 
     if ( prover.isValid( sequent map { _.deep } ) ) {
       debug( "The starting sequent is tautological." )
@@ -99,7 +99,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
       }
     }
 
-    result.toSeq
+    result
   }
 
   /**
@@ -139,7 +139,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
     case ExpansionSequent( ant, suc ) =>
       // newSequents will be the list of expansion sequents obtained
       // from S by removing one instance from one tree of S.
-      val newSequents = new ListBuffer[ExpansionSequent]
+      val newSequents = mutable.Buffer[ExpansionSequent]()
       var instanceCounter = 0 // Counts the instances of all trees in the sequent.
 
       // Loop over the antecedent.
@@ -221,7 +221,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
         instanceCounter += numberOfInstancesET( tree )
       }
 
-      newSequents.toSeq
+      newSequents
   }
 
   /**
@@ -255,7 +255,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
     case ETSkolemQuantifier( f, st, sf, sel ) =>
       generateSuccessorTrees( sel ).map( ETSkolemQuantifier.apply( f, st, sf, _ ) )
 
-    case tree @ ETWeakQuantifier( f, inst ) =>
+    case ETWeakQuantifier( f, inst ) =>
       inst.toSeq flatMap {
         case ( term, child ) =>
           val containsWeakQ = child.subProofs exists {
