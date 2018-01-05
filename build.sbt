@@ -169,6 +169,8 @@ lazy val core = project.in( file( "core" ) ).
     name := "gapt",
     description := "General Architecture for Proof Theory",
 
+    scalacOptions in Compile += "-Xfatal-warnings",
+
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,

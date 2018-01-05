@@ -166,7 +166,7 @@ trait TokenToLKConverter {
             case _ if ant == suc => //this is a workaround for the more restricted lk introduction rules
               AtomicExpansion( ant.head ) //TODO: remove atomic expansion when it's not necessary anymore
             case _ =>
-              TheoryAxiom( HOLSequent( ant, suc ) )
+              ProofLink( FOLAtom( "llkAxiom" ), HOLSequent( ant, suc ) )
           }
           proofstack = expaxiom :: proofstack
           require(

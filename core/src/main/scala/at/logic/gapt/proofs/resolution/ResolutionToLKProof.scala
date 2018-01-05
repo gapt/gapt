@@ -23,7 +23,7 @@ object ResolutionToLKProof {
   }
 
   def asDerivation( proof: ResolutionProof ): LKProof =
-    apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[Atom] ) ) )
+    apply( proof, in => ProofLink( FOLAtom( "resolutionInput" ), in.sequent ) )
 
   def apply( proof: ResolutionProof, input: Input => LKProof ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
