@@ -2,7 +2,7 @@ package at.logic.gapt.proofs.epsilon2
 
 import at.logic.gapt.examples.{ Pi2Pigeonhole, Pi3Pigeonhole }
 import at.logic.gapt.expr._
-import at.logic.gapt.proofs.expansion.deskolemizeET
+import at.logic.gapt.proofs.expansion.{ ExpansionProofToLK, deskolemizeET }
 import at.logic.gapt.proofs.{ Context, MutableContext }
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.utils.SatMatchers
@@ -72,8 +72,7 @@ class EpsilonProofTest extends Specification with SatMatchers {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( ty"list ?a", hoc"nil{?a} : list ?a", hoc"cons{?a} : ?a > list ?a > list ?a" )
     ctx += hoc"P{?a}: list ?a > o"
-    ctx += Context.Sort( "i" ) // TODO(gabriel): escargot fails when proving the goal with list ?a
-    val f = hof"!xs!x (P xs -> P (cons x xs)) -> P nil -> !x P (cons x nil : list i)"
+    val f = hof"!xs!(x:?a) (P xs -> P (cons x xs)) -> P (nil: list ?a) -> !x P (cons x nil : list ?a)"
     Escargot.getEpsilonProof( f ) must beLike {
       case Some( p ) =>
         ctx.check( p )
@@ -131,6 +130,20 @@ class EpsilonProofTest extends Specification with SatMatchers {
     val p2 = reduceEpsilons( p )
     ctx.check( p2 )
     p2.deep must beEValidSequent
+  }
+
+  "res to eps to lk" in {
+    skipped( "does not work yet" )
+    implicit val ctx: MutableContext = MutableContext.default()
+    ctx += Ti; ctx += hoc"P:i>i>i>o"
+    val sequent = hos"∀x∃y∀z P(x,y,z) :- ∃z∀x∃y P(x,y,z)"
+    val Some( exp ) = Escargot.getExpansionProof( sequent )
+    val desk = deskolemizeET( exp )
+    val eps = ExpansionProofToEpsilon( desk )
+    val exp2 = EpsilonToExpansionProof( eps )
+    val Right( lk ) = ExpansionProofToLK( exp2 )
+    ctx.check( lk )
+    ok
   }
 
 }

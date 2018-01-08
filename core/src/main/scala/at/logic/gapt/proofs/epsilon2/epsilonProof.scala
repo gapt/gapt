@@ -56,6 +56,8 @@ object CriticalFormula {
 }
 
 case class EpsilonProof( criticalFormulas: Vector[CriticalFormula], shallow: HOLSequent, epsilonized: HOLSequent ) {
+  require( shallow.sizes == epsilonized.sizes )
+
   def toSigRelativeString( implicit sig: BabelSignature ): String = {
     val exporter = new BabelExporter( unicode = true, sig = sig )
     import exporter._
@@ -97,7 +99,6 @@ object EpsilonProof {
       ctxWithEpsilonDefs += EpsilonC( TVar( "a" ) )
       ctxWithEpsilonDefs += ( ctx => ctx.state.update[Context.Reductions]( _ ++
         ctx.get[SkolemFunctions].epsilonDefinitions.map( ReductionRule( _ ) ) ) )
-      require( p.epsilonized.sizes == epsilonized2.sizes )
       for ( ( eps, sh ) <- p.epsilonized zip epsilonized2 )
         Checkable.requireDefEq( eps, sh )( ctxWithEpsilonDefs )
     }
