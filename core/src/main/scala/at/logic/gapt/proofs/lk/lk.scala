@@ -1395,6 +1395,13 @@ object ExistsSkLeftRule extends ConvenienceConstructor( "ExistsSkLeftRule" ) {
 
     ExistsSkLeftRule( subProof, Ant( indices( 0 ) ), mainFormula, skolemTerm, skolemDef )
   }
+
+  def apply( subProof: LKProof, skolemTerm: Expr )( implicit ctx: Context ): ExistsSkLeftRule = {
+    val Apps( skC: Const, _ ) = skolemTerm
+    val skD = ctx.skolemDef( skC ).getOrElse(
+      throw new IllegalArgumentException( s"not a defined Skolem function: $skC" ) )
+    apply( subProof, skolemTerm, skD )
+  }
 }
 
 /**
