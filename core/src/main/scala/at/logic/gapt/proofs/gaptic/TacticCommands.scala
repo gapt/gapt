@@ -2,6 +2,7 @@ package at.logic.gapt.proofs.gaptic
 
 import tactics._
 import at.logic.gapt.expr._
+import at.logic.gapt.proofs.Context.ProofNames
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.Prover
@@ -495,6 +496,11 @@ trait TacticCommands {
       _ <- insert( proof )
     } yield ()
   }
+
+  def include( labels: String* )( implicit ctx: Context ): Tactical[Unit] = Tactical(
+    Tactical.sequence( for ( l <- labels )
+      yield include( l, ProofLink( ctx.get[ProofNames].names( l )._1 ) ) )
+      andThen TacticalMonad.pure( () ) )
 
   /**
    * Solves the current subgoal as a first-order consequence of the background theory. This
