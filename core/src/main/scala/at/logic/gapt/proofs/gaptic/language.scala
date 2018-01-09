@@ -10,6 +10,7 @@ import language.experimental.macros
 
 object Lemma {
   def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.lemmaImpl
+  def apply[T]( formula: Formula )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.lemmaImpl2
 }
 
 object Proof {
@@ -82,6 +83,9 @@ object LemmaMacros {
       $proofState
     """
   }
+
+  def lemmaImpl2( c: blackbox.Context )( formula: c.Tree )( tacticsProof: c.Tree ): c.Tree =
+    lemmaImpl( c )( formula )( tacticsProof )
 
   def lemmaImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
     import c.universe._
