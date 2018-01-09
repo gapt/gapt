@@ -35,7 +35,7 @@ case class TreeGrammarProverOptions(
     smtSolver:        Prover              = DefaultProvers.smt,
     smtEquationMode:  SmtEquationMode     = AddNormalizedFormula,
     quantTys:         Option[Seq[String]] = None,
-    grammarWeighting: Production => Int   = _ => 1,
+    grammarWeighting: Production => Int = _ => 1,
     tautCheckNumber:  Int                 = 10,
     tautCheckSize:    FloatRange          = ( 2, 3 ),
     canSolSize:       FloatRange          = ( 2, 4 ),

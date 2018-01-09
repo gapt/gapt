@@ -218,7 +218,7 @@ object minimizeRecursionScheme {
   def apply( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
              targetFilter: TargetFilter.Type = TargetFilter.default,
              solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
-             weight:       Rule => Int       = _ => 1 ) = {
+             weight:       Rule => Int = _ => 1 ) = {
     val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
     val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
@@ -236,7 +236,7 @@ object minimizeRecursionScheme {
   def viaInst( recSchem: RecursionScheme, targets: Traversable[( Expr, Expr )],
                targetFilter: TargetFilter.Type = TargetFilter.default,
                solver:       MaxSATSolver      = bestAvailableMaxSatSolver,
-               weight:       Rule => Int       = _ => 1 ) = {
+               weight:       Rule => Int = _ => 1 ) = {
     val fvs = freeVariables( targets.map( _._1 ) ) union freeVariables( targets.map( _._2 ) )
     val nameGen = rename.awayFrom( constants( targets.map( _._1 ) ) union constants( targets.map( _._2 ) ) )
     val grounding = Substitution( for ( v @ Var( name, ty ) <- fvs ) yield v -> Const( nameGen fresh name, ty ) )
@@ -446,13 +446,13 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
   def findMinimalCover(
     targets: Set[( Expr, Expr )],
     solver:  MaxSATSolver        = bestAvailableMaxSatSolver,
-    weight:  Rule => Int         = _ => 1 ): RecursionScheme = {
+    weight:  Rule => Int = _ => 1 ): RecursionScheme = {
     minimizeRecursionScheme( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
   }
   def findMinimalCoverViaInst(
     targets: Set[( Expr, Expr )],
     solver:  MaxSATSolver        = bestAvailableMaxSatSolver,
-    weight:  Rule => Int         = _ => 1 ): RecursionScheme = {
+    weight:  Rule => Int = _ => 1 ): RecursionScheme = {
     minimizeRecursionScheme.viaInst( stableRecSchem( targets ), targets toSeq, targetFilter, solver, weight )
   }
 }
