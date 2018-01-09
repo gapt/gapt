@@ -499,8 +499,7 @@ trait TacticCommands {
   }
 
   def include( labels: String* )( implicit ctx: Context ): Tactical[Unit] = Tactical(
-    Tactical.sequence( for ( l <- labels )
-      yield include( l, ProofLink( ctx.get[ProofNames].names( l )._1 ) ) )
+    Tactical.sequence( for ( l <- labels ) yield include( l, ProofLink( l ) ) )
       andThen TacticalMonad.pure( () ) )
 
   /**

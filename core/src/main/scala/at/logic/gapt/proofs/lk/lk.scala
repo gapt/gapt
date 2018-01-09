@@ -174,6 +174,8 @@ case class ProofLink( referencedProof: Expr, referencedSequent: Sequent[Formula]
 object ProofLink {
   def apply( referencedProof: Expr )( implicit ctx: Context ): ProofLink =
     ProofLink( referencedProof, ctx.get[Context.ProofNames].lookup( referencedProof ).get )
+  def apply( name: String )( implicit ctx: Context ): ProofLink =
+    ProofLink( ctx.get[Context.ProofNames].names( name )._1 )
 }
 
 /**

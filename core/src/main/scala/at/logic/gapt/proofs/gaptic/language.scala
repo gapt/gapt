@@ -51,6 +51,8 @@ object Proof {
   }
   def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
     new Helper( labelledSequent )
+  def apply[T]( formula: Formula ): Helper =
+    apply( guessLabels( Sequent() :+ formula ) )
 }
 object IncompleteProof {
   class Helper( labelledSequent: Sequent[( String, Formula )] ) extends LemmaHelper[LKProof] {
