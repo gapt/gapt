@@ -721,6 +721,16 @@ trait TacticCommands {
   def analyticInduction( implicit ctx: MutableContext ) = AnalyticInductionTactic(
     StandardInductionAxioms(), Escargot )
 
+  def anaInd( implicit ctx: Context ): Tactical[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    repeat( allR ) andThen AnalyticInductionTactic( StandardInductionAxioms(), Escargot.withDeskolemization )
+  }
+
+  def escrgt( implicit ctx: Context ): Tactical[Unit] = {
+    implicit val mutCtx = ctx.newMutable
+    escargot.withDeskolemization
+  }
+
   def introUnivsExcept( i: Int ): Tactical[Unit] = Tactical {
     for {
       goal <- currentGoal
