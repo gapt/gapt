@@ -110,7 +110,12 @@ class AnalyticInductionProver( options: ProverOptions ) {
    * @return A proof whose end-sequent does not contain the specified axioms.
    */
   private def cutAxioms( proof: LKProof, axioms: List[Axiom] ): LKProof =
-    axioms.foldRight( proof ) { ( axiom, mainProof ) => CutRule( axiom.proof, mainProof, axiom.formula ) }
+    axioms.foldRight( proof ) { ( axiom, mainProof ) =>
+      if ( mainProof.conclusion.antecedent contains axiom.formula )
+        CutRule( axiom.proof, mainProof, axiom.formula )
+      else
+        mainProof
+    }
 
   /**
    * Tries to compute a resolution proof for a sequent by using analytic induction.
