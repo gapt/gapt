@@ -17,7 +17,7 @@ object LambdaPosition {
    * @return Positions of subexpressions satisfying pred.
    */
   def getPositions( exp: Expr, pred: Expr => Boolean = _ => true ): List[LambdaPosition] = exp match {
-    case Var( _, _ ) | Const( _, _ ) => if ( pred( exp ) ) List( LambdaPosition() ) else Nil
+    case Var( _, _ ) | Const( _, _, _ ) => if ( pred( exp ) ) List( LambdaPosition() ) else Nil
     case App( f, arg ) =>
       val fPositions = getPositions( f, pred ) map { p => 1 :: p }
       val argPositions = getPositions( arg, pred ) map { p => 2 :: p }
@@ -40,8 +40,8 @@ object LambdaPosition {
    * @return The list of outermost positions at which exp1 and exp2 differ.
    */
   def differingPositions( exp1: Expr, exp2: Expr ): List[LambdaPosition] = ( exp1, exp2 ) match {
-    case ( Var( n1, t1 ), Var( n2, t2 ) ) if n1 == n2 && t1 == t2     => Nil
-    case ( Const( n1, t1 ), Const( n2, t2 ) ) if n1 == n2 && t1 == t2 => Nil
+    case ( Var( n1, t1 ), Var( n2, t2 ) ) if n1 == n2 && t1 == t2 => Nil
+    case ( c1: Const, c2: Const ) if c1 == c2                     => Nil
     case ( App( f1, arg1 ), App( f2, arg2 ) ) =>
       val list1 = differingPositions( f1, f2 ) map { p => 1 :: p }
       val list2 = differingPositions( arg1, arg2 ) map { p => 2 :: p }

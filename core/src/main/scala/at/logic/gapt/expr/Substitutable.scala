@@ -48,8 +48,10 @@ trait ExprSubstitutable1 {
   protected def applySub( sub: Substitution, t: Expr ): Expr = t match {
     case _ if sub.isEmpty => t
     case v: Var           => sub.map.getOrElse( v, substVar( sub, v ) )
-    case c @ Const( x, ty ) =>
-      if ( sub.typeMap.isEmpty ) c else Const( x, SubstitutableTy.applySubstitution( sub, ty ) )
+    case c @ Const( x, ty, ps ) =>
+      if ( sub.typeMap.isEmpty ) c else
+        Const( x, SubstitutableTy.applySubstitution( sub, ty ),
+          ps.map( SubstitutableTy.applySubstitution( sub, _ ) ) )
     case App( a, b )                          => App( applySub( sub, a ), applySub( sub, b ) )
     case Abs( v, _ ) if sub.domain contains v => applySub( Substitution( sub.map - v ), t )
     case Abs( v, s ) if sub.range contains v => // TODO: this check is wrong with type substitutions

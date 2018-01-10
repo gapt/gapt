@@ -13,20 +13,7 @@ package at.logic.gapt.expr
  *
  * @param name  The name of this logical constant, e.g. "∀"
  */
-abstract class LogicalC( val name: String ) {
-  protected type MatchResult
-  protected def matchType( exptype: Ty ): MatchResult
-  protected def noMatch: MatchResult
-
-  def unapply( exp: Expr ): MatchResult = exp match {
-    case Const( `name`, exptype ) => matchType( exptype )
-    case _                        => noMatch
-  }
-  private[expr] def unapply( pair: ( String, Ty ) ): MatchResult = pair match {
-    case ( `name`, ty ) => matchType( ty )
-    case _              => noMatch
-  }
-}
+abstract class LogicalC( val name: String )
 
 /**
  * Logical constant with a fixed type.
@@ -35,11 +22,10 @@ abstract class LogicalC( val name: String ) {
  * @param ty  The fixed type of this logical constant, e.g. To->To->To
  */
 class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
-  def apply() = Const( name, ty )
-
-  protected type MatchResult = Boolean
-  protected override def matchType( exptype: Ty ) = exptype == ty
-  protected override def noMatch = false
+  private lazy val singleton = Const( name, ty )
+  def apply() = singleton
+  def unapply( e: Expr ): Boolean = singleton == e
+  def unapply( p: ( String, Ty, List[Ty] ) ): Boolean = p._1 == name && p._2 == ty && p._3.isEmpty
 }
 
 /**
@@ -48,14 +34,17 @@ class MonomorphicLogicalC( name: String, val ty: Ty ) extends LogicalC( name ) {
  * @param name  The name of this logical constant, e.g. "∀"
  */
 class QuantifierC( name: String ) extends LogicalC( name ) {
-  def apply( qtype: Ty ) = Const( name, ( qtype ->: To ) ->: To )
+  def apply( qtype: Ty ) = Const( name, ( qtype ->: To ) ->: To, List( qtype ) )
 
-  protected type MatchResult = Option[Ty]
-  protected override def matchType( exptype: Ty ) = exptype match {
-    case ( qtype ->: To ) ->: To => Some( qtype )
-    case _                       => None
+  def unapply( e: Expr ): Option[Ty] = e match {
+    case Const( n, t, ps ) => unapply( ( n, t, ps ) )
+    case _                 => None
   }
-  protected override def noMatch = None
+  def unapply( p: ( String, Ty, List[Ty] ) ): Option[Ty] =
+    p match {
+      case ( `name`, ( qtype_ ->: To ) ->: To, qtype :: Nil ) if qtype == qtype_ => Some( qtype )
+      case _ => None
+    }
 }
 
 object AndC extends MonomorphicLogicalC( "∧", To ->: To ->: To )
@@ -69,13 +58,16 @@ object ExistsC extends QuantifierC( "∃" )
 object ForallC extends QuantifierC( "∀" )
 
 object EqC extends LogicalC( "=" ) {
-  def apply( ty: Ty ) = Const( name, ty ->: ty ->: To )
+  def apply( ty: Ty ) = Const( name, ty ->: ty ->: To, ty :: Nil )
 
-  protected type MatchResult = Option[Ty]
-  protected override def matchType( exptype: Ty ) = exptype match {
-    case ty ->: ty_ ->: To if ty == ty_ => Some( ty )
-    case _                              => None
+  def unapply( e: Expr ): Option[Ty] = e match {
+    case Const( n, t, ps ) => unapply( ( n, t, ps ) )
+    case _                 => None
   }
-  protected override def noMatch = None
+  def unapply( p: ( String, Ty, List[Ty] ) ): Option[Ty] =
+    p match {
+      case ( `name`, ty_ ->: ty__ ->: To, ty :: Nil ) if ty == ty_ && ty_ == ty__ => Some( ty )
+      case _ => None
+    }
 }
 

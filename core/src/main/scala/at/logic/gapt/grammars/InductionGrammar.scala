@@ -122,7 +122,7 @@ object InductionGrammar {
       for ( nt <- g.nonTerminals; x <- nt ) ctx.check( x )
       val Some( ctrs ) = ctx.getConstructors( g.indTy )
       require( g.nus.keySet == ctrs.toSet )
-      for ( ctr @ Const( _, FunctionType( _, argTypes ) ) <- ctrs ) {
+      for ( ctr @ Const( _, FunctionType( _, argTypes ), _ ) <- ctrs ) {
         val nu = g.nus( ctr )
         require( nu.size == argTypes.size )
         for ( ( nui, argType ) <- nu zip argTypes )
@@ -167,7 +167,7 @@ object InductionGrammar {
     val tau = nameGen.fresh( Var( "τ", tauTy ) )
     val alpha = nameGen.fresh( Var( "α", indTy ) )
     val nus = Map() ++ ctx.getConstructors( indTy ).get.map {
-      case ctr @ Const( _, FunctionType( _, argTypes ) ) =>
+      case ctr @ Const( _, FunctionType( _, argTypes ), _ ) =>
         ctr -> argTypes.map( argTy => nameGen.fresh( Var( "ν", argTy ) ) )
     }
     InductionGrammar( tau, alpha, nus, gamma, Vector() )

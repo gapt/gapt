@@ -47,13 +47,13 @@ private object Support {
     stT: StructTransformer[Formula, Map[( String, Sequent[Boolean] ), String]] ): Map[Formula, ( Formula, Set[Var] )] = {
     val names = structNames( scs )
     scs.map {
-      case ( CLS( Apps( Const( name, _ ), vs ), cc ), ( st, vars ) ) =>
+      case ( CLS( Apps( Const( name, _, _ ), vs ), cc ), ( st, vars ) ) =>
         ( Atom( names( ( name, cc ) ), vs ), ( constructingForm( st, names, stT ), vars ) )
     }
   }
 
   def cF( pn: Expr, cc: Sequent[Boolean], mn: Map[( String, Sequent[Boolean] ), String] ): Formula = {
-    val Apps( Const( name, _ ), vs ) = pn
+    val Apps( Const( name, _, _ ), vs ) = pn
     Atom( mn.getOrElse( ( name, cc ), { throw new Exception( "Should be in map" ) } ), vs )
   }
   //assuming NNFCNF
@@ -118,7 +118,7 @@ private object Support {
     }.groupBy( _._1 ).map { case ( pred, eqns ) => ( pred, eqns.map( _._2 ) ) } )
   private def structNames( sss: Map[CLS, ( Struct, Set[Var] )] ): Map[( String, Sequent[Boolean] ), String] =
     sss.keySet.map {
-      case CLS( Apps( Const( name, _ ), _ ), cc ) =>
+      case CLS( Apps( Const( name, _, _ ), _ ), cc ) =>
         val cutConfigChars = cc.map( b => if ( b ) 'T' else 'F' )
         ( ( name, cc ), name + "S" ++ cutConfigChars.succedent + "A" ++ cutConfigChars.antecedent )
     }.toMap

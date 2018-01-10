@@ -36,13 +36,13 @@ object LatexExporter {
     parenIf( p, prio.quantOrNeg, s"$op ${escapeName( v.name )}\\: ${expr( f, prio.quantOrNeg + 1 )}" )
   private val relOps = Map( "=" -> "=", "<" -> "<", ">" -> ">", "<=" -> "\\leq", ">=" -> "\\geq" )
   private def expr( e: Expr, p: Int ): String = e match {
-    case Apps( Const( "+", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "+" )
-    case Apps( Const( "-", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "-" )
-    case Apps( Const( "*", _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.timesDiv, "*" )
+    case Apps( Const( "+", _, _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "+" )
+    case Apps( Const( "-", _, _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.plusMinus, "-" )
+    case Apps( Const( "*", _, _ ), Seq( a, b ) ) => binExpr( a, b, p, prio.timesDiv, "*" )
 
-    case Neg( Atom( Const( n, _ ), Seq( a, b ) ) ) if relOps contains n =>
+    case Neg( Atom( Const( n, _, _ ), Seq( a, b ) ) ) if relOps contains n =>
       binExpr( a, b, p - 3, prio.infixRel, "\\not " + relOps( n ) )
-    case Atom( Const( n, _ ), Seq( a, b ) ) if relOps contains n =>
+    case Atom( Const( n, _, _ ), Seq( a, b ) ) if relOps contains n =>
       binExpr( a, b, p - 3, prio.infixRel, relOps( n ) )
 
     case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>

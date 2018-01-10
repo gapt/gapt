@@ -249,7 +249,7 @@ object Session {
         case Pop                 => tell( LFun( "pop", LSymbol( "1" ) ) )
         case DeclareSort( sort ) => tell( LFun( "declare-sort", LSymbol( typeRenaming( sort ).name ), LSymbol( 0.toString ) ) )
         case DeclareFun( fun ) => termRenaming( fun ) match {
-          case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
+          case Const( name, FunctionType( TBase( retType, Nil ), argTypes ), _ ) =>
             tell( LFun( "declare-fun", LSymbol( name ),
               LList( argTypes.map {
                 case TBase( argType, Nil ) => LSymbol( argType )

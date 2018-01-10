@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.gaptic._
 object proof extends TacticsProof( Context.withoutEquality ) {
   ctx += Context.Sort( "i" )
   ctx += hoc"f: i>i>i"
-  ctx += hoc"'=':i>i>o"
+  ctx += hoc"'='{?a}:?a>?a>o"
   ctx += hoc"a:i"
   ctx += hoc"b:i"
   ctx += hoc"c:i"

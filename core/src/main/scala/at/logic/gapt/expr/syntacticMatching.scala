@@ -65,8 +65,8 @@ class syntacticMatching extends MatchingAlgorithm {
         case ( App( a1, b1 ), App( a2, b2 ) ) =>
           apply( ( a1 -> a2 ) :: ( b1 -> b2 ) :: rest, ( b1.ty, b2.ty ) :: tyPairs, alreadyFixedSubst )
 
-        case ( Const( n1, t1 ), Const( n2, t2 ) ) if n1 == n2 =>
-          apply( rest, ( t1, t2 ) :: tyPairs, alreadyFixedSubst )
+        case ( Const( n1, _, ps1 ), Const( n2, _, ps2 ) ) if n1 == n2 && ps1.size == ps2.size =>
+          apply( rest, ( ps1 zip ps2 ) ::: tyPairs, alreadyFixedSubst )
 
         case ( Abs( v1, e1 ), Abs( v2, e2 ) ) =>
           val v1_ = rename(

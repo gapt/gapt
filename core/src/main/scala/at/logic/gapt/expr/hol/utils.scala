@@ -90,19 +90,19 @@ object isPrenex {
  */
 object containsQuantifier {
   def apply( e: Expr ): Boolean = e match {
-    case Top() | Bottom() => false
-    case Var( x, tpe )    => false
-    case Const( x, tpe )  => false
-    case And( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
-    case Or( x, y )       => containsQuantifier( x ) || containsQuantifier( y )
-    case Imp( x, y )      => containsQuantifier( x ) || containsQuantifier( y )
-    case Neg( x )         => containsQuantifier( x )
-    case Ex( x, f )       => true
-    case All( x, f )      => true
+    case Top() | Bottom()   => false
+    case Var( x, tpe )      => false
+    case Const( x, tpe, _ ) => false
+    case And( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
+    case Or( x, y )         => containsQuantifier( x ) || containsQuantifier( y )
+    case Imp( x, y )        => containsQuantifier( x ) || containsQuantifier( y )
+    case Neg( x )           => containsQuantifier( x )
+    case Ex( x, f )         => true
+    case All( x, f )        => true
     // Is this really necessary? Yes, they handle cases like P( (\x.x) a ) .
-    case Abs( v, exp )    => containsQuantifier( exp )
-    case App( l, r )      => containsQuantifier( l ) || containsQuantifier( r )
-    case _                => throw new Exception( "Unrecognized symbol." )
+    case Abs( v, exp )      => containsQuantifier( exp )
+    case App( l, r )        => containsQuantifier( l ) || containsQuantifier( r )
+    case _                  => throw new Exception( "Unrecognized symbol." )
   }
 }
 

@@ -33,8 +33,8 @@ object SchematicStruct {
       //After constructing the struct we need to find all CLS terms
       val clauseSetDependencies = currentProofStruct.flatMap( e => {
         SchematicLeafs( e._2._1 ).filter {
-          case CLS( Apps( Const( pf, _ ), _ ), ccon ) => !foundCases.contains( ( pf, ccon ) )
-        }.map { case CLS( Apps( Const( pf, _ ), _ ), ccon ) => ( pf, ccon ) }
+          case CLS( Apps( Const( pf, _, _ ), _ ), ccon ) => !foundCases.contains( ( pf, ccon ) )
+        }.map { case CLS( Apps( Const( pf, _, _ ), _ ), ccon ) => ( pf, ccon ) }
       } )
       // For each CLS term we compute the Struct and merge the results
       Some( clauseSetDependencies.flatMap( x =>

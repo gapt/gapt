@@ -60,6 +60,10 @@ sealed trait Context extends BabelSignature {
   /** Returns Some(const) if name is a constant. */
   def constant( name: String ): Option[Const] = get[Constants].constants.get( name )
 
+  /** Returns Some(const) if (name,params) defines a constant. */
+  def constant( name: String, params: List[Ty] ): Option[Const] =
+    get[Constants].lookup( name, params )
+
   /** Returns Some(ctrs) if name is an inductive type with constructors ctrs. */
   def getConstructors( ty: Ty ): Option[Vector[Const]] =
     ty match {
@@ -123,7 +127,7 @@ sealed trait Context extends BabelSignature {
 
   def signatureLookup( s: String ): BabelSignature.VarConst =
     constant( s ) match {
-      case Some( c ) => BabelSignature.IsConst( c.ty )
+      case Some( c ) => BabelSignature.IsConst( c )
       case None      => BabelSignature.IsVar
     }
 
@@ -236,8 +240,17 @@ object Context {
     def ++( consts: Traversable[Const] ): Constants =
       consts.foldLeft( this )( _ + _ )
 
+    def lookup( name: String, params: List[Ty] ): Option[Const] =
+      constants.get( name ).flatMap {
+        case c @ Const( _, _, Nil ) if params.isEmpty => Some( c )
+        case Const( _, ty, declPs ) if declPs.size == params.size =>
+          val subst = Substitution( Nil, declPs.asInstanceOf[List[TVar]] zip params )
+          Some( Const( name, subst( ty ), params ) )
+        case _ => None
+      }
+
     override def toString = constants.values.toSeq.sortBy( _.name ).
-      map( c => s"${c.name}: ${c.ty}" ).mkString( "\n" )
+      map( c => s"${c.name}${if ( c.params.isEmpty ) "" else c.params.mkString( "{", " ", "}" )}: ${c.ty}" ).mkString( "\n" )
   }
   implicit val constsFacet: Facet[Constants] = Facet( Constants( Map() ) )
 
@@ -318,7 +331,7 @@ object Context {
   implicit val ProofsFacet: Facet[ProofNames] = Facet( ProofNames( Map[String, ( Expr, HOLSequent )]() ) )
 
   case class ProofDefinition( proofNameTerm: Expr, connector: SequentConnector, proof: LKProof ) {
-    val Apps( Const( proofName, _ ), _ ) = proofNameTerm
+    val Apps( Const( proofName, _, _ ), _ ) = proofNameTerm
   }
 
   case class ProofDefinitions( components: Map[String, Set[ProofDefinition]] ) {
@@ -361,8 +374,8 @@ object Context {
     implicit def fromDefn( defn: ( String, Expr ) ): Update =
       Definition( Const( defn._1, defn._2.ty ), defn._2 )
     implicit def fromDefnEq( eq: Formula ): Update = eq match {
-      case Eq( Apps( VarOrConst( name, ty ), vars ), by ) =>
-        Definition( Const( name, ty ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) )
+      case Eq( Apps( VarOrConst( name, ty, ps ), vars ), by ) =>
+        Definition( Const( name, ty, ps ), Abs.Block( vars.map( _.asInstanceOf[Var] ), by ) )
     }
     implicit def fromAxiom( axiom: ( String, HOLSequent ) ): Update = {
       val fvs = freeVariables( axiom._2 ).toVector.sortBy( _.toString )
@@ -382,25 +395,27 @@ object Context {
   }
   /** Inductive base type with constructors. */
   case class InductiveType( ty: TBase, constructors: Vector[Const] ) extends TypeDef {
+    val params: List[TVar] = ty.params.map( _.asInstanceOf[TVar] )
     for ( constr <- constructors ) {
       val FunctionType( ty_, _ ) = constr.ty
       require(
         ty == ty_,
         s"Base type $ty and type constructor $constr don't agree." )
-      require( typeVariables( constr ) subsetOf typeVariables( ty ) )
+      require( constr.params == params )
+      require( typeVariables( constr ) subsetOf params.toSet )
     }
     require(
       constructors.map( _.name ) == constructors.map( _.name ).distinct,
       s"Names of type constructors are not distinct." )
 
-    val baseCases = constructors.find { case Const( _, FunctionType( _, argTys ) ) => !argTys.contains( ty ) }
+    val baseCases = constructors.find { case Const( _, FunctionType( _, argTys ), _ ) => !argTys.contains( ty ) }
     require(
       baseCases.nonEmpty,
       s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
 
     override def apply( ctx: Context ): State = {
       require( !ctx.isType( ty ), s"Type $ty already defined" )
-      for ( Const( ctr, FunctionType( _, fieldTys ) ) <- constructors ) {
+      for ( Const( ctr, FunctionType( _, fieldTys ), ctrPs ) <- constructors ) {
         require( ctx.constant( ctr ).isEmpty, s"Constructor $ctr is already a declared constant" )
         for ( fieldTy <- fieldTys ) {
           if ( fieldTy == ty ) {
@@ -429,6 +444,8 @@ object Context {
   case class ConstDecl( const: Const ) extends Update {
     override def apply( ctx: Context ): State = {
       ctx.check( const.ty )
+      for ( p <- const.params ) require( p.isInstanceOf[TVar] )
+      require( typeVariables( const ).toSet subsetOf const.params.toSet )
       ctx.state.update[Constants]( _ + const )
     }
   }
@@ -456,7 +473,7 @@ object Context {
 
     val recTypes: Map[Const, TBase] = (
       for ( ( constant, _, recIdx, _ ) <- prfDefinitions ) yield {
-        val Const( _, FunctionType( _, argTypes ) ) = constant
+        val Const( _, FunctionType( _, argTypes ), _ ) = constant
         ( constant, argTypes( recIdx ).asInstanceOf[TBase] )
       } ).toMap
 
@@ -477,13 +494,13 @@ object Context {
       for ( ( ( lhs @ Apps( _, lhsArgs ), rhs ), ctr ) <- equations.zip( ctrs ) ) {
         ctx_.check( lhs )
         ctx_.check( rhs )
-        val Apps( Const( ctr_, _ ), _ ) = lhsArgs( recIdx )
+        val Apps( Const( ctr_, _, _ ), _ ) = lhsArgs( recIdx )
         require( ctr_ == ctr.name )
       }
     }
 
     private def validatePrimRecFunDef( c: Const, nArgs: Int, recIdx: Int, equations: Vector[( Expr, Expr )] ): Unit = {
-      val Const( name, FunctionType( _, argTypes ) ) = c
+      val Const( name, FunctionType( _, argTypes ), _ ) = c
       val typeVars: Set[TVar] = typeVariables( c.ty )
       require( 0 <= recIdx && recIdx < nArgs && nArgs <= argTypes.size )
 
@@ -496,13 +513,13 @@ object Context {
         require( lhsArgs.size == nArgs )
 
         val nonRecLhsArgs = lhsArgs.zipWithIndex.filter( _._2 != recIdx ).map( _._1 )
-        val Apps( Const( _, _ ), ctrArgs ) = lhsArgs( recIdx )
+        val Apps( _: Const, ctrArgs ) = lhsArgs( recIdx )
 
         val matchVars = nonRecLhsArgs ++ ctrArgs
         matchVars.foreach( a => require( a.isInstanceOf[Var] ) )
         require( matchVars == matchVars.distinct )
         folSubTerms( rhs ).foreach {
-          case Apps( fn @ Const( `name`, _ ), args ) =>
+          case Apps( fn @ Const( `name`, _, _ ), args ) =>
             require( fn == c )
             require( ctrArgs.contains( args( recIdx ) ) )
           case _ =>
@@ -516,12 +533,12 @@ object Context {
     private def useLiteralConst( p: preExpr.Expr, c: Const ): preExpr.Expr = {
       import preExpr._
       p match {
-        case LocAnnotation( expr, loc )          => LocAnnotation( useLiteralConst( expr, c ), loc )
-        case TypeAnnotation( expr, ty )          => TypeAnnotation( useLiteralConst( expr, c ), ty )
-        case Ident( name, ty ) if name == c.name => Quoted( c, liftTypeMono( c.ty ), Map() )
-        case Abs( v, sub )                       => Abs( v, useLiteralConst( sub, c ) )
-        case App( a, b )                         => App( useLiteralConst( a, c ), useLiteralConst( b, c ) )
-        case _: Quoted | _: Ident                => p
+        case LocAnnotation( expr, loc )            => LocAnnotation( useLiteralConst( expr, c ), loc )
+        case TypeAnnotation( expr, ty )            => TypeAnnotation( useLiteralConst( expr, c ), ty )
+        case Ident( name, _, _ ) if name == c.name => Quoted( c, liftTypeMono( c.ty ), Map() )
+        case Abs( v, sub )                         => Abs( v, useLiteralConst( sub, c ) )
+        case App( a, b )                           => App( useLiteralConst( a, c ), useLiteralConst( b, c ) )
+        case _: Quoted | _: Ident                  => p
       }
     }
 
@@ -542,7 +559,7 @@ object Context {
       val ( nArgs, recIdx ) = equations.head._1 match {
         case Apps( _, args ) => args.size -> args.indexWhere( !_.isInstanceOf[Var] )
       }
-      val Const( _, FunctionType( _, argTys ) ) = constant
+      val Const( _, FunctionType( _, argTys ), _ ) = constant
       val equationsByConst = equations.groupBy {
         case ( ( Apps( _, args ), _ ) ) =>
           val Apps( ctr, _ ) = args( recIdx )
@@ -569,12 +586,15 @@ object Context {
   case class ProofNameDeclaration( lhs: Expr, endSequent: HOLSequent ) extends Update {
     override def apply( ctx: Context ): State = {
       endSequent.foreach( ctx.check( _ ) )
-      val Apps( Const( c, _ ), vs ) = lhs
+      val Apps( Const( c, _, ps ), vs ) = lhs
       require( !ctx.get[ProofNames].names.keySet.contains( c ) )
       require( vs == vs.distinct )
       require( vs.forall( _.isInstanceOf[Var] ) )
+      require( ps.forall( _.isInstanceOf[TVar] ) )
       for ( fv <- freeVariables( endSequent ) )
         require( vs.contains( fv ) )
+      for ( tv <- typeVariables( endSequent.toImplication ) )
+        require( ps.contains( tv ) )
       ctx.state.update[ProofNames]( _ + ( c, lhs, endSequent ) )
     }
   }
@@ -582,7 +602,7 @@ object Context {
   case class ProofDefinitionDeclaration( lhs: Expr, referencedProof: LKProof ) extends Update {
     override def apply( ctx: Context ): State = {
       ctx.check( referencedProof )
-      val Apps( Const( _, _ ), vs ) = lhs
+      val Apps( c: Const, vs ) = lhs
       vs.foreach( ctx.check( _ ) )
       val declSeq = ctx.get[ProofNames].lookup( lhs )
         .getOrElse( throw new IllegalArgumentException( s"Proof name ${lhs.toSigRelativeString( ctx )} is not defined" ) )
@@ -615,7 +635,7 @@ object Context {
       ctx += Sort( ty )
     val consts = names.collect { case c: Const => c }
     for ( ( n, cs ) <- consts.groupBy( _.name ) if ctx.constant( n ).isEmpty )
-      ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ) ) )
+      ctx += ConstDecl( if ( cs.size == 1 ) cs.head else Const( n, TVar( "a" ), List( TVar( "a" ) ) ) )
     ctx
   }
 }

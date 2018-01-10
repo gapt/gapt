@@ -56,8 +56,9 @@ object BabelParserCombinators {
 
   val Expr: P[preExpr.Expr] = P( Lam )
 
-  val BoundVar: P[preExpr.Ident] = P( Ident | ( "(" ~ Name ~ ":" ~ Type ~ ")" ).
-    map( x => preExpr.Ident( x._1, x._2 ) ) )
+  val BoundVar: P[preExpr.Ident] = P(
+    Name.map( preExpr.Ident( _, preExpr.freshMetaType(), None ) ) |
+      ( "(" ~ Name ~ ":" ~ Type ~ ")" ).map( x => preExpr.Ident( x._1, x._2, None ) ) )
   val Lam: P[preExpr.Expr] = PE( ( ( "^" | "λ" ) ~/ BoundVar ~ Lam ).
     map( x => preExpr.Abs( x._1, x._2 ) ) | TypeAnnotation )
 
@@ -92,7 +93,7 @@ object BabelParserCombinators {
         case ( a, "=", b )  => preExpr.Eq( a, b )
         case ( a, r, b ) =>
           preExpr.TypeAnnotation(
-            preExpr.App( preExpr.App( preExpr.Ident( r, preExpr.freshMetaType() ), a ), b ),
+            preExpr.App( preExpr.App( preExpr.Ident( r, preExpr.freshMetaType(), None ), a ), b ),
             preExpr.Bool )
       }.reduceLeft( preExpr.And )
   } )
@@ -101,7 +102,7 @@ object BabelParserCombinators {
     case ( first, rest ) =>
       rest.foldLeft( first ) {
         case ( a, ( o, b ) ) =>
-          preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType() ), a ), b )
+          preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType(), None ), a ), b )
       }
   } )
 
@@ -109,7 +110,7 @@ object BabelParserCombinators {
     case ( first, rest ) =>
       rest.foldLeft( first ) {
         case ( a, ( o, b ) ) =>
-          preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType() ), a ), b )
+          preExpr.App( preExpr.App( preExpr.Ident( o, preExpr.freshMetaType(), None ), a ), b )
       }
   } )
 
@@ -127,13 +128,18 @@ object BabelParserCombinators {
   val Var = P( Name ~ ":" ~ Type ) map {
     case ( name, ty ) => real.Var( name, preExpr.toRealType( ty, Map() ) )
   }
-  val Const = P( Name ~ ":" ~ Type ) map {
-    case ( name, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ) )
+  val TyParams = P( "{" ~ Type.rep ~ "}" )
+  val Const = P( Name ~ TyParams.? ~ ":" ~ Type ) map {
+    case ( name, ps, ty ) => real.Const( name, preExpr.toRealType( ty, Map() ),
+      ps.getOrElse( Nil ).toList.map( preExpr.toRealType( _, Map() ) ) )
   }
   val VarLiteral = PE( ( "#v(" ~/ Var ~ ")" ).map { preExpr.QuoteBlackbox } )
   val ConstLiteral = PE( ( "#c(" ~/ Const ~ ")" ).map { preExpr.QuoteBlackbox } )
 
-  val Ident: P[preExpr.Ident] = P( Name.map( preExpr.Ident( _, preExpr.freshMetaType() ) ) )
+  val Ident: P[preExpr.Ident] = P( ( Name ~ TyParams.? ).map {
+    case ( n, ps ) =>
+      preExpr.Ident( n, preExpr.freshMetaType(), ps.map( _.toList ) )
+  } )
 
   val TypeParens: P[preExpr.Type] = P( "(" ~/ Type ~ ")" )
   val TypeBase: P[preExpr.Type] = P( Name ~ TypeAtom.rep ).map { case ( n, ps ) => preExpr.BaseType( n, ps.toList ) }

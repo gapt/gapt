@@ -26,9 +26,9 @@ class BabelTest extends Specification {
   "quoted names" in {
     BabelParser.parse(
       """
-        '\u2200' (^'""' ('""' '\'' : o)) : o
+        '\u2200' {i>o} (^'""' ('""' '\'' : o)) : o
       """ ) must beLike {
-        case All( v, App( v_, Const( "'", Ti ) ) ) if v == v_ => ok
+        case All( v, App( v_, Const( "'", Ti, Nil ) ) ) if v == v_ => ok
       }
   }
 
@@ -63,6 +63,7 @@ class BabelTest extends Specification {
       "'<=' x y : i",
       "true & p(#c('⊤': i))",
       "^('⊤': i) #c('⊤': o) & p('⊤': i)",
+      "c = c{}", "c = c{?a}", "c{?a} = c{?b}",
       "''",
       "'\\u0000'",
       "true", "'true'", "'all' x" )

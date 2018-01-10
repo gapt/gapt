@@ -10,7 +10,7 @@ object ExpressionParseHelper {
     def spliceIn: preExpr.Expr
   }
   implicit class IdentifierSplice[+T]( val ident: String ) extends Splice[T] {
-    def spliceIn = preExpr.Ident( ident, preExpr.freshMetaType() )
+    def spliceIn = preExpr.Ident( ident, preExpr.freshMetaType(), None )
   }
   implicit class ExpressionSplice[+ExprType <: Expr]( val expr: ExprType ) extends Splice[ExprType] {
     def spliceIn = preExpr.QuoteWhitebox( expr )
@@ -29,16 +29,16 @@ class ExpressionParseHelper( sc: StringContext, file: sourcecode.File, line: sou
     def repl( expr: preExpr.Expr ): preExpr.Expr = expr match {
       case preExpr.LocAnnotation( e, loc ) => preExpr.LocAnnotation( repl( e ), loc )
       case preExpr.TypeAnnotation( e, ty ) => preExpr.TypeAnnotation( repl( e ), ty )
-      case preExpr.Ident( name, ty ) if name startsWith placeholder =>
+      case preExpr.Ident( name, _, _ ) if name startsWith placeholder =>
         val i = name.drop( placeholder.length ).toInt
         expressions( i ).spliceIn
       case expr: preExpr.Ident => expr
       case preExpr.Abs( v, sub ) =>
         repl( v ) match {
-          case vNew @ preExpr.Ident( _, _ ) => // If repl(v) = v.
+          case vNew @ preExpr.Ident( _, _, _ ) => // If repl(v) = v.
             preExpr.Abs( vNew, repl( sub ) )
           case preExpr.Quoted( Var( vNew, _ ), ty, _ ) => // If repl(v) = v'.
-            preExpr.Abs( preExpr.Ident( vNew, ty ), repl( sub ) )
+            preExpr.Abs( preExpr.Ident( vNew, ty, None ), repl( sub ) )
           case _ => // Otherwise
             throw new IllegalArgumentException( "Trying to substitute non-variable term in binding." )
         }

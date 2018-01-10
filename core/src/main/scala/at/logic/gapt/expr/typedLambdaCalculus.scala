@@ -181,11 +181,11 @@ class Var private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
   override val alphaEquivalentHashCode = 42 + ty.hashCode
 }
 
-class Const private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
+class Const private[expr] ( val name: String, val ty: Ty, val params: List[Ty] ) extends VarOrConst {
 
   def syntaxEquals( e: Expr ) = e match {
-    case Const( n, t ) => n == name && t == ty
-    case _             => false
+    case Const( n, t, ps ) => n == name && t == ty && ps == params
+    case _                 => false
   }
 
   private[expr] override def alphaEquals( that: Expr, lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int] ) =
@@ -249,19 +249,20 @@ class Abs private[expr] ( val variable: Var, val term: Expr ) extends Expr {
 object Var {
   def apply( name: String, exptype: Ty ): Var = determineTraits.forVar( name, exptype )
 
-  def unapply( v: Var ) = Some( v.name, v.ty )
+  def unapply( v: Var ): Some[( String, Ty )] = Some( v.name, v.ty )
 }
 object Const {
-  def apply( name: String, exptype: Ty ): Const = determineTraits.forConst( name, exptype )
+  def apply( name: String, exptype: Ty, params: List[Ty] = Nil ): Const =
+    determineTraits.forConst( name, exptype, params )
 
-  def unapply( c: Const ) = Some( c.name, c.ty )
+  def unapply( c: Const ): Some[( String, Ty, List[Ty] )] = Some( ( c.name, c.ty, c.params ) )
 }
 object App {
   def apply( f: Expr, a: Expr ) = determineTraits.forApp( f, a )
 
   def apply( function: Expr, arguments: Seq[Expr] ): Expr = Apps( function, arguments )
 
-  def unapply( a: App ) = Some( a.function, a.arg )
+  def unapply( a: App ): Some[( Expr, Expr )] = Some( a.function, a.arg )
 }
 object Apps {
   def apply( function: Expr, arguments: Expr* )( implicit dummyImplicit: DummyImplicit ): Expr =
@@ -286,7 +287,7 @@ object Abs {
   def apply( variables: Seq[Var], expression: Expr ): Expr =
     variables.foldRight( expression )( Abs( _, _ ) )
 
-  def unapply( a: Abs ) = Some( a.variable, a.term )
+  def unapply( a: Abs ): Some[( Var, Expr )] = Some( a.variable, a.term )
 
   object Block {
     def apply( vars: Seq[Var], expr: Expr ) = Abs( vars, expr )

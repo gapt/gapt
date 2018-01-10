@@ -103,7 +103,7 @@ class LLKExporter( val expandTex: Boolean ) {
 
       case EqC( _ ) => ( vmap, cmap )
 
-      case NonLogicalConstant( name, exptype ) =>
+      case NonLogicalConstant( name, exptype, _ ) =>
         if ( cmap.contains( name ) ) {
           if ( cmap( name ) != exptype ) throw new Exception(
             "Symbol clash for " + name + " " + cmap( name ) + " != " + exptype )
@@ -258,12 +258,12 @@ object toLatexString {
         getFormulaString( t2, false, escape_latex )
       if ( outermost ) str else "(" + str + ")"
 
-    case Var( v, _ )   => v.toString
-    case Const( c, _ ) => c.toString
+    case Var( v, _ )      => v.toString
+    case Const( c, _, _ ) => c.toString
     case Atom( f, args ) =>
       val sym = f match {
-        case Const( x, _ ) => x
-        case Var( x, _ )   => x
+        case Const( x, _, _ ) => x
+        case Var( x, _ )      => x
       }
       val str: String =
         if ( args.length == 2 && sym.toString.matches( """(<|>|\\leq|\\geq|=|>=|<=)""" ) ) {
@@ -280,8 +280,8 @@ object toLatexString {
       str
     case HOLFunction( f, args ) =>
       val sym = f match {
-        case Const( x, _ ) => x
-        case Var( x, _ )   => x
+        case Const( x, _, _ ) => x
+        case Var( x, _ )      => x
       }
       if ( args.length == 2 && sym.toString.matches( """[+\-*/]""" ) )
         "(" + getFormulaString( args( 0 ), false, escape_latex ) + " " + sym.toString + " " +

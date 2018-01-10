@@ -47,7 +47,7 @@ object tptpToString {
 
     case Top()                              => "$true"
     case Bottom()                           => "$false"
-    case Const( c, _ )                      => atomic_word( c )
+    case Const( c, _, _ )                   => atomic_word( c )
     case Var( name, _ )                     => variable( name )
     case Neg( Eq( a, b ) )                  => binExpr( a, b, p, prio.infix_formula, "!=" )
     case Neg( f )                           => parenIf( p, prio.unitary_formula, s"~ ${expression( f, prio.unitary_formula + 1 )}" )
@@ -57,7 +57,7 @@ object tptpToString {
     case Imp( a, b )                        => binExpr( a, b, p, prio.binary_formula, "=>" )
     case All.Block( vs, bd ) if vs.nonEmpty => quant( vs, bd, p, "!" )
     case Ex.Block( vs, bd ) if vs.nonEmpty  => quant( vs, bd, p, "?" )
-    case Apps( Const( hd, _ ), args ) if expr.ty.isInstanceOf[TBase] =>
+    case Apps( Const( hd, _, _ ), args ) if expr.ty.isInstanceOf[TBase] =>
       s"${atomic_word( hd )}(${args map expression mkString ", "})"
     case App( a, b ) => binExpr( a, b, p, prio.term, s"@" )
   }

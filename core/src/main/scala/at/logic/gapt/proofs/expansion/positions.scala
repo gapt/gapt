@@ -105,7 +105,7 @@ object commuteReplacementCtxWithDefEq {
       case _ =>
         // imitate
         a match {
-          case Apps( fn2 @ Const( _, _ ), as2 ) =>
+          case Apps( fn2: Const, as2 ) =>
             val pat = fn2( for ( ( a, i ) <- as2.zipWithIndex ) yield Var( s"x$i", a.ty ) )
             syntacticMatching( ctx.normalize( pat ), ctx.normalize( c ) ) match {
               case Some( subst ) =>

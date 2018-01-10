@@ -211,8 +211,8 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 
   def encode( recursionScheme: RecursionScheme ): RecursionScheme = {
     val encodedNTs = recursionScheme.nonTerminals.map {
-      case c @ Const( name, FunctionType( To, argTypes ) ) =>
-        c -> Const( name, FunctionType( instanceTermType, argTypes ) )
+      case c @ Const( name, FunctionType( To, argTypes ), ps ) =>
+        c -> Const( name, FunctionType( instanceTermType, argTypes ), ps )
     }.toMap
     RecursionScheme( encodedNTs( recursionScheme.startSymbol ), encodedNTs.values.toSet,
       recursionScheme.rules map {
@@ -225,8 +225,8 @@ class InstanceTermEncoding private ( val endSequent: HOLSequent, val instanceTer
 
   def decode( recursionScheme: RecursionScheme ): RecursionScheme = {
     val decodedNTs = recursionScheme.nonTerminals.map {
-      case c @ Const( name, FunctionType( `instanceTermType`, argTypes ) ) =>
-        c -> Const( name, FunctionType( To, argTypes ) )
+      case c @ Const( name, FunctionType( `instanceTermType`, argTypes ), ps ) =>
+        c -> Const( name, FunctionType( To, argTypes ), ps )
     }.toMap
     RecursionScheme( decodedNTs( recursionScheme.startSymbol ), decodedNTs.values.toSet,
       recursionScheme.rules map {

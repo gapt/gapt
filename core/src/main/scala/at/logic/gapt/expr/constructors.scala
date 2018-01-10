@@ -1,10 +1,9 @@
 package at.logic.gapt.expr
 
 object NonLogicalConstant {
-  def unapply( e: Expr ) = e match {
+  def unapply( c: Const ) = c match {
     case c: LogicalConstant => None
-    case Const( n, t )      => Some( n, t )
-    case _                  => None
+    case Const( n, t, ps )  => Some( ( n, t, ps ) )
   }
 }
 
@@ -15,7 +14,7 @@ object HOLFunction {
     res
   }
   def unapply( e: Expr ): Option[( Expr, List[Expr] )] = e match {
-    case Apps( head @ ( NonLogicalConstant( _, _ ) | Var( _, _ ) ), args ) if e.ty != To => Some( head, args )
+    case Apps( head @ ( NonLogicalConstant( _, _, _ ) | Var( _, _ ) ), args ) if e.ty != To => Some( head, args )
     case _ => None
   }
 }
@@ -199,10 +198,7 @@ object Neg extends UnaryPropConnectiveHelper( NegC )
 
 class NullaryPropConnectiveHelper( val c: MonomorphicLogicalC ) {
   def apply(): PropFormula with Const = c().asInstanceOf[PropFormula with Const]
-  def unapply( formula: PropFormula ) = formula match {
-    case c() => true
-    case _   => false
-  }
+  def unapply( formula: PropFormula ) = c() == formula
 }
 
 object Top extends NullaryPropConnectiveHelper( TopC )

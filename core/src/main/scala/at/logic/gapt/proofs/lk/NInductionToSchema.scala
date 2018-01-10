@@ -41,10 +41,10 @@ object CreateASchemaVersion extends LKVisitor[MutableContext] {
 }
 object ArithmeticInductionToSchema {
   def apply( proof: LKProof, pe: Expr )( implicit ctx: MutableContext ): Unit = {
-    val Apps( Const( nameT, tpp ), _ ) = pe
+    val Apps( c: Const, _ ) = pe
     val resProof: LKProof = CreateASchemaVersion( proof, ctx )
     if ( ctx.get[ProofNames].lookup( pe ).isEmpty ) {
-      ctx += Const( nameT, tpp )
+      ctx += c
       ctx += Context.ProofNameDeclaration( pe, resProof.endSequent )
     }
     ctx += Context.ProofDefinitionDeclaration( pe, resProof )

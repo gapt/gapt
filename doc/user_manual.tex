@@ -2265,24 +2265,29 @@ x_2 → 0
 
 \chapter{Lambda calculus}\label{ch.lamda_calculus}
 
+\newcommand\Type{\mathrm{Type}}
+\newcommand\Expr{\mathrm{Expr}}
+
 GAPT uses a polymorphic simply-typed lambda calculus to represent formulas and
 terms.  The syntax of types and terms is as follows.  A type is either a type
 function, an arrow (function) type or a type variable.
-\[ \mathrm{Type} ::= f(\mathrm{Type},\dots,\mathrm{Type}) \mid \mathrm{Type} \to \mathrm{Type} \mid {?}\alpha \]
+\[ \Type ::= f(\Type,\dots,\Type) \mid \Type \to \Type \mid {?}\alpha \]
 
 There are 4 kinds of expressions: constants, variables, applications, and
 abstractions:
-\[ \mathrm{Expr} ::= v: Type \mid c: Type \mid \mathrm{Expr}\: \mathrm{Expr}
-  \mid \lambda (v : Type)\: \mathrm{Expr} \]
+\[ \Expr ::= v: \Type \mid c_{\Type \dots \Type}: \Type
+  \mid \Expr\: \Expr \mid \lambda (v : \Type)\: \Expr \]
 
 This lambda calculus is simply typed in the sense that we do not have
 \emph{quantification} over types.  Instead, we allow inductive data types and
 definitions to be polymorphic.  That is, data types and the types of
-definitions can have type variables.  In this manner, we can define a function
-\cli{concat} of type \cli{list ?a > list ?a > list ?a}.  With this definition
-we can use all instances, where we substitute \cli{?a} for any other type.  For
-example when we use this function for lists of numbers, we would use the instance
-\cli{concat: list nat > list nat > list nat}.
+definitions can have type variables.  Constants have a list of type parameters;
+the name of a constant together with its parameters should uniquely determine
+the type.  In this manner, we can define a function \cli{concat\{?a\}} of type
+\cli{list ?a > list ?a > list ?a}.  With this definition we can use all
+instances, where we substitute \cli{?a} for any other type.  For example when
+we use this function for lists of numbers, we would use the instance
+\cli{concat\{nat\}: list nat > list nat > list nat}.
 
 \chapter{Proof systems}
 

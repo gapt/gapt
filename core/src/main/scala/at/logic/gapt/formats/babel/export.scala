@@ -31,7 +31,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
   def knownConstantTypesFromSig( consts: Iterable[Const] ): Iterable[( String, Const )] =
     consts flatMap { c =>
       sig.signatureLookup( c.name ) match {
-        case BabelSignature.IsConst( ty ) if ty == c.ty =>
+        case BabelSignature.IsConst( `c` ) => // FIXME: this completely wrong now
           Some( c.name -> c )
         case _ => None
       }
@@ -102,18 +102,18 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     t0:        Map[String, VarOrConst],
     p:         Int ): ( Doc, Map[String, VarOrConst] ) =
     expr match {
-      case Top() if !bound( TopC.name )       => ( ( if ( unicode ) "⊤" else "true" ), t0 )
-      case Bottom() if !bound( BottomC.name ) => ( ( if ( unicode ) "⊥" else "false" ), t0 )
+      case Top() if !bound( TopC.name )       => ( if ( unicode ) "⊤" else "true", t0 )
+      case Bottom() if !bound( BottomC.name ) => ( if ( unicode ) "⊥" else "false", t0 )
 
-      case Apps( c @ Const( rel, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.ty == To =>
+      case Apps( c @ Const( rel, _, _ ), Seq( a, b ) ) if infixRel( rel ) && expr.ty == To =>
         showBinOp( c, prio.infixRel, 0, 0, a, b, true, bound, t0, p )
-      case Apps( c @ Const( "+", _ ), Seq( a, b ) ) =>
+      case Apps( c @ Const( "+", _, _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.plusMinus, 1, 0, a, b, knownType, bound, t0, p )
-      case Apps( c @ Const( "-", _ ), Seq( a, b ) ) =>
+      case Apps( c @ Const( "-", _, _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.plusMinus, 1, 0, a, b, knownType, bound, t0, p )
-      case Apps( c @ Const( "*", _ ), Seq( a, b ) ) =>
+      case Apps( c @ Const( "*", _, _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.timesDiv, 1, 0, a, b, knownType, bound, t0, p )
-      case Apps( c @ Const( "/", _ ), Seq( a, b ) ) =>
+      case Apps( c @ Const( "/", _, _ ), Seq( a, b ) ) =>
         showBinOp( c, prio.timesDiv, 1, 0, a, b, knownType, bound, t0, p )
 
       case Eq( a, b ) if !bound( EqC.name ) =>
@@ -149,13 +149,15 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
       case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
-      case expr @ Const( name, ty ) =>
+      case expr @ Const( name, ty, params ) =>
+        // FIXME(gabriel): type parameter syntax
         if ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.signatureLookup( name ).isVar )
-          ( "#c(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
+          ( "#c(" <> showName( name ) <> showTyParams( params ) <> ":" </> show( ty, false ) <> ")", t0 )
+        else if ( omitTypes || ( ( ty == Ti || knownType ) && params.isEmpty ) || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
         else
-          ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
+          ( parenIf( p, prio.typeAnnot, showName( name ) <> showTyParams( params )
+            <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
       case expr @ Var( name, ty ) =>
         if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.signatureLookup( name ).isVar ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
@@ -165,6 +167,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
           ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
     }
 
+  def showTyParams( params: List[Ty] ): Doc =
+    if ( params.isEmpty ) "" else
+      "{" <> wordwrap( params.map( show( _, params.size > 1 ) ) ) <> "}"
+
   def showApps(
     expr:      Expr,
     knownType: Boolean,
@@ -173,9 +179,9 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     p:         Int ): ( Doc, Map[String, VarOrConst] ) = {
     val Apps( hd, args ) = expr
     val hdSym = hd match {
-      case Const( n, _ ) => Some( n )
-      case Var( n, _ )   => Some( n )
-      case _             => None
+      case Const( n, _, _ ) => Some( n )
+      case Var( n, _ )      => Some( n )
+      case _                => None
     }
 
     val hdKnown0 = hdSym.exists { n => t0 get n contains hd }
@@ -227,7 +233,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
     bound:         Set[String],
     t0:            Map[String, VarOrConst],
     p:             Int ): ( Doc, Map[String, VarOrConst] ) = {
-    val Const( cn, argt1 ->: argt2 ->: rett ) = c
+    val Const( cn, argt1 ->: argt2 ->: rett, _ ) = c
     val cKnown = t0.get( cn ).contains( c )
     if ( t0.get( cn ).exists { _ != c } ) {
       showApps( c( a, b ), knownType, bound, t0, p )

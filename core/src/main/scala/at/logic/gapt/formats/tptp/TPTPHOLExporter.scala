@@ -154,7 +154,7 @@ class TPTPHOLExporter {
       return ()
     };
     println( "% Symbol translation table for THF export:" )
-    val csyms = cnames.keySet.toList.map( { case Const( s, _ ) => s } )
+    val csyms = cnames.keySet.toList.map( { case Const( s, _, _ ) => s } )
     val vsyms = vnames.keySet.toList.map( { case Var( s, _ ) => s } )
 
     val width = ( vsyms ++ csyms ).sortWith( ( x, y ) => y.size < x.size ).head.size
@@ -237,20 +237,20 @@ class TPTPHOLExporter {
   private def addparens( str: String, cond: Boolean ) = if ( cond ) "(" + str + ")" else str
   def thf_formula( f: Expr, vmap: NameMap, cmap: CNameMap, outermost: Boolean = false ): String = {
     f match {
-      case Top()                      => "$true"
-      case Bottom()                   => "$false"
-      case Neg( x )                   => addparens( " ~(" + thf_formula( x, vmap, cmap ) + ")", outermost ) //negation of atoms needs parenthesis!
-      case And( x, y )                => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
-      case Or( x, y )                 => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
-      case Imp( x, y )                => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
-      case All( x, t )                => addparens( "![" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case Ex( x, t )                 => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case Eq( x, y )                 => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
-      case Abs( x, t )                => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
-      case App( s, t )                => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
-      case Var( _, _ )                => vmap( f.asInstanceOf[Var] )
-      case NonLogicalConstant( _, _ ) => cmap( f.asInstanceOf[Const] )
-      case _                          => throw new Exception( "TPTP export does not support outermost connective of " + f )
+      case Top()                         => "$true"
+      case Bottom()                      => "$false"
+      case Neg( x )                      => addparens( " ~(" + thf_formula( x, vmap, cmap ) + ")", outermost ) //negation of atoms needs parenthesis!
+      case And( x, y )                   => addparens( thf_formula( x, vmap, cmap ) + " & " + thf_formula( y, vmap, cmap ), !outermost )
+      case Or( x, y )                    => addparens( thf_formula( x, vmap, cmap ) + " | " + thf_formula( y, vmap, cmap ), !outermost )
+      case Imp( x, y )                   => addparens( thf_formula( x, vmap, cmap ) + " => " + thf_formula( y, vmap, cmap ), !outermost )
+      case All( x, t )                   => addparens( "![" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Ex( x, t )                    => addparens( "?[" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case Eq( x, y )                    => addparens( thf_formula( x, vmap, cmap ) + " = " + thf_formula( y, vmap, cmap ), !outermost )
+      case Abs( x, t )                   => addparens( "^[" + vmap( x ) + " : " + getTypeString( x.ty ) + "] : (" + thf_formula( t, vmap, cmap ) + ")", !outermost )
+      case App( s, t )                   => addparens( thf_formula( s, vmap, cmap ) + " @ " + thf_formula( t, vmap, cmap ), !outermost )
+      case Var( _, _ )                   => vmap( f.asInstanceOf[Var] )
+      case NonLogicalConstant( _, _, _ ) => cmap( f.asInstanceOf[Const] )
+      case _                             => throw new Exception( "TPTP export does not support outermost connective of " + f )
     }
   }
 
@@ -323,19 +323,19 @@ class TPTPHOLExporter {
 
   /** extract all variables, bound and free */
   def getVars( t: Expr, set: Set[Var] ): Set[Var] = t match {
-    case Const( _, _ ) => set
-    case Var( _, _ )   => set + t.asInstanceOf[Var]
-    case App( s, t )   => getVars( s, getVars( t, set ) )
-    case Abs( x, t )   => getVars( t, set + x )
+    case Const( _, _, _ ) => set
+    case Var( _, _ )      => set + t.asInstanceOf[Var]
+    case App( s, t )      => getVars( s, getVars( t, set ) )
+    case Abs( x, t )      => getVars( t, set + x )
   }
 
   def getConsts( t: Expr, set: Set[Const] ): Set[Const] = t match {
-    case EqC( _ )                   => set
-    case _: LogicalConstant         => set
-    case NonLogicalConstant( _, _ ) => set + t.asInstanceOf[Const]
-    case Var( _, _ )                => set
-    case App( s, t )                => getConsts( s, getConsts( t, set ) )
-    case Abs( x, t )                => getConsts( t, set )
+    case EqC( _ )                          => set
+    case _: LogicalConstant                => set
+    case t @ NonLogicalConstant( _, _, _ ) => set + t
+    case Var( _, _ )                       => set
+    case App( s, t )                       => getConsts( s, getConsts( t, set ) )
+    case Abs( x, t )                       => getConsts( t, set )
   }
 
   def simplify_antecedent( es: ExpansionSequent ): ExpansionSequent = {

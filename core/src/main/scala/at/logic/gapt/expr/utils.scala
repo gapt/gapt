@@ -111,10 +111,10 @@ object typeVariables {
   }
 
   def apply( e: Expr ): Set[TVar] = e match {
-    case Const( _, t ) => apply( t )
-    case Var( _, t )   => apply( t )
-    case App( a, b )   => apply( a ) ++ apply( b )
-    case Abs( v, s )   => apply( s ) ++ apply( v )
+    case Const( _, t, ps ) => apply( t ) ++ ps.flatMap( apply )
+    case Var( _, t )       => apply( t )
+    case App( a, b )       => apply( a ) ++ apply( b )
+    case Abs( v, s )       => apply( s ) ++ apply( v )
   }
 }
 
@@ -147,17 +147,17 @@ object constants {
  */
 object subTerms {
   def apply( e: Expr ): Set[Expr] = e match {
-    case Var( _, _ ) | Const( _, _ ) => Set( e )
-    case Abs( _, e0 )                => apply( e0 ) + e
-    case App( e1, e2 )               => ( apply( e1 ) ++ apply( e2 ) ) + e
+    case Var( _, _ ) | Const( _, _, _ ) => Set( e )
+    case Abs( _, e0 )                   => apply( e0 ) + e
+    case App( e1, e2 )                  => ( apply( e1 ) ++ apply( e2 ) ) + e
   }
 }
 
 object expressionSize {
   def apply( e: Expr ): Int = e match {
-    case Var( _, _ ) | Const( _, _ ) => 1
-    case Abs( _, f )                 => 1 + expressionSize( f )
-    case App( a, b )                 => 1 + expressionSize( a ) + expressionSize( b )
+    case Var( _, _ ) | Const( _, _, _ ) => 1
+    case Abs( _, f )                    => 1 + expressionSize( f )
+    case App( a, b )                    => 1 + expressionSize( a ) + expressionSize( b )
   }
 }
 

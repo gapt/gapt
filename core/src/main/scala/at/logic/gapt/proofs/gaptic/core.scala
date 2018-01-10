@@ -13,9 +13,9 @@ import cats.instances.all._
 object guessLabels {
   def suggestLabel( formula: Formula, idx: SequentIndex, nameGen: NameGenerator ): String =
     formula match {
-      case Const( name, _ ) => nameGen.fresh( name )
-      case _ if idx.isSuc   => nameGen.fresh( "g" )
-      case _ if idx.isAnt   => nameGen.freshWithIndex( "h" )
+      case Const( name, _, _ ) => nameGen.fresh( name )
+      case _ if idx.isSuc      => nameGen.fresh( "g" )
+      case _ if idx.isAnt      => nameGen.freshWithIndex( "h" )
     }
 
   def apply( sequent: HOLSequent ): Sequent[( String, Formula )] = {

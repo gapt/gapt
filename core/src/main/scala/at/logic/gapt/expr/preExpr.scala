@@ -47,7 +47,7 @@ object preExpr {
   sealed trait Expr
   case class LocAnnotation( expr: Expr, loc: Location ) extends Expr
   case class TypeAnnotation( expr: Expr, ty: Type ) extends Expr
-  case class Ident( name: String, ty: Type ) extends Expr
+  case class Ident( name: String, ty: Type, params: Option[List[Type]] ) extends Expr
   case class Abs( v: Ident, sub: Expr ) extends Expr
   case class App( a: Expr, b: Expr ) extends Expr
   case class Quoted( e: real.Expr, ty: Type, fvs: Map[String, Type] ) extends Expr
@@ -67,12 +67,13 @@ object preExpr {
         assg.get( idx ).map( apply ).getOrElse( printMetaTypeIdx( idx ) )
     }
     def apply( e: Expr ): String = e match {
-      case LocAnnotation( expr, _ )   => apply( expr )
-      case TypeAnnotation( expr, ty ) => s"(${apply( expr )}:${apply( ty )})"
-      case Ident( name, ty )          => s"($name:${apply( ty )})"
-      case Abs( v, sub )              => s"(^${apply( v )} ${apply( sub )})"
-      case App( a, b )                => s"(${apply( a )} ${apply( b )})"
-      case Quoted( e, ty, fvs )       => s"#quote(${e.toSigRelativeString( sig )}, ${apply( ty )}${fvs map { case ( n, t ) => s", $n -> ${apply( t )}" } mkString})"
+      case LocAnnotation( expr, _ )      => apply( expr )
+      case TypeAnnotation( expr, ty )    => s"(${apply( expr )}:${apply( ty )})"
+      case Ident( name, ty, None )       => s"($name:${apply( ty )})"
+      case Ident( name, ty, Some( ps ) ) => s"($name{${ps.map( apply ).mkString( " " )}:${apply( ty )})"
+      case Abs( v, sub )                 => s"(^${apply( v )} ${apply( sub )})"
+      case App( a, b )                   => s"(${apply( a )} ${apply( b )})"
+      case Quoted( e, ty, fvs )          => s"#quote(${e.toSigRelativeString( sig )}, ${apply( ty )}${fvs map { case ( n, t ) => s", $n -> ${apply( t )}" } mkString})"
     }
   }
 
@@ -81,7 +82,7 @@ object preExpr {
   def Eq( a: Expr, b: Expr ) = {
     val argType = freshMetaType()
     val eqType = ArrType( argType, ArrType( argType, Bool ) )
-    App( App( Ident( real.EqC.name, eqType ), a ), b )
+    App( App( Ident( real.EqC.name, eqType, Some( List( argType ) ) ), a ), b )
   }
 
   def Top = QuoteBlackbox( real.Top() )
@@ -97,19 +98,22 @@ object preExpr {
   def Bicond( a: Expr, b: Expr ) = And( Imp( a, b ), Imp( b, a ) )
   def Imp = BinaryConn( real.ImpC )
 
-  def Quant( name: String ): ( Ident, Expr ) => Expr = ( v, sub ) =>
-    App( Ident( name, ArrType( ArrType( freshMetaType(), Bool ), Bool ) ), Abs( v, sub ) )
+  def Quant( name: String ): ( Ident, Expr ) => Expr = ( v, sub ) => {
+    val quantTy = freshMetaType()
+    App( Ident( name, ArrType( ArrType( quantTy, Bool ), Bool ), Some( List( quantTy ) ) ), Abs( v, sub ) )
+  }
   def Ex: ( Ident, Expr ) => Expr = Quant( real.ExistsC.name )
   def All = Quant( real.ForallC.name )
 
-  def liftTypePoly( t: real.Ty ) = {
+  def liftTypePoly( t: real.Ty, ps: List[real.Ty] ) = {
     val vars = mutable.Map[real.TVar, Type]()
     def lift( t: real.Ty ): Type = t match {
       case t: real.TVar               => vars.getOrElseUpdate( t, freshMetaType() )
       case real.TBase( name, params ) => BaseType( name, params.map( lift ) )
       case real.`->:`( in, out )      => ArrType( lift( in ), lift( out ) )
     }
-    lift( t )
+    val res = ( lift( t ), Some( ps.map( lift ) ) )
+    res
   }
 
   def liftTypeMono( t: real.Ty ): Type = t match {
@@ -140,13 +144,13 @@ object preExpr {
     case ArrType( a, b )   => ArrType( subst( a, assg ), subst( b, assg ) )
     case MetaType( idx )   => assg.get( idx ).fold( t )( subst( _, assg ) )
   }
-  trait UnificationError {
-    def assg: Map[MetaTypeIdx, Type]
-  }
-  case class OccursCheck( t1: MetaType, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
-  case class Mismatch( t1: Type, t2: Type, assg: Map[MetaTypeIdx, Type] ) extends UnificationError
 
-  def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): Either[UnificationError, Map[MetaTypeIdx, Type]] = eqs match {
+  type Assg = Map[MetaTypeIdx, Type]
+  sealed trait UnificationError { def assg: Assg }
+  case class OccursCheck( t1: MetaType, t2: Type, assg: Assg ) extends UnificationError
+  case class Mismatch( t1: Type, t2: Type, assg: Assg ) extends UnificationError
+
+  def solve( eqs: List[( Type, Type )], assg: Map[MetaTypeIdx, Type] ): Either[UnificationError, Assg] = eqs match {
     case Nil => Right( assg )
     case ( first :: rest ) => first match {
       case ( ArrType( a1, b1 ), ArrType( a2, b2 ) ) =>
@@ -173,7 +177,7 @@ object preExpr {
     expr match {
       case LocAnnotation( _, loc ) => Some( loc )
       case TypeAnnotation( _, _ )  => None
-      case Ident( _, _ )           => None
+      case Ident( _, _, _ )        => None
       case Abs( _, sub )           => locOf( sub )
       case App( a, b ) =>
         ( locOf( a ), locOf( b ) ) match {
@@ -190,54 +194,71 @@ object preExpr {
   type ElabResult[X] = Either[ElabError, X]
   type Elab[X] = StateT[ElabResult, ElabState, X]
 
-  def infers( exprs: Seq[Expr], env: Map[String, () => Type] )( implicit loc: Option[Location] ): Elab[List[Type]] =
+  type Env = Map[String, () => ( Type, Option[List[Type]] )]
+
+  def infers( exprs: Seq[Expr], env: Env )( implicit loc: Option[Location] ): Elab[List[( Expr, Type )]] =
     exprs.toList.traverse( infer( _, env ) )
 
   def unify( a: Type, b: Type, mkErr: UnificationError => ElabError ): Elab[Unit] =
     StateT.modifyF[ElabResult, ElabState]( solve( List( a -> b ), _ ).leftMap( mkErr ) )
 
-  def infer( expr: Expr, env: Map[String, () => Type] )( implicit loc: Option[Location] ): Elab[Type] =
+  def unifys( as: List[Type], bs: List[Type], mkErr: UnificationError => ElabError ): Elab[Unit] =
+    if ( as.size != bs.size ) StateT.inspectF( assg_ => Left( mkErr( new UnificationError { override def assg: Assg = assg_ } ) ) ) else
+      ( as zip bs ).traverse { case ( a, b ) => unify( a, b, mkErr ) }.map( _ => () )
+
+  def infer( expr: Expr, env: Env )( implicit loc: Option[Location] ): Elab[( Expr, Type )] =
     expr match {
       case LocAnnotation( e, loc_ ) =>
         infer( e, env )( Some( loc_ ) )
       case TypeAnnotation( e, t ) =>
         for {
-          et <- infer( e, env )
+          ei <- infer( e, env ); ( e_, et ) = ei
           _ <- unify( et, t, err => ElabError( loc, s"mismatched annotated type", Some( t ), et, err.assg ) )
-        } yield et
-      case Ident( n, t ) =>
+        } yield ei
+      case Ident( n, t, None ) =>
         if ( env contains n ) {
-          val tyInEnv = env( n )()
+          val ( tyInEnv, params ) = env( n )()
           for {
             _ <- unify( tyInEnv, t, err => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, err.assg ) )
-          } yield t
-        } else Monad[Elab].pure( t )
-      case Abs( Ident( vn, vt ), t ) =>
+          } yield ( Ident( n, t, params ), t )
+        } else Monad[Elab].pure( ( Ident( n, t, Some( Nil ) ), t ) )
+      case Ident( n, t, Some( ps ) ) =>
+        if ( env contains n ) {
+          val ( tyInEnv, params ) = env( n )()
+          for {
+            _ <- unifys( params.getOrElse( ps ), ps, err => ElabError(
+              loc,
+              s"mismatched constant type parameters: expected ${params.size}, actual ${ps.size}",
+              Some( t ), tyInEnv, err.assg ) )
+            _ <- unify( tyInEnv, t, err => ElabError( loc, "mismatched identifier type", Some( t ), tyInEnv, err.assg ) )
+          } yield ( Ident( n, t, Some( ps ) ), t )
+        } else Monad[Elab].pure( ( expr, t ) )
+      case Abs( v @ Ident( vn, vt, _ ), t ) =>
         for {
-          subt <- infer( t, env + ( vn -> ( () => vt ) ) )
-        } yield ArrType( vt, subt ): Type
+          ti <- infer( t, env + ( vn -> ( () => ( vt, None ) ) ) ); ( sube, subt ) = ti
+        } yield ( Abs( v, sube ), ArrType( vt, subt ): Type )
       case App( a, b ) =>
         val resType = freshMetaType()
         val argType = freshMetaType()
         for {
-          at <- infer( a, env )
+          ai <- infer( a, env ); ( a_, at ) = ai
           _ <- unify( at, ArrType( argType, resType ), err => ElabError( locOf( a ).orElse( loc ), "not a function", None, at, err.assg ) )
-          bt <- infer( b, env )
+          bi <- infer( b, env ); ( b_, bt ) = bi
           _ <- unify( bt, argType, err => ElabError( locOf( b ).orElse( loc ), "incorrect type for argument", Some( argType ), bt, err.assg ) )
-        } yield resType: Type
+        } yield ( App( a_, b_ ), resType: Type )
       case Quoted( e, ty, fvs ) =>
         fvs.toList.traverse {
           case ( name, fvTy ) =>
-            val tyInEnv = env( name )()
+            val ( tyInEnv, _ ) = env( name )() // params don't matter since we only look at free vars
             unify( tyInEnv, fvTy, err =>
               ElabError( loc, s"mismatched type for free variable $name in quote $e", Some( tyInEnv ), fvTy, err.assg ) )
-        }.map( _ => ty )
+        }.map( _ => ( expr, ty ) )
     }
 
   def freeIdentifers( expr: Expr ): Set[String] = expr match {
     case LocAnnotation( e, _ )   => freeIdentifers( e )
     case TypeAnnotation( e, ty ) => freeIdentifers( e )
-    case Ident( name, ty )       => Set( name )
+    case Ident( name, ty, _ )    => Set( name )
     case Abs( v, sub )           => freeIdentifers( sub ) - v.name
     case App( a, b )             => freeIdentifers( a ) union freeIdentifers( b )
     case Quoted( e, ty, fvs )    => fvs.keySet
@@ -253,10 +274,12 @@ object preExpr {
   def toRealExpr( expr: Expr, assg: Map[MetaTypeIdx, Type], bound: Set[String] ): real.Expr = expr match {
     case LocAnnotation( e, _ )   => toRealExpr( e, assg, bound )
     case TypeAnnotation( e, ty ) => toRealExpr( e, assg, bound )
-    case Ident( name, ty ) =>
+    case Ident( name, ty, None ) =>
       if ( bound( name ) ) real.Var( name, toRealType( ty, assg ) )
       else real.Const( name, toRealType( ty, assg ) )
-    case Abs( v @ Ident( vn, _ ), sub ) =>
+    case Ident( name, ty, Some( ps ) ) =>
+      real.Const( name, toRealType( ty, assg ), ps.map( toRealType( _, assg ) ) )
+    case Abs( v @ Ident( vn, _, _ ), sub ) =>
       val bound_ = bound + vn
       real.Abs( toRealExpr( v, assg, bound_ ).asInstanceOf[real.Var], toRealExpr( sub, assg, bound_ ) )
     case App( a, b ) =>
@@ -266,18 +289,18 @@ object preExpr {
   def toRealExprs( expr: Seq[Expr], sig: BabelSignature ): Either[ElabError, Seq[real.Expr]] = {
     val fi = expr.view.flatMap( freeIdentifers ).toSet
     val freeVars = fi.filter( sig.signatureLookup( _ ).isVar )
-    val startingEnv = fi.map { i =>
+    val startingEnv: Env = Map() ++ fi.map { i =>
       i -> ( sig.signatureLookup( i ) match {
-        case BabelSignature.IsConst( ty ) =>
-          () => liftTypePoly( ty )
+        case BabelSignature.IsConst( c ) =>
+          () => liftTypePoly( c.ty, c.params )
         case BabelSignature.IsUnknownConst | BabelSignature.IsVar =>
           val fixedMeta = freshMetaType()
-          () => fixedMeta
+          () => ( fixedMeta, None )
       } )
     }
-    infers( expr, startingEnv.toMap )( None ).run( Map() ).map {
-      case ( assg, _ ) =>
-        expr.map( toRealExpr( _, assg.withDefaultValue( BaseType( "i", Nil ) ), freeVars ) )
+    infers( expr, startingEnv )( None ).run( Map() ).map {
+      case ( assg, expr_ ) =>
+        expr_.map( _._1 ).map( toRealExpr( _, assg.withDefaultValue( BaseType( "i", Nil ) ), freeVars ) )
     }
   }
   def toRealExpr( expr: Expr, sig: BabelSignature ): Either[ElabError, real.Expr] =

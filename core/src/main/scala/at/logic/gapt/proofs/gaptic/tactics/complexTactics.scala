@@ -192,7 +192,7 @@ case class UnfoldTactic( target: String, definitions: Seq[String], maxSteps: Opt
     def normalize( expr: Expr, remainingSteps: Int ): ( Expr, Int ) = {
       val Apps( hd, as ) = expr
       ( hd match {
-        case Const( n, _ ) =>
+        case Const( n, _, _ ) =>
           if ( !definitions.contains( n ) )
             ( None, remainingSteps )
           else if ( remainingSteps == 0 )

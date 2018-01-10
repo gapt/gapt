@@ -3,10 +3,12 @@ package at.logic.gapt.expr
 import at.logic.gapt.proofs.Context
 
 case class Definition( what: Const, by: Expr ) extends Context.Update {
-  val Const( name, ty ) = what
+  val Const( name, ty, ps ) = what
+  require( ps.forall( _.isInstanceOf[TVar] ), s"type parameters $ps must be variables" )
   require( ty == by.ty, s"type $ty of $what and type ${by.ty} of $by must match!" )
   require( freeVariables( by ).isEmpty, s"$this: contains free variables ${freeVariables( by )}" )
-  require( typeVariables( by ) subsetOf typeVariables( what ) )
+  require( typeVariables( by ).toSet subsetOf ps.toSet )
+  require( typeVariables( what ).toSet subsetOf ps.toSet )
 
   def toTuple: ( Const, Expr ) = ( what, by )
 

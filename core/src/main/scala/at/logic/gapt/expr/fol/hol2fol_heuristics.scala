@@ -44,7 +44,7 @@ object undoHol2Fol {
     expected_type: Option[Ty] ): Expr = {
     e match {
       // --------------- logical structure ------------------------
-      case Atom( Const( name, _ ), args ) if sig_consts contains name.toString =>
+      case Atom( Const( name, _, _ ), args ) if sig_consts contains name.toString =>
         val args_ = args.map( backtranslate( _, sig_vars, sig_consts, abssymbol_map, None ) )
         val head = sig_consts( name.toString )( 0 )
         Atom( head, args_ )
@@ -74,7 +74,7 @@ object undoHol2Fol {
         }
       // --------------- term structure ------------------------
       //cases for term replacement
-      case Const( name, _ ) if abssymbol_map.contains( name ) =>
+      case Const( name, _, _ ) if abssymbol_map.contains( name ) =>
         val qterm_ = abssymbol_map( name )
         val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         expected_type match {
@@ -85,7 +85,7 @@ object undoHol2Fol {
             qterm
         }
 
-      case HOLFunction( Const( name, _ ), args ) if abssymbol_map.contains( name ) =>
+      case HOLFunction( Const( name, _, _ ), args ) if abssymbol_map.contains( name ) =>
         val qterm_ = abssymbol_map( name )
         val qterm: Expr = freeVariables( qterm_ ).toList.foldRight( qterm_ )( ( v, term ) => Abs( v, term ) )
         val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
@@ -98,14 +98,14 @@ object undoHol2Fol {
             r
         }
       //normal ones
-      case HOLFunction( Const( name, _ ), args ) if sig_consts contains name =>
+      case HOLFunction( Const( name, _, _ ), args ) if sig_consts contains name =>
         val btargs = args.map( x => backtranslate( x.asInstanceOf[Expr], sig_vars, sig_consts, abssymbol_map, None ) )
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         HOLFunction( head, btargs )
       case Var( name, Ti ) if sig_vars contains name =>
         val head = sig_vars( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         head
-      case Const( name, Ti ) if sig_consts contains name =>
+      case Const( name, Ti, _ ) if sig_consts contains name =>
         val head = sig_consts( name )( 0 ) //we have to pick a candidate somehow, lets go for the first
         head
       case Var( ivy_varname( name ), Ti ) =>
@@ -113,7 +113,7 @@ object undoHol2Fol {
         Var( name, Ti ).asInstanceOf[Var]
       case Var( name, Ti ) =>
         throw new Exception( "No signature information for variable " + e )
-      case Const( name, _ ) =>
+      case Const( name, _, _ ) =>
         throw new Exception( "No signature information for const " + e )
       case _ =>
         throw new Exception( "Could not convert subterm " + e )

@@ -221,7 +221,7 @@ object LKToND {
         nd.LogicalAxiom( f )
 
       case lk.ProofLink( prf, seq ) =>
-        val Apps( Const( proofName, _ ), _ ) = prf
+        val Apps( Const( proofName, _, _ ), _ ) = prf
         val ( genprf, genseq ) = ctx.get[ProofNames].names( proofName )
         val Apps( _, vs ) = genprf
         val Apps( _, args ) = prf

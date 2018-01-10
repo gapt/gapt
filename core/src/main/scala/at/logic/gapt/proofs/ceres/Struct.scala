@@ -139,26 +139,19 @@ case class A( fo: Formula ) extends Struct { // Atomic Struct
 
 case class CLS( proof: Expr, config: Sequent[Boolean] ) extends Struct { // Clause Set Symbol Struct
   override def toString(): String = {
-    val Apps( Const( pn, _ ), vs ) = proof
+    val Apps( Const( pn, _, _ ), vs ) = proof
     "CLS(" + pn + " , " + config.toString + " , " + vs.toString() + ")"
   }
-  override def formula_equal( s: Struct ) = s match {
-    case CLS( n, c ) => {
-      val Apps( Const( pn, _ ), vs ) = proof
-      val Apps( Const( pn2, _ ), vs2 ) = n
-      pn2.matches( pn ) && c.equals( config ) && vs.equals( vs2 )
-    }
-    case _ => false
-  }
+  override def formula_equal( s: Struct ) = this == s
   override def size() = 1
   override def alternations() = 0
 
   def toFormula = {
-    val Apps( Const( pn, _ ), vs ) = proof
+    val Apps( Const( pn, _, _ ), vs ) = proof
     Atom( "CL" + "[" + pn + "," + config.toString + "]", vs )
   }
   def label = {
-    val Apps( Const( pn, _ ), vs ) = proof
+    val Apps( Const( pn, _, _ ), vs ) = proof
     Atom( "CL" + "[" + pn + "," + config.toString + "]", vs )
   }
   def children = Seq()

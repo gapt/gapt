@@ -66,7 +66,7 @@ class TipTestCase( f: java.io.File ) extends RegressionTestCase( f.getParentFile
       generate( lower = 2, upper = 3, num = 1 ).head --- "random instance term"
     val instProof = instanceProof( proof, instanceTerms )
 
-    val proofName @ Apps( proofNameC @ Const( proofNameStr, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
+    val proofName @ Apps( proofNameC @ Const( proofNameStr, _, _ ), _ ) = Atom( ctx.newNameGenerator.fresh( "proof" ), variables )
     ArithmeticInductionToSchema( proof, proofName ) --? "induction to schema" foreach { _ =>
       ProofLink( proofName ) --? "create schema proof link"
       instantiateProof.Instantiate( proofNameC( instanceTerms ) ) --? "schema instance"

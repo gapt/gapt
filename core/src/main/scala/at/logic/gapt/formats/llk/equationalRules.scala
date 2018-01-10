@@ -36,10 +36,10 @@ object EquationVerifier {
   def checkReplacement( s: Expr, t: Expr, e1: Expr, e2: Expr ): ReplacementResult = {
     //trace("matching "+e1+" against "+e2+" for "+s+" -> "+t)
     ( e1, e2 ) match {
-      case _ if e1 == e2                    => Equal
-      case _ if ( e1 == s ) && ( e2 == t )  => EqualModuloEquality( Nil )
-      case ( Var( _, _ ), Var( _, _ ) )     => Different
-      case ( Const( _, _ ), Const( _, _ ) ) => Different
+      case _ if e1 == e2                          => Equal
+      case _ if ( e1 == s ) && ( e2 == t )        => EqualModuloEquality( Nil )
+      case ( Var( _, _ ), Var( _, _ ) )           => Different
+      case ( Const( _, _, _ ), Const( _, _, _ ) ) => Different
       case ( App( l1, r1 ), App( l2, r2 ) ) =>
         ( checkReplacement( s, t, l1, l2 ), checkReplacement( s, t, r1, r2 ) ) match {
           case ( Equal, Equal )                       => Equal

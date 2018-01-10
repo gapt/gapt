@@ -19,9 +19,9 @@ class ContextTest extends Specification {
       implicit val ctx: MutableContext = MutableContext.default()
       ctx += Context.InductiveType(
         ty"list ?a",
-        hoc"nil: list ?a",
-        hoc"cons: ?a > list ?a > list ?a" )
-      ctx += hof"xs + (x : ?a) = cons x xs"
+        hoc"nil{?a}: list ?a",
+        hoc"cons{?a}: ?a > list ?a > list ?a" )
+      ctx += hof"'+'{?a} xs x = cons{?a} x xs"
       ctx += Context.Sort( "i" )
       ctx ++= Seq( hoc"0: i", hoc"1: i", hoc"2: i" )
       val e = le"nil + 3 + 2 + 1: list i"
@@ -36,7 +36,7 @@ class ContextTest extends Specification {
 
   "polymorphic definitions" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += hof"const (f: ?a > ?b) = (!x!y f x = f y)"
+    ctx += hof"const{?a ?b} (f: ?a > ?b) = (!x!y f x = f y)"
 
     ctx += Context.Sort( "i" )
     ctx += hoc"0 : i"
@@ -61,7 +61,7 @@ class ContextTest extends Specification {
 
   "ite" in {
     implicit val ctx: MutableContext = MutableContext.default()
-    ctx += PrimRecFun( hoc"ite: o > ?a > ?a > ?a", "ite true a b = a", "ite false a b = b" )
+    ctx += PrimRecFun( hoc"ite{?a}: o > ?a > ?a > ?a", "ite true a b = a", "ite false a b = b" )
 
     ctx += Ti; ctx += hoc"a: i"; ctx += hoc"b: i"
     ctx.whnf( le"ite true a b" ) must_== le"a"

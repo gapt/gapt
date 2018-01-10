@@ -40,10 +40,8 @@ object Checkable {
     def check( expr: Expr ): Unit = {
       if ( validExpr( expr ) ) return
       expr match {
-        case c @ Const( name, _ ) =>
-          require(
-            ctx.constant( name ).exists( defC => syntacticMatching( defC, c ).isDefined ),
-            s"Unknown constant: $c" )
+        case c @ Const( name, _, params ) =>
+          require( ctx.constant( name, params ).contains( c ), s"Unknown constant: $c" )
         case Var( _, t ) =>
           check( t )
         case Abs( v, e ) =>

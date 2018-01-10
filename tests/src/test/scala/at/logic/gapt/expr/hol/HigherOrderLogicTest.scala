@@ -145,8 +145,8 @@ class HigherOrderLogicTest extends Specification {
     "be extracted correctly" in {
       val p = Const( "P", To )
       val result = p match {
-        case Atom( Const( "P", To ), Nil ) => true
-        case _                             => false
+        case Atom( Const( "P", To, Nil ), Nil ) => true
+        case _                                  => false
       }
       result must beTrue
     }

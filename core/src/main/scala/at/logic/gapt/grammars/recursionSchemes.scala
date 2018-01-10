@@ -268,7 +268,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
     Const( isSubtermC, v.ty ->: t.ty ->: To )( v, t ).asInstanceOf[Formula]
 
   val canonicalArgs = nonTerminals map {
-    case nt @ Const( _, FunctionType( _, argTypes ) ) =>
+    case nt @ Const( _, FunctionType( _, argTypes ), _ ) =>
       nt -> argTypes.zipWithIndex.map { case ( t, i ) => Var( s"${nt}_$i", t ) }
   } toMap
   val states = canonicalArgs map { case ( nt, args ) => nt( args: _* ) }
@@ -300,7 +300,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
                       } )
                 }
 
-              case Apps( Const( `isSubtermC`, _ ), Seq( a, b ) ) =>
+              case Apps( Const( `isSubtermC`, _, _ ), Seq( a, b ) ) =>
                 val vars = freeVariables( prevArgs( canonicalArgs( prev ).indexOf( a ) ) )
                 And( ( toArgs.toSeq zip canonicalArgs( to ) ).
                   collect {
@@ -339,7 +339,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
             case And( a, b )                            => And( appRecConstr( a ), appRecConstr( b ) )
             case Eq( a, b ) if constArgs contains a     => Eq( a, b )
             case Eq( a, b ) if structRecArgs contains a => isSubterm( a, b )
-            case Apps( Const( `isSubtermC`, _ ), Seq( a, b )
+            case Apps( Const( `isSubtermC`, _, _ ), Seq( a, b )
               ) if ( constArgs contains a ) || ( structRecArgs contains a ) =>
               isSubterm( a, b )
             case _ => Top()
@@ -374,7 +374,7 @@ case class RecSchemTemplate( startSymbol: Const, template: Set[( Expr, Expr )] )
             val bIdx = canonicalArgs( to ).indexOf( b )
             require( aIdx >= 0 && bIdx >= 0 )
             ( x, y ) => syntacticMatching( y( bIdx ), x( aIdx ) ).isDefined
-          case Apps( Const( `isSubtermC`, _ ), Seq( b, a ) ) =>
+          case Apps( Const( `isSubtermC`, _, _ ), Seq( b, a ) ) =>
             val aIdx = canonicalArgs( from ).indexOf( a )
             val bIdx = canonicalArgs( to ).indexOf( b )
             require( aIdx >= 0 && bIdx >= 0 )
@@ -480,7 +480,7 @@ object recSchemToVTRATG {
     val nameGen = rename.awayFrom( containedNames( recSchem ) )
 
     val ntCorrespondence = orderedNonTerminals( recSchem ).reverse map {
-      case nt @ Const( name, FunctionType( _, argTypes ) ) =>
+      case nt @ Const( name, FunctionType( _, argTypes ), _ ) =>
         nt -> ( for ( ( t, i ) <- argTypes.zipWithIndex ) yield Var( nameGen.fresh( s"x_${name}_$i" ), t ) )
     }
     val ntMap = ntCorrespondence.toMap
@@ -585,7 +585,7 @@ object qbupForRecSchem {
   def apply( recSchem: RecursionScheme, conj: Formula )( implicit ctx: Context ): Formula = {
     def convert( term: Expr ): Formula = term match {
       case Apps( ax, args ) if ax == recSchem.startSymbol => instantiate( conj, args )
-      case Apps( nt @ Const( name, ty ), args ) if recSchem.nonTerminals contains nt =>
+      case Apps( nt @ Const( name, ty, _ ), args ) if recSchem.nonTerminals contains nt =>
         Atom( Var( s"X_$name", ty )( args: _* ) )
       case formula: Formula => formula
     }

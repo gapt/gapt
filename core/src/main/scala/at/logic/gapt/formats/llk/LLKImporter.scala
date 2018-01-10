@@ -1233,7 +1233,7 @@ trait TokenToLKConverter {
   }
 
   def llkDefinitionToLKDefinition( exp: Expr, to: Expr ) = exp match {
-    case Apps( c @ Const( _, _ ), args ) if args.forall( { case Var( _, _ ) => true; case _ => false } ) =>
+    case Apps( c @ Const( _, _, _ ), args ) if args.forall( { case Var( _, _ ) => true; case _ => false } ) =>
       val vs = args.map( { case v @ Var( _, _ ) => v } )
       Definition( c, Abs.Block( vs, to ) )
     case _ =>
@@ -1331,7 +1331,7 @@ trait TokenToLKConverter {
                            axiomconj: Formula, axiomproof: LKProof,
                            sub: Substitution, definitions: List[Definition] ): ( Formula, LKProof ) = {
     axiomconj match {
-      case Atom( c @ Const( n, To ), List() ) =>
+      case Atom( c @ Const( n, To, _ ), List() ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
         val d = definitions.find( _.what == c ).getOrElse(
           throw new Exception(

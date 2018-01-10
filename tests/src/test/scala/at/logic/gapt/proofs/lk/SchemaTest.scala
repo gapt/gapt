@@ -258,7 +258,7 @@ class SchemaTest extends Specification {
             case p: InductionRule =>
               val succ: Var = p.cases.foldRight( Var( "wrong", p.indTy ): Var )( ( a, z ) => {
                 a match {
-                  case InductionCase( _, Const( "s", _ ), _, e, _ ) => e.head
+                  case InductionCase( _, Const( "s", _, _ ), _, e, _ ) => e.head
                   case _ => z
                 }
               } )
