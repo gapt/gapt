@@ -6,36 +6,8 @@ import at.logic.gapt.proofs.{ Context, MutableContext, Sequent }
 import at.logic.gapt.proofs.lk._
 import at.logic.gapt.utils.Maybe
 
-import language.experimental.macros
-
 object Lemma {
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.lemmaImpl
-  def apply[T]( formula: Formula )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.lemmaImpl2
-}
-
-object Proof {
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.proofImpl
-}
-object IncompleteProof {
-  def apply[T]( labelledSequent: Sequent[( String, Formula )] )( tacticsProof: => Tactical[T] ): LKProof = macro LemmaMacros.incompleteProofImpl
-}
-
-object LemmaMacros {
-
-  def use[T]( proofState: ProofState, tactical: Tactical[T] )( implicit sig: BabelSignature ): ProofState =
-    ( try tactical( proofState ) catch {
-      case t: Throwable =>
-        throw new TacticFailureException(
-          s"Exception when applying $tactical to proof state with sub goals:\n" +
-            proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ),
-          t )
-    } ) match {
-      case Right( ( _, newState ) ) => newState
-      case Left( error ) =>
-        throw new TacticFailureException( error.toSigRelativeString )
-    }
-
-  private def finish( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature ): LKProof =
+  def finish( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature ): LKProof =
     if ( incompleteOk ) {
       cleanStructuralRules( proofState.partialProof )
     } else if ( proofState.subGoals.isEmpty ) {
@@ -46,73 +18,46 @@ object LemmaMacros {
           proofState.subGoals.map { _.toPrettyString }.mkString( "\n" ) )
     }
 
-  def finishProof( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof = {
-    val p = finish( proofState, incompleteOk )
-    if ( !incompleteOk ) ctx.foreach( _.check( p ) )
-    p
-  }
+  def finish( lemmaName: String, proofState: ProofState, incompleteOk: Boolean )( implicit ctx: MutableContext ): LKProof =
+    addToCtx( lemmaName, finish( proofState, incompleteOk ) )
 
-  def finishLemma( lemmaName: String, proofState: ProofState, incompleteOk: Boolean )( implicit ctx: MutableContext ): LKProof = {
-    val proof = finish( proofState, incompleteOk )
+  def addToCtx( lemmaName: String, proof: LKProof )( implicit ctx: MutableContext ): LKProof = {
     val fvs = freeVariablesLK( proof ).toSeq.sortBy( _.name )
     val lhs = Const( lemmaName, FunctionType( Ti, fvs.map( _.ty ) ) )( fvs )
     ctx += Context.ProofDeclaration( lhs, proof )
     proof
   }
 
-  import reflect.macros._
-  def constructProofState( c: blackbox.Context )( labelledSequent: c.Tree, tacticsProof: c.Tree ): c.Tree = {
-    import c.universe._
-    val proofState = TermName( c.freshName( "proofState" ) )
-
-    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
-    val proofStateCompanion = symbolOf[ProofState.type].asClass.module
-
-    val tacticsStmts = tacticsProof match {
-      case q"{..$stmts}" =>
-        for ( stmt <- stmts )
-          yield atPos( stmt.pos )( q"$proofState = $lemmaMacros.use($proofState, $stmt)" )
-
-    }
-
-    q"""
-      var $proofState = $proofStateCompanion($labelledSequent)
-
-      ..$tacticsStmts
-
-      $proofState
-    """
+  class Helper( labelledSequent: Sequent[( String, Formula )] ) extends LemmaHelper[LKProof] {
+    def handleTacticBlock( proof: ProofState => ProofState )( implicit ctx: MutableContext, name: sourcecode.Name ): LKProof =
+      finish( implicitly[sourcecode.Name].value, proof( ProofState( labelledSequent ) ), incompleteOk = false )
   }
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
+    new Helper( labelledSequent )
+  def apply[T]( formula: Formula ): Helper =
+    apply( guessLabels( Sequent() :+ formula ) )
+}
 
-  def lemmaImpl2( c: blackbox.Context )( formula: c.Tree )( tacticsProof: c.Tree ): c.Tree =
-    lemmaImpl( c )( formula )( tacticsProof )
-
-  def lemmaImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
-    import c.universe._
-    val construction = constructProofState( c )( labelledSequent, tacticsProof )
-    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
-
-    val term = c.internal.enclosingOwner.asTerm
-    val name = term.name.decodedName.toString.trim
-
-    q"$lemmaMacros.finishLemma($name, $construction, incompleteOk = false)"
+object Proof {
+  def finish( proofState: ProofState, incompleteOk: Boolean )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof = {
+    val p = Lemma.finish( proofState, incompleteOk )
+    if ( !incompleteOk ) ctx.foreach( _.check( p ) )
+    p
   }
-
-  def proofImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
-    import c.universe._
-    val construction = constructProofState( c )( labelledSequent, tacticsProof )
-    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
-
-    q"$lemmaMacros.finishProof($construction, incompleteOk = false)"
+  class Helper( labelledSequent: Sequent[( String, Formula )] ) extends LemmaHelper[LKProof] {
+    def handleTacticBlock( proof: ProofState => ProofState )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof =
+      finish( proof( ProofState( labelledSequent ) ), incompleteOk = false )
   }
-
-  def incompleteProofImpl( c: blackbox.Context )( labelledSequent: c.Tree )( tacticsProof: c.Tree ): c.Tree = {
-    import c.universe._
-    val construction = constructProofState( c )( labelledSequent, tacticsProof )
-    val lemmaMacros = symbolOf[LemmaMacros.type].asClass.module
-
-    q"$lemmaMacros.finishProof($construction, incompleteOk = true)"
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
+    new Helper( labelledSequent )
+}
+object IncompleteProof {
+  class Helper( labelledSequent: Sequent[( String, Formula )] ) extends LemmaHelper[LKProof] {
+    def handleTacticBlock( proof: ProofState => ProofState )( implicit sig: BabelSignature, ctx: Maybe[Context] ): LKProof =
+      Proof.finish( proof( ProofState( labelledSequent ) ), incompleteOk = true )
   }
+  def apply[T]( labelledSequent: Sequent[( String, Formula )] ): Helper =
+    new Helper( labelledSequent )
 }
 
 class TacticFailureException( s: String, cause: Throwable = null ) extends Exception( s, cause )
