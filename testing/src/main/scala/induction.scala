@@ -95,9 +95,12 @@ object computeStrategies extends scala.App {
           if ctx.getConstructors( t ).isDefined
         } yield i
       val equationIdcs = for ( ( All.Block( _, Eq( _, _ ) ), i ) <- sequent.antecedent.zipWithIndex ) yield i
-      val equationIdxSubsets = equationIdcs.toSet.subsets( 2 )
+      val equationIdxSubsets = ( 0 to 2 ).flatMap( equationIdcs.toSet.subsets )
       for ( goalQuant <- inductiveGoalQuantIdcs; eqTh <- equationIdxSubsets )
-        printStrategy( fileName, "treeg_eq_" + ( goalQuant +: eqTh.toVector ).mkString( "_" ) )
+        printStrategy(
+          fileName,
+          if ( eqTh.isEmpty ) s"treeg_default$goalQuant" else
+            "treeg_eq_" + ( goalQuant +: eqTh.toVector ).mkString( "_" ) )
     } catch {
       case t: Throwable => Console.err.println( s"$fileName: ${t.getMessage}" )
     }
