@@ -122,7 +122,7 @@ object Prover9Importer extends ExternalProgram {
     assumptions ++: Sequent() :++ goals distinct
   }
 
-  def robinsonProofWithReconstructedEndSequent( p9Output: InputFile ): ( ResolutionProof, HOLSequent ) = {
+  def robinsonProofWithReconstructedEndSequent( p9Output: InputFile, runFixDerivation: Boolean = true ): ( ResolutionProof, HOLSequent ) = {
     val p9Output_ = loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output )
 
     val resProof = robinsonProof( p9Output_ )
@@ -136,7 +136,7 @@ object Prover9Importer extends ExternalProgram {
       }
     }
 
-    val fixedResProof = fixDerivation( resProof, endSequent )
+    val fixedResProof = if ( runFixDerivation ) fixDerivation( resProof, endSequent ) else resProof
 
     ( fixedResProof, endSequent )
   }
