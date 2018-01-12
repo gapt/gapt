@@ -58,7 +58,7 @@ class SubstitutionTest extends Specification with SequentMatchers {
 
   "induction" in {
     var ctx = Context()
-    ctx += Context.InductiveType( "sk" )
+    ctx += Context.Sort( "sk" )
     ctx += Context.InductiveType( "list", hoc"nil: list", hoc"cons:sk>list>list" )
     ctx += hoc"B:list>o"
     ctx += hoc"t:list"
