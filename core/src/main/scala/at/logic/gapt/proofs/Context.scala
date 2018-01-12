@@ -393,6 +393,11 @@ object Context {
       constructors.map( _.name ) == constructors.map( _.name ).distinct,
       s"Names of type constructors are not distinct." )
 
+    val baseCases = constructors.find { case Const( _, FunctionType( _, argTys ) ) => !argTys.contains( ty ) }
+    require(
+      baseCases.nonEmpty,
+      s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
+
     override def apply( ctx: Context ): State = {
       require( !ctx.isType( ty ), s"Type $ty already defined" )
       for ( Const( ctr, FunctionType( _, fieldTys ) ) <- constructors ) {
