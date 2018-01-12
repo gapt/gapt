@@ -43,10 +43,10 @@ class MetricsPrinter extends LogHandler {
     value( s"in_$phase", true )
   }
   override def time( key: String, desc: String, duration: Duration ): Unit = {
-    phaseStack.trimEnd( 1 )
     value( s"time_$key", duration.toMillis )
     value( s"in_$phase", false )
     value( s"ended_$phase", true )
+    phaseStack.trimEnd( 1 )
   }
   def phase: String = phaseStack.last
 
