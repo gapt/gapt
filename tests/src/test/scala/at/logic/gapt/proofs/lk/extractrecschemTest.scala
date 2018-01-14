@@ -92,7 +92,7 @@ class ExtractRecSchemTest extends Specification with SatMatchers {
 
     val proof = Lemma(
       ( "base" -> hof"∀y p(Zero, y)" ) +:
-        ( "step" -> hof"∀x ∀y (p(x, g y) ⊃ p(Suc x, y))" ) +:
+        ( "step" -> hof"∀x ∀y (p(x, g y) → p(Suc x, y))" ) +:
         Sequent()
         :+ ( "conj" -> hof"p(x, c)" ) ) {
         cut( "cut", hof"∀x ∀y p(x, y)" ); forget( "conj" )

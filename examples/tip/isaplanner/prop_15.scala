@@ -23,12 +23,12 @@ object prop_15 extends TacticsProof {
                        def_tail: ∀x0 ∀x1 (tail(cons(x0:Nat, x1:list): list): list) = x1,
                        def_lt_1: ∀x ¬lt(x:Nat, #c(Z: Nat)),
                        def_lt_2: ∀z lt(#c(Z: Nat), S(z:Nat): Nat),
-                       def_lt_3: ∀x2 ∀z ((lt(S(x2:Nat): Nat, S(z)) ⊃ lt(x2, z)) ∧ (lt(x2, z) ⊃ lt(S(x2), S(z)))),
+                       def_lt_3: ∀x2 ∀z ((lt(S(x2:Nat): Nat, S(z)) → lt(x2, z)) ∧ (lt(x2, z) → lt(S(x2), S(z)))),
                        def_len_1: (len(nil:list): Nat) = #c(Z: Nat),
                        def_len_2: ∀y ∀xs (len(cons(y:Nat, xs:list): list): Nat) = S(len(xs)),
                        def_ins_1: ∀x (ins(x:Nat, nil:list): list) = cons(x, nil),
-                       def_ins_2: ∀x ∀z ∀xs (¬lt(x:Nat, z:Nat) ⊃ (ins(x, cons(z, xs:list): list): list) = cons(z, ins(x, xs))),
-                       def_ins_3:∀x ∀z ∀xs (lt(x:Nat, z:Nat) ⊃ (ins(x, cons(z, xs:list): list): list) = cons(x, cons(z, xs))),
+                       def_ins_2: ∀x ∀z ∀xs (¬lt(x:Nat, z:Nat) → (ins(x, cons(z, xs:list): list): list) = cons(z, ins(x, xs))),
+                       def_ins_3:∀x ∀z ∀xs (lt(x:Nat, z:Nat) → (ins(x, cons(z, xs:list): list): list) = cons(x, cons(z, xs))),
                        ax_nat_1:∀y0 ¬#c(Z: Nat) = S(y0:Nat),
                        ax_list_1:∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
                        :-

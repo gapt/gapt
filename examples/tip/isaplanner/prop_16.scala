@@ -25,7 +25,7 @@ object prop_16 extends TacticsProof {
                       ax_nat_1:∀y0 ¬#c(Z: Nat) = S(y0:Nat),
                       ax_list_1:∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
                       :-
-                      goal: ∀x ∀xs ((xs:list) = nil ⊃ (last(cons(x:Nat, xs): list): Nat) = x)
+                      goal: ∀x ∀xs ((xs:list) = nil → (last(cons(x:Nat, xs): list): Nat) = x)
     """
 
   val proof = Lemma( sequent ) {

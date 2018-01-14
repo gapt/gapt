@@ -25,15 +25,15 @@ object prop_27 extends TacticsProof {
       def_equal_1: equal(Z, Z),
       def_equal_2: ∀x ¬equal(Z, S(x)),
       def_equal_3: ∀x ¬equal(S(x), Z),
-      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) ⊃ equal(x, y)) ∧ (equal(x, y) ⊃ equal(S(x), S(y)))),
+      def_equal_4: ∀x ∀y ((equal(S(x), S(y)) → equal(x, y)) ∧ (equal(x, y) → equal(S(x), S(y)))),
       def_elem_1: ∀x ¬elem(x:Nat, nil:list),
-      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) ⊃ equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) ⊃ elem(x, cons(z, xs)))),
+      def_elem_2: ∀x ∀z ∀xs ((elem(x:Nat, cons(z:Nat, xs:list): list) → equal(x, z) ∨ elem(x, xs)) ∧ (equal(x, z) ∨ elem(x, xs) → elem(x, cons(z, xs)))),
       def_append_1: ∀y (append(nil:list, y:list): list) = y,
       def_append_2: ∀z ∀xs ∀y (append(cons(z:Nat, xs:list): list, y:list): list) = cons(z, append(xs, y)) ,
       ax_nat: ∀x ¬Z = S(x),
       ax_list: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
       :-
-      goal: ∀x ∀xs ∀ys (elem(x:Nat, ys:list) ⊃ elem(x, append(xs:list, ys)))
+      goal: ∀x ∀xs ∀ys (elem(x:Nat, ys:list) → elem(x, append(xs:list, ys)))
     """
 
   val proof = Lemma( sequent ) {

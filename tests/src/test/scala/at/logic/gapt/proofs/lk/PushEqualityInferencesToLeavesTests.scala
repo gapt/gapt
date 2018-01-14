@@ -221,7 +221,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
     val proof = ( ProofBuilder
       c OpenAssumption( ( "" -> hof"s=t" ) +: ( "" -> hof"A(s)" ) +: Sequent() :+ ( "" -> hof"B(s)" ) )
       u ( ImpRightRule( _, Ant( 1 ), Suc( 0 ) ) )
-      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"(A(x)⊃B(x)):o" ) ) ) qed )
+      u ( EqualityRightRule( _, Ant( 0 ), Suc( 0 ), Abs( hov"x", le"(A(x)→B(x)):o" ) ) ) qed )
     val ( reduction, weakeningIntro ) = equalityRightReduction( proof.asInstanceOf[EqualityRightRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[ImpRightRule]
@@ -555,7 +555,7 @@ class PushEqualityInferencesToLeavesTests extends Specification with SequentMatc
       c OpenAssumption( Sequent() :+ ( "" -> hof"A(s)" ) )
       c OpenAssumption( ( "" -> hof"B(s)" ) +: ( "" -> hof"s=t" ) +: Sequent() )
       b ( ImpLeftRule( _, Suc( 0 ), _, Ant( 0 ) ) )
-      u ( EqualityLeftRule( _, Ant( 1 ), Ant( 0 ), Abs( hov"y", le"A(y) ⊃ B(y):o" ) ) ) qed )
+      u ( EqualityLeftRule( _, Ant( 1 ), Ant( 0 ), Abs( hov"y", le"A(y) → B(y):o" ) ) ) qed )
     val ( reduction, weakeningIntro ) = equalityLeftReduction( proof.asInstanceOf[EqualityLeftRule] ).get
     reduction.conclusion must beMultiSetEqual( proof.conclusion )
     reduction must beAnInstanceOf[ContractionLeftRule]

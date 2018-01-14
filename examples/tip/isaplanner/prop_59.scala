@@ -27,7 +27,7 @@ object prop_59 extends TacticsProof {
         constr_inj_0: ∀y0 ¬#c(Z: Nat) = S(y0:Nat),
         constr_inj_1: ∀y0 ∀y1 ¬(nil:list) = cons(y0:Nat, y1:list)
         :-
-        goal: ∀xs ∀ys ((ys:list) = nil ⊃ (last(append(xs:list, ys): list): Nat) = last(xs))
+        goal: ∀xs ∀ys ((ys:list) = nil → (last(append(xs:list, ys): list): Nat) = last(xs))
   """
 
   val proof_1 = Lemma( sequent ) {

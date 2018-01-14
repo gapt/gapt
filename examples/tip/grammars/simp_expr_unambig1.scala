@@ -44,7 +44,7 @@ object simp_expr_unambig1 extends TacticsProof {
         constr_inj_12: ∀x0 ∀x1 ¬(Plus(x0:E, x1:E): E) = EY,
         constr_inj_13: ¬(EX:E) = EY
         :-
-        goal: ∀u ∀v ((lin(u:E): list) = lin(v) ⊃ u = v)
+        goal: ∀u ∀v ((lin(u:E): list) = lin(v) → u = v)
   """
 
   val theory = Sequent( sequent.antecedent, Nil )

@@ -15,16 +15,16 @@ object primediv extends TacticsProof {
   val theory = hols"""
       assoc: ∀x∀y∀z x*(y*z) = (x*y)*z,
       neutral: ∀x x*1 = x,
-      mulleq: ∀x∀y∀z (x*y=z ∧ x!=z ⊃ x<z),
-      oneleqeq: ∀x (x!=1 ⊃ 1<x) :-
+      mulleq: ∀x∀y∀z (x*y=z ∧ x!=z → x<z),
+      oneleqeq: ∀x (x!=1 → 1<x) :-
     """
 
-  ctx += hof"LNP = (∀X (∃y X y ⊃ ∃y (X y ∧ ∀z (z < y ⊃ ¬X z))))"
-  ctx += hof"IND = (∀X ((∀y (∀z (z < y ⊃ X z) ⊃ X y)) ⊃ ∀y X y))"
+  ctx += hof"LNP = (∀X (∃y X y → ∃y (X y ∧ ∀z (z < y → ¬X z))))"
+  ctx += hof"IND = (∀X ((∀y (∀z (z < y → X z) → X y)) → ∀y X y))"
   ctx += hof"D w y = (∃z w*z = y)"
   ctx += Notation.Infix( ">", Precedence.infixRel )
   ctx += hof"(x > y) = (y < x)"
-  ctx += hof"PRIME w = (w > 1 ∧ ∀z (D z w ⊃ z=1 ∨ z=w))"
+  ctx += hof"PRIME w = (w > 1 ∧ ∀z (D z w → z=1 ∨ z=w))"
   ctx += hof"PD w y = (PRIME w ∧ D w y)"
 
   // TODO: expose current BabelSignature inside Lemma, then we can drop the (x:nat) annotation
@@ -37,9 +37,9 @@ object primediv extends TacticsProof {
     decompose; allL( "LNP_1", le"z:nat" ); prop
   }
 
-  val proof = Lemma( theory ++ hols"LNP :- ∀y (y > 1 ⊃ ∃w PD w y)" ) {
+  val proof = Lemma( theory ++ hols"LNP :- ∀y (y > 1 → ∃w PD w y)" ) {
     include( "ind", lnpind ); unfold( "IND" ) in "ind"
-    allL( "ind", le"λu (u > 1 ⊃ ∃w PD w u)" )
+    allL( "ind", le"λu (u > 1 → ∃w PD w u)" )
     chain( "ind_0" ); decompose
 
     cut( "yprime", hof"PRIME y" )

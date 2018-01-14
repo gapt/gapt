@@ -128,7 +128,7 @@ class NDTest extends Specification with SatMatchers {
     val d2 = ImpIntroRule( d1, Ant( 0 ) )
     val d3 = ImpIntroRule( d2 )
 
-    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:nat) ⊃ P(s(x))) ⊃ P(0) ⊃ ∀x P(x)"
+    d3.conclusion mustEqual Seq() ++: Sequent() :+ hof"∀x (P(x:nat) → P(s(x))) → P(0) → ∀x P(x)"
   }
 
   "ImpElim" in {

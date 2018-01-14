@@ -21,7 +21,7 @@
 \renewcommand{\familydefault}{\sfdefault} % change to sans serif font
 
 \newcommand{\seq}{\vdash}	% the sequent sign
-\newcommand{\impl}{\supset} %logical connectives: implies, not, and, or
+\newcommand{\impl}{\to} %logical connectives: implies, not, and, or
 \renewcommand{\lnot}{\neg}
 \renewcommand{\land}{\wedge}
 \renewcommand{\lor}{\vee}
@@ -69,7 +69,7 @@
     {⊥}{{\ensuremath{\bot}} }1%
     {⊤}{{\ensuremath{\top}} }1%
     {∧}{{\ensuremath{\land}} }1%
-    {⊃}{{\ensuremath{\impl}} }1%
+    {⊃}{{\ensuremath{\supset}} }1%
     {∨}{{\ensuremath{\lor}} }1%
     {¬}{{\ensuremath{\neg}} }1%
     {→}{{\ensuremath{\rightarrow}} }1%
@@ -308,7 +308,7 @@ manually.
 Here is an example of parsing a first-order formula:
 \begin{clilisting}
 gapt> val F = fof"!x (P(x,f(x)) -> ?y P(x,y))"
-F: at.logic.gapt.expr.FOLFormula = ∀x (P(x, f(x)) ⊃ ∃y P(x, y))
+F: at.logic.gapt.expr.FOLFormula = ∀x (P(x, f(x)) → ∃y P(x, y))
 
 \end{clilisting}
 
@@ -336,7 +336,7 @@ gapt> val t = fot"f(f(x))"
 t: at.logic.gapt.expr.FOLTerm = f(f(x))
 
 gapt> val G = fof"!x (P(x,$t) -> ?y P(x,y))"
-G: at.logic.gapt.expr.FOLFormula = ∀x (P(x, f(f(x))) ⊃ ∃y P(x, y))
+G: at.logic.gapt.expr.FOLFormula = ∀x (P(x, f(f(x))) → ∃y P(x, y))
 
 \end{clilisting}
 
@@ -414,7 +414,7 @@ On the formulas themselves, there are operators for the various Boolean connecti
  \cli{-A} & $\neg A$\\
  \cli{A \& B} & $A \wedge B$\\
  \cli{A | B} & $A \vee B$\\
- \cli{A --> B} & $A \supset B$\\
+ \cli{A --> B} & $A \impl B$\\
  \cli{A <-> B} & $A \leftrightarrow B$
 \end{tabular}
  
@@ -429,7 +429,7 @@ gapt> val C = FOLAtom("C")
 C: at.logic.gapt.expr.FOLAtom = C:o
 
 gapt> (A & B) --> C
-res4: at.logic.gapt.expr.FOLFormula = A ∧ B ⊃ C
+res4: at.logic.gapt.expr.FOLFormula = A ∧ B → C
 
 \end{clilisting}
 
@@ -440,12 +440,12 @@ You can generate instances of these formula sequences by entering for example:
 \begin{clilisting}
 gapt> val f = BussTautology( 5 )
 f: at.logic.gapt.proofs.HOLSequent =
-((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ∧ (c_4 ∨ d_4) ⊃ c_5) ∨
-  ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ∧ (c_4 ∨ d_4) ⊃ d_5),
-((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ⊃ c_4) ∨
-  ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ⊃ d_4),
-((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ⊃ c_3) ∨ ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ⊃ d_3),
-(c_1 ∨ d_1 ⊃ c_2) ∨ (c_1 ∨ d_1 ⊃ d_2),
+((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ∧ (c_4 ∨ d_4) → c_5) ∨
+  ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) ∧ (c_4 ∨ d_4) → d_5),
+((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) → c_4) ∨
+  ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) ∧ (c_3 ∨ d_3) → d_4),
+((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) → c_3) ∨ ((c_1 ∨ d_1) ∧ (c_2 ∨ d_2) → d_3),
+(c_1 ∨ d_1 → c_2) ∨ (c_1 ∨ d_1 → d_2),
 c_1 ∨ d_1
 ⊢
 c_5,
@@ -593,15 +593,15 @@ To finish the proof it remains to apply two $(\impl\mt{:r})$-inferences:
 \begin{clilisting}
 gapt> val p4 = ImpRightRule( p3, fof"B", fof"A & B" )
 p4: at.logic.gapt.proofs.lk.ImpRightRule =
-[p4] A ⊢ B ⊃ A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p4] A ⊢ B → A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> val p5 = ImpRightRule( p4, fof"A", fof"B -> A&B" )
 p5: at.logic.gapt.proofs.lk.ImpRightRule =
-[p5]  ⊢ A ⊃ B ⊃ A ∧ B    (ImpRightRule(p4, Ant(0), Suc(0)))
-[p4] A ⊢ B ⊃ A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p5]  ⊢ A → B → A ∧ B    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] A ⊢ B → A ∧ B    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] A, B ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
@@ -638,19 +638,19 @@ You can generate instances of these proof sequences by entering, e.g.,
 \begin{clilisting}
 gapt> val p = SumExampleProof( 5 )
 p: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))), P(s(s(s(s(s(0))))), 0) ⊢ P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
-[p24] ∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
-∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+[p25] ∀x ∀y (P(s(x), y) → P(x, s(y))), P(s(s(s(s(s(0))))), 0) ⊢ P(0, s(s(s(s(s(0))))))    (ContractionLeftRule(p24, Ant(0), Ant(1)))
+[p24] ∀x ∀y (P(s(x), y) → P(x, s(y))),
+∀x ∀y (P(s(x), y) → P(x, s(y))),
 P(s(s(s(s(s(0))))), 0)
 ⊢
-P(0, s(s(s(s(s(0))))))    (ForallLeftRule(p23, Ant(0), ∀y (P(s(x), y) ⊃ P(x, s(y))), 0, x))
-[p23] ∀y (P(s(0), y) ⊃ P(0, s(y))),
-∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+P(0, s(s(s(s(s(0))))))    (ForallLeftRule(p23, Ant(0), ∀y (P(s(x), y) → P(x, s(y))), 0, x))
+[p23] ∀y (P(s(0), y) → P(0, s(y))),
+∀x ∀y (P(s(x), y) → P(x, s(y))),
 P(s(s(s(s(s(0))))), 0)
 ⊢
-P(0, s(s(s(s(s(0))))))    (ForallLeftRule(p22, Ant(0), P(s(0), y) ⊃ P(0, s(y)), s(s(s(s(0)))), y))
-[p22] P(s(0), s(s(s(s(0))))) ⊃ P(0, s(s(s(s(s(0)))))),
-∀x ∀y (P(s(x), y) ⊃ P(x, s(y))),
+P(0, s(s(s(s(s(0))))))    (ForallLeftRule(p22, Ant(0), P(s(0), y) → P(0, s(y)), s(s(s(s(0)))), y))
+[p22] P(s(0), s(s(s(s(0))))) → P(0, s(s(s(s(s(0)))))),
+∀x ∀y (P(s(x), y) → P(x, s(y))),
 P(s(s(s(s(s(0))))), 0)
 ⊢
 P(0, s(s(s(s(s(0))))))    (ImpLeftRule(p20, Suc(0), p21, Ant(0)))
@@ -680,7 +680,7 @@ p2: at.logic.gapt.proofs.nd.LogicalAxiom =
 
 gapt> val p3 = nd.LogicalAxiom( fof"P & Q -> R" )
 p3: at.logic.gapt.proofs.nd.LogicalAxiom =
-[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+[p1] P ∧ Q → R ⊢ P ∧ Q → R    (LogicalAxiom(P ∧ Q → R))
 
 \end{clilisting}
 
@@ -701,11 +701,11 @@ and $P \land Q$ to arrive at $R$.
 \begin{clilisting}
 gapt> val p5 = nd.ImpElimRule( p3, p4 )
 p5: at.logic.gapt.proofs.nd.ImpElimRule =
-[p5] P ∧ Q ⊃ R, P, Q ⊢ R    (ImpElimRule(p1, p4))
+[p5] P ∧ Q → R, P, Q ⊢ R    (ImpElimRule(p1, p4))
 [p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
 [p3] Q ⊢ Q    (LogicalAxiom(Q:o))
 [p2] P ⊢ P    (LogicalAxiom(P:o))
-[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+[p1] P ∧ Q → R ⊢ P ∧ Q → R    (LogicalAxiom(P ∧ Q → R))
 
 \end{clilisting}
 
@@ -715,12 +715,12 @@ at the desired sequent.
 \begin{clilisting}
 gapt> val p6 = nd.ImpIntroRule( p5, Ant( 2 ) )
 p6: at.logic.gapt.proofs.nd.ImpIntroRule =
-[p6] P ∧ Q ⊃ R, P ⊢ Q ⊃ R    (ImpIntroRule(p5, Ant(2)))
-[p5] P ∧ Q ⊃ R, P, Q ⊢ R    (ImpElimRule(p1, p4))
+[p6] P ∧ Q → R, P ⊢ Q → R    (ImpIntroRule(p5, Ant(2)))
+[p5] P ∧ Q → R, P, Q ⊢ R    (ImpElimRule(p1, p4))
 [p4] P, Q ⊢ P ∧ Q    (AndIntroRule(p2, p3))
 [p3] Q ⊢ Q    (LogicalAxiom(Q:o))
 [p2] P ⊢ P    (LogicalAxiom(P:o))
-[p1] P ∧ Q ⊃ R ⊢ P ∧ Q ⊃ R    (LogicalAxiom(P ∧ Q ⊃ R))
+[p1] P ∧ Q → R ⊢ P ∧ Q → R    (LogicalAxiom(P ∧ Q → R))
 
 \end{clilisting}
 
@@ -797,7 +797,7 @@ object example extends TacticsProof {
 
   val lemma = Lemma(
     ("a" -> fof"P a") +:
-    ("b" -> fof"∀x (P x ⊃ Q x)") +:
+    ("b" -> fof"∀x (P x → Q x)") +:
     Sequent()
     :+ ("c" -> fof"Q a")
   ) {
@@ -858,9 +858,9 @@ val lemmaEx =
 \end{tacticslisting}
 \begin{tacticsoutput}
 at.logic.gapt.proofs.gaptic.QedFailureException: Proof not completed. There are still 1 open sub goals:
-b_0: P(a) ⊃ Q(a)
+b_0: P(a) → Q(a)
 a: P(a)
-b: ∀x (P(x) ⊃ Q(x))
+b: ∀x (P(x) → Q(x))
 :-
 c: Q(a)
 
@@ -1096,13 +1096,13 @@ cuts:
 \begin{clilisting}
 gapt> val p = examples.fol1.proof
 p: at.logic.gapt.proofs.lk.LKProof =
-[p25] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (CutRule(p9, Suc(0), p24, Ant(0)))
-[p24] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p23, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
-[p23] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), y, y))
-[p22] ¬P(b, y) ∨ Q(b, y) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p21] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
-[p20] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)    (ContractionRightRule(p19, Suc(1), Suc(0)))
-[p19] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y), ¬Q(b, y) ⊃ ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18, Ant(0...
+[p25] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (CutRule(p9, Suc(0), p24, Ant(0)))
+[p24] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ForallLeftRule(p23, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
+[p23] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsLeftRule(p22, Ant(0), y, y))
+[p22] ¬P(b, y) ∨ Q(b, y) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsRightRule(p21, Suc(0), ∃y (¬Q(x, y) → ¬P(x, y)), b, x))
+[p21] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p20, Suc(0), ¬Q(b, y) → ¬P(b, y), y, y))
+[p20] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y)    (ContractionRightRule(p19, Suc(1), Suc(0)))
+[p19] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y), ¬Q(b, y) → ¬P(b, y)    (OrLeftRule(p14, Ant(0), p18, Ant(0...
 
 \end{clilisting}
 %
@@ -1110,13 +1110,13 @@ and then call the cut-elimination procedure:
 \begin{clilisting}
 gapt> val q = ReductiveCutElimination( p )
 q: at.logic.gapt.proofs.lk.LKProof =
-[p14] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p13, Ant(0), ∀y (P(x, y) ⊃ Q(x, y)), b, x))
-[p13] ∀y (P(b, y) ⊃ Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ForallLeftRule(p12, Ant(0), P(b, y) ⊃ Q(b, y), a, y))
-[p12] P(b, a) ⊃ Q(b, a) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p11, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p11] P(b, a) ⊃ Q(b, a) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p10, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), a, y))
-[p10] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a)    (ContractionRightRule(p9, Suc(1), Suc(0)))
-[p9] P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬Q(b, a) ⊃ ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
-[p8] ¬Q(b, a), P(b, a) ⊃ Q(b, a) ⊢ ¬Q(b, a) ⊃ ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7,...
+[p14] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ForallLeftRule(p13, Ant(0), ∀y (P(x, y) → Q(x, y)), b, x))
+[p13] ∀y (P(b, y) → Q(b, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ForallLeftRule(p12, Ant(0), P(b, y) → Q(b, y), a, y))
+[p12] P(b, a) → Q(b, a) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsRightRule(p11, Suc(0), ∃y (¬Q(x, y) → ¬P(x, y)), b, x))
+[p11] P(b, a) → Q(b, a) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p10, Suc(0), ¬Q(b, y) → ¬P(b, y), a, y))
+[p10] P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a)    (ContractionRightRule(p9, Suc(1), Suc(0)))
+[p9] P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a), ¬Q(b, a) → ¬P(b, a)    (ImpRightRule(p8, Ant(0), Suc(1)))
+[p8] ¬Q(b, a), P(b, a) → Q(b, a) ⊢ ¬Q(b, a) → ¬P(b, a), ¬P(b, a)    (WeakeningLeftRule(p7,...
 
 \end{clilisting}
 
@@ -1202,13 +1202,13 @@ gapt> val proofs = structuralCNF(hos":- ?z ?x (drinksat z x -> !y drinksat z y)"
 proofs: Set[at.logic.gapt.proofs.resolution.ResolutionProof] =
 Set([p5] drinksat(z, s_0(z)) ⊢    (AllL(p4, Ant(0), s_0(z), λz ∀y drinksat(z, y)))
 [p4] ∀y drinksat(z, y) ⊢    (ImpL2(p3, Ant(0)))
-[p3] drinksat(z, x) ⊃ ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
-[p2] ∃x (drinksat(z, x) ⊃ ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
-[p1] ∃z ∃x (drinksat(z, x) ⊃ ∀y drinksat(z, y)) ⊢    (Input(∃z ∃x (drinksat(z, x) ⊃ ∀y drinksat(z, y)) ⊢ ))
+[p3] drinksat(z, x) → ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
+[p2] ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
+[p1] ∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (Input(∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢ ))
 , [p4]  ⊢ drinksat(z, x)   (ImpL1(p3, Ant(0)))
-[p3] drinksat(z, x) ⊃ ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
-[p2] ∃x (drinksat(z, x) ⊃ ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
-[p1] ∃z ∃x (drinksat(z, x) ⊃ ∀y drinksat(z, y)) ⊢    (Input(∃z ∃x (drinksat(z, x) ⊃ ∀y drinksat(z, y)) ⊢ ))
+[p3] drinksat(z, x) → ∀y drinksat(z, y) ⊢    (ExL(p2, Ant(0), x))
+[p2] ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (ExL(p1, Ant(0), z))
+[p1] ∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢    (Input(∃z ∃x (drinksat(z, x) → ∀y drinksat(z, y)) ⊢ ))
 )
 
 gapt> for (p <- proofs) println(p.conclusion)
@@ -1270,17 +1270,17 @@ gapt> val Some(p) = Escargot.getExpansionProof(hof"?x (drinks x -> !y drinks y)"
 p: at.logic.gapt.proofs.expansion.ExpansionProof =
 
 :-
-∃x (drinks(x) ⊃ ∀y drinks(y))
-  +^{s_0} (drinks(s_0)- ⊃ wk+{∀y drinks(y)})
-  +^{x} (wk-{drinks(x)} ⊃ ∀y drinks(y) +sk^{s_0} drinks(s_0)+)
+∃x (drinks(x) → ∀y drinks(y))
+  +^{s_0} (drinks(s_0)- → wk+{∀y drinks(y)})
+  +^{x} (wk-{drinks(x)} → ∀y drinks(y) +sk^{s_0} drinks(s_0)+)
 
 gapt> deskolemizeET(p)
 res13: at.logic.gapt.proofs.expansion.ExpansionProof =
 
 :-
-∃x (drinks(x) ⊃ ∀y_0 drinks(y_0))
-  +^{x} (wk-{drinks(x)} ⊃ ∀y_0 drinks(y_0) +ev^{y} drinks(y)+)
-  +^{y} (drinks(y)- ⊃ wk+{∀y_0 drinks(y_0)})
+∃x (drinks(x) → ∀y_0 drinks(y_0))
+  +^{x} (wk-{drinks(x)} → ∀y_0 drinks(y_0) +ev^{y} drinks(y)+)
+  +^{y} (drinks(y)- → wk+{∀y_0 drinks(y_0)})
 
 \end{clilisting}
 
@@ -1303,11 +1303,11 @@ contains only such predicate symbols that appear in both partitions.
 \begin{clilisting}
 gapt> val Right(p) = solvePropositional(hos"a -> b, b -> c :- a & d -> c")
 p: at.logic.gapt.proofs.lk.LKProof =
-[p8] a ⊃ b, b ⊃ c ⊢ a ∧ d ⊃ c    (ImpRightRule(p7, Ant(0), Suc(0)))
-[p7] a ∧ d, a ⊃ b, b ⊃ c ⊢ c    (AndLeftRule(p6, Ant(2), Ant(0)))
-[p6] d, a ⊃ b, a, b ⊃ c ⊢ c    (WeakeningLeftRule(p5, d:o))
-[p5] a ⊃ b, a, b ⊃ c ⊢ c    (ImpLeftRule(p1, Suc(0), p4, Ant(1)))
-[p4] b ⊃ c, b ⊢ c    (ImpLeftRule(p2, Suc(0), p3, Ant(0)))
+[p8] a → b, b → c ⊢ a ∧ d → c    (ImpRightRule(p7, Ant(0), Suc(0)))
+[p7] a ∧ d, a → b, b → c ⊢ c    (AndLeftRule(p6, Ant(2), Ant(0)))
+[p6] d, a → b, a, b → c ⊢ c    (WeakeningLeftRule(p5, d:o))
+[p5] a → b, a, b → c ⊢ c    (ImpLeftRule(p1, Suc(0), p4, Ant(1)))
+[p4] b → c, b ⊢ c    (ImpLeftRule(p2, Suc(0), p3, Ant(0)))
 [p3] c ⊢ c    (LogicalAxiom(c:o))
 [p2] b ⊢ b    (LogicalAxiom(b:o))
 [p1] a ⊢ a    (LogicalAxiom(a:o))
@@ -1331,27 +1331,27 @@ Consider the following example:
 \begin{clilisting}
 gapt> examples.gapticExamples.lemma
 res15: at.logic.gapt.proofs.lk.LKProof =
-[p7] A ⊃ B ⊢ A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
-[p6] A ⊃ B ⊢ A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
-[p5] A, A ⊃ B ⊢ A ∧ B    (ContractionLeftRule(p4, Ant(2), Ant(0)))
-[p4] A, A ⊃ B, A ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p3, Suc(0)))
-[p3] A ⊃ B, A ⊢ B    (ImpLeftRule(p1, Suc(0), p2, Ant(0)))
+[p7] A → B ⊢ A ∧ B ∨ ¬A    (OrRightRule(p6, Suc(0), Suc(1)))
+[p6] A → B ⊢ A ∧ B, ¬A    (NegRightRule(p5, Ant(0)))
+[p5] A, A → B ⊢ A ∧ B    (ContractionLeftRule(p4, Ant(2), Ant(0)))
+[p4] A, A → B, A ⊢ A ∧ B    (AndRightRule(p1, Suc(0), p3, Suc(0)))
+[p3] A → B, A ⊢ B    (ImpLeftRule(p1, Suc(0), p2, Ant(0)))
 [p2] B ⊢ B    (LogicalAxiom(B:o))
 [p1] A ⊢ A    (LogicalAxiom(A:o))
 
 gapt> LKToND( examples.gapticExamples.lemma, Some( Suc( 0 ) ) )
 res16: at.logic.gapt.proofs.nd.NDProof =
-[p16] A ⊃ B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p15, Ant(0)))
-[p15] ¬(A ∧ B), A ⊃ B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p14, A ∧ B))
-[p14] ¬(A ∧ B), A ⊃ B ⊢ ¬A    (NegIntroRule(p13, Ant(1)))
-[p13] ¬(A ∧ B), A, A ⊃ B ⊢ ⊥    (BottomElimRule(p12, ⊥))
-[p12] ¬(A ∧ B), A, A ⊃ B ⊢ ⊥    (NegElimRule(p3, p11))
-[p11] A, A ⊃ B ⊢ A ∧ B    (ContractionRule(p10, Ant(0), Ant(2)))
-[p10] A, A ⊃ B, A ⊢ A ∧ B    (AndIntroRule(p4, p9))
-[p9] A ⊃ B, A ⊢ B    (ImpElimRule(p6, p8))
-[p8] A ⊃ B, A ⊢ B    (ImpElimRule(p7, p4))
-[p7] A ⊃ B ⊢ A ⊃ B    (LogicalAxiom(A ⊃ B))
-[p6]  ⊢ B ⊃ B    (ImpIntroRule(p5, Ant(0)))
+[p16] A → B ⊢ A ∧ B ∨ ¬A    (ExcludedMiddleRule(p2, Ant(0), p15, Ant(0)))
+[p15] ¬(A ∧ B), A → B ⊢ A ∧ B ∨ ¬A    (OrIntro2Rule(p14, A ∧ B))
+[p14] ¬(A ∧ B), A → B ⊢ ¬A    (NegIntroRule(p13, Ant(1)))
+[p13] ¬(A ∧ B), A, A → B ⊢ ⊥    (BottomElimRule(p12, ⊥))
+[p12] ¬(A ∧ B), A, A → B ⊢ ⊥    (NegElimRule(p3, p11))
+[p11] A, A → B ⊢ A ∧ B    (ContractionRule(p10, Ant(0), Ant(2)))
+[p10] A, A → B, A ⊢ A ∧ B    (AndIntroRule(p4, p9))
+[p9] A → B, A ⊢ B    (ImpElimRule(p6, p8))
+[p8] A → B, A ⊢ B    (ImpElimRule(p7, p4))
+[p7] A → B ⊢ A → B    (LogicalAxiom(A → B))
+[p6]  ⊢ B → B    (ImpIntroRule(p5, Ant(0)))
 [p5] B ⊢ B    (LogicalAxiom(B:o))
 [p4] A ⊢ A    (LogicalAxiom(A:o))
 [p3] ¬(A ∧ B) ⊢ ¬(A ∧ B)    (LogicalAxiom(¬(A ∧ B)))
@@ -1384,18 +1384,18 @@ For example we can obtain an expansion proof by:
 \begin{clilisting}
 gapt> val expansion = LKToExpansionProof(examples.fol1.proof)
 expansion: at.logic.gapt.proofs.expansion.ExpansionProof =
-∀X (X ⊃ X)
+∀X (X → X)
   +^{∀x ∃y (¬P(x, y) ∨ Q(x, y))}
     (∀x ∃y (¬P(x, y) ∨ Q(x, y)) +ev^{x}
         ∃y (¬P(x, y) ∨ Q(x, y))
-        +^{a} (¬P(x, a)- ∨ Q(x, a)+) ⊃
+        +^{a} (¬P(x, a)- ∨ Q(x, a)+) →
       ∀x ∃y (¬P(x, y) ∨ Q(x, y))
         +^{b} ∃y (¬P(b, y) ∨ Q(b, y)) +ev^{y} (¬P(b, y)+ ∨ Q(b, y)-)),
-∀x ∀y (P(x, y) ⊃ Q(x, y))
-  +^{x} ∀y (P(x, y) ⊃ Q(x, y)) +^{a} (P(x, a)+ ⊃ Q(x, a)-)
+∀x ∀y (P(x, y) → Q(x, y))
+  +^{x} ∀y (P(x, y) → Q(x, y)) +^{a} (P(x, a)+ → Q(x, a)-)
 :-
-∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
-  +^{b} ∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{y} (¬Q(b, y)+ ⊃ ¬P(b, y)-)
+∃x ∃y (¬Q(x, y) → ¬P(x, y))
+  +^{b} ∃y (¬Q(b, y) → ¬P(b, y)) +^{y} (¬Q(b, y)+ → ¬P(b, y)-)
 
 \end{clilisting}
 
@@ -1411,10 +1411,10 @@ proven.  The deep sequent consists of instances of the shallow sequent: the
 sequent.
 \begin{clilisting}
 gapt> expansion.shallow
-res17: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀X (X ⊃ X), ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
+res17: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ∀X (X → X), ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))
 
 gapt> expansion.deep
-res18: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) ⊃ ¬P(b, y) ∨ Q(b, y), P(x, a) ⊃ Q(x, a) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)
+res18: at.logic.gapt.proofs.Sequent[at.logic.gapt.expr.Formula] = ¬P(x, a) ∨ Q(x, a) → ¬P(b, y) ∨ Q(b, y), P(x, a) → Q(x, a) ⊢ ¬Q(b, y) → ¬P(b, y)
 
 gapt> Sat4j isValid expansion.deep
 res19: Boolean = true
@@ -1428,11 +1428,11 @@ in~\cite{Hetzl2013Expansion}:
 \begin{clilisting}
 gapt> eliminateCutsET(expansion)
 res20: at.logic.gapt.proofs.expansion.ExpansionProof =
-∀x ∀y (P(x, y) ⊃ Q(x, y))
-  +^{b} ∀y (P(b, y) ⊃ Q(b, y)) +^{a} (P(b, a)+ ⊃ Q(b, a)-)
+∀x ∀y (P(x, y) → Q(x, y))
+  +^{b} ∀y (P(b, y) → Q(b, y)) +^{a} (P(b, a)+ → Q(b, a)-)
 :-
-∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))
-  +^{b} ∃y (¬Q(b, y) ⊃ ¬P(b, y)) +^{a} (¬Q(b, a)+ ⊃ ¬P(b, a)-)
+∃x ∃y (¬Q(x, y) → ¬P(x, y))
+  +^{b} ∃y (¬Q(b, y) → ¬P(b, y)) +^{a} (¬Q(b, a)+ → ¬P(b, a)-)
 
 \end{clilisting}
 
@@ -1441,12 +1441,12 @@ cuts, and also if the proof requires equational reasoning:
 \begin{clilisting}
 gapt> ExpansionProofToLK(expansion).get
 res21: at.logic.gapt.proofs.lk.LKProof =
-[p21] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) ⊃ ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) ⊃ ¬P(x, y)), b, x))
-[p20] ∀x ∀y (P(x, y) ⊃ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
-[p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
-[p18] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsLeftRule(p17, Ant(0), y, y))
-[p17] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) ⊃ ¬P(b, y))    (ExistsRightRule(p16, Suc(0), ¬Q(b, y) ⊃ ¬P(b, y), y, y))
-[p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) ⊃ ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
+[p21] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃x ∃y (¬Q(x, y) → ¬P(x, y))    (ExistsRightRule(p20, Suc(0), ∃y (¬Q(x, y) → ¬P(x, y)), b, x))
+[p20] ∀x ∀y (P(x, y) → Q(x, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (CutRule(p9, Suc(0), p19, Ant(0)))
+[p19] ∀x ∃y (¬P(x, y) ∨ Q(x, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ForallLeftRule(p18, Ant(0), ∃y (¬P(x, y) ∨ Q(x, y)), b, x))
+[p18] ∃y (¬P(b, y) ∨ Q(b, y)) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsLeftRule(p17, Ant(0), y, y))
+[p17] ¬P(b, y) ∨ Q(b, y) ⊢ ∃y (¬Q(b, y) → ¬P(b, y))    (ExistsRightRule(p16, Suc(0), ¬Q(b, y) → ¬P(b, y), y, y))
+[p16] ¬P(b, y) ∨ Q(b, y) ⊢ ¬Q(b, y) → ¬P(b, y)    (ImpRightRule(p15, Ant(0), Suc(0)))
 [p15] ¬Q(b, y), ¬P(b, y) ∨ Q(b, y) ⊢ ¬P(b, y)    (NegLeftRule(p14, Suc(0)))
 [p14] ¬P(b, y) ∨ Q(b, y) ⊢ Q(b, y), ...
 
@@ -1478,7 +1478,7 @@ LeanCoP interface reads back expansion proofs (and converts them to LK if desire
 Here is how you can get all of these kinds of proofs using Prover9:
 \begin{clilisting}
 gapt> val sequent = hos"p(0), !x (p(x) -> p(s(x))) :- p(s(s(0)))"
-sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))
+sequent: at.logic.gapt.proofs.HOLSequent = p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))
 
 \end{clilisting}
 
@@ -1497,27 +1497,27 @@ Some([p13]  ⊢    (Resolution(p8, Suc(0), p12, Ant(0)))
 [p7] p(0) ⊢ p(s(0))   (Subst(p6, Substitution(v0 -> 0)))
 [p6] p(v0) ⊢ p(s(v0))   (Subst(p5, Substitution(x -> v0)))
 [p5] p(x) ⊢ p(s(x))   (ImpR(p4, Suc(0)))
-[p4]  ⊢ p(x) ⊃ p(s(x))   (AllR(p3, Suc(0), x))
-[p3]  ⊢ ∀x (p(x) ⊃ p(s(x)))   (Input( ⊢ ∀x (p(x) ⊃ p(s(x)))))
+[p4]  ⊢ p(x) → p(s(x))   (AllR(p3, Suc(0), x))
+[p3]  ⊢ ∀x (p(x) → p(s(x)))   (Input( ⊢ ∀x (p(x) → p(s(x)))))
 [p2]  ⊢ p(0)   (Subst(p1, Substitution()))
 [p1]  ⊢ p(0)   (Input( ⊢ p(0)))
 )
 
 gapt> Prover9 getLKProof sequent
 res25: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
-[p10] p(0), ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
-[p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
-[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
-[p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
+Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0), ∀x (p(x) → p(s(x))), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) → p(s(x)), s(0), x))
+[p7] p(s(0)) → p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
 [p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
-[p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
-[p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
-[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
+[p5] p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
+[p4] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) → p(s(x)), 0, x))
+[p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))  ...
 
 gapt> Prover9 getExpansionProof sequent
 res26: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
 p(s(s(0)))+)
@@ -1530,15 +1530,15 @@ Vampire (\cli{Vampire}), and Metis (\cli{Metis}) as well, we will just show
 \begin{clilisting}[EProver.isInstalled]
 gapt> EProver getLKProof sequent
 res27: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p11] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
-[p10] p(0), ∀x (p(x) ⊃ p(s(x))), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
-[p9] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
-[p8] ∀x (p(x) ⊃ p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) ⊃ p(s(x)), s(0), x))
-[p7] p(s(0)) ⊃ p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
+Some([p11] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(s(0)))    (ContractionLeftRule(p10, Ant(2), Ant(1)))
+[p10] p(0), ∀x (p(x) → p(s(x))), ∀x (p(x) → p(s(x))) ⊢ p(s(s(0)))    (CutRule(p5, Suc(0), p9, Ant(1)))
+[p9] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (CutRule(p8, Suc(0), p6, Ant(0)))
+[p8] ∀x (p(x) → p(s(x))), p(s(0)) ⊢ p(s(s(0)))    (ForallLeftRule(p7, Ant(0), p(x) → p(s(x)), s(0), x))
+[p7] p(s(0)) → p(s(s(0))), p(s(0)) ⊢ p(s(s(0)))    (ImpLeftRule(p2, Suc(0), p6, Ant(0)))
 [p6] p(s(s(0))) ⊢ p(s(s(0)))    (LogicalAxiom(p(s(s(0))): o))
-[p5] p(0), ∀x (p(x) ⊃ p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
-[p4] ∀x (p(x) ⊃ p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) ⊃ p(s(x)), 0, x))
-[p3] p(0) ⊃ p(s(0)), p(0) ⊢ p(s(0))  ...
+[p5] p(0), ∀x (p(x) → p(s(x))) ⊢ p(s(0))    (CutRule(p1, Suc(0), p4, Ant(1)))
+[p4] ∀x (p(x) → p(s(x))), p(0) ⊢ p(s(0))    (ForallLeftRule(p3, Ant(0), p(x) → p(s(x)), 0, x))
+[p3] p(0) → p(s(0)), p(0) ⊢ p(s(0))  ...
 
 \end{clilisting}
 
@@ -1550,7 +1550,7 @@ gapt> Prover9 getExpansionProof hof"?x!y p x y -> !y?x p x y"
 res28: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
-∃x ∀y p(x, y) +sk^{s_0} ∀y p(s_0, y) +^{s_1} p(s_0, s_1)- ⊃
+∃x ∀y p(x, y) +sk^{s_0} ∀y p(s_0, y) +^{s_1} p(s_0, s_1)- →
   ∀y ∃x p(x, y) +sk^{s_1} ∃x p(x, s_1) +^{s_0} p(s_0, s_1)+)
 
 \end{clilisting}
@@ -1559,7 +1559,7 @@ The LeanCoP interface supports \cli{getExpansionProof} as well:
 \begin{clilisting}[LeanCoP.isInstalled]
 gapt> LeanCoP getExpansionProof sequent
 res29: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
-Some(∀x (p(x) ⊃ p(s(x))) +^{0} (p(0)+ ⊃ p(s(0))-) +^{s(0)} (p(s(0))+ ⊃ p(s(s(0)))-),
+Some(∀x (p(x) → p(s(x))) +^{0} (p(0)+ → p(s(0))-) +^{s(0)} (p(s(0))+ → p(s(s(0)))-),
 p(0)-
 :-
 p(s(s(0)))+)
@@ -1613,15 +1613,15 @@ problem: at.logic.gapt.proofs.HOLSequent = ∀x ∀y (x:a) = (y:a), ∀x f(f(x:b
 
 gapt> val (firstOrderProblem, back) = reduction forward problem
 firstOrderProblem: at.logic.gapt.proofs.HOLSequent =
-∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) ⊃ P_is_o('f_='(x0, x1))),
-∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) ⊃ P_is_o('f_='(x0, x1))),
-∀x0 (P_is_b(x0) ⊃ P_is_b(f_f(x0))),
-⊤ ⊃ P_is_b(f_c),
+∀x0 ∀x1 (P_is_a(x0) ∧ P_is_a(x1) → P_is_o('f_='(x0, x1))),
+∀x0 ∀x1 (P_is_b(x0) ∧ P_is_b(x1) → P_is_o('f_='(x0, x1))),
+∀x0 (P_is_b(x0) → P_is_b(f_f(x0))),
+⊤ → P_is_b(f_c),
 P_is_o(f_nonempty_o),
 P_is_a(f_nonempty_a),
 P_is_b(f_nonempty_b),
-∀x (P_is_a(x) ⊃ ∀y (P_is_a(y) ⊃ x = y)),
-∀x (P_is_b(x) ⊃ f_f(f_f(x)) = x)
+∀x (P_is_a(x) → ∀y (P_is_a(y) → x = y)),
+∀x (P_is_b(x) → f_f(f_f(x)) = x)
 ⊢
 ∃y (P_is_b(y) ∧ f_c = f_f(y))
 back: at.logic.gapt.proofs.expansion.ExpansionProof => at.logic.gapt.proofs.expansion.ExpansionProof = <function>
@@ -1641,7 +1641,7 @@ formulas.  For example we can check whether a quantifier-free formula is a
 quasi-tautology using veriT:
 \begin{clilisting}
 gapt> val f = hof"(a=b | a=c) & P(c) & P(b) -> P(a)"
-f: at.logic.gapt.expr.Formula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
+f: at.logic.gapt.expr.Formula = (a = b ∨ a = c) ∧ P(c) ∧ P(b) → P(a)
 
 \end{clilisting}
 
@@ -1686,23 +1686,23 @@ and congruences) from veriT's proof output:
 \begin{clilisting}[VeriT.isInstalled]
 gapt> val Some(expansionProof) = VeriT getExpansionProof f
 expansionProof: at.logic.gapt.proofs.expansion.ExpansionProof =
-∀x ∀y (x = y ⊃ y = x)
+∀x ∀y (x = y → y = x)
   +^{a}
-    ∀y (a = y ⊃ y = a)
-    +^{b} ((a = b)+ ⊃ (b = a)-)
-    +^{c} ((a = c)+ ⊃ (c = a)-),
-∀x1 ∀y1 (x1 = y1 ∧ P(x1) ⊃ P(y1))
-  +^{b} ∀y1 (b = y1 ∧ P(b) ⊃ P(y1)) +^{a} ((b = a)+ ∧ P(b)+ ⊃ P(a)-)
-  +^{c} ∀y1 (c = y1 ∧ P(c) ⊃ P(y1)) +^{a} ((c = a)+ ∧ P(c)+ ⊃ P(a)-)
+    ∀y (a = y → y = a)
+    +^{b} ((a = b)+ → (b = a)-)
+    +^{c} ((a = c)+ → (c = a)-),
+∀x1 ∀y1 (x1 = y1 ∧ P(x1) → P(y1))
+  +^{b} ∀y1 (b = y1 ∧ P(b) → P(y1)) +^{a} ((b = a)+ ∧ P(b)+ → P(a)-)
+  +^{c} ∀y1 (c = y1 ∧ P(c) → P(y1)) +^{a} ((c = a)+ ∧ P(c)+ → P(a)-)
 :-
-((a = b)- ∨ (a = c)-) ∧ P(c)- ∧ P(b)- ⊃ P(a)+
+((a = b)- ∨ (a = c)-) ∧ P(c)- ∧ P(b)- → P(a)+
 
 gapt> extractInstances(expansionProof) foreach println
-a = b ⊃ b = a
-a = c ⊃ c = a
-b = a ∧ P(b) ⊃ P(a)
-c = a ∧ P(c) ⊃ P(a)
-(a = b ∨ a = c) ∧ P(c) ∧ P(b) ⊃ P(a)
+a = b → b = a
+a = c → c = a
+b = a ∧ P(b) → P(a)
+c = a ∧ P(c) → P(a)
+(a = b ∨ a = c) ∧ P(c) ∧ P(b) → P(a)
 
 \end{clilisting}
 
@@ -1861,7 +1861,7 @@ Some([p571]
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
     (R(p_3, h_1) ∨ R(p_3, h_2) ∨ R(p_3, h_3)) ∧
-    (R(p_4, h_1) ∨ R(p_4, h_2) ∨ R(p_4, h_3)) ⊃
+    (R(p_4, h_1) ∨ R(p_4, h_2) ∨ R(p_4, h_3)) →
   R(p_1, h_1) ∧ R(p_2, h_1) ∨
     R(p_1, h_1) ∧ R(p_3, h_1) ∨
     R(p_1, h_1) ∧ R(p_4, h_1) ∨
@@ -1919,7 +1919,7 @@ the same interface as \cli{Prover9} and the other first-order provers:
 \begin{clilisting}
 gapt> val formula = fof"!x!y!z (x+y)+z=x+(y+z) & !x!y x+y=y+x -> d+a+c+b=a+b+c+d"
 formula: at.logic.gapt.expr.FOLFormula =
-∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x ⊃
+∀x ∀y ∀z x + y + z = x + (y + z) ∧ ∀x ∀y x + y = y + x →
   d + a + c + b = a + b + c + d
 
 gapt> Escargot getResolutionProof formula
@@ -1940,11 +1940,11 @@ gapt> val formula = hof"P(cons(0:nat, cons(s(0), nil)): list)"
 formula: at.logic.gapt.expr.Formula = P(cons(0:nat, cons(s(0): nat, nil:list): list)): o
 
 gapt> val axiom = hof"P(nil) & !x!y!z (P(x) -> P(cons(y: nat, cons(z, x)): list))"
-axiom: at.logic.gapt.expr.Formula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+axiom: at.logic.gapt.expr.Formula = P(nil:list) ∧ ∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list)))
 
 gapt> val problem = hof"$axiom -> $formula"
 problem: at.logic.gapt.expr.Formula =
-P(nil:list) ∧ ∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list))) ⊃
+P(nil:list) ∧ ∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list))) →
   P(cons(0, cons(s(0), nil)))
 
 gapt> Escargot.getExpansionProof(problem)
@@ -1952,12 +1952,12 @@ res51: Option[at.logic.gapt.proofs.expansion.ExpansionProof] =
 Some(
 :-
 P(nil:list)- ∧
-    (∀x ∀y ∀z (P(x) ⊃ P(cons(y:nat, cons(z:nat, x): list)))
+    (∀x ∀y ∀z (P(x) → P(cons(y:nat, cons(z:nat, x): list)))
       +^{nil}
-        ∀y ∀z (P(nil) ⊃ P(cons(y, cons(z, nil))))
+        ∀y ∀z (P(nil) → P(cons(y, cons(z, nil))))
         +^{0}
-          ∀z (P(nil) ⊃ P(cons(0, cons(z, nil))))
-          +^{s(0)} (P(nil)+ ⊃ P(cons(0, cons(s(0), nil)))-)) ⊃
+          ∀z (P(nil) → P(cons(0, cons(z, nil))))
+          +^{s(0)} (P(nil)+ → P(cons(0, cons(s(0), nil)))-)) →
   P(cons(0, cons(s(0), nil)))+)
 
 \end{clilisting}
@@ -2012,10 +2012,10 @@ proof: at.logic.gapt.proofs.lk.LKProof =
 [p168] ∀z ('-2'(S(z:Nat): Nat, #c(Z: Nat)): Nat) = S(z),
 ∀x0 ('proj1-S'(S(x0)): Nat) = x0,
 ∀y0 #c(Z: Nat) != S(y0),
-(⊤ ⊃ ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
+(⊤ → ∀m '-2'(#c(Z: Nat), '+2'(#c(Z: Nat), m:Nat)) = #c(Z: Nat)) ∧
     ∀n_0
-    (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) ⊃
-      ∀m '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) ⊃
+    (∀m '-2'(n_0, '+2'(n_0, m)) = #c(Z: Nat) →
+      ∀m '-2'(S(n_0), '+2'(S(n_0), m)) = #c(Z: Nat)) →
   ∀n ∀m '-2'(n, '+2'(n, m)) = #c(Z: Nat),
 ∀y '+2'(#c(Z: Nat), y) = y,
 ∀y '-2'(#c(Z: Nat), y) = #c(Z: Nat),
@@ -2030,8 +2030,8 @@ which can be called with the command \texttt{solvePropositional}, for example as
 \begin{clilisting}
 gapt> solvePropositional(hof"a -> b -> a&b").get
 res52: at.logic.gapt.proofs.lk.LKProof =
-[p5]  ⊢ a ⊃ b ⊃ a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
-[p4] a ⊢ b ⊃ a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
+[p5]  ⊢ a → b → a ∧ b    (ImpRightRule(p4, Ant(0), Suc(0)))
+[p4] a ⊢ b → a ∧ b    (ImpRightRule(p3, Ant(1), Suc(0)))
 [p3] a, b ⊢ a ∧ b    (AndRightRule(p1, Suc(0), p2, Suc(0)))
 [p2] b ⊢ b    (LogicalAxiom(b:o))
 [p1] a ⊢ a    (LogicalAxiom(a:o))
@@ -2042,7 +2042,7 @@ The tableaux prover can also prove quasi-tautologies if you call it as \texttt{s
 \begin{clilisting}
 gapt> solveQuasiPropositional(hof"a = b & f a = b -> a = f(f(b))").get
 res53: at.logic.gapt.proofs.lk.LKProof =
-[p9]  ⊢ a = b ∧ f(a) = b ⊃ a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
+[p9]  ⊢ a = b ∧ f(a) = b → a = f(f(b))    (ImpRightRule(p8, Ant(0), Suc(0)))
 [p8] a = b ∧ f(a) = b ⊢ a = f(f(b))    (AndLeftRule(p7, Ant(1), Ant(0)))
 [p7] f(a) = b, a = b ⊢ a = f(f(b))    (EqualityLeftRule(p6, Ant(0), Ant(1), λx f(x) = b))
 [p6] a = b, f(b) = b ⊢ a = f(f(b))    (EqualityRightRule(p5, Ant(0), Suc(0), λx x = f(f(b))))
@@ -2150,40 +2150,40 @@ proof. Take a cut-free example proof:
 \begin{clilisting}
 gapt> val p = LinearExampleProof(9)
 p: at.logic.gapt.proofs.lk.LKProof =
-[p36] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p35, Ant(0), Ant(1)))
-[p35] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) ⊃ P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
-[p34] P(s(s(s(s(s(s(s(s(0))))))))) ⊃ P(s(s(s(s(s(s(s(s(s(0)))))))))),
-∀x (P(x) ⊃ P(s(x))),
+[p36] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p35, Ant(0), Ant(1)))
+[p35] ∀x (P(x) → P(s(x))), ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p34, Ant(0), P(x) → P(s(x)), s(s(s(s(s(s(s(s(0)))))))), x))
+[p34] P(s(s(s(s(s(s(s(s(0))))))))) → P(s(s(s(s(s(s(s(s(s(0)))))))))),
+∀x (P(x) → P(s(x))),
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ImpLeftRule(p32, Suc(0), p33, Ant(0)))
 [p33] P(s(s(s(s(s(s(s(s(s(0)))))))))) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (LogicalAxiom(P(s(s(s(s(s(s(s(s(s(0)))))))))): o))
-[p32] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))))))    (ContractionLeftRule(p31, Ant(0), Ant(1)))
-[p31] ∀x (P(x) ⊃ P(s(x))), ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0...
+[p32] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0)))))))))    (ContractionLeftRule(p31, Ant(0), Ant(1)))
+[p31] ∀x (P(x) → P(s(x))), ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(0...
 
 \end{clilisting}
 Then compute a proof with a single cut that contains a single quantifier by:
 \begin{clilisting}
 gapt> val q = CutIntroduction(p, method=DeltaTableMethod())
 q: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p27] ∀x (P(x) ⊃ P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (CutRule(p14, Suc(0), p26, Ant(0)))
-[p26] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p25, Ant(1), Ant(0)))
-[p25] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
+Some([p27] ∀x (P(x) → P(s(x))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (CutRule(p14, Suc(0), p26, Ant(0)))
+[p26] ∀x1 (P(x1) → P(s(s(s(x1))))), P(0) ⊢ P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p25, Ant(1), Ant(0)))
+[p25] ∀x1 (P(x1) → P(s(s(s(x1))))),
+∀x1 (P(x1) → P(s(s(s(x1))))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) ⊃ P(s(s(s(x1)))), 0, x1))
-[p24] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0) ⊃ P(s(s(s(0)))),
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p24, Ant(1), P(x1) → P(s(s(s(x1)))), 0, x1))
+[p24] ∀x1 (P(x1) → P(s(s(s(x1))))),
+P(0) → P(s(s(s(0)))),
 P(0)
 ⊢
 P(s(s(s(s(s(s(s(s(s(0))))))))))    (ContractionLeftRule(p23, Ant(1), Ant(0)))
-[p23] ∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-∀x1 (P(x1) ⊃ P(s(s(s(x1))))),
-P(0) ⊃ P(s(s(s(0)))),
+[p23] ∀x1 (P(x1) → P(s(s(s(x1))))),
+∀x1 (P(x1) → P(s(s(s(x1))))),
+P(0) → P(s(s(s(0)))),
 P(0)
 ⊢
-P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) ⊃ P(s(s(s(x1)))), s(s(s(0))), x1))
+P(s(s(s(s(s(s(s(s(s(0))))))))))    (ForallLeftRule(p22, Ant(3), P(x1) → P(s(s(s(x1)))), s(s(s(0))), x1))
 [p22] ∀x1...
 
 \end{clilisting}
@@ -2219,21 +2219,21 @@ grammar: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
-x_0 → s(s(s(s(x_1))))
+x_0 → s(s(s(s(s(s(x_1))))))
 
-x_0 → s(x_1)
+x_0 → s(s(s(x_1)))
+
+x_0 → x_1
+
+x_1 → s(s(s(x_2)))
 
 x_1 → s(s(x_2))
 
 x_1 → s(x_2)
 
-x_1 → x_2
-
 x_2 → 0
 
-x_2 → s(s(s(s(s(s(0))))))
-
-x_2 → s(s(s(s(s(s(s(s(s(s(s(s(0))))))))))))
+x_2 → s(s(s(s(s(s(s(s(s(0)))))))))
 
 gapt> lang.toSet subsetOf grammar.language
 res59: Boolean = true
@@ -2247,15 +2247,15 @@ res60: at.logic.gapt.grammars.VTRATG =
 Non-terminal vectors: (x_0), (x_1), (x_2)
 Terminals: 0, s
 
-x_0 → s(s(s(s(x_1))))
+x_0 → s(s(s(x_1)))
 
-x_0 → s(x_1)
+x_0 → x_1
+
+x_1 → s(s(s(x_2)))
 
 x_1 → s(s(x_2))
 
 x_1 → s(x_2)
-
-x_1 → x_2
 
 x_2 → 0
 

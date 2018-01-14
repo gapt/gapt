@@ -76,8 +76,8 @@ object eliminateCutsET {
     // This uses a slightly more optimized reduction step than described in the unpublished
     // paper "Expansion Trees with Cut".
     //
-    // Say we have an expansion proof with cut ∀x P(x) ⊃ ∀x P(x), Γ :- Δ where the cut expands
-    // to P(eigenvar) ⊃ P(inst_1) ∧ ‥ ∧ P(inst_n), and the deep sequent is T-valid (for a given theory T).
+    // Say we have an expansion proof with cut ∀x P(x) → ∀x P(x), Γ :- Δ where the cut expands
+    // to P(eigenvar) → P(inst_1) ∧ ‥ ∧ P(inst_n), and the deep sequent is T-valid (for a given theory T).
     // Let η_i be renamings of the eigenvariables above the eigenvariables in P(eigenvar) and all P(inst_i)
     // in the dependency order to fresh variables, and σ_i = η_i [eigenvar \ inst_i].
     // By applying an invertible rule to the cut-implication we see that the deep formulas of Γ :- Δ, P(eigenvar)
@@ -85,14 +85,14 @@ object eliminateCutsET {
     //
     // If there exists an σ_k such that the shallow formulas of P(eigenvar) and P(inst_i)σ_k are equal for all i,
     // then we can apply all σ_i to the first sequent, and apply σ_k to the second sequent and conclude that
-    // P(eigenvar)σ_1 ⊃ P(inst_1)σ_k, P(eigenvar)σ_2 ⊃ P(inst_2)σ_k, ‥, Γσ_1, Γσ_2, ‥ :- Δσ_1, Δσ_2, ‥
+    // P(eigenvar)σ_1 → P(inst_1)σ_k, P(eigenvar)σ_2 → P(inst_2)σ_k, ‥, Γσ_1, Γσ_2, ‥ :- Δσ_1, Δσ_2, ‥
     // is T-valid.
     //
     // In the general case we can still apply all σ_i to the first sequent, but we cannot apply
     // σ_1 to the second sequent--but it's not necessary to apply a substitution there, it just
     // keeps the quantifier complexity low.
     // In this case the following sequent becomes T-valid by the same argument:
-    // P(eigenvar)σ_1 ⊃ P(inst_1), P(eigenvar)σ_2 ⊃ P(inst_2), ‥, Γ, Γσ_1, Γσ_2, ‥ :- Δ, Δσ_1, Δσ_2, ‥
+    // P(eigenvar)σ_1 → P(inst_1), P(eigenvar)σ_2 → P(inst_2), ‥, Γ, Γσ_1, Γσ_2, ‥ :- Δ, Δσ_1, Δσ_2, ‥
     //
     // The resulting expansion proof will have duplicate eigenvariables since we did not rename the ones
     // that are not above the eigenvariables in the cut.  But these will get merged as they do not dominate
