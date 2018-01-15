@@ -26,7 +26,7 @@ object testExpansionImport extends scala.App {
     implicit val ctx = MutableContext.guess( problem )
     val cnf = time( "clausifier" ) { structuralCNF( problem ) }
 
-    time( "prover" ) { EProver.getResolutionProof( cnf ) } match {
+    time( "prover" ) { new EProver( Seq( "--auto-schedule", "--soft-cpu-limit=60", "--memory-limit=2048" ) ).getResolutionProof( cnf ) } match {
       case Some( resolution ) =>
         metric( "size_res_dag", resolution.dagLike.size )
         metric( "size_res_tree", resolution.treeLike.size )

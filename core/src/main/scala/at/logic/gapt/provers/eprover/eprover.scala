@@ -11,14 +11,14 @@ import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
 import at.logic.gapt.utils._
 
-object EProver extends EProver
-class EProver extends ResolutionProver with ExternalProgram {
+object EProver extends EProver( Seq() )
+class EProver( extraArgs: Seq[String] ) extends ResolutionProver with ExternalProgram {
   override def getResolutionProof( seq: Traversable[HOLClause] )( implicit ctx: Maybe[MutableContext] ): Option[ResolutionProof] =
     renameConstantsToFi.wrap( seq.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
-        ( logger.time( "eprover" ) { runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ), tptpIn ) }: @unchecked ) match {
+        ( logger.time( "eprover" ) { runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ) ++ extraArgs, tptpIn ) }: @unchecked ) match {
           case ( 0, output ) =>
             val lines = output.split( "\n" )
             require( lines.contains( "# SZS status Unsatisfiable" ) )
