@@ -1,5 +1,5 @@
+package at.logic.gapt.testing
 import ammonite.ops.FilePath
-import at.logic.gapt.expr.fol.folTermSize
 import at.logic.gapt.expr.{ Const, expressionSize }
 import at.logic.gapt.expr.hol.lcomp
 import at.logic.gapt.formats.tptp.TptpParser
@@ -7,7 +7,6 @@ import at.logic.gapt.proofs.MutableContext
 import at.logic.gapt.proofs.expansion.{ eliminateCutsET, eliminateDefsET }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.provers.eprover.EProver
-import at.logic.gapt.testing.MetricsPrinter
 import at.logic.gapt.utils.LogHandler
 
 object testExpansionImport extends scala.App {
