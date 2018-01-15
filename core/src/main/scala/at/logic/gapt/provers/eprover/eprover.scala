@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.resolution.ResolutionProof
 import at.logic.gapt.proofs.{ FOLClause, HOLClause, MutableContext }
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.{ ResolutionProver, renameConstantsToFi }
-import at.logic.gapt.utils.{ ExternalProgram, Maybe, runProcess, withTempFile }
+import at.logic.gapt.utils._
 
 object EProver extends EProver
 class EProver extends ResolutionProver with ExternalProgram {
@@ -18,14 +18,16 @@ class EProver extends ResolutionProver with ExternalProgram {
       ( renaming, cnf: Seq[HOLClause] ) => {
         val labelledCNF = cnf.zipWithIndex.map { case ( clause, index ) => s"formula$index" -> clause.asInstanceOf[FOLClause] }.toMap
         val tptpIn = TPTPFOLExporter.exportLabelledCNF( labelledCNF ).toString
-        ( runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ), tptpIn ): @unchecked ) match {
+        ( logger.time( "eprover" ) { runProcess.withExitValue( Seq( "eprover", "-p", "--tptp3-format" ), tptpIn ) }: @unchecked ) match {
           case ( 0, output ) =>
             val lines = output.split( "\n" )
             require( lines.contains( "# SZS status Unsatisfiable" ) )
-            val sketch = TptpProofParser.parse(
-              StringInputFile( lines.filterNot( _ startsWith "#" ).mkString( "\n" ) ),
-              labelledCNF.mapValues( Seq( _ ) ) )
-            Some( RefutationSketchToResolution( sketch ).getOrElse( throw new Exception( "Could not reconstruct proof" ) ) )
+            logger.time( "eprover_import" ) {
+              val sketch = TptpProofParser.parse(
+                StringInputFile( lines.filterNot( _ startsWith "#" ).mkString( "\n" ) ),
+                labelledCNF.mapValues( Seq( _ ) ) )
+              Some( RefutationSketchToResolution( sketch ).getOrElse( throw new Exception( "Could not reconstruct proof" ) ) )
+            }
           case ( 1, output ) =>
             val lines = output.split( "\n" )
             require( lines.contains( "# SZS status Satisfiable" ) )
