@@ -246,8 +246,12 @@ case class Subst( subProof: ResolutionProof, substitution: Substitution ) extend
 }
 object Subst {
   def ifNecessary( subProof: ResolutionProof, substitution: Substitution ): ResolutionProof =
-    if ( substitution( subProof.conclusion ) == subProof.conclusion ) subProof
-    else Subst( subProof, substitution )
+    subProof match {
+      case Subst( subProof2, substitution2 ) =>
+        Subst.ifNecessary( subProof2, substitution compose substitution2 )
+      case _ if substitution( subProof.conclusion ) == subProof.conclusion => subProof
+      case _ => Subst( subProof, substitution )
+    }
 
 }
 
