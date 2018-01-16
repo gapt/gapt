@@ -121,7 +121,7 @@ private[expansion] class Minimizer( val sequent: ExpansionSequent, val prover: P
    * @return a minimal expansion sequent.
    */
   private def computeAMinimal_( mes: ExpansionSequent ): ExpansionSequent = {
-    debug( "Minimizing a ExpansionSequent with " + numberOfInstancesET( mes ) + " instances..." )
+    debug( "Minimizing an ExpansionSequent with " + numberOfInstancesET( mes ) + " instances..." )
     val suc_opt = generateSuccessors( mes ).find( { s => prover.isValid( s map { _.deep } ) } )
     if ( suc_opt.isDefined )
       computeAMinimal_( suc_opt.get )
