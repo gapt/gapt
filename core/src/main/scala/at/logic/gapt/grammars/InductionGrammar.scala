@@ -18,10 +18,12 @@ case class InductionGrammar(
     gamma:       List[Var],
     productions: Vector[Production] ) {
 
-  for ( Production( lhs, rhs ) <- productions ) {
-    require( lhs == List( tau ) || lhs == gamma )
+  for ( prod @ Production( lhs, rhs ) <- productions ) {
+    require( lhs == List( tau ) || lhs == gamma, s"$lhs is not a nonterminal" )
     val fvs = freeVariables( rhs )
-    require( nus.values.exists( n => fvs.subsetOf( Set( alpha ) ++ gamma ++ n ) ) )
+    require(
+      nus.values.exists( n => fvs.subsetOf( Set( alpha ) ++ gamma ++ n ) ),
+      s"production violates variable condition: $prod" )
   }
 
   def nonTerminals: Vector[NonTerminalVect] =
@@ -81,7 +83,7 @@ object InductionGrammar {
   type NonTerminalVect = List[Var]
 
   case class Production( lhs: NonTerminalVect, rhs: List[Expr] ) {
-    require( lhs.size == rhs.size )
+    require( lhs.size == rhs.size, s"sides of production have nonequal size: $this" )
     for ( ( l, r ) <- lhs zip rhs ) require( l.ty == r.ty )
 
     def zipped: List[( Var, Expr )] = lhs zip rhs
