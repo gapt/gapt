@@ -7,7 +7,7 @@ import at.logic.gapt.proofs.ceres.{ CLS, CharFormPRP, SchematicStruct, Struct }
 import at.logic.gapt.proofs.gaptic.TacticsProof
 import at.logic.gapt.proofs.lk.LKProof
 
-object FunctionInterationRefutationPos extends TacticsProof( FunctionInterationSchema.ctx ) {
+object FunctionIterationRefutationPos extends TacticsProof( FunctionIterationSchema.ctx ) {
   val SCS: Map[CLS, ( Struct, Set[Var] )] = SchematicStruct( "phi" ).getOrElse( Map() )
   val CFPRP = CharFormPRP( SCS )
   CharFormPRP.PR( CFPRP )
