@@ -19,6 +19,11 @@ object extractInductionGrammar {
 
   def apply( p: ExpansionProof, encoding: InstanceTermEncoding )( implicit ctx: Context ): InductionGrammar = {
     if ( !p.isCutFree ) return apply( eliminateCutsET( p ), encoding )
+    if ( freeVariablesET( p ).nonEmpty ) // ground proof
+      return apply( Substitution( freeVariablesET( p ).map( v => v ->
+        ctx.getConstructors( v.ty ).toVector.flatten.
+        find( _.ty == v.ty ).
+        getOrElse( Const( "dummy", v.ty ) ) ) )( p ), encoding )
     require( p.inductions.length == 1, s"Number of inductions not equal to 1: ${p.inductions.length}" )
     val Vector( ind ) = p.inductions
     val nus = ind.constructorsSteps.map( c => c.constr -> c.evs.toList ).toMap

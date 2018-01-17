@@ -39,4 +39,12 @@ class ExtractInductionGrammarTest extends Specification with SatMatchers {
     ( enc.decodeToInstanceSequent( g.instanceLanguage( n ) ) :+ hof"P($n,0)" ) must beValidSequent
   }
 
+  "prod prop 01 sip" in {
+    import at.logic.gapt.examples.tip.prod.prop_01._
+    val enc = InstanceTermEncoding( simpleInductionProof.endSequent )
+    val g = extractInductionGrammar( simpleInductionProof )
+    val n = le"S(S(0))"
+    ( enc.decodeToInstanceSequent( g.instanceLanguage( n ) ) :+ hof"d $n = $n + $n" ) must beEValidSequent
+  }
+
 }
