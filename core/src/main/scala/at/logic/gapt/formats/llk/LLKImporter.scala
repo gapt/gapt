@@ -88,7 +88,8 @@ trait TokenToLKConverter {
     val ( ttokens, atokens ) = tatokens.partition {
       case TToken( _, _, _ )        => true;
       case t @ AToken( _, _, _, _ ) => false;
-      case t: Token                 => throw new Exception( "Severe error: rule tokens were already filtered out, but rule " + t + " still contained!" )
+      case t: Token => throw new Exception(
+        "Severe error: rule tokens were already filtered out, but rule " + t + " still contained!" )
     }.asInstanceOf[( List[TToken], List[AToken] )] //need to cast because partition returns Tokens
     //println("creating naming!")
     val naming = createNaming( ttokens )
@@ -110,7 +111,8 @@ trait TokenToLKConverter {
             val nformula = c( LLKFormulaParser.ASTtoHOL( naming, name ) )
             ( Nil, current._2 + ( ( nformula, current._1.reverse ) ) )
           } catch {
-            case e: Exception => throw new HybridLatexParserException( "Error in parsing CONTINUEWITH{" + name + "}{" + a + "}{" + s"}: " + e.getMessage, e )
+            case e: Exception => throw new HybridLatexParserException(
+              "Error in parsing CONTINUEWITH{" + name + "}{" + a + "}{" + s"}: " + e.getMessage, e )
           }
         case RToken( "CONTINUEWITH", _, _, _, _ ) =>
           throw new HybridLatexParserException( "The CONTINUEWITH statement needs a name giving the argument!" )
@@ -123,7 +125,9 @@ trait TokenToLKConverter {
       }
     } )
 
-    require( last.isEmpty, "There are some rules left after parsing the list, use CONTINUEFROM to give proof a name! " + last )
+    require(
+      last.isEmpty,
+      "There are some rules left after parsing the list, use CONTINUEFROM to give proof a name! " + last )
 
     //dependncy analysis
     val dependecies = getDependecyMap( naming, rm )
@@ -135,7 +139,8 @@ trait TokenToLKConverter {
       val f_proof: LKProof = completeProof( f, proofs_done, naming, rm( f ), axioms, llk_definitions )
       proofs_done + ( ( f, f_proof ) )
     } )
-    ExtendedProofDatabase( proofs, axioms, llk_definitions.map( d => llkDefinitionToLKDefinition( d._1, d._2 ).toTuple ) )
+    ExtendedProofDatabase( proofs, axioms, llk_definitions.map( d =>
+      llkDefinitionToLKDefinition( d._1, d._2 ).toTuple ) )
   }
 
   /* Creates the subproof proofname from a list of rules. Uses the naming function to create basic term and
@@ -161,161 +166,194 @@ trait TokenToLKConverter {
             case _ if ant == suc => //this is a workaround for the more restricted lk introduction rules
               AtomicExpansion( ant.head ) //TODO: remove atomic expansion when it's not necessary anymore
             case _ =>
-              TheoryAxiom( HOLSequent( ant, suc ) )
+              ProofLink( FOLAtom( "llkAxiom" ), HOLSequent( ant, suc ) )
           }
           proofstack = expaxiom :: proofstack
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "TAUTCOMPLETION" =>
-          require( ant.size == 1, "Tautological Axiom Completion needs exactly one formula in the antecedent, not " + ant.mkString( "," ) )
-          require( suc.size == 1, "Tautological Axiom Completion needs exactly one formula in the succedent, not " + suc.mkString( "," ) )
-          require( ant.head == suc.head, "Tautological Axiom Completion can only expand sequents of the form F :- F, not " + HOLSequent( ant, suc ) )
+          require(
+            ant.size == 1,
+            "Tautological Axiom Completion needs exactly one formula in the antecedent, not " + ant.mkString( "," ) )
+          require( suc.size == 1, "Tautological Axiom Completion needs exactly one formula in the succedent, not "
+            + suc.mkString( "," ) )
+          require(
+            ant.head == suc.head,
+            "Tautological Axiom Completion can only expand sequents of the form F :- F, not " +
+              HOLSequent( ant, suc ) )
           val rule = AtomicExpansion( ant.head )
           proofstack = rule :: proofstack
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "AUTOPROP" =>
           try {
             val Right( rule ) = solvePropositional( HOLSequent( ant, suc ) )
             proofstack = rule :: proofstack
             require(
               proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-              "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+              "Error creating rule! Expected sequent: " + f( fs ) +
+                " got " + f( proofstack.head.endSequent ) + " instead!" )
           } catch {
             case e: Exception =>
-              throw new HybridLatexParserException( "Autopropositional failed with the message: " + e.getMessage + nLine + "Stack Trace:" + nLine +
-                e.getStackTrace.mkString( "", nLine, nLine ), e )
+              throw new HybridLatexParserException(
+                "Autopropositional failed with the message: " + e.getMessage + nLine + "Stack Trace:" + nLine +
+                  e.getStackTrace.mkString( "", nLine, nLine ), e )
           }
         // --- quantifier rules ---
         case "ALLL" =>
           proofstack = handleWeakQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "EXR" =>
           proofstack = handleWeakQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ALLR" =>
           proofstack = handleStrongQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "EXL" =>
           proofstack = handleStrongQuantifier( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ANDR" =>
           proofstack = handleBinaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ORL" =>
           proofstack = handleBinaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "IMPL" =>
           proofstack = handleBinaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         // --- unary rules ---
         case "ORR" =>
           proofstack = handleUnaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "ANDL" =>
           proofstack = handleUnaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "IMPR" =>
           proofstack = handleUnaryLogicalOperator( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         // --- negation rules ---
         case "NEGL" =>
           proofstack = handleNegation( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "NEGR" =>
           proofstack = handleNegation( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- equational rules ---
         case "EQL" =>
           proofstack = handleEquality( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "EQR" =>
           proofstack = handleEquality( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- definition rules ---
         case "DEF" =>
           proofstack = handleDefinitions( proofstack, name, fs, auxterm, naming, rt, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- structural rules ---
         case "CONTRL" =>
           proofstack = handleContraction( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "CONTRR" =>
           proofstack = handleContraction( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "WEAKL" =>
           proofstack = handleWeakening( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "WEAKR" =>
           proofstack = handleWeakening( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "CUT" =>
           proofstack = handleCut( proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         // --- macro rules ---
         case "EQAXIOM" =>
           proofstack = handleEQAxiom( proofstack, name, fs, auxterm, sub, naming, rt, axioms, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         case "INSTAXIOM" =>
           proofstack = handleInstAxiom( proofstack, name, fs, auxterm, sub, naming, rt, axioms, definitions )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
 
         case "CONTINUEFROM" =>
           proofstack = handleLink( proofs, proofstack, name, fs, auxterm, naming, rt )
           require(
             proofstack.nonEmpty && proofstack.head.endSequent.multiSetEquals( fs ),
-            "Error creating rule! Expected sequent: " + f( fs ) + " got " + f( proofstack.head.endSequent ) + " instead!" )
+            "Error creating rule! Expected sequent: " + f( fs ) +
+              " got " + f( proofstack.head.endSequent ) + " instead!" )
         case "CONTINUEWITH" => ;
         case "COMMENT"      => ;
         case _              => throw new HybridLatexParserException( "Rule type " + name + " not yet implemented!" )
@@ -328,12 +366,16 @@ trait TokenToLKConverter {
   }
 
   /* Takes care of weak quantifiers. */
-  def handleWeakQuantifier( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleWeakQuantifier( current_proof: List[LKProof], ruletype: String,
+                            fs: HOLSequent, auxterm: Option[LambdaAST],
+                            naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof :: rest = current_proof
 
     val ( mainsequent, auxsequent, _ ) = filterContext( oldproof.endSequent, fs )
-    require( auxsequent.formulas.size == 1, "Exactly one auxiliary formula in weak quantifier rule required (no autocontraction allowed)! " + auxsequent )
+    require(
+      auxsequent.formulas.size == 1,
+      "Exactly one auxiliary formula in weak quantifier rule required (no autocontraction allowed)! " + auxsequent )
     val ( main, aux ) = ruletype match {
       //TODO: if you use ALLL instead of ALLR, you might get an index out of bounds exception!
       case "ALLL" => ( mainsequent.antecedent.head, auxsequent.antecedent.head )
@@ -343,12 +385,13 @@ trait TokenToLKConverter {
     def inferTerm( x: Var, holf: Formula ): Expr = {
       syntacticMatching( holf, aux ) match {
         case Some( sub ) =>
-          val s: Expr = sub.map.getOrElse( x, x ) //in case the variable was projected away, we use the identity function
+          val s: Expr = sub.map.getOrElse( x, x )
+          //in case the variable was projected away, we use the identity function
           if ( auxterm.nonEmpty ) {
             //try to use user provided term
             val t: Expr = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
             if ( s == t ) {
-              //              println("Remark: automatically inferred the auxiliaray term " + f(t) + " in formula "+f(f))
+              // println("Remark: automatically inferred the auxiliaray term " + f(t) + " in formula "+f(f))
               t
             } else {
               debug( "Preferring user specified term " + f( t ) + " over inferred term " + f( s ) + "." )
@@ -361,7 +404,8 @@ trait TokenToLKConverter {
 
         case None =>
           //          println("Remark: Could not infer substitution term, using user specified one!")
-          LLKFormulaParser.ASTtoHOL( naming, auxterm.getOrElse( throw new HybridLatexParserException( "No substitution term found, please specify! " + rt ) ) )
+          LLKFormulaParser.ASTtoHOL( naming, auxterm.getOrElse(
+            throw new HybridLatexParserException( "No substitution term found, please specify! " + rt ) ) )
       }
     }
 
@@ -381,11 +425,15 @@ trait TokenToLKConverter {
     }
   }
 
-  def handleStrongQuantifier( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleStrongQuantifier( current_proof: List[LKProof], ruletype: String,
+                              fs: HOLSequent, auxterm: Option[LambdaAST],
+                              naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof = current_proof.head
     val ( mainsequent, auxsequent, _ ) = filterContext( oldproof.endSequent, fs )
-    require( auxsequent.formulas.size == 1, "Exactly one auxiliary formula in strong quantifier rule required! " + auxsequent )
+    require(
+      auxsequent.formulas.size == 1,
+      "Exactly one auxiliary formula in strong quantifier rule required! " + auxsequent )
     val ( main, aux ) = ruletype match {
       case "EXL"  => ( mainsequent.antecedent.head, auxsequent.antecedent.head )
       case "ALLR" => ( mainsequent.succedent.head, auxsequent.succedent.head )
@@ -400,24 +448,32 @@ trait TokenToLKConverter {
             val t: Expr = LLKFormulaParser.ASTtoHOL( naming, auxterm.get )
             if ( s == t ) {
               //              println("Remark: automatically inferred the auxiliaray term in rule " + rt + ".")
-              require( t.isInstanceOf[Var], "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
+              require(
+                t.isInstanceOf[Var],
+                "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
               t
             } else {
               debug( "Preferring user specified term " + t + " over inferred term " + s + "." )
-              require( t.isInstanceOf[Var], "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
+              require(
+                t.isInstanceOf[Var],
+                "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
               t
             }
           } else {
             //no user provided term
-            //            require(s.isInstanceOf[Var],  "Strong quantifier rule needs an eigenvariable as argument, but "+s+" is not!")
+            // require(s.isInstanceOf[Var],
+            //  "Strong quantifier rule needs an eigenvariable as argument, but "+s+" is not!")
             s
           }
 
         case None =>
           //automatic mode failed
           debug( "Remark: Could not infer substitution term, using user specified one!" )
-          val t = LLKFormulaParser.ASTtoHOL( naming, auxterm.getOrElse( throw new HybridLatexParserException( "No substitution term found, please specify! " + rt ) ) )
-          require( t.isInstanceOf[Var], "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
+          val t = LLKFormulaParser.ASTtoHOL( naming, auxterm.getOrElse(
+            throw new HybridLatexParserException( "No substitution term found, please specify! " + rt ) ) )
+          require(
+            t.isInstanceOf[Var],
+            "Strong quantifier rule needs an eigenvariable as argument, but " + t + " is not!" )
           t
       }
     }
@@ -437,7 +493,9 @@ trait TokenToLKConverter {
     }
   }
 
-  def handleBinaryLogicalOperator( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleBinaryLogicalOperator( current_proof: List[LKProof], ruletype: String,
+                                   fs: HOLSequent, auxterm: Option[LambdaAST],
+                                   naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
@@ -448,48 +506,79 @@ trait TokenToLKConverter {
         case "ANDR" =>
           mainsequent.succedent.head match {
             case And( l, r ) =>
-              require( auxsequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas" + f( auxsequent ) )
-              require( auxsequent.succedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
-              require( leftproof.endSequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.endSequent )
-              require( rightproof.endSequent.succedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + rightproof.endSequent )
+              require(
+                auxsequent.succedent.contains( l ),
+                "Left branch formula " + l + " not found in auxiliary formulas" + f( auxsequent ) )
+              require(
+                auxsequent.succedent.contains( r ),
+                "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
+              require(
+                leftproof.endSequent.succedent.contains( l ),
+                "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.endSequent )
+              require(
+                rightproof.endSequent.succedent.contains( r ),
+                "Right branch formula " + r + " not found in auxiliary formulas!" + rightproof.endSequent )
               val inf = AndRightRule( leftproof, l, rightproof, r )
               val contr = ContractionMacroRule( inf, fs )
               contr :: stack
-            case _ => throw new HybridLatexParserException( "Main formula of a conjunction right rule must have conjuntion as outermost operator!" )
+            case _ => throw new HybridLatexParserException(
+              "Main formula of a conjunction right rule must have conjuntion as outermost operator!" )
           }
 
         case "ORL" =>
           mainsequent.antecedent.head match {
             case Or( l, r ) =>
-              require( auxsequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
-              require( auxsequent.antecedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
-              require( leftproof.endSequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.endSequent )
-              require( rightproof.endSequent.antecedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + rightproof.endSequent )
+              require(
+                auxsequent.antecedent.contains( l ),
+                "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
+              require(
+                auxsequent.antecedent.contains( r ),
+                "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
+              require(
+                leftproof.endSequent.antecedent.contains( l ),
+                "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.endSequent )
+              require(
+                rightproof.endSequent.antecedent.contains( r ),
+                "Right branch formula " + r + " not found in auxiliary formulas!" + rightproof.endSequent )
               val inf = OrLeftRule( leftproof, l, rightproof, r )
               val contr = ContractionMacroRule( inf, fs )
               contr :: stack
-            case _ => throw new HybridLatexParserException( "Main formula of a disjunction left rule must have disjunction as outermost operator!" )
+            case _ => throw new HybridLatexParserException(
+              "Main formula of a disjunction left rule must have disjunction as outermost operator!" )
           }
 
         case "IMPL" =>
           mainsequent.antecedent.head match {
             case Imp( l, r ) =>
-              require( auxsequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
-              require( auxsequent.antecedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
-              require( leftproof.endSequent.succedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.endSequent )
-              require( rightproof.endSequent.antecedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + rightproof.endSequent )
+              require(
+                auxsequent.succedent.contains( l ),
+                "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
+              require(
+                auxsequent.antecedent.contains( r ),
+                "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
+              require(
+                leftproof.endSequent.succedent.contains( l ),
+                "Left branch formula " + l + " not found in auxiliary formulas " + leftproof.endSequent )
+              require(
+                rightproof.endSequent.antecedent.contains( r ),
+                "Right branch formula " + r + " not found in auxiliary formulas!" + rightproof.endSequent )
               val inf = ImpLeftRule( leftproof, l, rightproof, r )
               val contr = ContractionMacroRule( inf, fs )
               contr :: stack
-            case _ => throw new HybridLatexParserException( "Main formula of a implication left rule must have implication as outermost operator!" )
+            case _ => throw new HybridLatexParserException(
+              "Main formula of a implication left rule must have implication as outermost operator!" )
           }
       }
     } catch {
-      case e: Exception => throw new HybridLatexParserException( "Error in handling binary rule with end-sequent: " + f( fs ) + sys.props( "line.separator" ) + "Problem: " + e.getMessage, e )
+      case e: Exception => throw new HybridLatexParserException(
+        "Error in handling binary rule with end-sequent: " + f( fs ) + sys.props( "line.separator" ) +
+          "Problem: " + e.getMessage, e )
     }
   }
 
-  def handleUnaryLogicalOperator( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleUnaryLogicalOperator( current_proof: List[LKProof], ruletype: String,
+                                  fs: HOLSequent, auxterm: Option[LambdaAST],
+                                  naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val top :: stack = current_proof
 
@@ -512,7 +601,8 @@ trait TokenToLKConverter {
 
             val contr = ContractionMacroRule( inf, fs, strict = true )
             contr :: stack
-          case _ => throw new HybridLatexParserException( "Main formula of a disjunction right rule must have conjunction as outermost operator!" )
+          case _ => throw new HybridLatexParserException(
+            "Main formula of a disjunction right rule must have conjunction as outermost operator!" )
         }
 
       case "ANDL" =>
@@ -531,25 +621,37 @@ trait TokenToLKConverter {
 
             val contr = ContractionMacroRule( inf, fs, strict = true )
             contr :: stack
-          case _ => throw new HybridLatexParserException( "Main formula of a conjunction left rule must have disjunction as outermost operator!" )
+          case _ => throw new HybridLatexParserException(
+            "Main formula of a conjunction left rule must have disjunction as outermost operator!" )
         }
 
       case "IMPR" =>
         mainsequent.succedent.head match {
           case Imp( l, r ) =>
-            require( auxsequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
-            require( auxsequent.succedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
-            require( top.endSequent.antecedent.contains( l ), "Left branch formula " + l + " not found in auxiliary formulas " + top.endSequent )
-            require( top.endSequent.succedent.contains( r ), "Right branch formula " + r + " not found in auxiliary formulas!" + top.endSequent )
+            require(
+              auxsequent.antecedent.contains( l ),
+              "Left branch formula " + l + " not found in auxiliary formulas " + f( auxsequent ) )
+            require(
+              auxsequent.succedent.contains( r ),
+              "Right branch formula " + r + " not found in auxiliary formulas!" + f( auxsequent ) )
+            require(
+              top.endSequent.antecedent.contains( l ),
+              "Left branch formula " + l + " not found in auxiliary formulas " + top.endSequent )
+            require(
+              top.endSequent.succedent.contains( r ),
+              "Right branch formula " + r + " not found in auxiliary formulas!" + top.endSequent )
             val inf = ImpRightRule( top, l, r )
             val contr = ContractionMacroRule( inf, fs )
             contr :: stack
-          case _ => throw new HybridLatexParserException( "Main formula of a implication right rule must have implication as outermost operator!" )
+          case _ => throw new HybridLatexParserException(
+            "Main formula of a implication right rule must have implication as outermost operator!" )
         }
     }
   }
 
-  def handleNegation( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleNegation( current_proof: List[LKProof], ruletype: String,
+                      fs: HOLSequent, auxterm: Option[LambdaAST],
+                      naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val top :: stack = current_proof
     val ( main, aux, context ) = filterContext( top.endSequent, fs )
@@ -559,7 +661,9 @@ trait TokenToLKConverter {
         case Neg( g ) =>
           NegLeftRule( intermediate, g )
         case _ =>
-          throw new HybridLatexParserException( "Trying to apply the negation rule on formula " + f + " without negation as outermost symbol on " + top.endSequent + " to get " + fs )
+          throw new HybridLatexParserException(
+            "Trying to apply the negation rule on formula " + f +
+              " without negation as outermost symbol on " + top.endSequent + " to get " + fs )
       }
     } )
     val right = main.succedent.foldLeft( left )( ( intermediate, f ) => {
@@ -567,18 +671,25 @@ trait TokenToLKConverter {
         case Neg( g ) =>
           NegRightRule( intermediate, g )
         case _ =>
-          throw new HybridLatexParserException( "Trying to apply the negation rule on formula " + f + " without negation as outermost symbol on " + top.endSequent + " to get " + fs )
+          throw new HybridLatexParserException(
+            "Trying to apply the negation rule on formula " + f +
+              " without negation as outermost symbol on " + top.endSequent + " to get " + fs )
       }
     } )
 
     val contr = ContractionMacroRule( right, fs, strict = false )
 
-    require( contr.endSequent multiSetEquals fs, "Could not create target sequent " + fs + " by a series of negations from " + top.endSequent + " but got " + contr.endSequent + " instead!" )
+    require(
+      contr.endSequent multiSetEquals fs,
+      "Could not create target sequent " + fs + " by a series of negations from " + top.endSequent +
+        " but got " + contr.endSequent + " instead!" )
     contr :: stack
   }
 
   //TODO: refactor, a lot of code is already done in the rule constructors now
-  def handleEquality( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleEquality( current_proof: List[LKProof], ruletype: String,
+                      fs: HOLSequent, auxterm: Option[LambdaAST],
+                      naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
@@ -608,7 +719,8 @@ trait TokenToLKConverter {
         ) yield { ( s, t, e, f, main ) }
 
         require( candidates.nonEmpty, "For an eq:l rule, could not find a possible replacement of an equation from "
-          + lefteqs.map( f( _ ) ).mkString( "(", ",", ")" ) + " in " + fs.antecedent.map( f( _ ) ).mkString( "(", ",", ")" ) )
+          + lefteqs.map( f( _ ) ).mkString( "(", ",", ")" ) + " in " +
+          fs.antecedent.map( f( _ ) ).mkString( "(", ",", ")" ) )
 
         //now we try to create an inference from each candidate
         val inferences: Seq[LKProof] = candidates.flatMap( args => {
@@ -617,7 +729,8 @@ trait TokenToLKConverter {
             //we check if we can paramodulate s=t ...
             checkReplacement( s, t, f, main ) match {
               case EqualModuloEquality( _ ) =>
-                val rule = CutRule( leftproof, eq, EqualityLeftRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
+                val rule = CutRule( leftproof, eq,
+                  EqualityLeftRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
                 try {
                   ContractionMacroRule( rule, fs ) :: Nil
                 } catch {
@@ -631,7 +744,8 @@ trait TokenToLKConverter {
             //if not we try t=s....
             checkReplacement( t, s, f, main ) match {
               case EqualModuloEquality( _ ) =>
-                val rule = CutRule( leftproof, eq, EqualityLeftRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
+                val rule = CutRule( leftproof, eq,
+                  EqualityLeftRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
                 try {
                   ContractionMacroRule( rule, fs, strict = false ) :: Nil
                 } catch {
@@ -664,7 +778,8 @@ trait TokenToLKConverter {
         ) yield { ( s, t, e, f, main ) }
 
         require( candidates.nonEmpty, "For an eq:r rule, could not find a possible replacement of an equation from "
-          + lefteqs.map( f( _ ) ).mkString( "(", ",", ")" ) + " in " + fs.succedent.map( f( _ ) ).mkString( "(", ",", ")" ) )
+          + lefteqs.map( f( _ ) ).mkString( "(", ",", ")" ) + " in " +
+          fs.succedent.map( f( _ ) ).mkString( "(", ",", ")" ) )
 
         //now we try to create an inference from each candidate
         val inferences: Seq[LKProof] = candidates.flatMap( args => {
@@ -676,7 +791,8 @@ trait TokenToLKConverter {
             checkReplacement( s, t, f, main ) match {
               case EqualModuloEquality( _ ) =>
                 //println("found!")
-                val rule = CutRule( leftproof, eq, EqualityRightRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
+                val rule = CutRule( leftproof, eq,
+                  EqualityRightRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
                 try {
                   ContractionMacroRule( rule, fs, strict = false ) :: Nil
                 } catch {
@@ -693,7 +809,8 @@ trait TokenToLKConverter {
             checkReplacement( t, s, f, main ) match {
               case EqualModuloEquality( _ ) =>
                 //println("found!")
-                val rule = CutRule( leftproof, eq, EqualityRightRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
+                val rule = CutRule( leftproof, eq,
+                  EqualityRightRule( WeakeningLeftRule( rightproof, eq ), eq, f, main ), eq )
                 try {
                   ContractionMacroRule( rule, fs, strict = false ) :: Nil
                 } catch {
@@ -726,7 +843,9 @@ trait TokenToLKConverter {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parent :: stack = current_proof
     val ( mainsequent, auxsequent, context ) = filterContext( parent.endSequent, fs )
-    require( auxsequent.formulas.size == 1, "Definition rules expect exactly one auxiliary formula, not " + f( auxsequent ) )
+    require(
+      auxsequent.formulas.size == 1,
+      "Definition rules expect exactly one auxiliary formula, not " + f( auxsequent ) )
     require( ( auxsequent.antecedent.size == mainsequent.antecedent.size ) &&
       ( auxsequent.succedent.size == mainsequent.succedent.size ), "The definition needs to be on the same side!" )
 
@@ -742,7 +861,8 @@ trait TokenToLKConverter {
         } catch { case e: Exception => true } ) match {
           case d :: _ => DefinitionRightRule( parent, aux, main )
           case _ =>
-            throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
+            throw new HybridLatexParserException(
+              "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
         rule :: stack
       case ( HOLSequent( Vector( aux ), Vector() ), HOLSequent( Vector( main ), Vector() ) ) =>
@@ -752,23 +872,29 @@ trait TokenToLKConverter {
         } catch { case e: Exception => true } ) match {
           case d :: _ => DefinitionLeftRule( parent, aux, main )
           case _ =>
-            throw new HybridLatexParserException( "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
+            throw new HybridLatexParserException(
+              "Couldn't find a matching definition to infer " + f( main ) + " from " + f( aux ) )
         }
         rule :: stack
       case _ =>
-        throw new HybridLatexParserException( "Error in creation of definition rule, can not infer " + f( mainsequent ) + " from " + f( auxsequent ) )
+        throw new HybridLatexParserException(
+          "Error in creation of definition rule, can not infer " + f( mainsequent ) + " from " + f( auxsequent ) )
     }
   }
 
   /*   =================== STRUCTURAL RULES =============================    */
-  def handleContraction( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleContraction( current_proof: List[LKProof], ruletype: String,
+                         fs: HOLSequent, auxterm: Option[LambdaAST],
+                         naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parentproof :: stack = current_proof
     val inf = ContractionMacroRule( parentproof, fs, strict = false )
     inf :: stack
   }
 
-  def handleWeakening( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleWeakening( current_proof: List[LKProof], ruletype: String,
+                       fs: HOLSequent, auxterm: Option[LambdaAST],
+                       naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val parentproof :: stack = current_proof
     //val inf = weaken(parentproof, fs)
@@ -776,18 +902,31 @@ trait TokenToLKConverter {
     inf :: stack
   }
 
-  def handleCut( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
+  def handleCut( current_proof: List[LKProof], ruletype: String,
+                 fs: HOLSequent, auxterm: Option[LambdaAST],
+                 naming: ( String ) => Expr, rt: RToken ): List[LKProof] = {
     require( current_proof.size > 1, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val rightproof :: leftproof :: stack = current_proof
 
     val auxsequent = ( leftproof.endSequent ++ rightproof.endSequent ) diff fs
-    require( auxsequent.antecedent.size == 1 && auxsequent.succedent.size == 1, "Need exactly one formula in the antecedent and in the succedent of the parents!" + f( auxsequent ) )
-    require( auxsequent.antecedent.head == auxsequent.succedent.head, "Cut formula right (" + auxsequent.antecedent.head + ") is not equal to cut formula left (" + auxsequent.succedent.head + ")" )
+    require(
+      auxsequent.antecedent.size == 1 && auxsequent.succedent.size == 1,
+      "Need exactly one formula in the antecedent and in the succedent of the parents!" + f( auxsequent ) )
+    require(
+      auxsequent.antecedent.head == auxsequent.succedent.head,
+      "Cut formula right (" + auxsequent.antecedent.head +
+        ") is not equal to cut formula left (" + auxsequent.succedent.head + ")" )
     val cutformula = auxsequent.antecedent.head
-    require( leftproof.endSequent.succedent contains cutformula, "Cut formula " + cutformula + " must occur in succedent of " + leftproof.endSequent )
-    require( rightproof.endSequent.antecedent contains cutformula, "Cut formula " + cutformula + " must occur in antecedent of " + rightproof.endSequent )
+    require(
+      leftproof.endSequent.succedent contains cutformula,
+      "Cut formula " + cutformula + " must occur in succedent of " + leftproof.endSequent )
+    require(
+      rightproof.endSequent.antecedent contains cutformula,
+      "Cut formula " + cutformula + " must occur in antecedent of " + rightproof.endSequent )
     val inf = CutRule( leftproof, rightproof, cutformula )
-    require( inf.endSequent multiSetEquals fs, "Inferred sequent " + inf.endSequent + " is what was not expected: " + fs )
+    require(
+      inf.endSequent multiSetEquals fs,
+      "Inferred sequent " + inf.endSequent + " is what was not expected: " + fs )
     inf :: stack
   }
 
@@ -804,8 +943,11 @@ trait TokenToLKConverter {
       }
     } )
 
-    require( ps.nonEmpty, "None of the proofs in " + proofs.keys.mkString( "(", ",", ")" ) + " matches proof link " + link )
-    require( ps.head.endSequent.multiSetEquals( fs ), "LINK to " + f( link ) + " must give " + f( fs ) + " but gives " + f( ps.head.endSequent ) )
+    require( ps.nonEmpty, "None of the proofs in " +
+      proofs.keys.mkString( "(", ",", ")" ) + " matches proof link " + link )
+    require(
+      ps.head.endSequent.multiSetEquals( fs ),
+      "LINK to " + f( link ) + " must give " + f( fs ) + " but gives " + f( ps.head.endSequent ) )
 
     ps.head :: current_proof
 
@@ -815,7 +957,9 @@ trait TokenToLKConverter {
 
   def createSubstitution( naming: String => Expr, astlist: List[( ast.Var, LambdaAST )] ): Substitution = {
     val terms: List[( Var, Expr )] = astlist.foldLeft( List[( Var, Expr )]() )( ( list, p ) => {
-      ( LLKFormulaParser.ASTtoHOL( naming, p._1 ).asInstanceOf[Var], LLKFormulaParser.ASTtoHOL( naming, p._2 ) ) :: list
+      (
+        LLKFormulaParser.ASTtoHOL( naming, p._1 ).asInstanceOf[Var],
+        LLKFormulaParser.ASTtoHOL( naming, p._2 ) ) :: list
     } )
     Substitution( terms.reverse )
   }
@@ -860,7 +1004,8 @@ trait TokenToLKConverter {
 
     require( candidates.nonEmpty, "Could not find equational axiom for " + f( auxf ) )
     if ( candidates.size > 1 )
-      debug( "Warning: Axiom not uniquely specified, possible candidates: " + candidates.map( x => f( x._1 ) + " " + x._2 ).mkString( "," ) )
+      debug( "Warning: Axiom not uniquely specified, possible candidates: " +
+        candidates.map( x => f( x._1 ) + " " + x._2 ).mkString( "," ) )
     val ( name, axiom, sub2 ) = candidates.head
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
@@ -898,8 +1043,10 @@ trait TokenToLKConverter {
     cproof :: rest
   }
 
-  def handleInstAxiom( current_proof: List[LKProof], ruletype: String, fs: HOLSequent, auxterm: Option[LambdaAST], subterm: List[( ast.Var, LambdaAST )],
-                       naming: ( String ) => Expr, rt: RToken, axioms: Map[Formula, Formula], definitions: Map[Expr, Expr] ): List[LKProof] = {
+  def handleInstAxiom( current_proof: List[LKProof], ruletype: String,
+                       fs: HOLSequent, auxterm: Option[LambdaAST], subterm: List[( ast.Var, LambdaAST )],
+                       naming: ( String ) => Expr, rt: RToken,
+                       axioms: Map[Formula, Formula], definitions: Map[Expr, Expr] ): List[LKProof] = {
     require( current_proof.nonEmpty, "Imbalanced proof tree in application of " + ruletype + " with es: " + fs )
     val oldproof :: rest = current_proof
     //require(auxterm.isDefined, "Error creating an stantiate axiom rule: Need instantiation annotation!")
@@ -952,7 +1099,8 @@ trait TokenToLKConverter {
 
     require( candidates.nonEmpty, "Could not find instance axiom for " + f( auxf ) )
     if ( candidates.size > 1 )
-      debug( "Warning: Axiom not uniquely specified, possible candidates: " + candidates.map( x => f( x._1 ) + " " + x._2 ).mkString( "," ) )
+      debug( "Warning: Axiom not uniquely specified, possible candidates: " +
+        candidates.map( x => f( x._1 ) + " " + x._2 ).mkString( "," ) )
     val ( name, axiom, sub2 ) = candidates.head
     //definitions map (x => if (x._1 syntaxEquals(axformula)) println(x._1 +" -> "+x._2))
     val axiomconjunction = c( definitions( axformula ) )
@@ -963,7 +1111,8 @@ trait TokenToLKConverter {
     ContractionMacroRule( axrule, fs, strict = false ) :: rest
   }
 
-  /* given a map of elements to lists of dependant elements (e.g. a node's children in a graph), calculate a list l where
+  /* given a map of elements to lists of dependant elements (e.g. a node's children in a graph),
+   calculate a list l where
    * for every element a occurring before an element b in l we know that a does not depend on b.
    * Throws an exception, if the dependency graph contains cycles. */
   def getOrdering[T]( pm: Map[T, List[T]] ): List[T] = {
@@ -979,7 +1128,8 @@ trait TokenToLKConverter {
     }
   }
 
-  /* Extracts a map of dependencies between subproofs from a mapping of proof names to the token lists representing them. */
+  /* Extracts a map of dependencies between subproofs from a mapping of proof names to the
+   token lists representing them. */
   def getDependecyMap( naming: String => Expr, pm: Map[Formula, List[RToken]] ): Map[Formula, List[Formula]] = {
     val proofnames = pm.keySet.toList
     // only keep continuefrom tokens in the lists, map to the formulas in
@@ -1035,8 +1185,10 @@ trait TokenToLKConverter {
     val csequent = fs_new diff ndiff
 
     try {
-      require( ndiff.formulas.length == 1, "We want exactly one primary formula, not: " + f( ndiff ) + " in " + f( fs_new ) )
-      require( odiff.formulas.nonEmpty, "We want at least one auxiliary formula, not: " + f( odiff ) + " in " + f( fs_old ) )
+      require( ndiff.formulas.length == 1, "We want exactly one primary formula, not: " + f( ndiff ) +
+        " in " + f( fs_new ) )
+      require( odiff.formulas.nonEmpty, "We want at least one auxiliary formula, not: " + f( odiff ) +
+        " in " + f( fs_old ) )
     } catch {
       case e: Exception => throw new HybridLatexParserException( e.getMessage, e )
     }
@@ -1105,9 +1257,11 @@ trait TokenToLKConverter {
           require(
             freeVariables( lformula ) == freeVariables( rformula ),
             "Definition formulas " + lformula + " and " + rformula + " do not have the same set of free variables!" +
-              sys.props( "line.separator" ) + freeVariables( lformula ) + sys.props( "line.separator" ) + freeVariables( rformula ) )
+              sys.props( "line.separator" ) + freeVariables( lformula ) + sys.props( "line.separator" ) +
+              freeVariables( rformula ) )
           map + ( ( lformula, rformula ) )
-        case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " + lformula )
+        case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " +
+          lformula )
       }
 
     } )
@@ -1129,9 +1283,11 @@ trait TokenToLKConverter {
             "The types of defined formulas and definition must match, but are: " + f1.ty + " and " + f2.ty )
           require(
             freeVariables( lexpression ) == freeVariables( rexpression ),
-            "Definition function " + lexpression + " and " + rexpression + " do not have the same set of free variables!" )
+            "Definition function " + lexpression + " and " + rexpression +
+              " do not have the same set of free variables!" )
           map + ( ( lexpression, rexpression ) )
-        case _ => throw new HybridLatexParserException( "Left hand side of a definition must be an atom, but is " + lexpression )
+        case _ => throw new HybridLatexParserException(
+          "Left hand side of a definition must be an atom, but is " + lexpression )
       }
 
     } )
@@ -1151,7 +1307,8 @@ trait TokenToLKConverter {
    * return a triple: (sequent with main formula,
    *                   sequent with auxiliary and uncontracted formulas,
    *                   context sequent) */
-  def filterContext( fs_old1: HOLSequent, fs_old2: HOLSequent, fs_new: HOLSequent ): ( HOLSequent, HOLSequent, HOLSequent ) =
+  def filterContext( fs_old1: HOLSequent, fs_old2: HOLSequent,
+                     fs_new: HOLSequent ): ( HOLSequent, HOLSequent, HOLSequent ) =
     filterContext( fs_old1 ++ fs_old2, fs_new )
 
   /* removes univarsal quantifiers from f and returns the list of quantified variables together
@@ -1171,12 +1328,14 @@ trait TokenToLKConverter {
     }
 
   def getAxiomLookupProof( name: Formula, axiom: Formula, instance: Formula,
-                           axiomconj: Formula, axiomproof: LKProof, sub: Substitution, definitions: List[Definition] ): ( Formula, LKProof ) = {
+                           axiomconj: Formula, axiomproof: LKProof,
+                           sub: Substitution, definitions: List[Definition] ): ( Formula, LKProof ) = {
     axiomconj match {
       case Atom( c @ Const( n, To ), List() ) =>
         val pi = proveInstanceFrom( axiom, instance, sub, axiomproof )
         val d = definitions.find( _.what == c ).getOrElse(
-          throw new Exception( s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" ) )
+          throw new Exception(
+            s"could not find a definition for $c in ${definitions.map( _.what ).sortBy( _.name )}" ) )
         ( axiomconj, DefinitionLeftRule( pi, axiom, axiomconj ) )
 
       case And( x, y ) if formula_contains_atom( x, name ) =>
@@ -1203,7 +1362,8 @@ trait TokenToLKConverter {
     //val (qs,body) = stripUniversalQuantifiers(axiom)
     proveInstance_( axiom, instance, sub, uproof )._2
   }
-  def proveInstance_( axiom: Formula, instance: Formula, sub: Substitution, axiomproof: LKProof ): ( Formula, LKProof ) = {
+  def proveInstance_( axiom: Formula, instance: Formula,
+                      sub: Substitution, axiomproof: LKProof ): ( Formula, LKProof ) = {
     //    println("Prove instance with sub "+f(sub))
     axiom match {
       case All( v, s ) =>
@@ -1211,7 +1371,8 @@ trait TokenToLKConverter {
         ( c( sub( axiom ) ), ForallLeftRule( uproof, c( sub( axiom ) ), sub.map( v ) ) )
       case f if normalize( sub( f ) ) syntaxEquals instance =>
         ( instance, axiomproof )
-      case _ => throw new Exception( "Implementation error! Could not de++ " + f( axiom ) + " subterm=" + sub( axiom ) + " need=" + f( instance ) )
+      case _ => throw new Exception(
+        "Implementation error! Could not de++ " + f( axiom ) + " subterm=" + sub( axiom ) + " need=" + f( instance ) )
     }
   }
 }

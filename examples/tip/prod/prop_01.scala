@@ -42,9 +42,19 @@ object prop_01 extends TacticsProof {
     allR; allL( "lem", le"x:nat", le"x:nat" ); quasiprop
   }
 
+  val simpleInductionProof = Lemma( sequent ) {
+    allR; cut( "lem", hof"!y (x + S y = S (x + y) & d x = x + x)" ); forget( "g" )
+    induction( hov"x:nat" ).onAll( allR andThen destruct( "lem" ) )
+    rewrite.many ltr "p0"; refl
+    rewrite.many ltr ( "d0", "p0" ); refl
+    rewrite.many ltr "ps"; allL( "IHx_0", le"y:nat" ); quasiprop
+    rewrite.many ltr ( "ps", "ds" ); allL( "IHx_0", le"x_0:nat" ); quasiprop
+    escargot
+  }
+
   val treeGrammar = Lemma( sequent ) {
     cut( "p0r", hof"!x x+0=x" ); forget( "g" ); decompose; induction( hov"x: nat" ).onAll( escargot )
-    cut( "psr", hof"!x!y x+S(y)=S(x+y)" ); forget( "g" ); allR; induction( hov"x: nat" ).onAll( decompose andThen escargot )
+    cut( "psr", hof"!x!y x+S(y)=S(x+y)" ); forget( "g" ); allR; induction( hov"x: nat" ).onAll( escargot.withDeskolemization )
 
     treeGrammarInduction
       .canSolSize( 1 )

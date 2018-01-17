@@ -94,18 +94,24 @@ object ViperOptions {
       case "--onquant" :: i :: rest => parseTreeGrammar( rest, opts.copy( goalQuantifier = i.toInt ) )
       case "--prover" :: prover :: rest => parseTreeGrammar(
         rest,
-        opts.copy( instanceProver = provers.getOrElse( prover, throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
+        opts.copy( instanceProver = provers.getOrElse(
+          prover,
+          throw new IllegalArgumentException( s"unknown prover: $prover" ) ) ) )
       case "--instnum" :: instNum :: rest => parseTreeGrammar( rest, opts.copy( instanceNumber = instNum.toInt ) )
       case "--instsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( instanceSize = a.toFloat -> b.toFloat ) )
-      case "--qtys" :: qtys :: rest       => parseTreeGrammar( rest, opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
+      case "--qtys" :: qtys :: rest => parseTreeGrammar(
+        rest,
+        opts.copy( quantTys = Some( qtys.split( "," ).toSeq.filter( _.nonEmpty ) ) ) )
       case "--gramw" :: w :: rest =>
         val f: InductionGrammar.Production => Int = w match {
           case "scomp" => r => folTermSize( r.lhs ) + folTermSize( r.rhs )
           case "nprods" => _ => 1
         }
         parseTreeGrammar( rest, opts.copy( grammarWeighting = f ) )
-      case "--tchknum" :: num :: rest       => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
-      case "--tchksize" :: a :: b :: rest   => parseTreeGrammar( rest, opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
+      case "--tchknum" :: num :: rest => parseTreeGrammar( rest, opts.copy( tautCheckNumber = num.toInt ) )
+      case "--tchksize" :: a :: b :: rest => parseTreeGrammar(
+        rest,
+        opts.copy( tautCheckSize = a.toFloat -> b.toFloat ) )
       case "--cansolsize" :: a :: b :: rest => parseTreeGrammar( rest, opts.copy( canSolSize = a.toFloat -> b.toFloat ) )
       case _                                => ( args, opts )
     }
@@ -125,7 +131,8 @@ object Viper {
           10.seconds -> AnalyticInductionTactic( SequentialInductionAxioms(), Escargot ).aka( "analytic sequential" ),
           10.seconds -> AnalyticInductionTactic( IndependentInductionAxioms(), Escargot ).aka( "analytic independent" ) ) ++
           ( 0 until numVars ).toList.map( i => 20.seconds -> introUnivsExcept( i ).andThen(
-            new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) ).aka( s"treegrammar without quantifiers $i" ) ) ++
+            new TreeGrammarInductionTactic( opts.treeGrammarProverOptions.copy( quantTys = Some( Seq() ) ) ) )
+            .aka( s"treegrammar without quantifiers $i" ) ) ++
           ( 0 until numVars ).toList.map( i => 60.seconds -> introUnivsExcept( i ).andThen(
             new TreeGrammarInductionTactic( opts.treeGrammarProverOptions ) ).aka( s"treegrammar $i" ) )
       case "treegrammar" =>

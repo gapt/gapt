@@ -4,8 +4,6 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.HOLPosition
 
 object FOLPosition {
-  def apply( list: List[Int] ) = new FOLPosition( list )
-
   def apply( is: Int* ) = new FOLPosition( is.toList )
 
   def toList( pos: FOLPosition ) = pos.list
@@ -222,14 +220,13 @@ object FOLPosition {
 
   private def mySplit( list: List[Int] ): ( List[Int], List[Int] ) = mySplit( Nil, list )
 }
+
 /**
- *
- *
  * Positions are given as lists of Integers. The empty list denotes the current expression itself.
  * A list starting with k denotes a subexpression in the k^th^ argument of the current expression.
  * @param list The list describing the position.
  */
-class FOLPosition( val list: List[Int] ) {
+case class FOLPosition( list: List[Int] ) {
   require( list.forall( _ > 0 ) )
 
   def toList = list
@@ -240,13 +237,6 @@ class FOLPosition( val list: List[Int] ) {
   override def toString = s"[${list.mkString( "," )}]"
 
   def ::( x: Int ): FOLPosition = FOLPosition( x :: list )
-
-  override def equals( that: Any ) = that match {
-    case p: FOLPosition => p.list == list
-    case _              => false
-  }
-
-  override def hashCode() = list.hashCode()
 }
 
 object BinaryConnective {

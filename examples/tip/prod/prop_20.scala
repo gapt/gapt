@@ -50,6 +50,6 @@ object prop_20 extends TacticsProof {
   val proof = Lemma( sequent ) {
     cut( "lemma", hof"∀xs ∀ys ∀y length(append(xs, cons(y,ys))) = S(length(append(xs, ys)))" )
     insert( lemma_proof )
-    allR; induction( hov"x:list" ); decompose.onAllSubGoals; repeat( escargot )
+    allR; induction( hov"x:list" ); escargot.withDeskolemization.onAllSubGoals
   }
 }

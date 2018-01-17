@@ -34,22 +34,22 @@ abstract class Expr {
    * @param that  Lambda expression to compare against.
    * @return whether this lambda expression is equal to that lambda expression modulo alpha-conversion.
    */
-  def alphaEquals( that: Expr ): Boolean = this alphaEquals ( that, List(), List() )
+  def alphaEquals( that: Expr ): Boolean = this alphaEquals ( that, 0, Map(), Map() )
 
   /**
    * Alpha-equality in a bound variable context.
    *
-   * The parameters thisCtx and thatCtx list the bound variables in the corresponding lambda expressions, they can be
-   * thought of as maps from DeBruijn indices to their bound variables.  If we invert this map and extend it to
-   * non-bound variables as the identity, then the inverse map renames bound variables to new fresh variables (actually
-   * numbers).
+   * The parameters thisCtx and thatCtx list the bound variables in the corresponding lambda expressions,
+   * together with indices that indicate the originating binder.  That is, two bound variables `x` and `y`
+   * (in this and that, respectively) are alpha-equal iff `thisCtx(x) == thatCtx(y)`.
    *
    * @param that  Lambda expression to compare against.
+   * @param lcBound Upper bound for the values in thisCtx and thatCtx ("local constant bound").
    * @param thisCtx Bound variables in this lambda expression.
    * @param thatCtx Bound variables in that lambda expression.
-   * @return whether thisCtx^{-1}(this) is alpha-equal to thatCtx^{-1}(that)
+   * @return whether thisCtx(this) is alpha-equal to thatCtx(that)
    */
-  private[expr] def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ): Boolean
+  private[expr] def alphaEquals( that: Expr, lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int] ): Boolean
 
   /**
    * Tests whether this Expression has a subexpression at the given position.
@@ -164,11 +164,17 @@ class Var private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
     case _           => false
   }
 
-  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ): Boolean =
-    ( thisCtx indexOf this, thatCtx indexOf that ) match {
-      case ( -1, -1 )         => this syntaxEquals that // not bound
-      case ( i, j ) if i == j => true // both bound to the same DeBruijn index
-      case _                  => false
+  private[expr] override def alphaEquals(
+    that:    Expr,
+    lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int] ): Boolean =
+    that match {
+      case that: Var =>
+        ( thisCtx.getOrElse( this, -1 ), thatCtx.getOrElse( that, -1 ) ) match {
+          case ( -1, -1 )         => this syntaxEquals that // not bound
+          case ( i, j ) if i == j => true // both bound to the same local constant
+          case _                  => false
+        }
+      case _ => false
     }
 
   override val hashCode = 42 * name.hashCode + ty.hashCode
@@ -182,7 +188,7 @@ class Const private[expr] ( val name: String, val ty: Ty ) extends VarOrConst {
     case _             => false
   }
 
-  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ) =
+  private[expr] override def alphaEquals( that: Expr, lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int] ) =
     this syntaxEquals that
 
   override val hashCode = ( 41 * name.hashCode ) + ty.hashCode
@@ -203,12 +209,15 @@ class App private[expr] ( val function: Expr, val arg: Expr ) extends Expr {
     case _ => false
   }
 
-  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
-    case App( that_function, that_arg ) =>
-      this.function.alphaEquals( that_function, thisCtx, thatCtx ) &&
-        this.arg.alphaEquals( that_arg, thisCtx, thatCtx )
-    case _ => false
-  }
+  private[expr] override def alphaEquals(
+    that:    Expr,
+    lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int] ) =
+    that match {
+      case App( that_function, that_arg ) =>
+        this.function.alphaEquals( that_function, lcBound, thisCtx, thatCtx ) &&
+          this.arg.alphaEquals( that_arg, lcBound, thisCtx, thatCtx )
+      case _ => false
+    }
 
   override val hashCode = ( 41 * function.hashCode ) + arg.hashCode
   override val alphaEquivalentHashCode = ( 41 * function.alphaEquivalentHashCode ) + arg.alphaEquivalentHashCode
@@ -222,11 +231,16 @@ class Abs private[expr] ( val variable: Var, val term: Expr ) extends Expr {
     case _             => false
   }
 
-  private[expr] override def alphaEquals( that: Expr, thisCtx: List[Var], thatCtx: List[Var] ) = that match {
-    case Abs( that_variable, that_term ) if this.variable.ty == that_variable.ty =>
-      this.term alphaEquals ( that_term, this.variable :: thisCtx, that_variable :: thatCtx )
-    case _ => false
-  }
+  private[expr] override def alphaEquals(
+    that:    Expr,
+    lcBound: Int, thisCtx: Map[Var, Int], thatCtx: Map[Var, Int] ) =
+    that match {
+      case Abs( that_variable, that_term ) if this.variable.ty == that_variable.ty =>
+        this.term.alphaEquals( that_term, lcBound + 1,
+          thisCtx.updated( this.variable, lcBound ),
+          thatCtx.updated( that_variable, lcBound ) )
+      case _ => false
+    }
 
   override val hashCode = 41 * term.alphaEquivalentHashCode + variable.ty.hashCode
   override def alphaEquivalentHashCode = hashCode

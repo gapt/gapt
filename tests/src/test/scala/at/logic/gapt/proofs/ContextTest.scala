@@ -28,6 +28,10 @@ class ContextTest extends Specification {
       ctx.check( e )
       ctx.normalize( e ) must_== le"cons 1 (cons 2 (cons 3 nil))"
     }
+
+    "nonemptiness" in {
+      default + InductiveType( "conat", hoc"s: conat>conat" ) must throwAn[IllegalArgumentException]
+    }
   }
 
   "polymorphic definitions" in {

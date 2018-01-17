@@ -18,10 +18,6 @@ import cats.{ Id, ~> }
 import scala.collection.mutable
 
 /**
- * Created by sebastian on 24.11.16.
- */
-
-/**
  * Implementation of proof sessions via the cats free monad. See [[http://typelevel.org/cats/datatypes/freemonad.html]].
  */
 object Session {
@@ -255,7 +251,10 @@ object Session {
         case DeclareFun( fun ) => termRenaming( fun ) match {
           case Const( name, FunctionType( TBase( retType, Nil ), argTypes ) ) =>
             tell( LFun( "declare-fun", LSymbol( name ),
-              LList( argTypes map { case TBase( argType, Nil ) => LSymbol( argType ) }: _* ),
+              LList( argTypes.map {
+                case TBase( argType, Nil ) => LSymbol( argType )
+                case ty                    => throw new IllegalArgumentException( s"unsupported type: $ty" )
+              } ),
               LSymbol( retType ) ) )
         }
         case Assert( formula )                => tell( LFun( "assert", convert( formula ) ) )

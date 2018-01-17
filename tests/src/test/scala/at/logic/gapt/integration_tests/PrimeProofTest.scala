@@ -25,7 +25,9 @@ class PrimeProofTest extends Specification {
 
   "The system" should {
     //    "parse correctly the second-order prime proof" in {
-    //      val pdb = (new XMLReader(new InputStreamReader(new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("prime2.xml.gz")))) with XMLProofDatabaseParser).getProofDatabase()
+    //      val pdb = (new XMLReader(new InputStreamReader(
+    // new GZIPInputStream(getClass.getClassLoader.getResourceAsStream("prime2.xml.gz"))))
+    // with XMLProofDatabaseParser).getProofDatabase()
     //      pdb.proofs.size must beEqualTo(1)
     //      val proof = pdb.proofs.head
     //      printStats( proof )
@@ -36,18 +38,27 @@ class PrimeProofTest extends Specification {
     //      val csPre : List[Sequent] = StandardClauseSet.transformStructToClauseSet(s) map (_.getSequent)
     //
     //      // we will add three axioms: 0 < p(x), 1 < p(x), x = x
-    //      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"), Const(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"), Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
-    //      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"), Const(ConstantStringSymbol("1"), Ti())::Function(ConstantStringSymbol("p"), Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
-    //      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="), Var(VariableStringSymbol("x"), Ti())::(Var(VariableStringSymbol("x"), Ti())::Nil))::Nil)
-    //      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="), Function(ConstantStringSymbol("+"), Const(ConstantStringSymbol("0"), Ti())::Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Var(VariableStringSymbol("x"), Ti())::Nil)::Nil)
+    //      val seq1 = Sequent(Nil, Atom(ConstantStringSymbol("<"),
+    // Const(ConstantStringSymbol("0"), Ti())::Function(ConstantStringSymbol("p"),
+    // Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
+    //      val seq2 = Sequent(Nil, Atom(ConstantStringSymbol("<"),
+    // Const(ConstantStringSymbol("1"), Ti())::Function(ConstantStringSymbol("p"),
+    // Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Nil)::Nil)
+    //      val seq3 = Sequent(Nil, Atom(ConstantStringSymbol("="),
+    // Var(VariableStringSymbol("x"), Ti())::(Var(VariableStringSymbol("x"), Ti())::Nil))::Nil)
+    //      val seq4 = Sequent(Nil, Atom(ConstantStringSymbol("="),
+    // Function(ConstantStringSymbol("+"), Const(ConstantStringSymbol("0"), Ti())
+    // ::Var(VariableStringSymbol("x"), Ti())::Nil, Ti())::Var(VariableStringSymbol("x"), Ti())::Nil)::Nil)
     //
     //      val holcs : List[Sequent] = pdb.axioms ::: List[Sequent](seq1,seq2,seq3,seq4) ::: csPre
     //
     //      // maps original types and definitions of abstractions
-    //      val sectionsPre = ("Types", getTypeInformation(holcs).toList.sortWith((x,y) => x.toString < y.toString))::Nil
+    //      val sectionsPre = ("Types", getTypeInformation(holcs).toList.sortWith((x,y) => x.toString < y.toString))
+    // ::Nil
     //
     //      // convert to fol and obtain map of definitons
-    //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.Expr, at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
+    //      val imap = Map[at.logic.gapt.expr.typedLambdaCalculus.Expr,
+    // at.logic.gapt.language.hol.logicSymbols.ConstantStringSymbol]()
     //      val iid = new {var idd = 0; def nextId = {idd = idd+1; idd}}
     //      val cs = holcs.map(x => Sequent(
     //          x.antecedent.map(y => reduceHolToFol(y.asInstanceOf[Expr],imap,iid).asInstanceOf[FOLFormula]),
@@ -71,12 +82,16 @@ class PrimeProofTest extends Specification {
     //
     // /*     // apply unit resolution and subsumption on the resulted clause set
     //      val pb = new at.logic.gapt.utils.ds.PublishingBuffer[Clause]
-    //      pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(x.antecedent.asInstanceOf[List[Formula]], x.succedent.asInstanceOf[List[Formula]])))
+    //      pb.insertAll(0,cssv.map(x => at.logic.calculi.resolution.base.Clause(
+    // x.antecedent.asInstanceOf[List[Formula]], x.succedent.asInstanceOf[List[Formula]])))
     //      val ref = new at.logic.gapt.provers.atp.refinements.UnitRefinement(pb)
-    //      val subsumMng = new at.logic.gapt.proofs.lk.algorithms.subsumption.managers.SimpleManager(pb.asInstanceOf[at.logic.gapt.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
-    //        new at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithm{val matchAlg = at.logic.gapt.algorithms.matching.fol.FOLMatchingAlgorithm})
+    //      val subsumMng = new at.logic.gapt.proofs.lk.algorithms.subsumption.managers.SimpleManager(
+    // pb.asInstanceOf[at.logic.gapt.utils.ds.PublishingBuffer[at.logic.calculi.lk.base.Sequent]],
+    //        new at.logic.gapt.proofs.lk.algorithms.subsumption.StillmanSubsumptionAlgorithm{
+    // val matchAlg = at.logic.gapt.algorithms.matching.fol.FOLMatchingAlgorithm})
     //        AutomatedFOLStream(-1, new at.logic.gapt.provers.atp.refinements.UnitRefinement(pb), subsumMng)
-    //      val res = new Prover{}.refute(AutomatedFOLStream(-1, new at.logic.gapt.provers.atp.refinements.UnitRefinement(pb), subsumMng))
+    //      val res = new Prover{}.refute(AutomatedFOLStream(-1,
+    // new at.logic.gapt.provers.atp.refinements.UnitRefinement(pb), subsumMng))
     //      Console.println("has a refutation? " + (!res.isEmpty))
     //      val newUnitSet = pb.toList
     //      Console.println("newUnitSet size: " + newUnitSet.size)
@@ -95,14 +110,19 @@ class PrimeProofTest extends Specification {
     //*/
     //      val subsum = sequentNormalize(cssUnit).diff(cssv)
     //      Console.println("subsum size: " + subsum.size)
-    //      (new FileWriter("target" + separator + "prime2-cs-subsumed.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+    //      (new FileWriter("target" + separator + "prime2-cs-subsumed.tex") with SequentsListLatexExporter
+    // with HOLTermArithmeticalExporter)
     //        .exportSequentList(subsum, sections).close
-    //      (new FileWriter("target" + separator + "prime2-cs.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+    //      (new FileWriter("target" + separator + "prime2-cs.tex") with SequentsListLatexExporter
+    // with HOLTermArithmeticalExporter)
     //        .exportSequentList(neg.sortWith(mySort) ++ mix.sortWith(mySort) ++ pos.sortWith(mySort), sections).close
-    // /*     (new FileWriter("target" + separator + "prime2-cs-unit.tex") with SequentsListLatexExporter with HOLTermArithmeticalExporter)
+    // /*     (new FileWriter("target" + separator + "prime2-cs-unit.tex") with SequentsListLatexExporter
+    // with HOLTermArithmeticalExporter)
     //        .exportSequentList(neg2.sort(mySort) ++ mix2.sort(mySort) ++ pos2.sort(mySort), sections).close*/
-    //      //saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "prime2-cs.xml" )
-    //      //saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "prime2-cs.xml" )
+    //      //saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::
+    // Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "prime2-cs.xml" )
+    //      //saveXML( Tuple2("cs", cs)::Tuple2("dcs", dcs)::Tuple2("css", (css.toList))::
+    // Tuple2("cssv", cssv.toList)::Nil, "target" + separator + "prime2-cs.xml" )
     //    }
 
     def prime1( n: Int, refute: Boolean ) = {
@@ -116,7 +136,8 @@ class PrimeProofTest extends Specification {
       if ( false ) {
         if ( VeriT.isInstalled ) {
           // test expansion tree extraction by verifying that the deep formula is a tautology
-          val definitionFreeProof = eliminateDefinitions( primeN.ctx.definitions.toMap )( proof ) // can't extract ETs in the presence of definitions currently
+          // can't extract ETs in the presence of definitions currently
+          val definitionFreeProof = eliminateDefinitions( primeN.ctx.definitions.toMap )( proof )
           val etSeq = LKToExpansionProof( definitionFreeProof )
           val fSequent = etSeq.deep
           VeriT.isValid( fSequent ) must beTrue
@@ -156,16 +177,12 @@ class PrimeProofTest extends Specification {
       ok
     }
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=0" in euclid( 0 )
+    "euclid 0" in euclid( 0 )
+    "euclid 1" in euclid( 1 )
+    "euclid 2" in euclid( 2 )
 
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=1" in euclid( 1 )
-
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof (Euclid's proof), n=2" in euclid( 2 )
-
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=0" in prime1( 0, true )
-
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=1" in prime1( 1, false )
-
-    "parse, skolemize, and export the clause set in TPTP of the first-order prime proof, n=2" in prime1( 2, false )
+    "prime1 0 with refutation" in prime1( 0, true )
+    "prime1 1" in prime1( 1, false )
+    "prime1 2" in prime1( 2, false )
   }
 }

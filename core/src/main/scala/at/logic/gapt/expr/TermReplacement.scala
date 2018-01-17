@@ -9,8 +9,6 @@ trait Replaceable[-I, +O] {
 
   def names( obj: I ): Set[VarOrConst]
 }
-trait ClosedUnderReplacement[T] extends Replaceable[T, T]
-
 trait ReplaceableInstances0 {
 
   implicit object exprReplaceable extends ClosedUnderReplacement[Expr] {

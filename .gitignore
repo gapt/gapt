@@ -29,6 +29,8 @@ doc/*.fdb_latexmk
 doc/*.fls
 doc/*.out
 doc/*.lox
+doc/*.bcf
+doc/*.run.xml
 doc/*.synctex.gz
 doc/auto
 doc/_region_.*

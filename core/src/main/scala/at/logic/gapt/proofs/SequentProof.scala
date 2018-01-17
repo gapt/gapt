@@ -52,18 +52,27 @@ trait ContextRule[Formula, This <: SequentProof[Formula, This]] extends SequentP
 
   override lazy val conclusion = mainFormulaSequent.antecedent ++: contexts.flattenS :++ mainFormulaSequent.succedent
 
-  override def mainIndices = ( mainFormulaSequent.antecedent.map( _ => true ) ++: contexts.flattenS.map( _ => false ) :++ mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
+  override def mainIndices =
+    ( mainFormulaSequent.antecedent.map( _ => true ) ++:
+      contexts.flattenS.map( _ => false ) :++
+      mainFormulaSequent.succedent.map( _ => true ) ).indicesWhere( _ == true )
 
-  private val contextIndices = for ( ( p, is ) <- premises zip formulasToBeDeleted ) yield p.indicesSequent.delete( is )
+  private val contextIndices =
+    for ( ( p, is ) <- premises zip formulasToBeDeleted )
+      yield p.indicesSequent.delete( is )
 
   override def occConnectors = for ( i <- contextIndices.indices ) yield {
-    val ( leftContexts, currentContext, rightContext ) = ( contextIndices.take( i ), contextIndices( i ), contextIndices.drop( i + 1 ) )
+    val leftContexts = contextIndices.take( i )
+    val currentContext = contextIndices( i )
+    val rightContext = contextIndices.drop( i + 1 )
     val leftContextIndices = leftContexts.map( c => c.map( _ => Seq() ) )
     val currentContextIndices = currentContext.map( i => Seq( i ) )
     val rightContextIndices = rightContext.map( c => c.map( _ => Seq() ) )
     val auxIndicesAntecedent = mainFormulaSequent.antecedent.map( _ => formulasToBeDeleted( i ) )
     val auxIndicesSuccedent = mainFormulaSequent.succedent.map( _ => formulasToBeDeleted( i ) )
     SequentConnector( conclusion, premises( i ),
-      auxIndicesAntecedent ++: ( leftContextIndices.flattenS ++ currentContextIndices ++ rightContextIndices.flattenS ) :++ auxIndicesSuccedent )
+      auxIndicesAntecedent ++:
+        ( leftContextIndices.flattenS ++ currentContextIndices ++ rightContextIndices.flattenS ) :++
+        auxIndicesSuccedent )
   }
 }

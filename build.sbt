@@ -78,7 +78,9 @@ lazy val root = project.in( file( "." ) ).
       "-doc-title", "gapt",
       "-doc-version", version.value,
       "-doc-source-url", s"https://github.com/gapt/gapt/blob/${"git rev-parse HEAD" !!}/€{FILE_PATH}.scala",
+      "-doc-root-content", ( baseDirectory.value / "doc" / "rootdoc.txt" ).getAbsolutePath,
       "-sourcepath", baseDirectory.value.getAbsolutePath,
+      "-skip-packages", "ammonite:ammonite.ops",
       "-diagrams",
       "-implicits", "-implicits-show-all",
       "-skip-packages", "scala" ),
@@ -166,6 +168,8 @@ lazy val core = project.in( file( "core" ) ).
   settings(
     name := "gapt",
     description := "General Architecture for Proof Theory",
+
+    scalacOptions in Compile += "-Xfatal-warnings",
 
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6",

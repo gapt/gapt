@@ -1735,10 +1735,10 @@ R(p_3, h_3): o -> true
 \end{clilisting}
 yields a model of $\neg\mathrm{PHP}_{3,3}$ that can be queried:
 \begin{clilisting}
-gapt> val p1 = PigeonHolePrinciple.atom(1, 1)
+gapt> val p1 = PigeonHolePrinciple.inHole(1, 1)
 p1: at.logic.gapt.expr.FOLAtom = R(p_1, h_1): o
 
-gapt> val p2 = PigeonHolePrinciple.atom(2, 1)
+gapt> val p2 = PigeonHolePrinciple.inHole(2, 1)
 p2: at.logic.gapt.expr.FOLAtom = R(p_2, h_1): o
 
 gapt> m(p1) // Is pigeon 1 in hole 1?
@@ -1758,7 +1758,7 @@ res41: Boolean = false
 We can also convert $\neg\mathrm{PHP}_{3,3}$ into DIMACS format:
 \begin{clilisting}
 gapt> val cnf = structuralCNF(Sequent() :+ PigeonHolePrinciple(3,3)).map(_.conclusion.asInstanceOf[HOLClause])
-cnf: scala.collection.immutable.Set[at.logic.gapt.proofs.HOLClause] = Set(R(p_3, h_1), R(p_2, h_1) ⊢ ,  ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_2, h_1), R(p_1, h_1) ⊢ , R(p_2, h_2), R(p_1, h_2) ⊢ , R(p_2, h_3), R(p_1, h_3) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_3, h_2), R(p_2, h_2) ⊢ , R(p_3, h_3), R(p_1, h_3) ⊢ , R(p_3, h_1), R(p_1, h_1) ⊢ ,  ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_3, h_3), R(p_2, h_3) ⊢ , R(p_3, h_2), R(p_1, h_2) ⊢ )
+cnf: scala.collection.immutable.Set[at.logic.gapt.proofs.HOLClause] = Set( ⊢ R(p_2, h_3), R(p_2, h_1), R(p_2, h_2), R(p_1, h_3), R(p_2, h_3) ⊢ , R(p_1, h_1), R(p_2, h_1) ⊢ ,  ⊢ R(p_1, h_3), R(p_1, h_1), R(p_1, h_2), R(p_2, h_3), R(p_3, h_3) ⊢ , R(p_1, h_2), R(p_3, h_2) ⊢ , R(p_1, h_2), R(p_2, h_2) ⊢ , R(p_2, h_1), R(p_3, h_1) ⊢ , R(p_1, h_1), R(p_3, h_1) ⊢ ,  ⊢ R(p_3, h_3), R(p_3, h_1), R(p_3, h_2), R(p_2, h_2), R(p_3, h_2) ⊢ , R(p_1, h_3), R(p_3, h_3) ⊢ )
 
 gapt> val encoding = new DIMACSEncoding
 encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
@@ -1766,18 +1766,18 @@ encoding: at.logic.gapt.formats.dimacs.DIMACSEncoding = DIMACSEncoding()
 gapt> writeDIMACS(encoding encodeCNF cnf)
 res42: String =
 "p cnf 9 12
--1 -2 0
-3 2 4 0
--2 -5 0
--4 -6 0
--3 -7 0
-7 5 6 0
--8 -4 0
--9 -7 0
--1 -5 0
-9 1 8 0
--9 -3 0
--8 -6 0
+1 2 3 0
+-4 -1 0
+-5 -2 0
+4 5 6 0
+-1 -7 0
+-6 -8 0
+-6 -3 0
+-2 -9 0
+-5 -9 0
+7 9 8 0
+-3 -8 0
+-4 -7 0
 "
 
 \end{clilisting}
@@ -1786,7 +1786,7 @@ If you want to know which variable in the DIMACS output corresponds to which
 atom in GAPT, you can query the \cli{DIMACSEncoding} object:
 \begin{clilisting}
 gapt> encoding decodeAtom 1
-res43: at.logic.gapt.expr.Atom = R(p_3, h_1): o
+res43: at.logic.gapt.expr.Atom = R(p_2, h_3): o
 
 \end{clilisting}
 
@@ -1848,26 +1848,30 @@ format:
 \begin{clilisting}
 gapt> Sat4j getLKProof PigeonHolePrinciple(4,3)
 res48: Option[at.logic.gapt.proofs.lk.LKProof] =
-Some([p402]
+Some([p571]
 ⊢
 (R(p_1, h_1) ∨ R(p_1, h_2) ∨ R(p_1, h_3)) ∧
     (R(p_2, h_1) ∨ R(p_2, h_2) ∨ R(p_2, h_3)) ∧
     (R(p_3, h_1) ∨ R(p_3, h_2) ∨ R(p_3, h_3)) ∧
     (R(p_4, h_1) ∨ R(p_4, h_2) ∨ R(p_4, h_3)) ⊃
-  R(p_2, h_1) ∧ R(p_1, h_1) ∨
-    (R(p_3, h_1) ∧ R(p_1, h_1) ∨ R(p_3, h_1) ∧ R(p_2, h_1)) ∨
-    (R(p_4, h_1) ∧ R(p_1, h_1) ∨
-      R(p_4, h_1) ∧ R(p_2, h_1) ∨
-      R(p_4, h_1) ∧ R(p_3, h_1)) ∨
-    (R(p_2, h_2) ∧ R(p_1, h_2) ∨
-      (R(p_3, h_2) ∧ R(p_1, h_2) ∨ R(p_3, h_2) ∧ R(p_2, h_2)) ∨
-      (R(p_4, h_2) ∧ R(p_1, h_2) ∨
-        R(p_4, h_2) ∧ R(p_2, h_2) ∨
-        R(p_4, h_2) ∧ R(p_3, h_2))) ∨
-    (R(p_2, h_3) ∧ R(p_1, h_3) ∨
-      (R(p_3, h_3) ∧ R(p_1, h_3) ∨ R(p_3, h_3) ∧ R(p_2, h_3)) ∨
-      (R(p_4, h_3) ∧ R(p_1, h_3) ∨
-        R(p_4,...
+  R(p_1, h_1) ∧ R(p_2, h_1) ∨
+    R(p_1, h_1) ∧ R(p_3, h_1) ∨
+    R(p_1, h_1) ∧ R(p_4, h_1) ∨
+    R(p_2, h_1) ∧ R(p_3, h_1) ∨
+    R(p_2, h_1) ∧ R(p_4, h_1) ∨
+    R(p_3, h_1) ∧ R(p_4, h_1) ∨
+    R(p_1, h_2) ∧ R(p_2, h_2) ∨
+    R(p_1, h_2) ∧ R(p_3, h_2) ∨
+    R(p_1, h_2) ∧ R(p_4, h_2) ∨
+    R(p_2, h_2) ∧ R(p_3, h_2) ∨
+    R(p_2, h_2) ∧ R(p_4, h_2) ∨
+    R(p_3, h_2) ∧ R(p_4, h_2) ∨
+    R(p_1, h_3) ∧ R(p_2, h_3) ∨
+    R(p_1, h_3) ∧ R(p_3, h_3) ∨
+    R(p_1, h_3) ∧ R(p_4, h_3) ∨
+    R(p_2, h_3) ∧ R(p_3, h_3) ∨
+    R(p_2, h_3) ∧ R(p_4, h_3) ∨
+    ...
 
 \end{clilisting}
 
@@ -2078,27 +2082,27 @@ if necessary.
 gapt> prooftool(Pi2Pigeonhole.proof)
 
 gapt> cutFormulas(Pi2Pigeonhole.proof) filter {containsQuantifier(_)} foreach println
-∀x ∃y (x <= y ∧ f(y) = s(0))
-∀x ∃y (x <= y ∧ f(y) = 0)
+∀x_1 ∃y (x_1 <= y ∧ f(y) = s(0))
+∀x_1 ∃y (x_1 <= y ∧ f(y) = 0)
 
 gapt> val acnf = CERES(Pi2Pigeonhole.proof)
 acnf: at.logic.gapt.proofs.lk.LKProof =
-[p220] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0))
+[p208] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0))
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p219, Ant(2)))
-[p219] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (CutRule(p1, Suc(0), p207, Ant(2)))
+[p207] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0)),
 0 = 0
 ⊢
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p218, Suc(1), Suc(0)))
-[p218] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
-∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionRightRule(p206, Suc(1), Suc(0)))
+[p206] ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
+∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0)),
 0 = 0
 ⊢
 ∃x_0 ∃y_1 (s(x_0) <= y_1 ∧ f(x_0) = f(y_1)),
-∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p217, Ant(3), Ant(1)))
-[p217] ∀x_1 ∀y_0 (x_1 <= M(x_1, y_0) ∧ y_0 <= M(x_1, y_0)),
+∃x ∃y_1 (s(x) <= y_1 ∧ f(x) = f(y_1))    (ContractionLeftRule(p205, Ant(3), Ant(1)))
+[p205] ∀x_0 ∀y_0 (x_0 <= M(x_0, y_0) ∧ y_0 <= M(x_0, y_0)),
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0)),
 0 = 0,
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
@@ -2110,20 +2114,20 @@ gapt> prooftool(acnf)
 gapt> val et = LKToExpansionProof(acnf)
 et: at.logic.gapt.proofs.expansion.ExpansionProof =
 ∀x_0 (f(x_0) = 0 ∨ f(x_0) = s(0))
-  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
-      s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))}
-    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
-            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+  +^{M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
+      s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))}
+    ((f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
+            s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
         0)- ∨
-      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))),
-            s(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)))) =
+      (f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))),
+            s(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)))) =
         s(0))-)
-  +^{M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)}
-    ((f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = 0)- ∨
-      (f(M(s(M(s(M(x_2, x_4)), s(M(x_2, x_4)))), x_6)) = s(0))-)
-  +^{M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))}
-    ((f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = 0)- ∨
-      (f(M(s(M(x_2, x_4)), s(M(s(M(x_2, x_4)), x_6)))) = s(0))-)...
+  +^{M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)}
+    ((f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)) = 0)- ∨
+      (f(M(s(M(s(M(x_1, x_2)), s(M(x_1, x_2)))), x_3)) = s(0))-)
+  +^{M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))}
+    ((f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))) = 0)- ∨
+      (f(M(s(M(x_1, x_2)), s(M(s(M(x_1, x_2)), x_3)))) = s(0))-)...
 
 gapt> prooftool(et)
 

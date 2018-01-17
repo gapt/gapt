@@ -23,7 +23,7 @@ object ResolutionToLKProof {
   }
 
   def asDerivation( proof: ResolutionProof ): LKProof =
-    apply( proof, in => TheoryAxiom( in.sequent.map( _.asInstanceOf[Atom] ) ) )
+    apply( proof, in => ProofLink( FOLAtom( "resolutionInput" ), in.sequent ) )
 
   def apply( proof: ResolutionProof, input: Input => LKProof ): LKProof = {
     val memo = mutable.Map[ResolutionProof, LKProof]()
@@ -34,7 +34,9 @@ object ResolutionToLKProof {
     }
 
     def contract( p: ResolutionProof, q: LKProof ) =
-      ContractionMacroRule( q, ( ( p.conclusion ++ p.assertions ) diff q.endSequent.distinct ) ++ q.endSequent.distinct )
+      ContractionMacroRule(
+        q,
+        ( ( p.conclusion ++ p.assertions ) diff q.endSequent.distinct ) ++ q.endSequent.distinct )
 
     def f( p: ResolutionProof ): LKProof = memo.getOrElseUpdate( p, contract( p, p match {
       case in: Input       => input( in )

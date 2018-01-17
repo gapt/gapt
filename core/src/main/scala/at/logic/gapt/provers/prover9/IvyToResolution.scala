@@ -1,6 +1,15 @@
 package at.logic.gapt.formats.ivy.conversion
 
-import at.logic.gapt.formats.ivy.{ InitialClause => IInitialClause, Instantiate => IInstantiate, Resolution => IResolution, Paramodulation => IParamodulation, Propositional => IPropositional, NewSymbol, IvyResolutionProof, Flip => IFlip }
+import at.logic.gapt.formats.ivy.{
+  InitialClause => IInitialClause,
+  Instantiate => IInstantiate,
+  Resolution => IResolution,
+  Paramodulation => IParamodulation,
+  Propositional => IPropositional,
+  NewSymbol,
+  IvyResolutionProof,
+  Flip => IFlip
+}
 import at.logic.gapt.proofs.{ Clause, HOLClause, Suc, Ant }
 import at.logic.gapt.proofs.resolution._
 import at.logic.gapt.expr._

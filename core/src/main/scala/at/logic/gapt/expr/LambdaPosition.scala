@@ -6,7 +6,6 @@
 package at.logic.gapt.expr
 
 object LambdaPosition {
-  def apply( list: List[Int] ) = new LambdaPosition( list )
   def apply( xs: Int* ) = new LambdaPosition( xs.toList )
   def toList( p: LambdaPosition ) = p.list
 
@@ -83,7 +82,7 @@ object LambdaPosition {
  *
  * @param list The list of integers describing the position.
  */
-class LambdaPosition( val list: List[Int] ) {
+case class LambdaPosition( list: List[Int] ) {
   require( list.forall( i => i == 1 || i == 2 ) )
 
   def toList = list
@@ -94,13 +93,6 @@ class LambdaPosition( val list: List[Int] ) {
   override def toString = s"[${list.mkString( "," )}]"
 
   def ::( x: Int ): LambdaPosition = LambdaPosition( x :: list )
-
-  override def equals( that: Any ) = that match {
-    case p: LambdaPosition => p.list == list
-    case _                 => false
-  }
-
-  override def hashCode() = list.hashCode()
 
   def isDefined( exp: Expr ): Boolean = get( exp ).isDefined
 

@@ -26,7 +26,7 @@ object primeFactor extends TacticsProof {
   val ax = hof" ∀n (n = 1 ∨ prime(n) ∨ ∃l (div(l,n) ∧ 1 < l ∧ l < n))"
   def primeDiv( n: FOLTerm ) = hof"∃k ($n < 2 ∨ (div(k,$n) ∧ prime(k)))"
 
-  val endSequent = Seq( "AX" -> ax, "IND" -> hof"∀z(z < n -> ${primeDiv( fov"z" )})" ) :- Seq( "GOAL" -> primeDiv( fov"n" ) )
+  val endSequent = hols"AX: $ax, IND: ∀z(z < n -> ${primeDiv( fov"z" )}) :- GOAL: ${primeDiv( fov"n" )}"
 
   val proof = Lemma( endSequent ) {
     allL( "AX", fov"n" ).forget

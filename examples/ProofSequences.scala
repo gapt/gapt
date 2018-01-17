@@ -78,7 +78,8 @@ object SquareDiagonalExampleProof extends ProofSequence {
  *
  * where n is an Integer parameter >= 0.
  *
- * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed
+ * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed,
+ * then all Y-steps are performed
  */
 object SquareEdgesExampleProof extends ProofSequence {
 
@@ -110,7 +111,8 @@ object SquareEdgesExampleProof extends ProofSequence {
  *
  * where n is an Integer parameter >= 0.
  *
- * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed, then all Y-steps are performed,
+ * The proofs constructed here go along the edges of P, i.e. first all X-steps are performed,
+ * then all Y-steps are performed,
  * but unlike SquareEdgesExampleProof, different functions are used for the X- and the Y-directions.
  */
 object SquareEdges2DimExampleProof extends ProofSequence {
@@ -368,7 +370,9 @@ object SumOfOnesExampleProof extends ProofSequence {
  * Auxiliary structure to deal with axioms of the schema:
  * Forall variables cond1 -> cond2 -> ... -> condn -> consequence |- ...
  */
-class AllQuantifiedConditionalAxiomHelper( variables: List[FOLVar], conditions: List[FOLAtom], consequence: FOLFormula ) {
+class AllQuantifiedConditionalAxiomHelper(
+    variables: List[FOLVar], conditions: List[FOLAtom],
+    consequence: FOLFormula ) {
   /**
    * Returns the full axiom
    */
@@ -388,10 +392,11 @@ class AllQuantifiedConditionalAxiomHelper( variables: List[FOLVar], conditions: 
     assert( expressions.length == variables.length, "Number of expressions doesn't equal number of variables" )
 
     // construct implication with instantiated conditions and consequence
-    val ( instantiated_conditions, instantiated_consequence ) = ( ( conditions -> consequence ) /: variables.indices ) { ( acc, i ) =>
-      val substitute = ( x: FOLFormula ) => FOLSubstitution( variables( i ), expressions( i ) )( x )
-      ( acc._1.map( substitute ).asInstanceOf[List[FOLAtom]], substitute( acc._2 ) )
-    }
+    val ( instantiated_conditions, instantiated_consequence ) =
+      ( ( conditions -> consequence ) /: variables.indices ) { ( acc, i ) =>
+        val substitute = ( x: FOLFormula ) => FOLSubstitution( variables( i ), expressions( i ) )( x )
+        ( acc._1.map( substitute ).asInstanceOf[List[FOLAtom]], substitute( acc._2 ) )
+      }
 
     val p1 = apply_conditional_equality( instantiated_conditions, instantiated_consequence, p )
 
@@ -467,10 +472,14 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
   // x=y -> s(x) = s(y)
   def cs_ax(): FOLFormula = All( x, cs_ax( x ) )
   def cs_ax( x: FOLTerm ): FOLFormula = All( y, cs_ax( x, y ) )
-  def cs_ax( x: FOLTerm, y: FOLTerm ): FOLFormula = Imp( Eq( x, y ), Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ) )
+  def cs_ax( x: FOLTerm, y: FOLTerm ): FOLFormula =
+    Imp( Eq( x, y ), Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ) )
 
   // x1 = x2 -> y1 = y2 -> x1 + y1 = x2 + y2
-  val cp = new AllQuantifiedConditionalAxiomHelper( x1 :: x2 :: y1 :: y2 :: Nil, Eq( x1, x2 ) :: Eq( y1, y2 ) :: Nil, Eq( FOLFunction( p, x1 :: y1 :: Nil ), FOLFunction( p, x2 :: y2 :: Nil ) ) )
+  val cp = new AllQuantifiedConditionalAxiomHelper(
+    x1 :: x2 :: y1 :: y2 :: Nil,
+    Eq( x1, x2 ) :: Eq( y1, y2 ) :: Nil,
+    Eq( FOLFunction( p, x1 :: y1 :: Nil ), FOLFunction( p, x2 :: y2 :: Nil ) ) )
 
   // Arithmetic axioms
   val Ax1 = All( x, Eq( FOLFunction( p, x :: Utils.numeral( 0 ) :: Nil ), x ) )
@@ -478,7 +487,8 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
   // Forall x, y: s(x+y) = x+s(y)
   def ax2_ax(): FOLFormula = All( x, All( y, ax2_ax( x, y ) ) )
   def ax2_ax( x: FOLTerm ): FOLFormula = All( y, ax2_ax( x, y ) )
-  def ax2_ax( x: FOLTerm, y: FOLTerm ): FOLFormula = Eq( f1( s, f2( x, p, y ) ), f2( x, p, f1( s, y ) ) )
+  def ax2_ax( x: FOLTerm, y: FOLTerm ): FOLFormula =
+    Eq( f1( s, f2( x, p, y ) ), f2( x, p, f1( s, y ) ) )
 
   def addAllAxioms( proof: LKProof ): LKProof =
     Seq( Trans, cp.getAxiom, Symm, ax2_ax(), cs_ax(), refl_ax(), Ax1 ).foldLeft( proof )( WeakeningLeftRule( _, _ ) )
@@ -571,7 +581,8 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
     // show y1 = y2 by Ax2 (i.e. s(n + i) = (n + s(i)) )
     val p13 = show_by_ax2( n_num, i_num, p10 )
 
-    // now we only have (n + n) + s(i) = n + s(n + i) left (c=e), reduce right hand side by Ax2 and Trans to s(n + (n + i) (c=d) )
+    // now we only have (n + n) + s(i) = n + s(n + i) left (c=e),
+    // reduce right hand side by Ax2 and Trans to s(n + (n + i) (c=d) )
     val c1 = f2( f2( n_num, p, n_num ), p, f1( s, i_num ) )
     val d1 = f1( s, f2( n_num, p, f2( n_num, p, i_num ) ) )
     val e1 = f2( n_num, p, f1( s, f2( n_num, p, i_num ) ) )
@@ -610,7 +621,9 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
   }
 
   def show_by_cs( x: FOLTerm, y: FOLTerm, p: LKProof ): LKProof = {
-    val p1 = apply_conditional_equality( Eq( x, y ) :: Nil, Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ), p )
+    val p1 = apply_conditional_equality(
+      Eq( x, y ) :: Nil,
+      Eq( FOLFunction( s, x :: Nil ), FOLFunction( s, y :: Nil ) ), p )
 
     val p2 = ForallLeftRule( p1, cs_ax( x ), y )
     val p3 = ForallLeftRule( p2, cs_ax(), x )
@@ -652,7 +665,8 @@ object UniformAssociativity3ExampleProof extends ProofSequence {
 }
 
 /**
- * Proof of f(n) = g(n, 1), where f is the head recursive and g the tail recursive formulation of the factorial function
+ * Proof of f(n) = g(n, 1), where f is the head recursive and
+ * g the tail recursive formulation of the factorial function
  */
 object FactorialFunctionEqualityExampleProof extends ProofSequence {
 
@@ -673,20 +687,32 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
   val f_ax_1 = Eq( f1( f, Utils.numeral( 0 ) ), f1( s, Utils.numeral( 0 ) ) )
   val f_ax_2 = fof"!x f(s(x)) = s(x) * f(x)"
 
-  val g_ax_1 = new AllQuantifiedConditionalAxiomHelper( y :: Nil, Nil, Eq( y, f2( g, Utils.numeral( 0 ), y ) ) )
+  val g_ax_1 = new AllQuantifiedConditionalAxiomHelper( y :: Nil, Nil,
+    Eq( y, f2( g, Utils.numeral( 0 ), y ) ) )
   val g_ax_2 = fof"!x!y g(s(x), y) = g(x, y * s(x))"
 
-  val g_compat_2 = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Eq( y, z ) :: Nil, Eq( f2( g, x, y ), f2( g, x, z ) ) )
+  val g_compat_2 = new AllQuantifiedConditionalAxiomHelper(
+    x :: y :: z :: Nil,
+    Eq( y, z ) :: Nil, Eq( f2( g, x, y ), f2( g, x, z ) ) )
 
-  val trans_axiom = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Eq( x, y ) :: Eq( y, z ) :: Nil, Eq( x, z ) )
+  val trans_axiom = new AllQuantifiedConditionalAxiomHelper(
+    x :: y :: z :: Nil,
+    Eq( x, y ) :: Eq( y, z ) :: Nil, Eq( x, z ) )
   val symm_axiom = All( x, Eq( x, x ) )
-  val refl_axiom = new AllQuantifiedConditionalAxiomHelper( x :: y :: Nil, Eq( x, y ) :: Nil, Eq( y, x ) )
-  val compat_mul_axiom = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Eq( x, y ) :: Nil, Eq( f2( z, m, x ), f2( z, m, y ) ) )
-  val assoc_mul_axiom = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Nil, Eq( f2( x, m, f2( y, m, z ) ), f2( f2( x, m, y ), m, z ) ) )
+  val refl_axiom = new AllQuantifiedConditionalAxiomHelper(
+    x :: y :: Nil,
+    Eq( x, y ) :: Nil, Eq( y, x ) )
+  val compat_mul_axiom = new AllQuantifiedConditionalAxiomHelper(
+    x :: y :: z :: Nil,
+    Eq( x, y ) :: Nil, Eq( f2( z, m, x ), f2( z, m, y ) ) )
+  val assoc_mul_axiom = new AllQuantifiedConditionalAxiomHelper( x :: y :: z :: Nil, Nil,
+    Eq( f2( x, m, f2( y, m, z ) ), f2( f2( x, m, y ), m, z ) ) )
 
-  val mul_neutral_axiom = new AllQuantifiedConditionalAxiomHelper( x :: Nil, Nil, Eq( f2( x, m, Utils.numeral( 1 ) ), x ) )
+  val mul_neutral_axiom = new AllQuantifiedConditionalAxiomHelper( x :: Nil, Nil,
+    Eq( f2( x, m, Utils.numeral( 1 ) ), x ) )
   // this second axiom saves us from adding commutativity of multiplication
-  val mul_neutral_axiom_2 = new AllQuantifiedConditionalAxiomHelper( x :: Nil, Nil, Eq( f2( Utils.numeral( 1 ), m, x ), x ) )
+  val mul_neutral_axiom_2 = new AllQuantifiedConditionalAxiomHelper( x :: Nil, Nil,
+    Eq( f2( Utils.numeral( 1 ), m, x ), x ) )
 
   def apply( n: Int ): LKProof = n match {
     case 0 =>
@@ -697,7 +723,8 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
       val ax3 = LogicalAxiom( targetEquation )
       val p1 = ImpLeftRule( ax2, g0, ax3, targetEquation )
       val p2 = ImpLeftRule( ax1, f_ax_1, p1, Imp( g0, targetEquation ) )
-      val p3 = ForallLeftBlock( p2, trans_axiom.getAxiom, Seq( f1( f, Utils.numeral( 0 ) ), Utils.numeral( 1 ), f2( g, Utils.numeral( 0 ), Utils.numeral( 1 ) ) ) )
+      val p3 = ForallLeftBlock( p2, trans_axiom.getAxiom,
+        Seq( f1( f, Utils.numeral( 0 ) ), Utils.numeral( 1 ), f2( g, Utils.numeral( 0 ), Utils.numeral( 1 ) ) ) )
       val p4 = ForallLeftRule( p3, g_ax_1.getAxiom, Utils.numeral( 1 ) )
       WeakeningLeftMacroRule(
         p4,
@@ -786,7 +813,8 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
             // the antecedent contains something along the lines of:
             // 4*f(3) = (4*3) * f(2) or
             // (4*3)*f(2) = ((4*3)*2) * f(1)
-            // we however need the last part exposed and grouped to be able to use compat & f_ax2 to show it, like in: 4*f(3) = 4* (3*f(2))
+            // we however need the last part exposed and grouped to be able
+            // to use compat & f_ax2 to show it, like in: 4*f(3) = 4* (3*f(2))
             // use Trans to expose it and show it, other part can be shown by associativity
             // step in between (=yTrans):
             // 4 * (3*f(2)) or
@@ -812,7 +840,8 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
 
         val p5 =
           if ( n == k ) {
-            // g is initially called with a 1 as second argument, but we want to get rid of it to make the final result equal to the one f produces
+            // g is initially called with a 1 as second argument, but we want to get rid of it
+            // to make the final result equal to the one f produces
             // use trans to split into g-axiom part and part where the two expressions only differ by this extra one
             val g_intermed = f2( g, km1_num, f2( one, m, part_fac_next ) )
             val p5_1 = trans_axiom( g_k_term :: g_intermed :: g_km1_term :: Nil, p4_2 )
@@ -828,7 +857,9 @@ object FactorialFunctionEqualityExampleProof extends ProofSequence {
             val p5_6 = mul_neutral_axiom_2( List( k_num ), p5_5 )
             p5_6
           } else {
-            val intermed = All( y, Eq( f2( g, f1( s, km1_num ), y ), f2( g, km1_num, f2( m, y, f1( s, km1_num ) ) ) ) )
+            val intermed = All( y, Eq(
+              f2( g, f1( s, km1_num ), y ),
+              f2( g, km1_num, f2( m, y, f1( s, km1_num ) ) ) ) )
             val p6 = ForallLeftRule( p4_2, intermed, part_fac )
             val p7 = ForallLeftRule( p6, g_ax_2, km1_num )
             val p8 = ContractionLeftRule( p7, g_ax_2 )
@@ -884,53 +915,83 @@ object FactorialFunctionEqualityExampleProof2 extends ProofSequence {
 
     /*val axiom = ReflexivityAxiom( product( 1 ) )
 
-    val p1 = ParamodulationRightRule( LogicalAxiom( uR( product( 1 ) ) ), uR( product( 1 ) ), axiom, Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) )
-    val p2 = ParamodulationRightRule( LogicalAxiom( f0 ), f0, p1, Eq( m( product( 1 ), one ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) )
-    val p3 = ParamodulationRightRule( LogicalAxiom( g0( product( 1 ) ) ), g0( product( 1 ) ), p2, Eq( m( product( 1 ), f( zero ) ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) )
+    val p1 = ParamodulationRightRule( LogicalAxiom( uR( product( 1 ) ) ),
+     uR( product( 1 ) ), axiom, Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) )
+    val p2 = ParamodulationRightRule( LogicalAxiom( f0 ), f0, p1, Eq( m( product( 1 ), one ), product( 1 ) ),
+     Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) )
+    val p3 = ParamodulationRightRule( LogicalAxiom( g0( product( 1 ) ) ),
+     g0( product( 1 ) ), p2, Eq( m( product( 1 ), f( zero ) ), product( 1 ) ),
+      Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) )
     val p4 = ForallLeftRule( p3, All( x, uR( x ) ), product( 1 ) )
     val p5 = ForallLeftRule( p4, All( x, g0( x ) ), product( 1 ) )
 
     val p6 = ( 0 until n ).foldLeft[LKProof]( p5 ) { ( acc: LKProof, i: Int ) =>
-      val tmp1 = ParamodulationRightRule( LogicalAxiom( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ), ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), acc, Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) )
-      val tmp2 = ForallLeftBlock( tmp1, univclosure( ASSO( x, y, z ) ), List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) )
-      val tmp3 = ParamodulationRightRule( LogicalAxiom( fST( num( i ) ) ), fST( num( i ) ), tmp2, Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) )
-      val tmp4 = ParamodulationRightRule( LogicalAxiom( gST( product( i + 2 ), num( i ) ) ), gST( product( i + 2 ), num( i ) ), tmp3, Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) )
+      val tmp1 = ParamodulationRightRule( LogicalAxiom( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ),
+       ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), acc,
+       Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ),
+       Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) )
+      val tmp2 = ForallLeftBlock( tmp1, univclosure( ASSO( x, y, z ) ),
+       List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) )
+      val tmp3 = ParamodulationRightRule( LogicalAxiom( fST( num( i ) ) ), fST( num( i ) ),
+       tmp2, Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ),
+        Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) )
+      val tmp4 = ParamodulationRightRule( LogicalAxiom( gST( product( i + 2 ), num( i ) ) ),
+       gST( product( i + 2 ), num( i ) ), tmp3, Eq( m( product( i + 2 ), f( num( i + 1 ) ) ),
+        g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ),
+        g( product( i + 2 ), num( i + 1 ) ) ) )
       val tmp5 = ForallLeftRule( tmp4, univclosure( fST( x ) ), num( i ) )
       val tmp6 = ForallLeftBlock( tmp5, univclosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) )
       ContractionMacroRule( tmp6 )
     }
 
-    val p7 = ParamodulationRightRule( LogicalAxiom( uL( f( num( n ) ) ) ), uL( f( num( n ) ) ), p6, Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) )
+    val p7 = ParamodulationRightRule( LogicalAxiom( uL( f( num( n ) ) ) ),
+     uL( f( num( n ) ) ), p6, Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) )
     WeakeningContractionMacroRule( ForallLeftRule( p7, All( x, uL( x ) ), f( num( n ) ) ), endSequent( n ) )
 */
     val p1 = ( ProofBuilder
       c ReflexivityAxiom( product( 1 ) )
       u ( WeakeningLeftMacroRule( _, Seq( uR( product( 1 ) ), f0, g0( product( 1 ) ) ) ) )
-      u ( EqualityRightRule( _, uR( product( 1 ) ), Eq( product( 1 ), product( 1 ) ), Eq( m( product( 1 ), one ), product( 1 ) ) ) )
-      u ( EqualityRightRule( _, f0, Eq( m( product( 1 ), one ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) ) )
-      u ( EqualityRightRule( _, g0( product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), product( 1 ) ), Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) ) )
-      u ( ForallLeftRule( _, All( x, uR( x ) ), product( 1 ) ) )
-      u ( ForallLeftRule( _, All( x, g0( x ) ), product( 1 ) ) ) qed )
+      u ( EqualityRightRule( _, uR( product( 1 ) ), Eq( product( 1 ), product( 1 ) ),
+        Eq( m( product( 1 ), one ), product( 1 ) ) ) )
+        u ( EqualityRightRule( _, f0, Eq( m( product( 1 ), one ), product( 1 ) ),
+          Eq( m( product( 1 ), f( zero ) ), product( 1 ) ) ) )
+          u ( EqualityRightRule( _, g0( product( 1 ) ),
+            Eq( m( product( 1 ), f( zero ) ), product( 1 ) ),
+            Eq( m( product( 1 ), f( zero ) ), g( product( 1 ), zero ) ) ) )
+            u ( ForallLeftRule( _, All( x, uR( x ) ), product( 1 ) ) )
+            u ( ForallLeftRule( _, All( x, g0( x ) ), product( 1 ) ) ) qed )
 
     val p2 = ( 0 until n ).foldLeft[LKProof]( p1 ) { ( acc: LKProof, i: Int ) =>
       ( ProofBuilder
         c acc
-        u ( WeakeningLeftMacroRule( _, Seq( ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), fST( num( i ) ), gST( product( i + 2 ), num( i ) ) ) ) )
-        u ( EqualityRightRule( _, ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ), Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
-        u ( ForallLeftBlock( _, universalClosure( ASSO( x, y, z ) ), List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ) )
-        u ( EqualityRightRule( _, fST( num( i ) ), Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
-        u ( EqualityRightRule( _, gST( product( i + 2 ), num( i ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ), Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) ) )
-        u ( ForallLeftRule( _, universalClosure( fST( x ) ), num( i ) ) )
-        u ( ForallLeftBlock( _, universalClosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
-        u ( ContractionMacroRule( _ ) ) qed )
+        u ( WeakeningLeftMacroRule( _, Seq(
+          ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ),
+          fST( num( i ) ),
+          gST( product( i + 2 ), num( i ) ) ) ) )
+        u ( EqualityRightRule( _, ASSO( product( i + 2 ), num( i + 1 ), f( num( i ) ) ),
+          Eq( m( product( i + 1 ), f( num( i ) ) ), g( product( i + 1 ), num( i ) ) ),
+          Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
+          u ( ForallLeftBlock( _, universalClosure( ASSO( x, y, z ) ),
+            List( product( i + 2 ), num( i + 1 ), f( num( i ) ) ) ) )
+            u ( EqualityRightRule( _, fST( num( i ) ),
+              Eq( m( product( i + 2 ), m( num( i + 1 ), f( num( i ) ) ) ), g( product( i + 1 ), num( i ) ) ),
+              Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ) ) )
+              u ( EqualityRightRule( _, gST( product( i + 2 ), num( i ) ),
+                Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 1 ), num( i ) ) ),
+                Eq( m( product( i + 2 ), f( num( i + 1 ) ) ), g( product( i + 2 ), num( i + 1 ) ) ) ) )
+                u ( ForallLeftRule( _, universalClosure( fST( x ) ), num( i ) ) )
+                u ( ForallLeftBlock( _, universalClosure( gST( x, y ) ), List( product( i + 2 ), num( i ) ) ) )
+                u ( ContractionMacroRule( _ ) ) qed )
     }
 
     ( ProofBuilder
       c p2
       u ( WeakeningLeftRule( _, uL( f( num( n ) ) ) ) )
-      u ( EqualityRightRule( _, uL( f( num( n ) ) ), Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ), target( num( n ) ) ) )
-      u ( ForallLeftRule( _, All( x, uL( x ) ), f( num( n ) ) ) )
-      u ( WeakeningContractionMacroRule( _, endSequent( n ) ) ) qed )
+      u ( EqualityRightRule( _, uL( f( num( n ) ) ),
+        Eq( m( one, f( num( n ) ) ), g( one, num( n ) ) ),
+        target( num( n ) ) ) )
+        u ( ForallLeftRule( _, All( x, uL( x ) ), f( num( n ) ) ) )
+        u ( WeakeningContractionMacroRule( _, endSequent( n ) ) ) qed )
   }
 
   def endSequent( n: Int ): HOLSequent = HOLSequent(

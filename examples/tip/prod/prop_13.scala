@@ -7,9 +7,6 @@ import at.logic.gapt.proofs.gaptic.{ Lemma, TacticsProof, _ }
 
 object prop_13 extends TacticsProof {
 
-  // Sorts
-  ctx += TBase( "sk" )
-
   // Inductive types
   ctx += InductiveType( ty"Nat", hoc"'Z' :Nat", hoc"'S' :Nat>Nat" )
 
@@ -32,36 +29,36 @@ object prop_13 extends TacticsProof {
 
   val theory = sequent.antecedent ++: Sequent()
 
-  val hypothesis = hof"!x(!y plus(x, S(y)) = S(plus(x,y)) & half(plus(x,x)) = x)"
+  val lem = hof"!y ( plus(x, S(y)) = S(plus(x,y)) & half(plus(x,x)) = x )"
 
-  val hypothesis_proof = Lemma( theory :+ "hyp" -> hypothesis ) {
-    allR; induction( hov"x:Nat" )
+  val lem_proof = Lemma( theory :+ "lem" -> lem ) {
+    induction( hov"x:Nat" )
     //- base case
-    andR
+    allR; andR
     //-- base case: plus_s_comm
-    allR
-    rewrite.many ltr "def_plus_0" in "hyp"
+    rewrite.many ltr "def_plus_0" in "lem"
     refl
     //-- base case: goal
-    rewrite.many ltr "def_plus_0" in "hyp"
-    axiomLog
+    rewrite.many ltr "def_plus_0" in "lem"
+    rewrite.many ltr "def_half_0" in "lem"
+    refl
     //- inductive case
-    andL; andR
+    allR; andR
     //-- inductive case: plus_s_comm
-    allR
-    rewrite.many ltr "def_plus_1" in "hyp"
-    rewrite.many ltr "IHx_0_0" in "hyp"
-    refl
+    rewrite.many ltr "def_plus_1" in "lem"
+    allL( "IHx_0", le"y:Nat" )
+    quasiprop
     //-- inductive case: goal
-    rewrite.many ltr "def_plus_1" in "hyp"
-    rewrite.many ltr "IHx_0_0" in "hyp"
-    rewrite.many ltr "def_half_2" in "hyp"
-    rewrite.many ltr "IHx_0_1" in "hyp"
-    refl
+    rewrite.many ltr "def_plus_1" in "lem"
+    allL( "IHx_0", le"x_0:Nat" ); andL
+    rewrite.many ltr "IHx_0_0_0" in "lem"
+    rewrite.many ltr "def_half_2" in "lem"
+    quasiprop
   }
 
   val proof = Lemma( sequent ) {
-    cut( "hyp", hypothesis ); insert( hypothesis_proof )
-    escargot
+    allR; cut( "lem", lem ); insert( lem_proof )
+    escargot.withDeskolemization
   }
 }
+

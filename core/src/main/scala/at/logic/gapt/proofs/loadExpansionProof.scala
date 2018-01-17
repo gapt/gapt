@@ -9,7 +9,7 @@ import at.logic.gapt.proofs.expansion.{ ExpansionProof, addSymmetry }
 import at.logic.gapt.proofs.resolution.{ ResolutionProof, ResolutionToExpansionProof, containsEquationalReasoning, numberOfLogicalInferencesRes, simplifyResolutionProof }
 import at.logic.gapt.proofs.sketch.RefutationSketchToResolution
 import at.logic.gapt.provers.prover9.Prover9Importer
-import at.logic.gapt.utils.metrics
+import at.logic.gapt.utils.logger
 import ammonite.ops._
 
 object loadExpansionProof {
@@ -30,10 +30,10 @@ object loadExpansionProof {
     case _ => // try tstp format
       val tstpOutput = file.read
 
-      metrics.value( "tstp_is_cnf_ref", tstpOutput contains "CNFRefutation" )
+      logger.metric( "tstp_is_cnf_ref", tstpOutput contains "CNFRefutation" )
 
       val ( endSequent, sketch ) = TptpProofParser.parse( StringInputFile( tstpOutput ), ignoreStrongQuants = true )
-      metrics.value( "tstp_sketch_size", sketch.subProofs.size )
+      logger.metric( "tstp_sketch_size", sketch.subProofs.size )
 
       val Right( resProof ) = RefutationSketchToResolution( sketch )
       loadResolutionProof( resProof, endSequent )
@@ -55,7 +55,7 @@ object loadExpansionProof {
   }
 
   private def loadResolutionProof( resProof: ResolutionProof, endSequent: HOLSequent ) = {
-    metrics.value( "resinf_input", numberOfLogicalInferencesRes( simplifyResolutionProof( resProof ) ) )
+    logger.metric( "resinf_input", numberOfLogicalInferencesRes( simplifyResolutionProof( resProof ) ) )
     val backgroundTheory =
       if ( containsEquationalReasoning( resProof ) )
         CutIntroduction.BackgroundTheory.Equality

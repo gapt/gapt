@@ -3,7 +3,7 @@ import at.logic.gapt.expr._
 import at.logic.gapt.expr.fol.{ folSubTerms, thresholds }
 import at.logic.gapt.expr.hol.{ lcomp, simplify, toNNF }
 import at.logic.gapt.provers.maxsat.MaxSATSolver
-import at.logic.gapt.utils.metrics
+import at.logic.gapt.utils.logger
 
 /**
  * This is a slightly batshit insane and completely wrong formalization of grammars for proofs with a single Π₂-cut.
@@ -18,7 +18,8 @@ import at.logic.gapt.utils.metrics
  * The right side of the cut has alternating weak and strong quantifier inferences.  Say `r` is the term of
  * the weak quantifier inference, then `β` is the eigenvariable such that `φ(r,β)`.
  * We store this as the production `β → r`.
- * Additionally, we require that there is *exactly one* production for each `β` (this condition is missing from pre-grammars)
+ * Additionally, we require that there is *exactly one* production for each `β`
+ * (this condition is missing from pre-grammars)
  */
 case class Pi2PreGrammar(
     startSymbol: Var,
@@ -73,7 +74,8 @@ object stablePi2Grammar {
 
     Pi2PreGrammar( startSymbol, alpha, betas,
       Vector() ++
-        ( for ( rhs <- stableTerms( language, Seq( alpha ) ) ++ stableTerms( language, betas ) ) yield startSymbol -> rhs ) ++
+        ( for ( rhs <- stableTerms( language, Seq( alpha ) ) ++ stableTerms( language, betas ) )
+          yield startSymbol -> rhs ) ++
         ( for ( rhs <- stableTerms( folSubTerms( language ).filter( _.ty == alpha.ty ), Seq( alpha ) ) )
           yield alpha -> rhs ) ++
         ( for {
@@ -134,8 +136,9 @@ object minimizePi2Grammar {
     // We require that the set of α-productions is nonempty.
     val alphaNonempty = Or( for ( p @ ( lhs, _ ) <- g.productions if lhs == g.alpha ) yield prodinc( p ) )
 
-    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality & expressibilityCondition & alphaNonempty
-    metrics.value( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
+    val hard = tratgFormula.coversLanguage( lang ) & correspondenceFormula & betaCardinality &
+      expressibilityCondition & alphaNonempty
+    logger.metric( "minform_lcomp", lcomp( simplify( toNNF( hard ) ) ) )
 
     val soft = for ( p <- g.productions ) yield -prodinc( p ) -> 1
 
@@ -149,8 +152,8 @@ object findMinimalPi2Grammar {
   def apply( lang: Traversable[Expr], alpha: Var, betas: Vector[Var], solver: MaxSATSolver ): Option[Pi2Grammar] = {
     require( freeVariables( lang ).isEmpty )
     val startSymbol = rename( Var( "x0", lang.head.ty ), alpha +: betas )
-    val stableG = metrics.time( "stabgrammar" ) { stablePi2Grammar( startSymbol, alpha, betas, lang ) }
-    metrics.value( "stabgrammar", stableG.size )
-    metrics.time( "mingrammar" ) { minimizePi2Grammar( stableG, lang, solver ) }
+    val stableG = logger.time( "stabgrammar" ) { stablePi2Grammar( startSymbol, alpha, betas, lang ) }
+    logger.metric( "stabgrammar", stableG.size )
+    logger.time( "mingrammar" ) { minimizePi2Grammar( stableG, lang, solver ) }
   }
 }

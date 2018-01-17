@@ -15,8 +15,8 @@ class ExternalSATSolver( val command: String* ) extends SATSolver with ExternalP
         runProcess.withExitValue( command ++ Seq( dimacsInputFile.toString, dimacsOutputFile.toString ) ) match {
           case ( 10, _ ) => /* SAT */ Some( read ! dimacsOutputFile )
           case ( 20, _ ) => /* UNSAT */ None
-          case ( 1, str ) =>
-            throw new Exception( s"Error executing external sat prover $command: $str" )
+          case ( _, str ) =>
+            throw new Exception( s"Error executing external sat prover $command:\n$str" )
         }
       }
     }

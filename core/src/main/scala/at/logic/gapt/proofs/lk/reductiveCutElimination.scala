@@ -320,42 +320,52 @@ object gradeReduction {
         Some( subProof )
 
       // If either cut rule is introduced by weakening, delete one subproof and perform lots of weakenings instead.
-      case ( l @ WeakeningRightRule( subProof, main ), r ) if l.mainIndices.head == aux1 => // The left cut formula is introduced by weakening
+      case ( l @ WeakeningRightRule( subProof, main ), r ) if l.mainIndices.head == aux1 =>
+        // The left cut formula is introduced by weakening
         Some( WeakeningMacroRule( subProof, cut.endSequent ) )
 
-      case ( l, r @ WeakeningLeftRule( subProof, main ) ) if aux2 == right.mainIndices.head => // The right cut formula is introduced by weakening
+      case ( l, r @ WeakeningLeftRule( subProof, main ) ) if aux2 == right.mainIndices.head =>
+        // The right cut formula is introduced by weakening
         Some( WeakeningMacroRule( subProof, cut.endSequent ) )
 
       // The propositional rules replace the cut with simpler cuts.
-      case ( AndRightRule( llSubProof, a1, lrSubProof, a2 ), AndLeftRule( rSubProof, a3, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( AndRightRule( llSubProof, a1, lrSubProof, a2 ), AndLeftRule( rSubProof, a3, a4 )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( lrSubProof, a2, rSubProof, a4 )
         val o = tmp.getRightSequentConnector
         Some( CutRule( llSubProof, a1, tmp, o.child( a3 ) ) )
 
-      case ( OrRightRule( lSubProof, a1, a2 ), OrLeftRule( rlSubProof, a3, rrSubProof, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( OrRightRule( lSubProof, a1, a2 ), OrLeftRule( rlSubProof, a3, rrSubProof, a4 )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( lSubProof, a1, rlSubProof, a3 )
         val o = tmp.getLeftSequentConnector
         Some( CutRule( tmp, o.child( a2 ), rrSubProof, a4 ) )
 
-      case ( ImpRightRule( lSubProof, a1, a2 ), ImpLeftRule( rlSubProof, a3, rrSubProof, a4 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( ImpRightRule( lSubProof, a1, a2 ), ImpLeftRule( rlSubProof, a3, rrSubProof, a4 )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val tmp = CutRule( rlSubProof, a3, lSubProof, a1 )
         Some( CutRule( tmp, tmp.getRightSequentConnector.child( a2 ), rrSubProof, a4 ) )
 
-      case ( NegRightRule( lSubProof, a1 ), NegLeftRule( rSubProof, a2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( NegRightRule( lSubProof, a1 ), NegLeftRule( rSubProof, a2 )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         Some( CutRule( rSubProof, a2, lSubProof, a1 ) )
 
-      case ( ForallRightRule( lSubProof, a1, eigen, _ ), ForallLeftRule( rSubProof, a2, f, term, _ ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( ForallRightRule( lSubProof, a1, eigen, _ ), ForallLeftRule( rSubProof, a2, f, term, _ )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val lSubProofNew = Substitution( eigen, term )( lSubProof )
         Some( CutRule( lSubProofNew, rSubProof, right.auxFormulas.head.head ) )
 
-      case ( ExistsRightRule( lSubProof, a2, f, term, _ ), ExistsLeftRule( rSubProof, a1, eigen, _ ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( ExistsRightRule( lSubProof, a2, f, term, _ ), ExistsLeftRule( rSubProof, a1, eigen, _ )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         val rSubProofNew = Substitution( eigen, term )( rSubProof )
         Some( CutRule( lSubProof, rSubProofNew, left.auxFormulas.head.head ) )
 
-      case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 ) ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
+      case ( DefinitionRightRule( lSubProof, a1, definition1 ), DefinitionLeftRule( rSubProof, a2, definition2 )
+        ) if left.mainIndices.head == aux1 && right.mainIndices.head == aux2 =>
         Some( CutRule( lSubProof, a1, rSubProof, a2 ) )
 
-      case ( eqL @ EqualityRightRule( _, _, _, _ ), eqR @ EqualityLeftRule( _, _, _, _ ) ) if eqL.mainIndices.head == aux1 && eqR.mainIndices.head == aux2 && eqL.auxFormula == eqR.auxFormula =>
+      case ( eqL @ EqualityRightRule( _, _, _, _ ), eqR @ EqualityLeftRule( _, _, _, _ )
+        ) if eqL.mainIndices.head == aux1 && eqR.mainIndices.head == aux2 && eqL.auxFormula == eqR.auxFormula =>
         Some( CutRule( eqL.subProof, eqL.aux, eqR.subProof, eqR.aux ) )
 
       // If no grade reduction rule can be applied
@@ -393,7 +403,8 @@ object leftRankReduction {
         Some( ContractionLeftRule( cutSub, a1New, a2New ) )
 
       case l @ ContractionRightRule( subProof, a1, a2 ) =>
-        if ( l.mainIndices.head == aux1 ) { // The left cut formula is the main formula of the contraction: Duplicate right proof
+        if ( l.mainIndices.head == aux1 ) {
+          // The left cut formula is the main formula of the contraction: Duplicate right proof
           val tmp = CutRule( subProof, a1, right, aux2 )
           val tmp2 = CutRule( tmp, tmp.getLeftSequentConnector.child( a2 ), right, aux2 )
           Some(
@@ -401,7 +412,8 @@ object leftRankReduction {
         } else { // The contraction operates on the context: Swap the inferences
           val aux1Sub = l.getSequentConnector.parent( aux1 )
           val cutSub = CutRule( subProof, aux1Sub, right, aux2 )
-          val ( a1New, a2New ) = ( cutSub.getLeftSequentConnector.child( a1 ), cutSub.getLeftSequentConnector.child( a2 ) )
+          val a1New = cutSub.getLeftSequentConnector.child( a1 )
+          val a2New = cutSub.getLeftSequentConnector.child( a2 )
           Some( ContractionRightRule( cutSub, a1New, a2New ) )
         }
 
@@ -434,7 +446,8 @@ object leftRankReduction {
       case l @ AndLeftRule( subProof, a1, a2 ) =>
         val aux1Sub = l.getSequentConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftSequentConnector.child( a1 ), cutSub.getLeftSequentConnector.child( a2 ) )
+        val a1New = cutSub.getLeftSequentConnector.child( a1 )
+        val a2New = cutSub.getLeftSequentConnector.child( a2 )
         Some( AndLeftRule( cutSub, a1New, a2New ) )
 
       case l @ AndRightRule( leftSubProof, a1, rightSubProof, a2 ) if left.mainIndices.head != aux1 =>
@@ -466,7 +479,8 @@ object leftRankReduction {
       case l @ OrRightRule( subProof, a1, a2 ) if left.mainIndices.head != aux1 =>
         val aux1Sub = l.getSequentConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftSequentConnector.child( a1 ), cutSub.getLeftSequentConnector.child( a2 ) )
+        val a1New = cutSub.getLeftSequentConnector.child( a1 )
+        val a2New = cutSub.getLeftSequentConnector.child( a2 )
         Some( OrRightRule( cutSub, a1New, a2New ) )
 
       case l @ ImpLeftRule( leftSubProof, a1, rightSubProof, a2 ) =>
@@ -485,7 +499,8 @@ object leftRankReduction {
       case l @ ImpRightRule( subProof, a1, a2 ) if left.mainIndices.head != aux1 =>
         val aux1Sub = l.getSequentConnector.parent( aux1 )
         val cutSub = CutRule( l.subProof, aux1Sub, right, aux2 )
-        val ( a1New, a2New ) = ( cutSub.getLeftSequentConnector.child( a1 ), cutSub.getLeftSequentConnector.child( a2 ) )
+        val a1New = cutSub.getLeftSequentConnector.child( a1 )
+        val a2New = cutSub.getLeftSequentConnector.child( a2 )
         Some( ImpRightRule( cutSub, a1New, a2New ) )
 
       case l @ NegLeftRule( subProof, a ) =>
@@ -506,7 +521,8 @@ object leftRankReduction {
         val aNew = cutSub.getLeftSequentConnector.child( a )
         Some( ForallLeftRule( cutSub, aNew, f, term, quant ) )
 
-      case l @ ForallRightRule( _, _, _, _ ) if left.mainIndices.head != aux1 && freeVariables( cut.endSequent ).contains( l.eigenVariable ) =>
+      case l @ ForallRightRule( _, _, _, _
+        ) if left.mainIndices.head != aux1 && freeVariables( cut.endSequent ).contains( l.eigenVariable ) =>
         val newEigenvariable = rename( l.eigenVariable, freeVariables( cut.endSequent ) )
         val renaming = Substitution( l.eigenVariable -> newEigenvariable )
         val newLeftSubProof = l.copy( subProof = renaming( l.subProof ), eigenVariable = newEigenvariable )
@@ -611,14 +627,16 @@ object rightRankReduction {
           // The contraction operates on the context: Swap the inferences
           val aux2Sub = r.getSequentConnector.parent( aux2 )
           val cutSub = CutRule( left, aux1, subProof, aux2Sub )
-          val ( a1New, a2New ) = ( cutSub.getRightSequentConnector.child( a1 ), cutSub.getRightSequentConnector.child( a2 ) )
+          val a1New = cutSub.getRightSequentConnector.child( a1 )
+          val a2New = cutSub.getRightSequentConnector.child( a2 )
           Some( ContractionLeftRule( cutSub, a1New, a2New ) )
         }
 
       case r @ ContractionRightRule( subProof, a1, a2 ) =>
         val aux2Sub = r.getSequentConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightSequentConnector.child( a1 ), cutSub.getRightSequentConnector.child( a2 ) )
+        val a1New = cutSub.getRightSequentConnector.child( a1 )
+        val a2New = cutSub.getRightSequentConnector.child( a2 )
         Some( ContractionRightRule( cutSub, a1New, a2New ) )
 
       //Following line is redundant when eliminating uppermost cut
@@ -649,7 +667,8 @@ object rightRankReduction {
       case r @ AndLeftRule( subProof, a1, a2 ) if right.mainIndices.head != aux2 =>
         val aux2Sub = r.getSequentConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightSequentConnector.child( a1 ), cutSub.getRightSequentConnector.child( a2 ) )
+        val a1New = cutSub.getRightSequentConnector.child( a1 )
+        val a2New = cutSub.getRightSequentConnector.child( a2 )
         Some( AndLeftRule( cutSub, a1New, a2New ) )
 
       case r @ AndRightRule( leftSubProof, a1, rightSubProof, a2 ) =>
@@ -683,7 +702,8 @@ object rightRankReduction {
       case r @ OrRightRule( subProof, a1, a2 ) =>
         val aux2Sub = r.getSequentConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightSequentConnector.child( a1 ), cutSub.getRightSequentConnector.child( a2 ) )
+        val a1New = cutSub.getRightSequentConnector.child( a1 )
+        val a2New = cutSub.getRightSequentConnector.child( a2 )
         Some( OrRightRule( cutSub, a1New, a2New ) )
 
       case r @ ImpLeftRule( leftSubProof, a1, rightSubProof, a2 ) if right.mainIndices.head != aux2 =>
@@ -703,7 +723,8 @@ object rightRankReduction {
       case r @ ImpRightRule( subProof, a1, a2 ) =>
         val aux2Sub = r.getSequentConnector.parent( aux2 )
         val cutSub = CutRule( left, aux1, r.subProof, aux2Sub )
-        val ( a1New, a2New ) = ( cutSub.getRightSequentConnector.child( a1 ), cutSub.getRightSequentConnector.child( a2 ) )
+        val a1New = cutSub.getRightSequentConnector.child( a1 )
+        val a2New = cutSub.getRightSequentConnector.child( a2 )
         Some( ImpRightRule( cutSub, a1New, a2New ) )
 
       case r @ NegLeftRule( subProof, a ) if right.mainIndices.head != aux2 =>
@@ -747,7 +768,8 @@ object rightRankReduction {
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ForallSkRightRule( cutSub, aNew, main, skTerm, skDef ) )
 
-      case right @ ExistsLeftRule( _, _, _, _ ) if right.mainIndices.head != aux2 && freeVariables( cut.endSequent ).contains( right.eigenVariable ) =>
+      case right @ ExistsLeftRule( _, _, _, _
+        ) if right.mainIndices.head != aux2 && freeVariables( cut.endSequent ).contains( right.eigenVariable ) =>
         val newEigenvariable = rename( right.eigenVariable, freeVariables( cut.endSequent ) )
         val renaming = Substitution( right.eigenVariable -> newEigenvariable )
         val newRightSubProof = right.copy( subProof = renaming( right.subProof ), eigenVariable = newEigenvariable )
@@ -775,7 +797,8 @@ object rightRankReduction {
         val aNew = cutSub.getRightSequentConnector.child( a )
         Some( ExistsRightRule( cutSub, aNew, f, term, quant ) )
 
-      case r @ EqualityLeftRule( subProof, eq, eaux, indicator ) if r.mainIndices.head != aux2 && r.eqInConclusion != aux2 =>
+      case r @ EqualityLeftRule( subProof, eq, eaux, indicator
+        ) if r.mainIndices.head != aux2 && r.eqInConclusion != aux2 =>
         val conn1 = r.getSequentConnector
         val cutSub = CutRule( left, aux1, subProof, conn1.parent( aux2 ) )
         val conn2 = cutSub.getRightSequentConnector
@@ -834,7 +857,8 @@ object inductionRightReduction {
 
     cut.rightSubProof match {
 
-      case ind @ InductionRule( _, _, _ ) if contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty =>
+      case ind @ InductionRule( _, _, _
+        ) if contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty =>
         val newEigenvariables = rename( inductionEigenvariables( ind ), contextVariables( cut ) )
         val newInductionCases = ind.cases map { inductionCase =>
           val newCaseEigenvariables = inductionCase.eigenVars.map( newEigenvariables )
@@ -923,7 +947,8 @@ object inductionLeftReduction {
   def apply( cut: CutRule )( implicit ctx: Context ): Option[LKProof] = {
 
     cut.leftSubProof match {
-      case ind @ InductionRule( _, _, _ ) if ind.mainIndices.head != cut.aux1 && ( contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty ) =>
+      case ind @ InductionRule( _, _, _ ) if ind.mainIndices.head != cut.aux1 &&
+        ( contextVariables( cut ) intersect inductionEigenvariables( ind ) nonEmpty ) =>
         val newEigenvariables = rename( inductionEigenvariables( ind ), contextVariables( cut ) )
         val newInductionCases = ind.cases map { inductionCase =>
           val newCaseEigenvariables = inductionCase.eigenVars.map( newEigenvariables )
@@ -933,7 +958,8 @@ object inductionLeftReduction {
         val newLeftSubProof = ind.copy( cases = newInductionCases )
         apply( cut.copy( leftSubProof = newLeftSubProof ) )
 
-      case ind @ InductionRule( inductionCases, inductionFormula, inductionTerm ) if ind.mainIndices.head != cut.aux1 => {
+      case ind @ InductionRule( inductionCases, inductionFormula, inductionTerm
+        ) if ind.mainIndices.head != cut.aux1 =>
         val newInductionCases = inductionCases zip ind.occConnectors map {
           case ( inductionCase, connector ) =>
             if ( connector.parentOption( cut.aux1 ).nonEmpty ) {
@@ -947,7 +973,6 @@ object inductionLeftReduction {
             }
         }
         Some( InductionRule( newInductionCases, inductionFormula, inductionTerm ) )
-      }
       case _ => None
     }
   }
@@ -958,7 +983,7 @@ object inductionLeftReduction {
 
 object freeCutElimination {
   /**
-   * See [[FreeCutElimination.apply()]]
+   * See [[FreeCutElimination.apply]]
    */
   def apply( proof: LKProof )( implicit ctx: Context ) = {
     ( new FreeCutElimination ).apply( proof )
@@ -985,7 +1010,8 @@ class FreeCutElimination( implicit val ctx: Context ) {
           val ( tempProof, tempConnector ) = super.recurse( proof, () )
           reduction( tempProof ) match {
             case Some( ( newProof, _ ) ) =>
-              ( newProof, SequentConnector.guessInjection( fromLower = proof.conclusion, toUpper = newProof.conclusion ).inv )
+              ( newProof, SequentConnector.guessInjection(
+                fromLower = proof.conclusion, toUpper = newProof.conclusion ).inv )
             case None => ( tempProof, tempConnector )
           }
         }
@@ -1020,7 +1046,8 @@ class FreeCutElimination( implicit val ctx: Context ) {
         case ( EqualityLeftRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
           | ( EqualityLeftRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) )
           | ( EqualityRightRule( _, _, _, _ ), EqualityLeftRule( _, _, _, _ ) )
-          | ( EqualityRightRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ ) ) if weakeningEqualityOnlyTree( cut.leftSubProof ) && weakeningEqualityOnlyTree( cut.rightSubProof ) =>
+          | ( EqualityRightRule( _, _, _, _ ), EqualityRightRule( _, _, _, _ )
+            ) if weakeningEqualityOnlyTree( cut.leftSubProof ) && weakeningEqualityOnlyTree( cut.rightSubProof ) =>
           recurseGradeReduction( cut )
         case ( EqualityLeftRule( _, _, _, _ ), _ )
           | ( EqualityRightRule( _, _, _, _ ), _ ) if weakeningEqualityOnlyTree( cut.leftSubProof ) =>

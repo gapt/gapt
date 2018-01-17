@@ -48,7 +48,8 @@ import scala.collection.mutable
  * everywhere in the resulting expansion proof, then we can package up the expansions of `s1 :- A(x)` and `s2 :- B(x)` as cuts.
  * The other clauses are then precisely the clause we had before splitting.
  *
- * Subformula definitions are eliminated after the conversion to expansion proofs, see [[eliminateDefsET]].
+ * Subformula definitions are eliminated after the conversion to expansion proofs, see
+ * [[at.logic.gapt.proofs.expansion.eliminateDefsET]].
  */
 object ResolutionToExpansionProof {
 

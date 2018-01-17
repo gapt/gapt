@@ -23,7 +23,7 @@ class Prover9( val extraCommands: ( Map[Const, Const] => Seq[String] ) = _ => Se
     renameConstantsToFi.wrap( cnf.toSeq )(
       ( renaming, cnf: Seq[HOLClause] ) => {
         val p9Input = toP9Input( cnf, renaming )
-        runProcess.withExitValue( Seq( "prover9" ), p9Input ) match {
+        ( runProcess.withExitValue( Seq( "prover9" ), p9Input ): @unchecked ) match {
           case ( 0, out ) => Some( parseProof( out ) )
           case ( 2, _ )   => None
         }
@@ -122,7 +122,7 @@ object Prover9Importer extends ExternalProgram {
     assumptions ++: Sequent() :++ goals distinct
   }
 
-  def robinsonProofWithReconstructedEndSequent( p9Output: InputFile ): ( ResolutionProof, HOLSequent ) = {
+  def robinsonProofWithReconstructedEndSequent( p9Output: InputFile, runFixDerivation: Boolean = true ): ( ResolutionProof, HOLSequent ) = {
     val p9Output_ = loadExpansionProof.extractFromTSTPCommentsIfNecessary( p9Output )
 
     val resProof = robinsonProof( p9Output_ )
@@ -136,7 +136,7 @@ object Prover9Importer extends ExternalProgram {
       }
     }
 
-    val fixedResProof = fixDerivation( resProof, endSequent )
+    val fixedResProof = if ( runFixDerivation ) fixDerivation( resProof, endSequent ) else resProof
 
     ( fixedResProof, endSequent )
   }

@@ -2,9 +2,6 @@ package at.logic.gapt.examples.church_numerals
 
 import org.specs2.mutable.Specification
 
-/**
- * Created by marty on 9/10/16.
- */
 class ChurchNumeralsTest extends Specification {
 
   "0+0 = 0" in {

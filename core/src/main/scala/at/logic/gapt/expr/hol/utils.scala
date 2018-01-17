@@ -212,7 +212,7 @@ object lcomp {
     case Atom( _, _ )     => 1
   }
 
-  def apply( seq: HOLSequent ): Int = seq.antecedent.foldLeft( 0 )( _ + lcomp( _ ) ) + seq.succedent.foldLeft( 0 )( _ + lcomp( _ ) )
+  def apply( seq: HOLSequent ): Int = seq.map( lcomp( _ ) ).elements.sum
 }
 
 object universalClosure {
@@ -313,9 +313,10 @@ object instantiate {
   def apply( f: Formula, tss: Seq[Seq[Expr]] )( implicit d: DummyImplicit ): Seq[Formula] =
     tss.map( ts => instantiate( f, ts ) )
 
-  def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = apply( f.asInstanceOf[Formula], t.asInstanceOf[Expr] ).asInstanceOf[FOLFormula]
-  def apply( f: FOLFormula, ts: Seq[FOLTerm] ): FOLFormula = apply( f.asInstanceOf[Formula], ts.asInstanceOf[Seq[Expr]] ).asInstanceOf[FOLFormula]
-  def apply( f: FOLFormula, tss: Seq[Seq[FOLTerm]] )( implicit d: DummyImplicit ): Seq[FOLFormula] = apply( f.asInstanceOf[Formula], tss.asInstanceOf[Seq[Seq[FOLTerm]]] ).asInstanceOf[Seq[FOLFormula]]
+  def apply( f: FOLFormula, t: FOLTerm ): FOLFormula = apply( f: Formula, t: Expr ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula, ts: Seq[FOLTerm] ): FOLFormula = apply( f: Formula, ts: Seq[Expr] ).asInstanceOf[FOLFormula]
+  def apply( f: FOLFormula, tss: Seq[Seq[FOLTerm]] )( implicit d: DummyImplicit ): Seq[FOLFormula] =
+    apply( f: Formula, tss: Seq[Seq[FOLTerm]] ).asInstanceOf[Seq[FOLFormula]]
 
   /**
    * Compute all clauses obtainable from substituting terms from the given set for variables in the given clause.
@@ -325,7 +326,7 @@ object instantiate {
     val mappings = vars.foldLeft( Set( Map[FOLVar, FOLTerm]() ) )( ( ms, x ) => {
       for { m <- ms; t <- ts } yield m + ( x -> t )
     } )
-    mappings.map( m => { FOLSubstitution( m )( cl ) } ).asInstanceOf[Set[FOLClause]] //TODO: get rid of this cast (see issue 425)
+    mappings.map( m => FOLSubstitution( m )( cl ) )
   }
 
   /**
@@ -350,7 +351,7 @@ object normalizeFreeVariables {
    * @param f the formula to be normalized
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
-  def apply( f: Formula ): ( Formula, Substitution ) = apply( f.asInstanceOf[Expr] ).asInstanceOf[( Formula, Substitution )]
+  def apply( f: Formula ): ( Formula, Substitution ) = apply( f: Expr ).asInstanceOf[( Formula, Substitution )]
 
   /**
    * Systematically renames the free variables by their left-to-right occurence in a HOL Expression f to x_{i} where all
@@ -390,7 +391,7 @@ object normalizeFreeVariables {
    * @return a pair (g,sub) such that g = sub(f). reversing sub allows to restore the original variables.
    */
   def apply( f: Formula, freshName: () => String ): ( Formula, Substitution ) =
-    apply( f.asInstanceOf[Expr], freshName ).asInstanceOf[( Formula, Substitution )]
+    apply( f: Expr, freshName ).asInstanceOf[( Formula, Substitution )]
 
   /**
    * Works exactly like normalizeFreeVaribles(f:Expr) but allows the specification of your own name generator.
@@ -441,3 +442,19 @@ object formulaToSequent {
   }
 }
 
+object inductionPrinciple {
+  def apply( indty: Ty, constrs: Seq[Const] ) = {
+    val pred = Var( "X", indty ->: To )
+
+    val hyps = constrs.map { constr =>
+      val FunctionType( `indty`, argtypes ) = constr.ty
+      val vars = for ( ( at, i ) <- argtypes.zipWithIndex ) yield Var( s"x$i", at )
+
+      All.Block( vars, vars.filter {
+        _.ty == indty
+      }.foldRight( pred( constr( vars: _* ) ) )( ( v, f ) => pred( v ) --> f ) )
+    }
+
+    hof"∀X (${And( hyps )} ⊃ ∀x $pred x)"
+  }
+}

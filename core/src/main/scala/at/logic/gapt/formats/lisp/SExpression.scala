@@ -37,6 +37,10 @@ case class LList( elements: SExpression* ) extends SExpression {
 
   override def toString = "(" + elements.mkString( " " ) + ")"
 }
+object LList {
+  def apply( elements: Iterable[SExpression] ): LList =
+    LList( elements.toSeq: _* )
+}
 object LFun {
   def apply( head: String, args: SExpression* ): LList =
     LList( ( LSymbol( head ) +: args ): _* )

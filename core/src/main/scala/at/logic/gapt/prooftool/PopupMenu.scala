@@ -67,7 +67,8 @@ object PopupMenu {
    * @param pos The position of the sequent in which lbl resides.
    * @param i The index of lbl within its sequent.
    */
-  def apply[F, T <: SequentProof[F, T]]( main: SequentProofViewer[F, T], lbl: LatexLabel, pos: List[Int], i: SequentIndex, x: Int, y: Int ): Unit = {
+  def apply[F, T <: SequentProof[F, T]]( main: SequentProofViewer[F, T], lbl: LatexLabel, pos: List[Int],
+                                         i: SequentIndex, x: Int, y: Int ): Unit = {
     val popupMenu = new PopupMenu {
       contents += new MenuItem( Action( "Mark ancestors" ) {
         main.markAncestors( pos, Set( i ) )

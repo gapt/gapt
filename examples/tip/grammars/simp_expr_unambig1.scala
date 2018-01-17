@@ -24,7 +24,9 @@ object simp_expr_unambig1 extends TacticsProof {
         def_Plus_1: ∀x0 ∀x1 (Plus_1(Plus(x0:E, x1:E): E): E) = x1,
         def_append_0: ∀y (append(nil:list, y:list): list) = y,
         def_append_1: ∀z   ∀xs   ∀y   (append(cons(z:Tok, xs:list): list, y:list): list) = cons(z, append(xs, y)),
-        def_lin_0: ∀a   ∀b   (lin(Plus(a:E, b:E): E): list) =     append(append(append(append(cons(C:Tok, nil:list): list, lin(a)): list,           cons(Pl, nil)), lin(b)), cons(D, nil)),
+        def_lin_0: ∀a   ∀b   (lin(Plus(a:E, b:E): E): list) =
+             append(append(append(append(cons(C:Tok, nil:list): list, lin(a)): list,
+                        cons(Pl, nil)), lin(b)), cons(D, nil)),
         def_lin_1: (lin(EX:E): list) = cons(#c(X: Tok), nil:list),
         def_lin_2: (lin(EY:E): list) = cons(#c(Y: Tok), nil:list),
         constr_inj_0: ¬(C:Tok) = D,
@@ -107,7 +109,10 @@ object simp_expr_unambig1 extends TacticsProof {
     allL( "IHa_1", le"b_1:E" ).forget
     forget( "IHb_0", "IHb_1" )
 
-    cut( "step_1", hof"append(lin(a_0), cons(Pl, append(lin(a_1), cons(D, x)))) = append(lin(b_0), cons(Pl, append(lin(b_1), cons(D, y))))" ); insert( cong_pos_proof )
+    cut(
+      "step_1",
+      hof"""append(lin(a_0), cons(Pl, append(lin(a_1), cons(D, x)))) =
+            append(lin(b_0), cons(Pl, append(lin(b_1), cons(D, y))))""" ); insert( cong_pos_proof )
     forget( "goal_0" )
     allL( "IHa_0", le"cons(Pl, append(lin(a_1), cons(D, x)))", le"cons(Pl, append(lin(b_1), cons(D, y)))" ).forget
     impL( "IHa_0" ); trivial
@@ -196,7 +201,10 @@ object simp_expr_unambig1 extends TacticsProof {
 
     impR
     rewrite.many ltr ( "def_lin_0", "def_append_1", "def_append_0" ) in "goal_0"
-    cut( "eq1", hof"append(append(append(lin(u_0), cons(Pl, nil)), lin(u_1)), cons(D, nil)) = append(append(append(lin(v_0), cons(Pl, nil)), lin(v_1)), cons(D, nil))" ); insert( cong_pos_proof )
+    cut(
+      "eq1",
+      hof"""append(append(append(lin(u_0), cons(Pl, nil)), lin(u_1)), cons(D, nil)) =
+            append(append(append(lin(v_0), cons(Pl, nil)), lin(v_1)), cons(D, nil))""" ); insert( cong_pos_proof )
     forget( "goal_0" )
 
     rewrite.many rtl "app_assoc" in "eq1"
@@ -210,7 +218,8 @@ object simp_expr_unambig1 extends TacticsProof {
     rewrite.many ltr ( "def_append_1", "def_append_0" ) in "lem_0_1"
     cut( "eq2", hof"append(lin(u_1), cons(D, nil)) = append(lin(v_1), cons(D, nil))" ); insert( cong_pos_proof )
 
-    allL( "lem", hov"u_1:E", hov"v_1:E", le"cons(D, nil)", le"cons(D, nil)" ) // forward chaining would be useful here (FIXME?)
+    allL( "lem", hov"u_1:E", hov"v_1:E", le"cons(D, nil)", le"cons(D, nil)" )
+    // forward chaining would be useful here (FIXME?)
     impL( "lem_1" ); trivial
     quasiprop
 

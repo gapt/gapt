@@ -3,10 +3,6 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.proofs.{ Ant, SequentConnector }
 
 /**
- * Created by sebastian on 21.06.16.
- */
-
-/**
  * Algorithm that removes some unnecessary cuts.
  * At the moment it only removes cuts where one of the premises is a logical axiom.
  */

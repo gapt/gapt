@@ -74,7 +74,9 @@ class TipSmtParser {
     case LFun( "declare-fun", name @ LSymbol( _ ), LKeyword( _ ), rest @ _* ) =>
       parse( LFun( "declare-fun", name +: rest: _* ) )
     case LFun( "declare-fun", LSymbol( name ), LList( argTypes @ _* ), LSymbol( retType ) ) =>
-      val f = Const( name, FunctionType( typeDecls( retType ), argTypes map { case LSymbol( argType ) => typeDecls( argType ) } ) )
+      val f = Const( name, FunctionType(
+        typeDecls( retType ),
+        argTypes.asInstanceOf[Seq[LSymbol]].map { case LSymbol( argType ) => typeDecls( argType ) } ) )
       declare( f )
       ctx += f
 

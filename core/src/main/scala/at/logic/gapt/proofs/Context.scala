@@ -14,9 +14,9 @@ import scala.reflect.ClassTag
 /**
  * Captures constants, types, definitions, and background theory used in a proof.
  *
- * Each of these different kinds of information is stored in a separate [[Facet]]
+ * Each of these different kinds of information is stored in a separate [[Context.Facet]]
  * of the context.  Each modification or addition to the context is recorded as
- * an [[Update]].  Adding information is only possible by adding it as an [[Update]].
+ * an [[Context.Update]].  Adding information is only possible by adding it as an [[Context.Update]].
  * (Basically a Context is an extensible LCF-style kernel.)
  *
  * There are several inferences in our LK proofs for which it is not enough that are
@@ -392,6 +392,11 @@ object Context {
     require(
       constructors.map( _.name ) == constructors.map( _.name ).distinct,
       s"Names of type constructors are not distinct." )
+
+    val baseCases = constructors.find { case Const( _, FunctionType( _, argTys ) ) => !argTys.contains( ty ) }
+    require(
+      baseCases.nonEmpty,
+      s"Inductive type is empty, all of the constructors are recursive: ${constructors.mkString( ", " )}" )
 
     override def apply( ctx: Context ): State = {
       require( !ctx.isType( ty ), s"Type $ty already defined" )

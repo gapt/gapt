@@ -178,7 +178,8 @@ object IvyParser {
       if ( exp == what ) by else throw new Exception( "Error in parsing replacement: (sub)term " + exp + " is not the expected term " + what )
   }
 
-  def parse_position( l: Seq[SExpression] ): List[Int] = l.toList map { case LSymbol( s ) => s.toInt }
+  def parse_position( l: Seq[SExpression] ): List[Int] =
+    l.view.map( s => s.asInstanceOf[LSymbol].name.toInt ).toList
 
   def parse_substitution( exp: SExpression ): FOLSubstitution = exp match {
     case LList( list @ _* ) =>

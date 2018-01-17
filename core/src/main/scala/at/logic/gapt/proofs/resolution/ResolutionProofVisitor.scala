@@ -94,12 +94,15 @@ class ResolutionProofVisitor {
       }
     }
   }
-  def visitFlip( p: Flip ): ResolutionProof = copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
+  def visitFlip( p: Flip ): ResolutionProof =
+    copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
 
   def visitDefn( p: Defn ): ResolutionProof = p
-  def visitDefIntro( p: DefIntro ): ResolutionProof = copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
+  def visitDefIntro( p: DefIntro ): ResolutionProof =
+    copyUnary( p, recurse( p.subProof ), p.subProof.conclusion( p.idx ), p.idx.polarity )
 
-  def visitAvatarContradiction( p: AvatarContradiction ): ResolutionProof = AvatarContradiction( recurse( p.subProof ) )
+  def visitAvatarContradiction( p: AvatarContradiction ): ResolutionProof =
+    AvatarContradiction( recurse( p.subProof ) )
   def visitAvatarComponent( p: AvatarComponent ): ResolutionProof = p
   def visitAvatarSplit( p: AvatarSplit ): ResolutionProof = AvatarSplit( recurse( p.subProof ), p.component )
 
