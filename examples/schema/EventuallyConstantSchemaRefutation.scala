@@ -65,11 +65,15 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     escargot
     ref( "Next" )
   }
+  ctx += Context.ProofDefinitionDeclaration( le"Top (s n)", PRSc )
+
   val esPRBc = Sequent( Seq( "Ant_0" -> hof"phiSFAF(0)" ), Seq() )
   val PRBc: LKProof = Lemma( esPRBc ) {
     unfold( "phiSFAF" ) in "Ant_0"
     escargot
   }
+  ctx += Context.ProofDefinitionDeclaration( le"Top 0", PRBc )
+
   val esPR2Sc = Sequent( Seq(
     "Ant_2" -> hof"E(s(n), f(g(k))) | LE(f(g(k)), s(n))",
     "Ant_1" -> hof"E(s(n), f(k)) | LE(f(k), s(n))",
@@ -134,6 +138,8 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     ref( "Next" )
     escargot
   }
+  ctx += Context.ProofDefinitionDeclaration( le"Next (s n) k", PR2Sc )
+
   val esPR2Bc = Sequent( Seq(
     "Ant_2" -> hof"E(0, f(g(k))) | LE(f(g(k)), 0)",
     "Ant_1" -> hof"E(0, f(k)) | LE(f(k), 0)",
@@ -142,4 +148,6 @@ object EventuallyConstantSchemaRefutation extends TacticsProof( EventuallyConsta
     unfold( "phiSFAT" ) in "Ant_0"
     escargot
   }
+  ctx += Context.ProofDefinitionDeclaration( le"Next 0 k", PR2Bc )
+
 }
