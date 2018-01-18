@@ -58,7 +58,6 @@ class proofes( initialContext: ImmutableContext ) extends TacticsProof( initialC
 
 class SchemaTest extends Specification {
   {
-
     import NdiffSchema.ctx
     "NdiffSchema Instantiate " in {
       val proof = instantiateProof( le"omega ${natMaker( 15 )}" )
@@ -321,7 +320,7 @@ class SchemaTest extends Specification {
     }
   }
   {
-    import FunctionInterationSchema.ctx
+    import FunctionIterationSchema.ctx
     "Instantiation of function interation schema" in {
       val proof = instantiateProof.Instantiate( le"phi (s (s (s (s (s (s 0)))))) " )
       ctx.check( proof )
@@ -329,7 +328,7 @@ class SchemaTest extends Specification {
     }
   }
   {
-    import FunctionInterationRefutation.ctx
+    import FunctionIterationRefutation.ctx
     "Instantiation of the negative characteristic formula of the function interation schema" in {
       val proof = instantiateProof.Instantiate( le"Top (s (s (s (s (s (s 0)))))) " )
       ctx.check( proof )
@@ -337,7 +336,7 @@ class SchemaTest extends Specification {
     }
   }
   {
-    import FunctionInterationRefutationPos.ctx
+    import FunctionIterationRefutationPos.ctx
     "Instantiation of the positive characteristic formula proof of the function interation schema" in {
       val proof = instantiateProof.Instantiate( le"Top (s (s (s (s (s (s 0)))))) " )
       ctx.check( proof )
