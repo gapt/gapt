@@ -22,8 +22,9 @@ object Lemma {
     addToCtx( lemmaName, finish( proofState, incompleteOk ) )
 
   def addToCtx( lemmaName: String, proof: LKProof )( implicit ctx: MutableContext ): LKProof = {
-    val fvs = freeVariablesLK( proof ).toSeq.sortBy( _.name )
-    val lhs = Const( lemmaName, FunctionType( Ti, fvs.map( _.ty ) ) )( fvs )
+    val fvs = freeVariables( proof.endSequent ).toSeq.sortBy( _.name )
+    val ftvs = typeVariables( proof.endSequent.toImplication ).toList.sortBy( _.name )
+    val lhs = Const( lemmaName, FunctionType( Ti, fvs.map( _.ty ) ), ftvs )( fvs )
     ctx += Context.ProofDeclaration( lhs, proof )
     proof
   }
