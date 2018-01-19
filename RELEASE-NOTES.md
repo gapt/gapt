@@ -8,6 +8,9 @@
 * Restructured user manual
 * The Scala operator for function types is now `->:` instead of `->`
 * Logback logging library was removed, use `verbose{...}` or `tactic.verbose` to enable logging
+* Schematic structs and characteristic formulas for CERES
+* Support for iProver 2.7
+* Induction support for ExpansionProofToLK, LKToExpansionProof
 
 ## Version 2.8 (released on 2017-10-09)
 
