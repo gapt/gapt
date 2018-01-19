@@ -348,6 +348,7 @@ abstract class PropositionalResolutionRule extends LocalResolutionRule {
 
   override def immediateSubProofs = Seq( subProof )
   override def auxIndices = Seq( Seq( idx ) )
+  def occConn = occConnectors.head
 }
 
 /**
