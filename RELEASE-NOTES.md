@@ -11,6 +11,7 @@
 * Schematic structs and characteristic formulas for CERES
 * Support for iProver 2.7
 * Induction support for ExpansionProofToLK, LKToExpansionProof
+* Constants now have an explicit list of type parameters
 
 ## Version 2.8 (released on 2017-10-09)
 
