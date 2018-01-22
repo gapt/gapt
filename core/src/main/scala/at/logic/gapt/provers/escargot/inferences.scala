@@ -263,7 +263,7 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
           if termOrdering.lt( subst( s_ ), subterm )
         } {
           p = Paramod( Subst( c1.proof, subst ), Suc( 0 ), leftToRight,
-            p, i, replacementContext( t_.ty, p.conclusion( i ), pos ) )
+            p, i, replacementContext( subst( t_.ty ), p.conclusion( i ), pos ) )
           reason = ( reason ++ c1.assertion ).distinct
           didRewrite = true
         }
