@@ -659,7 +659,7 @@ class MutableContext( private var ctx_ :ImmutableContext ) extends Context {
         return Const( d, by.ty )
       }
     }
-    val what = Const( name, by.ty )
+    val what = Const( name, by.ty, typeVariables( by ).toList )
     this += Definition( what, by )
     what
   }
