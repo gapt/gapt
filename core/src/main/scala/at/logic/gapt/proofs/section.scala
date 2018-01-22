@@ -19,7 +19,8 @@ class ContextSection( ctx: MutableContext ) {
     val nameGen = ctx.newNameGenerator
     val grounding = Substitution(
       for ( v @ Var( n, t ) <- freeVariables( seq ) ) yield {
-        val c = Const( nameGen.fresh( n ), t )
+        val tvs = typeVariables( t ).toList
+        val c = Const( nameGen.fresh( n ), t, tvs )
         addParameter( c, v )
         v -> c
       } )
@@ -56,7 +57,8 @@ object revertParameters {
           replacements
         } else {
           val by1 = Abs( fvs, by )
-          val what1 = Const( what0.name, FunctionType( what0.ty, fvs.map( _.ty ) ) )
+          val tvs1 = typeVariables( by1 ).toList
+          val what1 = Const( what0.name, FunctionType( what0.ty, fvs.map( _.ty ) ), tvs1 )
           ctx += Definition( what1, by1 )
           replacements + ( what0 -> Apps( what1, fvs ) )
         }
