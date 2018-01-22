@@ -8,6 +8,7 @@ import at.logic.gapt.proofs.lk._
 import at.logic.gapt.provers.Prover
 import at.logic.gapt.provers.escargot.Escargot
 import at.logic.gapt.provers.prover9.Prover9
+import at.logic.gapt.provers.simp.SimpTactic
 import at.logic.gapt.provers.viper.aip.axioms.StandardInductionAxioms
 import at.logic.gapt.provers.viper.grammars.TreeGrammarInductionTactic
 
@@ -766,4 +767,6 @@ trait TacticCommands {
       _ <- insert( CutRule( newGoal, p, q_ ) )
     } yield ()
   }
+
+  def simp( implicit ctx: Context ): SimpTactic = SimpTactic()
 }
