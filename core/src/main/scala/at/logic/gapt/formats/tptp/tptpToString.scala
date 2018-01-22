@@ -42,7 +42,7 @@ object tptpToString {
     case GeneralColon( a, b ) =>
       s"${expression( a, prio.term )}:${expression( b, prio.term )}"
 
-    case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
+    case Iff( a, b ) =>
       binExpr( a, b, p, prio.binary_formula, "<=>" )
 
     case Top()                              => "$true"

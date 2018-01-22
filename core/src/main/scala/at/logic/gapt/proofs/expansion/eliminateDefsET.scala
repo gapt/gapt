@@ -6,9 +6,8 @@ import at.logic.gapt.proofs.Context
 object eliminateDefsET {
   object DefinitionFormula {
     def unapply( f: Formula ): Option[( List[Var], HOLAtomConst, Formula )] = f match {
-      case All.Block( vs, And( Imp( Apps( d1: HOLAtomConst, vs1 ), r1 ),
-        Imp( r2, Apps( d2, vs2 ) ) ) ) if d1 == d2 && r1 == r2 && vs == vs1 && vs == vs2 =>
-        Some( ( vs, d1, r2 ) )
+      case All.Block( vs, Iff( Apps( d: HOLAtomConst, vs_ ), r ) ) if vs == vs_ =>
+        Some( ( vs, d, r ) )
       case _ => None
     }
   }

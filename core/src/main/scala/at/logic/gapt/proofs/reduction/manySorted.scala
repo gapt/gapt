@@ -397,7 +397,7 @@ private object definitionIntroducingBackReplacement {
         p.conclusion match {
           case Sequent( Seq(), Seq( Eq( t, t_ ) ) ) if t == t_ =>
             Refl( t )
-          case Sequent( Seq(), Seq( And( Imp( f @ Apps( c: HOLAtomConst, args ), g ), Imp( g_, f_ ) ) ) ) if f == f_ && g == g_ && defs.contains( c ) =>
+          case Sequent( Seq(), Seq( Iff( f @ Apps( c: HOLAtomConst, args ), g ) ) ) if defs.contains( c ) =>
             var defn: ResolutionProof = Defn( c, defs( c ) )
             for ( ev <- args ) defn = AllR( defn, Suc( 0 ), ev.asInstanceOf[Var] )
             defn
