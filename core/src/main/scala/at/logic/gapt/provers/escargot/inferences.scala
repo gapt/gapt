@@ -370,14 +370,15 @@ class StandardInferences( state: EscargotState, propositional: Boolean ) {
 
   object AvatarSplitting extends InferenceRule {
 
-    var componentCache = mutable.Map[Formula, FOLAtom]()
+    var componentCache = mutable.Map[Formula, Atom]()
     def boxComponent( comp: HOLSequent ): AvatarNonGroundComp = {
       val definition @ All.Block( vs, _ ) = universalClosure( comp.toDisjunction )
       AvatarNonGroundComp(
         componentCache.getOrElseUpdate( definition, {
-          val c = PropAtom( nameGen.freshWithIndex( "split" ) )
+          val tvs = typeVariables( definition ).toList
+          val c = Const( nameGen.freshWithIndex( "split" ), To, tvs )
           state.ctx += Definition( c, definition )
-          c
+          c.asInstanceOf[Atom]
         } ), definition, vs )
     }
 
