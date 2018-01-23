@@ -741,4 +741,29 @@ trait TacticCommands {
       _ <- insert( ForallRightBlock( CutRule( newGoal, ForallLeftRule( LogicalAxiom( f ), All( xs( i ), f ) ), All( xs( i ), f ) ), q, xs ) )
     } yield ()
   }
+
+  def generalize( vs: Var* ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q = goal.conclusion.succedent.head
+      q_ = All.Block( vs, q )
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent.succedent.head._1 -> q_ ) )
+      _ <- insert( CutRule( newGoal, ForallLeftBlock( LogicalAxiom( q ), q_, vs ), q_ ) )
+    } yield ()
+  }
+
+  def revert( hyps: String* ): Tactical[Unit] = Tactical {
+    for {
+      goal <- currentGoal
+      _ <- Tactical.guard( goal.conclusion.succedent.nonEmpty, "no formula in succedent" )
+      q = goal.conclusion.succedent.head
+      hypFs = goal.labelledSequent.filter( hyps contains _._1 ).map( _._2 )
+      q_ = hypFs.toNegConjunction --> q
+      newGoal = OpenAssumption( goal.labelledSequent.updated( Suc( 0 ), goal.labelledSequent.succedent.head._1 -> q_ ).
+        filterNot( hyps contains _._1 ) )
+      p <- solvePropositional( q_ +: hypFs :+ q ).toTactical
+      _ <- insert( CutRule( newGoal, p, q_ ) )
+    } yield ()
+  }
 }
