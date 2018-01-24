@@ -54,7 +54,10 @@ object renameConstantsToFi {
 object groundFreeVariables {
   def getGroundingMap( vars: Set[Var], consts: Set[Const] ): Seq[( Var, Const )] = {
     val nameGen = rename.awayFrom( consts )
-    vars.toSeq map { v => v -> Const( nameGen fresh v.name, v.ty ) }
+    vars.toSeq map { v =>
+      val tvs = typeVariables( v ).toList
+      v -> Const( nameGen fresh v.name, v.ty, tvs )
+    }
   }
 
   def getGroundingMap( seq: HOLSequent ): Seq[( Var, Const )] =

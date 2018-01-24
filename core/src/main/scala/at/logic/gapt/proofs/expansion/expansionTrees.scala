@@ -209,7 +209,7 @@ object ETInduction {
 
   def indAxioms( implicit ctx: Context ) =
     ctx.get[StructurallyInductiveTypes].constructors.map {
-      case ( s, cs ) => ( inductionPrinciple( TBase( s ), cs ), cs )
+      case ( s, cs ) => ( inductionPrinciple( TBase( s, cs.head.params ), cs ), cs )
     }
 
   def isInductionAxiomExpansion( tree: ExpansionTree )( implicit ctx: Context ): Boolean =

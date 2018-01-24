@@ -20,6 +20,9 @@ object syntacticMatching extends syntacticMatching {
       pairs: List[( Expr, Expr )],
       Substitution( alreadyFixedSubst ) ) map { _.asFOLSubstitution } headOption
 
+  def apply( from: Expr, to: Expr, fixed: PreSubstitution ): Option[Substitution] =
+    apply( List( from -> to ), fixed ).headOption
+
   def apply( from: Expr, to: Expr ): Option[Substitution] =
     apply( List( from -> to ) )
 

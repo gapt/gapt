@@ -1,6 +1,6 @@
 package at.logic.gapt.proofs.lk
 
-import at.logic.gapt.proofs.{ Ant, SequentConnector }
+import at.logic.gapt.proofs._
 
 /**
  * Algorithm that removes some unnecessary cuts.
@@ -16,16 +16,15 @@ object cleanCuts extends LKVisitor[Unit] {
     ( leftSubProof, rightSubProof ) match {
       case ( LogicalAxiom( _ ), _ ) =>
         val ( subProofNew, subConnector ) = recurse( rightSubProof, () )
-        val parentsSequent = p.endSequent.indicesSequent map { Seq( _ ) } delete Ant( 0 ) insertAt ( aux2, Seq( Ant( 0 ) ) )
-        val connector = SequentConnector( rightSubProof.endSequent, p.endSequent, parentsSequent )
-        ( subProofNew, connector * subConnector )
+        ( subProofNew,
+          subConnector * p.getRightSequentConnector.inv
+          + ( subConnector.child( aux2 ), p.getLeftSequentConnector.child( Ant( 0 ) ) ) )
 
       case ( _, LogicalAxiom( _ ) ) =>
         val ( subProofNew, subConnector ) = recurse( leftSubProof, () )
-        val last = p.endSequent.indices.last
-        val parentsSequent = p.endSequent.indicesSequent map { Seq( _ ) } delete last insertAt ( aux1, Seq( last ) )
-        val connector = SequentConnector( leftSubProof.endSequent, p.endSequent, parentsSequent )
-        ( subProofNew, connector * subConnector )
+        ( subProofNew,
+          subConnector * p.getLeftSequentConnector.inv
+          + ( subConnector.child( aux1 ), p.getRightSequentConnector.child( Suc( 0 ) ) ) )
 
       case _ => super.visitCut( p, () )
     }

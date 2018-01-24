@@ -17,7 +17,7 @@ package object aip {
    * @return Returns true if the variable v is of inductive type in the context ctx, false otherwise.
    */
   def hasInductiveType( v: Var )( implicit ctx: Context ): Boolean =
-    ctx.getConstructors( baseType( v ) ).isDefined
+    ctx.getConstructors( v.ty ).isDefined
 
   /**
    * Converts a TIP problem to sequent with context.

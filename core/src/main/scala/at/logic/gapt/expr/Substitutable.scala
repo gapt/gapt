@@ -53,7 +53,7 @@ trait ExprSubstitutable1 {
         Const( x, SubstitutableTy.applySubstitution( sub, ty ),
           ps.map( SubstitutableTy.applySubstitution( sub, _ ) ) )
     case App( a, b )                          => App( applySub( sub, a ), applySub( sub, b ) )
-    case Abs( v, _ ) if sub.domain contains v => applySub( Substitution( sub.map - v ), t )
+    case Abs( v, _ ) if sub.domain contains v => applySub( Substitution( sub.map - v, sub.typeMap ), t )
     case Abs( v, s ) if sub.range contains v => // TODO: this check is wrong with type substitutions
       // It is safe to rename the bound variable to any variable that is not in freeVariables(s).
       val newV = rename( v, freeVariables( s ) union sub.range )

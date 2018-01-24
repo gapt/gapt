@@ -57,7 +57,8 @@ case class ProofState private (
       throw new IllegalArgumentException( s"Cannot replace non-existing open subgoal: $index" ) )
     require(
       proofSegment.conclusion isSubsetOf subGoal.conclusion,
-      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}" )
+      s"Conclusion of proof segment is not a subset of subgoal:\n${proofSegment.conclusion}\nis not a subset of\n${subGoal.conclusion}\n"
+        + s"Extra formulas:\n${proofSegment.conclusion.distinct.diff( subGoal.conclusion )}" )
 
     if ( subGoal == proofSegment ) return this
 

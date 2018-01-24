@@ -148,7 +148,7 @@ abstract class Expr {
   def |( that: Expr ): Formula = Or( this, that )
   def unary_- : Formula = Neg( this )
   def -->( that: Expr ) = Imp( this, that )
-  def <->( that: Expr ) = And( Imp( this, that ), Imp( that, this ) )
+  def <->( that: Expr ) = Iff( this, that )
   def ===( that: Expr ) = Eq( this, that )
   def !==( that: Expr ) = Neg( Eq( this, that ) )
   def apply( that: Expr* ): Expr = App( this, that )

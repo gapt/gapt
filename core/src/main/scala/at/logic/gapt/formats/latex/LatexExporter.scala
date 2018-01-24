@@ -45,7 +45,7 @@ object LatexExporter {
     case Atom( Const( n, _, _ ), Seq( a, b ) ) if relOps contains n =>
       binExpr( a, b, p - 3, prio.infixRel, relOps( n ) )
 
-    case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ =>
+    case Iff( a, b ) =>
       binExpr( a, b, p, prio.bicond, "\\equiv" )
 
     case n: VarOrConst => escapeName( n.name )

@@ -125,7 +125,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
         val ( e_, t1 ) = show( e, true, bound, t0, prio.quantOrNeg + 1 )
         ( parenIf( p, prio.quantOrNeg, ( if ( unicode ) "¬" else "-" ) <> e_ ), t1 )
 
-      case And( Imp( a, b ), Imp( b_, a_ ) ) if a == a_ && b == b_ && !bound( AndC.name ) && !bound( ImpC.name ) =>
+      case Iff( a, b ) if !bound( AndC.name ) && !bound( ImpC.name ) =>
         showBin( "<->", prio.bicond, 0, 0, a, b, true, bound, t0, p )
       case And( a, b ) if !bound( AndC.name ) =>
         showBin( if ( unicode ) "∧" else "&", prio.conj, 1, 0, a, b, true, bound, t0, p )
