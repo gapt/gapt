@@ -225,7 +225,8 @@ case object QPropSimpProc extends SimpProc {
     if ( f == g ) SimpIffResult.Refl( f, polarity ) else {
       val sequent = if ( polarity.inAnt ) f +: Sequent() :+ g else g +: Sequent() :+ f
       val expansion = for ( ( a, i ) <- sequent.zipWithIndex ) yield formulaToExpansionTree( a, Set( Substitution() ), i.polarity )
-      val Right( lk ) = ExpansionProofToLK( ExpansionProof( expansion ) )
+      val Right( lk ) = new ExpansionProofToLK( cl =>
+        cl.succedent.collectFirst { case Eq( s, t ) if s == t => ReflexivityAxiom( t ) } )( ExpansionProof( expansion ) )
       SimpIffResult.Prf( lk, f, g, polarity )
     }
   }

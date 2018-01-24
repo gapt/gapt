@@ -3,7 +3,7 @@ package at.logic.gapt.examples.theories
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
 
-object nat extends Theory( logic ) {
+object nat extends Theory( logic, props ) {
   indTy( ty"nat", hoc"0: nat", hoc"s: nat>nat" )
 
   fun( hoc"p: nat>nat", "p(s(x)) = x", "p(0) = 0" )
@@ -25,7 +25,9 @@ object nat extends Theory( logic ) {
   val add0l = lemma( hof"0+x = x", "simp" ) { include( "add" ); anaInd }
   val addsl = lemma( hof"s(x)+y = s(x+y)", "simp" ) { include( "add" ); anaInd }
   val addcomm = lemma( hof"x+y=y+x" ) { include( "add", "add0l", "addsl" ); anaInd }
+  val addcommiff = lemma( hof"x+y=y+x <-> true", "simp" ) { include( "addcomm" ); escrgt }
   val addassoc = lemma( hof"x+(y+z) = (x+y)+z" ) { include( "add" ); anaInd }
+  val addac1inst = lemma( hof"assoc '+' & comm '+' & unit '+' 0", "simp" ) { simp.w( "assoc", "comm", "unit", "addassoc" ) }
   val addinj = lemma( hof"x+y=x+z <-> y=z", "simp" ) { induction( hov"x:nat" ).onAll( simp.h ) }
   val addinjr = lemma( hof"y+x=z+x <-> y=z", "simp" ) { include( "addinj", "addcomm" ); escrgt }
   val addinjr2 = lemma( hof"x=y+x <-> y=0", "simp" ) { include( "addinjr", "add0l" ); escrgt }
@@ -37,6 +39,8 @@ object nat extends Theory( logic ) {
   val muladd = lemma( hof"x*(y+z) = x*y + x*z" ) { include( "mul", "add", "addassoc", "addcomm" ); anaInd }
   val addmul = lemma( hof"(x+y)*z = x*z + y*z" ) { include( "mulcomm", "muladd" ); escrgt }
   val mulassoc = lemma( hof"x*(y*z)=(x*y)*z" ) { include( "mul", "muladd" ); anaInd }
+  val mulcommiff = lemma( hof"x*y=y*x <-> true", "simp" ) { include( "mulcomm" ); escrgt }
+  val mulac1inst = lemma( hof"assoc '*' & comm '*' & unit '*' (s 0)", "simp" ) { simp.w( "assoc", "comm", "unit", "mulassoc" ) }
   val mul1 = lemma( hof"x*1 = x" ) { include( "1", "mul", "add0l" ); escrgt }
   val mul0eq = lemma( hof"x*y=0 <-> x=0 | y=0", "simp" ) { include( "sor0", "sne0", "mul", "mul0l", "add" ); escrgt }
   val mulinj = lemma( hof"x!=0 & x*y=x*z -> y=z" ) {

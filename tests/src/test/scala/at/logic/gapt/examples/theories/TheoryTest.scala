@@ -14,8 +14,12 @@ abstract class TheoryTest( t: Theory, skipping: Set[String] = Set() ) extends Sp
 }
 
 class LogicTest extends TheoryTest( logic )
+class PropsTest extends TheoryTest( props )
 class NatTest extends TheoryTest( nat )
 class NatDivisibleTest extends TheoryTest( natdivisible )
 class NatDivisionTest extends TheoryTest( natdivision )
 class NatOrderTest extends TheoryTest( natorder )
 class ListTest extends TheoryTest( list )
+class ListLengthTest extends TheoryTest( listlength )
+class ListFoldTest extends TheoryTest( listfold )
+class NatListsTest extends TheoryTest( natlists )

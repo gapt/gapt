@@ -106,7 +106,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
           t match {
             case t: QedFailureException =>
               println( t.getMessage )
-            case _ => t.printStackTrace()
+            case _ => t.printStackTrace( Console.out )
           }
           print( "\\" + "=" * ( 71 - 7 ) )
       }
@@ -290,4 +290,10 @@ object logic extends Theory {
   val iteneg = lemma( hof"-p -> ite{?a} p a b = b", "simp", "nocombine" ) { induction( hov"p:o" ) onAll simp.w( "ite" ) }
   val iteeq = lemma( hof"ite{?a} p a a = a", "simp" ) { cut( "", hof"p:o" ).onAll( simp.h ) }
 
+}
+
+object props extends Theory( logic ) {
+  dfn( hof"assoc{?a} (f:?a>?a>?a) = (!x!y!z f(x,f(y,z))=f(f(x,y),z))" )
+  dfn( hof"comm{?a} (f:?a>?a>?a) = (!x!y f(x,y)=f(y,x))" )
+  dfn( hof"unit{?a} (f:?a>?a>?a) (z:?a) = (!x (f(x,z)=x & f(z,x)=x))" )
 }
