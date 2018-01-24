@@ -151,7 +151,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
       case expr @ Const( name, ty, params ) =>
         // FIXME(gabriel): type parameter syntax
-        if ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.signatureLookup( name ).isVar )
+        if ( !omitTypes && ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.signatureLookup( name ).isVar ) )
           ( "#c(" <> showName( name ) <> showTyParams( params ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( omitTypes || ( ( ty == Ti || knownType ) && params.isEmpty ) || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
@@ -159,7 +159,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
           ( parenIf( p, prio.typeAnnot, showName( name ) <> showTyParams( params )
             <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
       case expr @ Var( name, ty ) =>
-        if ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.signatureLookup( name ).isVar ) )
+        if ( !omitTypes && ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.signatureLookup( name ).isVar ) ) )
           ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
         else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
           ( showName( name ), t0 + ( name -> expr ) )
