@@ -252,8 +252,7 @@ case class Simplifier( lemmas: Seq[SimpProc] ) {
         }
     require( ress.lhs == f )
     require( ress.pol == pol )
-    if ( ress.rhs != ress.lhs )
-      logger.info( s"${ress.lhs.toUntypedString} --> ${ress.rhs.toUntypedString}" )
+    logger.info( s"${ress.lhs.toUntypedString} --> ${ress.rhs.toUntypedString}" )
     ress
   }
 

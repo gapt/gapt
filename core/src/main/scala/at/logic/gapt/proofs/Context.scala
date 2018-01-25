@@ -587,7 +587,7 @@ object Context {
     override def apply( ctx: Context ): State = {
       endSequent.foreach( ctx.check( _ ) )
       val Apps( Const( c, _, ps ), vs ) = lhs
-      require( !ctx.get[ProofNames].names.keySet.contains( c ) )
+      require( !ctx.get[ProofNames].names.keySet.contains( c ), s"proof already defined: $lhs" )
       require( vs == vs.distinct )
       require( vs.forall( _.isInstanceOf[Var] ) )
       require( ps.forall( _.isInstanceOf[TVar] ) )

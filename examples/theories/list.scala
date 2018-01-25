@@ -1,6 +1,7 @@
 package at.logic.gapt.examples.theories
 import at.logic.gapt.expr._
 import at.logic.gapt.proofs.gaptic._
+import at.logic.gapt.proofs.lk.ProofLink
 
 object list extends Theory( logic ) {
 
@@ -66,6 +67,7 @@ object listlength extends Theory( list, nat ) {
   val lenrev = lemma( hof"len (rev{?a} x) = len x", "simp" ) { induction( hov"x:list?a" ) onAll simp.h }
 
   dfn( hof"cnt{?a} (x:?a) ys = len (filter ('=' x) ys)" )
+  val cntnil = lemma( hof"cnt{?a} x nil = 0", "simp" ) { simp.w( "cnt", "filter" ) }
   val cntconseq = lemma( hof"cnt{?a} x (cons x ys) = s (cnt x ys)", "simp" ) { simp.w( "cnt", "filter" ) }
   val cntconsne = lemma( hof"x != y -> cnt{?a} x (cons y ys) = cnt x ys", "simp" ) { decompose; simp.h( "cnt", "filter" ) }
   val cntapp = lemma( hof"cnt{?a} x (app y z) = cnt x y + cnt x z", "simp" ) { simp.w( "cnt" ) }
@@ -76,9 +78,41 @@ object listlength extends Theory( list, nat ) {
   val permsym = lemma( hof"perm{?a} x y -> perm y x" ) { simp.w( "perm" ); decompose; simp.h }
   val permtrans = lemma( hof"perm{?a} x y & perm y z -> perm x z" ) { simp.w( "perm" ); decompose; simp.h }
   val permrev = lemma( hof"perm{?a} x (rev x)", "simp" ) { simp.w( "perm" ) }
+
+  fun(
+    hoc"del{?a}: ?a > list?a > list ?a",
+    "del x nil = nil",
+    "del x (cons y ys) = ite (x = y) ys (cons y (del x ys))" )
+  attr( "simp" )( "delnil" )
+  val delconseq = lemma( hof"del{?a} x (cons x xs) = xs", "simp" ) { simp.w( "del" ) }
+  val delconsne = lemma( hof"x!=y -> del{?a} x (cons y xs) = cons y (del x xs)", "simp" ) { decompose; simp.h.w( "del" ) }
+  val cntdeleq = lemma( hof"cnt{?a} x (del x ys) = p (cnt x ys)", "simp" ) {
+    induction( hov"ys:list?a" ) onAll simp.h( "del" )
+    cut( "", hof"x = (x_0 : ?a)" ) onAll simp.h
+  }
+  val cntdelne = lemma( hof"x!=y -> cnt{?a} x (del y ys) = cnt x ys", "simp" ) {
+    impR; induction( hov"ys:list?a" ) onAll simp.h( "del" )
+    cut( "xx0", hof"x = (x_0 : ?a)" ) onAll cut( "yx0", hof"y = (x_0 : ?a)" ) onAll simp.h
+    simp.h.on( "IHys_0" ); simp.h
+    simp.h.on( "IHys_0" ); quasiprop
+  }
+  val permdel = lemma( hof"perm{?a} x y -> perm (del z x) (del z y)" ) {
+    simp.w( "perm" ); decompose; cut( "z0z", hof"z_0 = (z:?a)" ) onAll simp.h
+  }
+  val permnill = lemma( hof"perm{?a} nil y <-> y=nil", "simp" ) {
+    simp.w( "perm" ); induction( hov"y:list?a" ) onAll simp
+    exR( le"x:?a" ).forget; simp
+  }
+  val permnilr = lemma( hof"perm{?a} x nil <-> x=nil", "simp" ) { include( "permsym", "permnill" ); escrgt }
+
+  dfn( hof"elem{?a} xs (x:?a) = (cnt x xs != 0)" )
+  val elemnil = lemma( hof"-elem{?a} nil x", "simp" ) { simp.w( "elem" ) }
+  val elemcons = lemma( hof"elem{?a} (cons y ys) x <-> (x=y | elem ys x)", "simp" ) {
+    cut( "", hof"x=(y:?a)" ) onAll simp.h.w( "elem" )
+  }
 }
 
-object listfold extends Theory( list, props ) {
+object listfold extends Theory( listlength, props ) {
   fun(
     hoc"foldr{?a?b} : (?a>?b>?b) > ?b > list?a>?b",
     "foldr f z nil = z",
@@ -87,6 +121,20 @@ object listfold extends Theory( list, props ) {
   val foldrapp = lemma( hof"unit f z & assoc f -> foldr{?a?a} f z (app x y) = f (foldr f z x) (foldr f z y) ", "simp" ) {
     simp.w( "unit", "assoc" ); decompose; induction( hov"x:list?a" ) onAll simp.h
   }
+  val foldrdel = lemma( hof"assoc{?a} f & comm f -> elem ys x -> f x (foldr f z (del x ys)) = foldr f z ys" ) {
+    impR; induction( hov"ys:list?a" ) onAll simp onAll decompose onAll simp.h
+    destruct( "g_1_0" ); simp.h
+    cut( "xx0", hof"x=(x_0:?a)" ) onAll simp.h
+    include( "assoc", "comm" ); escrgt
+  }
+  val foldrperm = lemma( hof"assoc{?a} f & comm f -> perm x y -> foldr f z x = foldr f z y" ) {
+    impR; generalize( hov"y:list?a" ); induction( hov"x:list?a" ) onAll simp.h onAll decompose onAll simp.h
+    cut( "pd", hof"perm(x_1, del(x_0:?a, y))" ); include( "permdel", "delconseq" ); escrgt
+    cut( "pyc", hof"!z cnt{?a}(z,y) = cnt(z,cons(x_0,x_1))" ); forget( "g_1_1" ); simp.w( "perm" ).on( "g_1_0" ); simp.h
+    cut( "eyx_0", hof"elem y (x_0:?a)" ); forget( "g_1_1" ); simp.w( "elem" ).h
+    allL( "IHx_0", le"del{?a} x_0 y" ).forget; simp.h
+    simp.h( "foldrdel" )
+  }
 }
 
 object natlists extends Theory( listfold, nat ) {
@@ -94,9 +142,11 @@ object natlists extends Theory( listfold, nat ) {
   val sumnil = lemma( hof"sum nil = 0", "simp" ) { simp.w( "sum" ) }
   val sumcons = lemma( hof"sum (cons x xs) = x + sum xs", "simp" ) { simp.w( "sum" ) }
   val sumapp = lemma( hof"sum (app x y) = sum x + sum y", "simp" ) { simp.w( "sum" ) }
+  val sumperm = lemma( hof"perm x y -> sum x = sum y" ) { decompose; simp.h.w( "sum", "foldrperm" ) }
 
   dfn( hof"prod l = foldr '*' 1 l" )
   val prodnil = lemma( hof"prod nil = 1", "simp" ) { simp.w( "prod" ) }
   val prodcons = lemma( hof"prod (cons x xs) = x * prod xs", "simp" ) { simp.w( "prod" ) }
   val prodapp = lemma( hof"prod (app x y) = prod x * prod y", "simp" ) { simp.w( "prod" ) }
+  val prodperm = lemma( hof"perm x y -> prod x = prod y" ) { decompose; simp.h.w( "prod", "foldrperm" ) }
 }

@@ -95,7 +95,7 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
 
   def main( args: Array[String] ): Unit = {
     var failed = false
-    for ( ( n, u ) <- proofsHere ) {
+    for ( ( n, u ) <- proofsHere.reverseIterator ) {
       import scala.concurrent.duration._
       print( n + " " )
       val start = System.nanoTime()

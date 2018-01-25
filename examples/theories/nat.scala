@@ -21,6 +21,7 @@ object nat extends Theory( logic, props ) {
   val `0nes` = lemma( hof"0 != s(x)", "simp" ) { include( "sne0" ); escrgt }
   val sor0 = lemma( hof"x = 0 | x = s(p(x))" ) { include( "ps" ); anaInd }
   val sinj = lemma( hof"s(x) = s(y) <-> x = y", "simp" ) { include( "ps" ); escrgt }
+  val sp = lemma( hof"x!=0 -> s(p(x)) = x", "simp" ) { induction( hov"x:nat" ) onAll simp }
 
   val add0l = lemma( hof"0+x = x", "simp" ) { include( "add" ); anaInd }
   val addsl = lemma( hof"s(x)+y = s(x+y)", "simp" ) { include( "add" ); anaInd }
@@ -43,7 +44,13 @@ object nat extends Theory( logic, props ) {
   val mulac1inst = lemma( hof"assoc '*' & comm '*' & unit '*' (s 0)", "simp" ) { simp.w( "assoc", "comm", "unit", "mulassoc" ) }
   val mul1 = lemma( hof"x*1 = x" ) { include( "1", "mul", "add0l" ); escrgt }
   val mul0eq = lemma( hof"x*y=0 <-> x=0 | y=0", "simp" ) { include( "sor0", "sne0", "mul", "mul0l", "add" ); escrgt }
-  val mulinj = lemma( hof"x!=0 & x*y=x*z -> y=z" ) {
+  val mul1eq = lemma( hof"x*y=s(0) <-> x=s(0) & y=s(0)", "simp" ) {
+    induction( hov"y:nat" ) onAll simp
+    induction( hov"x:nat" ) onAll simp
+    prop
+  }
+  val muleq1 = lemma( hof"s(0)=x*y <-> x=s(0) & y=s(0)", "simp" ) { include( "mul1eq" ); escrgt }
+  val mulinj = lemma( hof"x!=0 -> x*y=x*z <-> y=z", "simp" ) {
     include( "sor0", "sne0", "mul", "mul0eq", "addinjr" )
     // TODO: anaInd doesn't find this
     generalize( hov"z: nat" ); induction( hov"y: nat" ).onAll( escrgt )
@@ -54,6 +61,11 @@ object nat extends Theory( logic, props ) {
   val powadd = lemma( hof"pow(x, y+z) = pow(x,y) * pow(x,z)" ) { include( "pow", "add", "mulassoc", "mul1" ); anaInd }
   val powmull = lemma( hof"pow(x, y*z) = pow(pow(x, y), z)" ) { include( "pow", "powadd", "mul", "mul1" ); anaInd }
   val powmulr = lemma( hof"pow(x*y, z) = pow(x,z) * pow(y,z)" ) { include( "pow", "mul1", "mulcomm", "mulassoc" ); anaInd }
+  val pow1 = lemma( hof"pow(s(0), x) = s(0)", "simp" ) { induction( hov"x:nat" ) onAll simp.h }
+  val poweq1 = lemma( hof"pow(x,y)=s(0) <-> x=s(0) | y=0", "simp" ) {
+    induction( hov"y:nat" ) onAll simp; forget( "IHy_0" )
+    cut( "", hof"x=s(0)" ) onAll simp.h
+  }
 
   val subadd = lemma( hof"(x+y)-y=x", "simp" ) { include( "add", "sub", "p" ); anaInd }
   val sub0l = lemma( hof"0-x=0", "simp" ) { induction( hov"x:nat" ) onAll simp.h }
@@ -63,6 +75,14 @@ object nat extends Theory( logic, props ) {
   val subaddl = lemma( hof"(x+y)-z=(x-z)+(y-(z-x))" ) {
     generalize( hov"z:nat" ); induction( hov"x:nat" ) onAll simp.h; decompose
     induction( hov"z:nat" ) onAll simp.h
+  }
+  val addsubsub = lemma( hof"a+b-c-b = a-c", "simp" ) {
+    induction( hov"b:nat" ) onAll simp.h
+    include( "subpl", "ps" ); escrgt // TODO: exclude lemmas from simp
+  }
+  val mulsub = lemma( hof"x*(y-z) = x*y - x*z", "simp" ) {
+    generalize( hov"y:nat" ); induction( hov"z:nat" ) onAll allR; simp
+    induction( hov"y:nat" ); simp; forget( "IHy_0" ); simp.h
   }
 }
 
@@ -83,19 +103,23 @@ object natorder extends Theory( nat ) {
     decompose; revert( "g_0", "g_1_1_1" ); simp.h
   }
   val notle = lemma( hof"-(x<=y) <-> (y<=x&x!=y)" ) { include( "letotal", "leantisymm" ); escrgt }
-  val lep = lemma( hof"p(x)<=y <-> x=s(y)|x<=y" ) {
+  val lepl = lemma( hof"p(x)<=y <-> x=s(y)|x<=y" ) {
     induction( hov"x:nat" ) onAll simp.w( "lesl" )
     cut( "", hof"x_0=(y:nat)" ) onAll simp.h
   }
+  val lepr = lemma( hof"y!=0 -> x<=p(y) <-> s(x)<=y", "simp" ) { induction( hov"y:nat" ) onAll simp }
 
   val addsub = lemma( hof"y<=x -> (x-y)+y = x", "simp" ) { include( "addcomm", "subadd", "le" ); escrgt }
 
   val addbnd = lemma( hof"x<=x+y & y<=x+y", "simp" ) { include( "le", "addcomm" ); escrgt }
   val addmon = lemma( hof"x1<=x2 & y1<=y2 -> x1+y1 <= x2+y2" ) { simp.w( "le" ); include( "addcomm", "addassoc" ); escrgt }
+  val mulbnd = lemma( hof"y!=0 -> x<=x*y & x<=y*x", "simp" ) { induction( hov"y:nat" ) onAll simp }
   val mulmon = lemma( hof"x1<=x2 & y1<=y2 -> x1*y1 <= x2*y2" ) { simp.w( "le" ); include( "addmul", "muladd", "addcomm", "addassoc" ); escrgt }
 
-  val lesub = lemma( hof"x-y<=x", "simp" ) { induction( hov"y:nat" ) onAll simp.h( "lep" ) }
+  val lesub = lemma( hof"x-y<=x", "simp" ) { induction( hov"y:nat" ) onAll simp.h( "lepl" ) }
   val leadd = lemma( hof"x<=x+y", "simp" ) { induction( hov"y:nat" ) onAll simp.h }
+  val leaddr = lemma( hof"x<=y+x", "simp" ) { include( "leadd", "addcomm" ); escrgt }
+  val lemul = lemma( hof"y!=0 -> x<=x*y", "simp" ) { induction( hov"y:nat" ) onAll simp }
 
   val submon = lemma( hof"x1<=x2 & y2<=y1 -> x1-y1 <= x2-y2" ) {
     impR; simp.w( "le" ).on( "g_0" ); decompose
@@ -118,8 +142,18 @@ object natorder extends Theory( nat ) {
   val lt0r = lemma( hof"-(x<0)", "simp" ) { include( "lt", "les0" ); escrgt }
   val lt0s = lemma( hof"0<s(x)", "simp" ) { include( "lt", "less", "le0l" ); escrgt }
   val ltsl = lemma( hof"s(x)<y <-> x<y&y!=s(x)" ) { include( "lt", "lesl" ); escrgt }
+  val ltsr = lemma( hof"x<s(y) <-> x=y|x<y" ) { include( "lt", "lesr", "lesl", "lerefl" ); escrgt }
+  val ltss = lemma( hof"s(x)<s(y) <-> x<y", "simp" ) { simp.w( "lt" ) }
   val ltsuc = lemma( hof"x<s(x)", "simp" ) { include( "lt", "lerefl" ); escrgt }
   val lt0l = lemma( hof"0<x <-> x!=0", "simp" ) { include( "ltirrefl", "sor0", "lt0s" ); escrgt }
+
+  val ltmull = lemma( hof"x!=0 & s(0)<y -> x<x*y" ) {
+    induction( hov"y:nat" ) onAll simp
+    induction( hov"y_0:nat" ) onAll simp
+    induction( hov"x:nat" ) onAll simp
+    simp.w( "lt" )
+  }
+  val ltmulr = lemma( hof"x!=0 & s(0)<y -> x<y*x" ) { include( "mulcomm", "ltmull" ); escrgt }
 
   val addsmonr = lemma( hof"x+y1<x+y2 <-> y1<y2", "simp" ) { simp.w( "lt", "lesl" ) }
   val addsmonl = lemma( hof"y1+x<y2+x <-> y1<y2", "simp" ) { simp.w( "lt", "lesl" ) }
@@ -169,10 +203,22 @@ object natdivisible extends Theory( natdivision ) {
   val dvd0 = lemma( hof"dvd x 0", "simp" ) { include( "dvd", "mul" ); escrgt }
   val dvd0l = lemma( hof"dvd 0 x <-> x=0", "simp" ) { include( "dvd", "mul0l" ); escrgt }
   val dvd1 = lemma( hof"dvd 1 x", "simp" ) { include( "dvd", "mul1", "mulcomm" ); escrgt }
+  val dvds0 = lemma( hof"dvd (s 0) x", "simp" ) { include( "dvd1", "1" ); escrgt }
+  val dvd1r = lemma( hof"dvd x (s 0) <-> x=1", "simp" ) { simp.w( "dvd" ); escrgt }
   val dvdrefl = lemma( hof"dvd x x", "simp" ) { include( "dvd", "mul1" ); escrgt }
   val dvdtrans = lemma( hof"dvd x y -> dvd y z -> dvd x z" ) { include( "dvd", "mulassoc" ); escrgt }
+  val dvdantisym = lemma( hof"dvd x y & dvd y x -> x=y" ) {
+    cut( "x0", hof"x!=0" ); simp.h.on( "g" ); quasiprop
+    cut( "y0", hof"y!=0" ); simp.h.on( "g" )
+    simp.w( "dvd" ); include( "mulassoc", "mul", "mulinj", "mul1", "mul1eq" ); escrgt
+  }
   val dvdmul = lemma( hof"dvd x (x*y)", "simp" ) { simp.w( "dvd" ); exR( le"y:nat" ).forget; simp }
   val dvdmulr = lemma( hof"dvd x (y*x)", "simp" ) { include( "dvdmul", "mulcomm" ); escrgt }
+  val dvdcancel = lemma( hof"x!=0 -> dvd (x*y) (x*z) <-> dvd y z", "simp" ) {
+    simp.w( "dvd" ); include( "mulassoc", "mulinj" ); escrgt
+  }
+  val dvdcancel2 = lemma( hof"x!=0 -> dvd (y*x) (x*z) <-> dvd y z", "simp" ) { include( "mulcomm", "dvdcancel" ); escrgt }
+  val dvdle = lemma( hof"y!=0 & dvd x y -> x<=y" ) { simp.w( "dvd" ); decompose; simp.h.on( "g_0_0" ); decompose; simp.h }
 
   dfn( hof"prime x = (1<x & !y (dvd(y,x) -> y=1|y=x))" )
   val notprime0 = lemma( hof"-prime 0", "simp" ) { simp.w( "prime" ) }
@@ -183,6 +229,8 @@ object natdivisible extends Theory( natdivision ) {
     induction( hov"y_0:nat" ) onAll simp
     induction( hov"y_1:nat" ) onAll simp.w( "ltsl" )
   }
+  val primene0 = lemma( hof"prime n -> n!=0" ) { include( "notprime0" ); escrgt }
+  val primene1 = lemma( hof"prime n -> n!=s 0" ) { include( "notprime1" ); escrgt }
 
   dfn( hof"composite x = (?y?z (x=y*z & 1<y&1<z))" )
   val primecomp = lemma( hof"prime x <-> 1<x & -composite x" ) {
@@ -197,5 +245,58 @@ object natdivisible extends Theory( natdivision ) {
     destruct( "g_0" ); simp.h
     destruct( "g_0" ); simp.h
     simp.h.on( "g_1_1_1" )
+  }
+
+  val muldiv = lemma( hof"y!=0 & mod x y = 0 -> y*(x/y)=x", "simp" ) { include( "mod", "mulcomm", "add" ); escrgt }
+
+  val dvdprime__ = lemma( hof"prime y -> y*z=x*(y*w) <-> z=x*w" ) {
+    include( "mulcomm", "mulinjr", "mulassoc", "mulcomm", "notprime0" ); escrgt
+  }
+  val dvdprime_ = lemma( hof"prime x -> !x!w!z (prime x & w < y & dvd x (w*z) -> dvd x w | dvd x z) -> dvd x (y*z) -> dvd x y | dvd x z" ) {
+    decompose
+    cut( "zy", hof"-(z<y)" ); include( "mulcomm" ); escrgt
+    cut( "s0y", hof"s(0)<y" ); simp.w( "ltsl" ).on( "s0y" ); destruct( "s0y" ); simp.h.on( "g_1_1_1_0" ); simp.h.on( "g_1_1_0" )
+
+    cut( "py", hof"prime y" ); simp.h.w( "primecomp", "composite" ).on( "py" ); decompose
+    cut( "y0y", hof"y_0<y" ); simp.w( "ltsl" ).on( "py_0_1" ); simp.h.w( "ltmull" ).on( "y0y" )
+    cut( "z0y", hof"z_0<y" ); simp.w( "ltsl" ).on( "py_1" ); simp.h.w( "ltmulr" ).on( "z0y" )
+    cut( "dvdy0y", hof"dvd y_0 y" ); simp.h.on( "dvdy0y" )
+    cut( "dvdz0y", hof"dvd z_0 y" ); simp.h.on( "dvdz0y" )
+    allL( "g_1_0", le"x:nat", le"y_0:nat", le"z_0*z" )
+    allL( "g_1_0", le"x:nat", le"z_0:nat", le"z:nat" ).forget
+    include( "dvdtrans", "mulassoc" ); escrgt
+
+    cut( "y0", hof"y!=0 & y!=s(0)" ); simp.w( "ltsl" ).on( "s0y" )
+
+    cut( "a", hof"?a y*z=x*a" ); simp.w( "dvd" ).on( "g_1_1_0" ); exL( "a" )
+    cut( "ya", hof"-dvd y a" ); negR( "ya" ); simp.w( "dvd" ).on( "ya" ); exL
+    simp.w( "dvd" ).on( "g_1_1_1_1" ); exR( le"z_0:nat" ).forget
+    simp.h.on( "a" ).w( "dvdprime__" )
+
+    cut( "yx", hof"-dvd y x" ); negR( "yx" ); simp.w( "prime" ).on( "g_0" ); escrgt
+
+    cut( "m0", hof"mod x y != 0" ); simp.w( "dvd" ).on( "yx" ); allL( "yx", le"x/y" ).forget; simp.h.on( "yx" )
+
+    cut( "a1", hof"y*z = ((x/y)*y + mod(x,y))*a" ); include( "mod" ); escrgt
+    cut( "a2", hof"y*z - ((x/y)*y)*a = mod(x,y)*a" ); include( "addmul", "addcomm", "subadd" ); escrgt
+    cut( "a3", hof"y*(z - (x/y)*a) = mod(x,y)*a" ); include( "mulsub", "mulcomm", "mulassoc" ); escrgt
+
+    cut( "dam", hof"dvd y (mod x y * a)" ); simp.w( "dvd" ).on( "dam" ); exR( "dam", le"z - (x/y)*a" ).forget; quasiprop
+
+    allL( "g_1_0", le"y:nat", le"mod x y", le"a:nat" ).forget; simp.h.on( "g_1_0" )
+
+    cut( "mxyy", hof"mod x y < y" ); include( "mod" ); escrgt
+    cut( "ymxy", hof"y <= mod x y" ); simp.h.w( "dvdle" ).on( "ymxy" )
+
+    simp.w( "lt", "lesl" ).on( "mxyy" ); include( "leantisymm" ); escrgt
+  }
+  val dvdprime = lemma( hof"prime x -> dvd x (y*z) <-> dvd x y | dvd x z", "simp" ) {
+    cut( "b", hof"!y!x!w!z (prime x & w < y & dvd x (w*z) -> dvd x w | dvd x z)" ); forget( "g" )
+    allR; induction( hov"y:nat" ); simp; repeat( allR ); simp.w( "ltsr" )
+    cut( "wy0", hof"w = (y_0:nat)" ) onAll simp.w( "wy0" ); escrgt
+    include( "dvdprime_" ); allL( "dvdprime_", le"x:nat", le"y_0:nat", le"z:nat" ).forget; escrgt
+
+    allL( le"s(y)", le"x:nat", le"y:nat", le"z:nat" ).forget; simp.on( "b" )
+    include( "dvdmul", "dvdmulr", "dvdtrans" ); escrgt
   }
 }
