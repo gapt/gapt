@@ -46,7 +46,7 @@ trait ExprSubstitutable1 {
     if ( sub.isIdentity ) t else {
       val sub1 = if ( sub.typeMap.isEmpty ) sub else {
         Substitution(
-          freeVariables( t ).map( v => v -> substVar( sub, v ) ) ++ sub.map,
+          freeVariables( t ).map( v => v -> substVar( sub, v ) ).toMap ++ sub.map,
           sub.typeMap )
       }
       go( sub1, t )
