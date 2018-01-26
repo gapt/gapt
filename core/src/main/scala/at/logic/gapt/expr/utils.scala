@@ -62,8 +62,8 @@ object variables {
   def apply( e: Expr ): Set[Var] = {
     val vs = mutable.Set[Var]()
     def go( e: Expr ): Unit = e match {
-      case v: Var      => vs += v
-      case _: Const    =>
+      case v: Var   => vs += v
+      case _: Const =>
       case App( a, b ) =>
         go( a ); go( b )
       case Abs( v, t ) => vs += v; go( t )
