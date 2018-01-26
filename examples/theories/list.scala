@@ -129,9 +129,9 @@ object listfold extends Theory( listlength, props ) {
   }
   val foldrperm = lemma( hof"assoc{?a} f & comm f -> perm x y -> foldr f z x = foldr f z y" ) {
     impR; generalize( hov"y:list?a" ); induction( hov"x:list?a" ) onAll simp.h onAll decompose onAll simp.h
-    cut( "pd", hof"perm(x_1, del(x_0:?a, y))" ); include( "permdel", "delconseq" ); escrgt
-    cut( "pyc", hof"!z cnt{?a}(z,y) = cnt(z,cons(x_0,x_1))" ); forget( "g_1_1" ); simp.w( "perm" ).on( "g_1_0" ); simp.h
-    cut( "eyx_0", hof"elem y (x_0:?a)" ); forget( "g_1_1" ); simp.w( "elem" ).h
+    cut( "pd", hof"perm(x_1, del(x_0:?a, y))" ); by { include( "permdel", "delconseq" ); escrgt }
+    cut( "pyc", hof"!z cnt{?a}(z,y) = cnt(z,cons(x_0,x_1))" ); by { forget( "g_1_1" ); simp.w( "perm" ).on( "g_1_0" ); simp.h }
+    cut( "eyx_0", hof"elem y (x_0:?a)" ); by { forget( "g_1_1" ); simp.w( "elem" ).h }
     allL( "IHx_0", le"del{?a} x_0 y" ).forget; simp.h
     simp.h( "foldrdel" )
   }

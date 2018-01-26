@@ -25,7 +25,7 @@ object LemmaMacros {
     } ) match {
       case Right( ( _, newState ) ) => newState
       case Left( error ) =>
-        throw new TacticFailureException( error.toSigRelativeString )
+        throw TacticFailureFailureException( error )
     }
 
   import reflect.macros._

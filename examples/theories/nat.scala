@@ -185,7 +185,7 @@ object natdivision extends Theory( natorder ) {
   val divmodge = lemma( hof"b!=0&b<=a -> a/b=s((a-b)/b) & mod a b = mod (a-b) b", "simp" ) {
     impR
     include( "divmoduniq" ); chain( "divmoduniq" ) onAll forget( "divmoduniq" ); simp.h
-    cut( "", hof"(a - b) / b * b + mod(a - b, b) + b = a" ); forget( "g_1" ); simp.h
+    cut( "", hof"(a - b) / b * b + mod(a - b, b) + b = a" ); by { forget( "g_1" ); simp.h }
     simp.h; include( "addassoc", "addcomm" ); escrgt
   }
   val divmodmul = lemma( hof"b!=0 -> (b*a)/b=a & mod(b*a,b)=0", "simp" ) {
@@ -208,8 +208,8 @@ object natdivisible extends Theory( natdivision ) {
   val dvdrefl = lemma( hof"dvd x x", "simp" ) { include( "dvd", "mul1" ); escrgt }
   val dvdtrans = lemma( hof"dvd x y -> dvd y z -> dvd x z" ) { include( "dvd", "mulassoc" ); escrgt }
   val dvdantisym = lemma( hof"dvd x y & dvd y x -> x=y" ) {
-    cut( "x0", hof"x!=0" ); simp.h.on( "g" ); quasiprop
-    cut( "y0", hof"y!=0" ); simp.h.on( "g" )
+    cut( "x0", hof"x!=0" ); by { simp.h.on( "g" ); quasiprop }
+    cut( "y0", hof"y!=0" ); by { simp.h.on( "g" ) }
     simp.w( "dvd" ); include( "mulassoc", "mul", "mulinj", "mul1", "mul1eq" ); escrgt
   }
   val dvdmul = lemma( hof"dvd x (x*y)", "simp" ) { simp.w( "dvd" ); exR( le"y:nat" ).forget; simp }
@@ -236,15 +236,17 @@ object natdivisible extends Theory( natdivision ) {
   val primecomp = lemma( hof"prime x <-> 1<x & -composite x" ) {
     simp.w( "prime", "composite" ); cut( "1x", hof"-(s 0<x)" ) onAll simp.w( "1x" )
     simp.w( "ltsl" ); simp.w( "ltsl" ).on( "1x" ); andR onAll impR
-    // ->
-    decompose; allL( le"y:nat" ); allL( le"z:nat" )
-    forget( "g_0" ); revert( "g_0_0", "g_0_1" ); simp.h( "mulid" )
-    // <-
-    simp.w( "dvd" ); decompose
-    allL( le"y:nat", le"z:nat" ).forget; simp.h.on( "g_0" )
-    destruct( "g_0" ); simp.h
-    destruct( "g_0" ); simp.h
-    simp.h.on( "g_1_1_1" )
+    by { // ->
+      decompose; allL( le"y:nat" ); allL( le"z:nat" )
+      forget( "g_0" ); revert( "g_0_0", "g_0_1" ); simp.h( "mulid" )
+    }
+    by { // <-
+      simp.w( "dvd" ); decompose
+      allL( le"y:nat", le"z:nat" ).forget; simp.h.on( "g_0" )
+      destruct( "g_0" ); simp.h
+      destruct( "g_0" ); simp.h
+      simp.h.on( "g_1_1_1" )
+    }
   }
 
   val muldiv = lemma( hof"y!=0 & mod x y = 0 -> y*(x/y)=x", "simp" ) { include( "mod", "mulcomm", "add" ); escrgt }
@@ -254,47 +256,54 @@ object natdivisible extends Theory( natdivision ) {
   }
   val dvdprime_ = lemma( hof"prime x -> !x!w!z (prime x & w < y & dvd x (w*z) -> dvd x w | dvd x z) -> dvd x (y*z) -> dvd x y | dvd x z" ) {
     decompose
-    cut( "zy", hof"-(z<y)" ); include( "mulcomm" ); escrgt
-    cut( "s0y", hof"s(0)<y" ); simp.w( "ltsl" ).on( "s0y" ); destruct( "s0y" ); simp.h.on( "g_1_1_1_0" ); simp.h.on( "g_1_1_0" )
+    cut( "zy", hof"-(z<y)" ); by { include( "mulcomm" ); escrgt }
+    cut( "s0y", hof"s(0)<y" ); by { simp.w( "ltsl" ).on( "s0y" ); destruct( "s0y" ); simp.h.on( "g_1_1_1_0" ); simp.h.on( "g_1_1_0" ) }
 
-    cut( "py", hof"prime y" ); simp.h.w( "primecomp", "composite" ).on( "py" ); decompose
-    cut( "y0y", hof"y_0<y" ); simp.w( "ltsl" ).on( "py_0_1" ); simp.h.w( "ltmull" ).on( "y0y" )
-    cut( "z0y", hof"z_0<y" ); simp.w( "ltsl" ).on( "py_1" ); simp.h.w( "ltmulr" ).on( "z0y" )
-    cut( "dvdy0y", hof"dvd y_0 y" ); simp.h.on( "dvdy0y" )
-    cut( "dvdz0y", hof"dvd z_0 y" ); simp.h.on( "dvdz0y" )
-    allL( "g_1_0", le"x:nat", le"y_0:nat", le"z_0*z" )
-    allL( "g_1_0", le"x:nat", le"z_0:nat", le"z:nat" ).forget
-    include( "dvdtrans", "mulassoc" ); escrgt
+    cut( "py", hof"prime y" ); by {
+      simp.h.w( "primecomp", "composite" ).on( "py" ); decompose
+      cut( "y0y", hof"y_0<y" ); by { simp.w( "ltsl" ).on( "py_0_1" ); simp.h.w( "ltmull" ).on( "y0y" ) }
+      cut( "z0y", hof"z_0<y" ); by { simp.w( "ltsl" ).on( "py_1" ); simp.h.w( "ltmulr" ).on( "z0y" ) }
+      cut( "dvdy0y", hof"dvd y_0 y" ); by { simp.h.on( "dvdy0y" ) }
+      cut( "dvdz0y", hof"dvd z_0 y" ); by { simp.h.on( "dvdz0y" ) }
+      allL( "g_1_0", le"x:nat", le"y_0:nat", le"z_0*z" )
+      allL( "g_1_0", le"x:nat", le"z_0:nat", le"z:nat" ).forget
+      include( "dvdtrans", "mulassoc" ); escrgt
+    }
 
-    cut( "y0", hof"y!=0 & y!=s(0)" ); simp.w( "ltsl" ).on( "s0y" )
+    cut( "y0", hof"y!=0 & y!=s(0)" ); by { simp.w( "ltsl" ).on( "s0y" ) }
 
-    cut( "a", hof"?a y*z=x*a" ); simp.w( "dvd" ).on( "g_1_1_0" ); exL( "a" )
-    cut( "ya", hof"-dvd y a" ); negR( "ya" ); simp.w( "dvd" ).on( "ya" ); exL
-    simp.w( "dvd" ).on( "g_1_1_1_1" ); exR( le"z_0:nat" ).forget
-    simp.h.on( "a" ).w( "dvdprime__" )
+    cut( "a", hof"?a y*z=x*a" ); by( simp.w( "dvd" ).on( "g_1_1_0" ) ); exL( "a" )
 
-    cut( "yx", hof"-dvd y x" ); negR( "yx" ); simp.w( "prime" ).on( "g_0" ); escrgt
+    cut( "ya", hof"-dvd y a" ); by {
+      negR( "ya" ); simp.w( "dvd" ).on( "ya" ); exL
+      simp.w( "dvd" ).on( "g_1_1_1_1" ); exR( le"z_0:nat" ).forget
+      simp.h.on( "a" ).w( "dvdprime__" )
+    }
 
-    cut( "m0", hof"mod x y != 0" ); simp.w( "dvd" ).on( "yx" ); allL( "yx", le"x/y" ).forget; simp.h.on( "yx" )
+    cut( "yx", hof"-dvd y x" ); by { negR( "yx" ); simp.w( "prime" ).on( "g_0" ); escrgt }
 
-    cut( "a1", hof"y*z = ((x/y)*y + mod(x,y))*a" ); include( "mod" ); escrgt
-    cut( "a2", hof"y*z - ((x/y)*y)*a = mod(x,y)*a" ); include( "addmul", "addcomm", "subadd" ); escrgt
-    cut( "a3", hof"y*(z - (x/y)*a) = mod(x,y)*a" ); include( "mulsub", "mulcomm", "mulassoc" ); escrgt
+    cut( "m0", hof"mod x y != 0" ); by { simp.w( "dvd" ).on( "yx" ); allL( "yx", le"x/y" ).forget; simp.h.on( "yx" ) }
 
-    cut( "dam", hof"dvd y (mod x y * a)" ); simp.w( "dvd" ).on( "dam" ); exR( "dam", le"z - (x/y)*a" ).forget; quasiprop
+    cut( "a1", hof"y*z = ((x/y)*y + mod(x,y))*a" ); by { include( "mod" ); escrgt }
+    cut( "a2", hof"y*z - ((x/y)*y)*a = mod(x,y)*a" ); by { include( "addmul", "addcomm", "subadd" ); escrgt }
+    cut( "a3", hof"y*(z - (x/y)*a) = mod(x,y)*a" ); by { include( "mulsub", "mulcomm", "mulassoc" ); escrgt }
+
+    cut( "dam", hof"dvd y (mod x y * a)" ); by { simp.w( "dvd" ).on( "dam" ); exR( "dam", le"z - (x/y)*a" ).forget; quasiprop }
 
     allL( "g_1_0", le"y:nat", le"mod x y", le"a:nat" ).forget; simp.h.on( "g_1_0" )
 
-    cut( "mxyy", hof"mod x y < y" ); include( "mod" ); escrgt
-    cut( "ymxy", hof"y <= mod x y" ); simp.h.w( "dvdle" ).on( "ymxy" )
+    cut( "mxyy", hof"mod x y < y" ); by { include( "mod" ); escrgt }
+    cut( "ymxy", hof"y <= mod x y" ); by { simp.h.w( "dvdle" ).on( "ymxy" ) }
 
     simp.w( "lt", "lesl" ).on( "mxyy" ); include( "leantisymm" ); escrgt
   }
   val dvdprime = lemma( hof"prime x -> dvd x (y*z) <-> dvd x y | dvd x z", "simp" ) {
-    cut( "b", hof"!y!x!w!z (prime x & w < y & dvd x (w*z) -> dvd x w | dvd x z)" ); forget( "g" )
-    allR; induction( hov"y:nat" ); simp; repeat( allR ); simp.w( "ltsr" )
-    cut( "wy0", hof"w = (y_0:nat)" ) onAll simp.w( "wy0" ); escrgt
-    include( "dvdprime_" ); allL( "dvdprime_", le"x:nat", le"y_0:nat", le"z:nat" ).forget; escrgt
+    cut( "b", hof"!y!x!w!z (prime x & w < y & dvd x (w*z) -> dvd x w | dvd x z)" ); by {
+      forget( "g" )
+      allR; induction( hov"y:nat" ); simp; repeat( allR ); simp.w( "ltsr" )
+      cut( "wy0", hof"w = (y_0:nat)" ) onAll simp.w( "wy0" ); by { escrgt }
+      include( "dvdprime_" ); allL( "dvdprime_", le"x:nat", le"y_0:nat", le"z:nat" ).forget; escrgt
+    }
 
     allL( le"s(y)", le"x:nat", le"y:nat", le"z:nat" ).forget; simp.on( "b" )
     include( "dvdmul", "dvdmulr", "dvdtrans" ); escrgt

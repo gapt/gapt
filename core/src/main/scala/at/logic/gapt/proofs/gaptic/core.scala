@@ -246,6 +246,19 @@ trait Tactical[+T] { self =>
     override def toString = s"$self.onCurrentSubGoal"
   }
 
+  def focused: Tactical[T] = new Tactical[T] {
+    override def apply( proofState: ProofState ) = {
+      val focusedGoal = proofState.currentSubGoalOption.toList
+      self( proofState.setSubGoals( focusedGoal ) ).flatMap {
+        case ( res, newState ) if newState.subGoals.isEmpty =>
+          Right( ( res, newState.setSubGoals( proofState.subGoals diff focusedGoal ) ) )
+        case ( res, newState ) =>
+          Left( TacticalFailure( this, newState, "focused goal not solved" ) )
+      }
+    }
+    override def toString = s"$self.focused"
+  }
+
   def onAllSubGoals: Tactical[Unit] = new Tactical[Unit] {
     override def apply( proofState: ProofState ): Either[TacticalFailure, ( Unit, ProofState )] =
       proofState.subGoals.foldLeft[Either[TacticalFailure, ProofState]]( Right( proofState ) )( ( proofState_, subGoal ) =>

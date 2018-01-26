@@ -768,4 +768,8 @@ trait TacticCommands {
   }
 
   def simp( implicit ctx: Context ): SimpTactic = SimpTactic()
+
+  /** `by { tac1; tac2; ...; tacn }` solves the first goal using the provided tactic block, and fails otherwise */
+  def by: TacticBlockArgument[Tactical[Unit]] =
+    tac => tac.focused
 }

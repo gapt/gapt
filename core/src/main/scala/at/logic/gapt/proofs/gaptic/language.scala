@@ -64,5 +64,20 @@ object IncompleteProof {
 }
 
 class TacticFailureException( s: String, cause: Throwable = null ) extends Exception( s, cause )
+case class TacticFailureFailureException( error: TacticalFailure )( implicit sig: BabelSignature )
+  extends TacticFailureException( error.toSigRelativeString )
 
 class QedFailureException( s: String ) extends Exception( s )
+
+trait SimpleLemmaHelper[T] extends LemmaHelper[T] {
+  def handleTacticBlock( block: ProofState => ProofState ): T
+}
+trait TacticBlockArgument[T] extends SimpleLemmaHelper[T] {
+  def handleTactic( block: Tactical[Unit] ): T
+
+  def handleTacticBlock( block: ProofState => ProofState ): T =
+    handleTactic( proofState =>
+      try Right( () -> block( proofState ) ) catch {
+        case TacticFailureFailureException( error ) => Left( error )
+      } )
+}
