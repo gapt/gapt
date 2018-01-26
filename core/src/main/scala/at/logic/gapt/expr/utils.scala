@@ -56,14 +56,20 @@ object toVNF {
 
 /**
  * Returns the set of all variables occurring in the given argument (including
- * vacuously bound variables).
+ * bound variables).
  */
 object variables {
-  def apply( e: Expr ): Set[Var] = e match {
-    case v: Var      => Set( v )
-    case c: Const    => Set()
-    case App( s, t ) => apply( s ) ++ apply( t )
-    case Abs( v, t ) => apply( v ) ++ apply( t )
+  def apply( e: Expr ): Set[Var] = {
+    val vs = mutable.Set[Var]()
+    def go( e: Expr ): Unit = e match {
+      case v: Var      => vs += v
+      case _: Const    =>
+      case App( a, b ) =>
+        go( a ); go( b )
+      case Abs( v, t ) => vs += v; go( t )
+    }
+    go( e )
+    vs.toSet
   }
 
   def apply( t: FOLExpression ): Set[FOLVar] = apply( t.asInstanceOf[Expr] ).asInstanceOf[Set[FOLVar]]

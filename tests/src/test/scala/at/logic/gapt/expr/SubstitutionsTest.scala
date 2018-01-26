@@ -192,4 +192,13 @@ class SubstitutionsTest extends Specification {
     Substitution( hov"x" -> le"f z", hov"y" -> le"z" ).isInjective( Set( hov"x" ) ) must_== true
     Substitution( hov"x" -> le"y" ).isInjective( Set( hov"x", hov"y" ) ) must_== false
   }
+
+  "issue 682" in {
+    val f1 = hof"P(#v(x:i)) -> ∀(x:?a) P(#v(x:i))"
+    val subst = Substitution( Map(), Map( TVar( "a" ) -> ty"i" ) )
+    val wrong = hof"P(x) -> ∀x P(x)"
+    val right = hof"P(x) -> ∀y P(x)"
+    subst( f1 ) must_!= wrong
+    subst( f1 ) must_== right
+  }
 }
