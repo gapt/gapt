@@ -8,10 +8,7 @@ import Doc._
 
 class ExpansionTreePrettyPrinter( sig: BabelSignature ) extends BabelExporter( unicode = true, sig = sig ) {
 
-  def export( et: ExpansionTree ): String = {
-    val knownTypesFromSig = knownConstantTypesFromSig( constants( et.deep ) union constants( et.shallow ) )
-    group( show( et, knownTypesFromSig.toMap, prio.max )._1 ).render( lineWidth )
-  }
+  def export( et: ExpansionTree ): String = group( show( et, Map[String, VarOrConst](), prio.max )._1 ).render( lineWidth )
 
   def addPol( doc: Doc, pol: Polarity ) =
     pol match {

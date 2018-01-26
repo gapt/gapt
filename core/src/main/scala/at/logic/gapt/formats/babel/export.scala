@@ -28,23 +28,10 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
 
   protected def parens( doc: Doc ): Doc = "(" <> doc <> ")"
 
-  def knownConstantTypesFromSig( consts: Iterable[Const] ): Iterable[( String, Const )] =
-    consts flatMap { c =>
-      sig.signatureLookup( c.name ) match {
-        case BabelSignature.IsConst( `c` ) => // FIXME: this completely wrong now
-          Some( c.name -> c )
-        case _ => None
-      }
-    }
-
-  def export( expr: Expr ): String = {
-    val knownTypesFromSig = knownConstantTypesFromSig( constants.all( expr ) )
-    group( show( expr, false, Set(), knownTypesFromSig.toMap, prio.max )._1 ).render( lineWidth )
-  }
-  def export( sequent: HOLSequent ): String = {
-    val knownTypesFromSig = knownConstantTypesFromSig( sequent.elements.view.flatMap( constants.all ).toSet )
-    group( show( sequent, Set(), knownTypesFromSig.toMap )._1 ).render( lineWidth )
-  }
+  def export( expr: Expr ): String =
+    group( show( expr, false, Set(), Map(), prio.max )._1 ).render( lineWidth )
+  def export( sequent: HOLSequent ): String =
+    group( show( sequent, Set(), Map() )._1 ).render( lineWidth )
   def export( ty: Ty ): String = show( ty, needParens = false ).group.render( lineWidth )
 
   object prio {
@@ -91,7 +78,7 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
    * @param expr  The lambda expression to convert.
    * @param knownType  Whether we already know the type of this expression.
    * @param bound  Names bound by enclosing binders.
-   * @param t0  Already used free identifiers, together with the variable or constant they represent.
+   * @param t0  Already known free identifiers, together with the variable or constant they represent.
    * @param p  The priority of the enclosing operator.
    * @return  Pretty-printed document and the free identifiers.
    */
@@ -150,24 +137,52 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case Apps( _, args ) if args.nonEmpty      => showApps( expr, knownType, bound, t0, p )
 
       case expr @ Const( name, ty, params ) =>
-        // FIXME(gabriel): type parameter syntax
-        if ( !omitTypes && ( bound( name ) || t0.get( name ).exists { _ != expr } || sig.signatureLookup( name ).isVar ) )
-          ( "#c(" <> showName( name ) <> showTyParams( params ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( omitTypes || ( ( ty == Ti || knownType ) && params.isEmpty ) || t0.get( name ).contains( expr ) )
-          ( showName( name ), t0 + ( name -> expr ) )
-        else
-          ( parenIf( p, prio.typeAnnot, showName( name ) <> showTyParams( params )
-            <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
+        def bare = showName( name )
+        def safe = "#c(" <> showName( name ) <> showTyParams( params ) <> ":" </> show( ty, false ) <> ")"
+        def withParams = showName( name ) <> showTyParams( params )
+        def withType =
+          parenIf( p, prio.typeAnnot, showName( name ) <> showTyParams( params ) <> ":" <> show( ty, false ) )
+
+        sig.signatureLookup( name ) match {
+          case _ if omitTypes                          => bare -> t0
+          case _ if bound( name )                      => safe -> t0
+          case _ if t0.get( name ).exists( _ != expr ) => safe -> t0
+          case BabelSignature.IsConst( c ) =>
+            safeMatching( c, expr ) match {
+              case Some( _ ) if knownType && !paramsNecessary( c ) =>
+                bare -> t0
+              case Some( _ ) => withParams -> t0
+              case None      => safe -> t0
+            }
+          case BabelSignature.IsVar => safe -> t0
+          case BabelSignature.IsUnknownConst if knownType || t0.get( name ).contains( expr ) || ( ty == Ti && params.isEmpty ) =>
+            bare -> ( t0 + ( name -> expr ) )
+          case BabelSignature.IsUnknownConst =>
+            withType -> ( t0 + ( name -> expr ) )
+        }
       case expr @ Var( name, ty ) =>
-        if ( !omitTypes && ( t0.get( name ).exists { _ != expr } || ( !bound( name ) && !sig.signatureLookup( name ).isVar ) ) )
-          ( "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")", t0 )
-        else if ( omitTypes || ty == Ti || knownType || t0.get( name ).contains( expr ) )
-          ( showName( name ), t0 + ( name -> expr ) )
-        else
-          ( parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) ), t0 + ( name -> expr ) )
+        def bare = showName( name )
+        def safe = "#v(" <> showName( name ) <> ":" </> show( ty, false ) <> ")"
+        def withType = parenIf( p, prio.typeAnnot, showName( name ) <> ":" <> show( ty, false ) )
+
+        if ( omitTypes ) bare -> t0
+        else if ( !bound( name ) && !sig.signatureLookup( name ).isVar ) safe -> t0
+        else if ( knownType || t0.get( name ).contains( expr ) || ty == Ti ) bare -> ( t0 + ( name -> expr ) )
+        else withType -> ( t0 + ( name -> expr ) )
     }
 
-  def showTyParams( params: List[Ty] ): Doc =
+  def paramsNecessary( sigC: Const ): Boolean =
+    !typeVariables( sigC.params ).subsetOf( typeVariables( sigC.ty ) )
+
+  def safeMatching( c1: Const, c2: Expr ): Option[Substitution] =
+    c2 match { case c2: Const => safeMatching( c1, c2 ) case _ => None }
+
+  def safeMatching( c1: Const, c2: Const ): Option[Substitution] =
+    if ( c1.name != c2.name ) None
+    else if ( c1.params.size != c2.params.size ) None
+    else syntacticMatching( List(), ( c1.ty -> c2.ty ) :: ( c1.params zip c2.params ), PreSubstitution() ).headOption
+
+  def showTyParams( params: List[Ty], always: Boolean = false ): Doc =
     if ( params.isEmpty ) "" else
       "{" <> wordwrap( params.map( show( _, params.size > 1 ) ) ) <> "}"
 
@@ -184,11 +199,17 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       case _                => None
     }
 
-    val hdKnown0 = hdSym.exists { n => t0 get n contains hd }
+    val argTysKnown = hdSym.exists { n =>
+      t0.get( n ).contains( hd ) || ( sig.signatureLookup( n ) match {
+        case _ if t0.get( n ).exists( _ != hd ) => false
+        case BabelSignature.IsConst( c )        => typeVariables( c ).isEmpty
+        case _                                  => false
+      } )
+    }
     var t1 = t0
     val args_ = for ( arg <- args ) yield {
-      val ( arg_, t10 ) = show( arg, hdKnown0, bound, t1, prio.max )
-      t1 = t10
+      val ( arg_, t1_ ) = show( arg, argTysKnown, bound, t1, prio.max )
+      t1 = t1_
       arg_
     }
 
@@ -196,12 +217,22 @@ class BabelExporter( unicode: Boolean, sig: BabelSignature, omitTypes: Boolean =
       parenIf( p, prio.app, hd_ ) <> nest( group( parens(
         if ( args_.size == 1 ) args_.head else wordwrap( args_, "," ) ) ) )
 
-    val hdKnown1 = hdSym.exists { n => t1 get n contains hd }
-    if ( omitTypes || knownType || expr.ty == Ti || hdKnown1 ) {
-      val ( hd_, t2 ) = show( hd, true, bound, t1, prio.app )
+    val retTyKnown = knownType || hdSym.exists { n =>
+      t1.get( n ).contains( hd ) || ( sig.signatureLookup( n ) match {
+        case _ if t0.get( n ).exists( _ != hd ) => false
+        case BabelSignature.IsConst( c ) =>
+          val FunctionType( retTy, argTys ) = c.ty
+          typeVariables( retTy :: argTys.drop( args.size ) ).subsetOf( typeVariables( argTys.take( args.size ) ) )
+        case BabelSignature.IsUnknownConst =>
+          expr.ty == Ti
+        case _ => false
+      } )
+    }
+    if ( omitTypes || retTyKnown ) {
+      val ( hd_, t2 ) = show( hd, knownType = true, bound, t1, prio.app )
       ( showFunCall( hd_, args_, p ), t2 )
     } else {
-      val ( hd_, t2 ) = show( hd, true, bound, t1, prio.typeAnnot )
+      val ( hd_, t2 ) = show( hd, knownType = true, bound, t1, prio.typeAnnot )
       ( parenIf( p, prio.typeAnnot, showFunCall( hd_, args_, prio.typeAnnot ) <> ":" </> show( expr.ty, false ) ), t2 )
     }
   }
