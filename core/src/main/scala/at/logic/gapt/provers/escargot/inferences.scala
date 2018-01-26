@@ -12,6 +12,10 @@ trait PreprocessingRule {
   def preprocess( newlyInferred: Set[Cls], existing: Set[Cls] ): Set[Cls]
 }
 
+/**
+ * An operation that looks at the given clause, and the set of worked off clauses;
+ * it returns a set of new clauses, plus a set of clauses that should be discarded.
+ */
 trait InferenceRule extends PreprocessingRule {
   def apply( given: Cls, existing: Set[Cls] ): ( Set[Cls], Set[( Cls, HOLClause )] )
 
