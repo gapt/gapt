@@ -1046,20 +1046,20 @@ class LKInterpolationTest extends Specification with SequentMatchers {
     val proof = NegRightRule( axp, hof"p" )
     val proof1 = NegLeftRule( proof, hof"-p" )
     val proof2 = WeakeningRightRule( proof1, hof"p" )
-    val proof3 = ImpRightRule( proof2, hof"--p", hof"p" )
+    val proof3 = ImpRightRule( proof2, hof"- -p", hof"p" )
 
     val proof4 = NegLeftRule( axp, hof"p" )
     val proof5 = WeakeningRightRule( proof4, hof"p" )
     val proof6 = OrLeftRule( axp, hof"p", proof5, hof"-p" )
     val proof7 = ContractionRightRule( proof6, hof"p" )
 
-    val proof8 = WeakeningLeftRule( axp, hof"--p" )
-    val proof9 = ImpRightRule( proof8, hof"--p", hof"p" )
+    val proof8 = WeakeningLeftRule( axp, hof"- -p" )
+    val proof9 = ImpRightRule( proof8, hof"- -p", hof"p" )
     val proof10 = CutRule( proof7, proof9, hof"p" )
 
     val proof11 = CutRule( proof3, proof10, hof"p" )
 
-    val proof12 = ContractionRightRule( proof11, Imp( hof"--p", hof"p" ) )
+    val proof12 = ContractionRightRule( proof11, Imp( hof"- -p", hof"p" ) )
 
     val ( nproof, pproof, ipl ) = Interpolate( proof12, Seq( false ) :- Seq( true ) )
 

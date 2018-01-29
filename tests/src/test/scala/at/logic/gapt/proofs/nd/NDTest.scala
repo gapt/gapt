@@ -8,7 +8,7 @@ import org.specs2.mutable._
 class NDTest extends Specification with SatMatchers {
 
   "doubleNegationElim" in {
-    val a1 = LogicalAxiom( hof"¬¬A" )
+    val a1 = LogicalAxiom( hof"¬ ¬A" )
     val a2 = LogicalAxiom( hof"¬A" )
     val a3 = NegElimRule( a1, a2 )
     val a4 = BottomElimRule( a3, hof"A" )

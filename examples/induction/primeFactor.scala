@@ -1,7 +1,7 @@
 package at.logic.gapt.examples.induction
 
 import at.logic.gapt.expr._
-import at.logic.gapt.expr.hol.universalClosure
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs._
 import at.logic.gapt.proofs.gaptic._
 
@@ -12,8 +12,11 @@ object primeFactor extends TacticsProof {
   ctx += Const( "1", Ti )
   ctx += Const( "2", Ti )
   ctx += Const( "+", Ti ->: Ti ->: Ti )
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   ctx += Const( "*", Ti ->: Ti ->: Ti )
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += Const( "<", Ti ->: Ti ->: To )
+  ctx += Notation.Infix( "<", Precedence.infixRel )
 
   ctx += hof" div l k = (∃m l * m = k)"
   ctx += hof" prime k = (1 < k ∧ ¬∃l(div(l,k) ∧ 1 < l ∧ l < k))"

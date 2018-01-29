@@ -10,14 +10,14 @@ object drinker extends TacticsProof {
   ctx += hoc"P: i>o"
 
   val drinker = Lemma( Sequent() :+ ( "D" -> hof"?x (P x -> !y P y)" ) ) {
-    exR( le"c" ); decompose
-    exR( le"y" ); decompose
+    exR( fov"c" ); decompose
+    exR( fov"y" ); decompose
     trivial
   }
 
   val dualdrinker = Lemma( ( "D" -> hof"!x (P x & ?y -P y)" ) +: Sequent() ) {
-    allL( le"c" ); decompose
-    allL( le"y" ); decompose
+    allL( fov"c" ); decompose
+    allL( fov"y" ); decompose
     trivial
   }
 }

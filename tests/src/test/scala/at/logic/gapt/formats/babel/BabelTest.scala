@@ -26,10 +26,16 @@ class BabelTest extends Specification {
   "quoted names" in {
     BabelParser.parse(
       """
-        '\u2200' {i>o} (^'""' ('""' '\'' : o)) : o
+        ('\u2200' {i>o}) (^'""' ('""' '\'' : o)) : o
       """ ) must beLike {
         case All( v, App( v_, Const( "'", Ti, Nil ) ) ) if v == v_ => ok
       }
+  }
+
+  "associativity" in {
+    BabelParser.parse( "a -> b -> c" ) must_== ( FOLAtom( "a" ) --> ( FOLAtom( "b" ) --> FOLAtom( "c" ) ) )
+    BabelParser.parse( "a & b & c" ) must_== And( Seq( FOLAtom( "a" ), FOLAtom( "b" ), FOLAtom( "c" ) ) )
+    BabelParser.parse( "a | b | c" ) must_== Or( Seq( FOLAtom( "a" ), FOLAtom( "b" ), FOLAtom( "c" ) ) )
   }
 
   "quantifiers bind more closely than disjunction" in {
@@ -64,6 +70,7 @@ class BabelTest extends Specification {
       "true & p(#c('⊤': i))",
       "^('⊤': i) #c('⊤': o) & p('⊤': i)",
       "c = c{}", "c = c{?a}", "c{?a} = c{?b}",
+      "'-2' = (-2)",
       "''",
       "'\\u0000'",
       "true", "'true'", "'all' x" )
@@ -72,9 +79,11 @@ class BabelTest extends Specification {
         val expr = BabelParser.parse( string )
 
         val expr2 = BabelParser.parse( expr.toString )
+        require( expr == expr2 )
         expr syntaxEquals expr2 must beTrue
 
         val expr3 = BabelParser.parse( expr.toAsciiString )
+        require( expr == expr3 )
         expr syntaxEquals expr3 must beTrue
       }
     }

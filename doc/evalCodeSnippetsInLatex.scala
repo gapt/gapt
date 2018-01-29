@@ -105,6 +105,7 @@ object evalCodeSnippetsInLatex {
     code ++= "val () = {\n"
     if ( !bare ) code ++= "new at.logic.gapt.proofs.gaptic.TacticsProof {\n"
     code ++= "import at.logic.gapt.proofs.gaptic._\n"
+    code ++= "import at.logic.gapt.formats.babel._\n"
     if ( !nosig ) code ++=
       """
           ctx += Context.Sort("i")

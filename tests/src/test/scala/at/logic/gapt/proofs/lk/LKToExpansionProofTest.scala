@@ -22,6 +22,8 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
       ctx += hoc"P: i>o"
       ctx += hoc"Q: i>i>o"
       ctx += hoc"f: i>i"
+      ctx += hoc"c: i"
+      ctx += hoc"d: i"
       ctx += "ax" -> hcl"P α, P β :- Q (f α) c, Q (f β) d"
 
       val p = ProofBuilder.
@@ -31,14 +33,14 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
         u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f α" ) ).
         u( ExistsRightRule( _, hof"∃y ∃z Q y z", le"f β" ) ).
         u( ContractionRightRule( _, hof"∃y ∃z Q y z" ) ).
-        u( ExistsLeftRule( _, hof"∃x P x", hov"α" ) ).
-        u( ExistsLeftRule( _, hof"∃x P x", hov"β" ) ).
+        u( ExistsLeftRule( _, hof"∃x P x", fov"α" ) ).
+        u( ExistsLeftRule( _, hof"∃x P x", fov"β" ) ).
         u( ContractionLeftRule( _, hof"∃x P x" ) ).
         qed
 
       val E = LKToExpansionProof( p ).expansionSequent
 
-      E.antecedent must_== Seq( ETStrongQuantifier( hof"∃x P x", hov"β", ETAtom( hoa"P β", Polarity.InAntecedent ) ) )
+      E.antecedent must_== Seq( ETStrongQuantifier( hof"∃x P x", fov"β", ETAtom( hoa"P β", Polarity.InAntecedent ) ) )
       // this assumes that the first variable wins, f(β) would also be valid
       val f_alpha = le"f β"
       E.succedent must_== Seq( ETWeakQuantifier(
@@ -125,10 +127,10 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
       implicit var ctx = Context()
       ctx += TBase( "i" )
       ctx += hoc"Q: i>o"
-      ctx += hof"P x = (x = x ∨ (¬ x = x))"
+      ctx += hof"P (x:i) = (x = x ∨ (¬ x = x))"
 
       val p = ProofBuilder.
-        c( LogicalAxiom( fof"x = x" ) ).
+        c( LogicalAxiom( fof"x = (x:i)" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
         u( DefinitionRightRule( _, Suc( 0 ), fof"P(x)" ) ).
@@ -140,20 +142,20 @@ class LKToExpansionProofTest extends Specification with SatMatchers with Sequent
       ctx.check( e )
       ctx.check( p )
 
-      e.deep must_== fos" :- x = x ∨ (¬ x = x) ∨ false"
+      e.deep must_== fos" :- x = x ∨ (¬ x = (x:i)) ∨ false"
     }
 
     "handle atom definitions in non-top position" in {
       implicit var ctx = Context()
       ctx += TBase( "i" )
       ctx += hoc"Q:i>o"
-      ctx += hof"P x = (x = x ∨ (¬ x = x))"
+      ctx += hof"P (x:i) = (x = x ∨ (¬ x = (x:i)))"
 
       val p = ProofBuilder.
-        c( LogicalAxiom( fof"x = x" ) ).
+        c( LogicalAxiom( fof"x = (x:i)" ) ).
         u( NegRightRule( _, Ant( 0 ) ) ).
         u( OrRightRule( _, Suc( 0 ), Suc( 1 ) ) ).
-        u( OrRightMacroRule( _, fof"x = x ∨ ¬ x = x", fof"Q(x)" ) ).
+        u( OrRightMacroRule( _, fof"x = (x:i) ∨ ¬ x = x", fof"Q(x)" ) ).
         u( DefinitionRightRule( _, Suc( 0 ), fof"P(x) ∨ Q(x)" ) ).
         qed
 

@@ -36,6 +36,7 @@ object Polarity {
   case object Negative extends Polarity {
     def inSuc = false
     def unary_! = Positive
+
   }
 
   val InSuccedent = Positive

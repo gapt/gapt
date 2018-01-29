@@ -2,12 +2,14 @@ package at.logic.gapt.examples.induction
 
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.{ Context, Sequent }
 
 object numbers extends TacticsProof {
   ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
 
   ctx += hoc"'+': nat>nat>nat"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   val plusth = ( "plus0" -> hof"∀x 0+x=x" ) +:
     ( "plussuc" -> hof"∀x∀y s(x)+y=s(x+y)" ) +:
     Sequent()

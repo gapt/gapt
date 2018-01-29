@@ -2,6 +2,7 @@ package at.logic.gapt.examples.theories
 
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ instantiate, simplify, universalClosure }
+import at.logic.gapt.formats.babel.Notation
 import at.logic.gapt.proofs.Context.{ InductiveType, PrimRecFun, SkolemFun }
 import at.logic.gapt.proofs.epsilon.EpsilonC
 import at.logic.gapt.proofs.{ Context, HOLSequent, ImmutableContext, Sequent, SequentConnector, Suc }
@@ -274,6 +275,9 @@ class Theory( imports: Theory* ) extends Theory0( imports.toList ) {
     for ( an <- attrNames; ln <- lemmaNames )
       addNow( Attributes.AddAttributeUpdate( ln, an ) )
 
+  protected def infix( operator: String, precedence: Int, leftAssociative: Boolean = true, const: String = null ) =
+    addNow( Notation.Infix( operator, if ( const == null ) operator else const, precedence, leftAssociative ) )
+
 }
 
 object logic extends Theory {
@@ -286,9 +290,9 @@ object logic extends Theory {
   }
 
   fun( hoc"ite{?a}:o>?a>?a>?a", "ite true a b = a", "ite false a b = b" )
-  val itepos = lemma( hof"p -> ite{?a} p a b = a", "simp", "nocombine" ) { induction( hov"p:o" ) onAll simp.w( "ite" ) }
-  val iteneg = lemma( hof"-p -> ite{?a} p a b = b", "simp", "nocombine" ) { induction( hov"p:o" ) onAll simp.w( "ite" ) }
-  val iteeq = lemma( hof"ite{?a} p a a = a", "simp" ) { cut( "", hof"p:o" ).onAll( simp.h ) }
+  val itepos = lemma( hof"p -> ite p a b = a", "simp", "nocombine" ) { induction( hov"p:o" ) onAll simp.w( "ite" ) }
+  val iteneg = lemma( hof"-p -> ite p a b = b", "simp", "nocombine" ) { induction( hov"p:o" ) onAll simp.w( "ite" ) }
+  val iteeq = lemma( hof"ite p a a = a", "simp" ) { cut( "", hof"p:o" ).onAll( simp.h ) }
 
 }
 

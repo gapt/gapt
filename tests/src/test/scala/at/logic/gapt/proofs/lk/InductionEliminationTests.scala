@@ -3,6 +3,7 @@ package at.logic.gapt.proofs.lk
 import at.logic.gapt.expr._
 import at.logic.gapt.examples.tip.isaplanner.{ prop_08, prop_15, prop_59 }
 import at.logic.gapt.expr.Substitution
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.{ Context, MutableContext, Sequent, SequentMatchers }
 import at.logic.gapt.proofs.gaptic.{ Lemma, ProofState, allR, cut, escargot, induction, insert, refl, rewrite }
 import org.specs2.mutable.Specification
@@ -48,6 +49,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
 
     val axioms = Seq(
       "ap1" -> hof"∀y 0+y = y",
@@ -97,6 +99,7 @@ class InductionEliminationTests extends Specification with SequentMatchers {
     implicit val ctx = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s:nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
 
     val axioms = Seq(
       "ap1" -> hof"∀y 0+y = y",

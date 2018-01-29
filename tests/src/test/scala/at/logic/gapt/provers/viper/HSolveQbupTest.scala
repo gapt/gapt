@@ -1,6 +1,7 @@
 package at.logic.gapt.provers.viper
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.{ instantiate, skolemize, universalClosure }
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.lk.LKProof
 import at.logic.gapt.proofs.{ Context, HOLSequent, MutableContext }
 import at.logic.gapt.provers.OneShotProver
@@ -28,6 +29,7 @@ class HSolveQbupTest extends Specification with SatMatchers {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"d: nat>nat"
     val qbup @ Ex( x, qbupMatrix ) =
       hof"""
@@ -47,6 +49,7 @@ class HSolveQbupTest extends Specification with SatMatchers {
     implicit val ctx: MutableContext = MutableContext.default()
     ctx += Context.InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
     ctx += hoc"d: nat>nat"
     val qbup @ Ex( x, qbupMatrix ) =
       hof"""

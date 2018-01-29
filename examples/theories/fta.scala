@@ -16,15 +16,15 @@ object fta extends Theory( natlists, listlength, natdivisible ) {
   }
   val mulsbndr = lemma( hof"1<y&x!=0 -> x<y*x", "simp" ) { include( "mulsbnd", "mulcomm" ); escrgt }
 
-  val dvdnotelemprod = lemma( hof"prime x & lall prime xs & -elem xs x -> -dvd(x, prod(xs))" ) {
+  val dvdnotelemprod = lemma( hof"prime x & lall prime xs & ~elem xs x -> ~dvd(x, prod(xs))" ) {
     induction( hov"xs:list nat" ) onAll simp onAll impR onAll simp.h( "primene1" )
     decompose; simp.w( "prime", "ltsl" ).on( "g_0_0_1_0" ); decompose
     allL( le"x:nat" ).forget; simp.h.on( "g_0_0_1_0_1" ); simp.h.on( "g_0_0_0" )
   }
-  val permconsdel = lemma( hof"elem{?a} xs x -> perm xs (cons x (del x xs))", "simp" ) {
+  val permconsdel = lemma( hof"elem xs x -> perm xs (cons x (del x xs))", "simp" ) {
     simp.w( "elem", "perm" ); decompose; cut( "zx", hof"z=(x:?a)" ) onAll simp.h
   }
-  val lalldel = lemma( hof"lall{?a} f xs -> lall f (del x xs)" ) {
+  val lalldel = lemma( hof"lall f xs -> lall f (del x xs)" ) {
     induction( hov"xs:list?a" ) onAll simp
     decompose; cut( "xx0", hof"x = (x_0:?a)" ) onAll simp.h
   }
@@ -34,8 +34,8 @@ object fta extends Theory( natlists, listlength, natdivisible ) {
     allR; simp; decompose
     cut( "d2x", hof"cnt (x:nat) d2 != 0" ); negR( "d2x" )
     by { // case 1: x not in d2
-      cut( "dvdxd2", hof"-dvd(x,prod(d2))" ); by { simp.h.on( "dvdxd2" ).w( "dvdnotelemprod", "elem" ) }
-      cut( "dvdxd1d2", hof"-dvd(x*prod(d1_0),prod(d2))" ); by { include( "dvdtrans", "dvdmul" ); escrgt }
+      cut( "dvdxd2", hof"~dvd(x,prod(d2))" ); by { simp.h.on( "dvdxd2" ).w( "dvdnotelemprod", "elem" ) }
+      cut( "dvdxd1d2", hof"~dvd(x*prod(d1_0),prod(d2))" ); by { include( "dvdtrans", "dvdmul" ); escrgt }
       simp.h; exR( le"x:nat" ).forget; simp.h
     }
     by { // case 2: x in d2
@@ -59,7 +59,7 @@ object fta extends Theory( natlists, listlength, natdivisible ) {
 
   // TODO: well-founded induction
   val primedecexstep = lemma( hof"!m(m<n -> m!=0 -> ?d primedec d m) -> (n!=0 -> ?d primedec d n)" ) {
-    impR; impR; cut( "pn", hof"-prime n" ); by { negR( "pn" ); exR( le"cons (n:nat) nil" ).forget; simp.h( "primedec" ) }
+    impR; impR; cut( "pn", hof"~prime n" ); by { negR( "pn" ); exR( le"cons (n:nat) nil" ).forget; simp.h( "primedec" ) }
     cut( "n1", hof"n!=s(0)" ); by { negR( "n1" ); exR( le"nil: list nat" ).forget; simp.h( "primedec" ) }
     simp.h.on( "pn" )( "primecomp", "ltsl", "composite" ); exL( hov"k:nat" ); exL( hov"l:nat" )
     simp.h
@@ -67,7 +67,7 @@ object fta extends Theory( natlists, listlength, natdivisible ) {
     ( chain( "g_0" ) onAll simp.h( "ltsl" ) ).onAllSubGoals
   }
   val primedecex = lemma( hof"n!=0 -> ?d primedec d n" ) {
-    cut( "gen", hof"-!m (m<=n -> m!=0 -> ?d primedec d m)" ); by { decompose; chain( "gen" ); simp.on( "g_1" ); prop }; forget( "g" ); negL
+    cut( "gen", hof"~ !m (m<=n -> m!=0 -> ?d primedec d m)" ); by { decompose; chain( "gen" ); simp.on( "g_1" ); prop }; forget( "g" ); negL
     induction( hov"n:nat" ) onAll allR
     by { simp; prop }
     by {

@@ -2,6 +2,7 @@ package at.logic.gapt.examples.induction
 
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.extractRecSchem
 
@@ -10,6 +11,7 @@ object lists extends TacticsProof {
   ctx += Context.InductiveType( "list", hoc"nil: list", hoc"cons: i>list>list" )
 
   ctx += hoc"'+': list>list>list"
+  ctx += Notation.Infix( "+", Precedence.plusMinus )
   val appth =
     ( "consapp" -> hof"∀x ∀y ∀z cons(x,y)+z = cons(x,y+z)" ) +:
       ( "nilapp" -> hof"∀x nil+x = x" ) +:
@@ -74,7 +76,8 @@ object lists extends TacticsProof {
     rewrite.many ltr ( "revcons", "mapcons", "mapapp", "IHxs_0", "mapnil" ); refl
   }
 
-  ctx += hof"(f*g) x = f (g x)"
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
+  ctx += hof"(f*g) x = (f (g (x: i): i): i)"
   Proof( Sequent() :+ ( "example" -> hof"(f*g) x = f (g x)" ) ) { unfold( "*" ) in "example"; refl }
 
   val mapfusion = Lemma( mapth :+ ( "goal" -> hof"∀f ∀g ∀xs map (f*g) xs = map f (map g xs)" ) ) {

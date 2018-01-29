@@ -1,6 +1,7 @@
 package at.logic.gapt.proofs.lk
 
 import at.logic.gapt.expr._
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.Context.InductiveType
 import at.logic.gapt.proofs.expansion.InstanceTermEncoding
 import at.logic.gapt.proofs.gaptic.TacticsProof
@@ -13,6 +14,7 @@ class ExtractInductionGrammarTest extends Specification with SatMatchers {
     import at.logic.gapt.proofs.gaptic._
     ctx += InductiveType( "nat", hoc"0: nat", hoc"s: nat>nat" )
     ctx += hoc"'+': nat>nat>nat"
+    ctx += Notation.Infix( "+", Precedence.plusMinus )
     val add0l = Lemma( hols"!x x+0=x, !x!y x+s(y)=s(x+y) :- !x 0+x=x" ) {
       allR; induction( hov"x:nat" ).onAll( escargot.withDeskolemization )
     }

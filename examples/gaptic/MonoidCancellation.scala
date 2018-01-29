@@ -1,6 +1,7 @@
 package at.logic.gapt.examples
 import at.logic.gapt.expr._
 import at.logic.gapt.expr.hol.universalClosure
+import at.logic.gapt.formats.babel.{ Notation, Precedence }
 import at.logic.gapt.proofs.{ Context, Sequent }
 import at.logic.gapt.proofs.gaptic._
 import at.logic.gapt.proofs.lk.LKProof
@@ -12,6 +13,7 @@ import at.logic.gapt.proofs.lk.LKProof
 object MonoidCancellation extends TacticsProof {
   ctx += Context.Sort( "m" )
   ctx += hoc"'*': m>m>m"
+  ctx += Notation.Infix( "*", Precedence.timesDiv )
   ctx += hoc"1: m"
 
   ctx += "mul_assoc" -> hcl":- (x*y)*z = x*(y*z)"
